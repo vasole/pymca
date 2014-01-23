@@ -38,14 +38,20 @@ else:
 if __name__ == "__main__":
     app = qt.QApplication([])
 
-from PyMca.widgets import PlotWindow
-from PyMca import ScanFit
-from PyMca import SimpleMath
-from PyMca import DataObject
 import copy
+
+from PyMca.widgets import ScanWindow
+from PyMca.PyMca_Icons import IconDict
+from PyMca.widgets import McaControlGUI
+from PyMca import ConfigDict
+from PyMca import McaAdvancedFit
+from PyMca import DataObject
+from PyMca import McaCalWidget
+from PyMca import McaSimpleFit
+from PyMca import Specfit
+from PyMca import SpecfitFuns
 from PyMca import PyMcaPrintPreview
 from PyMca import PyMcaDirs
-from PyMca import ScanWindowInfoWidget
 #implement the plugins interface
 try:
     from PyMca import QPyMcaMatplotlibSave1D
@@ -64,57 +70,63 @@ from PyMca import SimpleFitGUI
 from PyMca import PyMcaPlugins
 
 DEBUG = 0
-class ScanWindow(PlotWindow.PlotWindow):
-    def __init__(self, parent=None, name="Scan Window", specfit=None, backend=None,
-                 plugins=True, newplot=True, roi=True, fit=True, **kw):
+class McaWindow(ScanWindow.ScanWindow):
+    def __init__(self, parent=None, name="Mca Window", specfit=None, backend=None,
+                 plugins=True, newplot=False, roi=True, fit=True, **kw):
 
-        super(ScanWindow, self).__init__(parent,
+        ScanWindow.ScanWindow.__init__(self, parent,
+                                         name=name,
                                          newplot=newplot,
                                          plugins=plugins,
                                          backend=backend,
                                          roi=roi,
                                          fit=fit,
                                          **kw)
-        self.setWindowType("SCAN")
+        self.setWindowType("MCA")
         # this two objects are the same
         self.dataObjectsList = self._curveList
         # but this is tricky
         self.dataObjectsDict = {}
         
-        self.setWindowTitle(name)
-        self.matplotlibDialog = None
-        pluginDir = [os.path.dirname(os.path.abspath(PyMcaPlugins.__file__))]
-        #self.setPluginDirectoryList(pluginDir)
-        self.getPlugins(method="getPlugin1DInstance",
-                        directoryList=pluginDir)
-        """
-        self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setContenstsMargin(0)
-        self.mainLayout.setSpacing(0)
-        self.scanWindowInfoWidget = ScanWindowInfoWidget.\
-                                        ScanWindowInfoWidget(self)
-        self.mainLayout.addWidget(self.scanWindowInfoWidget)
-        """
-        self.scanWindowInfoWidget = None
-        #self.fig = None
-        self.scanFit = ScanFit.ScanFit(specfit=specfit)
-        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-        self.simpleMath = SimpleMath.SimpleMath()
+        #self.setWindowTitle(name)
         self.outputDir = None
         self.outputFilter = None
+        self.matplotlibDialog = None
 
-        #signals
-        self.setCallback(self._graphSignalReceived)
-        if 1:
-            self.customFit = SimpleFitGUI.SimpleFitGUI()
-            self.connect(self.scanFit,
-                         qt.SIGNAL('ScanFitSignal') ,
-                         self._scanFitSignalReceived)
-            self.connect(self.customFit,
-                         qt.SIGNAL('SimpleFitSignal') ,
-                         self._customFitSignalReceived)
+
+        self.calibration = 'None'
+        self.calboxoptions = ['None','Original (from Source)','Internal (from Source OR PyMca)']
+        self.caldict={}
+        self.calwidget   =  None
+        self.roilist = None
+        self.roidict = None
+        self.currentroi = None
+        self.roimarkers     = [-1,-1]
+        self._middleRoiMarker = -1
+        self._middleRoiMarkerFlag = False
+        self.elementmarkers = []
+        self.peakmarker     = None
         self.dataObjectsDict = {}
-        self.dataObjectsList = []
+        if specfit is None:
+            self.specfit = Specfit.Specfit()
+        else:
+            self.specfit = specfit
+        self.simplefit   = McaSimpleFit.McaSimpleFit(specfit=self.specfit)
+        self.specfit.fitconfig['McaMode'] = 1
+
+        self.advancedfit = McaAdvancedFit.McaAdvancedFit()
+
+        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
+        if DEBUG:
+            print("printPreview id = %d" % id(self.printPreview))
+
+        self._toggleROI()
+        self.connections()
+
+        self.fitMenu = qt.QMenu()
+        self.fitMenu.addAction(QString("Simple"),    self.mcaSimpleFitSignal)
+        self.fitMenu.addAction(QString("Advanced") , self.mcaAdvancedFitSignal)
+
 
         if 1:
             self.fitButtonMenu = qt.QMenu()
@@ -123,40 +135,621 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.fitButtonMenu.addAction(QString("Customized Fit") ,
                                    self._customFitSignal)
 
-    def _buildGraph(self):
-        self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True,
-                                               legendrename=True,
-                                               usecrosscursor=True)
-        self.graph.setPanningMode(True)
-        self.mainLayout.addWidget(self.graph)
 
-        self.graphBottom = qt.QWidget(self)
-        self.graphBottomLayout = qt.QHBoxLayout(self.graphBottom)
-        self.graphBottomLayout.setMargin(0)
-        self.graphBottomLayout.setSpacing(0)
+    def _toggleROI(self):
+        if not hasattr(self, "controlWidget"):
+            self.controlWidget = None
+        if self.controlWidget is None:
+            self.controlWidget = McaControlGUI.McaControlGUI()
+            self.roiWidget  = self.controlWidget
+            w = self.centralWidget().width()
+            h = self.centralWidget().height()
+            self.roiDockWidget = qt.QDockWidget(self)
+            self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
+            self.roiDockWidget.setWidget(self.controlWidget)
+            #if w > h:
+            #    self.addDockWidget(qt.Qt.LeftDockWidgetArea,
+            #                       self.roiDockWidget)
+            #else:
+            self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+                                   self.roiDockWidget)
+            self.controlWidget.sigMcaControlGUISignal.connect(self.__anasignal)
+            self.controlWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
+            self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
+        elif self.roiDockWidget.isHidden():
+            self.roiDockWidget.show()
+        else:
+            self.roiDockWidget.hide()
+
+
+    def _roiSignal(self, ddict):
+        return super(McaWindow, self)._roiSignal(ddict)
+
+    def connections(self):
+        #self.connect(self.scanfit,    qt.SIGNAL('ScanFitSignal') , self.__anasignal)
+        self.connect(self.simplefit,  qt.SIGNAL('McaSimpleFitSignal') , self.__anasignal)
+        self.connect(self.advancedfit,qt.SIGNAL('McaAdvancedFitSignal') , self.__anasignal)
+        #self.connect(self.scanwindow, qt.SIGNAL('ScanWindowSignal') ,   self.__anasignal)
+        #self.connect(self.scanwindow, qt.SIGNAL('QtBlissGraphSignal')  ,self.__graphsignal)
+        #self.connect(self.graph,      qt.SIGNAL('QtBlissGraphSignal')  ,self.__graphsignal)
+
+    def mcaSimpleFitSignal(self, ddict):
+        print ddict
+
+    def mcaAdvancedFitSignal(self, ddict):
+        print ddict
+
+    def __anasignal(self,dict):
+        if DEBUG:
+            print("__anasignal called dict = ",dict)
+            
+        if dict['event'] == 'clicked':
+            # A button has been cicked
+            if   dict['button'] == 'Source':
+                pass
+            elif dict['button'] == 'Calibration':
+                #legend,x,y = self.graph.getactivecurve()
+                legend = self.graph.getactivecurve(justlegend=1)
+                if legend is None:
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Please Select an active curve")
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.exec_()
+                    return
+                else:
+                    info,x, y = self.getinfodatafromlegend(legend)
+                    if info is None: return
+                    ndict = {}
+                    ndict[legend] = {'order':1,'A':0.0,'B':1.0,'C':0.0}
+                    if legend in self.caldict:
+                        ndict[legend].update(self.caldict[legend])
+                        if abs(ndict[legend]['C']) > 0.0:
+                            ndict[legend]['order']  = self.caldict[legend].get('order', 2)
+                    elif 'McaCalib' in info:
+                        if type(info['McaCalib'][0]) == type([]):
+                            calib = info['McaCalib'][0]
+                        else:
+                            calib = info['McaCalib']
+                        calibrationOrder = info.get('McaCalibOrder', 2)
+                        if len(calib) > 1:
+                            ndict[legend]['A'] = calib[0]
+                            ndict[legend]['B'] = calib[1]
+                            if len(calib) >2:
+                                ndict[legend]['order']  = calibrationOrder
+                                ndict[legend]['C']      = calib[2]
+                    caldialog = McaCalWidget.McaCalWidget(legend=legend,
+                                                             x=x,
+                                                             y=y,
+                                                             modal=1,
+                                                             caldict=ndict,
+                                                             fl=0)
+                    #info,x,y = self.getinfodatafromlegend(legend)
+                    #caldialog.graph.newCurve("fromlegend",x=x,y=y)
+                    if QTVERSION < '4.0.0':
+                        ret = caldialog.exec_loop()
+                    else:
+                        ret = caldialog.exec_()
+
+                    if ret == qt.QDialog.Accepted:
+                        self.caldict.update(caldialog.getDict())
+                        item, text = self.control.calbox.getcurrent()
+                        options = []
+                        for option in self.calboxoptions:
+                            options.append(option)
+                        for key in self.caldict.keys():
+                            if key not in options:
+                                options.append(key)
+                        try:
+                            self.control.calbox.setoptions(options)
+                        except:
+                            pass
+                        if QTVERSION < '4.0.0':
+                            self.control.calbox.setCurrentItem(item)
+                        else:
+                            self.control.calbox.setCurrentIndex(item)
+                        self.refresh()
+                    del caldialog
+            elif dict['button'] == 'CalibrationCopy':
+                #legend,x,y = self.graph.getactivecurve()
+                legend = self.graph.getactivecurve(justlegend=1)
+                if legend is None:
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText("Please Select an active curve")
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.exec_()
+                    return
+                else:
+                    info,x, y = self.getinfodatafromlegend(legend)
+                    if info is None: return
+                    ndict=copy.deepcopy(self.caldict)
+                    if 'McaCalib' in info:
+                        if type(info['McaCalib'][0]) == type([]):
+                            sourcecal = info['McaCalib'][0]
+                        else:
+                            sourcecal = info['McaCalib']
+                    else:
+                        sourcecal = [0.0,1.0,0.0]
+                    for curve in self.graph.curveslist:
+                        curveinfo = self.graph.getcurveinfo(curve)
+                        if 'McaCalibSource' in curveinfo:
+                            key = "%s (Source)" % curve
+                            if key not in ndict:
+                                if curveinfo['McaCalibSource'] != [0.0,1.0,0.0]:
+                                    ndict[key] = {'A':curveinfo['McaCalibSource'][0],
+                                                  'B':curveinfo['McaCalibSource'][1],
+                                                  'C':curveinfo['McaCalibSource'][2]} 
+                                    if curveinfo['McaCalibSource'][2] != 0.0:
+                                        ndict[key]['order'] = 2
+                                    else:
+                                        ndict[key]['order'] = 1
+                            if curve not in self.caldict.keys():
+                                if curveinfo['McaCalib'] != [0.0,1.0,0.0]:
+                                    if curveinfo['McaCalib'] != curveinfo['McaCalibSource']:
+                                        key = "%s (PyMca)" % curve    
+                                        ndict[key] = {'A':curveinfo['McaCalib'][0],
+                                                      'B':curveinfo['McaCalib'][1],
+                                                      'C':curveinfo['McaCalib'][2]} 
+                                        if curveinfo['McaCalib'][2] != 0.0:
+                                            ndict[key]['order'] = 2
+                                        else:
+                                            ndict[key]['order'] = 1
+                        else:
+                            if curve not in self.caldict.keys():
+                                if curveinfo['McaCalib'] != [0.0,1.0,0.0]:
+                                        key = "%s (PyMca)" % curve    
+                                        ndict[key] = {'A':curveinfo['McaCalib'][0],
+                                                      'B':curveinfo['McaCalib'][1],
+                                                      'C':curveinfo['McaCalib'][2]} 
+                                        if curveinfo['McaCalib'][2] != 0.0:
+                                            ndict[key]['order'] = 2
+                                        else:
+                                            ndict[key]['order'] = 1                                         
+                    
+                    if not (legend in self.caldict):
+                        ndict[legend]={}
+                        ndict[legend]['A'] = sourcecal[0] 
+                        ndict[legend]['B'] = sourcecal[1] 
+                        ndict[legend]['C'] = sourcecal[2]
+                        if sourcecal[2] != 0.0:
+                            ndict[legend]['order'] = 2
+                        else: 
+                            ndict[legend]['order'] = 1
+                    caldialog = McaCalWidget.McaCalCopy(legend=legend,modal=1,
+                                                        caldict=ndict,
+                                                        sourcecal=sourcecal,
+                                                        fl=0)
+                    #info,x,y = self.getinfodatafromlegend(legend)
+                    #caldialog.graph.newCurve("fromlegend",x=x,y=y)
+                    if QTVERSION < '4.0.0':
+                        ret = caldialog.exec_loop()
+                    else:
+                        ret = caldialog.exec_()
+                    if ret == qt.QDialog.Accepted:
+                        self.caldict.update(caldialog.getDict())
+                        item, text = self.control.calbox.getcurrent()
+                        options = []
+                        for option in self.calboxoptions:
+                            options.append(option)
+                        for key in self.caldict.keys():
+                            if key not in options:
+                                options.append(key)
+                        try:
+                            self.control.calbox.setoptions(options)
+                        except:
+                            pass
+                        if QTVERSION < '4.0.0':
+                            self.control.calbox.setCurrentItem(item)
+                        else:
+                            self.control.calbox.setCurrentIndex(item)
+                        self.refresh()
+                    del caldialog
+            elif dict['button'] == 'CalibrationLoad':
+                item     = dict['box'][0]
+                itemtext = dict['box'][1]
+                filename = dict['line_edit']
+                if not os.path.exists(filename):
+                    text = "Error. Calibration file %s not found " % filename
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText(text)
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.exec_()
+                    return
+                cald = ConfigDict.ConfigDict()
+                try:
+                    cald.read(filename)
+                except:
+                    text = "Error. Cannot read calibration file %s" % filename
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText(text)
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.exec_()
+                    return
+                self.caldict.update(cald)
+                options = []
+                for option in self.calboxoptions:
+                    options.append(option)
+                for key in self.caldict.keys():
+                    if key not in options:
+                        options.append(key)
+                try:
+                    self.control.calbox.setoptions(options)
+                    if QTVERSION < '4.0.0':
+                        self.control.calbox.setCurrentItem(options.index(itemtext))
+                    else:
+                        self.control.calbox.setCurrentIndex(options.index(itemtext))                        
+                    self.calibration = itemtext * 1
+                    self.control._calboxactivated(itemtext)
+                except:
+                    text = "Error. Problem updating combobox"
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setText(text)
+                    if QTVERSION < '4.0.0':
+                        msg.exec_loop()
+                    else:
+                        msg.exec_()
+                    return
+            elif dict['button'] == 'CalibrationSave':
+                filename = dict['line_edit']
+                cald = ConfigDict.ConfigDict()
+                if os.path.exists(filename):
+                    try:
+                        os.remove(filename)
+                    except:
+                        text = "Error. Problem deleting existing file %s" % filename
+                        msg = qt.QMessageBox(self)
+                        msg.setIcon(qt.QMessageBox.Critical)
+                        msg.setText(text)
+                        if QTVERSION < '4.0.0':
+                            msg.exec_loop()
+                        else:
+                            msg.exec_()
+                        return
+                cald.update(self.caldict)
+                cald.write(filename)
+            elif dict['button'] == 'Detector':
+                pass
+            elif dict['button'] == 'Search':
+                pass
+            elif dict['button'] == 'Fit':
+                if dict['box'][1]   == 'Simple':
+                    self.mcasimplefitsignal()
+                elif dict['box'][1]   == 'Advanced':
+                    self.mcaadvancedfitsignal()
+                else:
+                    print("Unknown Fit Event")
+        elif dict['event'] == 'activated':
+            # A comboBox has been selected
+            if   dict['boxname'] == 'Source':
+                pass
+            elif dict['boxname'] == 'Calibration':
+                self.calibration = dict['box'][1]
+                self.clearMarkers()
+                self.refresh()
+                self.resetZoom()
+                
+            elif dict['boxname'] == 'Detector':
+                pass
+            elif dict['boxname'] == 'Search':
+                pass
+            elif dict['boxname'] == 'ROI':
+                if dict['combotext'] == 'Add':
+                    pass
+                elif dict['combotext'] == 'Del':
+                    pass
+                else:
+                    pass
+            elif dict['boxname'] == 'Fit':
+                """
+                if dict['box'][1] == 'Simple':
+                    self.anacontainer.hide()
+                else:
+                    self.anacontainer.show()
+                """
+                pass
+            else:
+                if DEBUG:
+                    print("Unknown combobox",dict['boxname'])
+
+        elif (dict['event'] == 'EstimateFinished'):
+            pass
+        elif (dict['event'] == 'McaAdvancedFitFinished') or \
+             (dict['event'] == 'McaAdvancedFitMatrixFinished') :
+            x      = dict['result']['xdata']
+            yb     = dict['result']['continuum']
+            legend0= dict['info']['legend']
+            fitcalibration = [dict['result']['fittedpar'][0],
+                              dict['result']['fittedpar'][1],
+                              0.0] 
+            if dict['event'] == 'McaAdvancedFitMatrixFinished':
+                legend = dict['info']['legend'] + " Fit"
+                legend3 = dict['info']['legend'] + " Matrix"
+                ymatrix   = dict['result']['ymatrix'] * 1.0
+                #copy the original info from the curve
+                newDataObject = DataObject.DataObject()
+                newDataObject.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
+                newDataObject.info['SourceType']= 'AdvancedFit'
+                newDataObject.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
+                newDataObject.info['legend']    = legend3
+                newDataObject.info['Key']       = legend3
+                newDataObject.info['McaCalib']  = fitcalibration * 1
+                newDataObject.x = [x]
+                newDataObject.y = [ymatrix]
+                newDataObject.m = None
+                self.dataObjectsDict[legend3] = newDataObject
+                #self.graph.newCurve(legend3,x=x,y=ymatrix,logfilter=1)
+            else:
+                legend = dict['info']['legend'] + " Fit"
+                yfit   = dict['result']['yfit'] * 1.0
+
+                #copy the original info from the curve
+                newDataObject = DataObject.DataObject()
+                newDataObject.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
+                newDataObject.info['SourceType']= 'AdvancedFit'
+                newDataObject.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
+                newDataObject.info['legend'] = legend
+                newDataObject.info['Key']  = legend
+                newDataObject.info['McaCalib']  = fitcalibration * 1
+                newDataObject.data = numpy.reshape(numpy.concatenate((x,yfit,yb),0),(3,len(x)))
+                newDataObject.x = [x]
+                newDataObject.y = [yfit]
+                newDataObject.m = None
+
+                self.dataObjectsDict[legend] = newDataObject
+                #self.graph.newCurve(legend,x=x,y=yfit,logfilter=1)
+
+                #the same for the background
+                legend2 = dict['info']['legend'] + " Bkg"
+                newDataObject2 = DataObject.DataObject()
+                newDataObject2.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
+                newDataObject2.info['SourceType']= 'AdvancedFit'
+                newDataObject2.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
+                newDataObject2.info['legend'] = legend2
+                newDataObject2.info['Key']  = legend2
+                newDataObject2.info['McaCalib']  = fitcalibration * 1
+                newDataObject2.data = None
+                newDataObject2.x = [x]
+                newDataObject2.y = [yb]
+                newDataObject2.m = None
+                self.dataObjectsDict[legend2] = newDataObject2
+                #self.graph.newCurve(legend2,x=x,y=yb,logfilter=1)
+
+            if not (legend in self.caldict):
+                self.caldict[legend] = {}
+            self.caldict[legend] ['order'] = 1
+            self.caldict[legend] ['A']     = dict['result']['fittedpar'][0]
+            self.caldict[legend] ['B']     = dict['result']['fittedpar'][1]
+            self.caldict[legend] ['C']     = 0.0 
+            options = []
+            for option in self.calboxoptions:
+                options.append(option)
+            for key in self.caldict.keys():
+                if key not in options:
+                    options.append(key)
+            try:
+                self.control.calbox.setoptions(options)
+                #I only reset the graph scale after a fit, not on a matrix spectrum
+                if dict['event'] == 'McaAdvancedFitFinished':
+                    #get current limits
+                    if self.calibration == 'None':
+                        xmin,xmax =self.graph.getx1axislimits()
+                        emin    = dict['result']['fittedpar'][0] + \
+                                  dict['result']['fittedpar'][1] * xmin
+                        emax    = dict['result']['fittedpar'][0] + \
+                                  dict['result']['fittedpar'][1] * xmax
+                    else:
+                        emin,emax = self.graph.getx1axislimits()
+                    ymin,ymax =self.graph.gety1axislimits()
+                    if QTVERSION < '4.0.0':
+                        self.control.calbox.setCurrentItem(options.index(legend))
+                    else:
+                        self.control.calbox.setCurrentIndex(options.index(legend))
+                    self.calibration = legend
+                    self.control._calboxactivated(legend)
+                    self.graph.sety1axislimits(ymin, ymax, False)
+                    if emin < emax:
+                        self.graph.setx1axislimits(emin, emax, True)
+                    else:
+                        self.graph.setx1axislimits(emax, emin, True)
+            except:
+                self.refresh()
+                #self.graph.replot()
+
+        elif dict['event'] == 'McaFitFinished':
+            mcaresult = dict['data']
+            legend = dict['info']['legend'] + " "
+            i = 0
+            xfinal = []
+            yfinal = []
+            ybfinal= []
+            regions = []
+            legend0= dict['info']['legend']
+            mcamode = True
+            for result in mcaresult:
+                i += 1
+                if result['chisq'] is not None:
+                     mcamode = result['fitconfig']['McaMode']                         
+                     idx=numpy.nonzero((self.specfit.xdata0>=result['xbegin']) & \
+                                    (self.specfit.xdata0<=result['xend']))[0]
+                     x=numpy.take(self.specfit.xdata0,idx)
+                     y=self.specfit.gendata(x=x,parameters=result['paramlist'])
+                     nparb= len(self.specfit.bkgdict[self.specfit.fitconfig['fitbkg']][1])
+                     yb   = self.specfit.gendata(x=x,parameters=result['paramlist'][0:nparb])
+                     xtoadd = numpy.take(self.dataObjectsDict[legend0].x[0],idx).tolist()
+                     if not len(xtoadd): continue
+                     xfinal = xfinal + xtoadd
+                     regions.append([xtoadd[0],xtoadd[-1]])
+                     yfinal = yfinal + y.tolist()
+                     ybfinal= ybfinal + yb.tolist()
+                    #self.graph.newCurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
+            legend = legend0 + " SFit"            
+            if legend in self.dataObjectsDict.keys():
+                if legend in self.graph.curves.keys():                    
+                    if mcamode:
+                        if not ('baseline' in self.dataObjectsDict[legend].info):
+                            self.graph.delcurve(legend)
+                    else:
+                        if 'baseline' in self.dataObjectsDict[legend].info:
+                            self.graph.delcurve(legend)
+            #copy the original info from the curve
+            newDataObject = DataObject.DataObject()
+            newDataObject.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
+            newDataObject.info['SourceType']= 'SimpleFit'
+            newDataObject.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
+            newDataObject.info['legend']    = legend
+            newDataObject.info['Key']       = legend
+            newDataObject.info['CalMode']   = self.__simplefitcalmode
+            newDataObject.info['McaCalib']  = self.__simplefitcalibration
+            x    = numpy.array(xfinal)
+            yfit = numpy.array(yfinal)
+            yb = numpy.array(ybfinal)
+            newDataObject.x = [x]
+            newDataObject.y = [yfit]
+            newDataObject.m = [numpy.ones(len(yfit)).astype(numpy.float)]
+            if mcamode:
+                newDataObject.info['regions']   = regions
+                newDataObject.info['baseline'] = yb
+            self.dataObjectsDict[legend] = newDataObject
+            self.refresh()
+            return
+        elif dict['event'] == 'McaTableFilled':
+            if self.peakmarker is not None:
+                self.graph.removeMarker(self.peakmarker)
+            self.peakmarker = None
         
-        label=qt.QLabel(self.graphBottom)
-        label.setText('<b>X:</b>')
-        self.graphBottomLayout.addWidget(label)
+        elif dict['event'] == 'McaTableRowHeaderClicked':
+            #I have to mark the peaks
+            if dict['row'] >= 0:
+                pos = dict['Position']
+                label = 'PEAK %d' % (dict['row']+1)
+                if self.peakmarker is None:
+                    self.peakmarker = self.graph.insertx1marker(pos,1.1,
+                                        label = label)
+                self.graph.setx1markerpos(self.peakmarker,pos)
+                self.graph.setmarkercolor(self.peakmarker,'pink',
+                                        label=label)
+                self.graph.replot()
+            else:
+                if self.peakmarker is not None:
+                    self.graph.removeMarker(self.peakmarker)
+                self.peakmarker = None
+                
+        elif dict['event'] == 'McaTableClicked':
+            if self.peakmarker is not None:
+                self.graph.removeMarker(self.peakmarker)
+            self.peakmarker = None
+            self.graph.replot()    
 
-        self._xPos = qt.QLineEdit(self.graphBottom)
-        self._xPos.setText('------')
-        self._xPos.setReadOnly(1)
-        self._xPos.setFixedWidth(self._xPos.fontMetrics().width('##############'))
-        self.graphBottomLayout.addWidget(self._xPos)
+        elif (dict['event'] == 'McaAdvancedFitElementClicked') or \
+             (dict['event'] == 'ElementClicked'):
+            #this has been moved to the fit window
+            pass
+                
+        elif dict['event'] == 'McaAdvancedFitPrint':
+            #self.advancedfit.printps(doit=1)
+            self.printHtml(dict['text'])
 
+        elif dict['event'] == 'McaSimpleFitPrint':
+            self.printHtml(dict['text'])
 
-        label=qt.QLabel(self.graphBottom)
-        label.setText('<b>Y:</b>')
-        self.graphBottomLayout.addWidget(label)
+        elif dict['event'] == 'McaSimpleFitClosed':
+            if self.peakmarker is not None:
+                self.graph.removeMarker(self.peakmarker)
+            self.peakmarker = None
+            self.graph.replot()
+        elif dict['event'] == 'ScanFitPrint':
+            self.printHtml(dict['text'])
 
-        self._yPos = qt.QLineEdit(self.graphBottom)
-        self._yPos.setText('------')
-        self._yPos.setReadOnly(1)
-        self._yPos.setFixedWidth(self._yPos.fontMetrics().width('##############'))
-        self.graphBottomLayout.addWidget(self._yPos)
-        self.graphBottomLayout.addWidget(qt.HorizontalSpacer(self.graphBottom))
-        self.mainLayout.addWidget(self.graphBottom)
+        elif dict['event'] == 'AddROI':
+            return super(McaWindow, self)._roiSignal(dict)
+        elif dict['event'] == 'DelROI':
+            return super(McaWindow, self)._roiSignal(dict)
+            
+        elif dict['event'] == 'ResetROI':
+            return super(McaWindow, self)._roiSignal(dict)
+            
+        elif dict['event'] == 'ActiveROI':
+            print("ActiveROI event")
+            pass
+        elif dict['event'] == 'selectionChanged':
+            if DEBUG:
+                print("Selection changed")
+            ##############
+            self.roilist,self.roidict = self.roiwidget.getroilistanddict()
+            fromdata = dict['roi']['from']
+            todata   = dict['roi']['to']
+            if self.roimarkers[0] == -1:
+                self.roimarkers[0] = self.graph.insertx1marker(fromdata,1.1,
+                                        label = 'ROI min')
+            if self.roimarkers[1] == -1:
+                self.roimarkers[1] = self.graph.insertx1marker(todata,1.1,
+                                        label = 'ROI max')
+            self.graph.setx1markerpos(self.roimarkers[0],fromdata)
+            self.graph.setx1markerpos(self.roimarkers[1],todata )
+            self.currentroi = dict['key']
+            if dict['key'] == 'ICR':
+                #select the colors
+                self.graph.setmarkercolor(self.roimarkers[1],'black' )
+                self.graph.setmarkercolor(self.roimarkers[0],'black' )
+                #set the follow mouse propierty
+                self.graph.setmarkerfollowmouse(self.roimarkers[1],0)
+                self.graph.setmarkerfollowmouse(self.roimarkers[0],0)
+                #deal with the middle marker
+                self.graph.removeMarker(self._middleRoiMarker)
+                self._middleRoiMarker = -1
+                #disable marker mode
+                self.graph.disablemarkermode()
+            else:
+                if self._middleRoiMarkerFlag:
+                    pos = 0.5 * (fromdata + todata)                        
+                    if self._middleRoiMarker == -1:
+                        self._middleRoiMarker = self.graph.insertx1marker(pos,\
+                                                            1.1,
+                                                            label = ' ')
+                    else:
+                        self.graph.setx1markerpos(self._middleRoiMarker,
+                                                  pos)
+                else:
+                    if self._middleRoiMarker != -1:
+                        self.graph.removeMarker(self._middleRoiMarker)
+                #select the colors
+                self.graph.setmarkercolor(self.roimarkers[0],'blue' )
+                self.graph.setmarkercolor(self.roimarkers[1],'blue' )
+                #set the follow mouse propierty
+                self.graph.setmarkerfollowmouse(self.roimarkers[0],1)
+                self.graph.setmarkerfollowmouse(self.roimarkers[1],1)
+                #middle marker
+                if self._middleRoiMarker != -1:
+                    self.graph.setmarkercolor(self._middleRoiMarker,'yellow' )
+                    self.graph.setmarkerfollowmouse(self._middleRoiMarker, 1)
+                self.graph.enablemarkermode()
+            if dict['colheader'] in ['From', 'To']:
+                dict ={}
+                dict['event']  = "SetActiveCurveEvent"
+                dict['legend'] = self.graph.getactivecurve(justlegend=1)
+                self.__graphsignal(dict)
+            elif dict['colheader'] == 'Raw Counts':    
+                pass
+            elif dict['colheader'] == 'Net Counts':    
+                pass
+            else:
+                self.emitCurrentROISignal()
+            self.graph.replot()
+        else:
+            if DEBUG:
+                print("Unknown or ignored event",dict['event'])
 
     def setDispatcher(self, w):
         self.connect(w, qt.SIGNAL("addSelection"),
@@ -165,8 +758,228 @@ class ScanWindow(PlotWindow.PlotWindow):
                          self._removeSelection)
         self.connect(w, qt.SIGNAL("replaceSelection"),
                          self._replaceSelection)
+
+    def _addSelection(self, selection, replot=True):
+        if DEBUG:
+            print("__add, selection = ",selection)
+
+        if type(selection) == type([]):
+            sellist = selection
+        else:
+            sellist = [selection]
+
+        for sel in sellist:
+            # force the selections to include their source for completeness?
+            # source = sel['SourceName']
+            key    = sel['Key']
+            if "scanselection" in sel:
+                if sel["scanselection"] not in [False, "MCA"]:
+                    continue
+            mcakeys    = [key]
+            for mca in mcakeys:
+                curveinfo={}
+                legend = sel['legend']
+                dataObject = sel['dataobject']
+                info = dataObject.info
+                data  = dataObject.y[0]
+                if "selectiontype" in dataObject.info:
+                    if dataObject.info["selectiontype"] != "1D": continue
+                if dataObject.x is None:
+                    xhelp = None
+                else:
+                    xhelp = dataObject.x[0]
+
+                if xhelp is None:
+                    xhelp =info['Channel0'] + numpy.arange(len(data)).astype(numpy.float)
+                    dataObject.x = [xhelp]
+
+                ylen = len(data)
+                if ylen == 1:
+                    if len(xhelp) > 1:
+                        data = data[0] * numpy.ones(len(xhelp)).astype(numpy.float)
+                        dataObject.y = [data]
+                elif len(xhelp) == 1:
+                    xhelp = xhelp[0] * numpy.ones(ylen).astype(numpy.float)
+                    dataObject.x = [xhelp]
+
+                if not hasattr(dataObject, 'm'):
+                    dataObject.m = None
+
+                if dataObject.m is not None:
+                    if len(dataObject.m[0]) > 0:
+                        mdata = dataObject.m[0]
+                        if len(mdata) == len(data):
+                            mdata[data == 0] += 0.00000001
+                            index = numpy.nonzero(mdata)[0]
+                            if not len(index):
+                                continue
+                            xhelp = numpy.take(xhelp, index)
+                            data = numpy.take(data, index)
+                            mdata = numpy.take(mdata, index)
+                            data = data/mdata
+                            dataObject.x = [xhelp * 1]
+                            dataObject.m = [numpy.ones(len(data)).astype(numpy.float)]
+                        elif (len(mdata) == 1) or (ylen == 1):
+                            if mdata[0] == 0.0:
+                                continue
+                            data = data/mdata
+                        else:
+                            raise ValueError("Cannot normalize data")
+                        dataObject.y = [data]
+                self.dataObjectsDict[legend] = dataObject
+                if ('baseline' in info) and ('regions' in info):
+                    simplefitplot = True
+                else:
+                    simplefitplot = False
+                try:
+                    calib = [0.0,1.0,0.0]
+                    for inputkey in ['baseline', 'regions']: 
+                        if inputkey in info:
+                            curveinfo[inputkey] = info[inputkey]
+                    curveinfo['McaCalib'] = calib
+                    if 'McaCalib' in info:
+                        if type(info['McaCalib'][0]) == type([]):
+                            calib0 = info['McaCalib'][info['McaDet']-1]
+                        else:
+                            calib0 = info['McaCalib']
+                        curveinfo['McaCalibSource'] = calib0
+                    if self.calibration == self.calboxoptions[1]:
+                        if 'McaCalib' in info:
+                            if type(info['McaCalib'][0]) == type([]):
+                                calib = info['McaCalib'][info['McaDet']-1]
+                            else:
+                                calib = info['McaCalib']
+                        if len(calib) > 1:
+                            xdata=calib[0]+ \
+                                  calib[1]* xhelp
+                            if len(calib) == 3:
+                                  xdata = xdata + calib[2]* xhelp * xhelp
+                            curveinfo['McaCalib'] = calib
+                            if simplefitplot:
+                                inforegions = []
+                                for region in info['regions']:
+                                    inforegions.append([calib[0] + \
+                                                        calib[1] * region[0] +\
+                                                        calib[2] * region[0] * region[0],
+                                                        calib[0] + \
+                                                        calib[1] * region[1] +\
+                                                        calib[2] * region[1] * region[1]])
+                                self.addCurve(xdata, data, legend=legend,
+                                                info=curveinfo)
+                            else:
+                                self.addCurve(xdata, data, legend=legend,
+                                                info=curveinfo)
+                            self.setGraphXLabel('Energy')
+                    elif self.calibration == self.calboxoptions[2]:
+                        calibrationOrder = None
+                        if legend in self.caldict:
+                            A = self.caldict[legend]['A']
+                            B = self.caldict[legend]['B']
+                            C = self.caldict[legend]['C']
+                            calibrationOrder = self.caldict[legend]['order']  
+                            calib = [A,B,C]
+                        elif 'McaCalib' in info:
+                            if type(info['McaCalib'][0]) == type([]):
+                                calib = info['McaCalib'][info['McaDet']-1]
+                            else:
+                                calib = info['McaCalib']
+                        if len(calib) > 1:
+                            xdata=calib[0]+ \
+                                  calib[1]* xhelp
+                            if len(calib) == 3:
+                                if calibrationOrder == 'TOF':
+                                    xdata = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+                                else:
+                                    xdata = xdata + calib[2]* xhelp * xhelp
+                            curveinfo['McaCalib'] = calib
+                            curveinfo['McaCalibOrder'] = calibrationOrder
+                            if simplefitplot:
+                                inforegions = []
+                                for region in info['regions']:
+                                    if calibrationOrder == 'TOF':
+                                        inforegions.append([calib[2] + calib[0] / pow(region[0]-calib[1],2),
+                                                            calib[2] + calib[0] / pow(region[1]-calib[1],2)])
+                                    else:
+                                        inforegions.append([calib[0] + \
+                                                        calib[1] * region[0] +\
+                                                        calib[2] * region[0] * region[0],
+                                                        calib[0] + \
+                                                        calib[1] * region[1] +\
+                                                        calib[2] * region[1] * region[1]])
+                                self.addCurve(xdata, data,
+                                                legend=legend,
+                                                info=curveinfo)
+                            else:
+                                self.addCurve(xdata, data,
+                                                legend=legend,
+                                                info=curveinfo)
+                            if calibrationOrder == 'ID18':
+                                self.setGraphXLabel('Time')
+                            else:
+                                self.setGraphXLabel('Energy')
+                    elif self.calibration == 'Fit':
+                        print("Not yet implemented")
+                        continue
+                    elif self.calibration in  self.caldict.keys():
+                            A = self.caldict[self.calibration]['A']
+                            B = self.caldict[self.calibration]['B']
+                            C = self.caldict[self.calibration]['C']
+                            calibrationOrder = self.caldict[self.calibration]['order'] 
+                            calib = [A,B,C]
+                            if calibrationOrder == 'TOF':
+                                xdata =  C + (A / ((xhelp - B) * (xhelp - B)))
+                            else:
+                                xdata=calib[0]+ \
+                                  calib[1]* xhelp + \
+                                  calib[2]* xhelp * xhelp
+                            curveinfo['McaCalib'] = calib
+                            curveinfo['McaCalibOrder'] = calibrationOrder
+                            if simplefitplot:
+                                inforegions = []
+                                for region in info['regions']:
+                                    if calibrationOrder == 'TOF':
+                                        inforegions.append([calib[2] + calib[0] / pow(region[0]-calib[1],2),
+                                                            calib[2] + calib[0] / pow(region[1]-calib[1],2)])
+                                    else:
+                                        inforegions.append([calib[0] + \
+                                                        calib[1] * region[0] +\
+                                                        calib[2] * region[0] * region[0],
+                                                        calib[0] + \
+                                                        calib[1] * region[1] +\
+                                                        calib[2] * region[1] * region[1]])
+                                self.addCurve(xdata, data,
+                                              legend=legend,
+                                              info=curveinfo)
+                                                #baseline = info['baseline'],
+                                                #regions = inforegions)
+                            else:
+                                self.addCurve(xdata, data,
+                                              legend=legend,
+                                              info=curveinfo)
+                            if calibrationOrder == 'ID18':
+                                self.setGraphXLabel('Time')
+                            else:
+                                self.setGraphXLabel('Energy')
+                    else:
+                        if simplefitplot:
+                            self.addCurve(xhelp, data,
+                                          legend=legend,
+                                          info=curveinfo)
+                                          #baseline = info['baseline'],
+                                          #regions = info['regions'])
+                        else:
+                            self.addCurve(xhelp, data,
+                                          legend=legend,
+                                          info=curveinfo)
+                        self.setGraphXLabel('Channel')
+                except:
+                    del self.dataObjectsDict[legend]
+                    raise
+        if replot:
+            self.replot()
+            self.resetZoom()
         
-    def _addSelection(self, selectionlist, replot=True):
+    def _addSelectionSCAN(self, selectionlist, replot=True):
         if DEBUG:
             print("_addSelection(self, selectionlist)",selectionlist)
         if type(selectionlist) == type([]):
@@ -183,7 +996,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             key    = sel['Key']
             legend = sel['legend'] #expected form sourcename + scan key
             if not ("scanselection" in sel): continue
-            if sel['scanselection'] == "MCA":
+            if sel['scanselection'] != "MCA":
                 continue
             if not sel["scanselection"]:continue
             if len(key.split(".")) > 2: continue
@@ -1007,9 +1820,6 @@ class ScanWindow(PlotWindow.PlotWindow):
             mtplt.saveFile(filename)
         return
 
-    def getActiveCurveLegend(self):
-        return super(ScanWindow,self).getActiveCurve(just_legend=True)
-
     def _deriveIconSignal(self):
         if DEBUG:
             print("_deriveIconSignal")
@@ -1176,13 +1986,15 @@ class ScanWindow(PlotWindow.PlotWindow):
             info['plot_line_style'] = line_style
         if legend in self.dataObjectsDict:
             # the info is changing
-            super(ScanWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
+            super(McaWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
         else:
             # create the data object
             self.newCurve(x, y, legend=legend, info=info, **kw)
     
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
                  replace=False, replot=True, info=None, **kw):
+        print "TO BE IMPLEMENTED FOR MCAs"
+        return
         if legend is None:
             legend = "Unnamed curve 1.1"
         if xlabel is None:
@@ -1209,7 +2021,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         sel['Key']    = ""
         sel['legend'] = legend
         sel['dataobject'] = newDataObject
-        sel['scanselection'] = True
+        sel['scanselection'] = False
         sel['selection'] = {'x':[0], 'y':[1], 'm':[], 'cntlist':[xlabel, ylabel]}
         #sel['selection']['y'] = [ilabel]
         sel['selectiontype'] = "1D"
@@ -1263,9 +2075,25 @@ class ScanWindow(PlotWindow.PlotWindow):
         if self.printPreview.isHidden():
             self.printPreview.show()        
         self.printPreview.raise_()            
+
+    def refresh(self):
+        activeCurve = self.getActiveCurve(just_legend=True)
+        sellist = []
+        for key in self.dataObjectsDict.keys():
+            sel ={}
+            sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
+            sel['dataobject'] = self.dataObjectsDict[key]
+            sel['legend'] = key
+            sel['Key'] = self.dataObjectsDict[key].info['Key']
+            sellist.append(sel)
+        self.clearCurves()
+        self._addSelection(sellist)
+        if activeCurve is not None:
+            self.setActiveCurve(activeCurve)
+        self.replot()
         
 def test():
-    w = ScanWindow()
+    w = McaWindow()
     x = numpy.arange(1000.)
     y =  10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400)
     w.addCurve(x, y, legend="dummy", replot=True, replace=True)
