@@ -47,6 +47,8 @@ class McaROIWidget(qt.QWidget):
         if name is not None:
             self.setWindowTitle(name)
         layout = qt.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         ##############
         self.headerLabel = qt.QLabel(self)
         self.headerLabel.setAlignment(qt.Qt.AlignHCenter)
@@ -66,7 +68,7 @@ class McaROIWidget(qt.QWidget):
         
         hbox = qt.QWidget(self)
         hboxlayout = qt.QHBoxLayout(hbox)
-        hboxlayout.setMargin(0)
+        hboxlayout.setContentsMargins(0, 0, 0, 0)
         hboxlayout.setSpacing(0)
 
         hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
@@ -95,25 +97,25 @@ class McaROIWidget(qt.QWidget):
 
         layout.addWidget(hbox)
 
-        self.addButton.clicked.connect(self.__add)
-        self.delButton.clicked.connect(self.__del)
-        self.resetButton.clicked.connect(self.__reset)
+        self.addButton.clicked.connect(self._add)
+        self.delButton.clicked.connect(self._del)
+        self.resetButton.clicked.connect(self._reset)
 
         self.loadButton.clicked.connect(self._load)
         self.saveButton.clicked.connect(self._save)
-        self.mcaROITable.sigMcaROITableSignal.connect(self.__forward)
+        self.mcaROITable.sigMcaROITableSignal.connect(self._forward)
 
-    def __add(self):
+    def _add(self):
         if DEBUG:
-            print("McaROIWidget.__add")
+            print("McaROIWidget._add")
         ddict={}
         ddict['event']   = "AddROI"
         roilist, roidict  = self.mcaROITable.getROIListAndDict()
         ddict['roilist'] = roilist
         ddict['roidict'] = roidict
-        self.sigMcaROIWidgetSignal.emit(ddict)
+        self.emitSignal(ddict)
 
-    def __del(self):
+    def _del(self):
         row = self.mcaROITable.currentRow()
         if row >= 0:
             index = self.mcaROITable.labels.index('Type')
@@ -135,13 +137,13 @@ class McaROIWidget(qt.QWidget):
             ddict['event']      = "DelROI"
             ddict['roilist']    = roilist
             ddict['roidict']    = roidict
-            self.sigMcaROIWidgetSignal.emit(ddict)        
+            self.emitSignal(ddict)        
     
-    def __forward(self,ddict):
-        self.sigMcaROIWidgetSignal.emit(ddict) 
+    def _forward(self,ddict):
+        self.emitSignal(ddict) 
         
     
-    def __reset(self):
+    def _reset(self):
         ddict={}
         ddict['event']   = "ResetROI"
         roilist0,roidict0  = self.mcaROITable.getROIListAndDict()
@@ -158,7 +160,7 @@ class McaROIWidget(qt.QWidget):
         self.mcaROITable.fillFromROIDict(roilist=roilist,roidict=roidict)
         ddict['roilist'] = roilist
         ddict['roidict'] = roidict
-        self.sigMcaROIWidgetSignal.emit(ddict)
+        self.emitSignal(ddict)
 
     def _load(self):        
         if self.roiDir is None:
@@ -273,6 +275,9 @@ class McaROIWidget(qt.QWidget):
         else:
             text = ""
         self.headerLabel.setText("<b>%s<\b>" % text)
+
+    def emitSignal(self, ddict):
+        self.sigMcaROIWidgetSignal.emit(ddict)
 
 class McaROITable(qt.QTableWidget):
     sigMcaROITableSignal = qt.pyqtSignal(object)
@@ -472,7 +477,7 @@ class McaROITable(qt.QTableWidget):
             ddict['key']   = self.roilist[row]
             ddict['colheader'] = self.labels[col]
             ddict['rowheader'] = "%d" % row
-            self.sigMcaROITableSignal.emit(ddict)
+            self.emitSignal(ddict)
 
     def _cellChangedSlot(self, row, col):
         if DEBUG:
@@ -521,7 +526,7 @@ class McaROITable(qt.QTableWidget):
         ddict['key']   = self.roilist[row]
         ddict['colheader'] = self.labels[col]
         ddict['rowheader'] = "%d" % row
-        self.sigMcaROITableSignal.emit(ddict)
+        self.emitSignal(ddict)
 
     def nameSlot(self, row, col):
         if col != 0: return
@@ -548,7 +553,7 @@ class McaROITable(qt.QTableWidget):
             ddict['key']   = self.roilist[row]
             ddict['colheader'] = self.labels[col]
             ddict['rowheader'] = "%d" % row
-            self.sigMcaROITableSignal.emit(ddict)
+            self.emitSignal(ddict)
 
     def mySlot(self,*var,**kw):
         if len(var) == 0:
@@ -583,7 +588,7 @@ class McaROITable(qt.QTableWidget):
                     ddict['key']   = self.roilist[row]
                     ddict['colheader'] = self.labels[col]
                     ddict['rowheader'] = "%d" % row
-                    self.sigMcaROITableSignal.emit(ddict)
+                    self.emitSignal(ddict)
                 else:
                     if item is None:
                         item = qt.QTableWidgetItem(text,
@@ -591,6 +596,9 @@ class McaROITable(qt.QTableWidget):
                     else:
                         item.setText(text)
                     self._mySlot()
+
+    def emitSignal(self, ddict):
+        self.sigMcaROITableSignal.emit(ddict)
 
 class SimpleComboBox(qt.QComboBox):
         def __init__(self,parent = None,name = None,fl = 0,options=['1','2','3']):
