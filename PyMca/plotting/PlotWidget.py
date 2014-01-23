@@ -68,6 +68,14 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             Plot.Plot.graphCallback(self, ddict)
             self.sigPlotSignal.emit(ddict)
 
+    def replot(self):
+        Plot.Plot.replot(self)
+        # force update of the widget!!!
+        # should this be made at the backend level?
+        w = self.centralWidget()
+        QtGui.qApp.postEvent(w, QtGui.QResizeEvent(w.size(),
+                                                   w.size()))
+        
 if __name__ == "__main__":
     import time
     if "matplotlib" in sys.argv:

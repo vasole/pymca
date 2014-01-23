@@ -431,7 +431,7 @@ class Plot(PlotBase.PlotBase):
         if just_legend:
             return self._activeCurve
         if self._activeCurve is None:
-            return None
+            return []
         else:
             return self._curveDict[self._activeCurve] * 1
 
@@ -556,6 +556,8 @@ class Plot(PlotBase.PlotBase):
         key = str(legend)
         if key in self._curveDict.keys():
             self._activeCurve = key
+        if self._activeCurve == oldActiveCurve:
+            return self._activeCurve
         # this was giving troubles in the PyQtGraph binding
         #if self._activeCurve != oldActiveCurve:
         self._plot.setActiveCurve(self._activeCurve, replot=replot)

@@ -81,7 +81,10 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
             The legend of the active curve (or None) is returned.
         """
         print("PlotBase getActiveCurve not implemented")
-        return None
+        if just_legend:
+            return None
+        else:
+            return []
 
     def getActiveImage(self, just_legend=False):
         print("PlotBase getActiveImage not implemented")
