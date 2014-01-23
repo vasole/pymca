@@ -21,6 +21,7 @@ __doc__ = """
 Matplotlib Plot backend.
 """
 import numpy
+from numpy import vstack as numpyvstack
 import sys
 from .. import PlotBackend
 from matplotlib import cm
@@ -393,7 +394,9 @@ class MatplotlibGraph(FigureCanvas):
                 label = artist.get_label()
                 if label.startswith("__MARKER__"):
                     #data = artist.get_xydata()[0:1]
-                    xPixel, yPixel = self.ax.transData.transform(artist.get_xydata()[0])
+                    x, y = artist.get_xydata()[-1]
+                    pixels = self.ax.transData.transform(numpyvstack([x,y]).T)
+                    xPixel, yPixels = pixels.T
                     if 'xmarker' in artist._plot_options:
                         if abs(xPixel-event.x) < 5:
                             marker = artist
@@ -920,6 +923,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                           color=color,
                                           horizontalalignment='left',
                                           verticalalignment='top')
+        #line.set_ydata(numpy.array([1.0, 10.], dtype=numpy.float32))
         line._plot_options = ["xmarker"]
         if selectable:
             line._plot_options.append('selectable')
