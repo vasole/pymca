@@ -159,11 +159,11 @@ class McaControlGUI(qt.QWidget):
         self.__emitpysignal(box=[comboitem,combotext],boxname='Calibration',
                             event='activated')
 
-    def __forward(self,dict):
+    def __forward(self, ddict):
         if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL("McaControlGUISignal"), (dict,))    
+            self.emit(qt.PYSIGNAL("McaControlGUISignal"), (ddict,))    
         else:
-            self.emit(qt.SIGNAL("McaControlGUISignal"), dict)  
+            self.emit(qt.SIGNAL("McaControlGUISignal"), ddict)  
 
         
     def __calbuttonclicked(self):

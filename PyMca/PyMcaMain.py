@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __revision__ = "$Revision: 2.02 $"
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -193,11 +193,12 @@ if __name__ == "__main__":
         if sys.platform == "darwin":
             qt.qApp.processEvents()
 
-from PyMca import McaWindow
 if backend is None:
+    from PyMca import McaWindow
     from PyMca import ScanWindow
 else:
     from PyMca.widgets import ScanWindow
+    from PyMca.widgets import McaWindow
 OBJECT3D = False
 if QTVERSION > '4.0.0':
     from PyMca import PyMcaImageWindow
@@ -353,10 +354,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 else:
                     self.mainTabWidget = qt.QTabWidget(self.mdi)
                     self.mainTabWidget.setWindowTitle("Main Window")
-                    self.mcawindow = McaWindow.McaWidget()
                     if backend is None:
+                        self.mcawindow = McaWindow.McaWidget()                    
                         self.scanwindow = ScanWindow.ScanWindow()
                     else:
+                        self.mcawindow = McaWindow.McaWindow(backend=backend)
                         self.scanwindow = ScanWindow.ScanWindow(backend=backend)
                     if OBJECT3D:
                         self.glWindow = SceneGLWindow.SceneGLWindow()
