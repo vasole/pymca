@@ -27,7 +27,7 @@
 import sys
 import os
 import numpy
-from numpy import argsort, nonzero, take
+#from numpy import argsort, nonzero, take
 import time
 import traceback
 from PyMca import PyMcaQt as qt
@@ -65,14 +65,17 @@ from PyMca import PyMcaPlugins
 
 DEBUG = 0
 class ScanWindow(PlotWindow.PlotWindow):
-    def __init__(self, parent=None, name="Scan Window", specfit=None, backend=None, **kw):
+    def __init__(self, parent=None, name="Scan Window", specfit=None, backend=None,
+                 plugins=True, newplot=True, roi=True, fit=True, **kw):
+
         super(ScanWindow, self).__init__(parent,
                                          newplot=True,
                                          plugins=True,
                                          backend=backend,
-                                         roi=True,
-                                         fit=True,
+                                         roi=roi,
+                                         fit=fit,
                                          **kw)
+        self.setWindowType("SCAN")
         # this two objects are the same
         self.dataObjectsList = self._curveList
         # but this is tricky
@@ -119,116 +122,6 @@ class ScanWindow(PlotWindow.PlotWindow):
                                    self._simpleFitSignal)
             self.fitButtonMenu.addAction(QString("Customized Fit") ,
                                    self._customFitSignal)
-
-    def _pluginClicked(self):
-        actionList = []
-        menu = qt.QMenu(self)
-        text = QString("Reload Plugins")
-        menu.addAction(text)
-        actionList.append(text)
-        text = QString("Set User Plugin Directory")
-        menu.addAction(text)
-        actionList.append(text)
-        global DEBUG
-        if DEBUG:
-            text = QString("Toggle DEBUG mode OFF")
-        else:
-            text = QString("Toggle DEBUG mode ON")
-        menu.addAction(text)
-        actionList.append(text)
-        menu.addSeparator()
-        callableKeys = ["Dummy0", "Dummy1", "Dummy2"]
-        for m in self.pluginList:
-            if m == "PyMcaPlugins.Plugin1DBase":
-                continue
-            module = sys.modules[m]
-            if hasattr(module, 'MENU_TEXT'):
-                text = QString(module.MENU_TEXT)
-            else:
-                text = os.path.basename(module.__file__)
-                if text.endswith('.pyc'):
-                    text = text[:-4]
-                elif text.endswith('.py'):
-                    text = text[:-3]
-                text = QString(text)
-            methods = self.pluginInstanceDict[m].getMethods(plottype="SCAN") 
-            if not len(methods):
-                continue
-            menu.addAction(text)
-            actionList.append(text)
-            callableKeys.append(m)
-        a = menu.exec_(qt.QCursor.pos())
-        if a is None:
-            return None
-        idx = actionList.index(a.text())
-        if idx == 0:
-            n = self.getPlugins()
-            if n < 1:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Information)
-                msg.setText("Problem loading plugins")
-                msg.exec_()
-            return
-        if idx == 1:
-            dirName = qt.safe_str(qt.QFileDialog.getExistingDirectory(self,
-                                "Enter user plugins directory",
-                                os.getcwd()))
-            if len(dirName):
-                pluginsDir = self.getPluginDirectoryList()
-                pluginsDirList = [pluginsDir[0], dirName]
-                self.setPluginDirectoryList(pluginsDirList)
-            return
-        if idx == 2:
-            if DEBUG:
-                DEBUG = 0
-            else:
-                DEBUG = 1
-            Plot1DBase.DEBUG = DEBUG
-            return
-        key = callableKeys[idx]
-        methods = self.pluginInstanceDict[key].getMethods(plottype="SCAN")
-        if len(methods) == 1:
-            idx = 0
-        else:
-            actionList = []
-            # allow the plugin designer to specify the order
-            #methods.sort()
-            menu = qt.QMenu(self)
-            for method in methods:
-                text = QString(method)
-                pixmap = self.pluginInstanceDict[key].getMethodPixmap(method)
-                tip = QString(self.pluginInstanceDict[key].getMethodToolTip(method))
-                if pixmap is not None:
-                    action = qt.QAction(qt.QIcon(qt.QPixmap(pixmap)), text, self)
-                else:
-                    action = qt.QAction(text, self)
-                if tip is not None:
-                    action.setToolTip(tip)
-                menu.addAction(action)
-                actionList.append((text, pixmap, tip, action))
-            qt.QObject.connect(menu, qt.SIGNAL("hovered(QAction *)"), self._actionHovered)
-            a = menu.exec_(qt.QCursor.pos())
-            if a is None:
-                return None
-            idx = -1
-            for action in actionList:
-                if a.text() == action[0]:
-                    idx = actionList.index(action)
-        try:
-            self.pluginInstanceDict[key].applyMethod(methods[idx])
-        except:
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setWindowTitle("Plugin error")
-            msg.setText("An error has occured while executing the plugin:")
-            msg.setInformativeText(str(sys.exc_info()[1]))
-            msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
-
-    def _actionHovered(self, action):
-        tip = action.toolTip()
-        if qt.safe_str(tip) != qt.safe_str(action.text()):
-            qt.QToolTip.showText(qt.QCursor.pos(), tip)
 
     def _buildGraph(self):
         self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True,

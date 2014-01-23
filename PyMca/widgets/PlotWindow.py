@@ -48,6 +48,10 @@ except:
     PYQTGRAPH = False
 
 from PyMca import PyMcaQt as qt
+if hasattr(qt, 'QString'):
+    QString = qt.QString
+else:
+    QString = qt.safe_str
 from PyMca.PyMca_Icons import IconDict
 try:
     from PyMca.widgets import McaROIWidget
@@ -79,7 +83,7 @@ class PlotWindow(PlotWidget.PlotWidget):
     def setWindowType(self, wtype=None):
         if wtype not in [None, "SCAN", "MCA"]:
             print("Unsupported window type. Default to None")
-        self.plotType = wtype
+        self._plotType = wtype
 
     def _initIcons(self):
         self.normalIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))
@@ -410,11 +414,21 @@ class PlotWindow(PlotWidget.PlotWidget):
     def _pluginClicked(self):
         actionList = []
         menu = qt.QMenu(self)
-        text = qt.QString("Reload")
+        text = QString("Reload Plugins")
+        menu.addAction(text)
+        actionList.append(text)
+        text = QString("Set User Plugin Directory")
+        menu.addAction(text)
+        actionList.append(text)
+        global DEBUG
+        if DEBUG:
+            text = QString("Toggle DEBUG mode OFF")
+        else:
+            text = QString("Toggle DEBUG mode ON")
         menu.addAction(text)
         actionList.append(text)
         menu.addSeparator()
-        callableKeys = ["Dummy"]
+        callableKeys = ["Dummy0", "Dummy1", "Dummy2"]
         for m in self.pluginList:
             if m in ["PyMcaPlugins.Plugin1DBase", "Plugin1DBase"]:
                 continue
@@ -428,7 +442,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 elif text.endswith('.py'):
                     text = text[:-3]
                 text = qt.QString(text)
-            methods = self.pluginInstanceDict[m].getMethods(plottype=self.plotType) 
+            methods = self.pluginInstanceDict[m].getMethods(plottype=self._plotType) 
             if not len(methods):
                 continue
             menu.addAction(text)
@@ -445,14 +459,30 @@ class PlotWindow(PlotWidget.PlotWidget):
                 msg.setIcon(qt.QMessageBox.Information)
                 msg.setText("Problem loading plugins")
                 msg.exec_()
-            return        
+            return
+        if idx == 1:
+            dirName = qt.safe_str(qt.QFileDialog.getExistingDirectory(self,
+                                "Enter user plugins directory",
+                                os.getcwd()))
+            if len(dirName):
+                pluginsDir = self.getPluginDirectoryList()
+                pluginsDirList = [pluginsDir[0], dirName]
+                self.setPluginDirectoryList(pluginsDirList)
+            return
+        if idx == 2:
+            if DEBUG:
+                DEBUG = 0
+            else:
+                DEBUG = 1
+            return
         key = callableKeys[idx]
-        methods = self.pluginInstanceDict[key].getMethods(plottype=self.plotType)
+        methods = self.pluginInstanceDict[key].getMethods(plottype=self._plotType)
         if len(methods) == 1:
             idx = 0
         else:
             actionList = []
-            methods.sort()
+            # allow the plugin designer to specify the order
+            #methods.sort()
             menu = qt.QMenu(self)
             for method in methods:
                 text = qt.QString(method)
