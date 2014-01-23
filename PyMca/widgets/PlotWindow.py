@@ -309,6 +309,8 @@ class PlotWindow(PlotWidget.PlotWidget):
         super(PlotWindow, self).setXAxisLogarithmic(flag) 
         self.xLogButton.setChecked(flag)
         self.xLogButton.setDown(flag)
+        self.replot()
+        self.resetZoom()
 
     def _toggleLogY(self):
         if DEBUG:
@@ -322,6 +324,8 @@ class PlotWindow(PlotWidget.PlotWidget):
         super(PlotWindow, self).setYAxisLogarithmic(flag) 
         self.yLogButton.setChecked(flag)
         self.yLogButton.setDown(flag)
+        self.replot()
+        self.resetZoom()
 
     def _togglePointsSignal(self):
         if DEBUG:
@@ -336,6 +340,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         else:
             self.setDefaultPlotLines(True)
             self.setDefaultPlotPoints(False)
+        self.replot()
 
     def _hFlipIconSignal(self):
         if DEBUG:
@@ -535,7 +540,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             return
 
     def setActiveCurve(self, legend):
-        super(PlotWindow, self).setActiveCurve(legend)
+        PlotWidget.PlotWidget.setActiveCurve(self, legend)
         self.calculateROIs()
         
     def _handleROIMarkerEvent(self, ddict):
@@ -678,7 +683,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         else:
             raise ValueError("Expected roiList and roiDict or nothing")
         update = kw.get("update", True)
-        activeCurve = self.getActiveCurve()
+        activeCurve = self.getActiveCurve(just_legend=False)
         if len(activeCurve):
             x, y, legend = activeCurve[0:3]
             idx = argsort(x, kind='mergesort')
@@ -690,11 +695,15 @@ class PlotWindow(PlotWidget.PlotWidget):
             yproc = None
             self.roiWidget.setHeader('<b>ROIs of XXXXXXXXXX<\b>')
         for key in roiList:
-            roiDict[key]['rawcounts'] = " ?????? "
-            roiDict[key]['netcounts'] = " ?????? "
+            #roiDict[key]['rawcounts'] = " ?????? "
+            #roiDict[key]['netcounts'] = " ?????? "
             if key == 'ICR':
-                roiDict[key]['from'] = xproc.min()
-                roiDict[key]['to'] = xproc.max()
+                if xproc is not None:
+                    roiDict[key]['from'] = xproc.min()
+                    roiDict[key]['to'] = xproc.max()
+                else:
+                    roiDict[key]['from'] = 0
+                    roiDict[key]['to'] = -1
             fromData  = roiDict[key]['from']
             toData = roiDict[key]['to']
             if xproc is not None:
