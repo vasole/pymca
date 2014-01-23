@@ -174,10 +174,10 @@ class McaWindow(ScanWindow.ScanWindow):
         #self.connect(self.graph,      qt.SIGNAL('QtBlissGraphSignal')  ,self.__graphsignal)
 
     def mcaSimpleFitSignal(self, ddict):
-        print ddict
+        print(ddict)
 
     def mcaAdvancedFitSignal(self, ddict):
-        print ddict
+        print(ddict)
 
     def __anasignal(self,dict):
         if DEBUG:
@@ -1993,7 +1993,7 @@ class McaWindow(ScanWindow.ScanWindow):
     
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
                  replace=False, replot=True, info=None, **kw):
-        print "TO BE IMPLEMENTED FOR MCAs"
+        print("TO BE IMPLEMENTED FOR MCAs")
         return
         if legend is None:
             legend = "Unnamed curve 1.1"
