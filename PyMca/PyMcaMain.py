@@ -437,7 +437,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                                 selection=None)
                 else:
                      self._startupSelection(source=kw['spec'], 
-                                                selection=None)
+                                                selection=None)                
 
     def connectDispatcher(self, viewer, dispatcher = None):
         #I could connect sourceWidget to myself and then
@@ -772,8 +772,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d['PyMca']['Geometry']['Splitter'] = r
         r = self.mcawindow.geometry()
         d['PyMca']['Geometry']['McaWindow'] = [r.x(), r.y(), r.width(), r.height()]
-        r = self.mcawindow.graph.geometry()
-        d['PyMca']['Geometry']['McaGraph'] = [r.x(), r.y(), r.width(), r.height()]
+        if not backend:
+            r = self.mcawindow.graph.geometry()
+            d['PyMca']['Geometry']['McaGraph'] = [r.x(), r.y(), r.width(), r.height()]
         #sources
         d['PyMca']['Sources'] = {}
         d['PyMca']['Sources']['lastFileFilter'] = self.sourceWidget.sourceSelector.lastFileFilter
@@ -870,14 +871,15 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             key = 'Splitter'
             if key in dict['Geometry'].keys():
                 self.splitter.setSizes(dict['Geometry'][key])
-            key = 'McaWindow'
-            if key in dict['Geometry'].keys():
-                r = qt.QRect(*dict['Geometry']['McaWindow'])
-                self.mcawindow.setGeometry(r)
-            key = 'McaGraph'
-            if key in dict['Geometry'].keys():
-                r = qt.QRect(*dict['Geometry']['McaGraph'])
-                self.mcawindow.graph.setGeometry(r)
+            if backend is None:
+                key = 'McaWindow'
+                if key in dict['Geometry'].keys():
+                    r = qt.QRect(*dict['Geometry']['McaWindow'])
+                    self.mcawindow.setGeometry(r)
+                key = 'McaGraph'
+                if key in dict['Geometry'].keys():
+                    r = qt.QRect(*dict['Geometry']['McaGraph'])
+                    self.mcawindow.graph.setGeometry(r)
             self.show()
             qt.qApp.processEvents()
             qt.qApp.postEvent(self, qt.QResizeEvent(qt.QSize(dict['Geometry']['MainWindow'][2]+1,
@@ -965,7 +967,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if type(roilist) != type([]):
                     roilist=[roilist]                
                 roidict = ddict['roidict']
-                self.mcawindow.roiwidget.fillfromroidict(roilist=roilist,
+                if backend:
+                    self.mcawindow.roiWidget.fillFromROIDict(roilist=roilist,
+                                                         roidict=roidict)
+                else:
+                    self.mcawindow.roiwidget.fillfromroidict(roilist=roilist,
                                                          roidict=roidict)
             
 
@@ -2032,6 +2038,9 @@ if __name__ == '__main__':
         splash.finish(PyMcaMainWidgetInstance)
         PyMcaMainWidgetInstance.show()
         PyMcaMainWidgetInstance.raise_()
+        if backend:
+            PyMcaMainWidgetInstance.mcawindow.replot()
+        
         #try to interpret rest of command line arguments as data sources
         try:
             for source in args:
