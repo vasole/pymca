@@ -78,7 +78,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self._buildToolBar(kw)
         self._toggleCounter = 0
         self.gridLevel = 0
-        self.setCallback(self._graphSignalReceived)
+        self.setCallback(self.graphCallback)
         
     def setWindowType(self, wtype=None):
         if wtype not in [None, "SCAN", "MCA"]:
@@ -529,15 +529,17 @@ class PlotWindow(PlotWidget.PlotWidget):
         print("prints the graph")
 
     ########### ROI HANDLING ###############
-    def _graphSignalReceived(self, ddict):
+    def graphCallback(self, ddict):
         if DEBUG:
             print("_graphSignalReceived", ddict)
         if ddict['event'] in ['markerMoved', 'markerSelected']:
-            return self._handleROIMarkerEvent(ddict)
+            self._handleROIMarkerEvent(ddict)
         if ddict['event'] in ["curveClicked", "legendClicked"]:
             legend = ddict["label"]
             self.setActiveCurve(legend)
-            return
+        #make sure the signal is forwarded
+        super(PlotWindow, self).graphCallback(ddict)
+            
 
     def setActiveCurve(self, legend):
         PlotWidget.PlotWidget.setActiveCurve(self, legend)
@@ -547,10 +549,8 @@ class PlotWindow(PlotWidget.PlotWidget):
         if ddict['event'] == 'markerMoved':
             roiList, roiDict = self.roiWidget.getROIListAndDict()
             if self.currentROI is None:
-                print("self.currentroi unset :(  ")
                 return
             if self.currentROI not in roiDict:
-                print("self.currentROI wrongly set")
                 return
             x = ddict['x']
             label = ddict['label'] 
@@ -559,7 +559,6 @@ class PlotWindow(PlotWidget.PlotWidget):
             elif label == 'ROI max':
                 roiDict[self.currentROI]['to'] = x
             else:
-                print("Unhandled marker %s" % label)
                 return
             self.calculateROIs(roiList, roiDict)
             self.emitCurrentROISignal()
