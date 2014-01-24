@@ -66,9 +66,39 @@ class MatplotlibGraph(FigureCanvas):
             color = "#%x" % color.rgb()
             if len(color) == 9:
                 color = "#" + color[3:]
-            self.fig.set_facecolor(color)
+            #self.fig.set_facecolor(color)
+            self.fig.set_facecolor("w")
             # that's it
-        self.ax = self.fig.add_axes([.15, .15, .75, .75])
+        self.ax = self.fig.add_axes([.15, .15, .75, .75], label="left")
+        self.ax2 = self.ax.twinx()
+        """
+    def twinx(self):
+        call signature::
+
+          ax = twinx()
+
+        create a twin of Axes for generating a plot with a sharex
+        x-axis but independent y axis.  The y-axis of self will have
+        ticks on left and the returned axes will have ticks on the
+        right
+        ax2 = self.fig.add_axes(self.get_position(True), sharex=self,
+            frameon=False)
+        ax2.yaxis.tick_right()
+        ax2.yaxis.set_label_position('right')
+        ax2.yaxis.set_offset_position('right')
+        self.ax.yaxis.tick_left()
+        ax2.xaxis.set_visible(False)
+        return ax2
+        """
+        self.ax2.set_label("right")
+
+        # critical for picking!!!!
+        self.ax2.set_zorder(0)
+        self.ax2.set_autoscaley_on(True)
+        self.ax.set_zorder(1)
+        #this works but the figure color is left
+        self.ax.set_axis_bgcolor('none')
+        self.fig.sca(self.ax)
         # this respects aspect size
         # self.ax = self.fig.add_subplot(111, aspect='equal')
         # This should be independent of Qt
@@ -651,9 +681,30 @@ class MatplotlibGraph(FigureCanvas):
         self.limitsSet = True
 
     def resetZoom(self):
+        xmin, xmax, ymin, ymax = self.getDataLimits('left')
+        xmin2, xmax2, ymin2, ymax2 = self.getDataLimits('right')
+        self.ax2.set_ylim(ymin2, ymax2)
+        if (xmin2 != 0) or (xmax2 != 1):
+            xmin = min(xmin, xmin2)
+            xmax = max(xmax, xmax2)
+        self.setLimits(xmin, xmax, ymin, ymax)
+        #self.ax2.set_autoscaley_on(True)
+        self._zoomStack = []
+
+    def getDataLimits(self, axesLabel='left'):
+        if axesLabel == 'right':
+            axes = self.ax2
+        else:
+            axes = self.ax
+        if 1 or DEBUG:
+            print("CALCULATING limits ", axes.get_label())
         xmin = None
-        for line2d in self.ax.lines:
+        for line2d in axes.lines:
+            if hasattr(line2d, "_plot_info"):
+                if line2d._plot_info.get("axes", "left") != axesLabel:
+                    continue
             label = line2d.get_label()
+            print(label)
             if label.startswith("__MARKER__"):
                 #it is a marker
                 continue
@@ -676,13 +727,15 @@ class MatplotlibGraph(FigureCanvas):
             xmax = 1
             ymin = 0
             ymax = 1
-        self.setLimits(xmin, xmax, ymin, ymax)
-        self._zoomStack = []
+        if DEBUG:
+            print("CALCULATED LIMITS = ", xmin, xmax, ymin, ymax) 
+        return xmin, xmax, ymin, ymax
 
 class MatplotlibBackend(PlotBackend.PlotBackend):
     def __init__(self, parent=None, **kw):
        	#self.figure = Figure(figsize=size, dpi=dpi) #in inches
         self.graph = MatplotlibGraph(parent, **kw)
+        self.ax2 = self.graph.ax2
         self.ax = self.graph.ax
         PlotBackend.PlotBackend.__init__(self, parent)
         self._parent = parent
@@ -748,25 +801,20 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         brush = color
         style = info.get('plot_line_style', '-')
         linewidth = 1
-        """
-        return self.plot(x, y, title=legend,
-                         pen=color,
-                         symbol=symbol,
-                         symbolPen=color,
-                         symbolBrush=color)
-
-        line2D.set_marker(symbol)
-        line2D.set_data(x, y)
-        """
+        axesLabel = info.get('plot_axes', 'left')
+        if axesLabel == "left":
+            axes = self.ax
+        else:
+            axes = self.ax2
         if self._logY:
-            curveList = self.ax.semilogy( x, y, label=legend,
+            curveList = axes.semilogy( x, y, label=legend,
                                           linestyle=style,
                                           color=color,
                                           linewidth=linewidth,
                                           picker=3,
                                           **kw)
         else:
-            curveList = self.ax.plot( x, y, label=legend,
+            curveList = axes.plot( x, y, label=legend,
                                       linestyle=style,
                                       color=color,
                                       linewidth=linewidth,
@@ -778,19 +826,24 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       'brush':brush,
                                       'style':style,
                                       'symbol':symbol,
-                                      'label':legend}
+                                      'label':legend,
+                                      'axes':axesLabel}
         if self._oldActiveCurve in self.ax.lines:
             if self._oldActiveCurve.get_label() == legend:
                 curveList[-1].set_color('k')
         elif self._oldActiveCurveLegend == legend:
             curveList[-1].set_color('k')
+        curveList[-1].set_axes(axes)
+        curveList[-1].set_zorder(2)
+        if replot:
+            self.replot()
         return curveList[-1]
 
     def clear(self):
         """
         Clear all curvers and other items from the plot
         """
-        n = range(len(self.ax.lines))
+        n = list(range(len(self.ax.lines)))
         n.reverse()
         for i in n:
             line2d = self.ax.lines[i]
@@ -799,7 +852,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.ax.clear()
 
     def clearImages(self):
-        n = range(len(self.ax.images))
+        n = list(range(len(self.ax.images)))
         n.reverse()
         for i in n:
             image = self.ax.images[i]
@@ -807,7 +860,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             del image
             del self.ax.images[i]
 
-        n = range(len(self.ax.artists))
+        n = list(range(len(self.ax.artists)))
         n.reverse()
         for i in n:
             artist = self.ax.artists[i]
@@ -820,30 +873,32 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Clear all curves from the plot. Not the markers!!
         """
-        n = range(len(self.ax.lines))
-        n.reverse()
-        for i in n:
-            line2d = self.ax.lines[i]
-            label = line2d.get_label()
-            if label.startswith("__MARKER__"):
-                #it is a marker
-                continue
-            line2d.remove()
-            del line2d
+        for axes in [self.ax, self.ax2]:
+            n = list(range(len(axes.lines)))
+            n.reverse()
+            for i in n:
+                line2d = axes.lines[i]
+                label = line2d.get_label()
+                if label.startswith("__MARKER__"):
+                    #it is a marker
+                    continue
+                line2d.remove()
+                del line2d
 
     def clearMarkers(self):
         """
         Clear all markers from the plot. Not the curves!!
         """
-        n = range(len(self.ax.lines))
-        n.reverse()
-        for i in n:
-            line2d = self.ax.lines[i]
-            label = line2d.get_label()
-            if label.startswith("__MARKER__"):
-                #it is a marker
-                line2d.remove()
-                del line2d
+        for axes in [self.ax, self.ax2]:
+            n = list(range(len(axes.lines)))
+            n.reverse()
+            for i in n:
+                line2d = axes.lines[i]
+                label = line2d.get_label()
+                if label.startswith("__MARKER__"):
+                    #it is a marker
+                    line2d.remove()
+                    del line2d
 
     def getGraphXLimits(self):
         """
@@ -984,6 +1039,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 label = line2d.get_label()
                 if label == legend:
                     handle = line2d
+            if handle is None:
+                for line2d in self.ax2.lines:
+                    label = line2d.get_label()
+                    if label == legend:
+                        handle = line2d
             if handle is not None:
                 handle.remove()
                 del handle
@@ -1059,6 +1119,12 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             if DEBUG:
                 print("Nothing to autoscale")
+        #xmin2, xmax2, ymin2, ymax2 = self.graph.getDataLimits('right')
+        #self.ax2.figure.sca(self.ax2)
+        #self.ax2.set_ylim(10., 100.)
+        #self.ax2.figure.sca(self.ax)
+        self._zoomStack = []
+
         self.replot()
         return
 
@@ -1066,7 +1132,14 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Update plot
         """
+        print "CALLED"
         self.graph.draw()
+        """
+        if QT:
+            w = self.getWidgetHandle()
+            QtGui.qApp.postEvent(w, QtGui.QResizeEvent(w.size(),
+                                                   w.size()))
+        """
         return
 
     def setActiveCurve(self, legend, replot=True):
@@ -1077,6 +1150,12 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             # we have received a legend
             handle = None
             for line2d in self.ax.lines:
+                label = line2d.get_label()
+                if label.startswith("__MARKER__"):
+                    continue
+                if label == legend:
+                    handle = line2d
+            for line2d in self.ax2.lines:
                 label = line2d.get_label()
                 if label.startswith("__MARKER__"):
                     continue
@@ -1329,13 +1408,16 @@ def main(parent=None):
     plot = Plot.Plot(parent, backend=MatplotlibBackend)
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x + 100, -x * x, "To set Active")
-    print("Active curve = ", plot.getActiveCurve())
+    #info = {}
+    #info['plot_axes'] = 'right'
+    #plot.addCurve(x + 100, -x * x + 500, "RIGHT", info=info)
+    #print("Active curve = ", plot.getActiveCurve())
     print("X Limits) = ", plot.getGraphXLimits())
     print("Y Limits = ", plot.getGraphYLimits())
-    print("All curves = ", plot.getAllCurves())
+    #print("All curves = ", plot.getAllCurves())
     #plot.removeCurve("dummy")
     plot.setActiveCurve("To set Active")
-    print("All curves = ", plot.getAllCurves())
+    #print("All curves = ", plot.getAllCurves())
     #plot.resetZoom()
     return plot
 
@@ -1375,6 +1457,7 @@ if __name__ == "__main__":
     #w.widget.ax.axis('scaled') # candidate for keepting aspect ratio
     print("aspect = %s" % widget.ax.get_aspect())
     w.insertXMarker(50., label="Label", color='pink', draggable=True)
+    w.resetZoom()
     #print(w.widget.ax.get_images())
     #print(w.widget.ax.get_lines())
     if "tkinter" in sys.modules or "Tkinter" in sys.modules:
