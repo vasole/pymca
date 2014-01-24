@@ -119,16 +119,17 @@ class McaWindow(ScanWindow.ScanWindow):
             print("printPreview id = %d" % id(self.printPreview))
 
         self._toggleROI()
+        self.changeGridLevel()
         self.connections()
 
         if 1:
             self.fitButtonMenu = qt.QMenu()
             self.fitButtonMenu.addAction(QString("Simple"),    self.mcaSimpleFitSignal)
             self.fitButtonMenu.addAction(QString("Advanced") , self.mcaAdvancedFitSignal)
-            self.fitButtonMenu.addAction(QString("Simple Fit"),
-                                   self._simpleFitSignal)
-            self.fitButtonMenu.addAction(QString("Customized Fit") ,
-                                   self._customFitSignal)
+            #self.fitButtonMenu.addAction(QString("Simple Fit"),
+            #                       self._simpleFitSignal)
+            #self.fitButtonMenu.addAction(QString("Customized Fit") ,
+            #                       self._customFitSignal)
 
 
     def _toggleROI(self):
@@ -2144,7 +2145,7 @@ class McaWindow(ScanWindow.ScanWindow):
             # the info is changing
             super(McaWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
         else:
-            # create the data object
+            # create the data object (Is this necessary????)
             self.newCurve(x, y, legend=legend, info=info, **kw)
     
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
