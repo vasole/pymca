@@ -75,6 +75,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                          roi=roi,
                                          fit=fit,
                                          **kw)
+        self._togglePointsSignal()
         self.setWindowType("SCAN")
         # this two objects are the same
         self.dataObjectsList = self._curveList
@@ -113,9 +114,6 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.connect(self.customFit,
                          qt.SIGNAL('SimpleFitSignal') ,
                          self._customFitSignalReceived)
-        self.dataObjectsDict = {}
-        self.dataObjectsList = []
-
         if 1:
             self.fitButtonMenu = qt.QMenu()
             self.fitButtonMenu.addAction(QString("Simple Fit"),
@@ -329,9 +327,6 @@ class ScanWindow(PlotWindow.PlotWindow):
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
                                     symbol=symbol,maptoy2=maptoy2, replot=False)
-        if replot:
-            self.replot()
-            self.resetZoom()
         self.dataObjectsList = self._curveList
         if activeCurve is None:
             if len(self._curveList) > 0:
@@ -340,6 +335,10 @@ class ScanWindow(PlotWindow.PlotWindow):
             ddict['event'] = "curveClicked"
             ddict['label'] = activeCurve
             self._graphSignalReceived(ddict)
+        elif replot:
+            #self.replot()
+            self.resetZoom()
+            
             
     def _removeSelection(self, selectionlist):
         if DEBUG:
