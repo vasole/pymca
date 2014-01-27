@@ -29,7 +29,39 @@ __author__ = "T. Rueter - ESRF Data Analysis"
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 
+if hasattr(qt, "QString"):
+    print('qt has QString')
+    QString = QString
+    QStringList = QStringList
+else:
+    print('qt does not have QString')
+    QString = str
+    QStringList = list
+
 DEBUG = 1
+
+# Build all symbols
+# Curtesy of the pyqtgraph project
+Symbols = dict([(name, qt.QPainterPath()) for name in ['o', 's', 't', 'd', '+', 'x']])
+Symbols['o'].addEllipse(qt.QRectF(-0.5, -0.5, 1, 1))
+Symbols['s'].addRect(qt.QRectF(-0.5, -0.5, 1, 1))
+coords = {
+    't': [(-0.5, -0.5), (0, 0.5), (0.5, -0.5)],
+    'd': [(0., -0.5), (-0.4, 0.), (0, 0.5), (0.4, 0)],
+    '+': [
+        (-0.5, -0.05), (-0.5, 0.05), (-0.05, 0.05), (-0.05, 0.5),
+        (0.05, 0.5), (0.05, 0.05), (0.5, 0.05), (0.5, -0.05), 
+        (0.05, -0.05), (0.05, -0.5), (-0.05, -0.5), (-0.05, -0.05)
+    ],
+}
+for k, c in coords.items():
+    Symbols[k].moveTo(*c[0])
+    for x,y in c[1:]:
+        Symbols[k].lineTo(x, y)
+    Symbols[k].closeSubpath()
+tr = qt.QTransform()
+tr.rotate(45)
+Symbols['x'] = tr.map(Symbols['+'])
 
 class LegendIcon(qt.QWidget):
 
@@ -43,12 +75,11 @@ class LegendIcon(qt.QWidget):
 
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
-
         # Assign default values
         self.symbol    = None
         self.lineWidth = 4.
         self.color     = qt.Qt.green
-
+        
         # Pen draws outlines of a shape
         self.pen = qt.QPen(self.color,
                            self.lineWidth,
@@ -62,15 +93,22 @@ class LegendIcon(qt.QWidget):
         self.path = qt.QPainterPath()
         self.path.moveTo(0.,50.)
         self.path.lineTo(100.,50.)
-
         # Control widget size: sizeHint "is the only acceptable
         # alternative, so the widget can never grow or shrink"
         # (c.f. Qt Doc, enum QSizePolicy::Policy)
         self.setSizePolicy(qt.QSizePolicy.Fixed,
                            qt.QSizePolicy.Fixed)
-
+    
     def paintEvent(self, event):
+        '''
+        :param event: event
+        :type event: QPaintEvent
+        '''
         painter = qt.QPainter(self)
+        self.paint(painter, event.rect(), self.palette())
+
+    def paint(self, painter, rect, palette):
+        painter.save() # -> pushes painter state onto a stack
         # Boundary line will be rendered symmetrically
         # around the mathematical shape of an area (rect)
         # when using QPainter.Antialiasing
@@ -78,27 +116,25 @@ class LegendIcon(qt.QWidget):
         painter.setPen(self.pen)
         painter.setBrush(self.brush)
         if self.symbol == 'triangle':
-            painter.drawPath(self._trianglePainterPath())
+            spath = self._trianglePainterPath()
         elif self.symbol == 'utriangle':
-            painter.drawPath(self._upsideTrianglePainterPath())
+            spath = self._upsideTrianglePainterPath()
         elif self.symbol == 'square':
-            painter.drawPath(self._squarePainterPath())
+            spath = self._squarePainterPath()
         elif self.symbol == 'cross':
-            painter.drawPath(self._crossPainterPath())
+            spath = self._crossPainterPath()
         elif self.symbol == 'diamond':
-            painter.drawPath(self._diamondPainterPath())
+            spath = self._diamondPainterPath()
         elif self.symbol == 'circle':
-            painter.drawPath(self._circlePainterPath())
+            spath = self._circlePainterPath()
         elif self.symbol == 'ellipse':
-            painter.drawPath(self._ellipsePainterPath())
-        painter.drawPath(self._linePainterPath())
-
-    def _linePainterPath(self):
-        path = qt.QPainterPath()
-        w, h = float(self.width()), float(self.height())
-        path.moveTo(0., h/2.)
-        path.lineTo(w, h/2.)
-        return path
+            spath = self._ellipsePainterPath()
+        lpath = self._linePainterPath()
+        offset = rect.topLeft()
+        for path in [spath, lpath]:
+            path.translate(offset)
+            painter.drawPath(path)
+        painter.restore() # -> unwinds painter stack
 
     def sizeHint(self):
         return qt.QSize(50,20)
@@ -146,6 +182,16 @@ class LegendIcon(qt.QWidget):
         bottomRightY = h - lineWidth
         bottomRight = qt.QPointF(bottomRightX, bottomRightY)
         return qt.QRectF(topLeft, bottomRight)
+
+    #def drawSymbol(painter, symbol, )
+
+    # Line painter paths
+    def _linePainterPath(self):
+        path = qt.QPainterPath()
+        w, h = float(self.width()), float(self.height())
+        path.moveTo(0., h/2.)
+        path.lineTo(w, h/2.)
+        return path
 
     # Symbol painter paths
     def _crossPainterPath(self):
@@ -245,9 +291,9 @@ class LegendIcon(qt.QWidget):
         self.pen.setWidth(width)
         self.update()
 
-#class LegendListItem(object):
-#class LegendListItemWidget(qt.QWidget):
-class LegendListItemWidget(qt.QStyledItemDelegate):
+#class LegendListItemWidget(qt.QStyledItemDelegate):
+class LegendListItemWidget(qt.QItemDelegate):
+        
 
     # TODO: Add Icon handling, align icons on the right
     # Notice: LegendListItem does NOT inherit
@@ -256,26 +302,26 @@ class LegendListItemWidget(qt.QStyledItemDelegate):
     curveType = 0
     imageType = 1
 
-    def __init__(self, legend, parent=None, itemType=0):
+    def __init__(self, parent=None, itemType=0):
         #qt.QWidget.__init__(self, parent)
         qt.QStyledItemDelegate.__init__(self, parent)
         
-        self.checkbox = qt.QCheckBox(self)
+        self.checkbox = qt.QCheckBox()
         self.checkbox.setCheckState(qt.Qt.Checked)
         
-        self.legend = qt.QLabel(legend)
+        self.legend = qt.QLabel()
         self.legend.setAlignment(qt.Qt.AlignVCenter |
                                  qt.Qt.AlignLeft)
         
-        self.icon = LegendIcon(self)
-        self.color = qt.QColor('darkyellow')
+        self.icon = LegendIcon()
+        #self.color = qt.QColor('darkyellow')
         
         itemLayout = qt.QHBoxLayout()
         itemLayout.addWidget(self.checkbox)
         itemLayout.addWidget(self.legend)
         itemLayout.addWidget(qt.HorizontalSpacer())
         itemLayout.addWidget(self.icon)
-        self.setLayout(itemLayout)
+        #self.setLayout(itemLayout)
 
         '''
         self.itemType = 1000 + itemType
@@ -286,6 +332,7 @@ class LegendListItemWidget(qt.QStyledItemDelegate):
         self.pen = qt.QPen()
         self.textColor = qt.QColor()
         '''
+
 
     def updateItem(self, ddict):
         keys = ddict.keys()
@@ -326,15 +373,60 @@ class LegendListItemWidget(qt.QStyledItemDelegate):
 
         Here be docs..
         '''
-        # 127 -> PyQt_PyObject, i.e. Class derived from QObject
-        #if idx.data().canConvert(127):
-        obj = idx.data().toPyObject()
-        if isinstance(obj, LegendListItemWidget):
-            if (option.state == qt.QStyle.State_Selected):
-                painter.fillRect(option.rect, option.palette.highlight())
-            obj.paint(painter, option.rect, option.palette) # Not a native QWidget function..
+        rect = option.rect
+        # Calculate the checkbox rectangle
+        topLeft  = rect.topLeft()
+        botRight = qt.QPoint(topLeft.x() + 30,
+                             topLeft.y() + rect.height())
+        chBoxRect = qt.QRect(topLeft, botRight)
+        # Calculate the icon rectangle
+        iconSize = self.icon.sizeHint()
+        topRight = rect.topRight()
+        x = topRight.x() - iconSize.width()
+        y = topRight.y() + (rect.height()-iconSize.height()) / 2.
+        iconRect = qt.QRect(qt.QPoint(x,y), iconSize)
+        # Calculate the label rectangle
+        y  = rect.topLeft().y()
+        topLeft   = qt.QPoint(rect.topLeft().x() + 31, y)
+        botRight  = qt.QPoint(iconRect.bottomRight().x() - 1, y + rect.height())
+        labelRect = qt.QRect(topLeft, botRight)
+
+        # Draw background first!
+        if option.state & qt.QStyle.State_MouseOver:
+            painter.setOpacity(.5) # Control opacity
+            painter.fillRect(rect, option.palette.highlight())
+            painter.setOpacity(1.) # Reset opacity
         else:
-            qt.QStyledItemDelegate.paint(painter, option, idx);
+            backgoundBrush = idx.data(qt.Qt.BackgroundRole)
+            painter.fillRect(rect, backgoundBrush)
+
+        # Draw the checkbox
+        if idx.data(qt.Qt.CheckStateRole):
+            checkState = qt.Qt.Checked
+        else:
+            checkState = qt.Qt.Unchecked
+        itemStyle  = qt.QStyleOptionViewItem()
+        itemStyle
+        self.drawCheck(painter, itemStyle, chBoxRect, checkState)
+
+        # Draw label
+        legendText = idx.data(qt.Qt.DisplayRole)
+        textBrush  = idx.data(qt.Qt.ForegroundRole)
+        textAlign  = idx.data(qt.Qt.TextAlignmentRole)
+        painter.setBrush(textBrush)
+        painter.setFont(self.legend.font())
+        painter.drawText(labelRect, textAlign, legendText)
+
+        # Draw icon
+        iconColor = idx.data(LegendModel.iconColorRole)
+        iconLineWidth = idx.data(LegendModel.iconLineWidthRole)
+        iconSymbol = idx.data(LegendModel.iconSymbolRole)
+        self.icon.setColor(iconColor)
+        self.icon.setLineWidth(iconLineWidth)
+        self.icon.setSymbol(iconSymbol)
+        self.icon.paint(painter, iconRect, option.palette)
+        self.icon.resize(iconRect.size())
+        self.icon.move(iconRect.topRight())
             
     def createEditor(self, parent, option, idx):
         obj = idx.data().toPyObject()
@@ -374,13 +466,22 @@ class LegendListItemWidget(qt.QStyledItemDelegate):
             qt.QStyledItemDelegate.setModelData(self, editor, model, idx)
 
     def sizeHint(self, option, idx):
-        obj = idx.data().toPyObject()
-        if isinstance(obj, LegendListItemWidget):
-            return obj.sizeHint()
-        else:
-            return qt.QStyledItemDelegate.sizeHint(self, option, idx)
+        #return qt.QSize(68,24)
+        iconSize = self.icon.sizeHint()
+        legendSize = self.legend.sizeHint()
+        checkboxSize = self.checkbox.sizeHint()
+
+        height = max([iconSize.height(), legendSize.height(), checkboxSize.height()]) + 4
+        width = iconSize.width() + legendSize.width() + checkboxSize.width()
+
+        #print('Delegate.sizeHint -- height: %d, width: %d'%(height, width)) # height: 20, width: 68
+        return qt.QSize(height, width)
 
 class LegendModel(qt.QAbstractListModel):
+    iconColorRole = qt.Qt.UserRole + 0
+    iconLineWidthRole = qt.Qt.UserRole + 1
+    iconSymbolRole = qt.Qt.UserRole + 2
+    
     def __init__(self, llist=[], parent=None):
         qt.QAbstractListModel.__init__(self, parent)
         self.legendList = []
@@ -422,104 +523,47 @@ class LegendModel(qt.QAbstractListModel):
         item = self.legendList[idx]
         if role == qt.Qt.DisplayRole:
             # Data to be rendered in the form of text
-            legend = qt.QString(item.legend)
-            return qt.QVariant(legend)
+            legend = QString(item[0])
+            #return qt.QVariant(legend)
+            return legend
         elif role == qt.Qt.SizeHintRole:
             size = qt.QSize(200,50)
             return qt.QVariant(size)
         elif role == qt.Qt.TextAlignmentRole:
             alignment = qt.Qt.AlignVCenter | qt.Qt.AlignLeft
-            return qt.QVariant(alignment)
+            return alignment
         elif role == qt.Qt.BackgroundRole:
             # Background color, must be QBrush
             if idx%2:
-                color = qt.QColor(qt.Qt.white)
+                brush = qt.QBrush(qt.QColor(247,247,247))
             else:
-                color = qt.QColor(qt.Qt.lightgray)
-            brush = qt.QBrush(color)
-            #return qt.QVariant(brush)
-            return qt.QVariant()
+                brush = qt.QBrush(qt.Qt.white)
+            return brush
         elif role == qt.Qt.ForegroundRole:
             # ForegroundRole color, must be QBrush
-            brush = qt.QBrush(qt.Qt.darkyellow)
-            return qt.QVariant(brush)
+            brush = qt.QBrush(qt.Qt.blue)
+            return brush
         elif role == qt.Qt.CheckStateRole:
-            currentCheckState = item.currentCheckState
-            return qt.QVariant(currentCheckState)
+            if item[2] == qt.Qt.Checked:
+                currentCheckState = True
+            else:
+                currentCheckState = False
+            return currentCheckState
+        elif role == qt.Qt.ToolTipRole or role == qt.Qt.StatusTipRole:
+            return ''
+        elif role == self.iconColorRole:
+            return item[1]['color']
+        elif role == self.iconLineWidthRole:
+            return item[1]['linewidth']
+        elif role == self.iconSymbolRole:
+            return item[1]['symbol']        
         else:
             print('Unkown role requested: %s',str(role))
-            return qt.QVariant()
+            return None
 
-class LegendListItemDelegate(qt.QStyledItemDelegate):
-
-    def __init__(self, parent=None):
-        qt.QStyledItemDelegate.__init__(self, parent)
-
-    def paint(self, painter, option, idx):
-        '''
-        :param painter:
-        :type painter: QPainter
-        :param option:
-        :type option: QStyleOptionViewItem
-        :param idx:
-        :type idx: QModelIndex
-
-        Here be docs..
-        '''
-        # 127 -> PyQt_PyObject, i.e. Class derived from QObject
-        #if idx.data().canConvert(127):
-        obj = idx.data().toPyObject()
-        if isinstance(obj, LegendListItemWidget):
-            if (option.state == qt.QStyle.State_Selected):
-                painter.fillRect(option.rect, option.palette.highlight())
-            obj.paint(painter, option.rect, option.palette) # Not a native QWidget function..
-        else:
-            qt.QStyledItemDelegate.paint(painter, option, idx);
-            
-    def createEditor(self, parent, option, idx):
-        obj = idx.data().toPyObject()
-        if isinstance(obj, LegendListItemWidget):
-            # QColorDialog::QColorDialog(const QColor & initial, QWidget * parent = 0)
-            # TODO: Set editor to the items color
-            colorDial = qt.QColorDialog()
-            colorDial.colorSelected.connect(self.commitColor)
-            return colorDial
-        else:
-            return qt.QStyledItemDelegate.createEditor(self, parent, option, idx)
-
-    def commitColor(self, color):
-        print('commitColor -- Received color: %s'%str(color))
-        # set modelItem to color using self.lastModelItemIdx..
-        self.commitData(self.sender())
-        self.closeEditor(self.sender())
-
-    def setEditorData(self, editor, idx):
-        obj = idx.data().toPyObject()
-        print('setEditorData -- type(obj):',type(obj))
-        if isinstance(obj, LegendListItemWidget):
-            #editor.blockSignals(True)
-            qt.QColorDialog.setCurrentColor(editor, obj.color)
-            #editor.blockSignals(False)
-        else:
-            qt.QStyledItemDelegate.setModelData(self, editor, idx)
-
-    def setModelData(self, editor, model, idx):
-        obj = idx.data().toPyObject()
-        if isinstance(obj, LegendListItemWidget):
-            # Hier werden die Daten ans Modell gesendet!
-            color = qt.QColorDialog.currentColor(editor)
-            #model.setData(idx, qt.QVariant.fromValue(color))
-            model.setData(idx, color)
-        else:
-            qt.QStyledItemDelegate.setModelData(self, editor, model, idx)
-
-    def sizeHint(self, option, idx):
-        obj = idx.data().toPyObject()
-        if isinstance(obj, LegendListItemWidget):
-            return obj.sizeHint()
-        else:
-            return qt.QStyledItemDelegate.sizeHint(self, option, idx)
-
+    def setData(self, idx, value, role):
+        # TO BE CONTINUED..
+        pass
 
 class LegendListView(qt.QListView):
 
@@ -532,6 +576,12 @@ class LegendListView(qt.QListView):
         self.__lastButton = None
         # Connects
         self.clicked.connect(self._handleMouseClick)
+        self.setSizePolicy(qt.QSizePolicy.MinimumExpanding,
+                           qt.QSizePolicy.MinimumExpanding)
+
+
+    def sizeHint(self):
+        return qt.QSize(400,400)
 
     def __getitem__(self, idx):
         model = self.model()
@@ -594,28 +644,32 @@ class LegendListView(qt.QListView):
             return
         model = self.model()
         idx   = modelIndex.row()
+        # item is tupel: (legend, icon, checkState, curveType)
         item  = model[idx]
         ddict = {
-            'legend'   : str(item.legend),
-            'type'     : item.itemType,
-            'selected' : item.currentCheckState == qt.Qt.Checked
+            'legend'   : str(item[0]),
+            'icon'     : item[1],
+            'selected' : item[2] == qt.Qt.Checked,
+            'type'     : item[3]
         }
         if self.__lastButton == qt.Qt.RightButton:
             if DEBUG == 1:
                 print('Right clicked')
             ddict['button'] = qt.Qt.RightButton
-            ddict['event'] = self.__mouseClickedEvent
-        elif item.currentCheckState == item.lastCheckState:
+            ddict['event']  = self.__mouseClickedEvent
+        elif True:#item.currentCheckState == item.lastCheckState:
             if DEBUG == 1:
                 print('Legend clicked')
+            '''
             ddict['button'] = qt.Qt.LeftButton
             ddict['event']  = self.__legendClickedEvent
+            '''
         else:
             if DEBUG == 1:
                 print('CheckBox clicked')
             ddict['button'] = qt.Qt.LeftButton
-            ddict['event'] = self.__mouseClickedEvent
-            item.setCheckState(lastCheckState)
+            ddict['event']  = self.__mouseClickedEvent
+            #item.setCheckState(lastCheckState)
         if DEBUG == 1:
             print('  idx: %d\n  ddict: %s'%(idx, str(ddict)))
         self.sigMouseClicked.emit(ddict)
@@ -633,7 +687,7 @@ if __name__ == '__main__':
     llist = []
     for idx, (l, c, s) in enumerate(zip(legends, colors, symbols)):
         ddict = {
-            'color': c,
+            'color': qt.QColor(c),
             'linewidth': 4,
             'symbol': s,
         }
@@ -646,8 +700,11 @@ if __name__ == '__main__':
         #layout.addWidget(legendWidget)
         #win.setItemWidget(item, legendWidget)
     #win = LegendListItemWidget('Some Legend 1')
+    print(llist)
     model = LegendModel(llist=llist)
+    delegate = LegendListItemWidget()
     win.setModel(model)
+    win.setItemDelegate(delegate)
     
     #win = LegendListWidget(None, legends)
     #win[0].updateItem(ddict)
@@ -655,5 +712,4 @@ if __name__ == '__main__':
     win.show()
     
     app.exec_()
-            
             

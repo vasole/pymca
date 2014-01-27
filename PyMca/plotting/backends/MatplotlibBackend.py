@@ -1132,7 +1132,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Update plot
         """
-        print "CALLED"
+        print("CALLED")
         self.graph.draw()
         """
         if QT:
