@@ -26,8 +26,13 @@
 #############################################################################*/
 import numpy
 from PyMca import PyMcaQt as qt
-from PyMca import ScanWindow
-from PyMca import specfilewrapper as sf
+if 1:
+    from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+    #from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
+    from PyMca.widgets import PlotWindow as DataDisplay
+else:
+    from PyMca import ScanWindow as DataDisplay
+from PyMca.PyMcaIO import specfilewrapper as sf
 from PyMca import SimpleFitModule as SFM
 from PyMca import SpecfitFunctions
 from PyMca import Elements
@@ -37,6 +42,7 @@ from PyMca import QSpecFileWidget
 from PyMca import SpecFileDataSource
 from PyMca.SpecfitFuns import upstep, downstep
 from PyMca.Gefit import LeastSquaresFit as LSF
+from PyMca.PyMca_Icons import IconDict
 from os.path import isdir as osPathIsDir
 from os.path import basename as osPathBasename
 
@@ -46,7 +52,16 @@ except ImportError:
     print("WARNING:SumRulesPlugin import from somewhere else")
     from . import Plugin1DBase
 
-DEBUG = 1
+if hasattr(qt, "QString"):
+    print('qt has QString')
+    QString = qt.QString
+    QStringList = qt.QStringList
+else:
+    print('qt does not have QString')
+    QString = str
+    QStringList = list
+
+DEBUG = 0
 NEWLINE = '\n'
 
 class Calculations(object):
@@ -132,7 +147,11 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.plotWindow = plotWindow
         #self.graph = graph
         #self.markerID = self.graph.insertX1Marker(0., label=label)
-        self.markerID = self.plotWindow.graph.insertX1Marker(0., label=label)
+        if hasattr(self.plotWindow,'graph'):
+            self.markerID = self.plotWindow.graph.insertX1Marker(0., label=label)
+        else:
+            self.markerID = self.plotWindow.insertXMarker(0., label=label)
+            
         
         # Initialize
         self.setMinimum(0.)
@@ -141,20 +160,22 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         
         # Connects
         #self.connect(self.graph,
-        self.connect(self.plotWindow.graph,
-             qt.SIGNAL("QtBlissGraphSignal"),
-             self._markerMoved)
-        self.valueChanged['double'].connect(self._valueChanged)
-        self.valueChanged['QString'].connect(self._valueChanged)
+        if hasattr(self.plotWindow,'graph'):
+            self.connect(self.plotWindow.graph,
+                         qt.SIGNAL("QtBlissGraphSignal"),
+                         self._handlePlotSignal)
+        else:
+            self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
+        #self.valueChanged['double'].connect(self._valueChanged)
+        #self.valueChanged['QString'].connect(self._valueChanged)
+        self.valueChanged.connect(self._valueChanged)
 
     def getIntersections(self):
         dataList = self.plotWindow.getAllCurves()
-        #dataDict = self.graph.curves
         resDict  = {}
         pos      = self.value()
         if not isinstance(pos, float):
             return
-        #for listIdx, (x, y, legend, info) in enumerate(dataDict.items()):
         for x, y, legend, info in dataList:
             res  = float('NaN')
             if numpy.all(pos < x) or numpy.all(x < pos):
@@ -175,37 +196,77 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         return resDict
 
     def hideMarker(self):
-        graph = self.plotWindow.graph
-        if self.markerID in graph.markersdict.keys():
-            marker = graph.markersdict[self.markerID]['marker']
-            marker.hide()
+        if hasattr(self.plotWindow,'graph'):
+            graph = self.plotWindow.graph
+            if self.markerID in graph.markersdict.keys():
+                marker = graph.markersdict[self.markerID]['marker']
+                marker.hide()
+        else:
+            self.plotWindow.removeMarker(self.label)
+            self.markerID = None
             
     def showMarker(self):
-        graph = self.plotWindow.graph
-        if self.markerID in graph.markersdict.keys():
-            marker = graph.markersdict[self.markerID]['marker']
-            marker.show()
+        if hasattr(self.plotWindow,'graph'):
+            graph = self.plotWindow.graph
+            if self.markerID in graph.markersdict.keys():
+                marker = graph.markersdict[self.markerID]['marker']
+                marker.show()
+        else:
+            self.plotWindow.removeMarker(self.label)
+            self.markerID = self.plotWindow.insertXMarker(
+                                    x=self.value(),
+                                    label=self.label,
+                                    color='blue',
+                                    selectable=False,
+                                    draggable=True)
 
     def _setMarkerFollowMouse(self, windowTitle):
         windowTitle = str(windowTitle)
-        graph = self.plotWindow.graph
-        if self.window == windowTitle:
-            graph.setmarkercolor(self.markerID, 'blue')
-            graph.setmarkerfollowmouse(self.markerID, True)
+        if hasattr(self.plotWindow,'graph'):
+            graph = self.plotWindow.graph
+            if self.window == windowTitle:
+                graph.setmarkercolor(self.markerID, 'blue')
+                graph.setmarkerfollowmouse(self.markerID, True)
+            else:
+                graph.setmarkercolor(self.markerID, 'black')
+                graph.setmarkerfollowmouse(self.markerID, False)
             graph.replot()
         else:
-            graph.setmarkercolor(self.markerID, 'black')
-            graph.setmarkerfollowmouse(self.markerID, False)
-            graph.replot()
+            if self.window == windowTitle:
+                # Marker is active
+                color = 'blue'
+                draggable  = True
+            else:
+                # Black, marker is inactive
+                color = 'k'
+                draggable  = False
+            # Make shure that the marker is deleted
+            # If marker is not present, removeMarker just passes..
+            self.plotWindow.removeMarker(self.label)
+            self.markerID = self.plotWindow.insertXMarker(
+                                    x=self.value(),
+                                    label=self.label,
+                                    color=color,
+                                    selectable=False,
+                                    draggable=draggable)
+            self.plotWindow.replot()        
 
-    def _markerMoved(self, ddict):
-        if 'marker' not in ddict:
-            return
-        else:
-            if ddict['marker'] != self.markerID:
+    def _handlePlotSignal(self, ddict):
+        if hasattr(self.plotWindow, 'graph'):
+            if 'marker' not in ddict:
                 return
-        if ddict['event'] == 'markerMoving':
-            self.setValue(ddict['x'])
+            else:
+                if ddict['marker'] != self.markerID:
+                    return
+            if ddict['event'] == 'markerMoving':
+                self.setValue(ddict['x'])
+        else:
+            if ddict['event'] != 'markerMoving':
+                return
+            if ddict['label'] != self.label:
+                return
+            markerPos = ddict['x']
+            self.setValue(markerPos)                
             
     def _valueChanged(self, val):
         try:
@@ -214,14 +275,19 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
             if DEBUG == 0:
                 print('_valueChanged -- Sorry, it ain\'t gonna float: %s'%str(val))
             return
-        graph = self.plotWindow.graph
-        #self.graph.setMarkerXPos(self.markerID, val)
-        graph.setMarkerXPos(self.markerID, val)
-        #self.graph.replot()
-        graph.replot()
-        #self.valueChangedSignal.emit(val)
-        #ddict = self.getIntersections()
-        #self.intersectionsChangedSignal.emit(ddict)
+        if hasattr(self.plotWindow,'graph'):
+            graph = self.plotWindow.graph
+            graph.setMarkerXPos(self.markerID, val)
+            graph.replot()
+        else:
+            self.plotWindow.removeMarker(self.label)
+            self.markerID = self.plotWindow.insertXMarker(
+                                    x=val,
+                                    label=self.label,
+                                    color='blue',
+                                    selectable=False,
+                                    draggable=True)
+            self.plotWindow.replot()
         
 class LineEditDisplay(qt.QLineEdit):
     def __init__(self, controller, ddict={}, unit='', parent=None):
@@ -329,22 +395,42 @@ class SumRulesWindow(qt.QMainWindow):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle('Sum Rules Tool')
-        self.plotWindow = ScanWindow.ScanWindow(self)
-        self.plotWindow.scanWindowInfoWidget.hide()
-        self.plotWindow.graph.enablemarkermode()
-        
-        # Hide unnecessary buttons in the toolbar
-        toolbarChildren = self.plotWindow.toolBar
-        # QWidget.findChildren(<qt-type>) matches 
-        # all child widgets with the specified type
-        toolbarButtons  = toolbarChildren.findChildren(qt.QToolButton)
-        toolbarButtons[6].hide() # Simple Fit
-        toolbarButtons[7].hide() # Average Plotted Curves
-        toolbarButtons[8].hide() # Derivative
-        toolbarButtons[9].hide() # Smooth
-        toolbarButtons[12].hide() # Subtract active curve
-        toolbarButtons[13].hide() # Save active curve
-        toolbarButtons[14].hide() # Plugins   
+        if hasattr(DataDisplay,'PlotWindow'):
+            self.plotWindow = DataDisplay.PlotWindow(
+                parent=self,
+                backend=backend,
+                plugins=False,
+                newplot=False,
+                roi=False,
+                kw={'logx': False,
+                    'logy': False,
+                    'flip': False,
+                    'fit': False})
+        else:
+            self.plotWindow = DataDisplay.ScanWindow(self)
+
+        # Hide Buttons in the toolbar
+        if hasattr(self.plotWindow,'scanWindowInfoWidget'):
+            # Get rid of scanInfoWidget
+            self.plotWindow.scanWindowInfoWidget.hide()
+            self.plotWindow.graph.enablemarkermode()
+            # Hide unnecessary buttons in the toolbar
+            toolbarChildren = self.plotWindow.toolBar
+            # QWidget.findChildren(<qt-type>) matches 
+            # all child widgets with the specified type
+            toolbarButtons  = toolbarChildren.findChildren(qt.QToolButton)
+            toolbarButtons[3].hide() # LogX
+            toolbarButtons[4].hide() # LogY
+            toolbarButtons[6].hide() # Simple Fit
+            toolbarButtons[7].hide() # Average Plotted Curves
+            toolbarButtons[8].hide() # Derivative
+            toolbarButtons[9].hide() # Smooth
+            toolbarButtons[11].hide() # Set active to zero
+            toolbarButtons[12].hide() # Subtract active curve
+            toolbarButtons[13].hide() # Save active curve
+            toolbarButtons[14].hide() # Plugins
+        else:
+            self.plotWindow
         
         self.__savedConf = False
         self.__savedData = False
@@ -760,21 +846,38 @@ class SumRulesWindow(qt.QMainWindow):
         
         
         # Estimate button in bottom of plot window layout
-        self.buttonEstimate = qt.QPushButton('Estimate')
-        self.buttonEstimate.setToolTip(
-            'Shortcut: CRTL+E'
-           +'Depending on the tab, estimate either the pre/post'
-           +'edge regions and edge positions or the positions of'
-           +'the p, q and r markers.')
-        self.buttonEstimate.setShortcut(qt.Qt.CTRL+qt.Qt.Key_E)
-        self.buttonEstimate.clicked.connect(self.estimate)
-        self.buttonEstimate.setEnabled(False)
-        self.plotWindow.graphBottomLayout.addWidget(qt.HorizontalSpacer())
-        self.plotWindow.graphBottomLayout.addWidget(self.buttonEstimate)
-        
-        self.connect(self.plotWindow.graph,
-             qt.SIGNAL("QtBlissGraphSignal"),
-             self._handleGraphSignal)
+        if hasattr(self.plotWindow,'graph'):
+            self.buttonEstimate = qt.QPushButton('Estimate')
+            self.buttonEstimate.setToolTip(
+                'Shortcut: CRTL+E\n'
+               +'Depending on the tab, estimate either the pre/post\n'
+               +'edge regions and edge positions or the positions of\n'
+               +'the p, q and r markers.')
+            self.buttonEstimate.setShortcut(qt.Qt.CTRL+qt.Qt.Key_E)
+            self.buttonEstimate.clicked.connect(self.estimate)
+            self.buttonEstimate.setEnabled(False)
+            self.plotWindow.graphBottomLayout.addWidget(qt.HorizontalSpacer())
+            self.plotWindow.graphBottomLayout.addWidget(self.buttonEstimate)    
+        else:
+            self.buttonEstimate = qt.QToolButton(self)
+            self.buttonEstimate.setIcon(qt.QIcon(
+                        qt.QPixmap(IconDict["reload"])))
+            self.buttonEstimate.setToolTip(
+                'Shortcut: CRTL+E\n'
+               +'Depending on the tab, estimate either the pre/post\n'
+               +'edge regions and edge positions or the positions of\n'
+               +'the p, q and r markers.')
+            self.buttonEstimate.setShortcut(qt.Qt.CTRL+qt.Qt.Key_E)
+            self.buttonEstimate.clicked.connect(self.estimate)
+            self.buttonEstimate.setEnabled(False)
+            self.plotWindow.toolBar.addWidget(self.buttonEstimate)
+
+        if hasattr(self.plotWindow,'graph'):
+            self.connect(self.plotWindow.graph,
+                         qt.SIGNAL("QtBlissGraphSignal"),
+                         self._handlePlotSignal)
+        else:
+            self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
              
         # Layout
         mainWidget = qt.QWidget()
@@ -938,11 +1041,20 @@ class SumRulesWindow(qt.QMainWindow):
             # TODO: Find better way to determine curves..
             if marker in [self.__intP, self.__intQ]:
                 if self.xmcdCorrData is not None:
-                    curve = 'xmcd corr Int Y'
+                    if hasattr(self.plotWindow, 'graph'):
+                        curve = 'xmcd corr Int Y'
+                    else:
+                        curve = 'xmcd corr Int'
                 else:
-                    curve = 'xmcd Int Y'
+                    if hasattr(self.plotWindow, 'graph'):
+                        curve = 'xmcd Int Y'
+                    else:
+                        curve = 'xmcd Int'
             else:
-                curve = 'xas Int Y'
+                if hasattr(self.plotWindow, 'graph'):
+                    curve = 'xas Int Y'
+                else:
+                    curve = 'xas Int'
             spinbox = ddict[self.__tabInt][marker]
             integralVals = spinbox.getIntersections()
             x, y = integralVals.get(curve, (float('NaN'),float('NaN')))
@@ -1001,7 +1113,9 @@ class SumRulesWindow(qt.QMainWindow):
 
     def loadData(self):
         dial = LoadDichorismDataDialog()
-        dial.setDirectory(PyMcaDirs.outputDir)
+        #dial.setDirectory(PyMcaDirs.outputDir)
+        # CHANGE ME!
+        dial.setDirectory(r'C:\Users\tonn\lab\datasets\sum_rules\sum_rules_4f_example_EuRhj2Si2')
         if dial.exec_():
             dataDict = dial.dataDict
         else:
@@ -1050,13 +1164,10 @@ class SumRulesWindow(qt.QMainWindow):
             ddict    = self.getValuesDict()
             saveDir  = PyMcaDirs.outputDir
             filters  = 'spec File (*.spec);;All files (*.*)'
-            selectedFilter = 'Sum Rules Analysis files (*.spec)'
-            
             baseFilename = qt.QFileDialog.getSaveFileName(self,
                                    'Save Sum Rule Analysis Data',
                                    saveDir,
-                                   filters,
-                                   selectedFilter)
+                                   filters)
             if len(baseFilename) == 0:
                 # Leave self.baseFilename as it is..
                 #self.baseFilename = None
@@ -1144,14 +1255,12 @@ class SumRulesWindow(qt.QMainWindow):
             filename = self.confFilename
         else:
             saveDir  = PyMcaDirs.outputDir
-            filter   = 'Sum Rules Analysis files (*.sra);;All files (*.*)'
-            selectedFilter = 'Sum Rules Analysis files (*.sra)'
+            filters   = 'Sum Rules Analysis files (*.sra);;All files (*.*)'
             
             filename = qt.QFileDialog.getSaveFileName(self,
                                    'Save Sum Rule Analysis Configuration',
                                    saveDir,
-                                   filter,
-                                   selectedFilter)
+                                   filters)
             if len(filename) == 0:
                 return False
             else:
@@ -1268,7 +1377,7 @@ class SumRulesWindow(qt.QMainWindow):
             ed.updateDict(tmpDict)
             cb.addItems(['']+transitions)
             # Try to set to old entry
-            idx = cb.findText(qt.QString(curr))
+            idx = cb.findText(QString(curr))
             if idx < 0: idx = 0
             cb.setCurrentIndex(idx)
 
@@ -1332,7 +1441,10 @@ class SumRulesWindow(qt.QMainWindow):
                         tmp = float(value)
                         obj.setValue(tmp)
                     except ValueError:
-                        xmin, xmax = self.plotWindow.graph.getX1AxisLimits()
+                        if hasattr(self.plotWindow,'graph'):
+                            xmin, xmax = self.plotWindow.graph.getX1AxisLimits()
+                        else:
+                            xmin, xmax = self.plotWindow.getGraphXLimits()
                         tmp = xmin + (xmax-xmin)/10.
                         if DEBUG:
                             msg  = 'setValuesDict -- Float conversion failed'
@@ -1354,7 +1466,7 @@ class SumRulesWindow(qt.QMainWindow):
                             msg += ' while setting QDoubleSpinBox value. Value:', value
                             print(msg)
                 elif isinstance(obj, qt.QComboBox):
-                    idx = obj.findText(qt.QString(value))
+                    idx = obj.findText(QString(value))
                     obj.setCurrentIndex(idx)
                 elif isinstance(obj, LineEditDisplay):
                     # Must be before isinstance(obj, qt.QLineEdit)
@@ -1374,7 +1486,7 @@ class SumRulesWindow(qt.QMainWindow):
         try:
             symbol = ddict[self.__tabElem]['element']
             cb = self.valuesDict[self.__tabElem]['element']
-            idx = cb.findText(qt.QString(symbol))
+            idx = cb.findText(QString(symbol))
             cb.setCurrentIndex(idx)
         except KeyError:
             pass
@@ -1614,12 +1726,19 @@ class SumRulesWindow(qt.QMainWindow):
                                  {},
                                  replot=False)
         self.modelWidthChangedSignal.emit('%.3f'%(width*gap))
-        self.plotWindow.graph.replot()
+        if hasattr(self.plotWindow, 'graph'):
+            self.plotWindow.graph.replot()
+        else:
+            self.plotWindow.replot()
 
     def plotOnDemand(self, window, xlabel='ene_st', ylabel='zratio'):
         # Remove all curves
-        legends = self.plotWindow.getAllCurves(just_legend=True)
-        self.plotWindow.removeCurves(legends, replot=False)
+        if hasattr(self.plotWindow,'graph'):
+            legends = self.plotWindow.getAllCurves(just_legend=True)
+            for legend in legends:
+                self.plotWindow.removeCurve(legend, replot=False)
+        else:
+            self.plotWindow.clearCurves()
         if (self.xmcdData is None) or (self.xasData is None):
             # Nothing to do
             return
@@ -1628,12 +1747,12 @@ class SumRulesWindow(qt.QMainWindow):
         window = window.lower()
         if window == self.__tabElem:
             if self.xmcdCorrData is not None:
-                if DEBUG:
+                if DEBUG == 0:
                     print('plotOnDemand -- __tabElem: Using self.xmcdCorrData')
                 xmcdX, xmcdY = self.xmcdCorrData
                 xmcdLabel = 'xmcd corr'
             else:
-                if DEBUG:
+                if DEBUG == 0:
                     print('plotOnDemand -- __tabElem: Using self.xmcdData')
                 xmcdX, xmcdY = self.xmcdData
                 xmcdLabel = 'xmcd'
@@ -1681,22 +1800,33 @@ class SumRulesWindow(qt.QMainWindow):
             self.xmcdInt = xmcdIntX, xmcdIntY
             self.xasInt = xasIntX, xasIntY
         for x,y,legend in xyList:
-            self.plotWindow.newCurve(
+            #self.plotWindow.newCurve(
+            print('plotOnDemand -- adding Curve..')
+            self.plotWindow.addCurve(
                     x=x, 
                     y=y,
                     legend=legend,
-                    xlabel=xlabel, 
-                    #xlabel=xlabel, 
-                    ylabel=None, 
-                    #ylabel=ylabel,  
                     info={}, 
-                    replot=False, 
-                    replace=False)
+                    replace=False,
+                    replot=True)
+                    #kw = {
+                    # ylabel: None,
+                    # xlabel: xlabel})
             if mapToY2:
+                # TODO: Add Y2 mapping
+                if DEBUG == 0:
+                    print ('y2 mapping not implemented yet')
+                pass
+                '''
                 specLegend = self.plotWindow.dataObjectsList[-1]
                 self.plotWindow.graph.mapToY2(specLegend)
                 mapToY2 = False
-        self.plotWindow.graph.replot()
+                '''
+        if hasattr(self.plotWindow,'graph'):
+            self.plotWindow.graph.replot()
+        else:
+            print('plotOnDemand -- replotting..')
+            self.plotWindow.replot()
         
     def addMarker(self, window, label='X MARKER', xpos=None, unit=''):
         # Add spinbox controlling the marker
@@ -1720,7 +1850,7 @@ class SumRulesWindow(qt.QMainWindow):
          
         return spinboxWidget, spinbox
 
-    def _handleGraphSignal(self, ddict):
+    def _handlePlotSignal(self, ddict):
         #if 'marker' not in ddict:
         if ddict['event'] == 'markerMoved':
             if self.tabWidget.currentIndex() == 1: # 1 -> BG tab
@@ -1977,8 +2107,6 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         box.setIcon(qt.QMessageBox.Warning)
         box.setText(msg)
         box.exec_()
-        
-        
 
 if __name__ == '__main__':
    

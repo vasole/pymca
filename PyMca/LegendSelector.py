@@ -246,7 +246,8 @@ class LegendIcon(qt.QWidget):
         self.update()
 
 #class LegendListItem(object):
-class LegendListItemWidget(qt.QWidget):
+#class LegendListItemWidget(qt.QWidget):
+class LegendListItemWidget(qt.QStyledItemDelegate):
 
     # TODO: Add Icon handling, align icons on the right
     # Notice: LegendListItem does NOT inherit
@@ -256,7 +257,9 @@ class LegendListItemWidget(qt.QWidget):
     imageType = 1
 
     def __init__(self, legend, parent=None, itemType=0):
-        qt.QWidget.__init__(self, parent)
+        #qt.QWidget.__init__(self, parent)
+        qt.QStyledItemDelegate.__init__(self, parent)
+        
         self.checkbox = qt.QCheckBox(self)
         self.checkbox.setCheckState(qt.Qt.Checked)
         
@@ -265,6 +268,7 @@ class LegendListItemWidget(qt.QWidget):
                                  qt.Qt.AlignLeft)
         
         self.icon = LegendIcon(self)
+        self.color = qt.QColor('darkyellow')
         
         itemLayout = qt.QHBoxLayout()
         itemLayout.addWidget(self.checkbox)
@@ -311,6 +315,71 @@ class LegendListItemWidget(qt.QWidget):
         self.currentCheckState = state
         self.lastCheckState    = state
 
+    def paint(self, painter, option, idx):
+        '''
+        :param painter:
+        :type painter: QPainter
+        :param option:
+        :type option: QStyleOptionViewItem
+        :param idx:
+        :type idx: QModelIndex
+
+        Here be docs..
+        '''
+        # 127 -> PyQt_PyObject, i.e. Class derived from QObject
+        #if idx.data().canConvert(127):
+        obj = idx.data().toPyObject()
+        if isinstance(obj, LegendListItemWidget):
+            if (option.state == qt.QStyle.State_Selected):
+                painter.fillRect(option.rect, option.palette.highlight())
+            obj.paint(painter, option.rect, option.palette) # Not a native QWidget function..
+        else:
+            qt.QStyledItemDelegate.paint(painter, option, idx);
+            
+    def createEditor(self, parent, option, idx):
+        obj = idx.data().toPyObject()
+        if isinstance(obj, LegendListItemWidget):
+            # QColorDialog::QColorDialog(const QColor & initial, QWidget * parent = 0)
+            # TODO: Set editor to the items color
+            colorDial = qt.QColorDialog()
+            colorDial.colorSelected.connect(self.commitColor)
+            return colorDial
+        else:
+            return qt.QStyledItemDelegate.createEditor(self, parent, option, idx)
+
+    def commitColor(self, color):
+        print('commitColor -- Received color: %s'%str(color))
+        # set modelItem to color using self.lastModelItemIdx..
+        self.commitData(self.sender())
+        self.closeEditor(self.sender())
+
+    def setEditorData(self, editor, idx):
+        obj = idx.data().toPyObject()
+        print('setEditorData -- type(obj):',type(obj))
+        if isinstance(obj, LegendListItemWidget):
+            #editor.blockSignals(True)
+            qt.QColorDialog.setCurrentColor(editor, obj.color)
+            #editor.blockSignals(False)
+        else:
+            qt.QStyledItemDelegate.setModelData(self, editor, idx)
+
+    def setModelData(self, editor, model, idx):
+        obj = idx.data().toPyObject()
+        if isinstance(obj, LegendListItemWidget):
+            # Hier werden die Daten ans Modell gesendet!
+            color = qt.QColorDialog.currentColor(editor)
+            #model.setData(idx, qt.QVariant.fromValue(color))
+            model.setData(idx, color)
+        else:
+            qt.QStyledItemDelegate.setModelData(self, editor, model, idx)
+
+    def sizeHint(self, option, idx):
+        obj = idx.data().toPyObject()
+        if isinstance(obj, LegendListItemWidget):
+            return obj.sizeHint()
+        else:
+            return qt.QStyledItemDelegate.sizeHint(self, option, idx)
+
 class LegendModel(qt.QAbstractListModel):
     def __init__(self, llist=[], parent=None):
         qt.QAbstractListModel.__init__(self, parent)
@@ -333,6 +402,12 @@ class LegendModel(qt.QAbstractListModel):
 
     def rowCount(self, modelIndex=None):
         return len(self.legendList)
+
+    def flags(self, index):
+        return qt.Qt.ItemIsEditable | qt.Qt.ItemIsEnabled
+
+    def setData(self, idx, value, role):
+        print('set Data -- To be implemented')
 
     def data(self, modelIndex, role):
         if modelIndex.isValid:
@@ -360,12 +435,13 @@ class LegendModel(qt.QAbstractListModel):
             if idx%2:
                 color = qt.QColor(qt.Qt.white)
             else:
-                color = qt.QColor(qt.Qt.lightGray)
+                color = qt.QColor(qt.Qt.lightgray)
             brush = qt.QBrush(color)
-            return qt.QVariant(brush)
+            #return qt.QVariant(brush)
+            return qt.QVariant()
         elif role == qt.Qt.ForegroundRole:
             # ForegroundRole color, must be QBrush
-            brush = qt.QBrush(qt.Qt.darkYellow)
+            brush = qt.QBrush(qt.Qt.darkyellow)
             return qt.QVariant(brush)
         elif role == qt.Qt.CheckStateRole:
             currentCheckState = item.currentCheckState
@@ -379,7 +455,7 @@ class LegendListItemDelegate(qt.QStyledItemDelegate):
     def __init__(self, parent=None):
         qt.QStyledItemDelegate.__init__(self, parent)
 
-    def paint(painter, option, idx)
+    def paint(self, painter, option, idx):
         '''
         :param painter:
         :type painter: QPainter
@@ -400,6 +476,50 @@ class LegendListItemDelegate(qt.QStyledItemDelegate):
         else:
             qt.QStyledItemDelegate.paint(painter, option, idx);
             
+    def createEditor(self, parent, option, idx):
+        obj = idx.data().toPyObject()
+        if isinstance(obj, LegendListItemWidget):
+            # QColorDialog::QColorDialog(const QColor & initial, QWidget * parent = 0)
+            # TODO: Set editor to the items color
+            colorDial = qt.QColorDialog()
+            colorDial.colorSelected.connect(self.commitColor)
+            return colorDial
+        else:
+            return qt.QStyledItemDelegate.createEditor(self, parent, option, idx)
+
+    def commitColor(self, color):
+        print('commitColor -- Received color: %s'%str(color))
+        # set modelItem to color using self.lastModelItemIdx..
+        self.commitData(self.sender())
+        self.closeEditor(self.sender())
+
+    def setEditorData(self, editor, idx):
+        obj = idx.data().toPyObject()
+        print('setEditorData -- type(obj):',type(obj))
+        if isinstance(obj, LegendListItemWidget):
+            #editor.blockSignals(True)
+            qt.QColorDialog.setCurrentColor(editor, obj.color)
+            #editor.blockSignals(False)
+        else:
+            qt.QStyledItemDelegate.setModelData(self, editor, idx)
+
+    def setModelData(self, editor, model, idx):
+        obj = idx.data().toPyObject()
+        if isinstance(obj, LegendListItemWidget):
+            # Hier werden die Daten ans Modell gesendet!
+            color = qt.QColorDialog.currentColor(editor)
+            #model.setData(idx, qt.QVariant.fromValue(color))
+            model.setData(idx, color)
+        else:
+            qt.QStyledItemDelegate.setModelData(self, editor, model, idx)
+
+    def sizeHint(self, option, idx):
+        obj = idx.data().toPyObject()
+        if isinstance(obj, LegendListItemWidget):
+            return obj.sizeHint()
+        else:
+            return qt.QStyledItemDelegate.sizeHint(self, option, idx)
+
 
 class LegendListView(qt.QListView):
 
@@ -510,7 +630,6 @@ if __name__ == '__main__':
     #win = qt.QWidget()
     #layout = qt.QVBoxLayout()
     #layout.setContentsMargins(0,0,0,0)
-
     llist = []
     for idx, (l, c, s) in enumerate(zip(legends, colors, symbols)):
         ddict = {

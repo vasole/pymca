@@ -790,7 +790,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Clear all curvers and other items from the plot
         """
-        n = range(len(self.ax.lines))
+        n = list(range(len(self.ax.lines)))
         n.reverse()
         for i in n:
             line2d = self.ax.lines[i]
@@ -799,7 +799,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.ax.clear()
 
     def clearImages(self):
-        n = range(len(self.ax.images))
+        n = list(range(len(self.ax.images)))
         n.reverse()
         for i in n:
             image = self.ax.images[i]
@@ -807,7 +807,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             del image
             del self.ax.images[i]
 
-        n = range(len(self.ax.artists))
+        n = list(range(len(self.ax.artists)))
         n.reverse()
         for i in n:
             artist = self.ax.artists[i]
@@ -820,7 +820,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Clear all curves from the plot. Not the markers!!
         """
-        n = range(len(self.ax.lines))
+        n = list(range(len(self.ax.lines)))
         n.reverse()
         for i in n:
             line2d = self.ax.lines[i]
@@ -835,7 +835,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Clear all markers from the plot. Not the curves!!
         """
-        n = range(len(self.ax.lines))
+        n = list(range(len(self.ax.lines)))
         n.reverse()
         for i in n:
             line2d = self.ax.lines[i]
