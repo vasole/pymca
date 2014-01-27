@@ -367,7 +367,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 self.roiDockWidget = qt.QDockWidget(self)
                 self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
                 self.roiDockWidget.setWidget(self.roiWidget)
-                if w > h:
+                if w > (1.25 * h):
                     self.addDockWidget(qt.Qt.LeftDockWidgetArea,
                                        self.roiDockWidget)
                 else:
@@ -533,13 +533,15 @@ class PlotWindow(PlotWidget.PlotWidget):
         if DEBUG:
             print("_graphSignalReceived", ddict)
         if ddict['event'] in ['markerMoved', 'markerSelected']:
-            self._handleROIMarkerEvent(ddict)
+            label = ddict['label'] 
+            if label in ['ROI min', 'ROI max']:            
+                self._handleROIMarkerEvent(ddict)
         if ddict['event'] in ["curveClicked", "legendClicked"]:
             legend = ddict["label"]
             self.setActiveCurve(legend)
         #make sure the signal is forwarded
-        super(PlotWindow, self).graphCallback(ddict)
-            
+        #super(PlotWindow, self).graphCallback(ddict)
+        self.sigPlotSignal.emit(ddict)   
 
     def setActiveCurve(self, legend):
         PlotWidget.PlotWidget.setActiveCurve(self, legend)

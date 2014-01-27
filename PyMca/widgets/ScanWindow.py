@@ -75,6 +75,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                          roi=roi,
                                          fit=fit,
                                          **kw)
+        self._togglePointsSignal()
         self.setWindowType("SCAN")
         # this two objects are the same
         self.dataObjectsList = self._curveList
@@ -104,7 +105,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         self.outputFilter = None
 
         #signals
-        self.setCallback(self._graphSignalReceived)
+        # this one was made in the base class
+        #self.setCallback(self.graphCallback)
         if 1:
             self.customFit = SimpleFitGUI.SimpleFitGUI()
             self.connect(self.scanFit,
@@ -113,9 +115,6 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.connect(self.customFit,
                          qt.SIGNAL('SimpleFitSignal') ,
                          self._customFitSignalReceived)
-        self.dataObjectsDict = {}
-        self.dataObjectsList = []
-
         if 1:
             self.fitButtonMenu = qt.QMenu()
             self.fitButtonMenu.addAction(QString("Simple Fit"),
@@ -329,9 +328,6 @@ class ScanWindow(PlotWindow.PlotWindow):
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
                                     symbol=symbol,maptoy2=maptoy2, replot=False)
-        if replot:
-            self.replot()
-            self.resetZoom()
         self.dataObjectsList = self._curveList
         if activeCurve is None:
             if len(self._curveList) > 0:
@@ -339,7 +335,11 @@ class ScanWindow(PlotWindow.PlotWindow):
             ddict = {}
             ddict['event'] = "curveClicked"
             ddict['label'] = activeCurve
-            self._graphSignalReceived(ddict)
+            self.graphCallback(ddict)
+        elif replot:
+            #self.replot()
+            self.resetZoom()
+            
             
     def _removeSelection(self, selectionlist):
         if DEBUG:
@@ -416,28 +416,30 @@ class ScanWindow(PlotWindow.PlotWindow):
                 print("Unhandled marker %s" % label)
                 return
 
-    def _graphSignalReceived(self, ddict):
+    def graphCallback(self, ddict):
         if DEBUG:
-            print("_graphSignalReceived", ddict)
+            print("graphCallback", ddict)
         if ddict['event'] in ['markerMoved', 'markerSelected']:
-            return self._handleMarkerEvent(ddict)
-        if ddict['event'] == "MouseAt":
-            if ddict['xcurve'] is not None:
-                if self.__toggleCounter == 0:
+            self._handleMarkerEvent(ddict)
+        elif ddict['event'] in ["mouseMoved", "MouseAt"]:
+            if 1:
+                print("NOT YET HANDLED")
+            else:
+                if ddict['xcurve'] is not None:
+                    if self.__toggleCounter == 0:
+                        self._xPos.setText('%.7g' % ddict['x'])
+                        self._yPos.setText('%.7g' % ddict['y'])
+                    elif ddict['distance'] < 20:
+                        #print ddict['point'], ddict['distance'] 
+                        self._xPos.setText('%.7g' % ddict['xcurve'])
+                        self._yPos.setText('%.7g' % ddict['ycurve'])
+                    else:
+                        self._xPos.setText('----')
+                        self._yPos.setText('----')
+                else:
                     self._xPos.setText('%.7g' % ddict['x'])
                     self._yPos.setText('%.7g' % ddict['y'])
-                elif ddict['distance'] < 20:
-                    #print ddict['point'], ddict['distance'] 
-                    self._xPos.setText('%.7g' % ddict['xcurve'])
-                    self._yPos.setText('%.7g' % ddict['ycurve'])
-                else:
-                    self._xPos.setText('----')
-                    self._yPos.setText('----')
-            else:
-                self._xPos.setText('%.7g' % ddict['x'])
-                self._yPos.setText('%.7g' % ddict['y'])
-            return
-        if ddict['event'] in ["curveClicked", "legendClicked"]:
+        elif ddict['event'] in ["curveClicked", "legendClicked"]:
             legend = ddict["label"]
             if legend is None:
                 if len(self.dataObjectsList):
@@ -468,14 +470,10 @@ class ScanWindow(PlotWindow.PlotWindow):
             if self.scanWindowInfoWidget is not None:
                 self.scanWindowInfoWidget.updateFromDataObject\
                                                             (dataObject)
-            return
-
-        if ddict['event'] == "RemoveCurveEvent":
+        elif ddict['event'] == "RemoveCurveEvent":
             legend = ddict['legend']
             self.removeCurves([legend])
-            return
-        
-        if ddict['event'] == "RenameCurveEvent":
+        elif ddict['event'] == "RenameCurveEvent":
             legend = ddict['legend']
             newlegend = ddict['newlegend']
             if legend in self.dataObjectsDict:
@@ -486,7 +484,11 @@ class ScanWindow(PlotWindow.PlotWindow):
                 self.newCurve(self.dataObjectsDict[newlegend].x[0],
                               self.dataObjectsDict[newlegend].y[0],
                               legend=self.dataObjectsDict[newlegend].info['legend'])
-            return
+
+        #make sure the plot signal is forwarded because we have overwritten
+        #its handling
+        self.sigPlotSignal.emit(ddict)
+
 
     def _customFitSignalReceived(self, ddict):
         if ddict['event'] == "FitFinished":
@@ -506,7 +508,7 @@ class ScanWindow(PlotWindow.PlotWindow):
 
     def _scanFitSignalReceived(self, ddict):
         if DEBUG:
-            print("_graphSignalReceived", ddict)
+            print("_scanFitSignalReceived", ddict)
         if ddict['event'] == "EstimateFinished":
             return
         if ddict['event'] == "FitFinished":
