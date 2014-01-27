@@ -304,7 +304,8 @@ class LegendListItemWidget(qt.QItemDelegate):
 
     def __init__(self, parent=None, itemType=0):
         #qt.QWidget.__init__(self, parent)
-        qt.QStyledItemDelegate.__init__(self, parent)
+        #qt.QStyledItemDelegate.__init__(self, parent)
+        qt.QItemDelegate.__init__(self, parent)
         
         self.checkbox = qt.QCheckBox()
         self.checkbox.setCheckState(qt.Qt.Checked)
@@ -427,43 +428,36 @@ class LegendListItemWidget(qt.QItemDelegate):
         self.icon.paint(painter, iconRect, option.palette)
         self.icon.resize(iconRect.size())
         self.icon.move(iconRect.topRight())
-            
+
     def createEditor(self, parent, option, idx):
-        obj = idx.data().toPyObject()
-        if isinstance(obj, LegendListItemWidget):
-            # QColorDialog::QColorDialog(const QColor & initial, QWidget * parent = 0)
-            # TODO: Set editor to the items color
-            colorDial = qt.QColorDialog()
-            colorDial.colorSelected.connect(self.commitColor)
-            return colorDial
-        else:
-            return qt.QStyledItemDelegate.createEditor(self, parent, option, idx)
+        # QColorDialog::QColorDialog(const QColor & initial, QWidget * parent = 0)
+        # TODO: Set editor to the items color
+        colorDial = qt.QColorDialog()
+        colorDial.colorSelected.connect(self.commitColor)
+        return colorDial
 
     def commitColor(self, color):
         print('commitColor -- Received color: %s'%str(color))
         # set modelItem to color using self.lastModelItemIdx..
-        self.commitData(self.sender())
-        self.closeEditor(self.sender())
+        self.commitData.emit(self.sender())
+        self.closeEditor.emit(self.sender(),
+                              qt.QAbstractItemDelegate.NoHint)
 
     def setEditorData(self, editor, idx):
-        obj = idx.data().toPyObject()
-        print('setEditorData -- type(obj):',type(obj))
-        if isinstance(obj, LegendListItemWidget):
-            #editor.blockSignals(True)
-            qt.QColorDialog.setCurrentColor(editor, obj.color)
-            #editor.blockSignals(False)
-        else:
-            qt.QStyledItemDelegate.setModelData(self, editor, idx)
+        if not idx.isValid():
+            raise IndexError('setEditorData -- invalid index')
+        iconColor = idx.data(LegendModel.iconColorRole)
+        print('setEditorData -- Set editor to color: %s'%str(iconColor))
+        #editor.blockSignals(True)
+        qt.QColorDialog.setCurrentColor(editor, iconColor)
+        #editor.blockSignals(False)
 
     def setModelData(self, editor, model, idx):
-        obj = idx.data().toPyObject()
-        if isinstance(obj, LegendListItemWidget):
-            # Hier werden die Daten ans Modell gesendet!
-            color = qt.QColorDialog.currentColor(editor)
-            #model.setData(idx, qt.QVariant.fromValue(color))
-            model.setData(idx, color)
-        else:
-            qt.QStyledItemDelegate.setModelData(self, editor, model, idx)
+        if isinstance(editor, qt.QColorDialog):
+            value = qt.QColorDialog.currentColor(editor)
+            role  = LegendModel.iconColorRole
+        res = model.setData(idx, value, role)
+        print('setModelData -- change accepted? %s!'%str(res))
 
     def sizeHint(self, option, idx):
         #return qt.QSize(68,24)
@@ -478,9 +472,9 @@ class LegendListItemWidget(qt.QItemDelegate):
         return qt.QSize(height, width)
 
 class LegendModel(qt.QAbstractListModel):
-    iconColorRole = qt.Qt.UserRole + 0
+    iconColorRole     = qt.Qt.UserRole + 0
     iconLineWidthRole = qt.Qt.UserRole + 1
-    iconSymbolRole = qt.Qt.UserRole + 2
+    iconSymbolRole    = qt.Qt.UserRole + 2
     
     def __init__(self, llist=[], parent=None):
         qt.QAbstractListModel.__init__(self, parent)
@@ -507,9 +501,6 @@ class LegendModel(qt.QAbstractListModel):
     def flags(self, index):
         return qt.Qt.ItemIsEditable | qt.Qt.ItemIsEnabled
 
-    def setData(self, idx, value, role):
-        print('set Data -- To be implemented')
-
     def data(self, modelIndex, role):
         if modelIndex.isValid:
             idx = modelIndex.row()
@@ -517,7 +508,7 @@ class LegendModel(qt.QAbstractListModel):
             return qt.QVariant()
         if idx >= len(self.legendList):
             #raise IndexError('list index out of range')
-            print('List index out of range, idx: %d'%idx)
+            print('data -- List index out of range, idx: %d'%idx)
             return qt.QVariant()
         
         item = self.legendList[idx]
@@ -527,8 +518,9 @@ class LegendModel(qt.QAbstractListModel):
             #return qt.QVariant(legend)
             return legend
         elif role == qt.Qt.SizeHintRole:
-            size = qt.QSize(200,50)
-            return qt.QVariant(size)
+            #size = qt.QSize(200,50)
+            print('LegendModel -- size hint role not implemented')
+            return qt.QSize()
         elif role == qt.Qt.TextAlignmentRole:
             alignment = qt.Qt.AlignVCenter | qt.Qt.AlignLeft
             return alignment
@@ -561,9 +553,71 @@ class LegendModel(qt.QAbstractListModel):
             print('Unkown role requested: %s',str(role))
             return None
 
-    def setData(self, idx, value, role):
-        # TO BE CONTINUED..
-        pass
+    def setData(self, modelIndex, value, role):
+        if modelIndex.isValid:
+            idx = modelIndex.row()
+        else:
+            return None
+        if idx >= len(self.legendList):
+            #raise IndexError('list index out of range')
+            print('setData -- List index out of range, idx: %d'%idx)
+            return None
+
+        item = self.legendList[idx]
+        try:
+            if role == qt.Qt.DisplayRole:
+                # Set legend
+                item[0] = str(value)
+            elif role == self.iconColorRole:
+                item[1]['color'] = qt.QColor(value)
+            elif role == self.iconLineWidthRole:
+                item[1]['linewidth'] = int(value)
+            elif role == self.iconSymbolRole:
+                item[1]['symbol'] = str(value)
+        except ValueError:
+            if DEBUG == 1:
+                print('Conversion failed:'
+                     +'\n\tvalue:',value
+                     +'\n\trole:',role)
+        # Can that be right? Read docs again..
+        self.dataChanged.emit(modelIndex, modelIndex)
+        return True
+
+    def insertRows(self, row, count, modelIndex):
+        '''        
+        :param row: After which row comes the insert 
+        :type row: int
+        :param count: How many items are inserted
+        :type count: int
+        :param modelIndex: Check for children
+        '''
+        print('insertRows')
+        length = len(self.legendList)
+        if row < 0 or row >= length:
+            self.endInsertingRows()
+            raise IndexError('Index out of range -- '
+                            +'idx: %d, len: %d'%(idx, length))
+        qt.QAbstractListModel.beginInsertingRows(self,
+                                                 modelIndex,
+                                                 row,
+                                                 row+count)
+        head = self.legendList[0:row]
+        tail = self.legendList[row:]
+        new  = []
+        for child in modelIndex.children():
+            legend, icon = child
+            item = (legend,
+                    icon,
+                    checkState,
+                    curveType)
+            new.append(item)
+        self.legendList = head + new + tail
+        qt.QAbstractListModel.endInsertRows(self)
+        return True
+
+    def removeRows(self, row, count, modelIndex):
+        print('removeRows')
+        
 
 class LegendListView(qt.QListView):
 
