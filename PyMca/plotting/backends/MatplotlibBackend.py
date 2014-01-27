@@ -69,36 +69,54 @@ class MatplotlibGraph(FigureCanvas):
             #self.fig.set_facecolor(color)
             self.fig.set_facecolor("w")
             # that's it
-        self.ax = self.fig.add_axes([.15, .15, .75, .75], label="left")
-        self.ax2 = self.ax.twinx()
-        """
-    def twinx(self):
-        call signature::
+        if 1:
+            #this almost works
+            """
+        def twinx(self):
+            call signature::
 
-          ax = twinx()
+              ax = twinx()
 
-        create a twin of Axes for generating a plot with a sharex
-        x-axis but independent y axis.  The y-axis of self will have
-        ticks on left and the returned axes will have ticks on the
-        right
-        ax2 = self.fig.add_axes(self.get_position(True), sharex=self,
-            frameon=False)
-        ax2.yaxis.tick_right()
-        ax2.yaxis.set_label_position('right')
-        ax2.yaxis.set_offset_position('right')
-        self.ax.yaxis.tick_left()
-        ax2.xaxis.set_visible(False)
-        return ax2
-        """
-        self.ax2.set_label("right")
+            create a twin of Axes for generating a plot with a sharex
+            x-axis but independent y axis.  The y-axis of self will have
+            ticks on left and the returned axes will have ticks on the
+            right
+            ax2 = self.fig.add_axes(self.get_position(True), sharex=self,
+                frameon=False)
+            ax2.yaxis.tick_right()
+            ax2.yaxis.set_label_position('right')
+            ax2.yaxis.set_offset_position('right')
+            self.ax.yaxis.tick_left()
+            ax2.xaxis.set_visible(False)
+            return ax2
+            """
+            self.ax = self.fig.add_axes([.15, .15, .75, .75], label="left")
+            self.ax2 = self.ax.twinx()
+            self.ax2.set_label("right")
 
-        # critical for picking!!!!
-        self.ax2.set_zorder(0)
-        self.ax2.set_autoscaley_on(True)
-        self.ax.set_zorder(1)
-        #this works but the figure color is left
-        self.ax.set_axis_bgcolor('none')
-        self.fig.sca(self.ax)
+            # critical for picking!!!!
+            self.ax2.set_zorder(0)
+            self.ax2.set_autoscaley_on(True)
+            self.ax.set_zorder(1)
+            #this works but the figure color is left
+            self.ax.set_axis_bgcolor('none')
+            self.fig.sca(self.ax)
+        else:
+            #this almost works
+            self.ax2 = self.fig.add_axes([.15, .15, .75, .75],
+                                         axisbg="w",
+                                         label="right",
+                                         frameon=False)
+            self.ax = self.fig.add_axes(self.ax2.get_position(),
+                                        sharex=self.ax2,
+                                        label="left",
+                                        frameon=True)
+            self.ax2.yaxis.tick_right()
+            self.ax2.xaxis.set_visible(False)
+            self.ax2.yaxis.set_label_position('right')
+            self.ax2.yaxis.set_offset_position('right')
+            self.ax.set_axis_bgcolor('none')
+
         # this respects aspect size
         # self.ax = self.fig.add_subplot(111, aspect='equal')
         # This should be independent of Qt
@@ -146,6 +164,9 @@ class MatplotlibGraph(FigureCanvas):
         self._callback = callbackFuntion
 
     def onPick(self, event):
+        # Unfortunately only the artists on the top axes
+        # can be picked -> A legend handling widget is
+        # needed
         middleButton = 2
         rightButton = 3
         button = event.mouseevent.button 
@@ -1155,12 +1176,17 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     continue
                 if label == legend:
                     handle = line2d
-            for line2d in self.ax2.lines:
-                label = line2d.get_label()
-                if label.startswith("__MARKER__"):
-                    continue
-                if label == legend:
-                    handle = line2d
+                    axes = self.ax
+                    break
+            if handle is None:
+                for line2d in self.ax2.lines:
+                    label = line2d.get_label()
+                    if label.startswith("__MARKER__"):
+                        continue
+                    if label == legend:
+                        handle = line2d
+                        axes = self.ax2
+                        break
         if handle is not None:
             handle.set_color('k')
         else:
@@ -1169,14 +1195,34 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             if self._oldActiveCurve._plot_info['label'] != legend:
                 color = self._oldActiveCurve._plot_info['color']
                 self._oldActiveCurve.set_color(color)
+        elif self._oldActiveCurve in self.ax2.lines:
+            if self._oldActiveCurve._plot_info['label'] != legend:
+                color = self._oldActiveCurve._plot_info['color']
+                self._oldActiveCurve.set_color(color)
         elif self._oldActiveCurveLegend is not None:
             if self._oldActiveCurveLegend != handle._plot_info['label']:
+                done = False
                 for line2d in self.ax.lines:
                     label = line2d.get_label()
                     if label == self._oldActiveCurveLegend:
                         color = line2d._plot_info['color']
                         line2d.set_color(color)
+                        done = True
                         break
+                if not done:
+                    for line2d in self.ax2.lines:
+                        label = line2d.get_label()
+                        if label == self._oldActiveCurveLegend:
+                            color = line2d._plot_info['color']
+                            line2d.set_color(color)
+                            break
+        #update labels according to active curve???
+        if hasattr(handle, "_plot_info"):
+            xLabel = handle._plot_info.get("xlabel", None)
+            yLabel = handle._plot_info.get("ylabel", None)
+            if (xLabel is not None) and (yLabel is not None):
+                axes.set_xlabel(xLabel)
+                axes.set_ylabel(yLabel)
         self._oldActiveCurve = handle
         self._oldActiveCurveLegend = handle.get_label()
         if replot:
