@@ -743,12 +743,30 @@ class MatplotlibGraph(FigureCanvas):
             xmax = max(xmax, x.max())
             ymin = min(ymin, y.min())
             ymax = max(ymax, y.max())
+
         if xmin is None:
             xmin = 0
             xmax = 1
             ymin = 0
             ymax = 1
-        if DEBUG:
+
+        for artist in axes.images:
+            x0, x1, y0, y1 = artist.get_extent()
+            xmin = min(xmin, x0)
+            xmax = max(xmax, x1)
+            ymin = min(ymin, y0)
+            ymax = max(ymax, y1)
+
+        for artist in axes.artists:
+            label = artist.get_label()
+            if label.startswith("__IMAGE__"):
+                x0, x1, y0, y1 = artist.get_extent()
+                ymin = min(ymin, y0, y1)
+                ymax = max(ymax, y1, y0)
+                xmin = min(xmin, x0)
+                xmax = max(xmax, x1)
+
+        if 1 or DEBUG:
             print("CALCULATED LIMITS = ", xmin, xmax, ymin, ymax) 
         return xmin, xmax, ymin, ymax
 
@@ -1395,7 +1413,26 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.ax.set_ylim(ymin, ymax)
         elif 1:
             #the normalization can be a source of time waste
-            image = AxesImage(self.ax,
+            # Two possibilities, we receive data or a ready to show image
+            if len(data.shape) == 3:
+                if data.shape[-1] == 4:
+                    # force alpha(?)
+                    data[:,:,3] = 255
+            if len(data.shape) == 3:
+                # RGBA image
+                image = AxesImage(self.ax,
+                              label="__IMAGE__"+legend,
+                              interpolation='nearest',
+                              #origin=
+                              #cmap=cmap,
+                              extent=extent,
+                              picker=picker,
+                              zorder=z)
+                              #norm=Normalize(data.min(), data.max()))
+                image.set_data(data)
+            else:
+                # try as data
+                image = AxesImage(self.ax,
                               label="__IMAGE__"+legend,
                               interpolation='nearest',
                               #origin=
@@ -1404,7 +1441,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                               picker=picker,
                               zorder=z,
                               norm=Normalize(data.min(), data.max()))
-            image.set_data(data)
+                image.set_data(data)
             self.ax.add_artist(image)
             #self.ax.draw_artist(image)
         image._plot_info = {'label':legend,
