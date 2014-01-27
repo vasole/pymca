@@ -744,14 +744,13 @@ class MatplotlibGraph(FigureCanvas):
             ymin = min(ymin, y.min())
             ymax = max(ymax, y.max())
 
-        if xmin is None:
-            xmin = 0
-            xmax = 1
-            ymin = 0
-            ymax = 1
-
         for artist in axes.images:
             x0, x1, y0, y1 = artist.get_extent()
+            if (xmin is None):
+                xmin = x0
+                xmax = x1
+                ymin = min(y0, y1)
+                ymax = max(y0, y1)
             xmin = min(xmin, x0)
             xmax = max(xmax, x1)
             ymin = min(ymin, y0)
@@ -761,10 +760,21 @@ class MatplotlibGraph(FigureCanvas):
             label = artist.get_label()
             if label.startswith("__IMAGE__"):
                 x0, x1, y0, y1 = artist.get_extent()
+                if (xmin is None):
+                    xmin = x0
+                    xmax = x1
+                    ymin = min(y0, y1)
+                    ymax = max(y0, y1)
                 ymin = min(ymin, y0, y1)
                 ymax = max(ymax, y1, y0)
                 xmin = min(xmin, x0)
                 xmax = max(xmax, x1)
+
+        if xmin is None:
+            xmin = 0
+            xmax = 1
+            ymin = 0
+            ymax = 1
 
         if 1 or DEBUG:
             print("CALCULATED LIMITS = ", xmin, xmax, ymin, ymax) 
@@ -1420,6 +1430,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     data[:,:,3] = 255
             if len(data.shape) == 3:
                 # RGBA image
+                extent = (xmin, xmax, ymin, ymax)
                 image = AxesImage(self.ax,
                               label="__IMAGE__"+legend,
                               interpolation='nearest',
