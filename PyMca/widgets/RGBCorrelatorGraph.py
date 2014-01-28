@@ -37,7 +37,7 @@ from PyMca import PyMcaPrintPreview
 from PyMca import PyMcaDirs
 
 QTVERSION = qt.qVersion()
-DEBUG = True
+DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
     def __init__(self, parent = None, selection=False, aspect=False,
