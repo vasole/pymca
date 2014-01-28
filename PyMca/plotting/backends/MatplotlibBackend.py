@@ -713,7 +713,6 @@ class MatplotlibGraph(FigureCanvas):
         if (xmin2 != 0) or (xmax2 != 1):
             xmin = min(xmin, xmin2)
             xmax = max(xmax, xmax2)
-        print("FINAL LIMITS = ", xmin, xmax, ymin, ymax)
         self.setLimits(xmin, xmax, ymin, ymax)
         #self.ax2.set_autoscaley_on(True)
         self._zoomStack = []
@@ -1218,7 +1217,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Update plot
         """
-        print "CALLED"
         self.graph.draw()
         """
         if QT:
