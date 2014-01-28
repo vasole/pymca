@@ -293,6 +293,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self._keepDataAspectRatioFlag = False
             self.aspectButton.setIcon(self.solidCircleIcon)
             self.aspectButton.setToolTip("Keep data aspect ratio")
+        super(PlotWindow, self).keepDataAspectRatio(self._keepDataAspectRatioFlag)
                 
     def _zoomReset(self):
         if DEBUG:
