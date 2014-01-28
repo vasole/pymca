@@ -646,7 +646,11 @@ class MatplotlibGraph(FigureCanvas):
             self._drawingPatch.set_xy(self._mouseData)
 
         if self._x0 is None:
-            print("How can it be here???")
+            if event.inaxes != self.ax:
+                if DEBUG:
+                    print("on MouseReleased RETURNING")
+            else:
+                print("How can it be here???")
             return
 
         if self._zoomRectangle is None:
@@ -1535,7 +1539,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type flag: Boolean, default True
         """
         if flag:
-            for axes in [self.ax]
+            for axes in [self.ax]:
                 if axes.get_aspect() not in ['auto', None]:
                     axes.set_aspect('auto')
                     self.resetZoom()
@@ -1599,7 +1603,6 @@ if __name__ == "__main__":
     widget.ax.axis('auto') # appropriate for curves, no aspect ratio
     #w.widget.ax.axis('equal') # candidate for keepting aspect ratio
     #w.widget.ax.axis('scaled') # candidate for keepting aspect ratio
-    print("aspect = %s" % widget.ax.get_aspect())
     w.insertXMarker(50., label="Label", color='pink', draggable=True)
     w.resetZoom()
     #print(w.widget.ax.get_images())
