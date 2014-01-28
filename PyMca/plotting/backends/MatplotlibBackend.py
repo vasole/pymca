@@ -700,14 +700,16 @@ class MatplotlibGraph(FigureCanvas):
         self.ymin = ymin
         self.ymax = ymax
         self.limitsSet = True
+        #self.draw()
 
     def resetZoom(self):
         xmin, xmax, ymin, ymax = self.getDataLimits('left')
         xmin2, xmax2, ymin2, ymax2 = self.getDataLimits('right')
-        self.ax2.set_ylim(ymin2, ymax2)
+        #self.ax2.set_ylim(ymin2, ymax2)
         if (xmin2 != 0) or (xmax2 != 1):
             xmin = min(xmin, xmin2)
             xmax = max(xmax, xmax2)
+        print("FINAL LIMITS = ", xmin, xmax, ymin, ymax)
         self.setLimits(xmin, xmax, ymin, ymax)
         #self.ax2.set_autoscaley_on(True)
         self._zoomStack = []
@@ -775,9 +777,42 @@ class MatplotlibGraph(FigureCanvas):
             xmax = 1
             ymin = 0
             ymax = 1
+        print("BEFORE CALCULATED LIMITS = ", xmin, xmax, ymin, ymax)
 
-        if 1 or DEBUG:
-            print("CALCULATED LIMITS = ", xmin, xmax, ymin, ymax) 
+        xSize = float(xmax - xmin)
+        ySize = float(ymax - ymin)
+        A = self.ax.get_aspect()
+        if A != 'auto':
+            figW, figH = self.ax.get_figure().get_size_inches()
+            figAspect = figH / figW
+
+            #l, b, w, h = self.ax.get_position(original=True).bounds
+            #box_aspect = figAspect * (h / float(w))
+            
+            #dataRatio = box_aspect / A
+            dataRatio = (ySize / xSize) * A
+
+            y_expander = dataRatio - figAspect
+            # If y_expander > 0, the dy/dx viewLim ratio needs to increase
+            if abs(y_expander) < 0.005:
+                #good enough
+                pass
+            else:
+                # this works for any data ratio
+                if y_expander < 0:
+                    #print("adjust_y")
+                    deltaY = xSize * (figAspect / A) - ySize
+                    yc = 0.5 * (ymin + ymax)
+                    ymin = yc - (ySize + deltaY) * 0.5
+                    ymax = yc + (ySize + deltaY) * 0.5
+                else:
+                    #print("ADJUST X")
+                    deltaX = ySize * (A / figAspect) - xSize
+                    xc = 0.5 * (xmin + xmax)
+                    xmin = xc - (xSize + deltaX) * 0.5
+                    xmax = xc + (xSize + deltaX) * 0.5
+        if DEBUG:
+            print("CALCULATED LIMITS = ", xmin, xmax, ymin, ymax)
         return xmin, xmax, ymin, ymax
 
 class MatplotlibBackend(PlotBackend.PlotBackend):
@@ -821,7 +856,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                            origin='upper',
                            cmap=cmap,
                            norm=Normalize(0, 1000*1000.))
-
     def addCurve(self, x, y, legend, info=None, replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
@@ -850,7 +884,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         brush = color
         style = info.get('plot_line_style', '-')
         linewidth = 1
-        axesLabel = info.get('plot_axes', 'left')
+        axesLabel = info.get('plot_yaxis', 'left')
         if axesLabel == "left":
             axes = self.ax
         else:
@@ -1495,6 +1529,22 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.ax.grid(False)
         self.replot()
 
+    def keepDataAspectRatio(self, flag=True):
+        """
+        :param flag:  True to respect data aspect ratio
+        :type flag: Boolean, default True
+        """
+        if flag:
+            for axes in [self.ax]
+                if axes.get_aspect() not in ['auto', None]:
+                    axes.set_aspect('auto')
+                    self.resetZoom()
+        else:
+            for axes in [self.ax]:
+                if axes.get_aspect() not in [1.0]:
+                     axes.set_aspect(1.0)
+                     self.resetZoom()
+
 def main(parent=None):
     from .. import Plot
     x = numpy.arange(100.)
@@ -1503,7 +1553,7 @@ def main(parent=None):
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x + 100, -x * x, "To set Active")
     #info = {}
-    #info['plot_axes'] = 'right'
+    #info['plot_yaxis'] = 'right'
     #plot.addCurve(x + 100, -x * x + 500, "RIGHT", info=info)
     #print("Active curve = ", plot.getActiveCurve())
     print("X Limits) = ", plot.getGraphXLimits())
