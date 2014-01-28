@@ -139,7 +139,7 @@ class MyPicker(Qwt5.QwtPlotPicker):
 class MaskImageWidget(qt.QWidget):
     def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
                  imageicons=True, standalonesave=True, usetab=False,
-                 profileselection=False, scanwindow=None):
+                 profileselection=False, scanwindow=None, aspect=False):
         qt.QWidget.__init__(self, parent)
         if QTVERSION < '4.0.0':
             self.setIcon(qt.QPixmap(IconDict['gioconda16']))
@@ -176,6 +176,7 @@ class MaskImageWidget(qt.QWidget):
         self.__useTab = usetab
         self.mainTab = None
 
+        self.__aspect = aspect
         self._build(standalonesave, profileselection=profileselection)
         self._profileSelectionWindow = None
         self._profileScanWindow = scanwindow
@@ -217,6 +218,7 @@ class MaskImageWidget(qt.QWidget):
                                                    imageicons=self.__imageIconsFlag,
                                                    standalonesave=False,
                                                    standalonezoom=False,
+                                                   aspect=self.__aspect,
                                                    profileselection=profileselection)
             self.mainTab.addTab(self.graphWidget, 'IMAGES')
         else:
@@ -226,7 +228,8 @@ class MaskImageWidget(qt.QWidget):
                                                    colormap=True,
                                                    imageicons=self.__imageIconsFlag,
                                                    standalonesave=True,
-                                                   standalonezoom=False)
+                                                   standalonezoom=False,
+                                                   aspect=self.__aspect)
                 standalonesave = False
             else:
                 self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
@@ -235,8 +238,8 @@ class MaskImageWidget(qt.QWidget):
                                                    imageicons=self.__imageIconsFlag,
                                                    standalonesave=False,
                                                    standalonezoom=False,
-                                                   profileselection=profileselection)
-
+                                                   profileselection=profileselection,
+                                                   aspect=self.__aspect)
         #for easy compatibility with RGBCorrelatorGraph
         self.graph = self.graphWidget.graph
 
@@ -1313,9 +1316,10 @@ class MaskImageWidget(qt.QWidget):
     def plotImage(self, update=True):
         if self.__imageData is None:
             self.graphWidget.graph.clear()
-            self.graphWidget.picker.data = None
-            self.graphWidget.picker.xScale = None
-            self.graphWidget.picker.yScale = None
+            if 0:
+                self.graphWidget.picker.data = None
+                self.graphWidget.picker.xScale = None
+                self.graphWidget.picker.yScale = None
             return
 
         if update:
@@ -1343,15 +1347,15 @@ class MaskImageWidget(qt.QWidget):
                 xlimits = self.graphWidget.graph.getXAxisLimits()
             print("self._xScale", self._xScale)
             print("self._yScale", self._yScale)
+        
         self.graphWidget.graph.addImage(self.__pixmap,
-        #self.graphWidget.graph.addImage(self.__imageData,
                                         "image",
                                         #xmirror = 0,
                                         #ymirror = not self._y1AxisInverted,
-                                        xScale = (0., 1.0),
-                                        yScale = (0., 1.))
-                                        #xScale = self._xScale,
-                                        #yScale = self._yScale)
+                                        #xScale = (0., 1.0),
+                                        #yScale = (0., 1.))
+                                        xScale = self._xScale,
+                                        yScale = self._yScale)
         if 0:
             if not self.graphWidget.graph.isYAxisAutoScale():
                 self.graphWidget.graph.setYAxisLimits(ylimits[0], ylimits[1],
@@ -1582,16 +1586,10 @@ class MaskImageWidget(qt.QWidget):
                               self.colormapDialog.minValue, 
                               self.colormapDialog.maxValue,
                               minData, maxData)
-        if QTVERSION < '4.0.0':
-            self.colormapDialog.setCaption("Colormap Dialog")
-            self.connect(self.colormapDialog,
-                         qt.PYSIGNAL("ColormapChanged"),
-                         self.updateColormap)
-        else:
-            self.colormapDialog.setWindowTitle("Colormap Dialog")
-            self.connect(self.colormapDialog,
-                         qt.SIGNAL("ColormapChanged"),
-                         self.updateColormap)
+        self.colormapDialog.setWindowTitle("Colormap Dialog")
+        self.connect(self.colormapDialog,
+                     qt.SIGNAL("ColormapChanged"),
+                     self.updateColormap)
         self.colormapDialog._update()
 
     def updateColormap(self, *var):
@@ -1958,7 +1956,6 @@ def test():
                        qt.SIGNAL("lastWindowClosed()"),
                        app,
                        qt.SLOT('quit()'))
-    container = MaskImageWidget()
     if len(sys.argv) > 1:
         if sys.argv[1].endswith('edf') or\
            sys.argv[1].endswith('cbf') or\
@@ -1966,21 +1963,22 @@ def test():
            sys.argv[1].endswith('spe') or\
            sys.argv[1].endswith('tif') or\
            sys.argv[1].endswith('tiff'):
-            container = MaskImageWidget(profileselection=True)
+            container = MaskImageWidget(profileselection=True, aspect=True)
             import EdfFile
             edf = EdfFile.EdfFile(sys.argv[1])
             data = edf.GetData(0)
             container.setImageData(data)
         else:
+            container = MaskImageWidget(aspect=True)
             image = qt.QImage(sys.argv[1])
             #container.setQImage(image, image.width(),image.height())
             container.setQImage(image, 200, 200)
     else:
-        container = MaskImageWidget(profileselection=True)
-        data = numpy.arange(400 * 200).astype(numpy.int32)
-        data.shape = 400, 200
+        container = MaskImageWidget(profileselection=True, aspect=True)
+        data = numpy.arange(400 * 400).astype(numpy.int32)
+        data.shape = 400, 400
         #data = numpy.eye(200)
-        container.setImageData(data, xScale=(200, 800), yScale=(400., 800.))
+        container.setImageData(data, xScale=(0, 1), yScale=(0., 1.))
         #data.shape = 100, 400
         #container.setImageData(None)
         #container.setImageData(data)

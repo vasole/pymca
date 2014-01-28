@@ -723,7 +723,7 @@ class MatplotlibGraph(FigureCanvas):
             axes = self.ax2
         else:
             axes = self.ax
-        if 1 or DEBUG:
+        if DEBUG:
             print("CALCULATING limits ", axes.get_label())
         xmin = None
         for line2d in axes.lines:
@@ -781,7 +781,6 @@ class MatplotlibGraph(FigureCanvas):
             xmax = 1
             ymin = 0
             ymax = 1
-        print("BEFORE CALCULATED LIMITS = ", xmin, xmax, ymin, ymax)
 
         xSize = float(xmax - xmin)
         ySize = float(ymax - ymin)
@@ -1540,14 +1539,14 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         if flag:
             for axes in [self.ax]:
-                if axes.get_aspect() not in ['auto', None]:
-                    axes.set_aspect('auto')
+                if axes.get_aspect() not in [1.0]:
+                    axes.set_aspect(1.0)
                     self.resetZoom()
         else:
             for axes in [self.ax]:
-                if axes.get_aspect() not in [1.0]:
-                     axes.set_aspect(1.0)
-                     self.resetZoom()
+                if axes.get_aspect() not in ['auto', None]:
+                    axes.set_aspect('auto')
+                    self.resetZoom()
 
 def main(parent=None):
     from .. import Plot
