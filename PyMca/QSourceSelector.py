@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -67,7 +67,7 @@ class QSourceSelector(qt.QWidget):
             self.openIcon= qt.QIconSet(qt.QPixmap(icons.fileopen))
             self.closeIcon= qt.QIconSet(qt.QPixmap(icons.fileclose))
             self.specIcon= qt.QIconSet(qt.QPixmap(icons.spec))
-            self.reloadIcon = qt.QIconSet(qt.QPixmap(icons.reload))
+            self.reloadIcon = qt.QIconSet(qt.QPixmap(icons.reload_))
             openButton.setIconSet(self.openIcon)
             openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
             closeButton= qt.QToolButton(self.fileWidget)
@@ -79,7 +79,7 @@ class QSourceSelector(qt.QWidget):
         else:
             self.openIcon   = qt.QIcon(qt.QPixmap(icons.fileopen))
             self.closeIcon  = qt.QIcon(qt.QPixmap(icons.fileclose))
-            self.reloadIcon = qt.QIcon(qt.QPixmap(icons.reload))
+            self.reloadIcon = qt.QIcon(qt.QPixmap(icons.reload_))
             self.specIcon   = qt.QIcon(qt.QPixmap(icons.spec))
 
             openButton.setIcon(self.openIcon)

@@ -40,7 +40,8 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
-    def __init__(self, parent = None, selection=False, colormap=False,
+    def __init__(self, parent = None, selection=False, aspect=False,
+                 colormap=False,
                  imageicons=False, standalonesave=True, standalonezoom=True,
                  profileselection=False):
         qt.QWidget.__init__(self, parent)
@@ -49,11 +50,13 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.mainLayout.setSpacing(0)
         #TODO HANDLE IT
         profileselection = False
+        self._keepDataAspectRatioFlag = False
         self._buildToolBar(selection, colormap, imageicons,
                            standalonesave,
                            standalonezoom=standalonezoom,
-                           profileselection=profileselection)
-        self.graph = PlotWidget.PlotWidget(self, backend=backend)
+                           profileselection=profileselection,
+                           aspect=aspect)
+        self.graph = PlotWidget.PlotWidget(self, backend=backend, aspect=aspect)
         self.graph.setGraphXLabel("Column")
         self.graph.setGraphYLabel("Row")
         self.graph.setYAxisAutoScale(True)
@@ -79,7 +82,10 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def _buildToolBar(self, selection=False, colormap=False,
                       imageicons=False, standalonesave=True,
-                      standalonezoom=True,profileselection=False):
+                      standalonezoom=True, profileselection=False,
+                      aspect=False):
+        self.solidCircleIcon = qt.QIcon(qt.QPixmap(IconDict["solidcircle"]))
+        self.solidEllipseIcon = qt.QIcon(qt.QPixmap(IconDict["solidellipse"]))
         self.colormapIcon   = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
         self.selectionIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))
         self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
@@ -130,6 +136,14 @@ class RGBCorrelatorGraph(qt.QWidget):
                             toggle = True, state=True)
         self.xAutoScaleToolButton = tb
         tb.setDown(True)
+
+        #Aspect ratio
+        if aspect:
+            self.aspectButton = self._addToolButton(self.solidCircleIcon,
+                                self._aspectButtonSignal,
+                                'Keep data aspect ratio',
+                                toggle = False)
+            self.aspectButton.setChecked(False)
 
         #colormap
         if colormap:
@@ -267,6 +281,25 @@ class RGBCorrelatorGraph(qt.QWidget):
         tb = self._addToolButton(self.printIcon,
                                  self.printGraph,
                                  'Prints the Graph')
+
+    def _aspectButtonSignal(self):
+        if DEBUG:
+            print("_aspectButtonSignal")
+        if self._keepDataAspectRatioFlag:
+            self.keepDataAspectRatio(False)
+        else:
+            self.keepDataAspectRatio(True)
+
+    def keepDataAspectRatio(self, flag=True):
+        if flag:
+            self._keepDataAspectRatioFlag = True
+            self.aspectButton.setIcon(self.solidEllipseIcon)
+            self.aspectButton.setToolTip("Set free data aspect ratio")
+        else:
+            self._keepDataAspectRatioFlag = False
+            self.aspectButton.setIcon(self.solidCircleIcon)
+            self.aspectButton.setToolTip("Keep data aspect ratio")
+        self.graph.keepDataAspectRatio(self._keepDataAspectRatioFlag)
 
     def showInfo(self):
         self.infoWidget.show()

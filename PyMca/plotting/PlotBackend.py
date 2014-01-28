@@ -43,6 +43,7 @@ insertYMarker
 invertYAxis
 isXAxisAutoScale
 isYAxisAutoScale
+keepDataAspectRatio(*)
 removeCurve
 removeImage (*)
 removeMarker
@@ -357,6 +358,12 @@ class PlotBackend(object):
         """
         print("PlotBackend isYAxisInverted not implemented")
 
+    def keepDataAspectRatio(self, flag=True):
+        """
+        :param flag:  True to respect data aspect ratio
+        :type flag: Boolean, default True
+        """
+        print("PlotBackend keepDataAspectRatio not implemented")
 
     def removeCurve(self, legend, replot=True):
         """

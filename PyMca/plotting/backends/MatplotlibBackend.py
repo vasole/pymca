@@ -646,7 +646,11 @@ class MatplotlibGraph(FigureCanvas):
             self._drawingPatch.set_xy(self._mouseData)
 
         if self._x0 is None:
-            print("How can it be here???")
+            if event.inaxes != self.ax:
+                if DEBUG:
+                    print("on MouseReleased RETURNING")
+            else:
+                print("How can it be here???")
             return
 
         if self._zoomRectangle is None:
@@ -700,11 +704,12 @@ class MatplotlibGraph(FigureCanvas):
         self.ymin = ymin
         self.ymax = ymax
         self.limitsSet = True
+        #self.draw()
 
     def resetZoom(self):
         xmin, xmax, ymin, ymax = self.getDataLimits('left')
         xmin2, xmax2, ymin2, ymax2 = self.getDataLimits('right')
-        self.ax2.set_ylim(ymin2, ymax2)
+        #self.ax2.set_ylim(ymin2, ymax2)
         if (xmin2 != 0) or (xmax2 != 1):
             xmin = min(xmin, xmin2)
             xmax = max(xmax, xmax2)
@@ -717,7 +722,7 @@ class MatplotlibGraph(FigureCanvas):
             axes = self.ax2
         else:
             axes = self.ax
-        if 1 or DEBUG:
+        if DEBUG:
             print("CALCULATING limits ", axes.get_label())
         xmin = None
         for line2d in axes.lines:
@@ -744,14 +749,13 @@ class MatplotlibGraph(FigureCanvas):
             ymin = min(ymin, y.min())
             ymax = max(ymax, y.max())
 
-        if xmin is None:
-            xmin = 0
-            xmax = 1
-            ymin = 0
-            ymax = 1
-
         for artist in axes.images:
             x0, x1, y0, y1 = artist.get_extent()
+            if (xmin is None):
+                xmin = x0
+                xmax = x1
+                ymin = min(y0, y1)
+                ymax = max(y0, y1)
             xmin = min(xmin, x0)
             xmax = max(xmax, x1)
             ymin = min(ymin, y0)
@@ -761,13 +765,56 @@ class MatplotlibGraph(FigureCanvas):
             label = artist.get_label()
             if label.startswith("__IMAGE__"):
                 x0, x1, y0, y1 = artist.get_extent()
+                if (xmin is None):
+                    xmin = x0
+                    xmax = x1
+                    ymin = min(y0, y1)
+                    ymax = max(y0, y1)
                 ymin = min(ymin, y0, y1)
                 ymax = max(ymax, y1, y0)
                 xmin = min(xmin, x0)
                 xmax = max(xmax, x1)
 
-        if 1 or DEBUG:
-            print("CALCULATED LIMITS = ", xmin, xmax, ymin, ymax) 
+        if xmin is None:
+            xmin = 0
+            xmax = 1
+            ymin = 0
+            ymax = 1
+
+        xSize = float(xmax - xmin)
+        ySize = float(ymax - ymin)
+        A = self.ax.get_aspect()
+        if A != 'auto':
+            figW, figH = self.ax.get_figure().get_size_inches()
+            figAspect = figH / figW
+
+            #l, b, w, h = self.ax.get_position(original=True).bounds
+            #box_aspect = figAspect * (h / float(w))
+            
+            #dataRatio = box_aspect / A
+            dataRatio = (ySize / xSize) * A
+
+            y_expander = dataRatio - figAspect
+            # If y_expander > 0, the dy/dx viewLim ratio needs to increase
+            if abs(y_expander) < 0.005:
+                #good enough
+                pass
+            else:
+                # this works for any data ratio
+                if y_expander < 0:
+                    #print("adjust_y")
+                    deltaY = xSize * (figAspect / A) - ySize
+                    yc = 0.5 * (ymin + ymax)
+                    ymin = yc - (ySize + deltaY) * 0.5
+                    ymax = yc + (ySize + deltaY) * 0.5
+                else:
+                    #print("ADJUST X")
+                    deltaX = ySize * (A / figAspect) - xSize
+                    xc = 0.5 * (xmin + xmax)
+                    xmin = xc - (xSize + deltaX) * 0.5
+                    xmax = xc + (xSize + deltaX) * 0.5
+        if DEBUG:
+            print("CALCULATED LIMITS = ", xmin, xmax, ymin, ymax)
         return xmin, xmax, ymin, ymax
 
 class MatplotlibBackend(PlotBackend.PlotBackend):
@@ -811,7 +858,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                            origin='upper',
                            cmap=cmap,
                            norm=Normalize(0, 1000*1000.))
-
     def addCurve(self, x, y, legend, info=None, replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
@@ -840,7 +886,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         brush = color
         style = info.get('plot_line_style', '-')
         linewidth = 1
-        axesLabel = info.get('plot_axes', 'left')
+        axesLabel = info.get('plot_yaxis', 'left')
         if axesLabel == "left":
             axes = self.ax
         else:
@@ -1171,7 +1217,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Update plot
         """
-        print("CALLED")
         self.graph.draw()
         """
         if QT:
@@ -1420,6 +1465,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     data[:,:,3] = 255
             if len(data.shape) == 3:
                 # RGBA image
+                extent = (xmin, xmax, ymin, ymax)
                 image = AxesImage(self.ax,
                               label="__IMAGE__"+legend,
                               interpolation='nearest',
@@ -1484,6 +1530,22 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.ax.grid(False)
         self.replot()
 
+    def keepDataAspectRatio(self, flag=True):
+        """
+        :param flag:  True to respect data aspect ratio
+        :type flag: Boolean, default True
+        """
+        if flag:
+            for axes in [self.ax]:
+                if axes.get_aspect() not in [1.0]:
+                    axes.set_aspect(1.0)
+                    self.resetZoom()
+        else:
+            for axes in [self.ax]:
+                if axes.get_aspect() not in ['auto', None]:
+                    axes.set_aspect('auto')
+                    self.resetZoom()
+
 def main(parent=None):
     from .. import Plot
     x = numpy.arange(100.)
@@ -1492,7 +1554,7 @@ def main(parent=None):
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x + 100, -x * x, "To set Active")
     #info = {}
-    #info['plot_axes'] = 'right'
+    #info['plot_yaxis'] = 'right'
     #plot.addCurve(x + 100, -x * x + 500, "RIGHT", info=info)
     #print("Active curve = ", plot.getActiveCurve())
     print("X Limits) = ", plot.getGraphXLimits())
@@ -1538,7 +1600,6 @@ if __name__ == "__main__":
     widget.ax.axis('auto') # appropriate for curves, no aspect ratio
     #w.widget.ax.axis('equal') # candidate for keepting aspect ratio
     #w.widget.ax.axis('scaled') # candidate for keepting aspect ratio
-    print("aspect = %s" % widget.ax.get_aspect())
     w.insertXMarker(50., label="Label", color='pink', draggable=True)
     w.resetZoom()
     #print(w.widget.ax.get_images())

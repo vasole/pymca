@@ -77,6 +77,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self._initIcons()
         self._buildToolBar(kw)
         self._toggleCounter = 0
+        self._keepDataAspectRatioFlag = False
         self.gridLevel = 0
         self.setCallback(self.graphCallback)
         
@@ -103,6 +104,9 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.gridIcon	= qt.QIcon(qt.QPixmap(IconDict["grid16"]))
         self.hFlipIcon	= qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"]))
         self.togglePointsIcon = qt.QIcon(qt.QPixmap(IconDict["togglepoints"]))
+
+        self.solidCircleIcon = qt.QIcon(qt.QPixmap(IconDict["solidcircle"]))
+        self.solidEllipseIcon = qt.QIcon(qt.QPixmap(IconDict["solidellipse"]))
 
         self.fitIcon	= qt.QIcon(qt.QPixmap(IconDict["fit"]))
         self.searchIcon	= qt.QIcon(qt.QPixmap(IconDict["peaksearch"]))
@@ -163,6 +167,14 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.xLogButton.setChecked(False)
             self.xLogButton.setDown(False)
 
+        #Aspect ratio
+        if kw.get('aspect', False):
+            self.aspectButton = self._addToolButton(self.solidCircleIcon,
+                                self._aspectButtonSignal,
+                                'Keep data aspect ratio',
+                                toggle = False)
+            self.aspectButton.setChecked(False)
+            #self.aspectButton.setDown(False)
         #colormap
         if kw.get('colormap', False):
             tb = self._addToolButton(self.colormapIcon,
@@ -263,6 +275,25 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.toolBar.addWidget(tb)
         tb.clicked.connect(action)
         return tb
+
+    def _aspectButtonSignal(self):
+        if DEBUG:
+            print("_aspectButtonSignal")
+        if self._keepDataAspectRatioFlag:
+            self.keepDataAspectRatio(False)
+        else:
+            self.keepDataAspectRatio(True)
+
+    def keepDataAspectRatio(self, flag=True):
+        if flag:
+            self._keepDataAspectRatioFlag = True
+            self.aspectButton.setIcon(self.solidEllipseIcon)
+            self.aspectButton.setToolTip("Set free data aspect ratio")
+        else:
+            self._keepDataAspectRatioFlag = False
+            self.aspectButton.setIcon(self.solidCircleIcon)
+            self.aspectButton.setToolTip("Keep data aspect ratio")
+        super(PlotWindow, self).keepDataAspectRatio(self._keepDataAspectRatioFlag)
                 
     def _zoomReset(self):
         if DEBUG:

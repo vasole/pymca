@@ -149,6 +149,7 @@ class Plot(PlotBase.PlotBase):
         This callback is foing to receive all the events from the plot.
         Those events will consist on a dictionnary and among the dictionnary
         keys the key 'event' is mandatory to describe the type of event.
+        This default implementation only handles setting the active curve.
         """
 
         if ddict is None:
@@ -284,6 +285,7 @@ class Plot(PlotBase.PlotBase):
         #print("Legend = ", legend, "color = ", color, "style = ", line_style)
         info["plot_color"] = color
         info["plot_line_style"] = line_style
+        info.get('plot_yaxis', 'left')
 
         if self.isXAxisLogarithmic() or self.isYAxisLogarithmic():
             xplot, yplot = self.logFilterData(x, y)
@@ -300,7 +302,7 @@ class Plot(PlotBase.PlotBase):
             self.setActiveCurve(key)
         if replot:
             self.resetZoom()
-            self.replot()
+            #self.replot()
         return legend
 
     def addImage(self, data, legend=None, info=None,
@@ -878,6 +880,13 @@ class Plot(PlotBase.PlotBase):
         self._markerDict[label] = kw
         self._markerDict[label]['marker'] = marker
         return marker
+
+    def keepDataAspectRatio(self, flag=True):
+        """
+        :param flag:  True to respect data aspect ratio
+        :type flag: Boolean, default True
+        """
+        self._plot.keepDataAspectRatio(flag=flag)
 
     def clearMarkers(self):
         self._markerDict = {}

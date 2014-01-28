@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -473,16 +473,16 @@ class QSpsWidget(qt.QWidget):
         self.specCombo= qt.QComboBox(specWidget)
         self.specCombo.setEditable(0)
         if QTVERSION < '4.0.0':
-            self.reload= qt.QIconSet(qt.QPixmap(icons.reload))
+            self.reload_= qt.QIconSet(qt.QPixmap(icons.reload_))
             refreshButton= qt.QToolButton(specWidget)
-            refreshButton.setIconSet(self.reload)
+            refreshButton.setIconSet(self.reload_)
             self.closeIcon= qt.QIconSet(qt.QPixmap(icons.fileclose))
             closeButton= qt.QToolButton(specWidget)
             closeButton.setIconSet(self.closeIcon)
         else:
-            self.reload= qt.QIcon(qt.QPixmap(icons.reload))
+            self.reload_= qt.QIcon(qt.QPixmap(icons.reload_))
             refreshButton= qt.QToolButton(specWidget)
-            refreshButton.setIcon(self.reload)
+            refreshButton.setIcon(self.reload_)
             self.closeIcon= qt.QIcon(qt.QPixmap(icons.fileclose))
             closeButton= qt.QToolButton(specWidget)
             closeButton.setIcon(self.closeIcon)

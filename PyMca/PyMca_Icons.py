@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -24,6 +24,50 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
+aspect_ratio = [
+#/* columns rows colors chars-per-pixel */
+"32 32 5 1",
+"  c #47463F",
+". c #BA165D",
+"X c #2F3AB5",
+"o c #FFFFE8",
+"O c None",
+#/* pixels */
+"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+"OOXXXXXXXXXXXXXXXXXXXXXXXXXXXXOO",
+"OOXooooooooooooooooooooooooooXOO",
+"OOXo ......  ooooooooooooooooXOO",
+"OOXo. XXXXX.    oooooooooooooXOO",
+"OOXo.XXXXXX.ooo   oooooooooooXOO",
+"OOXo .. ....oooooo   ooooooooXOO",
+"OOXo ooo ooo ooooooo    oooooXOO",
+"OOXo  ooo ooo ooooooooo    ooXOO",
+"OOXoo oooo                  oXOO",
+"OOXoo oooo ................ oXOO",
+"OOXoo  ooo ................ oXOO",
+"OOXooo ooo ..XXXXXXXXXXXX.. oXOO",
+"OOXooo ooo ..XXXXXXXXXXXX.. oXOO",
+"OOXooo ooo ..XXXXXXXXXXXX.. oXOO",
+"OOXoooo oo ..XXXXXXXXXXXX.. oXOO",
+"OOXoooo oo ..XXXXXXXXXXXX.. oXOO",
+"OOXoooo oo ..XXXXXXXXXXXX.. oXOO",
+"OOXooooo o ..XXXXXXXXXXXX.. oXOO",
+"OOXooooo o ..XXXXXXXXXXXX.. oXOO",
+"OOXooooo o ..XXXXXXXXXXXX.. oXOO",
+"OOXooooo   ..XXXXXXXXXXXX.. oXOO",
+"OOXoooooo  ..XXXXXXXXXXXX.. oXOO",
+"OOXoooooo  ..XXXXXXXXXXXX.. oXOO",
+"OOXoooooo  ................ oXOO",
+"OOXooooooo ................ oXOO",
+"OOXooooooo                  oXOO",
+"OOXooooooooooooooooooooooooooXOO",
+"OOXXXXXXXXXXXXXXXXXXXXXXXXXXXXOO",
+"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
+]
+
+
 # --- scan window icons ---
 plugin = [
 #columns rows colors chars-per-pixel
@@ -122,6 +166,95 @@ togglepoints =[
 "  .    .        ",
 "                "
 ]
+
+circle16 =[
+"16 16 2 1",
+"  c none",
+"X c blue",
+"                ",
+"     XXXXXX     ",
+"    X      X    ",
+"   X        X   ",
+"  X          X  ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+"  X          X  ",
+"   X        X   ", 
+"    X      X    ",
+"     XXXXXX     ",
+"                "
+]
+
+ellipse16 =[
+"16 16 2 1",
+"  c none",
+"X c blue",
+"                ",
+"                ",
+"                ",
+"                ",
+"     XXXXXX     ",
+"   X        X   ",
+"  X          X  ",
+" X            X ",
+" X            X ",
+" X            X ",
+"  X          X  ",
+"   X        X   ", 
+"     XXXXXX     ",
+"                ",
+"                ",
+"                ",
+]
+
+solid_circle16 =[
+"16 16 2 1",
+"  c none",
+"X c blue",
+"                ",
+"     XXXXXX     ",
+"    XXXXXXXX    ",
+"   XXXXXXXXXX   ",
+"  XXXXXXXXXXXX  ",
+" XXXXXXXXXXXXXX ",
+" XXXXXXXXXXXXXX ",
+" XXXXXXXXXXXXXX ",
+" XXXXXXXXXXXXXX ",
+" XXXXXXXXXXXXXX ",
+" XXXXXXXXXXXXXX ",
+"  XXXXXXXXXXXX  ",
+"   XXXXXXXXXX   ", 
+"    XXXXXXXX    ",
+"     XXXXXX     ",
+"                "
+]
+
+solid_ellipse16 =[
+"16 16 2 1",
+"  c none",
+"X c blue",
+"                ",
+"                ",
+"                ",
+"                ",
+"     XXXXXX     ",
+"   XXXXXXXXXX   ",
+"  XXXXXXXXXXXX  ",
+" XXXXXXXXXXXXXX ",
+" XXXXXXXXXXXXXX ",
+" XXXXXXXXXXXXXX ",
+"  XXXXXXXXXXXX  ",
+"   XXXXXXXXXX   ", 
+"     XXXXXX     ",
+"                ",
+"                ",
+"                ",
+]
+
 
 subtract =[
 "16 16 2 1",
@@ -2710,7 +2843,7 @@ peaksearch = [
 " ++++  ++  + + +"
 ]
 	
-reload = [
+reload_ = [
 "16 16 51 1",
 "  c #000000",
 ". c #040d00",
@@ -3393,7 +3526,7 @@ IconDict= {
 	"spec":		spec,
 	"normal":	normal,
 	"normalize16":	normalize16,
-	"reload":	reload,
+	"reload":	reload_,
 	"window_fullscreen":	window_fullscreen,
 	"window_new":	window_new,
 	"window_nofullscreen":	window_nofullscreen,
@@ -3432,6 +3565,10 @@ IconDict= {
     "swapsign":swapsign,
     "ymintozero":ymintozero,
     "average16":average16,
+    "circle":circle16,
+    "ellipse":ellipse16,
+    "solidcircle":solid_circle16,
+    "solidellipse":solid_ellipse16,
     "smooth":smooth,
     "subtract":subtract,
     "substract":substract,

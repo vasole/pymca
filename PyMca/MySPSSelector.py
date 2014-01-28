@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -252,9 +252,9 @@ class SPSSelector(qt.QWidget):
         specWidget= qt.QWidget(self)
         self.specCombo= qt.QComboBox(specWidget)
         self.specCombo.setEditable(0)
-        self.reload= qt.QIconSet(qt.QPixmap(icons.reload))
+        self.reload_= qt.QIconSet(qt.QPixmap(icons.reload_))
         refreshButton= qt.QToolButton(specWidget)
-        refreshButton.setIconSet(self.reload)
+        refreshButton.setIconSet(self.reload_)
         refreshButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
         self.closeIcon= qt.QIconSet(qt.QPixmap(icons.fileclose))
         closeButton= qt.QToolButton(specWidget)
