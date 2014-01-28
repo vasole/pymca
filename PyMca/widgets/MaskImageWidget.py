@@ -1976,7 +1976,7 @@ def test():
     else:
         container = MaskImageWidget(profileselection=True, aspect=True)
         data = numpy.arange(400 * 400).astype(numpy.int32)
-        data.shape = 400, 400
+        data.shape = 200, 800
         #data = numpy.eye(200)
         container.setImageData(data, xScale=(0, 1), yScale=(0., 1.))
         #data.shape = 100, 400
