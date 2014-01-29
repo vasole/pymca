@@ -138,7 +138,7 @@ class MatplotlibGraph(FigureCanvas):
 
         #drawingmode handling
         self.setDrawModeEnabled(False)
-        self.__drawModeList = ['line', 'polygon']
+        self.__drawModeList = ['line', 'rectangle', 'polygon']
         self.__drawing = False
         self._drawingPatch = None
         self._drawModePatch = 'line'
@@ -261,18 +261,31 @@ class MatplotlibGraph(FigureCanvas):
         else:
             print("unhandled", event.artist)
 
-    def setDrawModeEnabled(self, flag=True):
-        self._drawModeEnabled = flag
+    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
         if flag:
-            #cannot draw and zoom simultaneously
-            self.setZoomModeEnabled(False)
+            shape = shape.lower()
+            if self._drawModeShape not in self._drawModeList:
+                self._drawModeEnabled = False
+                raise ValueError("Unsupported shape %s" % shape)
+            else:
+                self._drawModeEnabled = flag
+                self.setZoomModeEnabled(False)
+                self._drawModeShape = shape
+        else:
+            self._drawModeEnabled = True
 
     def setZoomModeEnabled(self, flag=True):
         if flag:
             self._zoomEnabled = True
             self.setDrawModeEnabled(False)
         else:
-            self._zoomEnabled = True
+            self._zoomEnabled = False
+
+    def isZoomModeEnabled():
+        return self._zoomEnabled
+
+    def isDrawModeEnabled():
+        return self._drawModeEnabled
 
     def setDrawModePatch(self, mode=None):
         if mode is None:

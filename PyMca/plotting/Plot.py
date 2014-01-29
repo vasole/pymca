@@ -135,6 +135,12 @@ class Plot(PlotBase.PlotBase):
         self.enableZoom = self.setZoomModeEnabled
         self.setZoomModeEnabled(True)
 
+    def isZoomModeEnabled(self):
+        return self._plot.isZoomModeEnabled()
+
+    def isDrawModeEnabled(self):
+        return self._plot.isDrawModeEnabled()
+
     def getWidgetHandle(self):
         return self.widget_
 
@@ -196,8 +202,15 @@ class Plot(PlotBase.PlotBase):
     def setZoomModeEnabled(self, flag=True):
         self._plot.setZoomModeEnabled(flag)
 
-    def setDrawModeEnabled(self, flag=True):
-        self._plot.setDrawModeEnabled(flag)
+    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
+        """
+        Zoom and drawing are not compatible
+        :param flag: Enable drawing mode disabling zoom and picking mode
+        :type flag: boolean, default True
+        :param shape: Type of item to be drawn
+        :type shape: string, default polygon
+        """
+        self._plot.setDrawModeEnabled(flag=flag, shape=shape, **kw)
 
     def addCurve(self, x, y, legend=None, info=None, replace=False,
                  replot=True, **kw):

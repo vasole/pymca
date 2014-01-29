@@ -371,6 +371,13 @@ class PlotBackend(object):
         """
         print("PlotBackend invertYAxis not implemented")
 
+    def isDrawModeEnabled(self):
+        """
+        :return: True if user can draw
+        """
+        print("PlotBackend isDrawModeEnabled not implemented")
+        return False
+
     def isXAxisAutoScale(self):
         """
         :return: True if bottom axis is automatically adjusting the scale
@@ -390,6 +397,14 @@ class PlotBackend(object):
         :return: True if left axis is inverted
         """
         print("PlotBackend isYAxisInverted not implemented")
+
+    def isZoomModeEnabled(self):
+        """
+        :return: True if user can zoom
+        """
+        print("PlotBackend isZoomModeEnabled not implemented")
+        return True
+
 
     def keepDataAspectRatio(self, flag=True):
         """
@@ -495,7 +510,7 @@ class PlotBackend(object):
         print("PlotBackend setDefaultColormap not implemented")
         return
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon"):
+    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
         """
         Zoom and drawing are not compatible
         :param flag: Enable drawing mode disabling zoom and picking mode
