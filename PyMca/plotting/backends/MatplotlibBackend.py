@@ -138,7 +138,7 @@ class MatplotlibGraph(FigureCanvas):
 
         #drawingmode handling
         self.setDrawModeEnabled(False)
-        self.__drawModeList = ['line', 'polygon']
+        self.__drawModeList = ['line', 'rectangle', 'polygon']
         self.__drawing = False
         self._drawingPatch = None
         self._drawModePatch = 'line'
@@ -261,29 +261,32 @@ class MatplotlibGraph(FigureCanvas):
         else:
             print("unhandled", event.artist)
 
-    def setDrawModeEnabled(self, flag=True):
-        self._drawModeEnabled = flag
+    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
+        print("Called with shape = ", flag, shape)
         if flag:
-            #cannot draw and zoom simultaneously
-            self.setZoomModeEnabled(False)
+            shape = shape.lower()
+            if shape not in self.__drawModeList:
+                self._drawModeEnabled = False
+                raise ValueError("Unsupported shape %s" % shape)
+            else:
+                self._drawModeEnabled = True
+                self.setZoomModeEnabled(False)
+                self._drawModePatch = shape
+        else:
+            self._drawModeEnabled = False
 
     def setZoomModeEnabled(self, flag=True):
         if flag:
             self._zoomEnabled = True
             self.setDrawModeEnabled(False)
         else:
-            self._zoomEnabled = True
+            self._zoomEnabled = False
 
-    def setDrawModePatch(self, mode=None):
-        if mode is None:
-            mode = self.__drawModeList[0]
+    def isZoomModeEnabled(self):
+        return self._zoomEnabled
 
-        mode = mode.lower()
-        #raise an error in case of an invalid mode
-        modeIndex = self.__drawModeList.index(mode)
-
-        self._drawModePatch = mode
-
+    def isDrawModeEnabled(self):
+        return self._drawModeEnabled
 
     def onMousePressed(self, event):
         if DEBUG:
@@ -536,7 +539,8 @@ class MatplotlibGraph(FigureCanvas):
         if self._x0 is None:
             return
         
-        if self.__zooming:
+        if self.__zooming or \
+           (self.__drawing and (self._drawModePatch == 'rectangle')):
             if self._x1 < self._xmin:
                 self._x1 = self._xmin
             elif self._x1 > self._xmax:
@@ -561,24 +565,43 @@ class MatplotlibGraph(FigureCanvas):
                 h = self._y1 - self._y0
             if w == 0:
                 return
-            if self.ax.get_aspect() != 'auto':
+            if (not self.__drawing) and (self.ax.get_aspect() != 'auto'):
                 if (h / w) > self._ratio:
                     h = w * self._ratio
                 else:
                     w = h / self._ratio
+                if self._x1 > self._x0:
+                    x = self._x0
+                else:
+                    x = self._x0 - w
+                if self._y1 > self._y0:
+                    y = self._y0
+                else:
+                    y = self._y0 - h
 
-            if self._zoomRectangle is None:
-                self._zoomRectangle = Rectangle(xy=(x,y),
-                                               width=w,
-                                               height=h,
-                                               fill=False)
-                self.ax.add_patch(self._zoomRectangle)
+            if self.__zooming:
+                if self._zoomRectangle is None:
+                    self._zoomRectangle = Rectangle(xy=(x,y),
+                                                   width=w,
+                                                   height=h,
+                                                   fill=False)
+                    self.ax.add_patch(self._zoomRectangle)
+                else:
+                    self._zoomRectangle.set_bounds(x, y, w, h)
+                    #self._zoomRectangle._update_patch_transform()
+                self.fig.canvas.draw()
+                return
             else:
-                self._zoomRectangle.set_bounds(x, y, w, h)
-                #self._zoomRectangle._update_patch_transform()
-            self.fig.canvas.draw()
-            return
-        
+                if self._drawingPatch is None:
+                    self._drawingPatch = Rectangle(xy=(x,y),
+                                                   width=w,
+                                                   height=h,
+                                                   fill=False)
+                    self._drawingPatch.set_hatch('/')
+                    self.ax.add_patch(self._drawingPatch)                    
+                else:
+                    self._drawingPatch.set_bounds(x, y, w, h)
+                    #self._zoomRectangle._update_patch_transform()
         if self.__drawing:
             if self._drawingPatch is None:
                 self._mouseData = numpy.zeros((2,2), numpy.float32)
@@ -590,6 +613,9 @@ class MatplotlibGraph(FigureCanvas):
                                              closed=True,
                                              fill=False)
                 self.ax.add_patch(self._drawingPatch)
+            elif self._drawModePatch == 'rectangle':
+                # already handled
+                pass            
             elif self._drawModePatch == 'line':
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
@@ -839,6 +865,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self._logY = False
         self.setZoomModeEnabled = self.graph.setZoomModeEnabled
         self.setDrawModeEnabled = self.graph.setDrawModeEnabled
+        self.isZoomModeEnabled = self.graph.isZoomModeEnabled
+        self.isDrawModeEnabled = self.graph.isDrawModeEnabled
         self._oldActiveCurve = None
         self._oldActiveCurveLegend = None
 
@@ -1336,22 +1364,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self._logY = False
             self.ax.set_yscale('linear')
 
-    def setZoomModeEnabled(self, flag=True):
-        """
-        Zoom and drawing are not compatible
-        :param flag: If True, the user can zoom. 
-        :type flag: boolean, default True
-        """
-        self._zoomEnabled = flag
-        if flag:
-            #cannot draw and zoom simultaneously
-            self.setDrawModeEnabled(False)
-            self._selecting = False
-
     def addImage(self, data, legend=None, info=None,
                     replace=True, replot=True,
                     xScale=None, yScale=None, z=0,
-                    selectable=False, draggable=False, **kw):
+                    selectable=False, draggable=False,
+                    colormap=None, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
@@ -1373,26 +1390,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the image can be moved
         :type draggable: boolean, default False
+        :param colormap: Dictionary describing the colormap to use (or None)
+        :type colormap: Dictionnary or None (default). Ignored if data is RGB(A)
         :returns: The legend/handle used by the backend to univocally access it.
         """
-        if not hasattr(self, "__temperatureCmap"):
-            # Temperature as defined in spslut
-            cdict = {'red': ((0.0, 0.0, 0.0),
-                             (0.5, 0.0, 0.0),
-                             (0.75, 1.0, 1.0),
-                             (1.0, 1.0, 1.0)),
-                     'green': ((0.0, 0.0, 0.0),
-                               (0.25, 1.0, 1.0),
-                               (0.75, 1.0, 1.0),
-                               (1.0, 0.0, 0.0)),
-                     'blue': ((0.0, 1.0, 1.0),
-                              (0.25, 1.0, 1.0),
-                              (0.5, 0.0, 0.0),
-                              (1.0, 0.0, 0.0))}
-            #but limited to 256 colors for a faster display (of the colorbar)
-            self.__temperatureCmap = LinearSegmentedColormap('temperature',
-                                                             cdict, 256)
-
         # Non-uniform image
         #http://wiki.scipy.org/Cookbook/Histograms
         # Non-linear axes
@@ -1403,7 +1404,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             # make sure we do not cummulate images with same name
             self.removeImage(legend, replot=False)
 
-        cmap = self.__temperatureCmap
         if xScale is None:
             xScale = [0.0, 1.0]
         if yScale is None:
@@ -1461,6 +1461,19 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                               #norm=Normalize(data.min(), data.max()))
                 image.set_data(data)
             else:
+                if colormap is None:
+                    colormap = self.getDefaultColormap()
+                cmap = self.__getColormap(colormap['name'])
+                if colormap['autoscale']:
+                    vmin = data.min()
+                    vmax = data.max()
+                else:
+                    vmin = colormap['vmin']
+                    vmax = colormap['vmax']
+                if colormap['normalization'].startswith('log'):
+                    norm = LogNorm(vmin, vmax)
+                else:
+                    norm = Normalize(vmin, vmax)
                 # try as data
                 image = AxesImage(self.ax,
                               label="__IMAGE__"+legend,
@@ -1470,7 +1483,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                               extent=extent,
                               picker=picker,
                               zorder=z,
-                              norm=Normalize(data.min(), data.max()))
+                              norm=norm)
                 image.set_data(data)
             self.ax.add_artist(image)
             #self.ax.draw_artist(image)
@@ -1529,6 +1542,92 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if axes.get_aspect() not in ['auto', None]:
                     axes.set_aspect('auto')
                     self.resetZoom()
+
+    def setDefaultColormap(self, colormap=None):
+        if colormap is None:
+            colormap = {'name': 'gray', 'normalization':'linear',
+                        'autoscale':True, 'vmin':0.0, 'vmax':1.0,
+                        'colors':256}
+        self._defaultColormap = colormap
+
+    def getDefaultColormap(self):
+        if not hasattr(self, "_defaultColormap"):
+            self.setDefaultColormap(None)
+        return self._defaultColormap
+
+    def getSupportedColormaps(self):
+        default = ['gray', 'reversed gray', 'temperature', 'red', 'green', 'blue']
+        maps = [m for m in cm.datad]
+        maps.sort()
+        return default + maps
+
+    def __getColormap(self, name):
+        if not hasattr(self, "__temperatureCmap"):
+            #initialize own colormaps
+            cdict = {'red': ((0.0, 0.0, 0.0),
+                             (1.0, 1.0, 1.0)),
+                     'green': ((0.0, 0.0, 0.0),
+                               (1.0, 0.0, 0.0)),
+                     'blue': ((0.0, 0.0, 0.0),
+                              (1.0, 0.0, 0.0))}
+            self.__redCmap = LinearSegmentedColormap('red',cdict,256)
+
+            cdict = {'red': ((0.0, 0.0, 0.0),
+                             (1.0, 0.0, 0.0)),
+                     'green': ((0.0, 0.0, 0.0),
+                               (1.0, 1.0, 1.0)),
+                     'blue': ((0.0, 0.0, 0.0),
+                              (1.0, 0.0, 0.0))}
+            self.__greenCmap = LinearSegmentedColormap('green',cdict,256)
+
+            cdict = {'red': ((0.0, 0.0, 0.0),
+                             (1.0, 0.0, 0.0)),
+                     'green': ((0.0, 0.0, 0.0),
+                               (1.0, 0.0, 0.0)),
+                     'blue': ((0.0, 0.0, 0.0),
+                              (1.0, 1.0, 1.0))}
+            self.__blueCmap = LinearSegmentedColormap('blue',cdict,256)
+
+            # Temperature as defined in spslut
+            cdict = {'red': ((0.0, 0.0, 0.0),
+                             (0.5, 0.0, 0.0),
+                             (0.75, 1.0, 1.0),
+                             (1.0, 1.0, 1.0)),
+                     'green': ((0.0, 0.0, 0.0),
+                               (0.25, 1.0, 1.0),
+                               (0.75, 1.0, 1.0),
+                               (1.0, 0.0, 0.0)),
+                     'blue': ((0.0, 1.0, 1.0),
+                              (0.25, 1.0, 1.0),
+                              (0.5, 0.0, 0.0),
+                              (1.0, 0.0, 0.0))}
+            #but limited to 256 colors for a faster display (of the colorbar)
+            self.__temperatureCmap = LinearSegmentedColormap('temperature',
+                                                             cdict, 256)
+
+            #reversed gray
+            cdict = {'red':     ((0.0, 1.0, 1.0),
+                                 (1.0, 0.0, 0.0)),
+                     'green':   ((0.0, 1.0, 1.0),
+                                 (1.0, 0.0, 0.0)),
+                     'blue':    ((0.0, 1.0, 1.0),
+                                 (1.0, 0.0, 0.0))}
+                             
+            self.__reversedGrayCmap = LinearSegmentedColormap('yerg', cdict, 256)
+
+        if name == "reversed gray":
+            return self.__reversedGrayCmap
+        elif name == "temperature":
+            return self.__temperatureCmap
+        elif name == "red":
+            self.__redCmap
+        elif name == "green":
+            self.__greenCmap
+        elif name == "blue":
+            self.__blueCmap
+        else:
+            # built in
+            return cm.get_cmap(name)
 
 def main(parent=None):
     from .. import Plot

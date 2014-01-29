@@ -31,11 +31,13 @@ clear
 clearCurves
 clearImages (*)
 clearMarkers
+getDefaultColormap (*)
 getGraphXLabel
 getGraphXLimits
 getGraphYLabel
 getGraphYLimits
 getGraphTitle
+getSupportedColormaps (*)
 getWidgetHandle
 insertMarker
 insertXMarker
@@ -53,6 +55,7 @@ replot_
 setActiveCurve
 setActiveImage (*)
 setCallback
+setDefaultColormap (*)
 setDrawModeEnabled
 setGraphTitle
 setGraphXLabel
@@ -129,6 +132,8 @@ MouseZoom
     keys xpixel_min, xpixel_max, ypixel_min, ypixel_max in pixel coordenates
 """
 
+DEBUG = 0
+
 class PlotBackend(object):
     def __init__(self, parent=None):
         self._parent = parent
@@ -164,7 +169,8 @@ class PlotBackend(object):
     def addImage(self, data, legend=None, info=None,
                     replace=True, replot=True,
                     xScale=None, yScale=None, z=0,
-                    selectable=False, draggable=False, **kw):
+                    selectable=False, draggable=False,
+                    colormap=None, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
@@ -186,6 +192,8 @@ class PlotBackend(object):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the image can be moved
         :type draggable: boolean, default False
+        :param colormap: Dictionary describing the colormap to use (or None)
+        :type colormap: Dictionnary or None (default). Ignored if data is RGB(A)
         :returns: The legend/handle used by the backend to univocally access it.
         """
         print("PlotBackend addImage not implemented")
@@ -226,6 +234,23 @@ class PlotBackend(object):
         print("PlotBackend default callback called")
         print(ddict)
 
+    def getDefaultColormap(self):
+        """
+        Return the colormap that will be applied by the backend to an image
+        if no colormap is applied to it.
+        A colormap is a dictionnary with the keys:
+        :type name: string
+        :type normalization: string (linear, log)
+        :type autoscale: boolean
+        :type vmin: float, minimum value
+        :type vmax: float, maximum value
+        :type colors: integer (typically 256)
+        """
+        print("PlotBackend getDefaultColormap called")
+        return {'name': 'gray', 'normalization':'linear',
+                'autoscale':True, 'vmin':0.0, 'vmax':1.0,
+                'colors':256} 
+
     def getGraphTitle(self):
         """
         Get the graph title.
@@ -265,6 +290,14 @@ class PlotBackend(object):
         """
         print("PlotBackend getGraphYLabel not implemented")
         return "Y"
+
+    def getSupportedColormaps(self):
+        """
+        Get a list of strings with the colormap names supported by the backend.
+        The list should at least contain and start by:
+        ['gray', 'reversed gray', 'temperature', 'red', 'green', 'blue']
+        """
+        return ['gray', 'reversed gray', 'temperature', 'red', 'green', 'blue']
 
     def getWidgetHandle(self):
         """
@@ -338,6 +371,13 @@ class PlotBackend(object):
         """
         print("PlotBackend invertYAxis not implemented")
 
+    def isDrawModeEnabled(self):
+        """
+        :return: True if user can draw
+        """
+        print("PlotBackend isDrawModeEnabled not implemented")
+        return False
+
     def isXAxisAutoScale(self):
         """
         :return: True if bottom axis is automatically adjusting the scale
@@ -357,6 +397,14 @@ class PlotBackend(object):
         :return: True if left axis is inverted
         """
         print("PlotBackend isYAxisInverted not implemented")
+
+    def isZoomModeEnabled(self):
+        """
+        :return: True if user can zoom
+        """
+        print("PlotBackend isZoomModeEnabled not implemented")
+        return True
+
 
     def keepDataAspectRatio(self, flag=True):
         """
@@ -433,7 +481,8 @@ class PlotBackend(object):
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
         """
-        print("PlotBackend setActiveImage not implemented")
+        if DEBUG:
+            print("PlotBackend setActiveImage not implemented")
         return
 
     def setCallback(self, callback_function):
@@ -444,7 +493,24 @@ class PlotBackend(object):
         """
         self._callback = callback_function
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon"):
+    def setDefaultColormap(self, colormap=None):
+        """
+        Sets the colormap that will be applied by the backend to an image
+        if no colormap is applied to it.
+        A colormap is a dictionnary with the keys:
+        :type name: string
+        :type normalization: string (linear, log)
+        :type autoscale: boolean
+        :type vmin: float, minimum value
+        :type vmax: float, maximum value
+        :type colors: integer (typically 256)
+
+        If None is passed, the backend will reset to its default colormap.
+        """
+        print("PlotBackend setDefaultColormap not implemented")
+        return
+
+    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
         """
         Zoom and drawing are not compatible
         :param flag: Enable drawing mode disabling zoom and picking mode
