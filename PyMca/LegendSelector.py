@@ -43,62 +43,127 @@ DEBUG = 1
 # Build all symbols
 # Curtesy of the pyqtgraph project
 Symbols = dict([(name, qt.QPainterPath()) for name in ['o', 's', 't', 'd', '+', 'x']])
-Symbols['o'].addEllipse(qt.QRectF(-0.5, -0.5, 1, 1))
-Symbols['s'].addRect(qt.QRectF(-0.5, -0.5, 1, 1))
+Symbols['o'].addEllipse(qt.QRectF(.1, .1, .8, .8))
+Symbols['s'].addRect(qt.QRectF(.1, .1, .8, .8))
+
 coords = {
-    't': [(-0.5, -0.5), (0, 0.5), (0.5, -0.5)],
-    'd': [(0., -0.5), (-0.4, 0.), (0, 0.5), (0.4, 0)],
-    '+': [
-        (-0.5, -0.05), (-0.5, 0.05), (-0.05, 0.05), (-0.05, 0.5),
-        (0.05, 0.5), (0.05, 0.05), (0.5, 0.05), (0.5, -0.05), 
-        (0.05, -0.05), (0.05, -0.5), (-0.05, -0.5), (-0.05, -0.05)
-    ],
+    't': [(0.5, 0.), (.1,.8), (.9, .8)],
+    'd': [(0.1, 0.5), (0.5, 0.), (0.9, 0.5), (0.5, 1.)],
+    '+': [(0.0, 0.40), (0.40, 0.40), (0.40, 0.), (0.60, 0.),
+          (0.60, 0.40), (1., 0.40), (1., 0.60), (0.60, 0.60),
+          (0.60, 1.), (0.40, 1.), (0.40, 0.60), (0., 0.60)],
+    'x': [(0.0, 0.40), (0.40, 0.40), (0.40, 0.), (0.60, 0.),
+          (0.60, 0.40), (1., 0.40), (1., 0.60), (0.60, 0.60),
+          (0.60, 1.), (0.40, 1.), (0.40, 0.60), (0., 0.60)]
 }
-for k, c in coords.items():
-    Symbols[k].moveTo(*c[0])
+for s, c in coords.items():
+    Symbols[s].moveTo(*c[0])
     for x,y in c[1:]:
-        Symbols[k].lineTo(x, y)
-    Symbols[k].closeSubpath()
+        Symbols[s].lineTo(x, y)
+    Symbols[s].closeSubpath()
 tr = qt.QTransform()
 tr.rotate(45)
-Symbols['x'] = tr.map(Symbols['+'])
+Symbols['x'].translate(qt.QPointF(-0.5,-0.5))
+Symbols['x'] = tr.map(Symbols['x'])
+Symbols['x'].translate(qt.QPointF(0.5,0.5))
 
 class LegendIcon(qt.QWidget):
 
-    symbols = ['triangle',
-               'utriangle',
-               'square',
-               'cross',
-               'circle',
-               'ellipse',
-               'diamond']
-
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
-        # Assign default values
-        self.symbol    = None
-        self.lineWidth = 4.
-        self.color     = qt.Qt.green
-        
-        # Pen draws outlines of a shape
-        self.pen = qt.QPen(self.color,
-                           self.lineWidth,
-                           qt.Qt.SolidLine,
-                           qt.Qt.FlatCap,
-                           qt.Qt.RoundJoin)
-        # Brush draws interior as a shape
-        self.brush = qt.QBrush(qt.Qt.SolidPattern)
+        # Visibilities
+        self.showLine   = True
+        self.showSymbol = True
 
-        # TODO: Only draws lines
-        self.path = qt.QPainterPath()
-        self.path.moveTo(0.,50.)
-        self.path.lineTo(100.,50.)
+        # Line attributes
+        self.lineStyle = qt.Qt.SolidLine
+        self.lineWidth = 1.
+        self.lineColor = qt.Qt.green
+
+        self.symbol     = ''
+        # Symbol attributes
+        self.symbolStyle = qt.Qt.SolidPattern
+        self.symbolColor = qt.Qt.green
+
         # Control widget size: sizeHint "is the only acceptable
         # alternative, so the widget can never grow or shrink"
         # (c.f. Qt Doc, enum QSizePolicy::Policy)
         self.setSizePolicy(qt.QSizePolicy.Fixed,
                            qt.QSizePolicy.Fixed)
-    
+
+    def sizeHint(self):
+        return qt.QSize(50,20)
+
+    # Modify Symbol
+    def setSymbol(self, symbol):
+        if symbol not in Symbols:
+            raise ValueError('Unknown symbol: \'%s\''%symbol)
+        self.symbol = symbol
+        # self.update() after set...?
+        # Does not seem necessary
+
+    def setSymbolColor(self, color):
+        '''
+        :param color: determines the symbol color
+        :type style: qt.QColor
+        '''
+        self.symbolColor = qt.QColor(color)
+
+    def setSymbolStyle(self, style):
+        '''
+        :param style: Must be in Qt.BrushStyle
+        :type style: int
+
+        Possible joices are:
+          Qt.NoBrush
+          Qt.SolidPattern
+          Qt.Dense1Pattern
+          Qt.Dense2Pattern
+          Qt.Dense3Pattern
+          Qt.Dense4Pattern
+          Qt.Dense5Pattern
+          Qt.Dense6Pattern
+          Qt.Dense7Pattern
+          Qt.HorPattern
+          Qt.VerPattern
+          Qt.CrossPattern
+          Qt.BDiagPattern
+          Qt.FDiagPattern
+          Qt.DiagCrossPattern
+          Qt.LinearGradientPattern
+          Qt.ConicalGradientPattern
+          Qt.RadialGradientPattern
+        '''
+        if style not in list(range(18)):
+            raise ValueError('Unknown style: %d')
+        self.symbolStyle = int(style)
+
+    # Modify Line
+    def setLineColor(self, color):
+        self.lineColor = qt.QColor(color)
+
+    def setLineWidth(self, width):
+        self.lineWidth = float(width)
+
+    def setLineStyle(self, style):
+        '''
+        :param style: Must be in Qt.PenStyle
+        :type style: int
+
+        Possible joices are:
+          Qt.NoPen
+          Qt.SolidLine
+          Qt.DashLine
+          Qt.DotLine
+          Qt.DashDotLine
+          Qt.DashDotDotLine
+          Qt.CustomDashLine
+        '''
+        if style not in list(range(7)):
+            raise ValueError('Unknown style: %d')
+        self.lineStyle = int(style)
+
+    # Paint
     def paintEvent(self, event):
         '''
         :param event: event
@@ -108,188 +173,66 @@ class LegendIcon(qt.QWidget):
         self.paint(painter, event.rect(), self.palette())
 
     def paint(self, painter, rect, palette):
-        painter.save() # -> pushes painter state onto a stack
-        # Boundary line will be rendered symmetrically
-        # around the mathematical shape of an area (rect)
-        # when using QPainter.Antialiasing
-        painter.setRenderHint(qt.QPainter.Antialiasing);
-        painter.setPen(self.pen)
-        painter.setBrush(self.brush)
-        if self.symbol == 'triangle':
-            spath = self._trianglePainterPath()
-        elif self.symbol == 'utriangle':
-            spath = self._upsideTrianglePainterPath()
-        elif self.symbol == 'square':
-            spath = self._squarePainterPath()
-        elif self.symbol == 'cross':
-            spath = self._crossPainterPath()
-        elif self.symbol == 'diamond':
-            spath = self._diamondPainterPath()
-        elif self.symbol == 'circle':
-            spath = self._circlePainterPath()
-        elif self.symbol == 'ellipse':
-            spath = self._ellipsePainterPath()
-        lpath = self._linePainterPath()
-        offset = rect.topLeft()
-        for path in [spath, lpath]:
-            path.translate(offset)
+        painter.save()
+        #painter.setRenderHint(qt.QPainter.Antialiasing)
+        # Scale painter to the icon height
+        # current -> width = 2.5, height = 1.0
+        scale  = float(self.height())
+        ratio  = float(self.width()) / scale
+        painter.scale(scale,
+                      scale)
+        # Determine and scale offset
+        offset = qt.QPointF(
+                    float(rect.left())/scale,
+                    float(rect.top())/scale)
+        # Draw BG rectangle (for debugging)
+        #bottomRight = qt.QPointF(
+        #    float(rect.right())/scale,
+        #    float(rect.bottom())/scale)               
+        #painter.fillRect(qt.QRectF(offset, bottomRight),
+        #                 qt.QBrush(qt.Qt.green))
+        llist = []
+        if self.showLine:
+            linePath = qt.QPainterPath()
+            linePath.moveTo(0.,0.5)
+            linePath.lineTo(ratio,0.5)
+            #linePath.lineTo(2.5,0.5)
+            linePath.translate(offset)
+            linePen = qt.QPen(
+                qt.QBrush(self.lineColor),
+                (self.lineWidth / self.height()),
+                self.lineStyle,
+                qt.Qt.FlatCap
+            )
+            llist.append((linePath,
+                          linePen,
+                          qt.QBrush(self.lineColor)))
+        if self.showSymbol and len(self.symbol):
+            symbolOffset = qt.QPointF(.5*(ratio-1.), 0.)
+            # PITFALL ahead: Let this be a warning to other
+            #symbolPath = Symbols[self.symbol]
+            # Copy before translate! Dict is a mutable type
+            symbolPath = qt.QPainterPath(Symbols[self.symbol])
+            symbolPath.translate(symbolOffset)
+            symbolPath.translate(offset)
+            symbolBrush = qt.QBrush(
+                self.symbolColor,
+                self.symbolStyle
+            )
+            symbolPen = qt.QPen(
+                qt.QBrush(qt.Qt.white),        # Brush
+                1./self.height(),   # Width
+                qt.Qt.SolidLine     # Style
+            )
+            llist.append((symbolPath,
+                          symbolPen,
+                          symbolBrush))
+        # Draw
+        for path, pen, brush in llist:
+            painter.setPen(pen)
+            painter.setBrush(brush)
             painter.drawPath(path)
-        painter.restore() # -> unwinds painter stack
-
-    def sizeHint(self):
-        return qt.QSize(50,20)
-
-    def getSymbolRectangle(self, square=True):
-        '''
-        :param square: Both sides have the same length
-        :type square: Bool
-
-        Returns the rectangle in which the symbol is drawn
-        '''
-        w, h = float(self.width()), float(self.height())
-        # Remove width of outline from rectangle
-        lineWidth = self.lineWidth / 2.
-        # TODO: Check how widget is directed (broader/higher)
-        if square:
-            rectW = w
-        else:
-            rectW = 1.3 * w 
-        '''
-        if square:
-            rectW = rectH
-            size = qt.QSizeF(rectH, rectW)
-        elif rectH < rectW:
-            rectW = 1.3 * rectH
-            size = qt.QSizeF(rectH, rectW)
-        else:
-            rectW = 1.3 * rectH
-            size = qt.QSizeF(rectW, rectH)
-        x, y = (w - rectW)/2., self.lineWidth
-        if rectH < rectW:
-            # Typical case: broad rectangle..
-            topLeft = qt.QPointF(x, y)
-        else:
-            # ..but maybe the rectangle is rather
-            # higher than broad
-            topLeft = qt.QPointF(y, x)
-        '''
-        # Top Left Corner
-        topLeftX = (rectW - h)/2. + lineWidth
-        topLeftY = lineWidth
-        topLeft = qt.QPointF(topLeftX, topLeftY)
-        # Bottom Right Corner
-        bottomRightX = (rectW + h)/2. - lineWidth
-        bottomRightY = h - lineWidth
-        bottomRight = qt.QPointF(bottomRightX, bottomRightY)
-        return qt.QRectF(topLeft, bottomRight)
-
-    #def drawSymbol(painter, symbol, )
-
-    # Line painter paths
-    def _linePainterPath(self):
-        path = qt.QPainterPath()
-        w, h = float(self.width()), float(self.height())
-        path.moveTo(0., h/2.)
-        path.lineTo(w, h/2.)
-        return path
-
-    # Symbol painter paths
-    def _crossPainterPath(self):
-        path = qt.QPainterPath()
-        rect = self.getSymbolRectangle()
-        path.moveTo(rect.topLeft())
-        path.lineTo(rect.bottomRight())
-        path.moveTo(rect.bottomLeft())
-        path.lineTo(rect.topRight())
-        return path
-
-    def _trianglePainterPath(self):
-        path = qt.QPainterPath()
-        rect = self.getSymbolRectangle()
-        points = [rect.bottomLeft(),
-                  rect.bottomRight(),
-                  rect.topLeft() + qt.QPointF(rect.width()/2., 0.)]
-        triangle = qt.QPolygonF(points)
-        path.addPolygon(triangle)
-        return path
-
-    def _upsideTrianglePainterPath(self):
-        path = qt.QPainterPath()
-        rect = self.getSymbolRectangle()
-        points = [rect.topLeft(),
-                  rect.topRight(),
-                  rect.bottomLeft() + qt.QPointF(rect.width()/2., 0.)]
-        triangle = qt.QPolygonF(points)
-        path.addPolygon(triangle)
-        return path
-
-    def _diamondPainterPath(self):
-        path = qt.QPainterPath()
-        rect = self.getSymbolRectangle()
-        halfWidth  = qt.QPointF(rect.width()/2., 0.)
-        halfHeigth = qt.QPointF(0., rect.height()/2.)
-        points = [(rect.topLeft() + halfWidth),
-                  (rect.topRight() + halfHeigth),
-                  (rect.bottomLeft() + halfWidth),
-                  (rect.topLeft() + halfHeigth)]
-        triangle = qt.QPolygonF(points)
-        path.addPolygon(triangle)
-        return path
-
-    def _squarePainterPath(self):
-        path = qt.QPainterPath()
-        rect = self.getSymbolRectangle()
-        path.addRect(rect)
-        return path
-
-    def _circlePainterPath(self):
-        path = qt.QPainterPath()
-        rect = self.getSymbolRectangle()
-        path.addEllipse(rect)
-        return path
-
-    def _ellipsePainterPath(self):
-        # TODO: Check getSymbolRectangle(square=False)
-        path = qt.QPainterPath()
-        rect = self.getSymbolRectangle(square=False)
-        path.addEllipse(rect)
-        return path
-
-    def setPen(self, pen):
-        # Use copy contructor
-        self.pen = qt.QPen(pen)
-        self.update()
-
-    def setBrush(self, brush):
-        # Use copy contructor
-        self.brush = qt.QBrush(brush)
-        self.update()
-
-    # Modify icon
-    def setColor(self, color):
-        self.pen.setColor(color)
-        self.brush.setColor(color)
-        self.update()
-
-    def setSymbol(self, symbol):
-        if symbol not in self.symbols:
-            raise ValueError('Unknown symbol: %s'%symbol)
-        self.symbol = symbol
-        self.update()
-
-    # Modify brush
-    def setBrushColor(self, color):
-        self.brush.setColor(color)
-        self.update()
-
-    # Modify pen
-    def setPenColor(self, color):
-        self.pen.setColor(color)
-        self.update()
-
-    def setLineWidth(self, width):
-        self.pen.setWidth(width)
-        self.update()
+        painter.restore()
 
 class LegendModel(qt.QAbstractListModel):
     iconColorRole     = qt.Qt.UserRole + 0
@@ -526,23 +469,39 @@ class LegendListItemWidget(qt.QItemDelegate):
 
         Here be docs..
         '''
+        painter.save()
+        # Rect geometry
+        width  = option.rect.width()
+        height = option.rect.height()
+        left   = option.rect.left()
+        top    = option.rect.top()
+        rect = qt.QRect(qt.QPoint(left, top),
+                        qt.QSize(width, height))
         rect = option.rect
-        # Calculate the checkbox rectangle
-        topLeft  = rect.topLeft()
-        botRight = qt.QPoint(topLeft.x() + 30,
-                             topLeft.y() + rect.height())
-        chBoxRect = qt.QRect(topLeft, botRight)
+
         # Calculate the icon rectangle
         iconSize = self.icon.sizeHint()
-        topRight = rect.topRight()
-        x = topRight.x() - iconSize.width()
-        y = topRight.y() + (rect.height()-iconSize.height()) / 2.
+        # Calculate icon position
+        x = rect.left() + 2
+        y = rect.top() + int(.5*(rect.height()-iconSize.height()))
         iconRect = qt.QRect(qt.QPoint(x,y), iconSize)
-        # Calculate the label rectangle
-        y  = rect.topLeft().y()
-        topLeft   = qt.QPoint(rect.topLeft().x() + 31, y)
-        botRight  = qt.QPoint(iconRect.bottomRight().x() - 1, y + rect.height())
-        labelRect = qt.QRect(topLeft, botRight)
+
+        # Calculate label rectangle
+        legendSize = qt.QSize(
+                        rect.width() - iconSize.width() - 30,
+                        rect.height())
+        # Calculate label position
+        x = rect.left() + iconRect.width()
+        y = rect.top()
+        labelRect = qt.QRect(qt.QPoint(x, y),
+                             legendSize)
+        labelRect.translate(qt.QPoint(10, 0))
+
+        # Calculate the checkbox rectangle
+        x = rect.right() - 30
+        y = rect.top()
+        chBoxRect = qt.QRect(qt.QPoint(x, y),
+                             rect.bottomRight())
 
         # Draw background first!
         if option.state & qt.QStyle.State_MouseOver:
@@ -553,15 +512,6 @@ class LegendListItemWidget(qt.QItemDelegate):
             backgoundBrush = idx.data(qt.Qt.BackgroundRole)
             painter.fillRect(rect, backgoundBrush)
 
-        # Draw the checkbox
-        if idx.data(qt.Qt.CheckStateRole):
-            checkState = qt.Qt.Checked
-        else:
-            checkState = qt.Qt.Unchecked
-        itemStyle  = qt.QStyleOptionViewItem()
-        #itemStyl.
-        self.drawCheck(painter, itemStyle, chBoxRect, checkState)
-
         # Draw label
         legendText = idx.data(qt.Qt.DisplayRole)
         textBrush  = idx.data(qt.Qt.ForegroundRole)
@@ -571,15 +521,45 @@ class LegendListItemWidget(qt.QItemDelegate):
         painter.drawText(labelRect, textAlign, legendText)
 
         # Draw icon
+        #painter.save()
         iconColor = idx.data(LegendModel.iconColorRole)
         iconLineWidth = idx.data(LegendModel.iconLineWidthRole)
         iconSymbol = idx.data(LegendModel.iconSymbolRole)
-        self.icon.setColor(iconColor)
-        self.icon.setLineWidth(iconLineWidth)
-        self.icon.setSymbol(iconSymbol)
-        self.icon.paint(painter, iconRect, option.palette)
+        self.icon = LegendIcon()
         self.icon.resize(iconRect.size())
         self.icon.move(iconRect.topRight())
+        self.icon.setSymbolColor(iconColor)
+        self.icon.setLineColor(iconColor)
+        self.icon.setLineWidth(iconLineWidth)
+        self.icon.setSymbol(iconSymbol)
+        #self.icon.setSymbol('s')
+        self.icon.paint(painter, iconRect, option.palette)
+        '''
+        icon = LegendIcon()
+        icon.setSymbolColor(iconColor)
+        icon.setLineColor(iconColor)
+        icon.setLineWidth(iconLineWidth)
+        icon.setSymbol(iconSymbol)
+        #icon.setSymbol('s')
+        icon.paint(painter, iconRect, option.palette)
+        icon.resize(iconRect.size())
+        icon.move(iconRect.topRight())
+        '''
+        #painter.restore()
+        
+        # Draw the checkbox
+        if idx.data(qt.Qt.CheckStateRole):
+            checkState = qt.Qt.Checked
+        else:
+            checkState = qt.Qt.Unchecked
+        itemStyle = qt.QStyleOptionViewItem()
+        #itemStyle
+        self.drawCheck(painter, option, chBoxRect, checkState)
+
+
+
+        painter.restore()
+        return
 
     def editorEvent(self, event, model, option, modelIndex):
         # self.createEditor is called first
@@ -589,6 +569,7 @@ class LegendListItemWidget(qt.QItemDelegate):
             return True
         elif event.button() == qt.Qt.LeftButton:
             # Check if checkbox was clicked
+            #self.blockSignals(True) # No use...
             xpos = event.pos().x()
             cbClicked = (xpos >= 10) & (xpos <= 20)
             if cbClicked:
@@ -605,6 +586,7 @@ class LegendListItemWidget(qt.QItemDelegate):
             return True
         return qt.QItemDelegate.editorEvent(self, event, model, option, modelIndex)
 
+    """
     def createEditor(self, parent, option, idx):
         return False
         # QColorDialog::QColorDialog(const QColor & initial, QWidget * parent = 0)
@@ -646,18 +628,16 @@ class LegendListItemWidget(qt.QItemDelegate):
             role  = LegendModel.iconColorRole
         res = model.setData(idx, value, role)
         print('setModelData -- change accepted? %s!'%str(res))
+    """
 
     def sizeHint(self, option, idx):
         #return qt.QSize(68,24)
         iconSize = self.icon.sizeHint()
         legendSize = self.legend.sizeHint()
         checkboxSize = self.checkbox.sizeHint()
-
         height = max([iconSize.height(), legendSize.height(), checkboxSize.height()]) + 4
         width = iconSize.width() + legendSize.width() + checkboxSize.width()
-
-        #print('Delegate.sizeHint -- height: %d, width: %d'%(height, width)) # height: 20, width: 68
-        return qt.QSize(height, width)
+        return qt.QSize(width, height)
 
 class LegendListView(qt.QListView):
 
@@ -698,6 +678,19 @@ class LegendListView(qt.QListView):
         self.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
 
     def sizeHint(self):
+        print('ListView.sizeHint called')
+        return qt.QSize(300,500)
+
+    def minimumWidth(self):
+        print('ListView.minimumSize called')
+        return 500
+
+    def minimumSize(self):
+        print('ListView.minimumSize called')
+        return qt.QSize(300,500)
+
+    def minimumSizeHint(self):
+        print('ListView.minimumSizeHint called')
         return qt.QSize(300,500)
 
     def __getitem__(self, idx):
@@ -753,7 +746,9 @@ class LegendListView(qt.QListView):
             return
         model = self.model()
         idx   = modelIndex.row()
-        xpos  = self.__lastPosition.x()
+        xpos  = abs(self.rect().right() - self.__lastPosition.x())
+        print('|%d - %d| = %d'%(self.rect().right(), self.__lastPosition.x(), xpos))
+        #xpos  = self.__lastPosition.x()
         # TODO: make cbClicked geometry independent
         cbClicked = (xpos >= 10) & (xpos <= 20)
         # item is tupel: (legend, icon, checkState, curveType)
@@ -804,9 +799,10 @@ class Notifier(qt.QObject):
 
 if __name__ == '__main__':
     notifier = Notifier()
-    legends = ['Legend0', 'Legend1', 'Long Legend 2', 'Foo Legend 3', 'Even Longer Legend 4', 'Short Leg 5']
-    colors  = [qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red]
-    symbols = ['circle', 'triangle', 'utriangle', 'diamond', 'square', 'cross']
+    legends = 10*['Legend0', 'Legend1', 'Long Legend 2', 'Foo Legend 3', 'Even Longer Legend 4', 'Short Leg 5']
+    colors  = 10*[qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red]
+    #symbols = ['circle', 'triangle', 'utriangle', 'diamond', 'square', 'cross']
+    symbols = 10*['o', 't', '+', 'x', 's', 'd']
     app = qt.QApplication([])
     win = LegendListView()
     #win = LegendListContextMenu()
@@ -841,37 +837,3 @@ if __name__ == '__main__':
     win.show()
     
     app.exec_()
-            
-'''
-GRAVEYARD
-
-    def _triggerEditor(self, ddict):
-        delegate = self.itemDelegate()
-        if isinstance(delegate, qt.QStyledItemDelegate) or\
-           isinstance(delegate, qt.QItemDelegate):
-            NotImplementedError('triggerEditor -- Use nontrivial delegate')
-        button   = ddict['button']
-        event    = ddict['event']
-        selected = ddict['selected']
-        if button == qt.Qt.RightButton:
-            if DEBUG == 1:
-                print('triggerEditor -- Trigger rightClick Editor')
-            editor = self.editorDict['rightClick']
-        elif not selected: # TODO: Switch off editor rather than cbClicked
-            if DEBUG == 1:
-                print('triggerEditor -- Trigger checkboxClick Editor')
-            editor = self.editorDict['checkboxClick']
-        elif event == self.__legendClickedEvent:
-            if DEBUG == 1:
-                print('triggerEditor -- Trigger legendClick Editor')
-            editor = self.editorDict['legendClick']
-        else:
-            if DEBUG == 1:
-                print('triggerEditor -- No case applies')
-            return
-        if editor:
-            print('triggerEditor -- Create Editor..')
-        else:
-            #raise ValueError('triggerEditor -- Signal not connected')
-            print('triggerEditor -- Signal connction is faulty')
-'''
