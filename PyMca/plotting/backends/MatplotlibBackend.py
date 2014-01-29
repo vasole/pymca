@@ -566,6 +566,14 @@ class MatplotlibGraph(FigureCanvas):
                     h = w * self._ratio
                 else:
                     w = h / self._ratio
+                if self._x1 > self._x0:
+                    x = self._x0
+                else:
+                    x = self._x0 - w
+                if self._y1 > self._y0:
+                    y = self._y0
+                else:
+                    y = self._y0 - h
 
             if self._zoomRectangle is None:
                 self._zoomRectangle = Rectangle(xy=(x,y),
