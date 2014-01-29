@@ -308,7 +308,8 @@ class Plot(PlotBase.PlotBase):
     def addImage(self, data, legend=None, info=None,
                  replace=True, replot=True,
                  xScale=None, yScale=None, z=0,
-                 selectable=False, draggable=False, **kw):
+                 selectable=False, draggable=False,
+                 colormap=None, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
@@ -330,6 +331,8 @@ class Plot(PlotBase.PlotBase):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the image can be moved
         :type draggable: boolean, default False
+        :param colormap: Dictionary describing the colormap to use (or None)
+        :type colormap: Dictionnary or None (default). Ignored if data is RGB(A)
         :returns: The legend/handle used by the backend to univocally access it.
         """
         if legend is None:
@@ -923,6 +926,46 @@ class Plot(PlotBase.PlotBase):
         if DEBUG:
             print("Plot showGrid called")
         self._plot.showGrid(flag)
+
+    # colormap related functions
+    def getDefaultColormap(self):
+        """
+        Return the colormap that will be applied by the backend to an image
+        if no colormap is applied to it.
+        A colormap is a dictionnary with the keys:
+        :type name: string
+        :type normalization: string (linear, log)
+        :type autoscale: boolean
+        :type vmin: float, minimum value
+        :type vmax: float, maximum value
+        :type colors: integer (typically 256)
+        """
+        return self._plot.getDefaultColormap()
+    
+    def setDefaultColormap(self, colormap=None):
+        """
+        Sets the colormap that will be applied by the backend to an image
+        if no colormap is applied to it.
+        A colormap is a dictionnary with the keys:
+        :type name: string
+        :type normalization: string (linear, log)
+        :type autoscale: boolean
+        :type vmin: float, minimum value
+        :type vmax: float, maximum value
+        :type colors: integer (typically 256)
+
+        If None is passed, the backend will reset to its default colormap.
+        """
+        self._plot.setDefaultColormap(colormap)
+
+    def getSupportedColormaps(self):
+        """
+        Get a list of strings with the colormap names supported by the backend.
+        The list should at least contain and start by:
+        ['gray', 'reversed gray', 'temperature', 'red', 'green', 'blue']
+        """
+        return self._plot.getSupportedColormaps()
+
 
 def main():
     import numpy

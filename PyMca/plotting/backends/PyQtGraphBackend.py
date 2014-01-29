@@ -446,7 +446,8 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
     def addImage(self, data, legend=None, info=None,
                     replace=True, replot=True,
                     xScale=None, yScale=None, z=0,
-                    selectable=False, draggable=False, **kw):
+                    selectable=False, draggable=False,
+                    colormap=None, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
@@ -468,6 +469,8 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the image can be moved
         :type draggable: boolean, default False
+        :param colormap: Dictionary describing the colormap to use (or None)
+        :type colormap: Dictionnary or None (default). Ignored if data is RGB(A)
         :returns: The legend/handle used by the backend to univocally access it.
         """
         self.removeImage(legend, replot=False)

@@ -1351,7 +1351,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
     def addImage(self, data, legend=None, info=None,
                     replace=True, replot=True,
                     xScale=None, yScale=None, z=0,
-                    selectable=False, draggable=False, **kw):
+                    selectable=False, draggable=False,
+                    colormap=None, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
         :type data: numpy.ndarray
@@ -1373,26 +1374,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the image can be moved
         :type draggable: boolean, default False
+        :param colormap: Dictionary describing the colormap to use (or None)
+        :type colormap: Dictionnary or None (default). Ignored if data is RGB(A)
         :returns: The legend/handle used by the backend to univocally access it.
         """
-        if not hasattr(self, "__temperatureCmap"):
-            # Temperature as defined in spslut
-            cdict = {'red': ((0.0, 0.0, 0.0),
-                             (0.5, 0.0, 0.0),
-                             (0.75, 1.0, 1.0),
-                             (1.0, 1.0, 1.0)),
-                     'green': ((0.0, 0.0, 0.0),
-                               (0.25, 1.0, 1.0),
-                               (0.75, 1.0, 1.0),
-                               (1.0, 0.0, 0.0)),
-                     'blue': ((0.0, 1.0, 1.0),
-                              (0.25, 1.0, 1.0),
-                              (0.5, 0.0, 0.0),
-                              (1.0, 0.0, 0.0))}
-            #but limited to 256 colors for a faster display (of the colorbar)
-            self.__temperatureCmap = LinearSegmentedColormap('temperature',
-                                                             cdict, 256)
-
         # Non-uniform image
         #http://wiki.scipy.org/Cookbook/Histograms
         # Non-linear axes
@@ -1403,7 +1388,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             # make sure we do not cummulate images with same name
             self.removeImage(legend, replot=False)
 
-        cmap = self.__temperatureCmap
         if xScale is None:
             xScale = [0.0, 1.0]
         if yScale is None:
@@ -1461,6 +1445,19 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                               #norm=Normalize(data.min(), data.max()))
                 image.set_data(data)
             else:
+                if colormap is None:
+                    colormap = self.getDefaultColormap()
+                cmap = self.__getColormap(colormap['name'])
+                if colormap['autoscale']:
+                    vmin = data.min()
+                    vmax = data.max()
+                else:
+                    vmin = colormap['vmin']
+                    vmax = colormap['vmax']
+                if colormap['normalization'].startswith('log'):
+                    norm = LogNorm(vmin, vmax)
+                else:
+                    norm = Normalize(vmin, vmax)
                 # try as data
                 image = AxesImage(self.ax,
                               label="__IMAGE__"+legend,
@@ -1470,7 +1467,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                               extent=extent,
                               picker=picker,
                               zorder=z,
-                              norm=Normalize(data.min(), data.max()))
+                              norm=norm)
                 image.set_data(data)
             self.ax.add_artist(image)
             #self.ax.draw_artist(image)
@@ -1529,6 +1526,92 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if axes.get_aspect() not in ['auto', None]:
                     axes.set_aspect('auto')
                     self.resetZoom()
+
+    def setDefaultColormap(self, colormap=None):
+        if colormap is None:
+            colormap = {'name': 'gray', 'normalization':'linear',
+                        'autoscale':True, 'vmin':0.0, 'vmax':1.0,
+                        'colors':256}
+        self._defaultColormap = colormap
+
+    def getDefaultColormap(self):
+        if not hasattr(self, "_defaultColormap"):
+            self.setDefaultColormap(None)
+        return self._defaultColormap
+
+    def getSupportedColormaps(self):
+        default = ['gray', 'reversed gray', 'temperature', 'red', 'green', 'blue']
+        maps = [m for m in cm.datad]
+        maps.sort()
+        return default + maps
+
+    def __getColormap(self, name):
+        if not hasattr(self, "__temperatureCmap"):
+            #initialize own colormaps
+            cdict = {'red': ((0.0, 0.0, 0.0),
+                             (1.0, 1.0, 1.0)),
+                     'green': ((0.0, 0.0, 0.0),
+                               (1.0, 0.0, 0.0)),
+                     'blue': ((0.0, 0.0, 0.0),
+                              (1.0, 0.0, 0.0))}
+            self.__redCmap = LinearSegmentedColormap('red',cdict,256)
+
+            cdict = {'red': ((0.0, 0.0, 0.0),
+                             (1.0, 0.0, 0.0)),
+                     'green': ((0.0, 0.0, 0.0),
+                               (1.0, 1.0, 1.0)),
+                     'blue': ((0.0, 0.0, 0.0),
+                              (1.0, 0.0, 0.0))}
+            self.__greenCmap = LinearSegmentedColormap('green',cdict,256)
+
+            cdict = {'red': ((0.0, 0.0, 0.0),
+                             (1.0, 0.0, 0.0)),
+                     'green': ((0.0, 0.0, 0.0),
+                               (1.0, 0.0, 0.0)),
+                     'blue': ((0.0, 0.0, 0.0),
+                              (1.0, 1.0, 1.0))}
+            self.__blueCmap = LinearSegmentedColormap('blue',cdict,256)
+
+            # Temperature as defined in spslut
+            cdict = {'red': ((0.0, 0.0, 0.0),
+                             (0.5, 0.0, 0.0),
+                             (0.75, 1.0, 1.0),
+                             (1.0, 1.0, 1.0)),
+                     'green': ((0.0, 0.0, 0.0),
+                               (0.25, 1.0, 1.0),
+                               (0.75, 1.0, 1.0),
+                               (1.0, 0.0, 0.0)),
+                     'blue': ((0.0, 1.0, 1.0),
+                              (0.25, 1.0, 1.0),
+                              (0.5, 0.0, 0.0),
+                              (1.0, 0.0, 0.0))}
+            #but limited to 256 colors for a faster display (of the colorbar)
+            self.__temperatureCmap = LinearSegmentedColormap('temperature',
+                                                             cdict, 256)
+
+            #reversed gray
+            cdict = {'red':     ((0.0, 1.0, 1.0),
+                                 (1.0, 0.0, 0.0)),
+                     'green':   ((0.0, 1.0, 1.0),
+                                 (1.0, 0.0, 0.0)),
+                     'blue':    ((0.0, 1.0, 1.0),
+                                 (1.0, 0.0, 0.0))}
+                             
+            self.__reversedGrayCmap = LinearSegmentedColormap('yerg', cdict, 256)
+
+        if name == "reversed gray":
+            return self.__reversedGrayCmap
+        elif name == "temperature":
+            return self.__temperatureCmap
+        elif name == "red":
+            self.__redCmap
+        elif name == "green":
+            self.__greenCmap
+        elif name == "blue":
+            self.__blueCmap
+        else:
+            # built in
+            return cm.get_cmap(name)
 
 def main(parent=None):
     from .. import Plot
