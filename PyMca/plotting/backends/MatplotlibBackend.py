@@ -49,6 +49,7 @@ Polygon = patches.Polygon
 from matplotlib.lines import Line2D
 from matplotlib.text import Text
 from matplotlib.image import AxesImage, NonUniformImage
+from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 import time
 
 DEBUG = 0
@@ -412,6 +413,8 @@ class MatplotlibGraph(FigureCanvas):
         self._zoomRect = None
         self._xmin, self._xmax  = self.ax.get_xlim()
         self._ymin, self._ymax  = self.ax.get_ylim()
+        if self.ax.get_aspect() != 'auto':
+            self._ratio = (self._ymax - self._ymin) / (self._xmax - self._xmin)
 
         self.__drawing = self._drawModeEnabled
             
@@ -556,6 +559,13 @@ class MatplotlibGraph(FigureCanvas):
             else:
                 y = self._y0
                 h = self._y1 - self._y0
+            if w == 0:
+                return
+            if self.ax.get_aspect() != 'auto':
+                if (h / w) > self._ratio:
+                    h = w * self._ratio
+                else:
+                    w = h / self._ratio
 
             if self._zoomRectangle is None:
                 self._zoomRectangle = Rectangle(xy=(x,y),
@@ -831,33 +841,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.setDrawModeEnabled = self.graph.setDrawModeEnabled
         self._oldActiveCurve = None
         self._oldActiveCurveLegend = None
-        self._imageItem = None
-        if self._imageItem is not None:
-            # Temperature as defined in spslut
-            from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
-            cdict = {'red': ((0.0, 0.0, 0.0),
-                             (0.5, 0.0, 0.0),
-                             (0.75, 1.0, 1.0),
-                             (1.0, 1.0, 1.0)),
-                     'green': ((0.0, 0.0, 0.0),
-                               (0.25, 1.0, 1.0),
-                               (0.75, 1.0, 1.0),
-                               (1.0, 0.0, 0.0)),
-                     'blue': ((0.0, 1.0, 1.0),
-                              (0.25, 1.0, 1.0),
-                              (0.5, 0.0, 0.0),
-                              (1.0, 0.0, 0.0))}
-            #but limited to 256 colors for a faster display (of the colorbar)
-            self.__temperatureCmap = LinearSegmentedColormap('temperature',
-                                                             cdict, 256)
-            cmap = self.__temperatureCmap
-            x = numpy.arange(1000*1000.)
-            x.shape = 1000, 1000
-            self.ax.imshow(x,
-                           interpolation='nearest',
-                           origin='upper',
-                           cmap=cmap,
-                           norm=Normalize(0, 1000*1000.))
+
     def addCurve(self, x, y, legend, info=None, replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
@@ -1393,7 +1377,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         if not hasattr(self, "__temperatureCmap"):
             # Temperature as defined in spslut
-            from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
             cdict = {'red': ((0.0, 0.0, 0.0),
                              (0.5, 0.0, 0.0),
                              (0.75, 1.0, 1.0),
@@ -1463,6 +1446,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if data.shape[-1] == 4:
                     # force alpha(?)
                     data[:,:,3] = 255
+                    pass
             if len(data.shape) == 3:
                 # RGBA image
                 extent = (xmin, xmax, ymin, ymax)
