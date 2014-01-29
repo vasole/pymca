@@ -262,17 +262,18 @@ class MatplotlibGraph(FigureCanvas):
             print("unhandled", event.artist)
 
     def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
+        print("Called with shape = ", flag, shape)
         if flag:
             shape = shape.lower()
-            if self._drawModeShape not in self._drawModeList:
+            if shape not in self.__drawModeList:
                 self._drawModeEnabled = False
                 raise ValueError("Unsupported shape %s" % shape)
             else:
-                self._drawModeEnabled = flag
+                self._drawModeEnabled = True
                 self.setZoomModeEnabled(False)
-                self._drawModeShape = shape
+                self._drawModePatch = shape
         else:
-            self._drawModeEnabled = True
+            self._drawModeEnabled = False
 
     def setZoomModeEnabled(self, flag=True):
         if flag:
@@ -281,22 +282,11 @@ class MatplotlibGraph(FigureCanvas):
         else:
             self._zoomEnabled = False
 
-    def isZoomModeEnabled():
+    def isZoomModeEnabled(self):
         return self._zoomEnabled
 
-    def isDrawModeEnabled():
+    def isDrawModeEnabled(self):
         return self._drawModeEnabled
-
-    def setDrawModePatch(self, mode=None):
-        if mode is None:
-            mode = self.__drawModeList[0]
-
-        mode = mode.lower()
-        #raise an error in case of an invalid mode
-        modeIndex = self.__drawModeList.index(mode)
-
-        self._drawModePatch = mode
-
 
     def onMousePressed(self, event):
         if DEBUG:
@@ -549,7 +539,8 @@ class MatplotlibGraph(FigureCanvas):
         if self._x0 is None:
             return
         
-        if self.__zooming:
+        if self.__zooming or \
+           (self.__drawing and (self._drawModePatch == 'rectangle')):
             if self._x1 < self._xmin:
                 self._x1 = self._xmin
             elif self._x1 > self._xmax:
@@ -574,7 +565,7 @@ class MatplotlibGraph(FigureCanvas):
                 h = self._y1 - self._y0
             if w == 0:
                 return
-            if self.ax.get_aspect() != 'auto':
+            if (not self.__drawing) and (self.ax.get_aspect() != 'auto'):
                 if (h / w) > self._ratio:
                     h = w * self._ratio
                 else:
@@ -588,18 +579,29 @@ class MatplotlibGraph(FigureCanvas):
                 else:
                     y = self._y0 - h
 
-            if self._zoomRectangle is None:
-                self._zoomRectangle = Rectangle(xy=(x,y),
-                                               width=w,
-                                               height=h,
-                                               fill=False)
-                self.ax.add_patch(self._zoomRectangle)
+            if self.__zooming:
+                if self._zoomRectangle is None:
+                    self._zoomRectangle = Rectangle(xy=(x,y),
+                                                   width=w,
+                                                   height=h,
+                                                   fill=False)
+                    self.ax.add_patch(self._zoomRectangle)
+                else:
+                    self._zoomRectangle.set_bounds(x, y, w, h)
+                    #self._zoomRectangle._update_patch_transform()
+                self.fig.canvas.draw()
+                return
             else:
-                self._zoomRectangle.set_bounds(x, y, w, h)
-                #self._zoomRectangle._update_patch_transform()
-            self.fig.canvas.draw()
-            return
-        
+                if self._drawingPatch is None:
+                    self._drawingPatch = Rectangle(xy=(x,y),
+                                                   width=w,
+                                                   height=h,
+                                                   fill=False)
+                    self._drawingPatch.set_hatch('/')
+                    self.ax.add_patch(self._drawingPatch)                    
+                else:
+                    self._drawingPatch.set_bounds(x, y, w, h)
+                    #self._zoomRectangle._update_patch_transform()
         if self.__drawing:
             if self._drawingPatch is None:
                 self._mouseData = numpy.zeros((2,2), numpy.float32)
@@ -611,6 +613,9 @@ class MatplotlibGraph(FigureCanvas):
                                              closed=True,
                                              fill=False)
                 self.ax.add_patch(self._drawingPatch)
+            elif self._drawModePatch == 'rectangle':
+                # already handled
+                pass            
             elif self._drawModePatch == 'line':
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
@@ -860,6 +865,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self._logY = False
         self.setZoomModeEnabled = self.graph.setZoomModeEnabled
         self.setDrawModeEnabled = self.graph.setDrawModeEnabled
+        self.isZoomModeEnabled = self.graph.isZoomModeEnabled
+        self.isDrawModeEnabled = self.graph.isDrawModeEnabled
         self._oldActiveCurve = None
         self._oldActiveCurveLegend = None
 
@@ -1356,18 +1363,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             self._logY = False
             self.ax.set_yscale('linear')
-
-    def setZoomModeEnabled(self, flag=True):
-        """
-        Zoom and drawing are not compatible
-        :param flag: If True, the user can zoom. 
-        :type flag: boolean, default True
-        """
-        self._zoomEnabled = flag
-        if flag:
-            #cannot draw and zoom simultaneously
-            self.setDrawModeEnabled(False)
-            self._selecting = False
 
     def addImage(self, data, legend=None, info=None,
                     replace=True, replot=True,
