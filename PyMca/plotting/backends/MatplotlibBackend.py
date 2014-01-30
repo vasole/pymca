@@ -426,6 +426,15 @@ class MatplotlibGraph(FigureCanvas):
                 print("RETURNING")
             return
 
+        button = event.button
+        if button == 1:
+            button = "left"
+        elif button == 2:
+            button = "middle"
+        elif button == 3:
+            button = "right"
+        else:
+            button = None
         #as default, export the mouse in graph coordenates
         self._x1 = event.xdata
         self._y1 = event.ydata
@@ -435,7 +444,9 @@ class MatplotlibGraph(FigureCanvas):
               'x':self._x1,
               'y':self._y1,
               'xpixel':self._x1Pixel,
-              'ypixel':self._y1Pixel}
+              'ypixel':self._y1Pixel,
+              'button':button,
+              }
         self._callback(ddict)
         # should this be made by Plot1D with the previous call???
         # The problem is Plot1D does not know if one is zooming or drawing
@@ -695,7 +706,7 @@ class MatplotlibGraph(FigureCanvas):
         if self._zoomRectangle is None:
             currentTime = time.time() 
             deltaT =  currentTime - self.__time0
-            if (deltaT < 0.1) or (self.__time0 < 0):
+            if (deltaT < 0.1) or (self.__time0 < 0) or (not self.__zooming):
                 # single or double click, no zooming
                 self.__zooming = False
                 ddict = {'x':event.xdata,
@@ -708,6 +719,8 @@ class MatplotlibGraph(FigureCanvas):
                 button = event.button
                 if button == rightButton:
                     ddict['button'] = "right"
+                elif button == middleButton:
+                    ddict['button'] = "middle"
                 else:
                     ddict['button'] = "left"
                 if (button == self.__lastMouseClick[0]) and\
@@ -737,18 +750,16 @@ class MatplotlibGraph(FigureCanvas):
         ddict = {}
         ddict['event'] = event
         ddict['type'] = '%s' % self._drawModePatch
-        #ddict['points'] = self._drawingPatch.get_xy()
-        print(dir(self._drawingPatch))
         ddict['xdata'] = numpy.array(self._drawingPatch.get_x())
         ddict['ydata'] = numpy.array(self._drawingPatch.get_y())
-        ddict['points'] = numpy.array(self._drawingPatch.get_xy())
         a = self._drawingPatch.get_xy()
+        ddict['points'] = numpy.array(a)
         pixels = self.ax.transData.transform(numpyvstack(a).T)
         xPixel, yPixels = pixels.T
         if self._drawModePatch in ["rectangle", "circle"]:
             # we need the rectangle containing it
-            ddict['x'] = ddict['xdata'].min()
-            ddict['y'] = ddict['ydata'].min()
+            ddict['x'] = ddict['points'][:, 0].min()
+            ddict['y'] = ddict['points'][:, 1].min()
             ddict['width'] = self._drawingPatch.get_width()
             ddict['height'] = self._drawingPatch.get_height()
         elif self._drawModePatch in ["ellipse"]:
@@ -1480,16 +1491,20 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     pass
             if len(data.shape) == 3:
                 # RGBA image
+                # TODO: Possibility to mirror the image
+                # in case of pixmaps just setting
+                # extend = (xmin, xmax, ymax, ymin)
+                # instead of (xmin, xmax, ymin, ymax)
                 extent = (xmin, xmax, ymin, ymax)
                 image = AxesImage(self.ax,
                               label="__IMAGE__"+legend,
                               interpolation='nearest',
-                              #origin=
-                              #cmap=cmap,
-                              extent=extent,
                               picker=picker,
                               zorder=z)
-                              #norm=Normalize(data.min(), data.max()))
+                if image.origin == 'upper':
+                    image.set_extent((xmin, xmax, ymax, ymin))
+                else:
+                    image.set_extent((xmin, xmax, ymin, ymax))
                 image.set_data(data)
             else:
                 if colormap is None:
@@ -1515,6 +1530,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                               picker=picker,
                               zorder=z,
                               norm=norm)
+                if image.origin == 'upper':
+                    image.set_extent((xmin, xmax, ymax, ymin))
+                else:
+                    image.set_extent((xmin, xmax, ymin, ymax))
                 image.set_data(data)
             self.ax.add_artist(image)
             #self.ax.draw_artist(image)
