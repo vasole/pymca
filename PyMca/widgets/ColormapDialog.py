@@ -544,6 +544,10 @@ def test():
     app = qt.QApplication(sys.argv)
     app.connect(app,qt.SIGNAL("lastWindowClosed()"), app.quit)
     demo = ColormapDialog()
+    def call(*var):
+        print("Received", var)
+
+    qt.QObject.connect(demo, qt.SIGNAL("ColormapChanged"), call)
 
     demo.setAutoscale(1)
     if QTVERSION < '4.0.0':
