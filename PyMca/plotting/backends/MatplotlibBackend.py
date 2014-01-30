@@ -20,6 +20,9 @@ __license__ = "LGPL"
 __doc__ = """
 Matplotlib Plot backend.
 """
+import numpy as np
+from matplotlib import cbook
+
 import numpy
 from numpy import vstack as numpyvstack
 import sys
@@ -53,6 +56,128 @@ from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 import time
 
 DEBUG = 0
+
+class ModestImage(AxesImage):
+    """
+Computationally modest image class.
+
+ModestImage is an extension of the Matplotlib AxesImage class
+better suited for the interactive display of larger images. Before
+drawing, ModestImage resamples the data array based on the screen
+resolution and view window. This has very little affect on the
+appearance of the image, but can substantially cut down on
+computation since calculations of unresolved or clipped pixels
+are skipped.
+
+The interface of ModestImage is the same as AxesImage. However, it
+does not currently support setting the 'extent' property. There
+may also be weird coordinate warping operations for images that
+I'm not aware of. Don't expect those to work either.
+"""
+    def __init__(self, *args, **kwargs):
+        self._full_res = None
+        self._sx, self._sy = None, None
+        self._bounds = (None, None, None, None)
+        super(ModestImage, self).__init__(*args, **kwargs)
+        if 'extent' in kwargs and kwargs['extent'] is not None:
+            self.set_extent(kwargs['extent'])
+        else:
+            self._origExtent = None
+
+    def set_extent(self, extent):
+        super(ModestImage, self).set_extent(extent)
+        self._origExtent = self.get_extent()
+        
+
+    def set_data(self, A):
+        """
+        Set the image array
+
+        ACCEPTS: numpy/PIL Image A
+        """
+            
+        self._full_res = A
+        self._A = A
+
+        if self._A.dtype != np.uint8 and not np.can_cast(self._A.dtype,
+                                                         np.float):
+            raise TypeError("Image data can not convert to float")
+
+        if (self._A.ndim not in (2, 3) or
+            (self._A.ndim == 3 and self._A.shape[-1] not in (3, 4))):
+            raise TypeError("Invalid dimensions for image data")
+
+        self._imcache =None
+        self._rgbacache = None
+        self._oldxslice = None
+        self._oldyslice = None
+        self._sx, self._sy = None, None
+
+    def get_array(self):
+        """Override to return the full-resolution array"""
+        return self._full_res
+
+    def _scale_to_res(self):
+        """ Change self._A and _extent to render an image whose
+resolution is matched to the eventual rendering."""
+
+        #extent has to be set BEFORE set_data
+        if self._origExtent is None:
+            if self.origin == "upper":
+                self._origExtent = 0, self._full_res.shape[1], \
+                                    self._full_res.shape[0], 0
+            else:
+                self._origExtent = 0, self._full_res.shape[1], \
+                                    0, self._full_res.shape[0]
+
+        if self.origin == "upper":
+            origXMin, origXMax, origYMax, origYMin =\
+                           self._origExtent[0:4]
+        else:
+            origXMin, origXMax, origYMin, origYMax =\
+                           self._origExtent[0:4]
+        ax = self.axes
+        ext = ax.transAxes.transform([1, 1]) - ax.transAxes.transform([0, 0])
+        #print("PIXELS H = ", ext[0], "PIXELS V = ", ext[1])
+        xlim, ylim = ax.get_xlim(), ax.get_ylim()
+        xlim = max(xlim[0], origXMin), min(xlim[1], origXMax)
+        ylim = max(ylim[0], origYMin), min(ylim[1], origYMax)
+        #print("AXES LIMITS X", xlim)
+        #print("AXES LIMITS Y", ylim)
+        #print("THOSE LIMITS ARE TO BE COMPARED WITH THE EXTENT")
+        #print("IN ORDER TO KNOW WHAT IT IS LIMITING THE DISPLAY")
+        #print("IF THE AXES OR THE EXTENT")
+        dx, dy = xlim[1] - xlim[0], ylim[1] - ylim[0]
+
+        y0 = max(0, ylim[0] - 5)
+        y1 = min(self._full_res.shape[0], ylim[1] + 5)
+        x0 = max(0, xlim[0] - 5)
+        x1 = min(self._full_res.shape[1], xlim[1] + 5)
+        y0, y1, x0, x1 = map(int, [y0, y1, x0, x1])
+
+        sy = int(max(1, min((y1 - y0) / 5., np.ceil(dy / ext[1]))))
+        sx = int(max(1, min((x1 - x0) / 5., np.ceil(dx / ext[0]))))
+
+        # have we already calculated what we need?
+        if sx >= self._sx and sy >= self._sy and \
+            x0 >= self._bounds[0] and x1 <= self._bounds[1] and \
+            y0 >= self._bounds[2] and y1 <= self._bounds[3]:
+            return
+
+        self._A = self._full_res[y0:y1:sy, x0:x1:sx]
+        self._A = cbook.safe_masked_invalid(self._A)
+        x1 = x0 + self._A.shape[1] * sx
+        y1 = y0 + self._A.shape[0] * sy
+
+        self.set_extent([x0 - .5, x1 - .5, y0 - .5, y1 - .5])
+        self._sx = sx
+        self._sy = sy
+        self._bounds = (x0, x1, y0, y1)
+        self.changed()
+
+    def draw(self, renderer, *args, **kwargs):
+        self._scale_to_res()
+        super(ModestImage, self).draw(renderer, *args, **kwargs)
 
 class MatplotlibGraph(FigureCanvas):
     def __init__(self, parent=None, **kw):
@@ -1461,6 +1586,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             picker = True
         else:
             picker = None
+        shape = data.shape 
             
         if 0:
             # this supports non regularly spaced coordenates!!!!
@@ -1489,14 +1615,18 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     # force alpha(?)
                     data[:,:,3] = 255
                     pass
-            if len(data.shape) == 3:
+            if len(shape) == 3:
                 # RGBA image
                 # TODO: Possibility to mirror the image
                 # in case of pixmaps just setting
                 # extend = (xmin, xmax, ymax, ymin)
                 # instead of (xmin, xmax, ymin, ymax)
                 extent = (xmin, xmax, ymin, ymax)
-                image = AxesImage(self.ax,
+                if (shape[0] * shape[1]) > 5.0e5:
+                    imageClass = ModestImage
+                else:
+                    imageClass = AxesImage
+                image = imageClass(self.ax,
                               label="__IMAGE__"+legend,
                               interpolation='nearest',
                               picker=picker,
@@ -1521,7 +1651,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 else:
                     norm = Normalize(vmin, vmax)
                 # try as data
-                image = AxesImage(self.ax,
+                if (shape[0] * shape[1]) > 5.0e5:
+                    imageClass = ModestImage
+                else:
+                    imageClass = AxesImage
+                image = imageClass(self.ax,
                               label="__IMAGE__"+legend,
                               interpolation='nearest',
                               #origin=
