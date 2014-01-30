@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
@@ -340,9 +340,8 @@ static PyObject *spslut_transformarray(PyObject *self, PyObject *args)
   }
 
   data = PyArray_DATA(src);
-  cols = (int) PyArray_DIMS(src);  /*FIX THIS cols and rows are turned around */
-  rows = (int) PyArray_DIMS(src);  /*###CHANGED - ALEXANDRE 24/07/2001*/
-
+  cols = (int) PyArray_DIMS(src)[1];  /*FIX THIS cols and rows are turned around */
+  rows = (int) PyArray_DIMS(src)[0];  /*###CHANGED - ALEXANDRE 24/07/2001*/
   r = SPS_PaletteArray (data, type, cols, rows, reduc, fastreduc, meth, gamma,
             autoscale, mapmin, mapmax, Xservinfo, palette_code,
             &min, &max, &pcols, &prows, &palette, &pal_entries);
@@ -353,7 +352,7 @@ static PyObject *spslut_transformarray(PyObject *self, PyObject *args)
   as_dim[0] = strlen(mode);
   as_dim[1] = prows * pcols;
 /*  printf("dim[0] = %d dim[1] = %d \"%s\" \n",as_dim[0],as_dim[1],mode); */
-  aux = (PyArrayObject*) PyArray_SimpleNew(2, as_dim, NPY_CHAR);
+  aux = (PyArrayObject*) PyArray_SimpleNew(2, as_dim, NPY_UBYTE);
   if (aux == NULL){
       free(r);
       Py_DECREF(src);

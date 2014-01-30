@@ -38,14 +38,11 @@ if hasattr(qt, "QString"):
 else:
     QString = qt.safe_str
 MATPLOTLIB = False
-if QTVERSION > '4.0.0':
-    try:
-        from PyMca import QPyMcaMatplotlibSave
-        MATPLOTLIB = True
-    except ImportError:
-        MATPLOTLIB = False
-else:
-    qt.QIcon = qt.QIconSet
+try:
+    from PyMca import QPyMcaMatplotlibSave
+    MATPLOTLIB = True
+except ImportError:
+    MATPLOTLIB = False
 from PyMca import spslut
 from PyMca import PyMcaDirs
 from PyMca.PyMcaIO import ArraySave
@@ -64,99 +61,50 @@ except ImportError:
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
-if QTVERSION > '4.0.0':
-    from PyQt4 import Qwt5
-    try:
-        from PyMca import QwtPlotItems
-        OVERLAY_DRAW = True
-    except ImportError:
-        OVERLAY_DRAW = False
-else:
-    OVERLAY_DRAW = False
-    import Qwt5
+OVERLAY_DRAW = True
 
 DEFAULT_COLORMAP_INDEX = 2
 DEFAULT_COLORMAP_LOG_FLAG = False
 DEBUG = 0
 
 
-# set this variable to false if you get crashes when moving the mouse
-# over the images.
-# Before I thought it had to do with the Qt version used, but it seems
-# to be related to old PyQwt versions. (In fact, the 5.2.1 version is
-# a recent snapshot)
-if Qwt5.QWT_VERSION_STR < '5.2.1':
-    USE_PICKER = False
-else:
-    USE_PICKER = True
-
-# Uncomment next line if you experience crashes moving the mouse on
-# top of the images
-#USE_PICKER = False
+USE_PICKER = False
 
 def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
     if xScale is None:
         c = x
     else:
         if x < xScale[0]:
-            x = xScale[0]        
-        c = shape[1] *(x - xScale[0]) / (xScale[1] - xScale[0])
+            x = xScale[0]
+        c = xScale[0] + xScale[1] * x
     if yScale is None:
         r = y
     else:
         if y < yScale[0]:
             y = yScale[0]        
-        r = shape[0] *(y - yScale[0]) / (yScale[1] - yScale[0])
+        r = yScale[0] + yScale[1] * y
 
     if safe:
         c = min(int(c), shape[1] - 1)
         r = min(int(r), shape[0] - 1)
     return r, c
-
-class MyPicker(Qwt5.QwtPlotPicker):
-    def __init__(self, *var):
-        Qwt5.QwtPlotPicker.__init__(self, *var)
-        self.__text = Qwt5.QwtText()
-        self.data = None
-        self.xScale = None
-        self.yScale = None
-
-    if USE_PICKER:
-        def trackerText(self, var):
-            d=self.invTransform(var)
-            if self.data is None:
-                self.__text.setText("%g, %g" % (d.x(), d.y()))
-            else:
-                x = d.x()
-                y = d.y()
-                r, c = convertToRowAndColumn(x, y, self.data.shape,
-                                             xScale=self.xScale,
-                                             yScale=self.yScale, safe=True)
-                z = self.data[r, c]
-                self.__text.setText("%.1f, %.1f, %.4g" % (x, y, z))
-            return self.__text
     
 class MaskImageWidget(qt.QWidget):
     def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
                  imageicons=True, standalonesave=True, usetab=False,
                  profileselection=False, scanwindow=None, aspect=False):
         qt.QWidget.__init__(self, parent)
-        if QTVERSION < '4.0.0':
-            self.setIcon(qt.QPixmap(IconDict['gioconda16']))
-            self.setCaption("PyMca - Image Selection Tool")
-            profileselection = False
-        else:
-            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
-            self.setWindowTitle("PyMca - Image Selection Tool")
-            if 0:
-                screenHeight = qt.QDesktopWidget().height()
-                if screenHeight > 0:
-                    self.setMaximumHeight(int(0.99*screenHeight))
-                    self.setMinimumHeight(int(0.5*screenHeight))
-                screenWidth = qt.QDesktopWidget().width()
-                if screenWidth > 0:
-                    self.setMaximumWidth(int(screenWidth)-5)
-                    self.setMinimumWidth(min(int(0.5*screenWidth),800))
+        self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+        self.setWindowTitle("PyMca - Image Selection Tool")
+        if 0:
+            screenHeight = qt.QDesktopWidget().height()
+            if screenHeight > 0:
+                self.setMaximumHeight(int(0.99*screenHeight))
+                self.setMinimumHeight(int(0.5*screenHeight))
+            screenWidth = qt.QDesktopWidget().width()
+            if screenWidth > 0:
+                self.setMaximumWidth(int(screenWidth)-5)
+                self.setMinimumWidth(min(int(0.5*screenWidth),800))
 
         self._y1AxisInverted = False
         self.__selectionMask = None
@@ -204,7 +152,7 @@ class MaskImageWidget(qt.QWidget):
 
     def _build(self, standalonesave, profileselection=False):
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         if self.__useTab:
             self.mainTab = qt.QTabWidget(self)
@@ -222,27 +170,16 @@ class MaskImageWidget(qt.QWidget):
                                                    profileselection=profileselection)
             self.mainTab.addTab(self.graphWidget, 'IMAGES')
         else:
-            if QTVERSION < '4.0.0':
-                self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                                   selection = self.__selectionFlag,
-                                                   colormap=True,
-                                                   imageicons=self.__imageIconsFlag,
-                                                   standalonesave=True,
-                                                   standalonezoom=False,
-                                                   aspect=self.__aspect)
-                standalonesave = False
-            else:
-                self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                                   selection =self.__selectionFlag,
-                                                   colormap=True,
-                                                   imageicons=self.__imageIconsFlag,
-                                                   standalonesave=False,
-                                                   standalonezoom=False,
-                                                   profileselection=profileselection,
-                                                   aspect=self.__aspect)
+            self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
+                                               selection =self.__selectionFlag,
+                                               colormap=True,
+                                               imageicons=self.__imageIconsFlag,
+                                               standalonesave=False,
+                                               standalonezoom=False,
+                                               profileselection=profileselection,
+                                               aspect=self.__aspect)
         #for easy compatibility with RGBCorrelatorGraph
         self.graph = self.graphWidget.graph
-
         if profileselection:
             self.connect(self.graphWidget,
                          qt.SIGNAL('PolygonSignal'), 
@@ -263,8 +200,8 @@ class MaskImageWidget(qt.QWidget):
                            Qwt5.QwtPicker.AlwaysOn,
                            self.graphWidget.graph.canvas())
             self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
-            self.graphWidget.graph.enableSelection(False)
-            self.graphWidget.graph.enableZoom(True)
+        self.graphWidget.graph.setDrawModeEnabled(False)
+        self.graphWidget.graph.setZoomModeEnabled(True)
         if self.__selectionFlag:
             if self.__imageIconsFlag:
                 self.setSelectionMode(False)
@@ -290,10 +227,9 @@ class MaskImageWidget(qt.QWidget):
 
         self._saveMenu.addAction(QString("Standard Graphics"),
                                  self.graphWidget._saveIconSignal)
-        if QTVERSION > '4.0.0':
-            if MATPLOTLIB:
-                self._saveMenu.addAction(QString("Matplotlib") ,
-                                 self._saveMatplotlibImage)
+        if MATPLOTLIB:
+            self._saveMenu.addAction(QString("Matplotlib") ,
+                             self._saveMatplotlibImage)
 
     def _buildConnections(self, widget = None):
         self.connect(self.graphWidget.hFlipToolButton,
@@ -309,8 +245,7 @@ class MaskImageWidget(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self._toggleSelectionMode)
             text = "Toggle between Selection\nand Zoom modes"
-            if QTVERSION > '4.0.0':
-                self.graphWidget.selectionToolButton.setToolTip(text)
+            self.graphWidget.selectionToolButton.setToolTip(text)
 
         if self.__imageIconsFlag:
             self.connect(self.graphWidget.imageToolButton,
@@ -333,30 +268,26 @@ class MaskImageWidget(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self._setBrush)
 
-        if QTVERSION < "4.0.0":
-            self.connect(self.graphWidget.graph,
-                         qt.PYSIGNAL("QtBlissGraphSignal"),
-                         self._graphSignal)
-        else:
-            if self.__imageIconsFlag:
-                self.connect(self.graphWidget.additionalSelectionToolButton,
-                         qt.SIGNAL("clicked()"),
-                         self._additionalSelectionMenuDialog)
-                self._additionalSelectionMenu = qt.QMenu()
-                self._additionalSelectionMenu.addAction(QString("Reset Selection"),
-                                                        self._resetSelection)
-                self._additionalSelectionMenu.addAction(QString("Invert Selection"),
-                                                        self._invertSelection)
-                self._additionalSelectionMenu.addAction(QString("I >= Colormap Max"),
-                                                        self._selectMax)
-                self._additionalSelectionMenu.addAction(QString("Colormap Min < I < Colormap Max"),
-                                                        self._selectMiddle)
-                self._additionalSelectionMenu.addAction(QString("I <= Colormap Min"),
-                                                        self._selectMin)
+        if self.__imageIconsFlag:
+            self.connect(self.graphWidget.additionalSelectionToolButton,
+                     qt.SIGNAL("clicked()"),
+                     self._additionalSelectionMenuDialog)
+            self._additionalSelectionMenu = qt.QMenu()
+            self._additionalSelectionMenu.addAction(QString("Reset Selection"),
+                                                    self._resetSelection)
+            self._additionalSelectionMenu.addAction(QString("Invert Selection"),
+                                                    self._invertSelection)
+            self._additionalSelectionMenu.addAction(QString("I >= Colormap Max"),
+                                                    self._selectMax)
+            self._additionalSelectionMenu.addAction(QString("Colormap Min < I < Colormap Max"),
+                                                    self._selectMiddle)
+            self._additionalSelectionMenu.addAction(QString("I <= Colormap Min"),
+                                                    self._selectMin)
 
-            self.connect(self.graphWidget.graph,
-                     qt.SIGNAL("QtBlissGraphSignal"),
-                     self._graphSignal)
+            #self.connect(self.graphWidget.graph,
+            #         qt.SIGNAL("QtBlissGraphSignal"),
+            #         self._graphSignal)
+            self.graphWidget.graph.sigPlotSignal.connect(self._graphSignal)
 
     def updateProfileSelectionWindow(self):
         mode = self.graphWidget.getPickerSelectionMode()
@@ -438,7 +369,7 @@ class MaskImageWidget(qt.QWidget):
 
     def getGraphTitle(self):
         try:
-            title = self.graphWidget.graph.title().text()
+            title = self.graphWidget.graph.getGraphTitle()
             if sys.version < '3.0':
                 title = qt.safe_str(title)
         except:
@@ -532,7 +463,7 @@ class MaskImageWidget(qt.QWidget):
                                          replot=True)
             xdata  = numpy.arange(shape[1]).astype(numpy.float)
             if self._xScale is not None:
-                xdata = self._xScale[0] + xdata * (self._xScale[1] - self._xScale[0]) / float(shape[1])
+                xdata = self._xScale[0] + xdata * self._xScale[1]
         elif ddict['mode'].upper() in ["VLINE", "VERTICAL"]:
             xLabel = self.getYLabel()
             deltaDistance = 1.0
@@ -834,17 +765,17 @@ class MaskImageWidget(qt.QWidget):
                 xLabel = self.getXLabel()
                 xdata += col0
                 if self._xScale is not None:
-                    xdata = self._xScale[0] + xdata * (self._xScale[1] - self._xScale[0]) / float(shape[1])
+                    xdata = self._xScale[0] + xdata * self._xScale[1]
             elif self.__lineProjectionMode == 'Y':
                 xLabel = self.getYLabel()
                 xdata += row0
                 if self._xScale is not None:
-                    xdata = self._yScale[0] + xdata * (self._yScale[1] - self._yScale[0]) / float(shape[0])
+                    xdata = self._yScale[0] + xdata * self._yScale[1]
             else:
                 xLabel = "Distance"
                 if self._xScale is not None:
-                    deltaCol *= (self._xScale[1] - self._xScale[0])/float(shape[1])
-                    deltaRow *= (self._yScale[1] - self._yScale[0])/float(shape[0])
+                    deltaCol *= self._xScale[1]
+                    deltaRow *= self._yScale[1]
                 #get the abscisa in distance units
                 deltaDistance = numpy.sqrt(float(deltaCol) * deltaCol +
                                     float(deltaRow) * deltaRow)/(npoints-1.0)
@@ -938,14 +869,14 @@ class MaskImageWidget(qt.QWidget):
         else:
             xList = []
             for i in x:
-                xList.append(self._xScale[0] + i * (self._xScale[1] - self._xScale[0])/float(shape[1]))
+                xList.append(self._xScale[0] + i * self._xScale[1])
 
         if self._yScale is None:
             yList = y
         else:
             yList = []
             for i in y:
-                yList.append(self._yScale[0] + i * (self._yScale[1] - self._yScale[0])/float(shape[0]))
+                yList.append(self._yScale[0] + i * self._yScale[1])
         overlayItem.setData(xList, yList)
         self._overlayItemsDict[legend]['x'] = xList
         self._overlayItemsDict[legend]['y'] = yList
@@ -955,6 +886,7 @@ class MaskImageWidget(qt.QWidget):
         self.__lastOverlayLegend = legend
 
     def _hFlipIconSignal(self):
+        """
         if not self.graphWidget.graph.yAutoScale:
             qt.QMessageBox.information(self, "Open",
                     "Please set Y Axis to AutoScale first")
@@ -963,14 +895,17 @@ class MaskImageWidget(qt.QWidget):
             qt.QMessageBox.information(self, "Open",
                     "Please set X Axis to AutoScale first")
             return
+        """
 
+        self._y1AxisInverted = self.graphWidget.graph.isYAxisInverted()
         if self._y1AxisInverted:
             self._y1AxisInverted = False
         else:
             self._y1AxisInverted = True
-        self.graphWidget.graph.zoomReset()
-        self.graphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
-        self.plotImage(True)
+        #self.graphWidget.graph.zoomReset()
+        self.graphWidget.graph.invertYAxis(self._y1AxisInverted)
+        self._y1AxisInverted = self.graphWidget.graph.isYAxisInverted()
+        self.graphWidget.graph.replot()
 
         #inform the other widgets
         ddict = {}
@@ -981,7 +916,7 @@ class MaskImageWidget(qt.QWidget):
 
     def setY1AxisInverted(self, value):
         self._y1AxisInverted = value
-        self.graphWidget.graph.setY1AxisInverted(self._y1AxisInverted)
+        self.graphWidget.graph.invertYAxis(self._y1AxisInverted)
 
     def setXLabel(self, label="Column"):
         return self.graphWidget.setXLabel(label)
@@ -1033,61 +968,42 @@ class MaskImageWidget(qt.QWidget):
             print("_setEraseSelectionMode")
         self.__eraseMode = True
         self.__brushMode = True
-        self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.ActiveOnly)
-        self.graphWidget.graph.enableSelection(False)
+        #self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.ActiveOnly)
+        self.graphWidget.graph.setDrawModeEnabled(False)
 
     def _setRectSelectionMode(self):
         if DEBUG:
             print("_setRectSelectionMode")
         self.__eraseMode = False
         self.__brushMode = False
-        self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOn)
-        self.graphWidget.graph.enableSelection(True)
+        self.graphWidget.graph.setDrawModeEnabled(True, shape="rectangle")
         
     def _setBrushSelectionMode(self):
         if DEBUG:
             print("_setBrushSelectionMode")
         self.__eraseMode = False
         self.__brushMode = True
-        self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.ActiveOnly)
-        self.graphWidget.graph.enableSelection(False)
+        #self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.ActiveOnly)
+        self.graphWidget.graph.setDrawModeEnabled(False)
         
     def _setBrush(self):
         if DEBUG:
             print("_setBrush")
         if self.__brushMenu is None:
-            if QTVERSION < '4.0.0':
-                self.__brushMenu = qt.QPopupMenu()
-                self.__brushMenu.insertItem(QString(" 1 Image Pixel Width"),
-                                            self.__setBrush1)
-                self.__brushMenu.insertItem(QString(" 2 Image Pixel Width"),
-                                            self.__setBrush2)
-                self.__brushMenu.insertItem(QString(" 3 Image Pixel Width"),
-                                            self.__setBrush3)
-                self.__brushMenu.insertItem(QString(" 5 Image Pixel Width"),
-                                            self.__setBrush4)
-                self.__brushMenu.insertItem(QString("10 Image Pixel Width"),
-                                            self.__setBrush5)
-                self.__brushMenu.insertItem(QString("20 Image Pixel Width"),
-                                            self.__setBrush6)
-            else:
-                self.__brushMenu = qt.QMenu()
-                self.__brushMenu.addAction(QString(" 1 Image Pixel Width"),
-                                           self.__setBrush1)
-                self.__brushMenu.addAction(QString(" 2 Image Pixel Width"),
-                                           self.__setBrush2)
-                self.__brushMenu.addAction(QString(" 3 Image Pixel Width"),
-                                           self.__setBrush3)
-                self.__brushMenu.addAction(QString(" 5 Image Pixel Width"),
-                                           self.__setBrush4)
-                self.__brushMenu.addAction(QString("10 Image Pixel Width"),
-                                           self.__setBrush5)
-                self.__brushMenu.addAction(QString("20 Image Pixel Width"),
-                                           self.__setBrush6)
-        if QTVERSION < '4.0.0':
-            self.__brushMenu.exec_loop(self.cursor().pos())
-        else:
-            self.__brushMenu.exec_(self.cursor().pos())
+            self.__brushMenu = qt.QMenu()
+            self.__brushMenu.addAction(QString(" 1 Image Pixel Width"),
+                                       self.__setBrush1)
+            self.__brushMenu.addAction(QString(" 2 Image Pixel Width"),
+                                       self.__setBrush2)
+            self.__brushMenu.addAction(QString(" 3 Image Pixel Width"),
+                                       self.__setBrush3)
+            self.__brushMenu.addAction(QString(" 5 Image Pixel Width"),
+                                       self.__setBrush4)
+            self.__brushMenu.addAction(QString("10 Image Pixel Width"),
+                                       self.__setBrush5)
+            self.__brushMenu.addAction(QString("20 Image Pixel Width"),
+                                       self.__setBrush6)
+        self.__brushMenu.exec_(self.cursor().pos())
 
     def __setBrush1(self):
         self.__brushWidth = 1
@@ -1108,9 +1024,7 @@ class MaskImageWidget(qt.QWidget):
         self.__brushWidth = 20
 
     def _toggleSelectionMode(self):
-        print("SELECTION TO IMPLEMENT")
-        return
-        if self.graphWidget.graph._selecting:
+        if self.graphWidget.graph.isDrawModeEnabled():
             self.setSelectionMode(False)
         else:
             self.setSelectionMode(True)
@@ -1120,25 +1034,20 @@ class MaskImageWidget(qt.QWidget):
         #if not self.__imageIconsFlag:
         #    mode = False
         if mode:
-            self.graphWidget.graph.enableSelection(True)
+            self.graphWidget.graph.setDrawModeEnabled(True, 'rectangle')
             self.__brushMode  = False
             #self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOn)
-            if QTVERSION < '4.0.0':
-                self.graphWidget.selectionToolButton.setState(qt.QButton.On)
-            else:
-                self.graphWidget.hideProfileSelectionIcons()
-                self.graphWidget.selectionToolButton.setChecked(True)
-            self.graphWidget.graph.enableZoom(False)
+            self.graphWidget.hideProfileSelectionIcons()
+            self.graphWidget.selectionToolButton.setChecked(True)
+            #self.graphWidget.graph.enableZoom(False)
             self.graphWidget.selectionToolButton.setDown(True)
             self.graphWidget.showImageIcons()            
         else:
             #self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOff)
             self.graphWidget.showProfileSelectionIcons()
-            self.graphWidget.graph.enableZoom(True)
-            if QTVERSION < '4.0.0':
-                self.graphWidget.selectionToolButton.setState(qt.QButton.Off)
-            else:
-                self.graphWidget.selectionToolButton.setChecked(False)
+            self.graphWidget.graph.setZoomModeEnabled(True)
+            #self.graphWidget.graph.setDrawModeEnabled(False)
+            self.graphWidget.selectionToolButton.setChecked(False)
             self.graphWidget.selectionToolButton.setDown(False)
             self.graphWidget.hideImageIcons()
         if self.__imageData is None: return
@@ -1316,10 +1225,6 @@ class MaskImageWidget(qt.QWidget):
     def plotImage(self, update=True):
         if self.__imageData is None:
             self.graphWidget.graph.clear()
-            if 0:
-                self.graphWidget.picker.data = None
-                self.graphWidget.picker.xScale = None
-                self.graphWidget.picker.yScale = None
             return
 
         if update:
@@ -1402,7 +1307,7 @@ class MaskImageWidget(qt.QWidget):
                                 data,
                                 (1,0),
                                 (self.__defaultColormapType,3.0),
-                                "BGRX",
+                                "RGBX",
                                 self.__defaultColormap,
                                 1,
                                 (0, 1),
@@ -1412,7 +1317,7 @@ class MaskImageWidget(qt.QWidget):
                                 data,
                                 (1,0),
                                 (self.__defaultColormapType,3.0),
-                                "BGRX",
+                                "RGBX",
                                 self.__defaultColormap,
                                 0,
                                 (minData,maxData),
@@ -1425,7 +1330,7 @@ class MaskImageWidget(qt.QWidget):
                                 data,
                                 (1,0),
                                 (colormap[6],3.0),
-                                "BGRX",
+                                "RGBX",
                                 COLORMAPLIST[int(str(colormap[0]))],
                                 colormap[1],
                                 (colormap[2],colormap[3]),
@@ -1437,7 +1342,7 @@ class MaskImageWidget(qt.QWidget):
                                 data,
                                 (1,0),
                                 (self.__defaultColormapType,3.0),
-                                "BGRX",
+                                "RGBX",
                                 self.__defaultColormap,
                                 1,
                                 (0, 1),
@@ -1447,7 +1352,7 @@ class MaskImageWidget(qt.QWidget):
                                 data,
                                 (1,0),
                                 (colormap[6],3.0),
-                                "BGRX",
+                                "RGBX",
                                 COLORMAPLIST[int(str(colormap[0]))],
                                 0,
                                 (minData,maxData),
@@ -1457,16 +1362,13 @@ class MaskImageWidget(qt.QWidget):
                                 data,
                                 (1,0),
                                 (colormap[6],3.0),
-                                "BGRX",
+                                "RGBX",
                                 COLORMAPLIST[int(str(colormap[0]))],
                                 colormap[1],
                                 (colormap[2],colormap[3]),
                                 (0,255), 1)
 
-        self.__pixmap = self.__pixmap.astype(numpy.ubyte)
-
         self.__pixmap.shape = [data.shape[0], data.shape[1], 4]
-
         if not goodData:
             self.__pixmap[finiteData < 1] = 255
 
@@ -1553,10 +1455,7 @@ class MaskImageWidget(qt.QWidget):
                 return
         if self.colormapDialog.isHidden():
             self.colormapDialog.show()
-        if QTVERSION < '4.0.0':
-            self.colormapDialog.raiseW()
-        else:
-            self.colormapDialog.raise_()
+        self.colormapDialog.raise_()
         self.colormapDialog.show()
 
     def __initColormapDialog(self):
@@ -1673,12 +1572,11 @@ class MaskImageWidget(qt.QWidget):
         #this sets the actual dimensions
         if self._xScale is not None:
             ddict['xorigin'] = self._xScale[0]
-            ddict['xpixelsize'] = (self._xScale[1] - self._xScale[0])/\
-                                      float(imageData.shape[1])
+            ddict['xpixelsize'] = self._xScale[1]
+
         if self._yScale is not None:
             ddict['yorigin'] = self._yScale[0]
-            ddict['ypixelsize'] = (self._yScale[1] - self._yScale[0])/\
-                                      float(imageData.shape[0])
+            ddict['ypixelsize'] = self._yScale[1]
         ddict['xlabel'] = self.getXLabel()
         ddict['ylabel'] = self.getYLabel()
         limits = self.graphWidget.graph.getX1AxisLimits()
@@ -1702,69 +1600,59 @@ class MaskImageWidget(qt.QWidget):
         emitsignal = False
         if self.__imageData is None:
             return
-        if ddict['event'] == "MouseSelection":
-            if ddict['column_min'] < ddict['column_max']:
-                xmin = ddict['column_min']
-                xmax = ddict['column_max']
-            else:
-                xmin = ddict['column_max']
-                xmax = ddict['column_min']
-            if ddict['row_min'] < ddict['row_max']:
-                ymin = ddict['row_min']
-                ymax = ddict['row_max']
-            else:
-                ymin = ddict['row_max']
-                ymax = ddict['row_min']
-            """
-            if not (self._xScale is None and self._yScale is None):
-                ymin, xmin = convertToRowAndColumn(xmin, ymin, self.__imageData.shape,
+        if ddict['event'] == "drawingFinished":
+            # TODO: when drawing a shape, set a legend to it in order
+            # to identify it.
+            # In the mean time, assume nobody else is triggering drawing
+            # and therefore only rectangle is supported as selection
+            if ddict['type'] != "rectangle":
+                return
+            j1, i1 = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
                                                   xScale=self._xScale,
                                                   yScale=self._yScale,
                                                   safe=True)
-                ymax, xmax = convertToRowAndColumn(xmax, ymax, self.__imageData.shape,
+            w = ddict['width']
+            h = ddict['height']
+            j2, i2 = convertToRowAndColumn(ddict['x'] + w,
+                                                  ddict['y'] + h,
+                                                  self.__imageData.shape,
                                                   xScale=self._xScale,
                                                   yScale=self._yScale,
                                                   safe=True)
-            """
-            i1 = max(int(round(xmin)), 0)
-            i2 = min(abs(int(round(xmax))) + 1, self.__imageData.shape[1])
-            j1 = max(int(round(ymin)),0)
-            j2 = min(abs(int(round(ymax))) + 1, self.__imageData.shape[0])
+            if i1 == i2:
+                i2 += 1
+            if j1 == j2:
+                j2 += 1
             if self.__selectionMask is None:
                 self.__selectionMask = numpy.zeros(self.__imageData.shape,
-                                     numpy.uint8)
-            self.__selectionMask[j1:j2, i1:i2] = 1
+                                 numpy.uint8)
+            if self.__eraseMode:
+                self.__selectionMask[j1:j2, i1:i2] = 0 
+            else:
+                self.__selectionMask[j1:j2, i1:i2] = 1
             emitsignal = True
 
-        elif ddict['event'] == "MouseAt":
+        elif ddict['event'] in ["mouseMoved", "MouseAt", "mouseClicked"]:
             if ownsignal:
                 pass
             if self.__brushMode:
-                if self.graphWidget.graph.isZoomEnabled():
+                if self.graphWidget.graph.isZoomModeEnabled():
                     return
-                #if follow mouse is not activated
-                #it only enters here when the mouse is pressed.
-                #Therefore is perfect for "brush" selections.
-                """
-                if not (self._xScale is None and self._yScale is None):
-                    y, x = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
+                if ddict['button'] != "left":
+                    return
+                y, x = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
                                                       xScale=self._xScale,
                                                       yScale=self._yScale,
                                                       safe=True)
-                else:
-                    x = ddict['x']
-                    y = ddict['y']
-                """
-                y = ddict['row']
-                x = ddict['column']
                 width = self.__brushWidth   #in (row, column) units
+                height = self.__brushWidth  #in (row, column) units
                 r = self.__imageData.shape[0]
                 c = self.__imageData.shape[1]
 
                 xmin = max((x-0.5*width), 0)
                 xmax = min((x+0.5*width), c)
-                ymin = max((y-0.5*width), 0)
-                ymax = min((y+0.5*width), r)
+                ymin = max((y-0.5*height), 0)
+                ymax = min((y+0.5*height), r)
                 
                 i1 = min(int(round(xmin)), c-1)
                 i2 = min(int(round(xmax)), c)
@@ -1798,14 +1686,9 @@ class MaskImageWidget(qt.QWidget):
         self.emitMaskImageSignal(ddict)
                             
     def emitMaskImageSignal(self, ddict):
-        if QTVERSION < '4.0.0':
-            qt.QObject.emit(self,
-                        qt.PYSIGNAL('MaskImageWidgetSignal'),
-                        ddict)
-        else:
-            qt.QObject.emit(self,
-                        qt.SIGNAL('MaskImageWidgetSignal'),
-                        ddict)
+        qt.QObject.emit(self,
+                    qt.SIGNAL('MaskImageWidgetSignal'),
+                    ddict)
 
     def _zoomResetSignal(self):
         if DEBUG:
@@ -1963,22 +1846,27 @@ def test():
            sys.argv[1].endswith('spe') or\
            sys.argv[1].endswith('tif') or\
            sys.argv[1].endswith('tiff'):
-            container = MaskImageWidget(profileselection=True, aspect=True)
-            import EdfFile
+            container = MaskImageWidget(selection=True,
+                                        profileselection=True,
+                                        aspect=True,
+                                        imageicons=True)
+            from PyMca.PyMcaIO import EdfFile
             edf = EdfFile.EdfFile(sys.argv[1])
             data = edf.GetData(0)
             container.setImageData(data)
         else:
-            container = MaskImageWidget(aspect=True)
+            container = MaskImageWidget(selection=True,
+                                        aspect=True,
+                                        imageicons=True)
             image = qt.QImage(sys.argv[1])
             #container.setQImage(image, image.width(),image.height())
             container.setQImage(image, 200, 200)
     else:
-        container = MaskImageWidget(profileselection=True, aspect=True)
+        container = MaskImageWidget(aspect=True)
         data = numpy.arange(400 * 400).astype(numpy.int32)
         data.shape = 200, 800
         #data = numpy.eye(200)
-        container.setImageData(data, xScale=(0, 1), yScale=(0., 1.))
+        container.setImageData(data, xScale=(0.0, 1.0), yScale=(0., 1.))
         #data.shape = 100, 400
         #container.setImageData(None)
         #container.setImageData(data)
@@ -1986,17 +1874,10 @@ def test():
     def theSlot(ddict):
         print(ddict['event'])
 
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(container,
-                           qt.PYSIGNAL("MaskImageWidgetSignal"),
-                           theSlot)
-        app.setMainWidget(container)
-        app.exec_loop()
-    else:
-        qt.QObject.connect(container,
-                           qt.SIGNAL("MaskImageWidgetSignal"),
-                           theSlot)
-        app.exec_()
+    qt.QObject.connect(container,
+                       qt.SIGNAL("MaskImageWidgetSignal"),
+                       theSlot)
+    app.exec_()
 
 if __name__ == "__main__":
     test()
