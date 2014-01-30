@@ -897,13 +897,15 @@ class MaskImageWidget(qt.QWidget):
             return
         """
 
+        self._y1AxisInverted = self.graphWidget.graph.isYAxisInverted()
         if self._y1AxisInverted:
             self._y1AxisInverted = False
         else:
             self._y1AxisInverted = True
         #self.graphWidget.graph.zoomReset()
         self.graphWidget.graph.invertYAxis(self._y1AxisInverted)
-        self.plotImage(True)
+        self._y1AxisInverted = self.graphWidget.graph.isYAxisInverted()
+        self.graphWidget.graph.replot()
 
         #inform the other widgets
         ddict = {}
