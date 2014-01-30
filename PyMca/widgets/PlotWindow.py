@@ -47,6 +47,10 @@ try:
 except:
     PYQTGRAPH = False
 
+if "matplotlib" in sys.argv:
+    if MATPLOTLIB:
+        PYQTGRAPH = False
+
 from PyMca import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
