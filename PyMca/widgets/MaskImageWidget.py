@@ -38,14 +38,11 @@ if hasattr(qt, "QString"):
 else:
     QString = qt.safe_str
 MATPLOTLIB = False
-if QTVERSION > '4.0.0':
-    try:
-        from PyMca import QPyMcaMatplotlibSave
-        MATPLOTLIB = True
-    except ImportError:
-        MATPLOTLIB = False
-else:
-    qt.QIcon = qt.QIconSet
+try:
+    from PyMca import QPyMcaMatplotlibSave
+    MATPLOTLIB = True
+except ImportError:
+    MATPLOTLIB = False
 from PyMca import spslut
 from PyMca import PyMcaDirs
 from PyMca.PyMcaIO import ArraySave
@@ -173,24 +170,14 @@ class MaskImageWidget(qt.QWidget):
                                                    profileselection=profileselection)
             self.mainTab.addTab(self.graphWidget, 'IMAGES')
         else:
-            if QTVERSION < '4.0.0':
-                self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                                   selection = self.__selectionFlag,
-                                                   colormap=True,
-                                                   imageicons=self.__imageIconsFlag,
-                                                   standalonesave=True,
-                                                   standalonezoom=False,
-                                                   aspect=self.__aspect)
-                standalonesave = False
-            else:
-                self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
-                                                   selection =self.__selectionFlag,
-                                                   colormap=True,
-                                                   imageicons=self.__imageIconsFlag,
-                                                   standalonesave=False,
-                                                   standalonezoom=False,
-                                                   profileselection=profileselection,
-                                                   aspect=self.__aspect)
+            self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
+                                               selection =self.__selectionFlag,
+                                               colormap=True,
+                                               imageicons=self.__imageIconsFlag,
+                                               standalonesave=False,
+                                               standalonezoom=False,
+                                               profileselection=profileselection,
+                                               aspect=self.__aspect)
         #for easy compatibility with RGBCorrelatorGraph
         self.graph = self.graphWidget.graph
         if profileselection:
@@ -240,10 +227,9 @@ class MaskImageWidget(qt.QWidget):
 
         self._saveMenu.addAction(QString("Standard Graphics"),
                                  self.graphWidget._saveIconSignal)
-        if QTVERSION > '4.0.0':
-            if MATPLOTLIB:
-                self._saveMenu.addAction(QString("Matplotlib") ,
-                                 self._saveMatplotlibImage)
+        if MATPLOTLIB:
+            self._saveMenu.addAction(QString("Matplotlib") ,
+                             self._saveMatplotlibImage)
 
     def _buildConnections(self, widget = None):
         self.connect(self.graphWidget.hFlipToolButton,
@@ -259,8 +245,7 @@ class MaskImageWidget(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self._toggleSelectionMode)
             text = "Toggle between Selection\nand Zoom modes"
-            if QTVERSION > '4.0.0':
-                self.graphWidget.selectionToolButton.setToolTip(text)
+            self.graphWidget.selectionToolButton.setToolTip(text)
 
         if self.__imageIconsFlag:
             self.connect(self.graphWidget.imageToolButton,
@@ -384,7 +369,7 @@ class MaskImageWidget(qt.QWidget):
 
     def getGraphTitle(self):
         try:
-            title = self.graphWidget.graph.title().text()
+            title = self.graphWidget.graph.getGraphTitle()
             if sys.version < '3.0':
                 title = qt.safe_str(title)
         except:
@@ -1050,11 +1035,8 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.graph.setDrawModeEnabled(True, 'rectangle')
             self.__brushMode  = False
             #self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOn)
-            if QTVERSION < '4.0.0':
-                self.graphWidget.selectionToolButton.setState(qt.QButton.On)
-            else:
-                self.graphWidget.hideProfileSelectionIcons()
-                self.graphWidget.selectionToolButton.setChecked(True)
+            self.graphWidget.hideProfileSelectionIcons()
+            self.graphWidget.selectionToolButton.setChecked(True)
             #self.graphWidget.graph.enableZoom(False)
             self.graphWidget.selectionToolButton.setDown(True)
             self.graphWidget.showImageIcons()            
@@ -1063,10 +1045,7 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.showProfileSelectionIcons()
             self.graphWidget.graph.setZoomModeEnabled(True)
             #self.graphWidget.graph.setDrawModeEnabled(False)
-            if QTVERSION < '4.0.0':
-                self.graphWidget.selectionToolButton.setState(qt.QButton.Off)
-            else:
-                self.graphWidget.selectionToolButton.setChecked(False)
+            self.graphWidget.selectionToolButton.setChecked(False)
             self.graphWidget.selectionToolButton.setDown(False)
             self.graphWidget.hideImageIcons()
         if self.__imageData is None: return
@@ -1474,10 +1453,7 @@ class MaskImageWidget(qt.QWidget):
                 return
         if self.colormapDialog.isHidden():
             self.colormapDialog.show()
-        if QTVERSION < '4.0.0':
-            self.colormapDialog.raiseW()
-        else:
-            self.colormapDialog.raise_()
+        self.colormapDialog.raise_()
         self.colormapDialog.show()
 
     def __initColormapDialog(self):
@@ -1708,14 +1684,9 @@ class MaskImageWidget(qt.QWidget):
         self.emitMaskImageSignal(ddict)
                             
     def emitMaskImageSignal(self, ddict):
-        if QTVERSION < '4.0.0':
-            qt.QObject.emit(self,
-                        qt.PYSIGNAL('MaskImageWidgetSignal'),
-                        ddict)
-        else:
-            qt.QObject.emit(self,
-                        qt.SIGNAL('MaskImageWidgetSignal'),
-                        ddict)
+        qt.QObject.emit(self,
+                    qt.SIGNAL('MaskImageWidgetSignal'),
+                    ddict)
 
     def _zoomResetSignal(self):
         if DEBUG:
@@ -1877,7 +1848,7 @@ def test():
                                         profileselection=True,
                                         aspect=True,
                                         imageicons=True)
-            import EdfFile
+            from PyMca.PyMcaIO import EdfFile
             edf = EdfFile.EdfFile(sys.argv[1])
             data = edf.GetData(0)
             container.setImageData(data)
@@ -1901,17 +1872,10 @@ def test():
     def theSlot(ddict):
         print(ddict['event'])
 
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(container,
-                           qt.PYSIGNAL("MaskImageWidgetSignal"),
-                           theSlot)
-        app.setMainWidget(container)
-        app.exec_loop()
-    else:
-        qt.QObject.connect(container,
-                           qt.SIGNAL("MaskImageWidgetSignal"),
-                           theSlot)
-        app.exec_()
+    qt.QObject.connect(container,
+                       qt.SIGNAL("MaskImageWidgetSignal"),
+                       theSlot)
+    app.exec_()
 
 if __name__ == "__main__":
     test()
