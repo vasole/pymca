@@ -92,7 +92,12 @@ ydata - Vertical graph coordinate associated to the item
 
 drawingFinished
     Still to be implemented.
-    It looks as it should export xdata, ydata and type 
+    It looks as it should export xdata, ydata and type.
+    line - two points in graph and pixel coordinates
+    rectangle - four points in graph and pixel coordinates, x, y, width, height
+    polygone - n points in graph and pixel coordinates
+    ellipse - four points in graph and pixel coordinates?
+    circle - four points in graph and pixel coordinates, center and radius
 
 hover
     Emitted the mouse pass over an item with hover notification (markers)

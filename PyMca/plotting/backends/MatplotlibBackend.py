@@ -262,7 +262,6 @@ class MatplotlibGraph(FigureCanvas):
             print("unhandled", event.artist)
 
     def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
-        print("Called with shape = ", flag, shape)
         if flag:
             shape = shape.lower()
             if shape not in self.__drawModeList:
@@ -406,9 +405,7 @@ class MatplotlibGraph(FigureCanvas):
             #right click
             self.__zooming = False
             if self._drawingPatch is not None:
-                self._drawingPatch.remove()
-                self.draw()
-                self._drawingPatch = None
+                self._emitDrawingSignal("drawingFinished")
             return
 
         self.__time0 = time.time()
@@ -597,7 +594,7 @@ class MatplotlibGraph(FigureCanvas):
                                                    width=w,
                                                    height=h,
                                                    fill=False)
-                    self._drawingPatch.set_hatch('/')
+                    self._drawingPatch.set_hatch('.')
                     self.ax.add_patch(self._drawingPatch)                    
                 else:
                     self._drawingPatch.set_bounds(x, y, w, h)
@@ -614,8 +611,12 @@ class MatplotlibGraph(FigureCanvas):
                                              fill=False)
                 self.ax.add_patch(self._drawingPatch)
             elif self._drawModePatch == 'rectangle':
-                # already handled
-                pass            
+                # already handled, just for compatibility
+                self._mouseData = numpy.zeros((2,2), numpy.float32)
+                self._mouseData[0,0] = self._x0
+                self._mouseData[0,1] = self._y0
+                self._mouseData[1,0] = self._x1
+                self._mouseData[1,1] = self._y1
             elif self._drawModePatch == 'line':
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
@@ -660,12 +661,12 @@ class MatplotlibGraph(FigureCanvas):
             #right click
             if self.__drawing:
                 self.__drawing = False
-                self._drawingPatch = None
+                #self._drawingPatch = None
                 ddict = {}
                 ddict['event'] = 'drawingFinished'
                 ddict['type']  = '%s' % self._drawModePatch
                 ddict['data']  = self._mouseData * 1
-                self.mySignal(ddict)
+                self._emitDrawingSignal(event='drawingFinished')
                 return
 
             self.__zooming = False
@@ -675,11 +676,13 @@ class MatplotlibGraph(FigureCanvas):
                 self.draw()
 
         if self.__drawing and (self._drawingPatch is not None):
-            nrows, ncols = self._mouseData.shape                
-            self._mouseData = numpy.resize(self._mouseData, (nrows+1,2))
+            nrows, ncols = self._mouseData.shape
+            if self._drawModePatch in ['polygon']:
+                self._mouseData = numpy.resize(self._mouseData, (nrows+1,2))
             self._mouseData[-1,0] = self._x1
             self._mouseData[-1,1] = self._y1
             self._drawingPatch.set_xy(self._mouseData)
+            self._emitDrawingSignal("drawingFinished")
 
         if self._x0 is None:
             if event.inaxes != self.ax:
@@ -729,6 +732,34 @@ class MatplotlibGraph(FigureCanvas):
             self._zoomStack.append((xmin, xmax, ymin, ymax))
             self.setLimits(x, x+w, y, y+h)
             self.draw()
+
+    def _emitDrawingSignal(self, event="drawingFinished"):
+        ddict = {}
+        ddict['event'] = event
+        ddict['type'] = '%s' % self._drawModePatch
+        #ddict['points'] = self._drawingPatch.get_xy()
+        print(dir(self._drawingPatch))
+        ddict['xdata'] = numpy.array(self._drawingPatch.get_x())
+        ddict['ydata'] = numpy.array(self._drawingPatch.get_y())
+        ddict['points'] = numpy.array(self._drawingPatch.get_xy())
+        a = self._drawingPatch.get_xy()
+        pixels = self.ax.transData.transform(numpyvstack(a).T)
+        xPixel, yPixels = pixels.T
+        if self._drawModePatch in ["rectangle", "circle"]:
+            # we need the rectangle containing it
+            ddict['x'] = ddict['xdata'].min()
+            ddict['y'] = ddict['ydata'].min()
+            ddict['width'] = self._drawingPatch.get_width()
+            ddict['height'] = self._drawingPatch.get_height()
+        elif self._drawModePatch in ["ellipse"]:
+            #we need the rectangle but given the four corners
+            pass
+        if event == "drawingFinished":
+            self.__drawing = False
+            self._drawingPatch.remove()
+            self._drawingPatch = None
+            self.draw()
+        self._callback(ddict)
 
     def setLimits(self, xmin, xmax, ymin, ymax):
         self.ax.set_xlim(xmin, xmax)
