@@ -48,8 +48,9 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        #TODO HANDLE IT
-        profileselection = False
+        if profileselection:
+            print("profile selection not implemented yet")
+            profileselection = False
         self._keepDataAspectRatioFlag = False
         self._buildToolBar(selection, colormap, imageicons,
                            standalonesave,
@@ -180,7 +181,9 @@ class RGBCorrelatorGraph(qt.QWidget):
             tb.setDown(False)
             self.selectionToolButton = tb
         #image selection icons
+        print("IMAGE ICONS = ", imageicons)
         if imageicons:
+            print("adding buttons")
             tb = self._addToolButton(self.imageIcon,
                                      None,
                                      'Reset')
@@ -211,7 +214,6 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.additionalSelectionToolButton = tb            
         else:
             self.imageToolButton = None
-
         #picker selection
         self._pickerSelectionButtons = []
         if profileselection:
@@ -423,10 +425,10 @@ class RGBCorrelatorGraph(qt.QWidget):
     def _setPickerSelectionMode(self, mode=None):
         if mode is None:
             self.graph.setPickerSelectionModeOff()
-            self.graph.enableZoom(True)
+            self.graph.setZoomEnabled(True)
         else:
             try:
-                self.graph.enableZoom(False)
+                self.graph.setZoomEnabled(False)
                 self.graph.setPickerSelectionModeOn(mode)
             except:
                 self.graph.enableZoom(True)
