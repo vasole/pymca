@@ -38,6 +38,7 @@ from PyMca import SpecfitFunctions
 from PyMca import Elements
 from PyMca import ConfigDict
 from PyMca import PyMcaDirs
+from PyMca import PyMcaDataDir
 from PyMca import QSpecFileWidget
 from PyMca import SpecFileDataSource
 from PyMca.SpecfitFuns import upstep, downstep
@@ -45,6 +46,7 @@ from PyMca.Gefit import LeastSquaresFit as LSF
 from PyMca.PyMca_Icons import IconDict
 from os.path import isdir as osPathIsDir
 from os.path import basename as osPathBasename
+from os.path import join as osPathJoin
 
 try:
     from PyMca import Plugin1DBase
@@ -53,11 +55,11 @@ except ImportError:
     from . import Plugin1DBase
 
 if hasattr(qt, "QString"):
-    print('qt has QString')
+    #print('qt has QString')
     QString = qt.QString
     QStringList = qt.QStringList
 else:
-    print('qt does not have QString')
+    #print('qt does not have QString')
     QString = str
     QStringList = list
 
@@ -936,6 +938,25 @@ class SumRulesWindow(qt.QMainWindow):
 #        }
         
 #        self.setValuesDict(tmpDict)
+        # Instantiate helpfile browser
+        helpFileName = osPathJoin(PyMcaDataDir.PYMCA_DOC_DIR,
+                                "HTML",
+                                "SumRulesToolInfotext.html")
+        self.helpFileBrowser = qt.QTextBrowser()
+        self.helpFileBrowser.setWindowTitle("Sum Rules Help")
+        self.helpFileBrowser.setLineWrapMode(qt.QTextEdit.FixedPixelWidth)
+        self.helpFileBrowser.setLineWrapColumnOrWidth(500)
+        self.helpFileBrowser.resize(520,300)
+        try:
+            helpFileHandle = open(helpFileName)
+            helpFileHTML = helpFileHandle.read()
+            helpFileHandle.close()
+            self.helpFileBrowser.setHtml(helpFileHTML)
+        except IOError:
+            if DEBUG:
+                print('SumRules Window -- init: Unable to read help file')
+            self.helpFileBrowser = None
+
         self._createMenuBar()
 
     def _createMenuBar(self):        
@@ -999,6 +1020,26 @@ class SumRulesWindow(qt.QMainWindow):
             else:
                 file.addSeparator()
         file.addAction('E&xit', self.close)
+
+        #
+        # 'help' Menu
+        #
+        about = menu.addMenu('Abou&t')
+        
+        helpFileBrowserAction = qt.QAction('Show Help F&ile', self)
+        helpFileBrowserAction.setShortcut(qt.Qt.Key_F1)
+        helpFileBrowserAction.setStatusTip('Showing help file..')
+        helpFileBrowserAction.setToolTip('Opens a browser that shows the helpfile')
+        helpFileBrowserAction.triggered.connect(self.showHelpFileBrowser)
+
+        about.addAction(helpFileBrowserAction)
+
+    def showHelpFileBrowser(self):
+        if self.helpFileBrowser:
+            self.helpFileBrowser.show()
+        else:
+            print('showHelpFileBrowser -- Help File Browser not available. '
+                 +'Check if the help file is installed correctly.' )
 
     def triggerDetrend(self, state):
         if (state == qt.Qt.Unchecked) or\
@@ -1115,7 +1156,7 @@ class SumRulesWindow(qt.QMainWindow):
         dial = LoadDichorismDataDialog()
         #dial.setDirectory(PyMcaDirs.outputDir)
         # CHANGE ME!
-        dial.setDirectory(r'C:\Users\tonn\lab\datasets\sum_rules\sum_rules_4f_example_EuRhj2Si2')
+        #dial.setDirectory(r'C:\Users\tonn\lab\datasets\sum_rules\sum_rules_4f_example_EuRhj2Si2')
         if dial.exec_():
             dataDict = dial.dataDict
         else:
@@ -1287,14 +1328,13 @@ class SumRulesWindow(qt.QMainWindow):
         confDict = ConfigDict.ConfigDict()
         ddict    = self.getValuesDict()
         loadDir  = PyMcaDirs.outputDir
-        filter   = 'Sum Rules Analysis files (*.sra);;All files (*.*)'
+        filters   = 'Sum Rules Analysis files (*.sra);;All files (*.*)'
         selectedFilter = 'Sum Rules Analysis files (*.sra)'
         
         filename = qt.QFileDialog.getOpenFileName(self,
                                'Load Sum Rule Analysis Configuration',
                                loadDir,
-                               filter,
-                               selectedFilter)
+                               filters)
         if len(filename) == 0:
             return
         else:

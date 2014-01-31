@@ -153,7 +153,19 @@ The tool offers a graphical user interface that allows data preprocessing, backg
 </a></H3>
 
 <div class='main'>
-Open a *.spec data file by selecting 'File -> Open Spec File'. A Dialog opens displaying the file system on the left hand side and two selection frames on the right. Once a *.spec file is selected, the top right frame shows the scans in the file. Notice that the scan also can be an analysis file with the analysed data divided into scans. If you used the XLD/XMCD Plugin of PyMca, the typical analysis file includes one or more scans that correspond to each analysis stored in the file. Once a scan has been selected, the bottom frame on the left shows the counters. One must define the counters used as x-axis as well as the XAS counter and the XMCD counter. Click 
+Open a *.spec data file by selecting 'File -> Open Spec File'. A Dialog opens displaying the file system on the left hand side and two selection frames on the right. Once a *.spec file is selected, the top right frame shows the scans in the file. Notice that the scan also can be an analysis file with the analysed data divided into scans. If you used the XLD/XMCD Plugin of PyMca, the typical analysis file includes one or more scans that correspond to each analysis stored in the file. Once a scan has been selected, the bottom frame on the left shows the counters. One must define the counters used as x-axis as well as the XAS counter resp. the XMCD counter.<br>
+<br>
+Once the selection is done, the programm has the informations required to perform the analysis. Click "Open" to load the data. The empty plot window in the top part of the application typically shows the XMCD spectrum in blue and the XAS spectrum in red. The bottom part of the window contains three tabs titled 'ELEMENT', 'BACKGROUND' and 'INTEGRATION'.<br>
+<br>
+The analysis starts by specifying the sample in the first tab 'ELEMENT' (Shortcut: F2). From the drop down menu in the bottom left select the electron shell and the element and set the electron occupation of the outer shell. From the drop down menus in the bottom right select the absorption edges probed in the experiment. The edge values can be defined more precisely later on and the values selected in the 'ELEMENTS' tab mainly tell the programm how many edges to consider.<br>
+<br>
+The next step in the analysis is the sustraction of a background from the XAS spectrum. Switch to the 'BACKGROUND' tab (Shortcut: F3). A click on the estimate button (shortcut: CRTL+E), located in the middle right part of the programm, tells it to guess initial values for certain markers relevant to the background substraction. The markers divide the XAS spectrum in three regions: pre-edge, post-edge and the region containing the absorption edges.<br>
+<br>
+The model itself consists of one or two gaussian error functions whose turning points conincide with the absorption edges. Slide the markers to the absorbtion edges by clicking and dragging the markers labelled 'Edge 1' and as the case may be 'Edge 2'. Every change done in this way automatically updates the model. Pre- and Post-edge regions define the constant model offsets before and after the steps by calculating the arithmetic mean over the data points inside the respective regions. Set the markers 'Pre Edge Min', 'Pre Edge Max', 'Post Edge Min', 'Post Edge Max' accordingly. Two values are missing to entirely define the module: the step width and, in case of a two step model, the ratio between the two steps. These values can be adjusted in the bottom right corner of the 'BACKGROUND' tab. If the cursor is inside the according the selection boxes, one can use the up and down arrow keys on the keyboard to adjust the values.<br>
+<br>
+Notice that the model is not fitted but only adjusted by eye. The user is encouraged to alter the quantities defining the background module during an analysis to validate the reliability of the method.<br>
+<br>
+For the final step of the analysis switch to the 'INTEGRATION' tab (shortcut: F4).
 </div>
 <br><a href=#Up>up</a>
 
