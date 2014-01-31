@@ -29,11 +29,9 @@ from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 
 if hasattr(qt, "QString"):
-    print('qt has QString')
     QString = QString
     QStringList = QStringList
 else:
-    print('qt does not have QString')
     QString = str
     QStringList = list
 
@@ -92,7 +90,7 @@ class LegendIcon(qt.QWidget):
                            qt.QSizePolicy.Fixed)
 
     def sizeHint(self):
-        return qt.QSize(50,20)
+        return qt.QSize(50,15)
 
     # Modify Symbol
     def setSymbol(self, symbol):
@@ -208,7 +206,7 @@ class LegendIcon(qt.QWidget):
                           linePen,
                           qt.QBrush(self.lineColor)))
         if self.showSymbol and len(self.symbol):
-            # PITFALL ahead: Let this be a warning to other
+            # PITFALL ahead: Let this be a warning to others
             #symbolPath = Symbols[self.symbol]
             # Copy before translate! Dict is a mutable type
             symbolPath = qt.QPainterPath(Symbols[self.symbol])
@@ -240,6 +238,8 @@ class LegendModel(qt.QAbstractListModel):
     iconSymbolRole    = qt.Qt.UserRole + 3
     showSymbolRole    = qt.Qt.UserRole + 4
     legendTypeRole    = qt.Qt.UserRole + 5
+    selectedRole      = qt.Qt.UserRole + 6
+    activeRole        = qt.Qt.UserRole + 7
     
     def __init__(self, llist=[], parent=None):
         qt.QAbstractListModel.__init__(self, parent)
@@ -249,12 +249,16 @@ class LegendModel(qt.QAbstractListModel):
             showLine = True
             showSymbol = True
             curveType  = 0
+            active = False
+            selected = False
             item = [legend,
                     icon,
                     qt.Qt.Checked,
                     showLine,
                     showSymbol,
-                    curveType]
+                    curveType,
+                    active,
+                    selected]
             self.legendList.append(item)
 
     def __getitem__(self, idx):
@@ -266,7 +270,9 @@ class LegendModel(qt.QAbstractListModel):
         return len(self.legendList)
 
     def flags(self, index):
-        return qt.Qt.ItemIsEditable | qt.Qt.ItemIsEnabled
+        return qt.Qt.ItemIsEditable |\
+               qt.Qt.ItemIsEnabled |\
+               qt.Qt.ItemIsSelectable
 
     def data(self, modelIndex, role):
         if modelIndex.isValid:
@@ -316,9 +322,8 @@ class LegendModel(qt.QAbstractListModel):
             return item[4]
         elif role == self.legendTypeRole:
             return 0 # item[4] ..curveType..
-        elif role == qt.Qt.EditRole:
-            print('### EDIT ROLE REQUESTED ###')
-            return qt.QString('What now?')
+        #elif role == qt.Qt.EditRole:
+        #    return qt.QString('What now?')
         else:
             print('Unkown role requested: %s',str(role))
             return None
@@ -577,7 +582,6 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
                     newState = qt.Qt.Unchecked
                 else:
                     newState = qt.Qt.Checked
-                #self.checkbox.setCheckState(newState)
                 idx = modelIndex.row()
                 self.cbDict[idx].setCheckState(newState)
                 model.setData(modelIndex, newState, qt.Qt.CheckStateRole)
@@ -623,8 +627,11 @@ class LegendListView(qt.QListView):
         #self.setBatchSize(2)
         #self.setLayoutMode(qt.QListView.Batched)
         #self.setFlow(qt.QListView.LeftToRight)
+
+        # Control selection
         self.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
 
+    '''
     def sizeHint(self):
         print('ListView.sizeHint called')
         return qt.QSize(300,500)
@@ -640,6 +647,7 @@ class LegendListView(qt.QListView):
     def minimumSizeHint(self):
         print('ListView.minimumSizeHint called')
         return qt.QSize(300,500)
+    '''
 
     def setContextMenu(self):#, actionList):
         delegate = self.itemDelegate()
@@ -669,7 +677,7 @@ class LegendListView(qt.QListView):
             print('LegendListView.mouseReleaseEvent -- '
                  +'is overwritten to subpress unwanted '
                  +'behavior in the delegate.')
-
+    
     def _handleMouseClick(self, modelIndex):
         '''
         :param modelIndex: index of the clicked item
@@ -681,7 +689,8 @@ class LegendListView(qt.QListView):
 
         Emits signal sigMouseClicked(ddict)
         '''
-        print('self._handleMouseClick called')
+        if DEBUG == 1:
+            print('self._handleMouseClick called')
         if self.__lastButton not in [qt.Qt.LeftButton,
                                      qt.Qt.RightButton]:
             return
@@ -737,7 +746,6 @@ class BaseContextMenu(qt.QMenu):
     def __init__(self, model):
         qt.QMenu.__init__(self, parent=None)
         self.model = model
-        print('Model type:',type(model))
         
     def exec_(self, pos, idx):
         self.__currentIdx = idx
@@ -830,6 +838,7 @@ if __name__ == '__main__':
     #print(llist)
     model = LegendModel(llist=llist)
     win.setModel(model)
+    win.setSelectionModel(qt.QItemSelectionModel(model))
     win.setContextMenu()
     #print('Edit triggers: %d'%win.editTriggers())
     
