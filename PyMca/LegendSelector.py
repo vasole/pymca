@@ -838,7 +838,6 @@ if __name__ == '__main__':
     #print(llist)
     model = LegendModel(llist=llist)
     win.setModel(model)
-    win.setSelectionModel(qt.QItemSelectionModel(model))
     win.setContextMenu()
     #print('Edit triggers: %d'%win.editTriggers())
     
