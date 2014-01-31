@@ -583,6 +583,8 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.calculateROIs()
         
     def _handleROIMarkerEvent(self, ddict):
+        if not hasattr(self, 'roiWidget'):
+            return
         if ddict['event'] == 'markerMoved':
             roiList, roiDict = self.roiWidget.getROIListAndDict()
             if self.currentROI is None:

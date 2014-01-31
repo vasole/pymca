@@ -31,7 +31,7 @@ import traceback
 from PyMca import PyMcaQt as qt
 from PyMca import PyMcaDataDir, PyMcaDirs, PyMcaFileDialogs
 from PyMca import ConfigDict
-from PyMca.PyMcaIO import specfilewrapper as SFW
+from PyMca import specfilewrapper as SFW #from PyMca.PyMcaIO import specfilewrapper as SFW
 from PyMca import SpecfitFunctions as SF
 from PyMca import SNIPModule as snip
 from PyMca.Gefit import LeastSquaresFit as LSF
@@ -63,16 +63,28 @@ class AlignmentWidget(qt.QDialog):
         
         # Buttons
         buttonSave = qt.QPushButton('Save')
-        buttonSave.setToolTip('Save shifts to file')
+        buttonSave.setToolTip('Shortcut: CTRL+S\n'
+                             +'Save shifts to file')
+        buttonSave.setShortcut(qt.Qt.CTRL + qt.Qt.Key_S)
         buttonLoad = qt.QPushButton('Load')
-        buttonLoad.setToolTip('Load shifts from file')
+        buttonLoad.setToolTip('Shortcut: CTRL+O\n'
+                             +'Load shifts from file')
+        buttonLoad.setShortcut(qt.Qt.CTRL + qt.Qt.Key_O)
         buttonStore = qt.QPushButton('Store')
-        buttonStore.setToolTip('Store shifts in memory.\n')
+        buttonStore.setToolTip('Shortcut: ALT+S\n'
+                              +'Store shifts in memory.\n')
+        buttonStore.setShortcut(qt.Qt.ALT + qt.Qt.Key_S)
         buttonApply = qt.QPushButton('Apply')
-        buttonApply.setToolTip('Apply shift to curves present'
+        buttonApply.setToolTip('Shortcut: CTRL+Return\n'
+                              +'Apply shift to curves present'
                               +' in the plot window')
+        buttonApply.setShortcut(qt.Qt.CTRL + qt.Qt.Key_Return)
         buttonCancel = qt.QPushButton('Cancel')
+        buttonCancel.setToolTip('Shortcut: ESC\n'
+                               +'Closes the window')
         buttonCalc = qt.QPushButton('Calculate')
+        buttonCalc.setToolTip('Shortcut: F5')
+        buttonCalc.setShortcut(qt.Qt.Key_F5)
 
         # Table
         self.shiftTab = qt.QTableWidget(nRows, nCols)
@@ -1061,15 +1073,23 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     from PyMca.Plot1DQwt import Plot1DQwt as Plot1D
 
+    a = AlignmentWidget()
+    a.show()
+    app.exec_()
     x = numpy.arange(250, 750, 2, dtype=float)
     y1 = 1.0 + 50.0 * numpy.exp(-0.001*(x-500)**2) + 2.*numpy.random.random(250.)
     y2 = 1.0 + 20.5 * numpy.exp(-0.005*(x-600)**2) + 2.*numpy.random.random(250.)
 
+    '''
     plot = Plot1D()
     plot.addCurve(x, y1, "y1", {'selectionlegend': 'y1'})
     plot.addCurve(x, y2, "y2", {'selectionlegend': 'y2'})
+    plot.show()
+    app.exec_()
 
+    
     plugin = getPlugin1DInstance(plot)
     for method in plugin.getMethods():
         print(method, ":", plugin.getMethodToolTip(method))
     plugin.applyMethod(plugin.getMethods()[0])
+    '''

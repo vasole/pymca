@@ -80,14 +80,21 @@ class XMCDOptions(qt.QDialog):
 
         # Buttons
         buttonOK = qt.QPushButton('OK')
-        buttonOK.setToolTip('Accept the configuration')
+        buttonOK.setToolTip('Shortcut: CTRL+Enter\n'
+                           +'Accept the configuration')
+        buttonOK.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Return)
         buttonCancel = qt.QPushButton('Cancel')
-        buttonCancel.setToolTip('Return to XMCD Analysis\nwithout changes')
+        buttonCancel.setToolTip('Shortcut: Esc\n'
+                               +'Return to XMCD Analysis\nwithout changes')
         if full:
             buttonSave = qt.QPushButton('Save')
-            buttonSave.setToolTip('Save configuration to *.cfg-File')
+            buttonSave.setToolTip('Shortcut: CTRL+S\n'
+                                 +'Save configuration to *.cfg-File')
+            buttonSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
         buttonLoad = qt.QPushButton('Load')
-        buttonLoad.setToolTip('Load existing configuration from *.cfg-File')
+        buttonLoad.setToolTip('Shortcut: CTRL+L\n'
+                             +'Load existing configuration from *.cfg-File')
+        buttonLoad.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
 
         # OptionLists and ButtonGroups
         # GroupBox can be generated from self.getGroupBox
@@ -399,6 +406,21 @@ class XMCDScanWindow(sw.ScanWindow):
         self.graphBottomLayout.addWidget(buttonAddAll)
         self.graphBottomLayout.addWidget(buttonReplace)
         self.graphBottomLayout.addWidget(buttonReplaceAll)
+
+        # Modify buttons in the toolbar
+        #toolbar = self.plotWindow.toolBar
+        toolbar = self.toolBar
+        # QWidget.findChildren(<qt-type>) matches 
+        # all child widgets with the specified type
+        toolbarButtons  = toolbar.findChildren(qt.QToolButton)
+        toolbarButtons[6].hide() # Simple Fit
+        toolbarButtons[7].hide() # Average Plotted Curves
+        toolbarButtons[8].hide() # Derivative
+        toolbarButtons[9].hide() # Smooth
+        toolbarButtons[11].hide() # Subtract active curve
+        toolbarButtons[12].hide() # Subtract active curve
+        toolbarButtons[13].setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
+        toolbarButtons[14].hide() # Plugins
         
         buttonAdd.clicked.connect(self.add)
         buttonReplace.clicked.connect(self.replace)
@@ -1393,21 +1415,27 @@ class XMCDWidget(qt.QWidget):
         
         buttonOptions = qt.QPushButton('Options', self)
         buttonOptions.setToolTip(
-            'Set normalization and interpolation\n'
+            'Shortcut: ALT+O\n'
+           +'Set normalization and interpolation\n'
            +'method and motors shown')
+        buttonOptions.setShortcut(qt.Qt.ALT + qt.Qt.Key_O)
            
         buttonInfo = qt.QPushButton('Info')
         buttonInfo.setToolTip(
-            'Shows a describtion of the plugins features\n'
+            'Shortcut: F1\n'
+           +'Shows a describtion of the plugins features\n'
            +'and gives instructions on how to use it')
+        buttonInfo.setShortcut(qt.Qt.Key_F1)
                                 
         updatePixmap  = qt.QPixmap(IconDict["reload"])
         buttonUpdate  = qt.QPushButton(
                             qt.QIcon(updatePixmap), '', self)
         buttonUpdate.setIconSize(qt.QSize(21,21))
         buttonUpdate.setToolTip(
-            'Update curves in XMCD Analysis\n'
+            'Shortcut: F5\n'
+           +'Update curves in XMCD Analysis\n'
            +'by checking the plot window')
+        buttonUpdate.setShortcut(qt.Qt.Key_F5)
 
         self.list = XMCDTreeWidget(self)
         labels = ['Group', 'Legend', 'S#','Counter']+\
@@ -1998,16 +2026,6 @@ def main():
 
     w = XMCDWidget(None, swin, 'ID08', nSelectors = 5)
     w.show()
-
-#    helpFileBrowser = qt.QTextBrowser()
-#    helpFileBrowser.setLineWrapMode(qt.QTextEdit.FixedPixelWidth)
-#    helpFileBrowser.setLineWrapColumnOrWidth(500)
-#    helpFileBrowser.resize(520,400)
-#    helpFileHandle = open('/home/truter/lab/XMCD_infotext.html')
-#    helpFileHTML = helpFileHandle.read()
-#    helpFileHandle.close()
-#    helpFileBrowser.setHtml(helpFileHTML)
-#    helpFileBrowser.show()
 
     app.exec_()
 
