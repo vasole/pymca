@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -29,11 +29,23 @@ from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 
 if hasattr(qt, "QString"):
-    QString = QString
-    QStringList = QStringList
+    QString = qt.QString
+elif hasattr(qt, "safe_str"):
+    QString = qt.safe_str
 else:
-    QString = str
-    QStringList = list
+    QString= str
+
+if hasattr(qt, 'QVariant'):
+    QVariant = qt.QVariant
+else:
+    def QVariant(x=None):
+        return x
+
+def convertToPyObject(x):
+    if hasattr(x, "toPyObject"):
+        return x.toPyObject()
+    else:
+        return x
 
 DEBUG = 1
 
@@ -94,8 +106,9 @@ class LegendIcon(qt.QWidget):
 
     # Modify Symbol
     def setSymbol(self, symbol):
+        symbol = qt.safe_str(symbol)
         if symbol not in Symbols:
-            raise ValueError('Unknown symbol: \'%s\''%symbol)
+            raise ValueError("Unknown symbol: <%s>" % symbol)
         self.symbol = symbol
         # self.update() after set...?
         # Does not seem necessary
@@ -278,7 +291,7 @@ class LegendModel(qt.QAbstractListModel):
         if modelIndex.isValid:
             idx = modelIndex.row()
         else:
-            return qt.QVariant()
+            return None
         if idx >= len(self.legendList):
             raise IndexError('list index out of range')
         
@@ -286,7 +299,7 @@ class LegendModel(qt.QAbstractListModel):
         if role == qt.Qt.DisplayRole:
             # Data to be rendered in the form of text
             legend = QString(item[0])
-            #return qt.QVariant(legend)
+            #return QVariant(legend)
             return legend
         elif role == qt.Qt.SizeHintRole:
             #size = qt.QSize(200,50)
@@ -465,7 +478,7 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
 
         Here be docs..
         '''
-        painter.save()
+        #painter.save()
         # Rect geometry
         width  = option.rect.width()
         height = option.rect.height()
@@ -506,37 +519,37 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
 
         # Draw background first!
         if option.state & qt.QStyle.State_MouseOver:
-            backgoundBrush = option.palette.highlight()
+            backgroundBrush = option.palette.highlight()
         else:
-            backgoundBrush = modelIndex.data(qt.Qt.BackgroundRole)
-        painter.fillRect(rect, backgoundBrush)
-
+            backgroundBrush = convertToPyObject(modelIndex.data(qt.Qt.BackgroundRole))
+        painter.fillRect(rect, backgroundBrush)
+        
         # Draw label
-        legendText = modelIndex.data(qt.Qt.DisplayRole)
-        textBrush  = modelIndex.data(qt.Qt.ForegroundRole)
-        textAlign  = modelIndex.data(qt.Qt.TextAlignmentRole)
+        legendText = convertToPyObject(modelIndex.data(qt.Qt.DisplayRole))
+        textBrush  = convertToPyObject(modelIndex.data(qt.Qt.ForegroundRole))
+        textAlign  = convertToPyObject(modelIndex.data(qt.Qt.TextAlignmentRole))
         painter.setBrush(textBrush)
         painter.setFont(self.legend.font())
         painter.drawText(labelRect, textAlign, legendText)
 
         # Draw icon
-        iconColor = modelIndex.data(LegendModel.iconColorRole)
-        iconLineWidth = modelIndex.data(LegendModel.iconLineWidthRole)
-        iconSymbol = modelIndex.data(LegendModel.iconSymbolRole)
+        iconColor = convertToPyObject(modelIndex.data(LegendModel.iconColorRole))
+        iconLineWidth = convertToPyObject(modelIndex.data(LegendModel.iconLineWidthRole))
+        iconSymbol = convertToPyObject(modelIndex.data(LegendModel.iconSymbolRole))
         icon = LegendIcon()
         icon.resize(iconRect.size())
         icon.move(iconRect.topRight())
-        icon.showSymbol = modelIndex.data(LegendModel.showSymbolRole)
-        icon.showLine = modelIndex.data(LegendModel.showLineRole)
+        icon.showSymbol = convertToPyObject(modelIndex.data(LegendModel.showSymbolRole))
+        icon.showLine = convertToPyObject(modelIndex.data(LegendModel.showLineRole))
         icon.setSymbolColor(iconColor)
         icon.setLineColor(iconColor)
         icon.setLineWidth(iconLineWidth)
         icon.setSymbol(iconSymbol)
-        icon.symbolOutlineBrush = backgoundBrush
+        icon.symbolOutlineBrush = backgroundBrush
         icon.paint(painter, iconRect, option.palette)
         
         # Draw the checkbox
-        if modelIndex.data(qt.Qt.CheckStateRole):
+        if convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)):
             checkState = qt.Qt.Checked
         else:
             checkState = qt.Qt.Unchecked
@@ -558,7 +571,7 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
 
         # Reset painter
         painter.begin(originalPaintDevice)
-        painter.restore()
+        #painter.restore()
         return
 
     def editorEvent(self, event, model, option, modelIndex):
@@ -577,7 +590,7 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
                     break
             if cbClicked:
                 # Edit checkbox
-                currentState = modelIndex.data(qt.Qt.CheckStateRole)
+                currentState = convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole))
                 if currentState:
                     newState = qt.Qt.Unchecked
                 else:
@@ -714,14 +727,14 @@ class LegendListView(qt.QListView):
         # item is tupel: (legend, icon, checkState, curveType)
         item  = model[idx]
         ddict = {
-            'legend'   : modelIndex.data(qt.Qt.DisplayRole),
+            'legend'   : convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)),
             'icon'     : {
-                'linewidth' : modelIndex.data(LegendModel.iconLineWidthRole),
-                'symbol'    : modelIndex.data(LegendModel.iconSymbolRole),
-                'color'     : modelIndex.data(LegendModel.legendTypeRole)
+                'linewidth' : convertToPyObject(modelIndex.data(LegendModel.iconLineWidthRole)),
+                'symbol'    : convertToPyObject(modelIndex.data(LegendModel.iconSymbolRole)),
+                'color'     : convertToPyObject(modelIndex.data(LegendModel.legendTypeRole))
             },
-            'selected' : modelIndex.data(qt.Qt.CheckStateRole),
-            'type'     : modelIndex.data()
+            'selected' : convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)),
+            'type'     : convertToPyObject(modelIndex.data())
         }
         if self.__lastButton == qt.Qt.RightButton:
             if DEBUG == 1:
