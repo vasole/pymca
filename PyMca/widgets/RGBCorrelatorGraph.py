@@ -43,20 +43,21 @@ class RGBCorrelatorGraph(qt.QWidget):
     def __init__(self, parent = None, selection=False, aspect=False,
                  colormap=False,
                  imageicons=False, standalonesave=True, standalonezoom=True,
-                 profileselection=False):
+                 profileselection=False, polygon=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
         if profileselection:
-            print("profile selection not implemented yet")
+            print("TODO: profile selection not implemented yet")
             profileselection = False
         self._keepDataAspectRatioFlag = False
         self._buildToolBar(selection, colormap, imageicons,
                            standalonesave,
                            standalonezoom=standalonezoom,
                            profileselection=profileselection,
-                           aspect=aspect)
+                           aspect=aspect,
+                           polygon=polygon)
         self.graph = PlotWidget.PlotWidget(self, backend=backend, aspect=aspect)
         self.graph.setGraphXLabel("Column")
         self.graph.setGraphYLabel("Row")
@@ -84,12 +85,13 @@ class RGBCorrelatorGraph(qt.QWidget):
     def _buildToolBar(self, selection=False, colormap=False,
                       imageicons=False, standalonesave=True,
                       standalonezoom=True, profileselection=False,
-                      aspect=False):
+                      aspect=False, polygon=False):
         self.solidCircleIcon = qt.QIcon(qt.QPixmap(IconDict["solidcircle"]))
         self.solidEllipseIcon = qt.QIcon(qt.QPixmap(IconDict["solidellipse"]))
         self.colormapIcon   = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
-        self.selectionIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))
-        self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
+        self.selectionIcon = qt.QIcon(qt.QPixmap(IconDict["normal"]))
+        self.zoomResetIcon = qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
+        self.polygonIcon = qt.QIcon(qt.QPixmap(IconDict["polygon"]))
         self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
         self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))            
         self.xAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["xauto"]))
@@ -181,9 +183,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             tb.setDown(False)
             self.selectionToolButton = tb
         #image selection icons
-        print("IMAGE ICONS = ", imageicons)
         if imageicons:
-            print("adding buttons")
             tb = self._addToolButton(self.imageIcon,
                                      None,
                                      'Reset')
@@ -204,10 +204,18 @@ class RGBCorrelatorGraph(qt.QWidget):
                                      'Brush Selection')
             self.brushSelectionToolButton = tb
 
+
             tb = self._addToolButton(self.brushIcon,
                                      None,
                                      'Select Brush')
             self.brushToolButton = tb
+
+            if polygon:
+                tb = self._addToolButton(self.polygonIcon,
+                                     None,
+                        'Polygon selection\nRight click to finish')
+                self.polygonSelectionToolButton = tb
+
             tb = self._addToolButton(self.additionalIcon,
                                      None,
                                      'Additional Selections Menu')
@@ -334,8 +342,9 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.rectSelectionToolButton.hide()
         self.brushSelectionToolButton.hide()
         self.brushToolButton.hide()
-        if QTVERSION > '4.0.0':
-            self.additionalSelectionToolButton.hide()
+        if hasattr(self, "polygonSelectionToolButton"):
+            self.polygonSelectionToolButton.hide()
+        self.additionalSelectionToolButton.hide()
 
     def showImageIcons(self):
         if self.imageToolButton is None:return
@@ -344,8 +353,9 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.rectSelectionToolButton.show()
         self.brushSelectionToolButton.show()
         self.brushToolButton.show()
-        if QTVERSION > '4.0.0':
-            self.additionalSelectionToolButton.show()
+        if hasattr(self, "polygonSelectionToolButton"):
+            self.polygonSelectionToolButton.show()
+        self.additionalSelectionToolButton.show()
 
     def _hLineProfileClicked(self):
         for button in self._pickerSelectionButtons:

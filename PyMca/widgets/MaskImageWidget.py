@@ -92,7 +92,7 @@ def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
 class MaskImageWidget(qt.QWidget):
     def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
                  imageicons=True, standalonesave=True, usetab=False,
-                 profileselection=False, scanwindow=None, aspect=False):
+                 profileselection=False, scanwindow=None, aspect=False, polygon=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMca - Image Selection Tool")
@@ -120,12 +120,14 @@ class MaskImageWidget(qt.QWidget):
         self.rgbWidget = rgbwidget
 
         self.__imageIconsFlag = imageicons
+        if polygon is None:
+            polygon = imageicons
         self.__selectionFlag = selection
         self.__useTab = usetab
         self.mainTab = None
 
         self.__aspect = aspect
-        self._build(standalonesave, profileselection=profileselection)
+        self._build(standalonesave, profileselection=profileselection, polygon=polygon)
         self._profileSelectionWindow = None
         self._profileScanWindow = scanwindow
 
@@ -150,7 +152,7 @@ class MaskImageWidget(qt.QWidget):
         # the projection mode
         self.__lineProjectionMode = 'D'
 
-    def _build(self, standalonesave, profileselection=False):
+    def _build(self, standalonesave, profileselection=False, polygon=False):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
@@ -167,7 +169,8 @@ class MaskImageWidget(qt.QWidget):
                                                    standalonesave=False,
                                                    standalonezoom=False,
                                                    aspect=self.__aspect,
-                                                   profileselection=profileselection)
+                                                   profileselection=profileselection,
+                                                   polygon=polygon)
             self.mainTab.addTab(self.graphWidget, 'IMAGES')
         else:
             self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
@@ -177,7 +180,8 @@ class MaskImageWidget(qt.QWidget):
                                                standalonesave=False,
                                                standalonezoom=False,
                                                profileselection=profileselection,
-                                               aspect=self.__aspect)
+                                               aspect=self.__aspect,
+                                               polygon=polygon)
         #for easy compatibility with RGBCorrelatorGraph
         self.graph = self.graphWidget.graph
         if profileselection:
@@ -268,6 +272,10 @@ class MaskImageWidget(qt.QWidget):
                      qt.SIGNAL("clicked()"),
                      self._setBrush)
 
+            if hasattr(self.graphWidget, "polygonSelectionToolButton"):
+                self.graphWidget.polygonSelectionToolButton.clicked.connect(self._setPolygonSelectionMode)
+
+
         if self.__imageIconsFlag:
             self.connect(self.graphWidget.additionalSelectionToolButton,
                      qt.SIGNAL("clicked()"),
@@ -305,6 +313,7 @@ class MaskImageWidget(qt.QWidget):
                 ddict['pixelwidth'] = self.__lastOverlayWidth
                 ddict['mode'] = mode
                 self._polygonSignalSlot(ddict)
+
 
     def _polygonSignalSlot(self, ddict):
         if DEBUG:
@@ -977,6 +986,11 @@ class MaskImageWidget(qt.QWidget):
         self.__eraseMode = False
         self.__brushMode = False
         self.graphWidget.graph.setDrawModeEnabled(True, shape="rectangle")
+
+    def _setPolygonSelectionMode(self):
+        self.__eraseMode = False
+        self.__brushMode = False
+        self.graphWidget.graph.setDrawModeEnabled(True, shape="polygon")
         
     def _setBrushSelectionMode(self):
         if DEBUG:
@@ -1594,6 +1608,31 @@ class MaskImageWidget(qt.QWidget):
     def _otherWidgetGraphSignal(self, ddict):
         self._graphSignal(ddict, ownsignal = False)
 
+
+    def _handlePolygonMask(self, ddict):
+        print ddict
+        from PyMca.plotting.ctools import pnpoly
+        x = self._xScale[0] + self._xScale[1] * numpy.arange(self.__imageData.shape[1])
+        y = self._yScale[0] + self._yScale[1] * numpy.arange(self.__imageData.shape[0])
+        X, Y = numpy.meshgrid(x, y)
+        X.shape = -1
+        Y.shape = -1
+        Z = numpy.zeros((self.__imageData.shape[1]*self.__imageData.shape[0], 2))
+        Z[:, 0] = X
+        Z[:, 1] = Y
+        X = None
+        Y = None
+        mask = pnpoly(ddict['points'][:-1], Z, 1)
+        print("SELECTED POINTS = ", mask.sum(dtype=numpy.float32))
+        mask.shape = self.__imageData.shape
+        if self.__selectionMask is None:
+            self.__selectionMask = mask
+        else:
+            self.__selectionMask[mask] = 1
+        self.plotImage(update = False)
+        #inform the other widgets
+        self._emitMaskChangedSignal()
+
     def _graphSignal(self, ddict, ownsignal = None):
         if ownsignal is None:
             ownsignal = True
@@ -1605,8 +1644,8 @@ class MaskImageWidget(qt.QWidget):
             # to identify it.
             # In the mean time, assume nobody else is triggering drawing
             # and therefore only rectangle is supported as selection
-            if ddict['type'] != "rectangle":
-                return
+            if ddict['type'] == "polygon":
+                return self._handlePolygonMask(ddict)
             j1, i1 = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
                                                   xScale=self._xScale,
                                                   yScale=self._yScale,
