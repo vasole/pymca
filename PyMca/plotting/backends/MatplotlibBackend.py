@@ -59,6 +59,10 @@ DEBUG = 0
 
 class ModestImage(AxesImage):
     """
+
+Customization of https://github.com/ChrisBeaumont/ModestImage to allow
+extent support.
+
 Computationally modest image class.
 
 ModestImage is an extension of the Matplotlib AxesImage class
