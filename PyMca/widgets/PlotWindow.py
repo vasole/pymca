@@ -41,6 +41,8 @@ try:
     MATPLOTLIB = True
 except:
     MATPLOTLIB = False
+
+# pyqtgraph has a SciPy dependency
 try:
     from PyMca.plotting.backends import PyQtGraphBackend
     PYQTGRAPH = True

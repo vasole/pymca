@@ -88,8 +88,12 @@ if __name__ == "__main__":
         print("USING matplotlib")
         time.sleep(1)
     else:
-        from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
-        print("USING PyQtGraph")
+        try:
+            from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
+            print("USING PyQtGraph")
+        except:
+            from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+            print("USING matplotlib")
         time.sleep(1)
     import numpy
     x = numpy.arange(100.)
