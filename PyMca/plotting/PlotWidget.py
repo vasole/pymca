@@ -68,6 +68,11 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             Plot.Plot.graphCallback(self, ddict)
             self.sigPlotSignal.emit(ddict)
 
+    def resizeEvent(self, event):
+        super(PlotWidget, self).resizeEvent(event)
+        #Should I reset the zoom or replot?
+        #self.resetZoom()
+
     def replot(self):
         Plot.Plot.replot(self)
         # force update of the widget!!!
