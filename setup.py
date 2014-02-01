@@ -30,6 +30,10 @@ except ImportError:
     text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
     raise ImportError(text)
 import distutils.sysconfig
+try:
+    from Cython.Distutils import build_ext
+except:
+    build_ext = None
 global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
 global USE_SMART_INSTALL_SCRIPTS 
@@ -273,6 +277,48 @@ def build_PyMcaSciPy(ext_modules):
                        include_dirs = [numpy.get_include()])
     ext_modules.append(module)
 
+def build_plotting_ctools(ext_modules):
+    packages.append('PyMca.plotting.ctools')
+    basedir = os.path.join(os.getcwd(),'PyMca', 'plotting','ctools', '_ctools')
+    c_files = glob.glob(os.path.join(basedir, 'src', '*.c'))
+    if build_ext:
+        src = glob.glob(os.path.join(basedir, 'cython','*.pyx'))
+    else:
+        src = glob.glob(os.path.join(basedir, 'cython','*.c'))
+    src += c_files
+
+    if sys.platform == 'win32':
+        extra_compile_args = []
+        extra_link_args = []
+    else:
+        extra_compile_args = []
+        extra_link_args = []
+
+    module = Extension(name="PyMca.plotting.ctools._ctools",
+                        sources=src,
+                        include_dirs=[numpy.get_include(),
+                                      os.path.join(basedir, "include")],
+                        extra_compile_args=extra_compile_args,
+                        extra_link_args=extra_link_args,
+                        language="c",
+                        )
+    """
+    setup(
+        name='ctools',
+        ext_modules=[Extension(name="_ctools",
+                    sources=src,
+                    include_dirs=[numpy.get_include(),
+                                  os.path.join(os.getcwd(),"include")],
+                    extra_compile_args=extra_compile_args,
+                    extra_link_args=extra_link_args,
+                    language="c",
+                    )] ,
+        cmdclass={'build_ext': build_ext},
+    )
+    """
+    ext_modules.append(module)
+
+
 ext_modules = []
 if sys.version < '3.0':
     build_FastEdf(ext_modules)
@@ -297,6 +343,7 @@ if (sys.version < '3.0') and LOCAL_OBJECT3D:
         print("Object3D Module could not be built")
         print(sys.exc_info())
 build_PyMcaSciPy(ext_modules)
+build_plotting_ctools(ext_modules)
 
 from distutils.command.build_py import build_py
 class smart_build_py(build_py):
@@ -562,7 +609,8 @@ class install(dftinstall):
 
 # end of man pages handling
 cmdclass = {'install_data':smart_install_data,
-            'build_py':smart_build_py}
+            'build_py':smart_build_py,
+            'build_ext': build_ext}
 
 if USE_SMART_INSTALL_SCRIPTS:
     # typical use of user without superuser privileges
