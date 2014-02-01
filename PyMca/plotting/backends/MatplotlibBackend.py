@@ -818,7 +818,8 @@ class MatplotlibGraph(FigureCanvas):
             self._mouseData[-1,0] = self._x1
             self._mouseData[-1,1] = self._y1
             self._drawingPatch.set_xy(self._mouseData)
-            self._emitDrawingSignal("drawingFinished")
+            if self._drawModePatch not in ['polygon']:
+                self._emitDrawingSignal("drawingFinished")
 
         if self._x0 is None:
             if event.inaxes != self.ax:
@@ -875,12 +876,16 @@ class MatplotlibGraph(FigureCanvas):
         ddict = {}
         ddict['event'] = event
         ddict['type'] = '%s' % self._drawModePatch
-        ddict['xdata'] = numpy.array(self._drawingPatch.get_x())
-        ddict['ydata'] = numpy.array(self._drawingPatch.get_y())
+        #ddict['xdata'] = numpy.array(self._drawingPatch.get_x())
+        #ddict['ydata'] = numpy.array(self._drawingPatch.get_y())
+        #print(dir(self._drawingPatch))
         a = self._drawingPatch.get_xy()
         ddict['points'] = numpy.array(a)
-        pixels = self.ax.transData.transform(numpyvstack(a).T)
-        xPixel, yPixels = pixels.T
+        ddict['xdata'] = ddict['points'][:, 0]
+        ddict['ydata'] = ddict['points'][:, 1]
+        #print(numpyvstack(a))
+        #pixels = self.ax.transData.transform(numpyvstack(a).T)
+        #xPixel, yPixels = pixels.T
         if self._drawModePatch in ["rectangle", "circle"]:
             # we need the rectangle containing it
             ddict['x'] = ddict['points'][:, 0].min()
