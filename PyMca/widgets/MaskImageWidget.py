@@ -28,6 +28,7 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 import numpy
+from PyMca.plotting.ctools import pnpoly
 from . import RGBCorrelatorGraph
 from . import ColormapDialog
 qt = RGBCorrelatorGraph.qt
@@ -195,15 +196,6 @@ class MaskImageWidget(qt.QWidget):
         self.connect(self.graphWidget.zoomResetToolButton,
                      qt.SIGNAL("clicked()"), 
                      self._zoomResetSignal)
-        #TODO picker
-        if 0:
-            self.graphWidget.picker = MyPicker(Qwt5.QwtPlot.xBottom,
-                           Qwt5.QwtPlot.yLeft,
-                           Qwt5.QwtPicker.NoSelection,
-                           Qwt5.QwtPlotPicker.CrossRubberBand,
-                           Qwt5.QwtPicker.AlwaysOn,
-                           self.graphWidget.graph.canvas())
-            self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
         self.graphWidget.graph.setDrawModeEnabled(False)
         self.graphWidget.graph.setZoomModeEnabled(True)
         if self.__selectionFlag:
@@ -977,7 +969,6 @@ class MaskImageWidget(qt.QWidget):
             print("_setEraseSelectionMode")
         self.__eraseMode = True
         self.__brushMode = True
-        #self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.ActiveOnly)
         self.graphWidget.graph.setDrawModeEnabled(False)
 
     def _setRectSelectionMode(self):
@@ -997,7 +988,6 @@ class MaskImageWidget(qt.QWidget):
             print("_setBrushSelectionMode")
         self.__eraseMode = False
         self.__brushMode = True
-        #self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.ActiveOnly)
         self.graphWidget.graph.setDrawModeEnabled(False)
         
     def _setBrush(self):
@@ -1050,23 +1040,18 @@ class MaskImageWidget(qt.QWidget):
         if mode:
             self.graphWidget.graph.setDrawModeEnabled(True, 'rectangle')
             self.__brushMode  = False
-            #self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOn)
             self.graphWidget.hideProfileSelectionIcons()
             self.graphWidget.selectionToolButton.setChecked(True)
-            #self.graphWidget.graph.enableZoom(False)
             self.graphWidget.selectionToolButton.setDown(True)
             self.graphWidget.showImageIcons()            
         else:
-            #self.graphWidget.picker.setTrackerMode(Qwt5.QwtPicker.AlwaysOff)
             self.graphWidget.showProfileSelectionIcons()
             self.graphWidget.graph.setZoomModeEnabled(True)
-            #self.graphWidget.graph.setDrawModeEnabled(False)
             self.graphWidget.selectionToolButton.setChecked(False)
             self.graphWidget.selectionToolButton.setDown(False)
             self.graphWidget.hideImageIcons()
-        if self.__imageData is None: return
-        #do not reset the selection
-        #self.__selectionMask = numpy.zeros(self.__imageData.shape, numpy.UInt8)
+        if self.__imageData is None:
+            return
 
     def _additionalSelectionMenuDialog(self):
         if self.__imageData is None:
@@ -1244,44 +1229,12 @@ class MaskImageWidget(qt.QWidget):
         if update:
             self.getPixmapFromData()
             self.__pixmap0 = self.__pixmap.copy()
-            if 0:
-                #TODO PICKER HANDLING
-                self.graphWidget.picker.data = self.__imageData
-                self.graphWidget.picker.xScale = self._xScale
-                self.graphWidget.picker.yScale = self._yScale
-                if self.colormap is None:
-                    if self.__defaultColormap < 2:
-                        self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.green))
-                    else:
-                        self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
-                elif int(str(self.colormap[0])) > 1:     #color
-                    self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.black))
-                else:
-                    self.graphWidget.picker.setTrackerPen(qt.QPen(qt.Qt.green))
         self.__applyMaskToImage()
-        if 0:
-            if not self.graphWidget.graph.isYAxisAutoScale():
-                ylimits = self.graphWidget.graph.getYAxisLimits()
-            if not self.graphWidget.graph.isXAxisAutoScale():
-                xlimits = self.graphWidget.graph.getXAxisLimits()
-            print("self._xScale", self._xScale)
-            print("self._yScale", self._yScale)
         
         self.graphWidget.graph.addImage(self.__pixmap,
                                         "image",
-                                        #xmirror = 0,
-                                        #ymirror = not self._y1AxisInverted,
-                                        #xScale = (0., 1.0),
-                                        #yScale = (0., 1.))
                                         xScale = self._xScale,
                                         yScale = self._yScale)
-        if 0:
-            if not self.graphWidget.graph.isYAxisAutoScale():
-                self.graphWidget.graph.setYAxisLimits(ylimits[0], ylimits[1],
-                                                       replot=False)
-            if not self.graphWidget.graph.isXAxisAutoScale():
-                self.graphWidget.graph.setXAxisLimits(xlimits[0], xlimits[1],
-                                                       replot=False)
         self.graphWidget.graph.replot()
         self.updateProfileSelectionWindow()
 
@@ -1610,8 +1563,6 @@ class MaskImageWidget(qt.QWidget):
 
 
     def _handlePolygonMask(self, ddict):
-        print ddict
-        from PyMca.plotting.ctools import pnpoly
         x = self._xScale[0] + self._xScale[1] * numpy.arange(self.__imageData.shape[1])
         y = self._yScale[0] + self._yScale[1] * numpy.arange(self.__imageData.shape[0])
         X, Y = numpy.meshgrid(x, y)
@@ -1623,12 +1574,11 @@ class MaskImageWidget(qt.QWidget):
         X = None
         Y = None
         mask = pnpoly(ddict['points'][:-1], Z, 1)
-        print("SELECTED POINTS = ", mask.sum(dtype=numpy.float32))
         mask.shape = self.__imageData.shape
         if self.__selectionMask is None:
             self.__selectionMask = mask
         else:
-            self.__selectionMask[mask] = 1
+            self.__selectionMask[mask==1] = 1
         self.plotImage(update = False)
         #inform the other widgets
         self._emitMaskChangedSignal()
