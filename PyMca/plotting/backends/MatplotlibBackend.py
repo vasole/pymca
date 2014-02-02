@@ -769,6 +769,14 @@ class MatplotlibGraph(FigureCanvas):
             elif self._drawModePatch == 'line':
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
+            elif self._drawModePatch == 'hline':
+                print("TODO: Use hline with a particular label?")
+                self._mouseData[1,0] = self._x1
+                self._mouseData[1,1] = self._y1
+            elif self._drawModePatch == 'vline':
+                print("TODO: Use vline with a particular label?")
+                self._mouseData[1,0] = self._x1
+                self._mouseData[1,1] = self._y1
                 self._drawingPatch.set_xy(self._mouseData)
             elif self._drawModePatch == 'polygon':
                 self._mouseData[-1,0] = self._x1
