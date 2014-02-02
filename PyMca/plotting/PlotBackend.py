@@ -32,6 +32,7 @@ clearCurves
 clearImages (*)
 clearMarkers
 getDefaultColormap (*)
+getDrawMode
 getGraphXLabel
 getGraphXLimits
 getGraphYLabel
@@ -43,6 +44,7 @@ insertMarker
 insertXMarker
 insertYMarker
 invertYAxis
+isDrawModeEnabled
 isXAxisAutoScale
 isYAxisAutoScale
 keepDataAspectRatio(*)
@@ -254,7 +256,18 @@ class PlotBackend(object):
         print("PlotBackend getDefaultColormap called")
         return {'name': 'gray', 'normalization':'linear',
                 'autoscale':True, 'vmin':0.0, 'vmax':1.0,
-                'colors':256} 
+                'colors':256}
+
+    def getDrawMode(self):
+        """
+        Return a dictionnary (or None) with the parameters passed when setting
+        the draw mode.
+        :key shape: The shape being drawn
+        :key label: Associated text (or None)
+        and any other info
+        """
+        print("PlotBackend getDrawMode not implemented")
+        return None
 
     def getGraphTitle(self):
         """
@@ -515,13 +528,15 @@ class PlotBackend(object):
         print("PlotBackend setDefaultColormap not implemented")
         return
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
+    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
         """
         Zoom and drawing are not compatible
         :param flag: Enable drawing mode disabling zoom and picking mode
         :type flag: boolean, default True
         :param shape: Type of item to be drawn
         :type shape: string, default polygon
+        :param label: Associated text (for identifying the signals)
+        :type label: string, default None
         """
         if flag:
             self._drawModeEnabled = True

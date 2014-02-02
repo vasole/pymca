@@ -390,7 +390,7 @@ class MatplotlibGraph(FigureCanvas):
         else:
             print("unhandled", event.artist)
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
+    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
         if flag:
             shape = shape.lower()
             if shape not in self.__drawModeList:
@@ -400,6 +400,9 @@ class MatplotlibGraph(FigureCanvas):
                 self._drawModeEnabled = True
                 self.setZoomModeEnabled(False)
                 self._drawModePatch = shape
+            self._drawingParameters = kw
+            self._drawingParameters['shape'] = shape
+            self._drawingParameters['label'] = label
         else:
             self._drawModeEnabled = False
 
@@ -415,6 +418,12 @@ class MatplotlibGraph(FigureCanvas):
 
     def isDrawModeEnabled(self):
         return self._drawModeEnabled
+
+    def getDrawMode(self):
+        if self.isDrawModeEnabled():
+            return self._drawingParameters()
+        else:
+            return None
 
     def onMousePressed(self, event):
         if DEBUG:
@@ -900,6 +909,10 @@ class MatplotlibGraph(FigureCanvas):
             #we need the rectangle but given the four corners
             pass
         if event == "drawingFinished":
+            ddict['parameters'] = {}
+            for key in self._drawingParameters.keys():
+                ddict['parameters'][key] = self._drawingParameters[key]
+            self.__drawingParameters = None
             self.__drawing = False
             self._drawingPatch.remove()
             self._drawingPatch = None
@@ -1043,6 +1056,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.setDrawModeEnabled = self.graph.setDrawModeEnabled
         self.isZoomModeEnabled = self.graph.isZoomModeEnabled
         self.isDrawModeEnabled = self.graph.isDrawModeEnabled
+        self.getDrawMode = self.graph.getDrawMode        
         self._oldActiveCurve = None
         self._oldActiveCurveLegend = None
 
