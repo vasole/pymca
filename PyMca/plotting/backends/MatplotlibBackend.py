@@ -267,7 +267,7 @@ class MatplotlibGraph(FigureCanvas):
 
         #drawingmode handling
         self.setDrawModeEnabled(False)
-        self.__drawModeList = ['line', 'rectangle', 'polygon']
+        self.__drawModeList = ['line', 'hline', 'vline', 'rectangle', 'polygon']
         self.__drawing = False
         self._drawingPatch = None
         self._drawModePatch = 'line'
