@@ -48,9 +48,6 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(0)
-        if profileselection:
-            print("TODO: profile selection not implemented yet")
-            profileselection = False
         self._keepDataAspectRatioFlag = False
         self._buildToolBar(selection, colormap, imageicons,
                            standalonesave,
@@ -224,6 +221,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.imageToolButton = None
         #picker selection
         self._pickerSelectionButtons = []
+        print("PROFILE SELECTION", profileselection)
         if profileselection:
             self._profileSelection = True
             self._polygonSelection = False
@@ -411,10 +409,13 @@ class RGBCorrelatorGraph(qt.QWidget):
             button.hide()
         self._pickerSelectionWidthLabel.hide()
         self._pickerSelectionWidthValue.hide()
-        self.graph.setPickerSelectionModeOff()
+        #self.graph.setPickerSelectionModeOff()
+        self.graph.setDrawModeEnabled(False)
 
     def showProfileSelectionIcons(self):
+        print("SHOWING PROFILE HERE")
         if not len(self._pickerSelectionButtons):
+            print("NO BUTTONS:")
             return
         for button in self._pickerSelectionButtons:
             button.show()
@@ -434,18 +435,12 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def _setPickerSelectionMode(self, mode=None):
         if mode is None:
-            self.graph.setPickerSelectionModeOff()
-            self.graph.setZoomEnabled(True)
+            self.graph.setDrawModeEnabled(False)
+            self.graph.setZoomModeEnabled(True)
         else:
-            try:
-                self.graph.setZoomEnabled(False)
-                self.graph.setPickerSelectionModeOn(mode)
-            except:
-                self.graph.enableZoom(True)
-                qt.QMessageBox.critical(self, "Cannot set picker mode %s" % mode,
-                                        "%s" % sys.exc_info()[1])
-                if DEBUG:
-                    raise
+            self.graph.setZoomModeEnabled(False)
+            self.graph.setDrawModeEnabled(True, shape="line",
+                                          label=mode)
         ddict = {}
         if mode is None:
             mode = "NONE"
@@ -464,27 +459,17 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def _addToolButton(self, icon, action, tip, toggle=None, state=None, position=None):
         tb      = qt.QToolButton(self.toolBar)            
-        if QTVERSION < '4.0.0':
-            tb.setIconSet(icon)
-            qt.QToolTip.add(tb,tip) 
-            if toggle is not None:
-                if toggle:
-                    tb.setToggleButton(1)
-                    if state is not None:
-                        if state:
-                            tb.setState(qt.QButton.On)
-        else:
-            if icon is not None:
-                tb.setIcon(icon)
-            tb.setToolTip(tip)
-            if toggle is not None:
-                if toggle:
-                    tb.setCheckable(1)
-                    if state is not None:
-                        if state:
-                            tb.setChecked(state)
-                    else:
-                        tb.setChecked(False)
+        if icon is not None:
+            tb.setIcon(icon)
+        tb.setToolTip(tip)
+        if toggle is not None:
+            if toggle:
+                tb.setCheckable(1)
+                if state is not None:
+                    if state:
+                        tb.setChecked(state)
+                else:
+                    tb.setChecked(False)
         if position is not None:
             self.toolBarLayout.insertWidget(position, tb)
         else:
@@ -533,37 +518,27 @@ class RGBCorrelatorGraph(qt.QWidget):
 
         outfile = qt.QFileDialog(self)
         outfile.setModal(1)
-        if QTVERSION < '4.0.0':
-            outfile.setCaption("Output File Selection")
-            filterlist = fileTypeList[0]
-            for f in fileTypeList:
-                filterlist += "\n%s" % f
-            outfile.setFilters(filterlist)
-            outfile.setMode(outfile.AnyFile)
-            outfile.setDir(self.saveDirectory)
-            ret = outfile.exec_loop()
+        outfile.setWindowTitle("Output File Selection")
+        if hasattr(qt, "QStringList"):
+            strlist = qt.QStringList()
         else:
-            outfile.setWindowTitle("Output File Selection")
-            if hasattr(qt, "QStringList"):
-                strlist = qt.QStringList()
-            else:
-                strlist = []
-            for f in fileTypeList:
-                strlist.append(f)
-            outfile.setFilters(strlist)
-            outfile.setFileMode(outfile.AnyFile)
-            outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
-            outfile.setDirectory(self.saveDirectory)
-            ret = outfile.exec_()
+            strlist = []
+        for f in fileTypeList:
+            strlist.append(f)
+        outfile.setFilters(strlist)
+        outfile.setFileMode(outfile.AnyFile)
+        outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
+        outfile.setDirectory(self.saveDirectory)
+        ret = outfile.exec_()
 
-        if not ret: return
+        if not ret:
+            return
         filterused = qt.safe_str(outfile.selectedFilter()).split()
         filetype = filterused[0]
         extension = filterused[1]
-        if QTVERSION < '4.0.0':
-            outstr = qt.safe_str(outfile.selectedFile())
-        else:
-            outstr = qt.safe_str(outfile.selectedFiles()[0])
+
+        outstr = qt.safe_str(outfile.selectedFiles()[0])
+
         try:            
             outputFile = os.path.basename(outstr)
         except:
@@ -597,10 +572,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         format_ = filename[-3:].upper()
         if original:
             #This is the whole image, not the zoomed one ...
-            if QTVERSION < '4.0.0':
-                pixmap = qt.QPixmap(self.graph.plotImage.image)
-            else:
-                pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+            pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
         else:
             pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
         if pixmap.save(filename, format_):
@@ -643,25 +615,11 @@ class RGBCorrelatorGraph(qt.QWidget):
 class MyQLabel(qt.QLabel):
     def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
         qt.QLabel.__init__(self,parent)
-        if qt.qVersion() <'4.0.0':
-            self.color = color
-            self.bold  = bold
-        else:
-            palette = self.palette()
-            role = self.foregroundRole()
-            palette.setColor(role,color)
-            self.setPalette(palette)
-            self.font().setBold(bold)
-
-
-    if qt.qVersion() < '4.0.0':
-        def drawContents(self, painter):
-            painter.font().setBold(self.bold)
-            pal =self.palette()
-            pal.setColor(qt.QColorGroup.Foreground,self.color)
-            self.setPalette(pal)
-            qt.QLabel.drawContents(self,painter)
-            painter.font().setBold(0)
+        palette = self.palette()
+        role = self.foregroundRole()
+        palette.setColor(role,color)
+        self.setPalette(palette)
+        self.font().setBold(bold)
 
 def test():
     app = qt.QApplication([])
@@ -672,11 +630,7 @@ def test():
 
     container = RGBCorrelatorGraph()
     container.show()
-    if QTVERSION < '4.0.0':
-        app.setMainWidget(container)
-        app.exec_loop()
-    else:
-        app.exec_()
+    app.exec_()
 
 if __name__ == "__main__":
     test()

@@ -976,12 +976,16 @@ class MaskImageWidget(qt.QWidget):
             print("_setRectSelectionMode")
         self.__eraseMode = False
         self.__brushMode = False
-        self.graphWidget.graph.setDrawModeEnabled(True, shape="rectangle")
+        self.graphWidget.graph.setDrawModeEnabled(True,
+                                                  shape="rectangle",
+                                                  label="mask")
 
     def _setPolygonSelectionMode(self):
         self.__eraseMode = False
         self.__brushMode = False
-        self.graphWidget.graph.setDrawModeEnabled(True, shape="polygon")
+        self.graphWidget.graph.setDrawModeEnabled(True,
+                                                  shape="polygon",
+                                                  label="mask")
         
     def _setBrushSelectionMode(self):
         if DEBUG:
@@ -1028,17 +1032,39 @@ class MaskImageWidget(qt.QWidget):
         self.__brushWidth = 20
 
     def _toggleSelectionMode(self):
-        if self.graphWidget.graph.isDrawModeEnabled():
-            self.setSelectionMode(False)
-        else:
-            self.setSelectionMode(True)
+        drawMode = self.graphWidget.graph.getDrawMode() 
+        if drawMode is None:
+            # we are not drawing anything            
+            if self.graphWidget.graph.isZoomModeEnabled():
+                # we have to pass to mask mode
+                self.setSelectionMode(True)
+            else:
+                # we set zoom mode and show the line icons
+                self.setSelectionMode(False)
+        elif drawMode['label'] is not None:
+            if drawMode['label'].startswith('mask'):
+                #we set the zoom mode and show the line icons
+                self.setSelectionMode(False)
+            else:
+                # we disable zoom and drawing and set mask mode
+                self.setSelectionMode(True)
+        elif drawMode['label'] in [None]:
+            # we are not drawing anything            
+            if self.graphWidget.graph.isZoomModeEnabled():
+                # we have to pass to mask mode
+                self.setSelectionMode(True)
+            else:
+                # we set zoom mode and show the line icons
+                self.setSelectionMode(False)
 
-    def setSelectionMode(self, mode = None):
+    def setSelectionMode(self, mode=None):
         #does it have sense to enable the selection without the image selection icons?
         #if not self.__imageIconsFlag:
         #    mode = False
         if mode:
-            self.graphWidget.graph.setDrawModeEnabled(True, 'rectangle')
+            self.graphWidget.graph.setDrawModeEnabled(True,
+                                                      'rectangle',
+                                                      label='mask')
             self.__brushMode  = False
             self.graphWidget.hideProfileSelectionIcons()
             self.graphWidget.selectionToolButton.setChecked(True)
@@ -1594,8 +1620,19 @@ class MaskImageWidget(qt.QWidget):
             # to identify it.
             # In the mean time, assume nobody else is triggering drawing
             # and therefore only rectangle is supported as selection
-            if ddict['type'] == "polygon":
+            label = ddict['parameters']['label']
+            shape = ddict['parameters']['shape']
+            if label is None:
+                #not this module business
+                return
+            elif not label.starswith('mask'):
+                return
+            elif shape == "polygon":
                 return self._handlePolygonMask(ddict)
+            else:
+                # rectangle
+                pass
+            
             j1, i1 = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
                                                   xScale=self._xScale,
                                                   yScale=self._yScale,
@@ -1846,12 +1883,14 @@ def test():
         else:
             container = MaskImageWidget(selection=True,
                                         aspect=True,
-                                        imageicons=True)
+                                        imageicons=True,                                        
+                                        profileselection=True)
             image = qt.QImage(sys.argv[1])
             #container.setQImage(image, image.width(),image.height())
             container.setQImage(image, 200, 200)
     else:
-        container = MaskImageWidget(aspect=True)
+        container = MaskImageWidget(aspect=True,
+                                    profileselection=True)
         data = numpy.arange(400 * 400).astype(numpy.int32)
         data.shape = 200, 800
         #data = numpy.eye(200)
