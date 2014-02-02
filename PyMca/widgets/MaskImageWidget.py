@@ -201,9 +201,13 @@ class MaskImageWidget(qt.QWidget):
         if self.__selectionFlag:
             if self.__imageIconsFlag:
                 self.setSelectionMode(False)
+                self._toggleSelectionMode()
+                self.graphWidget.graph.setDrawModeEnabled(True,
+                                                          shape="rectangle",
+                                                          label="mask")
             else:
                 self.setSelectionMode(True)
-            self._toggleSelectionMode()
+                self._toggleSelectionMode()
         if self.__useTab:
             self.mainLayout.addWidget(self.mainTab)
         else:
@@ -1625,7 +1629,7 @@ class MaskImageWidget(qt.QWidget):
             if label is None:
                 #not this module business
                 return
-            elif not label.starswith('mask'):
+            elif not label.startswith('mask'):
                 return
             elif shape == "polygon":
                 return self._handlePolygonMask(ddict)

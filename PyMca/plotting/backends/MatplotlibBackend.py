@@ -421,7 +421,7 @@ class MatplotlibGraph(FigureCanvas):
 
     def getDrawMode(self):
         if self.isDrawModeEnabled():
-            return self._drawingParameters()
+            return self._drawingParameters
         else:
             return None
 

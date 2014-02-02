@@ -210,7 +210,7 @@ class Plot(PlotBase.PlotBase):
         :param shape: Type of item to be drawn
         :type shape: string, default polygon
         """
-        self._plot.setDrawModeEnabled(flag=flag, shape=shape, label=None, **kw)
+        self._plot.setDrawModeEnabled(flag=flag, shape=shape, label=label, **kw)
 
     def getDrawMode(self):
         """
