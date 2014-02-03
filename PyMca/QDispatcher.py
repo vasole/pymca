@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -107,10 +107,11 @@ class QDispatcher(qt.QWidget):
 
     def _addSelectionSlot(self, sel_list, event=None):
         if DEBUG:
-            print("_addSelectionSlot")
+            print("QDispatcher._addSelectionSlot")
             print("sel_list = ",sel_list)
 
-        if event is None:event = "addSelection"
+        if event is None:
+            event = "addSelection"
         for sel in sel_list:
             #The dispatcher should be a singleton to work properly
             #implement a patch
@@ -120,6 +121,7 @@ class QDispatcher(qt.QWidget):
             #find the source
             sourcelist = sel['SourceName']
             for source in self.sourceList:
+                selectionList = []
                 if source.sourceName == sourcelist:
                     ddict = {}
                     ddict.update(sel)
@@ -169,20 +171,18 @@ class QDispatcher(qt.QWidget):
                                 #this may happen on deletion??
                                 return
                         ddict['dataobject'] = dataObject
-                        if QTVERSION < '4.0.0':
-                            self.emit(qt.PYSIGNAL(event), (ddict,))
-                        else:
-                            self.emit(qt.SIGNAL(event), ddict)
+                        selectionList.append(ddict)
                     else:
                         #this creates a weak reference to the source object
                         #the clients will be able to retrieve the data
                         #the problem is that 10 clients will requiere
                         #10 read outs
                         ddict["sourcereference"] = weakref.ref(source)
-                        if QTVERSION < '4.0.0':
-                            self.emit(qt.PYSIGNAL(event), (ddict,))
-                        else:
-                            self.emit(qt.SIGNAL(event), ddict)
+                        selectionList.append(ddict)
+                    if QTVERSION < '4.0.0':
+                        self.emit(qt.PYSIGNAL(event), (selectionList,))
+                    else:
+                        self.emit(qt.SIGNAL(event), selectionList)
 
     def _removeSelectionSlot(self, sel_list):
         if DEBUG:
