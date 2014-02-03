@@ -861,51 +861,51 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             filename = self.__getDefaultSettingsFile()
         d.write(filename)
 
-    def __configurePyMca(self, dict):
-        if 'ConfigDir' in dict:
-            self.configDir = dict['ConfigDir']
+    def __configurePyMca(self, ddict):
+        if 'ConfigDir' in ddict:
+            self.configDir = ddict['ConfigDir']
 
-        if 'Geometry' in dict:
-            r = qt.QRect(*dict['Geometry']['MainWindow'])
+        if 'Geometry' in ddict:
+            r = qt.QRect(*ddict['Geometry']['MainWindow'])
             self.setGeometry(r)
             key = 'Splitter'
-            if key in dict['Geometry'].keys():
-                self.splitter.setSizes(dict['Geometry'][key])
+            if key in ddict['Geometry'].keys():
+                self.splitter.setSizes(ddict['Geometry'][key])
             if backend is None:
                 key = 'McaWindow'
-                if key in dict['Geometry'].keys():
-                    r = qt.QRect(*dict['Geometry']['McaWindow'])
+                if key in ddict['Geometry'].keys():
+                    r = qt.QRect(*ddict['Geometry']['McaWindow'])
                     self.mcawindow.setGeometry(r)
                 key = 'McaGraph'
-                if key in dict['Geometry'].keys():
-                    r = qt.QRect(*dict['Geometry']['McaGraph'])
+                if key in ddict['Geometry'].keys():
+                    r = qt.QRect(*ddict['Geometry']['McaGraph'])
                     self.mcawindow.graph.setGeometry(r)
-            self.show()
+                self.show()
             qt.qApp.processEvents()
-            qt.qApp.postEvent(self, qt.QResizeEvent(qt.QSize(dict['Geometry']['MainWindow'][2]+1,
-                                                          dict['Geometry']['MainWindow'][3]+1),
-                                                 qt.QSize(dict['Geometry']['MainWindow'][2],
-                                                          dict['Geometry']['MainWindow'][3])))
+            qt.qApp.postEvent(self, qt.QResizeEvent(qt.QSize(ddict['Geometry']['MainWindow'][2]+1,
+                                                          ddict['Geometry']['MainWindow'][3]+1),
+                                                 qt.QSize(ddict['Geometry']['MainWindow'][2],
+                                                          ddict['Geometry']['MainWindow'][3])))
             self.mcawindow.showMaximized()
             
-        PyMcaDirs.nativeFileDialogs = dict.get('nativeFileDialogs', True)
+        PyMcaDirs.nativeFileDialogs = ddict.get('nativeFileDialogs', True)
 
-        if 'Sources' in dict:
-            if 'lastFileFilter' in dict['Sources']:
-                self.sourceWidget.sourceSelector.lastFileFilter = dict['Sources']['lastFileFilter']
+        if 'Sources' in ddict:
+            if 'lastFileFilter' in ddict['Sources']:
+                self.sourceWidget.sourceSelector.lastFileFilter = ddict['Sources']['lastFileFilter']
         for source in SOURCESLIST:
-            if source in dict:
-                if 'lastInputDir' in dict[source]:
-                    if dict[source] ['lastInputDir'] != "None":
-                        self.sourceWidget.sourceSelector.lastInputDir =  dict[source] ['lastInputDir']
+            if source in ddict:
+                if 'lastInputDir' in ddict[source]:
+                    if ddict[source] ['lastInputDir'] != "None":
+                        self.sourceWidget.sourceSelector.lastInputDir =  ddict[source] ['lastInputDir']
                         try:
-                            PyMcaDirs.inputDir = dict[source] ['lastInputDir']
+                            PyMcaDirs.inputDir = ddict[source] ['lastInputDir']
                         except ValueError:
                             pass
-                if 'SourceName' in dict[source]:
-                    if type(dict[source]['SourceName']) != type([]):
-                        dict[source]['SourceName'] = [dict[source]['SourceName'] * 1]
-                    for SourceName0 in dict[source]['SourceName']:
+                if 'SourceName' in ddict[source]:
+                    if type(ddict[source]['SourceName']) != type([]):
+                        ddict[source]['SourceName'] = [ddict[source]['SourceName'] * 1]
+                    for SourceName0 in ddict[source]['SourceName']:
                         if type(SourceName0) == type([]):
                             SourceName = SourceName0[0]
                         else:
@@ -938,11 +938,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                     msg.setDetailedText(traceback.format_exc())
                                     msg.exec_()
 
-                if 'WidgetConfiguration' in dict[source]:
+                if 'WidgetConfiguration' in ddict[source]:
                     selectorWidget = self.sourceWidget.selectorWidget[source]
                     if hasattr(selectorWidget,'setWidgetConfiguration'):
                         try:
-                            selectorWidget.setWidgetConfiguration(dict[source]['WidgetConfiguration'])
+                            selectorWidget.setWidgetConfiguration(ddict[source]['WidgetConfiguration'])
                         except:
                             msg = qt.QMessageBox(self)
                             msg.setIcon(qt.QMessageBox.Critical)
