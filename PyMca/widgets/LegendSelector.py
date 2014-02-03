@@ -47,7 +47,7 @@ def convertToPyObject(x):
     else:
         return x
 
-DEBUG = 1
+DEBUG = 0
 
 # Build all symbols
 # Curtesy of the pyqtgraph project
@@ -254,25 +254,12 @@ class LegendModel(qt.QAbstractListModel):
     selectedRole      = qt.Qt.UserRole + 6
     activeRole        = qt.Qt.UserRole + 7
     
-    def __init__(self, llist=[], parent=None):
+    def __init__(self, legendList=None, parent=None):
         qt.QAbstractListModel.__init__(self, parent)
+        if legendList is None:
+            legendList = []
         self.legendList = []
-        for (legend, icon) in llist:
-            checkState = LegendListItemWidget
-            showLine = True
-            showSymbol = True
-            curveType  = 0
-            active = False
-            selected = False
-            item = [legend,
-                    icon,
-                    qt.Qt.Checked,
-                    showLine,
-                    showSymbol,
-                    curveType,
-                    active,
-                    selected]
-            self.legendList.append(item)
+        self.insertLegendList(0,legendList)
 
     def __getitem__(self, idx):
         if idx >= len(self.legendList):
@@ -377,32 +364,28 @@ class LegendModel(qt.QAbstractListModel):
         self.dataChanged.emit(modelIndex, modelIndex)
         return True
 
-    def insertRows(self, row, count, modelIndex):
+    def insertLegendList(self, row, llist):
         '''        
-        :param row: After which row comes the insert 
+        :param row: Determines after which row the items are inserted
         :type row: int
-        :param count: How many items are inserted
-        :type count: int
-        :param modelIndex: Check for children
+        :param llist: Carries the new legend information 
+        :type count: list
         '''
-        print('insertRows')
-        length = len(self.legendList)
-        if row < 0 or row >= length:
-            self.endInsertingRows()
-            raise IndexError('Index out of range -- '
-                            +'idx: %d, len: %d'%(idx, length))
-        qt.QAbstractListModel.beginInsertingRows(self,
-                                                 modelIndex,
-                                                 row,
-                                                 row+count)
+        modelIndex = self.createIndex(row,0)
+        count = len(llist)
+        qt.QAbstractListModel.beginInsertRows(self,
+                                              modelIndex,
+                                              row,
+                                              row+count)
         head = self.legendList[0:row]
         tail = self.legendList[row:]
         new  = []
-        for child in modelIndex.children():
-            legend, icon = child
+        for (legend, icon) in llist:
             showLine = True
             showSymbol = True
             curveType  = 0
+            active = False
+            selected = False
             item = [legend,
                     icon,
                     qt.Qt.Checked,
@@ -414,11 +397,15 @@ class LegendModel(qt.QAbstractListModel):
         qt.QAbstractListModel.endInsertRows(self)
         return True
 
-    def removeRows(self, row, count, modelIndex):
-        print('removeRows')
+    def insertRows(self, row, count, modelIndex = qt.QModelIndex()):
+        raise NotImplementedError('Use LegendModel.insertLegendList instead')
+
+    def removeRows(self, row, count, modelIndex = qt.QModelIndex()):
         length = len(self.legendList)
+        if length == 0:
+            # Nothing to do..
+            return True
         if row < 0 or row >= length:
-            self.endInsertingRows()
             raise IndexError('Index out of range -- '
                             +'idx: %d, len: %d'%(idx, length))
         if count == 0:
@@ -621,7 +608,7 @@ class LegendListView(qt.QListView):
     __mouseClickedEvent  = 'mouseClicked'
     __legendClickedEvent = 'legendClicked'
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, model=None, contextMenu=None):
         qt.QListWidget.__init__(self, parent)
         self.__lastButton   = None
         self.__lastClickPos = None
@@ -644,6 +631,27 @@ class LegendListView(qt.QListView):
         # Control selection
         self.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
 
+        if model is None:
+            model = LegendModel()
+        self.setModel(model)
+        self.setSelectionModel(qt.QItemSelectionModel(model))
+        self.setContextMenu(contextMenu)
+
+    def setLegendList(self, legendList, row=None):
+        self.clear()
+        if row is None:
+            row = 0
+        model = self.model()
+        model.insertLegendList(row, legendList)
+        if DEBUG == 1:
+            print('LegendListView.setLegendList(legendList) finished')
+
+    def clear(self):
+        model = self.model()
+        model.removeRows(0,model.rowCount())
+        if DEBUG == 1:
+            print('LegendListView.clear() finished')
+
     '''
     def sizeHint(self):
         print('ListView.sizeHint called')
@@ -662,11 +670,14 @@ class LegendListView(qt.QListView):
         return qt.QSize(300,500)
     '''
 
-    def setContextMenu(self):#, actionList):
+    def setContextMenu(self, contextMenu=None):#, actionList):
         delegate = self.itemDelegate()
         if isinstance(delegate, LegendListItemWidget) and self.model():
-            delegate.contextMenu = LegendListContextMenu(self.model())
-
+            if contextMenu is None:
+                delegate.contextMenu = LegendListContextMenu(self.model())
+            else:
+                delegate.contextMenu = contextMenu
+            
     def __getitem__(self, idx):
         model = self.model()
         try:
@@ -809,7 +820,8 @@ class LegendListContextMenu(BaseContextMenu):
     def setActiveAction(self):
         idx = self.currentIdx()
         legend = idx.data(qt.Qt.DisplayRole)
-        print('setActiveAction -- active curve:',legend)
+        if DEBUG:
+            print('setActiveAction -- active curve:',legend)
 
 class Notifier(qt.QObject):
     def __init__(self):
@@ -822,10 +834,10 @@ class Notifier(qt.QObject):
 
 if __name__ == '__main__':
     notifier = Notifier()
-    legends = 1*['Legend0', 'Legend1', 'Long Legend 2', 'Foo Legend 3', 'Even Longer Legend 4', 'Short Leg 5']
-    colors  = 1*[qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red]
+    legends = ['Legend0', 'Legend1', 'Long Legend 2', 'Foo Legend 3', 'Even Longer Legend 4', 'Short Leg 5']
+    colors  = [qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red]
     #symbols = ['circle', 'triangle', 'utriangle', 'diamond', 'square', 'cross']
-    symbols = 1*['o', 't', '+', 'x', 's', 'd']
+    symbols = ['o', 't', '+', 'x', 's', 'd']
     app = qt.QApplication([])
     win = LegendListView()
     #win = LegendListContextMenu()
@@ -849,7 +861,7 @@ if __name__ == '__main__':
         #win.setItemWidget(item, legendWidget)
     #win = LegendListItemWidget('Some Legend 1')
     #print(llist)
-    model = LegendModel(llist=llist)
+    model = LegendModel(legendList=llist)
     win.setModel(model)
     win.setSelectionModel(qt.QItemSelectionModel(model))
     win.setContextMenu()
@@ -860,5 +872,8 @@ if __name__ == '__main__':
     #win.setLayout(layout)
     win.sigMouseClicked.connect(notifier.signalReceived)
     win.show()
+
+    win.clear()
+    win.setLegendList(llist)
     
     app.exec_()
