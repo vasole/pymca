@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -478,7 +478,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 self.mainTab.setCurrentWidget(self.cntTable)
             else:
                 pass
-            self._autoReplace(sel)
+            # Is this needed??? it does not seem so
+            #self._autoReplace(sel)
 
     def __headerSectionDoubleClicked(self, index):
         if index == 0:
@@ -665,9 +666,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel_list.append(sel)
 
         if QTVERSION < '4.0.0':
-            if len(sel_list): self.emit(qt.PYSIGNAL("addSelection"), (sel_list,))
+            if len(sel_list):
+                self.emit(qt.PYSIGNAL("addSelection"), (sel_list,))
         else:
-            if len(sel_list): self.emit(qt.SIGNAL("addSelection"), sel_list)
+            if len(sel_list):
+                self.emit(qt.SIGNAL("addSelection"), sel_list)
         
 
     def _removeClicked(self):
