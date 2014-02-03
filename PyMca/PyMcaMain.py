@@ -390,7 +390,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                      qt.SIGNAL("currentChanged(int)"),
                                      self.currentTabIndexChanged)
 
-
             if QTVERSION < '4.0.0':
                 self.connect(self.sourceWidget,
                              qt.PYSIGNAL("otherSignals"),
@@ -443,7 +442,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         #I could connect sourceWidget to myself and then
         #pass the selections to the active window!!
         #That will be made in a next iteration I guess
-        if dispatcher is None: dispatcher = self.sourceWidget
+        if dispatcher is None:
+            dispatcher = self.sourceWidget
         if QTVERSION < '4.0.0':
             self.connect(dispatcher, qt.PYSIGNAL("addSelection"),
                              viewer._addSelection)
@@ -522,9 +522,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 #make sure it is visible in case of being closed
                 self.mainTabWidget.show()
         if DEBUG:
-            return self._dispatcherAddSelectionSlot(ddict)
+            self._dispatcherAddSelectionSlot(ddict)
         try:
-            return self._dispatcherAddSelectionSlot(ddict)
+            self._dispatcherAddSelectionSlot(ddict)
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -536,10 +536,14 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 msg.setDetailedText(traceback.format_exc())
                 msg.exec_()
 
-    def _dispatcherAddSelectionSlot(self, ddict):
+    def _dispatcherAddSelectionSlot(self, dictOrList):
         if DEBUG:
-            print("self.dispatcherAddSelectionSlot(ddict), ddict = ",ddict)
-
+            print("self.dispatcherAddSelectionSlot(ddict), ddict = ", dictOrList)
+        if type(dictOrList) == type([]):
+            ddict = dictOrList[0]
+        else:
+            ddict = dictOrList
+            
         toadd = False
         if self._is2DSelection(ddict):
             if QTVERSION < '4.0.0':
@@ -610,7 +614,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         elif self._isStackSelection(ddict):
             legend = ddict['legend']
             widget = QStackWidget.QStackWidget()
-            widget.notifyCloseEventToWidget(self)            
+            widget.notifyCloseEventToWidget(self)
             widget.setStack(ddict['dataobject'])
             widget.setWindowTitle(legend)
             widget.show()
@@ -618,14 +622,14 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             if OBJECT3D:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
-                    self.mcawindow._addSelection(ddict)
-                    self.scanwindow._addSelection(ddict)
+                    self.mcawindow._addSelection(dictOrList)
+                    self.scanwindow._addSelection(dictOrList)
                 else:
                     self.mainTabWidget.setCurrentWidget(self.glWindow)
-                    self.glWindow._addSelection(ddict)            
-            else:            
-                self.mcawindow._addSelection(ddict)
-                self.scanwindow._addSelection(ddict)
+                    self.glWindow._addSelection(ddict)
+            else:
+                self.mcawindow._addSelection(dictOrList)
+                self.scanwindow._addSelection(dictOrList)
 
     def dispatcherRemoveSelectionSlot(self, ddict):
         try:
@@ -640,10 +644,13 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 msg.exec_()
 
 
-    def _dispatcherRemoveSelectionSlot(self, ddict):
+    def _dispatcherRemoveSelectionSlot(self, dictOrList):
         if DEBUG:
             print("self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict)
-
+        if type(dictOrList) == type([]):
+            ddict = dictOrList[0]
+        else:
+            ddict = dictOrList
         if self._is2DSelection(ddict):
             if QTVERSION < '4.0.0':
                 if DEBUG:
@@ -659,10 +666,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     self.imageWindowDict[legend]._removeSelection(ddict)
                     del self.imageWindowDict[legend]
         elif self._is3DSelection(ddict):
-            self.glWindow._removeSelection(ddict)             
+            self.glWindow._removeSelection(dictOrList)
         else:
-            self.mcawindow._removeSelection(ddict)
-            self.scanwindow._removeSelection(ddict)
+            self.mcawindow._removeSelection(dictOrList)
+            self.scanwindow._removeSelection(dictOrList)
 
     def dispatcherReplaceSelectionSlot(self, ddict):
         try:
@@ -676,9 +683,13 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             else:
                 msg.exec_()
 
-    def _dispatcherReplaceSelectionSlot(self, ddict):
+    def _dispatcherReplaceSelectionSlot(self, dictOrList):
         if DEBUG:
-            print("self.dispatcherReplaceSelectionSlot(ddict), ddict = ",ddict)
+            print("self.dispatcherReplaceSelectionSlot(ddict), ddict = ", dictOrList)
+        if type(dictOrList) == type([]):
+            ddict = dictOrList[0]
+        else:
+            ddict = dictOrList
         if self._is2DSelection(ddict):
             if QTVERSION < '4.0.0':
                 if DEBUG:
@@ -709,14 +720,18 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.imageWindowDict[legend].setPlotEnabled(True)
                 self.imageWindowDict[legend].setPlotEnabled(False)
         elif self._is3DSelection(ddict):
-            self.glWindow._replaceSelection(ddict)             
+            self.glWindow._replaceSelection(dictOrList)
         else:
-            self.mcawindow._replaceSelection(ddict)
-            self.scanwindow._replaceSelection(ddict)
+            self.mcawindow._replaceSelection(dictOrList)
+            self.scanwindow._replaceSelection(dictOrList)
 
-    def dispatcherOtherSignalsSlot(self, ddict):
+    def dispatcherOtherSignalsSlot(self, dictOrList):
         if DEBUG:
-            print("self.dispatcherOtherSignalsSlot(ddict), ddict = ",ddict)
+            print("self.dispatcherOtherSignalsSlot(ddict), ddict = ",dictOrList)
+        if type(dictOrList) == type([]):
+            ddict = dictOrList[0]
+        else:
+            ddict = dictOrList
         if not self.__useTabWidget:return
         if ddict['event'] == "SelectionTypeChanged":
             if QTVERSION < '4.0.0':
