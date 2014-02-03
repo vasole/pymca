@@ -32,6 +32,7 @@ clearCurves
 clearImages (*)
 clearMarkers
 getDefaultColormap (*)
+getDrawMode
 getGraphXLabel
 getGraphXLimits
 getGraphYLabel
@@ -43,6 +44,7 @@ insertMarker
 insertXMarker
 insertYMarker
 invertYAxis
+isDrawModeEnabled
 isXAxisAutoScale
 isYAxisAutoScale
 keepDataAspectRatio(*)
@@ -94,10 +96,13 @@ drawingFinished
     Still to be implemented.
     It looks as it should export xdata, ydata and type.
     line - two points in graph and pixel coordinates
+    hline - one point in graph and pixel coordinates
+    vline - one point in graph and pixel coordinates
     rectangle - four points in graph and pixel coordinates, x, y, width, height
     polygone - n points in graph and pixel coordinates
     ellipse - four points in graph and pixel coordinates?
     circle - four points in graph and pixel coordinates, center and radius
+    parameters - Parameters passed to setDrawMode when enabling it
 
 hover
     Emitted the mouse pass over an item with hover notification (markers)
@@ -254,7 +259,18 @@ class PlotBackend(object):
         print("PlotBackend getDefaultColormap called")
         return {'name': 'gray', 'normalization':'linear',
                 'autoscale':True, 'vmin':0.0, 'vmax':1.0,
-                'colors':256} 
+                'colors':256}
+
+    def getDrawMode(self):
+        """
+        Return a dictionnary (or None) with the parameters passed when setting
+        the draw mode.
+        :key shape: The shape being drawn
+        :key label: Associated text (or None)
+        and any other info passed to setDrawMode
+        """
+        print("PlotBackend getDrawMode not implemented")
+        return None
 
     def getGraphTitle(self):
         """
@@ -515,13 +531,15 @@ class PlotBackend(object):
         print("PlotBackend setDefaultColormap not implemented")
         return
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
+    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
         """
         Zoom and drawing are not compatible
         :param flag: Enable drawing mode disabling zoom and picking mode
         :type flag: boolean, default True
-        :param shape: Type of item to be drawn
-        :type shape: string, default polygon
+        :param shape: Type of item to be drawn (line, hline, vline, rectangle...)
+        :type shape: string (default polygon)
+        :param label: Associated text (for identifying the signals)
+        :type label: string, default None
         """
         if flag:
             self._drawModeEnabled = True

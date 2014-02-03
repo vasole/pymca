@@ -21,6 +21,7 @@ recursive-include PyMca/Object3D/scripts *.py
 include PyMca/Object3D/LICENSE.GPL
 include PyMca/Object3D/README.txt
 include PyMca/Object3D/scripts/ob_scene
+recursive-include PyMca/plotting *.py *.pyx *.pxd *.c *.h
 recursive-include PyMca/py_nnma *.py
 include PyMca/py_nnma/LICENSE
 include PyMca/py_nnma/README
@@ -30,6 +31,7 @@ recursive-include PyMca/sift *.py *.cl
 recursive-include PyMca/specfile *.py *.c *.h *.in
 recursive-include PyMca/specfit *.py *.c
 recursive-include PyMca/sps *.py *.c *.h *.in
+recursive-include PyMca/widgets *.py
 recursive-include PyMca/XRFMC *.py 
 recursive-include third-party *.c *.h *.txt 
 include PyMca/sps/LICENSE

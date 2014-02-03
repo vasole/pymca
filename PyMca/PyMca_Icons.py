@@ -167,6 +167,75 @@ togglepoints =[
 "                "
 ]
 
+square16 =[
+"16 16 2 1",
+"  c none",
+"X c blue",
+"                ",
+" XXXXXXXXXXXXXX ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" XXXXXXXXXXXXXX ",
+"                "
+]
+
+
+rectangle16 =[
+"16 16 2 1",
+"  c none",
+"X c blue",
+"                ",
+"                ", 
+"                ", 
+" XXXXXXXXXXXXXX ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" X            X ",
+" XXXXXXXXXXXXXX ",
+"                ", 
+"                ", 
+"                "
+]
+
+
+polygon16 =[
+"16 16 2 1",
+"  c none",
+"X c blue",
+"                ",
+"       XX       ",
+"      X  X      ",
+"     X    X     ",
+"    X      X    ",
+"   X        X   ",
+"  X         X   ",
+" X         X    ",
+"  X       X     ",
+"   X      X     ",
+"    X     X     ",
+"     X     X    ",
+"    X       X   ", 
+"   X         X  ",
+"   XXXXXXXXXXX  ",
+"                "
+]
+
+
 circle16 =[
 "16 16 2 1",
 "  c none",
@@ -3565,6 +3634,9 @@ IconDict= {
     "swapsign":swapsign,
     "ymintozero":ymintozero,
     "average16":average16,
+    "square":square16,
+    "polygon":polygon16,
+    "rectangle":rectangle16,
     "circle":circle16,
     "ellipse":ellipse16,
     "solidcircle":solid_circle16,

@@ -59,6 +59,10 @@ DEBUG = 0
 
 class ModestImage(AxesImage):
     """
+
+Customization of https://github.com/ChrisBeaumont/ModestImage to allow
+extent support.
+
 Computationally modest image class.
 
 ModestImage is an extension of the Matplotlib AxesImage class
@@ -263,7 +267,7 @@ class MatplotlibGraph(FigureCanvas):
 
         #drawingmode handling
         self.setDrawModeEnabled(False)
-        self.__drawModeList = ['line', 'rectangle', 'polygon']
+        self.__drawModeList = ['line', 'hline', 'vline', 'rectangle', 'polygon']
         self.__drawing = False
         self._drawingPatch = None
         self._drawModePatch = 'line'
@@ -386,7 +390,7 @@ class MatplotlibGraph(FigureCanvas):
         else:
             print("unhandled", event.artist)
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
+    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
         if flag:
             shape = shape.lower()
             if shape not in self.__drawModeList:
@@ -396,6 +400,9 @@ class MatplotlibGraph(FigureCanvas):
                 self._drawModeEnabled = True
                 self.setZoomModeEnabled(False)
                 self._drawModePatch = shape
+            self._drawingParameters = kw
+            self._drawingParameters['shape'] = shape
+            self._drawingParameters['label'] = label
         else:
             self._drawModeEnabled = False
 
@@ -411,6 +418,12 @@ class MatplotlibGraph(FigureCanvas):
 
     def isDrawModeEnabled(self):
         return self._drawModeEnabled
+
+    def getDrawMode(self):
+        if self.isDrawModeEnabled():
+            return self._drawingParameters
+        else:
+            return None
 
     def onMousePressed(self, event):
         if DEBUG:
@@ -756,6 +769,14 @@ class MatplotlibGraph(FigureCanvas):
             elif self._drawModePatch == 'line':
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
+            elif self._drawModePatch == 'hline':
+                print("TODO: Use hline with a particular label?")
+                self._mouseData[1,0] = self._x1
+                self._mouseData[1,1] = self._y1
+            elif self._drawModePatch == 'vline':
+                print("TODO: Use vline with a particular label?")
+                self._mouseData[1,0] = self._x1
+                self._mouseData[1,1] = self._y1
                 self._drawingPatch.set_xy(self._mouseData)
             elif self._drawModePatch == 'polygon':
                 self._mouseData[-1,0] = self._x1
@@ -818,7 +839,8 @@ class MatplotlibGraph(FigureCanvas):
             self._mouseData[-1,0] = self._x1
             self._mouseData[-1,1] = self._y1
             self._drawingPatch.set_xy(self._mouseData)
-            self._emitDrawingSignal("drawingFinished")
+            if self._drawModePatch not in ['polygon']:
+                self._emitDrawingSignal("drawingFinished")
 
         if self._x0 is None:
             if event.inaxes != self.ax:
@@ -875,12 +897,16 @@ class MatplotlibGraph(FigureCanvas):
         ddict = {}
         ddict['event'] = event
         ddict['type'] = '%s' % self._drawModePatch
-        ddict['xdata'] = numpy.array(self._drawingPatch.get_x())
-        ddict['ydata'] = numpy.array(self._drawingPatch.get_y())
+        #ddict['xdata'] = numpy.array(self._drawingPatch.get_x())
+        #ddict['ydata'] = numpy.array(self._drawingPatch.get_y())
+        #print(dir(self._drawingPatch))
         a = self._drawingPatch.get_xy()
         ddict['points'] = numpy.array(a)
-        pixels = self.ax.transData.transform(numpyvstack(a).T)
-        xPixel, yPixels = pixels.T
+        ddict['xdata'] = ddict['points'][:, 0]
+        ddict['ydata'] = ddict['points'][:, 1]
+        #print(numpyvstack(a))
+        #pixels = self.ax.transData.transform(numpyvstack(a).T)
+        #xPixel, yPixels = pixels.T
         if self._drawModePatch in ["rectangle", "circle"]:
             # we need the rectangle containing it
             ddict['x'] = ddict['points'][:, 0].min()
@@ -891,6 +917,10 @@ class MatplotlibGraph(FigureCanvas):
             #we need the rectangle but given the four corners
             pass
         if event == "drawingFinished":
+            ddict['parameters'] = {}
+            for key in self._drawingParameters.keys():
+                ddict['parameters'][key] = self._drawingParameters[key]
+            self.__drawingParameters = None
             self.__drawing = False
             self._drawingPatch.remove()
             self._drawingPatch = None
@@ -1034,6 +1064,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.setDrawModeEnabled = self.graph.setDrawModeEnabled
         self.isZoomModeEnabled = self.graph.isZoomModeEnabled
         self.isDrawModeEnabled = self.graph.isDrawModeEnabled
+        self.getDrawMode = self.graph.getDrawMode        
         self._oldActiveCurve = None
         self._oldActiveCurveLegend = None
 

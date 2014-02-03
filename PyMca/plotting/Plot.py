@@ -202,7 +202,7 @@ class Plot(PlotBase.PlotBase):
     def setZoomModeEnabled(self, flag=True):
         self._plot.setZoomModeEnabled(flag)
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon", **kw):
+    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
         """
         Zoom and drawing are not compatible
         :param flag: Enable drawing mode disabling zoom and picking mode
@@ -210,7 +210,17 @@ class Plot(PlotBase.PlotBase):
         :param shape: Type of item to be drawn
         :type shape: string, default polygon
         """
-        self._plot.setDrawModeEnabled(flag=flag, shape=shape, **kw)
+        self._plot.setDrawModeEnabled(flag=flag, shape=shape, label=label, **kw)
+
+    def getDrawMode(self):
+        """
+        Return a dictionnary (or None) with the parameters passed when setting
+        the draw mode.
+        :key shape: The shape being drawn
+        :key label: Associated text (or None)
+        and any other info
+        """
+        return self._plot.getDrawMode()
 
     def addCurve(self, x, y, legend=None, info=None, replace=False,
                  replot=True, **kw):
