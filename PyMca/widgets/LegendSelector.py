@@ -675,6 +675,8 @@ class LegendListView(qt.QListView):
         if isinstance(delegate, LegendListItemWidget) and self.model():
             if contextMenu is None:
                 delegate.contextMenu = LegendListContextMenu(self.model())
+                delegate.contextMenu.sigContextMenu.connect(\
+                    self._contextMenuSlot)
             else:
                 delegate.contextMenu = contextMenu
             
@@ -686,6 +688,9 @@ class LegendListView(qt.QListView):
             item = None
         return item
 
+    def _contextMenuSlot(self, ddict):
+        self.sigMouseClicked.emit(ddict)
+        
     def mousePressEvent(self, event):
         self.__lastButton = event.button()
         self.__lastPosition = event.pos()
@@ -780,6 +785,7 @@ class BaseContextMenu(qt.QMenu):
         return self.__currentIdx
 
 class LegendListContextMenu(BaseContextMenu):
+    sigContextMenu = qt.pyqtSignal(object)    
 
     def __init__(self, model):
         BaseContextMenu.__init__(self, model)
@@ -791,39 +797,56 @@ class LegendListContextMenu(BaseContextMenu):
             self.addAction(name, action)
 
     def removeCurveAction(self):
-        idx = self.currentIdx()
-        self.model.removeRow(idx.row())
         if DEBUG == 1:
             print('LegendListContextMenu.removeCurveAction called')
+        modelIndex = self.currentIdx()
+        legend = qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)))
+        ddict = {
+            'legend'   : legend,
+            'label'    : legend,
+            'selected' : convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)),
+            'type'     : qt.safe_str(convertToPyObject(modelIndex.data())),
+            'event': "removeCurve"
+        }
+        self.sigContextMenu.emit(ddict)
+        self.model.removeRow(modelIndex.row())
 
     def toggleLinesAction(self):
         idx = self.currentIdx()
         if idx.data(LegendModel.showLineRole):
-            model.setData(idx, False, LegendModel.showLineRole)
+            self.model.setData(idx, False, LegendModel.showLineRole)
             if DEBUG == 1:
                 print('togglePointsAction -- lines turned off')
         else:
-            model.setData(idx, True, LegendModel.showLineRole)
+            self.model.setData(idx, True, LegendModel.showLineRole)
             if DEBUG == 1:
                 print('togglePointsAction -- lines turned on')
             
     def togglePointsAction(self):
         idx = self.currentIdx()
         if idx.data(LegendModel.showSymbolRole):
-            model.setData(idx, False, LegendModel.showSymbolRole)
+            self.model.setData(idx, False, LegendModel.showSymbolRole)
             if DEBUG == 1:
                 print('togglePointsAction -- Symbols turned off')
         else:
-            model.setData(idx, True, LegendModel.showSymbolRole)
+            self.model.setData(idx, True, LegendModel.showSymbolRole)
             if DEBUG == 1:
                 print('togglePointsAction -- Symbols turned on')
 
     def setActiveAction(self):
-        idx = self.currentIdx()
-        legend = idx.data(qt.Qt.DisplayRole)
         if DEBUG:
             print('setActiveAction -- active curve:',legend)
-
+        modelIndex = self.currentIdx()
+        legend = qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)))
+        ddict = {
+            'legend'   : legend,
+            'label'    : legend,
+            'selected' : convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)),
+            'type'     : qt.safe_str(convertToPyObject(modelIndex.data())),
+            'event': "setActiveCurve",
+        }
+        self.sigContextMenu.emit(ddict)
+        
 class Notifier(qt.QObject):
     def __init__(self):
         qt.QObject.__init__(self)

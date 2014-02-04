@@ -127,7 +127,18 @@ class ScanWindow(PlotWindow.PlotWindow):
                                    self._customFitSignal)
 
     def _legendSignal(self, ddict):
-        print(ddict)
+        print("ddict = ", ddict)
+        if ddict['event'] == "legendClicked":
+            if ddict['button'] == "left":
+                ddict['label'] = ddict['legend']
+                self.graphCallback(ddict)
+        elif ddict['event'] == "removeCurve":
+            ddict['label'] = ddict['legend']
+            self.removeCurve(ddict['legend'], replot=True)
+        elif ddict['event'] == "setActiveCurve":
+            ddict['event'] = 'legendClicked'
+            ddict['label'] = ddict['legend']
+            self.graphCallback(ddict)
 
     def _buildPositionInfo(self):
         widget = self.centralWidget()
@@ -477,10 +488,10 @@ class ScanWindow(PlotWindow.PlotWindow):
             if self.scanWindowInfoWidget is not None:
                 self.scanWindowInfoWidget.updateFromDataObject\
                                                             (dataObject)
-        elif ddict['event'] == "RemoveCurveEvent":
+        elif ddict['event'] == "removeCurveEvent":
             legend = ddict['legend']
             self.removeCurves([legend])
-        elif ddict['event'] == "RenameCurveEvent":
+        elif ddict['event'] == "renameCurveEvent":
             legend = ddict['legend']
             newlegend = ddict['newlegend']
             if legend in self.dataObjectsDict:
