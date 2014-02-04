@@ -82,6 +82,9 @@ colorlist  = [colordict['black'],
 class Plot(PlotBase.PlotBase):
     PLUGINS_DIR = None
 
+    colorList = colorlist
+    colorDict = colordict
+
     def __init__(self, parent=None, backend=None, callback=None):
         self._parent = parent
         if backend is None:

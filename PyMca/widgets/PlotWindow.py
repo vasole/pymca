@@ -35,6 +35,7 @@ import os
 import traceback
 import numpy
 from numpy import argsort, nonzero, take
+from . import LegendSelector
 from PyMca.plotting import PlotWidget
 try:
     from PyMca.plotting.backends import MatplotlibBackend
@@ -85,6 +86,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self._toggleCounter = 0
         self._keepDataAspectRatioFlag = False
         self.gridLevel = 0
+        self.legendWidget = None
         self.setCallback(self.graphCallback)
         
     def setWindowType(self, wtype=None):
@@ -399,20 +401,23 @@ class PlotWindow(PlotWidget.PlotWidget):
                 self.roiWidget = None
             if self.roiWidget is None:
                 self.roiWidget = McaROIWidget.McaROIWidget()
-                w = self.centralWidget().width()
-                h = self.centralWidget().height()
                 self.roiDockWidget = qt.QDockWidget(self)
                 self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
                 self.roiDockWidget.setWidget(self.roiWidget)
+                w = self.centralWidget().width()
+                h = self.centralWidget().height()
                 if w > (1.25 * h):
                     self.addDockWidget(qt.Qt.LeftDockWidgetArea,
                                        self.roiDockWidget)
                 else:
                     self.addDockWidget(qt.Qt.BottomDockWidgetArea,
                                        self.roiDockWidget)
+                if hasattr(self, "legendDockWidget"):
+                    self.tabifyDockWidget(self.legendDockWidget,
+                                          self.roiDockWidget)
                 self.roiWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
                 self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
-            elif self.roiDockWidget.isHidden():            
+            if self.roiDockWidget.isHidden():
                 self.roiDockWidget.show()
             else:
                 self.roiDockWidget.hide()
@@ -583,6 +588,7 @@ class PlotWindow(PlotWidget.PlotWidget):
     def setActiveCurve(self, legend):
         PlotWidget.PlotWidget.setActiveCurve(self, legend)
         self.calculateROIs()
+        self.updateLegends()
         
     def _handleROIMarkerEvent(self, ddict):
         if ddict['event'] == 'markerMoved':
@@ -775,6 +781,50 @@ class PlotWindow(PlotWidget.PlotWidget):
                                                roidict=roiDict)
         else:
             return roiList, roiDict
+
+    def _buildLegendWidget(self):
+        if self.legendWidget is None:
+            self.legendWidget = LegendSelector.LegendListView()
+            self.legendDockWidget = qt.QDockWidget(self)
+            self.legendDockWidget.layout().setContentsMargins(0, 0, 0, 0)
+            self.legendDockWidget.setWidget(self.legendWidget)
+            self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+                                       self.legendDockWidget)
+            if hasattr(self, "roiDockWidget"):
+                self.tabifyDockWidget(self.roiDockWidget,
+                                      self.legendDockWidget)
+            self.legendWidget.sigMouseClicked.connect(self._legendSignal)
+            self.legendDockWidget.setWindowTitle(self.windowTitle()+(" Legend"))
+        
+    def _legendSignal(self, ddict):
+        print(ddict)
+
+    def showLegends(self, flag=True):
+        if self.legendWidget is None:
+            self._buildLegendWidget()
+        if flag:
+            self.legendDockWidget.show()
+        else:
+            self.legendDockWidget.hide()
+
+    def updateLegends(self):
+        if self.legendWidget is None:
+            return
+        legendList = [] * len(self._curveList)
+        for i in range(len(self._curveList)):
+            legend = self._curveList[i]
+            color = self._curveDict[legend][3].get('plot_color',
+                                                         '#000000')
+            color = qt.QColor(color)
+            linewidth = self._curveDict[legend][3].get('plot_line_width',
+                                                             2)
+            symbol = self._curveDict[legend][3].get('plot_symbol',
+                                                          'o')
+            ddict={'color':color,
+                   'linewidth':linewidth,
+                   'symbol':symbol}
+            legendList.append((legend, ddict))
+        self.legendWidget.setLegendList(legendList)
 
 if __name__ == "__main__":
     x = numpy.arange(100.)

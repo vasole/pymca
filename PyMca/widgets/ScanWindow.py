@@ -339,6 +339,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         elif replot:
             #self.replot()
             self.resetZoom()
+        self.updateLegends()
             
             
     def _removeSelection(self, selectionlist):
@@ -1179,6 +1180,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         if legend in self.dataObjectsDict:
             # the info is changing
             super(ScanWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
+            if self.legendWidget is None:
+                self.showLegends()
         else:
             # create the data object
             self.newCurve(x, y, legend=legend, info=info, **kw)

@@ -118,6 +118,7 @@ class McaWindow(ScanWindow.ScanWindow):
         if DEBUG:
             print("printPreview id = %d" % id(self.printPreview))
 
+        self._buildControlWidget()
         #self._toggleROI()
         self._toggleCounter = 2
         self._togglePointsSignal()
@@ -133,35 +134,34 @@ class McaWindow(ScanWindow.ScanWindow):
             #self.fitButtonMenu.addAction(QString("Customized Fit") ,
             #                       self._customFitSignal)
 
+    def _buildControlWidget(self):
+        self.controlWidget = McaControlGUI.McaControlGUI()
+        self.roiWidget  = self.controlWidget
+        self.roiDockWidget = None
+        self.controlWidget.sigMcaControlGUISignal.connect(self.__anasignal)
+        self.controlWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
 
     def setMiddleROIMarkerFlag(self, flag=True):
         print("setMiddleROIMarkerFlag to be implemented")
         
     def _toggleROI(self):
-        if not hasattr(self, "controlWidget"):
-            self.controlWidget = None
-        if self.controlWidget is None:
-            self.controlWidget = McaControlGUI.McaControlGUI()
-            self.roiWidget  = self.controlWidget
-            w = self.centralWidget().width()
-            h = self.centralWidget().height()
+        if self.roiDockWidget is None:
             self.roiDockWidget = qt.QDockWidget(self)
             self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
             self.roiDockWidget.setWidget(self.controlWidget)
+            w = self.centralWidget().width()
+            h = self.centralWidget().height()
             if w > 1.25*h:
                 self.addDockWidget(qt.Qt.RightDockWidgetArea,
                                    self.roiDockWidget)
             else:
                 self.addDockWidget(qt.Qt.BottomDockWidgetArea,
-                                   self.roiDockWidget)
-            self.controlWidget.sigMcaControlGUISignal.connect(self.__anasignal)
-            self.controlWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
+                                   self.roiDockWidget)        
             self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
-        elif self.roiDockWidget.isHidden():
+        if self.roiDockWidget.isHidden():
             self.roiDockWidget.show()
         else:
             self.roiDockWidget.hide()
-
 
     def _roiSignal(self, ddict):
         return super(McaWindow, self)._roiSignal(ddict)

@@ -47,7 +47,7 @@ def convertToPyObject(x):
     else:
         return x
 
-DEBUG = 1
+DEBUG = 0
 
 # Build all symbols
 # Curtesy of the pyqtgraph project
@@ -641,6 +641,7 @@ class LegendListView(qt.QListView):
         self.setContextMenu(contextMenu)
 
     def setLegendList(self, legendList, row=None):
+        self.clear()
         if row is None:
             row = 0
         model = self.model()
@@ -822,7 +823,8 @@ class LegendListContextMenu(BaseContextMenu):
     def setActiveAction(self):
         idx = self.currentIdx()
         legend = idx.data(qt.Qt.DisplayRole)
-        print('setActiveAction -- active curve:',legend)
+        if DEBUG:
+            print('setActiveAction -- active curve:',legend)
 
 class RIXSContextMenu(BaseContextMenu):
 
@@ -854,10 +856,10 @@ class Notifier(qt.QObject):
 
 if __name__ == '__main__':
     notifier = Notifier()
-    legends = 100*['Legend0', 'Legend1', 'Long Legend 2', 'Foo Legend 3', 'Even Longer Legend 4', 'Short Leg 5']
-    colors  = 100*[qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red]
+    legends = ['Legend0', 'Legend1', 'Long Legend 2', 'Foo Legend 3', 'Even Longer Legend 4', 'Short Leg 5']
+    colors  = [qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red]
     #symbols = ['circle', 'triangle', 'utriangle', 'diamond', 'square', 'cross']
-    symbols = 100*['o', 't', '+', 'x', 's', 'd']
+    symbols = ['o', 't', '+', 'x', 's', 'd']
     app = qt.QApplication([])
     win = LegendListView()
     #win = LegendListContextMenu()
