@@ -719,7 +719,8 @@ class LegendListView(qt.QListView):
                                      qt.Qt.RightButton]:
             return
         if not modelIndex.isValid():
-            print('_handleMouseClick -- Invalid QModelIndex')
+            if DEBUG:
+                print('_handleMouseClick -- Invalid QModelIndex')
             return
         model = self.model()
         idx   = modelIndex.row()
@@ -738,29 +739,29 @@ class LegendListView(qt.QListView):
         # item is tupel: (legend, icon, checkState, curveType)
         item  = model[idx]
         ddict = {
-            'legend'   : convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)),
+            'legend'   : qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole))),
             'icon'     : {
-                'linewidth' : convertToPyObject(modelIndex.data(LegendModel.iconLineWidthRole)),
-                'symbol'    : convertToPyObject(modelIndex.data(LegendModel.iconSymbolRole)),
+                'linewidth' : qt.safe_str(convertToPyObject(modelIndex.data(LegendModel.iconLineWidthRole))),
+                'symbol'    : qt.safe_str(convertToPyObject(modelIndex.data(LegendModel.iconSymbolRole))),
                 'color'     : convertToPyObject(modelIndex.data(LegendModel.legendTypeRole))
             },
             'selected' : convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)),
-            'type'     : convertToPyObject(modelIndex.data())
+            'type'     : qt.safe_str(convertToPyObject(modelIndex.data()))
         }
         if self.__lastButton == qt.Qt.RightButton:
             if DEBUG == 1:
                 print('Right clicked')
-            ddict['button'] = qt.Qt.RightButton
+            ddict['button'] = "right"
             ddict['event']  = self.__mouseClickedEvent
         elif cbClicked:
             if DEBUG == 1:
                 print('CheckBox clicked')
-            ddict['button'] = qt.Qt.LeftButton
+            ddict['button'] = "left"
             ddict['event']  = self.__mouseClickedEvent
         else:
             if DEBUG == 1:
                 print('Legend clicked')
-            ddict['button'] = qt.Qt.LeftButton
+            ddict['button'] = "left"
             ddict['event']  = self.__legendClickedEvent
         if DEBUG == 1:
             print('  idx: %d\n  ddict: %s'%(idx, str(ddict)))
