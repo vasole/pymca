@@ -88,6 +88,10 @@ class ScanWindow(PlotWindow.PlotWindow):
         #self.setPluginDirectoryList(pluginDir)
         self.getPlugins(method="getPlugin1DInstance",
                         directoryList=pluginDir)
+
+        # position
+        self._buildPositionInfo()
+
         """
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContenstsMargin(0)
@@ -122,16 +126,14 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.fitButtonMenu.addAction(QString("Customized Fit") ,
                                    self._customFitSignal)
 
-    def _buildGraph(self):
-        self.graph = QtBlissGraph.QtBlissGraph(self, uselegendmenu=True,
-                                               legendrename=True,
-                                               usecrosscursor=True)
-        self.graph.setPanningMode(True)
-        self.mainLayout.addWidget(self.graph)
+    def _legendSignal(self, ddict):
+        print(ddict)
 
-        self.graphBottom = qt.QWidget(self)
+    def _buildPositionInfo(self):
+        widget = self.centralWidget()
+        self.graphBottom = qt.QWidget(widget)
         self.graphBottomLayout = qt.QHBoxLayout(self.graphBottom)
-        self.graphBottomLayout.setMargin(0)
+        self.graphBottomLayout.setContentsMargins(0, 0, 0, 0)
         self.graphBottomLayout.setSpacing(0)
         
         label=qt.QLabel(self.graphBottom)
@@ -144,7 +146,6 @@ class ScanWindow(PlotWindow.PlotWindow):
         self._xPos.setFixedWidth(self._xPos.fontMetrics().width('##############'))
         self.graphBottomLayout.addWidget(self._xPos)
 
-
         label=qt.QLabel(self.graphBottom)
         label.setText('<b>Y:</b>')
         self.graphBottomLayout.addWidget(label)
@@ -155,8 +156,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         self._yPos.setFixedWidth(self._yPos.fontMetrics().width('##############'))
         self.graphBottomLayout.addWidget(self._yPos)
         self.graphBottomLayout.addWidget(qt.HorizontalSpacer(self.graphBottom))
-        self.mainLayout.addWidget(self.graphBottom)
-
+        widget.layout().addWidget(self.graphBottom)
+        
     def setDispatcher(self, w):
         self.connect(w, qt.SIGNAL("addSelection"),
                          self._addSelection)
@@ -177,7 +178,13 @@ class ScanWindow(PlotWindow.PlotWindow):
             activeCurve = self.getActiveCurve(just_legend=True)
         else:
             activeCurve = None
-        for sel in sellist:
+        nSelection = len(sellist)
+        for selectionIndex in range(nSelection):
+            sel = sellist[selectionIndex]
+            if selectionIndex == (nSelection - 1):
+                actualReplot = True
+            else:
+                actualReplot = False
             source = sel['SourceName']
             key    = sel['Key']
             legend = sel['legend'] #expected form sourcename + scan key
@@ -247,7 +254,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                 ylegend = dataObject.info['LabelNames'][ilabel]
                     newLegend = legend + " " + ylegend
                     self.dataObjectsDict[newLegend] = dataObject
-                    self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info, replot=False)
+                    self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info,
+                                  replot=actualReplot)
                     if self.scanWindowInfoWidget is not None:
                         activeLegend = self.getActiveCurve(just_legend=True)
                         if activeLegend is not None:
@@ -327,7 +335,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                         
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
-                                    symbol=symbol,maptoy2=maptoy2, replot=False)
+                                    symbol=symbol,maptoy2=maptoy2, replot=actualReplot)
         self.dataObjectsList = self._curveList
         if activeCurve is None:
             if len(self._curveList) > 0:
@@ -372,14 +380,15 @@ class ScanWindow(PlotWindow.PlotWindow):
         if len(removelist):
             self.removeCurves(removelist)
 
-    def removeCurves(self, removelist, replot=True):
-        for legend in removelist:
-            self.removeCurve(legend, replot=False)
+    def removeCurves(self, removeList, replot=True):
+        for legend in removeList:
+            if legend == removeList[-1]:
+                self.removeCurve(legend, replot=replot)
+            else:
+                self.removeCurve(legend, replot=False)
             if legend in self.dataObjectsDict.keys():
                 del self.dataObjectsDict[legend]
         self.dataObjectsList = self._curveList
-        if replot:
-            self.replot()
 
     def _replaceSelection(self, selectionlist):
         if DEBUG:
@@ -423,23 +432,20 @@ class ScanWindow(PlotWindow.PlotWindow):
         if ddict['event'] in ['markerMoved', 'markerSelected']:
             self._handleMarkerEvent(ddict)
         elif ddict['event'] in ["mouseMoved", "MouseAt"]:
-            if 1:
-                print("NOT YET HANDLED")
-            else:
-                if ddict['xcurve'] is not None:
-                    if self.__toggleCounter == 0:
-                        self._xPos.setText('%.7g' % ddict['x'])
-                        self._yPos.setText('%.7g' % ddict['y'])
-                    elif ddict['distance'] < 20:
-                        #print ddict['point'], ddict['distance'] 
-                        self._xPos.setText('%.7g' % ddict['xcurve'])
-                        self._yPos.setText('%.7g' % ddict['ycurve'])
-                    else:
-                        self._xPos.setText('----')
-                        self._yPos.setText('----')
-                else:
+            if 0: #ddict['xcurve'] is not None:
+                if self.__toggleCounter == 0:
                     self._xPos.setText('%.7g' % ddict['x'])
                     self._yPos.setText('%.7g' % ddict['y'])
+                elif ddict['distance'] < 20:
+                    #print ddict['point'], ddict['distance'] 
+                    self._xPos.setText('%.7g' % ddict['xcurve'])
+                    self._yPos.setText('%.7g' % ddict['ycurve'])
+                else:
+                    self._xPos.setText('----')
+                    self._yPos.setText('----')
+            else:
+                self._xPos.setText('%.7g' % ddict['x'])
+                self._yPos.setText('%.7g' % ddict['y'])
         elif ddict['event'] in ["curveClicked", "legendClicked"]:
             legend = ddict["label"]
             if legend is None:
