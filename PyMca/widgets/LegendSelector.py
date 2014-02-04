@@ -616,8 +616,8 @@ class LegendListView(qt.QListView):
         # Set default delegate
         self.setItemDelegate(LegendListItemWidget())
         # Set default editors
-        self.setSizePolicy(qt.QSizePolicy.MinimumExpanding,
-                           qt.QSizePolicy.MinimumExpanding)
+        #self.setSizePolicy(qt.QSizePolicy.MinimumExpanding,
+        #                   qt.QSizePolicy.MinimumExpanding)
         # Set edit triggers by hand using self.edit(QModelIndex)
         # in mousePressEvent (better to control than signals)
         self.setEditTriggers(
