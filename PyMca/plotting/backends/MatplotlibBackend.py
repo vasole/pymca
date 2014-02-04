@@ -53,6 +53,7 @@ from matplotlib.lines import Line2D
 from matplotlib.text import Text
 from matplotlib.image import AxesImage, NonUniformImage
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
+from matplotlib.container import BarContainer
 import time
 
 DEBUG = 0
@@ -1097,11 +1098,26 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         style = info.get('plot_line_style', '-')
         linewidth = 1
         axesLabel = info.get('plot_yaxis', 'left')
+        barPlot = info.get('plot_barplot', False)
+        edgeColor = info.get('plot_barplot_edgecolor', 'red')
         if axesLabel == "left":
             axes = self.ax
         else:
             axes = self.ax2
-        if self._logY:
+        if barPlot:
+            # axes.bar(..) returns a container for a rectangle patches
+            style = None # Linestyles like '-' are not recognized
+            width = x[1]-x[0] # TODO: Need better estimate for width
+            curveList = axes.bar( x, y, label=legend,
+                                          linestyle=style,
+                                          color=color,
+                                          linewidth=linewidth,
+                                          picker=3,
+                                          align='center',
+                                          width=width,
+                                          edgecolor=edgeColor,
+                                          **kw)
+        elif self._logY:
             curveList = axes.semilogy( x, y, label=legend,
                                           linestyle=style,
                                           color=color,
@@ -1115,21 +1131,41 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       linewidth=linewidth,
                                       picker=3,
                                       **kw)
-        curveList[-1].set_marker(symbol)
-        curveList[-1]._plot_info = {'color':color,
-                                      'linewidth':linewidth,
-                                      'brush':brush,
-                                      'style':style,
-                                      'symbol':symbol,
-                                      'label':legend,
-                                      'axes':axesLabel}
-        if self._oldActiveCurve in self.ax.lines:
-            if self._oldActiveCurve.get_label() == legend:
+        if isinstance(curveList, BarContainer):
+            # Loop through container
+            for artist in curveList:
+                if hasattr(artist, 'set_marker'):
+                    artist.set_marker(symbol)
+                artist._plot_info = {'color':color,
+                                              'linewidth':linewidth,
+                                              'brush':brush,
+                                              'style':style,
+                                              'symbol':symbol,
+                                              'label':legend,
+                                              'axes':axesLabel}
+                if self._oldActiveCurve in self.ax.lines:
+                    if self._oldActiveCurve.get_label() == legend:
+                        artist.set_color('k')
+                elif self._oldActiveCurveLegend == legend:
+                    artist.set_color('k')
+                artist.set_axes(axes)
+                artist.set_zorder(2)
+        else:
+            curveList[-1].set_marker(symbol)
+            curveList[-1]._plot_info = {'color':color,
+                                          'linewidth':linewidth,
+                                          'brush':brush,
+                                          'style':style,
+                                          'symbol':symbol,
+                                          'label':legend,
+                                          'axes':axesLabel}
+            if self._oldActiveCurve in self.ax.lines:
+                if self._oldActiveCurve.get_label() == legend:
+                    curveList[-1].set_color('k')
+            elif self._oldActiveCurveLegend == legend:
                 curveList[-1].set_color('k')
-        elif self._oldActiveCurveLegend == legend:
-            curveList[-1].set_color('k')
-        curveList[-1].set_axes(axes)
-        curveList[-1].set_zorder(2)
+            curveList[-1].set_axes(axes)
+            curveList[-1].set_zorder(2)
         if replot:
             self.replot()
         return curveList[-1]
