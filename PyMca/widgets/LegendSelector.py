@@ -400,6 +400,9 @@ class LegendModel(qt.QAbstractListModel):
     def insertRows(self, row, count, modelIndex = qt.QModelIndex()):
         raise NotImplementedError('Use LegendModel.insertLegendList instead')
 
+    def removeRow(self, row):
+        return self.removeRows(row, 1)
+
     def removeRows(self, row, count, modelIndex = qt.QModelIndex()):
         length = len(self.legendList)
         if length == 0:
@@ -784,11 +787,11 @@ class LegendListContextMenu(BaseContextMenu):
         actionList = [('Set Active', self.setActiveAction),
                       ('Toggle points', self.togglePointsAction),
                       ('Toggle lines', self.toggleLinesAction),
-                      ('Remove curve', self.removeCurveAction)]
+                      ('Remove curve', self.removeItemAction)]
         for name, action in actionList:
             self.addAction(name, action)
 
-    def removeCurveAction(self):
+    def removeItemAction(self):
         idx = self.currentIdx()
         self.model.removeRow(idx.row())
         if DEBUG == 1:
@@ -821,6 +824,25 @@ class LegendListContextMenu(BaseContextMenu):
         legend = idx.data(qt.Qt.DisplayRole)
         print('setActiveAction -- active curve:',legend)
 
+class RIXSContextMenu(BaseContextMenu):
+
+    def __init__(self, model):
+        BaseContextMenu.__init__(self, model)
+        actionList = [('Show histogram', self.showHistogramAction),
+                      ('Toggle points', self.removeItemAction)]
+        for name, action in actionList:
+            self.addAction(name, action)
+
+    def removeItemAction(self):
+        idx = self.currentIdx()
+        self.model.removeRow(idx.row())
+        if DEBUG == 1:
+            print('LegendListContextMenu.removeCurveAction called')
+
+    def showHistogramAction(self):
+        # TODO
+        print('LegendListContextMenu.showHistogramAction called')
+
 class Notifier(qt.QObject):
     def __init__(self):
         qt.QObject.__init__(self)
@@ -832,10 +854,10 @@ class Notifier(qt.QObject):
 
 if __name__ == '__main__':
     notifier = Notifier()
-    legends = 1000*['Legend0', 'Legend1', 'Long Legend 2', 'Foo Legend 3', 'Even Longer Legend 4', 'Short Leg 5']
-    colors  = 1000*[qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red]
+    legends = 100*['Legend0', 'Legend1', 'Long Legend 2', 'Foo Legend 3', 'Even Longer Legend 4', 'Short Leg 5']
+    colors  = 100*[qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red]
     #symbols = ['circle', 'triangle', 'utriangle', 'diamond', 'square', 'cross']
-    symbols = 1000*['o', 't', '+', 'x', 's', 'd']
+    symbols = 100*['o', 't', '+', 'x', 's', 'd']
     app = qt.QApplication([])
     win = LegendListView()
     #win = LegendListContextMenu()
