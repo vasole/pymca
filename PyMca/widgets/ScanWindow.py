@@ -139,6 +139,11 @@ class ScanWindow(PlotWindow.PlotWindow):
             ddict['event'] = 'legendClicked'
             ddict['label'] = ddict['legend']
             self.graphCallback(ddict)
+        elif ddict['event'] == "checkBoxClicked":
+            if ddict['selected']:
+                self.hideCurve(ddict['legend'], False)
+            else:
+                self.hideCurve(ddict['legend'], True)
 
     def _buildPositionInfo(self):
         widget = self.centralWidget()
