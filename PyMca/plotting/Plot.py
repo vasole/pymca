@@ -294,8 +294,11 @@ class Plot(PlotBase.PlotBase):
         # deal with the symbol
         symbol = info.get("plot_symbol", symbol)
         symbol = kw.get("symbol", symbol)
-        if self._plotPoints:
+        if self._plotPoints and (symbol is None):
             symbol = 'o'
+        elif symbol == "":
+            #symbol = None
+            pass
         info["plot_symbol"] = symbol
         color = info.get("plot_color", color)
         color = kw.get("color", color)
@@ -303,10 +306,10 @@ class Plot(PlotBase.PlotBase):
         line_style = info.get("plot_line_style", None)
         line_style = kw.get("line_style", line_style)
 
-        if not self._plotLines:
-            line_style = ' '
-        elif line_style == ' ':
+        if self._plotLines and (line_style is None):
             line_style = '-'
+        elif line_style is None:
+            line_style = ' '
 
         if (color is None) and (line_style is None):
             color, line_style = self._getColorAndStyle()
@@ -332,6 +335,8 @@ class Plot(PlotBase.PlotBase):
         self._curveDict[key] = [x, y, key, info]
         if len(self._curveList) == 1:
             self.setActiveCurve(key)
+        if self.isCurveHidden(key):
+            self._plot.removeCurve(key, replot=False)
         if replot:
             self.resetZoom()
             #self.replot()

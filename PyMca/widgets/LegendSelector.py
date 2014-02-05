@@ -107,8 +107,9 @@ class LegendIcon(qt.QWidget):
     # Modify Symbol
     def setSymbol(self, symbol):
         symbol = qt.safe_str(symbol)
-        if symbol not in Symbols:
-            raise ValueError("Unknown symbol: <%s>" % symbol)
+        if symbol not in [None, "None", ""]:
+            if symbol not in Symbols:
+                raise ValueError("Unknown symbol: <%s>" % symbol)
         self.symbol = symbol
         # self.update() after set...?
         # Does not seem necessary
@@ -813,26 +814,54 @@ class LegendListContextMenu(BaseContextMenu):
         self.model.removeRow(modelIndex.row())
 
     def toggleLinesAction(self):
-        idx = self.currentIdx()
-        if idx.data(LegendModel.showLineRole):
-            self.model.setData(idx, False, LegendModel.showLineRole)
+        modelIndex = self.currentIdx()
+        legend = qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)))
+        ddict = {
+            'legend'   : legend,
+            'label'    : legend,
+            'selected' : convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)),
+            'type'     : qt.safe_str(convertToPyObject(modelIndex.data())),
+        }
+        flag = convertToPyObject(modelIndex.data(LegendModel.showLineRole))
+        if flag:
             if DEBUG == 1:
                 print('togglePointsAction -- lines turned off')
+            ddict['event'] = "toggleLine"
+            ddict['line'] = False
+            self.sigContextMenu.emit(ddict)
+            self.model.setData(modelIndex, False, LegendModel.showLineRole)
         else:
-            self.model.setData(idx, True, LegendModel.showLineRole)
             if DEBUG == 1:
                 print('togglePointsAction -- lines turned on')
+            ddict['event'] = "toggleLine"
+            ddict['line'] = True
+            self.sigContextMenu.emit(ddict)
+            self.model.setData(modelIndex, True, LegendModel.showLineRole)
             
     def togglePointsAction(self):
-        idx = self.currentIdx()
-        if idx.data(LegendModel.showSymbolRole):
-            self.model.setData(idx, False, LegendModel.showSymbolRole)
+        modelIndex = self.currentIdx()
+        legend = qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)))
+        ddict = {
+            'legend'   : legend,
+            'label'    : legend,
+            'selected' : convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)),
+            'type'     : qt.safe_str(convertToPyObject(modelIndex.data())),
+        }
+        flag = convertToPyObject(modelIndex.data(LegendModel.showSymbolRole))
+        if flag:
             if DEBUG == 1:
                 print('togglePointsAction -- Symbols turned off')
+            ddict['event'] = "togglePoints"
+            ddict['points'] = False
+            self.sigContextMenu.emit(ddict)
+            self.model.setData(modelIndex, False, LegendModel.showSymbolRole)
         else:
-            self.model.setData(idx, True, LegendModel.showSymbolRole)
             if DEBUG == 1:
                 print('togglePointsAction -- Symbols turned on')
+            ddict['event'] = "togglePoints"
+            ddict['points'] = True
+            self.sigContextMenu.emit(ddict)
+            self.model.setData(modelIndex, True, LegendModel.showSymbolRole)
 
     def setActiveAction(self):
         if DEBUG:

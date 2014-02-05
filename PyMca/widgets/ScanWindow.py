@@ -127,7 +127,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                    self._customFitSignal)
 
     def _legendSignal(self, ddict):
-        print("ddict = ", ddict)
+        if DEBUG:
+            print("Legend signal ddict = ", ddict)
         if ddict['event'] == "legendClicked":
             if ddict['button'] == "left":
                 ddict['label'] = ddict['legend']
@@ -144,6 +145,22 @@ class ScanWindow(PlotWindow.PlotWindow):
                 self.hideCurve(ddict['legend'], False)
             else:
                 self.hideCurve(ddict['legend'], True)
+        elif ddict['event'] == "togglePoints":
+            legend = ddict['legend']
+            x, y, legend, info = self._curveDict[legend][0:4]
+            if ddict['points']:
+                self.addCurve(x, y, legend=legend, symbol='o')
+            else:
+                self.addCurve(x, y, legend, info, symbol='')
+        elif ddict['event'] == "toggleLine":
+            legend = ddict['legend']
+            x, y, legend, info = self._curveDict[legend][0:4]
+            if ddict['line']:
+                self.addCurve(x, y, legend=legend, info=info, line_style="-")
+            else:
+                self.addCurve(x, y, legend, info=info, line_style="")
+        elif DEBUG:
+            print("unhandled event", ddict['event'])
 
     def _buildPositionInfo(self):
         widget = self.centralWidget()
@@ -1194,7 +1211,9 @@ class ScanWindow(PlotWindow.PlotWindow):
             else:
                 oldInfo = {}
             color = info.get("plot_color", oldInfo.get("plot_color", None))
+            color = kw.get('color', color)
             symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
+            symbol = kw.get('symbol', symbol)
             line_style =  info.get("plot_line_style",oldInfo.get("plot_line_style", None))
             info['plot_color'] = color
             info['plot_symbol'] = symbol
