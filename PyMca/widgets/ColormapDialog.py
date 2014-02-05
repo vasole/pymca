@@ -269,11 +269,12 @@ class ColormapDialog(qt.QDialog):
         bins, counts = self.histogramData
         self.c.addCurve(bins, counts,
                         "Histogram",
-                        color='red',
+                        color='pink', # TODO: Change fill color
                         symbol='s',
-                        info={'plot_yaxis': 'right',
-                              'plot_barplot': True,
-                              'plot_barplot_edgecolor': 'red'})
+                        style='_', # Line style
+                        fill=True,
+                        info={'plot_yaxis': 'right'})
+                        # TODO: Do not use info!
 
     def _update(self):
         if DEBUG:
