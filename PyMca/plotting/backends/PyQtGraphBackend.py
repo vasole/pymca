@@ -402,10 +402,14 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             pen = QtGui.QPen(QtCore.Qt.SolidLine)
             pen.setColor(QtGui.QColor(color))
             #pen.setWidth(linewidth)
+        if symbol in [None, '']:
+            actualSymbol = None
+        else:
+            actualSymbol = symbol
         if _USE_ORIGINAL:
             item = self.plot(x, y, title=legend,
                              pen=pen,
-                             symbol=symbol,
+                             symbol=actualSymbol,
                              #symbolPen=color,
                              shadowPen=None,
                              symbolBrush=color,
@@ -414,7 +418,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             item = PlotDataItem()
             item.setData(x, y, title=legend,
                          pen=pen,
-                         symbol=symbol,
+                         symbol=actualSymbol,
                          #symbolPen=color,
                          shadowPen=None,
                          symbolBrush=color,

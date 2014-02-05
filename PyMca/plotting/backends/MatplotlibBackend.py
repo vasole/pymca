@@ -157,16 +157,17 @@ resolution is matched to the eventual rendering."""
         y1 = min(self._full_res.shape[0], ylim[1] + 5)
         x0 = max(0, xlim[0] - 5)
         x1 = min(self._full_res.shape[1], xlim[1] + 5)
-        y0, y1, x0, x1 = map(int, [y0, y1, x0, x1])
+        y0, y1, x0, x1 = [int(a) for a in [y0, y1, x0, x1]]
 
         sy = int(max(1, min((y1 - y0) / 5., np.ceil(dy / ext[1]))))
         sx = int(max(1, min((x1 - x0) / 5., np.ceil(dx / ext[0]))))
 
         # have we already calculated what we need?
-        if sx >= self._sx and sy >= self._sy and \
-            x0 >= self._bounds[0] and x1 <= self._bounds[1] and \
-            y0 >= self._bounds[2] and y1 <= self._bounds[3]:
-            return
+        if (self._sx is not None) and (self._sy is not None): 
+            if sx >= self._sx and sy >= self._sy and \
+                x0 >= self._bounds[0] and x1 <= self._bounds[1] and \
+                y0 >= self._bounds[2] and y1 <= self._bounds[3]:
+                return
 
         self._A = self._full_res[y0:y1:sy, x0:x1:sx]
         self._A = cbook.safe_masked_invalid(self._A)
@@ -963,7 +964,6 @@ class MatplotlibGraph(FigureCanvas):
                 if line2d._plot_info.get("axes", "left") != axesLabel:
                     continue
             label = line2d.get_label()
-            print(label)
             if label.startswith("__MARKER__"):
                 #it is a marker
                 continue
