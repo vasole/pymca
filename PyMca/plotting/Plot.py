@@ -285,6 +285,11 @@ class Plot(PlotBase.PlotBase):
         #print("They could come in **kw")
         #print("The actual plotting stuff should only take care of handling")
         #print("logarithmic filtering if needed")
+        # deal with the fill
+        fill = info.get("plot_fill", False)
+        fill = kw.get("fill", fill)
+        info["plot_fill"] = fill
+
         # deal with the symbol
         symbol = info.get("plot_symbol", symbol)
         symbol = kw.get("symbol", symbol)

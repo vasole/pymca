@@ -1097,6 +1097,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         style = info.get('plot_line_style', '-')
         linewidth = 1
         axesLabel = info.get('plot_yaxis', 'left')
+        fill = info.get('plot_fill', False)
         if axesLabel == "left":
             axes = self.ax
         else:
@@ -1115,6 +1116,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       linewidth=linewidth,
                                       picker=3,
                                       **kw)
+        # nice effects:
+        #curveList[-1].set_drawstyle('steps-mid')
+        if fill:
+            axes.fill_between(x, 1.0e-8, y)
+        #curveList[-1].set_fillstyle('bottom')
         curveList[-1].set_marker(symbol)
         curveList[-1]._plot_info = {'color':color,
                                       'linewidth':linewidth,
@@ -1122,7 +1128,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       'style':style,
                                       'symbol':symbol,
                                       'label':legend,
-                                      'axes':axesLabel}
+                                      'axes':axesLabel,
+                                      'fill':fill}
         if self._oldActiveCurve in self.ax.lines:
             if self._oldActiveCurve.get_label() == legend:
                 curveList[-1].set_color('k')
