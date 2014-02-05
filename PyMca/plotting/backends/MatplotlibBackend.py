@@ -1659,7 +1659,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 # extend = (xmin, xmax, ymax, ymin)
                 # instead of (xmin, xmax, ymin, ymax)
                 extent = (xmin, xmax, ymin, ymax)
-                if (shape[0] * shape[1]) > 5.0e5:
+                if (sys.version < '3.0') and ((shape[0] * shape[1]) > 5.0e5):
                     imageClass = ModestImage
                 else:
                     imageClass = AxesImage
@@ -1688,7 +1688,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 else:
                     norm = Normalize(vmin, vmax)
                 # try as data
-                if (shape[0] * shape[1]) > 5.0e5:
+                if 'sys.version < 3.0' and ((shape[0] * shape[1]) > 5.0e5):
                     imageClass = ModestImage
                 else:
                     imageClass = AxesImage
