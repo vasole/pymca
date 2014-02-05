@@ -963,7 +963,6 @@ class MatplotlibGraph(FigureCanvas):
                 if line2d._plot_info.get("axes", "left") != axesLabel:
                     continue
             label = line2d.get_label()
-            print(label)
             if label.startswith("__MARKER__"):
                 #it is a marker
                 continue
