@@ -307,7 +307,7 @@ class LegendModel(qt.QAbstractListModel):
             brush = qt.QBrush(qt.Qt.blue)
             return brush
         elif role == qt.Qt.CheckStateRole:
-            return item[2] == qt.Qt.Checked
+            return item[2] == True
         elif role == qt.Qt.ToolTipRole or role == qt.Qt.StatusTipRole:
             return ''
         elif role == self.iconColorRole:
@@ -384,11 +384,11 @@ class LegendModel(qt.QAbstractListModel):
             showLine = True
             showSymbol = True
             curveType  = 0
-            active = False
-            selected = False
+            active = icon.get('active', False)
+            selected = icon.get('selected', True)
             item = [legend,
                     icon,
-                    qt.Qt.Checked,
+                    selected,
                     showLine,
                     showSymbol,
                     curveType]
@@ -579,9 +579,9 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
                 # Edit checkbox
                 currentState = convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole))
                 if currentState:
-                    newState = qt.Qt.Unchecked
+                    newState = False
                 else:
-                    newState = qt.Qt.Checked
+                    newState = True
                 idx = modelIndex.row()
                 self.cbDict[idx].setCheckState(newState)
                 model.setData(modelIndex, newState, qt.Qt.CheckStateRole)
@@ -604,8 +604,9 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
 
 class LegendListView(qt.QListView):
 
-    sigMouseClicked = qt.pyqtSignal(object)
+    sigLegendSignal = qt.pyqtSignal(object)
     __mouseClickedEvent  = 'mouseClicked'
+    __checkBoxClickedEvent = 'checkBoxClicked'
     __legendClickedEvent = 'legendClicked'
     
     def __init__(self, parent=None, model=None, contextMenu=None):
@@ -689,7 +690,7 @@ class LegendListView(qt.QListView):
         return item
 
     def _contextMenuSlot(self, ddict):
-        self.sigMouseClicked.emit(ddict)
+        self.sigLegendSignal.emit(ddict)
         
     def mousePressEvent(self, event):
         self.__lastButton = event.button()
@@ -716,7 +717,7 @@ class LegendListView(qt.QListView):
         and mouse click on CheckBox by setting the
         currentCheckState attribute in LegendListItem.
 
-        Emits signal sigMouseClicked(ddict)
+        Emits signal sigLegendSignal(ddict)
         '''
         if DEBUG == 1:
             print('self._handleMouseClick called')
@@ -762,7 +763,7 @@ class LegendListView(qt.QListView):
             if DEBUG == 1:
                 print('CheckBox clicked')
             ddict['button'] = "left"
-            ddict['event']  = self.__mouseClickedEvent
+            ddict['event']  = self.__checkBoxClickedEvent
         else:
             if DEBUG == 1:
                 print('Legend clicked')
@@ -770,7 +771,7 @@ class LegendListView(qt.QListView):
             ddict['event']  = self.__legendClickedEvent
         if DEBUG == 1:
             print('  idx: %d\n  ddict: %s'%(idx, str(ddict)))
-        self.sigMouseClicked.emit(ddict)
+        self.sigLegendSignal.emit(ddict)
 
 class BaseContextMenu(qt.QMenu):
     def __init__(self, model):

@@ -108,6 +108,7 @@ class Plot(PlotBase.PlotBase):
         self._curveList = []
         self._curveDict = {}
         self._activeCurve = None
+        self._hiddenCurves = []
 
         #image handling
         self._imageList = []
@@ -522,6 +523,8 @@ class Plot(PlotBase.PlotBase):
         keys = list(self._curveDict.keys())
         for key in self._curveList:
             if key in keys:
+                if self.isCurveHidden(legend):
+                    continue        
                 if just_legend:
                     output.append(key)
                 else:
@@ -997,6 +1000,21 @@ class Plot(PlotBase.PlotBase):
         """
         return self._plot.getSupportedColormaps()
 
+    def hideCurve(self, legend, flag=True, replot=True):
+        if flag:
+            self._plot.removeCurve(legend, replot=replot)
+            if legend not in self._hiddenCurves:
+                self._hiddenCurves.append(legend)
+        else:
+            while legend in self._hiddenCurves:
+                idx = self._hiddenCurves.index(legend)
+                del self._hiddenCurves[idx]
+            if legend in self._curveDict:
+                x, y, legend, info = self._curveDict[legend][0:4]
+                self.addCurve(x, y, legend, info, replot=replot)
+
+    def isCurveHidden(self, legend):
+        return legend in self._hiddenCurves
 
 def main():
     import numpy

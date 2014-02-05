@@ -793,7 +793,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             if hasattr(self, "roiDockWidget"):
                 self.tabifyDockWidget(self.roiDockWidget,
                                       self.legendDockWidget)
-            self.legendWidget.sigMouseClicked.connect(self._legendSignal)
+            self.legendWidget.sigLegendSignal.connect(self._legendSignal)
             self.legendDockWidget.setWindowTitle(self.windowTitle()+(" Legend"))
         
     def _legendSignal(self, ddict):
@@ -820,9 +820,15 @@ class PlotWindow(PlotWidget.PlotWidget):
                                                              2)
             symbol = self._curveDict[legend][3].get('plot_symbol',
                                                           'o')
+
+            if self.isCurveHidden(legend):
+                selected = False
+            else:
+                selected = True
             ddict={'color':color,
                    'linewidth':linewidth,
-                   'symbol':symbol}
+                   'symbol':symbol,
+                   'selected':selected}
             legendList.append((legend, ddict))
         self.legendWidget.setLegendList(legendList)
 
