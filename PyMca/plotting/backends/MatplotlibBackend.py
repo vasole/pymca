@@ -53,7 +53,6 @@ from matplotlib.lines import Line2D
 from matplotlib.text import Text
 from matplotlib.image import AxesImage, NonUniformImage
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
-from matplotlib.container import BarContainer
 import time
 
 DEBUG = 0
@@ -1103,20 +1102,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             axes = self.ax
         else:
             axes = self.ax2
-        if barPlot:
-            # axes.bar(..) returns a container for a rectangle patches
-            style = None # Linestyles like '-' are not recognized
-            width = x[1]-x[0] # TODO: Need better estimate for width
-            curveList = axes.bar( x, y, label=legend,
-                                          linestyle=style,
-                                          color=color,
-                                          linewidth=linewidth,
-                                          picker=3,
-                                          align='center',
-                                          width=width,
-                                          edgecolor=edgeColor,
-                                          **kw)
-        elif self._logY:
+        if self._logY:
             curveList = axes.semilogy( x, y, label=legend,
                                           linestyle=style,
                                           color=color,
@@ -1147,8 +1133,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if self._oldActiveCurve in self.ax.lines:
             if self._oldActiveCurve.get_label() == legend:
                 curveList[-1].set_color('k')
-            curveList[-1].set_axes(axes)
-            curveList[-1].set_zorder(2)
+        elif self._oldActiveCurveLegend == legend:
+            curveList[-1].set_color('k')
+        curveList[-1].set_axes(axes)
+        curveList[-1].set_zorder(2)
         if replot:
             self.replot()
         return curveList[-1]
