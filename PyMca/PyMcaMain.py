@@ -82,7 +82,7 @@ if backend is not None:
     if backend.lower() == "matplotlib":
         from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
     elif backend.lower() == "pyqtgraph":
-        from PyMca.plotting.backends.PyQtGrapgBackend import PyQtGraphBackend as backend
+        from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
     else:
         backend = None
 

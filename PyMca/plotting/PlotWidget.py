@@ -48,9 +48,14 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         if parent is not None:
             # behave as a widget
             self.setWindowFlags(QtCore.Qt.Widget)
+        self.containerWidget = QtGui.QWidget()
+        self.containerWidget.mainLayout = QtGui.QVBoxLayout(self.containerWidget)
+        self.containerWidget.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.containerWidget.mainLayout.setSpacing(0)
         widget = self.getWidgetHandle()
         if widget is not None:
-            self.setCentralWidget(widget)
+            self.containerWidget.mainLayout.addWidget(widget)
+            self.setCentralWidget(self.containerWidget)
         else:
             print("WARNING: No backend. Using default.")
         if legends:
