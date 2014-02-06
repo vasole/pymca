@@ -930,7 +930,6 @@ class MatplotlibGraph(FigureCanvas):
             self._drawingPatch.remove()
             self._drawingPatch = None
             self.draw()
-        print("EMITTED DICT = ", ddict)
         self._callback(ddict)
 
     def setLimits(self, xmin, xmax, ymin, ymax):
@@ -1148,14 +1147,20 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
 
     def addItem(self, x, y, legend, info=None, replace=False, replot=True, **kw):
-        print("DOING THE JOB")
+        if replace:
+            self.clearItems()
+        else:
+            # make sure we do not cummulate images with same name
+            self.removeItem(legend, replot=False)
         shape = kw.get('shape', "polygon")
         if shape not in ['line', 'hline', 'vline', 'rectangle', 'polygon']:
             raise NotImplemented("Unsupported item shape %s" % shape)
+        label = kw.get('label', legend)
         color = kw.get('color', 'black')
         fill = kw.get('fill', True)
         xView = numpy.array(x, copy=False)
         yView = numpy.array(y, copy=False)
+        label = "__ITEM__" + label
         if shape in ["line"]:
             return legend
         elif shape in ['rectangle']:
@@ -1176,7 +1181,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             yView.shape = 1, -1
             item = Polygon(numpyvstack((xView, yView)).T,
                             closed=True,
-                            fill=False)
+                            fill=False,
+                            label=label)
             if fill:
                 #item.set_hatch('+')            
                 item.set_hatch('/')
@@ -1243,6 +1249,45 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     #it is a marker
                     line2d.remove()
                     del line2d
+
+    def clearItems(self):
+        """
+        Clear items, not markers, not curves
+        """
+        for axes in [self.ax, self.ax2]:
+            n = list(range(len(axes.patches)))
+            n.reverse()
+            for i in n:
+                item = axes.patches[i]
+                label = item.get_label()
+                if label.startswith("__ITEM__"):
+                    item.remove()
+                    del item
+
+    def removeItem(self, handle, replot=True):
+        if hasattr(handle, "remove"):
+            for axes in [self.ax, self.ax2]:
+                if handle in axes.patches:
+                    handle.remove()
+                    del handle
+        else:
+            # we have received a legend!
+            # we have received a legend!
+            legend = handle
+            handle = None
+            for axes in [self.ax, self.ax2]:
+                if handle is not None:
+                    break
+                for item in axes.patches:
+                    label = item.get_label()
+                    if label == ("__ITEM__"+legend):
+                        handle = item
+                        break
+            if handle is not None:
+                handle.remove()
+                del handle
+        if replot:
+            self.replot()
 
     def getGraphXLimits(self):
         """
