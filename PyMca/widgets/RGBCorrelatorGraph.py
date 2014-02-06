@@ -452,9 +452,9 @@ class RGBCorrelatorGraph(qt.QWidget):
             for key in ddict.keys():
                 print(key, ddict[key])
 
-        if ddict['event'] != 'drawingFinished':
+        if ddict['event'] not in ['drawingProgress', 'drawingFinished']:
             return
-        label = ddict['parameters']['label'] 
+        label = ddict['parameters']['label']
         if  label not in ['HORIZONTAL', 'VERTICAL', 'LINE']:
             return
         ddict['mode'] = label
