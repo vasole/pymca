@@ -27,6 +27,7 @@ PlotBackend Functions (Functions marked by (*) only needed for handling images)
 
 addCurve
 addImage (*)
+addItem (*)
 clear
 clearCurves
 clearImages (*)
@@ -208,6 +209,16 @@ class PlotBackend(object):
         """
         print("PlotBackend addImage not implemented")
         return legend
+
+    def addItem(self, xList, yList, legend=None, info=None,
+                                 replace=False, replot=True,
+                                shape="polygon", fill=True, **kw):
+        """
+        :param shape: Type of item to be drawn
+        :type shape: string, default polygon
+        """
+        print("PlotBackend addItem not implemented")
+        return legend        
 
     def clear(self):
         """
@@ -456,6 +467,10 @@ class PlotBackend(object):
         :type replot: boolean default True        
         """
         print("PlotBackend removeImage not implemented")
+        return
+
+    def removeItem(self, legend, replot=True):
+        print("PlotBackend removeItem not implemented")
         return
 
     def removeMarker(self, label, replot=True):

@@ -768,8 +768,12 @@ class MatplotlibGraph(FigureCanvas):
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
             elif self._drawModePatch == 'line':
+                print("LINE MODE")
+                self._mouseData[0,0] = self._x0
+                self._mouseData[0,1] = self._y0
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
+                self._drawingPatch.set_xy(self._mouseData)
             elif self._drawModePatch == 'hline':
                 print("TODO: Use hline with a particular label?")
                 self._mouseData[1,0] = self._x1
@@ -873,7 +877,7 @@ class MatplotlibGraph(FigureCanvas):
                     ddict['button'] = "left"
                 if (button == self.__lastMouseClick[0]) and\
                    ((currentTime - self.__lastMouseClick[1]) < 0.6):
-                    ddict['event'] = "mouseDoubleCliked"
+                    ddict['event'] = "mouseDoubleClicked"
                 else:
                     ddict['event'] = "mouseClicked"
                 self.__lastMouseClick = [button, time.time()]
@@ -926,6 +930,7 @@ class MatplotlibGraph(FigureCanvas):
             self._drawingPatch.remove()
             self._drawingPatch = None
             self.draw()
+        print("EMITTED DICT = ", ddict)
         self._callback(ddict)
 
     def setLimits(self, xmin, xmax, ymin, ymax):
@@ -1140,6 +1145,43 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if replot:
             self.replot()
         return curveList[-1]
+
+
+    def addItem(self, x, y, legend, info=None, replace=False, replot=True, **kw):
+        print("DOING THE JOB")
+        shape = kw.get('shape', "polygon")
+        if shape not in ['line', 'hline', 'vline', 'rectangle', 'polygon']:
+            raise NotImplemented("Unsupported item shape %s" % shape)
+        color = kw.get('color', 'black')
+        fill = kw.get('fill', True)
+        xView = numpy.array(x, copy=False)
+        yView = numpy.array(y, copy=False)
+        if shape in ["line"]:
+            return legend
+        elif shape in ['rectangle']:
+            xMin = xView.min()
+            xMax = xView.max()
+            yMin = yView.min()
+            yMax = yView.max()
+            w = xMax - xMin
+            h = yMax - yMin
+            item = Rectangle(xy=(xMin,yMin),
+                             width=w,
+                             height=h,
+                             fill=False)
+            if fill:
+                item.set_hatch('.')
+        elif shape in ['polygon']:
+            xView.shape = 1, -1
+            yView.shape = 1, -1
+            item = Polygon(numpyvstack((xView, yView)).T,
+                            closed=True,
+                            fill=False)
+            if fill:
+                #item.set_hatch('+')            
+                item.set_hatch('/')
+        self.ax.add_patch(item)
+        return item
 
     def clear(self):
         """
