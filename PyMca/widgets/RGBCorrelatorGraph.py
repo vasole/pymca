@@ -62,9 +62,8 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.graph.setXAxisAutoScale(True)
         if profileselection:
             if len(self._pickerSelectionButtons):
-                self.connect(self.graph,
-                         qt.SIGNAL('PolygonSignal'),
-                         self._graphPolygonSignalReceived)
+                self.graph.sigPlotSignal.connect(\
+                    self._graphPolygonSignalReceived)
                 self.connect(self._pickerSelectionWidthValue,
                              qt.SIGNAL('valueChanged(int)'),
                              self.setPickerSelectionWith)
@@ -396,10 +395,10 @@ class RGBCorrelatorGraph(qt.QWidget):
                 elif button == self.lineProfileButton:
                     mode = "LINE"        
         ddict = {}
-        ddict['event'] = "PolygonWidthChanged"
+        ddict['event'] = "profileWidthChanged"
         ddict['pixelwidth'] = self._pickerSelectionWidthValue.value()
         ddict['mode'] = mode
-        self.emit(qt.SIGNAL('PolygonSignal'), ddict)
+        self.emit(qt.SIGNAL('profileSignal'), ddict)
 
     def hideProfileSelectionIcons(self):
         if not len(self._pickerSelectionButtons):
@@ -413,9 +412,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.graph.setDrawModeEnabled(False)
 
     def showProfileSelectionIcons(self):
-        print("SHOWING PROFILE HERE")
         if not len(self._pickerSelectionButtons):
-            print("NO BUTTONS:")
             return
         for button in self._pickerSelectionButtons:
             button.show()
@@ -439,23 +436,30 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.graph.setZoomModeEnabled(True)
         else:
             self.graph.setZoomModeEnabled(False)
-            self.graph.setDrawModeEnabled(True, shape="line",
+            self.graph.setDrawModeEnabled(True,
+                                          shape="line",
                                           label=mode)
         ddict = {}
         if mode is None:
             mode = "NONE"
-        ddict['event'] = "PolygonModeChanged"
+        ddict['event'] = "profileModeChanged"
         ddict['mode'] = mode
-        self.emit(qt.SIGNAL('PolygonSignal'), ddict)
+        self.emit(qt.SIGNAL('profileSignal'), ddict)
 
     def _graphPolygonSignalReceived(self, ddict):
         if DEBUG:
             print("PolygonSignal Received")
             for key in ddict.keys():
                 print(key, ddict[key])
-        ddict['pixelwidth'] = self._pickerSelectionWidthValue.value()
-        self.emit(qt.SIGNAL('PolygonSignal'), ddict)
 
+        if ddict['event'] != 'drawingFinished':
+            return
+        label = ddict['parameters']['label'] 
+        if  label not in ['HORIZONTAL', 'VERTICAL', 'LINE']:
+            return
+        ddict['mode'] = label
+        ddict['pixelwidth'] = self._pickerSelectionWidthValue.value()
+        self.emit(qt.SIGNAL('profileSignal'), ddict)
 
     def _addToolButton(self, icon, action, tip, toggle=None, state=None, position=None):
         tb      = qt.QToolButton(self.toolBar)            
