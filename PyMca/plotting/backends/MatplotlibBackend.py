@@ -790,6 +790,8 @@ class MatplotlibGraph(FigureCanvas):
                 self._drawingPatch.set_hatch('/')
                 self._drawingPatch.set_closed(True)
             self.fig.canvas.draw()
+            self._emitDrawingSignal(event='drawingProgress')
+            
         
     def onMouseReleased(self, event):
         if DEBUG:
@@ -921,10 +923,10 @@ class MatplotlibGraph(FigureCanvas):
         elif self._drawModePatch in ["ellipse"]:
             #we need the rectangle but given the four corners
             pass
+        ddict['parameters'] = {}
+        for key in self._drawingParameters.keys():
+            ddict['parameters'][key] = self._drawingParameters[key]
         if event == "drawingFinished":
-            ddict['parameters'] = {}
-            for key in self._drawingParameters.keys():
-                ddict['parameters'][key] = self._drawingParameters[key]
             self.__drawingParameters = None
             self.__drawing = False
             self._drawingPatch.remove()
