@@ -145,8 +145,6 @@ class MaskImageWidget(qt.QWidget):
         self._buildConnections()
         self._matplotlibSaveImage = None
 
-        # the overlay items to be drawn
-        self._overlayItemsDict = {}
         # the last overlay legend used
         self.__lastOverlayLegend = None
         self.__lastOverlayWidth = None
@@ -187,8 +185,8 @@ class MaskImageWidget(qt.QWidget):
         self.graph = self.graphWidget.graph
         if profileselection:
             self.connect(self.graphWidget,
-                         qt.SIGNAL('PolygonSignal'), 
-                         self._polygonSignalSlot)
+                         qt.SIGNAL('profileSignal'), 
+                         self._profileSignalSlot)
 
         if standalonesave:
             self.buildStandaloneSaveMenu()
@@ -287,10 +285,6 @@ class MaskImageWidget(qt.QWidget):
                                                     self._selectMiddle)
             self._additionalSelectionMenu.addAction(QString("I <= Colormap Min"),
                                                     self._selectMin)
-
-            #self.connect(self.graphWidget.graph,
-            #         qt.SIGNAL("QtBlissGraphSignal"),
-            #         self._graphSignal)
             self.graphWidget.graph.sigPlotSignal.connect(self._graphSignal)
 
     def updateProfileSelectionWindow(self):
@@ -299,43 +293,46 @@ class MaskImageWidget(qt.QWidget):
             if mode is None:
                 # remove the overlay if present
                 legend = self.__lastOverlayLegend
-                if legend in self._overlayItemsDict:
-                    self._overlayItemsDict[legend]['item'].detach()
-                    del self._overlayItemsDict[legend]
+                self.graphWidget.graph.removeItem(legend)
             elif self.__lastOverlayWidth is not None:
                 # create a fake signal
                 ddict = {}
-                ddict['event'] = "PolygonWidthChanged"
+                ddict['event'] = "profileWidthChanged"
                 ddict['pixelwidth'] = self.__lastOverlayWidth
                 ddict['mode'] = mode
-                self._polygonSignalSlot(ddict)
+                self._profileSignalSlot(ddict)
 
-
-    def _polygonSignalSlot(self, ddict):
+    def _profileSignalSlot(self, ddict):
         if DEBUG:
-            print("_polygonSignalSLot, event = %s" % ddict['event'])
+            print("_profileSignalSLot, event = %s" % ddict['event'])
             print("Received ddict = ", ddict)
 
         if ddict['event'] in [None, "NONE"]:
             #Nothing to be made
             return
 
-        if ddict['event'] == "PolygonWidthChanged":
+        if ddict['event'] == "profileWidthChanged":
             if self.__lastOverlayLegend is not None:
                 legend = self.__lastOverlayLegend
-                if legend in self._overlayItemsDict:
-                    info = self._overlayItemsDict[legend]['info']
+                #TODO: Find a better way to deal with this
+                if legend in self.graphWidget.graph._itemDict:
+                    info = self.graphWidget.graph._itemDict[legend]['info']
                     if info['mode'] == ddict['mode']:
                         newDict = {}
-                        newDict.update(info)
-                        newDict['pixelwidth'] = ddict['pixelwidth']
-                        self._polygonSignalSlot(newDict)
+                        newDict['event'] = "updateProfile"
+                        newDict['xdata'] = info['xdata'] * 1
+                        newDict['ydata'] = info['ydata'] * 1
+                        newDict['mode'] = info['mode'] * 1
+                        newDict['pixelwidth'] = ddict['pixelwidth'] * 1
+                        info = None
+                        #self._updateProfileCurve(newDict)
+                        self._profileSignalSlot(newDict)
             return
 
         if self._profileSelectionWindow is None:
             if self._profileScanWindow is None:
                 #identical to the standard scan window
-                self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=False)
+                self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=False)                
             else:
                 self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=True)
                 self.connect(self._profileSelectionWindow,
@@ -351,8 +348,9 @@ class MaskImageWidget(qt.QWidget):
             #if I do not return here and the user interacts with the graph while
             #the profileSelectionWindow is not shown, I get crashes under Qt 4.5.3 and MacOS X
             #when calling _getProfileCurve
+            ############## TODO: show it here?
+            self._profileSelectionWindow.show()
             return
-
 
         self._updateProfileCurve(ddict)
 
@@ -418,12 +416,29 @@ class MaskImageWidget(qt.QWidget):
         self._profileSelectionWindow.show()
         #self._profileSelectionWindow.raise_()
 
-        if ddict['event'] == 'PolygonModeChanged':
+        if ddict['event'] == 'profileModeChanged':
             return
 
         #if I show the image here it does not crash, but it is not nice because
         #the user would get the profileSelectionWindow under his mouse
         #self._profileSelectionWindow.show()
+
+        if ('row' in ddict) and ('column' in ddict):
+            # probably arriving after width changed
+            pass
+        else:
+            r0, c0 = convertToRowAndColumn(ddict['xdata'][0], ddict['ydata'][0],
+                                                        self.__imageData.shape,
+                                                        xScale=self._xScale,
+                                                        yScale=self._yScale,
+                                                        safe=True)
+            r1, c1 = convertToRowAndColumn(ddict['xdata'][1], ddict['ydata'][1],
+                                                        self.__imageData.shape,
+                                                        xScale=self._xScale,
+                                                        yScale=self._yScale,
+                                                        safe=True)
+            ddict['row'] = [r0, r1]
+            ddict['column'] = [c0, c1]
 
         shape = imageData.shape
         width = ddict['pixelwidth'] - 1
@@ -716,7 +731,7 @@ class MaskImageWidget(qt.QWidget):
                     #multiply by width too have the equivalent scale
                     ydata = ydataCentral
                 else:
-                    if ddict['event'] == "PolygonSelected":
+                    if True: #ddict['event'] == "PolygonSelected":
                         #oversampling solves noise introduction issues
                         oversampling = width + 1
                         oversampling = min(oversampling, 21) 
@@ -759,7 +774,6 @@ class MaskImageWidget(qt.QWidget):
                 xdata = numpy.arange(float(npoints))
                 legend = "y = %f (x-%.1f) + %f ; width=%d" % (m, col0, b, width)
                 if overlay:
-                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem(colLimits0,
                                          rowLimits0,
                                          legend=ddict['mode'],
@@ -850,23 +864,6 @@ class MaskImageWidget(qt.QWidget):
         #same call as the plot1D addCurve command
         if legend is None:
             legend="UnnamedOverlayItem"
-        if legend not in self._overlayItemsDict:
-            overlayItem = QwtPlotItems.PolygonItem(legend)
-            overlayItem.attach(self.graphWidget.graph)
-            self._overlayItemsDict[legend] = {}
-            self._overlayItemsDict[legend]['item'] = overlayItem
-        else:
-            overlayItem = self._overlayItemsDict[legend]['item']
-        if replace:
-            iterKeys = list(self._overlayItemsDict.keys())
-            for name in iterKeys:
-                if name == legend:
-                    continue
-                self._overlayItemsDict[name]['item'].detach()
-                delKeys = list(self._overlayItemsDict[name].keys())
-                for key in delKeys:
-                    del self._overlayItemsDict[name][key]
-                del self._overlayItemsDict[name]
         #the type of x can be list or array
         shape = self.__imageData.shape
         if self._xScale is None:
@@ -882,12 +879,9 @@ class MaskImageWidget(qt.QWidget):
             yList = []
             for i in y:
                 yList.append(self._yScale[0] + i * self._yScale[1])
-        overlayItem.setData(xList, yList)
-        self._overlayItemsDict[legend]['x'] = xList
-        self._overlayItemsDict[legend]['y'] = yList
-        self._overlayItemsDict[legend]['info'] = info
-        if replot:
-            self.graphWidget.graph.replot()
+        self.graphWidget.graph.addItem(xList, yList, legend=legend, info=info,
+                                               replace=replace, replot=replot,
+                                               shape="polygon", fill=True)
         self.__lastOverlayLegend = legend
 
     def _hFlipIconSignal(self):
@@ -1630,6 +1624,7 @@ class MaskImageWidget(qt.QWidget):
                 #not this module business
                 return
             elif not label.startswith('mask'):
+                # is it a profile selection
                 return
             elif shape == "polygon":
                 return self._handlePolygonMask(ddict)

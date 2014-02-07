@@ -116,8 +116,12 @@ class Plot(PlotBase.PlotBase):
         self._activeImage = None
 
         # marker handling
-        self._markerDict = {}
         self._markerList = []
+        self._markerDict = {}
+
+        # item handling
+        self._itemList = []
+        self._itemDict = {}
         
         # colors and line types
         self._colorList = colorlist
@@ -215,6 +219,38 @@ class Plot(PlotBase.PlotBase):
         :type shape: string, default polygon
         """
         self._plot.setDrawModeEnabled(flag=flag, shape=shape, label=label, **kw)
+
+    def addItem(self, xdata, ydata, legend=None, info=None,
+                replot=True, replace=False,
+                shape="polygon", **kw):
+        #expected to receive the same parameters as the signal
+        if legend is None:
+            key = "Unnamed Item 1.1"
+        else:
+            key = str(legend)
+        if info is None:
+            info = {}
+        item = self._plot.addItem(xdata, ydata,
+                                  legend=legend,
+                                  info=info,
+                                  shape=shape,
+                                  **kw)
+        info['plot_handle'] = item
+        parameters = kw
+        label = kw.get('label', legend)
+        parameters['shape'] = shape
+        parameters['label'] = label
+
+        if legend in self._itemList:
+            idx = self._itemList.index(legend)
+            del self._itemList[idx]
+        self._itemList.append(legend)
+        self._itemDict[legend] = { 'x':xdata,
+                                   'y':ydata,
+                                   'legend':legend,
+                                   'info':info,
+                                   'parameters':parameters}
+        return legend
 
     def getDrawMode(self):
         """

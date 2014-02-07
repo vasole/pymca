@@ -768,8 +768,11 @@ class MatplotlibGraph(FigureCanvas):
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
             elif self._drawModePatch == 'line':
+                self._mouseData[0,0] = self._x0
+                self._mouseData[0,1] = self._y0
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
+                self._drawingPatch.set_xy(self._mouseData)
             elif self._drawModePatch == 'hline':
                 print("TODO: Use hline with a particular label?")
                 self._mouseData[1,0] = self._x1
@@ -786,6 +789,8 @@ class MatplotlibGraph(FigureCanvas):
                 self._drawingPatch.set_hatch('/')
                 self._drawingPatch.set_closed(True)
             self.fig.canvas.draw()
+            self._emitDrawingSignal(event='drawingProgress')
+            
         
     def onMouseReleased(self, event):
         if DEBUG:
@@ -873,7 +878,7 @@ class MatplotlibGraph(FigureCanvas):
                     ddict['button'] = "left"
                 if (button == self.__lastMouseClick[0]) and\
                    ((currentTime - self.__lastMouseClick[1]) < 0.6):
-                    ddict['event'] = "mouseDoubleCliked"
+                    ddict['event'] = "mouseDoubleClicked"
                 else:
                     ddict['event'] = "mouseClicked"
                 self.__lastMouseClick = [button, time.time()]
@@ -917,10 +922,10 @@ class MatplotlibGraph(FigureCanvas):
         elif self._drawModePatch in ["ellipse"]:
             #we need the rectangle but given the four corners
             pass
+        ddict['parameters'] = {}
+        for key in self._drawingParameters.keys():
+            ddict['parameters'][key] = self._drawingParameters[key]
         if event == "drawingFinished":
-            ddict['parameters'] = {}
-            for key in self._drawingParameters.keys():
-                ddict['parameters'][key] = self._drawingParameters[key]
             self.__drawingParameters = None
             self.__drawing = False
             self._drawingPatch.remove()
@@ -1141,6 +1146,52 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.replot()
         return curveList[-1]
 
+
+    def addItem(self, x, y, legend, info=None, replace=False, replot=True, **kw):
+        if replace:
+            self.clearItems()
+        else:
+            # make sure we do not cummulate images with same name
+            self.removeItem(legend, replot=False)
+        shape = kw.get('shape', "polygon")
+        if shape not in ['line', 'hline', 'vline', 'rectangle', 'polygon']:
+            raise NotImplemented("Unsupported item shape %s" % shape)
+        label = kw.get('label', legend)
+        color = kw.get('color', 'black')
+        fill = kw.get('fill', True)
+        xView = numpy.array(x, copy=False)
+        yView = numpy.array(y, copy=False)
+        label = "__ITEM__" + label
+        if shape in ["line"]:
+            return legend
+        elif shape in ['rectangle']:
+            xMin = xView.min()
+            xMax = xView.max()
+            yMin = yView.min()
+            yMax = yView.max()
+            w = xMax - xMin
+            h = yMax - yMin
+            item = Rectangle(xy=(xMin,yMin),
+                             width=w,
+                             height=h,
+                             fill=False)
+            if fill:
+                item.set_hatch('.')
+        elif shape in ['polygon']:
+            xView.shape = 1, -1
+            yView.shape = 1, -1
+            item = Polygon(numpyvstack((xView, yView)).T,
+                            closed=True,
+                            fill=False,
+                            label=label)
+            if fill:
+                #item.set_hatch('+')            
+                item.set_hatch('/')
+        self.ax.add_patch(item)
+        if replot:
+            self.ax.figure.canvas.draw()
+        return item
+
     def clear(self):
         """
         Clear all curvers and other items from the plot
@@ -1201,6 +1252,45 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     #it is a marker
                     line2d.remove()
                     del line2d
+
+    def clearItems(self):
+        """
+        Clear items, not markers, not curves
+        """
+        for axes in [self.ax, self.ax2]:
+            n = list(range(len(axes.patches)))
+            n.reverse()
+            for i in n:
+                item = axes.patches[i]
+                label = item.get_label()
+                if label.startswith("__ITEM__"):
+                    item.remove()
+                    del item
+
+    def removeItem(self, handle, replot=True):
+        if hasattr(handle, "remove"):
+            for axes in [self.ax, self.ax2]:
+                if handle in axes.patches:
+                    handle.remove()
+                    del handle
+        else:
+            # we have received a legend!
+            # we have received a legend!
+            legend = handle
+            handle = None
+            for axes in [self.ax, self.ax2]:
+                if handle is not None:
+                    break
+                for item in axes.patches:
+                    label = item.get_label()
+                    if label == ("__ITEM__"+legend):
+                        handle = item
+                        break
+            if handle is not None:
+                handle.remove()
+                del handle
+        if replot:
+            self.replot()
 
     def getGraphXLimits(self):
         """
