@@ -407,7 +407,7 @@ class MaskImageWidget(qt.QWidget):
 
         title = self.getGraphTitle()
 
-        self._profileSelectionWindow.setTitle(title)
+        self._profileSelectionWindow.setGraphTitle(title)
         if self._profileScanWindow is not None:
             self._profileSelectionWindow.label.setText(title)
 
@@ -417,6 +417,8 @@ class MaskImageWidget(qt.QWidget):
         #self._profileSelectionWindow.raise_()
 
         if ddict['event'] == 'profileModeChanged':
+            if self.__lastOverlayLegend:
+                self.graphWidget.graph.removeItem(self.__lastOverlayLegend, replot=True)
             return
 
         #if I show the image here it does not crash, but it is not nice because
