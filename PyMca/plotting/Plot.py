@@ -564,7 +564,7 @@ class Plot(PlotBase.PlotBase):
         keys = list(self._curveDict.keys())
         for key in self._curveList:
             if key in keys:
-                if self.isCurveHidden(legend):
+                if self.isCurveHidden(key):
                     continue        
                 if just_legend:
                     output.append(key)
