@@ -434,9 +434,15 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.graph.setDrawModeEnabled(False)
             self.graph.setZoomModeEnabled(True)
         else:
+            if mode == "HORIZONTAL":
+                shape = "hline"
+            elif mode == "VERTICAL":
+                shape = "vline"
+            else:
+                shape = "line"
             self.graph.setZoomModeEnabled(False)
             self.graph.setDrawModeEnabled(True,
-                                          shape="line",
+                                          shape=shape,
                                           label=mode)
         ddict = {}
         if mode is None:

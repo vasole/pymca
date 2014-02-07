@@ -252,6 +252,18 @@ class Plot(PlotBase.PlotBase):
                                    'parameters':parameters}
         return legend
 
+    def removeItem(self, legend, replot=True):
+        if legend is None:
+            return
+        if legend in self._itemList:
+            idx = self._itemList.index(legend)
+            del self._itemList[idx]
+        if legend in self._itemDict:
+            handle = self._itemDict[legend]['info'].get('plot_handle', None)
+            del self._itemDict[legend]
+            if handle is not None:
+                self._plot.removeItem(handle, replot=replot)
+
     def getDrawMode(self):
         """
         Return a dictionnary (or None) with the parameters passed when setting
@@ -564,7 +576,7 @@ class Plot(PlotBase.PlotBase):
         keys = list(self._curveDict.keys())
         for key in self._curveList:
             if key in keys:
-                if self.isCurveHidden(legend):
+                if self.isCurveHidden(key):
                     continue        
                 if just_legend:
                     output.append(key)

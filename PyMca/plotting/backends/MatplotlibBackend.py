@@ -556,6 +556,24 @@ class MatplotlibGraph(FigureCanvas):
             self._ratio = (self._ymax - self._ymin) / (self._xmax - self._xmin)
 
         self.__drawing = self._drawModeEnabled
+        if self.__drawing:
+            if self._drawModePatch in ['hline', 'vline']:
+                if self._drawingPatch is None:
+                    self._mouseData = numpy.zeros((2,2), numpy.float32)
+                    if self._drawModePatch == "hline":
+                        self._mouseData[0,0] = self._xmin
+                        self._mouseData[0,1] = self._y0
+                        self._mouseData[1,0] = self._xmax
+                        self._mouseData[1,1] = self._y0
+                    else:
+                        self._mouseData[0,0] = self._x0
+                        self._mouseData[0,1] = self._ymin
+                        self._mouseData[1,0] = self._x0
+                        self._mouseData[1,1] = self._ymax
+                    self._drawingPatch = Polygon(self._mouseData,
+                                             closed=True,
+                                             fill=False)
+                    self.ax.add_patch(self._drawingPatch)
             
     def onMouseMoved(self, event):
         if DEBUG:
@@ -774,13 +792,18 @@ class MatplotlibGraph(FigureCanvas):
                 self._mouseData[1,1] = self._y1
                 self._drawingPatch.set_xy(self._mouseData)
             elif self._drawModePatch == 'hline':
-                print("TODO: Use hline with a particular label?")
-                self._mouseData[1,0] = self._x1
+                xmin, xmax = self.ax.get_xlim()
+                self._mouseData[0,0] = xmin
+                self._mouseData[0,1] = self._y1
+                self._mouseData[1,0] = xmax
                 self._mouseData[1,1] = self._y1
+                self._drawingPatch.set_xy(self._mouseData)
             elif self._drawModePatch == 'vline':
-                print("TODO: Use vline with a particular label?")
+                ymin, ymax = self.ax.get_ylim()
+                self._mouseData[0,0] = self._x1
+                self._mouseData[0,1] = ymin
                 self._mouseData[1,0] = self._x1
-                self._mouseData[1,1] = self._y1
+                self._mouseData[1,1] = ymax
                 self._drawingPatch.set_xy(self._mouseData)
             elif self._drawModePatch == 'polygon':
                 self._mouseData[-1,0] = self._x1
@@ -1273,6 +1296,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if handle in axes.patches:
                     handle.remove()
                     del handle
+                    break
         else:
             # we have received a legend!
             # we have received a legend!
