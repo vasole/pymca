@@ -1189,6 +1189,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 #item.set_hatch('+')            
                 item.set_hatch('/')
         self.ax.add_patch(item)
+        if replot:
+            self.ax.figure.canvas.draw()
         return item
 
     def clear(self):
