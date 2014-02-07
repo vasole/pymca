@@ -1756,7 +1756,7 @@ class ScanWindow(qt.QWidget, Plot1DBase.Plot1DBase):
         return self.removeCurves([legend], replot=replot)
 
     def setGraphTitle(self, title):
-        self.graph.setTitle(text)
+        self.graph.setTitle(title)
 
     def setGraphXTitle(self, title):
         self.graph.x1Label(title)
