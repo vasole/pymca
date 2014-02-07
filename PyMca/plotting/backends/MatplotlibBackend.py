@@ -768,7 +768,6 @@ class MatplotlibGraph(FigureCanvas):
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
             elif self._drawModePatch == 'line':
-                print("LINE MODE")
                 self._mouseData[0,0] = self._x0
                 self._mouseData[0,1] = self._y0
                 self._mouseData[1,0] = self._x1

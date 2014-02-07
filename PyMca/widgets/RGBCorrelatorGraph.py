@@ -220,7 +220,6 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.imageToolButton = None
         #picker selection
         self._pickerSelectionButtons = []
-        print("PROFILE SELECTION", profileselection)
         if profileselection:
             self._profileSelection = True
             self._polygonSelection = False
@@ -327,10 +326,10 @@ class RGBCorrelatorGraph(qt.QWidget):
         return self.graph.setGraphYLabel(label)
 
     def getXLabel(self):
-        return self.graph.getGraphXLabel(label)
+        return self.graph.getGraphXLabel()
 
     def getYLabel(self):
-        return self.graph.getGraphYLabel(label)
+        return self.graph.getGraphYLabel()
 
     def hideImageIcons(self):
         if self.imageToolButton is None:return

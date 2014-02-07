@@ -66,7 +66,7 @@ OVERLAY_DRAW = True
 
 DEFAULT_COLORMAP_INDEX = 2
 DEFAULT_COLORMAP_LOG_FLAG = False
-DEBUG = 1
+DEBUG = 0
 
 
 USE_PICKER = False
@@ -145,8 +145,6 @@ class MaskImageWidget(qt.QWidget):
         self._buildConnections()
         self._matplotlibSaveImage = None
 
-        # the overlay items to be drawn
-        self._overlayItemsDict = {}
         # the last overlay legend used
         self.__lastOverlayLegend = None
         self.__lastOverlayWidth = None
@@ -287,10 +285,6 @@ class MaskImageWidget(qt.QWidget):
                                                     self._selectMiddle)
             self._additionalSelectionMenu.addAction(QString("I <= Colormap Min"),
                                                     self._selectMin)
-
-            #self.connect(self.graphWidget.graph,
-            #         qt.SIGNAL("QtBlissGraphSignal"),
-            #         self._graphSignal)
             self.graphWidget.graph.sigPlotSignal.connect(self._graphSignal)
 
     def updateProfileSelectionWindow(self):
@@ -299,9 +293,7 @@ class MaskImageWidget(qt.QWidget):
             if mode is None:
                 # remove the overlay if present
                 legend = self.__lastOverlayLegend
-                if legend in self._overlayItemsDict:
-                    self._overlayItemsDict[legend]['item'].detach()
-                    del self._overlayItemsDict[legend]
+                self.graphWidget.graph.removeItem(legend)
             elif self.__lastOverlayWidth is not None:
                 # create a fake signal
                 ddict = {}
@@ -309,7 +301,6 @@ class MaskImageWidget(qt.QWidget):
                 ddict['pixelwidth'] = self.__lastOverlayWidth
                 ddict['mode'] = mode
                 self._profileSignalSlot(ddict)
-
 
     def _profileSignalSlot(self, ddict):
         if DEBUG:
@@ -323,13 +314,19 @@ class MaskImageWidget(qt.QWidget):
         if ddict['event'] == "profileWidthChanged":
             if self.__lastOverlayLegend is not None:
                 legend = self.__lastOverlayLegend
-                if legend in self._overlayItemsDict:
-                    info = self._overlayItemsDict[legend]['info']
+                #TODO: Find a better way to deal with this
+                if legend in self.graphWidget.graph._itemDict:
+                    info = self.graphWidget.graph._itemDict[legend]['info']
                     if info['mode'] == ddict['mode']:
                         newDict = {}
-                        newDict.update(info)
-                        newDict['pixelwidth'] = ddict['pixelwidth']
-                        self._polygonSignalSlot(newDict)
+                        newDict['event'] = "updateProfile"
+                        newDict['xdata'] = info['xdata'] * 1
+                        newDict['ydata'] = info['ydata'] * 1
+                        newDict['mode'] = info['mode'] * 1
+                        newDict['pixelwidth'] = ddict['pixelwidth'] * 1
+                        info = None
+                        #self._updateProfileCurve(newDict)
+                        self._profileSignalSlot(newDict)
             return
 
         if self._profileSelectionWindow is None:
@@ -426,18 +423,22 @@ class MaskImageWidget(qt.QWidget):
         #the user would get the profileSelectionWindow under his mouse
         #self._profileSelectionWindow.show()
 
-        r0, c0 = convertToRowAndColumn(ddict['xdata'][0], ddict['ydata'][0],
-                                                    self.__imageData.shape,
-                                                    xScale=self._xScale,
-                                                    yScale=self._yScale,
-                                                    safe=True)
-        r1, c1 = convertToRowAndColumn(ddict['xdata'][1], ddict['ydata'][1],
-                                                    self.__imageData.shape,
-                                                    xScale=self._xScale,
-                                                    yScale=self._yScale,
-                                                    safe=True)
-        ddict['row'] = [r0, r1]
-        ddict['column'] = [c0, c1]
+        if ('row' in ddict) and ('column' in ddict):
+            # probably arriving after width changed
+            pass
+        else:
+            r0, c0 = convertToRowAndColumn(ddict['xdata'][0], ddict['ydata'][0],
+                                                        self.__imageData.shape,
+                                                        xScale=self._xScale,
+                                                        yScale=self._yScale,
+                                                        safe=True)
+            r1, c1 = convertToRowAndColumn(ddict['xdata'][1], ddict['ydata'][1],
+                                                        self.__imageData.shape,
+                                                        xScale=self._xScale,
+                                                        yScale=self._yScale,
+                                                        safe=True)
+            ddict['row'] = [r0, r1]
+            ddict['column'] = [c0, c1]
 
         shape = imageData.shape
         width = ddict['pixelwidth'] - 1
@@ -730,7 +731,7 @@ class MaskImageWidget(qt.QWidget):
                     #multiply by width too have the equivalent scale
                     ydata = ydataCentral
                 else:
-                    if ddict['event'] == "PolygonSelected":
+                    if True: #ddict['event'] == "PolygonSelected":
                         #oversampling solves noise introduction issues
                         oversampling = width + 1
                         oversampling = min(oversampling, 21) 
@@ -773,7 +774,6 @@ class MaskImageWidget(qt.QWidget):
                 xdata = numpy.arange(float(npoints))
                 legend = "y = %f (x-%.1f) + %f ; width=%d" % (m, col0, b, width)
                 if overlay:
-                    #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem(colLimits0,
                                          rowLimits0,
                                          legend=ddict['mode'],
@@ -1608,7 +1608,6 @@ class MaskImageWidget(qt.QWidget):
         self._emitMaskChangedSignal()
 
     def _graphSignal(self, ddict, ownsignal = None):
-        print("_GRAPH SIGNAL RECEIVED", ddict)
         if ownsignal is None:
             ownsignal = True
         emitsignal = False
@@ -1626,7 +1625,6 @@ class MaskImageWidget(qt.QWidget):
                 return
             elif not label.startswith('mask'):
                 # is it a profile selection
-                print("IGNORING, NOT MASK")
                 return
             elif shape == "polygon":
                 return self._handlePolygonMask(ddict)
