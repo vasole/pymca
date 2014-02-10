@@ -102,7 +102,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         """
         self.scanWindowInfoWidget = None
         #self.fig = None
-        self.scanFit = ScanFit.ScanFit(specfit=specfit)
+        if fit:
+            self.scanFit = ScanFit.ScanFit(specfit=specfit)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
         self.simpleMath = SimpleMath.SimpleMath()
         self.outputDir = None
@@ -111,7 +112,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         #signals
         # this one was made in the base class
         #self.setCallback(self.graphCallback)
-        if 1:
+        if fit:
             self.customFit = SimpleFitGUI.SimpleFitGUI()
             self.connect(self.scanFit,
                          qt.SIGNAL('ScanFitSignal') ,
@@ -119,7 +120,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.connect(self.customFit,
                          qt.SIGNAL('SimpleFitSignal') ,
                          self._customFitSignalReceived)
-        if 1:
+        if fit:
             self.fitButtonMenu = qt.QMenu()
             self.fitButtonMenu.addAction(QString("Simple Fit"),
                                    self._simpleFitSignal)
