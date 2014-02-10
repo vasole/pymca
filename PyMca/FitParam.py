@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -49,28 +49,13 @@ if QTVERSION > '4.0.0':
         # no XRFMC support
         pass
     from PyMca import StripBackgroundWidget
-    # This strange looking import is to workaround an endless import
-    SCANWINDOW = False
-    QWT = False
-    try:
-        from PyMca import ScanWindow
-        SCANWINDOW = True
-    except:
-        try:
-            from PyMca import Plot1DQwt
-            QWT = True
-        except ImportError:
-            from PyMca import Plot1DMatplotlib
+    from PyMca import ScanWindow
     import numpy
 
 DEBUG = 0
 
-if 0:
-    FitParamSections= ["fit", "detector", "peaks", "peakshape", "attenuators","concentrations","compound_fit"]
-    FitParamHeaders= ["FIT", "DETECTOR","BEAM","PEAKS", "PEAK SHAPE", "ATTENUATORS","MATRIX","CONCENTRATIONS", "COMPOUND_FIT"]
-else:
-    FitParamSections= ["fit", "detector", "peaks", "peakshape", "attenuators","concentrations"]
-    FitParamHeaders= ["FIT", "DETECTOR","BEAM","PEAKS", "PEAK SHAPE", "ATTENUATORS","MATRIX","CONCENTRATIONS"]
+FitParamSections= ["fit", "detector", "peaks", "peakshape", "attenuators","concentrations"]
+FitParamHeaders= ["FIT", "DETECTOR","BEAM","PEAKS", "PEAK SHAPE", "ATTENUATORS","MATRIX","CONCENTRATIONS"]
 
 class FitParamWidget(FitParamForm):
     attenuators= ["Filter 0", "Filter 1", "Filter 2", "Filter 3", "Filter 4", "Filter 5",
@@ -80,139 +65,78 @@ class FitParamWidget(FitParamForm):
         self._channels = None
         self._counts   = None
         self._stripDialog = None
-        if QTVERSION < '4.0.0':
-            self.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
-        else:
-            self.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-        #attenuators tab This was previously into FitParamForm.py: BEGIN
-        if QTVERSION < '4.0.0':
-            self.tabAtt = qt.QWidget(self.mainTab)
-            tabAttLayout = qt.QGridLayout(self.tabAtt,1,1,11,6)
-            self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt)
-            self.attTable = self.tabAttenuators.table
-            #self.multilayerTable =self.tabAttenuators.matrixTable
-            tabAttLayout.addWidget(self.tabAttenuators,0,0)
-            self.mainTab.insertTab(self.tabAtt, str("ATTENUATORS"))
-        else:
-            self.tabAtt = qt.QWidget()
-            tabAttLayout = qt.QGridLayout(self.tabAtt)
-            tabAttLayout.setMargin(11)
-            tabAttLayout.setSpacing(6)
-            if SCANWINDOW:
-                self.graphDialog = qt.QDialog(self)
-                self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
-                self.graphDialog.mainLayout.setMargin(0)
-                self.graphDialog.mainLayout.setSpacing(0)
-                self.graphDialog.graph = ScanWindow.ScanWindow(self.graphDialog)
-                self.graph = self.graphDialog.graph
-                self.graph._togglePointsSignal()
-                self.graph.graph.crossPicker.setEnabled(False)
-                self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
-                                                        graph=self.graphDialog)
-            elif QWT:
-                self.graphDialog = qt.QDialog(self)
-                self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
-                self.graphDialog.mainLayout.setMargin(0)
-                self.graphDialog.mainLayout.setSpacing(0)
-                self.graphDialog.graph = Plot1DQwt.Plot1DQwt(self.graphDialog)                
-                self.graph = self.graphDialog.graph
-                self.graph._togglePointsSignal()
-                self.graph.graph.crossPicker.setEnabled(False)
-                self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
-                                                        graph=self.graphDialog)
-            else:
-                self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog(self)                
-                self.graph = self.graphDialog.plot1DWindow
-                self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
-                                                        graph=self.graphDialog)
-            self.graphDialog.mainLayout.addWidget(self.graph)
-            self.graphDialog.okButton = qt.QPushButton(self.graphDialog)
-            self.graphDialog.okButton.setText('OK')
-            self.graphDialog.okButton.setAutoDefault(True)
-            self.graphDialog.mainLayout.addWidget(self.graphDialog.okButton)
-            self.graphDialog.connect(self.graphDialog.okButton,
-                                     qt.SIGNAL('clicked()'),
-                                     self.graphDialog.accept)
-            self.graph.fitButton.hide()
-            self.attTable = self.tabAttenuators.table
-            #self.multilayerTable =self.tabAttenuators.matrixTable
-            tabAttLayout.addWidget(self.tabAttenuators,0,0)
-            self.mainTab.addTab(self.tabAtt, str("ATTENUATORS"))
-            maxheight = qt.QDesktopWidget().height()
-            #self.graph.hide()
-            self.attPlotButton = qt.QPushButton(self.tabAttenuators)
-            self.attPlotButton.setAutoDefault(False)
-            text = 'Plot T(filters) * (1 - T(detector)) Efficienty Term'
-            self.attPlotButton.setText(text)
-            self.tabAttenuators.layout().insertWidget(1, self.attPlotButton)
-            self.connect(self.attPlotButton, qt.SIGNAL('clicked()'),
-                         self.__attPlotButtonSlot)
-            if maxheight < 801:
-                self.setMaximumHeight(int(0.8*maxheight))
-                self.setMinimumHeight(int(0.8*maxheight))
+        self.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
+        self.tabAtt = qt.QWidget()
+        tabAttLayout = qt.QGridLayout(self.tabAtt)
+        tabAttLayout.setContentsMargins(11, 11, 11, 11)
+        tabAttLayout.setSpacing(6)
+        self.graphDialog = qt.QDialog(self)
+        self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
+        self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.graphDialog.mainLayout.setSpacing(0)
+        self.graphDialog.graph = ScanWindow.ScanWindow(self.graphDialog)
+        self.graph = self.graphDialog.graph
+        self.graph._togglePointsSignal()
+        self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
+                                                graph=self.graphDialog)
+        self.graphDialog.mainLayout.addWidget(self.graph)
+        self.graphDialog.okButton = qt.QPushButton(self.graphDialog)
+        self.graphDialog.okButton.setText('OK')
+        self.graphDialog.okButton.setAutoDefault(True)
+        self.graphDialog.mainLayout.addWidget(self.graphDialog.okButton)
+        self.graphDialog.connect(self.graphDialog.okButton,
+                                 qt.SIGNAL('clicked()'),
+                                 self.graphDialog.accept)
+        self.graph.fitButton.hide()
+        self.attTable = self.tabAttenuators.table
+        #self.multilayerTable =self.tabAttenuators.matrixTable
+        tabAttLayout.addWidget(self.tabAttenuators,0,0)
+        self.mainTab.addTab(self.tabAtt, str("ATTENUATORS"))
+        maxheight = qt.QDesktopWidget().height()
+        #self.graph.hide()
+        self.attPlotButton = qt.QPushButton(self.tabAttenuators)
+        self.attPlotButton.setAutoDefault(False)
+        text = 'Plot T(filters) * (1 - T(detector)) Efficienty Term'
+        self.attPlotButton.setText(text)
+        self.tabAttenuators.layout().insertWidget(1, self.attPlotButton)
+        self.connect(self.attPlotButton, qt.SIGNAL('clicked()'),
+                     self.__attPlotButtonSlot)
+        if maxheight < 801:
+            self.setMaximumHeight(int(0.8*maxheight))
+            self.setMinimumHeight(int(0.8*maxheight))
 
         #This was previously into FitParamForm.py: END
-        
-        if QTVERSION < '4.0.0':
-            self.tabMul = qt.QWidget(self.mainTab,"tabMultilayer")
-            #self.tabMultilayer = None
-            tabMultilayerLayout = qt.QGridLayout(self.tabMul,1,1,11,6,"tabMultilayerLayout")
-            self.tabMultilayer  = AttenuatorsTable.MultilayerTab(self.tabMul,"tabMultilayer")
-            self.multilayerTable =self.tabMultilayer.matrixTable
-            tabMultilayerLayout.addWidget(self.tabMultilayer,0,0)
-            self.mainTab.insertTab(self.tabMul, str("MATRIX"))
-            self.matrixGeometry = self.tabMultilayer.matrixGeometry
-        else:
-            self.tabMul = qt.QWidget()
-            tabMultilayerLayout = qt.QGridLayout(self.tabMul)
-            tabMultilayerLayout.setMargin(11)
-            tabMultilayerLayout.setSpacing(6)
-            self.tabMultilayer  = AttenuatorsTable.MultilayerTab(self.tabMul)
-            self.multilayerTable =self.tabMultilayer.matrixTable
-            tabMultilayerLayout.addWidget(self.tabMultilayer,0,0)
-            self.mainTab.addTab(self.tabMul, str("MATRIX"))
-            self.matrixGeometry = self.tabMultilayer.matrixGeometry
+        self.tabMul = qt.QWidget()
+        tabMultilayerLayout = qt.QGridLayout(self.tabMul)
+        tabMultilayerLayout.setMargin(11)
+        tabMultilayerLayout.setSpacing(6)
+        self.tabMultilayer  = AttenuatorsTable.MultilayerTab(self.tabMul)
+        self.multilayerTable =self.tabMultilayer.matrixTable
+        tabMultilayerLayout.addWidget(self.tabMultilayer,0,0)
+        self.mainTab.addTab(self.tabMul, str("MATRIX"))
+        self.matrixGeometry = self.tabMultilayer.matrixGeometry
 
         #The concentrations
-        if QTVERSION < '4.0.0':
-            self.tabConcentrations =  qt.QWidget(self.mainTab,
-                                                 "tabConcentrations")
-            tabConcentrationsLayout = qt.QGridLayout(self.tabConcentrations,
-                                                     1,1,11,6,"tabConcentrationsLayout")
-            self.concentrationsWidget   = ConcentrationsWidget.ConcentrationsWidget(self.tabConcentrations,"tabConcentrations")
-            tabConcentrationsLayout.addWidget(self.concentrationsWidget,0,0)
-            self.mainTab.insertTab(self.tabConcentrations, str("CONCENTRATIONS"))
-        else:
-            self.tabConcentrations =  qt.QWidget()
-            tabConcentrationsLayout = qt.QGridLayout(self.tabConcentrations)
-            tabConcentrationsLayout.setMargin(11)
-            tabConcentrationsLayout.setSpacing(6)
-            self.concentrationsWidget   = ConcentrationsWidget.ConcentrationsWidget(self.tabConcentrations,"tabConcentrations")
-            tabConcentrationsLayout.addWidget(self.concentrationsWidget,0,0)
-            self.mainTab.addTab(self.tabConcentrations, str("CONCENTRATIONS"))
+        self.tabConcentrations =  qt.QWidget()
+        tabConcentrationsLayout = qt.QGridLayout(self.tabConcentrations)
+        tabConcentrationsLayout.setMargin(11)
+        tabConcentrationsLayout.setSpacing(6)
+        self.concentrationsWidget   = ConcentrationsWidget.ConcentrationsWidget(self.tabConcentrations,"tabConcentrations")
+        tabConcentrationsLayout.addWidget(self.concentrationsWidget,0,0)
+        self.mainTab.addTab(self.tabConcentrations, str("CONCENTRATIONS"))
         #end concentrations tab
         
         #self.matrixGeometry = self.tabAttenuators.matrixGeometry
         if 0:
             #The compound fit tab
-            if QTVERSION < '4.0.0':
-                self.tabCompoundFit =  qt.QWidget(self.mainTab,
-                                                     "tabCompound_fit")
-                tabCompoundFitLayout = qt.QGridLayout(self.tabCompoundFit,
-                                                         1,1,11,6,"tabCompound_fitLayout")
-                self.compoundFitWidget   = AttenuatorsTable.CompoundFittingTab(self.tabCompoundFit,
-                                                                               "tabCompound_fit")
-                tabCompoundFitLayout.addWidget(self.compoundFitWidget,0,0)
-                self.mainTab.insertTab(self.tabCompoundFit, str("COMPOUND FIT"))
-            else:
-                self.tabCompoundFit =  qt.QWidget()
-                tabCompoundFitLayout = qt.QGridLayout(self.tabCompoundFit)
-                tabCompoundFitLayout.setMargin(11)
-                tabCompoundFitLayout.setSpacing(6)
-                self.compoundFitWidget   = AttenuatorsTable.CompoundFittingTab(self.tabCompoundFit,
-                                                                               "tabCompound_fit")
-                tabCompoundFitLayout.addWidget(self.compoundFitWidget,0,0)
-                self.mainTab.addTab(self.tabCompoundFit, str("COMPOUND FIT"))
+            self.tabCompoundFit =  qt.QWidget()
+            tabCompoundFitLayout = qt.QGridLayout(self.tabCompoundFit)
+            tabCompoundFitLayout.setMargin(11)
+            tabCompoundFitLayout.setSpacing(6)
+            self.compoundFitWidget   = AttenuatorsTable.CompoundFittingTab(self.tabCompoundFit,
+                                                                           "tabCompound_fit")
+            tabCompoundFitLayout.addWidget(self.compoundFitWidget,0,0)
+            self.mainTab.addTab(self.tabCompoundFit, str("COMPOUND FIT"))
             #end compound fit tab
 
         if XRFMC_FLAG:
@@ -225,23 +149,15 @@ class FitParamWidget(FitParamForm):
             tabXRFMCLayout.addWidget(self.tabXRFMCWidget,0,0)
             self.mainTab.addTab(self.tabXRFMC, str("XRFMC"))
 
-        self.layout().setMargin(0)
+        self.layout().setContentsMargins(0, 0, 0, 0)
 
         #I had to add this line to prevent a crash. Why?
         qt.qApp.processEvents()
 
         self.attTable.verticalHeader().hide()
-        if QTVERSION < '4.0.0':
-            self.attTable.setLeftMargin(0)
-        #self.attTable.adjustColumn(0)
-
         #The beam energies tab
-        if QTVERSION < '4.0.0':
-            beamlayout= qt.QGridLayout(self.TabBeam,1,1)
-            self.energyTab = EnergyTable.EnergyTab(self.TabBeam)
-        else:
-            beamlayout= qt.QGridLayout(self.TabBeam)
-            self.energyTab = EnergyTable.EnergyTab(self.TabBeam)
+        beamlayout= qt.QGridLayout(self.TabBeam)
+        self.energyTab = EnergyTable.EnergyTab(self.TabBeam)
         beamlayout.addWidget(self.energyTab, 0, 0)
         self.energyTable = self.energyTab.table
 
@@ -249,10 +165,7 @@ class FitParamWidget(FitParamForm):
         self.xRayTube = self.energyTab.tube
 
         #The peak select tab
-        if QTVERSION < '4.0.0':
-            layout= qt.QGridLayout(self.TabPeaks,1,1)
-        else:
-            layout= qt.QGridLayout(self.TabPeaks)
+        layout= qt.QGridLayout(self.TabPeaks)
         if 0:
             self.peakTable= FitPeakSelect(self.TabPeaks)
             layout.addWidget(self.peakTable, 0, 0)
@@ -260,13 +173,9 @@ class FitParamWidget(FitParamForm):
         else:
             self.peakTable= FitPeakSelect(self.TabPeaks,
                                           energyTable=self.energyTable)
-            if QTVERSION < '4.0.0':
-                qt.QToolTip.add(self.peakTable.energy,
-                                "Energy is set in the BEAM tab")
-            else:
-                self.peakTable.energy.setToolTip("Energy is set in the BEAM tab")
-                maxWidth = int(min(900, 0.8*qt.QDesktopWidget().width()))
-                self.peakTable.setMaximumWidth(maxWidth)
+            self.peakTable.energy.setToolTip("Energy is set in the BEAM tab")
+            maxWidth = int(min(900, 0.8*qt.QDesktopWidget().width()))
+            self.peakTable.setMaximumWidth(maxWidth)
             layout.addWidget(self.peakTable, 0, 0)
             #self.peakTable.setMaximumSize(self.tabDetector.sizeHint())
         #self.energyTable = self.peakTable.energyTable        
@@ -289,26 +198,14 @@ class FitParamWidget(FitParamForm):
         self.tabLabel= []
         n = self.mainTab.count()
         for idx in range(n):
-            if QTVERSION < '4.0.0':
-                self.tabLabel.append(self.mainTab.label(idx))
-            else:
-                self.tabLabel.append(qt.safe_str(self.mainTab.tabText(idx)))
+            self.tabLabel.append(qt.safe_str(self.mainTab.tabText(idx)))
         self.connect(self.mainTab, qt.SIGNAL("currentChanged(QWidget*)"), self.__tabChanged)
         self.connect(self.contCombo, qt.SIGNAL("activated(int)"), self.__contComboActivated)
         self.connect(self.functionCombo, qt.SIGNAL("activated(int)"), self.__functionComboActivated)
         self.connect(self.orderSpin, qt.SIGNAL("valueChanged(int)"), self.__orderSpinChanged)
-        if QTVERSION > '4.0.0':
-            self._backgroundWindow = None
-            self.connect(self.stripSetupButton, qt.SIGNAL('clicked()'),
-                         self.__stripSetupButtonClicked)
-
-    if QTVERSION < '4.0.0' :
-        def resizeEvent(self, re):
-            FitParamForm.resizeEvent(self,re)
-            try:
-                self.peakTable.setMaximumSize(re.size())
-            except:
-                pass
+        self._backgroundWindow = None
+        self.connect(self.stripSetupButton, qt.SIGNAL('clicked()'),
+                     self.__stripSetupButtonClicked)
 
     def __attPlotButtonSlot(self):
         try:

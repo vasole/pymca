@@ -99,6 +99,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.zoomIcon	= qt.QIcon(qt.QPixmap(IconDict["zoom"]))
         self.roiIcon	= qt.QIcon(qt.QPixmap(IconDict["roi"]))
         self.peakIcon	= qt.QIcon(qt.QPixmap(IconDict["peak"]))
+        self.energyIcon = qt.QIcon(qt.QPixmap(IconDict["energy"]))
 
         self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
         self.roiResetIcon	= qt.QIcon(qt.QPixmap(IconDict["roireset"]))
@@ -211,6 +212,12 @@ class PlotWindow(PlotWidget.PlotWidget):
                              self._togglePointsSignal,
                              'Toggle Points/Lines')
 
+        #energy icon
+        if kw.get('energy', False):
+            self._addToolButton(self.energyIcon,
+                            self._energyIconSignal,
+                            'Toggle Energy Axis (On/Off)',
+                            toggle=True)            
 
         #roi icon
         if kw.get('roi', False):
@@ -433,6 +440,9 @@ class PlotWindow(PlotWidget.PlotWidget):
         elif self.gridLevel == 2:
             self.showGrid(2)
         self.replot()
+
+    def _energyIconSignal(self):
+        print("energy icon signal")
 
     def _fitIconSignal(self):
         print("fit icon signal")

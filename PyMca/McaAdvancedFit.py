@@ -42,18 +42,15 @@ else:
 
 QTVERSION = qt.qVersion()
 
+from PyMca import QPyMcaMatplotlibSave1D
+MATPLOTLIB = True
+#force understanding of utf-8 encoding
+#otherways it cannot generate svg output
 try:
-    from PyMca import QPyMcaMatplotlibSave1D
-    MATPLOTLIB = True
-    #force understanding of utf-8 encoding
-    #otherways it cannot generate svg output
-    try:
-        import encodings.utf_8
-    except:
-        #not a big problem
-        pass
+    import encodings.utf_8
 except:
-    MATPLOTLIB = False
+    #not a big problem
+    pass
 
 from PyMca import ClassMcaTheory
 from PyMca import FitParam
@@ -61,7 +58,9 @@ from PyMca import McaAdvancedTable
 from PyMca import QtMcaAdvancedFitReport
 from PyMca import ConcentrationsWidget
 from PyMca import ConcentrationsTool
-from PyMca import QtBlissGraph
+from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend
+from PyMca.widgets import PlotWindow
+from PyMca.widgets import ScanWindow
 from PyMca.PyMca_Icons import IconDict
 from PyMca import McaCalWidget
 from PyMca import PeakIdentifier
@@ -111,22 +110,17 @@ class McaAdvancedFit(qt.QWidget):
     """
     def __init__(self, parent=None, name="PyMca - McaAdvancedFit",fl=0,
                  sections=None, top=True, margin=11, spacing=6):
-                #fl=qt.Qt.WDestructiveClose):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self, parent, name,fl)
-            self.setCaption(name)
-            self.setIcon(qt.QPixmap(IconDict['gioconda16']))
-        else:
-            qt.QWidget.__init__(self, parent)
-            self.setWindowTitle(name)
-            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle(name)
+        self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.lastInputDir = None
         self.configDialog = None
         self.matplotlibDialog = None
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(margin)
+        self.mainLayout.setContentsMargins(margin, margin, margin, margin)
         self.mainLayout.setSpacing(0)
-        if sections is None:sections=["TABLE"]
+        if sections is None:
+            sections=["TABLE"]
         self.headerLabel = qt.QLabel(self)
         self.mainLayout.addWidget(self.headerLabel)
 
@@ -164,26 +158,13 @@ class McaAdvancedFit(qt.QWidget):
             #self.graphToolbar  = qt.QHBox(self.tabGraph)
             self.graphWindow = McaGraphWindow(self.tabGraph)
             tabGraphLayout.addWidget(self.graphWindow)
-            self.graph = self.graphWindow.graph
-            self.graph.xlabel('Channel')
-            self.graph.ylabel('Counts')
-            self.graph.canvas().setMouseTracking(1)
-            self.graph.setCanvasBackground(qt.Qt.white)
-            if QTVERSION < '4.0.0':
-                self.mainTab.insertTab(self.tabGraph,"GRAPH")
-                qt.QObject.connect(self.graphWindow,
-                                   qt.PYSIGNAL('McaGraphSignal'),
-                                   self._mcaGraphSignalSlot)
-            else:
-                self.mainTab.addTab(self.tabGraph,"GRAPH")
-                qt.QObject.connect(self.graphWindow,
-                                   qt.SIGNAL('McaGraphSignal'),
-                                   self._mcaGraphSignalSlot)
+            self.graph = self.graphWindow
+            self.graph.setGraphXLabel('Channel')
+            self.graph.setGraphYLabel('Counts')
+            self.mainTab.addTab(self.tabGraph,"GRAPH")
+            self.graphWindow.sigPlotSignal.connect(self._mcaGraphSignalSlot)
             #table
-            if QTVERSION < '4.0.0':
-                self.tabMca  = qt.QWidget(self.mainTab)
-            else:
-                self.tabMca  = qt.QWidget()
+            self.tabMca  = qt.QWidget()
             tabMcaLayout = qt.QVBoxLayout(self.tabMca)
             tabMcaLayout.setMargin(margin)
             tabMcaLayout.setSpacing(spacing)
@@ -191,33 +172,18 @@ class McaAdvancedFit(qt.QWidget):
             line = Line(w, info="TABLE")
             tabMcaLayout.addWidget(line)
 
-            if QTVERSION < '4.0.0':
-                qt.QToolTip.add(line,"DoubleClick toggles floating window mode")
-            else:
-                line.setToolTip("DoubleClick toggles floating window mode")
+            line.setToolTip("DoubleClick toggles floating window mode")
 
-            if QTVERSION < '4.0.0':
-                self.mcatable  = McaAdvancedTable.McaTable(w)
-                tabMcaLayout.addWidget(self.mcatable)
-                self.mainTab.insertTab(w,"TABLE")
-                self.connect(line,qt.PYSIGNAL("LineDoubleClickEvent"),
-                                self._tabReparent)
-                self.connect(self.mcatable,qt.PYSIGNAL("closed"),
-                                self._mcatableClose)
-            else:
-                self.mcatable  = McaAdvancedTable.McaTable(w)
-                tabMcaLayout.addWidget(self.mcatable)
-                self.mainTab.addTab(w,"TABLE")
-                self.connect(line,qt.SIGNAL("LineDoubleClickEvent"),
-                                self._tabReparent)
-                self.connect(self.mcatable,qt.SIGNAL("closed"),
-                                self._mcatableClose)
+            self.mcatable  = McaAdvancedTable.McaTable(w)
+            tabMcaLayout.addWidget(self.mcatable)
+            self.mainTab.addTab(w,"TABLE")
+            self.connect(line,qt.SIGNAL("LineDoubleClickEvent"),
+                            self._tabReparent)
+            self.connect(self.mcatable,qt.SIGNAL("closed"),
+                            self._mcatableClose)
 
             #concentrations
-            if QTVERSION < '4.0.0':
-                self.tabConcentrations  = qt.QWidget(self.mainTab,"tabConcentrations")
-            else:
-                self.tabConcentrations  = qt.QWidget()
+            self.tabConcentrations  = qt.QWidget()
             tabConcentrationsLayout = qt.QVBoxLayout(self.tabConcentrations)
             tabConcentrationsLayout.setMargin(margin)
             tabConcentrationsLayout.setSpacing(0)
@@ -226,33 +192,18 @@ class McaAdvancedFit(qt.QWidget):
             tabConcentrationsLayout.addWidget(line2)
             tabConcentrationsLayout.addWidget(self.concentrationsWidget)
 
-
-            if QTVERSION < '4.0.0':
-                self.mainTab.insertTab(self.tabConcentrations,"CONCENTRATIONS")
-                qt.QToolTip.add(line2,"DoubleClick toggles floating window mode")
-                self.connect(self.concentrationsWidget,
-                            qt.PYSIGNAL("ConcentrationsSignal"),
-                            self.__configureFromConcentrations)
-                self.connect(line2,qt.PYSIGNAL("LineDoubleClickEvent"),
-                                self._tabReparent)
-                self.connect(self.concentrationsWidget,qt.PYSIGNAL("closed"),
-                                self._concentrationsWidgetClose)
-            else:
-                self.mainTab.addTab(self.tabConcentrations,"CONCENTRATIONS")
-                line2.setToolTip("DoubleClick toggles floating window mode")
-                self.connect(self.concentrationsWidget,
-                            qt.SIGNAL("ConcentrationsSignal"),
-                            self.__configureFromConcentrations)
-                self.connect(line2,qt.SIGNAL("LineDoubleClickEvent"),
-                                self._tabReparent)
-                self.connect(self.concentrationsWidget,qt.SIGNAL("closed"),
-                                self._concentrationsWidgetClose)
+            self.mainTab.addTab(self.tabConcentrations,"CONCENTRATIONS")
+            line2.setToolTip("DoubleClick toggles floating window mode")
+            self.connect(self.concentrationsWidget,
+                        qt.SIGNAL("ConcentrationsSignal"),
+                        self.__configureFromConcentrations)
+            self.connect(line2,qt.SIGNAL("LineDoubleClickEvent"),
+                            self._tabReparent)
+            self.connect(self.concentrationsWidget,qt.SIGNAL("closed"),
+                            self._concentrationsWidgetClose)
 
             #diagnostics
-            if QTVERSION < '4.0.0':
-                self.tabDiagnostics  = qt.QWidget(self.mainTab)
-            else:
-                self.tabDiagnostics  = qt.QWidget()
+            self.tabDiagnostics  = qt.QWidget()
             tabDiagnosticsLayout = qt.QVBoxLayout(self.tabDiagnostics)
             tabDiagnosticsLayout.setMargin(margin)
             tabDiagnosticsLayout.setSpacing(spacing)
@@ -261,32 +212,17 @@ class McaAdvancedFit(qt.QWidget):
             self.diagnosticsWidget.setReadOnly(1)
 
             tabDiagnosticsLayout.addWidget(self.diagnosticsWidget)
-            if QTVERSION < '4.0.0':
-                self.mainTab.insertTab(w,"DIAGNOSTICS")
-                self.connect(self.mainTab, qt.SIGNAL('currentChanged(QWidget *)'),
-                             self._tabChanged)
-            else:
-                self.mainTab.addTab(w,"DIAGNOSTICS")
-                self.connect(self.mainTab, qt.SIGNAL('currentChanged(int)'),
-                             self._tabChanged)
+            self.mainTab.addTab(w,"DIAGNOSTICS")
+            self.connect(self.mainTab, qt.SIGNAL('currentChanged(int)'),
+                         self._tabChanged)
 
 
         self._logY       = False
         self._energyAxis = False
-        if QTVERSION < '4.0.0' :
-            self.__printmenu = qt.QPopupMenu()
-            self.__printmenu.insertItem(QString("Calibrate"),     self._calibrate)
-            self.__printmenu.insertItem(QString("Identify Peaks"),self.__peakIdentifier)
-            self.__printmenu.insertItem(QString("Elements Info"), self.__elementsInfo)
-            #self.__printmenu.insertItem(QString("Concentrations"),self.concentrations)
-            #self.__printmenu.insertItem(QString("Spectrum from Matrix"),self.matrixSpectrum)
-            #self.__printmenu.insertItem(QString("Print Table"),self.printps)
-            #self.__printmenu.insertItem(QString("HTML Report"),self.htmlReport)
-        else:
-            self.__printmenu = qt.QMenu()
-            self.__printmenu.addAction(QString("Calibrate"),     self._calibrate)
-            self.__printmenu.addAction(QString("Identify Peaks"),self.__peakIdentifier)
-            self.__printmenu.addAction(QString("Elements Info"), self.__elementsInfo)
+        self.__printmenu = qt.QMenu()
+        self.__printmenu.addAction(QString("Calibrate"),     self._calibrate)
+        self.__printmenu.addAction(QString("Identify Peaks"),self.__peakIdentifier)
+        self.__printmenu.addAction(QString("Elements Info"), self.__elementsInfo)
         self.outdir      = None
         self.configDir   = None
         self.__lastreport= None
@@ -558,7 +494,7 @@ class McaAdvancedFit(qt.QWidget):
             dialog.close()
             #del dialog
 
-        self.graph.removeMarkers()
+        self.graph.clearMarkers()
         self.graph.replot()
         self.__fitdone = False
         self._concentrationsDict = None
@@ -612,11 +548,12 @@ class McaAdvancedFit(qt.QWidget):
 
         #update graph
         delcurves = []
-        for key in self.graph.curves.keys():
+        curveList = self.graph.getAllCurves(just_legend=True)
+        for key in curveList:
             if key not in ["Data"]:
                 delcurves.append(key)
         for key in delcurves:
-            self.graph.delcurve(key)
+            self.graph.removeCurve(key)
 
         if not justupdate:
             self.plot()
@@ -645,7 +582,7 @@ class McaAdvancedFit(qt.QWidget):
         self.__anasignal(ddict)
 
     def __showElementMarker(self, dict):
-        self.graph.removeMarkers()
+        self.graph.clearMarkers()
         ele = dict['current']
         items = []
         if not (ele in dict):
@@ -661,7 +598,7 @@ class McaAdvancedFit(qt.QWidget):
         xdata  = self.mcafit.xdata * 1.0
         xmin = xdata[0]
         xmax = xdata[-1]
-        ymin,ymax = self.graph.getY1AxisLimits()
+        ymin,ymax = self.graph.getGraphYLimits()
         calib = [config['detector'] ['zero'], config['detector'] ['gain']]
         for transition,energy,rate in items:
             marker = ""
@@ -669,15 +606,13 @@ class McaAdvancedFit(qt.QWidget):
             if (x < xmin) or (x > xmax):continue
             if not self._energyAxis:
                 if abs(calib[1]) > 0.0000001:
-                    marker=self.graph.insertX1Marker(x,
-                                                     ymax*rate,
-                                                     label=transition)
+                    marker=self.graph.insertXMarker(x,
+                                                    label=transition,
+                                                    color='orange')
             else:
-                marker=self.graph.insertX1Marker(energy,
-                                                 ymax*rate,
-                                                 label=transition)
-            if marker is not "":
-                self.graph.setmarkercolor(marker,'orange')
+                marker=self.graph.insertXMarker(energy,
+                                                label=transition,
+                                                color='orange')
         self.graph.replot()
 
     def _updateTop(self):
@@ -1045,7 +980,7 @@ class McaAdvancedFit(qt.QWidget):
 
     def __clearPeaksSpectrum(self):
         delcurves = []
-        for key in self.graph.curves.keys():
+        for key in self.graph.getAllCurves(just_legend=True):
             if key not in ["Data", "Fit", "Continuum", "Pile-up", "Matrix"]:
                 if key.startswith('MC Matrix'):
                     if self._xrfmcMatrixSpectra in [None, []]:
@@ -1053,7 +988,7 @@ class McaAdvancedFit(qt.QWidget):
                 else:
                     delcurves.append(key)
         for key in delcurves:
-            self.graph.delcurve(key)
+            self.graph.removeCurve(key)
 
     def matrixSpectrum(self):
         if not self.__fitdone:
@@ -1063,10 +998,7 @@ class McaAdvancedFit(qt.QWidget):
             text+= "in order to calculate the spectrum derived from the matrix.\n"
             text+= "Background and detector parameters are taken from last fit"
             msg.setText(text)
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             return
         #fitresult = self.dict['result']
         fitresult = self.dict
@@ -1169,10 +1101,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Sorry, current implementation requires you to perform a fit first\n"
             msg.setText(text)
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             return
         fitresult = self.dict
         self._xrfmcMatrixSpectra = None
@@ -1852,10 +1781,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error filling Table: %s" % (sys.exc_info()[1]))
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 return
         dict={}
         dict['event']     = "McaAdvancedFitFinished"
@@ -1871,8 +1797,8 @@ class McaAdvancedFit(qt.QWidget):
         if self.matrixSpectrumButton.isChecked():
             self.matrixSpectrum()
         else:
-            if "Matrix" in self.graph.curves.keys():
-                self.graph.delcurve("Matrix")
+            if "Matrix" in self.graph.getAllCurves(just_legend=True):
+                self.graph.removeCurve("Matrix")
 
         # clear the Monte Carlo spectra (if any)
         self._xrfmcMatrixSpectra = None
@@ -1897,10 +1823,7 @@ class McaAdvancedFit(qt.QWidget):
                             msg = qt.QMessageBox(self)
                             msg.setIcon(qt.QMessageBox.Critical)
                             msg.setText("Concentrations Error: %s" % (sys.exc_info()[1]))
-                            if QTVERSION < '4.0.0':
-                                msg.exec_loop()
-                            else:
-                                msg.exec_()
+                            msg.exec_()
                             return
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'DIAGNOSTICS':
             try:
@@ -1909,10 +1832,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Diagnostics Error: %s" % (sys.exc_info()[1]))
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 return
 
         return self.__anasignal(dict)
@@ -1958,10 +1878,10 @@ class McaAdvancedFit(qt.QWidget):
     def toggleEnergyAxis(self, dict=None):
         if self._energyAxis:
             self._energyAxis = False
-            self.graph.xlabel('Channel')
+            self.graph.setGraphXLabel('Channel')
         else:
             self._energyAxis = True
-            self.graph.xlabel('Energy')
+            self.graph.setGraphXLabel('Energy')
         self.plot()
 
     def toggleLogY(self, dict=None):
@@ -1974,26 +1894,14 @@ class McaAdvancedFit(qt.QWidget):
             self.plot()
             self.graph.ToggleLogY()
 
-    def plot(self, dict=None):
+    def plot(self, ddict=None):
         if self._logY:
             logfilter = 1
         else:
             logfilter = 0
         config = self.mcafit.configure()
-        if dict is None:
+        if ddict is None:
             if not self.__fitdone:
-                #color counter
-                self.graph.color   = 0
-                #symbol counter
-                self.graph.symbol  = 0
-                #line type
-                self.graph.linetype= 0
-                for key in list(self.graph.curves.keys()):
-                    if key not in ["Data"]:
-                        self.graph.delcurve(key)
-                    else:
-                        self.graph.color   = 1
-
                 #just the data
                 xdata  = self.mcafit.xdata * 1.0
                 if self._energyAxis:
@@ -2004,40 +1912,33 @@ class McaAdvancedFit(qt.QWidget):
                     ydata  = self.mcafit.ydata * 1.0
                 xdata.shape= [len(xdata),]
                 ydata.shape= [len(ydata),]
-                self.graph.newCurve("Data",xdata,
-                                           ydata,logfilter=logfilter)
-                self.graph.replot()
+                self.graph.addCurve(xdata, ydata, legend="Data", replot=True, replace=True)
                 return
             else:
-                dict = self.dict
+                ddict = self.dict
         if self._energyAxis:
-            xdata = dict['result']['energy'][:]
+            xdata = ddict['result']['energy'][:]
         else:
-            xdata = dict['result']['xdata'][:]
-        self.graph.newCurve("Data",xdata,
-                                   dict['result']['ydata'],logfilter=logfilter)
-        self.graph.newCurve("Fit", xdata,
-                                   dict['result']['yfit'],logfilter=logfilter)
-        self.graph.newCurve("Continuum",xdata,
-                                   dict['result']['continuum'],logfilter=logfilter)
+            xdata = ddict['result']['xdata'][:]
+        self.graph.addCurve(xdata, ddict['result']['ydata'], legend="Data", replot=False)
+        self.graph.addCurve(xdata, ddict['result']['yfit'], legend="Fit", replot=True)
+        self.graph.addCurve(xdata, ddict['result']['continuum'], legend="Continuum", replot=True)
+
+        curveList = self.graph.getAllCurves(just_legend=True)
 
         if config['fit']['sumflag']:
-            self.graph.newCurve("Pile-up", xdata,
-                                       dict['result']['pileup']+dict['result']['continuum'],
-                                       logfilter=logfilter)
-        elif "Pile-up" in self.graph.curves.keys():
-            self.graph.delcurve("Pile-up")
+            self.graph.addCurve(xdata, ddict['result']['pileup'] + ddict['result']['continuum'],
+                                legend="Pile-up", replot=True)
+        elif "Pile-up" in curveList:
+            self.graph.removeCurve("Pile-up", replot=True)
 
         if self.matrixSpectrumButton.isChecked():
-            if 'ymatrix' in dict['result']:
-                self.graph.newCurve("Matrix",xdata, dict['result']['ymatrix'],
-                                    logfilter=logfilter)
+            if 'ymatrix' in ddict['result']:
+                self.graph.addCurve(xdata, ddict['result']['ymatrix'], legend="Matrix")
             else:
-                if "Matrix" in self.graph.curves.keys():
-                    self.graph.delcurve("Matrix")
+                self.graph.removeCurve("Matrix")
         else:
-            if "Matrix" in self.graph.curves.keys():
-                self.graph.delcurve("Matrix")
+            self.graph.removeCurve("Matrix")
 
         if self._xrfmcMatrixSpectra is not None:
             if len(self._xrfmcMatrixSpectra):
@@ -2047,34 +1948,36 @@ class McaAdvancedFit(qt.QWidget):
                     mcxdata = self._xrfmcMatrixSpectra[0]
                 mcydata0 = self._xrfmcMatrixSpectra[2]
                 mcydatan = self._xrfmcMatrixSpectra[-1]
-                self.graph.newCurve('MC Matrix 1',
-                                    mcxdata,
+                self.graph.addCurve(mcxdata,
                                     mcydata0,
-                                    logfilter=logfilter)
-                self.graph.newCurve('MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
-                                    mcxdata,
+                                    legend='MC Matrix 1',
+                                    replot=False)
+                self.graph.addCurve(mcxdata,
                                     mcydatan,
-                                    logfilter=logfilter)
+                                    legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
+                                    replot=True)
 
         if self.peaksSpectrumButton.isChecked():
             keep = ['Data','Fit','Continuum','Matrix','Pile-up']
-            for group in dict['result']['groups']:
+            for group in ddict['result']['groups']:
                 keep += ['y'+group]
-            for key in list(self.graph.curves.keys()):
+            for key in curveList:
                 if key not in keep:
                     if key.startswith('MC Matrix'):
                         if self._xrfmcMatrixSpectra in [None, []]:
-                            self.graph.delcurve(key)
+                            self.graph.removeCurve(key)
                     else:
-                        self.graph.delcurve(key)
-            for group in dict['result']['groups']:
+                        self.graph.removeCurve(key)
+            for group in ddict['result']['groups']:
                 label = 'y'+group
-                if label in dict['result']:
-                    self.graph.newCurve(label,xdata, dict['result'][label],
-                                    logfilter=logfilter)
+                if label in ddict['result']:
+                    self.graph.addCurve(xdata,
+                                        ddict['result'][label],
+                                        legend=label,
+                                        replot=False)
                 else:
-                    if group in self.graph.curves.keys():
-                        self.graph.delcurve(label)
+                    if group in curveList:
+                        self.graph.removeCurve(label)
         else:
             self.__clearPeaksSpectrum()
 
@@ -2761,346 +2664,50 @@ class SimpleThread(qt.QThread):
             self._result = ("Exception",) + sys.exc_info()
 
 
-class McaGraphWindow(qt.QWidget):
-    def __init__(self, parent=None, name="Toolbar",fl=0):
-        qt.QWidget.__init__(self,parent)
-        layout = qt.QVBoxLayout(self)
-        layout.setMargin(0)
-        layout.setSpacing(0)
-        self.toolbar = qt.QWidget(self)
-        self.toolbar.layout = qt.QHBoxLayout(self.toolbar)
-        self.toolbar.layout.setMargin(0)
-        self.toolbar.layout.setSpacing(0)
-        self.graph   = QtBlissGraph.QtBlissGraph(self)
-        self.graph.setPanningMode(True)
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.graph)
-        self.initToolBar()
-        if QTVERSION < '4.0.0':
-            self.connect(self.graph,
-                         qt.PYSIGNAL('QtBlissGraphSignal'),
-                         self.__graphSignal)
-        else:
-            self.connect(self.graph,
-                         qt.SIGNAL('QtBlissGraphSignal'),
-                         self.__graphSignal)
-
+class McaGraphWindow(PlotWindow.PlotWindow):
+    def __init__(self, parent=None, backend=None, plugins=False, newplot=False, **kw):
+        if backend is None:
+            backend = MatplotlibBackend
+        super(McaGraphWindow, self).__init__(parent, backend=backend,
+                                       plugins=plugins,
+                                       newplot=newplot,
+                                       energy=True,
+                                       roi=True,
+                                       logx=False,
+                                       **kw)
+        self.sigPlotSignal.connect(self.__graphSignal)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-        if DEBUG:
-            print("printPreview id = ", id(self.printPreview))
-
-    def __roiSlot(self,dict=None):
-        if dict is None:
-            self.roimarkers = [-1, -1]
-            self.roilist    = ['Integral']
-            self.roidict    = {}
-            self.roidict['Integral'] = {'type':'Default',
-                                        'from':0,'to':-1}
-            self.currentroi = None
-            self.roiwidget.fillfromroidict(roilist=self.roilist,
-                                       roidict=self.roidict)
-        elif dict['event'] == 'AddROI':
-            xmin,xmax = self.graph.getx1axislimits()
-            fromdata = xmin+ 0.25 * (xmax - xmin)
-            todata   = xmin+ 0.75 * (xmax - xmin)
-            if self.roimarkers[0] < 0:
-                self.roimarkers[0] = self.graph.insertx1marker(fromdata,1.1,
-                                        label = 'ROI min')
-            if self.roimarkers[1] < 0:
-                self.roimarkers[1] = self.graph.insertx1marker(todata,1.1,
-                                        label = 'ROI max')
-            self.graph.setmarkercolor(self.roimarkers[0],'blue')
-            self.graph.setmarkercolor(self.roimarkers[1],'blue')
-            self.graph.replot()
-            #if self.roilist is None:
-            self.roilist,self.roidict = self.roiwidget.getroilistanddict()
-            nrois = len(self.roilist)
-            for i in range(nrois):
-                i += 1
-                newroi = "newroi %d" % i
-                if newroi not in self.roilist:
-                    break
-            self.roilist.append(newroi)
-            self.roidict[newroi] = {}
-            self.roidict[newroi]['type']    = str(self.graph.xlabel())
-            self.roidict[newroi]['from']    = fromdata
-            self.roidict[newroi]['to']      = todata
-            self.roiwidget.fillfromroidict(roilist=self.roilist,
-                                           roidict=self.roidict,
-                                           currentroi=newroi)
-            self.currentroi = newroi
-
-        elif dict['event'] == 'DelROI':
-            self.roilist,self.roidict = self.roiwidget.getroilistanddict()
-            self.currentroi = self.roidict.keys()[0]
-            self.roiwidget.fillfromroidict(roilist=self.roilist,
-                                           roidict=self.roidict,
-                                           currentroi=self.currentroi)
-
-        elif dict['event'] == 'ResetROI':
-            self.roilist,self.roidict = self.roiwidget.getroilistanddict()
-            self.currentroi = self.roidict.keys()[0]
-            self.roiwidget.fillfromroidict(roilist=self.roilist,
-                                           roidict=self.roidict,
-                                           currentroi=self.currentroi)
-            self.graph.clearmarkers()
-        elif dict['event'] == 'ActiveROI':
-            print("ActiveROI event")
-            pass
-        ndict = {}
-        ndict['event']  = "SetActiveCurveEvent"
-        self.__graphSignal(ndict)
-
-    def initIcons(self):
-        if QTVERSION > '4.0.0':qt.QIconSet = qt.QIcon
-        self.normalIcon = qt.QIconSet(qt.QPixmap(IconDict["normal"]))
-        self.zoomIcon   = qt.QIconSet(qt.QPixmap(IconDict["zoom"]))
-        self.roiIcon    = qt.QIconSet(qt.QPixmap(IconDict["roi"]))
-        self.peakIcon   = qt.QIconSet(qt.QPixmap(IconDict["peak"]))
-
-        self.zoomResetIcon  = qt.QIconSet(qt.QPixmap(IconDict["zoomreset"]))
-        self.roiResetIcon   = qt.QIconSet(qt.QPixmap(IconDict["roireset"]))
-        self.peakResetIcon  = qt.QIconSet(qt.QPixmap(IconDict["peakreset"]))
-        self.refreshIcon    = qt.QIconSet(qt.QPixmap(IconDict["reload"]))
-
-        self.logxIcon   = qt.QIconSet(qt.QPixmap(IconDict["logx"]))
-        self.logyIcon   = qt.QIconSet(qt.QPixmap(IconDict["logy"]))
-        self.energyIcon = qt.QIconSet(qt.QPixmap(IconDict["energy"]))
-        self.xAutoIcon  = qt.QIconSet(qt.QPixmap(IconDict["xauto"]))
-        self.yAutoIcon  = qt.QIconSet(qt.QPixmap(IconDict["yauto"]))
-        self.fitIcon    = qt.QIconSet(qt.QPixmap(IconDict["fit"]))
-        self.deriveIcon = qt.QIconSet(qt.QPixmap(IconDict["derive"]))
-        self.saveIcon   = qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
-        self.printIcon  = qt.QIconSet(qt.QPixmap(IconDict["fileprint"]))
-        self.searchIcon = qt.QIconSet(qt.QPixmap(IconDict["peaksearch"]))
-
-
-    def initToolBar(self):
-        toolbar = self.toolbar
-        self.initIcons()
-        # AutoScale
-        self._addToolButton(self.zoomResetIcon,
-                            self.graph.ResetZoom,
-                            'Auto-Scale the Graph')
-
-        #y Autoscale
-        self._addToolButton(self.yAutoIcon,
-                            self._yAutoScaleToggle,
-                            'Toggle Autoscale Y Axis (On/Off)',
-                            toggle=1,
-                            state=1)
-
-        #x Autoscale
-        self._addToolButton(self.xAutoIcon,
-                            self._xAutoScaleToggle,
-                            'Toggle Autoscale X Axis (On/Off)',
-                            toggle=True,
-                            state=1)
-        # Logarithmic
-        self._addToolButton(self.logyIcon,
-                            self._logIconSignal,
-                            'Toggle Logarithmic Y Axis (On/Off)',
-                            toggle=True)
-
-        # Energy
-        self._addToolButton(self.energyIcon,
-                            self._energyIconSignal,
-                            'Toggle Energy Axis (On/Off)',
-                            toggle=True)
-        # Fit
-        self._addToolButton(self.fitIcon,
-                            self._fitIconSignal,
-                            'Fit Again!')
-
-        # ROI
-        self.roiwidget = None
-        """
-        self._initRoi()
-        self.roiwidget.hide()
-        tb      = qt.QToolButton(toolbar)
-        tb.setIconSet(self.roiIcon)
-        self.connect(tb,qt.SIGNAL('clicked()'),self._roiIconSignal)
-        qt.QToolTip.add(tb,'Show ROI Widget')
-        """
-
-        #save
-        self._addToolButton(self.saveIcon,
-                            self._saveIconSignal,
-                            'Save Curves')
-
-        # Search
-        """
-        tb      = qt.QToolButton(toolbar)
-        tb.setIconSet(self.searchIcon)
-        self.connect(tb,qt.SIGNAL('clicked()'),self.peaksearch)
-        qt.QToolTip.add(tb,'Clear Peak Table and Search Peaks')
-        # Marker
-        self.markerButton      = qt.QToolButton(toolbar)
-        self.markerButton.setIconSet(self.normalIcon)
-        self.markerButton.setToggleButton(1)
-        self.connect(self.markerButton,qt.SIGNAL('clicked()'),self.__peakmarkermode)
-        qt.QToolTip.add(self.markerButton,'Allow Right-Click Peak Selection from Graph')
-        """
-        self.toolbar.layout.addWidget(qt.HorizontalSpacer(toolbar))
-        label=qt.QLabel(toolbar)
-        #label.setText('<b>Channel:</b>')
-        label.setText('<b>X:</b>')
-        self.xpos = qt.QLineEdit(toolbar)
-        self.xpos.setText('------')
-        self.xpos.setReadOnly(1)
-        self.xpos.setFixedWidth(self.xpos.fontMetrics().width('#########'))
-        self.toolbar.layout.addWidget(label)
-        self.toolbar.layout.addWidget(self.xpos)
-
-        label=qt.QLabel(toolbar)
-        label.setText('<b>Y:</b>')
-        self.ypos = qt.QLineEdit(toolbar)
-        self.ypos.setText('------')
-        self.ypos.setReadOnly(1)
-        self.ypos.setFixedWidth(self.ypos.fontMetrics().width('############'))
-        self.toolbar.layout.addWidget(label)
-        self.toolbar.layout.addWidget(self.ypos)
-
-        """
-        label=qt.QLabel(toolbar)
-        label.setText('<b>Energy:</b>')
-        self.epos = qt.QLineEdit(toolbar)
-        self.epos.setText('------')
-        self.epos.setReadOnly(1)
-        self.epos.setFixedWidth(self.epos.fontMetrics().width('########'))
-        """
-        self.toolbar.layout.addWidget(qt.HorizontalSpacer(toolbar))
-        # ---print
-        if 0:
-            self._addToolButton(self.printIcon,
-                            self.graph.printps,
-                            'Prints the Graph')
-        else:
-            tb = self._addToolButton(self.printIcon,
-                    self.printGraph,
-                    'Print the graph')
-            toolbar.layout.addWidget(tb)
 
     def printGraph(self):
         pixmap = qt.QPixmap.grabWidget(self.graph)
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
             self.printPreview.show()
-        if QTVERSION < '4.0.0':
-            self.printPreview.raiseW()
-        else:
-            self.printPreview.raise_()
-
-    def _addToolButton(self, icon, action, tip, toggle=None, state=None):
-            toolbar = self.toolbar
-            tb      = qt.QToolButton(toolbar)
-            if QTVERSION < '4.0.0':
-                tb.setIconSet(icon)
-                qt.QToolTip.add(tb,tip)
-                if toggle is not None:
-                    if toggle:
-                        tb.setToggleButton(1)
-                        if state is not None:
-                            if state:
-                                tb.setState(qt.QButton.On)
-
-            else:
-                tb.setIcon(icon)
-                tb.setToolTip(tip)
-                if toggle is not None:
-                    if toggle:
-                        tb.setCheckable(1)
-                        if state is not None:
-                            if state:
-                                tb.setChecked(state)
-                        else:
-                            tb.setChecked(False)
-            self.toolbar.layout.addWidget(tb)
-            self.connect(tb,qt.SIGNAL('clicked()'), action)
-            return tb
-
-    def _yAutoScaleToggle(self):
-        if self.graph.yAutoScale:
-            self.graph.yAutoScale = False
-        else:
-            self.graph.yAutoScale = True
-
-    def _xAutoScaleToggle(self):
-        if self.graph.xAutoScale:
-            self.graph.xAutoScale = False
-        else:
-            self.graph.xAutoScale = True
+        self.printPreview.raise_()
 
     def _energyIconSignal(self):
-        legend = self.graph.getactivecurve(justlegend=1)
+        legend = self.getActiveCurve(just_legend=True)
         ddict={}
         ddict['event']  = 'EnergyClicked'
         ddict['active'] = legend
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'), (ddict,))
-        else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
-
-    def _logIconSignal(self):
-        legend = self.graph.getactivecurve(justlegend=1)
-        ddict={}
-        ddict['event']  = 'LogClicked'
-        ddict['active'] = legend
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'), (ddict,))
-        else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
+        self.sigPlotSignal.emit(ddict)
 
     def _fitIconSignal(self):
-        legend = self.graph.getactivecurve(justlegend=1)
+        legend = self.getActiveCurve(just_legend=True)
         ddict={}
         ddict['event']  = 'FitClicked'
         ddict['active'] = legend
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'),(ddict,))
-        else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
-
-    def _initRoi(self):
-        raise NotImplemented("ROIs not implemented in this module (yet?)")
-        # McaROIwidget is unknown: This method is part of a not finished
-        # project of adding ROI selection capabilities to this module.
-        self.roiwidget = McaROIWidget.McaROIWidget(None)
-        if QTVERSION < '4.0.0':
-            self.connect(self.roiwidget,qt.PYSIGNAL("McaROIWidgetSignal"),
-                     self.__roiSlot)
-        else:
-            self.connect(self.roiwidget,qt.SIGNAL("McaROIWidgetSignal"),
-                     self.__roiSlot)
-        self.__roiSlot()
-
-    def _roiIconSignal(self):
-        if self.roiwidget is None:self._initRoi()
-        if self.roiwidget.isHidden():self.roiwidget.show()
-        if QTVERSION < '4.0.0':
-            self.roiwidget.raiseW()
-        else:
-            self.roiwidget.raise_()
-        legend = self.graph.getactivecurve(justlegend=1)
-        ddict={}
-        ddict['event']  = 'RoiClicked'
-        ddict['active'] = legend
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'), (ddict,))
-        else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
+        self.sigPlotSignal.emit(ddict)
 
     def _saveIconSignal(self):
-        legend = self.graph.getactivecurve(justlegend=1)
+        legend = self.getActiveCurve(just_legend=True)
         ddict={}
         ddict['event']  = 'SaveClicked'
         ddict['active'] = legend
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaGraphSignal'), (ddict,))
-        else:
-            self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
+        self.sigPlotSignal.emit(ddict)
 
     def __graphSignal(self, dict):
+        return
         if dict['event'] == 'MouseAt':
             self.xpos.setText('%.4g' % dict['x'])
             self.ypos.setText('%.5g' % dict['y'])
@@ -3159,7 +2766,7 @@ class McaGraphWindow(qt.QWidget):
 
 
 def test(file='03novs060sum.mca'):
-    import specfilewrapper as specfile
+    from PyMca.PyMcaIO import specfilewrapper as specfile
     app = qt.QApplication([])
     app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
     sf=specfile.Specfile(file)
@@ -3171,17 +2778,12 @@ def test(file='03novs060sum.mca'):
     xmin = demo.mcafit.config['fit']['xmin']
     xmax = demo.mcafit.config['fit']['xmax']
     demo.setData(x,y0,xmin=xmin,xmax=xmax,sourcename=file)
-    if QTVERSION < '4.0.0':
-        app.setMainWidget(demo)
-        demo.show()
-        app.exec_loop()
-    else:
-        #This illustrates how to change the configuration
-        #oldConfig = demo.configure()
-        #oldConfig['fit']['xmin'] = 123
-        #demo.configure(oldConfig)
-        demo.show()
-        app.exec_()
+    #This illustrates how to change the configuration
+    #oldConfig = demo.configure()
+    #oldConfig['fit']['xmin'] = 123
+    #demo.configure(oldConfig)
+    demo.show()
+    app.exec_()
 
 
 def main():
