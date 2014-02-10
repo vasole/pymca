@@ -1273,6 +1273,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 label = line2d.get_label()
                 if label.startswith("__MARKER__"):
                     #it is a marker
+                    if hasattr(line2d, "_infoText"):
+                        line2d._infoText.remove()    
                     line2d.remove()
                     del line2d
 
