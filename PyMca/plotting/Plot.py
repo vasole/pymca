@@ -779,9 +779,9 @@ class Plot(PlotBase.PlotBase):
             for image in self._imageDict.keys():
                 self._plot.removeImage(image[1])
         if hasattr(self._plot, 'replot_'):
-            plot = self._plot.replot_
+            self._plot.replot_()
         else:
-            plot = self._plot.replot        
+            self._plot.replot()
 
     def clear(self):
         self._curveList = []
