@@ -41,16 +41,15 @@ from PyMca import ConcentrationsWidget
 from PyMca import EnergyTable
 from PyMca import PyMcaDirs
 XRFMC_FLAG = False
-if QTVERSION > '4.0.0':
-    try:
-        import PyMca.XRFMC.XRFMCPyMca as XRFMCPyMca
-        XRFMC_FLAG = True
-    except ImportError:
-        # no XRFMC support
-        pass
-    from PyMca import StripBackgroundWidget
-    from PyMca import ScanWindow
-    import numpy
+try:
+    import PyMca.XRFMC.XRFMCPyMca as XRFMCPyMca
+    XRFMC_FLAG = True
+except ImportError:
+    # no XRFMC support
+    pass
+from PyMca import StripBackgroundWidget
+from PyMca.widgets import ScanWindow
+import numpy
 
 DEBUG = 0
 
@@ -74,7 +73,7 @@ class FitParamWidget(FitParamForm):
         self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
         self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.graphDialog.mainLayout.setSpacing(0)
-        self.graphDialog.graph = ScanWindow.ScanWindow(self.graphDialog)
+        self.graphDialog.graph = ScanWindow.ScanWindow(self.graphDialog, newplot=False, plugins=False, fit=False)
         self.graph = self.graphDialog.graph
         self.graph._togglePointsSignal()
         self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
@@ -87,7 +86,6 @@ class FitParamWidget(FitParamForm):
         self.graphDialog.connect(self.graphDialog.okButton,
                                  qt.SIGNAL('clicked()'),
                                  self.graphDialog.accept)
-        self.graph.fitButton.hide()
         self.attTable = self.tabAttenuators.table
         #self.multilayerTable =self.tabAttenuators.matrixTable
         tabAttLayout.addWidget(self.tabAttenuators,0,0)
