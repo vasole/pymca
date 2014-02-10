@@ -191,6 +191,7 @@ class MatplotlibGraph(FigureCanvas):
         if TK:
             self._canvas = FigureCanvas.__init__(self, self.fig, master=parent)
         else:
+            self._originalCursorShape = QtCore.Qt.ArrowCursor
             self._canvas = FigureCanvas.__init__(self, self.fig)
             # get the default widget color
             color = self.palette().color(self.backgroundRole())
@@ -495,6 +496,8 @@ class MatplotlibGraph(FigureCanvas):
                     ddict['ypixel'] = self._y0Pixel
                     ddict['xdata'] = artist.get_xdata()
                     ddict['ydata'] = artist.get_ydata()
+                    ddict['x'] = artist.get_xdata()[-1]
+                    ddict['y'] = artist.get_ydata()[-1]
                     if button == leftButton:
                         ddict['button'] = "left"
                     else:
