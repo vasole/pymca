@@ -338,7 +338,10 @@ class MatplotlibGraph(FigureCanvas):
                     self._pickingInfo['selectable'] = True
                 else:
                     self._pickingInfo['selectable'] = False
-                self._pickingInfo['infoText'] = artist._infoText
+                if hasattr(artist, "_infoText"):
+                    self._pickingInfo['infoText'] = artist._infoText
+                else:
+                    self._pickingInfo['infoText'] = None
             else:
                 self._pickingInfo['type'] = 'curve' 
                 self._pickingInfo['label'] = label
@@ -468,13 +471,16 @@ class MatplotlibGraph(FigureCanvas):
                 if button == leftButton:
                     if self._pickingInfo['draggable']:
                         self.__markerMoving = True
-                    if 'xmarker' in artist._plot_options:
-                        artist.set_xdata(event.xdata)
-                    elif 'ymarker' in artist._plot_options:
-                        artist.set_ydata(event.ydata)
-                    else:
-                        artist.set_xdata(event.xdata)
-                        artist.set_ydata(event.ydata)
+                    if self._pickingInfo['selectable']:
+                        self.__markerMoving = False
+                    if self.__markerMoving:
+                        if 'xmarker' in artist._plot_options:
+                            artist.set_xdata(event.xdata)
+                        elif 'ymarker' in artist._plot_options:
+                            artist.set_ydata(event.ydata)
+                        else:
+                            artist.set_xdata(event.xdata)
+                            artist.set_ydata(event.ydata)
                     self.fig.canvas.draw()
                     ddict = {}
                     if self.__markerMoving:
@@ -485,8 +491,6 @@ class MatplotlibGraph(FigureCanvas):
                     ddict['type'] = self._pickingInfo['type']
                     ddict['draggable'] = self._pickingInfo['draggable']
                     ddict['selectable'] = self._pickingInfo['selectable']
-                    ddict['x'] = self._x0
-                    ddict['y'] = self._y0
                     ddict['xpixel'] = self._x0Pixel
                     ddict['ypixel'] = self._y0Pixel
                     ddict['xdata'] = artist.get_xdata()
@@ -1362,14 +1366,16 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         print("MatplotlibBackend insertMarker not implemented")
         return label
 
-    def insertXMarker(self, x, label,
+    def insertXMarker(self, x, legend, label=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
         """
         :param x: Horizontal position of the marker in graph coordenates
         :type x: float
-        :param label: Legend associated to the marker
-        :type label: string
+        :param legend: Legend associated to the marker
+        :type legend: string
+        :param label: Text associated to the marker
+        :type label: string or None
         :param color: Color to be used for instance 'blue', 'b', '#FF0000'
         :type color: string, default 'k' (black)
         :param selectable: Flag to indicate if the marker can be selected
@@ -1379,14 +1385,14 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :return: Handle used by the backend to univocally access the marker
         """
         #line = self.ax.axvline(x, picker=True)
-        text = " " + label
-        label = "__MARKER__" + label
-        self.removeMarker(label, replot=False)
+        legend = "__MARKER__" + legend
+        self.removeMarker(legend, replot=False)
         if selectable or draggable:
-            line = self.ax.axvline(x, label=label, color=color, picker=5)
+            line = self.ax.axvline(x, label=legend, color=color, picker=5)
         else:
-            line = self.ax.axvline(x, label=label, color=color)
+            line = self.ax.axvline(x, label=legend, color=color)
         if label is not None:
+            text = " " + label
             ymin, ymax = self.getGraphYLimits()
             delta = abs(ymax - ymin)
             if ymin > ymax:
@@ -1411,8 +1417,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         :param y: Vertical position of the marker in graph coordenates
         :type y: float
-        :param label: Legend associated to the marker
-        :type label: string
+        :param legend: Legend associated to the marker
+        :type legend: string
+        :param label: Text associated to the marker
+        :type label: string or None
         :param color: Color to be used for instance 'blue', 'b', '#FF0000'
         :type color: string, default 'k' (black)
         :param selectable: Flag to indicate if the marker can be selected
