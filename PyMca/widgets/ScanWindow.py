@@ -59,8 +59,6 @@ try:
         pass
 except:
     MATPLOTLIB = False
-
-from PyMca import SimpleFitGUI
 from PyMca import PyMcaPlugins
 
 DEBUG = 0
@@ -113,6 +111,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         # this one was made in the base class
         #self.setCallback(self.graphCallback)
         if fit:
+            from PyMca import SimpleFitGUI
             self.customFit = SimpleFitGUI.SimpleFitGUI()
             self.connect(self.scanFit,
                          qt.SIGNAL('ScanFitSignal') ,

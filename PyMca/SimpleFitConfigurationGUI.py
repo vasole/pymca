@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -35,8 +35,8 @@ from PyMca import PyMca_Icons as Icons
 from PyMca import PyMcaDirs
 
 #strip background handling
-from PyMca import StripBackgroundWidget
 from PyMca import Parameters
+from PyMca.StripBackgroundWidget import StripBackgroundDialog
 
 DEBUG = 0
 
@@ -190,7 +190,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
         event = ddict['event']
         if event == "stripSetupCalled":
             if self._stripDialog is None:
-                self._stripDialog = StripBackgroundWidget.StripBackgroundDialog()
+                self._stripDialog = StripBackgroundDialog()
                 self._stripDialog.setWindowIcon(qt.QIcon(\
                                     qt.QPixmap(Icons.IconDict["gioconda16"])))
             pars = self.__getConfiguration("FIT")

@@ -232,8 +232,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         if kw.get('fit', False):
             self.fitButton = self._addToolButton(self.fitIcon,
                                          self._fitIconSignal,
-                                         'Simple Fit of Active Curve')
-
+                                         'Fit of Active Curve')
 
         if self.newplotIconsFlag:
             tb = self._addToolButton(self.averageIcon,

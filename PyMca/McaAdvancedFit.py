@@ -60,7 +60,6 @@ from PyMca import ConcentrationsWidget
 from PyMca import ConcentrationsTool
 from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend
 from PyMca.widgets import PlotWindow
-from PyMca.widgets import ScanWindow
 from PyMca.PyMca_Icons import IconDict
 from PyMca import McaCalWidget
 from PyMca import PeakIdentifier
@@ -2674,6 +2673,7 @@ class McaGraphWindow(PlotWindow.PlotWindow):
                                        energy=True,
                                        roi=True,
                                        logx=False,
+                                       fit=True,
                                        **kw)
         self.sigPlotSignal.connect(self.__graphSignal)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
