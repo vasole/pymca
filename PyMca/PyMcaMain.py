@@ -78,13 +78,13 @@ if __name__ == '__main__':
 
 from PyMca import PyMcaMdi
 from PyMca import PyMcaQt as qt
-if backend is not None:
-    if backend.lower() == "matplotlib":
-        from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
-    elif backend.lower() == "pyqtgraph":
-        from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
-    else:
-        backend = None
+if backend is None:
+    backend = "matplotlib"
+
+if backend.lower() == "matplotlib":
+    from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+elif backend.lower() == "pyqtgraph":
+    from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -193,12 +193,9 @@ if __name__ == "__main__":
         if sys.platform == "darwin":
             qt.qApp.processEvents()
 
-if backend is None:
-    from PyMca import McaWindow
-    from PyMca import ScanWindow
-else:
-    from PyMca.widgets import ScanWindow
-    from PyMca.widgets import McaWindow
+from PyMca.widgets import ScanWindow
+from PyMca.widgets import McaWindow
+
 OBJECT3D = False
 if QTVERSION > '4.0.0':
     from PyMca import PyMcaImageWindow
@@ -305,10 +302,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
                 #self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
 
-            if QTVERSION > '4.0.0':
-                self.__useTabWidget = True
-            else:
-                self.__useTabWidget = False
+            self.__useTabWidget = True
 
             if not self.__useTabWidget:
                 self.mcawindow = McaWindow.McaWidget(self.mdi)
@@ -316,88 +310,50 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.imageWindowDict = None
                 self.connectDispatcher(self.mcawindow, self.sourceWidget)
                 self.connectDispatcher(self.scanwindow, self.sourceWidget)
-                if QTVERSION < '4.0.0':
-                    pass
-                else:
-                    self.mdi.addWindow(self.mcawindow)
-                    self.mdi.addWindow(self.scanwindow)
-                    #self.scanwindow.showMaximized()
-                    #self.mcawindow.showMaximized()
+                self.mdi.addWindow(self.mcawindow)
+                self.mdi.addWindow(self.scanwindow)
             else:
-                if QTVERSION < '4.0.0':
-                    self.mainTabWidget = qt.QTabWidget(self.mdi)
-                    self.mainTabWidget.setCaption("Main Window")
-                    self.mcawindow = McaWindow.McaWidget()
+                self.mainTabWidget = qt.QTabWidget(self.mdi)
+                self.mainTabWidget.setWindowTitle("Main Window")
+                if backend is None:
+                    self.mcawindow = McaWindow.McaWidget()                    
                     self.scanwindow = ScanWindow.ScanWindow()
-                    self.mainTabWidget.addTab(self.mcawindow, "MCA")
-                    self.mainTabWidget.addTab(self.scanwindow, "SCAN")
-                    #self.mdi.addWindow(self.mainTabWidget)
-                    self.mainTabWidget.showMaximized()
-                    if False:
-                        self.connectDispatcher(self.mcawindow, self.sourceWidget)
-                        self.connectDispatcher(self.scanwindow, self.sourceWidget)
-                    else:
-                        self.imageWindowDict = {}
-                        self.imageWindowCorrelator = None
-                        self.connect(self.sourceWidget,
-                                 qt.PYSIGNAL("addSelection"),
-                                 self.dispatcherAddSelectionSlot)
-                        self.connect(self.sourceWidget,
-                                 qt.PYSIGNAL("removeSelection"),
-                                 self.dispatcherRemoveSelectionSlot)
-                        self.connect(self.sourceWidget,
-                                 qt.PYSIGNAL("replaceSelection"),
-                                 self.dispatcherReplaceSelectionSlot)
-                        self.connect(self.mainTabWidget,
-                                     qt.SIGNAL("currentChanged(QWidget*)"),
-                                     self.currentTabIndexChanged)
                 else:
-                    self.mainTabWidget = qt.QTabWidget(self.mdi)
-                    self.mainTabWidget.setWindowTitle("Main Window")
-                    if backend is None:
-                        self.mcawindow = McaWindow.McaWidget()                    
-                        self.scanwindow = ScanWindow.ScanWindow()
-                    else:
-                        self.mcawindow = McaWindow.McaWindow(backend=backend)
-                        self.scanwindow = ScanWindow.ScanWindow(backend=backend)
-                    if OBJECT3D:
-                        self.glWindow = SceneGLWindow.SceneGLWindow()
-                    self.mainTabWidget.addTab(self.mcawindow, "MCA")
-                    self.mainTabWidget.addTab(self.scanwindow, "SCAN")
-                    if OBJECT3D:
-                        self.mainTabWidget.addTab(self.glWindow, "OpenGL")
-                    self.mdi.addWindow(self.mainTabWidget)
-                    #print "Markus patch"
-                    #self.mainTabWidget.show()
-                    #print "end Markus patch"
-                    self.mainTabWidget.showMaximized()
-                    if False:
-                        self.connectDispatcher(self.mcawindow, self.sourceWidget)
-                        self.connectDispatcher(self.scanwindow, self.sourceWidget)
-                    else:
-                        self.imageWindowDict = {}
-                        self.imageWindowCorrelator = None
-                        self.connect(self.sourceWidget,
-                                 qt.SIGNAL("addSelection"),
-                                 self.dispatcherAddSelectionSlot)
-                        self.connect(self.sourceWidget,
-                                 qt.SIGNAL("removeSelection"),
-                                 self.dispatcherRemoveSelectionSlot)
-                        self.connect(self.sourceWidget,
-                                 qt.SIGNAL("replaceSelection"),
-                                 self.dispatcherReplaceSelectionSlot)
-                        self.connect(self.mainTabWidget,
-                                     qt.SIGNAL("currentChanged(int)"),
-                                     self.currentTabIndexChanged)
+                    self.mcawindow = McaWindow.McaWindow(backend=backend)
+                    self.scanwindow = ScanWindow.ScanWindow(backend=backend)
+                if OBJECT3D:
+                    self.glWindow = SceneGLWindow.SceneGLWindow()
+                self.mainTabWidget.addTab(self.mcawindow, "MCA")
+                self.mainTabWidget.addTab(self.scanwindow, "SCAN")
+                if OBJECT3D:
+                    self.mainTabWidget.addTab(self.glWindow, "OpenGL")
+                self.mdi.addWindow(self.mainTabWidget)
+                #print "Markus patch"
+                #self.mainTabWidget.show()
+                #print "end Markus patch"
+                self.mainTabWidget.showMaximized()
+                if False:
+                    self.connectDispatcher(self.mcawindow, self.sourceWidget)
+                    self.connectDispatcher(self.scanwindow, self.sourceWidget)
+                else:
+                    self.imageWindowDict = {}
+                    self.imageWindowCorrelator = None
+                    self.connect(self.sourceWidget,
+                             qt.SIGNAL("addSelection"),
+                             self.dispatcherAddSelectionSlot)
+                    self.connect(self.sourceWidget,
+                             qt.SIGNAL("removeSelection"),
+                             self.dispatcherRemoveSelectionSlot)
+                    self.connect(self.sourceWidget,
+                             qt.SIGNAL("replaceSelection"),
+                             self.dispatcherReplaceSelectionSlot)
+                    self.connect(self.mainTabWidget,
+                                 qt.SIGNAL("currentChanged(int)"),
+                                 self.currentTabIndexChanged)
 
-            if QTVERSION < '4.0.0':
-                self.connect(self.sourceWidget,
-                             qt.PYSIGNAL("otherSignals"),
-                             self.dispatcherOtherSignalsSlot)
-            else:
-                self.connect(self.sourceWidget,
-                             qt.SIGNAL("otherSignals"),
-                             self.dispatcherOtherSignalsSlot)
+            self.connect(self.sourceWidget,
+                         qt.SIGNAL("otherSignals"),
+                         self.dispatcherOtherSignalsSlot)
             if 0:
                 if QTVERSION < '4.0.0':
                     self.connect(self.mcawindow,qt.PYSIGNAL('McaWindowSignal'),
@@ -444,34 +400,21 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         #That will be made in a next iteration I guess
         if dispatcher is None:
             dispatcher = self.sourceWidget
-        if QTVERSION < '4.0.0':
-            self.connect(dispatcher, qt.PYSIGNAL("addSelection"),
-                             viewer._addSelection)
-            self.connect(dispatcher, qt.PYSIGNAL("removeSelection"),
-                             viewer._removeSelection)
-            self.connect(dispatcher, qt.PYSIGNAL("replaceSelection"),
-                             viewer._replaceSelection)
-        else:
-            self.connect(dispatcher, qt.SIGNAL("addSelection"),
-                             viewer._addSelection)
-            self.connect(dispatcher, qt.SIGNAL("removeSelection"),
-                             viewer._removeSelection)
-            self.connect(dispatcher, qt.SIGNAL("replaceSelection"),
-                             viewer._replaceSelection)
+        self.connect(dispatcher, qt.SIGNAL("addSelection"),
+                         viewer._addSelection)
+        self.connect(dispatcher, qt.SIGNAL("removeSelection"),
+                         viewer._removeSelection)
+        self.connect(dispatcher, qt.SIGNAL("replaceSelection"),
+                         viewer._replaceSelection)
             
     def currentTabIndexChanged(self, index):
-        if QTVERSION < '4.0.0':
-            #is not an index but a widget
-            index = self.mainTabWidget.indexOf(index)
-            legend = "%s" % self.mainTabWidget.label(index)
-        else:
-            legend = "%s" % self.mainTabWidget.tabText(index)
-            for key in self.imageWindowDict.keys():
-                if key == legend:
-                    value = True
-                else:
-                    value = False
-                self.imageWindowDict[key].setPlotEnabled(value)
+        legend = "%s" % self.mainTabWidget.tabText(index)
+        for key in self.imageWindowDict.keys():
+            if key == legend:
+                value = True
+            else:
+                value = False
+            self.imageWindowDict[key].setPlotEnabled(value)
 
     def _is2DSelection(self, ddict):
         if 'imageselection' in ddict:
