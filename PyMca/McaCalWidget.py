@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -32,8 +32,14 @@ import numpy
 from numpy.linalg import inv as inverse
 import copy
 
-from PyMca import QtBlissGraph
 from PyMca import PyMcaQt as qt
+from PyMca.plotting import PlotWidget
+try:
+    from PyMca.plotting.backends.MatplotlibBackend\
+         import MatplotlibBackend as GraphBackend
+except:
+    from PyMca.plotting.backends.PyQtGraphBackend\
+         import PyQtGraphBackend as GraphBackend
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -111,8 +117,7 @@ class McaCalWidget(qt.QDialog):
             self.plot(x,y,legend)
         self.markermode = 0
         self.linewidgets=[]
-        self.graph.ToggleLogY()
-        self.graph.setCanvasBackground(qt.Qt.white)
+        self._toggleLogY()
         self.__peakmarkermode()
        
         
@@ -132,14 +137,11 @@ class McaCalWidget(qt.QDialog):
 
         self.layout.addWidget(self.container)
         #The graph
-        self.graph= QtBlissGraph.QtBlissGraph(self.container)
-        self.graph.xlabel('Channel')
-        self.graph.ylabel('Counts')
-        self.graph.canvas().setMouseTracking(1)
-        
-        #self.setCentralWidget(self.container)
-        #self.initIcons()
-        #self.initToolBar()
+        self.graph= PlotWidget.PlotWidget(self.container,
+                                          backend=GraphBackend)
+        self.graph.setGraphXLabel('Channel')
+        self.graph.setGraphYLabel('Counts')
+
         #The calibration Widget
         self.bottomPanel = qt.QWidget(self.container)
         self.bottomPanel.layout = qt.QHBoxLayout(self.bottomPanel)
@@ -174,7 +176,6 @@ class McaCalWidget(qt.QDialog):
 
 
     def initIcons(self):
-        if QTVERSION < '4.0.0': qt.QIcon = qt.QIconSet
         self.normalIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))
         self.zoomIcon	= qt.QIcon(qt.QPixmap(IconDict["zoom"]))
         self.roiIcon	= qt.QIcon(qt.QPixmap(IconDict["roi"]))
@@ -194,11 +195,11 @@ class McaCalWidget(qt.QDialog):
         toolbar = self.toolbar
         #Zoom Reset
         self._addToolButton(self.zoomResetIcon,
-                            self.graph.ResetZoom,
+                            self.graph.resetZoom,
                             'Auto-Scale the Graph')
         # Logarithmic
         self._addToolButton(self.logyIcon,
-                            self.graph.ToggleLogY,
+                            self._toggleLogY,
                             'Toggle Logarithmic Y Axis (On/Off)',
                             toggle=True)
         # Search
@@ -273,52 +274,42 @@ class McaCalWidget(qt.QDialog):
     def _addToolButton(self, icon, action, tip, toggle=None):
             toolbar = self.toolbar
             tb      = qt.QToolButton(toolbar)            
-            if QTVERSION < '4.0.0':
-                tb.setIconSet(icon)
-                qt.QToolTip.add(tb,tip) 
-                if toggle is not None:
-                    if toggle:
-                        tb.setToggleButton(1)
-            else:
-                tb.setIcon(icon)
-                tb.setToolTip(tip)
-                if toggle is not None:
-                    if toggle:
-                        tb.setCheckable(1)
+            tb.setIcon(icon)
+            tb.setToolTip(tip)
+            if toggle is not None:
+                if toggle:
+                    tb.setCheckable(1)
             self.toolbar.layout.addWidget(tb)
-            self.connect(tb,qt.SIGNAL('clicked()'), action)
+            tb.clicked.connect(action)
             return tb
+
+    def _toggleLogY(self):
+        if DEBUG:
+            print("_toggleLogY")
+        if self.graph.isYAxisLogarithmic():
+            self.graph.setYAxisLogarithmic(False)
+        else:
+            self.graph.setYAxisLogarithmic(True)
         
     def connections(self):
         self.connect(self.peakParameters.searchButton,qt.SIGNAL('clicked()')  ,self.peakSearch)
-        if QTVERSION < '4.0.0':
-            self.connect(self.graph, qt.PYSIGNAL('QtBlissGraphSignal')  ,
-                         self.__graphsignal) 
-            self.connect(self.peakTable, qt.PYSIGNAL('PeakTableWidgetSignal') , 
-                         self.__peaktablesignal)
-            self.connect(self.calpar, qt.PYSIGNAL('CalibrationParametersSignal'),
-                         self.__calparsignal)
-            self.connect(self.okButton,qt.SIGNAL('clicked()'),self.accept)
-            self.connect(self.cancelButton,qt.SIGNAL('clicked()'),self.reject)
-        else:
-            self.connect(self.graph, qt.SIGNAL('QtBlissGraphSignal')  ,
-                         self.__graphsignal) 
-            self.connect(self.peakTable, qt.SIGNAL('PeakTableWidgetSignal') , 
-                         self.__peakTableSignal)
-            self.connect(self.calpar, qt.SIGNAL('CalibrationParametersSignal'),
-                         self.__calparsignal)
-            self.connect(self.okButton,qt.SIGNAL('clicked()'),self.accept)
-            self.connect(self.cancelButton,qt.SIGNAL('clicked()'),self.reject)
+        self.graph.sigPlotSignal.connect(self.__graphsignal) 
+        self.connect(self.peakTable, qt.SIGNAL('PeakTableWidgetSignal') , 
+                     self.__peakTableSignal)
+        self.connect(self.calpar, qt.SIGNAL('CalibrationParametersSignal'),
+                     self.__calparsignal)
+        self.okButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
     
     def plot(self,x,y,legend):
         #clear graph
-        self.graph.clearcurves()
-        self.graph.newcurve(legend,x=x,y=y,logfilter=1)
+        self.graph.clearCurves()
+        self.graph.addCurve(x, y , legend=legend)
         self.dict['x']      = x
         self.dict['y']      = y
         self.dict['legend'] = legend
         #reset the zoom
-        self.graph.ResetZoom()
+        self.graph.resetZoom()
         
     def peakSearch(self):
         if DEBUG:
@@ -330,9 +321,12 @@ class McaCalWidget(qt.QDialog):
             else:
                 self.__msb.setChecked(0)
         #get current plot limits
-        xmin,xmax=self.graph.getx1axislimits()
+        xmin,xmax=self.graph.getGraphXLimits()
         #set the data into specfit
-        self.specfit.setdata(x=self.dict['x'],y=self.dict['y'],xmin=xmin,xmax=xmax)
+        self.specfit.setdata(x=self.dict['x'],
+                             y=self.dict['y'],
+                             xmin=xmin,
+                             xmax=xmax)
         #get the search parameters from the interface
         pars = self.peakParameters.getParameters()
         if pars["AutoFwhm"]:
@@ -358,7 +352,11 @@ class McaCalWidget(qt.QDialog):
         for idx in peaksidx:
             self.foundPeaks.append(self.specfit.xdata[int(idx)])            
             #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-            self.graph.insertX1Marker(self.specfit.xdata[int(idx)],1.1)
+            self.graph.insertXMarker(self.specfit.xdata[int(idx)],
+                                     legend="%d" % i,
+                                     label=None,
+                                     selectable=True,
+                                     draggable=False)
             i += 1
         self.graph.replot()
         #make sure marker mode is on
@@ -382,7 +380,6 @@ class McaCalWidget(qt.QDialog):
         self.markermode     = 1
         self.__peakmarkermode()
         self.__manualsearch = 1
-        #self.__msb.setDown(1)
 
     def __destroylinewidgets(self):
         for widget in self.linewidgets:
@@ -392,33 +389,14 @@ class McaCalWidget(qt.QDialog):
     def __peakmarkermode(self):
         self.__manualsearch = 0
         if self.markermode:
-            #enable zoom back
-            #self.graph.enablezoomback()
-            #disable marking
-            """
-            qt.QToolTip.add(self.markerButton,'Allow Peak Selection from Graph') 
-            """
-            self.graph.disablemarkermode()
-            if QTVERSION < '4.0.0':
-                self.graph.canvas().setCursor(qt.QCursor(qt.QCursor.CrossCursor))
-            else:
-                self.graph.canvas().setCursor(qt.QCursor(qt.Qt.CrossCursor))                
-            #save the cursor
+            self.graph.setCursor(qt.QCursor(qt.Qt.CrossCursor))                
             self.markermode = 0
+            self.graph.setZoomModeEnabled(False)
         else:
-            #disable zoomback
-            #self.graph.disablezoomback()
-            #enable marking
-            self.graph.enablemarkermode()
-            """
-            qt.QToolTip.add(self.markerButton,'Disable Peak Selection from Graph') 
-            """
             self.markermode = 1
-            self.nomarkercursor = self.graph.canvas().cursor().shape()
-            if QTVERSION < '4.0.0':
-                self.graph.canvas().setCursor(qt.QCursor(qt.QCursor.PointingHandCursor))
-            else:
-                self.graph.canvas().setCursor(qt.QCursor(qt.Qt.PointingHandCursor))
+            self.nomarkercursor = self.graph.cursor().shape()
+            self.graph.setCursor(qt.QCursor(qt.Qt.PointingHandCursor))
+            self.graph.setZoomModeEnabled(True)        
         #self.markerButton.setOn(self.markermode == 1)
 
     def __calparsignal(self,dict):
@@ -510,26 +488,22 @@ class McaCalWidget(qt.QDialog):
     def __graphsignal(self, ddict):
         if DEBUG:
             print("__graphsignal called with dict = ", ddict)
-        if ddict['event'] == 'markerSelected':
+        if ddict['event'] in ['markerClicked', 'markerSelected']:
+            print ddict
             if DEBUG:
                 print("Setting marker color")
-            marker = int(ddict['marker'])
-            name   = "Peak %d" % marker
-            number = marker
-            #channel= dict['x']
-            #The marker does not correspond to the peak number
-            channel=ddict['x']
-            number = 0
-            for m in self.graph.markersdict.keys():
-                if self.graph.markersdict[m]['marker'].xValue() < channel:
-                    number += 1
-            name = "Peak %d" % number
-            self.graph.setmarkercolor(marker,'red')
+            marker = int(ddict['label'])
+            #The marker corresponds to the peak number
+            channel = self.foundPeaks[marker]
+            self.graph.insertXMarker(channel, ddict['label'], color='red')
             self.graph.replot()
             current = self.current
             calenergy = self.caldict[current]['A']+ \
                         self.caldict[current]['B'] * channel+ \
                         self.caldict[current]['C'] * channel * channel
+            name = "Peak %d" % marker
+            number = marker
+            channel = ddict['x']
             if self.__xrdMode:
                 linewidget = XRDPeakTableWidget.XRDInputLine(self,name="Enter Selected Peak Parameters",
                                     peakpars={'name':name,
@@ -587,10 +561,12 @@ class McaCalWidget(qt.QDialog):
             else:
                 if DEBUG:
                     print("Dialog cancelled or closed ")
-                self.graph.setmarkercolor(marker,'black')
+                self.graph.insertXMarker(channel,
+                                         ddict['label'],
+                                         color='black')
                 self.graph.replot()
             del linewidget
-        elif ddict['event'] == 'MouseAt':            
+        elif ddict['event'] in ["mouseMoved", 'MouseAt']:            
             self.xpos.setText('%.1f' % ddict['x'])
             self.ypos.setText('%.1f' % ddict['y'])
             current = self.current
@@ -601,22 +577,20 @@ class McaCalWidget(qt.QDialog):
                         self.caldict[current]['B'] * ddict['x']+ \
                         self.caldict[current]['C'] * ddict['x'] * ddict['x']
             self.epos.setText('%.3f' % calenergy)
-        elif ddict['event'] == 'MouseClick':
+        elif ddict['event'] in ['mouseClicked', 'MouseClick']:
             if self.__manualsearch:
                 x = ddict['x']
                 y = ddict['y']
                 if (y <= 1.0): y=1.1
                 # insert the marker
-                self.foundPeaks.append(x)            
+                self.foundPeaks.append(x)
+                legend = "%d" % (len(self.foundPeaks)-1)
                 #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-                self.graph.insertX1Marker(x,y)
+                self.graph.insertXMarker(x, legend, selectable=True)
                 self.graph.replot()
                 self.markermode = 0
                 self.__peakmarkermode()
-            if QTVERSION < '4.0.0':
-                self.__msb.setState(qt.QButton.Off)
-            else:
-                self.__msb.setChecked(0)
+            self.__msb.setChecked(0)
         else:
             if DEBUG:
                 print("Unhandled event ",   ddict['event'])
