@@ -625,7 +625,7 @@ class MatplotlibGraph(FigureCanvas):
                     #data = artist.get_xydata()[0:1]
                     x, y = artist.get_xydata()[-1]
                     pixels = self.ax.transData.transform(numpyvstack([x,y]).T)
-                    xPixel, yPixels = pixels.T
+                    xPixel, yPixel = pixels.T
                     if 'xmarker' in artist._plot_options:
                         if abs(xPixel-event.x) < 5:
                             marker = artist
@@ -1414,7 +1414,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.replot()
         return line
         
-    def insertYMarker(self, y, label,
+    def insertYMarker(self, y, legend, label=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
         """
@@ -1432,11 +1432,22 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type draggable: boolean, default False
         :return: Handle used by the backend to univocally access the marker
         """
-        label = "__MARKER__" + label 
+        legend = "__MARKER__" + legend 
         if selectable or draggable:
-            line = self.ax.axhline(y, label=label, color=color, picker=5)
+            line = self.ax.axhline(y, label=legend, color=color, picker=5)
         else:
-            line = self.ax.axhline(y, label=label, color=color)
+            line = self.ax.axhline(y, label=legend, color=color)
+        if label is not None:
+            text = " " + label
+            xmin, xmax = self.getGraphXLimits()
+            delta = abs(xmax - xmin)
+            if xmin > xmax:
+                xmax = xmin
+            xmax -= 0.005 * delta
+            line._infoText = self.ax.text(y, xmax, text,
+                                          color=color,
+                                          horizontalalignment='left',
+                                          verticalalignment='top')
         line._plot_options = ["ymarker"]
         if selectable:
             line._plot_options.append('selectable')
