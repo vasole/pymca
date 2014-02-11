@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -27,20 +27,18 @@
 import os
 import sys
 import time
-MATPLOTLIB = False
+MATPLOTLIB = True
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-try:
-    #this is installation dependent I guess
-    from matplotlib import rcParams
-    from matplotlib import __version__ as matplotlib_version
-    #rcParams['numerix'] = "numeric"
-    from matplotlib.font_manager import FontProperties
-    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-    from matplotlib.figure import Figure
-    MATPLOTLIB = True
-except:
-    from PyMca import QtBlissGraph
+
+#this is installation dependent I guess
+from matplotlib import rcParams
+from matplotlib import __version__ as matplotlib_version
+#rcParams['numerix'] = "numeric"
+from matplotlib.font_manager import FontProperties
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+MATPLOTLIB = True
 
 from PyMca import ConfigDict
 from PyMca import PyMcaLogo
@@ -577,117 +575,65 @@ class QtMcaAdvancedFitReport:
         return text
        
     def getImage(self):
-        dict=self.fitresult
-        if MATPLOTLIB:
-            try:
-                fig = Figure(figsize=(6,3)) # in inches
-                canvas = FigureCanvas(fig)
-                ax = fig.add_axes([.15, .15, .8, .8])
-                ax.set_axisbelow(True)
-                logplot = self.plotDict.get('logy', True)
-                if logplot:
-                    axplot = ax.semilogy
-                else:
-                    axplot = ax.plot
-                axplot(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
-                axplot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
-                legendlist = ['spectrum', 'continuum', 'fit']
-                axplot(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
-                fontproperties = FontProperties(size=8)
-                if dict['result']['config']['fit']['sumflag']:
-                    axplot(dict['result']['energy'],
-                           dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
-                    legendlist.append('pileup')
-                if matplotlib_version < '0.99.0':
-                    legend = ax.legend(legendlist,0,
-                                       prop = fontproperties, labelsep=0.02)
-                else:
-                    legend = ax.legend(legendlist,0,
-                                       prop = fontproperties, labelspacing=0.02)
-            except ValueError:
-                fig = Figure(figsize=(6,3)) # in inches
-                canvas = FigureCanvas(fig)
-                ax = fig.add_axes([.15, .15, .8, .8])
-                ax.set_axisbelow(True)
-                ax.plot(dict['result']['energy'], dict['result']['ydata'], 'k', lw=1.5)
-                ax.plot(dict['result']['energy'], dict['result']['continuum'], 'g', lw=1.5)
-                legendlist = ['spectrum', 'continuum', 'fit']
-                ax.plot(dict['result']['energy'], dict['result']['yfit'], 'r', lw=1.5)
-                fontproperties = FontProperties(size=8)
-                if dict['result']['config']['fit']['sumflag']:
-                    ax.plot(dict['result']['energy'],
-                                dict['result']['pileup'] + dict['result']['continuum'], 'y', lw=1.5)
-                    legendlist.append('pileup')
-                if matplotlib_version < '0.99.0':
-                    legend = ax.legend(legendlist,0,
+        ddict=self.fitresult
+        try:
+            fig = Figure(figsize=(6,3)) # in inches
+            canvas = FigureCanvas(fig)
+            ax = fig.add_axes([.15, .15, .8, .8])
+            ax.set_axisbelow(True)
+            logplot = self.plotDict.get('logy', True)
+            if logplot:
+                axplot = ax.semilogy
+            else:
+                axplot = ax.plot
+            axplot(ddict['result']['energy'], ddict['result']['ydata'], 'k', lw=1.5)
+            axplot(ddict['result']['energy'], ddict['result']['continuum'], 'g', lw=1.5)
+            legendlist = ['spectrum', 'continuum', 'fit']
+            axplot(ddict['result']['energy'], ddict['result']['yfit'], 'r', lw=1.5)
+            fontproperties = FontProperties(size=8)
+            if ddict['result']['config']['fit']['sumflag']:
+                axplot(ddict['result']['energy'],
+                       ddict['result']['pileup'] + ddict['result']['continuum'], 'y', lw=1.5)
+                legendlist.append('pileup')
+            if matplotlib_version < '0.99.0':
+                legend = ax.legend(legendlist,0,
                                    prop = fontproperties, labelsep=0.02)
-                else:
-                    legend = ax.legend(legendlist,0,
+            else:
+                legend = ax.legend(legendlist,0,
                                    prop = fontproperties, labelspacing=0.02)
+        except ValueError:
+            fig = Figure(figsize=(6,3)) # in inches
+            canvas = FigureCanvas(fig)
+            ax = fig.add_axes([.15, .15, .8, .8])
+            ax.set_axisbelow(True)
+            ax.plot(ddict['result']['energy'], ddict['result']['ydata'], 'k', lw=1.5)
+            ax.plot(ddict['result']['energy'], ddict['result']['continuum'], 'g', lw=1.5)
+            legendlist = ['spectrum', 'continuum', 'fit']
+            ax.plot(ddict['result']['energy'], ddict['result']['yfit'], 'r', lw=1.5)
+            fontproperties = FontProperties(size=8)
+            if ddict['result']['config']['fit']['sumflag']:
+                ax.plot(ddict['result']['energy'],
+                            ddict['result']['pileup'] + ddict['result']['continuum'], 'y', lw=1.5)
+                legendlist.append('pileup')
+            if matplotlib_version < '0.99.0':
+                legend = ax.legend(legendlist,0,
+                               prop = fontproperties, labelsep=0.02)
+            else:
+                legend = ax.legend(legendlist,0,
+                               prop = fontproperties, labelspacing=0.02)
 
-            ax.set_xlabel('Energy')
-            ax.set_ylabel('Counts')
-            legend.draw_frame(False)
+        ax.set_xlabel('Energy')
+        ax.set_ylabel('Counts')
+        legend.draw_frame(False)
 
-            outfile = self.outdir+"/"+self.outfile+".png"
-            try:
-                os.remove(outfile)
-            except:
-                pass
-
-            canvas.print_figure(outfile)
-            return self.__getFitImage(self.outfile+".png")
-
-        if self.graph is None:
-            self.widget   = qt.QWidget()
-            self.widget.l = qt.QVBoxLayout(self.widget)
-            self.graph  = QtBlissGraph.QtBlissGraph(self.widget)
-            self.widget.l.addWidget(self.graph)
-        widget = self.widget
-        graph  = self.graph
-            
-        graph.xlabel('Energy')
-        graph.ylabel('Counts')
-        graph.setCanvasBackground(qt.Qt.white)
-        x = dict['result']['energy']
-        graph.newcurve('spectrum', x=x,y=dict['result']['ydata'],logfilter=1)
-        graph.newcurve('continuum',x=x,y=dict['result']['continuum'],logfilter=1)
-        graph.newcurve('fit',x=x,y=dict['result']['yfit'],logfilter=1)
-        if dict['result']['config']['fit']['escapeflag']:
-            #I DO NOT HAVE THE CONTRIBUTION
-            pass
-            #self.graph.newcurve('escape',x=x,y=dict['result']['escape'],logfilter=1)
-        if dict['result']['config']['fit']['sumflag']:
-            graph.newcurve('pileup',
-                                x=x,
-                                y=dict['result']['pileup']+dict['result']['continuum'],
-                                logfilter=1)                            
-        graph.ToggleLogY()
-        ymin=min(min(dict['result']['ydata']),min(dict['result']['yfit']))
-        ymax=max(max(dict['result']['ydata']),max(dict['result']['yfit']))
-        graph.setY1AxisLimits(ymin,ymax)
-        graph.setY2AxisLimits(ymin,ymax)
-        graph.show()
-        widget.resize(450,300)
-        #widget.show()
-        
-        qt.qApp.processEvents()
         outfile = self.outdir+"/"+self.outfile+".png"
-        pixmap = qt.QPixmap.grabWidget(widget)
         try:
             os.remove(outfile)
         except:
             pass
-        if pixmap.save(outfile,'PNG'):
-            qt.qApp.processEvents()
-            graph.close()
-            del graph
-            widget.close()
-            del widget
-            return self.__getFitImage(self.outfile+".png")
-        else:
-            print("cannot generate image")
-            return ""
+
+        canvas.print_figure(outfile)
+        return self.__getFitImage(self.outfile+".png")
 
     def getConcentrations(self):
         return self.concentrationsConversion.getConcentrationsAsHtml(\
