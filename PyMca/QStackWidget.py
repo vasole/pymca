@@ -262,11 +262,12 @@ class QStackWidget(StackBase.StackBase,
         if self.roiBackgroundButton.isChecked():
             self.roiWidget.setImageData(self._ROIImageList[0]-\
                                         self._ROIImageList[-1])
-            self.roiWidget.graphWidget.graph.setTitle(self._ROIImageNames[0]+\
-                                                      " Net")
+            self.roiWidget.graphWidget.graph.setGraphTitle(\
+                                self._ROIImageNames[0]+" Net")
         else:
             self.roiWidget.setImageData(self._ROIImageList[0])
-            self.roiWidget.graphWidget.graph.setTitle(self._ROIImageNames[0])
+            self.roiWidget.graphWidget.graph.setGraphTitle(\
+                                self._ROIImageNames[0])
 
     def _stackSaveToolButtonSignal(self):
         self._stackSaveMenu.exec_(self.cursor().pos())
@@ -275,7 +276,8 @@ class QStackWidget(StackBase.StackBase,
         fileTypes = "HDF5 Files (*.h5)\nHDF5 Files (*.hdf)"
         message = "Enter output filename"
         wdir = PyMcaDirs.outputDir
-        filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
+        filename = qt.QFileDialog.getSaveFileName(self, message, wdir,
+                                                  fileTypes)
         if len(filename):
             try:
                 fname = qt.safe_str(filename)
@@ -296,7 +298,8 @@ class QStackWidget(StackBase.StackBase,
         fileTypes = "TIFF Files (*.tif *.tiff *.TIF *.TIFF)"
         message = "Enter output filename"
         wdir = PyMcaDirs.outputDir
-        filename = qt.QFileDialog.getSaveFileName(self, message, wdir, fileTypes)
+        filename = qt.QFileDialog.getSaveFileName(self, message, wdir,
+                                                  fileTypes)
         if len(filename):
             try:
                 fname = qt.safe_str(filename)
@@ -351,8 +354,8 @@ class QStackWidget(StackBase.StackBase,
         if not len(filename):
             return
         #get limits
-        row0, row1 = self.stackWidget.graph.getY1AxisLimits()
-        col0, col1 = self.stackWidget.graph.getX1AxisLimits()
+        row0, row1 = self.stackWidget.graph.getGraphYLimits()
+        col0, col1 = self.stackWidget.graph.getGraphXLimits()
         #this should go to array save ...
         shape = self._stack.data.shape
         if mcaIndex in [0]:
@@ -371,11 +374,11 @@ class QStackWidget(StackBase.StackBase,
         axes = [None] * len(self._stack.data.shape)
         labels = [None] * len(self._stack.data.shape)
         try:
-            xLabel = qt.safe_str(self.mcaWidget.graph.xlabel())
+            xLabel = qt.safe_str(self.mcaWidget.graph.getGraphXLabel())
         except:
             xLabel = None
         try:
-            xData, y, legend, info = self.mcaWidget.getActiveCurve()
+            xData, y, legend, info = self.mcaWidget.getActiveCurve()[:4]
         except:
             xData = self._mcaData0.x[0]
             xLabel = 'Channels'
@@ -405,7 +408,8 @@ class QStackWidget(StackBase.StackBase,
             msg.exec_()
 
     def saveStackAsNeXusSpectra(self, compression=False):
-        self.saveStackAsNeXus(interpretation="spectrum", compression=compression)
+        self.saveStackAsNeXus(interpretation="spectrum",
+                              compression=compression)
 
     def saveStackAsNeXusImages(self):
         self.saveStackAsNeXus(interpretation="image", compression=False)
@@ -446,7 +450,8 @@ class QStackWidget(StackBase.StackBase,
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return            
-        ArraySave.save3DArrayAsHDF5(self._stack.data, filename, labels = None, dtype=None, mode='simplest')
+        ArraySave.save3DArrayAsHDF5(self._stack.data, filename,
+                                    labels = None, dtype=None, mode='simplest')
 
     def loadStack(self):
         if self._stackImageData is not None:
@@ -613,16 +618,21 @@ class QStackWidget(StackBase.StackBase,
             for method in methods:
                 text = QString(method)
                 pixmap = self.pluginInstanceDict[key].getMethodPixmap(method)
-                tip = QString(self.pluginInstanceDict[key].getMethodToolTip(method))
+                tip = QString(self.pluginInstanceDict[key].getMethodToolTip(\
+                                                                    method))
                 if pixmap is not None:
-                    action = qt.QAction(qt.QIcon(qt.QPixmap(pixmap)), text, self)
+                    action = qt.QAction(qt.QIcon(qt.QPixmap(pixmap)),
+                                        text,
+                                        self)
                 else:
                     action = qt.QAction(text, self)
                 if tip is not None:
                     action.setToolTip(tip)
                 menu.addAction(action)
                 actionList.append((text, pixmap, tip, action))
-            qt.QObject.connect(menu, qt.SIGNAL("hovered(QAction *)"), self._actionHovered)
+            qt.QObject.connect(menu,
+                               qt.SIGNAL("hovered(QAction *)"),
+                               self._actionHovered)
             a = menu.exec_(qt.QCursor.pos())
             if a is None:
                 return None
@@ -635,13 +645,10 @@ class QStackWidget(StackBase.StackBase,
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            if QTVERSION < '4.0.0':
-                msg.setText("%s" % sys.exc_info()[1])
-            else:
-                msg.setWindowTitle("Plugin error")
-                msg.setText("An error has occured while executing the plugin:")
-                msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
-                msg.setDetailedText(traceback.format_exc())
+            msg.setWindowTitle("Plugin error")
+            msg.setText("An error has occured while executing the plugin:")
+            msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
             if DEBUG:
                 raise
@@ -670,7 +677,8 @@ class QStackWidget(StackBase.StackBase,
         elif n == 2:
             self.tab = qt.QTabWidget(self)
             self.mcaWidget = McaWindow.McaWidget(vertical = False)
-            self.mcaWidget.graphBox.setMinimumWidth(0.5 * qt.QWidget.sizeHint(self).width())
+            self.mcaWidget.graphBox.setMinimumWidth(0.5 * \
+                                            qt.QWidget.sizeHint(self).width())
             self.tab.setMaximumHeight(1.3 * qt.QWidget.sizeHint(self).height())
             self.mcaWidget.setWindowTitle("PyMCA - Mca Window")
             self.tab.addTab(self.mcaWidget, "MCA")
@@ -697,12 +705,9 @@ class QStackWidget(StackBase.StackBase,
         
         self.stackWindow.mainLayout.addWidget(self.mcaButtonBox)
 
-        self.connect(self.addMcaButton, qt.SIGNAL("clicked()"), 
-                    self._addMcaClicked)
-        self.connect(self.removeMcaButton, qt.SIGNAL("clicked()"), 
-                    self._removeMcaClicked)
-        self.connect(self.replaceMcaButton, qt.SIGNAL("clicked()"), 
-                    self._replaceMcaClicked)
+        self.addMcaButton.clicked.connect(self._addMcaClicked)
+        self.removeMcaButton.clicked.connect(self._removeMcaClicked)
+        self.replaceMcaButton.clicked.connect(self._replaceMcaClicked)
 
         if self.rgbWidget is not None:
             # The IMAGE selection
@@ -726,18 +731,16 @@ class QStackWidget(StackBase.StackBase,
         self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
         self.stackGraphWidget.showInfo()
 
-        self.connect(self.stackGraphWidget.graph,
-                 qt.SIGNAL("QtBlissGraphSignal"),
-                 self._stackGraphSignal)
+        self.stackGraphWidget.graph.sigPlotSignal.connect(\
+                                    self._stackGraphSignal)
         self.connect(self.mcaWidget,
                  qt.SIGNAL("McaWindowSignal"),
                  self._mcaWidgetSignal)
-        self.connect(self.roiWidget.graphWidget.graph,
-                 qt.SIGNAL("QtBlissGraphSignal"),
-                 self._stackGraphSignal)
+        self.roiWidget.graphWidget.graph.sigPlotSignal.connect(\
+                                    self._stackGraphSignal)
 
     def showOriginalImage(self):
-        self.stackGraphWidget.graph.setTitle("Original Stack")
+        self.stackGraphWidget.graph.setGraphTitle("Original Stack")
         if self._stackImageData is None:
             self.stackGraphWidget.graph.clear()
             return
@@ -771,7 +774,7 @@ class QStackWidget(StackBase.StackBase,
             msg.setText(text)
             msg.exec_()
             return
-        x, y, legend, info = activeCurve
+        x, y, legend, info = activeCurve[:4]
         return StackBase.StackBase.calculateROIImages(self,
                                                       index1,
                                                       index2,
@@ -781,11 +784,11 @@ class QStackWidget(StackBase.StackBase,
     def showROIImageList(self, imageList, image_names=None):
         if self.roiBackgroundButton.isChecked():
             self.roiWidget.setImageData(imageList[0]-imageList[-1])
-            self.roiWidget.graphWidget.graph.setTitle(image_names[0]+\
+            self.roiWidget.graphWidget.graph.setGraphTitle(image_names[0]+\
                                                       " Net")
         else:
             self.roiWidget.setImageData(imageList[0])
-            self.roiWidget.graphWidget.graph.setTitle(image_names[0])
+            self.roiWidget.graphWidget.graph.setGraphTitle(image_names[0])
         self._ROIImageList = imageList
         self._ROIImageNames = image_names
         self._stackROIImageListUpdated()
@@ -827,7 +830,7 @@ class QStackWidget(StackBase.StackBase,
         elif self._selectionMask.sum() == 0:
             legend = "Stack SUM"
         else:
-            title = qt.safe_str(self.roiGraphWidget.graph.title().text())
+            title = qt.safe_str(self.roiGraphWidget.graph.getGraphTitle())
             legend = "Stack " + title + " selection"
         return legend
 
