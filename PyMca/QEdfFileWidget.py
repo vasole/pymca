@@ -644,12 +644,14 @@ class QEdfFileWidget(qt.QWidget):
     def groupSignal(self,i):
         self.allImages = i
 
-    def widgetSignal(self,dict={}):
+    def widgetSignal(self,dict=None):
+        if dict is None:
+            dict = {}
         if 'event' in dict:
             if dict['event']    == 'plotChanged':
                 self.__plotting = dict['plot']
                 self.__refreshSelection()
-            elif dict['event']    == 'MouseAt':
+            elif dict['event'] in ['mouseMoved', 'MouseAt']:
                 x = round(dict['y'])
                 if x < 0: x = 0
                 y = round(dict['x'])
@@ -666,8 +668,9 @@ class QEdfFileWidget(qt.QWidget):
                     z = self.lastData[x, y]
                     self.infoText.setText("    X = %d Y = %d Z = %.4g" %\
                                                    (y, x, z))
-            elif dict['event']    == 'MouseClick':
-                if self.justViewer:return
+            elif dict['event'] in ['mouseClicked', 'MouseClick']:
+                if self.justViewer:
+                    return
                 col = min(int(round(dict['x'])), self._x1Limit - 1)
                 row = min(int(round(dict['y'])), self._y1Limit - 1)
                 if row < 0: row = 0
@@ -1668,15 +1671,19 @@ class QEdfFileWidget(qt.QWidget):
                     if dict['y'] not in cols:
                         cols.append(dict['y'])            
             wid.markColSelected(cols)
-            self.graph.clearmarkers()
+            self.graph.clearMarkers()
             for i in rows:
                 label = "R%d" % i
-                marker=self.graph.inserty1marker(0.1,i,label=label)
-                self.graph.setmarkercolor(marker,"white")
+                marker=self.graph.insertYMarker(i,
+                                                label,
+                                                label=label,
+                                                color='white')
             for i in cols:
                 label = "C%d" % i
-                marker=self.graph.insertx1marker(i, 0.1,label=label)
-                self.graph.setmarkercolor(marker,"white")
+                marker=self.graph.insertXMarker(i,
+                                                label,
+                                                label=label,
+                                                color='white')
             self.graph.replot()
             return
 

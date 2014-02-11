@@ -915,7 +915,8 @@ class Plot(PlotBase.PlotBase):
         self._markerDict[label]['marker'] = marker
         return marker
 
-    def insertYMarker(self, y, legend=None,
+    def insertYMarker(self, y,
+                      legend=None,
                       label=None,
                       color=None,
                       selectable=False,
