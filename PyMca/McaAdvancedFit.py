@@ -142,18 +142,10 @@ class McaAdvancedFit(qt.QWidget):
             self.mainTab = qt.QTabWidget(self)
             self.mainLayout.addWidget(self.mainTab)
             #graph
-            if QTVERSION < '4.0.0':
-                self.mainTab.tabText = self.mainTab.label
-                self.mainTab.currentIndex = self.mainTab.currentPageIndex
-                self.mainTab.setCurrentIndex = self.mainTab.setCurrentPage
-                self.tabGraph  = qt.QWidget(self.mainTab,"tabGraph")
-                tabGraphLayout = qt.QVBoxLayout(self.tabGraph,margin,
-                                                spacing,"tabGraphLayout")
-            else:
-                self.tabGraph  = qt.QWidget()
-                tabGraphLayout = qt.QVBoxLayout(self.tabGraph)
-                tabGraphLayout.setMargin(margin)
-                tabGraphLayout.setSpacing(spacing)
+            self.tabGraph  = qt.QWidget()
+            tabGraphLayout = qt.QVBoxLayout(self.tabGraph)
+            tabGraphLayout.setMargin(margin)
+            tabGraphLayout.setSpacing(spacing)
             #self.graphToolbar  = qt.QHBox(self.tabGraph)
             self.graphWindow = McaGraphWindow(self.tabGraph)
             tabGraphLayout.addWidget(self.graphWindow)
@@ -267,23 +259,15 @@ class McaAdvancedFit(qt.QWidget):
         self.matrixSpectrumButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.matrixSpectrumButton)
         self.matrixSpectrumButton.setText("Matrix Spectrum")
-        if QTVERSION > '4.0.0':
-            self.matrixXRFMCSpectrumButton = qt.QPushButton(hbox)
-            self.matrixXRFMCSpectrumButton.setText("MC Matrix Spectrum")
-            hboxLayout.addWidget(self.matrixXRFMCSpectrumButton)
-            self.matrixXRFMCSpectrumButton.hide()
+        self.matrixXRFMCSpectrumButton = qt.QPushButton(hbox)
+        self.matrixXRFMCSpectrumButton.setText("MC Matrix Spectrum")
+        hboxLayout.addWidget(self.matrixXRFMCSpectrumButton)
+        self.matrixXRFMCSpectrumButton.hide()
         self.peaksSpectrumButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.peaksSpectrumButton)
         self.peaksSpectrumButton.setText("Peaks Spectrum")
-        if QTVERSION < '4.0.0':
-            self.matrixXRFMCSpectrumButton = None
-            self.matrixSpectrumButton.setToggleButton(1)
-            self.peaksSpectrumButton.setToggleButton(1)
-            self.matrixSpectrumButton.isChecked = self.matrixSpectrumButton.isOn
-            self.peaksSpectrumButton.isChecked = self.peaksSpectrumButton.isOn
-        else:
-            self.matrixSpectrumButton.setCheckable(1)
-            self.peaksSpectrumButton.setCheckable(1)
+        self.matrixSpectrumButton.setCheckable(1)
+        self.peaksSpectrumButton.setCheckable(1)
             
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.dismissButton = qt.QPushButton(hbox)
@@ -292,41 +276,30 @@ class McaAdvancedFit(qt.QWidget):
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
 
         self.mainLayout.addWidget(hbox)
-        if QTVERSION < '4.0.0':
-            qt.QToolTip.add(self.printButton,'Print Active Tab')
-            qt.QToolTip.add(self.htmlReportButton,'Generate Browser Compatible Output\nin Chosen Directory')
-            qt.QToolTip.add(self.matrixSpectrumButton,'Toggle Matrix Spectrum Calculation On/Off')
-            qt.QToolTip.add(self.peaksSpectrumButton,'Toggle Individual Peaks Spectrum Calculation On/Off')
-        else:
-            self.printButton.setToolTip('Print Active Tab')
-            self.htmlReportButton.setToolTip('Generate Browser Compatible Output\nin Chosen Directory')
-            self.matrixSpectrumButton.setToolTip('Toggle Matrix Spectrum Calculation On/Off')
-            self.matrixXRFMCSpectrumButton.setToolTip('Calculate Matrix Spectrum Using Monte Carlo')
-            self.peaksSpectrumButton.setToolTip('Toggle Individual Peaks Spectrum Calculation On/Off')
+        self.printButton.setToolTip('Print Active Tab')
+        self.htmlReportButton.setToolTip('Generate Browser Compatible Output\nin Chosen Directory')
+        self.matrixSpectrumButton.setToolTip('Toggle Matrix Spectrum Calculation On/Off')
+        self.matrixXRFMCSpectrumButton.setToolTip('Calculate Matrix Spectrum Using Monte Carlo')
+        self.peaksSpectrumButton.setToolTip('Toggle Individual Peaks Spectrum Calculation On/Off')
 
         self.mcafit   = ClassMcaTheory.McaTheory()
 
-        self.connect(self.fitButton,                qt.SIGNAL("clicked()"),self.fit)
-        self.connect(self.printButton,              qt.SIGNAL("clicked()"),self.printActiveTab)
-        self.connect(self.htmlReportButton,         qt.SIGNAL("clicked()"),self.htmlReport)
-        self.connect(self.matrixSpectrumButton,     qt.SIGNAL("clicked()"),self.__toggleMatrixSpectrum)
+        self.fitButton.clicked.connect(self.fit)
+        self.printButton.clicked.connect(self.printActiveTab)
+        self.htmlReportButton.clicked.connect(self.htmlReport)
+        self.matrixSpectrumButton.clicked.connect(self.__toggleMatrixSpectrum)
         if self.matrixXRFMCSpectrumButton is not None:
-            self.connect(self.matrixXRFMCSpectrumButton,
-                         qt.SIGNAL("clicked()"),
-                         self.xrfmcSpectrum)
-        self.connect(self.peaksSpectrumButton,      qt.SIGNAL("clicked()"),self.__togglePeaksSpectrum)
-        self.connect(self.dismissButton,            qt.SIGNAL("clicked()"),self.dismiss)
-        self.connect(self.top.configureButton,qt.SIGNAL("clicked()") ,   self.__configure)
-        self.connect(self.top.printButton,qt.SIGNAL("clicked()") ,self.__printps)
+            self.matrixXRFMCSpectrumButton.clicked.connect(self.xrfmcSpectrum)
+        self.peaksSpectrumButton.clicked.connect(self.__togglePeaksSpectrum)
+        self.dismissButton.clicked.connect(self.dismiss)
+        self.top.configureButton.clicked.connect(self.__configure)
+        self.top.printButton.clicked.connect(self.__printps)
         if top:
-            if QTVERSION < '4.0.0':
-                self.connect(self.top,qt.PYSIGNAL("TopSignal"), self.__updatefromtop)
-            else:
-                self.connect(self.top,qt.SIGNAL("TopSignal"), self.__updatefromtop)
+            self.connect(self.top,qt.SIGNAL("TopSignal"), self.__updatefromtop)
         else:
             self.top.hide()
-            self.connect(self.configureButton,qt.SIGNAL("clicked()") ,   self.__configure)
-            self.connect(self.toolsButton,qt.SIGNAL("clicked()") ,self.__printps)
+            self.configureButton.clicked.connect(self.__configure)
+            self.toolsButton.clicked.connect(self.__printps)
         self._updateTop()
 
     def __mainTabPatch(self, index):
@@ -349,14 +322,9 @@ class McaAdvancedFit(qt.QWidget):
         sthread.start()
         #except:
         #    raise "ThreadError",sys.exc_info()
-        if QTVERSION < '4.0.0':
-            msg = qt.QDialog(self, "Please Wait",
-                             1,
-                             qt.Qt.WStyle_NoBorder)
-        else:
-            msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
-            msg.setModal(0)
-            msg.setWindowTitle("Please Wait")
+        msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
+        msg.setModal(0)
+        msg.setWindowTitle("Please Wait")
         layout = qt.QHBoxLayout(msg)
         l1 = qt.QLabel(msg)
         layout.addWidget(l1)
@@ -371,28 +339,16 @@ class McaAdvancedFit(qt.QWidget):
         qt.qApp.processEvents()
         i = 0
         ticks = ['-','\\', "|", "/","-","\\",'|','/']
-        if QTVERSION < '4.0.0':
-            while (sthread.running()):
-                i = (i+1) % 8
-                l1.setText(ticks[i])
-                l3.setText(" "+ticks[i])
-                qt.qApp.processEvents()
-                time.sleep(1)
-            msg.close(True)
-        else:
-            while (sthread.isRunning()):
-                i = (i+1) % 8
-                l1.setText(ticks[i])
-                l3.setText(" "+ticks[i])
-                qt.qApp.processEvents()
-                time.sleep(1)
-            msg.close()
+        while (sthread.isRunning()):
+            i = (i+1) % 8
+            l1.setText(ticks[i])
+            l3.setText(" "+ticks[i])
+            qt.qApp.processEvents()
+            time.sleep(1)
+        msg.close()
         result = sthread._result
         del sthread
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
         return result
 
     def refreshWidgets(self):
@@ -644,12 +600,13 @@ class McaAdvancedFit(qt.QWidget):
         if self.concentrationsWidget is not None:
             self.concentrationsWidget.concentrationsTable.setRowCount(0)
         #update graph
+        curveList = self.graph.getAllCurves(just_legend=True)
         delcurves = []
-        for key in self.graph.curves.keys():
+        for key in curveList:
             if key not in ["Data"]:
                 delcurves.append(key)
         for key in delcurves:
-            self.graph.delcurve(key)
+            self.graph.removeCurve(key)
         self.plot()
 
         if DEBUG:
@@ -671,10 +628,7 @@ class McaAdvancedFit(qt.QWidget):
             if w.parent() is None:
                 if w.isHidden():
                     w.show()
-                if QTVERSION < '4.0.0':
-                    w.raiseW()
-                else:
-                    w.raise_()
+                w.raise_()
                 self.printButton.setEnabled(True)
                 #do not calculate again. It should be already updated
                 return
@@ -702,44 +656,35 @@ class McaAdvancedFit(qt.QWidget):
             if w.parent() is None:
                 if w.isHidden():
                     w.show()
-                if QTVERSION < '4.0.0':
-                    w.raiseW()
-                else:
-                    w.raise_()
+                w.raise_()
         elif str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "DIAGNOSTICS":
             self.printButton.setEnabled(False)
             self.diagnostics()
         else:
             self.printButton.setEnabled(True)
 
-    def _concentrationsWidgetClose(self, dict):
-        dict['info'] = "CONCENTRATIONS"
-        self._tabReparent(dict)
+    def _concentrationsWidgetClose(self, ddict):
+        ddict['info'] = "CONCENTRATIONS"
+        self._tabReparent(ddict)
 
-    def _mcatableClose(self, dict):
-        dict['info'] = "TABLE"
-        self._tabReparent(dict)
+    def _mcatableClose(self, ddict):
+        ddict['info'] = "TABLE"
+        self._tabReparent(ddict)
 
-    def _tabReparent(self, dict):
-        if dict['info'] == "CONCENTRATIONS":
+    def _tabReparent(self, ddict):
+        if ddict['info'] == "CONCENTRATIONS":
             w = self.concentrationsWidget
             parent = self.tabConcentrations
-        elif dict['info'] == "TABLE":
+        elif ddict['info'] == "TABLE":
             w = self.mcatable
             parent = self.tabMca
         if w.parent() is not None:
-            if QTVERSION < '4.0.0':
-                w.reparent(None,self.cursor().pos(),1)
-            else:
-                parent.layout().removeWidget(w)
-                w.setParent(None)
-                w.show()
+            parent.layout().removeWidget(w)
+            w.setParent(None)
+            w.show()
         else:
-            if QTVERSION < '4.0.0':
-                w.reparent(parent,qt.QPoint(),1)
-            else:
-                w.setParent(parent)
-                parent.layout().addWidget(w)
+            w.setParent(parent)
+            parent.layout().addWidget(w)
 
     def _calibrate(self):
         config = self.mcafit.configure()
@@ -759,10 +704,7 @@ class McaAdvancedFit(qt.QWidget):
         caldialog.calpar.orderbox.setEnabled(0)
         caldialog.calpar.CText.setEnabled(0)
         caldialog.calpar.savebox.setEnabled(0)
-        if QTVERSION < '4.0.0':
-            ret = caldialog.exec_loop()
-        else:
-            ret = caldialog.exec_()
+        ret = caldialog.exec_()
         if ret == qt.QDialog.Accepted:
             ddict = caldialog.getDict()
             config['detector']['zero'] = ddict[legend]['A']
@@ -779,10 +721,7 @@ class McaAdvancedFit(qt.QWidget):
             self.elementsInfo = ElementsInfo.ElementsInfo(None, "Elements Info")
         if self.elementsInfo.isHidden():
            self.elementsInfo.show()
-        if QTVERSION < '4.0.0':
-            self.elementsInfo.raiseW()
-        else:
-            self.elementsInfo.raise_()
+        self.elementsInfo.raise_()
 
     def __peakIdentifier(self, energy = None):
         if energy is None:energy = 5.9
@@ -794,19 +733,17 @@ class McaAdvancedFit(qt.QWidget):
         self.identifier.setEnergy(energy)
         if self.identifier.isHidden():
             self.identifier.show()
-        if QTVERSION < '4.0.0':
-            self.identifier.raiseW()
-        else:
-            self.identifier.raise_()
+        self.identifier.raise_()
 
     def printActiveTab(self):
-        if   str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "GRAPH":
+        txt = str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() 
+        if txt == "GRAPH":
             self.graph.printps()
-        elif str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "TABLE":
+        elif txt == "TABLE":
             self.printps(True)
-        elif str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
+        elif txt == "CONCENTRATIONS":
             self.printConcentrations(True)
-        elif str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "DIAGNOSTICS":
+        elif txt == "DIAGNOSTICS":
             pass
         else:
             pass
@@ -817,10 +754,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Sorry. You need to perform a fit first.\n"
             msg.setText(text)
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "DIAGNOSTICS":
                 self.mainTab.setCurrentIndex(0)
             return
@@ -885,11 +819,8 @@ class McaAdvancedFit(qt.QWidget):
                 text+="</td>"
             text+="</tr>"
             text+="</table>"
-        if QTVERSION < '4.0.0':
-            self.diagnosticsWidget.setText(text)
-        else:
-            self.diagnosticsWidget.clear()
-            self.diagnosticsWidget.insertHtml(text)
+        self.diagnosticsWidget.clear()
+        self.diagnosticsWidget.insertHtml(text)
 
     def concentrations(self):
         self._concentrationsDict = None
@@ -900,10 +831,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Sorry, You need to perform a fit first.\n"
             msg.setText(text)
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
                 self.mainTab.setCurrentIndex(0)
             return
@@ -917,12 +845,9 @@ class McaAdvancedFit(qt.QWidget):
         #tool = ConcentrationsWidget.Concentrations(fl=qt.Qt.WDestructiveClose)
         if self.concentrationsWidget is None:
            self.concentrationsWidget = ConcentrationsWidget.Concentrations()
-           if QTVERSION < '4.0.0':
-               self.connect(self.concentrationsWidget,qt.PYSIGNAL("ConcentrationsSignal"),
-                                    self.__configureFromConcentrations)
-           else:
-               self.connect(self.concentrationsWidget,qt.SIGNAL("ConcentrationsSignal"),
-                                    self.__configureFromConcentrations)
+           self.connect(self.concentrationsWidget,
+                        qt.SIGNAL("ConcentrationsSignal"),
+                        self.__configureFromConcentrations)
         tool = self.concentrationsWidget
         #this forces update
         tool.getParameters()
@@ -944,10 +869,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error processing fit result: %s" % (sys.exc_info()[1]))
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'CONCENTRATIONS':
                     self.mainTab.setCurrentIndex(0)
                 return
@@ -955,10 +877,7 @@ class McaAdvancedFit(qt.QWidget):
         self._concentrationsInfo = info
         tool.show()
         tool.setFocus()
-        if QTVERSION < '4.0.0':
-            tool.raiseW()
-        else:
-            tool.raise_()
+        tool.raise_()
 
     def __toggleMatrixSpectrum(self):
         if self.matrixSpectrumButton.isChecked():
@@ -1006,11 +925,11 @@ class McaAdvancedFit(qt.QWidget):
         tool   = ConcentrationsTool.ConcentrationsTool()
         #this forces update
         tool.configure()
-        dict = {}
-        dict.update(config['concentrations'])
-        tool.configure(dict)
+        ddict = {}
+        ddict.update(config['concentrations'])
+        tool.configure(ddict)
         if DEBUG:
-            dict, info = tool.processFitResult(fitresult=fitresult,
+            ddict, info = tool.processFitResult(fitresult=fitresult,
                                          elementsfrommatrix=True,
                                          addinfo=True)
         else:
@@ -1025,15 +944,12 @@ class McaAdvancedFit(qt.QWidget):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
                             raise Exception(threadResult[1], threadResult[2])
-                dict, info = threadResult
+                ddict, info = threadResult
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error: %s" % (sys.exc_info()[1]))
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 return
         self._concentrationsInfo = info
         groupsList = fitresult['result']['groups']
@@ -1048,7 +964,7 @@ class McaAdvancedFit(qt.QWidget):
                 areas.append(0.0)
             else:
                 # transitions = item[1] + " xrays"
-                areas.append(dict['area'][group])
+                areas.append(ddict['area'][group])
 
         nglobal    = len(fitresult['result']['parameters']) - len(groupsList)
         parameters = []
@@ -1061,15 +977,16 @@ class McaAdvancedFit(qt.QWidget):
         xmatrix = fitresult['result']['xdata']
         ymatrix = self.mcafit.mcatheory(parameters,xmatrix)
         ymatrix.shape =  [len(ymatrix),1]
-        dict=copy.deepcopy(self.dict)
-        dict['event'] = "McaAdvancedFitMatrixFinished"
+        ddict=copy.deepcopy(self.dict)
+        ddict['event'] = "McaAdvancedFitMatrixFinished"
         if self.mcafit.STRIP:
-            dict['result']['ymatrix']  = ymatrix + self.mcafit.zz
+            ddict['result']['ymatrix']  = ymatrix + self.mcafit.zz
         else:
-            dict['result']['ymatrix']  = ymatrix
-        dict['result']['ymatrix'].shape  = (len(dict['result']['ymatrix']),)
-        dict['result']['continuum'].shape  = (len(dict['result']['ymatrix']),)
-        if self.matrixSpectrumButton.isChecked():self.dict['result']['ymatrix']= dict['result']['ymatrix'] * 1.0
+            ddict['result']['ymatrix']  = ymatrix
+        ddict['result']['ymatrix'].shape  = (len(ddict['result']['ymatrix']),)
+        ddict['result']['continuum'].shape  = (len(ddict['result']['ymatrix']),)
+        if self.matrixSpectrumButton.isChecked():
+            self.dict['result']['ymatrix']= dict['result']['ymatrix'] * 1.0
         """
         if self.graph is not None:
             if self._logY:
@@ -1083,15 +1000,15 @@ class McaAdvancedFit(qt.QWidget):
             self.graph.newCurve("Matrix",xdata,dict['result']['ymatrix'],logfilter=logfilter)
         """
         try:
-            self.__anasignal(dict)
+            self.__anasignal(ddict)
         except:
             print("Error generating matrix output. ")
             print("Try to perform your fit again.  ")
             print(sys.exc_info())
             print("If error persists, please report this error.")
-            print("ymatrix shape = ", dict['result']['ymatrix'].shape)
+            print("ymatrix shape = ", ddict['result']['ymatrix'].shape)
             print("xmatrix shape = ", xmatrix.shape)
-            print("continuum shape = ", dict['result']['continuum'].shape)
+            print("continuum shape = ", ddict['result']['continuum'].shape)
             print("zz      shape = ", self.mcafit.zz.shape)
 
     def xrfmcSpectrum(self):
@@ -1264,8 +1181,8 @@ class McaAdvancedFit(qt.QWidget):
             groupsList = [groupsList]
 
         nglobal    = len(fitresult['result']['parameters']) - len(groupsList)
-        dict=copy.deepcopy(self.dict)
-        dict['event'] = "McaAdvancedFitPeaksFinished"
+        ddict=copy.deepcopy(self.dict)
+        ddict['event'] = "McaAdvancedFitPeaksFinished"
         newparameters = fitresult['result']['fittedpar'] * 1
         for i in range(nglobal,len(fitresult['result']['parameters'])):
             newparameters[i] = 0.0
@@ -1278,59 +1195,45 @@ class McaAdvancedFit(qt.QWidget):
             ymatrix.shape =  [len(ymatrix),1]
             label = 'y'+group
             if self.mcafit.STRIP:
-                dict['result'][label]  = ymatrix + self.mcafit.zz
+                ddict['result'][label]  = ymatrix + self.mcafit.zz
             else:
-                dict['result'][label]  = ymatrix
-            dict['result'][label].shape  = (len(dict['result'][label]),)
-            if self.peaksSpectrumButton.isChecked():self.dict['result'][label]= dict['result'][label] * 1.0
+                ddict['result'][label]  = ymatrix
+            ddict['result'][label].shape  = (len(ddict['result'][label]),)
+            if self.peaksSpectrumButton.isChecked():
+                self.dict['result'][label]= dict['result'][label] * 1.0
         try:
-            self.__anasignal(dict)
+            self.__anasignal(ddict)
         except:
             print("Error generating peaks output. ")
             print("Try to perform your fit again.  ")
             print(sys.exc_info())
             print("If error persists, please report this error.")
-            print("ymatrix shape = ", dict['result']['ymatrix'].shape)
+            print("ymatrix shape = ", ddict['result']['ymatrix'].shape)
             print("xmatrix shape = ", xmatrix.shape)
-            print("continuum shape = ", dict['result']['continuum'].shape)
+            print("continuum shape = ", ddict['result']['continuum'].shape)
             print("zz      shape = ", self.mcafit.zz.shape)
 
     def __printps(self):
-        if QTVERSION < '4.0.0':
-            self.__printmenu.exec_loop(self.cursor().pos())
-        else:
-            self.__printmenu.exec_(self.cursor().pos())
+        self.__printmenu.exec_(self.cursor().pos())
 
     def htmlReport(self,index=None):
         if not self.__fitdone:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("You should perform a fit \nfirst,\n shouldn't you?")
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             return
         oldoutdir = self.outdir
         if self.outdir is None:
             cwd = PyMcaDirs.outputDir
-            if QTVERSION < '4.0.0':
-                outfile = qt.QFileDialog(self,"Output Directory Selection",1)
-                outfile.setMode(outfile.DirectoryOnly)
-                outfile.setDir(cwd)
-                ret = outfile.exec_loop()
-            else:
-                outfile = qt.QFileDialog(self)
-                outfile.setWindowTitle("Output Directory Selection")
-                outfile.setModal(1)
-                outfile.setFileMode(outfile.DirectoryOnly)
-                outfile.setDirectory(cwd)
-                ret = outfile.exec_()
+            outfile = qt.QFileDialog(self)
+            outfile.setWindowTitle("Output Directory Selection")
+            outfile.setModal(1)
+            outfile.setFileMode(outfile.DirectoryOnly)
+            outfile.setDirectory(cwd)
+            ret = outfile.exec_()
             if ret:
-                if QTVERSION < '4.0.0':
-                    self.outdir = qt.safe_str(outfile.selectedFile())
-                else:
-                    self.outdir = qt.safe_str(outfile.selectedFiles()[0])
+                self.outdir = qt.safe_str(outfile.selectedFiles()[0])
                 outfile.close()
                 del outfile
             else:
@@ -1349,11 +1252,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
-
+            msg.exec_()
 
     def __htmlReport(self,outfile=None):
         report = QtMcaAdvancedFitReport.QtMcaAdvancedFitReport(None,
@@ -1369,58 +1268,41 @@ class McaAdvancedFit(qt.QWidget):
             self.__lastreport = report.writeReport(text=text)
         if self.browser is None:
             self.browser= qt.QWidget()
-            if QTVERSION < '4.0.0':
-                self.browser.setCaption(QString(self.__lastreport))
-            else:
-                self.browser.setWindowTitle(QString(self.__lastreport))
+            self.browser.setWindowTitle(QString(self.__lastreport))
             self.browser.layout = qt.QVBoxLayout(self.browser)
             self.browser.layout.setMargin(0)
             self.browser.layout.setSpacing(0)
-            if QTVERSION < '4.0.0':
-                self.__printmenu.insertSeparator()
-                self.__printmenu.insertItem(QString("Last Report"),self.showLastReport)
-            else:
-                self.__printmenu.addSeparator()
-                self.__printmenu.addAction(QString("Last Report"),self.showLastReport)
+            self.__printmenu.addSeparator()
+            self.__printmenu.addAction(QString("Last Report"),self.showLastReport)
 
-            if QTVERSION < '4.0.0':
-                self.browsertext= qt.QTextView(self.browser)
+            self.browsertext = qt.QTextBrowser(self.browser)
+            self.browsertext.setReadOnly(1)
+            screenWidth = qt.QDesktopWidget().width()
+            if screenWidth > 0:
+                self.browsertext.setMinimumWidth(min(self.width(), int(0.5 * screenWidth)))
             else:
-                self.browsertext = qt.QTextBrowser(self.browser)
-                self.browsertext.setReadOnly(1)
-                screenWidth = qt.QDesktopWidget().width()
-                if screenWidth > 0:
-                    self.browsertext.setMinimumWidth(min(self.width(), int(0.5 * screenWidth)))
-                else:
-                    self.browsertext.setMinimumWidth(self.width())
-                screenHeight = qt.QDesktopWidget().height()
-                if screenHeight > 0:
-                    self.browsertext.setMinimumHeight(min(self.height(), int(0.5 * screenHeight)))
-                else:
-                    self.browsertext.setMinimumHeight(self.height())
+                self.browsertext.setMinimumWidth(self.width())
+            screenHeight = qt.QDesktopWidget().height()
+            if screenHeight > 0:
+                self.browsertext.setMinimumHeight(min(self.height(), int(0.5 * screenHeight)))
+            else:
+                self.browsertext.setMinimumHeight(self.height())
 
             self.browser.layout.addWidget(self.browsertext)
         else:
-            if QTVERSION < '4.0.0':
-                self.browser.setCaption(QString(self.__lastreport))
-            else:
-                self.browser.setWindowTitle(QString(self.__lastreport))
+            self.browser.setWindowTitle(QString(self.__lastreport))
 
-        if QTVERSION < '4.0.0':
-            self.browsertext.mimeSourceFactory().addFilePath(QString(os.path.dirname(self.__lastreport)))
-            self.browsertext.setText(text)
+        dirname = os.path.dirname(self.__lastreport)
+        # basename = os.path.basename(self.__lastreport)
+        #self.browsertext.setMimeSourceFactory(qt.QMimeFactory.defaultFactory())
+        #self.browsertext.mimeSourceFactory().addFilePath(QString(dirname))
+        self.browsertext.setSearchPaths([QString(dirname)])
+        #self.browsertext.setSource(qt.QUrl(QString(basename)))
+        self.browsertext.clear()
+        if QTVERSION < '4.2.0':
+            self.browsertext.insertHtml(text)
         else:
-            dirname = os.path.dirname(self.__lastreport)
-            # basename = os.path.basename(self.__lastreport)
-            #self.browsertext.setMimeSourceFactory(qt.QMimeFactory.defaultFactory())
-            #self.browsertext.mimeSourceFactory().addFilePath(QString(dirname))
-            self.browsertext.setSearchPaths([QString(dirname)])
-            #self.browsertext.setSource(qt.QUrl(QString(basename)))
-            self.browsertext.clear()
-            if QTVERSION < '4.2.0':
-                self.browsertext.insertHtml(text)
-            else:
-                self.browsertext.setText(text)
+            self.browsertext.setText(text)
         self.browsertext.show()
         self.showLastReport()
 
@@ -1440,10 +1322,7 @@ class McaAdvancedFit(qt.QWidget):
             ddict={}
             ddict['event'] = "McaAdvancedFitPrint"
             ddict['text' ] = text
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'), (ddict,))
-            else:
-                self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
+            self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
 
     def printps(self, doit=0):
         h = self.__htmlheader()
@@ -1456,10 +1335,7 @@ class McaAdvancedFit(qt.QWidget):
             ddict={}
             ddict['event'] = "McaAdvancedFitPrint"
             ddict['text' ] = h+text
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'), (ddict,))
-            else:
-                self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
+            self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
 
     def __htmlheader(self):
         header = "%s" % qt.safe_str(self.headerLabel.text())
