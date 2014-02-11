@@ -26,9 +26,12 @@
 #############################################################################*/
 import sys
 import os.path
+import numpy
 
-from PyMca import QtBlissGraph
 from PyMca import PyMcaQt as qt
+from PyMca.plotting import PlotWidget
+from PyMca.plotting.backends.MatplotlibBackend \
+     import MatplotlibBackend as backend
 
 if not hasattr(qt, 'QString'):
     QString = qt.safe_str
@@ -37,41 +40,35 @@ else:
     QString = qt.QString
     QStringList = qt.QStringList
 QTVERSION = qt.qVersion()
-
-if QTVERSION > '4.0.0':
-    QT4 = True
-    try:
-        from PyMca import QPyMcaMatplotlibSave
-        MATPLOTLIB = True
-    except ImportError:
-        MATPLOTLIB = False
-else:
-    QT4 = False
-    MATPLOTLIB = False
+QT4=True
+from PyMca import QPyMcaMatplotlibSave
+MATPLOTLIB = True
 from PyMca.PyMca_Icons import IconDict
 from PyMca import ColormapDialog
 from PyMca import PyMcaPrintPreview
 from PyMca.PyMcaIO import ArraySave
 from PyMca import PyMcaDirs
 from PyMca import SpecFileDataInfo
+from PyMca import spslut
+COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
+                spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
+
 
 DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
 __revision__ = "$Revision: 1.35 $"
 
 class EdfFile_StandardArray(qt.QWidget):
-    def __init__(self, parent=None, name="Edf_StandardArray", fl=0, images=None, rows=None, cols=None):
-        if images is None:images = 1
-        if rows is None:rows = 0
-        if cols is None:cols = 0        
+    def __init__(self, parent=None, name="Edf_StandardArray", images=None, rows=None, cols=None):
+        if images is None:
+            images = 1
+        if rows is None:
+            rows = 0
+        if cols is None:
+            cols = 0        
         qt.QWidget.__init__(self, parent)
-        if qt.qVersion() < '4.0.0':
-            layout = qt.QGridLayout(self, 4, 2)
-            layout.setColStretch(0,0)
-            layout.setColStretch(1,1)
-        else:
-            layout = qt.QGridLayout(self)
-        layout.setMargin(5)
+        layout = qt.QGridLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
 
         ilab= qt.QLabel("Image:", self)
         self.plab= qt.QLabel("Plot", self)
@@ -86,15 +83,9 @@ class EdfFile_StandardArray(qt.QWidget):
 
         self.plotCombo= qt.QComboBox(self)
         self.plotCombo.setEditable(0)
-        if qt.qVersion() < '4.0.0':
-            self.plotCombo.insertItem("Rows")
-            self.plotCombo.insertItem("Columns")
-            self.yList= qt.QListBox(self)
-            self.yList.setSelectionMode(qt.QListBox.Multi)
-        else:
-            self.plotCombo.insertItems(0, ["Rows", "Columns"])
-            self.yList= qt.QListWidget(self)
-            #self.yList.setSelectionMode(qt.QListBox.Multi)
+        self.plotCombo.insertItems(0, ["Rows", "Columns"])
+        self.yList= qt.QListWidget(self)
+        #self.yList.setSelectionMode(qt.QListBox.Multi)
 
 
         layout.addWidget(self.iCombo,   0, 1)
@@ -109,33 +100,24 @@ class EdfFile_StandardArray(qt.QWidget):
 
     def setImages(self,images,info=None):
         self.iCombo.clear()
-        if info is None: info = []
+        if info is None:
+            info = []
         for i in range(images):
-            if qt.qVersion() < '4.0.0':
-                if len(info) == images:
-                    self.iCombo.insertItem("Image %d Key %s" % (i,info[i]))  
-                else:
-                    self.iCombo.insertItem("Image %d" % i)
+            if len(info) == images:
+                self.iCombo.insertItem(i, "Image %d Key %s" % (i,info[i])) 
             else:
-                if len(info) == images:
-                    self.iCombo.insertItem(i, "Image %d Key %s" % (i,info[i])) 
-                else:
-                    self.iCombo.insertItem(i, "Image %d" % i)
+                self.iCombo.insertItem(i, "Image %d" % i)
 
     def setCurrentImage(self,image):
         if image < self.iCombo.count():
-            if QT4:self.iCombo.setCurrentIndex(image)
-            else:  self.iCombo.setCurrentItem(image)
-    
+            self.iCombo.setCurrentIndex(image)
+
     def setDataSize(self, rows, cols):
         self.rows= rows
         self.cols= cols
 
-        idx= self.cols<=self.rows
-        if qt.qVersion() < '4.0.0':
-            self.plotCombo.setCurrentItem(idx)
-        else:
-            self.plotCombo.setCurrentIndex(idx)
+        idx = self.cols <= self.rows
+        self.plotCombo.setCurrentIndex(idx)
         self.__plotChanged(idx)
 
     def __plotChanged(self, index):
@@ -147,82 +129,54 @@ class EdfFile_StandardArray(qt.QWidget):
             self.ylab.setText('Rows')
             txt= "Row"
             val= self.rows
-        if qt.qVersion() < '4.0.0': self.yList.clear()
-        else:self.yList.clear()
+        self.yList.clear()
         for x in range(val):
-            if QT4:self.yList.addItem("%s %d"%(txt,x))
-            else:  self.yList.insertItem("%s %d"%(txt,x))
-        dict={}
-        dict['event'] = "plotChanged"
-        dict['plot']  =  txt+"s"
-        if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL("widgetSignal"),(dict,))
-        else:
-            self.emit(qt.SIGNAL("widgetSignal"),(dict))
+            self.yList.addItem("%s %d"%(txt,x))
+        ddict={}
+        ddict['event'] = "plotChanged"
+        ddict['plot']  =  txt+"s"
+        self.emit(qt.SIGNAL("widgetSignal"),(ddict))
 
     def __iChanged(self, index):
-        dict={}
-        dict['event'] = "imageChanged"
-        dict['index'] =  index
-        if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL("widgetSignal"),(dict,))
-        else:
-            self.emit(qt.SIGNAL("widgetSignal"),(dict))
+        ddict={}
+        ddict['event'] = "imageChanged"
+        ddict['index'] =  index
+        self.emit(qt.SIGNAL("widgetSignal"),(ddict))
 
     def getSelection(self):
         selection= []
 
-        if QTVERSION < '4.0.0':
-            idx = self.plotCombo.currentItem()
+        idx = self.plotCombo.currentIndex()
+        if idx==1:
+            plot= "cols"
         else:
-            idx = self.plotCombo.currentIndex()
-        if idx==1: plot= "cols"
-        else: plot= "rows"
+            plot= "rows"
 
-        if qt.qVersion() < '4.0.0':
-            idx = self.iCombo.currentItem()
+        idx = self.iCombo.currentIndex()
+        if idx==0:
+            image= None
         else:
-            idx = self.iCombo.currentIndex()
-        if idx==0: image= None
-        else: image= idx-1
+            image= idx-1
 
-        if QTVERSION < '4.0.0':
-            ylist= [ idx for idx in range(self.yList.count()) if self.yList.isSelected(idx) ]
-        else:
-            ylist= [ idx for idx in range(self.yList.count()) if self.yList.isItemSelected(self.yList.item(idx)) ]
+        ylist= [ idx for idx in range(self.yList.count()) if self.yList.isItemSelected(self.yList.item(idx)) ]
         for y in ylist:
             selection.append({"plot":plot, "image": image,"x":None, "y":y})
         return selection
 
     def markImageSelected(self,imagelist=[]):
-        if qt.qVersion() < '4.0.0':
-            current = self.iCombo.currentItem()
-        else:
-            current = self.iCombo.currentIndex()
+        current = self.iCombo.currentIndex()
         images  = self.iCombo.count()
         #self.iCombo.clear()
         msg = " (selected)"
         for i in range(images):
             index = "%d" % i
-            if qt.qVersion() < '4.0.0':
-                text = qt.safe_str(self.iCombo.text(i)).split(msg)[0]
-            else:
-                text = qt.safe_str(self.iCombo.itemText(i)).split(msg)[0]
+            text = qt.safe_str(self.iCombo.itemText(i)).split(msg)[0]
             key  = text.split()[-1]
-            if qt.qVersion() < '4.0.0':
-                if key in imagelist:
-                    self.iCombo.changeItem("%s%s" % (text,msg),i)
-                else:
-                    self.iCombo.changeItem("%s" % (text),i)
+            if key in imagelist:
+                self.iCombo.setItemText(i, "%s%s" % (text,msg))
             else:
-                if key in imagelist:
-                    self.iCombo.setItemText(i, "%s%s" % (text,msg))
-                else:
-                    self.iCombo.setItemText(i, "%s" % (text))
-        if qt.qVersion() < '4.0.0':
-            self.iCombo.setCurrentItem(current)
-        else:
-            self.iCombo.setCurrentIndex(current)
+                self.iCombo.setItemText(i, "%s" % (text))
+        self.iCombo.setCurrentIndex(current)
         
         
     def markRowSelected(self, rowlist=[]):
@@ -232,19 +186,10 @@ class EdfFile_StandardArray(qt.QWidget):
         n       = self.yList.count()
         self.yList.clear()
         for index in range(n):
-            if qt.qVersion() < '4.0.0':
-                if index in rowlist:
-                    self.yList.insertItem(" Row %d (selected)" % index)
-                else:
-                    self.yList.insertItem(" Row %d" % index)
+            if index in rowlist:
+                self.yList.addItem(" Row %d (selected)" % index)
             else:
-                if index in rowlist:
-                    self.yList.addItem(" Row %d (selected)" % index)
-                else:
-                    self.yList.addItem(" Row %d" % index)
-        #print "asking set"
-        #self.yList.setCurrentItem(current)
-        #print "DONE"
+                self.yList.addItem(" Row %d" % index)
     
     def markColSelected(self, collist=[]):
         if not qt.safe_str(self.plotCombo.currentText()) == "Columns":
@@ -252,28 +197,16 @@ class EdfFile_StandardArray(qt.QWidget):
         current = self.yList.currentItem()
         n       = self.yList.count()
         self.yList.clear()
-        if QTVERSION < '4.0.0':
-            for index in range(n):
-                if index in collist:
-                    self.yList.insertItem(" Column %d (selected)" % index)
-                else:
-                    self.yList.insertItem(" Column %d" % index)            
-            self.yList.setCurrentItem(current)
-        else:
-            for index in range(n):
-                if index in collist:
-                    self.yList.addItem(" Column %d (selected)" % index)
-                else:
-                    self.yList.addItem(" Column %d" % index)            
-            self.yList.setCurrentItem(current)
-        
+        for index in range(n):
+            if index in collist:
+                self.yList.addItem(" Column %d (selected)" % index)
+            else:
+                self.yList.addItem(" Column %d" % index)            
+        self.yList.setCurrentItem(current)
 
 class QEdfFileWidget(qt.QWidget):
     def __init__(self, parent=None, justviewer=False):
-        if qt.qVersion() < '4.0.0':
-            qt.QWidget.__init__(self, parent)
-        else:
-            qt.QWidget.__init__(self, parent)
+        qt.QWidget.__init__(self, parent)
         self.justViewer = justviewer
         self.dataSource= None
         self.oldsource = ""
@@ -302,25 +235,16 @@ class QEdfFileWidget(qt.QWidget):
 
         # --- splitter
         self.splitter= qt.QSplitter(self)
-        if QT4:
-            self.splitter.setOrientation(qt.Qt.Vertical)        
-        else:
-            self.splitter.setOrientation(qt.QSplitter.Vertical)
-    
+        self.splitter.setOrientation(qt.Qt.Vertical)        
+        
         # --- graph
-        self.graph=QtBlissGraph.QtBlissGraph(self.splitter)
-        self.graph.canvas().setMouseTracking(1)
-        self.graph.setTitle('')
-        self.graph.xlabel('Columns')
-        self.graph.ylabel('Rows')
-        if QTVERSION < '4.0.0':
-            self.connect(self.graph,qt.PYSIGNAL('QtBlissGraphSignal')  ,
-                         self.widgetSignal)
-        else:
-            self.connect(self.graph,qt.SIGNAL('QtBlissGraphSignal')  ,
-                         self.widgetSignal)
-        self._x1Limit = self.graph.getx1axislimits()[-1]
-        self._y1Limit = self.graph.gety1axislimits()[-1]
+        self.graph=PlotWidget.PlotWidget(self.splitter, backend=backend)
+        self.graph.setGraphTitle('')
+        self.graph.setGraphXLabel('Columns')
+        self.graph.setGraphYLabel('Rows')
+        self.graph.sigPlotSignal.connect(self.widgetSignal)
+        self._x1Limit = self.graph.getGraphXLimits()[-1]
+        self._y1Limit = self.graph.getGraphYLimits()[-1]
         #self.graph.hide()
         # --- array parameter
         self.__dummyW = qt.QWidget(self.splitter)
@@ -328,52 +252,31 @@ class QEdfFileWidget(qt.QWidget):
         self.__dummyW.layout.setMargin(0)
         self.__dummyW.layout.setSpacing(0)
         if not justviewer:
-            if not QT4:
-                self.applygroup = qt.QHButtonGroup(self.__dummyW,"")
-                self.applytoone = qt.QCheckBox(self.applygroup)
-                self.applytoone.setText("Apply to seen  image")
-                self.applytoone.setChecked(1)
-                self.applytoall = qt.QCheckBox(self.applygroup)
-                self.applytoall.setText("Apply to all in file")
-                self.applygroup.insert(self.applytoone,0)
-                self.applygroup.insert(self.applytoall,1)
-                self.applygroup.setExclusive(1)
-                self.__dummyW.layout.addWidget(self.applygroup)            
-                self.applygroup.setFlat(1)
-                self.applygroup.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.MinimumExpanding,
-                                                             qt.QSizePolicy.Fixed))
-                self.connect(self.applygroup,qt.SIGNAL("clicked(int)"),self.groupSignal)
-            else:
-                self.applygroupContainer = qt.QWidget(self.__dummyW)
-                self.applytoone = qt.QCheckBox(self.applygroupContainer)
-                self.applytoone.setText("Apply to seen  image")
-                self.applytoone.setChecked(1)
-                self.applytoall = qt.QCheckBox(self.applygroupContainer)
-                self.applytoall.setText("Apply to all images in list")
-                self.applygroup = qt.QButtonGroup()
-                self.applygroup.addButton(self.applytoone, 0)
-                self.applygroup.addButton(self.applytoall, 1)
-                self.applygroup.setExclusive(True)
-                self.applygroupLayout = qt.QHBoxLayout(self.applygroupContainer)
-                self.applygroupLayout.setMargin(0)
-                self.applygroupLayout.setSpacing(0)
-                self.applygroupLayout.addWidget(self.applytoone)
-                self.applygroupLayout.addWidget(self.applytoall)
-                self.__dummyW.layout.addWidget(self.applygroupContainer) 
-                self.connect(self.applygroup,qt.SIGNAL("buttonClicked(int)"),
-                             self.groupSignal)
+            self.applygroupContainer = qt.QWidget(self.__dummyW)
+            self.applytoone = qt.QCheckBox(self.applygroupContainer)
+            self.applytoone.setText("Apply to seen  image")
+            self.applytoone.setChecked(1)
+            self.applytoall = qt.QCheckBox(self.applygroupContainer)
+            self.applytoall.setText("Apply to all images in list")
+            self.applygroup = qt.QButtonGroup()
+            self.applygroup.addButton(self.applytoone, 0)
+            self.applygroup.addButton(self.applytoall, 1)
+            self.applygroup.setExclusive(True)
+            self.applygroupLayout = qt.QHBoxLayout(self.applygroupContainer)
+            self.applygroupLayout.setMargin(0)
+            self.applygroupLayout.setSpacing(0)
+            self.applygroupLayout.addWidget(self.applytoone)
+            self.applygroupLayout.addWidget(self.applytoall)
+            self.__dummyW.layout.addWidget(self.applygroupContainer) 
+            self.connect(self.applygroup,qt.SIGNAL("buttonClicked(int)"),
+                         self.groupSignal)
 
         self.dataInfoWidgetDict = {}
         self.paramWidget = EdfFile_StandardArray(self.__dummyW)
         self.__dummyW.layout.addWidget(self.paramWidget)
-        if QTVERSION < '4.0.0':
-            self.connect(self.paramWidget,
-                     qt.PYSIGNAL("widgetSignal"),
-                     self.widgetSignal)
-        else:
-            self.connect(self.paramWidget,
-                     qt.SIGNAL("widgetSignal"),
-                     self.widgetSignal)
+        self.connect(self.paramWidget,
+                 qt.SIGNAL("widgetSignal"),
+                 self.widgetSignal)
 
         if justviewer:
             self.paramWidget.plab.hide()
@@ -383,7 +286,7 @@ class QEdfFileWidget(qt.QWidget):
             
         self.allImages = 0
         # --- main layout
-        self.mainLayout.setMargin(5)
+        self.mainLayout.setContentsMargins(5, 5, 5, 5)
         self.mainLayout.setSpacing(2)
 
         #self.mainLayout.addWidget(self.infoBar)
@@ -391,25 +294,18 @@ class QEdfFileWidget(qt.QWidget):
         if not justviewer: self._buildActions()
 
     def _buildToolBar(self):
-        if QTVERSION < '4.0.0':
-            if qt.qVersion() < '3.0':
-                self.colormapIcon= qt.QIconSet(qt.QPixmap(IconDict["colormap16"]))
-            else:
-                self.colormapIcon= qt.QIconSet(qt.QPixmap(IconDict["colormap"]))
-            self.zoomResetIcon	= qt.QIconSet(qt.QPixmap(IconDict["zoomreset"]))
-            self.printIcon	= qt.QIconSet(qt.QPixmap(IconDict["fileprint"]))
-            self.saveIcon	= qt.QIconSet(qt.QPixmap(IconDict["filesave"]))
+        self.hFlipIcon	= qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"]))
+        self.solidCircleIcon = qt.QIcon(qt.QPixmap(IconDict["solidcircle"]))
+        self.solidEllipseIcon = qt.QIcon(qt.QPixmap(IconDict["solidellipse"]))
+        self.colormapIcon   = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
+        self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
+        self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
+        self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))
+        try:
+            self.infoIcon	= qt.QApplication.style().\
+                              standardIcon(qt.QStyle.SP_MessageBoxInformation)
+        except:
             self.infoIcon = None
-        else:
-            self.colormapIcon   = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
-            self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
-            self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
-            self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))
-            try:
-                self.infoIcon	= qt.QApplication.style().\
-                                  standardIcon(qt.QStyle.SP_MessageBoxInformation)
-            except:
-                self.infoIcon = None
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
@@ -421,10 +317,21 @@ class QEdfFileWidget(qt.QWidget):
                             self._zoomReset,
                             'Auto-Scale the Graph')
 
+        self.aspectButton = self._addToolButton(self.solidCircleIcon,
+                            self._aspectButtonSignal,
+                            'Keep data aspect ratio',
+                            toggle = False)
+        self.aspectButton.setChecked(False)
+        self._keepDataAspectRatioFlag = False
+
         #colormap
         self._addToolButton(self.colormapIcon,
                             self.selectColormap,
                             'Color-Scale the Graph')
+        tb = self._addToolButton(self.hFlipIcon,
+                             self._hFlipIconSignal,
+                             'Flip Horizontal')
+        self.hFlipToolButton = tb
         
         #info
         if self.infoIcon is not None:
@@ -456,23 +363,44 @@ class QEdfFileWidget(qt.QWidget):
         tb = self._addToolButton(self.printIcon,
                                  self.printGraph,
                                  'Print the Graph')
+    def _hFlipIconSignal(self):
+        if DEBUG:
+            print("_hFlipIconSignal called")
+        if self.graph.isYAxisInverted():
+            self.graph.invertYAxis(False)
+        else:
+            self.graph.invertYAxis(True)
+        self.graph.replot()
+
+    def _aspectButtonSignal(self):
+        if DEBUG:
+            print("_aspectButtonSignal")
+        if self._keepDataAspectRatioFlag:
+            self.keepDataAspectRatio(False)
+        else:
+            self.keepDataAspectRatio(True)
+
+    def keepDataAspectRatio(self, flag=True):
+        if flag:
+            self._keepDataAspectRatioFlag = True
+            self.aspectButton.setIcon(self.solidEllipseIcon)
+            self.aspectButton.setToolTip("Set free data aspect ratio")
+        else:
+            self._keepDataAspectRatioFlag = False
+            self.aspectButton.setIcon(self.solidCircleIcon)
+            self.aspectButton.setToolTip("Keep data aspect ratio")
+        self.graph.keepDataAspectRatio(self._keepDataAspectRatioFlag)
+
 
     def _addToolButton(self, icon, action, tip, toggle=None):
         tb      = qt.QToolButton(self.toolBar)            
-        if QTVERSION < '4.0.0':
-            tb.setIconSet(icon)
-            qt.QToolTip.add(tb,tip) 
-            if toggle is not None:
-                if toggle:
-                    tb.setToggleButton(1)
-        else:
-            tb.setIcon(icon)
-            tb.setToolTip(tip)
-            if toggle is not None:
-                if toggle:
-                    tb.setCheckable(1)
+        tb.setIcon(icon)
+        tb.setToolTip(tip)
+        if toggle is not None:
+            if toggle:
+                tb.setCheckable(1)
         self.toolBarLayout.addWidget(tb)
-        self.connect(tb,qt.SIGNAL('clicked()'), action)
+        tb.clicked.connect(action)
         return tb
 
     def _showInformation(self):
@@ -538,34 +466,21 @@ class QEdfFileWidget(qt.QWidget):
 
         outfile = qt.QFileDialog(self)
         outfile.setModal(1)
-        if QTVERSION < '4.0.0':
-            outfile.setCaption("Output File Selection")
-            filterlist = fileTypeList[0]
-            for f in fileTypeList:
-                filterlist += "\n%s" % f
-            outfile.setFilters(filterlist)
-            outfile.setMode(outfile.AnyFile)
-            outfile.setDir(self.lastInputDir)
-            ret = outfile.exec_loop()
-        else:
-            outfile.setWindowTitle("Output File Selection")
-            strlist = QStringList()
-            for f in fileTypeList:
-                strlist.append(f)
-            outfile.setFilters(strlist)
-            outfile.setFileMode(outfile.AnyFile)
-            outfile.setAcceptMode(outfile.AcceptSave)
-            outfile.setDirectory(self.lastInputDir)
-            ret = outfile.exec_()
+        outfile.setWindowTitle("Output File Selection")
+        strlist = QStringList()
+        for f in fileTypeList:
+            strlist.append(f)
+        outfile.setFilters(strlist)
+        outfile.setFileMode(outfile.AnyFile)
+        outfile.setAcceptMode(outfile.AcceptSave)
+        outfile.setDirectory(self.lastInputDir)
+        ret = outfile.exec_()
 
         if not ret: return
         filterused = qt.safe_str(outfile.selectedFilter()).split()
         filetype = filterused[0]
         extension = filterused[1]
-        if QTVERSION < '4.0.0':
-            outstr = qt.safe_str(outfile.selectedFile())
-        else:
-            outstr = qt.safe_str(outfile.selectedFiles()[0])
+        outstr = qt.safe_str(outfile.selectedFiles()[0])
         try:            
             outputFile = os.path.basename(outstr)
         except:
@@ -630,10 +545,7 @@ class QEdfFileWidget(qt.QWidget):
     def saveGraphImage(self, filename,original=True):
         fformat = filename[-3:].upper()
         if original:
-            if QTVERSION < '4.0.0':
-                pixmap = qt.QPixmap(self.graph.plotImage.image)
-            else:
-                pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+            pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
         else:
             pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
         if pixmap.save(filename, fformat):
@@ -659,18 +571,13 @@ class QEdfFileWidget(qt.QWidget):
             return False
     
     def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
+        pixmap = qt.QPixmap.grabWidget(self.graph)
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
             self.printPreview.show()
-        if QTVERSION < '4.0.0':
-            self.printPreview.raiseW()
-        else:
-            self.printPreview.raise_()
+        self.printPreview.raise_()
 
     def _buildActions(self):
-        if QTVERSION < '4.0.0':
-            return self._buildActionsQt3()
         self.buttonBox = qt.QWidget(self)
         buttonBox = self.buttonBox
         self.buttonBoxLayout = qt.QGridLayout(buttonBox)
@@ -701,19 +608,13 @@ class QEdfFileWidget(qt.QWidget):
         
         self.mainLayout.addWidget(buttonBox)
         
-        self.connect(self.add2DButton, qt.SIGNAL("clicked()"), 
-                    self._add2DClicked)
-        self.connect(self.remove2DButton, qt.SIGNAL("clicked()"), 
-                    self._remove2DClicked)
-        self.connect(self.replace2DButton, qt.SIGNAL("clicked()"), 
-                    self._replace2DClicked)
+        self.add2DButton.clicked.connect(self._add2DClicked)
+        self.remove2DButton.clicked.connect(self._remove2DClicked)
+        self.replace2DButton.clicked.connect(self._replace2DClicked)
 
-        self.connect(self.addButton, qt.SIGNAL("clicked()"), 
-                    self._addClicked)
-        self.connect(self.removeButton, qt.SIGNAL("clicked()"), 
-                    self._removeClicked)
-        self.connect(self.replaceButton, qt.SIGNAL("clicked()"), 
-                    self._replaceClicked)
+        self.addButton.clicked.connect(self._addClicked)
+        self.removeButton.clicked.connect(self._removeClicked)
+        self.replaceButton.clicked.connect(self._replaceClicked)
 
     def _buildActionsQt3(self):
         self.buttonBox = qt.QWidget(self)
@@ -733,14 +634,11 @@ class QEdfFileWidget(qt.QWidget):
         
         self.mainLayout.addWidget(buttonBox)
         
-        self.connect(self.addButton, qt.SIGNAL("clicked()"), 
-                    self._addClicked)
+        self.addButton.clicked.connect(self._addClicked)
 
-        self.connect(self.removeButton, qt.SIGNAL("clicked()"), 
-                    self._removeClicked)
+        self.removeButton.clicked.connect(self._removeClicked)
 
-        self.connect(self.replaceButton, qt.SIGNAL("clicked()"), 
-                    self._replaceClicked)
+        self.replaceButton.clicked.connect(self._replaceClicked)
 
 
     def groupSignal(self,i):
@@ -991,9 +889,100 @@ class QEdfFileWidget(qt.QWidget):
         if self.colormap is None: return
         if self.colormapDialog.isHidden():
             self.colormapDialog.show()
-        if qt.qVersion() < '4.0.0':self.colormapDialog.raiseW()
-        else:  self.colormapDialog.raise_()          
+        self.colormapDialog.raise_()          
         self.colormapDialog.show()
+
+    def getPixmapFromData(self, data, colormap):
+        finiteData = numpy.isfinite(data)
+        goodData = finiteData.min()
+        
+        if self.colormapDialog is not None:
+            minData = self.colormapDialog.dataMin
+            maxData = self.colormapDialog.dataMax
+        else:
+            if goodData:
+                minData = data.min()
+                maxData = data.max()
+            else:
+                tmpData = data[finiteData]
+                if tmpData.size > 0:
+                    minData = tmpData.min()
+                    maxData = tmpData.max()
+                else:
+                    minData = None
+                    maxData = None
+                tmpData = None
+        if colormap is None:
+            if minData is None:
+                (pixmap,size,minmax)= spslut.transform(\
+                                data,
+                                (1,0),
+                                (self.__defaultColormapType,3.0),
+                                "RGBX",
+                                self.__defaultColormap,
+                                1,
+                                (0, 1),
+                                (0, 255), 1)
+            else:
+                (pixmap,size,minmax)= spslut.transform(\
+                                data,
+                                (1,0),
+                                (self.__defaultColormapType,3.0),
+                                "RGBX",
+                                self.__defaultColormap,
+                                0,
+                                (minData,maxData),
+                                (0, 255), 1)
+        else:
+            if len(colormap) < 7:
+                colormap.append(spslut.LINEAR)
+            if goodData:
+                (pixmap,size,minmax)= spslut.transform(\
+                                data,
+                                (1,0),
+                                (colormap[6],3.0),
+                                "RGBX",
+                                COLORMAPLIST[int(str(colormap[0]))],
+                                colormap[1],
+                                (colormap[2],colormap[3]),
+                                (0,255), 1)                
+            elif colormap[1]:
+                #autoscale
+                if minData is None:
+                    (pixmap,size,minmax)= spslut.transform(\
+                                data,
+                                (1,0),
+                                (self.__defaultColormapType,3.0),
+                                "RGBX",
+                                self.__defaultColormap,
+                                1,
+                                (0, 1),
+                                (0, 255), 1)
+                else:
+                    (pixmap,size,minmax)= spslut.transform(\
+                                data,
+                                (1,0),
+                                (colormap[6],3.0),
+                                "RGBX",
+                                COLORMAPLIST[int(str(colormap[0]))],
+                                0,
+                                (minData,maxData),
+                                (0,255), 1)
+            else:
+                (pixmap,size,minmax)= spslut.transform(\
+                                data,
+                                (1,0),
+                                (colormap[6],3.0),
+                                "RGBX",
+                                COLORMAPLIST[int(str(colormap[0]))],
+                                colormap[1],
+                                (colormap[2],colormap[3]),
+                                (0,255), 1)
+
+        pixmap.shape = [data.shape[0], data.shape[1], 4]
+        if not goodData:
+            pixmap[finiteData < 1] = 255
+        return pixmap
 
     def updateColormap(self, *var):
         if len(var) > 6:
@@ -1018,11 +1007,9 @@ class QEdfFileWidget(qt.QWidget):
                              var[3],
                              var[4],
                              var[5]]
-        self.graph.setY1AxisInverted(True)
-        self.graph.imagePlot(self.lastData,
-                         colormap = self.colormap,
-                         xmirror = False,
-                         ymirror = False)
+        #self.graph.invertYAxis(True)
+        pixmap = self.getPixmapFromData(self.lastData, self.colormap)
+        self.graph.addImage(pixmap)
         self.graph.replot()
 
     def closeFile(self, filename=None):
@@ -1206,11 +1193,8 @@ class QEdfFileWidget(qt.QWidget):
                              minData, maxData)
             #self.graph.imagePlot(data=data, colormap = self.colormap)
             self.colormapDialog._update()
-            self.graph.setY1AxisInverted(True)
-            self.graph.imagePlot(data=data,
-                                 colormap = self.colormap,
-                                 ymirror = False)
-            
+            pixmap = self.getPixmapFromData(data, self.colormap)
+            self.graph.addImage(pixmap)
         self.__refreshSelection()
         self.graph.replot()
         self.oldsource       = "%s" % self.data.sourceName
