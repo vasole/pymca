@@ -50,3 +50,5 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# cython generated files
+PyMca/plotting/ctools/_ctools/cython/*.c
