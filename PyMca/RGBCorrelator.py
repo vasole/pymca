@@ -98,43 +98,23 @@ class RGBCorrelator(qt.QWidget):
 
     def _hFlipIconSignal(self):
         if self._handleGraph:
-            if not self.graph.yAutoScale:
-                qt.QMessageBox.information(self, "Open",
-                        "Please set Y Axis to AutoScale first")
-                return
-            if not self.graph.xAutoScale:
-                qt.QMessageBox.information(self, "Open",
-                        "Please set X Axis to AutoScale first")
-                return
-            if self._y1AxisInverted:
-                self._y1AxisInverted = False
+            if self.graph.isYAxisInverted():
+                self.graph.invertYAxis(False)
             else:
-                self._y1AxisInverted = True
-            self.graph.setY1AxisInverted(self._y1AxisInverted)
-            self.graph.zoomReset()
-            self.controller.update()
+                self.graph.invertYAxis(True)
+            self.graph.replot()
+            #this is not needed
+            #self.controller.update()
             return
 
     def correlatorSignalSlot(self, ddict):
         if 'image' in ddict:
             # keep the image buffer as an array
-            self._imageBuffer = ddict['image'] #.tostring()
+            self._imageBuffer = ddict['image']
             size = ddict['size']
-            if not self.graph.yAutoScale:
-                ylimits = self.graph.getY1AxisLimits()
-            if not self.graph.xAutoScale:
-                xlimits = self.graph.getX1AxisLimits()
-            if self._handleGraph:
-                self.graph.pixmapPlot(self._imageBuffer.tostring(),size, xmirror = 0,
-                                  ymirror = not self._y1AxisInverted)
-            else:
-                self.graph.pixmapPlot(self._imageBuffer.tostring(),size)
-            if not self.graph.yAutoScale:
-                self.graph.setY1AxisLimits(ylimits[0], ylimits[1], replot=False)
-            if not self.graph.xAutoScale:
-                self.graph.setX1AxisLimits(xlimits[0], xlimits[1], replot=False)
             self._imageBuffer.shape = size[1],size[0],4
             self._imageBuffer[:,:,3] = 255
+            self.graph.addImage(self._imageBuffer)
             self.graph.replot()
 
     def _saveToolButtonSignal(self):
