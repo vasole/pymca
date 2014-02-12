@@ -1014,21 +1014,21 @@ class QStackWidget(StackBase.StackBase,
             self.updateROIImages(ddict)
 
     def getActiveCurve(self):
-        legend = self.mcaWidget.graph.getactivecurve(justlegend=1)
+        legend = self.mcaWidget.getActiveCurve(just_legend=True)
         if legend is None:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Please select an active curve")
             msg.exec_()
             return
-        x, y, legend, info = self.mcaWidget.getActiveCurve()
+        x, y, legend, info = self.mcaWidget.getActiveCurve()[:4]
         return x, y, legend, info
 
     def getGraphXLimits(self):
-        return self.mcaWidget.graph.getX1AxisLimits()
+        return self.mcaWidget.getGraphXLimits()
         
     def getGraphYLimits(self):
-        return self.mcaWidget.graph.getY1AxisLimits()
+        return self.mcaWidget.getGraphYLimits()
     
 def test():
     #create a dummy stack
