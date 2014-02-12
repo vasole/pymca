@@ -219,7 +219,8 @@ class LegendIcon(qt.QWidget):
             llist.append((linePath,
                           linePen,
                           qt.QBrush(self.lineColor)))
-        if self.showSymbol and len(self.symbol):
+        if self.showSymbol and len(self.symbol) and\
+               self.symbol not in ["None", " "]:
             # PITFALL ahead: Let this be a warning to others
             #symbolPath = Symbols[self.symbol]
             # Copy before translate! Dict is a mutable type
