@@ -40,7 +40,7 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
-    def __init__(self, parent = None, selection=False, aspect=False,
+    def __init__(self, parent = None, selection=False, aspect=True,
                  colormap=False,
                  imageicons=False, standalonesave=True, standalonezoom=True,
                  profileselection=False, polygon=False):
