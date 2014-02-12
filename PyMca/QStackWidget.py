@@ -668,7 +668,7 @@ class QStackWidget(StackBase.StackBase,
             n += 1
         if n == 1:
             if self.mcaWidget is None:
-                self.mcaWidget = McaWindow.McaWidget(self, vertical = False)
+                self.mcaWidget = McaWindow.McaWindow(self)
                 self.mcaWidget.setWindowTitle("PyMCA - Mca Window")
                 self.mainLayout.addWidget(self.mcaWidget)
             if self.rgbWidget is None:
@@ -676,9 +676,9 @@ class QStackWidget(StackBase.StackBase,
                 self.mainLayout.addWidget(self.rgbWidget)
         elif n == 2:
             self.tab = qt.QTabWidget(self)
-            self.mcaWidget = McaWindow.McaWidget(vertical = False)
-            self.mcaWidget.graphBox.setMinimumWidth(0.5 * \
-                                            qt.QWidget.sizeHint(self).width())
+            self.mcaWidget = McaWindow.McaWindow()#vertical=False)
+            #self.mcaWidget.graph.setMinimumWidth(0.5 * \
+            #                            qt.QWidget.sizeHint(self).width())
             self.tab.setMaximumHeight(1.3 * qt.QWidget.sizeHint(self).height())
             self.mcaWidget.setWindowTitle("PyMCA - Mca Window")
             self.tab.addTab(self.mcaWidget, "MCA")
@@ -733,9 +733,7 @@ class QStackWidget(StackBase.StackBase,
 
         self.stackGraphWidget.graph.sigPlotSignal.connect(\
                                     self._stackGraphSignal)
-        self.connect(self.mcaWidget,
-                 qt.SIGNAL("McaWindowSignal"),
-                 self._mcaWidgetSignal)
+        self.mcaWidget.sigROISignal.connect(self._mcaWidgetSignal)
         self.roiWidget.graphWidget.graph.sigPlotSignal.connect(\
                                     self._stackGraphSignal)
 
@@ -987,21 +985,23 @@ class QStackWidget(StackBase.StackBase,
             return
         if ddict['event'] == "hFlipSignal":
             if ddict['id'] != id(self.stackWidget):
-                self.stackWidget.graphWidget.graph.zoomReset()
-                self.stackWidget.setY1AxisInverted(ddict['current'])
+                self.stackWidget.graphWidget.graph.resetZoom()
+                self.stackWidget.graph.invertYAxis(ddict['current'])
                 self.stackWidget.plotImage(update=True)
             if ddict['id'] != id(self.roiWidget):
-                self.roiWidget.graphWidget.graph.zoomReset()
-                self.roiWidget.setY1AxisInverted(ddict['current'])
+                self.roiWidget.graph.resetZoom()
+                self.roiWidget.graph.invertYAxis(ddict['current'])
                 self.roiWidget.plotImage(update=True)
             return
 
     def _stackGraphSignal(self, ddict):
-        if ddict['event'] == "MouseAt":
+        if ddict['event'] in ["mouseMoved", "MouseAt"]:
             x = round(ddict['y'])
-            if x < 0: x = 0
+            if x < 0:
+                x = 0
             y = round(ddict['x'])
-            if y < 0: y = 0
+            if y < 0:
+                y = 0
             if self._stackImageData is None:
                 return
             limits = self._stackImageData.shape
@@ -1014,7 +1014,7 @@ class QStackWidget(StackBase.StackBase,
     def _mcaWidgetSignal(self, ddict):
         if not self.__ROIConnected:
             return
-        if ddict['event'] == "ROISignal":
+        if ddict['event'] in ["currentROISignal", "ROISignal"]:
             self.updateROIImages(ddict)
 
     def getActiveCurve(self):
