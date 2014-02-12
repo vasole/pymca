@@ -1393,8 +1393,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :return: Handle used by the backend to univocally access the marker
         """
         #line = self.ax.axvline(x, picker=True)
-        legend = "__MARKER__" + legend
         self.removeMarker(legend, replot=False)
+        legend = "__MARKER__" + legend
         if selectable or draggable:
             line = self.ax.axvline(x, label=legend, color=color, picker=5)
         else:
@@ -1526,15 +1526,18 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             # we have received a legend!
             legend = handle
-            handle = None
-            for line2d in self.ax.lines:
-                label = line2d.get_label()
-                if label == ("__MARKER__"+legend):
-                    handle = line2d
-            if handle is not None:
-                self._removeInfoText(handle)
-                handle.remove()
-                del handle
+            done = False
+            for axes in [self.ax, self.ax2]:
+                for line2d in axes.lines:
+                    if done:
+                        break
+                    label = line2d.get_label()
+                    if label == ("__MARKER__"+legend):
+                        if hasattr(line2d, "_infoText"):
+                            line2d._infoText.remove()
+                        line2d.remove()
+                        del line2d
+                        done = True 
         if replot:
             self.replot()
 
