@@ -106,45 +106,40 @@ class QStackWidget(StackBase.StackBase,
         self.stackWindow.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.stackWindow.mainLayout.setSpacing(0)
 
-        #if HDF5:
-        if 1:
-            self.stackWidget = MaskImageWidget.MaskImageWidget(self.stackWindow,
-                                                        selection=False,
-                                                        standalonesave=False,
-                                                        imageicons=False)
-            self._stackSaveMenu = qt.QMenu()
-            if HDF5:
-                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Spectra"),
-                                                 self.saveStackAsNeXusSpectra)
-                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Images"),
-                                                 self.saveStackAsNeXusImages)
-                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Compressed Spectra"),
-                                                 self.saveStackAsNeXusCompressedSpectra)
-                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Compressed Images"),
-                                                 self.saveStackAsNeXusCompressedImages)
-                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 Spectra"),
-                                                 self.saveStackAsFloat32NeXusSpectra)
-                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float64 Spectra"),
-                                                 self.saveStackAsFloat64NeXusSpectra)
-                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 Images"),
-                                                 self.saveStackAsFloat32NeXusImages)
-                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float64 Images"),
-                                                 self.saveStackAsFloat64NeXusImages)
-                self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as HDF5 /data"),
-                                                 self.saveStackAsSimplestHDF5)
-            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Monochromatic TIFF Images"),
-                                                 self.saveStackAsMonochromaticTiffImages)
-            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 TIFF Images"),
-                                                 self.saveStackAsFloat32TiffImages)
-            self._stackSaveMenu.addAction(QString("Standard Graphics"),
-                                self.stackWidget.graphWidget._saveIconSignal)
-            self.connect(self.stackWidget.graphWidget.saveToolButton,
-                         qt.SIGNAL("clicked()"), 
-                         self._stackSaveToolButtonSignal)
-        else:
-            self.stackWidget = MaskImageWidget.MaskImageWidget(self.stackWindow,
-                                                        selection=False,
-                                                        imageicons=False)
+        self.stackWidget = MaskImageWidget.MaskImageWidget(self.stackWindow,
+                                                    selection=False,
+                                                    standalonesave=False,
+                                                    imageicons=False,
+                                                    aspect=True)
+        self._stackSaveMenu = qt.QMenu()
+        if HDF5:
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Spectra"),
+                                             self.saveStackAsNeXusSpectra)
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Images"),
+                                             self.saveStackAsNeXusImages)
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Compressed Spectra"),
+                                             self.saveStackAsNeXusCompressedSpectra)
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Compressed Images"),
+                                             self.saveStackAsNeXusCompressedImages)
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 Spectra"),
+                                             self.saveStackAsFloat32NeXusSpectra)
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float64 Spectra"),
+                                             self.saveStackAsFloat64NeXusSpectra)
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 Images"),
+                                             self.saveStackAsFloat32NeXusImages)
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float64 Images"),
+                                             self.saveStackAsFloat64NeXusImages)
+            self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as HDF5 /data"),
+                                             self.saveStackAsSimplestHDF5)
+        self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Monochromatic TIFF Images"),
+                                             self.saveStackAsMonochromaticTiffImages)
+        self._stackSaveMenu.addAction(QString("Save Zoomed Stack Region as Float32 TIFF Images"),
+                                             self.saveStackAsFloat32TiffImages)
+        self._stackSaveMenu.addAction(QString("Standard Graphics"),
+                            self.stackWidget.graphWidget._saveIconSignal)
+        self.connect(self.stackWidget.graphWidget.saveToolButton,
+                     qt.SIGNAL("clicked()"), 
+                     self._stackSaveToolButtonSignal)
             
         self.stackGraphWidget = self.stackWidget.graphWidget
 
@@ -159,7 +154,8 @@ class QStackWidget(StackBase.StackBase,
                                                          colormap=True,
                                                          imageicons=True,
                                                          standalonesave=standaloneSaving,
-                                                         profileselection=True)
+                                                         profileselection=True,
+                                                         aspect=True)
         infotext  = 'Toggle background subtraction from current image\n'
         infotext += 'subtracting a straight line between the ROI limits.'
         self.roiBackgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
