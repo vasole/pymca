@@ -156,7 +156,10 @@ class McaWindow(ScanWindow.ScanWindow):
                                    self.roiDockWidget)
             else:
                 self.addDockWidget(qt.Qt.BottomDockWidgetArea,
-                                   self.roiDockWidget)        
+                                   self.roiDockWidget)
+            if hasattr(self, "legendDockWidget"):
+                self.tabifyDockWidget(self.roiDockWidget,
+                                      self.legendDockWidget)
             self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
         if self.roiDockWidget.isHidden():
             self.roiDockWidget.show()

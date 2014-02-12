@@ -802,7 +802,8 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.addDockWidget(qt.Qt.BottomDockWidgetArea,
                                        self.legendDockWidget)
             if hasattr(self, "roiDockWidget"):
-                self.tabifyDockWidget(self.roiDockWidget,
+                if self.roiDockWidget is not None:
+                    self.tabifyDockWidget(self.roiDockWidget,
                                       self.legendDockWidget)
             self.legendWidget.sigLegendSignal.connect(self._legendSignal)
             self.legendDockWidget.setWindowTitle(self.windowTitle()+(" Legend"))
@@ -810,11 +811,21 @@ class PlotWindow(PlotWidget.PlotWidget):
     def _legendSignal(self, ddict):
         print(ddict)
 
+
+    def toggleLegendWidget(self):
+        if self.legendWidget is None:
+            self.showLegends(True)
+        elif self.legendDockWidget.isHidden():
+            self.showLegends(True)
+        else:
+            self.showLegends(False)
+
     def showLegends(self, flag=True):
         if self.legendWidget is None:
             self._buildLegendWidget()
         if flag:
             self.legendDockWidget.show()
+            self.updateLegends()
         else:
             self.legendDockWidget.hide()
 

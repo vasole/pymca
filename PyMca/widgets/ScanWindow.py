@@ -162,12 +162,26 @@ class ScanWindow(PlotWindow.PlotWindow):
         elif DEBUG:
             print("unhandled event", ddict['event'])
 
+    def _graphControlClicked(self):
+        #create a default menu
+        controlMenu = qt.QMenu()
+        controlMenu.addAction(QString("Show/Hide Legends"),
+                                   self.toggleLegendWidget)
+        controlMenu.exec_(self.cursor().pos())
+
+
     def _buildPositionInfo(self):
         widget = self.centralWidget()
         self.graphBottom = qt.QWidget(widget)
         self.graphBottomLayout = qt.QHBoxLayout(self.graphBottom)
         self.graphBottomLayout.setContentsMargins(0, 0, 0, 0)
         self.graphBottomLayout.setSpacing(0)
+
+        self.graphControlButton = qt.QPushButton(self.graphBottom)
+        self.graphControlButton.setText("Options")
+        self.graphControlButton.setAutoDefault(False)
+        self.graphBottomLayout.addWidget(self.graphControlButton)
+        self.graphControlButton.clicked.connect(self._graphControlClicked)
         
         label=qt.QLabel(self.graphBottom)
         label.setText('<b>X:</b>')
@@ -1221,8 +1235,6 @@ class ScanWindow(PlotWindow.PlotWindow):
         if legend in self.dataObjectsDict:
             # the info is changing
             super(ScanWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
-            if self.legendWidget is None:
-                self.showLegends()
         else:
             # create the data object
             self.newCurve(x, y, legend=legend, info=info, **kw)
