@@ -496,8 +496,12 @@ class MatplotlibGraph(FigureCanvas):
                     ddict['ypixel'] = self._y0Pixel
                     ddict['xdata'] = artist.get_xdata()
                     ddict['ydata'] = artist.get_ydata()
-                    ddict['x'] = artist.get_xdata()[-1]
-                    ddict['y'] = artist.get_ydata()[-1]
+                    if hasattr(ddict['xdata'], "__len__"):
+                        ddict['x'] = ddict['xdata'][-1]
+                        ddict['y'] = ddict['ydata'][-1]
+                    else:
+                        ddict['x'] = ddict['xdata']
+                        ddict['y'] = ddict['ydata']
                     if button == leftButton:
                         ddict['button'] = "left"
                     else:
@@ -938,6 +942,7 @@ class MatplotlibGraph(FigureCanvas):
         #print(dir(self._drawingPatch))
         a = self._drawingPatch.get_xy()
         ddict['points'] = numpy.array(a)
+        ddict['points'].shape = -1, 2
         ddict['xdata'] = ddict['points'][:, 0]
         ddict['ydata'] = ddict['points'][:, 1]
         #print(numpyvstack(a))
