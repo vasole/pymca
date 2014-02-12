@@ -46,7 +46,8 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 DEBUG = 0
 
 class RGBImageCalculator(qt.QWidget):
-    def __init__(self, parent = None, math = True, replace = False, scanwindow=None):
+    def __init__(self, parent = None, math = True, replace = False,
+                 scanwindow=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMCA - RGB Image Calculator")
@@ -106,7 +107,8 @@ class RGBImageCalculator(qt.QWidget):
                                                            imageicons=False,
                                                            profileselection=True,
                                                            selection=False,
-                                                           scanwindow=scanwindow)
+                                                           scanwindow=scanwindow,
+                                                           aspect=True)
         
         self.nameBox = qt.QWidget(self)
         self.nameBox.mainLayout = qt.QHBoxLayout(self.nameBox)
@@ -157,9 +159,8 @@ class RGBImageCalculator(qt.QWidget):
         #it consumes too much CPU, therefore only on click
         #self.graphWidget.graph.canvas().setMouseTracking(1)
         self.graphWidget.graphWidget.showInfo()
-        self.connect(self.graphWidget.graphWidget.graph,
-                     qt.SIGNAL("QtBlissGraphSignal"),
-                     self._graphSignal)
+        self.graphWidget.graphWidget.graph.sigPlotSignal.connect(\
+                                self._graphSignal)
 
     def plotImage(self, update=True):
         self.graphWidget.setImageData(self._imageData,
@@ -212,7 +213,7 @@ class RGBImageCalculator(qt.QWidget):
 
     def setName(self, name):
         self.name.setText(name)
-        self.graphWidget.graph.setTitle("%s" % name)
+        self.graphWidget.graph.setGraphTitle("%s" % name)
                     
     def _addImageClicked(self):
         if DEBUG:
@@ -266,7 +267,7 @@ class RGBImageCalculator(qt.QWidget):
             self.__defaultColormapType = spslut.LINEAR
 
     def _graphSignal(self, ddict):
-        if ddict['event'] == "MouseAt":
+        if ddict['event'] in ["mouseMoved", "MouseAt"]:
             if self._imageData is None:
                 self.graphWidget.setInfoText("    X = ???? Y = ???? Z =????")
                 return
