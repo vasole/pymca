@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,7 +31,10 @@ import traceback
 import copy
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
-from PyMca import ScanWindow
+#from PyMca import ScanWindow
+from PyMca.plotting.backends.MatplotlibBackend \
+     import MatplotlibBackend as backend
+from PyMca.widgets.PlotWindow import PlotWindow as ScanWindow
 try:
     from PyMca import XASNormalization
 except:
@@ -64,7 +67,6 @@ class XASNormalizationParametersWidget(qt.QWidget):
                                 'Linear',
                                 'Parabolic',
                                 'Cubic']
-
         i = 0
         edgeGroupBox = qt.QGroupBox(self)
         edgeGroupBoxLayout = qt.QGridLayout(edgeGroupBox)
@@ -98,9 +100,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
                      qt.SIGNAL('buttonClicked(int)'),
                      self._buttonClicked)
 
-        self.connect(self.userEdgeEnergy,
-                     qt.SIGNAL('editingFinished()'),
-                     self._userEdgeEnergyEditingFinished)
+        self.userEdgeEnergy.editingFinished.connect(self._userEdgeEnergyEditingFinished)
 
         regionsGroupBox = qt.QGroupBox(self)
         regionsGroupBoxLayout = qt.QGridLayout(regionsGroupBox)
@@ -274,20 +274,9 @@ class XASNormalizationWindow(qt.QWidget):
             self.energy = energy
         self.spectrum = spectrum
         self.parametersWidget = XASNormalizationParametersWidget(self)
-        self.graph = ScanWindow.ScanWindow(self)
+        self.graph = ScanWindow(self, backend=backend, plugins=False, newplot=False)
         self.__lastDict = {}
-        self.__markerHandling = False
-        self.__preEdgeMarkers = [None, None]
-        self.__postEdgeMarkers = [None, None]
-        self.__edgeMarker = None
-        if hasattr(self.graph, "scanWindowInfoWidget"):
-            self.graph.scanWindowInfoWidget.hide()
-            if hasattr(self.graph, "graph"):
-                if hasattr(self.graph.graph, "insertX1Marker"):
-                    self.__markerHandling = True
-                    self.connect(self.graph.graph,
-                                 qt.SIGNAL("QtBlissGraphSignal"),
-                                 self._handleGraphSignal)
+        self.graph.sigPlotSignal.connect(self._handleGraphSignal)
         self.graph.addCurve(self.energy,
                             spectrum, legend="Spectrum", replace=True)
         self.mainLayout.addWidget(self.parametersWidget)
@@ -307,18 +296,13 @@ class XASNormalizationWindow(qt.QWidget):
                      self.updateGraph)
         self.updateGraph(self.getParameters())
 
-
     def setData(self, spectrum, energy=None):
         self.spectrum = spectrum
         if energy is None:
             self.energy = range(len(spectrum))
         else:
             self.energy = energy
-        if self.__markerHandling:
-            self.graph.graph.clearMarkers()
-            self.__preEdgeMarkers = [None, None]
-            self.__postEdgeMarkers = [None, None]
-            self.__edgeMarker = None
+        self.graph.clearMarkers()
         self.graph.addCurve(self.energy,
                             self.spectrum,
                             legend="Spectrum",
@@ -360,16 +344,10 @@ class XASNormalizationWindow(qt.QWidget):
         parameters['pre_edge_order'] = ddict['pre_edge']['polynomial']
         parameters['post_edge_order'] = ddict['post_edge']['polynomial']
         algorithm = 'polynomial'
-        if self.__markerHandling:
-            self.updateMarkers(edgeEnergy,
-                               preRegions,
-                               postRegions,
-                               edge_auto=ddict['auto_edge'])
-        else:
-            self.graph.addCurve([edgeEnergy, edgeEnergy],
-                            [self.spectrum.min(), self.spectrum.max()],
-                            legend="Edge Position",
-                            replace=False)
+        self.updateMarkers(edgeEnergy,
+                           preRegions,
+                           postRegions,
+                           edge_auto=ddict['auto_edge'])
         try:
             normalizationResult = XASNormalization.XASNormalization(self.spectrum,
                                                             self.energy,
@@ -406,63 +384,59 @@ class XASNormalizationWindow(qt.QWidget):
                             replot=True)
 
     def updateMarkers(self, edgeEnergy, preEdgeRegions, postEdgeRegions, edge_auto=True):
-        if not self.__markerHandling:
-            return
-        if self.__edgeMarker is None:
-            self.__edgeMarker = self.graph.graph.insertX1Marker(edgeEnergy,
-                                    0.5 * (self.spectrum.max() + self.spectrum.min()),
-                                    label='EDGE')
-            self.graph.graph.setmarkercolor(self.__edgeMarker, 'pink')
-            self.graph.graph.enablemarkermode()
-        else:
-            self.graph.graph.setMarkerXPos(self.__edgeMarker, edgeEnergy)
         if edge_auto:
-            self.graph.graph.setmarkerfollowmouse(self.__edgeMarker, 0)
+            draggable = False
         else:
-            self.graph.graph.setmarkerfollowmouse(self.__edgeMarker, 1)            
+            draggable = True
+        #self.graph.clearMarkers()
+        self.graph.insertXMarker(edgeEnergy,
+                                'EDGE',
+                                 label='EDGE',
+                                 color='pink',
+                                 draggable=draggable,
+                                 replot=False)
         for i in range(2):
             x = preEdgeRegions[0][i] + edgeEnergy
-            if self.__preEdgeMarkers[i] is None:
-                if i == 0:
-                    label = 'MIN'
-                else:
-                    label = 'MAX'
-                self.__preEdgeMarkers[i] = self.graph.graph.insertX1Marker(x,
-                                    0.5 * (self.spectrum.max() + self.spectrum.min()),
-                                    label=label)
-                self.graph.graph.setmarkercolor(self.__preEdgeMarkers[i], 'blue')
-                self.graph.graph.setmarkerfollowmouse(self.__preEdgeMarkers[i], 1)
+            if i == 0:
+                label = 'MIN'
             else:
-                self.graph.graph.setMarkerXPos(self.__preEdgeMarkers[i], x)
+                label = 'MAX'
+            self.graph.insertXMarker(x,
+                                'Pre-'+ label,
+                                label=label,
+                                color='blue',
+                                draggable=True,
+                                replot=False)
         for i in range(2):
             x = postEdgeRegions[0][i] + edgeEnergy
-            if self.__postEdgeMarkers[i] is None:
-                if i == 0:
-                    label = 'MIN'
-                else:
-                    label = 'MAX'
-                self.__postEdgeMarkers[i] = self.graph.graph.insertX1Marker(x,
-                                    0.5 * (self.spectrum.max() + self.spectrum.min()),
-                                    label=label)
-                self.graph.graph.setmarkercolor(self.__postEdgeMarkers[i], 'blue')
-                self.graph.graph.setmarkerfollowmouse(self.__postEdgeMarkers[i], 1)
+            if i == 0:
+                label = 'MIN'
+                replot=False
             else:
-                self.graph.graph.setMarkerXPos(self.__postEdgeMarkers[i], x)
+                label = 'MAX'
+                replot=True
+            self.graph.insertXMarker(x,
+                                'Post-'+ label,
+                                label=label,
+                                color='blue',
+                                draggable=True,
+                                replot=replot)
 
     def _handleGraphSignal(self, ddict):
+        #print("ddict = ", ddict)
         if ddict['event'] != 'markerMoved':
             return
-        marker = ddict['marker']
+        marker = ddict['label']
         edgeEnergy =  self.__lastDict['edge_energy']
         x = ddict['x']
-        if marker == self.__edgeMarker:
+        if marker == "EDGE":
             self.parametersWidget.setEdgeEnergy(x,
                                     emin=self.energy.min(),
                                     emax=self.energy.max())
             return
 
         ddict ={}
-        if marker == self.__preEdgeMarkers[0]:
+        if marker == "Pre-MIN":
             ddict['pre_edge'] ={}
             xmin = x - edgeEnergy
             xmax = self.__lastDict['pre_edge']['regions'][0][1]
@@ -470,7 +444,7 @@ class XASNormalizationWindow(qt.QWidget):
                 ddict['pre_edge']['regions'] = [[xmax, xmin]]
             else:
                 ddict['pre_edge']['regions'] = [[xmin, xmax]]
-        elif marker == self.__preEdgeMarkers[1]:
+        elif marker == "Pre-MAX":
             ddict['pre_edge'] ={}
             xmin = self.__lastDict['pre_edge']['regions'][0][0]
             xmax = x - edgeEnergy
@@ -478,7 +452,7 @@ class XASNormalizationWindow(qt.QWidget):
                 ddict['pre_edge']['regions'] = [[xmax, xmin]]
             else:
                 ddict['pre_edge']['regions'] = [[xmin, xmax]]
-        elif marker == self.__postEdgeMarkers[0]:
+        elif marker == "Post-MIN":
             ddict['post_edge'] ={}
             xmin = x - edgeEnergy
             xmax = self.__lastDict['post_edge']['regions'][0][1]
@@ -486,7 +460,7 @@ class XASNormalizationWindow(qt.QWidget):
                 ddict['post_edge']['regions'] = [[xmax, xmin]]
             else:
                 ddict['post_edge']['regions'] = [[xmin, xmax]]
-        elif marker == self.__postEdgeMarkers[1]:
+        elif marker == "Post-MAX":
             ddict['post_edge'] ={}
             xmin = self.__lastDict['post_edge']['regions'][0][0]
             xmax = x - edgeEnergy
@@ -529,8 +503,8 @@ class XASNormalizationDialog(qt.QDialog):
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.dismissButton)
         self.mainLayout.addWidget(hbox)
-        self.connect(self.dismissButton, qt.SIGNAL("clicked()"), self.reject)
-        self.connect(self.okButton, qt.SIGNAL("clicked()"), self.accept)
+        self.dismissButton.clicked.connect(self.reject)
+        self.okButton.clicked.connect(self.accept)
 
     def getParameters(self):
         parametersDict = self.parametersWidget.getParameters()
