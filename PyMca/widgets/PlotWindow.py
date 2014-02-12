@@ -799,8 +799,14 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.legendDockWidget = qt.QDockWidget(self)
             self.legendDockWidget.layout().setContentsMargins(0, 0, 0, 0)
             self.legendDockWidget.setWidget(self.legendWidget)
-            self.addDockWidget(qt.Qt.BottomDockWidgetArea,
-                                       self.legendDockWidget)
+            w = self.centralWidget().width()
+            h = self.centralWidget().height()
+            if w > (1.25 * h):
+                self.addDockWidget(qt.Qt.RightDockWidgetArea,
+                                   self.legendDockWidget)
+            else:
+                self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+                                   self.legendDockWidget)
             if hasattr(self, "roiDockWidget"):
                 if self.roiDockWidget is not None:
                     self.tabifyDockWidget(self.roiDockWidget,
