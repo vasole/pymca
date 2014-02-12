@@ -73,10 +73,10 @@ class PlotWindow(PlotWidget.PlotWidget):
     
     def __init__(self, parent=None, backend=None, plugins=True, newplot=False, **kw):
         if backend is None:
-            if PYQTGRAPH:
-                backend = PyQtGraphBackend.PyQtGraphBackend
-            elif MATPLOTLIB:
+            if MATPLOTLIB:
                 backend = MatplotlibBackend.MatplotlibBackend
+            elif PYQTGRAPH:
+                backend = PyQtGraphBackend.PyQtGraphBackend
         super(PlotWindow, self).__init__(parent=parent, backend=backend)
         self.pluginsIconFlag = plugins
         self.newplotIconsFlag = newplot
@@ -648,10 +648,12 @@ class PlotWindow(PlotWidget.PlotWidget):
                         break
                 color = 'blue'
                 draggable = True
-            self.insertXMarker(fromdata, label= 'ROI min',
+            self.insertXMarker(fromdata, 'ROI min',
+                               label='ROI min',
                                color=color,
                                draggable=draggable)
-            self.insertXMarker(todata, label= 'ROI max',
+            self.insertXMarker(todata,'ROI max',
+                               label='ROI max',
                                color=color,
                                draggable=draggable)
             roiList.append(newroi)

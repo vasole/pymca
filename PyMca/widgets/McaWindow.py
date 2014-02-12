@@ -406,10 +406,7 @@ class McaWindow(ScanWindow.ScanWindow):
                                                         fl=0)
                     #info,x,y = self.getinfodatafromlegend(legend)
                     #caldialog.graph.newCurve("fromlegend",x=x,y=y)
-                    if QTVERSION < '4.0.0':
-                        ret = caldialog.exec_loop()
-                    else:
-                        ret = caldialog.exec_()
+                    ret = caldialog.exec_()
                     if ret == qt.QDialog.Accepted:
                         self.caldict.update(caldialog.getDict())
                         item, text = self.controlWidget.calbox.getcurrent()
@@ -423,10 +420,7 @@ class McaWindow(ScanWindow.ScanWindow):
                             self.controlWidget.calbox.setoptions(options)
                         except:
                             pass
-                        if QTVERSION < '4.0.0':
-                            self.controlWidget.calbox.setCurrentItem(item)
-                        else:
-                            self.controlWidget.calbox.setCurrentIndex(item)
+                        self.controlWidget.calbox.setCurrentIndex(item)
                         self.refresh()
                     del caldialog
             elif dict['button'] == 'CalibrationLoad':
@@ -438,10 +432,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText(text)
-                    if QTVERSION < '4.0.0':
-                        msg.exec_loop()
-                    else:
-                        msg.exec_()
+                    msg.exec_()
                     return
                 cald = ConfigDict.ConfigDict()
                 try:
@@ -451,10 +442,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText(text)
-                    if QTVERSION < '4.0.0':
-                        msg.exec_loop()
-                    else:
-                        msg.exec_()
+                    msg.exec_()
                     return
                 self.caldict.update(cald)
                 options = []
@@ -465,10 +453,7 @@ class McaWindow(ScanWindow.ScanWindow):
                         options.append(key)
                 try:
                     self.controlWidget.calbox.setoptions(options)
-                    if QTVERSION < '4.0.0':
-                        self.controlWidget.calbox.setCurrentItem(options.index(itemtext))
-                    else:
-                        self.controlWidget.calbox.setCurrentIndex(options.index(itemtext))                        
+                    self.controlWidget.calbox.setCurrentIndex(options.index(itemtext))                        
                     self.calibration = itemtext * 1
                     self.controlWidget._calboxactivated(itemtext)
                 except:
@@ -476,10 +461,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText(text)
-                    if QTVERSION < '4.0.0':
-                        msg.exec_loop()
-                    else:
-                        msg.exec_()
+                    msg.exec_()
                     return
             elif dict['button'] == 'CalibrationSave':
                 filename = dict['line_edit']
@@ -492,10 +474,7 @@ class McaWindow(ScanWindow.ScanWindow):
                         msg = qt.QMessageBox(self)
                         msg.setIcon(qt.QMessageBox.Critical)
                         msg.setText(text)
-                        if QTVERSION < '4.0.0':
-                            msg.exec_loop()
-                        else:
-                            msg.exec_()
+                        msg.exec_()
                         return
                 cald.update(self.caldict)
                 cald.write(filename)
@@ -830,6 +809,42 @@ class McaWindow(ScanWindow.ScanWindow):
         else:
             if DEBUG:
                 print("Unknown or ignored event",dict['event'])
+
+
+    def emitCurrentROISignal(self):
+        if self.currentROI is None:
+            return
+        #I have to get the current calibration
+        if self.getGraphXLabel().upper() != "CHANNEL":
+            #I have to get the energy
+            A = self.control.calinfo.caldict['']['A']
+            B = self.control.calinfo.caldict['']['B']
+            C = self.control.calinfo.caldict['']['C']
+            order = self.control.calinfo.caldict['']['order']
+        else:
+            A = 0.0
+            try:
+                legend = self.graph.getActiveCurve(just_legend=True)
+                if legend in self.dataObjectsDict.keys():
+                    A = self.dataObjectsDict[legend].x[0][0]
+            except:
+                if DEBUG:
+                    print("X axis offset not found")
+            B = 1.0
+            C = 0.0
+            order = 1
+        key = self.currentROI        
+        roiList, roiDict = self.roiWidget.getROIListAndDict()
+        fromdata = roiDict[key]['from' ]
+        todata   = roiDict[key]['to']
+        ddict = {}
+        ddict['event'] = "ROISignal"
+        ddict['name'] = key
+        ddict['from'] = fromdata
+        ddict['to']   = todata
+        ddict['type'] = roiDict[self.currentROI]["type"]
+        ddict['calibration']= [A, B, C, order]
+        self.sigROISignal.emit(ddict)
 
     def setDispatcher(self, w):
         self.connect(w, qt.SIGNAL("addSelection"),
