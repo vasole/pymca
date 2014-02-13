@@ -234,7 +234,8 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
             return
         self.plotWindow.removeMarker(self.label)
         self.markerID = self.plotWindow.insertXMarker(
-                                x=val,
+                                val,
+                                self.label,
                                 label=self.label,
                                 color='blue',
                                 selectable=False,
