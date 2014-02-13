@@ -701,7 +701,7 @@ class QStackWidget(StackBase.StackBase,
         
         self.stackWindow.mainLayout.addWidget(self.mcaButtonBox)
 
-        self.addMcaButton.clicked.connect(self._addMcaClicked)
+        self.addMcaButton.clicked.connect(self.__addMcaClicked)
         self.removeMcaButton.clicked.connect(self._removeMcaClicked)
         self.replaceMcaButton.clicked.connect(self._replaceMcaClicked)
 
@@ -711,10 +711,6 @@ class QStackWidget(StackBase.StackBase,
 
     def _buildConnections(self):
         self._buildAndConnectButtonBox()
-
-        #self.connect(self.stackGraphWidget.hFlipToolButton,
-        #     qt.SIGNAL("clicked()"),
-        #     self._hFlipIconSignal)
 
         #ROI Image
         widgetList = [self.stackWidget, self.roiWidget]
@@ -826,8 +822,11 @@ class QStackWidget(StackBase.StackBase,
             legend = "Stack " + title + " selection"
         return legend
 
+    def __addMcaClicked(self):
+        self._addMcaClicked("ADD")
+
     def _addMcaClicked(self, action=None):
-        if action is None:
+        if action in [None, False]:
             action = "ADD"
         if self._stackImageData is None:
             return

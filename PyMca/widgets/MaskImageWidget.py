@@ -244,7 +244,7 @@ class MaskImageWidget(qt.QWidget):
 
         if self.__imageIconsFlag:
             self.graphWidget.imageToolButton.clicked.connect(\
-                self._resetSelection)
+                self.__resetSelection)
 
             self.graphWidget.eraseSelectionToolButton.clicked.connect(\
                 self._setEraseSelectionMode)
@@ -265,7 +265,7 @@ class MaskImageWidget(qt.QWidget):
                 self._additionalSelectionMenuDialog)
             self._additionalSelectionMenu = qt.QMenu()
             self._additionalSelectionMenu.addAction(QString("Reset Selection"),
-                                                    self._resetSelection)
+                                                    self.__resetSelection)
             self._additionalSelectionMenu.addAction(QString("Invert Selection"),
                                                     self._invertSelection)
             self._additionalSelectionMenu.addAction(QString("I >= Colormap Max"),
@@ -1128,6 +1128,11 @@ class MaskImageWidget(qt.QWidget):
 
         self.setSelectionMask(mask, plot=True)
         self._emitMaskChangedSignal()
+
+    def __resetSelection(self):
+        # Needed because receiving directly in _resetSelection it was passing
+        # False as argument
+        self._resetSelection(True)
         
     def _resetSelection(self, owncall=True):
         if DEBUG:
@@ -1576,9 +1581,12 @@ class MaskImageWidget(qt.QWidget):
     def _otherWidgetGraphSignal(self, ddict):
         self._graphSignal(ddict, ownsignal = False)
 
-
     def _handlePolygonMask(self, ddict):
-        x = self._xScale[0] + self._xScale[1] * numpy.arange(self.__imageData.shape[1])
+        if self._xScale is None:
+            self._xScale = [0, 1]
+        if self._yScale is None:
+            self._yScale = [0, 1]
+        x = self._yScale[0] + self._xScale[1] * numpy.arange(self.__imageData.shape[1])
         y = self._yScale[0] + self._yScale[1] * numpy.arange(self.__imageData.shape[0])
         X, Y = numpy.meshgrid(x, y)
         X.shape = -1
