@@ -230,18 +230,12 @@ class MaskImageWidget(qt.QWidget):
                              self._saveMatplotlibImage)
 
     def _buildConnections(self, widget = None):
-        self.connect(self.graphWidget.hFlipToolButton,
-                 qt.SIGNAL("clicked()"),
-                 self._hFlipIconSignal)
+        self.graphWidget.hFlipToolButton.clicked.connect(self._hFlipIconSignal)
 
-        self.connect(self.graphWidget.colormapToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self.selectColormap)
+        self.graphWidget.colormapToolButton.clicked.connect(self.selectColormap)
 
         if self.__selectionFlag:
-            self.connect(self.graphWidget.selectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._toggleSelectionMode)
+            self.graphWidget.selectionToolButton.clicked.connect(self._toggleSelectionMode)
             text = "Toggle between Selection\nand Zoom modes"
             self.graphWidget.selectionToolButton.setToolTip(text)
 
@@ -905,7 +899,7 @@ class MaskImageWidget(qt.QWidget):
         ddict['event'] = "hFlipSignal"
         ddict['current'] = self._y1AxisInverted * 1
         ddict['id'] = id(self)
-        self.emitMaskImageSignal(ddict)        
+        self.emitMaskImageSignal(ddict)
 
     def setY1AxisInverted(self, value):
         self._y1AxisInverted = value

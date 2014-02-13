@@ -981,13 +981,11 @@ class QStackWidget(StackBase.StackBase,
             return
         if ddict['event'] == "hFlipSignal":
             if ddict['id'] != id(self.stackWidget):
-                self.stackWidget.graphWidget.graph.resetZoom()
                 self.stackWidget.graph.invertYAxis(ddict['current'])
-                self.stackWidget.plotImage(update=True)
+                self.stackWidget.graph.replot()
             if ddict['id'] != id(self.roiWidget):
-                self.roiWidget.graph.resetZoom()
                 self.roiWidget.graph.invertYAxis(ddict['current'])
-                self.roiWidget.plotImage(update=True)
+                self.roiWidget.graph.replot()
             return
 
     def _stackGraphSignal(self, ddict):
