@@ -73,7 +73,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                          roi=roi,
                                          fit=fit,
                                          **kw)
-        self._togglePointsSignal()
+        #self._togglePointsSignal()
         self.setWindowType("SCAN")
         # this two objects are the same
         self.dataObjectsList = self._curveList
