@@ -240,9 +240,9 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         elif self._stack:
             self.setImageData(self.imageList[index])
             if self.imageNames is None:
-                self.graphWidget.graph.setTitle("Image %d" % index)
+                self.graphWidget.graph.setGraphTitle("Image %d" % index)
             else:
-                self.graphWidget.graph.setTitle(self.imageNames[index])
+                self.graphWidget.graph.setGraphTitle(self.imageNames[index])
         else:
             qimage = self._imageDict[self.imageNames[index]]
             self.setQImage(qimage,
@@ -250,7 +250,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                        qimage.height(),
                        clearmask=False,
                        data=self.imageList[index])
-            self.graphWidget.graph.setTitle(self.imageNames[index])
+            self.graphWidget.graph.setGraphTitle(self.imageNames[index])
         if moveslider:
             self.slider.setValue(index)
 
@@ -259,7 +259,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         fileName = self.imageList[index]
         edf = EdfFile.EdfFile(fileName)
         self.setImageData(edf.GetData(0))
-        self.graphWidget.graph.setTitle(os.path.basename(fileName))
+        self.graphWidget.graph.setGraphTitle(os.path.basename(fileName))
 
     def setQImageList(self, images, width, height,
                       clearmask = False, data=None, imagenames = None):

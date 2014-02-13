@@ -246,34 +246,26 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.selectionToolButton.setToolTip(text)
 
         if self.__imageIconsFlag:
-            self.connect(self.graphWidget.imageToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._resetSelection)
+            self.graphWidget.imageToolButton.clicked.connect(\
+                self._resetSelection)
 
-            self.connect(self.graphWidget.eraseSelectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._setEraseSelectionMode)
+            self.graphWidget.eraseSelectionToolButton.clicked.connect(\
+                self._setEraseSelectionMode)
 
-            self.connect(self.graphWidget.rectSelectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._setRectSelectionMode)
+            self.graphWidget.rectSelectionToolButton.clicked.connect(\
+                self._setRectSelectionMode)
 
-            self.connect(self.graphWidget.brushSelectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._setBrushSelectionMode)
+            self.graphWidget.brushSelectionToolButton.clicked.connect(\
+                self._setBrushSelectionMode)
 
-            self.connect(self.graphWidget.brushToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._setBrush)
+            self.graphWidget.brushToolButton.clicked.connect(self._setBrush)
 
             if hasattr(self.graphWidget, "polygonSelectionToolButton"):
-                self.graphWidget.polygonSelectionToolButton.clicked.connect(self._setPolygonSelectionMode)
+                self.graphWidget.polygonSelectionToolButton.clicked.connect(\
+                    self._setPolygonSelectionMode)
 
-
-        if self.__imageIconsFlag:
-            self.connect(self.graphWidget.additionalSelectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._additionalSelectionMenuDialog)
+            self.graphWidget.additionalSelectionToolButton.clicked.connect(\
+                self._additionalSelectionMenuDialog)
             self._additionalSelectionMenu = qt.QMenu()
             self._additionalSelectionMenu.addAction(QString("Reset Selection"),
                                                     self._resetSelection)

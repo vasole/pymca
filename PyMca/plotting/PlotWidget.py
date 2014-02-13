@@ -116,8 +116,9 @@ if __name__ == "__main__":
         print("All curves = ",   plot.getAllCurves())
         #print("REMOVING dummy")
         #plot.removeCurve("dummy")
-        plot.insertXMarker(50., draggable=True)
+        plot.insertXMarker(50., "X", label="X", draggable=True)
         #plot.insertYMarker(50., draggable=True)
+        plot.setYAxisLogarithmic(True)    
     else:
         # insert a few curves
         cSin={}
@@ -134,8 +135,7 @@ if __name__ == "__main__":
             cSin[a] = plot.addCurve(x, y, 'y = sin(x)' + a, replot=False)
             cCos[a] = plot.addCurve(x, z, 'y = cos(x)' + a, replot=False)
         cCos[a] = plot.addCurve(x, z, 'y = cos(x)' + a, replot=True)
-        plot.insertXMarker(5., draggable=True)
-        plot.insertYMarker(5., draggable=True)
+        plot.insertXMarker(5., "X", label="X", draggable=True)
+        plot.insertYMarker(5., "Y", label="Y", draggable=True)
     print("All curves = ", plot.getAllCurves(just_legend=True))
-    plot.setYAxisLogarithmic(True)
     app.exec_()

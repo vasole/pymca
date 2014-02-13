@@ -73,10 +73,10 @@ class PlotWindow(PlotWidget.PlotWidget):
     
     def __init__(self, parent=None, backend=None, plugins=True, newplot=False, **kw):
         if backend is None:
-            if PYQTGRAPH:
-                backend = PyQtGraphBackend.PyQtGraphBackend
-            elif MATPLOTLIB:
+            if MATPLOTLIB:
                 backend = MatplotlibBackend.MatplotlibBackend
+            elif PYQTGRAPH:
+                backend = PyQtGraphBackend.PyQtGraphBackend
         super(PlotWindow, self).__init__(parent=parent, backend=backend)
         self.pluginsIconFlag = plugins
         self.newplotIconsFlag = newplot
@@ -99,6 +99,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.zoomIcon	= qt.QIcon(qt.QPixmap(IconDict["zoom"]))
         self.roiIcon	= qt.QIcon(qt.QPixmap(IconDict["roi"]))
         self.peakIcon	= qt.QIcon(qt.QPixmap(IconDict["peak"]))
+        self.energyIcon = qt.QIcon(qt.QPixmap(IconDict["energy"]))
 
         self.zoomResetIcon	= qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
         self.roiResetIcon	= qt.QIcon(qt.QPixmap(IconDict["roireset"]))
@@ -211,6 +212,12 @@ class PlotWindow(PlotWidget.PlotWidget):
                              self._togglePointsSignal,
                              'Toggle Points/Lines')
 
+        #energy icon
+        if kw.get('energy', False):
+            self._addToolButton(self.energyIcon,
+                            self._energyIconSignal,
+                            'Toggle Energy Axis (On/Off)',
+                            toggle=True)            
 
         #roi icon
         if kw.get('roi', False):
@@ -225,8 +232,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         if kw.get('fit', False):
             self.fitButton = self._addToolButton(self.fitIcon,
                                          self._fitIconSignal,
-                                         'Simple Fit of Active Curve')
-
+                                         'Fit of Active Curve')
 
         if self.newplotIconsFlag:
             tb = self._addToolButton(self.averageIcon,
@@ -434,6 +440,9 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.showGrid(2)
         self.replot()
 
+    def _energyIconSignal(self):
+        print("energy icon signal")
+
     def _fitIconSignal(self):
         print("fit icon signal")
 
@@ -639,10 +648,12 @@ class PlotWindow(PlotWidget.PlotWidget):
                         break
                 color = 'blue'
                 draggable = True
-            self.insertXMarker(fromdata, label= 'ROI min',
+            self.insertXMarker(fromdata, 'ROI min',
+                               label='ROI min',
                                color=color,
                                draggable=draggable)
-            self.insertXMarker(todata, label= 'ROI max',
+            self.insertXMarker(todata,'ROI max',
+                               label='ROI max',
                                color=color,
                                draggable=draggable)
             roiList.append(newroi)
@@ -788,10 +799,17 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.legendDockWidget = qt.QDockWidget(self)
             self.legendDockWidget.layout().setContentsMargins(0, 0, 0, 0)
             self.legendDockWidget.setWidget(self.legendWidget)
-            self.addDockWidget(qt.Qt.BottomDockWidgetArea,
-                                       self.legendDockWidget)
+            w = self.centralWidget().width()
+            h = self.centralWidget().height()
+            if w > (1.25 * h):
+                self.addDockWidget(qt.Qt.RightDockWidgetArea,
+                                   self.legendDockWidget)
+            else:
+                self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+                                   self.legendDockWidget)
             if hasattr(self, "roiDockWidget"):
-                self.tabifyDockWidget(self.roiDockWidget,
+                if self.roiDockWidget is not None:
+                    self.tabifyDockWidget(self.roiDockWidget,
                                       self.legendDockWidget)
             self.legendWidget.sigLegendSignal.connect(self._legendSignal)
             self.legendDockWidget.setWindowTitle(self.windowTitle()+(" Legend"))
@@ -799,11 +817,21 @@ class PlotWindow(PlotWidget.PlotWidget):
     def _legendSignal(self, ddict):
         print(ddict)
 
+
+    def toggleLegendWidget(self):
+        if self.legendWidget is None:
+            self.showLegends(True)
+        elif self.legendDockWidget.isHidden():
+            self.showLegends(True)
+        else:
+            self.showLegends(False)
+
     def showLegends(self, flag=True):
         if self.legendWidget is None:
             self._buildLegendWidget()
         if flag:
             self.legendDockWidget.show()
+            self.updateLegends()
         else:
             self.legendDockWidget.hide()
 

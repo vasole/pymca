@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -480,109 +480,9 @@ class SpecFileStack(DataObject.DataObject):
         return (self.data[y,x,:]).astype(numpy.float)
 
 if __name__ == "__main__":
-    import time
     import sys
-    t0= time.time()
     stack = SpecFileStack()
-    #stack.loadIndexedStack("Z:\COTTE\ch09\ch09__mca_0005_0000_0070.edf")
     if len(sys.argv) > 1:
         stack.loadIndexedStack(sys.argv[1])
     else:
-        stack.loadIndexedStack("..\..\mca3\c449b01_001.mca")
-    shape = stack.data.shape
-    print("elapsed = %f" % (time.time() - t0))
-    #guess the MCA
-    imax = 0
-    for i in range(len(shape)):
-        if shape[i] > shape[imax]:
-            imax = i
-
-    print("selections ")
-    print("getZSelectionArray  shape = ", stack.getZSelectionArray().shape)
-    print("getXYSelectionArray shape = ", stack.getXYSelectionArray().shape)
-
-    from PyMca import PyMcaQt as qt
-    app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
-    if 1:
-        from PyMca import RGBCorrelatorGraph
-        w = RGBCorrelatorGraph.RGBCorrelatorGraph()
-        graph = w.graph
-    else:
-        from PyMca import QtBlissGraph
-        w = QtBlissGraph.QtBlissGraph()
-        graph = w
-    print("shape sum 0 = ", numpy.sum(stack.data, 0).shape)
-    print("shape sum 1 = ", numpy.sum(stack.data, 1).shape)
-    print("shape sum 2 = ", numpy.sum(stack.data, 2).shape)
-    a = numpy.sum(stack.data, imax)
-    print(a.shape)
-    graph.setX1AxisLimits(0, a.shape[0])
-    if 0:
-        w.setY1AxisLimits(0, a.shape[1])
-        w.setY1AxisInverted(True)
-    else:
-        graph.setY1AxisInverted(True)
-        graph.setY1AxisLimits(0, a.shape[1])
-    graph.imagePlot(a, ymirror=0)
-    if imax == 0:
-        graph.x1Label('Column Number')
-    else:
-        graph.x1Label('Row Number')
-    graph.ylabel('File Number')
-    w.show()
-
-    if imax == 0:
-        mcaData0 = numpy.sum(numpy.sum(stack.data, 2),1)
-    else:
-        mcaData0 = numpy.sum(numpy.sum(stack.data, 2),0)
-
-    from PyMca import McaWindow
-    mca = McaWindow.McaWidget()
-    sel = {}
-    sel['SourceName'] = "Specfile Stack"
-    sel['Key']        = "SUM"
-    sel['legend']     = "EDF Stack SUM"
-    mcaData = DataObject.DataObject()
-    mcaData.info = {'McaCalib': [0 , 2.0 ,0],
-                    "selectiontype":"1D",
-                    "SourceName":"Specfile Stack",
-                    "Key":"SUM"}
-    mcaData.x = [numpy.arange(len(mcaData0)).astype(numpy.float)]
-    mcaData.y = [mcaData0]
-    sel['dataobject'] = mcaData
-    mca.show()
-    mca._addSelection([sel])
-    graph.enableSelection(True)
-    def graphSlot(ddict):
-        if ddict['event'] == "MouseSelection":
-            ix1 = int(ddict['xmin'])
-            ix2 = int(ddict['xmax'])+1
-            iy1 = int(ddict['xmin'])
-            iy2 = int(ddict['xmax'])+1
-            if imax == 0:
-                selectedData = numpy.sum(numpy.sum(stack.data[:,ix1:ix2, iy1:iy2], 2),1)
-            else:
-                selectedData = numpy.sum(numpy.sum(stack.data[ix1:ix2,:, iy1:iy2], 2),0)
-            sel = {}
-            sel['SourceName'] = "Specfile Stack"
-            sel['Key'] = "Selection"
-            sel["selectiontype"] = "1D"
-            sel['legend'] = "EDF Stack Selection"
-            selDataObject = DataObject.DataObject()
-            selDataObject.info={'McaCalib': [100 , 2.0 ,0],
-                                "selectiontype":"1D",
-                                "SourceName":"EDF Stack Selection",
-                                "Key":"Selection"}
-            selDataObject.x = [numpy.arange(len(mcaData0)).astype(numpy.float)]
-            selDataObject.y = [selectedData]
-            sel['dataobject'] = selDataObject
-            mca._addSelection([sel])
-    qt.QObject.connect(graph, qt.SIGNAL('QtBlissGraphSignal'),
-                       graphSlot)
-    #w.replot()
-    if qt.qVersion() < '4.0.0':
-        app.exec_loop()
-    else:
-        app.exec_()
+        print("Usage: python SpecFileStack.py indexed_file")

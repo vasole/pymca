@@ -1586,18 +1586,6 @@ class McaTheory(object):
                 dummy[r:,7]  = 0.0
          else:
                 dummy[0:,3] = param[PARAMETERS.index('Eta Factor')]             
-         #this was to test the analytical versus the numerical derivative
-         #nderiv = self.num_deriv(param0,index,t0)
-         #try:
-         #    self.g.newcurve("num", t0, nderiv)
-         #except:
-         #    import QtBlissGraph
-         #    self.g = QtBlissGraph.QtBlissGraph()
-         #    self.g.newcurve("num", t0, nderiv)
-         #ader = SpecfitFuns.fastahypermet(dummy,energy, HYPERMET)
-         #self.g.newcurve("ana", t0, ader)
-         #self.g.replot()
-         #self.g.show()
          if self.FASTER:
             if HYPERMET:
                 return SpecfitFuns.fastahypermet(dummy,energy,HYPERMET)        
@@ -2606,20 +2594,6 @@ class McaTheory(object):
                                            #deltachi=self.config['fit']['deltachi'],
                                            fulloutput=1)    
         fittedpar=fitresult[0]
-        if 0:
-            print(fitresult)        
-            import qt
-            import QtBlissGraph
-            app = qt.QApplication(sys.argv)
-            container = QtBlissGraph.QtBlissGraphWindow()
-            graph = container.graph
-            xw=numpy.ravel(xw)
-            graph.newcurve("Input  Data",xw,numpy.ravel(zw),logfilter=1)
-            graph.newcurve("Estimated Data",xw,self.linpol(fittedpar,xw),logfilter=1)
-            app.setMainWidget(container)
-            container.show()
-            app.exec_loop()
-            sys.exit(1)
         return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float)
             
 
@@ -2649,19 +2623,6 @@ class McaTheory(object):
                                            fulloutput=1)    
         fittedpar=fitresult[0]
         fittedpar[0] = numpy.exp(fittedpar[0])
-        if 0:
-            import qt
-            import QtBlissGraph
-            app = qt.QApplication(sys.argv)
-            container = QtBlissGraph.QtBlissGraphWindow()
-            graph = container.graph
-            xw=numpy.ravel(xw)
-            graph.newcurve("Input  Data",numpy.ravel(xw),numpy.ravel(z),logfilter=1)
-            graph.newcurve("Estimated Data",xw,self.exppol(fittedpar,xw),logfilter=1)
-            app.setMainWidget(container)
-            container.show()
-            app.exec_loop()
-            #sys.exit(1)
         return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float)        
 
 """
@@ -2757,22 +2718,18 @@ def test(inputfile=None,scankey=None,pkm=None,
     #except:
     else:
         if plotflag:
-            import qt
-            import QtBlissGraph
+            import PyMca.PyMcaQt as qt
+            from PyMca.widgets import ScanWindow
             app = qt.QApplication(sys.argv)
-            container = QtBlissGraph.QtBlissGraphWindow()
-            graph = container.graph
-
-
-
+            graph = ScanWindow.ScanWindow()
             xw = numpy.ravel(mcafit.xdata)
             yfit0 = mcafit.mcatheory(mcafit.parameters,xw)
             #+numpy.ravel(mcafit.zz)
             xw = xw*mcafit.parameters[1]+mcafit.parameters[0]
-            graph.newcurve("Input  Data",xw,numpy.ravel(mcafit.ydata),logfilter=1)
-            graph.newcurve("Estimated Data",xw,yfit0,logfilter=1)
-            graph.newcurve("Background Data",xw,numpy.ravel(mcafit.zz),logfilter=1)
-            app.setMainWidget(container)
+            graph.addCurve(xw,numpy.ravel(mcafit.ydata), "Input  Data")
+            graph.addCurve(xw,yfit0, "Estimated Data")
+            graph.addCurve(xw,numpy.ravel(mcafit.zz),"Background Data")
+            app.setMainWidget(graph)
             container.show()
             app.exec_loop()
         print("error ",sys.exc_info()[1])
@@ -2800,35 +2757,21 @@ def test(inputfile=None,scankey=None,pkm=None,
     print(mcafit.roifit(mcafit.xdata,mcafit.ydata))
 
     if plotflag:
-        if 0:
-            import Tkinter
-            import SimplePlot
-            root=Tkinter.Tk()
-            xw = numpy.ravel(mcafit.xdata)
-            yfit0 = mcafit.mcatheory(fittedpar,xw)+numpy.ravel(mcafit.zz)
-            SimplePlot.plot([xw*fittedpar[1]+fittedpar[0],numpy.ravel(mcafit.ydata),yfit0])
-            root.mainloop()
-        else:
-            import qt
-            import QtBlissGraph
-            app = qt.QApplication(sys.argv)
-            container = QtBlissGraph.QtBlissGraphWindow()
-            graph = container.graph
-            
-            
-            
-            xw = numpy.ravel(mcafit.xdata)
-            yfit0 = mcafit.mcatheory(fittedpar,xw)+numpy.ravel(mcafit.zz)
-            xw = xw*fittedpar[1]+fittedpar[0]
-            graph.newcurve("Input  Data",mcafitresult['energy'],mcafitresult['ydata'],logfilter=1)
-            graph.newcurve("Fitted Data",mcafitresult['energy'],mcafitresult['yfit'],logfilter=1)
-            graph.newcurve("Summing",mcafitresult['energy'],
-                                        mcafitresult['continuum']+mcafitresult['pileup'],
-                                        logfilter=1)
-            graph.newcurve("Continuum",mcafitresult['energy'],mcafitresult['continuum'],logfilter=1)
-            app.setMainWidget(container)
-            container.show()
-            app.exec_loop()
+        import PyMca.PyMcaQt as qt
+        from PyMca.widgets import ScanWindow
+        app = qt.QApplication(sys.argv)
+        graph = ScanWindow.ScanWindow()
+        xw = numpy.ravel(mcafit.xdata)
+        yfit0 = mcafit.mcatheory(fittedpar,xw)+numpy.ravel(mcafit.zz)
+        xw = xw*fittedpar[1]+fittedpar[0]
+        graph.addCurve(mcafitresult['energy'],mcafitresult['ydata'], "Input  Data")
+        graph.addCurve(mcafitresult['energy'],mcafitresult['yfit'],"Fitted Data")
+        graph.addCurve(mcafitresult['energy'],
+                                    mcafitresult['continuum']+mcafitresult['pileup'],
+                                    "Summing")
+        graph.addCurve(mcafitresult['energy'],mcafitresult['continuum'],"Continuum")
+        app.setMainWidget(graph)
+        app.exec_()
 
 PROFILING = 0        
 if __name__ == "__main__":

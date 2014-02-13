@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -27,13 +27,11 @@
 from PyMca import Elements
 from PyMca import XRayTubeEbel
 import numpy
-try:
-    from PyMca import QtBlissGraph
-    qt = QtBlissGraph.qt
-    HAS_QWT = True
-except ImportError:
-    from PyMca import PyMcaQt as qt
-    HAS_QWT = False
+from PyMca.plotting import PlotWidget
+from PyMca.plotting.backends.MatplotlibBackend \
+     import MatplotlibBackend as backend
+from PyMca import PyMcaQt as qt
+
 
 DEBUG = 0
 
@@ -44,10 +42,7 @@ if qt.qVersion() > '4.0.0':
 
 class QXTube(qt.QWidget):
     def __init__(self, parent=None, initdict = None):
-        if qt.qVersion() < '4.0.0':
-            qt.QWidget.__init__(self, parent, "TubeWidget",0)
-        else:
-            qt.QWidget.__init__(self, parent)
+        qt.QWidget.__init__(self, parent)
 
         self.l = qt.QVBoxLayout(self)
         self.l.setMargin(0)
@@ -86,34 +81,16 @@ class QXTube(qt.QWidget):
         self.l.addWidget(label)
         
         self.l.addWidget(hbox)
-        self.graph = None
+        self.graph = PlotWidget.PlotWidget(self,
+                                               backend=backend)
+        self.l.addWidget(self.graph)
+        self.graph.setGraphXLabel("Energy (keV)")
+        self.graph.setGraphYLabel("photons/sr/mA/keV/s")
 
-        if HAS_QWT:
-            self.connect(self.plotButton,
-                     qt.SIGNAL("clicked()"),
-                     self.plot)
-        else:
-            self.connect(self.plotButton,
-                     qt.SIGNAL("clicked()"),
-                     self.noQwtError)
-
-        self.connect(self.exportButton,
-                     qt.SIGNAL("clicked()"),
-                     self._export)
-
-    def noQwtError(self):
-        msg = qt.QMessageBox(self)
-        msg.setIcon(qt.QMessageBox.Critical)
-        msg.setText("This function needs PyQwt5 installed")
-        if qt.qVersion() < '4.0.0':
-            msg.exec_loop()
-        else:
-            msg.exec_()
-        return
+        self.plotButton.clicked.connect(self.plot)
+        self.exportButton.clicked.connect(self._export)
 
     def plot(self):
-        if not HAS_QWT:
-            return
         d = self.tubeWidget.getParameters()
         transmission    = d["transmission"]
         anode           = d["anode"]
@@ -133,14 +110,6 @@ class QXTube(qt.QWidget):
 
         delta           = d["deltaplotting"]
         e = numpy.arange(1, voltage, delta)
-
-        if self.graph is None:
-            self.graph = QtBlissGraph.QtBlissGraph(self)
-            self.l.addWidget(self.graph)
-            #self.graph.setTitle("Reference: X-Ray Spectrometry 28 (1999) 255-256")
-            self.graph.xlabel("Energy (keV)")
-            self.graph.ylabel("photons/sr/mA/keV/s")
-            self.graph.show()
 
         if __name__ == "__main__":
             continuumR = XRayTubeEbel.continuumEbel([anode, anodedensity, anodethickness],
@@ -162,8 +131,8 @@ class QXTube(qt.QWidget):
 
 
 
-            self.graph.newcurve("continuumR", e, continuumR)
-            self.graph.newcurve("continuumT", e, continuumT)
+            self.graph.addCurve(e, continuumR, "continuumR", replot=False)
+            self.graph.addCurve(e, continuumT, "continuumT", replot=False)
         else:
             continuum = XRayTubeEbel.continuumEbel([anode, anodedensity, anodethickness],
                                              voltage, e,
@@ -172,9 +141,9 @@ class QXTube(qt.QWidget):
                                              transmission=transmission,
                                              targetthickness=anodethickness,
                                              filterlist=filterlist)
-            self.graph.newcurve("continuum", e, continuum)
+            self.graph.addCurve(e, continuum, "continuum", replot=False)
 
-        self.graph.zoomReset()
+        self.graph.resetZoom()
         self.graph.replot()
 
     def _export(self):
@@ -234,41 +203,25 @@ class QXTube(qt.QWidget):
                                                         targetthickness=anodethickness,
                                                         filterlist=filterlist)
 
-        d["energylist"]        = energy
+        d["energylist"]  = energy
         d["weightlist"]  = energyweight
         d["scatterlist"] = energyscatter
         d["flaglist"]    = numpy.ones(len(energy))
 
-        if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL("QXTubeSignal"), (d,))
-        else:
-            self.emit(qt.SIGNAL("QXTubeSignal"), d)
+        self.emit(qt.SIGNAL("QXTubeSignal"), d)
             
 
 class TubeWidget(qt.QWidget):
     def __init__(self, parent=None, initdict = None):
-        if qt.qVersion() < '4.0.0':
-            qt.QWidget.__init__(self, parent, "TubeWidget",0)
-        else:
-            qt.QWidget.__init__(self, parent)
+        qt.QWidget.__init__(self, parent)
         self._build()
-        if qt.qVersion() < '4.0.0':
-            self.connect(self.anodeCombo, qt.PYSIGNAL("MyQComboBoxSignal"),
-                         self._anodeSlot)
-            self.connect(self.windowCombo, qt.PYSIGNAL("MyQComboBoxSignal"),
-                         self._windowSlot)
-            self.connect(self.filter1Combo, qt.PYSIGNAL("MyQComboBoxSignal"),
-                         self._filter1Slot)
-        else:            
-            self.connect(self.anodeCombo, qt.SIGNAL("MyQComboBoxSignal"),
-                         self._anodeSlot)
-            self.connect(self.windowCombo, qt.SIGNAL("MyQComboBoxSignal"),
-                         self._windowSlot)
-            self.connect(self.filter1Combo, qt.SIGNAL("MyQComboBoxSignal"),
-                         self._filter1Slot)
-        self.connect(self.transmissionCheckBox,
-                     qt.SIGNAL("clicked()"),
-                     self._transmissionSlot)
+        self.connect(self.anodeCombo, qt.SIGNAL("MyQComboBoxSignal"),
+                     self._anodeSlot)
+        self.connect(self.windowCombo, qt.SIGNAL("MyQComboBoxSignal"),
+                     self._windowSlot)
+        self.connect(self.filter1Combo, qt.SIGNAL("MyQComboBoxSignal"),
+                     self._filter1Slot)
+        self.transmissionCheckBox.clicked.connect(self._transmissionSlot)
             
         if initdict is not None:
             self.setParameters(initdict)
@@ -295,13 +248,9 @@ class TubeWidget(qt.QWidget):
         layout.setMargin(11)
 
         gridwidget   = qt.QWidget(self)
-        if qt.qVersion() < '4.0.0':
-            grid = qt.QGridLayout(gridwidget, 8, 4, 0, 6)
-        else:
-            grid = QGridLayout(gridwidget)
-            grid.setMargin(0)
-            grid.setSpacing(6)
-
+        grid = QGridLayout(gridwidget)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(6)
 
         self.transmissionCheckBox = qt.QCheckBox(gridwidget)
         self.transmissionCheckBox.setText("Transmission Tube")
@@ -317,11 +266,11 @@ class TubeWidget(qt.QWidget):
 
 
         #materials            
-        mlabel               = qt.QLabel(gridwidget)
+        mlabel = qt.QLabel(gridwidget)
         mlabel.setText("Material")
-        dlabel               = qt.QLabel(gridwidget)
+        dlabel = qt.QLabel(gridwidget)
         dlabel.setText("Density (g/cm3)")
-        tlabel               = qt.QLabel(gridwidget)
+        tlabel = qt.QLabel(gridwidget)
         tlabel.setText("Thickness (cm)")
 
 
@@ -529,16 +478,7 @@ class MyQComboBox(qt.QComboBox):
         
 if __name__ == "__main__":
     app = qt.QApplication([])
-
     w = QXTube()
     w.show()
-
-    if qt.qVersion() < '4.0.0':
-        qt.QObject.connect(app,
-                           qt.SIGNAL("lastWindowClosed()"),
-                           app,
-                           qt.SLOT("quit()"))
-        app.exec_loop()
-    else:
-        app.exec_()
+    app.exec_()
         

@@ -39,7 +39,7 @@ from PyMca.PyMcaIO import SupaVisioMap
 from PyMca.PyMcaIO import AifiraMap
 from PyMca.PyMcaIO import TextImageStack
 from PyMca.PyMcaIO import TiffStack
-from PyMca.QEDFStackWidget import QStack, QSpecFileStack
+from PyMca.QStack import QStack, QSpecFileStack
 try:
     from PyMca import QHDF5Stack1D
     import h5py

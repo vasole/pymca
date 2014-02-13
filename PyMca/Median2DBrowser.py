@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -129,7 +129,7 @@ class Median2DBrowser(StackBrowser.StackBrowser):
         else:
             self.setImageData(data, clearmask=False)
         txt = self._buildTitle(legend, index)
-        self.graphWidget.graph.setTitle(txt)
+        self.graphWidget.graph.setGraphTitle(txt)
         self.name.setText(txt)
         if moveslider:
             self.slider.setValue(index)

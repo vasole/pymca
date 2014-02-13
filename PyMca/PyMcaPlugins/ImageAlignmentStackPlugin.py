@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -660,9 +660,10 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             shape = data[mcaIndex].shape
         else:
             shape = data.shape[0], data.shape[1]
-        d0_start, d0_end, d1_start, d1_end = ImageRegistration.get_crop_indices(shape,
-                                                                                shifts[:, 0],
-                                                                                shifts[:, 1])
+        d0_start, d0_end, d1_start, d1_end = \
+                  ImageRegistration.get_crop_indices(shape,
+                                                     shifts[:, 0],
+                                                     shifts[:, 1])
         window = numpy.zeros(shape, numpy.float32)
         window[d0_start:d0_end, d1_start:d1_end] = 1.0
         self._progress = 0.0
@@ -684,6 +685,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             #tmpImage = ImageRegistration.shiftFFT(data[i], shifts[i])
             if mcaIndex == 0:
                 tmpImage = ImageRegistration.shiftBilinear(data[i], shifts[i])
+                #tmpImage = ImageRegistration.shiftImage(data[i], -shifts[i], method="fft")
                 if filename is None:
                     stack.data[i] = tmpImage * window
                 else:

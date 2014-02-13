@@ -59,8 +59,6 @@ try:
         pass
 except:
     MATPLOTLIB = False
-
-from PyMca import SimpleFitGUI
 from PyMca import PyMcaPlugins
 
 DEBUG = 0
@@ -75,7 +73,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                          roi=roi,
                                          fit=fit,
                                          **kw)
-        self._togglePointsSignal()
+        #self._togglePointsSignal()
         self.setWindowType("SCAN")
         # this two objects are the same
         self.dataObjectsList = self._curveList
@@ -102,7 +100,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         """
         self.scanWindowInfoWidget = None
         #self.fig = None
-        self.scanFit = ScanFit.ScanFit(specfit=specfit)
+        if fit:
+            self.scanFit = ScanFit.ScanFit(specfit=specfit)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
         self.simpleMath = SimpleMath.SimpleMath()
         self.outputDir = None
@@ -111,7 +110,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         #signals
         # this one was made in the base class
         #self.setCallback(self.graphCallback)
-        if 1:
+        if fit:
+            from PyMca import SimpleFitGUI
             self.customFit = SimpleFitGUI.SimpleFitGUI()
             self.connect(self.scanFit,
                          qt.SIGNAL('ScanFitSignal') ,
@@ -119,7 +119,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.connect(self.customFit,
                          qt.SIGNAL('SimpleFitSignal') ,
                          self._customFitSignalReceived)
-        if 1:
+        if fit:
             self.fitButtonMenu = qt.QMenu()
             self.fitButtonMenu.addAction(QString("Simple Fit"),
                                    self._simpleFitSignal)
@@ -162,12 +162,26 @@ class ScanWindow(PlotWindow.PlotWindow):
         elif DEBUG:
             print("unhandled event", ddict['event'])
 
+    def _graphControlClicked(self):
+        #create a default menu
+        controlMenu = qt.QMenu()
+        controlMenu.addAction(QString("Show/Hide Legends"),
+                                   self.toggleLegendWidget)
+        controlMenu.exec_(self.cursor().pos())
+
+
     def _buildPositionInfo(self):
         widget = self.centralWidget()
         self.graphBottom = qt.QWidget(widget)
         self.graphBottomLayout = qt.QHBoxLayout(self.graphBottom)
         self.graphBottomLayout.setContentsMargins(0, 0, 0, 0)
         self.graphBottomLayout.setSpacing(0)
+
+        self.graphControlButton = qt.QPushButton(self.graphBottom)
+        self.graphControlButton.setText("Options")
+        self.graphControlButton.setAutoDefault(False)
+        self.graphBottomLayout.addWidget(self.graphControlButton)
+        self.graphControlButton.clicked.connect(self._graphControlClicked)
         
         label=qt.QLabel(self.graphBottom)
         label.setText('<b>X:</b>')
@@ -1221,8 +1235,6 @@ class ScanWindow(PlotWindow.PlotWindow):
         if legend in self.dataObjectsDict:
             # the info is changing
             super(ScanWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
-            if self.legendWidget is None:
-                self.showLegends()
         else:
             # create the data object
             self.newCurve(x, y, legend=legend, info=info, **kw)

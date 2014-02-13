@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,19 +31,7 @@ from PyMca import SimpleFitModule
 from PyMca import SimpleFitConfigurationGUI
 from PyMca import SimpleFitUserEstimatedFunctions
 from PyMca import Parameters
-if qt.qVersion() < '4.0.0':
-    raise ImportError("This module requires PyQt4")
-try:
-    #For testing purposes
-    #raise ImportError
-    if 0:
-        from PyMca.QtBlissGraph import QtBlissGraph as GraphWindow
-    elif 1:
-        from PyMca.Plot1DQwt import Plot1DQwt as GraphWindow
-    else:
-        from PyMca.ScanWindow import ScanWindow as GraphWindow
-except ImportError:
-    from PyMca.Plot1DMatplotlib import Plot1DMatplotlib as GraphWindow
+from PyMca.widgets import ScanWindow
 
 DEBUG = 0
 
@@ -148,14 +136,12 @@ class SimpleFitGUI(qt.QWidget):
             self.fitModule = fit
         if graph is None:
             self.__useTab = True
-            self.graph = GraphWindow()
+            self.graph = ScanWindow.ScanWindow(newplot=False,
+                                               plugins=False,
+                                               fit=False)
         else:
             self.__useTab = False
             self.graph = graph
-        if hasattr(self.graph, "fitButton"):
-            self.graph.fitButton.hide()
-        if hasattr(self.graph, "scanWindowInfoWidget"):
-            self.graph.scanWindowInfoWidget.hide()
         self._configurationDialog = None
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(2)

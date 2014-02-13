@@ -710,14 +710,17 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         self.setGraphYLimits(ymin, ymax)
 
     # Marker handling
-    def insertXMarker(self, x, label,
+    def insertXMarker(self, x, legend,
+                      label=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
         """
         :param x: Horizontal position of the marker in graph coordenates
         :type x: float
-        :param label: Legend associated to the marker
-        :type label: string
+        :param legend: Legend associated to the marker
+        :type legend: string
+        :param label: Text associated to the marker
+        :type label: string or None
         :param color: Color to be used for instance 'blue', 'b', '#FF0000'
         :type color: string, default 'k' (black)
         :param selectable: Flag to indicate if the marker can be selected
@@ -734,7 +737,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         line = InfiniteLine(angle=90, movable=movable)
         line.setPos(x)
         line.setY(1.)
-        line._plot_info = {'label':label}
+        line._plot_info = {'label':legend}
         line._plot_options = ["xmarker"]
         if selectable:
             line._plot_options.append('selectable')
@@ -746,14 +749,16 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         self.addItem(line)
         return line
         
-    def insertYMarker(self, y, label,
+    def insertYMarker(self, y, legend, label=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
         """
         :param y: Vertical position of the marker in graph coordenates
         :type y: float
-        :param label: Legend associated to the marker
-        :type label: string
+        :param legend: Legend associated to the marker
+        :type legend: string
+        :param label: Text associated to the marker
+        :type label: string or None
         :param color: Color to be used for instance 'blue', 'b', '#FF0000'
         :type color: string, default 'k' (black)
         :param selectable: Flag to indicate if the marker can be selected
@@ -770,7 +775,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         line = InfiniteLine(angle=0, movable=movable)
         line.setPos(y)
         line.setX(1.)
-        line._plot_info = {'label':label}
+        line._plot_info = {'label':legend}
         line._plot_options = ["ymarker"]
         if selectable:
             line._plot_options.append('selectable')

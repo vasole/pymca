@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,19 +26,14 @@
 #############################################################################*/
 import numpy
 from PyMca import PyMcaQt as qt
-if 1:
-    from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
-    #from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
-    from PyMca.widgets import PlotWindow as DataDisplay
-else:
-    from PyMca import ScanWindow as DataDisplay
+from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+from PyMca.widgets import PlotWindow as DataDisplay
 from PyMca.PyMcaIO import specfilewrapper as sf
 from PyMca import SimpleFitModule as SFM
 from PyMca import SpecfitFunctions
 from PyMca import Elements
 from PyMca import ConfigDict
 from PyMca import PyMcaDirs
-from PyMca import PyMcaDataDir
 from PyMca import QSpecFileWidget
 from PyMca import SpecFileDataSource
 from PyMca.SpecfitFuns import upstep, downstep
@@ -46,7 +41,6 @@ from PyMca.Gefit import LeastSquaresFit as LSF
 from PyMca.PyMca_Icons import IconDict
 from os.path import isdir as osPathIsDir
 from os.path import basename as osPathBasename
-from os.path import join as osPathJoin
 
 try:
     from PyMca import Plugin1DBase
@@ -55,11 +49,9 @@ except ImportError:
     from . import Plugin1DBase
 
 if hasattr(qt, "QString"):
-    #print('qt has QString')
     QString = qt.QString
     QStringList = qt.QStringList
 else:
-    #print('qt does not have QString')
     QString = str
     QStringList = list
 
@@ -148,11 +140,9 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.window = window
         self.plotWindow = plotWindow
         #self.graph = graph
-        #self.markerID = self.graph.insertX1Marker(0., label=label)
-        if hasattr(self.plotWindow,'graph'):
-            self.markerID = self.plotWindow.graph.insertX1Marker(0., label=label)
-        else:
-            self.markerID = self.plotWindow.insertXMarker(0., label=label)
+        self.markerID = self.plotWindow.insertXMarker(0.,
+                                                      label,
+                                                      label=label)
             
         
         # Initialize
@@ -161,13 +151,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.setValue(0.)
         
         # Connects
-        #self.connect(self.graph,
-        if hasattr(self.plotWindow,'graph'):
-            self.connect(self.plotWindow.graph,
-                         qt.SIGNAL("QtBlissGraphSignal"),
-                         self._handlePlotSignal)
-        else:
-            self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
+        self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
         #self.valueChanged['double'].connect(self._valueChanged)
         #self.valueChanged['QString'].connect(self._valueChanged)
         self.valueChanged.connect(self._valueChanged)
@@ -198,77 +182,48 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         return resDict
 
     def hideMarker(self):
-        if hasattr(self.plotWindow,'graph'):
-            graph = self.plotWindow.graph
-            if self.markerID in graph.markersdict.keys():
-                marker = graph.markersdict[self.markerID]['marker']
-                marker.hide()
-        else:
-            self.plotWindow.removeMarker(self.label)
-            self.markerID = None
+        self.plotWindow.removeMarker(self.label)
+        self.markerID = None
             
     def showMarker(self):
-        if hasattr(self.plotWindow,'graph'):
-            graph = self.plotWindow.graph
-            if self.markerID in graph.markersdict.keys():
-                marker = graph.markersdict[self.markerID]['marker']
-                marker.show()
-        else:
-            self.plotWindow.removeMarker(self.label)
-            self.markerID = self.plotWindow.insertXMarker(
-                                    x=self.value(),
-                                    label=self.label,
-                                    color='blue',
-                                    selectable=False,
-                                    draggable=True)
+        self.plotWindow.removeMarker(self.label)
+        self.markerID = self.plotWindow.insertXMarker(
+                                self.value(),
+                                self.label,
+                                label=self.label,
+                                color='blue',
+                                selectable=False,
+                                draggable=True)
 
     def _setMarkerFollowMouse(self, windowTitle):
         windowTitle = str(windowTitle)
-        if hasattr(self.plotWindow,'graph'):
-            graph = self.plotWindow.graph
-            if self.window == windowTitle:
-                graph.setmarkercolor(self.markerID, 'blue')
-                graph.setmarkerfollowmouse(self.markerID, True)
-            else:
-                graph.setmarkercolor(self.markerID, 'black')
-                graph.setmarkerfollowmouse(self.markerID, False)
-            graph.replot()
+        if self.window == windowTitle:
+            # Marker is active
+            color = 'blue'
+            draggable  = True
         else:
-            if self.window == windowTitle:
-                # Marker is active
-                color = 'blue'
-                draggable  = True
-            else:
-                # Black, marker is inactive
-                color = 'k'
-                draggable  = False
-            # Make shure that the marker is deleted
-            # If marker is not present, removeMarker just passes..
-            self.plotWindow.removeMarker(self.label)
-            self.markerID = self.plotWindow.insertXMarker(
-                                    x=self.value(),
-                                    label=self.label,
-                                    color=color,
-                                    selectable=False,
-                                    draggable=draggable)
-            self.plotWindow.replot()        
+            # Black, marker is inactive
+            color = 'k'
+            draggable  = False
+        # Make shure that the marker is deleted
+        # If marker is not present, removeMarker just passes..
+        self.plotWindow.removeMarker(self.label)
+        self.markerID = self.plotWindow.insertXMarker(
+                                self.value(),
+                                self.label,
+                                label=self.label,
+                                color=color,
+                                selectable=False,
+                                draggable=draggable)
+        self.plotWindow.replot()        
 
     def _handlePlotSignal(self, ddict):
-        if hasattr(self.plotWindow, 'graph'):
-            if 'marker' not in ddict:
-                return
-            else:
-                if ddict['marker'] != self.markerID:
-                    return
-            if ddict['event'] == 'markerMoving':
-                self.setValue(ddict['x'])
-        else:
-            if ddict['event'] != 'markerMoving':
-                return
-            if ddict['label'] != self.label:
-                return
-            markerPos = ddict['x']
-            self.setValue(markerPos)                
+        if ddict['event'] != 'markerMoving':
+            return
+        if ddict['label'] != self.label:
+            return
+        markerPos = ddict['x']
+        self.setValue(markerPos)                
             
     def _valueChanged(self, val):
         try:
@@ -277,19 +232,14 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
             if DEBUG == 0:
                 print('_valueChanged -- Sorry, it ain\'t gonna float: %s'%str(val))
             return
-        if hasattr(self.plotWindow,'graph'):
-            graph = self.plotWindow.graph
-            graph.setMarkerXPos(self.markerID, val)
-            graph.replot()
-        else:
-            self.plotWindow.removeMarker(self.label)
-            self.markerID = self.plotWindow.insertXMarker(
-                                    x=val,
-                                    label=self.label,
-                                    color='blue',
-                                    selectable=False,
-                                    draggable=True)
-            self.plotWindow.replot()
+        self.plotWindow.removeMarker(self.label)
+        self.markerID = self.plotWindow.insertXMarker(
+                                x=val,
+                                label=self.label,
+                                color='blue',
+                                selectable=False,
+                                draggable=True)
+        self.plotWindow.replot()
         
 class LineEditDisplay(qt.QLineEdit):
     def __init__(self, controller, ddict={}, unit='', parent=None):
@@ -848,38 +798,20 @@ class SumRulesWindow(qt.QMainWindow):
         
         
         # Estimate button in bottom of plot window layout
-        if hasattr(self.plotWindow,'graph'):
-            self.buttonEstimate = qt.QPushButton('Estimate')
-            self.buttonEstimate.setToolTip(
-                'Shortcut: CRTL+E\n'
-               +'Depending on the tab, estimate either the pre/post\n'
-               +'edge regions and edge positions or the positions of\n'
-               +'the p, q and r markers.')
-            self.buttonEstimate.setShortcut(qt.Qt.CTRL+qt.Qt.Key_E)
-            self.buttonEstimate.clicked.connect(self.estimate)
-            self.buttonEstimate.setEnabled(False)
-            self.plotWindow.graphBottomLayout.addWidget(qt.HorizontalSpacer())
-            self.plotWindow.graphBottomLayout.addWidget(self.buttonEstimate)    
-        else:
-            self.buttonEstimate = qt.QToolButton(self)
-            self.buttonEstimate.setIcon(qt.QIcon(
-                        qt.QPixmap(IconDict["reload"])))
-            self.buttonEstimate.setToolTip(
-                'Shortcut: CRTL+E\n'
-               +'Depending on the tab, estimate either the pre/post\n'
-               +'edge regions and edge positions or the positions of\n'
-               +'the p, q and r markers.')
-            self.buttonEstimate.setShortcut(qt.Qt.CTRL+qt.Qt.Key_E)
-            self.buttonEstimate.clicked.connect(self.estimate)
-            self.buttonEstimate.setEnabled(False)
-            self.plotWindow.toolBar.addWidget(self.buttonEstimate)
+        self.buttonEstimate = qt.QToolButton(self)
+        self.buttonEstimate.setIcon(qt.QIcon(
+                    qt.QPixmap(IconDict["reload"])))
+        self.buttonEstimate.setToolTip(
+            'Shortcut: CRTL+E\n'
+           +'Depending on the tab, estimate either the pre/post\n'
+           +'edge regions and edge positions or the positions of\n'
+           +'the p, q and r markers.')
+        self.buttonEstimate.setShortcut(qt.Qt.CTRL+qt.Qt.Key_E)
+        self.buttonEstimate.clicked.connect(self.estimate)
+        self.buttonEstimate.setEnabled(False)
+        self.plotWindow.toolBar.addWidget(self.buttonEstimate)
 
-        if hasattr(self.plotWindow,'graph'):
-            self.connect(self.plotWindow.graph,
-                         qt.SIGNAL("QtBlissGraphSignal"),
-                         self._handlePlotSignal)
-        else:
-            self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
+        self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
              
         # Layout
         mainWidget = qt.QWidget()
@@ -938,25 +870,6 @@ class SumRulesWindow(qt.QMainWindow):
 #        }
         
 #        self.setValuesDict(tmpDict)
-        # Instantiate helpfile browser
-        helpFileName = osPathJoin(PyMcaDataDir.PYMCA_DOC_DIR,
-                                "HTML",
-                                "SumRulesToolInfotext.html")
-        self.helpFileBrowser = qt.QTextBrowser()
-        self.helpFileBrowser.setWindowTitle("Sum Rules Help")
-        self.helpFileBrowser.setLineWrapMode(qt.QTextEdit.FixedPixelWidth)
-        self.helpFileBrowser.setLineWrapColumnOrWidth(500)
-        self.helpFileBrowser.resize(520,300)
-        try:
-            helpFileHandle = open(helpFileName)
-            helpFileHTML = helpFileHandle.read()
-            helpFileHandle.close()
-            self.helpFileBrowser.setHtml(helpFileHTML)
-        except IOError:
-            if DEBUG:
-                print('SumRules Window -- init: Unable to read help file')
-            self.helpFileBrowser = None
-
         self._createMenuBar()
 
     def _createMenuBar(self):        
@@ -967,7 +880,7 @@ class SumRulesWindow(qt.QMainWindow):
         #
         # 'File' Menu
         #
-        file = menu.addMenu('&File')
+        ffile = menu.addMenu('&File')
 
         openAction = qt.QAction('&Open Spec File', self)
         openAction.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
@@ -1016,30 +929,10 @@ class SumRulesWindow(qt.QMainWindow):
                        saveDataAsAction,
                        'sep']:
             if isinstance(action, qt.QAction):
-                file.addAction(action)
+                ffile.addAction(action)
             else:
-                file.addSeparator()
-        file.addAction('E&xit', self.close)
-
-        #
-        # 'help' Menu
-        #
-        about = menu.addMenu('Abou&t')
-        
-        helpFileBrowserAction = qt.QAction('Show Help F&ile', self)
-        helpFileBrowserAction.setShortcut(qt.Qt.Key_F1)
-        helpFileBrowserAction.setStatusTip('Showing help file..')
-        helpFileBrowserAction.setToolTip('Opens a browser that shows the helpfile')
-        helpFileBrowserAction.triggered.connect(self.showHelpFileBrowser)
-
-        about.addAction(helpFileBrowserAction)
-
-    def showHelpFileBrowser(self):
-        if self.helpFileBrowser:
-            self.helpFileBrowser.show()
-        else:
-            print('showHelpFileBrowser -- Help File Browser not available. '
-                 +'Check if the help file is installed correctly.' )
+                ffile.addSeparator()
+        ffile.addAction('E&xit', self.close)
 
     def triggerDetrend(self, state):
         if (state == qt.Qt.Unchecked) or\
@@ -1063,10 +956,6 @@ class SumRulesWindow(qt.QMainWindow):
 
             # Fit linear model y = a*x + b
             a, b = numpy.polyfit(xFit, yFit, 1)
-
-            if DEBUG == 0:
-                print('a = %.5f, b = %.5f'%(a,b))
-            
             trend = a*x + b
             self.xmcdCorrData = (x, y-trend)
         if self.getCurrentTab() == self.__tabInt:
@@ -1082,20 +971,11 @@ class SumRulesWindow(qt.QMainWindow):
             # TODO: Find better way to determine curves..
             if marker in [self.__intP, self.__intQ]:
                 if self.xmcdCorrData is not None:
-                    if hasattr(self.plotWindow, 'graph'):
-                        curve = 'xmcd corr Int Y'
-                    else:
-                        curve = 'xmcd corr Int'
+                    curve = 'xmcd corr Int'
                 else:
-                    if hasattr(self.plotWindow, 'graph'):
-                        curve = 'xmcd Int Y'
-                    else:
-                        curve = 'xmcd Int'
+                    curve = 'xmcd Int'
             else:
-                if hasattr(self.plotWindow, 'graph'):
-                    curve = 'xas Int Y'
-                else:
-                    curve = 'xas Int'
+                curve = 'xas Int'
             spinbox = ddict[self.__tabInt][marker]
             integralVals = spinbox.getIntersections()
             x, y = integralVals.get(curve, (float('NaN'),float('NaN')))
@@ -1123,11 +1003,11 @@ class SumRulesWindow(qt.QMainWindow):
         res      = float('NaN')
         resList  = [res] * len(dataList)
         if not self.xmcdInt:
-            if DEBUG == 0:
+            if DEBUG:
                 print('getIntegralValues -- self.xmcdInt not present')
             return
         if not self.xasInt:
-            if DEBUG == 0:
+            if DEBUG:
                 print('getIntegralValues -- self.xasInt not present')
             return
         for listIdx, data in enumerate(dataList):
@@ -1149,14 +1029,14 @@ class SumRulesWindow(qt.QMainWindow):
                 res = dy/dx * (pos - x[lesserIdx]) + y[lesserIdx]
             resList[listIdx] = res
         #return res
-        if DEBUG == 0:
+        if DEBUG:
             print('getIntegralValues -- Result:\n\t%s'%str(resList))
 
     def loadData(self):
         dial = LoadDichorismDataDialog()
         #dial.setDirectory(PyMcaDirs.outputDir)
         # CHANGE ME!
-        #dial.setDirectory(r'C:\Users\tonn\lab\datasets\sum_rules\sum_rules_4f_example_EuRhj2Si2')
+        dial.setDirectory(r'C:\Users\tonn\lab\datasets\sum_rules\sum_rules_4f_example_EuRhj2Si2')
         if dial.exec_():
             dataDict = dial.dataDict
         else:
@@ -1328,13 +1208,14 @@ class SumRulesWindow(qt.QMainWindow):
         confDict = ConfigDict.ConfigDict()
         ddict    = self.getValuesDict()
         loadDir  = PyMcaDirs.outputDir
-        filters   = 'Sum Rules Analysis files (*.sra);;All files (*.*)'
+        filter   = 'Sum Rules Analysis files (*.sra);;All files (*.*)'
         selectedFilter = 'Sum Rules Analysis files (*.sra)'
         
         filename = qt.QFileDialog.getOpenFileName(self,
                                'Load Sum Rule Analysis Configuration',
                                loadDir,
-                               filters)
+                               filter,
+                               selectedFilter)
         if len(filename) == 0:
             return
         else:

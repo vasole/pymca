@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -27,18 +27,7 @@
 import sys
 import numpy
 from PyMca import PyMcaQt as qt
-SCANWINDOW = False
-QWT = False
-# This strange looking import is to workaround an endless import
-try:
-    from PyMca import ScanWindow
-    SCANWINDOW = True
-except:
-    try:
-        from PyMca import Plot1DQwt
-        QWT = True
-    except ImportError:
-        from PyMca import Plot1DMatplotlib
+from PyMca.widgets import PlotWindow
 from PyMca import SpecfitFuns
 
 
@@ -255,17 +244,10 @@ class StripBackgroundWidget(qt.QWidget):
         self.mainLayout.setMargin(0)
         self.mainLayout.setSpacing(2)
         self.parametersWidget = StripParametersWidget(self)
-        if SCANWINDOW:
-            self.graphWidget = ScanWindow.ScanWindow(self)
-        elif QWT:
-            self.graphWidget = Plot1DQwt.Plot1DQwt(self)
-        else:
-            self.graphWidget = Plot1DMatplotlib.Plot1DMatplotlib(self)
-        try:
-            self.graphWidget.fitButton.hide()
-            self.graphWidget.scanWindowInfoWidget.hide()
-        except:
-            pass
+        self.graphWidget = PlotWindow.PlotWindow(self,
+                                                 newplot=False,
+                                                 plugins=False,
+                                                 fit=False)
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graphWidget)
         self.getParameters = self.parametersWidget.getParameters

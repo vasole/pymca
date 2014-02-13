@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -43,6 +43,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
         ddict = {}
         ddict['usetab'] = kw.get("usetab",True)
+        ddict['aspect'] = kw.get("aspect",True)
         ddict.update(kw)
         ddict['standalonesave'] = False
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict) 
@@ -67,9 +68,8 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         self.spectrumGraphTitles = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
-            self.connect(self.graphWidget.saveToolButton,
-                         qt.SIGNAL("clicked()"), 
-                         self._saveToolButtonSignal)
+            self.graphWidget.saveToolButton.clicked.connect(\
+                                         self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
             self._saveMenu.addAction(QString("Image Data"),
                                      self.saveImageList)
@@ -108,9 +108,9 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             legend = self.spectrumNames[index]
             x = self.xValues[index]
             y = self.spectrumList[index]
-            self.spectrumGraph.newCurve(x, y, legend, replace=True)
+            self.spectrumGraph.addCurve(x, y, legend, replace=True)
             if self.spectrumGraphTitles is not None:
-                self.spectrumGraph.graph.setTitle(self.spectrumGraphTitles[index])
+                self.spectrumGraph.graph.setGraphTitle(self.spectrumGraphTitles[index])
                 
             
     def showImage(self, index=0, moveslider=True):
@@ -119,7 +119,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         if len(self.imageList) == 0:
             return
         # first the title to update any related selection curve legend
-        self.graphWidget.graph.setTitle(self.imageNames[index])
+        self.graphWidget.graph.setGraphTitle(self.imageNames[index])
         self.setImageData(self.imageList[index])
         if moveslider:
             self.slider.setValue(index)
@@ -177,9 +177,9 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             legend = self.spectrumNames[0]
             x = self.xValues[0]
             y = self.spectrumList[0]
-            self.spectrumGraph.newCurve(x, y, legend, replace=True)
+            self.spectrumGraph.addCurve(x, y, legend, replace=True)
             if self.spectrumGraphTitles is not None:
-                self.spectrumGraph.graph.setTitle(self.spectrumGraphTitles[0])
+                self.spectrumGraph.graph.setGraphTitle(self.spectrumGraphTitles[0])
             
         self.slider.setValue(0)
 
@@ -218,17 +218,10 @@ def test():
     def theSlot(ddict):
         print(ddict['event'])
 
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(container,
-                       qt.PYSIGNAL("MaskImageWidgetSignal"),
-                       updateMask)
-        app.setMainWidget(container)
-        app.exec_loop()
-    else:
-        qt.QObject.connect(container,
-                           qt.SIGNAL("MaskImageWidgetSignal"),
-                           theSlot)
-        app.exec_()
+    qt.QObject.connect(container,
+                       qt.SIGNAL("MaskImageWidgetSignal"),
+                       theSlot)
+    app.exec_()
 
 if __name__ == "__main__":
     import numpy

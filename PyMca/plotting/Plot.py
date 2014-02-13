@@ -779,9 +779,9 @@ class Plot(PlotBase.PlotBase):
             for image in self._imageDict.keys():
                 self._plot.removeImage(image[1])
         if hasattr(self._plot, 'replot_'):
-            plot = self._plot.replot_
+            self._plot.replot_()
         else:
-            plot = self._plot.replot        
+            self._plot.replot()
 
     def clear(self):
         self._curveList = []
@@ -880,11 +880,12 @@ class Plot(PlotBase.PlotBase):
         self._plot.setGraphYLabel(label)
         
     # Marker handling
-    def insertXMarker(self, x, label=None,
-                     color=None,
-                     selectable=False,
-                     draggable=False,
-                     **kw):
+    def insertXMarker(self, x, legend=None,
+                      label=None,
+                      color=None,
+                      selectable=False,
+                      draggable=False,
+                      **kw):
         """
         kw ->symbol
         """
@@ -894,30 +895,33 @@ class Plot(PlotBase.PlotBase):
             color = colordict['black']
         elif color in colordict:
             color = colordict[color]
-        if label is None:
+        if legend is None:
             i = 0
-            label = "Unnamed X Marker %d" % i
-            while label in self._markerList:
+            legend = "Unnamed X Marker %d" % i
+            while legend in self._markerList:
                 i += 1
-                label = "Unnamed X Marker %d" % i
+                legend = "Unnamed X Marker %d" % i
 
-        if label in self._markerList:
-            self.removeMarker(label)
-        marker = self._plot.insertXMarker(x, label,
+        if legend in self._markerList:
+            self.removeMarker(legend)
+        marker = self._plot.insertXMarker(x, legend,
+                                          label=label,
                                           color=color,
                                           selectable=selectable,
                                           draggable=draggable,
                                           **kw)
-        self._markerList.append(label)
+        self._markerList.append(legend)
         self._markerDict[label] = kw
         self._markerDict[label]['marker'] = marker
         return marker
 
-    def insertYMarker(self, y, label=None,
-                     color=None,
-                     selectable=False,
-                     draggable=False,
-                     **kw):
+    def insertYMarker(self, y,
+                      legend=None,
+                      label=None,
+                      color=None,
+                      selectable=False,
+                      draggable=False,
+                      **kw):
         """
         kw -> color, symbol
         """
@@ -925,25 +929,27 @@ class Plot(PlotBase.PlotBase):
             color = colordict['black']
         elif color in colordict:
             color = colordict[color]
-        if label is None:
+        if legend is None:
             i = 0
-            label = "Unnamed Y Marker %d" % i
-            while label in self._markerList:
+            legend = "Unnamed Y Marker %d" % i
+            while legend in self._markerList:
                 i += 1
-                label = "Unnamed Y Marker %d" % i
-        if label in self._markerList:
-            self.clearMarker(label)
-        marker = self._plot.insertYMarker(y, label,
+                legend = "Unnamed Y Marker %d" % i
+        if legend in self._markerList:
+            self.clearMarker(legend)
+        marker = self._plot.insertYMarker(y, legend,
+                                          label=label,
                                           color=color,
                                           selectable=selectable,
                                           draggable=draggable,
                                           **kw)
         self._markerList.append(label)
-        self._markerDict[label] = kw
-        self._markerDict[label]['marker'] = marker
+        self._markerDict[legend] = kw
+        self._markerDict[legend]['marker'] = marker
         return marker
 
-    def insertMarker(self, x, y, label=None,
+    def insertMarker(self, x, y, legend=None,
+                     label=None,
                      color=None,
                      selectable=False,
                      draggable=False,
@@ -952,23 +958,24 @@ class Plot(PlotBase.PlotBase):
             color = colordict['black']
         elif color in colordict:
             color = colordict[color]
-        if label is None:
+        if legend is None:
             i = 0
-            label = "Unnamed Marker %d" % i
-            while label in self._markerList:
+            legend = "Unnamed Marker %d" % i
+            while legend in self._markerList:
                 i += 1
-                label = "Unnamed Marker %d" % i
+                legend = "Unnamed Marker %d" % i
 
-        if label in self._markerList:
-            self.clearMarker(label)
-        marker = self._plot.insertMarker(x, y, label,
+        if legend in self._markerList:
+            self.clearMarker(legend)
+        marker = self._plot.insertMarker(x, y, legend,
+                                          label=label,
                                           color=color,
                                           selectable=selectable,
                                           draggable=draggable,
                                           **kw)
-        self._markerList.append(label)
-        self._markerDict[label] = kw
-        self._markerDict[label]['marker'] = marker
+        self._markerList.append(legend)
+        self._markerDict[legend] = kw
+        self._markerDict[legend]['marker'] = marker
         return marker
 
     def keepDataAspectRatio(self, flag=True):

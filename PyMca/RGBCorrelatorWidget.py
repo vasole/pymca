@@ -65,7 +65,7 @@ DEBUG = 0
 
 
 class RGBCorrelatorWidget(qt.QWidget):
-    def __init__(self, parent = None, bgrx = True, replace = False):
+    def __init__(self, parent = None, bgrx = False, replace = False):
         qt.QWidget.__init__(self, parent)
         self.replaceOption = replace 
         self.setWindowTitle("RGBCorrelatorWidget")
@@ -333,9 +333,12 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__recolor(['r', 'g', 'b'])        
 
     def __recolor(self, color = None):
-        if color is None:colorlist = ['r', 'g', 'b']
-        elif type(color) == type("") : colorlist = [color]
-        else:colorlist = color * 1
+        if color is None:
+            colorlist = ['r', 'g', 'b']
+        elif type(color) == type(""):
+            colorlist = [color]
+        else:
+            colorlist = color * 1
         ddict = {}
         ddict['event'] = 'updated'
         if 'r' in colorlist:
