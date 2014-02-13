@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,7 +30,7 @@ import numpy
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 from PyMca import MaskImageWidget
-from PyMca import ScanWindow
+from PyMca.widgets import ScanWindow
 from PyMca import PCAModule
 
 MDP = PCAModule.MDP
@@ -87,9 +87,11 @@ class PCAParametersDialog(qt.QDialog):
             self.buttonGroup.setId(rButton, i)
             i += 1
 
-        self.connect(self.buttonGroup,
-                     qt.SIGNAL('buttonPressed(QAbstractButton *)'),
-                     self._slot)
+        #self.connect(self.buttonGroup,
+        #             qt.SIGNAL('buttonPressed(QAbstractButton *)'),
+        #             self._slot)
+        self.buttonGroup.buttonPressed.connect(self._slot)
+        
 
         self.mainLayout.addWidget(self.methodOptions)
 
@@ -146,9 +148,7 @@ class PCAParametersDialog(qt.QDialog):
         if self.scanWindow is not None:
             self.mainLayout.addWidget(self.scanWindow)
 
-        self.connect(self.okButton,
-                     qt.SIGNAL("clicked()"),
-                     self.accept)
+        self.okButton.clicked.connect(self.accept)
 
     def __addRegionsWidget(self):
         #Region handling
@@ -159,10 +159,7 @@ class PCAParametersDialog(qt.QDialog):
                      self.regionsWidgetSlot)
         #the plot
         self.scanWindow = ScanWindow.ScanWindow(self)
-        self.scanWindow.scanWindowInfoWidget.hide()
-        self.connect(self.scanWindow.graph,
-                     qt.SIGNAL("QtBlissGraphSignal"),
-                     self._graphSlot)
+        self.scanWindow.sigPlotSignal.connect(self._graphSlot)
         if not self.__regions:
             #I am adding after instantiation
             self.mainLayout.insertWidget(2,self.regionsWidget)
@@ -172,29 +169,27 @@ class PCAParametersDialog(qt.QDialog):
     def regionsWidgetSlot(self, ddict):
         fromValue = ddict['from']
         toValue   = ddict['to']
-        self.graph = self.scanWindow.graph
+        self.graph = self.scanWindow
         self.graph.clearMarkers()
-        #self.fromMarker = -1
-        #self.toMarker = -1
-        self.fromMarker = self.graph.insertX1Marker(fromValue,1.1,
-                                label = 'From')
-        self.toMarker = self.graph.insertX1Marker(toValue,1.1,
-                                label = 'To')
-        self.graph.setmarkercolor(self.fromMarker,'blue')
-        self.graph.setmarkercolor(self.toMarker,'blue')
-        self.graph.setmarkerfollowmouse(self.fromMarker,1)
-        self.graph.setmarkerfollowmouse(self.toMarker,1)
-        self.graph.enablemarkermode()
+        self.graph.insertXMarker(fromValue,
+                                  'From',
+                                   label='From',
+                                   color='blue',
+                                   draggable=True)
+        self.graph.insertXMarker(toValue,
+                                 'To', label = 'To',
+                                  color='blue',
+                                  draggable=True)
         self.graph.replot() 
 
     def _graphSlot(self, ddict):
         if ddict['event'] == "markerMoved":
-            marker = ddict['marker']
+            marker = ddict['label']
             value = ddict['x']
             signal = False
-            if marker == self.fromMarker:
+            if marker == "From":
                 self.regionsWidget.fromLine.setText("%f" % value)
-            elif marker == self.toMarker:
+            elif marker == "To":
                 self.regionsWidget.toLine.setText("%f" % value)
             else:
                 signal = True
@@ -497,7 +492,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         if len(self.imageList) == 0:
             return
         self.setImageData(self.imageList[index])
-        self.graphWidget.graph.setTitle(self.imageNames[index])
+        self.graphWidget.graph.setGraphTitle(self.imageNames[index])
         if moveslider:
             self.slider.setValue(index)
 
