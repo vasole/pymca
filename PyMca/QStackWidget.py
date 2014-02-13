@@ -1093,9 +1093,9 @@ if __name__ == "__main__":
                 PyMcaDirs.nativeFileDialogs=True
             else:
                 PyMcaDirs.nativeFileDialogs=False
-        elif opt in '--old':
-            import QEDFStackWidget
-            sys.exit(QEDFStackWidget.runAsMain())
+        #elif opt in '--old':
+        #    import QEDFStackWidget
+        #    sys.exit(QEDFStackWidget.runAsMain())
     if filepattern is not None:
         if (begin is None) or (end is None):
             raise ValueError("A file pattern needs at least a set of begin and end indices")
