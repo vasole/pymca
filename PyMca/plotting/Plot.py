@@ -882,10 +882,10 @@ class Plot(PlotBase.PlotBase):
     # Marker handling
     def insertXMarker(self, x, legend=None,
                       label=None,
-                     color=None,
-                     selectable=False,
-                     draggable=False,
-                     **kw):
+                      color=None,
+                      selectable=False,
+                      draggable=False,
+                      **kw):
         """
         kw ->symbol
         """
