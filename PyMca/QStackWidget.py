@@ -719,9 +719,7 @@ class QStackWidget(StackBase.StackBase,
         #ROI Image
         widgetList = [self.stackWidget, self.roiWidget]
         for widget in widgetList:
-            self.connect(widget,
-                 qt.SIGNAL('MaskImageWidgetSignal'),
-                 self._maskImageWidgetSlot)
+            widget.sigMaskImageWidgetSignal.connect(self._maskImageWidgetSlot)
 
         #self.stackGraphWidget.graph.canvas().setMouseTracking(1)
         self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")

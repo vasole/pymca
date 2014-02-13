@@ -32,6 +32,7 @@ from PyMca.plotting.ctools import pnpoly
 from . import RGBCorrelatorGraph
 from . import ColormapDialog
 qt = RGBCorrelatorGraph.qt
+
 IconDict = RGBCorrelatorGraph.IconDict
 QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
@@ -91,6 +92,8 @@ def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
     return r, c
     
 class MaskImageWidget(qt.QWidget):
+    sigMaskImageWidgetSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
                  imageicons=True, standalonesave=True, usetab=False,
                  profileselection=False, scanwindow=None, aspect=False, polygon=None):
@@ -1699,9 +1702,10 @@ class MaskImageWidget(qt.QWidget):
         self.emitMaskImageSignal(ddict)
                             
     def emitMaskImageSignal(self, ddict):
-        qt.QObject.emit(self,
-                    qt.SIGNAL('MaskImageWidgetSignal'),
-                    ddict)
+        #qt.QObject.emit(self,
+        #            qt.SIGNAL('MaskImageWidgetSignal'),
+        #            ddict)
+        self.sigMaskImageWidgetSignal.emit(ddict)      
 
     def _zoomResetSignal(self):
         if DEBUG:
