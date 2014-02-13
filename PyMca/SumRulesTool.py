@@ -131,9 +131,10 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
     
     valueChangedSignal = qt.pyqtSignal(float)
     intersectionsChangedSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, window, plotWindow, label='', parent=None):
         qt.QDoubleSpinBox.__init__(self, parent)
+        print('Received label:', label)
         
         # Attributes
         self.label = label
@@ -221,6 +222,8 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         if ddict['event'] != 'markerMoving':
             return
         if ddict['label'] != self.label:
+            print('Not my label:',self.label)
+            print('ddict:',str(ddict))
             return
         markerPos = ddict['x']
         self.setValue(markerPos)                
@@ -234,7 +237,8 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
             return
         self.plotWindow.removeMarker(self.label)
         self.markerID = self.plotWindow.insertXMarker(
-                                x=val,
+                                val,
+                                self.label,
                                 label=self.label,
                                 color='blue',
                                 selectable=False,
@@ -348,6 +352,7 @@ class SumRulesWindow(qt.QMainWindow):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle('Sum Rules Tool')
         if hasattr(DataDisplay,'PlotWindow'):
+            print('Using MatplotLib')
             self.plotWindow = DataDisplay.PlotWindow(
                 parent=self,
                 backend=backend,
@@ -1208,14 +1213,13 @@ class SumRulesWindow(qt.QMainWindow):
         confDict = ConfigDict.ConfigDict()
         ddict    = self.getValuesDict()
         loadDir  = PyMcaDirs.outputDir
-        filter   = 'Sum Rules Analysis files (*.sra);;All files (*.*)'
+        filters   = 'Sum Rules Analysis files (*.sra);;All files (*.*)'
         selectedFilter = 'Sum Rules Analysis files (*.sra)'
         
         filename = qt.QFileDialog.getOpenFileName(self,
                                'Load Sum Rule Analysis Configuration',
                                loadDir,
-                               filter,
-                               selectedFilter)
+                               filters)
         if len(filename) == 0:
             return
         else:
