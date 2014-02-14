@@ -105,7 +105,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             y = self.spectrumList[index]
             self.spectrumGraph.addCurve(x, y, legend, replace=True)
             if self.spectrumGraphTitles is not None:
-                self.spectrumGraph.graph.setGraphTitle(self.spectrumGraphTitles[index])
+                self.spectrumGraph.setGraphTitle(self.spectrumGraphTitles[index])
                 
             
     def showImage(self, index=0, moveslider=True):
@@ -174,7 +174,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             y = self.spectrumList[0]
             self.spectrumGraph.addCurve(x, y, legend, replace=True)
             if self.spectrumGraphTitles is not None:
-                self.spectrumGraph.graph.setGraphTitle(self.spectrumGraphTitles[0])
+                self.spectrumGraph.setGraphTitle(self.spectrumGraphTitles[0])
             
         self.slider.setValue(0)
 

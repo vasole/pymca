@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -116,18 +116,18 @@ class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
         if backgroundIndex is None:
             self.setImageData(self.imageList[index])
             if self.imageNames is None:
-                self.graphWidget.graph.setTitle(mfText+"Image %d" % index)
+                self.graphWidget.graph.setGraphTitle(mfText+"Image %d" % index)
             else:
-                self.graphWidget.graph.setTitle(mfText+self.imageNames[index])
+                self.graphWidget.graph.setGraphTitle(mfText+self.imageNames[index])
         else:
             # TODO: Should the channel at max. and channel at min. be
             # recalculated?
             self.setImageData(self.imageList[index]-\
                               self.imageList[backgroundIndex])
             if self.imageNames is None:
-                self.graphWidget.graph.setTitle(mfText+"Image %d Net" % index)
+                self.graphWidget.graph.setGraphTitle(mfText+"Image %d Net" % index)
             else:
-                self.graphWidget.graph.setTitle(mfText+self.imageNames[index]+ " Net")
+                self.graphWidget.graph.setGraphTitle(mfText+self.imageNames[index]+ " Net")
         if moveslider:
             self.slider.setValue(index)
 
