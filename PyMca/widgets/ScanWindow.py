@@ -119,7 +119,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.connect(self.customFit,
                          qt.SIGNAL('SimpleFitSignal') ,
                          self._customFitSignalReceived)
-        if fit:
+
             self.fitButtonMenu = qt.QMenu()
             self.fitButtonMenu.addAction(QString("Simple Fit"),
                                    self._simpleFitSignal)
@@ -1308,11 +1308,12 @@ class ScanWindow(PlotWindow.PlotWindow):
         else:
             title = None
             comment = None
-        if not self.scanFit.isHidden():
-            if comment is None:
-                comment = ""
-            comment += "\n"
-            comment += self.scanFit.getText()
+        if hasattr(self, "scanFit"):
+            if not self.scanFit.isHidden():
+                if comment is None:
+                    comment = ""
+                comment += "\n"
+                comment += self.scanFit.getText()
             
         self.printPreview.addPixmap(pixmap,
                                     title=title,
