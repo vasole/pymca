@@ -323,7 +323,9 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             if filename is None:
                 self.setStack(stack)
         
-    def calculateShiftsSIFT(self, stack, reference, mask=None, device=None, crop=None, filename=None):
+    def calculateShiftsSIFT(self, stack, reference, mask=None, device=None, crop=None,
+                            sigma=None,
+                            filename=None):
         mask = self.getStackSelectionMask()
         if mask is not None:
             if mask.sum() == 0:
@@ -333,19 +335,24 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 max_workgroup_size = 1
                 siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
                                                 max_workgroup_size=max_workgroup_size,
-                                                devicetype="cpu")
+                                                devicetype="cpu",
+                                                init_sigma=sigma)
             else:
                 siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
-                                                devicetype="cpu")
+                                                devicetype="cpu",
+                                                init_sigma=sigma)
         else:
             deviceType = sift.opencl.ocl.platforms[device[0]].devices[device[1]].type
             if deviceType.lower() == "cpu" and sys.platform == 'darwin':
                 max_workgroup_size = 1
                 siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
                                                 max_workgroup_size=max_workgroup_size,
-                                                device=device)
+                                                device=device,
+                                                init_sigma=sigma)
             else:               
-                siftInstance = sift.LinearAlign(reference.astype(numpy.float32), device=device)
+                siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
+                                                device=device,
+                                                init_sigma=sigma)
         data = stack.data
         mcaIndex = stack.info['McaIndex']
         if not (mcaIndex in [0, 2, -1]):
@@ -549,6 +556,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             if not ret:
                 return
             shifts = hdf5File[self.__shitfsDataset].value
+            hdf5File.close()
         else:
             sf = specfilewrapper.Specfile(filename)
             nScans = len(sf)
@@ -700,6 +708,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
 
     def initializeHDF5File(self, fname):
         #for the time being overwriting
+        if os.path.exists(fname):
+            os.remove(fname)            
         hdf = h5py.File(fname, 'w')
         entryName = "entry_000"
         nxEntry = hdf.require_group(entryName)
@@ -717,7 +727,9 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         #add final date
         toplevelEntry = hdf["entry_000"]
         toplevelEntry['end_time'] = numpy.string_(ArraySave.getDate().encode('utf-8'))
-    
+        hdf.flush()
+        hdf.close()
+        
     def getHDF5BufferIntoGroup(self, h5Group, shape,
                                name="data", dtype=numpy.float32,
                                attributes=None,
