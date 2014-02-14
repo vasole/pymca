@@ -1858,6 +1858,51 @@ class MaskImageWidget(qt.QWidget):
     def setInfoText(self, text):
         return self.graphWidget.setInfoText(text)
 
+class MaskImageDialog(qt.QDialog):
+    def __init__(self, parent=None, image=None, mask=None):
+        super(MaskImageDialog, self).__init__(parent)
+        layout = qt.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self.maskWidget = MaskImageWidget(self, aspect=True)
+        buttonBox = qt.QWidget(self)
+        buttonBoxLayout = qt.QHBoxLayout(buttonBox)
+        buttonBoxLayout.setContentsMargins(0, 0, 0, 0)
+        buttonBoxLayout.setSpacing(0)
+        self.okButton = qt.QPushButton(buttonBox)
+        self.okButton.setText("OK")
+        self.okButton.setAutoDefault(False)
+        self.cancelButton = qt.QPushButton(buttonBox)
+        self.cancelButton.setText("Cancel")
+        self.cancelButton.setAutoDefault(False)
+        self.okButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        #buttonBoxLayout.addWidget(qt.HorizontalSpacer(self))
+        buttonBoxLayout.addWidget(self.okButton)
+        buttonBoxLayout.addWidget(self.cancelButton)
+        #buttonBoxLayout.addWidget(qt.HorizontalSpacer(self))
+        layout.addWidget(self.maskWidget)
+        layout.addWidget(buttonBox)
+        self.setImage = self.maskWidget.setImageData
+        self.setMask = self.maskWidget.setSelectionMask
+        self.getMask = self.maskWidget.getSelectionMask
+        if image is not None:
+            self.setImage(image)
+        if mask is not None:
+            self.setMask(mask)
+
+def getImageMask(image, mask=None):
+    """
+    Functional interface to interactively define a mask
+    """
+    w = MaskImageDialog(image=image, mask=mask)
+    ret = w.exec_()
+    if ret:
+        mask = w.getMask()
+    w = None
+    del(w)
+    return mask
+
 def test():
     app = qt.QApplication([])
     qt.QObject.connect(app,
