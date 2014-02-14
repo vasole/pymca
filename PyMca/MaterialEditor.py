@@ -24,21 +24,16 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-__revision__ = "$Revision: 2.02 $"
 import sys
 import os
 import copy
 import numpy
 import traceback
 from PyMca import PyMcaQt as qt
-
-DEBUG = 1
-QTVERSION = qt.qVersion()
-if QTVERSION < '4.0.0':
-    import qttable
-
 from PyMca import Elements
 from PyMca.widgets.PlotWindow import PlotWindow as ScanWindow
+
+DEBUG = 0
 
 class MaterialEditor(qt.QWidget):
     def __init__(self, parent=None, name="Material Editor",
@@ -167,7 +162,7 @@ class MaterialEditor(qt.QWidget):
             data=Elements.getMaterialTransmission(compoundList, fractionList, energy,
                                              density=density, thickness=thickness, listoutput=False)
             addButton = False
-            if self.graph is None and (SCANWINDOW):
+            if self.graph is None:
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
                 self.graphDialog.mainLayout.setMargin(0)
@@ -176,10 +171,6 @@ class MaterialEditor(qt.QWidget):
                 self.graphDialog.mainLayout.addWidget(self.graph)
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
-                addButton = True
-            elif self.graph is None:
-                self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog()
-                self.graph = self.graphDialog.plot1DWindow
                 addButton = True
             if addButton:
                 self._addGraphDialogButton()
@@ -213,7 +204,7 @@ class MaterialEditor(qt.QWidget):
                                                                  fractionList,
                                                                  energy)
             addButton = False
-            if (self.graph is None) and SCANWINDOW:
+            if self.graph is None:
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
                 self.graphDialog.mainLayout.setMargin(0)
@@ -223,10 +214,6 @@ class MaterialEditor(qt.QWidget):
                 self.graph._togglePointsSignal()
                 self.graph.graph.crossPicker.setEnabled(False)
                 addButton = True
-            elif self.graph is None:
-                self.graphDialog = Plot1DMatplotlib.Plot1DMatplotlibDialog()
-                self.graph = self.graphDialog.plot1DWindow
-                addButton = True
             if addButton:
                 self._addGraphDialogButton()
             self.graph.setGraphTitle(ddict['Comment'])
@@ -235,13 +222,15 @@ class MaterialEditor(qt.QWidget):
                                 legend=legend,
                                 xlabel='Energy (keV)',
                                 ylabel='Mass Att. (cm2/g)',
-                                replace=True)
+                                replace=True,
+                                replot=False)
             for legend in ['Compton', 'Photo','Total']:
                 self.graph.addCurve(energy, numpy.array(data[legend.lower()]),
                                 legend=legend,
                                 xlabel='Energy (keV)',
                                 ylabel='Mass Att. (cm2/g)',
-                                replace=False)
+                                replace=False,
+                                replot=False)
             self.graph.setActiveCurve(legend+' '+'Mass Att. (cm2/g)')
             self.graph.setGraphTitle(ddict['Comment'])
             if self.graphDialog is not None:
@@ -881,12 +870,7 @@ class MaterialGUI(qt.QWidget):
             else:
                 matkey  = Elements.getMaterialKey(compound)
                 if matkey is not None:
-                    if QTVERSION < '4.0.0':
-                        self.__table.setText(row,
-                                         col,
-                                         matkey)
-                    else:
-                        item.setText(matkey)
+                    item.setText(matkey)
                 else:
                     msg=qt.QMessageBox(self.__table)
                     msg.setIcon(qt.QMessageBox.Critical)
