@@ -37,22 +37,17 @@ import numpy
 from numpy import argsort, nonzero, take
 from . import LegendSelector
 from PyMca.plotting import PlotWidget
-try:
-    from PyMca.plotting.backends import MatplotlibBackend
-    MATPLOTLIB = True
-except:
-    MATPLOTLIB = False
 
 # pyqtgraph has a SciPy dependency
-try:
+PYQTGRAPH = False
+if 'pyqtgraph' in sys.argv:
     from PyMca.plotting.backends import PyQtGraphBackend
     PYQTGRAPH = True
-except:
-    PYQTGRAPH = False
 
-if "matplotlib" in sys.argv:
-    if MATPLOTLIB:
-        PYQTGRAPH = False
+MATPLOTLIB = False
+if ("matplotlib" in sys.argv) or (not PYQTGRAPH):
+    from PyMca.plotting.backends import MatplotlibBackend
+    MATPLOTLIB = True
 
 from PyMca import PyMcaQt as qt
 if hasattr(qt, 'QString'):
@@ -71,7 +66,8 @@ DEBUG = 0
 class PlotWindow(PlotWidget.PlotWidget):
     sigROISignal = qt.pyqtSignal(object)
     
-    def __init__(self, parent=None, backend=None, plugins=True, newplot=False, **kw):
+    def __init__(self, parent=None, backend=None, plugins=True, newplot=False,
+                 control=False, position=False, **kw):
         if backend is None:
             if MATPLOTLIB:
                 backend = MatplotlibBackend.MatplotlibBackend
@@ -88,11 +84,57 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.gridLevel = 0
         self.legendWidget = None
         self.setCallback(self.graphCallback)
+        if control or position:
+            self._buildGraphBottomWidget(control, position)
+
+    def _buildGraphBottomWidget(self, control, position):
+        widget = self.centralWidget()
+        self.graphBottom = qt.QWidget(widget)
+        self.graphBottomLayout = qt.QHBoxLayout(self.graphBottom)
+        self.graphBottomLayout.setContentsMargins(0, 0, 0, 0)
+        self.graphBottomLayout.setSpacing(0)
+
+        if control:
+            self.graphControlButton = qt.QPushButton(self.graphBottom)
+            self.graphControlButton.setText("Options")
+            self.graphControlButton.setAutoDefault(False)
+            self.graphBottomLayout.addWidget(self.graphControlButton)
+            self.graphControlButton.clicked.connect(self._graphControlClicked)
+
+        if position:
+            label=qt.QLabel(self.graphBottom)
+            label.setText('<b>X:</b>')
+            self.graphBottomLayout.addWidget(label)
+
+            self._xPos = qt.QLineEdit(self.graphBottom)
+            self._xPos.setText('------')
+            self._xPos.setReadOnly(1)
+            self._xPos.setFixedWidth(self._xPos.fontMetrics().width('##############'))
+            self.graphBottomLayout.addWidget(self._xPos)
+
+            label=qt.QLabel(self.graphBottom)
+            label.setText('<b>Y:</b>')
+            self.graphBottomLayout.addWidget(label)
+
+            self._yPos = qt.QLineEdit(self.graphBottom)
+            self._yPos.setText('------')
+            self._yPos.setReadOnly(1)
+            self._yPos.setFixedWidth(self._yPos.fontMetrics().width('##############'))
+            self.graphBottomLayout.addWidget(self._yPos)
+            self.graphBottomLayout.addWidget(qt.HorizontalSpacer(self.graphBottom))
+        widget.layout().addWidget(self.graphBottom)
         
     def setWindowType(self, wtype=None):
         if wtype not in [None, "SCAN", "MCA"]:
             print("Unsupported window type. Default to None")
         self._plotType = wtype
+
+    def _graphControlClicked(self):
+        #create a default menu
+        controlMenu = qt.QMenu()
+        controlMenu.addAction(QString("Show/Hide Legends"),
+                                   self.toggleLegendWidget)
+        controlMenu.exec_(self.cursor().pos())
 
     def _initIcons(self):
         self.normalIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))
@@ -590,6 +632,9 @@ class PlotWindow(PlotWidget.PlotWidget):
         if ddict['event'] in ["curveClicked", "legendClicked"]:
             legend = ddict["label"]
             self.setActiveCurve(legend)
+        if ddict['event'] in ['mouseMoved']:
+            self._xPos.setText('%.7g' % ddict['x'])
+            self._yPos.setText('%.7g' % ddict['y'])
         #make sure the signal is forwarded
         #super(PlotWindow, self).graphCallback(ddict)
         self.sigPlotSignal.emit(ddict)   
@@ -815,8 +860,42 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.legendDockWidget.setWindowTitle(self.windowTitle()+(" Legend"))
         
     def _legendSignal(self, ddict):
-        print(ddict)
-
+        if DEBUG:
+            print("Legend signal ddict = ", ddict)
+        if ddict['event'] == "legendClicked":
+            if ddict['button'] == "left":
+                ddict['label'] = ddict['legend']
+                self.graphCallback(ddict)
+        elif ddict['event'] == "removeCurve":
+            ddict['label'] = ddict['legend']
+            self.removeCurve(ddict['legend'], replot=True)
+        elif ddict['event'] == "setActiveCurve":
+            ddict['event'] = 'legendClicked'
+            ddict['label'] = ddict['legend']
+            self.graphCallback(ddict)
+        elif ddict['event'] == "checkBoxClicked":
+            if ddict['selected']:
+                self.hideCurve(ddict['legend'], False)
+            else:
+                self.hideCurve(ddict['legend'], True)
+        elif ddict['event'] == "togglePoints":
+            legend = ddict['legend']
+            x, y, legend, info = self._curveDict[legend][0:4]
+            if ddict['points']:
+                self.addCurve(x, y, legend=legend, info=info, symbol='o')
+            else:
+                self.addCurve(x, y, legend, info, symbol='')
+            self.updateLegends()
+        elif ddict['event'] == "toggleLine":
+            legend = ddict['legend']
+            x, y, legend, info = self._curveDict[legend][0:4]
+            if ddict['line']:
+                self.addCurve(x, y, legend=legend, info=info, line_style="-")
+            else:
+                self.addCurve(x, y, legend, info=info, line_style="")
+            self.updateLegends()
+        elif DEBUG:
+            print("unhandled event", ddict['event'])
 
     def toggleLegendWidget(self):
         if self.legendWidget is None:
@@ -829,6 +908,7 @@ class PlotWindow(PlotWidget.PlotWidget):
     def showLegends(self, flag=True):
         if self.legendWidget is None:
             self._buildLegendWidget()
+            self.updateLegends()
         if flag:
             self.legendDockWidget.show()
             self.updateLegends()
@@ -837,6 +917,8 @@ class PlotWindow(PlotWidget.PlotWidget):
 
     def updateLegends(self):
         if self.legendWidget is None:
+            return
+        if self.legendDockWidget.isHidden():
             return
         legendList = [] * len(self._curveList)
         for i in range(len(self._curveList)):
@@ -847,8 +929,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             linewidth = self._curveDict[legend][3].get('plot_line_width',
                                                              2)
             symbol = self._curveDict[legend][3].get('plot_symbol',
-                                                          'o')
-
+                                                    None)
             if self.isCurveHidden(legend):
                 selected = False
             else:
@@ -864,7 +945,7 @@ if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * x
     app = qt.QApplication([])
-    plot = PlotWindow(roi=True)#uselegendmenu=True)
+    plot = PlotWindow(roi=True, control=True, position=True)#uselegendmenu=True)
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)

@@ -64,7 +64,8 @@ from PyMca import PyMcaPlugins
 DEBUG = 0
 class ScanWindow(PlotWindow.PlotWindow):
     def __init__(self, parent=None, name="Scan Window", specfit=None, backend=None,
-                 plugins=True, newplot=True, roi=True, fit=True, **kw):
+                 plugins=True, newplot=True, roi=True, fit=True,
+                 control=True, position=True, **kw):
 
         super(ScanWindow, self).__init__(parent,
                                          newplot=newplot,
@@ -72,6 +73,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                          backend=backend,
                                          roi=roi,
                                          fit=fit,
+                                         control=control,
+                                         position=position,
                                          **kw)
         #self._togglePointsSignal()
         self.setWindowType("SCAN")
@@ -86,9 +89,6 @@ class ScanWindow(PlotWindow.PlotWindow):
         #self.setPluginDirectoryList(pluginDir)
         self.getPlugins(method="getPlugin1DInstance",
                         directoryList=pluginDir)
-
-        # position
-        self._buildPositionInfo()
 
         """
         self.mainLayout = qt.QVBoxLayout(self)
@@ -126,85 +126,6 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.fitButtonMenu.addAction(QString("Customized Fit") ,
                                    self._customFitSignal)
 
-    def _legendSignal(self, ddict):
-        if DEBUG:
-            print("Legend signal ddict = ", ddict)
-        if ddict['event'] == "legendClicked":
-            if ddict['button'] == "left":
-                ddict['label'] = ddict['legend']
-                self.graphCallback(ddict)
-        elif ddict['event'] == "removeCurve":
-            ddict['label'] = ddict['legend']
-            self.removeCurve(ddict['legend'], replot=True)
-        elif ddict['event'] == "setActiveCurve":
-            ddict['event'] = 'legendClicked'
-            ddict['label'] = ddict['legend']
-            self.graphCallback(ddict)
-        elif ddict['event'] == "checkBoxClicked":
-            if ddict['selected']:
-                self.hideCurve(ddict['legend'], False)
-            else:
-                self.hideCurve(ddict['legend'], True)
-        elif ddict['event'] == "togglePoints":
-            legend = ddict['legend']
-            x, y, legend, info = self._curveDict[legend][0:4]
-            if ddict['points']:
-                self.addCurve(x, y, legend=legend, symbol='o')
-            else:
-                self.addCurve(x, y, legend, info, symbol='')
-        elif ddict['event'] == "toggleLine":
-            legend = ddict['legend']
-            x, y, legend, info = self._curveDict[legend][0:4]
-            if ddict['line']:
-                self.addCurve(x, y, legend=legend, info=info, line_style="-")
-            else:
-                self.addCurve(x, y, legend, info=info, line_style="")
-        elif DEBUG:
-            print("unhandled event", ddict['event'])
-
-    def _graphControlClicked(self):
-        #create a default menu
-        controlMenu = qt.QMenu()
-        controlMenu.addAction(QString("Show/Hide Legends"),
-                                   self.toggleLegendWidget)
-        controlMenu.exec_(self.cursor().pos())
-
-
-    def _buildPositionInfo(self):
-        widget = self.centralWidget()
-        self.graphBottom = qt.QWidget(widget)
-        self.graphBottomLayout = qt.QHBoxLayout(self.graphBottom)
-        self.graphBottomLayout.setContentsMargins(0, 0, 0, 0)
-        self.graphBottomLayout.setSpacing(0)
-
-        self.graphControlButton = qt.QPushButton(self.graphBottom)
-        self.graphControlButton.setText("Options")
-        self.graphControlButton.setAutoDefault(False)
-        self.graphBottomLayout.addWidget(self.graphControlButton)
-        self.graphControlButton.clicked.connect(self._graphControlClicked)
-        
-        label=qt.QLabel(self.graphBottom)
-        label.setText('<b>X:</b>')
-        self.graphBottomLayout.addWidget(label)
-
-        self._xPos = qt.QLineEdit(self.graphBottom)
-        self._xPos.setText('------')
-        self._xPos.setReadOnly(1)
-        self._xPos.setFixedWidth(self._xPos.fontMetrics().width('##############'))
-        self.graphBottomLayout.addWidget(self._xPos)
-
-        label=qt.QLabel(self.graphBottom)
-        label.setText('<b>Y:</b>')
-        self.graphBottomLayout.addWidget(label)
-
-        self._yPos = qt.QLineEdit(self.graphBottom)
-        self._yPos.setText('------')
-        self._yPos.setReadOnly(1)
-        self._yPos.setFixedWidth(self._yPos.fontMetrics().width('##############'))
-        self.graphBottomLayout.addWidget(self._yPos)
-        self.graphBottomLayout.addWidget(qt.HorizontalSpacer(self.graphBottom))
-        widget.layout().addWidget(self.graphBottom)
-        
     def setDispatcher(self, w):
         self.connect(w, qt.SIGNAL("addSelection"),
                          self._addSelection)
