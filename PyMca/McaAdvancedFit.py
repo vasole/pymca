@@ -2555,7 +2555,7 @@ class McaGraphWindow(PlotWindow.PlotWindow):
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
 
     def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self.graph)
+        pixmap = qt.QPixmap.grabWidget(self)
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
             self.printPreview.show()
@@ -2583,6 +2583,7 @@ class McaGraphWindow(PlotWindow.PlotWindow):
         self.sigPlotSignal.emit(ddict)
 
     def __graphSignal(self, dict):
+        print("GRAPH SIGNAL REACHED AND TO BE HANDLED")
         return
         if dict['event'] == 'MouseAt':
             self.xpos.setText('%.4g' % dict['x'])
