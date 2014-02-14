@@ -2,8 +2,6 @@ include MANIFEST.in
 include LICENSE.GPL
 include changelog.txt
 include qtconffile
-include build-deb.sh
-include stdeb.cfg
 include cx_setup.py
 include py2app_setup.py
 include PlatypusScript
