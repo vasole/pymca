@@ -26,8 +26,9 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
 __doc__ = """
-This window is a solution for PyMca.
-It handles the plugins and adds a toolbar to the PlotWidget
+This window handles plugins and adds a toolbar to the PlotWidget.
+
+Currently the only dependency on PyMca is through the Icons.
 
 """
 import sys
@@ -36,31 +37,28 @@ import traceback
 import numpy
 from numpy import argsort, nonzero, take
 from . import LegendSelector
-from PyMca.plotting import PlotWidget
+from . import McaROIWidget
+from ..plotting import PlotWidget
 
 # pyqtgraph has a SciPy dependency
 PYQTGRAPH = False
 if 'pyqtgraph' in sys.argv:
-    from PyMca.plotting.backends import PyQtGraphBackend
+    from ..plotting.backends import PyQtGraphBackend
     PYQTGRAPH = True
 
 MATPLOTLIB = False
 if ("matplotlib" in sys.argv) or (not PYQTGRAPH):
-    from PyMca.plotting.backends import MatplotlibBackend
+    from ..plotting.backends import MatplotlibBackend
     MATPLOTLIB = True
 
+from PyMca.PyMca_Icons import IconDict
 from PyMca import PyMcaQt as qt
+
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
     QString = qt.safe_str
-from PyMca.PyMca_Icons import IconDict
-try:
-    from PyMca.widgets import McaROIWidget
-    ROIWIDGET = True
-except ImportError:
-    ROIWIDGET = False
-QTVERSION = qt.qVersion()
+
 DEBUG = 0
 
 class PlotWindow(PlotWidget.PlotWidget):
@@ -442,33 +440,32 @@ class PlotWindow(PlotWidget.PlotWidget):
             print("_colormapIconSignal called")
 
     def _toggleROI(self):
-        if DEBUG or (not ROIWIDGET):
+        if DEBUG:
             print("_toggleROI called")
-        if ROIWIDGET:
-            if not hasattr(self, "roiWidget"):
-                self.roiWidget = None
-            if self.roiWidget is None:
-                self.roiWidget = McaROIWidget.McaROIWidget()
-                self.roiDockWidget = qt.QDockWidget(self)
-                self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
-                self.roiDockWidget.setWidget(self.roiWidget)
-                w = self.centralWidget().width()
-                h = self.centralWidget().height()
-                if w > (1.25 * h):
-                    self.addDockWidget(qt.Qt.LeftDockWidgetArea,
-                                       self.roiDockWidget)
-                else:
-                    self.addDockWidget(qt.Qt.BottomDockWidgetArea,
-                                       self.roiDockWidget)
-                if hasattr(self, "legendDockWidget"):
-                    self.tabifyDockWidget(self.legendDockWidget,
-                                          self.roiDockWidget)
-                self.roiWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
-                self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
-            if self.roiDockWidget.isHidden():
-                self.roiDockWidget.show()
+        if not hasattr(self, "roiWidget"):
+            self.roiWidget = None
+        if self.roiWidget is None:
+            self.roiWidget = McaROIWidget.McaROIWidget()
+            self.roiDockWidget = qt.QDockWidget(self)
+            self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
+            self.roiDockWidget.setWidget(self.roiWidget)
+            w = self.centralWidget().width()
+            h = self.centralWidget().height()
+            if w > (1.25 * h):
+                self.addDockWidget(qt.Qt.LeftDockWidgetArea,
+                                   self.roiDockWidget)
             else:
-                self.roiDockWidget.hide()
+                self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+                                   self.roiDockWidget)
+            if hasattr(self, "legendDockWidget"):
+                self.tabifyDockWidget(self.legendDockWidget,
+                                      self.roiDockWidget)
+            self.roiWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
+            self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
+        if self.roiDockWidget.isHidden():
+            self.roiDockWidget.show()
+        else:
+            self.roiDockWidget.hide()
 
     def changeGridLevel(self):
         self.gridLevel += 1
@@ -633,8 +630,9 @@ class PlotWindow(PlotWidget.PlotWidget):
             legend = ddict["label"]
             self.setActiveCurve(legend)
         if ddict['event'] in ['mouseMoved']:
-            self._xPos.setText('%.7g' % ddict['x'])
-            self._yPos.setText('%.7g' % ddict['y'])
+            if hasattr(self, "_xPos"):
+                self._xPos.setText('%.7g' % ddict['x'])
+                self._yPos.setText('%.7g' % ddict['y'])
         #make sure the signal is forwarded
         #super(PlotWindow, self).graphCallback(ddict)
         self.sigPlotSignal.emit(ddict)   
