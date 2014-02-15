@@ -889,11 +889,11 @@ class MatplotlibGraph(FigureCanvas):
             else:
                 print("How can it be here???")
             return
-
         if self._zoomRectangle is None:
             currentTime = time.time() 
             deltaT =  currentTime - self.__time0
-            if (deltaT < 0.1) or (self.__time0 < 0) or (not self.__zooming):
+            if (deltaT < 0.150) or (self.__time0 < 0) or (not self.__zooming) or\
+               ((self._x1 == self._x0) and (self._y1 == self._y0)):
                 # single or double click, no zooming
                 self.__zooming = False
                 ddict = {'x':event.xdata,
@@ -927,10 +927,12 @@ class MatplotlibGraph(FigureCanvas):
             self._x0 = None
             self._y0 = None
             self._zoomRectangle = None
-            xmin, xmax = self.ax.get_xlim()
-            ymin, ymax = self.ax.get_ylim()
-            self._zoomStack.append((xmin, xmax, ymin, ymax))
-            self.setLimits(x, x+w, y, y+h)
+            if (w != 0) and (h != 0):
+                # don't do anything
+                xmin, xmax = self.ax.get_xlim()
+                ymin, ymax = self.ax.get_ylim()
+                self._zoomStack.append((xmin, xmax, ymin, ymax))
+                self.setLimits(x, x+w, y, y+h)
             self.draw()
 
     def _emitDrawingSignal(self, event="drawingFinished"):
