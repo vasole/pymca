@@ -538,10 +538,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             ddict = dictOrList
         if self._is2DSelection(ddict):
-            if QTVERSION < '4.0.0':
-                if DEBUG:
-                    print("For the time being, no Qt3 support")
-                return
             legend = ddict['legend']
             for key in list(self.imageWindowDict.keys()):
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[key])
@@ -1025,10 +1021,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 ddict["legend"] = ddict['SourceName'] + ' %s.c.1' %selection
                 ddict["SourceType"] =  'SPS'
                 self.sourceWidget._addSelectionSlot([ddict])
-                if QTVERSION < '4.0.0':
-                    self.mcawindow.control.calbox.setCurrentItem(2)
-                else:
-                    self.mcawindow.control.calbox.setCurrentIndex(2)
+                self.mcawindow.control.calbox.setCurrentIndex(2)
                 self.mcawindow.calibration = self.mcawindow.calboxoptions[2]
                 self.mcawindow.control._calboxactivated("Internal")
         else:
