@@ -2515,10 +2515,7 @@ class Line(qt.QFrame):
         ddict['event']="DoubleClick"
         ddict['data'] = event
         ddict['info'] = self.info
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("LineDoubleClickEvent"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
+        self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
 
 class SimpleThread(qt.QThread):
     def __init__(self, function = None, kw = None):
@@ -2540,7 +2537,8 @@ class SimpleThread(qt.QThread):
 
 
 class McaGraphWindow(PlotWindow.PlotWindow):
-    def __init__(self, parent=None, backend=None, plugins=False, newplot=False, **kw):
+    def __init__(self, parent=None, backend=None, plugins=False,
+                 newplot=False, position=True, control=True, **kw):
         if backend is None:
             backend = MatplotlibBackend
         super(McaGraphWindow, self).__init__(parent, backend=backend,
@@ -2550,6 +2548,8 @@ class McaGraphWindow(PlotWindow.PlotWindow):
                                        roi=True,
                                        logx=False,
                                        fit=True,
+                                       position=position,
+                                       control=control,
                                        **kw)
         self.sigPlotSignal.connect(self.__graphSignal)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
