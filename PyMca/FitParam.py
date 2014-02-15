@@ -307,18 +307,13 @@ class FitParamWidget(FitParamForm):
             pass
             
     def __orderSpinChanged(self, value):
-        if QTVERSION < '4.0.0':
-            continuum= int(self.contCombo.currentItem())
-        else:
-            continuum= int(self.contCombo.currentIndex())
+        continuum= int(self.contCombo.currentIndex())
         if continuum==4:
             self.linpolOrder= self.orderSpin.value()
         elif continuum==5:
             self.exppolOrder= self.orderSpin.value()
 
     def setData(self, x, y):
-        if QTVERSION < '4.0.0':
-            return
         self._channels = x
         self._counts = y
 
@@ -520,10 +515,7 @@ class FitParamWidget(FitParamForm):
                 attpar= self.__get("attenuators", att, [0, "-", 0., 0.], None)
                 lastrow += 1
                 row = lastrow
-            if QTVERSION < '4.0.0':
-                self.attTable.item(row, 0).setChecked(int(attpar[0]))
-            else:
-                self.attTable.cellWidget(row, 0).setChecked(int(attpar[0]))
+            self.attTable.cellWidget(row, 0).setChecked(int(attpar[0]))
             self.attTable.setText(row, 1, att)
             #self.attTable.setText(idx, 2, str(attpar[1]))
             combo = self.attTable.cellWidget(row, 2)
@@ -556,10 +548,7 @@ class FitParamWidget(FitParamForm):
             #att= self.attenuators[idx]
             att = str(self.attTable.text(idx,1))
             attpar= []
-            if QTVERSION < '4.0.0':
-                attpar.append(int(self.attTable.item(idx,0).isChecked()))
-            else:
-                attpar.append(int(self.attTable.cellWidget(idx,0).isChecked()))
+            attpar.append(int(self.attTable.cellWidget(idx,0).isChecked()))
             attpar.append(str(self.attTable.text(idx,2)))
             try:
                 attpar.append(float(str(self.attTable.text(idx, 3))))
@@ -596,10 +585,7 @@ class FitParamWidget(FitParamForm):
             attpar= self.__get("multilayer", att, [0, "-", 0., 0.], None)
             lastrow += 1
             row = lastrow
-            if QTVERSION < '4.0.0':
-                self.multilayerTable.item(row, 0).setChecked(int(attpar[0]))
-            else:
-                self.multilayerTable.cellWidget(row, 0).setChecked(int(attpar[0]))
+            self.multilayerTable.cellWidget(row, 0).setChecked(int(attpar[0]))
             self.multilayerTable.setText(row, 1, att)
             #self.attTable.setText(idx, 2, str(attpar[1]))
             combo = self.multilayerTable.cellWidget(row, 2)
@@ -613,36 +599,21 @@ class FitParamWidget(FitParamForm):
 
     def __getMultilayerPar(self):
         pars= {}
-        if QTVERSION < '4.0.0':
-            for idx in range(self.multilayerTable.numRows()):
-                #att= self.attenuators[idx]
-                att = str(self.multilayerTable.text(idx,1))
-                attpar= []
-                attpar.append(int(self.multilayerTable.item(idx,0).isChecked()))
-                attpar.append(str(self.multilayerTable.text(idx,2)))
-                try:
-                    attpar.append(float(str(self.multilayerTable.text(idx, 3))))
-                    attpar.append(float(str(self.multilayerTable.text(idx, 4))))
-                except:
-                    attpar= [0, '-', 0., 0.]
-                    self.__parError("ATTENUATORS", "Multilayer parameters error on:\n%s\nReset it to zero."%att)
-                pars[att]= attpar
-        else:
-            for idx in range(self.multilayerTable.rowCount()):
-                #att= self.attenuators[idx]
-                att = str(self.multilayerTable.text(idx,1))
-                attpar= []
-                attpar.append(int(self.multilayerTable.cellWidget(idx,0).isChecked()))
-                attpar.append(str(self.multilayerTable.text(idx,2)))
-                try:
-                #if 1:
-                    attpar.append(float(str(self.multilayerTable.text(idx, 3))))
-                    attpar.append(float(str(self.multilayerTable.text(idx, 4))))
-                #else:
-                except:
-                    attpar= [0, '-', 0., 0.]
-                    self.__parError("ATTENUATORS", "Multilayer parameters error on:\n%s\nReset it to zero."%att)
-                pars[att]= attpar
+        for idx in range(self.multilayerTable.rowCount()):
+            #att= self.attenuators[idx]
+            att = str(self.multilayerTable.text(idx,1))
+            attpar= []
+            attpar.append(int(self.multilayerTable.cellWidget(idx,0).isChecked()))
+            attpar.append(str(self.multilayerTable.text(idx,2)))
+            try:
+            #if 1:
+                attpar.append(float(str(self.multilayerTable.text(idx, 3))))
+                attpar.append(float(str(self.multilayerTable.text(idx, 4))))
+            #else:
+            except:
+                attpar= [0, '-', 0., 0.]
+                self.__parError("ATTENUATORS", "Multilayer parameters error on:\n%s\nReset it to zero."%att)
+            pars[att]= attpar
         return pars
 
     def __getTubePar(self):
@@ -668,10 +639,7 @@ class FitParamWidget(FitParamForm):
             index = 0
         else:
             index = 1
-        if QTVERSION < '4.0.0':
-            self.functionCombo.setCurrentItem(index)
-        else:
-            self.functionCombo.setCurrentIndex(index)
+        self.functionCombo.setCurrentIndex(index)
             
         self.staCheck.setChecked(self.__get("peakshape", "fixedst_arearatio", 0, int))
         self.staValue.setText(self.__get("peakshape", "st_arearatio"))
@@ -742,17 +710,11 @@ class FitParamWidget(FitParamForm):
         self.linpolOrder= self.__get("fit", "linpolorder", 1, int)
         self.exppolOrder= self.__get("fit", "exppolorder", 1, int)
         continuum= self.__get("fit", "continuum", 0, int)
-        if QTVERSION < '4.0.0':
-            self.contCombo.setCurrentItem(continuum)
-        else:
-            self.contCombo.setCurrentIndex(continuum)
+        self.contCombo.setCurrentIndex(continuum)
         self.__contComboActivated(continuum)
 
         self.fitWeight = self.__get("fit", "fitweight", 1, int)
-        if QTVERSION < '4.0.0':
-            self.weightCombo.setCurrentItem(self.fitWeight)
-        else:
-            self.weightCombo.setCurrentIndex(self.fitWeight)        
+        self.weightCombo.setCurrentIndex(self.fitWeight)        
 
         stripAlgorithm = self.__get("fit", "stripalgorithm", 0, int)
         self.setSNIP(stripAlgorithm)
@@ -816,16 +778,10 @@ class FitParamWidget(FitParamForm):
         err = "__getFitPar"
         #if 1:
         try:
-            if QTVERSION < '4.0.0':
-                pars["fitfunction"]= int(self.functionCombo.currentItem())
-                pars["continuum"]= int(self.contCombo.currentItem())
-                pars["fitweight"]= int(self.weightCombo.currentItem())
-                pars["stripalgorithm"] = int(self.stripCombo.currentItem())
-            else:
-                pars["fitfunction"]= int(self.functionCombo.currentIndex())
-                pars["continuum"]= int(self.contCombo.currentIndex())
-                pars["fitweight"]= int(self.weightCombo.currentIndex())
-                pars["stripalgorithm"] = int(self.stripCombo.currentIndex())
+            pars["fitfunction"]= int(self.functionCombo.currentIndex())
+            pars["continuum"]= int(self.contCombo.currentIndex())
+            pars["fitweight"]= int(self.weightCombo.currentIndex())
+            pars["stripalgorithm"] = int(self.stripCombo.currentIndex())
             pars["linpolorder"]= self.linpolOrder or 1
             pars["exppolorder"]= self.exppolOrder or 1
             #pars["stripconstant"]= float(str(self.stripConstValue.text()))
@@ -879,14 +835,9 @@ class FitParamWidget(FitParamForm):
     def __setDetPar(self):
         elt= self.__get("detector", "detele", "Si")
         for idx in range(self.elementCombo.count()):
-            if QTVERSION < '4.0.0':
-                if str(self.elementCombo.text(idx))==elt:
-                    self.elementCombo.setCurrentItem(idx)
-                    break
-            else:
-                if str(self.elementCombo.itemText(idx))==elt:
-                    self.elementCombo.setCurrentIndex(idx)
-                    break
+            if str(self.elementCombo.itemText(idx))==elt:
+                self.elementCombo.setCurrentIndex(idx)
+                break
 
         #self.energyValue0.setText(self.__get("detector", "detene"))
         #self.energyValue1.setText("0.0")
@@ -959,34 +910,24 @@ class FitParamWidget(FitParamForm):
     def __parError(self, tab, message):
         idx= self.tabLabel.index(tab)
         self.prevTabIdx= idx
-        if QTVERSION < '4.0.0':
-            self.mainTab.setCurrentPage(idx)
-        else:
-            self.mainTab.setCurrentIndex(idx)
+        self.mainTab.setCurrentIndex(idx)
         qt.QMessageBox.critical(self, "ERROR on %s"%tab, message, 
             qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
 
 class SectionFileDialog(qt.QFileDialog):
     def __init__(self, parent=None, name="SectionFileDialog", sections=[], labels=None,
                      mode=None,modal =1, initdir=None):
-        if QTVERSION < '4.0.0':
-            qt.QFileDialog.__init__(self, parent, name, modal)
-            self.setCaption(name)
+        qt.QFileDialog.__init__(self, parent)
+        self.setModal(modal)
+        self.setWindowTitle(name)
+        #layout = qt.QHBoxLayout(self)
+        if hasattr(qt, "QStringList"):
+            strlist = qt.QStringList()
         else:
-            qt.QFileDialog.__init__(self, parent)
-            self.setModal(modal)
-            self.setWindowTitle(name)
-            #layout = qt.QHBoxLayout(self)
-        if QTVERSION < '4.0.0':
-            self.addFilter("Config Files *.cfg")
-        else:
-            if hasattr(qt, "QStringList"):
-                strlist = qt.QStringList()
-            else:
-                strlist = []
-            strlist.append("Config Files *.cfg")
-            strlist.append("All Files *")
-            self.setFilters(strlist)
+            strlist = []
+        strlist.append("Config Files *.cfg")
+        strlist.append("All Files *")
+        self.setFilters(strlist)
         if initdir is not None:
             if os.path.isdir(initdir):
                 if hasattr(qt, "QString"):
@@ -994,29 +935,18 @@ class SectionFileDialog(qt.QFileDialog):
                 else:
                     self.setDir(qt.safe_str(initdir))
                 
-        if QTVERSION < '4.0.0':     
+        if DEBUG:
+            print("right to be added")
+        if 0:
             self.sectionWidget= SectionFileWidget(self,
                                               sections=sections,
                                               labels=labels)
-            self.addRightWidget(self.sectionWidget)
-            if mode is not None:
-                self.setMode(mode)
-        else:
-            if DEBUG:
-                print("right to be added")
-            if 0:
-                self.sectionWidget= SectionFileWidget(self,
-                                                  sections=sections,
-                                                  labels=labels)
-                self.layout().addWidget(self.sectionWidget)
-            if mode is not None:
-                self.setFileMode(mode)
+            self.layout().addWidget(self.sectionWidget)
+        if mode is not None:
+            self.setFileMode(mode)
 
     def getFilename(self):
-        if QTVERSION < '4.0.0':
-            filename= qt.safe_str(self.selectedFile())
-        else:
-            filename= qt.safe_str(self.selectedFiles()[0])
+        filename= qt.safe_str(self.selectedFiles()[0])
         filetype= qt.safe_str(self.selectedFilter())
         if filetype.find("Config")==0:
             fileext= os.path.splitext(filename)[1]
@@ -1029,28 +959,23 @@ class SectionFileDialog(qt.QFileDialog):
 
 class SectionFileWidget(qt.QWidget):
     def __init__(self, parent=None, name="FitParamSectionWidget", sections=[], labels=None, fl=0):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self, parent, name, fl)
-        else:
-            qt.QWidget.__init__(self, parent)
+        qt.QWidget.__init__(self, parent)
         layout= qt.QVBoxLayout(self)
         self.sections= sections
         if labels is None:
             self.labels = []
             for label in self.sections:
                 self.labels.append(label.upper())
-        else:    self.labels= labels
+        else:
+            self.labels= labels
 
         group= qt.QGroupBox("Read sections", self)
-        if QTVERSION < '4.0.0':
-            group.setColumnLayout(len(self.sections)+1, qt.Qt.Vertical)
-        else:
-            group.setAlignment(qt.Qt.Vertical)
-            group.layout = qt.QVBoxLayout(group)
+        group.setAlignment(qt.Qt.Vertical)
+        group.layout = qt.QVBoxLayout(group)
+
         layout.addWidget(group)
         self.allCheck= qt.QCheckBox("ALL", group)
-        if QTVERSION > '4.0.0':
-            group.layout.addWidget(self.allCheck)
+        group.layout.addWidget(self.allCheck)
         self.check= {}
         for (sect, txt) in zip(self.sections, self.labels):
             self.check[sect]= qt.QCheckBox(txt, group)
@@ -1082,14 +1007,9 @@ class SectionFileWidget(qt.QWidget):
 class FitParamDialog(qt.QDialog):
     def __init__(self, parent=None, name="FitParam",
                  modal=1, fl=0, initdir = None, fitresult=None):
-        if QTVERSION < '4.0.0':
-            qt.QDialog.__init__(self, parent, name, modal, fl)
-            self.setCaption("PyMca - MCA Fit Parameters")
-            self.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
-        else:
-            qt.QDialog.__init__(self, parent)
-            self.setWindowTitle("PyMca - MCA Fit Parameters")
-            self.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
+        qt.QDialog.__init__(self, parent)
+        self.setWindowTitle("PyMca - MCA Fit Parameters")
+        self.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
 
         self.initDir = initdir
         layout= qt.QVBoxLayout(self)
@@ -1100,41 +1020,33 @@ class FitParamDialog(qt.QDialog):
         layout.addWidget(self.fitparam)
         self.setData = self.fitparam.setData
 
-        if QTVERSION < '4.0.0':
-            buts= qt.QButtonGroup(5, qt.Qt.Horizontal, self)
-            loadfit = qt.QPushButton(buts)
-            loadfit.setText("Load From Fit")
-            self.fitresult = fitresult
-            load= qt.QPushButton("Load", buts)
-            save= qt.QPushButton("Save", buts)
-            reject= qt.QPushButton("Cancel", buts)
-            accept= qt.QPushButton("OK", buts)
-        else:
-            #buts= qt.QButtonGroup(4, qt.Qt.Horizontal, self)
-            buts= qt.QGroupBox(self)
-            buts.layout = qt.QHBoxLayout(buts)
-            loadfit = qt.QPushButton(buts)
-            loadfit.setAutoDefault(False)
-            loadfit.setText("Load From Fit")
-            loadfit.setToolTip("Take non linear parameters\nfrom last fit")
-            self.fitresult = fitresult
-            load= qt.QPushButton(buts)
-            load.setAutoDefault(False)
-            load.setText("Load")
-            save= qt.QPushButton(buts)
-            save.setAutoDefault(False)
-            save.setText("Save")
-            reject= qt.QPushButton(buts)
-            reject.setAutoDefault(False)
-            reject.setText("Cancel")
-            accept= qt.QPushButton(buts)
-            accept.setAutoDefault(False)
-            accept.setText("OK")
-            if loadfit is not None: buts.layout.addWidget(loadfit)
-            buts.layout.addWidget(load)
-            buts.layout.addWidget(save)
-            buts.layout.addWidget(reject)
-            buts.layout.addWidget(accept)
+        #buts= qt.QButtonGroup(4, qt.Qt.Horizontal, self)
+        buts= qt.QGroupBox(self)
+        buts.layout = qt.QHBoxLayout(buts)
+        loadfit = qt.QPushButton(buts)
+        loadfit.setAutoDefault(False)
+        loadfit.setText("Load From Fit")
+        loadfit.setToolTip("Take non linear parameters\nfrom last fit")
+        self.fitresult = fitresult
+        load= qt.QPushButton(buts)
+        load.setAutoDefault(False)
+        load.setText("Load")
+        save= qt.QPushButton(buts)
+        save.setAutoDefault(False)
+        save.setText("Save")
+        reject= qt.QPushButton(buts)
+        reject.setAutoDefault(False)
+        reject.setText("Cancel")
+        accept= qt.QPushButton(buts)
+        accept.setAutoDefault(False)
+        accept.setText("OK")
+
+        if loadfit is not None:
+            buts.layout.addWidget(loadfit)
+        buts.layout.addWidget(load)
+        buts.layout.addWidget(save)
+        buts.layout.addWidget(reject)
+        buts.layout.addWidget(accept)
         layout.addWidget(buts)
         self.loadfit = loadfit
 
@@ -1313,109 +1225,88 @@ class FitParamDialog(qt.QDialog):
         #diag= SectionFileDialog(self, "Load parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.ExistingFile)
         if self.initDir is None:
             self.initDir = PyMcaDirs.inputDir
-        if QTVERSION < '4.0.0':
-            diag= SectionFileDialog(self, "Load parameters", FitParamSections, None,
-                                    qt.QFileDialog.ExistingFile, initdir = self.initDir)
-            diag.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
-
-            if diag.exec_loop()==qt.QDialog.Accepted:
-                filename= diag.getFilename()
-                sections= diag.getSections()
-                self.loadParameters(filename, sections)
+        if PyMcaDirs.nativeFileDialogs:
+            filedialog = qt.QFileDialog(self)
+            filedialog.setFileMode(filedialog.ExistingFiles)
+            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
+            initdir = os.path.curdir
+            if self.initDir is not None:
+                if os.path.isdir(self.initDir):
+                    initdir = self.initDir
+            filename = filedialog.getOpenFileName(
+                        self,
+                        "Choose fit configuration file",
+                        initdir,
+                        "Fit configuration files (*.cfg)\nAll Files (*)")
+            filename = qt.safe_str(filename)
+            if len(filename):
+                self.loadParameters(filename, None)
+                self.initDir = os.path.dirname(filename)
         else:
-            #if sys.platform == 'darwin':
-            if PyMcaDirs.nativeFileDialogs:
-                filedialog = qt.QFileDialog(self)
-                filedialog.setFileMode(filedialog.ExistingFiles)
-                filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-                initdir = os.path.curdir
-                if self.initDir is not None:
-                    if os.path.isdir(self.initDir):
-                        initdir = self.initDir
-                filename = filedialog.getOpenFileName(
-                            self,
-                            "Choose fit configuration file",
-                            initdir,
-                            "Fit configuration files (*.cfg)\nAll Files (*)")
-                filename = qt.safe_str(filename)
-                if len(filename):
-                    self.loadParameters(filename, None)
-                    self.initDir = os.path.dirname(filename)
-            else:
-                filedialog = qt.QFileDialog(self)
-                filedialog.setFileMode(filedialog.ExistingFiles)
-                filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-                initdir = os.path.curdir
-                if self.initDir is not None:
-                    if os.path.isdir(self.initDir):
-                        initdir = self.initDir
-                filename = filedialog.getOpenFileName(
-                            self,
-                            "Choose fit configuration file",
-                            initdir,
-                            "Fit configuration files (*.cfg)\nAll Files (*)")
-                filename = qt.safe_str(filename)
-                if len(filename):
-                    self.loadParameters(filename, None)
-                    self.initDir = os.path.dirname(filename)
+            filedialog = qt.QFileDialog(self)
+            filedialog.setFileMode(filedialog.ExistingFiles)
+            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
+            initdir = os.path.curdir
+            if self.initDir is not None:
+                if os.path.isdir(self.initDir):
+                    initdir = self.initDir
+            filename = filedialog.getOpenFileName(
+                        self,
+                        "Choose fit configuration file",
+                        initdir,
+                        "Fit configuration files (*.cfg)\nAll Files (*)")
+            filename = qt.safe_str(filename)
+            if len(filename):
+                self.loadParameters(filename, None)
+                self.initDir = os.path.dirname(filename)
 
     def save(self):
         #diag= SectionFileDialog(self, "Save Parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.AnyFile)
         if self.initDir is None:
             self.initDir = PyMcaDirs.outputDir
-        if QTVERSION < '4.0.0':
-            diag= SectionFileDialog(self, "Save Parameters", FitParamSections,
-                                    None, qt.QFileDialog.AnyFile, initdir = self.initDir)
-            diag.setIcon(qt.QPixmap(Icons.IconDict["gioconda16"]))
-            if diag.exec_loop()==qt.QDialog.Accepted:
-                filename= diag.getFilename()
-                sections= diag.getSections()
-                self.saveParameters(filename, sections)
+        if PyMcaDirs.nativeFileDialogs:
+            filedialog = qt.QFileDialog(self)
+            filedialog.setFileMode(filedialog.AnyFile)
+            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
+            initdir = os.path.curdir
+            if self.initDir is not None:
+                if os.path.isdir(self.initDir):
+                    initdir = self.initDir
+            filename = filedialog.getSaveFileName(
+                        self,
+                        "Enter output fit configuration file",
+                        initdir,
+                        "Fit configuration files (*.cfg)\nAll Files (*)")
+            filename = qt.safe_str(filename)
+            if len(filename):
+                if len(filename) < 4:
+                    filename = filename+".cfg"
+                elif filename[-4:] != ".cfg":
+                    filename = filename+".cfg"
+                self.saveParameters(filename, None)
+                self.initDir = os.path.dirname(filename)
         else:
-            #if sys.platform != 'win32':
-            if PyMcaDirs.nativeFileDialogs:
-                filedialog = qt.QFileDialog(self)
-                filedialog.setFileMode(filedialog.AnyFile)
-                filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-                initdir = os.path.curdir
-                if self.initDir is not None:
-                    if os.path.isdir(self.initDir):
-                        initdir = self.initDir
-                filename = filedialog.getSaveFileName(
-                            self,
-                            "Enter output fit configuration file",
-                            initdir,
-                            "Fit configuration files (*.cfg)\nAll Files (*)")
-                filename = qt.safe_str(filename)
-                if len(filename):
-                    if len(filename) < 4:
-                        filename = filename+".cfg"
-                    elif filename[-4:] != ".cfg":
-                        filename = filename+".cfg"
-                    self.saveParameters(filename, None)
-                    self.initDir = os.path.dirname(filename)
-            else:
-                filedialog = qt.QFileDialog(self)
-                filedialog.setFileMode(filedialog.AnyFile)
-                filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-                initdir = os.path.curdir
-                if self.initDir is not None:
-                    if os.path.isdir(self.initDir):
-                        initdir = self.initDir
-                filename = filedialog.getSaveFileName(
-                            self,
-                            "Enter output fit configuration file",
-                            initdir,
-                            "Fit configuration files (*.cfg)\nAll Files (*)")
-                filename = qt.safe_str(filename)
-                if len(filename):
-                    if len(filename) < 4:
-                        filename = filename+".cfg"
-                    elif filename[-4:] != ".cfg":
-                        filename = filename+".cfg"
-                    self.saveParameters(filename, None)
-                    self.initDir = os.path.dirname(filename)
-                    PyMcaDirs.outputDir = os.path.dirname(filename)
+            filedialog = qt.QFileDialog(self)
+            filedialog.setFileMode(filedialog.AnyFile)
+            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
+            initdir = os.path.curdir
+            if self.initDir is not None:
+                if os.path.isdir(self.initDir):
+                    initdir = self.initDir
+            filename = filedialog.getSaveFileName(
+                        self,
+                        "Enter output fit configuration file",
+                        initdir,
+                        "Fit configuration files (*.cfg)\nAll Files (*)")
+            filename = qt.safe_str(filename)
+            if len(filename):
+                if len(filename) < 4:
+                    filename = filename+".cfg"
+                elif filename[-4:] != ".cfg":
+                    filename = filename+".cfg"
+                self.saveParameters(filename, None)
+                self.initDir = os.path.dirname(filename)
+                PyMcaDirs.outputDir = os.path.dirname(filename)
                     
 def openWidget():
     app= qt.QApplication(sys.argv)
@@ -1429,10 +1320,7 @@ def openDialog():
     app= qt.QApplication(sys.argv)
     app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
     wid= FitParamDialog(modal=1,fl=0)
-    if QTVERSION < '4.0.0':
-        ret = wid.exec_loop()
-    else:
-        ret = wid.exec_()
+    ret = wid.exec_()
     if ret == qt.QDialog.Accepted:
         npar = wid.getParameters()
         print(npar)
