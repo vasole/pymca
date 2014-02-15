@@ -26,6 +26,7 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.45 $"
 import sys
+import traceback
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
@@ -97,8 +98,7 @@ class FitParamWidget(FitParamForm):
         text = 'Plot T(filters) * (1 - T(detector)) Efficienty Term'
         self.attPlotButton.setText(text)
         self.tabAttenuators.layout().insertWidget(1, self.attPlotButton)
-        self.connect(self.attPlotButton, qt.SIGNAL('clicked()'),
-                     self.__attPlotButtonSlot)
+        self.attPlotButton.clicked.connect(self.__attPlotButtonSlot)
         if maxheight < 801:
             self.setMaximumHeight(int(0.8*maxheight))
             self.setMinimumHeight(int(0.8*maxheight))
@@ -202,8 +202,7 @@ class FitParamWidget(FitParamForm):
         self.connect(self.functionCombo, qt.SIGNAL("activated(int)"), self.__functionComboActivated)
         self.connect(self.orderSpin, qt.SIGNAL("valueChanged(int)"), self.__orderSpinChanged)
         self._backgroundWindow = None
-        self.connect(self.stripSetupButton, qt.SIGNAL('clicked()'),
-                     self.__stripSetupButtonClicked)
+        self.stripSetupButton.clicked.connect(self.__stripSetupButtonClicked)
 
     def __attPlotButtonSlot(self):
         try:
@@ -211,7 +210,9 @@ class FitParamWidget(FitParamForm):
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Error %s" % sys.exc_info()[0])
+            text = "Error %s" % sys.exc_info()[1]
+            msg.setInformativeText(text)
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
 
     def computeEfficiency(self):
@@ -279,8 +280,8 @@ class FitParamWidget(FitParamForm):
                            numpy.array(massatt(formula,1.0,energies)['total'])
                 efficiency *= (1.0 - numpy.exp(-coeffs))
 
-        self.graph.setTitle('Filter (not beam filter) and detector correction')
-        self.graph.newCurve(energies, efficiency,
+        self.graph.setGraphTitle('Filter (not beam filter) and detector correction')
+        self.graph.addCurve(energies, efficiency,
                             legend='Ta * (1.0 - Td)',
                             xlabel='Energy (keV)',
                             ylabel='Efficiency Term',
@@ -1059,7 +1060,7 @@ class SectionFileWidget(qt.QWidget):
         self.allCheck.setChecked(1)
         self.__allClicked()
 
-        self.connect(self.allCheck, qt.SIGNAL("clicked()"), self.__allClicked)
+        self.allCheck.clicked.connect(self.__allClicked)
 
     def __allClicked(self):
         state= self.allCheck.isChecked()
@@ -1142,20 +1143,17 @@ class FitParamDialog(qt.QDialog):
         else:
             self.loadfit.setEnabled(True)
 
-        if QTVERSION < '4.0.0' :
-            self.setMaximumWidth(800)
-        else:
-            maxheight = qt.QDesktopWidget().height()
-            maxwidth = qt.QDesktopWidget().width()
-            self.setMaximumWidth(maxwidth)
-            self.setMaximumHeight(maxheight)
-            self.resize(qt.QSize(min(800, maxwidth), min(int(0.7 * maxheight), 750)))
+        maxheight = qt.QDesktopWidget().height()
+        maxwidth = qt.QDesktopWidget().width()
+        self.setMaximumWidth(maxwidth)
+        self.setMaximumHeight(maxheight)
+        self.resize(qt.QSize(min(800, maxwidth), min(int(0.7 * maxheight), 750)))
 
-        self.connect(self.loadfit, qt.SIGNAL("clicked()"), self.__loadFromFit)            
-        self.connect(load, qt.SIGNAL("clicked()"), self.load)
-        self.connect(save, qt.SIGNAL("clicked()"), self.save)
-        self.connect(reject, qt.SIGNAL("clicked()"), self.reject)
-        self.connect(accept, qt.SIGNAL("clicked()"), self.accept)
+        self.loadfit.clicked.connect(self.__loadFromFit)            
+        load.clicked.connect(self.load)
+        save.clicked.connect(self.save)
+        reject.clicked.connect(self.reject)
+        accept.clicked.connect(self.accept)
 
     def setParameters(self, pars):
         actualPars = pars
