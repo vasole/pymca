@@ -77,6 +77,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.setWindowType(None)      # None, "SCAN", "MCA"
         self._initIcons()
         self._buildToolBar(kw)
+        self.setIconSize(qt.QSize(16, 16))
         self._toggleCounter = 0
         self._keepDataAspectRatioFlag = False
         self.gridLevel = 0
@@ -956,5 +957,3 @@ if __name__ == "__main__":
     #plot.addCurve(x, 2 * y, "dummy 2")
     #print("All curves = ",   plot.getAllCurves())
     app.exec_()
-
-    
