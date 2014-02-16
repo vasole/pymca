@@ -1181,7 +1181,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         curveList[-1].set_zorder(2)
         if replot:
             self.replot()
-        return curveList[-1]
+        # If I return the instance, later on cannot make a copy.deepcopy
+        # of the info and asks me to use "frozen" instead
+        #return curveList[-1]
+        return legend
 
 
     def addItem(self, x, y, legend, info=None, replace=False, replot=True, **kw):
