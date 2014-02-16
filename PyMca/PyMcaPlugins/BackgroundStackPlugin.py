@@ -133,8 +133,8 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
         x, spectrum, legend, info = activeCurve
         snipWindow = SGWindow.SGDialog(None,
                                            spectrum, x=x)
-        snipWindow.graph.setGraphXTitle(info['xlabel'])
-        snipWindow.graph.setGraphYTitle(info['ylabel'])
+        snipWindow.graph.setGraphXLabel(info['xlabel'])
+        snipWindow.graph.setGraphYLabel(info['ylabel'])
         #snipWindow.setModal(True)
         snipWindow.show()
         ret = snipWindow.exec_()
@@ -154,8 +154,8 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
         x, spectrum, legend, info = activeCurve
         snipWindow = SNIPWindow.SNIPDialog(None,
                                            spectrum, x=x, smooth=smooth)
-        snipWindow.graph.setGraphXTitle(info['xlabel'])
-        snipWindow.graph.setGraphYTitle(info['ylabel'])
+        snipWindow.graph.setGraphXLabel(info['xlabel'])
+        snipWindow.graph.setGraphYLabel(info['ylabel'])
         #snipWindow.setModal(True)
         snipWindow.show()
         ret = snipWindow.exec_()

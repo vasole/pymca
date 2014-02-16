@@ -1118,22 +1118,6 @@ class ScanWindow(PlotWindow.PlotWindow):
         #I should give the second axis limits
         return super(ScanWindow, self).getGraphYLimits()
 
-    def setGraphXTitle(self, title):
-        print("DEPRECATED")
-        return self.setGraphXLabel(title)
-
-    def setGraphYTitle(self, title):
-        print("DEPRECATED")
-        return self.setGraphYLabel(title)
-
-    def getGraphXTitle(self):
-        print("getGraphXTitle DEPRECATED")
-        return self.getGraphXLabel()
-
-    def getGraphYTitle(self):
-        print("getGraphYTitle DEPRECATED")
-        return self.getGraphYLabel()
-
     #end of plugins interface
     def addCurve(self, x, y, legend=None, info=None, **kw):
         #administrate the colors properly
