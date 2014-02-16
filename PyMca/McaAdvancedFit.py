@@ -1167,10 +1167,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "You need to perform a fit first\n"
             msg.setText(text)
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             return
         #fitresult = self.dict['result']
         fitresult = self.dict
@@ -1200,7 +1197,7 @@ class McaAdvancedFit(qt.QWidget):
                 ddict['result'][label]  = ymatrix
             ddict['result'][label].shape  = (len(ddict['result'][label]),)
             if self.peaksSpectrumButton.isChecked():
-                self.dict['result'][label]= dict['result'][label] * 1.0
+                self.dict['result'][label]= ddict['result'][label] * 1.0
         try:
             self.__anasignal(ddict)
         except:
