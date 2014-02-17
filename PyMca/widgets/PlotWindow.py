@@ -530,14 +530,14 @@ class PlotWindow(PlotWidget.PlotWidget):
                 continue
             module = sys.modules[m]
             if hasattr(module, 'MENU_TEXT'):
-                text = qt.QString(module.MENU_TEXT)
+                text = QString(module.MENU_TEXT)
             else:
                 text = os.path.basename(module.__file__)
                 if text.endswith('.pyc'):
                     text = text[:-4]
                 elif text.endswith('.py'):
                     text = text[:-3]
-                text = qt.QString(text)
+                text = QString(text)
             methods = self.pluginInstanceDict[m].getMethods(plottype=self._plotType) 
             if not len(methods):
                 continue
@@ -581,9 +581,9 @@ class PlotWindow(PlotWidget.PlotWidget):
             #methods.sort()
             menu = qt.QMenu(self)
             for method in methods:
-                text = qt.QString(method)
+                text = QString(method)
                 pixmap = self.pluginInstanceDict[key].getMethodPixmap(method)
-                tip = qt.QString(self.pluginInstanceDict[key].getMethodToolTip(method))
+                tip = QString(self.pluginInstanceDict[key].getMethodToolTip(method))
                 if pixmap is not None:
                     action = qt.QAction(qt.QIcon(qt.QPixmap(pixmap)), text, self)
                 else:
