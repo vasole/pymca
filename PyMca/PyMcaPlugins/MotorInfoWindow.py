@@ -33,7 +33,7 @@ if hasattr(qt, 'QString'):
 else:
     QString = qt.safe_str
 
-DEBUG = 1
+DEBUG = 0
 class MotorInfoComboBox(qt.QComboBox):
     
     loadColumnSignal = qt.pyqtSignal(object)
@@ -83,24 +83,26 @@ class MotorInfoHeader(qt.QHeaderView):
     def showEvent(self, event):
         if len(self.boxes) == 0:
             self.boxes = [None] * self.count()
-        for i in range(1, self.count()):
-            if not self.boxes[i]:
-                newBox = MotorInfoComboBox(self, self.parent().motorNamesList, i)
+        for idx in range(1, self.count()):
+            if self.boxes[idx] is None:
+                newBox = MotorInfoComboBox(self, self.parent().motorNamesList, idx)
                 newBox.loadColumnSignal.connect(self.parent().loadColumn)
-                newBox.resize(self.sectionSize(i) - 30, self.height())
-                self.boxes[i] = newBox
-            self.boxes[i].setGeometry(self.sectionViewportPosition(i) + self.xOffsetLeft, 
+                newBox.resize(self.sectionSize(idx) - 30, self.height())
+                self.boxes[idx] = newBox
+            self.boxes[idx].setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft, 
                                       self.yOffset, 
-                                      self.sectionSize(i) +  self.xOffsetRight, 
+                                      self.sectionSize(idx) +  self.xOffsetRight, 
                                       self.height())
-            self.boxes[i].show()
+            #if idx > 0:
+            #    self.setTabOrder(self.boxes[idx-1], self.boxes[idx])
+            self.boxes[idx].show()
         qt.QHeaderView.showEvent(self, event)
 
     def handleSectionResized(self, index):
-        for i in range(self.visualIndex(index), len(self.boxes)):
-            if i > 0:
-                logical = self.logicalIndex (i)
-                self.boxes[i].setGeometry(self.sectionViewportPosition(logical) + self.xOffsetLeft, 
+        for idx in range(self.visualIndex(index), len(self.boxes)):
+            if idx > 0:
+                logical = self.logicalIndex (idx)
+                self.boxes[idx].setGeometry(self.sectionViewportPosition(logical) + self.xOffsetLeft, 
                                           self.yOffset,
                                           self.sectionSize(logical) +  self.xOffsetRight,
                                           self.height())
@@ -110,21 +112,21 @@ class MotorInfoHeader(qt.QHeaderView):
         del( self.boxes[-1] )
 
     def addLastSection(self):
-        i = self.count()-1
-        newBox = MotorInfoComboBox(self, self.parent().motorNamesList, i)
+        idx = self.count()-1
+        newBox = MotorInfoComboBox(self, self.parent().motorNamesList, idx)
         newBox.loadColumnSignal.connect(self.parent().loadColumn)
-        newBox.setGeometry(self.sectionViewportPosition(i) + self.xOffsetLeft, 
+        newBox.setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft, 
                            self.yOffset, 
-                           self.sectionSize(i) +  self.xOffsetRight, 
+                           self.sectionSize(idx) +  self.xOffsetRight, 
                            self.height() )
         newBox.show()
         self.boxes += [newBox]
 
     def fixComboPositions(self):
-        for i in range(1, self.count()):
-            self.boxes[i].setGeometry(self.sectionViewportPosition(i) + self.xOffsetLeft, 
+        for idx in range(1, self.count()):
+            self.boxes[idx].setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft, 
                                       self.yOffset, 
-                                      self.sectionSize(i) +  self.xOffsetRight, 
+                                      self.sectionSize(idx) +  self.xOffsetRight, 
                                       self.height())
 
 class MotorInfoTable(qt.QTableWidget):
@@ -143,13 +145,13 @@ class MotorInfoTable(qt.QTableWidget):
         self.verticalHeader().hide()
         self.setSelectionBehavior(qt.QAbstractItemView.SelectRows)
         self.setShowGrid(False)
-        for i in range(len(self.legendsList)):
-            curveLegend = self.legendsList[i]
-            self.insertRow(i)
-            self.setItem(i, 0, curveLegend )
-            for j in range(1, self.columnCount()):
-                self.setItem(0, j, '')
-        self.sortByColumn ( 0, qt.Qt.AscendingOrder )
+        for idx in range(len(self.legendsList)):
+            curveLegend = self.legendsList[idx]
+            self.insertRow(idx)
+            self.setItem(idx, 0, curveLegend )
+            for jdx in range(1, self.columnCount()):
+                self.setItem(0, jdx, '')
+        self.sortByColumn(0, qt.Qt.AscendingOrder)
 
     def addColumn(self):
         currentColumn = self.columnCount()
@@ -186,15 +188,15 @@ class MotorInfoTable(qt.QTableWidget):
             self.motorsList = motList
             motorNamesList = self.getAllMotorNames()
             motorNamesList.sort()
-            for i in range(0, self.columnCount()):
-                cBox = self.header.boxes[i]
+            for idx in range(0, self.columnCount()):
+                cBox = self.header.boxes[idx]
                 if cBox is not None:
                     cBox.updateMotorNamesList(motorNamesList)
             self.motorNamesList = motorNamesList
-            for i in range(len(legList)):
-                self.fillRow(i)
-            for i in range(0, self.columnCount()):
-                cBox = self.header.boxes[i]
+            for idx in range(len(legList)):
+                self.fillRow(idx)
+            for idx in range(0, self.columnCount()):
+                cBox = self.header.boxes[idx]
                 if cBox is not None:
                     cBox.emitLoadColumnSignal()
 
@@ -205,17 +207,17 @@ class MotorInfoTable(qt.QTableWidget):
             elif str(key) == str("column"):
                 column = ddict[key]
         if len(motorName) > 0:
-            for i in range(self.rowCount()):
-                legend = str( self.item(i, 0).text() )
+            for idx in range(self.rowCount()):
+                legend = str( self.item(idx, 0).text() )
                 curveInfo = self.infoDict.get(legend, None)
                 if curveInfo is not None:
                     motorValue = curveInfo.get(motorName, '---')
                 else:
                     motorValue = '---'
-                self.setItem(i, column, str(motorValue))
+                self.setItem(idx, column, str(motorValue))
         else:
-            for i in range(0, self.rowCount()):
-                self.setItem(i, column, '')
+            for idx in range(0, self.rowCount()):
+                self.setItem(idx, column, '')
         self.resizeColumnToContents(column)
 
     def getAllMotorNames(self):
@@ -254,7 +256,8 @@ class MotorInfoDialog(qt.QWidget):
         # Buttons
         self.buttonAddColumn = qt.QPushButton("Add", self)
         self.buttonDeleteColumn = qt.QPushButton("Del", self)
-        self.buttonUpdate = qt.QPushButton(qt.QIcon(qt.QPixmap(IconDict["reload"])), '', self)
+        self.buttonUpdate = qt.QPushButton(
+                                qt.QIcon(qt.QPixmap(IconDict["reload"])), '', self)
         # Table
         self.table = MotorInfoTable(self, self.numCurves, 4, legends, motorValues)
         # Layout
@@ -271,13 +274,20 @@ class MotorInfoDialog(qt.QWidget):
         self.buttonLayout.addWidget(self.buttonDeleteColumn)
         self.buttonLayout.addWidget(qt.HorizontalSpacer(self))
         self.resize(700, 400)
+        # Create shortcuts
+        self.updateShortCut = qt.QShortcut(qt.QKeySequence('F5'), self)
+        self.addColShortCut = qt.QShortcut(qt.QKeySequence('Ctrl++'), self)
+        self.delColShortCut = qt.QShortcut(qt.QKeySequence('Ctrl+-'), self)
         # Make connections
         self.buttonAddColumn.clicked.connect(self.table.addColumn)
         self.buttonDeleteColumn.clicked.connect(self.table.delColumn)
+        self.addColShortCut.activated.connect(self.table.addColumn)
+        self.delColShortCut.activated.connect(self.table.delColumn)
 
     def keyPressEvent(self, event):
         if (event.key() == qt.Qt.Key_Escape):
             self.close()
+
 
 def main():
     import sys, random

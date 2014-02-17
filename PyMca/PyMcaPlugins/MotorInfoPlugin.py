@@ -84,7 +84,6 @@ class MotorInfo(Plugin1DBase.Plugin1DBase):
         legendList = [leg for (xvals, yvals,  leg,  info) in curves] 
         infoList = [info for (xvals, yvals,  leg,  info) in curves] 
         motorValuesList = self._convertInfoDictionary( infoList )
-        print(infoList)
         return legendList,  motorValuesList
 
     def _convertInfoDictionary(self,  infosList):
@@ -122,6 +121,7 @@ class MotorInfo(Plugin1DBase.Plugin1DBase):
                                                       legendList,  
                                                       motorValuesList)
         self.widget.buttonUpdate.clicked.connect(self.showMotorInfo)
+        self.widget.updateShortCut.activated.connect(self.showMotorInfo)
 
 MENU_TEXT = "Motor Info"
 def getPlugin1DInstance(plotWindow,  **kw):
