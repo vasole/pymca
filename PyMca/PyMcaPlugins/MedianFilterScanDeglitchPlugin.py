@@ -86,54 +86,54 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
         return
 
     def configureFilter(self):
-        if self._widget is None:
-            msg = qt.QDialog()
-            msg.setWindowTitle("Deglitch Configuration")
-            msgLayout = qt.QGridLayout()
-            buttonLayout = qt.QHBoxLayout()
-            
-            inpThreshold = qt.QDoubleSpinBox()
-            inpThreshold.setRange(0.,10.)
-            inpThreshold.setSingleStep(.1)
-            inpThreshold.setValue(self.threshold)
-            inpThreshold.setToolTip('Increase width for broad spikes')
+        # Always construct a widget
+        msg = qt.QDialog()
+        msg.setWindowTitle("Deglitch Configuration")
+        msgLayout = qt.QGridLayout()
+        buttonLayout = qt.QHBoxLayout()
 
-            inpWidth = qt.QSpinBox()
-            inpWidth.setRange(1,101)
-            inpWidth.setSingleStep(2)
-            inpWidth.setValue(self.width)
-            inpWidth.setToolTip('Set low threshold for multiple spikes of different markedness')
-            
-            labelWidth = qt.QLabel('Width (must be odd)')
-            labelThreshold = qt.QLabel('Threshold (multiple of deviation)')
-            buttonOK = qt.QPushButton('Ok')
-            buttonOK.clicked.connect(msg.accept)
-            buttonCancel = qt.QPushButton('Cancel')
-            buttonCancel.clicked.connect(msg.reject)
-            
-            allActiveBG = qt.QButtonGroup()
-            buttonAll = qt.QCheckBox('Apply to All')
-            buttonActive = qt.QCheckBox('Apply to Active')
-            allActiveBG.addButton(buttonAll, 0)
-            allActiveBG.addButton(buttonActive, 1)
-            buttonActive.setChecked(True)
-            
-            buttonLayout.addWidget(qt.HorizontalSpacer())
-            buttonLayout.addWidget(buttonOK)
-            buttonLayout.addWidget(buttonCancel)
-            
-            msgLayout.addWidget(labelWidth,0,0)
-            msgLayout.addWidget(inpWidth,0,1)
-            msgLayout.addWidget(labelThreshold,1,0)
-            msgLayout.addWidget(inpThreshold,1,1)
-            msgLayout.addWidget(buttonActive,2,0)
-            msgLayout.addWidget(buttonAll,2,1)
-            msgLayout.addLayout(buttonLayout,3,0,1,2)
-            msg.setLayout(msgLayout)
-            self._widget = msg
-            self._widget.inputWidth =  inpWidth
-            self._widget.inputThreshold =  inpThreshold
-            self._widget.applyToAll =  buttonAll
+        inpThreshold = qt.QDoubleSpinBox()
+        inpThreshold.setRange(0.,10.)
+        inpThreshold.setSingleStep(.1)
+        inpThreshold.setValue(self.threshold)
+        inpThreshold.setToolTip('Increase width for broad spikes')
+
+        inpWidth = qt.QSpinBox()
+        inpWidth.setRange(1,101)
+        inpWidth.setSingleStep(2)
+        inpWidth.setValue(self.width)
+        inpWidth.setToolTip('Set low threshold for multiple spikes of different markedness')
+
+        labelWidth = qt.QLabel('Width (must be odd)')
+        labelThreshold = qt.QLabel('Threshold (multiple of deviation)')
+        buttonOK = qt.QPushButton('Ok')
+        buttonOK.clicked.connect(msg.accept)
+        buttonCancel = qt.QPushButton('Cancel')
+        buttonCancel.clicked.connect(msg.reject)
+
+        allActiveBG = qt.QButtonGroup()
+        buttonAll = qt.QCheckBox('Apply to All')
+        buttonActive = qt.QCheckBox('Apply to Active')
+        allActiveBG.addButton(buttonAll, 0)
+        allActiveBG.addButton(buttonActive, 1)
+        buttonActive.setChecked(True)
+
+        buttonLayout.addWidget(qt.HorizontalSpacer())
+        buttonLayout.addWidget(buttonOK)
+        buttonLayout.addWidget(buttonCancel)
+
+        msgLayout.addWidget(labelWidth,0,0)
+        msgLayout.addWidget(inpWidth,0,1)
+        msgLayout.addWidget(labelThreshold,1,0)
+        msgLayout.addWidget(inpThreshold,1,1)
+        msgLayout.addWidget(buttonActive,2,0)
+        msgLayout.addWidget(buttonAll,2,1)
+        msgLayout.addLayout(buttonLayout,3,0,1,2)
+        msg.setLayout(msgLayout)
+        self._widget = msg
+        self._widget.inputWidth =  inpWidth
+        self._widget.inputThreshold =  inpThreshold
+        self._widget.applyToAll =  buttonAll
         if self._widget.exec_():
             self.threshold = float(self._widget.inputThreshold.value())
             self.width = int(self._widget.inputWidth.value())
@@ -171,16 +171,16 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
             diff = filtered-y
             mean = diff.mean()
             sigma = (x-mean)**2
-            sigma = numpy.sqrt(sigma.sum()/len(sigma))
+            sigma = numpy.sqrt(sigma.sum()/float(len(sigma)))
             ynew = numpy.where(abs(diff) > threshold * sigma, filtered, y)
-            legend = info.get('selectionlegend','') + ' SR'
+            legend = info.get('selectionlegend',legend) + ' SR'
             if (idx==0) and (len(spectra)!=1):
-                self.addCurve(x,ynew,legend,info,replace=True, replot=False) 
+                self.addCurve(x,ynew,legend,info, replace=True, replot=False)
             elif idx == (len(spectra)- 1):
-                self.addCurve(x,ynew,legend,info, replot=True)
+                self.addCurve(x,ynew,legend,info, replace=False, replot=True)
             else:
-                self.addCurve(x,ynew,legend,info, replot=False)
-        
+                self.addCurve(x,ynew,legend,info, replace=False, replot=False)
+        #self._plotWindow.replot()
 
 MENU_TEXT = "Remove glitches from curves"
 def getPlugin1DInstance(plotWindow,  **kw):
@@ -188,32 +188,21 @@ def getPlugin1DInstance(plotWindow,  **kw):
     return ob
     
 if __name__ == "__main__":
-    from PyMca import ScanWindow
-    from PyMca import PyMcaQt as qt
-    import numpy
+    from PyMca.widgets import PlotWindow
     app = qt.QApplication([])
     
-    sw = ScanWindow.ScanWindow()
+    sw = PlotWindow.PlotWindow()
 
-    x = numpy.arange(1000.)
-    y0 =  10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400) + 1500 * numpy.random.random(1000.)
-    y1 =  10 * x + 10000. * numpy.exp(-0.5*(x-600)*(x-600)/400) + 1500 * numpy.random.random(1000.)
-    y2 =  10 * x + 10000. * numpy.exp(-0.5*(x-400)*(x-400)/400) + 1500 * numpy.random.random(1000.)
-    y3 =  10 * x + 10000. * numpy.exp(-0.5*(x-700)*(x-700)/400) + 1500 * numpy.random.random(1000.)
-    y0[320:322] = 50000.
-    y2[400:405] = 12300.
-    y2[200:205] = 10400.
-    y1[620:623] = 16300.
-    y1[800:803] = 50000.
-    y3[664:666] = 16950.
-    y3[699:701] = 20000.
-    y3[730:733] = 20000.
-    
-    
+    x = numpy.linspace(0, 1999, 2000)
+    y0 = x/100. + 100.*numpy.exp(-(x-500)**2/1000.) + 50.*numpy.exp(-(x-1200)**2/5000.) + 100.*numpy.exp(-(x-1700)**2/500.) + 10 * numpy.random.random(2000)
+    y1 = x/100. + 100.*numpy.exp(-(x-600)**2/1000.) + 50.*numpy.exp(-(x-1000)**2/5000.) + 100.*numpy.exp(-(x-1500)**2/500.) + 10 * numpy.random.random(2000)
+
+    for idx in range(20):
+        y0[idx*100] = 500. * numpy.random.random(1)
+        y1[idx*100] = 500. * numpy.random.random(1)
+
     sw.addCurve(x, y0, legend="Curve0")
     sw.addCurve(x, y1, legend="Curve1")
-    sw.addCurve(x, y2, legend="Curve2")
-    sw.addCurve(x, y3, legend="Curve3")
     
     plugin = getPlugin1DInstance(sw)    
     plugin.configureFilter()
