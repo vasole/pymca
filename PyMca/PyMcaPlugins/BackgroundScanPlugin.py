@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -111,8 +111,8 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
         x, spectrum, legend, info = activeCurve
         snipWindow = SGWindow.SGDialog(None,
                                            spectrum, x=x)
-        snipWindow.graph.setGraphXTitle(info['xlabel'])
-        snipWindow.graph.setGraphYTitle(info['ylabel'])
+        snipWindow.graph.setGraphXLabel(info['xlabel'])
+        snipWindow.graph.setGraphYLabel(info['ylabel'])
         #snipWindow.setModal(True)
         snipWindow.show()
         ret = snipWindow.exec_()
@@ -134,8 +134,8 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
                                            spectrum, x=x, smooth=False)
         if self.subtract1DSnipParameters is not None:
             snipWindow.setParameters(self.subtract1DSnipParameters)
-        snipWindow.graph.setGraphXTitle(info['xlabel'])
-        snipWindow.graph.setGraphYTitle(info['ylabel'])
+        snipWindow.graph.setGraphXLabel(info['xlabel'])
+        snipWindow.graph.setGraphYLabel(info['ylabel'])
         snipWindow.show()
         ret = snipWindow.exec_()
         if ret:
@@ -158,8 +158,8 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
                                            spectrum, x=x, smooth=True)
         if self.deglitch1DSnipParameters is not None:
             snipWindow.setParameters(self.deglitch1DSnipParameters)
-        snipWindow.graph.setGraphXTitle(info['xlabel'])
-        snipWindow.graph.setGraphYTitle(info['ylabel'])
+        snipWindow.graph.setGraphXLabel(info['xlabel'])
+        snipWindow.graph.setGraphYLabel(info['ylabel'])
         snipWindow.show()
         ret = snipWindow.exec_()
         if ret:

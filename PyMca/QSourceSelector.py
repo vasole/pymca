@@ -153,83 +153,59 @@ class QSourceSelector(qt.QWidget):
             print("openfile = ",filename)
         staticDialog = False
         if not specsession:
-            if justloaded is None: justloaded = True
+            if justloaded is None:
+                justloaded = True
             if filename is None:
                 if self.lastInputDir is not None:
                     if not os.path.exists(self.lastInputDir):
                         self.lastInputDir = None
                 wdir = self.lastInputDir
-                if wdir is None:wdir = os.getcwd()
-                if QTVERSION < '4.0.0':
+                if wdir is None:
+                    wdir = os.getcwd()
+                if (sys.version < '3.0') and PyMcaDirs.nativeFileDialogs:
                     filetypes = ""
                     for filetype in self.fileTypeList:
                         filetypes += filetype+"\n"
-                    if sys.platform == 'win32':
-                        filelist = qt.QFileDialog.getOpenFileNames(
-                                    filetypes,
-                                    wdir,
-                                    self,
-                                    "openFile",
-                                    "Open a new EdfFile")
+                    if sys.version < '3.0':
+                        filelist = qt.QFileDialog.getOpenFileNames(self,
+                                "Open a new source file",
+                                wdir,
+                                filetypes,
+                                self.lastFileFilter)
                     else:
-                        filedialog = qt.QFileDialog(self,
-                                                    "Open new EdfFile(s)",
-                                                    1)
-                        if self.lastInputDir is not None:
-                            filedialog.setDir(self.lastInputDir)
-                        filedialog.setMode(filedialog.ExistingFiles)
-                        filedialog.setFilters(filetypes)           
-                        if filedialog.exec_loop() == qt.QDialog.Accepted:
-                            filelist= filedialog.selectedFiles()
-                        else:
-                            return              
+                        filelist, self.lastFileFilter =\
+                                qt.QFileDialog.getOpenFileNamesAndFilter(\
+                                self,
+                                "Open a new source file",
+                                wdir,
+                                filetypes,
+                                self.lastFileFilter)
+                    staticDialog = True
                 else:
-                    #if sys.platform == 'win32':
-                    #if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
-                    if (sys.version < '3.0') and PyMcaDirs.nativeFileDialogs:
-                        filetypes = ""
-                        for filetype in self.fileTypeList:
-                            filetypes += filetype+"\n"
-                        if sys.version < '3.0':
-                            filelist = qt.QFileDialog.getOpenFileNames(self,
-                                    "Open a new source file",
-                                    wdir,
-                                    filetypes,
-                                    self.lastFileFilter)
-                        else:
-                            filelist, self.lastFileFilter =\
-                                    qt.QFileDialog.getOpenFileNamesAndFilter(\
-                                    self,
-                                    "Open a new source file",
-                                    wdir,
-                                    filetypes,
-                                    self.lastFileFilter)
-                        staticDialog = True
+                    fdialog = qt.QFileDialog(self)
+                    fdialog.setModal(True)
+                    fdialog.setWindowTitle("Open a new source file")
+                    if hasattr(qt, "QStringList"):
+                        strlist = qt.QStringList()
                     else:
-                        fdialog = qt.QFileDialog(self)
-                        fdialog.setModal(True)
-                        fdialog.setWindowTitle("Open a new source file")
-                        if hasattr(qt, "QStringList"):
-                            strlist = qt.QStringList()
-                        else:
-                            strlist = []
-                        for filetype in self.fileTypeList:
-                            strlist.append(filetype)
-                        fdialog.setFilters(strlist)
-                        fdialog.selectFilter(self.lastFileFilter)
-                        fdialog.setFileMode(fdialog.ExistingFiles)
-                        fdialog.setDirectory(wdir)
-                        ret = fdialog.exec_()
-                        if ret == qt.QDialog.Accepted:
-                            filelist = fdialog.selectedFiles()
-                            self.lastFileFilter = qt.safe_str(\
-                                                    fdialog.selectedFilter())
-                            fdialog.close()
-                            del fdialog                        
-                        else:
-                            fdialog.close()
-                            del fdialog
-                            return            
+                        strlist = []
+                    for filetype in self.fileTypeList:
+                        strlist.append(filetype)
+                    fdialog.setFilters(strlist)
+                    fdialog.selectFilter(self.lastFileFilter)
+                    fdialog.setFileMode(fdialog.ExistingFiles)
+                    fdialog.setDirectory(wdir)
+                    ret = fdialog.exec_()
+                    if ret == qt.QDialog.Accepted:
+                        filelist = fdialog.selectedFiles()
+                        self.lastFileFilter = qt.safe_str(\
+                                                fdialog.selectedFilter())
+                        fdialog.close()
+                        del fdialog                        
+                    else:
+                        fdialog.close()
+                        del fdialog
+                        return            
                 #filelist.sort()
                 filename=[]
                 for f in filelist:
@@ -283,22 +259,15 @@ class QSourceSelector(qt.QWidget):
         self.mapCombo[key] = filename
         if ddict["event"] =="NewSourceSelected":
             nitems = self.fileCombo.count()
-            if QTVERSION < '4.0.0':
-                self.fileCombo.insertItem(key)
-                self.fileCombo.setCurrentItem(nitems)
-            else:
-                self.fileCombo.insertItem(nitems, key)
-                self.fileCombo.setCurrentIndex(nitems)
+            self.fileCombo.insertItem(nitems, key)
+            self.fileCombo.setCurrentIndex(nitems)
         else:
             if hasattr(qt, "QString"):
                 nitem = self.fileCombo.findText(qt.QString(key))
             else:
                 nitem = self.fileCombo.findText(key)
             self.fileCombo.setCurrentIndex(nitem)
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("SourceSelectorSignal"), (ddict,))        
-        else:
-            self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
+        self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
 
     def closeFile(self):
         if DEBUG:
@@ -351,10 +320,7 @@ class QSourceSelector(qt.QWidget):
         ddict["event"] = "SourceSelected"
         ddict["combokey"] = key
         ddict["sourcelist"] = self.mapCombo[key]
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("SourceSelectorSignal"), (ddict,))    
-        else:
-            self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
+        self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
 
 def test():
     a = qt.QApplication(sys.argv)
@@ -366,23 +332,15 @@ def test():
         if ddict["event"] == "NewSourceSelected":
             d = QDataSource.QDataSource(ddict["sourcelist"][0])
             w.specfileWidget.setDataSource(d)
-            if QTVERSION < '4.0.0':
-                a.connect(w, qt.PYSIGNAL("SourceSelectorSignal"),
-                      mySlot)
-            else:
-                a.connect(w, qt.SIGNAL("SourceSelectorSignal"),
+            a.connect(w, qt.SIGNAL("SourceSelectorSignal"),
                        mySlot)
 
         
     qt.QObject.connect(a, qt.SIGNAL("lastWindowClosed()"),
               a, qt.SLOT("quit()"))
 
-    if QTVERSION < '4.0.0':
-        w.show()
-        a.exec_loop()
-    else:
-        w.show()
-        a.exec_()
+    w.show()
+    a.exec_()
 
 
 if __name__=="__main__":

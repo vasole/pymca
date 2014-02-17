@@ -1167,10 +1167,7 @@ class McaAdvancedFit(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "You need to perform a fit first\n"
             msg.setText(text)
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             return
         #fitresult = self.dict['result']
         fitresult = self.dict
@@ -1200,7 +1197,7 @@ class McaAdvancedFit(qt.QWidget):
                 ddict['result'][label]  = ymatrix
             ddict['result'][label].shape  = (len(ddict['result'][label]),)
             if self.peaksSpectrumButton.isChecked():
-                self.dict['result'][label]= dict['result'][label] * 1.0
+                self.dict['result'][label]= ddict['result'][label] * 1.0
         try:
             self.__anasignal(ddict)
         except:
@@ -1737,13 +1734,11 @@ class McaAdvancedFit(qt.QWidget):
     def _mcaGraphSignalSlot(self, ddict):
         if ddict['event'] == "FitClicked":
             self.fit()
-        elif ddict['event'] == "LogClicked":
-            self.toggleLogY(ddict)
         elif ddict['event'] == "EnergyClicked":
             self.toggleEnergyAxis()
         elif ddict['event'] == "SaveClicked":
             self._saveGraph()
-        elif ddict['event'] == 'MouseClick':
+        elif ddict['event'].lower() in ["mouseclicked", "curveclicked"]:
             if self._energyAxis:
                 self.__peakIdentifier(ddict['x'])
         else:
@@ -1758,16 +1753,6 @@ class McaAdvancedFit(qt.QWidget):
             self._energyAxis = True
             self.graph.setGraphXLabel('Energy')
         self.plot()
-
-    def toggleLogY(self, dict=None):
-        if self._logY:
-            self.graph.ToggleLogY()
-            self._logY = False
-            self.plot()
-        else:
-            self._logY = True
-            self.plot()
-            self.graph.ToggleLogY()
 
     def plot(self, ddict=None):
         if self._logY:
@@ -2515,10 +2500,7 @@ class Line(qt.QFrame):
         ddict['event']="DoubleClick"
         ddict['data'] = event
         ddict['info'] = self.info
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("LineDoubleClickEvent"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
+        self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
 
 class SimpleThread(qt.QThread):
     def __init__(self, function = None, kw = None):
@@ -2540,7 +2522,8 @@ class SimpleThread(qt.QThread):
 
 
 class McaGraphWindow(PlotWindow.PlotWindow):
-    def __init__(self, parent=None, backend=None, plugins=False, newplot=False, **kw):
+    def __init__(self, parent=None, backend=None, plugins=False,
+                 newplot=False, position=True, control=True, **kw):
         if backend is None:
             backend = MatplotlibBackend
         super(McaGraphWindow, self).__init__(parent, backend=backend,
@@ -2550,12 +2533,14 @@ class McaGraphWindow(PlotWindow.PlotWindow):
                                        roi=True,
                                        logx=False,
                                        fit=True,
+                                       position=position,
+                                       control=control,
                                        **kw)
         self.sigPlotSignal.connect(self.__graphSignal)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
 
     def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self.graph)
+        pixmap = qt.QPixmap.grabWidget(self)
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
             self.printPreview.show()
@@ -2582,64 +2567,11 @@ class McaGraphWindow(PlotWindow.PlotWindow):
         ddict['active'] = legend
         self.sigPlotSignal.emit(ddict)
 
-    def __graphSignal(self, dict):
-        return
-        if dict['event'] == 'MouseAt':
-            self.xpos.setText('%.4g' % dict['x'])
-            self.ypos.setText('%.5g' % dict['y'])
-        elif dict['event'] == 'MouseClick':
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL('McaGraphSignal'),(dict,))
-            else:
-                self.emit(qt.SIGNAL('McaGraphSignal'), (dict))
-        elif dict['event'] == "SetActiveCurveEvent":
-            legend = dict.get('legend', None)
-            if (legend is not None) and (self.roiwidget is not None):
-                legend,x,y = self.graph.getactivecurve()
-                #if self.roidict is None:
-                self.roilist,self.roidict = self.roiwidget.getroilistanddict()
-                if not len(x):
-                    #only zeros ...
-                    for i in range(len(self.roilist)):
-                        key = self.roilist[i]
-                        self.roidict[key]['rawcounts'] = 0.0
-                        self.roidict[key]['netcounts'] = 0.0
-                        #self.roidict[key]['from'  ] = 0.0
-                        #self.roidict[key]['to'    ] = 0.0
-                else:
-                    for i in range(len(self.roilist)):
-                        key = self.roilist[i]
-                        if key == self.roilist[0]:
-                            #take care of LLD
-                            #if len(x) > 3:
-                            #    fromdata = x[3]
-                            #else:
-                            fromdata = x[0]
-                            todata   = x[-1]
-                        else:
-                            fromdata = self.roidict[key]['from']
-                            todata   = self.roidict[key]['to']
-                        i1 = numpy.nonzero(x>=fromdata)[0]
-                        xw = numpy.take(x,i1)
-                        yw = numpy.take(y,i1)
-                        i1 = numpy.nonzero(xw<=todata)[0]
-                        xw = numpy.take(xw,i1)
-                        yw = numpy.take(yw,i1)
-                        counts = numpy.sum(yw)
-                        self.roidict[key]['rawcounts'] = counts
-                        if len(yw):
-                            self.roidict[key]['netcounts'] = counts - \
-                                                      len(yw) *  0.5 * (yw[0] + yw[-1])
-                        else:
-                            self.roidict[key]['netcounts'] = 0
-                        self.roidict[key]['from'  ] = fromdata
-                        self.roidict[key]['to'    ] = todata
-                self.roiwidget.setHeader(text="ROIs of %s" % (legend))
-                self.roiwidget.fillfromroidict(roilist=self.roilist,
-                                                roidict=self.roidict)
-
-
-
+    def __graphSignal(self, ddict):
+        #only the mouse click is dealt with here
+        if ddict['event'].lower() in ["mouseclicked", "curveclicked"]:
+            if ddict['button'] == 'left':
+                self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
 
 def test(file='03novs060sum.mca'):
     from PyMca.PyMcaIO import specfilewrapper as specfile

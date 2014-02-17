@@ -181,7 +181,8 @@ class Plot(PlotBase.PlotBase):
         else:
             self._plotPoints = False
         for key in self._curveList:
-            del self._curveDict[key][3]['plot_symbol']
+            if 'plot_symbol' in self._curveDict[key][3]:
+                del self._curveDict[key][3]['plot_symbol']
         if len(self._curveList):
             self._update()
 

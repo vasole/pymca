@@ -592,17 +592,8 @@ def test():
     def theSlot(ddict):
         print(ddict['event'])
 
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(container,
-                       qt.PYSIGNAL("MaskImageWidgetSignal"),
-                       updateMask)
-        app.setMainWidget(container)
-        app.exec_loop()
-    else:
-        qt.QObject.connect(container,
-                           qt.SIGNAL("MaskImageWidgetSignal"),
-                           theSlot)
-        app.exec_()
+    container.sigMaskImageWidgetSignal.connect(theSlot)
+    app.exec_()
 
 if __name__ == "__main__":
     test()

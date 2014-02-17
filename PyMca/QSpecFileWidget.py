@@ -319,7 +319,6 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             print("datasource = ", datasource)
         self.data = datasource
         self.refresh()
-        if QTVERSION < '4.0.0':return
 
         if not self.autoAddBox.isChecked():
             return
@@ -396,7 +395,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 else:
                     item.setText(0, "")
 
-    def _autoReplace(self, scanlist):
+    def _autoReplace(self, scanlist=None):
         if DEBUG:
             print("autoreplace called with ",scanlist)
         if self.autoReplaceBox.isChecked():
@@ -407,79 +406,64 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     #
     # signal/slot handling
     #
-    if QTVERSION < '4.0.0':
-        """
-        def _cntSignal(self, ddict):
-            if ddict["event"] == " updated":
-                sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-                self._autoReplace(sel)
-        """
-
-        def __selectionChanged(self):
-            if DEBUG:
-                print("__selectionChanged")
-            sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-            info = self.data.getKeyInfo(sel[0])
-            self.cntTable.info = info
-            self.cntTable.refresh()
-            if self._oldCntSelection is not None:
-                if len(self._oldCntSelection['y']):
-                    self.cntTable.markCntSelected(self._oldCntSelection)
-            self.mcaTable.info = info
-            self.mcaTable.refresh()
-            self.emit(qt.PYSIGNAL("scanSelection"), (sel,))
-            self._autoReplace(sel)
-
-    else:
-        def _cntSignal(self, ddict):
-            if ddict["event"] == "updated":                
-                itemlist = self.list.selectedItems()
-                sel = [str(item.text(1)) for item in itemlist]
-                self._autoReplace(sel)
-
-        
-        def __selectionChanged(self):
-            if DEBUG:
-                print("__selectionChanged")
+    def _cntSignal(self, ddict):
+        if ddict["event"] == "updated":                
             itemlist = self.list.selectedItems()
             sel = [str(item.text(1)) for item in itemlist]
-            if DEBUG:
-                print("selection = ",sel)
-            if not len(sel):return
-            info = self.data.getKeyInfo(sel[0])
-            self.mcaTable.build(info)
-            if True:
-                #This does not work properly yet
-                NbMca = info.get('NbMcaDet', 0)
-                self.cntTable.build(info['LabelNames'], nmca=NbMca)
-            else:
-                self.cntTable.build(info['LabelNames'], nmca=0)
-            if (info['Lines'] > 0) and len(info['LabelNames']):
-                if self._oldCntSelection is not None:
-                    if len(self._oldCntSelection['y']):
-                        self.cntTable.setCounterSelection(self._oldCntSelection)
-                    else:
-                        if len(self.cntTable.cntList):
-                            self.cntTable.setCounterSelection({'x':[0],
-                                                               'y':[-1],
-                                                'cntlist':info['LabelNames']*1})
+            self._autoReplace(sel)
+
+    
+    def __selectionChanged(self):
+        if DEBUG:
+            print("__selectionChanged")
+        itemlist = self.list.selectedItems()
+        sel = [str(item.text(1)) for item in itemlist]
+        if DEBUG:
+            print("selection = ",sel)
+        if not len(sel):
+            return
+        info = self.data.getKeyInfo(sel[0])
+        self.mcaTable.build(info)
+        if True:
+            #This does not work properly yet
+            NbMca = info.get('NbMcaDet', 0)
+            self.cntTable.build(info['LabelNames'], nmca=NbMca)
+        else:
+            self.cntTable.build(info['LabelNames'], nmca=0)
+
+        autoReplaceCall = True
+        if (info['Lines'] > 0) and len(info['LabelNames']):
+            if self._oldCntSelection is not None:
+                if len(self._oldCntSelection['y']):
+                    self.cntTable.setCounterSelection(self._oldCntSelection)
                 else:
                     if len(self.cntTable.cntList):
                         self.cntTable.setCounterSelection({'x':[0],
                                                            'y':[-1],
                                             'cntlist':info['LabelNames']*1})
-                
-            self.emit(qt.SIGNAL("scanSelection"), (sel))
-            if (info['NbMca'] > 0) and (info['Lines'] > 0):
-                pass
-            elif (info['NbMca'] > 0) and (info['Lines'] == 0):
-                self.mainTab.setCurrentWidget(self.mcaTable)
-            elif (info['NbMca'] == 0) and (info['Lines'] > 0):
-                self.mainTab.setCurrentWidget(self.cntTable)
             else:
-                pass
-            # Is this needed??? it does not seem so
-            #self._autoReplace(sel)
+                if len(self.cntTable.cntList):
+                   self.cntTable.setCounterSelection({'x':[0],
+                                                      'y':[-1],
+                                        'cntlist':info['LabelNames']*1})
+            # That already emitted a signal, no need to repeat with
+            # autoreplace
+            autoReplaceCall = False
+
+        # Emit this signal for the case someone else uses it ...    
+        self.emit(qt.SIGNAL("scanSelection"), (sel))
+        if (info['NbMca'] > 0) and (info['Lines'] > 0):
+            pass
+        elif (info['NbMca'] > 0) and (info['Lines'] == 0):
+            self.mainTab.setCurrentWidget(self.mcaTable)
+        elif (info['NbMca'] == 0) and (info['Lines'] > 0):
+            self.mainTab.setCurrentWidget(self.cntTable)
+        else:
+            pass
+        # Next call is needed to handle the direct opening of MCAs
+        # when using a single scan, single mca file.
+        if autoReplaceCall:
+            self._autoReplace(sel)
 
     def __headerSectionDoubleClicked(self, index):
         if index == 0:
@@ -507,25 +491,16 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             #for the time being just add
             self._addClicked()
 
-    if QTVERSION < '4.0.0':        
-        def __contextMenu(self, item, point, col=None):
-            if DEBUG:
-                print("__contextMenu")
-            if item is not None:
-                sn= str(item.text(1))
-                self.menu.setItemParameter(self.menu.idAt(0), self.scans.index(sn))
-                self.menu.popup(point)
-    else:
-        def __contextMenu(self, point):
-            if DEBUG:
-                print("__contextMenu",point)
-            item = self.list.itemAt(point)
-            if item is not None:
-                sn= str(item.text(1))
-                self.menu= qt.QMenu()
-                self.menu.addAction("Show scan header", self.__showScanInfo)
-                self.menu_idx = self.scans.index(sn)
-                self.menu.popup(self.cursor().pos())
+    def __contextMenu(self, point):
+        if DEBUG:
+            print("__contextMenu",point)
+        item = self.list.itemAt(point)
+        if item is not None:
+            sn= str(item.text(1))
+            self.menu= qt.QMenu()
+            self.menu.addAction("Show scan header", self.__showScanInfo)
+            self.menu_idx = self.scans.index(sn)
+            self.menu.popup(self.cursor().pos())
 
     def mcaDeviceSelected(self, ddict):
         action, actiontype = ddict['action'].split()

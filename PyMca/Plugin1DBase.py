@@ -39,13 +39,17 @@ The main items are reproduced here and can be directly accessed as plugin method
     getGraphXLimits
     getGraphYLimits
     getGraphTitle
+    getGraphXLabel
     getGraphXTitle
+    getGraphYLabel
     getGraphYTitle    
     removeCurve
     setActiveCurve
     setGraphTitle
     setGraphXLimits
     setGraphYLimits
+    setGraphXLabel
+    setGraphYLabel
     setGraphXTitle
     setGraphYTitle
 
@@ -177,19 +181,35 @@ class Plugin1DBase(object):
         """
         return self._plotWindow.getGraphTitle()
 
+    def getGraphXLabel(self):
+        """
+        :return: The graph X axis label
+        :rtype: string
+        """
+        return self._plotWindow.getGraphXLabel()
+
     def getGraphXTitle(self):
         """
         :return: The graph X axis label
         :rtype: string
         """
-        return self._plotWindow.getGraphXTitle()
+        print("getGraphXTitle deprecated, use getGraphXLabel")
+        return self._plotWindow.getGraphXLabel()
+
+    def getGraphYLabel(self):
+        """
+        :return: The graph Y axis label
+        :rtype: string
+        """
+        return self._plotWindow.getGraphYLabel()
 
     def getGraphYTitle(self):
         """
         :return: The graph Y axis label
         :rtype: string
         """
-        return self._plotWindow.getGraphYTitle()
+        print("getGraphYTitle deprecated, use getGraphYLabel")
+        return self._plotWindow.getGraphYLabel()
 
     def setGraphXLimits(self, xmin, xmax, replot=False):
         """

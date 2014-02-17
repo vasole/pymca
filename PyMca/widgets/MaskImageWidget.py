@@ -32,6 +32,7 @@ from PyMca.plotting.ctools import pnpoly
 from . import RGBCorrelatorGraph
 from . import ColormapDialog
 qt = RGBCorrelatorGraph.qt
+
 IconDict = RGBCorrelatorGraph.IconDict
 QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
@@ -91,6 +92,8 @@ def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
     return r, c
     
 class MaskImageWidget(qt.QWidget):
+    sigMaskImageWidgetSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
                  imageicons=True, standalonesave=True, usetab=False,
                  profileselection=False, scanwindow=None, aspect=False, polygon=None):
@@ -230,24 +233,18 @@ class MaskImageWidget(qt.QWidget):
                              self._saveMatplotlibImage)
 
     def _buildConnections(self, widget = None):
-        self.connect(self.graphWidget.hFlipToolButton,
-                 qt.SIGNAL("clicked()"),
-                 self._hFlipIconSignal)
+        self.graphWidget.hFlipToolButton.clicked.connect(self._hFlipIconSignal)
 
-        self.connect(self.graphWidget.colormapToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self.selectColormap)
+        self.graphWidget.colormapToolButton.clicked.connect(self.selectColormap)
 
         if self.__selectionFlag:
-            self.connect(self.graphWidget.selectionToolButton,
-                     qt.SIGNAL("clicked()"),
-                     self._toggleSelectionMode)
+            self.graphWidget.selectionToolButton.clicked.connect(self._toggleSelectionMode)
             text = "Toggle between Selection\nand Zoom modes"
             self.graphWidget.selectionToolButton.setToolTip(text)
 
         if self.__imageIconsFlag:
             self.graphWidget.imageToolButton.clicked.connect(\
-                self._resetSelection)
+                self.__resetSelection)
 
             self.graphWidget.eraseSelectionToolButton.clicked.connect(\
                 self._setEraseSelectionMode)
@@ -268,7 +265,7 @@ class MaskImageWidget(qt.QWidget):
                 self._additionalSelectionMenuDialog)
             self._additionalSelectionMenu = qt.QMenu()
             self._additionalSelectionMenu.addAction(QString("Reset Selection"),
-                                                    self._resetSelection)
+                                                    self.__resetSelection)
             self._additionalSelectionMenu.addAction(QString("Invert Selection"),
                                                     self._invertSelection)
             self._additionalSelectionMenu.addAction(QString("I >= Colormap Max"),
@@ -905,7 +902,7 @@ class MaskImageWidget(qt.QWidget):
         ddict['event'] = "hFlipSignal"
         ddict['current'] = self._y1AxisInverted * 1
         ddict['id'] = id(self)
-        self.emitMaskImageSignal(ddict)        
+        self.emitMaskImageSignal(ddict)
 
     def setY1AxisInverted(self, value):
         self._y1AxisInverted = value
@@ -1131,6 +1128,11 @@ class MaskImageWidget(qt.QWidget):
 
         self.setSelectionMask(mask, plot=True)
         self._emitMaskChangedSignal()
+
+    def __resetSelection(self):
+        # Needed because receiving directly in _resetSelection it was passing
+        # False as argument
+        self._resetSelection(True)
         
     def _resetSelection(self, owncall=True):
         if DEBUG:
@@ -1579,9 +1581,12 @@ class MaskImageWidget(qt.QWidget):
     def _otherWidgetGraphSignal(self, ddict):
         self._graphSignal(ddict, ownsignal = False)
 
-
     def _handlePolygonMask(self, ddict):
-        x = self._xScale[0] + self._xScale[1] * numpy.arange(self.__imageData.shape[1])
+        if self._xScale is None:
+            self._xScale = [0, 1]
+        if self._yScale is None:
+            self._yScale = [0, 1]
+        x = self._yScale[0] + self._xScale[1] * numpy.arange(self.__imageData.shape[1])
         y = self._yScale[0] + self._yScale[1] * numpy.arange(self.__imageData.shape[0])
         X, Y = numpy.meshgrid(x, y)
         X.shape = -1
@@ -1705,9 +1710,10 @@ class MaskImageWidget(qt.QWidget):
         self.emitMaskImageSignal(ddict)
                             
     def emitMaskImageSignal(self, ddict):
-        qt.QObject.emit(self,
-                    qt.SIGNAL('MaskImageWidgetSignal'),
-                    ddict)
+        #qt.QObject.emit(self,
+        #            qt.SIGNAL('MaskImageWidgetSignal'),
+        #            ddict)
+        self.sigMaskImageWidgetSignal.emit(ddict)      
 
     def _zoomResetSignal(self):
         if DEBUG:
@@ -1851,6 +1857,51 @@ class MaskImageWidget(qt.QWidget):
 
     def setInfoText(self, text):
         return self.graphWidget.setInfoText(text)
+
+class MaskImageDialog(qt.QDialog):
+    def __init__(self, parent=None, image=None, mask=None):
+        super(MaskImageDialog, self).__init__(parent)
+        layout = qt.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self.maskWidget = MaskImageWidget(self, aspect=True)
+        buttonBox = qt.QWidget(self)
+        buttonBoxLayout = qt.QHBoxLayout(buttonBox)
+        buttonBoxLayout.setContentsMargins(0, 0, 0, 0)
+        buttonBoxLayout.setSpacing(0)
+        self.okButton = qt.QPushButton(buttonBox)
+        self.okButton.setText("OK")
+        self.okButton.setAutoDefault(False)
+        self.cancelButton = qt.QPushButton(buttonBox)
+        self.cancelButton.setText("Cancel")
+        self.cancelButton.setAutoDefault(False)
+        self.okButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        #buttonBoxLayout.addWidget(qt.HorizontalSpacer(self))
+        buttonBoxLayout.addWidget(self.okButton)
+        buttonBoxLayout.addWidget(self.cancelButton)
+        #buttonBoxLayout.addWidget(qt.HorizontalSpacer(self))
+        layout.addWidget(self.maskWidget)
+        layout.addWidget(buttonBox)
+        self.setImage = self.maskWidget.setImageData
+        self.setMask = self.maskWidget.setSelectionMask
+        self.getMask = self.maskWidget.getSelectionMask
+        if image is not None:
+            self.setImage(image)
+        if mask is not None:
+            self.setMask(mask)
+
+def getImageMask(image, mask=None):
+    """
+    Functional interface to interactively define a mask
+    """
+    w = MaskImageDialog(image=image, mask=mask)
+    ret = w.exec_()
+    if ret:
+        mask = w.getMask()
+    w = None
+    del(w)
+    return mask
 
 def test():
     app = qt.QApplication([])

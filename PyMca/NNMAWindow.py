@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -28,16 +28,11 @@ __author__ = "V.A. Sole - ESRF"
 from PyMca import PCAWindow
 from PyMca import PyMcaQt as qt
 from PyMca import NNMAModule
-QTVERSION = qt.qVersion()
-
 
 class NNMAParametersDialog(qt.QDialog):
     def __init__(self, parent = None, options=[1, 2, 3, 4, 5, 10]):
         qt.QDialog.__init__(self, parent)
-        if QTVERSION < '4.0.0':
-            self.setCaption("NNMA Configuration Dialog")
-        else:
-            self.setWindowTitle("NNMA Configuration Dialog")
+        self.setWindowTitle("NNMA Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setMargin(11)
         self.mainLayout.setSpacing(0)
@@ -283,17 +278,8 @@ def test():
     def theSlot(ddict):
         print(ddict['event'])
 
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(container,
-                       qt.PYSIGNAL("MaskImageWidgetSignal"),
-                       updateMask)
-        app.setMainWidget(container)
-        app.exec_loop()
-    else:
-        qt.QObject.connect(container,
-                           qt.SIGNAL("MaskImageWidgetSignal"),
-                           theSlot)
-        app.exec_()
+    container.sigMaskImageWidgetSignal.connect(theSlot)
+    app.exec_()
 
 if __name__ == "__main__":
     import numpy

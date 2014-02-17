@@ -35,9 +35,6 @@ else:
 from PyMca.PyMca_Icons import IconDict
 from PyMca import MaskImageWidget
 from PyMca import ScanWindow
-MATPLOTLIB = MaskImageWidget.MATPLOTLIB
-QTVERSION = MaskImageWidget.QTVERSION
-
 
 class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
@@ -75,10 +72,8 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
                                      self.saveImageList)
             self._saveMenu.addAction(QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)
-            if QTVERSION > '4.0.0':
-                if MATPLOTLIB:
-                    self._saveMenu.addAction(QString("Matplotlib") ,
-                                     self._saveMatplotlibImage)
+            self._saveMenu.addAction(QString("Matplotlib") ,
+                             self._saveMatplotlibImage)
         self.multiplyIcon = qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
         infotext = "Multiply image by -1"
         self.multiplyButton = self.graphWidget._addToolButton(\
@@ -110,7 +105,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             y = self.spectrumList[index]
             self.spectrumGraph.addCurve(x, y, legend, replace=True)
             if self.spectrumGraphTitles is not None:
-                self.spectrumGraph.graph.setGraphTitle(self.spectrumGraphTitles[index])
+                self.spectrumGraph.setGraphTitle(self.spectrumGraphTitles[index])
                 
             
     def showImage(self, index=0, moveslider=True):
@@ -179,7 +174,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             y = self.spectrumList[0]
             self.spectrumGraph.addCurve(x, y, legend, replace=True)
             if self.spectrumGraphTitles is not None:
-                self.spectrumGraph.graph.setGraphTitle(self.spectrumGraphTitles[0])
+                self.spectrumGraph.setGraphTitle(self.spectrumGraphTitles[0])
             
         self.slider.setValue(0)
 
@@ -218,9 +213,7 @@ def test():
     def theSlot(ddict):
         print(ddict['event'])
 
-    qt.QObject.connect(container,
-                       qt.SIGNAL("MaskImageWidgetSignal"),
-                       theSlot)
+    container.sigMaskImageWidgetSignal.connect(theSlot)
     app.exec_()
 
 if __name__ == "__main__":

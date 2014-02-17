@@ -43,15 +43,14 @@ try:
 except ImportError:
     EDF = False
 
-MATPLOTLIB = MaskImageWidget.MATPLOTLIB
-QTVERSION = MaskImageWidget.QTVERSION
-
 class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
         ddict = {}
         ddict['usetab'] = False
         ddict.update(kw)
         ddict['standalonesave'] = False
+        if 'aspect' not in kw:
+            ddict['aspect'] = True
         if 'dynamic' in kw:
             del ddict['dynamic']
         if 'crop' in kw:
@@ -76,17 +75,14 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         self._stack = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
-            self.connect(self.graphWidget.saveToolButton,
-                         qt.SIGNAL("clicked()"), 
+            self.graphWidget.saveToolButton.clicked.connect(\
                          self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
             self._saveMenu.addAction(QString("Image Data"),
                                      self.saveImageList)
             self._saveMenu.addAction(QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)
-            if QTVERSION > '4.0.0':
-                if MATPLOTLIB:
-                    self._saveMenu.addAction(QString("Matplotlib") ,
+            self._saveMenu.addAction(QString("Matplotlib") ,
                                      self._saveMatplotlibImage)
 
         dynamic = kw.get("dynamic", False)
@@ -116,11 +112,6 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                                      self._flipLeftRight)
             self._flipMenu.addAction(QString("Flip Image Up-Down"),
                                      self._flipUpDown)
-        #else:
-        #    self.connect(self.graphWidget.hFlipToolButton,
-        #         qt.SIGNAL("clicked()"),
-        #         self.__hFlipIconSignal)
-
 
     def sizeHint(self):
         return qt.QSize(400, 400)
@@ -439,18 +430,9 @@ def test():
     def theSlot(ddict):
         print(ddict['event'])
 
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(container,
-                       qt.PYSIGNAL("MaskImageWidgetSignal"),
-                       theSlot)
-        app.setMainWidget(container)
-        app.exec_loop()
-    else:
-        if not container._dynamic:
-            qt.QObject.connect(container,
-                           qt.SIGNAL("MaskImageWidgetSignal"),
-                           theSlot)
-        app.exec_()
+    if not container._dynamic:
+        container.sigMaskImageWidgetSignal.connect(theSlot)
+    app.exec_()
 
 if __name__ == "__main__":
     test()

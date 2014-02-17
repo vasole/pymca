@@ -701,7 +701,7 @@ class QStackWidget(StackBase.StackBase,
         
         self.stackWindow.mainLayout.addWidget(self.mcaButtonBox)
 
-        self.addMcaButton.clicked.connect(self._addMcaClicked)
+        self.addMcaButton.clicked.connect(self.__addMcaClicked)
         self.removeMcaButton.clicked.connect(self._removeMcaClicked)
         self.replaceMcaButton.clicked.connect(self._replaceMcaClicked)
 
@@ -712,16 +712,10 @@ class QStackWidget(StackBase.StackBase,
     def _buildConnections(self):
         self._buildAndConnectButtonBox()
 
-        #self.connect(self.stackGraphWidget.hFlipToolButton,
-        #     qt.SIGNAL("clicked()"),
-        #     self._hFlipIconSignal)
-
         #ROI Image
         widgetList = [self.stackWidget, self.roiWidget]
         for widget in widgetList:
-            self.connect(widget,
-                 qt.SIGNAL('MaskImageWidgetSignal'),
-                 self._maskImageWidgetSlot)
+            widget.sigMaskImageWidgetSignal.connect(self._maskImageWidgetSlot)
 
         #self.stackGraphWidget.graph.canvas().setMouseTracking(1)
         self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
@@ -828,8 +822,11 @@ class QStackWidget(StackBase.StackBase,
             legend = "Stack " + title + " selection"
         return legend
 
+    def __addMcaClicked(self):
+        self._addMcaClicked("ADD")
+
     def _addMcaClicked(self, action=None):
-        if action is None:
+        if action in [None, False]:
             action = "ADD"
         if self._stackImageData is None:
             return
@@ -981,13 +978,11 @@ class QStackWidget(StackBase.StackBase,
             return
         if ddict['event'] == "hFlipSignal":
             if ddict['id'] != id(self.stackWidget):
-                self.stackWidget.graphWidget.graph.resetZoom()
                 self.stackWidget.graph.invertYAxis(ddict['current'])
-                self.stackWidget.plotImage(update=True)
+                self.stackWidget.graph.replot()
             if ddict['id'] != id(self.roiWidget):
-                self.roiWidget.graph.resetZoom()
                 self.roiWidget.graph.invertYAxis(ddict['current'])
-                self.roiWidget.plotImage(update=True)
+                self.roiWidget.graph.replot()
             return
 
     def _stackGraphSignal(self, ddict):

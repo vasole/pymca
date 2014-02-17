@@ -62,48 +62,28 @@ class QDispatcher(qt.QWidget):
         for src_widget in QDataSource.source_widgets.keys():
             self.selectorWidget[src_widget] = QDataSource.source_widgets[src_widget]()
             self.tabWidget.addTab(self.selectorWidget[src_widget], src_widget)
-            if QTVERSION < '4.0.0':
+            self.connect(self.selectorWidget[src_widget],
+                         qt.SIGNAL("addSelection"),
+                         self._addSelectionSlot)                                                 
+            self.connect(self.selectorWidget[src_widget],
+                         qt.SIGNAL("removeSelection"),
+                         self._removeSelectionSlot)
+            self.connect(self.selectorWidget[src_widget],
+                         qt.SIGNAL("replaceSelection"),
+                         self._replaceSelectionSlot)
+            if src_widget not in ['EdfFile']:
                 self.connect(self.selectorWidget[src_widget],
-                             qt.PYSIGNAL("addSelection"),
-                             self._addSelectionSlot)
-                self.connect(self.selectorWidget[src_widget],
-                             qt.PYSIGNAL("removeSelection"),
-                             self._removeSelectionSlot)
-                self.connect(self.selectorWidget[src_widget],
-                             qt.PYSIGNAL("replaceSelection"),
-                             self._replaceSelectionSlot)
-                if src_widget not in ['EdfFile']:
-                    self.connect(self.selectorWidget[src_widget],
-                             qt.PYSIGNAL("otherSignals"),
-                             self._otherSignalsSlot)
-            else:
-                self.connect(self.selectorWidget[src_widget],
-                             qt.SIGNAL("addSelection"),
-                             self._addSelectionSlot)                                                 
-                self.connect(self.selectorWidget[src_widget],
-                             qt.SIGNAL("removeSelection"),
-                             self._removeSelectionSlot)
-                self.connect(self.selectorWidget[src_widget],
-                             qt.SIGNAL("replaceSelection"),
-                             self._replaceSelectionSlot)
-                if src_widget not in ['EdfFile']:
-                    self.connect(self.selectorWidget[src_widget],
-                             qt.SIGNAL("otherSignals"),
-                             self._otherSignalsSlot)
+                         qt.SIGNAL("otherSignals"),
+                         self._otherSignalsSlot)
         
         self.mainLayout.addWidget(self.sourceSelector)
         self.mainLayout.addWidget(self.tabWidget)
-        if QTVERSION < '4.0.0':
-            self.connect(self.sourceSelector, 
-                    qt.PYSIGNAL("SourceSelectorSignal"), 
-                    self._sourceSelectorSlot)
-        else:
-            self.connect(self.sourceSelector, 
-                    qt.SIGNAL("SourceSelectorSignal"), 
-                    self._sourceSelectorSlot)
-            self.connect(self.tabWidget,
-                         qt.SIGNAL('currentChanged(int)'),
-                         self._tabChanged)
+        self.connect(self.sourceSelector, 
+                qt.SIGNAL("SourceSelectorSignal"), 
+                self._sourceSelectorSlot)
+        self.connect(self.tabWidget,
+                     qt.SIGNAL('currentChanged(int)'),
+                     self._tabChanged)
 
     def _addSelectionSlot(self, sel_list, event=None):
         if DEBUG:
@@ -209,10 +189,7 @@ class QDispatcher(qt.QWidget):
             self._addSelectionSlot(sel_list[1:], event = "addSelection")
 
     def _otherSignalsSlot(self, ddict):
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("otherSignals"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("otherSignals"), ddict)
+        self.emit(qt.SIGNAL("otherSignals"), ddict)
 
     def _sourceSelectorSlot(self, ddict):
         if DEBUG:
@@ -223,17 +200,9 @@ class QDispatcher(qt.QWidget):
             self.sourceList.append(source)
             sourceType = source.sourceType
             self.selectorWidget[sourceType].setDataSource(source)
-            if QTVERSION < '4.0.0':
-                index = self.tabWidget.indexOf(self.selectorWidget[sourceType])
-                self.tabWidget.setCurrentPage(index)  
-            else:
-                self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
+            self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
             if sourceType == "SPS":
-                if QTVERSION < '4.0.0':
-                    self.connect(source, qt.PYSIGNAL("updated"),
-                                        self._selectionUpdatedSlot)
-                else:                                                 
-                    self.connect(source, qt.SIGNAL("updated"),
+                self.connect(source, qt.SIGNAL("updated"),
                                         self._selectionUpdatedSlot)
 
         elif (ddict["event"] == "SourceSelected") or \
@@ -251,11 +220,7 @@ class QDispatcher(qt.QWidget):
             if ddict["event"] == "SourceReloaded":
                 source.refresh()
             self.selectorWidget[sourceType].setDataSource(source)
-            if QTVERSION < '4.0.0':
-                index = self.tabWidget.indexOf(self.selectorWidget[sourceType])
-                self.tabWidget.setCurrentPage(index)  
-            else:
-                self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
+            self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
         elif ddict["event"] == "SourceClosed":
             found = 0
             for source in self.sourceList:
@@ -271,11 +236,7 @@ class QDispatcher(qt.QWidget):
             for source in self.sourceList:
                 if sourceType == source.sourceType:
                     self.selectorWidget[sourceType].setDataSource(source)
-                    if QTVERSION < '4.0.0':
-                        index = self.tabWidget.indexOf(self.selectorWidget[sourceType])
-                        self.tabWidget.setCurrentPage(index)  
-                    else:
-                        self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
+                    self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
                     return
             #there is no other selection of that type
             if len(self.sourceList):
@@ -284,11 +245,7 @@ class QDispatcher(qt.QWidget):
                 self.selectorWidget[sourceType].setDataSource(source)
             else:
                 self.selectorWidget[sourceType].setDataSource(None)
-            if QTVERSION < '4.0.0':
-                index = self.tabWidget.indexOf(self.selectorWidget[sourceType])
-                self.tabWidget.setCurrentPage(index)  
-            else:
-                self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
+            self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
         elif ddict["event"] == "SourceClosed":
             if DEBUG:
                 print("not implemented yet")
@@ -325,10 +282,7 @@ class QDispatcher(qt.QWidget):
     def _tabChanged(self, value):
         if DEBUG:
             print("self._tabChanged(value), value =  ",value)
-        if QTVERSION < '4.0.0':
-            pass
-        else:
-            text = str(self.tabWidget.tabText(value))
+        text = str(self.tabWidget.tabText(value))
         ddict = {}
         ddict['SourceType'] = text
         if self.selectorWidget[text].data is not None:
@@ -337,10 +291,7 @@ class QDispatcher(qt.QWidget):
         else:
             ddict['SourceName'] = None
         ddict['event'] = "SourceTypeChanged"
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("otherSignals"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("otherSignals"), ddict)
+        self.emit(qt.SIGNAL("otherSignals"), ddict)
 
 
 def test():
@@ -349,10 +300,7 @@ def test():
     w.show()
     qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))
-    if QTVERSION < '4.0.0':
-        app.exec_loop()
-    else:
-        app.exec_()
+    app.exec_()
         
 if __name__ == "__main__":
     test()

@@ -107,7 +107,7 @@ class LegendIcon(qt.QWidget):
     # Modify Symbol
     def setSymbol(self, symbol):
         symbol = qt.safe_str(symbol)
-        if symbol not in [None, "None", ""]:
+        if symbol not in [None, "None", "", " "]:
             if symbol not in Symbols:
                 raise ValueError("Unknown symbol: <%s>" % symbol)
         self.symbol = symbol
@@ -829,14 +829,14 @@ class LegendListContextMenu(BaseContextMenu):
         flag = convertToPyObject(modelIndex.data(LegendModel.showLineRole))
         if flag:
             if DEBUG == 1:
-                print('togglePointsAction -- lines turned off')
+                print('toggleLinesAction -- lines turned off')
             ddict['event'] = "toggleLine"
             ddict['line'] = False
             self.sigContextMenu.emit(ddict)
             self.model.setData(modelIndex, False, LegendModel.showLineRole)
         else:
             if DEBUG == 1:
-                print('togglePointsAction -- lines turned on')
+                print('toggleLinesAction -- lines turned on')
             ddict['event'] = "toggleLine"
             ddict['line'] = True
             self.sigContextMenu.emit(ddict)
@@ -852,7 +852,8 @@ class LegendListContextMenu(BaseContextMenu):
             'type'     : qt.safe_str(convertToPyObject(modelIndex.data())),
         }
         flag = convertToPyObject(modelIndex.data(LegendModel.showSymbolRole))
-        if flag:
+        symbol = convertToPyObject(modelIndex.data(LegendModel.iconSymbolRole))
+        if flag and (symbol is not None):
             if DEBUG == 1:
                 print('togglePointsAction -- Symbols turned off')
             ddict['event'] = "togglePoints"
@@ -907,7 +908,7 @@ class Notifier(qt.QObject):
 
     def signalReceived(self, **kw):
         obj = self.sender()
-        print('NOTIFIER -- signal received\n\tsender:',str(obj))
+        print('NOTIFIER -- signal received\n\tsender:', str(obj))
 
 if __name__ == '__main__':
     notifier = Notifier()
@@ -947,7 +948,7 @@ if __name__ == '__main__':
     #win = LegendListWidget(None, legends)
     #win[0].updateItem(ddict)
     #win.setLayout(layout)
-    win.sigMouseClicked.connect(notifier.signalReceived)
+    win.sigLegendSignal.connect(notifier.signalReceived)
     win.show()
 
     win.clear()

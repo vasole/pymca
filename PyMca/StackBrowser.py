@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -39,6 +39,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
         ddict = {}
         ddict['usetab'] = kw.get("usetab", False)
+        ddict['aspect'] = kw.get("aspect", True)
         ddict.update(kw)
         ddict['standalonesave'] = True
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict)
@@ -273,9 +274,9 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
     def _nameSlot(self):
         txt = str(self.name.text())
         if len(txt):
-            self.graphWidget.graph.setTitle(txt)
+            self.graphWidget.graph.setGraphTitle(txt)
         else:
-            self.name.setText(str(self.graphWidget.graph.title().text()))
+            self.name.setText(self.graphWidget.graph.getTitle())
 
     def _buildTitle(self, legend, index):
         width = int(0.5*(self.roiWidthSpin.value() - 1))
@@ -298,7 +299,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         else:
             self.setImageData(data, clearmask=False)
         txt = self._buildTitle(legend, index)
-        self.graphWidget.graph.setTitle(txt)
+        self.graphWidget.graph.setGraphTitle(txt)
         self.name.setText(txt)
         if moveslider:
             self.slider.setValue(index)
