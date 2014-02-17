@@ -971,12 +971,9 @@ class ScanWindow(PlotWindow.PlotWindow):
             alias = "%c" % (96+dataCounter)
             mtplt.addDataToPlot( xdata, ydata, legend=legend, alias=alias )
 
-        if sys.version < '3.0':
-            self.matplotlibDialog.setXLabel(qt.safe_str(self.graph.x1Label()))
-            self.matplotlibDialog.setYLabel(qt.safe_str(self.graph.y1Label()))
-        else:
-            self.matplotlibDialog.setXLabel(self.graph.x1Label())
-            self.matplotlibDialog.setYLabel(self.graph.y1Label())
+        self.matplotlibDialog.setXLabel(self.getGraphX1Label())
+        self.matplotlibDialog.setYLabel(self.getGraphY1Label())
+
         if legends:
             mtplt.plotLegends()
         ret = self.matplotlibDialog.exec_()
