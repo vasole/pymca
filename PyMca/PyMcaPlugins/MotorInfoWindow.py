@@ -28,7 +28,12 @@ __author__ = 'Tonn Rueter'
 from PyMca import PyMcaQt as qt
 from PyMca.PyMca_Icons import IconDict
 
-DEBUG = 0
+if hasattr(qt, 'QString'):
+    QString = qt.QString
+else:
+    QString = qt.safe_str
+
+DEBUG = 1
 class MotorInfoComboBox(qt.QComboBox):
     
     loadColumnSignal = qt.pyqtSignal(object)
@@ -37,7 +42,7 @@ class MotorInfoComboBox(qt.QComboBox):
         qt.QComboBox.__init__(self,  parent)
         self.motorNamesList = [""] + mlist
         self.nColumn = nCol
-        self.addItems([qt.QString(elem) for elem in self.motorNamesList])
+        self.addItems([QString(elem) for elem in self.motorNamesList])
         self.activated.connect(self.emitLoadColumnSignal)
 
     def emitLoadColumnSignal(self):
@@ -54,12 +59,11 @@ class MotorInfoComboBox(qt.QComboBox):
         currentMotorName = self.currentMotor()
         self.clear()
         newMotorNamesList = [''] + newMotorNamesList
-        self.motorNamesList = newMotorNamesList 
-        if currentMotorName in self.motorNamesList:
-            newIndex = newMotorNamesList.index(currentMotorName)
-        else:
+        self.motorNamesList = newMotorNamesList
+        self.addItems([QString(elem) for elem in self.motorNamesList])
+        newIndex = self.findText(currentMotorName)
+        if newIndex < 0:
             newIndex = 0
-        self.addItems( [ qt.QString(elem) for elem in self.motorNamesList ] )
         self.setCurrentIndex(newIndex)
 
 class MotorInfoHeader(qt.QHeaderView):
@@ -77,7 +81,7 @@ class MotorInfoHeader(qt.QHeaderView):
         self.setMinimumSectionSize(120)
 
     def showEvent(self, event):
-        if self.boxes == []:
+        if len(self.boxes) == 0:
             self.boxes = [None] * self.count()
         for i in range(1, self.count()):
             if not self.boxes[i]:
