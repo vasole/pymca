@@ -166,7 +166,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             if dataObject.info["selectiontype"] != "1D": continue
             
             #there must be something to plot
-            if not hasattr(dataObject, 'y'): continue                
+            if not hasattr(dataObject, 'y'):
+                continue                
             if not hasattr(dataObject, 'x'):
                 ylen = len(dataObject.y[0]) 
                 if ylen:
@@ -303,6 +304,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                         
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
+                                    info=newDataObject.info,
                                     symbol=symbol,maptoy2=maptoy2, replot=actualReplot)
         self.dataObjectsList = self._curveList
         if activeCurve is None:
@@ -933,10 +935,11 @@ class ScanWindow(PlotWindow.PlotWindow):
 
     def graphicsSave(self, filename):
         #use the plugin interface
-        x, y, legend, info = self.getActiveCurve()
+        x, y, legend, info = self.getActiveCurve()[:4]
+        curveList = self.getAllCurves()
         size = (6, 3) #in inches
         bw = False
-        if len(self.graph.curves.keys()) > 1:
+        if len(curveList) > 1:
             legends = True
         else:
             legends = False
@@ -961,22 +964,18 @@ class ScanWindow(PlotWindow.PlotWindow):
         ydata = y
         dataCounter = 1
         alias = "%c" % (96+dataCounter)
-        mtplt.addDataToPlot( xdata, ydata, legend=legend0, alias=alias )
-        curveList = self.getAllCurves()
+        mtplt.addDataToPlot( xdata, ydata, legend=legend0, alias=alias )        
         for curve in curveList:
-            xdata, ydata, legend, info = curve
+            xdata, ydata, legend, info = curve[0:4]
             if legend == legend0:
                 continue
             dataCounter += 1
             alias = "%c" % (96+dataCounter)
             mtplt.addDataToPlot( xdata, ydata, legend=legend, alias=alias )
 
-        if sys.version < '3.0':
-            self.matplotlibDialog.setXLabel(qt.safe_str(self.graph.x1Label()))
-            self.matplotlibDialog.setYLabel(qt.safe_str(self.graph.y1Label()))
-        else:
-            self.matplotlibDialog.setXLabel(self.graph.x1Label())
-            self.matplotlibDialog.setYLabel(self.graph.y1Label())
+        self.matplotlibDialog.setXLabel(self.getGraphX1Label())
+        self.matplotlibDialog.setYLabel(self.getGraphY1Label())
+
         if legends:
             mtplt.plotLegends()
         ret = self.matplotlibDialog.exec_()
