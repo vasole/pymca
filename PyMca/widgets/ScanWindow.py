@@ -166,7 +166,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             if dataObject.info["selectiontype"] != "1D": continue
             
             #there must be something to plot
-            if not hasattr(dataObject, 'y'): continue                
+            if not hasattr(dataObject, 'y'):
+                continue                
             if not hasattr(dataObject, 'x'):
                 ylen = len(dataObject.y[0]) 
                 if ylen:
@@ -303,6 +304,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                         
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
+                                    info=newDataObject.info,
                                     symbol=symbol,maptoy2=maptoy2, replot=actualReplot)
         self.dataObjectsList = self._curveList
         if activeCurve is None:
