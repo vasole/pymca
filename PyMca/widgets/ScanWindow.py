@@ -933,10 +933,11 @@ class ScanWindow(PlotWindow.PlotWindow):
 
     def graphicsSave(self, filename):
         #use the plugin interface
-        x, y, legend, info = self.getActiveCurve()
+        x, y, legend, info = self.getActiveCurve()[:4]
+        curveList = self.getAllCurves()
         size = (6, 3) #in inches
         bw = False
-        if len(self.graph.curves.keys()) > 1:
+        if len(curveList) > 1:
             legends = True
         else:
             legends = False
@@ -961,10 +962,9 @@ class ScanWindow(PlotWindow.PlotWindow):
         ydata = y
         dataCounter = 1
         alias = "%c" % (96+dataCounter)
-        mtplt.addDataToPlot( xdata, ydata, legend=legend0, alias=alias )
-        curveList = self.getAllCurves()
+        mtplt.addDataToPlot( xdata, ydata, legend=legend0, alias=alias )        
         for curve in curveList:
-            xdata, ydata, legend, info = curve
+            xdata, ydata, legend, info = curve[0:4]
             if legend == legend0:
                 continue
             dataCounter += 1
