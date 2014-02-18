@@ -434,6 +434,7 @@ class MatplotlibGraph(FigureCanvas):
         if DEBUG:
             print("onMousePressed, event = ",event.xdata, event.ydata)
             print("Mouse button = ", event.button)
+        self.__time0 = -1.0
         if event.inaxes != self.ax:
             if DEBUG:
                 print("RETURNING")
@@ -550,7 +551,6 @@ class MatplotlibGraph(FigureCanvas):
                 self.__picking = False
                 self._callback(ddict)
 
-        self.__time0 = -1.0
         if event.button == rightButton:
             #right click
             self.__zooming = False
