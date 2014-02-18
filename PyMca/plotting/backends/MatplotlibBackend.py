@@ -22,7 +22,7 @@ Matplotlib Plot backend.
 """
 import numpy as np
 from matplotlib import cbook
-
+BLITTING = False
 import numpy
 from numpy import vstack as numpyvstack
 import sys
@@ -483,7 +483,16 @@ class MatplotlibGraph(FigureCanvas):
                         else:
                             artist.set_xdata(event.xdata)
                             artist.set_ydata(event.ydata)
-                    self.fig.canvas.draw()
+                    if BLITTING:
+                        canvas = artist.figure.canvas
+                        axes = artist.axes
+                        artist.set_animated(True)
+                        canvas.draw()
+                        self._background = canvas.copy_from_bbox(axes.bbox)
+                        axes.draw_artist(artist)
+                        canvas.blit(axes.bbox)
+                    else:
+                        self.fig.canvas.draw()
                     ddict = {}
                     if self.__markerMoving:
                         ddict['event'] = "markerMoving"
@@ -688,14 +697,24 @@ class MatplotlibGraph(FigureCanvas):
                     ymin, ymax = self.ax.get_ylim()
                     delta = abs(ymax - ymin)
                     ymax = max(ymax, ymin) - 0.005 * delta
-                    infoText.set_position((event.xdata, ymax))
+                    if infoText is not None:
+                        infoText.set_position((event.xdata, ymax))
                 elif 'ymarker' in artist._plot_options:
                     artist.set_ydata(event.ydata)
-                    infoText.set_position((event.xdata, event.ydata))
+                    if infoText is not None:
+                        infoText.set_position((event.xdata, event.ydata))
                 else:
                     artist.set_xdata(event.xdata)
                     artist.set_ydata(event.ydata)
-                self.fig.canvas.draw()
+                if BLITTING:
+                    canvas = artist.figure.canvas
+                    axes = artist.axes
+                    artist.set_animated(True)
+                    canvas.restore_region(self._background)
+                    axes.draw_artist(artist)
+                    canvas.blit(axes.bbox)
+                else:
+                    self.fig.canvas.draw()
                 ddict = {}
                 ddict['event'] = "markerMoving"
                 ddict['button'] = "left"
@@ -836,6 +855,10 @@ class MatplotlibGraph(FigureCanvas):
             if self.__markerMoving:
                 self.__markerMoving = False
                 artist = self._pickingInfo['artist']
+                if BLITTING:
+                    artist.set_animated(False)
+                    self._background = None
+                    artist.figure.canvas.draw()
                 ddict = {}
                 ddict['event'] = "markerMoved"
                 ddict['label'] = self._pickingInfo['label']

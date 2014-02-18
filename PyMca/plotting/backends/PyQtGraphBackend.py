@@ -729,7 +729,8 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :type draggable: boolean, default False
         :return: Handle used by the backend to univocally access the marker
         """
-        label = "__MARKER__" + label
+        self.removeMarker(legend, replot=False)
+        legend = "__MARKER__" + legend
         if selectable or draggable:
             movable = True
         else:
