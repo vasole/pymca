@@ -437,6 +437,7 @@ class MatplotlibGraph(FigureCanvas):
         if event.inaxes != self.ax:
             if DEBUG:
                 print("RETURNING")
+            self.__time0 = -1.
             return        
         button = event.button
         leftButton = 1
