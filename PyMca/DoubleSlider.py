@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -29,14 +29,11 @@ __author__ = "V.A. Sole - ESRF BLISS Group"
 from PyMca import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
-if QTVERSION < '4.0.0':
-    import Qwt5
-else:
-    from PyQt4 import Qwt5
-
 DEBUG = 0
     
 class DoubleSlider(qt.QWidget):
+    sigDoubleSliderValueChanged = qt.pyqtSignal(object)
+    
     def __init__(self, parent = None, scale = False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
@@ -44,24 +41,16 @@ class DoubleSlider(qt.QWidget):
         self.mainLayout.setSpacing(1)
         orientation = qt.Qt.Horizontal
         
-        self.minSliderContainer = MySlider(self, orientation)
-        self.minSlider = self.minSliderContainer.slider
-        if scale:
-            self.minSlider.setScalePosition(Qwt5.QwtSlider.BottomScale)
-        self.minSlider.setRange(0.0, 100.0, 0.01)
-        self.minSlider.setValue(0.0)
-        self.maxSliderContainer = MySlider(self, orientation)
-        self.maxSlider = self.maxSliderContainer.slider
-        self.maxSlider.setRange(0.0, 100.0, 0.01)
+        self.minSlider = MySlider(self, orientation)
+        self.minSlider.setRange(0, 100.)
+        self.minSlider.setValue(0)
+        self.maxSlider = MySlider(self, orientation)
+        self.maxSlider.setRange(0, 100.0)
         self.maxSlider.setValue(100.)
-        self.mainLayout.addWidget(self.maxSliderContainer)
-        self.mainLayout.addWidget(self.minSliderContainer)
-        self.connect(self.minSlider,
-                     qt.SIGNAL("valueChanged(double)"),
-                     self._sliderChanged)
-        self.connect(self.maxSlider,
-                     qt.SIGNAL("valueChanged(double)"),
-                     self._sliderChanged)
+        self.mainLayout.addWidget(self.maxSlider)
+        self.mainLayout.addWidget(self.minSlider)
+        self.minSlider.sigValueChanged.connect(self._sliderChanged)
+        self.maxSlider.sigValueChanged.connect(self._sliderChanged)
 
     def __getDict(self):
         ddict = {}
@@ -80,10 +69,7 @@ class DoubleSlider(qt.QWidget):
         if DEBUG:
             print("DoubleSlider._sliderChanged()")
         ddict = self.__getDict()
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("doubleSliderValueChanged"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("doubleSliderValueChanged"), ddict)
+        self.sigDoubleSliderValueChanged.emit(ddict)
 
     def setMinMax(self, m, M):
         self.minSlider.setValue(m)
@@ -99,6 +85,8 @@ class DoubleSlider(qt.QWidget):
         
 
 class MySlider(qt.QWidget):
+    sigValueChanged = qt.pyqtSignal(float)
+    
     def __init__(self, parent = None, orientation=qt.Qt.Horizontal):
         qt.QWidget.__init__(self, parent)
         if orientation == qt.Qt.Horizontal:
@@ -109,19 +97,29 @@ class MySlider(qt.QWidget):
             layout = qt.QVBoxLayout(self)
         layout.setMargin(0)
         layout.setSpacing(0)
-        self.slider = Qwt5.QwtSlider(self, orientation)
+        self.slider = qt.QSlider(self)
+        self.slider.setOrientation(orientation)
         self.label  = qt.QLabel("0", self)
         self.label.setAlignment(alignment)
         self.label.setFixedWidth(self.label.fontMetrics().width('100.99'))
 
         layout.addWidget(self.slider)
         layout.addWidget(self.label)
-        self.connect(self.slider,
-                     qt.SIGNAL('valueChanged(double)'),
-                     self.setNum)
+        self.slider.valueChanged.connect(self.setNum)
 
     def setNum(self, value):
-        self.label.setText('%s' % value)
+        value = value / 100.
+        self.label.setText('%.2f' % value)
+        self.sigValueChanged.emit(value)
+
+    def setRange(self, minValue, maxValue):
+        self.slider.setRange(minValue * 100, int(maxValue * 100))
+
+    def setValue(self, value):
+        self.slider.setValue(value * 100)
+
+    def value(self):
+        return self.slider.value()/100.
 
 def test():
     app = qt.QApplication([])

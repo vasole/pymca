@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -94,29 +94,20 @@ class RGBCorrelatorSlider(qt.QWidget):
         self.mainLayout.addWidget(self._gridBox)
 
 
-        self.connect(self.redSlider,
-                     qt.SIGNAL("doubleSliderValueChanged"),
+        self.redSlider.sigDoubleSliderValueChanged.connect(\
                      self._redSliderChanged)
 
-        self.connect(self.greenSlider,
-                     qt.SIGNAL("doubleSliderValueChanged"),
+        self.greenSlider.sigDoubleSliderValueChanged.connect(\
                      self._greenSliderChanged)
 
-        self.connect(self.blueSlider,
-                     qt.SIGNAL("doubleSliderValueChanged"),
+        self.blueSlider.sigDoubleSliderValueChanged.connect(\
                      self._blueSliderChanged)
 
-        self.connect(self.autoScaleButton,
-                     qt.SIGNAL("clicked()"),
-                     self.autoScale)
+        self.autoScaleButton.clicked.connect(self.autoScale)
         
-        self.connect(self.autoScaleFromAToBButton,
-                     qt.SIGNAL("clicked()"),
-                     self.autoScaleFromAToB)
+        self.autoScaleFromAToBButton.clicked.connect(self.autoScaleFromAToB)
         
-        self.connect(self.autoScale90Button,
-                     qt.SIGNAL("clicked()"),
-                     self.autoScale90)
+        self.autoScale90Button.clicked.connect(self.autoScale90)
     
     def autoScale(self):
         self.__emitSignals = False
