@@ -82,15 +82,15 @@ I'm not aware of. Don't expect those to work either.
         self._full_res = None
         self._sx, self._sy = None, None
         self._bounds = (None, None, None, None)
+        self._origExtent = None
         super(ModestImage, self).__init__(*args, **kwargs)
         if 'extent' in kwargs and kwargs['extent'] is not None:
             self.set_extent(kwargs['extent'])
-        else:
-            self._origExtent = None
 
     def set_extent(self, extent):
         super(ModestImage, self).set_extent(extent)
-        self._origExtent = self.get_extent()
+        if self._origExtent is None:
+            self._origExtent = self.get_extent()
         
 
     def set_data(self, A):
@@ -124,7 +124,7 @@ I'm not aware of. Don't expect those to work either.
     def _scale_to_res(self):
         """ Change self._A and _extent to render an image whose
 resolution is matched to the eventual rendering."""
-
+        #print("CALLED")
         #extent has to be set BEFORE set_data
         if self._origExtent is None:
             if self.origin == "upper":
@@ -144,6 +144,8 @@ resolution is matched to the eventual rendering."""
         ext = ax.transAxes.transform([1, 1]) - ax.transAxes.transform([0, 0])
         #print("PIXELS H = ", ext[0], "PIXELS V = ", ext[1])
         xlim, ylim = ax.get_xlim(), ax.get_ylim()
+        #print("BEFORE AXES LIMITS X", xlim)
+        #print("BEFORE AXES LIMITS Y", ylim)
         xlim = max(xlim[0], origXMin), min(xlim[1], origXMax)
         ylim = max(ylim[0], origYMin), min(ylim[1], origYMax)
         #print("AXES LIMITS X", xlim)
@@ -438,7 +440,7 @@ class MatplotlibGraph(FigureCanvas):
         if event.inaxes != self.ax:
             if DEBUG:
                 print("RETURNING")
-            return        
+            return
         button = event.button
         leftButton = 1
         middleButton = 2
