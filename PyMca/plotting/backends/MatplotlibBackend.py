@@ -1159,9 +1159,12 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if info is None:
             info = {}
         color = info.get('plot_color', 'k')
+        color = kw.get('color', color)
         symbol = info.get('plot_symbol', None)
+        symbol = kw.get('symbol', symbol)
         brush = color
         style = info.get('plot_line_style', '-')
+        style = info.get('line_style', style)
         linewidth = 1
         axesLabel = info.get('plot_yaxis', 'left')
         fill = info.get('plot_fill', False)
@@ -1197,11 +1200,12 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       'label':legend,
                                       'axes':axesLabel,
                                       'fill':fill}
-        if self._oldActiveCurve in self.ax.lines:
-            if self._oldActiveCurve.get_label() == legend:
+        if self._activeCurveHandling:
+            if self._oldActiveCurve in self.ax.lines:
+                if self._oldActiveCurve.get_label() == legend:
+                    curveList[-1].set_color('k')
+            elif self._oldActiveCurveLegend == legend:
                 curveList[-1].set_color('k')
-        elif self._oldActiveCurveLegend == legend:
-            curveList[-1].set_color('k')
         curveList[-1].set_axes(axes)
         curveList[-1].set_zorder(2)
         if replot:
@@ -1620,6 +1624,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         return
 
     def setActiveCurve(self, legend, replot=True):
+        if not self._activeCurveHandling:
+            return
         if hasattr(legend, "_plot_info"):
             # we have received an actual item
             handle = legend

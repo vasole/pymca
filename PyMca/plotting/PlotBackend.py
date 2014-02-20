@@ -32,6 +32,7 @@ clear
 clearCurves
 clearImages (*)
 clearMarkers
+enableActiveCurveHandling
 getDefaultColormap (*)
 getDrawMode
 getGraphXLabel
@@ -154,6 +155,7 @@ class PlotBackend(object):
         self._yAutoScale = True
         self.setGraphXLimits(0., 100.)
         self.setGraphYLimits(0., 100.)
+        self._activeCurveHandling = False
         self._callback = self._dummyCallback
                 
     def addCurve(self, x, y, legend=None, info=None,
@@ -254,6 +256,12 @@ class PlotBackend(object):
         """
         print("PlotBackend default callback called")
         print(ddict)
+
+    def enableActiveCurveHandling(self, flag=True):
+        if flag:
+            self._activeCurveHandling = True
+        else:
+            self._activeCurveHandling = False
 
     def getDefaultColormap(self):
         """

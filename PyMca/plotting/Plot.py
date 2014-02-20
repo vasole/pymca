@@ -110,6 +110,9 @@ class Plot(PlotBase.PlotBase):
         self._activeCurve = None
         self._hiddenCurves = []
 
+        # activeCurve handling
+        self.enableActiveCurveHandling(True)
+
         #image handling
         self._imageList = []
         self._imageDict = {}
@@ -142,6 +145,21 @@ class Plot(PlotBase.PlotBase):
         # zoom handling (should we take care of it?)
         self.enableZoom = self.setZoomModeEnabled
         self.setZoomModeEnabled(True)
+
+    def enableActiveCurveHandling(self, flag=True):
+        activeCurve = None
+        if not flag:
+            if self.isActiveCurveHandlingEnabled():
+                activeCurve = self.getActiveCurve()
+            self._activeCurveHandling = False
+        else:
+            self._activeCurveHandling = True
+        self._plot.enableActiveCurveHandling(self._activeCurveHandling)
+        if activeCurve is not None:
+            self.addCurve(activeCurve[0],
+                          activeCurve[1],
+                          legend=activeCurve[2],
+                          info=activeCurve[3])
 
     def isZoomModeEnabled(self):
         return self._plot.isZoomModeEnabled()
@@ -382,8 +400,11 @@ class Plot(PlotBase.PlotBase):
         else:
             info['plot_handle'] = key
         self._curveDict[key] = [x, y, key, info]
+
         if len(self._curveList) == 1:
-            self.setActiveCurve(key)
+            if self.isActiveCurveHandlingEnabled():
+                self.setActiveCurve(key)
+
         if self.isCurveHidden(key):
             self._plot.removeCurve(key, replot=False)
         if replot:
@@ -517,6 +538,8 @@ class Plot(PlotBase.PlotBase):
         If just_legend is True:
             The legend of the active curve (or None) is returned.
         """
+        if not self.isActiveCurveHandlingEnabled():
+            return None
         if self._activeCurve not in self._curveDict:
             self._activeCurve = None
         if just_legend:
@@ -645,6 +668,8 @@ class Plot(PlotBase.PlotBase):
         :param legend: The legend associated to the curve
         :type legend: string
         """
+        if not self.isActiveCurveHandlingEnabled():
+            return
         oldActiveCurve = self.getActiveCurve(just_legend=True)
         key = str(legend)
         if key in self._curveDict.keys():
