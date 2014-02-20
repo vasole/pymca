@@ -110,9 +110,6 @@ class Plot(PlotBase.PlotBase):
         self._activeCurve = None
         self._hiddenCurves = []
 
-        # activeCurve handling
-        self.enableActiveCurveHandling(True)
-
         #image handling
         self._imageList = []
         self._imageDict = {}
@@ -132,8 +129,9 @@ class Plot(PlotBase.PlotBase):
         self._nColors   = len(colorlist)
         self._nStyles   = len(self._styleList)
 
-        self._colorIndex = 1 # black is reserved
+        self._colorIndex = 0
         self._styleIndex = 0
+        self._activeCurveColor = "#000000"
 
         # default properties
         self._logY = False
@@ -215,15 +213,23 @@ class Plot(PlotBase.PlotBase):
     def _getColorAndStyle(self):
         self._lastColorIndex = self._colorIndex
         self._lastStyleIndex = self._styleIndex
-        color = self._colorList[self._colorIndex]
-        style = self._styleList[self._styleIndex]
-        self._colorIndex += 1
-        #print("color index = ", self._colorIndex, "ncolors = ", self._nColors)
         if self._colorIndex >= self._nColors:
-            self._colorIndex = 1
+            self._colorIndex = 0
             self._styleIndex += 1
             if self._styleIndex >= self._nStyles:
-                self._styleIndex = 0
+                self._styleIndex = 0            
+        color = self._colorList[self._colorIndex]
+        style = self._styleList[self._styleIndex]
+        if color == self._activeCurveColor:
+            self._colorIndex += 1
+            if self._colorIndex >= self._nColors:
+                self._colorIndex = 0
+                self._styleIndex += 1
+                if self._styleIndex >= self._nStyles:
+                    self._styleIndex = 0
+            color = self._colorList[self._colorIndex]
+            style = self._styleList[self._styleIndex]
+        self._colorIndex += 1
         return color, style
 
     def setZoomModeEnabled(self, flag=True):
@@ -328,7 +334,7 @@ class Plot(PlotBase.PlotBase):
         if replace:
             self._curveList = []
             self._curveDict = {}
-            self._colorIndex = 1
+            self._colorIndex = 0
             self._styleIndex = 0
             self._plot.clearCurves()
 
@@ -498,6 +504,9 @@ class Plot(PlotBase.PlotBase):
             del self._curveDict[legend]
             if handle is not None:
                 self._plot.removeCurve(handle, replot=replot)
+        if not len(self._curveList):
+            self._colorIndex = 0
+            self._styleIndex = 0
 
     def removeImage(self, legend, replot=True):
         """
@@ -681,6 +690,14 @@ class Plot(PlotBase.PlotBase):
         self._plot.setActiveCurve(self._activeCurve, replot=replot)
         return self._activeCurve
 
+    def setActiveCurveColor(self, color="#000000"):
+        if color is None:
+            color = "black"
+        if color in colordict:
+            color = colordict[color]
+        self._activeCurveColor = color
+        self._plot.setActiveCurveColor(color)
+
     def setActiveImage(self, legend, replot=True):
         """
         Funtion to request the plot window to set the image with the specified legend
@@ -812,7 +829,7 @@ class Plot(PlotBase.PlotBase):
     def clear(self):
         self._curveList = []
         self._curveDict = {}
-        self._colorIndex = 1
+        self._colorIndex = 0
         self._styleIndex = 0
         self._markerDict = {}
         self._imageList = []
@@ -824,7 +841,7 @@ class Plot(PlotBase.PlotBase):
     def clearCurves(self):
         self._curveList = []
         self._curveDict = {}
-        self._colorIndex = 1
+        self._colorIndex = 0
         self._styleIndex = 0
         self._plot.clearCurves()
         self.replot()

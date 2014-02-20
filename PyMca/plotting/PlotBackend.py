@@ -156,6 +156,7 @@ class PlotBackend(object):
         self.setGraphXLimits(0., 100.)
         self.setGraphYLimits(0., 100.)
         self._activeCurveHandling = False
+        self.setActiveCurveColor("#000000")
         self._callback = self._dummyCallback
                 
     def addCurve(self, x, y, legend=None, info=None,
@@ -520,6 +521,9 @@ class PlotBackend(object):
         """
         print("PlotBackend setActiveCurve not implemented")
         return
+
+    def setActiveCurveColor(self, color="#000000"):
+        self._activeCurveColor = color
 
     def setActiveImage(self, legend, replot=True):
         """

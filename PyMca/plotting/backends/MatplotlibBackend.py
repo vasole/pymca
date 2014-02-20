@@ -1158,7 +1158,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.removeCurve(legend, replot=False)
         if info is None:
             info = {}
-        color = info.get('plot_color', 'k')
+        color = info.get('plot_color', self._activeCurveColor)
         color = kw.get('color', color)
         symbol = info.get('plot_symbol', None)
         symbol = kw.get('symbol', symbol)
@@ -1203,9 +1203,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if self._activeCurveHandling:
             if self._oldActiveCurve in self.ax.lines:
                 if self._oldActiveCurve.get_label() == legend:
-                    curveList[-1].set_color('k')
+                    curveList[-1].set_color(self._activeCurveColor)
             elif self._oldActiveCurveLegend == legend:
-                curveList[-1].set_color('k')
+                curveList[-1].set_color(self._activeCurveColor)
         curveList[-1].set_axes(axes)
         curveList[-1].set_zorder(2)
         if replot:
@@ -1650,7 +1650,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                         axes = self.ax2
                         break
         if handle is not None:
-            handle.set_color('k')
+            handle.set_color(self._activeCurveColor)
         else:
             raise KeyError("Curve %s not found" % legend)
         if self._oldActiveCurve in self.ax.lines:
