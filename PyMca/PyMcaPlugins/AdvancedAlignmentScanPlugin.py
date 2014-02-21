@@ -248,7 +248,7 @@ class AlignmentWidget(qt.QDialog):
             return False
         if not str(filename).endswith('.shift'):
             filename += '.shift'
-        if DEBUG:
+        if DEBUG == 1:
             print('saveOptions -- Filename: "%s"' % filename)
         currentOrder = self.plugin.getOrder()
         outDict = ConfigDict.ConfigDict()
@@ -474,7 +474,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             xmin = xmin0
         if xmax0 < xmax:
             xmax = xmax0
-        if DEBUG:
+        if DEBUG == 1:
             print('calculateShiftsFit -- xmin = %.3f, xmax = %.3f'%(xmin, xmax))
 
         # Get active curve
@@ -507,7 +507,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                                     numpy.asarray([yp0, xp0, fwhm0]), 
                                     xdata=x0[fitrange0], 
                                     ydata=y0[fitrange0])
-        if DEBUG:
+        if DEBUG == 1:
             if derivative:
                 print('calculateShiftsFit -- Results (Leg, PeakPos, Shift):')
             else:
@@ -545,7 +545,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             key = legend
             retList.append(key)
             retDict[key] = shift
-            if DEBUG:
+            if DEBUG == 1:
                   print( '\t%s\t%.3f\t%.3f'%(legend, fitp[1], shift))
         return retList, retDict
 
@@ -587,7 +587,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         
         # Determine the index of maximum in active curve
         shift0 = numpy.argmax(y0)
-        if DEBUG:
+        if DEBUG == 1:
             print('calculateShiftsMax -- Results:')
             print('\targmax(y) shift')
         for x,y,legend,info in curves:
@@ -600,7 +600,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             key = legend
             retList.append(key)
             retDict[key] = shift
-            if DEBUG:
+            if DEBUG == 1:
                 print('\t%d %.3f'%(x[shifty],shift))
         return retList, retDict
 
@@ -621,7 +621,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             xmin = xmin0
         if xmax0 < xmax:
             xmax = xmax0
-        if DEBUG:
+        if DEBUG == 1:
             print('calculateShiftsFFT -- xmin = %.3f, xmax = %.3f'%(xmin, xmax))
 
         # Get active curve
@@ -642,7 +642,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         y0 = numpy.take(y0, idx)
 
         fft0 = numpy.fft.fft(y0)
-        if DEBUG:
+        if DEBUG == 1:
             print('calculateShiftsFFT -- results (Legend len(idx) shift):')
         for x,y,legend,info in curves:
             idx = numpy.nonzero((x >= xmin) & (x <= xmax))[0]
@@ -673,7 +673,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             key = legend
             retList.append(key)
             retDict[key] = shift
-            if DEBUG:
+            if DEBUG == 1:
                 print('\t%s\t%d\t%f'%(legend,len(idx),shift))
         return retList, retDict
     # END Alignment Methods
@@ -715,18 +715,18 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             if msg.exec_() != qt.QMessageBox.Ok:
                 return False
         
-        if DEBUG:
+        if DEBUG == 1:
             print('applyShifts -- Shifting ...')
         for idx, (x,y,legend,info) in enumerate(curves):
             shift = self.shiftDict[legend]
             
             if shift is None:
-                if DEBUG:
+                if DEBUG == 1:
                     print('\tCurve \'%s\' not found in shiftDict\n%s'\
                           %(legend,str(self.shiftDict)))
                 continue
             if shift == float('NaN'):
-                if DEBUG:
+                if DEBUG == 1:
                     print('\tCurve \'%s\' has NaN shift'%legend)
                 continue
             
@@ -743,7 +743,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             else:
                 replace, replot = False, False
             # Check if scan number is adopted by new curve
-            if DEBUG:
+            if DEBUG == 1:
                 print('\'%s\' -- shifts -> \'%s\' by %f'%(self.shiftList[idx], legend, shift))
             selectionlegend = info.get('selectionlegend',legend)
             self.addCurve(xShifted, yShifted, 
@@ -802,7 +802,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         Method receives methodName from AlignmentWidget
         instance and assigns the according shift method. 
         """
-        if DEBUG:
+        if DEBUG == 1:
             print('setShiftMethod -- %s'%methodName)
         methodName = str(methodName)
         if methodName == 'Inverse FFT shift':
@@ -818,7 +818,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         Method receives methodName from AlignmentWidget
         instance and assigns the according alignment method. 
         """
-        if DEBUG:
+        if DEBUG == 1:
             print('setAlignmentMethod -- %s'%methodName)
         methodName = str(methodName)
         if methodName == 'FFT':
@@ -883,7 +883,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         """
         curves = self.getAllCurves()
         if len(curves) < 1:
-            if DEBUG:
+            if DEBUG == 1:
                 print('interpolate -- no curves present')
             raise ValueError("At least 1 curve needed")
             return
@@ -949,7 +949,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                     xmin0 = xmin
                 if xmax > xmax0:
                     xmax0 = xmax
-        if DEBUG:
+        if DEBUG == 1:
             print('getXLimits -- overlap = %s, xmin = %.3f, xmax =%.3f'\
                   %(overlap,xmin0,xmax0))
         return xmin0, xmax0
@@ -1003,16 +1003,16 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
 
         # Replace by max()?
         try:
-            # Calculate array woth all peak indices
+            # Calculate array with all peak indices
             peakIdx = numpy.asarray(sffuns.seek(ybg, yscaling=1000.), dtype=int)
             # Extract highest peak
             sortIdx = y[peakIdx].argsort()[-1]
         except IndexError:
-            if DEBUG:
+            if DEBUG == 1:
                 print('No peaks found..')
             return None
         except SystemError:
-            if DEBUG:
+            if DEBUG == 1:
                 print('Peak search failed. Continue with y maximum')
             peakIdx = [ybg.argmax()]
             sortIdx = 0
@@ -1053,7 +1053,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             msg.setWindowTitle('Alignment Scan Error')
             msg.setText('No help file found.')
             msg.exec_()
-            if DEBUG:
+            if DEBUG == 1:
                 print('XMCDWindow -- init: Unable to read help file')
             self.helpFileBrowser = None
         if self.helpFileBrowser is not None:
