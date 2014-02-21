@@ -293,7 +293,7 @@ class McaCalWidget(qt.QDialog):
         
     def connections(self):
         self.connect(self.peakParameters.searchButton,qt.SIGNAL('clicked()')  ,self.peakSearch)
-        self.graph.sigPlotSignal.connect(self.__graphsignal) 
+        self.graph.sigPlotSignal.connect(self.__graphsignal)
         self.connect(self.peakTable, qt.SIGNAL('PeakTableWidgetSignal') , 
                      self.__peakTableSignal)
         self.connect(self.calpar, qt.SIGNAL('CalibrationParametersSignal'),
@@ -489,7 +489,7 @@ class McaCalWidget(qt.QDialog):
         if DEBUG:
             print("__graphsignal called with dict = ", ddict)
         if ddict['event'] in ['markerClicked', 'markerSelected']:
-            print ddict
+            print(ddict)
             if DEBUG:
                 print("Setting marker color")
             marker = int(ddict['label'])
