@@ -86,6 +86,10 @@ class PlotWindow(PlotWidget.PlotWidget):
         if control or position:
             self._buildGraphBottomWidget(control, position)
 
+        # activeCurve handling
+        self.enableActiveCurveHandling(True)
+        self.setActiveCurveColor('black')
+
     def _buildGraphBottomWidget(self, control, position):
         widget = self.centralWidget()
         self.graphBottom = qt.QWidget(widget)

@@ -32,6 +32,7 @@ The plugins will be compatible with any plot window that provides the methods:
     getMonotonicCurves
     hideCurve
     hideImage
+    isActiveCurveHandlingEnabled
     isCurveHidden
     isImageHidden
     setActiveCurve
@@ -61,6 +62,9 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
 
         # And this to complete the interface
         PlotBackend.PlotBackend.__init__(self, parent)
+
+        self._activeCurveHandling = True
+
 
     def getActiveCurve(self, just_legend=False):
         """
@@ -184,6 +188,12 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         """
         print("PlotBase hideImage not implemented")
         return
+
+    def isActiveCurveHandlingEnabled(self):
+        if self._activeCurveHandling:
+            return True
+        else:
+            return False
 
     def isCurveHidden(self, legend):
         """

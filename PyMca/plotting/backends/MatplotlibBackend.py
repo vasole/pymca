@@ -22,7 +22,7 @@ Matplotlib Plot backend.
 """
 import numpy as np
 from matplotlib import cbook
-
+BLITTING = False
 import numpy
 from numpy import vstack as numpyvstack
 import sys
@@ -82,15 +82,15 @@ I'm not aware of. Don't expect those to work either.
         self._full_res = None
         self._sx, self._sy = None, None
         self._bounds = (None, None, None, None)
+        self._origExtent = None
         super(ModestImage, self).__init__(*args, **kwargs)
         if 'extent' in kwargs and kwargs['extent'] is not None:
             self.set_extent(kwargs['extent'])
-        else:
-            self._origExtent = None
 
     def set_extent(self, extent):
         super(ModestImage, self).set_extent(extent)
-        self._origExtent = self.get_extent()
+        if self._origExtent is None:
+            self._origExtent = self.get_extent()
         
 
     def set_data(self, A):
@@ -124,7 +124,7 @@ I'm not aware of. Don't expect those to work either.
     def _scale_to_res(self):
         """ Change self._A and _extent to render an image whose
 resolution is matched to the eventual rendering."""
-
+        #print("CALLED")
         #extent has to be set BEFORE set_data
         if self._origExtent is None:
             if self.origin == "upper":
@@ -144,6 +144,8 @@ resolution is matched to the eventual rendering."""
         ext = ax.transAxes.transform([1, 1]) - ax.transAxes.transform([0, 0])
         #print("PIXELS H = ", ext[0], "PIXELS V = ", ext[1])
         xlim, ylim = ax.get_xlim(), ax.get_ylim()
+        #print("BEFORE AXES LIMITS X", xlim)
+        #print("BEFORE AXES LIMITS Y", ylim)
         xlim = max(xlim[0], origXMin), min(xlim[1], origXMax)
         ylim = max(ylim[0], origYMin), min(ylim[1], origYMax)
         #print("AXES LIMITS X", xlim)
@@ -438,8 +440,7 @@ class MatplotlibGraph(FigureCanvas):
         if event.inaxes != self.ax:
             if DEBUG:
                 print("RETURNING")
-            self.__time0 = -1.
-            return        
+            return
         button = event.button
         leftButton = 1
         middleButton = 2
@@ -484,7 +485,16 @@ class MatplotlibGraph(FigureCanvas):
                         else:
                             artist.set_xdata(event.xdata)
                             artist.set_ydata(event.ydata)
-                    self.fig.canvas.draw()
+                    if BLITTING:
+                        canvas = artist.figure.canvas
+                        axes = artist.axes
+                        artist.set_animated(True)
+                        canvas.draw()
+                        self._background = canvas.copy_from_bbox(axes.bbox)
+                        axes.draw_artist(artist)
+                        canvas.blit(axes.bbox)
+                    else:
+                        self.fig.canvas.draw()
                     ddict = {}
                     if self.__markerMoving:
                         ddict['event'] = "markerMoving"
@@ -689,14 +699,24 @@ class MatplotlibGraph(FigureCanvas):
                     ymin, ymax = self.ax.get_ylim()
                     delta = abs(ymax - ymin)
                     ymax = max(ymax, ymin) - 0.005 * delta
-                    infoText.set_position((event.xdata, ymax))
+                    if infoText is not None:
+                        infoText.set_position((event.xdata, ymax))
                 elif 'ymarker' in artist._plot_options:
                     artist.set_ydata(event.ydata)
-                    infoText.set_position((event.xdata, event.ydata))
+                    if infoText is not None:
+                        infoText.set_position((event.xdata, event.ydata))
                 else:
                     artist.set_xdata(event.xdata)
                     artist.set_ydata(event.ydata)
-                self.fig.canvas.draw()
+                if BLITTING:
+                    canvas = artist.figure.canvas
+                    axes = artist.axes
+                    artist.set_animated(True)
+                    canvas.restore_region(self._background)
+                    axes.draw_artist(artist)
+                    canvas.blit(axes.bbox)
+                else:
+                    self.fig.canvas.draw()
                 ddict = {}
                 ddict['event'] = "markerMoving"
                 ddict['button'] = "left"
@@ -837,6 +857,10 @@ class MatplotlibGraph(FigureCanvas):
             if self.__markerMoving:
                 self.__markerMoving = False
                 artist = self._pickingInfo['artist']
+                if BLITTING:
+                    artist.set_animated(False)
+                    self._background = None
+                    artist.figure.canvas.draw()
                 ddict = {}
                 ddict['event'] = "markerMoved"
                 ddict['label'] = self._pickingInfo['label']
@@ -1134,10 +1158,13 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.removeCurve(legend, replot=False)
         if info is None:
             info = {}
-        color = info.get('plot_color', 'k')
+        color = info.get('plot_color', self._activeCurveColor)
+        color = kw.get('color', color)
         symbol = info.get('plot_symbol', None)
+        symbol = kw.get('symbol', symbol)
         brush = color
         style = info.get('plot_line_style', '-')
+        style = info.get('line_style', style)
         linewidth = 1
         axesLabel = info.get('plot_yaxis', 'left')
         fill = info.get('plot_fill', False)
@@ -1173,11 +1200,12 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       'label':legend,
                                       'axes':axesLabel,
                                       'fill':fill}
-        if self._oldActiveCurve in self.ax.lines:
-            if self._oldActiveCurve.get_label() == legend:
-                curveList[-1].set_color('k')
-        elif self._oldActiveCurveLegend == legend:
-            curveList[-1].set_color('k')
+        if self._activeCurveHandling:
+            if self._oldActiveCurve in self.ax.lines:
+                if self._oldActiveCurve.get_label() == legend:
+                    curveList[-1].set_color(self._activeCurveColor)
+            elif self._oldActiveCurveLegend == legend:
+                curveList[-1].set_color(self._activeCurveColor)
         curveList[-1].set_axes(axes)
         curveList[-1].set_zorder(2)
         if replot:
@@ -1596,6 +1624,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         return
 
     def setActiveCurve(self, legend, replot=True):
+        if not self._activeCurveHandling:
+            return
         if hasattr(legend, "_plot_info"):
             # we have received an actual item
             handle = legend
@@ -1620,7 +1650,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                         axes = self.ax2
                         break
         if handle is not None:
-            handle.set_color('k')
+            handle.set_color(self._activeCurveColor)
         else:
             raise KeyError("Curve %s not found" % legend)
         if self._oldActiveCurve in self.ax.lines:

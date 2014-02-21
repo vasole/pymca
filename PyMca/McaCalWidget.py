@@ -489,7 +489,6 @@ class McaCalWidget(qt.QDialog):
         if DEBUG:
             print("__graphsignal called with dict = ", ddict)
         if ddict['event'] in ['markerClicked', 'markerSelected']:
-            print(ddict)
             if DEBUG:
                 print("Setting marker color")
             marker = int(ddict['label'])
