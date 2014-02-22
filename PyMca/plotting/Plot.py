@@ -78,6 +78,36 @@ colorlist  = [colordict['black'],
               colordict['darkBrown']]
 
 #PyQtGraph symbols ['o', 's', 't', 'd', '+', 'x']
+#
+#Matplotlib symbols:
+#”.” 	point
+#”,” 	pixel
+#“o” 	circle
+#“v” 	triangle_down
+#“^” 	triangle_up
+#“<” 	triangle_left
+#“>” 	triangle_right
+#“1” 	tri_down
+#“2” 	tri_up
+#“3” 	tri_left
+#“4” 	tri_right
+#“8” 	octagon
+#“s” 	square
+#“p” 	pentagon
+#“*” 	star
+#“h” 	hexagon1
+#“H” 	hexagon2
+#“+” 	plus
+#“x” 	x
+#“D” 	diamond
+#“d” 	thin_diamond
+#“|” 	vline
+#“_” 	hline
+#“None” 	nothing
+#None 	nothing
+#” “ 	nothing
+#“” 	nothing
+#
 
 class Plot(PlotBase.PlotBase):
     PLUGINS_DIR = None
