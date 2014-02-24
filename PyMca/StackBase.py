@@ -143,7 +143,14 @@ class StackBase(object):
                                 import imp
                                 imp.reload(sys.modules[plugin])
                     else:
-                        __import__(plugin)
+                        try:
+                            __import__(plugin)
+                        except:
+                            if directory == PLUGINS_DIR:
+                                plugin = "PyMca.PyMcaPlugins." + pluginName
+                                __import__(plugin)
+                            else:
+                                raise
                     if hasattr(sys.modules[plugin], targetMethod):
                         self.pluginInstanceDict[plugin] = \
                                 sys.modules[plugin].getStackPluginInstance(self)
@@ -286,10 +293,10 @@ class StackBase(object):
         if self._stack.x in [None, []]:
             self._stack.x = [numpy.arange(len(mcaData0)).astype(numpy.float)+\
                                 self._stack.info.get('Channel0', 0.0)]
-            dataObject.x = [self._stack.x * 1]
+            dataObject.x = [self._stack.x[0]]
         else:
             # for the time being it can only contain one axis
-            dataObject.x = [self._stack.x[0]]            
+            dataObject.x = [self._stack.x[0]]
 
         dataObject.y = [mcaData0]
 
@@ -335,7 +342,6 @@ class StackBase(object):
             ddict = self._ROIDict
         else:
             updateROIDict = True
-
         xw = ddict['calibration'][0] + \
              ddict['calibration'][1] * self._mcaData0.x[0] + \
              ddict['calibration'][2] * (self._mcaData0.x[0] ** 2)
