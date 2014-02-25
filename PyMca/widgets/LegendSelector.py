@@ -412,7 +412,7 @@ class LegendModel(qt.QAbstractListModel):
             return True
         if row < 0 or row >= length:
             raise IndexError('Index out of range -- '
-                            +'idx: %d, len: %d'%(idx, length))
+                            +'idx: %d, len: %d'%(row, length))
         if count == 0:
             return False
         qt.QAbstractListModel.beginRemoveRows(self,
