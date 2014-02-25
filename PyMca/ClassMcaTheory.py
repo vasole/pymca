@@ -1487,7 +1487,7 @@ class McaTheory(object):
             gain = param[1] * 1.0
             energy=zero + gain * x
             energy -= numpy.sum(energy)/len(energy)
-            return pow(energy,index-PARAMETERS.index('Sum')-1).reshape(-1)
+            return pow(energy,index-PARAMETERS.index('Sum')-1)
         elif self.__CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial') and \
             PARAMETERS[index] == ('A%d' % (index-PARAMETERS.index('Sum')-1)):
             text  = "Linear Least-Squares Fit incompatible\n"
