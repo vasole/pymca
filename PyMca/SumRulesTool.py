@@ -66,8 +66,9 @@ else:
     QStringList = list
 
 
-DEBUG = 0
+DEBUG = 1
 NEWLINE = '\n'
+BLITTING = True
 
 class Calculations(object):
     def __init__(self):
@@ -93,7 +94,8 @@ class Calculations(object):
         
         return numpy.cumsum(.5 * numpy.diff(x) * (y[1:] + y[:-1]))
     
-    def magneticMoment(self, p, q, r, n, econf = '3d'):
+    #def magneticMoment(self, p, q, r, n, econf = '3d'):
+    def magneticMoment(self, p, q, r, n, econf):
         """
         Input
         -----
@@ -120,7 +122,7 @@ class Calculations(object):
         
         # Determine number of states in outer shell
         if econf not in ['3d','4f']:
-            raise ValueError('Element must either be 3d or 4f type!')
+            raise ValueError('Calculations.magneticMoment -- Element must either be 3d or 4f type!')
         elif econf == '3d':
             nMax = 10.
         else:
@@ -135,13 +137,12 @@ class Calculations(object):
             mOrbt = -4./3. * q * (nMax - n) / r
         if (q is not None) and (p is not None):
             mSpin  = -(6.*p - 4.*q) * (nMax - n) / r
-            mRatio = 2*q/(9*p-6*q)
+            mRatio = 2.*q/(9.*p-6.*q)
         return mOrbt, mSpin, mRatio
 
 class MarkerSpinBox(qt.QDoubleSpinBox):
     
-    valueChangedSignal = qt.pyqtSignal(float)
-    intersectionsChangedSignal = qt.pyqtSignal(object)
+    intersectionsChangedSignal = qt.pyqtSignal()
 
     def __init__(self, window, plotWindow, label='', parent=None):
         qt.QDoubleSpinBox.__init__(self, parent)
@@ -209,7 +210,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
     def _setMarkerFollowMouse(self, windowTitle):
         windowTitle = str(windowTitle)
         if self.window == windowTitle:
-            # Marker is active
+            # Blue, Marker is active
             color = 'blue'
             draggable  = True
         else:
@@ -239,12 +240,13 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.blockSignals(True)
         self.setValue(markerPos)
         self.blockSignals(False)
+        self.intersectionsChangedSignal.emit()
             
     def _valueChanged(self, val):
         try:
             val = float(val)
         except ValueError:
-            if DEBUG == 0:
+            if DEBUG == 1:
                 print('_valueChanged -- Sorry, it ain\'t gonna float: %s'%str(val))
             return
         #self.plotWindow.removeMarker(self.label)
@@ -256,6 +258,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
                                 selectable=False,
                                 draggable=True)
         #self.plotWindow.replot()
+        self.intersectionsChangedSignal.emit()
         
 class LineEditDisplay(qt.QLineEdit):
     def __init__(self, controller, ddict=None, unit='', parent=None):
@@ -440,7 +443,7 @@ class SumRulesWindow(qt.QMainWindow):
                 self.elementEConfCB.currentIndexChanged['QString'].connect(self.setElectronConf)
                 elementEConfLayout = qt.QHBoxLayout()
                 elementEConfLayout.setContentsMargins(0,0,0,0)
-                elementEConfLayout.addWidget(qt.QLabel('Electron shell'))
+                elementEConfLayout.addWidget(qt.QLabel('Electron configuration'))
                 elementEConfLayout.addWidget(qt.HorizontalSpacer())
                 elementEConfLayout.addWidget(self.elementEConfCB)
                 elementEConfWidget = qt.QWidget()
@@ -539,7 +542,7 @@ class SumRulesWindow(qt.QMainWindow):
                 self.valuesDict[self.__tabElem]\
                     ['element'] = self.elementCB
                 self.valuesDict[self.__tabElem]\
-                    ['electron shell'] = self.elementEConfCB
+                    ['electron configuration'] = self.elementEConfCB
                 self.valuesDict[self.__tabElem]\
                     ['electron occupation'] = self.electronOccupation
                 self.valuesDict[self.__tabElem]\
@@ -709,13 +712,13 @@ class SumRulesWindow(qt.QMainWindow):
                     integralVal = qt.QLineEdit()
                     integralVal.setReadOnly(True)
                     integralVal.setMaximumWidth(120)
-                    #spinbox.valueChanged['QString'].connect(self.getIntegralValue)
                     valLabel = qt.QLabel('Integral Value:')
                     mwLayout = markerWidget.layout()
                     mwLayout.addWidget(valLabel)
                     mwLayout.addWidget(integralVal)
                     pqLayout.addWidget(markerWidget)
-                    spinbox.valueChanged.connect(self.calcMagneticMoments)
+                    #spinbox.valueChanged.connect(self.calcMagneticMoments)
+                    spinbox.intersectionsChangedSignal.connect(self.calcMagneticMoments)
                     key = 'Integral ' + markerLabel
                     self.valuesDict[self.__tabInt][key] = integralVal
                 pqGB = qt.QGroupBox('XAS/XMCD integrals')
@@ -1014,7 +1017,6 @@ class SumRulesWindow(qt.QMainWindow):
             self.calcMagneticMoments()
 
     def calcMagneticMoments(self):
-        # 0. Get Marker intersections
         ddict = self.valuesDict
         pqr = []
         mathObj = Calculations()
@@ -1034,8 +1036,6 @@ class SumRulesWindow(qt.QMainWindow):
             lineEdit = ddict[self.__tabInt][key]
             lineEdit.setText(str(y))
             pqr += [y]
-        # 1. Display intergral values
-        # 2. Calculate the moments
         p, q, r = pqr
         electronOccupation = ddict[self.__tabElem]['electron occupation']
         try:
@@ -1044,50 +1044,22 @@ class SumRulesWindow(qt.QMainWindow):
             if DEBUG == 1:
                 print('calcMM -- Could not convert electron occupation')
             return
-        mmO, mmS, mmR = mathObj.magneticMoment(p,q,r,n)
-        # 3. Display moments
+        electronConfiguration = ddict[self.__tabElem]['electron configuration']
+        econf = str(electronConfiguration.currentText())
+        try:
+            mmO, mmS, mmR = mathObj.magneticMoment(p,q,r,n,econf)
+        except ValueError as e:
+            if DEBUG == 1:
+                print(e)
+            mmO, mmS, mmR = 3*['---']
         self.mmOrbt.setText(str(mmO))
         self.mmSpin.setText(str(mmS))
         self.mmRatio.setText(str(mmR))
 
-    def getIntegralValues(self, pos):
-        dataList = [self.xmcdInt, self.xasInt]
-        res      = float('NaN')
-        resList  = [res] * len(dataList)
-        if not self.xmcdInt:
-            if DEBUG:
-                print('getIntegralValues -- self.xmcdInt not present')
-            return
-        if not self.xasInt:
-            if DEBUG:
-                print('getIntegralValues -- self.xasInt not present')
-            return
-        for listIdx, data in enumerate(dataList):
-            x, y = data
-            if numpy.all(pos < x) or numpy.all(x < pos):
-                if DEBUG == 0:
-                    print('getIntegralValues -- Marker position outside of data range')
-                continue
-            if pos in x:
-                idx = numpy.where(x == pos)
-                res = y[idx]
-            else:
-                # Intepolation needed, assume well
-                # behaved data (c.f. copy routine)
-                lesserIdx  = numpy.nonzero(x < pos)[0][-1]
-                greaterIdx = numpy.nonzero(x > pos)[0][0]
-                dy = y[lesserIdx] - y[greaterIdx]
-                dx = x[lesserIdx] - x[greaterIdx]
-                res = dy/dx * (pos - x[lesserIdx]) + y[lesserIdx]
-            resList[listIdx] = res
-        #return res
-        if DEBUG:
-            print('getIntegralValues -- Result:\n\t%s'%str(resList))
-
     def loadData(self):
         dial = LoadDichorismDataDialog()
         dial.setDirectory(PyMcaDirs.outputDir)
-        # CHANGE ME!
+        # TODO: CHANGE ME!
         #dial.setDirectory(r'C:\Users\tonn\lab\datasets\sum_rules\sum_rules_4f_example_EuRhj2Si2')
         if dial.exec_():
             dataDict = dial.dataDict
@@ -1709,17 +1681,17 @@ class SumRulesWindow(qt.QMainWindow):
                 xmcdX, xmcdY = self.xmcdData
                 xmcdLabel = 'xmcd'
             xasX,  xasY  = self.xasData
-            xyList = [(xmcdX, xmcdY, xmcdLabel),
-                      (xasX, xasY, 'xas')]
+            xyList = [(xmcdX, xmcdY, xmcdLabel, {'plot_yaxis': 'right'}),
+                      (xasX, xasY, 'xas', {})]
             # At least one of the curve is going
             # to get plotted on secondary y axis
             mapToY2 = True 
         elif window == self.__tabBG:
             xasX, xasY= self.xasData
-            xyList = [(xasX, xasY, 'xas')]
+            xyList = [(xasX, xasY, 'xas', {})]
             if self.xasDataBG is not None:
                 xasBGX, xasBGY = self.xasDataBG
-                xyList += [(xasBGX, xasBGY, self.__xasBGmodel)]
+                xyList += [(xasBGX, xasBGY, self.__xasBGmodel, {})]
         elif window == self.__tabInt:
             if self.xasDataBG is None:
                 self.xmcdInt = None
@@ -1745,27 +1717,28 @@ class SumRulesWindow(qt.QMainWindow):
             xmcdIntX = .5 * (xmcdX[1:] + xmcdX[:-1])
             xasIntY  = mathObj.cumtrapz(y=xasY,  x=xasX)
             xasIntX  = .5 * (xasX[1:] + xasX[:-1])
-            xyList = [(xmcdIntX, xmcdIntY, xmcdIntLabel),
-                      (xasX,     xasY,     'xas corr'),
-                      (xasIntX,  xasIntY,  'xas Int')]
+            xyList = [(xmcdIntX, xmcdIntY, xmcdIntLabel, {'plot_yaxis': 'right'}),
+                      (xasX,     xasY,     'xas corr', {}),
+                      (xasIntX,  xasIntY,  'xas Int', {})]
             self.xmcdInt = xmcdIntX, xmcdIntY
             self.xasInt = xasIntX, xasIntY
         xmin, xmax = numpy.infty, -numpy.infty
         ymin, ymax = numpy.infty, -numpy.infty
-        for x,y,legend in xyList:
+        for x,y,legend,info in xyList:
             xmin = min(xmin, x.min())
             xmax = max(xmax, x.max())
             ymin = min(ymin, y.min())
             ymax = max(ymax, y.max())
             if DEBUG == 1:
                 print('plotOnDemand -- adding Curve..')
-            info = {}
+            """
             if mapToY2:
                 if hasattr(self.plotWindow, 'graph'):
                     specLegend = self.plotWindow.dataObjectsList[-1]
                     self.plotWindow.graph.mapToY2(specLegend)
                 else:
                     info['plot_yaxis'] = 'right'
+            """
             self.plotWindow.addCurve(
                     x=x, 
                     y=y,
@@ -2054,6 +2027,7 @@ if __name__ == '__main__':
    
     app = qt.QApplication([])
     win = SumRulesWindow()
+    #r'C:\Users\tonn\lab\datasets\sum_rules\sum_rules_4f_example_EuRhj2Si2'
     #win = DataDisplay.PlotWindow()
     #xmin, xmax = win.getGraphXLimits()
     #win.insertXMarker(50., draggable=True)
