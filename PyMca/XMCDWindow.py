@@ -1478,7 +1478,7 @@ class XMCDWidget(qt.QWidget):
                                +'experiment or configure new experiment')
         
         self.experimentsDict = {
-            'Generic Dichorism': {
+            'Generic Dichroism': {
                   'xrange': 0,
                   'normalization': 0,
                   'normalizationMethod': 'offsetAndArea',
@@ -1560,7 +1560,7 @@ class XMCDWidget(qt.QWidget):
             }
         }
         self.expCBox.addItems(
-                        ['Generic Dichorism',
+                        ['Generic Dichroism',
                          'ID08: XLD 9 Tesla Magnet',
                          'ID08: XLD 5 Tesla Magnet',
                          'ID08: XMCD 9 Tesla Magnet',
@@ -1692,7 +1692,7 @@ class XMCDWidget(qt.QWidget):
                 self.optsWindow.setOptions(self.experimentsDict[exp])
             except ValueError:
                 self.optsWindow.setOptions(
-                        self.experimentsDict['Generic Dichorism'])
+                        self.experimentsDict['Generic Dichroism'])
                 return
             # Get motor values from tree
             self.updateTree()
@@ -1855,7 +1855,7 @@ class XMCDWidget(qt.QWidget):
         self.optsWindow.updateMotorList(self.motorNamesList)
         self.updateTree()
         experiment = str(self.expCBox.currentText())
-        if experiment != 'Generic Dichorism':
+        if experiment != 'Generic Dichroism':
             self.selectExperiment(experiment)
         return
 
