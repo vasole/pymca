@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1481,13 +1481,13 @@ class McaTheory(object):
             return a*a
         elif (self.__CONTINUUM == CONTINUUM_LIST.index('Linear Polynomial')) and \
              (PARAMETERS[index] == ( 'A%d' % (index-PARAMETERS.index('Sum')-1))):
-            param=numpy.array(param0)
+            param=numpy.array(self.parameters)
             x=numpy.array(t0)
             zero = param[0]
             gain = param[1] * 1.0
             energy=zero + gain * x
             energy -= numpy.sum(energy)/len(energy)
-            return pow(energy,index-PARAMETERS.index('Sum')-1) 
+            return pow(energy,index-PARAMETERS.index('Sum')-1).reshape(-1)
         elif self.__CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial') and \
             PARAMETERS[index] == ('A%d' % (index-PARAMETERS.index('Sum')-1)):
             text  = "Linear Least-Squares Fit incompatible\n"
@@ -2731,7 +2731,7 @@ def test(inputfile=None,scankey=None,pkm=None,
             graph.addCurve(xw,numpy.ravel(mcafit.zz),"Background Data")
             app.setMainWidget(graph)
             container.show()
-            app.exec_loop()
+            app.exec_()
         print("error ",sys.exc_info()[1])
         sys.exit(1)
     fittedpar=fitresult[0]
