@@ -125,7 +125,7 @@
 marginwidth=10 marginheight=10  topmargin=10 leftmargin=10>
 
 <a NAME=Up></a>
-<H3>XLD/XMCD Analysis HOWTO</H3>
+<H3>Sum Rules Tool Documentation</H3>
 
 <H4>
 Contents
@@ -140,38 +140,51 @@ Contents
 Synopsis
 </H4>
 
-The present tool serves the purpose to evaluate XMCD data according to a 1995 paper of Chen <i>et. al.</i> (Phys. Rev. Lett. 75, 152 (1995), c.f. <a NAME=Theory>Theory</a>). To apply it, the user has to contribute a xray magnetic circular dichorism (XMCD) spectrum as well as a xray absorbtion spectrum of a sample.<br>
+The present tool serves the purpose to evaluate XMCD data according to a 1995 paper of Chen <i>et. al.</i> (Phys. Rev. Lett. 75, 152 (1995), c.f. <a href=#Theory>Theory</a>). To apply it, the user has to contribute a x-ray magnetic circular dichroism (XMCD) spectrum as well as a x-ray absorption spectrum of a sample.<br>
 <br>
-The tool offers a graphical user interface that allows data preprocessing, background substraction and integration of the data in an interactive manner. Results can be exported in the usual *.spec file format.
+The tool offers a graphical user interface that allows data preprocessing, background subtraction and integration of the data in an interactive manner. Results can be exported in the usual *.spec file format.
 
 <H3><a NAME=Usage>
 1. Usage
 </a></H3>
 
 <div class='main'>
-Open a *.spec data file by selecting 'File -> Open Spec File'. A Dialog opens displaying the file system on the left hand side and two selection frames on the right. Once a *.spec file is selected, the top right frame shows the scans in the file. Notice that the scan also can be an analysis file with the analysed data divided into scans. If you used the XLD/XMCD Plugin of PyMca, the typical analysis file includes one or more scans that correspond to each analysis stored in the file. Once a scan has been selected, the bottom frame on the left shows the counters. One must define the counters used as x-axis as well as the XAS counter resp. the XMCD counter.<br>
-<br>
-Once the selection is done, the programm has the informations required to perform the analysis. Click "Open" to load the data. The empty plot window in the top part of the application typically shows the XMCD spectrum in blue and the XAS spectrum in red. The bottom part of the window contains three tabs titled 'ELEMENT', 'BACKGROUND' and 'INTEGRATION'.<br>
-<br>
-The analysis starts by specifying the sample in the first tab 'ELEMENT' (Shortcut: F2). From the drop down menu in the bottom left select the electron shell and the element and set the electron occupation of the outer shell. From the drop down menus in the bottom right select the absorption edges probed in the experiment. The edge values can be defined more precisely later on and the values selected in the 'ELEMENTS' tab mainly tell the programm how many edges to consider.<br>
-<br>
-The next step in the analysis is the sustraction of a background from the XAS spectrum. Switch to the 'BACKGROUND' tab (Shortcut: F3). A click on the estimate button (shortcut: CRTL+E), located in the middle right part of the programm, tells it to guess initial values for certain markers relevant to the background substraction. The markers divide the XAS spectrum in three regions: pre-edge, post-edge and the region containing the absorption edges.<br>
-<br>
-The model itself consists of one or two gaussian error functions whose turning points conincide with the absorption edges. Slide the markers to the absorbtion edges by clicking and dragging the markers labelled 'Edge 1' and as the case may be 'Edge 2'. Every change done in this way automatically updates the model. Pre- and Post-edge regions define the constant model offsets before and after the steps by calculating the arithmetic mean over the data points inside the respective regions. Set the markers 'Pre Edge Min', 'Pre Edge Max', 'Post Edge Min', 'Post Edge Max' accordingly. Two values are missing to entirely define the module: the step width and, in case of a two step model, the ratio between the two steps. These values can be adjusted in the bottom right corner of the 'BACKGROUND' tab. If the cursor is inside the according the selection boxes, one can use the up and down arrow keys on the keyboard to adjust the values.<br>
-<br>
-Notice that the model is not fitted but only adjusted by eye. The user is encouraged to alter the quantities defining the background module during an analysis to validate the reliability of the method.<br>
-<br>
-For the final step of the analysis switch to the 'INTEGRATION' tab (shortcut: F4). The plot window shows three curves: the corrected XAS absorbtion spectrum and the cumultive integral of both the XMCD and the XAS spectra. In the top left corner of the tab one can find markers corresponding to the integrals used to calculate the orbital and the spin magnetic moment. The latter values are displayed on the top right corner of the tab. Click the estimate button to assign an initial value to the markers. Markers <b>p</b> and <b>q</b> acts on the integrale of the XMCD spectrum, marker <b>r</b> acts on the integral of the XAS spectrum (c.f. Section <a href=#Theory>Theory</a> for the equations).
+    Open a *.spec data file by selecting 'File -> Open Spec File'. A Dialog opens displaying the file system on the left hand side and two selection frames on the right. Once a *.spec file is selected, the top right frame shows the scans in the file. Notice that the scan also can be an analysis file with the analyzed data divided into scans. If you used the XLD/XMCD Plugin of PyMca, the typical analysis file includes one or more scans that correspond to each analysis stored in the file. Once a scan has been selected, the bottom frame on the left shows the counters. One must define the counters used as x-axis as well as the XAS counter resp. the XMCD counter.<br>
+    <br>
+    Once the selection is done, the program has the information required to perform the analysis. Click "Open" to load the data. The empty plot window in the top part of the application typically shows the XMCD spectrum in blue and the XAS spectrum in red. The bottom part of the window contains three tabs titled 'ELEMENT', 'BACKGROUND' and 'INTEGRATION'.<br>
+    <br>
+    The analysis starts by specifying the sample in the first tab 'ELEMENT' (Shortcut: F2). From the drop down menu in the bottom left select the electron shell and the element and set the electron occupation of the outer shell. From the drop down menus in the bottom right select the absorption edges probed in the experiment. The edge values can be defined more precisely later on and the values selected in the 'ELEMENTS' tab mainly tell the program how many edges to consider.<br>
+    <br>
+    The next step in the analysis is the sustraction of a background from the XAS spectrum. Switch to the 'BACKGROUND' tab (Shortcut: F3). A click on the estimate button (shortcut: CRTL+E), located in the middle right part of the programm, tells it to guess initial values for certain markers relevant to the background subtraction. The markers divide the XAS spectrum in three regions: pre-edge, post-edge and the region containing the absorption edges.<br>
+    <br>
+    The model itself consists of one or two Gaussian error functions whose turning points coincide with the absorption edges. Slide the markers to the absorption edges by clicking and dragging the markers labeled 'Edge 1' and as the case may be 'Edge 2'. Every change done in this way automatically updates the model. Pre- and Post-edge regions define the constant model offsets before and after the steps by calculating the arithmetic mean over the data points inside the respective regions. Set the markers 'Pre Edge Min', 'Pre Edge Max', 'Post Edge Min', 'Post Edge Max' accordingly. Two values are missing to entirely define the module: the step width and, in case of a two-step model, the ratio between the two steps. These values can be adjusted in the bottom right corner of the 'BACKGROUND' tab. If the cursor is inside the according the selection boxes, one can use the up and down arrow keys on the keyboard to adjust the values.<br>
+    <br>
+    Notice that the model is not fitted but only adjusted by eye. The user is encouraged to alter the quantities defining the background module during an analysis to validate the reliability of the method.<br>
+    <br>
+    For the final step of the analysis switch to the 'INTEGRATION' tab (shortcut: F4). The plot window shows three curves: the corrected XAS absorption spectrum and the cumulative integral of both the XMCD and the XAS spectra. In the top left corner of the tab one can find markers corresponding to the integrals used to calculate the orbital and the spin magnetic moment. The latter values are displayed on the top right corner of the tab. Click the estimate button to assign an initial value to the markers. Markers <b>p</b> and <b>q</b> acts on the integral of the XMCD spectrum, marker <b>r</b> acts on the integral of the XAS spectrum (c.f. Section <a href=#Theory>Theory</a> for the equations).
 </div>
 <br><a href=#Up>up</a>
 
 <H3><a NAME=Theory>
 2. Theory
 </a></H3>
-<br><a href=#Up>up</a>
 
 <div class='main'>
-Here be Theory
+    The present application uses equations obtained from Chen <i>et. al.</i>. The orbital angular momentum is calculated using
+    <br><br><img src="mOrb.png" alt="Orbital angular momentum"><br><br>
+    while the spin angular momentum is given by
+    <br><br><img src="mSpin.png" alt="Spin angular momentum"><br><br>
+    where the n define the maximal and average electron occupation of the outer shell. For 3d and 4f shells, the maximal occupation is
+    <br><br><img src="nMax.png" alt="Maximal occupation of 3d and 4f electron shells"><br><br>
+    The ration of the above expressions simplifies to
+    <br><br><img src="mOverM.png" alt="Ration of orbital and spin angular momentum"><br><br>
+    Both equations for orbital and spin magnetic moment the parameter p, q and r which are obtained from the integrals certain features of the absorption and the difference spectra. Following the paper of Chen <i>et. al.</i>, we treat the case of a 3d material. The parameter r is given by the integral over the whole range of the absorption spectrum:
+    <br><br><img src="rInt.png" alt="Integral r"><br><br>
+    Integral p considers the L3 absorption edge feature of the difference (XMCD) spectrum
+    <br><br><img src="pInt.png" alt="Integral p"><br><br>
+    while intergral q considers the L2 absorption edge feature in the same spectrum
+    <br><br><img src="qInt.png" alt="Integral q"><br><br>
+    The &mu;s are given by the absorption spectrum recorded at different polarizations. Thus in the last three equations, the expression in parentheses is either the XAS spectrum (r: +) or the XMCD spectrum (p,q: -).
 </div>
 <br><a href=#Up>up</a>
 
@@ -180,7 +193,88 @@ Here be Theory
 </a></H3>
 
 <div class='main'>
-Here be Shortcuts
+<table border="1">
+    <colgroup>
+        <col span="1" style="width: 20%;">
+        <col span="1" style="width: 26%;">
+		<col span="1" style="width: 54%;">
+    </colgroup>
+    <tr>
+        <th text-align='left'>Shortcut</th>
+        <th>Purpose</th>
+		<th>Describtion</th>
+    </tr>
+    <tr>
+        <td>F1</td>
+        <td>
+        Shows help file
+        </td>
+		<td>
+		Opens a browser that displays this document.
+		</td>
+    </tr>
+    <tr>
+        <td>F2, F3, F4</td>
+        <td>
+		Switch tabs
+        </td>
+		<td>
+		Switches to tabs ELEMENT, BACKGROUND resp. INTEGRATION
+		</td>
+    </tr>
+    <tr>
+        <td>&lt;CTRL&gt;+E</td>
+        <td>
+        Estimate
+        </td>
+		<td>
+		Trigger estimation of marker position. Only available on Background and Integration tab
+		</td>
+    </tr>
+    <tr>
+        <td>&lt;CTRL&gt; + O</td>
+        <td>Open data file</td>
+		<td>
+        Opens a file dialog to select a *.spec or *.dat file as input data.
+        </td>
+    </tr>
+    <tr>
+		<td>&lt;CRTL&gt; + L</td>
+        <td>Opens analysis file</td>
+		<td>
+        Opens a file dialog to open a previously saved analysis file
+        </td>
+    </tr>
+    <tr>
+        <td>&lt;CRTL&gt; + S</td>
+		<td>Save current analysis</td>
+        <td>
+		Saves recent changes to a previously saved analysis file. If the analysis has not been saved yet, a file dialog opens to specify the save location in the file system.
+        </td>
+    </tr>
+	<tr>
+        <td>&lt;CRTL&gt; +<br>&lt;SHIFT&gt; + S</td>
+		<td>Save analysis as</td>
+        <td>
+		Saves current analysis in different analysis file.
+        </td>
+    </tr>
+	<tr>
+        <td>&lt;CRTL&gt; + D</td>
+		<td>Save data</td>
+        <td>
+		Saves data produced during the analysis. The save procedure produces one file containing two parts. In the first part all raw data on which the analysis was based is saved, i.e. the x-range, the XAS and XMCD spectrum, and the background model applied to the XAS spectrum before integration. Also, the corrected XAS and XMCD spectra are saved. The second part contains the integrated data.
+        </td>
+    </tr>
+	<tr>
+        <td>&lt;CRTL&gt; +<br>&lt;SHIFT&gt; + D</td>
+		<td>Save analysis as</td>
+        <td>
+		Same as the above, but allows the user to select a different file in which the data is written.
+        </td>
+    </tr>
+</table>
+
 </div>
 <br><a href=#Up>up</a>
 
