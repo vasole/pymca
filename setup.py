@@ -280,9 +280,9 @@ def build_PyMcaSciPy(ext_modules):
 def build_plotting_ctools(ext_modules):
     packages.append('PyMca.plotting.ctools')
     basedir = os.path.join(os.getcwd(),'PyMca', 'plotting','ctools', '_ctools')
-    c_files = glob.glob(os.path.join(basedir, 'src', '*.c'))
+    c_files = glob.glob(os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'))
     if build_ext:
-        src = glob.glob(os.path.join(basedir, 'cython','*.pyx'))
+        src = glob.glob(os.path.join(basedir, 'cython','_ctools.pyx'))
     else:
         src = glob.glob(os.path.join(basedir, 'cython','*.c'))
     src += c_files
