@@ -1467,7 +1467,7 @@ class McaTheory(object):
             f2 = self.mcatheory(newpar, x)
             return (f1-f2) / (2.0 * delta)
 
-    def linearMcaTheoryDerivative(self,param0,index,t0):
+    def linearMcaTheoryDerivative(self, param0, index, t0):
         NGLOBAL = self.NGLOBAL
         if index > NGLOBAL-1:
              return self.linearMatrix[:, index-NGLOBAL]
@@ -1481,13 +1481,13 @@ class McaTheory(object):
             return a*a
         elif (self.__CONTINUUM == CONTINUUM_LIST.index('Linear Polynomial')) and \
              (PARAMETERS[index] == ( 'A%d' % (index-PARAMETERS.index('Sum')-1))):
-            param=numpy.array(self.parameters)
-            x=numpy.array(t0)
+            param=numpy.array(param0, copy=False)
+            x=numpy.array(t0, copy=False)
             zero = param[0]
             gain = param[1] * 1.0
             energy=zero + gain * x
             energy -= numpy.sum(energy)/len(energy)
-            return pow(energy,index-PARAMETERS.index('Sum')-1).reshape(-1)
+            return pow(energy,index-PARAMETERS.index('Sum')-1)
         elif self.__CONTINUUM == CONTINUUM_LIST.index('Exp. Polynomial') and \
             PARAMETERS[index] == ('A%d' % (index-PARAMETERS.index('Sum')-1)):
             text  = "Linear Least-Squares Fit incompatible\n"
