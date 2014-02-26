@@ -844,27 +844,6 @@ class SumRulesWindow(qt.QMainWindow):
         self.confFilename      = None
         self.baseFilename      = None
 
-        #
-        # Instanciate helpfile browser
-        #
-        helpFileName = osPathJoin(PyMcaDataDir.PYMCA_DOC_DIR,
-                                  "HTML",
-                                  "SumRulesToolInfotext.html")
-        self.helpFileBrowser = qt.QTextBrowser()
-        self.helpFileBrowser.setWindowTitle("Sum Rules Help")
-        self.helpFileBrowser.setLineWrapMode(qt.QTextEdit.FixedPixelWidth)
-        self.helpFileBrowser.setLineWrapColumnOrWidth(500)
-        self.helpFileBrowser.resize(520,300)
-        try:
-            helpFileHandle = open(helpFileName)
-            helpFileHTML = helpFileHandle.read()
-            helpFileHandle.close()
-            self.helpFileBrowser.setHtml(helpFileHTML)
-        except IOError:
-            if DEBUG:
-                print('XMCDWindow -- init: Unable to read help file')
-            self.helpFileBrowser = None
-
         self._createMenuBar()
 
     def _createMenuBar(self):        
@@ -937,23 +916,21 @@ class SumRulesWindow(qt.QMainWindow):
         showHelpFileAction = qt.QAction('Show &documentation', self)
         showHelpFileAction.setShortcut(qt.Qt.Key_F1)
         showHelpFileAction.setStatusTip('')
-        showHelpFileAction.setToolTip('Opens a window to view the documentation')
+        showHelpFileAction.setToolTip('Opens the documentation (html-file) in the systems native web browser')
         showHelpFileAction.triggered.connect(self.showInfoWindow)
 
         # Populate the 'Help' menu
-        ffile.addAction(showHelpFileAction)
+        hhelp.addAction(showHelpFileAction)
 
 
     def showInfoWindow(self):
-        if self.helpFileBrowser is None:
-            msg = qt.QMessageBox()
-            msg.setWindowTitle('Sum Rules Tool Error')
-            msg.setText('No help file found..')
-            msg.exec_()
-            return
-        else:
-            self.helpFileBrowser.show()
-            self.helpFileBrowser.raise_()
+        """
+        Opens a web browser and displays the help file
+        """
+        helpFileName = qt.QDir(osPathJoin(PyMcaDataDir.PYMCA_DOC_DIR,
+                                          "HTML",
+                                          "SumRulesToolInfotext.html"))
+        qt.QDesktopServices.openUrl(qt.QUrl(helpFileName.absolutePath()))
 
     def triggerDetrend(self, state):
         if (state == qt.Qt.Unchecked) or\
