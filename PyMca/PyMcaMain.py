@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __revision__ = "$Revision: 2.02 $"
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -93,7 +93,7 @@ from PyMca.PyMca_Icons import IconDict
 from PyMca.PyMca_help import HelpDict
 from PyMca import PyMcaDataDir
 import os
-__version__ = "4.7.1"
+__version__ = "4.7.2rc3"
 if (QTVERSION < '4.0.0') and (sys.platform == 'darwin'):
     class SplashScreen(qt.QWidget):
         def __init__(self,parent=None,name="SplashScreen",

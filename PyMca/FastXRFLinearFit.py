@@ -148,12 +148,14 @@ class FastXRFLinearFit(object):
         #build the matrix of derivatives
         derivatives = None
         idx = 0
+        tmpData = self._mcaTheory.xdata[:]
+        tmpData.shape = -1
         for i, param in enumerate(self._mcaTheory.PARAMETERS):
             if self._mcaTheory.codes[0][i] == ClassMcaTheory.Gefit.CFIXED:
                 continue
-            deriv= self._mcaTheory.linearMcaTheoryDerivative(self._mcaTheory.parameters[i],
+            deriv= self._mcaTheory.linearMcaTheoryDerivative(self._mcaTheory.parameters,
                                                              i,
-                                                             self._mcaTheory.xdata)
+                                                             tmpData)
             if derivatives is None:
                 derivatives = numpy.zeros((deriv.shape[0], nFree), numpy.float)
             derivatives[:, idx] = deriv
