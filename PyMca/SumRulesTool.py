@@ -43,17 +43,6 @@ from PyMca import QSpecFileWidget
 from PyMca import SpecFileDataSource
 from PyMca.PyMca_Icons import IconDict
 
-if sys.version < '3.0':
-    from StringIO import StringIO
-else:
-    from io import StringIO
-
-try:
-    from PyMca import Plugin1DBase
-except ImportError:
-    print("WARNING:SumRulesPlugin import from somewhere else")
-    from . import Plugin1DBase
-
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -66,9 +55,8 @@ else:
     QStringList = list
 
 
-DEBUG = 1
+DEBUG = 0
 NEWLINE = '\n'
-BLITTING = True
 
 class Calculations(object):
     def __init__(self):
@@ -155,7 +143,6 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.markerID = self.plotWindow.insertXMarker(0.,
                                                       label,
                                                       label=label)
-            
         
         # Initialize
         self.setMinimum(0.)
@@ -164,8 +151,6 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         
         # Connects
         self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
-        #self.valueChanged['double'].connect(self._valueChanged)
-        #self.valueChanged['QString'].connect(self._valueChanged)
         self.valueChanged.connect(self._valueChanged)
 
     def getIntersections(self):
@@ -219,7 +204,6 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
             draggable  = False
         # Make shure that the marker is deleted
         # If marker is not present, removeMarker just passes..
-        #self.plotWindow.removeMarker(self.label)
         self.markerID = self.plotWindow.insertXMarker(
                                 self.value(),
                                 self.label,
@@ -227,14 +211,11 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
                                 color=color,
                                 selectable=False,
                                 draggable=draggable)
-        #self.plotWindow.replot()
 
     def _handlePlotSignal(self, ddict):
         if ddict['event'] != 'markerMoving':
             return
         if ddict['label'] != self.label:
-            #print('Not my label:',self.label)
-            #print('ddict:',str(ddict))
             return
         markerPos = ddict['x']
         self.blockSignals(True)
@@ -249,7 +230,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
             if DEBUG == 1:
                 print('_valueChanged -- Sorry, it ain\'t gonna float: %s'%str(val))
             return
-        #self.plotWindow.removeMarker(self.label)
+        # Marker of same label as self.label gets replaced..
         self.markerID = self.plotWindow.insertXMarker(
                                 val,
                                 self.label,
@@ -257,7 +238,6 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
                                 color='blue',
                                 selectable=False,
                                 draggable=True)
-        #self.plotWindow.replot()
         self.intersectionsChangedSignal.emit()
         
 class LineEditDisplay(qt.QLineEdit):
@@ -372,7 +352,6 @@ class SumRulesWindow(qt.QMainWindow):
     
     # Signals
     tabChangedSignal = qt.pyqtSignal('QString')
-    modelWidthChangedSignal = qt.pyqtSignal('QString')
 
     def __init__(self, parent=None):
         qt.QMainWindow.__init__(self, parent)
@@ -381,13 +360,15 @@ class SumRulesWindow(qt.QMainWindow):
             self.plotWindow = DataDisplay.PlotWindow(
                 parent=self,
                 backend=backend,
-                plugins=False,
-                newplot=False,
-                roi=False,
-                kw={'logx': False,
-                    'logy': False,
-                    'flip': False,
-                    'fit': False})
+                plugins=False, # Hide plugin tool button
+                newplot=False, # Hide mirror active curve, ... functionality
+                roi=False,     # No ROI widget
+                control=False, # Hide option button
+                position=True, # Show x,y position display
+                kw={'logx': False, # Hide logarithmic x-scale tool button
+                    'logy': False, # Hide logarithmic y-scale tool button
+                    'flip': False, # Hide whatever this does
+                    'fit': False}) # Hide simple fit tool button
             self.plotWindow._buildLegendWidget()
         else:
             self.plotWindow = DataDisplay.ScanWindow(self)
@@ -629,20 +610,13 @@ class SumRulesWindow(qt.QMainWindow):
                 stepWidth = qt.QDoubleSpinBox()
                 stepWidth.setMaximumWidth(100)
                 stepWidth.setAlignment(qt.Qt.AlignRight)
-                #stepWidth.setMinimum(0.)
                 stepWidth.setMinimum(0.)
-                #stepWidth.setMaximum(1.)
                 stepWidth.setMaximum(1000.)
                 stepWidth.setSingleStep(0.05)
                 stepWidth.setValue(.0) # Start with step function
-                #modelWidthLineEdit = LineEditDisplay(
-                #                            controller=stepWidth,
-                #                            unit='eV')
-                #self.modelWidthChangedSignal.connect(modelWidthLineEdit.setText)
                 stepWidthLayout = qt.QHBoxLayout()
                 stepWidthLayout.addWidget(qt.QLabel('Step width [eV]'))
                 stepWidthLayout.addWidget(qt.HorizontalSpacer())
-                #stepWidthLayout.addWidget(modelWidthLineEdit)
                 stepWidthLayout.addWidget(stepWidth)
                 stepWidthWidget = qt.QWidget()
                 stepWidthWidget.setContentsMargins(0,-8,0,0)
@@ -667,8 +641,6 @@ class SumRulesWindow(qt.QMainWindow):
                 backgroundTabLayout = qt.QVBoxLayout()
                 backgroundTabLayout.setContentsMargins(1,1,1,1)
                 backgroundTabLayout.addWidget(prePostGB)
-                #backgroundTabLayout.addWidget(edgeGB)    
-                #backgroundTabLayout.addWidget(fitControlGB)    
                 backgroundTabLayout.addWidget(sndLine)
                 backgroundTabLayout.addWidget(qt.VerticalSpacer())
                 backgroundWidget = qt.QWidget()
@@ -687,15 +659,12 @@ class SumRulesWindow(qt.QMainWindow):
                         ['Step Ratio'] = stepRatio
                 self.valuesDict[self.__tabBG]\
                         ['Step Width'] = stepWidth
-                #self.valuesDict[self.__tabBG]\
-                #        ['Model Width'] = modelWidthLineEdit
             
             elif window == self.__tabInt:
                 # BEGIN Integral marker groupbox
                 pqLayout = qt.QVBoxLayout()
                 pqLayout.setContentsMargins(0,-8,0,-8)
                 for markerLabel in self.xmcdMarkerList:
-                    # TODO: Fix intial xpos
                     markerWidget, spinbox = self.addMarker(window=window,
                                                   label=markerLabel,
                                                   xpos=0.,
@@ -829,11 +798,8 @@ class SumRulesWindow(qt.QMainWindow):
         self.tabWidget.currentChanged['int'].connect(
                             self._handleTabChangedSignal)
         
-        
         # Estimate button in bottom of plot window layout
-        self.buttonEstimate = qt.QToolButton(self)
-        self.buttonEstimate.setIcon(qt.QIcon(
-                    qt.QPixmap(IconDict["reload"])))
+        self.buttonEstimate = qt.QPushButton('Estimate', self)
         self.buttonEstimate.setToolTip(
             'Shortcut: CRTL+E\n'
            +'Depending on the tab, estimate either the pre/post\n'
@@ -842,6 +808,7 @@ class SumRulesWindow(qt.QMainWindow):
         self.buttonEstimate.setShortcut(qt.Qt.CTRL+qt.Qt.Key_E)
         self.buttonEstimate.clicked.connect(self.estimate)
         self.buttonEstimate.setEnabled(False)
+        self.plotWindow.toolBar.addSeparator()
         self.plotWindow.toolBar.addWidget(self.buttonEstimate)
 
         self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
@@ -1021,7 +988,6 @@ class SumRulesWindow(qt.QMainWindow):
         pqr = []
         mathObj = Calculations()
         for marker in self.xmcdMarkerList:
-            # TODO: Find better way to determine curves..
             if marker in [self.__intP, self.__intQ]:
                 if self.xmcdCorrData is not None:
                     curve = 'xmcd corr Int'
@@ -1059,8 +1025,6 @@ class SumRulesWindow(qt.QMainWindow):
     def loadData(self):
         dial = LoadDichorismDataDialog()
         dial.setDirectory(PyMcaDirs.outputDir)
-        # TODO: CHANGE ME!
-        #dial.setDirectory(r'C:\Users\tonn\lab\datasets\sum_rules\sum_rules_4f_example_EuRhj2Si2')
         if dial.exec_():
             dataDict = dial.dataDict
         else:
@@ -1160,34 +1124,33 @@ class SumRulesWindow(qt.QMainWindow):
         dataInt = numpy.vstack((xInt, yXasInt, yXmcdInt)).T
 
         # Construct spectra output
-        outSpec = StringIO()
-        outSpec.write(NEWLINE + '#S 1 XAS data %s'%baseName + NEWLINE)
-        outSpec.write('#N %d'%5 + NEWLINE)
+        outSpec = ''
+        outSpec += (NEWLINE + '#S 1 XAS data %s'%baseName + NEWLINE)
+        outSpec += ('#N %d'%5 + NEWLINE)
         if self.xmcdCorrData:
-            outSpec.write('#L x  XAS  Background model  XAS corrected  XMCD corrected' + NEWLINE)
+            outSpec += ('#L x  XAS  Background model  XAS corrected  XMCD corrected' + NEWLINE)
         else:
-            outSpec.write('#L x  XAS  Background model  XAS corrected  XMCD' + NEWLINE)
+            outSpec += ('#L x  XAS  Background model  XAS corrected  XMCD' + NEWLINE)
         for line in dataSpec:
             tmp = delim.join(['%f'%num for num in line])
-            outSpec.write(tmp + NEWLINE)
-        outSpec.write(NEWLINE)
+            outSpec += (tmp + NEWLINE)
+        outSpec += (NEWLINE)
 
         # Construct integral output
-        outInt = StringIO()
-        outInt.write('#S 2 Integral data %s'%baseName + NEWLINE)
-        outInt.write('#N %d'%3 + NEWLINE)
+        outInt = ''
+        outInt += ('#S 2 Integral data %s'%baseName + NEWLINE)
+        outInt += ('#N %d'%3 + NEWLINE)
         if self.xmcdCorrData:
-            outInt.write('#L x  XAS Int  XMCD Int' + NEWLINE)
+            outInt += ('#L x  XAS Int  XMCD Int' + NEWLINE)
         else:
-            outInt.write('#L x  XAS Int  XMCD Int corrected' + NEWLINE)
+            outInt += ('#L x  XAS Int  XMCD Int corrected' + NEWLINE)
         for line in dataInt:
             tmp = delim.join(['%f'%num for num in line])
-            outInt.write(tmp + NEWLINE)
-        outInt.write(NEWLINE)
-        
+            outInt += (tmp + NEWLINE)
+        outInt += (NEWLINE)
+
         for output in [outSpec, outInt]:
-            output.seek(0)
-            specFilehandle.write(output.read())
+            specFilehandle.write(output.encode('ascii'))
         specFilehandle.close()
         
         self.__savedData = True
@@ -1480,9 +1443,9 @@ class SumRulesWindow(qt.QMainWindow):
         ddict = self.getValuesDict()
         edgeList = [ddict[self.__tabElem]['edge1Energy'],
                     ddict[self.__tabElem]['edge2Energy']]
-        filterEdgeList = lambda x:\
-                            float(x.replace('meV',''))\
-                            if (len(x)>0 and x!='---')\
+        filterEdgeList = lambda inp:\
+                            float(inp.replace('meV',''))\
+                            if (len(inp)>0 and inp!='---')\
                             else 0.0
         # Use list comprehension instead of map(filterEdgeList, edgeList)
         edgeList = [filterEdgeList(edge) for edge in edgeList]
@@ -1649,11 +1612,11 @@ class SumRulesWindow(qt.QMainWindow):
                                  'Post BG model',
                                  {},
                                  replot=False)
-        self.modelWidthChangedSignal.emit('%.3f'%(width*gap))
         if hasattr(self.plotWindow, 'graph'):
             self.plotWindow.graph.replot()
         else:
             self.plotWindow.replot()
+            self.plotWindow.updateLegends()
 
     def plotOnDemand(self, window):
         # Remove all curves
@@ -1763,6 +1726,9 @@ class SumRulesWindow(qt.QMainWindow):
                                             xmax+xmargin)
             self.plotWindow.setGraphYLimits(ymin-ymargin,
                                             ymax+ymargin)
+            # Need to force replot here for correct display
+            self.plotWindow.replot()
+            self.plotWindow.updateLegends()
         
     def addMarker(self, window, label='X MARKER', xpos=None, unit=''):
         # Add spinbox controlling the marker
@@ -1825,6 +1791,7 @@ class SumRulesWindow(qt.QMainWindow):
                 sb = self.valuesDict[self.__tabBG][keyBG]
                 parentWidget  = sb.parent()                
                 parentWidget.setEnabled(True)
+            self.estimateBG()
         elif tab == self.__tabInt:
             self.buttonEstimate.setEnabled(True)
             for marker in markerList:
@@ -1835,6 +1802,7 @@ class SumRulesWindow(qt.QMainWindow):
                     sb = self.valuesDict[self.__tabBG][marker]
                     #sb.setValue(0.0) # Should be consistent with estimateBG
                     sb.hideMarker()
+            self.calcMagneticMoments()
         else: # tab == self.__tabElem:
             self.buttonEstimate.setEnabled(False)
             for marker in markerList:
