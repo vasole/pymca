@@ -402,6 +402,9 @@ class LegendModel(qt.QAbstractListModel):
     def insertRows(self, row, count, modelIndex = qt.QModelIndex()):
         raise NotImplementedError('Use LegendModel.insertLegendList instead')
 
+    def removeRow(self, row):
+        return self.removeRows(row, 1)
+
     def removeRows(self, row, count, modelIndex = qt.QModelIndex()):
         length = len(self.legendList)
         if length == 0:
@@ -409,7 +412,7 @@ class LegendModel(qt.QAbstractListModel):
             return True
         if row < 0 or row >= length:
             raise IndexError('Index out of range -- '
-                            +'idx: %d, len: %d'%(idx, length))
+                            +'idx: %d, len: %d'%(row, length))
         if count == 0:
             return False
         qt.QAbstractListModel.beginRemoveRows(self,
@@ -795,11 +798,11 @@ class LegendListContextMenu(BaseContextMenu):
         actionList = [('Set Active', self.setActiveAction),
                       ('Toggle points', self.togglePointsAction),
                       ('Toggle lines', self.toggleLinesAction),
-                      ('Remove curve', self.removeCurveAction)]
+                      ('Remove curve', self.removeItemAction)]
         for name, action in actionList:
             self.addAction(name, action)
 
-    def removeCurveAction(self):
+    def removeItemAction(self):
         if DEBUG == 1:
             print('LegendListContextMenu.removeCurveAction called')
         modelIndex = self.currentIdx()
@@ -866,10 +869,10 @@ class LegendListContextMenu(BaseContextMenu):
             self.model.setData(modelIndex, True, LegendModel.showSymbolRole)
 
     def setActiveAction(self):
-        if DEBUG:
-            print('setActiveAction -- active curve:',legend)
         modelIndex = self.currentIdx()
         legend = qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)))
+        if DEBUG:
+            print('setActiveAction -- active curve:',legend)
         ddict = {
             'legend'   : legend,
             'label'    : legend,
@@ -878,7 +881,7 @@ class LegendListContextMenu(BaseContextMenu):
             'event': "setActiveCurve",
         }
         self.sigContextMenu.emit(ddict)
-        
+
 class Notifier(qt.QObject):
     def __init__(self):
         qt.QObject.__init__(self)
