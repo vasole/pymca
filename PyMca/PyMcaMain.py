@@ -33,6 +33,7 @@ if sys.platform == 'win32':
     from ctypes.wintypes import MAX_PATH
 nativeFileDialogs = None
 DEBUG = 0
+backend=None
 if __name__ == '__main__':
     options     = '-f'
     longoptions = ['spec=',
@@ -53,7 +54,6 @@ if __name__ == '__main__':
     keywords={}
     debugreport = 0
     qtversion = '4'
-    backend=None
     for opt, arg in opts:
         if  opt in ('--spec'):
             keywords['spec'] = arg
