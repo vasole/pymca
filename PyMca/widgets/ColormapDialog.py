@@ -261,7 +261,7 @@ class ColormapDialog(qt.QDialog):
         # colormap window can not be resized
         self.setFixedSize(vlayout.minimumSize())
 
-    def _plotHistogram(self, data=None):
+    def plotHistogram(self, data=None):
         if data is not None:
             self.histogramData = data
         if self.histogramData is None:
@@ -566,7 +566,7 @@ def test():
     import numpy as np
     x = np.linspace(-10, 10, 50)
     y = abs(9. * np.exp(-x**2) + np.random.randn(len(x)) + 1.)
-    demo._plotHistogram((x,y))
+    demo.plotHistogram((x,y))
     
     def call(*var):
         print("Received", var)
