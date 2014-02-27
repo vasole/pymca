@@ -293,7 +293,7 @@ class McaCalWidget(qt.QDialog):
         
     def connections(self):
         self.connect(self.peakParameters.searchButton,qt.SIGNAL('clicked()')  ,self.peakSearch)
-        self.graph.sigPlotSignal.connect(self.__graphsignal) 
+        self.graph.sigPlotSignal.connect(self.__graphsignal)
         self.connect(self.peakTable, qt.SIGNAL('PeakTableWidgetSignal') , 
                      self.__peakTableSignal)
         self.connect(self.calpar, qt.SIGNAL('CalibrationParametersSignal'),

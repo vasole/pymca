@@ -31,7 +31,6 @@ import traceback
 from PyMca import PyMcaQt as qt
 from PyMca import PyMcaDataDir, PyMcaDirs, PyMcaFileDialogs
 from PyMca import ConfigDict
-from PyMca.PyMcaIO import specfilewrapper as SFW
 from PyMca import SpecfitFunctions as SF
 from PyMca import SNIPModule as snip
 from PyMca.Gefit import LeastSquaresFit as LSF
@@ -180,7 +179,7 @@ class AlignmentWidget(qt.QDialog):
     def triggerCalculateShift(self, methodName=None):
         # Need to call the plugin instance to perform calculations
         try:
-            if methodName != None:
+            if methodName is not None:
                 self.plugin.setAlignmentMethod(methodName)
             llist, ddict = self.plugin.calculateShifts()
             self.setDict(llist, ddict)
@@ -198,12 +197,12 @@ class AlignmentWidget(qt.QDialog):
 
     def loadDict(self):
         openDir = PyMcaDirs.outputDir
-        filter = 'PyMca (*.shift)'
+        filters = 'PyMca (*.shift)'
         filename = qt.QFileDialog.\
                     getOpenFileName(self,
                                     'Load Shifts obtained from FFTAlignment',
                                     openDir,
-                                    filter)
+                                    filters)
         if len(filename) == 0:
             return
         inDict = ConfigDict.ConfigDict()
@@ -249,7 +248,7 @@ class AlignmentWidget(qt.QDialog):
             return False
         if not str(filename).endswith('.shift'):
             filename += '.shift'
-        if DEBUG:
+        if DEBUG == 1:
             print('saveOptions -- Filename: "%s"' % filename)
         currentOrder = self.plugin.getOrder()
         outDict = ConfigDict.ConfigDict()
@@ -282,7 +281,7 @@ class AlignmentWidget(qt.QDialog):
             value       = self.shiftTab.item(idx, self._colShift)
             try:
                 floatValue = float(value.text())
-            except:
+            except ValueError:
                 floatValue = float('NaN')
             ddict[str(legend.text())] = floatValue
             llist.append(str(shiftLegend.text()))
@@ -319,7 +318,6 @@ class AlignmentWidget(qt.QDialog):
                 if (j == 0) or (j == 1):
                     elem = qt.QTableWidgetItem(dlist[i])
                     elem.setFlags(qt.Qt.ItemIsSelectable)
-                    #elem.setFlags(qt.Qt.ItemIsEnabled)
                 elif j == 2:
                     elem = qt.QTableWidgetItem(str(dlist[i]))
                     elem.setTextAlignment(qt.Qt.AlignRight)
@@ -340,7 +338,7 @@ class AlignmentWidget(qt.QDialog):
             try:
                 floatValue = float(item.text())
                 item.setText('%.6g'%floatValue)
-            except:
+            except ValueError:
                 floatValue = float('NaN')
                 item.setText(str(floatValue))
         
@@ -433,7 +431,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         self.shiftList = []
 
     def calculateShifts(self):
-        '''
+        """
         Generic alignment method, executes the method
         that is set under self.alignmentMethod.
         
@@ -443,15 +441,15 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         - calculateShiftsMax
         
         Sets self.shiftList and self.shiftDict
-        '''
+        """
         self.shiftList, self.shiftDict = self.alignmentMethod()
         return  self.shiftList, self.shiftDict
 
     def getOrder(self):
-        '''
+        """
         Returns the legends of the curves in the plot winow
         in the order they were added.
-        '''
+        """
         ret = [legend for (x,y,legend,info) in self._plotWindow.getAllCurves()]
         return ret
 
@@ -467,7 +465,6 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         nCurves = len(curves)
         if nCurves < 2:
             raise ValueError("At least 2 curves needed")
-            return
         
         # Check if scan window is zoomed in
         xmin, xmax = self.getGraphXLimits()
@@ -477,7 +474,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             xmin = xmin0
         if xmax0 < xmax:
             xmax = xmax0
-        if DEBUG:
+        if DEBUG == 1:
             print('calculateShiftsFit -- xmin = %.3f, xmax = %.3f'%(xmin, xmax))
 
         # Get active curve
@@ -510,7 +507,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                                     numpy.asarray([yp0, xp0, fwhm0]), 
                                     xdata=x0[fitrange0], 
                                     ydata=y0[fitrange0])
-        if DEBUG:
+        if DEBUG == 1:
             if derivative:
                 print('calculateShiftsFit -- Results (Leg, PeakPos, Shift):')
             else:
@@ -544,10 +541,11 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                 msg.setStandardButtons(qt.QMessageBox.Ok)
                 msg.exec_()
                 shift = float('NaN')
+                fitp, chisq, sigma = [None, None, None], 0., 0.
             key = legend
             retList.append(key)
             retDict[key] = shift
-            if DEBUG:
+            if DEBUG == 1:
                   print( '\t%s\t%.3f\t%.3f'%(legend, fitp[1], shift))
         return retList, retDict
 
@@ -589,7 +587,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         
         # Determine the index of maximum in active curve
         shift0 = numpy.argmax(y0)
-        if DEBUG:
+        if DEBUG == 1:
             print('calculateShiftsMax -- Results:')
             print('\targmax(y) shift')
         for x,y,legend,info in curves:
@@ -602,7 +600,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             key = legend
             retList.append(key)
             retDict[key] = shift
-            if DEBUG:
+            if DEBUG == 1:
                 print('\t%d %.3f'%(x[shifty],shift))
         return retList, retDict
 
@@ -614,7 +612,6 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         nCurves = len(curves)
         if nCurves < 2:
             raise ValueError("At least 2 curves needed")
-            return
         
         # Check if scan window is zoomed in
         xmin, xmax = self.getGraphXLimits()
@@ -624,7 +621,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             xmin = xmin0
         if xmax0 < xmax:
             xmax = xmax0
-        if DEBUG:
+        if DEBUG == 1:
             print('calculateShiftsFFT -- xmin = %.3f, xmax = %.3f'%(xmin, xmax))
 
         # Get active curve
@@ -645,7 +642,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         y0 = numpy.take(y0, idx)
 
         fft0 = numpy.fft.fft(y0)
-        if DEBUG:
+        if DEBUG == 1:
             print('calculateShiftsFFT -- results (Legend len(idx) shift):')
         for x,y,legend,info in curves:
             idx = numpy.nonzero((x >= xmin) & (x <= xmax))[0]
@@ -676,13 +673,13 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             key = legend
             retList.append(key)
             retDict[key] = shift
-            if DEBUG:
+            if DEBUG == 1:
                 print('\t%s\t%d\t%f'%(legend,len(idx),shift))
         return retList, retDict
     # END Alignment Methods
 
     def applyShifts(self):
-        '''
+        """
         Generic shift method. The method shifts curves
         according to the shift stored in self.shiftDict
         and executes the method stored in self.shiftMethod.
@@ -690,7 +687,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         Curves are sorted with respect to their legend,
         the values of self.shiftDict are sorted with
         respect to their key.
-        '''
+        """
         if len(self.shiftDict) == 0:
             msg = qt.QMessageBox(None)
             msg.setWindowTitle('Alignment Error')
@@ -709,8 +706,8 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             msg = qt.QMessageBox(None)
             msg.setWindowTitle('Alignment Error')
             msg.setText(
-                '''Number of shifts does not match the number of curves.
-                Do you want to continue anyway?''')
+                """Number of shifts does not match the number of curves.
+                Do you want to continue anyway?""")
             msg.setStandardButtons(qt.QMessageBox.Ok)
             msg.setStandardButtons(qt.QMessageBox.Ok | qt.QMessageBox.Cancel)
             msg.setDefaultButton(qt.QMessageBox.Ok)
@@ -718,18 +715,18 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             if msg.exec_() != qt.QMessageBox.Ok:
                 return False
         
-        if DEBUG:
+        if DEBUG == 1:
             print('applyShifts -- Shifting ...')
         for idx, (x,y,legend,info) in enumerate(curves):
             shift = self.shiftDict[legend]
             
             if shift is None:
-                if DEBUG:
+                if DEBUG == 1:
                     print('\tCurve \'%s\' not found in shiftDict\n%s'\
                           %(legend,str(self.shiftDict)))
                 continue
             if shift == float('NaN'):
-                if DEBUG:
+                if DEBUG == 1:
                     print('\tCurve \'%s\' has NaN shift'%legend)
                 continue
             
@@ -746,7 +743,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             else:
                 replace, replot = False, False
             # Check if scan number is adopted by new curve
-            if DEBUG:
+            if DEBUG == 1:
                 print('\'%s\' -- shifts -> \'%s\' by %f'%(self.shiftList[idx], legend, shift))
             selectionlegend = info.get('selectionlegend',legend)
             self.addCurve(xShifted, yShifted, 
@@ -768,14 +765,14 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
     # END Shift Methods
 
     def showShifts(self):
-        '''
+        """
         Creates an instance of Alignment Widget that
         allows to
         
         - Calculate, display  & save/store shifts
         - Load existing shift data
         - Select different alignment and shift methods
-        '''
+        """
         # Empty shift table in the beginning
         widget = AlignmentWidget(None, self.shiftDict, self.shiftList, self)
         ret = widget.exec_()
@@ -801,11 +798,11 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
 
     # BEGIN Helper Methods
     def setShiftMethod(self, methodName):
-        '''
+        """
         Method receives methodName from AlignmentWidget
         instance and assigns the according shift method. 
-        '''
-        if DEBUG:
+        """
+        if DEBUG == 1:
             print('setShiftMethod -- %s'%methodName)
         methodName = str(methodName)
         if methodName == 'Inverse FFT shift':
@@ -817,11 +814,11 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             self.shiftMethod = self.fftShift
 
     def setAlignmentMethod(self, methodName):
-        '''
+        """
         Method receives methodName from AlignmentWidget
         instance and assigns the according alignment method. 
-        '''
-        if DEBUG:
+        """
+        if DEBUG == 1:
             print('setAlignmentMethod -- %s'%methodName)
         methodName = str(methodName)
         if methodName == 'FFT':
@@ -837,11 +834,11 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             self.alignmentMethod = self.calculateShiftsFFT
 
     def getAllCurves(self, just_legend=False):
-        '''
+        """
         Ensures that the x-range of the curves
         is strictly monotonically increasing.
         Conserves curves legend and info dictionary.
-        '''
+        """
         curves = Plugin1DBase.Plugin1DBase.getAllCurves(self)
         if just_legend:
             return curves
@@ -864,7 +861,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         return processedCurves
 
     def interpolate(self, factor=1.):
-        '''
+        """
         Input
         -----
         factor : float
@@ -883,12 +880,12 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             Array containing the interpolated curves shown
             in the plot window. 
             Format: [(x0, y0, legend0, info0), ...]
-        '''
+        """
         curves = self.getAllCurves()
         if len(curves) < 1:
-            raise ValueError("At least 1 curve needed")
-            if DEBUG:
+            if DEBUG == 1:
                 print('interpolate -- no curves present')
+            raise ValueError("At least 1 curve needed")
             return
 
         activeCurve = self.getActiveCurve()
@@ -921,7 +918,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         return interpCurves
 
     def getXLimits(self, values, overlap=True):
-        '''
+        """
         Input
         -----
         overlap : bool
@@ -934,7 +931,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         Returns
         -------
         xmin0, xmax0 : float
-        '''
+        """
         if overlap:
             xmin0, xmax0 = -numpy.inf, numpy.inf
         else:
@@ -952,20 +949,20 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                     xmin0 = xmin
                 if xmax > xmax0:
                     xmax0 = xmax
-        if DEBUG:
+        if DEBUG == 1:
             print('getXLimits -- overlap = %s, xmin = %.3f, xmax =%.3f'\
                   %(overlap,xmin0,xmax0))
         return xmin0, xmax0
 
     def normalize(self, y):
-        '''
+        """
         Normalizes spectrum to values between zero and one.
-        '''
+        """
         ymax, ymin = y.max(), y.min()
         return (y-ymin)/(ymax-ymin)
 
     def findPeaks(self, x, y, thr, derivative):
-        '''
+        """
         Input
         -----
         x,y : ndarrays
@@ -988,7 +985,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         fwhmIdx : ndarray
             Indices determine the range on which the LSF
             is performed
-        '''
+        """
         # Use SNIP algorithm for background substraction &
         # seek method for peak detection
         sffuns = SF.SpecfitFunctions()
@@ -1006,16 +1003,16 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
 
         # Replace by max()?
         try:
-            # Calculate array woth all peak indices
+            # Calculate array with all peak indices
             peakIdx = numpy.asarray(sffuns.seek(ybg, yscaling=1000.), dtype=int)
             # Extract highest peak
             sortIdx = y[peakIdx].argsort()[-1]
         except IndexError:
-            if DEBUG:
+            if DEBUG == 1:
                 print('No peaks found..')
             return None
         except SystemError:
-            if DEBUG:
+            if DEBUG == 1:
                 print('Peak search failed. Continue with y maximum')
             peakIdx = [ybg.argmax()]
             sortIdx = 0
@@ -1035,9 +1032,9 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
     # END Helper Methods
     
     def showDocs(self):
-        '''
+        """
         Displays QTextBrowser showing the documentation
-        '''
+        """
         helpFileName = pathjoin(PyMcaDataDir.PYMCA_DOC_DIR,
                                 "HTML",
                                 "AdvancedAlignmentScanPlugin.html")
@@ -1056,7 +1053,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             msg.setWindowTitle('Alignment Scan Error')
             msg.setText('No help file found.')
             msg.exec_()
-            if DEBUG:
+            if DEBUG == 1:
                 print('XMCDWindow -- init: Unable to read help file')
             self.helpFileBrowser = None
         if self.helpFileBrowser is not None:
@@ -1069,27 +1066,13 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca import PyMcaQt as qt
     app = qt.QApplication([])
-    from PyMca.Plot1DQwt import Plot1DQwt as Plot1D
 
     a = AlignmentWidget()
     a.show()
-    app.exec_()
+
     x = numpy.arange(250, 750, 2, dtype=float)
     y1 = 1.0 + 50.0 * numpy.exp(-0.001*(x-500)**2) + 2.*numpy.random.random(250.)
     y2 = 1.0 + 20.5 * numpy.exp(-0.005*(x-600)**2) + 2.*numpy.random.random(250.)
 
-    '''
-    plot = Plot1D()
-    plot.addCurve(x, y1, "y1", {'selectionlegend': 'y1'})
-    plot.addCurve(x, y2, "y2", {'selectionlegend': 'y2'})
-    plot.show()
     app.exec_()
-
-    
-    plugin = getPlugin1DInstance(plot)
-    for method in plugin.getMethods():
-        print(method, ":", plugin.getMethodToolTip(method))
-    plugin.applyMethod(plugin.getMethods()[0])
-    '''

@@ -57,7 +57,9 @@ class ColormapDialog(qt.QDialog):
         
         self.colormapList = ["Greyscale", "Reverse Grey", "Temperature",
                              "Red", "Green", "Blue", "Many"]
-                         
+
+        # histogramData is tupel(bins, counts)
+        self.histogramData = None
 
         # default values
         self.dataMin   = -10
@@ -258,6 +260,21 @@ class ColormapDialog(qt.QDialog):
 
         # colormap window can not be resized
         self.setFixedSize(vlayout.minimumSize())
+
+    def _plotHistogram(self, data=None):
+        if data is not None:
+            self.histogramData = data
+        if self.histogramData is None:
+            return False
+        bins, counts = self.histogramData
+        self.c.addCurve(bins, counts,
+                        "Histogram",
+                        color='pink', # TODO: Change fill color
+                        symbol='s',
+                        style='_', # Line style
+                        fill=True,
+                        info={'plot_yaxis': 'right'})
+                        # TODO: Do not use info!
 
     def _update(self):
         if DEBUG:
@@ -544,6 +561,13 @@ def test():
     app = qt.QApplication(sys.argv)
     app.connect(app,qt.SIGNAL("lastWindowClosed()"), app.quit)
     demo = ColormapDialog()
+
+    # Histogram demo
+    import numpy as np
+    x = np.linspace(-10, 10, 50)
+    y = abs(9. * np.exp(-x**2) + np.random.randn(len(x)) + 1.)
+    demo._plotHistogram((x,y))
+    
     def call(*var):
         print("Received", var)
 

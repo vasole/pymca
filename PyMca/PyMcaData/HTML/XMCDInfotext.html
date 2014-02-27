@@ -151,7 +151,7 @@ Synopsis
 </H4>
 
 <div class='main'>
-Xray linear dichorism (XLD) and Xray magnetic circular dichorism (XMCD)
+Xray linear dichroism (XLD) and Xray magnetic circular dichroism (XMCD)
 measurements as performed at Beamlines ID08 and ID12 of the ESRF
 probe the sample with x-rays of two different polarizations. From two spectra
 with different polarizations, one calculates the difference spectrum (the
@@ -182,7 +182,7 @@ plug-in, only the data within that energy range is used for the analysis.<br>
 <br>
 The selected spectra now appears in the table of the plug-in.
 Per default, the spectra remain unassigned as indicated by the drop down menu showing
-the entry 'Generic dichorism'. Either one selects an existing experiment from the
+the entry 'Generic dichroism'. Either one selects an existing experiment from the
 drop down menu (which also provides automatic division of spectra into groups) or does all
 settings by hand using the options menu. The options menu also allows to determine
 if and when a normalization is applied to the spectra and the specifics of the interpolation
@@ -507,12 +507,12 @@ The experiments dictionary contains the settings specific to an experiments. The
 the normalization settings and method, the interpolation settings and most importantly the motors
 on which the assignment depends.<br>
 <br>
-The following code fragment shows the exemplary entry 'Generic Dichorism' in the experiments
+The following code fragment shows the exemplary entry 'Generic Dichroism' in the experiments
 dictionary.
 </div>
 
 <div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">experimentsDict</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s">&#39;Generic Dichorism&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s">&#39;Generic Dichroism&#39;</span><span class="p">:</span> <span class="p">{</span>
           <span class="s">&#39;xrange&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
           <span class="s">&#39;normalization&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
           <span class="s">&#39;normalizationMethod&#39;</span><span class="p">:</span> <span class="s">&#39;offsetAndArea&#39;</span><span class="p">,</span>
@@ -596,7 +596,7 @@ added using the addItem member function. The explicit code to do so (at least in
 version of this program) looks as follows:
 
 <div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">expCBox</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span>
-    <span class="p">[</span><span class="s">&#39;Generic Dichorism&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s">&#39;Generic Dichroism&#39;</span><span class="p">,</span>
     <span class="s">&#39;ID08: XLD 9 Tesla Magnet&#39;</span><span class="p">,</span>
     <span class="s">&#39;ID08: XLD 5 Tesla Magnet&#39;</span><span class="p">,</span>
     <span class="s">&#39;ID08: XMCD 9 Tesla Magnet&#39;</span><span class="p">,</span>

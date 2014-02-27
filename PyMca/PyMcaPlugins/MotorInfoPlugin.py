@@ -121,6 +121,7 @@ class MotorInfo(Plugin1DBase.Plugin1DBase):
                                                       legendList,  
                                                       motorValuesList)
         self.widget.buttonUpdate.clicked.connect(self.showMotorInfo)
+        self.widget.updateShortCut.activated.connect(self.showMotorInfo)
 
 MENU_TEXT = "Motor Info"
 def getPlugin1DInstance(plotWindow,  **kw):
