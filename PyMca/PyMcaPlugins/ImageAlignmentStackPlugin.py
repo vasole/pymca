@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (C) 2013-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -170,8 +170,6 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                     raise Exception(result[1], result[2], result[3])
                 else:
                     shifts = result
-                if filename is not None:
-                    self.__hdf5 = self.initializeHDF5File(filename)
                 result = self.__shiftStack(stack,
                                            shifts,
                                            crop=crop,
