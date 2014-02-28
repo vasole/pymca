@@ -876,17 +876,6 @@ class MaskImageWidget(qt.QWidget):
         self.__lastOverlayLegend = legend
 
     def _hFlipIconSignal(self):
-        """
-        if not self.graphWidget.graph.yAutoScale:
-            qt.QMessageBox.information(self, "Open",
-                    "Please set Y Axis to AutoScale first")
-            return
-        if not self.graphWidget.graph.xAutoScale:
-            qt.QMessageBox.information(self, "Open",
-                    "Please set X Axis to AutoScale first")
-            return
-        """
-
         self._y1AxisInverted = self.graphWidget.graph.isYAxisInverted()
         if self._y1AxisInverted:
             self._y1AxisInverted = False
