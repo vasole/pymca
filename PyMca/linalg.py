@@ -30,7 +30,8 @@ numpy itself (BSD license).
 # Linear Least Squares
 
 def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
-          uncertainties=True, covariances=False, digested_output=False):
+          uncertainties=True, covariances=False, digested_output=False, svd=True,
+          last_svd=None):
     """
     Return the least-squares solution to a linear matrix equation.
 
@@ -50,7 +51,8 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         Ordinate or "dependent variable" values. If `b` is two-dimensional,
         the least-squares solution is calculated for each of the `K` columns
         of `b`.
-    sigma_b : uncertainties on the b values
+    sigma_b : uncertainties on the b values or None. If sigma_b has shape (M,) or (M, 1) and
+              b has dimension (M, K), teh uncertainty will be the same for all spectra.
 
     weight: 0 - No data weighting.
                 If required, uncertainties will be calculated using either the
@@ -59,6 +61,12 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
             1 - Statistical weight.
                 Weighted fit using the supplied experimental uncertainties or the
                 square root of the b values.
+
+    svd: If not true, a simple matrix inversion will be used in case of weighting with unequal
+         data weights. Ignored in any other cases.
+
+    last_svd: Tuple containing U, s, V of the weighted model matrix or None. This is to
+                    prevent recalculation on repeated fits.
 
     uncertainties: If False, no uncertainties will be calculated unless the covariance
                 matrix is requested.
@@ -110,7 +118,6 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
     >>> plt.show()
 
     """
-
     a = numpy.array(a, dtype=numpy.float, copy=False)
     b = numpy.array(b, dtype=numpy.float, copy=False)
     a_shape = a.shape
@@ -129,22 +136,28 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         raise ValueError('Incompatible dimensions between A and b matrices')
 
     fastest = False
-    if sigma_b is not None:
-        # experimental uncertainties provided these are the ones to use (if any)
-        w = numpy.abs(numpy.array(sigma_b, dtype=numpy.float, copy=False))
-        w = w + numpy.equal(w, 0)
-        w.shape = b_shape
-    elif weight == 0:
+    if weight:
+        if sigma_b is not None:
+            # experimental uncertainties provided these are the ones to use (if any)
+            w = numpy.abs(numpy.array(sigma_b, dtype=numpy.float, copy=False))
+            w = w + numpy.equal(w, 0)
+            if w.size == b_shape[0]:
+                # same uncertainty for every spectrum
+                fastest = True
+                w.shape = b.shape[0]
+            else:
+                w.shape = b_shape
+        else:
+            # "statistical" weight
+            # we are asked to somehow weight the data but no uncertainties provided        
+            # assume the uncertainties are the square root of the b values ...
+            w = numpy.sqrt(numpy.abs(b))
+            w = w + numpy.equal(w, 0)
+    else:
         # we have an unweighted fit with no uncertainties
         # assume all the uncertainties equal to 1
         fastest = True
         w = numpy.ones(b.shape, numpy.float)
-    else:
-        # "statistical" weight
-        # we are asked to somehow weight the data but no uncertainties provided        
-        # assume the uncertainties are the square root of the b values ...
-        w = numpy.sqrt(numpy.abs(b))
-        w = w + numpy.equal(w, 0)
 
     if covariances:
         covarianceMatrix = numpy.zeros((b_shape[1], n, n), numpy.float)
@@ -152,7 +165,11 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
     if not weight:
         # no weight is applied
         # get the SVD decomposition of the A matrix
-        U, s, V = numpy.linalg.svd(a, full_matrices=False)
+        # One could avoid calculating U, s, V each time ...
+        if last_svd is not None:
+            U, s, V = last_svd
+        else:
+            U, s, V = numpy.linalg.svd(a, full_matrices=False)
 
         if rcond is None:
             s_cutoff = n * numpy.finfo(numpy.float).eps
@@ -199,29 +216,110 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                     sigmapar += (numpy.dot(dummy, numpy.dot(U.T, d))) ** 2
                     d[k] = 0.0
                 sigmapar[:, :] = numpy.sqrt(sigmapar)
+    elif fastest:
+        # same weight for all spectra
+        # it could be made by the calling routine, because it is equivalent to supplying a
+        # different model and different independent values ...
+        # That way one could avoid calculating U, s, V each time
+        A = a / weight
+        b = b / weight
+        # get the SVD decomposition of the A matrix
+        if last_svd is not None:
+            U, s, V = last_svd
+        else:
+            U, s, V = numpy.linalg.svd(A, full_matrices=False)
+
+        if rcond is None:
+            s_cutoff = n * numpy.finfo(numpy.float).eps
+        else:
+            s_cutoff = rcond * s[0]
+        s[s < s_cutoff] = numpy.inf
+        
+        # and get the parameters
+        s.shape = -1
+        dummy = numpy.dot(V.T, numpy.eye(n)*(1./s))
+        parameters = numpy.dot(dummy, numpy.dot(U.T, b))
+        parameters.shape = n, b.shape[1]
+        if uncertainties or covariances:
+            _covariance = numpy.dot(dummy, dummy.T)
+            sigmapar = numpy.sqrt(numpy.diag(_covariance))
+            sigmapar = numpy.outer(sigmapar, numpy.ones(b_shape[1]))
+            sigmapar.shape = n, b_shape[1]
+            if covariances:
+                covarianceMatrix[:] = _covariance
     else:
         parameters = numpy.zeros((n, b_shape[1]), numpy.float)
         sigmapar = numpy.zeros((n, b_shape[1]), numpy.float)
-        for i in range(b_shape[1]):
-            tmpWeight = w[:, i:i+1]
-            tmpData = b[:, i:i+1] / tmpWeight
-            A = a / tmpWeight
-            U, s, V = numpy.linalg.svd(A, full_matrices=False)
-            if rcond is None:
-                s_cutoff = n * numpy.finfo(numpy.float).eps
-            else:
-                s_cutoff = rcond * s[0]
-            s[s < s_cutoff] = numpy.inf
-            s.shape = -1
-            dummy = numpy.dot(V.T, numpy.eye(n)*(1./s))
-            parameters[:, i:i+1] = numpy.dot(dummy, numpy.dot(U.T, tmpData))
-            if uncertainties or covariances:
-                # get the uncertainties
-                _covariance = numpy.dot(dummy, dummy.T)
-                sigmapar[:, i] = numpy.sqrt(numpy.diag(_covariance))
+        if svd:
+            # SVD - slower by a factor 2
+            for i in range(b_shape[1]):
+                tmpWeight = w[:, i:i+1]
+                tmpData = b[:, i:i+1] / tmpWeight
+                A = a / tmpWeight
+                U, s, V = numpy.linalg.svd(A, full_matrices=False)
+                if rcond is None:
+                    s_cutoff = n * numpy.finfo(numpy.float).eps
+                else:
+                    s_cutoff = rcond * s[0]
+                s[s < s_cutoff] = numpy.inf
+                s.shape = -1
+                dummy = numpy.dot(V.T, numpy.eye(n)*(1./s))
+                parameters[:, i:i+1] = numpy.dot(dummy, numpy.dot(U.T, tmpData))
+                if uncertainties or covariances:
+                    # get the uncertainties
+                    _covariance = numpy.dot(dummy, dummy.T)
+                    sigmapar[:, i] = numpy.sqrt(numpy.diag(_covariance))
+                    if covariances:
+                        covarianceMatrix[i] = _covariance
+        elif 1:
+            # Pure matrix inversion (faster than SVD)
+            # I do not seem to gain anything by re-using the storage
+            #alpha = numpy.empty((n, n), numpy.float)
+            #beta = numpy.empty((n, 1), numpy.float)
+            for i in range(b_shape[1]):
+                tmpWeight = w[:, i:i+1]
+                A = a / tmpWeight
+                tmpData =  b[:, i:i+1] / tmpWeight
+                #numpy.dot(A.T, A, alpha)
+                #numpy.dot(A.T, tmpData, beta)
+                alpha = numpy.dot(A.T, A)
+                beta = numpy.dot(A.T, tmpData)
+                try:
+                    _covariance = numpy.linalg.inv(alpha)
+                except:
+                    print("Exception")
+                    print("Exception", sys.exc_info()[1])
+                    continue
+                parameters[:, i:i+1] = numpy.dot(_covariance, beta)
+                if uncertainties:
+                    sigmapar[:, i] = numpy.sqrt(numpy.diag(_covariance))
                 if covariances:
-                    covarianceMatrix[i] = _covariance
-
+                    covarianceMatrix[i] = covariance    
+        else:
+            # Matrix inversion with buffers does not improve
+            bufferProduct = numpy.empty((n, n + 1), numpy.float)
+            bufferAB = numpy.empty((b_shape[0], n+1), numpy.float)
+            alpha = numpy.empty((n, n), numpy.float)
+            for i in range(b_shape[1]):
+                tmpWeight = w[:, i:i+1]
+                A = a / tmpWeight
+                tmpData =  b[:, i:i+1] / tmpWeight
+                bufferAB [:, :n] = A
+                bufferAB [:, n:n+1] = tmpData
+                numpy.dot(A.T, bufferAB, bufferProduct)
+                alpha[:, :]  = bufferProduct[:n, :n] 
+                beta = bufferProduct[:,n]
+                try:
+                    _covariance = numpy.linalg.inv(alpha)
+                except:
+                    print("Exception")
+                    print("Exception", sys.exc_inf())
+                    continue
+                parameters[:, i] = numpy.dot(_covariance, beta)
+                if uncertainties:
+                    sigmapar[:, i] = numpy.sqrt(numpy.diag(_covariance))
+                if covariances:
+                    covarianceMatrix[i] = covariance    
     if len(original) == 1:
         parameters.shape = -1
     if covariances:
@@ -242,6 +340,8 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
             ddict['uncertainties'] = result[1]
         elif covariances:
             ddict['covariances'] = result[2]
+        if svd or fastest:
+            ddict['svd'] = (U, s, V)
         return ddict
     else:
         return result

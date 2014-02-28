@@ -17,6 +17,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __license__ = "LGPL"
+import os
 import numpy
 from PyMca.linalg import lstsq
 from PyMca import ClassMcaTheory
@@ -24,6 +25,7 @@ from PyMca import Gefit
 from PyMca import ConcentrationsTool
 from PyMca import SpecfitFuns
 from PyMca import ConfigDict
+import time
 
 DEBUG = 0
 
@@ -39,6 +41,8 @@ class FastXRFLinearFit(object):
         self._mcaTheory.setConfiguration(configuration)
 
     def setFitConfigurationFile(self, ffile):
+        if not os.path.exists(ffile):
+            raise IOError("File <%s> does not exists" % ffile)
         configuration = ConfigDict.ConfigDict()
         configuration.read(ffile)
         self.setFitConfiguration(configuration)
@@ -53,15 +57,13 @@ class FastXRFLinearFit(object):
         #    txt = "Fast concentration calculation not implemented yet"
         #    raise NotImplemented(txt)
 
+        if DEBUG:
+            t0 = time.time()
         if configuration is not None:
             self._mcaTheory.setConfiguration(configuration)
 
         # read the current configuration
         config = self._mcaTheory.getConfiguration()
-
-        #make sure we force a linear fit
-        config['fit']['linearfitflag'] = 1
-        weight = config['fit']['fitweight']
 
         # background
         if config['fit']['stripflag']:
@@ -71,8 +73,14 @@ class FastXRFLinearFit(object):
             else:
                 raise RuntimeError("Please use the faster SNIP background")
 
-        # and now configure the fit
-        self._mcaTheory.setConfiguration(config)
+        if not config['fit']['linearfitflag']:
+            #make sure we force a linear fit
+            config['fit']['linearfitflag'] = 1
+ 
+            # and now re configure the fit
+            self._mcaTheory.setConfiguration(config)
+
+        weight = config['fit']['fitweight']
 
         if hasattr(y, "info") and hasattr(y, "data"):
             data = y.data
@@ -148,14 +156,13 @@ class FastXRFLinearFit(object):
         #build the matrix of derivatives
         derivatives = None
         idx = 0
-        tmpData = self._mcaTheory.xdata[:]
-        tmpData.shape = -1
         for i, param in enumerate(self._mcaTheory.PARAMETERS):
             if self._mcaTheory.codes[0][i] == ClassMcaTheory.Gefit.CFIXED:
                 continue
             deriv= self._mcaTheory.linearMcaTheoryDerivative(self._mcaTheory.parameters,
                                                              i,
-                                                             tmpData)
+                                                             self._mcaTheory.xdata)
+            deriv.shape = -1
             if derivatives is None:
                 derivatives = numpy.zeros((deriv.shape[0], nFree), numpy.float)
             derivatives[:, idx] = deriv
@@ -199,42 +206,67 @@ class FastXRFLinearFit(object):
         results = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
         uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
 
-        #perform the inital fit
-        for i in range(data.shape[0]):
+        #perform the initial fit
+        if DEBUG:
+            print("Configuration elapsed = %f"  % (time.time() - t0))
+            t0 = time.time()
+        totalSpectra = data.shape[0] * data.shape[1]
+        jStep = min(100, data.shape[1])
+        if weight:
+            SVD = False
+        else:
+            SVD = True
+        last_svd = None
+        for i in range(0, data.shape[0]):
+            #print(i)
             #chunks of nColumns spectra
             if i == 0:
-                chunk = numpy.zeros((dummySpectrum.shape[0], data.shape[1]),
-                                    numpy.float)
-                
-            chunk[:,:] = data[i, :, iXMin:iXMax+1].T
-            if config['fit']['stripflag']:
-                for k in range(chunk.shape[0]):
-                    # obtain the smoothed spectrum
-                    background=SpecfitFuns.SavitskyGolay(chunk[k], 
-                                            config['fit']['stripfilterwidth'])
-                    lastAnchor = 0
-                    for anchor in anchorslist:
-                        if (anchor > lastAnchor) and (anchor < background.size):
-                            background[lastAnchor:anchor] =\
-                                    SpecfitFuns.snip1d(background[lastAnchor:anchor],
+                chunk = numpy.zeros((dummySpectrum.shape[0],
+                                     jStep),
+                                     numpy.float)
+            jStart = 0
+            while jStart < data.shape[1]:
+                jEnd = min(jStart + jStep, data.shape[1])
+                chunk[:,:(jEnd - jStart)] = data[i, jStart:jEnd, iXMin:iXMax+1].T
+                if config['fit']['stripflag']:
+                    for k in range(chunk.shape[0]):
+                        # obtain the smoothed spectrum
+                        background=SpecfitFuns.SavitskyGolay(chunk[k], 
+                                                config['fit']['stripfilterwidth'])
+                        lastAnchor = 0
+                        for anchor in anchorslist:
+                            if (anchor > lastAnchor) and (anchor < background.size):
+                                background[lastAnchor:anchor] =\
+                                        SpecfitFuns.snip1d(background[lastAnchor:anchor],
+                                                           config['fit']['snipwidth'],
+                                                           0)
+                                lastAnchor = anchor
+                        if lastAnchor < background.size:
+                            background[lastAnchor:] =\
+                                    SpecfitFuns.snip1d(background[lastAnchor:],
                                                        config['fit']['snipwidth'],
                                                        0)
-                            lastAnchor = anchor
-                    if lastAnchor < background.size:
-                        background[lastAnchor:] =\
-                                SpecfitFuns.snip1d(background[lastAnchor:],
-                                                   config['fit']['snipwidth'],
-                                                   0)
-                    chunk[k] -= background
+                        chunk[k] -= background
 
-            # perform the multiple fit to all the spectra in the chunk
-            # print("SHAPES")
-            # print(derivatives.shape)
-            # print(chunk.shape)
-            ddict=lstsq(derivatives, chunk, weight=weight, digested_output=True)
-            parameters = ddict['parameters'] 
-            results[:, i, :] = parameters
-            uncertainties[:, i, :] = ddict['uncertainties']
+                # perform the multiple fit to all the spectra in the chunk
+                #print("SHAPES")
+                #print(derivatives.shape)
+                #print(chunk[:,:(jEnd - jStart)].shape)
+                ddict=lstsq(derivatives, chunk[:,:(jEnd - jStart)],
+                            weight=weight,
+                            digested_output=True,
+                            svd=SVD,
+                            last_svd=last_svd)
+                last_svd = ddict.get('svd', None)
+                parameters = ddict['parameters'] 
+                results[:, i, jStart:jEnd] = parameters
+                uncertainties[:, i, jStart:jEnd] = ddict['uncertainties']
+                jStart = jEnd
+        if DEBUG:
+            t = time.time() - t0
+            print("First fit elapsed = %f" % t)
+            print("Spectra per second = %f" % (data.shape[0]*data.shape[1]/float(t)))
+            t0 = time.time()
 
         # cleanup zeros
         # start with the parameter with the largest amount of negative values
@@ -316,7 +348,10 @@ class FastXRFLinearFit(object):
                                                        config['fit']['snipwidth'],
                                                        0)
                     spectra[k] -= background
-                ddict = lstsq(A, spectra, weight=weight, digested_output=True)
+                ddict = lstsq(A, spectra,
+                              weight=weight,
+                              digested_output=True,
+                              svd=SVD)
                 idx = 0
                 for i in range(nFree):
                     if i in badParameters:
@@ -326,6 +361,12 @@ class FastXRFLinearFit(object):
                         results[i][badMask] = ddict['parameters'][idx]
                         uncertainties[i][badMask] = ddict['uncertainties'][idx]
                         idx += 1
+
+        if DEBUG:
+            t = time.time() - t0
+            print("Fit of negative peaks elapsed = %f" % t)
+            t0 = time.time()
+
         outputDict = {'parameters':results, 'uncertainties':uncertainties, 'names':freeNames}
         
         if concentrations:
@@ -452,31 +493,40 @@ class FastXRFLinearFit(object):
                                 ((referenceArea/fitresult['result'][group]['fitarea']) *\
                                 (concentrationsResult[layer]['mass fraction'][group]))
             outputDict['concentrations'] = massFractions
+            if DEBUG:
+                t = time.time() - t0
+                print("Calculation of concentrations elapsed = %f" % t)
+                t0 = time.time()
+
             ####################################################
         return outputDict
         
 if __name__ == "__main__":
-    import time
+    DEBUG = True
     import glob
     from PyMca.PyMcaIO import EDFStack
     if 1:
-        configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
-        fileList = glob.glob("E:\DATA\COTTE\CH1777\G4_mca_0012_0000_0*.edf")
-        concentrations = True
+        #configurationFile = "G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
+        configurationFile = "G4-4720eV-WEIGHT-NO_Constant-batch.cfg"
+        fileList = glob.glob("E:\DATA\COTTE\CH1777\G4_mca_0012_0000_*.edf")
+        concentrations = False
+        dataStack = EDFStack.EDFStack(filelist=fileList)
     elif 0:
         configurationFile = "D:\RIVARD\config_3-6kev_OceanIsland_batch_NO_BACKGROUND.cfg"
         fileList = glob.glob("D:\RIVARD\m*.edf")
         concentrations = False
+        dataStack = EDFStack.EDFStack(filelist=fileList)
     else:
         configurationFile = "E2_line.cfg"
         fileList = glob.glob("E:\DATA\PyMca-Training\FDM55\AS_EDF\E2_line*.edf")
         concentrations = False
-    dataStack = EDFStack.EDFStack(filelist=fileList)
+        dataStack = EDFStack.EDFStack(filelist=fileList)
 
     t0 = time.time()
     fastFit = FastXRFLinearFit()
     fastFit.setFitConfigurationFile(configurationFile)
-    print("Configuring Elapsed = % s " % (time.time() - t0))
-    results = fastFit.fitMultipleSpectra(y=dataStack, concentrations=True)
+    print("Main configuring Elapsed = % s " % (time.time() - t0))
+    results = fastFit.fitMultipleSpectra(y=dataStack,
+                                         concentrations=concentrations)
     print("Total Elapsed = % s " % (time.time() - t0))
 
