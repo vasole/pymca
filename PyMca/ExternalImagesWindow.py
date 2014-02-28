@@ -114,7 +114,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                                      self._flipUpDown)
         else:
             self.graphWidget.hFlipToolButton.clicked.connect(\
-                                     self._hFlipIconSignal)
+                                     self.__hFlipIconSignal)
 
 
     def sizeHint(self):
@@ -183,15 +183,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         self._flipMenu.exec_(self.cursor().pos())
 
     def _hFlipIconSignal(self):
-        if not self.graphWidget.graph.yAutoScale:
-            qt.QMessageBox.information(self, "Open",
-                    "Please set Y Axis to AutoScale first")
-            return
-        if not self.graphWidget.graph.xAutoScale:
-            qt.QMessageBox.information(self, "Open",
-                    "Please set X Axis to AutoScale first")
-            return
-        if self.getQImage is None:
+        if self.getQImage() is None:
             return
         if self.imageNames is None:
             #just setImage data used
