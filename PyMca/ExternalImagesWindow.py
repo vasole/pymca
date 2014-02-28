@@ -116,10 +116,10 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                                      self._flipLeftRight)
             self._flipMenu.addAction(QString("Flip Image Up-Down"),
                                      self._flipUpDown)
-        #else:
-        #    self.connect(self.graphWidget.hFlipToolButton,
-        #         qt.SIGNAL("clicked()"),
-        #         self.__hFlipIconSignal)
+        else:
+            self.connect(self.graphWidget.hFlipToolButton,
+                 qt.SIGNAL("clicked()"),
+                 self.__hFlipIconSignal)
 
 
     def sizeHint(self):
