@@ -35,6 +35,10 @@ if "tk" in sys.argv:
         import Tkinter as Tk
     else:
         import tkinter as Tk
+elif ('PySide' in sys.modules) or ('PySide' in sys.argv) :
+    import matplotlib
+    matplotlib.rcParams['backend.qt4']='PySide'
+    from PySide import QtCore, QtGui
 else:
     from PyQt4 import QtCore, QtGui
 if ("PyQt4" in sys.modules) or ("PySide" in sys.modules): 
@@ -254,7 +258,7 @@ class MatplotlibGraph(FigureCanvas):
         # this respects aspect size
         # self.ax = self.fig.add_subplot(111, aspect='equal')
         # This should be independent of Qt
-        if "PyQt4" in sys.modules or "PySide" in sys.modules:
+        if ("PyQt4" in sys.modules) or ("PySide" in sys.modules):
             FigureCanvas.setSizePolicy(self,
                                    QtGui.QSizePolicy.Expanding,
                                    QtGui.QSizePolicy.Expanding)

@@ -40,6 +40,9 @@ from . import LegendSelector
 from . import McaROIWidget
 from ..plotting import PlotWidget
 
+if "PySide" in sys.argv:
+    import PySide
+
 # pyqtgraph has a SciPy dependency
 PYQTGRAPH = False
 if 'pyqtgraph' in sys.argv:

@@ -41,7 +41,8 @@ if __name__ == '__main__':
                    'debug=',
                    'qt=',
                    'backend=',
-                   'nativefiledialogs=']
+                   'nativefiledialogs=',
+                   'PySide=']
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -73,6 +74,8 @@ if __name__ == '__main__':
                 nativeFileDialogs = True
             else:
                 nativeFileDialogs = False
+        elif opt in ('--PySide'):
+            import PySide
     if qtversion == '3':
         raise NotImplementedError("Qt3 is not longer supported") 
 
@@ -906,10 +909,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.actionQuit.setText(QString("&Quit"))
             #self.actionQuit.setIcon(self.Icons["fileprint"])
             self.actionQuit.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Q)
-            qt.QObject.connect(self.actionQuit,
-                               qt.SIGNAL("triggered(bool)"),
-                               qt.qApp,
-                               qt.SLOT("closeAllWindows()"))
+            qApp = qt.QApplication.instance()
+            self.actionQuit.triggered.connect(qApp.closeAllWindows)
 
             #self.menubar = qt.QMenuBar(self)
             self.menuFile= qt.QMenu(self.menuBar())

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -34,21 +34,32 @@ on the one that has been previously chosen by the end user.
 """
 # force cx_freeze to consider sip among the modules to add
 # to the binary packages
-import sip
-if 'qt' not in sys.modules:
+if 'PySide' in sys.modules:
+    print("PySide")
+    from PySide.QtCore import *
+    from PySide.QtGui import *
     try:
-        from PyQt4.QtCore import *
-        from PyQt4.QtGui import *
-        try:
-            # In case PyQwt is compiled with QtSvg this forces
-            # cx_freeze to add PyQt4.QtSvg to the list of modules
-            from PyQt4.QtSvg import *
-        except:
-            pass
+        from PySide.QtSvg import *
     except:
-        from qt import *
+        pass
+    pyqtSignal = Signal
+
+    #matplotlib has difficulties to identify PySide
+    try:
+        import matplotlib
+        matplotlib.rcParams['backend.qt4']='PySide'
+    except:
+        pass
 else:
-    from qt import *
+    import sip
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
+    try:
+        # In case PyQwt is compiled with QtSvg this forces
+        # cx_freeze to add PyQt4.QtSvg to the list of modules
+        from PyQt4.QtSvg import *
+    except:
+        pass
 
 
 class HorizontalSpacer(QWidget):
