@@ -146,7 +146,7 @@ class SGDialog(qt.QDialog):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("Savitzky-Golay Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(10)
+        self.mainLayout.setContentsMargins(10, 10, 10, 10)
         self.mainLayout.setSpacing(2)
         self.__image = False
         if len(data.shape) == 2:

@@ -28,7 +28,7 @@ class Object3DColormap(qt.QGroupBox):
 
     def build(self):
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
 
         # the ComboBox

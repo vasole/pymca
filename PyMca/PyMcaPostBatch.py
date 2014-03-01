@@ -165,7 +165,7 @@ def test():
                 transpose=True
     filelist=args
     w = PyMcaPostBatch()
-    w.layout().setMargin(11)
+    w.layout().setContentsMargins(11, 11, 11, 11)
     if not len(filelist):
         filelist = w._getStackOfFiles()
     if not len(filelist):

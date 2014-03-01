@@ -47,7 +47,7 @@ class PCAParametersDialog(qt.QDialog):
         else:
             self.setWindowTitle("PCA Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(11)
+        self.mainLayout.setContentsMargins(11, 11, 11, 11)
         self.mainLayout.setSpacing(0)
 
         self.methodOptions = qt.QGroupBox(self)

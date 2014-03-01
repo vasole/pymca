@@ -9,14 +9,14 @@ class Object3DConfig(qt.QWidget):
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(4)
+        self.mainLayout.setContentsMargins(4, 4, 4, 4)
         self.mainLayout.setSpacing(4)
 
         #drawing
         self.mainTab = qt.QTabWidget(self)
         self.tabDrawing = qt.QWidget(self.mainTab)
         self.tabDrawing.mainLayout = qt.QVBoxLayout(self.tabDrawing) 
-        self.tabDrawing.mainLayout.setMargin(0)
+        self.tabDrawing.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.tabDrawing.mainLayout.setSpacing(0)
         self.movementsWidget  = Object3DMovement.Object3DMovement(self.tabDrawing)
         self.scaleWidget      = Object3DProperties.Object3DScale(self.tabDrawing)
@@ -29,7 +29,7 @@ class Object3DConfig(qt.QWidget):
         #clipping
         self.tabClipping = qt.QWidget(self.mainTab)
         self.tabClipping.mainLayout = qt.QVBoxLayout(self.tabClipping)
-        self.tabClipping.mainLayout.setMargin(0)
+        self.tabClipping.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.tabClipping.mainLayout.setSpacing(0)
         self.clippingPlaneWidget = ClippingPlaneConfiguration.ClippingPlaneWidget(self.tabClipping)
         self.colormapWidget = Object3DColormap.Object3DColormap(self.tabClipping)

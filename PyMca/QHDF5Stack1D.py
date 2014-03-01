@@ -52,7 +52,7 @@ class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):
         self.bars =qt.QWidget()
         self.bars.setWindowTitle("Reading progress")
         self.barsLayout = qt.QGridLayout(self.bars)
-        self.barsLayout.setMargin(2)
+        self.barsLayout.setContentsMargins(2, 2, 2, 2)
         self.barsLayout.setSpacing(3)
         self.progressBar   = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)

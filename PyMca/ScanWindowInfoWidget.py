@@ -423,7 +423,7 @@ class ScanWindowInfoWidget(qt.QWidget):
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QVBoxLayout(self)
-        layout.setMargin(2)
+        layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(2)
         
         self.scanInfo  = ScanInfoWidget(self)

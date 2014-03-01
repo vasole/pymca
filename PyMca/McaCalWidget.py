@@ -147,9 +147,9 @@ class McaCalWidget(qt.QDialog):
         self.bottomPanel.layout = qt.QHBoxLayout(self.bottomPanel)
         self.bottomPanel.layout.setSpacing(6)
         if qt.QDesktopWidget().height() < LOW_HEIGHT_THRESHOLD:
-            self.bottomPanel.layout.setMargin(2)
+            self.bottomPanel.layout.setContentsMargins(2, 2, 2, 2)
         else:
-            self.bottomPanel.layout.setMargin(10)
+            self.bottomPanel.layout.setContentsMargins(10, 10, 10, 10)
         self.peakParameters        = PeakSearchParameters(self.bottomPanel)
         self.bottomPanel.layout.addWidget(self.peakParameters)
         """

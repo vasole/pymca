@@ -325,7 +325,7 @@ class SNIPDialog(qt.QDialog):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("SNIP Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(10)
+        self.mainLayout.setContentsMargins(10, 10, 10, 10)
         self.mainLayout.setSpacing(2)
         self.__image = False
         self.__smooth = smooth

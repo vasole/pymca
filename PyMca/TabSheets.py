@@ -58,7 +58,7 @@ class TabSheets(qt.QDialog):
             TabSheetsLayout = qt.QVBoxLayout(self,11,6,"TabSheetsLayout")
         else:
             TabSheetsLayout = qt.QVBoxLayout(self)
-            TabSheetsLayout.setMargin(11)
+            TabSheetsLayout.setContentsMargins(11, 11, 11, 11)
             TabSheetsLayout.setSpacing(6)
             
         self.tabWidget = qt.QTabWidget(self)

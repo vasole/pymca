@@ -50,7 +50,7 @@ class ProfileScanWidget(ScanWindow.ScanWindow):
         self.buttonBox = self.labelBox
         buttonBox = self.buttonBox
         self.buttonBoxLayout = self.labelBox.mainLayout
-        self.buttonBoxLayout.setMargin(0)
+        self.buttonBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.buttonBoxLayout.setSpacing(0)
         self.addButton = qt.QPushButton(buttonBox)
         self.addButton.setText("ADD")

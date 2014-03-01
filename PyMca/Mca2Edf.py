@@ -74,7 +74,7 @@ class Mca2EdfGUI(qt.QWidget):
             grid.setColStretch(2,0)
         else:
             grid  = qt.QGridLayout(self.__grid)
-            grid.setMargin(11)
+            grid.setContentsMargins(11, 11, 11, 11)
             grid.setSpacing(6)
         #input list
         listrow  = 0
@@ -424,7 +424,7 @@ class Mca2EdfWindow(qt.QWidget):
             self.barsLayout = qt.QGridLayout(self.bars,2,3)
         else:
             self.barsLayout = qt.QGridLayout(self.bars)
-            self.barsLayout.setMargin(2)
+            self.barsLayout.setContentsMargins(2, 2, 2, 2)
             self.barsLayout.setSpacing(3)
         self.progressBar   = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)

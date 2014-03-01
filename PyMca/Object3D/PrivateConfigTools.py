@@ -114,7 +114,7 @@ class ValueFilter(qt.QGroupBox):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Value Filter')
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(4)
+        self.mainLayout.setContentsMargins(4, 4, 4, 4)
         self.mainLayout.setSpacing(4)
         i = 0
         for text in ["Use", "Min Value", "Max Value"]:
@@ -169,7 +169,7 @@ class Isosurfaces(qt.QGroupBox):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Isosurfaces')
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(4)
+        self.mainLayout.setContentsMargins(4, 4, 4, 4)
         self.mainLayout.setSpacing(4)
         self.__nIsosurfaces = niso
         i = 0

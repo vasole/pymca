@@ -57,9 +57,9 @@ class ParametersTab(qt.QTabWidget):
         self.tables={}
         self.mcatable=None
         if QTVERSION < '4.0.0':
-            self.setMargin(10)
+            self.setContentsMargins(10, 10, 10, 10)
         else:
-            if DEBUG: "self.setMargin(10) omitted"
+            if DEBUG: "self.setContentsMargins(10, 10, 10, 10) omitted"
         self.setview(name="Region 1")
 
     def setview(self,name=None,fitparameterslist=None):

@@ -56,7 +56,7 @@ class CheckField(qt.QWidget):
                                               "CheckFieldLayout")
         else:
             CheckFieldLayout = qt.QHBoxLayout(self)
-            CheckFieldLayout.setMargin(11)
+            CheckFieldLayout.setContentsMargins(11, 11, 11, 11)
             CheckFieldLayout.setSpacing(6)
 
 

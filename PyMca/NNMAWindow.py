@@ -34,7 +34,7 @@ class NNMAParametersDialog(qt.QDialog):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("NNMA Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(11)
+        self.mainLayout.setContentsMargins(11, 11, 11, 11)
         self.mainLayout.setSpacing(0)
         
         self.infoButton = qt.QPushButton(self)

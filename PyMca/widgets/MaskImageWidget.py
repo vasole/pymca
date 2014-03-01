@@ -162,7 +162,7 @@ class MaskImageWidget(qt.QWidget):
             self.mainTab = qt.QTabWidget(self)
             #self.graphContainer =qt.QWidget()
             #self.graphContainer.mainLayout = qt.QVBoxLayout(self.graphContainer)
-            #self.graphContainer.mainLayout.setMargin(0)
+            #self.graphContainer.mainLayout.setContentsMargins(0, 0, 0, 0)
             #self.graphContainer.mainLayout.setSpacing(0)
             self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
                                                    selection = self.__selectionFlag,
@@ -914,7 +914,7 @@ class MaskImageWidget(qt.QWidget):
         self.imageButtonBox = qt.QWidget(self)
         buttonBox = self.imageButtonBox
         self.imageButtonBoxLayout = qt.QHBoxLayout(buttonBox)
-        self.imageButtonBoxLayout.setMargin(0)
+        self.imageButtonBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.imageButtonBoxLayout.setSpacing(0)
         self.addImageButton = qt.QPushButton(buttonBox)
         icon = qt.QIcon(qt.QPixmap(IconDict["rgb16"]))

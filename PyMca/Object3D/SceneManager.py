@@ -46,7 +46,7 @@ class SceneManager(qt.QWidget):
         else:
             self.glWindow = weakref.proxy(glwindow)
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         #self.toolBar = ToolBar(self, self.glWindow)
         #self.toolBar.layout().addWidget(HorizontalSpacer(self.toolBar))

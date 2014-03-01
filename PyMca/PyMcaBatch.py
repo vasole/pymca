@@ -107,7 +107,7 @@ class McaBatchGUI(qt.QWidget):
             grid.setColStretch(2,0)
         else:
             grid       = qt.QGridLayout(self.__grid)
-            grid.setMargin(11)
+            grid.setContentsMargins(11, 11, 11, 11)
             grid.setSpacing(6)
         #input list
         listrow  = 0
@@ -169,7 +169,7 @@ class McaBatchGUI(qt.QWidget):
 
         box  = qt.QWidget(self)
         box.l = qt.QHBoxLayout(box)
-        box.l.setMargin(11)
+        box.l.setContentsMargins(11, 11, 11, 11)
         box.l.setSpacing(0)
         vbox1 = qt.QWidget(box)
         vbox1.l = qt.QVBoxLayout(vbox1)
@@ -1383,7 +1383,7 @@ class McaBatchWindow(qt.QWidget):
             self.barsLayout = qt.QGridLayout(self.bars,2,3)
         else:
             self.barsLayout = qt.QGridLayout(self.bars)
-            self.barsLayout.setMargin(2)
+            self.barsLayout.setContentsMargins(2, 2, 2, 2)
             self.barsLayout.setSpacing(3)
         self.progressBar   = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)

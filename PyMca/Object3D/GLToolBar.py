@@ -9,7 +9,7 @@ class GLToolBar(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.build()
 

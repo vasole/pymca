@@ -38,7 +38,7 @@ class StripParametersWidget(qt.QWidget):
 
     def build(self):
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(11)
+        self.mainLayout.setContentsMargins(11, 11, 11, 11)
         self.mainLayout.setSpacing(6)
 
         #strip algorithm

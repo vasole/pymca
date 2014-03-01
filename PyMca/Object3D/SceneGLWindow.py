@@ -79,7 +79,7 @@ class WheelAndSlider(qt.QWidget):
             else:
                 orientation = qt.Qt.Vertical
                 self.mainLayout = qt.QVBoxLayout(self)
-            self.mainLayout.setMargin(0)
+            self.mainLayout.setContentsMargins(0, 0, 0, 0)
             self.wheel  = Qwt5.QwtWheel(self)
             self.wheel.setOrientation(orientation)
             self.slider = Qwt5.QwtSlider(self,
@@ -98,7 +98,7 @@ class WheelAndLineEdit(qt.QWidget):
         def __init__(self, parent = None, orientation=qt.Qt.Horizontal):
             qt.QWidget.__init__(self, parent)
             self.mainLayout = qt.QHBoxLayout(self)
-            self.mainLayout.setMargin(0)
+            self.mainLayout.setContentsMargins(0, 0, 0, 0)
             self.wheel  = Qwt5.QwtWheel(self)
             self.wheel.setOrientation(orientation)
             self.lineEdit = qt.QLineEdit(self)
@@ -117,7 +117,7 @@ class WheelAndSpacer(qt.QWidget):
                 orientation = qt.Qt.Vertical
                 self.mainLayout = qt.QVBoxLayout(self)
                 self.spacer = VerticalSpacer(self)
-            self.mainLayout.setMargin(0)
+            self.mainLayout.setContentsMargins(0, 0, 0, 0)
             self.wheel  = Qwt5.QwtWheel(self)
             self.wheel.setOrientation(orientation)
             if orientation == qt.Qt.Horizontal:

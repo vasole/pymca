@@ -161,7 +161,7 @@ class CompoundFittingTab(qt.QWidget):
             glt = qt.QGridLayout(grid, 1, 1, 11, 2, "gridlayout")
         else:
             glt = Q3GridLayout(grid)
-            glt.setMargin(11)
+            glt.setContentsMargins(11, 11, 11, 11)
             glt.setSpacing(2)
 
         self._layerFlagWidgetList = []
@@ -225,7 +225,7 @@ class CompoundFittingTab0(qt.QWidget):
             gl = qt.QGridLayout(grid, 1, 1, 11, 2, "gridlayout")
         else:
             gl = Q3GridLayout(grid)
-            gl.setMargin(11)
+            gl.setContentsMargins(11, 11, 11, 11)
             gl.setSpacing(2)
 
         # Layer name

@@ -39,7 +39,7 @@ class TopWidget(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
         font = qt.QFont(self.font())
         font.setBold(True)
@@ -104,7 +104,7 @@ class StatusWidget(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
         
         self.statusLabel = qt.QLabel(self)
@@ -144,7 +144,7 @@ class SimpleFitGUI(qt.QWidget):
             self.graph = graph
         self._configurationDialog = None
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
         self.topWidget  = TopWidget(self)
         config = self.fitModule.getConfiguration()
@@ -173,7 +173,7 @@ class SimpleFitGUI(qt.QWidget):
             #build the actions widget
             self.fitActions = qt.QWidget(self)
             self.fitActions.mainLayout = qt.QHBoxLayout(self.fitActions)
-            self.fitActions.mainLayout.setMargin(2)
+            self.fitActions.mainLayout.setContentsMargins(2, 2, 2, 2)
             self.fitActions.mainLayout.setSpacing(2)
             self.fitActions.estimateButton = qt.QPushButton(self.fitActions)
             self.fitActions.estimateButton.setText("Estimate")

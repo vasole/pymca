@@ -107,7 +107,7 @@ class MatrixEditor(qt.QWidget):
             gridLayout=qt.QGridLayout(grid,6,2,11,4)
         else:
             gridLayout = qt.QGridLayout(grid)
-            gridLayout.setMargin(11)
+            gridLayout.setContentsMargins(11, 11, 11, 11)
             gridLayout.setSpacing(4)            
         
         #the angles

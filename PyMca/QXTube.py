@@ -245,7 +245,7 @@ class TubeWidget(qt.QWidget):
 
     def _build(self):
         layout = qt.QVBoxLayout(self)
-        layout.setMargin(11)
+        layout.setContentsMargins(11, 11, 11, 11)
 
         gridwidget   = qt.QWidget(self)
         grid = QGridLayout(gridwidget)

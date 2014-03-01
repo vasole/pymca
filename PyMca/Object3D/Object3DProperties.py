@@ -18,7 +18,7 @@ class Object3DDrawingModeWidget(qt.QGroupBox):
 
     def build(self):
         self.l = qt.QVBoxLayout(self)
-        self.l.setMargin(0)
+        self.l.setContentsMargins(0, 0, 0, 0)
         self.l.setSpacing(4)
         self.buttonGroup = qt.QButtonGroup(self)
         j = 0

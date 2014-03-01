@@ -172,7 +172,7 @@ class SPSMcaArrayWidget(qt.QWidget):
             qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
             layout= QGridLayout(self)
-        layout.setMargin(5)
+        layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(0)
 
         self.title= qt.QLabel(self)
@@ -215,7 +215,7 @@ class SPSXiaArrayWidget(qt.QWidget):
         else:
             qt.QWidget.__init__(self, parent)
             layout= qt.QGridLayout(self)
-        layout.setMargin(5)
+        layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(0)
 
         self.title= qt.QLabel(self)
@@ -284,7 +284,7 @@ class SPS_ImageArray(qt.QWidget):
             qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
             layout= QGridLayout(self)
-        layout.setMargin(5)
+        layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(0)
 
         self.title= qt.QLabel(self)
@@ -330,7 +330,7 @@ class SPS_StandardArray(qt.QWidget):
         else:
             qt.QWidget.__init__(self, parent)
             layout= qt.QGridLayout(self)
-        layout.setMargin(5)
+        layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(0)
 
         plab= qt.QLabel("Plot", self)
@@ -559,14 +559,14 @@ class QSpsWidget(qt.QWidget):
         butLayout.addWidget(addButton)
         butLayout.addWidget(removeButton)
         butLayout.addWidget(replaceButton)
-        butLayout.setMargin(5)
+        butLayout.setContentsMargins(5, 5, 5, 5)
 
         self.connect(addButton, qt.SIGNAL("clicked()"), self.__addClicked)
         self.connect(replaceButton, qt.SIGNAL("clicked()"), self.__replaceClicked)
         self.connect(removeButton, qt.SIGNAL("clicked()"), self.__removeClicked)
 
         # --- main layout
-        mainLayout.setMargin(5)
+        mainLayout.setContentsMargins(5, 5, 5, 5)
         mainLayout.setSpacing(5)
         mainLayout.addWidget(specWidget)
         if __name__ != "__main__":

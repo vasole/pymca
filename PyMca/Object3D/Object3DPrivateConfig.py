@@ -20,7 +20,7 @@ class Object3DPrivateConfig(qt.QWidget):
 
     def build(self):
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(4)
+        self.mainLayout.setContentsMargins(4, 4, 4, 4)
         self.mainLayout.setSpacing(4)
         self.button = qt.QPushButton(self)
         self.button.setText("Test Signal")

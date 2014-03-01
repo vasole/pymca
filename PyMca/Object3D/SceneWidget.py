@@ -10,8 +10,8 @@ class SceneWidget(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle('Scene Widget')
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         if scene is None:
             tree = None
         else:

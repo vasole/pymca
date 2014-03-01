@@ -35,7 +35,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle("Function Definition")
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
 
         row = 0
@@ -143,7 +143,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         #anchors
         self.anchorsContainer = qt.QWidget(self)
         anchorsContainerLayout = qt.QHBoxLayout(self.anchorsContainer)
-        anchorsContainerLayout.setMargin(2)
+        anchorsContainerLayout.setContentsMargins(2, 2, 2, 2)
         anchorsContainerLayout.setSpacing(2)
         self.stripAnchorsCheckBox = qt.QCheckBox(self.anchorsContainer)
         self.stripAnchorsCheckBox.setText(str("Strip Background use Anchors"))
@@ -247,7 +247,7 @@ class FitControl(qt.QGroupBox):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle("Fit Control")
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
 
         row =0
@@ -390,7 +390,7 @@ class SimpleFitControlWidget(qt.QWidget):
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt. QVBoxLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
         self.functionDefinitionWidget = FitFunctionDefinition(self)
         self.fitControlWidget = FitControl(self)

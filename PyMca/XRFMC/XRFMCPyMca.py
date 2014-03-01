@@ -53,7 +53,7 @@ class GetFileList(qt.QGroupBox):
     def __init__(self, parent=None, title='File Input', nfiles=1):
         qt.QGroupBox.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.__maxNFiles = nfiles
         self.fileList = []
@@ -230,7 +230,7 @@ class XRFMCParameters(qt.QGroupBox):
     def __init__(self, parent=None, title='XMIMSIM-PyMca Configuration'):
         qt.QGroupBox.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.setTitle(title)
         # I should read a default configuration file
@@ -466,7 +466,7 @@ class XRFMCSimulationControl(qt.QGroupBox):
 
     def build(self):
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
 
         i = 0

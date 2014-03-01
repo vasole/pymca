@@ -22,7 +22,7 @@ class Object3DAnchorWidget(qt.QGroupBox):
 
     def build(self):
         self.l = qt.QGridLayout(self)
-        self.l.setMargin(4)
+        self.l.setContentsMargins(4, 4, 4, 4)
         self.l.setSpacing(4)
         i = 0
         j = 0
@@ -121,7 +121,7 @@ class Object3DTranslationWidget(qt.QGroupBox):
 
     def build(self, labels):
         self.l = qt.QGridLayout(self)
-        self.l.setMargin(4)
+        self.l.setContentsMargins(4, 4, 4, 4)
         self.l.setSpacing(4)
         if labels is None:labels = ['Axis','Amount']
         i = 0
@@ -190,7 +190,7 @@ class Object3DRotationWidget(qt.QGroupBox):
 
     def build(self):
         self.l = qt.QGridLayout(self)
-        self.l.setMargin(0)
+        self.l.setContentsMargins(0, 0, 0, 0)
         self.l.setSpacing(0)
         i = 0
         j = 0
@@ -281,7 +281,7 @@ class Object3DMovement(qt.QWidget):
                        connect = True):
         qt.QWidget.__init__(self, parent)
         self.l = qt.QHBoxLayout(self)
-        self.l.setMargin(0)
+        self.l.setContentsMargins(0, 0, 0, 0)
         self.l.setSpacing(0)
         self.anchorWidget      = Object3DAnchorWidget(self, anchor)
         self.translationWidget = Object3DTranslationWidget(self, translation)

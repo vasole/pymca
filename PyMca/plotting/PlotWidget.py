@@ -29,8 +29,10 @@ import sys
 import os
 from . import Plot
 
-#TODO check for PySide
-from PyQt4 import QtCore, QtGui
+if "PySide" in sys.modules:
+    from PySide import QtCore, QtGui
+else:
+    from PyQt4 import QtCore, QtGui
 if not hasattr(QtCore, "Signal"):
     QtCore.Signal = QtCore.pyqtSignal
 

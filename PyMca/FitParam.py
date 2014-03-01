@@ -106,7 +106,7 @@ class FitParamWidget(FitParamForm):
         #This was previously into FitParamForm.py: END
         self.tabMul = qt.QWidget()
         tabMultilayerLayout = qt.QGridLayout(self.tabMul)
-        tabMultilayerLayout.setMargin(11)
+        tabMultilayerLayout.setContentsMargins(11, 11, 11, 11)
         tabMultilayerLayout.setSpacing(6)
         self.tabMultilayer  = AttenuatorsTable.MultilayerTab(self.tabMul)
         self.multilayerTable =self.tabMultilayer.matrixTable
@@ -117,7 +117,7 @@ class FitParamWidget(FitParamForm):
         #The concentrations
         self.tabConcentrations =  qt.QWidget()
         tabConcentrationsLayout = qt.QGridLayout(self.tabConcentrations)
-        tabConcentrationsLayout.setMargin(11)
+        tabConcentrationsLayout.setContentsMargins(11, 11, 11, 11)
         tabConcentrationsLayout.setSpacing(6)
         self.concentrationsWidget   = ConcentrationsWidget.ConcentrationsWidget(self.tabConcentrations,"tabConcentrations")
         tabConcentrationsLayout.addWidget(self.concentrationsWidget,0,0)
@@ -129,7 +129,7 @@ class FitParamWidget(FitParamForm):
             #The compound fit tab
             self.tabCompoundFit =  qt.QWidget()
             tabCompoundFitLayout = qt.QGridLayout(self.tabCompoundFit)
-            tabCompoundFitLayout.setMargin(11)
+            tabCompoundFitLayout.setContentsMargins(11, 11, 11, 11)
             tabCompoundFitLayout.setSpacing(6)
             self.compoundFitWidget   = AttenuatorsTable.CompoundFittingTab(self.tabCompoundFit,
                                                                            "tabCompound_fit")
@@ -140,7 +140,7 @@ class FitParamWidget(FitParamForm):
         if XRFMC_FLAG:
             self.tabXRFMC =  qt.QWidget()
             tabXRFMCLayout = qt.QGridLayout(self.tabXRFMC)
-            tabXRFMCLayout.setMargin(11)
+            tabXRFMCLayout.setContentsMargins(11, 11, 11, 11)
             tabXRFMCLayout.setSpacing(6)
             self.tabXRFMCWidget   = XRFMCPyMca.XRFMCTabWidget(\
                                                 self.tabXRFMC)
@@ -1013,7 +1013,7 @@ class FitParamDialog(qt.QDialog):
 
         self.initDir = initdir
         layout= qt.QVBoxLayout(self)
-        layout.setMargin(5)
+        layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(5)
 
         self.fitparam= FitParamWidget(self)

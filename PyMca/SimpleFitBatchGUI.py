@@ -42,7 +42,7 @@ class SimpleFitBatchParameters(qt.QWidget):
         self.setWindowTitle("PyMca Simple Fit Batch GUI")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
         self._inputDir   = None
         self._outputDir  = None
@@ -237,7 +237,7 @@ class SimpleFitBatchGUI(qt.QWidget):
         else:
             file_browser = True
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
 
         self.parametersWidget = SimpleFitBatchParameters(self)
@@ -246,7 +246,7 @@ class SimpleFitBatchGUI(qt.QWidget):
         if actions:
             self.actionsBox = qt.QWidget(self)
             self.actionsBox.mainLayout = qt.QHBoxLayout(self.actionsBox)
-            self.actionsBox.mainLayout.setMargin(2)
+            self.actionsBox.mainLayout.setContentsMargins(2, 2, 2, 2)
             self.actionsBox.mainLayout.setSpacing(2)
             self.closeButton = qt.QPushButton(self.actionsBox)
             self.closeButton.setText("Close")

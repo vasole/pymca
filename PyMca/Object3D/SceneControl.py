@@ -19,14 +19,14 @@ class SceneControl(qt.QWidget):
             self.scene = scene
 
         self.mainLayout = qt.QHBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.sceneWidget = SceneWidget.SceneWidget(self, scene=self.scene)
         self.selectedObjectControl = Object3DConfig.Object3DConfig(self)
         self.mainTab = self.selectedObjectControl.mainTab
         self.tabScene = qt.QWidget(self.mainTab)
         self.tabScene.mainLayout = qt.QGridLayout(self.tabScene) 
-        self.tabScene.mainLayout.setMargin(0)
+        self.tabScene.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.tabScene.mainLayout.setSpacing(0)
         self.coordinatesWidget = SceneCoordinates.SceneCoordinates(self.tabScene)
         self.coordinatesWidget.observerWidget.hide()

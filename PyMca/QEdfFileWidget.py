@@ -310,7 +310,6 @@ class QEdfFileWidget(qt.QWidget):
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
         self.toolBarLayout.setContentsMargins(0, 0, 0, 0)
-        self.toolBarLayout.setMargin(2)
         self.mainLayout.addWidget(self.toolBar)
         #Autoscale
         self._addToolButton(self.zoomResetIcon,
@@ -581,7 +580,7 @@ class QEdfFileWidget(qt.QWidget):
         self.buttonBox = qt.QWidget(self)
         buttonBox = self.buttonBox
         self.buttonBoxLayout = qt.QGridLayout(buttonBox)
-        self.buttonBoxLayout.setMargin(2)
+        self.buttonBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.buttonBoxLayout.setSpacing(2)
         
         self.add2DButton = qt.QPushButton(buttonBox)

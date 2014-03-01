@@ -75,16 +75,16 @@ class FitParamForm(qt.QWidget):
             layout5 = qt.QGridLayout(None, 1, 1, 12, 6, "layout5")
         else:
             FitParamFormLayout = qt.QVBoxLayout(self)
-            FitParamFormLayout.setMargin(11)
+            FitParamFormLayout.setContentsMargins(11, 11, 11, 11)
             FitParamFormLayout.setSpacing(6)
             self.mainTab = qt.QTabWidget(self)
             self.tabFit = qt.QWidget()
             tabFitLayout = qt.QVBoxLayout(self.tabFit)
-            tabFitLayout.setMargin(11)
+            tabFitLayout.setContentsMargins(11, 11, 11, 11)
             tabFitLayout.setSpacing(6)
             layout5 = Q3GridLayout(None)
             #,1,1,
-            layout5.setMargin(11)
+            layout5.setContentsMargins(11, 11, 11, 11)
             layout5.setSpacing(6)
 
         if QTVERSION < '4.0.0':
@@ -392,7 +392,7 @@ class FitParamForm(qt.QWidget):
             #self.mainTab.addTab(self.tabFit,str("FIT"))
             self.tabDetector = qt.QWidget()
             tabDetectorLayout = qt.QVBoxLayout(self.tabDetector)
-            tabDetectorLayout.setMargin(11)
+            tabDetectorLayout.setContentsMargins(11, 11, 11, 11)
             tabDetectorLayout.setSpacing(6)
 
             detLayout = Q3GridLayout(None)
@@ -450,7 +450,7 @@ class FitParamForm(qt.QWidget):
             layout5_2 = qt.QGridLayout(None,1,1,11,2,"layout5_2")
         else:
             layout5_2 = Q3GridLayout(None)
-            layout5_2.setMargin(11)
+            layout5_2.setContentsMargins(11, 11, 11, 11)
             layout5_2.setSpacing(2)
 
         self.zeroError = qt.QLineEdit(self.tabDetector)
@@ -649,7 +649,7 @@ class FitParamForm(qt.QWidget):
         else:
             self.tabPeakShape = qt.QWidget()
             tabPeakShapeLayout = Q3GridLayout(self.tabPeakShape)
-            tabPeakShapeLayout.setMargin(11)
+            tabPeakShapeLayout.setContentsMargins(11, 11, 11, 11)
             tabPeakShapeLayout.setSpacing(2)
             
         spacer_7 = qt.QSpacerItem(20, 90,\

@@ -21,7 +21,7 @@ class Object3DMeshConfig(Object3DPrivateConfig.Object3DPrivateConfig):
 
     def build(self):
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(4)
+        self.mainLayout.setContentsMargins(4, 4, 4, 4)
         self.mainLayout.setSpacing(4)
 
         #info

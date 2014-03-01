@@ -9,7 +9,7 @@ class SceneCoordinates(qt.QWidget):
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.limitsWidget = SceneLimitsWidget(self)
         self.observerWidget = ObserverPositionWidget(self)
@@ -64,7 +64,7 @@ class SceneAxesVectorsWidget(qt.QGroupBox):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Axes Vectors')
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(4)
+        self.mainLayout.setContentsMargins(4, 4, 4, 4)
         self.mainLayout.setSpacing(4)
         self.build()
         ddict = {'u':[1.0, 0.0, 0.0],
@@ -162,7 +162,7 @@ class SceneLimitsWidget(qt.QGroupBox):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Visual Volume')
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(4)
+        self.mainLayout.setContentsMargins(4, 4, 4, 4)
         self.mainLayout.setSpacing(4)
         self.build()
         ddict = {'xmin': -10.0,
@@ -378,7 +378,7 @@ class ViewOrientationWidget(qt.QGroupBox):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('View Orientation')
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(4)
+        self.mainLayout.setContentsMargins(4, 4, 4, 4)
         self.mainLayout.setSpacing(4)
         self.build()
         viewMatrix = numpy.zeros((4,4), numpy.float32)
@@ -457,7 +457,7 @@ class ObserverPositionWidget(qt.QGroupBox):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Observer Position')
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(4)
+        self.mainLayout.setContentsMargins(4, 4, 4, 4)
         self.mainLayout.setSpacing(4)
         self.build()
         ddict = {'observer': [0.0, 0.0, 0.0],

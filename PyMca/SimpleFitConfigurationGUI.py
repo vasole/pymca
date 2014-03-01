@@ -148,7 +148,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
         self.setWindowTitle("PyMca - Simple Fit Configuration")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
         if 0:
             self.fitControlWidget = SimpleFitControlWidget.SimpleFitControlWidget(self)

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -40,24 +40,13 @@ def uic_load_pixmap_FitActionsGUI(name):
 
 class FitStatusGUI(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self,parent,name,fl)
-
-            if name == None:
-                self.setName("FitStatusGUI")
-
-            self.setCaption("FitStatusGUI")
-        else:
-            qt.QWidget.__init__(self,parent)
+        qt.QWidget.__init__(self,parent)
 
         self.resize(535,47)
 
-        if QTVERSION < '4.0.0':
-            FitStatusGUILayout = qt.QHBoxLayout(self,11,6,"FitStatusGUILayout")
-        else:
-            FitStatusGUILayout = qt.QHBoxLayout(self)
-            FitStatusGUILayout.setMargin(11)
-            FitStatusGUILayout.setSpacing(6)
+        FitStatusGUILayout = qt.QHBoxLayout(self)
+        FitStatusGUILayout.setContentsMargins(11, 11, 11, 11)
+        FitStatusGUILayout.setSpacing(6)
 
         self.StatusLabel = qt.QLabel(self)
         self.StatusLabel.setText("Status:")

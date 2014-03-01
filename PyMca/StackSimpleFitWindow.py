@@ -42,7 +42,7 @@ class OutputParameters(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
         self.outputDirLabel = qt.QLabel(self)
         self.outputDirLabel.setText("Output directory")
@@ -104,7 +104,7 @@ class StackSimpleFitWindow(qt.QWidget):
         self.setWindowTitle('Stack Fit Window')
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(2)
+        self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
 
         self.fitSetupWindow = SimpleFitGUI.SimpleFitGUI(self)

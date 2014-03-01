@@ -88,7 +88,7 @@ class SpecFileDataInfo(qt.QTabWidget):
     def __init__(self, info, parent=None, name="DataSpecFileInfo", fl=0):
         if QTVERSION < '4.0.0':
             qt.QTabWidget.__init__(self, parent, name, fl)
-            self.setMargin(5)
+            self.setContentsMargins(5, 5, 5, 5)
         else:
             qt.QTabWidget.__init__(self, parent)
             if name is not None:self.setWindowTitle(name)

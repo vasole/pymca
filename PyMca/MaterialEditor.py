@@ -475,7 +475,7 @@ class MaterialGUI(qt.QWidget):
             grid = self.__gridVBox
             vboxLayout.addWidget(grid)
             gridLayout = qt.QGridLayout(grid)
-            gridLayout.setMargin(11)
+            gridLayout.setContentsMargins(11, 11, 11, 11)
             gridLayout.setSpacing(4)
             
             densityLabel  = qt.QLabel(grid)
@@ -554,7 +554,7 @@ class MaterialGUI(qt.QWidget):
         self.__comments = comments
         grid = qt.QWidget(self)
         gridLayout = qt.QGridLayout(grid)
-        gridLayout.setMargin(11)
+        gridLayout.setContentsMargins(11, 11, 11, 11)
         gridLayout.setSpacing(4)
         numberLabel  = qt.QLabel(grid)
         numberLabel.setText("Number  of  Compounds:")

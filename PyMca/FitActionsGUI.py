@@ -58,7 +58,7 @@ class FitActionsGUI(qt.QWidget):
             
         else:
             FitActionsGUILayout = qt.QGridLayout(self)
-            FitActionsGUILayout.setMargin(11)
+            FitActionsGUILayout.setContentsMargins(11, 11, 11, 11)
             FitActionsGUILayout.setSpacing(6)
             Layout9 = qt.QHBoxLayout(None)
             Layout9.setContentsMargins(0, 0, 0, 0)

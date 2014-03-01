@@ -46,7 +46,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                  profileselection=False, polygon=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self._keepDataAspectRatioFlag = False
         self._buildToolBar(selection, colormap, imageicons,
@@ -105,7 +105,7 @@ class RGBCorrelatorGraph(qt.QWidget):
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
-        self.toolBarLayout.setMargin(0)
+        self.toolBarLayout.setContentsMargins(0, 0, 0, 0)
         self.toolBarLayout.setSpacing(0)
         self.mainLayout.addWidget(self.toolBar)
         #Autoscale
@@ -273,7 +273,7 @@ class RGBCorrelatorGraph(qt.QWidget):
 
         self.infoWidget = qt.QWidget(self.toolBar)
         self.infoWidget.mainLayout = qt.QHBoxLayout(self.infoWidget)
-        self.infoWidget.mainLayout.setMargin(0)
+        self.infoWidget.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.infoWidget.mainLayout.setSpacing(0)
         self.infoWidget.label = qt.QLabel(self.infoWidget)
         self.infoWidget.label.setText("X = ???? Y = ???? Z = ????")

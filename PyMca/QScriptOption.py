@@ -270,7 +270,7 @@ class RadioField(qt.QWidget):
             else:
                 qt.QWidget.__init__(self,parent)
                 RadioFieldLayout = qt.QHBoxLayout(self)
-                RadioFieldLayout.setMargin(11)
+                RadioFieldLayout.setContentsMargins(11, 11, 11, 11)
                 RadioFieldLayout.setSpacing(6)
 
 
@@ -280,7 +280,7 @@ class RadioField(qt.QWidget):
             self.RadioFieldBox.setTitle(str(""))
             self.RadioFieldBox.setColumnLayout(0,qt.Qt.Vertical)
             self.RadioFieldBox.layout().setSpacing(6)
-            self.RadioFieldBox.layout().setMargin(11)
+            self.RadioFieldBox.layout().setContentsMargins(11, 11, 11, 11)
             RadioFieldBoxLayout = qt.QVBoxLayout(self.RadioFieldBox.layout())
             RadioFieldBoxLayout.setAlignment(qt.Qt.AlignTop)
             Layout1 = qt.QVBoxLayout(None,0,6,"Layout1")

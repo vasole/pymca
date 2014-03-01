@@ -14,7 +14,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
 
     def build(self):
         self.l = qt.QGridLayout(self)
-        self.l.setMargin(4)
+        self.l.setContentsMargins(4, 4, 4, 4)
         self.l.setSpacing(2)
         i = 0
         j = 0
@@ -139,7 +139,7 @@ class UserClippingPlaneWidget(qt.QWidget):
     def __init__(self, parent = None, vector = None, point = None, rotation=None):
         qt.QWidget.__init__(self, parent)
         self.l = qt.QHBoxLayout(self)
-        self.l.setMargin(0)
+        self.l.setContentsMargins(0, 0, 0, 0)
         self.l.setSpacing(0)
         if vector is None: vector = [0.0, 0.0, 1.0]
         self.vectorWidget = Object3DTranslationWidget(self, vector, labels = ['Axis', 'Value'])

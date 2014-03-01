@@ -34,7 +34,7 @@ class XiaCorrectionWidget(qt.QWizardPage):
         qt.QWizardPage.__init__(self, parent)
 
         layout= qt.QVBoxLayout(self)
-        layout.setMargin(10)
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(5)
 
         self.deadCheck= qt.QCheckBox("DeadTime correction", self)
@@ -207,7 +207,7 @@ class XiaInputWidget(qt.QWizardPage):
         qt.QWizardPage.__init__(self, parent)
 
         layout= qt.QVBoxLayout(self)
-        layout.setMargin(10)
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(5)
 
         self.listFiles= qt.QListWidget(self)
@@ -304,7 +304,7 @@ class XiaOutputWidget(qt.QWizardPage):
         #, name, fl)
 
         layout= qt.QVBoxLayout(self)
-        layout.setMargin(10)
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(5)
 
         topWidget= qt.QWidget(self)
