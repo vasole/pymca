@@ -98,7 +98,7 @@ class StripParametersWidget(qt.QWidget):
         #anchors
         self.anchorsContainer = qt.QWidget(self)
         anchorsContainerLayout = qt.QHBoxLayout(self.anchorsContainer)
-        anchorsContainerLayout.setMargin(0)
+        anchorsContainerLayout.setContentsMargins(0, 0, 0, 0)
         anchorsContainerLayout.setSpacing(2)
         self.stripAnchorsFlagCheck = qt.QCheckBox(self.anchorsContainer)
         self.stripAnchorsFlagCheck.setText(str("Strip Background use Anchors"))
@@ -241,7 +241,7 @@ class StripBackgroundWidget(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("Strip and SNIP Configuration Window")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.parametersWidget = StripParametersWidget(self)
         self.graphWidget = PlotWindow.PlotWindow(self,
@@ -345,7 +345,7 @@ class StripBackgroundDialog(qt.QDialog):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("Strip and SNIP Configuration Window")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.parametersWidget = StripBackgroundWidget(self)
         self.setData = self.parametersWidget.setData
@@ -354,7 +354,7 @@ class StripBackgroundDialog(qt.QDialog):
         self.mainLayout.addWidget(self.parametersWidget)
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
-        hboxLayout.setMargin(0)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
         hboxLayout.setSpacing(2)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")

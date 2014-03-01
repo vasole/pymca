@@ -38,7 +38,7 @@ class QSourceSelector(qt.QWidget):
     def __init__(self, parent=None, filetypelist=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout= qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         if filetypelist is None:
             self.fileTypeList = ["Spec Files (*mca)",
@@ -57,7 +57,7 @@ class QSourceSelector(qt.QWidget):
         self.lastInputDir = PyMcaDirs.inputDir
         self.fileWidget= qt.QWidget(self)
         fileWidgetLayout= qt.QHBoxLayout(self.fileWidget)
-        fileWidgetLayout.setMargin(0)
+        fileWidgetLayout.setContentsMargins(0, 0, 0, 0)
         fileWidgetLayout.setSpacing(0)
         self.fileCombo  = qt.QComboBox(self.fileWidget)
         self.fileCombo.setEditable(0)

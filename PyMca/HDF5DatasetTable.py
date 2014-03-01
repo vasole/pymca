@@ -33,7 +33,7 @@ class HDF5DatasetTable(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.__init__(self,
                                                                      parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.arrayTableWidget =  NumpyArrayTableWidget.NumpyArrayTableWidget(self)
         self.mainLayout.addWidget(self.arrayTableWidget)

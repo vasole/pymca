@@ -138,7 +138,7 @@ class HKL(qt.QWidget):
     def __init__(self, parent = None, h= "", k= "", l=""):
         qt.QWidget.__init__(self, parent)
         layout = qt.QHBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
         
 
@@ -185,7 +185,7 @@ class GraphInfoWidget(qt.QWidget):
     def __init__(self, parent):
         qt.QWidget.__init__(self, parent)
         layout = qt.QGridLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
         #peak
@@ -195,7 +195,7 @@ class GraphInfoWidget(qt.QWidget):
         self.peak.setReadOnly(True)
         hboxPeak   = qt.QWidget(self)
         hboxPeak.l = qt.QHBoxLayout(hboxPeak) 
-        hboxPeak.l.setMargin(0)
+        hboxPeak.l.setContentsMargins(0, 0, 0, 0)
         hboxPeak.l.setSpacing(0)
         peakAt     = qt.QLabel(hboxPeak)
         peakAt.setText(" at:")
@@ -211,7 +211,7 @@ class GraphInfoWidget(qt.QWidget):
         self.fwhm.setReadOnly(True)
         hboxFwhm   = qt.QWidget(self)
         hboxFwhm.l = qt.QHBoxLayout(hboxFwhm) 
-        hboxFwhm.l.setMargin(0)
+        hboxFwhm.l.setContentsMargins(0, 0, 0, 0)
         hboxFwhm.l.setSpacing(0)
         fwhmAt     = qt.QLabel(hboxFwhm)
         fwhmAt.setText(" at:")
@@ -362,7 +362,7 @@ class ScanInfoWidget(qt.QWidget):
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QGridLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
         #scan info

@@ -79,7 +79,7 @@ class AttenuatorsTab(qt.QWidget):
         if QTVERSION > '4.0.0':
             maxheight = qt.QDesktopWidget().height()
             if maxheight < 800:
-                layout.setMargin(0)
+                layout.setContentsMargins(0, 0, 0, 0)
                 layout.setSpacing(2)
         self.table  = AttenuatorsTableWidget(self, name, attenuators,
                                              funnyfilters=True)

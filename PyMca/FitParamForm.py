@@ -219,7 +219,7 @@ class FitParamForm(qt.QWidget):
         ########
         self.anchorsContainer = qt.QWidget(self.tabFit)
         anchorsContainerLayout = qt.QHBoxLayout(self.anchorsContainer)
-        anchorsContainerLayout.setMargin(0)
+        anchorsContainerLayout.setContentsMargins(0, 0, 0, 0)
         anchorsContainerLayout.setSpacing(2)
         self.stripAnchorsFlagCheck = qt.QCheckBox(self.anchorsContainer)
         self.stripAnchorsFlagCheck.setText(str("Strip Background use Anchors"))
@@ -328,7 +328,7 @@ class FitParamForm(qt.QWidget):
             includeLayout = qt.QGridLayout(includeWidget,1,1,0,3,"includeLayout")
         else:
             includeLayout = Q3GridLayout(includeWidget)
-            includeLayout.setMargin(0)
+            includeLayout.setContentsMargins(0, 0, 0, 0)
             includeLayout.setSpacing(3)
 
         self.stepCheck = qt.QCheckBox(includeWidget)
@@ -396,7 +396,7 @@ class FitParamForm(qt.QWidget):
             tabDetectorLayout.setSpacing(6)
 
             detLayout = Q3GridLayout(None)
-            detLayout.setMargin(0)
+            detLayout.setContentsMargins(0, 0, 0, 0)
             detLayout.setSpacing(2)
             self.elementCombo = qt.QComboBox(self.tabDetector)
 

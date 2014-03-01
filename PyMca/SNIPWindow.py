@@ -48,7 +48,7 @@ class SNIP1DParametersWidget(qt.QWidget):
     def __init__(self, parent = None, length=2000, smooth=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
 
         i = 0
@@ -112,7 +112,7 @@ class SNIP2DParametersWidget(qt.QWidget):
     def __init__(self, parent = None, shape=(4000,4000)):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
 
         i = 0
@@ -208,7 +208,7 @@ class SNIPWindow(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("SNIP Configuration Window")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         if image is None:
             image = False
@@ -346,7 +346,7 @@ class SNIPDialog(qt.QDialog):
         self.mainLayout.addWidget(self.parametersWidget)
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
-        hboxLayout.setMargin(0)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")

@@ -60,7 +60,7 @@ class PeakIdentifier(qt.QWidget):
         self.__energyHBox=qt.QWidget(self)
         hbox = self.__energyHBox
         hbox.layout = qt.QHBoxLayout(hbox)
-        hbox.layout.setMargin(0)
+        hbox.layout.setContentsMargins(0, 0, 0, 0)
         hbox.layout.setSpacing(0)
         layout.addWidget(hbox)
         hbox.layout.addWidget(qt.HorizontalSpacer(hbox))
@@ -90,7 +90,7 @@ class PeakIdentifier(qt.QWidget):
 
         layout.addWidget(hbox2)
         hbox2.layout = qt.QHBoxLayout(hbox2)
-        hbox2.layout.setMargin(0)
+        hbox2.layout.setContentsMargins(0, 0, 0, 0)
         hbox2.layout.setSpacing(0)
         font=hbox2.font()
         font.setBold(1)

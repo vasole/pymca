@@ -87,7 +87,7 @@ class McaROIWidget(qt.QWidget):
         
         hbox = qt.QWidget(self)
         hboxlayout = qt.QHBoxLayout(hbox)
-        hboxlayout.setMargin(0)
+        hboxlayout.setContentsMargins(0, 0, 0, 0)
         hboxlayout.setSpacing(0)
 
         hboxlayout.addWidget(qt.HorizontalSpacer(hbox))

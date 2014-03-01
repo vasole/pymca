@@ -92,7 +92,7 @@ class MatrixEditor(qt.QWidget):
             labelHBox = qt.QWidget(sampleBox)
             sampleBoxLayout.addWidget(labelHBox)
             labelHBoxLayout = qt.QVBoxLayout(labelHBox)
-            labelHBoxLayout.setMargin(0)
+            labelHBoxLayout.setContentsMargins(0, 0, 0, 0)
             labelHBoxLayout.setSpacing(4)
             label = MatrixImage.MatrixImage(labelHBox,size=size)
             labelHBoxLayout.addWidget(label)

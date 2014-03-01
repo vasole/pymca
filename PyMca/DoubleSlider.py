@@ -95,7 +95,7 @@ class MySlider(qt.QWidget):
         else:
             alignment = qt.Qt.AlignVCenter | qt.Qt.AlignLeft
             layout = qt.QVBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(orientation)

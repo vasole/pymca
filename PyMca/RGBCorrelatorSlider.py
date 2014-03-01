@@ -36,11 +36,11 @@ class RGBCorrelatorSlider(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         self.__emitSignals = True
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self._buttonBox = qt.QWidget(self)
         self._buttonBoxLayout = qt.QGridLayout(self._buttonBox)
-        self._buttonBoxLayout.setMargin(0)
+        self._buttonBoxLayout.setContentsMargins(0, 0, 0, 0)
         self._buttonBoxLayout.setSpacing(0)
 
         if autoscalelimits is None:
@@ -66,7 +66,7 @@ class RGBCorrelatorSlider(qt.QWidget):
 
         self._gridBox = qt.QWidget(self)
         self._gridBoxLayout = qt.QGridLayout(self._gridBox)
-        self._gridBoxLayout.setMargin(0)
+        self._gridBoxLayout.setContentsMargins(0, 0, 0, 0)
         self._gridBoxLayout.setSpacing(0)
 
         redLabel = MyQLabel(self._gridBox, color = qt.Qt.red)

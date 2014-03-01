@@ -234,7 +234,7 @@ class McaAdvancedFit(qt.QWidget):
         hbox=qt.QWidget(self)
         self.bottom = hbox
         hboxLayout = qt.QHBoxLayout(hbox)
-        hboxLayout.setMargin(0)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
         hboxLayout.setSpacing(4)
         if not top:
             self.configureButton = qt.QPushButton(hbox)
@@ -1267,7 +1267,7 @@ class McaAdvancedFit(qt.QWidget):
             self.browser= qt.QWidget()
             self.browser.setWindowTitle(QString(self.__lastreport))
             self.browser.layout = qt.QVBoxLayout(self.browser)
-            self.browser.layout.setMargin(0)
+            self.browser.layout.setContentsMargins(0, 0, 0, 0)
             self.browser.layout.setSpacing(0)
             self.__printmenu.addSeparator()
             self.__printmenu.addAction(QString("Last Report"),self.showLastReport)
@@ -2245,7 +2245,7 @@ class Top(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
         qt.QWidget.__init__(self,parent)
         self.mainLayout= qt.QHBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.build()
 

@@ -61,12 +61,12 @@ class XiaCorrectionWidget(qt.QWizardPage):
 
         sumWidget= qt.QWidget(self)
         sumLayout= qt.QHBoxLayout(sumWidget)
-        sumLayout.setMargin(0)
+        sumLayout.setContentsMargins(0, 0, 0, 0)
         sumLayout.setSpacing(5)
 
         butWidget= qt.QWidget(sumWidget)
         butLayout= qt.QVBoxLayout(butWidget)
-        butLayout.setMargin(0)
+        butLayout.setContentsMargins(0, 0, 0, 0)
         butLayout.setSpacing(0)
 
         self.sumTable= qt.QTableWidget(sumWidget)
@@ -215,7 +215,7 @@ class XiaInputWidget(qt.QWizardPage):
 
         butWidget= qt.QWidget(self)
         butLayout= qt.QHBoxLayout(butWidget)
-        butLayout.setMargin(0)
+        butLayout.setContentsMargins(0, 0, 0, 0)
         butLayout.setSpacing(5)
 
         butRemove= qt.QPushButton("Remove", butWidget)
@@ -309,7 +309,7 @@ class XiaOutputWidget(qt.QWizardPage):
 
         topWidget= qt.QWidget(self)
         topLayout= qt.QGridLayout(topWidget)
-        topLayout.setMargin(0)
+        topLayout.setContentsMargins(0, 0, 0, 0)
         topLayout.setSpacing(5)
 
         dirLabel=  qt.QLabel("Directory", topWidget)

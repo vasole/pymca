@@ -253,7 +253,7 @@ class PCADialog(qt.QDialog):
         msg.setModal(1)
         msg.setWindowTitle("Please Wait")
         layout = qt.QHBoxLayout(msg)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         l1 = qt.QLabel(msg)
         l1.setFixedWidth(l1.fontMetrics().width('##'))

@@ -58,7 +58,7 @@ class PCAParametersDialog(qt.QDialog):
                           PCAModule.expectationMaximizationPCA,
                           PCAModule.multipleArrayPCA]
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
-        self.methodOptions.mainLayout.setMargin(0)
+        self.methodOptions.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.methodOptions.mainLayout.setSpacing(2)
         #this does not seem to bring any advantage
         if 0:
@@ -99,7 +99,7 @@ class PCAParametersDialog(qt.QDialog):
         self.speedOptions = qt.QGroupBox(self)
         self.speedOptions.setTitle("Speed Options")
         self.speedOptions.mainLayout = qt.QGridLayout(self.speedOptions)
-        self.speedOptions.mainLayout.setMargin(0)
+        self.speedOptions.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.speedOptions.mainLayout.setSpacing(2)
         labelPC = qt.QLabel(self)
         labelPC.setText("Number of PC:")
@@ -133,7 +133,7 @@ class PCAParametersDialog(qt.QDialog):
         #the OK button
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
-        hboxLayout.setMargin(0)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("Accept")
@@ -295,7 +295,7 @@ class RegionsWidget(qt.QGroupBox):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Spectral Regions')
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         if nregions % 2:
             nregions += 1

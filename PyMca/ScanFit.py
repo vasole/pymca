@@ -47,7 +47,7 @@ class ScanFit(qt.QWidget):
             self.specfit = specfit
         self.info = None
         layout = qt.QVBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         ##############
         self.headerlabel = qt.QLabel(self)
@@ -88,7 +88,7 @@ class ScanFit(qt.QWidget):
         ##############
         hbox = qt.QWidget(self)
         hboxlayout = qt.QHBoxLayout(hbox)
-        hboxlayout.setMargin(0)
+        hboxlayout.setContentsMargins(0, 0, 0, 0)
         hboxlayout.setSpacing(0)
         self.estimatebutton = qt.QPushButton(hbox)
         self.estimatebutton.setText("Estimate")

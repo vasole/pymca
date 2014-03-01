@@ -49,7 +49,7 @@ class RGBCorrelator(qt.QWidget):
         self.setWindowTitle("PyMCA RGB Correlator")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(RGBCorrelatorGraph.IconDict['gioconda16'])))
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(6)
         self.splitter   = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Horizontal)

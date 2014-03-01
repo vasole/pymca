@@ -77,7 +77,7 @@ class Concentrations(qt.QWidget):
 
     def build(self):
         layout = qt.QVBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.concentrationsTool = ConcentrationsTool.ConcentrationsTool()
         self.concentrationsWidget = ConcentrationsWidget(self)
@@ -198,7 +198,7 @@ class Concentrations(qt.QWidget):
             msg.setModal(0)
             msg.setWindowTitle("Please Wait")
         layout = qt.QHBoxLayout(msg)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         l1 = qt.QLabel(msg)
         l1.setFixedWidth(l1.fontMetrics().width('##'))
@@ -281,7 +281,7 @@ class ConcentrationsWidget(qt.QWidget):
 
     def build(self):
         layout = qt.QVBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         if QTVERSION < '4.0.0':
             buttonGroup = qt.QVButtonGroup("Estimate concentrations", self)
@@ -289,14 +289,14 @@ class ConcentrationsWidget(qt.QWidget):
         else:
             buttonGroup = qt.QGroupBox(self)
             buttonGroup.layout = qt.QVBoxLayout(buttonGroup)
-            buttonGroup.layout.setMargin(0)
+            buttonGroup.layout.setContentsMargins(0, 0, 0, 0)
             buttonGroup.layout.setSpacing(0)
         layout.addWidget(buttonGroup)
         self.fluxCheckBox = qt.QCheckBox(buttonGroup)
         self.fluxCheckBox.setText("From fundamental parameters")
         wf = qt.QWidget(buttonGroup)
         wf.layout = qt.QHBoxLayout(wf)
-        wf.layout.setMargin(0)
+        wf.layout.setContentsMargins(0, 0, 0, 0)
         wf.layout.setSpacing(0)
         wf.layout.addWidget(qt.HorizontalSpacer(wf))
         self.fundamentalWidget = FundamentalWidget(wf)
@@ -308,7 +308,7 @@ class ConcentrationsWidget(qt.QWidget):
 
         wm = qt.QWidget(buttonGroup)
         wm.layout = qt.QHBoxLayout(wm)
-        wm.layout.setMargin(0)
+        wm.layout.setContentsMargins(0, 0, 0, 0)
         wm.layout.setSpacing(0)
         wm.layout.addWidget(qt.HorizontalSpacer(wm))
         referenceLabel = qt.QLabel(wm)
@@ -598,13 +598,13 @@ class FundamentalWidget(qt.QWidget):
 
     def build(self, spacing=2):
         layout = qt.QHBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(spacing)
 
         #column 0
         c0 = qt.QWidget(self)
         c0.layout = qt.QVBoxLayout(c0)
-        c0.layout.setMargin(0)
+        c0.layout.setContentsMargins(0, 0, 0, 0)
         c0.layout.setSpacing(spacing)
 
         c0l0 = qt.QLabel(c0)
@@ -619,7 +619,7 @@ class FundamentalWidget(qt.QWidget):
         #column 1
         c1 = qt.QWidget(self)
         c1.layout = qt.QVBoxLayout(c1)
-        c1.layout.setMargin(0)
+        c1.layout.setContentsMargins(0, 0, 0, 0)
         c1.layout.setSpacing(spacing)
 
         self.flux = MyQLineEdit(c1)
@@ -634,7 +634,7 @@ class FundamentalWidget(qt.QWidget):
         #column 2
         c2 = qt.QWidget(self)
         c2.layout = qt.QVBoxLayout(c2)
-        c2.layout.setMargin(0)
+        c2.layout.setContentsMargins(0, 0, 0, 0)
         c2.layout.setSpacing(spacing)
 
         c2l0 = qt.QLabel(c2)
@@ -649,7 +649,7 @@ class FundamentalWidget(qt.QWidget):
         #column 3
         c3 = qt.QWidget(self)
         c3.layout = qt.QVBoxLayout(c3)
-        c3.layout.setMargin(0)
+        c3.layout.setContentsMargins(0, 0, 0, 0)
         c3.layout.setSpacing(spacing)
 
         self.time = MyQLineEdit(c3)

@@ -62,16 +62,16 @@ class MaterialEditor(qt.QWidget):
 
         if self.__toolMode:
             layout = qt.QHBoxLayout(self)
-            layout.setMargin(0)
+            layout.setContentsMargins(0, 0, 0, 0)
             layout.setSpacing(0)
         else:
             layout = qt.QVBoxLayout(self)
-            layout.setMargin(0)
+            layout.setContentsMargins(0, 0, 0, 0)
             layout.setSpacing(0)
             self.__hboxMaterialCombo   = qt.QWidget(self)
             hbox = self.__hboxMaterialCombo
             hboxlayout = qt.QHBoxLayout(hbox)
-            hboxlayout.setMargin(0)
+            hboxlayout.setContentsMargins(0, 0, 0, 0)
             hboxlayout.setSpacing(0)
             label = qt.QLabel(hbox)
             label.setText("Enter name of material to be defined:")
@@ -165,7 +165,7 @@ class MaterialEditor(qt.QWidget):
             if self.graph is None:
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
-                self.graphDialog.mainLayout.setMargin(0)
+                self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
                 self.graphDialog.mainLayout.setSpacing(0)
                 self.graph = ScanWindow.ScanWindow(self.graphDialog)
                 self.graphDialog.mainLayout.addWidget(self.graph)
@@ -207,7 +207,7 @@ class MaterialEditor(qt.QWidget):
             if self.graph is None:
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
-                self.graphDialog.mainLayout.setMargin(0)
+                self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
                 self.graphDialog.mainLayout.setSpacing(0)
                 self.graph = ScanWindow.ScanWindow(self.graphDialog)
                 self.graphDialog.mainLayout.addWidget(self.graph)
@@ -420,25 +420,25 @@ class MaterialGUI(qt.QWidget):
         
     def build(self,comments="True",height=3):
         layout = qt.QVBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.__comments = comments
         commentsHBox   = qt.QWidget(self)
         layout.addWidget(commentsHBox)
         commentsHBoxLayout = qt.QHBoxLayout(commentsHBox)
-        commentsHBoxLayout.setMargin(0)
+        commentsHBoxLayout.setContentsMargins(0, 0, 0, 0)
         commentsHBoxLayout.setSpacing(0)
 
         tableContainer = qt.QWidget(commentsHBox)
         commentsHBoxLayout.addWidget(tableContainer)
         tableContainerLayout = qt.QVBoxLayout(tableContainer)
-        tableContainerLayout.setMargin(0)
+        tableContainerLayout.setContentsMargins(0, 0, 0, 0)
         tableContainerLayout.setSpacing(0)
         self.__hboxTableContainer = qt.QWidget(tableContainer)
         hbox = self.__hboxTableContainer
         tableContainerLayout.addWidget(hbox)
         hboxLayout = qt.QHBoxLayout(hbox)
-        hboxLayout.setMargin(0)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
         hboxLayout.setSpacing(0)
         numberLabel  = qt.QLabel(hbox)
         hboxLayout.addWidget(numberLabel)
@@ -549,7 +549,7 @@ class MaterialGUI(qt.QWidget):
             
     def buildToolMode(self, comments="True",height=3):
         layout = qt.QVBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.__comments = comments
         grid = qt.QWidget(self)
@@ -566,7 +566,7 @@ class MaterialGUI(qt.QWidget):
 
         tableContainer = qt.QWidget(self)
         tableContainerLayout = qt.QVBoxLayout(tableContainer)
-        tableContainerLayout.setMargin(0)
+        tableContainerLayout.setContentsMargins(0, 0, 0, 0)
         tableContainerLayout.setSpacing(0)
         self.__tableContainer = tableContainer
 
@@ -615,7 +615,7 @@ class MaterialGUI(qt.QWidget):
 
         nameHBox       = qt.QWidget(grid)
         nameHBoxLayout = qt.QHBoxLayout(nameHBox)
-        nameHBoxLayout.setMargin(0)
+        nameHBoxLayout.setContentsMargins(0, 0, 0, 0)
         nameHBoxLayout.setSpacing(0)
         nameLabel      = qt.QLabel(nameHBox)
         nameLabel.setText("Name:")

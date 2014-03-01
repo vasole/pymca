@@ -42,7 +42,7 @@ class MedianParameters(qt.QWidget):
     def __init__(self, parent=None, use_conditional=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.label = qt.QLabel(self)
         self.label.setText("Median filter width: ")

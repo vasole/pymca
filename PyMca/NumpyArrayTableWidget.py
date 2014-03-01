@@ -32,7 +32,7 @@ class NumpyArrayTableWidget(QtGui.QWidget):
     def __init__(self, parent=None):
         QtGui.QTableWidget.__init__(self, parent)
         self.mainLayout = QtGui.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.browser = FrameBrowser.FrameBrowser(self)
         self.view = NumpyArrayTableView.NumpyArrayTableView(self)

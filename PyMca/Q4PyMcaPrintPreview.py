@@ -100,7 +100,7 @@ class PyMcaPrintPreview(qt.QDialog):
             self.printer = printer
         
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
 
         self._buildToolbar()
@@ -134,7 +134,7 @@ class PyMcaPrintPreview(qt.QDialog):
         toolBar = qt.QWidget(self)
         # a layout for the toolbar
         toolsLayout = qt.QHBoxLayout(toolBar)
-        toolsLayout.setMargin(0)
+        toolsLayout.setContentsMargins(0, 0, 0, 0)
         toolsLayout.setSpacing(0)
 
         # Margin

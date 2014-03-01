@@ -80,7 +80,7 @@ def waitingMessageDialog(thread, message=None, parent=None, modal=True, update_c
         msg.setModal(modal)
         msg.setWindowTitle(windowTitle)
         layout = qt.QHBoxLayout(msg)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         l1 = qt.QLabel(msg)
         l1.setFixedWidth(l1.fontMetrics().width('##'))

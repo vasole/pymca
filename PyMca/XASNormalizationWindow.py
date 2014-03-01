@@ -266,7 +266,7 @@ class XASNormalizationWindow(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("XAS Normalization Configuration Window")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         if energy is None:
             self.energy = range(len(spectrum))
@@ -491,7 +491,7 @@ class XASNormalizationDialog(qt.QDialog):
         self.mainLayout.addWidget(self.parametersWidget)
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
-        hboxLayout.setMargin(0)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")

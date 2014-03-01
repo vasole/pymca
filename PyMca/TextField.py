@@ -64,7 +64,7 @@ class TextField(qt.QWidget):
         else:
             TextFieldLayout = qt.QHBoxLayout(self)
             Layout2 = qt.QHBoxLayout(None)
-            Layout2.setMargin(0)
+            Layout2.setContentsMargins(0, 0, 0, 0)
             Layout2.setSpacing(6)
         spacer = qt.QSpacerItem(20,20,
                                 qt.QSizePolicy.Expanding,qt.QSizePolicy.Minimum)

@@ -274,7 +274,7 @@ class FFTAlignmentDialog(qt.QDialog):
         self.mainLayout.addWidget(self.parametersWidget)
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
-        hboxLayout.setMargin(0)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")

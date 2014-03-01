@@ -52,7 +52,7 @@ class SimpleInfoGroupBox(qt.QGroupBox):
     def __init__(self, parent, title=None, keys=None):
         qt.QGroupBox.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         if title is not None:
             self.setTitle(title)
@@ -143,7 +143,7 @@ class MembersGroupBox(qt.QGroupBox):
     def __init__(self, parent):
         qt.QGroupBox.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.setTitle("Group Members")
         self.label = qt.QLabel(self)
@@ -214,7 +214,7 @@ class HDF5GeneralInfoWidget(qt.QWidget):
     def __init__(self, parent=None, ddict=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.nameWidget = NameGroupBox(self)
         self.membersWidget = MembersGroupBox(self)
@@ -249,7 +249,7 @@ class HDF5AttributesInfoWidget(qt.QWidget):
     def __init__(self, parent):
         qt.QGroupBox.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.label = qt.QLabel(self)
         self.label.setText("Number of members: 0")

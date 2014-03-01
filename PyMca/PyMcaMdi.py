@@ -57,7 +57,7 @@ class PyMcaMdi(qt.QMainWindow):
         self.splitter = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Horizontal)
         #self.splitterLayout = qt.QVBoxLayout(self.splitter)
-        #self.splitterLayout.setMargin(0)
+        #self.splitterLayout.setContentsMargins(0, 0, 0, 0)
         #self.splitterLayout.setSpacing(0)
         
         self.printer= qt.QPrinter()

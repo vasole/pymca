@@ -53,7 +53,7 @@ class RGBImageCalculator(qt.QWidget):
         self.setWindowTitle("PyMCA - RGB Image Calculator")
 
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.imageList   = None
         self.imageDict   = None
@@ -128,7 +128,7 @@ class RGBImageCalculator(qt.QWidget):
         buttonBox = self.imageButtonBox
         #self.imageButtonBoxLayout = qt.QHBoxLayout(buttonBox)
         self.imageButtonBoxLayout = self.nameBox.mainLayout
-        self.imageButtonBoxLayout.setMargin(0)
+        self.imageButtonBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.imageButtonBoxLayout.setSpacing(0)
         self.addImageButton = qt.QPushButton(buttonBox)
         icon = qt.QIcon(qt.QPixmap(IconDict["rgb16"]))

@@ -136,7 +136,7 @@ class FrameBrowser(qt.QWidget):
     def __init__(self, parent=None, n=1):
         qt.QWidget.__init__(self, parent)
         self.mainLayout=qt.QHBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.firstButton = qt.QPushButton(self)
         self.firstButton.setIcon(qt.QIcon(qt.QPixmap(icon_first)))
@@ -252,7 +252,7 @@ class HorizontalSliderWithBrowser(qt.QAbstractSlider):
         qt.QAbstractSlider.__init__(self, *var)
         self.setOrientation(qt.Qt.Horizontal)
         self.mainLayout = qt.QHBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self._slider  = qt.QSlider(self)
         self._slider.setOrientation(qt.Qt.Horizontal)

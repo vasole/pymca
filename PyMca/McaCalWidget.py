@@ -123,16 +123,16 @@ class McaCalWidget(qt.QDialog):
         
     def build(self):
         self.layout = qt.QVBoxLayout(self)
-        self.layout.setMargin(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.toolbar   = qt.QWidget(self)
         self.toolbar.layout = qt.QHBoxLayout(self.toolbar)
-        self.toolbar.layout.setMargin(0)
+        self.toolbar.layout.setContentsMargins(0, 0, 0, 0)
         self.toolbar.layout.setSpacing(0)
         self.layout.addWidget(self.toolbar)
         self.container = qt.QWidget(self)
         self.container.layout = qt.QVBoxLayout(self.container)
-        self.container.layout.setMargin(0)
+        self.container.layout.setContentsMargins(0, 0, 0, 0)
         self.container.layout.setSpacing(0)
 
         self.layout.addWidget(self.container)
@@ -249,7 +249,7 @@ class McaCalWidget(qt.QDialog):
         toolbar2 = qt.QWidget(self)
         self.layout.addWidget(toolbar2)
         toolbar2.layout = qt.QHBoxLayout(toolbar2)
-        toolbar2.layout.setMargin(0)
+        toolbar2.layout.setContentsMargins(0, 0, 0, 0)
         toolbar2.layout.setSpacing(0)
         self.calpar         = CalibrationParameters(toolbar2,
                                 calname=self.current,caldict=self.caldict,
@@ -876,7 +876,7 @@ class PeakSearchParameters(qt.QWidget):
         if 1:
             if QTVERSION < '4.0.0':
                 layout= qt.QVBoxLayout(self)
-                layout.setMargin(0)
+                layout.setContentsMargins(0, 0, 0, 0)
                 layout.setSpacing(0)
 
             # --- parameters
@@ -891,7 +891,7 @@ class PeakSearchParameters(qt.QWidget):
                 else:
                     lowHeight = False
                 if lowHeight:
-                    layout.setMargin(0)
+                    layout.setContentsMargins(0, 0, 0, 0)
                     layout.setSpacing(0)
 
             # --- parameters
@@ -911,7 +911,7 @@ class PeakSearchParameters(qt.QWidget):
         else:
             grid= qt.QGridLayout(parw)
             if lowHeight:
-                grid.setMargin(0)
+                grid.setContentsMargins(0, 0, 0, 0)
                 grid.setSpacing(2)
         lab= qt.QLabel("Sensitivity", parw)
         grid.addWidget(lab, 0, 0, qt.Qt.AlignLeft)
@@ -1005,7 +1005,7 @@ class CalibrationParameters(qt.QWidget):
     def build(self):
         layout= qt.QHBoxLayout(self)
         if qt.QDesktopWidget().height() < LOW_HEIGHT_THRESHOLD:
-            layout.setMargin(0)
+            layout.setContentsMargins(0, 0, 0, 0)
         parw = self
         
         lab= qt.QLabel("Order:", parw)
@@ -1390,7 +1390,7 @@ class McaCalCopy(qt.QDialog):
             self.setWindowTitle(name)
             self.setModal(modal)
         layout0 = qt.QVBoxLayout(self)
-        layout0.setMargin(0)
+        layout0.setContentsMargins(0, 0, 0, 0)
         layout0.setSpacing(0)
         
         currentcal = legend
@@ -1413,14 +1413,14 @@ class McaCalCopy(qt.QDialog):
         else:
             sgroup = qt.QGroupBox(self)
             sgrouplayout = qt.QHBoxLayout(sgroup)
-            sgrouplayout.setMargin(0)
+            sgrouplayout.setContentsMargins(0, 0, 0, 0)
             sgrouplayout.setSpacing(0)
         sgroup.setTitle('Calibration from Source (Read Only)')
         sgroup.setAlignment(qt.Qt.AlignHCenter)
         layout0.addWidget(sgroup)    
         w      = qt.QWidget(sgroup)
         wlayout= qt.QVBoxLayout(w)
-        wlayout.setMargin(0)
+        wlayout.setContentsMargins(0, 0, 0, 0)
         wlayout.setSpacing(0)
         if QTVERSION < '4.0.0':
             pass
@@ -1439,7 +1439,7 @@ class McaCalCopy(qt.QDialog):
         
         lines  = qt.QWidget(w)
         lineslayout = qt.QHBoxLayout(lines)
-        lineslayout.setMargin(0)
+        lineslayout.setContentsMargins(0, 0, 0, 0)
         lineslayout.setSpacing(0)
 
         asl=qt.QLabel(lines)
@@ -1479,7 +1479,7 @@ class McaCalCopy(qt.QDialog):
         else:
             cgroup = qt.QGroupBox(self)
             cgrouplayout = qt.QHBoxLayout(cgroup)
-            cgrouplayout.setMargin(0)
+            cgrouplayout.setContentsMargins(0, 0, 0, 0)
             cgrouplayout.setSpacing(0)
         layout0.addWidget(cgroup)
         fontc = cgroup.font()
@@ -1489,7 +1489,7 @@ class McaCalCopy(qt.QDialog):
         cgroup.setAlignment(qt.Qt.AlignHCenter)
         wc = qt.QWidget(cgroup)
         wclayout = qt.QVBoxLayout(wc)
-        wclayout.setMargin(0)
+        wclayout.setContentsMargins(0, 0, 0, 0)
         wclayout.setSpacing(3)
         if QTVERSION < '4.0.0':
             pass
@@ -1498,7 +1498,7 @@ class McaCalCopy(qt.QDialog):
 
         linec  = qt.QWidget(wc)
         lineclayout = qt.QHBoxLayout(linec)
-        lineclayout.setMargin(0)
+        lineclayout.setContentsMargins(0, 0, 0, 0)
         lineclayout.setSpacing(0)
         wclayout.addWidget(linec)
 
@@ -1550,7 +1550,7 @@ class McaCalCopy(qt.QDialog):
             wfont.setBold(0)
             wid.setFont(wfont)
             layout2=qt.QHBoxLayout(wid)
-            layout2.setMargin(0)
+            layout2.setContentsMargins(0, 0, 0, 0)
             layout2.setSpacing(3)
             
             copybut = qt.QPushButton(wid)
@@ -1567,7 +1567,7 @@ class McaCalCopy(qt.QDialog):
         # --- dialog buttons ---
         bottom = qt.QWidget(self)
         bottomlayout = qt.QHBoxLayout(bottom)
-        bottomlayout.setMargin(0)
+        bottomlayout.setContentsMargins(0, 0, 0, 0)
         bottomlayout.setSpacing(0)
 
         layout0.addWidget(bottom)

@@ -122,7 +122,7 @@ class PeakButtonList(qt.QWidget):
             layout= qt.QHBoxLayout(self, 0, 5)
         else:
             layout= qt.QHBoxLayout(self)
-            layout.setMargin(0)
+            layout.setContentsMargins(0, 0, 0, 0)
             layout.setSpacing(5)
             #, 0, 5)
             
@@ -190,11 +190,11 @@ class FitPeakSelect(qt.QWidget):
                                               qt.QSizePolicy.Minimum))
 
         layout=qt.QVBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
-        hboxLayout.setMargin(0)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
         hboxLayout.setSpacing(20)
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         l1=MyQLabel(hbox, bold=True, color=qt.QColor(0,0,0))

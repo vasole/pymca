@@ -51,7 +51,7 @@ class NNMAParametersDialog(qt.QDialog):
         self.methods = ['RRI', 'NNSC', 'NMF', 'SNMF', 'NMFKL',
                         'FNMAI', 'ALS', 'FastHALS', 'GDCLS']
         self.methodOptions.mainLayout = qt.QGridLayout(self.methodOptions)
-        self.methodOptions.mainLayout.setMargin(0)
+        self.methodOptions.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.methodOptions.mainLayout.setSpacing(2)
         self.buttonGroup = qt.QButtonGroup(self.methodOptions)
         i = 0
@@ -75,7 +75,7 @@ class NNMAParametersDialog(qt.QDialog):
         self.nnmaConfiguration = qt.QGroupBox(self)
         self.nnmaConfiguration.setTitle('NNMA Configuration')
         self.nnmaConfiguration.mainLayout = qt.QGridLayout(self.nnmaConfiguration)
-        self.nnmaConfiguration.mainLayout.setMargin(0)
+        self.nnmaConfiguration.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.nnmaConfiguration.mainLayout.setSpacing(2)
         label = qt.QLabel(self.nnmaConfiguration)
         label.setText('Tolerance (0<eps<1000:')
@@ -101,7 +101,7 @@ class NNMAParametersDialog(qt.QDialog):
         self.speedOptions = qt.QGroupBox(self)
         self.speedOptions.setTitle("Speed Options")
         self.speedOptions.mainLayout = qt.QGridLayout(self.speedOptions)
-        self.speedOptions.mainLayout.setMargin(0)
+        self.speedOptions.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.speedOptions.mainLayout.setSpacing(2)
         labelPC = qt.QLabel(self)
         labelPC.setText("Number of PC:")
@@ -126,7 +126,7 @@ class NNMAParametersDialog(qt.QDialog):
         #the OK button
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
-        hboxLayout.setMargin(0)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setAutoDefault(False)

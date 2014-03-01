@@ -56,7 +56,7 @@ class McaControlGUI(qt.QWidget):
 
     def build(self):
         layout = qt.QVBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         self.calbox =    None
@@ -90,7 +90,7 @@ class McaControlGUI(qt.QWidget):
         #roibox.setTitle(' ROI ')
         roibox = qt.QWidget(self)
         roiboxlayout = qt.QHBoxLayout(roibox)
-        roiboxlayout.setMargin(0)
+        roiboxlayout.setContentsMargins(0, 0, 0, 0)
         roiboxlayout.setSpacing(0)
         
         #roibox.setAlignment(qt.Qt.AlignHCenter)
@@ -360,7 +360,7 @@ class McaCalControlLine(qt.QWidget):
             qt.QWidget.__init__(self, parent)
             if name is not None:self.setWindowTitle(name)
         self.l = qt.QHBoxLayout(self)
-        self.l.setMargin(0)
+        self.l.setContentsMargins(0, 0, 0, 0)
         self.l.setSpacing(0)
         self.build()
     
@@ -402,7 +402,7 @@ class McaCalInfoLine(qt.QWidget):
     
     def build(self):
         layout= qt.QHBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         parw = self
 

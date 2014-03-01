@@ -129,7 +129,7 @@ class FieldSheet(qt.QWidget):
         else:
             qt.QWidget.__init__(self,parent)
         layout= qt.QVBoxLayout(self)
-        layout.setMargin(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
         #self.fields = ([,,,])

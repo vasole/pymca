@@ -62,11 +62,11 @@ class FitConfigGUI(qt.QWidget):
             FitConfigGUILayout.setSpacing(6)
     
             Layout9 = qt.QHBoxLayout(None)
-            Layout9.setMargin(0)
+            Layout9.setContentsMargins(0, 0, 0, 0)
             Layout9.setSpacing(6)
     
             Layout2 = qt.QGridLayout(None)
-            Layout2.setMargin(0)
+            Layout2.setContentsMargins(0, 0, 0, 0)
             Layout2.setSpacing(6)
 
         if QTVERSION < '4.0.0':
@@ -106,7 +106,7 @@ class FitConfigGUI(qt.QWidget):
             Layout6 = qt.QGridLayout(None,1,1,0,6,"Layout6")
         else:
             Layout6 = qt.QGridLayout(None)
-            Layout6.setMargin(0)
+            Layout6.setContentsMargins(0, 0, 0, 0)
             Layout6.setSpacing(6)
 
         self.WeightCheckBox = qt.QCheckBox(self)
@@ -124,7 +124,7 @@ class FitConfigGUI(qt.QWidget):
             Layout6_2 = qt.QGridLayout(None,1,1,0,6,"Layout6_2")
         else:
             Layout6_2 = qt.QGridLayout(None)
-            Layout6_2.setMargin(0)
+            Layout6_2.setContentsMargins(0, 0, 0, 0)
             Layout6_2.setSpacing(6)
             
         self.AutoFWHMCheckBox = qt.QCheckBox(self)
@@ -145,7 +145,7 @@ class FitConfigGUI(qt.QWidget):
             Layout5 = qt.QGridLayout(None,1,1,0,6,"Layout5")
         else:
             Layout5 = qt.QGridLayout(None)
-            Layout5.setMargin(0)
+            Layout5.setContentsMargins(0, 0, 0, 0)
             Layout5.setSpacing(6)
 
         self.PrintPushButton = qt.QPushButton(self)

@@ -78,7 +78,7 @@ class TabSheets(qt.QDialog):
             Layout2 = qt.QHBoxLayout(None,0,6,"Layout2")
         else:
             Layout2 = qt.QHBoxLayout(None)
-            Layout2.setMargin(0)
+            Layout2.setContentsMargins(0, 0, 0, 0)
             Layout2.setSpacing(6)
 
         if not nohelp:

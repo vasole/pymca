@@ -51,7 +51,7 @@ class TopWidget(qt.QWidget):
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.labelList = ['Title', 'X Label', 'Y Label']
         self.keyList   = ['title', 'xlabel', 'ylabel']
@@ -311,7 +311,7 @@ class RightWidget(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.gridWidget = qt.QWidget(self) 
         self.gridLayout = qt.QGridLayout(self.gridWidget)
-        self.gridLayout.setMargin(0)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setSpacing(2)
         self.labelList = ['X Axis',
                         'Y Axis',

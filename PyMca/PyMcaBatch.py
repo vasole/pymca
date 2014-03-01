@@ -74,7 +74,7 @@ class McaBatchGUI(qt.QWidget):
             self.setWindowTitle(name)
             self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self._layout = qt.QVBoxLayout(self)
-        self._layout.setMargin(0)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
         self._edfSimpleViewer = None
         self._timer = None
@@ -173,18 +173,18 @@ class McaBatchGUI(qt.QWidget):
         box.l.setSpacing(0)
         vbox1 = qt.QWidget(box)
         vbox1.l = qt.QVBoxLayout(vbox1)
-        vbox1.l.setMargin(0)
+        vbox1.l.setContentsMargins(0, 0, 0, 0)
         vbox1.l.setSpacing(0)
         box.l.addWidget(vbox1)
         vbox2 = qt.QWidget(box)
         vbox2.l = qt.QVBoxLayout(vbox2)
-        vbox2.l.setMargin(0)
+        vbox2.l.setContentsMargins(0, 0, 0, 0)
         vbox2.l.setSpacing(0)
 
         box.l.addWidget(vbox2)
         vbox3 = qt.QWidget(box)
         vbox3.l = qt.QVBoxLayout(vbox3)
-        vbox3.l.setMargin(0)
+        vbox3.l.setContentsMargins(0, 0, 0, 0)
         vbox3.l.setSpacing(0)
 
         box.l.addWidget(vbox3)
@@ -256,12 +256,12 @@ class McaBatchGUI(qt.QWidget):
         # other stuff
         bigbox   = qt.QWidget(self)
         bigbox.l = qt.QHBoxLayout(bigbox)
-        bigbox.l.setMargin(0)
+        bigbox.l.setContentsMargins(0, 0, 0, 0)
         bigbox.l.setSpacing(0)
         
         vBox = qt.QWidget(bigbox)
         vBox.l = qt.QVBoxLayout(vBox)
-        vBox.l.setMargin(0)
+        vBox.l.setContentsMargins(0, 0, 0, 0)
         vBox.l.setSpacing(2)
         bigbox.l.addWidget(vBox)
 
@@ -290,7 +290,7 @@ class McaBatchGUI(qt.QWidget):
         boxStep0.l = qt.QVBoxLayout(boxStep0)
         boxStep  = qt.QWidget(boxStep0)
         boxStep.l= qt.QHBoxLayout(boxStep)
-        boxStep.l.setMargin(0)
+        boxStep.l.setContentsMargins(0, 0, 0, 0)
         boxStep.l.setSpacing(0)
         boxStep0.l.addWidget(boxStep)
         bigbox.l.addWidget(boxStep0)
@@ -299,7 +299,7 @@ class McaBatchGUI(qt.QWidget):
             self.__boxFStep   = qt.QWidget(boxStep)
             boxFStep = self.__boxFStep
             boxFStep.l = qt.QHBoxLayout(boxFStep)
-            boxFStep.l.setMargin(0)
+            boxFStep.l.setContentsMargins(0, 0, 0, 0)
             boxFStep.l.setSpacing(0)
             boxStep.l.addWidget(boxFStep)
             label= qt.QLabel(boxFStep)
@@ -319,7 +319,7 @@ class McaBatchGUI(qt.QWidget):
             self.__boxMStep   = qt.QWidget(boxStep0)
             boxMStep = self.__boxMStep
             boxMStep.l = qt.QHBoxLayout(boxMStep)
-            boxMStep.l.setMargin(0)
+            boxMStep.l.setContentsMargins(0, 0, 0, 0)
             boxMStep.l.setSpacing(0)
             boxStep0.l.addWidget(boxMStep)
             
@@ -347,7 +347,7 @@ class McaBatchGUI(qt.QWidget):
         self.__box3 = qt.QWidget(boxStep0)
         box3 = self.__box3
         box3.l = qt.QHBoxLayout(box3)
-        box3.l.setMargin(0)
+        box3.l.setContentsMargins(0, 0, 0, 0)
         box3.l.setSpacing(0)
         boxStep0.l.addWidget(box3)
 
@@ -374,7 +374,7 @@ class McaBatchGUI(qt.QWidget):
         self.__box4 = qt.QWidget(boxStep0)
         box4 = self.__box4
         box4.l = qt.QHBoxLayout(box4)
-        box4.l.setMargin(0)
+        box4.l.setContentsMargins(0, 0, 0, 0)
         box4.l.setSpacing(0)
         boxStep0.l.addWidget(box4)
         
@@ -474,7 +474,7 @@ class McaBatchGUI(qt.QWidget):
                         dialog = qt.QDialog(self)
                         dialog.setWindowTitle('Select your data set')
                         dialog.mainLayout = qt.QVBoxLayout(dialog)
-                        dialog.mainLayout.setMargin(0)
+                        dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
                         dialog.mainLayout.setSpacing(0)
                         datasource = NexusDataSource.NexusDataSource(filelist[0])                        
                         nexusWidget = QNexusWidget.QNexusWidget(dialog)

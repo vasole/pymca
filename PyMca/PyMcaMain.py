@@ -963,7 +963,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self.sourceFrame.setWindowIcon(self.windowIcon())
         #self.splitter.setResizeMode(self.sourceFrame,qt.QSplitter.KeepSize)
         self.sourceFrameLayout = qt.QVBoxLayout(self.sourceFrame)
-        self.sourceFrameLayout.setMargin(0)
+        self.sourceFrameLayout.setContentsMargins(0, 0, 0, 0)
         self.sourceFrameLayout.setSpacing(0)
         #layout.setAutoAdd(1)
         

@@ -61,7 +61,7 @@ class FitActionsGUI(qt.QWidget):
             FitActionsGUILayout.setMargin(11)
             FitActionsGUILayout.setSpacing(6)
             Layout9 = qt.QHBoxLayout(None)
-            Layout9.setMargin(0)
+            Layout9.setContentsMargins(0, 0, 0, 0)
             Layout9.setSpacing(6)
 
         self.EstimateButton = qt.QPushButton(self)

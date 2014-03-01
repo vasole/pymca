@@ -70,18 +70,18 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.replaceOption = replace 
         self.setWindowTitle("RGBCorrelatorWidget")
         self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(4)
         self.labelWidget = qt.QWidget(self)
         self.labelWidget.mainLayout = qt.QGridLayout(self.labelWidget)
-        self.labelWidget.mainLayout.setMargin(0)
+        self.labelWidget.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.labelWidget.mainLayout.setSpacing(0)
         alignment = qt.Qt.AlignVCenter | qt.Qt.AlignCenter
         self.toolBar = qt.QWidget(self)
         #hbox = qt.QWidget(self.labelWidget)
         hbox = self.toolBar
         hbox.mainLayout = qt.QHBoxLayout(hbox)
-        hbox.mainLayout.setMargin(0)
+        hbox.mainLayout.setContentsMargins(0, 0, 0, 0)
         hbox.mainLayout.setSpacing(0)
         self.loadButton = qt.QToolButton(hbox)
         self.loadButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["fileopen"])))

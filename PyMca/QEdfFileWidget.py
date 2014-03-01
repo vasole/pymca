@@ -249,7 +249,7 @@ class QEdfFileWidget(qt.QWidget):
         # --- array parameter
         self.__dummyW = qt.QWidget(self.splitter)
         self.__dummyW.layout =qt.QVBoxLayout(self.__dummyW)
-        self.__dummyW.layout.setMargin(0)
+        self.__dummyW.layout.setContentsMargins(0, 0, 0, 0)
         self.__dummyW.layout.setSpacing(0)
         if not justviewer:
             self.applygroupContainer = qt.QWidget(self.__dummyW)
@@ -263,7 +263,7 @@ class QEdfFileWidget(qt.QWidget):
             self.applygroup.addButton(self.applytoall, 1)
             self.applygroup.setExclusive(True)
             self.applygroupLayout = qt.QHBoxLayout(self.applygroupContainer)
-            self.applygroupLayout.setMargin(0)
+            self.applygroupLayout.setContentsMargins(0, 0, 0, 0)
             self.applygroupLayout.setSpacing(0)
             self.applygroupLayout.addWidget(self.applytoone)
             self.applygroupLayout.addWidget(self.applytoall)
@@ -309,7 +309,7 @@ class QEdfFileWidget(qt.QWidget):
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
-        self.toolBarLayout.setMargin(0)
+        self.toolBarLayout.setContentsMargins(0, 0, 0, 0)
         self.toolBarLayout.setMargin(2)
         self.mainLayout.addWidget(self.toolBar)
         #Autoscale
