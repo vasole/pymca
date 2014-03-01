@@ -144,7 +144,7 @@ class McaAdvancedFit(qt.QWidget):
             #graph
             self.tabGraph  = qt.QWidget()
             tabGraphLayout = qt.QVBoxLayout(self.tabGraph)
-            tabGraphLayout.setMargin(margin)
+            tabGraphLayout.setContentsMargins(margin, margin, margin, margin)
             tabGraphLayout.setSpacing(spacing)
             #self.graphToolbar  = qt.QHBox(self.tabGraph)
             self.graphWindow = McaGraphWindow(self.tabGraph)
@@ -157,7 +157,7 @@ class McaAdvancedFit(qt.QWidget):
             #table
             self.tabMca  = qt.QWidget()
             tabMcaLayout = qt.QVBoxLayout(self.tabMca)
-            tabMcaLayout.setMargin(margin)
+            tabMcaLayout.setContentsMargins(margin, margin, margin, margin)
             tabMcaLayout.setSpacing(spacing)
             w = self.tabMca
             line = Line(w, info="TABLE")
@@ -176,7 +176,10 @@ class McaAdvancedFit(qt.QWidget):
             #concentrations
             self.tabConcentrations  = qt.QWidget()
             tabConcentrationsLayout = qt.QVBoxLayout(self.tabConcentrations)
-            tabConcentrationsLayout.setMargin(margin)
+            tabConcentrationsLayout.setContentsMargins(margin,
+                                                       margin,
+                                                       margin,
+                                                       margin)
             tabConcentrationsLayout.setSpacing(0)
             line2 = Line(self.tabConcentrations, info="CONCENTRATIONS")
             self.concentrationsWidget = ConcentrationsWidget.Concentrations(self.tabConcentrations)
@@ -196,7 +199,7 @@ class McaAdvancedFit(qt.QWidget):
             #diagnostics
             self.tabDiagnostics  = qt.QWidget()
             tabDiagnosticsLayout = qt.QVBoxLayout(self.tabDiagnostics)
-            tabDiagnosticsLayout.setMargin(margin)
+            tabDiagnosticsLayout.setContentsMargins(margin, margin, margin, margin)
             tabDiagnosticsLayout.setSpacing(spacing)
             w = self.tabDiagnostics
             self.diagnosticsWidget = qt.QTextEdit(w)
