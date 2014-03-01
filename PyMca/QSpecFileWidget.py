@@ -63,29 +63,22 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     def _build(self):        
         #self.layout= qt.QVBoxLayout(self)
-        if QTVERSION < '4.0.0':
-            self.list= qt.QListView(self, "ScanList")
-            self.list.setSelectionMode(qt.QListView.Extended)
-            self.mainTab = qt.QTabWidget(self)
-        else:
-            self.splitter = qt.QSplitter(self)
-            self.splitter.setOrientation(qt.Qt.Vertical)
-            self.list  = qt.QTreeWidget(self.splitter)
-            self.list.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
-            self.mainTab = qt.QTabWidget(self.splitter)
+        self.splitter = qt.QSplitter(self)
+        self.splitter.setOrientation(qt.Qt.Vertical)
+        self.list  = qt.QTreeWidget(self.splitter)
+        self.list.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
+        self.mainTab = qt.QTabWidget(self.splitter)
 
         self.cntTable = SpecFileCntTable.SpecFileCntTable()
         self.mcaTable = SpecFileMcaTable.SpecFileMcaTable()
 
         self.mainTab.addTab(self.cntTable, str("Counters"))
         self.mainTab.addTab(self.mcaTable, str("MCA"))
-        if QTVERSION < '4.0.0':
-            self.mainTab.setCurrentPage(self.mainTab.indexOf(self.mcaTable))
-        else:
-            self.mainTab.setCurrentWidget(self.mcaTable)
+        self.mainTab.setCurrentWidget(self.mcaTable)
+
         autoBox = qt.QWidget(self)
-        autoBoxLayout = qt.QHBoxLayout(autoBox)
-        autoBoxLayout.setMargin(0)
+        autoBoxLayout = qt.QGridLayout(autoBox) 
+        autoBoxLayout.setContentsMargins(0, 0, 0, 0)
         autoBoxLayout.setSpacing(0)
         self.autoOffBox = qt.QCheckBox(autoBox)
         self.autoOffBox.setText("Auto OFF")
@@ -93,6 +86,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.autoAddBox.setText("Auto ADD")
         self.autoReplaceBox = qt.QCheckBox(autoBox)
         self.autoReplaceBox.setText("Auto REPLACE")
+
+        row = 0
+        autoBoxLayout.addWidget(self.autoOffBox, row, 0)
+        autoBoxLayout.addWidget(self.autoAddBox, row, 1)
+        autoBoxLayout.addWidget(self.autoReplaceBox, row, 2)
             
         if self.autoReplace:
             self.autoAddBox.setChecked(False)
@@ -100,143 +98,88 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         else:
             self.autoAddBox.setChecked(True)
             self.autoReplaceBox.setChecked(False)
+        row += 1
 
         if OBJECT3D:
             self.object3DBox = qt.QCheckBox(autoBox)
             self.object3DBox.setText("3D On")
-            autoBoxLayout.addWidget(self.object3DBox)
+            autoBoxLayout.addWidget(self.object3DBox, row, 0)
             self.connect(self.mcaTable,
                          qt.SIGNAL("McaDeviceSelected"),
                          self.mcaDeviceSelected)
 
-        if QTVERSION > '4.0.0':
-            self.meshBox = qt.QCheckBox(autoBox)
-            self.meshBox.setText("Mesh")
-            self.meshBox.setToolTip("Consider selection as a regular mesh")
-            autoBoxLayout.addWidget(self.meshBox)
+        self.meshBox = qt.QCheckBox(autoBox)
+        self.meshBox.setText("Mesh")
+        self.meshBox.setToolTip("Consider selection as a regular mesh")
+        autoBoxLayout.addWidget(self.meshBox, row, 1)
 
 
-        autoBoxLayout.addWidget(self.autoOffBox)
-        autoBoxLayout.addWidget(self.autoAddBox)
-        autoBoxLayout.addWidget(self.autoReplaceBox)
         self.forceMcaBox = qt.QCheckBox(autoBox)
         self.forceMcaBox.setText("Force MCA")
-        autoBoxLayout.addWidget(self.forceMcaBox)
+        autoBoxLayout.addWidget(self.forceMcaBox, row, 2)
 
-        if QTVERSION < '4.0.0':
-            self.mainLayout.addWidget(self.list)
-            self.mainLayout.addWidget(self.mainTab)
-        else:
-            self.mainLayout.addWidget(self.splitter)
+        self.mainLayout.addWidget(self.splitter)
         self.mainLayout.addWidget(autoBox)
 
 
         # --- list headers
-        if QTVERSION < '4.0.0':
-            self.list.addColumn("X")
-            self.list.addColumn("S#")
-            self.list.addColumn("Command")
-            self.list.addColumn("Pts")
-            self.list.addColumn("Mca")
-            self.list.header().setResizeEnabled(0, 0)
-            self.list.header().setResizeEnabled(0, 1)
-            self.list.header().setResizeEnabled(1, 2)
-            self.list.header().setResizeEnabled(0, 3)
-            self.list.header().setResizeEnabled(0, 4)
-            self.list.header().setClickEnabled(0,-1)
-            self.list.setSorting(-1)
+        labels = ["X", "S#", "Command", "Points", "Nb. Mca"]
+        ncols  = len(labels)
+        self.list.setColumnCount(ncols)
+        self.list.setHeaderLabels(labels)
+        #size=50
+        #self.list.header().resizeSection(0, size)
+        #self.list.header().resizeSection(1, size)
+        #self.list.header().resizeSection(2, 4 * size)
+        #self.list.header().resizeSection(3, size)
+        #self.list.header().resizeSection(4, size)
 
-            # --- list selection options
-            self.list.setAllColumnsShowFocus(1)
-
-            # --- signal handling
-            self.connect(self.list, qt.SIGNAL("selectionChanged()"), self.__selectionChanged)
-            self.connect(self.list,
-                qt.SIGNAL("contextMenuRequested(QListViewItem *, const QPoint &, int)"),
-                self.__contextMenu)
-            self.connect(self.list, qt.SIGNAL("doubleClicked(QListViewItem *)"),
-                    self.__doubleClicked)
-            """
-            self.connect(self.cntTable,
-                         qt.PYSIGNAL('SpecCntTableSignal'),
-                         self._cntSignal)
-            """
-
-            # --- context menu
-            self.menu= qt.QPopupMenu(self.list)
-            idd= self.menu.insertItem("Show scan header")
-            self.menu.connectItem(idd, self.__showScanInfo)
+        self.list.header().setStretchLastSection(False)
+        if QTVERSION < '4.2.0':
+            self.list.header().setResizeMode(0, qt.QHeaderView.Stretch)
+            self.list.header().setResizeMode(1, qt.QHeaderView.Stretch)
+            self.list.header().setResizeMode(2, qt.QHeaderView.Interactive)
+            self.list.header().setResizeMode(3, qt.QHeaderView.Stretch)
+            self.list.header().setResizeMode(4, qt.QHeaderView.Stretch)
         else:
-            labels = ["X", "S#", "Command", "Points", "Nb. Mca"]
-            ncols  = len(labels)
-            self.list.setColumnCount(ncols)
-            self.list.setHeaderLabels(labels)
-            #size=50
-            #self.list.header().resizeSection(0, size)
-            #self.list.header().resizeSection(1, size)
-            #self.list.header().resizeSection(2, 4 * size)
-            #self.list.header().resizeSection(3, size)
-            #self.list.header().resizeSection(4, size)
+            self.list.header().setResizeMode(0, qt.QHeaderView.ResizeToContents)
+            self.list.header().setResizeMode(1, qt.QHeaderView.ResizeToContents)
+            self.list.header().setResizeMode(2, qt.QHeaderView.Interactive)
+            self.list.header().setResizeMode(3, qt.QHeaderView.ResizeToContents)
+            self.list.header().setResizeMode(4, qt.QHeaderView.ResizeToContents)
 
-            self.list.header().setStretchLastSection(False)
-            if QTVERSION < '4.2.0':
-                self.list.header().setResizeMode(0, qt.QHeaderView.Stretch)
-                self.list.header().setResizeMode(1, qt.QHeaderView.Stretch)
-                self.list.header().setResizeMode(2, qt.QHeaderView.Interactive)
-                self.list.header().setResizeMode(3, qt.QHeaderView.Stretch)
-                self.list.header().setResizeMode(4, qt.QHeaderView.Stretch)
-            else:
-                self.list.header().setResizeMode(0, qt.QHeaderView.ResizeToContents)
-                self.list.header().setResizeMode(1, qt.QHeaderView.ResizeToContents)
-                self.list.header().setResizeMode(2, qt.QHeaderView.Interactive)
-                self.list.header().setResizeMode(3, qt.QHeaderView.ResizeToContents)
-                self.list.header().setResizeMode(4, qt.QHeaderView.ResizeToContents)
+        # --- signal handling
+        self.list.itemSelectionChanged.connect(self.__selectionChanged)
+        self.list.setContextMenuPolicy(qt.Qt.CustomContextMenu)
+        self.connect(self.list,
+                     qt.SIGNAL("customContextMenuRequested(const QPoint &)"),
+                     self.__contextMenu)
+        self.connect(self.list,
+                     qt.SIGNAL("itemDoubleClicked(QTreeWidgetItem *, int)"),
+                     self.__doubleClicked)
+        self.connect(self.cntTable,
+                     qt.SIGNAL('SpecCntTableSignal'),
+                     self._cntSignal)
 
-            # --- signal handling
-            self.connect(self.list, qt.SIGNAL("itemSelectionChanged()"),
-                         self.__selectionChanged)
-            self.list.setContextMenuPolicy(qt.Qt.CustomContextMenu)
-            self.connect(self.list,
-                         qt.SIGNAL("customContextMenuRequested(const QPoint &)"),
-                         self.__contextMenu)
-            self.connect(self.list,
-                         qt.SIGNAL("itemDoubleClicked(QTreeWidgetItem *, int)"),
-                         self.__doubleClicked)
-            self.connect(self.cntTable,
-                         qt.SIGNAL('SpecCntTableSignal'),
-                         self._cntSignal)
-
-            if QTVERSION > '4.2.0':
-                self.list.setSortingEnabled(False)
-                self.connect(self.list.header(),
-                             qt.SIGNAL("sectionDoubleClicked(int)"),
-                             self.__headerSectionDoubleClicked)
+        if QTVERSION > '4.2.0':
+            self.list.setSortingEnabled(False)
+            self.connect(self.list.header(),
+                         qt.SIGNAL("sectionDoubleClicked(int)"),
+                         self.__headerSectionDoubleClicked)
         if OBJECT3D:
-            self.connect(self.object3DBox, qt.SIGNAL("clicked()"),
-                     self._setObject3DBox)
+            self.object3DBox.clicked.connect(self._setObject3DBox)
         if hasattr(self, 'meshBox'):
-            self.connect(self.meshBox, qt.SIGNAL("clicked()"),
-                     self._setMeshBox)
+            self.meshBox.clicked.connect(self._setMeshBox)
 
-        self.connect(self.autoOffBox, qt.SIGNAL("clicked()"),
-                     self._setAutoOff)
-        self.connect(self.autoAddBox, qt.SIGNAL("clicked()"),
-                     self._setAutoAdd)
-        self.connect(self.autoReplaceBox, qt.SIGNAL("clicked()"),
-                     self._setAutoReplace)
+        self.autoOffBox.clicked.connect(self._setAutoOff)
+        self.autoAddBox.clicked.connect(self._setAutoAdd)
+        self.autoReplaceBox.clicked.connect(self._setAutoReplace)
 
-        self.connect(self.forceMcaBox,
-                     qt.SIGNAL('clicked()'),
-                     self._setForcedMca)
+        self.forceMcaBox.clicked.connect(self._setForcedMca)
 
-        if QTVERSION < '4.0.0':
-            self.connect(self.mainTab,
-                         qt.SIGNAL('currentChanged(QWidget*)'),
-                         self._tabChanged)
-        else:
-            self.connect(self.mainTab,
-                         qt.SIGNAL('currentChanged(int)'),
-                         self._tabChanged)
+        self.connect(self.mainTab,
+                     qt.SIGNAL('currentChanged(int)'),
+                     self._tabChanged)
 
         self.disableMca    = 0 #(type=="scan")
         self.disableScan   = 0 #(type=="mca")
@@ -259,7 +202,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.autoReplaceBox.setChecked(False)
         self.autoOffBox.setChecked(False)
         self.cntTable.set2DEnabled(True)
-        self.object3DBox.setChecked(False)
+        if hasattr(self, "object3DBox"):
+            self.object3DBox.setChecked(False)
         self.meshBox.setChecked(True)
 
     def _setAutoOff(self):
@@ -353,33 +297,20 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             info= self.data.GetSourceInfo()
         self.scans= []
         after= None
-        if QTVERSION < '4.0.0':
-            for (sn, cmd, pts, mca) in zip(info["KeyList"], info["Commands"], info["NumPts"], info["NumMca"]):
-                if after is not None:
-                    item= qt.QListViewItem(self.list, after, "", sn, cmd, str(pts), str(mca))
-                else:
-                    item= qt.QListViewItem(self.list, "", sn, cmd, str(pts), str(mca))
-                if (self.disableMca and not mca) or (self.disableScan and not pts):
-                    item.setSelectable(0)
-                    #XXX: not possible to put in italic: other solutions ??
-                self.list.insertItem(item)
-                self.scans.append(sn)
-                after= item
-        else:
-            i = 0
-            for (sn, cmd, pts, mca) in zip(info["KeyList"], info["Commands"], info["NumPts"], info["NumMca"]):
-                if after is not None:
-                    #print "after is not none"
-                    #item= qt.QTreeWidgetItem(self.list, [after, "", sn, cmd, str(pts), str(mca)])
-                    item= MyQTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
-                else:
-                    item= MyQTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
-                if (self.disableMca and not mca) or (self.disableScan and not pts):
-                    item.setSelectable(0)
-                    #XXX: not possible to put in italic: other solutions ??
-                self.scans.append(sn)
-                after= item
-                i = i + 1
+        i = 0
+        for (sn, cmd, pts, mca) in zip(info["KeyList"], info["Commands"], info["NumPts"], info["NumMca"]):
+            if after is not None:
+                #print "after is not none"
+                #item= qt.QTreeWidgetItem(self.list, [after, "", sn, cmd, str(pts), str(mca)])
+                item= MyQTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
+            else:
+                item= MyQTreeWidgetItem(self.list, ["", sn, cmd, str(pts), str(mca)])
+            if (self.disableMca and not mca) or (self.disableScan and not pts):
+                item.setSelectable(0)
+                #XXX: not possible to put in italic: other solutions ??
+            self.scans.append(sn)
+            after= item
+            i = i + 1
 
     def clear(self):
         self.list.clear()
@@ -640,12 +571,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                             pass
                     sel_list.append(sel)
 
-        if QTVERSION < '4.0.0':
-            if len(sel_list):
-                self.emit(qt.PYSIGNAL("addSelection"), (sel_list,))
-        else:
-            if len(sel_list):
-                self.emit(qt.SIGNAL("addSelection"), sel_list)
+        if len(sel_list):
+            self.emit(qt.SIGNAL("addSelection"), sel_list)
         
 
     def _removeClicked(self):
@@ -653,11 +580,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             print("Overwritten _removeClicked method")
 
         #get selected scan keys
-        if QTVERSION < '4.0.0':
-            scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-        else:
-            itemlist = self.list.selectedItems()
-            scan_sel = [str(item.text(1)) for item in itemlist]
+        itemlist = self.list.selectedItems()
+        scan_sel = [str(item.text(1)) for item in itemlist]
 
         #get selected counter keys
         cnt_sel = self.cntTable.getCounterSelection()
@@ -698,20 +622,14 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel_list.append(sel)            
             
         if len(sel_list): 
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("removeSelection"), (sel_list,))            
-            else:
-                self.emit(qt.SIGNAL("removeSelection"), sel_list)
+            self.emit(qt.SIGNAL("removeSelection"), sel_list)
 
     def _replaceClicked(self):
         if DEBUG:
             print("Overwritten _replaceClicked method")
         #get selected scan keys
-        if QTVERSION < '4.0.0':
-            scan_sel= [sn for sn in self.scans if self.list.findItem(sn,1).isSelected()]
-        else:
-            itemlist = self.list.selectedItems()
-            scan_sel = [str(item.text(1)) for item in itemlist]
+        itemlist = self.list.selectedItems()
+        scan_sel = [str(item.text(1)) for item in itemlist]
 
         #get selected counter keys
         cnt_sel = self.cntTable.getCounterSelection()
@@ -769,12 +687,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     def _tabChanged(self, value):
         if DEBUG:
             print("self._tabChanged(value), value =  ",value)
-        if QTVERSION < '4.0.0':
-            #is not an index but a widget
-            index = self.mainTab.indexOf(value)
-            text = str(self.mainTab.label(index))
-        else:
-            text = str(self.mainTab.tabText(value))
+        text = str(self.mainTab.tabText(value))
         if self.data is None: return
 
         ddict = {}
@@ -782,10 +695,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         ddict['SourceType'] = self.data.sourceType
         ddict['event'] = "SelectionTypeChanged"
         ddict['SelectionType'] = text
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("otherSignals"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("otherSignals"), ddict)
+        self.emit(qt.SIGNAL("otherSignals"), ddict)
 
 def test():
     from PyMca import QDataSource
@@ -803,13 +713,9 @@ def test():
             sys.exit(0)
     w.setData(d) 
     w.show()
-    qt.QObject.connect(a, qt.SIGNAL("lastWindowClosed()"),
-                       a, qt.SLOT("quit()"))
+    a.lastWindowClosed.connect(a.quit)
 
-    if QTVERSION < '4.0.0':
-        a.exec_loop()
-    else:
-        a.exec_()
+    a.exec_()
 
 
 if __name__=="__main__":

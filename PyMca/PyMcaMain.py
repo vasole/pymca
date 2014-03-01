@@ -231,7 +231,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.openMenu.addAction("Load Training Data",
                                         self.loadTrainingData)
 
-                #self.connect(self.openMenu,qt.SIGNAL('activated(int)'),self.openSource)
 
             self.__useTabWidget = True
 
@@ -572,7 +571,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             ddict = dictOrList[0]
         else:
             ddict = dictOrList
-        if not self.__useTabWidget:return
+        if not self.__useTabWidget:
+            return
         if ddict['event'] == "SelectionTypeChanged":
             if ddict['SelectionType'].upper() == "COUNTERS":
                 self.mainTabWidget.setCurrentWidget(self.scanwindow)
@@ -1671,9 +1671,9 @@ if __name__ == '__main__':
     PyMcaMainWidgetInstance = PyMcaMain(**keywords)
     if nativeFileDialogs is not None:
         PyMcaDirs.nativeFileDialogs = nativeFileDialogs
-    if debugreport:PyMcaMainWidgetInstance.onDebug()
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                            app,qt.SLOT("quit()"))
+    if debugreport:
+        PyMcaMainWidgetInstance.onDebug()
+    app.lastWindowClosed.connect(app.quit)
             
     splash.finish(PyMcaMainWidgetInstance)
     PyMcaMainWidgetInstance.show()
