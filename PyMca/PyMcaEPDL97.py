@@ -298,7 +298,11 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
             if (y0 > 0.0) and (x >= binding[key]):
                 #standard way
                 y1 = wdata[key][j1]
-                ddict[key][i] = exp((log(y0) * log(x1/x) +\
+                if (((x1 - x0) < 5.E-10) or ((x1 - x) < 5.E-10)):
+                    # no interpolation needed
+                    ddict[key][i] = y1
+                else:
+                    ddict[key][i] = exp((log(y0) * log(x1/x) +\
                                  log(y1) * log(x/x0))/log(x1/x0))
             elif (forced_shells == []) and (x < binding[key]):
                 continue
