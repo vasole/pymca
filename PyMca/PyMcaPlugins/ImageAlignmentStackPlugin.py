@@ -541,7 +541,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             self.__hdf5Dialog = qt.QDialog()
             self.__hdf5Dialog.setWindowTitle('Select your data set by a double click')
             self.__hdf5Dialog.mainLayout = qt.QVBoxLayout(self.__hdf5Dialog)
-            self.__hdf5Dialog.mainLayout.setMargin(0)
+            self.__hdf5Dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
             self.__hdf5Dialog.mainLayout.setSpacing(0)
             fileModel = HDF5Widget.FileModel()
             fileView = HDF5Widget.HDF5Widget(fileModel)
