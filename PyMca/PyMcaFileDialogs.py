@@ -68,7 +68,7 @@ def getExistingDirectory(parent=None, message=None, mode=None):
                 PyMcaDirs.inputDir = os.path.dirname(outdir)
     return outdir
 
-def getFileList(parent=None, filetypelist=None, message=None,
+def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
                 mode=None, getfilter=None, single=False, currentfilter=None):
     if filetypelist is None:
         fileTypeList = ['All Files (*)']
@@ -85,10 +85,13 @@ def getFileList(parent=None, filetypelist=None, message=None,
         mode = "OPEN"
     else:
         mode = mode.upper()
-    if mode == "OPEN":
-        wdir = PyMcaDirs.inputDir
+    if currentdir is None:
+        if mode == "OPEN":
+            wdir = PyMcaDirs.inputDir
+        else:
+            wdir = PyMcaDirs.outputDir
     else:
-        wdir = PyMcaDirs.outputDir
+        wdir = currentdir
     if getfilter is None:
         getfilter = False
     if getfilter:
