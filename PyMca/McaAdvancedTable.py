@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -32,19 +32,7 @@ else:
 QTVERSION = qt.qVersion()
 DEBUG=0
 
-if QTVERSION < '4.0.0':
-    import qttable
-    class QTable(qttable.QTable):
-        def __init__(self, parent=None, name=""):
-            qttable.QTable.__init__(self, parent, name)
-            self.rowCount    = self.numRows
-            self.columnCount = self.numCols
-            self.setRowCount = self.setNumRows
-            self.setColumnCount = self.setNumCols
-            self.resizeColumnToContents = self.adjustColumn
-        
-else:
-    QTable = qt.QTableWidget
+QTable = qt.QTableWidget
 
 class McaTable(QTable):
     def __init__(self, *args,**kw):
@@ -58,31 +46,21 @@ class McaTable(QTable):
             self.labels=['Element','Group','Fit Area','Sigma','Energy','Ratio','FWHM','Chi square']
         self.setColumnCount(len(self.labels))
 
-        if QTVERSION < '4.0.0':
-            i=0        
-            for label in self.labels:
-                qt.QHeader.setLabel(self.horizontalHeader(),i,label)
-                self.adjustColumn(i)
-                i=i+1
-        else:
-            for i in range(len(self.labels)):
-                item = self.horizontalHeaderItem(i)
-                if item is None:
-                    item = qt.QTableWidgetItem(self.labels[i],
-                                               qt.QTableWidgetItem.Type)
-                item.setText(self.labels[i])
-                self.setHorizontalHeaderItem(i,item)            
+        for i in range(len(self.labels)):
+            item = self.horizontalHeaderItem(i)
+            if item is None:
+                item = qt.QTableWidgetItem(self.labels[i],
+                                           qt.QTableWidgetItem.Type)
+            item.setText(self.labels[i])
+            self.setHorizontalHeaderItem(i,item)            
                 
         self.regionlist=[]
         self.regiondict={}
-        if QTVERSION < '4.0.0':
-            self.verticalHeader().setClickEnabled(1)
-        else:
-            if DEBUG:
-                print("vertical header click to enable")
-        self.connect(self.verticalHeader(),qt.SIGNAL('clicked(int)'),self.__myslot)
-        #self.connect(self.verticalHeader(),qt.SIGNAL('clicked(int)'),self.__myslot)
-        self.connect(self,qt.SIGNAL("selectionChanged()"),self.__myslot)
+        self.verticalHeader().setClickable(True)
+        self.verticalHeader().sectionClicked.connect(self.__myslot)
+
+        self.itemSelectionChanged.connect(self.__myslot)
+        #self.connect(self,qt.SIGNAL("selectionChanged()"),self.__myslot)
         #self.setSelectionMode(qttable.QTable.SingleRow)
 
                 
@@ -111,31 +89,22 @@ class McaTable(QTable):
                 self.setRowCount(line+1)
             for i in range(len(self.labels)):
                 if i < len(fields):
-                    if qt.qVersion() < '4.0.0':
-                        item=ColorQTableItem(self,qttable.QTableItem.OnTyping,
-                                            fields[i],color=color,bold=1)
+                    item = self.item(line, col)
+                    text = fields[i]
+                    if item is None:
+                        item = qt.QTableWidgetItem(text,
+                                                   qt.QTableWidgetItem.Type)
                         self.setItem(line, col, item)
                     else:
-                        item = self.item(line, col)
-                        text = fields[i]
-                        if item is None:
-                            item = qt.QTableWidgetItem(text,
-                                                       qt.QTableWidgetItem.Type)
-                            self.setItem(line, col, item)
-                        else:
-                            item.setText(text)
-                            item.setBackgroundColor(color)
-                            item.setFlags(qt.Qt.ItemIsSelectable|
-                                          qt.Qt.ItemIsEnabled)                    
+                        item.setText(text)
+                        item.setBackgroundColor(color)
+                        item.setFlags(qt.Qt.ItemIsSelectable|
+                                      qt.Qt.ItemIsEnabled)                    
                 else:
-                    if qt.qVersion() < '4.0.0':
-                        self.clearCell(line,col)
-                        self.setItem(line, col, item)
-                    else:
-                        item = self.item(line, col)
-                        if item is not None:
-                            item.setText("")
-                        #self.setItem(line, col, item)
+                    item = self.item(line, col)
+                    if item is not None:
+                        item.setText("")
+                    #self.setItem(line, col, item)
                 col=col+1
             line += 1
             #Lemon Chiffon = (255,250,205)
@@ -153,22 +122,17 @@ class McaTable(QTable):
                 fields = [name,area,sigma,energy,ratio,fwhm,chisq]
                 col = 1
                 for field in fields:
-                    if qt.qVersion() < '4.0.0':
-                        item=ColorQTableItem(self, qttable.QTableItem.Never,
-                                            field,color=color)
+                    item = self.item(line, col)
+                    text = field
+                    if item is None:
+                        item = qt.QTableWidgetItem(text,
+                                                   qt.QTableWidgetItem.Type)
                         self.setItem(line, col, item)
                     else:
-                        item = self.item(line, col)
-                        text = field
-                        if item is None:
-                            item = qt.QTableWidgetItem(text,
-                                                       qt.QTableWidgetItem.Type)
-                            self.setItem(line, col, item)
-                        else:
-                            item.setText(text)
-                        item.setBackgroundColor(color)
-                        item.setFlags(qt.Qt.ItemIsSelectable|
-                                      qt.Qt.ItemIsEnabled)                    
+                        item.setText(text)
+                    item.setBackgroundColor(color)
+                    item.setFlags(qt.Qt.ItemIsSelectable|
+                                  qt.Qt.ItemIsEnabled)                    
                     col=col+1
                 line+=1
             for peak0 in result[group]['escapepeaks']:
@@ -185,22 +149,16 @@ class McaTable(QTable):
                     fields = [peak,area,sigma,energy,ratio,fwhm,chisq]
                     col = 1
                     for field in fields:
-                        if qt.qVersion() < '4.0.0':
-                            item=ColorQTableItem(self,
-                                                 qttable.QTableItem.Never,
-                                                 field,color=color)
+                        item = self.item(line, col)
+                        if item is None:
+                            item = qt.QTableWidgetItem(field,
+                                                       qt.QTableWidgetItem.Type)
                             self.setItem(line, col, item)
                         else:
-                            item = self.item(line, col)
-                            if item is None:
-                                item = qt.QTableWidgetItem(field,
-                                                           qt.QTableWidgetItem.Type)
-                                self.setItem(line, col, item)
-                            else:
-                                item.setText(field)
-                            item.setBackgroundColor(color)
-                            item.setFlags(qt.Qt.ItemIsSelectable|
-                                          qt.Qt.ItemIsEnabled)
+                            item.setText(field)
+                        item.setBackgroundColor(color)
+                        item.setFlags(qt.Qt.ItemIsSelectable|
+                                      qt.Qt.ItemIsEnabled)
                         col=col+1
                     line+=1
         for i in range(self.columnCount()):
@@ -250,15 +208,15 @@ class McaTable(QTable):
         if row >= 0:
             col = 0
             for label in self.labels:
-                try:
-                    ddict[label] = float(str(self.text(row,col)))
-                except:
-                    ddict[label] = str(self.text(row,col))
+                item = self.item(row, col)
+                if item is not None:
+                    text = item.text()
+                    try:
+                        ddict[label] = float(str(text))
+                    except:
+                        ddict[label] = str(text)
                 col +=1
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaTableSignal'), (ddict,))
-        else:
-            self.emit(qt.SIGNAL('McaTableSignal'), ddict)
+        self.emit(qt.SIGNAL('McaTableSignal'), ddict)
 
     def gettext(self):
         lemon= ("#%x%x%x" % (255,250,205)).upper()
@@ -273,32 +231,20 @@ class McaTable(QTable):
         text += ("<nobr>")
         text += ("<table>")
         text += ("<tr>")
-        if QTVERSION < '4.0.0':
-            ncols = self.numCols()
-        else:
-            ncols = self.columnCount()
+        ncols = self.columnCount()
         for l in range(ncols):
             text+=('<td align="left" bgcolor="%s"><b>' % hcolor)
-            if QTVERSION < '4.0.0':
-                text+=(str(self.horizontalHeader().label(l)))
-            else:
-                text+=(str(self.horizontalHeaderItem(l).text()))
+            text+=(str(self.horizontalHeaderItem(l).text()))
             text+=("</b></td>")
         text+=("</tr>")
         #text+=( str(QString("</br>"))
-        if QTVERSION < '4.0.0':
-            nrows = self.numRows()
-        else:
-            nrows = self.rowCount()
+        nrows = self.rowCount()
         for r in range(nrows):
             text+=("<tr>")
-            if QTVERSION < '4.0.0':
-                moretext = str(self.text(r,0))
-            else:
-                moretext = ""
-                item = self.item(r, 0)
-                if item is not None:
-                    moretext = str(item.text()) 
+            moretext = ""
+            item = self.item(r, 0)
+            if item is not None:
+                moretext = str(item.text()) 
             if len(moretext):
                 color = "white"
                 b="<b>"                
@@ -306,11 +252,8 @@ class McaTable(QTable):
                 b=""
                 color = lemon
             for c in range(ncols):
-                if QTVERSION < '4.0.0':
-                    moretext = str(self.text(r,c))
-                else:
-                    moretext = ""
-                    item = self.item(r, c)
+                moretext = ""
+                item = self.item(r, c)
                 if item is not None:
                     moretext = str(item.text()) 
                 if len(moretext):
@@ -326,13 +269,10 @@ class McaTable(QTable):
                     text+=("</td>")
                 else:
                     text+=("</b></td>") 
-            if QTVERSION < '4.0.0':
-                moretext = str(self.text(r,0))
-            else:
-                moretext = ""
-                item = self.item(r, 0)
-                if item is not None:
-                    moretext = str(item.text()) 
+            moretext = ""
+            item = self.item(r, 0)
+            if item is not None:
+                moretext = str(item.text()) 
             if len(moretext):
                 text+=("</b>")
             text+=("</tr>")
@@ -346,20 +286,4 @@ class McaTable(QTable):
         QTable.closeEvent(self, event)
         ddict={}
         ddict['event']= 'closed'
-        if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL('closed'),(ddict,))
-        else:
-            self.emit(qt.SIGNAL('closed'), ddict)
-
-if QTVERSION < '4.0.0':
-    class ColorQTableItem(qttable.QTableItem):
-         def __init__(self, table, edittype, text,color=qt.Qt.white,bold=0):
-            qttable.QTableItem.__init__(self, table, edittype, text)
-            self.color = color
-            self.bold  = bold
-         def paint(self, painter, colorgroup, rect, selected):
-            painter.font().setBold(self.bold)
-            cg = qt.QColorGroup(colorgroup)
-            cg.setColor(qt.QColorGroup.Base, self.color)
-            qttable.QTableItem.paint(self,painter, cg, rect, selected)
-            painter.font().setBold(0)
+        self.emit(qt.SIGNAL('closed'), ddict)
