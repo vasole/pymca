@@ -91,7 +91,7 @@ class EdfFile_StandardArray(qt.QWidget):
         layout.addWidget(self.iCombo,   0, 1)
         layout.addWidget(self.plotCombo,1, 1)
         layout.addWidget(self.yList,    2, 1)
-
+        
         self.connect(self.plotCombo, qt.SIGNAL("activated(int)"), self.__plotChanged)
         self.connect(self.iCombo, qt.SIGNAL("activated(int)"),    self.__iChanged)
         self.setImages(images)
@@ -1094,7 +1094,8 @@ class QEdfFileWidget(qt.QWidget):
             #wid = self.__getParamWidget('array')
             #wid.setImages(1)
             return
-        if self.data.sourceName is None:    return
+        if self.data.sourceName is None:
+            return
         self.currentFile = self.data.sourceName
         #this gives the number of images in the file
         infoSource= self.data.getSourceInfo()
@@ -1151,7 +1152,7 @@ class QEdfFileWidget(qt.QWidget):
             else:
                 if 'Title' in info:
                     imageinfo [self.currentArray] += info['Title']  
-                wid.setImages(nimages,  info = imageinfo)                
+                wid.setImages(nimages,  info = imageinfo)
             wid.setCurrentImage(self.currentArray)
             #P.B. -> pointer(a,d1,d2,i1,i2) = a+ (i1+i2 * d1) 
             wid.setDataSize(int(info["Dim_2"]), int(info["Dim_1"]))
@@ -1708,12 +1709,15 @@ def test2():
 def test():
     import sys
     from PyMca import EdfFileDataSource
-    def repSelection(sel):    print("replaceSelection", sel)
-    def removeSelection(sel): print("removeSelection", sel)
-    def addSelection(sel):    print("addSelection", sel)
+    def repSelection(sel):
+        print("replaceSelection", sel)
+    def removeSelection(sel):
+        print("removeSelection", sel)
+    def addSelection(sel):
+        print("addSelection", sel)
 
     a= qt.QApplication(sys.argv)
-    a.connect(a, qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+    a.lastWindowClosed.connect(a.quit)
 
     w = QEdfFileWidget()
     #print w
@@ -1726,19 +1730,11 @@ def test():
         print("python QEdfFileWidget edffile")
         sys.exit(0)
     w.setDataSource(d)
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(w,qt.PYSIGNAL("addSelection"),addSelection)
-        qt.QObject.connect(w,qt.PYSIGNAL("removeSelection"),removeSelection)
-        qt.QObject.connect(w,qt.PYSIGNAL("replaceSelection"),repSelection)
-    else:
-        qt.QObject.connect(w,qt.SIGNAL("addSelection"),addSelection)
-        qt.QObject.connect(w,qt.SIGNAL("removeSelection"),removeSelection)
-        qt.QObject.connect(w,qt.SIGNAL("replaceSelection"),repSelection)
+    qt.QObject.connect(w,qt.SIGNAL("addSelection"),addSelection)
+    qt.QObject.connect(w,qt.SIGNAL("removeSelection"),removeSelection)
+    qt.QObject.connect(w,qt.SIGNAL("replaceSelection"),repSelection)
     w.show()
-    if qt.qVersion() < '4.0.0':
-        a.exec_loop()
-    else:
-        a.exec_()
+    a.exec_()
 
 if __name__=="__main__":
     test()

@@ -127,17 +127,12 @@ def main():
     for opt,arg in opts:
         pass
     filelist=args
-    qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     w=EdfFileSimpleViewer()
-    if QTVERSION < '4.0.0' :
-        app.setMainWidget(w)
-        w.show()
-        if len(filelist):w.setFileList(filelist)
-        app.exec_loop()
-    else:
-        if len(filelist):w.setFileList(filelist)
-        w.show()
-        app.exec_()
+    if len(filelist):
+        w.setFileList(filelist)
+    w.show()
+    app.exec_()
 
 if __name__ == "__main__":
     main()

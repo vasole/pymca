@@ -74,7 +74,7 @@ class ColormapDialog(qt.QDialog):
         self.autoscale90 = False
         # main layout
         vlayout = qt.QVBoxLayout(self)
-        vlayout.setMargin(10)
+        vlayout.setContentsMargins(10, 10, 10, 10)
         vlayout.setSpacing(0)
 
         # layout 1 : -combo to choose colormap
