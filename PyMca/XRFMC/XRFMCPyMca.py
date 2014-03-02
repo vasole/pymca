@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2013 V.A. Sole - European Synchrotron Radiation Facility
+# Copyright (C) 2013-2014 V.A. Sole - European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -377,7 +377,7 @@ class XRFMCParameters(qt.QGroupBox):
         i += 1
 
     def setParameters(self, ddict0):
-        if ddict0.has_key('xrfmc'):
+        if 'xrfmc' in ddict0:
             ddict = ddict0['xrfmc']['setup']
         else:
             ddict= ddict0
@@ -514,7 +514,7 @@ class XRFMCSimulationControl(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict0):
-        if ddict0.has_key('xrfmc'):
+        if 'xrfmc' in ddict0:
             ddict = ddict0['xrfmc']['setup']
         else:
             ddict= ddict0
@@ -702,8 +702,8 @@ class XRFMCPyMca(qt.QWidget):
             self.errorMessage(text, title)
             return
 
-        if self.fitConfiguration.has_key('xrfmc'):
-            if self.fitConfiguration['xrfmc'].has_key('setup'):
+        if 'xrfmc' in self.fitConfiguration:
+            if 'setup' in self.fitConfiguration['xrfmc']:
                 self.parametersWidget.setParameters(self.fitConfiguration)
 
         if matrix[1] != "MULTILAYER":
@@ -714,7 +714,7 @@ class XRFMCPyMca(qt.QWidget):
         configFile= ddict['filelist'][0]
         configuration = ConfigDict.ConfigDict()
         configuration.read(configFile)
-        if not configuration['xrfmc'].has_key('setup'):
+        if not ('setup' in configuration['xrfmc']):
             title = "Invalid file" 
             text = "Invalid configuration file." 
             self.errorMessage(text, title)        
