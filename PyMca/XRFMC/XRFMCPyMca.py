@@ -50,6 +50,8 @@ class HorizontalSpacer(qt.QWidget):
                            qt.QSizePolicy.Fixed))
 
 class GetFileList(qt.QGroupBox):
+    sigFileListUpdated = qt.pyqtSignal(object)
+    
     def __init__(self, parent=None, title='File Input', nfiles=1):
         qt.QGroupBox.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
@@ -68,11 +70,14 @@ class GetFileList(qt.QGroupBox):
         self.__listButton = qt.QPushButton(self)
         self.__listButton.setText('Browse')
         self.__listView.setMaximumHeight(n*self.__listButton.sizeHint().height())
-        self.connect(self.__listButton,qt.SIGNAL('clicked()'),self._browseList)
+        self.__listButton.clicked.connect(self.__browseList)
         grid = self.mainLayout
         grid.addWidget(self._label,             0, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
         grid.addWidget(self.__listView,   0, 1)
         grid.addWidget(self.__listButton, 0, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
+
+    def __browseList(self, dummy=True):
+        return self._browseList()
 
     def _browseList(self, filetypes="All Files (*)"):
         self.inputDir = xrfmc_dirs.inputDir
@@ -88,7 +93,7 @@ class GetFileList(qt.QGroupBox):
 
         if self.__maxNFiles == 1:
             filelist = qt.QFileDialog.getOpenFileName(self,
-                        "Open a set of files",
+                        "Open a file",
                         wdir,
                         filetypes,
                         None)
@@ -101,7 +106,7 @@ class GetFileList(qt.QGroupBox):
                         filetypes,
                         None)
         if len(filelist):
-            filelist = map(str, filelist)
+            filelist = [str(x) for x in filelist]
             self.setFileList(filelist)
 
     def setFileList(self,filelist=None):
@@ -126,7 +131,7 @@ class GetFileList(qt.QGroupBox):
         ddict = {}
         ddict['event'] = 'fileListUpdated'
         ddict['filelist'] = self.fileList * 1
-        self.emit(qt.SIGNAL('fileListUpdated'), ddict) 
+        self.sigFileListUpdated.emit(ddict) 
 
     def getFileList(self):
         if not len(self.fileList):
@@ -628,20 +633,11 @@ class XRFMCPyMca(qt.QWidget):
 
 
     def buildConnections(self):
-        self.connect(self.fitFileWidget,
-                     qt.SIGNAL('fileListUpdated'),
-                     self.fitFileChanged)
+        self.fitFileWidget.sigFileListUpdated.connect(self.fitFileChanged)
         
-        #self.connect(self.iniFileWidget,
-        #             qt.SIGNAL('fileListUpdated'),
-        #             self.configurationFileChanged)
-        
-        self.connect(self.actions.startButton,
-                     qt.SIGNAL("clicked()"), self.start)
-        self.connect(self.actions.dismissButton,
-                     qt.SIGNAL("clicked()"), self.close)
-        self.connect(self.logWidget,
-                     qt.SIGNAL('SubprocessLogWidgetSignal'),
+        self.actions.startButton.clicked.connect(self.start)
+        self.actions.dismissButton.clicked.connect(self.close)
+        self.logWidget.sigSubprocessLogWidgetSignal.connect(\
                      self.subprocessSlot)
 
     def closeEvent(self, event):
@@ -901,8 +897,7 @@ class XRFMCPyMca(qt.QWidget):
 
 if __name__ == "__main__":
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL('lastWindowClosed()'),
-                       app, qt.SLOT('quit()'))
+    app.lastWindowClosed.connect(app.quit)
     w = XRFMCPyMca()
     w.show()
     app.exec_()

@@ -1094,9 +1094,8 @@ class McaAdvancedFit(qt.QWidget):
         if self.logWidget is None:
             self.logWidget = SubprocessLogWidget.SubprocessLogWidget()
             self.logWidget.setMinimumWidth(400)
-            self.connect(self.logWidget,
-                     qt.SIGNAL('SubprocessLogWidgetSignal'),
-                     self._xrfmcSubprocessSlot)
+            self.logWidget.sigSubprocessLogWidgetSignal.connect(\
+                self._xrfmcSubprocessSlot)
         self.logWidget.clear()
         self.logWidget.show()
         self.logWidget.raise_()

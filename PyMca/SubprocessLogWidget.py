@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,6 +31,8 @@ import time
 from PyMca import PyMcaQt as qt
 
 class SubprocessLogWidget(qt.QWidget):
+    sigSubprocessLogWidgetSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent=None, args=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("Subprocess Log Widget")
@@ -38,7 +40,7 @@ class SubprocessLogWidget(qt.QWidget):
         self._p = None
         self.__timer = qt.QTimer()
         self._args = args
-        self.connect(self.__timer, qt.SIGNAL("timeout()"), self._timerSlot)
+        self.__timer.timeout.connect(self._timerSlot)
         self.logWidget = qt.QTextEdit(self)
         self.logWidget.setReadOnly(True)
         self.mainLayout.addWidget(self.logWidget)
@@ -80,7 +82,7 @@ class SubprocessLogWidget(qt.QWidget):
         ddict = {}
         ddict["subprocess"] = self._p
         ddict["event"] = "ProcessStarted"
-        self.emit(qt.SIGNAL("SubprocessLogWidgetSignal"), ddict)
+        self.sigSubprocessLogWidgetSignal.emit(ddict)
         self.__timer.start(timing)
 
     def _timerSlot(self):
@@ -111,7 +113,7 @@ class SubprocessLogWidget(qt.QWidget):
                     self.logWidget.append(line[:-1])
                     line = self._p.stderr.readline()
             self._p = None
-        self.emit(qt.SIGNAL("SubprocessLogWidgetSignal"), ddict)
+        self.sigSubprocessLogWidgetSignal.emit(ddict)
 
     def clear(self):
         self.logWidget.clear()
