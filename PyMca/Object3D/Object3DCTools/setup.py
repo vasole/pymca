@@ -15,6 +15,9 @@ from distutils.extension import Extension
 if sys.platform == 'win32':
     libraries = ['opengl32', 'glu32']
     define_macros = [('WIN32', None)]
+elif sys.platform == "darwin":
+    libraries = []
+    define_macros = []
 else:
     libraries = ['GL', 'GLU']
     define_macros = []

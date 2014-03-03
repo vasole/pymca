@@ -34,7 +34,7 @@ os.system("/bin/rm -rf dist")
 os.system("/bin/rm -rf build")
 os.system("/bin/rm -rf *.pyc")
 
-BUNDLE_ICON = os.path.join('icons', 'PyMca.icns')
+BUNDLE_ICON = os.path.join(os.path.abspath('icons'), 'PyMca.icns')
 
 #obtain the current PyMca version from the source file
 ffile = open(os.path.join('PyMca', 'PyMcaMain.py'), 'r').readlines()
