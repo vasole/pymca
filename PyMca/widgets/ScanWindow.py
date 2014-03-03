@@ -59,9 +59,26 @@ try:
         pass
 except:
     MATPLOTLIB = False
-from PyMca import PyMcaPlugins
+
+PLUGINS_DIR = None
+try:
+    if os.path.exists(os.path.join(os.path.dirname(qt.__file__), "PyMcaPlugins")):
+        from PyMca import PyMcaPlugins
+        PLUGINS_DIR = os.path.dirname(PyMcaPlugins.__file__)
+    else:
+        directory = os.path.dirname(__file__)
+        while True:
+            if os.path.exists(os.path.join(directory, "PyMcaPlugins")):
+                PLUGINS_DIR = os.path.join(directory, "PyMcaPlugins")
+                break
+            directory = os.path.dirname(directory)
+            if len(directory) < 5:
+                break
+except:
+    pass
 
 DEBUG = 0
+
 class ScanWindow(PlotWindow.PlotWindow):
     def __init__(self, parent=None, name="Scan Window", specfit=None, backend=None,
                  plugins=True, newplot=True, roi=True, fit=True,
@@ -85,9 +102,9 @@ class ScanWindow(PlotWindow.PlotWindow):
         
         self.setWindowTitle(name)
         self.matplotlibDialog = None
-        pluginDir = [os.path.dirname(os.path.abspath(PyMcaPlugins.__file__))]
-        #self.setPluginDirectoryList(pluginDir)
-        self.getPlugins(method="getPlugin1DInstance",
+        if PLUGINS_DIR is not None:
+            pluginDir = [PLUGINS_DIR]
+            self.getPlugins(method="getPlugin1DInstance",
                         directoryList=pluginDir)
 
         """

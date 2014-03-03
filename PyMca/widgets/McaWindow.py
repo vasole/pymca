@@ -67,7 +67,6 @@ except:
     MATPLOTLIB = False
 
 from PyMca import SimpleFitGUI
-from PyMca import PyMcaPlugins
 
 DEBUG = 0
 class McaWindow(ScanWindow.ScanWindow):
