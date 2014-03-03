@@ -106,7 +106,7 @@ from PyMca.PyMca_Icons import IconDict
 from PyMca.PyMca_help import HelpDict
 from PyMca import PyMcaDataDir
 import os
-__version__ = "5.0.0-alpha1"
+__version__ = "5.0.0-alpha2"
 
 if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
