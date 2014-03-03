@@ -66,7 +66,6 @@ class EdfFileDataSource(object):
         """        
         return self.__getSourceInfo()
         
-        
     def __getSourceInfo(self):
         SourceInfo={}
         SourceInfo["SourceType"]=SOURCE_TYPE
