@@ -139,9 +139,6 @@ class McaWindow(ScanWindow.ScanWindow):
         self.roiDockWidget = None
         self.controlWidget.sigMcaControlGUISignal.connect(self.__anasignal)
         self.controlWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
-
-    def setMiddleROIMarkerFlag(self, flag=True):
-        print("setMiddleROIMarkerFlag to be implemented")
         
     def _toggleROI(self):
         if self.roiDockWidget is None:

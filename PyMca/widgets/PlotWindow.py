@@ -93,6 +93,9 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.enableActiveCurveHandling(True)
         self.setActiveCurveColor('black')
 
+        # default ROI handling
+        self._middleROIMarkerFlag = False
+        
     def _buildGraphBottomWidget(self, control, position):
         widget = self.centralWidget()
         self.graphBottom = qt.QWidget(widget)
@@ -632,7 +635,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             print("_graphSignalReceived", ddict)
         if ddict['event'] in ['markerMoved', 'markerSelected']:
             label = ddict['label'] 
-            if label in ['ROI min', 'ROI max']:            
+            if label in ['ROI min', 'ROI max', 'ROI middle']:            
                 self._handleROIMarkerEvent(ddict)
         if ddict['event'] in ["curveClicked", "legendClicked"]:
             legend = ddict["label"]
@@ -661,8 +664,39 @@ class PlotWindow(PlotWidget.PlotWidget):
             label = ddict['label'] 
             if label == 'ROI min':
                 roiDict[self.currentROI]['from'] = x
+                if self._middleROIMarkerFlag:
+                    pos = 0.5 * (roiDict[self.currentROI]['to'] +\
+                                 roiDict[self.currentROI]['from'])
+                    self.insertXMarker(pos,
+                                      'ROI middle',
+                                       label='',
+                                       color='yellow',
+                                       draggable=True)
             elif label == 'ROI max':
                 roiDict[self.currentROI]['to'] = x
+                if self._middleROIMarkerFlag:
+                    pos = 0.5 * (roiDict[self.currentROI]['to'] +\
+                                 roiDict[self.currentROI]['from'])
+                    self.insertXMarker(pos,
+                                      'ROI middle',
+                                       label='',
+                                       color='yellow',
+                                       draggable=True)
+            elif label == 'ROI middle':
+                delta = x - 0.5 * (roiDict[self.currentROI]['from'] + \
+                                   roiDict[self.currentROI]['to'])
+                roiDict[self.currentROI]['from'] += delta
+                roiDict[self.currentROI]['to'] += delta
+                self.insertXMarker(roiDict[self.currentROI]['from'],
+                                   'ROI min',
+                                   label='ROI min',
+                                   color='blue',
+                                   draggable=True)
+                self.insertXMarker(roiDict[self.currentROI]['to'],
+                                   'ROI max',
+                                   label='ROI max',
+                                   color='blue',
+                                   draggable=True)
             else:
                 return
             self.calculateROIs(roiList, roiDict)
@@ -675,15 +709,8 @@ class PlotWindow(PlotWidget.PlotWidget):
             todata   = xmin + 0.75 * (xmax - xmin)
             self.removeMarker('ROI min')
             self.removeMarker('ROI max')
-            """
-            if self._middleRoiMarkerFlag:
-                pos = 0.5 * (fromdata + todata)
-                self._middleRoiMarker = self.graph.insertx1marker(pos,\
-                                                        1.1,
-                                                        label = ' ')
-                self.graph.setmarkercolor(self._middleRoiMarker,'yellow' )
-                self.graph.setmarkerfollowmouse(self._middleRoiMarker, 1)
-            """
+            if self._middleROIMarkerFlag:
+                self.removeMarker('ROI middle')
             roiList, roiDict = self.roiWidget.getROIListAndDict()
             nrois = len(roiList)
             if nrois == 0:
@@ -707,6 +734,12 @@ class PlotWindow(PlotWidget.PlotWidget):
                                label='ROI max',
                                color=color,
                                draggable=draggable)
+            if draggable and self._middleROIMarkerFlag:
+                pos = 0.5 * (fromdata + todata)
+                self.insertXMarker(pos, 'ROI middle',
+                                   label="",
+                                   color='yellow',
+                                   draggable=draggable)                
             roiList.append(newroi)
             roiDict[newroi] = {}
             roiDict[newroi]['type'] = self.getGraphXLabel()
@@ -720,6 +753,8 @@ class PlotWindow(PlotWidget.PlotWidget):
         elif ddict['event'] in ['DelROI', "ResetROI"]:
             self.removeMarker('ROI min')
             self.removeMarker('ROI max')
+            if self._middleROIMarkerFlag:
+                self.removeMarker('ROI middle')
             roiList, roiDict = self.roiWidget.getROIListAndDict()
             currentroi = roiDict.keys()[0]
             self.roiWidget.fillFromROIDict(roilist=roiList,
@@ -750,6 +785,12 @@ class PlotWindow(PlotWidget.PlotWidget):
                                    draggable=True)
                 self.insertXMarker(todata, label = 'ROI max',
                                    color='blue',
+                                   draggable=True)
+            if draggable and self._middleROIMarkerFlag:
+                pos = 0.5 * (fromdata + todata)
+                self.insertXMarker(pos, 'ROI middle',
+                                   label="",
+                                   color='yellow',
                                    draggable=True)
             self.currentROI = ddict['key'] 
             if ddict['colheader'] in ['From', 'To']:
@@ -946,6 +987,13 @@ class PlotWindow(PlotWidget.PlotWidget):
                    'selected':selected}
             legendList.append((legend, ddict))
         self.legendWidget.setLegendList(legendList)
+
+
+    def setMiddleROIMarkerFlag(self, flag=True):
+        if flag:
+            self._middleROIMarkerFlag = True
+        else:
+            self._middleROIMarkerFlag= False
 
 if __name__ == "__main__":
     x = numpy.arange(100.)
