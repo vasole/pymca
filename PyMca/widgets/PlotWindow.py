@@ -634,7 +634,29 @@ class PlotWindow(PlotWidget.PlotWidget):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
 
     def printGraph(self):
-        print("prints the graph")
+        import cStringIO as StringIO
+        imgData = StringIO.StringIO()
+        self.saveGraph(imgData, 'svg')
+        imgData.flush()
+        imgData.seek(0)
+        svgRenderer = qt.QSvgRenderer(qt.QXmlStreamReader(imgData.read()))
+        #svgRenderer = qt.QSvgRenderer(imgData.read())
+        printer = qt.QPrinter()
+        printDialog = qt.QPrintDialog(printer, self)
+        if printDialog.exec_():
+            try:
+                painter = qt.QPainter()
+                if not(painter.begin(printer)):
+                    return 0
+                dpiy    = printer.logicalDpiY()
+                margin  = int((2/2.54) * dpiy) #2cm margin
+                body = qt.QRectF(0.5*margin,
+                                margin,
+                                printer.width() - 1 * margin,
+                                printer.height() - 2 * margin)
+                svgRenderer.render(painter, body)
+            finally:
+                painter.end()
 
     ########### ROI HANDLING ###############
     def graphCallback(self, ddict):

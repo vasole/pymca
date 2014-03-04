@@ -26,6 +26,7 @@ BLITTING = False
 import numpy
 from numpy import vstack as numpyvstack
 import sys
+import types
 from .. import PlotBackend
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
@@ -1654,6 +1655,25 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             QtGui.qApp.postEvent(w, QtGui.QResizeEvent(w.size(),
                                                    w.size()))
         """
+        return
+
+    def saveGraph(self, fileName, fileFormat='svg', dpi=None):
+        if 0 and type(fileName) not in [types.ModuleType]:
+            print("Filename to open")
+            fig = self.ax.figure
+            if dpi is not None:
+                fig.savefig(fileName, format=fileFormat, dpi=dpi)
+            else:
+                fig.savefig(fileName, format=fileFormat)
+            fig = None
+        else:
+            print("we have to write inside")
+            fig = self.ax.figure
+            if dpi is not None:
+                fig.savefig(fileName, format=fileFormat, dpi=dpi)
+            else:
+                fig.savefig(fileName, format=fileFormat)
+            fig = None
         return
 
     def setActiveCurve(self, legend, replot=True):

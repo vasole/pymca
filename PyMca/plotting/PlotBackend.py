@@ -56,6 +56,7 @@ removeMarker
 resetZoom
 replot
 replot_
+saveGraph
 setActiveCurve
 setActiveImage (*)
 setCallback
@@ -510,6 +511,15 @@ class PlotBackend(object):
         be implemented as replot_
         """
         print("PlotBackend replot not implemented")
+
+    def saveGraph(self, fileName, fileFormat='svg'):
+        """
+        :param fileName: Destination
+        :type fileName: String or StringIO or BytesIO
+        :param fileFormat:  String specifying the format
+        :type fileFormat: String (default 'svg')
+        """
+        print("PlotBackend saveGraph not implemented")
 
     def setActiveCurve(self, legend, replot=True):
         """

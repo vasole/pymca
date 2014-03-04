@@ -703,6 +703,18 @@ class Plot(PlotBase.PlotBase):
                 ymax = max(ymax, y.max())
         return xmin, ymin, xmax, ymax
 
+    def saveGraph(self, filename, fileFormat='svg', dpi=None):
+        """
+        :param fileName: Destination
+        :type fileName: String or StringIO or BytesIO
+        :param fileFormat:  String specifying the format
+        :type fileFormat: String (default 'svg')
+        """
+        return self._plot.saveGraph(filename,
+                                    fileFormat=fileFormat,
+                                    dpi=dpi)
+
+
     def setActiveCurve(self, legend, replot=True):
         """
         Funtion to request the plot window to set the curve with the specified legend
