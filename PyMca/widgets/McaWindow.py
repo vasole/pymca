@@ -741,69 +741,7 @@ class McaWindow(ScanWindow.ScanWindow):
             print("ActiveROI event")
             pass
         elif dict['event'] == 'selectionChanged':
-            if DEBUG:
-                print("Selection changed")
-            ##############
-            self.roilist,self.roidict = self.roiwidget.getroilistanddict()
-            fromdata = dict['roi']['from']
-            todata   = dict['roi']['to']
-            if self.roimarkers[0] == -1:
-                self.roimarkers[0] = self.graph.insertx1marker(fromdata,1.1,
-                                        label = 'ROI min')
-            if self.roimarkers[1] == -1:
-                self.roimarkers[1] = self.graph.insertx1marker(todata,1.1,
-                                        label = 'ROI max')
-            self.graph.setx1markerpos(self.roimarkers[0],fromdata)
-            self.graph.setx1markerpos(self.roimarkers[1],todata )
-            self.currentROI = dict['key']
-            if dict['key'] == 'ICR':
-                #select the colors
-                self.graph.setmarkercolor(self.roimarkers[1],'black' )
-                self.graph.setmarkercolor(self.roimarkers[0],'black' )
-                #set the follow mouse propierty
-                self.graph.setmarkerfollowmouse(self.roimarkers[1],0)
-                self.graph.setmarkerfollowmouse(self.roimarkers[0],0)
-                #deal with the middle marker
-                self.graph.removeMarker(self._middleRoiMarker)
-                self._middleRoiMarker = -1
-                #disable marker mode
-                self.graph.disablemarkermode()
-            else:
-                if self._middleRoiMarkerFlag:
-                    pos = 0.5 * (fromdata + todata)                        
-                    if self._middleRoiMarker == -1:
-                        self._middleRoiMarker = self.graph.insertx1marker(pos,\
-                                                            1.1,
-                                                            label = ' ')
-                    else:
-                        self.graph.setx1markerpos(self._middleRoiMarker,
-                                                  pos)
-                else:
-                    if self._middleRoiMarker != -1:
-                        self.graph.removeMarker(self._middleRoiMarker)
-                #select the colors
-                self.graph.setmarkercolor(self.roimarkers[0],'blue' )
-                self.graph.setmarkercolor(self.roimarkers[1],'blue' )
-                #set the follow mouse propierty
-                self.graph.setmarkerfollowmouse(self.roimarkers[0],1)
-                self.graph.setmarkerfollowmouse(self.roimarkers[1],1)
-                #middle marker
-                if self._middleRoiMarker != -1:
-                    self.graph.setmarkercolor(self._middleRoiMarker,'yellow' )
-                    self.graph.setmarkerfollowmouse(self._middleRoiMarker, 1)
-                self.graph.enablemarkermode()
-            if dict['colheader'] in ['From', 'To']:
-                dict ={}
-                dict['event']  = "SetActiveCurveEvent"
-                dict['legend'] = self.graph.getactivecurve(justlegend=1)
-                self.__graphsignal(dict)
-            elif dict['colheader'] == 'Raw Counts':    
-                pass
-            elif dict['colheader'] == 'Net Counts':    
-                pass
-            else:
-                self.emitCurrentROISignal()
-            self.graph.replot()
+            print("Selection changed event not implemented any more")
         else:
             if DEBUG:
                 print("Unknown or ignored event",dict['event'])
@@ -815,9 +753,9 @@ class McaWindow(ScanWindow.ScanWindow):
         #I have to get the current calibration
         if self.getGraphXLabel().upper() != "CHANNEL":
             #I have to get the energy
-            A = self.control.calinfo.caldict['']['A']
-            B = self.control.calinfo.caldict['']['B']
-            C = self.control.calinfo.caldict['']['C']
+            A = self.controlWidget.calinfo.caldict['']['A']
+            B = self.controlWidget.calinfo.caldict['']['B']
+            C = self.controlWidget.calinfo.caldict['']['C']
             order = self.control.calinfo.caldict['']['order']
         else:
             A = 0.0
@@ -1258,32 +1196,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 del self.dataObjectsDict[legend]
             self.graph.replot()
         elif ddict['event'] == "MouseClick":
-            #check if we are in automatic ROI mode
-            if self.currentROI not in ["ICR", None, "None"]:
-                self.roilist,self.roidict = self.roiwidget.getroilistanddict()
-                fromdata = self.roidict[self.currentROI]['from']
-                todata = self.roidict[self.currentROI]['to']
-                pos = 0.5 * (fromdata + todata)
-                delta = ddict['x'] - pos
-                self.roidict[self.currentROI]['to'] += delta
-                self.roidict[self.currentROI]['from'] += delta
-                self.graph.setx1markerpos(self.roimarkers[0],fromdata)
-                self.graph.setx1markerpos(self.roimarkers[1],todata )
-                self.roiwidget.fillfromroidict(roilist=self.roilist,
-                                           roidict=self.roidict)
-                key = self.currentROI
-                ddict = {}
-                ddict['event'] = 'selectionChanged'
-                ddict['key'] = key
-                ddict['roi'] = {}
-                ddict['roi']['from'] = self.roidict[key]['from' ]
-                ddict['roi']['to'] = self.roidict[key]['to' ]
-                ddict['colheader'] = 'Raw Counts'
-                self.__anasignal(ddict)
-                ddict ={}
-                ddict['event']  = "SetActiveCurveEvent"
-                ddict['legend'] = self.graph.getactivecurve(justlegend=1)
-                self.__graphsignal(ddict)
+            print("MouseClick not implemented any more")
         else:
             if DEBUG:
                 print("Unhandled event %s" % dict['event'])
