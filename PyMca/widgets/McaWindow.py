@@ -756,7 +756,7 @@ class McaWindow(ScanWindow.ScanWindow):
             A = self.controlWidget.calinfo.caldict['']['A']
             B = self.controlWidget.calinfo.caldict['']['B']
             C = self.controlWidget.calinfo.caldict['']['C']
-            order = self.control.calinfo.caldict['']['order']
+            order = self.controlWidget.calinfo.caldict['']['order']
         else:
             A = 0.0
             try:
