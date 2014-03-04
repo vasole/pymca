@@ -238,23 +238,23 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.__useTabWidget = True
 
             if not self.__useTabWidget:
-                self.mcawindow = McaWindow.McaWidget(self.mdi)
+                self.mcaWindow = McaWindow.McaWidget(self.mdi)
                 self.scanwindow = ScanWindow.ScanWindow(self.mdi)
                 self.imageWindowDict = None
-                self.connectDispatcher(self.mcawindow, self.sourceWidget)
+                self.connectDispatcher(self.mcaWindow, self.sourceWidget)
                 self.connectDispatcher(self.scanwindow, self.sourceWidget)
-                self.mdi.addWindow(self.mcawindow)
+                self.mdi.addWindow(self.mcaWindow)
                 self.mdi.addWindow(self.scanwindow)
             else:
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
-                self.mcawindow = McaWindow.McaWindow(backend=backend)
+                self.mcaWindow = McaWindow.McaWindow(backend=backend)
                 self.scanwindow = ScanWindow.ScanWindow(info=True,
                                                         backend=backend)
                 self.scanwindow._togglePointsSignal()
                 if OBJECT3D:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
-                self.mainTabWidget.addTab(self.mcawindow, "MCA")
+                self.mainTabWidget.addTab(self.mcaWindow, "MCA")
                 self.mainTabWidget.addTab(self.scanwindow, "SCAN")
                 if OBJECT3D:
                     self.mainTabWidget.addTab(self.glWindow, "OpenGL")
@@ -264,7 +264,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 #print "end Markus patch"
                 self.mainTabWidget.showMaximized()
                 if False:
-                    self.connectDispatcher(self.mcawindow, self.sourceWidget)
+                    self.connectDispatcher(self.mcaWindow, self.sourceWidget)
                     self.connectDispatcher(self.scanwindow, self.sourceWidget)
                 else:
                     self.imageWindowDict = {}
@@ -287,18 +287,18 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                          self.dispatcherOtherSignalsSlot)
             if 0:
                 if QTVERSION < '4.0.0':
-                    self.connect(self.mcawindow,qt.PYSIGNAL('McaWindowSignal'),
+                    self.connect(self.mcaWindow,qt.PYSIGNAL('McaWindowSignal'),
                                  self.__McaWindowSignal)
                 else:
-                    self.connect(self.mcawindow,qt.SIGNAL('McaWindowSignal'),
+                    self.connect(self.mcaWindow,qt.SIGNAL('McaWindowSignal'),
                                  self.__McaWindowSignal)
                 if 'shm' in kw:
                     if len(kw['shm']) >= 8:
                         if kw['shm'][0:8] in ['MCA_DATA', 'XIA_DATA']:
-                            self.mcawindow.showMaximized()
+                            self.mcaWindow.showMaximized()
                             self.toggleSource()
                 else:
-                    self.mcawindow.showMaximized()
+                    self.mcaWindow.showMaximized()
             currentConfigDict = ConfigDict.ConfigDict()
             try:
                 defaultFileName = self.__getDefaultSettingsFile()
@@ -314,7 +314,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if len(kw['shm']) >= 8:
                     #if kw['shm'][0:8] in ['MCA_DATA', 'XIA_DATA']:
                     if kw['shm'][0:8] in ['MCA_DATA']:
-                        #self.mcawindow.showMaximized()
+                        #self.mcaWindow.showMaximized()
                         self.toggleSource()
                         self._startupSelection(source=kw['spec'], 
                                                 selection=kw['shm'])
@@ -482,13 +482,13 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             if OBJECT3D:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
-                    self.mcawindow._addSelection(dictOrList)
+                    self.mcaWindow._addSelection(dictOrList)
                     self.scanwindow._addSelection(dictOrList)
                 else:
                     self.mainTabWidget.setCurrentWidget(self.glWindow)
                     self.glWindow._addSelection(ddict)
             else:
-                self.mcawindow._addSelection(dictOrList)
+                self.mcaWindow._addSelection(dictOrList)
                 self.scanwindow._addSelection(dictOrList)
 
     def dispatcherRemoveSelectionSlot(self, ddict):
@@ -521,7 +521,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         elif self._is3DSelection(ddict):
             self.glWindow._removeSelection(dictOrList)
         else:
-            self.mcawindow._removeSelection(dictOrList)
+            self.mcaWindow._removeSelection(dictOrList)
             self.scanwindow._removeSelection(dictOrList)
 
     def dispatcherReplaceSelectionSlot(self, ddict):
@@ -565,7 +565,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         elif self._is3DSelection(ddict):
             self.glWindow._replaceSelection(dictOrList)
         else:
-            self.mcawindow._replaceSelection(dictOrList)
+            self.mcaWindow._replaceSelection(dictOrList)
             self.scanwindow._replaceSelection(dictOrList)
 
     def dispatcherOtherSignalsSlot(self, dictOrList):
@@ -619,11 +619,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d['PyMca']['Geometry']['MainWindow'] = [r.x(), r.y(), r.width(), r.height()]
         r = self.splitter.sizes()
         d['PyMca']['Geometry']['Splitter'] = r
-        r = self.mcawindow.geometry()
+        r = self.mcaWindow.geometry()
         d['PyMca']['Geometry']['McaWindow'] = [r.x(), r.y(), r.width(), r.height()]
-        if not backend:
-            r = self.mcawindow.graph.geometry()
-            d['PyMca']['Geometry']['McaGraph'] = [r.x(), r.y(), r.width(), r.height()]
+
         #sources
         d['PyMca']['Sources'] = {}
         d['PyMca']['Sources']['lastFileFilter'] = self.sourceWidget.sourceSelector.lastFileFilter
@@ -663,7 +661,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             #d['PyMca'][source]['Selection'] = self.sourceWidget[source].getSelection()
         #ROIs
         d['ROI']={}
-        roilist, roidict = self.mcawindow.roiwidget.getroilistanddict()
+        roilist, roidict = self.mcaWindow.roiWidget.getROIListAndDict()
         d['ROI']['roilist'] = roilist
         d['ROI']['roidict'] = {}
         d['ROI']['roidict'].update(roidict)
@@ -673,21 +671,21 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d['Elements']['Material'] = {}
         d['Elements']['Material'].update(ElementsInfo.Elements.Material)
         d['Fit'] = {}
-        if self.mcawindow.advancedfit.configDir is not None:
-            d['Fit'] ['ConfigDir'] = self.mcawindow.advancedfit.configDir * 1
+        if self.mcaWindow.advancedfit.configDir is not None:
+            d['Fit'] ['ConfigDir'] = self.mcaWindow.advancedfit.configDir * 1
         d['Fit'] ['Configuration'] = {}
-        d['Fit'] ['Configuration'].update(self.mcawindow.advancedfit.mcafit.configure())
+        d['Fit'] ['Configuration'].update(self.mcaWindow.advancedfit.mcafit.configure())
         d['Fit'] ['Information'] = {}
-        d['Fit'] ['Information'].update(self.mcawindow.advancedfit.info)
+        d['Fit'] ['Information'].update(self.mcaWindow.advancedfit.info)
         d['Fit'] ['LastFit'] = {}
-        d['Fit'] ['LastFit']['hidden'] = self.mcawindow.advancedfit.isHidden()
-        d['Fit'] ['LastFit']['xdata0'] = self.mcawindow.advancedfit.mcafit.xdata0
-        d['Fit'] ['LastFit']['ydata0'] = self.mcawindow.advancedfit.mcafit.ydata0
-        d['Fit'] ['LastFit']['sigmay0']= self.mcawindow.advancedfit.mcafit.sigmay0
-        d['Fit'] ['LastFit']['fitdone']= self.mcawindow.advancedfit._fitdone()
+        d['Fit'] ['LastFit']['hidden'] = self.mcaWindow.advancedfit.isHidden()
+        d['Fit'] ['LastFit']['xdata0'] = self.mcaWindow.advancedfit.mcafit.xdata0
+        d['Fit'] ['LastFit']['ydata0'] = self.mcaWindow.advancedfit.mcafit.ydata0
+        d['Fit'] ['LastFit']['sigmay0']= self.mcaWindow.advancedfit.mcafit.sigmay0
+        d['Fit'] ['LastFit']['fitdone']= self.mcaWindow.advancedfit._fitdone()
         #d['Fit'] ['LastFit']['fitdone']= 1
-        #d['Fit'] ['LastFit']['xmin'] = self.mcawindow.advancedfit.mcafit.sigma0
-        #d['Fit'] ['LastFit']['xmax'] = self.mcawindow.advancedfit.mcafit.sigma0
+        #d['Fit'] ['LastFit']['xmin'] = self.mcaWindow.advancedfit.mcafit.sigma0
+        #d['Fit'] ['LastFit']['xmax'] = self.mcaWindow.advancedfit.mcafit.sigma0
 
         #ScanFit related
         d['ScanSimpleFit'] = {}
@@ -711,6 +709,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d.write(filename)
 
     def __configurePyMca(self, ddict):
+        savedVersion = ddict.get("VERSION", '4.7.2')
         if 'ConfigDir' in ddict:
             self.configDir = ddict['ConfigDir']
 
@@ -721,21 +720,22 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             if key in ddict['Geometry'].keys():
                 self.splitter.setSizes(ddict['Geometry'][key])
             if backend is None:
+                # this was the way of working of 4.x.x versions
                 key = 'McaWindow'
                 if key in ddict['Geometry'].keys():
                     r = qt.QRect(*ddict['Geometry']['McaWindow'])
-                    self.mcawindow.setGeometry(r)
+                    self.mcaWindow.setGeometry(r)
                 key = 'McaGraph'
                 if key in ddict['Geometry'].keys():
                     r = qt.QRect(*ddict['Geometry']['McaGraph'])
-                    self.mcawindow.graph.setGeometry(r)
+                    self.mcaWindow.graph.setGeometry(r)
                 self.show()
             qt.qApp.processEvents()
             qt.qApp.postEvent(self, qt.QResizeEvent(qt.QSize(ddict['Geometry']['MainWindow'][2]+1,
                                                           ddict['Geometry']['MainWindow'][3]+1),
                                                  qt.QSize(ddict['Geometry']['MainWindow'][2],
                                                           ddict['Geometry']['MainWindow'][3])))
-            self.mcawindow.showMaximized()
+            self.mcaWindow.showMaximized()
             
         PyMcaDirs.nativeFileDialogs = ddict.get('nativeFileDialogs', True)
 
@@ -803,13 +803,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if type(roilist) != type([]):
                     roilist=[roilist]                
                 roidict = ddict['roidict']
-                if backend:
-                    self.mcawindow.roiWidget.fillFromROIDict(roilist=roilist,
+                self.mcaWindow.roiWidget.fillFromROIDict(roilist=roilist,
                                                          roidict=roidict)
-                else:
-                    self.mcawindow.roiwidget.fillfromroidict(roilist=roilist,
-                                                         roidict=roidict)
-            
+                
 
     def __configureElements(self, ddict):
         if 'Material' in ddict:
@@ -817,24 +813,24 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def __configureFit(self, d):
         if 'Configuration' in d:
-            self.mcawindow.advancedfit.configure(d['Configuration'])
-            if not self.mcawindow.advancedfit.isHidden():
-                self.mcawindow.advancedfit._updateTop()
+            self.mcaWindow.advancedfit.configure(d['Configuration'])
+            if not self.mcaWindow.advancedfit.isHidden():
+                self.mcaWindow.advancedfit._updateTop()
         if 'ConfigDir' in d:
-            self.mcawindow.advancedfit.configDir = d['ConfigDir'] * 1
+            self.mcaWindow.advancedfit.configDir = d['ConfigDir'] * 1
         if False and ('LastFit' in d):
             if (d['LastFit']['ydata0'] != None) and \
                (d['LastFit']['ydata0'] != 'None'):               
-                self.mcawindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
+                self.mcaWindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
                                                    y=d['LastFit']['ydata0'],
                                               sigmay=d['LastFit']['sigmay0'],
                                               **d['Information'])
                 if d['LastFit']['hidden'] == 'False':
-                    self.mcawindow.advancedfit.show()
-                    self.mcawindow.advancedfit.raiseW()
+                    self.mcaWindow.advancedfit.show()
+                    self.mcaWindow.advancedfit.raiseW()
                     if d['LastFit']['fitdone']:
                         try:
-                            self.mcawindow.advancedfit.fit()
+                            self.mcaWindow.advancedfit.fit()
                         except:
                             pass  
                 else:
@@ -842,24 +838,24 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             
     def __configureFit(self, d):
         if 'Configuration' in d:
-            self.mcawindow.advancedfit.mcafit.configure(d['Configuration'])
-            if not self.mcawindow.advancedfit.isHidden():
-                self.mcawindow.advancedfit._updateTop()
+            self.mcaWindow.advancedfit.mcafit.configure(d['Configuration'])
+            if not self.mcaWindow.advancedfit.isHidden():
+                self.mcaWindow.advancedfit._updateTop()
         if 'ConfigDir' in d:
-            self.mcawindow.advancedfit.configDir = d['ConfigDir'] * 1
+            self.mcaWindow.advancedfit.configDir = d['ConfigDir'] * 1
         if False and ('LastFit' in d):
             if (d['LastFit']['ydata0'] != None) and \
                (d['LastFit']['ydata0'] != 'None'):               
-                self.mcawindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
+                self.mcaWindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
                                                    y=d['LastFit']['ydata0'],
                                               sigmay=d['LastFit']['sigmay0'],
                                               **d['Information'])
                 if d['LastFit']['hidden'] == 'False':
-                    self.mcawindow.advancedfit.show()
-                    self.mcawindow.advancedfit.raiseW()
+                    self.mcaWindow.advancedfit.show()
+                    self.mcaWindow.advancedfit.raiseW()
                     if d['LastFit']['fitdone']:
                         try:
-                            self.mcawindow.advancedfit.fit()
+                            self.mcaWindow.advancedfit.fit()
                         except:
                             pass  
                 else:
@@ -1023,9 +1019,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 ddict["legend"] = ddict['SourceName'] + ' %s.c.1' %selection
                 ddict["SourceType"] =  'SPS'
                 self.sourceWidget._addSelectionSlot([ddict])
-                self.mcawindow.control.calbox.setCurrentIndex(2)
-                self.mcawindow.calibration = self.mcawindow.calboxoptions[2]
-                self.mcawindow.control._calboxactivated("Internal")
+                self.mcaWindow.control.calbox.setCurrentIndex(2)
+                self.mcaWindow.calibration = self.mcaWindow.calboxoptions[2]
+                self.mcaWindow.control._calboxactivated("Internal")
         else:
             return
         """ 
@@ -1230,7 +1226,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if self.__imagingTool is None:
             rgbWidget = None
             try:
-                widget = QStackWidget.QStackWidget(mcawidget=self.mcawindow,
+                widget = QStackWidget.QStackWidget(mcawidget=self.mcaWindow,
                                                    rgbwidget=rgbWidget,
                                                    master=True)
                 widget.notifyCloseEventToWidget(self)
@@ -1301,7 +1297,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self.saveMenu.addAction("PyMca Configuration", self._onSaveAs)
         if text.upper() == 'MCA':
             self.saveMenu.addAction("Active Mca",
-                             self.mcawindow._saveIconSignal)
+                             self.mcaWindow._saveIconSignal)
         elif text.upper() == 'SCAN':
             self.saveMenu.addAction("Active Scan",
                              self.scanwindow._saveIconSignal)
@@ -1552,17 +1548,17 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             return
 
         if not self.__useTabWidget:
-            self.mcawindow.show()
-            self.mcawindow.raise_()
+            self.mcaWindow.show()
+            self.mcaWindow.raise_()
         else:
-            self.mainTabWidget.setCurrentWidget(self.mcawindow)
-        self.mcawindow.graph.printps()
+            self.mainTabWidget.setCurrentWidget(self.mcaWindow)
+        self.mcaWindow.graph.printps()
 
     def __McaWindowSignal(self, ddict):
         if ddict['event'] == 'NewScanCurve':
-            if self.mcawindow.scanwindow.isHidden():
-                self.mcawindow.scanwindow.show()
-            self.mcawindow.scanwindow.setFocus()   
+            if self.mcaWindow.scanwindow.isHidden():
+                self.mcaWindow.scanwindow.show()
+            self.mcaWindow.scanwindow.setFocus()   
 
 if 0:            
             
@@ -1680,8 +1676,7 @@ if __name__ == '__main__':
     splash.finish(PyMcaMainWidgetInstance)
     PyMcaMainWidgetInstance.show()
     PyMcaMainWidgetInstance.raise_()
-    if backend:
-        PyMcaMainWidgetInstance.mcawindow.replot()
+    PyMcaMainWidgetInstance.mcaWindow.replot()
     
     #try to interpret rest of command line arguments as data sources
     try:
