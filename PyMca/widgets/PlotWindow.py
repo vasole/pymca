@@ -780,19 +780,17 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.removeMarker('ROI min')
             self.removeMarker('ROI max')
             if ddict['key'] == 'ICR':
-                self.insertXMarker(fromdata, label = 'ROI min',
-                                   color='black',
-                                   draggable=False)
-                self.insertXMarker(todata, label = 'ROI max',
-                                   color='black',
-                                   draggable=False)
+                draggable = False
+                color = 'black'
             else:
-                self.insertXMarker(fromdata, label = 'ROI min',
-                                   color='blue',
-                                   draggable=True)
-                self.insertXMarker(todata, label = 'ROI max',
-                                   color='blue',
-                                   draggable=True)
+                draggable = True
+                color = 'blue'
+            self.insertXMarker(fromdata, label = 'ROI min',
+                               color=color,
+                               draggable=draggable)
+            self.insertXMarker(todata, label = 'ROI max',
+                               color=color,
+                               draggable=draggable)
             if draggable and self._middleROIMarkerFlag:
                 pos = 0.5 * (fromdata + todata)
                 self.insertXMarker(pos, 'ROI middle',
@@ -838,7 +836,11 @@ class PlotWindow(PlotWidget.PlotWidget):
             raise ValueError("Expected roiList and roiDict or nothing")
         update = kw.get("update", True)
         activeCurve = self.getActiveCurve(just_legend=False)
-        if len(activeCurve):
+        if activeCurve is None:
+            xproc = None
+            yproc = None
+            self.roiWidget.setHeader('<b>ROIs of XXXXXXXXXX<\b>')
+        elif len(activeCurve):
             x, y, legend = activeCurve[0:3]
             idx = argsort(x, kind='mergesort')
             xproc = take(x, idx)
