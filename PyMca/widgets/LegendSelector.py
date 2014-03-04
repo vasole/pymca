@@ -50,9 +50,11 @@ def convertToPyObject(x):
 DEBUG = 0
 
 # Build all symbols
-# Curtesy of the pyqtgraph project
-Symbols = dict([(name, qt.QPainterPath()) for name in ['o', 's', 't', 'd', '+', 'x']])
+# Courtesy of the pyqtgraph project
+Symbols = dict([(name, qt.QPainterPath()) for name in ['o', 's', 't', 'd', '+', 'x', '.', ',']])
 Symbols['o'].addEllipse(qt.QRectF(.1, .1, .8, .8))
+Symbols['.'].addEllipse(qt.QRectF(.3, .3, .4, .4))
+Symbols[','].addEllipse(qt.QRectF(.4, .4, .2, .2))
 Symbols['s'].addRect(qt.QRectF(.1, .1, .8, .8))
 
 coords = {
@@ -923,10 +925,17 @@ class Notifier(qt.QObject):
 
 if __name__ == '__main__':
     notifier = Notifier()
-    legends = ['Legend0', 'Legend1', 'Long Legend 2', 'Foo Legend 3', 'Even Longer Legend 4', 'Short Leg 5']
-    colors  = [qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red]
+    legends = ['Legend0',
+               'Legend1',
+               'Long Legend 2',
+               'Foo Legend 3',
+               'Even Longer Legend 4',
+               'Short Leg 5',
+               'Dot symbol 6',
+               'Comma symbol 7']
+    colors  = [qt.Qt.darkRed, qt.Qt.green, qt.Qt.yellow, qt.Qt.darkCyan, qt.Qt.blue, qt.Qt.darkBlue, qt.Qt.red, qt.Qt.darkYellow]
     #symbols = ['circle', 'triangle', 'utriangle', 'diamond', 'square', 'cross']
-    symbols = ['o', 't', '+', 'x', 's', 'd']
+    symbols = ['o', 't', '+', 'x', 's', 'd', '.', ',']
     app = qt.QApplication([])
     win = LegendListView()
     #win = LegendListContextMenu()
