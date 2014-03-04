@@ -447,19 +447,25 @@ class ScanWindow(PlotWindow.PlotWindow):
             
             #force the current x label to the appropriate value
             dataObject = self.dataObjectsDict[legend]
-            ilabel = dataObject.info['selection']['y'][0]
-            ylabel = dataObject.info['LabelNames'][ilabel]
-            if len(dataObject.info['selection']['x']):
-                ilabel = dataObject.info['selection']['x'][0]
-                xlabel = dataObject.info['LabelNames'][ilabel]
+            if 'selection' in dataObject.info:
+                ilabel = dataObject.info['selection']['y'][0]
+                ylabel = dataObject.info['LabelNames'][ilabel]
+                if len(dataObject.info['selection']['x']):
+                    ilabel = dataObject.info['selection']['x'][0]
+                    xlabel = dataObject.info['LabelNames'][ilabel]
+                else:
+                    xlabel = "Point Number"
+                if len(dataObject.info['selection']['m']):
+                    ilabel = dataObject.info['selection']['m'][0]
+                    ylabel += "/" + dataObject.info['LabelNames'][ilabel]
             else:
-                xlabel = "Point Number"
-            if len(dataObject.info['selection']['m']):
-                ilabel = dataObject.info['selection']['m'][0]
-                ylabel += "/" + dataObject.info['LabelNames'][ilabel]
+                xlabel = dataObject.info.get('xlabel', None)
+                ylabel = dataObject.info.get('ylabel', None)
+            if xlabel is not None:
+                self.setGraphXLabel(xlabel)
+            if ylabel is not None:
+                self.setGraphYLabel(ylabel)
             self.setActiveCurve(legend)
-            self.setGraphYLabel(ylabel)
-            self.setGraphXLabel(xlabel)
             #self.setGraphTitle(legend)
             if self.scanWindowInfoWidget is not None:
                 self.scanWindowInfoWidget.updateFromDataObject\
