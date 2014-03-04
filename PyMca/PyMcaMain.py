@@ -239,23 +239,23 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
             if not self.__useTabWidget:
                 self.mcaWindow = McaWindow.McaWidget(self.mdi)
-                self.scanwindow = ScanWindow.ScanWindow(self.mdi)
+                self.scanWindow = ScanWindow.ScanWindow(self.mdi)
                 self.imageWindowDict = None
                 self.connectDispatcher(self.mcaWindow, self.sourceWidget)
-                self.connectDispatcher(self.scanwindow, self.sourceWidget)
+                self.connectDispatcher(self.scanWindow, self.sourceWidget)
                 self.mdi.addWindow(self.mcaWindow)
-                self.mdi.addWindow(self.scanwindow)
+                self.mdi.addWindow(self.scanWindow)
             else:
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcaWindow = McaWindow.McaWindow(backend=backend)
-                self.scanwindow = ScanWindow.ScanWindow(info=True,
+                self.scanWindow = ScanWindow.ScanWindow(info=True,
                                                         backend=backend)
-                self.scanwindow._togglePointsSignal()
+                self.scanWindow._togglePointsSignal()
                 if OBJECT3D:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
                 self.mainTabWidget.addTab(self.mcaWindow, "MCA")
-                self.mainTabWidget.addTab(self.scanwindow, "SCAN")
+                self.mainTabWidget.addTab(self.scanWindow, "SCAN")
                 if OBJECT3D:
                     self.mainTabWidget.addTab(self.glWindow, "OpenGL")
                 self.mdi.addWindow(self.mainTabWidget)
@@ -265,7 +265,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mainTabWidget.showMaximized()
                 if False:
                     self.connectDispatcher(self.mcaWindow, self.sourceWidget)
-                    self.connectDispatcher(self.scanwindow, self.sourceWidget)
+                    self.connectDispatcher(self.scanWindow, self.sourceWidget)
                 else:
                     self.imageWindowDict = {}
                     self.imageWindowCorrelator = None
@@ -286,12 +286,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                          qt.SIGNAL("otherSignals"),
                          self.dispatcherOtherSignalsSlot)
             if 0:
-                if QTVERSION < '4.0.0':
-                    self.connect(self.mcaWindow,qt.PYSIGNAL('McaWindowSignal'),
-                                 self.__McaWindowSignal)
-                else:
-                    self.connect(self.mcaWindow,qt.SIGNAL('McaWindowSignal'),
-                                 self.__McaWindowSignal)
                 if 'shm' in kw:
                     if len(kw['shm']) >= 8:
                         if kw['shm'][0:8] in ['MCA_DATA', 'XIA_DATA']:
@@ -440,11 +434,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if hkl:
                     imageWindow = PyMcaHKLImageWindow.PyMcaHKLImageWindow(name = legend,
                                 correlator = self.imageWindowCorrelator,
-                                scanwindow=self.scanwindow)
+                                scanwindow=self.scanWindow)
                 else:
                     imageWindow = PyMcaImageWindow.PyMcaImageWindow(name = legend,
                                 correlator = self.imageWindowCorrelator,
-                                scanwindow=self.scanwindow)
+                                scanwindow=self.scanWindow)
                 self.imageWindowDict[legend] = imageWindow
 
                 self.connect(imageWindow, qt.SIGNAL("addImageClicked"),
@@ -483,13 +477,13 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             if OBJECT3D:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
                     self.mcaWindow._addSelection(dictOrList)
-                    self.scanwindow._addSelection(dictOrList)
+                    self.scanWindow._addSelection(dictOrList)
                 else:
                     self.mainTabWidget.setCurrentWidget(self.glWindow)
                     self.glWindow._addSelection(ddict)
             else:
                 self.mcaWindow._addSelection(dictOrList)
-                self.scanwindow._addSelection(dictOrList)
+                self.scanWindow._addSelection(dictOrList)
 
     def dispatcherRemoveSelectionSlot(self, ddict):
         try:
@@ -522,7 +516,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.glWindow._removeSelection(dictOrList)
         else:
             self.mcaWindow._removeSelection(dictOrList)
-            self.scanwindow._removeSelection(dictOrList)
+            self.scanWindow._removeSelection(dictOrList)
 
     def dispatcherReplaceSelectionSlot(self, ddict):
         try:
@@ -566,7 +560,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.glWindow._replaceSelection(dictOrList)
         else:
             self.mcaWindow._replaceSelection(dictOrList)
-            self.scanwindow._replaceSelection(dictOrList)
+            self.scanWindow._replaceSelection(dictOrList)
 
     def dispatcherOtherSignalsSlot(self, dictOrList):
         if DEBUG:
@@ -579,7 +573,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             return
         if ddict['event'] == "SelectionTypeChanged":
             if ddict['SelectionType'].upper() == "COUNTERS":
-                self.mainTabWidget.setCurrentWidget(self.scanwindow)
+                self.mainTabWidget.setCurrentWidget(self.scanWindow)
                 return
             for i in range(self.mainTabWidget.count()):
                 if str(self.mainTabWidget.tabText(i)) == \
@@ -692,11 +686,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d['ScanSimpleFit']['Configuration'] = {}
         if DEBUG:
                   d['ScanSimpleFit']['Configuration'].update(\
-                      self.scanwindow.scanFit.getConfiguration())
+                      self.scanWindow.scanFit.getConfiguration())
         else:
             try:
                   d['ScanSimpleFit']['Configuration'].update(\
-                      self.scanwindow.scanFit.getConfiguration())
+                      self.scanWindow.scanFit.getConfiguration())
             except:
                 print("Error getting ScanFint configuration")
         return d
@@ -866,7 +860,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def __configureScanSimpleFit(self, ddict):
         if 'Configuration' in ddict:
-            self.scanwindow.scanFit.setConfiguration(ddict['Configuration'])
+            self.scanWindow.scanFit.setConfiguration(ddict['Configuration'])
                 
     def initMenuBar(self):
         if self.options["MenuFile"]:
@@ -1300,7 +1294,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                              self.mcaWindow._saveIconSignal)
         elif text.upper() == 'SCAN':
             self.saveMenu.addAction("Active Scan",
-                             self.scanwindow._saveIconSignal)
+                             self.scanWindow._saveIconSignal)
         elif text in self.imageWindowDict.keys():
             self.saveMenu.addAction("Active Image",
                   self.imageWindowDict[text].graphWidget._saveIconSignal)
@@ -1543,8 +1537,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def onPrint(self):
         if DEBUG:
             print("onPrint called")
-        if not self.scanwindow.isHidden():
-            self.scanwindow.graph.printps()
+        if not self.scanWindow.isHidden():
+            self.scanWindow.graph.printps()
             return
 
         if not self.__useTabWidget:
@@ -1553,12 +1547,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             self.mainTabWidget.setCurrentWidget(self.mcaWindow)
         self.mcaWindow.graph.printps()
-
-    def __McaWindowSignal(self, ddict):
-        if ddict['event'] == 'NewScanCurve':
-            if self.mcaWindow.scanwindow.isHidden():
-                self.mcaWindow.scanwindow.show()
-            self.mcaWindow.scanwindow.setFocus()   
 
 if 0:            
             
