@@ -123,6 +123,7 @@ class McaWindow(ScanWindow.ScanWindow):
         self._togglePointsSignal()
         self.changeGridLevel()
         self.connections()
+        self.setGraphYLabel('Counts')
 
         if 1:
             self.fitButtonMenu = qt.QMenu()
