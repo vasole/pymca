@@ -82,7 +82,7 @@ DEBUG = 0
 class ScanWindow(PlotWindow.PlotWindow):
     def __init__(self, parent=None, name="Scan Window", specfit=None, backend=None,
                  plugins=True, newplot=True, roi=True, fit=True,
-                 control=True, position=True, **kw):
+                 control=True, position=True, info=False, **kw):
 
         super(ScanWindow, self).__init__(parent,
                                          newplot=newplot,
@@ -107,15 +107,23 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.getPlugins(method="getPlugin1DInstance",
                         directoryList=pluginDir)
 
-        """
-        self.mainLayout = qt.QVBoxLayout(self)
-        self.mainLayout.setContenstsMargin(0)
-        self.mainLayout.setSpacing(0)
-        self.scanWindowInfoWidget = ScanWindowInfoWidget.\
-                                        ScanWindowInfoWidget(self)
-        self.mainLayout.addWidget(self.scanWindowInfoWidget)
-        """
-        self.scanWindowInfoWidget = None
+        if info:
+            self.scanWindowInfoWidget = ScanWindowInfoWidget.\
+                                            ScanWindowInfoWidget()
+            self.infoDockWidget = qt.QDockWidget(self)
+            self.infoDockWidget.layout().setContentsMargins(0, 0, 0, 0)
+            self.infoDockWidget.setWidget(self.scanWindowInfoWidget)
+            self.infoDockWidget.setWindowTitle(self.windowTitle()+(" Info"))
+            self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+                                   self.infoDockWidget)
+            controlMenu = qt.QMenu()
+            controlMenu.addAction(QString("Show/Hide Legends"),
+                                       self.toggleLegendWidget)
+            controlMenu.addAction(QString("Show/Hide Info"),
+                                       self._toggleInfoWidget)
+            self.setControlMenu(controlMenu)  
+        else:
+            self.scanWindowInfoWidget = None
         #self.fig = None
         if fit:
             self.scanFit = ScanFit.ScanFit(specfit=specfit)
@@ -142,6 +150,20 @@ class ScanWindow(PlotWindow.PlotWindow):
                                    self._simpleFitSignal)
             self.fitButtonMenu.addAction(QString("Customized Fit") ,
                                    self._customFitSignal)
+
+
+    def _toggleInfoWidget(self):
+        if self.infoDockWidget.isHidden():
+            self.infoDockWidget.show()
+            legend = self.getActiveCurve(just_legend=True)
+            if legend is not None:
+                ddict ={}
+                ddict['event'] = "curveClicked"
+                ddict['label'] = legend
+                ddict['legend'] = legend
+                self.graphCallback(ddict)
+        else:
+            self.infoDockWidget.hide()
 
     def setDispatcher(self, w):
         self.connect(w, qt.SIGNAL("addSelection"),
@@ -243,16 +265,17 @@ class ScanWindow(PlotWindow.PlotWindow):
                     self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info,
                                   replot=actualReplot)
                     if self.scanWindowInfoWidget is not None:
-                        activeLegend = self.getActiveCurve(just_legend=True)
-                        if activeLegend is not None:
-                            if activeLegend == newLegend:
-                                self.scanWindowInfoWidget.updateFromDataObject\
-                                                            (dataObject)
-                        else:
-                            dummyDataObject = DataObject.DataObject()
-                            dummyDataObject.y=[numpy.array([])]
-                            dummyDataObject.x=[numpy.array([])]
-                            self.scanWindowInfoWidget.updateFromDataObject(dummyDataObject)                            
+                        if not self.infoDockWidget.isHidden():
+                            activeLegend = self.getActiveCurve(just_legend=True)
+                            if activeLegend is not None:
+                                if activeLegend == newLegend:
+                                    self.scanWindowInfoWidget.updateFromDataObject\
+                                                                (dataObject)
+                            else:
+                                dummyDataObject = DataObject.DataObject()
+                                dummyDataObject.y=[numpy.array([])]
+                                dummyDataObject.x=[numpy.array([])]
+                                self.scanWindowInfoWidget.updateFromDataObject(dummyDataObject)
             else:
                 #we have to loop for all y values
                 ycounter = -1
@@ -468,7 +491,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.setActiveCurve(legend)
             #self.setGraphTitle(legend)
             if self.scanWindowInfoWidget is not None:
-                self.scanWindowInfoWidget.updateFromDataObject\
+                if not self.infoDockWidget.isHidden():
+                    self.scanWindowInfoWidget.updateFromDataObject\
                                                             (dataObject)
         elif ddict['event'] == "removeCurveEvent":
             legend = ddict['legend']
@@ -1209,29 +1233,30 @@ class ScanWindow(PlotWindow.PlotWindow):
         pixmap = qt.QPixmap.grabWidget(self.centralWidget())
 
         if self.scanWindowInfoWidget is not None:
-            info = self.scanWindowInfoWidget.getInfo()
-            title = info['scan'].get('source', None)
-            comment = info['scan'].get('scan', None)+"\n"
-            h, k, l = info['scan'].get('hkl')
-            if h != "----":
-                comment += "H = %s  K = %s  L = %s\n" % (h, k, l)
-            peak   = info['graph']['peak']
-            peakAt = info['graph']['peakat']
-            fwhm   = info['graph']['fwhm']
-            fwhmAt = info['graph']['fwhmat']
-            com    = info['graph']['com']
-            mean   = info['graph']['mean']
-            std    = info['graph']['std']
-            minimum = info['graph']['min']
-            maximum = info['graph']['max']
-            delta   = info['graph']['delta']
-            xLabel = self.graph.x1Label()
-            comment += "Peak %s at %s = %s\n" % (peak, xLabel, peakAt)
-            comment += "FWHM %s at %s = %s\n" % (fwhm, xLabel, fwhmAt)
-            comment += "COM = %s  Mean = %s  STD = %s\n" % (com, mean, std)
-            comment += "Min = %s  Max = %s  Delta = %s\n" % (minimum,
-                                                            maximum,
-                                                            delta)           
+            if not self.infoDockWidget.isHidden():
+                info = self.scanWindowInfoWidget.getInfo()
+                title = info['scan'].get('source', None)
+                comment = info['scan'].get('scan', None)+"\n"
+                h, k, l = info['scan'].get('hkl')
+                if h != "----":
+                    comment += "H = %s  K = %s  L = %s\n" % (h, k, l)
+                peak   = info['graph']['peak']
+                peakAt = info['graph']['peakat']
+                fwhm   = info['graph']['fwhm']
+                fwhmAt = info['graph']['fwhmat']
+                com    = info['graph']['com']
+                mean   = info['graph']['mean']
+                std    = info['graph']['std']
+                minimum = info['graph']['min']
+                maximum = info['graph']['max']
+                delta   = info['graph']['delta']
+                xLabel = self.graph.x1Label()
+                comment += "Peak %s at %s = %s\n" % (peak, xLabel, peakAt)
+                comment += "FWHM %s at %s = %s\n" % (fwhm, xLabel, fwhmAt)
+                comment += "COM = %s  Mean = %s  STD = %s\n" % (com, mean, std)
+                comment += "Min = %s  Max = %s  Delta = %s\n" % (minimum,
+                                                                maximum,
+                                                                delta)           
         else:
             title = None
             comment = None

@@ -88,6 +88,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.setCallback(self.graphCallback)
         if control or position:
             self._buildGraphBottomWidget(control, position)
+            self._controlMenu = None
 
         # activeCurve handling
         self.enableActiveCurveHandling(True)
@@ -139,11 +140,17 @@ class PlotWindow(PlotWidget.PlotWidget):
         self._plotType = wtype
 
     def _graphControlClicked(self):
-        #create a default menu
-        controlMenu = qt.QMenu()
-        controlMenu.addAction(QString("Show/Hide Legends"),
-                                   self.toggleLegendWidget)
-        controlMenu.exec_(self.cursor().pos())
+        if self._controlMenu is None:
+            #create a default menu
+            controlMenu = qt.QMenu()
+            controlMenu.addAction(QString("Show/Hide Legends"),
+                                       self.toggleLegendWidget)
+            controlMenu.exec_(self.cursor().pos())
+        else:
+            self._controlMenu.exec_(self.cursor().pos())
+
+    def setControlMenu(self, menu=None):
+        self._controlMenu = menu
 
     def _initIcons(self):
         self.normalIcon	= qt.QIcon(qt.QPixmap(IconDict["normal"]))

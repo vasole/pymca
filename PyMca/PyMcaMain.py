@@ -249,7 +249,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcawindow = McaWindow.McaWindow(backend=backend)
-                self.scanwindow = ScanWindow.ScanWindow(backend=backend)
+                self.scanwindow = ScanWindow.ScanWindow(info=True,
+                                                        backend=backend)
                 self.scanwindow._togglePointsSignal()
                 if OBJECT3D:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
