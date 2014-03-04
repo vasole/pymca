@@ -925,6 +925,13 @@ class PlotWindow(PlotWidget.PlotWidget):
                 self.hideCurve(ddict['legend'], False)
             else:
                 self.hideCurve(ddict['legend'], True)
+        elif ddict['event'] in ["mapToRight", "mapToLeft"]:
+            legend = ddict['legend']
+            x, y, legend, info = self._curveDict[legend][0:4]
+            if ddict['event'] == "mapToRight":
+                self.addCurve(x, y, legend=legend, info=info, yaxis="right")
+            else:
+                self.addCurve(x, y, legend=legend, info=info, yaxis="left")
         elif ddict['event'] == "togglePoints":
             legend = ddict['legend']
             x, y, legend, info = self._curveDict[legend][0:4]

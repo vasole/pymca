@@ -796,11 +796,41 @@ class LegendListContextMenu(BaseContextMenu):
     def __init__(self, model):
         BaseContextMenu.__init__(self, model)
         actionList = [('Set Active', self.setActiveAction),
+                      ('Map to left', self.mapToLeftAction),
+                      ('Map to right', self.mapToRightAction),
                       ('Toggle points', self.togglePointsAction),
                       ('Toggle lines', self.toggleLinesAction),
                       ('Remove curve', self.removeItemAction)]
         for name, action in actionList:
             self.addAction(name, action)
+
+    def mapToLeftAction(self):
+        if DEBUG:
+            print('LegendListContextMenu.mapToLeftAction called')
+        modelIndex = self.currentIdx()
+        legend = qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)))
+        ddict = {
+            'legend'   : legend,
+            'label'    : legend,
+            'selected' : convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)),
+            'type'     : qt.safe_str(convertToPyObject(modelIndex.data())),
+            'event': "mapToLeft"
+        }
+        self.sigContextMenu.emit(ddict)
+                
+    def mapToRightAction(self):
+        if DEBUG:
+            print('LegendListContextMenu.mapToRightAction called')
+        modelIndex = self.currentIdx()
+        legend = qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)))
+        ddict = {
+            'legend'   : legend,
+            'label'    : legend,
+            'selected' : convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)),
+            'type'     : qt.safe_str(convertToPyObject(modelIndex.data())),
+            'event': "mapToRight"
+        }
+        self.sigContextMenu.emit(ddict)
 
     def removeItemAction(self):
         if DEBUG == 1:

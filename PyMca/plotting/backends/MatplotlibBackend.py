@@ -128,7 +128,6 @@ I'm not aware of. Don't expect those to work either.
     def _scale_to_res(self):
         """ Change self._A and _extent to render an image whose
 resolution is matched to the eventual rendering."""
-        #print("CALLED")
         #extent has to be set BEFORE set_data
         if self._origExtent is None:
             if self.origin == "upper":
@@ -1138,6 +1137,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.getDrawMode = self.graph.getDrawMode        
         self._oldActiveCurve = None
         self._oldActiveCurveLegend = None
+        # should one have two methods, for enable and for show 
+        self._rightAxisEnabled = False
+        self.enableAxis('right', False)
 
     def addCurve(self, x, y, legend, info=None, replace=False, replot=True, **kw):
         """
@@ -1170,12 +1172,17 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         style = info.get('plot_line_style', '-')
         style = info.get('line_style', style)
         linewidth = 1
-        axesLabel = info.get('plot_yaxis', 'left')
+        axisId = info.get('plot_yaxis', 'left')
+        axisId = kw.get('yaxis', axisId)
         fill = info.get('plot_fill', False)
-        if axesLabel == "left":
-            axes = self.ax
-        else:
+        if axisId == "right":
             axes = self.ax2
+            if self._rightAxisEnabled is None:
+                # never initialized
+                self.enableAxis(axisId, True)
+        else:
+            axes = self.ax
+            
         if self._logY:
             curveList = axes.semilogy( x, y, label=legend,
                                           linestyle=style,
@@ -1202,7 +1209,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       'style':style,
                                       'symbol':symbol,
                                       'label':legend,
-                                      'axes':axesLabel,
+                                      'axes':axisId,
                                       'fill':fill}
         if self._activeCurveHandling:
             if self._oldActiveCurve in self.ax.lines:
@@ -1390,6 +1397,20 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             return self.graph.get_tk_widget()
         else:
             return self.graph
+
+    def enableAxis(self, axis, flag=True):
+        """
+        :param axis: Axis to be shown or hidden
+        :type axis: string (left, right, top, bottom)
+        :param flag: Boolean (default, True)
+        """
+        if axis == "right":
+            self.ax2.get_yaxis().set_visible(flag)
+            self._rightAxisEnabled = flag
+        elif axis == "left":
+            self.ax.get_yaxis().set_visible(flag)
+        else:
+            print("unhandled axis %s" % axis)
 
     def insertMarker(self, x, y, label, color='k',
                       selectable=False, draggable=False,
@@ -1618,6 +1639,14 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         Update plot
         """
+        if self._rightAxisEnabled is not None:
+            # the right axis was initialized at a certain point
+            # so, we have to see if there is something still mapped
+            # to that axis.
+            # For the time being we only check lines
+            if not len(self.ax2.lines):
+                self.enableAxis('right', False)
+                self._rightAxisEnabled = None
         self.graph.draw()
         """
         if QT:

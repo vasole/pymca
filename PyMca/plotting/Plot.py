@@ -360,6 +360,9 @@ class Plot(PlotBase.PlotBase):
             info['ylabel'] = kw['ylabel']
         info['xlabel'] = str(xlabel)
         info['ylabel'] = str(ylabel)
+        yaxis = info.get('yaxis', 'left')
+        yaxis = kw.get('yaxis', yaxis)
+        info['plot_yaxis'] = yaxis
 
         if replace:
             self._curveList = []
