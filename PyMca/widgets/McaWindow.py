@@ -171,8 +171,6 @@ class McaWindow(ScanWindow.ScanWindow):
         self.connect(self.simplefit,  qt.SIGNAL('McaSimpleFitSignal') , self.__anasignal)
         self.connect(self.advancedfit,qt.SIGNAL('McaAdvancedFitSignal') , self.__anasignal)
         #self.connect(self.scanwindow, qt.SIGNAL('ScanWindowSignal') ,   self.__anasignal)
-        #self.connect(self.scanwindow, qt.SIGNAL('QtBlissGraphSignal')  ,self.__graphsignal)
-        #self.connect(self.graph,      qt.SIGNAL('QtBlissGraphSignal')  ,self.__graphsignal)
 
     def mcaSimpleFitSignal(self, ddict):
         print(ddict)

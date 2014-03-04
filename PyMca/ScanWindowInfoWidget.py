@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -378,10 +378,7 @@ class ScanInfoWidget(qt.QWidget):
 
         self.hkl = HKL(self)
         layout.addWidget(sourceLabel, 0, 0)
-        if QTVERSION < '4.0.0':
-            layout.addMultiCellWidget(self.sourceLabel, 0, 0, 1, 5)
-        else:
-            layout.addWidget(self.sourceLabel, 0, 1, 1, 5)
+        layout.addWidget(self.sourceLabel, 0, 1, 1, 5)
         layout.addWidget(scanLabel,        1, 0)
         layout.addWidget(self.scanLabel,   1, 1)
         layout.addWidget(self.hkl,         1, 2)
@@ -447,8 +444,7 @@ class ScanWindowInfoWidget(qt.QWidget):
 def test():
         app = qt.QApplication([])
         w   = ScanWindowInfoWidget()
-        qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                        app,qt.SLOT("quit()"))
+        app.lastWindowClosed.connect(app.quit)
         """
         winfo.grid(sticky='wesn')
         if STATISTICS:
@@ -460,10 +456,7 @@ def test():
                         fwhm=0.2154,com=544)
         """
         w.show()
-        if QTVERSION < '4.0.0':
-            app.exec_loop()
-        else:
-            app.exec_()
+        app.exec_()
 
 
 if __name__ == '__main__':
