@@ -29,10 +29,19 @@ import sys
 import os
 from . import Plot
 
+SVG = True
 if "PySide" in sys.modules:
     from PySide import QtCore, QtGui
+    try:
+        from PySide import QtSvg
+    except ImportError:
+        SVG = False
 else:
     from PyQt4 import QtCore, QtGui
+    try:
+        from PyQt4 import QtSvg
+    except ImportError:
+        SVG = False
 if not hasattr(QtCore, "Signal"):
     QtCore.Signal = QtCore.pyqtSignal
 
@@ -60,6 +69,10 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             self.setCentralWidget(self.containerWidget)
         else:
             print("WARNING: No backend. Using default.")
+
+        # defaultPrinter
+        self._printer = None
+
         if legends:
             print("Legends widget to be implemented")
         self.setGraphTitle("  ")
@@ -87,6 +100,82 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         w = self.centralWidget()
         QtGui.qApp.postEvent(w, QtGui.QResizeEvent(w.size(),
                                                    w.size()))
+
+    def saveGraph(self, fileName, fileFormat=None, dpi=None, **kw):
+        supportedFormats = ["png", "svg", "pdf", "ps", "eps",
+                            "tif", "tiff","jpeg", "jpg"]
+        if fileFormat is None:
+            fileFormat = (fileName.split(".")[-1]).lower()
+        if fileFormat not in supportedFormats:
+            print("Probably unsupported format %s" % fileFormat)
+            fileFormat = "svg"
+        return super(PlotWidget, self).saveGraph(fileName, fileFormat, dpi=dpi, **kw)
+
+    def printGraph(self, size=None, units="inches", dpi=None, printer=None,
+                   dialog=True, **kw):
+        if not SVG:
+            raise RuntimeError("QtSvg module missing. Please compile Qt with SVG support")
+            return
+        if sys.version < '3.0':
+            import cStringIO as StringIO
+            imgData = StringIO.StringIO()
+        else:
+            from io import BytesIO          
+            imgData = BytesIO()
+        self.saveGraph(imgData, fileFormat='svg')
+        imgData.flush()
+        imgData.seek(0)
+        svgRenderer = QtSvg.QSvgRenderer(QtCore.QXmlStreamReader(imgData.read()))
+        if printer is None:
+            if self._printer is None:
+                printer = QtGui.QPrinter()
+            else:
+                printer = self._printer
+        if (printer is None) or dialog:
+            # allow printer selection/configuration
+            printDialog = QtGui.QPrintDialog(printer, self)
+            actualPrint = printDialog.exec_()
+        else:
+            actualPrint = True
+        if actualPrint:
+            self._printer = printer
+            try:
+                painter = QtGui.QPainter()
+                if not(painter.begin(printer)):
+                    return 0
+                dpiy    = printer.logicalDpiY()
+                margin  = int((2/2.54) * dpiy) #2cm margin
+                # get the available space
+                availableWidth = printer.width() - 1 * margin
+                availableHeight = printer.height() - 2 * margin
+
+                #get the aspect ratio
+                widget = self.getWidgetHandle()
+                if widget is None:
+                    # does this make sense?
+                    graphWidth = availableWidth
+                    graphHeight = availableHeight
+                else:
+                    graphWidth = float(widget.width())
+                    graphHeight = float(widget.height())
+
+                graphRatio = graphHeight / graphWidth
+                # that ratio has to be respected
+                
+                bodyWidth = availableWidth
+                bodyHeight = availableWidth * graphRatio
+
+                if bodyHeight > availableHeight:
+                    bodyHeight = availableHeight
+                    bodyWidth = bodyHeight / graphRatio                
+
+                body = QtCore.QRectF(0.5*margin,
+                                margin,
+                                bodyWidth,
+                                bodyHeight)
+                svgRenderer.render(painter, body)
+            finally:
+                painter.end()
         
 if __name__ == "__main__":
     import time

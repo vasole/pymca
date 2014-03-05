@@ -703,7 +703,7 @@ class Plot(PlotBase.PlotBase):
                 ymax = max(ymax, y.max())
         return xmin, ymin, xmax, ymax
 
-    def saveGraph(self, filename, fileFormat='svg', dpi=None):
+    def saveGraph(self, filename, fileFormat='svg', dpi=None, **kw):
         """
         :param fileName: Destination
         :type fileName: String or StringIO or BytesIO
@@ -712,8 +712,8 @@ class Plot(PlotBase.PlotBase):
         """
         return self._plot.saveGraph(filename,
                                     fileFormat=fileFormat,
-                                    dpi=dpi)
-
+                                    dpi=dpi,
+                                    **kw)
 
     def setActiveCurve(self, legend, replot=True):
         """

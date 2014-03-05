@@ -512,7 +512,7 @@ class PlotBackend(object):
         """
         print("PlotBackend replot not implemented")
 
-    def saveGraph(self, fileName, fileFormat='svg'):
+    def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
         """
         :param fileName: Destination
         :type fileName: String or StringIO or BytesIO

@@ -1657,7 +1657,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         return
 
-    def saveGraph(self, fileName, fileFormat='svg', dpi=None):
+    def saveGraph(self, fileName, fileFormat='svg', dpi=None , **kw):
         if 0 and type(fileName) not in [types.ModuleType]:
             print("Filename to open")
             fig = self.ax.figure

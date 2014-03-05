@@ -332,10 +332,16 @@ class PlotWindow(PlotWidget.PlotWidget):
 
         # ---print
         tb = self._addToolButton(self.printIcon,
-                                 self.printGraph,
+                                 self._printGraph,
                                  'Prints the Graph')
 
         self.addToolBar(self.toolBar)
+
+    def _printGraph(self):
+        # new style signals seem to send an argument when the slot accepts
+        # arguments. That is the reason of passing by this intermediate
+        # method instead of directly calling printGraph
+        self.printGraph()
 
     def _addToolButton(self, icon, action, tip, toggle=None):
         tb      = qt.QToolButton(self.toolBar)            
@@ -632,31 +638,6 @@ class PlotWindow(PlotWidget.PlotWidget):
         tip = action.toolTip()
         if str(tip) != str(action.text()):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
-
-    def printGraph(self):
-        import cStringIO as StringIO
-        imgData = StringIO.StringIO()
-        self.saveGraph(imgData, 'svg')
-        imgData.flush()
-        imgData.seek(0)
-        svgRenderer = qt.QSvgRenderer(qt.QXmlStreamReader(imgData.read()))
-        #svgRenderer = qt.QSvgRenderer(imgData.read())
-        printer = qt.QPrinter()
-        printDialog = qt.QPrintDialog(printer, self)
-        if printDialog.exec_():
-            try:
-                painter = qt.QPainter()
-                if not(painter.begin(printer)):
-                    return 0
-                dpiy    = printer.logicalDpiY()
-                margin  = int((2/2.54) * dpiy) #2cm margin
-                body = qt.QRectF(0.5*margin,
-                                margin,
-                                printer.width() - 1 * margin,
-                                printer.height() - 2 * margin)
-                svgRenderer.render(painter, body)
-            finally:
-                painter.end()
 
     ########### ROI HANDLING ###############
     def graphCallback(self, ddict):
