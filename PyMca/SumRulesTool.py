@@ -118,19 +118,22 @@ class Calculations(object):
             nMax = 10.
             # Calculate Integrals
             if q is not None:
-                mOrbt = -4./3. * q * (nMax - n) / r
+                #mOrbt = abs(-4./3. * q * (nMax - n) / (2.*r))
+                mOrbt = abs(-2./3. * q * (nMax - n) / r)
             if (q is not None) and (p is not None):
-                mSpin  = -(6.*p - 4.*q) * (nMax - n) / r
-                mRatio = 2.*q/(9.*p-6.*q)
+                #mSpin  = abs((6.*p - 4.*q) * (nMax - n) / (2.*r))
+                mSpin  = abs((3.*p - 2.*q) * (nMax - n) / r)
+                mRatio = abs(2.*q/(9.*p-6.*q))
         elif econf == '4f':
             if DEBUG >= 1:
                 print('Calculations.magneticMoment -- considering 4f material:')
                 print('\tp: %s, q: %s, r:%s'%(str(p),str(q),str(r)))
             nMax = 14.
+            if q is not None:
+                mOrbt = abs(q * (nMax - n) / r)
             if (q is not None) and (p is not None) and (r is not None):
-                mOrbt = -(p + q) * (nMax - n) / r
-                mSpin  = -(2.*p - 3.*q) * (nMax - n) / (2. * r)
-                mRatio = (q + p) / (2.*p - 3.*q)
+                mSpin  = abs((3.*q - 5.*p) * (nMax - n) / (2. * r))
+                mRatio = mOrbt / mSpin
         else:
             raise ValueError('Calculations.magneticMoment -- Element must either be 3d or 4f type!')
 
@@ -1228,7 +1231,7 @@ class SumRulesWindow(qt.QMainWindow):
             msg.setStandardButtons(qt.QMessageBox.Cancel | qt.QMessageBox.Discard)
             if msg.exec_() == qt.QMessageBox.Cancel:
                 return
-        qt.sQMainWindow.close(self)
+        qt.QMainWindow.close(self)
 
     def setElectronConf(self, eConf):
         eConf = str(eConf)
