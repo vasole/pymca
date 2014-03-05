@@ -55,7 +55,7 @@ else:
     QStringList = list
 
 
-DEBUG = 1
+DEBUG = 0
 NEWLINE = '\n'
 
 class Calculations(object):
