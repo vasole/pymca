@@ -82,50 +82,61 @@ class Calculations(object):
         
         return numpy.cumsum(.5 * numpy.diff(x) * (y[1:] + y[:-1]))
     
-    #def magneticMoment(self, p, q, r, n, econf = '3d'):
     def magneticMoment(self, p, q, r, n, econf):
         """
         Input
         -----
         
-        p : Float
-            Integral over the L3 (first) edge of the XMCD
-            (difference) signal
-        q : Float
-            Integral over the L2 (second) edge of the XMCD
-            (difference) signal
-        r : Float
-            Integral over the complete XAS signal
-        n : Float
-            Electron occupation number of the sample material
-        econf : String
-            Determines if material is of 3d or 4f type and
-            thus the number of electronic states in the outer
-            shell
+        :param p: Integral over the (first) edge of the XMCD (difference) signal
+        :type p: Float
+        :param q: Integral over the (second) edge of the XMCD (difference) signal
+        :type q: Float
+        :param r: Integral over the complete XAS signal
+        :type r: Float
+        :param n: Electron occupation number of the sample material
+        :type n: Float
+        :param econf: Determines if material is of 3d or 4f type and thus the number of electronic states in the outer shell
+        :type econf: String
         
-        Returns the orbital resp. the spin part of the magnetic moment        
-        (c.f. Chen et al., Phys. Rev. Lett., 75(1), 152)
+        Returns the orbital resp. the spin part of the magnetic moment
+
+        Paper references:
+        3d materials: Chen et al., Phys. Rev. Lett., 75(1), 152
+        4f materials: Krishnamurthy et al., Phys. Rev. B, 79(1), 014426
         """
         mOrbt, mSpin, mRatio = None, None, None
-        
-        # Determine number of states in outer shell
-        if econf not in ['3d','4f']:
-            raise ValueError('Calculations.magneticMoment -- Element must either be 3d or 4f type!')
-        elif econf == '3d':
-            nMax = 10.
-        else:
-            nMax = 14.
-        
+
         # Check if r is non-zero
         if r == 0.:
             raise ZeroDivisionError()
-            
-        # Calculate Integrals
-        if q is not None:
-            mOrbt = -4./3. * q * (nMax - n) / r
-        if (q is not None) and (p is not None):
-            mSpin  = -(6.*p - 4.*q) * (nMax - n) / r
-            mRatio = 2.*q/(9.*p-6.*q)
+
+        # Determine number of states in outer shell
+        if econf == '3d':
+            if DEBUG >= 1:
+                print('Calculations.magneticMoment -- considering 3d material:')
+                print('\tp: %s, q: %s, r:%s'%(str(p),str(q),str(r)))
+            nMax = 10.
+            # Calculate Integrals
+            if q is not None:
+                #mOrbt = abs(-4./3. * q * (nMax - n) / (2.*r))
+                mOrbt = abs(-2./3. * q * (nMax - n) / r)
+            if (q is not None) and (p is not None):
+                #mSpin  = abs((6.*p - 4.*q) * (nMax - n) / (2.*r))
+                mSpin  = abs((3.*p - 2.*q) * (nMax - n) / r)
+                mRatio = abs(2.*q/(9.*p-6.*q))
+        elif econf == '4f':
+            if DEBUG >= 1:
+                print('Calculations.magneticMoment -- considering 4f material:')
+                print('\tp: %s, q: %s, r:%s'%(str(p),str(q),str(r)))
+            nMax = 14.
+            if q is not None:
+                mOrbt = abs(q * (nMax - n) / r)
+            if (q is not None) and (p is not None) and (r is not None):
+                mSpin  = abs((3.*q - 5.*p) * (nMax - n) / (2. * r))
+                mRatio = mOrbt / mSpin
+        else:
+            raise ValueError('Calculations.magneticMoment -- Element must either be 3d or 4f type!')
+
         return mOrbt, mSpin, mRatio
 
 class MarkerSpinBox(qt.QDoubleSpinBox):
@@ -1220,7 +1231,7 @@ class SumRulesWindow(qt.QMainWindow):
             msg.setStandardButtons(qt.QMessageBox.Cancel | qt.QMessageBox.Discard)
             if msg.exec_() == qt.QMessageBox.Cancel:
                 return
-        qt.sQMainWindow.close(self)
+        qt.QMainWindow.close(self)
 
     def setElectronConf(self, eConf):
         eConf = str(eConf)
