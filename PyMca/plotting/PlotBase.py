@@ -35,6 +35,7 @@ The plugins will be compatible with any plot window that provides the methods:
     isActiveCurveHandlingEnabled
     isCurveHidden
     isImageHidden
+    printGraph
     setActiveCurve
     showCurve
     showImage
@@ -214,6 +215,9 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         if DEBUG:
             print("PlotBase isImageHidden not implemented")
         return False
+
+    def printGraph(self, **kw):
+        print("PlotBase printGraph not implemented")
 
         
     def setActiveCurve(self, legend):
