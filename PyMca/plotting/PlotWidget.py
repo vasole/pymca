@@ -111,8 +111,9 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             fileFormat = "svg"
         return super(PlotWidget, self).saveGraph(fileName, fileFormat, dpi=dpi, **kw)
 
-    def printGraph(self, size=None, units="inches", dpi=None, printer=None,
-                   dialog=True, **kw):
+    def printGraph(self, width=None, height=None, xOffset=0.0, yOffset=0.0,
+                   units="inches", dpi=None, printer=None,
+                   dialog=True, keepAspectRatio=True, **kw):
         if not SVG:
             raise RuntimeError("QtSvg module missing. Please compile Qt with SVG support")
             return
@@ -143,34 +144,77 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                 painter = QtGui.QPainter()
                 if not(painter.begin(printer)):
                     return 0
+                dpix    = printer.logicalDpiX()
                 dpiy    = printer.logicalDpiY()
-                margin  = int((2/2.54) * dpiy) #2cm margin
+
+                #margin  = int((2/2.54) * dpiy) #2cm margin
+                availableWidth = printer.width() #- 1 * margin
+                availableHeight = printer.height() #- 2 * margin
+
+
                 # get the available space
-                availableWidth = printer.width() - 1 * margin
-                availableHeight = printer.height() - 2 * margin
-
-                #get the aspect ratio
-                widget = self.getWidgetHandle()
-                if widget is None:
-                    # does this make sense?
-                    graphWidth = availableWidth
-                    graphHeight = availableHeight
+                # convert the offsets to dpi
+                if units.lower() in ['inch', 'inches']:
+                    xOffset = xOffset * dpix
+                    yOffset = yOffset * dpiy
+                    if width is not None:
+                        width = width * dpix
+                    if height is not None:
+                        height = height * dpiy
+                elif units.lower() in ['cm', 'centimeters']:
+                    xOffset = (xOffset/2.54) * dpix
+                    yOffset = (yOffset/2.54) * dpiy
+                    if width is not None:
+                        width = (width/2.54) * dpix
+                    if height is not None:
+                        height = (height/2.54) * dpiy
                 else:
-                    graphWidth = float(widget.width())
-                    graphHeight = float(widget.height())
+                    # page units
+                    xOffset = availableWidth * xOffset
+                    yOffset = availableheight * yOffset
+                    if width is not None:
+                        width = availableWidth * width
+                    if height is not None:
+                        height = availableHeight * height
+                                    
+                availableWidth -= xOffset
+                availableHeight -= yOffset
 
-                graphRatio = graphHeight / graphWidth
-                # that ratio has to be respected
-                
-                bodyWidth = availableWidth
-                bodyHeight = availableWidth * graphRatio
+                if width is not None:
+                    if availableWidth < width:
+                        raise ValueError("Available width is less than requested width")
+                    availableWidth = width
+                if height is not None:
+                    if availableHeight < height:
+                        raise ValueError("Available height is less than requested width")
+                    availableHeight = height
 
-                if bodyHeight > availableHeight:
-                    bodyHeight = availableHeight
-                    bodyWidth = bodyHeight / graphRatio                
+                if keepAspectRatio:
+                    #get the aspect ratio
+                    widget = self.getWidgetHandle()
+                    if widget is None:
+                        # does this make sense?
+                        graphWidth = availableWidth
+                        graphHeight = availableHeight
+                    else:
+                        graphWidth = float(widget.width())
+                        graphHeight = float(widget.height())
 
-                body = QtCore.QRectF(0.5*margin,
-                                margin,
+                    graphRatio = graphHeight / graphWidth
+                    # that ratio has to be respected
+                    
+                    bodyWidth = availableWidth
+                    bodyHeight = availableWidth * graphRatio
+
+                    if bodyHeight > availableHeight:
+                        bodyHeight = availableHeight
+                        bodyWidth = bodyHeight / graphRatio
+                else:
+                    bodyWidth = availableWidth
+                    bodyHeight = availableHeight                    
+
+                body = QtCore.QRectF(xOffset,
+                                yOffset,
                                 bodyWidth,
                                 bodyHeight)
                 svgRenderer.render(painter, body)

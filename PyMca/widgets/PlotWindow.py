@@ -31,12 +31,14 @@ This window handles plugins and adds a toolbar to the PlotWidget.
 Currently the only dependency on PyMca is through the Icons.
 
 """
+import copy
 import sys
 import os
 import traceback
 import numpy
 from numpy import argsort, nonzero, take
 from . import LegendSelector
+from .ObjectPrintConfigurationDialog import ObjectPrintConfigurationDialog
 from . import McaROIWidget
 from ..plotting import PlotWidget
 
@@ -90,6 +92,17 @@ class PlotWindow(PlotWidget.PlotWidget):
             self._buildGraphBottomWidget(control, position)
             self._controlMenu = None
 
+        # default print configuration (uses a quarter of a page)
+        self._printMenu = None
+        self._printConfigurationDialog = None
+        self._printConfiguration = {"xOffset": 0.1,
+                                    "yOffset": 0.1,
+                                    "width": 0.9,
+                                    "height": 0.9,
+                                    "units": "page",
+                                    "keepAspectRatio": True}
+
+
         # activeCurve handling
         self.enableActiveCurveHandling(True)
         self.setActiveCurveColor('black')
@@ -133,6 +146,9 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.graphBottomLayout.addWidget(self._yPos)
             self.graphBottomLayout.addWidget(qt.HorizontalSpacer(self.graphBottom))
         widget.layout().addWidget(self.graphBottom)
+
+    def setPrintMenu(self, menu):
+        self._printMenu = menu
         
     def setWindowType(self, wtype=None):
         if wtype not in [None, "SCAN", "MCA"]:
@@ -338,10 +354,55 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.addToolBar(self.toolBar)
 
     def _printGraph(self):
-        # new style signals seem to send an argument when the slot accepts
-        # arguments. That is the reason of passing by this intermediate
-        # method instead of directly calling printGraph
-        self.printGraph()
+        if self._printMenu is None:
+            printMenu = qt.QMenu()
+            #printMenu.addAction(QString("Select printer"),
+            #                        self._printerSelect)
+            printMenu.addAction(QString("Customize printing"),
+                            self._getPrintConfigurationFromDialog)
+            printMenu.addAction(QString("Print"),
+                                       self.printGraph)
+            printMenu.exec_(self.cursor().pos())
+        else:
+            self._printMenu.exec_(self.cursor().pos())
+
+    def printGraph(self, *var, **kw):
+        config = self.getPrintConfiguration()
+        if 0:
+            # this is not working yet
+            PlotWidget.PlotWidget.printGraph(self,
+                                         width=config['width'],
+                                         height=config['height'],
+                                         xOffset=config['xOffset'],
+                                         yOffset=config['yOffset'],
+                                         printer=self._printer)
+        else:
+            PlotWidget.PlotWidget.printGraph(self)
+
+    def setPrintConfiguration(self, configuration, printer=None):
+        for key in self._printConfiguration:
+            if key in configuration:
+                self._printConfiguration[key] = configuration[key]
+        if printer is not None:
+            # printer should be a global thing
+            self._printer = printer
+
+    def getPrintConfiguration(self, dialog=False):
+        if dialog:
+            self._getPrintConfigurationFromDialog()
+        return copy.deepcopy(self._printConfiguration)
+
+
+    def _getPrintConfigurationFromDialog(self):
+        if self._printConfigurationDialog is None:
+            self._printConfigurationDialog = \
+                                ObjectPrintConfigurationDialog(self)
+        oldConfig = self.getPrintConfiguration()
+        self._printConfigurationDialog.setPrintConfiguration(oldConfig,
+                                                    printer=self._printer)
+        if self._printConfigurationDialog.exec_():
+            self.setPrintConfiguration(\
+                self._printConfigurationDialog.getPrintConfiguration())
 
     def _addToolButton(self, icon, action, tip, toggle=None):
         tb      = qt.QToolButton(self.toolBar)            
