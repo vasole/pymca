@@ -488,6 +488,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 self.setGraphXLabel(xlabel)
             if ylabel is not None:
                 self.setGraphYLabel(ylabel)
+            self.setGraphTitle(legend)
             self.setActiveCurve(legend)
             #self.setGraphTitle(legend)
             if self.scanWindowInfoWidget is not None:
@@ -1020,8 +1021,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             alias = "%c" % (96+dataCounter)
             mtplt.addDataToPlot( xdata, ydata, legend=legend, alias=alias )
 
-        self.matplotlibDialog.setXLabel(self.getGraphX1Label())
-        self.matplotlibDialog.setYLabel(self.getGraphY1Label())
+        self.matplotlibDialog.setXLabel(self.getGraphXLabel())
+        self.matplotlibDialog.setYLabel(self.getGraphYLabel())
 
         if legends:
             mtplt.plotLegends()
@@ -1229,9 +1230,21 @@ class ScanWindow(PlotWindow.PlotWindow):
             self._addSelection(sel_list, replot=replot)
 
     def printGraph(self):
-        #temporary print
-        pixmap = qt.QPixmap.grabWidget(self.centralWidget())
+        self._printer = self.printPreview.printer
+        if PlotWindow.PlotWidget.SVG:
+            # windows QGraphicsView svg printing seems broken
+            if sys.platform.startswith("win"):
+                PlotWindow.PlotWindow.printGraph(self)
+                return
+            else:
+                svg = True
+                svgRenderer = self.getSvgRenderer()
+        else:
+            svg = False
+            pixmap = qt.QPixmap.grabWidget(self.centralWidget())
 
+        title = None
+        comment = None
         if self.scanWindowInfoWidget is not None:
             if not self.infoDockWidget.isHidden():
                 info = self.scanWindowInfoWidget.getInfo()
@@ -1250,30 +1263,149 @@ class ScanWindow(PlotWindow.PlotWindow):
                 minimum = info['graph']['min']
                 maximum = info['graph']['max']
                 delta   = info['graph']['delta']
-                xLabel = self.graph.x1Label()
+                xLabel = self.getGraphXLabel()
                 comment += "Peak %s at %s = %s\n" % (peak, xLabel, peakAt)
                 comment += "FWHM %s at %s = %s\n" % (fwhm, xLabel, fwhmAt)
                 comment += "COM = %s  Mean = %s  STD = %s\n" % (com, mean, std)
                 comment += "Min = %s  Max = %s  Delta = %s\n" % (minimum,
                                                                 maximum,
-                                                                delta)           
-        else:
-            title = None
-            comment = None
+                                                                delta)
+
         if hasattr(self, "scanFit"):
             if not self.scanFit.isHidden():
                 if comment is None:
                     comment = ""
                 comment += "\n"
                 comment += self.scanFit.getText()
-            
-        self.printPreview.addPixmap(pixmap,
-                                    title=title,
+
+        if svg:
+            self.printPreview.addSvgItem(svgRenderer,
+                                    title=None,
                                     comment=comment,
-                                    commentposition="LEFT")
+                                    commentPosition="LEFT")
+        else:
+            self.printPreview.addPixmap(pixmap,
+                                    title=None,
+                                    comment=comment,
+                                    commentPosition="LEFT")
         if self.printPreview.isHidden():
             self.printPreview.show()        
         self.printPreview.raise_()            
+
+    def getSvgRenderer(self, printer=None):
+        if printer is None:
+            printer = self._printer
+        if printer is None:
+            print("Select printer")
+            return
+
+        # we have what is to be printed
+        if sys.version < '3.0':
+            import cStringIO as StringIO
+            imgData = StringIO.StringIO()
+        else:
+            from io import BytesIO          
+            imgData = BytesIO()
+        self.saveGraph(imgData, fileFormat='svg')
+        imgData.flush()
+        imgData.seek(0)
+        svgData = imgData.read()
+        imgData = None
+        svgRenderer = qt.QSvgRenderer()
+
+        #svgRenderer = PlotWindow.PlotWindow.getSvgRenderer(self)
+
+        # we have to specify the bounding box
+        config = self.getPrintConfiguration()
+        width = config['width']
+        height = config['height']
+        xOffset = config['xOffset']
+        yOffset = config['yOffset']
+        units = config['units']
+        keepAspectRatio = config['keepAspectRatio']
+
+
+        dpix    = printer.logicalDpiX()
+        dpiy    = printer.logicalDpiY()
+
+        # get the available space
+        # availableWidth = printer.width()
+        # availableHeight = printer.height()
+        availableWidth = self.printPreview.page.rect().width()
+        availableHeight = self.printPreview.page.rect().height()
+
+
+        # convert the offsets to dpi
+        if units.lower() in ['inch', 'inches']:
+            xOffset = xOffset * dpix
+            yOffset = yOffset * dpiy
+            if width is not None:
+                width = width * dpix
+            if height is not None:
+                height = height * dpiy
+        elif units.lower() in ['cm', 'centimeters']:
+            xOffset = (xOffset/2.54) * dpix
+            yOffset = (yOffset/2.54) * dpiy
+            if width is not None:
+                width = (width/2.54) * dpix
+            if height is not None:
+                height = (height/2.54) * dpiy
+        else:
+            # page units
+            xOffset = availableWidth * xOffset
+            yOffset = availableHeight * yOffset
+            if width is not None:
+                width = availableWidth * width
+            if height is not None:
+                height = availableHeight * height
+                            
+        availableWidth -= xOffset
+        availableHeight -= yOffset
+
+        if width is not None:
+            if availableWidth < width:
+                raise ValueError("Available width is less than requested width")
+            availableWidth = width
+        if height is not None:
+            if availableHeight < height:
+                raise ValueError("Available height is less than requested width")
+            availableHeight = height
+
+        if keepAspectRatio:
+            #get the aspect ratio
+            widget = self.getWidgetHandle()
+            if widget is None:
+                # does this make sense?
+                graphWidth = availableWidth
+                graphHeight = availableHeight
+            else:
+                graphWidth = float(widget.width())
+                graphHeight = float(widget.height())
+
+            graphRatio = graphHeight / graphWidth
+            # that ratio has to be respected
+            
+            bodyWidth = availableWidth
+            bodyHeight = availableWidth * graphRatio
+
+            if bodyHeight > availableHeight:
+                bodyHeight = availableHeight
+                bodyWidth = bodyHeight / graphRatio
+        else:
+            bodyWidth = availableWidth
+            bodyHeight = availableHeight                    
+
+        body = qt.QRectF(xOffset,
+                         yOffset,
+                         bodyWidth,
+                         bodyHeight)
+        # this does not work if I set the svgData before
+        svgRenderer.setViewBox(body)
+        svgRenderer._viewBox = body
+        #svgRenderer._svgData = qt.QXmlStreamReader(svgData)
+        if not svgRenderer.load(qt.QXmlStreamReader(svgData)):
+            raise RuntimeError("Cannot interpret svg data")
+        return svgRenderer
         
 def test():
     w = ScanWindow()
