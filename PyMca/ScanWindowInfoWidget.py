@@ -146,16 +146,20 @@ class HKL(qt.QWidget):
         hlabel.setText('H:')
         self.h = qt.QLineEdit(self)
         self.h.setReadOnly(True)
+        width = self.h.fontMetrics().width('##.####')
+        self.h.setFixedWidth(width)
 
         klabel = qt.QLabel(self)
         klabel.setText('K:')
         self.k = qt.QLineEdit(self)
         self.k.setReadOnly(True)
+        self.k.setFixedWidth(width)
 
         llabel = qt.QLabel(self)
         llabel.setText('L:')
         self.l = qt.QLineEdit(self)
         self.l.setReadOnly(True)
+        self.l.setFixedWidth(width)
         
         self.setHKL(h, k, l)
 
@@ -167,19 +171,19 @@ class HKL(qt.QWidget):
         layout.addWidget(self.l)
         
     def setHKL(self, h="", k="", l=""):
-        format = "%.4f"
+        dformat = "%.4f"
         if type(h) == type (""):
             self.h.setText(h)
         else:
-            self.h.setText(format % h)
+            self.h.setText(dformat % h)
         if type(k) == type (""):
             self.k.setText(k)
         else:
-            self.k.setText(format % k)
+            self.k.setText(dformat % k)
         if type(l) == type (""):
             self.l.setText(l)
         else:
-            self.l.setText(format % l)
+            self.l.setText(dformat % l)
 
 class GraphInfoWidget(qt.QWidget):
     def __init__(self, parent):
@@ -366,22 +370,28 @@ class ScanInfoWidget(qt.QWidget):
         layout.setSpacing(2)
 
         #scan info
-        sourceLabel = qt.QLabel(self)
+        hBox = qt.QWidget(self)
+        hBoxLayout = qt.QHBoxLayout(hBox)
+        hBoxLayout.setContentsMargins(0, 0, 0, 0)
+        hBoxLayout.setSpacing(0)
+        sourceLabel = qt.QLabel(hBox)
         sourceLabel.setText('Source:')
-        self.sourceLabel = qt.QLineEdit(self)
-        self.sourceLabel.setReadOnly(True)        
+        self.sourceLabel = qt.QLineEdit(hBox)
+        self.sourceLabel.setReadOnly(True)
+        hBoxLayout.addWidget(sourceLabel)
+        hBoxLayout.addWidget(self.sourceLabel)
         
         scanLabel = qt.QLabel(self)
-        scanLabel.setText('Scan:')
+        scanLabel.setText('Scan:   ')
         self.scanLabel = qt.QLineEdit(self)
         self.scanLabel.setReadOnly(True)        
 
         self.hkl = HKL(self)
-        layout.addWidget(sourceLabel, 0, 0)
-        layout.addWidget(self.sourceLabel, 0, 1, 1, 5)
+        layout.addWidget(hBox, 0, 0, 1, 7)
+        #layout.addWidget(self.sourceLabel, 0, 1)#, 1, 9)
         layout.addWidget(scanLabel,        1, 0)
         layout.addWidget(self.scanLabel,   1, 1)
-        layout.addWidget(self.hkl,         1, 2)
+        layout.addWidget(self.hkl,         1, 4, 1, 3)
 
     def updateFromDataObject(self, dataObject):
         info = dataObject.info
