@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -27,12 +27,9 @@
 import sys
 from PyMca import PyMcaQt as qt
 
-QTVERSION = qt.qVersion()
 DEBUG = 0
-if QTVERSION < '4.0.0':
-    from PyMca.Q3PyMcaPrintPreview import PrintPreview
-else:
-    from PyMca.Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
+
+from PyMca.Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
     
 #SINGLETON
 if 0:
@@ -77,10 +74,7 @@ def testPreview():
     w = PyMcaPrintPreview( parent = None, printer = p, name = 'Print Prev',
                       modal = 0, fl = 0)
     w.resize(400,500)
-    if QTVERSION < '4.0.0':
-        w.addPixmap(qt.QPixmap(qt.QImage(filename)))
-    else:
-        w.addPixmap(qt.QPixmap.fromImage(qt.QImage(filename)))
+    w.addPixmap(qt.QPixmap.fromImage(qt.QImage(filename)))
     w.addImage(qt.QImage(filename))
     if 0:
         w2 = PyMcaPrintPreview( parent = None, printer = p, name = '2Print Prev',
@@ -89,10 +83,7 @@ def testPreview():
         w2.resize(100,100)
         w2.show()
         sys.exit(w2.exec_())
-    if QTVERSION < '4.0.0':
-        sys.exit(w.exec_loop())
-    else:
-        sys.exit(w.exec_())
+    sys.exit(w.exec_())
     
 if  __name__ == '__main__':
     testPreview()

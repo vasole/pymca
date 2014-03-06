@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -49,6 +49,7 @@ class PyMcaPrintPreview(qt.QDialog):
         self.setModal(modal)
         self.resize(400, 500)
         self.printDialog = None
+        self._svgItems = []
         if printer is None:
             printer = qt.QPrinter(qt.QPrinter.HighResolution)
             printer.setPageSize(qt.QPrinter.A4)
@@ -98,7 +99,6 @@ class PyMcaPrintPreview(qt.QDialog):
         else:
             self.badNews = False
             self.printer = printer
-        
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
@@ -108,7 +108,6 @@ class PyMcaPrintPreview(qt.QDialog):
         self.scene = qt.QGraphicsScene()
         self.scene.setBackgroundBrush(qt.QColor(qt.Qt.lightGray))
 
-        
         self.page = qt.QGraphicsRectItem(0,0, printer.width(), printer.height())
         self.page.setBrush(qt.QColor(qt.Qt.white))
         self.scene.setSceneRect(qt.QRectF(0,0, printer.width(), printer.height()))
@@ -154,12 +153,8 @@ class PyMcaPrintPreview(qt.QDialog):
         scaleCombo = qt.QComboBox(toolBar)
         self.scaleValues = [20, 40, 60, 80, 100, 150, 200]
 
-        if QTVERSION < '4.0.0':
-            for scale in self.scaleValues:
-                scaleCombo.insertItem("%3d %%"%scale)
-        else:
-            for scale in self.scaleValues:
-                scaleCombo.addItem("%3d %%"%scale)
+        for scale in self.scaleValues:
+            scaleCombo.addItem("%3d %%"%scale)
             
         self.scaleCombo = scaleCombo
         self.connect(self.scaleCombo, qt.SIGNAL("activated(int)"),        \
@@ -167,31 +162,31 @@ class PyMcaPrintPreview(qt.QDialog):
         
         hideBut   = qt.QPushButton("Hide", toolBar)
         #hideBut.setFixedWidth(buttonSize-10)
-        self.connect(hideBut, qt.SIGNAL("clicked()"), self.hide)
+        hideBut.clicked.connect(self.hide)
 
         cancelBut = qt.QPushButton("Clear All", toolBar)
         #cancelBut.setFixedWidth(buttonSize+10)
-        self.connect(cancelBut, qt.SIGNAL("clicked()"), self.__clearAll)
+        cancelBut.clicked.connect(self.__clearAll)
 
         removeBut = qt.QPushButton("Remove", toolBar)
         #removeBut.setFixedWidth(buttonSize)
-        self.connect(removeBut, qt.SIGNAL("clicked()"), self.__remove)
+        removeBut.clicked.connect(self.__remove)
 
         setupBut  = qt.QPushButton("Setup", toolBar)
         #setupBut.setFixedWidth(buttonSize-5)
-        self.connect(setupBut, qt.SIGNAL("clicked()"), self.__setup)
+        setupBut.clicked.connect(self.__setup)
 
         printBut  = qt.QPushButton("Print", toolBar)
         #printBut.setFixedWidth(buttonSize-5)
-        self.connect(printBut, qt.SIGNAL("clicked()"), self.__print)
+        printBut.clicked.connect(self.__print)
         
         zoomPlusBut  = qt.QPushButton("Zoom +", toolBar)
         #zoomPlusBut.setFixedWidth(buttonSize-5)
-        self.connect(zoomPlusBut, qt.SIGNAL("clicked()"), self.__zoomPlus)
+        zoomPlusBut.clicked.connect(self.__zoomPlus)
         
         zoomMinusBut  = qt.QPushButton("Zoom -", toolBar)
         #zoomMinusBut.setFixedWidth(buttonSize-5)
-        self.connect(zoomMinusBut, qt.SIGNAL("clicked()"), self.__zoomMinus)
+        zoomMinusBut.clicked.connect(self.__zoomMinus)
         
         # now we put widgets in the toolLayout
         toolsLayout.addWidget(hideBut)
@@ -240,16 +235,19 @@ class PyMcaPrintPreview(qt.QDialog):
 
     def __print(self):
         printer = self.printer
-        painter = qt.QPainter(printer)
+        painter = qt.QPainter()
         try:
+            if not(painter.begin(printer)):
+                print("CANOT INITIALIZE PRINTER")
+                return 0
             self.scene.render(painter, qt.QRectF(0, 0, printer.width(), printer.height()),
                               qt.QRectF(self.page.rect().x(), self.page.rect().y(),
                               self.page.rect().width(),self.page.rect().height()),
                               qt.Qt.KeepAspectRatio)
             painter.end()
-            self.__clearAll()
             self.hide()
             self.accept()
+            self.__clearAll()
         except:
             painter.end()
             qt.QMessageBox.critical(self, "ERROR",
@@ -276,15 +274,15 @@ class PyMcaPrintPreview(qt.QDialog):
         self._viewScale *= 0.80 
         self.view.scale(0.80, 0.80)
 
-    def addImage(self, image, title = None, comment = None, commentposition=None):
+    def addImage(self, image, title = None, comment = None, commentPosition=None):
         """
         add an image item to the print preview scene
         """
         self.addPixmap(qt.QPixmap.fromImage(image),
                        title = title, comment = comment,
-                       commentposition=commentposition)
+                       commentPosition=commentPosition)
 
-    def addPixmap(self, pixmap, title = None, comment = None, commentposition=None):
+    def addPixmap(self, pixmap, title = None, comment = None, commentPosition=None):
         """
         add a pixmap to the print preview scene
         """
@@ -294,8 +292,8 @@ class PyMcaPrintPreview(qt.QDialog):
         if comment is None:
             comment  = '                                            '
             comment += '                                            '
-        if commentposition is None:
-            commentposition = "CENTER"
+        if commentPosition is None:
+            commentPosition = "CENTER"
         if self.badNews:
             self.message.exec_()
             return
@@ -335,7 +333,7 @@ class PyMcaPrintPreview(qt.QDialog):
         commentItem = qt.QGraphicsTextItem(comment, rectItem, self.scene)
         commentItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
         offset = 0.5 * commentItem.boundingRect().width()
-        if commentposition.upper() == "LEFT":
+        if commentPosition.upper() == "LEFT":
             x = 1
         else:
             x = 0.5 * pixmap.width() - offset
@@ -348,6 +346,71 @@ class PyMcaPrintPreview(qt.QDialog):
         rectItem.scale(scale, scale)
         rectItem.moveBy(20 , 40)
 
+    def addSvgItem(self, item, title = None, comment = None, commentPosition=None):
+        if not isinstance(item, qt.QSvgRenderer):
+            raise TypeError("addSvgItem: QSvgRenderer expected")
+        if title is None:
+            title  = 50 * ' '
+        if comment is None:
+            comment  = 80 * ' '
+        if commentPosition is None:
+            commentPosition = "CENTER"
+
+        if 0 and hasattr(item, "_viewBox"):
+            svgItem = GraphicsSvgItem(self.page)
+            svgItem.setSharedRenderer(item)
+            svgItem.setBoundingRect(item._viewBox)
+        elif 0:
+            svgItem = GraphicsSvgRectItem(item._viewBox, self.page)
+            svgItem.setSvgRenderer(item)
+            #svgScaleX = item._viewBox.width()/svgItem.boundingRect().width()
+            #svgScaleY = item._viewBox.height()/svgItem.boundingRect().height()
+            #item._scale = (svgScaleX, svgScaleY) 
+            #print 
+            #svgItem.scale(svgScaleX, svgScaleY)
+        else:
+            svgItem = qt.QGraphicsSvgItem(self.page)
+            svgItem.setSharedRenderer(item)
+            if hasattr(item, "_viewBox"):
+                svgScaleX = item._viewBox.width()/svgItem.boundingRect().width()
+                svgScaleY = item._viewBox.height()/svgItem.boundingRect().height()
+                svgItem.scale(svgScaleX, svgScaleY)
+        #print svgItem.renderer().viewBox().width()
+        #print svgItem.boundingRect().width()
+        #print item._viewBox.width()
+        svgItem.setCacheMode(qt.QGraphicsItem.NoCache)
+        svgItem.setZValue(0)
+        svgItem.setFlag(qt.QGraphicsItem.ItemIsSelectable, True)
+        svgItem.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
+        svgItem.setFlag(qt.QGraphicsItem.ItemIsFocusable, False)
+
+        #make sure the life time of the item is enough to print it!
+        self._svgItems.append(item)
+
+        #I add the title
+        textItem = qt.QGraphicsTextItem(title, svgItem, self.scene)
+        textItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
+        offset = 0.5 * textItem.boundingRect().width()
+        textItem.setZValue(1)
+        textItem.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
+
+        #I add the comment
+        dummyComment = 80 * "1"
+        commentItem = qt.QGraphicsTextItem(dummyComment, svgItem, self.scene)
+        commentItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
+        scaleCalculationRect = qt.QRectF(commentItem.boundingRect())
+        commentItem.setPlainText(comment)
+        commentItem.moveBy(svgItem.boundingRect().x(),
+                           svgItem.boundingRect().y() + svgItem.boundingRect().height())
+
+        commentItem.setZValue(1)
+        scale = svgItem.boundingRect().width() / scaleCalculationRect.width()
+        commentItem.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
+        commentItem.scale(scale, scale)
+        textItem.moveBy(svgItem.boundingRect().x()+\
+                        0.5 * svgItem.boundingRect().width() - offset * scale,
+                        svgItem.boundingRect().y()) 
+        textItem.scale(scale, scale)
 
     def __setup(self):
         """
@@ -389,6 +452,7 @@ class PyMcaPrintPreview(qt.QDialog):
             else:
                 self.scene.removeItem(itemlist[0])
             itemlist = self.scene.items()
+        self._svgItems = []
         
     def __remove(self):
         """
@@ -407,6 +471,32 @@ class PyMcaPrintPreview(qt.QDialog):
             #this line is not really needed because the list
             #should be deleted at the end of the method
             del itemlist[i]             
+
+
+if hasattr(qt, 'QGraphicsSvgItem'):
+    class GraphicsSvgItem(qt.QGraphicsSvgItem):
+        def setBoundingRect(self, rect):
+            self._rect = rect
+
+        def boundingRect(self):
+            return self._rect
+
+        def paint(self, painter, *var, **kw):
+            if not self.renderer().isValid():
+                print("Invalid renderer")
+                return
+            if self.elementId().isEmpty():
+                self.renderer().render(painter, self._rect)
+            else:
+                self.renderer().render(painter,  self.elementId(), self._rect)
+
+    class GraphicsSvgRectItem(qt.QGraphicsRectItem):
+        def setSvgRenderer(self, renderer):
+            self._renderer = renderer
+
+        def paint(self, painter, *var, **kw):
+            self._renderer.render(painter, self._renderer._viewBox)
+            #self._renderer.render(painter, self.boundingRect())
 
 class GraphicsResizeRectItem(qt.QGraphicsRectItem):
     def __init__(self, parent = None, scene = None, keepratio = True):
@@ -433,7 +523,6 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
     def mouseDoubleClickEvent(self, event):
         if DEBUG:
             print("ResizeRect mouseDoubleClick")
-
 
     def mousePressEvent(self, event):
         if DEBUG:
@@ -537,10 +626,19 @@ def testPreview():
 
     a = qt.QApplication(sys.argv)
     if filename[-3:] == "svg":
-        item = qt.QSvgWidget()
-        item.load(filename)
-        item.show()
-        sys.exit(a.exec_())
+        if 0:
+            item = qt.QSvgWidget()
+            item.load(filename)
+            item.show()
+        else:
+            w = PyMcaPrintPreview( parent = None, printer = None, name = 'Print Prev',
+                      modal = 0, fl = 0)
+            w.resize(400,500)
+            item = qt.QGraphicsSvgItem(filename, w.page)
+            item.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
+            item.setCacheMode(qt.QGraphicsItem.NoCache)
+        sys.exit(w.exec_())
+            
  
     p = qt.QPrinter()
     p.setOutputFileName(os.path.splitext(filename)[0]+".ps")
@@ -555,8 +653,8 @@ def testPreview():
     w.addPixmap(qt.QPixmap.fromImage(qt.QImage(filename)),
                 title=filename,
                 comment=comment,
-                commentposition="CENTER")
-    w.addImage(qt.QImage(filename), comment=comment, commentposition="LEFT")
+                commentPosition="CENTER")
+    w.addImage(qt.QImage(filename), comment=comment, commentPosition="LEFT")
     #w.addImage(qt.QImage(filename))
     w.exec_()
 
