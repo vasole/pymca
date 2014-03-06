@@ -1667,7 +1667,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 fig.savefig(fileName, format=fileFormat)
             fig = None
         else:
-            print("we have to write inside")
+            print("MatplotlibBackend, check missing")
             fig = self.ax.figure
             if dpi is not None:
                 fig.savefig(fileName, format=fileFormat, dpi=dpi)

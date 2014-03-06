@@ -368,14 +368,16 @@ class PlotWindow(PlotWidget.PlotWidget):
 
     def printGraph(self, *var, **kw):
         config = self.getPrintConfiguration()
-        if 0:
+        if 1:
             # this is not working yet
             PlotWidget.PlotWidget.printGraph(self,
-                                         width=config['width'],
-                                         height=config['height'],
-                                         xOffset=config['xOffset'],
-                                         yOffset=config['yOffset'],
-                                         printer=self._printer)
+                                width=config['width'],
+                                height=config['height'],
+                                xOffset=config['xOffset'],
+                                yOffset=config['yOffset'],
+                                units=config['units'],
+                                keepAspectRatio=config['keepAspectRatio'],
+                                printer=self._printer)
         else:
             PlotWidget.PlotWidget.printGraph(self)
 

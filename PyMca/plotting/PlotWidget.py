@@ -111,9 +111,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             fileFormat = "svg"
         return super(PlotWidget, self).saveGraph(fileName, fileFormat, dpi=dpi, **kw)
 
-    def printGraph(self, width=None, height=None, xOffset=0.0, yOffset=0.0,
-                   units="inches", dpi=None, printer=None,
-                   dialog=True, keepAspectRatio=True, **kw):
+    def getSvgRenderer(self, printer=None):
         if not SVG:
             raise RuntimeError("QtSvg module missing. Please compile Qt with SVG support")
             return
@@ -127,6 +125,12 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         imgData.flush()
         imgData.seek(0)
         svgRenderer = QtSvg.QSvgRenderer(QtCore.QXmlStreamReader(imgData.read()))
+        return svgRenderer
+        
+    def printGraph(self, width=None, height=None, xOffset=0.0, yOffset=0.0,
+                   units="inches", dpi=None, printer=None,
+                   dialog=True, keepAspectRatio=True, **kw):
+        svgRenderer = self.getSvgRenderer()
         if printer is None:
             if self._printer is None:
                 printer = QtGui.QPrinter()
@@ -151,7 +155,6 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                 availableWidth = printer.width() #- 1 * margin
                 availableHeight = printer.height() #- 2 * margin
 
-
                 # get the available space
                 # convert the offsets to dpi
                 if units.lower() in ['inch', 'inches']:
@@ -171,7 +174,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                 else:
                     # page units
                     xOffset = availableWidth * xOffset
-                    yOffset = availableheight * yOffset
+                    yOffset = availableHeight * yOffset
                     if width is not None:
                         width = availableWidth * width
                     if height is not None:
