@@ -185,11 +185,15 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
 
                 if width is not None:
                     if availableWidth < width:
-                        raise ValueError("Available width is less than requested width")
+                        txt = "Available width  %f is less than requested width %f" % \
+                                      (availableWidth, width)
+                        raise ValueError(txt)
                     availableWidth = width
                 if height is not None:
                     if availableHeight < height:
-                        raise ValueError("Available height is less than requested width")
+                        txt = "Available height  %f is less than requested height %f" % \
+                                      (availableHeight, height)
+                        raise ValueError(txt)
                     availableHeight = height
 
                 if keepAspectRatio:
