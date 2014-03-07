@@ -49,7 +49,10 @@ class PyMcaPrintPreview(qt.QDialog):
         self.setModal(modal)
         self.resize(400, 500)
         self.printDialog = None
+        self._toBeCleared = False
         self._svgItems = []
+        self.printer = printer
+        """
         if printer is None:
             printer = qt.QPrinter(qt.QPrinter.HighResolution)
             printer.setPageSize(qt.QPrinter.A4)
@@ -87,39 +90,21 @@ class PyMcaPrintPreview(qt.QDialog):
                 printer.setOutputFileName(finalfile)
                 printer.setColorMode(qt.QPrinter.Color)
 
-        if (printer.width() <= 0) or (printer.height() <= 0):
-            self.message = qt.QMessageBox(self)
-            self.message.setIcon(qt.QMessageBox.Critical)
-            self.message.setText("Unknown library error \non printer initialization")
-            self.message.setWindowTitle("Library Error")
-            self.message.setModal(0)
-            self.badNews = True
-            self.printer = None
-            return
-        else:
-            self.badNews = False
-            self.printer = printer
+        """
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
 
         self._buildToolbar()
 
-        self.scene = qt.QGraphicsScene()
-        self.scene.setBackgroundBrush(qt.QColor(qt.Qt.lightGray))
+        self.scene = None
+        self.page = None
+        self.view = None
 
-        self.page = qt.QGraphicsRectItem(0,0, printer.width(), printer.height())
-        self.page.setBrush(qt.QColor(qt.Qt.white))
-        self.scene.setSceneRect(qt.QRectF(0,0, printer.width(), printer.height()))
-        self.scene.addItem(self.page)
-        
-        self.view = qt.QGraphicsView(self.scene)
-
-        self.mainLayout.addWidget(self.view)
-        self._buildStatusBar()
-
-        self.view.fitInView(self.page.rect(), qt.Qt.KeepAspectRatio)
-        self._viewScale = 1.00
+    def exec_(self):
+        if self._toBeCleared:
+            self.__clearAll()
+        return qt.QDialog.exec_(self)
 
     def setOutputFileName(self, name):
         if self.printer is not None:
@@ -174,7 +159,7 @@ class PyMcaPrintPreview(qt.QDialog):
 
         setupBut  = qt.QPushButton("Setup", toolBar)
         #setupBut.setFixedWidth(buttonSize-5)
-        setupBut.clicked.connect(self.__setup)
+        setupBut.clicked.connect(self.setup)
 
         printBut  = qt.QPushButton("Print", toolBar)
         #printBut.setFixedWidth(buttonSize-5)
@@ -247,7 +232,7 @@ class PyMcaPrintPreview(qt.QDialog):
             painter.end()
             self.hide()
             self.accept()
-            self.__clearAll()
+            self._toBeCleared = True
         except:
             painter.end()
             qt.QMessageBox.critical(self, "ERROR",
@@ -286,6 +271,8 @@ class PyMcaPrintPreview(qt.QDialog):
         """
         add a pixmap to the print preview scene
         """
+        if self.printer is None:
+            self.setup()
         if title is None:
             title  = '                                            '
             title += '                                            '
@@ -347,6 +334,8 @@ class PyMcaPrintPreview(qt.QDialog):
         rectItem.moveBy(20 , 40)
 
     def addSvgItem(self, item, title = None, comment = None, commentPosition=None):
+        if self.printer is None:
+            self.setup()
         if not isinstance(item, qt.QSvgRenderer):
             raise TypeError("addSvgItem: QSvgRenderer expected")
         if title is None:
@@ -360,14 +349,9 @@ class PyMcaPrintPreview(qt.QDialog):
             svgItem = GraphicsSvgItem(self.page)
             svgItem.setSharedRenderer(item)
             svgItem.setBoundingRect(item._viewBox)
-        elif 0:
+        elif 1:
             svgItem = GraphicsSvgRectItem(item._viewBox, self.page)
             svgItem.setSvgRenderer(item)
-            #svgScaleX = item._viewBox.width()/svgItem.boundingRect().width()
-            #svgScaleY = item._viewBox.height()/svgItem.boundingRect().height()
-            #item._scale = (svgScaleX, svgScaleY) 
-            #print 
-            #svgItem.scale(svgScaleX, svgScaleY)
         else:
             svgItem = qt.QGraphicsSvgItem(self.page)
             svgItem.setSharedRenderer(item)
@@ -375,14 +359,17 @@ class PyMcaPrintPreview(qt.QDialog):
                 svgScaleX = item._viewBox.width()/svgItem.boundingRect().width()
                 svgScaleY = item._viewBox.height()/svgItem.boundingRect().height()
                 svgItem.scale(svgScaleX, svgScaleY)
-        #print svgItem.renderer().viewBox().width()
-        #print svgItem.boundingRect().width()
-        #print item._viewBox.width()
+
         svgItem.setCacheMode(qt.QGraphicsItem.NoCache)
         svgItem.setZValue(0)
         svgItem.setFlag(qt.QGraphicsItem.ItemIsSelectable, True)
         svgItem.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
         svgItem.setFlag(qt.QGraphicsItem.ItemIsFocusable, False)
+
+        #I add the resize tool
+        rectItemResizeRect = GraphicsResizeRectItem(svgItem, self.scene)
+        rectItemResizeRect.setZValue(2)
+
 
         #make sure the life time of the item is enough to print it!
         self._svgItems.append(item)
@@ -412,7 +399,7 @@ class PyMcaPrintPreview(qt.QDialog):
                         svgItem.boundingRect().y()) 
         textItem.scale(scale, scale)
 
-    def __setup(self):
+    def setup(self):
         """
         """
         if self.printer is None:
@@ -420,15 +407,43 @@ class PyMcaPrintPreview(qt.QDialog):
         if self.printDialog is None:
             self.printDialog = qt.QPrintDialog(self.printer, self)
         if self.printDialog.exec_():
-             self.printer.setFullPage(True)
-             self.updatePrinter()
+            if (self.printer.width() <= 0) or (self.printer.height() <= 0):
+                self.message = qt.QMessageBox(self)
+                self.message.setIcon(qt.QMessageBox.Critical)
+                self.message.setText("Unknown library error \non printer initialization")
+                self.message.setWindowTitle("Library Error")
+                self.message.setModal(0)
+                self.badNews = True
+                self.printer = None
+                return
+            self.badNews = False
+            self.printer.setFullPage(True)
+            self.updatePrinter()
 
     def updatePrinter(self):
         if DEBUG:
             print("UPDATE PRINTER")
+        printer = self.printer
+        if self.scene is None:
+            self.scene = qt.QGraphicsScene()
+            self.scene.setBackgroundBrush(qt.QColor(qt.Qt.lightGray))
+            self.scene.setSceneRect(qt.QRectF(0,0, printer.width(), printer.height()))
+
+        if self.page is None:
+            self.page = qt.QGraphicsRectItem(0,0, printer.width(), printer.height())
+            self.page.setBrush(qt.QColor(qt.Qt.white))
+            self.scene.addItem(self.page)
+
         self.scene.setSceneRect(qt.QRectF(0,0, self.printer.width(), self.printer.height()))
         self.page.setPos(qt.QPointF(0.0, 0.0))
         self.page.setRect(qt.QRectF(0,0, self.printer.width(), self.printer.height()))
+
+        if self.view is None:
+            self.view = qt.QGraphicsView(self.scene)
+            self.mainLayout.addWidget(self.view)
+            self._buildStatusBar()
+        self.view.fitInView(self.page.rect(), qt.Qt.KeepAspectRatio)
+        self._viewScale = 1.00 
         #self.view.scale(1./self._viewScale, 1./self._viewScale) 
         #self.view.fitInView(self.page.rect(), qt.Qt.KeepAspectRatio)
         #self._viewScale = 1.00
@@ -453,6 +468,7 @@ class PyMcaPrintPreview(qt.QDialog):
                 self.scene.removeItem(itemlist[0])
             itemlist = self.scene.items()
         self._svgItems = []
+        self._toBeCleared = False
         
     def __remove(self):
         """
@@ -495,8 +511,8 @@ if hasattr(qt, 'QGraphicsSvgItem'):
             self._renderer = renderer
 
         def paint(self, painter, *var, **kw):
-            self._renderer.render(painter, self._renderer._viewBox)
-            #self._renderer.render(painter, self.boundingRect())
+            #self._renderer.render(painter, self._renderer._viewBox)
+            self._renderer.render(painter, self.boundingRect())
 
 class GraphicsResizeRectItem(qt.QGraphicsRectItem):
     def __init__(self, parent = None, scene = None, keepratio = True):
