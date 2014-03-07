@@ -2542,7 +2542,7 @@ class McaGraphWindow(PlotWindow.PlotWindow):
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
 
     def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self)
+        pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
             self.printPreview.show()
