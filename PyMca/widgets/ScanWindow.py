@@ -337,15 +337,17 @@ class ScanWindow(PlotWindow.PlotWindow):
                         symbol=None
                         newDataObject.info['legend'] = legend + " " + ylegend
                         newDataObject.info['selectionlegend'] = legend
-                    maptoy2 = False
+                    yaxis = 'left'
                     if 'operations' in dataObject.info:
                         if dataObject.info['operations'][-1] == 'derivate':
-                            maptoy2 = True
+                            yaxis = 'right'
                         
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
                                     info=newDataObject.info,
-                                    symbol=symbol,maptoy2=maptoy2, replot=actualReplot)
+                                    symbol=symbol,
+                                    yaxis=yaxis,
+                                    replot=actualReplot)
         self.dataObjectsList = self._curveList
         if activeCurve is None:
             if len(self._curveList) > 0:
