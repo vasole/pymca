@@ -106,6 +106,16 @@ class PyMcaPrintPreview(qt.QDialog):
             self.__clearAll()
         return qt.QDialog.exec_(self)
 
+    def raise_(self):
+        if self._toBeCleared:
+            self.__clearAll()
+        return qt.QDialog.raise_(self)
+
+    def show(self):
+        if self._toBeCleared:
+            self.__clearAll()
+        return qt.QDialog.show(self)
+
     def setOutputFileName(self, name):
         if self.printer is not None:
             self.printer.setOutputFileName(name)
@@ -271,6 +281,8 @@ class PyMcaPrintPreview(qt.QDialog):
         """
         add a pixmap to the print preview scene
         """
+        if self._toBeCleared:
+            self.__clearAll()
         if self.printer is None:
             self.setup()
         if title is None:
@@ -282,10 +294,9 @@ class PyMcaPrintPreview(qt.QDialog):
         if commentPosition is None:
             commentPosition = "CENTER"
         if self.badNews:
-            self.message.exec_()
             return
         rectItem = qt.QGraphicsRectItem(self.page, self.scene)
-        scale = float(0.5 * self.scene.width()/pixmap.width())
+        scale = 1.0 # float(0.5 * self.scene.width()/pixmap.width())
         rectItem.setRect(qt.QRectF(1, 1,
                         pixmap.width(), pixmap.height()))
         
@@ -333,9 +344,20 @@ class PyMcaPrintPreview(qt.QDialog):
         rectItem.scale(scale, scale)
         rectItem.moveBy(20 , 40)
 
+    def isReady(self):
+        if self.badNews:
+            return False
+        else:
+            return True
+
     def addSvgItem(self, item, title = None, comment = None, commentPosition=None):
+        if self._toBeCleared:
+            self.__clearAll()
         if self.printer is None:
             self.setup()
+        if self.badNews:
+            # printer not properly initialized
+            return
         if not isinstance(item, qt.QSvgRenderer):
             raise TypeError("addSvgItem: QSvgRenderer expected")
         if title is None:
@@ -404,7 +426,7 @@ class PyMcaPrintPreview(qt.QDialog):
         """
         if self.printer is None:
             self.printer = qt.QPrinter()
-        if self.printDialog is None:
+        if (self.printDialog is None) or (not self.isReady()):
             self.printDialog = qt.QPrintDialog(self.printer, self)
         if self.printDialog.exec_():
             if (self.printer.width() <= 0) or (self.printer.height() <= 0):
@@ -419,6 +441,13 @@ class PyMcaPrintPreview(qt.QDialog):
             self.badNews = False
             self.printer.setFullPage(True)
             self.updatePrinter()
+        else:
+            if self.page is None:
+                # not initialized
+                self.badNews = True
+                self.printer = None
+            else:
+                self.badNews = False
 
     def updatePrinter(self):
         if DEBUG:
@@ -517,12 +546,16 @@ if hasattr(qt, 'QGraphicsSvgItem'):
 class GraphicsResizeRectItem(qt.QGraphicsRectItem):
     def __init__(self, parent = None, scene = None, keepratio = True):
         qt.QGraphicsRectItem.__init__(self, parent, scene)
-        rect = parent.sceneBoundingRect()
+        #rect = parent.sceneBoundingRect()
+        rect = parent.boundingRect()
+        x = rect.x()
+        y = rect.y()
         w = rect.width()
         h = rect.height()
         self._newRect = None
         self.keepRatio = keepratio
-        self.setRect(qt.QRectF(w-40, h-40, 40, 40))
+        self.setRect(qt.QRectF(x + w - 40, y + h - 40, 40, 40))
+        self.setAcceptHoverEvents(True)
         if DEBUG:
             self.setBrush(qt.QBrush(qt.Qt.white, qt.Qt.SolidPattern))
         else:
@@ -535,6 +568,27 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
             self.setBrush(color)            
         self.setFlag(self.ItemIsMovable, True)
         self.show()
+
+    def hoverEnterEvent(self, event):
+        if self.parentItem().isSelected():
+            self.parentItem().setSelected(False)
+        if self.keepRatio:
+            self.setCursor(qt.QCursor(qt.Qt.SizeFDiagCursor))
+        else:
+            self.setCursor(qt.QCursor(qt.Qt.SizeAllCursor))
+        self.setBrush(qt.QBrush(qt.Qt.yellow, qt.Qt.SolidPattern))
+        return qt.QGraphicsRectItem.hoverEnterEvent(self, event)
+        
+    def hoverLeaveEvent(self, event):
+        self.setCursor(qt.QCursor(qt.Qt.ArrowCursor))
+        pen = qt.QPen()
+        color = qt.QColor(qt.Qt.white)
+        color.setAlpha(0)
+        pen.setColor(color)
+        pen.setStyle(qt.Qt.NoPen)
+        self.setPen(pen)
+        self.setBrush(color)            
+        return qt.QGraphicsRectItem.hoverLeaveEvent(self, event)
 
     def mouseDoubleClickEvent(self, event):
         if DEBUG:
