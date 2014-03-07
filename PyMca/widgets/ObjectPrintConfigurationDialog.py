@@ -70,7 +70,7 @@ class ObjectPrintConfigurationWidget(qt.QWidget):
         label.setText("X Offset:")
         self.mainLayout.addWidget(label, 2, 0)
         self._xOffset = qt.QLineEdit(self)
-        validator = qt.QDoubleValidator()
+        validator = qt.QDoubleValidator(None)
         self._xOffset.setValidator(validator)
         self._xOffset.setText("0.0")
         self.mainLayout.addWidget(self._xOffset, 2, 1)
@@ -80,7 +80,7 @@ class ObjectPrintConfigurationWidget(qt.QWidget):
         label.setText("Y Offset:")
         self.mainLayout.addWidget(label, 2, 2)
         self._yOffset = qt.QLineEdit(self)
-        validator = qt.QDoubleValidator()
+        validator = qt.QDoubleValidator(None)
         self._yOffset.setValidator(validator)
         self._yOffset.setText("0.0")
         self.mainLayout.addWidget(self._yOffset, 2, 3)
@@ -90,7 +90,7 @@ class ObjectPrintConfigurationWidget(qt.QWidget):
         label.setText("Width:")
         self.mainLayout.addWidget(label, 3, 0)
         self._width = qt.QLineEdit(self)
-        validator = qt.QDoubleValidator()
+        validator = qt.QDoubleValidator(None)
         self._width.setValidator(validator)
         self._width.setText("0.5")
         self.mainLayout.addWidget(self._width, 3, 1)
@@ -100,7 +100,7 @@ class ObjectPrintConfigurationWidget(qt.QWidget):
         label.setText("Height:")
         self.mainLayout.addWidget(label, 3, 2)
         self._height = qt.QLineEdit(self)
-        validator = qt.QDoubleValidator()
+        validator = qt.QDoubleValidator(None)
         self._height.setValidator(validator)
         self._height.setText("0.5")
         self.mainLayout.addWidget(self._height, 3, 3)
@@ -158,6 +158,7 @@ class ObjectPrintConfigurationWidget(qt.QWidget):
 class ObjectPrintConfigurationDialog(qt.QDialog):
     def __init__(self, parent=None, configuration=None):
         qt.QDialog.__init__(self, parent)
+        self.setWindowTitle("Set print size preferences")
         if configuration is None:
             configuration = {"xOffset": 0.0,
                              "yOffset": 0.0,
