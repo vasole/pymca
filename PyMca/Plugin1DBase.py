@@ -55,6 +55,7 @@ The main items are reproduced here and can be directly accessed as plugin method
 
 """
 import weakref
+from PyMca.PyMcaQt import QObject
 try:
     from numpy import argsort, nonzero, take
 except ImportError:
@@ -70,7 +71,6 @@ class Plugin1DBase(object):
         I pass the actual instance to keep all doors open.
         """        
         self._plotWindow = weakref.proxy(plotWindow)
-        pass
 
     #Window related functions
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):

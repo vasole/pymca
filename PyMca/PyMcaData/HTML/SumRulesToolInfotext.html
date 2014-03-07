@@ -141,7 +141,7 @@ Contents
 Synopsis
 </H4>
 
-The present tool serves the purpose to evaluate XMCD data according to a 1995 paper of Chen <i>et. al.</i> (Phys. Rev. Lett. 75, 152 (1995), c.f. <a href=#Theory>Theory</a>). To apply it, the user has to contribute a x-ray magnetic circular dichroism (XMCD) spectrum as well as a x-ray absorption spectrum of a sample.<br>
+The present tool serves the purpose to evaluate XMCD data according to a 1995 paper of Chen <i>et. al.</i> (Phys. Rev. Lett. 75, 152 (1995) and a 2009 paper of Krishnamurthy <i>et al.</i> (Phys. Rev. B, 79(1), 014426), c.f. <a href=#Theory>Theory</a>). To apply it, the user has to contribute a x-ray magnetic circular dichroism (XMCD) spectrum as well as a x-ray absorption spectrum of a sample.<br>
 <br>
 The tool offers a graphical user interface that allows data preprocessing, background subtraction and integration of the data in an interactive manner. Results can be exported in the usual *.spec file format.
 
@@ -171,21 +171,54 @@ The tool offers a graphical user interface that allows data preprocessing, backg
 </a></H3>
 
 <div class='main'>
-    The present application uses equations obtained from Chen <i>et. al.</i>. The orbital angular momentum is calculated using
+    <H4>3d samples</H4>
+    We use equations (1) and (2) from Chen <i>et. al.</i> to obtain the equations used by the present application. The orbital angular momentum is calculated using
+    <!-- m_{Orb} = - \frac{2 q}{3 r} \cdot (n_{max} - n_{3d}) -->
     <br><br><img src="mOrb.png" alt="Orbital angular momentum"><br><br>
     while the spin angular momentum is given by
+    <!-- m_{Spin} = - \frac{3p - 2 q}{r} \cdot (n_{max} - n_{3d}) -->
     <br><br><img src="mSpin.png" alt="Spin angular momentum"><br><br>
-    where the n define the maximal and average electron occupation of the outer shell. For 3d and 4f shells, the maximal occupation is
-    <br><br><img src="nMax.png" alt="Maximal occupation of 3d and 4f electron shells"><br><br>
+    where the n define the maximal and average electron occupation of the 3d shell. The latter is given by
+    <!-- n_{max} = 10 -->
+    <br><br><img src="nMax.png" alt="Maximal occupation of 3d electron shell"><br><br>
     The ration of the above expressions simplifies to
+    <!-- \frac{m_{Orb}}{m_{Spin}} = \frac{2 q}{9p - 6q} -->
     <br><br><img src="mOverM.png" alt="Ration of orbital and spin angular momentum"><br><br>
     Both equations for orbital and spin magnetic moment the parameter p, q and r which are obtained from the integrals certain features of the absorption and the difference spectra. Following the paper of Chen <i>et. al.</i>, we treat the case of a 3d material. The parameter r is given by the integral over the whole range of the absorption spectrum:
+    <!-- 2 r \equiv \int_{L_3 + L_2} (\mu^+ + \mu^-) d \omega -->
     <br><br><img src="rInt.png" alt="Integral r"><br><br>
+    Here a factor 2 is introduced by the way the XAS absorption spectrum is calculated. Instead of summation over both polarizations, the application assumes the XAS absorption is calculated as the mean of the differently polarized spectra.<br>
     Integral p considers the L3 absorption edge feature of the difference (XMCD) spectrum
     <br><br><img src="pInt.png" alt="Integral p"><br><br>
     while intergral q considers the L2 absorption edge feature in the same spectrum
+    <!-- q \equiv \int_{L_3 + L_2} (\mu^+ - \mu^-) d \omega -->
     <br><br><img src="qInt.png" alt="Integral q"><br><br>
     The &mu;s are given by the absorption spectrum recorded at different polarizations. Thus in the last three equations, the expression in parentheses is either the XAS spectrum (r: +) or the XMCD spectrum (p,q: -).
+    <br>
+    <H4>4f samples</H4>
+    In case of 4f samples, the present application uses equations (2) and (3) from Krishnamurthy <i>et. al.</i>. The orbital angular momentum is calculated using
+    <br><br><img src="lz.png" alt="Orbital angular momentum"><br><br>
+    while the spin angular momentum is given by
+    <!-- \left \langle S_Z \right \rangle + \frac{7}{2} \left \langle T_Z \right \rangle = \frac{2 A_{M5} - 3 A_{M4}}{2 \mu_0(M)} N_{4f} -->
+    <br><br><img src="sz.png" alt="Spin angular momentum"><br><br>
+    where the N_4f define the number of holes in the 4f shell. For 3d and 4f shells, the maximal occupation is
+    <!-- N_{4f} = n_{max} - n_{4f} \:\:\:\:\:\: \textup{where} \:\:\:\:\:\: n_{max} = 14 -->
+    <br><br><img src="N4f.png" alt="Maximal occupation of 4f electron shell"><br><br>
+    The equations used to calculate the magnetic moments thus reduce to
+    <!--m_{Orb} = \frac{q}{2r} \cdot (n_{max} - n_{3d}) -->
+    <br><br><img src="mOrb_K.png" alt="Maximal occupation of 3d and 4f electron shells"><br><br>
+    and
+    <!-- m_{Spin} = \frac{3q - 5p}{2r} \cdot (n_{max} - n_{3d}) -->
+    <br><br><img src="mSpin_K.png" alt="Maximal occupation of 3d and 4f electron shells"><br><br>
+    The ratio of both moments is calculated the ratio of the two latter equations. Both equations for orbital and spin magnetic moment are derived by assuming
+    <!-- A_{M5} \equiv p -->
+    <br><br><img src="aM5.png" alt="Integral r"><br><br>
+    and
+    <!-- A_{M4} \equiv q - p -->
+    <br><br><img src="aM4.png" alt="Integral p"><br><br>
+    where p is the integral of the XMCD spectrum up to the first absorption edge and q is the integral of the XMCD spectrum over the second absorption edge. The &mu;_0 is given by the integral of the mean of the XAS spectrum obtained from spectra recorded with different polarizations.
+    <br><br>
+    The application uses the method <code>magneticMoment</code> in the class <code>Calculations</code> of <code>SumRulesTool.py</code>.
 </div>
 <br><a href=#Up>up</a>
 
