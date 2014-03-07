@@ -1916,7 +1916,8 @@ class McaWindow(ScanWindow.ScanWindow):
             self._addSelection(sel_list, replot=replot)
 
     def printGraph(self):
-        super(ScanWindow.ScanWindow, self).printGraph()
+        #super(ScanWindow.ScanWindow, self).printGraph()
+        super(McaWindow, self).printGraph()
 
     def refresh(self):
         activeCurve = self.getActiveCurve(just_legend=True)

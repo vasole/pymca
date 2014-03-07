@@ -1230,15 +1230,17 @@ class ScanWindow(PlotWindow.PlotWindow):
             self._addSelection(sel_list, replot=replot)
 
     def printGraph(self):
+        if self.printPreview.printer is None:
+            # setup needed
+            self.printPreview.setup()
         self._printer = self.printPreview.printer
+        if self._printer is None:
+            # printer was not selected
+            return
+        #self._printer = None
         if PlotWindow.PlotWidget.SVG:
-            # windows QGraphicsView svg printing seems broken
-            if sys.platform.startswith("win"):
-                PlotWindow.PlotWindow.printGraph(self)
-                return
-            else:
-                svg = True
-                svgRenderer = self.getSvgRenderer()
+            svg = True
+            self._svgRenderer = self.getSvgRenderer()
         else:
             svg = False
             pixmap = qt.QPixmap.grabWidget(self.centralWidget())
@@ -1279,7 +1281,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 comment += self.scanFit.getText()
 
         if svg:
-            self.printPreview.addSvgItem(svgRenderer,
+            self.printPreview.addSvgItem(self._svgRenderer,
                                     title=None,
                                     comment=comment,
                                     commentPosition="LEFT")
@@ -1290,21 +1292,42 @@ class ScanWindow(PlotWindow.PlotWindow):
                                     commentPosition="LEFT")
         if self.printPreview.isHidden():
             self.printPreview.show()        
-        self.printPreview.raise_()            
+        self.printPreview.raise_()
 
     def getSvgRenderer(self, printer=None):
         if printer is None:
+            if self.printPreview.printer is None:
+                # setup needed
+                self.printPreview.setup()
+            self._printer = self.printPreview.printer
             printer = self._printer
         if printer is None:
-            print("Select printer")
-            return
+            # printer was not selected
+            # return a renderer without adjusting the viewbox
+            if sys.version < '3.0':
+                import cStringIO as StringIO
+                imgData = StringIO.StringIO()
+            else:
+                from io import BytesIO
+                imgData = BytesIO()
+            self.saveGraph(imgData, fileFormat='svg')
+            imgData.flush()
+            imgData.seek(0)
+            svgData = imgData.read()
+            imgData = None
+            svgRenderer = qt.QSvgRenderer()
+            svgRenderer._svgRawData = svgData
+            svgRenderer._svgRendererData = qt.QXmlStreamReader(svgData)
+            if not svgRenderer.load(svgRenderer._svgRendererData):
+                raise RuntimeError("Cannot interpret svg data")            
+            return svgRenderer
 
         # we have what is to be printed
         if sys.version < '3.0':
             import cStringIO as StringIO
             imgData = StringIO.StringIO()
         else:
-            from io import BytesIO          
+            from io import BytesIO      
             imgData = BytesIO()
         self.saveGraph(imgData, fileFormat='svg')
         imgData.flush()
@@ -1329,11 +1352,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         dpiy    = printer.logicalDpiY()
 
         # get the available space
-        # availableWidth = printer.width()
-        # availableHeight = printer.height()
-        availableWidth = self.printPreview.page.rect().width()
-        availableHeight = self.printPreview.page.rect().height()
-
+        availableWidth = printer.width()
+        availableHeight = printer.height()
 
         # convert the offsets to dpi
         if units.lower() in ['inch', 'inches']:
@@ -1363,12 +1383,16 @@ class ScanWindow(PlotWindow.PlotWindow):
         availableHeight -= yOffset
 
         if width is not None:
-            if availableWidth < width:
-                raise ValueError("Available width is less than requested width")
+            if (availableWidth + 0.1) < width:
+                txt = "Available width  %f is less than requested width %f" % \
+                              (availableWidth, width)
+                raise ValueError(txt)
             availableWidth = width
         if height is not None:
-            if availableHeight < height:
-                raise ValueError("Available height is less than requested width")
+            if (availableHeight + 0.1) < height:
+                txt = "Available height  %f is less than requested height %f" % \
+                              (availableHeight, height)
+                raise ValueError(txt)
             availableHeight = height
 
         if keepAspectRatio:
@@ -1402,8 +1426,10 @@ class ScanWindow(PlotWindow.PlotWindow):
         # this does not work if I set the svgData before
         svgRenderer.setViewBox(body)
         svgRenderer._viewBox = body
-        #svgRenderer._svgData = qt.QXmlStreamReader(svgData)
-        if not svgRenderer.load(qt.QXmlStreamReader(svgData)):
+        svgRenderer._svgRawData = svgData
+        svgRenderer._svgRendererData = qt.QXmlStreamReader(svgData)
+        
+        if not svgRenderer.load(svgRenderer._svgRendererData):
             raise RuntimeError("Cannot interpret svg data")
         return svgRenderer
         
