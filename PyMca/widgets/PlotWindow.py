@@ -368,25 +368,21 @@ class PlotWindow(PlotWidget.PlotWidget):
 
     def printGraph(self, *var, **kw):
         config = self.getPrintConfiguration()
-        if 1:
-            # this is not working yet
-            PlotWidget.PlotWidget.printGraph(self,
-                                width=config['width'],
-                                height=config['height'],
-                                xOffset=config['xOffset'],
-                                yOffset=config['yOffset'],
-                                units=config['units'],
-                                keepAspectRatio=config['keepAspectRatio'],
-                                printer=self._printer)
-        else:
-            PlotWidget.PlotWidget.printGraph(self)
+        PlotWidget.PlotWidget.printGraph(self,
+                            width=config['width'],
+                            height=config['height'],
+                            xOffset=config['xOffset'],
+                            yOffset=config['yOffset'],
+                            units=config['units'],
+                            keepAspectRatio=config['keepAspectRatio'],
+                            printer=self._printer)
 
     def setPrintConfiguration(self, configuration, printer=None):
         for key in self._printConfiguration:
             if key in configuration:
                 self._printConfiguration[key] = configuration[key]
         if printer is not None:
-            # printer should be a global thing
+            # printer should be a global thing ...
             self._printer = printer
 
     def getPrintConfiguration(self, dialog=False):
