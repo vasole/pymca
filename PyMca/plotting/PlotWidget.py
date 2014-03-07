@@ -187,13 +187,13 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                 availableHeight -= yOffset
 
                 if width is not None:
-                    if availableWidth < width:
+                    if (availableWidth + 0.1) < width:
                         txt = "Available width  %f is less than requested width %f" % \
                                       (availableWidth, width)
                         raise ValueError(txt)
                     availableWidth = width
                 if height is not None:
-                    if availableHeight < height:
+                    if (availableHeight + 0.1) < height:
                         txt = "Available height  %f is less than requested height %f" % \
                                       (availableHeight, height)
                         raise ValueError(txt)
