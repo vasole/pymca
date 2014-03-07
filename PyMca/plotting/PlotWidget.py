@@ -124,13 +124,16 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         self.saveGraph(imgData, fileFormat='svg')
         imgData.flush()
         imgData.seek(0)
-        svgRenderer = QtSvg.QSvgRenderer(QtCore.QXmlStreamReader(imgData.read()))
+        svgRawData = imgData.read()
+        svgRendererData = QtCore.QXmlStreamReader(svgRawData)
+        svgRenderer = QtSvg.QSvgRenderer(svgRendererData)
+        svgRenderer._svgRawData = svgRawData
+        svgRenderer._svgRendererData = svgRendererData
         return svgRenderer
         
     def printGraph(self, width=None, height=None, xOffset=0.0, yOffset=0.0,
                    units="inches", dpi=None, printer=None,
                    dialog=True, keepAspectRatio=True, **kw):
-        svgRenderer = self.getSvgRenderer()
         if printer is None:
             if self._printer is None:
                 printer = QtGui.QPrinter()
@@ -224,6 +227,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                                 yOffset,
                                 bodyWidth,
                                 bodyHeight)
+                svgRenderer = self.getSvgRenderer()
                 svgRenderer.render(painter, body)
             finally:
                 painter.end()
