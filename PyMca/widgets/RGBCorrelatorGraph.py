@@ -608,13 +608,11 @@ class RGBCorrelatorGraph(qt.QWidget):
             return False
 
     def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
+        pixmap = qt.QPixmap.grabWidget(self.graph.getWidgetHandle())
         self.printPreview.addPixmap(pixmap)
-        if self.printPreview.isHidden():
-            self.printPreview.show()
-        if QTVERSION < '4.0.0':
-            self.printPreview.raiseW()
-        else:
+        if self.printPreview.isReady():
+            if self.printPreview.isHidden():
+                self.printPreview.show()
             self.printPreview.raise_()
 
     def selectColormap(self):
