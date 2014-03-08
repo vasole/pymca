@@ -267,21 +267,22 @@ class McaWindow(ScanWindow.ScanWindow):
                 pass
             elif dict['button'] == 'Calibration':
                 #legend,x,y = self.graph.getactivecurve()
-                legend = self.graph.getactivecurve(justlegend=1)
+                legend = self.getActiveCurve(just_legend=1)
                 if legend is None:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Please Select an active curve")
-                    if QTVERSION < '4.0.0':
-                        msg.exec_loop()
-                    else:
-                        msg.exec_()
+                    msg.exec_()
                     return
                 else:
-                    info,x, y = self.getinfodatafromlegend(legend)
-                    if info is None: return
+                    x, y, legend, info = self.getCurve(legend)[:4]
+                    if info is None:
+                        return
                     ndict = {}
-                    ndict[legend] = {'order':1,'A':0.0,'B':1.0,'C':0.0}
+                    ndict[legend] = {'order':1,
+                                     'A':0.0,
+                                     'B':1.0,
+                                     'C':0.0}
                     if legend in self.caldict:
                         ndict[legend].update(self.caldict[legend])
                         if abs(ndict[legend]['C']) > 0.0:
@@ -306,14 +307,11 @@ class McaWindow(ScanWindow.ScanWindow):
                                                              fl=0)
                     #info,x,y = self.getinfodatafromlegend(legend)
                     #caldialog.graph.newCurve("fromlegend",x=x,y=y)
-                    if QTVERSION < '4.0.0':
-                        ret = caldialog.exec_loop()
-                    else:
-                        ret = caldialog.exec_()
+                    ret = caldialog.exec_()
 
                     if ret == qt.QDialog.Accepted:
                         self.caldict.update(caldialog.getDict())
-                        item, text = self.control.calbox.getcurrent()
+                        item, text = self.controlWidget.calbox.getCurrent()
                         options = []
                         for option in self.calboxoptions:
                             options.append(option)
@@ -321,30 +319,25 @@ class McaWindow(ScanWindow.ScanWindow):
                             if key not in options:
                                 options.append(key)
                         try:
-                            self.controlWidget.calbox.setoptions(options)
+                            self.controlWidget.calbox.setOptions(options)
                         except:
                             pass
-                        if QTVERSION < '4.0.0':
-                            self.controlWidget.calbox.setCurrentItem(item)
-                        else:
-                            self.controlWidget.calbox.setCurrentIndex(item)
+                        self.controlWidget.calbox.setCurrentIndex(item)
                         self.refresh()
                     del caldialog
             elif dict['button'] == 'CalibrationCopy':
                 #legend,x,y = self.graph.getactivecurve()
-                legend = self.graph.getactivecurve(justlegend=1)
+                legend = self.getActiveCurve(just_legend=1)
                 if legend is None:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Please Select an active curve")
-                    if QTVERSION < '4.0.0':
-                        msg.exec_loop()
-                    else:
-                        msg.exec_()
+                    msg.exec_()
                     return
                 else:
-                    info,x, y = self.getinfodatafromlegend(legend)
-                    if info is None: return
+                    x, y, legend, info = self.getCurve(legend)[:4]
+                    if info is None:
+                        return
                     ndict=copy.deepcopy(self.caldict)
                     if 'McaCalib' in info:
                         if type(info['McaCalib'][0]) == type([]):
@@ -353,8 +346,8 @@ class McaWindow(ScanWindow.ScanWindow):
                             sourcecal = info['McaCalib']
                     else:
                         sourcecal = [0.0,1.0,0.0]
-                    for curve in self.graph.curveslist:
-                        curveinfo = self.graph.getcurveinfo(curve)
+                    for curve in self.getAllCurves(just_legend=True):
+                        curveinfo = self.getCurve(curve)[3]
                         if 'McaCalibSource' in curveinfo:
                             key = "%s (Source)" % curve
                             if key not in ndict:
@@ -407,7 +400,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     ret = caldialog.exec_()
                     if ret == qt.QDialog.Accepted:
                         self.caldict.update(caldialog.getDict())
-                        item, text = self.controlWidget.calbox.getcurrent()
+                        item, text = self.controlWidget.calbox.getCurrent()
                         options = []
                         for option in self.calboxoptions:
                             options.append(option)
@@ -415,7 +408,7 @@ class McaWindow(ScanWindow.ScanWindow):
                             if key not in options:
                                 options.append(key)
                         try:
-                            self.controlWidget.calbox.setoptions(options)
+                            self.controlWidget.calbox.setOptions(options)
                         except:
                             pass
                         self.controlWidget.calbox.setCurrentIndex(item)
@@ -450,7 +443,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     if key not in options:
                         options.append(key)
                 try:
-                    self.controlWidget.calbox.setoptions(options)
+                    self.controlWidget.calbox.setOptions(options)
                     self.controlWidget.calbox.setCurrentIndex(options.index(itemtext))                        
                     self.calibration = itemtext * 1
                     self.controlWidget._calboxactivated(itemtext)
@@ -596,7 +589,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 if key not in options:
                     options.append(key)
             try:
-                self.controlWidget.calbox.setoptions(options)
+                self.controlWidget.calbox.setOptions(options)
                 #I only reset the graph scale after a fit, not on a matrix spectrum
                 if dict['event'] == 'McaAdvancedFitFinished':
                     #get current limits

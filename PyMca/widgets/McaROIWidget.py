@@ -603,13 +603,13 @@ class McaROITable(qt.QTableWidget):
 class SimpleComboBox(qt.QComboBox):
         def __init__(self,parent = None,name = None,fl = 0,options=['1','2','3']):
             qt.QComboBox.__init__(self,parent)
-            self.setoptions(options) 
+            self.setOptions(options) 
             
-        def setoptions(self,options=['1','2','3']):
+        def setOptions(self,options=['1','2','3']):
             self.clear()    
             self.insertStrList(options)
             
-        def getcurrent(self):
+        def getCurrent(self):
             return   self.currentItem(),str(self.currentText())
              
 if __name__ == '__main__':

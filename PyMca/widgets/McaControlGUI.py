@@ -124,13 +124,13 @@ class McaControlGUI(qt.QWidget):
             options.append("%d" % i)
         options.append('Add')
         options.append('Del')
-        self.roibox.setoptions(options)
+        self.roibox.setOptions(options)
         self._roiboxactivated(self,'0')
     
     def resetroilist(self):
         self.roiList = [[0,-1]]
         self.roiList.append(None,None)
-        self.roibox.setoptions(['0','Add','Del'])
+        self.roibox.setOptions(['0','Add','Del'])
         self.roibox.setCurrentItem(0)
 
     def getroilist(self):

@@ -1634,7 +1634,7 @@ class McaCalCopy(qt.QDialog):
             self.CText.setFocus()
         
     def __copybuttonclicked(self):
-        item, text = self.combo.getcurrent()
+        item, text = self.combo.getCurrent()
         self.AText.setText("%.7g" % self.caldict[text]['A'])
         self.BText.setText("%.7g" % self.caldict[text]['B'])
         self.CText.setText("%.7g" % self.caldict[text]['C'])
@@ -1660,21 +1660,15 @@ class McaCalCopy(qt.QDialog):
 class SimpleComboBox(qt.QComboBox):
     def __init__(self,parent = None,name = None,fl = 0,options=['1','2','3']):
         qt.QComboBox.__init__(self,parent)
-        self.setoptions(options) 
+        self.setOptions(options) 
 
-    def setoptions(self,options=['1','2','3']):
+    def setOptions(self,options=['1','2','3']):
         self.clear()
-        if QTVERSION < '4.0.0':
-            self.insertStrList(options)
-        else:
-            for item in options:
-                self.addItem(QString(item))
+        for item in options:
+            self.addItem(QString(item))
 
-    def getcurrent(self):
-        if QTVERSION < '4.0.0':
-            return   self.currentItem(),str(self.currentText())
-        else:
-            return   self.currentIndex(),str(self.currentText())
+    def getCurrent(self):
+        return   self.currentIndex(),str(self.currentText())
              
 def test(x,y,legend):
     app = qt.QApplication(args)
@@ -1682,11 +1676,7 @@ def test(x,y,legend):
         qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),
                            app, qt.SLOT("quit()"))
     demo = McaCalWidget(x=x,y=y,modal=1,legend=legend)
-    if QTVERSION < '4.0.0':
-        app.setMainWidget(demo)
-        ret=demo.exec_loop()
-    else:
-        ret=demo.exec_()
+    ret=demo.exec_()
     if ret == qt.QDialog.Accepted:
         ddict=demo.getDict()
     else:
