@@ -1715,8 +1715,9 @@ class McaAdvancedFit(qt.QWidget):
         elif ddict['event'] == "SaveClicked":
             self._saveGraph()
         elif ddict['event'].lower() in ["mouseclicked", "curveclicked"]:
-            if self._energyAxis:
-                self.__peakIdentifier(ddict['x'])
+            if ddict['button'] == 'left':
+                if self._energyAxis:
+                    self.__peakIdentifier(ddict['x'])
         else:
             pass
         return
@@ -2509,7 +2510,6 @@ class McaGraphWindow(PlotWindow.PlotWindow):
                                        position=position,
                                        control=control,
                                        **kw)
-        self.sigPlotSignal.connect(self.__graphSignal)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
 
     def printGraph(self):
@@ -2540,29 +2540,29 @@ class McaGraphWindow(PlotWindow.PlotWindow):
         ddict['active'] = legend
         self.sigPlotSignal.emit(ddict)
 
-    def __graphSignal(self, ddict):
-        #only the mouse click is dealt with here
-        if ddict['event'].lower() in ["mouseclicked", "curveclicked"]:
-            if ddict['button'] == 'left':
-                self.emit(qt.SIGNAL('McaGraphSignal'), (ddict))
-
-def test(file='03novs060sum.mca'):
+def test(ffile='03novs060sum.mca', cfg=None):
     from PyMca.PyMcaIO import specfilewrapper as specfile
     app = qt.QApplication([])
-    app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
-    sf=specfile.Specfile(file)
-    scan=sf[0]
-    mcadata=scan.mca(1)
+    app.lastWindowClosed.connect(app.quit)
+    sf=specfile.Specfile(ffile)
+    scan=sf[-1]
+    nMca = scan.nbmca()
+    mcadata=scan.mca(nMca)
     y0= numpy.array(mcadata)
     x = numpy.arange(len(y0))*1.0
     demo = McaAdvancedFit()
-    xmin = demo.mcafit.config['fit']['xmin']
-    xmax = demo.mcafit.config['fit']['xmax']
-    demo.setData(x,y0,xmin=xmin,xmax=xmax,sourcename=file)
     #This illustrates how to change the configuration
     #oldConfig = demo.configure()
     #oldConfig['fit']['xmin'] = 123
     #demo.configure(oldConfig)
+    if cfg is not None:
+        d = ConfigDict.ConfigDict()
+        d.read(cfg)
+        demo.configure(d)
+        d = None
+    xmin = demo.mcafit.config['fit']['xmin']
+    xmax = demo.mcafit.config['fit']['xmax']
+    demo.setData(x,y0,xmin=xmin,xmax=xmax,sourcename=ffile)
     demo.show()
     app.exec_()
 
@@ -2579,7 +2579,11 @@ if __name__ == "__main__":
         ffile = sys.argv[1]
     else:
         ffile = '03novs060sum.mca'
+    if len(sys.argv) > 2:
+        cfg = sys.argv[2]
+    else:
+        cfg = None
     if os.path.exists(ffile):
-        test(ffile)
+        test(ffile, cfg)
     else:
         main()
