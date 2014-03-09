@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -677,12 +677,8 @@ image_small=[
 
 class MatrixImage(qt.QWidget):
     def __init__(self,parent = None, name = "Matrix Image", size=None):
-        if qt.qVersion() < '4.0.0':
-            qt.QWidget.__init__(self, parent, name)
-            self.setCaption(name)
-        else:
-            qt.QWidget.__init__(self, parent)
-            self.setWindowTitle(name)
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle(name)
 
         layout = qt.QVBoxLayout(self)
         self.label  = qt.QLabel(self)
@@ -704,15 +700,10 @@ class MatrixImage(qt.QWidget):
 
 if __name__ == '__main__':
     a= qt.QApplication([])
-    a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
+    a.lastWindowClosed.connect(a.quit)
     if len(sys.argv) > 1:
         w=MatrixImage(size=sys.argv[1])
     else:
         w=MatrixImage()
-    if qt.qVersion() < '4.0.0':
-        a.setMainWidget(w)
-        w.show()
-        a.exec_loop()
-    else:
-        w.show()
-        a.exec_()
+    w.show()
+    a.exec_()
