@@ -76,14 +76,13 @@ if DEBUG:
     print("#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG)
     print("############################################")
 XRFMC_FLAG = False
-if QTVERSION > '4.0.0':
-    try:
-        from PyMca.XRFMC import XRFMCHelper
-        XRFMC_FLAG = True
-    except ImportError:
-        if DEBUG:
-            print("Cannot import XRFMCHelper module")
-            raise
+try:
+    from PyMca.XRFMC import XRFMCHelper
+    XRFMC_FLAG = True
+except ImportError:
+    if DEBUG:
+        print("Cannot import XRFMCHelper module")
+        raise
 USE_BOLD_FONT = True
 
 class McaAdvancedFit(qt.QWidget):
@@ -107,6 +106,8 @@ class McaAdvancedFit(qt.QWidget):
     >>> w.show()
     
     """
+    sigMcaAdvancedFitSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent=None, name="PyMca - McaAdvancedFit",fl=0,
                  sections=None, top=True, margin=11, spacing=6):
         qt.QWidget.__init__(self, parent)
@@ -398,14 +399,9 @@ class McaAdvancedFit(qt.QWidget):
                                                      fl=0,
                                                      initdir=self.configDir,
                                                      fitresult=None)
-                if QTVERSION < '4.0.0':
-                    self.connect(dialog.fitparam.peakTable,
-                                 qt.PYSIGNAL("FitPeakSelect"),
-                                 self.__elementclicked)
-                else:
-                    self.connect(dialog.fitparam.peakTable,
-                                 qt.SIGNAL("FitPeakSelect"),
-                                 self.__elementclicked)
+                self.connect(dialog.fitparam.peakTable,
+                             qt.SIGNAL("FitPeakSelect"),
+                             self.__elementclicked)
                 self.configDialog = dialog
             else:
                 dialog = self.configDialog
@@ -421,10 +417,7 @@ class McaAdvancedFit(qt.QWidget):
             #dialog.fitparam.regionCheck.setDisabled(True)
             #dialog.fitparam.minSpin.setDisabled(True)
             #dialog.fitparam.maxSpin.setDisabled(True)
-            if QTVERSION < '4.0.0':
-                ret = dialog.exec_loop()
-            else:
-                ret = dialog.exec_()
+            ret = dialog.exec_()
             if dialog.initDir is not None:
                 self.configDir = 1 * dialog.initDir
             else:
@@ -439,14 +432,10 @@ class McaAdvancedFit(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                if QTVERSION < '4.0.0':
-                    msg.setText("%s" % sys.exc_info()[1])
-                    msg.exec_loop()
-                else:
-                    msg.setText("Error occured getting parameters:")
-                    msg.setInformativeText(str(sys.exc_info()[1]))
-                    msg.setDetailedText(traceback.format_exc())
-                    msg.exec_()
+                msg.setText("Error occured getting parameters:")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
                 return
             config.update(npar)
             dialog.close()
@@ -467,18 +456,18 @@ class McaAdvancedFit(qt.QWidget):
         #materials in the fit configuration
         for material in Elements.Material.keys():
             self.mcafit.config['materials'][material] =copy.deepcopy(Elements.Material[material])
-        if QTVERSION > '4.0.0':
-            hideButton = True
-            if 'xrfmc' in config:
-                programFile = config['xrfmc'].get('program', None)
-                if programFile is not None:
-                    if os.path.exists(programFile):
-                        if os.path.isfile(config['xrfmc']['program']):
-                            hideButton = False
-            if hideButton:
-                self.matrixXRFMCSpectrumButton.hide()
-            else:
-                self.matrixXRFMCSpectrumButton.show()
+
+        hideButton = True
+        if 'xrfmc' in config:
+            programFile = config['xrfmc'].get('program', None)
+            if programFile is not None:
+                if os.path.exists(programFile):
+                    if os.path.isfile(config['xrfmc']['program']):
+                        hideButton = False
+        if hideButton:
+            self.matrixXRFMCSpectrumButton.hide()
+        else:
+            self.matrixXRFMCSpectrumButton.show()
 
         if DEBUG:
             self.mcafit.configure(config)
@@ -493,15 +482,11 @@ class McaAdvancedFit(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                if QTVERSION < '4.0.0':
-                    msg.setText("%s" % sys.exc_info()[1])
-                    msg.exec_loop()
-                else:
-                    msg.setWindowTitle("Configuration error")
-                    msg.setText("Error configuring fit:")
-                    msg.setInformativeText(str(sys.exc_info()[1]))
-                    msg.setDetailedText(traceback.format_exc())
-                    msg.exec_()
+                msg.setWindowTitle("Configuration error")
+                msg.setText("Error configuring fit:")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
                 return
 
         #update graph
@@ -648,10 +633,7 @@ class McaAdvancedFit(qt.QWidget):
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Concentrations error: %s" % sys.exc_info()[1])
-                    if QTVERSION < '4.0.0':
-                        msg.exec_loop()
-                    else:
-                        msg.exec_()
+                    msg.exec_()
                     self.mainTab.setCurrentIndex(0)
         elif str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "TABLE":
             self.printButton.setEnabled(True)
@@ -887,8 +869,8 @@ class McaAdvancedFit(qt.QWidget):
             self.matrixSpectrum()
             self.plot()
         else:
-            if "Matrix" in self.graph.curves.keys():
-                self.graph.delcurve("Matrix")
+            if "Matrix" in self.graph.getAllCurves(just_legend=True):
+                self.graph.removeCurve("Matrix")
                 self.plot()
 
     def __togglePeaksSpectrum(self):
@@ -989,7 +971,7 @@ class McaAdvancedFit(qt.QWidget):
         ddict['result']['ymatrix'].shape  = (len(ddict['result']['ymatrix']),)
         ddict['result']['continuum'].shape  = (len(ddict['result']['ymatrix']),)
         if self.matrixSpectrumButton.isChecked():
-            self.dict['result']['ymatrix']= dict['result']['ymatrix'] * 1.0
+            self.dict['result']['ymatrix']= ddict['result']['ymatrix'] * 1.0
         """
         if self.graph is not None:
             if self._logY:
@@ -1321,7 +1303,7 @@ class McaAdvancedFit(qt.QWidget):
             ddict={}
             ddict['event'] = "McaAdvancedFitPrint"
             ddict['text' ] = text
-            self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
+            self.sigMcaAdvancedFitSignal.emit(ddict)
 
     def printps(self, doit=0):
         h = self.__htmlheader()
@@ -1334,7 +1316,7 @@ class McaAdvancedFit(qt.QWidget):
             ddict={}
             ddict['event'] = "McaAdvancedFitPrint"
             ddict['text' ] = h+text
-            self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
+            self.sigMcaAdvancedFitSignal.emit(ddict)
 
     def __htmlheader(self):
         header = "%s" % qt.safe_str(self.headerLabel.text())
@@ -1637,16 +1619,12 @@ class McaAdvancedFit(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                if QTVERSION < '4.0.0':
-                    msg.setText("Error on fit: %s" % (sys.exc_info()[1]))
-                    msg.exec_loop()
-                else:
-                    msg.setWindowTitle("Fit error")
-                    msg.setText("Error on fit:")
-                    msg.setInformativeText(str(sys.exc_info()[1]))
-                    msg.setDetailedText(traceback.format_exc())
-                    msg.exec_()
-                    msg.exec_()
+                msg.setWindowTitle("Fit error")
+                msg.setText("Error on fit:")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
+                msg.exec_()
                 return
             try:
                 #self.mcatable.fillfrommca(self.mcafit.result)
@@ -1717,11 +1695,7 @@ class McaAdvancedFit(qt.QWidget):
         if 'event' in ddict:
             ddict['info'] = {}
             ddict['info'].update(self.info)
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL('McaAdvancedFitSignal'), (ddict,))
-            else:
-                self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
-
+            self.sigMcaAdvancedFitSignal.emit(ddict)
             #Simplify interactive usage of the module
             return ddict
 
@@ -2480,10 +2454,7 @@ class Top(qt.QWidget):
 
     def mysignal(self,*var):
         ddict = self.getParameters()
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('TopSignal'),(ddict,))
-        else:
-            self.emit(qt.SIGNAL('TopSignal'),(ddict))
+        self.emit(qt.SIGNAL('TopSignal'),(ddict))
 
 
 class Line(qt.QFrame):

@@ -169,7 +169,7 @@ class McaWindow(ScanWindow.ScanWindow):
     def connections(self):
         #self.connect(self.scanfit,    qt.SIGNAL('ScanFitSignal') , self.__anasignal)
         self.connect(self.simplefit,  qt.SIGNAL('McaSimpleFitSignal') , self.__anasignal)
-        self.connect(self.advancedfit,qt.SIGNAL('McaAdvancedFitSignal') , self.__anasignal)
+        self.advancedfit.sigMcaAdvancedFitSignal.connect(self.__anasignal)
         #self.connect(self.scanwindow, qt.SIGNAL('ScanWindowSignal') ,   self.__anasignal)
 
     def mcaSimpleFitSignal(self, ddict):
