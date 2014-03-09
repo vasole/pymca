@@ -34,7 +34,7 @@ on the one that has been previously chosen by the end user.
 """
 # force cx_freeze to consider sip among the modules to add
 # to the binary packages
-if 'PySide' in sys.modules:
+if ('PySide' in sys.modules) or ('PySide' in sys.argv):
     from PySide.QtCore import *
     from PySide.QtGui import *
     try:
