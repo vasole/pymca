@@ -42,7 +42,7 @@ import copy
 
 from PyMca.widgets import ScanWindow
 from PyMca.PyMca_Icons import IconDict
-from PyMca.widgets import McaControlGUI
+from . import McaCalibrationControlGUI
 from PyMca import ConfigDict
 from PyMca import McaAdvancedFit
 from PyMca import DataObject
@@ -113,7 +113,7 @@ class McaWindow(ScanWindow.ScanWindow):
         if DEBUG:
             print("printPreview id = %d" % id(self.printPreview))
 
-        self._buildControlWidget()
+        self._buildCalibrationControlWidget()
         #self._toggleROI()
         self._toggleCounter = 2
         self._togglePointsSignal()
@@ -130,9 +130,10 @@ class McaWindow(ScanWindow.ScanWindow):
             #self.fitButtonMenu.addAction(QString("Customized Fit") ,
             #                       self._customFitSignal)
 
-    def _buildControlWidget(self):
+    def _buildCalibrationControlWidget(self):
         widget = self.centralWidget()
-        self.controlWidget = McaControlGUI.McaCalibrationControlGUI(widget)
+        self.controlWidget = McaCalibrationControlGUI.McaCalibrationControlGUI(\
+                                        widget)
         widget.layout().addWidget(self.controlWidget)
         self.controlWidget.sigMcaCalibrationControlGUISignal.connect(\
                             self.__anasignal)
