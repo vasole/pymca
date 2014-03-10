@@ -1,2 +1,2 @@
 print("Importing McaControlGUI from PyMca")
-from .widgets.McaControlGUI import *
+from .widgets.McaCalibrationControlGUI import *
