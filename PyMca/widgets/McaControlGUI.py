@@ -34,23 +34,16 @@ if hasattr(qt, "QString"):
 else:
     QString = qt.safe_str
 
-from PyMca.widgets import McaROIWidget
 from PyMca import PyMcaDirs
 
 DEBUG = 0
-class McaControlGUI(qt.QWidget):
-    sigMcaROIWidgetSignal = qt.pyqtSignal(object)
-    sigMcaControlGUISignal = qt.pyqtSignal(object)
+class McaCalibrationControlGUI(qt.QWidget):
+    sigMcaCalibrationControlGUISignal = qt.pyqtSignal(object)
     
     def __init__(self, parent=None, name=""):
         qt.QWidget.__init__(self, parent)
         if name is not None:
             self.setWindowTitle(name)
-        self.roiList = ['ICR']
-        self.roiDict = {}
-        self.roiDict['ICR'] = {'type':'Default',
-                               'from':0,
-                               'to':-1}
         self.lastInputDir = None
         self.build()
         self.connections()
@@ -63,10 +56,10 @@ class McaControlGUI(qt.QWidget):
         self.calbox =    None
         self.calbut =    None
 
-        calibration  = McaCalControlLine(self)
+        calibration  = McaCalibrationControlLine(self)
         self.calbox  = calibration.calbox
         self.calbut  = calibration.calbut
-        self.calinfo = McaCalInfoLine(self)
+        self.calinfo = McaCalibrationInfoLine(self)
 
         self.calmenu = qt.QMenu()
         self.calmenu.addAction(QString("Edit"),    self._copysignal)
@@ -78,96 +71,38 @@ class McaControlGUI(qt.QWidget):
         layout.addWidget(calibration)
         layout.addWidget(self.calinfo)
 
-        # ROI
-        #roibox = qt.QHGroupBox(self)
-        #roibox.setTitle(' ROI ')
-        roibox = qt.QWidget(self)
-        roiboxlayout = qt.QHBoxLayout(roibox)
-        layout.setContentsMargins(0, 0, 0, 0)
-        roiboxlayout.setSpacing(0)
-        
-        #roibox.setAlignment(qt.Qt.AlignHCenter)
-        self.roiWidget = McaROIWidget.McaROIWidget(roibox)
-        self.roiWidget.fillFromROIDict(roilist=self.roiList,
-                                       roidict=self.roiDict)
-        self.fillFromROIDict   = self.roiWidget.fillFromROIDict
-        self.getROIListAndDict = self.roiWidget.getROIListAndDict
-        self.addROI            = self.roiWidget.addROI
-        self.setHeader            = self.roiWidget.setHeader
-
-        roiboxlayout.addWidget(self.roiWidget)
-        layout.addWidget(roibox)
-        layout.setStretchFactor(roibox, 1)
-        
     def connections(self):
-        #QObject.connect(a,SIGNAL("lastWindowClosed()"),a,SLOT("quit()"
         #selection changed
-        self.connect(self.calbox,qt.SIGNAL("activated(const QString &)"),
-                    self._calboxactivated)
-        self.connect(self.calbut,qt.SIGNAL("clicked()"),self._calbuttonclicked)
-        self.roiWidget.sigMcaROIWidgetSignal.connect(self._forward)
-    
-    def addROI(self,xmin,xmax):
-        if [xmin,xmax] not in self.roiList:
-            self.roiList.append([xmin,xmax])
-        self._updateroibox()
+        #self.connect(self.calbox,qt.SIGNAL("activated(const QString &)"),
+        #            self._calboxactivated)
+        self.calbox.activated.connect(self._calboxactivated)
+        self.calbut.clicked.connect(self._calbuttonclicked)
         
-    def delroi(self,number):
-        if number > 0:
-            if number < len(self.roiList):
-                del self.roiList[number]
-        self._updateroibox()
-            
-    def _updateroibox(self):
-        options = []
-        for i in range(len(self.roiList)):
-            options.append("%d" % i)
-        options.append('Add')
-        options.append('Del')
-        self.roibox.setOptions(options)
-        self._roiboxactivated(self,'0')
-    
-    def resetroilist(self):
-        self.roiList = [[0,-1]]
-        self.roiList.append(None,None)
-        self.roibox.setOptions(['0','Add','Del'])
-        self.roibox.setCurrentItem(0)
-
-    def getroilist(self):
-        return self.roiList
-
-    def _calboxactivated(self, item):
-        self._calboxactivated(item)
-        
-    def _calboxactivated(self,item):
-        item = qt.safe_str(item)
+    def _calboxactivated(self, item=None):
         if DEBUG:
+            item = qt.safe_str(item)
             print("Calibration box activated %s" % item)
-        comboitem,combotext = self.calbox.getCurrent()
-        self._emitpysignal(box=[comboitem,combotext],boxname='Calibration',
-                            event='activated')
-
-    def _forward(self, ddict):
-        self.sigMcaROIWidgetSignal.emit(ddict)
-
+        comboitem, combotext = self.calbox.getCurrent()
+        self._emitpysignal(box=[comboitem,combotext],
+                           boxname='Calibration',
+                           event='activated')
         
     def _calbuttonclicked(self):
         if DEBUG:
             print("Calibration button clicked")
-        if qt.qVersion() < '4.0.0':
-            self.calmenu.exec_loop(self.cursor().pos())
-        else:
-            self.calmenu.exec_(self.cursor().pos())
+        self.calmenu.exec_(self.cursor().pos())
         
     def _copysignal(self):
         comboitem,combotext = self.calbox.getCurrent()
         self._emitpysignal(button="CalibrationCopy",
-                            box=[comboitem,combotext],event='clicked')
+                           box=[comboitem,combotext],
+                           event='clicked')
                 
     def _computesignal(self):
         comboitem,combotext = self.calbox.getCurrent()
         self._emitpysignal(button="Calibration",
-                            box=[comboitem,combotext],event='clicked')
+                           box=[comboitem,combotext],
+                           event='clicked')
                 
     def _loadsignal(self):
         if self.lastInputDir is None:
@@ -217,9 +152,9 @@ class McaControlGUI(qt.QWidget):
         self.lastInputDir = os.path.dirname(filename)
         comboitem,combotext = self.calbox.getCurrent()
         self._emitpysignal(button="CalibrationLoad",
-                            box=[comboitem,combotext],
-                            line_edit = filename,
-                            event='clicked')
+                           box=[comboitem,combotext],
+                           line_edit = filename,
+                           event='clicked')
                 
     def _savesignal(self):
         if self.lastInputDir is None:
@@ -275,14 +210,6 @@ class McaControlGUI(qt.QWidget):
                             line_edit = filename,
                             event='clicked')
 
-    def _roiresetbuttonclicked(self):
-        if DEBUG:
-            print("ROI reset button clicked")
-        comboitem,combotext = self.roibox.getCurrent()
-        self._emitpysignal(button="Roi reset",
-                            box=[comboitem,combotext],
-                            event='clicked')
-
     def _emitpysignal(self,button=None,
                             box=None,
                             boxname=None,
@@ -298,9 +225,9 @@ class McaControlGUI(qt.QWidget):
         data['line_edit']     = line_edit
         data['event']         = event
         data['boxname']       = boxname
-        self.sigMcaControlGUISignal.emit(data)
+        self.sigMcaCalibrationControlGUISignal.emit(data)
 
-class McaCalControlLine(qt.QWidget):
+class McaCalibrationControlLine(qt.QWidget):
     def __init__(self, parent=None, name=None, calname="",
                  caldict = None):
         if caldict is None:
@@ -333,7 +260,7 @@ class McaCalControlLine(qt.QWidget):
         self.l.addWidget(self.calbut)
 
 
-class McaCalInfoLine(qt.QWidget):
+class McaCalibrationInfoLine(qt.QWidget):
     def __init__(self, parent=None, name=None, calname="",
                  caldict = None):
         if caldict is None:
@@ -406,7 +333,6 @@ class McaCalInfoLine(qt.QWidget):
         self.caldict[self.currentcal]["C"] = pars["C"]
         self.caldict[self.currentcal]["order"] = order
 
-
 class SimpleComboBox(qt.QComboBox):
         def __init__(self, parent=None, name=None, options=['1','2','3']):
             qt.QComboBox.__init__(self,parent)
@@ -423,6 +349,6 @@ class SimpleComboBox(qt.QComboBox):
 
 if __name__ == '__main__':
     app = qt.QApplication(sys.argv)
-    demo = McaControlGUI()
+    demo = McaCalibrationControlGUI()
     demo.show()
     app.exec_()            

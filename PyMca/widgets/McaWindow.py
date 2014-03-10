@@ -131,36 +131,11 @@ class McaWindow(ScanWindow.ScanWindow):
             #                       self._customFitSignal)
 
     def _buildControlWidget(self):
-        self.controlWidget = McaControlGUI.McaControlGUI()
-        self.roiWidget  = self.controlWidget
-        self.roiDockWidget = None
-        self.controlWidget.sigMcaControlGUISignal.connect(self.__anasignal)
-        self.controlWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
-        
-    def _toggleROI(self):
-        if self.roiDockWidget is None:
-            self.roiDockWidget = qt.QDockWidget(self)
-            self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
-            self.roiDockWidget.setWidget(self.controlWidget)
-            w = self.centralWidget().width()
-            h = self.centralWidget().height()
-            if w > 1.25*h:
-                self.addDockWidget(qt.Qt.RightDockWidgetArea,
-                                   self.roiDockWidget)
-            else:
-                self.addDockWidget(qt.Qt.BottomDockWidgetArea,
-                                   self.roiDockWidget)
-            if hasattr(self, "legendDockWidget"):
-                self.tabifyDockWidget(self.roiDockWidget,
-                                      self.legendDockWidget)
-            self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
-        if self.roiDockWidget.isHidden():
-            self.roiDockWidget.show()
-        else:
-            self.roiDockWidget.hide()
-
-    def _roiSignal(self, ddict):
-        return super(McaWindow, self)._roiSignal(ddict)
+        widget = self.centralWidget()
+        self.controlWidget = McaControlGUI.McaCalibrationControlGUI(widget)
+        widget.layout().addWidget(self.controlWidget)
+        self.controlWidget.sigMcaCalibrationControlGUISignal.connect(\
+                            self.__anasignal)
 
     def connections(self):
         #self.connect(self.scanfit,    qt.SIGNAL('ScanFitSignal') , self.__anasignal)
@@ -590,25 +565,22 @@ class McaWindow(ScanWindow.ScanWindow):
                 if dict['event'] == 'McaAdvancedFitFinished':
                     #get current limits
                     if self.calibration == 'None':
-                        xmin,xmax =self.graph.getx1axislimits()
+                        xmin, xmax =self.getGraphXLimits()
                         emin    = dict['result']['fittedpar'][0] + \
                                   dict['result']['fittedpar'][1] * xmin
                         emax    = dict['result']['fittedpar'][0] + \
                                   dict['result']['fittedpar'][1] * xmax
                     else:
-                        emin,emax = self.graph.getx1axislimits()
-                    ymin,ymax =self.graph.gety1axislimits()
-                    if QTVERSION < '4.0.0':
-                        self.controlWidget.calbox.setCurrentItem(options.index(legend))
-                    else:
-                        self.controlWidget.calbox.setCurrentIndex(options.index(legend))
+                        emin,emax = self.getGraphXLimits()
+                    ymin, ymax =self.getGraphYLimits()
+                    self.controlWidget.calbox.setCurrentIndex(options.index(legend))
                     self.calibration = legend
                     self.controlWidget._calboxactivated(legend)
-                    self.graph.sety1axislimits(ymin, ymax, False)
+                    self.setGraphYLimits(ymin, ymax, replot=False)
                     if emin < emax:
-                        self.graph.setx1axislimits(emin, emax, True)
+                        self.setGraphXLimits(emin, emax, replot=True)
                     else:
-                        self.graph.setx1axislimits(emax, emin, True)
+                        self.setGraphXLimits(emax, emin, replot=True)
             except:
                 self.refresh()
                 #self.graph.replot()
@@ -996,8 +968,9 @@ class McaWindow(ScanWindow.ScanWindow):
                     del self.dataObjectsDict[legend]
                     raise
         if replot:
-            self.replot()
+            #self.replot()
             self.resetZoom()
+        self.updateLegends()
 
     def _removeSelection(self, selectionlist):
         if DEBUG:
@@ -1052,144 +1025,94 @@ class McaWindow(ScanWindow.ScanWindow):
         self.dataObjectsList=self._curveList
         self._addSelection(selectionlist)
 
-    def _handleMarkerEvent(self, ddict):
-        if ddict['event'] == 'markerMoved':
-            label = ddict['label'] 
-            if label.startswith('ROI'):
-                return self._handleROIMarkerEvent(ddict)
-            else:
-                print("Unhandled marker %s" % label)
-                return
-
-    def _graphSignalReceived(self, ddict):
+    def graphCallback(self, ddict):
         if DEBUG:
-            print("_graphSignalReceived", ddict)
+            print("McaWindow._graphCallback", ddict)
         if ddict['event'] in ['markerMoved', 'markerSelected']:
             return self._handleMarkerEvent(ddict)
-        elif ddict['event'] == 'MouseAt':
+        elif ddict['event'] in ["mouseMoved", "MouseAt"]:
             if self.calibration == self.calboxoptions[0]:
-                self.xpos.setText('%.2f' % ddict['x'])
-                self.ypos.setText('%.2f' % ddict['y'])
+                self._xPos.setText('%.2f' % ddict['x'])
+                self._yPos.setText('%.2f' % ddict['y'])
             else:
-                self.xpos.setText('%.4f' % ddict['x'])
-                self.ypos.setText('%.2f' % ddict['y'])
-        elif ddict['event'] in ["curveClicked", "legendClicked", "SetActiveCurveEvent"]:
-            legend = ddict.get('label', None)
-            if legend is not None:
-                legend = self.getActiveCurve(just_legend=True)
-                if legend in self.dataObjectsDict.keys():
-                    x0 = self.dataObjectsDict[legend].x[0]
-                    y = self.dataObjectsDict[legend].y[0]
-                    #those are the actual data
-                    if str(self.getGraphXLabel()).upper() != "CHANNEL":
-                        #I have to get the energy
-                        A = self.controlWidget.calinfo.caldict['']['A']
-                        B = self.controlWidget.calinfo.caldict['']['B']
-                        C = self.controlWidget.calinfo.caldict['']['C']
-                        order = self.controlWidget.calinfo.caldict['']['order']
-                    else:
-                        A = 0.0
-                        B = 1.0
-                        C = 0.0
-                        order = 1
-                    calib = [A,B,C]
-                    if order == "TOF":
-                        x = calib[2] + calib[0] / pow(x0-calib[1],2)
-                    else:
-                        x = calib[0]+ \
-                            calib[1]* x0 + \
-                            calib[2]* x0 * x0
+                self._xPos.setText('%.4f' % ddict['x'])
+                self._yPos.setText('%.2f' % ddict['y'])
+        elif ddict['event'] in ["curveClicked", "legendClicked"]:
+            legend = ddict.get('legend', None)
+            legend = ddict.get('label', legend)
+            if legend is None:
+                if len(self.dataObjectsList):
+                    legend = self.dataObjectsList[0]
                 else:
-                    print("Should not be here, the legend is not in the dict")
                     return
-                #if self.roidict is None:
-                roiList, roiDict = self.roiWidget.getROIListAndDict()
-                if not len(x):
-                    #only zeros ...
-                    for i in range(len(roilist)):
-                        key = roiList[i]
-                        self.roidict[key]['rawcounts'] = 0.0
-                        self.roidict[key]['netcounts'] = 0.0
-                        #self.roidict[key]['from'  ] = 0.0
-                        #self.roidict[key]['to'    ] = 0.0
-                else:    
-                    for i in range(len(roiList)):
-                        key = roiList[i]
-                        if key == 'ICR':
-                            #take care of LLD
-                            #if len(x) > 3:
-                            #    fromdata = x[3]
-                            #else:
-                            fromdata = x[0]
-                            todata   = x[-1]
-                            #I profit to update ICR
-                            roiDict[key]['from'] = x[0]
-                            roiDict[key]['to'] = x[-1]
-                        else:
-                            fromdata = roiDict[key]['from']
-                            todata   = roiDict[key]['to']
-                        if roiDict[key]['type'].upper() != "CHANNEL":
-                            i1 = numpy.nonzero(x>=fromdata)[0]
-                            xw = numpy.take(x,i1)
-                        else:
-                            i1 = numpy.nonzero(x0>=fromdata)[0]
-                            xw = numpy.take(x0,i1)
-                        yw = numpy.take(y, i1)
-                        i1 = numpy.nonzero(xw<=todata)[0]
-                        xw = numpy.take(xw,i1)
-                        yw = numpy.take(yw,i1)
-                        counts = yw.sum()
-                        roiDict[key]['rawcounts'] = counts
-                        if len(yw):
-                            roiDict[key]['netcounts'] = counts - \
-                                                      len(yw) *  0.5 * (yw[0] + yw[-1])
-                        else:
-                            roiDict[key]['netcounts'] = 0
-                    self.emitCurrentROISignal()
-                self.roiWidget.setHeader(text="ROIs of %s" % (legend))
-                self.roiWidget.fillFromROIDict(roilist=roiList,
-                                               roidict=roiDict)
-                try:
-                    calib = self.getActiveCurve()[3]['McaCalib']
-                    self.controlWidget.calinfo.setParameters({'A':calib[0],'B':calib[1],'C':calib[2]})
-                except:
-                    self.controlWidget.calinfo.AText.setText("?????")
-                    self.controlWidget.calinfo.BText.setText("?????")
-                    self.controlWidget.calinfo.CText.setText("?????")
-            else:
-                    self.controlWidget.calinfo.AText.setText("?????")
-                    self.controlWidget.calinfo.BText.setText("?????")
-                    self.controlWidget.calinfo.CText.setText("?????")                
-                
-        elif ddict['event'] == "RemoveCurveEvent":
-            #WARNING this is to be called just from the graph!"
-            legend = ddict['legend']
-            self.graph.delcurve(legend)
-            if legend in self.dataObjectsDict:
-                del self.dataObjectsDict[legend]
-            self.graph.replot()
-            #I should generate an event to allow the controller
-            #to eventually inform other widgets
-        elif ddict['event'] == "RenameCurveEvent":
+            self.setActiveCurve(legend)
+        elif ddict['event'] == "renameCurveEvent":
             legend = ddict['legend']
             newlegend = ddict['newlegend']
             if legend in self.dataObjectsDict:
-                self.dataObjectsDict[newlegend]= copy.deepcopy(self.dataObjectsDict[legend])
+                self.dataObjectsDict[newlegend]= copy.deepcopy(\
+                                    self.dataObjectsDict[legend])
                 self.dataObjectsDict[newlegend].info['legend'] = newlegend
-                self.graph.delcurve(legend)
-                self.graph.newCurve(self.dataObjectsDict[newlegend].info['legend'],
-                                    self.dataObjectsDict[newlegend].x[0],
-                                    self.dataObjectsDict[newlegend].y[0])
+                self.removeCurve(legend)
+                self.addCurve(self.dataObjectsDict[newlegend].x[0],
+                              self.dataObjectsDict[newlegend].y[0],
+                              legend=newlegend,
+                              info=self.dataObjectsDict[newlegend].info['legend'])
                 if legend in self.caldict:
                     self.caldict[newlegend] = copy.deepcopy(self.caldict[legend])
                 del self.dataObjectsDict[legend]
-            self.graph.replot()
-        elif ddict['event'] == "MouseClick":
-            print("MouseClick not implemented any more")
+            self.replot()
         else:
-            if DEBUG:
-                print("Unhandled event %s" % dict['event'])
+            super(McaWindow, self).graphCallback(ddict)
+            return
+        self.sigPlotSignal.emit(ddict)
 
+    def setActiveCurve(self, legend=None):
+        if legend is None:
+            legend = self.getActiveCurve(just_legend=True)
+        if legend is None:
+            self.controlWidget.calinfo.AText.setText("?????")
+            self.controlWidget.calinfo.BText.setText("?????")
+            self.controlWidget.calinfo.CText.setText("?????")
+            return
+        if legend in self.dataObjectsDict.keys():
+            x0 = self.dataObjectsDict[legend].x[0]
+            y = self.dataObjectsDict[legend].y[0]
+            #those are the actual data
+            if str(self.getGraphXLabel()).upper() != "CHANNEL":
+                #I have to get the energy
+                A = self.controlWidget.calinfo.caldict['']['A']
+                B = self.controlWidget.calinfo.caldict['']['B']
+                C = self.controlWidget.calinfo.caldict['']['C']
+                order = self.controlWidget.calinfo.caldict['']['order']
+            else:
+                A = 0.0
+                B = 1.0
+                C = 0.0
+                order = 1
+            calib = [A,B,C]
+            if order == "TOF":
+                x = calib[2] + calib[0] / pow(x0-calib[1],2)
+            else:
+                x = calib[0]+ \
+                    calib[1]* x0 + \
+                    calib[2]* x0 * x0
+        else:
+            print("Should not be here")
+            return
+        try:
+            info = self.getCurve(legend)[3]
+            calib = info['McaCalib']
+            self.controlWidget.calinfo.setParameters({'A':calib[0],
+                                                'B':calib[1],
+                                                'C':calib[2]})
+        except KeyError:
+            self.controlWidget.calinfo.AText.setText("?????")
+            self.controlWidget.calinfo.BText.setText("?????")
+            self.controlWidget.calinfo.CText.setText("?????")
+        super(McaWindow, self).setActiveCurve(legend)
+
+        
     def _customFitSignalReceived(self, ddict):
         if ddict['event'] == "FitFinished":
             newDataObject = self.__customFitDataObject
@@ -1904,10 +1827,6 @@ class McaWindow(ScanWindow.ScanWindow):
         else:
             self._addSelection(sel_list, replot=replot)
 
-    def printGraph(self):
-        #super(ScanWindow.ScanWindow, self).printGraph()
-        super(McaWindow, self).printGraph()
-
     def refresh(self):
         activeCurve = self.getActiveCurve(just_legend=True)
         sellist = []
@@ -1930,8 +1849,7 @@ def test():
     y =  10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400)
     w.addCurve(x, y, legend="dummy", replot=True, replace=True)
     w.resetZoom()
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     w.show()
     app.exec_()
 
