@@ -98,10 +98,6 @@ class McaWindow(ScanWindow.ScanWindow):
         self.caldict={}
         self.calwidget   =  None
         self.currentROI = None
-        self.roimarkers     = [-1,-1]
-        self._middleRoiMarker = -1
-        self._middleRoiMarkerFlag = False
-        self.elementmarkers = []
         self.peakmarker     = None
         self.dataObjectsDict = {}
         if specfit is None:
