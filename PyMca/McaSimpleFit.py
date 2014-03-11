@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,13 +31,10 @@ from PyMca import SpecfitGUI
 from PyMca import Specfit
 
 class McaSimpleFit(qt.QWidget):
+    sigMcaSimpleFitSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="McaSimpleFit", specfit=None,fl=0): 
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self, parent, name,fl)
-            self.setCaption(name)
-        else:
-            qt.QWidget.__init__(self, parent)
-            self.setWindowTitle(name)
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle(name)
         if specfit is None:
             self.specfit = Specfit.Specfit()
         else:
@@ -76,17 +73,10 @@ class McaSimpleFit(qt.QWidget):
         self.fitbutton.setText("Fit Again!")
         self.dismissbutton = qt.QPushButton(hbox)
         self.dismissbutton.setText("Dismiss")        
-        self.connect(self.estimatebutton,qt.SIGNAL("clicked()"),self.estimate)
-        self.connect(self.fitbutton,    qt.SIGNAL("clicked()"),self.fit)
-        self.connect(self.dismissbutton,qt.SIGNAL("clicked()"),self.dismiss)
-        if QTVERSION < '4.0.0':
-            self.connect(self.specfitGUI,
-                         qt.PYSIGNAL('SpecfitGUISignal') ,
-                         self.__anasignal)
-        else:
-            self.connect(self.specfitGUI,
-                         qt.SIGNAL('SpecfitGUISignal') ,
-                         self.__anasignal)
+        self.estimatebutton.clicked[()].connect(self.estimate)
+        self.fitbutton.clicked[()].connect(self.fit)
+        self.dismissbutton.clicked[()].connect(self.dismiss)
+        self.specfitGUI.sigSpecfitGUISignal.connect(self.__anasignal)
         hs2 = qt.HorizontalSpacer(hbox)
         hboxLayout.addWidget(hs1)
         hboxLayout.addWidget(self.estimatebutton)
@@ -149,6 +139,9 @@ class McaSimpleFit(qt.QWidget):
         fitconfig.update(self.specfit.fitconfig)
         self.specfitGUI.updateGUI(configuration=fitconfig)
         self.specfitGUI.estimate() 
+
+    def _emitSignal(self, ddict):
+        self.sigMcaSimpleFitSignal.emit(ddict)       
     
     def __anasignal(self,ddict):
         if type(ddict) != type({}):
@@ -164,10 +157,7 @@ class McaSimpleFit(qt.QWidget):
                     ndict['text' ] = h+ddict['text']
                     ndict['info' ] = {}
                     ndict['info'].update(self.info)
-                    if QTVERSION < '4.0.0':
-                        self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(ndict,))
-                    else:
-                        self.emit(qt.SIGNAL('McaSimpleFitSignal'), ndict)
+                    self.sigMcaSimpleFitSignal.emit(ndict)
             if ddict['event'] == "McaModeChanged":
                 if ddict['data']:
                     self.estimatebutton.hide()
@@ -180,10 +170,7 @@ class McaSimpleFit(qt.QWidget):
                     #write the simple fit output in a form acceptable by McaWindow
                     ddict['event'] = 'McaFitFinished'
                     ddict['data'] = [self.specfitGUI.specfit.mcagetresult()]
-                if QTVERSION < '4.0.0':
-                    self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(ddict,))
-                else:
-                    self.emit(qt.SIGNAL('McaSimpleFitSignal'), ddict)
+                self.sigMcaSimpleFitSignal.emit(ddict)
         
     def dismiss(self):
         self.close()
@@ -191,10 +178,7 @@ class McaSimpleFit(qt.QWidget):
     def closeEvent(self, event):
         ddict = {}
         ddict["event"] = "McaSimpleFitClosed"
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaSimpleFitSignal'),(ddict,))
-        else:
-            self.emit(qt.SIGNAL('McaSimpleFitSignal'), ddict)
+        self.sigMcaSimpleFitSignal.emit(ddict)
         return qt.QWidget.closeEvent(self, event)
         
     def __htmlheader(self):
@@ -301,10 +285,5 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     demo = McaSimpleFit()
-    if QTVERSION < '4.0.0':
-        app.setMainWidget(demo)
-        demo.show()
-        app.exec_loop()
-    else:
-        demo.show()
-        app.exec_()
+    demo.show()
+    app.exec_()

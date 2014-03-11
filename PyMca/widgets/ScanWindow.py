@@ -138,9 +138,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         if fit:
             from PyMca import SimpleFitGUI
             self.customFit = SimpleFitGUI.SimpleFitGUI()
-            self.connect(self.scanFit,
-                         qt.SIGNAL('ScanFitSignal') ,
-                         self._scanFitSignalReceived)
+            self.scanFit.sigScanFitSignal.connect(self._scanFitSignalReceived)
             self.connect(self.customFit,
                          qt.SIGNAL('SimpleFitSignal') ,
                          self._customFitSignalReceived)

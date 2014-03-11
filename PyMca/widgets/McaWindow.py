@@ -123,8 +123,10 @@ class McaWindow(ScanWindow.ScanWindow):
 
         if 1:
             self.fitButtonMenu = qt.QMenu()
-            self.fitButtonMenu.addAction(QString("Simple"),    self.mcaSimpleFitSignal)
-            self.fitButtonMenu.addAction(QString("Advanced") , self.mcaAdvancedFitSignal)
+            self.fitButtonMenu.addAction(QString("Simple"),
+                                         self.mcaSimpleFitSignal)
+            self.fitButtonMenu.addAction(QString("Advanced") ,
+                                         self.mcaAdvancedFitSignal)
             #self.fitButtonMenu.addAction(QString("Simple Fit"),
             #                       self._simpleFitSignal)
             #self.fitButtonMenu.addAction(QString("Customized Fit") ,
@@ -140,12 +142,63 @@ class McaWindow(ScanWindow.ScanWindow):
 
     def connections(self):
         #self.connect(self.scanfit,    qt.SIGNAL('ScanFitSignal') , self.__anasignal)
-        self.connect(self.simplefit,  qt.SIGNAL('McaSimpleFitSignal') , self.__anasignal)
+        self.simplefit.sigMcaSimpleFitSignal.connect(self.__anasignal)
         self.advancedfit.sigMcaAdvancedFitSignal.connect(self.__anasignal)
         #self.connect(self.scanwindow, qt.SIGNAL('ScanWindowSignal') ,   self.__anasignal)
 
-    def mcaSimpleFitSignal(self, ddict):
-        print(ddict)
+    def mcaSimpleFitSignal(self):
+        legend = self.getActiveCurve(just_legend=True)
+        if legend is None:
+           msg = qt.QMessageBox(self)
+           msg.setIcon(qt.QMessageBox.Critical)
+           msg.setText("Please Select an active curve")
+           msg.setWindowTitle('MCA Window')
+           msg.exec_()
+           return
+        x, y, legend, info = self.getCurve(legend)[:4]
+        self.advancedfit.hide()
+        self.simplefit.show()
+        self.simplefit.setFocus()
+        self.simplefit.raise_()
+        if info is not None:
+            xmin, xmax = self.getGraphXLimits()
+            self.__simplefitcalmode = self.calibration
+            curveinfo = info
+            if self.calibration == 'None':
+                calib = [0.0,1.0,0.0]
+            else:
+                if 'McaCalib' in curveinfo:
+                    calib = curveinfo['McaCalib']
+                else:
+                    calib = [0.0, 1.0, 0.0]
+            self.__simplefitcalibration = calib
+            calibrationOrder = curveinfo.get('McaCalibOrder',2)
+            if calibrationOrder == 'TOF':
+                x = calib[2] + calib[0] / pow(x-calib[1],2)
+            else:
+                x = calib[0] + calib[1] * x + calib[2] * x * x
+            self.simplefit.setdata(x=x,y=y,
+                                    xmin=xmin,
+                                    xmax=xmax,
+                                    legend=legend)
+            """
+            if self.specfit.fitconfig['McaMode']:
+                self.specfitGUI.guiparameters.fillfromfit(self.specfit.paramlist,
+                                    current='Region 1')
+                self.specfitGUI.guiparameters.removeallviews(keep='Region 1')
+            else:
+                self.specfitGUI.guiparameters.fillfromfit(self.specfit.paramlist,
+                                        current='Fit')
+                self.specfitGUI.guiparameters.removeallviews(keep='Fit')
+            """
+            if self.specfit.fitconfig['McaMode']:
+                self.simplefit.fit()
+        else:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error. Trying to fit fitted data?")
+                msg.setWindowTitle('MCA Window')
+                msg.exec_()
 
     def getActiveCurve(self, just_legend=False):
         legend = super(McaWindow, self).getActiveCurve(just_legend)
@@ -685,9 +738,9 @@ class McaWindow(ScanWindow.ScanWindow):
 
         elif dict['event'] == 'McaSimpleFitClosed':
             if self.peakmarker is not None:
-                self.graph.removeMarker(self.peakmarker)
+                self.removeMarker(self.peakmarker)
             self.peakmarker = None
-            self.graph.replot()
+            self.replot()
         elif dict['event'] == 'ScanFitPrint':
             self.printHtml(dict['text'])
 

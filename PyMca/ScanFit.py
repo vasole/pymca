@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,13 +33,11 @@ QTVERSION = qt.qVersion()
 
 
 class ScanFit(qt.QWidget):
+    sigScanFitSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="ScanFit", specfit=None, fl=0):
                 #fl=qt.Qt.WDestructiveClose):
         qt.QWidget.__init__(self, parent)
-        if QTVERSION < '4.0.0':
-            self.setCaption(name)
-        else:
-            self.setWindowTitle(name)
+        self.setWindowTitle(name)
 
         if specfit is None:
             self.specfit = Specfit.Specfit()
@@ -83,8 +81,6 @@ class ScanFit(qt.QWidget):
 
         self.specfitGUI.guiconfig.MCACheckBox.setEnabled(1)
         palette = self.specfitGUI.guiconfig.MCACheckBox.palette()
-        if QTVERSION < '4.0.0':
-            palette.setDisabled(palette.active())
         ##############
         hbox = qt.QWidget(self)
         hboxlayout = qt.QHBoxLayout(hbox)
@@ -100,17 +96,10 @@ class ScanFit(qt.QWidget):
 
         self.dismissbutton = qt.QPushButton(hbox)
         self.dismissbutton.setText("Dismiss")
-        self.connect(self.estimatebutton, qt.SIGNAL("clicked()"), self.estimate)
-        self.connect(self.fitbutton, qt.SIGNAL("clicked()"), self.fit)
-        self.connect(self.dismissbutton, qt.SIGNAL("clicked()"), self.dismiss)
-        if QTVERSION < '4.0.0':
-            self.connect(self.specfitGUI,
-                         qt.PYSIGNAL('SpecfitGUISignal') ,
-                         self._specfitGUISignal)
-        else:
-            self.connect(self.specfitGUI,
-                         qt.SIGNAL('SpecfitGUISignal') ,
-                         self._specfitGUISignal)
+        self.estimatebutton.clicked[()].connect(self.estimate)
+        self.fitbutton.clicked[()].connect(self.fit)
+        self.dismissbutton.clicked[()].connect(self.dismiss)
+        self.specfitGUI.sigSpecfitGUISignal.connect(self._specfitGUISignal)
         hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxlayout.addWidget(self.dismissbutton)
         layout.addWidget(self.headerlabel)
@@ -189,19 +178,13 @@ class ScanFit(qt.QWidget):
                     ndict['text' ] = h + ddict['text']
                     ndict['info' ] = {}
                     ndict['info'].update(self.info)
-                    if QTVERSION < '4.0.0':
-                        self.emit(qt.PYSIGNAL('ScanFitSignal'), (ndict,))
-                    else:
-                        self.emit(qt.SIGNAL('ScanFitSignal'), ndict)
+                    self.sigScanFitSignal.emit(ndict)
             else:
                 if self.info is None:
                     self.info = {}
                 ddict['info'] = {}
                 ddict['info'].update(self.info)
-                if QTVERSION < '4.0.0':
-                    self.emit(qt.PYSIGNAL('ScanFitSignal'), (ddict,))
-                else:
-                    self.emit(qt.SIGNAL('ScanFitSignal'), ddict)
+                self.sigScanFitSignal.emit(ddict)
 
     def dismiss(self):
         self.close()
@@ -342,18 +325,12 @@ class ScanFit(qt.QWidget):
         self.specfit.configure(**fitconfig)
         self.specfitGUI.updateGUI(configuration=fitconfig)
 
-
 def main():
     app = qt.QApplication([])
     w = ScanFit()
-    qt.QObject.connect(app, qt.SIGNAL("lasWindowClosed()"),
-                       app, qt.SLOT("quit()"))
+    app.lasWindowClosed.connect(app.quit)
     w.show()
-    if QTVERSION < '4.0.0':
-        app.setMainWidget(w)
-        app.exec_loop()
-    else:
-        app.exec_()
+    app.exec_()
 
 if __name__ == "__main__":
     main()
