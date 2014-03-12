@@ -152,10 +152,10 @@ class McaWindow(ScanWindow.ScanWindow):
            msg = qt.QMessageBox(self)
            msg.setIcon(qt.QMessageBox.Critical)
            msg.setText("Please Select an active curve")
-           msg.setWindowTitle('MCA Window')
+           msg.setWindowTitle('MCA Window Simple Fit')
            msg.exec_()
            return
-        x, y, legend, info = self.getCurve(legend)[:4]
+        x, y, info = self.getDataAndInfoFromLegend(legend)
         self.advancedfit.hide()
         self.simplefit.show()
         self.simplefit.setFocus()
@@ -197,7 +197,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error. Trying to fit fitted data?")
-                msg.setWindowTitle('MCA Window')
+                msg.setWindowTitle('MCA Window Simple Fit')
                 msg.exec_()
 
     def getActiveCurve(self, just_legend=False):
@@ -237,6 +237,22 @@ class McaWindow(ScanWindow.ScanWindow):
         info['ylabel'] = self.getGraphYLabel()
         return x, y, legend, info
 
+    def getDataAndInfoFromLegend(self, legend):
+        xdata    = None
+        ydata    = None
+        info = None
+        if legend in self.dataObjectsDict.keys():
+            info  = self.dataObjectsDict[legend].info
+            xdata = self.dataObjectsDict[legend].x[0]
+            ydata = self.dataObjectsDict[legend].y[0]
+        else:
+            info = None
+            xdata    = None
+            ydata    = None
+        return xdata, ydata, info
+
+
+
     def mcaAdvancedFitSignal(self):
         legend = self.getActiveCurve(just_legend=True)
         if legend is None:
@@ -246,13 +262,17 @@ class McaWindow(ScanWindow.ScanWindow):
             msg.setWindowTitle('MCA Window')
             msg.exec_()
             return
-        x, y, legend, info = self.getActiveCurve()
+
+        x, y, info = self.getDataAndInfoFromLegend(legend)
+        curveinfo = self.getCurve(legend)[3]
+        xmin,xmax = self.getGraphXLimits()
         if self.calibration == 'None':
-            xmin, xmax =self.getGraphXLimits()
-            calib = info.get('McaCalibSource', [0.0,1.0,0.0])
+            if 'McaCalibSource' in curveinfo:
+                calib = curveinfo['McaCalibSource']
+            else:
+                calib = [0.0,1.0,0.0]
         else:
-            calib = info['McaCalib']
-            xmin, xmax =self.getGraphXLimits()
+            calib = curveinfo['McaCalib']
             energy = calib[0] + calib[1] * x + calib[2] * x * x
             i1 = min(numpy.nonzero(energy >= xmin)[0])
             i2 = max(numpy.nonzero(energy <= xmax)[0])
@@ -264,7 +284,6 @@ class McaWindow(ScanWindow.ScanWindow):
         self.advancedfit.show()
         self.advancedfit.setFocus()
         self.advancedfit.raise_()
-
         if info is not None:
             xlabel = 'Channel'
             self.advancedfit.setData(x=x,y=y,
@@ -280,7 +299,7 @@ class McaWindow(ScanWindow.ScanWindow):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Error. Trying to fit fitted data?")
             msg.exec_()
-
+        return
         
     def __anasignal(self,dict):
         if DEBUG:
@@ -300,7 +319,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg.exec_()
                     return
                 else:
-                    x, y, legend, info = self.getCurve(legend)[:4]
+                    x, y, info = self.getDataAndInfoFromLegend(legend)
                     if info is None:
                         return
                     ndict = {}
@@ -328,8 +347,7 @@ class McaWindow(ScanWindow.ScanWindow):
                                                              x=x,
                                                              y=y,
                                                              modal=1,
-                                                             caldict=ndict,
-                                                             fl=0)
+                                                             caldict=ndict)
                     #info,x,y = self.getinfodatafromlegend(legend)
                     #caldialog.graph.newCurve("fromlegend",x=x,y=y)
                     ret = caldialog.exec_()
@@ -360,7 +378,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     msg.exec_()
                     return
                 else:
-                    x, y, legend, info = self.getCurve(legend)[:4]
+                    x, y, info = self.getDataAndInfoFromLegend(legend)
                     if info is None:
                         return
                     ndict=copy.deepcopy(self.caldict)
@@ -668,13 +686,13 @@ class McaWindow(ScanWindow.ScanWindow):
                     #self.graph.newCurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
             legend = legend0 + " SFit"            
             if legend in self.dataObjectsDict.keys():
-                if legend in self.graph.curves.keys():                    
+                if legend in self.getAllCurves(just_legend=True):
                     if mcamode:
                         if not ('baseline' in self.dataObjectsDict[legend].info):
-                            self.graph.delcurve(legend)
+                            self.removeCurve(legend)
                     else:
                         if 'baseline' in self.dataObjectsDict[legend].info:
-                            self.graph.delcurve(legend)
+                            self.removeCurve(legend)
             #copy the original info from the curve
             newDataObject = DataObject.DataObject()
             newDataObject.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
@@ -1216,9 +1234,215 @@ class McaWindow(ScanWindow.ScanWindow):
         self.__QSimpleOperation("custom_fit")
 
     def _saveIconSignal(self):
-        if DEBUG:
-            print("_saveIconSignal")
-        self.__QSimpleOperation("save")
+        legend = self.getActiveCurve(just_legend=True)
+        if legend is None:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Please Select an active curve")
+            msg.setWindowTitle('MCA window')
+            msg.exec_()
+            return
+        #get outputfile
+        self.outputDir = PyMcaDirs.outputDir
+        if self.outputDir is None:
+            self.outputDir = os.getcwd()
+            wdir = os.getcwd()
+        elif os.path.exists(self.outputDir):
+            wdir = self.outputDir
+        else:
+            self.outputDir = os.getcwd()
+            wdir = self.outputDir
+           
+        outfile = qt.QFileDialog(self)
+        outfile.setWindowTitle("Output File Selection")
+        outfile.setModal(1)
+        format_list = ['Specfile MCA  *.mca',
+                       'Specfile Scan *.dat',
+                       'Raw ASCII  *.txt',
+                       '";"-separated CSV *.csv',
+                       '","-separated CSV *.csv',
+                       '"tab"-separated CSV *.csv',
+                       'OMNIC CSV *.csv',
+                       'Widget PNG *.png',
+                       'Widget JPG *.jpg']
+        if self.outputFilter is None:
+            self.outputFilter = format_list[0]
+        if MATPLOTLIB:
+            format_list.append('Graphics PNG *.png')
+            format_list.append('Graphics EPS *.eps')
+            format_list.append('Graphics SVG *.svg')
+            
+        outfile.setFilters(format_list)
+        outfile.selectFilter(self.outputFilter)
+        outfile.setFileMode(outfile.AnyFile)
+        outfile.setAcceptMode(outfile.AcceptSave)
+        outfile.setDirectory(wdir)
+        ret = outfile.exec_()
+        if ret:
+            self.outputFilter = qt.safe_str(outfile.selectedFilter())
+            filterused = self.outputFilter.split()
+            filetype  = filterused[1]
+            extension = filterused[2]
+            outdir=qt.safe_str(outfile.selectedFiles()[0])
+            try:            
+                self.outputDir  = os.path.dirname(outdir)
+                PyMcaDirs.outputDir = os.path.dirname(outdir) 
+            except:
+                self.outputDir  = "."
+            try:            
+                outputFile = os.path.basename(outdir)
+            except:
+                outputFile  = outdir
+            outfile.close()
+            del outfile
+        else:
+            # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
+            outfile.close()
+            del outfile
+            return
+
+        #get active curve
+        x, y, info = self.getDataAndInfoFromLegend(legend)
+        if info is None:
+            return
+
+        ndict = {}
+        ndict[legend] = {'order':1,'A':0.0,'B':1.0,'C':0.0}
+        if self.getGraphXLabel().upper() == "CHANNEL":
+            if legend in self.caldict:
+                ndict[legend].update(self.caldict[legend])
+                if abs(ndict[legend]['C']) > 0.0:
+                    ndict[legend]['order']  = 2    
+            elif 'McaCalib' in info:
+                if type(info['McaCalib'][0]) == type([]):
+                    calib = info['McaCalib'][0]
+                else:
+                    calib = info['McaCalib']
+                if len(calib) > 1:
+                    ndict[legend]['A'] = calib[0]
+                    ndict[legend]['B'] = calib[1]
+                    if len(calib) >2:
+                        ndict[legend]['order']  = 2
+                        ndict[legend]['C']      = calib[2]
+        else:
+            #I have to get current plot energy
+            A = self.controlWidget.calinfo.caldict['']['A']
+            B = self.controlWidget.calinfo.caldict['']['B']
+            C = self.controlWidget.calinfo.caldict['']['C']
+            order = self.controlWidget.calinfo.caldict['']['order']
+            ndict[legend] = {'order':order,'A':A,'B':B,'C':C}
+
+        #I should have x, y, caldict
+        """ 
+        caldialog = McaCalWidget.McaCalWidget(legend=legend,
+                                                 x=x,
+                                                 y=y,
+                                                 modal=1,
+                                                 caldict=ndict,
+                                                 fl=0)
+        """
+        #always overwrite for the time being
+        if not outputFile.endswith(extension[1:]):
+            outputFile += extension[1:]
+        specFile = os.path.join(self.outputDir, outputFile)
+        try:
+            os.remove(specFile)
+        except:
+            pass
+        systemline = os.linesep
+        os.linesep = '\n'
+        if filterused[0].upper() == "WIDGET":
+            fformat = specFile[-3:].upper()
+            pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
+            if not pixmap.save(specFile, fformat):
+                qt.QMessageBox.critical(self,
+                        "Save Error",
+                        "%s" % "I could not save the file\nwith the desired format")
+            return
+
+        if MATPLOTLIB:
+            try:
+                if specFile[-3:].upper() in ['EPS', 'PNG', 'SVG']:
+                    self.graphicsSave(specFile)
+                    return
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
+                msg.exec_()
+                return
+
+        try:
+            ffile = open(specFile,'wb')
+        except IOError:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+            msg.exec_()
+            return
+        systemline = os.linesep
+        os.linesep = '\n'
+        #This was giving problems on legends with a leading b
+        #legend = legend.strip('<b>')
+        #legend = legend.strip('<\b>')
+        try:
+            if filetype == 'Scan':
+                ffile.write("#F %s\n" % specFile)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("\n")
+                ffile.write("#S 1 %s\n" % legend)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("#N 3\n")
+                ffile.write("#L channel  counts  energy\n")
+                energy = ndict[legend]['A'] + ndict[legend]['B'] * x + ndict[legend]['C'] * x * x
+                for i in range(len(y)):
+                    ffile.write("%.7g  %.7g  %.7g\n" % (x[i], y[i], energy[i]))
+                ffile.write("\n")
+            elif filetype == 'ASCII':
+                energy = ndict[legend]['A'] + \
+                         ndict[legend]['B'] * x + \
+                         ndict[legend]['C'] * x * x
+                for i in range(len(y)):
+                   ffile.write("%.7g  %.7g  %.7g\n" % (x[i], y[i], energy[i]))
+            elif filetype == 'CSV':
+                if "," in filterused[0]:
+                    csv = ","
+                elif ";" in filterused[0]:
+                    csv = ";"
+                elif "OMNIC" in filterused[0]:
+                    csv = ","
+                else:
+                    csv = "\t"                
+                energy = ndict[legend]['A'] + \
+                         ndict[legend]['B'] * x + \
+                         ndict[legend]['C'] * x * x
+                if "OMNIC" in filterused[0]:
+                    for i in range(len(y)):
+                        ffile.write("%.7E%s%.7E\n" % \
+                               (energy[i], csv, y[i]))
+                else:
+                    ffile.write('"channel"%s"counts"%s"energy"\n' % (csv, csv))
+                    for i in range(len(y)):
+                        ffile.write("%.7E%s%.7E%s%.7E\n" % \
+                               (x[i], csv, y[i], csv, energy[i]))
+            else:
+                ffile.write("#F %s\n" % specFile)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("\n")
+                ffile.write("#S 1 %s\n" % legend)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("#@MCA %16C\n")
+                ffile.write("#@CHANN %d %d %d 1\n" %  (len(y), x[0], x[-1]))
+                ffile.write("#@CALIB %.7g %.7g %.7g\n" % (ndict[legend]['A'],
+                                                         ndict[legend]['B'],
+                                                         ndict[legend]['C']))
+                ffile.write(self.array2SpecMca(y))
+                ffile.write("\n")
+            ffile.close()
+        except:
+            os.linesep = systemline
+            raise
+        return
         
     def _averageIconSignal(self):
         if DEBUG:
