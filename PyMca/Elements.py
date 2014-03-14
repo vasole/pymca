@@ -2215,7 +2215,7 @@ def getmassattcoef(compound, energy=None):
     for ele in elts:
         xcom_data = getelementmassattcoef(ele,None)
         #now I have to interpolate at the different energies
-        if (type(energy) != type([])):
+        if not hasattr(energy, "__len__"):
             energy =[energy]
         eneindex = 0
         for ene in energy:
@@ -2730,7 +2730,7 @@ def getelementmassattcoef(ele,energy=None):
     ddict['photo']    = []
     ddict['pair']     = []
     ddict['total']    = []
-    if (type(energy) != type([])):
+    if not hasattr(energy, "__len__"):
         energy =[energy]
     for ene in energy:
         if ene < 1.0:
