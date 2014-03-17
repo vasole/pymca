@@ -604,7 +604,7 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
         scene  = self.scene()
         rect = parent.rect()
         self._x = rect.x()
-        self._y = rect.x()
+        self._y = rect.y()
         self._w = rect.width()
         self._h = rect.height()
         self._ratio = self._w /self._h
