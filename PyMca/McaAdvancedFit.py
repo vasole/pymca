@@ -501,6 +501,7 @@ class McaAdvancedFit(qt.QWidget):
         if not justupdate:
             self.plot()
 
+
         self._updateTop()
         if self.concentrationsWidget is not None:
             try:
@@ -596,7 +597,7 @@ class McaAdvancedFit(qt.QWidget):
         for key in delcurves:
             self.graph.removeCurve(key)
         self.plot()
-
+        
         if DEBUG:
             self.mcafit.configure(config)
         else:
@@ -876,11 +877,10 @@ class McaAdvancedFit(qt.QWidget):
     def __togglePeaksSpectrum(self):
         if self.peaksSpectrumButton.isChecked():
             self.peaksSpectrum()
-            self.plot()
         else:
             self.__clearPeaksSpectrum()
-            self.plot()
-
+        self.plot()
+        
     def __clearPeaksSpectrum(self):
         delcurves = []
         for key in self.graph.getAllCurves(just_legend=True):
@@ -891,7 +891,8 @@ class McaAdvancedFit(qt.QWidget):
                 else:
                     delcurves.append(key)
         for key in delcurves:
-            self.graph.removeCurve(key)
+            self.graph.removeCurve(key, replot=False)
+        
 
     def matrixSpectrum(self):
         if not self.__fitdone:
@@ -1750,6 +1751,7 @@ class McaAdvancedFit(qt.QWidget):
                 xdata.shape= [len(xdata),]
                 ydata.shape= [len(ydata),]
                 self.graph.addCurve(xdata, ydata, legend="Data", replot=True, replace=True)
+                self.graph.updateLegends()
                 return
             else:
                 ddict = self.dict
@@ -1814,11 +1816,12 @@ class McaAdvancedFit(qt.QWidget):
                                         replot=False)
                 else:
                     if group in curveList:
-                        self.graph.removeCurve(label)
+                        self.graph.removeCurve(label, replot=False)
         else:
             self.__clearPeaksSpectrum()
 
         self.graph.replot()
+        self.graph.updateLegends()
 
     def _saveGraph(self, dict=None):
         curves = self.graph.curves.keys()
