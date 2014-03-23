@@ -104,8 +104,8 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         if item[2] not in ['mesh', 'hklmesh']:
             raise ValueError("Active curve does not seem to be a mesh scan")
 
-        self._xLabel = self.getGraphXTitle()
-        self._yLabel = self.getGraphYTitle()
+        self._xLabel = self.getGraphXLabel()
+        self._yLabel = self.getGraphYLabel()
 
         self._motor0Mne = item[3]
         self._motor1Mne = item[7]

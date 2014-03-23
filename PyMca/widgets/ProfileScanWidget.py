@@ -37,7 +37,8 @@ class ProfileScanWidget(ScanWindow.ScanWindow):
             self._buildActionsBox()
 
     def _buildActionsBox(self):
-        self.labelBox = qt.QWidget(self)
+        widget = self.centralWidget()
+        self.labelBox = qt.QWidget(widget)
         self.labelBox.mainLayout = qt.QHBoxLayout(self.labelBox)
 
         self.labelLabel = qt.QLabel(self.labelBox)
@@ -65,13 +66,11 @@ class ProfileScanWidget(ScanWindow.ScanWindow):
         self.replaceButton.setToolTip("Replace curves in destination widget")
         self.buttonBoxLayout.addWidget(self.replaceButton)
         
-        self.mainLayout.addWidget(buttonBox)
-        self.connect(self.addButton, qt.SIGNAL("clicked()"), 
-                    self._addClicked)
-        self.connect(self.removeButton, qt.SIGNAL("clicked()"), 
-                    self._removeClicked)
-        self.connect(self.replaceButton, qt.SIGNAL("clicked()"), 
-                    self._replaceClicked)
+        #self.mainLayout.addWidget(buttonBox)
+        widget.layout().addWidget(buttonBox)
+        self.addButton.clicked.connect(self._addClicked)
+        self.removeButton.clicked.connect(self._removeClicked)
+        self.replaceButton.clicked.connect(self._replaceClicked)
 
     def _addClicked(self):
         if DEBUG:
