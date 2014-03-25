@@ -860,7 +860,7 @@ class QStackWidget(StackBase.StackBase,
         legend = self.__getLegend()
         if self.normalizeButton.isChecked():
             legend += "/"
-            curves = self.mcaWidget.graph.curves.keys()
+            curves = self.mcaWidget.getAllCurves(just_legend=True)
             for curve in curves:
                 if curve.startswith(legend):
                     legend = curve
