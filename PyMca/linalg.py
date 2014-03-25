@@ -1,4 +1,4 @@
-#    Copyright (c) 2018-2013 V.A. Sole, ESRF
+#    Copyright (c) 2008-2014 V.A. Sole, ESRF
 #
 #   Permission to use and redistribute the source code or binary forms of
 #   this software and its documentation, with or without modification is
@@ -52,7 +52,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         the least-squares solution is calculated for each of the `K` columns
         of `b`.
     sigma_b : uncertainties on the b values or None. If sigma_b has shape (M,) or (M, 1) and
-              b has dimension (M, K), teh uncertainty will be the same for all spectra.
+              b has dimension (M, K), the uncertainty will be the same for all spectra.
 
     weight: 0 - No data weighting.
                 If required, uncertainties will be calculated using either the
@@ -158,7 +158,6 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         # assume all the uncertainties equal to 1
         fastest = True
         w = numpy.ones(b.shape, numpy.float)
-
     if covariances:
         covarianceMatrix = numpy.zeros((b_shape[1], n, n), numpy.float)
 
