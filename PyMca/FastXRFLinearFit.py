@@ -49,7 +49,7 @@ class FastXRFLinearFit(object):
 
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
-                           ysum=None):
+                           ysum=None, weight=None):
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
 
@@ -73,14 +73,45 @@ class FastXRFLinearFit(object):
             else:
                 raise RuntimeError("Please use the faster SNIP background")
 
+        toReconfigure = False
+        if weight is None:
+            # dictated by the file
+            weight = config['fit']['fitweight']
+            if weight:
+                # individual pixel weights (slow)
+                weightPolicy = 2
+            else:
+                # No weight
+                weightPolicy = 0
+        elif weight == 1:
+            # use average weight from the sum spectrum
+            weightPolicy = 1
+            if not config['fit']['fitweight']:
+                 config['fit']['fitweight'] = 1
+                 toReconfigure = True               
+        elif weight == 2:
+           # individual pixel weights (slow)
+            weightPolicy = 2
+            if not config['fit']['fitweight']:
+                 config['fit']['fitweight'] = 1
+                 toReconfigure = True
+            weight = 1
+        else:
+            # No weight
+            weightPolicy = 0
+            if config['fit']['fitweight']:
+                 config['fit']['fitweight'] = 0
+                 toReconfigure = True
+            weight = 0
+
         if not config['fit']['linearfitflag']:
             #make sure we force a linear fit
             config['fit']['linearfitflag'] = 1
- 
-            # and now re configure the fit
-            self._mcaTheory.setConfiguration(config)
+            toReconfigure = True
 
-        weight = config['fit']['fitweight']
+        if toReconfigure: 
+            # we must configure again the fit
+            self._mcaTheory.setConfiguration(config)
 
         if hasattr(y, "info") and hasattr(y, "data"):
             data = y.data
@@ -101,6 +132,20 @@ class FastXRFLinearFit(object):
             nColumns = data.shape[1]
             nPixels =  nRows * nColumns
             if ysum is not None:
+                firstSpectrum = ysum
+            elif weightPolicy == 1:
+                # we need to calculate the sum spectrum to derive the uncertainties
+                totalSpectra = data.shape[0] * data.shape[1]
+                jStep = min(5000, data.shape[1])
+                ysum = numpy.zeros((data.shape[mcaIndex],), numpy.float)
+                for i in range(0, data.shape[0]):
+                    if i == 0:
+                        chunk = numpy.zeros((data.shape[0], jStep), numpy.float)
+                    jStart = 0
+                    while jStart < data.shape[1]:
+                        jEnd = min(jStart + jStep, data.shape[1])
+                        ysum += data[i, jStart:jEnd, :].sum(axis=0, dtype=numpy.float)
+                        jStart = jEnd
                 firstSpectrum = ysum
             elif not concentrations:
                 # just one spectrum is enough for the setup
@@ -212,10 +257,16 @@ class FastXRFLinearFit(object):
             t0 = time.time()
         totalSpectra = data.shape[0] * data.shape[1]
         jStep = min(100, data.shape[1])
-        if weight:
+        if weightPolicy == 2:
             SVD = False
+            sigma_b = None
+        elif weightPolicy == 1:
+            # the +1 is to prevent misbehavior due to weights less than 1.0
+            sigma_b = 1 + numpy.sqrt(dummySpectrum)/nPixels
+            SVD = True
         else:
             SVD = True
+            sigma_b = None
         last_svd = None
         for i in range(0, data.shape[0]):
             #print(i)
@@ -253,6 +304,7 @@ class FastXRFLinearFit(object):
                 #print(derivatives.shape)
                 #print(chunk[:,:(jEnd - jStart)].shape)
                 ddict=lstsq(derivatives, chunk[:,:(jEnd - jStart)],
+                            sigma_b=sigma_b,
                             weight=weight,
                             digested_output=True,
                             svd=SVD,
@@ -349,6 +401,7 @@ class FastXRFLinearFit(object):
                                                        0)
                     spectra[k] -= background
                 ddict = lstsq(A, spectra,
+                              sigma_b=sigma_b,
                               weight=weight,
                               digested_output=True,
                               svd=SVD)

@@ -188,12 +188,17 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         fitConfigurationFile = self._parameters['configuration']
         concentrations = self._parameters['concentrations']
         self.fitInstance.setFitConfigurationFile(fitConfigurationFile)
+        weightPolicy = self._parameters['weight_policy']
+        if weightPolicy:
+            # force calculation of the unnormalized sum spectrum
+            spectrum = None                
         if stack.x in [None, []]:
             x = None
         else:
             x = stack.x[0]
         result = self.fitInstance.fitMultipleSpectra(x=x,
                                                      y=stack,
+                                                     weight=weightPolicy,
                                                      concentrations=concentrations,
                                                      ysum=spectrum)
         return result
