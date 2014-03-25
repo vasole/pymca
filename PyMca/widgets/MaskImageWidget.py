@@ -1239,7 +1239,7 @@ class MaskImageWidget(qt.QWidget):
             self.getPixmapFromData()
             self.__pixmap0 = self.__pixmap.copy()
         self.__applyMaskToImage()
-        
+
         self.graphWidget.graph.addImage(self.__pixmap,
                                         "image",
                                         xScale = self._xScale,

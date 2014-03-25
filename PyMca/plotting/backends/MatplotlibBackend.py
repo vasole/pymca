@@ -578,6 +578,12 @@ class MatplotlibGraph(FigureCanvas):
         self._zoomRect = None
         self._xmin, self._xmax  = self.ax.get_xlim()
         self._ymin, self._ymax  = self.ax.get_ylim()
+        # deal with inverted axis
+        if self._ymin > self._ymax:
+            tmpValue = self._ymin
+            self._ymin = self._ymax
+            self._ymax = tmpValue
+        
         if self.ax.get_aspect() != 'auto':
             self._ratio = (self._ymax - self._ymin) / (self._xmax - self._xmin)
 
@@ -746,7 +752,6 @@ class MatplotlibGraph(FigureCanvas):
                 self._x1 = self._xmin
             elif self._x1 > self._xmax:
                 self._x1 = self._xmax
-     
             if self._y1 < self._ymin:
                 self._y1 = self._ymin
             elif self._y1 > self._ymax:
@@ -1018,7 +1023,10 @@ class MatplotlibGraph(FigureCanvas):
         if (xmin2 != 0) or (xmax2 != 1):
             xmin = min(xmin, xmin2)
             xmax = max(xmax, xmax2)
-        self.setLimits(xmin, xmax, ymin, ymax)
+        if self.ax.yaxis_inverted():
+            self.setLimits(xmin, xmax, ymax, ymin)
+        else:
+            self.setLimits(xmin, xmax, ymin, ymax)        
         #self.ax2.set_autoscaley_on(True)
         self._zoomStack = []
 
@@ -1860,7 +1868,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             picker = None
         shape = data.shape 
-            
         if 0:
             # this supports non regularly spaced coordenates!!!!
             x = xmin + numpy.arange(w) * xScale[1] 
