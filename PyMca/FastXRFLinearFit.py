@@ -162,24 +162,6 @@ class FastXRFLinearFit(object):
         # print("firstShape = ", firstSpectrum.shape)
         self._mcaTheory.setData(x=x, y=firstSpectrum, xmin=xmin, xmax=xmax)
 
-        #loop for anchors
-        if config['fit']['stripflag']:
-            anchorslist = []
-            if config['fit']['stripanchorsflag']:
-                if config['fit']['stripanchorslist'] is not None:
-                    ravelled = numpy.ravel(self._mcaTheory.xdata)
-                    for channel in config['fit']['stripanchorslist']:
-                        if channel <= ravelled[0]:
-                            continue
-                        index = numpy.nonzero(ravelled >= channel)[0]
-                        if len(index):
-                            index = min(index)
-                            if index > 0:
-                                anchorslist.append(index)
-            if len(anchorslist) == 0:
-                anchorlist = [0, self._mcaTheory.ydata.size - 1]
-            anchorslist.sort()
-
         # and initialize the derivatives
         self._mcaTheory.estimate()
         
@@ -280,9 +262,9 @@ class FastXRFLinearFit(object):
                 jEnd = min(jStart + jStep, data.shape[1])
                 chunk[:,:(jEnd - jStart)] = data[i, jStart:jEnd, iXMin:iXMax+1].T
                 if config['fit']['stripflag']:
-                    for k in range(chunk.shape[0]):
+                    for k in range(jStep):
                         # obtain the smoothed spectrum
-                        background=SpecfitFuns.SavitskyGolay(chunk[k], 
+                        background=SpecfitFuns.SavitskyGolay(chunk[:, k], 
                                                 config['fit']['stripfilterwidth'])
                         lastAnchor = 0
                         for anchor in anchorslist:
@@ -297,7 +279,7 @@ class FastXRFLinearFit(object):
                                     SpecfitFuns.snip1d(background[lastAnchor:],
                                                        config['fit']['snipwidth'],
                                                        0)
-                        chunk[k] -= background
+                        chunk[:, k] -= background
 
                 # perform the multiple fit to all the spectra in the chunk
                 #print("SHAPES")
@@ -382,9 +364,9 @@ class FastXRFLinearFit(object):
                 spectra = spectra.T
                 # 
                 if config['fit']['stripflag']:
-                    for k in range(spectra.shape[0]):
+                    for k in range(spectra.shape[1]):
                         # obtain the smoothed spectrum
-                        background=SpecfitFuns.SavitskyGolay(spectra[k], 
+                        background=SpecfitFuns.SavitskyGolay(spectra[:, k], 
                                                 config['fit']['stripfilterwidth'])
                         lastAnchor = 0
                         for anchor in anchorslist:
@@ -399,7 +381,7 @@ class FastXRFLinearFit(object):
                                     SpecfitFuns.snip1d(background[lastAnchor:],
                                                        config['fit']['snipwidth'],
                                                        0)
-                    spectra[k] -= background
+                    spectra[:, k] -= background
                 ddict = lstsq(A, spectra,
                               sigma_b=sigma_b,
                               weight=weight,
