@@ -76,6 +76,24 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._concentrationsBox.setChecked(False)
         self._concentrationsBox.setEnabled(True)
 
+        # weight method
+        self._weightWidget = qt.QWidget(self)
+        self._weightWidget.mainLayout = qt.QHBoxLayout(self._weightWidget)
+        self._weightWidget.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self._weightWidget.mainLayout.setSpacing(0)
+        self._weightButtonGroup = qt.QButtonGroup(self._weightWidget)
+        i = 0
+        weightLabel = qt.QLabel(self)
+        weightLabel.setText("Weight policy: ")
+        for txt in ["No Weight (Fastest)", "Average Weight (Fast)", "Individual Weights (slow)"]:
+            button = qt.QRadioButton(self._weightWidget)
+            button.setText(txt)
+            self._weightButtonGroup.addButton(button)
+            self._weightButtonGroup.setId(button, i)
+            self._weightWidget.mainLayout.addWidget(button)
+            i += 1
+        self._weightButtonGroup.buttons()[0].setChecked(True)
+        #self._weightWidget.mainLayout.addWidget(qt.HorizontalSpacer(self._weightWidget))
 
         self.mainLayout.addWidget(configLabel, 0, 0)
         self.mainLayout.addWidget(self._configLine, 0, 1)
@@ -85,7 +103,9 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self.mainLayout.addWidget(self._outButton, 1, 2)
         self.mainLayout.addWidget(fileLabel, 2, 0)
         self.mainLayout.addWidget(self._fileLine, 2, 1)
-        self.mainLayout.addWidget(self._concentrationsBox, 3, 0, 1, 2)
+        self.mainLayout.addWidget(self._concentrationsBox, 4, 0, 1, 2)
+        self.mainLayout.addWidget(weightLabel, 3, 0)
+        self.mainLayout.addWidget(self._weightWidget, 3, 1, 1, 1)
 
     def sizeHint(self):
         return qt.QSize(int(1.8 * qt.QWidget.sizeHint(self).width()),
@@ -116,6 +136,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
             ddict['concentrations'] = 1
         else:
             ddict['concentrations'] = 0
+        ddict['weight_policy'] = self._weightButtonGroup.checkedId()
         return ddict
         
 class FastXRFLinearFitDialog(qt.QDialog):
@@ -138,7 +159,7 @@ class FastXRFLinearFitDialog(qt.QDialog):
         self.rejectButton.clicked.connect(self.reject)
         self.acceptButton.clicked.connect(self.accept)
         
-        self.mainLayout.addWidget(self.parametersWidget, 0, 0, 5, 5)
+        self.mainLayout.addWidget(self.parametersWidget, 0, 0, 5, 4)
         self.mainLayout.addWidget(self.rejectButton, 6, 1)
         self.mainLayout.addWidget(self.acceptButton, 6, 2)
 
