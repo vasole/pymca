@@ -1006,7 +1006,10 @@ class MatplotlibGraph(FigureCanvas):
 
     def setLimits(self, xmin, xmax, ymin, ymax):
         self.ax.set_xlim(xmin, xmax)
-        self.ax.set_ylim(ymin, ymax)
+        if self.ax.yaxis_inverted():
+            self.ax.set_ylim(ymax, ymin)
+        else:
+            self.ax.set_ylim(ymin, ymax)
         # Next line forces a square display region
         #self.ax.set_aspect((xmax-xmin)/float(ymax-ymin))
         self.xmin = xmin
@@ -1023,10 +1026,7 @@ class MatplotlibGraph(FigureCanvas):
         if (xmin2 != 0) or (xmax2 != 1):
             xmin = min(xmin, xmin2)
             xmax = max(xmax, xmax2)
-        if self.ax.yaxis_inverted():
-            self.setLimits(xmin, xmax, ymax, ymin)
-        else:
-            self.setLimits(xmin, xmax, ymin, ymax)        
+        self.setLimits(xmin, xmax, ymin, ymax)        
         #self.ax2.set_autoscaley_on(True)
         self._zoomStack = []
 
@@ -1389,14 +1389,22 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         Get the graph X (bottom) limits.
         :return:  Minimum and maximum values of the X axis
         """
-        return self.ax.get_xlim()
+        vmin, vmax = self.ax.get_xlim()
+        if vmin > vmax:
+            return vmax, vmin
+        else:
+            return vmin, vmax
 
     def getGraphYLimits(self):
         """
         Get the graph Y (left) limits.
         :return:  Minimum and maximum values of the Y axis
         """
-        return self.ax.get_ylim()
+        vmin, vmax = self.ax.get_ylim()
+        if vmin > vmax:
+            return vmax, vmin
+        else:
+            return vmin, vmax
 
     def getWidgetHandle(self):
         """
