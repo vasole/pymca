@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -570,7 +570,7 @@ class QNexusWidget(qt.QWidget):
                 if DEBUG:
                     print("Unhandled item type: %s" % ddict['dtype'])
 
-    def buttonsSlot(self, ddict):
+    def buttonsSlot(self, ddict, emit=True):
         if self.data is None:
             return
         action, selectionType = ddict['action'].split()
@@ -634,6 +634,9 @@ class QNexusWidget(qt.QWidget):
                     addLegend = " %s" % aliases[yCnt]
                 sel['legend'] += addLegend
                 selectionList.append(sel)
+
+        if not emit:
+            return selectionList
         self._lastAction = "%s" % ddict['action']
         if len(selectionList):
             if selectionType.upper() in ["SCAN", "MCA"]:
@@ -647,6 +650,12 @@ class QNexusWidget(qt.QWidget):
                 self.emit(qt.SIGNAL("removeSelection"), selectionList)
             if action.upper() == "REPLACE":
                 self.emit(qt.SIGNAL("replaceSelection"), selectionList)
+
+    def currentSelectionList(self):
+        ddict={}
+        ddict['event'] = 'buttonClicked'
+        ddict['action'] = 'ADD DUMMY'
+        return self.buttonsSlot(ddict, emit=False)
 
     def getSelectedEntries(self):
         return self.hdf5Widget.getSelectedEntries()

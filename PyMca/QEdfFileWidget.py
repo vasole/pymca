@@ -1264,7 +1264,7 @@ class QEdfFileWidget(qt.QWidget):
             else:
                 self.emit(qt.SIGNAL("replaceSelection"), signalsellist)
 
-    def _add2DClicked(self, replace=False):
+    def _add2DClicked(self, replace=False, emit=True):
         if DEBUG:
             print("ADD 2D clicked")
         if (self.data is None) or \
@@ -1287,10 +1287,13 @@ class QEdfFileWidget(qt.QWidget):
         sel['mcaselection']  = False
         sel['scanselection'] = False
         sel['selection'] = None
-        if replace:
-            self.emit(qt.SIGNAL("replaceSelection"), [sel])
+        if emit:
+            if replace:
+                self.emit(qt.SIGNAL("replaceSelection"), [sel])
+            else:
+                self.emit(qt.SIGNAL("addSelection"), [sel])
         else:
-            self.emit(qt.SIGNAL("addSelection"), [sel])
+            return [sel]
 
     def _remove2DClicked(self):
         if DEBUG:
@@ -1316,7 +1319,13 @@ class QEdfFileWidget(qt.QWidget):
             print("REPLACE 2D clicked")
         self._add2DClicked(replace=True)
 
-    def _addClicked(self):
+    def currentSelectionList(self):
+        a = self._addClicked(emit=False)
+        if a in [None, []]:
+            a = self._add2DClicked(emit=False)
+        return a
+
+    def _addClicked(self, emit=True):
         if DEBUG:
             print("select clicked")
         selkeys= self.__getSelectedKeys()
@@ -1378,11 +1387,15 @@ class QEdfFileWidget(qt.QWidget):
                 self.setSelected(sellist,reset=1)
             else:
                 self.setSelected(sellist,reset=0)
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("addSelection"), (sellistsignal,))
+            if emit:
+                if QTVERSION < '4.0.0':
+                    self.emit(qt.PYSIGNAL("addSelection"), (sellistsignal,))
+                else:
+                    self.emit(qt.SIGNAL("addSelection"), sellistsignal)
             else:
-                self.emit(qt.SIGNAL("addSelection"), sellistsignal)
-            
+                return sellistsignal
+
+
     def __getSelectedKeys(self):
         selkeys= []
         parwid= self.paramWidget

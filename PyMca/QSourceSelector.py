@@ -35,7 +35,7 @@ from PyMca import PyMcaDirs
 DEBUG = 0
 
 class QSourceSelector(qt.QWidget):
-    def __init__(self, parent=None, filetypelist=None):
+    def __init__(self, parent=None, filetypelist=None, pluginsIcon=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout= qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -63,51 +63,37 @@ class QSourceSelector(qt.QWidget):
         self.fileCombo.setEditable(0)
         self.mapCombo= {}
         openButton= qt.QToolButton(self.fileWidget)
-        if QTVERSION < '4.0.0':
-            self.openIcon= qt.QIconSet(qt.QPixmap(icons.fileopen))
-            self.closeIcon= qt.QIconSet(qt.QPixmap(icons.fileclose))
-            self.specIcon= qt.QIconSet(qt.QPixmap(icons.spec))
-            self.reloadIcon = qt.QIconSet(qt.QPixmap(icons.reload_))
-            openButton.setIconSet(self.openIcon)
-            openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
-            closeButton= qt.QToolButton(self.fileWidget)
-            closeButton.setIconSet(self.closeIcon)
-            specButton= qt.QToolButton(self.fileWidget)
-            specButton.setIconSet(self.specIcon)
-            refreshButton= qt.QToolButton(self.fileWidget)
-            refreshButton.setIconSet(self.reloadIcon)
-        else:
-            self.openIcon   = qt.QIcon(qt.QPixmap(icons.fileopen))
-            self.closeIcon  = qt.QIcon(qt.QPixmap(icons.fileclose))
-            self.reloadIcon = qt.QIcon(qt.QPixmap(icons.reload_))
-            self.specIcon   = qt.QIcon(qt.QPixmap(icons.spec))
 
-            openButton.setIcon(self.openIcon)
-            openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
-            openButton.setToolTip("Open new file data source")
+        self.openIcon   = qt.QIcon(qt.QPixmap(icons.fileopen))
+        self.closeIcon  = qt.QIcon(qt.QPixmap(icons.fileclose))
+        self.reloadIcon = qt.QIcon(qt.QPixmap(icons.reload_))
+        self.specIcon   = qt.QIcon(qt.QPixmap(icons.spec))
 
-            closeButton= qt.QToolButton(self.fileWidget)
-            closeButton.setIcon(self.closeIcon)
-            closeButton.setToolTip("Close current data source")
+        openButton.setIcon(self.openIcon)
+        openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
+        openButton.setToolTip("Open new file data source")
 
-            refreshButton= qt.QToolButton(self.fileWidget)
-            refreshButton.setIcon(self.reloadIcon)
-            refreshButton.setToolTip("Refresh data source")
+        closeButton= qt.QToolButton(self.fileWidget)
+        closeButton.setIcon(self.closeIcon)
+        closeButton.setToolTip("Close current data source")
 
-            specButton= qt.QToolButton(self.fileWidget)
-            specButton.setIcon(self.specIcon)
-            specButton.setToolTip("Open new shared memory source")
+        refreshButton= qt.QToolButton(self.fileWidget)
+        refreshButton.setIcon(self.reloadIcon)
+        refreshButton.setToolTip("Refresh data source")
+
+        specButton= qt.QToolButton(self.fileWidget)
+        specButton.setIcon(self.specIcon)
+        specButton.setToolTip("Open new shared memory source")
 
         closeButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
         specButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
         refreshButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
 
-        self.connect(openButton, qt.SIGNAL("clicked()"), self._openFileSlot)
-        self.connect(closeButton, qt.SIGNAL("clicked()"), self.closeFile)
-        self.connect(refreshButton, qt.SIGNAL("clicked()"),
-                         self._reload)
+        openButton.clicked.connect(self._openFileSlot)
+        closeButton.clicked.connect(self.closeFile)
+        refreshButton.clicked.connect(self._reload)
             
-        self.connect(specButton, qt.SIGNAL("clicked()"), self.openSpec)
+        specButton.clicked.connect(self.openSpec)
         self.connect(self.fileCombo, qt.SIGNAL("activated(const QString &)"),
                                                      self._fileSelection)
 
@@ -118,6 +104,11 @@ class QSourceSelector(qt.QWidget):
         if sys.platform == "win32":specButton.hide()
         fileWidgetLayout.addWidget(refreshButton)
         self.specButton = specButton
+        if pluginsIcon:
+            self.pluginsButton = qt.QToolButton(self.fileWidget)
+            self.pluginsButton.setIcon(qt.QIcon(qt.QPixmap(icons.plugin)))
+            self.pluginsButton.setToolTip("Plugin handling")
+            fileWidgetLayout.addWidget(self.pluginsButton)
         self.mainLayout.addWidget(self.fileWidget)
 
     def _reload(self):

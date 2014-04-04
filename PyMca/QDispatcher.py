@@ -36,7 +36,7 @@ from PyMca import QDataSource
 DEBUG = 0
 
 class QDispatcher(qt.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, pluginsIcon=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -54,7 +54,12 @@ class QDispatcher(qt.QWidget):
             fileTypeList.append("HDF5 Files (*.nxs *.hdf *.h5 *.hdf5)")
         fileTypeList.append("All Files (*)")
         
-        self.sourceSelector = QSourceSelector.QSourceSelector(self, filetypelist=fileTypeList)
+        self.sourceSelector = QSourceSelector.QSourceSelector(self,
+                                    filetypelist=fileTypeList,
+                                    pluginsIcon=pluginsIcon)
+        if pluginsIcon:
+            self.sourceSelector.pluginsButton.clicked.connect(self._pluginsClicked)
+            self.pluginsCallback = None
         self.selectorWidget = {}
         self.tabWidget = qt.QTabWidget(self)
         
@@ -292,6 +297,27 @@ class QDispatcher(qt.QWidget):
             ddict['SourceName'] = None
         ddict['event'] = "SourceTypeChanged"
         self.emit(qt.SIGNAL("otherSignals"), ddict)
+
+    def _pluginsClicked(self):
+        ddict = {}
+        value = self.tabWidget.currentIndex()
+        text = str(self.tabWidget.tabText(value))
+        ddict['SourceType'] = text
+        if self.selectorWidget[text].data is not None:
+            ddict['SourceType'] = self.selectorWidget[text].data.sourceType
+            ddict['SourceName'] = self.selectorWidget[text].data.sourceName
+        else:
+            ddict['SourceName'] = None
+        print(ddict)
+        print("===========================")
+        for source in self.sourceList:
+            print(source)
+            print(source.sourceType)
+            sourceType = source.sourceType
+            print(self.selectorWidget[sourceType].currentSelectionList())
+
+        if self.pluginsCallback is not None:
+            self.pluginsCallback(info)
 
 
 def test():

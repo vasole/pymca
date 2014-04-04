@@ -512,7 +512,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             ddict = event.dict
             self._dataInfoClosed(ddict)
 
-    def _addClicked(self):
+    def _addClicked(self, emit=True):
         if DEBUG:
             print("Overwritten _addClicked method")
 
@@ -570,10 +570,15 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                             # but I let the data source to rise it.
                             pass
                     sel_list.append(sel)
+        if emit:
+            if len(sel_list):
+                self.emit(qt.SIGNAL("addSelection"), sel_list)
+        else:
+            return sel_list
 
-        if len(sel_list):
-            self.emit(qt.SIGNAL("addSelection"), sel_list)
-        
+    def currentSelectionList(self):
+        return self._addClicked(emit=False)
+
 
     def _removeClicked(self):
         if DEBUG:

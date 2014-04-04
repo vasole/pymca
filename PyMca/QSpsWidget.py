@@ -561,7 +561,7 @@ class QSpsWidget(qt.QWidget):
         butLayout.addWidget(replaceButton)
         butLayout.setContentsMargins(5, 5, 5, 5)
 
-        self.connect(addButton, qt.SIGNAL("clicked()"), self.__addClicked)
+        self.connect(addButton, qt.SIGNAL("clicked()"), self._addClicked)
         self.connect(replaceButton, qt.SIGNAL("clicked()"), self.__replaceClicked)
         self.connect(removeButton, qt.SIGNAL("clicked()"), self.__removeClicked)
 
@@ -871,7 +871,10 @@ class QSpsWidget(qt.QWidget):
             else:
                 self.emit(qt.SIGNAL("replaceSelection"), sellistsignal)
 
-    def __addClicked(self):
+    def currentSelectionList(self):
+        return self._addCliked(emit = False)
+
+    def _addClicked(self, emit=True):
         if DEBUG:
             print("select clicked")
         selkeys= self.__getSelectedKeys()
@@ -976,11 +979,14 @@ class QSpsWidget(qt.QWidget):
                 self.setSelected([sel],reset=1)
             else:
                 self.setSelected([sel],reset=0)
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("addSelection"), (sellistsignal,))
+            if emit:
+                if QTVERSION < '4.0.0':
+                    self.emit(qt.PYSIGNAL("addSelection"), (sellistsignal,))
+                else:
+                    self.emit(qt.SIGNAL("addSelection"),  sellistsignal)
             else:
-                self.emit(qt.SIGNAL("addSelection"),  sellistsignal)
-            
+                return sellistsignal
+
     def __getSelectedKeys(self):
         selkeys= []
         if QTVERSION < '4.0.0':
