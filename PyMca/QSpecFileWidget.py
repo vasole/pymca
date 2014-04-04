@@ -713,6 +713,17 @@ def test():
             sys.exit(0)
     w.setData(d) 
     w.show()
+    def mySlot(selection):
+        print(selection)
+        try:
+            # this is only for "addSelection"
+            print(d.getDataObject(selection[0]['Key'], selection[0]['selection']))
+        except:
+            pass
+        return
+    qt.QObject.connect(w, qt.SIGNAL("addSelection"), mySlot)
+    qt.QObject.connect(w, qt.SIGNAL("removeSelection"), mySlot)
+    qt.QObject.connect(w, qt.SIGNAL("replaceSelection"), mySlot)
     a.lastWindowClosed.connect(a.quit)
 
     a.exec_()
