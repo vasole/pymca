@@ -48,7 +48,7 @@ class testElements(unittest.TestCase):
             self.dataDir = PyMcaDataDir.PYMCA_DATA_DIR
         except:
             self.dataDir = None
-        from PyMca5 import Elements
+        from PyMca5.PyMcaPhysics import Elements
         self._elements = Elements
 
     def testDataDirectoryPresence(self):
@@ -106,7 +106,7 @@ class testElements(unittest.TestCase):
         if DEBUG:
             print()
             print("Test XCOM Cross Sections Readout")
-        from PyMca5 import specfile
+        from PyMca5.PyMcaIO import specfile
         xcomFile = os.path.join(self.dataDir, 'XCOM_CrossSections.dat')
         sf = specfile.Specfile(xcomFile)
         for ele in ['Si', 'Fe', 'Pb', 'U']:

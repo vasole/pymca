@@ -59,7 +59,7 @@ class testSpecfilewrapper(unittest.TestCase):
     def testSpecfilewrapperImport(self):
         #"""Test successful import"""
         self.assertTrue(self.specfileClass is not None,
-                        'Unsuccessful PyMca.specfilewrapper import')
+                        'Unsuccessful PyMca5.PyMcaIO.specfilewrapper import')
 
     def testSpecfilewrapperReading(self):
         #"""Test specfile readout"""

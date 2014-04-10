@@ -56,23 +56,13 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import os
-try:
-    from PyMca5 import StackPluginBase
-    from PyMca5 import PyMcaQt as qt
-    from PyMca5.PyMcaIO import EDFStack
-    from PyMca5 import PyMcaFileDialogs
-    from PyMca5 import StackPluginResultsWindow
-    from PyMca5 import ExternalImagesWindow
-    import PyMca.PyMca_Icons as PyMca_Icons
-except ImportError:
-    print("ExternalImagesWindow importing from somewhere else")
-    import StackPluginBase
-    import PyMcaQt as qt
-    import EDFStack
-    import PyMcaFileDialogs
-    import StackPluginResultsWindow
-    import ExternalImagesWindow
-    import PyMca_Icons
+from PyMca5 import StackPluginBase
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaIO import EDFStack
+from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui import StackPluginResultsWindow
+from PyMca5.PyMcaGui import ExternalImagesWindow
+from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 DEBUG = 0
 class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):

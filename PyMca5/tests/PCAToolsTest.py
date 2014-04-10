@@ -28,10 +28,10 @@ except:
 
 class testPCATools(unittest.TestCase):
     def testPCAToolsImport(self):
-        from PyMca5 import PCATools
+        from PyMca5.PyMcaMath.mva import PCATools
 
     def testPCAToolsCovariance(self):
-        from PyMca5.PCATools import getCovarianceMatrix
+        from PyMca5.PyMcaMath.mva.PCATools import getCovarianceMatrix
         x = numpy.array([[0.0,  2.0,  3.0],
                          [3.0,  0.0, -1.0],
                          [4.0, -4.0,  4.0],
@@ -77,7 +77,7 @@ class testPCATools(unittest.TestCase):
             self.assertTrue(nData == nSpectra)
 
     def testPCAToolsPCA(self):
-        from PyMca5.PCATools import numpyPCA
+        from PyMca5.PyMcaMath.mva.PCATools import numpyPCA
         x = numpy.array([[0.0,  2.0,  3.0],
                          [3.0,  0.0, -1.0],
                          [4.0, -4.0,  4.0],
@@ -119,7 +119,7 @@ class testPCATools(unittest.TestCase):
 
     if MDP:
         def testPCAToolsMDP(self):
-            from PyMca5.PCATools import getCovarianceMatrix, numpyPCA
+            from PyMca5.PyMcaMath.mva.PCATools import getCovarianceMatrix, numpyPCA
             x = numpy.array([[0.0,  2.0,  3.0],
                              [3.0,  0.0, -1.0],
                              [4.0, -4.0,  4.0],

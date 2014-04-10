@@ -60,12 +60,12 @@ import os
 import numpy
 import time
 from PyMca5 import StackPluginBase
-from PyMca5 import FastXRFLinearFit
-from PyMca5 import FastXRFLinearFitWindow
-from PyMca5 import CalculationThread
-from PyMca5 import StackPluginResultsWindow
-import PyMca.PyMca_Icons as PyMca_Icons
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaPhysics import FastXRFLinearFit
+from PyMca5.PyMcaGui import FastXRFLinearFitWindow
+from PyMca5.PyMcaGui import CalculationThread
+from PyMca5.PyMcaGui import StackPluginResultsWindow
+from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import ArraySave
 
 DEBUG = 0

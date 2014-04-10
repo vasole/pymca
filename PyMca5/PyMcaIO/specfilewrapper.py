@@ -28,11 +28,7 @@ import os
 import sys
 import numpy
 import re
-try:
-    from PyMca5 import specfile
-except ImportError:
-    print("specfilewrapper importting specfile directly")
-    import specfile
+from PyMca5.PyMcaIO import specfile
 from PyMca5.PyMcaIO import Fit2DChiFileParser
 from PyMca5.PyMcaIO import APSMEDFileParser
 from PyMca5.PyMcaIO import SRSFileParser

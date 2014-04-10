@@ -57,9 +57,9 @@ class testData(unittest.TestCase):
 
     def testDataDirectoryPresence(self):
         self.assertTrue(self._importSuccess,
-                        'Unsuccessful PyMca.PyMcaDataDir import')
+                        'Unsuccessful PyMca5.PyMcaDataDir import')
         self.assertTrue(self.dataDir is not None,
-                        'Unassigned PyMca.PyMcaDataDir.PYMCA_DATA_DIR')
+                        'Unassigned PyMca5.PyMcaDataDir.PYMCA_DATA_DIR')
         self.assertTrue(os.path.exists(self.dataDir),
                         'Directory "%s" does not exist' % self.dataDir)
         self.assertTrue(os.path.isdir(self.dataDir),

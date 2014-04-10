@@ -1,1 +1,1 @@
-from .xrf import McaAdvancedFit
+from .xrf import McaAdvancedFit, FastXRFLinearFitWindow

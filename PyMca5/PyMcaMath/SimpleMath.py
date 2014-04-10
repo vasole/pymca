@@ -25,12 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 import numpy
-try:
-    from PyMca5 import SGModule
-except ImportError:
-    print("SimpleMath importing SGModule directly")
-    import SGModule
-    
+from . import SGModule
+
 class SimpleMath(object):
     def derivate(self,xdata,ydata, xlimits=None):
         x=numpy.array(xdata, copy=False, dtype=numpy.float)

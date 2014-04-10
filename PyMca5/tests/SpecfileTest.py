@@ -28,7 +28,7 @@ class testSpecfile(unittest.TestCase):
         import the module
         """
         try:
-            from PyMca5 import specfile
+            from PyMca5.PyMcaIO import specfile
             self.specfileClass = specfile
         except:
             self.specfileClass = None

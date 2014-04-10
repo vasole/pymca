@@ -19,12 +19,12 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __license__ = "LGPL"
 import os
 import numpy
-from PyMca.linalg import lstsq
-from PyMca5 import ClassMcaTheory
-from PyMca5 import Gefit
-from PyMca5 import ConcentrationsTool
-from PyMca5 import SpecfitFuns
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaMath.linalg import lstsq
+from . import ClassMcaTheory
+from PyMca5.PyMcaMath.fitting import Gefit
+from . import ConcentrationsTool
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
+from PyMca5.PyMcaIO import ConfigDict
 import time
 
 DEBUG = 0
