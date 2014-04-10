@@ -29,10 +29,10 @@ import os
 import sys
 import numpy
 import copy
-from PyMca5 import Elements
-from PyMca5 import SpecfitFuns
-from PyMca5 import ConfigDict
-from PyMca5 import Gefit
+from . import Elements
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
+from PyMca5.PyMcaIO import ConfigDict
+from PyMca5.PyMcaMath.fitting import Gefit
 from PyMca5 import PyMcaDataDir
 DEBUG = 0
 #"python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory.dat --continuum=0 --strip=1 --sumflag=1 --maxiter=4"

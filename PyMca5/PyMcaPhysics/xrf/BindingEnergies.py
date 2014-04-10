@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -28,11 +28,7 @@ __revision__ = "$Revision: 1.2 $"
 
 import os
 import numpy
-try:
-    from PyMca5 import specfile
-except ImportError:
-    print("BindingEnergies.py is importing specfile from local directory")
-    import specfile
+from PyMca5.PyMcaIO import specfile
 
 # PyMcaDataDir is created at installation time in setup.py
 from PyMca5 import PyMcaDataDir

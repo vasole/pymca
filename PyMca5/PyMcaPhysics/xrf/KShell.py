@@ -28,12 +28,7 @@ __revision__ = "$Revision: 1.5 $"
 
 import os
 import numpy
-try:
-    from PyMca5 import specfile
-except ImportError:
-    #this is needed for frozen versions
-    print("KShell.py is importing specfile from local directory")
-    import specfile
+from PyMca5.PyMcaIO import specfile
 from PyMca5 import PyMcaDataDir
 
 dirname   = PyMcaDataDir.PYMCA_DATA_DIR

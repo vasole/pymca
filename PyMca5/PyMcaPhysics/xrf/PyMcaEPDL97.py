@@ -20,7 +20,7 @@ __doc__= "Interface to the PyMca EPDL97 description"
 import os
 import sys
 try:
-    from PyMca5 import specfile
+    from PyMca5.PyMcaIO import specfile
 except ImportError:
     #this is needed for frozen versions
     print("PyMcaEPDL97.py is importing specfile from local directory")

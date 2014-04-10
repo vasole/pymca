@@ -26,7 +26,7 @@
 #############################################################################*/
 import sys
 import os
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import PyMcaDataDir
 
 dict = ConfigDict.ConfigDict()

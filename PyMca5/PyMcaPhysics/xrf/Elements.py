@@ -24,10 +24,10 @@ import numpy
 import re
 import weakref
 import types
-from PyMca5 import ConfigDict
-from PyMca5 import CoherentScattering
-from PyMca5 import IncoherentScattering
-from PyMca5 import PyMcaEPDL97
+from PyMca5.PyMcaIO import ConfigDict
+from . import CoherentScattering
+from . import IncoherentScattering
+from . import PyMcaEPDL97
 from PyMca5 import PyMcaDataDir
 
 """
@@ -159,15 +159,15 @@ ElementsInfo = [
 ]
 ElementList= [ elt[0] for elt in ElementsInfo ]
 
-from PyMca5 import BindingEnergies
+from . import BindingEnergies
 ElementShells = BindingEnergies.ElementShells[1:]
 ElementBinding = BindingEnergies.ElementBinding
 
-from PyMca5 import KShell
-from PyMca5 import LShell
-from PyMca5 import MShell
+from . import KShell
+from . import LShell
+from . import MShell
 #Scofield's photoelectric dictionnary
-from PyMca5 import Scofield1973
+from . import Scofield1973
 
 ElementShellTransitions = [KShell.ElementKShellTransitions,
                            KShell.ElementKAlphaTransitions,
