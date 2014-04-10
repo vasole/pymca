@@ -8,7 +8,7 @@ from VerticalSpacer import VerticalSpacer
 from HorizontalSpacer import HorizontalSpacer
 CONFIGDICT = True
 try:
-    from PyMca import ConfigDict    
+    from PyMca5 import ConfigDict    
 except ImportError:
     try:
         import ConfigDict
@@ -16,7 +16,7 @@ except ImportError:
         CONFIGDICT = False
 
 try:
-    from PyMca import PyMcaDirs as Object3DDirs
+    from PyMca5 import PyMcaDirs as Object3DDirs
 except ImportError:
     try:
         import PyMcaDirs as Object3DDirs

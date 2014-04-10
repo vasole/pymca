@@ -1,6 +1,6 @@
 import Object3DQt as qt
 try:
-    from PyMca import PyMcaDirs as Object3DDirs
+    from PyMca5 import PyMcaDirs as Object3DDirs
 except:
     import Object3DDirs
 import os

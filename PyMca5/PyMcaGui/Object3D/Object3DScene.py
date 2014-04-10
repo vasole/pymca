@@ -1,9 +1,9 @@
 try:
-    from PyMca.Object3D import SceneGLWindow
+    from PyMca5.Object3D import SceneGLWindow
     #This is needed for the mesh plots
-    from PyMca.Object3D.Object3DPlugins import Object3DMesh
+    from PyMca5.Object3D.Object3DPlugins import Object3DMesh
     #This is needed for the stack plots
-    from PyMca.Object3D.Object3DPlugins import Object3DStack
+    from PyMca5.Object3D.Object3DPlugins import Object3DStack
 except:
     from Object3D import SceneGLWindow
     #This is needed for the mesh plots
