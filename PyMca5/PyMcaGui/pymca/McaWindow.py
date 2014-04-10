@@ -40,10 +40,10 @@ if __name__ == "__main__":
 
 import copy
 
-from PyMca5.widgets import ScanWindow
-from PyMca5.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui.PyMca_Icons import IconDict
+from . import ScanWindow
 from . import McaCalibrationControlGUI
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import McaAdvancedFit
 from PyMca5 import DataObject
 from PyMca5 import McaCalWidget
