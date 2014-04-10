@@ -77,10 +77,16 @@ print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
-packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests', 'PyMca5.PyMcaCore.XRFMC',
+packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests',
+            'PyMca5.PyMcaCore.',
+            'PyMca5.PyMcaCore.XRFMC',
             'PyMca5.PyMcaIO',
+            'PyMca5.PyMcaMath',
+            'PyMca5.PyMcaMath.fitting',
             'PyMca5.PyMcaGraph','PyMca5.PyMcaGraph.backends',
-            'PyMca5.PyMcaGui', 'PyMca5.PyMcaGui.plotting', 'PyMca5.PyMcaGui.pymca', ]
+            'PyMca5.PyMcaGui', 'PyMca5.PyMcaGui.plotting',
+            'PyMca5.PyMcaGui.pymca',
+            'PyMca5.PyMcaGui.math', 'PyMca5.PyMcaGui.math.fitting',]
 py_modules = []
 
 # Specify all the required PyMca data
@@ -148,8 +154,8 @@ else:
     script_files = glob.glob('PyMca5/scripts/*')
             
 def build_FastEdf(ext_modules):
-    module  = Extension(name = 'PyMca.FastEdf',
-                        sources = glob.glob('PyMca/edf/*.c'),
+    module  = Extension(name = 'PyMca5.FastEdf',
+                        sources = glob.glob('PyMca5/PyMcaIO/edf/*.c'),
                         define_macros = define_macros,
                         include_dirs = [numpy.get_include()])
     ext_modules.append(module)
