@@ -80,7 +80,7 @@ print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests', 'PyMca5.PyMcaCore.XRFMC',
             'PyMca5.PyMcaIO',
             'PyMca5.PyMcaGraph','PyMca5.PyMcaGraph.backends',
-            'PyMca5.PyMcaGui']
+            'PyMca5.PyMcaGui', 'PyMca5.PyMcaGui.plotting', 'PyMca5.PyMcaGui.pymca', ]
 py_modules = []
 
 # Specify all the required PyMca data

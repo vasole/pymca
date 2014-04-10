@@ -2,7 +2,7 @@
 
 import os
 import sys
-import PyMca
+import PyMca5.PyMcaGui.pymca as PyMca
 
 sys.path.insert(0, os.path.dirname(PyMca.__file__))
 fname = os.path.join(os.path.dirname(PyMca.__file__), 'PyMcaMain.py')
