@@ -29,9 +29,9 @@ __author__="V.A. Sole - ESRF Software Group"
 import sys
 import os
 import numpy
-from PyMca import QXTube
-from PyMca import PyMcaDirs
-from PyMca import PyMca_Icons as Icons
+from PyMca5 import QXTube
+from PyMca5 import PyMcaDirs
+from PyMca5 import PyMca_Icons as Icons
 qt = QXTube.qt
 
 QTVERSION = qt.qVersion()

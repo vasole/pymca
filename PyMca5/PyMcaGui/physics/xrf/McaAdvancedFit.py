@@ -34,7 +34,7 @@ import tempfile
 import shutil
 import traceback
 
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -42,7 +42,7 @@ else:
 
 QTVERSION = qt.qVersion()
 
-from PyMca import QPyMcaMatplotlibSave1D
+from PyMca5 import QPyMcaMatplotlibSave1D
 MATPLOTLIB = True
 #force understanding of utf-8 encoding
 #otherways it cannot generate svg output
@@ -52,24 +52,24 @@ except:
     #not a big problem
     pass
 
-from PyMca import ClassMcaTheory
-from PyMca import FitParam
-from PyMca import McaAdvancedTable
-from PyMca import QtMcaAdvancedFitReport
-from PyMca import ConcentrationsWidget
-from PyMca import ConcentrationsTool
+from PyMca5 import ClassMcaTheory
+from PyMca5 import FitParam
+from PyMca5 import McaAdvancedTable
+from PyMca5 import QtMcaAdvancedFitReport
+from PyMca5 import ConcentrationsWidget
+from PyMca5 import ConcentrationsTool
 from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend
 from PyMca.widgets import PlotWindow
 from PyMca.PyMca_Icons import IconDict
-from PyMca import McaCalWidget
-from PyMca import PeakIdentifier
-from PyMca import SubprocessLogWidget
-from PyMca import ElementsInfo
+from PyMca5 import McaCalWidget
+from PyMca5 import PeakIdentifier
+from PyMca5 import SubprocessLogWidget
+from PyMca5 import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
-from PyMca import PyMcaPrintPreview
-from PyMca import PyMcaDirs
-from PyMca import ConfigDict
+from PyMca5 import PyMcaPrintPreview
+from PyMca5 import PyMcaDirs
+from PyMca5 import ConfigDict
 DEBUG = 0
 if DEBUG:
     print("############################################")
@@ -100,7 +100,7 @@ class McaAdvancedFit(qt.QWidget):
 
     **Usage**
 
-    >>> from PyMca import McaAdvancedFit
+    >>> from PyMca5 import McaAdvancedFit
     >>> w = McaAdvancedFit.McaAdvancedFit()
     >>> w.setData(x=x, y=y) # x is your channel array and y the counts array
     >>> w.show()

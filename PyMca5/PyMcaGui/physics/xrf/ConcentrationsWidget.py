@@ -26,7 +26,7 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.21 $"
 import sys
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -54,8 +54,8 @@ if QTVERSION < '4.0.0':
 else:
     QTable = qt.QTableWidget
 
-from PyMca import ConcentrationsTool
-from PyMca import Elements
+from PyMca5 import ConcentrationsTool
+from PyMca5 import Elements
 import time
 DEBUG = 0
 if DEBUG:
@@ -962,8 +962,8 @@ if __name__ == "__main__":
     import getopt
     import copy
     # import sys
-    # from PyMca import ConcentrationsTool
-    from PyMca import ConfigDict
+    # from PyMca5 import ConcentrationsTool
+    from PyMca5 import ConfigDict
     if len(sys.argv) > 1:
         options = ''
         longoptions = ['flux=', 'time=', 'area=', 'distance=', 'attenuators=',

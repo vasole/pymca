@@ -28,7 +28,7 @@ import os
 import sys
 import time
 MATPLOTLIB = True
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 #this is installation dependent I guess
@@ -40,8 +40,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 MATPLOTLIB = True
 
-from PyMca import ConfigDict
-from PyMca import PyMcaLogo
+from PyMca5 import ConfigDict
+from PyMca5 import PyMcaLogo
 from PyMca.ConcentrationsTool import ConcentrationsConversion
 
 class QtMcaAdvancedFitReport:

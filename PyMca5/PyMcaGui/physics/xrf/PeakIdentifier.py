@@ -27,8 +27,8 @@
 __revision__= "$Revision: 1.11 $"
 __author__="V.A. Sole - ESRF Software Group"
 import sys
-from PyMca import PyMcaQt as qt
-from PyMca import Elements
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import Elements
 from PyMca.QPeriodicTable import QPeriodicTable
 from PyMca.PyMca_Icons import IconDict
 QTVERSION = qt.qVersion()

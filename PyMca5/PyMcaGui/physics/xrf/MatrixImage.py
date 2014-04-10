@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 image2=["312 177 16 1",
 "  c black",
 ". c maroon",

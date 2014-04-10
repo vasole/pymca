@@ -26,7 +26,7 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.26 $"
 import sys
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 if QTVERSION < '4.0.0':
@@ -40,9 +40,9 @@ if QTVERSION > '4.0.0':
     class Q3GridLayout(qt.QGridLayout):
         def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
             self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
-from PyMca import Elements
-from PyMca import MaterialEditor
-from PyMca import MatrixEditor
+from PyMca5 import Elements
+from PyMca5 import MaterialEditor
+from PyMca5 import MatrixEditor
 import re
 DEBUG = 0
 

@@ -27,9 +27,9 @@
 __revision__ = "$Revision: 1.10 $"
 import copy
 
-from PyMca import MaterialEditor
-from PyMca import PyMcaQt as qt
-from PyMca import MatrixImage
+from PyMca5 import MaterialEditor
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import MatrixImage
 
 QTVERSION = qt.qVersion()
 

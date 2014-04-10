@@ -32,7 +32,7 @@ import numpy
 from numpy.linalg import inv as inverse
 import copy
 
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 from PyMca.plotting import PlotWidget
 try:
     from PyMca.plotting.backends.MatplotlibBackend\
@@ -46,13 +46,13 @@ if hasattr(qt, "QString"):
 else:
     QString = str
 QTVERSION = qt.qVersion()
-from PyMca import Gefit
-from PyMca import Specfit
-from PyMca import SpecfitFuns
+from PyMca5 import Gefit
+from PyMca5 import Specfit
+from PyMca5 import SpecfitFuns
 from PyMca.PyMca_Icons import IconDict
-from PyMca import PeakTableWidget
+from PyMca5 import PeakTableWidget
 if 0:
-    from PyMca import XRDPeakTableWidget
+    from PyMca5 import XRDPeakTableWidget
 DEBUG = 0
 
 LOW_HEIGHT_THRESHOLD = 660
@@ -1688,7 +1688,7 @@ def test(x,y,legend):
 
 if __name__ == '__main__':
     import getopt
-    from PyMca import specfile
+    from PyMca5 import specfile
     options     = 'f:s:o'
     longoptions = ['file=','scan=','pkm=',
                     'output=','linear=','strip=',
