@@ -46,8 +46,8 @@ global USE_SMART_INSTALL_SCRIPTS
 # The sift module implements a patented algorithm. The algorithm can be used
 # for non-commercial research purposes. If you do not want to distribute it
 # with the PyMca sources you just need to delete the PyMca/sift directory.
-PYMCA_DATA_DIR = os.path.join('PyMca','PyMcaData')
-PYMCA_DOC_DIR = os.path.join('PyMca','PyMcaData')
+PYMCA_DATA_DIR = os.path.join('PyMca5','PyMcaData')
+PYMCA_DOC_DIR = os.path.join('PyMca5','PyMcaData')
 USE_SMART_INSTALL_SCRIPTS = False
 if "--install-scripts" in sys.argv:
     USE_SMART_INSTALL_SCRIPTS = True
@@ -64,7 +64,7 @@ if SPECFILE_USE_GNU_SOURCE is None:
 else:
     SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
 
-ffile = open(os.path.join('PyMca', 'PyMcaMain.py'), 'r').readlines()
+ffile = open(os.path.join('PyMca5', 'PyMcaGui', 'pymca', 'PyMcaMain.py'), 'r').readlines()
 for line in ffile:
     if line.startswith('__version__'):
         #remove spaces and split
@@ -77,44 +77,48 @@ print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
-packages = ['PyMca','PyMca.PyMcaPlugins', 'PyMca.tests', 'PyMca.XRFMC',
-            'PyMca.PyMcaIO',
-            'PyMca.plotting','PyMca.plotting.backends','PyMca.widgets']
+packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests', 'PyMca5.PyMcaCore.XRFMC',
+            'PyMca5.PyMcaIO',
+            'PyMca5.PyMcaGraph','PyMca5.PyMcaGraph.backends',
+            'PyMca5.PyMcaGui']
 py_modules = []
 
 # Specify all the required PyMca data
 data_files = [(PYMCA_DATA_DIR, ['LICENSE.GPL',
-                         'PyMca/PyMcaData/Scofield1973.dict',
+                         'PyMca5/PyMcaData/Scofield1973.dict',
                          'changelog.txt',
-                         'PyMca/PyMcaData/McaTheory.cfg',
-                         'PyMca/PyMcaData/PyMcaSplashImage.png',
-                         'PyMca/PyMcaData/BindingEnergies.dat',
-                         'PyMca/PyMcaData/KShellRates.dat',
-                         'PyMca/PyMcaData/KShellRatesScofieldHS.dat',
-                         'PyMca/PyMcaData/KShellConstants.dat',
-                         'PyMca/PyMcaData/LShellRates.dat',
-                         'PyMca/PyMcaData/LShellConstants.dat',
-                         'PyMca/PyMcaData/LShellRatesCampbell.dat',
-                         'PyMca/PyMcaData/LShellRatesScofieldHS.dat',
-                         'PyMca/PyMcaData/MShellRates.dat',
-                         'PyMca/PyMcaData/MShellConstants.dat',
-                         'PyMca/PyMcaData/EADL97_BindingEnergies.dat',
-                         'PyMca/PyMcaData/EADL97_KShellConstants.dat',
-                         'PyMca/PyMcaData/EADL97_LShellConstants.dat',
-                         'PyMca/PyMcaData/EADL97_MShellConstants.dat',
-                         'PyMca/PyMcaData/EPDL97_CrossSections.dat',
-                         'PyMca/PyMcaData/XCOM_CrossSections.dat',
-                         'PyMca/PyMcaData/XRFSpectrum.mca']),
-              (PYMCA_DATA_DIR+'/attdata', glob.glob('PyMca/PyMcaData/attdata/*')),
-              (PYMCA_DOC_DIR+'/HTML', glob.glob('PyMca/PyMcaData/HTML/*.*')),
-              (PYMCA_DOC_DIR+'/HTML/IMAGES', glob.glob('PyMca/PyMcaData/HTML/IMAGES/*')),
-              (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca/HTML/PyMCA_files/*'))]
+                         'PyMca5/PyMcaData/McaTheory.cfg',
+                         'PyMca5/PyMcaData/PyMcaSplashImage.png',
+                         'PyMca5/PyMcaData/BindingEnergies.dat',
+                         'PyMca5/PyMcaData/KShellRates.dat',
+                         'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
+                         'PyMca5/PyMcaData/KShellConstants.dat',
+                         'PyMca5/PyMcaData/LShellRates.dat',
+                         'PyMca5/PyMcaData/LShellConstants.dat',
+                         'PyMca5/PyMcaData/LShellRatesCampbell.dat',
+                         'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
+                         'PyMca5/PyMcaData/MShellRates.dat',
+                         'PyMca5/PyMcaData/MShellConstants.dat',
+                         'PyMca5/PyMcaData/EADL97_BindingEnergies.dat',
+                         'PyMca5/PyMcaData/EADL97_KShellConstants.dat',
+                         'PyMca5/PyMcaData/EADL97_LShellConstants.dat',
+                         'PyMca5/PyMcaData/EADL97_MShellConstants.dat',
+                         'PyMca5/PyMcaData/EPDL97_CrossSections.dat',
+                         'PyMca5/PyMcaData/XCOM_CrossSections.dat',
+                         'PyMca5/PyMcaData/XRFSpectrum.mca']),
+              (PYMCA_DATA_DIR+'/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
+              (PYMCA_DOC_DIR+'/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
+              (PYMCA_DOC_DIR+'/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
+              (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*'))]
 
-if os.path.exists(os.path.join("PyMca", "EPDL97")):
-    packages.append('PyMca.EPDL97')
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97',glob.glob('PyMca/EPDL97/*.DAT')))
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97',['PyMca/EPDL97/LICENSE']))
+print("EPDL NOT YET IN")
+print("XRFMC NOT YET IN")
+if os.path.exists(os.path.join("PyMca5", "EPDL97")):
+    packages.append('PyMca5.EPDL97')
+    data_files.append((PYMCA_DATA_DIR+'/EPDL97',glob.glob('PyMca5/EPDL97/*.DAT')))
+    data_files.append((PYMCA_DATA_DIR+'/EPDL97',['PyMca5/EPDL97/LICENSE']))
 
+print("SIFT NOT YET IN")
 global SIFT_OPENCL_FILES
 SIFT_OPENCL_FILES = []
 if os.path.exists(os.path.join("PyMca", "sift")):
@@ -122,11 +126,13 @@ if os.path.exists(os.path.join("PyMca", "sift")):
     SIFT_OPENCL_FILES = glob.glob('PyMca/sift/*.cl')
     data_files.append((os.path.join('PyMca', 'sift'), SIFT_OPENCL_FILES))
 
+print("NNMAE NOT YET IN")
 NNMA_PATH = os.path.join("PyMca", "py_nnma")
 if os.path.exists(NNMA_PATH):
     py_modules.append('PyMca.py_nnma.__init__')
     py_modules.append('PyMca.py_nnma.nnma')
     
+print("OBJECT 3D NOT IN")
 LOCAL_OBJECT3D =False
 if os.path.exists(os.path.join("PyMca", "Object3D")):
     LOCAL_OBJECT3D = True
@@ -134,12 +140,12 @@ if os.path.exists(os.path.join("PyMca", "Object3D")):
 sources = glob.glob('*.c')
 if sys.platform == "win32":
     define_macros = [('WIN32',None)]
-    script_files = glob.glob('PyMca/scripts/*')
+    script_files = glob.glob('PyMca5/scripts/*')
     script_files += glob.glob('scripts/*.bat')
     script_files.append('scripts/pymca_win_post_install.py')
 else:
     define_macros = []
-    script_files = glob.glob('PyMca/scripts/*')
+    script_files = glob.glob('PyMca5/scripts/*')
             
 def build_FastEdf(ext_modules):
     module  = Extension(name = 'PyMca.FastEdf',
@@ -162,11 +168,11 @@ def build_specfile(ext_modules):
     if sys.version >= '3.0':
         srcfiles[-1] += '3'
     sources = [] 
-    specfile_source_dir = os.path.join('PyMca', 'specfile', 'src')
-    specfile_include_dir = os.path.join('PyMca', 'specfile', 'include')
+    specfile_source_dir = os.path.join('PyMca5', 'PyMcaIO', 'specfile', 'src')
+    specfile_include_dir = os.path.join('PyMca5', 'PyMcaIO', 'specfile', 'include')
     for ffile in srcfiles:
       sources.append(os.path.join(specfile_source_dir, ffile+'.c'))
-    module  = Extension(name = 'PyMca.specfile',
+    module  = Extension(name = 'PyMca5.PyMcaIO.specfile',
                         sources = sources,
                         define_macros = specfile_define_macros,
                         include_dirs = [specfile_include_dir,
@@ -174,10 +180,10 @@ def build_specfile(ext_modules):
     ext_modules.append(module)
 
 def build_specfit(ext_modules):
-    module  = Extension(name = 'PyMca.SpecfitFuns',
-                        sources = glob.glob('PyMca/specfit/*.c'),
+    module  = Extension(name = 'PyMca5.PyMcaMath.fitting.SpecfitFuns',
+                        sources = glob.glob('PyMca5/PyMcaMath/fitting/specfit/*.c'),
                         define_macros = define_macros,
-                        include_dirs = ['PyMca/specfit',
+                        include_dirs = ['PyMca5/PyMcaMath/fitting/specfit',
                                          numpy.get_include()])
     ext_modules.append(module)
 
@@ -191,29 +197,29 @@ def build_sps(ext_modules):
     else:
         extra_compile_args = []
 
-    module  = Extension(name = 'PyMca.spslut',
-                         sources = ['PyMca/sps/Src/sps_lut.c',
-                                    'PyMca/sps/Src/spslut_py.c'],
+    module  = Extension(name = 'PyMca5.spslut',
+                         sources = ['PyMca5/PyMcaIO/sps/Src/sps_lut.c',
+                                    'PyMca5/PyMcaIO/sps/Src/spslut_py.c'],
                          define_macros = define_macros,
                          extra_compile_args = extra_compile_args,          
-                         include_dirs = ['PyMca/sps/Include',
+                         include_dirs = ['PyMca5/PyMcaIO/sps/Include',
                                           numpy.get_include()])
     ext_modules.append(module)
     if (sys.platform != "win32") and (sys.version < '3.0'):
-        module = (Extension(name = 'PyMca.sps',
-                                            sources = ['PyMca/sps/Src/sps.c',
-                                                       'PyMca/sps/Src/sps_py.c'],
+        module = (Extension(name = 'PyMca5.PyMcaIO.sps',
+                                            sources = ['PyMca5/PyMcaIO/sps/Src/sps.c',
+                                                       'PyMca5/PyMcaIO/sps/Src/sps_py.c'],
                                             define_macros = define_macros,
                                  extra_compile_args = extra_compile_args,          
-                                            include_dirs = ['PyMca/sps/Include',
+                                            include_dirs = ['PyMca5/PyMcaIO/sps/Include',
                                                              numpy.get_include()]))
         ext_modules.append(module)
 
 def build_PyMcaIOHelper(ext_modules):
-    module  = Extension(name = 'PyMca.PyMcaIOHelper',
-                        sources = glob.glob('PyMca/PyMcaIOHelper/*.c'),
+    module  = Extension(name = 'PyMca5.PyMcaIO.PyMcaIOHelper',
+                        sources = glob.glob('PyMca5/PyMcaIO/PyMcaIOHelper/*.c'),
                         define_macros = define_macros,
-                        include_dirs = ['PyMca/PyMcaIOHelper',
+                        include_dirs = ['PyMca5/PyMcaIO/PyMcaIOHelper',
                                         numpy.get_include()])
     ext_modules.append(module)
 
@@ -269,17 +275,17 @@ def build_Object3DQhull(extensions):
 
 
 def build_PyMcaSciPy(ext_modules):
-    packages.append('PyMca.PyMcaSciPy')
-    packages.append('PyMca.PyMcaSciPy.signal')
-    module = Extension(name = 'PyMca.PyMcaSciPy.signal.mediantools',
-                       sources = glob.glob('PyMca/PyMcaSciPy/signal/*.c'),
+    packages.append('PyMca5.PyMcaMath.PyMcaSciPy')
+    packages.append('PyMca5.PyMcaMath.PyMcaSciPy.signal')
+    module = Extension(name = 'PyMca5.PyMcaMath.PyMcaSciPy.signal.mediantools',
+                       sources = glob.glob('PyMca5/PyMcaMath/PyMcaSciPy/signal/*.c'),
                        define_macros = [],
                        include_dirs = [numpy.get_include()])
     ext_modules.append(module)
 
 def build_plotting_ctools(ext_modules):
-    packages.append('PyMca.plotting.ctools')
-    basedir = os.path.join(os.getcwd(),'PyMca', 'plotting','ctools', '_ctools')
+    packages.append('PyMca5.PyMcaGraph.ctools')
+    basedir = os.path.join(os.getcwd(),'PyMca5', 'PyMcaGraph','ctools', '_ctools')
     c_files = glob.glob(os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'))
     if build_ext:
         src = glob.glob(os.path.join(basedir, 'cython','_ctools.pyx'))
@@ -294,7 +300,7 @@ def build_plotting_ctools(ext_modules):
         extra_compile_args = []
         extra_link_args = []
 
-    module = Extension(name="PyMca.plotting.ctools._ctools",
+    module = Extension(name="PyMca5.PyMcaGraph.ctools._ctools",
                         sources=src,
                         include_dirs=[numpy.get_include(),
                                       os.path.join(basedir, "include")],
@@ -352,7 +358,7 @@ class smart_build_py(build_py):
         global PYMCA_DATA_DIR
         global PYMCA_DOC_DIR
         global PYMCA_INSTALL_DIR
-        defaultPath = os.path.join('PyMca','PyMcaData')
+        defaultPath = os.path.join('PyMca5','PyMcaData')
         if (PYMCA_DATA_DIR == defaultPath) or\
            (PYMCA_DOC_DIR == defaultPath):
             #default, just make sure the complete path is there
@@ -368,7 +374,7 @@ class smart_build_py(build_py):
             #default, just make sure the complete path is there
             PYMCA_DOC_DIR = os.path.join(PYMCA_INSTALL_DIR,
                                           PYMCA_DOC_DIR)
-        target = os.path.join(self.build_lib, "PyMca", "PyMcaDataDir.py")
+        target = os.path.join(self.build_lib, "PyMca5", "PyMcaDataDir.py")
         fid = open(target,'r')
         content = fid.readlines()
         fid.close()
@@ -399,7 +405,7 @@ class smart_install_data(install_data):
         print("PyMca to be installed in %s" %  self.install_dir)
 
         #cleanup old stuff if present
-        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca", "Plugins1D")
+        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "Plugins1D")
         if os.path.exists(pymcaOld):
             for f in glob.glob(os.path.join(pymcaOld,"*.py")):
                 print("Removing previously installed file %s" % f)
@@ -409,7 +415,7 @@ class smart_install_data(install_data):
                 os.remove(f)
             print("Removing previously installed directory %s" % pymcaOld)
             os.rmdir(pymcaOld)
-        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca", "PyMca.py")
+        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMca.py")
         if os.path.exists(pymcaOld):
             print("Removing previously installed file %s" % pymcaOld)
             os.remove(pymcaOld)
@@ -436,7 +442,7 @@ if USE_SMART_INSTALL_SCRIPTS:
             #This is to ignore the --install-scripts keyword
             #I do not know if to leave it optional ...
             if False:
-                self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca')
+                self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca5')
                 self.install_dir = os.path.join(self.install_dir, 'bin')        
             else:
                 self.install_dir = getattr(install_cmd, 'install_scripts')
@@ -447,11 +453,11 @@ if USE_SMART_INSTALL_SCRIPTS:
                 print("PyMca scripts to be installed in %s" %  self.install_dir)
             self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
             self.outfiles = []
-            for filein in glob.glob('PyMca/scripts/*'):
+            for filein in glob.glob('PyMca5/scripts/*'):
                 filedest = os.path.join(self.install_dir, os.path.basename(filein))
                 if os.path.exists(filedest):
                     os.remove(filedest)
-                moddir = os.path.join(getattr(install_cmd,'install_lib'), "PyMca")
+                moddir = os.path.join(getattr(install_cmd,'install_lib'), "PyMca5")
                 if 0:
                     f = open(filein, 'r')
                     modfile = f.readline().replace("\n","")
@@ -658,7 +664,7 @@ if sphinx:
             sys.path.pop(0)
     cmdclass['build_doc'] = build_doc
 
-distrib = setup(name="PyMca",
+distrib = setup(name="PyMca5",
                 version= __version__,
                 description = description,
                 author = "V. Armando Sole",
