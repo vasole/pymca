@@ -28,7 +28,7 @@ import sys
 import os
 import numpy
 from PyMca import DataObject
-from PyMca.PyMcaIO import specfilewrapper as specfile
+from PyMca5.PyMcaIO import specfilewrapper as specfile
 from PyMca import SpecFileDataSource
 
 HDF5 = False
@@ -199,7 +199,7 @@ class SpecFileStack(DataObject.DataObject):
                             hdf5file += ".h5"
 
                         #get the final shape
-                        from PyMca.RGBCorrelatorWidget import ImageShapeDialog
+                        from PyMca5.RGBCorrelatorWidget import ImageShapeDialog
                         stackImageShape = self.nbFiles,\
                                      int(numberofmca/numberofdetectors)
                         dialog = ImageShapeDialog(None, shape =stackImageShape)

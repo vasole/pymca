@@ -26,7 +26,7 @@
 #############################################################################*/
 __author__ = 'Tonn Rueter'
 from PyMca import PyMcaQt as qt
-from PyMca.PyMca_Icons import IconDict
+from PyMca5.PyMca_Icons import IconDict
 
 if hasattr(qt, 'QString'):
     QString = qt.QString

@@ -26,8 +26,8 @@
 #############################################################################*/
 import os
 import sys
-from PyMca.PyMcaIO import MEDFile
-from PyMca.PyMcaIO import SpecFileAbstractClass
+from PyMca5.PyMcaIO import MEDFile
+from PyMca5.PyMcaIO import SpecFileAbstractClass
 
 class APSMEDFileParser(object):
     def __init__(self, filename, sum_all=False):

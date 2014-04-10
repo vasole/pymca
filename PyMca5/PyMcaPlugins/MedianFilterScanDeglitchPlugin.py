@@ -27,7 +27,7 @@
 __author__ = "T. Rueter - ESRF Data Analysis Unit"
 
 from PyMca import Plugin1DBase
-from PyMca.PyMcaSciPy.signal import medfilt1d
+from PyMca5.PyMcaSciPy.signal import medfilt1d
 from PyMca import PyMcaQt as qt
 import numpy
     
@@ -189,7 +189,7 @@ def getPlugin1DInstance(plotWindow,  **kw):
     return ob
     
 if __name__ == "__main__":
-    from PyMca.widgets import PlotWindow
+    from PyMca5.widgets import PlotWindow
     app = qt.QApplication([])
     
     sw = PlotWindow.PlotWindow()

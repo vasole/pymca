@@ -66,7 +66,7 @@ from PyMca import CalculationThread
 from PyMca import StackPluginResultsWindow
 import PyMca.PyMca_Icons as PyMca_Icons
 from PyMca import PyMcaQt as qt
-from PyMca.PyMcaIO import ArraySave
+from PyMca5.PyMcaIO import ArraySave
 
 DEBUG = 0
 

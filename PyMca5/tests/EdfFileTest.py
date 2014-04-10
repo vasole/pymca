@@ -32,7 +32,7 @@ class testEdfFile(unittest.TestCase):
         os.close(tmpFile[0])
         self.fname = tmpFile[1]
         try:
-            from PyMca.PyMcaIO.EdfFile import EdfFile
+            from PyMca5.PyMcaIO.EdfFile import EdfFile
             self.fileClass = EdfFile
         except:
             self.fileClass = None

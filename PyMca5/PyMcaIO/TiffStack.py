@@ -20,7 +20,7 @@ import sys
 import os
 import numpy
 from PyMca import DataObject
-from PyMca.PyMcaIO import TiffIO
+from PyMca5.PyMcaIO import TiffIO
 if sys.version > '2.9':
     long = int
 

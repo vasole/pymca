@@ -66,7 +66,7 @@ except ImportError:
     from . import StackPluginBase
     from . import CalculationThread
 try:
-    from PyMca.PCAWindow import PCAParametersDialog
+    from PyMca5.PCAWindow import PCAParametersDialog
     from PyMca import StackPluginResultsWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:

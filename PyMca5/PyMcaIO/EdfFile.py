@@ -94,24 +94,24 @@ try:
 except:
     BZ2 = False
 try:
-    from PyMca.PyMcaIO import MarCCD
+    from PyMca5.PyMcaIO import MarCCD
     MARCCD_SUPPORT = True
 except ImportError:
     #MarCCD
     MARCCD_SUPPORT = False
 try:
-    from PyMca.PyMcaIO import TiffIO
+    from PyMca5.PyMcaIO import TiffIO
     TIFF_SUPPORT = True
 except ImportError:
     #MarCCD
     TIFF_SUPPORT = False
 try:
-    from PyMca.PyMcaIO import PilatusCBF
+    from PyMca5.PyMcaIO import PilatusCBF
     PILATUS_CBF_SUPPORT = True
 except ImportError:
     PILATUS_CBF_SUPPORT = False
 try:
-    from PyMca.FastEdf import extended_fread
+    from PyMca5.FastEdf import extended_fread
     CAN_USE_FASTEDF = 1
 except:
     CAN_USE_FASTEDF = 0

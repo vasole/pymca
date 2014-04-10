@@ -199,7 +199,7 @@ def getPlugin1DInstance(plotWindow, **kw):
 if __name__ == "__main__":
     from PyMca import PyMcaQt as qt
     app = qt.QApplication([])
-    from PyMca.Plot1DQwt import Plot1DQwt as Plot1D
+    from PyMca5.Plot1DQwt import Plot1DQwt as Plot1D
     i = numpy.arange(1000.)
     y1 = 10.0 + 5000.0 * numpy.exp(-0.01*(i-50)**2)
     y2 = 10.0 + 5000.0 * numpy.exp(-((i-55)/5.)**2)

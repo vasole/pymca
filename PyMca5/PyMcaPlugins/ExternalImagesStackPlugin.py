@@ -59,7 +59,7 @@ import os
 try:
     from PyMca import StackPluginBase
     from PyMca import PyMcaQt as qt
-    from PyMca.PyMcaIO import EDFStack
+    from PyMca5.PyMcaIO import EDFStack
     from PyMca import PyMcaFileDialogs
     from PyMca import StackPluginResultsWindow
     from PyMca import ExternalImagesWindow

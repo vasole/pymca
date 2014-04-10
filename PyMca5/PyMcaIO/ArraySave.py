@@ -21,8 +21,8 @@ import numpy
 import time
 
 try:
-    from PyMca.PyMcaIO import EdfFile
-    from PyMca.PyMcaIO import TiffIO
+    from PyMca5.PyMcaIO import EdfFile
+    from PyMca5.PyMcaIO import TiffIO
 except ImportError:
     print("ArraySave.py is importing EdfFile and TiffIO from local directory")
     import EdfFile

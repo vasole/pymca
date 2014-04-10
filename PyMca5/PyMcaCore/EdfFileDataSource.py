@@ -17,7 +17,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
 from PyMca import DataObject
-from PyMca.PyMcaIO import EdfFile
+from PyMca5.PyMcaIO import EdfFile
 import types
 import sys
 import os

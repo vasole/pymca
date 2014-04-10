@@ -31,7 +31,7 @@ except ImportError:
     from . import Plugin1DBase
 
 try:
-    from PyMca.PyMcaPlugins import MotorInfoWindow
+    from PyMca5.PyMcaPlugins import MotorInfoWindow
 except ImportError:
     try:
         # Frozen version

@@ -65,7 +65,7 @@ except ImportError:
     from . import StackPluginBase
     from . import CalculationThread
 try:
-    from PyMca.NNMAWindow import NNMAParametersDialog
+    from PyMca5.NNMAWindow import NNMAParametersDialog
     from PyMca import StackPluginResultsWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:

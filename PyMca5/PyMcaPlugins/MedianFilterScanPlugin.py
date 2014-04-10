@@ -34,7 +34,7 @@ except ImportError:
     from . import Plugin1DBase
 
 from PyMca import SpecfitFuns
-from PyMca.PyMcaSciPy.signal.median import medfilt1d
+from PyMca5.PyMcaSciPy.signal.median import medfilt1d
 
 class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):

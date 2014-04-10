@@ -33,8 +33,8 @@ from PyMca import PyMcaDataDir, PyMcaDirs, PyMcaFileDialogs
 from PyMca import ConfigDict
 from PyMca import SpecfitFunctions as SF
 from PyMca import SNIPModule as snip
-from PyMca.Gefit import LeastSquaresFit as LSF
-from PyMca.SpecfitFuns import gauss
+from PyMca5.Gefit import LeastSquaresFit as LSF
+from PyMca5.SpecfitFuns import gauss
 from PyMca import SpecfitFuns
 from os.path import join as pathjoin
 
