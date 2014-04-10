@@ -147,7 +147,7 @@ class StackBase(object):
                             __import__(plugin)
                         except:
                             if directory == PLUGINS_DIR:
-                                plugin = "PyMca.PyMcaPlugins." + pluginName
+                                plugin = "PyMca5.PyMcaPlugins." + pluginName
                                 __import__(plugin)
                             else:
                                 raise
