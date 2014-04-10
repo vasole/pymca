@@ -28,7 +28,7 @@ class testConfigDict(unittest.TestCase):
         import the module
         """
         try:
-            from PyMca import ConfigDict
+            from PyMca5 import ConfigDict
             self._module = ConfigDict
         except:
             self._module = None
@@ -48,7 +48,7 @@ class testConfigDict(unittest.TestCase):
 
     def testConfigDictIO(self):
         # create a dictionnary
-        from PyMca import ConfigDict
+        from PyMca5 import ConfigDict
         testDict = {}
         testDict['simple_types'] = {} 
         testDict['simple_types']['float'] = 1.0

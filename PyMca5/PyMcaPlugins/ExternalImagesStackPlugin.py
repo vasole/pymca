@@ -57,12 +57,12 @@ These plugins will be compatible with any stack window that provides the functio
 """
 import os
 try:
-    from PyMca import StackPluginBase
-    from PyMca import PyMcaQt as qt
+    from PyMca5 import StackPluginBase
+    from PyMca5 import PyMcaQt as qt
     from PyMca5.PyMcaIO import EDFStack
-    from PyMca import PyMcaFileDialogs
-    from PyMca import StackPluginResultsWindow
-    from PyMca import ExternalImagesWindow
+    from PyMca5 import PyMcaFileDialogs
+    from PyMca5 import StackPluginResultsWindow
+    from PyMca5 import ExternalImagesWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print("ExternalImagesWindow importing from somewhere else")

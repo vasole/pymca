@@ -26,7 +26,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
 try:
-    from PyMca import Plugin1DBase
+    from PyMca5 import Plugin1DBase
 except ImportError:
     from . import Plugin1DBase
 import numpy
@@ -37,7 +37,7 @@ except ImportError:
     import PyMca_Icons
 
 try:
-    from PyMca import SpecfitFuns
+    from PyMca5 import SpecfitFuns
     HAS_SPECFIT = True
 except ImportError:
     #This happens in frozen versions
@@ -317,7 +317,7 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca import Plot1D
+    from PyMca5 import Plot1D
     x = numpy.arange(100.)
     y = x * x
     plot = Plot1D.Plot1D()

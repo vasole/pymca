@@ -30,9 +30,9 @@ import os
 import numpy
 from matplotlib.mlab import griddata
 
-from PyMca import Plugin1DBase
-from PyMca import MaskImageWidget
-from PyMca import PyMcaQt as qt
+from PyMca5 import Plugin1DBase
+from PyMca5 import MaskImageWidget
+from PyMca5 import PyMcaQt as qt
 
 DEBUG = 0
 
@@ -235,7 +235,7 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca import Plot1D
+    from PyMca5 import Plot1D
     app = qt.QApplication([])
     #w = ConfigurationWidget()
     #w.exec_()

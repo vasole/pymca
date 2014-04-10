@@ -56,11 +56,11 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 try:
-    from PyMca import StackPluginBase
+    from PyMca5 import StackPluginBase
 except ImportError:
     from . import StackPluginBase
 try:
-    from PyMca import StackROIWindow
+    from PyMca5 import StackROIWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print("ROIStackPlugin importing from somewhere else")

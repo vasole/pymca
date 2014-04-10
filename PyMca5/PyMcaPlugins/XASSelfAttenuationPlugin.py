@@ -26,9 +26,9 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
 import numpy
-from PyMca import Plugin1DBase
-from PyMca import XASSelfAttenuationCorrection
-from PyMca import XASSelfAttenuationWindow
+from PyMca5 import Plugin1DBase
+from PyMca5 import XASSelfAttenuationCorrection
+from PyMca5 import XASSelfAttenuationWindow
 
 class XASSelfAttenuationPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):

@@ -128,7 +128,7 @@ class testSpecfilewrapper(unittest.TestCase):
         gc.collect()
 
     def testTrainingSpectrumReading(self):
-        from PyMca import PyMcaDataDir
+        from PyMca5 import PyMcaDataDir
         import numpy
         fname = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR,
                                   'XRFSpectrum.mca')

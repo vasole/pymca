@@ -740,7 +740,7 @@ class CIF(dict):
 if __name__ == "__main__":
     import os
     import sys
-    from PyMca import EdfFile
+    from PyMca5 import EdfFile
     #fd = open('Cu_ZnO_20289.mccd', 'rb')
     filename = sys.argv[1]
     cbf = PilatusCBF(filename)

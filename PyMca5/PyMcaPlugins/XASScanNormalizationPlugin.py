@@ -27,14 +27,14 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import numpy
 try:
-    from PyMca import Plugin1DBase
+    from PyMca5 import Plugin1DBase
 except ImportError:
     from . import Plugin1DBase
 
 try:
-    from PyMca import XASNormalization
-    from PyMca import XASNormalizationWindow
-    from PyMca import SpecfitFuns
+    from PyMca5 import XASNormalization
+    from PyMca5 import XASNormalizationWindow
+    from PyMca5 import SpecfitFuns
 except ImportError:
     print("XASScanNormalizationPlugin importing from somewhere else")
     import XASNormalization
@@ -227,7 +227,7 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca import Plot1D
+    from PyMca5 import Plot1D
     x = numpy.arange(100.)
     y = x * x
     plot = Plot1D.Plot1D()

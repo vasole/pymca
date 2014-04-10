@@ -35,7 +35,7 @@ from numpy.fft import fft2, ifft2, fftshift, ifftshift
 PYMCA = False
 SCIPY = False
 try:
-    from PyMca import SpecfitFuns
+    from PyMca5 import SpecfitFuns
     PYMCA = True
 except ImportError:
     try:

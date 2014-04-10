@@ -58,15 +58,15 @@ functions:
 """
 import numpy
 try:
-    from PyMca import StackPluginBase
-    from PyMca import CalculationThread
+    from PyMca5 import StackPluginBase
+    from PyMca5 import CalculationThread
 except ImportError:
     #python 3 might need this
     from . import StackPluginBase
     from . import CalculationThread
 try:
     from PyMca5.NNMAWindow import NNMAParametersDialog
-    from PyMca import StackPluginResultsWindow
+    from PyMca5 import StackPluginResultsWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print("NNMAStackPlugin importing from somewhere else")

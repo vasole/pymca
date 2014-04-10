@@ -56,8 +56,8 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 try:
-    from PyMca import StackPluginBase
-    from PyMca import StackSimpleFitWindow
+    from PyMca5 import StackPluginBase
+    from PyMca5 import StackSimpleFitWindow
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     print("FitStackPlugin importing from somewhere else")

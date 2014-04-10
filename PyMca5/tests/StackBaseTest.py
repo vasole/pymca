@@ -55,10 +55,10 @@ class DummyArray(object):
 
 class testStackBase(unittest.TestCase):
     def testStackBaseImport(self):
-        from PyMca import StackBase
+        from PyMca5 import StackBase
 
     def testStackBaseStack1DDataHandling(self):
-        from PyMca import StackBase
+        from PyMca5 import StackBase
         nrows = 50
         ncolumns = 100
         nchannels = 500
@@ -123,7 +123,7 @@ class testStackBase(unittest.TestCase):
         referenceData = None
 
     def testStackBaseStack2DDataHandling(self):
-        from PyMca import StackBase
+        from PyMca5 import StackBase
         nrows = 50
         ncolumns = 100
         nchannels = 500

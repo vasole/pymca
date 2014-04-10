@@ -19,7 +19,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 import sys
 import os
 import numpy
-from PyMca import DataObject
+from PyMca5 import DataObject
 from PyMca5.PyMcaIO import TiffIO
 if sys.version > '2.9':
     long = int
@@ -340,7 +340,7 @@ class TiffStack(DataObject.DataObject):
         pass
 
 def test():
-    from PyMca import StackBase
+    from PyMca5 import StackBase
     testFileName = "TiffTest.tif"
     nrows = 2000
     ncols = 2000
@@ -384,8 +384,8 @@ def test():
             print("Test small ROI %f" %\
                   stackData.data[10:11,[29],:].sum())
     else:
-        from PyMca import PyMcaQt as qt
-        from PyMca import QStackWidget
+        from PyMca5 import PyMcaQt as qt
+        from PyMca5 import QStackWidget
         app = qt.QApplication([])
         w = QStackWidget.QStackWidget()
         print("Setting stack")

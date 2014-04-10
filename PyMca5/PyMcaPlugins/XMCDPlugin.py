@@ -25,8 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 import PyMca.PyMca_Icons as PyMca_Icons
-from PyMca import Plugin1DBase
-from PyMca import XMCDWindow
+from PyMca5 import Plugin1DBase
+from PyMca5 import XMCDWindow
 
 from platform import node as gethostname
     
@@ -87,8 +87,8 @@ def getPlugin1DInstance(plotWindow,  **kw):
     return ob
     
 if __name__ == "__main__":
-    from PyMca import ScanWindow
-    from PyMca import PyMcaQt as qt
+    from PyMca5 import ScanWindow
+    from PyMca5 import PyMcaQt as qt
     import numpy
     app = qt.QApplication([])
     

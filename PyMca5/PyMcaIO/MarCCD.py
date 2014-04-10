@@ -200,7 +200,7 @@ class MccdHeader(object):
 
 if __name__ == "__main__":
     import os
-    from PyMca import EdfFile
+    from PyMca5 import EdfFile
     #fd = open('Cu_ZnO_20289.mccd', 'rb')
     filename = sys.argv[1]
     mccd = MarCCD(filename)

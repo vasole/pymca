@@ -28,7 +28,7 @@ except:
 
 class testPCATools(unittest.TestCase):
     def testPCAToolsImport(self):
-        from PyMca import PCATools
+        from PyMca5 import PCATools
 
     def testPCAToolsCovariance(self):
         from PyMca5.PCATools import getCovarianceMatrix

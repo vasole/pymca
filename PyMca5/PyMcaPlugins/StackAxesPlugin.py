@@ -57,8 +57,8 @@ functions:
     selectionMaskUpdated
 """
 import numpy
-from PyMca import StackPluginBase
-from PyMca import PyMcaFileDialogs
+from PyMca5 import StackPluginBase
+from PyMca5 import PyMcaFileDialogs
 import PyMca.PyMca_Icons as PyMca_Icons
 
 DEBUG = 0

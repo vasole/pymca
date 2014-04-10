@@ -50,18 +50,18 @@ These plugins will be compatible with any stack window that provides the functio
 import numpy
 
 try:
-    from PyMca import StackPluginBase
-    from PyMca import CalculationThread
+    from PyMca5 import StackPluginBase
+    from PyMca5 import CalculationThread
 except ImportError:
     print("XASStackNormalizationPlugin importing bases from somewhere else")
     from . import StackPluginBase
     from . import CalculationThread
 
 try:
-    from PyMca import PyMcaQt as qt
-    from PyMca import StackPluginResultsWindow
-    from PyMca import XASNormalization
-    from PyMca import XASNormalizationWindow
+    from PyMca5 import PyMcaQt as qt
+    from PyMca5 import StackPluginResultsWindow
+    from PyMca5 import XASNormalization
+    from PyMca5 import XASNormalizationWindow
 except ImportError:
     print("XASStackNormalizationPlugin importing from somewhere else")
     import PyMcaQt as qt

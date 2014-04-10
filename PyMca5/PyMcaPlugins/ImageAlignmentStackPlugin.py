@@ -58,19 +58,19 @@ These plugins will be compatible with any stack window that provides the functio
 import sys
 import os
 import numpy
-from PyMca import StackPluginBase
-from PyMca import PyMcaQt as qt
-from PyMca import FFTAlignmentWindow
-from PyMca import ImageRegistration
-from PyMca import SpecfitFuns
-from PyMca import CalculationThread
+from PyMca5 import StackPluginBase
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import FFTAlignmentWindow
+from PyMca5 import ImageRegistration
+from PyMca5 import SpecfitFuns
+from PyMca5 import CalculationThread
 from PyMca5.PyMcaIO import ArraySave
-from PyMca import PyMcaFileDialogs
+from PyMca5 import PyMcaFileDialogs
 from PyMca5.PyMcaIO import specfilewrapper
-from PyMca import HDF5Widget
+from PyMca5 import HDF5Widget
 
 try:
-    from PyMca import SIFTAlignmentWindow
+    from PyMca5 import SIFTAlignmentWindow
     sift = SIFTAlignmentWindow.sift
     SIFT = True
 except:

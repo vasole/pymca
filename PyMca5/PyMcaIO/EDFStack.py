@@ -16,10 +16,10 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-from PyMca import DataObject
+from PyMca5 import DataObject
 from PyMca5.PyMcaIO import EdfFile
-from PyMca import EdfFileDataSource
-from PyMca import PhysicalMemory
+from PyMca5 import EdfFileDataSource
+from PyMca5 import PhysicalMemory
 import numpy
 import sys
 import os
@@ -183,8 +183,8 @@ class EDFStack(DataObject.DataObject):
                         hdf5done = False
                         if HDF5 and (('PyMcaQt' in sys.modules) or\
                            ('PyMca.PyMcaQt' in sys.modules)):
-                            from PyMca import PyMcaQt as qt
-                            from PyMca import ArraySave
+                            from PyMca5 import PyMcaQt as qt
+                            from PyMca5 import ArraySave
                             msg=qt.QMessageBox.information( None,
                               "Memory error\n",
                               "Do you want to convert your data to HDF5?\n",
@@ -365,8 +365,8 @@ class EDFStack(DataObject.DataObject):
                                 text = "Memory Error: Attempt subsampling or convert to HDF5"
                                 if HDF5 and (('PyMcaQt' in sys.modules) or\
                                    ('PyMca.PyMcaQt' in sys.modules)):
-                                    from PyMca import PyMcaQt as qt
-                                    from PyMca import ArraySave
+                                    from PyMca5 import PyMcaQt as qt
+                                    from PyMca5 import ArraySave
                                     msg=qt.QMessageBox.information( None,
                                       "Memory error\n",
                                       "Do you want to convert your data to HDF5?\n",

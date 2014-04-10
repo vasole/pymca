@@ -26,7 +26,7 @@ class testGefit(unittest.TestCase):
         import the module
         """
         try:
-            from PyMca import Gefit
+            from PyMca5 import Gefit
             self.gefit = Gefit
         except:
             self.gefit = None

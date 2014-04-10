@@ -382,7 +382,7 @@ def test1():
 def test2():
     import time
     try:
-        from PyMca import Gefit
+        from PyMca5 import Gefit
         GEFIT = True
         def f(p, x):
             return p[1] * x + p[0]

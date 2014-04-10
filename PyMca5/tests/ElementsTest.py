@@ -44,11 +44,11 @@ class testElements(unittest.TestCase):
         Get the data directory
         """
         try:
-            from PyMca import PyMcaDataDir
+            from PyMca5 import PyMcaDataDir
             self.dataDir = PyMcaDataDir.PYMCA_DATA_DIR
         except:
             self.dataDir = None
-        from PyMca import Elements
+        from PyMca5 import Elements
         self._elements = Elements
 
     def testDataDirectoryPresence(self):
@@ -106,7 +106,7 @@ class testElements(unittest.TestCase):
         if DEBUG:
             print()
             print("Test XCOM Cross Sections Readout")
-        from PyMca import specfile
+        from PyMca5 import specfile
         xcomFile = os.path.join(self.dataDir, 'XCOM_CrossSections.dat')
         sf = specfile.Specfile(xcomFile)
         for ele in ['Si', 'Fe', 'Pb', 'U']:

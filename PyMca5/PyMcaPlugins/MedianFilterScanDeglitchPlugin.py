@@ -26,9 +26,9 @@
 #############################################################################*/
 __author__ = "T. Rueter - ESRF Data Analysis Unit"
 
-from PyMca import Plugin1DBase
+from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaSciPy.signal import medfilt1d
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 import numpy
     
 DEBUG = 0

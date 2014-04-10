@@ -22,7 +22,7 @@ import os
 import sys
 import re
 import numpy
-from PyMca import DataObject
+from PyMca5 import DataObject
 
 SOURCE_TYPE = "EdfFileStack"
 

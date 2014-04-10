@@ -48,7 +48,7 @@ These plugins will be compatible with any stack window that provides the functio
 """
 import numpy
 try:
-    from PyMca import StackPluginBase
+    from PyMca5 import StackPluginBase
 except ImportError:
     from . import StackPluginBase
 

@@ -28,18 +28,18 @@ __author__ = "Tonn Rueter & V.A. Sole - ESRF Data Analysis"
 import numpy
 import sys
 import traceback
-from PyMca import PyMcaQt as qt
-from PyMca import PyMcaDataDir, PyMcaDirs, PyMcaFileDialogs
-from PyMca import ConfigDict
-from PyMca import SpecfitFunctions as SF
-from PyMca import SNIPModule as snip
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import PyMcaDataDir, PyMcaDirs, PyMcaFileDialogs
+from PyMca5 import ConfigDict
+from PyMca5 import SpecfitFunctions as SF
+from PyMca5 import SNIPModule as snip
 from PyMca5.Gefit import LeastSquaresFit as LSF
 from PyMca5.SpecfitFuns import gauss
-from PyMca import SpecfitFuns
+from PyMca5 import SpecfitFuns
 from os.path import join as pathjoin
 
 try:
-    from PyMca import Plugin1DBase
+    from PyMca5 import Plugin1DBase
 except ImportError:
     print("WARNING:AlignmentScanPlugin import from somewhere else")
     from . import Plugin1DBase

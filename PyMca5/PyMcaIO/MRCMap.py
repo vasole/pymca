@@ -21,7 +21,7 @@ import re
 import struct
 import numpy
 import copy
-from PyMca import DataObject
+from PyMca5 import DataObject
 
 if sys.version < '2.6':
     def bytes(x):

@@ -56,11 +56,11 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 try:
-    from PyMca import StackPluginBase
+    from PyMca5 import StackPluginBase
 except ImportError:
     from . import StackPluginBase
 try:
-    from PyMca import Median2DBrowser
+    from PyMca5 import Median2DBrowser
     import PyMca.PyMca_Icons as PyMca_Icons
 except ImportError:
     import Median2DBrowser

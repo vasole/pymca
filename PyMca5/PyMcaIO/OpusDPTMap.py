@@ -26,7 +26,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software group"
 import numpy
-from PyMca import DataObject
+from PyMca5 import DataObject
 from PyMca5.PyMcaIO import specfilewrapper as specfile
 
 SOURCE_TYPE = "SpecFileStack"

@@ -44,7 +44,7 @@ class testData(unittest.TestCase):
         """
         self._importSuccess = False
         try:
-            from PyMca import PyMcaDataDir
+            from PyMca5 import PyMcaDataDir
             self._importSuccess = True
             self.dataDir = PyMcaDataDir.PYMCA_DATA_DIR
         except:

@@ -29,8 +29,8 @@ import os
 import numpy
 import struct
 import time
-from PyMca import DataObject
-from PyMca import PyMcaIOHelper
+from PyMca5 import DataObject
+from PyMca5 import PyMcaIOHelper
 
 DEBUG = 0
 SOURCE_TYPE="EdfFileStack"

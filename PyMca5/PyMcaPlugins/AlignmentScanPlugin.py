@@ -28,12 +28,12 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 import numpy
 
 try:
-    from PyMca import Plugin1DBase
+    from PyMca5 import Plugin1DBase
 except ImportError:
     print("WARNING:MedianFilterScanPlugin import from somewhere else")
     from . import Plugin1DBase
 
-from PyMca import SpecfitFuns
+from PyMca5 import SpecfitFuns
 
 class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
@@ -197,7 +197,7 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca import PyMcaQt as qt
+    from PyMca5 import PyMcaQt as qt
     app = qt.QApplication([])
     from PyMca5.Plot1DQwt import Plot1DQwt as Plot1D
     i = numpy.arange(1000.)

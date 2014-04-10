@@ -26,7 +26,7 @@
 #############################################################################*/
 import numpy
 try:
-    from PyMca import SGModule
+    from PyMca5 import SGModule
 except ImportError:
     print("SimpleMath importing SGModule directly")
     import SGModule

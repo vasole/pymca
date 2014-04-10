@@ -21,7 +21,7 @@ import re
 import struct
 import numpy
 import copy
-from PyMca import DataObject
+from PyMca5 import DataObject
 
 DEBUG = 0
 SOURCE_TYPE = "EdfFileStack"
