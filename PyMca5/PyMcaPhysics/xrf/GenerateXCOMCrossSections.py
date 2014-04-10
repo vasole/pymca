@@ -20,7 +20,7 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 import numpy
-from PyMca import Elements
+from PyMca5 import Elements
 
 if len(sys.argv) < 3:
     print("Usage:")

@@ -29,13 +29,13 @@ __revision__ = "$Revision: 1.2 $"
 import os
 import numpy
 try:
-    from PyMca import specfile
+    from PyMca5 import specfile
 except ImportError:
     print("BindingEnergies.py is importing specfile from local directory")
     import specfile
 
 # PyMcaDataDir is created at installation time in setup.py
-from PyMca import PyMcaDataDir
+from PyMca5 import PyMcaDataDir
 
 filename = "BindingEnergies.dat"
 dirname = PyMcaDataDir.PYMCA_DATA_DIR

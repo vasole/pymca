@@ -20,8 +20,8 @@ __author__ = "Ana Sancho Tomas and V.A. Sole"
 __license__ = "LGPL"
 import copy
 import numpy
-from PyMca import ConfigDict
-from PyMca import Elements
+from PyMca5 import ConfigDict
+from PyMca5 import Elements
 
 def isValidConfiguration(configuration):
     return True, "OK"

@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyMca import Elements
+from PyMca5 import Elements
 import math
 import numpy
 

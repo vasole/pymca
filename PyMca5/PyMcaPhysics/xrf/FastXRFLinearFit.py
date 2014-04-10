@@ -20,11 +20,11 @@ __license__ = "LGPL"
 import os
 import numpy
 from PyMca.linalg import lstsq
-from PyMca import ClassMcaTheory
-from PyMca import Gefit
-from PyMca import ConcentrationsTool
-from PyMca import SpecfitFuns
-from PyMca import ConfigDict
+from PyMca5 import ClassMcaTheory
+from PyMca5 import Gefit
+from PyMca5 import ConcentrationsTool
+from PyMca5 import SpecfitFuns
+from PyMca5 import ConfigDict
 import time
 
 DEBUG = 0

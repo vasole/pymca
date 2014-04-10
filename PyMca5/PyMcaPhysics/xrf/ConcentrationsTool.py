@@ -29,7 +29,7 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import copy
 import numpy
-from PyMca import Elements
+from PyMca5 import Elements
 from PyMca.XRFMC import XRFMCHelper
 
 class ConcentrationsConversion(object):
@@ -719,7 +719,7 @@ def main():
     import sys
     import getopt
 
-    from PyMca import ConfigDict
+    from PyMca5 import ConfigDict
 
     if len(sys.argv) > 1:
         options = ''

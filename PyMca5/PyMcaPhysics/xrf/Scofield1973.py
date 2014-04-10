@@ -26,8 +26,8 @@
 #############################################################################*/
 import sys
 import os
-from PyMca import ConfigDict
-from PyMca import PyMcaDataDir
+from PyMca5 import ConfigDict
+from PyMca5 import PyMcaDataDir
 
 dict = ConfigDict.ConfigDict()
 dirmod = PyMcaDataDir.PYMCA_DATA_DIR 

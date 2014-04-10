@@ -31,8 +31,8 @@ should take a look at dedicated and well-tested packages like IFEFFIT or
 Viper/XANES dactyloscope """
 
 import numpy
-from PyMca import SpecfitFuns
-from PyMca import SGModule
+from PyMca5 import SpecfitFuns
+from PyMca5 import SGModule
 from PyMca.Gefit import LeastSquaresFit
 DEBUG = 0
 if DEBUG:

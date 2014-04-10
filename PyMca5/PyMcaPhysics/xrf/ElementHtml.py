@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-from PyMca import Elements
+from PyMca5 import Elements
 
 class ElementHtml(object):
     def __init__(self,element=None):
@@ -284,7 +284,7 @@ if __name__ == "__main__":
     # can safely use it as LPGL for HTML generation.
     #
     import sys
-    from PyMca import PyMcaQt as qt
+    from PyMca5 import PyMcaQt as qt
     app  = qt.QApplication(sys.argv)
     if len(sys.argv) > 1:
         ele = sys.argv[1]

@@ -27,11 +27,11 @@
 import os
 import numpy
 try:
-    from PyMca import specfile
+    from PyMca5 import specfile
 except ImportError:
     print("MShell.py is importing specfile from local directory")
     import specfile
-from PyMca import PyMcaDataDir
+from PyMca5 import PyMcaDataDir
     
 dirname   = PyMcaDataDir.PYMCA_DATA_DIR
 inputfile = os.path.join(dirname, "MShellRates.dat")

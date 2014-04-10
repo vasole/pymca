@@ -18,8 +18,8 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import os
 import numpy
-from PyMca import ConfigDict
-from PyMca import PyMcaDataDir
+from PyMca5 import ConfigDict
+from PyMca5 import PyMcaDataDir
 
 dirmod = PyMcaDataDir.PYMCA_DATA_DIR
 ffile = os.path.join(dirmod, "attdata")

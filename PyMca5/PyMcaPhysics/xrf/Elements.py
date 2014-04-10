@@ -24,11 +24,11 @@ import numpy
 import re
 import weakref
 import types
-from PyMca import ConfigDict
-from PyMca import CoherentScattering
-from PyMca import IncoherentScattering
-from PyMca import PyMcaEPDL97
-from PyMca import PyMcaDataDir
+from PyMca5 import ConfigDict
+from PyMca5 import CoherentScattering
+from PyMca5 import IncoherentScattering
+from PyMca5 import PyMcaEPDL97
+from PyMca5 import PyMcaDataDir
 
 """
 Constant                     Symbol      2006 CODATA value          Relative uncertainty
@@ -159,15 +159,15 @@ ElementsInfo = [
 ]
 ElementList= [ elt[0] for elt in ElementsInfo ]
 
-from PyMca import BindingEnergies
+from PyMca5 import BindingEnergies
 ElementShells = BindingEnergies.ElementShells[1:]
 ElementBinding = BindingEnergies.ElementBinding
 
-from PyMca import KShell
-from PyMca import LShell
-from PyMca import MShell
+from PyMca5 import KShell
+from PyMca5 import LShell
+from PyMca5 import MShell
 #Scofield's photoelectric dictionnary
-from PyMca import Scofield1973
+from PyMca5 import Scofield1973
 
 ElementShellTransitions = [KShell.ElementKShellTransitions,
                            KShell.ElementKAlphaTransitions,

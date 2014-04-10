@@ -18,8 +18,8 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import os
 import numpy
-from PyMca import ConfigDict
-from PyMca import PyMcaDataDir
+from PyMca5 import ConfigDict
+from PyMca5 import PyMcaDataDir
 
 ElementList= ['H','He','Li','Be','B','C','N','O','F','Ne',
               'Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn',

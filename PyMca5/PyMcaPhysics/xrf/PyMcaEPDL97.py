@@ -20,12 +20,12 @@ __doc__= "Interface to the PyMca EPDL97 description"
 import os
 import sys
 try:
-    from PyMca import specfile
+    from PyMca5 import specfile
 except ImportError:
     #this is needed for frozen versions
     print("PyMcaEPDL97.py is importing specfile from local directory")
     import specfile
-from PyMca import PyMcaDataDir
+from PyMca5 import PyMcaDataDir
 import numpy
 log = numpy.log
 exp = numpy.exp
