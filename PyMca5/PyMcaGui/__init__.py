@@ -1,2 +1,3 @@
-from .pymca import PyMcaMain
-from .plotting import PlotWidget, PlotWindow, MaskImageWidget
+from .plotting import PlotWidget, PlotWindow, MaskImageWidget, \
+                      PyMca_Icons, PyMcaPrintPreview
+from .math.fitting import SpecfitGui, SimpleFitGui, SimpleFitBatchGui

@@ -26,12 +26,15 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import sys
-print("ProfileScanWidget should not depend on ScanWindow")
-from PyMca5.PyMcaGui.pymca import ScanWindow
-qt = ScanWindow.qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
+if 0:
+    print("ProfileScanWidget should not depend on ScanWindow")
+    from PyMca5.PyMcaGui.pymca.ScanWindow import ScanWindow as Window
+else:
+    from .PlotWindow import PlotWindow as Window
 DEBUG = 0
 
-class ProfileScanWidget(ScanWindow.ScanWindow):
+class ProfileScanWidget(Window):
     def __init__(self, parent=None, actions=False, **kw):
         ScanWindow.ScanWindow.__init__(self, parent, **kw)
         if actions:

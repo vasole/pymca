@@ -79,8 +79,9 @@ if __name__ == '__main__':
     if qtversion == '3':
         raise NotImplementedError("Qt3 is not longer supported") 
 
-from . import PyMcaMdi
-from .. import PyMcaQt as qt
+from PyMca5.PyMcaGui.pymca import PyMcaMdi
+IconDict = PyMcaMdi.IconDict
+from PyMca5.PyMcaGui import PyMcaQt as qt
 if backend is None:
     backend = "matplotlib"
 
@@ -103,8 +104,7 @@ try:
 except:
     XRFMC_FLAG = False
 
-from ..PyMca_Icons import IconDict
-from PyMca5.PyMca_help import HelpDict
+from PyMca5.PyMcaGui.pymca.PyMca_help import HelpDict
 from PyMca5 import PyMcaDataDir
 import os
 __version__ = "5.0.0-alpha2"
@@ -148,7 +148,7 @@ if __name__ == "__main__":
         splash = qt.QSplashScreen()
     splash.show()
     splash.raise_()
-    from PyMca5 import ChangeLog
+    from PyMca5.PyMcaGui.pymca import ChangeLog
     font = splash.font()
     font.setBold(1)
     splash.setFont(font)
@@ -158,11 +158,11 @@ if __name__ == "__main__":
     if sys.platform == "darwin":
         qt.qApp.processEvents()
 
-from PyMca5.widgets import ScanWindow
-from PyMca5.widgets import McaWindow
+from PyMca5.PyMcaGui.pymca import ScanWindow
+from PyMca5.PyMcaGui.pymca import McaWindow
 
-from PyMca5 import PyMcaImageWindow
-from PyMca5 import PyMcaHKLImageWindow
+from PyMca5.PyMcaGui.pymca import PyMcaImageWindow
+from PyMca5.PyMcaGui.pymca import PyMcaHKLImageWindow
 try:
     #This is to make sure it is properly frozen
     #and that Object3D is fully supported
@@ -173,12 +173,12 @@ try:
     OBJECT3D = True
 except:
     OBJECT3D = False
-from PyMca5 import QDispatcher
-from PyMca5 import ElementsInfo
-from PyMca5 import PeakIdentifier
-from PyMca5 import PyMcaBatch
+from PyMca5.PyMcaGui.pymca import QDispatcher
+from PyMca5.PyMcaGui.pymca import ElementsInfo
+from PyMca5.PyMcaGui.pymca import PeakIdentifier
+from PyMca5.PyMcaGui.pymca import PyMcaBatch
 ###########import Fit2Spec
-from PyMca5 import Mca2Edf
+from PyMca5.PyMcaGui.pymca import Mca2Edf
 try:
     from PyMca5 import QStackWidget
     from PyMca5 import StackSelector

@@ -38,14 +38,14 @@ else:
 if __name__ == "__main__":
     app = qt.QApplication([])
 
-from PyMca5.widgets import PlotWindow
-from PyMca5 import ScanFit
-from PyMca5 import SimpleMath
-from PyMca5 import DataObject
+from PyMca5.PyMcaGui import PlotWindow
+from . import ScanFit
+from PyMca5.PyMcaMath import SimpleMath
+from PyMca5.PyMcaCore import DataObject
 import copy
-from PyMca5 import PyMcaPrintPreview
-from PyMca5 import PyMcaDirs
-from PyMca5 import ScanWindowInfoWidget
+from PyMca5.PyMcaGui import PyMcaPrintPreview
+from PyMca5.PyMcaCore import PyMcaDirs
+from . import ScanWindowInfoWidget
 #implement the plugins interface
 try:
     from PyMca5 import QPyMcaMatplotlibSave1D

@@ -46,15 +46,11 @@ try:
 except ImportError:
     MATPLOTLIB = False
 from PyMca5 import spslut
-from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ArraySave
+from . import ProfileScanWidget
 try:
-    from PyMca5 import ProfileScanWidget
-except ImportError:
-    print("MaskImageWidget importing ProfileScanWidget directly")
-    import ProfileScanWidget
-try:
-    from PyMca5 import SpecfitFuns
+    from PyMca5.PyMcaMath.fitting import SpecfitFuns
 except ImportError:
     print("MaskImageWidget importing SpecfitFuns directly")
     import SpecfitFuns
