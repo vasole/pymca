@@ -28,12 +28,12 @@
 import sys
 import time
 import numpy
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 PCA = False
 MDP = False
 if qt.qVersion() > '4.0.0':
     try:
-        from PyMca import PCAWindow
+        from PyMca5 import PCAWindow
         PCA = True
         MDP = PCAWindow.MDP
     except ImportError:
@@ -283,7 +283,7 @@ class PCADialog(qt.QDialog):
 if __name__ == "__main__":
     DEBUG = 1
     import os
-    from PyMca.PyMcaIO import EdfFile
+    from PyMca5.PyMcaIO import EdfFile
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))

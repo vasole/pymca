@@ -25,8 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 __revision__ = "$Revision: 1.4 $"
-from PyMca.PyMcaIO import spswrap as sps
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaIO import spswrap as sps
+from PyMca5 import PyMcaQt as qt
 import PyMca.PyMca_Icons as icons
 DEBUG = 0
 PYDVT = 0
@@ -693,9 +693,9 @@ class SPSSelector(qt.QWidget):
 def test():
     import sys
     if PYDVT:
-        from PyMca import SPSData
+        from PyMca5 import SPSData
     else:
-        from PyMca import SPSLayer
+        from PyMca5 import SPSLayer
     def repSelection(sel): print("repSelection", sel)
     def addSelection(sel): print("addSelection", sel)
 

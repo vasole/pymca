@@ -27,12 +27,12 @@
 #############################################################################*/
 import copy
 import numpy
-from PyMca import PyMcaQt as qt
-from PyMca import PyMcaFileDialogs
-from PyMca import Elements
-from PyMca import MatrixImage
-from PyMca import MaterialEditor
-from PyMca import ConfigDict
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import PyMcaFileDialogs
+from PyMca5 import Elements
+from PyMca5 import MatrixImage
+from PyMca5 import MaterialEditor
+from PyMca5 import ConfigDict
 
 if hasattr(qt, "QString"):
     qstring = qt.QString

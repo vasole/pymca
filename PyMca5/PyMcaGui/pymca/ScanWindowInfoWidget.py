@@ -27,7 +27,7 @@
 #############################################################################*/
 import sys
 import numpy
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 """

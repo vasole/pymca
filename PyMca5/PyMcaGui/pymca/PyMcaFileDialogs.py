@@ -25,8 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 import os
-from PyMca import PyMcaQt as qt
-from PyMca import PyMcaDirs
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import PyMcaDirs
 QTVERSION = qt.qVersion()
 
 def getExistingDirectory(parent=None, message=None, mode=None):

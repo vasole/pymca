@@ -31,31 +31,31 @@ import os
 import time
 import subprocess
 
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     try:
         import h5py
-        from PyMca import NexusDataSource
-        from PyMca import QNexusWidget
-        from PyMca import HDF5Selection
+        from PyMca5 import NexusDataSource
+        from PyMca5 import QNexusWidget
+        from PyMca5 import HDF5Selection
         HDF5SUPPORT = True
     except ImportError:
         HDF5SUPPORT = False
 else:
     HDF5SUPPORT = False
-from PyMca import ConfigDict
-from PyMca import McaAdvancedFitBatch
-from PyMca import EdfFileLayer
-from PyMca import SpecFileLayer
-from PyMca.PyMca_Icons import IconDict
-from PyMca import McaCustomEvent
-from PyMca import EdfFileSimpleViewer
-from PyMca import QtMcaAdvancedFitReport
-from PyMca import HtmlIndex
-from PyMca import PyMcaDirs
-from PyMca import PyMcaBatchBuildOutput
+from PyMca5 import ConfigDict
+from PyMca5 import McaAdvancedFitBatch
+from PyMca5 import EdfFileLayer
+from PyMca5 import SpecFileLayer
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import McaCustomEvent
+from PyMca5 import EdfFileSimpleViewer
+from PyMca5 import QtMcaAdvancedFitReport
+from PyMca5 import HtmlIndex
+from PyMca5 import PyMcaDirs
+from PyMca5 import PyMcaBatchBuildOutput
 
 ROIWIDTH = 100.
 DEBUG = 0

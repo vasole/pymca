@@ -28,20 +28,20 @@
 import sys
 import os
 import copy
-from PyMca import PyMcaQt as qt
-from PyMca import PyMcaDirs
-from PyMca import DataObject
-from PyMca.PyMcaIO import MRCMap
-from PyMca.PyMcaIO import OmnicMap
-from PyMca.PyMcaIO import OpusDPTMap
-from PyMca.PyMcaIO import LuciaMap
-from PyMca.PyMcaIO import SupaVisioMap
-from PyMca.PyMcaIO import AifiraMap
-from PyMca.PyMcaIO import TextImageStack
-from PyMca.PyMcaIO import TiffStack
-from PyMca.QStack import QStack, QSpecFileStack
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import PyMcaDirs
+from PyMca5 import DataObject
+from PyMca5.PyMcaIO import MRCMap
+from PyMca5.PyMcaIO import OmnicMap
+from PyMca5.PyMcaIO import OpusDPTMap
+from PyMca5.PyMcaIO import LuciaMap
+from PyMca5.PyMcaIO import SupaVisioMap
+from PyMca5.PyMcaIO import AifiraMap
+from PyMca5.PyMcaIO import TextImageStack
+from PyMca5.PyMcaIO import TiffStack
+from PyMca5.QStack import QStack, QSpecFileStack
 try:
-    from PyMca import QHDF5Stack1D
+    from PyMca5 import QHDF5Stack1D
     import h5py
     HDF5 = True
 except ImportError:
@@ -439,7 +439,7 @@ class StackSelector(object):
 
 
 if __name__ == "__main__":
-    from PyMca import QStackWidget
+    from PyMca5 import QStackWidget
     import getopt
     options = ''
     longoptions = ["fileindex=",

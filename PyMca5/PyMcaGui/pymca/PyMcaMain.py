@@ -79,15 +79,15 @@ if __name__ == '__main__':
     if qtversion == '3':
         raise NotImplementedError("Qt3 is not longer supported") 
 
-from PyMca import PyMcaMdi
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaMdi
+from PyMca5 import PyMcaQt as qt
 if backend is None:
     backend = "matplotlib"
 
 if backend.lower() == "matplotlib":
-    from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+    from PyMca5.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
 elif backend.lower() == "pyqtgraph":
-    from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
+    from PyMca5.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -97,14 +97,14 @@ else:
 QTVERSION = qt.qVersion()
 
 try:
-    from PyMca.XRFMC import XRFMCPyMca
+    from PyMca5.XRFMC import XRFMCPyMca
     XRFMC_FLAG = True
 except:
     XRFMC_FLAG = False
 
-from PyMca.PyMca_Icons import IconDict
-from PyMca.PyMca_help import HelpDict
-from PyMca import PyMcaDataDir
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5.PyMca_help import HelpDict
+from PyMca5 import PyMcaDataDir
 import os
 __version__ = "5.0.0-alpha2"
 
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         splash = qt.QSplashScreen()
     splash.show()
     splash.raise_()
-    from PyMca import ChangeLog
+    from PyMca5 import ChangeLog
     font = splash.font()
     font.setBold(1)
     splash.setFont(font)
@@ -157,11 +157,11 @@ if __name__ == "__main__":
     if sys.platform == "darwin":
         qt.qApp.processEvents()
 
-from PyMca.widgets import ScanWindow
-from PyMca.widgets import McaWindow
+from PyMca5.widgets import ScanWindow
+from PyMca5.widgets import McaWindow
 
-from PyMca import PyMcaImageWindow
-from PyMca import PyMcaHKLImageWindow
+from PyMca5 import PyMcaImageWindow
+from PyMca5 import PyMcaHKLImageWindow
 try:
     #This is to make sure it is properly frozen
     #and that Object3D is fully supported
@@ -172,29 +172,29 @@ try:
     OBJECT3D = True
 except:
     OBJECT3D = False
-from PyMca import QDispatcher
-from PyMca import ElementsInfo
-from PyMca import PeakIdentifier
-from PyMca import PyMcaBatch
+from PyMca5 import QDispatcher
+from PyMca5 import ElementsInfo
+from PyMca5 import PeakIdentifier
+from PyMca5 import PyMcaBatch
 ###########import Fit2Spec
-from PyMca import Mca2Edf
+from PyMca5 import Mca2Edf
 try:
-    from PyMca import QStackWidget
-    from PyMca import StackSelector
+    from PyMca5 import QStackWidget
+    from PyMca5 import StackSelector
     STACK = True
 except:
     STACK = False
-from PyMca import PyMcaPostBatch
-from PyMca import RGBCorrelator
-from PyMca import MaterialEditor
+from PyMca5 import PyMcaPostBatch
+from PyMca5 import RGBCorrelator
+from PyMca5 import MaterialEditor
 
-from PyMca import ConfigDict
-from PyMca import PyMcaDirs
+from PyMca5 import ConfigDict
+from PyMca5 import PyMcaDirs
 
 XIA_CORRECT = False
 if QTVERSION > '4.3.0':
     try:
-        from PyMca import XiaCorrect
+        from PyMca5 import XiaCorrect
         XIA_CORRECT = True
     except:
         pass

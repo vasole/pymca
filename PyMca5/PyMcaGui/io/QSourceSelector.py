@@ -26,11 +26,11 @@
 #############################################################################*/
 import sys
 import os
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 import PyMca.PyMca_Icons as icons
-from PyMca.PyMcaIO import spswrap as sps
-from PyMca import PyMcaDirs
+from PyMca5.PyMcaIO import spswrap as sps
+from PyMca5 import PyMcaDirs
 
 DEBUG = 0
 
@@ -316,7 +316,7 @@ class QSourceSelector(qt.QWidget):
 def test():
     a = qt.QApplication(sys.argv)
     #new access
-    from PyMca import QDataSource
+    from PyMca5 import QDataSource
     w= QSourceSelector()
     def mySlot(ddict):
         print(ddict)

@@ -28,14 +28,14 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import numpy
 import time
-from PyMca.PyMca_Icons import IconDict
-from PyMca import RGBImageCalculator
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import RGBImageCalculator
 qt = RGBImageCalculator.qt
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
-    from PyMca import RGBCorrelator
+    from PyMca5 import RGBCorrelator
 try:
-    from PyMca import FrameBrowser
+    from PyMca5 import FrameBrowser
     USE_BROWSER = True
 except ImportError:
     USE_BROWSER = False
@@ -347,7 +347,7 @@ class TimerLoop:
         print("Test function called")
 
 if __name__ == "__main__":
-    from PyMca import DataObject
+    from PyMca5 import DataObject
     import weakref
     import time
     def buildDataObject(arrayData):
@@ -386,7 +386,7 @@ if __name__ == "__main__":
     else:PYMCA = False
 
     if PYMCA:
-        from PyMca import PyMcaMain
+        from PyMca5 import PyMcaMain
         w = PyMcaMain.PyMca()
         w.show()
     else:

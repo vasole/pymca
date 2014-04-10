@@ -29,14 +29,14 @@ import sys
 import numpy
 import traceback
 import copy
-from PyMca import PyMcaQt as qt
-from PyMca.PyMca_Icons import IconDict
-#from PyMca import ScanWindow
-from PyMca.plotting.backends.MatplotlibBackend \
+from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMca_Icons import IconDict
+#from PyMca5 import ScanWindow
+from PyMca5.plotting.backends.MatplotlibBackend \
      import MatplotlibBackend as backend
-from PyMca.widgets.PlotWindow import PlotWindow as ScanWindow
+from PyMca5.widgets.PlotWindow import PlotWindow as ScanWindow
 try:
-    from PyMca import XASNormalization
+    from PyMca5 import XASNormalization
 except:
     print("WARNING: XASNormalizationWindow performing local import")
     from . import XASNormalization
@@ -517,7 +517,7 @@ class XASNormalizationDialog(qt.QDialog):
 if __name__ == "__main__":
     app = qt.QApplication([])
     if len(sys.argv) > 1:
-        from PyMca.PyMcaIO import specfilewrapper as specfile
+        from PyMca5.PyMcaIO import specfilewrapper as specfile
         sf = specfile.Specfile(sys.argv[1])
         scan = sf[0]
         data = scan.data()
@@ -525,7 +525,7 @@ if __name__ == "__main__":
         spectrum = data[1, :]
         w = XASNormalizationDialog(None, spectrum, energy=energy)
     else:
-        from PyMca import SpecfitFuns
+        from PyMca5 import SpecfitFuns
         noise = numpy.random.randn(1500.) 
         x = 8000. + numpy.arange(1500.)
         y = SpecfitFuns.upstep([100, 8500., 50], x)

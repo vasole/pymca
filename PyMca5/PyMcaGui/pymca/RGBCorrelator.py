@@ -29,15 +29,15 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 import numpy
-from PyMca import RGBCorrelatorWidget
+from PyMca5 import RGBCorrelatorWidget
 qt = RGBCorrelatorWidget.qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
     QString = str
-from PyMca import RGBCorrelatorGraph
+from PyMca5 import RGBCorrelatorGraph
 try:
-    from PyMca import QPyMcaMatplotlibSave
+    from PyMca5 import QPyMcaMatplotlibSave
     MATPLOTLIB = True
 except ImportError:
     MATPLOTLIB = False

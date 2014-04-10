@@ -27,10 +27,10 @@
 import sys
 import os
 import traceback
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-from PyMca import QSourceSelector
-from PyMca import QDataSource
+from PyMca5 import QSourceSelector
+from PyMca5 import QDataSource
 #import weakref
 
 DEBUG = 0

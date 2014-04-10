@@ -29,13 +29,13 @@ import sys
 import os
 import traceback
 import time
-from PyMca import PyMcaQt as qt
-from PyMca import PyMcaDirs
-from PyMca import SimpleFitGUI
-from PyMca.PyMca_Icons import IconDict
-from PyMca import StackSimpleFit
-from PyMca.PyMcaIO import ArraySave
-from PyMca import CalculationThread
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import PyMcaDirs
+from PyMca5 import SimpleFitGUI
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import StackSimpleFit
+from PyMca5.PyMcaIO import ArraySave
+from PyMca5 import CalculationThread
 safe_str = qt.safe_str
 
 class OutputParameters(qt.QWidget):
@@ -242,8 +242,8 @@ class StackSimpleFitWindow(qt.QWidget):
 
 if __name__ == "__main__":
     import numpy
-    from PyMca import SpecfitFuns
-    from PyMca import SimpleFitUserEstimatedFunctions as Functions
+    from PyMca5 import SpecfitFuns
+    from PyMca5 import SimpleFitUserEstimatedFunctions as Functions
     x = numpy.arange(1000.)
     data = numpy.zeros((50, 1000), numpy.float)
 

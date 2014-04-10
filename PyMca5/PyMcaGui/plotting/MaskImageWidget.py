@@ -41,20 +41,20 @@ else:
     QString = qt.safe_str
 MATPLOTLIB = False
 try:
-    from PyMca import QPyMcaMatplotlibSave
+    from PyMca5 import QPyMcaMatplotlibSave
     MATPLOTLIB = True
 except ImportError:
     MATPLOTLIB = False
-from PyMca import spslut
-from PyMca import PyMcaDirs
-from PyMca.PyMcaIO import ArraySave
+from PyMca5 import spslut
+from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaIO import ArraySave
 try:
-    from PyMca import ProfileScanWidget
+    from PyMca5 import ProfileScanWidget
 except ImportError:
     print("MaskImageWidget importing ProfileScanWidget directly")
     import ProfileScanWidget
 try:
-    from PyMca import SpecfitFuns
+    from PyMca5 import SpecfitFuns
 except ImportError:
     print("MaskImageWidget importing SpecfitFuns directly")
     import SpecfitFuns
@@ -1909,7 +1909,7 @@ def test():
                                         profileselection=True,
                                         aspect=True,
                                         imageicons=True)
-            from PyMca.PyMcaIO import EdfFile
+            from PyMca5.PyMcaIO import EdfFile
             edf = EdfFile.EdfFile(sys.argv[1])
             data = edf.GetData(0)
             container.setImageData(data)

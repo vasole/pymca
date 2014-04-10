@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys, getopt, string
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -33,8 +33,8 @@ else:
     
 QTVERSION = qt.qVersion()
 
-from PyMca.PyMca_Icons import IconDict
-from PyMca.PyMca_help  import HelpDict
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5.PyMca_help  import HelpDict
 DEBUG = 0
 
 __version__ = "1.5"

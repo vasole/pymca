@@ -25,9 +25,9 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
-from PyMca import HDF5Stack1D
-from PyMca import QHDF5StackWizard
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import HDF5Stack1D
+from PyMca5 import QHDF5StackWizard
 DEBUG = 0
 
 class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):

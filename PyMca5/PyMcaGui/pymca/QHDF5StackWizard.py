@@ -27,11 +27,11 @@
 import sys
 import os
 import posixpath
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 safe_str = qt.safe_str
-from PyMca import QNexusWidget
-from PyMca import NexusDataSource
-from PyMca import PyMcaDirs
+from PyMca5 import QNexusWidget
+from PyMca5 import NexusDataSource
+from PyMca5 import PyMcaDirs
 
 class IntroductionPage(qt.QWizardPage):
     def __init__(self, parent):

@@ -27,11 +27,11 @@
 import sys
 import posixpath
 try:
-    from PyMca import PyMcaQt as qt
-    from PyMca import DataObject
-    from PyMca.QNexusWidget import *
-    from PyMca import QStackWidget
-    from PyMca import HDF5Stack1D
+    from PyMca5 import PyMcaQt as qt
+    from PyMca5 import DataObject
+    from PyMca5.QNexusWidget import *
+    from PyMca5 import QStackWidget
+    from PyMca5 import HDF5Stack1D
 except ImportError:
     print("PyMcaNexusWidget importing from directory")
     import PyMcaQt as qt
@@ -225,7 +225,7 @@ class PyMcaNexusWidget(QNexusWidget):
 if __name__ == "__main__":
     try:
         #this is to add the 3D buttons ...
-        from PyMca import Object3D
+        from PyMca5 import Object3D
     except:
         #not a big deal for this tests
         pass

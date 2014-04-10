@@ -30,13 +30,13 @@ Generic access to data sources.
 """
 import sys
 import os
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
-from PyMca import SpecFileDataSource
-from PyMca import EdfFileDataSource
-from PyMca import QEdfFileWidget
-from PyMca import QSpecFileWidget
+from PyMca5 import SpecFileDataSource
+from PyMca5 import EdfFileDataSource
+from PyMca5 import QEdfFileWidget
+from PyMca5 import QSpecFileWidget
 
 if sys.platform == "win32":
     source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
@@ -46,9 +46,9 @@ if sys.platform == "win32":
                        EdfFileDataSource.SOURCE_TYPE: QEdfFileWidget.QEdfFileWidget}
     sps = None 
 else:
-    from PyMca import QSpsDataSource
+    from PyMca5 import QSpsDataSource
     sps = QSpsDataSource.SpsDataSource.sps
-    from PyMca import QSpsWidget
+    from PyMca5 import QSpsWidget
     source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
                      EdfFileDataSource.SOURCE_TYPE:  EdfFileDataSource.EdfFileDataSource,
                      QSpsDataSource.SOURCE_TYPE: QSpsDataSource.QSpsDataSource}
@@ -59,8 +59,8 @@ else:
 
 NEXUS = True
 try:
-    from PyMca import NexusDataSource
-    from PyMca import PyMcaNexusWidget
+    from PyMca5 import NexusDataSource
+    from PyMca5 import PyMcaNexusWidget
     import h5py
 except:
     # HDF5 file format support is not mandatory

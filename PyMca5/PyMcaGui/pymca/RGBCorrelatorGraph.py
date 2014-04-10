@@ -1,1 +1,1 @@
-from PyMca.widgets.RGBCorrelatorGraph import *
+from PyMca5.widgets.RGBCorrelatorGraph import *

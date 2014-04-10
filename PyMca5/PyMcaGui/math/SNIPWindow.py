@@ -26,14 +26,14 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
-from PyMca import PyMcaQt as qt
-from PyMca.PyMca_Icons import IconDict
-from PyMca import MaskImageWidget
-from PyMca import ScanWindow
-from PyMca import SNIPModule
+from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import MaskImageWidget
+from PyMca5 import ScanWindow
+from PyMca5 import SNIPModule
 OBJECT3D = False
 try:
-    from PyMca.Object3D import Object3DScene
+    from PyMca5.Object3D import Object3DScene
     OBJECT3D = True
 except:
     try:
@@ -394,7 +394,7 @@ if __name__ == "__main__":
         y=numpy.arange(1000.)
         w = SNIPDialog(None, y+numpy.sqrt(y)* noise)
     elif len(sys.argv) > 1:
-        from PyMca.PyMcaIO import EdfFile
+        from PyMca5.PyMcaIO import EdfFile
         edf = EdfFile.EdfFile(sys.argv[1])
         data = edf.GetData(0)
         w = SNIPDialog(None, data)    

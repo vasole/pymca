@@ -27,8 +27,8 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import numpy
 try:
-    from PyMca import StackBrowser
-    from PyMca.PyMcaSciPy.signal import median
+    from PyMca5 import StackBrowser
+    from PyMca5.PyMcaSciPy.signal import median
 except ImportError:
     print("Median2DBrowser importing directly!")
     import StackBrowser

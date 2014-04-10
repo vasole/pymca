@@ -29,21 +29,21 @@ import sys
 import os
 import numpy
 import traceback
-from PyMca import RGBCorrelatorSlider
-from PyMca import RGBCorrelatorTable
-from PyMca import RGBImageCalculator
-from PyMca import spslut
-from PyMca.PyMca_Icons import IconDict
-from PyMca.PyMcaIO import ArraySave
-from PyMca import PyMcaDirs
-from PyMca import EdfFileDataSource
-from PyMca import ExternalImagesWindow
-from PyMca.PyMcaIO import TiffIO
+from PyMca5 import RGBCorrelatorSlider
+from PyMca5 import RGBCorrelatorTable
+from PyMca5 import RGBImageCalculator
+from PyMca5 import spslut
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5.PyMcaIO import ArraySave
+from PyMca5 import PyMcaDirs
+from PyMca5 import EdfFileDataSource
+from PyMca5 import ExternalImagesWindow
+from PyMca5.PyMcaIO import TiffIO
 
 DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False
 
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
     QStringList = qt.QStringList
@@ -53,9 +53,9 @@ else:
 
 QTVERSION = qt.qVersion()
 try:
-    from PyMca import NNMADialog
+    from PyMca5 import NNMADialog
     NNMA = NNMADialog.NNMA
-    from PyMca import PCADialog
+    from PyMca5 import PCADialog
     PCA = PCADialog.PCA
 except:
     NNMA = False
@@ -1285,7 +1285,7 @@ class MyQLabel(qt.QLabel):
             painter.font().setBold(0)
 
 def test():
-    from PyMca import RGBCorrelatorGraph
+    from PyMca5 import RGBCorrelatorGraph
     app = qt.QApplication([])
     qt.QObject.connect(app,
                        qt.SIGNAL("lastWindowClosed()"),

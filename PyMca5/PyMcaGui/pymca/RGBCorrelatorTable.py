@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 DEBUG = 0
 
 class RGBCorrelatorTable(qt.QTableWidget):

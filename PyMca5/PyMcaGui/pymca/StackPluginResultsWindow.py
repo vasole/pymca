@@ -27,14 +27,14 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import numpy
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
-from PyMca.PyMca_Icons import IconDict
-from PyMca import MaskImageWidget
-from PyMca import ScanWindow
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import MaskImageWidget
+from PyMca5 import ScanWindow
 
 class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):

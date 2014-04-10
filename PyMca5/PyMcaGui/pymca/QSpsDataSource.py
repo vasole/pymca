@@ -25,8 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import QSource
-from PyMca import SpsDataSource
+from PyMca5 import QSource
+from PyMca5 import SpsDataSource
 qt = QSource.qt
 QTVERSION = qt.qVersion()
 

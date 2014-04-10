@@ -28,11 +28,11 @@
 import os
 import sys
 import numpy
-from PyMca import PyMcaQt as qt
-from PyMca import ExternalImagesWindow
-from PyMca import PyMcaFileDialogs
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import ExternalImagesWindow
+from PyMca5 import PyMcaFileDialogs
 try:
-    from PyMca import sift
+    from PyMca5 import sift
 except:
     if sys.platform.lower().startswith("linux"):
         raise

@@ -26,8 +26,8 @@
 #############################################################################*/
 import sys
 import os
-from PyMca import PyMcaDataDir
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaDataDir
+from PyMca5 import PyMcaQt as qt
 
 class ChangeLog(qt.QTextDocument):
     def __init__(self, parent=None, textfile = None):

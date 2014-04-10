@@ -33,7 +33,7 @@ import McaCustomEvent
 import ConfigDict
 ROIWIDTH = 250.
 
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 
 class Fit2SpecGUI(qt.QWidget):
     def __init__(self,parent=None,name="Fit to Spec Conversion",

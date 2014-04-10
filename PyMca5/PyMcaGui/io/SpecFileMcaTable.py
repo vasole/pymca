@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 
@@ -377,7 +377,7 @@ else:
 
 def test():
     import sys
-    from PyMca import SpecFileLayer
+    from PyMca5 import SpecFileLayer
     app = qt.QApplication([])
     tab = SpecFileMcaTable()
     d = SpecFileLayer.SpecFileLayer()

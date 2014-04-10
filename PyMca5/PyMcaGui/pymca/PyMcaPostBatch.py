@@ -28,9 +28,9 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
-from PyMca import PyMcaDirs
-from PyMca import RGBCorrelator
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaDirs
+from PyMca5 import RGBCorrelator
+from PyMca5 import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
     QStringList = qt.QStringList

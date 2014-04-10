@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 if QTVERSION < '4.0.0':
@@ -293,7 +293,7 @@ class SpecFileDataInfo(qt.QTabWidget):
         return qt.QTabWidget.closeEvent(self, event)
 
 def test():
-    from PyMca import SpecFileLayer
+    from PyMca5 import SpecFileLayer
 
     if len(sys.argv) < 3:
         print("USAGE: %s <filename> <key>" % sys.argv[0])

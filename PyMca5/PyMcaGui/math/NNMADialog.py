@@ -28,11 +28,11 @@
 import sys
 import numpy
 import time
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 NNMA = False
 if qt.qVersion() > '4.0.0':
     try:
-        from PyMca import NNMAWindow
+        from PyMca5 import NNMAWindow
         NNMA = True
     except ImportError:
         pass
@@ -243,7 +243,7 @@ class NNMADialog(qt.QDialog):
 
 if __name__ == "__main__":
     import os
-    from PyMca.PyMcaIO import EdfFile
+    from PyMca5.PyMcaIO import EdfFile
     app = qt.QApplication([])
     qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
                        app, qt.SLOT("quit()"))

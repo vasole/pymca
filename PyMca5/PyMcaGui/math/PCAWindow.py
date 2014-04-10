@@ -27,11 +27,11 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 
 import numpy
-from PyMca import PyMcaQt as qt
-from PyMca.PyMca_Icons import IconDict
-from PyMca import MaskImageWidget
-from PyMca.widgets import ScanWindow
-from PyMca import PCAModule
+from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import MaskImageWidget
+from PyMca5.widgets import ScanWindow
+from PyMca5 import PCAModule
 
 MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB

@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "E. Papillon - ESRF Software group"
-from PyMca import XiaEdf
+from PyMca5 import XiaEdf
 import sys
 import os
 import time

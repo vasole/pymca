@@ -27,11 +27,11 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import sys
 import numpy
-from PyMca import MaskImageWidget
-from PyMca import ColormapDialog
-from PyMca import spslut
+from PyMca5 import MaskImageWidget
+from PyMca5 import ColormapDialog
+from PyMca5 import spslut
 try:
-    from PyMca import QPyMcaMatplotlibSave
+    from PyMca5 import QPyMcaMatplotlibSave
     MATPLOTLIB = True
 except ImportError:
     MATPLOTLIB = False

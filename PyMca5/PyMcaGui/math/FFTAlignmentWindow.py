@@ -27,9 +27,9 @@
 #############################################################################*/
 import sys
 import numpy
-from PyMca import PyMcaQt as qt
-from PyMca import ExternalImagesWindow
-from PyMca import PyMcaFileDialogs
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import ExternalImagesWindow
+from PyMca5 import PyMcaFileDialogs
 DEBUG = 0
 
 class ParametersWidget(qt.QWidget):

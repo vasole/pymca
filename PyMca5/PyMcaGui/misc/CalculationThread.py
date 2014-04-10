@@ -27,7 +27,7 @@
 import sys
 import time
 try:
-    from PyMca import PyMcaQt as qt
+    from PyMca5 import PyMcaQt as qt
 except ImportError:
     import PyMcaQt as qt
 

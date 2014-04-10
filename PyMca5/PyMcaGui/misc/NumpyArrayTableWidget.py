@@ -25,8 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 from PyQt4 import QtCore, QtGui
-from PyMca import FrameBrowser
-from PyMca import NumpyArrayTableView
+from PyMca5 import FrameBrowser
+from PyMca5 import NumpyArrayTableView
 
 class NumpyArrayTableWidget(QtGui.QWidget):
     def __init__(self, parent=None):

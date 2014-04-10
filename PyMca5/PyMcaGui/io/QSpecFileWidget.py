@@ -26,12 +26,12 @@
 #############################################################################*/
 import sys
 import os
-from PyMca import PyMcaQt as qt
-from PyMca import QSelectorWidget
-from PyMca import SpecFileDataInfo
-from PyMca import SpecFileCntTable
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import QSelectorWidget
+from PyMca5 import SpecFileDataInfo
+from PyMca5 import SpecFileCntTable
 OBJECT3D = SpecFileCntTable.OBJECT3D
-from PyMca import SpecFileMcaTable
+from PyMca5 import SpecFileMcaTable
 
 QTVERSION = qt.qVersion()
 
@@ -703,7 +703,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.emit(qt.SIGNAL("otherSignals"), ddict)
 
 def test():
-    from PyMca import QDataSource
+    from PyMca5 import QDataSource
     a = qt.QApplication(sys.argv)
     w = QSpecFileWidget()
     if len(sys.argv) > 1:

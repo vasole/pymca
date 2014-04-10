@@ -30,7 +30,7 @@ import numpy
 #from numpy import argsort, nonzero, take
 import time
 import traceback
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
@@ -38,17 +38,17 @@ else:
 if __name__ == "__main__":
     app = qt.QApplication([])
 
-from PyMca.widgets import PlotWindow
-from PyMca import ScanFit
-from PyMca import SimpleMath
-from PyMca import DataObject
+from PyMca5.widgets import PlotWindow
+from PyMca5 import ScanFit
+from PyMca5 import SimpleMath
+from PyMca5 import DataObject
 import copy
-from PyMca import PyMcaPrintPreview
-from PyMca import PyMcaDirs
-from PyMca import ScanWindowInfoWidget
+from PyMca5 import PyMcaPrintPreview
+from PyMca5 import PyMcaDirs
+from PyMca5 import ScanWindowInfoWidget
 #implement the plugins interface
 try:
-    from PyMca import QPyMcaMatplotlibSave1D
+    from PyMca5 import QPyMcaMatplotlibSave1D
     MATPLOTLIB = True
     #force understanding of utf-8 encoding
     #otherways it cannot generate svg output
@@ -63,7 +63,7 @@ except:
 PLUGINS_DIR = None
 try:
     if os.path.exists(os.path.join(os.path.dirname(qt.__file__), "PyMcaPlugins")):
-        from PyMca import PyMcaPlugins
+        from PyMca5 import PyMcaPlugins
         PLUGINS_DIR = os.path.dirname(PyMcaPlugins.__file__)
     else:
         directory = os.path.dirname(__file__)
@@ -136,7 +136,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         # this one was made in the base class
         #self.setCallback(self.graphCallback)
         if fit:
-            from PyMca import SimpleFitGUI
+            from PyMca5 import SimpleFitGUI
             self.customFit = SimpleFitGUI.SimpleFitGUI()
             self.scanFit.sigScanFitSignal.connect(self._scanFitSignalReceived)
             self.connect(self.customFit,

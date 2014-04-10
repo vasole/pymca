@@ -30,10 +30,10 @@ import os
 import numpy
 import copy
 import time
-from PyMca import PyMcaQt as qt
-from PyMca import McaWindow
-from PyMca.PyMcaIO import EDFStack
-from PyMca import SpecFileStack
+from PyMca5 import PyMcaQt as qt
+from PyMca5 import McaWindow
+from PyMca5.PyMcaIO import EDFStack
+from PyMca5 import SpecFileStack
 DEBUG = 0
 
 class SimpleThread(qt.QThread):

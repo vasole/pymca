@@ -30,18 +30,18 @@ from os.path import basename as osPathBasename
 from os.path import join as osPathJoin
 
 import numpy
-from PyMca.SpecfitFuns import upstep, downstep
+from PyMca5.SpecfitFuns import upstep, downstep
 
-from PyMca import PyMcaQt as qt
-from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
-from PyMca.widgets import PlotWindow as DataDisplay
-from PyMca import Elements
-from PyMca import ConfigDict
+from PyMca5 import PyMcaQt as qt
+from PyMca5.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+from PyMca5.widgets import PlotWindow as DataDisplay
+from PyMca5 import Elements
+from PyMca5 import ConfigDict
 
-from PyMca import PyMcaDataDir, PyMcaDirs
-from PyMca import QSpecFileWidget
-from PyMca import SpecFileDataSource
-from PyMca.PyMca_Icons import IconDict
+from PyMca5 import PyMcaDataDir, PyMcaDirs
+from PyMca5 import QSpecFileWidget
+from PyMca5 import SpecFileDataSource
+from PyMca5.PyMca_Icons import IconDict
 
 if hasattr(qt, "QString"):
     QString = qt.QString

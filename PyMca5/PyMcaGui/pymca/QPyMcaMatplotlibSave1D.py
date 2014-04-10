@@ -36,10 +36,10 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from PyMca import PyMcaQt as qt
-from PyMca.PyMca_Icons import IconDict
-from PyMca import PyMcaPrintPreview
-from PyMca import PyMcaDirs
+from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import PyMcaPrintPreview
+from PyMca5 import PyMcaDirs
 
 DEBUG = 0
 

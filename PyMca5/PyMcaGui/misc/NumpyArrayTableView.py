@@ -30,7 +30,7 @@ if hasattr(QtCore, 'QStringList'):
 else:
     def MyQVariant(x=None):
         return x
-from PyMca import NumpyArrayTableModel
+from PyMca5 import NumpyArrayTableModel
 import sys
 
 class HorizontalHeader(QtCore.QAbstractItemModel):

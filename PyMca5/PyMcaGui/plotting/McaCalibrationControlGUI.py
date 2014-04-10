@@ -27,14 +27,14 @@
 import sys
 import os
 
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = qt.safe_str
 
-from PyMca import PyMcaDirs
+from PyMca5 import PyMcaDirs
 
 DEBUG = 0
 class McaCalibrationControlGUI(qt.QWidget):

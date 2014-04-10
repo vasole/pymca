@@ -27,8 +27,8 @@
 import numpy
 DEBUG = 0
 try:
-    from PyMca import Object3D
-    from PyMca.Object3D import Object3DScene
+    from PyMca5 import Object3D
+    from PyMca5.Object3D import Object3DScene
 except ImportError:
     if DEBUG:
         print("PyMcaGLWindow imports Object3D direcly. Frozen version?")

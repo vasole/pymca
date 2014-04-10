@@ -28,9 +28,9 @@ import sys
 import os.path
 import numpy
 
-from PyMca import PyMcaQt as qt
-from PyMca.plotting import PlotWidget
-from PyMca.plotting.backends.MatplotlibBackend \
+from PyMca5 import PyMcaQt as qt
+from PyMca5.plotting import PlotWidget
+from PyMca5.plotting.backends.MatplotlibBackend \
      import MatplotlibBackend as backend
 
 if not hasattr(qt, 'QString'):
@@ -41,15 +41,15 @@ else:
     QStringList = qt.QStringList
 QTVERSION = qt.qVersion()
 QT4=True
-from PyMca import QPyMcaMatplotlibSave
+from PyMca5 import QPyMcaMatplotlibSave
 MATPLOTLIB = True
-from PyMca.PyMca_Icons import IconDict
-from PyMca import ColormapDialog
-from PyMca import PyMcaPrintPreview
-from PyMca.PyMcaIO import ArraySave
-from PyMca import PyMcaDirs
-from PyMca import SpecFileDataInfo
-from PyMca import spslut
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import ColormapDialog
+from PyMca5 import PyMcaPrintPreview
+from PyMca5.PyMcaIO import ArraySave
+from PyMca5 import PyMcaDirs
+from PyMca5 import SpecFileDataInfo
+from PyMca5 import spslut
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
@@ -1721,7 +1721,7 @@ def test2():
         
 def test():
     import sys
-    from PyMca import EdfFileDataSource
+    from PyMca5 import EdfFileDataSource
     def repSelection(sel):
         print("replaceSelection", sel)
     def removeSelection(sel):

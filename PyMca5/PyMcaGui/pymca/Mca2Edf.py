@@ -31,15 +31,15 @@ import os
 import numpy
 import time
 
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION >= '4.0.0':
     qt.Qt.WDestructiveClose = "TO BE DONE"
-from PyMca.PyMca_Icons import IconDict
-from PyMca import McaCustomEvent
-from PyMca.PyMcaIO import EdfFile
-from PyMca import SpecFileLayer
-from PyMca import PyMcaDirs
+from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import McaCustomEvent
+from PyMca5.PyMcaIO import EdfFile
+from PyMca5 import SpecFileLayer
+from PyMca5 import PyMcaDirs
 
 
 class Mca2EdfGUI(qt.QWidget):

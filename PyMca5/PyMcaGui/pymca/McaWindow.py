@@ -30,7 +30,7 @@ import numpy
 #from numpy import argsort, nonzero, take
 import time
 import traceback
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
@@ -40,21 +40,21 @@ if __name__ == "__main__":
 
 import copy
 
-from PyMca.widgets import ScanWindow
-from PyMca.PyMca_Icons import IconDict
+from PyMca5.widgets import ScanWindow
+from PyMca5.PyMca_Icons import IconDict
 from . import McaCalibrationControlGUI
-from PyMca import ConfigDict
-from PyMca import McaAdvancedFit
-from PyMca import DataObject
-from PyMca import McaCalWidget
-from PyMca import McaSimpleFit
-from PyMca import Specfit
-from PyMca import SpecfitFuns
-from PyMca import PyMcaPrintPreview
-from PyMca import PyMcaDirs
+from PyMca5 import ConfigDict
+from PyMca5 import McaAdvancedFit
+from PyMca5 import DataObject
+from PyMca5 import McaCalWidget
+from PyMca5 import McaSimpleFit
+from PyMca5 import Specfit
+from PyMca5 import SpecfitFuns
+from PyMca5 import PyMcaPrintPreview
+from PyMca5 import PyMcaDirs
 #implement the plugins interface
 try:
-    from PyMca import QPyMcaMatplotlibSave1D
+    from PyMca5 import QPyMcaMatplotlibSave1D
     MATPLOTLIB = True
     #force understanding of utf-8 encoding
     #otherways it cannot generate svg output
@@ -66,7 +66,7 @@ try:
 except:
     MATPLOTLIB = False
 
-from PyMca import SimpleFitGUI
+from PyMca5 import SimpleFitGUI
 
 DEBUG = 0
 class McaWindow(ScanWindow.ScanWindow):
