@@ -28,7 +28,7 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 import numpy
-from PyMca.plotting.ctools import pnpoly
+from PyMca5.PyMcaGraph.ctools import pnpoly
 from . import RGBCorrelatorGraph
 from . import ColormapDialog
 qt = RGBCorrelatorGraph.qt

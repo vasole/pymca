@@ -26,10 +26,10 @@
 #############################################################################*/
 import sys
 
-from PyMca.plotting.backends.MatplotlibBackend import \
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGraph.backends.MatplotlibBackend import \
                             MatplotlibBackend as backend
-from PyMca.plotting import PlotWidget
-from PyMca import PyMcaQt as qt
+from . import PlotWidget
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
