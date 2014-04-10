@@ -26,7 +26,8 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import sys
-from PyMca.widgets import ScanWindow
+print("ProfileScanWidget should not depend on ScanWindow")
+from PyMca5.PyMcaGui.pymca import ScanWindow
 qt = ScanWindow.qt
 DEBUG = 0
 

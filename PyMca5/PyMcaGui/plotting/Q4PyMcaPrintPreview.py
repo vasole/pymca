@@ -26,7 +26,7 @@
 #############################################################################*/
 import sys
 import os
-from PyMca import PyMcaQt as qt
+from .. import PyMcaQt as qt
 DEBUG = 0
 __revision__="$Revision: 1.7 $"
 

@@ -240,7 +240,7 @@ if __name__ == "__main__":
         time.sleep(1)
     else:
         try:
-            fromPyMca5.PyMcaGraph.backends.PyQtGraphBackend import PyQtGraphBackend as backend
+            from PyMca5.PyMcaGraph.backends.PyQtGraphBackend import PyQtGraphBackend as backend
             print("USING PyQtGraph")
         except:
             from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend

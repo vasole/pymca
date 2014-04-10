@@ -24,6 +24,7 @@ Functions to be implemented by an actual plotter can be found in the
 abstract class PlotBackend.
 
 """
+import sys
 import numpy
 from . import PlotBase
 from .PlotBase import PlotBackend
@@ -119,7 +120,11 @@ class Plot(PlotBase.PlotBase):
         self._parent = parent
         if backend is None:
             # an empty backend for testing purposes
-            self._plot = PlotBackend.PlotBackend(parent)
+            if "matplotlib" in sys.modules:
+                from .backends.MatplotlibBackend import MatplotlibBackend as backend
+                self._plot = backend(parent)
+            else:
+                self._plot = PlotBackend.PlotBackend(parent)
         else:
             self._plot = backend(parent)
             self._default = False
@@ -1165,7 +1170,6 @@ class Plot(PlotBase.PlotBase):
         return legend in self._hiddenCurves
 
 def main():
-    import numpy
     x = numpy.arange(100.)
     y = x * x
     plot = Plot()

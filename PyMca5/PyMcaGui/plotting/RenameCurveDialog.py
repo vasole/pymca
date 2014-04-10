@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyMca import PyMcaQt as qt
+from .. import PyMcaQt as qt
 
 class RenameCurveDialog(qt.QDialog):
     def __init__(self, parent = None, current="", curves = []):
@@ -46,8 +46,8 @@ class RenameCurveDialog(qt.QDialog):
         self.hboxLayout.addWidget(qt.HorizontalSpacer(self.hbox))
         layout.addWidget(self.lineEdit)
         layout.addWidget(self.hbox)
-        self.connect(self.okButton, qt.SIGNAL('clicked()'), self.preAccept)
-        self.connect(self.cancelButton, qt.SIGNAL('clicked()'), self.reject)
+        self.okButton.clicked[()].connect(self.preAccept)
+        self.cancelButton.clicked[()].connect(self.reject)
 
     def preAccept(self):
         text = str(self.lineEdit.text())

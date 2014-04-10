@@ -28,13 +28,13 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
 
-from PyMca.plotting import PlotWidget
-from PyMca.plotting.backends.MatplotlibBackend \
-     import MatplotlibBackend as backend
-from PyMca import PyMcaQt as qt
-from PyMca.PyMca_Icons import IconDict
-from PyMca import PyMcaPrintPreview
-from PyMca import PyMcaDirs
+from . import PlotWidget
+from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
+                    import MatplotlibBackend as backend
+from .. import PyMcaQt as qt
+from .PyMca_Icons import IconDict
+from . import PyMcaPrintPreview
+from PyMca5.PyMcaCore import PyMcaDirs
 
 QTVERSION = qt.qVersion()
 DEBUG = 0

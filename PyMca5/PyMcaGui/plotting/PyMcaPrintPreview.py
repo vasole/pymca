@@ -25,11 +25,11 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
+from .. import PyMcaQt as qt
 
 DEBUG = 0
 
-from PyMca.Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
+from .Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
     
 #SINGLETON
 if 0:
