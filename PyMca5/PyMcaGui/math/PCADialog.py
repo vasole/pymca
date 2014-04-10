@@ -28,7 +28,7 @@
 import sys
 import time
 import numpy
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 PCA = False
 MDP = False
 if qt.qVersion() > '4.0.0':

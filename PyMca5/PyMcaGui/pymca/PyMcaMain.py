@@ -79,15 +79,15 @@ if __name__ == '__main__':
     if qtversion == '3':
         raise NotImplementedError("Qt3 is not longer supported") 
 
-from PyMca5 import PyMcaMdi
-from PyMca5 import PyMcaQt as qt
+from . import PyMcaMdi
+from .. import PyMcaQt as qt
 if backend is None:
     backend = "matplotlib"
 
 if backend.lower() == "matplotlib":
-    from PyMca5.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+    from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
 elif backend.lower() == "pyqtgraph":
-    from PyMca5.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
+    from PyMca5.PyMcaGraph.backends.PyQtGraphBackend import PyQtGraphBackend as backend
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -96,13 +96,14 @@ else:
 
 QTVERSION = qt.qVersion()
 
+print("TO RELOCATE XRFMC")
 try:
     from PyMca5.XRFMC import XRFMCPyMca
     XRFMC_FLAG = True
 except:
     XRFMC_FLAG = False
 
-from PyMca5.PyMca_Icons import IconDict
+from ..PyMca_Icons import IconDict
 from PyMca5.PyMca_help import HelpDict
 from PyMca5 import PyMcaDataDir
 import os

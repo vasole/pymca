@@ -28,7 +28,7 @@
 import sys
 import numpy
 import time
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 NNMA = False
 if qt.qVersion() > '4.0.0':
     try:

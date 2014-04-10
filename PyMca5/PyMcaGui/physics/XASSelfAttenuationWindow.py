@@ -27,7 +27,7 @@
 #############################################################################*/
 import copy
 import numpy
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaFileDialogs
 from PyMca5 import Elements
 from PyMca5 import MatrixImage

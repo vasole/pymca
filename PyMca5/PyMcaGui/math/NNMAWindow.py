@@ -26,7 +26,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF"
 from PyMca5 import PCAWindow
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import NNMAModule
 
 class NNMAParametersDialog(qt.QDialog):

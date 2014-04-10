@@ -27,7 +27,7 @@
 import sys
 import posixpath
 try:
-    from PyMca5 import PyMcaQt as qt
+    from PyMca5.PyMcaGui import PyMcaQt as qt
     from PyMca5 import DataObject
     from PyMca5.QNexusWidget import *
     from PyMca5 import QStackWidget

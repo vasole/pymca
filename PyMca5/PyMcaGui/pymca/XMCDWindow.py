@@ -30,7 +30,7 @@ from os.path import splitext, basename, dirname, exists, join as pathjoin
 from PyMca5.PyMca_Icons import IconDict
 from PyMca5 import PyMcaDirs, PyMcaFileDialogs
 from PyMca5 import ConfigDict
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import specfilewrapper as specfile
 from PyMca5 import PyMcaDataDir
 from PyMca5 import ScanWindow as sw

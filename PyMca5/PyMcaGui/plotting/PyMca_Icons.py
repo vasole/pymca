@@ -3656,7 +3656,7 @@ IconDict= {
 
 def showIcons():
     import sys
-    from PyMca5 import PyMcaQt as qt
+    from PyMca5.PyMcaGui import PyMcaQt as qt
     a= qt.QApplication(sys.argv)
     a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
     w= qt.QWidget()

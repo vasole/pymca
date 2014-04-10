@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 icon_first = ["22 22 2 1",
               ". c None",

@@ -27,7 +27,7 @@
 import sys
 import os
 import posixpath
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
 from PyMca5 import QNexusWidget
 from PyMca5 import NexusDataSource

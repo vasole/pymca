@@ -26,7 +26,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMca_Icons import IconDict
 from PyMca5 import MaskImageWidget
 from PyMca5 import ScanWindow

@@ -30,7 +30,7 @@ import os
 import numpy
 import copy
 import time
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import McaWindow
 from PyMca5.PyMcaIO import EDFStack
 from PyMca5 import SpecFileStack

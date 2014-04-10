@@ -28,7 +28,7 @@ import sys
 import os.path
 import numpy
 
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.plotting import PlotWidget
 from PyMca5.plotting.backends.MatplotlibBackend \
      import MatplotlibBackend as backend

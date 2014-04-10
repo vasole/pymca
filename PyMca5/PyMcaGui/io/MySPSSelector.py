@@ -26,7 +26,7 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.4 $"
 from PyMca5.PyMcaIO import spswrap as sps
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 import PyMca.PyMca_Icons as icons
 DEBUG = 0
 PYDVT = 0

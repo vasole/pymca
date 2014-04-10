@@ -28,7 +28,7 @@
 import os
 import sys
 import numpy
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import ExternalImagesWindow
 from PyMca5 import PyMcaFileDialogs
 try:

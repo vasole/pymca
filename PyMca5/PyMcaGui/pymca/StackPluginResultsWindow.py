@@ -27,7 +27,7 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import numpy
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:

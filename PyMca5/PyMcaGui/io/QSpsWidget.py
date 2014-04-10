@@ -27,7 +27,7 @@
 __revision__ = "$Revision: 1.3 $"
 import sys
 from PyMca5.PyMcaIO import spswrap as sps
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import SpecFileCntTable
 from PyMca5 import MaskImageWidget
 QTVERSION = qt.qVersion()

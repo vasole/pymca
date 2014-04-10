@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import os
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 from PyMca5 import SpecfitGUI
 from PyMca5 import Specfit

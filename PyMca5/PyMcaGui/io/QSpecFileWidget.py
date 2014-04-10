@@ -26,7 +26,7 @@
 #############################################################################*/
 import sys
 import os
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import QSelectorWidget
 from PyMca5 import SpecFileDataInfo
 from PyMca5 import SpecFileCntTable

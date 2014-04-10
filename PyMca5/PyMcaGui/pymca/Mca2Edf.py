@@ -31,7 +31,7 @@ import os
 import numpy
 import time
 
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION >= '4.0.0':
     qt.Qt.WDestructiveClose = "TO BE DONE"

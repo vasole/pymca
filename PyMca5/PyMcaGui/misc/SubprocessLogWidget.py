@@ -28,7 +28,7 @@ import sys
 import os
 import subprocess
 import time
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 class SubprocessLogWidget(qt.QWidget):
     sigSubprocessLogWidgetSignal = qt.pyqtSignal(object)

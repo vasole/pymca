@@ -30,7 +30,7 @@ import numpy
 #from numpy import argsort, nonzero, take
 import time
 import traceback
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:

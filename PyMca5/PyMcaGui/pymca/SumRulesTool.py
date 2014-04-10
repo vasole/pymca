@@ -32,7 +32,7 @@ from os.path import join as osPathJoin
 import numpy
 from PyMca5.SpecfitFuns import upstep, downstep
 
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
 from PyMca5.widgets import PlotWindow as DataDisplay
 from PyMca5 import Elements
