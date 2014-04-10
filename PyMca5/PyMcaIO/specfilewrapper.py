@@ -29,16 +29,16 @@ import sys
 import numpy
 import re
 try:
-    from PyMca import specfile
+    from PyMca5 import specfile
 except ImportError:
     print("specfilewrapper importting specfile directly")
     import specfile
-from PyMca.PyMcaIO import Fit2DChiFileParser
-from PyMca.PyMcaIO import APSMEDFileParser
-from PyMca.PyMcaIO import SRSFileParser
-from PyMca.PyMcaIO import BAXSCSVFileParser
+from PyMca5.PyMcaIO import Fit2DChiFileParser
+from PyMca5.PyMcaIO import APSMEDFileParser
+from PyMca5.PyMcaIO import SRSFileParser
+from PyMca5.PyMcaIO import BAXSCSVFileParser
 try:
-    from PyMca.PyMcaIO import SPXFileParser
+    from PyMca5.PyMcaIO import SPXFileParser
     SPX = True
 except:
     print("specfilewrapper cannot import SPXFileParser")

@@ -32,7 +32,7 @@ import types
 
 #spx file format is based on XML
 import xml.etree.ElementTree as ElementTree
-from PyMca.PyMcaIO import SpecFileAbstractClass
+from PyMca5.PyMcaIO import SpecFileAbstractClass
 
 def myFloat(x):
     try:

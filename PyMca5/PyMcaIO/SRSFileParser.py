@@ -27,7 +27,7 @@
 import sys
 import os
 import numpy
-from PyMca.PyMcaIO import SpecFileAbstractClass
+from PyMca5.PyMcaIO import SpecFileAbstractClass
 
 DEBUG = 0
 
