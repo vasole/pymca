@@ -26,7 +26,7 @@
 #############################################################################*/
 import os, os.path
 import numpy
-from PyMca.PyMcaIO import EdfFile
+from PyMca5.PyMcaIO import EdfFile
 
 __version__="$Revision: 1.15 $"
 
