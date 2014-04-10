@@ -16,7 +16,7 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-from PyMca5 import Elements
+from . import Elements
 
 class ElementHtml(object):
     def __init__(self,element=None):

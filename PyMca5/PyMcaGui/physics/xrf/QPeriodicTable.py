@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca.PyMcaQt import *
+from PyMca5.PyMcaGui.PyMcaQt import *
 
 QTVERSION = qVersion()
 qttable = QTableWidget

@@ -27,9 +27,9 @@
 __revision__ = "$Revision: 1.10 $"
 import copy
 
-from PyMca5 import MaterialEditor
-from PyMca5 import PyMcaQt as qt
-from PyMca5 import MatrixImage
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from . import MaterialEditor
+from . import MatrixImage
 
 QTVERSION = qt.qVersion()
 
@@ -37,12 +37,8 @@ class MatrixEditor(qt.QWidget):
     def __init__(self, parent=None, name="Matrix Editor",current=None, 
                     table=True,orientation="vertical",thickness=True,
                    density=True, size=None):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self, parent, name)
-            self.setCaption(name)
-        else:
-            qt.QWidget.__init__(self, parent)
-            self.setWindowTitle(name)
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle(name)
             
         self._current={'Density':     1.0,
                        'Thickness':   1.0,

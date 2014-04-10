@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:

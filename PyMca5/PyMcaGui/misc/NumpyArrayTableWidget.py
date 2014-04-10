@@ -24,14 +24,14 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyQt4 import QtCore, QtGui
-from PyMca5 import FrameBrowser
-from PyMca5 import NumpyArrayTableView
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from . import FrameBrowser
+from . import NumpyArrayTableView
 
-class NumpyArrayTableWidget(QtGui.QWidget):
+class NumpyArrayTableWidget(qt.QWidget):
     def __init__(self, parent=None):
-        QtGui.QTableWidget.__init__(self, parent)
-        self.mainLayout = QtGui.QVBoxLayout(self)
+        qt.QTableWidget.__init__(self, parent)
+        self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.browser = FrameBrowser.FrameBrowser(self)
@@ -39,7 +39,7 @@ class NumpyArrayTableWidget(QtGui.QWidget):
         self.mainLayout.addWidget(self.browser)
         self.mainLayout.addWidget(self.view)
         self.connect(self.browser,
-                     QtCore.SIGNAL("indexChanged"),
+                     qt.SIGNAL("indexChanged"),
                      self.browserSlot)                     
 
     def setArrayData(self, data):
@@ -58,7 +58,7 @@ class NumpyArrayTableWidget(QtGui.QWidget):
 
 if __name__ == "__main__":
     import numpy
-    a = QtGui.QApplication([])
+    a = qt.QApplication([])
     d = numpy.random.normal(0,1, (5, 1000,1000))
     for i in range(5):
         d[i, :, :] += i

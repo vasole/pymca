@@ -32,13 +32,13 @@ import numpy
 from numpy.linalg import inv as inverse
 import copy
 
-from PyMca5 import PyMcaQt as qt
-from PyMca.plotting import PlotWidget
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import PlotWidget
 try:
-    from PyMca.plotting.backends.MatplotlibBackend\
+    from PyMca5.PyMcaGraph.backends.MatplotlibBackend\
          import MatplotlibBackend as GraphBackend
 except:
-    from PyMca.plotting.backends.PyQtGraphBackend\
+    from PyMca5.PyMcaGraph.backends.PyQtGraphBackend\
          import PyQtGraphBackend as GraphBackend
 
 if hasattr(qt, "QString"):
@@ -46,11 +46,12 @@ if hasattr(qt, "QString"):
 else:
     QString = str
 QTVERSION = qt.qVersion()
-from PyMca5 import Gefit
-from PyMca5 import Specfit
-from PyMca5 import SpecfitFuns
-from PyMca.PyMca_Icons import IconDict
-from PyMca5 import PeakTableWidget
+from PyMca5.PyMcaMath.fitting import Gefit
+from PyMca5.PyMcaMath.fitting import Specfit
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
+from PyMca5.PyMcaGui import PyMca_Icons
+IconDict = PyMca_Icons.IconDict
+from . import PeakTableWidget
 if 0:
     from PyMca5 import XRDPeakTableWidget
 DEBUG = 0

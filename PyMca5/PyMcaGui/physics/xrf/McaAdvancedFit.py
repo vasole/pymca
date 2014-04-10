@@ -59,7 +59,8 @@ from . import QtMcaAdvancedFitReport
 from . import ConcentrationsWidget
 from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
 from PyMca5.PyMcaGui import PlotWindow
-from PyMca5.PyMcaGui.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui import PyMca_Icons
+IconDict = PyMca_Icons.IconDict
 from . import McaCalWidget
 from . import PeakIdentifier
 from PyMca5.PyMcaGui import SubprocessLogWidget

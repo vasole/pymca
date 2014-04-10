@@ -26,7 +26,7 @@
 #############################################################################*/
 __revision__ = "$Revision: 1.21 $"
 import sys
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -54,8 +54,8 @@ if QTVERSION < '4.0.0':
 else:
     QTable = qt.QTableWidget
 
-from PyMca5 import ConcentrationsTool
-from PyMca5 import Elements
+from PyMca5.PyMcaPhysics import ConcentrationsTool
+from PyMca5.PyMcaPhysics import Elements
 import time
 DEBUG = 0
 if DEBUG:

@@ -27,20 +27,21 @@
 __revision__ = "$Revision: 1.45 $"
 import sys
 import traceback
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
-from PyMca5 import ConfigDict
-from PyMca5 import PyMca_Icons as Icons
+from PyMca5.PyMcaIO import ConfigDict
+from PyMca5.PyMcaGui import PyMca_Icons as Icons
 import os.path
 import copy
-from PyMca5 import Elements
-from PyMca.FitParamForm import FitParamForm
-from PyMca.FitPeakSelect import FitPeakSelect
-from PyMca5 import AttenuatorsTable
-from PyMca5 import ConcentrationsWidget
-from PyMca5 import EnergyTable
-from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaPhysics import Elements
+from .FitParamForm import FitParamForm
+from . import FitPeakSelect
+from . import AttenuatorsTable
+from . import ConcentrationsWidget
+from . import EnergyTable
+from PyMca5.PyMcaCore import PyMcaDirs
+print("XRFMC_TO_BE_IMPORTED")
 XRFMC_FLAG = False
 try:
     import PyMca.XRFMC.XRFMCPyMca as XRFMCPyMca
@@ -48,8 +49,8 @@ try:
 except ImportError:
     # no XRFMC support
     pass
-from PyMca5 import StripBackgroundWidget
-from PyMca.widgets import ScanWindow
+from PyMca5.PyMcaGui.math import StripBackgroundWidget
+from PyMca5.PyMcaGui import ScanWindow
 import numpy
 
 DEBUG = 0

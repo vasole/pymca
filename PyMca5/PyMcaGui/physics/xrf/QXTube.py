@@ -24,13 +24,11 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyMca5 import Elements
-from PyMca5 import XRayTubeEbel
+from PyMca5.PyMcaPhysics import Elements
+from PyMca5.PyMcaPhysics import XRayTubeEbel
 import numpy
-from PyMca.plotting import PlotWidget
-from PyMca.plotting.backends.MatplotlibBackend \
-     import MatplotlibBackend as backend
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PlotWidget
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 
 DEBUG = 0
@@ -82,7 +80,7 @@ class QXTube(qt.QWidget):
         
         self.l.addWidget(hbox)
         self.graph = PlotWidget.PlotWidget(self,
-                                               backend=backend)
+                                               backend=None)
         self.l.addWidget(self.graph)
         self.graph.setGraphXLabel("Energy (keV)")
         self.graph.setGraphYLabel("photons/sr/mA/keV/s")

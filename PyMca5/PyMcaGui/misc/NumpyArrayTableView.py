@@ -24,42 +24,42 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyQt4 import QtCore, QtGui
-if hasattr(QtCore, 'QStringList'):
-    MyQVariant = QtCore.QVariant
+from PyMca5.PyMcaGui import PyMcaQt as qt
+if hasattr(qt, 'QStringList'):
+    MyQVariant = qt.QVariant
 else:
     def MyQVariant(x=None):
         return x
-from PyMca5 import NumpyArrayTableModel
+from . import NumpyArrayTableModel
 import sys
 
-class HorizontalHeader(QtCore.QAbstractItemModel):
+class HorizontalHeader(qt.QAbstractItemModel):
     def __init__(self, parent=None):
-        QtGui.QHeaderView.__init__(self, parent)
+        qt.QHeaderView.__init__(self, parent)
 
     def columnCount(self, modelIndex):
         return self.parent().columnCount()
 
-    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole:
+    def headerData(self, section, orientation, role=qt.Qt.DisplayRole):
+        if role == qt.Qt.DisplayRole:
             return MyQVariant("%d" % section)
         return MyQVariant()
 
-class VerticalHeader(QtCore.QAbstractItemModel):
+class VerticalHeader(qt.QAbstractItemModel):
     def __init__(self, parent=None):
-        QtGui.QHeaderView.__init__(self, parent)
+        qt.QHeaderView.__init__(self, parent)
 
     def rowCount(self, modelIndex):
         return self.parent().rowCount()
 
-    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole:
+    def headerData(self, section, orientation, role=qt.Qt.DisplayRole):
+        if role == qt.Qt.DisplayRole:
             return MyQVariant("%d" % section)
         return MyQVariant()
 
-class NumpyArrayTableView(QtGui.QTableView):
+class NumpyArrayTableView(qt.QTableView):
     def __init__(self, parent=None):
-        QtGui.QTableView.__init__(self, parent)
+        qt.QTableView.__init__(self, parent)
         self._model = NumpyArrayTableModel.NumpyArrayTableModel(self)
         self.setModel(self._model)
         self._horizontalHeaderModel = HorizontalHeader(self._model)
@@ -88,7 +88,7 @@ class NumpyArrayTableView(QtGui.QTableView):
 
 if __name__ == "__main__":
     import numpy
-    a = QtGui.QApplication([])
+    a = qt.QApplication([])
     d = numpy.random.normal(0,1, (5, 1000,1000))
     for i in range(5):
         d[i, :, :] += i

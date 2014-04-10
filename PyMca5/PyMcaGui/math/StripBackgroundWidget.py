@@ -27,8 +27,8 @@
 import sys
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.widgets import PlotWindow
-from PyMca5 import SpecfitFuns
+from PyMca5.PyMcaGui import PlotWindow
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
 
 
 class StripParametersWidget(qt.QWidget):

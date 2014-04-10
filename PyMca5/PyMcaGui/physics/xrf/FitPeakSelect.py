@@ -27,11 +27,11 @@
 
 import copy
 
-from PyMca5 import EnergyTable
-from PyMca5 import Elements
-from PyMca.QPeriodicTable import QPeriodicTable
+from . import EnergyTable
+from PyMca5.PyMcaPhysics import Elements
+from .QPeriodicTable import QPeriodicTable
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
-from PyMca5 import PyMcaQt as qt
 
 
 DEBUG = 0

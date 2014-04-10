@@ -29,9 +29,10 @@ import os
 import copy
 import numpy
 import traceback
-from PyMca5 import PyMcaQt as qt
-from PyMca5 import Elements
-from PyMca.widgets.PlotWindow import PlotWindow as ScanWindow
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaPhysics import Elements
+from PyMca5.PyMcaGui import PlotWindow
+ScanWindow = PlotWindow.PlotWindow
 
 DEBUG = 0
 

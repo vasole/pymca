@@ -29,8 +29,9 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import copy
 import numpy
-from PyMca5 import Elements
-from PyMca.XRFMC import XRFMCHelper
+from . import Elements
+print("XRFMC NOT IMPORTED YET IN ", __file__)
+#from PyMca5.XRFMC import XRFMCHelper
 
 class ConcentrationsConversion(object):
     def getConcentrationsAsHtml(self, concentrations=None):

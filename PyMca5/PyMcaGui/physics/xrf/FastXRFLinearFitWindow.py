@@ -27,9 +27,10 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import sys
 import numpy
-from PyMca5 import PyMcaQt as qt
-from PyMca.PyMca_Icons import IconDict
-from PyMca5 import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMca_Icons
+IconDict = PyMca_Icons.IconDict
+from PyMca5.PyMcaGui.pymca import PyMcaFileDialogs
 
 DEBUG = 0
 
