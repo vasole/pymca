@@ -37,7 +37,7 @@ phynx = h5py
 if sys.version > '2.9':
     basestring = str
 
-from PyMca import DataObject
+from . import DataObject
 
 SOURCE_TYPE = "HDF5"
 DEBUG = 0

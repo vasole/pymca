@@ -27,7 +27,7 @@
 import os
 import sys
 import time
-from PyMca import PyMcaLogo
+from . import PyMcaLogo
 
 class HtmlIndex(object):
     def __init__(self, htmldir):

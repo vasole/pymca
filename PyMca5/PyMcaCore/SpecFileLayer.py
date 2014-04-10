@@ -33,7 +33,7 @@
 
 ################################################################################  
 import numpy
-from PyMca.PyMcaIO import specfilewrapper as specfile
+from PyMca5.PyMcaIO import specfilewrapper as specfile
 ################################################################################
 
 SOURCE_TYPE = "SpecFile"

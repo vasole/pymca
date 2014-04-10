@@ -27,7 +27,7 @@
 #############################################################################*/
 import os
 import numpy
-from PyMca.PyMcaIO import EdfFile
+from PyMca5.PyMcaIO import EdfFile
 
 DEBUG = 0
 

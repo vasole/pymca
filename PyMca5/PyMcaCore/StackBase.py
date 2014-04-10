@@ -20,7 +20,7 @@ __author__ = "V.A. Sole - ESRF Software Group"
 Base class to handle stacks.
 
 """
-from PyMca import DataObject
+from . import DataObject
 import numpy
 import time
 import os

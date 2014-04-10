@@ -29,8 +29,8 @@ import sys
 import os
 import numpy
 import types
-from PyMca import DataObject
-from PyMca.PyMcaIO import specfilewrapper as specfile
+from . import DataObject
+from PyMca5.PyMcaIO import specfilewrapper as specfile
 
 SOURCE_TYPE = "SpecFile"
 DEBUG = 0

@@ -25,8 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 import types
-from PyMca import DataObject
-from PyMca.PyMcaIO import spswrap as sps
+from . import DataObject
+from PyMca5.PyMcaIO import spswrap as sps
 
 DEBUG = 0
 SOURCE_TYPE = 'SPS'

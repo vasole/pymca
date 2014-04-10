@@ -25,7 +25,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 
 ################################################################################  
 #import fast_EdfFile as EdfFile
-from PyMca.PyMcaIO import EdfFile
+from PyMca5.PyMcaIO import EdfFile
 ################################################################################
 
 SOURCE_TYPE = "EdfFile"
