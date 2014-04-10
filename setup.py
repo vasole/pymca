@@ -80,6 +80,7 @@ print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMcaCore.',
             'PyMca5.PyMcaPhysics',
+            'PyMca5.PyMcaPhysics.xrf',
             'PyMca5.PyMcaCore.XRFMC',
             'PyMca5.PyMcaIO',
             'PyMca5.PyMcaMath',

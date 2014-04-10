@@ -34,7 +34,7 @@ import tempfile
 import shutil
 import traceback
 
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -42,7 +42,7 @@ else:
 
 QTVERSION = qt.qVersion()
 
-from PyMca5 import QPyMcaMatplotlibSave1D
+from PyMca5.PyMcaGui import QPyMcaMatplotlibSave1D
 MATPLOTLIB = True
 #force understanding of utf-8 encoding
 #otherways it cannot generate svg output
@@ -52,29 +52,29 @@ except:
     #not a big problem
     pass
 
-from PyMca5 import ClassMcaTheory
-from PyMca5 import FitParam
-from PyMca5 import McaAdvancedTable
-from PyMca5 import QtMcaAdvancedFitReport
-from PyMca5 import ConcentrationsWidget
-from PyMca5 import ConcentrationsTool
-from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend
-from PyMca.widgets import PlotWindow
-from PyMca.PyMca_Icons import IconDict
-from PyMca5 import McaCalWidget
-from PyMca5 import PeakIdentifier
-from PyMca5 import SubprocessLogWidget
-from PyMca5 import ElementsInfo
+from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
+from . import FitParam
+from . import McaAdvancedTable
+from . import QtMcaAdvancedFitReport
+from . import ConcentrationsWidget
+from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
+from PyMca5.PyMcaGui import PlotWindow
+from PyMca5.PyMcaGui.PyMca_Icons import IconDict
+from . import McaCalWidget
+from . import PeakIdentifier
+from PyMca5.PyMcaGui import SubprocessLogWidget
+from . import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
-from PyMca5 import PyMcaPrintPreview
-from PyMca5 import PyMcaDirs
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaGui import PyMcaPrintPreview
+from PyMca5.PyMcaCore import PyMcaDirs
+from PyMca5.PyMcaIO import ConfigDict
 DEBUG = 0
 if DEBUG:
     print("############################################")
     print("#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG)
     print("############################################")
+print("XRFMC TO be imported")
 XRFMC_FLAG = False
 try:
     from PyMca.XRFMC import XRFMCHelper
@@ -2501,8 +2501,6 @@ class SimpleThread(qt.QThread):
 class McaGraphWindow(PlotWindow.PlotWindow):
     def __init__(self, parent=None, backend=None, plugins=False,
                  newplot=False, position=True, control=True, **kw):
-        if backend is None:
-            backend = MatplotlibBackend
         super(McaGraphWindow, self).__init__(parent, backend=backend,
                                        plugins=plugins,
                                        newplot=newplot,
