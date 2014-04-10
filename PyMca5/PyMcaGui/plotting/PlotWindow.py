@@ -40,7 +40,7 @@ from numpy import argsort, nonzero, take
 from . import LegendSelector
 from .ObjectPrintConfigurationDialog import ObjectPrintConfigurationDialog
 from . import McaROIWidget
-from ..plotting import PlotWidget
+from . import PlotWidget
 
 if "PySide" in sys.argv:
     import PySide
@@ -48,16 +48,16 @@ if "PySide" in sys.argv:
 # pyqtgraph has a SciPy dependency
 PYQTGRAPH = False
 if 'pyqtgraph' in sys.argv:
-    from ..plotting.backends import PyQtGraphBackend
+    from PyMca5.PyMcaGraph.backends import PyQtGraphBackend
     PYQTGRAPH = True
 
 MATPLOTLIB = False
 if ("matplotlib" in sys.argv) or (not PYQTGRAPH):
-    from ..plotting.backends import MatplotlibBackend
+    from PyMca5.PyMcaGraph.backends import MatplotlibBackend
     MATPLOTLIB = True
 
-from PyMca.PyMca_Icons import IconDict
-from PyMca import PyMcaQt as qt
+from .PyMca_Icons import IconDict
+from .. import PyMcaQt as qt
 
 if hasattr(qt, 'QString'):
     QString = qt.QString

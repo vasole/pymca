@@ -27,7 +27,7 @@
 import sys
 import os
 
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -35,8 +35,8 @@ else:
     
 QTVERSION = qt.qVersion()
 
-from PyMca import PyMcaDirs
-from PyMca import ConfigDict
+from PyMca5.PyMcaCore import PyMcaDirs
+from PyMca5.PyMcaIO import ConfigDict
 
 DEBUG = 0
 class McaROIWidget(qt.QWidget):

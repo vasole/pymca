@@ -27,7 +27,7 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import os
-from . import Plot
+from PyMca5.PyMcaGraph import Plot
 
 SVG = True
 if "PySide" in sys.modules:
@@ -235,15 +235,15 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
 if __name__ == "__main__":
     import time
     if "matplotlib" in sys.argv:
-        from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+        from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
         print("USING matplotlib")
         time.sleep(1)
     else:
         try:
-            from PyMca.plotting.backends.PyQtGraphBackend import PyQtGraphBackend as backend
+            fromPyMca5.PyMcaGraph.backends.PyQtGraphBackend import PyQtGraphBackend as backend
             print("USING PyQtGraph")
         except:
-            from PyMca.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
+            from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
             print("USING matplotlib")
         time.sleep(1)
     import numpy
