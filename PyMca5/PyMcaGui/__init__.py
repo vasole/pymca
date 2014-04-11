@@ -20,3 +20,7 @@ from .math import FFTAlignmentWindow, NNMADialog, NNMAWindow, PCADialog, \
 from .pymca import StackPluginResultsWindow, ExternalImagesWindow
 
 from .pymca import RGBImageCalculator
+from .io import QSourceSelector
+from .io import QEdfFileWidget
+from .pymca import RGBCorrelator
+from .physics.xrf import MaterialEditor

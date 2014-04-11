@@ -16,10 +16,10 @@
 #
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
-from PyMca5 import DataObject
+from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaIO import EdfFile
-from PyMca5 import EdfFileDataSource
-from PyMca5 import PhysicalMemory
+from PyMca5.PyMcaCore import EdfFileDataSource
+from PyMca5.PyMcaMisc import PhysicalMemory
 import numpy
 import sys
 import os

@@ -28,14 +28,14 @@ import posixpath
 import numpy
 import h5py
 try:
-    from PyMca5 import DataObject
-    from PyMca5 import PhysicalMemory
+    from PyMca5.PyMcaCore import DataObject
+    from PyMca5.PyMcaMisc import PhysicalMemory
 except ImportError:
     print("HDF5Stack1D importing DataObject from local directory!")
     import DataObject
     import PhysicalMemory
 try:
-    from PyMca5 import NexusDataSource
+    from PyMca5.PyMcaCore import NexusDataSource
 except ImportError:
     print("HDF5Stack1D importing NexusDataSource from local directory!")
     import NexusDataSource

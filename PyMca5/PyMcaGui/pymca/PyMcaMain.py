@@ -185,9 +185,9 @@ try:
     STACK = True
 except:
     STACK = False
-from PyMca5 import PyMcaPostBatch
-from PyMca5 import RGBCorrelator
-from PyMca5 import MaterialEditor
+from PyMca5.PyMcaGui.pymca import PyMcaPostBatch
+from PyMca5.PyMcaGui import RGBCorrelator
+from PyMca5.PyMcaGui import MaterialEditor
 
 from PyMca5 import ConfigDict
 from PyMca5 import PyMcaDirs

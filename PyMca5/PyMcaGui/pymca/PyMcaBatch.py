@@ -34,28 +34,25 @@ import subprocess
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
-if QTVERSION > '4.0.0':
-    try:
-        import h5py
-        from PyMca5 import NexusDataSource
-        from PyMca5 import QNexusWidget
-        from PyMca5 import HDF5Selection
-        HDF5SUPPORT = True
-    except ImportError:
-        HDF5SUPPORT = False
-else:
+try:
+    import h5py
+    from PyMca5.PyMcaCore import NexusDataSource
+    from PyMca5.PyMcaGui.io.hdf5 import QNexusWidget
+    from PyMca5.PyMcaGui.io.hdf5 import HDF5Selection
+    HDF5SUPPORT = True
+except ImportError:
     HDF5SUPPORT = False
 from PyMca5 import ConfigDict
-from PyMca5 import McaAdvancedFitBatch
-from PyMca5 import EdfFileLayer
-from PyMca5 import SpecFileLayer
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import McaCustomEvent
-from PyMca5 import EdfFileSimpleViewer
-from PyMca5 import QtMcaAdvancedFitReport
-from PyMca5 import HtmlIndex
-from PyMca5 import PyMcaDirs
-from PyMca5 import PyMcaBatchBuildOutput
+from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
+from PyMca5.PyMcaGui.physics.xrf import QtMcaAdvancedFitReport
+from PyMca5.PyMcaCore import EdfFileLayer
+from PyMca5.PyMcaCore import SpecFileLayer
+from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui.pymca import McaCustomEvent
+from PyMca5.PyMcaGui.pymca import EdfFileSimpleViewer
+from PyMca5.PyMcaCore import HtmlIndex
+from PyMca5.PyMcaCore import PyMcaDirs
+from PyMca5.PyMcaCore import PyMcaBatchBuildOutput
 
 ROIWIDTH = 100.
 DEBUG = 0

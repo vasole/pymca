@@ -58,11 +58,11 @@ class McaSimpleFit(qt.QWidget):
         fitconfig['WeightFlag'] = 1
         fitconfig['McaMode']    = 1
         self.specfit.configure(**fitconfig)
-        self.specfitGUI = SpecfitGUI.SpecfitGUI(self,config=1, status=1, buttons=0,
+        self.specfitGui = SpecfitGui.SpecfitGui(self,config=1, status=1, buttons=0,
                                     specfit = self.specfit,eh=self.specfit.eh)
 
         layout.addWidget(self.headerlabel)
-        layout.addWidget(self.specfitGUI)
+        layout.addWidget(self.specfitGui)
 
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
@@ -76,7 +76,7 @@ class McaSimpleFit(qt.QWidget):
         self.estimatebutton.clicked[()].connect(self.estimate)
         self.fitbutton.clicked[()].connect(self.fit)
         self.dismissbutton.clicked[()].connect(self.dismiss)
-        self.specfitGUI.sigSpecfitGUISignal.connect(self.__anasignal)
+        self.specfitGui.sigSpecfitGuiSignal.connect(self.__anasignal)
         hs2 = qt.HorizontalSpacer(hbox)
         hboxLayout.addWidget(hs1)
         hboxLayout.addWidget(self.estimatebutton)
@@ -127,18 +127,18 @@ class McaSimpleFit(qt.QWidget):
         if self.specfit.fitconfig['McaMode']:
             fitconfig = {}
             fitconfig.update(self.specfit.fitconfig)
-            self.specfitGUI.updateGUI(configuration=fitconfig)
+            self.specfitGui.updateGui(configuration=fitconfig)
             #the GUI already takes care of mcafit
-            self.specfitGUI.estimate()
+            self.specfitGui.estimate()
         else:
-            #self.specfitGUI.estimate()
-            self.specfitGUI.startfit()
+            #self.specfitGui.estimate()
+            self.specfitGui.startfit()
     
     def estimate(self):
         fitconfig = {}
         fitconfig.update(self.specfit.fitconfig)
-        self.specfitGUI.updateGUI(configuration=fitconfig)
-        self.specfitGUI.estimate() 
+        self.specfitGui.updateGui(configuration=fitconfig)
+        self.specfitGui.estimate() 
 
     def _emitSignal(self, ddict):
         self.sigMcaSimpleFitSignal.emit(ddict)       
@@ -169,7 +169,7 @@ class McaSimpleFit(qt.QWidget):
                 if ddict['event'] == 'FitFinished':
                     #write the simple fit output in a form acceptable by McaWindow
                     ddict['event'] = 'McaFitFinished'
-                    ddict['data'] = [self.specfitGUI.specfit.mcagetresult()]
+                    ddict['data'] = [self.specfitGui.specfit.mcagetresult()]
                 self.sigMcaSimpleFitSignal.emit(ddict)
         
     def dismiss(self):

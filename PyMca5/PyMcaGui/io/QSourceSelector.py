@@ -28,7 +28,7 @@ import sys
 import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-import PyMca.PyMca_Icons as icons
+from PyMca5.PyMcaGui import PyMca_Icons as icons
 from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5 import PyMcaDirs
 

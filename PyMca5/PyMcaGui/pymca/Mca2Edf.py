@@ -35,10 +35,10 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 if QTVERSION >= '4.0.0':
     qt.Qt.WDestructiveClose = "TO BE DONE"
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import McaCustomEvent
+from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui.pymca import McaCustomEvent
 from PyMca5.PyMcaIO import EdfFile
-from PyMca5 import SpecFileLayer
+from PyMca5.PyMcaCore import SpecFileLayer
 from PyMca5 import PyMcaDirs
 
 

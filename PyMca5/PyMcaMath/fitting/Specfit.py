@@ -657,7 +657,6 @@ class Specfit(object):
             configure=newfun.CONFIGURE
         except:
             configure=None
-            
         badluck=0
         if type(theory) == type([]):
             for i in range(len(theory)):

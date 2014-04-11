@@ -131,12 +131,12 @@ def getPlugin1DInstance(plotWindow,  **kw):
 if __name__ == "__main__":
     # Basic test setup
     import numpy
-    from PyMca5 import Plot1D
-    from PyMca5 import PyMcaQt as qt
+    from PyMca5.PyMcaGraph import Plot
+    from PyMca5.PyMcaGui import PyMcaQt as qt
     app = qt.QApplication([])
     x = numpy.arange(100.)
     y = numpy.arange(100.)
-    plot = Plot1D.Plot1D()
+    plot = Plot.Plot()
     plot.addCurve(x, y, "Curve1", {'MotorNames': "foo bar",  'MotorValues': "3.14 2.97"})
     plot.addCurve(x+100, y, "Curve2", {'MotorNames': "baz",  'MotorValues': "6.28"})
     plugin = getPlugin1DInstance(plot)

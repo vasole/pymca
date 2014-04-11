@@ -25,8 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = 'Tonn Rueter'
-from PyMca5 import PyMcaQt as qt
-from PyMca5.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import IconDict
 
 if hasattr(qt, 'QString'):
     QString = qt.QString

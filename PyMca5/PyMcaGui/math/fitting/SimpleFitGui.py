@@ -125,10 +125,10 @@ class StatusWidget(qt.QWidget):
         self.mainLayout.addWidget(self.chi2Label)
         self.mainLayout.addWidget(self.chi2Line)
 
-class SimpleFitGUI(qt.QWidget):
+class SimpleFitGui(qt.QWidget):
     def __init__(self, parent=None, fit=None, graph=None, actions=True):
         qt.QWidget.__init__(self, parent)
-        self.setWindowTitle("SimpleFitGUI")
+        self.setWindowTitle("SimpleFitGui")
         if fit is None:
             self.fitModule = SimpleFitModule.SimpleFit()
             self.fitModule.importFunctions(SimpleFitUserEstimatedFunctions)
@@ -412,11 +412,11 @@ def test():
         #fit.setBackgroundFunction('Gaussians')
         #fit.setBackgroundFunction('Constant')
         fit.setData(x, y)
-        w = SimpleFitGUI(fit=fit)
+        w = SimpleFitGui(fit=fit)
         w.show()
     else:
         fit=None
-        w = SimpleFitGUI(fit=fit)
+        w = SimpleFitGui(fit=fit)
         w.setData(x, y, xmin=x[0], xmax=x[-1])
         w.show()
         import SimpleFitUserEstimatedFunctions

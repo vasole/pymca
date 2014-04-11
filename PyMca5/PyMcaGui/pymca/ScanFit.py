@@ -72,15 +72,15 @@ class ScanFit(qt.QWidget):
         fitconfig['ForcePeakPresence'] = 1
         fitconfig['McaMode']    = 0
         self.specfit.configure(**fitconfig)
-        self.specfitGUI = SpecfitGUI.SpecfitGUI(self, config=1, status=1,
+        self.specfitGui = SpecfitGui.SpecfitGui(self, config=1, status=1,
                                                 buttons=0,
                                                 specfit=self.specfit,
                                                 eh=self.specfit.eh)
-        #self.specfitGUI.updateGUI(configuration=fitconfig)
+        #self.specfitGui.updateGui(configuration=fitconfig)
         #self.setdata = self.specfit.setdata
 
-        self.specfitGUI.guiconfig.MCACheckBox.setEnabled(1)
-        palette = self.specfitGUI.guiconfig.MCACheckBox.palette()
+        self.specfitGui.guiconfig.MCACheckBox.setEnabled(1)
+        palette = self.specfitGui.guiconfig.MCACheckBox.palette()
         ##############
         hbox = qt.QWidget(self)
         hboxlayout = qt.QHBoxLayout(hbox)
@@ -99,11 +99,11 @@ class ScanFit(qt.QWidget):
         self.estimatebutton.clicked[()].connect(self.estimate)
         self.fitbutton.clicked[()].connect(self.fit)
         self.dismissbutton.clicked[()].connect(self.dismiss)
-        self.specfitGUI.sigSpecfitGUISignal.connect(self._specfitGUISignal)
+        self.specfitGui.sigSpecfitGuiSignal.connect(self._specfitGuiSignal)
         hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxlayout.addWidget(self.dismissbutton)
         layout.addWidget(self.headerlabel)
-        layout.addWidget(self.specfitGUI)
+        layout.addWidget(self.specfitGui)
         layout.addWidget(hbox)
 
     def setData(self, *var, **kw):
@@ -150,21 +150,21 @@ class ScanFit(qt.QWidget):
         if self.specfit.fitconfig['McaMode']:
             fitconfig = {}
             fitconfig.update(self.specfit.fitconfig)
-            self.specfitGUI.updateGUI(configuration=fitconfig)
-            #the GUI already takes care of mcafit
-            self.specfitGUI.estimate()
+            self.specfitGui.updateGui(configuration=fitconfig)
+            #the Gui already takes care of mcafit
+            self.specfitGui.estimate()
         else:
             #exception handler to be implemented
-            #self.specfitGUI.estimate()
-            self.specfitGUI.startfit()
+            #self.specfitGui.estimate()
+            self.specfitGui.startfit()
 
     def estimate(self):
         fitconfig = {}
         fitconfig.update(self.specfit.fitconfig)
-        self.specfitGUI.updateGUI(configuration=fitconfig)
-        self.specfitGUI.estimate()
+        self.specfitGui.updateGui(configuration=fitconfig)
+        self.specfitGui.estimate()
 
-    def _specfitGUISignal(self, ddict):
+    def _specfitGuiSignal(self, ddict):
         if not hasattr(ddict, "keys"):
             return
         if 'event' in ddict:
@@ -315,7 +315,7 @@ class ScanFit(qt.QWidget):
                                                                        mode[0],
                                                                        fwhm,
                                                                        scaling)
-        text += self.specfitGUI.guiparameters.getText()
+        text += self.specfitGui.guiparameters.getText()
         return text
 
     def getConfiguration(self):
@@ -323,7 +323,7 @@ class ScanFit(qt.QWidget):
 
     def setConfiguration(self, fitconfig):
         self.specfit.configure(**fitconfig)
-        self.specfitGUI.updateGUI(configuration=fitconfig)
+        self.specfitGui.updateGui(configuration=fitconfig)
 
 def main():
     app = qt.QApplication([])

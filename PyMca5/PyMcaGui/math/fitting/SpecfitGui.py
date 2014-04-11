@@ -45,7 +45,7 @@ class SpecfitGui(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0, specfit = None,
                  config = 0, status = 0, buttons = 0, eh = None):
         if name == None:
-            name = "SpecfitGUI"
+            name = "SpecfitGui"
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
         layout= qt.QVBoxLayout(self)

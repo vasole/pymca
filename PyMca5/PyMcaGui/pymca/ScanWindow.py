@@ -47,22 +47,20 @@ from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs
 from . import ScanWindowInfoWidget
 #implement the plugins interface
+from PyMca5.PyMcaGui import QPyMcaMatplotlibSave1D
+MATPLOTLIB = True
+#force understanding of utf-8 encoding
+#otherways it cannot generate svg output
 try:
-    from PyMca5 import QPyMcaMatplotlibSave1D
-    MATPLOTLIB = True
-    #force understanding of utf-8 encoding
-    #otherways it cannot generate svg output
-    try:
-        import encodings.utf_8
-    except:
-        #not a big problem
-        pass
+    import encodings.utf_8
 except:
-    MATPLOTLIB = False
+    #not a big problem
+    pass
 
 PLUGINS_DIR = None
 try:
-    if os.path.exists(os.path.join(os.path.dirname(qt.__file__), "PyMcaPlugins")):
+    import PyMca5
+    if os.path.exists(os.path.join(os.path.dirname(PyMca5.__file__), "PyMcaPlugins")):
         from PyMca5 import PyMcaPlugins
         PLUGINS_DIR = os.path.dirname(PyMcaPlugins.__file__)
     else:
@@ -136,8 +134,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         # this one was made in the base class
         #self.setCallback(self.graphCallback)
         if fit:
-            from PyMca5 import SimpleFitGUI
-            self.customFit = SimpleFitGUI.SimpleFitGUI()
+            from PyMca5.PyMcaGui.math.fitting import SimpleFitGui
+            self.customFit = SimpleFitGui.SimpleFitGui()
             self.scanFit.sigScanFitSignal.connect(self._scanFitSignalReceived)
             self.connect(self.customFit,
                          qt.SIGNAL('SimpleFitSignal') ,

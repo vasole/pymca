@@ -29,7 +29,7 @@ import os
 import numpy
 arctan = numpy.arctan
 from PyMca5 import SpecfitFuns
-from .Gefit import LeastSquaresFit
+from PyMca5.PyMcaMath.fitting.Gefit import LeastSquaresFit
 
 DEBUG=0
 

@@ -28,21 +28,21 @@ __revision__ = "$Revision: 1.32 $"
 import sys
 import os
 import numpy
-from PyMca5 import ClassMcaTheory
-from PyMca5 import SpecFileLayer
-from PyMca5 import EdfFileLayer
-from PyMca.PyMcaIO import EdfFile
-from PyMca.PyMcaIO import LuciaMap
-from PyMca.PyMcaIO import AifiraMap
-from PyMca.PyMcaIO import EDFStack
+from . import ClassMcaTheory
+from PyMca5.PyMcaCore import SpecFileLayer
+from PyMca5.PyMcaCore import EdfFileLayer
+from PyMca5.PyMcaIO import EdfFile
+from PyMca5.PyMcaIO import LuciaMap
+from PyMca5.PyMcaIO import AifiraMap
+from PyMca5.PyMcaIO import EDFStack
 try:
     import h5py
-    from PyMca5 import HDF5Stack1D
+    from PyMca5.PyMcaIO import HDF5Stack1D
     HDF5SUPPORT = True
 except ImportError:
     HDF5SUPPORT = False
 from PyMca5 import ConfigDict
-from PyMca5 import ConcentrationsTool
+from . import ConcentrationsTool
 
 
 class McaAdvancedFitBatch(object):
