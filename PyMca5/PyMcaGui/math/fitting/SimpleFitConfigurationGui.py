@@ -142,7 +142,7 @@ class DefaultParametersWidget(qt.QWidget):
         else:
             return self.setConfiguration(ddict)
 
-class SimpleFitConfigurationGUI(qt.QDialog):
+class SimpleFitConfigurationGui(qt.QDialog):
     def __init__(self, parent = None, fit=None):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("PyMca - Simple Fit Configuration")
@@ -544,7 +544,7 @@ class SimpleFitConfigurationGUI(qt.QDialog):
 def test():
     app = qt.QApplication(sys.argv)
     app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
-    wid = SimpleFitConfigurationGUI()
+    wid = SimpleFitConfigurationGui()
     ddict = {}
     ddict['fit'] = {}
     ddict['fit']['use_limits'] = 1

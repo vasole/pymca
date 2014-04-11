@@ -24,8 +24,11 @@ from .io import QSourceSelector
 from .io import QEdfFileWidget
 from .pymca import RGBCorrelator
 from .physics.xrf import MaterialEditor
+# Should they be moved to files in this directory?
 #try:
 #    from .io.hdf5 import HDF5Widget, QNexusWidget
 #except:
 #    # HDF5 is not a forced dependency
 #    pass
+
+from .pymca import StackSimpleFitWindow

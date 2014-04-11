@@ -57,13 +57,10 @@ These plugins will be compatible with any stack window that provides the functio
 """
 try:
     from PyMca5 import StackPluginBase
-    from PyMca5 import StackSimpleFitWindow
-    import PyMca.PyMca_Icons as PyMca_Icons
+    from PyMca5.PyMcaGui import StackSimpleFitWindow
+    from PyMca5.PyMcaGui import PyMca_Icons
 except ImportError:
     print("FitStackPlugin importing from somewhere else")
-    import StackPluginBase
-    import StackSimpleFitWindow
-    import PyMca_Icons
 
 DEBUG = 0
 

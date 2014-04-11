@@ -31,11 +31,11 @@ import traceback
 import time
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDirs
-from PyMca5 import SimpleFitGUI
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import StackSimpleFit
+from PyMca5.PyMcaGui import SimpleFitGui
+from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaMath.fitting import StackSimpleFit
 from PyMca5.PyMcaIO import ArraySave
-from PyMca5 import CalculationThread
+from PyMca5.PyMcaGui import CalculationThread
 safe_str = qt.safe_str
 
 class OutputParameters(qt.QWidget):
@@ -107,7 +107,7 @@ class StackSimpleFitWindow(qt.QWidget):
         self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
 
-        self.fitSetupWindow = SimpleFitGUI.SimpleFitGUI(self)
+        self.fitSetupWindow = SimpleFitGui.SimpleFitGui(self)
         self.fitSetupWindow.fitActions.dismissButton.hide()
         self.mainLayout.addWidget(self.fitSetupWindow)
         self.fitInstance = self.fitSetupWindow.fitModule
@@ -242,8 +242,8 @@ class StackSimpleFitWindow(qt.QWidget):
 
 if __name__ == "__main__":
     import numpy
-    from PyMca5 import SpecfitFuns
-    from PyMca5 import SimpleFitUserEstimatedFunctions as Functions
+    from PyMca5.PyMcaMath.fitting import SpecfitFuns
+    from PyMca5.PyMcaMath.fitting import SimpleFitUserEstimatedFunctions as Functions
     x = numpy.arange(1000.)
     data = numpy.zeros((50, 1000), numpy.float)
 
