@@ -51,23 +51,16 @@ import numpy
 
 try:
     from PyMca5 import StackPluginBase
-    from PyMca5 import CalculationThread
+    from PyMca5.PyMcaGui import CalculationThread
 except ImportError:
     print("XASStackNormalizationPlugin importing bases from somewhere else")
     from . import StackPluginBase
     from . import CalculationThread
 
-try:
-    from PyMca5 import PyMcaQt as qt
-    from PyMca5 import StackPluginResultsWindow
-    from PyMca5 import XASNormalization
-    from PyMca5 import XASNormalizationWindow
-except ImportError:
-    print("XASStackNormalizationPlugin importing from somewhere else")
-    import PyMcaQt as qt
-    import StackPluginResultsWindow
-    import XASNormalization
-    import XASNormalizationWindow
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import StackPluginResultsWindow
+from PyMca5.PyMcaPhysics.xas import XASNormalization
+from PyMca5.PyMcaGui import XASNormalizationWindow
 
 DEBUG = 0
 

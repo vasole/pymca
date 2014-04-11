@@ -47,10 +47,7 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import numpy
-try:
-    from PyMca5 import StackPluginBase
-except ImportError:
-    from . import StackPluginBase
+from PyMca5 import StackPluginBase
 
 DEBUG = 0
 

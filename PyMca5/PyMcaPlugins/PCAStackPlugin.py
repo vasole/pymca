@@ -58,22 +58,13 @@ functions:
     selectionMaskUpdated
 """
 import numpy
-try:
-    from PyMca5 import StackPluginBase
-    from PyMca5 import CalculationThread
-except ImportError:
-    #python 3 might need this
-    from . import StackPluginBase
-    from . import CalculationThread
-try:
-    from PyMca5.PCAWindow import PCAParametersDialog
-    from PyMca5 import StackPluginResultsWindow
-    import PyMca.PyMca_Icons as PyMca_Icons
-except ImportError:
-    print("PCAStackPlugin importing from somewhere else")
-    from PCAWindow import PCAParametersDialog
-    import StackPluginResultsWindow
-    import PyMca_Icons
+
+from PyMca5 import StackPluginBase
+from PyMca5.PyMcaGui import CalculationThread
+
+from PyMca5.PyMcaGui.math.PCAWindow import PCAParametersDialog
+from PyMca5.PyMcaGui import StackPluginResultsWindow
+from PyMca5.PyMcaGui import PyMca_Icons
 
 qt = StackPluginResultsWindow.qt
 DEBUG = 0

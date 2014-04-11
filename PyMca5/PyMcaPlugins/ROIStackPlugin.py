@@ -55,12 +55,8 @@ These plugins will be compatible with any stack window that provides the functio
     stackUpdated
     selectionMaskUpdated
 """
-try:
-    from PyMca5 import StackPluginBase
-except ImportError:
-    from . import StackPluginBase
-
-from PyMca5.PyMcaGui import StackROIWindow
+from PyMca5 import StackPluginBase
+from PyMca5.PyMcaGui.pymca import StackROIWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 DEBUG = 0

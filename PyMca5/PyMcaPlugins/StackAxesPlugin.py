@@ -58,8 +58,8 @@ functions:
 """
 import numpy
 from PyMca5 import StackPluginBase
-from PyMca5 import PyMcaFileDialogs
-import PyMca.PyMca_Icons as PyMca_Icons
+from PyMca5.PyMcaGui import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMca_Icons
 
 DEBUG = 0
 

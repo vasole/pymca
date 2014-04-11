@@ -55,7 +55,8 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import numpy
-from PyMca5 import ScanWindow
+
+from PyMca5.PyMcaGui import ScanWindow
 from PyMca5 import StackPluginBase
 
 DEBUG = 0
