@@ -30,13 +30,9 @@ try:
     from PyMca5 import Plugin1DBase
 except ImportError:
     from . import Plugin1DBase
-try:
-    import PyMca.PyMca_Icons as PyMca_Icons
-    import PyMca.SimpleMath as SimpleMath
-except ImportError:
-    #This happens in frozen versions
-    import PyMca_Icons
-    import SimpleMath
+
+from PyMca5.PyMcaGui import PyMca_Icons
+import PyMca5.PyMcaMath.SimpleMath as SimpleMath
 
 swapsign = PyMca_Icons.swapsign
 derive = PyMca_Icons.derive
@@ -115,10 +111,10 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca5 import Plot1D
+    from PyMca5.PyMcaGraph import Plot
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D.Plot1D()
+    plot = Plot.Plot()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
     plugin = getPlugin1DInstance(plot)

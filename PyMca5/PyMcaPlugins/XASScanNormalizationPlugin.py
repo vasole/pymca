@@ -32,15 +32,11 @@ except ImportError:
     from . import Plugin1DBase
 
 try:
-    from PyMca5 import XASNormalization
-    from PyMca5 import XASNormalizationWindow
-    from PyMca5 import SpecfitFuns
+    from PyMca5.PyMcaPhysics.xas import XASNormalization
+    from PyMca5.PyMcaGui import XASNormalizationWindow
+    from PyMca5.PyMcaMath.fitting import SpecfitFuns
 except ImportError:
-    print("XASScanNormalizationPlugin importing from somewhere else")
-    import XASNormalization
-    import XASNormalizationWindow
-    import SpecfitFuns
-
+    print("XASScanNormalizationPlugin problem")
 
 class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
@@ -227,10 +223,10 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca5 import Plot1D
+    from PyMca5.PyMcaGraph import Plot
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D.Plot1D()
+    plot = Plot.Plot()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
     plugin = getPlugin1DInstance(plot)

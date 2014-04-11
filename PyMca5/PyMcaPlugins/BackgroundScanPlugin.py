@@ -27,17 +27,10 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import numpy
 
-try:
-    from PyMca5 import Plugin1DBase
-    from PyMca5 import SGWindow
-    from PyMca5 import SNIPWindow
-    import PyMca.PyMca_Icons as PyMca_Icons
-except ImportError:
-    print("Plugin importing from somewhere else")
-    import Plugin1DBase
-    import SGWindow
-    import SNIPWindow
-    import PyMca_Icons
+from PyMca5 import Plugin1DBase
+from PyMca5.PyMcaGui import SGWindow
+from PyMca5.PyMcaGui import SNIPWindow
+from PyMca5.PyMcaGui import PyMca_Icons
 
 class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
@@ -178,12 +171,12 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca5 import PyMcaQt as qt
+    from PyMca5.PyMcaGui import PyMcaQt as qt
     app = qt.QApplication([])
-    from PyMca5 import Plot1D
+    from PyMca5.PyMcaGraph import Plot
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D.Plot1D()
+    plot = Plot.Plot()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
     plugin = getPlugin1DInstance(plot)

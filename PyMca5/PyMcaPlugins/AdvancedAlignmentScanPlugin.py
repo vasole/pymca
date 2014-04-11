@@ -28,14 +28,15 @@ __author__ = "Tonn Rueter & V.A. Sole - ESRF Data Analysis"
 import numpy
 import sys
 import traceback
-from PyMca5 import PyMcaQt as qt
-from PyMca5 import PyMcaDataDir, PyMcaDirs, PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5 import PyMcaDataDir, PyMcaDirs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5 import ConfigDict
-from PyMca5 import SpecfitFunctions as SF
-from PyMca5 import SNIPModule as snip
-from PyMca5.Gefit import LeastSquaresFit as LSF
-from PyMca5.SpecfitFuns import gauss
-from PyMca5 import SpecfitFuns
+from PyMca5.PyMcaMath.fitting import SpecfitFunctions as SF
+from PyMca5.PyMcaMath import SNIPModule as snip
+from PyMca5.PyMcaMath.fitting.Gefit import LeastSquaresFit as LSF
+from PyMca5.PyMcaMath.fitting.SpecfitFuns import gauss
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from os.path import join as pathjoin
 
 try:
