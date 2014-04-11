@@ -30,12 +30,8 @@ import tempfile
 import subprocess
 import time
 import shutil
-try:
-    from PyMca import ConfigDict
-    from PyMca.XRFMC import XMSOParser
-except ImportError:
-    print("Trying to import XMSOParser directly")
-    import XMSOParser
+from PyMca5 import ConfigDict
+from . import XMSOParser
 
 getXMSOFileFluorescenceInformation =\
                         XMSOParser.getXMSOFileFluorescenceInformation

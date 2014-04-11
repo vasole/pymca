@@ -29,11 +29,11 @@ import sys
 import os
 import time
 import traceback
-from PyMca import PyMcaQt as qt
-from PyMca import PyMcaDirs as xrfmc_dirs
-from PyMca import ConfigDict
-from PyMca import SubprocessLogWidget
-from PyMca.XRFMC import XRFMCHelper
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5 import PyMcaDirs as xrfmc_dirs
+from PyMca5 import ConfigDict
+from PyMca5.PyMcaGui import SubprocessLogWidget
+from PyMca5.PyMcaPhysics.xrf.XRFMC import XRFMCHelper
 
 class VerticalSpacer(qt.QWidget):
     def __init__(self, *args):
