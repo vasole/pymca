@@ -28,8 +28,8 @@ __revision__ = "$Revision: 1.15 $"
 import os
 import numpy
 arctan = numpy.arctan
-from PyMca import SpecfitFuns
-from PyMca.Gefit import LeastSquaresFit
+from PyMca5 import SpecfitFuns
+from .Gefit import LeastSquaresFit
 
 DEBUG=0
 

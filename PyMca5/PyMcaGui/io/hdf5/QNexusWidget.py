@@ -30,26 +30,22 @@ import posixpath
 import weakref
 import gc
 import h5py
-try:
-    from PyMca import PyMcaQt as qt
-    safe_str = qt.safe_str
-except ImportError:
-    # for people using this widget without PyMca installed
-    import PyQt4.Qt as qt
-    safe_str = str
+
+from PyMca5.PyMcaGui import PyMcaQt as qt
+safe_str = qt.safe_str
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
     QString = str
 
-from PyMca import HDF5Widget
-from PyMca import HDF5Info
-from PyMca import HDF5CounterTable
-from PyMca import HDF5DatasetTable
-from PyMca import ConfigDict
+from . import HDF5Widget
+from . import HDF5Info
+from . import HDF5CounterTable
+from . import HDF5DatasetTable
+from PyMca5 import ConfigDict
 if "PyMcaDirs" in sys.modules:
-    from PyMca import PyMcaDirs
+    from PyMca5 import PyMcaDirs
 
 DEBUG=0
 

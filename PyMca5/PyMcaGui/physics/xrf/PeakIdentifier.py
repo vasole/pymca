@@ -29,7 +29,6 @@ __author__="V.A. Sole - ESRF Software Group"
 import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics import Elements
-from .QPeriodicTable import QPeriodicTable
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 QTVERSION = qt.qVersion()

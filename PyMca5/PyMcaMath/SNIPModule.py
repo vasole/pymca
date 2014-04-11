@@ -26,11 +26,7 @@
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import numpy
-try:
-    import PyMca.SpecfitFuns as SpecfitFuns
-except ImportError:
-    print("SNIPModule importing SpecfitFuns directly")
-    import SpecfitFuns
+from PyMca5 import SpecfitFuns
 
 snip1d = SpecfitFuns.snip1d
 snip2d = SpecfitFuns.snip2d

@@ -24,12 +24,12 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 
 
-def uic_load_pixmap_FitActionsGUI(name):
+def uic_load_pixmap_FitActionsGui(name):
     pix = qt.QPixmap()
     if QTVERSION < '4.0.0':
         m = qt.QMimeSourceFactory.defaultFactory().data(name)
@@ -40,29 +40,18 @@ def uic_load_pixmap_FitActionsGUI(name):
     return pix
 
 
-class FitActionsGUI(qt.QWidget):
+class FitActionsGui(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self,parent,name,fl)
-            if name == None:
-                self.setName("FitActionsGUI")
-            self.setCaption("FitActionsGUI")
-        else:
-            qt.QWidget.__init__(self,parent)
+        qt.QWidget.__init__(self,parent)
 
         self.resize(234,53)
 
-        if QTVERSION < '4.0.0':
-            FitActionsGUILayout = qt.QGridLayout(self,1,1,11,6,"FitActionsGUILayout")
-            Layout9 = qt.QHBoxLayout(None,0,6,"Layout9")
-            
-        else:
-            FitActionsGUILayout = qt.QGridLayout(self)
-            FitActionsGUILayout.setContentsMargins(11, 11, 11, 11)
-            FitActionsGUILayout.setSpacing(6)
-            Layout9 = qt.QHBoxLayout(None)
-            Layout9.setContentsMargins(0, 0, 0, 0)
-            Layout9.setSpacing(6)
+        FitActionsGUILayout = qt.QGridLayout(self)
+        FitActionsGUILayout.setContentsMargins(11, 11, 11, 11)
+        FitActionsGUILayout.setSpacing(6)
+        Layout9 = qt.QHBoxLayout(None)
+        Layout9.setContentsMargins(0, 0, 0, 0)
+        Layout9.setSpacing(6)
 
         self.EstimateButton = qt.QPushButton(self)
         self.EstimateButton.setText("Estimate")
@@ -88,6 +77,6 @@ class FitActionsGUI(qt.QWidget):
         
 if __name__ == "__main__":
     app = qt.QApplication([])
-    w = FitActionsGUI()
+    w = FitActionsGui()
     w.show()
     app.exec_()

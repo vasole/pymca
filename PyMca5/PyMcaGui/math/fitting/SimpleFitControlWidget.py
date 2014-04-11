@@ -25,10 +25,8 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-if QTVERSION < '4.0.0':
-    raise ImportError("This module requires Qt4")
 
 class FitFunctionDefinition(qt.QGroupBox):
     def __init__(self, parent=None):

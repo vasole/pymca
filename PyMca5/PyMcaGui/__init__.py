@@ -1,13 +1,17 @@
 from .pymca import PyMcaFileDialogs
-from .misc import DoubleSlider, CalculationThread, SubprocessLogWidget, NumpyArrayTableWidget
-from .math.fitting import SpecfitGui, SimpleFitGui, SimpleFitBatchGui
-from .plotting import PlotWidget, PlotWindow, MaskImageWidget, \
-                      PyMca_Icons, PyMcaPrintPreview, ColormapDialog
+from .plotting import PyMca_Icons, PyMcaPrintPreview
 from .plotting.PyMca_Icons import IconDict
 from .pymca import QPyMcaMatplotlibSave1D, QPyMcaMatplotlibSave
+from .misc import DoubleSlider, CalculationThread, SubprocessLogWidget, \
+                  NumpyArrayTableWidget, FrameBrowser, CloseEventNotifyingWidget
+from .plotting import PlotWidget, PlotWindow, MaskImageWidget, \
+                      ColormapDialog, \
+                      RGBCorrelatorGraph
+from .math.fitting import SpecfitGui, SimpleFitGui, SimpleFitBatchGui
 from .pymca import ScanWindow, ExternalImagesWindow
 from .physics import McaAdvancedFit, FastXRFLinearFitWindow, \
-                     XASNormalizationWindow, XASSelfattenuationWindow
+                     XASNormalizationWindow, XASSelfattenuationWindow, \
+                     QPeriodicTable, ElementsInfo, PeakIdentifier
 
 from .pymca import StackPluginResultsWindow
 from .math import FFTAlignmentWindow, NNMADialog, NNMAWindow, PCADialog, \

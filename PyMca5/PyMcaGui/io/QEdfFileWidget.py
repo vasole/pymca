@@ -29,8 +29,8 @@ import os.path
 import numpy
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.plotting import PlotWidget
-from PyMca5.plotting.backends.MatplotlibBackend \
+from PyMca5.PyMcaGui import PlotWidget
+from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
      import MatplotlibBackend as backend
 
 if not hasattr(qt, 'QString'):
@@ -41,14 +41,14 @@ else:
     QStringList = qt.QStringList
 QTVERSION = qt.qVersion()
 QT4=True
-from PyMca5 import QPyMcaMatplotlibSave
+from PyMca5.PyMcaGui import QPyMcaMatplotlibSave
 MATPLOTLIB = True
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import ColormapDialog
-from PyMca5 import PyMcaPrintPreview
+from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui import ColormapDialog
+from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
-from PyMca5 import SpecFileDataInfo
+from . import SpecFileDataInfo
 from PyMca5 import spslut
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]

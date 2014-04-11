@@ -33,7 +33,7 @@ Viper/XANES dactyloscope """
 import numpy
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaMath import SGModule
-from PyMca.Gefit import LeastSquaresFit
+from PyMca5.PyMcaMath.fitting.Gefit import LeastSquaresFit
 DEBUG = 0
 if DEBUG:
     from pylab import *

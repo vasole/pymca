@@ -163,7 +163,7 @@ try:
 except:
     MDP = False
 
-from PyMca import py_nnma
+from . import py_nnma
 DEBUG = 0
 
 function_list = ['FNMAI', 'ALS', 'FastHALS', 'GDCLS']

@@ -29,8 +29,8 @@ import os
 import numpy
 import copy
 import types
-from PyMca import Gefit
-from PyMca import SpecfitFuns
+from . import Gefit
+from PyMca5 import SpecfitFuns
 
 DEBUG = 0
 

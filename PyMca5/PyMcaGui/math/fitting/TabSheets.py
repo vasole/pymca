@@ -25,41 +25,19 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-
-def uic_load_pixmap_FitActionsGUI(name):
-    pix = qt.QPixmap()
-    if QTVERSION < '4.0.0':
-        m = qt.QMimeSourceFactory.defaultFactory().data(name)
-
-        if m:
-            qt.QImageDrag.decode(m,pix)
-
-    return pix
 
 
 class TabSheets(qt.QDialog):
     def __init__(self,parent = None,name = None,modal = 0,fl = 0, nohelp =1,nodefaults=1):
-        if QTVERSION < '4.0.0':
-            qt.QDialog.__init__(self,parent,name,modal,fl)
-            if name == None:
-                self.setName("TabSheets")
+        qt.QDialog.__init__(self,parent)
+        self.setWindowTitle(str("TabSheets"))
+        self.setModal(modal)
 
-            self.setCaption(str("TabSheets"))
-            self.setSizeGripEnabled(1)
-        else:
-            qt.QDialog.__init__(self,parent)
-            self.setWindowTitle(str("TabSheets"))
-            self.setModal(modal)
-            #,fl)
-
-        if QTVERSION < '4.0.0':
-            TabSheetsLayout = qt.QVBoxLayout(self,11,6,"TabSheetsLayout")
-        else:
-            TabSheetsLayout = qt.QVBoxLayout(self)
-            TabSheetsLayout.setContentsMargins(11, 11, 11, 11)
-            TabSheetsLayout.setSpacing(6)
+        TabSheetsLayout = qt.QVBoxLayout(self)
+        TabSheetsLayout.setContentsMargins(11, 11, 11, 11)
+        TabSheetsLayout.setSpacing(6)
             
         self.tabWidget = qt.QTabWidget(self)
 

@@ -24,7 +24,7 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -32,39 +32,15 @@ else:
     
 QTVERSION = qt.qVersion()
 
-if QTVERSION < '4.0.0':
-    import qttable
-    class QTable(qttable.QTable):
-        def __init__(self, parent=None, name=""):
-            qttable.QTable.__init__(self, parent, name)
-            self.rowCount    = self.numRows
-            self.columnCount = self.numCols
-            self.setRowCount = self.setNumRows
-            self.setColumnCount = self.setNumCols
-            self.resizeColumnToContents = self.adjustColumn
-
-    class MyQTableItem(qttable.QTableItem):
-         def __init__(self, table, edittype, text,color=qt.Qt.white):
-                 qttable.QTableItem.__init__(self, table, edittype, text)
-                 self.color = color
-         def paint(self, painter, colorgroup, rect, selected):
-                 cg = qt.QColorGroup(colorgroup)
-                 cg.setColor(qt.QColorGroup.Base, self.color)
-                 qttable.QTableItem.paint(self,painter, cg, rect, selected)
-else:
-    QTable = qt.QTableWidget
+QTable = qt.QTableWidget
     
 DEBUG=0
 
 class McaTable(QTable):
     def __init__(self, *args,**kw):
         QTable.__init__(self, *args)
-        if QTVERSION < '4.0.0':
-            self.setNumRows(1)
-            self.setNumCols(1)
-        else:
-            self.setRowCount(1)
-            self.setColumnCount(1)            
+        self.setRowCount(1)
+        self.setColumnCount(1)            
         self.labels=['Parameter','Estimation','Fit Value','Sigma',
                      'Restrains','Min/Parame','Max/Factor/Delta/']
         self.code_options=["FREE","POSITIVE","QUOTED",
@@ -78,23 +54,17 @@ class McaTable(QTable):
         else:
             self.labels=['Position','Fit Area','MCA Area','Sigma','Fwhm','Chisq',
                          'Region','XBegin','XEnd']
-        if QTVERSION < '4.0.0':
-            self.setNumCols(len(self.labels))        
-            for label in self.labels:
-                qt.QHeader.setLabel(self.horizontalHeader(),i,label)
-                self.adjustColumn(i)
-                i=i+1
-        else:
-            self.setColumnCount(len(self.labels))
-            for label in self.labels:
-                item = self.horizontalHeaderItem(i)
-                if item is None:
-                    item = qt.QTableWidgetItem(self.labels[i],
-                                               qt.QTableWidgetItem.Type)
-                    self.setHorizontalHeaderItem(i,item)
-                item.setText(self.labels[i])
-                self.resizeColumnToContents(i)
-                i=i+1
+
+        self.setColumnCount(len(self.labels))
+        for label in self.labels:
+            item = self.horizontalHeaderItem(i)
+            if item is None:
+                item = qt.QTableWidgetItem(self.labels[i],
+                                           qt.QTableWidgetItem.Type)
+                self.setHorizontalHeaderItem(i,item)
+            item.setText(self.labels[i])
+            self.resizeColumnToContents(i)
+            i=i+1
                 
         self.regionlist=[]
         self.regiondict={}

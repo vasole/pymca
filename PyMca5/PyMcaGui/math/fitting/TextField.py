@@ -25,32 +25,14 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
-def uic_load_pixmap_FitActionsGUI(name):
-    pix = qt.QPixmap()
-    if QTVERSION < '4.0.0':
-        m = qt.QMimeSourceFactory.defaultFactory().data(name)
-
-        if m:
-            qt.QImageDrag.decode(m,pix)
-
-    return pix
-
 class TextField(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self,parent,name,fl)
-
-            if name == None:
-                self.setName("TextField")
-
-            self.setCaption(str("TextField"))
-        else:
-            qt.QWidget.__init__(self,parent)
+        qt.QWidget.__init__(self,parent)
         self.resize(373,44)
         try:
             self.setSizePolicy(qt.QSizePolicy(1,1,0,0,self.sizePolicy().hasHeightForWidth()))
@@ -58,14 +40,10 @@ class TextField(qt.QWidget):
             if DEBUG:
                 print("TextField Bad Size policy")
 
-        if QTVERSION < '4.0.0':
-            TextFieldLayout = qt.QHBoxLayout(self,11,6,"TextFieldLayout")
-            Layout2 = qt.QHBoxLayout(None,0,6,"Layout2")
-        else:
-            TextFieldLayout = qt.QHBoxLayout(self)
-            Layout2 = qt.QHBoxLayout(None)
-            Layout2.setContentsMargins(0, 0, 0, 0)
-            Layout2.setSpacing(6)
+        TextFieldLayout = qt.QHBoxLayout(self)
+        Layout2 = qt.QHBoxLayout(None)
+        Layout2.setContentsMargins(0, 0, 0, 0)
+        Layout2.setSpacing(6)
         spacer = qt.QSpacerItem(20,20,
                                 qt.QSizePolicy.Expanding,qt.QSizePolicy.Minimum)
         Layout2.addItem(spacer)

@@ -2,10 +2,11 @@
 
 import os
 import sys
-import PyMca
+import PyMca5
+from PyMca5.PyMcaGui import PeakIdentifier
 
-sys.path.insert(0, os.path.dirname(PyMca.__file__))
-fname = os.path.join(os.path.dirname(PyMca.__file__), 'PeakIdentifier.py')
+sys.path.insert(0, os.path.dirname(PeakIdentifier.__file__))
+fname = os.path.join(os.path.dirname(PeakIdentifier.__file__), 'PeakIdentifier.py')
 if sys.version < '3.0':
     execfile(fname)
 else:

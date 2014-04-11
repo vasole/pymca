@@ -35,7 +35,7 @@ if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
     QString = str
-from PyMca5.PyMcaGui.pymca import RGBCorrelatorGraph
+from PyMca5.PyMcaGui import RGBCorrelatorGraph
 from PyMca5.PyMcaGui import QPyMcaMatplotlibSave
 MATPLOTLIB = True
 

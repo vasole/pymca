@@ -94,7 +94,10 @@ packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMcaGui.physics.xrf',
             'PyMca5.PyMcaGui.pymca',
             'PyMca5.PyMcaGui.misc',
-            'PyMca5.PyMcaGui.math', 'PyMca5.PyMcaGui.math.fitting',]
+            'PyMca5.PyMcaGui.io',
+            'PyMca5.PyMcaGui.io.hdf5',
+            'PyMca5.PyMcaGui.math',
+            'PyMca5.PyMcaGui.math.fitting',]
 py_modules = []
 
 # Specify all the required PyMca data

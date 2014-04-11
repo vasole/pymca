@@ -27,11 +27,11 @@
 import sys
 import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5 import QSelectorWidget
-from PyMca5 import SpecFileDataInfo
-from PyMca5 import SpecFileCntTable
+from . import QSelectorWidget
+from . import SpecFileDataInfo
+from . import SpecFileCntTable
 OBJECT3D = SpecFileCntTable.OBJECT3D
-from PyMca5 import SpecFileMcaTable
+from . import SpecFileMcaTable
 
 QTVERSION = qt.qVersion()
 

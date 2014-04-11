@@ -24,10 +24,10 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
     
 QTVERSION = qt.qVersion()
-def uic_load_pixmap_FitConfigGUI(name):
+def uic_load_pixmap_FitConfigGui(name):
     pix = qt.QPixmap()
     m = qt.QMimeSourceFactory.defaultFactory().data(name)
 
@@ -37,7 +37,7 @@ def uic_load_pixmap_FitConfigGUI(name):
     return pix
 
 
-class FitConfigGUI(qt.QWidget):
+class FitConfigGui(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
         qt.QWidget.__init__(self,parent)
 
@@ -131,6 +131,6 @@ class FitConfigGUI(qt.QWidget):
 
 if __name__ == "__main__":
     app = qt.QApplication([])
-    w = FitConfigGUI()
+    w = FitConfigGui()
     w.show()
     app.exec_()

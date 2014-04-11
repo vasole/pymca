@@ -42,8 +42,8 @@ except:
     # MDP can raise other errors than just an import error
     MDP = False
 
-from PyMca import Lanczos
-from PyMca import PCATools
+from . import Lanczos
+from . import PCATools
 DEBUG = 0
 
 # Make these functions accept arguments not relevant to

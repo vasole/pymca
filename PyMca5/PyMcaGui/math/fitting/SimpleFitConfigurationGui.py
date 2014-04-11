@@ -27,16 +27,16 @@
 import sys
 import os.path
 import numpy
-from PyMca import SimpleFitControlWidget
+from . import SimpleFitControlWidget
 
-from PyMca import PyMcaQt as qt
-from PyMca import ConfigDict
-from PyMca import PyMca_Icons as Icons
-from PyMca import PyMcaDirs
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5 import ConfigDict
+from PyMca5.PyMcaGui import PyMca_Icons as Icons
+from PyMca5 import PyMcaDirs
 
 #strip background handling
-from PyMca import Parameters
-from PyMca.StripBackgroundWidget import StripBackgroundDialog
+from . import Parameters
+from PyMca5.PyMcaGui.math.StripBackgroundWidget import StripBackgroundDialog
 
 DEBUG = 0
 

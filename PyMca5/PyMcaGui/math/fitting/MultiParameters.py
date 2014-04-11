@@ -25,10 +25,10 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
-from PyMca import Parameters
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from . import Parameters
 QTVERSION = qt.qVersion()
-from PyMca import McaTable
+from . import McaTable
 
 DEBUG = 0
 

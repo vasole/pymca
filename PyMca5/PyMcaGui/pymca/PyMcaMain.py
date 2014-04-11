@@ -174,8 +174,8 @@ try:
 except:
     OBJECT3D = False
 from PyMca5.PyMcaGui.pymca import QDispatcher
-from PyMca5.PyMcaGui.pymca import ElementsInfo
-from PyMca5.PyMcaGui.pymca import PeakIdentifier
+from PyMca5.PyMcaGui import ElementsInfo
+from PyMca5.PyMcaGui import PeakIdentifier
 from PyMca5.PyMcaGui.pymca import PyMcaBatch
 ###########import Fit2Spec
 from PyMca5.PyMcaGui.pymca import Mca2Edf

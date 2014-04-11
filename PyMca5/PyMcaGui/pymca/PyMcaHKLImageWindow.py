@@ -27,8 +27,8 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import sys
 import numpy
-from PyMca5 import PyMcaImageWindow
-from PyMca5 import SixCircle
+from . import PyMcaImageWindow
+from PyMca5.PyMcaPhysics import SixCircle
 
 arctan = numpy.arctan
 

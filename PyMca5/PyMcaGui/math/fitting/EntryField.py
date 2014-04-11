@@ -24,31 +24,13 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
 
-def uic_load_pixmap_FitActionsGUI(name):
-    pix = qt.QPixmap()
-    if QTVERSION < '4.0.0':
-        m = qt.QMimeSourceFactory.defaultFactory().data(name)
-
-        if m:
-            qt.QImageDrag.decode(m,pix)
-
-    return pix
-
 class EntryField(qt.QWidget):
     def __init__(self,parent = None,name = None,fl = 0):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self,parent,name,fl)
-
-            if name == None:
-                self.setName("EntryField")
-
-            self.setCaption("EntryField")
-        else:
-            qt.QWidget.__init__(self,parent)
+        qt.QWidget.__init__(self,parent)
 
         Layout1 = qt.QHBoxLayout(self)
         

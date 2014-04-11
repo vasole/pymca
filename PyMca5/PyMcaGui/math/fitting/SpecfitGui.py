@@ -26,22 +26,21 @@
 #############################################################################*/
 import sys
 import os
-from PyMca import EventHandler
-from PyMca import Specfit
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaCore import EventHandler
+from PyMca5.PyMcaMath.fitting import Specfit
+from PyMca5.PyMcaGui import PyMcaQt as qt
     
 QTVERSION = qt.qVersion()
-from PyMca import FitConfigGUI
-from PyMca import MultiParameters
-from PyMca import FitActionsGUI
-from PyMca import FitStatusGUI
-from PyMca import EventHandler
-from PyMca import QScriptOption
+from . import FitConfigGui
+from . import MultiParameters
+from . import FitActionsGui
+from . import FitStatusGui
+from . import QScriptOption
 DEBUG = 0
 
-class SpecfitGUI(qt.QWidget):
+class SpecfitGui(qt.QWidget):
     
-    sigSpecfitGUISignal = qt.pyqtSignal(object)
+    sigSpecfitGuiSignal = qt.pyqtSignal(object)
     
     def __init__(self,parent = None,name = None,fl = 0, specfit = None,
                  config = 0, status = 0, buttons = 0, eh = None):
@@ -76,12 +75,12 @@ class SpecfitGUI(qt.QWidget):
         self.setdata=self.specfit.setdata
         self.guiconfig=None
         if config:
-            self.guiconfig = FitConfigGUI.FitConfigGUI(self)
+            self.guiconfig = FitConfigGui.FitConfigGui(self)
             self.guiconfig.MCACheckBox.stateChanged[int].connect(self.mcaevent) 
             self.guiconfig.WeightCheckBox.stateChanged[int].connect(self.weightevent) 
             self.guiconfig.AutoFWHMCheckBox.stateChanged[int].connect(self.autofwhmevent) 
             self.guiconfig.AutoScalingCheckBox.stateChanged[int].connect(self.autoscaleevent) 
-            self.guiconfig.ConfigureButton.clicked[()].connect(self.__configureGUI) 
+            self.guiconfig.ConfigureButton.clicked[()].connect(self.__configureGui) 
             self.guiconfig.PrintPushButton.clicked[()].connect(self.printps) 
             self.guiconfig.connect(self.guiconfig.BkgComBox,
                                 qt.SIGNAL("activated(const QString &)"),self.bkgevent)
@@ -139,11 +138,11 @@ class SpecfitGUI(qt.QWidget):
                 self.guiconfig.AutoScalingCheckBox.setChecked(0)
 
         if status:
-            self.guistatus =  FitStatusGUI.FitStatusGUI(self)
+            self.guistatus =  FitStatusGui.FitStatusGui(self)
             self.eh.register('FitStatusChanged',self.fitstatus)
             layout.addWidget(self.guistatus)
         if buttons:
-            self.guibuttons = FitActionsGUI.FitActionsGUI(self)
+            self.guibuttons = FitActionsGui.FitActionsGui(self)
             self.guibuttons.connect(self.guibuttons.EstimateButton,
                                     qt.SIGNAL("clicked()"),self.estimate)
             self.guibuttons.connect(self.guibuttons.StartfitButton,
@@ -152,24 +151,24 @@ class SpecfitGUI(qt.QWidget):
                                     qt.SIGNAL("clicked()"),self.dismiss)
             layout.addWidget(self.guibuttons)
 
-    def updateGUI(self,configuration=None):
-        self.__configureGUI(configuration)
+    def updateGui(self,configuration=None):
+        self.__configureGui(configuration)
 
     def _emitSignal(self, ddict):
-        self.sigSpecfitGUISignal.emit(ddict)
+        self.sigSpecfitGuiSignal.emit(ddict)
 
-    def __configureGUI(self, newconfiguration=None):
+    def __configureGui(self, newconfiguration=None):
         if self.guiconfig is not None:
             #get current dictionary
             #print "before ",self.specfit.fitconfig['fitbkg']
             configuration=self.configure()
             #get new dictionary
             if newconfiguration is None:
-                newconfiguration=self.configureGUI(configuration)
+                newconfiguration=self.configureGui(configuration)
             #update configuration
             configuration.update(self.configure(**newconfiguration))
             #print "after =",self.specfit.fitconfig['fitbkg']
-            #update GUI
+            #update Gui
             #current function
             #self.funevent(self.specfit.theorylist[0])
             try:
@@ -206,11 +205,11 @@ class SpecfitGUI(qt.QWidget):
                 self.guiconfig.AutoScalingCheckBox.setChecked(1)
             else:
                 self.guiconfig.AutoScalingCheckBox.setChecked(0)
-            #update the GUI
+            #update the Gui
             self.__initialparameters() 
 
     
-    def configureGUI(self,oldconfiguration):
+    def configureGui(self,oldconfiguration):
         #this method can be overwritten for custom
         #it should give back a new dictionary
         newconfiguration={}
@@ -283,7 +282,7 @@ class SpecfitGUI(qt.QWidget):
                     text += "the initial parameters. Please, fill them\n"
                     text += "yourself in the table and press Start Fit\n"
                     msg.setText(text)
-                    msg.setWindowTitle('SpecfitGUI Message')
+                    msg.setWindowTitle('SpecfitGui Message')
                     msg.exec_()
                     return
             except:
@@ -580,7 +579,7 @@ if __name__ == "__main__":
     y=y/1000.0
     a = qt.QApplication(sys.argv)
     qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
-    w = SpecfitGUI(config=1, status=1, buttons=1)
+    w = SpecfitGui(config=1, status=1, buttons=1)
     w.setdata(x=x,y=y)
     if QTVERSION < '4.0.0':
         a.setMainWidget(w)

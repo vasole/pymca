@@ -26,12 +26,12 @@
 #############################################################################*/
 import sys
 import os
-from PyMca import PyMcaQt as qt
-from PyMca import SimpleFitModule
-from PyMca import SimpleFitConfigurationGUI
-from PyMca import SimpleFitUserEstimatedFunctions
-from PyMca import Parameters
-from PyMca.widgets import ScanWindow
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaMath.fitting import SimpleFitModule
+from . import SimpleFitConfigurationGui
+from PyMca5.PyMcaMath.fitting import SimpleFitUserEstimatedFunctions
+from . import Parameters
+from PyMca5.PyMcaGui import PlotWindow
 
 DEBUG = 0
 
@@ -136,7 +136,7 @@ class SimpleFitGUI(qt.QWidget):
             self.fitModule = fit
         if graph is None:
             self.__useTab = True
-            self.graph = ScanWindow.ScanWindow(newplot=False,
+            self.graph = PlotWindow.PlotWindow(newplot=False,
                                                plugins=False,
                                                fit=False)
         else:
@@ -249,7 +249,7 @@ class SimpleFitGUI(qt.QWidget):
     def configureButtonSlot(self):
         if self._configurationDialog is None:
             self._configurationDialog =\
-                SimpleFitConfigurationGUI.SimpleFitConfigurationGUI()
+                SimpleFitConfigurationGui.SimpleFitConfigurationGui()
         self._configurationDialog.setSimpleFitInstance(self.fitModule)
         if not self._configurationDialog.exec_():
             if DEBUG:

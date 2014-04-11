@@ -24,9 +24,9 @@
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
-import PyMcaQt as qt
-from PyMca import CloseEventNotifyingWidget
-from PyMca import NumpyArrayTableWidget
+from  PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import CloseEventNotifyingWidget
+from PyMca5.PyMcaGui import NumpyArrayTableWidget
 
 class HDF5DatasetTable(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def __init__(self, parent=None):

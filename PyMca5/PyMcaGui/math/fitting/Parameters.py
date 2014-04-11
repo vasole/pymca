@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 import sys
-from PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 if not hasattr(qt, "QString"):
     QString = str
 else:
@@ -37,67 +37,29 @@ else:
     QStringList = qt.QStringList
 
 QTVERSION = qt.qVersion()
-if QTVERSION < '4.0.0':
-    import qttable
+QTable = qt.QTableWidget
 
-if QTVERSION < '4.0.0':
-    class QTable(qttable.QTable):
-        def __init__(self, parent=None, name=""):
-            qttable.QTable.__init__(self, parent, name)
-            self.rowCount = self.numRows
-            self.columnCount = self.numCols
-            self.setRowCount = self.setNumRows
-            self.setColumnCount = self.setNumCols
-            self.resizeColumnToContents = self.adjustColumn
+class QComboTableItem(qt.QComboBox):
+    def __init__(self, parent=None, row=None, col=None):
+        self._row = row
+        self._col = col
+        qt.QComboBox.__init__(self, parent)
+        self.connect(self, qt.SIGNAL('activated(int)'), self._cellChanged)
 
-    #Class added for compatibility with previous Qt versions
-    class QComboTableItem(qttable.QTableItem):
-        def __init__(self, table, list):
-            qttable.QTableItem.__init__(self, table,
-                                        qttable.QTableItem.Always, "")
-            self.setReplaceable(0)
-            self.table = table
-            self.list = list
+    def _cellChanged(self, idx):
+        if DEBUG:
+            print("cell changed", idx)
+        self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
 
-        def setCurrentItem(self, cur):
-            for i in range(len(self.list)):
-                if str(cur) == str(self.list[i]):
-                    self.cb.setCurrentItem(i)
-                    return
+class QCheckBoxItem(qt.QCheckBox):
+    def __init__(self, parent=None, row=None, col=None):
+        self._row = row
+        self._col = col
+        qt.QCheckBox.__init__(self, parent)
+        self.connect(self, qt.SIGNAL('clicked()'), self._cellChanged)
 
-        def createEditor(self):
-            self.cb = qt.QComboBox(self.table.viewport())
-            self.cb.insertStringList(self.list)
-            self.cb.connect(self.cb, qt.SIGNAL("activated(int)"), self.mySlot)
-            return self.cb
-
-        def mySlot(self, index):
-            self.table.setText(self.row(), self.col(), self.cb.currentText())
-            self.table.myslot(self.row(), self.col())
-else:
-    QTable = qt.QTableWidget
-
-    class QComboTableItem(qt.QComboBox):
-        def __init__(self, parent=None, row=None, col=None):
-            self._row = row
-            self._col = col
-            qt.QComboBox.__init__(self, parent)
-            self.connect(self, qt.SIGNAL('activated(int)'), self._cellChanged)
-
-        def _cellChanged(self, idx):
-            if DEBUG:
-                print("cell changed", idx)
-            self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
-
-    class QCheckBoxItem(qt.QCheckBox):
-        def __init__(self, parent=None, row=None, col=None):
-            self._row = row
-            self._col = col
-            qt.QCheckBox.__init__(self, parent)
-            self.connect(self, qt.SIGNAL('clicked()'), self._cellChanged)
-
-        def _cellChanged(self):
-            self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
+    def _cellChanged(self):
+        self.emit(qt.SIGNAL('cellChanged'), self._row, self._col)
 
 DEBUG = 0
 

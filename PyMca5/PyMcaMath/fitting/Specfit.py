@@ -28,9 +28,9 @@ __revision__ = "$Revision: 1.26 $"
 import sys
 import os
 import numpy
-from PyMca import SpecfitFuns
-from PyMca.Gefit import LeastSquaresFit
-from PyMca import EventHandler
+from PyMca5 import SpecfitFuns
+from .Gefit import LeastSquaresFit
+from PyMca5.PyMcaCore import EventHandler
 DEBUG = 0
 class Specfit(object):
     #def __init__(self,x=None,y=None,sigmay=None):

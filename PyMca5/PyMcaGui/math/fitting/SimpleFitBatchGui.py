@@ -27,14 +27,14 @@
 #############################################################################*/
 import sys
 import os
-from PyMca import PyMcaQt as qt
-from PyMca.PyMca_Icons import IconDict
-from PyMca import PyMcaDirs
-from PyMca import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import IconDict
+from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 PyMcaDirs.nativeFileDialogs = False
 QTVERSION = qt.qVersion()
 HDF5SUPPORT = True
-from PyMca import QDataSource
+from PyMca5.PyMcaGui.pymca import QDataSource
 
 class SimpleFitBatchParameters(qt.QWidget):
     def __init__(self, parent=None, file_browser=True):
@@ -229,7 +229,7 @@ class SimpleFitBatchParameters(qt.QWidget):
         ddict['fitconfiguration'] = str(self._fitConfigurationLine.text())
         return ddict
 
-class SimpleFitBatchGUI(qt.QWidget):
+class SimpleFitBatchGui(qt.QWidget):
     def __init__(self, parent=None, stack=False, actions=True):
         qt.QWidget.__init__(self, parent)
         if stack in [None, False]:
@@ -264,6 +264,6 @@ class SimpleFitBatchGUI(qt.QWidget):
     
 if __name__ == "__main__":
     app = qt.QApplication([])
-    w = SimpleFitBatchGUI()
+    w = SimpleFitBatchGui()
     w.show()
     app.exec_()

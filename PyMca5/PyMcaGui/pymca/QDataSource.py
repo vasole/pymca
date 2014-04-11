@@ -33,10 +33,10 @@ import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
-from PyMca5 import SpecFileDataSource
-from PyMca5 import EdfFileDataSource
-from PyMca5 import QEdfFileWidget
-from PyMca5 import QSpecFileWidget
+from PyMca5.PyMcaCore import SpecFileDataSource
+from PyMca5.PyMcaCore import EdfFileDataSource
+from PyMca5.PyMcaGui.io import QEdfFileWidget
+from PyMca5.PyMcaGui.io import QSpecFileWidget
 
 if sys.platform == "win32":
     source_types = { SpecFileDataSource.SOURCE_TYPE: SpecFileDataSource.SpecFileDataSource,
