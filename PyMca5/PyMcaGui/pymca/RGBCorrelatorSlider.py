@@ -25,7 +25,7 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Software Group"
-from PyMca5 import DoubleSlider
+from PyMca5.PyMcaGui import DoubleSlider
 qt = DoubleSlider.qt
 
 QTVERSION = qt.qVersion()

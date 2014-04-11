@@ -25,9 +25,9 @@
 # is a problem for you.
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF"
-from PyMca5 import PCAWindow
+from . import PCAWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5 import NNMAModule
+from PyMca5.PyMcaMath.mva import NNMAModule
 
 class NNMAParametersDialog(qt.QDialog):
     def __init__(self, parent = None, options=[1, 2, 3, 4, 5, 10]):

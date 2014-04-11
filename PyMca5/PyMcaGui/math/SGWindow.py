@@ -27,10 +27,11 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import MaskImageWidget
-from PyMca5 import ScanWindow
-from PyMca5 import SGModule
+from PyMca5.PyMcaGui import PyMca_Icons
+IconDict = PyMca_Icons.IconDict
+from PyMca5.PyMcaGui import MaskImageWidget
+from PyMca5.PyMcaGui import ScanWindow
+from PyMca5.PyMcaMath import SGModule
 
 
 class SGParametersWidget(qt.QWidget):

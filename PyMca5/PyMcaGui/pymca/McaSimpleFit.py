@@ -27,8 +27,8 @@
 import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-from PyMca5 import SpecfitGUI
-from PyMca5 import Specfit
+from PyMca5.PyMcaGui import SpecfitGui
+from PyMca5.PyMcaMath.fitting import Specfit
 
 class McaSimpleFit(qt.QWidget):
     sigMcaSimpleFitSignal = qt.pyqtSignal(object)

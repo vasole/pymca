@@ -27,14 +27,11 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import sys
 import numpy
-from PyMca5 import MaskImageWidget
-from PyMca5 import ColormapDialog
+from PyMca5.PyMcaGui import MaskImageWidget
+from PyMca5.PyMcaGui import ColormapDialog
 from PyMca5 import spslut
-try:
-    from PyMca5 import QPyMcaMatplotlibSave
-    MATPLOTLIB = True
-except ImportError:
-    MATPLOTLIB = False
+from PyMca5.PyMcaGui import QPyMcaMatplotlibSave
+MATPLOTLIB = True
 
 qt = MaskImageWidget.qt
 IconDict = MaskImageWidget.IconDict

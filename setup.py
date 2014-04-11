@@ -132,19 +132,13 @@ if os.path.exists(os.path.join("PyMca5", "EPDL97")):
     data_files.append((PYMCA_DATA_DIR+'/EPDL97',glob.glob('PyMca5/EPDL97/*.DAT')))
     data_files.append((PYMCA_DATA_DIR+'/EPDL97',['PyMca5/EPDL97/LICENSE']))
 
-print("SIFT NOT YET IN")
 global SIFT_OPENCL_FILES
 SIFT_OPENCL_FILES = []
-if os.path.exists(os.path.join("PyMca", "sift")):
-    packages.append('PyMca.sift')
-    SIFT_OPENCL_FILES = glob.glob('PyMca/sift/*.cl')
-    data_files.append((os.path.join('PyMca', 'sift'), SIFT_OPENCL_FILES))
-
-print("NNMAE NOT YET IN")
-NNMA_PATH = os.path.join("PyMca", "py_nnma")
-if os.path.exists(NNMA_PATH):
-    py_modules.append('PyMca.py_nnma.__init__')
-    py_modules.append('PyMca.py_nnma.nnma')
+if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
+    packages.append('PyMca5.PyMcaMath.sift')
+    SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
+    data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
+                       SIFT_OPENCL_FILES))
     
 print("OBJECT 3D NOT IN")
 LOCAL_OBJECT3D =False

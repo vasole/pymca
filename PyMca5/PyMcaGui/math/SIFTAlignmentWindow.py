@@ -29,10 +29,10 @@ import os
 import sys
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5 import ExternalImagesWindow
-from PyMca5 import PyMcaFileDialogs
+from PyMca5.PyMcaGui import ExternalImagesWindow
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 try:
-    from PyMca5 import sift
+    from PyMca5.PyMcaMath import sift
 except:
     if sys.platform.lower().startswith("linux"):
         raise

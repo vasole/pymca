@@ -40,34 +40,29 @@ if __name__ == "__main__":
 
 import copy
 
-from PyMca5.PyMcaGui.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui import IconDict
 from . import ScanWindow
 from . import McaCalibrationControlGUI
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5 import McaAdvancedFit
-from PyMca5 import DataObject
-from PyMca5 import McaCalWidget
-from PyMca5 import McaSimpleFit
-from PyMca5 import Specfit
-from PyMca5 import SpecfitFuns
-from PyMca5 import PyMcaPrintPreview
+from PyMca5.PyMcaGui import McaAdvancedFit
+from PyMca5.PyMcaCore import DataObject
+from PyMca5.PyMcaGui.physics.xrf import McaCalWidget
+from . import McaSimpleFit
+from PyMca5.PyMcaMath.fitting import Specfit
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
+from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5 import PyMcaDirs
-#implement the plugins interface
+
+from PyMca5.PyMcaGui import QPyMcaMatplotlibSave1D
+MATPLOTLIB = True
+
+#force understanding of utf-8 encoding
+#otherways it cannot generate svg output
 try:
-    from PyMca5 import QPyMcaMatplotlibSave1D
-    MATPLOTLIB = True
-    #force understanding of utf-8 encoding
-    #otherways it cannot generate svg output
-    try:
-        import encodings.utf_8
-    except:
-        #not a big problem
-        pass
+    import encodings.utf_8
 except:
-    MATPLOTLIB = False
-
-from PyMca5 import SimpleFitGUI
-
+    #not a big problem
+    pass
 DEBUG = 0
 class McaWindow(ScanWindow.ScanWindow):
     def __init__(self, parent=None, name="Mca Window", specfit=None, backend=None,

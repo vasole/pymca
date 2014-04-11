@@ -39,9 +39,9 @@ from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 from matplotlib.ticker import MaxNLocator, AutoLocator
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5 import PyMcaMatplotlibSave
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import PyMcaPrintPreview
+from PyMca5.PyMcaCore import PyMcaMatplotlibSave
+from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5 import PyMcaDirs
 
 DEBUG = 0

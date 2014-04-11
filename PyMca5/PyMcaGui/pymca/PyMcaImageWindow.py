@@ -28,17 +28,14 @@ __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import numpy
 import time
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import RGBImageCalculator
+from PyMca5.PyMcaGui import IconDict
+from . import RGBImageCalculator
 qt = RGBImageCalculator.qt
 QTVERSION = qt.qVersion()
-if QTVERSION > '4.0.0':
-    from PyMca5 import RGBCorrelator
-try:
-    from PyMca5 import FrameBrowser
-    USE_BROWSER = True
-except ImportError:
-    USE_BROWSER = False
+from . import RGBCorrelator
+from PyMca5.PyMcaGui import FrameBrowser
+USE_BROWSER = True
+
 DEBUG = 0
 
 class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):

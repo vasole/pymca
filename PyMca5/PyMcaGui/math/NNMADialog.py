@@ -29,13 +29,8 @@ import sys
 import numpy
 import time
 from PyMca5.PyMcaGui import PyMcaQt as qt
-NNMA = False
-if qt.qVersion() > '4.0.0':
-    try:
-        from PyMca5 import NNMAWindow
-        NNMA = True
-    except ImportError:
-        pass
+from . import NNMAWindow
+NNMA = True
 DEBUG = 0
 
 class SimpleThread(qt.QThread):

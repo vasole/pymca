@@ -35,13 +35,10 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import MaskImageWidget
-try:
-    from PyMca5.PyMcaIO import EdfFile
-    EDF = True
-except ImportError:
-    EDF = False
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui import MaskImageWidget
+from PyMca5.PyMcaIO import EdfFile
+EDF = True
 
 class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):

@@ -29,15 +29,15 @@ import sys
 import os
 import numpy
 import traceback
-from PyMca5 import RGBCorrelatorSlider
-from PyMca5 import RGBCorrelatorTable
-from PyMca5 import RGBImageCalculator
+from . import RGBCorrelatorSlider
+from . import RGBCorrelatorTable
+from PyMca5.PyMcaGui import RGBImageCalculator
 from PyMca5 import spslut
-from PyMca5.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui import IconDict
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
-from PyMca5 import EdfFileDataSource
-from PyMca5 import ExternalImagesWindow
+from PyMca5.PyMcaCore import EdfFileDataSource
+from PyMca5.PyMcaGui import ExternalImagesWindow
 from PyMca5.PyMcaIO import TiffIO
 
 DataReader = EdfFileDataSource.EdfFileDataSource
