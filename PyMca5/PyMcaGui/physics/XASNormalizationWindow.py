@@ -30,16 +30,12 @@ import numpy
 import traceback
 import copy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMca_Icons import IconDict
-#from PyMca5 import ScanWindow
-from PyMca5.plotting.backends.MatplotlibBackend \
+from PyMca5.PyMcaGui import PyMca_Icons
+IconDict = PyMca_Icons.IconDict
+from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
      import MatplotlibBackend as backend
-from PyMca5.widgets.PlotWindow import PlotWindow as ScanWindow
-try:
-    from PyMca5 import XASNormalization
-except:
-    print("WARNING: XASNormalizationWindow performing local import")
-    from . import XASNormalization
+from PyMca5.PyMcaGui import PlotWindow
+from PyMca5.PyMcaPhysics import XASNormalization
 
 class PolynomSelector(qt.QComboBox):
     def __init__(self, parent=None, options=None):
@@ -274,7 +270,8 @@ class XASNormalizationWindow(qt.QWidget):
             self.energy = energy
         self.spectrum = spectrum
         self.parametersWidget = XASNormalizationParametersWidget(self)
-        self.graph = ScanWindow(self, backend=backend, plugins=False, newplot=False)
+        self.graph = PlotWindow.PlotWindow(self, backend=backend,
+                                           plugins=False, newplot=False)
         self.__lastDict = {}
         self.graph.sigPlotSignal.connect(self._handleGraphSignal)
         self.graph.addCurve(self.energy,

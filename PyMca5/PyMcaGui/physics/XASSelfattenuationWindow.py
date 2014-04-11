@@ -28,10 +28,10 @@
 import copy
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5 import PyMcaFileDialogs
+from PyMca5.PyMcaGui.pymca import PyMcaFileDialogs
 from PyMca5 import Elements
-from PyMca5 import MatrixImage
-from PyMca5 import MaterialEditor
+from .xrf import MatrixImage
+from .xrf import MaterialEditor
 from PyMca5 import ConfigDict
 
 if hasattr(qt, "QString"):
@@ -279,7 +279,7 @@ class GeometryConfiguration(qt.QWidget):
             self.angleWidgets[0].setText("%.2f" % ddict['angles'][0])
             self.angleWidgets[1].setText("%.2f" % ddict['angles'][1])
         
-class XASSelfAttenuationWidget(qt.QWidget):
+class XASSelfattenuationWidget(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
@@ -304,13 +304,13 @@ class XASSelfAttenuationWidget(qt.QWidget):
         ddict['XAS'].update(self.geometry.getParameters())
         return ddict
             
-class XASSelfAttenuationDialog(qt.QDialog):
+class XASSelfattenuationDialog(qt.QDialog):
     def __init__(self, parent=None):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("XAS self-attenuation dialog")
         self.mainLayout = qt.QVBoxLayout(self)
         self.setContentsMargins(0, 0, 0, 0)
-        self.configurationWidget = XASSelfAttenuationWidget(self)
+        self.configurationWidget = XASSelfattenuationWidget(self)
         self.actionsBox = qt.QWidget(self)
         self.actionsBox.mainLayout = qt.QHBoxLayout(self.actionsBox)
         self.actionsBox.setContentsMargins(0, 0, 0, 0)
@@ -386,7 +386,7 @@ class XASSelfAttenuationDialog(qt.QDialog):
         
 if __name__ == "__main__":
     app = qt.QApplication([])
-    w = XASSelfAttenuationDialog()
+    w = XASSelfattenuationDialog()
     w.setConfiguration({"material":"Goethite"})
     ret = w.exec_()
     if ret:

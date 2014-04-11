@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,8 +31,8 @@ should take a look at dedicated and well-tested packages like IFEFFIT or
 Viper/XANES dactyloscope """
 
 import numpy
-from PyMca5 import SpecfitFuns
-from PyMca5 import SGModule
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
+from PyMca5.PyMcaMath import SGModule
 from PyMca.Gefit import LeastSquaresFit
 DEBUG = 0
 if DEBUG:

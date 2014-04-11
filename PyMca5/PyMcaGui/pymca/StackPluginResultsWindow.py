@@ -32,9 +32,9 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import MaskImageWidget
-from PyMca5 import ScanWindow
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui.plotting import MaskImageWidget
+from . import ScanWindow
 
 class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):

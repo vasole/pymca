@@ -4,9 +4,11 @@ if os.path.exists(os.path.join(\
     raise ImportError('PyMca cannot be imported from source directory')
 
 try:
-    from .PyMcaIO import specfilewrapper, EdfFile, specfile
+    from .PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
 except:
     print("WARNING importing IO directly")
-    from PyMcaIO import specfilewrapper, EdfFile, specfile
+    from PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
 
-from .PyMcaCore import Plugin1DBase, StackPluginBase
+from .PyMcaCore import Plugin1DBase, StackPluginBase, PyMcaDirs
+from .PyMcaMath import SpecfitFuns
+from .PyMcaPhysics.xrf import Elements
