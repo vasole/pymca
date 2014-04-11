@@ -27,9 +27,9 @@
 import sys
 import os
 import numpy
-from PyMca5 import DataObject
+from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaIO import specfilewrapper as specfile
-from PyMca5 import SpecFileDataSource
+from PyMca5.PyMcaCore import SpecFileDataSource
 
 HDF5 = False
 try:

@@ -50,7 +50,7 @@ else:#except ImportError:
     # no XRFMC support
     pass
 from PyMca5.PyMcaGui.math import StripBackgroundWidget
-from PyMca5.PyMcaGui import ScanWindow
+from PyMca5.PyMcaGui import PlotWindow
 import numpy
 
 DEBUG = 0
@@ -75,7 +75,9 @@ class FitParamWidget(FitParamForm):
         self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
         self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.graphDialog.mainLayout.setSpacing(0)
-        self.graphDialog.graph = ScanWindow.ScanWindow(self.graphDialog, newplot=False, plugins=False, fit=False)
+        self.graphDialog.graph = PlotWindow.PlotWindow(self.graphDialog,
+                                                       newplot=False,
+                                                       plugins=False, fit=False)
         self.graph = self.graphDialog.graph
         self.graph._togglePointsSignal()
         self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,

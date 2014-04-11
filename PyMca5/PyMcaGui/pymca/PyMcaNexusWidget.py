@@ -26,26 +26,18 @@
 #############################################################################*/
 import sys
 import posixpath
-try:
-    from PyMca5.PyMcaGui import PyMcaQt as qt
-    from PyMca5 import DataObject
-    from PyMca5.QNexusWidget import *
-    from PyMca5 import QStackWidget
-    from PyMca5 import HDF5Stack1D
-except ImportError:
-    print("PyMcaNexusWidget importing from directory")
-    import PyMcaQt as qt
-    import DataObject
-    from QNexusWidget import *
-    import QStackWidget
-    import HDF5Stack1D
 import h5py
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaCore import DataObject
+from PyMca5.PyMcaGui.io.hdf5 import QNexusWidget
+from PyMca5.PyMcaGui import QStackWidget
+from PyMca5.PyMcaIO import HDF5Stack1D
 
 DEBUG=0
 
-class PyMcaNexusWidget(QNexusWidget):
+class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
     def __init__(self, *var, **kw):
-        QNexusWidget.__init__(self, *var, **kw)
+        QNexusWidget.QNexusWidget.__init__(self, *var, **kw)
         
     def itemRightClickedSlot(self, ddict):
         filename = ddict['file']
@@ -234,7 +226,7 @@ if __name__ == "__main__":
     if 0:
         w.setFile(sys.argv[1])
     else:
-        import NexusDataSource
+        from PyMca5.PyMcaCore import NexusDataSource
         dataSource = NexusDataSource.NexusDataSource(sys.argv[1:])
         w.setDataSource(dataSource)
     def addSelection(sel):

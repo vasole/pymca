@@ -27,7 +27,7 @@
 import sys
 import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import SpecfitGui
+from PyMca5.PyMcaGui.math.fitting import SpecfitGui
 from PyMca5.PyMcaMath.fitting import Specfit
 QTVERSION = qt.qVersion()
 

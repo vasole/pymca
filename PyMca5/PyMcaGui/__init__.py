@@ -7,11 +7,11 @@ from .misc import DoubleSlider, CalculationThread, SubprocessLogWidget, \
 from .plotting import PlotWidget, PlotWindow, MaskImageWidget, \
                       ColormapDialog, \
                       RGBCorrelatorGraph
-from .math.fitting import SpecfitGui, SimpleFitGui, SimpleFitBatchGui
-from .pymca import ScanWindow, ExternalImagesWindow
 from .physics import McaAdvancedFit, FastXRFLinearFitWindow, \
                      XASNormalizationWindow, XASSelfattenuationWindow, \
                      QPeriodicTable, ElementsInfo, PeakIdentifier
+from .pymca import ScanWindow, ExternalImagesWindow
+from .math.fitting import SpecfitGui, SimpleFitGui, SimpleFitBatchGui
 
 from .pymca import StackPluginResultsWindow
 from .math import FFTAlignmentWindow, NNMADialog, NNMAWindow, PCADialog, \
@@ -24,3 +24,8 @@ from .io import QSourceSelector
 from .io import QEdfFileWidget
 from .pymca import RGBCorrelator
 from .physics.xrf import MaterialEditor
+#try:
+#    from .io.hdf5 import HDF5Widget, QNexusWidget
+#except:
+#    # HDF5 is not a forced dependency
+#    pass

@@ -39,9 +39,9 @@ from PyMca5.PyMcaIO import SupaVisioMap
 from PyMca5.PyMcaIO import AifiraMap
 from PyMca5.PyMcaIO import TextImageStack
 from PyMca5.PyMcaIO import TiffStack
-from PyMca5.QStack import QStack, QSpecFileStack
+from .QStack import QStack, QSpecFileStack
 try:
-    from PyMca5 import QHDF5Stack1D
+    from . import QHDF5Stack1D
     import h5py
     HDF5 = True
 except ImportError:

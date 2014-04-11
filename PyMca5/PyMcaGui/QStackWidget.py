@@ -36,16 +36,16 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = qt.safe_str
-from PyMca5 import DataObject
-from PyMca5 import McaWindow
-from PyMca5 import StackBase
-from PyMca5 import CloseEventNotifyingWidget
-from PyMca5 import MaskImageWidget
-from PyMca5 import StackROIWindow
-from PyMca5 import RGBCorrelator
-from PyMca5.RGBCorrelatorWidget import ImageShapeDialog
-from PyMca5.PyMca_Icons import IconDict
-from PyMca5 import StackSelector
+from PyMca5.PyMcaCore import DataObject
+from PyMca5.PyMcaGui.pymca import McaWindow
+from PyMca5.PyMcaCore import StackBase
+from PyMca5.PyMcaGui import CloseEventNotifyingWidget
+from PyMca5.PyMcaGui import MaskImageWidget
+from PyMca5.PyMcaGui.pymca import StackROIWindow
+from PyMca5.PyMcaGui import RGBCorrelator
+from PyMca5.PyMcaGui.pymca.RGBCorrelatorWidget import ImageShapeDialog
+from PyMca5.PyMcaGui import IconDict
+from PyMca5.PyMcaGui.pymca import StackSelector
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaIO import ArraySave
 HDF5 = ArraySave.HDF5

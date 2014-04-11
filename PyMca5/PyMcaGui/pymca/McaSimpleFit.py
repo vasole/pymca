@@ -27,7 +27,7 @@
 import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-from PyMca5.PyMcaGui import SpecfitGui
+from PyMca5.PyMcaGui.math.fitting import SpecfitGui
 from PyMca5.PyMcaMath.fitting import Specfit
 
 class McaSimpleFit(qt.QWidget):
