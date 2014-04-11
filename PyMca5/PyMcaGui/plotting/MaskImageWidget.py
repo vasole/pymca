@@ -1207,7 +1207,8 @@ class MaskImageWidget(qt.QWidget):
             pixmap[:,3] = 255
             pixmap.shape = height, width, 4
         else:
-            self.__image = self.__image.convertToFormat(qt.QImage.Format_ARGB32) 
+            self.__image = self.__image.convertToFormat(qt.QImage.Format_ARGB32)
+            #TODO: It remains in BGR :( invertPixels does nothing and rgbSwapped
             pixmap = numpy.fromstring(self.__image.bits().asstring(width * height * 4),
                                  dtype = numpy.uint8)
         pixmap.shape = height, width,-1
