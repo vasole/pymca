@@ -27,9 +27,9 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import sys
 import numpy
-from PyMca5 import MaskImageWidget
-from PyMca5 import FrameBrowser
-from PyMca5 import DataObject
+from PyMca5.PyMcaGui import MaskImageWidget
+from PyMca5.PyMcaGui import FrameBrowser
+from PyMca5.PyMcaCore import DataObject
 qt = MaskImageWidget.qt
 IconDict = MaskImageWidget.IconDict
 

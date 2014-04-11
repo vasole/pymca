@@ -59,12 +59,9 @@ try:
     from PyMca5 import StackPluginBase
 except ImportError:
     from . import StackPluginBase
-try:
-    from PyMca5 import Median2DBrowser
-    import PyMca.PyMca_Icons as PyMca_Icons
-except ImportError:
-    import Median2DBrowser
-    import PyMca_Icons
+
+from PyMca5.PyMcaGui.pymca import Median2DBrowser
+from PyMca5.PyMcaGui import PyMca_Icons
 
 DEBUG = 0
 
