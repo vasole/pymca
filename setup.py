@@ -78,11 +78,11 @@ print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 # The following is not supported by python-2.3:
 #package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
 packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests',
-            'PyMca5.PyMcaCore.',
+            'PyMca5.PyMcaCore',
             'PyMca5.PyMcaPhysics',
             'PyMca5.PyMcaPhysics.xrf',
+            'PyMca5.PyMcaPhysics.xrf.XRFMC',
             'PyMca5.PyMcaPhysics.xas',
-            'PyMca5.PyMcaCore.XRFMC',
             'PyMca5.PyMcaIO',
             'PyMca5.PyMcaMisc',
             'PyMca5.PyMcaMath',
@@ -129,8 +129,6 @@ data_files = [(PYMCA_DATA_DIR, ['LICENSE.GPL',
               (PYMCA_DOC_DIR+'/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
               (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*'))]
 
-print("EPDL NOT YET IN")
-print("XRFMC NOT YET IN")
 if os.path.exists(os.path.join("PyMca5", "EPDL97")):
     packages.append('PyMca5.EPDL97')
     data_files.append((PYMCA_DATA_DIR+'/EPDL97',glob.glob('PyMca5/EPDL97/*.DAT')))

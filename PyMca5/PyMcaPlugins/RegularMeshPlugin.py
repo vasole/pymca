@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -35,12 +35,12 @@ except ImportError:
 
 import os
 try:
-    from PyMca5 import PyMcaQt as qt
+    from PyMca5.PyMcaGui import PyMcaQt as qt
 except ImportError:
     print("WARNING: RegularMeshPlugin Using huge PyQt4 import")
     import PyQt4.Qt as qt
 
-from PyMca5 import MaskImageWidget
+from PyMca5.PyMcaGui import MaskImageWidget
 
 DEBUG = 0
 

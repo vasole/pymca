@@ -97,9 +97,8 @@ else:
 
 QTVERSION = qt.qVersion()
 
-print("TO RELOCATE XRFMC")
 try:
-    from PyMca5.XRFMC import XRFMCPyMca
+    from PyMca5.PyMcaCore.XRFMC import XRFMCPyMca
     XRFMC_FLAG = True
 except:
     XRFMC_FLAG = False

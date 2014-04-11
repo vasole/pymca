@@ -328,7 +328,7 @@ class ScanFit(qt.QWidget):
 def main():
     app = qt.QApplication([])
     w = ScanFit()
-    app.lasWindowClosed.connect(app.quit)
+    app.lastWindowClosed.connect(app.quit)
     w.show()
     app.exec_()
 

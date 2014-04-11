@@ -41,12 +41,12 @@ from . import AttenuatorsTable
 from . import ConcentrationsWidget
 from . import EnergyTable
 from PyMca5.PyMcaCore import PyMcaDirs
-print("XRFMC_TO_BE_IMPORTED")
 XRFMC_FLAG = False
-try:
-    import PyMca.XRFMC.XRFMCPyMca as XRFMCPyMca
+if 1:#try:
+    from . import XRFMCPyMca
     XRFMC_FLAG = True
-except ImportError:
+else:#except ImportError:
+    print("XRFMC_TO_BE_IMPORTED")
     # no XRFMC support
     pass
 from PyMca5.PyMcaGui.math import StripBackgroundWidget

@@ -75,14 +75,13 @@ if DEBUG:
     print("############################################")
     print("#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG)
     print("############################################")
-print("XRFMC TO be imported")
 XRFMC_FLAG = False
 try:
-    from PyMca.XRFMC import XRFMCHelper
+    from PyMca5.PyMcaPhysics.xrf.XRFMC import XRFMCHelper
     XRFMC_FLAG = True
 except ImportError:
+    print("Cannot import XRFMCHelper module")
     if DEBUG:
-        print("Cannot import XRFMCHelper module")
         raise
 USE_BOLD_FONT = True
 

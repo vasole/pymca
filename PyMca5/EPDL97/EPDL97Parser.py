@@ -189,7 +189,7 @@ AVOGADRO_NUMBER = 6.02214179E23
 EPDL = os.path.join(os.path.dirname(__file__), 'EPDL97.DAT')
 
 if not os.path.exists(EPDL):
-    from PyMca import PyMcaDataDir
+    from PyMca5 import PyMcaDataDir
     EPDL = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, 'EPDL97', 'EPDL97.DAT')
 
 

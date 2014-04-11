@@ -152,7 +152,7 @@ Elements = ['H', 'He',
 EADL = os.path.join(os.path.dirname(__file__), 'EADL.DAT')
 
 if not os.path.exists(EADL):
-    from PyMca import PyMcaDataDir
+    from PyMca5 import PyMcaDataDir
     EADL = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, 'EPDL97', 'EADL.DAT')
 
 infile = open(EADL, 'rb')

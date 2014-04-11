@@ -30,8 +30,7 @@ import sys
 import copy
 import numpy
 from . import Elements
-print("XRFMC NOT IMPORTED YET IN ", __file__)
-#from PyMca5.XRFMC import XRFMCHelper
+from PyMca5.PyMcaCore.XRFMC import XRFMCHelper
 
 class ConcentrationsConversion(object):
     def getConcentrationsAsHtml(self, concentrations=None):
