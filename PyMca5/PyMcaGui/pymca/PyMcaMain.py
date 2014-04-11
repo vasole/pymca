@@ -98,7 +98,7 @@ else:
 QTVERSION = qt.qVersion()
 
 try:
-    from PyMca5.PyMcaCore.XRFMC import XRFMCPyMca
+    from PyMca5.PyMcaGui.physics.xrf import XRFMCPyMca
     XRFMC_FLAG = True
 except:
     XRFMC_FLAG = False
