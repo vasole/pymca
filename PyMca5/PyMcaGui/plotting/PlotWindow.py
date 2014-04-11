@@ -535,7 +535,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             w = self.centralWidget().width()
             h = self.centralWidget().height()
             if w > (1.25 * h):
-                self.addDockWidget(qt.Qt.LeftDockWidgetArea,
+                self.addDockWidget(qt.Qt.RightDockWidgetArea,
                                    self.roiDockWidget)
             else:
                 self.addDockWidget(qt.Qt.BottomDockWidgetArea,
