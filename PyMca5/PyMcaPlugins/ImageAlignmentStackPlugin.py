@@ -59,21 +59,22 @@ import sys
 import os
 import numpy
 from PyMca5 import StackPluginBase
-from PyMca5 import PyMcaQt as qt
-from PyMca5 import FFTAlignmentWindow
-from PyMca5 import ImageRegistration
-from PyMca5 import SpecfitFuns
-from PyMca5 import CalculationThread
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import FFTAlignmentWindow
+from PyMca5.PyMcaMath import ImageRegistration
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
+from PyMca5.PyMcaGui import CalculationThread
 from PyMca5.PyMcaIO import ArraySave
-from PyMca5 import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaIO import specfilewrapper
-from PyMca5 import HDF5Widget
+from PyMca5.PyMcaGui import HDF5Widget
 
 try:
-    from PyMca5 import SIFTAlignmentWindow
+    from PyMca5.PyMcaGui import SIFTAlignmentWindow
     sift = SIFTAlignmentWindow.sift
     SIFT = True
 except:
+    print("SIFTAlignmentWindow not successful")
     SIFT = False
 
 try:
