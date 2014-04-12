@@ -28,11 +28,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 import numpy
 from numpy import cos, sin
 import sys
-try:
-    from PyMca5 import Plugin1DBase
-except ImportError:
-    from . import Plugin1DBase
-
+from PyMca5 import Plugin1DBase
 import os
 try:
     from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -157,18 +153,18 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca5 import Plot1D
+    from PyMca5.PyMcaGraph import Plot
     app = qt.QApplication([])
     DEBUG = 1
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D.Plot1D()
+    plot = Plot.Plot()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
     plugin = getPlugin1DInstance(plot)
     for method in plugin.getMethods():
         print(method, ":", plugin.getMethodToolTip(method))
-    plugin.applyMethod(plugin.getMethods()[1])
+    plugin.applyMethod(plugin.getMethods()[0])
     curves = plugin.getAllCurves()
     for curve in curves:
         print(curve[2])

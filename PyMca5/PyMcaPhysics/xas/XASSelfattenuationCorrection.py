@@ -26,7 +26,7 @@ from PyMca5.PyMcaPhysics.xrf import Elements
 def isValidConfiguration(configuration):
     return True, "OK"
 
-class XASSelfAttenuationCorrection(object):
+class XASSelfattenuationCorrection(object):
     def __init__(self, configuration=None):
         self.setConfiguration(configuration)
 
@@ -208,7 +208,7 @@ class XASSelfAttenuationCorrection(object):
         
 if __name__ == "__main__":
     from PyMca.PyMcaIO import specfilewrapper
-    instance = XASSelfAttenuationCorrection()
+    instance = XASSelfattenuationCorrection()
     configuration = {}
     configuration['XAS'] = {}
     configuration['XAS']['material'] = 'Pd'

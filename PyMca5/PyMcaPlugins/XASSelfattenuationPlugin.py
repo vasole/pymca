@@ -27,10 +27,10 @@
 __author__ = "V.A. Sole - ESRF Software Group"
 import numpy
 from PyMca5 import Plugin1DBase
-from PyMca5 import XASSelfAttenuationCorrection
-from PyMca5 import XASSelfAttenuationWindow
+from PyMca5.PyMcaPhysics.xas import XASSelfattenuationCorrection
+from PyMca5.PyMcaGui import XASSelfattenuationWindow
 
-class XASSelfAttenuationPlugin(Plugin1DBase.Plugin1DBase):
+class XASSelfattenuationPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
         self.methodDict = {}
@@ -59,7 +59,7 @@ class XASSelfAttenuationPlugin(Plugin1DBase.Plugin1DBase):
                                          info,
                                          icon]
         self.widget = None
-        self.instance = XASSelfAttenuationCorrection.XASSelfAttenuationCorrection()
+        self.instance = XASSelfattenuationCorrection.XASSelfattenuationCorrection()
         self.parameters = None
         
     #Methods to be implemented by the plugin
@@ -95,7 +95,7 @@ class XASSelfAttenuationPlugin(Plugin1DBase.Plugin1DBase):
 
     def configure(self):
         if self.widget is None:
-            self.widget = XASSelfAttenuationWindow.XASSelfAttenuationDialog()
+            self.widget = XASSelfattenuationWindow.XASSelfattenuationDialog()
         ret = self.widget.exec_()
         if ret:
             self.configuration = self.widget.getConfiguration()
@@ -148,5 +148,5 @@ class XASSelfAttenuationPlugin(Plugin1DBase.Plugin1DBase):
 
 MENU_TEXT = "XAS Self-Attenuation Correction"
 def getPlugin1DInstance(plotWindow, **kw):
-    ob = XASSelfAttenuationPlugin(plotWindow)
+    ob = XASSelfattenuationPlugin(plotWindow)
     return ob

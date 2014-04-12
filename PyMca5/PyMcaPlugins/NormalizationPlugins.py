@@ -30,22 +30,13 @@ try:
 except ImportError:
     from . import Plugin1DBase
 import numpy
-try:
-    import PyMca.PyMca_Icons as PyMca_Icons
-except ImportError:
-    #This happens in frozen versions
-    import PyMca_Icons
+from PyMca5.PyMcaGui import PyMca_Icons
 
 try:
-    from PyMca5 import SpecfitFuns
+    from PyMca5.PyMcaMath.fitting import SpecfitFuns
     HAS_SPECFIT = True
 except ImportError:
-    #This happens in frozen versions
-    try:
-        import SpecfitFuns
-        HAS_SPECFIT = True
-    except:
-        HAS_SPECFIT = False
+    HAS_SPECFIT = False
 
 
 class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
@@ -317,10 +308,10 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca5 import Plot1D
+    from PyMca5.PyMcaGraph import Plot
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D.Plot1D()
+    plot = Plot.Plot()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
     plugin = getPlugin1DInstance(plot)

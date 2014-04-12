@@ -27,14 +27,9 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import numpy
 
-try:
-    from PyMca5 import Plugin1DBase
-except ImportError:
-    print("WARNING:MedianFilterScanPlugin import from somewhere else")
-    from . import Plugin1DBase
-
-from PyMca5 import SpecfitFuns
-from PyMca5.PyMcaSciPy.signal.median import medfilt1d
+from PyMca5 import Plugin1DBase
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
+from PyMca5.PyMcaMath.PyMcaSciPy.signal.median import medfilt1d
 
 class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
@@ -211,12 +206,12 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca5 import PyMcaQt as qt
+    from PyMca5.PyMcaGui import PyMcaQt as qt
     app = qt.QApplication([])
-    from PyMca5 import Plot1D
+    from PyMca5.PyMcaGraph import Plot
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D.Plot1D()
+    plot = Plot.Plot()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
     plugin = getPlugin1DInstance(plot)

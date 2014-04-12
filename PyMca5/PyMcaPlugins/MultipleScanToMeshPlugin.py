@@ -31,8 +31,8 @@ import numpy
 from matplotlib.mlab import griddata
 
 from PyMca5 import Plugin1DBase
-from PyMca5 import MaskImageWidget
-from PyMca5 import PyMcaQt as qt
+from PyMca5.PyMcaGui import MaskImageWidget
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 DEBUG = 0
 
@@ -91,8 +91,8 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             msg = "ID26 RIXS scans are built combining several single scans"
             raise ValueError(msg)
 
-        self._xLabel = self.getGraphXTitle()
-        self._yLabel = self.getGraphYTitle()
+        self._xLabel = self.getGraphXLabel()
+        self._yLabel = self.getGraphYLabel()
 
         if self._xLabel not in ["Spec.Energy", "arr_hdh_ene", "Mono.Energy"]:
             msg = "X axis does not correspond to an ID26 RIXS scan"
@@ -235,7 +235,7 @@ def getPlugin1DInstance(plotWindow, **kw):
     return ob
 
 if __name__ == "__main__":
-    from PyMca5 import Plot1D
+    from PyMca5.PyMcaGraph import Plot
     app = qt.QApplication([])
     #w = ConfigurationWidget()
     #w.exec_()
@@ -244,13 +244,13 @@ if __name__ == "__main__":
     DEBUG = 1
     x = numpy.arange(100.)
     y = x * x
-    plot = Plot1D.Plot1D()
+    plot = Plot.Plot()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, -x*x)
     plugin = getPlugin1DInstance(plot)
     for method in plugin.getMethods():
         print(method, ":", plugin.getMethodToolTip(method))
-    plugin.applyMethod(plugin.getMethods()[1])
+    plugin.applyMethod(plugin.getMethods()[0])
     curves = plugin.getAllCurves()
     for curve in curves:
         print(curve[2])
