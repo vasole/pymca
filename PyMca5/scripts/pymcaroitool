@@ -4,7 +4,6 @@ import os
 import sys
 import PyMca5.PyMcaGui
 
-sys.path.insert(0, os.path.dirname(PyMca5.PyMcaGui.__file__))
 fname = os.path.join(os.path.dirname(PyMca5.PyMcaGui.__file__), 'QStackWidget.py')
 if sys.version < '3.0':
     execfile(fname)

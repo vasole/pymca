@@ -32,7 +32,7 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
 
 from PyMca5.PyMcaGui import QSourceSelector
-from . import QDataSource
+from PyMca5.PyMcaGui.pymca import QDataSource
 from PyMca5.PyMcaGui import QEdfFileWidget
 class EdfFileSimpleViewer(qt.QWidget):
     def __init__(self, parent=None):

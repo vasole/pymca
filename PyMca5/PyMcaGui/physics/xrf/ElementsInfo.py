@@ -27,7 +27,7 @@
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics.xrf import ElementHtml
 from PyMca5.PyMcaPhysics import Elements
-from .QPeriodicTable import QPeriodicTable
+from PyMca5.PyMcaGui.physics.xrf.QPeriodicTable import QPeriodicTable
 
 __revision__ = "$Revision: 1.15 $"
 

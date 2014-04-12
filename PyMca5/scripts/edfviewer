@@ -2,10 +2,9 @@
 
 import os
 import sys
-import PyMca
+import PyMca5.PyMcaGui.pymca.EdfFileSimpleViewer as target
 
-sys.path.insert(0, os.path.dirname(PyMca.__file__))
-fname = os.path.join(os.path.dirname(PyMca.__file__), 'EdfFileSimpleViewer.py')
+fname = os.path.join(os.path.dirname(target.__file__), 'EdfFileSimpleViewer.py')
 if sys.version < '3.0':
     execfile(fname)
 else:

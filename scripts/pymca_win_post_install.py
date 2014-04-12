@@ -47,8 +47,8 @@ def install():
     python_console = prefix + r'\python.exe'
     
     # Lookup path to common startmenu ...
-    ip_dir = get_special_folder_path('CSIDL_COMMON_PROGRAMS') + r'\PyMca'
-    lib_dir = prefix+'\Lib\site-packages\PyMca'
+    ip_dir = get_special_folder_path('CSIDL_COMMON_PROGRAMS') + r'\PyMca5'
+    lib_dir = prefix+'\Lib\site-packages\PyMca5'
 
     if not os.path.isdir(ip_dir):
         os.mkdir(ip_dir)
