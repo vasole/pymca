@@ -30,6 +30,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 #
+__author__ = "Uwe Schitt"
+__copyright__ = "Uwe Schmitt"
 __license__ = "MIT"
 import numpy
 from numpy.linalg import solve

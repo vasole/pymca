@@ -33,7 +33,7 @@
 ##
 ## **************************************************************************/
 __author__ = "A. Mirone - ESRF SciSoft Group"
-__license__ = "BSD"
+__license__ = "MIT"
 import math
 sparsamodulo=0
 PARALLEL=0
