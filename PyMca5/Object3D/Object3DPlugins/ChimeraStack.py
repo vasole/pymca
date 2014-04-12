@@ -2,7 +2,7 @@ import os
 import h5py
 import Object3DStack
 try:
-    from PyMca.Object3D import Object3DFileDialogs
+    from PyMca5.Object3D import Object3DFileDialogs
 except ImportError:
     from Object3D import Object3DFileDialogs
 qt = Object3DFileDialogs.qt
@@ -19,7 +19,7 @@ def getObject3DInstance(config=None):
     #because the modules could be instanstiated without using
     #this method
     try:
-        from PyMca.PyMcaIO import EDFStack
+        from PyMca5.PyMcaIO import EDFStack
     except ImportError:
         import EDFStack
 
@@ -55,8 +55,8 @@ if __name__ == "__main__":
     from Object3D import SceneGLWindow
     import os
     try:
-        from PyMca.PyMcaIO import EDFStack
-        from PyMca.PyMcaIO import EdfFile
+        from PyMca5.PyMcaIO import EDFStack
+        from PyMca5.PyMcaIO import EdfFile
     except ImportError:
         import EDFStack
         import EdfFile

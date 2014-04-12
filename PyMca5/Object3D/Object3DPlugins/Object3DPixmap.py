@@ -7,21 +7,21 @@ except ImportError:
     raise ImportError, "OpenGL must be installed to use these functionalities"
 
 try:
-    from PyMca import spslut
-    from PyMca.PyMcaIO import EdfFile
+    from PyMca5 import spslut
+    from PyMca5.PyMcaIO import EdfFile
 except ImportError:
     import spslut
     import EdfFile
 
 try:
-    from PyMca.Object3D import Object3DFileDialogs
-    from PyMca.Object3D import Object3DBase
+    from PyMca5.Object3D import Object3DFileDialogs
+    from PyMca5.Object3D import Object3DBase
 except ImportError:
     from Object3D import Object3DFileDialogs
     from Object3D import Object3DBase
 
 try:
-    from PyMca.Object3D import Object3DCTools
+    from PyMca5.Object3D import Object3DCTools
 except ImportError:
     try:
         from Object3D import Object3DCTools
@@ -626,8 +626,8 @@ def getObject3DInstance(config=None):
 if __name__ == "__main__":
     import sys
     import os
-    from PyMca.Object3D import SceneGLWindow
-    from PyMca.Object3D import Object3DFileDialogs
+    from PyMca5.Object3D import SceneGLWindow
+    from PyMca5.Object3D import Object3DFileDialogs
     app = qt.QApplication(sys.argv)
     window = SceneGLWindow.SceneGLWindow()
     window.show()

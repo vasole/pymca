@@ -1,9 +1,9 @@
 try:
-    from PyMca.Object3D import Object3DQt as qt
-    from PyMca.Object3D import Object3DPrivateConfig
-    from PyMca.Object3D import PrivateConfigTools
-    from PyMca.Object3D.HorizontalSpacer import HorizontalSpacer
-    from PyMca.Object3D.VerticalSpacer import VerticalSpacer
+    from PyMca5.Object3D import Object3DQt as qt
+    from PyMca5.Object3D import Object3DPrivateConfig
+    from PyMca5.Object3D import PrivateConfigTools
+    from PyMca5.Object3D.HorizontalSpacer import HorizontalSpacer
+    from PyMca5.Object3D.VerticalSpacer import VerticalSpacer
 except ImportError:
     from Object3D import Object3DQt as qt
     from Object3D import Object3DPrivateConfig
@@ -92,5 +92,5 @@ if __name__ == "__main__":
         print "Callback called"
     w = Object3DMeshConfig()
     w.setCallBack(myslot)
-    w.show()    
+    w.show()
     app.exec_()

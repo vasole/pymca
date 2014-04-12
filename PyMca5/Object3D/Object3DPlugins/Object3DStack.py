@@ -6,18 +6,18 @@ except ImportError:
     raise ImportError, "OpenGL must be installed to use these functionalities"
 import numpy
 try:
-    from PyMca import spslut
+    from PyMca5 import spslut
 except:
     import spslut
 try:
-    from PyMca.Object3D import Object3DFileDialogs
-    from PyMca.Object3D import Object3DBase
+    from PyMca5.Object3D import Object3DFileDialogs
+    from PyMca5.Object3D import Object3DBase
 except ImportError:
     from Object3D import Object3DFileDialogs
     from Object3D import Object3DBase
 
 try:
-    from PyMca.Object3D import Object3DCTools
+    from PyMca5.Object3D import Object3DCTools
 except ImportError:
     try:
         from Object3D import Object3DCTools
@@ -483,8 +483,8 @@ def getObject3DInstance(config=None):
     #because the modules could be instanstiated without using
     #this method
     try:
-        from PyMca.PyMcaIO import EDFStack
-        from PyMca.PyMcaIO import TiffStack
+        from PyMca5.PyMcaIO import EDFStack
+        from PyMca5.PyMcaIO import TiffStack
     except ImportError:
         import EDFStack
         import TiffStack
@@ -529,8 +529,8 @@ if __name__ == "__main__":
     from Object3D import SceneGLWindow
     import os
     try:
-        from PyMca.PyMcaIO import EDFStack
-        from PyMca.PyMcaIO import EdfFile
+        from PyMca5.PyMcaIO import EDFStack
+        from PyMca5.PyMcaIO import EdfFile
     except ImportError:
         import EDFStack
         import EdfFile
