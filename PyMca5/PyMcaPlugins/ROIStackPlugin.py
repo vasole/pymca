@@ -133,9 +133,7 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
                                                         profileselection=True)
             self.roiWindow.setSelectionMode(True)
             qt = StackROIWindow.qt
-            qt.QObject.connect(self.roiWindow,
-                   qt.SIGNAL('MaskImageWidgetSignal'),
-                   self.mySlot)
+            self.roiWindow.sigMaskImageWidgetSignal.connect(self.mySlot)
 
         #Show
         self.roiWindow.show()

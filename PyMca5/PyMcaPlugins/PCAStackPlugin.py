@@ -255,10 +255,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                                         usetab=True)
         self.widget.buildAndConnectImageButtonBox()
         qt = StackPluginResultsWindow.qt
-        qt.QObject.connect(self.widget,
-                           qt.SIGNAL('MaskImageWidgetSignal'),
-                           self.mySlot)
-
+        self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
         self.widget.setStackPluginResults(images,
                                           spectra=eigenVectors,
                                           image_names=imageNames,

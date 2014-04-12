@@ -144,9 +144,7 @@ class StackBrowserPlugin(StackPluginBase.StackPluginBase):
                                                     profileselection=True)
             self.widget.setSelectionMode(True)
             qt = StackBrowser.qt
-            qt.QObject.connect(self.widget,
-                   qt.SIGNAL('MaskImageWidgetSignal'),
-                   self.mySlot)
+            self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
 
         #Show
         self.widget.show()

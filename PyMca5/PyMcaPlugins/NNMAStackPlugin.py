@@ -260,10 +260,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             print("NNMAStackPlugin threadFinished. Widget created")
         self.widget.buildAndConnectImageButtonBox()
         qt = StackPluginResultsWindow.qt
-        qt.QObject.connect(self.widget,
-                           qt.SIGNAL('MaskImageWidgetSignal'),
-                           self.mySlot)
-
+        self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
         self.widget.setStackPluginResults(images,
                                           spectra=eigenVectors,
                                           image_names=imageNames,

@@ -198,10 +198,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
+    app.lastWindowClosed.connect(app.quit)
 
     container = StackPluginResultsWindow()
     data = numpy.arange(20000)

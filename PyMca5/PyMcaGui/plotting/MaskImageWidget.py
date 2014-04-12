@@ -190,9 +190,7 @@ class MaskImageWidget(qt.QWidget):
         if standalonesave:
             self.buildStandaloneSaveMenu()
 
-        self.connect(self.graphWidget.zoomResetToolButton,
-                     qt.SIGNAL("clicked()"), 
-                     self._zoomResetSignal)
+        self.graphWidget.zoomResetToolButton.clicked[()].connect(self._zoomResetSignal)
         self.graphWidget.graph.setDrawModeEnabled(False)
         self.graphWidget.graph.setZoomModeEnabled(True)
         if self.__selectionFlag:
@@ -211,9 +209,7 @@ class MaskImageWidget(qt.QWidget):
             self.mainLayout.addWidget(self.graphWidget)
 
     def buildStandaloneSaveMenu(self):
-        self.connect(self.graphWidget.saveToolButton,
-                         qt.SIGNAL("clicked()"), 
-                         self._saveToolButtonSignal)
+        self.graphWidget.saveToolButton.clicked[()].connect(self._saveToolButtonSignal)
         self._saveMenu = qt.QMenu()
         self._saveMenu.addAction(QString("Image Data"),
                                  self.saveImageList)
@@ -1891,10 +1887,7 @@ def getImageMask(image, mask=None):
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
+    app.lastWindowClosed.connect(app.quit)
     if len(sys.argv) > 1:
         if sys.argv[1].endswith('edf') or\
            sys.argv[1].endswith('cbf') or\
@@ -1932,9 +1925,7 @@ def test():
     def theSlot(ddict):
         print(ddict['event'])
 
-    qt.QObject.connect(container,
-                       qt.SIGNAL("MaskImageWidgetSignal"),
-                       theSlot)
+    container.sigMaskImageWidgetSignal.connect(theSlot)
     app.exec_()
 
 if __name__ == "__main__":

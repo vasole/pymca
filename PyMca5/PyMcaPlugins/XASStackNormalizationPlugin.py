@@ -185,9 +185,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                         usetab=False,profileselection=True)
                 self.imageWidget.buildAndConnectImageButtonBox()
                 qt = StackPluginResultsWindow.qt
-                qt.QObject.connect(self.imageWidget,
-                           qt.SIGNAL('MaskImageWidgetSignal'),
-                           self.mySlot)
+                self.imageWidget.sigMaskImageWidgetSignal.connect(self.mySlot)                
                 self.methodDict["Show Images"] =[self._showImageWidget,
                                                  "Show calculated jump and edge position images",
                                                  None]

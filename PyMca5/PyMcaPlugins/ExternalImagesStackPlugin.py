@@ -184,9 +184,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             self.widget = StackPluginResultsWindow.StackPluginResultsWindow(parent=None,
                                                     usetab=False)
             self.widget.buildAndConnectImageButtonBox()
-            qt.QObject.connect(self.widget,
-                   qt.SIGNAL('MaskImageWidgetSignal'),
-                   self.mySlot)
+            self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
             self.widget.setStackPluginResults(imagelist,
                                               image_names=imagenames)
             self._showWidget()
@@ -217,9 +215,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                                                     imageicons=True,
                                                     standalonesave=True)
             self.widget.buildAndConnectImageButtonBox()
-            qt.QObject.connect(self.widget,
-                   qt.SIGNAL('MaskImageWidgetSignal'),
-                   self.mySlot)
+            self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)            
             self.widget.setImageData(None)
             self.widget.setQImageList(imagelist, shape[1], shape[0],
                                                 clearmask=False,
