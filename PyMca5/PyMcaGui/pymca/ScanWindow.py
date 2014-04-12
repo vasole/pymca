@@ -38,7 +38,7 @@ else:
 if __name__ == "__main__":
     app = qt.QApplication([])
 
-from PyMca5.PyMcaGui import PlotWindow
+from PyMca5.PyMcaGui.plotting import PlotWindow
 from . import ScanFit
 from PyMca5.PyMcaMath import SimpleMath
 from PyMca5.PyMcaCore import DataObject

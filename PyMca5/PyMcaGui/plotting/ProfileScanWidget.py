@@ -27,8 +27,9 @@
 __author__ = "V.A. Sole - ESRF Data Analysis"
 import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
-if 0:
-    print("ProfileScanWidget should not depend on ScanWindow")
+if 1:
+    # Should profileScanWidget depend on ScanWindow???
+    # if not, we miss profile fitting ...
     from PyMca5.PyMcaGui.pymca.ScanWindow import ScanWindow as Window
 else:
     from .PlotWindow import PlotWindow as Window
@@ -36,7 +37,7 @@ DEBUG = 0
 
 class ProfileScanWidget(Window):
     def __init__(self, parent=None, actions=False, **kw):
-        ScanWindow.ScanWindow.__init__(self, parent, **kw)
+        super(ProfileScanWidget, self).__init__(parent, **kw)
         if actions:
             self._buildActionsBox()
 
