@@ -1,3 +1,25 @@
+VERSION 5.0.0
+
+Incorporate a new repository layout.
+
+Most of the source code can be used under MIT or LGPL licenses.
+
+Dependency on Qwt (via PyQwt) removed.
+
+Possibility to keep image aspect ratio.
+
+Improved print preview.
+
+MCA Window accepts plugins.
+
+Any plot accepts ROI selection.
+
+VERSION 4.7.3
+
+Correct bug using SNIP background with the Fast XRF linear fit stack plugin.
+
+Better handling of screen resolutions with 768 vertical pixels.
+
 VERSION 4.7.2
 
 Allow fitting of all Cr L lines
