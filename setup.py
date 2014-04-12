@@ -45,7 +45,7 @@ global USE_SMART_INSTALL_SCRIPTS
 # directory containing the python modules (aka. installation directory).
 # The sift module implements a patented algorithm. The algorithm can be used
 # for non-commercial research purposes. If you do not want to distribute it
-# with the PyMca sources you just need to delete the PyMca/sift directory.
+# with the PyMca sources you just need to delete the PyMca5/PyMcaMath/sift directory.
 PYMCA_DATA_DIR = os.path.join('PyMca5','PyMcaData')
 PYMCA_DOC_DIR = os.path.join('PyMca5','PyMcaData')
 USE_SMART_INSTALL_SCRIPTS = False
@@ -142,9 +142,8 @@ if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
     data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
                        SIFT_OPENCL_FILES))
     
-print("OBJECT 3D NOT IN")
 LOCAL_OBJECT3D =False
-if os.path.exists(os.path.join("PyMca", "Object3D")):
+if os.path.exists(os.path.join("PyMca5", "Object3D")):
     LOCAL_OBJECT3D = True
 
 sources = glob.glob('*.c')
@@ -246,8 +245,8 @@ def build_Object3DCTools(ext_modules):
         #if WindowsSDK is not None:
         #    includes.append(WindowsSDK)
 
-    module  = Extension(name = 'PyMca.Object3D.Object3DCTools',
-                        sources = glob.glob('PyMca/Object3D/Object3DCTools/*.c'),
+    module  = Extension(name = 'PyMca5.Object3D.Object3DCTools',
+                        sources = glob.glob('PyMca5/Object3D/Object3DCTools/*.c'),
                         define_macros = define_macros,
                         libraries  = libraries,
                         include_dirs = includes)
@@ -256,7 +255,7 @@ def build_Object3DCTools(ext_modules):
 
 def build_Object3DQhull(extensions):
     libraries = []
-    sources = ["PyMca/Object3D/Object3DQhull/Object3DQhull.c"]
+    sources = ["PyMca5/Object3D/Object3DQhull/Object3DQhull.c"]
     include_dirs = [numpy.get_include()]
 
     # check if the user provide some information about a system qhull
@@ -273,7 +272,7 @@ def build_Object3DQhull(extensions):
         sources += glob.glob("third-party/qhull/src/*.c")
         include_dirs += ["third-party/qhull/src"]
 
-    module = Extension(name='PyMca.Object3D.Object3DQhull',
+    module = Extension(name='PyMca5.Object3D.Object3DQhull',
                        sources=sources,
                        define_macros=define_macros,
                        libraries=libraries,
@@ -346,13 +345,13 @@ if (sys.version < '3.0') and LOCAL_OBJECT3D:
     try:
         build_Object3DCTools(ext_modules)
         build_Object3DQhull(ext_modules)
-        for python_file in glob.glob('PyMca/Object3D/*.py'):
+        for python_file in glob.glob('PyMca5/Object3D/*.py'):
             if python_file in ['setup.py', 'cx_setup.py']:
                 continue
-            m = "PyMca.Object3D.%s" % os.path.basename(python_file)[:-3] 
+            m = "PyMca5.Object3D.%s" % os.path.basename(python_file)[:-3] 
             py_modules.append(m)
-        for python_file in glob.glob('PyMca/Object3D/Object3DPlugins/*.py'):
-            m = "PyMca.Object3D.Object3DPlugins.%s" %\
+        for python_file in glob.glob('PyMca5/Object3D/Object3DPlugins/*.py'):
+            m = "PyMca5.Object3D.Object3DPlugins.%s" %\
                                     os.path.basename(python_file)[:-3] 
             py_modules.append(m)
     except:
