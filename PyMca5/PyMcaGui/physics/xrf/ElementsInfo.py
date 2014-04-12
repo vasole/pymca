@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,7 +26,7 @@
 #############################################################################*/
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics.xrf import ElementHtml
-from PyMca5.PyMcaPhysics import Elements
+from PyMca5.PyMcaPhysics.xrf import Elements
 from PyMca5.PyMcaGui.physics.xrf.QPeriodicTable import QPeriodicTable
 
 __revision__ = "$Revision: 1.15 $"
@@ -72,16 +72,9 @@ CLOSE_ICON =[
 
 
 class ElementsInfo(qt.QWidget):
-    def __init__(self,parent=None,name="Elements Info",fl=0):
-        if qt.qVersion() < '4.0.0':
-            qt.QWidget.__init__(self,parent,name,fl)
-            self.setCaption(name)
-        else:
-            if fl == 0:
-                qt.QWidget.__init__(self, parent)
-            else:
-                qt.QWidget.__init__(self, parent, fl)
-            self.setWindowTitle(name)
+    def __init__(self, parent=None, name="Elements Info"):
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle(name)
             
         layout = qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -93,36 +86,26 @@ class ElementsInfo(qt.QWidget):
         self.table = QPeriodicTable(self.splitter)
         self.html  = ElementHtml.ElementHtml()
         self.infoWidget = None
-        if qt.qVersion() < '4.0.0':
-            self.splitter.setResizeMode(self.table,qt.QSplitter.KeepSize)
-            self.connect(self.table,qt.PYSIGNAL("elementClicked"),self.elementClicked)
-        else:
-            self.table.setMinimumSize(500,
-                                      400)
-                                      
-            self.connect(self.table,qt.SIGNAL("elementClicked"),
-                         self.elementClicked)
+        self.table.setMinimumSize(500,
+                                  400)
+                                  
+        self.connect(self.table,qt.SIGNAL("elementClicked"),
+                     self.elementClicked)
             
         self.lastElement = None
         Elements.registerUpdate(self._updateCallback)
         
     def elementClicked(self, symbol):
-        if self.infoWidget is None: self.__createInfoWidget(symbol)
+        if self.infoWidget is None:
+            self.__createInfoWidget(symbol)
         else:
-            if qt.qVersion() < '4.0.0':
-                self.infoText.setText(self.html.gethtml(symbol))
-            else:
-                self.infoText.clear()
-                self.infoText.insertHtml(self.html.gethtml(symbol))
+            self.infoText.clear()
+            self.infoText.insertHtml(self.html.gethtml(symbol))
         if self.infoWidget.isHidden():
             self.infoWidget.show()
         self.lastElement = symbol
-        if qt.qVersion() < '4.0.0':
-            self.infoWidget.setCaption(symbol)
-            self.infoWidget.raiseW()
-        else:
-            self.infoWidget.setWindowTitle(symbol)
-            self.infoWidget.raise_()
+        self.infoWidget.setWindowTitle(symbol)
+        self.infoWidget.raise_()
         
     def __createInfoWidget(self,symbol=""):
         #Dock window like widget
@@ -137,11 +120,9 @@ class ElementsInfo(qt.QWidget):
         layout1       = qt.QHBoxLayout(toolbar)
         layout1.setContentsMargins(0, 0, 0, 0)
         layout1.setSpacing(0)
+
         # --- the line
-        if qt.qVersion() < '4.0.0':
-            self.line1 = Line(toolbar,"line1")
-        else:
-            self.line1 = Line(toolbar)
+        self.line1 = Line(toolbar)
         self.line1.setFrameShape(qt.QFrame.HLine)
         self.line1.setFrameShadow(qt.QFrame.Sunken)
         self.line1.setFrameShape(qt.QFrame.HLine)
@@ -154,12 +135,8 @@ class ElementsInfo(qt.QWidget):
         self.closelabel.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
 
         # --- connections
-        if qt.qVersion() < '4.0.0':
-            self.connect(self.line1,qt.PYSIGNAL("LineDoubleClickEvent"),self.infoReparent)
-            self.connect(self.closelabel,qt.PYSIGNAL("PixmapLabelMousePressEvent"),self.infoToggle)
-        else:
-            self.connect(self.line1,qt.SIGNAL("LineDoubleClickEvent"),self.infoReparent)
-            self.connect(self.closelabel,qt.SIGNAL("PixmapLabelMousePressEvent"),self.infoToggle)
+        self.connect(self.line1,qt.SIGNAL("LineDoubleClickEvent"),self.infoReparent)
+        self.connect(self.closelabel,qt.SIGNAL("PixmapLabelMousePressEvent"),self.infoToggle)
 
         # --- The text edit widget
         w= qt.QWidget(frame)
@@ -182,46 +159,34 @@ class ElementsInfo(qt.QWidget):
         hbox.layout.addWidget(l1)
         hbox.layout.addWidget(self.energy)
         hbox.layout.addWidget(qt.HorizontalSpacer(hbox))
-        self.connect(self.energy,qt.SIGNAL('returnPressed()'),self._energySlot)
-        if qt.qVersion() < '4.0.0':
-            self.connect(self.energy,qt.PYSIGNAL('focusOut'),self._energySlot)
-        else:
-            self.connect(self.energy,qt.SIGNAL('focusOut'),self._energySlot)
+        self.connect(self.energy, qt.SIGNAL('editingFinished()'),
+                                     self._energySlot)
+
+        #if both signals are emitted and there is an error then we are in an
+        #endless loop
+        #self.connect(self.energy, qt.SIGNAL('focusOut'), self._energySlot)
         
         self.infoText = qt.QTextEdit(w)
         self.infoText.setReadOnly(1)
-        if qt.qVersion() < '4.0.0':
-            self.infoText.setText(self.html.gethtml(symbol))
-        else:
-            self.infoText.clear()
-            self.infoText.insertHtml(self.html.gethtml(symbol))
+        self.infoText.clear()
+        self.infoText.insertHtml(self.html.gethtml(symbol))
         l.addWidget(self.infoText)
         w.show()
         self.infoWidget=frame
-        if qt.qVersion() < '4.0.0':
-            self.infoWidget.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,qt.QSizePolicy.Expanding))
-            self.infoWidget.setMinimumWidth(self.infoWidget.sizeHint().width()*1.8)
         frame.show()
         
     def infoReparent(self):
-        if qt.qVersion() < '4.0.0':
-            if self.infoWidget.parent() is not None:
-                self.infoWidget.reparent(None,self.cursor().pos(),1)
-            else:
-                self.infoWidget.reparent(self.splitter,qt.QPoint(),1)
-                #self.splitter.moveToFirst(self.sourceFrame)
+        if self.infoWidget.parent() is not None:
+            self.infoWidget.setParent(None)
+            self.infoWidget.move(self.cursor().pos())
+            self.infoWidget.show()
+            #,self.cursor().pos(),1)
         else:
-            if self.infoWidget.parent() is not None:
-                self.infoWidget.setParent(None)
-                self.infoWidget.move(self.cursor().pos())
-                self.infoWidget.show()
-                #,self.cursor().pos(),1)
-            else:
-                self.infoWidget.setParent(self.splitter)
-                self.splitter.insertWidget(1,self.infoWidget)
-                #,qt.QPoint(),1)
-                #self.splitter.moveToFirst(self.sourceFrame)
-            self.infoWidget.setFocus()
+            self.infoWidget.setParent(self.splitter)
+            self.splitter.insertWidget(1,self.infoWidget)
+            #,qt.QPoint(),1)
+            #self.splitter.moveToFirst(self.sourceFrame)
+        self.infoWidget.setFocus()
     
     def infoToggle(self,**kw):
         if DEBUG:
@@ -241,7 +206,7 @@ class ElementsInfo(qt.QWidget):
                 msg=qt.QMessageBox(self.energy)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
-                msg.exec_loop()
+                msg.exec_()
                 self.energy.setFocus()
                 return
             if self.energyValue is not None:
@@ -273,10 +238,7 @@ class Line(qt.QFrame):
         ddict={}
         ddict['event']="DoubleClick"
         ddict['data'] = event
-        if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL("LineDoubleClickEvent"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
+        self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
 
 class PixmapLabel(qt.QLabel):
     def mousePressEvent(self,event):
@@ -285,10 +247,7 @@ class PixmapLabel(qt.QLabel):
         ddict={}
         ddict['event']="MousePress"
         ddict['data'] = event
-        if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL("PixmapLabelMousePressEvent"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("PixmapLabelMousePressEvent"), ddict)
+        self.emit(qt.SIGNAL("PixmapLabelMousePressEvent"), ddict)
 
 
 class MyQLineEdit(qt.QLineEdit):
@@ -296,41 +255,26 @@ class MyQLineEdit(qt.QLineEdit):
         qt.QLineEdit.__init__(self,parent)
 
     def setPaletteBackgroundColor(self, color):
-        if qt.qVersion() < '4.0.0':
-            qt.QLineEdit.setPaletteBackgroundColor(self,color)
-        else:
-            palette = self.palette()
-            role = self.backgroundRole()
-            palette.setColor(role,color)
-            self.setPalette(palette)
+        palette = self.palette()
+        role = self.backgroundRole()
+        palette.setColor(role,color)
+        self.setPalette(palette)
 
     def focusInEvent(self,event):
-        if qt.qVersion() < '4.0.0 ':
-            self.backgroundcolor = self.paletteBackgroundColor()
-            self.setPaletteBackgroundColor(qt.QColor('yellow'))
-        else:
-            self.setPaletteBackgroundColor(qt.QColor('yellow'))
+        self.setPaletteBackgroundColor(qt.QColor('yellow'))
 
 
     def focusOutEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('white'))
-        if qt.qVersion() <'4.0.0':
-            self.emit(qt.PYSIGNAL("focusOut"),())
-        else:
-            self.emit(qt.SIGNAL("focusOut"),())
+        self.emit(qt.SIGNAL("focusOut"),())
 
 def main():
     app  = qt.QApplication([])
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)
     w= ElementsInfo()
-    if qt.qVersion() < '4.0.0':
-        app.setMainWidget(w)
-        w.show()
-        app.exec_loop()
-    else:
-        w.show()
-        app.exec_()
+    w.show()
+    app.exec_()
     
 if __name__ == "__main__":
     main()        
