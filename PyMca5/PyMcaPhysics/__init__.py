@@ -32,4 +32,4 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from .xrf import Elements, ClassMcaTheory, PyMcaEPDL97, \
                  XRayTubeEbel, ConcentrationsTool, FastXRFLinearFit
-from .xas import XASNormalization, XASSelfAttenuationCorrection
+from .xas import XASNormalization, XASSelfattenuationCorrection

@@ -1,10 +1,7 @@
 try:
-    import mediantools
+    from . import mediantools
 except ImportError:
-    try:
-        from PyMca.PyMcaSciPy.signal import mediantools
-    except ImportError:
-        from PyMcaSciPy.signal import mediantools        
+    from PyMca5.PyMcaSciPy.signal import mediantools
 
 from numpy import asarray
 

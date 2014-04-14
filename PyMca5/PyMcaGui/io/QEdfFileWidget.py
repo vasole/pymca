@@ -1692,7 +1692,7 @@ def test2():
 def test():
     import sys
     from PyMca5.PyMcaCore import EdfFileDataSource
-    def repSelection(sel):
+    def replaceSelection(sel):
         print("replaceSelection", sel)
     def removeSelection(sel):
         print("removeSelection", sel)
