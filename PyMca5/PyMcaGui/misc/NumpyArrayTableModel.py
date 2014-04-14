@@ -27,16 +27,16 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
-from PyQt4 import QtCore, QtGui
-if hasattr(QtCore, 'QStringList'):
-    MyQVariant = QtCore.QVariant
+from PyMca5.PyMcaGui import PyMcaQt as qt
+if hasattr(qt, 'QStringList'):
+    MyQVariant = qt.QVariant
 else:
     def MyQVariant(x=None):
         return x
 
-class NumpyArrayTableModel(QtCore.QAbstractTableModel):
+class NumpyArrayTableModel(qt.QAbstractTableModel):
     def __init__(self, parent=None, narray=None, fmt="%g", perspective=0):
-        QtCore.QAbstractTableModel.__init__(self, parent)
+        qt.QAbstractTableModel.__init__(self, parent)
         if narray is None:
             narray = numpy.array([])
         self._array  = narray
@@ -50,7 +50,7 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
     def columnCount(self, parent=None):
         return self._columnCount(parent)
 
-    def data(self, index, role=QtCore.Qt.DisplayRole):
+    def data(self, index, role=qt.Qt.DisplayRole):
         return self._data(index, role)
 
     def _rowCount1D(self, parent=None):
@@ -59,9 +59,9 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
     def _columnCount1D(self, parent=None):
         return self._array.shape[0]
 
-    def _data1D(self, index, role=QtCore.Qt.DisplayRole):
+    def _data1D(self, index, role=qt.Qt.DisplayRole):
         if index.isValid():
-            if role == QtCore.Qt.DisplayRole:
+            if role == qt.Qt.DisplayRole:
                 # row = 0
                 col = index.column()
                 return MyQVariant(self._format % self._array[col])
@@ -73,9 +73,9 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
     def _columnCount2D(self, parent=None):
         return self._array.shape[1]
 
-    def _data2D(self, index, role=QtCore.Qt.DisplayRole):
+    def _data2D(self, index, role=qt.Qt.DisplayRole):
         if index.isValid():
-            if role == QtCore.Qt.DisplayRole:
+            if role == qt.Qt.DisplayRole:
                 row = index.row()
                 col = index.column()
                 return MyQVariant(self._format % self._array[row, col])
@@ -100,9 +100,9 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
     def _columnCount3DIndex2(self, parent=None):
         return self._array.shape[1]            
 
-    def _data3DIndex0(self, index, role=QtCore.Qt.DisplayRole):
+    def _data3DIndex0(self, index, role=qt.Qt.DisplayRole):
         if index.isValid():
-            if role == QtCore.Qt.DisplayRole:
+            if role == qt.Qt.DisplayRole:
                 row = index.row()
                 col = index.column()
                 return MyQVariant(self._format % self._array[self._index,
@@ -110,9 +110,9 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
                                                                   col])
         return MyQVariant()
 
-    def _data3DIndex1(self, index, role=QtCore.Qt.DisplayRole):
+    def _data3DIndex1(self, index, role=qt.Qt.DisplayRole):
         if index.isValid():
-            if role == QtCore.Qt.DisplayRole:
+            if role == qt.Qt.DisplayRole:
                 row = index.row()
                 col = index.column()
                 return MyQVariant(self._format % self._array[row,
@@ -120,9 +120,9 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
                                                                   col])
         return MyQVariant()
 
-    def _data3DIndex2(self, index, role=QtCore.Qt.DisplayRole):
+    def _data3DIndex2(self, index, role=qt.Qt.DisplayRole):
         if index.isValid():
-            if role == QtCore.Qt.DisplayRole:
+            if role == qt.Qt.DisplayRole:
                 row = index.row()
                 col = index.column()
                 return MyQVariant(self._format % self._array[row,
@@ -183,8 +183,8 @@ class NumpyArrayTableModel(QtCore.QAbstractTableModel):
         self._format = fmt
 
 if __name__ == "__main__":
-    a = QtGui.QApplication([])
-    w = QtGui.QTableView()
+    a = qt.QApplication([])
+    w = qt.QTableView()
     d = numpy.random.normal(0,1, (5, 1000,1000))
     for i in range(5):
         d[i, :, :] += i

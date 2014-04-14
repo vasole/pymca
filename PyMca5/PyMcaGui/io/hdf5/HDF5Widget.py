@@ -33,13 +33,8 @@ import gc
 import re
 from operator import itemgetter
 
-try:
-    from PyMca import PyMcaQt as qt
-    safe_str = qt.safe_str
-except ImportError:
-    # for people using this widget without PyMca installed
-    import PyQt4.Qt as qt
-    safe_str = str
+from PyMca5.PyMcaGui import PyMcaQt as qt
+safe_str = qt.safe_str
 
 if hasattr(qt, 'QStringList'):
     MyQVariant = qt.QVariant

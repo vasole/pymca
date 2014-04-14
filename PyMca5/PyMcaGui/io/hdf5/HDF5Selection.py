@@ -26,7 +26,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-from PyMca import PyMcaQt as qt
+from PyMca5 import PyMcaQt as qt
 safe_str = qt.safe_str
 
 DEBUG = 0

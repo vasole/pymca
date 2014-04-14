@@ -167,11 +167,11 @@ try:
     #This is to make sure it is properly frozen
     #and that Object3D is fully supported
     import OpenGL.GL
-    #TODO: This import should be done in PyMcaQt for PySide compatibility
-    import PyQt4.QtOpenGL
     #import Object3D.SceneGLWindow as SceneGLWindow
     import PyMca5.PyMcaGui.pymca.PyMcaGLWindow as SceneGLWindow
-    OBJECT3D = True
+    OBJECT3D = False
+    if ("PyQt4.QtOpenGL" in sys.modules) or ("PySide.QtOpenGL") in sys.modules:
+        OBJECT3D = True
 except:
     OBJECT3D = False
 from PyMca5.PyMcaGui.pymca import QDispatcher

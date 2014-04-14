@@ -31,11 +31,7 @@ from numpy import cos, sin
 import sys
 from PyMca5 import Plugin1DBase
 import os
-try:
-    from PyMca5.PyMcaGui import PyMcaQt as qt
-except ImportError:
-    print("WARNING: RegularMeshPlugin Using huge PyQt4 import")
-    import PyQt4.Qt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 from PyMca5.PyMcaGui import MaskImageWidget
 

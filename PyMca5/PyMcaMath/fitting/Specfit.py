@@ -1685,7 +1685,7 @@ class Specfit(object):
    		
        
 def test():
-    from PyMca import SpecfitFunctions
+    from PyMca5 import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = numpy.arange(1000).astype(numpy.float)
     p1 = numpy.array([1500,100.,50.0])
@@ -1708,18 +1708,6 @@ def test():
     for param in fit.paramlist:
         print(param['name'],' = ',param['fitresult'])
     print("chisq = ",fit.chisq)
-    print("Attempting a plot")
-    import PyQt4.Qt as qt
-    from PyMca import ScanWindow
-    qtApp = qt.QApplication([])
-    sw = ScanWindow.ScanWindow()
-    sw.addCurve(x, y, legend="Data")
-    yfit = fit.gendata()
-    sw.addCurve(x, yfit, legend="Fit")
-    sw.addCurve(x, y-yfit, legend="Data-Fit")
-    sw.show()
-    qtApp.exec_()
-
 
 if __name__ == "__main__":
     test()
