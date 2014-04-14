@@ -1,5 +1,5 @@
 """
-This modules allow to parse the Evaluated Photon Data Library files.
+These modules allow to parse the Evaluated Photon Data Library files.
 
 The modules to use are:
 
