@@ -188,12 +188,8 @@ class PeakButtonList(qt.QWidget):
         
 
 class FitPeakSelect(qt.QWidget):
-    def __init__(self, parent=None, name="FitPeakSelect",peakdict = {}, fl=0, energyTable = None):
+    def __init__(self, parent=None, name="FitPeakSelect", peakdict = {}, energyTable=None):
         qt.QWidget.__init__(self,parent)
-
-        if QTVERSION < '4.0.0':
-            self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Minimum,
-                                              qt.QSizePolicy.Minimum))
 
         layout=qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -243,31 +239,22 @@ class FitPeakSelect(qt.QWidget):
         self.peaks = PeakButtonList(self)
         self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M'])
 
-        if QTVERSION < '4.0.0':
-            self.connect(self.energyTable, qt.PYSIGNAL("EnergyTableSignal"),
-                         self._energyTableAction)
-            self.connect(self.table, qt.PYSIGNAL("elementClicked"),
-                         self.elementClicked)
-            self.connect(self.peaks, qt.PYSIGNAL("selectionChanged"),
-                         self.peakSelectionChanged)
-        else:
-            self.connect(self.energyTable, qt.SIGNAL("EnergyTableSignal"),
-                         self._energyTableAction)
-            self.connect(self.table, qt.SIGNAL("elementClicked"),
-                         self.elementClicked)
-            self.connect(self.peaks, qt.SIGNAL("selectionChanged"),
-                         self.peakSelectionChanged)
-            #Reset All
-            self.resetAllButton = qt.QPushButton(self.peaks)
-            palette = qt.QPalette(self.resetAllButton.palette())
-            role = self.resetAllButton.foregroundRole()
-            palette.setColor(role, qt.Qt.red)
-            self.resetAllButton.setPalette(palette)
-            self.resetAllButton.setText("Reset All")
-            self.peaks.layout().addWidget(self.resetAllButton)
+        self.connect(self.energyTable, qt.SIGNAL("EnergyTableSignal"),
+                     self._energyTableAction)
+        self.table.sigElementClicked.connect(self.elementClicked)
+        self.connect(self.peaks, qt.SIGNAL("selectionChanged"),
+                     self.peakSelectionChanged)
+        #Reset All
+        self.resetAllButton = qt.QPushButton(self.peaks)
+        palette = qt.QPalette(self.resetAllButton.palette())
+        role = self.resetAllButton.foregroundRole()
+        palette.setColor(role, qt.Qt.red)
+        self.resetAllButton.setPalette(palette)
+        self.resetAllButton.setText("Reset All")
+        self.peaks.layout().addWidget(self.resetAllButton)
 
-            self.connect(self.resetAllButton, qt.SIGNAL("clicked()"),
-                         self.__resetAll)
+        self.connect(self.resetAllButton, qt.SIGNAL("clicked()"),
+                     self.__resetAll)
 
         layout.addWidget(self.table)
         layout.addWidget(line)

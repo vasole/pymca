@@ -41,16 +41,16 @@ import os.path
 import copy
 from PyMca5.PyMcaPhysics import Elements
 from .FitParamForm import FitParamForm
-from . import FitPeakSelect
+from .FitPeakSelect import FitPeakSelect
 from . import AttenuatorsTable
 from . import ConcentrationsWidget
 from . import EnergyTable
 from PyMca5.PyMcaCore import PyMcaDirs
 XRFMC_FLAG = False
-if 1:#try:
+try:
     from . import XRFMCPyMca
     XRFMC_FLAG = True
-else:#except ImportError:
+except ImportError:
     print("XRFMC_TO_BE_IMPORTED")
     # no XRFMC support
     pass
@@ -157,9 +157,11 @@ class FitParamWidget(FitParamForm):
 
         self.layout().setContentsMargins(0, 0, 0, 0)
 
-        #I had to add this line to prevent a crash. Why?
-        qt.qApp.processEvents()
-
+        if "PyQt4" in sys.modules:
+            #I had to add this line to prevent a crash. Why?
+            qt.qApp.processEvents()
+        else:
+            qt.QApplication.instance().processEvents()
         self.attTable.verticalHeader().hide()
         #The beam energies tab
         beamlayout= qt.QGridLayout(self.TabBeam)
@@ -184,8 +186,7 @@ class FitParamWidget(FitParamForm):
             self.peakTable.setMaximumWidth(maxWidth)
             layout.addWidget(self.peakTable, 0, 0)
             #self.peakTable.setMaximumSize(self.tabDetector.sizeHint())
-        #self.energyTable = self.peakTable.energyTable        
-        
+        #self.energyTable = self.peakTable.energyTable
         self.input = None
         self.linpolOrder= None
         self.exppolOrder= None
@@ -193,12 +194,11 @@ class FitParamWidget(FitParamForm):
                                 'Contact'   :[0,"Au1",19.370,1.0E-06],
                                 'Deadlayer' :[0,"Si1",2.330,0.0020],
                                 'Window'    :[0,"Be1",1.848,0.0100]},
-                 'concentrations':self.concentrationsWidget.getParameters()}             
+                 'concentrations':self.concentrationsWidget.getParameters()}
         if XRFMC_FLAG:
             pardict = self.tabXRFMCWidget.getParameters()
+        # TODO: This line makes PySide crash
         self.setParameters(pardict=pardict)
-        
-        
 
         self.prevTabIdx= None
         self.tabLabel= []
@@ -206,9 +206,9 @@ class FitParamWidget(FitParamForm):
         for idx in range(n):
             self.tabLabel.append(qt.safe_str(self.mainTab.tabText(idx)))
         self.connect(self.mainTab, qt.SIGNAL("currentChanged(QWidget*)"), self.__tabChanged)
-        self.connect(self.contCombo, qt.SIGNAL("activated(int)"), self.__contComboActivated)
-        self.connect(self.functionCombo, qt.SIGNAL("activated(int)"), self.__functionComboActivated)
-        self.connect(self.orderSpin, qt.SIGNAL("valueChanged(int)"), self.__orderSpinChanged)
+        self.contCombo.activated[int].connect(self.__contComboActivated)
+        self.functionCombo.activated[int].connect(self.__functionComboActivated)
+        self.orderSpin.valueChanged[int].connect(self.__orderSpinChanged)
         self._backgroundWindow = None
         self.stripSetupButton.clicked.connect(self.__stripSetupButtonClicked)
 

@@ -95,8 +95,7 @@ class ElementsInfo(qt.QWidget):
         self.table.setMinimumSize(500,
                                   400)
                                   
-        self.connect(self.table,qt.SIGNAL("elementClicked"),
-                     self.elementClicked)
+        self.table.sigElementClicked.connect(self.elementClicked)
             
         self.lastElement = None
         Elements.registerUpdate(self._updateCallback)

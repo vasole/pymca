@@ -31,13 +31,9 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-from PyMca5.PyMcaGui.PyMcaQt import *
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
-QTVERSION = qVersion()
-qttable = QTableWidget
-QComboTableItem = QComboBox
-MyQListView = QTreeWidget
-QListViewItem = QTreeWidgetItem
+QTVERSION = qt.qVersion()
 #
 #   Symbol  Atomic Number   x y ( positions on table )
 #       name,  mass, density 
@@ -157,9 +153,12 @@ Elements = [
 ]
 ElementList= [ elt[0] for elt in Elements ]
 
-class ElementButton(QPushButton):
+class ElementButton(qt.QPushButton):
+    sigElementEnter = qt.pyqtSignal(object)
+    sigElementLeave = qt.pyqtSignal(object)
+    sigElementClicked = qt.pyqtSignal(object)
     def __init__(self, parent, symbol, Z, name):
-        QPushButton.__init__(self, parent)
+        qt.QPushButton.__init__(self, parent)
             
         self.symbol = symbol
         self.Z      = Z
@@ -169,21 +168,21 @@ class ElementButton(QPushButton):
         self.setFlat(1)
         self.setCheckable(0)
 
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding,
-                                       QSizePolicy.Expanding))
+        self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
+                                       qt.QSizePolicy.Expanding))
 
         self.selected= 0
         self.current= 0
-        self.colors= [ QColor(Qt.yellow),
-                       QColor(Qt.darkYellow),
-                       QColor(Qt.gray) ]
+        self.colors= [ qt.QColor(qt.Qt.yellow),
+                       qt.QColor(qt.Qt.darkYellow),
+                       qt.QColor(qt.Qt.gray) ]
         
-        self.brush= QBrush()
+        self.brush= qt.QBrush()
 
         self.clicked.connect(self.clickedSlot)
 
     def sizeHint(self):
-        return QSize(40, 40)
+        return qt.QSize(40, 40)
 
     def setCurrent(self, b):
         self.current= b
@@ -203,52 +202,55 @@ class ElementButton(QPushButton):
         role = self.backgroundRole()
         palette = self.palette()
         if self.current and self.selected:
-            self.brush= QBrush(self.colors[1])
+            self.brush= qt.QBrush(self.colors[1])
         elif self.selected:
-            self.brush= QBrush(self.colors[0])
+            self.brush= qt.QBrush(self.colors[0])
         elif self.current:
-            self.brush= QBrush(self.colors[2])
+            self.brush= qt.QBrush(self.colors[2])
         else:
-            self.brush= QBrush()
+            self.brush= qt.QBrush()
         palette.setBrush( role,self.brush)
         self.update()
 
 
     def paintEvent(self, pEvent):
-        p = QPainter(self)
+        p = qt.QPainter(self)
         wr= self.rect()
-        pr= QRect(wr.left()+1, wr.top()+1, wr.width()-2, wr.height()-2)
+        pr= qt.QRect(wr.left()+1, wr.top()+1, wr.width()-2, wr.height()-2)
         if self.brush is not None:
             p.fillRect(pr, self.brush)
-        p.setPen(Qt.black)
+        p.setPen(qt.Qt.black)
         p.drawRect(pr)
         p.end()
-        QPushButton.paintEvent(self, pEvent)
+        qt.QPushButton.paintEvent(self, pEvent)
         
     def drawButton(self, p):
         #Qt 2 and Qt3
         wr= self.rect()
-        pr= QRect(wr.left()+1, wr.top()+1, wr.width()-2, wr.height()-2)
+        pr= qt.QRect(wr.left()+1, wr.top()+1, wr.width()-2, wr.height()-2)
         if self.brush is not None:
             p.fillRect(pr, self.brush)
-        QPushButton.drawButtonLabel(self, p)
-        p.setPen(Qt.black)
+        qt.QPushButton.drawButtonLabel(self, p)
+        p.setPen(qt.Qt.black)
         p.drawRect(pr)
 
     def enterEvent(self, e):
-        self.emit(SIGNAL("elementEnter"),
-                          self.symbol, self.Z,
-                          self.name)
+        #self.emit(SIGNAL("elementEnter"),
+        #                  self.symbol, self.Z,
+        #                  self.name)
+        self.sigElementEnter.emit((self.symbol, self.Z, self.name))
             
     def leaveEvent(self, e):
-        self.emit(SIGNAL("elementLeave"), self.symbol)
+        #self.emit(SIGNAL("elementLeave"), self.symbol)
+        self.sigElementLeave.emit(self.symbol)
 
     def clickedSlot(self):
-        self.emit(SIGNAL("elementClicked"), self.symbol)
+        #self.emit(SIGNAL("elementClicked"), self.symbol)
+        self.sigElementClicked.emit(self.symbol)
 
 
-class QPeriodicTable(QWidget):
-    """ Periodic Table - Qt version
+class QPeriodicTable(qt.QWidget):
+    """ Periodic Table - qt.Qt version
         Public methods:
             setSelection(eltlist):
                 set all elements in eltlist selected
@@ -256,26 +258,27 @@ class QPeriodicTable(QWidget):
             getSelection():
                 get list of selected elements
 
-        Signal (PYSIGNAL):
-            elementClicked(symbol):
+        Signal:
+            sigElementClicked(symbol):
     """
+    sigElementClicked  = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="PeriodicTable", fl=0):
-        QWidget.__init__(self,parent)
+        qt.QWidget.__init__(self,parent)
         self.setWindowTitle(name)
-        self.gridLayout= QGridLayout(self)
+        self.gridLayout= qt.QGridLayout(self)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         #, 6, 10, 0, 0, "PTLayout")
-        self.gridLayout.addItem(QSpacerItem(0, 5), 7, 0)
+        self.gridLayout.addItem(qt.QSpacerItem(0, 5), 7, 0)
 
         for idx in range(10):
             self.gridLayout.setRowStretch(idx, 3)
         self.gridLayout.setRowStretch(7, 2)
 
-        self.eltLabel= QLabel(self)
+        self.eltLabel= qt.QLabel(self)
         f= self.eltLabel.font()
         f.setBold(1)
         self.eltLabel.setFont(f)
-        self.eltLabel.setAlignment(Qt.AlignHCenter)
+        self.eltLabel.setAlignment(qt.Qt.AlignHCenter)
         self.gridLayout.addWidget(self.eltLabel, 1, 1, 3, 10)
 
         self.eltCurrent= None
@@ -291,11 +294,15 @@ class QPeriodicTable(QWidget):
         self.eltButton[symbol]= b
         self.gridLayout.addWidget(b, row, col)
 
-        QObject.connect(b, SIGNAL(("elementEnter")), self.elementEnter)
-        QObject.connect(b, SIGNAL("elementLeave"), self.elementLeave)
-        QObject.connect(b, SIGNAL("elementClicked"), self.elementClicked)
+        b.sigElementEnter.connect(self.elementEnter)
+        b.sigElementLeave.connect(self.elementLeave)
+        b.sigElementClicked.connect(self.elementClicked)
 
-    def elementEnter(self, symbol, z, name):
+    def elementEnter(self, *var):
+        if len(var) == 1:
+            symbol, z, name = var[0]
+        else:
+            symbol, z, name = var
         self.eltLabel.setText("%s(%d) - %s"%(symbol, z, name))
 
     def elementLeave(self, symbol):
@@ -307,7 +314,7 @@ class QPeriodicTable(QWidget):
         symbol = str(symbol)
         self.eltButton[symbol].setCurrent(1)
         self.eltCurrent= self.eltButton[symbol]
-        self.emit(SIGNAL("elementClicked"), symbol)
+        self.sigElementClicked.emit(symbol)
             
     def getSelection(self):
         return [ e for (e,b) in self.eltButton.items() if b.isSelected() ]
@@ -327,7 +334,7 @@ class QPeriodicTable(QWidget):
         b= self.eltButton[symbol]
         b.setSelected(not b.isSelected())
 
-class QPeriodicComboTableItem(QComboTableItem):
+class QPeriodicComboTableItem(qt.QComboBox):
     """ Periodic Table Combo List to be used in a QTable
         Init options:
             table (mandatory)= parent QTable
@@ -347,7 +354,7 @@ class QPeriodicComboTableItem(QComboTableItem):
             SIGNAL("valueChanged(int,int)") for example.
     """
     def __init__(self, table, addnone=1, detailed=0):
-        strlist= QStringList()
+        strlist= qt.QStringList()
         self.addnone= (addnone==1)
         if self.addnone: strlist.append("-")
         for (symbol, Z, x, y, name, mass, density) in Elements:
@@ -356,7 +363,7 @@ class QPeriodicComboTableItem(QComboTableItem):
             else:
                 txt= "%2s (%d)" % (symbol, Z)
             strlist.append(txt)
-        QComboBox.__init__(self)
+        qt.QComboBox.__init__(self)
         self.addItems(strlist)
         print("still to continue")
 
@@ -374,7 +381,7 @@ class QPeriodicComboTableItem(QComboTableItem):
         else:
             return ElementList[idx - self.addnone]
         
-class QPeriodicCombo(QComboBox):
+class QPeriodicCombo(qt.QComboBox):
     """ Periodic Table Element list in a QComboBox
         Init options:
             detailed= 1 (default) display element symbol, Z and name
@@ -385,13 +392,14 @@ class QPeriodicCombo(QComboBox):
             getSelection():
                 Return symbol of element selected
 
-        Signal (PYSIGNAL):
-            selectionChanged(elt):
+        Signal:
+            sigSelectionChanged(elt):
                 signal sent when the selection changed
                 send symbol of element selected
     """
+    sigSelectionChanged = qt.pyqtSignal(object)
     def __init__(self, parent=None, name=None, detailed=1):
-        QComboBox.__init__(self, parent)
+        qt.QComboBox.__init__(self, parent)
 
         i = 0
         for (symbol, Z, x, y, name, mass, density) in Elements:
@@ -402,10 +410,10 @@ class QPeriodicCombo(QComboBox):
             self.insertItem(i,txt)
             i += 1
             
-        self.connect(self, SIGNAL("activated(int)"), self.__selectionChanged)
+        self.activated[int].connect(self.__selectionChanged)
 
     def __selectionChanged(self, idx):
-        self.emit(SIGNAL("selectionChanged"), Elements[idx][0])
+        self.sigSelectionChanged.emit(Elements[idx][0])
 
     def getSelection(self):
         return Elements[self.currentItem()]
@@ -415,7 +423,7 @@ class QPeriodicCombo(QComboBox):
         self.setCurrentItem(symblist.index(symbol))
         
 
-class QPeriodicList(MyQListView):
+class QPeriodicList(qt.QTreeWidget):
     """ Periodic Table Element list in a QListView
         Init options:
             detailed= 1 (default) display element symbol, Z and name
@@ -433,8 +441,10 @@ class QPeriodicList(MyQListView):
                 signal sent when the selection changed
                 send list of symbol selected
     """
+    sigSelectionChanged = qt.pyqtSignal(object)
+    sigItemSelectionChanged = qt.pyqtSignal(object)
     def __init__(self, master=None, name=None, fl=0, detailed=1, single=0):
-        MyQListView.__init__(self, master)
+        qt.QTreeWidget.__init__(self, master)
 
     
         self.detailed= (detailed==1)    
@@ -453,7 +463,7 @@ class QPeriodicList(MyQListView):
         self.setHeaderLabels(strlist)
         self.header().setStretchLastSection(False)
         self.setRootIsDecorated(0)
-        self.connect(self, SIGNAL("itemSelectionChanged()"), self.__selectionChanged)
+        self.sigItemSelectionChanged.connect(self.__selectionChanged)
         print("what to do? ")
         """
         self.header().setClickEnabled(0, -1)
@@ -461,11 +471,12 @@ class QPeriodicList(MyQListView):
         self.setSelectionMode((single and QListView.Single) or QListView.Extended)
         self.setSorting(-1)
         """
-        self.setSelectionMode((single and QAbstractItemView.SingleSelection) or QAbstractItemView.ExtendedSelection)
+        self.setSelectionMode((single and qt.QAbstractItemView.SingleSelection) or qt.QAbstractItemView.ExtendedSelection)
         self.__fill_list()
         self.resizeColumnToContents(0)
         self.resizeColumnToContents(1)
-        if detailed: self.resizeColumnToContents(2)
+        if detailed:
+            self.resizeColumnToContents(2)
 
 
     def __fill_list(self):
@@ -473,9 +484,9 @@ class QPeriodicList(MyQListView):
         after= None
         for (symbol, Z, x, y, name, mass, density) in Elements:
             if after is None:
-                item= QListViewItem(self)
+                item= qt.QTreeWidgetItem(self)
             else:
-                item= QListViewItem(self, after)
+                item= qt.QTreeWidgetItem(self, after)
             item.setText(0, str(Z))
             item.setText(1, symbol)
             if self.detailed:
@@ -513,27 +524,27 @@ def testwidget():
     def change(list):
         print("New selection:", list)
 
-    a = QApplication(sys.argv)
+    a = qt.QApplication(sys.argv)
     a.lastWindowClosed.connect(a.quit)
 
-    w = QTabWidget()
+    w = qt.QTabWidget()
 
     f = QPeriodicTable()
 
-    o= QWidget()
-    ol= QVBoxLayout(o)
+    o= qt.QWidget()
+    ol= qt.QVBoxLayout(o)
     #ol.setAutoAdd(1)
-    tlabel = QLabel("QPeriodicCombo", o)
+    tlabel = qt.QLabel("QPeriodicCombo", o)
     ol.addWidget(tlabel)
     c = QPeriodicCombo(o)
     ol.addWidget(c)
     
-    t = QLabel("QPeriodicList", o)
+    t = qt.QLabel("QPeriodicList", o)
     ol.addWidget(t)
     l = QPeriodicList(o)
     ol.addWidget(l)        
 
-    tab = QTableWidget()
+    tab = qt.QTableWidget()
     tab.setRowCount(2)
     tab.setColumnCount(1)
     tab.setCellWidget(0, 0, QPeriodicCombo(tab, detailed=0))
@@ -546,9 +557,9 @@ def testwidget():
 
     f.setSelection(['H', 'Fe', 'Si'])
     
-    QObject.connect(f, SIGNAL("elementClicked"), f.elementToggle)
-    QObject.connect(l, SIGNAL("selectionChanged"), change)
-    QObject.connect(c, SIGNAL("selectionChanged"), change)
+    f.sigElementClicked.connect(f.elementToggle)
+    l.sigSelectionChanged.connect(change)
+    c.sigSelectionChanged.connect(change)
 
     w.show()
     a.exec_()
