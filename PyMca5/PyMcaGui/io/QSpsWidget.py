@@ -61,9 +61,7 @@ class SPSFramesMcaWidget(qt.QWidget):
 
     def setDataSource(self, data):
         self.data = data
-        self.connect(self.data,
-                     qt.SIGNAL("updated"),
-                     self._update)
+        self.data.sigUpdated.connect(self._update)
         
         dataObject = self._getDataObject()
         self.graphWidget.setImageData(dataObject.data)
@@ -365,7 +363,7 @@ class SPS_StandardArray(qt.QWidget):
         layout.addWidget(self.xCombo, 1, 1)
         layout.addWidget(self.yList, 2, 1)
 
-        self.connect(self.plotCombo, qt.SIGNAL("activated(int)"), self.__plotChanged)
+        self.plotCombo.activated[int].connect(self.__plotChanged)
 
         self.setDataSize(rows, cols)
 
@@ -374,10 +372,7 @@ class SPS_StandardArray(qt.QWidget):
         self.cols= cols
 
         idx= self.cols<=self.rows
-        if QTVERSION < '4.0.0':
-            self.plotCombo.setCurrentItem(idx)
-        else:
-            self.plotCombo.setCurrentIndex(idx)
+        self.plotCombo.setCurrentIndex(idx)
         self.__plotChanged(idx)
 
     def __plotChanged(self, index):
@@ -450,6 +445,11 @@ class QSpsWidget(qt.QWidget):
                  "XIA_DATA": "xia", "XIA_BASELINE":"xia",
                  "SCAN_D": "scan", "image_data":"image" }
 
+    sigAddSelection = qt.pyqtSignal(object)
+    sigRemoveSelection = qt.pyqtSignal(object)
+    sigReplaceSelection = qt.pyqtSignal(object)
+    sigOtherSignals = qt.pyqtSignal(object)
+
     def __init__(self, parent=None, name="SPSSelector", fl=0):
         if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)
@@ -494,59 +494,32 @@ class QSpsWidget(qt.QWidget):
         specLayout.addWidget(refreshButton)
         specLayout.addWidget(closeButton)
 
-        self.connect(refreshButton, qt.SIGNAL("clicked()"), self.refreshSpecList)
-        self.connect(closeButton,qt.SIGNAL("clicked()"), self.closeCurrentSpec)
-        self.connect(self.specCombo, qt.SIGNAL("activated(const QString &)"), 
-                    self.refreshArrayList)
+        refreshButton.clicked[()].connect(self.refreshSpecList)
+        closeButton.clicked[()].connect(self.closeCurrentSpec)
+        #self.connect(self.specCombo, qt.SIGNAL("activated(const QString &)"), 
+        #            self.refreshArrayList)
+        self.specCombo.activated.connect(self.refreshArrayList)
 
         # --- splitter
         self.splitter= qt.QSplitter(self)
-        if QTVERSION < '4.0.0':
-            self.splitter.setOrientation(qt.QSplitter.Vertical)
-        else:
-            self.splitter.setOrientation(qt.Qt.Vertical)
+        self.splitter.setOrientation(qt.Qt.Vertical)
 
         # --- shm array list
-        if QTVERSION < '4.0.0':
-            self.arrayList= qt.QListView(self.splitter, "ShmArrayList")
-            self.arrayList.addColumn("")
-            self.arrayList.addColumn("Array Name")
-            self.arrayList.addColumn("Rows")
-            self.arrayList.addColumn("Cols")
-            self.arrayList.setSorting(-1)
-            self.arrayList.header().setClickEnabled(0,-1)
-            self.arrayList.setAllColumnsShowFocus(1)
-            self.arrayList.setSelectionMode(qt.QListView.Single)
-            self.connect(self.arrayList,
-                         qt.SIGNAL("selectionChanged()"),
-                         self.__arraySelection)
-        else:
-            self.arrayList= qt.QTreeWidget(self.splitter)
-            labels = ["","Array Name", "Rows","Cols"]
-            self.arrayList.setColumnCount(len(labels))
-            self.arrayList.setHeaderLabels(labels)
-            self.arrayList.setSelectionMode(qt.QAbstractItemView.SingleSelection)
-            self.connect(self.arrayList,
-                         qt.SIGNAL("itemSelectionChanged()"),
-                         self.__arraySelection)
+        self.arrayList= qt.QTreeWidget(self.splitter)
+        labels = ["","Array Name", "Rows","Cols"]
+        self.arrayList.setColumnCount(len(labels))
+        self.arrayList.setHeaderLabels(labels)
+        self.arrayList.setSelectionMode(qt.QAbstractItemView.SingleSelection)
+        self.arrayList.itemSelectionChanged[()].connect(self.__arraySelection)
 
         # --- array parameter
-        if QTVERSION < '4.0.0':
-            self.paramIndex= {}
-            self.paramWidget= qt.QWidgetStack(self.splitter)
-            for wtype in self.WidgetArrays.keys():
-                widclass= self.WidgetArrays[wtype]
-                wid= widclass(self.paramWidget)
-                self.paramWidget.addWidget(wid)
-                self.paramIndex[wtype]= self.paramWidget.id(wid)
-        else:
-            self.paramIndex= {}
-            self.paramWidget= qt.QStackedWidget(self.splitter)
-            for wtype in self.WidgetArrays.keys():
-                widclass= self.WidgetArrays[wtype]
-                wid= widclass(self.paramWidget)
-                self.paramWidget.addWidget(wid)
-                self.paramIndex[wtype]= self.paramWidget.indexOf(wid)
+        self.paramIndex= {}
+        self.paramWidget= qt.QStackedWidget(self.splitter)
+        for wtype in self.WidgetArrays.keys():
+            widclass= self.WidgetArrays[wtype]
+            wid= widclass(self.paramWidget)
+            self.paramWidget.addWidget(wid)
+            self.paramIndex[wtype]= self.paramWidget.indexOf(wid)
 
         # --- command buttons
         butWidget= qt.QWidget(self)
@@ -562,9 +535,9 @@ class QSpsWidget(qt.QWidget):
         butLayout.addWidget(replaceButton)
         butLayout.setContentsMargins(5, 5, 5, 5)
 
-        self.connect(addButton, qt.SIGNAL("clicked()"), self._addClicked)
-        self.connect(replaceButton, qt.SIGNAL("clicked()"), self.__replaceClicked)
-        self.connect(removeButton, qt.SIGNAL("clicked()"), self.__removeClicked)
+        addButton.clicked[()].connect(self._addClicked)
+        replaceButton.clicked[()].connect(self.__replaceClicked)
+        removeButton.clicked[()].connect(self.__removeClicked)
 
         # --- main layout
         mainLayout.setContentsMargins(5, 5, 5, 5)
@@ -752,22 +725,13 @@ class QSpsWidget(qt.QWidget):
             ddict['SelectionType'] = "MCA"
         else:
             ddict['SelectionType'] = arrayType
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("otherSignals"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("otherSignals"), ddict)
+        self.sigOtherSignals.emit(ddict)
 
     def __getParamWidget(self, widtype):
-        if QTVERSION < '4.0.0':
-            wid= self.paramWidget.visibleWidget()
-            if self.paramWidget.id(wid)!=self.paramIndex[widtype]:
-                self.paramWidget.raiseWidget(self.paramIndex[widtype])
-                wid= self.paramWidget.visibleWidget()
-        else:
-            wid= self.paramWidget.currentWidget()
-            if self.paramWidget.indexOf(wid) != self.paramIndex[widtype]:
-                self.paramWidget.setCurrentIndex(self.paramIndex[widtype])
-                wid = self.paramWidget.currentWidget()
+        wid= self.paramWidget.currentWidget()
+        if self.paramWidget.indexOf(wid) != self.paramIndex[widtype]:
+            self.paramWidget.setCurrentIndex(self.paramIndex[widtype])
+            wid = self.paramWidget.currentWidget()
         return wid
 
     def __replaceClicked(self):
@@ -867,10 +831,7 @@ class QSpsWidget(qt.QWidget):
                     selsignal['imageselection'] = True
                 sellistsignal.append(selsignal)
             self.setSelected([sel],reset=1)
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("replaceSelection"), (sellistsignal,))
-            else:
-                self.emit(qt.SIGNAL("replaceSelection"), sellistsignal)
+            self.sigReplaceSelection.emit(sellistsignal)
 
     def currentSelectionList(self):
         return self._addCliked(emit = False)
@@ -981,19 +942,13 @@ class QSpsWidget(qt.QWidget):
             else:
                 self.setSelected([sel],reset=0)
             if emit:
-                if QTVERSION < '4.0.0':
-                    self.emit(qt.PYSIGNAL("addSelection"), (sellistsignal,))
-                else:
-                    self.emit(qt.SIGNAL("addSelection"),  sellistsignal)
+                self.sigAddSelection.emit(sellistsignal)
             else:
                 return sellistsignal
 
     def __getSelectedKeys(self):
         selkeys= []
-        if QTVERSION < '4.0.0':
-            parwid= self.paramWidget.visibleWidget()
-        else:
-            parwid= self.paramWidget.currentWidget()
+        parwid= self.paramWidget.currentWidget()
         if self.currentArray is not None:
             for sel in parwid.getSelection():
                 sel["SourceName"]= self.currentSpec
@@ -1109,10 +1064,8 @@ class QSpsWidget(qt.QWidget):
                                 seln['Key']        = sel['Key']
                                 seln[seln['Key']]  = self.selection[seln['SourceName']][seln['Key']]
                                 self.setSelected([seln],reset=0)
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("removeSelection"), (sellistsignal,))
-            else:
-                self.emit(qt.SIGNAL("removeSelection"), sellistsignal)
+            self.sigRemoveSelection.emit(sellistsignal)
+
             
     def removeSelection(self,selection):
         if type(selection) != type([]):
@@ -1145,10 +1098,7 @@ class QSpsWidget(qt.QWidget):
                                 seln['Key']        = sel['Key']
                                 seln[seln['Key']]  = self.selection[seln['SourceName']][seln['Key']]
                                 self.setSelected([seln],reset=0)
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("removeSelection"), (selection,))
-        else:
-            self.emit(qt.SIGNAL("removeSelection"), (selection))
+        self.sigRemoveSelection.emit((selection))
                              
     def setSelected(self,sellist,reset=1):
         if DEBUG:
@@ -1269,8 +1219,8 @@ def test():
         from PyMca5 import QSpsDataSource
 
     a= qt.QApplication(sys.argv)
-    a.connect(a, qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
-    def repSelection(sel):
+    a.lastWindowClosed.connect(a.quit)
+    def replaceSelection(sel):
         print("replaceSelection", sel)
     def removeSelection(sel):
         print("removeSelection", sel)
@@ -1278,14 +1228,9 @@ def test():
         print("addSelection", sel)
 
     w= QSpsWidget()
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(w,qt.PYSIGNAL("addSelection"),addSelection)
-        qt.QObject.connect(w,qt.PYSIGNAL("removeSelection"),removeSelection)
-        qt.QObject.connect(w,qt.PYSIGNAL("replaceSelection"),repSelection)
-    else:
-        qt.QObject.connect(w,qt.SIGNAL("addSelection"),addSelection)
-        qt.QObject.connect(w,qt.SIGNAL("removeSelection"),removeSelection)
-        qt.QObject.connect(w,qt.SIGNAL("replaceSelection"),repSelection)
+    w.sigAddSelection.connect(addSelection)
+    w.sigRemoveSelection.connect(removeSelection)
+    w.sigReplaceSelection.connect(replaceSelection)
     #d = QSpsDataSource.QSpsDataSource()
     #w.setData(d)
     """

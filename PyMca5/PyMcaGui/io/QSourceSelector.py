@@ -37,6 +37,7 @@ from PyMca5 import PyMcaDirs
 DEBUG = 0
 
 class QSourceSelector(qt.QWidget):
+    sigSourceSelectorSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, filetypelist=None, pluginsIcon=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout= qt.QVBoxLayout(self)
@@ -96,8 +97,9 @@ class QSourceSelector(qt.QWidget):
         refreshButton.clicked.connect(self._reload)
             
         specButton.clicked.connect(self.openSpec)
-        self.connect(self.fileCombo, qt.SIGNAL("activated(const QString &)"),
-                                                     self._fileSelection)
+        #self.connect(self.fileCombo, qt.SIGNAL("activated(const QString &)"),
+        #                                             self._fileSelection)
+        self.fileCombo.activated.connect(self._fileSelection)
 
         fileWidgetLayout.addWidget(self.fileCombo)
         fileWidgetLayout.addWidget(openButton)            
@@ -125,10 +127,7 @@ class QSourceSelector(qt.QWidget):
         ddict["event"] = "SourceReloaded"
         ddict["combokey"] = key
         ddict["sourcelist"] = self.mapCombo[key] * 1
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("SourceSelectorSignal"), (ddict,))    
-        else:
-            self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
+        self.sigSourceSelectorSignal.emit(ddict)
 
     def _openFileSlot(self):
         self.openFile(None, None)
@@ -260,7 +259,7 @@ class QSourceSelector(qt.QWidget):
             else:
                 nitem = self.fileCombo.findText(key)
             self.fileCombo.setCurrentIndex(nitem)
-        self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
+        self.sigSourceSelectorSignal.emit(ddict)
 
     def closeFile(self):
         if DEBUG:
@@ -280,10 +279,7 @@ class QSourceSelector(qt.QWidget):
             nitem = self.fileCombo.findText(key)
         self.fileCombo.removeItem(nitem)
         del self.mapCombo[key]
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("SourceSelectorSignal"), (ddict,))    
-        else:
-            self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
+        self.sigSourceSelectorSignal.emit(ddict)
 
     def openSpec(self):
         speclist = sps.getspeclist()
@@ -313,24 +309,21 @@ class QSourceSelector(qt.QWidget):
         ddict["event"] = "SourceSelected"
         ddict["combokey"] = key
         ddict["sourcelist"] = self.mapCombo[key]
-        self.emit(qt.SIGNAL("SourceSelectorSignal"), ddict)
+        self.sigSourceSelectorSignal.emit(ddict)
 
 def test():
     a = qt.QApplication(sys.argv)
     #new access
-    from PyMca5 import QDataSource
+    from PyMca5.PyMcaGui.pymca import QDataSource
     w= QSourceSelector()
     def mySlot(ddict):
         print(ddict)
         if ddict["event"] == "NewSourceSelected":
             d = QDataSource.QDataSource(ddict["sourcelist"][0])
             w.specfileWidget.setDataSource(d)
-            a.connect(w, qt.SIGNAL("SourceSelectorSignal"),
-                       mySlot)
-
-        
-    qt.QObject.connect(a, qt.SIGNAL("lastWindowClosed()"),
-              a, qt.SLOT("quit()"))
+            w.sigSourceSelectorSignal.connect(mySlot)
+    
+    a.lastWindowClosed.connect(a.quit)
 
     w.show()
     a.exec_()

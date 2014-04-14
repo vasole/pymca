@@ -69,28 +69,21 @@ class QDispatcher(qt.QWidget):
         for src_widget in QDataSource.source_widgets.keys():
             self.selectorWidget[src_widget] = QDataSource.source_widgets[src_widget]()
             self.tabWidget.addTab(self.selectorWidget[src_widget], src_widget)
-            self.connect(self.selectorWidget[src_widget],
-                         qt.SIGNAL("addSelection"),
-                         self._addSelectionSlot)                                                 
-            self.connect(self.selectorWidget[src_widget],
-                         qt.SIGNAL("removeSelection"),
+            self.selectorWidget[src_widget].sigAddSelection.connect( \
+                            self._addSelectionSlot)                                                 
+            self.selectorWidget[src_widget].sigRemoveSelection.connect( \
                          self._removeSelectionSlot)
-            self.connect(self.selectorWidget[src_widget],
-                         qt.SIGNAL("replaceSelection"),
+            self.selectorWidget[src_widget].sigReplaceSelection.connect( \
                          self._replaceSelectionSlot)
             if src_widget not in ['EdfFile']:
-                self.connect(self.selectorWidget[src_widget],
-                         qt.SIGNAL("otherSignals"),
+                self.selectorWidget[src_widget].sigOtherSignals.connect( \
                          self._otherSignalsSlot)
         
         self.mainLayout.addWidget(self.sourceSelector)
         self.mainLayout.addWidget(self.tabWidget)
-        self.connect(self.sourceSelector, 
-                qt.SIGNAL("SourceSelectorSignal"), 
-                self._sourceSelectorSlot)
-        self.connect(self.tabWidget,
-                     qt.SIGNAL('currentChanged(int)'),
-                     self._tabChanged)
+        self.sourceSelector.sigSourceSelectorSignal.connect( \
+                    self._sourceSelectorSlot)
+        self.tabWidget.currentChanged[int].connect(self._tabChanged)
 
     def _addSelectionSlot(self, sel_list, event=None):
         if DEBUG:
@@ -166,10 +159,7 @@ class QDispatcher(qt.QWidget):
                         #10 read outs
                         ddict["sourcereference"] = weakref.ref(source)
                         selectionList.append(ddict)
-                    if QTVERSION < '4.0.0':
-                        self.emit(qt.PYSIGNAL(event), (selectionList,))
-                    else:
-                        self.emit(qt.SIGNAL(event), selectionList)
+                    self.emit(qt.SIGNAL(event), selectionList)
 
     def _removeSelectionSlot(self, sel_list):
         if DEBUG:
@@ -179,10 +169,7 @@ class QDispatcher(qt.QWidget):
             ddict = {}
             ddict.update(sel)
             ddict["event"] = "removeSelection"
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("removeSelection"), (ddict,))
-            else:
-                self.emit(qt.SIGNAL("removeSelection"), ddict)
+            self.emit(qt.SIGNAL("removeSelection"), ddict)
 
     def _replaceSelectionSlot(self, sel_list):
         if DEBUG:
@@ -209,8 +196,7 @@ class QDispatcher(qt.QWidget):
             self.selectorWidget[sourceType].setDataSource(source)
             self.tabWidget.setCurrentWidget(self.selectorWidget[sourceType])
             if sourceType == "SPS":
-                self.connect(source, qt.SIGNAL("updated"),
-                                        self._selectionUpdatedSlot)
+                source.sigUpdated.connect(self._selectionUpdatedSlot)
 
         elif (ddict["event"] == "SourceSelected") or \
              (ddict["event"] == "SourceReloaded"):
@@ -326,8 +312,7 @@ def test():
     app = qt.QApplication([])
     w = QDispatcher()
     w.show()
-    qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     app.exec_()
         
 if __name__ == "__main__":

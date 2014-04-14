@@ -29,11 +29,11 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from . import QSelectorWidget
-from . import SpecFileDataInfo
-from . import SpecFileCntTable
+from PyMca5.PyMcaGui.io import QSelectorWidget
+from PyMca5.PyMcaGui.io import SpecFileDataInfo
+from PyMca5.PyMcaGui.io import SpecFileCntTable
 OBJECT3D = SpecFileCntTable.OBJECT3D
-from . import SpecFileMcaTable
+from PyMca5.PyMcaGui.io import SpecFileMcaTable
 
 QTVERSION = qt.qVersion()
 
@@ -53,6 +53,11 @@ if QTVERSION > '4.0.0':
 
 #class QSpecFileWidget(qt.QWidget):
 class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
+    sigAddSelection = qt.pyqtSignal(object)
+    sigRemoveSelection = qt.pyqtSignal(object)
+    sigReplaceSelection = qt.pyqtSignal(object)
+    sigOtherSignals = qt.pyqtSignal(object)
+    sigScanSelection = qt.pyqtSignal(object)
     def __init__(self, parent=None, autoreplace=False):
         self.autoReplace = autoreplace
         if self.autoReplace:
@@ -106,9 +111,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             self.object3DBox = qt.QCheckBox(autoBox)
             self.object3DBox.setText("3D On")
             autoBoxLayout.addWidget(self.object3DBox, row, 0)
-            self.connect(self.mcaTable,
-                         qt.SIGNAL("McaDeviceSelected"),
-                         self.mcaDeviceSelected)
+            self.mcaTable.sigMcaDeviceSelected.connect(self.mcaDeviceSelected)
 
         self.meshBox = qt.QCheckBox(autoBox)
         self.meshBox.setText("Mesh")
@@ -153,15 +156,14 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         # --- signal handling
         self.list.itemSelectionChanged.connect(self.__selectionChanged)
         self.list.setContextMenuPolicy(qt.Qt.CustomContextMenu)
-        self.connect(self.list,
-                     qt.SIGNAL("customContextMenuRequested(const QPoint &)"),
-                     self.__contextMenu)
+        #self.connect(self.list,
+        #             qt.SIGNAL("customContextMenuRequested(const QPoint &)"),
+        #             self.__contextMenu)
+        self.list.customContextMenuRequested.connect(self.__contextMenu)
         self.connect(self.list,
                      qt.SIGNAL("itemDoubleClicked(QTreeWidgetItem *, int)"),
                      self.__doubleClicked)
-        self.connect(self.cntTable,
-                     qt.SIGNAL('SpecCntTableSignal'),
-                     self._cntSignal)
+        self.cntTable.sigSpecFileCntTableSignal.connect(self._cntSignal)
 
         if QTVERSION > '4.2.0':
             self.list.setSortingEnabled(False)
@@ -179,9 +181,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
         self.forceMcaBox.clicked.connect(self._setForcedMca)
 
-        self.connect(self.mainTab,
-                     qt.SIGNAL('currentChanged(int)'),
-                     self._tabChanged)
+        self.mainTab.currentChanged[int].connect(self._tabChanged)
 
         self.disableMca    = 0 #(type=="scan")
         self.disableScan   = 0 #(type=="mca")
@@ -384,7 +384,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             autoReplaceCall = False
 
         # Emit this signal for the case someone else uses it ...    
-        self.emit(qt.SIGNAL("scanSelection"), (sel))
+        self.sigScanSelection.emit((sel))
         if (info['NbMca'] > 0) and (info['Lines'] > 0):
             pass
         elif (info['NbMca'] > 0) and (info['Lines'] == 0):
@@ -416,10 +416,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             ddict['Command']  = str(item.text(2))
             ddict['NbPoints'] = int(str(item.text(3)))
             ddict['NbMca']    = int(str(item.text(4)))
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("scanDoubleClicked"), (ddict,))
-            else:
-                self.emit(qt.SIGNAL("scanDoubleClicked"), ddict)
+            self.sigScanDoubleClicked.emit(ddict)
             #shortcut selec + remove?
             #for the time being just add
             self._addClicked()
@@ -460,11 +457,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             sel_list.append(sel)
         if len(scan_sel):
             if action == 'ADD':
-                self.emit(qt.SIGNAL("addSelection"), sel_list)
+                self.sigAddSelection.emit(sel_list)
             elif action == 'REMOVE':
-                self.emit(qt.SIGNAL("removeSelection"), sel_list)
+                self.sigRemoveSelection.emit(sel_list)
             elif action == 'REPLACE':
-                self.emit(qt.SIGNAL("replaceSelection"), sel_list)
+                self.sigReplaceSelection.emit(sel_list)
 
     def __showScanInfo(self, idx = None):
         if idx is None:
@@ -480,10 +477,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             text = "Error: %s\n accessing scan information." % (sys.exc_info()[1])
             msg.setText(text)
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             if DEBUG:
                 raise
             return
@@ -491,19 +485,11 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         dataInfoWidget= SpecFileDataInfo.SpecFileDataInfo(info)
         if "Header" in info:
             if info['Header'] is not None:
-                if QTVERSION > '4.0.0':
-                    dataInfoWidget.setWindowTitle(info['Header'][0])
-                else:
-                    dataInfoWidget.setCaption(info['Header'][0])
+                dataInfoWidget.setWindowTitle(info['Header'][0])
         dataInfoWidget.show()
         wid = id(dataInfoWidget)
         self.dataInfoWidgetDict[wid] = dataInfoWidget
-        if QTVERSION < '4.0.0':
-            self.connect(dataInfoWidget,
-                     qt.PYSIGNAL('SpecFileDataInfoSignal'),
-                     self._dataInfoClosed)
-        else:
-            dataInfoWidget.notifyCloseEventToWidget(self)
+        dataInfoWidget.notifyCloseEventToWidget(self)
 
     def _dataInfoClosed(self, ddict):
         if ddict['event'] == "SpecFileDataInfoClosed":
@@ -574,7 +560,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel_list.append(sel)
         if emit:
             if len(sel_list):
-                self.emit(qt.SIGNAL("addSelection"), sel_list)
+                self.sigAddSelection.emit(sel_list)
         else:
             return sel_list
 
@@ -629,7 +615,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     sel_list.append(sel)            
             
         if len(sel_list): 
-            self.emit(qt.SIGNAL("removeSelection"), sel_list)
+            self.sigRemoveSelection.emit(sel_list)
 
     def _replaceClicked(self):
         if DEBUG:
@@ -686,10 +672,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                             pass
                     sel_list.append(sel)
         if len(sel_list): 
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("replaceSelection"), (sel_list,))            
-            else:
-                self.emit(qt.SIGNAL("replaceSelection"), sel_list)
+            self.sigReplaceSelection.emit(sel_list)
 
     def _tabChanged(self, value):
         if DEBUG:
@@ -702,10 +685,10 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         ddict['SourceType'] = self.data.sourceType
         ddict['event'] = "SelectionTypeChanged"
         ddict['SelectionType'] = text
-        self.emit(qt.SIGNAL("otherSignals"), ddict)
+        self.sigOtherSignals.emit(ddict)
 
 def test():
-    from PyMca5 import QDataSource
+    from PyMca5.PyMcaGui.pymca import QDataSource
     a = qt.QApplication(sys.argv)
     w = QSpecFileWidget()
     if len(sys.argv) > 1:
@@ -728,9 +711,9 @@ def test():
         except:
             pass
         return
-    qt.QObject.connect(w, qt.SIGNAL("addSelection"), mySlot)
-    qt.QObject.connect(w, qt.SIGNAL("removeSelection"), mySlot)
-    qt.QObject.connect(w, qt.SIGNAL("replaceSelection"), mySlot)
+    w.sigAddSelection.connect(mySlot)
+    w.sigRemoveSelection.connect(mySlot)
+    w.sigReplaceSelection.connect(mySlot)
     a.lastWindowClosed.connect(a.quit)
 
     a.exec_()

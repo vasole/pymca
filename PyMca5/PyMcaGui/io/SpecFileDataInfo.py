@@ -30,36 +30,25 @@ import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 QTVERSION = qt.qVersion()
-if QTVERSION < '4.0.0':
-    import qttable
-    class QTable(qttable.QTable):
-        def __init__(self, parent=None, name=""):
-            qttable.QTable.__init__(self, parent, name)
-            self.rowCount    = self.numRows
-            self.columnCount = self.numCols
-            self.setRowCount = self.setNumRows
-            self.setColumnCount = self.setNumCols
-            self.resizeColumnToContents = self.adjustColumn
-else:
-    class QTable(qt.QTableWidget):
-        def setText(self, row, col, text):
-            if qt.qVersion() < "4.0.0":
-                QTable.setText(self, row, col, text)
+class QTable(qt.QTableWidget):
+    def setText(self, row, col, text):
+        if qt.qVersion() < "4.0.0":
+            QTable.setText(self, row, col, text)
+        else:
+            item = self.item(row, col)
+            if item is None:
+                item = qt.QTableWidgetItem(text,
+                                           qt.QTableWidgetItem.Type)
+                self.setItem(row, col, item)
             else:
-                item = self.item(row, col)
-                if item is None:
-                    item = qt.QTableWidgetItem(text,
-                                               qt.QTableWidgetItem.Type)
-                    self.setItem(row, col, item)
-                else:
-                    item.setText(text)
+                item.setText(text)
 
-    class SpecFileDataInfoCustomEvent(qt.QEvent):
-        def __init__(self, ddict):
-            if ddict is None:
-                ddict = {}
-            self.dict = ddict
-            qt.QEvent.__init__(self, qt.QEvent.User)
+class SpecFileDataInfoCustomEvent(qt.QEvent):
+    def __init__(self, ddict):
+        if ddict is None:
+            ddict = {}
+        self.dict = ddict
+        qt.QEvent.__init__(self, qt.QEvent.User)
 
 
 class SpecFileDataInfo(qt.QTabWidget):
@@ -282,44 +271,31 @@ class SpecFileDataInfo(qt.QTabWidget):
         ddict = {}
         ddict['event'] = "SpecFileDataInfoClosed"
         ddict['id'] = id(self)
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("SpecFileDataInfoSignal"), (ddict,))
-        else:
-            #self.emit(qt.SIGNAL("SpecFileDataInfoSignal"),ddict)
-            if len(self._notifyCloseEventToWidget):
-                for widget in self._notifyCloseEventToWidget:
-                    newEvent = SpecFileDataInfoCustomEvent(ddict)
-                    qt.QApplication.postEvent(widget,
-                                          newEvent)
-                self._notifyCloseEventToWidget = []
+        #self.emit(qt.SIGNAL("SpecFileDataInfoSignal"),ddict)
+        if len(self._notifyCloseEventToWidget):
+            for widget in self._notifyCloseEventToWidget:
+                newEvent = SpecFileDataInfoCustomEvent(ddict)
+                qt.QApplication.postEvent(widget,
+                                      newEvent)
+            self._notifyCloseEventToWidget = []
         return qt.QTabWidget.closeEvent(self, event)
 
 def test():
-    from PyMca5 import SpecFileLayer
+    from PyMca5.PyMcaCore import SpecFileLayer
 
     if len(sys.argv) < 3:
         print("USAGE: %s <filename> <key>" % sys.argv[0])
         sys.exit(0)
 
-    #d= SpecFileData()
     d = SpecFileLayer.SpecFileLayer()
 
     d.SetSource(sys.argv[1])
     info,data = d.LoadSource(sys.argv[2])
-    #info= d.GetPageInfo({"SourceName":sys.argv[1], "Key":sys.argv[2]})
 
-    if qt.qVersion() < '4.0.0':
-        app= qt.QApplication(sys.argv)
-        wid= SpecFileDataInfo(info)
-        wid.show()
-
-        app.setMainWidget(wid)
-        app.exec_loop()
-    else:
-        app= qt.QApplication([])
-        wid= SpecFileDataInfo(info)
-        wid.show()
-        app.exec_()
+    app= qt.QApplication([])
+    wid= SpecFileDataInfo(info)
+    wid.show()
+    app.exec_()
 
 if __name__=="__main__":
     test()

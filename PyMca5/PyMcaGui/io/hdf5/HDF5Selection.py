@@ -26,12 +26,9 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-try:
-    from PyMca import PyMcaQt as qt
-    safe_str = qt.safe_str
-except ImportError:
-    import PyQt4.Qt as qt
-    safe_str = str
+from PyMca import PyMcaQt as qt
+safe_str = qt.safe_str
+
 DEBUG = 0
 
 class HDF5Selection(qt.QWidget):

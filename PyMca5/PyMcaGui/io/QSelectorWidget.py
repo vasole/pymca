@@ -65,14 +65,9 @@ class QSelectorWidget(qt.QWidget):
         
         self.mainLayout.addWidget(buttonBox)
         
-        self.connect(self.addButton, qt.SIGNAL("clicked()"), 
-                    self._addClicked)
-
-        self.connect(self.removeButton, qt.SIGNAL("clicked()"), 
-                    self._removeClicked)
-
-        self.connect(self.replaceButton, qt.SIGNAL("clicked()"), 
-                    self._replaceClicked)
+        self.addButton.clicked[()].connect(self._addClicked)
+        self.removeButton.clicked[()].connect(self._removeClicked)
+        self.replaceButton.clicked[()].connect(self._replaceClicked)
 
     def _addClicked(self):
         if DEBUG:
@@ -91,12 +86,8 @@ def test():
     app = qt.QApplication([])
     w = QSelectorWidget()
     w.show()
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
-    if QTVERSION < '4.0.0':
-        app.exec_loop()
-    else:
-        app.exec_()
+    app.lastWindowClosed.connect(app.quit)
+    app.exec_()
         
 if __name__ == "__main__":
     test()

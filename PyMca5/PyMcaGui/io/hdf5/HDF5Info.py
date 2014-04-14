@@ -27,13 +27,10 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-try:
-    from PyMca import PyMcaQt as qt
-    safe_str = qt.safe_str
-except ImportError:
-    # for people using this widget without PyMca installed
-    import PyQt4.Qt as qt
-    safe_str = str
+
+from PyMca5.PyMcaGui import PyMcaQt as qt
+safe_str = qt.safe_str
+
 import copy
 import posixpath
 

@@ -26,17 +26,15 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-try:
-    from PyMca import PyMcaQt as qt
-    safe_str = qt.safe_str
-except ImportError:
-    # for people using this widget without PyMca installed
-    import PyQt4.Qt as qt
-    safe_str = str
+from PyMca5.PyMcaGui import PyMcaQt as qt
+safe_str = qt.safe_str
 
 DEBUG = 0
 
 class HDF5CounterTable(qt.QTableWidget):
+
+    sigHDF5CounterTableSignal = qt.pyqtSignal(object)
+
     def __init__(self, parent=None):
         qt.QTableWidget.__init__(self, parent)
         self.cntList      = []
@@ -60,9 +58,10 @@ class HDF5CounterTable(qt.QTableWidget):
         #the cell is not the same as the check box
         #but I wonder about the checkboxes being destroyed
         """
-        qt.QObject.connect(self,
-                     qt.SIGNAL("cellChanged(int, int)"),
-                     self._aliasSlot)
+        #qt.QObject.connect(self,
+        #             qt.SIGNAL("cellChanged(int, int)"),
+        #             self._aliasSlot)
+        self.cellChanged[int, int].connect(self._aliasSlot)
 
     def build(self, cntlist, aliaslist=None):
         self.__building = True
@@ -114,9 +113,7 @@ class HDF5CounterTable(qt.QTableWidget):
             if widget is None:
                 widget = CheckBoxItem(self, i, j)
                 self.setCellWidget(i, j, widget)
-                qt.QObject.connect(widget,
-                                   qt.SIGNAL('CheckBoxItemSignal'),
-                                   self._mySlot)
+                widget.sigCheckBoxItemSignal.connect(self._mySlot)
             else:
                 pass
 
@@ -216,7 +213,7 @@ class HDF5CounterTable(qt.QTableWidget):
                     widget.setChecked(False)
         ddict = {}
         ddict["event"] = "updated"
-        self.emit(qt.SIGNAL('HDF5CounterTableSignal'), ddict)        
+        self.sigHDF5CounterTableSignal.emit(ddict)        
         
 
     def getCounterSelection(self):
@@ -286,11 +283,14 @@ class HDF5CounterTable(qt.QTableWidget):
         
 
 class CheckBoxItem(qt.QCheckBox):
+
+    sigCheckBoxItemSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent, row, col):
         qt.QCheckBox.__init__(self, parent)
         self.__row = row
         self.__col = col
-        qt.QObject.connect(self, qt.SIGNAL("clicked(bool)"), self._mySignal)
+        self.clicked.connect(self._mySignal)
 
     def _mySignal(self, value):
         ddict = {}
@@ -298,7 +298,7 @@ class CheckBoxItem(qt.QCheckBox):
         ddict["state"] = value
         ddict["row"] = self.__row * 1
         ddict["col"] = self.__col * 1
-        self.emit(qt.SIGNAL('CheckBoxItemSignal'), ddict)
+        self.sigCheckBoxItemSignal.emit(ddict)
 
 def main():
     app = qt.QApplication([])

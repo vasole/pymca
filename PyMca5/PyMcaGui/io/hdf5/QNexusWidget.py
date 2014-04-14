@@ -52,6 +52,9 @@ if "PyMcaDirs" in sys.modules:
 DEBUG=0
 
 class Buttons(qt.QWidget):
+    
+    sigButtonsSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent=None, options=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
@@ -74,17 +77,24 @@ class Buttons(qt.QWidget):
                 self.mainLayout.addWidget(button, row, col)
                 self.buttonGroup.addButton(button)
                 self.buttonList.append(button)
-        self.connect(self.buttonGroup,
-                     qt.SIGNAL('buttonClicked(QAbstractButton *)'),
-                     self.emitSignal)
+        #self.connect(self.buttonGroup,
+        #             qt.SIGNAL('buttonClicked(QAbstractButton *)'),
+        #             self.emitSignal)
+        #self.buttonGroup.buttonClicked[int].connect(self.emitSignal)
+        self.buttonGroup.buttonClicked.connect(self.emitSignal)
 
     def emitSignal(self, button):
+        #button = self.buttonList[button]
         ddict={}
         ddict['event'] = 'buttonClicked'
         ddict['action'] = safe_str(button.text())
-        self.emit(qt.SIGNAL('ButtonsSignal'), ddict)
+        self.sigButtonsSignal.emit(ddict)
 
 class QNexusWidget(qt.QWidget):
+    sigAddSelection = qt.pyqtSignal(object)
+    sigRemoveSelection = qt.pyqtSignal(object)
+    sigReplaceSelection = qt.pyqtSignal(object)
+    sigOtherSignals = qt.pyqtSignal(object)
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.data = None
@@ -119,15 +129,13 @@ class QNexusWidget(qt.QWidget):
             self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D'])
             self.cntTable.set3DEnabled(False)
         self.mainLayout.addWidget(self.buttons)
-        self.connect(self.hdf5Widget,
-                     qt.SIGNAL('HDF5WidgetSignal'),
-                     self.hdf5Slot)
-        self.connect(self.cntTable,
-                     qt.SIGNAL('customContextMenuRequested(QPoint)'),
-                     self._counterTableCustomMenuSlot)
-        self.connect(self.buttons,
-                     qt.SIGNAL('ButtonsSignal'),
-                     self.buttonsSlot)
+        self.hdf5Widget.sigHDF5WidgetSignal.connect(self.hdf5Slot)
+        #self.connect(self.cntTable,
+        #             qt.SIGNAL('customContextMenuRequested(QPoint)'),
+        #             self._counterTableCustomMenuSlot)
+        self.cntTable.customContextMenuRequested.connect(\
+                        self._counterTableCustomMenuSlot)
+        self.buttons.sigButtonsSignal.connect(self.buttonsSlot)
 
 
         # Some convenience functions to customize the table
@@ -641,13 +649,17 @@ class QNexusWidget(qt.QWidget):
                 ddict = {}
                 ddict['event'] = "SelectionTypeChanged"
                 ddict['SelectionType'] = selectionType.upper()
-                self.emit(qt.SIGNAL('otherSignals'), ddict)
+                #self.emit(qt.SIGNAL('otherSignals'), ddict)
+                self.sigOtherSignals.emit(ddict)
             if action.upper() == "ADD":
-                self.emit(qt.SIGNAL("addSelection"), selectionList)
+                #self.emit(qt.SIGNAL("addSelection"), selectionList)
+                self.sigAddSelection.emit(selectionList)
             if action.upper() == "REMOVE":
-                self.emit(qt.SIGNAL("removeSelection"), selectionList)
+                #self.emit(qt.SIGNAL("removeSelection"), selectionList)
+                self.sigRemoveSelection.emit(selectionList)
             if action.upper() == "REPLACE":
-                self.emit(qt.SIGNAL("replaceSelection"), selectionList)
+                #self.emit(qt.SIGNAL("replaceSelection"), selectionList)
+                self.sigReplaceSelection.emit(selectionList)
 
     def currentSelectionList(self):
         ddict={}
@@ -690,14 +702,14 @@ if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
     try:
         #this is to add the 3D buttons ...
-        from PyMca import Object3D
+        from PyMca5 import Object3D
     except:
         pass
     w = QNexusWidget()
     if 0:
         w.setFile(sys.argv[1])
     else:
-        from PyMca import NexusDataSource
+        from PyMca5.PyMcaCore import NexusDataSource
         dataSource = NexusDataSource.NexusDataSource(sys.argv[1:])
         w.setDataSource(dataSource)
     def addSelection(sel):
@@ -707,7 +719,7 @@ if __name__ == "__main__":
     def replaceSelection(sel):
         print(sel)
     w.show()
-    qt.QObject.connect(w, qt.SIGNAL("addSelection"),     addSelection)
-    qt.QObject.connect(w, qt.SIGNAL("removeSelection"),  removeSelection)
-    qt.QObject.connect(w, qt.SIGNAL("replaceSelection"), replaceSelection)
+    w.sigAddSelection.connect(addSelection)
+    w.sigRemoveSelection.connect(removeSelection)
+    w.sigReplaceSelection.connect(replaceSelection)
     sys.exit(app.exec_())

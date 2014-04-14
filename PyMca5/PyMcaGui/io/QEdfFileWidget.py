@@ -61,6 +61,8 @@ SOURCE_TYPE = 'EdfFile'
 __revision__ = "$Revision: 1.35 $"
 
 class EdfFile_StandardArray(qt.QWidget):
+    sigWidgetSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent=None, name="Edf_StandardArray", images=None, rows=None, cols=None):
         if images is None:
             images = 1
@@ -94,8 +96,8 @@ class EdfFile_StandardArray(qt.QWidget):
         layout.addWidget(self.plotCombo,1, 1)
         layout.addWidget(self.yList,    2, 1)
         
-        self.connect(self.plotCombo, qt.SIGNAL("activated(int)"), self.__plotChanged)
-        self.connect(self.iCombo, qt.SIGNAL("activated(int)"),    self.__iChanged)
+        self.plotCombo.activated[int].connect(self.__plotChanged)
+        self.iCombo.activated[int].connect(self.__iChanged)
         self.setImages(images)
 
         self.setDataSize(rows, cols)
@@ -137,13 +139,14 @@ class EdfFile_StandardArray(qt.QWidget):
         ddict={}
         ddict['event'] = "plotChanged"
         ddict['plot']  =  txt+"s"
-        self.emit(qt.SIGNAL("widgetSignal"),(ddict))
+        self.sigWidgetSignal.emit((ddict))
 
     def __iChanged(self, index):
         ddict={}
         ddict['event'] = "imageChanged"
         ddict['index'] =  index
-        self.emit(qt.SIGNAL("widgetSignal"),(ddict))
+        self.sigWidgetSignal.emit((ddict))
+        #self.emit(qt.SIGNAL("widgetSignal"),(ddict))
 
     def getSelection(self):
         selection= []
@@ -207,6 +210,10 @@ class EdfFile_StandardArray(qt.QWidget):
         self.yList.setCurrentItem(current)
 
 class QEdfFileWidget(qt.QWidget):
+    sigAddSelection = qt.pyqtSignal(object)
+    sigRemoveSelection = qt.pyqtSignal(object)
+    sigReplaceSelection = qt.pyqtSignal(object)    
+
     def __init__(self, parent=None, justviewer=False):
         qt.QWidget.__init__(self, parent)
         self.justViewer = justviewer
@@ -270,15 +277,12 @@ class QEdfFileWidget(qt.QWidget):
             self.applygroupLayout.addWidget(self.applytoone)
             self.applygroupLayout.addWidget(self.applytoall)
             self.__dummyW.layout.addWidget(self.applygroupContainer) 
-            self.connect(self.applygroup,qt.SIGNAL("buttonClicked(int)"),
-                         self.groupSignal)
+            self.applygroup.buttonClicked[int].connect(self.groupSignal)
 
         self.dataInfoWidgetDict = {}
         self.paramWidget = EdfFile_StandardArray(self.__dummyW)
         self.__dummyW.layout.addWidget(self.paramWidget)
-        self.connect(self.paramWidget,
-                 qt.SIGNAL("widgetSignal"),
-                 self.widgetSignal)
+        self.paramWidget.sigWidgetSignal.connect(self.widgetSignal)
 
         if justviewer:
             self.paramWidget.plab.hide()
@@ -729,34 +733,19 @@ class QEdfFileWidget(qt.QWidget):
                                               " "+signalsel['Key']
                     if self.selection == {}:
                         self.setSelected([nsel],reset=0)
-                        if QTVERSION < '4.0.0':
-                            self.emit(qt.PYSIGNAL("addSelection"), ([signalsel],))
-                        else:
-                            self.emit(qt.SIGNAL("addSelection"), [signalsel])
+                        self.sigAddSelection.emit([signalsel])
                     elif not (nsel['SourceName'] in self.selection):
                         self.setSelected([nsel],reset=0)
-                        if QTVERSION < '4.0.0':
-                            self.emit(qt.PYSIGNAL("addSelection"), ([signalsel],))
-                        else:
-                            self.emit(qt.SIGNAL("addSelection"), [signalsel])
+                        self.sigAddSelection.emit([signalsel])
                     elif not (key in self.selection[nsel['SourceName']]):
                         self.setSelected([nsel],reset=0)
-                        if QTVERSION < '4.0.0':
-                            self.emit(qt.PYSIGNAL("addSelection"), ([signalsel],))
-                        else:
-                            self.emit(qt.SIGNAL("addSelection"), [signalsel])
+                        self.sigAddSelection.emit([signalsel])
                     elif len(self.selection[nsel['SourceName']][key][ptype]) == 0:
                         self.setSelected([nsel],reset=0)
-                        if QTVERSION < '4.0.0':
-                            self.emit(qt.PYSIGNAL("addSelection"), ([signalsel],))
-                        else:
-                            self.emit(qt.SIGNAL("addSelection"), [signalsel])
+                        self.sigAddSelection.emit([signalsel])
                     elif nsel[key][ptype][0] not in self.selection[nsel['SourceName']][key][ptype]:
                         self.setSelected([nsel],reset=0)
-                        if QTVERSION < '4.0.0':
-                            self.emit(qt.PYSIGNAL("addSelection"), ([signalsel],))
-                        else:
-                            self.emit(qt.SIGNAL("addSelection"), [signalsel])
+                        self.sigAddSelection.emit([signalsel])
                     else:
                         self.removeSelection([nsel])
             elif dict['event']  == 'imageChanged':
@@ -989,6 +978,8 @@ class QEdfFileWidget(qt.QWidget):
         return pixmap
 
     def updateColormap(self, *var):
+        if len(var) == 1:
+            var = var[0]
         if len(var) > 6:
             self.colormap = [var[0],
                              var[1],
@@ -1179,14 +1170,8 @@ class QEdfFileWidget(qt.QWidget):
                 self.colormapDialog = ColormapDialog.ColormapDialog()
                 self.colormapDialog.colormapIndex  = self.colormapDialog.colormapList.index("Temperature")
                 self.colormapDialog.colormapString = "Temperature"
-                if QTVERSION < '4.0.0':
-                    self.connect(self.colormapDialog,
-                                 qt.PYSIGNAL("ColormapChanged"),
-                                 self.updateColormap)
-                else:
-                    self.connect(self.colormapDialog,
-                                 qt.SIGNAL("ColormapChanged"),
-                                 self.updateColormap)
+                self.colormapDialog.sigColormapChanged.connect( \
+                                self.updateColormap)
             self.colormapDialog.setDataMinMax(minData, maxData)
             if wasnone:
                 self.colormapDialog.setAutoscale(1)
@@ -1261,10 +1246,7 @@ class QEdfFileWidget(qt.QWidget):
                     signalsellist.append(signalsel)
                 sellist.append(sel)
             self.setSelected(sellist,reset=1)
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("replaceSelection"), (signalsellist,))
-            else:
-                self.emit(qt.SIGNAL("replaceSelection"), signalsellist)
+            self.sigReplaceSelection.emit(signalsellist)
 
     def _add2DClicked(self, replace=False, emit=True):
         if DEBUG:
@@ -1291,9 +1273,9 @@ class QEdfFileWidget(qt.QWidget):
         sel['selection'] = None
         if emit:
             if replace:
-                self.emit(qt.SIGNAL("replaceSelection"), [sel])
+                self.sigReplaceSelection.emit([sel])
             else:
-                self.emit(qt.SIGNAL("addSelection"), [sel])
+                self.sigAddSelection.emit([sel])
         else:
             return [sel]
 
@@ -1314,7 +1296,7 @@ class QEdfFileWidget(qt.QWidget):
         sel['mcaselection']  = False
         sel['scanselection'] = False
         sel['selection'] = None
-        self.emit(qt.SIGNAL("removeSelection"), [sel])
+        self.sigRemoveSelection.emit([sel])
 
     def _replace2DClicked(self):
         if DEBUG:
@@ -1390,10 +1372,7 @@ class QEdfFileWidget(qt.QWidget):
             else:
                 self.setSelected(sellist,reset=0)
             if emit:
-                if QTVERSION < '4.0.0':
-                    self.emit(qt.PYSIGNAL("addSelection"), (sellistsignal,))
-                else:
-                    self.emit(qt.SIGNAL("addSelection"), sellistsignal)
+                self.sigAddSelection.emit(sellistsignal)
             else:
                 return sellistsignal
 
@@ -1505,10 +1484,7 @@ class QEdfFileWidget(qt.QWidget):
                                     seln[seln['Key']]  = self.selection[seln['SourceName']][seln['Key']]
                                     self.setSelected([seln],reset=0)
                     returnedselection.append(sel)
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("removeSelection"), (signalsellist,))
-            else:
-                self.emit(qt.SIGNAL("removeSelection"), signalsellist)
+            self.sigRemoveSelection.emit(signalsellist)
             
     def removeSelection(self,selection):
         if type(selection) != type([]):
@@ -1566,12 +1542,7 @@ class QEdfFileWidget(qt.QWidget):
                                 seln['Key']        = sel['Key']
                                 seln[seln['Key']]  = self.selection[seln['SourceName']][seln['Key']]
                                 self.setSelected([seln],reset=0)
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("removeSelection"), (signalsellist,))
-        else:
-            self.emit(qt.SIGNAL("removeSelection"), signalsellist)
-
-
+        self.sigRemoveSelection.emit(signalsellist)
                              
     def setSelected(self,sellist,reset=1):
         if DEBUG:
@@ -1712,18 +1683,15 @@ class QEdfFileWidget(qt.QWidget):
 
 def test2():
     a= qt.QApplication(sys.argv)
-    a.connect(a, qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+    a.lastWindowClosed.connect(a.quit)
 
     w = EdfFile_StandardArray()
     w.show()
-    if qt.qVersion() < '4.0.0':
-        a.exec_loop()
-    else:
-        a.exec_()
+    a.exec_()
         
 def test():
     import sys
-    from PyMca5 import EdfFileDataSource
+    from PyMca5.PyMcaCore import EdfFileDataSource
     def repSelection(sel):
         print("replaceSelection", sel)
     def removeSelection(sel):
@@ -1745,9 +1713,9 @@ def test():
         print("python QEdfFileWidget edffile")
         sys.exit(0)
     w.setDataSource(d)
-    qt.QObject.connect(w,qt.SIGNAL("addSelection"),addSelection)
-    qt.QObject.connect(w,qt.SIGNAL("removeSelection"),removeSelection)
-    qt.QObject.connect(w,qt.SIGNAL("replaceSelection"),repSelection)
+    w.sigAddSelection.connect(addSelection)
+    w.sigRemoveSelection.connect(removeSelection)
+    w.sigReplaceSelection.connect(replaceSelection)
     w.show()
     a.exec_()
 

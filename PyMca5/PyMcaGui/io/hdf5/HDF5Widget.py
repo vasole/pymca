@@ -336,6 +336,9 @@ class FileModel(qt.QAbstractItemModel):
     """
     """
 
+    sigFileUpdated = qt.pyqtSignal(object)
+    sigFileAppended = qt.pyqtSignal(object)
+    
     def __init__(self, parent=None):
         qt.QAbstractItemModel.__init__(self, parent)
         self.rootItem = RootItem(['File/Group/Dataset', 'Description', 'Shape', 'DType'])
@@ -449,7 +452,7 @@ class FileModel(qt.QAbstractItemModel):
                 ddict = {}
                 ddict['event'] = "fileUpdated"
                 ddict['filename'] = filename
-                self.emit(qt.SIGNAL('fileUpdated'), ddict)
+                self.sigFileUpdated.emit(ddict)
                 return item.file
         phynxFile = phynx.File(filename, 'r')
         if weakreference:
@@ -493,7 +496,7 @@ class FileModel(qt.QAbstractItemModel):
             ddict = {}
             ddict['event'] = "fileUpdated"
             ddict['filename'] = name
-            self.emit(qt.SIGNAL('fileUpdated'), ddict)
+            self.sigFileUpdated.emit(ddict)
             return
             
         if weakreference:
@@ -513,13 +516,16 @@ class FileModel(qt.QAbstractItemModel):
         ddict = {}
         ddict['event'] = "fileAppended"
         ddict['filename'] = name
-        self.emit(qt.SIGNAL('fileAppended'), ddict)
+        self.sigFileAppended.emit(ddict)
 
     def clear(self):
         self.reset()
 
 
 class FileView(qt.QTreeView):
+
+    sigHDF5WidgetSignal = qt.pyqtSignal(object)
+
     def __init__(self, fileModel, parent=None):
         qt.QTreeView.__init__(self, parent)
         self.setModel(fileModel)
@@ -531,17 +537,8 @@ class FileView(qt.QTreeView):
         #    qt.SIGNAL('collapsed(QModelIndex)'),
         #    fileModel.clearRows
         #)
-        self.connect(
-            fileModel,
-            qt.SIGNAL('fileAppended'),
-            self.fileAppended
-        )
-
-        self.connect(
-            fileModel,
-            qt.SIGNAL('fileUpdated'),
-            self.fileUpdated
-        )
+        fileModel.sigFileAppended.connect(self.fileAppended)
+        fileModel.sigFileUpdated.connect(self.fileUpdated)
 
     def fileAppended(self, ddict=None):
         self.doItemsLayout()
@@ -576,23 +573,27 @@ class HDF5Widget(FileView):
                      qt.SIGNAL('activated(QModelIndex)'),
                      self.itemActivated)
 
-        qt.QObject.connect(self,
-                     qt.SIGNAL('clicked(QModelIndex)'),
-                     self.itemClicked)
+        #qt.QObject.connect(self,
+        #             qt.SIGNAL('clicked(QModelIndex)'),
+        #             self.itemClicked)
+        self.clicked.connect(self.itemClicked)
 
-        qt.QObject.connect(self,
-                     qt.SIGNAL('doubleClicked(QModelIndex)'),
-                     self.itemDoubleClicked)
+        #qt.QObject.connect(self,
+        #             qt.SIGNAL('doubleClicked(QModelIndex)'),
+        #             self.itemDoubleClicked)
+        self.doubleClicked.connect(self.itemDoubleClicked)
 
-        qt.QObject.connect(
-            self,
-            qt.SIGNAL('collapsed(QModelIndex)'),
-            self._adjust)
+        #qt.QObject.connect(
+        #    self,
+        #    qt.SIGNAL('collapsed(QModelIndex)'),
+        #    self._adjust)
+        self.collapsed.connect(self._adjust)
 
-        qt.QObject.connect(
-            self,
-            qt.SIGNAL('expanded(QModelIndex)'),
-            self._adjust)
+        #qt.QObject.connect(
+        #    self,
+        #    qt.SIGNAL('expanded(QModelIndex)'),
+        #    self._adjust)
+        self.expanded.connect(self._adjust)
 
     def _adjust(self, modelIndex=None):
         self.resizeColumnToContents(0)
@@ -637,7 +638,7 @@ class HDF5Widget(FileView):
         ddict['dtype'] = item.dtype
         ddict['shape'] = item.shape
         ddict['mouse'] = self._lastMouse * 1
-        self.emit(qt.SIGNAL("HDF5WidgetSignal"), ddict)
+        self.sigHDF5WidgetSignal.emit(ddict)
 
     def getSelectedEntries(self):
         modelIndexList = self.selectedIndexes()
@@ -671,6 +672,6 @@ if __name__ == "__main__":
         print(ddict)
         if ddict['type'].lower() in ['dataset']:
             print(phynxFile[ddict['name']].dtype, phynxFile[ddict['name']].shape)
-    qt.QObject.connect(fileView, qt.SIGNAL("HDF5WidgetSignal"), mySlot)
+    fileView.sigHDF5WidgetSignal.connect(mySlot)
     fileView.show()
     sys.exit(app.exec_())

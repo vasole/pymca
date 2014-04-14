@@ -45,12 +45,13 @@ class MyQLineEdit(qt.QLineEdit):
 
     def focusOutEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('white'))
-        self.emit(qt.SIGNAL("returnPressed()"))
+        self.returnPressed[()].emit()
         
 """
 Manage colormap Widget class
 """
 class ColormapDialog(qt.QDialog):
+    sigColormapChanged = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="Colormap Dialog"):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle(name)
@@ -92,18 +93,14 @@ class ColormapDialog(qt.QDialog):
         self.combo = qt.QComboBox(hbox1)
         for colormap in self.colormapList:
             self.combo.addItem(colormap)
-        self.connect(self.combo,
-                     qt.SIGNAL("activated(int)"),
-                     self.colormapChange)
+        self.combo.activated[int].connect(self.colormapChange)
         hlayout1.addWidget(self.combo)
 
         # autoscale
         self.autoScaleButton = qt.QPushButton("Autoscale", hbox1)
         self.autoScaleButton.setCheckable(True)
         self.autoScaleButton.setAutoDefault(False)    
-        self.connect(self.autoScaleButton,
-                     qt.SIGNAL("toggled(bool)"),
-                     self.autoscaleChange)
+        self.autoScaleButton.toggled[bool].connect(self.autoscaleChange)
         hlayout1.addWidget(self.autoScaleButton)
 
         # autoscale 90%
@@ -111,9 +108,7 @@ class ColormapDialog(qt.QDialog):
         self.autoScale90Button.setCheckable(True)
         self.autoScale90Button.setAutoDefault(False)    
                 
-        self.connect(self.autoScale90Button,
-                     qt.SIGNAL("toggled(bool)"),
-                     self.autoscale90Change)
+        self.autoScale90Button.toggled[bool].connect(self.autoscale90Change)
         hlayout1.addWidget(self.autoScale90Button)
 
         # hlayout
@@ -146,9 +141,7 @@ class ColormapDialog(qt.QDialog):
         hlayout0.addWidget(g2)
         hlayout0.addWidget(g3)
         vlayout.addWidget(hbox0)
-        self.connect(self.buttonGroup,
-                     qt.SIGNAL("buttonClicked(int)"),
-                     self.buttonGroupChange)
+        self.buttonGroup.buttonClicked[int].connect(self.buttonGroupChange)
         vlayout.addSpacing(20)
 
         hboxlimits = qt.QWidget(self)
@@ -186,9 +179,7 @@ class ColormapDialog(qt.QDialog):
         self.minText  = MyQLineEdit(hbox2)
         self.minText.setFixedWidth(150)
         self.minText.setAlignment(qt.Qt.AlignRight)
-        self.connect(self.minText,
-                     qt.SIGNAL("returnPressed()"),
-                     self.minTextChanged)
+        self.minText.returnPressed[()].connect(self.minTextChanged)
         hlayout2.addWidget(self.minText)
         
         # hlayout 3 : - min label
@@ -213,9 +204,7 @@ class ColormapDialog(qt.QDialog):
         self.maxText.setFixedWidth(150)
         self.maxText.setAlignment(qt.Qt.AlignRight)
 
-        self.connect( self.maxText,
-                      qt.SIGNAL("returnPressed()"),
-                      self.maxTextChanged)
+        self.maxText.returnPressed[()].connect(self.maxTextChanged)
         hlayout3.addWidget(self.maxText)
 
 
@@ -541,18 +530,16 @@ class ColormapDialog(qt.QDialog):
             vmax = self.maxValue
             vmin = self.minValue
         try:
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("ColormapChanged"),
-                        (self.colormapIndex, self.autoscale,
-                         vmin, vmax,
-                         self.dataMin, self.dataMax,
-                         self.colormapType))
-            else:
-                self.emit(qt.SIGNAL("ColormapChanged"),
-                        self.colormapIndex, self.autoscale,
-                        vmin, vmax,
-                        self.dataMin, self.dataMax,
-                        self.colormapType)
+            self.emit(qt.SIGNAL("ColormapChanged"),
+                    self.colormapIndex, self.autoscale,
+                    vmin, vmax,
+                    self.dataMin, self.dataMax,
+                    self.colormapType)
+            cmap = [self.colormapIndex, self.autoscale,
+                    vmin, vmax,
+                    self.dataMin, self.dataMax,
+                    self.colormapType]
+            self.sigColormapChanged.emit(cmap)
             
         except:
             sys.excepthook(sys.exc_info()[0],

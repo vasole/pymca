@@ -38,6 +38,7 @@ except:
     OBJECT3D = False
 
 class SpecFileCntTable(qt.QTableWidget):
+    sigSpecFileCntTableSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None):
         qt.QTableWidget.__init__(self, parent)
         self.cntList      = []
@@ -127,9 +128,7 @@ class SpecFileCntTable(qt.QTableWidget):
             if widget is None:
                 widget = CheckBoxItem(self, i, j)
                 self.setCellWidget(i, j, widget)
-                qt.QObject.connect(widget,
-                                   qt.SIGNAL('CheckBoxItemSignal'),
-                                   self._mySlot)
+                widget.sigCheckBoxItemSignal.connect(self._mySlot)
             else:
                 pass
 
@@ -223,7 +222,7 @@ class SpecFileCntTable(qt.QTableWidget):
                     widget.setChecked(False)
         ddict = {}
         ddict["event"] = "updated"
-        self.emit(qt.SIGNAL('SpecCntTableSignal'), ddict)        
+        self.sigSpecFileCntTableSignal.emit(ddict)        
         
 
     def getCounterSelection(self):
@@ -275,11 +274,12 @@ class SpecFileCntTable(qt.QTableWidget):
         
 
 class CheckBoxItem(qt.QCheckBox):
+    sigCheckBoxItemSignal = qt.pyqtSignal(object)
     def __init__(self, parent, row, col):
         qt.QCheckBox.__init__(self, parent)
         self.__row = row
         self.__col = col
-        qt.QObject.connect(self, qt.SIGNAL("clicked(bool)"), self._mySignal)
+        self.clicked[bool].connect(self._mySignal)
 
     def _mySignal(self, value):
         ddict = {}
@@ -287,7 +287,7 @@ class CheckBoxItem(qt.QCheckBox):
         ddict["state"] = value
         ddict["row"] = self.__row * 1
         ddict["col"] = self.__col * 1
-        self.emit(qt.SIGNAL('CheckBoxItemSignal'), ddict)
+        self.sigCheckBoxItemSignal.emit(ddict)
 
 def main():
     app = qt.QApplication([])

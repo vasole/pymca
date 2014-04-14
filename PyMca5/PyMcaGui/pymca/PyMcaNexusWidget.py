@@ -34,7 +34,10 @@ from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaGui.io.hdf5 import QNexusWidget
 from PyMca5.PyMcaGui import QStackWidget
 from PyMca5.PyMcaIO import HDF5Stack1D
-
+if hasattr(qt, 'QString'):
+    QString = qt.QString
+else:
+    QString = str
 DEBUG=0
 
 class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
@@ -238,7 +241,7 @@ if __name__ == "__main__":
     def replaceSelection(sel):
         print(sel)
     w.show()
-    qt.QObject.connect(w, qt.SIGNAL("addSelection"),     addSelection)
-    qt.QObject.connect(w, qt.SIGNAL("removeSelection"),  removeSelection)
-    qt.QObject.connect(w, qt.SIGNAL("replaceSelection"), replaceSelection)
+    w.sigAddSelection.connect(addSelection)
+    w.sigRemoveSelection.connect(removeSelection)
+    w.sigReplaceSelection.connect(replaceSelection)
     sys.exit(app.exec_())
