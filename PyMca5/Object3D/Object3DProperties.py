@@ -1,5 +1,33 @@
+#/*##########################################################################
+# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your option)
+# any later version.
+#
+# This file is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
+# is a problem for you.
+#
+#############################################################################*/
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "LGPL2+"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import Object3DQt   as qt
-import PyQt4.Qwt5 as Qwt5
+import Object3DSlider
 from VerticalSpacer import VerticalSpacer
 
 DEBUG = 0
@@ -106,38 +134,32 @@ class Object3DAspect(qt.QGroupBox):
         i = 0
         # point size
         label = qt.QLabel('Point size')
-        self.pointSize = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
-        self.pointSize.setRange(1.0, 1.0, 1.0)
+        self.pointSize = Object3DSlider.Object3DSlider(self, qt.Qt.Horizontal)
+        self.pointSize.setRange(0.0, 1.0, 1.0)
         self.pointSize.setValue(1.0)
         self.l.addWidget(label, i, 0)
         self.l.addWidget(self.pointSize, i, 1)
-        self.connect(self.pointSize,
-                     qt.SIGNAL("valueChanged(double)"),
-                     self._slot)
+        self.pointSize.valueChanged.connect(self._slot)
 
         # line width
         i += 1
         label = qt.QLabel('Line width')
-        self.lineWidth = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
-        self.lineWidth.setRange(1.0, 1.0, 1.0)
+        self.lineWidth = Object3DSlider.Object3DSlider(self, qt.Qt.Horizontal)
+        self.lineWidth.setRange(0.0, 1.0, 1.0)
         self.lineWidth.setValue(1.0)
         self.l.addWidget(label, i, 0)
         self.l.addWidget(self.lineWidth, i, 1)
-        self.connect(self.lineWidth,
-                     qt.SIGNAL("valueChanged(double)"),
-                     self._slot)
+        self.lineWidth.valueChanged.connect(self._slot)
 
         # transparency
         i += 1
         label = qt.QLabel('Transparency')
-        self.transparency = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
+        self.transparency = Object3DSlider.Object3DSlider(self, qt.Qt.Horizontal)
         self.transparency.setRange(0.0, 1.0, 0.01)
         self.transparency.setValue(0.0)
         self.l.addWidget(label, i, 0)
         self.l.addWidget(self.transparency, i, 1)
-        self.connect(self.transparency,
-                     qt.SIGNAL("valueChanged(double)"),
-                     self._slot)
+        self.transparency.valueChanged.connect(self._slot)
 
         # bounding box
         self.boundingBoxCheckBox = qt.QCheckBox(self)
@@ -263,33 +285,27 @@ class Object3DScale(qt.QGroupBox):
 
         # xScaling
         i = 0
-        self.xScaleSlider = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
-        self.xScaleSlider.setScale(-10.0, 10.0, 0.001)
+        self.xScaleSlider = Object3DSlider.Object3DSlider(self, qt.Qt.Horizontal)
+        self.xScaleSlider.setRange(-10.0, 10.0, 0.001)
         self.xScaleSlider.setValue(1.0)
         self.l.addWidget(self.xScaleSlider, i, 2)
-        self.connect(self.xScaleSlider,
-                     qt.SIGNAL("valueChanged(double)"),
-                     self._xSliderSlot)
+        self.xScaleSlider.valueChanged.connect(self._xSliderSlot)
 
         # yScaling
         i += 1
-        self.yScaleSlider = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
+        self.yScaleSlider = Object3DSlider.Object3DSlider(self, qt.Qt.Horizontal)
         self.yScaleSlider.setRange(-100.0, 100.0, 0.01)
         self.yScaleSlider.setValue(1.0)
         self.l.addWidget(self.yScaleSlider, i, 2)
-        self.connect(self.yScaleSlider,
-                     qt.SIGNAL("valueChanged(double)"),
-                     self._ySliderSlot)
+        self.yScaleSlider.valueChanged.connect(self._ySliderSlot)
 
         # zScaling
         i += 1
-        self.zScaleSlider = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
+        self.zScaleSlider = Object3DSlider.Object3DSlider(self, qt.Qt.Horizontal)
         self.zScaleSlider.setRange(-100.0, 100.0, 0.01)
         self.zScaleSlider.setValue(1.0)
         self.l.addWidget(self.zScaleSlider, i, 2)
-        self.connect(self.zScaleSlider,
-                     qt.SIGNAL("valueChanged(double)"),
-                     self._zSliderSlot)
+        self.zScaleSlider.valueChanged.connect(self._zSliderSlot)
 
     def _xSliderSlot(self, *var):
         if not self.__disconnect:

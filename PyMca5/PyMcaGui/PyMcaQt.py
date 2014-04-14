@@ -43,6 +43,10 @@ if ('PySide' in sys.modules) or ('PySide' in sys.argv):
         from PySide.QtSvg import *
     except:
         pass
+    try:
+        from PySide.QtOpenGL import *
+    except:
+        pass
     pyqtSignal = Signal
 
     #matplotlib has difficulties to identify PySide
@@ -55,6 +59,10 @@ else:
     import sip
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
+    try:
+        from PyQt4.QtOpenGL import *
+    except:
+        pass
     try:
         # In case PyQwt is compiled with QtSvg this forces
         # cx_freeze to add PyQt4.QtSvg to the list of modules

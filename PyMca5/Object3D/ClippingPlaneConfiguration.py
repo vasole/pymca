@@ -1,5 +1,33 @@
+#/*##########################################################################
+# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your option)
+# any later version.
+#
+# This file is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+#
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
+# is a problem for you.
+#
+#############################################################################*/
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "LGPL2+"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import Object3DQt as qt
-import PyQt4.Qwt5 as Qwt5
+import Object3DSlider
 from Object3DMovement import Object3DRotationWidget, Object3DTranslationWidget
 import numpy
 
@@ -44,12 +72,10 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
                 self.validatorList.append(v)
                 vector.append(line)
             if item != "U0":
-                slider = Qwt5.QwtSlider(self, qt.Qt.Horizontal)
+                slider = Object3DSlider.Object3DSlider(self, qt.Qt.Horizontal)
                 slider.setRange(-100, 100, 0.05)
-                slider.setValue(0.0)
-                self.connect(slider,
-                         qt.SIGNAL("valueChanged(double)"),
-                         self._sliderSlot)
+                slider.setValue(0.0)                
+                slider.valueChanged.connect(self._sliderSlot)
                          
                 vector.append(slider)
             self.planeList.append(vector)

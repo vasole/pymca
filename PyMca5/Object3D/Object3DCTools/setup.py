@@ -30,7 +30,8 @@ setup (
         description  = "Object3D helper module",
         author       = "V.A. Sole - ESRF",
         author_email = "sole@esrf.fr",
-        url          = "http://www.esrf.fr/computing/bliss/",
+        url          = "http://pymca.sourceforge.net",
+        license      = "MIT",
 
         # Description of the modules and packages in the distribution
         ext_modules  = [
