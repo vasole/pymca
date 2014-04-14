@@ -1,30 +1,31 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option)
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
-# PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
+# This file is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
-# You should have received a copy of the GNU General Public License along with
-# PyMca; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# PyMca follows the dual licensing model of Riverbank's PyQt and cannot be
-# used as a free plugin for a non-free program.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
+#
 #############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "LGPL2+"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
 
 try:
@@ -199,11 +200,11 @@ def getPlugin1DInstance(plotWindow, **kw):
 if __name__ == "__main__":
     from PyMca5 import PyMcaQt as qt
     app = qt.QApplication([])
-    from PyMca5.Plot1DQwt import Plot1DQwt as Plot1D
+    from PyMca5.PyMcaGraph import Plot
     i = numpy.arange(1000.)
     y1 = 10.0 + 5000.0 * numpy.exp(-0.01*(i-50)**2)
     y2 = 10.0 + 5000.0 * numpy.exp(-((i-55)/5.)**2)
-    plot = Plot1D()
+    plot = Plot.Plot()
     plot.addCurve(i, y1, "y1")
     plot.addCurve(i, y2, "y2")
     plugin = getPlugin1DInstance(plot)
