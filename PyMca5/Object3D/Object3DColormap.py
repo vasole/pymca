@@ -152,7 +152,6 @@ class Object3DColormap(qt.QGroupBox):
         delta =  (self.dataMax-self.dataMin) / 200.
         for i in [0, 1]:
             slider = Object3DSlider.Object3DSlider(self, qt.Qt.Horizontal)
-            print(self.dataMin, self.dataMax, delta)
             slider.setRange(self.dataMin, self.dataMax, delta)
             if i == 0:
                 slider.setValue(self.maxValue)
