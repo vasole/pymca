@@ -1,42 +1,43 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option)
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
-# PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
+# This file is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
-# You should have received a copy of the GNU General Public License along with
-# PyMca; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# PyMca follows the dual licensing model of Riverbank's PyQt and cannot be
-# used as a free plugin for a non-free program.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #
 # Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
+#
 #############################################################################*/
-import PyQt4.QtCore as QtCore
-import PyQt4.QtGui as QtGui
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "LGPL2+"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
-class HDFInfoCustomEvent(QtCore.QEvent):
+class HDFInfoCustomEvent(qt.QEvent):
     def __init__(self, ddict):
         if ddict is None:
             ddict = {}
         self.dict = ddict
-        QtCore.QEvent.__init__(self, QtCore.QEvent.User)
+        qt.QEvent.__init__(self, qt.QEvent.User)
         
-class CloseEventNotifyingWidget(QtGui.QWidget):
+class CloseEventNotifyingWidget(qt.QWidget):
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        qt.QWidget.__init__(self, parent)
         self._notifyCloseEventToWidget = []
 
     def notifyCloseEventToWidget(self, widget):
@@ -50,7 +51,7 @@ class CloseEventNotifyingWidget(QtGui.QWidget):
                 ddict['event'] = 'closeEventSignal'
                 ddict['id']    = id(self)
                 newEvent = HDFInfoCustomEvent(ddict)
-                QtGui.QApplication.postEvent(widget,
+                qt.QApplication.postEvent(widget,
                                       newEvent)
             self._notifyCloseEventToWidget = []
-        return QtGui.QWidget.closeEvent(self, event)
+        return qt.QWidget.closeEvent(self, event)
