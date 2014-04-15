@@ -28,10 +28,7 @@ __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 """
-This module simplifies writing code that has to deal with with PyQt and PyQt4.
-
-In the future may also be used to choose between PyQt4 and PySide depending
-on the one that has been previously chosen by the end user.
+This module simplifies writing code that has to deal with with PySide and PyQt4.
 
 """
 # force cx_freeze to consider sip among the modules to add
