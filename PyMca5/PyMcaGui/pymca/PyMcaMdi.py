@@ -74,8 +74,7 @@ class PyMcaMdi(qt.QMainWindow):
 
         self.splitter.insertWidget(1, self.mdi)
         self.windowMapper = qt.QSignalMapper(self)
-        self.connect(self.windowMapper, qt.SIGNAL("mapped(QWidget *)"),
-                     self.mdi, qt.SLOT("setActiveWindow(QWidget *)"))
+        self.windowMapper.mapped.connect(self.mdi.setActiveWindow)
 
 
         #self.setDockEnabled(qt.Qt.DockTop, 0)
@@ -100,31 +99,27 @@ class PyMcaMdi(qt.QMainWindow):
             self.actionOpen.setText(QString("&Open"))
             self.actionOpen.setIcon(self.Icons["fileopen"])
             self.actionOpen.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
-            self.connect(self.actionOpen, qt.SIGNAL("triggered(bool)"),
-                         self.onOpen)
+            self.actionOpen.triggered[bool].connect(self.onOpen)
             #filesaveas
             self.actionSaveAs = qt.QAction(self)
             self.actionSaveAs.setText(QString("&Save"))
             self.actionSaveAs.setIcon(self.Icons["filesave"])
             self.actionSaveAs.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
-            self.connect(self.actionSaveAs, qt.SIGNAL("triggered(bool)"),
-                         self.onSaveAs)
+            self.actionSaveAs.triggered[bool].connect(self.onSaveAs)
 
             #filesave
             self.actionSave = qt.QAction(self)
             self.actionSave.setText(QString("Save &Defaults"))
             #self.actionSave.setIcon(self.Icons["filesave"])
             #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
-            self.connect(self.actionSave, qt.SIGNAL("triggered(bool)"),
-                         self.onSave)
+            self.actionSave.triggered[bool].connect(self.onSave)
 
             #fileprint
             self.actionPrint = qt.QAction(self)
             self.actionPrint.setText(QString("&Print"))
             self.actionPrint.setIcon(self.Icons["fileprint"])
             self.actionPrint.setShortcut(qt.Qt.CTRL+qt.Qt.Key_P)
-            self.connect(self.actionPrint, qt.SIGNAL("triggered(bool)"),
-                         self.onPrint)
+            self.actionPrint.triggered[bool].connect(self.onPrint)
 
             #filequit
             self.actionQuit = qt.QAction(self)
@@ -132,10 +127,7 @@ class PyMcaMdi(qt.QMainWindow):
             #self.actionQuit.setIcon(self.Icons["fileprint"])
             self.actionQuit.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Q)
             qApp = qt.QApplication.instance() 
-            self.actionQuit.triggered.connect(qApp.closeAllWindows)
-                               #qt.SIGNAL("triggered(bool)"),
-                               #qt.qApp,
-                               #qt.SLOT("closeAllWindows()"))
+            self.actionQuit.triggered[bool].connect(qApp.closeAllWindows)
 
     def initIcons(self):
         self.Icons= {}
@@ -251,15 +243,14 @@ class PyMcaMdi(qt.QMainWindow):
         if self.options["MenuTools"]:
             self.menuTools= qt.QMenu()
             #self.menuTools.setCheckable(1)
-            self.connect(self.menuTools, qt.SIGNAL("aboutToShow()"),
-                         self.menuToolsAboutToShow)
+            self.menuTools.aboutToShow[()].connect(self.menuToolsAboutToShow)
             self.menuTools.setTitle("&Tools")
             self.menuBar().addMenu(self.menuTools)
                 
         if self.options["MenuWindow"]:
             self.menuWindow= qt.QMenu()
             #self.menuWindow.setCheckable(1)
-            self.connect(self.menuWindow, qt.SIGNAL("aboutToShow()"), self.menuWindowAboutToShow)
+            self.menuWindow.aboutToShow[()].connect(self.menuWindowAboutToShow)
             self.menuWindow.setTitle("&Window")
             self.menuBar().addMenu(self.menuWindow)
 
@@ -291,8 +282,7 @@ class PyMcaMdi(qt.QMainWindow):
             action = self.menuWindow.addAction(text)
             action.setCheckable(True)
             action.setChecked(window == self.mdi.activeWindow())
-            self.connect(action, qt.SIGNAL("triggered()"),
-                         self.windowMapper, qt.SLOT("map()"))
+            action.triggered[()].connect(self.windowMapper.map)
             self.windowMapper.setMapping(action, window)
 
     def menuWindowActivated(self, idx = None):
@@ -305,10 +295,10 @@ class PyMcaMdi(qt.QMainWindow):
         self.menuWindowMap[idx].setFocus()
 
     def __connectFollow(self):
-        self.connect(self.mdi, qt.SIGNAL("windowActivated(QWidget*)"), self.onWindowActivated)
+        self.mdi.windowActivated.connect(self.onWindowActivated)
 
     def __disconnectFollow(self):
-        self.disconnect(self.mdi, qt.SIGNAL("windowActivated(QWidget*)"), self.onWindowActivated)
+        self.mdi.windowActivated.disconnect(self.onWindowActivated)
 
     def setFollowActiveWindow(self, follow):
         if follow != self.followActiveWindow:

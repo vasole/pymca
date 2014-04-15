@@ -113,10 +113,7 @@ class QSpsDataSource(QSource.QSource):
                     else:
                         del self.selections[key][i]
             
-                if QTVERSION < '4.0.0':
-                    self.emit(qt.PYSIGNAL("updated"), (ddict,))
-                else:
-                    self.emit(qt.SIGNAL("updated"), ddict)
+                self.sigUpdated.emit(ddict)
             else:
                 print("No info????")
         
@@ -133,10 +130,6 @@ if __name__ == "__main__":
         print(ddict['Key'])
     app.mytest = mytest
     data = obj.getDataObject(arrayname,poll=True)
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(obj,qt.PYSIGNAL('updated'),mytest) 
-        app.exec_loop()
-    else:
-        qt.QObject.connect(obj,qt.SIGNAL('updated'),mytest) 
-        app.exec_()
+    obj.sigUpdated.connect(mytest) 
+    app.exec_()
     

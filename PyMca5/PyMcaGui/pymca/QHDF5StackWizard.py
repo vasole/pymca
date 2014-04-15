@@ -66,9 +66,7 @@ class FileListPage(qt.QWizardPage):
         self.mainLayout.addWidget(self._listView)
         self.mainLayout.addWidget(self._listButton)
 
-        self.connect(self._listButton,
-                     qt.SIGNAL('clicked()'),
-                     self.browseList)
+        self._listButton.clicked[()].connect(self.browseList)
 
     def setFileList(self, filelist):
         text = ""
@@ -132,9 +130,7 @@ class StackIndexWidget(qt.QWidget):
             i += 1
         rButton.setChecked(True)
         self._stackIndex = -1
-        self.connect(self.buttonGroup,
-                         qt.SIGNAL('buttonPressed(QAbstractButton *)'),
-                         self._slot)
+        self.buttonGroup.buttonPressed.connect(self._slot)
 
     def _slot(self, button):
         if "first" in safe_str(button.text()).lower():
@@ -373,6 +369,3 @@ if __name__ == "__main__":
     ret = w.exec_()
     if ret == qt.QDialog.Accepted:
         print(w.getParameters())
-    #qt.QObject.connect(w, qt.SIGNAL("addSelection"),     addSelection)
-    #qt.QObject.connect(w, qt.SIGNAL("removeSelection"),  removeSelection)
-    #qt.QObject.connect(w, qt.SIGNAL("replaceSelection"), replaceSelection)

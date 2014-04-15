@@ -128,6 +128,7 @@ class StatusWidget(qt.QWidget):
         self.mainLayout.addWidget(self.chi2Line)
 
 class SimpleFitGui(qt.QWidget):
+    sigSimpleFitSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, fit=None, graph=None, actions=True):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("SimpleFitGui")
@@ -189,29 +190,23 @@ class SimpleFitGui(qt.QWidget):
             self.mainLayout.addWidget(self.fitActions)
 
         #connect top widget
-        self.connect(self.topWidget.addFunctionButton,
-                    qt.SIGNAL("clicked()"),self.importFunctions)
+        self.topWidget.addFunctionButton.clicked[()].connect(\
+                    self.importFunctions)
         
-        self.connect(self.topWidget.fitFunctionCombo,
-                     qt.SIGNAL("currentIndexChanged(int)"),
+        self.topWidget.fitFunctionCombo.currentIndexChanged[int].connect(\
                      self.fitFunctionComboSlot)
 
-        self.connect(self.topWidget.backgroundCombo,
-                     qt.SIGNAL("currentIndexChanged(int)"),
+        self.topWidget.backgroundCombo.currentIndexChanged[int].connect(\
                      self.backgroundComboSlot)
 
-        self.connect(self.topWidget.configureButton,
-                     qt.SIGNAL("clicked()"),
-                     self.configureButtonSlot)
+        self.topWidget.configureButton.clicked[()].connect(\
+                    self.configureButtonSlot)
 
         if actions:
             #connect actions
-            self.connect(self.fitActions.estimateButton,
-                        qt.SIGNAL("clicked()"),self.estimate)
-            self.connect(self.fitActions.startFitButton,
-                                    qt.SIGNAL("clicked()"),self.startFit)
-            self.connect(self.fitActions.dismissButton,
-                                    qt.SIGNAL("clicked()"),self.dismiss)        
+            self.fitActions.estimateButton.clicked[()].connect(self.estimate)
+            self.fitActions.startFitButton.clicked[()].connect(self.startFit)
+            self.fitActions.dismissButton.clicked[()].connect(self.dismiss)        
 
     def importFunctions(self, functionsfile=None):
         if functionsfile is None:
@@ -367,7 +362,7 @@ class SimpleFitGui(qt.QWidget):
         ddict['x']    = self.fitModule._x
         ddict['y']    = self.fitModule._y
         ddict['yfit'] = self.evaluateDefinedFunction()
-        self.emit(qt.SIGNAL('SimpleFitSignal'), ddict)
+        self.sigSimpleFitSignal.emit(ddict)
         self.updateGraph()
 
     def updateGraph(self):

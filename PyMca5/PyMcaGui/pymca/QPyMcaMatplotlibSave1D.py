@@ -80,6 +80,7 @@ colorlist  = [colordict['black'],
 
 
 class MatplotlibCurveTable(qt.QTableWidget):
+    sigCurveTableSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None):
         qt.QTableWidget.__init__(self, parent)
         labels = ["Curve", "Alias", "Color", "Line Style", "Line Symbol"]
@@ -120,9 +121,7 @@ class MatplotlibCurveTable(qt.QTableWidget):
         if widget is None:
             widget = CheckBoxItem(self, i, j)
             self.setCellWidget(i, j, widget)
-            qt.QObject.connect(widget,
-                               qt.SIGNAL('CheckBoxItemSignal'),
-                               self._mySlot)
+            widget.sigCheckBoxItemSignal.connect(self._mySlot)
         widget.setChecked(True)
         widget.setText(legend)
 
@@ -137,9 +136,6 @@ class MatplotlibCurveTable(qt.QTableWidget):
                                        qt.QTableWidgetItem.Type)
             item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
             self.setItem(i, j, item)
-            #qt.QObject.connect(self,
-            #                   qt.SIGNAL("itemChanged(QTableWidgetItem *)"),
-            #                   self._mySlot)
         else:
             item.setText(alias)
         #item.setFlags(qt.Qt.ItemIsEnabled | qt.Qt.ItemIsSelectable)
@@ -152,9 +148,7 @@ class MatplotlibCurveTable(qt.QTableWidget):
             options.sort()
             widget = ComboBoxItem(self, i, j, options=options)
             self.setCellWidget(i, j, widget)
-            qt.QObject.connect(widget,
-                               qt.SIGNAL('ComboBoxItemSignal'),
-                               self._mySlot)
+            widget.sigComboBoxItemSignal.connect(self._mySlot)
         color = ddict['color']
         if color == 'k':
             color = '#000000'
@@ -171,9 +165,7 @@ class MatplotlibCurveTable(qt.QTableWidget):
         if widget is None:
             widget = ComboBoxItem(self, i, j, options=options)
             self.setCellWidget(i, j, widget)
-            qt.QObject.connect(widget,
-                               qt.SIGNAL('ComboBoxItemSignal'),
-                               self._mySlot)
+            widget.sigComboBoxItemSignal.connect(self._mySlot)
 
         idx = widget.findText(ddict['linestyle'])
         widget.setCurrentIndex(idx)
@@ -185,9 +177,7 @@ class MatplotlibCurveTable(qt.QTableWidget):
         if widget is None:
             widget = ComboBoxItem(self, i, j, options=options)
             self.setCellWidget(i, j, widget)
-            qt.QObject.connect(widget,
-                               qt.SIGNAL('ComboBoxItemSignal'),
-                               self._mySlot)
+            widget.sigComboBoxItemSignal.connect(self._mySlot)
 
         idx = widget.findText(ddict['linemarker'])
         widget.setCurrentIndex(idx)
@@ -220,16 +210,17 @@ class MatplotlibCurveTable(qt.QTableWidget):
             widget = self.cellWidget(i, 4)
             linemarker = str(widget.currentText())
             ddict['curvedict'][legend]['linemarker'] = linemarker
-        self.emit(qt.SIGNAL("CurveTableSignal"), ddict)
+        self.sigCurveTableSignal.emit(ddict)
 
 class ComboBoxItem(qt.QComboBox):
+    sigComboBoxItemSignal = qt.pyqtSignal(object)
     def __init__(self, parent, row, col, options=[1,2,3]):
         qt.QCheckBox.__init__(self, parent)
         self.__row = row
         self.__col = col
         for option in options:
             self.addItem(option)
-        qt.QObject.connect(self, qt.SIGNAL("activated(int)"), self._mySignal)
+        self.activated[int].connect(self._mySignal)
 
     def _mySignal(self, value):
         ddict = {}
@@ -237,14 +228,15 @@ class ComboBoxItem(qt.QComboBox):
         ddict["item"] = value
         ddict["row"] = self.__row * 1
         ddict["col"] = self.__col * 1
-        self.emit(qt.SIGNAL('ComboBoxItemSignal'), ddict)
+        self.sigComboBoxItemSignal.emit(ddict)
 
 class CheckBoxItem(qt.QCheckBox):
+    sigCheckBoxItemSignal = qt.pyqtSignal(object)
     def __init__(self, parent, row, col):
         qt.QCheckBox.__init__(self, parent)
         self.__row = row
         self.__col = col
-        qt.QObject.connect(self, qt.SIGNAL("clicked(bool)"), self._mySignal)
+        self.clicked[bool].connect(self._mySignal)
 
     def _mySignal(self, value):
         ddict = {}
@@ -252,7 +244,7 @@ class CheckBoxItem(qt.QCheckBox):
         ddict["state"] = value
         ddict["row"] = self.__row * 1
         ddict["col"] = self.__col * 1
-        self.emit(qt.SIGNAL('CheckBoxItemSignal'), ddict)
+        self.sigCheckBoxItemSignal.emit(ddict)
 
 
 class QPyMcaMatplotlibSaveDialog(qt.QDialog):
@@ -315,22 +307,14 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
             self.mainLayout.addWidget(self.actionsWidget, 3, 0)
             self.mainLayout.setRowStretch(1, 1)
 
-        self.connect(self.xLabelLine,
-                     qt.SIGNAL("editingFinished()"),
-                     self._xLabelSlot)
+        self.xLabelLine.editingFinished[()].connect(self._xLabelSlot)
         
-        self.connect(self.yLabelLine,
-                     qt.SIGNAL("editingFinished()"),
-                     self._yLabelSlot)
+        self.yLabelLine.editingFinished[()].connect(self._yLabelSlot)
 
 
-        self.connect(self.acceptButton,
-                     qt.SIGNAL("clicked()"),
-                     self.accept)
+        self.acceptButton.clicked[()].connect(self.accept)
         
-        self.connect(self.dismissButton,
-                     qt.SIGNAL("clicked()"),
-                     self.reject)
+        self.dismissButton.clicked[()].connect(self.reject)
 
     def exec_(self):
         self.plot.draw()
@@ -404,9 +388,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
 
     def setCurveTable(self, table):
         self.curveTable = table
-        self.connect(self.curveTable,
-                     qt.SIGNAL("CurveTableSignal"),
-                     self.updateFromTable)
+        self.curveTable.sigCurveTableSignal.connect(self.updateFromTable)
 
     def setParameters(self,kw):
         if 'bw' in kw:

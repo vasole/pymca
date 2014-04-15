@@ -139,10 +139,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
+    app.lastWindowClosed.connect(app.quit)
 
     import getopt
     options=''

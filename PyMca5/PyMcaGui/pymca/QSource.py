@@ -32,20 +32,12 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
 SOURCE_EVENT = qt.QEvent.User
 
-if QTVERSION < '4.0.0':
-    class SourceEvent(qt.QCustomEvent):
-        def __init__(self, ddict=None):
-            if ddict is None:
-                ddict = {}
-            qt.QCustomEvent.__init__(self, SOURCE_EVENT)
-            self.dict = ddict
-else:
-    class SourceEvent(qt.QEvent):
-        def __init__(self, ddict=None):
-            if ddict is None:
-                ddict = {}
-            self.dict = ddict
-            qt.QEvent.__init__(self, SOURCE_EVENT)
+class SourceEvent(qt.QEvent):
+    def __init__(self, ddict=None):
+        if ddict is None:
+            ddict = {}
+        self.dict = ddict
+        qt.QEvent.__init__(self, SOURCE_EVENT)
 
 import time
 try:
@@ -55,6 +47,7 @@ except ImportError:
 import weakref
 
 class QSource(qt.QObject):
+    sigUpdated = qt.pyqtSignal(object)
     def __init__(self):
         qt.QObject.__init__(self, None) #no parent
 

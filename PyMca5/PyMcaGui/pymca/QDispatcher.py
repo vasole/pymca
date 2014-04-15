@@ -38,6 +38,11 @@ from . import QDataSource
 DEBUG = 0
 
 class QDispatcher(qt.QWidget):
+    sigAddSelection = qt.pyqtSignal(object)
+    sigRemoveSelection = qt.pyqtSignal(object)
+    sigReplaceSelection = qt.pyqtSignal(object)
+    sigOtherSignals = qt.pyqtSignal(object)
+    
     def __init__(self, parent=None, pluginsIcon=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
@@ -159,7 +164,10 @@ class QDispatcher(qt.QWidget):
                         #10 read outs
                         ddict["sourcereference"] = weakref.ref(source)
                         selectionList.append(ddict)
-                    self.emit(qt.SIGNAL(event), selectionList)
+                    if event.lower() == "addselection":
+                        self.sigAddSelection.emit(selectionList)
+                    else:
+                        print("Unhandled dispatcher event = ", event)
 
     def _removeSelectionSlot(self, sel_list):
         if DEBUG:
@@ -169,7 +177,7 @@ class QDispatcher(qt.QWidget):
             ddict = {}
             ddict.update(sel)
             ddict["event"] = "removeSelection"
-            self.emit(qt.SIGNAL("removeSelection"), ddict)
+            self.sigRemoveSelection.emit(ddict)
 
     def _replaceSelectionSlot(self, sel_list):
         if DEBUG:
@@ -183,7 +191,7 @@ class QDispatcher(qt.QWidget):
             self._addSelectionSlot(sel_list[1:], event = "addSelection")
 
     def _otherSignalsSlot(self, ddict):
-        self.emit(qt.SIGNAL("otherSignals"), ddict)
+        self.sigOtherSignals.emit(ddict)
 
     def _sourceSelectorSlot(self, ddict):
         if DEBUG:
@@ -284,7 +292,7 @@ class QDispatcher(qt.QWidget):
         else:
             ddict['SourceName'] = None
         ddict['event'] = "SourceTypeChanged"
-        self.emit(qt.SIGNAL("otherSignals"), ddict)
+        self.sigOtherSignals.emit(ddict)
 
     def _pluginsClicked(self):
         ddict = {}
