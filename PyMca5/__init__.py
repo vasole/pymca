@@ -12,4 +12,6 @@ except:
     from PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
 
 from .PyMcaMath import SpecfitFuns
+from .PyMcaMath.fitting import Gefit
+from .PyMcaMath.fitting import Specfit
 from .PyMcaPhysics.xrf import Elements
