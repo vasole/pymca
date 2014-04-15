@@ -41,6 +41,8 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
 
 class RGBCorrelatorGraph(qt.QWidget):
+    sigProfileSignal = qt.pyqtSignal(object)
+
     def __init__(self, parent = None, selection=False, aspect=True,
                  colormap=False,
                  imageicons=False, standalonesave=True, standalonezoom=True,
@@ -65,8 +67,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             if len(self._pickerSelectionButtons):
                 self.graph.sigPlotSignal.connect(\
                     self._graphPolygonSignalReceived)
-                self.connect(self._pickerSelectionWidthValue,
-                             qt.SIGNAL('valueChanged(int)'),
+                self._pickerSelectionWidthValue.valueChanged[int].connect( \
                              self.setPickerSelectionWith)
         
         self.saveDirectory = os.getcwd()
@@ -398,7 +399,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         ddict['event'] = "profileWidthChanged"
         ddict['pixelwidth'] = self._pickerSelectionWidthValue.value()
         ddict['mode'] = mode
-        self.emit(qt.SIGNAL('profileSignal'), ddict)
+        self.sigProfileSignal.emit(ddict)
 
     def hideProfileSelectionIcons(self):
         if not len(self._pickerSelectionButtons):
@@ -450,7 +451,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             mode = "NONE"
         ddict['event'] = "profileModeChanged"
         ddict['mode'] = mode
-        self.emit(qt.SIGNAL('profileSignal'), ddict)
+        self.sigProfileSignal.emit(ddict)
 
     def _graphPolygonSignalReceived(self, ddict):
         if DEBUG:
@@ -465,7 +466,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             return
         ddict['mode'] = label
         ddict['pixelwidth'] = self._pickerSelectionWidthValue.value()
-        self.emit(qt.SIGNAL('profileSignal'), ddict)
+        self.sigProfileSignal.emit(ddict)
 
     def _addToolButton(self, icon, action, tip, toggle=None, state=None, position=None):
         tb      = qt.QToolButton(self.toolBar)            
@@ -485,7 +486,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         else:
             self.toolBarLayout.addWidget(tb)
         if action is not None:
-            self.connect(tb,qt.SIGNAL('clicked()'), action)
+            tb.clicked[()].connect(action)
         return tb
 
     def _zoomReset(self, replot=None):
@@ -631,10 +632,7 @@ class MyQLabel(qt.QLabel):
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
+    app.lastWindowClosed.connect(app.quit)
 
     container = RGBCorrelatorGraph()
     container.show()

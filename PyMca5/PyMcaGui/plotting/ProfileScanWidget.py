@@ -37,6 +37,9 @@ else:
 DEBUG = 0
 
 class ProfileScanWidget(Window):
+    sigAddClicked = qt.pyqtSignal(object)
+    sigRemoveClicked = qt.pyqtSignal(object)
+    sigReplaceClicked = qt.pyqtSignal(object)
     def __init__(self, parent=None, actions=False, **kw):
         super(ProfileScanWidget, self).__init__(parent, **kw)
         if actions:
@@ -110,25 +113,22 @@ class ProfileScanWidget(Window):
         ddict['label']   = text
         ddict['curves']  = curveList
         if action == 'ADD':
-            self.emit(qt.SIGNAL("addClicked"), ddict)
+            self.sigAddClicked.emit(ddict)
         elif action == 'REMOVE':
-            self.emit(qt.SIGNAL("removeClicked"), ddict)
+            self.sigRemoveClicked.emit(ddict)
         else:
-            self.emit(qt.SIGNAL("replaceClicked"), ddict)
+            self.replaceAddClicked.emit(ddict)
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
+    app.lastWindowClosed.connect(app.quit)
     def testSlot(ddict):
         print(ddict)
     w = ProfileScanWidget(actions=True)
     w.addCurve([1, 2, 3, 4], [1, 4, 9, 16], legend='Dummy')
-    qt.QObject.connect(w, qt.SIGNAL("addClicked"), testSlot)
-    qt.QObject.connect(w, qt.SIGNAL("removeClicked"), testSlot)
-    qt.QObject.connect(w, qt.SIGNAL("replaceClicked"), testSlot)
+    w.sigAddClicked.connect(testSlot)
+    w.sigRemoveClicked.connect(testSlot)
+    w.sigReplaceClicked.connect(testSlot)
     w.show()
     app.exec_()
 

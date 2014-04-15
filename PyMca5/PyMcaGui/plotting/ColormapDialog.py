@@ -530,11 +530,11 @@ class ColormapDialog(qt.QDialog):
             vmax = self.maxValue
             vmin = self.minValue
         try:
-            self.emit(qt.SIGNAL("ColormapChanged"),
-                    self.colormapIndex, self.autoscale,
-                    vmin, vmax,
-                    self.dataMin, self.dataMax,
-                    self.colormapType)
+            #self.emit(qt.SIGNAL("ColormapChanged"),
+            #        self.colormapIndex, self.autoscale,
+            #        vmin, vmax,
+            #        self.dataMin, self.dataMax,
+            #        self.colormapType)
             cmap = [self.colormapIndex, self.autoscale,
                     vmin, vmax,
                     self.dataMin, self.dataMax,
@@ -548,7 +548,7 @@ class ColormapDialog(qt.QDialog):
 
 def test():
     app = qt.QApplication(sys.argv)
-    app.connect(app,qt.SIGNAL("lastWindowClosed()"), app.quit)
+    app.lastWindowClosed.connect(app.quit)
     demo = ColormapDialog()
 
     # Histogram demo
@@ -560,16 +560,11 @@ def test():
     def call(*var):
         print("Received", var)
 
-    qt.QObject.connect(demo, qt.SIGNAL("ColormapChanged"), call)
+    demo.sigColormapChanged.connect(call)
 
     demo.setAutoscale(1)
-    if QTVERSION < '4.0.0':
-        app.setMainWidget(demo)
     demo.show()
-    if QTVERSION < '4.0.0':
-        app.exec_loop()
-    else:
-        app.exec_()
+    app.exec_()
 
 
 if __name__ == "__main__":

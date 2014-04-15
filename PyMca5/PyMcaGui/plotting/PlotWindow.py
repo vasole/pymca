@@ -675,7 +675,8 @@ class PlotWindow(PlotWidget.PlotWidget):
                     action.setToolTip(tip)
                 menu.addAction(action)
                 actionList.append((text, pixmap, tip, action))
-            qt.QObject.connect(menu, qt.SIGNAL("hovered(QAction *)"), self._actionHovered)
+            #qt.QObject.connect(menu, qt.SIGNAL("hovered(QAction *)"), self._actionHovered)
+            menu.hovered.connect(self._actionHovered)
             a = menu.exec_(qt.QCursor.pos())
             if a is None:
                 return None

@@ -184,9 +184,7 @@ class MaskImageWidget(qt.QWidget):
         #for easy compatibility with RGBCorrelatorGraph
         self.graph = self.graphWidget.graph
         if profileselection:
-            self.connect(self.graphWidget,
-                         qt.SIGNAL('profileSignal'), 
-                         self._profileSignalSlot)
+            self.graphWidget.sigProfileSignal.connect(self._profileSignalSlot)
 
         if standalonesave:
             self.buildStandaloneSaveMenu()
@@ -317,14 +315,11 @@ class MaskImageWidget(qt.QWidget):
                 self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=False)                
             else:
                 self._profileSelectionWindow = ProfileScanWidget.ProfileScanWidget(actions=True)
-                self.connect(self._profileSelectionWindow,
-                             qt.SIGNAL('addClicked'),
+                self._profileSelectionWindow.sigAddClicked.connect( \
                              self._profileSelectionSlot)
-                self.connect(self._profileSelectionWindow,
-                             qt.SIGNAL('removeClicked'),
+                self._profileSelectionWindow.sigRemoveClicked.connect( \
                              self._profileSelectionSlot)
-                self.connect(self._profileSelectionWindow,
-                             qt.SIGNAL('replaceClicked'),
+                self._profileSelectionWindow.sigReplaceClicked.connect(
                              self._profileSelectionSlot)
             self._interpolate =  SpecfitFuns.interpol
             #if I do not return here and the user interacts with the graph while
@@ -922,18 +917,15 @@ class MaskImageWidget(qt.QWidget):
         
         self.mainLayout.addWidget(buttonBox)
         
-        self.connect(self.addImageButton, qt.SIGNAL("clicked()"), 
-                    self._addImageClicked)
-        self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
-                    self._removeImageClicked)
+        self.addImageButton.clicked[()].connect(self._addImageClicked)
+        self.removeImageButton.clicked[()].connect(self._removeImageClicked)
         if replace:
             self.replaceImageButton = qt.QPushButton(buttonBox)
             self.replaceImageButton.setIcon(icon)
             self.replaceImageButton.setText("REPLACE IMAGE")
             self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
-            self.connect(self.replaceImageButton,
-                         qt.SIGNAL("clicked()"), 
-                         self._replaceImageClicked)
+            self.replaceImageButton.clicked[()].connect( \
+                                self._replaceImageClicked)
     
     def _setEraseSelectionMode(self):
         if DEBUG:
@@ -1456,12 +1448,12 @@ class MaskImageWidget(qt.QWidget):
                               self.colormapDialog.maxValue,
                               minData, maxData)
         self.colormapDialog.setWindowTitle("Colormap Dialog")
-        self.connect(self.colormapDialog,
-                     qt.SIGNAL("ColormapChanged"),
-                     self.updateColormap)
+        self.colormapDialog.sigColormapChanged.connect(self.updateColormap)
         self.colormapDialog._update()
 
     def updateColormap(self, *var):
+        if len(var) == 1:
+            var = var[0]
         if len(var) > 6:
             self.colormap = [var[0],
                              var[1],

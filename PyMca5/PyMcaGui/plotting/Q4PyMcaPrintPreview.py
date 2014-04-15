@@ -154,8 +154,7 @@ class PyMcaPrintPreview(qt.QDialog):
             scaleCombo.addItem("%3d %%"%scale)
             
         self.scaleCombo = scaleCombo
-        self.connect(self.scaleCombo, qt.SIGNAL("activated(int)"),        \
-                     self.__scaleChanged)
+        self.scaleCombo.activated[int].connect(self.__scaleChanged)
         
         hideBut   = qt.QPushButton("Hide", toolBar)
         #hideBut.setFixedWidth(buttonSize-10)
@@ -772,7 +771,7 @@ def testSimple():
     l.addWidget(view)
     w.resize(300, 600)
     w.show()
-    w.connect(button, qt.SIGNAL('clicked()'), printFile)
+    button.clicked[()].connect(printFile)
 
     a.exec_()    
 

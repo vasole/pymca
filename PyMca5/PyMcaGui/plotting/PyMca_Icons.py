@@ -3660,7 +3660,7 @@ def showIcons():
     import sys
     from PyMca5.PyMcaGui import PyMcaQt as qt
     a= qt.QApplication(sys.argv)
-    a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
+    app.lastWindowClosed.connect(app.quit)
     w= qt.QWidget()
     g= qt.QGridLayout(w)
 
@@ -3676,10 +3676,7 @@ def showIcons():
         idx+= 1
 
     w.show()
-    if qt.qVersion () < '4.0.0':
-        a.exec_loop()
-    else:
-        a.exec_()
+    a.exec_()
 
 if __name__=='__main__':
     showIcons()
