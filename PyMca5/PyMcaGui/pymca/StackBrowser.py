@@ -72,15 +72,10 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
 
         self.mainLayout.addWidget(self.nameBox)
         self.mainLayout.addWidget(self.slider)
-        self.connect(self.roiWidthSpin,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._roiWidthSlot)
-        self.connect(self.slider,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._showImageSliderSlot)
-        self.connect(self.name,
-                     qt.SIGNAL("editingFinished()"),
-                     self._nameSlot)
+        self.roiWidthSpin.valueChanged[int].connect(self._roiWidthSlot)
+        self.slider.valueChanged[int].connect(self._showImageSliderSlot)
+        self.name.editingFinished[()].connect(self._nameSlot)
+        
         self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         infotext  = 'Toggle background image subtraction from current image\n'
         infotext += 'No action if no background image available.'
@@ -317,8 +312,7 @@ if __name__ == "__main__":
         stackData[:, :, i] = a * i
 
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                        app,qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     w = StackBrowser()
     w.setStackDataObject(stackData, index=0)
     w.show()

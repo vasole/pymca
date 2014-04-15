@@ -58,8 +58,8 @@ class XiaCorrectionWidget(qt.QWizardPage):
         layout.addWidget(lineSep)
         layout.addWidget(optWidget)
 
-        self.connect(self.sumCheck, qt.SIGNAL("toggled(bool)"), self.__sumCheckChanged)
-        self.connect(self.avgCheck, qt.SIGNAL("toggled(bool)"), self.__avgCheckChanged)
+        self.sumCheck.toggled[bool].connect(self.__sumCheckChanged)
+        self.avgCheck.toggled[bool].connect(self.__avgCheckChanged)
 
         sumWidget= qt.QWidget(self)
         sumLayout= qt.QHBoxLayout(sumWidget)
@@ -81,7 +81,7 @@ class XiaCorrectionWidget(qt.QWizardPage):
         item.setText("Detectors")
         self.sumTable.setHorizontalHeaderItem(0, item)
 
-        self.connect(self.sumTable, qt.SIGNAL("valueChanged(int,int)"), self.__valueChanged)
+        self.sumTable.valueChanged[int,int].connect(self.__valueChanged)
 
         buttonAdd= qt.QPushButton("Add", butWidget)
         buttonDel= qt.QPushButton("Remove", butWidget)
@@ -90,8 +90,8 @@ class XiaCorrectionWidget(qt.QWizardPage):
         butLayout.addWidget(buttonDel)
         butLayout.addStretch()
 
-        self.connect(buttonAdd, qt.SIGNAL("clicked()"), self.__add)
-        self.connect(buttonDel, qt.SIGNAL("clicked()"), self.__remove)
+        buttonAdd.clicked[()].connect(self.__add)
+        buttonDel.clicked[()].connect(self.__remove)
 
         sumLayout.addWidget(self.sumTable)
         sumLayout.addWidget(butWidget)
@@ -224,9 +224,9 @@ class XiaInputWidget(qt.QWizardPage):
         butFiles= qt.QPushButton("Add Files", butWidget)
         butDirectory= qt.QPushButton("Add Directory", butWidget)
 
-        self.connect(butRemove, qt.SIGNAL("clicked()"), self.__remove)
-        self.connect(butFiles, qt.SIGNAL("clicked()"), self.__addFiles)
-        self.connect(butDirectory, qt.SIGNAL("clicked()"), self.__addDirectory)
+        butRemove.clicked[()].connect(self.__remove)
+        butFiles.clicked[()].connect(self.__addFiles)
+        butDirectory.clicked[()].connect(self.__addDirectory)
 
         butLayout.addWidget(butRemove)
         butLayout.addWidget(butFiles)
@@ -326,7 +326,7 @@ class XiaOutputWidget(qt.QWizardPage):
         topLayout.addWidget(self.directory, 0, 1)
         topLayout.addWidget(self.outname, 1, 1)
 
-        self.connect(self.directory, qt.SIGNAL("returnPressed()"), self.__directoryCheck)
+        self.directory.returnPressed[()].connect(self.__directoryCheck)
 
         butDirectory= qt.QPushButton("Find", topWidget)
         butOutname= qt.QPushButton("Default", topWidget)
@@ -334,8 +334,8 @@ class XiaOutputWidget(qt.QWizardPage):
         topLayout.addWidget(butDirectory, 0, 2)
         topLayout.addWidget(butOutname, 1, 2)
 
-        self.connect(butDirectory, qt.SIGNAL("clicked()"), self.__openDirectory)
-        self.connect(butOutname, qt.SIGNAL("clicked()"), self.__defaultOutname)
+        butDirectory.clicked[()].connect(self.__openDirectory)
+        butOutname.clicked[()].connect(self.__defaultOutname)
 
         lineSep= qt.QFrame(self)
         lineSep.setFrameStyle(qt.QFrame.HLine|qt.QFrame.Sunken)
@@ -405,6 +405,8 @@ class XiaOutputWidget(qt.QWizardPage):
 
 
 class XiaRunWidget(qt.QWidget):
+    sigStarted  = qt.pyqtSignal(())	
+    sigFinished  = qt.pyqtSignal(())	
     def __init__(self, parent=None, name=None, fl=0):
         qt.QWidget.__init__(self, parent, name, fl)
 
@@ -428,7 +430,7 @@ class XiaRunWidget(qt.QWidget):
         layout.addWidget(self.logText)
         layout.addWidget(progressWidget)
 
-        self.connect(self.startButton, qt.SIGNAL("clicked()"), self.start)
+        self.startButton.clicked[()].connect(self.start)
 
         self.parameters= {}
 
@@ -436,16 +438,14 @@ class XiaRunWidget(qt.QWidget):
         self.parameters= pars
 
     def start(self):
-        self.emit(qt.SIGNAL("started"), ())
+        self.sigStarted.emit(())
         import time
         for idx in range(30):
             self.logText.append("%d"%idx)
             qt.qApp.processEvents()
             time.sleep(.5)
             print(idx)
-
-        self.emit(qt.SIGNAL("finished"), ())
-	
+        self.sigFinished.emit(())	
 		
 class XiaCorrectWizard(qt.QWizard):
     def __init__(self, parent=None, name=None, modal=0, fl=0):
@@ -473,8 +473,8 @@ class XiaCorrectWizard(qt.QWizard):
         finish.setFont(font)
         finish.setText("Start")
 
-        next = self.button(self.NextButton)
-        self.connect(next, qt.SIGNAL('clicked()'), self.next)
+        nnext = self.button(self.NextButton)
+        nnext.clicked[()].connect(self.next)
 
         #self.setFinishEnabled(self.output, 1)
         self.output.setFinalPage(True)
@@ -508,7 +508,7 @@ if __name__=="__main__":
     app= qt.QApplication(sys.argv)
     wid= XiaCorrectWizard()
     app.setMainWidget(wid)
-    app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
+    app.lastWindowClosed.connect(app.quit)
     wid.show()
     app.exec_()
     print(wid.get())

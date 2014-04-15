@@ -33,6 +33,7 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
     
 class RGBCorrelatorSlider(qt.QWidget):
+    sigRGBCorrelatorSliderSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, scale = False, autoscalelimits=None):
         qt.QWidget.__init__(self, parent)
         self.__emitSignals = True
@@ -140,33 +141,28 @@ class RGBCorrelatorSlider(qt.QWidget):
         ddict['red']   = self.redSlider.getMinMax()
         ddict['green'] = self.greenSlider.getMinMax()
         ddict['blue']  = self.blueSlider.getMinMax()
-        self.emit(qt.SIGNAL("RGBCorrelatorSliderSignal"),
-                      ddict)
+        self.sigRGBCorrelatorSliderSignal.emit(ddict)
 
     def _redSliderChanged(self, ddict):
         if DEBUG:
             print("RGBCorrelatorSlider._redSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "redChanged"
-            self.emit(qt.SIGNAL("RGBCorrelatorSliderSignal"),
-                      ddict)
-            
+            self.sigRGBCorrelatorSliderSignal.emit(ddict)            
 
     def _greenSliderChanged(self, ddict):
         if DEBUG:
             print("RGBCorrelatorSlider._greenSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "greenChanged"
-            self.emit(qt.SIGNAL("RGBCorrelatorSliderSignal"),
-                      ddict)
+            self.sigRGBCorrelatorSliderSignal.emit(ddict)
 
     def _blueSliderChanged(self, ddict):
         if DEBUG:
             print("RGBCorrelatorSlider._blueSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "blueChanged"
-            self.emit(qt.SIGNAL("RGBCorrelatorSliderSignal"),
-                      ddict)
+            self.sigRGBCorrelatorSliderSignal.emit(ddict)
 
 class MyQLabel(qt.QLabel):
     def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
@@ -193,15 +189,12 @@ class MyQLabel(qt.QLabel):
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit'))
+    app.lastWindowClosed.connect(app.quit)
 
     def slot(ddict):
         print("received dict = ", ddict)
     w = RGBCorrelatorSlider()
-    app.connect(w, qt.SIGNAL("RGBCorrelatorSliderSignal"), slot)
+    w.sigRGBCorrelatorSliderSignal.connect(slot)
     w.show()
     app.exec_()
 

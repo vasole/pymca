@@ -42,9 +42,10 @@ MATPLOTLIB = True
 
 
 class RGBCorrelator(qt.QWidget):
+    sigRGBCorrelatorSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, graph = None, bgrx = True):
         qt.QWidget.__init__(self, parent)
-        self.setWindowTitle("PyMCA RGB Correlator")
+        self.setWindowTitle("PyMca RGB Correlator")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(RGBCorrelatorGraph.IconDict['gioconda16'])))
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -62,16 +63,14 @@ class RGBCorrelator(qt.QWidget):
             self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.splitter,
                                             standalonesave=standaloneSaving)
             if not standaloneSaving:
-                self.connect(self.graphWidget.saveToolButton,
-                         qt.SIGNAL("clicked()"), 
+                self.graphWidget.saveToolButton.clicked[()].connect( \
                          self._saveToolButtonSignal)
                 self._saveMenu = qt.QMenu()
                 self._saveMenu.addAction(QString("Standard"),    self.graphWidget._saveIconSignal)
                 self._saveMenu.addAction(QString("Matplotlib") , self._saveMatplotlibImage)
             self.graph = self.graphWidget.graph
             #add flip Icon
-            self.connect(self.graphWidget.hFlipToolButton,
-                         qt.SIGNAL("clicked()"),
+            self.graphWidget.hFlipToolButton.clicked[()].connect( \
                          self._hFlipIconSignal)
             self._handleGraph    = True
         else:
@@ -90,8 +89,7 @@ class RGBCorrelator(qt.QWidget):
         self.setImageShape = self.controller.setImageShape
         self.update   = self.controller.update
         self.transposeImages   = self.controller.transposeImages
-        self.connect(self.controller,
-                     qt.SIGNAL("RGBCorrelatorWidgetSignal"),
+        self.controller.sigRGBCorrelatorWidgetSignal.connect( \
                      self.correlatorSignalSlot)
 
     def _hFlipIconSignal(self):
@@ -137,7 +135,7 @@ class RGBCorrelator(qt.QWidget):
         self.controller.close()
         if self._matplotlibSaveImage is not None:
             self._matplotlibSaveImage.close()
-        self.emit(qt.SIGNAL("RGBCorrelatorSignal"),ddict)
+        self.sigRGBCorrelatorSignal.emit(ddict)
         qt.QWidget.closeEvent(self, event)
 
     def show(self):
@@ -147,10 +145,7 @@ class RGBCorrelator(qt.QWidget):
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
+    app.lastWindowClosed.connect(app.quit)
     if 0:
         graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph()
         graph = graphWidget.graph

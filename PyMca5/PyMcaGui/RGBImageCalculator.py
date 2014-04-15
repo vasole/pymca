@@ -44,6 +44,10 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 DEBUG = 0
 
 class RGBImageCalculator(qt.QWidget):
+    sigAddImageClicked = qt.pyqtSignal(object)
+    sigRemoveImageClicked = qt.pyqtSignal(object)
+    sigReplaceImageClicked = qt.pyqtSignal(object)
+
     def __init__(self, parent = None, math = True, replace = False,
                  scanwindow=None):
         qt.QWidget.__init__(self, parent)
@@ -92,8 +96,7 @@ class RGBImageCalculator(qt.QWidget):
         self.mathBox.mainLayout.addWidget(self.mathExpression)
         self.mathBox.mainLayout.addWidget(self.mathAction)
         self.mainLayout.addWidget(self.mathBox)
-        self.connect(self.mathAction, qt.SIGNAL("clicked()"), 
-                    self._calculateClicked)
+        self.mathAction.clicked[()].connect(self._calculateClicked)
 
     def _build(self, math = True, replace = False, scanwindow=False):
         if math:
@@ -146,13 +149,11 @@ class RGBImageCalculator(qt.QWidget):
         #self.mainLayout.addWidget(self.nameBox)
         self.mainLayout.addWidget(self.graphWidget)
         self.mainLayout.addWidget(buttonBox)
-        self.connect(self.addImageButton, qt.SIGNAL("clicked()"), 
-                    self._addImageClicked)
-        self.connect(self.removeImageButton, qt.SIGNAL("clicked()"), 
-                    self._removeImageClicked)
+        self.addImageButton.clicked[()].connect(self._addImageClicked)
+        self.removeImageButton.clicked[()].connect(self._removeImageClicked)
         if replace:
-            self.connect(self.replaceImageButton, qt.SIGNAL("clicked()"), 
-                         self._replaceImageClicked)
+            self.replaceImageButton.clicked[()].connect( \
+                self._replaceImageClicked)
             
         #it consumes too much CPU, therefore only on click
         #self.graphWidget.graph.canvas().setMouseTracking(1)
@@ -228,8 +229,7 @@ class RGBImageCalculator(qt.QWidget):
         ddict = {}
         ddict['label'] = text
         ddict['image']  = self._imageData
-        self.emit(qt.SIGNAL("addImageClicked"),
-                  ddict)
+        self.sigAddImageClicked.emit(ddict)
 
     def _removeImageClicked(self):
         if DEBUG:
@@ -239,8 +239,7 @@ class RGBImageCalculator(qt.QWidget):
             qt.QMessageBox.critical(self, "Name Error",
                                     "Please enter the image name")
             return 1
-        self.emit(qt.SIGNAL("removeImageClicked"),
-                  text)
+        self.sigRemoveImageClicked.emit(text)
 
     def _replaceImageClicked(self):
         if DEBUG:
@@ -253,8 +252,7 @@ class RGBImageCalculator(qt.QWidget):
         ddict = {}
         ddict['label'] = text
         ddict['image']  = self._imageData
-        self.emit(qt.SIGNAL("replaceImageClicked"),
-                  ddict)
+        self.sigReplaceImageClicked.emit(ddict)
 
 
     def setDefaultColormap(self, colormapindex, logflag=False):

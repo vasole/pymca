@@ -77,8 +77,7 @@ class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
         self._medianParametersWidget = MedianParameters(self)
         self._medianParametersWidget.widthSpin.setValue(1)
         self.layout().addWidget(self._medianParametersWidget)
-        self.connect(self._medianParametersWidget.widthSpin,
-                     qt.SIGNAL('valueChanged(int)'),
+        self._medianParametersWidget.widthSpin.valueChanged[int].connect( \
                      self.setKernelWidth)
 
     def setKernelWidth(self, value):

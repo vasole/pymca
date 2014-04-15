@@ -139,9 +139,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             from PyMca5.PyMcaGui.math.fitting import SimpleFitGui
             self.customFit = SimpleFitGui.SimpleFitGui()
             self.scanFit.sigScanFitSignal.connect(self._scanFitSignalReceived)
-            self.connect(self.customFit,
-                         qt.SIGNAL('SimpleFitSignal') ,
-                         self._customFitSignalReceived)
+            self.customFit.sigSimpleFitSignal.connect( \
+                            self._customFitSignalReceived)
 
             self.fitButtonMenu = qt.QMenu()
             self.fitButtonMenu.addAction(QString("Simple Fit"),
@@ -164,12 +163,9 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.infoDockWidget.hide()
 
     def setDispatcher(self, w):
-        self.connect(w, qt.SIGNAL("addSelection"),
-                         self._addSelection)
-        self.connect(w, qt.SIGNAL("removeSelection"),
-                         self._removeSelection)
-        self.connect(w, qt.SIGNAL("replaceSelection"),
-                         self._replaceSelection)
+        w.sigAddSelection.connect(self._addSelection)
+        w.sigRemoveSelection.connect(self._removeSelection)
+        w.sigReplaceSelection.connect(self._replaceSelection)
         
     def _addSelection(self, selectionlist, replot=True):
         if DEBUG:
@@ -1439,8 +1435,7 @@ def test():
     y =  10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400)
     w.addCurve(x, y, legend="dummy", replot=True, replace=True)
     w.resetZoom()
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     w.show()
     app.exec_()
 

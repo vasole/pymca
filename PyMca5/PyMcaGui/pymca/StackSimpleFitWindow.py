@@ -67,9 +67,7 @@ class OutputParameters(qt.QWidget):
         self.mainLayout.addWidget(self.outputDirButton, 0, 2)
         self.mainLayout.addWidget(self.outputFileLabel,  1, 0)
         self.mainLayout.addWidget(self.outputFileLine,   1, 1)
-        self.connect(self.outputDirButton,
-                     qt.SIGNAL('clicked()'),
-                     self.browseDirectory)
+        self.outputDirButton.clicked[()].connect(self.browseDirectory)
         
     def getOutputDirectory(self):
         return safe_str(self.outputDirLine.text())
@@ -122,9 +120,7 @@ class StackSimpleFitWindow(qt.QWidget):
         self.startButton = qt.QPushButton(self)
         self.startButton.setText("FitStack")
         self.mainLayout.addWidget(self.startButton)
-        self.connect(self.startButton,
-                     qt.SIGNAL('clicked()'),
-                     self.startStackFit)
+        self.startButton.clicked[()].connect(self.startStackFit)
 
         #progress handling
         self._total = 100

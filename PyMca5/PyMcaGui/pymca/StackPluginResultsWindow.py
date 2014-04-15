@@ -56,9 +56,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.mainTab.addTab(self.spectrumGraph, "VECTORS")
         
         self.mainLayout.addWidget(self.slider)
-        self.connect(self.slider,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._showImage)
+        self.slider.valueChanged[int].connect(self._showImage)
 
         self.imageList = None
         self.spectrumList = None

@@ -30,6 +30,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 DEBUG = 0
 
 class RGBCorrelatorTable(qt.QTableWidget):
+    sigRGBCorrelatorTableSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None):
         qt.QTableWidget.__init__(self, parent)
         self.elementList      = []
@@ -50,12 +51,6 @@ class RGBCorrelatorTable(qt.QTableWidget):
         self.resizeColumnToContents(1)
         self.resizeColumnToContents(2)
         self.resizeColumnToContents(3)
-
-        """
-        qt.QObject.connect(self,
-                     qt.SIGNAL("cellClicked(int, int)"),
-                     self._mySlot)
-        """
 
     def build(self, elementlist):
         self.elementList = elementlist
@@ -90,9 +85,7 @@ class RGBCorrelatorTable(qt.QTableWidget):
             if widget is None:
                 widget = CheckBoxItem(self, i, j)
                 self.setCellWidget(i, j, widget)
-                qt.QObject.connect(widget,
-                                   qt.SIGNAL('CheckBoxItemSignal'),
-                                   self._mySlot)
+                widget.sigCheckBoxItemSignal.connect(self._mySlot)
             else:
                 pass
 
@@ -132,8 +125,7 @@ class RGBCorrelatorTable(qt.QTableWidget):
     def _emitSignal(self):
         ddict = self.getElementSelection()
         ddict['event'] = "updated"
-        self.emit(qt.SIGNAL('RGBCorrelatorTableSignal'),
-                  ddict)
+        self.sigRGBCorrelatorTableSignal.emit(ddict)
 
     def _update(self):
         for i in range(self.rowCount()):
@@ -225,11 +217,12 @@ class RGBCorrelatorTable(qt.QTableWidget):
         
 
 class CheckBoxItem(qt.QCheckBox):
+    sigCheckBoxItemSignal = qt.pyqtSignal(object)
     def __init__(self, parent, row, col):
         qt.QCheckBox.__init__(self, parent)
         self.__row = row
         self.__col = col
-        qt.QObject.connect(self, qt.SIGNAL("clicked(bool)"), self._mySignal)
+        self.clicked[bool].connect(self._mySignal)
 
     def _mySignal(self, value):
         ddict = {}
@@ -237,16 +230,14 @@ class CheckBoxItem(qt.QCheckBox):
         ddict["state"] = value
         ddict["row"] = self.__row * 1
         ddict["col"] = self.__col * 1
-        self.emit(qt.SIGNAL('CheckBoxItemSignal'), ddict)
+        self.sigCheckBoxItemSignal.emit(ddict)
 
 def main():
     app = qt.QApplication([])
     def slot(ddict):
         print("received dict = ", ddict)
     tab = RGBCorrelatorTable()
-    app.connect(tab,
-                qt.SIGNAL('RGBCorrelatorTableSignal'),
-                slot)
+    tab.sigRGBCorrelatorTableSignal.conenct(slot)
 
     tab.build(["Cnt1", "Cnt2", "Cnt3"])
     tab.setElementSelection({'r':[1], 'g':[4], 'elementlist':["dummy", "Ca K", "Fe K", "Pb M", "U l"]})

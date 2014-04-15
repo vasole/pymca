@@ -139,8 +139,7 @@ class QStackWidget(StackBase.StackBase,
                                              self.saveStackAsFloat32TiffImages)
         self._stackSaveMenu.addAction(QString("Standard Graphics"),
                             self.stackWidget.graphWidget._saveIconSignal)
-        self.connect(self.stackWidget.graphWidget.saveToolButton,
-                     qt.SIGNAL("clicked()"), 
+        self.stackWidget.graphWidget.saveToolButton.clicked[()].connect( \
                      self._stackSaveToolButtonSignal)
             
         self.stackGraphWidget = self.stackWidget.graphWidget
@@ -628,9 +627,7 @@ class QStackWidget(StackBase.StackBase,
                     action.setToolTip(tip)
                 menu.addAction(action)
                 actionList.append((text, pixmap, tip, action))
-            qt.QObject.connect(menu,
-                               qt.SIGNAL("hovered(QAction *)"),
-                               self._actionHovered)
+            menu.hovered.connect(self._actionHovered)
             a = menu.exec_(qt.QCursor.pos())
             if a is None:
                 return None

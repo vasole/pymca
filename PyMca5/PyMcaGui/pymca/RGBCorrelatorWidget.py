@@ -66,6 +66,7 @@ DEBUG = 0
 
 
 class RGBCorrelatorWidget(qt.QWidget):
+    sigRGBCorrelatorWidgetSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, bgrx = False, replace = False):
         qt.QWidget.__init__(self, parent)
         self.replaceOption = replace 
@@ -194,13 +195,9 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__blueImage = None
         self.outputDir   = None
 
-        self.connect(self.loadButton,
-                     qt.SIGNAL("clicked()"),
-                     self.addFileList)
+        self.loadButton.clicked[()].connect(self.addFileList)
 
-        self.connect(self.saveButton,
-                     qt.SIGNAL("clicked()"),
-                     self.saveButtonClicked)
+        self.saveButton.clicked[()].connect(self.saveButtonClicked)
         self._saveButtonMenu = qt.QMenu()
         self._saveButtonMenu.addAction(QString("Save all"),
                                     self.saveImageList)
@@ -208,40 +205,24 @@ class RGBCorrelatorWidget(qt.QWidget):
                                     self.saveSelectedImages)
 
 
-        self.connect(self.removeButton,
-                     qt.SIGNAL("clicked()"),
-                     self.removeButtonClicked)
+        self.removeButton.clicked[()].connect(self.removeButtonClicked)
 
-        self.connect(self.toggleSlidersButton,
-                     qt.SIGNAL("clicked()"),
-                     self.toggleSliders)
+        self.toggleSlidersButton.clicked[()].connect(self.toggleSliders)
 
-        self.connect(self.calculationButton,
-                     qt.SIGNAL("clicked()"),
-                     self._showCalculationDialog)
+        self.calculationButton.clicked[()].connect(self._showCalculationDialog)
 
-        self.connect(self.profileButton,
-                     qt.SIGNAL("clicked()"),
-                     self.profileSelectedImages)
+        self.profileButton.clicked[()].connect(self.profileSelectedImages)
 
         self._calculationMenu = None
         self.pcaDialog  = None
         self.nnmaDialog = None
 
-        self.connect(self.__imageResizeButton,
-                     qt.SIGNAL("clicked()"),
-                     self._imageResizeSlot)
-        self.connect(self.sliderWidget,
-                     qt.SIGNAL("RGBCorrelatorSliderSignal"),
-                     self._sliderSlot)
+        self.__imageResizeButton.clicked[()].connect(self._imageResizeSlot)
+        self.sliderWidget.sigRGBCorrelatorSliderSignal.connect(self._sliderSlot)
 
-        self.connect(self.tableWidget,
-                     qt.SIGNAL("RGBCorrelatorTableSignal"),
-                     self._tableSlot)
+        self.tableWidget.sigRGBCorrelatorTableSignal.connect(self._tableSlot)
 
-        self.connect(self.buttonGroup,
-                     qt.SIGNAL("buttonClicked(int)"),
-                     self._colormapTypeChange)
+        self.buttonGroup.buttonClicked[int].connect(self._colormapTypeChange)
 
     def _showCalculationDialog(self):
         if (not NNMA) and (not PCA):
@@ -428,7 +409,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             ddict['size'] = size
         image = self.__redImage + self.__greenImage + self.__blueImage
         ddict['image'] = image
-        self.emit(qt.SIGNAL("RGBCorrelatorWidgetSignal"), ddict)
+        self.sigRGBCorrelatorWidgetSignal.emit(ddict)
 
     def _colormapTypeChange(self, val):
         self.colormapType = val
@@ -1031,15 +1012,11 @@ class RGBCorrelatorWidget(qt.QWidget):
     def showCalculationDialog(self):
         if self.calculationDialog is None:
             self.calculationDialog = RGBImageCalculator.RGBImageCalculator(replace=self.replaceOption)
-            self.connect(self.calculationDialog,
-                         qt.SIGNAL("addImageClicked"),
-                         self.addImageSlot)
-            self.connect(self.calculationDialog,
-                         qt.SIGNAL("removeImageClicked"),
+            self.calculationDialog.sigAddImageClicked.connect(self.addImageSlot)
+            self.calculationDialog.sigRemoveImageClicked.connect( \
                          self.removeImage)
             if self.replaceOption:
-                self.connect(self.calculationDialog,
-                         qt.SIGNAL("replaceImageClicked"),
+                self.calculationDialog.sigReplaceImageClicked.connect( \
                          self.replaceImageSlot)
         self.calculationDialog.imageList = self._imageList 
         self.calculationDialog.imageDict = self._imageDict
@@ -1199,27 +1176,20 @@ class ImageShapeDialog(qt.QDialog):
         self.cancelButton.setText("Dismiss")
         self.okButton    = qt.QPushButton(self)
         self.okButton.setText("Accept")
-        if QTVERSION > '4.0.0':
-            self.cancelButton.setAutoDefault(False)
-            self.okButton.setAutoDefault(False)
-            self.connect(self.rows,
-                         qt.SIGNAL("editingFinished()"),
-                         self._rowsChanged)
-            self.connect(self.columns,
-                         qt.SIGNAL("editingFinished()"),
-                         self._columnsChanged)
+
+        self.cancelButton.setAutoDefault(False)
+        self.okButton.setAutoDefault(False)
+        self.rows.editingFinished[()].connect(self._rowsChanged)
+        self.columns.editingFinished[()].connect(self._columnsChanged)
+
         self.mainLayout.addWidget(label1, 0, 0)
         self.mainLayout.addWidget(self.rows, 0, 1)
         self.mainLayout.addWidget(label2, 1, 0)
         self.mainLayout.addWidget(self.columns, 1, 1)
         self.mainLayout.addWidget(self.cancelButton, 2, 0)
         self.mainLayout.addWidget(self.okButton, 2, 1)
-        self.connect(self.cancelButton,
-                     qt.SIGNAL("clicked()"),
-                     self.reject)
-        self.connect(self.okButton,
-                     qt.SIGNAL("clicked()"),
-                     self.accept)
+        self.cancelButton.clicked[()].connect(self.reject)
+        self.okButton.clicked[()].connect(self.accept)
 
     def _rowsChanged(self):
         nrows, ncolumns = self.getImageShape()
@@ -1288,10 +1258,7 @@ class MyQLabel(qt.QLabel):
 def test():
     from PyMca5 import RGBCorrelatorGraph
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
+    app.lastWindowClosed.connect(app.quit)
 
     container = qt.QSplitter()
     #containerLayout = qt.QHBoxLayout(container)
@@ -1303,7 +1270,7 @@ def test():
             size = ddict['size']
             graph.graph.pixmapPlot(image_buffer,size)
             graph.graph.replot()
-    app.connect(w, qt.SIGNAL("RGBCorrelatorWidgetSignal"), slot)
+    w.sigRGBCorrelatorWidgetSignal.connect(slot)
     import getopt
     options=''
     longoptions=[]
