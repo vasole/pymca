@@ -327,10 +327,8 @@ class H5FileProxy(H5NodeProxy):
 
 
 class FileModel(qt.QAbstractItemModel):
-
     """
     """
-
     sigFileUpdated = qt.pyqtSignal(object)
     sigFileAppended = qt.pyqtSignal(object)
     
@@ -467,7 +465,7 @@ class FileModel(qt.QAbstractItemModel):
         ddict = {}
         ddict['event'] = "fileAppended"
         ddict['filename'] = filename
-        self.emit(qt.SIGNAL('fileAppended'), ddict)
+        self.sigFileAppended.emit(ddict)
         return phynxFile
 
     def appendPhynxFile(self, phynxFile, weakreference=True):
@@ -527,11 +525,7 @@ class FileView(qt.QTreeView):
         self.setColumnWidth(0, 250)
         #This removes the children after a double click
         #with no possibility to recover them
-        #self.connect(
-        #    self,
-        #    qt.SIGNAL('collapsed(QModelIndex)'),
-        #    fileModel.clearRows
-        #)
+        #self.collapsed[QModelIndex].connect(fileModel.clearRows)
         fileModel.sigFileAppended.connect(self.fileAppended)
         fileModel.sigFileUpdated.connect(self.fileUpdated)
 
@@ -564,31 +558,12 @@ class HDF5Widget(FileView):
         self.setSelectionBehavior(qt.QAbstractItemView.SelectRows)
         self._adjust()
         if 0:
-            qt.QObject.connect(self,
-                     qt.SIGNAL('activated(QModelIndex)'),
-                     self.itemActivated)
+            self.activated[qt.QModelIndex].connect(self.itemActivated)
 
-        #qt.QObject.connect(self,
-        #             qt.SIGNAL('clicked(QModelIndex)'),
-        #             self.itemClicked)
-        self.clicked.connect(self.itemClicked)
-
-        #qt.QObject.connect(self,
-        #             qt.SIGNAL('doubleClicked(QModelIndex)'),
-        #             self.itemDoubleClicked)
-        self.doubleClicked.connect(self.itemDoubleClicked)
-
-        #qt.QObject.connect(
-        #    self,
-        #    qt.SIGNAL('collapsed(QModelIndex)'),
-        #    self._adjust)
-        self.collapsed.connect(self._adjust)
-
-        #qt.QObject.connect(
-        #    self,
-        #    qt.SIGNAL('expanded(QModelIndex)'),
-        #    self._adjust)
-        self.expanded.connect(self._adjust)
+        self.clicked[qt.QModelIndex].connect(self.itemClicked)
+        self.doubleClicked[qt.QModelIndex].connect(self.itemDoubleClicked)
+        self.collapsed[qt.QModelIndex].connect(self._adjust)
+        self.expanded[qt.QModelIndex].connect(self._adjust)
 
     def _adjust(self, modelIndex=None):
         self.resizeColumnToContents(0)

@@ -58,6 +58,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     sigReplaceSelection = qt.pyqtSignal(object)
     sigOtherSignals = qt.pyqtSignal(object)
     sigScanSelection = qt.pyqtSignal(object)
+    sigScanDoubleClicked = qt.pyqtSignal(object)    
     def __init__(self, parent=None, autoreplace=False):
         self.autoReplace = autoreplace
         if self.autoReplace:
@@ -156,19 +157,14 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         # --- signal handling
         self.list.itemSelectionChanged.connect(self.__selectionChanged)
         self.list.setContextMenuPolicy(qt.Qt.CustomContextMenu)
-        #self.connect(self.list,
-        #             qt.SIGNAL("customContextMenuRequested(const QPoint &)"),
-        #             self.__contextMenu)
         self.list.customContextMenuRequested.connect(self.__contextMenu)
-        self.connect(self.list,
-                     qt.SIGNAL("itemDoubleClicked(QTreeWidgetItem *, int)"),
+        self.list.itemDoubleClicked[qt.QTreeWidgetItem, int].connect( \
                      self.__doubleClicked)
         self.cntTable.sigSpecFileCntTableSignal.connect(self._cntSignal)
 
         if QTVERSION > '4.2.0':
             self.list.setSortingEnabled(False)
-            self.connect(self.list.header(),
-                         qt.SIGNAL("sectionDoubleClicked(int)"),
+            self.list.header().sectionDoubleClicked[int].connect( \
                          self.__headerSectionDoubleClicked)
         if OBJECT3D:
             self.object3DBox.clicked.connect(self._setObject3DBox)

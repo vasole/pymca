@@ -167,11 +167,11 @@ class FrameBrowser(qt.QWidget):
         self.mainLayout.addWidget(self.lastButton)
         self.mainLayout.addWidget(qt.HorizontalSpacer(self))
 
-        self.firstButton.clicked.connect(self._firstClicked)
-        self.previousButton.clicked.connect(self._previousClicked)
-        self.nextButton.clicked.connect(self._nextClicked)
-        self.lastButton.clicked.connect(self._lastClicked)
-        self.lineEdit.clicked.connect(self._textChangedSlot)
+        self.firstButton.clicked[()].connect(self._firstClicked)
+        self.previousButton.clicked[()].connect(self._previousClicked)
+        self.nextButton.clicked[()].connect(self._nextClicked)
+        self.lastButton.clicked[()].connect(self._lastClicked)
+        self.lineEdit.editingFinished[()].connect(self._textChangedSlot)
 
     def _firstClicked(self):
         self.lineEdit.setText("%d" % self.lineEdit.validator().bottom())

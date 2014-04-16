@@ -58,9 +58,6 @@ class HDF5CounterTable(qt.QTableWidget):
         #the cell is not the same as the check box
         #but I wonder about the checkboxes being destroyed
         """
-        #qt.QObject.connect(self,
-        #             qt.SIGNAL("cellChanged(int, int)"),
-        #             self._aliasSlot)
         self.cellChanged[int, int].connect(self._aliasSlot)
 
     def build(self, cntlist, aliaslist=None):

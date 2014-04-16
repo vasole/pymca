@@ -54,9 +54,7 @@ class SpecFileMcaTable(qt.QWidget):
         self.table.setSelectionMode(qt.QAbstractItemView.MultiSelection)
         self.l.addWidget(self.table)
 
-        #self.connect(self.table,
-        #             qt.SIGNAL("cellActivated( int, int)"),
-        #             self._cellActivated)
+        #self.table.cellActivated[int, int].connect(self._cellActivated)
         self.table.cellClicked[int, int].connect(self._cellClicked)
         self.table.cellDoubleClicked[int, int].connect(self._cellDoubleClicked)
         

@@ -142,7 +142,7 @@ class PyMcaPrintPreview(qt.QDialog):
             self.marginSpin = qt.QSpinBox(toolBar)
             self.marginSpin.setRange(0, 50)
             self.marginSpin.setSingleStep(10)
-        self.connect(self.marginSpin, qt.SIGNAL("valueChanged(int)"),    \
+        self.marginSpin.valueChanged[int].connect( \
                  self.__marginChanged)
         """
         # Scale / Zoom

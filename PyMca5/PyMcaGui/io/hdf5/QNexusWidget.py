@@ -77,14 +77,10 @@ class Buttons(qt.QWidget):
                 self.mainLayout.addWidget(button, row, col)
                 self.buttonGroup.addButton(button)
                 self.buttonList.append(button)
-        #self.connect(self.buttonGroup,
-        #             qt.SIGNAL('buttonClicked(QAbstractButton *)'),
-        #             self.emitSignal)
-        #self.buttonGroup.buttonClicked[int].connect(self.emitSignal)
-        self.buttonGroup.buttonClicked.connect(self.emitSignal)
+        self.buttonGroup.buttonClicked[int].connect(self.emitSignal)
 
-    def emitSignal(self, button):
-        #button = self.buttonList[button]
+    def emitSignal(self, idx):
+        button = self.buttonGroup.button(idx)
         ddict={}
         ddict['event'] = 'buttonClicked'
         ddict['action'] = safe_str(button.text())
@@ -130,10 +126,7 @@ class QNexusWidget(qt.QWidget):
             self.cntTable.set3DEnabled(False)
         self.mainLayout.addWidget(self.buttons)
         self.hdf5Widget.sigHDF5WidgetSignal.connect(self.hdf5Slot)
-        #self.connect(self.cntTable,
-        #             qt.SIGNAL('customContextMenuRequested(QPoint)'),
-        #             self._counterTableCustomMenuSlot)
-        self.cntTable.customContextMenuRequested.connect(\
+        self.cntTable.customContextMenuRequested[qt.QPoint].connect(\
                         self._counterTableCustomMenuSlot)
         self.buttons.sigButtonsSignal.connect(self.buttonsSlot)
 
@@ -649,16 +642,12 @@ class QNexusWidget(qt.QWidget):
                 ddict = {}
                 ddict['event'] = "SelectionTypeChanged"
                 ddict['SelectionType'] = selectionType.upper()
-                #self.emit(qt.SIGNAL('otherSignals'), ddict)
                 self.sigOtherSignals.emit(ddict)
             if action.upper() == "ADD":
-                #self.emit(qt.SIGNAL("addSelection"), selectionList)
                 self.sigAddSelection.emit(selectionList)
             if action.upper() == "REMOVE":
-                #self.emit(qt.SIGNAL("removeSelection"), selectionList)
                 self.sigRemoveSelection.emit(selectionList)
             if action.upper() == "REPLACE":
-                #self.emit(qt.SIGNAL("replaceSelection"), selectionList)
                 self.sigReplaceSelection.emit(selectionList)
 
     def currentSelectionList(self):

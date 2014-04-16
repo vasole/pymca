@@ -496,9 +496,7 @@ class QSpsWidget(qt.QWidget):
 
         refreshButton.clicked[()].connect(self.refreshSpecList)
         closeButton.clicked[()].connect(self.closeCurrentSpec)
-        #self.connect(self.specCombo, qt.SIGNAL("activated(const QString &)"), 
-        #            self.refreshArrayList)
-        self.specCombo.activated.connect(self.refreshArrayList)
+        self.specCombo.activated[str].connect(self.refreshArrayList)
 
         # --- splitter
         self.splitter= qt.QSplitter(self)

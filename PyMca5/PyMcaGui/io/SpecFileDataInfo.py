@@ -271,7 +271,7 @@ class SpecFileDataInfo(qt.QTabWidget):
         ddict = {}
         ddict['event'] = "SpecFileDataInfoClosed"
         ddict['id'] = id(self)
-        #self.emit(qt.SIGNAL("SpecFileDataInfoSignal"),ddict)
+        #self.sigSpecFileDataInfoSignal.emit(ddict)
         if len(self._notifyCloseEventToWidget):
             for widget in self._notifyCloseEventToWidget:
                 newEvent = SpecFileDataInfoCustomEvent(ddict)

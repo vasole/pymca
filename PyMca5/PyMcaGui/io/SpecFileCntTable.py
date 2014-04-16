@@ -60,9 +60,7 @@ class SpecFileCntTable(qt.QTableWidget):
         """
         #the cell is not the same as the check box
         #but I wonder about the checkboxes being destroyed
-        qt.QObject.connect(self,
-                     qt.SIGNAL("cellClicked(int, int)"),
-                     self._mySlot)
+        self.cellClicked[int, int].connect(self._mySlot)
         """
 
     def build(self, cntlist, nmca=None):

@@ -97,9 +97,7 @@ class QSourceSelector(qt.QWidget):
         refreshButton.clicked.connect(self._reload)
             
         specButton.clicked.connect(self.openSpec)
-        #self.connect(self.fileCombo, qt.SIGNAL("activated(const QString &)"),
-        #                                             self._fileSelection)
-        self.fileCombo.activated.connect(self._fileSelection)
+        self.fileCombo.activated[str].connect(self._fileSelection)
 
         fileWidgetLayout.addWidget(self.fileCombo)
         fileWidgetLayout.addWidget(openButton)            

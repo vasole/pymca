@@ -146,7 +146,6 @@ class EdfFile_StandardArray(qt.QWidget):
         ddict['event'] = "imageChanged"
         ddict['index'] =  index
         self.sigWidgetSignal.emit((ddict))
-        #self.emit(qt.SIGNAL("widgetSignal"),(ddict))
 
     def getSelection(self):
         selection= []
@@ -1028,15 +1027,13 @@ class QEdfFileWidget(qt.QWidget):
                         qt.QMessageBox.No, qt.QMessageBox.Yes)
                 if ans==qt.QMessageBox.No: return
                 try:
-                    self.emit(qt.PYSIGNAL("delSelection"), (self.data.SourceName, mcakeys))
+                    self.sigDelSelection.emit((self.data.SourceName, mcakeys))
                 except:
-                    print("This is to be implemented")
+                    if DEBUG:
+                        print("sigDelSelection is to be implemented")
         
         for idx in range(self.fileCombo.count()):
-            if qt.qVersion() < '4.0.0':
-                itext = self.fileCombo.text(idx)
-            else:
-                itext = self.fileCombo.itemText(idx)            
+            itext = self.fileCombo.itemText(idx)            
             if filename == "EDF Stack":
                 if itext == filename:
                     self.fileCombo.removeItem(idx)
