@@ -202,7 +202,7 @@ class PeakTableWidget(QTable):
             self.peaks[peak]['use_item'].setText("")
             self.setCellWidget(linew, col,
                      self.peaks[peak]['use_item'])
-            self.peaks[peak]['use_item'].sigellChanged[int,int].connect( \
+            self.peaks[peak]['use_item'].sigCellChanged[int,int].connect( \
                      self.myslot)
 
         self.peaks[peak]['use_item'].setChecked(self.peaks[peak]['use'])
@@ -587,7 +587,7 @@ class QPeriodicComboTableItem(QComboTableItem):
         self._col = col
         qt.QComboBox.__init__(self)
         self.addItems(strlist)
-        self.activated[int].conenct(self._cellChanged)
+        self.activated[int].connect(self._cellChanged)
 
     def _cellChanged(self, idx):
         self.sigCellChanged.emit(self._row, self._col)
