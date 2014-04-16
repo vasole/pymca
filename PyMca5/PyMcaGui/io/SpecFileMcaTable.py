@@ -114,7 +114,7 @@ class SpecFileMcaTable(qt.QWidget):
                     item = qt.QTableWidgetItem('',
                             qt.QTableWidgetItem.Type)
                     self.table.setItem(0, 0, item)
-                self.table.setItemSelected(item, True)
+                item.setSelected(True)
 
     def _toggleCell(self, row, col):
         item = self.table.item(row, col)
