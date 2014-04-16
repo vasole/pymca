@@ -304,6 +304,7 @@ QTable = qt.QTableWidget
 
 
 class AttenuatorsTableWidget(QTable):
+    sigValueChanged = qt.pyqtSignal(int, int)
     def __init__(self, parent=None, name="Attenuators Table",
                  attenuators=None, matrixmode=None, compoundmode=None,
                  layerindex=0, funnyfilters=False):
@@ -369,7 +370,7 @@ class AttenuatorsTableWidget(QTable):
             self.resizeColumnToContents(0)
             self.resizeColumnToContents(1)
                                            
-        self.valueChanged[int,int].connect(self.mySlot)
+        self.sigValueChanged[int,int].connect(self.mySlot)
 
     def __build(self, nfilters=12):
         n = 0
@@ -556,7 +557,7 @@ class AttenuatorsTableWidget(QTable):
         text = ddict['text']
         self.setCurrentCell(row, col)
         self._checkDensityThickness(text, row)
-        self.valueChanged.emit(row, col)
+        self.sigValueChanged.emit(row, col)
 
     def text(self, row, col):
         if col == 2:

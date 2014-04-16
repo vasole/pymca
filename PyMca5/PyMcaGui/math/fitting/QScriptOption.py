@@ -79,21 +79,18 @@ class QScriptOption(TabSheets.TabSheets):
             a.setdefaults(self.default)
             self.sheetslist.append(name)
             self.tabWidget.addTab(self.sheets[name],str(name))
-            if QTVERSION < '4.0.0':
-                self.tabWidget.showPage(self.sheets[name])
+            if QTVERSION < '4.2.0':
+                i = self.tabWidget.indexOf(self.sheets[name])
+                self.tabWidget.setCurrentIndex(i)
             else:
-                if QTVERSION < '4.2.0':
-                    i = self.tabWidget.indexOf(self.sheets[name])
-                    self.tabWidget.setCurrentIndex(i)
-                else:
-                    self.tabWidget.setCurrentWidget(self.sheets[name])
+                self.tabWidget.setCurrentWidget(self.sheets[name])
         #perform the binding to the buttons
-        self.connect(self.buttonOk,qt.SIGNAL("clicked()"),self.myaccept)
-        self.connect(self.buttonCancel,qt.SIGNAL("clicked()"),self.myreject)
+        self.buttonOk.clicked[()].connect(self.myaccept)
+        self.buttonCancel.clicked[()].connect(self.myreject)
         if not nodefaults:
-            self.connect(self.buttonDefaults,qt.SIGNAL("clicked()"),self.defaults)
+            self.buttonDefaults.clicked[()].connect(self.defaults)
         if not nohelp:
-            self.connect(self.buttonHelp,qt.SIGNAL("clicked()"),self.myhelp)
+            self.buttonHelp.clicked[()].connect(self.myhelp)
         
         
     def myaccept(self):
@@ -201,7 +198,7 @@ class MyEntryField(EntryField.EntryField):
         else:
             self.dict[keys]=None
         self.TextLabel.setText(str(params))
-        self.connect(self.Entry,qt.SIGNAL("textChanged(const QString&)"),self.setvalue)
+        self.Entry.textChanged[str].connect(self.setvalue)
                  
     def getvalue(self):
         return self.dict
@@ -231,7 +228,7 @@ class MyCheckField(CheckField.CheckField):
         else:
             self.dict[keys]=None
         self.CheckBox.setText(str(params))
-        self.connect(self.CheckBox,qt.SIGNAL("stateChanged(int)"),self.setvalue)
+        self.CheckBox.stateChanged[int].connect(self.setvalue)
                  
     def getvalue(self):
         return self.dict
@@ -307,8 +304,7 @@ class RadioField(qt.QWidget):
             RadioFieldBoxLayout.addLayout(Layout1)
             RadioFieldLayout.addWidget(self.RadioFieldBox)
             self.RadioButton[0].setChecked(1)
-            self.connect(self.RadioFieldBox,qt.SIGNAL("clicked(int)"),
-                                self.setvalue)
+            self.RadioFieldBox.clicked[int].connect(self.setvalue)
                  
     def getvalue(self):
         return self.dict
@@ -332,8 +328,7 @@ class RadioField(qt.QWidget):
 
 def test():
     a = qt.QApplication(sys.argv)
-    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),
-                       a,qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     #w = FieldSheet(fields=(["TextField",'Simple Entry'],
     #                       ["EntryField",'entry','MyLabel'],
     #                       ["CheckField",'label','Check Label'],

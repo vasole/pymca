@@ -34,6 +34,7 @@ from PyMca5.PyMcaMath.fitting import SpecfitFuns
 
 
 class StripParametersWidget(qt.QWidget):
+    sigStripParametersWidgetSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.build()
@@ -49,9 +50,7 @@ class StripParametersWidget(qt.QWidget):
         self.stripCombo = qt.QComboBox(self)
         self.stripCombo.addItem(str("Strip"))
         self.stripCombo.addItem(str("SNIP"))
-        self.connect(self.stripCombo,
-                     qt.SIGNAL("activated(int)"),
-                     self._stripComboActivated)
+        self.stripCombo.activated[int].connect(self._stripComboActivated)
 
         #SNIP width
         self.snipWidthLabel = qt.QLabel(self)
@@ -60,9 +59,7 @@ class StripParametersWidget(qt.QWidget):
         self.snipWidthSpin = qt.QSpinBox(self)
         self.snipWidthSpin.setMaximum(300)
         self.snipWidthSpin.setMinimum(0)
-        self.connect(self.snipWidthSpin,
-                     qt.SIGNAL('valueChanged(int)'),
-                     self._emitSignal)
+        self.snipWidthSpin.valueChanged[int].connect(self._emitSignal)
 
         #Strip width
         self.stripWidthLabel = qt.QLabel(self)
@@ -71,9 +68,7 @@ class StripParametersWidget(qt.QWidget):
         self.stripWidthSpin = qt.QSpinBox(self)
         self.stripWidthSpin.setMaximum(100)
         self.stripWidthSpin.setMinimum(1)
-        self.connect(self.stripWidthSpin,
-                     qt.SIGNAL('valueChanged(int)'),
-                     self._emitSignal)
+        self.stripWidthSpin.valueChanged[int].connect(self._emitSignal)
 
         #Strip iterations
         self.stripIterLabel = qt.QLabel(self)
@@ -81,9 +76,7 @@ class StripParametersWidget(qt.QWidget):
         self.stripIterValue = qt.QLineEdit(self)
         validator = qt.QIntValidator(self.stripIterValue)
         self.stripIterValue._v = validator
-        self.connect(self.stripIterValue,
-                     qt.SIGNAL('editingFinished()'),
-                     self._emitSignal)
+        self.stripIterValue.editingFinished[()].connect(self._emitSignal)
 
         #Strip smoothing
         self.stripFilterLabel = qt.QLabel(self)
@@ -93,9 +86,7 @@ class StripParametersWidget(qt.QWidget):
         self.stripFilterSpin.setMinimum(1)
         self.stripFilterSpin.setMaximum(40)
         self.stripFilterSpin.setSingleStep(2)
-        self.connect(self.stripFilterSpin,
-                     qt.SIGNAL('valueChanged(int)'),
-                     self._emitSignal)
+        self.stripFilterSpin.valueChanged[int].connect(self._emitSignal)
 
         #anchors
         self.anchorsContainer = qt.QWidget(self)
@@ -104,8 +95,7 @@ class StripParametersWidget(qt.QWidget):
         anchorsContainerLayout.setSpacing(2)
         self.stripAnchorsFlagCheck = qt.QCheckBox(self.anchorsContainer)
         self.stripAnchorsFlagCheck.setText(str("Strip Background use Anchors"))
-        self.connect(self.stripAnchorsFlagCheck,
-                     qt.SIGNAL('stateChanged(int)'),
+        self.stripAnchorsFlagCheck.stateChanged[int].connect( \
                      self._emitSignal)
         anchorsContainerLayout.addWidget(self.stripAnchorsFlagCheck)
 
@@ -118,9 +108,7 @@ class StripParametersWidget(qt.QWidget):
             anchorSpin = qt.QSpinBox(self.anchorsContainer)
             anchorSpin.setMinimum(0)
             anchorSpin.setMaximum(maxnchannel)
-            self.connect(anchorSpin,
-                     qt.SIGNAL('valueChanged(int)'),
-                     self._emitSignal)
+            anchorSpin.valueChanged[int].connect(self._emitSignal)
             anchorsContainerLayout.addWidget(anchorSpin)
             self.stripAnchorsList.append(anchorSpin)
 
@@ -236,7 +224,7 @@ class StripParametersWidget(qt.QWidget):
         ddict= {}
         ddict['event']='ParametersChanged'
         ddict['parameters'] = self.getParameters()
-        self.emit(qt.SIGNAL('StripParametersWidgetSignal'), ddict)
+        self.sigStripParametersWidgetSignal.emit(ddict)
 
 class StripBackgroundWidget(qt.QWidget):
     def __init__(self, parent=None):
@@ -256,8 +244,7 @@ class StripBackgroundWidget(qt.QWidget):
         self.setParameters = self.parametersWidget.setParameters
         self._x = None
         self._y = None
-        self.connect(self.parametersWidget,
-                     qt.SIGNAL('StripParametersWidgetSignal'),
+        self.parametersWidget.sigStripParametersWidgetSignal.connect( \
                      self._slot)
 
     def setData(self, x, y):
@@ -368,8 +355,8 @@ class StripBackgroundDialog(qt.QDialog):
         hboxLayout.addWidget(self.okButton)
         hboxLayout.addWidget(self.dismissButton)
         self.mainLayout.addWidget(hbox)
-        self.connect(self.dismissButton, qt.SIGNAL("clicked()"), self.reject)
-        self.connect(self.okButton, qt.SIGNAL("clicked()"), self.accept)
+        self.dismissButton.clicked[()].connect(self.reject)
+        self.okButton.clicked[()].connect(self.accept)
         
     def sizeHint(self):
         return qt.QSize(int(1.5*qt.QDialog.sizeHint(self).width()),
@@ -377,11 +364,11 @@ class StripBackgroundDialog(qt.QDialog):
         
 if __name__ == "__main__":
     a = qt.QApplication(sys.argv)
-    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+    a.lastWindowClosed.connect(a.quit)
     w = StripBackgroundDialog()
     def mySlot(ddict):
         print(ddict)
-    qt.QObject.connect(w.parametersWidget, qt.SIGNAL('StripParametersWidgetSignal'), mySlot)
+    w.parametersWidget.sigStripParametersWidgetSignal.connect(mySlot)
     x = numpy.arange(1000.).astype(numpy.float32)
     y = 100 + x + 100 * numpy.exp(-0.5*(x-500) * (x-500)/ 30.)
     w.setData(x, y)

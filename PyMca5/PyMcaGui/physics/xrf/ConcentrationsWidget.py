@@ -247,12 +247,10 @@ class SimpleThread(qt.QThread):
 
 
 class ConcentrationsWidget(qt.QWidget):
-    def __init__(self, parent=None, name="Concentrations", fl=0):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self, parent, name, fl)
-            self. setCaption(name)
-        else:
-            qt.QWidget.__init__(self, parent)
+    sigConcentrationsWidgetSignal = qt.pyqtSignal(object)
+    def __init__(self, parent=None, name="Concentrations"):
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle(name)
 
         self.build()
         ddict = {}

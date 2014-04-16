@@ -42,9 +42,7 @@ class NNMAParametersDialog(qt.QDialog):
         self.infoButton.setAutoDefault(False)        
         self.infoButton.setText('About NNMA')
         self.mainLayout.addWidget(self.infoButton)
-        self.connect(self.infoButton,
-                     qt.SIGNAL('clicked()'),
-                     self._showInfo)
+        self.infoButton.clicked[()].connect(self._showInfo)
 
         #
         self.methodOptions = qt.QGroupBox(self)
@@ -66,9 +64,7 @@ class NNMAParametersDialog(qt.QDialog):
             self.buttonGroup.addButton(rButton)
             self.buttonGroup.setId(rButton, i)
             i += 1
-        self.connect(self.buttonGroup,
-                     qt.SIGNAL('buttonPressed(QAbstractButton *)'),
-                     self._slot)
+        self.buttonGroup.buttonPressed[int].connect(self._slot)
 
         self.mainLayout.addWidget(self.methodOptions)
 
@@ -142,12 +138,8 @@ class NNMAParametersDialog(qt.QDialog):
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.mainLayout.addWidget(self.speedOptions)
         self.mainLayout.addWidget(hbox)
-        self.connect(self.okButton,
-                     qt.SIGNAL("clicked()"),
-                     self.accept)
-        self.connect(self.dismissButton,
-                     qt.SIGNAL("clicked()"),
-                     self.reject)
+        self.okButton.clicked[()].connect(self.accept)
+        self.dismissButton.clicked[()].connect(self.reject)
 
         self._infoDocument = qt.QTextEdit()
         self._infoDocument.setReadOnly(True)
@@ -159,9 +151,9 @@ class NNMAParametersDialog(qt.QDialog):
     def _showInfo(self):
         self._infoDocument.show()
 
-    def _slot(self, button):
+    def _slot(self, index):
+        button = self.buttonGroup.button(index)
         button.setChecked(True)
-        index = self.buttonGroup.checkedId()
         self.binningLabel.setText("Spectral Binning:")
         if 1 or index != 2:
             self.binningCombo.setEnabled(True)
@@ -248,11 +240,7 @@ class NNMAWindow(PCAWindow.PCAWindow):
             
 def test2():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
-
+    app.lastWindowClosed.connect(app.quit)
     dialog = NNMAParametersDialog()
     #dialog.setParameters({'options':[1,3,5,7,9],'method':1, 'npc':8,'binning':3})
     dialog.setModal(True)
@@ -264,11 +252,7 @@ def test2():
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
-
+    app.lastWindowClosed.connect(app.quit)
     container = NNMAWindow()
     data = numpy.arange(20000)
     data.shape = 2, 100, 100

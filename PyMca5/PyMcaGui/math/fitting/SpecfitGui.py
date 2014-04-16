@@ -41,7 +41,6 @@ from . import QScriptOption
 DEBUG = 0
 
 class SpecfitGui(qt.QWidget):
-    
     sigSpecfitGuiSignal = qt.pyqtSignal(object)
     
     def __init__(self,parent = None,name = None,fl = 0, specfit = None,
@@ -84,17 +83,13 @@ class SpecfitGui(qt.QWidget):
             self.guiconfig.AutoScalingCheckBox.stateChanged[int].connect(self.autoscaleevent) 
             self.guiconfig.ConfigureButton.clicked[()].connect(self.__configureGui) 
             self.guiconfig.PrintPushButton.clicked[()].connect(self.printps) 
-            self.guiconfig.connect(self.guiconfig.BkgComBox,
-                                qt.SIGNAL("activated(const QString &)"),self.bkgevent)
-            self.guiconfig.connect(self.guiconfig.FunComBox,
-                                qt.SIGNAL("activated(const QString &)"),self.funevent)
+            self.guiconfig.BkgComBox.activated[str].connect(self.bkgevent)
+            self.guiconfig.FunComBox.activated[str].connect(self.funevent)
             layout.addWidget(self.guiconfig)
 
         self.guiparameters = MultiParameters.ParametersTab(self)
         layout.addWidget(self.guiparameters)
-        self.connect(self.guiparameters,
-                     qt.SIGNAL('MultiParametersSignal'),
-                     self.__forward)
+        self.guiparameters.sigMultiParametersSignal.connect(self.__forward)
         if config:
             for key in self.specfit.bkgdict.keys():
                 self.guiconfig.BkgComBox.addItem(str(key))
@@ -104,10 +99,7 @@ class SpecfitGui(qt.QWidget):
             if specfit is not None:
                 configuration = specfit.configure()
                 if configuration['fittheory'] is None:
-                    if QTVERSION < '4.0.0':
-                        self.guiconfig.FunComBox.setCurrentItem(1)
-                    else:
-                        self.guiconfig.FunComBox.setCurrentIndex(1)
+                    self.guiconfig.FunComBox.setCurrentIndex(1)
                     self.funevent(self.specfit.theorylist[0])
                 else:
                     self.funevent(configuration['fittheory'])
@@ -145,12 +137,9 @@ class SpecfitGui(qt.QWidget):
             layout.addWidget(self.guistatus)
         if buttons:
             self.guibuttons = FitActionsGui.FitActionsGui(self)
-            self.guibuttons.connect(self.guibuttons.EstimateButton,
-                                    qt.SIGNAL("clicked()"),self.estimate)
-            self.guibuttons.connect(self.guibuttons.StartfitButton,
-                                    qt.SIGNAL("clicked()"),self.startfit)
-            self.guibuttons.connect(self.guibuttons.DismissButton,
-                                    qt.SIGNAL("clicked()"),self.dismiss)
+            self.guibuttons.EstimateButton.clicked[()].connect(self.estimate)
+            self.guibuttons.StartfitButton.clicked[()].connect(self.startfit)
+            self.guibuttons.DismissButton.clicked[()].connect(self.dismiss)
             layout.addWidget(self.guibuttons)
 
     def updateGui(self,configuration=None):
@@ -364,48 +353,11 @@ class SpecfitGui(qt.QWidget):
             self._emitSignal(ddict)
         return
 
-    if QTVERSION < '4.0.0':        
-        def __printps(self,text):
-            printer = qt.QPrinter()
-            if printer.setup(self):
-                painter = qt.QPainter()
-                if not(painter.begin(printer)):
-                    return 0
-            metrics = qt.QPaintDeviceMetrics(printer)
-            dpiy    = metrics.logicalDpiY()
-            margin  = int((2/2.54) * dpiy) #2cm margin
-            body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
-            #text = self.mcatable.gettext()
-            #html output -> print text
-            richtext = qt.QSimpleRichText(text, qt.QFont(),
-                                                qt.QString(""),
-                                                #0,
-                                                qt.QStyleSheet.defaultSheet(),
-                                                qt.QMimeSourceFactory.defaultFactory(),
-                                                body.height())
-            view = qt.QRect(body)
-            richtext.setWidth(painter,view.width())
-            page = 1                
-            while(1):
-                richtext.draw(painter,body.left(),body.top(),
-                              view,qt.QColorGroup())
-                view.moveBy(0, body.height())
-                painter.translate(0, -body.height())
-                painter.drawText(view.right()  - painter.fontMetrics().width(qt.QString.number(page)),
-                                 view.bottom() - painter.fontMetrics().ascent() + 5,qt.QString.number(page))
-                if view.top() >= richtext.height():
-                    break
-                printer.newPage()
-                page += 1
-
-            #painter.flush()
-            painter.end()
-    else:
-        def __printps(self, text):
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Sorry, Qt4 printing not implemented yet")
-            msg.exec_()            
+    def __printps(self, text):
+        msg = qt.QMessageBox(self)
+        msg.setIcon(qt.QMessageBox.Critical)
+        msg.setText("Sorry, Qt4 printing not implemented yet")
+        msg.exec_()            
     
     def mcaevent(self,item):
         if int(item):
@@ -555,7 +507,7 @@ class SpecfitGui(qt.QWidget):
         
 if __name__ == "__main__":
     import numpy
-    from PyMca import SpecfitFunctions
+    from PyMca5 import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = numpy.arange(2000).astype(numpy.float)
     p1 = numpy.array([1500,100.,30.0])
@@ -580,13 +532,8 @@ if __name__ == "__main__":
     #y = y + a.gauss(p10,x)
     y=y/1000.0
     a = qt.QApplication(sys.argv)
-    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+    a.lastWindowClosed.connect(a.quit)
     w = SpecfitGui(config=1, status=1, buttons=1)
     w.setdata(x=x,y=y)
-    if QTVERSION < '4.0.0':
-        a.setMainWidget(w)
-        w.show()
-        a.exec_loop()
-    else:
-        w.show()
-        a.exec_()
+    w.show()
+    a.exec_()

@@ -81,13 +81,8 @@ class NNMADialog(qt.QDialog):
         self.nnmaWindow.hide()
 
         #connections
-        self.connect(self.calculateButton,
-                     qt.SIGNAL("clicked()"),
-                     self._calculateSlot)
-
-        self.connect(self.showLastButton,
-                     qt.SIGNAL("clicked()"),
-                     self._showLastSlot)
+        self.calculateButton.clicked([]).connect(sself._calculateSlot)
+        self.showLastButton.clicked([]).connect(sself._showLastSlot)
 
     def sizeHint(self):
         return qt.QSize(int(4*qt.QDialog.sizeHint(self).width()),
@@ -242,8 +237,7 @@ if __name__ == "__main__":
     import os
     from PyMca5.PyMcaIO import EdfFile
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     d = NNMADialog()
     imageList = []
     for t in ["mix1.edf", "mix2.edf", "mix3.edf"]:

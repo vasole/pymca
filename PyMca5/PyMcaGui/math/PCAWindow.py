@@ -35,6 +35,11 @@ from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import ScanWindow
 from PyMca5.PyMcaMath.mva import PCAModule
 
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
+
 MDP = PCAModule.MDP
 MATPLOTLIB = MaskImageWidget.MATPLOTLIB
 QTVERSION = MaskImageWidget.QTVERSION
@@ -88,12 +93,7 @@ class PCAParametersDialog(qt.QDialog):
             self.buttonGroup.addButton(rButton)
             self.buttonGroup.setId(rButton, i)
             i += 1
-
-        #self.connect(self.buttonGroup,
-        #             qt.SIGNAL('buttonPressed(QAbstractButton *)'),
-        #             self._slot)
-        self.buttonGroup.buttonPressed.connect(self._slot)
-        
+        self.buttonGroup.buttonPressed[int].connect(self._slot)
 
         self.mainLayout.addWidget(self.methodOptions)
 
@@ -121,8 +121,7 @@ class PCAParametersDialog(qt.QDialog):
         self.speedOptions.mainLayout.addWidget(self.binningLabel, 1, 0)
         self.speedOptions.mainLayout.addWidget(self.binningCombo, 1, 1)
         self.binningCombo.setEnabled(False)
-        self.connect(self.binningCombo,
-                     qt.SIGNAL("activated(int)"),
+        self.binningCombo.activated[int].connect( \
                      self._updatePlotFromBinningCombo)
         if regions:
             self.__regions = True
@@ -150,15 +149,14 @@ class PCAParametersDialog(qt.QDialog):
         if self.scanWindow is not None:
             self.mainLayout.addWidget(self.scanWindow)
 
-        self.okButton.clicked.connect(self.accept)
+        self.okButton.clicked[()].connect(self.accept)
 
     def __addRegionsWidget(self):
         #Region handling
         self.regionsWidget = RegionsWidget(self)
         self.regionsWidget.setEnabled(False)
-        self.connect(self.regionsWidget,
-                     qt.SIGNAL('RegionsWidgetSignal'),
-                     self.regionsWidgetSlot)
+        self.regionsWidget.sigRegionsWidgetSignal.connect( \
+            self.regionsWidgetSlot)
         #the plot
         self.scanWindow = ScanWindow.ScanWindow(self)
         self.scanWindow.sigPlotSignal.connect(self._graphSlot)
@@ -197,9 +195,9 @@ class PCAParametersDialog(qt.QDialog):
                 signal = True
             self.regionsWidget._editingSlot(signal=signal)
 
-    def _slot(self, button):
+    def _slot(self, index):
+        button = self.buttonGroup.button(index)
         button.setChecked(True)
-        index = self.buttonGroup.checkedId()
         self.binningLabel.setText("Spectral Binning:")
         if index != 2:
             self.binningCombo.setEnabled(True)
@@ -293,6 +291,7 @@ class PCAParametersDialog(qt.QDialog):
 
 
 class RegionsWidget(qt.QGroupBox):
+    sigRegionsWidgetSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, nregions=10, limits=[0.0, 1000.]):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Spectral Regions')
@@ -317,9 +316,7 @@ class RegionsWidget(qt.QGroupBox):
         self.nRegionsSpinBox.setMaximum(self.nRegions)
         self.mainLayout.addWidget(self.nRegionsLabel, 0, 0)
         self.mainLayout.addWidget(self.nRegionsSpinBox, 0, 1)
-        self.connect(self.nRegionsSpinBox,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._regionsChanged)
+        self.nRegionsSpinBox.valueChanged[int].connect(self._regionsChanged)
 
         self.currentRegionLabel = qt.QLabel(self)
         self.currentRegionLabel.setText("Current Region:")
@@ -329,9 +326,7 @@ class RegionsWidget(qt.QGroupBox):
         self.currentRegionSpinBox.setMaximum(1)
         self.mainLayout.addWidget(self.currentRegionLabel, 0, 2)
         self.mainLayout.addWidget(self.currentRegionSpinBox, 0, 3)
-        self.connect(self.currentRegionSpinBox,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._currentRegionChanged)
+        self.currentRegionSpinBox.valueChanged[int].connect(self._currentRegionChanged)
 
         label = qt.QLabel(self)
         label.setText("From:")
@@ -341,9 +336,7 @@ class RegionsWidget(qt.QGroupBox):
         self.fromLine.setValidator(self.fromLine._v)
         self.mainLayout.addWidget(label, 0, 4)
         self.mainLayout.addWidget(self.fromLine, 0, 5)
-        self.connect(self.fromLine,
-                     qt.SIGNAL("editingFinished()"),
-                     self._editingSlot)
+        self.fromLine.editingFinished[()].connect(self._editingSlot)
 
         label = qt.QLabel(self)
         label.setText("To:")
@@ -353,9 +346,7 @@ class RegionsWidget(qt.QGroupBox):
         self.toLine.setValidator(self.toLine._v)
         self.mainLayout.addWidget(label, 0, 6)
         self.mainLayout.addWidget(self.toLine, 0, 7)
-        self.connect(self.toLine,
-                     qt.SIGNAL("editingFinished()"),
-                     self._editingSlot)
+        self.toLine.editingFinished[()].connect(self._editingSlot)
         self._regionsChanged(0)
 
     def setLimits(self, xmin, xmax):
@@ -404,7 +395,7 @@ class RegionsWidget(qt.QGroupBox):
         ddict['event'] = 'regionChanged'
         ddict['from'] = self.regionList[current][0]
         ddict['to'] = self.regionList[current][1]
-        self.emit(qt.SIGNAL('RegionsWidgetSignal'), ddict)
+        self.sigRegionsWidgetSignal.emit(ddict)
 
     def getRegions(self):
         nRegions = self.nRegionsSpinBox.value()
@@ -432,9 +423,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         self.mainTab.addTab(self.vectorGraph, "VECTORS")
 
         self.mainLayout.addWidget(self.slider)
-        self.connect(self.slider,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._showImage)
+        self.slider.valueChanged[int].connect(self._showImage)
 
         self.imageList = None
         self.imageNames=None
@@ -444,17 +433,15 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         self.vectorGraphTitles = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
-            self.connect(self.graphWidget.saveToolButton,
-                         qt.SIGNAL("clicked()"), 
+            self.graphWidget.saveToolButton.clicked[()].connect( \
                          self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
-            self._saveMenu.addAction(qt.QString("Image Data"),
+            self._saveMenu.addAction(QString("Image Data"),
                                      self.saveImageList)
-            self._saveMenu.addAction(qt.QString("Standard Graphics"),
+            self._saveMenu.addAction(QString("Standard Graphics"),
                                      self.graphWidget._saveIconSignal)
-            if QTVERSION > '4.0.0':
-                if MATPLOTLIB:
-                    self._saveMenu.addAction(qt.QString("Matplotlib") ,
+            if MATPLOTLIB:
+                self._saveMenu.addAction(QString("Matplotlib") ,
                                              self._saveMatplotlibImage)
         self.multiplyIcon = qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
         infotext = "Multiply image by -1"
@@ -560,11 +547,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
 
 def test2():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
-
+    app.lastWindowClosed.connect(app.quit)
     dialog = PCAParametersDialog()
     dialog.setParameters({'options': [1,3,5,7,9], 'method': 1, 'npc': 8,
                           'binning': 3})
@@ -577,11 +560,7 @@ def test2():
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
-
+    app.lastWindowClosed.connect(app.quit)
     container = PCAWindow()
     data = numpy.arange(20000)
     data.shape = 2, 100, 100

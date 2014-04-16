@@ -47,6 +47,7 @@ except:
 
 
 class SNIP1DParametersWidget(qt.QWidget):
+    sigSNIPParametersSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, length=2000, smooth=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
@@ -80,9 +81,7 @@ class SNIP1DParametersWidget(qt.QWidget):
             self.widgetDict[key].setMinimum(0)
             self.widgetDict[key].setMaximum(self.parametersDict['roi_max'])
             self.widgetDict[key].setValue(self.parametersDict[key])
-            self.connect(self.widgetDict[key],
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._updateParameters)
+            self.widgetDict[key].valueChanged[int].connect(self._updateParameters)
             self.mainLayout.addWidget(self.widgetDict[key], i, 1)
             i += 1
         self.widgetDict['smoothing'].setMaximum(100)
@@ -93,7 +92,7 @@ class SNIP1DParametersWidget(qt.QWidget):
         ddict = {}
         ddict['event']='SNIPParametersChanged'
         ddict.update(self.parametersDict)
-        self.emit(qt.SIGNAL('SNIPParametersSignal'), ddict)
+        self.sigSNIPParametersSignal.emit(ddict)
                   
     def getParameters(self):
         return self.parametersDict
@@ -111,6 +110,7 @@ class SNIP1DParametersWidget(qt.QWidget):
         self._updateParameters("dummy")
 
 class SNIP2DParametersWidget(qt.QWidget):
+    sigSNIPParametersSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, shape=(4000,4000)):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
@@ -140,9 +140,7 @@ class SNIP2DParametersWidget(qt.QWidget):
                 spinBox.setMinimum(0)
                 spinBox.setMaximum(min(self.parametersDict['roi_max']))
                 spinBox.setValue(self.parametersDict[key])
-                self.connect(spinBox,
-                         qt.SIGNAL("valueChanged(int)"),
-                         self._updateParameters)
+                spinBox.valueChanged[int].connect(self._updateParameters)
                 self.mainLayout.addWidget(spinBox, i, 2)
                 self.widgetDict[key] = spinBox
             elif 1:
@@ -151,8 +149,7 @@ class SNIP2DParametersWidget(qt.QWidget):
                 lineEdit.setValidator(validator)
                 lineEdit._validator = validator
                 lineEdit.setText("%d" % self.parametersDict[key][0])
-                self.connect(lineEdit,
-                         qt.SIGNAL("editingFinished()"),
+                lineEdit.editingFinished[()].connect( \
                          self._updateParameters)
                 self.mainLayout.addWidget(lineEdit, i, 1)
                 self.widgetDict[key] = [lineEdit]
@@ -161,9 +158,7 @@ class SNIP2DParametersWidget(qt.QWidget):
                 lineEdit.setValidator(validator)
                 lineEdit._validator = validator
                 lineEdit.setText("%d" % self.parametersDict[key][1])
-                self.connect(lineEdit,
-                         qt.SIGNAL("editingFinished()"),
-                         self._updateParameters)
+                lineEdit.editingFinished.connect(self._updateParameters)
                 self.mainLayout.addWidget(lineEdit, i, 2)
                 self.widgetDict[key].append(lineEdit)
             else:
@@ -171,18 +166,14 @@ class SNIP2DParametersWidget(qt.QWidget):
                 spinBox.setMinimum(0)
                 spinBox.setMaximum(self.parametersDict['roi_max'][0])
                 spinBox.setValue(self.parametersDict[key][0])
-                self.connect(spinBox,
-                         qt.SIGNAL("valueChanged(int)"),
-                         self._updateParameters)
+                spinBox.valueChanged[int].connect(self._updateParameters)
                 self.mainLayout.addWidget(spinBox, i, 1)
                 self.widgetDict[key] = [spinBox]
                 spinBox = qt.QSpinBox(self)
                 spinBox.setMinimum(0)
                 spinBox.setMaximum(self.parametersDict['roi_max'][1])
                 spinBox.setValue(self.parametersDict[key][1])
-                self.connect(spinBox,
-                         qt.SIGNAL("valueChanged(int)"),
-                         self._updateParameters)
+                spinBox.valueChanged[int].connect(self._updateParameters)
                 self.mainLayout.addWidget(spinBox, i, 2)
                 self.widgetDict[key].append(spinBox)
             i += 1
@@ -197,7 +188,7 @@ class SNIP2DParametersWidget(qt.QWidget):
         ddict = {}
         ddict['event']='SNIPParametersChanged'
         ddict.update(self.parametersDict)
-        self.emit(qt.SIGNAL('SNIPParametersSignal'), ddict)
+        self.sigSNIPParametersSignal.emit(ddict)
                   
     def getParameters(self):
         return self.parametersDict
@@ -260,8 +251,7 @@ class SNIPWindow(qt.QWidget):
         self.yMarkers = []
         self.getParameters = self.parametersWidget.getParameters
         self.setParameters = self.parametersWidget.setParameters
-        self.connect(self.parametersWidget,
-                     qt.SIGNAL('SNIPParametersSignal'),
+        self.parametersWidget.sigSNIPParametersSignal.connect( \
                      self.updateGraph)
         self.updateGraph(self.getParameters())
 
@@ -360,8 +350,8 @@ class SNIPDialog(qt.QDialog):
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.dismissButton)
         self.mainLayout.addWidget(hbox)
-        self.connect(self.dismissButton, qt.SIGNAL("clicked()"), self.reject)
-        self.connect(self.okButton, qt.SIGNAL("clicked()"), self.accept)
+        self.dismissButton.clicked[()].connect(self.reject)
+        self.okButton.clicked[()].connect(self.accept)
 
     def getParameters(self):
         parametersDict = self.parametersWidget.getParameters()

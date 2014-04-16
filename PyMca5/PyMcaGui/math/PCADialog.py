@@ -94,13 +94,8 @@ class PCADialog(qt.QDialog):
         self.pcaWindow.hide()
 
         #connections
-        self.connect(self.calculateButton,
-                     qt.SIGNAL("clicked()"),
-                     self._calculateSlot)
-
-        self.connect(self.showLastButton,
-                     qt.SIGNAL("clicked()"),
-                     self._showLastSlot)
+        self.calculateButton.clicked([]).connect(self._calculateSlot)
+        self.showLastButton.clicked([]).connect(self._showLastSlot)
 
     def sizeHint(self):
         return qt.QSize(int(4 * qt.QDialog.sizeHint(self).width()),
@@ -287,8 +282,7 @@ if __name__ == "__main__":
     import os
     from PyMca5.PyMcaIO import EdfFile
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     d = PCADialog()
     if len(sys.argv) < 2:
         fileList = ["D:\DATA\ICA\mix1.edf",

@@ -31,6 +31,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 class FitFunctionDefinition(qt.QGroupBox):
+    sigFitFunctionDefinitionSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle("Function Definition")
@@ -45,9 +46,8 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.fitFunctionCheckBox.setText("Fit Function to be used")
         self.fitFunctionCombo    = qt.QComboBox(self)
         self.fitFunctionCombo.addItem(str("None"))
-        self.connect(self.fitFunctionCombo,
-                     qt.SIGNAL("activated(int)"),
-                     self._fitFunctionComboActivated)
+        self.fitFunctionCombo.activated[int].connect( \
+                self._fitFunctionComboActivated)
         self.fitFunctionSetupButton = qt.QPushButton(self)
         self.fitFunctionSetupButton.setText('SETUP')
         self.fitFunctionSetupButton.setAutoDefault(False)
@@ -64,9 +64,8 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.backgroundCheckBox.setText("Background function")
         self.backgroundCombo    = qt.QComboBox(self)
         self.backgroundCombo.addItem(str("None"))
-        self.connect(self.backgroundCombo,
-                     qt.SIGNAL("activated(int)"),
-                     self._backgroundComboActivated)
+        self.backgroundCombo.activated[int].connect( \
+            self._backgroundComboActivated)
 
         self.backgroundSetupButton = qt.QPushButton(self)
         self.backgroundSetupButton.setText('SETUP')
@@ -89,9 +88,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.stripSetupButton = qt.QPushButton(self)
         self.stripSetupButton.setText('SETUP')
         self.stripSetupButton.setAutoDefault(False)
-        self.connect(self.stripCombo,
-                     qt.SIGNAL("activated(int)"),
-                     self._stripComboActivated)
+        self.stripCombo.activated[int].connect(self._stripComboActivated)
 
         self.mainLayout.addWidget(self.stripCheckBox,       row, 0)
         self.mainLayout.addWidget(qt.HorizontalSpacer(self),   row, 1)
@@ -161,17 +158,9 @@ class FitFunctionDefinition(qt.QGroupBox):
 
 
         #signals
-        self.connect(self.fitFunctionSetupButton,
-                     qt.SIGNAL('clicked()'),
-                     self.setupFitFunction)
-
-        self.connect(self.backgroundSetupButton,
-                     qt.SIGNAL('clicked()'),
-                     self.setupBackground)
-
-        self.connect(self.stripSetupButton,
-                     qt.SIGNAL('clicked()'),
-                     self.setupStrip)
+        self.fitFunctionSetupButton.clicked[()].connect(self.setupFitFunction)
+        self.backgroundSetupButton.clicked[()].connect(self.setupBackground)
+        self.stripSetupButton.clicked[()].connect(self.setupStrip)
         
     def _stripComboActivated(self, iValue):
         if iValue == 1:
@@ -183,13 +172,13 @@ class FitFunctionDefinition(qt.QGroupBox):
         ddict = {}
         ddict['event'] = "fitFunctionChanged"
         ddict['fit_function'] = str(self.fitFunctionCombo.currentText())
-        self.emit(qt.SIGNAL("FitFunctionDefinitionSignal"), ddict)
+        self.sigFitFunctionDefinitionSignal.emit(ddict)
 
     def _backgroundComboActivated(self, iValue):
         ddict = {}
         ddict['event'] = "backgroundFunctionChanged"
         ddict['background_function'] = str(self.backgroundCombo.currentText())
-        self.emit(qt.SIGNAL("FitFunctionDefinitionSignal"), ddict)
+        self.sigFitFunctionDefinitionSignal.emit(ddict)
 
     def setSNIP(self, bValue):
         if bValue:
@@ -240,7 +229,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         ddict['event'] = "stripSetupCalled"
         ddict['strip_function'] = str(self.stripCombo.currentText())
         ddict['stripalgorithm'] = self.stripCombo.currentIndex()
-        self.emit(qt.SIGNAL("FitFunctionDefinitionSignal"), ddict)
+        self.sigFitFunctionDefinitionSignal.emit(ddict)
 
 class FitControl(qt.QGroupBox):
     def __init__(self, parent=None):
@@ -387,6 +376,7 @@ class FitControl(qt.QGroupBox):
         row += 1
 
 class SimpleFitControlWidget(qt.QWidget):
+    sigFitControlSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt. QVBoxLayout(self)
@@ -397,12 +387,11 @@ class SimpleFitControlWidget(qt.QWidget):
         self.mainLayout.addWidget(self.functionDefinitionWidget)
         self.mainLayout.addWidget(self.fitControlWidget)
         self.mainLayout.addWidget(qt.VerticalSpacer(self))
-        self.connect(self.functionDefinitionWidget,
-                     qt.SIGNAL("FitFunctionDefinitionSignal"),
-                     self._functionDefinitionSlot)
+        self.functionDefinitionWidget.sigFitFunctionDefinitionSignal.connect( \
+                    self._functionDefinitionSlot)
 
     def _functionDefinitionSlot(self, ddict):
-        self.emit(qt.SIGNAL("FitControlSignal"), ddict)
+        self.sigFitControlSignal.emit(ddict)
 
     def setConfiguration(self, ddict0):
         if "fit" in ddict0:
@@ -563,7 +552,7 @@ class SimpleFitControlWidget(qt.QWidget):
 
 def test():
     app = qt.QApplication(sys.argv)
-    app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
+    app.lastWindowClosed.connect(app.quit)
     wid = SimpleFitControlWidget()
     ddict = {}
     ddict['stripwidth'] = 4

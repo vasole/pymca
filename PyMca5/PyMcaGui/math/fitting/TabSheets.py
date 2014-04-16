@@ -45,28 +45,18 @@ class TabSheets(qt.QDialog):
 
         self.Widget8 = qt.QWidget(self.tabWidget)
         self.Widget9 = qt.QWidget(self.tabWidget)
-        if QTVERSION < '4.0.0':
-            self.tabWidget.insertTab(self.Widget8,str("Tab"))
-            self.tabWidget.insertTab(self.Widget9,str("Tab"))
-        else:
-            self.tabWidget.addTab(self.Widget8,str("Tab"))
-            self.tabWidget.addTab(self.Widget9,str("Tab"))
+        self.tabWidget.addTab(self.Widget8,str("Tab"))
+        self.tabWidget.addTab(self.Widget9,str("Tab"))
 
         TabSheetsLayout.addWidget(self.tabWidget)
 
-        if QTVERSION < '4.0.0':
-            Layout2 = qt.QHBoxLayout(None,0,6,"Layout2")
-        else:
-            Layout2 = qt.QHBoxLayout(None)
-            Layout2.setContentsMargins(0, 0, 0, 0)
-            Layout2.setSpacing(6)
+        Layout2 = qt.QHBoxLayout(None)
+        Layout2.setContentsMargins(0, 0, 0, 0)
+        Layout2.setSpacing(6)
 
         if not nohelp:
             self.buttonHelp = qt.QPushButton(self)
             self.buttonHelp.setText(str("Help"))
-            if QTVERSION < '4.0.0':
-                self.buttonHelp.setAccel(4144)
-                self.buttonHelp.setAutoDefault(1)
             Layout2.addWidget(self.buttonHelp)
 
         if not nodefaults:
@@ -80,21 +70,12 @@ class TabSheets(qt.QDialog):
 
         self.buttonOk = qt.QPushButton(self)
         self.buttonOk.setText(str("OK"))
-        if QTVERSION < '4.0.0':
-            self.buttonOk.setAccel(0)
-            self.buttonOk.setAutoDefault(1)
-            self.buttonOk.setDefault(1)
         Layout2.addWidget(self.buttonOk)
 
         self.buttonCancel = qt.QPushButton(self)
         self.buttonCancel.setText(str("Cancel"))    
-        if QTVERSION < '4.0.0':
-            self.buttonCancel.setAccel(0)
-            self.buttonCancel.setAutoDefault(1)
         Layout2.addWidget(self.buttonCancel)
         TabSheetsLayout.addLayout(Layout2)
 
-        self.connect(self.buttonOk, qt.SIGNAL("clicked()"),
-                     self, qt.SLOT("accept()"))
-        self.connect(self.buttonCancel,qt.SIGNAL("clicked()"),
-                     self, qt.SLOT("reject()"))
+        self.buttonOk.clicked[()].connect(self.accept)
+        self.buttonCancel.clicked[()].connect(self.reject)

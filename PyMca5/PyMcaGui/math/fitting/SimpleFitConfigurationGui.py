@@ -152,32 +152,22 @@ class SimpleFitConfigurationGui(qt.QDialog):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
-        if 0:
-            self.fitControlWidget = SimpleFitControlWidget.SimpleFitControlWidget(self)
-            self.mainLayout.addWidget(self.fitControlWidget)
-            self.connect(self.fitControlWidget,
-                         qt.SIGNAL("FitControlSignal"),
-                         self._fitControlSlot)
-            self._stripDialog = None
-        else:            
-            self.tabWidget = qt.QTabWidget(self)
-            self.fitControlWidget = SimpleFitControlWidget.SimpleFitControlWidget(self)
-            self.connect(self.fitControlWidget,
-                         qt.SIGNAL("FitControlSignal"),
-                         self._fitControlSlot)
-            self.tabWidget.insertTab(0, self.fitControlWidget, "FIT")
-            self.fitFunctionWidgetStack = qt.QWidget(self)
-            self.fitFunctionWidgetStack.mainLayout = qt.QStackedLayout(self.fitFunctionWidgetStack)
-            self.fitFunctionWidgetStack.mainLayout.setContentsMargins(0, 0, 0, 0)
-            self.fitFunctionWidgetStack.mainLayout.setSpacing(0)            
-            self.tabWidget.insertTab(1, self.fitFunctionWidgetStack, "FUNCTION")
-            self.backgroundWidgetStack = qt.QWidget(self)
-            self.backgroundWidgetStack.mainLayout = qt.QStackedLayout(self.backgroundWidgetStack)
-            self.backgroundWidgetStack.mainLayout.setContentsMargins(0, 0, 0, 0)
-            self.backgroundWidgetStack.mainLayout.setSpacing(0)            
-            self.tabWidget.insertTab(2, self.backgroundWidgetStack, "BACKGROUND")
-            self.mainLayout.addWidget(self.tabWidget)
-            self._stripDialog = None
+        self.tabWidget = qt.QTabWidget(self)
+        self.fitControlWidget = SimpleFitControlWidget.SimpleFitControlWidget(self)
+        self.fitControlWidget.sigFitControlSignal.connect(self._fitControlSlot)
+        self.tabWidget.insertTab(0, self.fitControlWidget, "FIT")
+        self.fitFunctionWidgetStack = qt.QWidget(self)
+        self.fitFunctionWidgetStack.mainLayout = qt.QStackedLayout(self.fitFunctionWidgetStack)
+        self.fitFunctionWidgetStack.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.fitFunctionWidgetStack.mainLayout.setSpacing(0)            
+        self.tabWidget.insertTab(1, self.fitFunctionWidgetStack, "FUNCTION")
+        self.backgroundWidgetStack = qt.QWidget(self)
+        self.backgroundWidgetStack.mainLayout = qt.QStackedLayout(self.backgroundWidgetStack)
+        self.backgroundWidgetStack.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.backgroundWidgetStack.mainLayout.setSpacing(0)            
+        self.tabWidget.insertTab(2, self.backgroundWidgetStack, "BACKGROUND")
+        self.mainLayout.addWidget(self.tabWidget)
+        self._stripDialog = None
         self.buildAndConnectActions()
         self.mainLayout.addWidget(qt.VerticalSpacer(self))
         self._fitFunctionWidgets = {}
@@ -320,10 +310,10 @@ class SimpleFitConfigurationGui(qt.QDialog):
         buts.layout.addWidget(accept)
         self.mainLayout.addWidget(buts)
 
-        self.connect(load, qt.SIGNAL("clicked()"), self.load)
-        self.connect(save, qt.SIGNAL("clicked()"), self.save)
-        self.connect(reject, qt.SIGNAL("clicked()"), self.reject)
-        self.connect(accept, qt.SIGNAL("clicked()"), self.accept)
+        load.clicked[()].connect(self.load)
+        save.clicked[()].connect(self.save)
+        reject.clicked[()].connect(self.reject)
+        accept.clicked[()].connect(self.accept)
 
     def setSimpleFitInstance(self, fitInstance):
         self.simpleFitInstance = fitInstance
@@ -545,7 +535,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
 
 def test():
     app = qt.QApplication(sys.argv)
-    app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
+    app.lastWindowClosed.conenct(app.quit)
     wid = SimpleFitConfigurationGui()
     ddict = {}
     ddict['fit'] = {}

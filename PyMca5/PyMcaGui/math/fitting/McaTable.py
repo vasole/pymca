@@ -39,6 +39,7 @@ QTable = qt.QTableWidget
 DEBUG=0
 
 class McaTable(QTable):
+    sigMcaTableSignal = qt.pyqtSignal(object)
     def __init__(self, *args,**kw):
         QTable.__init__(self, *args)
         self.setRowCount(1)
@@ -70,16 +71,11 @@ class McaTable(QTable):
                 
         self.regionlist=[]
         self.regiondict={}
-        if QTVERSION < '4.0.0':
-            self.verticalHeader().setClickEnabled(1)
-            self.connect(self.verticalHeader(),qt.SIGNAL('clicked(int)'),self.__myslot)
-        else:
-            if DEBUG:
-                print("MCATABLE click on vertical header items?")
-            self.connect(self,
-                         qt.SIGNAL('cellClicked(int, int)'),
-                         self.__myslot)
-        self.connect(self,qt.SIGNAL("selectionChanged()"),self.__myslot)
+        if DEBUG:
+            print("MCATABLE click on vertical header items?")
+            self.verticalHeader().sectionClicked[int].connect(self.__myslot)
+        self.cellClicked[int, int].connect(self.__myslot)
+        self.selectionChanged[()].connect(self.__myslot)
 
                 
     def fillfrommca(self,mcaresult,diag=1):
@@ -135,47 +131,31 @@ class McaTable(QTable):
                                 color = qt.QColor(255,182,193)
                                 recolor = 1
                     for field in fields:
-                        if QTVERSION < '4.0.0':
-                            if recolor:
-                                key=MyQTableItem(self,qttable.QTableItem.Never,field,color=color)
-                            else:
-                                key=qttable.QTableItem(self,qttable.QTableItem.Never,field)
-                            self.setItem(line,col,key)
+                        key = self.item(line, col)
+                        if key is None:
+                            key = qt.QTableWidgetItem(field)
+                            self.setItem(line, col, key)
                         else:
-                            key = self.item(line, col)
-                            if key is None:
-                                key = qt.QTableWidgetItem(field)
-                                self.setItem(line, col, key)
-                            else:
-                                item.setText(field)
-                            if recolor:
-                                #function introduced in Qt 4.2.0
-                                if QTVERSION >= '4.2.0':
-                                    item.setBackground(qt.QBrush(color))
-                            item.setFlags(qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)                            
+                            item.setText(field)
+                        if recolor:
+                            #function introduced in Qt 4.2.0
+                            if QTVERSION >= '4.2.0':
+                                item.setBackground(qt.QBrush(color))
+                        item.setFlags(qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)                            
                         col=col+1
                     if recolor:
                         if not alreadyforced:
                             alreadyforced = 1
-                            if QTVERSION < '4.0.0':
-                                self.ensureCellVisible(line,0)
-                            else:
-                                self.scrollToItem(self.item(line, 0))
+                            self.scrollToItem(self.item(line, 0))
                     i += 1 
 
         i = 0
         for label in self.labels:
-            if QTVERSION < '4.0.0':
-                self.adjustColumn(i)
-            else:
-                self.resizeColumnToContents(i)
+            self.resizeColumnToContents(i)
             i=i+1
         ndict = {}
         ndict['event'] = 'McaTableFilled'
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaTableSignal'),(ndict,))
-        else:
-            self.emit(qt.SIGNAL('McaTableSignal'), ndict)
+        self.sigMcaTableSignal.emit(ndict)
 
 
     def __getfitpar(self,result):
@@ -221,16 +201,10 @@ class McaTable(QTable):
         if row >= 0:
             col = 0
             for label in self.labels:
-                if QTVERSION < '4.0.0':
-                    text = str(self.text(row,col))
-                else:
-                    text = str(self.item(row, col).text())
+                text = str(self.item(row, col).text())
                 try:
                     ddict[label] = float(text)
                 except:
                     ddict[label] = text
                 col +=1
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('McaTableSignal'),(ddict,))
-        else:
-            self.emit(qt.SIGNAL('McaTableSignal'), ddict)
+        self.sigMcaTableSignal.emit(ddict)

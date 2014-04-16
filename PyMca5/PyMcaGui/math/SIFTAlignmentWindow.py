@@ -334,8 +334,7 @@ if __name__ == "__main__":
         stackData[:, :, i] = a * i
 
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                        app,qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     w = SIFTAlignmentDialog()
     w.setStack(stackData, index=0)
     ret = w.exec_()

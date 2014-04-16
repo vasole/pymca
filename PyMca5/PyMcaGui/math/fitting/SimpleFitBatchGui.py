@@ -62,7 +62,7 @@ class SimpleFitBatchParameters(qt.QWidget):
             self._listButton = qt.QPushButton(self)
             self._listButton.setText('Browse')
             self._listButton.setAutoDefault(False)
-            self.connect(self._listButton,qt.SIGNAL('clicked()'),self.browseList)
+            self._listButton.clicked[()].connect(self.browseList)
             self.mainLayout.addWidget(self._listLabel,  0, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
             self.mainLayout.addWidget(self._listView,   0, 1)
             self.mainLayout.addWidget(self._listButton, 0, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
@@ -89,13 +89,10 @@ class SimpleFitBatchParameters(qt.QWidget):
             row0 += 1
         row += row0
 
-        self.connect(self._outputDirectoryButton,
-                     qt.SIGNAL('clicked()'),
-                     self.browseOutputDirectory)
-
-        self.connect(self._fitConfigurationButton,
-                     qt.SIGNAL('clicked()'),
-                     self.browseFitConfiguration)
+        self._outputDirectoryButton.clicked[()].connect( \
+                    self.browseOutputDirectory)
+        self._fitConfigurationButton.clicked[()].connect( \
+                    self.browseFitConfiguration)
 
     def browseList(self):
         if self._inputDir is None:
@@ -207,8 +204,7 @@ class SimpleFitBatchParameters(qt.QWidget):
         self._dataSource = dataSourceClass(self._fileList[0])
         self._dataWidget = dataSourceWidget()
         self._dataWidget.setDataSource(self._dataSource)
-        self.connect(self._dataWidget,
-                     qt.SIGNAL('addSelection'), self.printSelection)
+        self._dataWidget.sigAddSelection.connect(self.printSelection)
         self._dataWidget.show()
 
     def setFitConfigurationFile(self, fname):
@@ -260,9 +256,7 @@ class SimpleFitBatchGui(qt.QWidget):
             self.actionsBox.mainLayout.addWidget(self.startButton)
             self.actionsBox.mainLayout.addWidget(qt.HorizontalSpacer(self.actionsBox))
             self.mainLayout.addWidget(self.actionsBox)
-            self.connect(self.closeButton,
-                         qt.SIGNAL('clicked()'),
-                         self.close)
+            self.closeButton.clicked[()].connect(self.close)
     
 if __name__ == "__main__":
     app = qt.QApplication([])

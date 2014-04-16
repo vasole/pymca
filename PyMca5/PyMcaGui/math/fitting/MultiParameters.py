@@ -35,14 +35,10 @@ from . import McaTable
 DEBUG = 0
 
 class ParametersTab(qt.QTabWidget):
-    def __init__(self,parent = None,name = None,fl = 0):
-        if QTVERSION < '4.0.0':
-            qt.QTabWidget.__init__(self, parent, name, fl)
-        else:
-            qt.QTabWidget.__init__(self, parent)
-
-        #if name == None:
-        #    self.setName("FitParameters")
+    sigMultiParametersSignal = qt.pyqtSignal(object)
+    def __init__(self,parent = None, name = "FitParameters"):
+        qt.QTabWidget.__init__(self, parent)
+        self.setWindowTitle(name)
         
         #geometry
         #self.resize(570,300)
@@ -58,10 +54,7 @@ class ParametersTab(qt.QTabWidget):
         #the widgets/tables themselves
         self.tables={}
         self.mcatable=None
-        if QTVERSION < '4.0.0':
-            self.setContentsMargins(10, 10, 10, 10)
-        else:
-            if DEBUG: "self.setContentsMargins(10, 10, 10, 10) omitted"
+        self.setContentsMargins(10, 10, 10, 10)
         self.setview(name="Region 1")
 
     def setview(self,name=None,fitparameterslist=None):
@@ -173,19 +166,13 @@ class ParametersTab(qt.QTabWidget):
            self.views[name]=table
            #self.addTab(table,self.trUtf8(name))
            self.addTab(table,str(name))
-           if QTVERSION < '4.0.0':
-               self.connect(table,qt.PYSIGNAL('McaTableSignal'),self.__forward)
-           else:
-               self.connect(table,qt.SIGNAL('McaTableSignal'),self.__forward)
+           table.sigMcaTableSignal.connect(self.__forward)
         table.fillfrommca(mcaresult)
         self.setview(name=name)        
         return
         
     def __forward(self,ddict):
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('MultiParametersSignal'),(ddict,))
-        else:
-            self.emit(qt.SIGNAL('MultiParametersSignal'),(ddict))
+        self.sigMultiParametersSignal.emit(ddict)
 
 
     def gettext(self,**kw):
@@ -332,59 +319,54 @@ class ParametersTab(qt.QTabWidget):
 
 def test():
     a = qt.QApplication(sys.argv)
-    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+    a.lastWindowClosed.connect(a.quit)
     w = ParametersTab()
-    if QTVERSION < '4.0.0':a.setMainWidget(w)
     w.show()
-    if 1:
-        import specfile
-        import Specfit
-        import numpy
-        sf=specfile.Specfile('02021201.dat')
-        scan=sf.select('14')
-        #sf=specfile.Specfile('02022101.dat')
-        #scan=sf.select('11')
-        mcadata=scan.mca(1)
-        y=numpy.array(mcadata)
-        #x=numpy.arange(len(y))
-        x=numpy.arange(len(y))*0.0200511-0.003186
-        fit=Specfit.Specfit()
-        fit.setdata(x=x,y=y)
-        fit.importfun("SpecfitFunctions.py")
-        fit.settheory('Hypermet')
-        fit.configure(Yscaling=1.,
-                      WeightFlag=1,
-                      PosFwhmFlag=1,
-                      HeightAreaFlag=1,
-                      FwhmPoints=50,
-                      PositionFlag=1,
-                      HypermetTails=1)        
-        fit.setbackground('Linear')
-        if 0:
-            # build a spectrum array
-            f=open("spec.arsp",'r')
-            #read the spectrum data
-            x=numpy.array([], numpy.float)
-            y=numpy.array([], numpy.float)
+    import specfile
+    import Specfit
+    import numpy
+    sf=specfile.Specfile('02021201.dat')
+    scan=sf.select('14')
+    #sf=specfile.Specfile('02022101.dat')
+    #scan=sf.select('11')
+    mcadata=scan.mca(1)
+    y=numpy.array(mcadata)
+    #x=numpy.arange(len(y))
+    x=numpy.arange(len(y))*0.0200511-0.003186
+    fit=Specfit.Specfit()
+    fit.setdata(x=x,y=y)
+    fit.importfun("SpecfitFunctions.py")
+    fit.settheory('Hypermet')
+    fit.configure(Yscaling=1.,
+                  WeightFlag=1,
+                  PosFwhmFlag=1,
+                  HeightAreaFlag=1,
+                  FwhmPoints=50,
+                  PositionFlag=1,
+                  HypermetTails=1)        
+    fit.setbackground('Linear')
+    if 0:
+        # build a spectrum array
+        f=open("spec.arsp",'r')
+        #read the spectrum data
+        x=numpy.array([], numpy.float)
+        y=numpy.array([], numpy.float)
+        tmp=f.readline()[:-1]
+        while (tmp != ""):
+            tmpSeq=tmp.split()
+            x=numpy.concatenate((x,[float(tmpSeq[0])]))
+            y=numpy.concatenate((y,[float(tmpSeq[1])]))
             tmp=f.readline()[:-1]
-            while (tmp != ""):
-                tmpSeq=tmp.split()
-                x=numpy.concatenate((x,[float(tmpSeq[0])]))
-                y=numpy.concatenate((y,[float(tmpSeq[1])]))
-                tmp=f.readline()[:-1]
-            fit.setdata(x=x,y=y)
-        if 1:
-            mcaresult=fit.mcafit(x=x,xmin=x[70],xmax=x[500])
-            w.fillfrommca(mcaresult)
-        else:
-            fit.estimate()
-            fit.startfit()
-            w.fillfromfit(fit.paramlist,current='Fit')
-            w.removeview(view='Region 1')
-    if QTVERSION < '4.0.0':
-        a.exec_loop()
+        fit.setdata(x=x,y=y)
+    if 1:
+        mcaresult=fit.mcafit(x=x,xmin=x[70],xmax=x[500])
+        w.fillfrommca(mcaresult)
     else:
-        a.exec_()
+        fit.estimate()
+        fit.startfit()
+        w.fillfromfit(fit.paramlist,current='Fit')
+        w.removeview(view='Region 1')
+    a.exec_()
         
 if __name__ == "__main__":
     bench=0
