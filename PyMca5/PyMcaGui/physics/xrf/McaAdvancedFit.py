@@ -340,7 +340,8 @@ class McaAdvancedFit(qt.QWidget):
         layout.addWidget(l3)
         l3.setFixedWidth(l3.fontMetrics().width('##'))
         msg.show()
-        qt.qApp.processEvents()
+        app = qt.QApplication.instance()
+        app.processEvents()
         i = 0
         ticks = ['-','\\', "|", "/","-","\\",'|','/']
         while (sthread.isRunning()):
