@@ -271,21 +271,16 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 else:
                     self.imageWindowDict = {}
                     self.imageWindowCorrelator = None
-                    self.connect(self.sourceWidget,
-                             qt.SIGNAL("addSelection"),
+                    self.sourceWidget.sigAddSelection.connect( \
                              self.dispatcherAddSelectionSlot)
-                    self.connect(self.sourceWidget,
-                             qt.SIGNAL("removeSelection"),
+                    self.sourceWidget.sigRemoveSelection.connect( \
                              self.dispatcherRemoveSelectionSlot)
-                    self.connect(self.sourceWidget,
-                             qt.SIGNAL("replaceSelection"),
+                    self.sourceWidget.sigReplaceSelection.connect( \
                              self.dispatcherReplaceSelectionSlot)
-                    self.connect(self.mainTabWidget,
-                                 qt.SIGNAL("currentChanged(int)"),
-                                 self.currentTabIndexChanged)
+                    self.mainTabWidget.currentChanged[int].connect( \
+                        self.currentTabIndexChanged)
 
-            self.connect(self.sourceWidget,
-                         qt.SIGNAL("otherSignals"),
+            self.sourceWidget.sigOtherSignals.connect( \
                          self.dispatcherOtherSignalsSlot)
             if 0:
                 if 'shm' in kw:
@@ -327,12 +322,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         #That will be made in a next iteration I guess
         if dispatcher is None:
             dispatcher = self.sourceWidget
-        self.connect(dispatcher, qt.SIGNAL("addSelection"),
-                         viewer._addSelection)
-        self.connect(dispatcher, qt.SIGNAL("removeSelection"),
-                         viewer._removeSelection)
-        self.connect(dispatcher, qt.SIGNAL("replaceSelection"),
-                         viewer._replaceSelection)
+        dispatcher.sigAddSelection.connect(viewer._addSelection)
+        dispatcher.sigRemoveSelection.connect(viewer._removeSelection)
+        dispatcher.sigReplaceSelection.connect(viewer._replaceSelection)
             
     def currentTabIndexChanged(self, index):
         legend = "%s" % self.mainTabWidget.tabText(index)
@@ -443,11 +435,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                 scanwindow=self.scanWindow)
                 self.imageWindowDict[legend] = imageWindow
 
-                self.connect(imageWindow, qt.SIGNAL("addImageClicked"),
+                imageWindow.sigAddImageClicked.connect( \
                      self.imageWindowCorrelator.addImageSlot)
-                self.connect(imageWindow, qt.SIGNAL("removeImageClicked"),
+                imageWindow.sigRemoveImageClicked.connect( \
                      self.imageWindowCorrelator.removeImageSlot)
-                self.connect(imageWindow, qt.SIGNAL("replaceImageClicked"),
+                imageWindow.sigRreplaceImageClicked.conenct( \
                      self.imageWindowCorrelator.replaceImageSlot)
                 self.mainTabWidget.addTab(imageWindow, legend)
                 if toadd:
@@ -872,30 +864,27 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.actionOpen.setText(QString("&Open"))
             self.actionOpen.setIcon(self.Icons["fileopen"])
             self.actionOpen.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
-            self.connect(self.actionOpen, qt.SIGNAL("triggered(bool)"),
-                         self.onOpen)
+            self.actionOpen.triggered[bool].connect(self.onOpen)
             #filesaveas
             self.actionSaveAs = qt.QAction(self)
             self.actionSaveAs.setText(QString("&Save"))
             self.actionSaveAs.setIcon(self.Icons["filesave"])
             self.actionSaveAs.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
-            self.connect(self.actionSaveAs, qt.SIGNAL("triggered(bool)"),
-                         self.onSaveAs)
+            self.actionSaveAs.triggered[bool].connect(self.onSaveAs)
 
             #filesave
             self.actionSave = qt.QAction(self)
             self.actionSave.setText(QString("Save &Default Settings"))
             #self.actionSave.setIcon(self.Icons["filesave"])
             #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
-            self.connect(self.actionSave, qt.SIGNAL("triggered(bool)"),
-                         self.onSave)
+            self.actionSave.triggered[bool].connect(self.onSave)
+
             #fileprint
             self.actionPrint = qt.QAction(self)
             self.actionPrint.setText(QString("&Print"))
             self.actionPrint.setIcon(self.Icons["fileprint"])
             self.actionPrint.setShortcut(qt.Qt.CTRL+qt.Qt.Key_P)
-            self.connect(self.actionPrint, qt.SIGNAL("triggered(bool)"),
-                         self.onPrint)
+            self.actionPrint.triggered[bool].connect(self.onPrint)
 
             #filequit
             self.actionQuit = qt.QAction(self)
@@ -921,15 +910,14 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if self.options["MenuTools"]:
             self.menuTools= qt.QMenu()
             #self.menuTools.setCheckable(1)
-            self.connect(self.menuTools, qt.SIGNAL("aboutToShow()"),
-                         self.menuToolsAboutToShow)
+            self.menuTools.aboutToShow[()].connect(self.menuToolsAboutToShow)
             self.menuTools.setTitle("&Tools")
             self.menuBar().addMenu(self.menuTools)
 
         if self.options["MenuWindow"]:
             self.menuWindow= qt.QMenu()
             #self.menuWindow.setCheckable(1)
-            self.connect(self.menuWindow, qt.SIGNAL("aboutToShow()"), self.menuWindowAboutToShow)
+            self.menuWindow.aboutToShow[()].connect(self.menuWindowAboutToShow)
             self.menuWindow.setTitle("&Window")
             self.menuBar().addMenu(self.menuWindow)
 
@@ -978,8 +966,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self.sourceFrameLayout.addWidget(sourceToolbar)
         
         #connections
-        self.connect(self.line1,qt.SIGNAL("LineDoubleClickEvent"),self.sourceReparent)
-        self.connect(self.closelabel,qt.SIGNAL("PixmapLabelMousePressEvent"),self.toggleSource)
+        self.line1.sigLineDoubleClickEvent.connect(self.sourceReparent)
+        self.closelabel.sigPixmapLabelMousePressEvent.connect(self.toggleSource)
     
         #tips
         self.line1.setToolTip("DoubleClick toggles floating window mode")
@@ -1135,9 +1123,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             if correlator.isHidden():
                 correlator.show()
             correlator.raise_()
-        self.connect(self.__correlator[-1],
-                     qt.SIGNAL("RGBCorrelatorSignal"),
-                     self._deleteCorrelator)
+        self.__correlator[-1].sigRGBCorrelatorSignal.connect( \
+                self._deleteCorrelator)
 
         if len(filelist) == 1:
             correlator.addBatchDatFile(filelist[0])
@@ -1564,7 +1551,7 @@ if 0:
             #name= self.__getNewGraphName()
             if name == "MCA Graph":
                 graph= McaWindow.McaWindow(self.mdi, name=name)
-            self.connect(graph, qt.SIGNAL("windowClosed()"), self.closeGraph)
+            graph.windowClosed[()].connect(self.closeGraph)
             graph.show()
 
             if len(self.mdi.windowList())==1:
@@ -1634,22 +1621,24 @@ class MyQTextBrowser(qt.QTextBrowser):
             qt.QTextBrowser.setSource(self,name)                           
             
 class Line(qt.QFrame):
+    sigLineDoubleClickEvent = qt.pyqtSignal(object)
     def mouseDoubleClickEvent(self,event):
         if DEBUG:
             print("Double Click Event")
         ddict={}
         ddict['event']="DoubleClick"
         ddict['data'] = event
-        self.emit(qt.SIGNAL("LineDoubleClickEvent"),(ddict))
+        self.sigLineDoubleClickEvent.emit(ddict)
 
 class PixmapLabel(qt.QLabel):
+    sigPixmapLabelMousePressEvent = qt.pyqtSignal(object)
     def mousePressEvent(self,event):
         if DEBUG:
             print("Mouse Press Event")
         ddict={}
         ddict['event']="MousePress"
         ddict['data'] = event
-        self.emit(qt.SIGNAL("PixmapLabelMousePressEvent"),(ddict))
+        self.sigPixmapLabelMousePressEvent.emit(ddict)
 
 if __name__ == '__main__':
     PROFILING = 0

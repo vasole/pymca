@@ -45,6 +45,7 @@ if qt.qVersion() > '4.0.0':
             self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
 
 class QXTube(qt.QWidget):
+    sigQXTubeSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, initdict = None):
         qt.QWidget.__init__(self, parent)
 
@@ -212,19 +213,16 @@ class QXTube(qt.QWidget):
         d["scatterlist"] = energyscatter
         d["flaglist"]    = numpy.ones(len(energy))
 
-        self.emit(qt.SIGNAL("QXTubeSignal"), d)
+        self.sigQXTubeSignal.emit(d)
             
 
 class TubeWidget(qt.QWidget):
     def __init__(self, parent=None, initdict = None):
         qt.QWidget.__init__(self, parent)
         self._build()
-        self.connect(self.anodeCombo, qt.SIGNAL("MyQComboBoxSignal"),
-                     self._anodeSlot)
-        self.connect(self.windowCombo, qt.SIGNAL("MyQComboBoxSignal"),
-                     self._windowSlot)
-        self.connect(self.filter1Combo, qt.SIGNAL("MyQComboBoxSignal"),
-                     self._filter1Slot)
+        self.anodeCombo.sigMyQComboBoxSignal.connect(self._anodeSlot)
+        self.windowCombo.sigMyQComboBoxSignal.connect(self._windowSlot)
+        self.filter1Combo.sigMyQComboBoxSignal.connect(self._filter1Slot)
         self.transmissionCheckBox.clicked.connect(self._transmissionSlot)
             
         if initdict is not None:
@@ -437,6 +435,7 @@ class TubeWidget(qt.QWidget):
             self.anodeThickness.setEnabled(0)
 
 class MyQComboBox(qt.QComboBox):
+    sigMyQComboBoxSignal = qt.pyqtSignal(object)
     def __init__(self,parent = None,name = None,fl = 0,
                  options=['1','2','3'],row=None,col=None):
         if row is None: row = 0
@@ -447,14 +446,7 @@ class MyQComboBox(qt.QComboBox):
         self.setOptions(options)
         self.setDuplicatesEnabled(False)
         self.setEditable(False)
-        self.connect(self, qt.SIGNAL("activated(const QString &)"),self._mySignal)
-
-    if qt.qVersion() < '4.0.0':
-        def setCurrentIndex(self, index):
-            return self.setCurrentItem(index)
-
-        def currentIndex(self):
-            return self.currentItem()
+        self.activated[str].connect(self._mySignal)
 
     def setOptions(self,options=['1','2','3']):
         self.clear()
@@ -475,10 +467,7 @@ class MyQComboBox(qt.QComboBox):
         d['event']   = 'activated'
         d['element'] = text
         #d['z'] = Elemens.ElementList.index(d) + 1
-        if qt.qVersion() < '4.0.0':
-            self.emit(qt.PYSIGNAL('MyQComboBoxSignal'),(d,))
-        else:
-            self.emit(qt.SIGNAL('MyQComboBoxSignal'), (d))
+        self.sigMyQComboBoxSignal.emit(d)
         
 if __name__ == "__main__":
     app = qt.QApplication([])

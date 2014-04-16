@@ -47,6 +47,7 @@ __revision__ = "$Revision: 1.12 $"
 
 
 class PeakButton(qt.QPushButton):
+    sigPeakClicked = qt.pyqtSignal(str)
     def __init__(self, parent, peak):
         qt.QPushButton.__init__(self, parent)
         #, peak)
@@ -63,7 +64,7 @@ class PeakButton(qt.QPushButton):
         self.selected= 0
         self.brush= qt.QBrush(qt.QColor(qt.Qt.yellow))
 
-        self.connect(self, qt.SIGNAL("clicked()"), self.clickedSlot)
+        self.clicked[()].connect(self.clickedSlot)
 
     def toggle(self):
         self.selected= not self.selected
@@ -71,17 +72,16 @@ class PeakButton(qt.QPushButton):
 
     def setSelected(self, b):
         self.selected= b
-        if QTVERSION > '4.0.0':
-            if b:
-                role = self.backgroundRole()
-                palette = self.palette()
-                palette.setBrush( role,self.brush)
-                self.setPalette(palette)
-            else:
-                role = self.backgroundRole()
-                palette = self.palette()
-                palette.setBrush( role, qt.QBrush())
-                self.setPalette(palette)
+        if b:
+            role = self.backgroundRole()
+            palette = self.palette()
+            palette.setBrush( role,self.brush)
+            self.setPalette(palette)
+        else:
+            role = self.backgroundRole()
+            palette = self.palette()
+            palette.setBrush( role, qt.QBrush())
+            self.setPalette(palette)
         self.update()
 
     def isSelected(self):
@@ -89,10 +89,7 @@ class PeakButton(qt.QPushButton):
 
     def clickedSlot(self):
         self.toggle()
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("peakClicked"), (self.peak,))
-        else:
-            self.emit(qt.SIGNAL("peakClicked(QString)"), self.peak)
+        self.sigPeakClicked.emit(self.peak)
 
     def paintEvent(self, pEvent):
         if QTVERSION < '4.0.0':
@@ -118,6 +115,8 @@ class PeakButton(qt.QPushButton):
         p.drawRoundRect(pr)
 
 class PeakButtonList(qt.QWidget):
+    # emitted object is a list
+    sigSelectionChanged = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="PeakButtonList",
                  peaklist=['K','Ka','Kb','L','L1','L2','L3','M'],
                  fl=0):
@@ -138,12 +137,7 @@ class PeakButtonList(qt.QWidget):
         for key in peaklist:
             self.buttondict[key] = PeakButton(self, key)
             layout.addWidget(self.buttondict[key])
-            if QTVERSION < '4.0.0':
-                self.connect(self.buttondict[key],
-                             qt.PYSIGNAL("peakClicked"), self.__selection)
-            else:
-                self.connect(self.buttondict[key],
-                             qt.SIGNAL("peakClicked(QString)"), self.__selection)
+            self.buttondict[key].sigPeakClicked.connect(self.__selection)
 
         layout.addStretch(1)
 
@@ -151,43 +145,40 @@ class PeakButtonList(qt.QWidget):
         self.resetBut = qt.QPushButton(self)
         self.resetBut.setText("Reset")
         layout.addWidget(self.resetBut)
-        self.connect(self.resetBut,qt.SIGNAL('clicked()'),self.__resetBut)
+        self.resetBut.clicked[()].connect(self.__resetBut)
 
         layout.addStretch(2)        
 
     def __resetBut(self):
         for key in self.peaklist:
-                    self.buttondict[key].setSelected(0)
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('selectionChanged'),([],))
-        else:
-            self.emit(qt.SIGNAL('selectionChanged'),([]))
+            self.buttondict[key].setSelected(0)
+        self.sigSelectionChanged.emit([])
 
     def __selection(self, peak):
         selection= []
         for key in self.peaklist:
-                if self.buttondict[key].isSelected():
-                        selection.append(key)
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("selectionChanged"), (selection,))
-        else:
-            self.emit(qt.SIGNAL("selectionChanged"), (selection))
+            if self.buttondict[key].isSelected():
+                selection.append(key)
+        self.sigSelectionChanged.emit(selection)
             
 
     def setSelection(self, selection=[]):
         for key in self.peaklist:
-                if key in selection:
-                        self.buttondict[key].setSelected(1)
-                else:        self.buttondict[key].setSelected(0)
+            if key in selection:
+                self.buttondict[key].setSelected(1)
+            else:
+                self.buttondict[key].setSelected(0)
 
     def setDisabled(self,selection=[]):
         for key in self.peaklist:
             if key in selection:
                 self.buttondict[key].setEnabled(0)
-            else:        self.buttondict[key].setEnabled(1)
+            else:
+                self.buttondict[key].setEnabled(1)
         
 
 class FitPeakSelect(qt.QWidget):
+    sigFitPeakSelect = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="FitPeakSelect", peakdict = {}, energyTable=None):
         qt.QWidget.__init__(self,parent)
 
@@ -224,8 +215,7 @@ class FitPeakSelect(qt.QWidget):
             self.energyButton = qt.QPushButton(hbox)
             hboxLayout.addWidget(self.energyButton)
             self.energyButton.setText("Update")
-            self.connect(self.energyButton, qt.SIGNAL('clicked()'),
-                         self._energyClicked)
+            self.energyButton.clicked[()].connect(self._energyClicked)
 
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         layout.addSpacing(20)
@@ -239,11 +229,10 @@ class FitPeakSelect(qt.QWidget):
         self.peaks = PeakButtonList(self)
         self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M'])
 
-        self.connect(self.energyTable, qt.SIGNAL("EnergyTableSignal"),
-                     self._energyTableAction)
+        self.energyTable.sigEnergyTableSignal.connect(self._energyTableAction)
         self.table.sigElementClicked.connect(self.elementClicked)
-        self.connect(self.peaks, qt.SIGNAL("selectionChanged"),
-                     self.peakSelectionChanged)
+        self.peaks.sigSelectionChanged.connect(self.peakSelectionChanged)
+
         #Reset All
         self.resetAllButton = qt.QPushButton(self.peaks)
         palette = qt.QPalette(self.resetAllButton.palette())
@@ -253,8 +242,7 @@ class FitPeakSelect(qt.QWidget):
         self.resetAllButton.setText("Reset All")
         self.peaks.layout().addWidget(self.resetAllButton)
 
-        self.connect(self.resetAllButton, qt.SIGNAL("clicked()"),
-                     self.__resetAll)
+        self.resetAllButton.clicked[()].connect(self.__resetAll)
 
         layout.addWidget(self.table)
         layout.addWidget(line)
@@ -306,10 +294,7 @@ class FitPeakSelect(qt.QWidget):
             self.table.setElementSelected(self.current,0)
         sel= self.getSelection()
         sel['current'] = self.current
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("FitPeakSelect"), (sel,))
-        else:
-            self.emit(qt.SIGNAL("FitPeakSelect"), (sel))
+        self.sigFitPeakSelect.emit((sel))
 
     def elementClicked(self,symbol):
         if QTVERSION > '4.0.0':symbol = str(symbol)
@@ -327,10 +312,7 @@ class FitPeakSelect(qt.QWidget):
         sel= self.getSelection()
         sel['current'] = self.current
         self.setPeaksDisabled(symbol)
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("FitPeakSelect"), (sel,))
-        else:
-            self.emit(qt.SIGNAL("FitPeakSelect"),(sel))
+        self.sigFitPeakSelect.emit((sel))
         self.peaks.setSelection(self.peakdict[symbol])
 
     def setPeaksDisabled(self,symbol):
@@ -469,17 +451,13 @@ class MyQLineEdit(qt.QLineEdit):
         self.setPaletteBackgroundColor(qt.QColor('white'))
 
 class MyQLabel(qt.QLabel):
-    def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
+    def __init__(self, parent=None, bold=True, color= qt.Qt.red):
         qt.QLabel.__init__(self,parent)
-        if QTVERSION <'4.0.0':
-            self.color = color
-            self.bold  = bold
-        else:
-            palette = self.palette()
-            role = self.foregroundRole()
-            palette.setColor(role,color)
-            self.setPalette(palette)
-            self.font().setBold(bold)
+        palette = self.palette()
+        role = self.foregroundRole()
+        palette.setColor(role,color)
+        self.setPalette(palette)
+        self.font().setBold(bold)
 
 
     if QTVERSION < '4.0.0':
@@ -497,22 +475,15 @@ def testwidget():
         print("New selection:",)
         print(ddict)
     a = qt.QApplication(sys.argv)
-    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+    a.lastWindowClosed.connect(a.quit)
 
     w = qt.QTabWidget()
 
-    if QTVERSION < '4.0.0':
-        f = FitPeakSelect(w)
-        w.addTab(f, "QPeriodicTable")
-        qt.QObject.connect(f, qt.PYSIGNAL("FitPeakSelect"), change)
-        w.show()
-        a.exec_loop()
-    else:
-        f = FitPeakSelect()
-        w.addTab(f, "QPeriodicTable")
-        qt.QObject.connect(f, qt.SIGNAL("FitPeakSelect"), change)
-        w.show()
-        a.exec_()
+    f = FitPeakSelect()
+    w.addTab(f, "QPeriodicTable")
+    f.sigFitPeakSelect.connect(change)
+    w.show()
+    a.exec_()
 
 if __name__ == "__main__":
     testwidget()

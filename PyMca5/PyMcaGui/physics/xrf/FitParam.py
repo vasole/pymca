@@ -66,8 +66,8 @@ FitParamHeaders= ["FIT", "DETECTOR","BEAM","PEAKS", "PEAK SHAPE", "ATTENUATORS",
 class FitParamWidget(FitParamForm):
     attenuators= ["Filter 0", "Filter 1", "Filter 2", "Filter 3", "Filter 4", "Filter 5",
                    "Filter 6","Filter 7","BeamFilter0", "BeamFilter1","Detector", "Matrix"]
-    def __init__(self, parent=None, name="FitParamWidget", fl=0):
-        FitParamForm.__init__(self, parent, name, fl)
+    def __init__(self, parent=None):
+        FitParamForm.__init__(self, parent)
         self._channels = None
         self._counts   = None
         self._stripDialog = None
@@ -92,8 +92,7 @@ class FitParamWidget(FitParamForm):
         self.graphDialog.okButton.setText('OK')
         self.graphDialog.okButton.setAutoDefault(True)
         self.graphDialog.mainLayout.addWidget(self.graphDialog.okButton)
-        self.graphDialog.connect(self.graphDialog.okButton,
-                                 qt.SIGNAL('clicked()'),
+        self.graphDialog.okButton.clicked[()].connect( \
                                  self.graphDialog.accept)
         self.attTable = self.tabAttenuators.table
         #self.multilayerTable =self.tabAttenuators.matrixTable
@@ -205,7 +204,7 @@ class FitParamWidget(FitParamForm):
         n = self.mainTab.count()
         for idx in range(n):
             self.tabLabel.append(qt.safe_str(self.mainTab.tabText(idx)))
-        self.connect(self.mainTab, qt.SIGNAL("currentChanged(QWidget*)"), self.__tabChanged)
+        self.mainTab.currentChanged[int].connect(self.__tabChanged)
         self.contCombo.activated[int].connect(self.__contComboActivated)
         self.functionCombo.activated[int].connect(self.__functionComboActivated)
         self.orderSpin.valueChanged[int].connect(self.__orderSpinChanged)
@@ -390,9 +389,7 @@ class FitParamWidget(FitParamForm):
                 i += 1
             
 
-    def __tabChanged(self, wid):
-        idx= self.mainTab.indexOf(wid)
-
+    def __tabChanged(self, idx):
         if self.prevTabIdx is None:
             self.prevTabIdx= idx
 
@@ -1318,7 +1315,7 @@ class FitParamDialog(qt.QDialog):
                     
 def openWidget():
     app= qt.QApplication(sys.argv)
-    app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
+    app.lastWindowClosed.connect(app.quit)
     wid= FitParamWidget()
     app.setMainWidget(wid)
     wid.show()
@@ -1326,8 +1323,8 @@ def openWidget():
 
 def openDialog():
     app= qt.QApplication(sys.argv)
-    app.connect(app, qt.SIGNAL("lastWindowClosed()"), app.quit)
-    wid= FitParamDialog(modal=1,fl=0)
+    app.lastWindowClosed.connect(app.quit)
+    wid= FitParamDialog(modal=1)
     ret = wid.exec_()
     if ret == qt.QDialog.Accepted:
         npar = wid.getParameters()

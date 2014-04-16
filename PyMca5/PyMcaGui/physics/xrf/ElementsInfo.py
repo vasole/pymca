@@ -140,8 +140,8 @@ class ElementsInfo(qt.QWidget):
         self.closelabel.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
 
         # --- connections
-        self.connect(self.line1,qt.SIGNAL("LineDoubleClickEvent"),self.infoReparent)
-        self.connect(self.closelabel,qt.SIGNAL("PixmapLabelMousePressEvent"),self.infoToggle)
+        self.line1.sigLineDoubleClickEvent.connect(self.infoReparent)
+        self.closelabel.sigPixmapLabelMousePressEvent.connect(self.infoToggle)
 
         # --- The text edit widget
         w= qt.QWidget(frame)
@@ -164,8 +164,7 @@ class ElementsInfo(qt.QWidget):
         hbox.layout.addWidget(l1)
         hbox.layout.addWidget(self.energy)
         hbox.layout.addWidget(qt.HorizontalSpacer(hbox))
-        self.connect(self.energy, qt.SIGNAL('editingFinished()'),
-                                     self._energySlot)
+        self.energy.editingFinished[()].connect(self._energySlot)
 
         #if both signals are emitted and there is an error then we are in an
         #endless loop
@@ -237,25 +236,28 @@ class ElementsInfo(qt.QWidget):
                 self.energy.setText("")
 
 class Line(qt.QFrame):
+    sigLineDoubleClickEvent = qt.pyqtSignal(object)
     def mouseDoubleClickEvent(self,event):
         if DEBUG:
             print("Double Click Event")
         ddict={}
         ddict['event']="DoubleClick"
         ddict['data'] = event
-        self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
+        self.sigLineDoubleClickEvent.emit(ddict)
 
 class PixmapLabel(qt.QLabel):
+    sigPixmapLabelMousePressEvent = qt.pyqtSignal(object)
     def mousePressEvent(self,event):
         if DEBUG:
             print("Mouse Press Event")
         ddict={}
         ddict['event']="MousePress"
         ddict['data'] = event
-        self.emit(qt.SIGNAL("PixmapLabelMousePressEvent"), ddict)
+        self.sigPixmapLabelMousePressEvent.emit(ddict)
 
 
 class MyQLineEdit(qt.QLineEdit):
+    sigFocusOut = qt.pyqtSignal()
     def __init__(self,parent=None,name=None):
         qt.QLineEdit.__init__(self,parent)
 
@@ -271,7 +273,7 @@ class MyQLineEdit(qt.QLineEdit):
 
     def focusOutEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('white'))
-        self.emit(qt.SIGNAL("focusOut"),())
+        self.sigFocusOut.emit()
 
 def main():
     app  = qt.QApplication([])

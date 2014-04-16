@@ -41,6 +41,8 @@ DEBUG=0
 QTable = qt.QTableWidget
 
 class McaTable(QTable):
+    sigMcaTableSignal = qt.pyqtSignal(object)
+    sigClosed = qt.pyqtSignal(object)
     def __init__(self, *args,**kw):
         QTable.__init__(self, *args)
         if 'labels' in kw:
@@ -222,7 +224,7 @@ class McaTable(QTable):
                     except:
                         ddict[label] = str(text)
                 col +=1
-        self.emit(qt.SIGNAL('McaTableSignal'), ddict)
+        self.sigMcaTableSignal.emit(ddict)
 
     def gettext(self):
         lemon= ("#%x%x%x" % (255,250,205)).upper()
@@ -292,4 +294,4 @@ class McaTable(QTable):
         QTable.closeEvent(self, event)
         ddict={}
         ddict['event']= 'closed'
-        self.emit(qt.SIGNAL('closed'), ddict)
+        self.sigClosed.emit(ddict)

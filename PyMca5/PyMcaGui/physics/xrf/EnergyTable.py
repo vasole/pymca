@@ -39,8 +39,6 @@ from PyMca5.PyMcaGui import PyMca_Icons as Icons
 qt = QXTube.qt
 
 QTVERSION = qt.qVersion()
-if QTVERSION < '4.0.0':
-    import qttable
 
 DEBUG=0
 class EnergyTab(qt.QWidget):
@@ -64,46 +62,29 @@ class EnergyTab(qt.QWidget):
         self.outputDir = None
 
         self.__calculating = 0
-        if QTVERSION < '4.0.0':
-            self.tubeButton = qt.QPushButton(self)
-            self.tubeButton.setText("Open X-Ray Tube Setup")        
-            layout.addWidget(self.tubeButton)
-            layout.addWidget(hbox)
-            self.connect(self.tubeButton,
-                         qt.SIGNAL("clicked()"),
-                         self.tubeButtonClicked)
+        self.tubeActionsBox = qt.QWidget(self)
+        actionsLayout = qt.QHBoxLayout(self.tubeActionsBox)
+        actionsLayout.setContentsMargins(0, 0, 0, 0)
+        actionsLayout.setSpacing(0)
+        #tube setup button
+        self.tubeButton = qt.QPushButton(self.tubeActionsBox)
+        self.tubeButton.setText("Open X-Ray Tube Setup")        
+        actionsLayout.addWidget(self.tubeButton, 1)
+        #load new energy table
+        self.tubeLoadButton = qt.QPushButton(self.tubeActionsBox)
+        self.tubeLoadButton.setText("Load Table")        
+        actionsLayout.addWidget(self.tubeLoadButton, 0)            
+        #save seen energy table
+        self.tubeSaveButton = qt.QPushButton(self.tubeActionsBox)
+        self.tubeSaveButton.setText("Save Table")        
+        actionsLayout.addWidget(self.tubeSaveButton, 0)
 
-            self.connect(self.tube, qt.PYSIGNAL("QXTubeSignal"), self.__tubeUpdated)
-        else:
-            self.tubeActionsBox = qt.QWidget(self)
-            actionsLayout = qt.QHBoxLayout(self.tubeActionsBox)
-            actionsLayout.setContentsMargins(0, 0, 0, 0)
-            actionsLayout.setSpacing(0)
-            #tube setup button
-            self.tubeButton = qt.QPushButton(self.tubeActionsBox)
-            self.tubeButton.setText("Open X-Ray Tube Setup")        
-            actionsLayout.addWidget(self.tubeButton, 1)
-            #load new energy table
-            self.tubeLoadButton = qt.QPushButton(self.tubeActionsBox)
-            self.tubeLoadButton.setText("Load Table")        
-            actionsLayout.addWidget(self.tubeLoadButton, 0)            
-            #save seen energy table
-            self.tubeSaveButton = qt.QPushButton(self.tubeActionsBox)
-            self.tubeSaveButton.setText("Save Table")        
-            actionsLayout.addWidget(self.tubeSaveButton, 0)
-
-            layout.addWidget(self.tubeActionsBox)
-            layout.addWidget(hbox)
-            self.connect(self.tubeButton,
-                         qt.SIGNAL("clicked()"),
-                         self.tubeButtonClicked)
-            self.connect(self.tubeLoadButton,
-                         qt.SIGNAL("clicked()"),
-                         self.loadButtonClicked)            
-            self.connect(self.tubeSaveButton,
-                         qt.SIGNAL("clicked()"),
-                         self.saveButtonClicked)
-            self.connect(self.tube, qt.SIGNAL("QXTubeSignal"), self.__tubeUpdated)
+        layout.addWidget(self.tubeActionsBox)
+        layout.addWidget(hbox)
+        self.tubeButton.clicked[()].connect(self.tubeButtonClicked)
+        self.tubeLoadButton.clicked[()].connect(self.loadButtonClicked)            
+        self.tubeSaveButton.clicked[()].connect(self.saveButtonClicked)
+        self.tube.sigQXTubeSignal.connect(self.__tubeUpdated)
 
     def tubeButtonClicked(self):
         if self.tube.isHidden():
@@ -300,13 +281,10 @@ class EnergyTab(qt.QWidget):
         self.__calculating = 0
         self.tubeButtonClicked()
 
-
-if QTVERSION < '4.0.0':
-    QTable = qttable.QTable
-else:
-    QTable = qt.QTableWidget
+QTable = qt.QTableWidget
 
 class EnergyTable(QTable):
+    sigEnergyTableSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="Energy Table",
                      energylist=None, weightlist=None, flaglist=None,offset=None,scatterlist=None):
         QTable.__init__(self, parent)
@@ -363,15 +341,9 @@ class EnergyTable(QTable):
         self.__build(self.dataColumns * 20)
         self.__disconnected = False
         for i in range(self.dataColumns):
-            if QTVERSION < '4.0.0':
-                self.adjustColumn(0 + 3*i)
-            else:
-                if DEBUG:
-                    print("column adjustment missing")
-        if QTVERSION < '4.0.0':
-            self.connect(self, qt.SIGNAL("valueChanged(int,int)"),self.mySlot)
-        else:
-            self.connect(self, qt.SIGNAL("cellChanged(int, int)"),self.mySlot)
+            if DEBUG:
+                print("column adjustment missing")
+        self.cellChanged[int, int].connect(self.mySlot)
 
     def _itemSlot(self, *var):
         self.mySlot(self.currentRow(), self.currentColumn())
@@ -414,7 +386,7 @@ class EnergyTable(QTable):
                 if item is None:
                     item= ColorQTableItem(self, text, color)
                     self.setCellWidget(r, 0+coloffset, item)
-                    self.connect(item, qt.SIGNAL("stateChanged(int)"),self._itemSlot)
+                    item.stateChanged[int].connect(self._itemSlot)
                 else:
                     item.setText(text)
                 oldcolor = item.color
@@ -548,10 +520,7 @@ class EnergyTable(QTable):
             ddict['event'] = "TableFilled"
             ddict['row']   = 0
             ddict['col']   = 0
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("EnergyTableSignal"), (ddict,))
-            else:
-                self.emit(qt.SIGNAL("EnergyTableSignal"), (ddict))
+            self.sigEnergyTableSignal.emit(ddict)
 
     def mySlot(self,row,col):
         if self.__disconnected:return
@@ -568,60 +537,45 @@ class EnergyTable(QTable):
                 msg = qt.QMessageBox(self)       
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 return 
         ddict = self._getDict()
         if ddict != {}:
             ddict['event'] = "ValueChanged"
             ddict['row']   = row
             ddict['col']   = col
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL("EnergyTableSignal"),(ddict,))
-            else:
-                self.emit(qt.SIGNAL("EnergyTableSignal"),(ddict))
+            self.sigEnergyTableSignal.emit(ddict)
             
     def text(self, row, col):
-        if QTVERSION < '4.0.0':
-            return qttable.QTable.text(self, row, col)
-        else:
-            if (col % 3) in [1,2]:
-                item = self.item(row , col)
-                if item is not None:
-                    return item.text()
-                else:
-                    return ''
+        if (col % 3) in [1,2]:
+            item = self.item(row , col)
+            if item is not None:
+                return item.text()
+            else:
+                return ''
 
     def setText(self, row, col, text):
-        if QTVERSION < "4.0.0":
-            QTable.setText(self, row, col, text)
-        else:
-            #ncol = self.columnCount()
-            if (col % 3) in [1,2]:
-                item = self.item(row, col)
-                if item is None:
-                    item = qt.QTableWidgetItem(text,
-                                               qt.QTableWidgetItem.Type)
-                    self.setItem(row, col, item)
-                else:
-                    item.setText(text)
+        #ncol = self.columnCount()
+        if (col % 3) in [1,2]:
+            item = self.item(row, col)
+            if item is None:
+                item = qt.QTableWidgetItem(text,
+                                           qt.QTableWidgetItem.Type)
+                self.setItem(row, col, item)
             else:
-                if DEBUG:
-                    print("checkbox can be called?")
-                pass
+                item.setText(text)
+        else:
+            if DEBUG:
+                print("checkbox can be called?")
+            pass
 
     def _getDict(self):
-        dict ={}
-        if QTVERSION < '4.0.0':
-            n = self.numRows()
-        else:
-            n = self.rowCount()
-        dict['energy'] = []
-        dict['rate']   = []
-        dict['flag']   = []
-        dict['scatterflag']   = []
+        ddict ={}
+        n = self.rowCount()
+        ddict['energy'] = []
+        ddict['rate']   = []
+        ddict['flag']   = []
+        ddict['scatterflag']   = []
         for i in range(n * self.dataColumns):
                 if i >= (n*self.__rows/self.dataColumns):
                     rowoffset= (-int(i/self.__rows))*(self.__rows)
@@ -636,10 +590,7 @@ class EnergyTable(QTable):
                     s=s.replace(" ","")
                     if len(s):
                         ene=float(s)
-                        if QTVERSION < '4.0.0':
-                            selfitem = self.item(r,0+coffset)
-                        else:
-                            selfitem = self.cellWidget(r, 0+coffset)
+                        selfitem = self.cellWidget(r, 0+coffset)
                         if selfitem.isChecked():
                             flag = 1
                         else:
@@ -652,59 +603,38 @@ class EnergyTable(QTable):
                         s=s.replace(" ","")
                         if len(s):
                             rate = float(s)
-                            dict['flag'].append(flag)
-                            dict['energy'].append(ene)
-                            dict['rate'].append(rate)
-                            dict['scatterflag'].append(scatterflag)
+                            ddict['flag'].append(flag)
+                            ddict['energy'].append(ene)
+                            ddict['rate'].append(rate)
+                            ddict['scatterflag'].append(scatterflag)
                 except:
                 #else:
                     msg = qt.QMessageBox(self)       
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("EnergyTable: Error on energy %d" % i)
-                    if QTVERSION < '4.0.0':
-                        msg.exec_loop()
-                    else:
-                        msg.exec_()
+                    msg.exec_()
                     return {}
-        return dict
+        return ddict
 
-if QTVERSION < '4.0.0':
-    class ColorQTableItem(qttable.QCheckTableItem):
-             def __init__(self, table, text,color=qt.Qt.white,bold=0):
-                qttable.QCheckTableItem.__init__(self, table, text)
-                self.color = color
-                self.bold  = bold
+class ColorQTableItem(qt.QCheckBox):
+         def __init__(self, table, text, color=qt.Qt.white,bold=0):
+            qt.QCheckBox.__init__(self, table)
+            self.color = color
+            self.bold  = bold
+            self.setText(text)
+            #this is one critical line
+            self.setAutoFillBackground(1)
 
-             def paint(self, painter, colorgroup, rect, selected):
-                painter.font().setBold(self.bold)
-                cg = qt.QColorGroup()
-                #colorgroup)
-                cg.setColor(qt.QColorGroup.Base, self.color)
-                cg.setColor(qt.QColorGroup.Foreground, self.color)
-                cg.setColor(qt.QColorGroup.HighlightedText, self.color)
-                qttable.QCheckTableItem.paint(self,painter, cg, rect, selected)
-                painter.font().setBold(0)
+         def setColor(self, color):
+             self.color = color
 
-else:
-    class ColorQTableItem(qt.QCheckBox):
-             def __init__(self, table, text, color=qt.Qt.white,bold=0):
-                qt.QCheckBox.__init__(self, table)
-                self.color = color
-                self.bold  = bold
-                self.setText(text)
-                #this is one critical line
-                self.setAutoFillBackground(1)
-
-             def setColor(self, color):
-                 self.color = color
-
-             def paintEvent(self, painter):
-                #this is the other (self.palette() is not appropriate)
-                palette = qt.QPalette()
-                role = self.backgroundRole()
-                palette.setColor(role, self.color)
-                self.setPalette(palette)
-                return qt.QCheckBox.paintEvent(self, painter)
+         def paintEvent(self, painter):
+            #this is the other (self.palette() is not appropriate)
+            palette = qt.QPalette()
+            role = self.backgroundRole()
+            palette.setColor(role, self.color)
+            self.setPalette(palette)
+            return qt.QCheckBox.paintEvent(self, painter)
             
 def main(args):
     app=qt.QApplication(args)
@@ -718,15 +648,9 @@ def main(args):
     scatterlist = numpy.zeros(len(energy))
     scatterlist[0:10] = 1
     tab.setParameters(energy, weight, flag, scatterlist)
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(tab,qt.PYSIGNAL('EnergyTableSignal'),dummy)
-        tab.show()
-        app.setMainWidget( tab )
-        app.exec_loop()
-    else:
-        qt.QObject.connect(tab,qt.SIGNAL('EnergyTableSignal'),dummy)
-        tab.show()
-        app.exec_()
+    tab.sigEnergyTableSignal.connect(dummy)
+    tab.show()
+    app.exec_()
 
                             
 

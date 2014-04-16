@@ -174,10 +174,8 @@ class McaAdvancedFit(qt.QWidget):
             self.mcatable  = McaAdvancedTable.McaTable(w)
             tabMcaLayout.addWidget(self.mcatable)
             self.mainTab.addTab(w,"TABLE")
-            self.connect(line,qt.SIGNAL("LineDoubleClickEvent"),
-                            self._tabReparent)
-            self.connect(self.mcatable,qt.SIGNAL("closed"),
-                            self._mcatableClose)
+            line.sigLineDoubleClickEvent.connect(self._tabReparent)
+            self.mcatable.sigClosed.connect(self._mcatableClose)
 
             #concentrations
             self.tabConcentrations  = qt.QWidget()
@@ -194,12 +192,10 @@ class McaAdvancedFit(qt.QWidget):
 
             self.mainTab.addTab(self.tabConcentrations,"CONCENTRATIONS")
             line2.setToolTip("DoubleClick toggles floating window mode")
-            self.connect(self.concentrationsWidget,
-                        qt.SIGNAL("ConcentrationsSignal"),
+            self.concentrationsWidget.sigConcentrationsSignal.connect( \
                         self.__configureFromConcentrations)
-            self.connect(line2,qt.SIGNAL("LineDoubleClickEvent"),
-                            self._tabReparent)
-            self.connect(self.concentrationsWidget,qt.SIGNAL("closed"),
+            line2.sigLineDoubleClickEvent.connect(self._tabReparent)
+            self.concentrationsWidget.sigClosed.connect( \
                             self._concentrationsWidgetClose)
 
             #diagnostics
@@ -212,9 +208,8 @@ class McaAdvancedFit(qt.QWidget):
             self.diagnosticsWidget.setReadOnly(1)
 
             tabDiagnosticsLayout.addWidget(self.diagnosticsWidget)
-            self.mainTab.addTab(w,"DIAGNOSTICS")
-            self.connect(self.mainTab, qt.SIGNAL('currentChanged(int)'),
-                         self._tabChanged)
+            self.mainTab.addTab(w, "DIAGNOSTICS")
+            self.mainTab.currentChanged[int].connect(self._tabChanged)
 
 
         self._logY       = False
@@ -304,7 +299,7 @@ class McaAdvancedFit(qt.QWidget):
         self.top.configureButton.clicked.connect(self.__configure)
         self.top.printButton.clicked.connect(self.__printps)
         if top:
-            self.connect(self.top,qt.SIGNAL("TopSignal"), self.__updatefromtop)
+            self.top.sigTopSignal.connect(self.__updatefromtop)
         else:
             self.top.hide()
             self.configureButton.clicked.connect(self.__configure)
@@ -404,8 +399,7 @@ class McaAdvancedFit(qt.QWidget):
                                                      fl=0,
                                                      initdir=self.configDir,
                                                      fitresult=None)
-                self.connect(dialog.fitparam.peakTable,
-                             qt.SIGNAL("FitPeakSelect"),
+                dialog.fitparam.peakTable.sigFitPeakSelect.connect( \
                              self.__elementclicked)
                 self.configDialog = dialog
             else:
@@ -836,8 +830,7 @@ class McaAdvancedFit(qt.QWidget):
         #tool = ConcentrationsWidget.Concentrations(fl=qt.Qt.WDestructiveClose)
         if self.concentrationsWidget is None:
            self.concentrationsWidget = ConcentrationsWidget.Concentrations()
-           self.connect(self.concentrationsWidget,
-                        qt.SIGNAL("ConcentrationsSignal"),
+           self.concentrationsWidget.sigConcentrationsSignal.connect( \
                         self.__configureFromConcentrations)
         tool = self.concentrationsWidget
         #this forces update
@@ -1578,7 +1571,7 @@ class McaAdvancedFit(qt.QWidget):
         
         In case of successfull fit emits a signal of the form:
             
-        self.emit(qt.SIGNAL('McaAdvancedFitSignal'), (ddict))
+        self.sigMcaAdvancedFitSignal.emit(ddict)
         
         where ddict['event'] = 'McaAdvancedFitFinished'
         """    
@@ -1592,10 +1585,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("No peaks defined.\nPlease configure peaks")
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             return
         if DEBUG:
             if DEBUG:
@@ -2227,6 +2217,7 @@ class McaAdvancedFit(qt.QWidget):
 
 
 class Top(qt.QWidget):
+    sigTopSignal = qt.pyqtSignal(object)
     def __init__(self,parent = None,name = None,fl = 0):
         qt.QWidget.__init__(self,parent)
         self.mainLayout= qt.QHBoxLayout(self)
@@ -2275,12 +2266,9 @@ class Top(qt.QWidget):
             for item in options:
                 self.BkgComBox.insertItem(options.index(item), item)
 
-        self.connect(self.FunComBox,
-                     qt.SIGNAL("activated(int)"),self.mysignal)
+        self.FunComBox.activated[int].connect(self.mysignal)
 
-        self.connect(self.BkgComBox,
-                     qt.SIGNAL("activated(int)"),self.mysignal)
-        #                        qt.SIGNAL("activated(const QString &)"),self.bkgevent)
+        self.BkgComBox.activated[int].connect(self.mysignal)
         wlayout.addWidget(BkgLabel,1,0)
         wlayout.addWidget(self.BkgComBox,1,1)
         dummy = qt.QWidget(self)
@@ -2318,12 +2306,12 @@ class Top(qt.QWidget):
         self.stripbox = qt.QCheckBox(f)
         self.stripbox.setText('Strip Back.')
         #checkbox connections
-        self.connect(self.stbox,qt.SIGNAL("clicked()"),     self.mysignal)
-        self.connect(self.ltbox,qt.SIGNAL("clicked()"),     self.mysignal)
-        self.connect(self.stepbox,qt.SIGNAL("clicked()"),   self.mysignal)
-        self.connect(self.escapebox,qt.SIGNAL("clicked()"), self.mysignal)
-        self.connect(self.sumbox,qt.SIGNAL("clicked()"),    self.mysignal)
-        self.connect(self.stripbox,qt.SIGNAL("clicked()"),  self.mysignal)
+        self.stbox.clicked[()].connect(self.mysignal)
+        self.ltbox.clicked[()].connect(self.mysignal)
+        self.stepbox.clicked[()].connect(self.mysignal)
+        self.escapebox.clicked[()].connect(self.mysignal)
+        self.sumbox.clicked[()].connect(self.mysignal)
+        self.stripbox.clicked[()].connect(self.mysignal)
         #f.layout.addWidget(hyplabel,flagsoffset,coffset +1)
         f.layout.addWidget(self.stbox,flagsoffset+1,coffset +0)
         f.layout.addWidget(self.ltbox,flagsoffset+1,coffset +1)
@@ -2354,10 +2342,7 @@ class Top(qt.QWidget):
             else:
                 ddict['fitfunction'] = 1
 
-        if QTVERSION < '4.0.0':
-            self.FunComBox.setCurrentItem(ddict['fitfunction'])
-        else:
-            self.FunComBox.setCurrentIndex(ddict['fitfunction'])
+        self.FunComBox.setCurrentIndex(ddict['fitfunction'])
 
         if 'hypermetflag' in ddict:
             hypermetflag = ddict['hypermetflag']
@@ -2416,11 +2401,7 @@ class Top(qt.QWidget):
 
     def getParameters(self):
         ddict={}
-        if QTVERSION < '4.0.0':
-            index = self.FunComBox.currentItem()
-        else:
-            index = self.FunComBox.currentIndex()
-
+        index = self.FunComBox.currentIndex()
         ddict['fitfunction'] = index
         ddict['hypermetflag'] = 1
         if index == 0:
@@ -2463,10 +2444,11 @@ class Top(qt.QWidget):
 
     def mysignal(self,*var):
         ddict = self.getParameters()
-        self.emit(qt.SIGNAL('TopSignal'),(ddict))
+        self.sigTopSignal.emit(ddict)
 
 
 class Line(qt.QFrame):
+    sigLineDoubleClickEvent = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="Line", fl=0, info=None):
         qt.QFrame.__init__(self, parent)
         self.info = info
@@ -2482,7 +2464,7 @@ class Line(qt.QFrame):
         ddict['event']="DoubleClick"
         ddict['data'] = event
         ddict['info'] = self.info
-        self.emit(qt.SIGNAL("LineDoubleClickEvent"), ddict)
+        self.sigLineDoubleClickEvent.emit(ddict)
 
 class SimpleThread(qt.QThread):
     def __init__(self, function = None, kw = None):

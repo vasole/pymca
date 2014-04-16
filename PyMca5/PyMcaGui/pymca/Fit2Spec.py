@@ -65,7 +65,7 @@ class Fit2SpecGUI(qt.QWidget):
         self.__listView.setMaximumHeight(30*listlabel.sizeHint().height())
         self.__listButton = qt.QPushButton(self.__grid)
         self.__listButton.setText('Browse')
-        self.connect(self.__listButton,qt.SIGNAL('clicked()'),self.browseList) 
+        self.__listButton.clicked[()].connect(self.browseList) 
         grid.addWidget(listlabel,        listrow, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
         grid.addWidget(self.__listView,  listrow, 1)
         grid.addWidget(self.__listButton,listrow, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
@@ -80,7 +80,7 @@ class Fit2SpecGUI(qt.QWidget):
         #self.__outLine.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Maximum, qt.QSizePolicy.Fixed))
         self.__outButton = qt.QPushButton(self.__grid)
         self.__outButton.setText('Browse')
-        self.connect(self.__outButton,qt.SIGNAL('clicked()'),self.browseOutputDir) 
+        self.__outButton.clicked[()].connect(self.browseOutputDir) 
         grid.addWidget(outlabel,         outrow, 0, qt.Qt.AlignLeft)
         grid.addWidget(self.__outLine,   outrow, 1)
         grid.addWidget(self.__outButton, outrow, 2, qt.Qt.AlignLeft)
@@ -97,8 +97,8 @@ class Fit2SpecGUI(qt.QWidget):
         self.__startButton   = qt.QPushButton(box)
         qt.HorizontalSpacer(box)
         self.__startButton.setText("Start")
-        self.connect(self.__dismissButton,qt.SIGNAL("clicked()"),self.close)
-        self.connect(self.__startButton,qt.SIGNAL("clicked()"),self.start)
+        self.__dismissButton.clicked[()].connect(self.close)
+        self.__startButton.clicked[()].connect(self.start)
 
     def setFileList(self,filelist=None):
         if filelist is None:
@@ -203,9 +203,10 @@ class Fit2SpecGUI(qt.QWidget):
             else:
                 b.pleasePause=1
                 window.pauseButton.setText("Continue") 
-        qt.QObject.connect(window.pauseButton,qt.SIGNAL("clicked()"),pause)
-        qt.QObject.connect(window.abortButton,qt.SIGNAL("clicked()"),window.close)
-        qt.QObject.connect(qt.qApp,qt.SIGNAL("aboutToQuit()"),cleanup)
+        window.pauseButton.clicked[()].connect(pause)
+        window.abortButton.clicked[()].connect(window.close)
+        qApp = qt.QApplication.instance()
+        qApp.aboutToQuit.connect(cleanup)
         self.__window = window
         self.__b      = b
         window.show()
@@ -382,14 +383,13 @@ if __name__ == "__main__":
     app=qt.QApplication(sys.argv) 
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)       
+    app.lastWindowClosed.conenct(app.quit)
     if len(filelist) == 0:
-        qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
         w = Fit2SpecGUI(actions=1)
         app.setMainWidget(w)
         w.show()
         app.exec_loop()
     else:
-        qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),app, qt.SLOT("quit()"))
         text = "Batch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
         window =  Fit2SpecWindow(name=text,actions=1)
         b = Fit2SpecBatch(window,filelist,outdir)
@@ -406,9 +406,9 @@ if __name__ == "__main__":
             else:
                 b.pleasePause=1
                 window.pauseButton.setText("Continue") 
-        qt.QObject.connect(window.pauseButton,qt.SIGNAL("clicked()"),pause)
-        qt.QObject.connect(window.abortButton,qt.SIGNAL("clicked()"),window.close)
-        qt.QObject.connect(app,qt.SIGNAL("aboutToQuit()"),cleanup)        
+        window.pauseButton.clicked[()].connect(pause)
+        window.abortButton.clicked[()].connect(window.close)
+        app.aboutToQuit.connect(cleanup)        
         window.show()
         b.start()
         app.setMainWidget(window)

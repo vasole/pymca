@@ -235,17 +235,12 @@ class ElementButton(qt.QPushButton):
         p.drawRect(pr)
 
     def enterEvent(self, e):
-        #self.emit(SIGNAL("elementEnter"),
-        #                  self.symbol, self.Z,
-        #                  self.name)
         self.sigElementEnter.emit((self.symbol, self.Z, self.name))
             
     def leaveEvent(self, e):
-        #self.emit(SIGNAL("elementLeave"), self.symbol)
         self.sigElementLeave.emit(self.symbol)
 
     def clickedSlot(self):
-        #self.emit(SIGNAL("elementClicked"), self.symbol)
         self.sigElementClicked.emit(self.symbol)
 
 
@@ -351,7 +346,7 @@ class QPeriodicComboTableItem(qt.QComboBox):
 
         Signals:
             No specific signals. Use signals from QTable
-            SIGNAL("valueChanged(int,int)") for example.
+            valueChanged(int,int) for example.
     """
     def __init__(self, table, addnone=1, detailed=0):
         strlist= qt.QStringList()
@@ -436,8 +431,8 @@ class QPeriodicList(qt.QTreeWidget):
             getSelection():
                 Return the list of symbol selected
 
-        Signal (PYSIGNAL):
-            selectionChanged(elt):
+        Signal:
+            sigSelectionChanged(elt):
                 signal sent when the selection changed
                 send list of symbol selected
     """
@@ -494,18 +489,12 @@ class QPeriodicList(qt.QTreeWidget):
             self.items.append(item)
             after= item
     """
-    def __selectionChanged(self):
-        self.emit(PYSIGNAL("selectionChanged"), (self.getSelection(),))
-    
-    def getSelection(self):
-        return [ Elements[idx][0] for idx in range(len(self.items)) if self.items[idx].isSelected() ]   
-
     def setSelection(self, symbolList):
         for idx in range(len(self.items)):
             self.items[idx].setSelected(Elements[idx][0] in symbolList)
     """
     def __selectionChanged(self):
-        self.emit(SIGNAL("selectionChanged"), self.getSelection())
+        self.sigSelectionChanged.emit(self.getSelection())
     
     def getSelection(self):
         return [ Elements[idx][0] for idx in range(len(self.items)) \

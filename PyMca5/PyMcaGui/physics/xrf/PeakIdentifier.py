@@ -40,6 +40,7 @@ DEBUG = 0
 
 
 class PeakIdentifier(qt.QWidget):
+    sigPeakIdentifierSignal = qt.pyqtSignal(object)
     def __init__(self,parent=None,energy=None,threshold=None,useviewer=None,
                  name="Peak Identifier",fl=0):
         if QTVERSION < '4.0.0':
@@ -82,12 +83,7 @@ class PeakIdentifier(qt.QWidget):
             self.energy.setToolTip('Press enter to validate your energy')
         hbox.layout.addWidget(self.energy)
         hbox.layout.addWidget(qt.HorizontalSpacer(hbox))
-        if QTVERSION < '4.0.0':
-            self.connect(self.energy,qt.SIGNAL('returnPressed()'),
-                         self._energySlot)
-        else:
-            self.connect(self.energy,qt.SIGNAL('editingFinished()'),
-                         self._energySlot)
+        self.energy.editingFinished.connect(self._energySlot)
         #parameters
         self.__hbox2 = qt.QWidget(self)
         hbox2 = self.__hbox2
@@ -126,12 +122,12 @@ class PeakIdentifier(qt.QWidget):
         self.m = qt.QCheckBox(hbox2)
         self.m.setText('M')
         self.m.setChecked(1)
-        self.connect(self.threshold,qt.SIGNAL('valueChanged(int)'),self.myslot)
-        self.connect(self.k,qt.SIGNAL('clicked()'),self.myslot)
-        self.connect(self.l1,qt.SIGNAL('clicked()'),self.myslot)
-        self.connect(self.l2,qt.SIGNAL('clicked()'),self.myslot)
-        self.connect(self.l3,qt.SIGNAL('clicked()'),self.myslot)
-        self.connect(self.m,qt.SIGNAL('clicked()'),self.myslot)
+        self.threshold.valueChanged[int].connect(self.myslot)
+        self.k.clicked[()].connect(self.myslot)
+        self.l1.clicked[()].connect(self.myslot)
+        self.l2.clicked[()].connect(self.myslot)
+        self.l3.clicked[()].connect(self.myslot)
+        self.m.clicked[()].connect(self.myslot)
 
         hbox2.layout.addWidget(l2)
         hbox2.layout.addWidget(self.threshold)
@@ -142,10 +138,7 @@ class PeakIdentifier(qt.QWidget):
         hbox2.layout.addWidget(self.m)
         
         if self.__useviewer:
-            if QTVERSION < '4.0.0':
-                self.__browsertext= qt.QTextView(self)
-            else:
-                self.__browsertext = qt.QTextEdit(self)
+            self.__browsertext = qt.QTextEdit(self)
         layout.addWidget(self.__browsertext)
         self.setEnergy()
 
@@ -220,15 +213,13 @@ class PeakIdentifier(qt.QWidget):
                 #self.__browsertext.insertHtml("<CENTER>"+dict['text']+\
                 #                              "</CENTER>")
                 self.__browsertext.insertHtml(ddict['text'])
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('PeakIdentifierSignal'), (ddict,))
-        else:
-            self.emit(qt.SIGNAL('PeakIdentifierSignal'), ddict)
+        self.sigPeakIdentifierSignal.emit(ddict)
         
         
     def getHtmlText(self, ddict):
         text  = ""
-        if QTVERSION < '4.0.0': text += "<br>"
+        if QTVERSION < '4.0.0':
+            text += "<br>"
         labels=['Element','Line','Energy','Rate'] 
         lemmon=("#%x%x%x" % (255,250,205))
         lemmon = lemmon.upper()
@@ -284,17 +275,13 @@ class PeakIdentifier(qt.QWidget):
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):
         qt.QLineEdit.__init__(self,parent)
-        if QTVERSION > '4.0.0':
-            self.setAutoFillBackground(True)
+        self.setAutoFillBackground(True)
         
     def setPaletteBackgroundColor(self, color):
-        if QTVERSION < '4.0.0':
-            qt.QLineEdit.setPaletteBackgroundColor(self,color)
-        else:
-            palette = qt.QPalette()
-            role = self.backgroundRole()
-            palette.setColor(role,color)
-            self.setPalette(palette)
+        palette = qt.QPalette()
+        role = self.backgroundRole()
+        palette.setColor(role,color)
+        self.setPalette(palette)
             
 
     def focusInEvent(self,event):
@@ -307,9 +294,7 @@ class MyQLineEdit(qt.QLineEdit):
 
     def focusOutEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('white'))
-        if QTVERSION > '4.0.0':
-            qt.QLineEdit.focusOutEvent(self, event)
-        #self.emit(qt.SIGNAL("returnPressed()"),())
+        qt.QLineEdit.focusOutEvent(self, event)
 
 def main():
     app  = qt.QApplication(sys.argv)
@@ -322,24 +307,11 @@ def main():
     mw = qt.QWidget()
     l  = qt.QVBoxLayout(mw)
     l.setSpacing(0)
-    if 0:
-       w= PeakIdentifier(mw,energy=ene)
-       browsertext= qt.QTextView(mw)
-       def myslot(dict):
-           browsertext.setText(dict['text'])
-       mw.connect(w,qt.PYSIGNAL('PeakIdentifierSignal'),myslot)
-    else:
-       w= PeakIdentifier(mw,energy=ene,useviewer=1)
-       #######w.myslot()
+    w= PeakIdentifier(mw,energy=ene,useviewer=1)
     l.addWidget(w)
-    if QTVERSION < '4.0.0':
-        app.setMainWidget(mw)
-        mw.show()
-        app.exec_loop()
-    else:
-        mw.setWindowTitle("Peak Identifier")
-        mw.show()
-        app.exec_()
-        
+    mw.setWindowTitle("Peak Identifier")
+    mw.show()
+    app.exec_()
+    
 if __name__ == "__main__":
     main()

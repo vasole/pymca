@@ -68,12 +68,11 @@ if DEBUG:
 
 
 class Concentrations(qt.QWidget):
-    def __init__(self, parent=None, name="Concentrations", fl=0):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self, parent, name, fl)
-            self. setCaption(name)
-        else:
-            qt.QWidget.__init__(self, parent)
+    sigConcentrationsSignal = qt.pyqtSignal(object)
+    sigClosed = qt.pyqtSignal()
+    def __init__(self, parent=None, name="Concentrations"):
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle(name)
         self.build()
         self.setParameters = self.concentrationsWidget.setParameters
         self.getParameters = self.concentrationsWidget.getParameters
@@ -89,33 +88,21 @@ class Concentrations(qt.QWidget):
         self.concentrationsTable = ConcentrationsTable(self)
         layout.addWidget(self.concentrationsWidget)
         layout.addWidget(self.concentrationsTable)
-        if QTVERSION < '4.0.0':
-            self.connect(self.concentrationsWidget,
-                         qt.PYSIGNAL('ConcentrationsWidgetSignal'),
-                                     self.mySlot)
-        else:
-            layout.setStretchFactor(self.concentrationsWidget, 0)
-            layout.setStretchFactor(self.concentrationsTable, 1)
-            self.connect(self.concentrationsWidget,
-                         qt.SIGNAL('ConcentrationsWidgetSignal'), self.mySlot)
+        layout.setStretchFactor(self.concentrationsWidget, 0)
+        layout.setStretchFactor(self.concentrationsTable, 1)
+        self.concentrationsWidget.sigConcentrationsWidgetSignal.connect( \
+                        self.mySlot)
         self.concentrationsTool.configure(
             self.concentrationsWidget.getParameters())
 
     def mySlot(self, ddict={}):
-        if QTVERSION < '4.0.0':
-            self.disconnect(self.concentrationsWidget,
-                        qt.PYSIGNAL('ConcentrationsWidgetSignal'), self.mySlot)
-            self.concentrationsTable.setFocus()
-            qt.qApp.processEvents()
-            self.connect(self.concentrationsWidget,
-                        qt.PYSIGNAL('ConcentrationsWidgetSignal'), self.mySlot)
-        else:
-            self.disconnect(self.concentrationsWidget,
-                        qt.SIGNAL('ConcentrationsWidgetSignal'), self.mySlot)
-            self.concentrationsTable.setFocus()
-            qt.qApp.processEvents()
-            self.connect(self.concentrationsWidget,
-                         qt.SIGNAL('ConcentrationsWidgetSignal'), self.mySlot)
+        self.concentrationsWidget.sigConcentrationsWidgetSignal.disconnect( \
+                    self.mySlot)
+        self.concentrationsTable.setFocus()
+        app = qt.QApplication.instance()
+        app.processEvents()
+        self.concentrationsWidget.sigConcentrationsWidgetSignal.connect( \
+            self.mySlot)
         if ddict['event'] == 'updated':
             self.concentrationsTool.configure(ddict)
             if self.__lastKw is not None:
@@ -134,11 +121,10 @@ class Concentrations(qt.QWidget):
                     raise
             self.mySignal(ddict)
 
-    def mySignal(self, ddict={}):
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('ConcentrationsSignal'), (ddict,))
-        else:
-            self.emit(qt.SIGNAL('ConcentrationsSignal'), ddict)
+    def mySignal(self, ddict=None):
+        if ddict is None:
+            ddict = {}
+        self.sigConcentrationsSignal.emit(ddict)
 
     def processFitResult(self, *var, **kw):
         self.__lastVar = var
@@ -185,10 +171,7 @@ class Concentrations(qt.QWidget):
         qt.QWidget.closeEvent(self, event)
         ddict = {}
         ddict['event'] = 'closed'
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('closed'), (ddict,))
-        else:
-            self.emit(qt.SIGNAL('closed'), ddict)
+        self.sigClosed.emit(ddict)
 
     def _submitThread(self, *var, **kw):
         message = "Calculating concentrations"
@@ -329,26 +312,12 @@ class ConcentrationsWidget(qt.QWidget):
             self.referenceLine.fontMetrics().width('#######'))
 
         wm.layout.addWidget(qt.HorizontalSpacer(wm))
-        if QTVERSION < '4.0.0':
-            self.connect(self.referenceLine,
-                         qt.PYSIGNAL("MyQLineEditSignal"),
-                         self._referenceLineSlot)
-
-            self.connect(self.referenceLine,
-                         qt.PYSIGNAL("MyQLineEditSignal"),
-                         self._referenceLineSlot)
-        else:
-            self.connect(self.referenceLine,
-                         qt.SIGNAL("MyQLineEditSignal"),
-                         self._referenceLineSlot)
-
-            self.connect(self.referenceLine,
-                         qt.SIGNAL("MyQLineEditSignal"),
-                         self._referenceLineSlot)
-            buttonGroup.layout.addWidget(self.fluxCheckBox)
-            buttonGroup.layout.addWidget(wf)
-            buttonGroup.layout.addWidget(self.matrixCheckBox)
-            buttonGroup.layout.addWidget(wm)
+        self.referenceLine.sigMyQLineEditSignal.connect( \
+                     self._referenceLineSlot)
+        buttonGroup.layout.addWidget(self.fluxCheckBox)
+        buttonGroup.layout.addWidget(wf)
+        buttonGroup.layout.addWidget(self.matrixCheckBox)
+        buttonGroup.layout.addWidget(wm)
 
         #self.fundamentalWidget.setEnabled(False)
         self.attenuatorsCheckBox = qt.QCheckBox(self)
@@ -372,48 +341,25 @@ class ConcentrationsWidget(qt.QWidget):
 
         layout.addWidget(qt.VerticalSpacer(self))
         buttonGroup.show()
-        if QTVERSION < '4.0.0':
-            self.connect(self.fluxCheckBox, qt.SIGNAL("clicked()"),
-                         self.checkBoxSlot)
-            self.connect(self.matrixCheckBox, qt.SIGNAL("clicked()"),
-                         self.checkBoxSlot)
-        else:
-            self.connect(self.fluxCheckBox, qt.SIGNAL("clicked()"),
-                         self._fluxCheckBoxSlot)
-            self.connect(self.matrixCheckBox, qt.SIGNAL("clicked()"),
-                         self.checkBoxSlot)
-        self.connect(self.attenuatorsCheckBox, qt.SIGNAL("clicked()"),
-                     self.checkBoxSlot)
+        self.fluxCheckBox.clicked[()].connect(self._fluxCheckBoxSlot)
+        self.matrixCheckBox.clicked[()].connect(self.checkBoxSlot)
+        self.attenuatorsCheckBox.clicked[()].connect(self.checkBoxSlot)
         if XRFMC_FLAG:
-            self.connect(self.secondaryCheckBox, qt.SIGNAL("clicked()"),
-                         self._secondaryCheckBoxSlot)
-            self.connect(self.xrfmcCheckBox, qt.SIGNAL("clicked()"),
-                         self._xrfmcCheckBoxSlot)
+            self.secondaryCheckBox.clicked[()].connect(self._secondaryCheckBoxSlot)
+            self.xrfmcCheckBox.clicked[()].connect(self._xrfmcCheckBoxSlot)
         else:
-            self.connect(self.secondaryCheckBox, qt.SIGNAL("clicked()"),
-                         self.checkBoxSlot)
+            self.secondaryCheckBox.clicked[()].connect(self.checkBoxSlot)
             
-        self.connect(self.mMolarCheckBox, qt.SIGNAL("clicked()"),
-                     self.checkBoxSlot)
+        self.mMolarCheckBox.clicked[()].connect(self.checkBoxSlot)
 
-        if QTVERSION < '4.0.0':
-            self.connect(self.fundamentalWidget.flux,
-                         qt.PYSIGNAL('MyQLineEditSignal'), self._mySignal)
-            self.connect(self.fundamentalWidget.area,
-                         qt.PYSIGNAL('MyQLineEditSignal'), self._mySignal)
-            self.connect(self.fundamentalWidget.time,
-                         qt.PYSIGNAL('MyQLineEditSignal'), self._mySignal)
-            self.connect(self.fundamentalWidget.distance,
-                         qt.PYSIGNAL('MyQLineEditSignal'), self._mySignal)
-        else:
-            self.connect(self.fundamentalWidget.flux,
-                         qt.SIGNAL('MyQLineEditSignal'), self._mySignal)
-            self.connect(self.fundamentalWidget.area,
-                         qt.SIGNAL('MyQLineEditSignal'), self._mySignal)
-            self.connect(self.fundamentalWidget.time,
-                         qt.SIGNAL('MyQLineEditSignal'), self._mySignal)
-            self.connect(self.fundamentalWidget.distance,
-                         qt.SIGNAL('MyQLineEditSignal'), self._mySignal)
+        self.fundamentalWidget.flux.sigMyQLineEditSignal.connect( \
+            self._mySignal)
+        self.fundamentalWidget.area.sigMyQLineEditSignal.connect( \
+            self._mySignal)
+        self.fundamentalWidget.time.sigMyQLineEditSignal.connect( \
+            self._mySignal)
+        self.fundamentalWidget.distance.sigMyQLineEditSignal.connect( \
+            self._mySignal)
 
     def _fluxCheckBoxSlot(self):
         if self.fluxCheckBox.isChecked():
@@ -436,15 +382,12 @@ class ConcentrationsWidget(qt.QWidget):
         if self.matrixCheckBox.isChecked():
             self.fundamentalWidget.setInputDisabled(True)
             self.referenceLine.setEnabled(True)
-            if QTVERSION > '4.0.0':
-                self.fluxCheckBox.setChecked(False)
+            self.fluxCheckBox.setChecked(False)
         else:
             self.fundamentalWidget.setInputDisabled(False)
             self.referenceLine.setEnabled(False)
-            if QTVERSION > '4.0.0':
-                self.fluxCheckBox.setChecked(True)
-                self.connect(self.secondaryCheckBox, qt.SIGNAL("clicked()"),
-                     self.checkBoxSlot)
+            self.fluxCheckBox.setChecked(True)
+            self.secondaryCheckBox.clicked[()].connect(self.checkBoxSlot)
         self._mySignal()
 
     def _referenceLineSlot(self, ddict):
@@ -462,10 +405,7 @@ class ConcentrationsWidget(qt.QWidget):
                 msg = qt.QMessageBox(self.referenceLine)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 self.referenceLine.setFocus()
                 return
             if (current == '') or (current.upper() == 'AUTO'):
@@ -488,10 +428,7 @@ class ConcentrationsWidget(qt.QWidget):
     def _mySignal(self, dummy=None):
         ddict = self.getParameters()
         ddict['event'] = 'updated'
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL('ConcentrationsWidgetSignal'), (ddict,))
-        else:
-            self.emit(qt.SIGNAL('ConcentrationsWidgetSignal'), ddict)
+        self.sigConcentrationsWidgetSignal.emit(ddict)
 
     def getParameters(self):
         ddict = {}
@@ -887,35 +824,17 @@ if QTVERSION < '4.0.0':
 
 
 class MyQLineEdit(qt.QLineEdit):
+    sigMyQLineEditSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name=None):
         qt.QLineEdit.__init__(self, parent)
-        if QTVERSION < '4.0.0':
-            qt.QObject.connect(self, qt.SIGNAL("returnPressed()"),
-                               self._mySignal)
-        else:
-            qt.QObject.connect(self, qt.SIGNAL("editingFinished()"),
-                               self._mySignal)
-
-    if QTVERSION < '4.0.0':
-        def focusInEvent(self, event):
-            self.setPaletteBackgroundColor(qt.QColor('yellow'))
-
-        def focusOutEvent(self, event):
-            self.setPaletteBackgroundColor(qt.QColor('white'))
-            self.emit(qt.SIGNAL("returnPressed()"), ())
-
-    def setPaletteBackgroundColor(self, qcolor):
-        if QTVERSION < '4.0.0':
-            qt.QLineEdit.setPaletteBackgroundColor(self, qcolor)
+        self.editingFinished[()].connect(self._mySignal)
+    #TODO: Focus in to set yellow color
 
     def _mySignal(self):
         self.setPaletteBackgroundColor(qt.QColor('white'))
         ddict = {}
         ddict['event'] = "returnPressed"
-        if QTVERSION < '4.0.0':
-            self.emit(qt.PYSIGNAL("MyQLineEditSignal"), (ddict,))
-        else:
-            self.emit(qt.SIGNAL("MyQLineEditSignal"), ddict)
+        self.sigMyQLineEditSignal.emit(ddict)
 
 
 class MyQComboBox(qt.QComboBox):
@@ -924,12 +843,7 @@ class MyQComboBox(qt.QComboBox):
         self.setEditable(True)
         self._lineEdit = MyQLineEdit()
         self.setLineEdit(self._lineEdit)
-        if QTVERSION < '4.0.0':
-            self.connect(self._lineEdit,
-                         qt.PYSIGNAL("MyQLineEditSignal"), self._mySlot)
-        else:
-            self.connect(self._lineEdit,
-                         qt.SIGNAL("MyQLineEditSignal"), self._mySlot)
+        self._lineEdit.sigMyQLineEditSignal.connect(self._mySlot)
 
     def _mySlot(self, ddict):
         if ddict['event'] == "returnPressed":
@@ -945,19 +859,13 @@ class MyQComboBox(qt.QComboBox):
                 msg = qt.QMessageBox(self._lineEdit)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 self._lineEdit.setFocus()
             if not Elements.isValidFormula(current):
                 msg = qt.QMessageBox(self._lineEdit)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 self._lineEdit.setFocus()
             else:
                 self.setCurrentText(current)
@@ -979,8 +887,7 @@ if __name__ == "__main__":
                         options,
                         longoptions)
         app = qt.QApplication([])
-        qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"), app,
-                           qt.SLOT("quit()"))
+        app.lastWindowClosed.connect(app.quit)
         demo = Concentrations()
         config = demo.getParameters()
         for opt, arg in opts:

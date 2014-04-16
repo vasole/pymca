@@ -182,34 +182,14 @@ class MatrixEditor(qt.QWidget):
         gridLayout.addWidget(qt.VerticalSpacer(grid), rowoffset, 0)
         gridLayout.addWidget(qt.VerticalSpacer(grid), rowoffset, 1)
 
-        if QTVERSION < '4.0.0':
-            self.connect(self.__angle1Line,qt.PYSIGNAL('MyQLineEditSignal'),
-                         self.__angle1Slot)
-            self.connect(self.__angle2Line, qt.PYSIGNAL('MyQLineEditSignal'),
-                         self.__angle2Slot)
-            self.connect(self.__angle3Line, qt.PYSIGNAL('MyQLineEditSignal'),
-                         self.__angle3Slot)
-            if self.__densityLine is not None:
-                self.connect(self.__densityLine, qt.PYSIGNAL('MyQLineEditSignal'),
-                         self.__densitySlot)
-            if self.__thicknessLine is not None:
-                self.connect(self.__thicknessLine,qt.PYSIGNAL('MyQLineEditSignal'),
-                         self.__thicknessSlot)
-        else:
-            self.connect(self.__angle1Line,qt.SIGNAL('MyQLineEditSignal'),
-                         self.__angle1Slot)
-            self.connect(self.__angle2Line, qt.SIGNAL('MyQLineEditSignal'),
-                         self.__angle2Slot)
-            self.connect(self.__angle3Line, qt.SIGNAL('MyQLineEditSignal'),
-                         self.__angle3Slot)
-            if self.__densityLine is not None:
-                self.connect(self.__densityLine, qt.SIGNAL('MyQLineEditSignal'),
-                         self.__densitySlot)
-            if self.__thicknessLine is not None:
-                self.connect(self.__thicknessLine,qt.SIGNAL('MyQLineEditSignal'),
-                         self.__thicknessSlot)
-        self.connect(self.__angle3Label, qt.SIGNAL('clicked()'),
-                       self.__angle3LabelSlot)
+        self.__angle1Line.sigMyQLineEditSignal.connect(self.__angle1Slot)
+        self.__angle2Line.sigMyQLineEditSignal.connect(self.__angle2Slot)
+        self.__angle3Line.sigMyQLineEditSignal.connect(self.__angle3Slot)
+        if self.__densityLine is not None:
+            self.__densityLine.sigMyQLineEditSignal.connect(self.__densitySlot)
+        if self.__thicknessLine is not None:
+            self.__thicknessLine.sigMyQLineEditSignal.connect(self.__thicknessSlot)
+        self.__angle3Label.clicked[()].connect(self.__angle3LabelSlot)
 
         if orientation == "vertical":
             sampleBoxLayout.addWidget(qt.VerticalSpacer(sampleBox))
@@ -321,12 +301,10 @@ class MatrixEditor(qt.QWidget):
         self._current['Density'] = ddict['value']
 
 class MyQLineEdit(qt.QLineEdit):
+    sigMyQLineEditSignal = qt.pyqtSignal(object)
     def __init__(self,parent=None,name=None):
         qt.QLineEdit.__init__(self,parent)
-        if QTVERSION < '4.0.0':
-            self.connect(self, qt.SIGNAL("returnPressed()"), self.__mySlot)
-        else:
-            self.connect(self, qt.SIGNAL("editingFinished()"), self.__mySlot)
+        self.editingFinished.connect(self.__mySlot)
 
     if QTVERSION < '4.0.0':
         def focusInEvent(self,event):
@@ -351,29 +329,18 @@ class MyQLineEdit(qt.QLineEdit):
                 ddict['value']   = value
                 ddict['text']    = text
                 ddict['qstring'] = qstring
-                if QTVERSION < '4.0.0':
-                    self.emit(qt.PYSIGNAL('MyQLineEditSignal'),(ddict,))
-                else:
-                    self.emit(qt.SIGNAL('MyQLineEditSignal'), ddict)
+                self.sigMyQLineEditSignal.emit(ddict)
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             self.setFocus()
 
 if __name__ == "__main__":
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),app,qt.SLOT("quit()"))
+    app.lastWindowClosed[()].connect(app.quit)
     #demo = MatrixEditor(table=False, orientation="horizontal")
     demo = MatrixEditor(table=True, orientation="vertical")
-    if QTVERSION < '4.0.0':
-        app.setMainWidget(demo)
-        demo.show()
-        app.exec_loop()
-    else:
-        demo.show()
-        app.exec_()
+    demo.show()
+    app.exec_()

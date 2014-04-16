@@ -54,6 +54,7 @@ class PolynomSelector(qt.QComboBox):
             self.addItem(item)
 
 class XASNormalizationParametersWidget(qt.QWidget):
+    sigXASNormalizationParametersSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
@@ -97,9 +98,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
         self.userEdgeEnergy = userEnergy
 
         # connect the signals
-        self.connect(buttonGroup,
-                     qt.SIGNAL('buttonClicked(int)'),
-                     self._buttonClicked)
+        buttonGroup.buttonClicked[int].connect(self._buttonClicked)
 
         self.userEdgeEnergy.editingFinished.connect(self._userEdgeEnergyEditingFinished)
 
@@ -124,9 +123,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
             self.widgetDict[key] = {}
             c = 1
             w = PolynomSelector(regionsGroupBox, options=self._polynomOptions)
-            self.connect(w,
-                         qt.SIGNAL('activated(int)'),
-                         self._regionParameterChanged)
+            w.activated[int].connect(self._regionParameterChanged)
             regionsGroupBoxLayout.addWidget(w, i, c)
             c += 1
             self.widgetDict[key]['polynomial'] = w
@@ -134,8 +131,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
                 label = qt.QLabel(regionsGroupBox)
                 label.setText(text)
                 self.widgetDict[key][text] = qt.QLineEdit(regionsGroupBox)
-                self.connect(self.widgetDict[key][text],
-                             qt.SIGNAL('editingFinished()'),
+                self.widgetDict[key][text].editingFinished.connect( \
                              self._regionParameterChanged)
                 validator = qt.QDoubleValidator(self.widgetDict[key][text])
                 self.widgetDict[key][text].setValidator(validator)
@@ -230,7 +226,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
                 ddict['event']='XASNormalizationParametersChanged'
             else:
                 ddict['event'] = event
-            self.emit(qt.SIGNAL('XASNormalizationParametersSignal'), ddict)
+            self.sigXASNormalizationParametersSignal.emit(ddict)
                   
     def getParameters(self):
         # make sure a copy is given back
@@ -293,8 +289,7 @@ class XASNormalizationWindow(qt.QWidget):
                                             emax=self.energy.max())
         self.getParameters = self.parametersWidget.getParameters
         self.setParameters = self.parametersWidget.setParameters
-        self.connect(self.parametersWidget,
-                     qt.SIGNAL('XASNormalizationParametersSignal'),
+        self.parametersWidget.sigXASNormalizationParametersSignal.connect( \
                      self.updateGraph)
         self.updateGraph(self.getParameters())
 

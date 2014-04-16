@@ -369,7 +369,7 @@ class AttenuatorsTableWidget(QTable):
             self.resizeColumnToContents(0)
             self.resizeColumnToContents(1)
                                            
-        self.connect(self, qt.SIGNAL("valueChanged(int,int)"), self.mySlot)
+        self.valueChanged[int,int].connect(self.mySlot)
 
     def __build(self, nfilters=12):
         n = 0
@@ -412,9 +412,7 @@ class AttenuatorsTableWidget(QTable):
                 combo = MyQComboBox(self, options=a, row = idx, col = 2)
                 combo.setEditable(True)
                 self.setCellWidget(idx, 2, combo)
-                qt.QObject.connect(combo,
-                                   qt.SIGNAL("MaterialComboBoxSignal"),
-                                   self._comboSlot)
+                combo.sigMaterialComboBoxSignal.connect(self._comboSlot)
             return
         selfnumRows = self.rowCount()
             
@@ -443,9 +441,7 @@ class AttenuatorsTableWidget(QTable):
             combo.setEditable(True)
             self.setCellWidget(idx, 2, combo)
             #self.setItem(idx,2,combo)
-            qt.QObject.connect(combo,
-                               qt.SIGNAL("MaterialComboBoxSignal"),
-                               self._comboSlot)
+            combo.sigMaterialComboBoxSignal.connect(self._comboSlot)
 
         for i in range(2):
             #BeamFilter(i)
@@ -479,9 +475,7 @@ class AttenuatorsTableWidget(QTable):
             combo = MyQComboBox(self, options=a, row=idx, col=2)
             combo.setEditable(True)
             self.setCellWidget(idx, 2, combo)
-            qt.QObject.connect(combo,
-                               qt.SIGNAL("MaterialComboBoxSignal"),
-                               self._comboSlot)
+            combo.sigMaterialComboBoxSignal.connect(self._comboSlot)
             
         #Detector
         item = qt.QCheckBox(self)
@@ -537,9 +531,7 @@ class AttenuatorsTableWidget(QTable):
             item.setText(text)
         item.setFlags(qt.Qt.ItemIsSelectable | qt.Qt.ItemIsEnabled)
 
-        qt.QObject.connect(combo,
-                           qt.SIGNAL("MaterialComboBoxSignal"),
-                           self._comboSlot)
+        combo.sigMaterialComboBoxSignal.connect(self._comboSlot)
 
         #a = qt.QStringList()
         a = []
@@ -549,9 +541,7 @@ class AttenuatorsTableWidget(QTable):
         #combo = qttable.QComboTableItem(self,a)
         self.combo = MyQComboBox(self, options=a, row=idx, col=2)
         self.setCellWidget(idx, 2, self.combo)
-        self.connect(self.combo,
-                     qt.SIGNAL("MaterialComboBoxSignal"),
-                     self._comboSlot)
+        self.combo.sigMaterialComboBoxSignal.connect(self._comboSlot)
             
     def mySlot(self,row,col):
         if DEBUG:
@@ -566,10 +556,7 @@ class AttenuatorsTableWidget(QTable):
         text = ddict['text']
         self.setCurrentCell(row, col)
         self._checkDensityThickness(text, row)
-        if QTVERSION < '4.0.0':
-            self.emit(qt.SIGNAL("valueChanged(int,int)"), (row, col))
-        else:
-            self.emit(qt.SIGNAL("valueChanged(int,int)"), row, col)
+        self.valueChanged.emit(row, col)
 
     def text(self, row, col):
         if col == 2:
@@ -679,8 +666,8 @@ class MyQComboBox(MaterialEditor.MaterialComboBox):
                 insert = False
         if insert:
             self.insertItem(-1, qstring)
-
-        self.emit(qt.SIGNAL('MaterialComboBoxSignal'), ddict)
+        # signal defined in the superclass.
+        self.sigMaterialComboBoxSignal.emit(ddict)
 
 def main(args):
     app = qt.QApplication(args)

@@ -59,29 +59,32 @@ if qt.qVersion() < '4.0.0':
 else:
     QTable = qt.QTableWidget
     class QComboTableItem(qt.QComboBox):
+        sigCellChanged = qt.pyqtSignal(int,int)
         def __init__(self, parent=None, row = None, col = None):
             self._row = row
             self._col = col
             qt.QComboBox.__init__(self,parent)
-            self.connect(self, qt.SIGNAL('activated(int)'), self._cellChanged)
+            self.activated[int].connect(self._cellChanged)
 
         def _cellChanged(self, idx):
             if DEBUG:
                 print("cell changed",idx)
-            self.emit(qt.SIGNAL('cellChanged(int,int)'), self._row, self._col)
+            self.sigCellChanged.emit(self._row, self._col)
 
     class QCheckBoxItem(qt.QCheckBox):
+        sigCellChanged = qt.pyqtSignal(int, int)
         def __init__(self, parent=None, row = None, col = None):
             self._row = row
             self._col = col
             qt.QCheckBox.__init__(self,parent)
-            self.connect(self, qt.SIGNAL('clicked()'), self._cellChanged)
+            self.clicked[()].connect(self._cellChanged)
 
         def _cellChanged(self):
-            self.emit(qt.SIGNAL('cellChanged(int, int)'), self._row, self._col)
+            self.sigCellChanged.emit(self._row, self._col)
 
 
 class PeakTableWidget(QTable):
+    sigPeakTableWidgetSignal = qt.pyqtSignal(object)
     def __init__(self, *args,**kw):
         QTable.__init__(self, *args)
         self.setRowCount(0)
@@ -109,10 +112,7 @@ class PeakTableWidget(QTable):
         if 'peaklist' in kw:
             self.peaklist = kw['peaklist']
         self.build()
-        if qt.qVersion() < '4.0.0':
-            self.connect(self,qt.SIGNAL("valueChanged(int,int)"),self.myslot)
-        else:
-            self.connect(self,qt.SIGNAL("cellChanged(int,int)"),self.myslot)
+        self.cellChanged[int,int].connect(self.myslot)
 
         if qt.qVersion() > '4.0.0':
             rheight = self.horizontalHeader().sizeHint().height()
@@ -172,35 +172,23 @@ class PeakTableWidget(QTable):
         col = self.peaks[peak]['fields'].index('element')
         self.peaks[peak]['element_item']=QPeriodicComboTableItem(self,
                                         row = linew, col= col)
-        if qt.qVersion() < '4.0.0':
-            self.setItem(linew,
-                         col,
-                         self.peaks[peak]['element_item'])
-        else:
-            self.setCellWidget(linew,
-                               col,
-                               self.peaks[peak]['element_item'])
-            self.connect(self.peaks[peak]['element_item'],
-                         qt.SIGNAL('cellChanged(int,int)'), self.myslot)
-                         #qt.SIGNAL('activated(int)'), self.myslot)
+        self.setCellWidget(linew,
+                           col,
+                           self.peaks[peak]['element_item'])
+        self.peaks[peak]['element_item'].sigCellChanged[int,int].connect( \
+                           self.myslot)
         a = QStringList()
         a.append('-')
         col = self.peaks[peak]['fields'].index('elementline')
-        if qt.qVersion() < '4.0.0':
-            self.peaks[peak]['elementline_item']= QComboTableItem(self,a)
-            self.setItem(linew,
-                         col,
-                         self.peaks[peak]['elementline_item'])
-        else:
-           self.peaks[peak]['elementline_item']= QComboTableItem(self,
-                                                                 row = linew,
-                                                                 col = col)
-           self.peaks[peak]['elementline_item'].addItems(a)
-           self.setCellWidget(linew,
-                         col,
-                         self.peaks[peak]['elementline_item'])
-           self.connect(self.peaks[peak]['elementline_item'],
-                         qt.SIGNAL('cellChanged(int,int)'), self.myslot)
+        self.peaks[peak]['elementline_item']= QComboTableItem(self,
+                                                              row = linew,
+                                                              col = col)
+        self.peaks[peak]['elementline_item'].addItems(a)
+        self.setCellWidget(linew,
+                           col,
+                           self.peaks[peak]['elementline_item'])
+        self.peaks[peak]['elementline_item'].sigCellChanged[int,int].connect( \
+            self.myslot)
         
         col = self.peaks[peak]['fields'].index('use')
         if qt.qVersion() < '4.0.0':
@@ -214,16 +202,12 @@ class PeakTableWidget(QTable):
             self.peaks[peak]['use_item'].setText("")
             self.setCellWidget(linew, col,
                      self.peaks[peak]['use_item'])
-            self.connect(self.peaks[peak]['use_item'],
-                         qt.SIGNAL('cellChanged(int,int)'), self.myslot)
+            self.peaks[peak]['use_item'].sigellChanged[int,int].connect( \
+                     self.myslot)
 
         self.peaks[peak]['use_item'].setChecked(self.peaks[peak]['use'])
-        #Not supported below 3.0
-        #self.setColumnReadOnly(self.parameters[param]['fields'].index('name'),1)
-        #self.setColumnReadOnly(self.parameters[param]['fields'].index('fitresult'),1)
-        #self.setColumnReadOnly(self.parameters[param]['fields'].index('sigma'),1)
 
-    def myslot(self,row,col):
+    def myslot(self, row, col):
         if DEBUG:
             print("Passing by myslot",
                   self.peaks[self.peaklist[row]]['fields'][col])
@@ -245,12 +229,8 @@ class PeakTableWidget(QTable):
                 #set line to -
                 options  = QStringList()
                 options.append('-')
-                if qt.qVersion() < '4.0.0':
-                    self.peaks[peak]["elementline_item"].setStringList(options)
-                    self.peaks[peak]["elementline_item"].setCurrentItem(0)
-                else:
-                    self.peaks[peak]["elementline_item"].insertItems(0, options)
-                    self.peaks[peak]["elementline_item"].setCurrentIndex(0)
+                self.peaks[peak]["elementline_item"].insertItems(0, options)
+                self.peaks[peak]["elementline_item"].setCurrentIndex(0)
             else:
                 #get the emission energies
                 ele = str(newvalue).split()[0]
@@ -267,12 +247,8 @@ class PeakTableWidget(QTable):
                         emax = max(emax,Elements.Element[ele][transition]['rate'])
                 energies[0] = "%.5f " % emax
                 #lineitem=qttable.QComboTableItem(self,options)
-                if qt.qVersion() < '4.0.0':
-                    self.peaks[peak]["elementline_item"].setStringList(options)
-                    self.peaks[peak]["elementline_item"].setCurrentItem(0)
-                else:
-                    self.peaks[peak]["elementline_item"].insertItems(0, options)
-                    self.peaks[peak]["elementline_item"].setCurrentIndex(0)
+                self.peaks[peak]["elementline_item"].insertItems(0, options)
+                self.peaks[peak]["elementline_item"].setCurrentIndex(0)
                 #self.setItem(row,
                 #             col+1,
                 #             lineitem)
@@ -316,10 +292,7 @@ class PeakTableWidget(QTable):
             self.peaks[peak][field] = value 
             ddict={}
             ddict['event'] = 'use'
-            if qt.qVersion() < '4.0.0':
-                self.emit(qt.PYSIGNAL('PeakTableWidgetSignal'),(ddict,))
-            else:
-                self.emit(qt.SIGNAL('PeakTableWidgetSignal'), (ddict))
+            self.sigPeakTableWidgetSignal.emit(ddict)
 
         if field == "channel":
             oldvalue = self.peaks[peak]["channel"]
@@ -336,10 +309,7 @@ class PeakTableWidget(QTable):
             self.peaks[peak][field] = value 
             ddict={}
             ddict['event'] = 'use'
-            if qt.qVersion() < '4.0.0':
-                self.emit(qt.PYSIGNAL('PeakTableWidgetSignal'),(ddict,))
-            else:
-                self.emit(qt.SIGNAL('PeakTableWidgetSignal'), (ddict))
+            self.sigPeakTableWidgetSignal.emit(ddict)
 
         if field == "use":
             if self.peaks[peak][field+"_item"].isChecked():
@@ -348,10 +318,7 @@ class PeakTableWidget(QTable):
                 self.peaks[peak][field] = 0
             ddict={}
             ddict['event'] = 'use'
-            if qt.qVersion() < '4.0.0':
-                self.emit(qt.PYSIGNAL('PeakTableWidgetSignal'),(ddict,))
-            else:
-                self.emit(qt.SIGNAL('PeakTableWidgetSignal'), (ddict))
+            self.sigPeakTableWidgetSignal.emit(ddict)
 
     def setReadOnly(self,parameter,fields):
         if DEBUG:
@@ -603,9 +570,9 @@ class QPeriodicComboTableItem(QComboTableItem):
                 Return symbol of element selected
 
         Signals:
-            No specific signals in Qt3. Use signals from QTable
-            SIGNAL("valueChanged(int,int)") for example.
+            sigValueChanged(int,int)
     """
+    sigValueChanged = qt.pyqtSignal(int, int)
     def __init__(self, table=None, addnone=1, detailed=0, row=None, col=None):
         strlist = QStringList()
         self.addnone= (addnone==1)
@@ -618,38 +585,27 @@ class QPeriodicComboTableItem(QComboTableItem):
         if col is None: col = 0
         self._row = row
         self._col = col
-        if qt.qVersion() < '4.0.0':
-            qttable.QComboTableItem.__init__(self, table, strlist)
-        else:
-            qt.QComboBox.__init__(self)
-            self.addItems(strlist)
-            self.connect(self, qt.SIGNAL('activated(int)'), self._cellChanged)
+        qt.QComboBox.__init__(self)
+        self.addItems(strlist)
+        self.activated[int].conenct(self._cellChanged)
 
-    if qt.qVersion() > "4.0.0":
-        def _cellChanged(self, idx):
-            self.emit(qt.SIGNAL('cellChanged(int, int)'), self._row, self._col)
+    def _cellChanged(self, idx):
+        self.sigCellChanged.emit(self._row, self._col)
 
     def setSelection(self, symbol=None):
         if symbol is None:
             if self.addnone:
-                if qt.qVersion() < '4.0.0':
-                    self.setCurrentItem(0)
-                else:
-                    self.setCurrentIndex(0)
+                self.setCurrentIndex(0)
         else:
             idx= self.addnone+Elements.getz(symbol)-1
-            if qt.qVersion() < '4.0.0':
-                self.setCurrentItem(idx)
-            else:
-                self.setCurrentIndex(idx)
+            self.setCurrentIndex(idx)
 
     def getSelection(self):
-        if qt.qVersion() < '4.0.0':
-            id = self.currentItem()
+        idx = self.currentIndex()
+        if self.addnone and not idx:
+            return None
         else:
-            id = self.currentIndex()
-        if self.addnone and not id: return None
-        else: return Elements.ElementList[id-self.addnone]
+            return Elements.ElementList[idx - self.addnone]
 
 def main(args):
     app=qt.QApplication(args)

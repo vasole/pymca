@@ -65,23 +65,18 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         self.slider.setRange(0, 0)
         
         self.mainLayout.addWidget(self.slider)
-        self.connect(self.slider,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._showImageSliderSlot)
+        self.slider.valueChanged[int].connect(self._showImageSliderSlot)
         self.slider.hide()
 
     def _connectCorrelator(self):
-        if QTVERSION > '4.0.0':
-            if self.correlator is None:
-                self.ownCorrelator = True
-                self.correlator = RGBCorrelator.RGBCorrelator()
-            self.correlator.setWindowTitle("ImageWindow RGB Correlator")
-            self.connect(self, qt.SIGNAL("addImageClicked"),
-                         self.correlator.addImageSlot)
-            self.connect(self, qt.SIGNAL("removeImageClicked"),
-                         self.correlator.removeImageSlot)
-            self.connect(self, qt.SIGNAL("replaceImageClicked"),
-                         self.correlator.replaceImageSlot)
+        if self.correlator is None:
+            self.ownCorrelator = True
+            self.correlator = RGBCorrelator.RGBCorrelator()
+        self.correlator.setWindowTitle("ImageWindow RGB Correlator")
+        self.sigAddImageClicked.connect(self.correlator.addImageSlot)
+        self.sigRemoveImageClicked.connect(self.correlator.removeImageSlot)
+        self.sigReplaceImageClicked.connect( \
+            self.correlator.replaceImageSlot)
 
 
     def _addImageClicked(self):
@@ -98,20 +93,9 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                     self.correlator.show()
 
     def setDispatcher(self, w):
-        if QTVERSION < '4.0.0':
-            self.connect(w, qt.PYSIGNAL("addSelection"),
-                             self._addSelection)
-            self.connect(w, qt.PYSIGNAL("removeSelection"),
-                             self._removeSelection)
-            self.connect(w, qt.PYSIGNAL("replaceSelection"),
-                             self._replaceSelection)
-        else:
-            self.connect(w, qt.SIGNAL("addSelection"),
-                             self._addSelection)
-            self.connect(w, qt.SIGNAL("removeSelection"),
-                             self._removeSelection)
-            self.connect(w, qt.SIGNAL("replaceSelection"),
-                             self._replaceSelection)
+        w.sigAddSelection.connect(self._addSelection)
+        w.sigRemoveSelection.connect(self._removeSelection)
+        w.sigReplaceSelection.connect(self._replaceSelection)
             
     def _addSelection(self, selectionlist):
         if DEBUG:
@@ -336,9 +320,7 @@ class TimerLoop:
     
     def __setThread(self, function, period):
         self.__timer = qt.QTimer()
-        qt.QObject.connect(self.__timer,
-                       qt.SIGNAL("timeout()"),
-                       function)
+        self.__timer.timeout[()].connect(function)
         self.__timer.start(period)
 
     def test(self):
@@ -378,8 +360,7 @@ if __name__ == "__main__":
     x2 = numpy.transpose(x1)
 
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                        app,qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     if len(sys.argv) > 1:PYMCA=True
     else:PYMCA = False
 
@@ -451,7 +432,4 @@ if __name__ == "__main__":
         counter += 1
 
     loop = TimerLoop(function = function, period = period)
-    if QTVERSION < '4.0.0':
-        app.exec_loop()
-    else:
-        sys.exit(app.exec_())
+    sys.exit(app.exec_())

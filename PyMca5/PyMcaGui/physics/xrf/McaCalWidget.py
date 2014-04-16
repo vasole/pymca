@@ -297,11 +297,10 @@ class McaCalWidget(qt.QDialog):
             self.graph.setYAxisLogarithmic(True)
         
     def connections(self):
-        self.connect(self.peakParameters.searchButton,qt.SIGNAL('clicked()')  ,self.peakSearch)
+        self.peakParameters.searchButton.clicked.connect(self.peakSearch)
         self.graph.sigPlotSignal.connect(self.__graphsignal)
-        self.connect(self.peakTable, qt.SIGNAL('PeakTableWidgetSignal') , 
-                     self.__peakTableSignal)
-        self.connect(self.calpar, qt.SIGNAL('CalibrationParametersSignal'),
+        self.peakTable.sigPeakTableWidgetSignal.connect(self.__peakTableSignal)
+        self.calpar.sigCalibrationParametersSignal.connect( \
                      self.__calparsignal)
         self.okButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
@@ -931,31 +930,29 @@ class PeakSearchParameters(qt.QWidget):
         self.yscalingText= MyQLineEdit(parw)
         grid.addWidget(self.yscalingText, 2, 1)
         self.fwhmAuto= qt.QCheckBox("Auto", parw)
-        self.connect(self.fwhmAuto, qt.SIGNAL("toggled(bool)"), self.__fwhmToggled)
+        self.fwhmAuto.toggled[bool].connect(self.__fwhmToggled)
         grid.addWidget(self.fwhmAuto, 1, 2, qt.Qt.AlignLeft)
         self.yscalingAuto= qt.QCheckBox("Auto", parw)
-        self.connect(self.yscalingAuto, qt.SIGNAL("toggled(bool)"), self.__yscalingToggled)
+        self.yscalingAuto.toggled[bool].connect(self.__yscalingToggled)
         grid.addWidget(self.yscalingAuto, 2, 2, qt.Qt.AlignLeft)
         if self.searchButtonFlag:
             self.searchButton = qt.QPushButton(parw)   
             self.searchButton.setText('Search')
             grid.addWidget(self.searchButton, 3, 1)
-            if QTVERSION > '4.0.0':
-                self.searchButton.setAutoDefault(0)
+            self.searchButton.setAutoDefault(0)
         layout.addWidget(parf)
-        if QTVERSION > '4.0.0':
-            text  = "Enter a positive number above 2.0\n"
-            text += "A higher number means a lower sensitivity."
-            self.sensitivityText.setToolTip(text)
-            text  = "Enter a positive integer."
-            self.fwhmText.setToolTip(text)
-            text  = "If your data are averaged or normalized,\n"
-            text += "enter the scaling factor for your data to\n"
-            text += "follow a normal distribution."
-            self.yscalingText.setToolTip(text)
-            for w in [self.sensitivityText, self.fwhmText, self.yscalingText]:
-                validator = qt.QDoubleValidator(w)
-                w.setValidator(validator)
+        text  = "Enter a positive number above 2.0\n"
+        text += "A higher number means a lower sensitivity."
+        self.sensitivityText.setToolTip(text)
+        text  = "Enter a positive integer."
+        self.fwhmText.setToolTip(text)
+        text  = "If your data are averaged or normalized,\n"
+        text += "enter the scaling factor for your data to\n"
+        text += "follow a normal distribution."
+        self.yscalingText.setToolTip(text)
+        for w in [self.sensitivityText, self.fwhmText, self.yscalingText]:
+            validator = qt.QDoubleValidator(w)
+            w.setValidator(validator)
 
     def setParameters(self, pars):
         self.sensitivityText.setText(str(pars["Sensitivity"]))
@@ -987,6 +984,7 @@ class PeakSearchParameters(qt.QWidget):
 
 
 class CalibrationParameters(qt.QWidget):
+    sigCalibrationParametersSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="", calname="", 
                  caldict = {},fl=0, xrd=False):
         if QTVERSION < '4.0.0':
@@ -1061,19 +1059,13 @@ class CalibrationParameters(qt.QWidget):
         self.savebox.setDuplicatesEnabled(0)
     
     def connections(self):
-        if QTVERSION < '4.0.0':
-            self.connect(self.AText,qt.SIGNAL('returnPressed()'),self._Aslot)
-            self.connect(self.BText,qt.SIGNAL('returnPressed()'),self._Bslot)
-            self.connect(self.CText,qt.SIGNAL('returnPressed()'),self._Cslot)
-        else:
-            self.connect(self.AText,qt.SIGNAL('editingFinished()'),self._Aslot)
-            self.connect(self.BText,qt.SIGNAL('editingFinished()'),self._Bslot)
-            self.connect(self.CText,qt.SIGNAL('editingFinished()'),self._Cslot)
-            self.connect(self.CFixed,qt.SIGNAL('clicked()'),self._CFixSlot)
+        self.AText.editingFinished[()].connect(self._Aslot)
+        self.BText.editingFinished[()].connect(self._Bslot)
+        self.CText.editingFinished[()].connect(self._Cslot)
+        self.CFixed.editingFinished[()].connect(self._CFixSlot)
             
-        self.connect(self.orderbox,qt.SIGNAL('activated(const QString &)'),self.__orderbox)
-        #self.connect(self.savebut,qt.SIGNAL('clicked()')    ,self.myslot)
-        self.connect(self.savebox,qt.SIGNAL('activated(const QString &)'),self.__savebox)
+        self.orderbox.activated[str].connect(self.__orderbox)
+        self.savebox.activated[str].connect(self.__savebox)
         
     def setParameters(self, pars):
         self.AText.setText("%.4g" % pars["A"])
@@ -1232,10 +1224,7 @@ class CalibrationParameters(qt.QWidget):
                 ddict['event']         = "savebox"
                 ddict['calname' ]      = self.currentcal
                 ddict['caldict']       = self.caldict
-            if QTVERSION < '4.0.0':
-                self.emit(qt.PYSIGNAL('CalibrationParametersSignal'),(ddict,))
-            else:
-                self.emit(qt.SIGNAL('CalibrationParametersSignal'), ddict)
+            self.sigCalibrationParametersSignal.emit(ddict)
 
 class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):
@@ -1260,10 +1249,7 @@ class MyQLineEdit(qt.QLineEdit):
     
     def focusOutEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('white'))
-        if QTVERSION < '4.0.0':
-            self.emit(qt.SIGNAL("returnPressed()"),())
-        else:
-            qt.QLineEdit.focusOutEvent(self, event)
+        qt.QLineEdit.focusOutEvent(self, event)
 
 class DoubleDialog(qt.QDialog):
     def __init__(self, parent=None, text=None, value=None):
@@ -1294,22 +1280,17 @@ class DoubleDialog(qt.QDialog):
         self.mainLayout.addWidget(self.okButton, 1, 0)
         self.mainLayout.addWidget(self.cancelButton, 1, 1)
 
-        self.connect(self.okButton,qt.SIGNAL('clicked()'),self.accept)
-        self.connect(self.cancelButton,qt.SIGNAL('clicked()'),self.reject)
+        self.okButton.clicked[()].connect(self.accept)
+        self.cancelButton.clicked[()].connect(self.reject)
 
 
 class InputLine(qt.QDialog):
     def __init__(self,parent ,name = "Peak Parameters",modal=1,
-                 peakpars={}, fl=0):
-        #fl=qt.Qt.WDestructiveClose):
-        if QTVERSION < '4.0.0':
-            qt.QDialog.__init__(self, parent, name, modal, fl)
-            self.setCaption(name)
-        else:
-            qt.QDialog.__init__(self, parent)
-            self.setModal(modal)
-            self.setWindowTitle(name)
-            self.resize(600,200)
+                 peakpars={}):
+        qt.QDialog.__init__(self, parent)
+        self.setModal(modal)
+        self.setWindowTitle(name)
+        self.resize(600,200)
         layout = qt.QVBoxLayout(self)
         self.table = PeakTableWidget.PeakTableWidget(self)
         layout.addWidget(self.table)
@@ -1327,8 +1308,8 @@ class InputLine(qt.QDialog):
         okbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         cancelbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         self.bottom.layout.addWidget(qt.HorizontalSpacer(self.bottom))
-        self.connect(cancelbutton, qt.SIGNAL("clicked()"), self.reject)
-        self.connect(okbutton, qt.SIGNAL("clicked()"), self.accept)
+        cancelbutton.clicked[()].connect(self.reject)
+        okbutton.clicked[()].connect(self.accept)
         if 'name' in peakpars:
             peakname = peakpars['name']
         else:
@@ -1539,14 +1520,9 @@ class McaCalCopy(qt.QDialog):
         lineclayout.addWidget(ccl)
         lineclayout.addWidget(self.CText)
 
-        if QTVERSION < '4.0.0':
-            self.connect(self.AText,qt.SIGNAL('returnPressed()'),self._Aslot)
-            self.connect(self.BText,qt.SIGNAL('returnPressed()'),self._Bslot)
-            self.connect(self.CText,qt.SIGNAL('returnPressed()'),self._Cslot)
-        else:
-            self.connect(self.AText,qt.SIGNAL('editingFinished()'),self._Aslot)
-            self.connect(self.BText,qt.SIGNAL('editingFinished()'),self._Bslot)
-            self.connect(self.CText,qt.SIGNAL('editingFinished()'),self._Cslot)
+        self.AText.editingFinished[()].connect(self._Aslot)
+        self.BText.editingFinished[()].connect(self._Bslot)
+        self.CText.editingFinished[()].connect(self._Cslot)
 
         # --- available for copy ---
         if len(caldict.keys()):
@@ -1561,7 +1537,7 @@ class McaCalCopy(qt.QDialog):
             copybut = qt.QPushButton(wid)
             copybut.setText('Copy From')
             copybut.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,qt.QSizePolicy.Fixed))
-            self.connect(copybut,qt.SIGNAL("clicked()"),self.__copybuttonclicked)
+            copybut.clicked[()].connect(self.__copybuttonclicked)
             
             self.combo = SimpleComboBox(wid,options=caldict.keys())
             self.combo.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,qt.QSizePolicy.Fixed))
@@ -1591,8 +1567,8 @@ class McaCalCopy(qt.QDialog):
         cancelbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         bottomlayout.addWidget(qt.HorizontalSpacer(bottom))
         
-        self.connect(cancelbutton, qt.SIGNAL("clicked()"), self.reject)
-        self.connect(okbutton,     qt.SIGNAL("clicked()"), self.accept)
+        cancelbutton.clicked[()].connect(self.reject)
+        okbutton.clicked[()].connect(self.accept)
 
         self.AText.setFocus()
 
@@ -1604,10 +1580,7 @@ class McaCalCopy(qt.QDialog):
             msg=qt.QMessageBox(self.AText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             self.AText.setFocus()
         
     def _Bslot(self):
@@ -1618,10 +1591,7 @@ class McaCalCopy(qt.QDialog):
             msg=qt.QMessageBox(self.BText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             self.BText.setFocus()
 
     def _Cslot(self):
@@ -1632,10 +1602,7 @@ class McaCalCopy(qt.QDialog):
             msg=qt.QMessageBox(self.CText)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             self.CText.setFocus()
         
     def __copybuttonclicked(self):
@@ -1677,9 +1644,6 @@ class SimpleComboBox(qt.QComboBox):
              
 def test(x,y,legend):
     app = qt.QApplication(args)
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(app,qt.SIGNAL("lastWindowClosed()"),
-                           app, qt.SLOT("quit()"))
     demo = McaCalWidget(x=x,y=y,modal=1,legend=legend)
     ret=demo.exec_()
     if ret == qt.QDialog.Accepted:

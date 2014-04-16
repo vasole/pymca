@@ -138,10 +138,8 @@ class McaWindow(ScanWindow.ScanWindow):
                             self.__anasignal)
 
     def connections(self):
-        #self.connect(self.scanfit,    qt.SIGNAL('ScanFitSignal') , self.__anasignal)
         self.simplefit.sigMcaSimpleFitSignal.connect(self.__anasignal)
         self.advancedfit.sigMcaAdvancedFitSignal.connect(self.__anasignal)
-        #self.connect(self.scanwindow, qt.SIGNAL('ScanWindowSignal') ,   self.__anasignal)
 
     def mcaSimpleFitSignal(self):
         legend = self.getActiveCurve(just_legend=True)
@@ -813,12 +811,9 @@ class McaWindow(ScanWindow.ScanWindow):
         self.sigROISignal.emit(ddict)
 
     def setDispatcher(self, w):
-        self.connect(w, qt.SIGNAL("addSelection"),
-                         self._addSelection)
-        self.connect(w, qt.SIGNAL("removeSelection"),
-                         self._removeSelection)
-        self.connect(w, qt.SIGNAL("replaceSelection"),
-                         self._replaceSelection)
+        w.sigAddSelection.connect(self._addSelection)
+        w.sigRemoveSelection.connect(self._removeSelection)
+        w.sigReplaceSelection.connect(self._replaceSelection)
 
     def _addSelection(self, selection, replot=True):
         if DEBUG:

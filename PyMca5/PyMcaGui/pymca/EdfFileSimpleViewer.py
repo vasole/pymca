@@ -54,14 +54,8 @@ class EdfFileSimpleViewer(qt.QWidget):
         self.mainLayout.addWidget(self.sourceSelector)
         self.mainLayout.addWidget(self.selectorWidget[QEdfFileWidget.SOURCE_TYPE])
 
-        if QTVERSION < '4.0.0':
-            self.connect(self.sourceSelector, 
-                    qt.PYSIGNAL("SourceSelectorSignal"), 
-                    self._sourceSelectorSlot)
-        else:
-            self.connect(self.sourceSelector, 
-                    qt.SIGNAL("SourceSelectorSignal"), 
-                    self._sourceSelectorSlot)
+        self.sourceSelector.sigSourceSelectorSignal.connect( \
+                self._sourceSelectorSlot)
 
     def _sourceSelectorSlot(self, ddict):
         if DEBUG:

@@ -75,11 +75,9 @@ class Median2DBrowser(StackBrowser.StackBrowser):
                                                         use_conditional=1)
         self._medianParametersWidget.widthSpin.setValue(5)        
         self.layout().addWidget(self._medianParametersWidget)
-        self.connect(self._medianParametersWidget.widthSpin,
-                     qt.SIGNAL('valueChanged(int)'),
+        self._medianParametersWidget.widthSpin.valueChanged[int].connect( \
                      self.setKernelWidth)
-        self.connect(self._medianParametersWidget.conditionalSpin,
-                     qt.SIGNAL('valueChanged(int)'),
+        self._medianParametersWidget.conditionalSpin.valueChanged[int].connect(\
                      self.setConditionalFlag)
 
     def setKernelWidth(self, value):
@@ -158,8 +156,7 @@ if __name__ == "__main__":
             stackData[:, :, i] = 10 * a * i
 
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                        app,qt.SLOT("quit()"))
+    app.lastWindowClosed[()].connect(app.quit)
     w = Median2DBrowser()
     w.setStackDataObject(stackData, index=0)
     w.show()

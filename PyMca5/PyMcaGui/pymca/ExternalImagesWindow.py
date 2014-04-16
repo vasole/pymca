@@ -63,9 +63,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         self.slider.setMaximum(0)
         
         self.mainLayout.addWidget(self.slider)
-        self.connect(self.slider,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._showImage)
+        self.slider.valueChanged[int].connect(self._showImage)
 
         self.imageList = None
         self._imageDict = None
@@ -397,10 +395,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
+    app.lastWindowClosed.connect(app.quit)
     if len(sys.argv) > 1:
         if sys.argv[1][-3:].upper() in ['EDF', 'CCD']:
             container = ExternalImagesWindow(selection=False,

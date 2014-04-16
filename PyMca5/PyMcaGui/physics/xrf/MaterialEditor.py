@@ -88,15 +88,14 @@ class MaterialEditor(qt.QWidget):
             layout.addWidget(hbox)
 
             #self.matCombo.setEditable(True)
-            self.connect(self.matCombo,qt.SIGNAL('MaterialComboBoxSignal'),
+            self.matCombo.sigMaterialComboBoxSignal.connect( \
                          self._comboSlot)
 
         self.materialGUI = MaterialGUI(self, comments=comments,
                                        height=height, toolmode=self.__toolMode)
-        self.connect(self.materialGUI,qt.SIGNAL('MaterialTransmissionSignal'),
+        self.materialGUI.sigMaterialTransmissionSignal.connect( \
                      self._transmissionSlot)
-        self.connect(self.materialGUI,
-                     qt.SIGNAL('MaterialMassAttenuationSignal'),
+        self.materialGUI.sigMaterialMassAttenuationSignal.connect( \
                      self._massAttenuationSlot)
         if self.__toolMode:
             self.materialGUI.setCurrent(a[0])
@@ -154,8 +153,7 @@ class MaterialEditor(qt.QWidget):
         self.graphDialog.okButton.setText('OK')
         self.graphDialog.okButton.setAutoDefault(True)
         self.graphDialog.mainLayout.addWidget(self.graphDialog.okButton)
-        self.graphDialog.connect(self.graphDialog.okButton,
-                                 qt.SIGNAL('clicked()'),
+        self.graphDialog.okButton.clicked[()].connect( \
                                  self.graphDialog.accept)
 
 
@@ -255,6 +253,7 @@ class MaterialEditor(qt.QWidget):
         qt.QWidget.closeEvent(self, event)
 
 class MaterialComboBox(qt.QComboBox):
+    sigMaterialComboBoxSignal = qt.pyqtSignal(object)
     def __init__(self,parent = None,name = None,fl = 0,
                  options=['1','2','3'],row=None,col=None):
         if row is None: row = 0
@@ -267,8 +266,7 @@ class MaterialComboBox(qt.QComboBox):
         self.setDuplicatesEnabled(False)
         self.setEditable(True)
         self._line = self.lineEdit()
-        self.connect(self, qt.SIGNAL("activated(const QString &)"),
-                     self._mySignal)
+        self.activated[str].connect(self._mySignal)
         self._line.editingFinished.connect(self._mySlot)
 
     def setCurrentText(self, qstring):
@@ -360,7 +358,7 @@ class MaterialComboBox(qt.QComboBox):
         if insert:
             self.insertItem(self.count(), qstring)
                 
-        self.emit(qt.SIGNAL('MaterialComboBoxSignal'), (ddict))
+        self.sigMaterialComboBoxSignal.emit(ddict)
 
     def _mySlot(self):
         self._mySignal(self.currentText())
@@ -400,6 +398,8 @@ class MaterialValidator(qt.QValidator):
             return (self.Invalid,pos)
 
 class MaterialGUI(qt.QWidget):
+    sigMaterialMassAttenuationSignal = qt.pyqtSignal(object)
+    sigMaterialTransmissionSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="New Material",default={},
                  comments=True, height=10, toolmode=False):
         qt.QWidget.__init__(self, parent)
@@ -506,9 +506,9 @@ class MaterialGUI(qt.QWidget):
 
             gridLayout.addWidget(self.__thicknessLine, 1, 1)
             self.__thicknessLine.setReadOnly(False)
-            self.connect(self.__densityLine,qt.SIGNAL('editingFinished()'),
+            self.__densityLine.editingFinished[()].connect( \
                          self.__densitySlot)
-            self.connect(self.__thicknessLine,qt.SIGNAL('editingFinished()'),
+            self.__thicknessLine.editingFinished[()].connect( \
                      self.__thicknessSlot)
 
             self.__transmissionButton = qt.QPushButton(grid)
@@ -536,23 +536,16 @@ class MaterialGUI(qt.QWidget):
             nameLabel.setAlignment(qt.Qt.AlignVCenter)
             nameHBoxLayout.addWidget(qt.HorizontalSpacer(nameHBox))
             self.__nameLine  = qt.QLineEdit(nameHBox)
-            self.connect(self.__nameLine,qt.SIGNAL('editingFinished()'),
-                         self.__nameLineSlot)
+            self.__nameLine.editingFinished[()].connect(self.__nameLineSlot)
             nameHBoxLayout.addWidget(self.__nameLine)
             self.__nameLine.setReadOnly(False)
             longtext="En un lugar de La Mancha, de cuyo nombre no quiero acordarme ..."
             self.__nameLine.setFixedWidth(self.__nameLine.fontMetrics().width(longtext))
             layout.addWidget(nameHBox)
 
-        self.connect(self.__numberSpin,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self.__numberSpinChanged)
-        self.connect(self.__table,
-                     qt.SIGNAL("cellChanged(int,int)"),
-                     self.__tableSlot)
-        self.connect(self.__table,
-                     qt.SIGNAL("cellEntered(int,int)"),
-                     self.__tableSlot2)
+        self.__numberSpin.valueChanged[int].connect(self.__numberSpinChanged)
+        self.__table.cellChanged[int,int].connect(self.__tableSlot)
+        self.__table.cellEntered[int,int].connect(self.__tableSlot2)
             
     def buildToolMode(self, comments="True",height=3):
         layout = qt.QVBoxLayout(self)
@@ -651,31 +644,20 @@ class MaterialGUI(qt.QWidget):
         layout.addWidget(qt.VerticalSpacer(self))
 
         #build all the connections
-        self.connect(self.__nameLine,qt.SIGNAL('editingFinished()'),
-                     self.__nameLineSlot)
+        self.__nameLine.editingFinished[()].connect(self.__nameLineSlot)
 
-        self.connect(self.__numberSpin,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self.__numberSpinChanged)
+        self.__numberSpin.valueChanged[int].connect(self.__numberSpinChanged)
 
-        self.connect(self.__table,
-                     qt.SIGNAL("cellChanged(int,int)"),
-                     self.__tableSlot)
-        self.connect(self.__table,
-                     qt.SIGNAL("cellEntered(int,int)"),
-                     self.__tableSlot2)
+        self.__table.cellChanged[int,int].connect(self.__tableSlot)
+        self.__table.cellEntered[int,int].connect(self.__tableSlot2)
 
-        self.connect(self.__densityLine,qt.SIGNAL('editingFinished()'),
-                     self.__densitySlot)
+        self.__densityLine.editingFinished[()].connect( self.__densitySlot)
 
-        self.connect(self.__thicknessLine,qt.SIGNAL('editingFinished()'),
-                 self.__thicknessSlot)
+        self.__thicknessLine.editingFinished[()].connect(self.__thicknessSlot)
 
-        self.connect(self.__transmissionButton, qt.SIGNAL('clicked()'),
-                     self.__transmissionSlot)
+        self.__transmissionButton.clicked[()].connect(self.__transmissionSlot)
 
-        self.connect(self.__massAttButton, qt.SIGNAL('clicked()'),
-                     self.__massAttSlot)
+        self.__massAttButton.editingFinished[()].connect(self.__massAttSlot)
 
     def setCurrent(self, matkey0):
         if DEBUG:"setCurrent(self, matkey0) ", matkey0
@@ -802,14 +784,14 @@ class MaterialGUI(qt.QWidget):
         ddict = {}
         ddict.update(self._current)
         ddict['event'] = 'MaterialTransmission'
-        self.emit(qt.SIGNAL('MaterialTransmissionSignal'), ddict)
+        self.sigMaterialTransmissionSignal.emit(ddict)
 
 
     def __massAttSlot(self):
         ddict = {}
         ddict.update(self._current)
         ddict['event'] = 'MaterialMassAttenuation'
-        self.emit(qt.SIGNAL('MaterialMassAttenuationSignal'), ddict)        
+        self.sigMaterialMassAttenuationSignal.emit(ddict)        
 
     def __nameLineSlot(self):
         if DEBUG:
