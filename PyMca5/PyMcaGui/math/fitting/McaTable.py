@@ -75,7 +75,7 @@ class McaTable(QTable):
             print("MCATABLE click on vertical header items?")
             self.verticalHeader().sectionClicked[int].connect(self.__myslot)
         self.cellClicked[int, int].connect(self.__myslot)
-        self.selectionChanged[()].connect(self.__myslot)
+        self.itemSelectionChanged[()].connect(self.__myslot)
 
                 
     def fillfrommca(self,mcaresult,diag=1):

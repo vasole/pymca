@@ -719,24 +719,22 @@ class McaWindow(ScanWindow.ScanWindow):
             if dict['row'] >= 0:
                 pos = dict['Position']
                 label = 'PEAK %d' % (dict['row']+1)
-                if self.peakmarker is None:
-                    self.peakmarker = self.graph.insertx1marker(pos,1.1,
-                                        label = label)
-                self.graph.setx1markerpos(self.peakmarker,pos)
-                self.graph.setmarkercolor(self.peakmarker,'pink',
-                                        label=label)
-                self.graph.replot()
+                if self.peakmarker is not None:
+                    self.removeMarker(self.peakmarker)
+                self.insertXMarker(pos,
+                                   label,
+                                   label=label,
+                                   color='pink',
+                                   draggable=False)
+                self.peakmarker = label
             else:
                 if self.peakmarker is not None:
-                    self.graph.removeMarker(self.peakmarker)
+                    self.removeMarker(self.peakmarker)
                 self.peakmarker = None
-                
         elif dict['event'] == 'McaTableClicked':
             if self.peakmarker is not None:
-                self.graph.removeMarker(self.peakmarker)
+                self.removeMarker(self.peakmarker)
             self.peakmarker = None
-            self.graph.replot()    
-
         elif (dict['event'] == 'McaAdvancedFitElementClicked') or \
              (dict['event'] == 'ElementClicked'):
             #this has been moved to the fit window
