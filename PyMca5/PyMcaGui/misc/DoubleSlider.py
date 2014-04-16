@@ -124,17 +124,10 @@ class MySlider(qt.QWidget):
 
 def test():
     app = qt.QApplication([])
-    qt.QObject.connect(app,
-                       qt.SIGNAL("lastWindowClosed()"),
-                       app,
-                       qt.SLOT('quit()'))
-    
+    app.lastWindowClosed.connect(app.quit)    
     w = DoubleSlider()
     w.show()
-    if QTVERSION < '4.0.0':
-        app.exec_loop()
-    else:
-        app.exec_()
+    app.exec_()
 
 if __name__ == "__main__":
     test()

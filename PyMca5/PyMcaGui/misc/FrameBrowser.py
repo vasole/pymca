@@ -135,6 +135,7 @@ icon_last = ["22 22 2 1",
 
 
 class FrameBrowser(qt.QWidget):
+    sigIndexChanged = qt.pyqtSignal(object)
     def __init__(self, parent=None, n=1):
         qt.QWidget.__init__(self, parent)
         self.mainLayout=qt.QHBoxLayout(self)
@@ -166,26 +167,11 @@ class FrameBrowser(qt.QWidget):
         self.mainLayout.addWidget(self.lastButton)
         self.mainLayout.addWidget(qt.HorizontalSpacer(self))
 
-        self.connect(self.firstButton,
-                     qt.SIGNAL("clicked()"),
-                     self._firstClicked)
-
-        self.connect(self.previousButton,
-                     qt.SIGNAL("clicked()"),
-                     self._previousClicked)
-
-        self.connect(self.nextButton,
-                     qt.SIGNAL("clicked()"),
-                     self._nextClicked)
-
-
-        self.connect(self.lastButton,
-                     qt.SIGNAL("clicked()"),
-                     self._lastClicked)
-
-        self.connect(self.lineEdit,
-                     qt.SIGNAL("editingFinished()"),
-                     self._textChangedSlot)
+        self.firstButton.clicked.connect(self._firstClicked)
+        self.previousButton.clicked.connect(self._previousClicked)
+        self.nextButton.clicked.connect(self._nextClicked)
+        self.lastButton.clicked.connect(self._lastClicked)
+        self.lineEdit.clicked.connect(self._textChangedSlot)
 
     def _firstClicked(self):
         self.lineEdit.setText("%d" % self.lineEdit.validator().bottom())
@@ -218,7 +204,7 @@ class FrameBrowser(qt.QWidget):
         ddict["old"]   = self._oldIndex + 1
         self._oldIndex = newValue
         ddict["new"]   = self._oldIndex + 1
-        self.emit(qt.SIGNAL("indexChanged"), ddict)
+        self.sigIndexChanged.emit(ddict)
 
     def setRange(self, first, last):
         return self.setLimits(first, last)
@@ -261,12 +247,8 @@ class HorizontalSliderWithBrowser(qt.QAbstractSlider):
         self._browser = FrameBrowser(self)
         self.mainLayout.addWidget(self._slider)
         self.mainLayout.addWidget(self._browser)
-        self.connect(self._slider,
-                     qt.SIGNAL("valueChanged(int)"),
-                     self._sliderSlot)
-        self.connect(self._browser,
-                     qt.SIGNAL("indexChanged"),
-                     self._browserSlot)
+        self._slider.valueChanged[int].connect(self._sliderSlot)
+        self._browser.sigIndexChanged.connect(self._browserSlot)
 
 
     def setMinimum(self, value):
@@ -291,7 +273,7 @@ class HorizontalSliderWithBrowser(qt.QAbstractSlider):
 
     def _sliderSlot(self, value):
         self._browser.setValue(value)
-        self.emit(qt.SIGNAL("valueChanged(int)"), value)
+        self.valueChanged.emit(value)
 
     def _browserSlot(self, ddict):
         self._slider.setValue(ddict['new'])
@@ -308,9 +290,7 @@ def test1(args):
     w=HorizontalSliderWithBrowser()
     def slot(ddict):
         print(ddict)
-    qt.QObject.connect(w,
-                       qt.SIGNAL("valueChanged(int)"),
-                       slot)
+    w.valueChanged[int].connect(slot)
     w.setRange(8, 20)
     w.show()
     app.exec_()
@@ -321,9 +301,7 @@ def test2(args):
     w=FrameBrowser()
     def slot(ddict):
         print(ddict)
-    qt.QObject.connect(w,
-                       qt.SIGNAL("indexChanged"),
-                       slot)
+    w.sigIndexChanged.connect(slot)
     if len(args) > 1:
         w.setLimits(8, 20)
     w.show()
