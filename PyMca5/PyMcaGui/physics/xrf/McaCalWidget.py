@@ -1062,7 +1062,7 @@ class CalibrationParameters(qt.QWidget):
         self.AText.editingFinished[()].connect(self._Aslot)
         self.BText.editingFinished[()].connect(self._Bslot)
         self.CText.editingFinished[()].connect(self._Cslot)
-        self.CFixed.editingFinished[()].connect(self._CFixSlot)
+        self.CFixed.clicked[()].connect(self._CFixSlot)
             
         self.orderbox.activated[str].connect(self.__orderbox)
         self.savebox.activated[str].connect(self.__savebox)
@@ -1072,19 +1072,13 @@ class CalibrationParameters(qt.QWidget):
         self.BText.setText("%.4g" % pars["B"])
         self.CText.setText("%.4g" % pars["C"])
         if pars['order'] != 1:
-            if QTVERSION < '4.0.0':
-                self.orderbox.setCurrentItem(1)
+            if pars['order'] == 'TOF':
+                self.orderbox.setCurrentIndex(2)
             else:
-                if pars['order'] == 'TOF':
-                    self.orderbox.setCurrentIndex(2)
-                else:
-                    self.orderbox.setCurrentIndex(1)
+                self.orderbox.setCurrentIndex(1)
             self.CText.setReadOnly(0)
         else:
-            if QTVERSION < '4.0.0':
-                self.orderbox.setCurrentItem(0)
-            else:
-                self.orderbox.setCurrentIndex(0)
+            self.orderbox.setCurrentIndex(0)
             self.CText.setReadOnly(1)
         self.caldict[self.currentcal]["A"] = pars["A"]
         self.caldict[self.currentcal]["B"] = pars["B"]
