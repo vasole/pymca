@@ -166,6 +166,10 @@ class QDispatcher(qt.QWidget):
                         selectionList.append(ddict)
                     if event.lower() == "addselection":
                         self.sigAddSelection.emit(selectionList)
+                    elif event.lower() == "replaceselection":
+                        self.sigReplaceSelection.emit(selectionList)
+                    elif event.lower() == "removeselection":
+                        self.sigRemoveSelection.emit(selectionList)
                     else:
                         print("Unhandled dispatcher event = ", event)
 
