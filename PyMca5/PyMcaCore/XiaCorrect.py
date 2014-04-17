@@ -26,7 +26,7 @@ __author__ = "E. Papillon - ESRF Software group"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-from PyMca5 import XiaEdf
+from . import XiaEdf
 import sys
 import os
 import time
@@ -390,8 +390,8 @@ def mainCommandLine():
                  options["output"], options["name"], options["force"], options["verbose"])
 
 def mainGUI(app=None):
-    import PyMcaQt as qt
-    import XiaCorrectWizard
+    from PyMca5.PyMcaGui import PyMcaQt as qt
+    from PyMca5.PyMcaGui.pymca import XiaCorrectWizard
 
     if app is None:
         app= qt.QApplication(sys.argv)
