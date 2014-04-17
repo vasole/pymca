@@ -30,4 +30,5 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-from .fitting import SpecfitFuns
+from .fitting import SpecfitFuns, Gefit, Specfit
+from .mva import NNMAModule, PCAModule, PCATools

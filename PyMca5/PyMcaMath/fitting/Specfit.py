@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
-from PyMca5 import SpecfitFuns
+from . import SpecfitFuns
 from .Gefit import LeastSquaresFit
 from PyMca5.PyMcaCore import EventHandler
 DEBUG = 0
