@@ -156,7 +156,8 @@ if __name__ == "__main__":
             qt.Qt.AlignLeft|qt.Qt.AlignBottom, 
             qt.Qt.white)
     if sys.platform == "darwin":
-        qt.qApp.processEvents()
+        qApp = qt.QApplication.instance()
+        qApp.processEvents()
 
 from PyMca5.PyMcaGui.pymca import ScanWindow
 from PyMca5.PyMcaGui.pymca import McaWindow
@@ -718,7 +719,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     r = qt.QRect(*ddict['Geometry']['McaGraph'])
                     self.mcaWindow.graph.setGeometry(r)
                 self.show()
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
             qt.qApp.postEvent(self, qt.QResizeEvent(qt.QSize(ddict['Geometry']['MainWindow'][2]+1,
                                                           ddict['Geometry']['MainWindow'][3]+1),
                                                  qt.QSize(ddict['Geometry']['MainWindow'][2],
@@ -1433,7 +1435,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.sourceFrame.show()
         self.sourceFrame.raise_()
         self.sourceBrowserTab.showPage(self.sourceWidget[source])
-        qt.qApp.processEvents()
+        qApp = qt.QApplication.instance()
+        qApp.processEvents()
         self.sourceWidget[source].openFile()
         
     def onMenuHelp(self):

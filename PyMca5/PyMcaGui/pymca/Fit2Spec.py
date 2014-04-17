@@ -194,7 +194,8 @@ class Fit2SpecGUI(qt.QWidget):
             b.pleasePause = 0
             b.pleaseBreak = 1
             b.wait()
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
 
         def pause():
             if b.pleasePause:
@@ -397,7 +398,8 @@ if __name__ == "__main__":
             b.pleasePause = 0
             b.pleaseBreak = 1
             b.wait()
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
 
         def pause():
             if b.pleasePause:

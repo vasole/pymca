@@ -896,7 +896,8 @@ class McaBatchGUI(qt.QWidget):
                 b.pleasePause = 0
                 b.pleaseBreak = 1
                 b.wait()
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
 
             def pause():
                 if b.pleasePause:
@@ -925,7 +926,8 @@ class McaBatchGUI(qt.QWidget):
                 b.pleasePause = 0
                 b.pleaseBreak = 1
                 b.wait()
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
 
             def pause():
                 if b.pleasePause:
@@ -1018,7 +1020,8 @@ class McaBatchGUI(qt.QWidget):
                                                                     listfile,concentrations,
                                                                     table, fitfiles, selectionFlag)
             self.hide()
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
             if DEBUG:
                 print("cmd = %s" % cmd)
             if self.__splitBox.isChecked():
@@ -1134,7 +1137,8 @@ class McaBatchGUI(qt.QWidget):
             if DEBUG:
                 print("cmd = %s" % cmd)
             if self.__splitBox.isChecked():
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
                 nbatches = int(qt.safe_str(self.__splitSpin.text()))
                 filechunk = int(len(self.fileList)/nbatches)
                 processList = []
@@ -1490,7 +1494,8 @@ class McaBatchWindow(qt.QWidget):
         else:
             self.time0 = e
         if sys.platform == 'darwin':
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
 
     def onImage(self,key,keylist):
         if DEBUG:
@@ -1545,7 +1550,8 @@ class McaBatchWindow(qt.QWidget):
             self.mcaBar.setMaximum(nmca)
             self.mcaBar.setValue(mca)
         if sys.platform == 'darwin':
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
 
     def __htmlReport(self, filename, key, outputdir, useExistingFiles, info=None, firstmca = True): 
         """
@@ -1695,7 +1701,8 @@ class McaBatchWindow(qt.QWidget):
             cmd = '"%s" %s ' % (myself, filelist)
             if 0:
                 self.hide()
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
                 os.system(cmd)
                 self.show()                
             else:
@@ -1869,7 +1876,8 @@ def main():
             b.pleasePause = 0
             b.pleaseBreak = 1
             b.wait()
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
 
         def pause():
             if b.pleasePause:

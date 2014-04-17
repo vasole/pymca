@@ -262,14 +262,16 @@ class PCADialog(qt.QDialog):
         layout.addWidget(l2)
         layout.addWidget(l3)
         msg.show()
-        qt.qApp.processEvents()
+        qApp = qt.QApplication.instance()
+        qApp.processEvents()
         i = 0
         ticks = ['-', '\\', "|", "/", "-", "\\", '|', '/']
         while (sthread.isRunning()):
             i = (i + 1) % 8
             l1.setText(ticks[i])
             l3.setText(" " + ticks[i])
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
             time.sleep(2)
         msg.close()
         result = sthread._result

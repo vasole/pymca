@@ -219,7 +219,8 @@ class StackSimpleFitWindow(qt.QWidget):
         self._index = 0
         while thread.isRunning():
             time.sleep(2)
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
             self.progressBar.setMaximum(self._total)
             self.progressBar.setValue(self._index)
         self.progressBar.hide()

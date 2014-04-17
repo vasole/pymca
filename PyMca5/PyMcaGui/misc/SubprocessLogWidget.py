@@ -95,7 +95,8 @@ class SubprocessLogWidget(qt.QWidget):
             line = self._p.stdout.readline()
             if len(line) > 1:
                 self.logWidget.append(line[:-1])
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
             ddict["event"] = "ProcessRunning"
         else:
             self.__timer.stop()

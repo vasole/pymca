@@ -300,7 +300,8 @@ class Mca2EdfGUI(qt.QWidget):
             b.pleasePause = 0
             b.pleaseBreak = 1
             b.wait()
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
 
         def pause():
             if b.pleasePause:
@@ -500,7 +501,8 @@ class Mca2EdfWindow(qt.QWidget):
         else:
             self.time0 = e
         if sys.platform == 'darwin':
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
 
     def onEnd(self,ddict):
         if QTVERSION < '4.0.0':
@@ -567,7 +569,8 @@ def main():
             b.pleasePause = 0
             b.pleaseBreak = 1
             b.wait()
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
 
         def pause():
             if b.pleasePause:

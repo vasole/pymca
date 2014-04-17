@@ -442,7 +442,8 @@ class XiaRunWidget(qt.QWidget):
         import time
         for idx in range(30):
             self.logText.append("%d"%idx)
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
             time.sleep(.5)
             print(idx)
         self.sigFinished.emit(())	

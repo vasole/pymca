@@ -154,7 +154,8 @@ class QSource(qt.QObject):
                                 event.dict['scanselection'] = False
                             try:
                                 if QTVERSION < '4.0.0':
-                                    qt.qApp.processEvents()
+                                    qApp = qt.QApplication.instance()
+                                    qApp.processEvents()
                                     qt.qApp.lock()
                                 # Should one make a list of events to prevent
                                 # posting the same event twice?
@@ -170,7 +171,8 @@ class QSource(qt.QObject):
                             print("key error in loop")
                         pass
             if QTVERSION > '4.0.0':
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
             time.sleep(self._pollTime)
             if DEBUG:
                 print("woke up")

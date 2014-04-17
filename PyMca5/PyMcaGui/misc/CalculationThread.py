@@ -94,7 +94,8 @@ def waitingMessageDialog(thread, message=None, parent=None, modal=True, update_c
         layout.addWidget(l2)
         layout.addWidget(l3)
         msg.show()
-        qt.qApp.processEvents()
+        qApp = qt.QApplication.instance()
+        qApp.processEvents()
         t0 = time.time()
         i = 0
         ticks = ['-','\\', "|", "/","-","\\",'|','/']
@@ -103,7 +104,8 @@ def waitingMessageDialog(thread, message=None, parent=None, modal=True, update_c
                 i = (i+1) % 8
                 l1.setText(ticks[i])
                 l3.setText(" "+ticks[i])
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
                 time.sleep(2)
         else:
             while (thread.isRunning()):
@@ -115,7 +117,8 @@ def waitingMessageDialog(thread, message=None, parent=None, modal=True, update_c
                 l1.setText(ticks[i])
                 l2.setText(message)
                 l3.setText(" "+ticks[i])
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
                 time.sleep(2)            
     finally:
         msg.close()
