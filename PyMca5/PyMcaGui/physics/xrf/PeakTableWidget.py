@@ -41,46 +41,34 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
-if qt.qVersion() < '4.0.0':
-    import qttable
 from PyMca5.PyMcaPhysics import Elements
 
 DEBUG=0
 
-if qt.qVersion() < '4.0.0':
-    class QTable(qttable.QTable):
-        def __init__(self, parent=None, name=""):
-            qttable.QTable.__init__(self, parent, name)
-            self.rowCount    = self.numRows
-            self.columnCount = self.numCols
-            self.setRowCount = self.setNumRows
-            self.setColumnCount = self.setNumCols
-    QComboTableItem = qttable.QComboTableItem
-else:
-    QTable = qt.QTableWidget
-    class QComboTableItem(qt.QComboBox):
-        sigCellChanged = qt.pyqtSignal(int,int)
-        def __init__(self, parent=None, row = None, col = None):
-            self._row = row
-            self._col = col
-            qt.QComboBox.__init__(self,parent)
-            self.activated[int].connect(self._cellChanged)
+QTable = qt.QTableWidget
+class QComboTableItem(qt.QComboBox):
+    sigCellChanged = qt.pyqtSignal(int,int)
+    def __init__(self, parent=None, row = None, col = None):
+        self._row = row
+        self._col = col
+        qt.QComboBox.__init__(self,parent)
+        self.activated[int].connect(self._cellChanged)
 
-        def _cellChanged(self, idx):
-            if DEBUG:
-                print("cell changed",idx)
-            self.sigCellChanged.emit(self._row, self._col)
+    def _cellChanged(self, idx):
+        if DEBUG:
+            print("cell changed",idx)
+        self.sigCellChanged.emit(self._row, self._col)
 
-    class QCheckBoxItem(qt.QCheckBox):
-        sigCellChanged = qt.pyqtSignal(int, int)
-        def __init__(self, parent=None, row = None, col = None):
-            self._row = row
-            self._col = col
-            qt.QCheckBox.__init__(self,parent)
-            self.clicked[()].connect(self._cellChanged)
+class QCheckBoxItem(qt.QCheckBox):
+    sigCellChanged = qt.pyqtSignal(int, int)
+    def __init__(self, parent=None, row = None, col = None):
+        self._row = row
+        self._col = col
+        qt.QCheckBox.__init__(self,parent)
+        self.clicked[()].connect(self._cellChanged)
 
-        def _cellChanged(self):
-            self.sigCellChanged.emit(self._row, self._col)
+    def _cellChanged(self):
+        self.sigCellChanged.emit(self._row, self._col)
 
 
 class PeakTableWidget(QTable):
@@ -93,19 +81,13 @@ class PeakTableWidget(QTable):
         self.setColumnCount(len(self.labels))
         if 'labels' in kw:
             self.labels = kw['labels']
-        if qt.qVersion() < '4.0.0':
-            i=0
-            for label in self.labels:
-                qt.QHeader.setLabel(self.horizontalHeader(),i,label)
-                i=i+1
-        else:
-            for i in range(len(self.labels)):
-                item = self.horizontalHeaderItem(i)
-                if item is None:
-                    item = qt.QTableWidgetItem(self.labels[i],
-                                               qt.QTableWidgetItem.Type)
-                item.setText(self.labels[i])
-                self.setHorizontalHeaderItem(i,item)
+        for i in range(len(self.labels)):
+            item = self.horizontalHeaderItem(i)
+            if item is None:
+                item = qt.QTableWidgetItem(self.labels[i],
+                                           qt.QTableWidgetItem.Type)
+            item.setText(self.labels[i])
+            self.setHorizontalHeaderItem(i,item)
                 
         self.peaks={}
         self.peaklist=[]
@@ -114,10 +96,9 @@ class PeakTableWidget(QTable):
         self.build()
         self.cellChanged[int,int].connect(self.myslot)
 
-        if qt.qVersion() > '4.0.0':
-            rheight = self.horizontalHeader().sizeHint().height()
-            for idx in range(self.rowCount()):
-                self.setRowHeight(idx, rheight)
+        rheight = self.horizontalHeader().sizeHint().height()
+        for idx in range(self.rowCount()):
+            self.setRowHeight(idx, rheight)
         
 
     def build(self):
@@ -127,16 +108,10 @@ class PeakTableWidget(QTable):
         for peak in oldlist:
             self.newpeakline(peak,line)
             line=line+1
-        if qt.qVersion() < '4.0.0':
-            self.adjustColumn(0)    
-            self.adjustColumn(1)    
-            self.adjustColumn(2)    
-            self.adjustColumn(5)
-        else:
-            self.resizeColumnToContents(0)
-            #self.resizeColumnToContents(1)
-            #self.resizeColumnToContents(2)
-            self.resizeColumnToContents(5)
+        self.resizeColumnToContents(0)
+        #self.resizeColumnToContents(1)
+        #self.resizeColumnToContents(2)
+        self.resizeColumnToContents(5)
 
     def clearPeaks(self):
         self.peaks = {}
@@ -191,19 +166,14 @@ class PeakTableWidget(QTable):
             self.myslot)
         
         col = self.peaks[peak]['fields'].index('use')
-        if qt.qVersion() < '4.0.0':
-            self.peaks[peak]['use_item']    = qttable.QCheckTableItem(self,"")
-            self.setItem(linew, col,
-                     self.peaks[peak]['use_item'])
-        else:
-            self.peaks[peak]['use_item']    = QCheckBoxItem(self,
-                                                            row = linew,
-                                                            col = col)
-            self.peaks[peak]['use_item'].setText("")
-            self.setCellWidget(linew, col,
-                     self.peaks[peak]['use_item'])
-            self.peaks[peak]['use_item'].sigCellChanged[int,int].connect( \
-                     self.myslot)
+        self.peaks[peak]['use_item']    = QCheckBoxItem(self,
+                                                        row = linew,
+                                                        col = col)
+        self.peaks[peak]['use_item'].setText("")
+        self.setCellWidget(linew, col,
+                 self.peaks[peak]['use_item'])
+        self.peaks[peak]['use_item'].sigCellChanged[int,int].connect( \
+                 self.myslot)
 
         self.peaks[peak]['use_item'].setChecked(self.peaks[peak]['use'])
 
@@ -219,10 +189,7 @@ class PeakTableWidget(QTable):
         elif field == "use":
             pass
         else:
-            if qt.qVersion() < '4.0.0':
-                newvalue=QString(self.text(row,col))
-            else:
-                newvalue = self.item(row, col).text()
+            newvalue = self.item(row, col).text()
         if field == "element":
             if str(newvalue) == '-':
                 #no element
@@ -282,12 +249,9 @@ class PeakTableWidget(QTable):
             try:
                 value = float(str(newvalue))
             except:
-                print("taking old value")
-                if qt.qVersion() < '4.0.0':
-                    self.setText(row,col,oldvalue)
-                else:
-                    item = self.item(row, col)
-                    item.setText("%s" % oldvalue)
+                print(field, " newvalue = ", newvalue, "taking old value", oldvalue)
+                item = self.item(row, col)
+                item.setText("%s" % oldvalue)
                 value = float(str(oldvalue))
             self.peaks[peak][field] = value 
             ddict={}
@@ -299,12 +263,9 @@ class PeakTableWidget(QTable):
             try:
                 value = float(str(newvalue))
             except:
-                print("taking old value")
-                if qt.qVersion() < '4.0.0':
-                    self.setText(row,col,oldvalue)
-                else:
-                    item = self.item(row, col)
-                    item.setText("%s" % oldvalue)
+                print(field, " newvalue = ", newvalue, "taking old value", oldvalue)
+                item = self.item(row, col)
+                item.setText("%s" % oldvalue)
                 value = float(str(oldvalue))
             self.peaks[peak][field] = value 
             ddict={}
@@ -323,21 +284,15 @@ class PeakTableWidget(QTable):
     def setReadOnly(self,parameter,fields):
         if DEBUG:
             print("peak ",parameter,"fields = ",fields,"asked to be read only")
-        if qt.qVersion() < '4.0.0':
-            self.setfield(parameter,fields,qttable.QTableItem.Never)
-        else:
-            self.setfield(parameter, fields,
-                          qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)
+        self.setfield(parameter, fields,
+                      qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)
 
         
     def setReadWrite(self,parameter,fields):
         if DEBUG:
             print("peak ",parameter,"fields = ",fields,"asked to be read write")
-        if qt.qVersion() < '4.0.0':
-            self.setfield(parameter,fields,qttable.QTableItem.OnTyping)
-        else:
-            self.setfield(parameter, fields,
-                          qt.Qt.ItemIsEditable|qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)
+        self.setfield(parameter, fields,
+                      qt.Qt.ItemIsEditable|qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)
                             
     def setfield(self,peak,fields,EditType):
         if DEBUG:
@@ -364,21 +319,15 @@ class PeakTableWidget(QTable):
                             col=self.peaks[peak]['fields'].index(field)
                             if (field != 'element') and (field != 'elementline'):
                                 key=field+"_item"
-                                if qt.qVersion() < '4.0.0':
-                                    self.peaks[peak][key]=qttable.QTableItem(self,
-                                                            EditType,
-                                                        self.peaks[peak][field])
-                                    self.setItem(row,col,self.peaks[peak][key])
-                                else:
-                                    item = self.item(row, col)
-                                    text = "%s" % self.peaks[peak][field]
-                                    if item is None:
-                                        item = qt.QTableWidgetItem(text,
-                                                   qt.QTableWidgetItem.Type)
-                                        self.setItem(row, col, item)
-                                    else:                                        
-                                        item.setText(str(text))
-                                    item.setFlags(EditType)
+                                item = self.item(row, col)
+                                text = "%s" % self.peaks[peak][field]
+                                if item is None:
+                                    item = qt.QTableWidgetItem(text,
+                                               qt.QTableWidgetItem.Type)
+                                    self.setItem(row, col, item)
+                                else:                                        
+                                    item.setText(str(text))
+                                item.setFlags(EditType)
                                     
 
     def configure(self,*vars,**kw):
@@ -416,10 +365,7 @@ class PeakTableWidget(QTable):
                     elif key is 'element':
                         newvalue = str(kw[key]).split()[0]
                         if newvalue == "-":
-                            if qt.qVersion() < '4.0.0':
-                                self.peaks[name][key+"_item"].setCurrentItem(0)
-                            else:
-                                self.peaks[name][key+"_item"].setCurrentIndex(0)
+                            self.peaks[name][key+"_item"].setCurrentIndex(0)
                         else:
                             self.peaks[name][key+"_item"].setSelection(newvalue)
                         try:
@@ -428,11 +374,8 @@ class PeakTableWidget(QTable):
                             print("Error setting element") 
                     elif key is 'elementline':
                         try:
-                            if qt.qVersion() < '4.0.0':
-                                self.peaks[name][key+"_item"].setCurrentItem(kw[key])
-                            else:
-                                iv = self.peaks[name][key+"_item"].findText(QString(kw[key]))
-                                self.peaks[name][key+"_item"].setCurrentIndex(iv)
+                            iv = self.peaks[name][key+"_item"].findText(QString(kw[key]))
+                            self.peaks[name][key+"_item"].setCurrentIndex(iv)
                         except:
                             print("Error setting elementline")
                     elif key is 'use':
@@ -448,17 +391,14 @@ class PeakTableWidget(QTable):
                             self.peaks[name][key]=newvalue
                         else:
                             self.peaks[name][key]=oldvalue
-                        if qt.qVersion() < '4.0.0':
-                            self.setText(row,col,self.peaks[name][key])
+                        text = self.peaks[name][key]
+                        item = self.item(row, col)
+                        if item is None:
+                            item = qt.QTableWidgetItem(text,
+                                            qt.QTableWidgetItem.Type)
+                            self.setItem(row, col, item)
                         else:
-                            text = self.peaks[name][key]
-                            item = self.item(row, col)
-                            if item is None:
-                                item = qt.QTableWidgetItem(text,
-                                                qt.QTableWidgetItem.Type)
-                                self.setItem(row, col, item)
-                            else:
-                                item.setText(text)
+                            item.setText(text)
                     elif key == 'channel':
                         if DEBUG:
                             print("setting channel in configure")
@@ -468,17 +408,14 @@ class PeakTableWidget(QTable):
                             self.peaks[name][key]=newvalue
                         else:
                             self.peaks[name][key]=oldvalue
-                        if qt.qVersion() < '4.0.0':
-                            self.setText(row,col,self.peaks[name][key])
+                        text = self.peaks[name][key]
+                        item = self.item(row, col)
+                        if item is None:
+                            item = qt.QTableWidgetItem(text,
+                                            qt.QTableWidgetItem.Type)
+                            self.setItem(row, col, item)
                         else:
-                            text = self.peaks[name][key]
-                            item = self.item(row, col)
-                            if item is None:
-                                item = qt.QTableWidgetItem(text,
-                                                qt.QTableWidgetItem.Type)
-                                self.setItem(row, col, item)
-                            else:
-                                item.setText(text)
+                            item.setText(text)
                     elif (key == 'setenergy') or (key == 'calenergy'):
                         if len(str(kw[key])):
                             newvalue=float(str(kw[key]))
@@ -486,17 +423,14 @@ class PeakTableWidget(QTable):
                             self.peaks[name][key]=newvalue
                         else:
                             self.peaks[name][key]=oldvalue
-                        if qt.qVersion() < '4.0.0':
-                            self.setText(row,col,self.peaks[name][key])
+                        text = self.peaks[name][key]
+                        item = self.item(row, col)
+                        if item is None:
+                            item = qt.QTableWidgetItem(text,
+                                            qt.QTableWidgetItem.Type)
+                            self.setItem(row, col, item)
                         else:
-                            text = self.peaks[name][key]
-                            item = self.item(row, col)
-                            if item is None:
-                                item = qt.QTableWidgetItem(text,
-                                                qt.QTableWidgetItem.Type)
-                                self.setItem(row, col, item)
-                            else:
-                                item.setText(text)
+                            item.setText(text)
                         #self.myslot(row,col)
                     else:
                         if len(str(kw[key])):
@@ -524,35 +458,35 @@ class PeakTableWidget(QTable):
         return self.getDict(*var)
 
     def getDict(self,*var):
-        dict={}
+        ddict={}
         if len(var) == 0:
             #asked for the dict of dicts
             for peak in self.peaks.keys():
-                dict[peak] = {}
-                dict[peak]['number']      = float(str(self.peaks[peak]['number']))
-                dict[peak]['channel']     = float(str(self.peaks[peak]['channel']))
-                dict[peak]['element']     = str(self.peaks[peak]['element'])
-                dict[peak]['elementline'] = str(self.peaks[peak]['elementline'])
-                dict[peak]['setenergy']   = float(str(self.peaks[peak]['setenergy']))
-                dict[peak]['use']         = self.peaks[peak]['use']
+                ddict[peak] = {}
+                ddict[peak]['number']      = float(str(self.peaks[peak]['number']))
+                ddict[peak]['channel']     = float(str(self.peaks[peak]['channel']))
+                ddict[peak]['element']     = str(self.peaks[peak]['element'])
+                ddict[peak]['elementline'] = str(self.peaks[peak]['elementline'])
+                ddict[peak]['setenergy']   = float(str(self.peaks[peak]['setenergy']))
+                ddict[peak]['use']         = self.peaks[peak]['use']
                 if len(str(self.peaks[peak]['calenergy'])):
-                    dict[peak]['calenergy']   = float(str(self.peaks[peak]['calenergy']))
+                    ddict[peak]['calenergy']   = float(str(self.peaks[peak]['calenergy']))
                 else:
-                    dict[peak]['calenergy']   = ""
+                    ddict[peak]['calenergy']   = ""
         else:
             peak=var[0]              
             if peak in self.peaks.keys():        
-                dict['number']      = float(str(self.peaks[peak]['number']))
-                dict['channel']     = float(str(self.peaks[peak]['channel']))
-                dict['element']     = str(self.peaks[peak]['element'])
-                dict['elementline'] = str(self.peaks[peak]['elementline'])
-                dict['setenergy']   = float(str(self.peaks[peak]['setenergy']))
-                dict['use']         = self.peaks[peak]['use']
+                ddict['number']      = float(str(self.peaks[peak]['number']))
+                ddict['channel']     = float(str(self.peaks[peak]['channel']))
+                ddict['element']     = str(self.peaks[peak]['element'])
+                ddict['elementline'] = str(self.peaks[peak]['elementline'])
+                ddict['setenergy']   = float(str(self.peaks[peak]['setenergy']))
+                ddict['use']         = self.peaks[peak]['use']
                 if len(str(self.peaks[peak]['calenergy'])):
-                    dict['calenergy']   = float(str(self.peaks[peak]['calenergy']))
+                    ddict['calenergy']   = float(str(self.peaks[peak]['calenergy']))
                 else:
-                    dict['calenergy']   = ""
-        return dict
+                    ddict['calenergy']   = ""
+        return ddict
         
 class QPeriodicComboTableItem(QComboTableItem):
     """ Periodic Table Combo List to be used in a QTable
@@ -581,8 +515,10 @@ class QPeriodicComboTableItem(QComboTableItem):
             if detailed:    txt= "%2s (%d) - %s"%(symbol, Z, name)
             else:       txt= "%2s (%d)"%(symbol, Z)
             strlist.append(txt)
-        if row is None: row = 0
-        if col is None: col = 0
+        if row is None:
+            row = 0
+        if col is None:
+            col = 0
         self._row = row
         self._col = col
         qt.QComboBox.__init__(self)
@@ -620,11 +556,7 @@ def main(args):
     tab.configure(name='1',number=24,channel='1234',use=1,
                   setenergy=12.5,calenergy=24.0)    
     tab.show()
-    if qt.qVersion() < '4.0.0':
-        app.setMainWidget( tab )
-        app.exec_loop()
-    else:
-        app.exec_()
+    app.exec_()
 
 if __name__=="__main__":
     main(sys.argv)
