@@ -1018,8 +1018,8 @@ class Plot(PlotBase.PlotBase):
                                           draggable=draggable,
                                           **kw)
         self._markerList.append(legend)
-        self._markerDict[label] = kw
-        self._markerDict[label]['marker'] = marker
+        self._markerDict[legend] = kw
+        self._markerDict[legend]['marker'] = marker
         return marker
 
     def insertYMarker(self, y,
@@ -1050,7 +1050,7 @@ class Plot(PlotBase.PlotBase):
                                           selectable=selectable,
                                           draggable=draggable,
                                           **kw)
-        self._markerList.append(label)
+        self._markerList.append(legend)
         self._markerDict[legend] = kw
         self._markerDict[legend]['marker'] = marker
         return marker
@@ -1101,6 +1101,7 @@ class Plot(PlotBase.PlotBase):
     def removeMarker(self, marker):
         if marker in self._markerList:
             idx = self._markerList.index(marker)
+            del self._markerList[idx]
             try:
                 self._plot.removeMarker(self._markerDict[marker]['marker'])
                 del self._markerDict[marker]
