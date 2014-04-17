@@ -81,7 +81,7 @@ class XiaCorrectionWidget(qt.QWizardPage):
         item.setText("Detectors")
         self.sumTable.setHorizontalHeaderItem(0, item)
 
-        self.sumTable.valueChanged[int,int].connect(self.__valueChanged)
+        self.sumTable.cellChanged[int,int].connect(self.__valueChanged)
 
         buttonAdd= qt.QPushButton("Add", butWidget)
         buttonDel= qt.QPushButton("Remove", butWidget)

@@ -32,13 +32,13 @@ import numpy
 import traceback
 from . import RGBCorrelatorSlider
 from . import RGBCorrelatorTable
-from PyMca5.PyMcaGui import RGBImageCalculator
+from PyMca5.PyMcaGui.pymca import RGBImageCalculator
 from PyMca5 import spslut
 from PyMca5.PyMcaGui import IconDict
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaCore import EdfFileDataSource
-from PyMca5.PyMcaGui import ExternalImagesWindow
+from PyMca5.PyMcaGui.pymca import ExternalImagesWindow
 from PyMca5.PyMcaIO import TiffIO
 
 DataReader = EdfFileDataSource.EdfFileDataSource

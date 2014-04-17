@@ -2,9 +2,9 @@
 
 import os
 import sys
-import PyMca5.PyMcaGui
+from PyMca5.PyMcaGui.pymca import QStackWidget as target
 
-fname = os.path.join(os.path.dirname(PyMca5.PyMcaGui.__file__), 'QStackWidget.py')
+fname = os.path.join(os.path.dirname(target.__file__), 'QStackWidget.py')
 if sys.version < '3.0':
     execfile(fname)
 else:

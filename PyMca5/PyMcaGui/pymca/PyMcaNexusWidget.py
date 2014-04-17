@@ -32,7 +32,7 @@ import h5py
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaGui.io.hdf5 import QNexusWidget
-from PyMca5.PyMcaGui import QStackWidget
+from PyMca5.PyMcaGui.pymca import QStackWidget
 from PyMca5.PyMcaIO import HDF5Stack1D
 if hasattr(qt, 'QString'):
     QString = qt.QString

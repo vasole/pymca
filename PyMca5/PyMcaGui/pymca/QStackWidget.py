@@ -44,7 +44,7 @@ from PyMca5.PyMcaCore import StackBase
 from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui.pymca import StackROIWindow
-from PyMca5.PyMcaGui import RGBCorrelator
+from PyMca5.PyMcaGui.pymca import RGBCorrelator
 from PyMca5.PyMcaGui.pymca.RGBCorrelatorWidget import ImageShapeDialog
 from PyMca5.PyMcaGui import IconDict
 from PyMca5.PyMcaGui.pymca import StackSelector

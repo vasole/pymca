@@ -196,7 +196,7 @@ from PyMca5 import PyMcaDirs
 XIA_CORRECT = False
 if QTVERSION > '4.3.0':
     try:
-        from PyMca5 import XiaCorrect
+        from PyMca5.PyMcaCore import XiaCorrect
         XIA_CORRECT = True
     except:
         pass
