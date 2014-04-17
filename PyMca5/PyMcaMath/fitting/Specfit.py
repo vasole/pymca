@@ -39,7 +39,7 @@ from PyMca5.PyMcaCore import EventHandler
 DEBUG = 0
 class Specfit(object):
     #def __init__(self,x=None,y=None,sigmay=None):
-    def __init__(self,parent=None,*vars,**kw):
+    def __init__(self, *vars, **kw):
         self.fitconfig={}
         self.filterlist=[]
         self.filterdict={}
