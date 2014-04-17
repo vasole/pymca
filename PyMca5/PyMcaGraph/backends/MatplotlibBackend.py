@@ -35,7 +35,8 @@ Matplotlib Plot backend.
 """
 import numpy as np
 from matplotlib import cbook
-BLITTING = False
+#blitting enabled by default
+BLITTING = True
 import numpy
 from numpy import vstack as numpyvstack
 import sys
