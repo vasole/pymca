@@ -348,7 +348,7 @@ class McaAdvancedFit(qt.QWidget):
             i = (i+1) % 8
             l1.setText(ticks[i])
             l3.setText(" "+ticks[i])
-            qt.qApp.processEvents()
+            app.processEvents()
             time.sleep(1)
         msg.close()
         result = sthread._result
@@ -505,7 +505,8 @@ class McaAdvancedFit(qt.QWidget):
         self._updateTop()
         if self.concentrationsWidget is not None:
             try:
-                qt.qApp.processEvents()
+                app = qt.QApplication.instance()
+                app.processEvents()
                 self.concentrationsWidget.setParameters(config['concentrations'], signal=False)
             except:
                 if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":

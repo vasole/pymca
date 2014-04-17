@@ -1260,6 +1260,11 @@ class FitParamDialog(qt.QDialog):
                         "Choose fit configuration file",
                         initdir,
                         "Fit configuration files (*.cfg)\nAll Files (*)")
+            if "PySide" in sys.modules:
+                # PySide returns filename and filter
+                if type(filename) in [type((1,)), type([])]:
+                    if len(filename):
+                        filename = filename[0]
             filename = qt.safe_str(filename)
             if len(filename):
                 self.loadParameters(filename, None)
