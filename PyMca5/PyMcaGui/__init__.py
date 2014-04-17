@@ -60,3 +60,4 @@ except:
     pass
 
 from .pymca import StackSimpleFitWindow
+from .pymca import QStackWidget
