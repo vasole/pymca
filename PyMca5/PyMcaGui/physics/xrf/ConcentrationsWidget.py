@@ -198,7 +198,8 @@ class Concentrations(qt.QWidget):
         layout.addWidget(l2)
         layout.addWidget(l3)
         msg.show()
-        qt.qApp.processEvents()
+        qApp = qt.QApplication.instance()
+        qApp.processEvents()
         i = 0
         ticks = ['-', '\\', "|", "/", "-", "\\", '|', '/']
         if QTVERSION < '4.0.0':
@@ -206,7 +207,8 @@ class Concentrations(qt.QWidget):
                 i = (i + 1) % 8
                 l1.setText(ticks[i])
                 l3.setText(" " + ticks[i])
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
                 time.sleep(1)
             msg.close(True)
         else:
@@ -214,7 +216,8 @@ class Concentrations(qt.QWidget):
                 i = (i + 1) % 8
                 l1.setText(ticks[i])
                 l3.setText(" " + ticks[i])
-                qt.qApp.processEvents()
+                qApp = qt.QApplication.instance()
+                qApp.processEvents()
                 time.sleep(1)
             msg.close()
         result = sthread._result

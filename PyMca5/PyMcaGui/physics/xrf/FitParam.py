@@ -158,7 +158,8 @@ class FitParamWidget(FitParamForm):
 
         if "PyQt4" in sys.modules:
             #I had to add this line to prevent a crash. Why?
-            qt.qApp.processEvents()
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
         else:
             qt.QApplication.instance().processEvents()
         self.attTable.verticalHeader().hide()
