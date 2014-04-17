@@ -827,7 +827,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             if self._middleROIMarkerFlag:
                 self.removeMarker('ROI middle')
             roiList, roiDict = self.roiWidget.getROIListAndDict()
-            currentroi = roiDict.keys()[0]
+            currentroi = list(roiDict.keys())[0]
             self.roiWidget.fillFromROIDict(roilist=roiList,
                                            roidict=roiDict,
                                            currentroi=currentroi)
