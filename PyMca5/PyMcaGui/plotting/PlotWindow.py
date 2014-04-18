@@ -93,7 +93,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self._buildGraphBottomWidget(control, position)
             self._controlMenu = None
 
-        # default print configuration (uses a quarter of a page)
+        # default print configuration (uses full page)
         self._printMenu = None
         self._printConfigurationDialog = None
         self._printConfiguration = {"xOffset": 0.1,
