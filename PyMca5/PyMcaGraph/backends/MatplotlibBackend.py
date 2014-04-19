@@ -35,7 +35,11 @@ Matplotlib Plot backend.
 """
 import numpy as np
 from matplotlib import cbook
-#blitting enabled by default
+# blitting enabled by default
+# it provides faster response at the cost of missing minor updates
+# during movement (only the bounding box of the moving object is updated)
+# For instance, when moving a marker, the label is not updated during the
+# movement.
 BLITTING = True
 import numpy
 from numpy import vstack as numpyvstack
