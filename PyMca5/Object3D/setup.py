@@ -79,11 +79,11 @@ while 1:
         sys.exit(1)
 
     if resp == "l":
-        os.system("more LICENSE.GPL")
+        os.system("more LICENSE.LGPL")
 
 
 # Specify all the required Object3D data
-data_files = [('Object3D', ['LICENSE.GPL',])]
+data_files = [('Object3D', ['LICENSE.LGPL',])]
 
 packages = ['Object3D']
 package_dir = {'Object3D':os.path.dirname(__file__)}
@@ -208,7 +208,7 @@ class smart_install_scripts(install_scripts):
                     log.info("changing mode of %s to %o", ffile, mode)
                     os.chmod(ffile, mode)
    
-description = "GPL License unless a commercial license is bought. Please contact industry@esrf.fr if needed."
+description = "LGPL License unless a commercial license is bought. Please contact industry@esrf.fr if needed."
 long_description = """Stand-alone python application and tools for multidimensional data visualization"""
 
 distrib = setup(name="Object3D",
