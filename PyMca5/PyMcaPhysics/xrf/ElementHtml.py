@@ -292,11 +292,6 @@ class ElementHtml(object):
         
         
 if __name__ == "__main__":
-    #
-    # WARNING: This test method uses PyQt and therefore its license is GPL
-    # If you use the methods of this module and not this test portion, you
-    # can safely use it as LPGL for HTML generation.
-    #
     import sys
     from PyMca5 import PyMcaQt as qt
     app  = qt.QApplication(sys.argv)
@@ -307,18 +302,9 @@ if __name__ == "__main__":
     w= qt.QWidget()
     l=qt.QVBoxLayout(w)
     html = ElementHtml()
-    if qt.qVersion() < '4.0.0':
-        text = qt.QTextEdit(w)
-        text.setText(html.gethtml(ele))
-        text.setReadOnly(1)
-        app.setMainWidget(w)
-    else:
-        text = qt.QTextEdit(w)
-        text.insertHtml(html.gethtml(ele))
-        text.setReadOnly(1)
+    text = qt.QTextEdit(w)
+    text.insertHtml(html.gethtml(ele))
+    text.setReadOnly(1)
     l.addWidget(text)
     w.show()
-    if qt.qVersion() < '4.0.0':
-        app.exec_loop()
-    else:
-        app.exec_()
+    app.exec_()
