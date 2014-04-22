@@ -29,8 +29,8 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5 import SpecFileCntTable
-from PyMca5 import MaskImageWidget
+from PyMca5.PyMcaGui.io import SpecFileCntTable
+from PyMca5.PyMcaGui import MaskImageWidget
 QTVERSION = qt.qVersion()
 import PyMca.PyMca_Icons as icons
 DEBUG = 0
@@ -1211,10 +1211,7 @@ class QSpsWidget(qt.QWidget):
 
 def test():
     import sys
-    if 0:
-        from PyMca5 import SPSLayer
-    else:
-        from PyMca5 import QSpsDataSource
+    from PyMca5.PyMcaGui.pymca import QSpsDataSource
 
     a= qt.QApplication(sys.argv)
     a.lastWindowClosed.connect(a.quit)
@@ -1236,10 +1233,7 @@ def test():
     w.eh.register("repSelection", repSelection)
     """
     w.show()
-    if QTVERSION < '4.0.0':
-        a.exec_loop()
-    else:
-        a.exec_()
+    a.exec_()
 
 if __name__=="__main__":
     test()
