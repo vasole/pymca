@@ -68,14 +68,6 @@ def install():
     f = ip_dir + r'\%s.lnk'%name
     mkshortcut(python_console,name,f,script)
 
-    """
-    name = 'ChangeLog'
-    script = '"'+lib_dir+r'\%s.py" LICENSE.GPL'%name
-    fname = 'License'
-    f = ip_dir + r'\%s.lnk'%fname
-    mkshortcut(python,name,f,script)
-    """
-
     # Create documentation shortcuts ...
 
 def remove():
