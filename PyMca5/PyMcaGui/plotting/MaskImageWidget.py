@@ -95,7 +95,7 @@ class MaskImageWidget(qt.QWidget):
     def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
                  imageicons=True, standalonesave=True, usetab=False,
                  profileselection=False, scanwindow=None, aspect=False, polygon=None,
-                 maxNofRois=1):
+                 maxNRois=1):
         qt.QWidget.__init__(self, parent)
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMca - Image Selection Tool")
@@ -130,8 +130,8 @@ class MaskImageWidget(qt.QWidget):
         self.mainTab = None
 
         self.__aspect = aspect
-        self.maxNofRois=maxNofRois
-        self.NofRoi=1
+        self._maxNRois = maxNRois
+        self._nRoi = 1
         self._build(standalonesave, profileselection=profileselection, polygon=polygon)
         self._profileSelectionWindow = None
         self._profileScanWindow = scanwindow
@@ -188,32 +188,9 @@ class MaskImageWidget(qt.QWidget):
                                                polygon=polygon)
 
 
-        #######################################################
-        # aggiunta per piazzare controllo ID della roi
-        # 
-        mytoolbar = self.graphWidget.toolBar
-
-        self._NofRoiLabel = qt.QLabel(mytoolbar)
-        self._NofRoiLabel.setText("NofRoi:")
-        mytoolbar.layout().addWidget(self._NofRoiLabel )
-
-        self._NofRoiSelector = qt.QSpinBox(mytoolbar)
-        self._NofRoiSelector.setMinimum(1)
-        self._NofRoiSelector.setMaximum(self.maxNofRois)
-        mytoolbar.layout().addWidget(self._NofRoiSelector)
-        self._NofRoiSelector.valueChanged[int].connect( \
-                             self.setNofRoi)
-
-        self._NofRoiMover = qt.QSpinBox(mytoolbar)
-        self._NofRoiMover.setMinimum(1)
-        self._NofRoiMover.setMaximum(self.maxNofRois)
-        mytoolbar.layout().addWidget(self._NofRoiMover)
-        self._NofRoiMover.valueChanged[int].connect( \
-                             self.moveNofRoi)
-            
-           
-        ##################################################
-
+        if self._maxNRois > 1:
+            # multiple ROI control
+            self._buildMultipleRois()
 
         #for easy compatibility with RGBCorrelatorGraph
         self.graph = self.graphWidget.graph
@@ -256,6 +233,34 @@ class MaskImageWidget(qt.QWidget):
         if MATPLOTLIB:
             self._saveMenu.addAction(QString("Matplotlib") ,
                              self._saveMatplotlibImage)
+
+    def _buildMultipleRois(self):
+        """
+        Multiple ROI control
+        """
+        mytoolbar = self.graphWidget.toolBar
+
+        self._nRoiLabel = qt.QLabel(mytoolbar)
+        self._nRoiLabel.setText("Roi:")
+        mytoolbar.layout().addWidget(self._nRoiLabel )
+
+        self._nRoiSelector = qt.QSpinBox(mytoolbar)
+        self._nRoiSelector.setMinimum(1)
+        self._nRoiSelector.setMaximum(self._maxNRois)
+        mytoolbar.layout().addWidget(self._nRoiSelector)
+        self._nRoiSelector.valueChanged[int].connect(self.setActiveRoiNumber)
+
+        if 0:
+            self._nRoiTagLabel = qt.QLabel(mytoolbar)
+            self._nRoiTagLabel.setText("Tag:")
+            mytoolbar.layout().addWidget(self._nRoiTagLabel)
+            self._nRoiTag = qt.QSpinBox(mytoolbar)
+            self._nRoiTag.setMinimum(1)
+            self._nRoiTag.setMaximum(self._maxNRois)
+            mytoolbar.layout().addWidget(self._nRoiTag)
+            self._nRoiTag.valueChanged[int].connect(self.tagRoi)
+        # initialize tags (ROI 1 , has tag 1, ROI 2 has tag 2, ...)
+        self._roiTags = list(range(1, self._maxNRois + 1))
 
     def _buildConnections(self, widget = None):
         self.graphWidget.hFlipToolButton.clicked.connect(self._hFlipIconSignal)
@@ -1368,32 +1373,41 @@ class MaskImageWidget(qt.QWidget):
         if not goodData:
             self.__pixmap[finiteData < 1] = 255
 
-    def moveNofRoi(self, intValue):
-        if intValue > self.NofRoi:
-            direction=1
+    def tagRoi(self, intValue):
+        #get current ROI tag
+        oldTag = self._roiTags[self._nRoi - 1]
+        newTag = intValue
+        if oldTag != newTag:
+            self._roiTags[self._roiTags.index(intValue)] = oldTag
+            self._roiTags[self._nRoi - 1] = newTag
+            if self.__selectionMask is not None:
+                mem0 = (self.__selectionMask ==  oldTag)
+                mem1 = (self.__selectionMask ==  newTag)
+                self.__selectionMask[mem0] = newTag
+                self.__selectionMask[mem1] = oldTag
+        self.plotImage(update=False)
+
+    def setActiveRoiNumber(self, intValue):
+        self._nRoi = intValue
+        if 0:
+            self.tagRoi(self._roiTags[intValue-1])
         else:
-            direction=-1
-        mem =  (self.__selectionMask ==  self.NofRoi  )
-        for i in range(  self.NofRoi+direction  , intValue+direction, direction):
-            mask = (self.__selectionMask==i)
-            self.__selectionMask [mask] =self.__selectionMask [mask]-direction
-        self.__selectionMask[mem] =     intValue
-        self.plotImage(update=False)
+            self.plotImage(update=False)
 
-
-    def setNofRoi(self, intValue):
-        self.NofRoi=intValue
-        self.plotImage(update=False)
-
-    def __applyMaskToImage(self):
+    def __applyMaskToImageOLD(self):
+        """
+        Method kept for reference till the new one is fully tested
+        """
         if self.__selectionMask is None:
             return
         #if not self.__selectionFlag:
         #    print("Return because of selection flag")
         #    return
-
-        alteration =  numpy.array(self.__selectionMask>0,"f")+ (self.__selectionMask== self.NofRoi)
-        alteration=(1-0.2*alteration)
+        if self._maxNRois < 2:
+            alteration = (1 - (0.2 * self.__selectionMask))
+        else:
+            alteration = (1 - (0.2 * (self.__selectionMask > 0))) - \
+                         0.1 * (self.__selectionMask == self._nRoi)           
         if self.colormap is None:
             if self.__image is not None:
                 if self.__image.format() == qt.QImage.Format_ARGB32:
@@ -1405,14 +1419,11 @@ class MaskImageWidget(qt.QWidget):
                     self.__pixmap[self.__selectionMask>0,0]    = 0x40
                     self.__pixmap[self.__selectionMask>0,2]    = 0x70
                     self.__pixmap[self.__selectionMask>0,3]    = 0x40
-                    self.__pixmap[self.__selectionMask==self.NofRoi,0]    = 2*0x40
-                    self.__pixmap[self.__selectionMask==self.NofRoi,2]    = 2*0x70
-                    self.__pixmap[self.__selectionMask==self.NofRoi,3]    = 2*0x40
             else:
                 if self.__defaultColormap > 1:
                     for i in range(3):
                         self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
-                                                     alteration)
+                                alteration)
                     if 0:
                         #this is to recolor non finite points
                         tmpMask = numpy.isfinite(self.__imageData)
@@ -1425,9 +1436,104 @@ class MaskImageWidget(qt.QWidget):
                     self.__pixmap[self.__selectionMask>0,0]    = 0x40
                     self.__pixmap[self.__selectionMask>0,2]    = 0x70
                     self.__pixmap[self.__selectionMask>0,3]    = 0x40
-                    self.__pixmap[self.__selectionMask==self.NofRoi,0]    = 2*0x40
-                    self.__pixmap[self.__selectionMask==self.NofRoi,2]    = 2*0x70
-                    self.__pixmap[self.__selectionMask==self.NofRoi,3]    = 2*0x40
+                    if 0:
+                        #this is to recolor non finite points
+                        tmpMask = ~numpy.isfinite(self.__imageData)
+                        badData = numpy.isfinite(self.__imageData).max()
+                        if badData:
+                            self.__pixmap[tmpMask,0]    = 0x00
+                            self.__pixmap[tmpMask,1]    = 0xff
+                            self.__pixmap[tmpMask,2]    = 0xff
+                            self.__pixmap[tmpMask,3]    = 0xff
+        elif int(str(self.colormap[0])) > 1:     #color
+            tmp = 1 - 0.2 * self.__selectionMask
+            for i in range(3):
+                self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
+                        tmp)
+            if 0:
+                tmpMask = numpy.isfinite(self.__imageData)
+                goodData = numpy.isfinite(self.__imageData).min()
+                if not goodData:
+                    if not goodData:
+                        for i in range(3):
+                            self.__pixmap[:,:,i] *= tmpMask                
+        else:
+            self.__pixmap = self.__pixmap0.copy()
+            tmp  = 1 - self.__selectionMask
+            self.__pixmap[:,:, 2] = (0x70 * self.__selectionMask) +\
+                                  tmp * self.__pixmap0[:,:,2]
+            self.__pixmap[:,:, 3] = (0x40 * self.__selectionMask) +\
+                                  tmp * self.__pixmap0[:,:,3]
+            if 0:
+                tmpMask = ~numpy.isfinite(self.__imageData)
+                badData = numpy.isfinite(self.__imageData).max()
+                if badData:
+                    self.__pixmap[tmpMask,0]    = 0x00
+                    self.__pixmap[tmpMask,1]    = 0xff
+                    self.__pixmap[tmpMask,2]    = 0xff
+                    self.__pixmap[tmpMask,3]    = 0xff
+        return
+
+    def __applyMaskToImage(self):
+        if self.__selectionMask is None:
+            return
+        #if not self.__selectionFlag:
+        #    print("Return because of selection flag")
+        #    return
+        if self._maxNRois < 2:
+            alteration = (1 - (0.2 * self.__selectionMask))
+        else:
+            alteration = (1 - (0.2 * (self.__selectionMask > 0))) - \
+                         0.1 * (self.__selectionMask == self._roiTags[self._nRoi - 1])
+        if self.colormap is None:
+            if DEBUG:
+                print("Colormap is None")
+            if self.__image is not None:
+                if self.__image.format() == qt.QImage.Format_ARGB32:
+                    if DEBUG:
+                        print("__applyMaskToImage CASE 1")
+                    for i in range(4):
+                        self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
+                                alteration).astype(numpy.uint8)
+                else:
+                    if DEBUG:
+                        print("__applyMaskToImage CASE 2")
+                    self.__pixmap = self.__pixmap0.copy()
+                    tmp = self.__selectionMask > 0
+                    self.__pixmap[tmp, 0] = 0x40
+                    self.__pixmap[tmp, 2] = 0x70
+                    self.__pixmap[tmp, 3] = 0x40
+                    if self._maxNRois > 1:
+                        roiTag = (self.__selectionMask == self._roiTags[self._nRoi - 1])
+                        self.__pixmap[roiTag, 0] = 2*0x40
+                        self.__pixmap[roiTag, 2] = 2*0x70
+                        self.__pixmap[roiTag, 3] = 2*0x40
+            else:
+                if self.__defaultColormap > 1:
+                    if DEBUG:
+                        print("__applyMaskToImage CASE 3")
+                    self.__pixmap = self.__pixmap0.copy()
+                    for i in range(3):
+                        self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
+                                                     alteration)
+                    if 0:
+                        #this is to recolor non finite points
+                        tmpMask = numpy.isfinite(self.__imageData)
+                        goodData = numpy.isfinite(self.__imageData).min()
+                        if not goodData:
+                            for i in range(3):
+                                self.__pixmap[:,:,i] *= tmpMask
+                else:
+                    if DEBUG:
+                        print("__applyMaskToImage CASE 4")
+                    self.__pixmap = self.__pixmap0.copy()
+                    self.__pixmap[self.__selectionMask>0,0]    = 0x40
+                    self.__pixmap[self.__selectionMask>0,2]    = 0x70
+                    self.__pixmap[self.__selectionMask>0,3]    = 0x40
+                    if self._maxNRois > 1:
+                        self.__pixmap[self.__selectionMask==self._nRoi,0]    = 2*0x40
+                        self.__pixmap[self.__selectionMask==self._nRoi,2]    = 2*0x70
+                        self.__pixmap[self.__selectionMask==self._nRoi,3]    = 2*0x40
 
                     if 0:
                         #this is to recolor non finite points
@@ -1439,23 +1545,35 @@ class MaskImageWidget(qt.QWidget):
                             self.__pixmap[tmpMask,2]    = 0xff
                             self.__pixmap[tmpMask,3]    = 0xff
         elif int(str(self.colormap[0])) > 1:     #color
+            if DEBUG:
+                print("__applyMaskToImage CASE 5")
             for i in range(3):
-                self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] *\
-                        alteration)
+                self.__pixmap[:,:,i]  = (self.__pixmap0[:,:,i] * alteration)
             if 0:
                 tmpMask = numpy.isfinite(self.__imageData)
                 goodData = numpy.isfinite(self.__imageData).min()
                 if not goodData:
                     if not goodData:
                         for i in range(3):
-                            self.__pixmap[:,:,i] *= tmpMask                
-        else:
-            self.__pixmap = self.__pixmap0.copy()
+                            self.__pixmap[:,:,i] *= tmpMask
+        elif self._maxNRois > 1:
+            if DEBUG:
+                print("__applyMaskToImage CASE 6")
             tmp  = 1 - (self.__selectionMask>0)
-            tmp2 = (self.__selectionMask == self.NofRoi)
-            self.__pixmap[:,:, 2] = (0x70 * (1-tmp)   + 0x70 * tmp2  ) +\
+            tmp2 = (self.__selectionMask == self._nRoi)
+            self.__pixmap[:, :, 2] = (0x70 * (self.__selectionMask>0) + \
+                                      0x70 * tmp2) +\
+                                      tmp * self.__pixmap0[:,:,2]
+            self.__pixmap[:,:, 3] = (0x40 * (self.__selectionMask>0)   + 0x40 * tmp2) +\
+                                      tmp * self.__pixmap0[:,:,3]
+        else:
+            if DEBUG:
+                print("__applyMaskToImage CASE 7")
+            self.__pixmap = self.__pixmap0.copy()
+            tmp  = 1 - self.__selectionMask
+            self.__pixmap[:, :, 2] = (0x70 * self.__selectionMask) +\
                                   tmp * self.__pixmap0[:,:,2]
-            self.__pixmap[:,:, 3] = (  0x40 * (1-tmp)   + 0x40 * tmp2    ) +\
+            self.__pixmap[:, :, 3] = (0x40 * self.__selectionMask) +\
                                   tmp * self.__pixmap0[:,:,3]
             if 0:
                 tmpMask = ~numpy.isfinite(self.__imageData)
@@ -1635,7 +1753,7 @@ class MaskImageWidget(qt.QWidget):
         if self.__selectionMask is None:
             self.__selectionMask = mask
         else:
-            self.__selectionMask[mask==1] = self.NofRoi
+            self.__selectionMask[mask==1] = self._nRoi
         self.plotImage(update = False)
         #inform the other widgets
         self._emitMaskChangedSignal()
@@ -1687,7 +1805,7 @@ class MaskImageWidget(qt.QWidget):
             if self.__eraseMode:
                 self.__selectionMask[j1:j2, i1:i2] = 0 
             else:
-                self.__selectionMask[j1:j2, i1:i2] = self.NofRoi
+                self.__selectionMask[j1:j2, i1:i2] = self._nRoi
             emitsignal = True
 
         elif ddict['event'] in ["mouseMoved", "MouseAt", "mouseClicked"]:
@@ -1726,7 +1844,7 @@ class MaskImageWidget(qt.QWidget):
                 if self.__eraseMode:
                     self.__selectionMask[j1:j2, i1:i2] = 0 
                 else:
-                    self.__selectionMask[j1:j2, i1:i2] = self.NofRoi
+                    self.__selectionMask[j1:j2, i1:i2] = self._nRoi
                 emitsignal = True
         if emitsignal:
             #should this be made by the parent?
@@ -1951,7 +2069,7 @@ def test():
                                         profileselection=True,
                                         aspect=True,
                                         imageicons=True,
-                                        maxNofRois=2)
+                                        maxNRois=2)
             from PyMca5.PyMcaIO import EdfFile
             edf = EdfFile.EdfFile(sys.argv[1])
             data = edf.GetData(0)
@@ -1966,24 +2084,23 @@ def test():
                                         aspect=True,
                                         imageicons=True,                                        
                                         profileselection=True,
-                                        maxNofRois=2)
+                                        maxNRois=2)
             image = qt.QImage(sys.argv[1])
             #container.setQImage(image, image.width(),image.height())
             container.setQImage(image, 200, 200)
 
     else:
-        print " DI QUA " 
         container = MaskImageWidget(aspect=True,
                                     profileselection=True,
-                                     maxNofRois=4)
+                                     maxNRois=2)
         data = numpy.arange(400 * 400).astype(numpy.int32)
         data.shape = 200, 800
         #data = numpy.eye(200)
         container.setImageData(data, xScale=(0.0, 1.0), yScale=(0., 1.))
-        mask=data*0
-        n,m=data.shape
-        mask[ n/4:n/4+n/8, m/4:m/4+m/8]=1
-        mask[ 3*n/4:3*n/4+n/8, m/4:m/4+m/8  ]=2
+        mask = (data*0).astype(numpy.uint8)
+        n, m = data.shape
+        mask[ n/4:n/4+n/8, m/4:m/4+m/8] = 1
+        mask[ 3*n/4:3*n/4+n/8, m/4:m/4+m/8] = 2
         container.setSelectionMask( mask, plot=True)
         #data.shape = 100, 400
         #container.setImageData(None)
@@ -1994,7 +2111,7 @@ def test():
 
     container.sigMaskImageWidgetSignal.connect(theSlot)
     app.exec_()
-    print container.getSelectionMask()
+    print(container.getSelectionMask())
 
 if __name__ == "__main__":
     test()
