@@ -75,7 +75,7 @@ class PyMcaMdi(qt.QMainWindow):
 
         self.splitter.insertWidget(1, self.mdi)
         self.windowMapper = qt.QSignalMapper(self)
-        self.windowMapper.mapped.connect(self.mdi.setActiveWindow)
+        self.windowMapper.mapped[qt.QWidget].connect(self.mdi.setActiveWindow)
 
 
         #self.setDockEnabled(qt.Qt.DockTop, 0)
