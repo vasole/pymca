@@ -33,7 +33,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.io import SpecFileCntTable
 from PyMca5.PyMcaGui import MaskImageWidget
 QTVERSION = qt.qVersion()
-import PyMca.PyMca_Icons as icons
+from PyMca5.PyMcaGui import PyMca_Icons as icons
 DEBUG = 0
 SOURCE_TYPE = 'SPS'
 SCAN_MODE = True
