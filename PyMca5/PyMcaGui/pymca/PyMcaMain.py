@@ -652,9 +652,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         #ROIs
         d['ROI']={}
         if self.mcaWindow.roiWidget is None:
-            self._mcaWindow._toggleROI()
-            self.mcaWindow.roiWidget.hide()
-        roilist, roidict = self.mcaWindow.roiWidget.getROIListAndDict()
+            roilist = []
+            roidict = {}
+        else:
+            roilist, roidict = self.mcaWindow.roiWidget.getROIListAndDict()
         d['ROI']['roilist'] = roilist
         d['ROI']['roidict'] = {}
         d['ROI']['roidict'].update(roidict)
@@ -798,8 +799,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     roilist=[roilist]                
                 roidict = ddict['roidict']
                 if self.mcaWindow.roiWidget is None:
-                    self.mcaWindow._toggleROI()
-                    self.mcaWindow.roiWidget.hide()
+                    self.mcaWindow.showRoiWidget(qt.Qt.BottomDockWidgetArea)
                 self.mcaWindow.roiWidget.fillFromROIDict(roilist=roilist,
                                                          roidict=roidict)
 

@@ -112,8 +112,6 @@ class McaWindow(ScanWindow.ScanWindow):
             print("printPreview id = %d" % id(self.printPreview))
 
         self._buildCalibrationControlWidget()
-        self.roiWidget = None
-        #self._toggleROI()
         self._toggleCounter = 2
         self._togglePointsSignal()
         self.changeGridLevel()

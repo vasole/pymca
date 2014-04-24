@@ -110,6 +110,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.setActiveCurveColor('black')
 
         # default ROI handling
+        self.roiWidget = None
         self._middleROIMarkerFlag = False
         
     def _buildGraphBottomWidget(self, control, position):
@@ -412,7 +413,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             if toggle:
                 tb.setCheckable(1)
         self.toolBar.addWidget(tb)
-        tb.clicked.connect(action)
+        tb.clicked[()].connect(action)
         return tb
 
     def _aspectButtonSignal(self):
@@ -524,24 +525,28 @@ class PlotWindow(PlotWidget.PlotWidget):
         if DEBUG:
             print("_colormapIconSignal called")
 
-    def _toggleROI(self):
+    def showRoiWidget(self, position=None):
+        self._toggleROI(position)
+
+    def _toggleROI(self, position=None):
         if DEBUG:
             print("_toggleROI called")
-        if not hasattr(self, "roiWidget"):
-            self.roiWidget = None
         if self.roiWidget is None:
             self.roiWidget = McaROIWidget.McaROIWidget()
             self.roiDockWidget = qt.QDockWidget(self)
             self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
             self.roiDockWidget.setWidget(self.roiWidget)
-            w = self.centralWidget().width()
-            h = self.centralWidget().height()
-            if w > (1.25 * h):
-                self.addDockWidget(qt.Qt.RightDockWidgetArea,
-                                   self.roiDockWidget)
+            if position is None:
+                w = self.centralWidget().width()
+                h = self.centralWidget().height()
+                if w > (1.25 * h):
+                    self.addDockWidget(qt.Qt.RightDockWidgetArea,
+                                       self.roiDockWidget)
+                else:
+                    self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+                                       self.roiDockWidget)
             else:
-                self.addDockWidget(qt.Qt.BottomDockWidgetArea,
-                                   self.roiDockWidget)
+                self.addDockWidget(position, self.roiDockWidget)
             if hasattr(self, "legendDockWidget"):
                 self.tabifyDockWidget(self.legendDockWidget,
                                       self.roiDockWidget)
