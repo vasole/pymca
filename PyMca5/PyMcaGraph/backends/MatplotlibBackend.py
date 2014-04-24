@@ -2009,16 +2009,19 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def showGrid(self, flag=True):
         if flag == 1:
-            self.ax.xaxis.set_tick_params(which='major')
-            self.ax.yaxis.set_tick_params(which='major')
+            if hasattr(self.ax.xaxis, "set_tick_params"):
+                self.ax.xaxis.set_tick_params(which='major')
+                self.ax.yaxis.set_tick_params(which='major')
             self.ax.grid(which='major')
         elif flag == 2:
-            self.ax.xaxis.set_tick_params(which='both')
-            self.ax.yaxis.set_tick_params(which='both')
+            if hasattr(self.ax.xaxis, "set_tick_params"):
+                self.ax.xaxis.set_tick_params(which='both')
+                self.ax.yaxis.set_tick_params(which='both')
             self.ax.grid(which='both')
         elif flag:
-            self.ax.xaxis.set_tick_params(which='major')
-            self.ax.yaxis.set_tick_params(which='major')
+            if hasattr(self.ax.xaxis, "set_tick_params"):
+                self.ax.xaxis.set_tick_params(which='major')
+                self.ax.yaxis.set_tick_params(which='major')
             self.ax.grid(True)
         else:
             self.ax.grid(False)
