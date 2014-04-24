@@ -44,8 +44,13 @@ from .math.fitting import SpecfitGui, SimpleFitGui, SimpleFitBatchGui
 
 from .pymca import StackPluginResultsWindow
 from .math import FFTAlignmentWindow, NNMADialog, NNMAWindow, PCADialog, \
-                  PCAWindow, SGWindow, SIFTAlignmentWindow, SNIPWindow, \
+                  PCAWindow, SGWindow, SNIPWindow, \
                   StripBackgroundWidget
+try:
+    from .math import SIFTAlignmentWindow
+except:
+    # sift or PyOpenCL might not be installed
+    pass
 from .pymca import StackPluginResultsWindow, ExternalImagesWindow
 
 from .pymca import RGBImageCalculator
