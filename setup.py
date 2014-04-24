@@ -32,6 +32,9 @@ except ImportError:
 import distutils.sysconfig
 try:
     from Cython.Distutils import build_ext
+    import Cython.Compiler.Version
+    if Cython.Compiler.Version.version < '0.18':
+        build_ext = None
 except:
     build_ext = None
 global PYMCA_INSTALL_DIR
