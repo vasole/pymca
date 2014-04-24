@@ -467,12 +467,14 @@ class MatplotlibGraph(FigureCanvas):
         leftButton = 1
         middleButton = 2
         rightButton = 3
-        if button == middleButton:
-            # do nothing with the middle button
-            return
 
         self._x0 = event.xdata
         self._y0 = event.ydata
+
+        if button == middleButton:
+            # by default, do nothing with the middle button
+            return
+
         self._x0Pixel = event.x
         self._y0Pixel = event.y
         self._x1 = event.xdata
