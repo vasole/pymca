@@ -651,6 +651,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             #d['PyMca'][source]['Selection'] = self.sourceWidget[source].getSelection()
         #ROIs
         d['ROI']={}
+        if self.mcaWindow.roiWidget is None:
+            self._mcaWindow._toggleROI()
+            self.mcaWindow.roiWidget.hide()
         roilist, roidict = self.mcaWindow.roiWidget.getROIListAndDict()
         d['ROI']['roilist'] = roilist
         d['ROI']['roidict'] = {}
@@ -794,9 +797,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if type(roilist) != type([]):
                     roilist=[roilist]                
                 roidict = ddict['roidict']
+                if self.mcaWindow.roiWidget is None:
+                    self.mcaWindow._toggleROI()
+                    self.mcaWindow.roiWidget.hide()
                 self.mcaWindow.roiWidget.fillFromROIDict(roilist=roilist,
                                                          roidict=roidict)
-                
 
     def __configureElements(self, ddict):
         if 'Material' in ddict:
