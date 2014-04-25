@@ -169,7 +169,10 @@ resolution is matched to the eventual rendering."""
         #print("BEFORE AXES LIMITS X", xlim)
         #print("BEFORE AXES LIMITS Y", ylim)
         xlim = max(xlim[0], origXMin), min(xlim[1], origXMax)
-        ylim = max(ylim[0], origYMin), min(ylim[1], origYMax)
+        if ylim[0] > ylim[1]:
+            ylim = max(ylim[1], origYMin), min(ylim[0], origYMax)
+        else:
+            ylim = max(ylim[0], origYMin), min(ylim[1], origYMax)
         #print("AXES LIMITS X", xlim)
         #print("AXES LIMITS Y", ylim)
         #print("THOSE LIMITS ARE TO BE COMPARED WITH THE EXTENT")
@@ -198,7 +201,10 @@ resolution is matched to the eventual rendering."""
         x1 = x0 + self._A.shape[1] * sx
         y1 = y0 + self._A.shape[0] * sy
 
-        self.set_extent([x0 - .5, x1 - .5, y0 - .5, y1 - .5])
+        if self.origin == "upper":
+            self.set_extent([x0 - .5, x1 - .5, y1 - .5, y0 - .5])
+        else:
+            self.set_extent([x0 - .5, x1 - .5, y0 - .5, y1 - .5])
         self._sx = sx
         self._sy = sy
         self._bounds = (x0, x1, y0, y1)
