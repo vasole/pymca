@@ -897,6 +897,8 @@ class PlotWindow(PlotWidget.PlotWidget):
     def calculateROIs(self, *var, **kw):
         if not hasattr(self, "roiWidget"):
             return
+        if self.roiWidget is None:
+            return
         if len(var) == 0:
             roiList, roiDict = self.roiWidget.getROIListAndDict()
         elif len(var) == 2:
