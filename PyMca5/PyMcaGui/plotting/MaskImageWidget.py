@@ -263,9 +263,9 @@ class MaskImageWidget(qt.QWidget):
         self._roiTags = list(range(1, self._maxNRois + 1))
 
     def _buildConnections(self, widget = None):
-        self.graphWidget.hFlipToolButton.clicked.connect(self._hFlipIconSignal)
+        self.graphWidget.hFlipToolButton.clicked[()].connect(self._hFlipIconSignal)
 
-        self.graphWidget.colormapToolButton.clicked.connect(self.selectColormap)
+        self.graphWidget.colormapToolButton.clicked[()].connect(self.selectColormap)
 
         if self.__selectionFlag:
             self.graphWidget.selectionToolButton.clicked.connect(self._toggleSelectionMode)
@@ -273,19 +273,19 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.selectionToolButton.setToolTip(text)
 
         if self.__imageIconsFlag:
-            self.graphWidget.imageToolButton.clicked.connect(\
+            self.graphWidget.imageToolButton.clicked[()].connect(\
                 self.__resetSelection)
 
-            self.graphWidget.eraseSelectionToolButton.clicked.connect(\
+            self.graphWidget.eraseSelectionToolButton.clicked[()].connect(\
                 self._setEraseSelectionMode)
 
-            self.graphWidget.rectSelectionToolButton.clicked.connect(\
+            self.graphWidget.rectSelectionToolButton.clicked[()].connect(\
                 self._setRectSelectionMode)
 
-            self.graphWidget.brushSelectionToolButton.clicked.connect(\
+            self.graphWidget.brushSelectionToolButton.clicked[()].connect(\
                 self._setBrushSelectionMode)
 
-            self.graphWidget.brushToolButton.clicked.connect(self._setBrush)
+            self.graphWidget.brushToolButton.clicked[()].connect(self._setBrush)
 
             if hasattr(self.graphWidget, "polygonSelectionToolButton"):
                 self.graphWidget.polygonSelectionToolButton.clicked.connect(\
@@ -1560,7 +1560,7 @@ class MaskImageWidget(qt.QWidget):
             if DEBUG:
                 print("__applyMaskToImage CASE 6")
             tmp  = 1 - (self.__selectionMask>0)
-            tmp2 = (self.__selectionMask == self._nRoi)
+            tmp2 = (self.__selectionMask == self._roiTags[self._nRoi - 1])
             self.__pixmap[:, :, 2] = (0x70 * (self.__selectionMask>0) + \
                                       0x70 * tmp2) +\
                                       tmp * self.__pixmap0[:,:,2]
@@ -1753,7 +1753,7 @@ class MaskImageWidget(qt.QWidget):
         if self.__selectionMask is None:
             self.__selectionMask = mask
         else:
-            self.__selectionMask[mask==1] = self._nRoi
+            self.__selectionMask[mask==1] = self._roiTags[self._nRoi - 1]
         self.plotImage(update = False)
         #inform the other widgets
         self._emitMaskChangedSignal()
@@ -1805,7 +1805,7 @@ class MaskImageWidget(qt.QWidget):
             if self.__eraseMode:
                 self.__selectionMask[j1:j2, i1:i2] = 0 
             else:
-                self.__selectionMask[j1:j2, i1:i2] = self._nRoi
+                self.__selectionMask[j1:j2, i1:i2] = self._roiTags[self._nRoi - 1]
             emitsignal = True
 
         elif ddict['event'] in ["mouseMoved", "MouseAt", "mouseClicked"]:
@@ -1844,7 +1844,7 @@ class MaskImageWidget(qt.QWidget):
                 if self.__eraseMode:
                     self.__selectionMask[j1:j2, i1:i2] = 0 
                 else:
-                    self.__selectionMask[j1:j2, i1:i2] = self._nRoi
+                    self.__selectionMask[j1:j2, i1:i2] = self._roiTags[self._nRoi - 1]
                 emitsignal = True
         if emitsignal:
             #should this be made by the parent?
@@ -2076,8 +2076,8 @@ def test():
             container.setImageData(data)
             mask=data*0
             n,m=data.shape
-            mask[ n/4:n/4+n/8, m/4:m/4+m/8]=1
-            mask[ 3*n/4:3*n/4+n/8, m/4:m/4+m/8  ]=2
+            mask[ n/4:n/4+n/8, m/4:m/4+m/8] = 1
+            mask[ 3*n/4:3*n/4+n/8, m/4:m/4+m/8] = 2
             container.setSelectionMask( mask, plot=True)
         else:
             container = MaskImageWidget(selection=True,
@@ -2101,7 +2101,7 @@ def test():
         n, m = data.shape
         mask[ n/4:n/4+n/8, m/4:m/4+m/8] = 1
         mask[ 3*n/4:3*n/4+n/8, m/4:m/4+m/8] = 2
-        container.setSelectionMask( mask, plot=True)
+        container.setSelectionMask(mask, plot=True)
         #data.shape = 100, 400
         #container.setImageData(None)
         #container.setImageData(data)
