@@ -11,5 +11,6 @@ except:
     print("WARNING importing IO directly")
     from PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
 
-from .PyMcaMath import SpecfitFuns, Gefit, Specfit
+from .PyMcaMath.fitting import SpecfitFuns, Gefit, Specfit
+from .PyMcaMath.fitting import SpecfitFunctions
 from .PyMcaPhysics import Elements

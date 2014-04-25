@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
 arctan = numpy.arctan
-from PyMca5 import SpecfitFuns
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaMath.fitting.Gefit import LeastSquaresFit
 
 DEBUG=0
