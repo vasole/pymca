@@ -191,6 +191,8 @@ class MaskImageWidget(qt.QWidget):
         if self._maxNRois > 1:
             # multiple ROI control
             self._buildMultipleRois()
+        else:
+            self._roiTags=[1]
 
         #for easy compatibility with RGBCorrelatorGraph
         self.graph = self.graphWidget.graph
