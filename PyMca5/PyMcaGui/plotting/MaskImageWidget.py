@@ -87,6 +87,9 @@ def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
     if safe:
         c = min(int(c), shape[1] - 1)
         r = min(int(r), shape[0] - 1)
+    else:
+        c = int(c)
+        r = int(r)
     return r, c
     
 class MaskImageWidget(qt.QWidget):
@@ -1791,6 +1794,7 @@ class MaskImageWidget(qt.QWidget):
                                                   safe=True)
             w = ddict['width']
             h = ddict['height']
+
             j2, i2 = convertToRowAndColumn(ddict['x'] + w,
                                                   ddict['y'] + h,
                                                   self.__imageData.shape,
@@ -1799,7 +1803,11 @@ class MaskImageWidget(qt.QWidget):
                                                   safe=True)
             if i1 == i2:
                 i2 += 1
+            elif (ddict['x'] + w) < shape[1]:
+                i2 += 1
             if j1 == j2:
+                j2 += 1
+            elif (ddict['y'] + h) < shape[0]:
                 j2 += 1
             if self.__selectionMask is None:
                 self.__selectionMask = numpy.zeros(self.__imageData.shape,
