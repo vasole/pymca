@@ -441,7 +441,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                      self.imageWindowCorrelator.addImageSlot)
                 imageWindow.sigRemoveImageClicked.connect( \
                      self.imageWindowCorrelator.removeImageSlot)
-                imageWindow.sigRreplaceImageClicked.conenct( \
+                imageWindow.sigReplaceImageClicked.connect( \
                      self.imageWindowCorrelator.replaceImageSlot)
                 self.mainTabWidget.addTab(imageWindow, legend)
                 if toadd:
