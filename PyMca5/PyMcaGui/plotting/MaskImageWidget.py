@@ -43,7 +43,7 @@ else:
     QString = qt.safe_str
 MATPLOTLIB = False
 try:
-    from PyMca5 import QPyMcaMatplotlibSave
+    from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave
     MATPLOTLIB = True
 except ImportError:
     MATPLOTLIB = False
@@ -51,12 +51,7 @@ from PyMca5 import spslut
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ArraySave
 from . import ProfileScanWidget
-try:
-    from PyMca5.PyMcaMath.fitting import SpecfitFuns
-except ImportError:
-    print("MaskImageWidget importing SpecfitFuns directly")
-    import SpecfitFuns
-
+from PyMca5.PyMcaMath.fitting import SpecfitFuns
 
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
@@ -1723,10 +1718,10 @@ class MaskImageWidget(qt.QWidget):
             ddict['ypixelsize'] = self._yScale[1]
         ddict['xlabel'] = self.getXLabel()
         ddict['ylabel'] = self.getYLabel()
-        limits = self.graphWidget.graph.getX1AxisLimits()
+        limits = self.graphWidget.graph.getGraphXLimits()
         ddict['zoomxmin'] = limits[0]
         ddict['zoomxmax'] = limits[1]
-        limits = self.graphWidget.graph.getY1AxisLimits()
+        limits = self.graphWidget.graph.getGraphYLimits()
         ddict['zoomymin'] = limits[0] 
         ddict['zoomymax'] = limits[1]
         
