@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -129,6 +129,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 if len(scanlist) == 1:
                     if scanlist[0] == ySelection:
                         scanlist = None
+                        USE_JUST_KEYS = True
         elif len(entryNames) == 1:
             # deal with the SOLEIL case of one entry but with different name
             # in different files
