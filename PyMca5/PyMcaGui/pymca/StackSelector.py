@@ -44,7 +44,7 @@ from PyMca5.PyMcaIO import TextImageStack
 from PyMca5.PyMcaIO import TiffStack
 from .QStack import QStack, QSpecFileStack
 try:
-    from . import QHDF5Stack1D
+    from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
     import h5py
     HDF5 = True
 except ImportError:

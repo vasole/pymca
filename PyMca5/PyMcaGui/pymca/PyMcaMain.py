@@ -183,8 +183,8 @@ from PyMca5.PyMcaGui.pymca import PyMcaBatch
 ###########import Fit2Spec
 from PyMca5.PyMcaGui.pymca import Mca2Edf
 try:
-    from PyMca5 import QStackWidget
-    from PyMca5 import StackSelector
+    from PyMca5.PyMcaGui.pymca import QStackWidget
+    from PyMca5.PyMcaGui.pymca import StackSelector
     STACK = True
 except:
     STACK = False
