@@ -34,7 +34,7 @@ if sys.platform == 'win32':
     import ctypes
     from ctypes.wintypes import MAX_PATH
 nativeFileDialogs = None
-DEBUG = 0
+DEBUG = 1
 backend=None
 if __name__ == '__main__':
     options     = '-f'
@@ -1522,7 +1522,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self.changeLog.show()
     
     def onDebug(self):
-        print("Module name PyMca ",__revision__.replace("$",""))
         print("Module name PyQt  ",qt.PYQT_VERSION_STR)
         for module in sys.modules.values():
             try:

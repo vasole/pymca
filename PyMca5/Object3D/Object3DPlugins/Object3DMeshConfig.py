@@ -88,7 +88,7 @@ class Object3DMeshConfig(Object3DPrivateConfig.Object3DPrivateConfig):
         self.connect(self.colorFilter,
                      qt.SIGNAL('ColorFilterSignal'),
                      self.updateCallBack)
-        self.updateButton.clicked[()].connect(elf.updateCallBack)
+        self.updateButton.clicked[()].connect(self.updateCallBack)
 
     def setParameters(self, ddict):
         #if ddict.has_key('widget'):
