@@ -76,9 +76,7 @@ class Object3DAnchorWidget(qt.QGroupBox):
                 buttonGroup.setId(rButton, j - 1)
                 j += 1
             self.buttonGroupList.append(buttonGroup)
-            self.connect(buttonGroup,
-                         qt.SIGNAL('buttonPressed(QAbstractButton *)'),
-                         self._slot)
+            buttonGroup.buttonPressed.connect(self._slot)
             i += 1
 
         """

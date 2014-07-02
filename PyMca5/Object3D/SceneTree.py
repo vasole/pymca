@@ -148,9 +148,7 @@ class Object3DObjectTree(qt.QGroupBox):
         self.actions.deleteButton.clicked.connect(self.deleteObject)
         self.actions.replaceButton.clicked.connect(self.replaceWithObject)
 
-        self.connect(self.treeWidget,
-            qt.SIGNAL('currentItemChanged( QTreeWidgetItem *, QTreeWidgetItem *)'),
-            self.itemChanged)
+        self.treeWidget.currentItemChanged.connect(self.itemChanged)
 
     def updateView(self, expand=False):
         self.treeWidget.updateView()
@@ -223,7 +221,7 @@ class Object3DObjectTree(qt.QGroupBox):
         if self.__cutObject == self.__current:
             #do nothing
             if DEBUG:
-                print "Doing nothing"
+                print("Doing nothing")
             self.__cutObject = None
             self.treeWidget.resizeColumnToContents(0)
             return
@@ -233,7 +231,7 @@ class Object3DObjectTree(qt.QGroupBox):
         destination = self.tree.find(self.__current)
         destination.addChildTree(child)
         if DEBUG:
-            print "TREE after addition = ", self.tree
+            print("TREE after addition = ", self.tree)
         self.updateView()
 
         if 1:
@@ -246,7 +244,7 @@ class Object3DObjectTree(qt.QGroupBox):
                     qt.QAbstractItemView.EnsureVisible)
             else:
                 if DEBUG:
-                    print "Is this a problem?"
+                    print("Is this a problem?")
 
         else:
             #this too
@@ -260,7 +258,7 @@ class Object3DObjectTree(qt.QGroupBox):
                     self.treeWidget.expandItem(itemList[0])
                 else:
                     if DEBUG:
-                        print "Is this a problem?"
+                        print("Is this a problem?")
                     break
         self.treeWidget.resizeColumnToContents(0)
         self.__cutObject = None
@@ -313,6 +311,7 @@ class Object3DObjectTree(qt.QGroupBox):
         self.emitSignal('objectReplaced')
         
     def itemChanged(self, current, previous):
+        print "itemChanged", current, "previous = ", previous
         if current is None:
             #This happens when updating because I clear the tree
             return
@@ -325,8 +324,8 @@ class Object3DObjectTree(qt.QGroupBox):
         else:
             self.__previous = previous.text(0)
         if DEBUG:
-            print "current = ", self.__current
-            print "previous = ", self.__previous
+            print("current = ", self.__current)
+            print("previous = ", self.__previous)
         if self.__current != self.__previous:
             self.setSelectedObject(str(self.__current))
             self.emitSignal('objectSelected')

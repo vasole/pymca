@@ -59,9 +59,7 @@ class Object3DDrawingModeWidget(qt.QGroupBox):
             self.buttonGroup.addButton(rButton)
             self.buttonGroup.setId(rButton, j)
             j += 1
-            self.connect(self.buttonGroup,
-                         qt.SIGNAL('buttonPressed(QAbstractButton *)'),
-                         self._slot)
+            self.buttonGroup.buttonPressed.connect(self._slot)
 
     def _slot(self, button):
         button.setChecked(True)
