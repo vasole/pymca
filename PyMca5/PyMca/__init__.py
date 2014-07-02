@@ -3,16 +3,11 @@ import glob
 
 def getPackages(directory):
     packages = []
-    fileList = glob.glob(os.path.join(directory, "*"))
+    fileList = glob.glob(os.path.join(directory, "*", "__init__.py"))
     for fileName in fileList:
-        if fileName.endswith(".py") or fileName.endswith(".pyc"):
-            continue
-        if os.path.isdir(fileName):
-            if os.path.exists(os.path.join(fileName, "__init__.py")):
-                # is a package
-                packages.append(fileName)
-                # that may contain packages
-                packages += getPackages(fileName)                
+        dirName = os.path.dirname(fileName)
+        packages.append(dirName)
+        packages += getPackages(dirName)                
     return packages
 
 
