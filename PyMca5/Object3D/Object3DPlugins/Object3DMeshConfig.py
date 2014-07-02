@@ -57,9 +57,7 @@ class Object3DMeshConfig(Object3DPrivateConfig.Object3DPrivateConfig):
 
         #color filtering
         self.colorFilter = PrivateConfigTools.ColorFilter(self)
-        self.connect(self.colorFilter,
-                     qt.SIGNAL('ColorFilterSignal'),
-                     self.updateCallBack)
+        self.colorFilter.sigColorFilterSignal.connect(self.updateCallBack)
 
         #value filtering
         self.valueFilter = PrivateConfigTools.ValueFilter(self)
@@ -85,9 +83,7 @@ class Object3DMeshConfig(Object3DPrivateConfig.Object3DPrivateConfig):
         self.mainLayout.addWidget(VerticalSpacer(self), 3, 0)
 
         #connect
-        self.connect(self.colorFilter,
-                     qt.SIGNAL('ColorFilterSignal'),
-                     self.updateCallBack)
+        self.colorFilter.sigColorFilterSignal.connect(self.updateCallBack)
         self.updateButton.clicked[()].connect(self.updateCallBack)
 
     def setParameters(self, ddict):
