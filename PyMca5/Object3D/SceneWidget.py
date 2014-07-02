@@ -34,6 +34,8 @@ QTVERSION = qt.qVersion()
 DEBUG = 0 
 
 class SceneWidget(qt.QWidget):
+    sigSceneWidgetSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent = None, scene = None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle('Scene Widget')
@@ -48,9 +50,7 @@ class SceneWidget(qt.QWidget):
         self.tree = self.treeWidget.tree
         self.mainLayout.addWidget(self.treeWidget)
 
-        self.connect(self.treeWidget,
-                     qt.SIGNAL('ObjectTreeSignal'),
-                     self._treeWidgetSignal)
+        self.treeWidget.sigObjectTreeSignal.connect(self._treeWidgetSignal)
 
     def _treeWidgetSignal(self, ddict):
         self.emitSignal(ddict['event'], ddict)
@@ -59,9 +59,7 @@ class SceneWidget(qt.QWidget):
         if ddict is None:
             ddict = {}
         ddict['event'] = event
-        qt.QObject.emit(self,
-                        qt.SIGNAL('SceneWidgetSignal'),
-                        ddict)
+        self.sigSceneWidgetSignal.emit(ddict)
 
     def updateView(self, expand=True):
         return self.treeWidget.updateView(expand=expand)

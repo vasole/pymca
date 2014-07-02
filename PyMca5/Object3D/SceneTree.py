@@ -125,6 +125,8 @@ class Object3DTreeWidgetItem(qt.QTreeWidgetItem):
         self.setText(1, text)
 
 class Object3DObjectTree(qt.QGroupBox):
+    sigObjectTreeSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent = None, tree=None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Objects Tree')
@@ -332,14 +334,12 @@ class Object3DObjectTree(qt.QGroupBox):
     def emitSignal(self, event):
         if self.__replacing:
             if DEBUG:
-                print "EVENT = ", event, "NOT SENT"
+                print("EVENT = ", event, "NOT SENT")
         ddict = {}
         ddict['event'] = event
         ddict['current'] = str(self.__current)
         ddict['previous'] = str(self.__previous)
-        qt.QObject.emit(self,
-                        qt.SIGNAL('ObjectTreeSignal'),
-                        ddict)
+        self.sigObjectTreeSignal.emit(ddict)
 
 
 class ObjectActions(qt.QGroupBox):

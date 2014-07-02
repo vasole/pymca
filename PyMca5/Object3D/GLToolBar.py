@@ -34,6 +34,9 @@ from HorizontalSpacer import HorizontalSpacer
 DEBUG = 0
 
 class GLToolBar(qt.QWidget):
+    
+    sigGLToolBarSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
@@ -127,7 +130,7 @@ class GLToolBar(qt.QWidget):
         ddict = {}
         ddict['event'] = 'ApplyCubeClicked'
         ddict['face'] = cubeFace
-        self.emit(qt.SIGNAL('GLToolBarSignal'), ddict)
+        self.sigGLToolBarSignal.emit(ddict)
         #print "to be implemented"
 
 if __name__ == "__main__":

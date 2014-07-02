@@ -34,6 +34,8 @@ import numpy
 DEBUG = 0
 
 class ClippingPlaneConfiguration(qt.QGroupBox):
+    sigClippingPlaneSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle("Clipping Planes: Only points satisfying Ax + By + Cz + D >=0 will be plotted")
@@ -155,9 +157,12 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
             event = "ClippingPlaneUpdated"
         ddict = self.getParameters()
         ddict['event'] = event
-        self.emit(qt.SIGNAL('ClippingPlaneSignal'),ddict)
+        self.sigClippingPlaneSignal.emit(ddict)
 
 class UserClippingPlaneWidget(qt.QWidget):
+
+    sigUserClippingPlaneSignal= qt.pyqtSignal(object)
+    
     def __init__(self, parent = None, vector = None, point = None, rotation=None):
         qt.QWidget.__init__(self, parent)
         self.l = qt.QHBoxLayout(self)
@@ -180,16 +185,9 @@ class UserClippingPlaneWidget(qt.QWidget):
         self.l.addWidget(self.pointWidget)
         self.l.addWidget(self.rotationWidget)
         self.__disconnected = False
-        self.connect(self.vectorWidget,
-                     qt.SIGNAL('Object3DTranslationSignal'),
-                     self._slot)
-        self.connect(self.pointWidget,
-                     qt.SIGNAL('Object3DTranslationSignal'),
-                     self._slot)
-        self.connect(self.rotationWidget,
-                     qt.SIGNAL('Object3DRotationSignal'),
-                     self._slot)
-
+        self.vectorWidget.sigObject3DTranslationSignal.connect(self._slot)
+        self.pointWidget.sigObject3DTranslationSignal.connect(self._slot)
+        self.rotationWidget.sigObject3DRotationSignal.connect(self._slot)
 
     def _slot(self, ddict):
         self._emitSignal()
@@ -213,13 +211,17 @@ class UserClippingPlaneWidget(qt.QWidget):
 
     def _emitSignal(self, event=None):
         if self.__disconnected: return
-        if DEBUG:print "Emitting UserClippingPlaneSignal"
-        if event is None:event="U0PlaneUpdated"
+        if DEBUG:
+            print("Emitting UserClippingPlaneSignal")
+        if event is None:
+            event="U0PlaneUpdated"
         ddict = self.getParameters()
         ddict['event'] = event
-        self.emit(qt.SIGNAL('UserClippingPlaneSignal'), ddict)
+        self.sigUserClippingPlaneSignal.emit(ddict)
 
 class ClippingPlaneWidget(qt.QWidget):
+    sigClippingPlaneWidgetSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
@@ -228,12 +230,10 @@ class ClippingPlaneWidget(qt.QWidget):
         self.mainLayout.addWidget(self.standardClippingPlane)
         self.mainLayout.addWidget(self.userClippingPlane)
 
-        self.connect(self.standardClippingPlane,
-                     qt.SIGNAL('ClippingPlaneSignal'),
-                     self._emitSignal)
+        self.standardClippingPlane.sigClippingPlaneSignal.connect(\
+                            self._emitSignal)
 
-        self.connect(self.userClippingPlane,
-                     qt.SIGNAL('UserClippingPlaneSignal'),
+        self.userClippingPlane.sigUserClippingPlaneSignal.connect(\
                      self._userPlaneSlot)
 
     def _userPlaneSlot(self, ddict):
@@ -311,12 +311,14 @@ class ClippingPlaneWidget(qt.QWidget):
         return [A, B, C, D]
 
     def _emitSignal(self, event = None):
-        if DEBUG:print "Emitting ClippingPlaneWidgetSignal"
-        if event is None:event = 'ClippingPlaneWidgetUpdated'
+        if DEBUG:
+            print("Emitting ClippingPlaneWidgetSignal")
+        if event is None:
+            event = 'ClippingPlaneWidgetUpdated'
         ddict = self.standardClippingPlane.getParameters()
         ddict.update(self.userClippingPlane.getParameters())
         ddict['event'] = event
-        self.emit(qt.SIGNAL('ClippingPlaneWidgetSignal'), ddict)
+        self.sigClippingPlaneWidgetSignal.emit(ddict)
 
     def setParameters(self, ddict):
         self.standardClippingPlane.setParameters(ddict)
@@ -326,17 +328,13 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     def myslot(ddict):
-        print "Signal received"
-        print "ddict      = ", ddict
+        print("Signal received")
+        print("ddict      = ", ddict)
     if 0:
         w = ClippingPlaneConfiguration()
-        qt.QObject.connect(w,
-                       qt.SIGNAL('ClippingPlaneSignal'),
-                       myslot)
+        w.sigClippingPlaneSignal.connect(myslot)
     elif 1:
         w = ClippingPlaneWidget()
-        qt.QObject.connect(w,
-                       qt.SIGNAL('ClippingPlaneWidgetSignal'),
-                       myslot)
+        w.sigClippingPlaneWidgetSignal.connect(myslot)
     w.show()    
     app.exec_()

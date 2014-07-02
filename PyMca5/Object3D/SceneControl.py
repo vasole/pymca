@@ -38,6 +38,7 @@ from VerticalSpacer import VerticalSpacer
 DEBUG = 0
 
 class SceneControl(qt.QWidget):
+    sigSceneControlSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, scene = None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle('Scene Control Widget')
@@ -70,16 +71,12 @@ class SceneControl(qt.QWidget):
         configDict = self.scene[self.scene.name()].root[0].getConfiguration()
         self.selectedObjectControl.setConfiguration(configDict)
 
-        self.connect(self.sceneWidget,
-                     qt.SIGNAL('SceneWidgetSignal'),
-                     self._sceneWidgetSignal)
+        self.sceneWidge.sigSceneWidgetSignal.connect(self._sceneWidgetSignal)
 
-        self.connect(self.coordinatesWidget,
-                     qt.SIGNAL('SceneCoordinatesSignal'),
+        self.coordinatesWidget.sigSceneCoordinatesSignal.connect(\
                      self._sceneCoordinatesSlot)
         return
-        self.connect(self.movementsWidget,
-                     qt.SIGNAL('Object3DMovementSignal'),
+        self.movementsWidget.sigObject3DMovementSignal.connect(\
                      self._movementsSlot)
 
 
@@ -132,9 +129,7 @@ class SceneControl(qt.QWidget):
             ddict = {}
         if event is not None:
             ddict['event'] = event
-        qt.QObject.emit(self,
-                        qt.SIGNAL('SceneControlSignal'),
-                        ddict)
+        self.sigSceneControlSignal.emit(ddict)
 
     def updateView(self):
         self.sceneWidget.updateView()
@@ -155,7 +150,7 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     w = SceneControl()
     def slot(ddict):
-        print " ddict = ", ddict
+        print(" ddict = ", ddict)
         objectList = w.scene.tree.getList()
         selected = []
         for item in objectList:
@@ -163,11 +158,9 @@ if __name__ == "__main__":
                 if hasattr(item, 'selected'):
                     if item.selected():
                         selected.append(item.name())
-        print selected
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
-    qt.QObject.connect(w, qt.SIGNAL("SceneControlSignal"),
-                       slot)
+        print(selected)
+    app.lastWindowClosed.connect(app.quit)
+    w.sigSceneControlSignal.connect(slot)
     o0 = Object3DBase.Object3D("DummyObject0")
     o0.setLimits(-100, -200, -300, 100, 200, 300)
     o1 = Object3DBase.Object3D("DummyObject1")

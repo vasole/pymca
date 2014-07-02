@@ -34,6 +34,7 @@ BBOXCENTER = 2
 BBOXMAX    = 3
 
 class Object3DAnchorWidget(qt.QGroupBox):
+    sigObject3DAnchorSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, anchor = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Anchor')
@@ -96,9 +97,7 @@ class Object3DAnchorWidget(qt.QGroupBox):
             self.l.addWidget(slider, i, j + 1)
             self.l.setAlignment(slider, qt.Qt.AlignVCenter)
             self.spinBoxList.append(slider)
-            #self.connect(slider,
-            #             qt.SIGNAL('valueChanged(double)'),
-            #             self._slot)
+            #slider.valueChanged(float).connect(self._slot)
             i += 1
         """
         self.l.setRowStretch(0, 0)
@@ -118,7 +117,7 @@ class Object3DAnchorWidget(qt.QGroupBox):
         ddict = {}
         ddict['event']  = 'AnchorUpdated'
         ddict['anchor'] = anchor 
-        self.emit(qt.SIGNAL('Object3DAnchorSignal'), ddict)
+        self.sigObject3DAnchorSignal.emit(ddict)
 
     def setAnchor(self, anchor):
         for i in range(3):
@@ -135,6 +134,7 @@ class Object3DAnchorWidget(qt.QGroupBox):
         return anchorList
 
 class Object3DTranslationWidget(qt.QGroupBox):
+    sigObject3DTranslationSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, translation = None, labels = None):
         qt.QGroupBox.__init__(self, parent)
         text  = 'Specify translations of 3D objects\n'
@@ -188,7 +188,7 @@ class Object3DTranslationWidget(qt.QGroupBox):
         ddict = {}
         ddict['event']  = event
         ddict['translation'] = translation 
-        self.emit(qt.SIGNAL('Object3DTranslationSignal'), ddict)
+        self.sigObject3DTranslationSignal.emit(ddict)
 
     def setTranslation(self, translation):
         for i in range(3):
@@ -202,6 +202,7 @@ class Object3DTranslationWidget(qt.QGroupBox):
 
 
 class Object3DRotationWidget(qt.QGroupBox):
+    sigObject3DRotationSignal qt.pyqtSignal(object)
     def __init__(self, parent = None, rotation = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Rotation')
@@ -277,7 +278,7 @@ class Object3DRotationWidget(qt.QGroupBox):
         ddict = {}
         ddict['event']  = event
         ddict['rotation'] = rotation 
-        self.emit(qt.SIGNAL('Object3DRotationSignal'), ddict)
+        self.sigObject3DRotationSignal.emit(ddict)
 
     def setRotation(self, rotation):
         for i in range(3):
@@ -296,6 +297,7 @@ class Object3DRotationWidget(qt.QGroupBox):
         return rotationList
 
 class Object3DMovement(qt.QWidget):
+    sigObject3DMovementSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None,
                        anchor = None,
                        translation = None,
@@ -321,14 +323,11 @@ class Object3DMovement(qt.QWidget):
         self.l.addWidget(self.rotationWidget)
 
         if connect:
-            self.connect(self.anchorWidget,
-                     qt.SIGNAL('Object3DAnchorSignal'),
+            self.anchorWidget.sigObject3DAnchorSignal.connect(\
                      self._anchorSlot)
-            self.connect(self.translationWidget,
-                     qt.SIGNAL('Object3DTranslationSignal'),
+            self.translationWidget.sigObject3DTranslationSignal.connect(\
                      self._translationSlot)
-            self.connect(self.rotationWidget,
-                     qt.SIGNAL('Object3DRotationSignal'),
+            self.rotationWidget.sigObject3DRotationSignal.connect(\
                      self._rotationSlot)
 
     def _anchorSlot(self, ddict):
@@ -343,7 +342,7 @@ class Object3DMovement(qt.QWidget):
     def _emitSignal(self):
         ddict = self.getParameters()
         ddict['event']  = 'Object3DMovementUpdated'
-        self.emit(qt.SIGNAL('Object3DMovementSignal'), ddict)
+        self.sigObject3DMovementSignal.emit(ddict)
 
     def getParameters(self):
         ddict= {}
@@ -370,8 +369,6 @@ if __name__ == "__main__":
         print("Rotation    = ", ddict['rotation'])
 
     w = Object3DMovement()
-    qt.QObject.connect(w,
-                       qt.SIGNAL('Object3DMovementSignal'),
-                       myslot)
+    w.sigObject3DMovementSignal.connect( myslot)
     w.show()    
     app.exec_()

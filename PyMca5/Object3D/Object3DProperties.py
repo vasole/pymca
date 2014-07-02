@@ -38,6 +38,7 @@ DRAW_MODES = ['NONE',
 
 
 class Object3DDrawingModeWidget(qt.QGroupBox):
+    sigObject3DDrawingModeSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Drawing Mode')
@@ -73,7 +74,7 @@ class Object3DDrawingModeWidget(qt.QGroupBox):
             event = 'DrawModeUpdated'
         ddict = self.getParameters()
         ddict['event']  = event
-        self.emit(qt.SIGNAL('Object3DDrawingModeSignal'), ddict)
+        self.sigObject3DDrawingModeSignal.emit(ddict)
 
     def getParameters(self):
         mode = self.getDrawingMode()
@@ -123,6 +124,7 @@ class Object3DDrawingModeWidget(qt.QGroupBox):
             self._signal()
 
 class Object3DAspect(qt.QGroupBox):
+    sigObject3DAspectSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Aspect')
@@ -249,9 +251,10 @@ class Object3DAspect(qt.QGroupBox):
             event = "AspectUpdated"
         ddict = self.getParameters()
         ddict['event'] = event
-        self.emit(qt.SIGNAL('Object3DAspectSignal'), ddict)
+        self.sigObject3DAspectSignal.emit(ddict)
 
 class Object3DScale(qt.QGroupBox):
+    sigObject3DScaleSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Object Scaling')
@@ -409,7 +412,7 @@ class Object3DScale(qt.QGroupBox):
         if not emit:
             return
         ddict['event'] = event
-        self.emit(qt.SIGNAL('Object3DScaleSignal'), ddict)
+        self.sigObject3DScaleSignal.emit(ddict)
 
     def getParameters(self):
         scale = [1.0, 1.0, 1.0]
@@ -446,6 +449,7 @@ class Object3DPrivateInterface(qt.QGroupBox):
         self.mainLayout.addWidget(VerticalSpacer(self))
 
 class Object3DProperties(qt.QWidget):
+    sigObject3DPropertiesSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.l = qt.QHBoxLayout(self)
@@ -457,12 +461,10 @@ class Object3DProperties(qt.QWidget):
         self.l.addWidget(self.aspectWidget)
         self.l.addWidget(self.privateInterfaceWidget)
 
-        qt.QObject.connect(self.drawingModeWidget,
-                       qt.SIGNAL('Object3DDrawingModeSignal'),
+        self.drawingModeWidget.sigObject3DDrawingModeSignal.connect(\
                        self._slot)
 
-        qt.QObject.connect(self.aspectWidget,
-                       qt.SIGNAL('Object3DAspectSignal'),
+        self.aspectWidget.sigObject3DAspectSignal.connect(\
                        self._slot)
 
         self.privateInterfaceWidget.button.clicked[()].connect(\
@@ -480,12 +482,12 @@ class Object3DProperties(qt.QWidget):
             ddict['event'] = "PropertiesUpdated"
         else:
             ddict['event'] = event 
-        self.emit(qt.SIGNAL('Object3DPropertiesSignal'), ddict)
+        self.sigObject3DPropertiesSignal.emit(ddict)
 
     def _privateCallBack(self):
         ddict = self.getParameters()
         ddict['event'] = "PropertiesUpdated"
-        self.emit(qt.SIGNAL('Object3DPropertiesSignal'), ddict)        
+        self.sigObject3DPropertiesSignal.emit(ddict)        
 
     def showPrivateInterface(self):
         if self.privateWidget is not None:
@@ -536,23 +538,15 @@ if __name__ == "__main__":
 
     if 1:
         w = Object3DProperties()
-        qt.QObject.connect(w,
-                       qt.SIGNAL('Object3DPropertiesSignal'),
-                       myslot)
+        w.sigObject3DPropertiesSignal.connect(myslot)
     elif 0:
         w = Object3DDrawingModeWidget()
-        qt.QObject.connect(w,
-                       qt.SIGNAL('Object3DDrawingModeSignal'),
-                       myslot)
+        w.sigObject3DDrawingModeSignal.connect(myslot)
     elif 0:
         w = Object3DAspect()
-        qt.QObject.connect(w,
-                       qt.SIGNAL('Object3DAspectSignal'),
-                       myslot)
+        w.sigObject3DAspectSignal.connect(myslot)
     elif 1:
         w = Object3DScale()
-        qt.QObject.connect(w,
-                       qt.SIGNAL('Object3DScaleSignal'),
-                       myslot)
+        w.sigObject3DScaleSignal.connect(myslot)
     w.show()    
     app.exec_()

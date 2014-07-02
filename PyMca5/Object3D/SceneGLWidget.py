@@ -44,6 +44,12 @@ DEBUG = 0
 SCENE_MATRIX = True
 
 class SceneGLWidget(qt.QGLWidget):
+
+    sigScaleChanged = qt.pyqtSignal(object)
+    sigObjectSelected = qt.pyqtSignal(object)
+    sigVertexSelected = qt.pyqtSignal(object)
+    sigMouseMoved = qt.pyqtSignal(object)
+    
     def __init__(self, parent = None, scene=None):
         #qt.QGLWidget.__init__(self, qt.QGLFormat(qt.QGL.SampleBuffers), parent)
         qt.QGLWidget.__init__(self, parent)
@@ -140,7 +146,7 @@ class SceneGLWidget(qt.QGLWidget):
 
     def setScale(self, value):
         self.scale = value
-        self.emit(qt.SIGNAL("scaleChanged"), value)
+        self.sigScaleChanged.emit(value)
         self.cacheUpdateGL()
         
     def setZoomFactor(self, value):
@@ -1057,9 +1063,9 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             self.scene.setSelectedObject(ddict['legend'])
 
             if not self.__outOfSelectMode:
-                self.emit(qt.SIGNAL('objectSelected'), ddict)
+                self.sigObjectSelected.emit(ddict)
             else:
-                print "no signal"
+                print("no signal")
 
             qt.QApplication.postEvent(self,
                               qt.QResizeEvent(qt.QSize(width,height),self.size()))
@@ -1091,7 +1097,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 ddict['info'] = txt
                 ddict['vertex'] = None
                 ddict['value']  = None
-                self.emit(qt.SIGNAL('vertexSelected'), ddict)
+                self.sigVertexSelected.emit(ddict)
                 return
 
             #print "glu pro before height correction",GLU.gluUnProject(x, y, 0.0)
@@ -1200,13 +1206,13 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                                     (values[0], values[1], values[2], values[3])
                 except:
                     ddict['info'] = "ERROR: %s" % (sys.exc_info()[1])
-            self.emit(qt.SIGNAL('vertexSelected'), ddict)
+            self.sigVertexSelected.emit(ddict)
 
     def mouseReleaseEvent(self, event):
         if DEBUG:
-            print "Release event = L", event.button() & qt.Qt.LeftButton
-            print "Release event = M", event.button() & qt.Qt.MidButton
-            print "Release event = R", event.button() & qt.Qt.RightButton
+            print("Release event = L", event.button() & qt.Qt.LeftButton)
+            print("Release event = M", event.button() & qt.Qt.MidButton)
+            print("Release event = R", event.button() & qt.Qt.RightButton)
         if self._objectSelectionMode:
             self.setCacheEnabled(True)
             return
@@ -1319,8 +1325,8 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             ddict['yselected'] = glY
             ddict['zselected'] = glZ                        
             if DEBUG:
-                print "Emitting mouseMoved signal", ddict
-            self.emit(qt.SIGNAL('mouseMoved'), ddict)
+                print("Emitting mouseMoved signal", ddict)
+            self.sigMouseMoved.emit(ddict)
         self.lastPos = qt.QPoint(event.pos())
 
     def cacheUpdateGL(self):
@@ -1396,16 +1402,16 @@ if __name__ == '__main__':
     window.setObjectSelectionMode(True)
     window.setZoomFactor(1)
     def mySlot(ddict):
-        print "Selected = ", ddict['legend']
-        print "Object %s selected" % ddict['legend']
+        print("Selected = ", ddict['legend'])
+        print("Object %s selected" % ddict['legend'])
         if ddict['legend'] in [None, 'Scene']:
-            print "Come on! It is not so difficult to hit one triangle"
+            print("Come on! It is not so difficult to hit one triangle")
             window.setZoomFactor(window.getZoomFactor() / 1.1)
         else:
             window.setZoomFactor(window.getZoomFactor() * 1.1)
             
-        print "NEW ZOOM = ", window.getZoomFactor()
-    qt.QObject.connect(window, qt.SIGNAL('objectSelected'), mySlot)
+        print("NEW ZOOM = ", window.getZoomFactor())
+    window.sigObjectSelected.connect(mySlot)
     window.show()
     sys.exit(app.exec_())
 

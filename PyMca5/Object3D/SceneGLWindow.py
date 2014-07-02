@@ -214,40 +214,29 @@ class SceneGLWindow(qt.QWidget):
             self.connectSceneControl()
             #self.manager.show()
             #self.sceneControl.show()
-            self.connect(self.manager,
-                         qt.SIGNAL('SceneManagerSignal'),
-                         self.sceneManagerSlot)
+            self.manager.sigSceneManagerSignal.connect(self.sceneManagerSlot)
         else:
             self.manager=weakref.proxy(manager)
     
         self.activeObject = None
 
-        self.connect(self.glWidget,
-                     qt.SIGNAL('objectSelected'),
-                     self.objectSelectedSlot)
+        self.glWidget.sigObjectSelected.connect(self.objectSelectedSlot)
 
-        self.connect(self.glWidget,
-                     qt.SIGNAL('vertexSelected'),
-                     self.vertexSelectedSlot)
+        self.glWidget.sigVertexSelected.connect(self.vertexSelectedSlot)
 
-        self.setWindowTitle(self.tr("Object3D Scene"))
+        self.setWindowTitle("Object3D Scene")
 
     def connectSceneControl(self):
         self.selectedObjectControl = self.sceneControl.selectedObjectControl
         self.sceneControl.updateView()
-        self.connect(self.sceneControl,
-                     qt.SIGNAL('SceneControlSignal'),
-                     self.sceneControlSlot)
-        self.connect(self.selectedObjectControl,
-                         qt.SIGNAL('Object3DConfigSignal'),
+        self.sceneControl.sigSceneControlSignal.connect(self.sceneControlSlot)
+        self.selectedObjectControl.sigObject3DConfigSignal.connect(\
                          self.objectControlSlot)
 
 
     def buildToolBar(self):
         self.toolBar = GLToolBar.GLToolBar(self)
-        self.connect(self.toolBar,
-                     qt.SIGNAL('GLToolBarSignal'),
-                     self.applyCube)
+        self.toolBar.sigGLToolBarSignal.connect(self.applyCube)
         IconDict = Object3DIcons.IconDict
         self.normalIcon = qt.QIcon(qt.QPixmap(IconDict["cursor_normal"]))
         self.sizeallIcon = qt.QIcon(qt.QPixmap(IconDict["cursor_sizeall"]))
@@ -507,8 +496,7 @@ class SceneGLWindow(qt.QWidget):
             print("objectSelectedSlot", ddict)
         if self.selectedObjectControl is None:
             self.selectedObjectControl = Object3DConfig.Object3DConfig()
-            self.connect(self.selectedObjectControl,
-                         qt.SIGNAL('Object3DConfigSignal'),
+            self.selectedObjectControl.sigObject3DConfigSignal.connect(\
                          self.objectControlSlot)
         # It is not necessary to show the manager
         if 0:

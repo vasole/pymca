@@ -95,6 +95,7 @@ class InfoLabel(qt.QGroupBox):
 
 
 class ColorFilter(qt.QGroupBox):
+    sigColorFilterSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Color Filter')
@@ -121,7 +122,7 @@ class ColorFilter(qt.QGroupBox):
         ddict = {}
         ddict['event']  = 'ColorFilterUpdated'
         ddict['colorfilter'] = self.__options.index(button.text()) 
-        self.emit(qt.SIGNAL('ColorFilterSignal'), ddict)
+        self.sigColorFilterSignal.emit(ddict)
 
     def setParameters(self, ddict=None):
         if ddict is None:
@@ -280,6 +281,6 @@ if __name__ == "__main__":
     def mySlot(ddict):
         print ddict
     w = Isosurfaces()
-    qt.QObject.connect(w, qt.SIGNAL('ColorFilterSignal'), mySlot)
+    #w.sigColorFilterSignal.connect(mySlot)
     w.show()    
     app.exec_()

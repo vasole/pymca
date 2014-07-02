@@ -34,6 +34,7 @@ import numpy
 DEBUG = 0
 
 class SceneCoordinates(qt.QWidget):
+    sigSceneCoordinatesSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
@@ -57,15 +58,10 @@ class SceneCoordinates(qt.QWidget):
         #self.mainLayout.setRowStretch(1, 1)
 
         #connections
-        self.connect(self.limitsWidget,
-                     qt.SIGNAL('SceneLimitsSignal'),
-                     self._emitSignal)
-        self.connect(self.observerWidget,
-                     qt.SIGNAL('ObserverPositionSignal'),
-                     self._emitSignal)
-        self.connect(self.axesVectorsWidget,
-                     qt.SIGNAL('SceneAxesVectorsSignal'),
-                     self._emitSignal)
+        self.limitsWidget.sigSceneLimitsSignal.connect(self._emitSignal)
+        self.observerWidget.sigObserverPositionSignal.connect(self._emitSignal)
+        self.axesVectorsWidget.sigSceneAxesVectorsSignal.connect( \
+            self._emitSignal)
 
     def getParameters(self):
         ddict = self.limitsWidget.getParameters()
@@ -85,9 +81,10 @@ class SceneCoordinates(qt.QWidget):
             event = ddict['event']
         ddict = self.getParameters()
         ddict['event'] = event
-        self.emit(qt.SIGNAL('SceneCoordinatesSignal'), ddict)
+        self.sigSceneCoordinatesSignal.emit(ddict)
 
 class SceneAxesVectorsWidget(qt.QGroupBox):
+    sigSceneAxesVectorsSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Axes Vectors')
@@ -150,7 +147,7 @@ class SceneAxesVectorsWidget(qt.QGroupBox):
     def _emitSignal(self):
         ddict = self.getParameters()
         ddict['event'] = 'SceneAxesVectorsChanged'               
-        self.emit(qt.SIGNAL('SceneAxesVectorsSignal'), ddict)
+        self.sigSceneAxesVectorsSignal.emit(ddict)
 
     def getParameters(self):
         ddict = {}
@@ -181,6 +178,7 @@ class SceneAxesVectorsWidget(qt.QGroupBox):
 
 
 class SceneLimitsWidget(qt.QGroupBox):
+    sigSceneLimitsSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Visual Volume')
@@ -340,7 +338,7 @@ class SceneLimitsWidget(qt.QGroupBox):
     def _emitSignal(self):
         ddict = self.getParameters()
         ddict['event'] = 'SceneLimitsChanged'               
-        self.emit(qt.SIGNAL('SceneLimitsSignal'), ddict)
+        self.sigSceneLimitsSignal.emit(ddict)
 
     def __xCenterChanged(self):
         self.__updateFromCenterAndDelta(0)
@@ -458,6 +456,7 @@ class ViewOrientationWidget(qt.QGroupBox):
   
 
 class ObserverPositionWidget(qt.QGroupBox):
+    sigObserverPositionSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Observer Position')
@@ -518,7 +517,7 @@ class ObserverPositionWidget(qt.QGroupBox):
     def _emitSignal(self):
         ddict = self.getParameters()
         ddict['event'] = 'ObserverPositionChanged'
-        self.emit(qt.SIGNAL('ObserverPositionSignal'), ddict)
+        self.sigObserverPositionSignal.emit(ddict)
 
 if __name__ == "__main__":
     app = qt.QApplication([])
@@ -527,5 +526,5 @@ if __name__ == "__main__":
     def slot(ddict):
         for key in ddict:
             print("Key = %s key Content = %s" % (key, ddict[key]))
-    qt.QObject.connect(w, qt.SIGNAL('SceneCoordinatesSignal'),slot)
+    w.sigSceneCoordinatesSignal.connect(slot)
     app.exec_()

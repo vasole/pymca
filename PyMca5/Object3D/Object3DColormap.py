@@ -33,6 +33,7 @@ import Object3DSlider
 DEBUG = 0
 
 class Object3DColormap(qt.QGroupBox):
+    sigObject3DColormapSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Colormap')
@@ -236,7 +237,7 @@ class Object3DColormap(qt.QGroupBox):
             print("sending colormap")
         ddict = self.getParameters()
         ddict['event'] = event
-        self.emit(qt.SIGNAL("Object3DColormapSignal"),ddict)
+        self.sigObject3DColormapSignal.emit(ddict)
 
     def setAutoscale(self, val):
         if DEBUG:
@@ -343,7 +344,7 @@ def test():
     def slot(ddict):
         print("ddict= ", ddict)
     demo = Object3DColormap()
-    qt.QObject.connect(demo, qt.SIGNAL("Object3DColormapSignal"),slot)
+    demo.sigObject3DColormapSignal.connect(slot)
     demo.show()
     app.exec_()
 

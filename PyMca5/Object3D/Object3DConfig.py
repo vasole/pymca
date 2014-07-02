@@ -34,6 +34,7 @@ import Object3DColormap
 from VerticalSpacer import VerticalSpacer
 
 class Object3DConfig(qt.QWidget):
+    sigObject3DConfigSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
@@ -68,21 +69,15 @@ class Object3DConfig(qt.QWidget):
 
         self.mainLayout.addWidget(self.mainTab)
 
-        self.connect(self.movementsWidget,
-                     qt.SIGNAL('Object3DMovementSignal'),
+        self.movementsWidget.sigObject3DMovementSignal.connect(\
                      self._movementsSlot)
-        self.connect(self.scaleWidget,
-                     qt.SIGNAL('Object3DScaleSignal'),
+        self.scaleWidget.sigObject3DScaleSignal.connect(\
                      self._scaleSlot)
-        self.connect(self.propertiesWidget,
-                     qt.SIGNAL('Object3DPropertiesSignal'),
+        self.propertiesWidget.sigObject3DPropertiesSignal.connect(\
                      self._propertiesSlot)
-        self.connect(self.clippingPlaneWidget,
-                     qt.SIGNAL('ClippingPlaneWidgetSignal'),
+        self.clippingPlaneWidget.sigClippingPlaneWidgetSignal.connect(\
                      self._clippingPlaneSlot)
-
-        self.connect(self.colormapWidget,
-                     qt.SIGNAL('Object3DColormapSignal'),
+        self.colormapWidget.sigObject3DColormapSignal.connect(\
                      self._colormapSlot)
 
     def _movementsSlot(self, ddict0):
@@ -128,7 +123,7 @@ class Object3DConfig(qt.QWidget):
         self._signal(ddict)
 
     def _signal(self, ddict):
-        self.emit(qt.SIGNAL('Object3DConfigSignal'), ddict)
+        self.sigObject3DConfigSignal.emit(ddict)
 
     def getConfiguration(self):
         ddict = self.propertiesWidget.getParameters()
@@ -153,8 +148,6 @@ if __name__ == "__main__":
         print("dict = ", ddict)
 
     w = Object3DConfig()
-    qt.QObject.connect(w,
-                       qt.SIGNAL('Object3DConfigSignal'),
-                       myslot)
+    w.sigObject3DConfigSignal.connect(myslot)
     w.show()    
     app.exec_()

@@ -64,6 +64,8 @@ class ToolBar(GLToolBar.GLToolBar):
         self.glWindow.glWidget.setCurrentViewPosition(position)
 
 class SceneManager(qt.QWidget):
+    sigSceneManagerSignal = qt.pyqtSignal(object)
+    
     def __init__(self, parent=None, glwindow=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle('Scene Manager')
@@ -125,7 +127,7 @@ class SceneManager(qt.QWidget):
         ddict['event'] = 'configurationLoaded'
         ddict['object'] = None
         ddict['legend'] = None
-        self.emit(qt.SIGNAL('SceneManagerSignal'), ddict)
+        self.sigSceneManagerSignal.emit(ddict)
         
     def saveConfiguration(self):
         wdir = Object3DDirs.outputDir
@@ -150,12 +152,11 @@ class SceneManager(qt.QWidget):
         ddict['event'] = 'addObject'
         ddict['object'] = None
         ddict['legend'] = None
-        self.emit(qt.SIGNAL('SceneManagerSignal'), ddict)
+        self.sigSceneManagerSignal.emit(ddict)
 
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = SceneManager()
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     w.show()
     app.exec_()
