@@ -1,10 +1,5 @@
-This is the GPL version of the PyMca XRF Toolkit.
-Please read the LICENSE.GPL file to know what that means.
-
-That license grants you the rights to distribute this code under
-the same license conditions. Nevertheless, you should keep using
-sourceforge or the ESRF for downloading in order to keep up-to-date.
-
+This is the MIT version of the PyMca XRF Toolkit.
+Please read the LICENSE file to know what that means.
 
 INSTALLATION
 
@@ -50,14 +45,15 @@ You will need:
 If you want to use the graphical interfaces provided, you will need a running
 python installation with:
 
-- PyQt4 + matplotlib
+- PyQt4 + matplotlib (PyMca license will be GPL unless you have a commercial PyQt4 license)
+- PySide + matplotlib (PyMca license will be MIT because PySide is LGPL)
 
-If you want to embed PyMca in your own PyQt application, I recommend you to use
+If you want to embed PyMca in your own graphical applications, I recommend you to use
 the McaAdvancedFit.py module. It is very easy to embed.
 
 DEVELOPMENT PLANS
 
-- Port all Physics to C++ under a more permissive license
+- Port all Physics to C++
 
 - Include analytical secondary excitation corrections in multilayers.
 

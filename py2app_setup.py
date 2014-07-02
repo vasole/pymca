@@ -1,5 +1,5 @@
 #
-# These Python module have been developed by V.A. Sole, from the European
+# These Python modules have been developed by V.A. Sole, from the European
 # Synchrotron Radiation Facility (ESRF) to build a frozen version of PyMca.
 # Given the nature of this work, these module can be considered public domain. 
 # Therefore redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ os.system("/bin/rm -rf *.pyc")
 BUNDLE_ICON = os.path.join(os.path.abspath('icons'), 'PyMca.icns')
 
 #obtain the current PyMca version from the source file
-ffile = open(os.path.join('PyMca', 'PyMcaMain.py'), 'r').readlines()
+ffile = open(os.path.join('PyMca5', 'PyMcaGui','pymca','PyMcaMain.py'), 'r').readlines()
 for line in ffile:
     if line.startswith('__version__'):
         #remove spaces and split
@@ -47,7 +47,7 @@ for line in ffile:
         break
 
 PyMcaInstallationDir = os.path.abspath("build")
-PyMcaDir = os.path.join(PyMcaInstallationDir, "PyMca")
+PyMcaDir = os.path.join(PyMcaInstallationDir, "PyMca5")
 #make sure PyMca is freshly built
 cmd = "python setup.py install --install-lib %s --install-scripts /tmp" % PyMcaInstallationDir
 if os.system(cmd):
@@ -58,12 +58,12 @@ if os.system(cmd):
 os.chdir(PyMcaInstallationDir)
 sys.path.insert(0, PyMcaInstallationDir)
 pymcapath = PyMcaDir
-application=os.path.join(pymcapath, "PyMcaMain.py")
+application=os.path.join(pymcapath, 'PyMcaGui','pymca', "PyMcaMain.py")
 
 #The options below are equivalent to running from the command line
 #python py2app_setup.py py2app --packages=matplotlib,ctypes,h5py,Object3D
 #probably matplotlib and PyOpenGL are properly detected by py2app
-PACKAGES = ['h5py','OpenGL','ctypes','matplotlib','logging', 'PyMca']
+PACKAGES = ['h5py','OpenGL','ctypes','matplotlib','logging', 'PyMca5']
 try:
     import mdp
     PACKAGES.append('mdp')
