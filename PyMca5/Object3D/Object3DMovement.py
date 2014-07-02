@@ -170,9 +170,7 @@ class Object3DTranslationWidget(qt.QGroupBox):
             self.l.addWidget(slider, i, 1)
             self.l.setAlignment(slider, qt.Qt.AlignHCenter)
             self.spinBoxList.append(slider)
-            self.connect(slider,
-                         qt.SIGNAL('valueChanged(double)'),
-                         self._slot)
+            slider.valueChanged[float].connect(self._slot)
             i += 1
         self.l.setRowStretch(0, 0)
         self.l.setRowStretch(1, 1)
@@ -239,18 +237,14 @@ class Object3DRotationWidget(qt.QGroupBox):
             self.l.addWidget(slider, i, j)
             self.l.setAlignment(slider, qt.Qt.AlignHCenter)
             self.spinList.append(slider)
-            self.connect(slider,
-                         qt.SIGNAL('valueChanged(int)'),
-                         self._slot)
+            slider.valueChanged[int].connect(self._slot)
             lineEdit = qt.QLineEdit(self)
             v = qt.QDoubleValidator(lineEdit)
             lineEdit.setValidator(v)
             self.validatorList.append(v)
             self.l.addWidget(lineEdit, i+1, j)
             self.lineEditList.append(lineEdit)
-            self.connect(lineEdit,
-                         qt.SIGNAL('editingFinished()'),
-                         self._lineSlot)
+            lineEdit.editingFinished.connect(self._lineSlot)
             j += 1
         """
         self.l.setRowStretch(0, 0)
@@ -370,10 +364,10 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     def myslot(ddict):
-        print "Signal received"
-        print "Anchor      = ", ddict['anchor']
-        print "Translation = ", ddict['translation']
-        print "Rotation    = ", ddict['rotation']
+        print("Signal received")
+        print("Anchor      = ", ddict['anchor'])
+        print("Translation = ", ddict['translation'])
+        print("Rotation    = ", ddict['rotation'])
 
     w = Object3DMovement()
     qt.QObject.connect(w,

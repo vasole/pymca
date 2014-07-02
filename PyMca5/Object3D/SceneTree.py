@@ -141,21 +141,10 @@ class Object3DObjectTree(qt.QGroupBox):
         self.__previous= None
         self.__cutObject = None
         self.__replacing = False
-        self.connect(self.actions.cutButton,
-                     qt.SIGNAL('clicked()'),
-                     self.cutObject)
-
-        self.connect(self.actions.pasteButton,
-                     qt.SIGNAL('clicked()'),
-                     self.pasteObject)
-
-        self.connect(self.actions.deleteButton,
-                     qt.SIGNAL('clicked()'),
-                     self.deleteObject)
-
-        self.connect(self.actions.replaceButton,
-                     qt.SIGNAL('clicked()'),
-                     self.replaceWithObject)
+        self.actions.cutButton.clicked.connect(self.cutObject)
+        self.actions.pasteButton.clicked.connect(self.pasteObject)
+        self.actions.deleteButton.clicked.connect(self.deleteObject)
+        self.actions.replaceButton.clicked.connect(self.replaceWithObject)
 
         self.connect(self.treeWidget,
             qt.SIGNAL('currentItemChanged( QTreeWidgetItem *, QTreeWidgetItem *)'),
@@ -384,8 +373,7 @@ class ObjectActions(qt.QGroupBox):
 if __name__ == "__main__":
     import Object3DBase
     app = qt.QApplication([])
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     o0 = Object3DBase.Object3D("DummyObject0")
     o1 = Object3DBase.Object3D("DummyObject1")
     o01 = Object3DBase.Object3D("DummyObject01")

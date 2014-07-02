@@ -1344,61 +1344,55 @@ IconDict= {'cube_bottom':image_cubeBo_data,
            'cube_front' :image_cubeF_data,
            'cube_back' :image_cubeBa_data,
            'cube_45' :image_cube45_data,
-	   'cursor_closedhand': cursor_closedhand,
-	   'cursor_normal': cursor_normal,
-	   'cursor_openhand': cursor_openhand,
-	   'cursor_pointinghand': cursor_pointinghand,
-	   'cursor_sizeall':cursor_sizeall, 
+           'cursor_closedhand': cursor_closedhand,
+           'cursor_normal': cursor_normal,
+           'cursor_openhand': cursor_openhand,
+           'cursor_pointinghand': cursor_pointinghand,
+           'cursor_sizeall':cursor_sizeall, 
            'cursor_what': cursor_what,
-	   'cut': image_cut_data,
-	   'copy': image_copy_data,
-	   'delete': image_delete_data,
-	   'paste': image_paste_data,
-	   'print': image_print_data,
-	   'play': icon_play,
-	   'playr': icon_playr,
-	   'stop': icon_stop,
-	   'pause': icon_pause,
-	   'file_open': file_open,
-	   'file_save': file_save,
+           'cut': image_cut_data,
+           'copy': image_copy_data,
+           'delete': image_delete_data,
+           'paste': image_paste_data,
+           'print': image_print_data,
+           'play': icon_play,
+           'playr': icon_playr,
+           'stop': icon_stop,
+           'pause': icon_pause,
+           'file_open': file_open,
+           'file_save': file_save,
 }
 
 
-
-
-
 def showIcons():
-    	import sys
-	if 'qt'not in sys.modules:
-            try:
-                import Object3DQt as qt
-            except:
-                import qt
-        else:
-        	import qt
+    import sys
+    if 'qt'not in sys.modules:
+        try:
+            import Object3DQt as qt
+        except:
+            import qt
+    else:
+        import qt
 
-	a= qt.QApplication(sys.argv)
-	a.connect(a, qt.SIGNAL("lastWindowClosed()"), a.quit)
-	w= qt.QWidget()
-	g= qt.QGridLayout(w)
+    a= qt.QApplication(sys.argv)
+    a.lastWindowClosed.connect(a.quit)
+    w= qt.QWidget()
+    g= qt.QGridLayout(w)
 
-	idx= 0
-	for name,icon in IconDict.items():
-		#print "name",name
-		lab= qt.QLabel(w)
-		lab.setText(str(name))
-		g.addWidget(lab, idx, 0)
-		lab= qt.QLabel(w)
-		lab.setPixmap(qt.QPixmap(icon))
-		g.addWidget(lab, idx, 1)
-		idx+= 1
+    idx= 0
+    for name,icon in IconDict.items():
+        #print "name",name
+        lab= qt.QLabel(w)
+        lab.setText(str(name))
+        g.addWidget(lab, idx, 0)
+        lab= qt.QLabel(w)
+        lab.setPixmap(qt.QPixmap(icon))
+        g.addWidget(lab, idx, 1)
+        idx+= 1
 
-	w.show()
-	if qt.qVersion () < '4.0.0':
-        	a.exec_loop()
-        else:
-                a.exec_()
+    w.show()
+    a.exec_()
 
 if __name__=='__main__':
-	showIcons()
+    showIcons()
 

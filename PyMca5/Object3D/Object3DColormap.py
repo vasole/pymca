@@ -65,17 +65,13 @@ class Object3DColormap(qt.QGroupBox):
             self.comboBox.addItem(colormap)
 
         self.mainLayout.addWidget(self.comboBox, 0, 0)
-        self.connect(self.comboBox,
-                     qt.SIGNAL("activated(int)"),
-                     self.colormapChanged)
+        self.comboBox.activated[int].connect(self.colormapChanged)
 
         # autoscale
         self.autoScaleButton = qt.QPushButton("Autoscale", self)
         self.autoScaleButton.setCheckable(True)
         self.autoScaleButton.setAutoDefault(False)    
-        self.connect(self.autoScaleButton,
-                     qt.SIGNAL("toggled(bool)"),
-                     self.autoscaleChanged)
+        self.autoScaleButton.toggled[bool].connect(self.autoscaleChanged)
         self.mainLayout.addWidget(self.autoScaleButton, 0, 1)
 
         # autoscale 90%
@@ -83,9 +79,7 @@ class Object3DColormap(qt.QGroupBox):
         self.autoScale90Button.setCheckable(True)
         self.autoScale90Button.setAutoDefault(False)    
                 
-        self.connect(self.autoScale90Button,
-                     qt.SIGNAL("toggled(bool)"),
-                     self.autoscale90Changed)
+        self.autoScale90Button.toggled[bool].connect(self.autoscale90Changed)
         
         self.mainLayout.addWidget(self.autoScale90Button, 0, 2)
 
@@ -110,9 +104,7 @@ class Object3DColormap(qt.QGroupBox):
         self.mainLayout.addWidget(g1, 1, 0)
         self.mainLayout.addWidget(g2, 1, 1)
         self.mainLayout.addWidget(g3, 1, 2)
-        self.connect(self.buttonGroup,
-                         qt.SIGNAL("buttonClicked(int)"),
-                         self.buttonGroupChanged)
+        self.buttonGroup.buttonClicked[int].connect(self.buttonGroupChanged)
 
         # The max line
         label = qt.QLabel(self)
@@ -125,9 +117,8 @@ class Object3DColormap(qt.QGroupBox):
         self.maxText.setValidator(v)
         self.mainLayout.addWidget(label, 0, 3)
         self.mainLayout.addWidget(self.maxText, 0, 4)
-        self.connect(self.maxText,
-                     qt.SIGNAL("editingFinished()"),
-                     self.textChanged)
+        self.maxText.editingFinished.connect(self.textChanged)
+
         # The min line
         label = qt.QLabel(self)
         label.setText('Minimum')
@@ -139,9 +130,7 @@ class Object3DColormap(qt.QGroupBox):
         self.minText.setValidator(v)
         self.mainLayout.addWidget(label, 1, 3)
         self.mainLayout.addWidget(self.minText, 1, 4)
-        self.connect(self.minText,
-                     qt.SIGNAL("editingFinished()"),
-                     self.textChanged)
+        self.minText.editingFinished.connect(self.textChanged)
 
         # The sliders
         self.dataMin   = -10
@@ -211,7 +200,7 @@ class Object3DColormap(qt.QGroupBox):
         if self.__disconnected:
             return
         if DEBUG:
-            print "sliderChanged"
+            print("sliderChanged")
         value0 = self.sliderList[0].value()
         value1 = self.sliderList[1].value()
         self.maxText.setText("%f" % max(value0, value1))
@@ -222,7 +211,8 @@ class Object3DColormap(qt.QGroupBox):
         self._emitSignal()
 
     def _update(self):
-        if DEBUG: print "colormap _update called"
+        if DEBUG:
+            print("colormap _update called")
         self.__disconnected = True
         delta = (self.dataMax - self.dataMin)/ 200.
         self.sliderList[0].setRange(self.dataMin, self.dataMax, delta)
@@ -238,16 +228,19 @@ class Object3DColormap(qt.QGroupBox):
         self.__disconnected = False
 
     def _emitSignal(self, event = None):
-        if self.__disconnected:return
-        if event is None:event = 'ColormapChanged'
-        if DEBUG:print "sending colormap"
+        if self.__disconnected:
+            return
+        if event is None:
+            event = 'ColormapChanged'
+        if DEBUG:
+            print("sending colormap")
         ddict = self.getParameters()
         ddict['event'] = event
         self.emit(qt.SIGNAL("Object3DColormapSignal"),ddict)
 
     def setAutoscale(self, val):
         if DEBUG:
-            print "setAutoscale called", val
+            print("setAutoscale called", val)
         if val:
             self.autoScaleButton.setChecked(True)
             self.autoScale90Button.setChecked(False)
@@ -345,10 +338,10 @@ class Object3DColormap(qt.QGroupBox):
 
 def test():
     app = qt.QApplication(sys.argv)
-    app.connect(app,qt.SIGNAL("lastWindowClosed()"), app.quit)
+    app.lastWindowClosed.connect(app.quit)
 
     def slot(ddict):
-        print "ddict= ", ddict
+        print("ddict= ", ddict)
     demo = Object3DColormap()
     qt.QObject.connect(demo, qt.SIGNAL("Object3DColormapSignal"),slot)
     demo.show()

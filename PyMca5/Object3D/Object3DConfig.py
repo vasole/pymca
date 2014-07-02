@@ -149,8 +149,8 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     def myslot(ddict):
-        print "Signal received"
-        print "dict = ", ddict
+        print("Signal received")
+        print("dict = ", ddict)
 
     w = Object3DConfig()
     qt.QObject.connect(w,
