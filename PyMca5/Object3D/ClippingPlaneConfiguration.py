@@ -97,9 +97,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
         self.planeList[2][4].setReadOnly(False)
 
         for i in range(3):
-            self.connect(self.planeList[i][4],
-                         qt.SIGNAL('editingFinished()'),
-                         self._lineSlot)
+            self.planeList[i][4].editingFinished.connect(self._lineSlot)
         for p in self.planeList:
             i += 1
             for j in range(len(p)):

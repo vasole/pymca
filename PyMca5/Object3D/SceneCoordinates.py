@@ -212,9 +212,7 @@ class SceneLimitsWidget(qt.QGroupBox):
             l.setValidator(l._v)
             self._entryList.append(l)
             self.mainLayout.addWidget(l, i, 1)
-            self.connect(l,
-                         qt.SIGNAL('editingFinished()'),
-                         self._emitSignal)
+            l.editingFinished.connect(self._emitSignal)
             
             l = qt.QLabel(self)
             l.setText("%s Max:" % t)
@@ -225,9 +223,7 @@ class SceneLimitsWidget(qt.QGroupBox):
             l.setValidator(l._v)
             self._entryList.append(l)
             self.mainLayout.addWidget(l, i, 3)
-            self.connect(l,
-                         qt.SIGNAL('editingFinished()'),
-                         self._emitSignal)
+            l.editingFinished.connect(self._emitSignal)
 
             l = qt.QLabel(self)
             l.setText("%s Center:" % t)
@@ -240,17 +236,11 @@ class SceneLimitsWidget(qt.QGroupBox):
             self.mainLayout.addWidget(l, i, 5)
 
             if i == 0:  
-                self.connect(l,
-                         qt.SIGNAL('editingFinished()'),
-                         self.__xCenterChanged)
+                l.editingFinished.connect(self.__xCenterChanged)
             elif i == 1:
-                self.connect(l,
-                         qt.SIGNAL('editingFinished()'),
-                         self.__yCenterChanged)
+                l.editingFinished.connect(self.__yCenterChanged)
             else:
-                self.connect(l,
-                         qt.SIGNAL('editingFinished()'),
-                         self.__zCenterChanged)
+                l.editingFinished.connect(self.__zCenterChanged)
 
             l = qt.QLabel(self)
             l.setText("%s Delta:" % t)
@@ -261,17 +251,11 @@ class SceneLimitsWidget(qt.QGroupBox):
             l.setValidator(l._v)
             self._deltaList.append(l)
             if i == 0:  
-                self.connect(l,
-                         qt.SIGNAL('editingFinished()'),
-                         self.__xDeltaChanged)
+                l.editingFinished.connect(self.__xDeltaChanged)
             elif i == 1:
-                self.connect(l,
-                         qt.SIGNAL('editingFinished()'),
-                         self.__yDeltaChanged)
+                l.editingFinished.connect(self.__yDeltaChanged)
             else:
-                self.connect(l,
-                         qt.SIGNAL('editingFinished()'),
-                         self.__zDeltaChanged)
+                l.editingFinished.connect(self.__zDeltaChanged)
 
             self.mainLayout.addWidget(l, i, 7)
             i += 1
@@ -498,9 +482,7 @@ class ObserverPositionWidget(qt.QGroupBox):
             l.setValidator(l._v)
             self._entryList.append(l)
             self.mainLayout.addWidget(l, i, 1)
-            self.connect(l,
-                         qt.SIGNAL('editingFinished()'),
-                         self._emitSignal)
+            l.editingFinished.connect(self._emitSignal)
             i += 1
         self._autoCheckBox = qt.QCheckBox(self)
         self._autoCheckBox.setText('Automatic')
