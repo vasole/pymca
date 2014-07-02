@@ -1129,7 +1129,7 @@ static PyObject *draw2DGridQuads(PyObject *self, PyObject *args)
 						py++;
 						continue;
 					}
-					glVertex3f(*(px+1), *py, *(pz+(k+ySize)));		
+					glVertex3f(*(px+1), *py, *(pz+(k+ySize)));
 					/* face x1y1 */
 					if ((*(pv+(k+ySize+1)) < vMin) || (*(pv+(k+ySize+1)) > vMax)){
 						/* do not plot */
@@ -1165,7 +1165,7 @@ static PyObject *draw2DGridQuads(PyObject *self, PyObject *args)
 					k = i * ySize + j;
 					glVertex3f(*px, *py, *(pz+k));
 					/* face x1y0 */
-					glVertex3f(*(px+1), *py, *(pz+(k+ySize)));		
+					glVertex3f(*(px+1), *py, *(pz+(k+ySize)));
 					/* face x1y1 */
 					glVertex3f(*(px+1), *(py+1), *(pz+(k+ySize+1)));
 					/* face x0y1 */
@@ -1284,7 +1284,7 @@ static PyObject *draw2DGridQuads(PyObject *self, PyObject *args)
 						continue;
 					}
 					glColor4ubv((pc+cidx));
-					glVertex3f(*(px+1), *py, *(pz+(k+ySize)));		
+					glVertex3f(*(px+1), *py, *(pz+(k+ySize)));
 					/* face x1y1 */
 					cidx = coffset+ 4*ySize+4;
 					if ((*(pv+(k+ySize+1)) < vMin) || (*(pv+(k+ySize+1)) > vMax)){
@@ -1329,7 +1329,7 @@ static PyObject *draw2DGridQuads(PyObject *self, PyObject *args)
 					/* face x1y0 */
 					cidx = coffset+4*ySize;
 					glColor4ubv((pc+cidx));
-					glVertex3f(*(px+1), *py, *(pz+(k+ySize)));		
+					glVertex3f(*(px+1), *py, *(pz+(k+ySize)));
 					/* face x1y1 */
 					cidx = coffset+ 4*ySize+4;
 					glColor4ubv((pc+cidx));
@@ -1387,7 +1387,7 @@ static PyObject *draw3DGridPoints(PyObject *self, PyObject *args)
 
 	VertexArray		*vertexArrayGL=NULL, *pVAGL;
 	ColorArray		*colorArrayGL=NULL,  *pCAGL;
-	GLuint			*indexArray=NULL,  *pIA; 
+	GLuint			*indexArray=NULL,  *pIA;
 
 	GLint			maxElementsVertices=4096; /* 256 * 256 * 256 in my card */
 	GLint			maxElementsIndices=4096;  /* 65535 in my card */
@@ -1617,7 +1617,7 @@ static PyObject *draw3DGridPoints(PyObject *self, PyObject *args)
 							GL_UNSIGNED_INT, pIA);
 			}
 			glDisableClientState(GL_COLOR_ARRAY);
-			glDisableClientState(GL_VERTEX_ARRAY);		
+			glDisableClientState(GL_VERTEX_ARRAY);
 		}else if (1 && (indexArray != NULL) && (vertexArrayGL != NULL) && (colorArrayGL != NULL)){
 			pVAGL = vertexArrayGL;
 			glVertexPointer(3, GL_FLOAT, 0, vertexArrayGL);
@@ -1638,7 +1638,7 @@ static PyObject *draw3DGridPoints(PyObject *self, PyObject *args)
 						if (index == maxElements){
 							pIA = indexArray;
 							pVAGL = vertexArrayGL;
-							memcpy(colorArrayGL, (pc+(4*indexOffset)), (4*index));   
+							memcpy(colorArrayGL, (pc+(4*indexOffset)), (4*index));
 							glDrawArrays(GL_POINTS, 0, index);
 							indexOffset+=index;
 							index=0;
@@ -1654,11 +1654,11 @@ static PyObject *draw3DGridPoints(PyObject *self, PyObject *args)
 			}
 			if(index > 0)
 			{
-				memcpy(colorArrayGL, (pc+(4*indexOffset)), (4*index));   
+				memcpy(colorArrayGL, (pc+(4*indexOffset)), (4*index));
 				glDrawArrays(GL_POINTS, 0, index);
 			}
 			glDisableClientState(GL_COLOR_ARRAY);
-			glDisableClientState(GL_VERTEX_ARRAY);		
+			glDisableClientState(GL_VERTEX_ARRAY);
 		}else{
 			glBegin(GL_POINTS);
 			px = (float *) xArray->data;
@@ -2035,11 +2035,11 @@ static PyObject *draw3DGridQuads(PyObject *self, PyObject *args)
 						}
 
 						/* vertex x0y0 */
-						glVertex3f(*px, *py, *pz);	
+						glVertex3f(*px, *py, *pz);
 						/* vertex x1y0 */
-						glVertex3f(*(px+1), *py, *pz);		
+						glVertex3f(*(px+1), *py, *pz);
 						/* vertex x1y1 */
-						glVertex3f(*(px+1), *(py+1), *pz);	
+						glVertex3f(*(px+1), *(py+1), *pz);
 						/* vertex x0y1 */
 						glVertex3f(*(px), *(py+1), *pz);
 						py++;
@@ -2060,11 +2060,11 @@ static PyObject *draw3DGridQuads(PyObject *self, PyObject *args)
 					py = (float *) yArray->data;
 					for (j=0; j<(ySize-1); j++){
 						/* face x0y0 */
-						glVertex3f(*px, *py, *pz);	
+						glVertex3f(*px, *py, *pz);
 						/* face x1y0 */
-						glVertex3f(*(px+1), *py, *pz);		
+						glVertex3f(*(px+1), *py, *pz);
 						/* face x1y1 */
-						glVertex3f(*(px+1), *(py+1), *pz);	
+						glVertex3f(*(px+1), *(py+1), *pz);
 						/* face x0y1 */
 						glVertex3f(*(px), *(py+1), *pz);
 						py++;
@@ -2115,7 +2115,7 @@ static PyObject *draw3DGridQuads(PyObject *self, PyObject *args)
 							continue;
 						}
 						glColor4ubv(pc);
-						glVertex3f(*(px+1), *py, *pz);		
+						glVertex3f(*(px+1), *py, *pz);
 						pc -= cidx,
 
 						/* vertex x1y1 */
@@ -2130,7 +2130,7 @@ static PyObject *draw3DGridQuads(PyObject *self, PyObject *args)
 							continue;
 						}
 						glColor4ubv(pc);
-						glVertex3f(*(px+1), *(py+1), *pz);	
+						glVertex3f(*(px+1), *(py+1), *pz);
 						pc -= cidx,
 
 						/* vertex x0y1 */
@@ -2197,15 +2197,15 @@ static PyObject *draw3DGridQuads(PyObject *self, PyObject *args)
 						coffset = 4 * (i * deltaX + j * zSize + k);
 						cidx = coffset;
 						glColor4ubv((pc+cidx));
-						glVertex3f(*px, *py, *pz);	
+						glVertex3f(*px, *py, *pz);
 						/* vertex x1y0 */
 						cidx = coffset+4*deltaX;
 						glColor4ubv((pc+cidx));
-						glVertex3f(*(px+1), *py, *pz);		
+						glVertex3f(*(px+1), *py, *pz);
 						/* vertex x1y1 */
 						cidx = coffset+ 4*deltaX + 4*zSize;
 						glColor4ubv((pc+cidx));
-						glVertex3f(*(px+1), *(py+1), *pz);	
+						glVertex3f(*(px+1), *(py+1), *pz);
 						/* vertex x0y1 */
 						cidx = coffset + 4*zSize;
 						glColor4ubv((pc+cidx));
@@ -2231,15 +2231,15 @@ static PyObject *draw3DGridQuads(PyObject *self, PyObject *args)
 						coffset = 4 * (i * deltaX + j * zSize + k);
 						cidx = coffset;
 						glColor4ubv((pc+cidx));
-						glVertex3f(*px, *py, *pz);	
+						glVertex3f(*px, *py, *pz);
 						/* vertex x1y0 */
 						cidx = coffset+4*deltaX;
 						glColor4ubv((pc+cidx));
-						glVertex3f(*(px+1), *py, *pz);		
+						glVertex3f(*(px+1), *py, *pz);
 						/* vertex x1y1 */
 						cidx = coffset+ 4*deltaX + 4*zSize;
 						glColor4ubv((pc+cidx));
-						glVertex3f(*(px+1), *(py+1), *pz);	
+						glVertex3f(*(px+1), *(py+1), *pz);
 						/* vertex x0y1 */
 						cidx = coffset + 4*zSize;
 						glColor4ubv((pc+cidx));
@@ -2805,7 +2805,7 @@ static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args)
 		if ((ySize > 1) && (ySize < (nVertices-1)))
 		{
 			if (nVertices % ySize){
-				/* not an integer */ 
+				/* not an integer */
 				Py_DECREF(vertexArray);
 				Py_INCREF(Py_None);
 				return(Py_None);
@@ -2822,7 +2822,7 @@ static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args)
 		if ((xSize > 1) && (xSize < (nVertices-1)))
 		{
 			if (nVertices % xSize){
-				/* not an integer */ 
+				/* not an integer */
 				Py_DECREF(vertexArray);
 				Py_INCREF(Py_None);
 				return(Py_None);
@@ -2982,7 +2982,7 @@ static PyObject *draw3DGridTexture(PyObject *dummy, PyObject *args)
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
-    glTexImage3D(GL_TEXTURE_3D, 0, 2, 256, 256, 256, 0, GL_LUMINANCE_ALPHA, 
+    glTexImage3D(GL_TEXTURE_3D, 0, 2, 256, 256, 256, 0, GL_LUMINANCE_ALPHA,
                  GL_UNSIGNED_BYTE, _3Dbuff);
     glDisable(GL_TEXTURE_3D);
   }
@@ -3320,7 +3320,7 @@ static PyObject *getGridFacetsFromVertices(PyObject *self, PyObject *args)
 {
 	/* input parameters  */
 	PyObject *input1;
-	int	xsize, ysize;	
+	int	xsize, ysize;
 
 	PyArrayObject *inputArray;
 	PyArrayObject *result;
@@ -3335,7 +3335,7 @@ static PyObject *getGridFacetsFromVertices(PyObject *self, PyObject *args)
 
 	inputArray = (PyArrayObject *)
 				PyArray_ContiguousFromObject(input1, PyArray_FLOAT,0,0);
-	
+
 
     if (inputArray == NULL)
 	{
@@ -3367,7 +3367,7 @@ static PyObject *getGridFacetsFromVertices(PyObject *self, PyObject *args)
 				PyArray_FromDims(2, outputArrayDimensions, PyArray_FLOAT);
     if (result == NULL){
         Py_DECREF(inputArray);
-        return NULL;    
+        return NULL;
     }
 
 	resultP = (float *) result->data;
@@ -3469,7 +3469,7 @@ initObject3DCTools(void)
 	/* Create the module and add the functions */
 	/*(void) Py_InitModule("Object3DCTools", Object3DCToolsMethods);*/
 	m = Py_InitModule("Object3DCTools", Object3DCToolsMethods);
-  
+
 	/* Add some symbolic constants to the module */
 	d = PyModule_GetDict(m);
 
