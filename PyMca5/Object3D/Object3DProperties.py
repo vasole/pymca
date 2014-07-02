@@ -164,9 +164,8 @@ class Object3DAspect(qt.QGroupBox):
         # bounding box
         self.boundingBoxCheckBox = qt.QCheckBox(self)
         self.boundingBoxCheckBox.setText("Show bounding box")
-        self.connect(self.boundingBoxCheckBox,
-                                         qt.SIGNAL("stateChanged(int)"),
-                                         self._signal)
+        self.boundingBoxCheckBox.stateChanged[int].connect(self._signal)
+
         i = 0
         j = 2
         self.l.addWidget(self.boundingBoxCheckBox, i, j)
@@ -176,7 +175,7 @@ class Object3DAspect(qt.QGroupBox):
             checkBox = qt.QCheckBox(self)
             checkBox.setText('Show bbox %s limit' % t)
             self.l.addWidget(checkBox, i, j)
-            self.connect(checkBox, qt.SIGNAL("stateChanged(int)"), self._slot)
+            checkBox.stateChanged[int].connect(self._slot)
             self.showLimitsCheckBoxes.append(checkBox)
 
 
@@ -278,9 +277,7 @@ class Object3DScale(qt.QGroupBox):
             self.lineEditList.append(lineEdit)
             lineEdit.setText('1.0')
             lineEdit.setFixedWidth(lineEdit.fontMetrics().width('######.#####'))
-            self.connect(lineEdit,
-                         qt.SIGNAL('editingFinished()'),
-                         self._lineSlotList[i])
+            lineEdit.editingFinished.connect(self._lineSlotList[i])
             i+= 1
 
         # xScaling
@@ -468,9 +465,8 @@ class Object3DProperties(qt.QWidget):
                        qt.SIGNAL('Object3DAspectSignal'),
                        self._slot)
 
-        qt.QObject.connect(self.privateInterfaceWidget.button,
-                       qt.SIGNAL('clicked()'),
-                       self.showPrivateInterface)
+        self.privateInterfaceWidget.button.clicked[()].connect(\
+                            self.showPrivateInterface)
 
 
     def _slot(self, ddict):

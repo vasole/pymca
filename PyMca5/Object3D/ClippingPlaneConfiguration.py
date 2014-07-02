@@ -59,9 +59,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
             use = qt.QCheckBox(self)
             use.setText(item)
             vector = [use]
-            self.connect(use,
-                         qt.SIGNAL("clicked()"),
-                         self._signal)
+            use.clicked[()].connect(self._signal)
             for k in [0, 1, 2, 3]:
                 line = qt.QLineEdit(self)
                 line.setFixedWidth(line.fontMetrics().width('########'))

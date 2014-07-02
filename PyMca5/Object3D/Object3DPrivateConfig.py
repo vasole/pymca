@@ -57,7 +57,7 @@ class Object3DPrivateConfig(qt.QWidget):
         self.mainLayout.addWidget(self.button, 1, 1)
         self.mainLayout.addWidget(HorizontalSpacer(self), 1, 2)
         self.mainLayout.addWidget(VerticalSpacer(self), 2, 0, 1, 3)
-        self.connect(self.button, qt.SIGNAL('clicked()'), self.updateCallBack)
+        self.button.clicked[()].connect(self.updateCallBack)
 
     def setParameters(self, ddict):
         for key in ddict.keys():

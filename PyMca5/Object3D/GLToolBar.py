@@ -94,26 +94,13 @@ class GLToolBar(qt.QWidget):
         self.mainLayout.addWidget(self.cubeLeft)
         self.mainLayout.addWidget(self.cube45)
 
-        self.connect(self.cubeFront, qt.SIGNAL('clicked()'),
-                     self.cubeFrontSlot)
-
-        self.connect(self.cubeBack, qt.SIGNAL('clicked()'),
-                     self.cubeBackSlot)
-
-        self.connect(self.cubeTop, qt.SIGNAL('clicked()'),
-                     self.cubeTopSlot)
-
-        self.connect(self.cubeBottom, qt.SIGNAL('clicked()'),
-                     self.cubeBottomSlot)
-
-        self.connect(self.cubeRight, qt.SIGNAL('clicked()'),
-                     self.cubeRightSlot)
-
-        self.connect(self.cubeLeft, qt.SIGNAL('clicked()'),
-                     self.cubeLeftSlot)
-
-        self.connect(self.cube45, qt.SIGNAL('clicked()'),
-                     self.cube45Slot)
+        self.cubeFront.clicked[()].connect(self.cubeFrontSlot)
+        self.cubeBack.clicked[()].connect(self.cubeBackSlot)
+        self.cubeTop.clicked[()].connect(self.cubeTopSlot)
+        self.cubeBottom.clicked[()].connect(self.cubeBottomSlot)
+        self.cubeRight.clicked[()].connect(self.cubeRightSlot)
+        self.cubeLeft.clicked[()].connect(self.cubeLeftSlot)
+        self.cube45.clicked[()].connect(self.cube45Slot)
 
     def cubeFrontSlot(self):
         self.applyCube('front')
@@ -146,7 +133,6 @@ class GLToolBar(qt.QWidget):
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = GLToolBar()
-    qt.QObject.connect(app, qt.SIGNAL("lastWindowClosed()"),
-                       app, qt.SLOT("quit()"))
+    app.lastWindowClosed.connect(app.quit)
     w.show()
     app.exec_()

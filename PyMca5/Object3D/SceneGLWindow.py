@@ -171,9 +171,7 @@ class SceneGLWindow(qt.QWidget):
         self.wheelSlider10.wheel.setRange(-360., 360., 0.5)
         self.wheelSlider10.wheel.setValue(0.0)
         #self.wheelSlider10.wheel.setTotalAngle(360.)
-        self.connect(self.wheelSlider10.wheel,
-                     qt.SIGNAL("valueChanged(double)"),
-                     self.setTheta)
+        self.wheelSlider10.wheel.valueChanged[float].connect(self.setTheta)
 
         
         self.glWidget = SceneGLWidget.SceneGLWidget(self)
@@ -413,7 +411,7 @@ class SceneGLWindow(qt.QWidget):
         else:
             self.toolBar.mainLayout.addWidget(tb)
         if action is not None:
-            self.connect(tb,qt.SIGNAL('clicked()'), action)
+            tb.clicked[()].connect(action)
         return tb
 
     def sceneManagerSlot(self, ddict):

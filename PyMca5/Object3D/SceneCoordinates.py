@@ -144,13 +144,8 @@ class SceneAxesVectorsWidget(qt.QGroupBox):
                                                      qt.Qt.AlignCenter)
 
         
-        self.connect(self._useCheckBox,
-                     qt.SIGNAL('clicked()'),
-                     self._emitSignal)
-
-        self.connect(self._updateButton,
-                     qt.SIGNAL('clicked()'),
-                     self._emitSignal)
+        self._useCheckBox.clicked[()].connect(self._emitSignal)
+        self._updateButton.clicked[()].connect(self._emitSignal)
 
     def _emitSignal(self):
         ddict = self.getParameters()
@@ -287,9 +282,7 @@ class SceneLimitsWidget(qt.QGroupBox):
         self.mainLayout.addWidget(self._autoCheckBox, i, 0,
                                                       1, 4,
                                                       qt.Qt.AlignCenter)
-        self.connect(self._autoCheckBox,
-                     qt.SIGNAL('clicked()'),
-                     self._autoCheckBoxClicked)
+        self._autoCheckBox.clicked[()].connect(self._autoCheckBoxClicked)
         return
         self._applyButton = qt.QPushButton(self)
         self._applyButton.setText('Apply')
@@ -515,9 +508,7 @@ class ObserverPositionWidget(qt.QGroupBox):
         self.mainLayout.addWidget(self._autoCheckBox, i, 0,
                                                       1, 2,
                                                       qt.Qt.AlignCenter)
-        self.connect(self._autoCheckBox,
-                     qt.SIGNAL('clicked()'),
-                     self._emitSignal)
+        self._autoCheckBox.clicked[()].connect(self._emitSignal)
 
 
     def getParameters(self):

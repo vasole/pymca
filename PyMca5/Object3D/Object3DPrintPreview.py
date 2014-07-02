@@ -165,31 +165,31 @@ class Object3DPrintPreview(qt.QDialog):
         
         hideBut   = qt.QPushButton("Hide", toolBar)
         #hideBut.setFixedWidth(buttonSize-10)
-        self.connect(hideBut, qt.SIGNAL("clicked()"), self.hide)
+        hideBut.clicked[()].connect(self.hide)
 
         cancelBut = qt.QPushButton("Clear All", toolBar)
         #cancelBut.setFixedWidth(buttonSize+10)
-        self.connect(cancelBut, qt.SIGNAL("clicked()"), self.__clearAll)
+        cancelBut.clicked[()].connect(self.__clearAll)
 
         removeBut = qt.QPushButton("Remove", toolBar)
         #removeBut.setFixedWidth(buttonSize)
-        self.connect(removeBut, qt.SIGNAL("clicked()"), self.__remove)
+        removeBut.clicked[()].connect(self.__remove)
 
         setupBut  = qt.QPushButton("Setup", toolBar)
         #setupBut.setFixedWidth(buttonSize-5)
-        self.connect(setupBut, qt.SIGNAL("clicked()"), self.__setup)
+        setupBut.clicked[()].connect(self.__setup)
 
         printBut  = qt.QPushButton("Print", toolBar)
         #printBut.setFixedWidth(buttonSize-5)
-        self.connect(printBut, qt.SIGNAL("clicked()"), self.__print)
+        printBut.clicked[()].connect(self.__print)
         
         zoomPlusBut  = qt.QPushButton("Zoom +", toolBar)
         #zoomPlusBut.setFixedWidth(buttonSize-5)
-        self.connect(zoomPlusBut, qt.SIGNAL("clicked()"), self.__zoomPlus)
+        zoomPlusBut.clicked[()].connect(self.__zoomPlus)
         
         zoomMinusBut  = qt.QPushButton("Zoom -", toolBar)
         #zoomMinusBut.setFixedWidth(buttonSize-5)
-        self.connect(zoomMinusBut, qt.SIGNAL("clicked()"), self.__zoomMinus)
+        zoomMinusBut.clicked[()].connect(self.__zoomMinus)
         
         # now we put widgets in the toolLayout
         toolsLayout.addWidget(hideBut)
@@ -567,7 +567,7 @@ def testSimple():
     l.addWidget(view)
     w.resize(300, 600)
     w.show()
-    w.connect(button, qt.SIGNAL('clicked()'), printFile)
+    button.clicked[()].connect(printFile)
 
     a.exec_()    
 
