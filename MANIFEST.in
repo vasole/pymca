@@ -1,5 +1,8 @@
 include MANIFEST.in
+include LICENSE
+include LICENSE.MIT
 include LICENSE.GPL
+include LICENSE.LGPL
 include changelog.txt
 include qtconffile
 include cx_setup.py
@@ -7,7 +10,6 @@ include py2app_setup.py
 include PlatypusScript
 recursive-include doc/man *.1
 recursive-include icons *.icns *.ico *_256x256.png
-recursive-include PyMca/edf *.py *.c
 recursive-include PyMca5/EPDL97 *.DAT
 include PyMca5/EPDL97/LICENSE
 include PyMca5/Object3D/qtconffile
@@ -23,19 +25,16 @@ recursive-include PyMca5/PyMcaCore *.py
 recursive-include PyMca5/PyMcaData *.dict *.dat *.cfg *.png *.mat *.html *.pdf *.xml *.gif *.wmz *.mso *.DICT *.TXT *.lib *.mca
 recursive-include PyMca5/PyMcaGraph *.py *.pyx *.pxd *.c *.h
 recursive-include PyMca5/PyMcaGui *.py
-recursive-include PyMca5/PyMcaIO *.py *.c *.h
+recursive-include PyMca5/PyMcaIO *.py *.c *.h *.in
+include PyMca5/PyMcaIO/sps/LICENSE
 recursive-include PyMca5/PyMcaMath *.py *.c *.h *.cl
 include PyMca5/PyMcaMath/mva/py_nnma/LICENSE
 include PyMca5/PyMcaMath/mva/py_nnma/README
-recursive-include PyMca/PyMcaIOHelper *.py *.c
-include PyMca5/PyMcaMath/PyMcaSciPy/signal LICENSE.txt
-recursive-include PyMca/sift *.py *.cl
-recursive-include PyMca/specfile *.py *.c *.h *.in
-recursive-include PyMca/specfit *.py *.c
-recursive-include PyMca/sps *.py *.c *.h *.in
-recursive-include PyMca/widgets *.py
-recursive-include PyMca/XRFMC *.py 
+include PyMca5/PyMcaMath/PyMcaSciPy/signal/LICENSE.txt
+recursive-include PyMca5/PyMcaMisc *.py
+recursive-include PyMca5/PyMcaPhysics *.py
+recursive-include PyMca5/PyMcaPlugins *.py
+recursive-include PyMca5/scripts *
+recursive-include PyMca5/tests *.py
 recursive-include third-party *.c *.h *.txt 
-include PyMca/sps/LICENSE
-include PyMca/sps/MANIFEST.in
 recursive-include scripts *.py *.bat
