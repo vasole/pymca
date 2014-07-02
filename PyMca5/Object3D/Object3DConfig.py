@@ -26,12 +26,12 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import Object3DQt as qt
-import Object3DMovement
-import Object3DProperties
-import ClippingPlaneConfiguration
-import Object3DColormap
-from VerticalSpacer import VerticalSpacer
+from . import Object3DQt as qt
+from . import Object3DMovement
+from . import Object3DProperties
+from . import ClippingPlaneConfiguration
+from . import Object3DColormap
+from .VerticalSpacer import VerticalSpacer
 
 class Object3DConfig(qt.QWidget):
     sigObject3DConfigSignal = qt.pyqtSignal(object)

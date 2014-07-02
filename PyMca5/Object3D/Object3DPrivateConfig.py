@@ -26,9 +26,9 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import Object3DQt as qt
-from HorizontalSpacer import HorizontalSpacer
-from VerticalSpacer import VerticalSpacer
+from . import Object3DQt as qt
+from .HorizontalSpacer import HorizontalSpacer
+from .VerticalSpacer import VerticalSpacer
 import weakref
 DEBUG = 0
 

@@ -27,10 +27,10 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-import Object3DQt as qt
-from HorizontalSpacer import HorizontalSpacer
-from VerticalSpacer import VerticalSpacer
 import numpy
+from . import Object3DQt as qt
+from .HorizontalSpacer import HorizontalSpacer
+from .VerticalSpacer import VerticalSpacer
 DEBUG = 0
 
 class SceneCoordinates(qt.QWidget):

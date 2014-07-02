@@ -27,14 +27,14 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-import Object3DQt as qt
-import Scene
-import SceneWidget
-import SceneCoordinates
-import Object3DMovement
-import Object3DConfig
-from HorizontalSpacer import HorizontalSpacer
-from VerticalSpacer import VerticalSpacer
+from . import Object3DQt as qt
+from . import Scene
+from . import SceneWidget
+from . import SceneCoordinates
+from . import Object3DMovement
+from . import Object3DConfig
+from .HorizontalSpacer import HorizontalSpacer
+from .VerticalSpacer import VerticalSpacer
 DEBUG = 0
 
 class SceneControl(qt.QWidget):
@@ -71,7 +71,7 @@ class SceneControl(qt.QWidget):
         configDict = self.scene[self.scene.name()].root[0].getConfiguration()
         self.selectedObjectControl.setConfiguration(configDict)
 
-        self.sceneWidge.sigSceneWidgetSignal.connect(self._sceneWidgetSignal)
+        self.sceneWidget.sigSceneWidgetSignal.connect(self._sceneWidgetSignal)
 
         self.coordinatesWidget.sigSceneCoordinatesSignal.connect(\
                      self._sceneCoordinatesSlot)

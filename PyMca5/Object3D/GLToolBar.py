@@ -27,9 +27,9 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-import Object3DQt as qt
-import Object3DIcons
-from HorizontalSpacer import HorizontalSpacer
+from . import Object3DQt as qt
+from . import Object3DIcons
+from .HorizontalSpacer import HorizontalSpacer
 
 DEBUG = 0
 

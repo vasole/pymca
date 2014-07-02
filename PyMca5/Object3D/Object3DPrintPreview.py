@@ -28,7 +28,7 @@ __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
-import Object3DQt as qt
+from . import Object3DQt as qt
 DEBUG = 0
 __revision__="$Revision: 1.0 $"
 

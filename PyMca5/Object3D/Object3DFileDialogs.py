@@ -30,7 +30,7 @@ import Object3DQt as qt
 try:
     from PyMca5 import PyMcaDirs as Object3DDirs
 except:
-    import Object3DDirs
+    from . import Object3DDirs
 import os
 QTVERSION = qt.qVersion()
 
@@ -178,5 +178,5 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
 if __name__ == "__main__":
     app = qt.QApplication([])
     fileTypeList = ['PNG Files (*.png *.jpg)']
-    print getFileList(None, fileTypeList,"Please select a file", "SAVE", True)
+    print(getFileList(None, fileTypeList,"Please select a file", "SAVE", True))
     #app.exec_()

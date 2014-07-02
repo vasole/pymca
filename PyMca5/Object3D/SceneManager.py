@@ -27,19 +27,18 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
-import GLToolBar
-import SceneControl
-qt = SceneControl.qt
-import SceneGLWindow
 import weakref
-from VerticalSpacer import VerticalSpacer
-from HorizontalSpacer import HorizontalSpacer
+from . import GLToolBar
+from . import SceneControl
+qt = SceneControl.qt
+from .VerticalSpacer import VerticalSpacer
+from .HorizontalSpacer import HorizontalSpacer
 CONFIGDICT = True
 try:
-    from PyMca5 import ConfigDict    
+    from PyMca5.PyMcaIO import ConfigDict    
 except ImportError:
     try:
-        import ConfigDict
+        from . import ConfigDict
     except ImportError:
         CONFIGDICT = False
 
@@ -49,7 +48,7 @@ except ImportError:
     try:
         import PyMcaDirs as Object3DDirs
     except ImportError:
-        import Object3DDirs
+        from . import Object3DDirs
 
     
 DEBUG = 0
@@ -70,6 +69,7 @@ class SceneManager(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle('Scene Manager')
         if glwindow is None:
+            from . import SceneGLWindow
             self.glWindow = SceneGLWindow.SceneGLWindow(manager=self)
             self.glWindow.setWindowTitle('Scene')
             self.glWindow.show()

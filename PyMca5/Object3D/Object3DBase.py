@@ -27,10 +27,10 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
-import Object3DQt as qt
 import weakref
 import sys
-import Object3DPrivateConfig
+from . import Object3DQt as qt
+from . import Object3DPrivateConfig
 
 try:
     import OpenGL.GL  as GL
@@ -46,7 +46,7 @@ DRAW_MODES = ['NONE',
               #'LIGHT',
               #'POINT_SELECTION']
 
-class Object3D:
+class Object3D(object):
     def __init__(self, name = "Object3D"):
         self._configuration ={}
 
@@ -472,7 +472,6 @@ def getObject3DInstance(config=None):
     return Object3D()
 
 if __name__ == "__main__":
-    import sys
     app = qt.QApplication(sys.argv)
     name = "Base 3D-Object"
     object3D = Object3D(name)

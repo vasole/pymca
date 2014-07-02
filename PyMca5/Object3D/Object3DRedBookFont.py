@@ -26,10 +26,9 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import Object3DQt as qt
-import SceneGLWidget
 import OpenGL.GL  as GL
 import numpy
+from . import Object3DQt as qt
 
 rasters = numpy.array([
  [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], 

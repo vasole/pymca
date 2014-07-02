@@ -27,10 +27,10 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-import Object3DQt as qt
-from Object3DIcons import IconDict
-import ObjectTree
 import weakref
+from . import Object3DQt as qt
+from .Object3DIcons import IconDict
+from . import ObjectTree
 
 DEBUG = 0 
 

@@ -34,7 +34,7 @@ inputDir  = None
 outputDir = None
 nativeFileDialogs = True
 
-class __ModuleWrapper:
+class __ModuleWrapper(object):
   def __init__(self, wrapped):
     self.__dict__["_ModuleWrapper__wrapped"] = wrapped
 

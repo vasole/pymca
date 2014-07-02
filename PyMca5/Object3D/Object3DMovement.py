@@ -26,7 +26,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import Object3DQt as qt
+from . import Object3DQt as qt
 
 ORIGIN     = 0
 BBOXMIN    = 1
@@ -202,7 +202,7 @@ class Object3DTranslationWidget(qt.QGroupBox):
 
 
 class Object3DRotationWidget(qt.QGroupBox):
-    sigObject3DRotationSignal qt.pyqtSignal(object)
+    sigObject3DRotationSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, rotation = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Rotation')

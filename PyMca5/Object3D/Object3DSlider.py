@@ -27,7 +27,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
-from PyMca5.PyMcaGui import PyMcaQt as qt
+from . import Object3DQt as qt
 QTVERSION = qt.qVersion()
 
 DEBUG = 0

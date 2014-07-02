@@ -28,6 +28,8 @@ __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import sys
+import numpy
+import weakref
 import glob
 import OpenGL.GL  as GL
 import OpenGL.GLU as GLU
@@ -51,21 +53,19 @@ try:
 except:
     pass
 #End of PyMca specific imports
-import Object3DConfig
-import SceneGLWidget
+from . import Object3DConfig
+from . import SceneGLWidget
 qt=SceneGLWidget.qt
-import Object3DIcons
-import Object3DFileDialogs
+from . import Object3DIcons
+from . import Object3DFileDialogs
 #import Object3D
-import Object3DSlider
-import SceneControl
-from HorizontalSpacer import HorizontalSpacer
-from VerticalSpacer import VerticalSpacer
-import SceneManager
-import GLToolBar
-import numpy
-import weakref
-import Object3DPrintPreview
+from . import Object3DSlider
+from . import SceneControl
+from .HorizontalSpacer import HorizontalSpacer
+from .VerticalSpacer import VerticalSpacer
+from . import SceneManager
+from . import GLToolBar
+from . import Object3DPrintPreview
 
 
 DEBUG = 0

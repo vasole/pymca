@@ -27,14 +27,14 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
-import ObjectTree
-import Object3DBase
 import OpenGL.GLU as GLU
 import weakref
+from . import ObjectTree
+from . import Object3DBase
 
 DEBUG = 0 
 
-class Scene:
+class Scene(object):
     def __init__(self, name = 'Scene'):
         #self.tree = ObjectTree.ObjectTree('__Scene__', name)
         self.__sceneObject= Object3DBase.Object3D(name=name)

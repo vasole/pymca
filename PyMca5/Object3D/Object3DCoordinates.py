@@ -30,7 +30,7 @@ import OpenGL.GL  as GL
 import OpenGL.GLU as GLU
 import weakref
 
-class Object3DCoordinates:
+class Object3DCoordinates(object):
     def __init__(self, parent, limits = None):
 
         """

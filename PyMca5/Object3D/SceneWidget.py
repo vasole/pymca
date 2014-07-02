@@ -27,8 +27,8 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-import Object3DQt as qt
-import SceneTree
+from . import Object3DQt as qt
+from . import SceneTree
 
 QTVERSION = qt.qVersion()
 DEBUG = 0 

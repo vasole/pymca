@@ -30,7 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 Provides the class 'ObjectTree'.
 """
 
-class ObjectTree:
+class ObjectTree(object):
     """
     Implements a simple tree of objects with a _name attribute.
     Number of children is illimited.

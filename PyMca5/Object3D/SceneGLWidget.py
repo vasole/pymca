@@ -26,18 +26,18 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import Object3DQt as qt
 import OpenGL.GL  as GL
 import OpenGL.GLU as GLU
-import numpy
-import Object3DCoordinates
-import Object3DRedBookFont
-import Scene
 import sys
-import ObjectTree
-import GLWidgetCachePixmap
+import numpy
 import weakref
-from HorizontalSpacer import HorizontalSpacer
+from . import Object3DQt as qt
+from . import Object3DCoordinates
+from . import Object3DRedBookFont
+from . import Scene
+from . import ObjectTree
+from . import GLWidgetCachePixmap
+from .HorizontalSpacer import HorizontalSpacer
 QTVERSION = qt.qVersion()
 
 DEBUG = 0

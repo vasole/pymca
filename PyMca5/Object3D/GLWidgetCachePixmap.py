@@ -30,7 +30,7 @@ try:
     import OpenGL.GL  as GL
 except ImportError:
     raise ImportError, "OpenGL must be installed to use these functionalities"
-import Object3DQt as qt
+from . import Object3DQt as qt
 import numpy
 DEBUG = 0
 
