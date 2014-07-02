@@ -34,7 +34,7 @@ __doc__= "Generate specfile from XCOM generated files"
 import sys
 import os
 import numpy
-from PyMca5 import Elements
+from PyMca5.PyMcaPhysics import Elements
 
 if len(sys.argv) < 3:
     print("Usage:")

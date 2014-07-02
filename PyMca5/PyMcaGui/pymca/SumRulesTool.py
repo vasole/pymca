@@ -36,15 +36,16 @@ import numpy
 from PyMca5.SpecfitFuns import upstep, downstep
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.plotting.backends.MatplotlibBackend import MatplotlibBackend as backend
-from PyMca5.widgets import PlotWindow as DataDisplay
-from PyMca5 import Elements
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaGui.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
+from PyMca5.PyMcaGui.plotting import PlotWindow as DataDisplay
+from PyMca5.PyMcaPhysics.xrf import Elements
+from PyMca5.PyMcaIO import ConfigDict
 
-from PyMca5 import PyMcaDataDir, PyMcaDirs
-from PyMca5 import QSpecFileWidget
-from PyMca5 import SpecFileDataSource
-from PyMca5.PyMca_Icons import IconDict
+from PyMca5 import PyMcaDataDir
+from PyMca5.PyMcaCore import PyMcaDirs
+from PyMca5.PyMcaGui.io import QSpecFileWidget
+from PyMca5.PyMcaCore import SpecFileDataSource
+from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 
 if hasattr(qt, "QString"):
     QString = qt.QString
