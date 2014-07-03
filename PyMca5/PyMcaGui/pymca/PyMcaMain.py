@@ -34,7 +34,7 @@ if sys.platform == 'win32':
     import ctypes
     from ctypes.wintypes import MAX_PATH
 nativeFileDialogs = None
-DEBUG = 1
+DEBUG = 0
 backend=None
 if __name__ == '__main__':
     options     = '-f'
@@ -387,19 +387,20 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mainTabWidget.show()
         if DEBUG:
             self._dispatcherAddSelectionSlot(ddict)
-        try:
-            self._dispatcherAddSelectionSlot(ddict)
-        except:
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Error: %s" % sys.exc_info()[1])
-            msg.setInformativeText(str(sys.exc_info()[1]))
-            msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
+        else:
+            try:
+                self._dispatcherAddSelectionSlot(ddict)
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error: %s" % sys.exc_info()[1])
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
 
     def _dispatcherAddSelectionSlot(self, dictOrList):
         if DEBUG:
-            print("self.dispatcherAddSelectionSlot(ddict), ddict = ", dictOrList)
+            print("self._dispatcherAddSelectionSlot(ddict), ddict = ", dictOrList)
         if type(dictOrList) == type([]):
             ddict = dictOrList[0]
         else:
@@ -407,6 +408,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             
         toadd = False
         if self._is2DSelection(ddict):
+            if DEBUG:
+                print("2D selection")
             if self.imageWindowCorrelator is None:
                 self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
                 #toadd = True
@@ -462,6 +465,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             else:
                 self.imageWindowDict[legend]._addSelection(ddict)
         elif self._isStackSelection(ddict):
+            if DEBUG:
+                print("Stack selection")
             legend = ddict['legend']
             widget = QStackWidget.QStackWidget()
             widget.notifyCloseEventToWidget(self)
@@ -472,12 +477,18 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             if OBJECT3D:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
+                    if DEBUG:
+                        print("1D selection")
                     self.mcaWindow._addSelection(dictOrList)
                     self.scanWindow._addSelection(dictOrList)
                 else:
+                    if DEBUG:
+                        print("3D selection")
                     self.mainTabWidget.setCurrentWidget(self.glWindow)
                     self.glWindow._addSelection(ddict)
             else:
+                if DEBUG:
+                    print("1D selection")
                 self.mcaWindow._addSelection(dictOrList)
                 self.scanWindow._addSelection(dictOrList)
 
