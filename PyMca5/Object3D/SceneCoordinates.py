@@ -300,7 +300,7 @@ class SceneLimitsWidget(qt.QGroupBox):
         i = 0
         updateList = []
         for key in labelList:
-            if ddict.has_key(key):
+            if key in ddict:
                 self._entryList[i].setText("%g" % ddict[key])
                 if int(i/2) not in updateList:
                     updateList.append(int(i/2))
@@ -427,17 +427,17 @@ class ViewOrientationWidget(qt.QGroupBox):
         self.mainLayout.addWidget(l, i, 3)        
 
     def setParameters(self, ddict):
-        if ddict.has_key('view'):
+        if "view" in ddict:
             k = 0
             for i in range(4):
                 for j in range(4):
                     self._entryList[k].setText("%g" % float(ddict['view'][i, j]))
                     k = k + 1
 
-        if ddict.has_key('theta'):
+        if 'theta'in ddict:
             self._theta.setText("%.3g" % float(ddict['theta']))
 
-        if ddict.has_key('phi'):
+        if 'phi' in  ddict:
             self._phi.setText("%.3g" % float(ddict['phi']))
 
     def getParameters(self):
@@ -507,7 +507,7 @@ class ObserverPositionWidget(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict):
-        if not ddict.has_key('observer'):
+        if not ('observer' in ddict):
             return
         position = ddict['observer']
         for i in range(3):

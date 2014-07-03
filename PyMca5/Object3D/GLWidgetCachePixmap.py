@@ -29,7 +29,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 try:
     import OpenGL.GL  as GL
 except ImportError:
-    raise ImportError, "OpenGL must be installed to use these functionalities"
+    raise ImportError("OpenGL must be installed to use these functionalities")
 from . import Object3DQt as qt
 import numpy
 DEBUG = 0
@@ -48,7 +48,7 @@ class GLWidgetCachePixmap:
 
     def openGLCleanup(self):
         if DEBUG:
-            print "CLEANING OPENGL"
+            print("CLEANING OPENGL")
         if self.drawList <= 0:
             GL.glDeleteLists(self.drawList, 1)
             self.drawList = 0
@@ -58,7 +58,7 @@ class GLWidgetCachePixmap:
     
     def setPixmap(self, pixmap, width, height, xmirror = False, ymirror = False, z=0.0):
         if type(pixmap) == type(""):
-            raise ValueError, "Input pixmap has to be an uint8 array"
+            raise ValueError("Input pixmap has to be an uint8 array")
     
         useNewTexture = True
         if self.__pixmap is not None:
@@ -141,13 +141,13 @@ class GLWidgetCachePixmap:
         When producing geometry, bind the texture before starting the polygon and then
         set a texture coordinate with glTexCoord before each glVertex.
         gl.glTexSubImage2D(texture.getTarget(), 
-			0, // no support for mipmapping
-			x, y + row, // in texture
-			bounds.width, 1,
-			GL.GL_BGRA, 
-			type,
-			dataBuffer
-		);
+            0, // no support for mipmapping
+            x, y + row, // in texture
+            bounds.width, 1,
+            GL.GL_BGRA, 
+            type,
+            dataBuffer
+            );
 
 
         """
@@ -162,7 +162,7 @@ class GLWidgetCachePixmap:
                 GL.glDeleteTextures([self.__textureId])
                 self.__textureId = GL.glGenTextures(1)            
         if self.__textureId is None:
-            print "no valid id?"
+            print("no valid texture id?")
             return
         if self._useNewTexture:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.__textureId)
@@ -187,13 +187,13 @@ class GLWidgetCachePixmap:
         else:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.__textureId)
             GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 
-			0,
-			0, 0,
-			self.__tWidth,
-			self.__tHeight,
-			GL.GL_RGBA, 
-			GL.GL_UNSIGNED_BYTE,
-			self.__pixmap)
+            0,
+            0, 0,
+            self.__tWidth,
+            self.__tHeight,
+            GL.GL_RGBA, 
+            GL.GL_UNSIGNED_BYTE,
+            self.__pixmap)
             GL.glEnable(GL.GL_TEXTURE_2D)
             
         self._forceTextureCalculation = False
@@ -211,17 +211,17 @@ class GLWidgetCachePixmap:
         GL.glNewList(self.drawList, GL.GL_COMPILE)
         #The texture gets multiplied by this color!!
         GL.glColor4f(1.0, 1.0, 1.0, self.__alpha)
-       	GL.glBindTexture(GL.GL_TEXTURE_2D, self.__textureId)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.__textureId)
         GL.glEnable(GL.GL_TEXTURE_2D)
         GL.glBegin(GL.GL_QUADS)
-       	GL.glTexCoord2d(tx0, ty0)
-       	GL.glVertex3f(xmin, ymin, zmin)
-	GL.glTexCoord2d(tx0, ty1)
-	GL.glVertex3f(xmin, ymax, zmin)
-	GL.glTexCoord2d(tx1, ty1)
-	GL.glVertex3f(xmax, ymax, zmin)
-	GL.glTexCoord2d(tx1, ty0)
-	GL.glVertex3f(xmax, ymin, zmin)
+        GL.glTexCoord2d(tx0, ty0)
+        GL.glVertex3f(xmin, ymin, zmin)
+        GL.glTexCoord2d(tx0, ty1)
+        GL.glVertex3f(xmin, ymax, zmin)
+        GL.glTexCoord2d(tx1, ty1)
+        GL.glVertex3f(xmax, ymax, zmin)
+        GL.glTexCoord2d(tx1, ty0)
+        GL.glVertex3f(xmax, ymin, zmin)
         GL.glEnd()
         GL.glDisable(GL.GL_TEXTURE_2D)
         GL.glEndList()

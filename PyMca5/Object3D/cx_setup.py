@@ -99,12 +99,12 @@ if sys.platform == 'win32':
         # MinGW compiler needs two steps
         cmd = "python setup.py build -c mingw32"
         if os.system(cmd):
-            print "Error building Object3D"
+            print("Error building Object3D")
             sys.exit(1)
 
 cmd = "python setup.py install --install-lib %s" % InstallationDir
 if os.system(cmd):
-    print "Error building Object3D"
+    print("Error building Object3D")
     sys.exit(1)
 
 include_files = []
@@ -145,7 +145,7 @@ sys.path = [Dir] + sys.path
 import Object3D
 excludes = ["OpenGL", "Tkinter", "Object3D"]
 includes = []
-print Object3D.__file__
+print(Object3D.__file__)
 for f in [os.path.dirname(ctypes.__file__),
           os.path.dirname(OpenGL.__file__),
           os.path.dirname(Object3D.__file__)]:
@@ -169,9 +169,9 @@ if os.path.exists(install_dir):
     try:
         os.rmdir(install_dir)
     except:
-        print "###################################################"
-        print "WARNING: Cannot remove directory %s" % install_dir
-        print "###################################################"
+        print("###################################################")
+        print("WARNING: Cannot remove directory %s" % install_dir)
+        print("###################################################")
         import time
         time.sleep(3)
 

@@ -44,7 +44,7 @@ class Object3DPrivateConfig(qt.QWidget):
 
     def __del__(self):
         if DEBUG:
-            print "Object3DPrivateConfig %s deleted" % self._name
+            print("Object3DPrivateConfig %s deleted" % self._name)
 
     def build(self):
         self.mainLayout = qt.QGridLayout(self)
@@ -61,7 +61,7 @@ class Object3DPrivateConfig(qt.QWidget):
 
     def setParameters(self, ddict):
         for key in ddict.keys():
-            if self._configuration.has_key(key):
+            if key in self._configuration:
                 if key != 'widget':
                     self._configuration[key].update(ddict[key])
         self._updateWidget()
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     def myslot():
-        print "Callback called"
+        print("Callback called")
     w = Object3DPrivateConfig()
     w.setCallBack(myslot)
     w.show()    

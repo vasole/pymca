@@ -128,7 +128,7 @@ class Object3DAnchorWidget(qt.QGroupBox):
             if n >= 0:
                 anchorList[i] = n
             else:
-                print "WARNING: getAnchor -> Unselected button"
+                print("WARNING: getAnchor -> Unselected button")
         return anchorList
 
 class Object3DTranslationWidget(qt.QGroupBox):

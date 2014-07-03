@@ -43,13 +43,13 @@ except:
         import spslut
     except:
         pass
-import Object3DCTools
-import Object3DQhull
+from . import Object3DCTools
+from . import Object3DQhull
 # End of freeze options
 #This hould be in PyMca, I put it here for the time being
 try:
-    from Object3DPlugins import Object3DMesh
-    from Object3DPlugins import Object3DStack
+    from .Object3DPlugins import Object3DMesh
+    from .Object3DPlugins import Object3DStack
 except:
     pass
 #End of PyMca specific imports
@@ -82,7 +82,7 @@ def getObject3DModules(directory=None):
         else:
             directory = os.path.join(directory,".", "Object3DPlugins")
         if not os.path.exists(directory):
-            raise IOError, "Directory:\n%s\ndoes not exist." % directory
+            raise IOError("Directory:\n%s\ndoes not exist." % directory)
     if directory not in sys.path:
         sys.path.append(directory)
     fileList = glob.glob(os.path.join(directory, "*.py"))
@@ -94,9 +94,9 @@ def getObject3DModules(directory=None):
                 moduleList.append(m)
         except:
             if DEBUG:
-                print "Problem importing module %s" % module
+                print("Problem importing module %s" % module)
     if not len(moduleList):
-        raise IOError, "No plugins found in directory %s"  % directory
+        raise IOError("No plugins found in directory %s"  % directory)
     return moduleList
 
 class WheelAndSlider(qt.QWidget):
@@ -305,7 +305,7 @@ class SceneGLWindow(qt.QWidget):
                                  "Print widget")
 
     def applyCube(self, ddict):
-        if ddict.has_key('face'):
+        if 'face' in ddict:
             position = self.scene.applyCube(ddict['face'])
             self.glWidget.setCurrentViewPosition(position)
             self.__applyingCube = True
@@ -536,7 +536,7 @@ class SceneGLWindow(qt.QWidget):
             #make sure we do not mix modes
             self.setObjectSelectionModeSlot()
         text = "Object %s selected." % self.activeObject
-        if ddict.has_key('event'):
+        if 'event' in ddict:
             if ddict['event'] == "objectDeleted":
                 text = ("Object %s deleted. " % ddict['previous']) + text
         self.infoLine.setText(text)
@@ -557,7 +557,7 @@ class SceneGLWindow(qt.QWidget):
             self.selectedObjectControl.hide()
             return
         configDict = {'common':{}, 'private':{}}
-        if ddict.has_key('private'):
+        if 'private' in ddict:
             configDict['private'] = ddict['private']
         oldScale = self.scene[legend].root[0].getConfiguration()['common']['scale']
         configDict['common'].update(ddict['common'])

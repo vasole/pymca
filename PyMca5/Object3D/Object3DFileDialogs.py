@@ -26,10 +26,11 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import Object3DQt as qt
 try:
     from PyMca5 import PyMcaDirs as Object3DDirs
+    from PyMca5 import Object3DQt as qt
 except:
+    from . import Object3DQt as qt
     from . import Object3DDirs
 import os
 QTVERSION = qt.qVersion()

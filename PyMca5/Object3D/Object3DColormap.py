@@ -327,7 +327,7 @@ class Object3DColormap(qt.QGroupBox):
         return ddict
 
     def setParameters(self, ddict):
-        if ddict.has_key('colormap'):
+        if 'colormap' in ddict:
             self.__disconnected = True
             self.colormapIndex,  self.autoscale, \
                  self.minValue, self.maxValue, \

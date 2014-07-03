@@ -31,6 +31,10 @@ import weakref
 from . import GLToolBar
 from . import SceneControl
 qt = SceneControl.qt
+if hasattr(qt, "QString"):
+    qtQString = qt.QString
+else:
+    qtQString = str
 from .VerticalSpacer import VerticalSpacer
 from .HorizontalSpacer import HorizontalSpacer
 CONFIGDICT = True
@@ -94,12 +98,12 @@ class SceneManager(qt.QWidget):
 
     def addFileMenu(self):
         self.fileMenu = qt.QMenu("File", self.menuBar)
-        self.fileMenu.addAction(qt.QString('Add Object'), self.addObjectSignal)
+        self.fileMenu.addAction(qtQString('Add Object'), self.addObjectSignal)
         if CONFIGDICT:
             self.fileMenu.addSeparator()
-            self.fileMenu.addAction(qt.QString('Load Configuration'),
+            self.fileMenu.addAction(qtQString('Load Configuration'),
                                     self.loadConfiguration)
-            self.fileMenu.addAction(qt.QString('Save Configuration'),
+            self.fileMenu.addAction(qtQString('Save Configuration'),
                                     self.saveConfiguration)
         self.menuBar.addMenu(self.fileMenu)
 

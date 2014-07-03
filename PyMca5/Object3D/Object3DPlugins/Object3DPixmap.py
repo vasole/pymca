@@ -32,7 +32,7 @@ try:
     import OpenGL.GL  as GL
     from OpenGL.GL import glDeleteLists
 except ImportError:
-    raise ImportError, "OpenGL must be installed to use these functionalities"
+    raise ImportError("OpenGL must be installed to use these functionalities")
 
 try:
     from PyMca5 import spslut
@@ -151,7 +151,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         
     def setQPixmap(self, qpixmap):
         if not isinstance(qpixmap, qt.QPixmap):
-            raise TypeError, "This does not seem to be a QPixmap"
+            raise TypeError("This does not seem to be a QPixmap")
         qimage = qpixmap.toImage()
         return self.setQImage(qimage)
 
@@ -160,7 +160,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         QImage
         """
         if not isinstance(qimage, qt.QImage):
-            raise TypeError, "This does not seem to be a QImage"
+            raise TypeError("This does not seem to be a QImage")
         height = qimage.height()
         width  = qimage.width()
         image = qimage.convertToFormat(qt.QImage.Format_ARGB32)
@@ -175,7 +175,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         spslut string output
         """
         if type(pixmap) == type(""):
-            raise ValueError, "Input pixmap has to be an uin8 array"
+            raise ValueError("Input pixmap has to be an uin8 array")
 
         self._imageData = None
         self._meshImage = False
@@ -191,8 +191,8 @@ class Object3DPixmap(Object3DBase.Object3D):
         maximum_texture = GL.glGetIntegerv(GL.GL_MAX_TEXTURE_SIZE)
         #print "MAXIMUM  = ", maximum_texture
         if (self.__tWidth > maximum_texture) or (self.__tHeight > maximum_texture):
-            raise ValueError, "Invalid final texture size: %d x %d" % (self.__tWidth,
-                                                                 self.__tHeight)
+            raise ValueError("Invalid final texture size: %d x %d" % (self.__tWidth,
+                                                                 self.__tHeight))
 
         if (self.__tWidth != self.__width) or (self.__tHeight != self.__height):
             #I have to zero padd the texture to make sure it works on all cards ...
@@ -231,7 +231,7 @@ class Object3DPixmap(Object3DBase.Object3D):
             t0 = time.time()
         self._buildPointSelectionVertices()
         if DEBUG:
-            print "POINT SELECTION ELAPSED = ", time.time() - t0
+            print("POINT SELECTION ELAPSED = ", time.time() - t0)
         self._forcePointSelectionGridListCalculation = True
 
     def setImage(self, *var, **kw):
@@ -382,7 +382,8 @@ class Object3DPixmap(Object3DBase.Object3D):
                 GL.glTranslate(-0.5 * self.__widthStep, -0.5 * self.__heightStep, 0.0)
                 """
             
-        if DEBUG:print "elapsed = ", time.time() - e0
+        if DEBUG:
+            print("elapsed = ", time.time() - e0)
 
     def _drawMesh(self):
         alpha = 1.0 - self._configuration['common']['transparency']
@@ -473,17 +474,17 @@ class Object3DPixmap(Object3DBase.Object3D):
         ty1 = (1.0 * self.__height)/self.__tHeight
         self.drawList = GL.glGenLists(1)
         GL.glNewList(self.drawList, GL.GL_COMPILE)
-       	GL.glBindTexture(GL.GL_TEXTURE_2D, self.textureId)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.textureId)
         GL.glEnable(GL.GL_TEXTURE_2D)
         GL.glBegin(GL.GL_QUADS)
-       	GL.glTexCoord2d(tx0, ty0)
-       	GL.glVertex3f(xmin, ymin, zmin)
-	GL.glTexCoord2d(tx0, ty1)
-	GL.glVertex3f(xmin, ymax, zmin)
-	GL.glTexCoord2d(tx1, ty1)
-	GL.glVertex3f(xmax, ymax, zmin)
-	GL.glTexCoord2d(tx1, ty0)
-	GL.glVertex3f(xmax, ymin, zmin)
+        GL.glTexCoord2d(tx0, ty0)
+        GL.glVertex3f(xmin, ymin, zmin)
+        GL.glTexCoord2d(tx0, ty1)
+        GL.glVertex3f(xmin, ymax, zmin)
+        GL.glTexCoord2d(tx1, ty1)
+        GL.glVertex3f(xmax, ymax, zmin)
+        GL.glTexCoord2d(tx1, ty0)
+        GL.glVertex3f(xmax, ymin, zmin)
         GL.glEnd()
         GL.glDisable(GL.GL_TEXTURE_2D)
         GL.glEndList()
@@ -525,7 +526,8 @@ class Object3DPixmap(Object3DBase.Object3D):
             self.vertices[:,0]=B
             self.vertices[:,1]=A
         self.zdata = self.vertices[:,2]
-        if DEBUG:print "vertex generation elapsed = ", time.time()-e0
+        if DEBUG:
+            print("vertex generation elapsed = ", time.time()-e0)
 
         #get the associated selection colors
         if DEBUG:
@@ -543,7 +545,7 @@ class Object3DPixmap(Object3DBase.Object3D):
             self.vertexSelectionColors[:,1] = ((i >> 8) & 255)/255.
             self.vertexSelectionColors[:,2] = ((i >> 16) & 255)/255.
         if DEBUG:
-            print "vertex selection color elapsed = ", time.time()-e0
+            print("vertex selection color elapsed = ", time.time()-e0)
 
     def buildPointSelectionGridList0(self):
         #in fact I am using a line selection
@@ -586,8 +588,8 @@ class Object3DPixmap(Object3DBase.Object3D):
         x,y,z, I
         """
         if DEBUG:
-            print "INDEX = ",index
-            print "Width, Height =", self.__width, self.__height
+            print("INDEX = ",index)
+            print("Width, Height =", self.__width, self.__height)
         xindex = int(index/self.__height)
         yindex = index % (self.__height)
         xvalue = self._xCalibration[0] +\
@@ -688,7 +690,7 @@ if __name__ == "__main__":
         t0 = time.time()
         object3D.updateImageData(data)
         window.glWidget.setZoomFactor(1.0)
-        print "elapsed = ",  time.time() - t0
+        print("elapsed = ",  time.time() - t0)
         app.processEvents()
     object3D = None
     app.exec_()

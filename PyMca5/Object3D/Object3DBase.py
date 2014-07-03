@@ -35,7 +35,7 @@ from . import Object3DPrivateConfig
 try:
     import OpenGL.GL  as GL
 except ImportError:
-    raise ImportError, "OpenGL must be installed to use these functionalities"
+    raise ImportError("OpenGL must be installed to use these functionalities")
 
 DEBUG = 0
     
@@ -98,8 +98,8 @@ class Object3D(object):
             if self.boundingBoxList != 0:
                 GL.glDeleteLists(self.boundingBoxList, 1)
         if DEBUG:
-            print "DELETING Object3d base"
-            print self.name(), "DELETED"
+            print("DELETING Object3d base")
+            print(self.name(), "DELETED")
 
     def name(self):
         return self.__name
@@ -189,9 +189,9 @@ class Object3D(object):
         """
         You will very likely overwrite this method
         """
-        if ddict.has_key('common'):
+        if "common" in ddict:
             self._configuration['common'].update(ddict['common'])
-        if ddict.has_key('private'):
+        if "private" in ddict:
             #do not overwrite widget!!!
             widget = self._configuration['private']['widget']
             self._configuration['private'].update(ddict['private'])

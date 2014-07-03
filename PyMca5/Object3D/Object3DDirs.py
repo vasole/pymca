@@ -35,11 +35,12 @@ outputDir = None
 nativeFileDialogs = True
 
 class __ModuleWrapper(object):
-  def __init__(self, wrapped):
-    self.__dict__["_ModuleWrapper__wrapped"] = wrapped
+   def __init__(self, wrapped):
+      self.__dict__["_ModuleWrapper__wrapped"] = wrapped
 
-  def __getattr__(self, name):
-    if DEBUG: print "getting ", name
+   def __getattr__(self, name):
+    if DEBUG:
+      print("getting ", name)
     if name == "inputDir":
         if self.__wrapped.__dict__[name] is None:
             if self.__wrapped.__dict__['outputDir'] is not None:
@@ -58,28 +59,30 @@ class __ModuleWrapper(object):
             if not os.path.isdir(value):
                 value = os.getcwd()
             self.__setattr__('outputDir', value)
-    if DEBUG:print "got ", name, getattr(self.__wrapped, name)
+    if DEBUG:
+      print("got ", name, getattr(self.__wrapped, name))
     return getattr(self.__wrapped, name)
 
-  def __setattr__(self, name, value):
-    if DEBUG: print "setting ", name, value
-    if name == "inputDir":
-        if os.path.isdir(value):
+   def __setattr__(self, name, value):
+      if DEBUG:
+         print("setting ", name, value)
+      if name == "inputDir":
+         if os.path.isdir(value):
             self.__wrapped.__dict__[name]=value
-        else:
-            raise ValueError, "Non existing directory %s" % value
-    elif name == "outputDir":
-        if os.path.isdir(value):
+         else:
+            raise ValueError("Non existing directory %s" % value)
+      elif name == "outputDir":
+         if os.path.isdir(value):
             self.__wrapped.__dict__[name]=value
-        else:
-            raise ValueError, "Non existing directory %s" % value
-    elif name == "nativeFileDialogs":
-        self.__wrapped.__dict__[name]=value
-    elif name.startswith("__"):
-        self.__dict__[name]=value
-    else:
-        raise AttributeError, "Invalid attribute %s" % name
-        #self.__wrapped.__dict__[name]=value
+         else:
+            raise ValueError("Non existing directory %s" % value)
+      elif name == "nativeFileDialogs":
+         self.__wrapped.__dict__[name]=value
+      elif name.startswith("__"):
+         self.__dict__[name]=value
+      else:
+         raise AttributeError("Invalid attribute %s" % name)
+         #self.__wrapped.__dict__[name]=value
 
 sys.modules[__name__]=__ModuleWrapper(sys.modules[__name__])
 

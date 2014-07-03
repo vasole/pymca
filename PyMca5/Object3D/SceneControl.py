@@ -124,7 +124,7 @@ class SceneControl(qt.QWidget):
 
     def emitSignal(self, event=None, ddict = None):
         if DEBUG:
-            print "SceneControl emit signal ", ddict
+            print("SceneControl emit signal ", ddict)
         if ddict is None:
             ddict = {}
         if event is not None:

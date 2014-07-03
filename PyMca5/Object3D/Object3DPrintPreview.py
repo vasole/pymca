@@ -124,7 +124,7 @@ class Object3DPrintPreview(qt.QDialog):
         if self.printer is not None:
             self.printer.setOutputFileName(name)
         else:
-            raise IOError, "setOutputFileName : a printer must be defined before"
+            raise IOError("setOutputFileName : a printer must be defined before")
 
     def _buildToolbar(self):
         # --- command buttons
@@ -212,11 +212,9 @@ class Object3DPrintPreview(qt.QDialog):
         if self.printer is None:
             self.targetLabel.setText("???")
         elif len(self.printer.outputFileName()):
-            self.targetLabel.setText(qt.QString("File:").append(
-                self.printer.outputFileName()))
+            self.targetLabel.setText("File: " + self.printer.outputFileName())
         else:
-            self.targetLabel.setText(qt.QString("Printer:").append(
-                self.printer.printerName()))
+            self.targetLabel.setText("Printer: " + self.printer.printerName())
 
     def __print(self):
         printer = self.printer
@@ -237,19 +235,22 @@ class Object3DPrintPreview(qt.QDialog):
             return
 
     def __scaleChanged(self, value):
-        if DEBUG:print "current scale = ",   self._viewScale
+        if DEBUG:
+            print("current scale = ",   self._viewScale)
         if value > 2:
             self.view.scale(1.20, 1.20)
         else:
             self.view.scale(0.80, 0.80)
             
     def __zoomPlus(self):
-        if DEBUG:print "current scale = ",   self._viewScale
+        if DEBUG:
+            print("current scale = ",   self._viewScale)
         self._viewScale *= 1.20 
         self.view.scale(1.20, 1.20)
             
     def __zoomMinus(self):
-        if DEBUG:print "current scale = ",   self._viewScale
+        if DEBUG:
+            print("current scale = ",   self._viewScale)
         self._viewScale *= 0.80 
         self.view.scale(0.80, 0.80)
 
@@ -327,7 +328,8 @@ class Object3DPrintPreview(qt.QDialog):
              self.updatePrinter()
 
     def updatePrinter(self):
-        if DEBUG:print "UPDATE PRINTER"
+        if DEBUG:
+            print("UPDATE PRINTER")
         self.scene.setSceneRect(qt.QRectF(0,0, self.printer.width(), self.printer.height()))
         self.page.setPos(qt.QPointF(0.0, 0.0))
         self.page.setRect(qt.QRectF(0,0, self.printer.width(), self.printer.height()))
@@ -396,11 +398,13 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
         self.show()
 
     def mouseDoubleClickEvent(self, event):
-        if DEBUG:print "ResizeRect mouseDoubleClick"
+        if DEBUG:
+            print("ResizeRect mouseDoubleClick")
 
 
     def mousePressEvent(self, event):
-        if DEBUG:print "ResizeRect mousePress"
+        if DEBUG:
+            print("ResizeRect mousePress")
         if self._newRect is not None:
             self._newRect = None
         self.__point0 = self.pos()
@@ -420,7 +424,8 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
         qt.QGraphicsRectItem.mousePressEvent(self, event)
 
     def mouseMoveEvent(self, event):
-        if DEBUG:print "ResizeRect mouseMove"
+        if DEBUG:
+            print("ResizeRect mouseMove")
         point1 = self.pos()
         deltax = point1.x() -  self.__point0.x()
         deltay = point1.y() -  self.__point0.y()
@@ -445,7 +450,8 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
         qt.QGraphicsRectItem.mouseMoveEvent(self, event)
 
     def mouseReleaseEvent(self, event):
-        if DEBUG:print "ResizeRect mouseRelease"
+        if DEBUG:
+            print("ResizeRect mouseRelease")
         point1 = self.pos()
         deltax = point1.x() -  self.__point0.x()
         deltay = point1.y() -  self.__point0.y()
@@ -487,11 +493,11 @@ def testPreview():
     import os
 
     if len(sys.argv) < 2:
-        print "give an image file as parameter please."
+        print("give an image file as parameter please.")
         sys.exit(1)
 
     if len(sys.argv) > 2:
-        print "only one parameter please."
+        print("only one parameter please.")
         sys.exit(1)
 
     filename = sys.argv[1]

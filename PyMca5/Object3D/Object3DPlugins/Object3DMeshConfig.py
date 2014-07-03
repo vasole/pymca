@@ -111,7 +111,7 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     def myslot():
-        print "Callback called"
+        print("Callback called")
     w = Object3DMeshConfig()
     w.setCallBack(myslot)
     w.show()

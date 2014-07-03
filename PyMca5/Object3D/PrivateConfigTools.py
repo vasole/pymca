@@ -84,7 +84,7 @@ class InfoLabel(qt.QGroupBox):
         if ddict is None:
             ddict = {}
         key = 'infolabel'
-        if ddict.has_key(key):
+        if key in ddict:
             self.infoLabel.setText(ddict[key])
 
     def getParameters(self):
@@ -126,7 +126,7 @@ class ColorFilter(qt.QGroupBox):
         if ddict is None:
             ddict = {}
         key = 'colorfilter'
-        if ddict.has_key(key):
+        if key in ddict:
             idx = int(ddict[key])
             self.buttonGroup.button(idx).setChecked(True)
 
@@ -171,7 +171,7 @@ class ValueFilter(qt.QGroupBox):
         if ddict is None:
             ddict = {}
         key = 'useminmax'
-        if ddict.has_key(key):
+        if key in ddict:
             if ddict[key][0]:
                 self.useCheckBox.setChecked(True)
             else:
@@ -232,7 +232,7 @@ class Isosurfaces(qt.QGroupBox):
         if ddict is None:
             ddict = {}
         key = 'isosurfaces'
-        if ddict.has_key(key):
+        if key in ddict:
             if type(ddict[key][0]) not in [type((1,)), type([])]:
                 ddict[key] = [ddict[key] * 1]
             for i in range(len(ddict[key])):
@@ -277,7 +277,7 @@ if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
     def mySlot(ddict):
-        print ddict
+        print(ddict)
     w = Isosurfaces()
     #w.sigColorFilterSignal.connect(mySlot)
     w.show()    

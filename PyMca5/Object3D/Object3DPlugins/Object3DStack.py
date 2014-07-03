@@ -31,7 +31,7 @@ try:
     import OpenGL.GL  as GL
     import OpenGL.GLU as GLU
 except ImportError:
-    raise ImportError, "OpenGL must be installed to use these functionalities"
+    raise ImportError("OpenGL must be installed to use these functionalities")
 import numpy
 try:
     from PyMca5 import spslut
@@ -218,7 +218,7 @@ class Object3DStack(Object3DBase.Object3D):
                 self._z = numpy.arange(zsize).astype(numpy.float32)
                 self.zSize = zsize
         else:
-            raise ValueError, "Unhandled case"
+            raise ValueError("Unhandled case")
 
         old_shape = self.values.shape
         self.nVertices = self.xSize * self.ySize * self.zSize
@@ -342,10 +342,10 @@ class Object3DStack(Object3DBase.Object3D):
                                        self._configuration['private']['colorfilter'],
                                        self._configuration['private']['useminmax'])
         else:
-            print "UNSUPPORTED MODE"
+            print("UNSUPPORTED MODE")
         GL.glPopAttrib()
         if DEBUG:
-            print "Drawing takes ", time.time() - t0
+            print("Drawing takes ", time.time() - t0)
 
     def _getVertexSelectionColors(self):
         self.vertexSelectionColors = numpy.zeros((self.nVertices,4),
@@ -416,7 +416,6 @@ class Object3DStack(Object3DBase.Object3D):
         self._verticesBufferObject = buffers.VertexBuffer(self.vertices,
                                                         GL.GL_STATIC_DRAW)
         self.vertices = None
-        print "self._vertexBufferObject = ", self._verticesBufferObject
 
     def __fillVertexColorsBufferObject(self):
         if self.vertexColors is None:
@@ -430,7 +429,6 @@ class Object3DStack(Object3DBase.Object3D):
                 self.vertexSelectionColors[:,3] = 255 - (i >> 24)
         self._vertexColorsBufferObject = buffers.VertexBuffer(self.vertexSelectionColors,
                                                         GL.GL_STATIC_DRAW)
-        print "self._vertexColorsBufferObject = ", self._vertexColorsBufferObject
 
     def buildPointListNEW(self, selection=False):
         if self._verticesBufferObject is None:
@@ -464,11 +462,8 @@ class Object3DStack(Object3DBase.Object3D):
         This is just to test memory and speed
         """
         n1, n2, n3 = 256, 256, 256
-        print "OLD TOTAL = ",71 * 80 * 2000
-        print "TOTAL = ", 256 * 256 * 256
         zdata = numpy.arange(n1*n2*n3).astype(numpy.float32)
         zdata.shape= -1, 1
-        print zdata.shape
         (image,size,minmax)= spslut.transform(zdata,
                                           (1,0),
                                           (spslut.LINEAR,3.0),
@@ -570,8 +565,8 @@ if __name__ == "__main__":
                      sys.argv[1:],
                      options,
                      longoptions)
-    except getopt.error,msg:
-        print msg
+    except:
+        print(sys.exc_info()[0])
         sys.exit(1)
     fileindex = 2
     begin = None
@@ -598,20 +593,19 @@ if __name__ == "__main__":
             stack = EDFStack.EDFStack(dtype=numpy.float32, imagestack=False)
             filename = "..\COTTE\ch09\ch09__mca_0005_0000_0070.edf"
         if os.path.exists(filename):
-            print "fileindex = ", fileindex
+            print("fileindex = ", fileindex)
             stack.loadIndexedStack(filename, begin=begin, end=end, fileindex=fileindex)
             object3D = Object3DStack()
             object3D.setStack(stack)
             stack = 0
         else:
-            print "filename %s does not exists" % filename
+            print("filename %s does not exists" % filename)
             sys.exit(1)
         time.sleep(1)
-        print "START ADDING"
+        print("START ADDING")
         window.addObject(object3D, "STACK")
         window.setSelectedObject("STACK")
-        print "END ADDING"
-
+        print("END ADDING")
             
     window.glWidget.setZoomFactor(1.0)
     window.show()

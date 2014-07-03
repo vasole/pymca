@@ -32,7 +32,7 @@ try:
     import OpenGL.GLU as GLU
     from OpenGL.GL import glDeleteLists
 except ImportError:
-    raise ImportError, "OpenGL must be installed to use these functionalities"
+    raise ImportError("OpenGL must be installed to use these functionalities")
 import numpy
 try:
     from PyMca5 import spslut
@@ -109,11 +109,10 @@ class Object3DMesh(Object3DBase.Object3D):
   
     def __del__(self):
         if DEBUG:
-            print "Deleting object %s" % self.name()
+            print("Deleting object %s" % self.name())
         for key in self.drawListDict.keys():
             if key.upper() != "NONE":
                 if self.drawListDict[key] > 0:
-                    print "DELETING LISTS"
                     glDeleteLists(self.drawListDict[key], 1)
         del self._privateConfigurationWidget
         try:
@@ -131,7 +130,7 @@ class Object3DMesh(Object3DBase.Object3D):
 
         self.drawMode = DRAW_MODES[self._configuration['common']['mode']]
 
-        if ddict['common'].has_key('event'):
+        if 'event' in ddict['common']:
             if ddict['common']['event'] == 'ColormapChanged':
                 self.getColors()
 
@@ -217,7 +216,7 @@ class Object3DMesh(Object3DBase.Object3D):
                 self._z.shape = 1, 1
                 self.zSize = 1
         else:
-            raise ValueError, "Unhandled case"
+            raise ValueError("Unhandled case")
         self.nVertices = self.xSize * self.ySize
         self.values.shape = self.nVertices, 1
 
@@ -251,7 +250,7 @@ class Object3DMesh(Object3DBase.Object3D):
         self.vertexColors.shape = self.nVertices, 4
         self.vertexColors[:, 3] = self._alpha
         if DEBUG:
-            print "colors elapsed = ", time.time() - t0
+            print("colors elapsed = ", time.time() - t0)
         #selection colors
         # if I have more than pow(2, 24) vertices
         # the vertex with number pow(2, 24) will never be selected
@@ -355,10 +354,10 @@ class Object3DMesh(Object3DBase.Object3D):
                             self._configuration['private']['colorfilter'],
                             self._configuration['private']['useminmax'])
         else:
-            print "UNSUPPORTED MODE"
+            print("UNSUPPORTED MODE")
         GL.glPopAttrib()
         if DEBUG:
-            print "Drawing takes ", time.time() - t0
+            print("Drawing takes ", time.time() - t0)
 
     def _getVertexSelectionColors(self):
         i = numpy.arange(self.nVertices)
@@ -384,17 +383,17 @@ class Object3DMesh(Object3DBase.Object3D):
         self.facets = Object3DQhull.delaunay(self.vertices[:,0:2],
                                  "qhull d Qbb QJ Qc")
         if DEBUG:
-            print "delaunay elapsed = ", time.time() -e0
-            print "facets 1st= ",self.facets[0,:]
-            print "vertices 1st =", self.vertices[self.facets[0,0]],\
+            print("delaunay elapsed = ", time.time() -e0)
+            print("facets 1st= ",self.facets[0,:])
+            print("vertices 1st =", self.vertices[self.facets[0,0]],\
                                 self.vertices[self.facets[0,1]],\
-                                self.vertices[self.facets[0,2]]
-            print "COLORS = ", self.vertexColors[self.facets[0,0]],\
+                                self.vertices[self.facets[0,2]])
+            print("COLORS = ", self.vertexColors[self.facets[0,0]],\
                            self.vertexColors[self.facets[0,1]],\
-                           self.vertexColors[self.facets[0,2]]
-            print "COLORS = ", self.vertexColors[self.facets[1,0]],\
+                           self.vertexColors[self.facets[0,2]])
+            print("COLORS = ", self.vertexColors[self.facets[1,0]],\
                            self.vertexColors[self.facets[1,1]],\
-                           self.vertexColors[self.facets[1,2]]
+                           self.vertexColors[self.facets[1,2]])
 
     def buildPointList(self, selection=False):
         if selection:
@@ -513,11 +512,8 @@ class Object3DMesh(Object3DBase.Object3D):
         This is just to test memory and speed
         """
         n1, n2, n3 = 256, 256, 256
-        print "OLD TOTAL = ",71 * 80 * 2000
-        print "TOTAL = ", 256 * 256 * 256
         zdata = numpy.arange(n1*n2*n3).astype(numpy.float32)
         zdata.shape= -1, 1
-        print zdata.shape
         (image,size,minmax)= spslut.transform(zdata,
                                           (1,0),
                                           (spslut.LINEAR,3.0),
@@ -597,7 +593,7 @@ def getObject3DInstance(config=None):
 if __name__ == "__main__":
     import sys
     import os
-    from Object3D import SceneGLWindow
+    from PyMca5.Object3D import SceneGLWindow
     try:
         from PyMca5.PyMcaIO import EdfFile
     except ImportError:
@@ -645,11 +641,9 @@ if __name__ == "__main__":
     else:
         #not flat
         object3D.setData(data, z=data)
-    print "START ADDING"
     window.addObject(object3D, "Mesh")
     object3D = None
-    print "END ADDING"
-
+    
     window.glWidget.setZoomFactor(1.0)
     window.show()
     app.exec_()

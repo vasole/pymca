@@ -96,8 +96,8 @@ if __name__ == "__main__":
                      sys.argv[1:],
                      options,
                      longoptions)
-    except getopt.error,msg:
-        print msg
+    except:
+        print(sys.exc_info()[0])
         sys.exit(1)
     fileindex = 2
     begin = None
@@ -119,12 +119,12 @@ if __name__ == "__main__":
     else:
         filename = sys.argv[1]
         if not os.path.exists(filename):
-            print "File does not exists"
+            print("File does not exists")
             sys.exit(1)
         f = h5py.File(filename)
         stack = f['Image']['data'].value
         if stack is None:
-            raise IOError, "Problem reading stack."
+            raise IOError("Problem reading stack.")
         object3D = ChimeraStack(name=os.path.basename(filename))
         object3D.setStack(stack)
         f = None

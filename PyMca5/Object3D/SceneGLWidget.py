@@ -181,17 +181,17 @@ class SceneGLWidget(qt.QGLWidget):
             ob = self.objectsDict[legend]['object3D']
             if ob.selected():
                 if DEBUG:
-                    print "setting alpha = ", alpha
+                    print("setting alpha = ", alpha)
                 ob.setAlpha(alpha)
             else:
                 if DEBUG:
-                    print " object %d not selected" % i
+                    print(" object %d not selected" % i)
                 i += 1
 
     def initializeGL(self):
         if DEBUG:
-            print "OpenGL version = ", GL.glGetString(GL.GL_VERSION)
-            print "Supported extensions = ", GL.glGetString(GL.GL_EXTENSIONS)
+            print("OpenGL version = ", GL.glGetString(GL.GL_VERSION))
+            print("Supported extensions = ", GL.glGetString(GL.GL_EXTENSIONS))
         GL.glClearDepth(1.0)
         ##########GL.glEnable(GL.GL_DEPTH_TEST)
         self.clearColor = [0.5, 0.5, 0.5, 1.0]
@@ -213,8 +213,8 @@ class SceneGLWidget(qt.QGLWidget):
         GL.glLoadIdentity()
         
         #initialize own font lists
-	self.redBookFont = Object3DRedBookFont.Object3DRedBookFont()
-	self.redBookFont.initialize()
+        self.redBookFont = Object3DRedBookFont.Object3DRedBookFont()
+        self.redBookFont.initialize()
         ####
 
         if 0:
@@ -358,7 +358,7 @@ class SceneGLWidget(qt.QGLWidget):
 
     def drawCacheTexture(self):
         if DEBUG:
-            print "USING CACHE TEXTURE!!!!!!!!!!!!"
+            print("USING CACHE TEXTURE!!!!!!!!!!!!")
         GL.glClearColor(*self.clearColor)
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
@@ -440,7 +440,7 @@ class SceneGLWidget(qt.QGLWidget):
                     if GL.glGetIntegerv(GL.GL_RENDER_MODE) == GL.GL_RENDER:
                         self.swapBuffers()
             else:
-                print "WARNING: Expected to work with autoBufferSwap off"
+                print("WARNING: Expected to work with autoBufferSwap off")
 
         #keep a copy of the current image
         #self.__finalImage = GL.glReadPixelsub(0,0, self.width(),self.height(),
@@ -925,15 +925,15 @@ class SceneGLWidget(qt.QGLWidget):
             #gluPickMatrix code
             """
 gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
-		  GLint viewport[4])
+          GLint viewport[4])
 {
     if (deltax <= 0 || deltay <= 0) { 
-	return;
+        return;
     }
 
     /* Translate and scale the picked region to the entire window */
     glTranslatef((viewport[2] - 2 * (x - viewport[0])) / deltax,
-	    (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
+        (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
     glScalef(viewport[2] / deltax, viewport[3] / deltay, 1.0);
 }
             """
@@ -972,7 +972,8 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
 
 
     def mousePressEvent(self, event):
-        if DEBUG:print "pressEvent"
+        if DEBUG:
+            print("pressEvent")
         self.lastPos = qt.QPoint(event.pos())
         #get the color
         x = self.lastPos.x()
@@ -989,11 +990,11 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
         """
         if event.buttons() & qt.Qt.RightButton:
             if DEBUG:
-                print "Right button clicked"
+                print("Right button clicked")
             return
         if self._objectSelectionMode:
             if DEBUG:
-                print "in object selection mode"
+                print("in object selection mode")
             y = self.height()- y
 
             self.makeCurrent()
@@ -1041,7 +1042,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                             nearest = (near,index)
                     #print "near = ", near, "far = ", far, index
                 if DEBUG:
-                    print " Object index   = ", nearest[1][0] - 1
+                    print(" Object index   = ", nearest[1][0] - 1)
                 if len(nearest[1]):
                     index = nearest[1][0]
                     if index <= len(objectsList):
@@ -1050,9 +1051,9 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 ddict['legend'] = self.scene.name()
 
             if DEBUG:
-                print "In SceneGLWidget"
-                print "current = ", self.scene.getSelectedObject()
-                print "selected = ", ddict['legend']
+                print("In SceneGLWidget")
+                print("current = ", self.scene.getSelectedObject())
+                print("selected = ", ddict['legend'])
             if ddict['legend'] == self.scene.getSelectedObject():
                 self.__outOfSelectMode = True
             else:
@@ -1073,20 +1074,20 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
         elif self._vertexSelectionMode:
             #self.setCacheEnabled(False)
             if DEBUG:
-                print "vertexSelectionMode"
+                print("vertexSelectionMode")
             selected = False
             legend = self.scene.getSelectedObject()
             if legend is None:
                 if DEBUG:
-                    print " NO OBJECT SELECTED"
+                    print(" NO OBJECT SELECTED")
                 return
             else:
                 selected = True
             object3D = self.scene[legend].root[0]
             if not object3D.selected():
                 if DEBUG:
-                    print "%s NOT SELECTED" % legend
-                print "THIS SHOULD NOT HAPPEN"
+                    print("%s NOT SELECTED" % legend)
+                print("THIS SHOULD NOT HAPPEN")
                 return
             if not object3D.isVertexSelectionModeSupported():
                 #emit info
@@ -1131,11 +1132,12 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             color = GL.glReadPixelsub(x, y, 1, 1, GL.GL_RGBA)
             #workaround a PyOpenGL bug
             if color.dtype == 'int8':
-                if DEBUG:print '######### workaround pyopengl bug #########'
+                if DEBUG:
+                    print('######### workaround pyopengl bug #########')
                 color = color.astype(numpy.uint8)
 
             if DEBUG:
-                print "color = ", color
+                print("color = ", color)
 
             index =  color[0][0][0] + \
                     (color[0][0][1] << 8) +\
@@ -1169,20 +1171,20 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                                 index += pow(2,24) * (255 - color[0][0][3])
                                 if index != backgroundIndex:
                                     if DEBUG:
-                                        print "found with x, y = ", i, j
-                                        print "color = ", color
-                                        print "index = ", index
+                                        print("found with x, y = ", i, j)
+                                        print("color = ", color)
+                                        print("index = ", index)
                                         if hasattr(object3D, "getIndexValues"):
-                                            print "VERTEX = ",\
-                                                   object3D.getIndexValues(index)
+                                            print("VERTEX = ",\
+                                                 object3D.getIndexValues(index))
                                     break
             if DEBUG:
                 if index == backgroundIndex:
-                    print "click too far away"
+                    print("click too far away")
                 else:
-                    print "INDEX =  ", index
+                    print("INDEX =  ", index)
                     if hasattr(object3D, "getIndexValues"):
-                        print "VERTEX = ", object3D.getIndexValues(index)
+                        print("VERTEX = ", object3D.getIndexValues(index))
 
             #make sure everything is fine ...
             qt.QApplication.postEvent(self,
@@ -1223,7 +1225,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
         #This does not work: event.buttons() excludes the button that caused the event
         if event.buttons() & qt.Qt.RightButton:
             if DEBUG:
-                print "Right button released"
+                print("Right button released")
             pass
 
     def mouseMoveEvent(self, event):
@@ -1285,7 +1287,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 self.cacheUpdateGL()
         else:
             if DEBUG:
-                print "I can only be here is mouse tracking is enabled"
+                print("I can only be here is mouse tracking is enabled")
             xPixel = event.x()
             yPixel = event.y()
             width  = self.width()

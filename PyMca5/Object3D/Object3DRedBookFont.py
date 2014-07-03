@@ -129,32 +129,32 @@ rasters = numpy.array([
 
 class Object3DRedBookFont:
     def __init__(self):
-	self.rasters = rasters
-	self.__initialized = 0
+        self.rasters = rasters
+        self.__initialized = 0
 
     def initialize(self):
-	self.makeRasterFont()
+        self.makeRasterFont()
 
     def	makeRasterFont(self):
-	GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1)
-	self.fontOffset = GL.glGenLists(128)
-	for i in range(32, 127):
-	    GL.glNewList(i + self.fontOffset, GL.GL_COMPILE)
-	    GL.glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, self.rasters[i-32])
-	    GL.glEndList()
+        GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1)
+        self.fontOffset = GL.glGenLists(128)
+        for i in range(32, 127):
+            GL.glNewList(i + self.fontOffset, GL.GL_COMPILE)
+            GL.glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, self.rasters[i-32])
+            GL.glEndList()
 
     def printString(self, text):
-	GL.glPushAttrib(GL.GL_LIST_BIT)
-	GL.glListBase(self.fontOffset)
-	GL.glCallLists(text)
-	GL.glPopAttrib()
+        GL.glPushAttrib(GL.GL_LIST_BIT)
+        GL.glListBase(self.fontOffset)
+        GL.glCallLists(text)
+        GL.glPopAttrib()
 
 
 class TestWidget(qt.QGLWidget):
     def initializeGL(self):
-	qt.QGLWidget.initializeGL(self)
-	self.redBookFont = Object3DRedBookFont()
-	self.redBookFont.initialize()
+        qt.QGLWidget.initializeGL(self)
+        self.redBookFont = Object3DRedBookFont()
+        self.redBookFont.initialize()
 
     def resizeGL(self, width, height):
         side = min(width, height)
@@ -166,19 +166,19 @@ class TestWidget(qt.QGLWidget):
         GL.glLoadIdentity()
 
     def paintGL(self):
-	GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-	GL.glColor4f(1.0, 1.0, 1.0, 1.0)
-	for i in range(32, 127, 32):
-	    teststring = ""
-	    GL.glRasterPos2i(20, 200 -18 * i/32)
-	    for j in range(32):
-		teststring += "%c" % (i+j)
-	    self.redBookFont.printString(teststring)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+        GL.glColor4f(1.0, 1.0, 1.0, 1.0)
+        for i in range(32, 127, 32):
+            teststring = ""
+            GL.glRasterPos2i(20, 200 -18 * i/32)
+            for j in range(32):
+                teststring += "%c" % (i+j)
+                self.redBookFont.printString(teststring)
 
-	GL.glRasterPos2f(20, 100)
-	self.redBookFont.printString("The quick brown fox jumps")
-	GL.glRasterPos2i(20,  82)
-	self.redBookFont.printString("over a lazy dog")
+        GL.glRasterPos2f(20, 100)
+        self.redBookFont.printString("The quick brown fox jumps")
+        GL.glRasterPos2i(20,  82)
+        self.redBookFont.printString("over a lazy dog")
 
 def test():
     app = qt.QApplication([])

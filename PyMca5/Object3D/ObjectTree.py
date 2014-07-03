@@ -47,10 +47,10 @@ class ObjectTree(object):
         """
         self.root = [item]
         if name is None:
-	    if hasattr(item, "name"):
-		name = item.name()
-	    else:
-	        name = "Unnamed"
+            if hasattr(item, "name"):
+                name = item.name()
+            else:
+                name = "Unnamed"
         self.__name = name
 
     def name(self):
@@ -58,7 +58,7 @@ class ObjectTree(object):
         Return its name.
         """
         #if type(self.root[0]) == type(''):
-	#    return self.root[0]
+        #    return self.root[0]
         #return self.root[0]._name
         return self.__name
 
@@ -272,15 +272,15 @@ if __name__ == "__main__":
         #append DummyObject01 to DummyObject0'
         tree = w.find("DummyObject0")
         tree.addChild(o01)        
-    print w
-    print "LIST"
-    print w.getList()
-    print "Now I am going to paste DummyObject0 into DummyObject1"
+    print(w)
+    print("LIST")
+    print(w.getList())
+    print("Now I am going to paste DummyObject0 into DummyObject1")
     t0 = w.find("DummyObject0")
     w.delChild("DummyObject0")
     t1=w.find("DummyObject1")
     t1.addChildTree(t0)
-    print w
+    print(w)
 
-    print "LIST"
-    print w.getList()
+    print("LIST")
+    print(w.getList())

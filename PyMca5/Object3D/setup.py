@@ -35,7 +35,7 @@ try:
 except ImportError:
     text  = "You must have numpy installed.\n"
     text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
-    raise ImportError, text
+    raise ImportError(text)
 import distutils.sysconfig
 global OBJECT3D_INSTALL_DIR
 global OBJECT3D_SCRIPTS_DIR
@@ -55,12 +55,12 @@ for line in file('SceneGLWindow.py').readlines():
             __version__ += 'dev_r%i' % revision
         break
 
-print "Object3D Toolkit %s" % __version__
-print 
-print "Type 'L' to view the license."
-print "Type 'yes' to accept the terms of the license."
-print "Type 'no' to decline the terms of the license."
-print
+print("Object3D Toolkit %s" % __version__)
+print()
+print("Type 'L' to view the license.")
+print("Type 'yes' to accept the terms of the license.")
+print("Type 'no' to decline the terms of the license.")
+print()
 
 while 1:
     try:
@@ -155,7 +155,7 @@ class smart_install_data(install_data):
         install_cmd = self.get_finalized_command('install')
         self.install_dir = getattr(install_cmd, 'install_lib')
         OBJECT3D_INSTALL_DIR = self.install_dir
-        print "Object3D to be installed in %s" %  self.install_dir
+        print("Object3D to be installed in %s" %  self.install_dir)
         return install_data.run(self)
 
 from distutils.command.install_scripts import install_scripts
@@ -178,7 +178,7 @@ class smart_install_scripts(install_scripts):
             self.install_dir = getattr(install_cmd, 'install_scripts')
         OBJECT3D_SCRIPTS_DIR = self.install_dir        
         if sys.platform != "win32":
-            print "Object3D scripts to be installed in %s" %  self.install_dir
+            print("Object3D scripts to be installed in %s" %  self.install_dir)
         self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
         self.outfiles = []
         for filein in glob.glob('scripts/*'):
@@ -204,7 +204,7 @@ class smart_install_scripts(install_scripts):
                 if self.dry_run:
                     log.info("changing mode of %s", ffile)
                 else:
-                    mode = ((os.stat(ffile)[ST_MODE]) | 0555) & 07777
+                    mode = ((os.stat(ffile)[ST_MODE]) | 365) & 4095
                     log.info("changing mode of %s to %o", ffile, mode)
                     os.chmod(ffile, mode)
    
@@ -239,41 +239,10 @@ for fname in ['setup.py', 'cx_setup.py']:
     if os.path.exists(file_to_remove+'o'):
         os.remove(file_to_remove+'o')
 
-
-#post installation checks
-try:
-    import sip
-    SIP = True
-except ImportError:
-    SIP = False
-    print "sip must be installed for full Object3D functionality."
-
 badtext = "No valid PyQt4 and PyOpenGL installation found.\n"
 
 try:
-    print "Object3D is installed in %s " % OBJECT3D_INSTALL_DIR
+    print("Object3D is installed in %s " % OBJECT3D_INSTALL_DIR)
 except NameError:
     #I really do not see how this may happen but ...
     pass
-    
-if SIP:
-    try:
-        import PyQt4.QtCore
-        QT4 = True
-    except ImportError:
-        QT4 = False
-
-    try:
-        import OpenGL
-        GL = True
-    except:
-        GL = False        
-    if QT4 and GL:
-        print "You have PyQt4 and PyOpenGL installed."
-        print "Object3D is fully functional under PyQt4 with PyOpenGL (ctypes)."
-        print "You can easily embed Object3D in your Qt4 graphical "
-        print "applications using SceneGLWindow.py"
-    else:
-        print badtext
-else:
-    print "No valid PyQt4 installation found."

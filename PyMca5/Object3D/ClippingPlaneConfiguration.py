@@ -107,7 +107,8 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
 
     def _sliderSlot(self, *var):
         if self.__disconnected: return
-        if DEBUG:print "sliderSlot"
+        if DEBUG:
+            print("sliderSlot")
         for i in range(3):
             value = self.planeList[i][5].value()
             self.planeList[i][4].setText("%f" % value) 
@@ -115,7 +116,8 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
         self._signal()
 
     def _lineSlot(self):
-        if DEBUG:print "lineSlot"
+        if DEBUG:
+            print("lineSlot")
         for i in range(3):
             oldValue = self.planeList[i][5].value() 
             value = float(str(self.planeList[i][4].text()))
@@ -136,13 +138,13 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
 
     def setParameters(self, ddict=None):
         if ddict is None:return
-        if ddict.has_key('limits'):
+        if 'limits' in ddict:
             xmin, ymin, zmin = ddict['limits'][0]
             xmax, ymax, zmax = ddict['limits'][1]
             self.planeList[0][5].setRange(-abs(zmax), abs(zmax))
             self.planeList[1][5].setRange(-abs(ymax), abs(ymax))
             self.planeList[2][5].setRange(-abs(xmax), abs(xmax))
-        if ddict.has_key('clippingplanes'):
+        if 'clippingplanes' in ddict:
             i = 0
             self.__disconnected = True
             for plane in ddict['clippingplanes']:
@@ -201,11 +203,11 @@ class UserClippingPlaneWidget(qt.QWidget):
 
     def setParameters(self, ddict):
         self.__disconnected = True
-        if ddict.has_key('U0vector'):
+        if 'U0vector' in ddict:
             self.vectorWidget.setTranslation(ddict['U0vector'])
-        if ddict.has_key('U0point'):
+        if 'U0point' in ddict:
             self.pointWidget.setTranslation(ddict['U0point'])
-        if ddict.has_key('U0rotation'):
+        if 'U0rotation' in ddict:
             self.rotationWidget.setRotation(ddict['U0rotation'])
         self.__disconnected = False
 

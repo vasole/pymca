@@ -111,9 +111,9 @@ class ObjectTreeWidget(qt.QTreeWidget):
 class Object3DTreeWidgetItem(qt.QTreeWidgetItem):
     def __init__(self, wtype, object3D):
         if type(wtype) != type(1):
-            raise TypeError, "First argument must be an integer"
+            raise TypeError("First argument must be an integer")
         #if (wtype != 0) and (wtype < qt.QTreeWidgetItem.UserType):
-        #    raise TypeError, "First argument must be 0 or an integer >= 1000"
+        #    raise TypeError("First argument must be 0 or an integer >= 1000")
         actualType = wtype
         qt.QTreeWidgetItem.__init__(self, wtype + qt.QTreeWidgetItem.UserType)
         self.__object3D = object3D
@@ -311,7 +311,6 @@ class Object3DObjectTree(qt.QGroupBox):
         self.emitSignal('objectReplaced')
         
     def itemChanged(self, current, previous):
-        print "itemChanged", current, "previous = ", previous
         if current is None:
             #This happens when updating because I clear the tree
             return

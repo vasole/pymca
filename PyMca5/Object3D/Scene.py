@@ -107,7 +107,7 @@ class Scene(object):
                 o3d =self.getObject3DProxy(name)
                 o3d.setConfiguration(d[name])
             elif DEBUG:
-                print "name %s ignored" % name
+                print("name %s ignored" % name)
         self.updateTransformationMatrix()
                 
     def name(self):
@@ -140,7 +140,7 @@ class Scene(object):
                 
         parentTree = self.tree.find(parent)
         if parentTree is None:
-            raise ValueError, "Parent %s does not exist." % parent
+            raise ValueError("Parent %s does not exist." % parent)
 
         if legend in self.getObjectList():
             self.removeObject(legend)
@@ -213,7 +213,7 @@ class Scene(object):
             self.__sceneObject._configuration['private']['view'] =\
                                                 m.astype(numpy.float32)
         else:
-            raise ValueError, "Trying to set an invalid transformation matrix"
+            raise ValueError("Trying to set an invalid transformation matrix")
         self.updateTransformationMatrix()
 
     def getCurrentViewMatrix(self):
@@ -255,39 +255,39 @@ class Scene(object):
                              self.__transformationMatrix).astype(numpy.float32)
 
     def gluLookAt(self, eyeX, eyeY, eyeZ,
-			centerX, centerY, centerZ,
-			upX, upY, upZ):
-	F = numpy.array((centerX - eyeX, centerY - eyeY, centerZ - eyeZ),
-			numpy.float)
-	UP = numpy.array((upX, upY, upZ), numpy.float)
+                  centerX, centerY, centerZ,
+                  upX, upY, upZ):
+        F = numpy.array((centerX - eyeX, centerY - eyeY, centerZ - eyeZ),
+            numpy.float)
+        UP = numpy.array((upX, upY, upZ), numpy.float)
 
-	M = numpy.zeros((4,4), numpy.float)
-	M[0,0] = 1.0
-	M[1,1] = 1.0
-	M[2,2] = 1.0
-	M[3,3] = 1.0
+        M = numpy.zeros((4,4), numpy.float)
+        M[0,0] = 1.0
+        M[1,1] = 1.0
+        M[2,2] = 1.0
+        M[3,3] = 1.0
 
         fmod = numpy.sqrt(numpy.dot(F, F.T)) #numpy.linalg.norm(F)
-	umod = numpy.sqrt(numpy.dot(UP, UP.T)) #numpy.linalg.norm(U)
+        umod = numpy.sqrt(numpy.dot(UP, UP.T)) #numpy.linalg.norm(U)
 
         if (fmod <= 0.0) or (umod <= 0.0):
             return M
 
-	F = F/fmod
-	UP = UP/umod
+        F = F/fmod
+        UP = UP/umod
 
-	s = numpy.cross(F, UP)
-	u = numpy.cross(s, F)
+        s = numpy.cross(F, UP)
+        u = numpy.cross(s, F)
 
-	M[0,0:3] = s
-	M[1,0:3] = u
-	M[2,0:3] = -F
-	M = M.T		#is this due to a PyOpenGL problem?
-			#if this because OpenGL gluLookAt man pages
-			# suggest order orientation and it is not the case???
+        M[0,0:3] = s
+        M[1,0:3] = u
+        M[2,0:3] = -F
+        M = M.T         #is this due to a PyOpenGL problem?
+                        #if this because OpenGL gluLookAt man pages
+                        # suggest order orientation and it is not the case???
 
-	# the translation -eyeX, -eyeY, -eyeZ
-	if 0:
+        # the translation -eyeX, -eyeY, -eyeZ
+        if 0:
             # as pure matrix operation
             T = numpy.zeros((4,4), numpy.float)
             T[0,0] = 1.0
@@ -299,11 +299,11 @@ class Scene(object):
             T[3,3] = 1.0
             M = numpy.dot(T, M)
         else:
-	    #just compute the last row
-	    M[3, 0] = -eyeX * M[0, 0] - eyeY * M[1, 0] - eyeZ * M[2, 0]
-	    M[3, 1] = -eyeX * M[0, 1] - eyeY * M[1, 1] - eyeZ * M[2, 1]
-	    M[3, 2] = -eyeX * M[0, 2] - eyeY * M[1, 2] - eyeZ * M[2, 2]	    
-	return M
+            #just compute the last row
+            M[3, 0] = -eyeX * M[0, 0] - eyeY * M[1, 0] - eyeZ * M[2, 0]
+            M[3, 1] = -eyeX * M[0, 1] - eyeY * M[1, 1] - eyeZ * M[2, 1]
+            M[3, 2] = -eyeX * M[0, 2] - eyeY * M[1, 2] - eyeZ * M[2, 2]	    
+        return M
 
     def setSelectedObject(self, target):
         self.__sceneObject.setSelected(False)
@@ -347,7 +347,7 @@ class Scene(object):
         objectTree = self.tree.find(name)
         if objectTree is None:
             if DEBUG:
-                raise ValueError, "No object with name %s in tree." % name
+                raise ValueError("No object with name %s in tree." % name)
             return
         self.tree.delChild(name)
 
@@ -647,7 +647,7 @@ if __name__ == "__main__":
     w.addObject(o0)
     w.addObject(o1)
     w.addObject(o01)
-    print w.tree
+    print(w.tree)
 
     w.addObject(o0, parent="DummyObject01")
-    print w.tree
+    print(w.tree)
