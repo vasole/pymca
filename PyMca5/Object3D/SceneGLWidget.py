@@ -450,6 +450,10 @@ class SceneGLWidget(qt.QGLWidget):
             self.__finalImage = GL.glReadPixelsub(0,0,
                                 self.width(), self.height(),
                                 GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+            if not hasattr(self.__finalImage, "dtype"):
+                # we did not receive an array (python 3) ...
+                self.__finalImage = numpy.fromstring(self.__finalImage,
+                                                dtype=numpy.uint8)
 
             self.__cacheTexture.setPixmap(self.__finalImage,
                                       self.width(), self.height())
