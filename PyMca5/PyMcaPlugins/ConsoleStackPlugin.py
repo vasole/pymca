@@ -35,14 +35,15 @@ except ImportError:
 
 from PyMca5.PyMcaGui.misc  import QIPythonWidget
 
-
-class ConsoleStackPlugin(Plugin1DBase.Plugin1DBase):
-    def __init__(self, plotWindow, **kw):
-       Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
-       self.methodDict = {}
-       self.methodDict["console"] = [self._embed,
+class ConsoleStackPlugin(StackPluginBase.StackPluginBase):
+    def __init__(self, stackWindow, **kw):
+        StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
+        self.methodDict = {}
+        self.methodDict["console"] = [self._embed,
                                      "Open IPython console",
                                      None]
+        self._widget = None
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
@@ -75,11 +76,11 @@ class ConsoleStackPlugin(Plugin1DBase.Plugin1DBase):
         return
 
     def _embed(self):
-        if self._ipython is None:
-            self._ipython = QIPythonWidget.QIPythonWidget(customBanner="Stack Console")
-            self._ipython.pushVariables({"plugin":self})
-        self._ipython.show()
-        self._ipython.raise_()
+        if self._widget is None:
+            self._widget = QIPythonWidget.QIPythonWidget(customBanner="Console 1D Window")
+            self._widget.pushVariables({"plugin":self})
+        self._widget.show()
+        self._widget.raise_()
 
 MENU_TEXT = "Interactive Console"
 def getStackPluginInstance(stackWindow, **kw):
