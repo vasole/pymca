@@ -34,7 +34,7 @@ from . import Object3DQt as qt
 import numpy
 DEBUG = 0
 
-class GLWidgetCachePixmap:
+class GLWidgetCachePixmap(object):
     def __init__(self, name="Unnamed"):
         self.__name = name
         self.__pixmap = None
@@ -57,7 +57,7 @@ class GLWidgetCachePixmap:
             self.__textureId = None
     
     def setPixmap(self, pixmap, width, height, xmirror = False, ymirror = False, z=0.0):
-        if type(pixmap) == type(""):
+        if not hasattr(pixmap, "dtype"):
             raise ValueError("Input pixmap has to be an uint8 array")
     
         useNewTexture = True
