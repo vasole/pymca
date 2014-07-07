@@ -10,8 +10,9 @@ if PYSIDE:
     from PySide.QtGui import *
 else:
     os.environ['QT_API'] = 'pyqt'
-    if 0:
-        #is this needed? I get rid of it
+    if 1:
+        #is this really needed?
+        #If I get rid of it IPython complains
         import sip
         sip.setapi("QString", 2)
         sip.setapi("QVariant", 2)

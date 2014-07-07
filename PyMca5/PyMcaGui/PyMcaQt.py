@@ -55,6 +55,12 @@ if ('PySide' in sys.modules) or ('PySide' in sys.argv):
         pass
 else:
     import sip
+    try:
+        sip.setapi("QString", 2)
+        sip.setapi("QVariant", 2)
+    except:
+        print("API 1 -> Console widget not available")
+    
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
     try:

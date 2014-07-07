@@ -81,9 +81,9 @@ if __name__ == '__main__':
     if qtversion == '3':
         raise NotImplementedError("Qt3 is not longer supported") 
 
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.pymca import PyMcaMdi
 IconDict = PyMcaMdi.IconDict
-from PyMca5.PyMcaGui import PyMcaQt as qt
 if backend is None:
     backend = "matplotlib"
 
