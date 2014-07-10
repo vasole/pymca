@@ -368,8 +368,10 @@ class PlotBackend(object):
         :type x: float
         :param y: Vertical position of the marker in graph coordenates
         :type y: float
-        :param label: Legend associated to the marker
-        :type label: string
+        :param legend: Legend associated to the marker
+        :type legend: string
+        :param label: Text associated to the marker
+        :type label: string or None
         :param color: Color to be used for instance 'blue', 'b', '#FF0000'
         :type color: string, default 'k' (black)
         :param selectable: Flag to indicate if the marker can be selected

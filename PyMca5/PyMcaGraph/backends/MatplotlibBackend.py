@@ -1460,7 +1460,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             print("unhandled axis %s" % axis)
 
-    def insertMarker(self, x, y, label, color='k',
+    def insertMarker(self, x, y, legend, label=None, color='k',
                       selectable=False, draggable=False,
                       **kw):
         """
@@ -1479,8 +1479,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :return: Handle used by the backend to univocally access the marker
         """
         print("MatplotlibBackend insertMarker not implemented")
-        return label
-
+        return legend
+    
     def insertXMarker(self, x, legend, label=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
