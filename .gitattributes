@@ -1,0 +1,21 @@
+# sets line endings in the repository:
+* text=lf
+*.bat text=crlf
+
+# sets line endings in the working directory:
+* eol=lf
+*.bat eol=crlf
+
+# consider as binary files
+*.html -text
+*.DAT -text
+*.mat -text
+*.dict -text
+*.lib -text
+*.1 -text
+EGRID.TXT -text
+
+# sets how git diffs will be displayed
+*.py diff=python
+*.c diff=cpp
+*.h diff=cpp
