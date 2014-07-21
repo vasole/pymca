@@ -1,0 +1,9 @@
+# sets line endings in the repository:
+* text=lf
+*.bat text=crlf
+
+# sets line endings in the working directory:
+* eol=lf
+*.bat eol=crlf
+
+*.py diff=python
