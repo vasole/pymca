@@ -1,7 +1,7 @@
 #
 # These Python modules have been developed by V.A. Sole, from the European
 # Synchrotron Radiation Facility (ESRF) to build a frozen version of PyMca.
-# Given the nature of this work, these module can be considered public domain. 
+# Given the nature of this work, these module can be considered public domain.
 # Therefore redistribution and use in source and binary forms, with or without
 # modification, are permitted provided the following disclaimer is accepted:
 #
@@ -54,7 +54,7 @@ if os.system(cmd):
     print "Error building PyMca"
     sys.exit(1)
 
-# awful workaround because py2app picks PyMca form the source directory 
+# awful workaround because py2app picks PyMca form the source directory
 os.chdir(PyMcaInstallationDir)
 sys.path.insert(0, PyMcaInstallationDir)
 pymcapath = PyMcaDir

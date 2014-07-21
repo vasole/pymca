@@ -99,12 +99,12 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             self.methodDict[key] = [self._siftAlignment,
                                     "Align using SIFT Algorithm",
                                     None]
-            self.__methodKeys.append(key) 
+            self.__methodKeys.append(key)
         key = 'From File Alignment'
         self.methodDict[key] = [self._shiftFromFile,
                                 "Align using shifts from file",
                                 None]
-        self.__methodKeys.append(key) 
+        self.__methodKeys.append(key)
         self.widget = None
 
     def stackUpdated(self):
@@ -138,7 +138,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         if ret:
             ddict = self.widget.getParameters()
             self.widget.setDummyStack()
-            offsets = [ddict['Dim 0']['offset'], ddict['Dim 1']['offset']] 
+            offsets = [ddict['Dim 0']['offset'], ddict['Dim 1']['offset']]
             widths = [ddict['Dim 0']['width'], ddict['Dim 1']['width']]
             if mcaIndex == 0:
                 reference = stack.data[ddict['reference_index']]
@@ -200,7 +200,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                                    name="reference_mask",
                                                    dtype=numpy.uint8,
                                                    attributes=attributes)
-                
+
                 maskData = numpy.zeros(reference.shape, dtype=numpy.uint8)
                 maskData[offsets[0]:offsets[0] + widths[0], offsets[1] : offsets[1] + widths[1]] = 1
                 maskFrame[:,:] = maskData[:,:]
@@ -276,7 +276,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
     def _waitingCallback(self):
         ddict = {}
         ddict['message'] = "Calculation Progress = %d %%" % self._progress
-        return ddict        
+        return ddict
 
     def _siftAlignment(self):
         if not SIFT:
@@ -323,7 +323,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                             raise Exception(result[1], result[2], result[3])
             if filename is None:
                 self.setStack(stack)
-        
+
     def calculateShiftsSIFT(self, stack, reference, mask=None, device=None, crop=None,
                             sigma=None,
                             filename=None):
@@ -350,7 +350,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                                 max_workgroup_size=max_workgroup_size,
                                                 device=device,
                                                 init_sigma=sigma)
-            else:               
+            else:
                 siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
                                                 device=device,
                                                 init_sigma=sigma)
@@ -451,7 +451,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             dataGroup['dim_2'].attrs['axis'] = numpy.int32(3)
             dim2 = numpy.arange(reference.shape[1]).astype(numpy.float32)
             dataGroup['data'].attrs['axes'] = axesAttribute
-            self.finishHDF5File(hdf)            
+            self.finishHDF5File(hdf)
 
     def calculateShiftsFFT(self, stack, reference, offsets=None, widths=None, crop=False):
         if DEBUG:
@@ -492,7 +492,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             for i in range(data.shape[mcaIndex]):
                 image1[:,:] = window * data[i][offsets[0]:offsets[0]+widths[0],
                                                offsets[1]:offsets[1]+widths[1]]
-                   
+
                 image1fft2 = fft2Function(image1)
                 shifts[i] = ImageRegistration.measure_offset_from_ffts(image2fft2,
                                                                        image1fft2)
@@ -503,7 +503,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             for i in range(data.shape[mcaIndex]):
                 image1[:,:] = window * data[:,:,i][offsets[0]:offsets[0]+widths[0],
                                                offsets[1]:offsets[1]+widths[1]]
-                   
+
                 image1fft2 = fft2Function(image1)
                 shifts[i] = ImageRegistration.measure_offset_from_ffts(image2fft2,
                                                                        image1fft2)
@@ -651,7 +651,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             self.finishHDF5File(hdf)
         else:
             self.setStack(stack)
-                
+
     def _hdf5WidgetSlot(self, ddict):
         if ddict['event'] == "itemDoubleClicked":
             if ddict['type'].lower() in ['dataset']:
@@ -712,7 +712,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
     def initializeHDF5File(self, fname):
         #for the time being overwriting
         if os.path.exists(fname):
-            os.remove(fname)            
+            os.remove(fname)
         hdf = h5py.File(fname, 'w')
         entryName = "entry_000"
         nxEntry = hdf.require_group(entryName)
@@ -723,7 +723,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
 
         alignmentGroup = nxEntry.require_group('Alignment')
         dataGroup = nxEntry.require_group('Data')
-        dataGroup.attrs['NX_class'] = 'NXdata'.encode('utf-8')        
+        dataGroup.attrs['NX_class'] = 'NXdata'.encode('utf-8')
         return hdf
 
     def finishHDF5File(self, hdf):
@@ -732,7 +732,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         toplevelEntry['end_time'] = numpy.string_(ArraySave.getDate().encode('utf-8'))
         hdf.flush()
         hdf.close()
-        
+
     def getHDF5BufferIntoGroup(self, h5Group, shape,
                                name="data", dtype=numpy.float32,
                                attributes=None,

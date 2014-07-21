@@ -54,7 +54,7 @@ class SceneControl(qt.QWidget):
         self.selectedObjectControl = Object3DConfig.Object3DConfig(self)
         self.mainTab = self.selectedObjectControl.mainTab
         self.tabScene = qt.QWidget(self.mainTab)
-        self.tabScene.mainLayout = qt.QGridLayout(self.tabScene) 
+        self.tabScene.mainLayout = qt.QGridLayout(self.tabScene)
         self.tabScene.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.tabScene.mainLayout.setSpacing(0)
         self.coordinatesWidget = SceneCoordinates.SceneCoordinates(self.tabScene)
@@ -63,7 +63,7 @@ class SceneControl(qt.QWidget):
         #self.movementsWidget.anchorWidget.hide()
         self.tabScene.mainLayout.addWidget(self.coordinatesWidget, 0, 0)
         #self.tabScene.mainLayout.addWidget(self.movementsWidget, 1, 0)
-        vspacer = VerticalSpacer(self.tabScene) 
+        vspacer = VerticalSpacer(self.tabScene)
         self.tabScene.mainLayout.addWidget(vspacer, 2, 0)
         self.mainTab.addTab(self.tabScene, "SCENE")
         self.mainLayout.addWidget(self.sceneWidget)
@@ -119,7 +119,7 @@ class SceneControl(qt.QWidget):
                             ymin + diagonal2,
                             zmin + diagonal2]
                 ddict['observer'] = position
-                self.coordinatesWidget.setParameters(ddict)                        
+                self.coordinatesWidget.setParameters(ddict)
         self.emitSignal(ddict['event'], ddict)
 
     def emitSignal(self, event=None, ddict = None):

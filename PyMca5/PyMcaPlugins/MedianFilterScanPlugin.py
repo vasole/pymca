@@ -64,14 +64,14 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
                                        info,
                                        icon]
             self.__methodKeys.append(method)
-        
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         if self.__randomization:
             return self.__methodKeys[0:1] +  self.__methodKeys[2:]
@@ -117,7 +117,7 @@ class MedianFilterScanPlugin(Plugin1DBase.Plugin1DBase):
         else:
             indices = range(nCurves)
 
-        # get active curve            
+        # get active curve
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             activeCurve = curves[0]

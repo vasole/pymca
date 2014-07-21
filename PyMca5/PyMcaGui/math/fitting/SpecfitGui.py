@@ -32,7 +32,7 @@ import os
 from PyMca5.PyMcaCore import EventHandler
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5.PyMcaGui import PyMcaQt as qt
-    
+
 QTVERSION = qt.qVersion()
 from . import FitConfigGui
 from . import MultiParameters
@@ -43,7 +43,7 @@ DEBUG = 0
 
 class SpecfitGui(qt.QWidget):
     sigSpecfitGuiSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self,parent = None,name = None,fl = 0, specfit = None,
                  config = 0, status = 0, buttons = 0, eh = None):
         if name == None:
@@ -69,7 +69,7 @@ class SpecfitGui(qt.QWidget):
                 funsFile = os.path.join(os.path.dirname(Specfit.__file__),\
                                 funsFile)
             self.specfit.importfun(funsFile)
-        
+
         #copy specfit configure method for direct access
         self.configure=self.specfit.configure
         self.fitconfig=self.specfit.fitconfig
@@ -78,12 +78,12 @@ class SpecfitGui(qt.QWidget):
         self.guiconfig=None
         if config:
             self.guiconfig = FitConfigGui.FitConfigGui(self)
-            self.guiconfig.MCACheckBox.stateChanged[int].connect(self.mcaevent) 
-            self.guiconfig.WeightCheckBox.stateChanged[int].connect(self.weightevent) 
-            self.guiconfig.AutoFWHMCheckBox.stateChanged[int].connect(self.autofwhmevent) 
-            self.guiconfig.AutoScalingCheckBox.stateChanged[int].connect(self.autoscaleevent) 
-            self.guiconfig.ConfigureButton.clicked[()].connect(self.__configureGui) 
-            self.guiconfig.PrintPushButton.clicked[()].connect(self.printps) 
+            self.guiconfig.MCACheckBox.stateChanged[int].connect(self.mcaevent)
+            self.guiconfig.WeightCheckBox.stateChanged[int].connect(self.weightevent)
+            self.guiconfig.AutoFWHMCheckBox.stateChanged[int].connect(self.autofwhmevent)
+            self.guiconfig.AutoScalingCheckBox.stateChanged[int].connect(self.autoscaleevent)
+            self.guiconfig.ConfigureButton.clicked[()].connect(self.__configureGui)
+            self.guiconfig.PrintPushButton.clicked[()].connect(self.printps)
             self.guiconfig.BkgComBox.activated[str].connect(self.bkgevent)
             self.guiconfig.FunComBox.activated[str].connect(self.funevent)
             layout.addWidget(self.guiconfig)
@@ -94,7 +94,7 @@ class SpecfitGui(qt.QWidget):
         if config:
             for key in self.specfit.bkgdict.keys():
                 self.guiconfig.BkgComBox.addItem(str(key))
-            for key in self.specfit.theorylist:            
+            for key in self.specfit.theorylist:
                 self.guiconfig.FunComBox.addItem(str(key))
             configuration={}
             if specfit is not None:
@@ -115,19 +115,19 @@ class SpecfitGui(qt.QWidget):
                 self.funevent(self.specfit.theorylist[0])
                 self.bkgevent(list(self.specfit.bkgdict.keys())[0])
             configuration.update(self.configure())
-            if configuration['McaMode']:            
+            if configuration['McaMode']:
                 self.guiconfig.MCACheckBox.setChecked(1)
             else:
                 self.guiconfig.MCACheckBox.setChecked(0)
-            if configuration['WeightFlag']:            
+            if configuration['WeightFlag']:
                 self.guiconfig.WeightCheckBox.setChecked(1)
             else:
                 self.guiconfig.WeightCheckBox.setChecked(0)
-            if configuration['AutoFwhm']:            
+            if configuration['AutoFwhm']:
                 self.guiconfig.AutoFWHMCheckBox.setChecked(1)
             else:
                 self.guiconfig.AutoFWHMCheckBox.setChecked(0)
-            if configuration['AutoScaling']:            
+            if configuration['AutoScaling']:
                 self.guiconfig.AutoScalingCheckBox.setChecked(1)
             else:
                 self.guiconfig.AutoScalingCheckBox.setChecked(0)
@@ -181,26 +181,26 @@ class SpecfitGui(qt.QWidget):
                       self.specfit.fitconfig['fitbkg'])
                 self.bkgevent(list(self.specfit.bkgdict.keys())[0])
             #and all the rest
-            if configuration['McaMode']:            
+            if configuration['McaMode']:
                 self.guiconfig.MCACheckBox.setChecked(1)
             else:
                 self.guiconfig.MCACheckBox.setChecked(0)
-            if configuration['WeightFlag']:            
+            if configuration['WeightFlag']:
                 self.guiconfig.WeightCheckBox.setChecked(1)
             else:
                 self.guiconfig.WeightCheckBox.setChecked(0)
-            if configuration['AutoFwhm']:            
+            if configuration['AutoFwhm']:
                 self.guiconfig.AutoFWHMCheckBox.setChecked(1)
             else:
                 self.guiconfig.AutoFWHMCheckBox.setChecked(0)
-            if configuration['AutoScaling']:            
+            if configuration['AutoScaling']:
                 self.guiconfig.AutoScalingCheckBox.setChecked(1)
             else:
                 self.guiconfig.AutoScalingCheckBox.setChecked(0)
             #update the Gui
-            self.__initialparameters() 
+            self.__initialparameters()
 
-    
+
     def configureGui(self,oldconfiguration):
         #this method can be overwritten for custom
         #it should give back a new dictionary
@@ -211,7 +211,7 @@ class SpecfitGui(qt.QWidget):
             newconfiguration['FitTheory']="Pseudo-Voigt Line"
             newconfiguration['AutoFwhm']=1
             newconfiguration['AutoScaling']=1
-        
+
         #example script options like
         if (1):
             sheet1={'notetitle':'Restrains',
@@ -221,7 +221,7 @@ class SpecfitGui(qt.QWidget):
                           ["CheckField",'SameFwhmFlag','Force same FWHM'],
                           ["CheckField",'EtaFlag','Force Eta between 0 and 1'],
                           ["CheckField",'NoConstrainsFlag','Ignore Restrains'])}
- 
+
             sheet2={'notetitle':'Search',
                 'fields':(["EntryField",'FwhmPoints', 'Fwhm Points: '],
                           ["EntryField",'Sensitivity','Sensitivity: '],
@@ -230,7 +230,7 @@ class SpecfitGui(qt.QWidget):
             w=QScriptOption.QScriptOption(self,name='Fit Configuration',
                             sheets=(sheet1,sheet2),
                             default=oldconfiguration)
-            
+
             w.show()
             w.exec_()
             if w.result():
@@ -291,12 +291,12 @@ class SpecfitGui(qt.QWidget):
             ddict['event'] = 'EstimateFinished'
             ddict['data']  = self.specfit.paramlist
             self._emitSignal(ddict)
-            
+
         return
 
     def __forward(self,ddict):
         self._emitSignal(ddict)
-    
+
     def startfit(self):
         if self.specfit.fitconfig['McaMode']:
             try:
@@ -341,8 +341,8 @@ class SpecfitGui(qt.QWidget):
             ddict['data']  = self.specfit.paramlist
             self._emitSignal(ddict)
         return
-    
-    
+
+
     def printps(self,**kw):
         text = self.guiparameters.gettext(**kw)
         if __name__ == "__main__":
@@ -358,8 +358,8 @@ class SpecfitGui(qt.QWidget):
         msg = qt.QMessageBox(self)
         msg.setIcon(qt.QMessageBox.Critical)
         msg.setText("Sorry, Qt4 printing not implemented yet")
-        msg.exec_()            
-    
+        msg.exec_()
+
     def mcaevent(self,item):
         if int(item):
             self.configure(McaMode=1)
@@ -367,10 +367,10 @@ class SpecfitGui(qt.QWidget):
         else:
             self.configure(McaMode=0)
             mode = 0
-        self.__initialparameters() 
+        self.__initialparameters()
         ddict={}
         ddict['event'] = 'McaModeChanged'
-        ddict['data']  = mode 
+        ddict['data']  = mode
         self._emitSignal(ddict)
         return
 
@@ -394,7 +394,7 @@ class SpecfitGui(qt.QWidget):
         else:
             self.configure(AutoScaling=0)
         return
-    
+
     def bkgevent(self,item):
         item=str(item)
         if item in self.specfit.bkgdict.keys():
@@ -417,7 +417,7 @@ class SpecfitGui(qt.QWidget):
                 fn = qt.QFileDialog.getOpenFileName()
             else:
                 dlg=qt.QFileDialog(qt.QString.null,qt.QString.null,self,None,1)
-                dlg.show()            
+                dlg.show()
                 fn=dlg.selectedFile()
             if fn.isEmpty():
                 functionsfile = ""
@@ -450,7 +450,7 @@ class SpecfitGui(qt.QWidget):
                 self.guiconfig.FunComBox.setCurrentIndex(i)
         self.__initialparameters()
         return
-    
+
     def __initialparameters(self):
         self.specfit.final_theory=[]
         self.specfit.paramlist=[]
@@ -494,18 +494,18 @@ class SpecfitGui(qt.QWidget):
             else:
                 chisq=data['chisq']
                 self.guistatus.ChisqLine.setText("%6.2f" % chisq)
-            
+
         if 'status' in data:
             status=data['status']
             self.guistatus.StatusLine.setText(str(status))
         return
 
 
-    
+
     def dismiss(self):
         self.close()
         return
-        
+
 if __name__ == "__main__":
     import numpy
     from PyMca5 import SpecfitFunctions

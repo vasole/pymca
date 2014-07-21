@@ -11,40 +11,40 @@ pymcabatch [OPTIONS] [FILES]
 .SH DESCRIPTION
 
 .P
-Loops over a series of input files to which the same fitting 
-parameters can be applied. The setup of the fit configuration 
+Loops over a series of input files to which the same fitting
+parameters can be applied. The setup of the fit configuration
 is usually made via the main PyMca application.
 
-The program stores the fitted parameters inside the IMAGES 
-directory created in the user specfified output directory. The 
-pymcapostbatch tool can perform further analysis via correlation 
+The program stores the fitted parameters inside the IMAGES
+directory created in the user specfified output directory. The
+pymcapostbatch tool can perform further analysis via correlation
 tools.
 
-The user can also request an HTML report. This is much slower 
+The user can also request an HTML report. This is much slower
 but can be convenient to browse the results with a Web browser.
 
-This tool is also accessible via the Tools menu of the main 
+This tool is also accessible via the Tools menu of the main
 PyMca window application.
 
 .SH EXAMPLES
 
 .B  pymcabatch
-    Open a dialog to select input files, fit configuration, output 
+    Open a dialog to select input files, fit configuration, output
     directory and output parameters.
-    
+
 .B  pymcabatch --cfg=fitconfig.cfg --outdir=/tmp/  *.mca
-    Fit all the .mca files in current directory using the specified 
-    confifuration file fitconfig.cfg and stores the output in /tmp 
+    Fit all the .mca files in current directory using the specified
+    confifuration file fitconfig.cfg and stores the output in /tmp
 
 .B  pymcabatch --cfg=fitconfig.cfg --outdir=/tmp/  --listfile=inputfiles
-    Same as above but taken the files from the inputfiles file. This file 
+    Same as above but taken the files from the inputfiles file. This file
     is just a text file with one file path in each line.
 
 .SH CAVEATS
 
-This tool, when used in command line mode, could run fully Qt 
-independent because in that case it uses Qt just for showing 
+This tool, when used in command line mode, could run fully Qt
+independent because in that case it uses Qt just for showing
 the progress bar.
-    
+
 .SH SEE ALSO
 pymca, pymcapostbatch

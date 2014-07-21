@@ -56,7 +56,7 @@ class MathPlugins(Plugin1DBase.Plugin1DBase):
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         names = list(self.methodDict.keys())
         names.sort()
@@ -105,7 +105,7 @@ class MathPlugins(Plugin1DBase.Plugin1DBase):
         info['operations'] = operations
         legend = legend+"'"
         self.addCurve(x, y, legend=legend, info=info, replot=True)
-        
+
 
 MENU_TEXT = "Built-in Math"
 def getPlugin1DInstance(plotWindow, **kw):

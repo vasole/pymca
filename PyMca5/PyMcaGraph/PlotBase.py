@@ -85,7 +85,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
         :return: legend of the active curve or list [x, y, legend, info]
-        :rtype: string or list 
+        :rtype: string or list
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
@@ -113,7 +113,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
         :return: legend of the curves or list [[x, y, legend, info], ...]
-        :rtype: list of strings or list of curves 
+        :rtype: list of strings or list of curves
 
         It returns an empty list in case of not having any curve.
         If just_legend is False:
@@ -136,7 +136,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         :param legend: legend assiciated to the curve
         :type legend: boolean
         :return: list [x, y, legend, info]
-        :rtype: list 
+        :rtype: list
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
@@ -198,7 +198,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         :param legend: The legend associated to the image to be hidden
         :type legend: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True        
+        :type replot: boolean default True
         """
         print("PlotBase hideImage not implemented")
         return
@@ -218,7 +218,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         if DEBUG:
             print("PlotBase isCurveHidden not implemented")
         return False
-        
+
     def isImageHidden(self, legend):
         """
         :param legend: The legend associated to the image
@@ -232,7 +232,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
     def printGraph(self, **kw):
         print("PlotBase printGraph not implemented")
 
-        
+
     def setActiveCurve(self, legend):
         """
         Funtion to request the plot window to set the curve with the specified legend
@@ -249,7 +249,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         :param legend: The legend associated to the curve
         :type legend: string
         :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True        
+        :type replot: boolean default True
         """
         print("PlotBase showCurve not implemented")
         return False

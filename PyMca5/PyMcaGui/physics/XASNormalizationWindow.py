@@ -114,7 +114,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
             label.setText(text)
             regionsGroupBoxLayout.addWidget(label, i, 0)
             #self.mainLayout.addWidget(qt.HorizontalSpacer(self), i, 1)
-            i +=1 
+            i +=1
 
         i = 1
         self.widgetDict = {}
@@ -141,7 +141,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
             i += 1
         self.mainLayout.addWidget(regionsGroupBox, 0, 2)
         self._updateParameters()
-        
+
     def _getDefaultParameters(self):
         ddict = {}
         ddict['auto_edge'] = 1
@@ -227,7 +227,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
             else:
                 ddict['event'] = event
             self.sigXASNormalizationParametersSignal.emit(ddict)
-                  
+
     def getParameters(self):
         # make sure a copy is given back
         return copy.deepcopy(self.__parametersDict)
@@ -245,7 +245,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
                     ddict['pre_edge'] = {}
                     xmin = emin - energy
                     xmax = 0.5 * xmin
-                    ddict['pre_edge']['regions'] = [[xmin, xmax]] 
+                    ddict['pre_edge']['regions'] = [[xmin, xmax]]
                     break
         if emax is not None:
             for region in self.__parametersDict['post_edge']['regions']:
@@ -254,7 +254,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
                     ddict['post_edge'] = {}
                     xmax = emax - energy
                     xmin = 0.1 * xmax
-                    ddict['post_edge']['regions'] = [[xmin, xmax]] 
+                    ddict['post_edge']['regions'] = [[xmin, xmax]]
                     break
         self.setParameters(ddict, signal=signal)
 
@@ -362,7 +362,7 @@ class XASNormalizationWindow(qt.QWidget):
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
             return
-            
+
         nEnergy, nSpectrum, usedEdge, jump = normalizationResult[0:4]
         preEdgeFunction, preEdgeParameters = normalizationResult[4:6]
         postEdgeFunction, postEdgeParameters = normalizationResult[6:8]
@@ -492,7 +492,7 @@ class XASNormalizationDialog(qt.QDialog):
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")
-        self.okButton.setAutoDefault(False)   
+        self.okButton.setAutoDefault(False)
         self.dismissButton = qt.QPushButton(hbox)
         self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
@@ -505,12 +505,12 @@ class XASNormalizationDialog(qt.QDialog):
 
     def getParameters(self):
         parametersDict = self.parametersWidget.getParameters()
-        return parametersDict                                       
+        return parametersDict
 
     def setParameters(self, ddict):
         return self.parametersWidget.setParameters(ddict)
 
-                 
+
 if __name__ == "__main__":
     app = qt.QApplication([])
     if len(sys.argv) > 1:
@@ -523,7 +523,7 @@ if __name__ == "__main__":
         w = XASNormalizationDialog(None, spectrum, energy=energy)
     else:
         from PyMca5 import SpecfitFuns
-        noise = numpy.random.randn(1500.) 
+        noise = numpy.random.randn(1500.)
         x = 8000. + numpy.arange(1500.)
         y = SpecfitFuns.upstep([100, 8500., 50], x)
         w = XASNormalizationDialog(None, y + numpy.sqrt(y)* noise, energy=x)

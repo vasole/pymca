@@ -32,7 +32,7 @@ from . import Object3DQt as qt
 from .Object3DIcons import IconDict
 from . import ObjectTree
 
-DEBUG = 0 
+DEBUG = 0
 
 class ObjectTreeWidget(qt.QTreeWidget):
     def __init__(self, parent=None, tree=None, labels=None):
@@ -126,7 +126,7 @@ class Object3DTreeWidgetItem(qt.QTreeWidgetItem):
 
 class Object3DObjectTree(qt.QGroupBox):
     sigObjectTreeSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent = None, tree=None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle('Objects Tree')
@@ -263,7 +263,7 @@ class Object3DObjectTree(qt.QGroupBox):
         self.treeWidget.resizeColumnToContents(0)
         self.__cutObject = None
         self.emitSignal('treeChanged')
-        
+
     def deleteObject(self):
         if self.__current == 'Scene':
             qt.QMessageBox.critical(self, "Error on deletion",
@@ -276,7 +276,7 @@ class Object3DObjectTree(qt.QGroupBox):
         self.emitSignal('objectDeleted')
         self.updateView()
 
-    def replaceWithObject(self):            
+    def replaceWithObject(self):
         if self.__current in [None, 'None']:
             return
         self.__replacing = True
@@ -286,7 +286,7 @@ class Object3DObjectTree(qt.QGroupBox):
             for item in itemList:
                 self.tree.delChild(item.name())
             self.updateView()
-            self.__cutObject = self.__current * 1            
+            self.__cutObject = self.__current * 1
         else:
             self.__cutObject = self.__current * 1
             self.__current = 'Scene'
@@ -307,9 +307,9 @@ class Object3DObjectTree(qt.QGroupBox):
         self.treeWidget.resizeColumnToContents(0)
         self.__current = self.__cutObject * 1
         self.__cutObject = None
-        self.__replacing = False        
+        self.__replacing = False
         self.emitSignal('objectReplaced')
-        
+
     def itemChanged(self, current, previous):
         if current is None:
             #This happens when updating because I clear the tree

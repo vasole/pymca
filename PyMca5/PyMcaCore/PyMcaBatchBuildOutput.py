@@ -141,7 +141,7 @@ class PyMcaBatchBuildOutput(object):
                 line += "\n"
                 outfile.write("%s" % line)
                 line =""
-            outfile.write("\n") 
+            outfile.write("\n")
             outfile.close()
             datoutlist.append(outfilename)
             if delete:
@@ -172,7 +172,7 @@ class PyMcaBatchBuildOutput(object):
                 for filename in edflist:
                     os.remove(filename)
         return edfoutlist, datoutlist, outconlist
-        
+
     def getIndexedFileList(self, filename, begin=None,end=None, skip = None, fileindex=0):
         name = os.path.basename(filename)
         n = len(name)

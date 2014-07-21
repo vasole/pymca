@@ -27,11 +27,11 @@
 #
 #############################################################################*/
 """
-Authors: Jerome Kieffer, ESRF 
+Authors: Jerome Kieffer, ESRF
          email:jerome.kieffer@esrf.fr
 
 Cif Binary Files images are 2D images written by the Pilatus detector and others.
-They use a modified (simplified) byte-offset algorithm.  
+They use a modified (simplified) byte-offset algorithm.
 """
 
 __author__    = "Jerome Kieffer"
@@ -140,8 +140,8 @@ class PilatusCBF(object):
 
     def _readbinary_byte_offset(self, inStream):
         """
-        Read in a binary part of an x-CBF_BYTE_OFFSET compressed image 
-        
+        Read in a binary part of an x-CBF_BYTE_OFFSET compressed image
+
         @param inStream: the binary image (without any CIF decorators)
         @type inStream: python string.
         @return: a linear numpy array without shape and dtype set
@@ -189,7 +189,7 @@ class PilatusCBF(object):
 #                        position += 1
 #                        print "loop32 x=%4i y=%4i in idx %4i lns %4i value=%s" % ((position % 2463), (position // 2463), idx, lns, listnpa[-1])
                         shift = 7
-                else: #int16 
+                else: #int16
                     listnpa.append(np.fromstring(stream[idx + 1:idx + 3], dtype="int16"))
 #                    position += 1
 #                    print "loop16 x=%4i y=%4i in idx %4i lns %4i value=%s" % ((position % 2463), (position // 2463), idx, lns, listnpa[-1])
@@ -210,7 +210,7 @@ class PilatusCBF(object):
 
         assert len(myData) == self.dim1 * self.dim2
         return myData
-    
+
     def read(self, fname):
         self.__header = {}
         self.cif.loadCIF(fname, _bKeepComment=True)
@@ -280,7 +280,7 @@ class CIF(dict):
         """
         Just call loadCIF:
         Load the CIF file and sets the CIF dictionnary into the object
-        
+
         @param _strFilename: the name of the file to open
         @type  _strFilename: string
         """
@@ -292,7 +292,7 @@ class CIF(dict):
         @type  _strFilename: string
         @param _strFilename: the name of the file to open
         @type  _strFilename: string
-        @return the 
+        @return the
         """
         if not os.path.isfile(_strFilename):
             print("I cannot find the file %s" % _strFilename)
@@ -306,10 +306,10 @@ class CIF(dict):
     def isAscii(_strIn):
         """
         Check if all characters in a string are ascii,
-        
+
         @param _strIn: input string
         @type _strIn: python string
-        @return: boolean 
+        @return: boolean
         @rtype: boolean
         """
         bIsAcii = True
@@ -322,10 +322,10 @@ class CIF(dict):
     @staticmethod
     def _readCIF(_strFilename):
         """
-        -Check if the filename containing the CIF data exists 
+        -Check if the filename containing the CIF data exists
         -read the cif file
-        -removes the comments 
-        
+        -removes the comments
+
         @param _strFilename: the name of the CIF file
         @type _strFilename: string
         @return: a string containing the raw data
@@ -352,12 +352,12 @@ class CIF(dict):
 
 
     def _parseCIF(self, sText):
-        """ 
-        -Parses the text of a CIF file   
+        """
+        -Parses the text of a CIF file
         -Cut it in fields
-        -Find all the loops and process    
-        -Find all the keys and values      
-        
+        -Find all the loops and process
+        -Find all the keys and values
+
         @param sText: the content of the CIF-file
         @type sText: string
         @return: Nothing, the data are incorporated at the CIF object dictionnary
@@ -400,7 +400,7 @@ class CIF(dict):
     def _splitCIF(sText):
         """
         Separate the text in fields as defined in the CIF
-        
+
         @param sText: the content of the CIF-file
         @type sText: string
         @return: list of all the fields of the CIF
@@ -416,7 +416,7 @@ class CIF(dict):
                 bFinished = False
                 while not  bFinished:
                     idx += 1 + sText[idx + 1:].find(sText[0])
-    ##########debuging    in case we arrive at the end of the text             
+    ##########debuging    in case we arrive at the end of the text
                     if idx >= len(sText) - 1:
                         lFields.append(sText[1:-1].strip())
                         sText = ""
@@ -435,7 +435,7 @@ class CIF(dict):
                 bFinished = False
                 while not  bFinished:
                     idx += 1 + sText[idx + 1:].find(toTest)
-    ##########debuging    in case we arrive at the end of the text             
+    ##########debuging    in case we arrive at the end of the text
                     if idx >= len(sText) - 1:
     #                    print sText,idx,len(sText)
                         lFields.append(sText[1:-1].strip())
@@ -485,7 +485,7 @@ class CIF(dict):
         """Processes one loop in the data extraction of the CIF file
         @param lFields: list of all the words contained in the cif file
         @type lFields: list
-        @param iStart: the starting index corresponding to the "loop_" key 
+        @param iStart: the starting index corresponding to the "loop_" key
         @type iStart: integer
         @return: the list of loop dictionnaries, the length of the data extracted from the lFields and the list of all the keys of the loop.
         @rtype: tupple
@@ -532,7 +532,7 @@ class CIF(dict):
 
         else:
             #print data
-            #print keys 
+            #print keys
             for i in range(len(data) / len(keys)):
                 element = {}
                 for j in keys:
@@ -557,7 +557,7 @@ class CIF(dict):
         @param _strFilename: the of the file to be written
         @type param: string
         """
-#TODO We should definitly handle exception here   
+#TODO We should definitly handle exception here
         try:
             fFile = open(_strFilename, "w")
         except IOError:
@@ -576,7 +576,7 @@ class CIF(dict):
 
     def _cif2str(self, _strFilename):
         """converts a cif dictionnary to a string according to the CIF syntax
-        @param _strFilename: the name of the filename to be apppended in the header of the CIF file 
+        @param _strFilename: the name of the filename to be apppended in the header of the CIF file
         @type _strFilename: string
         @return : a sting that corresponds to the content of the CIF-file.
         @rtype: string

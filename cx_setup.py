@@ -1,7 +1,7 @@
 #
 # These Python module have been developed by V.A. Sole, from the European
 # Synchrotron Radiation Facility (ESRF) to build a frozen version of PyMca.
-# Given the nature of this work, these module can be considered public domain. 
+# Given the nature of this work, these module can be considered public domain.
 # Therefore redistribution and use in source and binary forms, with or without
 # modification, are permitted provided the following disclaimer is accepted:
 #
@@ -46,7 +46,7 @@ def load_PyQt4_Qt(finder, module):
        to this technique over pure Python; ignore the absence of some of
        the modules since not every installation includes all of them."""
     try:
-        #This modules does not seem to be always present 
+        #This modules does not seem to be always present
         finder.IncludeModule("PyQt4._qt")
     except ImportError:
         pass
@@ -201,7 +201,7 @@ try:
                     'h5py._conv', 'h5py._proxy']
     else:
         H5PY_SPECIAL = True
-        includes = []        
+        includes = []
 except:
     includes = []
 
@@ -216,12 +216,12 @@ for module in glob.glob(os.path.join('PyMca', '*.py')):
     if DEBUG:
         print("Adding %s" % m)
     includes.append(m)
-    
+
 if OBJECT3D:
     includes.append("logging")
     excludes = ["OpenGL", "Tkinter", "PyMca.Object3D", "Object3D",
                 "PyMca.PyMcaPlugins", "PyMcaPlugins",
-                "scipy", "Numeric", "numarray"] 
+                "scipy", "Numeric", "numarray"]
     #This requieres the use of the environmental variable MATPLOTLIBDATA
     #pointing to mpl-data directory to work
     special_modules =[os.path.dirname(ctypes.__file__),
@@ -248,9 +248,9 @@ if OBJECT3D:
     if OBJECT3DCTOOLS:
         excludes.append("Object3DCTools")
         excludes.append("Object3DQhull")
-        for f in [Object3DCTools.__file__,Object3DQhull.__file__]: 
+        for f in [Object3DCTools.__file__,Object3DQhull.__file__]:
             o3ddir = os.path.dirname(Object3D.__file__)
-            include_files.append((f, 
+            include_files.append((f,
                             os.path.join(os.path.basename(o3ddir), os.path.basename(f))))
 else:
     excludes = ["Tkinter", "PyMca.PyMcaPlugins",
@@ -274,7 +274,7 @@ else:
         special_modules.append(os.path.dirname(scipy.__file__))
     for f in special_modules:
             include_files.append((f,os.path.basename(f)))
-    
+
 for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
     excludes.append(f)
 
@@ -313,7 +313,7 @@ if os.path.exists(install_dir):
     except:
         print("Unexpected error:", sys.exc_info())
         pass
-        
+
 if os.path.exists('bin'):
     for f in glob.glob(os.path.join('bin','*')):
         os.remove(f)
@@ -336,7 +336,7 @@ for f in exec_list:
     if os.path.exists(executable):
         os.remove(executable)
 
-         
+
 executables = []
 for python_module in exec_list:
     icon = None
@@ -422,7 +422,7 @@ if not sys.platform.startswith('win'):
                                        os.path.join(install_dir, f.lower())))
             if f == "PyMcaPostBatch":
                 os.system("cp -f %s %s" % (executable, os.path.join(install_dir, 'rgbcorrelator')))
-            
+
 
 #cleanup
 for f in glob.glob(os.path.join(os.path.dirname(__file__),"PyMca", "*.pyc")):
@@ -490,11 +490,11 @@ if not SCIPY:
 sys.exit(0)
 
 ########################## WHAT FOLLOWS IS UNUSED CODE ################
-#                                                                     #               
+#                                                                     #
 # I was using it to add undetected modules to library.zip             #
-#                                                                     #               
+#                                                                     #
 # It might be needed in the future. Code kept here as "backup".       #
-#                                                                     #               
+#                                                                     #
 #######################################################################
 
 #Add modules to library.zip
@@ -538,7 +538,7 @@ def addToZip(zf, path, zippath, full=False):
                 print("NOT ADDING", path)
 
 addToZip(zf, PyMcaDir, os.path.basename(PyMcaDir), full=False)
-    
+
 #if PY_COUNTER > PYC_COUNTER:
 #    print "WARNING: More .py files than  .pyc files. Check cx_setup.py"
 if PY_COUNTER < PYC_COUNTER:

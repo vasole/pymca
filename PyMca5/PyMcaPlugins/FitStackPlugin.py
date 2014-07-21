@@ -79,7 +79,7 @@ class FitStackPlugin(StackPluginBase.StackPluginBase):
                                        icon]
         self.__methodKeys = ["Fit Stack"]
         self.simpleFitWindow = None
-                                     
+
     def stackUpdated(self):
         if self.simpleFitWindow is None:
             return
@@ -89,7 +89,7 @@ class FitStackPlugin(StackPluginBase.StackPluginBase):
         if self.simpleFitWindow is None:
             return
         self.simpleFitWindow.setMask(self.getStackSelectionMask())
-    
+
     #Methods implemented by the plugin
     def getMethods(self):
         return self.__methodKeys

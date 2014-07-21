@@ -155,7 +155,7 @@ class testSpecfilewrapper(unittest.TestCase):
         datacol = self._scan.datacol(2)
         self._scan = self._sf[1]
 
-        # The "second" scan is the readout as mca 
+        # The "second" scan is the readout as mca
         mca = self._scan.mca(1)
         self.assertTrue(numpy.alltrue(datacol == mca))
 

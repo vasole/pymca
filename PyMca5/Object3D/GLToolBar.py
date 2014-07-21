@@ -34,9 +34,9 @@ from .HorizontalSpacer import HorizontalSpacer
 DEBUG = 0
 
 class GLToolBar(qt.QWidget):
-    
+
     sigGLToolBarSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
@@ -77,7 +77,7 @@ class GLToolBar(qt.QWidget):
         self.cube45.setIcon(self.cube45Icon)
 
         #the tool tips
-        
+
         self.cubeFront.setToolTip("See from front (X+)")
         self.cubeBack.setToolTip("See from back (X-)")
 

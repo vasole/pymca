@@ -85,7 +85,7 @@ class NumpyArrayTableView(qt.QTableView):
             self._verticalHeaderModel = VerticalHeader(self._model)
         self.horizontalHeader().setModel(self._horizontalHeaderModel)
         self.verticalHeader().setModel(self._verticalHeaderModel)
-        
+
     def setCurrentArrayIndex(self, index):
         return self._model.setCurrentArrayIndex(index)
 

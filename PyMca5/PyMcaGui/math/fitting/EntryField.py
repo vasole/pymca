@@ -36,10 +36,10 @@ class EntryField(qt.QWidget):
         qt.QWidget.__init__(self,parent)
 
         Layout1 = qt.QHBoxLayout(self)
-        
+
         self.TextLabel = qt.QLabel(self)
         self.TextLabel.setText("TextLabel")
-        
+
         self.Entry = qt.QLineEdit(self)
         Layout1.addWidget(self.TextLabel)
         Layout1.addWidget(self.Entry)

@@ -121,7 +121,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             self.replaceImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "resetSelection":
             self.setStackSelectionMask(None)
-    
+
     #Methods implemented by the plugin
     def getMethods(self):
         if self._widget is None:
@@ -153,7 +153,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         if self.fitInstance is None:
             self.fitInstance = FastXRFLinearFit.FastXRFLinearFit()
         #self._fitConfigurationFile="E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-Constant-batch.cfg"
-        
+
         if DEBUG:
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
@@ -193,7 +193,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         weightPolicy = self._parameters['weight_policy']
         if weightPolicy:
             # force calculation of the unnormalized sum spectrum
-            spectrum = None                
+            spectrum = None
         if stack.x in [None, []]:
             x = None
         else:
@@ -268,7 +268,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                                        labels=fileImageNames)
         fileName = os.path.join(imagesDir, fileRoot+".csv")
         ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
-                                         labels=fileImageNames)                    
+                                         labels=fileImageNames)
 
     def _showWidget(self):
         if self._widget is None:

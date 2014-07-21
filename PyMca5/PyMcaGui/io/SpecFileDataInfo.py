@@ -126,13 +126,13 @@ class SpecFileDataInfo(qt.QTabWidget):
         else:
             table.setSelectionMode(qt.QTableWidget.NoSelection)
         table.verticalHeader().hide()
-        if qt.qVersion() < '4.0.0':            
+        if qt.qVersion() < '4.0.0':
             table.setLeftMargin(0)
             table.horizontalHeader().setLabel(0, head_par)
             table.horizontalHeader().setLabel(1, head_val)
         else:
             labels = [head_par, head_val]
-            for i in range(len(labels)):                
+            for i in range(len(labels)):
                 item = table.horizontalHeaderItem(i)
                 if item is None:
                     item = qt.QTableWidgetItem(labels[i],
@@ -163,7 +163,7 @@ class SpecFileDataInfo(qt.QTabWidget):
                         tmpString += self.info[tmpKey].replace('"','')
                     names = tmpString.split()
                 break
-        valKeys = ["MotorValues", "motor_pos"] 
+        valKeys = ["MotorValues", "motor_pos"]
         for key in valKeys:
             pos= self.info.get(key, None)
             if pos is not None:
@@ -173,7 +173,7 @@ class SpecFileDataInfo(qt.QTabWidget):
                     #ID01 specific
                     tmpKey = key + '~1'
                     if tmpKey in self.info:
-                        tmpString += self.info[tmpKey].replace('"','')                    
+                        tmpString += self.info[tmpKey].replace('"','')
                     pos = tmpString.split()
                 break
         if names is not None and pos is not None:
@@ -190,7 +190,7 @@ class SpecFileDataInfo(qt.QTabWidget):
                 self.addTab(table, "Motors")
 
     def __createCounterTable(self):
-        nameKeys = ["LabelNames", "counter_mne"] 
+        nameKeys = ["LabelNames", "counter_mne"]
         for key in nameKeys:
             cnts= self.info.get(key, None)
             if cnts is not None:
@@ -198,7 +198,7 @@ class SpecFileDataInfo(qt.QTabWidget):
                     #EDF like ...
                     cnts = cnts.split()
                 break
-        valKeys = ["LabelValues", "counter_pos"] 
+        valKeys = ["LabelValues", "counter_pos"]
         for key in valKeys:
             vals= self.info.get(key, None)
             if vals is not None:

@@ -22,7 +22,7 @@
  *   Project:       SpecFile library
  *
  *   Description:   python interface to Specfile library
- * 
+ *
  *   Author:        V.Rey
  *
  *   Date:          $Date: 2005/05/25 13:30:16 $
@@ -55,7 +55,7 @@
  *   Log:
  *
  *       New command for Scandata:  motorpos()
- *       interfaces with the library function 
+ *       interfaces with the library function
  *       SfMotorPosByName()
  *
  *   Log: Revision 3.0  2000/12/20 14:17:19  rey
@@ -66,24 +66,24 @@
  *   Log:
  * Revision 2.1  2000/07/31  19:03:11  19:03:11  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 1.5  2000/02/16  13:58:27  13:58:27  rey (Vicente Rey-Bakaikoa)
  * Version before major changes for MCA support
- * 
+ *
  * Revision 1.1  99/10/19  15:28:32  15:28:32  rey (Vicente Rey-Bakaikoa)
  * Initial revision
- * 
+ *
  */
 
 /************************************************************************
- 
-  Copyright 1999  by European Synchrotron Radiation Facility, Grenoble, 
+
+  Copyright 1999  by European Synchrotron Radiation Facility, Grenoble,
                   France
 
                                ----------
- 
+
                            All Rights Reserved
- 
+
                                ----------
 
 Permission to use, copy, modify, and distribute this software and its
@@ -91,15 +91,15 @@ documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
 both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of European Synchrotron
-Radiation Facility or ESRF or BLISS not be used in advertising or 
-publicity pertaining to distribution of the software without specific, 
+Radiation Facility or ESRF or BLISS not be used in advertising or
+publicity pertaining to distribution of the software without specific,
 written prior permission.
 
 EUROPEAN SYNCHROTRON RADIATION FACILITY DISCLAIMS ALL WARRANTIES WITH
 REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
 MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL EUROPEAN SYNCHROTRON
-RADIATION FACILITY OR ESRF BE LIABLE FOR ANY SPECIAL, INDIRECT OR 
-CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, 
+RADIATION FACILITY OR ESRF BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
 DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
@@ -132,7 +132,7 @@ static PyObject *ErrorObject;
 
      /* except specfile.error */
 #define onError(message)  \
-     {PyErr_SetString (ErrorObject,message); return NULL; }  
+     {PyErr_SetString (ErrorObject,message); return NULL; }
 
 /*
  * Data types
@@ -181,7 +181,7 @@ static PyObject  * specfile_scanno    (PyObject *self,PyObject *args);
 static PyObject  * specfile_select    (PyObject *self,PyObject *args);
 static PyObject  * specfile_show      (PyObject *self,PyObject *args);
 
-static struct PyMethodDef  specfile_methods[] = 
+static struct PyMethodDef  specfile_methods[] =
 {
    {"list",      specfile_list,      1},
    {"allmotors", specfile_allmotors, 1},
@@ -203,7 +203,7 @@ static PyObject * specfile_open   (char *filename);             /* create  */
 static PyObject * specfile_close  (PyObject *self);             /* dealloc */
 static Py_ssize_t specfile_noscans(PyObject *self);             /* length  */
 static PyObject * specfile_scan   (PyObject *self, Py_ssize_t index);   /* item    */
-static int        specfile_print  (PyObject *self,FILE *fp, 
+static int        specfile_print  (PyObject *self,FILE *fp,
                                                    int flags);  /* print*/
 static PyObject * specfile_getattr(PyObject *self,char *name);  /* getattr */
 
@@ -279,7 +279,7 @@ static PyObject *scandatatype_new(PyObject *self,PyObject *args);
 
 /*
  *  Specfile class
- * 
+ *
  *************************************************/
   /*
    * Instance methods
@@ -287,7 +287,7 @@ static PyObject *scandatatype_new(PyObject *self,PyObject *args);
 static PyObject *
 specfile_list(PyObject *self,PyObject *args)
 {
-    long      *scanlist; 
+    long      *scanlist;
     long      no_scans;
     int       error = 0;
     char     *strlist;
@@ -295,7 +295,7 @@ specfile_list(PyObject *self,PyObject *args)
 
     specfileobject *v = (specfileobject *) self;
 
-    if (!PyArg_ParseTuple(args, ""))   
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     no_scans = SfScanNo(v->sf);
@@ -309,13 +309,13 @@ specfile_list(PyObject *self,PyObject *args)
         pstr = Py_BuildValue("s",strlist);
         free(scanlist);
         return pstr;
-    } 
+    }
 }
 
 static PyObject *
 specfile_allmotors(PyObject *self,PyObject *args)
 {
-    
+
     int error,i;
     char **motornames;
     long nb_motors;
@@ -323,12 +323,12 @@ specfile_allmotors(PyObject *self,PyObject *args)
 
     specfileobject *v = (specfileobject *) self;
 
-    if (!PyArg_ParseTuple(args, ""))   
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     nb_motors = SfAllMotors(v->sf,1,&motornames,&error);
 
-    if ( nb_motors == -1 ) 
+    if ( nb_motors == -1 )
            onError("cannot get motor names for specfile");
 
     t = PyList_New(nb_motors);
@@ -349,12 +349,12 @@ specfile_title(PyObject *self,PyObject *args)
 
     specfileobject *v = (specfileobject *) self;
 
-    if (!PyArg_ParseTuple(args, ""))   
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     title = SfTitle(v->sf,1,&error);
-   
-    if (title == NULL) 
+
+    if (title == NULL)
         onError("cannot get title for specfile")
 
     pyo = Py_BuildValue("s",title);
@@ -370,11 +370,11 @@ specfile_user(PyObject *self,PyObject *args)
 
     specfileobject *v = (specfileobject *) self;
 
-    if (!PyArg_ParseTuple(args, ""))   
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     user = SfUser(v->sf,1,&error);
-   
+
     if (user != NULL) {
         free(user);
         return Py_BuildValue("s",user);
@@ -392,12 +392,12 @@ specfile_date(PyObject *self,PyObject *args)
 
     specfileobject *v = (specfileobject *) self;
 
-    if (!PyArg_ParseTuple(args, ""))   
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     date = SfFileDate(v->sf,1,&error);
-   
-    if (date == NULL) 
+
+    if (date == NULL)
        onError("cannot get data for specfile")
 
     pyo = Py_BuildValue("s",date);
@@ -413,11 +413,11 @@ specfile_epoch(PyObject *self,PyObject *args)
 
     specfileobject *v = (specfileobject *) self;
 
-    if (!PyArg_ParseTuple(args, ""))   
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     epoch = SfEpoch(v->sf,1,&error);
-   
+
     if (epoch != -1) {
         return Py_BuildValue("l",epoch);
     } else {
@@ -432,8 +432,8 @@ specfile_update(PyObject *self,PyObject *args)
     short ret;
 
     specfileobject *v = (specfileobject *) self;
-   
-    if (!PyArg_ParseTuple(args, ""))   
+
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     ret = SfUpdate(v->sf,&error);
@@ -448,9 +448,9 @@ specfile_scanno(PyObject *self,PyObject *args)
 {
     long scanno;
     specfileobject *v = (specfileobject *) self;
-   
 
-    if (!PyArg_ParseTuple(args, ""))   
+
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     scanno = v->length;
@@ -459,31 +459,31 @@ specfile_scanno(PyObject *self,PyObject *args)
 }
 
 static PyObject *
-specfile_select(PyObject *self,PyObject *args) 
+specfile_select(PyObject *self,PyObject *args)
 {
 
-    int  n,number,order,index; 
+    int  n,number,order,index;
     char   *scanstr;
     int error;
 
     scandataobject *v;
     specfileobject *f = (specfileobject *)self;
-    
+
    if (!PyArg_ParseTuple(args,"s",&scanstr)) {
        return NULL;
    } else {
        n = sscanf(scanstr,"%d.%d",&number,&order);
-       if ( n < 1 || n > 2 ) onError("cannot decode scan number/order"); 
+       if ( n < 1 || n > 2 ) onError("cannot decode scan number/order");
        if ( n == 1) order = 1;
    }
 
     index = SfIndex(f->sf,number,order);
 
-    if (index == -1 ) 
+    if (index == -1 )
           onError("scan not found");
 
     v = PyObject_NEW(scandataobject,&Scandatatype);
- 
+
     if (v == NULL)
         return NULL;
 
@@ -497,7 +497,7 @@ specfile_select(PyObject *self,PyObject *args)
 }
 
 static PyObject *
-specfile_show(PyObject *self,PyObject *args) 
+specfile_show(PyObject *self,PyObject *args)
 {
 
     specfileobject *f = (specfileobject *)self;
@@ -575,7 +575,7 @@ specfile_scan(PyObject *self, Py_ssize_t index) {
     }
 
     v = PyObject_NEW(scandataobject,&Scandatatype);
- 
+
     if (v == NULL)
         return NULL;
 
@@ -617,12 +617,12 @@ static PySequenceMethods specfile_as_sequence = {
 };
 
 static PyTypeObject Specfiletype = {
-    /* type header */ 
+    /* type header */
 #ifdef WIN32
        PyObject_HEAD_INIT(NULL)
 #else
        PyObject_HEAD_INIT(&PyType_Type)
-#endif       
+#endif
        0,
        "specfile",
        sizeof(specfileobject),
@@ -653,7 +653,7 @@ static PyTypeObject Specfiletype = {
 /* begin scandata */
 static PyObject *
 scandata_data(PyObject *self,PyObject *args) {
-   
+
     int     error;
     int     ret;
     double  **data;
@@ -685,7 +685,7 @@ scandata_data(PyObject *self,PyObject *args) {
 
    /*
     * Copy
-    *   I should write a specfile function that copies all data in a 
+    *   I should write a specfile function that copies all data in a
     *   single pointer array
     */
     for (i=0;i<dimensions[0];i++) {
@@ -722,11 +722,11 @@ scandata_dataline(PyObject *self,PyObject *args) {
     sf  = (s->file)->sf;
     idx = s->index;
 
-    if (!PyArg_ParseTuple(args,"i",&lineno)) 
-            onError("cannot decode arguments for line data"); 
-    
+    if (!PyArg_ParseTuple(args,"i",&lineno))
+            onError("cannot decode arguments for line data");
+
     ret = SfDataLine(sf,idx,lineno,&data,&error);
-     
+
     if (ret == -1 )
           onError("cannot get data for line");
 
@@ -755,21 +755,21 @@ scandata_datacol(PyObject *self,PyObject *args) {
     idx = s->index;
 
     if (!PyArg_ParseTuple(args,"i",&colno)) {
-      PyErr_Clear() ; 
+      PyErr_Clear() ;
       if (!PyArg_ParseTuple(args,"s",&colname)) {
-    onError("cannot decode arguments for column data"); 
+    onError("cannot decode arguments for column data");
       } else {
     ret = SfDataColByName(sf,idx,colname,&data,&error);
       }
     } else {
       ret = SfDataCol(sf,idx,colno,&data,&error);
     }
-    
+
     if (ret == -1 )
       onError("cannot get data for column");
-    
+
     r_array      = (PyArrayObject *)PyArray_SimpleNew(1,&ret,NPY_DOUBLE);
-    
+
    if (data != (double *) NULL){
         memcpy(PyArray_DATA(r_array),data,PyArray_NBYTES(r_array));
         free(data);
@@ -783,12 +783,12 @@ scandata_datacol(PyObject *self,PyObject *args) {
     /*
       it does not work for solaris and linux
       I should check the call to PyErr_Occurred()) in Numeric/Src/arrayobject.c
-      PyArray_Return(array); 
+      PyArray_Return(array);
      */
 }
 
 
-static PyObject * 
+static PyObject *
 scandata_alllabels  (PyObject *self,PyObject *args)
 {
     int error,i;
@@ -798,7 +798,7 @@ scandata_alllabels  (PyObject *self,PyObject *args)
 
     scandataobject *v = (scandataobject *) self;
 
-    if (!PyArg_ParseTuple(args, ""))   
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     nb_labels = SfAllLabels((v->file)->sf,v->index,&labels,&error);
@@ -812,7 +812,7 @@ scandata_alllabels  (PyObject *self,PyObject *args)
     return t;
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_allmotorpos  (PyObject *self,PyObject *args)
 {
     int error,i;
@@ -822,7 +822,7 @@ scandata_allmotorpos  (PyObject *self,PyObject *args)
 
     scandataobject *v = (scandataobject *) self;
 
-    if (!PyArg_ParseTuple(args, ""))   
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     nb_motors = SfAllMotorPos((v->file)->sf,v->index,&motorpos,&error);
@@ -837,7 +837,7 @@ scandata_allmotorpos  (PyObject *self,PyObject *args)
     return t;
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_motorpos  (PyObject *self,PyObject *args)
 {
     char   *motorname;
@@ -848,7 +848,7 @@ scandata_motorpos  (PyObject *self,PyObject *args)
 
     if (!PyArg_ParseTuple(args,"s",&motorname)) {
        return NULL;
-    } 
+    }
 
     motorpos = SfMotorPosByName((v->file)->sf,v->index,motorname,&error);
 
@@ -857,10 +857,10 @@ scandata_motorpos  (PyObject *self,PyObject *args)
     } else {
         onError("cannot get position for motor");
     }
-   
+
 }
 
-static PyObject * 
+static PyObject *
 scandata_hkl          (PyObject *self,PyObject *args)
 {
     int idx,error;
@@ -879,7 +879,7 @@ scandata_hkl          (PyObject *self,PyObject *args)
 
     hkl = SfHKL(sf,idx,&error);
 
-    if (hkl == NULL) 
+    if (hkl == NULL)
         onError("cannot get data for column");
 
     pyo = Py_BuildValue("ddd",hkl[0],hkl[1],hkl[2]);
@@ -888,7 +888,7 @@ scandata_hkl          (PyObject *self,PyObject *args)
 
 }
 
-static PyObject * 
+static PyObject *
 scandata_number       (PyObject *self,PyObject *args)
 {
     int number,idx;
@@ -905,7 +905,7 @@ scandata_number       (PyObject *self,PyObject *args)
 
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_order        (PyObject *self,PyObject *args)
 {
     int order,idx;
@@ -922,7 +922,7 @@ scandata_order        (PyObject *self,PyObject *args)
 
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_command      (PyObject *self,PyObject *args)
 {
     int idx,error;
@@ -941,7 +941,7 @@ scandata_command      (PyObject *self,PyObject *args)
 
     command = SfCommand(sf,idx,&error);
 
-    if (command == NULL) 
+    if (command == NULL)
        onError("cannot get command for scan")
 
     pyo = Py_BuildValue("s",command);
@@ -950,7 +950,7 @@ scandata_command      (PyObject *self,PyObject *args)
 
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_date      (PyObject *self,PyObject *args)
 {
     int idx,error;
@@ -969,7 +969,7 @@ scandata_date      (PyObject *self,PyObject *args)
 
     date = SfDate(sf,idx,&error);
 
-    if (date == NULL) 
+    if (date == NULL)
         onError("cannot get date for scan");
 
     pyo =  Py_BuildValue("s",date);
@@ -978,7 +978,7 @@ scandata_date      (PyObject *self,PyObject *args)
 
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_cols      (PyObject *self,PyObject *args)
 {
     int cols,idx;
@@ -986,10 +986,10 @@ scandata_cols      (PyObject *self,PyObject *args)
     scandataobject *s = (scandataobject *) self;
 
     idx = s->index;
-    if (idx == -1 ) 
+    if (idx == -1 )
         onError("empty scan data");
-   
-    cols = s->cols; 
+
+    cols = s->cols;
 
     if (cols == -1)
         onError("cannot get cols for scan");
@@ -997,7 +997,7 @@ scandata_cols      (PyObject *self,PyObject *args)
     return Py_BuildValue("l",cols);
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_lines      (PyObject *self,PyObject *args)
 {
     int lines,idx,error;
@@ -1007,9 +1007,9 @@ scandata_lines      (PyObject *self,PyObject *args)
     scandataobject *s = (scandataobject *) self;
 
     idx = s->index;
-    if (idx == -1 ) 
+    if (idx == -1 )
         onError("empty scan data");
-    
+
     sf  = (s->file)->sf;
 
     lines = SfNoDataLines(sf,idx,&error);
@@ -1023,7 +1023,7 @@ scandata_lines      (PyObject *self,PyObject *args)
     return Py_BuildValue("l",lines);
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_fileheader     (PyObject *self,PyObject *args)
 {
     int i,no_lines,idx,error;
@@ -1035,13 +1035,13 @@ scandata_fileheader     (PyObject *self,PyObject *args)
 
     scandataobject *s = (scandataobject *) self;
 
-    if (!PyArg_ParseTuple(args,"s",&searchstr)) 
+    if (!PyArg_ParseTuple(args,"s",&searchstr))
       return NULL;
 
     idx = s->index;
-    if (idx == -1 ) 
+    if (idx == -1 )
         onError("empty scan data");
-    
+
     sf  = (s->file)->sf;
 
     no_lines = SfFileHeader(sf,idx,searchstr,&lines,&error);
@@ -1060,7 +1060,7 @@ scandata_fileheader     (PyObject *self,PyObject *args)
     return Py_BuildValue("l",no_lines);
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_header     (PyObject *self,PyObject *args)
 {
     int i,no_lines,idx,error;
@@ -1072,13 +1072,13 @@ scandata_header     (PyObject *self,PyObject *args)
 
     scandataobject *s = (scandataobject *) self;
 
-    if (!PyArg_ParseTuple(args,"s",&searchstr)) 
+    if (!PyArg_ParseTuple(args,"s",&searchstr))
       return NULL;
 
     idx = s->index;
-    if (idx == -1 ) 
+    if (idx == -1 )
         onError("empty scan data");
-    
+
     sf  = (s->file)->sf;
 
     no_lines = SfHeader(sf,idx,searchstr,&lines,&error);
@@ -1097,7 +1097,7 @@ scandata_header     (PyObject *self,PyObject *args)
     return Py_BuildValue("l",no_lines);
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_nbmca      (PyObject *self,PyObject *args)
 {
     int nomca,idx,error;
@@ -1115,14 +1115,14 @@ scandata_nbmca      (PyObject *self,PyObject *args)
 
     nomca = SfNoMca(sf,idx,&error);
 
-    if (nomca == -1) 
+    if (nomca == -1)
         onError("cannot get number of mca for scan");
 
     pyo =  Py_BuildValue("l",nomca);
     return pyo;
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_mca      (PyObject *self,PyObject *args)
 {
     int    error;
@@ -1136,9 +1136,9 @@ scandata_mca      (PyObject *self,PyObject *args)
 
     scandataobject *s = (scandataobject *) self;
 
-    if (!PyArg_ParseTuple(args,"l",&mcano)) 
-            onError("cannot decode arguments for line data"); 
-    
+    if (!PyArg_ParseTuple(args,"l",&mcano))
+            onError("cannot decode arguments for line data");
+
     idx = s->index;
 
     if (idx == -1 ) {
@@ -1149,7 +1149,7 @@ scandata_mca      (PyObject *self,PyObject *args)
 
     ret = SfGetMca(sf,idx,mcano,&mcadata,&error);
 
-    if (ret == -1) 
+    if (ret == -1)
         onError("cannot get mca for scan");
 
     r_array = (PyArrayObject *)PyArray_SimpleNew(1,&ret,NPY_DOUBLE);
@@ -1161,18 +1161,18 @@ scandata_mca      (PyObject *self,PyObject *args)
     }else{
         printf("I should give back an empty array\n");
     }
- 
+
 /*    return (PyObject *)array; */
-    
+
     return PyArray_Return(r_array);
     /*
       it does not work for solaris and linux
       I should check the call to PyErr_Occurred()) in Numeric/Src/arrayobject.c
-      PyArray_Return(array); 
+      PyArray_Return(array);
      */
 }
 
-static PyObject   * 
+static PyObject   *
 scandata_show      (PyObject *self,PyObject *args)
 {
     int idx;
@@ -1183,9 +1183,9 @@ scandata_show      (PyObject *self,PyObject *args)
 
     idx = s->index;
 
-    if (idx == -1 ) 
+    if (idx == -1 )
         onError("empty scan data");
-    
+
     sf  = (s->file)->sf;
 
     SfShowScan(sf,idx);
@@ -1215,8 +1215,8 @@ scandata_new(void) {      /* on x = specfile.Scandata() */
 
 static PyObject *
 scandata_free(PyObject *self) {
-    scandataobject *s =(scandataobject *)self; 
-    specfileobject *f = s->file; 
+    scandataobject *s =(scandataobject *)self;
+    specfileobject *f = s->file;
     Py_DECREF((PyObject *)f);
     PyObject_DEL(self);
 
@@ -1227,7 +1227,7 @@ static Py_ssize_t
 scandata_size(PyObject *self) {
 
     scandataobject *s = (scandataobject *) self;
-  
+
     return (Py_ssize_t) s->cols;
 }
 
@@ -1243,7 +1243,7 @@ scandata_col(PyObject *self, Py_ssize_t index) {
     int      idx,col;
 
     scandataobject *s = (scandataobject *) self;
-    
+
 
     if ( index < 0 || index > (s->cols - 1) ) {
          PyErr_SetString(PyExc_IndexError,"column out of bounds");
@@ -1261,7 +1261,7 @@ scandata_col(PyObject *self, Py_ssize_t index) {
 
     r_array = (PyArrayObject *)PyArray_SimpleNew(1,&ret,NPY_DOUBLE);
 
-    if ( r_array == NULL ) 
+    if ( r_array == NULL )
           onError("cannot get memory for array data");
 
     if (data != (double *) NULL){
@@ -1280,7 +1280,7 @@ scandata_col(PyObject *self, Py_ssize_t index) {
     /*
       it does not work for solaris and linux
       I should check the call to PyErr_Occurred()) in Numeric/Src/arrayobject.c
-      PyArray_Return(array); 
+      PyArray_Return(array);
      */
 }
 
@@ -1304,8 +1304,8 @@ scandata_print(PyObject *self,FILE *fp,int flags) {
         sf  = (s->file)->sf;
         fprintf(fp,"scandata('source: %s,scan: %d.%d')",
                                     (s->file)->name,
-                                    (int) SfNumber(sf,idx), 
-                                    (int) SfOrder (sf,idx)); 
+                                    (int) SfNumber(sf,idx),
+                                    (int) SfOrder (sf,idx));
     }
     return ok;
 }
@@ -1341,12 +1341,12 @@ static PySequenceMethods scandata_as_sequence = {
 };
 
 static PyTypeObject Scandatatype = {
-    /* type header */   
+    /* type header */
 #ifdef WIN32
        PyObject_HEAD_INIT(NULL)
 #else
        PyObject_HEAD_INIT(&PyType_Type)
-#endif       
+#endif
        0,
        "scandata",
        sizeof(scandataobject),
@@ -1432,7 +1432,7 @@ specfiletype_new(self,args)
     ret = (PyObject *)specfile_open(filename);
 
    return ret;
- 
+
 }
 
 static PyObject *
@@ -1442,11 +1442,11 @@ scandatatype_new(self,args)
 {
    PyObject *ret;
 
-   if (!PyArg_ParseTuple(args,"")) 
+   if (!PyArg_ParseTuple(args,""))
       return NULL;
    ret = (PyObject *)scandata_new();
    return ret;
- 
+
 }
 
 /*
@@ -1459,7 +1459,7 @@ initspecfile(void) {
     Specfiletype.ob_type = &PyType_Type;
     Scandatatype.ob_type = &PyType_Type;
     m = Py_InitModule("specfile",specfiletype_methods);
-    
+
 /*    printf("Loading test specfile module\n");*/
 
     import_array();
@@ -1491,7 +1491,7 @@ compList(long *nolist,long howmany)
 
      *str = '\0';
 
-     strcat(str,buf); 
+     strcat(str,buf);
 
      colon=0;
      for(this=1;this<howmany;this++) {
@@ -1504,14 +1504,14 @@ compList(long *nolist,long howmany)
             } else {
                sprintf(buf,",%d",(int) nolist[this]);
             }
-            strcat(str,buf); 
+            strcat(str,buf);
          }
      }
 
      if (howmany != 1 ) {
         if (colon) {
            sprintf(buf,":%d",(int) nolist[howmany-1]);
-           strcat(str,buf); 
+           strcat(str,buf);
         }
      }
      retstr = (char *)strdup(str);

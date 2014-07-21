@@ -23,7 +23,7 @@ __author__ = "M. Newville - The University of Chicago"
 """
 Simple interface to M. River's Multi-Element MCA Data Format
 
-M. Newville  
+M. Newville
 """
 import numpy as np
 import re
@@ -32,11 +32,11 @@ MIN_SLOPE   = 1.e-7
 
 def str_converter(strin, delim=None, converter=None):
     """convert a string of a delimited array to a list"""
-    if delim is None: 
+    if delim is None:
         arr = strin.split()
     else:
         arr = re.split(delim, strin)
-    conv = converter 
+    conv = converter
     if hasattr(conv, '__call__'):
         return [conv(elem) for elem in arr]
     else:
@@ -63,7 +63,7 @@ class ROI(object):
         self.name = name
         self.spectra = np.array(spectra)
         self.__counts = -1
-        
+
     def __repr__(self):
         return "<ROI('%s' chan:[%i, %i])>" % (self.name, self.left,
                                               self.right)
@@ -72,7 +72,7 @@ class ROI(object):
         if self.spectra is None:
             return None
         return self.spectra[self.left:self.right+1].sum()
-            
+
 class MCA(object):
     """ basic MCA spectra"""
     def __init__(self, data=None):
@@ -107,7 +107,7 @@ class MCA(object):
         if self.energy is not None:
             return self.energy
         idx = np.arange(self.npts)
-        self.cal_slope = max(MIN_SLOPE, self.cal_slope)        
+        self.cal_slope = max(MIN_SLOPE, self.cal_slope)
         self.energy = self.cal_offset + idx * (self.cal_slope +
                                                idx * self.cal_quad)
         return self.energy
@@ -122,7 +122,7 @@ class MEDFile(object):
         self.filename = filename
         if filename is not None:
             self.mca_read_file(filename)
-            
+
     def get_calibration(self, detector=None):
         "get calibration constants"
         if detector is None:
@@ -208,7 +208,7 @@ class MEDFile(object):
                         _roi_1[iroi] = str2int(val)
                 else:
                     header[tag] = val
-                
+
         #  find first valid detector, identify bad detectors
         self.mcas = [MCA() for i in range(nelem)]
         tmpdat  = np.transpose(np.array(tmpdat))
@@ -223,21 +223,21 @@ class MEDFile(object):
             mca.cal_slope  = header['cal_slope'][imca]
             mca.cal_quad   = header['cal_quad'][imca]
             mca.cal_tth    = header['two_theta'][imca]
-            
+
             mca.data = 1 * tmpdat[imca, :]
             for iroi in _roi_n:
                 name   = _roi_n[iroi][imca].strip()
                 ileft  = _roi_0[iroi][imca]
-                iright = _roi_1[iroi][imca]                
+                iright = _roi_1[iroi][imca]
                 mca.rois.append(ROI(index=iroi, left=ileft,
                                     right=iright, name=name,
                                     spectra=mca.data))
-                    
+
 
     def write_ascii(self, fname, elem=None, sum_all=True):
         """write data to ASCII column file"""
         out = []
-        
+
         out.append("# XRF data from %s\n" % (self.filename))
         if len(self.env)>0:
             out.append("# Extra PVs:\n")
@@ -285,4 +285,4 @@ if __name__ == '__main__':
     if HAS_PYLAB:
         pylab.plot(energy, dsum)
         pylab.show()
-        
+

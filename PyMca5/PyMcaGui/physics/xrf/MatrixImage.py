@@ -693,13 +693,13 @@ class MatrixImage(qt.QWidget):
 
     def setPixmap(self, size):
         if size == "small":
-            self.pixmap = qt.QPixmap(image_small)        
+            self.pixmap = qt.QPixmap(image_small)
         elif size == "image2":
             self.pixmap = qt.QPixmap(image2)
         elif size == "image2trans":
-            self.pixmap = qt.QPixmap(image2trans)        
+            self.pixmap = qt.QPixmap(image2trans)
         elif size == "medium":
-            self.pixmap = qt.QPixmap(image_medium)        
+            self.pixmap = qt.QPixmap(image_medium)
         else:
             self.pixmap = qt.QPixmap(image)
         self.label.setPixmap(self.pixmap)

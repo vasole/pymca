@@ -454,7 +454,7 @@ class StackBase(object):
         if self.__ROIImageCalculationIsUsingSuppliedEnergyAxis:
             imageNames[1] = "%s %s at Max." % (title, cursor)
             imageNames[2] = "%s %s at Min." % (title, cursor)
-            
+
         self.showROIImageList(imageList, image_names=imageNames)
 
     def showOriginalImage(self):
@@ -872,7 +872,7 @@ class StackBase(object):
                                   minImage[i:i+step,:])
                         numpy.add(maxImage[i:i+step,:],
                                   numpy.max(tmpData, 2),
-                                  maxImage[i:i+step,:])                            
+                                  maxImage[i:i+step,:])
                         leftImage[i:i+step, :]   += tmpData[:, :, 0]
                         middleImage[i:i+step, :] += tmpData[:, :, imiddle-i1]
                         rightImage[i:i+step, :]  += tmpData[:, :,-1]

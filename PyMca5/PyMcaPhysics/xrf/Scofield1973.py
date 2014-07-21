@@ -36,7 +36,7 @@ from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import PyMcaDataDir
 
 dict = ConfigDict.ConfigDict()
-dirmod = PyMcaDataDir.PYMCA_DATA_DIR 
+dirmod = PyMcaDataDir.PYMCA_DATA_DIR
 dictfile = os.path.join(dirmod, "Scofield1973.dict")
 if not os.path.exists(dictfile):
     dirmod = os.path.dirname(dirmod)

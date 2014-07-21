@@ -58,7 +58,7 @@ def h5py_sorting(object_list):
 
     # we have received items, not values
     posixNames = [item[1].name for item in object_list]
-    
+
     # This implementation only sorts entries
     if posixpath.dirname(posixNames[0]) != "/":
         return object_list
@@ -193,7 +193,7 @@ class H5NodeProxy(object):
                     if DEBUG:
                         raise
                     else:
-                        tmpList = list(self.getNode(self.name).values())                
+                        tmpList = list(self.getNode(self.name).values())
                         finalList = tmpList
                     for i in range(len(finalList)):
                         finalList[i]._posixPath = posixpath.join(self.name,
@@ -238,7 +238,7 @@ class H5NodeProxy(object):
             return text
         else:
             return ""
-        
+
     @property
     def dtype(self):
         return self._dtype
@@ -251,7 +251,7 @@ class H5NodeProxy(object):
     def __init__(self, ffile, node, parent=None, path=None):
         if 1:#with ffile.plock:
             self._file = ffile
-            self._parent = parent    
+            self._parent = parent
             if hasattr(node, '_posixPath'):
                 self._name = node._posixPath
             else:
@@ -332,7 +332,7 @@ class FileModel(qt.QAbstractItemModel):
     """
     sigFileUpdated = qt.pyqtSignal(object)
     sigFileAppended = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None):
         qt.QAbstractItemModel.__init__(self, parent)
         self.rootItem = RootItem(['File/Group/Dataset', 'Description', 'Shape', 'DType'])
@@ -387,10 +387,10 @@ class FileModel(qt.QAbstractItemModel):
             return self.getProxyFromIndex(index).getNode()
         except AttributeError:
             return None
-        
+
     def getProxyFromIndex(self, index):
         try:
-            return self._idMap[index.internalId()]        
+            return self._idMap[index.internalId()]
         except KeyError:
             try:
                 #Linux 32-bit problem
@@ -492,7 +492,7 @@ class FileModel(qt.QAbstractItemModel):
             ddict['filename'] = name
             self.sigFileUpdated.emit(ddict)
             return
-            
+
         if weakreference:
             def phynxFileInstanceDistroyed(weakrefObject):
                 idx = self.rootItem._identifiers.index(id(weakrefObject))
@@ -535,7 +535,7 @@ class FileView(qt.QTreeView):
         if ddict is None:
             return
         self.fileUpdated(ddict)
-            
+
 
     def fileUpdated(self, ddict):
         rootModelIndex = self.rootIndex()
@@ -545,14 +545,14 @@ class FileView(qt.QTreeView):
                 if self.model().hasIndex(row, 0, rootModelIndex):
                     modelIndex = self.model().index(row, 0, rootModelIndex)
                     item = self.model().getProxyFromIndex(modelIndex)
-                    if item.name == ddict['filename']:            
+                    if item.name == ddict['filename']:
                         self.selectionModel().setCurrentIndex(modelIndex,
                                               qt.QItemSelectionModel.NoUpdate)
                         self.scrollTo(modelIndex,
                                       qt.QAbstractItemView.PositionAtTop)
                         break
         self.doItemsLayout()
-                    
+
 class HDF5Widget(FileView):
     def __init__(self, model, parent=None):
         FileView.__init__(self, model, parent)
@@ -571,7 +571,7 @@ class HDF5Widget(FileView):
         self.resizeColumnToContents(1)
         self.resizeColumnToContents(2)
         self.resizeColumnToContents(3)
-        
+
     def mousePressEvent(self, e):
         button = e.button()
         if button == qt.Qt.LeftButton:
@@ -601,7 +601,7 @@ class HDF5Widget(FileView):
         if self.model() is None:
             return
         ddict = {}
-        item  = self.model().getProxyFromIndex(modelIndex)        
+        item  = self.model().getProxyFromIndex(modelIndex)
         ddict['event'] = event
         ddict['file']  = item.file.filename
         ddict['name']  = item.name

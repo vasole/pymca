@@ -125,7 +125,7 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
         else:
             fdialog.setAcceptMode(fdialog.AcceptSave)
             fdialog.setFileMode(fdialog.AnyFile)
-            
+
         fdialog.setDirectory(wdir)
         if QTVERSION > '4.3.0':
             history = fdialog.history()
@@ -139,13 +139,13 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
                 return [], filterused
             else:
                 return []
-        else:            
+        else:
             filelist = fdialog.selectedFiles()
             filterused = str(fdialog.selectedFilter())
             if mode != "OPEN":
                 if "." in filterused:
                     extension = filterused.replace(")", "")
-                    if "(" in extension:   
+                    if "(" in extension:
                         extension = extension.split("(")[-1]
                     extensionList = extension.split()
                     txt = str(filelist[0])
@@ -169,7 +169,7 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
     else:
         Object3DDirs.outputDir = os.path.dirname(filelist[0])
         if Object3DDirs.inputDir is None:
-            Object3DDirs.inputDir = os.path.dirname(filelist[0])        
+            Object3DDirs.inputDir = os.path.dirname(filelist[0])
     filelist.sort()
     if getfilter:
         return filelist, filterused

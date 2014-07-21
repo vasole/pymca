@@ -181,7 +181,7 @@ class PCAParametersDialog(qt.QDialog):
                                  'To', label = 'To',
                                   color='blue',
                                   draggable=True)
-        self.graph.replot() 
+        self.graph.replot()
 
     def _graphSlot(self, ddict):
         if ddict['event'] == "markerMoved":
@@ -413,7 +413,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         ddict['usetab'] = True
         ddict.update(kw)
         ddict['standalonesave'] = False
-        MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict) 
+        MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict)
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setMinimum(0)

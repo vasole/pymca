@@ -43,20 +43,20 @@ from PyMca5.PyMcaPhysics.xrf.XRFMC import XRFMCHelper
 class VerticalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
-      
+
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,
                            qt.QSizePolicy.Expanding))
 
 class HorizontalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
-      
+
         self.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,
                            qt.QSizePolicy.Fixed))
 
 class GetFileList(qt.QGroupBox):
     sigFileListUpdated = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None, title='File Input', nfiles=1):
         qt.QGroupBox.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
@@ -136,7 +136,7 @@ class GetFileList(qt.QGroupBox):
         ddict = {}
         ddict['event'] = 'fileListUpdated'
         ddict['filelist'] = self.fileList * 1
-        self.sigFileListUpdated.emit(ddict) 
+        self.sigFileListUpdated.emit(ddict)
 
     def getFileList(self):
         if not len(self.fileList):
@@ -192,7 +192,7 @@ class XRFMCProgramFile(GetFileList):
             if len(filelist):
                 filelist = [filelist]
         self.setFileList(filelist)
-            
+
     def setFileList(self, fileList):
         oldInputDir = xrfmc_dirs.inputDir
         oldOutputDir = xrfmc_dirs.outputDir
@@ -285,7 +285,7 @@ class XRFMCParameters(qt.QGroupBox):
             label.setText(t)
             self.mainLayout.addWidget(label, i, 0)
             i += 1
-            
+
         self.__widgetList = []
 
         #polarisation
@@ -381,7 +381,7 @@ class XRFMCParameters(qt.QGroupBox):
         # Layer to be adjusted
         self.fitLayer = qt.QSpinBox(self)
         self.fitLayer.setMinimum(0)
-        self.fitLayer.setValue(0)        
+        self.fitLayer.setValue(0)
         self.__widgetList.append(self.fitLayer)
         self.mainLayout.addWidget(self.fitLayer, i, 1)
         i += 1
@@ -398,7 +398,7 @@ class XRFMCParameters(qt.QGroupBox):
             value = ddict.get(key, current[key])
             current[key] = value
         self.__update()
-        return        
+        return
 
     def __update(self):
         current = self.__configuration['xrfmc']['setup']
@@ -427,7 +427,7 @@ class XRFMCParameters(qt.QGroupBox):
         self.maxInteractions.setValue(current[key])
         key = 'layer'
         self.fitLayer.setValue(current[key] - 1)
-        
+
     def getParameters(self):
         current = self.__configuration['xrfmc']['setup']
         key = 'p_polarisation'
@@ -451,7 +451,7 @@ class XRFMCParameters(qt.QGroupBox):
         if 0:
             # used in older versions
             key = 'detector_acceptance_angle'
-            current[key] = self.acceptanceAngle.value()        
+            current[key] = self.acceptanceAngle.value()
         key = 'nmax_interaction'
         current[key] = self.maxInteractions.value()
         key = 'layer'
@@ -486,7 +486,7 @@ class XRFMCSimulationControl(qt.QGroupBox):
             self.__runNumber = qt.QSpinBox(self)
             self.__runNumber.setMinimum(0)
             self.__runNumber.setValue(0)
-            
+
             self.mainLayout.addWidget(label, i, 0)
             self.mainLayout.addWidget(self.__runNumber, i, 1)
             i += 1
@@ -498,7 +498,7 @@ class XRFMCSimulationControl(qt.QGroupBox):
             self._simulationMode.setEditable(False)
             self._simulationMode.addItem("Simulation")
             self._simulationMode.addItem("Fit")
-            
+
             self.mainLayout.addWidget(label, i, 0)
             self.mainLayout.addWidget(self._simulationMode, i, 1)
             i += 1
@@ -511,7 +511,7 @@ class XRFMCSimulationControl(qt.QGroupBox):
             self.__nHistories.setMaximum(10000000)
             self.__nHistories.setValue(100000)
             self.__nHistories.setSingleStep(50000)
-            
+
             self.mainLayout.addWidget(label, i, 0)
             self.mainLayout.addWidget(self.__nHistories, i, 1)
             i += 1
@@ -531,7 +531,7 @@ class XRFMCSimulationControl(qt.QGroupBox):
 
         if 'histories' in ddict:
             self.__nHistories.setValue(int(ddict['histories']))
-                
+
     def getSimulationMode(self):
         current = self._simulationMode.currentIndex()
         if current:
@@ -639,7 +639,7 @@ class XRFMCPyMca(qt.QWidget):
 
     def buildConnections(self):
         self.fitFileWidget.sigFileListUpdated.connect(self.fitFileChanged)
-        
+
         self.actions.startButton.clicked.connect(self.start)
         self.actions.dismissButton.clicked.connect(self.close)
         self.logWidget.sigSubprocessLogWidgetSignal.connect(\
@@ -674,7 +674,7 @@ class XRFMCPyMca(qt.QWidget):
     def errorMessage(self, text, title='ERROR'):
         qt.QMessageBox.critical(self, title,
             text)
-        
+
     def fitFileChanged(self, ddict):
         #for the time being only one ...
         fitfile= ddict['filelist'][0]
@@ -716,9 +716,9 @@ class XRFMCPyMca(qt.QWidget):
         configuration = ConfigDict.ConfigDict()
         configuration.read(configFile)
         if not ('setup' in configuration['xrfmc']):
-            title = "Invalid file" 
-            text = "Invalid configuration file." 
-            self.errorMessage(text, title)        
+            title = "Invalid file"
+            text = "Invalid configuration file."
+            self.errorMessage(text, title)
         else:
             self.parametersWidget.setParameters(configuration['xrfmc']['setup'])
 
@@ -756,7 +756,7 @@ class XRFMCPyMca(qt.QWidget):
             self.errorMessage(text)
             return
         pymcaFitFile = pymcaFitFile[0]
-        
+
         program = self.programWidget.getFileList()
         if len(program) < 1:
             text = "Simulation program file is mandatory\n"
@@ -794,7 +794,7 @@ class XRFMCPyMca(qt.QWidget):
             #perform a dummy fit till xmimsim-pymca is upgraded
             if 0:
                 import numpy
-                from PyMca import ClassMcaTheory 
+                from PyMca import ClassMcaTheory
                 newFile['fit']['linearfitflag']=1
                 newFile['fit']['stripflag']=0
                 newFile['fit']['stripiterations']=0
@@ -866,11 +866,11 @@ class XRFMCPyMca(qt.QWidget):
                                     "--set-threads=2"]
         i = 0
         for parameter in simulationParameters:
-            i += 1             
+            i += 1
             args.insert(1, parameter)
 
         # show the command on the log widget
-        text = "%s" % scriptFile 
+        text = "%s" % scriptFile
         for arg in args[1:]:
             text += " %s" % arg
         self.logWidget.clear()
@@ -906,4 +906,4 @@ if __name__ == "__main__":
     w = XRFMCPyMca()
     w.show()
     app.exec_()
-    
+

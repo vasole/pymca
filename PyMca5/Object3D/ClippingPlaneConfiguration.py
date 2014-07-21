@@ -35,7 +35,7 @@ DEBUG = 0
 
 class ClippingPlaneConfiguration(qt.QGroupBox):
     sigClippingPlaneSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent = None):
         qt.QGroupBox.__init__(self, parent)
         self.setTitle("Clipping Planes: Only points satisfying Ax + By + Cz + D >=0 will be plotted")
@@ -74,9 +74,9 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
             if item != "U0":
                 slider = Object3DSlider.Object3DSlider(self, qt.Qt.Horizontal)
                 slider.setRange(-100, 100, 0.05)
-                slider.setValue(0.0)                
+                slider.setValue(0.0)
                 slider.valueChanged.connect(self._sliderSlot)
-                         
+
                 vector.append(slider)
             self.planeList.append(vector)
 
@@ -111,7 +111,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
             print("sliderSlot")
         for i in range(3):
             value = self.planeList[i][5].value()
-            self.planeList[i][4].setText("%f" % value) 
+            self.planeList[i][4].setText("%f" % value)
 
         self._signal()
 
@@ -119,10 +119,10 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
         if DEBUG:
             print("lineSlot")
         for i in range(3):
-            oldValue = self.planeList[i][5].value() 
+            oldValue = self.planeList[i][5].value()
             value = float(str(self.planeList[i][4].text()))
             if (oldValue-value) != 0.0:
-                self.planeList[i][5].setValue(value) 
+                self.planeList[i][5].setValue(value)
 
     def getParameters(self):
         ddict = {}
@@ -152,7 +152,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
                 for j in [1, 2, 3, 4]:
                     self.planeList[i][j].setText("%f"% plane[j])
                 i += 1
-            self.__disconnected = False  
+            self.__disconnected = False
 
     def _signal(self, event = None):
         if event is None:
@@ -164,7 +164,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
 class UserClippingPlaneWidget(qt.QWidget):
 
     sigUserClippingPlaneSignal= qt.pyqtSignal(object)
-    
+
     def __init__(self, parent = None, vector = None, point = None, rotation=None):
         qt.QWidget.__init__(self, parent)
         self.l = qt.QHBoxLayout(self)
@@ -223,7 +223,7 @@ class UserClippingPlaneWidget(qt.QWidget):
 
 class ClippingPlaneWidget(qt.QWidget):
     sigClippingPlaneWidgetSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
@@ -269,7 +269,7 @@ class ClippingPlaneWidget(qt.QWidget):
             rotX[0,0] =  1
             rotX[1,1] =  1
             rotX[2,2] =  1
-            rotX[1,1] =  cs; rotX[1,2] = sn   
+            rotX[1,1] =  cs; rotX[1,2] = sn
             rotX[2,1] = -sn; rotX[2,2] = cs
 
             #RotY
@@ -282,7 +282,7 @@ class ClippingPlaneWidget(qt.QWidget):
             rotY[2,2] =  1
             rotY[0,0] =  cs; rotY[0,2] = -sn   #inverted respect to the others
             rotY[2,0] =  sn; rotY[2,2] =  cs
-            
+
             #RotZ
             angle = rotation[2]*numpy.pi/180.
             cs = numpy.cos(angle)
@@ -291,7 +291,7 @@ class ClippingPlaneWidget(qt.QWidget):
             rotZ[0,0] =  1
             rotZ[1,1] =  1
             rotZ[2,2] =  1
-            rotZ[0,0] =  cs; rotZ[0,1] = sn   
+            rotZ[0,0] =  cs; rotZ[0,1] = sn
             rotZ[1,0] = -sn; rotZ[1,1] = cs
 
             #The final matrix
@@ -338,5 +338,5 @@ if __name__ == "__main__":
     elif 1:
         w = ClippingPlaneWidget()
         w.sigClippingPlaneWidgetSignal.connect(myslot)
-    w.show()    
+    w.show()
     app.exec_()

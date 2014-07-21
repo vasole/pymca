@@ -177,7 +177,7 @@ class SaveImageSetup(qt.QWidget):
             msg.setDetailedText(traceback.format_exc())
             msg.setWindowTitle('Matplotlib Save Image')
             msg.exec_()
-            
+
 
     def printClicked(self):
         try:
@@ -192,7 +192,7 @@ class SaveImageSetup(qt.QWidget):
             msg.setText("Error printing image: %s" % sys.exc_info()[1])
             msg.setWindowTitle('Matplotlib Save Image')
             msg.exec_()
-        
+
     def saveClicked(self):
         outfile = qt.QFileDialog(self)
         outfile.setModal(1)
@@ -229,13 +229,13 @@ class SaveImageSetup(qt.QWidget):
                 msg.setText("Error saving image: %s" % sys.exc_info()[1])
                 msg.setWindowTitle('Matplotlib Save Image')
                 msg.exec_()
-            try:            
+            try:
                 outputDir  = os.path.dirname(outstr)
                 self.lastOutputDir = outputDir
                 PyMcaDirs.outputDir = outputDir
             except:
                 outputDir  = "."
-            try:            
+            try:
                 outputFile = os.path.basename(outstr)
             except:
                 outputFile  = outstr
@@ -306,7 +306,7 @@ class RightWidget(qt.QWidget):
     def __init__(self, parent = None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
-        self.gridWidget = qt.QWidget(self) 
+        self.gridWidget = qt.QWidget(self)
         self.gridLayout = qt.QGridLayout(self.gridWidget)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setSpacing(2)
@@ -376,7 +376,7 @@ class RightWidget(qt.QWidget):
                 options = ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"]
             elif self.labelList[i] in ['Image Background']:
                 options = ['Black', 'White', 'Grey']
-                
+
             if self.labelList[i] in ['Contour Levels']:
                 line = qt.QSpinBox(self)
                 line.setMinimum(1)
@@ -522,7 +522,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                      origin='lower',
                      contour='off',
                      contourlabels='on',
-                     contourlabelformat='%.3f',                 
+                     contourlabelformat='%.3f',
                      contourlevels=2,
                      contourlinewidth=10,
                      extent=None,
@@ -629,7 +629,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                              (1.0, 0.0, 0.0)),
                  'blue':    ((0.0, 1.0, 1.0),
                              (1.0, 0.0, 0.0))}
-                         
+
         self.__reversedGrayCmap = LinearSegmentedColormap('yerg', cdict, 256)
 
         self.updateFigure()
@@ -741,7 +741,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         else:
             extent = self.config['extent']
 
-    
+
         vlimits = self.__getValueLimits()
         if vlimits is None:
             imageData = self.imageData
@@ -754,11 +754,11 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
         if self.config['linlogcolormap'] != 'linear':
             if vmin <= 0:
-                if vmax > 0:                   
+                if vmax > 0:
                     vmin = min(imageData[imageData>0])
                 else:
                     vmin = 0.0
-                    vmax = 1.0                
+                    vmax = 1.0
             self._image  = self.axes.imshow(imageData.clip(vmin,vmax),
                                         interpolation=interpolation,
                                         origin=origin,
@@ -774,7 +774,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                                         norm=Normalize(vmin, vmax))
 
         ylim = self.axes.get_ylim()
-        
+
         if self.config['colorbar'] is not None:
             barorientation = self.config['colorbar']
             self._colorbar = self.figure.colorbar(self._image,
@@ -825,7 +825,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             self.pixmapImage = None
             self.updateFigure()
             return
-        
+
         if bgr:
             self.pixmapImage = image * 1
             self.pixmapImage[:,:,0] = image[:,:,2]
@@ -930,7 +930,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
             ylimits = self.config['ylimits']
         else:
             ylimits = None
-        
+
         if ylimits is None:
             self.axes.set_ylim(ylim[0],ylim[1])
         else:
@@ -940,7 +940,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                 self.axes.set_ylim(ymin, ymax)
             else:
                 self.axes.set_ylim(ymax, ymin)
-                
+
         if xlimits is not None:
             xmin = min(xlimits)
             xmax = max(xlimits)
@@ -958,4 +958,4 @@ def test():
     app.exec_()
 
 if __name__ == "__main__":
-    test()   
+    test()

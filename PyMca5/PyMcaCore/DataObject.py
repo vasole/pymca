@@ -43,7 +43,7 @@ class DataObject(object):
     Now each different data source implements its selection methods.
 
     Plotting routines may add additional members
-    
+
     x: A list containing arrays to be considered axes
     y: A list of data to be considered as signals
     m: A list containing the monitor data
@@ -51,7 +51,7 @@ class DataObject(object):
     GETINFO_DEPRECATION_WARNING = True
     GETDATA_DEPRECATION_WARNING = True
     SELECT_DEPRECATION_WARNING = True
-    
+
     def __init__(self):
         '''
         Defaut Constructor

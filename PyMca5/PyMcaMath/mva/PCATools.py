@@ -767,7 +767,7 @@ if __name__ == "__main__":
     import os
     import time
     #inputfile = ".\PierreSue\CH1777\G4-Sb\G4_mca_0012_0000_0000.edf"
-    inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
+    inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"
     if len(sys.argv) > 1:
         inputfile = sys.argv[1]
         print(inputfile)

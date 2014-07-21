@@ -60,14 +60,14 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             self.methodDict['y/yactive'] = [self.divideByActiveCurve,
                        "Divide all curves by active curve",
                                        None]
-        
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         names = list(self.methodDict.keys())
         names.sort()
@@ -118,13 +118,13 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                           legend=legend,
                           info=info,
                           replot=replot,
-                          replace=replace)                
+                          replace=replace)
         self.addCurve(x, y,
                           legend=legend,
                           info=info,
                           replot=True,
                           replace=False)
-        
+
     def offsetAndMaximum(self):
         curves = self.getAllCurves()
         nCurves = len(curves)
@@ -153,7 +153,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                           legend=legend,
                           info=info,
                           replot=replot,
-                          replace=replace)                
+                          replace=replace)
         self.addCurve(x, y,
                           legend=legend,
                           info=info,
@@ -188,7 +188,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                           legend=legend,
                           info=info,
                           replot=replot,
-                          replace=replace)                
+                          replace=replace)
         self.addCurve(x, y,
                           legend=legend,
                           info=info,
@@ -223,7 +223,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                           legend=legend,
                           info=info,
                           replot=replot,
-                          replace=replace)                
+                          replace=replace)
         self.addCurve(x, y,
                           legend=legend,
                           info=info,
@@ -237,13 +237,13 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
         if nCurves < 2:
             raise ValueError("At least two curves needed")
             return
-        
+
         #get active curve
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             raise ValueError("Please select an active curve")
             return
-        
+
         x, y, legend0, info = activeCurve
         xmin, xmax = self.getGraphXLimits()
         y = y.astype(numpy.float)
@@ -253,7 +253,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
         if not len(idx):
             raise ValueError("All divisor values are zero!")
         x0 = numpy.take(x, idx)
-        y0 = numpy.take(y, idx)        
+        y0 = numpy.take(y, idx)
 
         #sort the values
         idx = numpy.argsort(x0, kind='mergesort')
@@ -261,7 +261,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
         y0 = numpy.take(y0, idx)
 
         i = 0
-        for curve in curves:            
+        for curve in curves:
             x, y, legend, info = curve[0:4]
             if legend == legend0:
                 continue
@@ -279,7 +279,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
                 continue
             xi = numpy.take(x0, idx)
             yi = numpy.take(y0, idx)
-            
+
             #perform interpolation
             xi.shape = -1, 1
             yw = SpecfitFuns.interpol([x], y, xi, yi.min())
@@ -299,7 +299,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             lastCurve = [x, y, legend]
         self.addCurve(lastCurve[0],
                       lastCurve[1],
-                      legend=lastCurve[2],                      
+                      legend=lastCurve[2],
                       info=info,
                       replot=True,
                       replace=False)

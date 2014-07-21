@@ -129,7 +129,7 @@ class StripParametersWidget(qt.QWidget):
         row += 1
         self.mainLayout.addWidget(self.stripIterLabel, row, 0)
         self.mainLayout.addWidget(self.stripIterValue, row, 4)
-        
+
         row += 1
         self.mainLayout.addWidget(self.stripFilterLabel, row, 0)
         self.mainLayout.addWidget(self.stripFilterSpin,  row, 4)
@@ -169,12 +169,12 @@ class StripParametersWidget(qt.QWidget):
         if key in pars:
             stripAlgorithm = int(pars[key])
             self.setSNIP(stripAlgorithm)
-            
-        key = "snipwidth"            
+
+        key = "snipwidth"
         if key in pars:
             self.snipWidthSpin.setValue(int(pars[key]))
 
-        key = "stripwidth"            
+        key = "stripwidth"
         if key in pars:
             self.stripWidthSpin.setValue(int(pars[key]))
 
@@ -264,7 +264,7 @@ class StripBackgroundWidget(qt.QWidget):
 
         #smoothed data
         y = numpy.ravel(numpy.array(self._y)).astype(numpy.float)
-        ysmooth = SpecfitFuns.SavitskyGolay(y, pars['stripfilterwidth'])        
+        ysmooth = SpecfitFuns.SavitskyGolay(y, pars['stripfilterwidth'])
         f=[0.25,0.5,0.25]
         ysmooth[1:-1] = numpy.convolve(ysmooth,f,mode=0)
         ysmooth[0] = 0.5 *(ysmooth[0] + ysmooth[1])
@@ -329,7 +329,7 @@ class StripBackgroundWidget(qt.QWidget):
         self.graphWidget.addCurve(x, snipBackground,\
                                   legend='SNIP Background',
                                   replot=True)
-        
+
 class StripBackgroundDialog(qt.QDialog):
     def __init__(self, parent=None):
         qt.QDialog.__init__(self, parent)
@@ -348,7 +348,7 @@ class StripBackgroundDialog(qt.QDialog):
         hboxLayout.setSpacing(2)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")
-        self.okButton.setAutoDefault(False)   
+        self.okButton.setAutoDefault(False)
         self.dismissButton = qt.QPushButton(hbox)
         self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
@@ -358,11 +358,11 @@ class StripBackgroundDialog(qt.QDialog):
         self.mainLayout.addWidget(hbox)
         self.dismissButton.clicked[()].connect(self.reject)
         self.okButton.clicked[()].connect(self.accept)
-        
+
     def sizeHint(self):
         return qt.QSize(int(1.5*qt.QDialog.sizeHint(self).width()),
                         qt.QDialog.sizeHint(self).height())
-        
+
 if __name__ == "__main__":
     a = qt.QApplication(sys.argv)
     a.lastWindowClosed.connect(a.quit)

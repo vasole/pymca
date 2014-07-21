@@ -36,12 +36,12 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
 
 import numpy
-################################################################################  
+################################################################################
 #from Data import *
 from PyMca5.PyMcaIO import spswrap as sps
 ################################################################################
 
-SOURCE_TYPE = "SPS"    
+SOURCE_TYPE = "SPS"
 
 
 class SPSLayer(object):
@@ -55,7 +55,7 @@ class SPSLayer(object):
         """
         self.EdfObj=None
         info["Class"]="SPSData"
-        #Data.__init__(self,refresh_interval,info)        
+        #Data.__init__(self,refresh_interval,info)
         self.SourceName= None
         self.SourceInfo= None
         self.GetData   = self.LoadSource
@@ -64,13 +64,13 @@ class SPSLayer(object):
         if 'SourceName' in index:
             self.SetSource(index['SourceName'])
             if 'Key' in index:
-                info=self.GetData(index['Key'])   
+                info=self.GetData(index['Key'])
                 return info[0]
 
     def AppendPage(self,scan_info, scan_data):
         return scan_info,scan_data
 
-        
+
     def SetSource (self,source_name=None):
         """
         Sets a new source for data retrieving, an spec version.
@@ -79,7 +79,7 @@ class SPSLayer(object):
         source_name: name of spec version
         """
         if source_name==self.SourceName: return 1
-        
+
         if (source_name != None) and (source_name in sps.getspeclist()):
             self.SourceName=source_name
             self.Source=self.SourceName
@@ -100,8 +100,8 @@ class SPSLayer(object):
         in this source). Each element in "KeyList" is an shared memory
         array name.
         If key is set as an array name, returns information about it.
-        """        
-        if self.SourceName is not None: 
+        """
+        if self.SourceName is not None:
             if key is None: return self.__GetSourceInfo()
             elif key in sps.getarraylist(self.SourceName): return self.__GetArrayInfo(key)
         return None
@@ -126,7 +126,7 @@ class SPSLayer(object):
         info["SourceName"]=self.SourceName
         info["Key"]=array
         info["Source"]=self.Source
-        
+
         arrayinfo=sps.getarrayinfo (self.SourceName,array)
         info["rows"]=arrayinfo[0]
         info["cols"]=arrayinfo[1]
@@ -164,10 +164,10 @@ class SPSLayer(object):
                     info["env_updatecounter"]= updc
                 except:
                     pass
-	
+
         return info
 
- 
+
     def LoadSource(self,key_list="ALL",append=0,invalidate=1,row="ALL",col="ALL"):
         """
         Creates a given number of pages, getting data from the actual
@@ -177,13 +177,13 @@ class SPSLayer(object):
                  string, shared memory array names, to be read from the file.
                  It can be also one single string, if only one array is to be read.
         append: If non-zero appends to the end of page list.
-                Otherwise, initializes the page list                
+                Otherwise, initializes the page list
         invalidate: if non-zero performas an invalidade call after
                     loading
         row: If set to an integer, loads a single row (0-based indexed)
         col: If set to an integer, loads a single column (0-based indexed)
         """
-        #AS if append==0: Data.Delete(self)        
+        #AS if append==0: Data.Delete(self)
         if type(key_list) == type(" "): key_list=(key_list,)
         output =[]
         if self.SourceName in sps.getspeclist():
@@ -213,7 +213,7 @@ class SPSLayer(object):
 
         #AS if invalidate: self.Invalidate()
 
- 
+
     def __RefreshPageOrig (source_obj,self,page):
         """
         Virtual method, implements seeking for changes in data.
@@ -232,7 +232,7 @@ class SPSLayer(object):
         Important:
         Derived classes shall update the page:   self.Pages[page]
         but not:   source_obj.Pages[page]
-        """       
+        """
         if (self.GetItemPageInfo("SourceType",page)==SOURCE_TYPE):
             specname=self.GetItemPageInfo("SourceName",page)
             arrayname=self.GetItemPageInfo("Key",page)
@@ -246,7 +246,7 @@ class SPSLayer(object):
                             info.update(self.__GetArrayInfo(arrayname))
                             if   info["row"]!="ALL": data= sps.getdatarow(specname,arrayname,info["row"])
                             elif info["col"]!="ALL": data= sps.getdatacol(specname,arrayname,info["col"])
-                            else: data=sps.getdata (specname,arrayname)                            
+                            else: data=sps.getdata (specname,arrayname)
                             self.Pages[page].Array=data
                             return 1
             infoname= self.GetItemPageInfo("EnvKey")
@@ -265,7 +265,7 @@ class SPSLayer(object):
         arrayname= key
         if not sps.specrunning(specname):
             return 0
-        
+
         if sps.isupdated(specname,arrayname):
             return 1
         else:
@@ -273,14 +273,14 @@ class SPSLayer(object):
 
 ################################################################################
 #EXEMPLE CODE:
-    
+
 if __name__ == "__main__":
     import sys,time
 
     try:
         obj=SPSLayer()
         specname=sys.argv[1]
-        arrayname=sys.argv[2]        
+        arrayname=sys.argv[2]
         obj.SetSource(specname)
         obj.LoadSource(arrayname)
         while(1):
@@ -294,5 +294,5 @@ if __name__ == "__main__":
         print(obj.GetPageInfo(i))
         print(obj.GetPageArray(i))
 
-    
+
 

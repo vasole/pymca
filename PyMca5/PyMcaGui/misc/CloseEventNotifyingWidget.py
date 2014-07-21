@@ -35,7 +35,7 @@ class HDFInfoCustomEvent(qt.QEvent):
             ddict = {}
         self.dict = ddict
         qt.QEvent.__init__(self, qt.QEvent.User)
-        
+
 class CloseEventNotifyingWidget(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)

@@ -130,7 +130,7 @@ if __name__ == "__main__":
         f = None
         window.addObject(object3D, os.path.basename(filename))
         window.setSelectedObject(os.path.basename(filename))
-            
+
     window.glWidget.setZoomFactor(1.0)
     window.show()
     app.exec_()

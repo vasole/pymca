@@ -82,7 +82,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
     def stackUpdated(self):
         self.widget = None
-            
+
     def selectionMaskUpdated(self):
         if self.widget is None:
             return
@@ -139,12 +139,12 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                                     single=False,
                                     currentfilter=None)
         if len(filenamelist) < 1:
-            return        
+            return
         imagelist = []
         imagenames= []
         mask = self.getStackSelectionMask()
         if mask is None:
-            r, n = self.getStackROIImagesAndNames()            
+            r, n = self.getStackROIImagesAndNames()
             shape = r[0].shape
         else:
             shape = mask.shape
@@ -217,7 +217,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                                                     imageicons=True,
                                                     standalonesave=True)
             self.widget.buildAndConnectImageButtonBox()
-            self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)            
+            self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
             self.widget.setImageData(None)
             self.widget.setQImageList(imagelist, shape[1], shape[0],
                                                 clearmask=False,
@@ -234,7 +234,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
         #Show
         self.widget.show()
-        self.widget.raise_()        
+        self.widget.raise_()
 
         #update
         self.selectionMaskUpdated()

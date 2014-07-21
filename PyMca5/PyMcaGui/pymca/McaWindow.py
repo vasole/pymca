@@ -84,7 +84,7 @@ class McaWindow(ScanWindow.ScanWindow):
         self.dataObjectsList = self._curveList
         # but this is tricky
         self.dataObjectsDict = {}
-        
+
         #self.setWindowTitle(name)
         self.outputDir = None
         self.outputFilter = None
@@ -295,11 +295,11 @@ class McaWindow(ScanWindow.ScanWindow):
             msg.setText("Error. Trying to fit fitted data?")
             msg.exec_()
         return
-        
+
     def __anasignal(self,dict):
         if DEBUG:
             print("__anasignal called dict = ",dict)
-            
+
         if dict['event'] == 'clicked':
             # A button has been cicked
             if   dict['button'] == 'Source':
@@ -392,7 +392,7 @@ class McaWindow(ScanWindow.ScanWindow):
                                 if curveinfo['McaCalibSource'] != [0.0,1.0,0.0]:
                                     ndict[key] = {'A':curveinfo['McaCalibSource'][0],
                                                   'B':curveinfo['McaCalibSource'][1],
-                                                  'C':curveinfo['McaCalibSource'][2]} 
+                                                  'C':curveinfo['McaCalibSource'][2]}
                                     if curveinfo['McaCalibSource'][2] != 0.0:
                                         ndict[key]['order'] = 2
                                     else:
@@ -400,10 +400,10 @@ class McaWindow(ScanWindow.ScanWindow):
                             if curve not in self.caldict.keys():
                                 if curveinfo['McaCalib'] != [0.0,1.0,0.0]:
                                     if curveinfo['McaCalib'] != curveinfo['McaCalibSource']:
-                                        key = "%s (PyMca)" % curve    
+                                        key = "%s (PyMca)" % curve
                                         ndict[key] = {'A':curveinfo['McaCalib'][0],
                                                       'B':curveinfo['McaCalib'][1],
-                                                      'C':curveinfo['McaCalib'][2]} 
+                                                      'C':curveinfo['McaCalib'][2]}
                                         if curveinfo['McaCalib'][2] != 0.0:
                                             ndict[key]['order'] = 2
                                         else:
@@ -411,23 +411,23 @@ class McaWindow(ScanWindow.ScanWindow):
                         else:
                             if curve not in self.caldict.keys():
                                 if curveinfo['McaCalib'] != [0.0,1.0,0.0]:
-                                        key = "%s (PyMca)" % curve    
+                                        key = "%s (PyMca)" % curve
                                         ndict[key] = {'A':curveinfo['McaCalib'][0],
                                                       'B':curveinfo['McaCalib'][1],
-                                                      'C':curveinfo['McaCalib'][2]} 
+                                                      'C':curveinfo['McaCalib'][2]}
                                         if curveinfo['McaCalib'][2] != 0.0:
                                             ndict[key]['order'] = 2
                                         else:
-                                            ndict[key]['order'] = 1                                         
-                    
+                                            ndict[key]['order'] = 1
+
                     if not (legend in self.caldict):
                         ndict[legend]={}
-                        ndict[legend]['A'] = sourcecal[0] 
-                        ndict[legend]['B'] = sourcecal[1] 
+                        ndict[legend]['A'] = sourcecal[0]
+                        ndict[legend]['B'] = sourcecal[1]
                         ndict[legend]['C'] = sourcecal[2]
                         if sourcecal[2] != 0.0:
                             ndict[legend]['order'] = 2
-                        else: 
+                        else:
                             ndict[legend]['order'] = 1
                     caldialog = McaCalWidget.McaCalCopy(legend=legend,modal=1,
                                                         caldict=ndict,
@@ -482,7 +482,7 @@ class McaWindow(ScanWindow.ScanWindow):
                         options.append(key)
                 try:
                     self.controlWidget.calbox.setOptions(options)
-                    self.controlWidget.calbox.setCurrentIndex(options.index(itemtext))                        
+                    self.controlWidget.calbox.setCurrentIndex(options.index(itemtext))
                     self.calibration = itemtext * 1
                     self.controlWidget._calboxactivated(itemtext)
                 except:
@@ -527,7 +527,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 self.clearMarkers()
                 self.refresh()
                 self.resetZoom()
-                
+
             elif dict['boxname'] == 'Detector':
                 pass
             elif dict['boxname'] == 'Search':
@@ -560,7 +560,7 @@ class McaWindow(ScanWindow.ScanWindow):
             legend0= dict['info']['legend']
             fitcalibration = [dict['result']['fittedpar'][0],
                               dict['result']['fittedpar'][1],
-                              0.0] 
+                              0.0]
             if dict['event'] == 'McaAdvancedFitMatrixFinished':
                 legend = dict['info']['legend'] + " Fit"
                 legend3 = dict['info']['legend'] + " Matrix"
@@ -619,7 +619,7 @@ class McaWindow(ScanWindow.ScanWindow):
             self.caldict[legend] ['order'] = 1
             self.caldict[legend] ['A']     = dict['result']['fittedpar'][0]
             self.caldict[legend] ['B']     = dict['result']['fittedpar'][1]
-            self.caldict[legend] ['C']     = 0.0 
+            self.caldict[legend] ['C']     = 0.0
             options = []
             for option in self.calboxoptions:
                 options.append(option)
@@ -665,7 +665,7 @@ class McaWindow(ScanWindow.ScanWindow):
             for result in mcaresult:
                 i += 1
                 if result['chisq'] is not None:
-                     mcamode = result['fitconfig']['McaMode']                         
+                     mcamode = result['fitconfig']['McaMode']
                      idx=numpy.nonzero((self.specfit.xdata0>=result['xbegin']) & \
                                     (self.specfit.xdata0<=result['xend']))[0]
                      x=numpy.take(self.specfit.xdata0,idx)
@@ -679,7 +679,7 @@ class McaWindow(ScanWindow.ScanWindow):
                      yfinal = yfinal + y.tolist()
                      ybfinal= ybfinal + yb.tolist()
                     #self.graph.newCurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
-            legend = legend0 + " SFit"            
+            legend = legend0 + " SFit"
             if legend in self.dataObjectsDict.keys():
                 if legend in self.getAllCurves(just_legend=True):
                     if mcamode:
@@ -713,7 +713,7 @@ class McaWindow(ScanWindow.ScanWindow):
             if self.peakmarker is not None:
                 self.graph.removeMarker(self.peakmarker)
             self.peakmarker = None
-        
+
         elif dict['event'] == 'McaTableRowHeaderClicked':
             #I have to mark the peaks
             if dict['row'] >= 0:
@@ -739,7 +739,7 @@ class McaWindow(ScanWindow.ScanWindow):
              (dict['event'] == 'ElementClicked'):
             #this has been moved to the fit window
             pass
-                
+
         elif dict['event'] == 'McaAdvancedFitPrint':
             #self.advancedfit.printps(doit=1)
             self.printHtml(dict['text'])
@@ -759,10 +759,10 @@ class McaWindow(ScanWindow.ScanWindow):
             return super(McaWindow, self)._roiSignal(dict)
         elif dict['event'] == 'DelROI':
             return super(McaWindow, self)._roiSignal(dict)
-            
+
         elif dict['event'] == 'ResetROI':
             return super(McaWindow, self)._roiSignal(dict)
-            
+
         elif dict['event'] == 'ActiveROI':
             print("ActiveROI event")
             pass
@@ -795,7 +795,7 @@ class McaWindow(ScanWindow.ScanWindow):
             B = 1.0
             C = 0.0
             order = 1
-        key = self.currentROI        
+        key = self.currentROI
         roiList, roiDict = self.roiWidget.getROIListAndDict()
         fromdata = roiDict[key]['from' ]
         todata   = roiDict[key]['to']
@@ -887,7 +887,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     simplefitplot = False
                 try:
                     calib = [0.0,1.0,0.0]
-                    for inputkey in ['baseline', 'regions']: 
+                    for inputkey in ['baseline', 'regions']:
                         if inputkey in info:
                             curveinfo[inputkey] = info[inputkey]
                     curveinfo['McaCalib'] = calib
@@ -930,7 +930,7 @@ class McaWindow(ScanWindow.ScanWindow):
                             A = self.caldict[legend]['A']
                             B = self.caldict[legend]['B']
                             C = self.caldict[legend]['C']
-                            calibrationOrder = self.caldict[legend]['order']  
+                            calibrationOrder = self.caldict[legend]['order']
                             calib = [A,B,C]
                         elif 'McaCalib' in info:
                             if type(info['McaCalib'][0]) == type([]):
@@ -978,7 +978,7 @@ class McaWindow(ScanWindow.ScanWindow):
                             A = self.caldict[self.calibration]['A']
                             B = self.caldict[self.calibration]['B']
                             C = self.caldict[self.calibration]['C']
-                            calibrationOrder = self.caldict[self.calibration]['order'] 
+                            calibrationOrder = self.caldict[self.calibration]['order']
                             calib = [A,B,C]
                             if calibrationOrder == 'TOF':
                                 xdata =  C + (A / ((xhelp - B) * (xhelp - B)))
@@ -1174,7 +1174,7 @@ class McaWindow(ScanWindow.ScanWindow):
             self.controlWidget.calinfo.CText.setText("?????")
         super(McaWindow, self).setActiveCurve(legend)
 
-        
+
     def _customFitSignalReceived(self, ddict):
         if ddict['event'] == "FitFinished":
             newDataObject = self.__customFitDataObject
@@ -1183,13 +1183,13 @@ class McaWindow(ScanWindow.ScanWindow):
             yplot = ddict['yfit']
             newDataObject.x = [xplot]
             newDataObject.y = [yplot]
-            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]            
+            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]
 
             #here I should check the log or linear status
             self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
             self.addCurve(xplot,
                           yplot,
-                          legend=newDataObject.info['legend'])        
+                          legend=newDataObject.info['legend'])
 
     def _scanFitSignalReceived(self, ddict):
         if DEBUG:
@@ -1203,11 +1203,11 @@ class McaWindow(ScanWindow.ScanWindow):
             yplot = self.scanFit.specfit.gendata(parameters=ddict['data'])
             newDataObject.x = [xplot]
             newDataObject.y = [yplot]
-            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]            
+            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]
 
             self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
             self.addCurve(x=xplot, y=yplot, legend=newDataObject.info['legend'])
-            
+
     def _fitIconSignal(self):
         if DEBUG:
             print("_fitIconSignal")
@@ -1242,7 +1242,7 @@ class McaWindow(ScanWindow.ScanWindow):
         else:
             self.outputDir = os.getcwd()
             wdir = self.outputDir
-           
+
         outfile = qt.QFileDialog(self)
         outfile.setWindowTitle("Output File Selection")
         outfile.setModal(1)
@@ -1261,7 +1261,7 @@ class McaWindow(ScanWindow.ScanWindow):
             format_list.append('Graphics PNG *.png')
             format_list.append('Graphics EPS *.eps')
             format_list.append('Graphics SVG *.svg')
-            
+
         outfile.setFilters(format_list)
         outfile.selectFilter(self.outputFilter)
         outfile.setFileMode(outfile.AnyFile)
@@ -1274,12 +1274,12 @@ class McaWindow(ScanWindow.ScanWindow):
             filetype  = filterused[1]
             extension = filterused[2]
             outdir=qt.safe_str(outfile.selectedFiles()[0])
-            try:            
+            try:
                 self.outputDir  = os.path.dirname(outdir)
-                PyMcaDirs.outputDir = os.path.dirname(outdir) 
+                PyMcaDirs.outputDir = os.path.dirname(outdir)
             except:
                 self.outputDir  = "."
-            try:            
+            try:
                 outputFile = os.path.basename(outdir)
             except:
                 outputFile  = outdir
@@ -1302,7 +1302,7 @@ class McaWindow(ScanWindow.ScanWindow):
             if legend in self.caldict:
                 ndict[legend].update(self.caldict[legend])
                 if abs(ndict[legend]['C']) > 0.0:
-                    ndict[legend]['order']  = 2    
+                    ndict[legend]['order']  = 2
             elif 'McaCalib' in info:
                 if type(info['McaCalib'][0]) == type([]):
                     calib = info['McaCalib'][0]
@@ -1323,7 +1323,7 @@ class McaWindow(ScanWindow.ScanWindow):
             ndict[legend] = {'order':order,'A':A,'B':B,'C':C}
 
         #I should have x, y, caldict
-        """ 
+        """
         caldialog = McaCalWidget.McaCalWidget(legend=legend,
                                                  x=x,
                                                  y=y,
@@ -1402,7 +1402,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 elif "OMNIC" in filterused[0]:
                     csv = ","
                 else:
-                    csv = "\t"                
+                    csv = "\t"
                 energy = ndict[legend]['A'] + \
                          ndict[legend]['B'] * x + \
                          ndict[legend]['C'] * x * x
@@ -1433,17 +1433,17 @@ class McaWindow(ScanWindow.ScanWindow):
             os.linesep = systemline
             raise
         return
-        
+
     def _averageIconSignal(self):
         if DEBUG:
             print("_averageIconSignal")
         self.__QSimpleOperation("average")
-        
+
     def _smoothIconSignal(self):
         if DEBUG:
             print("_smoothIconSignal")
         self.__QSimpleOperation("smooth")
-        
+
     def _getOutputFileName(self):
         #get outputfile
         self.outputDir = PyMcaDirs.outputDir
@@ -1455,7 +1455,7 @@ class McaWindow(ScanWindow.ScanWindow):
         else:
             self.outputDir = os.getcwd()
             wdir = self.outputDir
-            
+
         outfile = qt.QFileDialog(self)
         outfile.setWindowTitle("Output File Selection")
         outfile.setModal(1)
@@ -1489,13 +1489,13 @@ class McaWindow(ScanWindow.ScanWindow):
         filetype  = filterused[1]
         extension = filterused[2]
         outdir = qt.safe_str(outfile.selectedFiles()[0])
-        try:            
+        try:
             self.outputDir  = os.path.dirname(outdir)
             PyMcaDirs.outputDir = os.path.dirname(outdir)
         except:
             print("setting output directory to default")
             self.outputDir  = os.getcwd()
-        try:     
+        try:
             outputFile = os.path.basename(outdir)
         except:
             outputFile = outdir
@@ -1524,7 +1524,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     tmpstr += "%.7g " % data[i]
             tmpstr += "\n"
         return tmpstr
-        
+
     def __QSimpleOperation(self, operation):
         try:
             self.__simpleOperation(operation)
@@ -1533,7 +1533,7 @@ class McaWindow(ScanWindow.ScanWindow):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s" % sys.exc_info()[1])
             msg.exec_()
-    
+
     def __simpleOperation(self, operation):
         if operation == 'subtract':
             self._subtractOperation()
@@ -1649,7 +1649,7 @@ class McaWindow(ScanWindow.ScanWindow):
             try:
                 if filetype in ['Scan', 'MultiScan']:
                     ffile.write("#F %s\n" % filename)
-                    savingDate = "#D %s\n"%(time.ctime(time.time()))                    
+                    savingDate = "#D %s\n"%(time.ctime(time.time()))
                     ffile.write(savingDate)
                     ffile.write("\n")
                     ffile.write("#S 1 %s\n" % legend)
@@ -1664,7 +1664,7 @@ class McaWindow(ScanWindow.ScanWindow):
                         keylist = list(self.dataObjectsList)
                         for key in self._curveList:
                             if key not in keylist:
-                                keylist.append(key)        
+                                keylist.append(key)
                         for key in keylist:
                             if key not in self.dataObjectsDict.keys():
                                 continue
@@ -1703,7 +1703,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     else:
                         csvseparator = "\t"
                     if "OMNIC" not in filterused[0]:
-                        ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel)) 
+                        ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel))
                     for i in range(len(y)):
                         ffile.write("%.7E%s%.7E\n" % (x[i], csvseparator,y[i]))
                 else:
@@ -1956,7 +1956,7 @@ class McaWindow(ScanWindow.ScanWindow):
         yActiveLabel  = ylabel
         xActiveLabel  = xlabel
 
-        operation = "subtract"    
+        operation = "subtract"
         sel_list = []
         i = 0
         ndata = 0
@@ -2054,7 +2054,7 @@ class McaWindow(ScanWindow.ScanWindow):
         else:
             # create the data object (Is this necessary????)
             self.newCurve(x, y, legend=legend, info=info, **kw)
-    
+
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
                  replace=False, replot=True, info=None, **kw):
         print("DATA OBJECT CREATION TO BE IMPLEMENTED FOR MCAs")
@@ -2110,7 +2110,7 @@ class McaWindow(ScanWindow.ScanWindow):
         if activeCurve is not None:
             self.setActiveCurve(activeCurve)
         self.replot()
-        
+
 def test():
     w = McaWindow()
     x = numpy.arange(1000.)

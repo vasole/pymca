@@ -45,16 +45,16 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
         self.methodDict['Show RIXS Image'] = [self._rixsID26,
                                               "Show curves as RIXS image",
                                               None]
-                           
+
         self._rixsWidget = None
-        
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         names = list(self.methodDict.keys())
         names.sort()
@@ -185,7 +185,7 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
         n = (xMax - xMin) * (factor / eStep)
         grid0 = numpy.linspace(xMin * factor, xMax * factor, n)
         grid1 = numpy.linspace(yData.min(), yData.max(), n)
-        
+
         # create the meshgrid
         xx, yy = numpy.meshgrid(grid0, grid1)
 
@@ -199,14 +199,14 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
                                             imageicons=False,
                                             selection=False,
                                             profileselection=True,
-                                            scanwindow=self)                
+                                            scanwindow=self)
             self._rixsWidget.setImageData(zz,
                                           xScale=(xx.min(), xx.max()),
                                           yScale=(yy.min(), yy.max()))
             self._rixsWidget.show()
         elif 1:
             etData = xData - yData
-            grid3 = numpy.linspace(etData.min(), etData.max(), n) 
+            grid3 = numpy.linspace(etData.min(), etData.max(), n)
             # create the meshgrid
             xx, yy = numpy.meshgrid(grid0, grid3)
 
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     #w = ConfigurationWidget()
     #w.exec_()
     #sys.exit(0)
-    
+
     DEBUG = 1
     x = numpy.arange(100.)
     y = x * x

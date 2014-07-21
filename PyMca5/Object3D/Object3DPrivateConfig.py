@@ -69,7 +69,7 @@ class Object3DPrivateConfig(qt.QWidget):
 
     def _updateWidget(self):
         return
-    
+
     def getParameters(self):
         return self._configuration
 
@@ -79,7 +79,7 @@ class Object3DPrivateConfig(qt.QWidget):
     def updateCallBack(self):
         if self.callBack is not None:
             self.callBack()
- 
+
 if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
@@ -87,5 +87,5 @@ if __name__ == "__main__":
         print("Callback called")
     w = Object3DPrivateConfig()
     w.setCallBack(myslot)
-    w.show()    
+    w.show()
     app.exec_()

@@ -105,7 +105,7 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
                              "Reverse Even Rows",
                              "Reverse Odd Columns",
                              "Reverse Even Columns"]
-        
+
     #Methods implemented by the plugin
     def getMethods(self):
         return self.__methodKeys
@@ -156,10 +156,10 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
                     tmp = stack.data[:, i, j] * 1
                     stack.data[:, i, j] = stack.data[:, i,(ndata-j-1)] * 1
                     stack.data[:, i,(ndata-j-1)] = tmp
-                    j += 1            
+                    j += 1
         else:
             raise ValueError("Invalid 1D index %d" % mcaIndex)
-        self.setStack(stack) 
+        self.setStack(stack)
 
     def reverseColumns(self, offset=1):
         stack = self.getStackDataObject()
@@ -186,10 +186,10 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
                     tmp = stack.data[:, j, i] * 1
                     stack.data[:, j, i] = stack.data[:,(ndata-j-1), i] * 1
                     stack.data[:, (ndata-j-1), i] = tmp
-                    j += 1            
+                    j += 1
         else:
             raise ValueError("Invalid 1D index %d" % mcaIndex)
-        self.setStack(stack) 
+        self.setStack(stack)
 
 MENU_TEXT = "Stack Row or Column Reversing"
 def getStackPluginInstance(stackWindow, **kw):

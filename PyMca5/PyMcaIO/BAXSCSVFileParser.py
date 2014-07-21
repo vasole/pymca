@@ -109,7 +109,7 @@ class BAXSCSVFileParser(object):
         Gives back the number of scans in the file
         """
         return len(self_scan)
-        
+
     def list(self):
         return "1:1"
 
@@ -137,7 +137,7 @@ class BAXSCSVScan(SpecFileAbstractClass.SpecFileAbstractScan):
 
     def nbmca(self):
         return 1
-        
+
     def mca(self, number):
         if number <= 0:
             raise IndexError("Mca numbering starts at 1")

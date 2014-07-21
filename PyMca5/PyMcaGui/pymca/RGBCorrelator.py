@@ -76,11 +76,11 @@ class RGBCorrelator(qt.QWidget):
             self._handleGraph    = True
         else:
             self.graph = graph
-            self._handleGraph = False 
+            self._handleGraph = False
         #self.splitter.setStretchFactor(0,1)
         #self.splitter.setStretchFactor(1,1)
         self.mainLayout.addWidget(self.splitter)
-        
+
         self.reset    = self.controller.reset
         self.addImage = self.controller.addImage
         self.removeImage = self.controller.removeImage
@@ -160,7 +160,7 @@ def test():
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
-                    longoptions)      
+                    longoptions)
     for opt,arg in opts:
         pass
     filelist=args
@@ -178,7 +178,7 @@ def test():
                 w.addImage(dataObject.data, os.path.basename(fname)+" "+key)
     else:
         print("This is a just test method using 100 x 100 matrices.")
-        print("Run PyMcaPostBatch to have file loading capabilities.") 
+        print("Run PyMcaPostBatch to have file loading capabilities.")
         array1 = numpy.arange(10000)
         array2 = numpy.resize(numpy.arange(10000), (100, 100))
         array2 = numpy.transpose(array2)
@@ -192,4 +192,4 @@ def test():
 
 if __name__ == "__main__":
     test()
-        
+

@@ -52,7 +52,7 @@ def load_PyQt4_Qt(finder, module):
        to this technique over pure Python; ignore the absence of some of
        the modules since not every installation includes all of them."""
     try:
-        #This modules does not seem to be always present 
+        #This modules does not seem to be always present
         finder.IncludeModule("PyQt4._qt")
     except ImportError:
         pass

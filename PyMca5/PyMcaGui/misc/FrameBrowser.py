@@ -147,7 +147,7 @@ class FrameBrowser(qt.QWidget):
         self.previousButton = qt.QPushButton(self)
         self.previousButton.setIcon(qt.QIcon(qt.QPixmap(icon_previous)))
         self.lineEdit = qt.QLineEdit(self)
-        self.lineEdit.setFixedWidth(self.lineEdit.fontMetrics().width('%05d' % n))        
+        self.lineEdit.setFixedWidth(self.lineEdit.fontMetrics().width('%05d' % n))
         validator = qt.QIntValidator(1, n, self.lineEdit)
         self.lineEdit.setText("1")
         self._oldIndex = 0
@@ -180,12 +180,12 @@ class FrameBrowser(qt.QWidget):
 
     def _previousClicked(self):
         if self._oldIndex >= self.lineEdit.validator().bottom():
-            self.lineEdit.setText("%d" % (self._oldIndex)) 
+            self.lineEdit.setText("%d" % (self._oldIndex))
             self._textChangedSlot()
 
     def _nextClicked(self):
         if self._oldIndex < (self.lineEdit.validator().top()-1):
-            self.lineEdit.setText("%d" % (self._oldIndex+2)) 
+            self.lineEdit.setText("%d" % (self._oldIndex+2))
             self._textChangedSlot()
 
     def _lastClicked(self):
@@ -285,7 +285,7 @@ class HorizontalSliderWithBrowser(qt.QAbstractSlider):
 
     def value(self):
         return self._slider.value()
-    
+
 def test1(args):
     app=qt.QApplication(args)
     w=HorizontalSliderWithBrowser()
@@ -307,9 +307,9 @@ def test2(args):
         w.setLimits(8, 20)
     w.show()
     app.exec_()
-    
+
 
 if __name__=="__main__":
     import sys
     test1(sys.argv)
-    
+

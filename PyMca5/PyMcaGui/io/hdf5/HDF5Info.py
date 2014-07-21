@@ -57,7 +57,7 @@ class SimpleInfoGroupBox(qt.QGroupBox):
         if title is not None:
             self.setTitle(title)
         if keys is None:
-           keys = [] 
+           keys = []
         self.keyList = keys
         self.keyDict = {}
         if len(self.keyList):
@@ -78,7 +78,7 @@ class SimpleInfoGroupBox(qt.QGroupBox):
     def setInfoDict(self, ddict):
         if not len(self.keyList):
             self.keyList = ddict.keys()
-            self._build()            
+            self._build()
         self._fillInfo(ddict)
 
     def _fillInfo(self, ddict0):
@@ -198,18 +198,18 @@ class MembersGroupBox(qt.QGroupBox):
                     continue
                 col = self._tableLabels.index(label)
                 info = ddict[key][label]
-                item = self.table.item(row, col)    
+                item = self.table.item(row, col)
                 if item is None:
                     item = qt.QTableWidgetItem(info, qt.QTableWidgetItem.Type)
                     item.setFlags(qt.Qt.ItemIsSelectable|
                                       qt.Qt.ItemIsEnabled)
                     self.table.setItem(row, col, item)
                 else:
-                    item.setText(info)                    
+                    item.setText(info)
             row += 1
         for i in range(self.table.columnCount()):
             self.table.resizeColumnToContents(i)
-        
+
 class HDF5GeneralInfoWidget(qt.QWidget):
     def __init__(self, parent=None, ddict=None):
         qt.QWidget.__init__(self, parent)
@@ -224,7 +224,7 @@ class HDF5GeneralInfoWidget(qt.QWidget):
         self.mainLayout.addWidget(VerticalSpacer(self))
         self.mainLayout.addWidget(self.dimensionWidget)
         self._notifyCloseEventToWidget = None
-        
+
         if ddict is not None:
             self.setInfoDict(ddict)
 
@@ -241,7 +241,7 @@ class HDF5GeneralInfoWidget(qt.QWidget):
         if 'members' in ddict:
             if len(ddict['members']):
                 #it is a datagroup
-                self.dimensionWidget.hide()  
+                self.dimensionWidget.hide()
         self.dimensionWidget.hide()
 
 
@@ -282,7 +282,7 @@ class HDF5AttributesInfoWidget(qt.QWidget):
             self.table.setRowCount(nrows)
             self.hide()
             return
-        self.table.setRowCount(nrows)        
+        self.table.setRowCount(nrows)
         keylist.sort()
         row = 0
         for key in keylist:
@@ -305,7 +305,7 @@ class HDF5AttributesInfoWidget(qt.QWidget):
         #for i in range(self.table.columnCount()):
         self.table.resizeColumnToContents(1)
         self.table.resizeColumnToContents(3)
-        
+
 class HDF5InfoWidget(qt.QTabWidget):
     def __init__(self, parent=None, info=None):
         qt.QTabWidget.__init__(self, parent)
@@ -317,7 +317,7 @@ class HDF5InfoWidget(qt.QTabWidget):
     def sizeHint(self):
         return qt.QSize(2 * qt.QTabWidget.sizeHint(self).width(),
                         qt.QTabWidget.sizeHint(self).height())
-                        
+
     def _build(self):
         self.generalInfoWidget = HDF5GeneralInfoWidget(self)
         self.attributesInfoWidget = HDF5AttributesInfoWidget(self)
@@ -415,7 +415,7 @@ def getInfo(hdf5File, node):
         if ddict['general']['Path'] == "/":
             ddict['general'][member]['Type'] = safe_str(hdf5File[node+"/"+member])
             continue
-        memberObject = hdf5File[node][member]            
+        memberObject = hdf5File[node][member]
         if hasattr(memberObject, 'shape'):
             ddict['general'][member]['Type'] = safe_str(hdf5File[node+"/"+member])
             dtype = memberObject.dtype
@@ -445,7 +445,7 @@ def getInfo(hdf5File, node):
                                                                              memberObject.value[-1])
                 elif len(shape) == 2:
                     ddict['general'][member]['Value'] = "%s, ..., %s" % (memberObject.value[0],
-                                                                         memberObject.value[-1])                                                                         
+                                                                         memberObject.value[-1])
                 else:
                     pass
         else:
@@ -478,7 +478,7 @@ def getInfo(hdf5File, node):
         ddict['attributes'][key]['Type']  = Type
         ddict['attributes'][key]['Size']  = Size
     return ddict
-        
+
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage:")

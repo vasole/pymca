@@ -31,8 +31,8 @@ from .HorizontalSpacer import HorizontalSpacer
 from .VerticalSpacer import VerticalSpacer
 
 COLORS_LIST = ['white', 'pink', 'red', 'brown', 'orange', 'yellow',
-               'green', 'blue', 'violet', 'black', 'auto']  
-               
+               'green', 'blue', 'violet', 'black', 'auto']
+
 COLORS = {}
 if 0:
     COLORS['blue']     = qt.QColor(0, 0, 0xFF, 0xFF)
@@ -101,7 +101,7 @@ class ColorFilter(qt.QGroupBox):
         self.setTitle('Color Filter')
         self.mainLayout = qt.QVBoxLayout(self)
         self.buttonGroup = qt.QButtonGroup(self)
-        self.__options = ['None', 'MinMax'] 
+        self.__options = ['None', 'MinMax']
         for j in range(len(self.__options)):
             text = self.__options[j]
             rButton = qt.QRadioButton(self)
@@ -114,12 +114,12 @@ class ColorFilter(qt.QGroupBox):
             self.buttonGroup.setId(rButton, j)
         self.mainLayout.addWidget(VerticalSpacer(self))
         self.buttonGroup.buttonPressed.connect(self._slot)
-        
+
     def _slot(self, button):
         button.setChecked(True)
         ddict = {}
         ddict['event']  = 'ColorFilterUpdated'
-        ddict['colorfilter'] = self.__options.index(button.text()) 
+        ddict['colorfilter'] = self.__options.index(button.text())
         self.sigColorFilterSignal.emit(ddict)
 
     def setParameters(self, ddict=None):
@@ -153,7 +153,7 @@ class ValueFilter(qt.QGroupBox):
         self.useCheckBox = qt.QCheckBox(self)
         self.minLineEdit = qt.QLineEdit(self)
         w = self.minLineEdit.fontMetrics().width("#####.####")
-        self.minLineEdit.setFixedWidth(w)        
+        self.minLineEdit.setFixedWidth(w)
         self.minLineEdit.setText("0.0")
         self.minLineEdit.validator  = qt.QDoubleValidator(self.minLineEdit)
         self.minLineEdit.setValidator(self.minLineEdit.validator)
@@ -280,5 +280,5 @@ if __name__ == "__main__":
         print(ddict)
     w = Isosurfaces()
     #w.sigColorFilterSignal.connect(mySlot)
-    w.show()    
+    w.show()
     app.exec_()

@@ -265,7 +265,7 @@ class StackSelector(object):
              args[0].upper().endswith("CCD.BZ2"):
             if imagestack is None:
                 imagestack = True
-            stack = QStack(imagestack=imagestack)            
+            stack = QStack(imagestack=imagestack)
         else:
             if HDF5:
                 if h5py.is_hdf5(args[0]):

@@ -43,7 +43,7 @@ if QTVERSION > '4.0.0':
     if QTVERSION > '4.2.0':
         class MyQTreeWidgetItem(qt.QTreeWidgetItem):
             def __lt__(self, other):
-                c = self.treeWidget().sortColumn() 
+                c = self.treeWidget().sortColumn()
                 if  c == 0:
                     return False
                 if c !=  2:
@@ -59,7 +59,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     sigReplaceSelection = qt.pyqtSignal(object)
     sigOtherSignals = qt.pyqtSignal(object)
     sigScanSelection = qt.pyqtSignal(object)
-    sigScanDoubleClicked = qt.pyqtSignal(object)    
+    sigScanDoubleClicked = qt.pyqtSignal(object)
     def __init__(self, parent=None, autoreplace=False):
         self.autoReplace = autoreplace
         if self.autoReplace:
@@ -70,7 +70,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         QSelectorWidget.QSelectorWidget.__init__(self, parent)
         self.dataInfoWidgetDict = {}
 
-    def _build(self):        
+    def _build(self):
         #self.layout= qt.QVBoxLayout(self)
         self.splitter = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Vertical)
@@ -86,7 +86,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.mainTab.setCurrentWidget(self.mcaTable)
 
         autoBox = qt.QWidget(self)
-        autoBoxLayout = qt.QGridLayout(autoBox) 
+        autoBoxLayout = qt.QGridLayout(autoBox)
         autoBoxLayout.setContentsMargins(0, 0, 0, 0)
         autoBoxLayout.setSpacing(0)
         self.autoOffBox = qt.QCheckBox(autoBox)
@@ -100,7 +100,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         autoBoxLayout.addWidget(self.autoOffBox, row, 0)
         autoBoxLayout.addWidget(self.autoAddBox, row, 1)
         autoBoxLayout.addWidget(self.autoReplaceBox, row, 2)
-            
+
         if self.autoReplace:
             self.autoAddBox.setChecked(False)
             self.autoReplaceBox.setChecked(True)
@@ -183,7 +183,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.disableMca    = 0 #(type=="scan")
         self.disableScan   = 0 #(type=="mca")
 
-        # --- context menu        
+        # --- context menu
         self.data= None
         self.scans= []
 
@@ -252,7 +252,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if hasattr(self, "meshBox"):
                 self.meshBox.setEnabled(True)
 
-    # 
+    #
     # Data management
     #
     #NEW data management
@@ -272,7 +272,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if item is not None:
                 item.setSelected(True)
                 self.__selectionChanged()
-    
+
     #OLD data management
     def setData(self, specfiledata):
         if DEBUG:
@@ -285,7 +285,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         self.list.clear()
         if self.data is None: return
         try:
-            if self.data.sourceName is None: return        
+            if self.data.sourceName is None: return
         except:
             if self.data.SourceName is None: return
         try:
@@ -337,12 +337,12 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
     # signal/slot handling
     #
     def _cntSignal(self, ddict):
-        if ddict["event"] == "updated":                
+        if ddict["event"] == "updated":
             itemlist = self.list.selectedItems()
             sel = [str(item.text(1)) for item in itemlist]
             self._autoReplace(sel)
 
-    
+
     def __selectionChanged(self):
         if DEBUG:
             print("__selectionChanged")
@@ -380,7 +380,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             # autoreplace
             autoReplaceCall = False
 
-        # Emit this signal for the case someone else uses it ...    
+        # Emit this signal for the case someone else uses it ...
         self.sigScanSelection.emit((sel))
         if (info['NbMca'] > 0) and (info['Lines'] > 0):
             pass
@@ -447,7 +447,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                 sel['imageselection'] = False
             else:
                 sel['selection']['selectiontype'] = "2D"
-                sel['imageselection'] = True                
+                sel['imageselection'] = True
             sel['scanselection'] = False
             sel['mcaselection']  = False
             sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
@@ -462,7 +462,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
 
     def __showScanInfo(self, idx = None):
         if idx is None:
-            if QTVERSION > '4.0.0': 
+            if QTVERSION > '4.0.0':
                 idx = self.menu_idx
         if DEBUG:
             print("Scan information:")
@@ -478,7 +478,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             if DEBUG:
                 raise
             return
-            
+
         dataInfoWidget= SpecFileDataInfo.SpecFileDataInfo(info)
         if "Header" in info:
             if info['Header'] is not None:
@@ -543,7 +543,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     if len(sel['selection']['x']) == 2:
                         if self.meshBox.isChecked():
                             sel['selection']['selectiontype'] = "2D"
-                    sel['selection']['y'] = cnt_sel['y'] 
+                    sel['selection']['y'] = cnt_sel['y']
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
@@ -605,13 +605,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     if len(sel['selection']['x']) == 2:
                         if self.meshBox.isChecked():
                             sel['selection']['selectiontype'] = "2D"
-                    sel['selection']['y'] = cnt_sel['y'] 
+                    sel['selection']['y'] = cnt_sel['y']
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
-                    sel_list.append(sel)            
-            
-        if len(sel_list): 
+                    sel_list.append(sel)
+
+        if len(sel_list):
             self.sigRemoveSelection.emit(sel_list)
 
     def _replaceClicked(self):
@@ -656,7 +656,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                     if len(sel['selection']['x']) == 2:
                         if self.meshBox.isChecked():
                             sel['selection']['selectiontype'] = "2D"
-                    sel['selection']['y'] = cnt_sel['y'] 
+                    sel['selection']['y'] = cnt_sel['y']
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel['legend']    = os.path.basename(sel['SourceName'][0]) +" "+ sel['Key']
@@ -668,7 +668,7 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
                             # but I let the data source to rise it.
                             pass
                     sel_list.append(sel)
-        if len(sel_list): 
+        if len(sel_list):
             self.sigReplaceSelection.emit(sel_list)
 
     def _tabChanged(self, value):
@@ -698,7 +698,7 @@ def test():
             print("      python QSpecFileWidget.py filename")
             a.quit()
             sys.exit(0)
-    w.setData(d) 
+    w.setData(d)
     w.show()
     def mySlot(selection):
         print(selection)

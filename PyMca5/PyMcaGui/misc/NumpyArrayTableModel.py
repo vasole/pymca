@@ -82,24 +82,24 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
                 return MyQVariant(self._format % self._array[row, col])
         return MyQVariant()
 
-        
+
     def _rowCount3DIndex0(self, parent=None):
         return self._array.shape[1]
 
     def _columnCount3DIndex0(self, parent=None):
-        return self._array.shape[2]            
+        return self._array.shape[2]
 
     def _rowCount3DIndex1(self, parent=None):
         return self._array.shape[0]
 
     def _columnCount3DIndex1(self, parent=None):
-        return self._array.shape[2]            
+        return self._array.shape[2]
 
     def _rowCount3DIndex2(self, parent=None):
         return self._array.shape[0]
 
     def _columnCount3DIndex2(self, parent=None):
-        return self._array.shape[1]            
+        return self._array.shape[1]
 
     def _data3DIndex0(self, index, role=qt.Qt.DisplayRole):
         if index.isValid():
@@ -141,7 +141,7 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
         self._array = data
         self.assignDataFunction(perspective)
         self._index = 0
-        
+
     def assignDataFunction(self, dimension):
         shape = self._array.shape
         if len(shape) == 2:

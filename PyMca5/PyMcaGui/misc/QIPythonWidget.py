@@ -1,7 +1,7 @@
 # Set the QT API to PyQt4
 import os
 import sys
-if "PySide" in sys.modules: 
+if "PySide" in sys.modules:
     PYSIDE = True
 else:
     PYSIDE = False
@@ -36,7 +36,7 @@ class QIPythonWidget(RichIPythonWidget):
         def stop():
             kernel_client.stop_channels()
             kernel_manager.shutdown_kernel()
-            guisupport.get_app_qt4().exit()            
+            guisupport.get_app_qt4().exit()
         self.exit_requested.connect(stop)
 
     def pushVariables(self,variableDict):
@@ -44,10 +44,10 @@ class QIPythonWidget(RichIPythonWidget):
         self.kernel_manager.kernel.shell.push(variableDict)
     def clearTerminal(self):
         """ Clears the terminal """
-        self._control.clear()    
+        self._control.clear()
     def printText(self,text):
         """ Prints some plain text to the console """
-        self._append_plain_text(text)        
+        self._append_plain_text(text)
     def executeCommand(self,command):
         """ Execute a command in the frame of the console widget """
         self._execute(command,False)
@@ -61,10 +61,10 @@ class ExampleWidget(QWidget):
         self.button = QPushButton('Another widget')
         ipyConsole = QIPythonWidget(customBanner="Welcome to the embedded ipython console\n")
         layout.addWidget(self.button)
-        layout.addWidget(ipyConsole)        
+        layout.addWidget(ipyConsole)
         # This allows the variable foo and method print_process_id to be accessed from the ipython console
         ipyConsole.pushVariables({"foo":43,"print_process_id":print_process_id})
-        ipyConsole.printText("The variable 'foo' and the method 'print_process_id()' are available. Use the 'whos' command for information.")                           
+        ipyConsole.printText("The variable 'foo' and the method 'print_process_id()' are available. Use the 'whos' command for information.")
 
 def print_process_id():
     print('Process ID is:', os.getpid())
@@ -73,7 +73,7 @@ def main():
     app  = QApplication([])
     widget = ExampleWidget()
     widget.show()
-    app.exec_()    
+    app.exec_()
 
 if __name__ == '__main__':
     main()

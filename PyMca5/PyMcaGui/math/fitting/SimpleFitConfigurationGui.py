@@ -108,7 +108,7 @@ class DefaultParametersWidget(qt.QWidget):
                              'fitresult':0.0,
                              'sigma':0.0,
                              'xmin':xmin,
-                             'xmax':xmax}               
+                             'xmax':xmax}
                 paramlist.append(paramdict)
         else:
             parameters = ddict['configuration']['estimation']['parameters']
@@ -116,10 +116,10 @@ class DefaultParametersWidget(qt.QWidget):
                 parameters = [parameters]
             paramlist = []
             for parameter in parameters:
-                paramdict = ddict['configuration']['estimation'][parameter]              
+                paramdict = ddict['configuration']['estimation'][parameter]
                 paramlist.append(paramdict)
         self.parametersWidget.fillTableFromFit(paramlist)
-            
+
     def getConfiguration(self):
         if self.simpleFitInstance is None:
             return  self._buffer
@@ -137,7 +137,7 @@ class DefaultParametersWidget(qt.QWidget):
                     ddict['configuration']['estimation'][name][key] = float(param[key])
                 else:
                     ddict['configuration']['estimation'][name][key] = param[key]
-        return ddict        
+        return ddict
 
     def configure(self, ddict=None):
         if ddict is None:
@@ -160,12 +160,12 @@ class SimpleFitConfigurationGui(qt.QDialog):
         self.fitFunctionWidgetStack = qt.QWidget(self)
         self.fitFunctionWidgetStack.mainLayout = qt.QStackedLayout(self.fitFunctionWidgetStack)
         self.fitFunctionWidgetStack.mainLayout.setContentsMargins(0, 0, 0, 0)
-        self.fitFunctionWidgetStack.mainLayout.setSpacing(0)            
+        self.fitFunctionWidgetStack.mainLayout.setSpacing(0)
         self.tabWidget.insertTab(1, self.fitFunctionWidgetStack, "FUNCTION")
         self.backgroundWidgetStack = qt.QWidget(self)
         self.backgroundWidgetStack.mainLayout = qt.QStackedLayout(self.backgroundWidgetStack)
         self.backgroundWidgetStack.mainLayout.setContentsMargins(0, 0, 0, 0)
-        self.backgroundWidgetStack.mainLayout.setSpacing(0)            
+        self.backgroundWidgetStack.mainLayout.setSpacing(0)
         self.tabWidget.insertTab(2, self.backgroundWidgetStack, "BACKGROUND")
         self.mainLayout.addWidget(self.tabWidget)
         self._stripDialog = None
@@ -201,7 +201,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
                 return
             pars = self._stripDialog.getParameters()
             self.fitControlWidget.setConfiguration(pars)
-            
+
         if event == "fitFunctionChanged":
             functionName = ddict['fit_function']
             if functionName in [None, "None", "NONE"]:
@@ -230,7 +230,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
                     fun['configuration'].update(configureMethod())
                     instance.configure(fun)
             self.fitFunctionWidgetStack.mainLayout.setCurrentWidget(instance)
-            
+
         if event == "backgroundFunctionChanged":
             functionName = ddict['background_function']
             if functionName in [None, "None", "NONE"]:
@@ -346,7 +346,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
                             continue
                         print("Cannot import file %s" % fileName)
                         print(sys.exc_info()[1])
-            
+
         if 'fit' in ddict:
             self.fitControlWidget.setConfiguration(ddict['fit'])
             fitFunction = ddict['fit']['fit_function']
@@ -366,7 +366,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
                     #if currentConfig['functions'][fname]['widget'] is not None:
                         widget.setConfiguration(ddict['functions'][fname])
                         self.fitFunctionWidgetStack.mainLayout.setCurrentWidget(widget)
-            
+
             #background function
             fname = ddict['fit']['background_function']
             widget = self._backgroundWidgets[fname]
@@ -389,7 +389,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
         if fname not in [None, "None", "NONE"]:
             ddict['functions'][fname]={}
             ddict['functions'][fname]['file'] = \
-                oldConfiguration['functions'][fname]['file']                
+                oldConfiguration['functions'][fname]['file']
             ddict['functions'][fname]['configuration'] =\
                 oldConfiguration['functions'][fname]['configuration']
             newConfig = widget.getConfiguration()
@@ -405,7 +405,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
         if fname not in [None, "None", "NONE"]:
             ddict['functions'][fname]={}
             ddict['functions'][fname]['file'] = \
-                oldConfiguration['functions'][fname]['file']                
+                oldConfiguration['functions'][fname]['file']
             ddict['functions'][fname]['configuration'] =\
                 oldConfiguration['functions'][fname]['configuration']
             newConfig = widget.getConfiguration()
@@ -414,7 +414,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
                                         newConfig['configuration'])
             else:
                 ddict['functions'][fname]['configuration'].update(newConfig)
-                    
+
         return ddict
 
     def __getConfiguration(self, name):
@@ -456,7 +456,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
             if len(filename):
                 self.loadConfiguration(filename)
                 self.initDir = os.path.dirname(filename)
-        
+
     def save(self):
         if self.initDir is None:
             self.initDir = PyMcaDirs.outputDir
@@ -514,11 +514,11 @@ class SimpleFitConfigurationGui(qt.QDialog):
             if DEBUG:
                 raise
             qt.QMessageBox.critical(self, "Load Parameters",
-                "ERROR while loading parameters from\n%s"%filename, 
+                "ERROR while loading parameters from\n%s"%filename,
                 qt.QMessageBox.Ok,
                 qt.QMessageBox.NoButton,
                 qt.QMessageBox.NoButton)
-        
+
     def saveConfiguration(self, filename):
         cfg = ConfigDict.ConfigDict(self.getConfiguration())
         if DEBUG:
@@ -529,10 +529,10 @@ class SimpleFitConfigurationGui(qt.QDialog):
                 cfg.write(filename)
                 self.initDir = os.path.dirname(filename)
             except:
-                qt.QMessageBox.critical(self, "Save Parameters", 
+                qt.QMessageBox.critical(self, "Save Parameters",
                     "ERROR while saving parameters to\n%s"%filename,
                     qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
-        
+
 
 def test():
     app = qt.QApplication(sys.argv)

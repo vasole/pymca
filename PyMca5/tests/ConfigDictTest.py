@@ -64,7 +64,7 @@ class testConfigDict(unittest.TestCase):
         # create a dictionnary
         from PyMca5.PyMcaIO import ConfigDict
         testDict = {}
-        testDict['simple_types'] = {} 
+        testDict['simple_types'] = {}
         testDict['simple_types']['float'] = 1.0
         testDict['simple_types']['int'] = 1
         testDict['simple_types']['string'] = "Hello World"
@@ -88,7 +88,7 @@ class testConfigDict(unittest.TestCase):
         readInstance.read(self._tmpFileName)
 
         # get read key list
-        testDictKeys = list(testDict.keys()) 
+        testDictKeys = list(testDict.keys())
         readKeys = list(readInstance.keys())
         self.assertTrue(len(readKeys) == len(testDictKeys),
                     "Number of read keys not equal to number of written keys")

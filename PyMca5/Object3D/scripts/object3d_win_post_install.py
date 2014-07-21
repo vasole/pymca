@@ -52,7 +52,7 @@ def install():
 
     # This shows it
     python_console = prefix + r'\python.exe'
-    
+
     # Lookup path to common startmenu ...
     ip_dir = get_special_folder_path('CSIDL_COMMON_PROGRAMS') + r'\Object3D'
     lib_dir = prefix+'\Lib\site-packages\Object3D'

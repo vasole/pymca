@@ -134,7 +134,7 @@ def lanczosPCA2(stack, ncomponents=10, binning=None, **kw):
         data = stack.data
     else:
         data = stack
-        
+
     # check we have received a numpy.ndarray and not an HDF5 group
     # or other type of dynamically loaded data
     if not isinstance(data, numpy.ndarray):

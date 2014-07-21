@@ -64,7 +64,7 @@ LOW_HEIGHT_THRESHOLD = 660
 
 
 class McaCalWidget(qt.QDialog):
-    def __init__(self, parent=None, name="MCA Calibration Widget", 
+    def __init__(self, parent=None, name="MCA Calibration Widget",
                 x = None,y=None,current=None,peaks=None,caldict=None,
                 specfit=None,legend="", xrd=False, lambda_="-", modal=0,fl=0):
                 #fl=qt.Qt.WDestructiveClose):
@@ -100,15 +100,15 @@ class McaCalWidget(qt.QDialog):
         self.caldict = caldict
         if legend not in self.caldict.keys():
             self.caldict[legend] = {}
-            self.caldict[legend]['order'] = 1  
-            self.caldict[legend]['A'] = 0.0  
-            self.caldict[legend]['B'] = 1.0  
+            self.caldict[legend]['order'] = 1
+            self.caldict[legend]['A'] = 0.0
+            self.caldict[legend]['B'] = 1.0
             self.caldict[legend]['C'] = 0.0
         if not ('order' in self.caldict[legend]):
                 if abs(self.caldict[legend]['C']) > 0.0:
                     self.caldict[legend]['order'] = 2
                 else:
-                    self.caldict[legend]['order'] = 1   
+                    self.caldict[legend]['order'] = 1
         self.callist           = self.caldict.keys()
         if specfit is None:
             self.specfit = Specfit.Specfit()
@@ -124,8 +124,8 @@ class McaCalWidget(qt.QDialog):
         self.linewidgets=[]
         self._toggleLogY()
         self.__peakmarkermode()
-       
-        
+
+
     def build(self):
         self.layout = qt.QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -176,7 +176,7 @@ class McaCalWidget(qt.QDialog):
             self.peakTable.setLeftMargin(0)
         self.container.layout.addWidget(self.graph)
         self.container.layout.addWidget(self.bottomPanel)
-            
+
         #self.peakTable.setRowReadOnly(0,1)
 
 
@@ -210,11 +210,11 @@ class McaCalWidget(qt.QDialog):
         # Search
         self._addToolButton(self.searchIcon,
                             self.peakSearch,
-                            'Clear Peak Table and Search Peaks') 
+                            'Clear Peak Table and Search Peaks')
         # Clear peaks
         self._addToolButton(self.peakResetIcon,
                             self.clearPeaks,
-                            'Clear Peak Table') 
+                            'Clear Peak Table')
         # Manual Search
         self.__msb = self._addToolButton(self.peakIcon,
                             self.manualsearch,
@@ -278,7 +278,7 @@ class McaCalWidget(qt.QDialog):
 
     def _addToolButton(self, icon, action, tip, toggle=None):
             toolbar = self.toolbar
-            tb      = qt.QToolButton(toolbar)            
+            tb      = qt.QToolButton(toolbar)
             tb.setIcon(icon)
             tb.setToolTip(tip)
             if toggle is not None:
@@ -295,7 +295,7 @@ class McaCalWidget(qt.QDialog):
             self.graph.setYAxisLogarithmic(False)
         else:
             self.graph.setYAxisLogarithmic(True)
-        
+
     def connections(self):
         self.peakParameters.searchButton.clicked.connect(self.peakSearch)
         self.graph.sigPlotSignal.connect(self.__graphsignal)
@@ -304,7 +304,7 @@ class McaCalWidget(qt.QDialog):
                      self.__calparsignal)
         self.okButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
-    
+
     def plot(self,x,y,legend):
         #clear graph
         self.graph.clearCurves()
@@ -314,7 +314,7 @@ class McaCalWidget(qt.QDialog):
         self.dict['legend'] = legend
         #reset the zoom
         self.graph.resetZoom()
-        
+
     def peakSearch(self):
         if DEBUG:
             print("Peak search called")
@@ -354,7 +354,7 @@ class McaCalWidget(qt.QDialog):
         self.peakTable.setRowCount(0)
         i = 0
         for idx in peaksidx:
-            self.foundPeaks.append(self.specfit.xdata[int(idx)])            
+            self.foundPeaks.append(self.specfit.xdata[int(idx)])
             #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
             self.graph.insertXMarker(self.specfit.xdata[int(idx)],
                                      legend="%d" % i,
@@ -389,18 +389,18 @@ class McaCalWidget(qt.QDialog):
         for widget in self.linewidgets:
             widget.close(1)
         self.linewidgets=[]
-        
+
     def __peakmarkermode(self):
         self.__manualsearch = 0
         if self.markermode:
-            self.graph.setCursor(qt.QCursor(qt.Qt.CrossCursor))                
+            self.graph.setCursor(qt.QCursor(qt.Qt.CrossCursor))
             self.markermode = 0
             self.graph.setZoomModeEnabled(False)
         else:
             self.markermode = 1
             self.nomarkercursor = self.graph.cursor().shape()
             self.graph.setCursor(qt.QCursor(qt.Qt.PointingHandCursor))
-            self.graph.setZoomModeEnabled(True)        
+            self.graph.setZoomModeEnabled(True)
         #self.markerButton.setOn(self.markermode == 1)
 
     def __calparsignal(self,dict):
@@ -418,7 +418,7 @@ class McaCalWidget(qt.QDialog):
                 channel = peakdict[peak]['channel']
                 calenergy  = self.caldict[current]['A'] + \
                                  self.caldict[current]['B'] * channel +\
-                                 self.caldict[current]['C'] * channel * channel  
+                                 self.caldict[current]['C'] * channel * channel
                 self.peakTable.configure(name=peak,use=0,
                                          calenergy=calenergy)
         elif dict['event'] == 'order':
@@ -464,13 +464,13 @@ class McaCalWidget(qt.QDialog):
                 self.caldict[current]['C']     = dict['caldict'][current]['C']
                 if self.caldict[current]['order'] == 'TOF':
                     self.caldict[current]['vfix'] = dict['caldict'][current]['vfix']
-                    
+
             self.__peakTableSignal({'event':'use'})
-                    
+
         elif dict['event'] == 'savebox':
             current = dict['calname' ]
             if current not in self.caldict.keys():
-                self.caldict[current] = {}    
+                self.caldict[current] = {}
             self.current  = current
             self.caldict[current]['order'] = dict['caldict'][current]['order']
             self.caldict[current]['A']     = dict['caldict'][current]['A']
@@ -569,7 +569,7 @@ class McaCalWidget(qt.QDialog):
                                          color='black')
                 self.graph.replot()
             del linewidget
-        elif ddict['event'] in ["mouseMoved", 'MouseAt']:            
+        elif ddict['event'] in ["mouseMoved", 'MouseAt']:
             self.xpos.setText('%.1f' % ddict['x'])
             self.ypos.setText('%.1f' % ddict['y'])
             current = self.current
@@ -717,7 +717,7 @@ class McaCalWidget(qt.QDialog):
             A = calibration[0]
             B = calibration[1]
             C = calibration[2]
-            
+
         return C + A / ((x - B) * (x - B))
 
     def calculateTOF(self, usedpeaks):
@@ -765,7 +765,7 @@ class McaCalWidget(qt.QDialog):
                 codes = numpy.zeros((3,3), numpy.float)
                 if fixed:
                     codes[0,2] = Gefit.CFIXED
-                fittedpar, chisq, sigmapar = Gefit.LeastSquaresFit(self.functionTOF, 
+                fittedpar, chisq, sigmapar = Gefit.LeastSquaresFit(self.functionTOF,
                                                parameters,
                                                xdata=x, ydata=y,
                                                constrains=codes,
@@ -797,7 +797,7 @@ class McaCalWidget(qt.QDialog):
             return A * pow((x-B), -3)
         if index == 2:
             return numpy.ones(x.shape, numpy.float)
-            
+
 
     def calculate(self, usedpeaks, order=1):
         """
@@ -816,13 +816,13 @@ class McaCalWidget(qt.QDialog):
                         self.caldict[current]['B'],
                         self.caldict[current]['C']]
         if (order > 1) and (len(usedpeaks) == 2):
-            usedpeaks.append([0.0,0.0])            
+            usedpeaks.append([0.0,0.0])
         usedarray = numpy.array(usedpeaks).astype(numpy.float)
         energy = usedarray[:,1]
         channel= usedarray[:,0]
-        
+
         if order < 2:
-            X = numpy.array([numpy.ones(len(channel)), channel])        
+            X = numpy.array([numpy.ones(len(channel)), channel])
         else:
             X= numpy.array([numpy.ones(len(channel)), channel, channel*channel])
         TX = numpy.transpose(X)
@@ -850,17 +850,17 @@ class PeakSearchParameters(qt.QWidget):
     def __init__(self, parent=None, name="", specfit=None, config=None,
                 searchbutton=1, fl=0):
         if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self, parent, name, fl)    
+            qt.QWidget.__init__(self, parent, name, fl)
             self.setCaption(name)
         else:
-            qt.QWidget.__init__(self, parent)    
+            qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
-            
+
         if specfit is None:
             self.specfit = Specfit.Specfit()
         else:
             specfit      = specfit
-        if config is None: 
+        if config is None:
             config=self.specfit.fitconfig
         if "AutoYscaling" in config:
             autoscaling = config["AutoYscaling"]
@@ -875,7 +875,7 @@ class PeakSearchParameters(qt.QWidget):
                      }
         self.build()
         self.setParameters(parameters)
-        
+
     def build(self):
         if 1:
             if QTVERSION < '4.0.0':
@@ -900,7 +900,7 @@ class PeakSearchParameters(qt.QWidget):
 
             # --- parameters
                 parf= qt.QGroupBox(self)
-                parf.layout = qt.QVBoxLayout(parf)                
+                parf.layout = qt.QVBoxLayout(parf)
                 parf.setTitle('Search Parameters')
                 parf.setAlignment(qt.Qt.AlignHCenter)
                 parw= qt.QWidget(parf)
@@ -936,7 +936,7 @@ class PeakSearchParameters(qt.QWidget):
         self.yscalingAuto.toggled[bool].connect(self.__yscalingToggled)
         grid.addWidget(self.yscalingAuto, 2, 2, qt.Qt.AlignLeft)
         if self.searchButtonFlag:
-            self.searchButton = qt.QPushButton(parw)   
+            self.searchButton = qt.QPushButton(parw)
             self.searchButton.setText('Search')
             grid.addWidget(self.searchButton, 3, 1)
             self.searchButton.setAutoDefault(0)
@@ -985,10 +985,10 @@ class PeakSearchParameters(qt.QWidget):
 
 class CalibrationParameters(qt.QWidget):
     sigCalibrationParametersSignal = qt.pyqtSignal(object)
-    def __init__(self, parent=None, name="", calname="", 
+    def __init__(self, parent=None, name="", calname="",
                  caldict = {},fl=0, xrd=False):
         if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self, parent, name, fl)    
+            qt.QWidget.__init__(self, parent, name, fl)
             self.setCaption(name)
         else:
             qt.QWidget.__init__(self, parent)
@@ -997,20 +997,20 @@ class CalibrationParameters(qt.QWidget):
         if calname not in self.caldict.keys():
             self.caldict[calname] = {}
             self.caldict[calname]['order'] = 1
-            self.caldict[calname]['A'] = 0.0   
-            self.caldict[calname]['B'] = 1.0   
+            self.caldict[calname]['A'] = 0.0
+            self.caldict[calname]['B'] = 1.0
             self.caldict[calname]['C'] = 0.0
         self.currentcal = calname
         self.build()
         self.setParameters(self.caldict[calname])
         self.connections()
-        
+
     def build(self):
         layout= qt.QHBoxLayout(self)
         if qt.QDesktopWidget().height() < LOW_HEIGHT_THRESHOLD:
             layout.setContentsMargins(0, 0, 0, 0)
         parw = self
-        
+
         lab= qt.QLabel("Order:", parw)
 
         if QTVERSION <  '4.0.0':
@@ -1044,7 +1044,7 @@ class CalibrationParameters(qt.QWidget):
             layout.addWidget(self.CFixed)
             self.CFixed.hide()
         layout.addWidget(self.CText)
-    
+
         if 0:
             self.savebut= qt.QPushButton(parw)
             self.savebut.setText("Add as")
@@ -1057,16 +1057,16 @@ class CalibrationParameters(qt.QWidget):
 
         self.savebox.setEditable(1)
         self.savebox.setDuplicatesEnabled(0)
-    
+
     def connections(self):
         self.AText.editingFinished[()].connect(self._Aslot)
         self.BText.editingFinished[()].connect(self._Bslot)
         self.CText.editingFinished[()].connect(self._Cslot)
         self.CFixed.clicked[()].connect(self._CFixSlot)
-            
+
         self.orderbox.activated[str].connect(self.__orderbox)
         self.savebox.activated[str].connect(self.__savebox)
-        
+
     def setParameters(self, pars):
         self.AText.setText("%.4g" % pars["A"])
         self.BText.setText("%.4g" % pars["B"])
@@ -1085,23 +1085,23 @@ class CalibrationParameters(qt.QWidget):
         self.caldict[self.currentcal]["C"] = pars["C"]
         self.caldict[self.currentcal]["order"] = pars["order"]
 
-    
+
     def getcurrentdict(self):
         return self.caldict[self.currentcal]
-    
+
     def getcurrentcal(self):
         return self.current
-    
+
     def getdict(self):
         print("DEPRECATED. Use getDict")
         return self.getDict()
-      
+
     def getDict(self):
         return self.caldict
 
     def _CFixSlot(self):
         self.__orderbox(QString('TOF'))
-    
+
     def __orderbox(self,qstring):
         qstring = str(qstring)
         if qstring == "1st":
@@ -1163,7 +1163,7 @@ class CalibrationParameters(qt.QWidget):
             else:
                 msg.exec_()
             self.AText.setFocus()
-        
+
     def _Bslot(self):
         qstring = self.BText.text()
         try:
@@ -1207,12 +1207,12 @@ class CalibrationParameters(qt.QWidget):
                 ddict['event']         = "order"
                 ddict['calname']       = self.currentcal
                 ddict['caldict']       = self.caldict
-                    
+
             if (kw['event'] == 'coeff'):
                 ddict={}
                 ddict['event']         = "coeff"
                 ddict['calname' ]      = self.currentcal
-                ddict['caldict']       = self.caldict          
+                ddict['caldict']       = self.caldict
             if (kw['event'] == 'savebox'):
                 ddict={}
                 ddict['event']         = "savebox"
@@ -1234,13 +1234,13 @@ class MyQLineEdit(qt.QLineEdit):
             role = self.backgroundRole()
             palette.setColor(role,color)
             self.setPalette(palette)
-            
+
     def focusInEvent(self,event):
         if QTVERSION < '4.0.0':
             self.backgroundcolor = self.paletteBackgroundColor()
         self.setPaletteBackgroundColor(qt.QColor('yellow'))
         qt.QLineEdit.focusInEvent(self, event)
-    
+
     def focusOutEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('white'))
         qt.QLineEdit.focusOutEvent(self, event)
@@ -1338,7 +1338,7 @@ class InputLine(qt.QDialog):
         else:
             calenergy = ""
         self.table.newpeakline(peakname, 1)
-        self.peakname = peakname 
+        self.peakname = peakname
         self.table.configure(name=peakname,
                              number=number,
                              channel=channel,
@@ -1372,7 +1372,7 @@ class McaCalCopy(qt.QDialog):
         layout0 = qt.QVBoxLayout(self)
         layout0.setContentsMargins(0, 0, 0, 0)
         layout0.setSpacing(0)
-        
+
         currentcal = legend
         if sourcecal is None:
             sourcecal  = [0.0,1.0,0.0]
@@ -1383,7 +1383,7 @@ class McaCalCopy(qt.QDialog):
         if currentcal in caldict.keys():
             currentval = [caldict[currentcal]['A'],
                                   caldict[currentcal]['B'],
-                                  caldict[currentcal]['C']] 
+                                  caldict[currentcal]['C']]
         else:
             currentval = [0.0,1.0,0.0]
 
@@ -1397,7 +1397,7 @@ class McaCalCopy(qt.QDialog):
             sgrouplayout.setSpacing(0)
         sgroup.setTitle('Calibration from Source (Read Only)')
         sgroup.setAlignment(qt.Qt.AlignHCenter)
-        layout0.addWidget(sgroup)    
+        layout0.addWidget(sgroup)
         w      = qt.QWidget(sgroup)
         wlayout= qt.QVBoxLayout(w)
         wlayout.setContentsMargins(0, 0, 0, 0)
@@ -1406,7 +1406,7 @@ class McaCalCopy(qt.QDialog):
             pass
         else:
             sgroup.layout().addWidget(w)
-        
+
         """
         l           = qt.QHBox(w)
         qt.HorizontalSpacer(l)
@@ -1416,7 +1416,7 @@ class McaCalCopy(qt.QDialog):
         f.setBold(1)
         sourcelabel.setText('Calibration from Source')
         """
-        
+
         lines  = qt.QWidget(w)
         lineslayout = qt.QHBoxLayout(lines)
         lineslayout.setContentsMargins(0, 0, 0, 0)
@@ -1425,11 +1425,11 @@ class McaCalCopy(qt.QDialog):
         asl=qt.QLabel(lines)
         asl.setText('A:')
         asl.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
-        
+
         as_=qt.QLineEdit(lines)
         as_.setReadOnly(1)
         as_.setText("%.4g" % sourcecal[0])
-        
+
 
         bsl=qt.QLabel(lines)
         bsl.setText('B:')
@@ -1527,12 +1527,12 @@ class McaCalCopy(qt.QDialog):
             layout2=qt.QHBoxLayout(wid)
             layout2.setContentsMargins(0, 0, 0, 0)
             layout2.setSpacing(3)
-            
+
             copybut = qt.QPushButton(wid)
             copybut.setText('Copy From')
             copybut.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,qt.QSizePolicy.Fixed))
             copybut.clicked[()].connect(self.__copybuttonclicked)
-            
+
             self.combo = SimpleComboBox(wid,options=caldict.keys())
             self.combo.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,qt.QSizePolicy.Fixed))
             layout2.addWidget(copybut)
@@ -1547,12 +1547,12 @@ class McaCalCopy(qt.QDialog):
 
         layout0.addWidget(bottom)
         bottomlayout.addWidget(qt.HorizontalSpacer(bottom))
-        
+
         okbutton       = qt.QPushButton(bottom)
         okbutton.setText('OK')
         bottomlayout.addWidget(okbutton)
 
-        
+
         cancelbutton   = qt.QPushButton(bottom)
         cancelbutton.setText('Cancel')
         bottomlayout.addWidget(cancelbutton)
@@ -1560,7 +1560,7 @@ class McaCalCopy(qt.QDialog):
         okbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         cancelbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         bottomlayout.addWidget(qt.HorizontalSpacer(bottom))
-        
+
         cancelbutton.clicked[()].connect(self.reject)
         okbutton.clicked[()].connect(self.accept)
 
@@ -1576,7 +1576,7 @@ class McaCalCopy(qt.QDialog):
             msg.setText("Invalid Float")
             msg.exec_()
             self.AText.setFocus()
-        
+
     def _Bslot(self):
         qstring = self.BText.text()
         try:
@@ -1598,13 +1598,13 @@ class McaCalCopy(qt.QDialog):
             msg.setText("Invalid Float")
             msg.exec_()
             self.CText.setFocus()
-        
+
     def __copybuttonclicked(self):
         item, text = self.combo.getCurrent()
         self.AText.setText("%.7g" % self.caldict[text]['A'])
         self.BText.setText("%.7g" % self.caldict[text]['B'])
         self.CText.setText("%.7g" % self.caldict[text]['C'])
-            
+
     def getdict(self):
         print("DEPRECATED. Use getDict")
         return self.getDict()
@@ -1619,14 +1619,14 @@ class McaCalCopy(qt.QDialog):
             ddict[self.currentcal]['order'] = 2
         else:
             ddict[self.currentcal]['order'] = 1
-        self.caldict.update(ddict)        
+        self.caldict.update(ddict)
         return copy.deepcopy(self.caldict)
-    
-                                 
+
+
 class SimpleComboBox(qt.QComboBox):
     def __init__(self,parent = None,name = None,fl = 0,options=['1','2','3']):
         qt.QComboBox.__init__(self,parent)
-        self.setOptions(options) 
+        self.setOptions(options)
 
     def setOptions(self,options=['1','2','3']):
         self.clear()
@@ -1635,7 +1635,7 @@ class SimpleComboBox(qt.QComboBox):
 
     def getCurrent(self):
         return   self.currentIndex(),str(self.currentText())
-             
+
 def test(x,y,legend):
     app = qt.QApplication(args)
     demo = McaCalWidget(x=x,y=y,modal=1,legend=legend)

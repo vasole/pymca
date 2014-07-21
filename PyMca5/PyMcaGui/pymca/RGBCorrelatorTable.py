@@ -66,7 +66,7 @@ class RGBCorrelatorTable(qt.QTableWidget):
         self.resizeColumnToContents(1)
         self.resizeColumnToContents(2)
         self.resizeColumnToContents(3)
-        
+
     def _addLine(self, i, cntlabel):
         #the counter name
         item = self.item(i, 0)
@@ -154,7 +154,7 @@ class RGBCorrelatorTable(qt.QTableWidget):
             else:
                 if widget.isChecked():
                     widget.setChecked(False)
-        self._emitSignal()        
+        self._emitSignal()
 
     def getElementSelection(self):
         ddict = {}
@@ -215,7 +215,7 @@ class RGBCorrelatorTable(qt.QTableWidget):
                 if counter in self.elementList:
                     self.bSelection.append(self.elementList.index(counter))
         self._update()
-        
+
 
 class CheckBoxItem(qt.QCheckBox):
     sigCheckBoxItemSignal = qt.pyqtSignal(object)
@@ -247,4 +247,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+

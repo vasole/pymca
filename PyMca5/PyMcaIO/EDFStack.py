@@ -46,7 +46,7 @@ try:
     HDF5 = True
 except:
     pass
-        
+
 
 SOURCE_TYPE = "EdfFileStack"
 DEBUG = 0
@@ -176,7 +176,7 @@ class EDFStack(DataObject.DataObject):
                             self.incrProgressBar=0
                             for tempEdfFileName in filelist:
                                 tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
-                                pieceOfStack=tempEdf.GetData(0)    
+                                pieceOfStack=tempEdf.GetData(0)
                                 self.data[self.incrProgressBar] = pieceOfStack
                                 self.incrProgressBar += 1
                                 self.onProgress(self.incrProgressBar)
@@ -189,7 +189,7 @@ class EDFStack(DataObject.DataObject):
                             self.incrProgressBar=0
                             for tempEdfFileName in filelist:
                                 tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
-                                pieceOfStack=tempEdf.GetData(0)    
+                                pieceOfStack=tempEdf.GetData(0)
                                 self.data[:,:, self.incrProgressBar] = pieceOfStack
                                 self.incrProgressBar += 1
                                 self.onProgress(self.incrProgressBar)
@@ -400,14 +400,14 @@ class EDFStack(DataObject.DataObject):
                                     hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
                                                   (self.nbFiles,
                                                    arrRet.shape[0],
-                                                   arrRet.shape[1]))               
-                                else:    
+                                                   arrRet.shape[1]))
+                                else:
                                     raise MemoryError("Memory Error")
                     self.incrProgressBar=0
                     if fileindex == 1:
                         for tempEdfFileName in filelist:
                             tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
-                            pieceOfStack=tempEdf.GetData(0)    
+                            pieceOfStack=tempEdf.GetData(0)
                             self.data[:,self.incrProgressBar,:] = pieceOfStack[:,:]
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
@@ -444,7 +444,7 @@ class EDFStack(DataObject.DataObject):
                                     print(" DIM 0 error Assuming missing data were at the end!!!")
                                 self.data[self.incrProgressBar,\
                                          :pieceOfStack.shape[0],\
-                                         :pieceOfStack.shape[1]] = pieceOfStack[:,:]                                
+                                         :pieceOfStack.shape[1]] = pieceOfStack[:,:]
                             self.incrProgressBar += 1
                             self.onProgress(self.incrProgressBar)
                     self.onEnd()
@@ -479,7 +479,7 @@ class EDFStack(DataObject.DataObject):
             self.info["SourceName"] = self.sourceName
             self.info["NumberOfFiles"] = self.__nFiles * 1
             self.info["Size"] = self.__nFiles * self.__nImagesPerFile
-            
+
 
     def onBegin(self, n):
         pass
@@ -578,12 +578,12 @@ class EDFStack(DataObject.DataObject):
 
     def isIndexedStack(self):
         return self.__indexedStack
-    
+
     def getZSelectionArray(self,z=0):
         return (self.data[:,:,z]).astype(numpy.float)
-        
+
     def getXYSelectionArray(self,coord=(0,0)):
-        x,y=coord    
+        x,y=coord
         return (self.data[y,x,:]).astype(numpy.float)
 
 if __name__ == "__main__":

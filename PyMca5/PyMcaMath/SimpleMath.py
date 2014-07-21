@@ -44,7 +44,7 @@ class SimpleMath(object):
             y=numpy.take(y,i1)
         i1 = numpy.argsort(x)
         x=numpy.take(x,i1)
-        y=numpy.take(y,i1)  
+        y=numpy.take(y,i1)
         deltax=x[1:] - x[:-1]
         i1=numpy.nonzero(abs(deltax)>0.0000001)[0]
         x=numpy.take(x, i1)
@@ -85,7 +85,7 @@ class SimpleMath(object):
             if DEBUG:
                 print('specAverage -- invalid input!')
                 print('Array lengths do not match or are 0')
-            return None, None 
+            return None, None
 
         same = True
         if x == None:
@@ -140,7 +140,7 @@ class SimpleMath(object):
                 return numpy.array([]), numpy.array([])
 
         # Clip xRange to maximal overlap in spectra
-        mask = numpy.nonzero((x0 >= xmin0) & 
+        mask = numpy.nonzero((x0 >= xmin0) &
                              (x0 <= xmax0))[0]
         xnew = numpy.take(x0, mask)
         ynew = numpy.zeros(len(xnew))
@@ -148,7 +148,7 @@ class SimpleMath(object):
         # Perform average
         for (x, y) in zip(xsort, ysort):
             if same:
-                ynew += y  
+                ynew += y
             else:
                 yinter = numpy.interp(xnew, x, y)
                 ynew   += numpy.asarray(yinter)
@@ -176,7 +176,7 @@ class SimpleMath(object):
             result[0]=0.5*(result[0]+result[1])
             result[-1]=0.5*(result[-1]+result[-2])
         return result
-        
+
 if __name__ == "__main__":
     x = numpy.arange(100.)*0.25
     y = x*x + 2 * x

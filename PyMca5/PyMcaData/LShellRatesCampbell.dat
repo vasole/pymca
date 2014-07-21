@@ -1,13 +1,13 @@
 
 #S 1 L1 Subshell X-ray emission rates.
 #U0 File: AP0L1R.DAT received by courtesy of J.L. Campbell
-#U1 
+#U1
 #U2 X-ray emission rates for determining relative x-ray line intensities.
-#U3 
+#U3
 #U4 Reference: J.L.Campbell and J.X.Wang. Interpolated Dirac-Fock values of L
 #U5 subshell X-ray emission rates including overlap and exchange effects. At.Data
 #U6 Nucl.Data Tables 43 (1989) 281-291.
-#U7 
+#U7
 #N 10
 #L Z   L1L3      L1M2      L1M3      L1N2      L1N3      L1O23     L1P23     L1M45     L1N45
 1   0         0         0         0         0         0         0         0         0
@@ -122,14 +122,14 @@
 
 #S 2 L2 Subshell X-ray emission rates.
 #U0 File: AP0L2R.DAT received by courtesy of J.L. Campbell
-#U1 
+#U1
 #U2 X-ray emission rates for determining relative x-ray line intensities.
-#U3 
+#U3
 #U4 Reference: J.L.Campbell and J.X.Wang. Interpolated Dirac-Fock values of L
 #U5 subshell X-ray emission rates including overlap and exchange effects. At.Data
 #U6 Nucl.Data Tables 43 (1989) 281-291.
 #U7
-#N 8 
+#N 8
 #L Z   L2M1      L2M4      L2N1      L2N4      L2O1      L2O4      L2P1
 1  0         0         0         0         0         0         0
 2  0         0         0         0         0         0         0
@@ -243,13 +243,13 @@
 
 #S 3 L3 Subshell X-ray emission rates.
 #U0 File: AP0L3R.DAT received by courtesy of J.L. Campbell
-#U1 
+#U1
 #U2 X-ray emission rates for determining relative x-ray line intensities.
-#U3 
+#U3
 #U4 Reference: J.L.Campbell and J.X.Wang. Interpolated Dirac-Fock values of L
 #U5 subshell X-ray emission rates including overlap and exchange effects. At.Data
 #U6 Nucl.Data Tables 43 (1989) 281-291.
-#U7 
+#U7
 #N 10
 #L Z   L3M1      L3M4      L3M5      L3N1      L3N4      L3N5      L3O1      L3O45     L3P1
 1   0         0         0         0         0         0         0         0         0

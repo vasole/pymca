@@ -22,7 +22,7 @@
  *   Project:       SpecFile library
  *
  *   Description:   Functions to handle lists
- * 
+ *
  *   Author:        V.Rey
  *
  *   Date:          $Date: 2003/03/06 17:00:42 $
@@ -38,7 +38,7 @@
  *   Log:
  * Revision 2.1  2000/07/31  19:03:25  19:03:25  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 2.0  2000/04/13  13:28:54  13:28:54  rey (Vicente Rey-Bakaikoa)
  * New version of the library. Complete rewrite
  * Adds support for MCA
@@ -64,9 +64,9 @@ static long  linkToList     ( ListHeader *list, void *object );
  *   Description:	Looks for an list element.
  *
  *   Parameters:
- *		Input :	(1) ListHeader pointer   
+ *		Input :	(1) ListHeader pointer
  *			(2) Comp. procedure
- *			(3) value 
+ *			(3) value
  *   Returns:
  *		Pointer to the found element ,
  *		NULL if not found .
@@ -76,7 +76,7 @@ ObjectList *
 findInList( ListHeader *list, int (*proc)(void * , void *), void *value )
 {
      register ObjectList	*ptr;
-     
+
      for ( ptr=list->first ; ptr ; ptr=ptr->next ) {
           if ( (*proc)(ptr->contents, value) ) {
 	       return( ptr );
@@ -92,13 +92,13 @@ findInList( ListHeader *list, int (*proc)(void * , void *), void *value )
  *   Description:	Adds an element to the list.
  *
  *   Parameters:
- *		Input :	(1) List pointer   
+ *		Input :	(1) List pointer
  *			(2) Pointer to the new element
  *			(3) Size of the new element
- *   Returns:		
+ *   Returns:
  *		(  0 ) => OK
  *	        ( -1 ) => error
- *	
+ *
  *********************************************************************/
 long
 addToList( ListHeader *list, void *object, long size )
@@ -107,9 +107,9 @@ addToList( ListHeader *list, void *object, long size )
 
      if ( (newobj = (void *)malloc(size)) == (void *)NULL ) return( -1 );
      memcpy(newobj, object, size);
-     
+
      return( linkToList( list, newobj ) );
-       
+
 }
 
 
@@ -119,9 +119,9 @@ addToList( ListHeader *list, void *object, long size )
  *   Description:	Adds an element to the list.
  *
  *   Parameters:
- *		Input:	(1) ListHeader pointer   
+ *		Input:	(1) ListHeader pointer
  *			(2) pointer to the new element
- *   Returns:		
+ *   Returns:
  *		(  0 ) => OK
  *	        ( -1 ) => error
  *
@@ -132,9 +132,9 @@ linkToList( ListHeader *list, void *object )
      ObjectList	*newobj;
 
 
-     if ((newobj = (ObjectList *) malloc(sizeof(ObjectList))) == 
+     if ((newobj = (ObjectList *) malloc(sizeof(ObjectList))) ==
 	    (ObjectList *) NULL)  return( -1 );
-      
+
      newobj->contents	= object;
      newobj->prev	= list->last;
      newobj->next	= NULL;
@@ -156,7 +156,7 @@ linkToList( ListHeader *list, void *object )
  *   Description:	Removes an element from the list.
  *
  *   Parameters:
- *		Input :	(1) List pointer   
+ *		Input :	(1) List pointer
  *			(2) Pointer to the element
  *
  *********************************************************************/
@@ -173,7 +173,7 @@ unlinkFromList( ListHeader *list, ObjectList *element )
 	  }
 	  if ( element->prev != (ObjectList *)NULL ) {
 	       element->prev->next = element->next;
-	  } 
+	  }
 	  else {
 	       list->first = element->next;
 	  }

@@ -62,7 +62,7 @@ class TopWidget(qt.QWidget):
         self.fitFunctionCombo.addItem(qt.safe_str("None"))
         self.fitFunctionCombo.setSizeAdjustPolicy(qt.QComboBox.AdjustToContents)
         self.fitFunctionCombo.setMinimumWidth(100)
-        
+
         #background function
         self.backgroundLabel = qt.QLabel(self)
         self.backgroundLabel.setFont(font)
@@ -102,14 +102,14 @@ class TopWidget(qt.QWidget):
         self.fitFunctionCombo.setCurrentIndex(idx)
         idx = self.backgroundCombo.findText(currentBackground)
         self.backgroundCombo.setCurrentIndex(idx)
-        
+
 class StatusWidget(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QHBoxLayout(self)
         self.mainLayout.setContentsMargins(2, 2, 2, 2)
         self.mainLayout.setSpacing(2)
-        
+
         self.statusLabel = qt.QLabel(self)
         self.statusLabel.setText(qt.safe_str("Status:"))
         self.statusLine = qt.QLineEdit(self)
@@ -122,7 +122,7 @@ class StatusWidget(qt.QWidget):
         self.chi2Line = qt.QLineEdit(self)
         self.chi2Line.setText(qt.safe_str(""))
         self.chi2Line.setReadOnly(1)
-        
+
         self.mainLayout.addWidget(self.statusLabel)
         self.mainLayout.addWidget(self.statusLine)
         self.mainLayout.addWidget(self.chi2Label)
@@ -193,7 +193,7 @@ class SimpleFitGui(qt.QWidget):
         #connect top widget
         self.topWidget.addFunctionButton.clicked[()].connect(\
                     self.importFunctions)
-        
+
         self.topWidget.fitFunctionCombo.currentIndexChanged[int].connect(\
                      self.fitFunctionComboSlot)
 
@@ -207,7 +207,7 @@ class SimpleFitGui(qt.QWidget):
             #connect actions
             self.fitActions.estimateButton.clicked[()].connect(self.estimate)
             self.fitActions.startFitButton.clicked[()].connect(self.startFit)
-            self.fitActions.dismissButton.clicked[()].connect(self.dismiss)        
+            self.fitActions.dismissButton.clicked[()].connect(self.dismiss)
 
     def importFunctions(self, functionsfile=None):
         if functionsfile is None:
@@ -276,7 +276,7 @@ class SimpleFitGui(qt.QWidget):
         if DEBUG:
             print("TABLE TO BE CLEANED")
         #self.estimate()
-        
+
     def setFitFunction(self, fname):
         current = self.fitModule.getFitFunction()
         if current != fname:
@@ -314,9 +314,9 @@ class SimpleFitGui(qt.QWidget):
             x = self.fitModule._x
             y = self.fitModule._y
             if hasattr(self.graph, "addCurve"):
-                self.graph.addCurve(x, y, 'Data') 
+                self.graph.addCurve(x, y, 'Data')
             elif hasattr(self.graph, "newCurve"):
-                self.graph.newCurve('Data', x, y) 
+                self.graph.newCurve('Data', x, y)
             self.graph.removeCurve("Fit")
             self.graph.removeCurve("Background", replot=True)
             self.fitModule.estimate()
@@ -331,7 +331,7 @@ class SimpleFitGui(qt.QWidget):
             msg.setText(text)
             msg.exec_()
             self.setStatus("Ready (after estimate error)")
-            
+
 
     def setStatus(self, text=None):
         if text is None:
@@ -355,7 +355,7 @@ class SimpleFitGui(qt.QWidget):
             msg.exec_()
             self.setStatus("Ready (after fit error)")
             return
-            
+
         self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
         self.statusWidget.chi2Line.setText("%f" % chisq)
         ddict = {}
@@ -377,13 +377,13 @@ class SimpleFitGui(qt.QWidget):
         ddict['yfit'] = self.evaluateDefinedFunction()
         ddict['background'] = self.fitModule._evaluateBackground()
         if hasattr(self.graph, "addCurve"):
-            self.graph.addCurve(ddict['x'], ddict['y'], 'Data') 
+            self.graph.addCurve(ddict['x'], ddict['y'], 'Data')
             self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit')
-            self.graph.addCurve(ddict['x'], ddict['background'], 'Background') 
+            self.graph.addCurve(ddict['x'], ddict['background'], 'Background')
         elif hasattr(self.graph, "newCurve"):
-            self.graph.newCurve('Data', ddict['x'], ddict['y']) 
-            self.graph.newCurve('Fit', ddict['x'], ddict['yfit']) 
-            self.graph.newCurve('Background', ddict['x'], ddict['background']) 
+            self.graph.newCurve('Data', ddict['x'], ddict['y'])
+            self.graph.newCurve('Fit', ddict['x'], ddict['yfit'])
+            self.graph.newCurve('Background', ddict['x'], ddict['background'])
         self.graph.replot()
         self.graph.show()
 

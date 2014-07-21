@@ -1,4 +1,4 @@
-__doc__= "Generate specfile from all EPL97 cross sections in keV and barn" 
+__doc__= "Generate specfile from all EPL97 cross sections in keV and barn"
 import os
 import sys
 import EADLSubshells
@@ -120,7 +120,7 @@ for i in range(1, 101):
     cohe    = numpy.zeros(len(energy), numpy.float)
     incohe  = numpy.zeros(len(energy), numpy.float)
     photo   = numpy.zeros(len(energy), numpy.float)
-    total   = numpy.zeros(len(energy), numpy.float)    
+    total   = numpy.zeros(len(energy), numpy.float)
 
     #get the partial photoelectric cross sections
     photo_dict = {}
@@ -181,7 +181,7 @@ for i in range(1, 101):
         photo_dict[actual_shell]['value']  = value
 
     #coherent needs to interpolate
-    indices = numpy.nonzero(energy_cohe<energy_photo[0]) 
+    indices = numpy.nonzero(energy_cohe<energy_photo[0])
     cohe[indices]  = value_cohe[indices]
     for n in range(len(indices),len(energy)):
         x = energy[n]
@@ -248,7 +248,7 @@ for i in range(1, 101):
     text  = '#S %d %s\n' % (i, ele)
     text += '#N %d\n' % (7+len(photo_label_list))
     labels = '#L PhotonEnergy[keV]'
-    labels += '  Rayleigh(coherent)[barn/atom]' 
+    labels += '  Rayleigh(coherent)[barn/atom]'
     labels += '  Compton(incoherent)[barn/atom]'
     labels += '  CoherentPlusIncoherent[barn/atom]'
     labels += '  Photoelectric[barn/atom]'
@@ -305,7 +305,7 @@ for i in range(1, 101):
         if (i < firstNonZeroPhotoelectric) or (restOfShells < 1.0E-7):
             line += " 0.0 %.6E\n" % (total[n])
         else:
-            line += " %.6E %.6E\n" % (restOfShells, total[n])  
+            line += " %.6E %.6E\n" % (restOfShells, total[n])
         outfile.write(line)
     outfile.write('\n')
 outfile.close()

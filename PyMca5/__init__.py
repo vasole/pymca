@@ -7,7 +7,7 @@ if os.path.exists(os.path.join(\
 from .PyMcaCore import Plugin1DBase, StackPluginBase, PyMcaDirs, DataObject
 
 #convenience modules that could be directly imported
-# using from PyMca5.PyMca import 
+# using from PyMca5.PyMca import
 try:
     from .PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
 except:

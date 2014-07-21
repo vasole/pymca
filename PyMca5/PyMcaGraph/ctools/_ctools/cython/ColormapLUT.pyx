@@ -21,13 +21,13 @@ def fillPixmap(points, colormap, mode="linear", auto=True, minValue=0, maxValue=
     :param colormap: Array of uint8 of N, 4 with the colors to assign
     :type points: ndarray
     :param mode: linear or log
-    :type border: string (default linear) 
+    :type border: string (default linear)
     :param auto: True to calculate the min and max values of the input data
     :param minValue: If auto is false, the value to be used as minimum
     :param maxValue: If auto is false, the value to be used as maximum
     :returns pixmap: Int32 of colormap values with the same shape as points
     :returns usedMin: Used minimum value
-    :returns usedMax: Used maximum value 
+    :returns usedMax: Used maximum value
     """
     if isinstance(points, numpy.ndarray):
         """

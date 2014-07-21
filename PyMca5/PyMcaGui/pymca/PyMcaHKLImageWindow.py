@@ -74,7 +74,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
             # gamma in horizontal (following BM28)
             deltaH = toDeg * numpy.arctan((x - info['pixel_zero_h']) *\
                         (info['pixel_size_h']/info['distance']))
-        
+
             deltaV = toDeg *arctan((y - info['pixel_zero_v'])*\
                         (info['pixel_size_v']/info['distance']))
             if 0:
@@ -84,13 +84,13 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
             else:
                #MarCCD settings
                gamma = info['gamma'] - deltaV
-               delta = info['delta'] - deltaH            
+               delta = info['delta'] - deltaH
            #end of BM28 customization
         else:
 	    #ID03
             deltaH = toDeg * numpy.arctan((x - info['pixel_zero_v']) *\
                         (info['pixel_size_v']/info['distance']))
-        
+
             deltaV = toDeg *arctan((y - info['pixel_zero_h'])*\
                         (info['pixel_size_h']/info['distance']))
 	    #delta in horizontal
@@ -100,7 +100,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
             if 0:
                 #ID03 test for EH1
                 wavelength = 1.03321027
-                ub = [1.0, 0.0, 0.0, 
+                ub = [1.0, 0.0, 0.0,
                       0.0, 1.0, 0.0,
                       0.0, 0.0, 1.0]
                 ub[0] = 0.060082400000000001
@@ -120,9 +120,9 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
         ub = info['ub']
 
         if 0:
-            #This should always give 1 1 1 
+            #This should always give 1 1 1
             wavelength = 0.363504
-            ub = [1.0, 0.0, 0.0, 
+            ub = [1.0, 0.0, 0.0,
                   0.0, 1.0, 0.0,
                   0.0, 0.0, 1.0]
             ub[0] = -4.080
@@ -154,7 +154,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
 
     def _getHKLInfoFromWidget(self):
         ddict = {}
-        ddict['lambda'] = 1.0           # In Angstroms   
+        ddict['lambda'] = 1.0           # In Angstroms
         ddict['distance'] = 1000.       # Same units as pixel size
         ddict['pixel_size_h'] = 0.080   # Same units as distance
         ddict['pixel_size_v'] = 0.080   # Same units as distance
@@ -165,7 +165,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
                        0.0, 1.0, 0.0,
                        0.0, 0.0, 1.0]
         ddict['phi'] = 0.0
-        ddict['chi'] = 0.0 
+        ddict['chi'] = 0.0
         ddict['theta'] = 0.0
         ddict['gamma'] = 0.0
         ddict['delta'] = 0.0
@@ -208,7 +208,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
         if len(cntPos) == len(cntMne):
             for i in range(len(cntMne)):
                 cntInfo[cntMne[i]] = cntPos[i]
-            
+
         for key in cntInfo.keys():
             # diffractometer
             if key in ['phicnt']:

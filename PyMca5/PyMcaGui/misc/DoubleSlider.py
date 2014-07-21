@@ -32,17 +32,17 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 
 DEBUG = 0
-    
+
 class DoubleSlider(qt.QWidget):
     sigDoubleSliderValueChanged = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent = None, scale = False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(6, 6, 6, 6)
         self.mainLayout.setSpacing(1)
         orientation = qt.Qt.Horizontal
-        
+
         self.minSlider = MySlider(self, orientation)
         self.minSlider.setRange(0, 100.)
         self.minSlider.setValue(0)
@@ -84,11 +84,11 @@ class DoubleSlider(qt.QWidget):
             return M, m
         else:
             return m, M
-        
+
 
 class MySlider(qt.QWidget):
     sigValueChanged = qt.pyqtSignal(float)
-    
+
     def __init__(self, parent = None, orientation=qt.Qt.Horizontal):
         qt.QWidget.__init__(self, parent)
         if orientation == qt.Qt.Horizontal:
@@ -125,11 +125,11 @@ class MySlider(qt.QWidget):
 
 def test():
     app = qt.QApplication([])
-    app.lastWindowClosed.connect(app.quit)    
+    app.lastWindowClosed.connect(app.quit)
     w = DoubleSlider()
     w.show()
     app.exec_()
 
 if __name__ == "__main__":
     test()
- 
+

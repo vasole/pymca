@@ -167,7 +167,7 @@ class SampleConfiguration(qt.QWidget):
             if DEBUG:
                 print("Setting the highest Z as default")
             self.elementSignal(qstring(elementsList[iMaxZ]))
-        
+
 
     def toggleEditor(self):
         if self.materialEditor.isHidden():
@@ -284,7 +284,7 @@ class GeometryConfiguration(qt.QWidget):
         if 'angles' in ddict:
             self.angleWidgets[0].setText("%.2f" % ddict['angles'][0])
             self.angleWidgets[1].setText("%.2f" % ddict['angles'][1])
-        
+
 class XASSelfattenuationWidget(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
@@ -309,7 +309,7 @@ class XASSelfattenuationWidget(qt.QWidget):
         ddict['XAS'] = self.element.getParameters()
         ddict['XAS'].update(self.geometry.getParameters())
         return ddict
-            
+
 class XASSelfattenuationDialog(qt.QDialog):
     def __init__(self, parent=None):
         qt.QDialog.__init__(self, parent)
@@ -365,7 +365,7 @@ class XASSelfattenuationDialog(qt.QDialog):
 
     def reject(self):
         return qt.QDialog.reject(self)
-                                      
+
     def accept(self):
         return qt.QDialog.accept(self)
 
@@ -374,7 +374,7 @@ class XASSelfattenuationDialog(qt.QDialog):
 
     def setConfiguration(self, ddict):
         self.configurationWidget.setParameters(ddict)
-        
+
     def loadConfiguration(self, filename):
         d = ConfigDict.ConfigDict()
         d.read(filename)
@@ -389,7 +389,7 @@ class XASSelfattenuationDialog(qt.QDialog):
         else:
             d['XAS'].update(ddict)
         d.write(filename)
-        
+
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = XASSelfattenuationDialog()

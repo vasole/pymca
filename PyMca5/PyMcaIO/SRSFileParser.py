@@ -124,7 +124,7 @@ class SRSFileParser(object):
                               point=False)]
         _fileObject = None
         data = None
-        
+
         #the methods below are called by PyMca on any SPEC file
 
     def __getitem__(self, item):
@@ -135,7 +135,7 @@ class SRSFileParser(object):
         Gives back the number of scans in the file
         """
         return len(self_scan)
-        
+
     def list(self):
         return "1:1"
 
@@ -172,7 +172,7 @@ def isSRSFile(filename):
            return True
     except:
         pass
-    f.close()    
+    f.close()
     return False
 
 def test(filename):

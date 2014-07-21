@@ -17,12 +17,12 @@ PyDoc_STRVAR(Object3DQhull__doc__,
 "    See http://www.qhull.org for Qhull details.\n"
 "\n"
 "Object3DQHullf.delaunay(nodes, \"qhull  d Qbb QJ Qc Po\")\n"
-"    Nodes is a sequence of points (an nrows x 2 or an nrows x 3 array)\n" 
+"    Nodes is a sequence of points (an nrows x 2 or an nrows x 3 array)\n"
 "    The second argument is optional.\n"
 "    The output is an array of indices for the facets.\n");
 PyDoc_STRVAR(Object3DQhull_delaunay__doc__,
 "delaunay(nodes, \"qhull  d Qbb QJ Qc Po\")\n"
-"    Nodes is a sequence of points (an nrows x 2 or an nrows x 3 array)\n" 
+"    Nodes is a sequence of points (an nrows x 2 or an nrows x 3 array)\n"
 "    The second argument is optional.\n"
 "    http://www.qhull.org for Qhull details.\n"
 "    The output is an array of indices for the facets.\n");
@@ -33,12 +33,12 @@ PyDoc_STRVAR(Object3DQhull__doc__,
 "    See http://www.qhull.org for Qhull details.\n"
 "\n"
 "Object3DQHull.delaunay(nodes, \"qhull  d Qbb QJ Qc\")\n"
-"    Nodes is a sequence of points (an nrows x 2 or an nrows x 3 array)\n" 
+"    Nodes is a sequence of points (an nrows x 2 or an nrows x 3 array)\n"
 "    The second argument is optional.\n"
 "    The output is an array of indices for the facets.\n");
 PyDoc_STRVAR(Object3DQhull_delaunay__doc__,
 "delaunay(nodes, \"qhull  d Qbb QJ Qc\")\n"
-"    Nodes is a sequence of points (an nrows x 2 or an nrows x 3 array)\n" 
+"    Nodes is a sequence of points (an nrows x 2 or an nrows x 3 array)\n"
 "    The second argument is optional.\n"
 "    http://www.qhull.org for Qhull details.\n"
 "    The output is an array of indices for the facets.\n");
@@ -59,7 +59,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 {
     /* input parameters */
     PyObject    *input1, *input3=NULL;
-    const char      *input2 = NULL;    
+    const char      *input2 = NULL;
 
     /* local variables */
     PyArrayObject    *pointArray, *inner_pointArray=NULL;
@@ -80,7 +80,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
     char cQhullDefaultFlags[] = "qhull d Qbb QJ Qc"; /* Qhull flags (see doc)*/
 #endif
     char *cQhullFlags;
-    
+
     int            nFacets = 0;
     npy_intp    outDimensions[3];
     facetT *facet;        /* needed by FORALLfacets */
@@ -137,7 +137,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
     }
 #endif
 
- 
+
     if (pointArray == NULL)
     {
         PyErr_SetString(Object3DQhullError, "First argument is not a nrows x X array");
@@ -152,17 +152,17 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
     cQhullFlags = (char *) input2;
       }
     /* printf("flags = %s\n", cQhullFlags); */
-    
+
     /* dimension to pass to Qhull */
     dimension = (int) pointArray->dimensions[1];
-    
+
     /* number of points for Qhull */
     nPoints = (int) pointArray->dimensions[0];
-    
-    
+
+
     /* the points themselves for Qhull */
     points = (coordT *) pointArray->data;
-    
+
     qhullResult = qh_new_qhull(dimension, nPoints, points,
                    ismalloc, cQhullFlags, NULL, stderr);
 
@@ -177,7 +177,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
         qhullResultFailure(qhullResult);
         return NULL;
     }
-    
+
     /* Get the number of facets */
     /* Probably there is a better way to do it */
     FORALLfacets {
@@ -186,7 +186,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
         nFacets ++;
     }
     /* printf("Number of facets = %d\n", nFacets); */
-    
+
     /* Allocate the memory for the output array */
     if (0)    // As triangles
     {
@@ -256,7 +256,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
                 if(inner_pointArray)
                 {
                     Py_DECREF (inner_pointArray) ;
-                } 
+                }
             }
             PyErr_SetString(Object3DQhullError, "Error allocating output memory");
             return NULL;
@@ -274,7 +274,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
         if(input3)
         {
             uintP = (unsigned int *) inner_result->data;
-#if (REALfloat == 1) 
+#if (REALfloat == 1)
             p = (float *) inner_pointArray->data;
 #else
             p = (double *) inner_pointArray->data;
@@ -285,26 +285,26 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
                 {
                     point[j] = *( p++);
                 }
-              
+
                 qh_setdelaunay(  dimension+1 , 1, point);
 
                 facet = qh_findbestfacet(point, qh_ALL, &bestdist, &isoutside);
 
-                if (facet && !facet->upperdelaunay && facet->simplicial) 
+                if (facet && !facet->upperdelaunay && facet->simplicial)
                 {
                     FOREACHvertex_(facet->vertices)    {
                         *uintP =  qh_pointid(vertex->point);
                         ++uintP;
-                    }            
-                } 
+                    }
+                }
                 else
                 {
-                    qh_freeqhull(qh_ALL); 
+                    qh_freeqhull(qh_ALL);
                     Py_DECREF (pointArray);
-                    if(pointArray) 
-                    {  
+                    if(pointArray)
+                    {
                         Py_DECREF (inner_pointArray);
-                    } 
+                    }
                     PyErr_SetString(Object3DQhullError, "Error allocating output memory");
                     return NULL;
                 }
@@ -315,13 +315,13 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 
     /* Free the memory allocated by Qhull */
     qh_freeqhull(qh_ALL);
-    
+
     Py_DECREF (pointArray);
-    
-    if( input3==NULL) 
+
+    if( input3==NULL)
     {
         return PyArray_Return(result);
-    } 
+    }
     else
     {
         return  Py_BuildValue("NN", result, inner_result );
@@ -332,7 +332,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
 {
     /* input parameters */
     PyObject    *input1, *input3=NULL;
-    const char      *input2 = NULL;    
+    const char      *input2 = NULL;
 
     /* local variables */
     PyArrayObject    *pointArray, *inner_pointArray=NULL;
@@ -352,7 +352,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
     char cQhullDefaultFlags[] = "qhull v p"; /* Qhull flags (see doc)*/
 #endif
     char *cQhullFlags;
-    
+
     int            nFacets = 0;
     npy_intp    outDimensions[2];
     facetT *facet;        /* needed by FORALLfacets */
@@ -403,7 +403,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
     }
 #endif
 
- 
+
     if (pointArray == NULL)
     {
         PyErr_SetString(Object3DQhullError, "First argument is not a nrows x X array");
@@ -418,17 +418,17 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
     cQhullFlags = (char *) input2;
       }
     /* printf("flags = %s\n", cQhullFlags); */
-    
+
     /* dimension to pass to Qhull */
     dimension = (int) pointArray->dimensions[1];
-    
+
     /* number of points for Qhull */
     nPoints = (int) pointArray->dimensions[0];
-    
-    
+
+
     /* the points themselves for Qhull */
     points = (coordT *) pointArray->data;
-    
+
     qhullResult = qh_new_qhull(dimension, nPoints, points,
                    ismalloc, cQhullFlags, NULL, stderr);
 
@@ -454,13 +454,13 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
       nFacets ++;
     }
     printf("Number of facets = %d\n", nFacets);
-    
+
     /* Allocate the memory for the output array */
     /* It has the form: [nfacets, dimension, 3] */
     outDimensions[0] = nFacets;
     outDimensions[1] = dimension;
     //outDimensions[2] = dimension;
-    printf("output dimensions = %d, %d\n",outDimensions[0], outDimensions[1]); 
+    printf("output dimensions = %d, %d\n",outDimensions[0], outDimensions[1]);
     result = (PyArrayObject *)
       PyArray_SimpleNew(2, outDimensions, PyArray_DOUBLE);
     if (result == NULL)
@@ -507,9 +507,9 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
 
     /* Free the memory allocated by Qhull */
     qh_freeqhull(qh_ALL);
-    
+
     Py_DECREF (pointArray);
-    
+
     return PyArray_Return(result);
 }
 

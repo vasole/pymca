@@ -50,7 +50,7 @@ def calc_coeff(num_points, pol_degree, diff_order=0):
 
         diff_order   is degree of implicit differentiation.
                      0 means that filter results in smoothing of function
-                     1 means that filter results in smoothing the first 
+                     1 means that filter results in smoothing the first
                                                  derivative of function.
                      and so on ...
 
@@ -67,7 +67,7 @@ def calc_coeff(num_points, pol_degree, diff_order=0):
     for i in range(2*num_points+1):
         for j in range(pol_degree+1):
             A[i,j] = monom(x[i], j)
-        
+
     # calculate diff_order-th row of inv(A^T A)
     ATA = numpy.dot(A.transpose(), A)
     rhs = numpy.zeros((pol_degree+1,), numpy.float)
@@ -82,7 +82,7 @@ def calc_coeff(num_points, pol_degree, diff_order=0):
     return coeff
 
 def smooth(signal, coeff):
-    
+
     """ applies coefficients calculated by calc_coeff()
         to signal """
     N = numpy.size(coeff-1)/2
@@ -120,7 +120,7 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
             data[i,N:-N] = convolve(data[i,:],coeff, mode='valid')
             if order > 0:
                 data[i, :N]  = data[i, N]
-                data[i, -N:] = data[i,-(N+1)]            
+                data[i, -N:] = data[i,-(N+1)]
         data.shape = oldShape
     elif mcaIndex == 0:
         data.shape = oldShape[0], -1
@@ -128,7 +128,7 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
             data[N:-N, i] = convolve(data[:, i],coeff, mode='valid')
             if order > 0:
                 data[:N, i] = data[N, i]
-                data[-N:, i] = data[-(N+1), i]            
+                data[-N:, i] = data[-(N+1), i]
         data.shape = oldShape
     else:
         raise ValueError("Invalid 1D index %d" % mcaIndex)

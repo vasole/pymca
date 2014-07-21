@@ -29,7 +29,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5.PyMcaGui import PyMcaQt as qt
-    
+
 QTVERSION = qt.qVersion()
 DEBUG = 0
 
@@ -106,12 +106,12 @@ class EdfFileSimpleViewer(qt.QWidget):
     def setFileList(self, filelist):
         for ffile in filelist:
             self.sourceSelector.openFile(ffile, justloaded = 1)
-                    
-            
+
+
 def main():
     import sys
     import getopt
-    app=qt.QApplication(sys.argv) 
+    app=qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)
     options=''
@@ -119,7 +119,7 @@ def main():
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
-                    longoptions)      
+                    longoptions)
     for opt,arg in opts:
         pass
     filelist=args

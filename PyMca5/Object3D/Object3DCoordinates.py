@@ -36,7 +36,7 @@ class Object3DCoordinates(object):
         """
         The parent has to be a QGLWidget
         """
-        
+
         self.parent = weakref.proxy(parent)
         self.limits = limits
         self.drawX  = True
@@ -56,7 +56,7 @@ class Object3DCoordinates(object):
         if self.limits is None:
             return
 
-        if self.drawX or self.drawY or self.drawZ: 
+        if self.drawX or self.drawY or self.drawZ:
             #get the viewport limits
             vlimits = self.convertToViewportLimits(self.limits)
 
@@ -99,19 +99,19 @@ class Object3DCoordinates(object):
                 lmaxz = z
 
         return [[lminx, lminy, lminz], [lmaxx, lmaxy, lmaxz]]
-        
+
     def drawXAxis(self, vlimits):
         xmin, ymin, zmin = self.limits[0]
         xmax, ymax, zmax = self.limits[1]
         difference_vector = self.limits[1] - self.limits[0]
         deltax, deltay, deltaz = self.delta * (difference_vector)
 
-        
+
         begin = [[xmin, ymin - deltay, zmin - deltaz],
                  [xmin, ymax + deltay, zmin - deltaz],
                  [xmin, ymin - deltay, zmax + deltaz],
                  [xmin, ymax + deltay, zmax + deltaz]]
-        
+
         end   = [[xmax, ymin - deltay, zmin - deltaz],
                  [xmax, ymax + deltay, zmin - deltaz],
                  [xmax, ymin - deltay, zmax + deltaz],
@@ -129,7 +129,7 @@ class Object3DCoordinates(object):
         for item in X:
             if (item[0][0] > vlimits[0][0]) and (item[0][0] < vlimits[1][0]) and \
                (item[0][1] > vlimits[0][1]) and (item[0][1] < vlimits[1][1]):
-                possible[i] = 0        
+                possible[i] = 0
             elif (item[1][0] > vlimits[0][0]) and (item[1][0] < vlimits[1][0]) and \
                  (item[1][1] > vlimits[0][1]) and (item[1][1] < vlimits[1][1]):
                 possible[i] = 0
@@ -153,24 +153,24 @@ class Object3DCoordinates(object):
                         "%.3f" % (begin[i][0]),
                         self.parent.font(), 2000)
 
-            self.parent.renderText(end[i][0], end[i][1], end[i][2], 
+            self.parent.renderText(end[i][0], end[i][1], end[i][2],
                         "%.3f" % (end[i][0]),
                         self.parent.font(), 2000)
             return
 
-                
+
     def drawYAxis(self, vlimits):
         xmin, ymin, zmin = self.limits[0]
         xmax, ymax, zmax = self.limits[1]
         difference_vector = self.limits[1] - self.limits[0]
         deltax, deltay, deltaz = self.delta * (difference_vector)
 
-        
+
         begin = [[xmin - deltax, ymin, zmin - deltaz],
                  [xmin - deltax, ymin, zmax + deltaz],
                  [xmax + deltax, ymin, zmin - deltaz],
                  [xmax + deltax, ymin, zmax + deltaz]]
-        
+
         end   = [[xmin - deltax, ymax, zmin - deltaz],
                  [xmin - deltax, ymax, zmax + deltaz],
                  [xmax + deltax, ymax, zmin - deltaz],
@@ -186,7 +186,7 @@ class Object3DCoordinates(object):
         for item in X:
             if (item[0][0] > vlimits[0][0]) and (item[0][0] < vlimits[1][0]) and \
                (item[0][1] > vlimits[0][1]) and (item[0][1] < vlimits[1][1]):
-                possible[i] = 0        
+                possible[i] = 0
             elif (item[1][0] > vlimits[0][0]) and (item[1][0] < vlimits[1][0]) and \
                  (item[1][1] > vlimits[0][1]) and (item[1][1] < vlimits[1][1]):
                 possible[i] = 0
@@ -208,28 +208,28 @@ class Object3DCoordinates(object):
                             "%.3f" % (begin[i][1]),
                             self.parent.font(), 2000)
 
-                self.parent.renderText(end[i][0], end[i][1], end[i][2], 
+                self.parent.renderText(end[i][0], end[i][1], end[i][2],
                             "%.3f" % (end[i][1]),
                             self.parent.font(), 2000)
                 return
-                
+
     def drawZAxis(self, vlimits):
         xmin, ymin, zmin = self.limits[0]
         xmax, ymax, zmax = self.limits[1]
         difference_vector = self.limits[1] - self.limits[0]
         deltax, deltay, deltaz = self.delta * (difference_vector)
 
-        
+
         begin = [[xmin - deltax, ymin - deltay, zmin],
                  [xmin - deltax, ymax + deltay, zmin],
                  [xmax + deltax, ymin - deltay, zmin],
                  [xmax + deltax, ymax + deltay, zmin]]
-        
+
         end   = [[xmin - deltax, ymin - deltay, zmax],
                  [xmin - deltax, ymax + deltay, zmax],
                  [xmax + deltax, ymin - deltay, zmax],
                  [xmax + deltax, ymax + deltay, zmax]]
-        
+
         X = []
         for i in range(4):
             X.append([GLU.gluProject(*begin[i]),
@@ -240,7 +240,7 @@ class Object3DCoordinates(object):
         for item in X:
             if (item[0][0] > vlimits[0][0]) and (item[0][0] < vlimits[1][0]) and \
                (item[0][1] > vlimits[0][1]) and (item[0][1] < vlimits[1][1]):
-                possible[i] = 0        
+                possible[i] = 0
             elif (item[1][0] > vlimits[0][0]) and (item[1][0] < vlimits[1][0]) and \
                  (item[1][1] > vlimits[0][1]) and (item[1][1] < vlimits[1][1]):
                 possible[i] = 0
@@ -263,10 +263,10 @@ class Object3DCoordinates(object):
                             "%.3f" % (begin[i][2]),
                             self.parent.font(), 2000)
 
-                self.parent.renderText(end[i][0], end[i][1], end[i][2], 
+                self.parent.renderText(end[i][0], end[i][1], end[i][2],
                             "%.3f" % (end[i][2]),
                             self.parent.font(), 2000)
                 return
 
-                
-            
+
+

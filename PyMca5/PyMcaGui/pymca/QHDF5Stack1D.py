@@ -60,7 +60,7 @@ class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):
         self.progressBar   = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)
         self.progressLabel.setText('Mca Progress:')
-        self.barsLayout.addWidget(self.progressLabel,0,0)        
+        self.barsLayout.addWidget(self.progressLabel,0,0)
         self.barsLayout.addWidget(self.progressBar,0,1)
         self.progressBar.setMaximum(nfiles)
         self.progressBar.setValue(0)

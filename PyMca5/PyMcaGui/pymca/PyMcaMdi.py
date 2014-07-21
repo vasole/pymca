@@ -33,7 +33,7 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
-    
+
 QTVERSION = qt.qVersion()
 
 from PyMca5.PyMcaGui import PyMca_Icons
@@ -63,14 +63,14 @@ class PyMcaMdi(qt.QMainWindow):
         #self.splitterLayout = qt.QVBoxLayout(self.splitter)
         #self.splitterLayout.setContentsMargins(0, 0, 0, 0)
         #self.splitterLayout.setSpacing(0)
-        
+
         self.printer= qt.QPrinter()
         self.mdi = qt.QWorkspace(self.splitter)
         self.mdi.setScrollBarsEnabled(1)
         #if QTVERSION > '4.0.0':self.mdi.setBackground(qt.QBrush(qt.QColor(238,234,238)))
         #self.setCentralWidget(self.mdi)
         #self.splitterLayout.addWidget(self.mdi)
-            
+
         self.setCentralWidget(self.splitter)
 
         self.splitter.insertWidget(1, self.mdi)
@@ -80,7 +80,7 @@ class PyMcaMdi(qt.QMainWindow):
 
         #self.setDockEnabled(qt.Qt.DockTop, 0)
 
-        
+
 
         self.initIcons()
         if QTVERSION > '4.0.0':
@@ -93,7 +93,7 @@ class PyMcaMdi(qt.QMainWindow):
 
         self.mdi.show()
         #self.resize(600,400)
-        
+
     def createActions(self):
             #fileopen
             self.actionOpen = qt.QAction(self)
@@ -127,7 +127,7 @@ class PyMcaMdi(qt.QMainWindow):
             self.actionQuit.setText(QString("&Quit"))
             #self.actionQuit.setIcon(self.Icons["fileprint"])
             self.actionQuit.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Q)
-            qApp = qt.QApplication.instance() 
+            qApp = qt.QApplication.instance()
             self.actionQuit.triggered[bool].connect(qApp.closeAllWindows)
 
     def initIcons(self):
@@ -211,7 +211,7 @@ class PyMcaMdi(qt.QMainWindow):
                 window.parentWidget().showNormal()
                 window.parentWidget().setGeometry(int(windowwidth*i),0,
                                         int(windowwidth),self.mdi.height())
-                
+
                 if QTVERSION < '4.0.0':
                     window.parentWidget().raiseW()
                 else:
@@ -247,7 +247,7 @@ class PyMcaMdi(qt.QMainWindow):
             self.menuTools.aboutToShow[()].connect(self.menuToolsAboutToShow)
             self.menuTools.setTitle("&Tools")
             self.menuBar().addMenu(self.menuTools)
-                
+
         if self.options["MenuWindow"]:
             self.menuWindow= qt.QMenu()
             #self.menuWindow.setCheckable(1)
@@ -279,7 +279,7 @@ class PyMcaMdi(qt.QMainWindow):
         num = 0
         for window in windows:
             text = "&%d %s"%(num, str(window.windowTitle()))
-            num += 1                
+            num += 1
             action = self.menuWindow.addAction(text)
             action.setCheckable(True)
             action.setChecked(window == self.mdi.activeWindow())

@@ -34,7 +34,7 @@ DEBUG = 0
 
 class Object3DSlider(qt.QWidget):
     valueChanged = qt.pyqtSignal(float)
-    
+
     def __init__(self, parent = None, orientation=qt.Qt.Horizontal):
         qt.QWidget.__init__(self, parent)
         if orientation == qt.Qt.Horizontal:
@@ -67,7 +67,7 @@ class Object3DSlider(qt.QWidget):
             self.__factor = (maxValue - minValue) / 0.01
         else:
             self.__factor = (maxValue - minValue) / float(increment)
-            
+
         self.slider.setRange(int(minValue * self.__factor),
                              int(maxValue * self.__factor))
 
@@ -96,19 +96,19 @@ class Object3DSlider(qt.QWidget):
         if self.__factor != 0.0:
             return self.slider.singleStep() / self.__factor
         else:
-            return float(self.slider.singleStep())        
+            return float(self.slider.singleStep())
 
     def singleStep(self):
         return self.step()
-    
+
 def test():
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
-    
+
     w = DoubleSlider()
     w.show()
     app.exec_()
 
 if __name__ == "__main__":
     test()
- 
+

@@ -6,10 +6,10 @@ def pnpoly(vertices, points, bint border=True):
     """
     :param vertices: Array Nx2 with the coordenates of the polygon vertices
     :type vertices: ndarray
-    :param points: Points to be checked out. 
+    :param points: Points to be checked out.
     :type points: ndarray Nx2 or list of [x, y] pairs
     :param border: Flag to indicate if a pointon a vertex is to be in or out
-    :type border: boolean (default True) 
+    :type border: boolean (default True)
     """
     cdef double[:,:] c_vertices = numpy.ascontiguousarray(vertices,
                                                           dtype=numpy.float64)

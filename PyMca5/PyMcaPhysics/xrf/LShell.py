@@ -76,7 +76,7 @@ if os.path.exists(fname):
     EADL97 = True
     sf = None
 
-Elements = ['H', 'He', 
+Elements = ['H', 'He',
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
             'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -84,12 +84,12 @@ Elements = ['H', 'He',
             'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
             'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
             'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
 
@@ -111,7 +111,7 @@ def getomegal1(ele):
             #I do not expect any fluorescent analysis of these elements ...
             zEle = 99
         index = EADL97_ElementL1ShellConstants.index('omegaL1')
-        value = EADL97_ElementL1ShellValues[zEle-1][index]        
+        value = EADL97_ElementL1ShellValues[zEle-1][index]
     return value
 
 def getomegal2(ele):
@@ -139,7 +139,7 @@ def getomegal3(ele):
             #I do not expect any fluorescent analysis of these elements ...
             zEle = 99
         index = EADL97_ElementL3ShellConstants.index('omegaL3')
-        value = EADL97_ElementL3ShellValues[zEle-1][index]        
+        value = EADL97_ElementL3ShellValues[zEle-1][index]
     return value
 
 def getCosterKronig(ele):
@@ -168,7 +168,7 @@ def getCosterKronig(ele):
              if EADL97:
                  #extend with EADL97 values
                  index     = EADL97_ElementL2ShellConstants.index(t)
-                 ckEADL[t] = EADL97_ElementL2ShellValues[EADL_z-1][index]                 
+                 ckEADL[t] = EADL97_ElementL2ShellValues[EADL_z-1][index]
         elif t in ElementL3ShellConstants:
              index   = ElementL3ShellConstants.index(t)
              ck[t]   = ElementL3ShellValues[zEle-1][index]
@@ -180,7 +180,7 @@ def getCosterKronig(ele):
             print("%s not in L-Shell Coster-Kronig transitions" % t)
             continue
         ckSum += ck[t]
-        
+
     if ckSum > 0.0:
         #I do not force EADL97 because of compatibility
         #with previous versions. I may offer forcing to
@@ -202,7 +202,7 @@ def getjl2(z):
 
 def getjl3(z):
     return (80.0/z) + 1.5
-    
+
 def getwjump(ele,excitedshells=[1.0,1.0,1.0]):
     """
     wjump represents the probability for a vacancy to be created
@@ -230,7 +230,7 @@ def getweights(ele,excitedshells=None):
         ele = getsymbol(int(ele))
     if excitedshells == None:excitedshells=[1.0,1.0,1.0]
     w = getwjump(ele,excitedshells)
-    #weights due to Coster Kronig transitions and fluorescence yields 
+    #weights due to Coster Kronig transitions and fluorescence yields
     ck= getCosterKronig(ele)
     w[0] *=  1.0
     w[1] *= (1.0 + ck['f12'] * w[0])
@@ -241,7 +241,7 @@ def getweights(ele,excitedshells=None):
     cum = sum(w)
     for i in range(len(w)):
         if cum > 0.0:
-            w[i] /= cum        
+            w[i] /= cum
     return w
 
 if 'TOTAL' in  ElementL1ShellTransitions:
@@ -251,10 +251,10 @@ else:
 ElementLShellTransitions = ElementL1ShellTransitions     +  \
                            ElementL2ShellTransitions[labeloffset:] +  \
                            ElementL3ShellTransitions[labeloffset:]
-    
+
 for i in range(len(ElementLShellTransitions)):
-    ElementLShellTransitions[i]+="*"    
- 
+    ElementLShellTransitions[i]+="*"
+
 nele = len(ElementL1ShellRates)
 elements = range(1,nele+1)
 weights = []
@@ -264,7 +264,7 @@ weights = numpy.array(weights).astype(numpy.float)
 ElementLShellRates = numpy.zeros((len(ElementL1ShellRates),
                                   len(ElementLShellTransitions)),
                                   numpy.float)
-ElementLShellRates[:,0]     = numpy.arange(len(ElementL1ShellRates)) + 1 
+ElementLShellRates[:,0]     = numpy.arange(len(ElementL1ShellRates)) + 1
 n1 = len(ElementL1ShellTransitions)
 lo = labeloffset
 ElementLShellRates[:,lo:n1] = numpy.array(ElementL1ShellRates).astype(numpy.float)[:,lo:] * \

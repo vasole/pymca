@@ -52,7 +52,7 @@ class SPSFramesMcaWidget(qt.QWidget):
         self.graphWidget = MaskImageWidget.MaskImageWidget(self,
                                     imageicons=False,
                                     selection=False)
-        self.graph = self.graphWidget.graphWidget.graph 
+        self.graph = self.graphWidget.graphWidget.graph
         self.mainLayout.addWidget(self.graphWidget)
 
     def setInfo(self, info):
@@ -63,7 +63,7 @@ class SPSFramesMcaWidget(qt.QWidget):
     def setDataSource(self, data):
         self.data = data
         self.data.sigUpdated.connect(self._update)
-        
+
         dataObject = self._getDataObject()
         self.graphWidget.setImageData(dataObject.data)
         self.lastDataObject = dataObject
@@ -91,7 +91,7 @@ class SPSFramesMcaWidget(qt.QWidget):
             dataObject.info['targetwidgetid'] = id(self)
             self.data.addToPoller(dataObject)
         return dataObject
-        
+
 
     def setDataSize(self,rows,cols,selsize=None):
         self.rows= rows
@@ -107,11 +107,11 @@ class SPSFramesMcaWidget(qt.QWidget):
     def getSelection(self):
         keys = {"plot":self.idx,"x":0,"y":1}
         return [keys]
-        
+
 
 class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
     def setInfo(self, info):
-        if DEBUG: 
+        if DEBUG:
             print("info = ", info)
         if "envdict" in info:
             if len(info["envdict"].keys()):
@@ -141,12 +141,12 @@ class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
             for i in range(info['cols']):
                 cntList.append('%s_%03d' % (arrayname, i))
         self.build(cntList)
-            
+
     def getSelection(self):
         #get selected counter keys
         cnt_sel = self.getCounterSelection()
         sel_list = []
-        
+
         #build the appropriate selection for mca's
         if len(cnt_sel['cntlist']):
             if len(cnt_sel['y']): #if there is something to plot
@@ -155,8 +155,8 @@ class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
                     sel['selection'] = {}
                     sel['plot'] = 'scan'
                     sel['scanselection']  = True
-                    sel['selection']['x'] = cnt_sel['x'] 
-                    sel['selection']['y'] = [index] 
+                    sel['selection']['x'] = cnt_sel['x']
+                    sel['selection']['y'] = [index]
                     sel['selection']['m'] = cnt_sel['m']
                     sel['selection']['cntlist'] = cnt_sel['cntlist']
                     sel_list.append(sel)
@@ -187,7 +187,7 @@ class SPSMcaArrayWidget(qt.QWidget):
             layout.addWidget(self.title, 0, 0)
             layout.setAlignment(self.title, qt.Qt.AlignCenter)
         self.setTitle(title)
-        
+
     def setInfo(self, info):
         self.setDataSize(info["rows"], info["cols"])
         self.setTitle(info["Key"])
@@ -209,7 +209,7 @@ class SPSMcaArrayWidget(qt.QWidget):
 
 class SPSXiaArrayWidget(qt.QWidget):
     def __init__(self, parent=None, name="SPS_XIA_DATA", fl=0, title="XIA", size=(0,8192)):
-        if QTVERSION < '4.0.0':       
+        if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)
             layout= qt.QGridLayout(self, 2, 1)
         else:
@@ -299,7 +299,7 @@ class SPS_ImageArray(qt.QWidget):
             layout.addWidget(self.title, 0, 0)
             layout.setAlignment(self.title, qt.Qt.AlignCenter)
         self.setTitle(title)
-        
+
     def setInfo(self, info):
         self.setDataSize(info["rows"], info["cols"])
         self.setTitle(info["Key"])
@@ -321,7 +321,7 @@ class SPS_ImageArray(qt.QWidget):
         sel['selection'] = None
         sel_list.append(sel)
         return sel_list
- 
+
 class SPS_StandardArray(qt.QWidget):
     def __init__(self, parent=None, name="SPS_StandardArray", fl=0, rows=0, cols=0):
         if QTVERSION < '4.0.0':
@@ -434,9 +434,9 @@ class SPS_StandardArray(qt.QWidget):
 
 class QSpsWidget(qt.QWidget):
     HiddenArrays= ["MCA_DATA_PARAM", "XIA_STAT", "XIA_DET"]
-    WidgetArrays= {"scan":SPSScanArrayWidget, 
-                   "xia": SPSXiaArrayWidget, 
-                   "mca": SPSMcaArrayWidget, 
+    WidgetArrays= {"scan":SPSScanArrayWidget,
+                   "xia": SPSXiaArrayWidget,
+                   "mca": SPSMcaArrayWidget,
                    "array": SPS_StandardArray,
                    "image": SPS_ImageArray,
                    "frames_mca":SPSFramesMcaWidget,
@@ -646,14 +646,14 @@ class QSpsWidget(qt.QWidget):
                 arrayorder.reverse()
                 if QTVERSION < '4.0.0':
                     for name in arrayorder:
-                        self.arrayList.insertItem(qt.QListViewItem(self.arrayList, 
+                        self.arrayList.insertItem(qt.QListViewItem(self.arrayList,
                             "", name, str(arraylist[name][0]), str(arraylist[name][1])))
                 else:
                     for name in arrayorder:
-                        item = (qt.QTreeWidgetItem(self.arrayList, 
+                        item = (qt.QTreeWidgetItem(self.arrayList,
                             ["", name, str(arraylist[name][0]), str(arraylist[name][1])]))
                 self.refreshDataSelection()
-            
+
         self.__getParamWidget("empty")
 
     def __arraySelection(self):
@@ -771,7 +771,7 @@ class QSpsWidget(qt.QWidget):
                                         ".c.%d" % int(selection['y'])
                      sel[arrayname]['cols'].append({'x':selection['x'],'y':selection['y']})
                 elif selection['plot'] == 'rows':
-                     sel[arrayname]['rows'].append({'x':selection['x'],'y':selection['y']})                              
+                     sel[arrayname]['rows'].append({'x':selection['x'],'y':selection['y']})
                      selsignal["selection"] = {"rows":{}}
                      selsignal["selection"]["rows"] = {}
                      selsignal["selection"]["rows"]["x"] = [selection['x']]
@@ -785,7 +785,7 @@ class QSpsWidget(qt.QWidget):
                                         ".r.%d" % int(selection['y'])
                 elif selection['plot'] == 'XIA':
                      sel[arrayname]['rows'].append({'x':selection['x'],
-                                            'y':selection['y']})                              
+                                            'y':selection['y']})
                      #selsignal["Key"] += ".r.%d" % int(selection['y'])
                      selsignal["selection"] = {"rows":{}, "XIA":True}
                      selsignal["selection"]["rows"] = {}
@@ -821,9 +821,9 @@ class QSpsWidget(qt.QWidget):
                          selsignal['scanselection'] = True
                          #print "cheeting"
                          #selsignal['scanselection'] = False
-                         
+
                 elif selection['plot'] == 'image':
-                    selsignal["selection"] = selection['selection']   
+                    selsignal["selection"] = selection['selection']
                     selsignal['legend'] = self.data.sourceName + " " + \
                                               selsignal['Key']
                     selsignal['scanselection']  = False
@@ -846,8 +846,8 @@ class QSpsWidget(qt.QWidget):
             if DEBUG:
                 print("Select event")
             sel = {}
-            sel['SourceType'] = SOURCE_TYPE 
-            sellistsignal = []           
+            sel['SourceType'] = SOURCE_TYPE
+            sellistsignal = []
             for selection in selkeys:
                 selsignal = {}
                 selsignal['SourceType'] = self.data.sourceType
@@ -863,7 +863,7 @@ class QSpsWidget(qt.QWidget):
                     sel[arrayname] = {'rows':[],'cols':[]}
                 if selection['plot'] == 'XIA':
                      sel[arrayname]['rows'].append({'x':selection['x'],
-                                            'y':selection['y']})                              
+                                            'y':selection['y']})
                      #selsignal["Key"] += ".r.%d" % int(selection['y'])
                      selsignal["selection"] = {"rows":{}, "XIA":True}
                      selsignal["selection"]["rows"] = {}
@@ -893,7 +893,7 @@ class QSpsWidget(qt.QWidget):
                                         ".c.%d" % int(selection['y'])
                 elif selection['plot'] == 'rows':
                      sel[arrayname]['rows'].append({'x':selection['x'],
-                                            'y':selection['y']})                              
+                                            'y':selection['y']})
                      #selsignal["Key"] += ".r.%d" % int(selection['y'])
                      selsignal["selection"] = {"rows":{}}
                      selsignal["selection"]["rows"] = {}
@@ -929,14 +929,14 @@ class QSpsWidget(qt.QWidget):
                          #print "cheeting"
                          #selsignal['scanselection'] = False
                 elif selection['plot'] == 'image':
-                    selsignal["selection"] = selection['selection']   
+                    selsignal["selection"] = selection['selection']
                     selsignal['legend'] = self.data.sourceName + " " + \
                                               selsignal['Key']
                     selsignal['scanselection']  = False
                     selsignal['imageselection'] = True
 
                 sellistsignal.append(selsignal)
-            if self.selection is None: 
+            if self.selection is None:
                 self.setSelected([sel],reset=1)
             else:
                 self.setSelected([sel],reset=0)
@@ -951,7 +951,7 @@ class QSpsWidget(qt.QWidget):
         if self.currentArray is not None:
             for sel in parwid.getSelection():
                 sel["SourceName"]= self.currentSpec
-                sel['SourceType'] = SOURCE_TYPE            
+                sel['SourceType'] = SOURCE_TYPE
                 sel["Key"]= self.currentArray
                 selkeys.append(sel)
         return selkeys
@@ -966,7 +966,7 @@ class QSpsWidget(qt.QWidget):
                 print("Remove Event")
                 print("self.selection before = ",self.selection)
             returnedselection=[]
-            sellistsignal = []           
+            sellistsignal = []
             for selection in selkeys:
                 selsignal = {}
                 selsignal['SourceType'] = self.data.sourceType
@@ -975,7 +975,7 @@ class QSpsWidget(qt.QWidget):
                 selsignal['Key'] = selection['Key']
                 sel = {}
                 sel['SourceName'] = selection['SourceName']
-                sel['SourceType'] = SOURCE_TYPE            
+                sel['SourceType'] = SOURCE_TYPE
                 sel['Key'] = selection['Key']
                 arrayname = selection['Key']
                 sel[arrayname] = {'rows':[],'cols':[]}
@@ -1007,7 +1007,7 @@ class QSpsWidget(qt.QWidget):
                                         ".r.%d" % int(selection['y'])
                 elif selection['plot'] == 'XIA':
                      sel[arrayname]['rows'].append({'x':selection['x'],
-                                            'y':selection['y']})                              
+                                            'y':selection['y']})
                      #selsignal["Key"] += ".r.%d" % int(selection['y'])
                      selsignal["selection"] = {"rows":{}, "XIA":True}
                      selsignal["selection"]["rows"] = {}
@@ -1029,7 +1029,7 @@ class QSpsWidget(qt.QWidget):
                      selsignal['scanselection'] = True
 
                 elif selection['plot'] == 'image':
-                    selsignal["selection"] = selection['selection']   
+                    selsignal["selection"] = selection['selection']
                     selsignal['legend'] = self.data.sourceName + " " + \
                                               selsignal['Key']
                     selsignal['scanselection']  = False
@@ -1052,25 +1052,25 @@ class QSpsWidget(qt.QWidget):
                                 for couple in  sel[arrayname]['rows']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                         index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
-                                        del self.selection[sel['SourceName']][arrayname]['rows'][index]  
+                                        del self.selection[sel['SourceName']][arrayname]['rows'][index]
                                 for couple in  sel[arrayname]['cols']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['cols']:
                                         index= self.selection[sel['SourceName']][arrayname]['cols'].index(couple)
                                         del self.selection[sel['SourceName']][arrayname]['cols'][index]
                                 seln = {}
-                                seln['SourceName'] = sel['SourceName'] 
-                                seln['SourceType'] = SOURCE_TYPE            
+                                seln['SourceName'] = sel['SourceName']
+                                seln['SourceType'] = SOURCE_TYPE
                                 seln['Key']        = sel['Key']
                                 seln[seln['Key']]  = self.selection[seln['SourceName']][seln['Key']]
                                 self.setSelected([seln],reset=0)
             self.sigRemoveSelection.emit(sellistsignal)
 
-            
+
     def removeSelection(self,selection):
         if type(selection) != type([]):
             selection=[selection]
         for sel in selection:
-                arrayname = sel['Key']                
+                arrayname = sel['Key']
                 if self.selection is not None:
                     if DEBUG:
                         print("step 1")
@@ -1086,19 +1086,19 @@ class QSpsWidget(qt.QWidget):
                                 for couple in  sel[arrayname]['rows']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['rows']:
                                         index= self.selection[sel['SourceName']][arrayname]['rows'].index(couple)
-                                        del self.selection[sel['SourceName']][arrayname]['rows'][index]  
+                                        del self.selection[sel['SourceName']][arrayname]['rows'][index]
                                 for couple in  sel[arrayname]['cols']:
                                     if couple in  self.selection[sel['SourceName']][arrayname]['cols']:
                                         index= self.selection[sel['SourceName']][arrayname]['cols'].index(couple)
                                         del self.selection[sel['SourceName']][arrayname]['cols'][index]
                                 seln = {}
-                                seln['SourceName'] = sel['SourceName'] 
-                                seln['SourceType'] = SOURCE_TYPE            
+                                seln['SourceName'] = sel['SourceName']
+                                seln['SourceType'] = SOURCE_TYPE
                                 seln['Key']        = sel['Key']
                                 seln[seln['Key']]  = self.selection[seln['SourceName']][seln['Key']]
                                 self.setSelected([seln],reset=0)
         self.sigRemoveSelection.emit((selection))
-                             
+
     def setSelected(self,sellist,reset=1):
         if DEBUG:
             print("setSelected(self,sellist,reset=1) called")
@@ -1123,11 +1123,11 @@ class QSpsWidget(qt.QWidget):
             if 'rows' in sel[selkey]:
                 for rowsel in sel[selkey]['rows']:
                     if rowsel not in self.selection[specname][selkey]['rows']:
-                        self.selection[specname][selkey]['rows'].append(rowsel)   
+                        self.selection[specname][selkey]['rows'].append(rowsel)
             if 'cols' in sel[selkey]:
                 for rowsel in sel[selkey]['cols']:
                     if rowsel not in self.selection[specname][selkey]['cols']:
-                        self.selection[specname][selkey]['cols'].append(rowsel)   
+                        self.selection[specname][selkey]['cols'].append(rowsel)
         if DEBUG:
             print("self.selection after = ",self.selection)
         self.__refreshSelection()
@@ -1149,7 +1149,7 @@ class QSpsWidget(qt.QWidget):
                 selection.append(sel)
         return selection
 
-        
+
     def __refreshSelection(self):
         return
         if DEBUG:
@@ -1175,7 +1175,7 @@ class QSpsWidget(qt.QWidget):
                 self.cntTable.markCntSelected(scandict['scan'])
             else:
                 self.cntTable.markCntSelected({})
-                
+
     def isSelectionUpdated(self,sellist):
         outsel = []
         if type(sellist) != type([]):
@@ -1205,10 +1205,10 @@ class QSpsWidget(qt.QWidget):
                                                    shm:{'rows':rows,
                                                         'cols':cols},
                                                     'SourceType':'SPS'})
-        return outsel                                    
-                                        
-                                        
-        
+        return outsel
+
+
+
 
 def test():
     import sys

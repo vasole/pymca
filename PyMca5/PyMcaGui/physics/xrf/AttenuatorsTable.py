@@ -156,7 +156,7 @@ class CompoundFittingTab(qt.QWidget):
             glt.addWidget(label, r, c)
             glt.addWidget(cbox, r, c + 1)
             glt.addWidget(qt.QWidget(grid), r, c + 2)
-        
+
         layout.addWidget(grid)
         self.mainTab = qt.QTabWidget(self)
         layout.addWidget(self.mainTab)
@@ -226,11 +226,11 @@ class CompoundFittingTab0(qt.QWidget):
         gl.addWidget(fixedLabel, 2, 2)
         gl.addWidget(valueLabel, 2, 3)
         gl.addWidget(errorLabel, 2, 5)
-        
+
         #density
         densityLabel = qt.QLabel(grid)
         densityLabel.setText("Density")
-        
+
         self.densityCheck = qt.QCheckBox(grid)
         self.densityCheck.setText(str(""))
 
@@ -249,11 +249,11 @@ class CompoundFittingTab0(qt.QWidget):
         gl.addWidget(self.densityValue, 3, 3)
         gl.addWidget(densitySepLabel, 3, 4)
         gl.addWidget(self.densityError, 3, 5)
-        
+
         #thickness
         thicknessLabel = qt.QLabel(grid)
         thicknessLabel.setText("Thickness")
-        
+
         self.thicknessCheck = qt.QCheckBox(grid)
         self.thicknessCheck.setText(str(""))
 
@@ -271,13 +271,13 @@ class CompoundFittingTab0(qt.QWidget):
         gl.addWidget(self.thicknessValue, 4, 3)
         gl.addWidget(thicknessSepLabel, 4, 4)
         gl.addWidget(self.thicknessError, 4, 5)
-        
+
         Line = qt.QFrame(grid)
         Line.setFrameShape(qt.QFrame.HLine)
         Line.setFrameShadow(qt.QFrame.Sunken)
         Line.setFrameShape(qt.QFrame.HLine)
         gl.addMultiCellWidget(Line, 5, 5, 0, 5)
-        
+
         layout.addWidget(grid)
         """
         self.matrixGeometry = MatrixEditor.MatrixEditor(self,"tabMatrix",
@@ -285,14 +285,14 @@ class CompoundFittingTab0(qt.QWidget):
                                    density=False, thickness=False,
                                    size="image2")
         layout.addWidget(self.matrixGeometry)
-        
+
         text  ="This matrix definition will only be "
         text +="considered if Matrix is selected and material is set to "
         text +="MULTILAYER in the ATTENUATORS tab.\n  "
         self.matrixInfo  = qt.QLabel(self)
         layout.addWidget(self.matrixInfo)
         self.matrixInfo.setText(text)
-        """ 
+        """
         self.matrixTable = AttenuatorsTableWidget(self, name,
                                                   attenuators=compoundlist,
                                                   matrixmode=False,
@@ -330,7 +330,7 @@ class AttenuatorsTableWidget(QTable):
         self.funnyFiltersMode = funnyfilters
         if self.compoundMode:
             self.funnyFiltersMode = False
-            labels = ["Compound", "Name", "Material", "Initial Amount"]        
+            labels = ["Compound", "Name", "Material", "Initial Amount"]
         else:
             if self.funnyFiltersMode:
                 labels = ["Attenuator", "Name", "Material",
@@ -369,7 +369,7 @@ class AttenuatorsTableWidget(QTable):
         if self.compoundMode:
             self.resizeColumnToContents(0)
             self.resizeColumnToContents(1)
-                                           
+
         self.sigValueChanged[int,int].connect(self.mySlot)
 
     def __build(self, nfilters=12):
@@ -416,7 +416,7 @@ class AttenuatorsTableWidget(QTable):
                 combo.sigMaterialComboBoxSignal.connect(self._comboSlot)
             return
         selfnumRows = self.rowCount()
-            
+
         for idx in range(selfnumRows - n):
             text = "Filter% 2d" % idx
             item = qt.QCheckBox(self)
@@ -435,7 +435,7 @@ class AttenuatorsTableWidget(QTable):
 
             #a = qt.QStringList()
             a = []
-            #a.append('')            
+            #a.append('')
             for key in matlist:
                 a.append(key)
             combo = MyQComboBox(self, options=a, row=idx, col = 2)
@@ -477,7 +477,7 @@ class AttenuatorsTableWidget(QTable):
             combo.setEditable(True)
             self.setCellWidget(idx, 2, combo)
             combo.sigMaterialComboBoxSignal.connect(self._comboSlot)
-            
+
         #Detector
         item = qt.QCheckBox(self)
         idx = self.rowCount() - 2
@@ -503,11 +503,11 @@ class AttenuatorsTableWidget(QTable):
         else:
             item.setText(text)
         item.setFlags(qt.Qt.ItemIsSelectable | qt.Qt.ItemIsEnabled)
-            
+
         combo = MyQComboBox(self, options=a, row=idx, col=2)
         combo.setEditable(True)
         self.setCellWidget(idx, 2, combo)
-        #Matrix            
+        #Matrix
         item = qt.QCheckBox(self)
         idx = self.rowCount() - 1
         self.setCellWidget(idx, 0, item)
@@ -543,7 +543,7 @@ class AttenuatorsTableWidget(QTable):
         self.combo = MyQComboBox(self, options=a, row=idx, col=2)
         self.setCellWidget(idx, 2, self.combo)
         self.combo.sigMaterialComboBoxSignal.connect(self._comboSlot)
-            
+
     def mySlot(self,row,col):
         if DEBUG:
             print("Value changed row = %d cole = &d" % (row, col))
@@ -604,7 +604,7 @@ class AttenuatorsTableWidget(QTable):
             #check if single element
             if text in Elements.Element.keys():
                 defaultDensity = Elements.Element[text]['density']
-            else: 
+            else:
                 elts = [ w for w in re.split('[0-9]', text) if w != '']
                 nbs = [ int(w) for w in re.split('[a-zA-Z]', text) if w != '']
                 if len(elts) == 1 and len(nbs) == 1:
@@ -615,7 +615,7 @@ class AttenuatorsTableWidget(QTable):
                 if 'Density' in Elements.Material[key]:
                     defaultDensity = Elements.Material[key]['Density']
                 if 'Thickness' in Elements.Material[key]:
-                    defaultThickness = Elements.Material[key]['Thickness'] 
+                    defaultThickness = Elements.Material[key]['Thickness']
         if defaultDensity >= 0.0:
             self.setText(row, 3, "%g" % defaultDensity)
         elif currentDensity <= 0:

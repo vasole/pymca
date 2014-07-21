@@ -16,17 +16,17 @@
 #
 #############################################################################*/
 /***************************************************************************
- *  
+ *
  *  File:            SpecFileP.h
- *  
+ *
  *  Description:     Include file for treating spec data files.
- * 
+ *
  *  Author:          Vicente Rey
  *
  *  Created:         2 March 1995
- *  
+ *
  *    (copyright by E.S.R.F.  March 1995)
- * 
+ *
  ***************************************************************************/
 #ifndef SPECFILE_P_H
 #define SPECFILE_P_H

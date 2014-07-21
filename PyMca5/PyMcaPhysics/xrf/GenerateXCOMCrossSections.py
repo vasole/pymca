@@ -77,10 +77,10 @@ for i in range(1, 101):
 
     # coherent (cm2/g)
     cohe = dataDict['coherent']
-    
+
     # incoherent
     incohe = dataDict['compton']
-    
+
     # photoelectric
     photo = dataDict['photo']
 
@@ -104,7 +104,7 @@ for i in range(1, 101):
     text  = '#S %d %s\n' % (i, ele)
     text += '#N 5\n'
     labels = '#L PhotonEnergy[keV]'
-    labels += '  Rayleigh(coherent)[barn/atom]' 
+    labels += '  Rayleigh(coherent)[barn/atom]'
     labels += '  Compton(incoherent)[barn/atom]'
     labels += '  CoherentPlusIncoherent[barn/atom]'
     labels += '  Photoelectric[barn/atom]'

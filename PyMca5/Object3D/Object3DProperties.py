@@ -98,7 +98,7 @@ class Object3DDrawingModeWidget(qt.QGroupBox):
         else:
             i = mode
         self.buttonGroup.button(i).setChecked(True)
-    
+
     def getDrawingMode(self):
         mode = 0
         n = self.buttonGroup.checkedId()
@@ -238,7 +238,7 @@ class Object3DAspect(qt.QGroupBox):
 
 
         self.boundingBoxCheckBox.setChecked(showBBox)
-        
+
         for i in [0, 1, 2]:
             self.showLimitsCheckBoxes[i].setChecked(showLimits[i])
 
@@ -271,7 +271,7 @@ class Object3DScale(qt.QGroupBox):
             lineEdit = qt.QLineEdit(self)
             v = qt.QDoubleValidator(lineEdit)
             lineEdit.setValidator(v)
-            
+
             self.validatorList.append(v)
             self.l.addWidget(label, i, 0)
             self.l.addWidget(lineEdit, i, 1)
@@ -405,7 +405,7 @@ class Object3DScale(qt.QGroupBox):
         for i in range(3):
             if abs((scale[i]-oldScale[i])) > 1.0e-10:
                 emit = True
-                ddict['magnification'] = scale[i]/oldScale[i] 
+                ddict['magnification'] = scale[i]/oldScale[i]
                 break
         if not emit:
             return
@@ -427,7 +427,7 @@ class Object3DScale(qt.QGroupBox):
             print("setParameters", ddict)
         if ddict is None:ddict = {}
         scale = ddict.get('scale', [1.0, 1.0, 1.0])
-        
+
         self.xScaleSlider.setValue(scale[0])
         self.yScaleSlider.setValue(scale[1])
         self.zScaleSlider.setValue(scale[2])
@@ -479,13 +479,13 @@ class Object3DProperties(qt.QWidget):
         if event is None:
             ddict['event'] = "PropertiesUpdated"
         else:
-            ddict['event'] = event 
+            ddict['event'] = event
         self.sigObject3DPropertiesSignal.emit(ddict)
 
     def _privateCallBack(self):
         ddict = self.getParameters()
         ddict['event'] = "PropertiesUpdated"
-        self.sigObject3DPropertiesSignal.emit(ddict)        
+        self.sigObject3DPropertiesSignal.emit(ddict)
 
     def showPrivateInterface(self):
         if self.privateWidget is not None:
@@ -495,7 +495,7 @@ class Object3DProperties(qt.QWidget):
             text += " configuration interface"
             qt.QMessageBox.information(self,
                 "No private configuration", text)
-                
+
     def getParameters(self):
         ddict ={}
         ddict['common'] = self.drawingModeWidget.getParameters()
@@ -546,5 +546,5 @@ if __name__ == "__main__":
     elif 1:
         w = Object3DScale()
         w.sigObject3DScaleSignal.connect(myslot)
-    w.show()    
+    w.show()
     app.exec_()

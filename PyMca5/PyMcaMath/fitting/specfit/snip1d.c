@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-/* 
+/*
    Implementation of the algorithm SNIP in 1D described in
    Miroslav Morhac et al. Nucl. Instruments and Methods in Physics Research A401 (1997) 113-132.
 
@@ -62,10 +62,10 @@ void lls_inv(double *data, int size)
 	{
 		/* slightly different than the published formula because
 		   with the original formula:
-		   
+
 		   tmp = exp(exp(data[i]-1.0)-1.0);
 		   data[i] = tmp * tmp - 1.0;
-		   
+
 		   one does not recover the original data */
 
 		tmp = exp(exp(data[i])-1.0)-1.0;
@@ -102,14 +102,14 @@ void lsdf(double *data, int size, int fwhm, double f, double A, double M, double
 				data[channel] = S /(2*i+1);
 				break;
 			}
-			dhelp = (R+1)/(L+1); 
+			dhelp = (R+1)/(L+1);
 			if ((dhelp < ratio) && (dhelp > (1/ratio)))
 			{
 				if (S<(A*sqrt(data[channel])))
 				{
 					data[channel] = S /(2*i+1);
 					break;
-				}				
+				}
 			}
 			i=i-1;
 		}
@@ -132,7 +132,7 @@ void snip1d_multiple(double *data, int n_channels, int snip_width, int n_spectra
 
 	i = (int) (0.5 * snip_width);
 	/* lsdf(data, size, i, 1.5, 75., 10., 1.3); */
-	
+
 	w = (double *) malloc(n_channels * sizeof(double));
 
 	for (j=0; j < n_spectra; j++)

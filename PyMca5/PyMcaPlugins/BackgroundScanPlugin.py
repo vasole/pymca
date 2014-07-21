@@ -64,14 +64,14 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
                              "Deglitch with SNIP 1D Background"]
         self.subtract1DSnipParameters = None
         self.deglitch1DSnipParameters = None
-        
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         if 0:
             names = self.methodDict.keys()

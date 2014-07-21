@@ -37,7 +37,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 
 
-################################################################################  
+################################################################################
 import numpy
 from PyMca5.PyMcaIO import specfilewrapper as specfile
 ################################################################################
@@ -75,7 +75,7 @@ class SpecFileLayer(object):
         if 'SourceName' in index:
             self.SetSource(index['SourceName'])
             if 'Key' in index:
-                info=self.GetData(index['Key'])   
+                info=self.GetData(index['Key'])
                 return info[0]
 
     def AppendPage(self,scan_info, scan_data):
@@ -107,7 +107,7 @@ class SpecFileLayer(object):
         else:
             self.SourceName= source_name
             return 1
-        
+
     def Refresh(self):
         self.SourceInfo= None
         if self.Source is not None:
@@ -135,7 +135,7 @@ class SpecFileLayer(object):
         """
         if self.SourceName == None: return None
 
-        if key is None: 
+        if key is None:
                 if self.SourceInfo is None:
                     self.SourceInfo= self.__GetSourceInfo()
                 return self.SourceInfo
@@ -144,11 +144,11 @@ class SpecFileLayer(object):
             if key_type=="scan": scan_key= key
             elif key_type=="mca": (scan_key, mca_no)=self.__GetMcaPars(key)
             return self.__GetScanInfo(scan_key)
- 
+
 
     def LoadSource(self,key_list="ALL",append=0,invalidate=1):
         """
-        Creates a given number of pages, getting data from the actual 
+        Creates a given number of pages, getting data from the actual
         source (set by SetSource).
         Parameters:
         * key_list: list of all keys to be read from source. It is a list of strings
@@ -248,7 +248,7 @@ class SpecFileLayer(object):
         while mot1_idx<mot2_max and mot2_array[mot1_idx]==mot2_array[0]: mot1_idx+=1
         mot2_idx= scan_array.shape[1]/mot1_idx
         cnts_idx= scan_array.shape[0]
-        return (mot1_idx, mot2_idx, cnts_idx)        
+        return (mot1_idx, mot2_idx, cnts_idx)
 
     def __GetScanMotorRange(self, info, obj):
         name= info["LabelNames"][0]
@@ -259,7 +259,7 @@ class SpecFileLayer(object):
     def __GetMeshMotorRange(self, info, obj):
         return ()
 
-    def __LoadMcaData(self, key, file_info={}):        
+    def __LoadMcaData(self, key, file_info={}):
         key_split= key.split(".")
         scan_key= key_split[0]+"."+key_split[1]
         scan_obj= self.Source.select(scan_key)
@@ -284,7 +284,7 @@ class SpecFileLayer(object):
                     mca_range[idx]= ("Channels", mca_length, None)
                     scan_info["McaRange"]= mca_range
                     return self.AppendPage(scan_info, scan_data)
-                except: 
+                except:
                     raise IOError("SF_SCAN+SF_MCA read failed")
             elif scan_type==SF_NMCA:
                 try:
@@ -297,7 +297,7 @@ class SpecFileLayer(object):
                     mca_range[1]= ("Channels", mca_length, None)
                     scan_info["McaRange"]= mca_range
                     return self.AppendPage(scan_info, scan_data)
-                except: 
+                except:
                     raise IOError("SF_NMCA read failed")
             elif scan_type==SF_MESH+SF_MCA:
                 try:
@@ -310,7 +310,7 @@ class SpecFileLayer(object):
                             mca_no= 1 + idx1 + idx2*mot1
                             scan_data[idx1,idx2,:]= scan_obj.mca(mca_no)
                         return  self.AppendPage(scan_info, scan_data)
-                except: 
+                except:
                     raise IOError("SF_MESH+SF_MCA read failed")
             elif scan_type==SF_SCAN+SF_NMCA:
                 try:
@@ -338,10 +338,10 @@ class SpecFileLayer(object):
                 #if scan_type==SF_NMCA or \
                 #   scan_type==SF_SCAN+SF_MCA or \
                 #   scan_type==SF_MESH+SF_MCA:
-                        try: 
+                        try:
                                 mca_no= int(key_split[2])
                                 scan_data= scan_obj.mca(mca_no)
-                        except: 
+                        except:
                                 raise IOError("Single MCA read failed")
                 if scan_data is not None:
                         scan_info.update(self.__GetMcaInfo(mca_no, scan_obj, scan_info))
@@ -357,7 +357,7 @@ class SpecFileLayer(object):
                     try:
                         mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                         scan_data= scan_obj.mca(mca_no)
-                    except: 
+                    except:
                         raise IOError("SF_SCAN+SF_NMCA read failed")
                 elif scan_type==SF_MESH+SF_MCA:
                     try:
@@ -366,13 +366,13 @@ class SpecFileLayer(object):
                         #mca_no= 1 + int(key_split[2]) + int(key_split[3])*mot1
                         mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                         scan_data= scan_obj.mca(mca_no)
-                    except: 
+                    except:
                         raise IOError("SF_MESH+SF_MCA read failed")
                 elif scan_type&SF_NMCA or scan_type&SF_MCA:
                     try:
                         mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
                         scan_data= scan_obj.mca(mca_no)
-                    except: 
+                    except:
                         raise IOError("SF_SCAN+SF_NMCA read failed")
                 else:
                     print("Unknown scan!!!!!!!!!!!!!!!!")
@@ -463,7 +463,7 @@ class SpecFileLayer(object):
         for i in range(len(newlist)):
             newlist[i]="%d.%d" % (newlist[i],newlistcount[i])
         return newlist
- 
+
 
     def __GetKeyType (self,key):
         count = key.count('.')
@@ -539,7 +539,7 @@ class SpecFileLayer(object):
                         try:
                                 cval= [ float(ctxt[1]), float(ctxt[2]), float(ctxt[3]) ]
                                 mcainfo["McaCalib"]= cval
-                        except: 
+                        except:
                             mcainfo["McaCalib"]=[0.0,1.0,0.0]
         ctime= scandata.header("@CTIME")
         if len(ctime):
@@ -550,7 +550,7 @@ class SpecFileLayer(object):
                                 mcainfo["McaLiveTime"]= float(ctxt[2])
                                 mcainfo["McaRealTime"]= float(ctxt[3])
                         except: pass
-                        
+
         chann = scandata.header("@CHANN")
         if len(chann):
             ctxt= chann[0].split()
@@ -559,7 +559,7 @@ class SpecFileLayer(object):
             else:
                 mcainfo['Channel0'] = 0.0
         else:
-            mcainfo['Channel0'] = 0.0                
+            mcainfo['Channel0'] = 0.0
         return mcainfo
 
 
@@ -587,7 +587,7 @@ class SpecFileLayer(object):
 
 ################################################################################
 #EXEMPLE CODE:
- 
+
 if __name__ == "__main__":
     import sys,time
 

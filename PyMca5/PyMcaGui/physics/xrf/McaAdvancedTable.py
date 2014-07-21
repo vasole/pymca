@@ -60,8 +60,8 @@ class McaTable(QTable):
                 item = qt.QTableWidgetItem(self.labels[i],
                                            qt.QTableWidgetItem.Type)
             item.setText(self.labels[i])
-            self.setHorizontalHeaderItem(i,item)            
-                
+            self.setHorizontalHeaderItem(i,item)
+
         self.regionlist=[]
         self.regiondict={}
         self.verticalHeader().setClickable(True)
@@ -71,7 +71,7 @@ class McaTable(QTable):
         #self.connect(self,qt.SIGNAL("selectionChanged()"),self.__myslot)
         #self.setSelectionMode(qttable.QTable.SingleRow)
 
-                
+
     def fillfrommca(self,result,diag=1):
         line=0
         #calculate the number of rows
@@ -107,7 +107,7 @@ class McaTable(QTable):
                         item.setText(text)
                         item.setBackgroundColor(color)
                         item.setFlags(qt.Qt.ItemIsSelectable|
-                                      qt.Qt.ItemIsEnabled)                    
+                                      qt.Qt.ItemIsEnabled)
                 else:
                     item = self.item(line, col)
                     if item is not None:
@@ -140,7 +140,7 @@ class McaTable(QTable):
                         item.setText(text)
                     item.setBackgroundColor(color)
                     item.setFlags(qt.Qt.ItemIsSelectable|
-                                  qt.Qt.ItemIsEnabled)                    
+                                  qt.Qt.ItemIsEnabled)
                     col=col+1
                 line+=1
             for peak0 in result[group]['escapepeaks']:
@@ -192,7 +192,7 @@ class McaTable(QTable):
                 pass
             elif param['name'].find(fitlabel) != -1:
                 value      = param['fitresult']
-                sigmavalue = param['sigma'] 
+                sigmavalue = param['sigma']
                 values.append(value)
                 sigmavalues.append(sigmavalue)
         return fitlabel, values, sigmavalues
@@ -252,10 +252,10 @@ class McaTable(QTable):
             moretext = ""
             item = self.item(r, 0)
             if item is not None:
-                moretext = str(item.text()) 
+                moretext = str(item.text())
             if len(moretext):
                 color = "white"
-                b="<b>"                
+                b="<b>"
             else:
                 b=""
                 color = lemon
@@ -263,7 +263,7 @@ class McaTable(QTable):
                 moretext = ""
                 item = self.item(r, c)
                 if item is not None:
-                    moretext = str(item.text()) 
+                    moretext = str(item.text())
                 if len(moretext):
                     finalcolor = color
                 else:
@@ -276,11 +276,11 @@ class McaTable(QTable):
                 if len(b):
                     text+=("</td>")
                 else:
-                    text+=("</b></td>") 
+                    text+=("</b></td>")
             moretext = ""
             item = self.item(r, 0)
             if item is not None:
-                moretext = str(item.text()) 
+                moretext = str(item.text())
             if len(moretext):
                 text+=("</b>")
             text+=("</tr>")

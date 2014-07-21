@@ -80,8 +80,8 @@ static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
 static PyObject *get2DGridFromXY(PyObject *self, PyObject *args)
 {
 	/* One can do this in pure python, but our goal is to keep memory
-	   needs as low as possible in the process: 
-        #fast method to generate the vertices 
+	   needs as low as possible in the process:
+        #fast method to generate the vertices
         self.vertices = numpy.zeros((xsize * ysize, 3), numpy.float32)
         A=numpy.outer(x, numpy.ones(len(y), numpy.float32))
         B=numpy.outer(y, numpy.ones(len(x), numpy.float32))

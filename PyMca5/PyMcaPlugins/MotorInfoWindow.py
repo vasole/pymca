@@ -37,9 +37,9 @@ else:
 
 DEBUG = 0
 class MotorInfoComboBox(qt.QComboBox):
-    
+
     loadColumnSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent, mlist, nCol):
         qt.QComboBox.__init__(self,  parent)
         self.motorNamesList = [""] + mlist
@@ -56,7 +56,7 @@ class MotorInfoComboBox(qt.QComboBox):
 
     def currentMotor(self):
         return str(self.currentText())
-        
+
     def updateMotorNamesList(self, newMotorNamesList):
         currentMotorName = self.currentMotor()
         self.clear()
@@ -69,11 +69,11 @@ class MotorInfoComboBox(qt.QComboBox):
         self.setCurrentIndex(newIndex)
 
 class MotorInfoHeader(qt.QHeaderView):
-    
+
     xOffsetLeft = 5
     xOffsetRight = -35
     yOffset = -1
-    
+
     def __init__(self, parent):
         qt.QHeaderView.__init__(self, qt.Qt.Horizontal, parent)
         self.boxes = []
@@ -91,9 +91,9 @@ class MotorInfoHeader(qt.QHeaderView):
                 newBox.loadColumnSignal.connect(self.parent().loadColumn)
                 newBox.resize(self.sectionSize(idx) - 30, self.height())
                 self.boxes[idx] = newBox
-            self.boxes[idx].setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft, 
-                                      self.yOffset, 
-                                      self.sectionSize(idx) +  self.xOffsetRight, 
+            self.boxes[idx].setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft,
+                                      self.yOffset,
+                                      self.sectionSize(idx) +  self.xOffsetRight,
                                       self.height())
             #if idx > 0:
             #    self.setTabOrder(self.boxes[idx-1], self.boxes[idx])
@@ -104,7 +104,7 @@ class MotorInfoHeader(qt.QHeaderView):
         for idx in range(self.visualIndex(index), len(self.boxes)):
             if idx > 0:
                 logical = self.logicalIndex (idx)
-                self.boxes[idx].setGeometry(self.sectionViewportPosition(logical) + self.xOffsetLeft, 
+                self.boxes[idx].setGeometry(self.sectionViewportPosition(logical) + self.xOffsetLeft,
                                           self.yOffset,
                                           self.sectionSize(logical) +  self.xOffsetRight,
                                           self.height())
@@ -117,18 +117,18 @@ class MotorInfoHeader(qt.QHeaderView):
         idx = self.count()-1
         newBox = MotorInfoComboBox(self, self.parent().motorNamesList, idx)
         newBox.loadColumnSignal.connect(self.parent().loadColumn)
-        newBox.setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft, 
-                           self.yOffset, 
-                           self.sectionSize(idx) +  self.xOffsetRight, 
+        newBox.setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft,
+                           self.yOffset,
+                           self.sectionSize(idx) +  self.xOffsetRight,
                            self.height() )
         newBox.show()
         self.boxes += [newBox]
 
     def fixComboPositions(self):
         for idx in range(1, self.count()):
-            self.boxes[idx].setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft, 
-                                      self.yOffset, 
-                                      self.sectionSize(idx) +  self.xOffsetRight, 
+            self.boxes[idx].setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft,
+                                      self.yOffset,
+                                      self.sectionSize(idx) +  self.xOffsetRight,
                                       self.height())
 
 class MotorInfoTable(qt.QTableWidget):
@@ -298,14 +298,14 @@ def main():
                'Motor 8': 0.19806882661182112, 'Motor 9': 0.4844754557916431, 'Motor 4': 0.3502522172639875},
                {'Motor18': 0.4707468826876532, 'Motor17': 0.6958160702991127, 'Motor16': 0.8257808117546283,
                'Motor13': 0.09084289261899736, 'Motor12': 0.5190253643331453, 'Motor11': 0.21344565983311958},
-               {'Motor12': 0.6504890336783156, 'Motor11': 0.44400576643956124, 'Motor10': 0.613870067851634, 
-               'Motor 8': 0.901968648110583, 'Motor 9': 0.3197687710845185, 'Motor 4': 0.5714322786278168}, 
+               {'Motor12': 0.6504890336783156, 'Motor11': 0.44400576643956124, 'Motor10': 0.613870067851634,
+               'Motor 8': 0.901968648110583, 'Motor 9': 0.3197687710845185, 'Motor 4': 0.5714322786278168},
                {'Motor13': 0.6491598094029021, 'Motor12': 0.2975843286841311, 'Motor11': 0.006312468992195397,
                'Motor 9': 0.014325738753558803, 'Motor 4': 0.8185362197656616, 'Motor 5': 0.6643614796103005}]
     app = qt.QApplication(sys.argv)
     w = MotorInfoDialog(None, legends, motors)
     w.show()
     app.exec_()
-    
+
 if __name__ == '__main__':
     main()

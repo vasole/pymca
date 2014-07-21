@@ -34,7 +34,7 @@ import os
 import numpy
 from PyMca5.PyMcaIO import specfile
 from PyMca5 import PyMcaDataDir
-    
+
 dirname   = PyMcaDataDir.PYMCA_DATA_DIR
 inputfile = os.path.join(dirname, "MShellRates.dat")
 if not os.path.exists(inputfile):
@@ -91,7 +91,7 @@ if os.path.exists(fname):
     sf = None
 
 
-Elements = ['H', 'He', 
+Elements = ['H', 'He',
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
             'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -99,12 +99,12 @@ Elements = ['H', 'He',
             'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
             'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
             'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 def getsymbol(z):
     return Elements[z-1]
@@ -121,7 +121,7 @@ def getomegam1(ele):
         if zEle > 99:
             #just to avoid a crash
             #I do not expect any fluorescent analysis of these elements ...
-            zEle = 99        
+            zEle = 99
         index = EADL97_ElementM1ShellConstants.index('omegaM1')
         value = EADL97_ElementM1ShellValues[zEle-1][index]
     return value
@@ -134,7 +134,7 @@ def getomegam2(ele):
         if zEle > 99:
             #just to avoid a crash
             #I do not expect any fluorescent analysis of these elements ...
-            zEle = 99        
+            zEle = 99
         index = EADL97_ElementM2ShellConstants.index('omegaM2')
         value = EADL97_ElementM2ShellValues[zEle-1][index]
     return value
@@ -147,7 +147,7 @@ def getomegam3(ele):
         if zEle > 99:
             #just to avoid a crash
             #I do not expect any fluorescent analysis of these elements ...
-            zEle = 99        
+            zEle = 99
         index = EADL97_ElementM3ShellConstants.index('omegaM3')
         value = EADL97_ElementM3ShellValues[zEle-1][index]
     return value
@@ -160,7 +160,7 @@ def getomegam4(ele):
         if zEle > 99:
             #just to avoid a crash
             #I do not expect any fluorescent analysis of these elements ...
-            zEle = 99        
+            zEle = 99
         index = EADL97_ElementM4ShellConstants.index('omegaM4')
         value = EADL97_ElementM4ShellValues[zEle-1][index]
     return value
@@ -173,7 +173,7 @@ def getomegam5(ele):
         if zEle > 99:
             #just to avoid a crash
             #I do not expect any fluorescent analysis of these elements ...
-            zEle = 99        
+            zEle = 99
         index = EADL97_ElementM5ShellConstants.index('omegaM5')
         value = EADL97_ElementM5ShellValues[zEle-1][index]
     return value
@@ -243,16 +243,16 @@ def getCosterKronig(ele):
 #Jump ratios following Veigele: Atomic Data Tables 5 (1973) 51-111. p 54 and 55
 def getjm1(z):
     return 1.1
-    
+
 def getjm2(z):
     return 1.1
-    
+
 def getjm3(z):
     return 1.2
-    
+
 def getjm4(z):
     return 1.5
-    
+
 def getjm5(z):
     return (225.0/z) - 0.35
 
@@ -275,7 +275,7 @@ def getwjump(ele,excitedshells=[1.0,1.0,1.0,1.0,1.0]):
     for i in range(len(wjump)):
         wjump[i] = wjump[i] / cum
     return wjump
-    
+
 def getweights(ele,excitedshells=None):
     if type(ele) == type(" "):
         pass
@@ -283,7 +283,7 @@ def getweights(ele,excitedshells=None):
         ele = getsymbol(int(ele))
     if excitedshells == None:excitedshells=[1.0,1.0,1.0,1.0,1.0]
     w = getwjump(ele,excitedshells)
-    #weights due to Coster Kronig transitions and fluorescence yields 
+    #weights due to Coster Kronig transitions and fluorescence yields
     ck= getCosterKronig(ele)
     w[0] *=  1.0
     w[1] *= (1.0 + ck['f12'] * w[0])
@@ -296,7 +296,7 @@ def getweights(ele,excitedshells=None):
     cum = sum(w)
     for i in range(len(w)):
         if cum > 0.0:
-            w[i] /= cum        
+            w[i] /= cum
     return w
 
 ElementMShellTransitions = ElementM1ShellTransitions     +  \
@@ -311,7 +311,7 @@ for ele in elements:
     weights.append(getweights(ele))
 weights = numpy.array(weights).astype(numpy.float)
 ElementMShellRates = numpy.zeros((len(ElementM1ShellRates),len(ElementMShellTransitions)),numpy.float)
-ElementMShellRates[:,0]     = numpy.arange(len(ElementM1ShellRates)) + 1 
+ElementMShellRates[:,0]     = numpy.arange(len(ElementM1ShellRates)) + 1
 n1 = len(ElementM1ShellTransitions)
 ElementMShellRates[:,2:n1] = numpy.array(ElementM1ShellRates).astype(numpy.float)[:,2:] * \
                              numpy.resize(weights[:,0],(nele,1))

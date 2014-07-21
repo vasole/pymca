@@ -52,7 +52,7 @@ class ProfileScanWidget(Window):
         self.labelBox.mainLayout = qt.QHBoxLayout(self.labelBox)
 
         self.labelLabel = qt.QLabel(self.labelBox)
-        
+
         self.labelLabel.setText("Selection Label = ")
         self.label = qt.QLineEdit(self.labelBox)
         self.labelBox.mainLayout.addWidget(self.labelLabel)
@@ -75,7 +75,7 @@ class ProfileScanWidget(Window):
         self.replaceButton.setText("REPLACE")
         self.replaceButton.setToolTip("Replace curves in destination widget")
         self.buttonBoxLayout.addWidget(self.replaceButton)
-        
+
         #self.mainLayout.addWidget(buttonBox)
         widget.layout().addWidget(buttonBox)
         self.addButton.clicked.connect(self._addClicked)

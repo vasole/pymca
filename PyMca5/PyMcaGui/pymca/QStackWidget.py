@@ -68,7 +68,7 @@ class QStackWidget(StackBase.StackBase,
         StackBase.StackBase.__init__(self)
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.__init__(self,
                                                                      parent)
-        
+
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.setWindowTitle("PyMCA - ROI Imaging Tool")
         screenHeight = qt.QDesktopWidget().height()
@@ -142,14 +142,14 @@ class QStackWidget(StackBase.StackBase,
                             self.stackWidget.graphWidget._saveIconSignal)
         self.stackWidget.graphWidget.saveToolButton.clicked[()].connect( \
                      self._stackSaveToolButtonSignal)
-            
+
         self.stackGraphWidget = self.stackWidget.graphWidget
 
         self.roiWindow = qt.QWidget(box)
         self.roiWindow.mainLayout = qt.QVBoxLayout(self.roiWindow)
         self.roiWindow.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.roiWindow.mainLayout.setSpacing(0)
-        standaloneSaving = True        
+        standaloneSaving = True
         self.roiWidget = MaskImageWidget.MaskImageWidget(parent=self.roiWindow,
                                                          rgbwidget=self.rgbWidget,
                                                          selection=True,
@@ -160,7 +160,7 @@ class QStackWidget(StackBase.StackBase,
                                                          aspect=True)
         infotext  = 'Toggle background subtraction from current image\n'
         infotext += 'subtracting a straight line between the ROI limits.'
-        self.roiBackgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
+        self.roiBackgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         self.roiBackgroundButton = self.roiWidget.graphWidget._addToolButton(\
                                     self.roiBackgroundIcon,
                                     self._roiSubtractBackgroundClicked,
@@ -195,14 +195,14 @@ class QStackWidget(StackBase.StackBase,
         offset += 1
 
         if self.master:
-            self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))  
+            self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))
             self.loadStackButton = self.stackGraphWidget._addToolButton(\
                                         self.loadIcon,
                                         self.loadSlaveStack,
                                         'Load another stack of same shape',
                                         position = offset)
             offset += 1
-        
+
         self.pluginIcon     = qt.QIcon(qt.QPixmap(IconDict["plugin"]))
         infotext = "Call/Load Stack Plugins"
         self.stackGraphWidget._addToolButton(self.pluginIcon,
@@ -211,7 +211,7 @@ class QStackWidget(StackBase.StackBase,
                                              toggle = False,
                                              state = False,
                                              position = offset)
-        
+
     def setStack(self, *var, **kw):
         self.stackWidget.setImageData(None)
         self.roiWidget.setImageData(None)
@@ -337,7 +337,7 @@ class QStackWidget(StackBase.StackBase,
                                     mcaindex=mcaIndex)
 
     def saveStackAsFloat32TiffImages(self):
-        return self.saveStackAsMonochromaticTiffImages(dtype=numpy.float32)    
+        return self.saveStackAsMonochromaticTiffImages(dtype=numpy.float32)
 
     def saveStackAsNeXus(self, dtype=None, interpretation=None, compression=False):
         mcaIndex = self._stack.info.get('McaIndex', -1)
@@ -447,7 +447,7 @@ class QStackWidget(StackBase.StackBase,
     def saveStackAsSimplestHDF5(self):
         filename = self._getOutputHDF5Filename()
         if not len(filename):
-            return            
+            return
         ArraySave.save3DArrayAsHDF5(self._stack.data, filename,
                                     labels = None, dtype=None, mode='simplest')
 
@@ -529,7 +529,7 @@ class QStackWidget(StackBase.StackBase,
         if master is None:
             master = self
         self._masterStack = weakref.proxy(master)
-        
+
     def _pluginClicked(self):
         actionList = []
         menu = qt.QMenu(self)
@@ -653,7 +653,7 @@ class QStackWidget(StackBase.StackBase,
         tip = action.toolTip()
         if qt.safe_str(tip) != qt.safe_str(action.text()):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
-        
+
 
     def _buildBottom(self):
         n = 0
@@ -681,7 +681,7 @@ class QStackWidget(StackBase.StackBase,
             self.rgbWidget = RGBCorrelator.RGBCorrelator()
             self.tab.addTab(self.rgbWidget, "RGB Correlator")
             self.mainLayout.addWidget(self.tab)
-        self.mcaWidget.setMiddleROIMarkerFlag(True)        
+        self.mcaWidget.setMiddleROIMarkerFlag(True)
 
     def _buildAndConnectButtonBox(self):
         #the MCA selection
@@ -698,7 +698,7 @@ class QStackWidget(StackBase.StackBase,
         self.mcaButtonBoxLayout.addWidget(self.addMcaButton)
         self.mcaButtonBoxLayout.addWidget(self.removeMcaButton)
         self.mcaButtonBoxLayout.addWidget(self.replaceMcaButton)
-        
+
         self.stackWindow.mainLayout.addWidget(self.mcaButtonBox)
 
         self.addMcaButton.clicked.connect(self.__addMcaClicked)
@@ -802,7 +802,7 @@ class QStackWidget(StackBase.StackBase,
             self.rgbWidget.raise_()
         else:
             self.tab.setCurrentWidget(self.rgbWidget)
-            
+
     def _addImageClicked(self, image, title):
         self.addImage(image, title)
 
@@ -831,7 +831,7 @@ class QStackWidget(StackBase.StackBase,
         if self._stackImageData is None:
             return
 
-        if self.normalizeButton.isChecked():        
+        if self.normalizeButton.isChecked():
             dataObject = self.calculateMcaDataObject(normalize=True)
         else:
             dataObject = self.calculateMcaDataObject(normalize=False)
@@ -850,8 +850,8 @@ class QStackWidget(StackBase.StackBase,
         return self.sendMcaSelection(dataObject,
                           key = "Selection",
                           legend =legend,
-                          action = action)        
-    
+                          action = action)
+
     def _removeMcaClicked(self):
         #remove the mca
         #dataObject = self.__mcaData0
@@ -866,13 +866,13 @@ class QStackWidget(StackBase.StackBase,
                     legend = curve
                     break
         self.sendMcaSelection(dataObject, legend = legend, action = "REMOVE")
-    
+
     def _replaceMcaClicked(self):
         #replace the mca
         self.__ROIConnected = False
         self._addMcaClicked(action="REPLACE")
         self.__ROIConnected = True
-    
+
     def sendMcaSelection(self, mcaObject, key = None, legend = None, action = None):
         if action is None:
             action = "ADD"
@@ -947,7 +947,7 @@ class QStackWidget(StackBase.StackBase,
                 if DEBUG:
                     print("INFORMING MASTER")
                 self._masterStack.setSelectionMask(mask, instance_id=id(self))
-        
+
         #Inform plugins
         for key in self.pluginInstanceDict.keys():
             if key == "PyMcaPlugins.StackPluginBase":
@@ -1021,10 +1021,10 @@ class QStackWidget(StackBase.StackBase,
 
     def getGraphXLimits(self):
         return self.mcaWidget.getGraphXLimits()
-        
+
     def getGraphYLimits(self):
         return self.mcaWidget.getGraphYLimits()
-    
+
 def test():
     #create a dummy stack
     nrows = 100
@@ -1114,4 +1114,4 @@ if __name__ == "__main__":
         widget.setStack(stack)
     widget.show()
     app.exec_()
-    
+

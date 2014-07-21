@@ -74,7 +74,7 @@ class Median2DBrowser(StackBrowser.StackBrowser):
                                   'conditional':0}
         self._medianParametersWidget = MedianParameters(self,
                                                         use_conditional=1)
-        self._medianParametersWidget.widthSpin.setValue(5)        
+        self._medianParametersWidget.widthSpin.setValue(5)
         self.layout().addWidget(self._medianParametersWidget)
         self._medianParametersWidget.widthSpin.valueChanged[int].connect( \
                      self.setKernelWidth)

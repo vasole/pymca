@@ -121,7 +121,7 @@
     </style>
 </head>
 
-<body TEXT=#000000 BGCOLOR=#FFFFFF ALINK=#ff6600 LINK=#0000cc VLINK=#0000cc 
+<body TEXT=#000000 BGCOLOR=#FFFFFF ALINK=#ff6600 LINK=#0000cc VLINK=#0000cc
 marginwidth=10 marginheight=10  topmargin=10 leftmargin=10>
 
 <a NAME=Up></a>
@@ -177,7 +177,7 @@ switches between two sets of data where one set aligns the other one it is highl
 to consult the table in the Alignment window to check if every element in the two different
 sets of data is assigned to its correct counterpart before applying the shift.</br>
 </br>
-If the data in the plot window is zoomed in to a distinct feature, only of the data is used to 
+If the data in the plot window is zoomed in to a distinct feature, only of the data is used to
 calculate the shift.
 </div>
 
@@ -199,7 +199,7 @@ FIT DRV.
     since it is not affected by the peak shape, fast and numerically robust. Notice: the shifts
     are given in real space values.
     </div>
-    
+
 <div class=elem><i>MAX</i></div>
     <div class='indent'>
     Determines the maximum of each curve, the shift is given by its the differences in the x-position
@@ -213,13 +213,13 @@ FIT DRV.
     most pronounced feature is selected. The peak is fitted by a Gaussian model, the shifts are then
     given by differences in the x-offsets of the fitted Gaussians.
     </div>
-    
+
 <div class=elem><i>FIT</i></div>
     <div class='indent'>
     Uses the same procedure as the FIT method, however the fit is applied to the first derivative of
     the data. This method only recommended for X-ray absorption data.
     </div>
-    
+
 <div class='main'>
 Shift methods are used to apply the calculated shift to the data. Present methods include 'Shift x-range'
 and 'Inverse FFT shift'.
@@ -230,17 +230,17 @@ and 'Inverse FFT shift'.
     This method takes the x-range of the respective curve and adds the calculated shift value to every
     point.
     </div>
-    
+
 <div class=elem><i>Inverse FFT shift</i></div>
     <div class='indent'>
     Takes the Fourier Transform of a curve and multiplies the shift as a phase factor. The multiplication
     of a phase factor in Fourier space translates to a shift in the x-range in real space. The shifted data
     is given by the inverse Fourier transform.
-    
-    Notice: In the process, the data needs to have a equidistant x-range. If this is not the case, the data 
+
+    Notice: In the process, the data needs to have a equidistant x-range. If this is not the case, the data
     will be interpolated on a equidistant x-range. Due to the cyclic nature of the Fourier transform, this
     method is recommended for data that has linear background.
     </div>
-    
+
 <br><a href=#Up>up</a>
 </body>

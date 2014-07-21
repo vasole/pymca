@@ -1,8 +1,8 @@
-__doc__= "Generate specfiles with EADL97 shell constans" 
+__doc__= "Generate specfiles with EADL97 shell constans"
 import os
 import EADLParser
 
-Elements = ['H', 'He', 
+Elements = ['H', 'He',
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
             'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -10,12 +10,12 @@ Elements = ['H', 'He',
             'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
             'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
             'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
 def getHeader(filename):
@@ -47,10 +47,10 @@ for i in range(1,101):
         label_text += '  omegaK'
         n += 1
         text += '#N %d\n' % n
-        text += '#L Z' + label_text 
+        text += '#L Z' + label_text
         text += '\n'
         outfile.write(text)
-    text = "%d" % i 
+    text = "%d" % i
     ddict = EADLParser.getFluorescenceYields(i)
     value = ddict.get('K (1s1/2)', 0.0)
     text += '  %.4E' % (value)
@@ -85,10 +85,10 @@ for nshell in range(1,4):
                 label_text += '  omegaL3'
                 n += 1
             text += '#N %d\n' % n
-            text += '#L Z' + label_text 
+            text += '#L Z' + label_text
             text += '\n'
             outfile.write(text)
-        text = "%d" % i 
+        text = "%d" % i
         ddict = EADLParser.getFluorescenceYields(i)
         ddict.update(EADLParser.getLShellCosterKronigYields(i))
         omega = ddict.get(shell, 0.0)
@@ -141,10 +141,10 @@ for nshell in range(1,6):
                 label_text += '  omegaM5'
                 n += 1
             text += '#N %d\n' % n
-            text += '#L Z' + label_text 
+            text += '#L Z' + label_text
             text += '\n'
             outfile.write(text)
-        text = "%d" % i 
+        text = "%d" % i
         ddict = EADLParser.getFluorescenceYields(i)
         ddict.update(EADLParser.getMShellCosterKronigYields(i))
         omega = ddict.get(shell, 0.0)

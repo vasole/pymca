@@ -83,7 +83,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                                       icon]
         self.__methodKeys = ["I/I0 Normalization",
                              "-log(I/I0) Normalization"]
-        
+
     #Methods implemented by the plugin
     def getMethods(self):
         return self.__methodKeys
@@ -120,7 +120,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
                 stack.data[:, i, :] = stack.data[:,i,:]/value
         else:
             raise ValueError("Invalid 1D index %d" % mcaIndex)
-        self.setStack(stack) 
+        self.setStack(stack)
 
     def logNormalizeByCurve(self):
         stack = self.getStackDataObject()
@@ -145,7 +145,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
                 stack.data[:, i, :] = -numpy.log(stack.data[:,i,:]/value)
         else:
             raise ValueError("Invalid 1D index %d" % mcaIndex)
-        self.setStack(stack) 
+        self.setStack(stack)
 
 MENU_TEXT = "Stack Normalization"
 def getStackPluginInstance(stackWindow, **kw):

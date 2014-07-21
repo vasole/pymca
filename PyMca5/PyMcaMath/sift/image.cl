@@ -157,7 +157,7 @@ __kernel void local_maxmin(
 			else ismin = 1;
 			for (r = gid1  - 1; r <= gid1 + 1; r++) {
 				for (c = gid0 - 1; c <= gid0 + 1; c++) {
-				
+
 					pos = r*width + c;
 					if (ismax == 1) //if (val > 0.0)
 						if (DOGS[index_dog_prev+pos] > val || DOGS[index_dog+pos] > val || DOGS[index_dog_next+pos] > val) ismax = 0;

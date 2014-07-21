@@ -121,7 +121,7 @@
     </style>
 </head>
 
-<body TEXT=#000000 BGCOLOR=#FFFFFF ALINK=#ff6600 LINK=#0000cc VLINK=#0000cc 
+<body TEXT=#000000 BGCOLOR=#FFFFFF ALINK=#ff6600 LINK=#0000cc VLINK=#0000cc
 marginwidth=10 marginheight=10  topmargin=10 leftmargin=10>
 
 <a NAME=Up></a>
@@ -176,7 +176,7 @@ can be exported into spec-files.
 From the open spec-File, select the relevant scans in the scan selection window
 on the left side of your PyMca session. Assign the relevant counters to the
 respective axes and load the scans in the plot window on the right. Load the plug-in
-from the plug-in menu (gearbox item in the top row of the plot window). 
+from the plug-in menu (gearbox item in the top row of the plot window).
 Notice that if one selects a section of the data by zooming in before starting the
 plug-in, only the data within that energy range is used for the analysis.<br>
 <br>
@@ -193,7 +193,7 @@ offering several ways to assign a selected spectrum a group.<br>
 <br>
 Once a selection is made, the result of calculations is displayed immediately in the analysis window.
 An average is calculated on the spectra that belong to groups 'A' and 'B' (curves labeled
-avg_A resp. avg_B). The difference spectrum (curve labeled XMCD) is calculated as Avg(B)- Avg(A). 
+avg_A resp. avg_B). The difference spectrum (curve labeled XMCD) is calculated as Avg(B)- Avg(A).
 The XAS spectrum is calculated as the average of both groups: (Avg(A) + Avg(B))/2<br>
 The finished analysis can be saved in a spec file using the Save Button in the top button row
 of the analysis window.
@@ -222,10 +222,10 @@ Button, the Options Button and the Experiment Selection.
 
 <div class=elem><i>Update Button</i></div>
     <div class='indent'>
-    Loads plots from the main window of the PyMca session into the plug-in. Notice: 
+    Loads plots from the main window of the PyMca session into the plug-in. Notice:
     If the plot window of the main application is zoomed in or out, only the data
     within the zoomed in energy range is considered for analysis. After zooming in
-    or out in the main application, the spectra in the plug-in should be updated.    
+    or out in the main application, the spectra in the plug-in should be updated.
     </div>
 
 <div class=elem><i>Options Button</i></div>
@@ -236,21 +236,21 @@ Button, the Options Button and the Experiment Selection.
 
 <div class='elem'><i>Experiment Selection:</i></div>
     <div class='indent'>
-    The options for the experiments carried out at beamlines ID08 and ID12 are 
+    The options for the experiments carried out at beamlines ID08 and ID12 are
     embedded in the plug-in. Selecting one of the experiments sets these options
-    and divides the spectra automatically into groups 'A' and 'B'.    
+    and divides the spectra automatically into groups 'A' and 'B'.
     A new experimental configuration can be added using the 'Add new configuration'
     option. A window will open and ask the user to name the configuration.
     Once accepted, an option window is opened and can be used to define the experimental
     configuration. This can be done by either loading an existing configuration
-    or by specifying it by hand.   
+    or by specifying it by hand.
     The new experimental configuration can now be selected in the drop down menu and
     remains there until the end of the PyMca session. It sets all options as specified,
     however the spectra assignment into groups has still to be done by hand.
     </div>
 
 <br><a href=#Up>up</a>
-    
+
 <H4><a NAME=OptionsWindow>
 2.2 Options Window
 </a></H4>
@@ -370,7 +370,7 @@ Notice that ID12 also uses different counters to differ between polarizations.
 </div>
 
 <br><a href=#Up>up</a>
-    
+
 <H4><a NAME=Table>
 2.3 Table
 </a></H4>
@@ -400,18 +400,18 @@ options:
     Assigns a scan selected in the table to the respective group and triggers a
     recalculation of the XLD/XMCD Analysis.
     </div>
-    
+
 <div class='elem'><i>Enter sequence</i></div>
     <div class='indent'>
     Opens a window and allows to enter a sequence of letters ('A', 'B', 'D'). The
-    spectra in the table are sorted after their scan number and assigned into 
+    spectra in the table are sorted after their scan number and assigned into
     groups 'A' and 'B' based on the sequence, 'D' leaves a spectrum unselected.
     If no scan number is present, the spectra remain unsorted.
     The length of the sequence does not need to match the number of spectra. If the
     length of the sequence is smaller than the number of spectra, the plug-in assumes
     the entered sequence as a pattern and repeats it.
     </div>
-    
+
 <div class='elem'><i>Remove selection</i></div>
     <div class='indent'>
     Removes a scan from the selection, effectively setting its group to 'D'
@@ -422,12 +422,12 @@ options:
     Selects scans in the table that are not selected yet and deselects the selected
     scans.
     </div>
-    
+
 <div class='elem'><i>Remove curves</i></div>
     <div class='indent'>
     Removes curves from the table and the plot window in the main application.
     </div>
-    
+
 <br><a href=#Up>up</a>
 
 <H4><a NAME=AnalysisWindow>
@@ -436,13 +436,13 @@ options:
 
 <div class='main'>
 The analysis window beneath the table shows the result of the XLD/XMCD analysis. Four
-curves are displayed: the arithmetic averages over groups A and B, the XAS spectrum 
+curves are displayed: the arithmetic averages over groups A and B, the XAS spectrum
 (an arithmetic average over the averages of groups A and B) and the difference spectrum
 (group B - group A) called the XMCD spectrum.<br>
 <br>
 Notice that the XMCD spectrum usually is not in the same order of magnitude as the average
 spectra and the XAS spectrum. Thus, the XMCD spectrum is plotted to the secondary y axis
-on the right. In order to hide individual spectra, one can right-click on the legend and 
+on the right. In order to hide individual spectra, one can right-click on the legend and
 select 'Hide curve'.<br>
 <br>
 In the analysis window behaves exactly like the plot window of the main application. The
@@ -457,21 +457,21 @@ the save routine has been modified to the specific demands of XLD/XMCD analysis.
     first column contains the energy range over which the analysis is carried out, followed
     by the averages over groups 'A' and 'B'. The last two columns are occupied by the XLD/XMCD
     spectra.<br>
-    The save dialog also allows to enter a comment that will be written in the spec file. 
+    The save dialog also allows to enter a comment that will be written in the spec file.
     If multiple datasets are analyzed consecutively, the results can be still saved in a single
     spec file by selecting the 'Append to existing file' option. Every individual scan is saved
-    in a separate file, too. Therefore, the original file name is extended by an underscore and 
+    in a separate file, too. Therefore, the original file name is extended by an underscore and
     the number of scans already present in the file to which the analysis is appended to.<br>
     Along with the data, the configuration from the options menu is also saved under the same
     file name, but with the extension 'cfg'.
     </div>
-    
+
 <div class='elem'>Buttons <i>Add, Add all, Replace </i>and<i> Replace All</i></div>
     <div class='indent'>
     Allow to push the resulting spectra from the plug-in window to the plot window of the main
     application. While 'Add' and 'Replace' only affect the active curve in the plug-in plot
     window, 'Add all' and 'Replace all' copy all curves from the analysis to the main application.
-    Notice: If one plans to compare two or more analyzed spectra by consecutively pushing them 
+    Notice: If one plans to compare two or more analyzed spectra by consecutively pushing them
     to the main window, the spectra should be renamed beforehand. The name for each analyzed
     spectrum remains the same (avg_A, avg_B, XMCD, XAS) and moving spectra of the same name
     to the plot window in the main application just replaces them there.
@@ -649,7 +649,7 @@ number of scans in question<br>
 The next section consists of a succession of if/else statements to determine the specific experiment. Within
 such a statement, the values from the table are reduced to a single vector named 'values' that determines
 the affiliation of a spectrum to groups 'A' or 'B'. This array contains numerical values for every spectrum.
-The second step here is to set a pivot element (or threshold value), so that if the value for a spectrum is 
+The second step here is to set a pivot element (or threshold value), so that if the value for a spectrum is
 above this value, the spectrum belongs to group 'A' and below to group 'B'. New assignment routines must be
 implemented here as a new elif block.<br>
 <br>

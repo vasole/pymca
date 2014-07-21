@@ -98,7 +98,7 @@ class SceneAxesVectorsWidget(qt.QGroupBox):
                  'uvw':False}
         self.setParameters(ddict)
 
-        
+
     def build(self):
         self._entryDict = {'u':[],'v':[],'w':[]}
         alignment = qt.Qt.AlignCenter
@@ -110,7 +110,7 @@ class SceneAxesVectorsWidget(qt.QGroupBox):
             l.setAlignment(alignment)
             l.setText("%s" % t)
             self.mainLayout.addWidget(l, i, c)
-            
+
         i = 0
         for t in ["u", "v", "w"]:
             i += 1
@@ -140,13 +140,13 @@ class SceneAxesVectorsWidget(qt.QGroupBox):
                                                      1, 2,
                                                      qt.Qt.AlignCenter)
 
-        
+
         self._useCheckBox.clicked[()].connect(self._emitSignal)
         self._updateButton.clicked[()].connect(self._emitSignal)
 
     def _emitSignal(self):
         ddict = self.getParameters()
-        ddict['event'] = 'SceneAxesVectorsChanged'               
+        ddict['event'] = 'SceneAxesVectorsChanged'
         self.sigSceneAxesVectorsSignal.emit(ddict)
 
     def getParameters(self):
@@ -211,7 +211,7 @@ class SceneLimitsWidget(qt.QGroupBox):
             self._entryList.append(l)
             self.mainLayout.addWidget(l, i, 1)
             l.editingFinished.connect(self._emitSignal)
-            
+
             l = qt.QLabel(self)
             l.setText("%s Max:" % t)
             self.mainLayout.addWidget(l, i, 2)
@@ -233,7 +233,7 @@ class SceneLimitsWidget(qt.QGroupBox):
             self._centerList.append(l)
             self.mainLayout.addWidget(l, i, 5)
 
-            if i == 0:  
+            if i == 0:
                 l.editingFinished.connect(self.__xCenterChanged)
             elif i == 1:
                 l.editingFinished.connect(self.__yCenterChanged)
@@ -248,7 +248,7 @@ class SceneLimitsWidget(qt.QGroupBox):
             l._v = qt.QDoubleValidator(l)
             l.setValidator(l._v)
             self._deltaList.append(l)
-            if i == 0:  
+            if i == 0:
                 l.editingFinished.connect(self.__xDeltaChanged)
             elif i == 1:
                 l.editingFinished.connect(self.__yDeltaChanged)
@@ -257,7 +257,7 @@ class SceneLimitsWidget(qt.QGroupBox):
 
             self.mainLayout.addWidget(l, i, 7)
             i += 1
-            
+
         self._autoCheckBox = qt.QCheckBox(self)
         self._autoCheckBox.setText('Automatic')
         self._autoCheckBox.setChecked(True)
@@ -270,7 +270,7 @@ class SceneLimitsWidget(qt.QGroupBox):
         self._applyButton.setText('Apply')
         self._applyButton.setAutoDefault(False)
         self.mainLayout.addWidget(self._applyButton, i, 3)
-        
+
     def getParameters(self):
         ddict = {'xmin': 0.0,
                  'xmax': 0.0,
@@ -284,7 +284,7 @@ class SceneLimitsWidget(qt.QGroupBox):
         for key in labelList:
             try:
                 ddict[key] = float(self._entryList[i].text())
-            except:                
+            except:
                 pass
             i += 1
         if self._autoCheckBox.isChecked():
@@ -333,11 +333,11 @@ class SceneLimitsWidget(qt.QGroupBox):
                 e.setDisabled(False)
             for e in self._deltaList:
                 e.setDisabled(False)
-            
+
 
     def _emitSignal(self):
         ddict = self.getParameters()
-        ddict['event'] = 'SceneLimitsChanged'               
+        ddict['event'] = 'SceneLimitsChanged'
         self.sigSceneLimitsSignal.emit(ddict)
 
     def __xCenterChanged(self):
@@ -389,7 +389,7 @@ class ViewOrientationWidget(qt.QGroupBox):
             viewMatrix[i, i] = 1.0
         ddict = {'theta': 0.0,
                  'phi':0.0,
-                 'view':viewMatrix} 
+                 'view':viewMatrix}
         self.setParameters(ddict)
 
     def build(self):
@@ -424,7 +424,7 @@ class ViewOrientationWidget(qt.QGroupBox):
         l._v = qt.QDoubleValidator(l)
         l.setValidator(l._v)
         self._phi = l
-        self.mainLayout.addWidget(l, i, 3)        
+        self.mainLayout.addWidget(l, i, 3)
 
     def setParameters(self, ddict):
         if "view" in ddict:
@@ -453,7 +453,7 @@ class ViewOrientationWidget(qt.QGroupBox):
         ddict['view'] = m
         ddict['theta'] = theta
         ddict['phi'] = phi
-  
+
 
 class ObserverPositionWidget(qt.QGroupBox):
     sigObserverPositionSignal = qt.pyqtSignal(object)
@@ -497,7 +497,7 @@ class ObserverPositionWidget(qt.QGroupBox):
         for i in range(3):
             try:
                 position[i] = float(self._entryList[i].text())
-            except:     
+            except:
                 pass
         ddict = {'observer': position}
         if self._autoCheckBox.isChecked():

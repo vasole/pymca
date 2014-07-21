@@ -121,7 +121,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             import cStringIO as StringIO
             imgData = StringIO.StringIO()
         else:
-            from io import BytesIO          
+            from io import BytesIO
             imgData = BytesIO()
         self.saveGraph(imgData, fileFormat='svg')
         imgData.flush()
@@ -132,7 +132,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         svgRenderer._svgRawData = svgRawData
         svgRenderer._svgRendererData = svgRendererData
         return svgRenderer
-        
+
     def printGraph(self, width=None, height=None, xOffset=0.0, yOffset=0.0,
                    units="inches", dpi=None, printer=None,
                    dialog=True, keepAspectRatio=True, **kw):
@@ -184,7 +184,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                         width = availableWidth * width
                     if height is not None:
                         height = availableHeight * height
-                                    
+
                 availableWidth -= xOffset
                 availableHeight -= yOffset
 
@@ -214,7 +214,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
 
                     graphRatio = graphHeight / graphWidth
                     # that ratio has to be respected
-                    
+
                     bodyWidth = availableWidth
                     bodyHeight = availableWidth * graphRatio
 
@@ -223,7 +223,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                         bodyWidth = bodyHeight / graphRatio
                 else:
                     bodyWidth = availableWidth
-                    bodyHeight = availableHeight                    
+                    bodyHeight = availableHeight
 
                 body = QtCore.QRectF(xOffset,
                                 yOffset,
@@ -233,7 +233,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
                 svgRenderer.render(painter, body)
             finally:
                 painter.end()
-        
+
 if __name__ == "__main__":
     import time
     if "matplotlib" in sys.argv:
@@ -266,7 +266,7 @@ if __name__ == "__main__":
         #plot.removeCurve("dummy")
         plot.insertXMarker(50., "X", label="X", draggable=True)
         #plot.insertYMarker(50., draggable=True)
-        plot.setYAxisLogarithmic(True)    
+        plot.setYAxisLogarithmic(True)
     else:
         # insert a few curves
         cSin={}

@@ -43,7 +43,7 @@ class QDispatcher(qt.QWidget):
     sigRemoveSelection = qt.pyqtSignal(object)
     sigReplaceSelection = qt.pyqtSignal(object)
     sigOtherSignals = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None, pluginsIcon=False):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QVBoxLayout(self)
@@ -61,7 +61,7 @@ class QDispatcher(qt.QWidget):
         if QDataSource.NEXUS:
             fileTypeList.append("HDF5 Files (*.nxs *.hdf *.h5 *.hdf5)")
         fileTypeList.append("All Files (*)")
-        
+
         self.sourceSelector = QSourceSelector.QSourceSelector(self,
                                     filetypelist=fileTypeList,
                                     pluginsIcon=pluginsIcon)
@@ -70,13 +70,13 @@ class QDispatcher(qt.QWidget):
             self.pluginsCallback = None
         self.selectorWidget = {}
         self.tabWidget = qt.QTabWidget(self)
-        
+
         #for the time being just files
         for src_widget in QDataSource.source_widgets.keys():
             self.selectorWidget[src_widget] = QDataSource.source_widgets[src_widget]()
             self.tabWidget.addTab(self.selectorWidget[src_widget], src_widget)
             self.selectorWidget[src_widget].sigAddSelection.connect( \
-                            self._addSelectionSlot)                                                 
+                            self._addSelectionSlot)
             self.selectorWidget[src_widget].sigRemoveSelection.connect( \
                          self._removeSelectionSlot)
             self.selectorWidget[src_widget].sigReplaceSelection.connect( \
@@ -84,7 +84,7 @@ class QDispatcher(qt.QWidget):
             if src_widget not in ['EdfFile']:
                 self.selectorWidget[src_widget].sigOtherSignals.connect( \
                          self._otherSignalsSlot)
-        
+
         self.mainLayout.addWidget(self.sourceSelector)
         self.mainLayout.addWidget(self.tabWidget)
         self.sourceSelector.sigSourceSelectorSignal.connect( \
@@ -112,7 +112,7 @@ class QDispatcher(qt.QWidget):
                     ddict = {}
                     ddict.update(sel)
                     ddict["event"]  = event
-                    #we have found the source  
+                    #we have found the source
                     #this recovers the data and the info
                     if True:
                         #this creates a data object that is passed to everybody so
@@ -147,7 +147,7 @@ class QDispatcher(qt.QWidget):
                                     continue
                         else:
                             dataObject = source.getDataObject(sel['Key'],
-                                                      selection=sel['selection'], 
+                                                      selection=sel['selection'],
                                                       poll=False)
                             if dataObject is not None:
                                 dataObject.info['legend'] = sel['legend']
@@ -282,7 +282,7 @@ class QDispatcher(qt.QWidget):
                     sel['legend']     = ddict['legend']
                     sel['scanselection']  = ddict['scanselection']
                     sel['imageselection']  = ddict['imageselection']
-                sel_list.append(sel)            
+                sel_list.append(sel)
         self._addSelectionSlot(sel_list)
 
     def _tabChanged(self, value):
@@ -327,6 +327,6 @@ def test():
     w.show()
     app.lastWindowClosed.connect(app.quit)
     app.exec_()
-        
+
 if __name__ == "__main__":
     test()

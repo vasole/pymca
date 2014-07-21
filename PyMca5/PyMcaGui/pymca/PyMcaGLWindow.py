@@ -36,7 +36,7 @@ except ImportError:
     if DEBUG:
         print("PyMcaGLWindow imports Object3D direcly. Frozen version?")
     import Object3D
-    from Object3D import Object3DScene    
+    from Object3D import Object3DScene
 
 class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
     def _addSelection(self, selectionlist, replot=True):
@@ -55,13 +55,13 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
             #one-dimensional selections not considered
             if dataObject.info["selectiontype"] == "1D":
                 continue
-            
+
             #there must be something to plot
             if not hasattr(dataObject, 'y'):
                 continue
             #there must be an x for a scan selection to reach here
             if not hasattr(dataObject, 'x'):
-                continue                
+                continue
 
             if dataObject.x is None:
                 numberOfXAxes = 0
@@ -114,7 +114,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
             self.removeObject(object3Dlegend, update_scene=False)
         self.sceneControl.updateView()
         self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
-        
+
 
     def _replaceSelection(self, selectionlist):
         if DEBUG:
@@ -129,12 +129,12 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
     def addDataObject(self, dataObject, legend=None, update_scene=True):
         if legend is None:
             legend = dataObject.info['legend']
-            
+
         if (dataObject.m is None) or (dataObject.m == []):
             data = dataObject.y[0]
         else:
             #I would have to check for the presence of zeros in monitor
-            data = dataObject.y[0]/dataObject.m[0]            
+            data = dataObject.y[0]/dataObject.m[0]
 
         if dataObject.x is None:
             if len(data.shape) == 3:
@@ -190,7 +190,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                     object3D = self.mesh(data,
                                          x=dataObject.x[0],
                                          y=dataObject.x[1],
-                                         z=0, #This is 2D   
+                                         z=0, #This is 2D
                                          #z=data[:], #This is 3D
                                          legend=legend,
                                          update_scene=update_scene)

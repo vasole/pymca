@@ -32,7 +32,7 @@ qt = DoubleSlider.qt
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
-    
+
 class RGBCorrelatorSlider(qt.QWidget):
     sigRGBCorrelatorSliderSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None, scale = False, autoscalelimits=None):
@@ -55,7 +55,7 @@ class RGBCorrelatorSlider(qt.QWidget):
             if self.fromA > self.toB:
                 self.fromA = autoscalelimits[1]
                 self.toB   = autoscalelimits[0]
-            
+
         self.autoScaleButton = qt.QPushButton(self._buttonBox)
         self.autoScaleButton.setText("Autoscale")
         self.autoScaleFromAToBButton = qt.QPushButton(self._buttonBox)
@@ -75,7 +75,7 @@ class RGBCorrelatorSlider(qt.QWidget):
         redLabel = MyQLabel(self._gridBox, color = qt.Qt.red)
         redLabel.setText("RED")
         self.redSlider = DoubleSlider.DoubleSlider(self._gridBox)
-        
+
         greenLabel = MyQLabel(self._gridBox, color = qt.Qt.green)
         greenLabel.setText("GREEN")
         self.greenSlider = DoubleSlider.DoubleSlider(self._gridBox)
@@ -107,11 +107,11 @@ class RGBCorrelatorSlider(qt.QWidget):
                      self._blueSliderChanged)
 
         self.autoScaleButton.clicked.connect(self.autoScale)
-        
+
         self.autoScaleFromAToBButton.clicked.connect(self.autoScaleFromAToB)
-        
+
         self.autoScale90Button.clicked.connect(self.autoScale90)
-    
+
     def autoScale(self):
         self.__emitSignals = False
         self.redSlider.setMinMax(0., 100.)
@@ -119,7 +119,7 @@ class RGBCorrelatorSlider(qt.QWidget):
         self.blueSlider.setMinMax(0., 100.)
         self.__emitSignals = True
         self._allChangedSignal()
-        
+
     def autoScaleFromAToB(self):
         self.__emitSignals = False
         self.redSlider.setMinMax( self.fromA, self.toB)
@@ -127,7 +127,7 @@ class RGBCorrelatorSlider(qt.QWidget):
         self.blueSlider.setMinMax(self.fromA, self.toB)
         self.__emitSignals = True
         self._allChangedSignal()
-        
+
     def autoScale90(self):
         self.__emitSignals = False
         self.redSlider.setMinMax(0., 90.)
@@ -149,7 +149,7 @@ class RGBCorrelatorSlider(qt.QWidget):
             print("RGBCorrelatorSlider._redSliderChanged()")
         if self.__emitSignals:
             ddict['event'] = "redChanged"
-            self.sigRGBCorrelatorSliderSignal.emit(ddict)            
+            self.sigRGBCorrelatorSliderSignal.emit(ddict)
 
     def _greenSliderChanged(self, ddict):
         if DEBUG:
@@ -201,4 +201,4 @@ def test():
 
 if __name__ == "__main__":
     test()
-        
+

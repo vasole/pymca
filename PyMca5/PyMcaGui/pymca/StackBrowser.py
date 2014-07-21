@@ -76,11 +76,11 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         self.roiWidthSpin.valueChanged[int].connect(self._roiWidthSlot)
         self.slider.valueChanged[int].connect(self._showImageSliderSlot)
         self.name.editingFinished[()].connect(self._nameSlot)
-        
+
         self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         infotext  = 'Toggle background image subtraction from current image\n'
         infotext += 'No action if no background image available.'
-        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))  
+        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         self.backgroundButton = self.graphWidget._addToolButton(\
                                     self.backgroundIcon,
                                     self.subtractBackground,
@@ -97,9 +97,9 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         self._backgroundImage = image
         if self._backgroundSubtraction:
             self.subtractBackground()
-            
+
     def setStackDataObject(self, stack, index=None, stack_name=None):
-        if hasattr(stack, "info") and hasattr(stack, "data"):            
+        if hasattr(stack, "info") and hasattr(stack, "data"):
             dataObject = stack
         else:
             dataObject = DataObject.DataObject()
@@ -129,7 +129,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
                 self._nImages = 1
                 for dimension in dataObject.data.shape[:-2]:
                     self._nImages *= dimension
-                #This is a problem for dynamic data        
+                #This is a problem for dynamic data
                 #dataObject.data.shape = self._nImages, shape[-2], shape[-1]
                 data = self._getImageDataFromSingleIndex(0)
                 self.setImageData(data)
@@ -149,7 +149,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
                 self._nImages = 1
                 for dimension in dataObject.data.shape[2:]:
                     self._nImages *= dimension
-                #This is a problem for dynamic data        
+                #This is a problem for dynamic data
                 #dataObject.data.shape = self._nImages, shape[-2], shape[-1]
                 data = self._getImageDataFromSingleIndex(0)
                 self.setImageData(data)
@@ -168,7 +168,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         if self.backgroundButton.isChecked():
             self._backgroundSubtraction = True
         else:
-            self._backgroundSubtraction = False        
+            self._backgroundSubtraction = False
         index = self.slider.value()
         self._showImageSliderSlot(index)
 
@@ -210,7 +210,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
                         data = dataObject.data[i0:i1,:,:]
                         backgroundData = 0.5*(i1-i0)*\
                                      (data[0, :, :]+data[-1, :,:])
-                        data = data.sum(axis=0) - backgroundData                        
+                        data = data.sum(axis=0) - backgroundData
                     else:
                         data = dataObject.data[i0:i1,:,:].sum(axis=0)
                     data /= float(i1-i0)
@@ -284,7 +284,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         if self._backgroundSubtraction:
             title += " Net"
         return title
-        
+
     def showImage(self, index=0, moveslider=True):
         if not len(self.dataObjectsList):
             return

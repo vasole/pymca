@@ -83,7 +83,7 @@ class McaAdvancedFitBatch(object):
             self.fitImages = False
             self.__ncols = None
         self.fileStep = filestep
-        self.mcaStep  = mcastep 
+        self.mcaStep  = mcastep
         self.useExistingFiles = not overwrite
         self.savedImages=[]
         if roifit   is None:roifit   = False
@@ -97,7 +97,7 @@ class McaAdvancedFitBatch(object):
         self.chunk     = chunk
         self.selection = selection
 
-        
+
     def setFileList(self,filelist=None):
         self._rootname = ""
         if filelist is None:filelist = []
@@ -142,13 +142,13 @@ class McaAdvancedFitBatch(object):
                     break
             rootname = name1[0:]+"_to_"+last[(i1-delta):]
         else:
-            rootname = name1[0:]+"_to_"+last[0:]            
+            rootname = name1[0:]+"_to_"+last[0:]
         return rootname
 
     def setOutputDir(self,outputdir=None):
         if outputdir is None:outputdir=os.getcwd()
         self._outputdir = outputdir
-        
+
     def processList(self):
         self.counter =  0
         self.__row   = self.fileBeginOffset - 1
@@ -181,7 +181,7 @@ class McaAdvancedFitBatch(object):
             else:
                 self.__processOneFile()
         if self.counter:
-            if not self.roiFit: 
+            if not self.roiFit:
                 if self.fitFiles:
                     self.listfile.write(']\n')
                     self.listfile.close()
@@ -214,23 +214,23 @@ class McaAdvancedFitBatch(object):
         except:
             raise IOError("I do not know what to do with file %s" % inputfile)
 
-    
+
     def onNewFile(self,ffile, filelist):
         self.__log(ffile)
 
     def onImage(self,image,imagelist):
         pass
-        
+
     def onMca(self,mca,nmca, filename=None, key=None, info=None):
         pass
 
 
     def onEnd(self):
         pass
-            
+
     def __log(self,text):
         print(text)
-  
+
     def __tryEdf(self,inputfile):
         try:
             ffile   = EdfFileLayer.EdfFileLayer(fastedf=0)
@@ -336,7 +336,7 @@ class McaAdvancedFitBatch(object):
                 self.onMca(mca, numberofmca, filename=filename,
                                             key=key,
                                             info=infoDict)
-                
+
     def __processOneFile(self):
         ffile=self.file
         fileinfo = ffile.GetSourceInfo()
@@ -422,8 +422,8 @@ class McaAdvancedFitBatch(object):
     def __getFitFile(self, filename, key):
         fitdir = self.os_path_join(self._outputdir,"FIT")
         fitdir = self.os_path_join(fitdir,filename+"_FITDIR")
-        outfile = filename +"_"+key+".fit" 
-        outfile = self.os_path_join(fitdir,  outfile)           
+        outfile = filename +"_"+key+".fit"
+        outfile = self.os_path_join(fitdir,  outfile)
         return outfile
 
     def os_path_join(self, a, b):
@@ -549,7 +549,7 @@ class McaAdvancedFitBatch(object):
                             pass
                             #print "Concentrations not calculated"
                             #print "Is your fit configuration file correct?"
-                            #return                      
+                            #return
                         try:
                             concentrations = self._tool.processFitResult(config=tconf,
                                             fitresult=fitresult0,
@@ -588,7 +588,7 @@ class McaAdvancedFitBatch(object):
                 if not os.path.isdir(fitdir):
                     print("%s does not seem to be a valid directory" % fitdir)
                 else:
-                    outfile = filename +"_"+key+".fit" 
+                    outfile = filename +"_"+key+".fit"
                     outfile = self.os_path_join(fitdir,  outfile)
                 if not useExistingResult:
                     result = self.mcafit.digestresult(outfile=outfile,
@@ -618,7 +618,7 @@ class McaAdvancedFitBatch(object):
                     self.listfile=open(name,"w+")
                     self.listfile.write("fitfilelist = [")
                     self.listfile.write('\n'+outfile)
-                else: 
+                else:
                     self.listfile.write(',\n'+outfile)
             else:
                 if not useExistingResult:
@@ -678,7 +678,7 @@ class McaAdvancedFitBatch(object):
                                 if len(layerlist) > 1:
                                     for layer in layerlist:
                                         key = group+" "+layer
-                                        self.__concentrationsKeys.append(key)                                        
+                                        self.__concentrationsKeys.append(key)
                                         self.__images[key] = numpy.zeros((self.__nrows,
                                                                     self.__ncols),
                                                                     numpy.float)
@@ -733,7 +733,7 @@ class McaAdvancedFitBatch(object):
                                 self._ROIimages[group][roi]=numpy.zeros((self.__nrows,
                                                                    self.__ncols),
                                                                    numpy.float)
-                                
+
                 if not hasattr(self, "_ROIimages"):
                     print("ROI fitting only supported on EDF")
                 for group in self.__ROIpeaks:
@@ -749,7 +749,7 @@ class McaAdvancedFitBatch(object):
         #update counter
         self.counter += 1
 
-            
+
     def saveImage(self,ffile=None):
         self.savedImages=[]
         if ffile is None:
@@ -779,7 +779,7 @@ class McaAdvancedFitBatch(object):
                     speclabel +="  s(%s)" % (a+"-"+b)
                     edfname = ffile +"_"+a+"_"+b+trailing+suffix
                 elif peak in self.__concentrationsKeys:
-                    speclabel +="  %s" % peak.replace(" ","-") 
+                    speclabel +="  %s" % peak.replace(" ","-")
                     edfname = ffile +"_"+peak.replace(" ","_")+trailing+suffix
                 elif peak == 'chisq':
                     speclabel +="  %s" % (peak)
@@ -800,7 +800,7 @@ class McaAdvancedFitBatch(object):
                     except:
                         print("I cannot delete output file")
                         print("trying to append image to the end")
-                        Append = 1 
+                        Append = 1
                 edfout   = EdfFile.EdfFile(edfname, access='ab')
                 edfout.WriteImage ({'Title':peak} , self.__images[peak], Append=Append)
                 edfout = None
@@ -838,7 +838,7 @@ class McaAdvancedFitBatch(object):
                     specline += "\n"
                     specfile.write("%s" % specline)
                     specline =""
-            specfile.write("\n") 
+            specfile.write("\n")
             specfile.close()
         else:
             for group in self.__ROIpeaks:
@@ -849,7 +849,7 @@ class McaAdvancedFitBatch(object):
                     if (self.fileStep > 1) or (self.mcaStep > 1):
                         edfname = ffile+"_"+grouptext+("_%04deVROI_filestep_%02d_mcastep_%02d.edf" % (self.roiWidth,
                                                                     self.fileStep, self.mcaStep ))
-                    else: 
+                    else:
                         edfname = ffile+"_"+grouptext+("_%04deVROI.edf" % self.roiWidth)
                     dirname = os.path.dirname(edfname)
                     if not os.path.exists(dirname):
@@ -863,7 +863,7 @@ class McaAdvancedFitBatch(object):
                     if i==0:
                         self.savedImages.append(edfname)
                         i=1
-                    
+
 
 if __name__ == "__main__":
     import getopt
@@ -891,6 +891,6 @@ if __name__ == "__main__":
     if len(filelist) == 0:
         print("No input files, run GUI")
         sys.exit(0)
-    
+
     b = McaAdvancedFitBatch(cfg,filelist,outdir,roifit,roiwidth)
     b.processList()

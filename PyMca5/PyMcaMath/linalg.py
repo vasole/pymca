@@ -149,7 +149,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                 w.shape = b_shape
         else:
             # "statistical" weight
-            # we are asked to somehow weight the data but no uncertainties provided        
+            # we are asked to somehow weight the data but no uncertainties provided
             # assume the uncertainties are the square root of the b values ...
             w = numpy.sqrt(numpy.abs(b))
             w = w + numpy.equal(w, 0)
@@ -175,7 +175,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         else:
             s_cutoff = rcond * s[0]
         s[s < s_cutoff] = numpy.inf
-        
+
         # and get the parameters
         s.shape = -1
         dummy = numpy.dot(V.T, numpy.eye(n)*(1./s))
@@ -233,7 +233,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         else:
             s_cutoff = rcond * s[0]
         s[s < s_cutoff] = numpy.inf
-        
+
         # and get the parameters
         s.shape = -1
         dummy = numpy.dot(V.T, numpy.eye(n)*(1./s))
@@ -293,7 +293,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                 if uncertainties:
                     sigmapar[:, i] = numpy.sqrt(numpy.diag(_covariance))
                 if covariances:
-                    covarianceMatrix[i] = covariance    
+                    covarianceMatrix[i] = covariance
         else:
             # Matrix inversion with buffers does not improve
             bufferProduct = numpy.empty((n, n + 1), numpy.float)
@@ -306,7 +306,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                 bufferAB [:, :n] = A
                 bufferAB [:, n:n+1] = tmpData
                 numpy.dot(A.T, bufferAB, bufferProduct)
-                alpha[:, :]  = bufferProduct[:n, :n] 
+                alpha[:, :]  = bufferProduct[:n, :n]
                 beta = bufferProduct[:,n]
                 try:
                     _covariance = numpy.linalg.inv(alpha)
@@ -318,13 +318,13 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
                 if uncertainties:
                     sigmapar[:, i] = numpy.sqrt(numpy.diag(_covariance))
                 if covariances:
-                    covarianceMatrix[i] = covariance    
+                    covarianceMatrix[i] = covariance
     if len(original) == 1:
         parameters.shape = -1
     if covariances:
         sigmapar.shape = parameters.shape
         if len(original) == 1:
-            covarianceMatrix.shape = parameters.shape[0], parameters.shape[0] 
+            covarianceMatrix.shape = parameters.shape[0], parameters.shape[0]
         result = [parameters, sigmapar, covarianceMatrix]
     elif uncertainties:
         sigmapar.shape = parameters.shape
@@ -344,7 +344,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         return ddict
     else:
         return result
-        
+
 
 def getModelMatrixFromFunction(model_function, dummy_parameters, xdata, derivative=None):
     nPoints = xdata.size
@@ -417,7 +417,7 @@ def test2():
         print("Gefit results:")
         print("Parameters    = %f, %f" % (parameters[0], parameters[1]))
         print("Uncertainties = %f, %f" % (uncertainties[0], uncertainties[1]))
-                                                
+
     print("Mathematica results:")
     print("Parameters    = %f, %f" % (1.57043, 1.78945))
     print("Uncertainties = %f, %f" % (0.68363, 0.11555))
@@ -429,7 +429,7 @@ def test2():
                                       uncertainties=True, weight=True)
     print("Elapsed = %f" % (time.time() - t0))
     print("Parameters    = %f, %f" % (parameters[0, 100], parameters[1, 100]))
-    print("Uncertainties = %f, %f" % (uncertainties[0, 100], uncertainties[1, 100]))    
+    print("Uncertainties = %f, %f" % (uncertainties[0, 100], uncertainties[1, 100]))
     if GEFIT:
         parameters, chisq, uncertainties = Gefit.LeastSquaresFit(f, [0.0, 0.0],
                                                 xdata=data[:,0],

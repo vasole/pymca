@@ -10,8 +10,8 @@
 #
 # If you want to analyze it, these are the experimental conditions:
 #
-# Excitation energy around 17.5 keV (In fact it is a monochromatized Mo tube) 
-# Si detector 450 micron thickness and Be window of 8 micron. 
+# Excitation energy around 17.5 keV (In fact it is a monochromatized Mo tube)
+# Si detector 450 micron thickness and Be window of 8 micron.
 # For the sake of simplicity assume the sample is 100 micron water
 # and contains 500 ppm of Co.
 # Incident beam angle is 0.1 degrees and fluorescence beam angle is 90 degrees.
@@ -21,7 +21,7 @@
 #
 # 1 - Calibrate the data.
 #     This detector presented a huge energy offset and you will need more
-#     than justone peak to calibrate. Main Co peak is found close to the 
+#     than justone peak to calibrate. Main Co peak is found close to the
 #     channel 1474.
 # 2 - Enter as much information as you know in the fit configuration.
 # 3 - Iteratively, identify peaks and perform fits.

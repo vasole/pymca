@@ -56,7 +56,7 @@ def loadCLibrary(name="libc.so"):
                                           name+\
                                           lineSplit[1].split()[0]
                             break
-                    libraryFile = line[line.index(libraryFile):].split()[0]                    
+                    libraryFile = line[line.index(libraryFile):].split()[0]
                     libc = ctypes.CDLL(libraryFile)
         else:
             raise
@@ -92,7 +92,7 @@ if sys.platform == 'win32':
 elif sys.platform.startswith('linux'):
     def getPhysicalMemory():
         return os.sysconf('SC_PAGESIZE') * os.sysconf('SC_PHYS_PAGES')
-    
+
 elif sys.platform == 'darwin':
     def getPhysicalMemory():
         libc = loadCLibrary("libc.dylib")
@@ -101,7 +101,7 @@ elif sys.platform == 'darwin':
         libc.sysctlbyname("hw.memsize", ctypes.byref(memsize), ctypes.byref(length), None, 0)
         return memsize.value
 else:
-    def getPhysicalMemory():    
+    def getPhysicalMemory():
         return None
 
 def getPhysicalMemoryOrNone():

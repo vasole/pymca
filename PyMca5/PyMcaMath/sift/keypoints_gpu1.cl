@@ -25,22 +25,22 @@ typedef float4 keypoint;
 
 
 /*
-	
-	Descriptors kernel -- optimized for compute capability <=1.3  (GTX <= 295) 
-	
+
+	Descriptors kernel -- optimized for compute capability <=1.3  (GTX <= 295)
+
 	Turns out that it takes more memory !
-	
-	
+
+
 	The previous kernel uses (128*8+128)*4 = 4608 Bytes in shared memory, plus 4 bytes for the header.
 	This is 4612B per block. Cuda Profiler tells that there are 6 blocks active per SM (8 max for CC==2.0), so
-	4612*6=27672 Bytes of shared mem are used. 
+	4612*6=27672 Bytes of shared mem are used.
 
-	
+
 	see also: http://en.wikipedia.org/wiki/CUDA#Version_features_and_specifications (2nd table)
-	
-	
-	
-	
+
+
+
+
  * @param keypoints: Pointer to global memory with current keypoints vector
  * @param descriptor: Pointer to global memory with the output SIFT descriptor, cast to uint8
  * @param grad: Pointer to global memory with gradient norm previously calculated
@@ -64,7 +64,7 @@ __kernel void descriptor(
 	__global float* orim,
 	int octsize,
 	int keypoints_start,
-//	int keypoints_end,	
+//	int keypoints_end,
 	__global int* keypoints_end, //passing counter value to avoid to read it each time
 	int grad_width,
 	int grad_height)
@@ -78,41 +78,41 @@ __kernel void descriptor(
 	keypoint k = keypoints[groupid];
 	if (!(keypoints_start <= groupid && groupid < *keypoints_end && k.s1 >=0.0f))
 		return;
-		
+
 	int i,j,j2;
-	
+
 	__local volatile float histogram[128];
 	__local volatile float hist2[128*8];
-			
+
 	float rx, cx;
 	float row = k.s1/octsize, col = k.s0/octsize, angle = k.s3;
 	int	irow = (int) (row + 0.5f), icol = (int) (col + 0.5f);
 	float sine = sin((float) angle), cosine = cos((float) angle);
 	float spacing = k.s2/octsize * 3.0f;
 	int radius = (int) ((1.414f * spacing * 2.5f) + 0.5f);
-	
+
 	int imin = -64 +32*lid1,
 		jmin = -64 +32*lid2;
 	int imax = imin+32,
 		jmax = jmin+32;
-		
+
 	//memset
 	histogram[lid] = 0.0f;
 	for (i=0; i < 8; i++) hist2[lid*8+i] = 0.0f;
-	
+
 	for (i=imin; i < imax; i++) {
-		for (j2=jmin/8; j2 < jmax/8; j2++) {	
+		for (j2=jmin/8; j2 < jmax/8; j2++) {
 			j=j2*8+lid0;
-			
+
 			rx = ((cosine * i - sine * j) - (row - irow)) / spacing + 1.5f;
 			cx = ((sine * i + cosine * j) - (col - icol)) / spacing + 1.5f;
 			if ((rx > -1.0f && rx < 4.0f && cx > -1.0f && cx < 4.0f
 				 && (irow +i) >= 0  && (irow +i) < grad_height && (icol+j) >= 0 && (icol+j) < grad_width)) {
-				
+
 				float mag = grad[icol+j + (irow+i)*grad_width]
 							 * exp(- 0.125f*((rx - 1.5f) * (rx - 1.5f) + (cx - 1.5f) * (cx - 1.5f)) );
 				float ori = orim[icol+j+(irow+i)*grad_width] -  angle;
-				
+
 				while (ori > 2.0f*M_PI_F) ori -= 2.0f*M_PI_F;
 				while (ori < 0.0f) ori += 2.0f*M_PI_F;
 				int	orr, rindex, cindex, oindex;
@@ -123,12 +123,12 @@ __kernel void descriptor(
 					ci = (int)((cx >= 0.0f) ? cx : cx - 1.0f),
 					oi = (int)((oval >= 0.0f) ? oval : oval - 1.0f);
 
-				float rfrac = rx - ri,	
+				float rfrac = rx - ri,
 					cfrac = cx - ci,
 					ofrac = oval - oi;
 				if ((ri >= -1  &&  ri < 4  && oi >=  0  &&  oi <= 8  && rfrac >= 0.0f  &&  rfrac <= 1.0f)) {
 					for (int r = 0; r < 2; r++) {
-						rindex = ri + r; 
+						rindex = ri + r;
 						if ((rindex >=0 && rindex < 4)) {
 							rweight = mag * ((r == 0) ? 1.0f - rfrac : rfrac);
 
@@ -142,18 +142,18 @@ __kernel void descriptor(
 											oindex = 0;
 										}
 										int bin = (rindex*4 + cindex)*8+oindex; //value in [0,128[
-										
+
 										/*
 											Bank conflict ?
-											shared[base+S*tid] : no conflict if "S" has no common factors with 16 (half-warp) 
+											shared[base+S*tid] : no conflict if "S" has no common factors with 16 (half-warp)
 												i.e if "S" is odd
 											If we want to be sure there are no bank conflicts, we can force the stride to
 											be odd : S=9. This leads to creating a 128*9 vector "hist2". The unused parts do
 											not need to be padded since we know that bin is in [0,128[.
 											hist2 = [idx=0|...|idx=7|PADDED|idx=0|...|idx=7|PADDED|idx=0|...]
-										    
+
 											where idx = (r*2+c)*orr is the index of "lid0", in [0,8[
-										
+
 										*/
 										hist2[lid0+8*bin] += cweight * ((orr == 0) ? 1.0f - ofrac : ofrac);
 
@@ -166,20 +166,20 @@ __kernel void descriptor(
 			}//end "in the boundaries"
 		} //end j loop
 	}//end i loop
-	
+
 
 	barrier(CLK_LOCAL_MEM_FENCE);
-	histogram[lid] 
+	histogram[lid]
 		+= hist2[lid*8]+hist2[lid*8+1]+hist2[lid*8+2]+hist2[lid*8+3]+hist2[lid*8+4]+hist2[lid*8+5]+hist2[lid*8+6]+hist2[lid*8+7];
 
 	barrier(CLK_LOCAL_MEM_FENCE);
 	//memset of 128 values of hist2 before re-use
 	hist2[lid] = histogram[lid]*histogram[lid];
-	
+
 	/*
 	 	Normalization and thre work shared by the 16 threads (8 values per thread)
 	*/
-	
+
 	//parallel reduction to normalize vector
 	if (lid < 64) {
 		hist2[lid] += hist2[lid+64];
@@ -208,7 +208,7 @@ __kernel void descriptor(
 	if (lid == 0) hist2[0] = rsqrt(hist2[1]+hist2[0]);
 	barrier(CLK_LOCAL_MEM_FENCE);
 	//now we have hist2[0] = 1/sqrt(sum(hist[i]^2))
-	
+
 	histogram[lid] *= hist2[0];
 
 	//Threshold to 0.2 of the norm, for invariance to illumination
@@ -220,7 +220,7 @@ __kernel void descriptor(
 	}
 	barrier(CLK_LOCAL_MEM_FENCE);
 	//if values have changed, we have to re-normalize
-	if (changed[0]) { 
+	if (changed[0]) {
 		hist2[lid] = histogram[lid]*histogram[lid];
 		if (lid < 64) {
 			hist2[lid] += hist2[lid+64];
@@ -250,13 +250,13 @@ __kernel void descriptor(
 		barrier(CLK_LOCAL_MEM_FENCE);
 		histogram[lid] *= hist2[0];
 	}
-	
-	
+
+
 	barrier(CLK_LOCAL_MEM_FENCE);
 	//finally, cast to integer
 		descriptors[128*groupid+lid]
 		= (unsigned char) MIN(255,(unsigned char)(512.0f*histogram[lid]));
-	
+
 }
 
 

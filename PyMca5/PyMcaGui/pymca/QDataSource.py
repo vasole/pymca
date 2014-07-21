@@ -47,7 +47,7 @@ if sys.platform == "win32":
 
     source_widgets = { SpecFileDataSource.SOURCE_TYPE: QSpecFileWidget.QSpecFileWidget,
                        EdfFileDataSource.SOURCE_TYPE: QEdfFileWidget.QEdfFileWidget}
-    sps = None 
+    sps = None
 else:
     from PyMca5.PyMcaGui.pymca import QSpsDataSource
     sps = QSpsDataSource.SpsDataSource.sps
@@ -90,7 +90,7 @@ def getSourceType(sourceName0):
                 f = None
                 return NexusDataSource.SOURCE_TYPE
             except:
-                pass        
+                pass
     if os.path.exists(sourceName):
         f = open(sourceName, 'rb')
         if sys.version < '3.0':
@@ -106,7 +106,7 @@ def getSourceType(sourceName0):
                     return EdfFileDataSource.SOURCE_TYPE
             except:
                 pass
-            f.seek(0)                
+            f.seek(0)
             try:
                 line = str(f.readline().decode())
                 if not len(line.replace("\n","")):
@@ -115,7 +115,7 @@ def getSourceType(sourceName0):
                 line = str(f.readline().decode("latin-1"))
                 if not len(line.replace("\n","")):
                     line = str(f.readline().decode("latin-1"))
-                            
+
         f.close()
         if sourceName.lower().endswith('.cbf'):
             #pilatus CBF
@@ -159,7 +159,7 @@ def getSourceType(sourceName0):
                     f = None
                     return NexusDataSource.SOURCE_TYPE
                 except:
-                    pass                
+                    pass
             return SpecFileDataSource.SOURCE_TYPE
     else:
         return QSpsDataSource.SOURCE_TYPE
@@ -168,19 +168,19 @@ def QDataSource(name=None, source_type=None):
     if name is None:
         raise ValueError("Invalid Source Name")
     if source_type is None:
-        source_type = getSourceType(name)    
+        source_type = getSourceType(name)
     try:
         sourceClass = source_types[source_type]
     except KeyError:
         #ERROR invalid source type
         raise TypeError("Invalid Source Type, source type should be one of %s" % source_types.keys())
     return sourceClass(name)
-  
-  
+
+
 if __name__ == "__main__":
     try:
         sourcename=sys.argv[1]
-        key       =sys.argv[2]        
+        key       =sys.argv[2]
     except:
         print("Usage: QDataSource <sourcename> <key>")
         sys.exit()

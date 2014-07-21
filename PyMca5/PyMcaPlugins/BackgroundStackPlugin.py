@@ -206,7 +206,7 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
                 stack.data[i] -= y[i]
         else:
             raise ValueError("Invalid 1D index %d" % mcaIndex)
-        self.setStack(stack) 
+        self.setStack(stack)
 
 MENU_TEXT = "Stack Filtering Options"
 

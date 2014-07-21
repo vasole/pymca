@@ -71,14 +71,14 @@ __kernel void orientation_assignment(
 	int cmin = MAX(0,col - radius);
 	int rmax = MIN(row + radius,grad_height - 2);
 	int cmax = MIN(col + radius,grad_width - 2);
-	
+
 	for (r = rmin; r <= rmax; r++) {
 		for (c = cmin; c <= cmax; c++) {
 			gval = grad[r*grad_width+c];
-			
+
 			float dif = (r - k.s1);	distsq = dif*dif;
 			dif = (c - k.s2);	distsq += dif*dif;
-			
+
 			//distsq = (r-k.s1)*(r-k.s1) + (c-k.s2)*(c-k.s2);
 
 			if (gval > 0.0f  &&  distsq < ((float) (radius*radius)) + 0.5f) {
@@ -91,9 +91,9 @@ __kernel void orientation_assignment(
 			}
 		}
 	}
-	
-	
-	
+
+
+
 	/*
 		Apply smoothing 6 times for accurate Gaussian approximation
 	*/
@@ -108,7 +108,7 @@ __kernel void orientation_assignment(
 		}
 	}
 
-	
+
 	/* Find maximum value in histogram */
 
 	float maxval = 0.0f;
@@ -119,10 +119,10 @@ __kernel void orientation_assignment(
 			argmax = i;
 		}
 	}
-		
+
 /*
 	This maximum value in the histogram is defined as the orientation of our current keypoint
-*/	
+*/
 	prev = (argmax == 0 ? 35 : argmax - 1);
 	next = (argmax == 35 ? 0 : argmax + 1);
 	hist_prev = hist[prev];
@@ -141,13 +141,13 @@ __kernel void orientation_assignment(
 	k.s2 = k.s3 *octsize; //sigma
 	k.s3 = angle; 		  //angle
 	keypoints[gid0] = k;
-	
+
 	/*
 		An orientation is now assigned to our current keypoint.
 		We can create new keypoints of same (x,y,sigma) but a different angle.
 		For every local peak in histogram, every peak of value >= 80% of maxval generates a new keypoint
 	*/
-	
+
 	for (i=0; i < 36; i++) {
 		int prev = (i == 0 ? 35 : i - 1);
 		int next = (i == 35 ? 0 : i + 1);
@@ -207,9 +207,9 @@ __kernel void descriptor(
 	keypoint k = keypoints[gid0];
 	if (!(keypoints_start <= gid0 && gid0 < *keypoints_end && k.s1 >=0.0f))
 		return;
-		
+
 	int i,j,u,v,old;
-	
+
 	__local volatile float tmp_descriptors[128];
 	for (i=0; i<128; i++) tmp_descriptors[i] = 0.0f;
 
@@ -220,8 +220,8 @@ __kernel void descriptor(
 	float spacing = k.s2/octsize * 3.0f;
 	int iradius = (int) ((1.414f * spacing * 2.5f) + 0.5f);
 
-	for (i = -iradius; i <= iradius; i++) { 
-		for (j = -iradius; j <= iradius; j++) { 
+	for (i = -iradius; i <= iradius; i++) {
+		for (j = -iradius; j <= iradius; j++) {
 			 rx = ((cosine * i - sine * j) - (row - irow)) / spacing + 1.5f;
 			 cx = ((sine * i + cosine * j) - (col - icol)) / spacing + 1.5f;
 			if ((rx > -1.0f && rx < 4.0f && cx > -1.0f && cx < 4.0f
@@ -234,18 +234,18 @@ __kernel void descriptor(
 				int	orr, rindex, cindex, oindex;
 				float	rweight, cweight;
 
-				float oval = 4.0f*ori*M_1_PI_F; 
+				float oval = 4.0f*ori*M_1_PI_F;
 
 				int	ri = (int)((rx >= 0.0f) ? rx : rx - 1.0f),
 					ci = (int)((cx >= 0.0f) ? cx : cx - 1.0f),
 					oi = (int)((oval >= 0.0f) ? oval : oval - 1.0f);
 
-				float rfrac = rx - ri,	
+				float rfrac = rx - ri,
 					cfrac = cx - ci,
 					ofrac = oval - oi;
 				if ((ri >= -1  &&  ri < 4  && oi >=  0  &&  oi <= 8  && rfrac >= 0.0f  &&  rfrac <= 1.0f)) {
 					for (int r = 0; r < 2; r++) {
-						rindex = ri + r; 
+						rindex = ri + r;
 						if ((rindex >=0 && rindex < 4)) {
 							float rweight = (float) (mag * (float) ((r == 0) ? 1.0f - rfrac : rfrac));
 
@@ -258,10 +258,10 @@ __kernel void descriptor(
 										if (oindex >= 8) {  /* Orientation wraps around at PI. */
 											oindex = 0;
 										}
-										tmp_descriptors[(rindex*4 + cindex)*8+oindex] 
+										tmp_descriptors[(rindex*4 + cindex)*8+oindex]
 											+= cweight * ((orr == 0) ? 1.0f - ofrac : ofrac); //1.0f;
-										
-										
+
+
 									} //end "for orr"
 								} //end "valid cindex"
 							} //end "for c"
@@ -270,7 +270,7 @@ __kernel void descriptor(
 				}
 			} //end "sample in boundaries"
 		}
-		
+
 	} //end "i loop"
 
 
@@ -282,7 +282,7 @@ __kernel void descriptor(
 	// Normalization
 
 	float norm = 0;
-	for (i = 0; i < 128; i++) 
+	for (i = 0; i < 128; i++)
 		norm+=tmp_descriptors[i]*tmp_descriptors[i];
 	norm = rsqrt(norm);
 	for (i=0; i < 128; i++) {

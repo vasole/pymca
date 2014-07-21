@@ -37,7 +37,7 @@ DEBUG = 0
 
 class ParametersWidget(qt.QWidget):
     parametersWidgetSignal = qt.pyqtSignal(object)
-        
+
     def __init__(self, parent=None, ndim=2):
         qt.QWidget.__init__(self, parent)
         self._nDimensions = 2
@@ -105,7 +105,7 @@ class ParametersWidget(qt.QWidget):
                     v = pow(2, j)
                     if v <= (self._shape[i] - offset):
                         lastItem = "%d" %  v
-                    self.widgetDict[key]['width'].addItem(lastItem)                
+                    self.widgetDict[key]['width'].addItem(lastItem)
         self.emitParametersWidgetSignal()
 
     def _widthValueChanged(self, value):
@@ -121,14 +121,14 @@ class ParametersWidget(qt.QWidget):
                 self.widgetDict[key]['offset'].setValue(offset)
                 return
         self.emitParametersWidgetSignal()
-                
+
     def setShape(self, shape):
         if len(shape) != self._nDimensions:
             raise ValueError("Shape length does not match number of dimensions")
 
         self._shape = shape
         self._settingShape = True
-        
+
         for i in range(self._nDimensions):
             key = "Dim %d" % i
             # offset
@@ -209,7 +209,7 @@ class OutputFile(qt.QWidget):
         else:
             self.checkBox.setChecked(False)
             self.checkBox.setEnabled(True)
-            
+
 
 class FFTAlignmentWindow(qt.QWidget):
     def __init__(self, parent=None, stack=None):
@@ -281,7 +281,7 @@ class FFTAlignmentDialog(qt.QDialog):
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")
-        self.okButton.setAutoDefault(False)   
+        self.okButton.setAutoDefault(False)
         self.dismissButton = qt.QPushButton(hbox)
         self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
@@ -320,14 +320,14 @@ class FFTAlignmentDialog(qt.QDialog):
                         "Inconsistent limits on dimension %d" % i)
                 return
         return qt.QDialog.accept(self)
-        
+
     def reject(self):
         self.setDummyStack()
         return qt.QDialog.reject(self)
 
     def closeEvent(self, ev):
         self.setDummyStack()
-        return qt.QDialog.closeEvent(self, ev) 
+        return qt.QDialog.closeEvent(self, ev)
 
 if __name__ == "__main__":
     #create a dummy stack

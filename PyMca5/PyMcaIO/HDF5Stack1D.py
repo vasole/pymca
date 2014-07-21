@@ -56,7 +56,7 @@ class HDF5Stack1D(DataObject.DataObject):
         DataObject.DataObject.__init__(self)
 
         #the data type of the generated stack
-        self.__dtype0 = dtype 
+        self.__dtype0 = dtype
         self.__dtype  = dtype
 
         if filelist is not None:
@@ -97,7 +97,7 @@ class HDF5Stack1D(DataObject.DataObject):
 
         # built the selection in terms of HDF terms
         # for the time being, only the first item in x selection used
-        
+
         xSelection = selection['x']
         if xSelection is not None:
             if type(xSelection) != type([]):
@@ -118,7 +118,7 @@ class HDF5Stack1D(DataObject.DataObject):
         mSelection = selection['m']
         if mSelection not in [None, []]:
             if type(mSelection) != type([]):
-                mSelection = [mSelection]            
+                mSelection = [mSelection]
         if type(mSelection) == type([]):
             if len(mSelection):
                 mSelection = mSelection[0]
@@ -156,7 +156,7 @@ class HDF5Stack1D(DataObject.DataObject):
                     dirname = posixpath.dirname(path)
                     base = posixpath.basename(path)
                     try:
-                        if base in tmpHdf[dirname].keys():                        
+                        if base in tmpHdf[dirname].keys():
                             scanlist.append(entry)
                     except:
                         pass
@@ -184,7 +184,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 scanlist.append("")
                         except:
                             #it will crash later on
-                            pass                        
+                            pass
                 else:
                     JUST_KEYS = False
                     scanlist.append("")
@@ -202,7 +202,7 @@ class HDF5Stack1D(DataObject.DataObject):
                         t = scan
                     if t not in entryNames:
                         raise ValueError("Entry %s not in file" % scan)
-        
+
         nFiles = len(filelist)
         nScans = len(scanlist)
         if JUST_KEYS:
@@ -227,7 +227,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 mpath = scanlist[0] + mSelection
             if xSelection is not None:
                 xpath = scanlist[0] + xSelection
-        
+
         yDataset = tmpHdf[path]
 
         if self.__dtype is None:
@@ -301,7 +301,7 @@ class HDF5Stack1D(DataObject.DataObject):
             else:
                 #what to do if the number of dimensions is only 2?
                 raise
-        
+
         if (not DONE) and (not considerAsImages):
             self.info["McaIndex"] = 2
             n = 0
@@ -347,7 +347,7 @@ class HDF5Stack1D(DataObject.DataObject):
                             IN_MEMORY = False
                         else:
                             #read the data into memory
-                            yDataset = hdf[path].value 
+                            yDataset = hdf[path].value
                             IN_MEMORY = True
                     except (MemoryError, ValueError):
                         yDataset = hdf[path]
@@ -445,7 +445,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                 elif len(yDataset.shape) == 2:
                                     yData = yDataset[:, mca]
                                 elif len(yDataset.shape) == 1:
-                                    yData = yDataset[:]                            
+                                    yData = yDataset[:]
                                 if mSelection is not None:
                                     if case == 0:
                                         self.data[i, j, :] = yData/mDataset[mca]
@@ -490,7 +490,7 @@ class HDF5Stack1D(DataObject.DataObject):
             self.onEnd()
         elif not DONE:
             # data into memory but as images
-            self.info["McaIndex"] = mcaIndex            
+            self.info["McaIndex"] = mcaIndex
             for hdf in hdfStack._sourceObjectList:
                 entryNames = list(hdf["/"].keys())
                 for scan in scanlist:
@@ -514,7 +514,7 @@ class HDF5Stack1D(DataObject.DataObject):
                     if mSelection is not None:
                         nMonitorData = mDataset.size
                         case = -1
-                        yDatasetShape = yDataset.shape 
+                        yDatasetShape = yDataset.shape
                         if nMonitorData == yDatasetShape[0]:
                             #as many monitor data as images
                             mDataset.shape = yDatasetShape[0]
@@ -599,7 +599,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 if i == index:
                     continue
                 nMca *= shape[i]
-                
+
         mcaDim = shape[index]
         if DEBUG:
             print("nMca = %d" % nMca)

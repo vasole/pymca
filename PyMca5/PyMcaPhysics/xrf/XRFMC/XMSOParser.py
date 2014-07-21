@@ -46,7 +46,7 @@ def getXMSOFileFluorescenceInformation(xmsoFile):
             print(i.attrib)
             for key in ['symbol', 'total_counts']:
                 print(key, '= ', i.get(key))
-        element = i.get('symbol') 
+        element = i.get('symbol')
         ddict[element] = {}
         #ddict[element]['z'] = i.get('atomic_number')
         for key in transitions:
@@ -89,7 +89,7 @@ def getXMSOFileFluorescenceInformation(xmsoFile):
                 ddict[element][line]['correction_factor'].append(\
                     multiple/single)
                 for key in transitionsAffected:
-                    nValues = len(ddict[element][line]['counts']) 
+                    nValues = len(ddict[element][line]['counts'])
                     while(len(ddict[element][key]['counts']) < nValues):
                         ddict[element][key]['counts'].append(0.0)
                     ddict[element][key]['counts'][excitationCounter] += value
@@ -129,7 +129,7 @@ if __name__ == "__main__":
             test()
         else:
             print("Usage:")
-            print("python XMSOParser.py xmso_file") 
+            print("python XMSOParser.py xmso_file")
             sys.exit(0)
     else:
         test(sys.argv[1])

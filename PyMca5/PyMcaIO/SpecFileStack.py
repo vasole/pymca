@@ -119,7 +119,7 @@ class SpecFileStack(DataObject.DataObject):
                 mca_number = -1
                 for keyindex in keylist:
                     info = tempInstance.getKeyInfo(keyindex)
-                    numberofmca       = info['NbMca']                    
+                    numberofmca       = info['NbMca']
                     if numberofmca <= 0:
                         continue
                     key = "%s.1.%s" % (keyindex, numberofmca)
@@ -148,7 +148,7 @@ class SpecFileStack(DataObject.DataObject):
                 #prevent problems if the scan number is different
                 #scan = tempInstance.select(keylist[-1])
                 scan = tempInstance[-1]
-                iterationList = range(scan.nbmca()) 
+                iterationList = range(scan.nbmca())
                 for i in iterationList:
                     #mcadata = scan_obj.mca(i)
                     self.data[0,
@@ -266,7 +266,7 @@ class SpecFileStack(DataObject.DataObject):
                                    shape[1],
                                    arrRet.shape[0]),
                                    numpy.float32)
-                except MemoryError:                    
+                except MemoryError:
                     MEMORY_ERROR = True
             while MEMORY_ERROR:
                 try:
@@ -314,7 +314,7 @@ class SpecFileStack(DataObject.DataObject):
 
         """
         # Scan types
-        # ----------    
+        # ----------
         #SF_EMPTY       = 0        # empty scan
         #SF_SCAN        = 1        # non-empty scan
         #SF_MESH        = 2        # mesh scan
@@ -345,7 +345,7 @@ class SpecFileStack(DataObject.DataObject):
                           SpecFileDataSource.SF_MCA):
             #Assumed scans containing always 1 detector
             pass
-        
+
         elif scantype == (SpecFileDataSource.SF_MCA):
             #Assumed scans containing always 1 detector
             pass
@@ -355,7 +355,7 @@ class SpecFileStack(DataObject.DataObject):
             #Assumed scans containing the same number of detectors
             #for the time being I take last mca
             pass
-        
+
         elif scantype == (SpecFileDataSource.SF_NMCA):
             #Assumed scans containing the same number of detectors
             #for the time being I take last mca
@@ -477,12 +477,12 @@ class SpecFileStack(DataObject.DataObject):
 
     def isIndexedStack(self):
         return self.__indexedStack
-    
+
     def getZSelectionArray(self,z=0):
         return (self.data[:,:,z]).astype(numpy.float)
-        
+
     def getXYSelectionArray(self,coord=(0,0)):
-        x,y=coord    
+        x,y=coord
         return (self.data[y,x,:]).astype(numpy.float)
 
 if __name__ == "__main__":

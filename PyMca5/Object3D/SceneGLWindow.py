@@ -116,7 +116,7 @@ class WheelAndSlider(qt.QWidget):
             if orientation == qt.Qt.Horizontal:
                 #self.mainLayout.addWidget(self.wheel)
                 self.mainLayout.addWidget(self.slider)
-            else:    
+            else:
                 self.mainLayout.addWidget(self.slider)
                 #self.mainLayout.addWidget(self.wheel)
 
@@ -131,7 +131,7 @@ class WheelAndLineEdit(qt.QWidget):
             self.lineEdit.setReadOnly(True)
             self.mainLayout.addWidget(self.wheel)
             self.mainLayout.addWidget(self.lineEdit)
-    
+
 class WheelAndSpacer(qt.QWidget):
         def __init__(self, parent = None, orientation = qt.Qt.Horizontal):
             qt.QWidget.__init__(self, parent)
@@ -147,10 +147,10 @@ class WheelAndSpacer(qt.QWidget):
             if orientation == qt.Qt.Horizontal:
                 self.mainLayout.addWidget(self.wheel)
                 self.mainLayout.addWidget(self.spacer)
-            else:    
+            else:
                 self.mainLayout.addWidget(self.spacer)
                 self.mainLayout.addWidget(self.wheel)
-    
+
 class SceneGLWindow(qt.QWidget):
     def __init__(self, parent=None, manager=None, printpreview=None):
         qt.QWidget.__init__(self, parent)
@@ -173,7 +173,7 @@ class SceneGLWindow(qt.QWidget):
         #self.wheelSlider10.wheel.setTotalAngle(360.)
         self.wheelSlider10.wheel.valueChanged[float].connect(self.setTheta)
 
-        
+
         self.glWidget = SceneGLWidget.SceneGLWidget(self)
         self.scene = weakref.proxy(self.glWidget.scene)
         self.glWidget.setObjectSelectionMode(True)
@@ -189,7 +189,7 @@ class SceneGLWindow(qt.QWidget):
         self.wheelSlider12.setValue(0.0)
         #self.wheelSlider12.setScaleMaxMinor(10)
         self.wheelSlider12.valueChanged.connect(self.setZoomFactor)
-        
+
         self.wheelSlider21  = WheelAndLineEdit(self, orientation = qt.Qt.Horizontal)
         #wheel
         #self.wheelSlider21.wheel.setMass(0.5)
@@ -217,7 +217,7 @@ class SceneGLWindow(qt.QWidget):
             self.manager.sigSceneManagerSignal.connect(self.sceneManagerSlot)
         else:
             self.manager=weakref.proxy(manager)
-    
+
         self.activeObject = None
 
         self.glWidget.sigObjectSelected.connect(self.objectSelectedSlot)
@@ -255,7 +255,7 @@ class SceneGLWindow(qt.QWidget):
         self.buttonObjectSelectionMode = tb
         self.objectSelectionMode = False
 
-        # the vertex toggle 
+        # the vertex toggle
         tb = self._addToolButton(self.pointingHandIcon,
                                  self.setVertexSelectionModeSlot,
                                  "Vertex selection Mode",
@@ -264,7 +264,7 @@ class SceneGLWindow(qt.QWidget):
         self.buttonVertexSelectionMode = tb
         self.vertexSelectionMode = False
 
-        # the panning toggle 
+        # the panning toggle
         tb = self._addToolButton(self.sizeallIcon,
                                  self.setScenePanningModeSlot,
                                  "Scene panning Mode",
@@ -313,7 +313,7 @@ class SceneGLWindow(qt.QWidget):
             self.wheelSlider21.wheel.setValue(0.0)
             self.__applyingCube = False
 
-        
+
     def setObjectSelectionModeSlot(self):
         self.vertexSelectionMode = False
         self.objectSelectionMode = True
@@ -350,7 +350,7 @@ class SceneGLWindow(qt.QWidget):
         else:
             text = ("Vertex selection mode for object %s." % current)
         self.infoLine.setText(text)
-        
+
     def setScenePanningModeSlot(self):
         if self.scenePanningMode:
            # nothing to be done
@@ -377,14 +377,14 @@ class SceneGLWindow(qt.QWidget):
     def printWidget(self):
         #pixmap = qt.QPixmap.grabWidget(self)
         #self.printPreview.addPixmap(pixmap)
-        qimage = self.glWidget.getQImage()    
+        qimage = self.glWidget.getQImage()
         self.printPreview.addImage(qimage)
         if self.printPreview.isHidden():
             self.printPreview.show()
         self.printPreview.raise_()
 
     def _addToolButton(self, icon, action, tip, toggle=None, state=None, position=None):
-        tb      = qt.QToolButton(self.toolBar)            
+        tb      = qt.QToolButton(self.toolBar)
         tb.setIcon(icon)
         tb.setToolTip(tip)
         if toggle is not None:
@@ -467,7 +467,7 @@ class SceneGLWindow(qt.QWidget):
                 "%s\n %s" % (sys.exc_info()[0], sys.exc_info()[1]),
                 qt.QMessageBox.Ok | qt.QMessageBox.Default,
                             qt.QMessageBox.NoButton)
-                    
+
 
     def sceneControlSlot(self, ddict):
         if DEBUG:
@@ -487,7 +487,7 @@ class SceneGLWindow(qt.QWidget):
             return
         #self.glWidget.updateGL()
         self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
-    
+
     def setSelectedObject(self, name, update_scene=True):
         self.objectSelectedSlot({'legend':name}, update_scene=update_scene)
 
@@ -615,12 +615,12 @@ class SceneGLWindow(qt.QWidget):
                                 o3d.setConfiguration(cfg)
                             #this is to get the proper limits for the scene
                             configDict['common']['colormap'] = newColormap
-                            del configDict['common']['event']                            
+                            del configDict['common']['event']
                             cfg = self.scene[legend].root[0].getConfiguration()
                             cfg['common']['colormap'] = newColormap
                             self.scene[legend].root[0].setConfiguration(cfg)
                             self.selectedObjectControl.setConfiguration(cfg)
-                    
+
         if legend == self.scene.name() or self.scene.getAutoScale():
             newScale = self.scene[legend].root[0].getConfiguration()['common']['scale']
             if newScale != oldScale:
@@ -631,9 +631,9 @@ class SceneGLWindow(qt.QWidget):
                 position=self.scene.applyCube()
                 self.glWidget.setCurrentViewPosition(position,
                                                      rotation_reset=False)
-                return            
+                return
         self.glWidget.cacheUpdateGL()
-    
+
     def vertexSelectedSlot(self, ddict):
         self.infoLine.setText(ddict['info'])
 
@@ -683,7 +683,7 @@ class SceneGLWindow(qt.QWidget):
         self.glWidget.setSelectedObjectAlpha(value/10.)
         #self.glWidget.updateGL()
         self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
-    
+
     def addObject(self, ob, legend = None, update_scene=True):
         self.sceneControl.scene.addObject(ob, legend)
         self.sceneControl.scene.getLimits()
@@ -706,15 +706,15 @@ class SceneGLWindow(qt.QWidget):
             self.activeObject = None
         self.sceneControl.scene.removeObject(legend)
         self.sceneControl.scene.getLimits()
-        self.sceneControl.updateView()            
+        self.sceneControl.updateView()
         if update_scene:
             self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
-        
+
     def clear(self, update_scene=True):
         self.activeObject = None
         self.sceneControl.scene.clearTree()
         self.sceneControl.scene.getLimits()
-        self.sceneControl.updateView()            
+        self.sceneControl.updateView()
         if update_scene:
             self.glWidget.setZoomFactor(self.glWidget.getZoomFactor())
 
@@ -741,7 +741,7 @@ if __name__ == '__main__':
     if 0:
         class MyObject(Object3DBase.Object3D):
             def drawObject(self):
-                #GL.glShadeModel(GL.GL_FLAT)  
+                #GL.glShadeModel(GL.GL_FLAT)
                 GL.glShadeModel(GL.GL_SMOOTH) #in order not to have just blue face
                 GL.glBegin(GL.GL_TRIANGLE_STRIP)
                 alpha = 1.0 - self._configuration['common']['transparency']
@@ -756,7 +756,7 @@ if __name__ == '__main__':
         ob3D1 = MyObject(name="Object1")
         ob3D1.setLimits(-25, 0.0, 0.0, 25, 25, 0.0)
 
-        ob3D2 = MyObject(name="Object2")    
+        ob3D2 = MyObject(name="Object2")
         ob3D2.setLimits(-25, 0.0, 0.0, 25, 25, 0.0)
 
 

@@ -23,7 +23,7 @@ elif platform.system() == 'SunOS' :
     extra_compile_args = []
 else:
     extra_compile_args = []
-    
+
 ext_modules = [Extension(
                         name = 'spslut',
                         sources=['Src/sps_lut.c',

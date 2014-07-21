@@ -350,7 +350,7 @@ class ConcentrationsWidget(qt.QWidget):
             self.xrfmcCheckBox.clicked[()].connect(self._xrfmcCheckBoxSlot)
         else:
             self.secondaryCheckBox.clicked[()].connect(self.checkBoxSlot)
-            
+
         self.mMolarCheckBox.clicked[()].connect(self.checkBoxSlot)
 
         self.fundamentalWidget.flux.sigMyQLineEditSignal.connect( \

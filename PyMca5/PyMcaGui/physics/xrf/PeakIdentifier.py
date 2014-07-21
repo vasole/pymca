@@ -59,7 +59,7 @@ class PeakIdentifier(qt.QWidget):
         if threshold is None: threshold = 0.030
         if useviewer is None: useviewer = 0
         self.__useviewer = useviewer
-        
+
         layout = qt.QVBoxLayout(self)
         #heading
         self.__energyHBox=qt.QWidget(self)
@@ -95,7 +95,7 @@ class PeakIdentifier(qt.QWidget):
         font=hbox2.font()
         font.setBold(1)
         hbox2.setFont(font)
-        
+
 
         l2=qt.QLabel(hbox2)
         l2.setText('Energy Threshold (eV)')
@@ -136,7 +136,7 @@ class PeakIdentifier(qt.QWidget):
         hbox2.layout.addWidget(self.l2)
         hbox2.layout.addWidget(self.l3)
         hbox2.layout.addWidget(self.m)
-        
+
         if self.__useviewer:
             self.__browsertext = qt.QTextEdit(self)
         layout.addWidget(self.__browsertext)
@@ -149,7 +149,7 @@ class PeakIdentifier(qt.QWidget):
         else:
             self.energy.setText("%.3f" % energy)
         self._energySlot()
-        
+
     def _energySlot(self):
         qstring = self.energy.text()
         try:
@@ -188,7 +188,7 @@ class PeakIdentifier(qt.QWidget):
                 msg.exec_()
             self.energy.setFocus()
             return
-            
+
         threshold = float(str(self.threshold.text()))/1000.
         lines=[]
         if self.k.isChecked():
@@ -214,13 +214,13 @@ class PeakIdentifier(qt.QWidget):
                 #                              "</CENTER>")
                 self.__browsertext.insertHtml(ddict['text'])
         self.sigPeakIdentifierSignal.emit(ddict)
-        
-        
+
+
     def getHtmlText(self, ddict):
         text  = ""
         if QTVERSION < '4.0.0':
             text += "<br>"
-        labels=['Element','Line','Energy','Rate'] 
+        labels=['Element','Line','Energy','Rate']
         lemmon=("#%x%x%x" % (255,250,205))
         lemmon = lemmon.upper()
         hcolor = ("#%x%x%x" % (230,240,249))
@@ -276,13 +276,13 @@ class MyQLineEdit(qt.QLineEdit):
     def __init__(self,parent=None,name=None):
         qt.QLineEdit.__init__(self,parent)
         self.setAutoFillBackground(True)
-        
+
     def setPaletteBackgroundColor(self, color):
         palette = qt.QPalette()
         role = self.backgroundRole()
         palette.setColor(role,color)
         self.setPalette(palette)
-            
+
 
     def focusInEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('yellow'))
@@ -312,6 +312,6 @@ def main():
     mw.setWindowTitle("Peak Identifier")
     mw.show()
     app.exec_()
-    
+
 if __name__ == "__main__":
     main()

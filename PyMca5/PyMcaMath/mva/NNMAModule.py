@@ -16,7 +16,7 @@ NNMA minimizes  dist(Y, A X)
 
                k < min(m,n)
 
-     dist(A,B) can be || A - B ||_fro 
+     dist(A,B) can be || A - B ||_fro
                    or   KL(A,B)
 
 
@@ -29,13 +29,13 @@ The common parameters when calling such a function are:
 
     input:
 
-            Y           --   the matrix for decomposition, maybe dense 
-                             from numpy or sparse from scipy.sparse 
+            Y           --   the matrix for decomposition, maybe dense
+                             from numpy or sparse from scipy.sparse
                              package
 
             k           --   number of componnets to estimate
 
-            Astart 
+            Astart
             Xstart      --   matrices to start iterations. Maybe None
                              for using random start matrices.
 
@@ -49,13 +49,13 @@ The common parameters when calling such a function are:
 
     output:
 
-            A, X        --   result matrices of algorithm 
-            
+            A, X        --   result matrices of algorithm
+
             obj         --   value of objective function of last iteration
 
             count       --   number of iterations done
 
-            converged   --   flag: indicates if iterations stoped within 
+            converged   --   flag: indicates if iterations stoped within
                              max number of iterations
 
 The following extra parameters exist depending on algorithm:
@@ -66,7 +66,7 @@ The following extra parameters exist depending on algorithm:
 
     ALS      :  regularization parameter 'regul' for stabilizing iterations
                 (default value 0). needed if objective value jitters.
- 
+
     GCDLS    :  'regul' for l2-smoothness of X (default 0)
 
     GDCLS_L1 :  'regul' for l1-smoothness of X (default 0)
@@ -85,8 +85,8 @@ This module is based on:
 
     - Daniel D. Lee and H. Sebastian Seung:
 
-          "Algorithms for non-negative matrix factorization", 
-          in Advances in Neural Information Processing 13 
+          "Algorithms for non-negative matrix factorization",
+          in Advances in Neural Information Processing 13
           (Proc. NIPS*2000) MIT Press, 2001.
 
           "Learning the parts of objects by non-negative matrix
@@ -103,7 +103,7 @@ This module is based on:
     - P. O. Hoyer
 
           "Non-negative Matrix Factorization with sparseness
-           constraints", 
+           constraints",
           Journal of Machine Learning Research, vol. 5, pp. 1457-1469,
           2004.
 
@@ -111,15 +111,15 @@ This module is based on:
     - Dongmin Kim, Suvrit Sra,Inderjit S. Dhillon:
 
            "Fast Newton-type Methods for the Least Squares Nonnegative Matrix
-           Approximation Problem" 
-           SIAM Data Mining (SDM), Apr. 2007 
-          
+           Approximation Problem"
+           SIAM Data Mining (SDM), Apr. 2007
+
 
     - Ngoc-Diep Ho:
 
         dissertation from
         http://edoc.bib.ucl.ac.be:81/ETD-db/collection/available/BelnUcetd-06052008-235205/
-                
+
 
 #############################################################################
 
@@ -330,7 +330,7 @@ def nnma(stack, ncomponents, binning=None,
                 spectrum = data[k:k+1,:]
                 new_images[-1, i,j] = classifier.label(spectrum)[0]
                 k += 1
-    return new_images, values, new_vectors        
+    return new_images, values, new_vectors
 
 if __name__ == "__main__":
     from PyMca.PyMcaIO import EDFStack
@@ -338,7 +338,7 @@ if __name__ == "__main__":
     import os
     import sys
     import time
-    inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"    
+    inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"
     if len(sys.argv) > 1:
         inputfile = sys.argv[1]
         print(inputfile)

@@ -87,14 +87,14 @@ def getComptonScatteringEnergy(energy, theta):
 
 def getElementIncoherentScatteringFunction(ele, theta, energy):
     """
-    Usage: 
+    Usage:
         getIncoherentScatteringFunction(ele,theta, energy):
-    
+
     ele   - Element
     theta - Scattering angle in degrees
     energy- Photon Energy in keV
-    
-    This routine calculates the incoherent scattering function 
+
+    This routine calculates the incoherent scattering function
     in electron units an interpolation to EGS4 tabulation of S(x,Z)/Z
     """
     if ele in ElementList:
@@ -105,14 +105,14 @@ def getElementIncoherentScatteringFunction(ele, theta, energy):
     sinhalftheta = numpy.sin(theta * (numpy.pi / 360.0))
     #Hubbel just give this term
     x =  sinhalftheta / wavelength
-    
+
     #print "x old = ",x
     e = energy/511.0
     #Fajardo uses:
     x = x * numpy.sqrt(1.0 + e* (e+2.0)* pow(sinhalftheta, 2))/ \
             (1.0 + 2.0 * e * pow(sinhalftheta, 2))
     #print "x new = ",x
-    
+
     ilow  = 0
     ihigh = 44
     i     = 22
@@ -123,7 +123,7 @@ def getElementIncoherentScatteringFunction(ele, theta, energy):
 
     if z > 100:
         if ihigh == ilow:
-            value = svalues[int(99),ilow]  
+            value = svalues[int(99),ilow]
         else:
             A = (x - xvalues[ilow])/(xvalues[ihigh]-xvalues[ilow])
             value = ((1.0 - A ) * svalues[int(99),ilow] + \
@@ -131,12 +131,12 @@ def getElementIncoherentScatteringFunction(ele, theta, energy):
         value = value * (z/100.)
     else:
         if ihigh == ilow:
-            value = svalues[int(z-1),ilow]  
+            value = svalues[int(z-1),ilow]
         else:
             A = (x - xvalues[ilow])/(xvalues[ihigh]-xvalues[ilow])
             value = ((1.0 - A ) * svalues[int(z-1),ilow] + \
                     A * svalues[int(z-1),ihigh])
-    
+
     return value
 
 
@@ -161,7 +161,7 @@ if __name__ == "__main__":
         ele   = sys.argv[1]
         theta = float(sys.argv[2])
         energy= float(sys.argv[3])
-        print(getElementComptonFormFactor(ele, theta, energy))    
+        print(getElementComptonFormFactor(ele, theta, energy))
     else:
         print("Usage:")
         print("python IncoherentScatteringFunction.py Element Theta(deg) Energy(kev)")

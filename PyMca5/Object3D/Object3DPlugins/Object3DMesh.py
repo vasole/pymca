@@ -61,7 +61,7 @@ import weakref
 
 DEBUG = 0
 import time
-    
+
 DRAW_MODES = ['NONE',
               'POINT',
               'WIRE',
@@ -106,7 +106,7 @@ class Object3DMesh(Object3DBase.Object3D):
         self._configuration['private']['isosurfaces'] = [[0, 10, 'green', 0, 0xFF, 0, 0xFF]] #green
         self._configuration['private']['useminmax']    = [0, 100, 200]
         self._configuration['private']['infolabel'] = "Object3DMesh %s" % name
-  
+
     def __del__(self):
         if DEBUG:
             print("Deleting object %s" % self.name())
@@ -160,7 +160,7 @@ class Object3DMesh(Object3DBase.Object3D):
                         doit = False
                         x = None
                 if doit:
-                    y = arr[1]                        
+                    y = arr[1]
                     z = numpy.zeros(x.shape[0]*y.shape[0], numpy.float)
                     z[:] = xyz[:, 2]
                     xyz = None
@@ -221,7 +221,7 @@ class Object3DMesh(Object3DBase.Object3D):
         self.values.shape = self.nVertices, 1
 
         self.getColors()
-        self._obtainLimits()            
+        self._obtainLimits()
 
     def __setXYZArray(self, xyz, values=None):
         if values is None:
@@ -263,9 +263,9 @@ class Object3DMesh(Object3DBase.Object3D):
             self.vertexSelectionColors[:,2] = ((i >> 16) & 255)
             self.vertexSelectionColors[:,3] = 255 - (i >> 24)
         return
-        
+
     def _obtainLimits(self):
-        xmin, ymin, zmin =  self._x.min(), self._y.min(), self._z.min() 
+        xmin, ymin, zmin =  self._x.min(), self._y.min(), self._z.min()
         xmax, ymax, zmax =  self._x.max(), self._y.max(), self._z.max()
         self.setLimits(xmin, ymin, zmin, xmax, ymax, zmax)
 
@@ -336,7 +336,7 @@ class Object3DMesh(Object3DBase.Object3D):
                              self.facets,
                              self._configuration['private']['colorfilter'],
                              self._configuration['private']['useminmax'])
-                
+
             elif self.__flat:
                 Object3DCTools.draw3DGridQuads(self._x,
                             self._y,
@@ -497,7 +497,7 @@ class Object3DMesh(Object3DBase.Object3D):
                              self._configuration['private']['useminmax'])
         return
 
-        
+
         GL.glVertexPointerf(self.vertices)
         if selection:
             GL.glColorPointerub(self.vertexSelectionColors)
@@ -524,12 +524,12 @@ class Object3DMesh(Object3DBase.Object3D):
                                           (0, 255),1)
         image.shape = -1, 4
         image[:,3] = 255
-        #self.vertexColors = image.astype(numpy.float32)            
+        #self.vertexColors = image.astype(numpy.float32)
         x = numpy.arange(n1).astype(numpy.float32)
         y = numpy.arange(n2).astype(numpy.float32)
         z = numpy.arange(n3).astype(numpy.float32)
-        #Object3DCTools.draw3DGridQuads(x, y, y) 
-        #Object3DCTools.draw3DGridLines(x, y, z, image) 
+        #Object3DCTools.draw3DGridQuads(x, y, y)
+        #Object3DCTools.draw3DGridLines(x, y, z, image)
         Object3DCTools.draw3DGridPoints(x, y, z, image)
         self.zdata = zdata
 
@@ -583,7 +583,7 @@ def getObject3DInstance(config=None):
         fileindex = 1
     #file index is irrelevant in case of an actual 3D stack.
     filename = fileList[0]
-    legend = os.path.basename(filename)    
+    legend = os.path.basename(filename)
     edf = EdfFile.EdfFile(filename, access='rb')
     data = edf.GetData(0).astype(numpy.float32)
     object3D = Object3DMesh(os.path.basename(filename))
@@ -633,7 +633,7 @@ if __name__ == "__main__":
         #print Object3DCTools.getVertexArrayMeshAxes(xyz)
         #sys.exit(0)
         data.shape = 1, xSize * ySize
-        xyz[:,2] = data[:]                         
+        xyz[:,2] = data[:]
         object3D.setData(data, xyz=xyz)
     elif 0:
         #flat
@@ -643,7 +643,7 @@ if __name__ == "__main__":
         object3D.setData(data, z=data)
     window.addObject(object3D, "Mesh")
     object3D = None
-    
+
     window.glWidget.setZoomFactor(1.0)
     window.show()
     app.exec_()

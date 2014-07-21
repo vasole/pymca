@@ -62,7 +62,7 @@ import weakref
 
 import time
 DEBUG = 0
-    
+
 DRAW_MODES = ['NONE',
               'POINT',
               'WIRE',
@@ -90,7 +90,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         self.__yMirror = False  # OpenGL origin is bottom left ...
         self.__widthStep  = 1.0
         self.__heightStep = 1.0
-        self._linear = True        
+        self._linear = True
         self.pointSelectionGridList = 0
         self._forcePointSelectionGridListCalculation = False
 
@@ -148,7 +148,7 @@ class Object3DPixmap(Object3DBase.Object3D):
             self.pixmap[:,0:3] = pixmap[:,0:3]
         self.pixmap[:,3] = 255
         return
-        
+
     def setQPixmap(self, qpixmap):
         if not isinstance(qpixmap, qt.QPixmap):
             raise TypeError("This does not seem to be a QPixmap")
@@ -180,7 +180,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         self._imageData = None
         self._meshImage = False
         self._forceTextureCalculation = True
-        
+
         #make sure we work with integers
         self.__width  = int(width)
         self.__height = int(height)
@@ -251,7 +251,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         self._configuration['common']['colormap'][5]=self._dataMax
         ddict = {'common':{'event':'ColormapChanged'}}
         self.setConfiguration(ddict)
-        
+
     def setImageData(self, data):
         """
         setImageData(self, data)
@@ -259,7 +259,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         """
         self._qt = False
         maxTextureSize = GL.glGetIntegerv(GL.GL_MAX_TEXTURE_SIZE)
-        shape = data.shape        
+        shape = data.shape
         self._dataMin = data.min()
         self._dataMax = data.max()
         if (shape[0] > maxTextureSize) or\
@@ -317,13 +317,13 @@ class Object3DPixmap(Object3DBase.Object3D):
                 rotX[0,0] =  1
                 rotX[1,1] =  1
                 rotX[2,2] =  1
-                rotX[3,3] =  1                    
+                rotX[3,3] =  1
                 cs = -1.0
                 sn =  0.0
-                rotX[1,1] =  cs; rotX[1,2] = sn   
+                rotX[1,1] =  cs; rotX[1,2] = sn
                 rotX[2,1] = -sn; rotX[2,2] = cs
                 GL.glMultMatrixd(rotX)
-                GL.glTranslated(0.0, -self.__height, 0.0) 
+                GL.glTranslated(0.0, -self.__height, 0.0)
 
             if xMirror:
                 #RotY
@@ -335,9 +335,9 @@ class Object3DPixmap(Object3DBase.Object3D):
                 rotY[2,2] =  1
                 rotY[3,3] =  1
                 rotY[0,0] =  cs; rotY[0,2] = -sn   #inverted respect to the others
-                rotY[2,0] =  sn; rotY[2,2] =  cs                
+                rotY[2,0] =  sn; rotY[2,2] =  cs
                 GL.glMultMatrixd(rotY)
-                GL.glTranslated(-self.__width, 0.0, 0.0) 
+                GL.glTranslated(-self.__width, 0.0, 0.0)
 
     def drawObject(self):
         if DEBUG:e0=time.time()
@@ -381,7 +381,7 @@ class Object3DPixmap(Object3DBase.Object3D):
                 GL.glCallList(self.pointSelectionGridList)
                 GL.glTranslate(-0.5 * self.__widthStep, -0.5 * self.__heightStep, 0.0)
                 """
-            
+
         if DEBUG:
             print("elapsed = ", time.time() - e0)
 
@@ -393,7 +393,7 @@ class Object3DPixmap(Object3DBase.Object3D):
             alpha = 255
         else:
             alpha = int(255 * alpha)
-        self.pixmap[:, 3] = alpha        
+        self.pixmap[:, 3] = alpha
         shape = self._imageData.shape
         self._imageData.shape = -1,1
         if DRAW_MODES[self._configuration['common']['mode']] == "POINT":
@@ -429,7 +429,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         set a texture coordinate with glTexCoord before each glVertex.
         """
         if self.textureId >= 0:
-            #I should use texture subimage whenever possible ... 
+            #I should use texture subimage whenever possible ...
             #glDeleteTextures(GLsizei n, const GLuint *textureNames);
             GL.glDeleteTextures(self.textureId)
         self.textureId = GL.glGenTextures(1)
@@ -457,7 +457,7 @@ class Object3DPixmap(Object3DBase.Object3D):
                         GL.GL_UNSIGNED_BYTE, self.pixmap)
         GL.glEnable(GL.GL_TEXTURE_2D)
         self._forceTextureCalculation = False
-        
+
     def buildQuad(self):
         if self.drawList > 0:
             GL.glDeleteLists(self.drawList, 1)
@@ -504,14 +504,14 @@ class Object3DPixmap(Object3DBase.Object3D):
 
         self.__widthStep  = (xmax - xmin)/xsize
         self.__heightStep = (ymax - ymin)/ysize
-        
-        x = xmin + numpy.arange(xsize) * self.__widthStep 
+
+        x = xmin + numpy.arange(xsize) * self.__widthStep
         y = ymin + numpy.arange(ysize) * self.__heightStep
 
         if DEBUG:e0 = time.time()
         self.vertices = numpy.zeros((xsize * ysize, 3), numpy.float32)
         if 0:
-            #fast method to generate the vertices 
+            #fast method to generate the vertices
             A=numpy.outer(x, numpy.ones(len(y), numpy.float32))
             B=numpy.outer(y, numpy.ones(len(x), numpy.float32))
 
@@ -579,7 +579,7 @@ class Object3DPixmap(Object3DBase.Object3D):
         GL.glEnableClientState(GL.GL_COLOR_ARRAY)
         GL.glDrawArrays(GL.GL_POINTS, 0, self.__width*self.__height)
         GL.glDisableClientState(GL.GL_COLOR_ARRAY);
-        GL.glDisableClientState(GL.GL_VERTEX_ARRAY); 
+        GL.glDisableClientState(GL.GL_VERTEX_ARRAY);
         GL.glEndList()
         self._forcePointSelectionGridListCalculation = False
 
@@ -613,7 +613,7 @@ def getObject3DInstance(config=None):
     fileTypeList = ['Picture Files (*jpg *jpeg *tif *tiff *png)',
                     'EDF Files (*edf)',
                     'EDF Files (*ccd)',
-                    'ADSC Files (*img)',                    
+                    'ADSC Files (*img)',
                     'EDF Files (*)']
     fileList, filterUsed = Object3DFileDialogs.getFileList(None,
                                     filetypelist=fileTypeList,
@@ -652,7 +652,7 @@ def getObject3DInstance(config=None):
         return object3D
     return None
 
-    
+
 if __name__ == "__main__":
     import sys
     import os

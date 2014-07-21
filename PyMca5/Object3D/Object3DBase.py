@@ -38,7 +38,7 @@ except ImportError:
     raise ImportError("OpenGL must be installed to use these functionalities")
 
 DEBUG = 0
-    
+
 DRAW_MODES = ['NONE',
               'POINT',
               'WIRE',
@@ -106,22 +106,22 @@ class Object3D(object):
 
     def isVertexSelectionModeSupported(self):
         return False
-        
+
     def setVertexSelectionMode(self, flag):
         # This is to tell the widget the application is trying
-        # to get information about a vertex. 
+        # to get information about a vertex.
         self._vertexSelectionMode = flag
-        
+
     def initCommonConfiguration(self, name):
         """
         Fills the default configuration features
         found in all objects
         """
-        
+
         ddict = {}
 
         ddict['name'] = name
-        
+
         ddict['pointsize']    = 1.0     #always supported
         ddict['linewidth']    = 1.0     #always supported
         ddict['transparency'] = 0.0     #solid color
@@ -164,7 +164,7 @@ class Object3D(object):
                                    [0, 0.0, 1.0, 0.0, 0.0], #XZ
                                    [0, 1.0, 0.0, 0.0, 0.0], #YZ
                                    [0, 0.0, 0.0, 1.0, 0.0]] #U0
-                                           
+
 
         ddict['limits'] = self.getLimits()
 
@@ -223,11 +223,11 @@ class Object3D(object):
         for x in [xmin, xmax]:
             for y in [ymin, ymax]:
                 for z in [zmin, zmax]:
-                    self._limitsArray[i, 0] = x 
-                    self._limitsArray[i, 1] = y 
+                    self._limitsArray[i, 0] = x
+                    self._limitsArray[i, 1] = y
                     self._limitsArray[i, 2] = z
                     i += 1
-        
+
         self._limitsChanged = True
         self._configuration['common']['limits'] = self._limits
 
@@ -270,7 +270,7 @@ class Object3D(object):
         GL.glDisable(GL.GL_CLIP_PLANE1)
         GL.glDisable(GL.GL_CLIP_PLANE2)
         GL.glDisable(GL.GL_CLIP_PLANE3)
-        
+
     def drawObject(self):
         pass
 
@@ -312,7 +312,7 @@ class Object3D(object):
                 #the old bounding box list is not valid
                 GL.glDeleteLists(self.boundingBoxList, 1)
                 self.buildBoundingBoxList()
-            
+
         #should I consider the alpha?
         alpha = 1. - self._configuration['common']['transparency']
         GL.glColor4f(0., 0., 0., alpha)
@@ -321,7 +321,7 @@ class Object3D(object):
     def buildBoundingBoxList(self):
         (xmin, ymin, zmin) = self._limits[0,:]
         (xmax, ymax, zmax) = self._limits[1,:]
-        
+
         self.boundingBoxList = GL.glGenLists(1)
         GL.glColor3f(0.5, 0.0, 0.0)
 
@@ -395,7 +395,7 @@ class Object3D(object):
                 y += ydelta
             GL.glEnd()
 
-        if zdelta > 0:        
+        if zdelta > 0:
             GL.glBegin(GL.GL_LINES)
             z = zmin + zdelta
             while z <= zmax:
@@ -404,7 +404,7 @@ class Object3D(object):
                 GL.glVertex3f(xmax, ymin, z)
                 GL.glVertex3f(xmax - xTickSize, ymin, z)
 
-                GL.glVertex3f(xmin, ymin, z)                
+                GL.glVertex3f(xmin, ymin, z)
                 GL.glVertex3f(xmin, ymin + yTickSize, z)
                 GL.glVertex3f(xmin, ymax, z)
                 GL.glVertex3f(xmin, ymax - yTickSize, z)
@@ -419,7 +419,7 @@ class Object3D(object):
         if maxval0 < 0:
             maxval = -maxval0
         else:
-            maxval = maxval0        
+            maxval = maxval0
         if minval > maxval:
             temp = minval * 1.0
             minval = maxval * 1.0

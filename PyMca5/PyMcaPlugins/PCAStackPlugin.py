@@ -207,7 +207,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             # for the time being only in the global image
             # spatial_mask = numpy.isfinite(image_data)
             spatial_mask = numpy.isfinite(self.getStackOriginalImage())
-            pcaParameters['mask'] = spatial_mask 
+            pcaParameters['mask'] = spatial_mask
         stack = self.getStackDataObject()
         if isinstance(stack, numpy.ndarray):
             if stack.data.dtype not in [numpy.float, numpy.float32]:

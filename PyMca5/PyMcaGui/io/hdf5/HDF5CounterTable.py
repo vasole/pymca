@@ -90,7 +90,7 @@ class HDF5CounterTable(qt.QTableWidget):
         self.resizeColumnToContents(2)
         self.resizeColumnToContents(3)
         self.__building = False
-        
+
     def __addLine(self, i, cntlabel):
         #the counter name
         item = self.item(i, 0)
@@ -211,8 +211,8 @@ class HDF5CounterTable(qt.QTableWidget):
                     widget.setChecked(False)
         ddict = {}
         ddict["event"] = "updated"
-        self.sigHDF5CounterTableSignal.emit(ddict)        
-        
+        self.sigHDF5CounterTableSignal.emit(ddict)
+
 
     def getCounterSelection(self):
         ddict = {}
@@ -220,7 +220,7 @@ class HDF5CounterTable(qt.QTableWidget):
         ddict['aliaslist'] = self.aliasList * 1
         ddict['x']       = self.xSelection * 1
         ddict['y']       = self.ySelection * 1
-        ddict['m'] = self.monSelection * 1        
+        ddict['m'] = self.monSelection * 1
         return ddict
 
     def setCounterSelection(self, ddict):
@@ -237,7 +237,7 @@ class HDF5CounterTable(qt.QTableWidget):
                 aliaslist = ddict['aliaslist']
             elif len(self.aliasList) == len(cntlist):
                 aliaslist = self.aliasList * 1
-            else:            
+            else:
                 aliaslist = self.cntList * 1
 
         if 'x' in keys:
@@ -278,12 +278,12 @@ class HDF5CounterTable(qt.QTableWidget):
                 if counter in self.cntList:
                     self.monSelection.append(self.cntList.index(counter))
         self._update()
-        
+
 
 class CheckBoxItem(qt.QCheckBox):
 
     sigCheckBoxItemSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent, row, col):
         qt.QCheckBox.__init__(self, parent)
         self.__row = row
@@ -309,4 +309,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+

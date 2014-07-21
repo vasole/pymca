@@ -30,7 +30,7 @@ In any case you need write privileges to the final directories.
 
 3 - Creation of an easy to install windows binary using Visual Studio
 
-python setup.py bdist_wininst --install-script pymca_win_post_install.py 
+python setup.py bdist_wininst --install-script pymca_win_post_install.py
 
 4 - Creation of an easy to install windows binary using the  MinGW compiler
 python setup.py build -c mingw32

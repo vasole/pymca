@@ -233,7 +233,7 @@ class ConcentrationsTool(object):
         xrfmcSecondary = self.config['usexrfmc']
         if secondary and xrfmcSecondary:
             txt = "Only one of built-in secondary and Monte Carlo correction can be used"
-            raise ValueError(txt) 
+            raise ValueError(txt)
         # get attenuators and matrix from fit
         attenuators = []
         beamfilters = []
@@ -660,7 +660,7 @@ class ConcentrationsTool(object):
                 # calculate the corrections
                 xrfmcCorrections = XRFMCHelper.getXRFMCCorrectionFactors(fitresult['result']['config'])
 
-            
+
             if referenceElement is not None:
                 referenceLines = referenceTransitions.split()[0]
                 referenceCorrection = xrfmcCorrections[referenceElement][referenceLines]\
@@ -692,7 +692,7 @@ class ConcentrationsTool(object):
                 addInfo['Time'] = config['time']
             else:
                 addInfo['Time'] = 1.0
-            addInfo['Flux'] = flux / addInfo['Time']       
+            addInfo['Flux'] = flux / addInfo['Time']
             addInfo['I0'] = flux
             addInfo['DetectorDistance'] = config['distance']
             addInfo['DetectorArea'] = config['area']

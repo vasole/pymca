@@ -44,14 +44,14 @@ class ConsolePlugin(Plugin1DBase.Plugin1DBase):
                                      "Open IPython console",
                                      None]
        self._widget = None
-       
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         names = list(self.methodDict.keys())
         names.sort()

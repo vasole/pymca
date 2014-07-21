@@ -6,7 +6,7 @@
 #
 
 """
-Automatic selection of OpenCL devices 
+Automatic selection of OpenCL devices
 """
 
 from __future__ import division

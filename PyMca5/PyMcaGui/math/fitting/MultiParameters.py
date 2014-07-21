@@ -40,11 +40,11 @@ class ParametersTab(qt.QTabWidget):
     def __init__(self,parent = None, name = "FitParameters"):
         qt.QTabWidget.__init__(self, parent)
         self.setWindowTitle(name)
-        
+
         #geometry
         #self.resize(570,300)
         #self.setCaption(self.trUtf8(name))
-            
+
         #initialize the numer of tabs to 1
         #self.TabWidget=QTabWidget(self,"ParametersTab")
         #self.TabWidget.setGeometry(QRect(25,25,450,350))
@@ -81,12 +81,12 @@ class ParametersTab(qt.QTabWidget):
             self.showPage(self.views[name])
         else:
             self.setCurrentWidget(self.views[name])
-        self.current=name        
+        self.current=name
 
     def renameview(self,oldname=None,newname=None):
         error = 1
         if newname is not None:
-            if newname not in self.views.keys():            
+            if newname not in self.views.keys():
                 if oldname in self.views.keys():
                     parameterlist=self.tables[oldname].fillfitfromtable()
                     self.setview(name=newname,fitparameterslist=parameterlist)
@@ -100,7 +100,7 @@ class ParametersTab(qt.QTabWidget):
         #for view in self.tables.keys():
         #    self.removeview(view)
         self.setview(fitparameterslist=fitparameterslist,name=current)
-        
+
     def fillfitfromtable(self,*vars,**kw):
         if len(vars) > 0:
             name=vars[0]
@@ -113,8 +113,8 @@ class ParametersTab(qt.QTabWidget):
         if hasattr(self.tables[name],'fillfitfromtable'):
             return self.tables[name].fillfitfromtable()
         else:
-            return None       
-    
+            return None
+
     def removeview(self,*vars,**kw):
         error = 1
         if len(vars) > 0:
@@ -162,16 +162,16 @@ class ParametersTab(qt.QTabWidget):
            table=self.tables[name]
         else:
            self.tables[name]=McaTable.McaTable(self)
-           table=self.tables[name]       
+           table=self.tables[name]
            self.tabs.append(name)
            self.views[name]=table
            #self.addTab(table,self.trUtf8(name))
            self.addTab(table,str(name))
            table.sigMcaTableSignal.connect(self.__forward)
         table.fillfrommca(mcaresult)
-        self.setview(name=name)        
+        self.setview(name=name)
         return
-        
+
     def __forward(self,ddict):
         self.sigMultiParametersSignal.emit(ddict)
 
@@ -219,7 +219,7 @@ class ParametersTab(qt.QTabWidget):
                     newtext = str(item.text())
             if len(newtext):
                 color = "white"
-                b="<b>"                
+                b="<b>"
             else:
                 b=""
                 color = lemon
@@ -250,7 +250,7 @@ class ParametersTab(qt.QTabWidget):
                 if len(b):
                     text+=("</td>")
                 else:
-                    text+=("</b></td>") 
+                    text+=("</b></td>")
             if QTVERSION < '4.0.0':
                 newtext = str(table.text(r,0))
             else:
@@ -304,7 +304,7 @@ class ParametersTab(qt.QTabWidget):
                     if QTVERSION < '4.0.0':
                         newtext = str(table.text(r,c))
                     else:
-                        newtext = ""                        
+                        newtext = ""
                         if c != 4:
                             item = table.item(r, c)
                             if item is not None:
@@ -344,7 +344,7 @@ def test():
                   HeightAreaFlag=1,
                   FwhmPoints=50,
                   PositionFlag=1,
-                  HypermetTails=1)        
+                  HypermetTails=1)
     fit.setbackground('Linear')
     if 0:
         # build a spectrum array
@@ -368,7 +368,7 @@ def test():
         w.fillfromfit(fit.paramlist,current='Fit')
         w.removeview(view='Region 1')
     a.exec_()
-        
+
 if __name__ == "__main__":
     bench=0
     if bench:

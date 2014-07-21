@@ -107,7 +107,7 @@ def shiftImage(img, shift, method=None):
         return scipy.ndimage.interpolation.shift(img, shift, mode="wrap")
     else:
         return shiftFFT(img, shift)
-    
+
 def measure_offset(img1, img2, method="fft", withLog=False):
     """
     Measure the actual offset between 2 images. The first one is the reference. That means, if

@@ -53,6 +53,6 @@ else:
         def __init__(self, dict={}):
             qt.QCustomEvent.__init__(self, MCAEVENT)
             self.dict = dict
-        
-        
-        
+
+
+

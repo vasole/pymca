@@ -45,7 +45,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         ddict['aspect'] = kw.get("aspect",True)
         ddict.update(kw)
         ddict['standalonesave'] = False
-        MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict) 
+        MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict)
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setMinimum(0)
@@ -55,7 +55,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             # The 1D graph
             self.spectrumGraph = ScanWindow.ScanWindow(self)
             self.mainTab.addTab(self.spectrumGraph, "VECTORS")
-        
+
         self.mainLayout.addWidget(self.slider)
         self.slider.valueChanged[int].connect(self._showImage)
 
@@ -106,8 +106,8 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.spectrumGraph.addCurve(x, y, legend, replace=True)
             if self.spectrumGraphTitles is not None:
                 self.spectrumGraph.setGraphTitle(self.spectrumGraphTitles[index])
-                
-            
+
+
     def showImage(self, index=0, moveslider=True):
         if self.imageList is None:
             return
@@ -148,7 +148,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
                     self.imageNames.append("Image %02d" % i)
             else:
                 self.imageNames = image_names
-                
+
         if self.imageList is not None:
             self.slider.setMaximum(len(self.imageList)-1)
             self.showImage(0)
@@ -175,7 +175,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.spectrumGraph.addCurve(x, y, legend, replace=True)
             if self.spectrumGraphTitles is not None:
                 self.spectrumGraph.setGraphTitle(self.spectrumGraphTitles[0])
-            
+
         self.slider.setValue(0)
 
 
@@ -194,7 +194,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         if imagelist is not None:
             self.slider.setMaximum(len(self.imageList)-1)
             self.showImage(0)
-            
+
 
 def test():
     app = qt.QApplication([])
@@ -216,4 +216,4 @@ def test():
 if __name__ == "__main__":
     import numpy
     test()
-        
+

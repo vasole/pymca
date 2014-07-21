@@ -55,7 +55,7 @@ def checkCB(log_cb=None, done_cb=None, error_cb=None):
         error_cb= defaultErrorCB
 
     return (log_cb, done_cb, error_cb)
-    
+
 
 def parseFiles(filelist, verbose=0, keep_sum=0, log_cb=None, done_cb=None, error_cb=None):
     (log_cb, done_cb, error_cb)= checkCB(log_cb, done_cb, error_cb)
@@ -119,7 +119,7 @@ def parseFiles(filelist, verbose=0, keep_sum=0, log_cb=None, done_cb=None, error
         error_cb("XiaCorrect ERROR: No XIA files found.")
         return None
 
-    
+
 def correctFiles(xiafiles, deadtime=1, livetime=0, sums=None, avgflag=0, outdir=None, outname="corr", force=0, \
 		    verbose=0, log_cb=None, done_cb=None, error_cb=None):
     (log_cb, done_cb, error_cb)= checkCB(log_cb, done_cb, error_cb)
@@ -164,7 +164,7 @@ def correctFiles(xiafiles, deadtime=1, livetime=0, sums=None, avgflag=0, outdir=
             except XiaEdf.XiaEdfError:
                 errors += 1
                 log_cb(sys.exc_info()[1])
-                
+
         else:
             groupfiles= [ file.get() for file in group ]
             name= groupfiles[-1]
@@ -185,7 +185,7 @@ def correctFiles(xiafiles, deadtime=1, livetime=0, sums=None, avgflag=0, outdir=
                 if sums is None:
                     for file in group[:-1]:
                         det= file.getDetector()
-                    
+
                         if det is not None:
                             log_cb("Working on detector #%02d"%det, 1, verbose)
                             try:
@@ -211,7 +211,7 @@ def correctFiles(xiafiles, deadtime=1, livetime=0, sums=None, avgflag=0, outdir=
                     for isum in range(len(sums)):
                         try:
                             err= xia.sum(sums[isum], deadtime, livetime, avgflag)
-                        
+
                             file.setType("sum", isum+1)
                             name= file.get()
 
@@ -230,7 +230,7 @@ def correctFiles(xiafiles, deadtime=1, livetime=0, sums=None, avgflag=0, outdir=
 
         processed += 1
         done_cb(processed, total)
-                    
+
     done_cb(total, total)
     log_cb("\n* %d groups processed and %d files saved in %.2f sec"%(processed, saved, time.time()-tps))
     if not errors:
@@ -293,8 +293,8 @@ def parseArguments():
             options["avgflag"]= 1
         if opt in ("-p", "--parsing"):
             options["parsing"]= 1
-                
-    
+
+
     for iinput in options["input"]:
         if not os.path.isdir(iinput):
             print("XiaCorrect WARNING: Input directory <%s> is not valid"%\
@@ -324,7 +324,7 @@ def parseArguments():
                 print("XiaCorrect ERROR: output directory is not valid")
                 sys.exit(0)
 
-    return options 
+    return options
 
 def printHelp():
     prog= os.path.basename(sys.argv[0])
@@ -344,7 +344,7 @@ Options:
     [-l]/[--livetime]
             Perform livetime normalization
     [-s]/[--sum] <detector_list_comma_separated>
-            Sum given detectors. if detector list is set to (-1), 
+            Sum given detectors. if detector list is set to (-1),
             all detectors are used:
                 %s -s 2,4,8  --> will sum detectors 2,4 and 8
                 %s -s -1     --> will sum ALL detectors
@@ -355,7 +355,7 @@ Options:
 	    Need <-s> to specify list of detectors:
 		-s 2,3,4 -a  --> will average detectors 2,3 and 4
     [-i]/[--input] <directory>
-            Specify input directory: all files in this directory 
+            Specify input directory: all files in this directory
             which appears to be xia edf files are processed.
             Several [-i] options can be added:
                 %s -d -i /tmp -i /data/opidXX
@@ -406,11 +406,11 @@ def mainGUI(app=None):
         if files is not None:
             correctFiles(files, options["deadtime"], options["livetime"], options["sums"], options["avgflag"], \
                      options["output"], options["name"], options["force"], options["verbose"])
-        
 
 
 
-if __name__=="__main__": 
+
+if __name__=="__main__":
     import sys
 
     if len(sys.argv)==1:

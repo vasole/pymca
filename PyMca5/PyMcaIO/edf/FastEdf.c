@@ -4,9 +4,9 @@
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
+# This toolkit is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
+# Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
 # PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -19,9 +19,9 @@
 # Suite 330, Boston, MA 02111-1307, USA.
 #
 # PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
+# and cannot be used as a free plugin for a non-free program.
 #
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem to you.
 #############################################################################*/
 
@@ -149,7 +149,7 @@ statichere PyTypeObject FastEdfo_Type = {
 /* --------------------------------------------------------------------- */
 
 
-static PyObject *FastEdf_extended_fread(PyObject *self, PyObject *args) 
+static PyObject *FastEdf_extended_fread(PyObject *self, PyObject *args)
 {
     PyObject *resultobj;
     char *arg1 ;
@@ -169,7 +169,7 @@ static PyObject *FastEdf_extended_fread(PyObject *self, PyObject *args)
             long totalsize = 1;
             int sizeofunit=0;
             int i;
-    
+
     if(!PyArg_ParseTuple(args,(char *)"OiOOO:extended_fread",&obj0,&arg2,&obj2,&obj3,&obj4)) goto fail;
     {
         tmp1 = (PyArrayObject *) obj0;
@@ -193,7 +193,7 @@ static PyObject *FastEdf_extended_fread(PyObject *self, PyObject *args)
             return NULL;
         }
         arg5 = (int *)tmp4->data;
-        
+
         {
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_CHAR ) sizeofunit=1;
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_UBYTE ) sizeofunit=1;
@@ -205,27 +205,27 @@ static PyObject *FastEdf_extended_fread(PyObject *self, PyObject *args)
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_DOUBLE ) sizeofunit=8;
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_CFLOAT ) sizeofunit=8;
             if (  ((PyArrayObject *) obj0)->descr->type_num == PyArray_CDOUBLE ) sizeofunit=16;
-            
+
             for(i=0; i<arg3; i++ ) {
                 totalsize *= arg4[i] ;
             }
             if ( ( PyArray_Size( ( obj0) ))  != totalsize*arg2/sizeofunit ) {
                 printf("needed size = %li\n",totalsize*arg2/sizeofunit);
                 PyErr_SetString(PyExc_ValueError, "You provided an array of the wrong size");
-                return NULL;	    
+                return NULL;
             }
-            
+
         }
-        
+
     }
     {
         arg6 = PyFile_AsFile(obj4);
     }
     extended_fread(arg1,arg2,arg3,arg4,arg5,arg6);
-    
+
     Py_INCREF(Py_None); resultobj = Py_None;
     {
-        if(tmp3){ 
+        if(tmp3){
             Py_DECREF(tmp3);
         }
     }

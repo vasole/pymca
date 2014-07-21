@@ -53,7 +53,7 @@ class SpecArithmetic(object):
     """
     def search_peak(self, xdata,ydata):
          """
-         Search a peak and its position in arrays xdata ad ydata. 
+         Search a peak and its position in arrays xdata ad ydata.
          Return three integer:
            - peak position
            - peak value
@@ -75,7 +75,7 @@ class SpecArithmetic(object):
            result = num/denom
         else:
            result = 0
-           
+
         return result
 
 
@@ -91,7 +91,7 @@ class SpecArithmetic(object):
         else:
             mypeak     = peak
             index_peak = index
-        
+
         hm = mypeak/2
         idx = index_peak
 
@@ -102,10 +102,10 @@ class SpecArithmetic(object):
             x1 = float(xdata[idx+1])
             y0 = float(ydata[idx])
             y1 = float(ydata[idx+1])
-        
+
             lhmx = (hm*(x1-x0) - (y0*x1)+(y1*x0)) / (y1-y0)
         except ZeroDivisionError:
-            lhmx = 0 
+            lhmx = 0
         except IndexError:
             lhmx = xdata[0]
 
@@ -113,12 +113,12 @@ class SpecArithmetic(object):
         try:
             while ydata[idx] >= hm:
                 idx = idx+1
-        
+
             x0 = float(xdata[idx-1])
             x1 = float(xdata[idx])
             y0 = float(ydata[idx-1])
             y1 = float(ydata[idx])
-        
+
             uhmx = (hm*(x1-x0) - (y0*x1)+(y1*x0)) / (y1-y0)
         except ZeroDivisionError:
             uhmx = 0
@@ -143,7 +143,7 @@ class HKL(qt.QWidget):
         layout = qt.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        
+
 
         hlabel = qt.QLabel(self)
         hlabel.setText('H:')
@@ -163,7 +163,7 @@ class HKL(qt.QWidget):
         self.l = qt.QLineEdit(self)
         self.l.setReadOnly(True)
         self.l.setFixedWidth(width)
-        
+
         self.setHKL(h, k, l)
 
         layout.addWidget(hlabel)
@@ -172,7 +172,7 @@ class HKL(qt.QWidget):
         layout.addWidget(self.k)
         layout.addWidget(llabel)
         layout.addWidget(self.l)
-        
+
     def setHKL(self, h="", k="", l=""):
         dformat = "%.4f"
         if type(h) == type (""):
@@ -201,7 +201,7 @@ class GraphInfoWidget(qt.QWidget):
         self.peak = qt.QLineEdit(self)
         self.peak.setReadOnly(True)
         hboxPeak   = qt.QWidget(self)
-        hboxPeak.l = qt.QHBoxLayout(hboxPeak) 
+        hboxPeak.l = qt.QHBoxLayout(hboxPeak)
         hboxPeak.l.setContentsMargins(0, 0, 0, 0)
         hboxPeak.l.setSpacing(0)
         peakAt     = qt.QLabel(hboxPeak)
@@ -217,7 +217,7 @@ class GraphInfoWidget(qt.QWidget):
         self.fwhm = qt.QLineEdit(self)
         self.fwhm.setReadOnly(True)
         hboxFwhm   = qt.QWidget(self)
-        hboxFwhm.l = qt.QHBoxLayout(hboxFwhm) 
+        hboxFwhm.l = qt.QHBoxLayout(hboxFwhm)
         hboxFwhm.l.setContentsMargins(0, 0, 0, 0)
         hboxFwhm.l.setSpacing(0)
         fwhmAt     = qt.QLabel(hboxFwhm)
@@ -287,7 +287,7 @@ class GraphInfoWidget(qt.QWidget):
 
     def updateFromDataObject(self, dataObject):
         ydata = numpy.ravel(dataObject.y[0])
-        ylen = len(ydata) 
+        ylen = len(ydata)
         if ylen:
             if dataObject.x is None:
                 xdata = numpy.arange(ylen).astype(numpy.float)
@@ -317,7 +317,7 @@ class GraphInfoWidget(qt.QWidget):
             fformat = "%.7g"
             peakpos = fformat % peakpos
             peak    = fformat % peak
-            myidx   = "%d" % myidx 
+            myidx   = "%d" % myidx
             com     = fformat % com
             fwhm    = fformat % fwhm
             cfwhm   = fformat % cfwhm
@@ -325,15 +325,15 @@ class GraphInfoWidget(qt.QWidget):
             ystd    = fformat % ystd
             ymax    = fformat % ymax
             ymin    = fformat % ymin
-            delta   = fformat % delta         
+            delta   = fformat % delta
         else:
             peakpos = "----"
             peak    = "----"
             myidx   = "----"
             com     = "----"
             fwhm    = "----"
-            cfwhm   = "----" 
-            ymean   = "----" 
+            cfwhm   = "----"
+            ymean   = "----"
             ystd    = "----"
             ymax    = "----"
             ymin    = "----"
@@ -350,7 +350,7 @@ class GraphInfoWidget(qt.QWidget):
         self.delta.setText(delta)
 
     def getInfo(self):
-        ddict={}        
+        ddict={}
         ddict['peak']   = self.peak.text()
         ddict['peakat'] = self.peakAt.text()
         ddict['fwhm']   = self.fwhm.text()
@@ -383,11 +383,11 @@ class ScanInfoWidget(qt.QWidget):
         self.sourceLabel.setReadOnly(True)
         hBoxLayout.addWidget(sourceLabel)
         hBoxLayout.addWidget(self.sourceLabel)
-        
+
         scanLabel = qt.QLabel(self)
         scanLabel.setText('Scan:   ')
         self.scanLabel = qt.QLineEdit(self)
-        self.scanLabel.setReadOnly(True)        
+        self.scanLabel.setReadOnly(True)
 
         self.hkl = HKL(self)
         layout.addWidget(hBox, 0, 0, 1, 7)
@@ -435,7 +435,7 @@ class ScanWindowInfoWidget(qt.QWidget):
         layout = qt.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(2)
-        
+
         self.scanInfo  = ScanInfoWidget(self)
         self.graphInfo = GraphInfoWidget(self)
 
@@ -447,10 +447,10 @@ class ScanWindowInfoWidget(qt.QWidget):
     def updateFromDataObject(self, dataObject):
         self.scanInfo.updateFromDataObject(dataObject)
         self.graphInfo.updateFromDataObject(dataObject)
-        
+
     def getInfo(self):
         ddict = {}
-        ddict['scan']  = self.scanInfo.getInfo() 
+        ddict['scan']  = self.scanInfo.getInfo()
         ddict['graph'] = self.graphInfo.getInfo()
         return ddict
 

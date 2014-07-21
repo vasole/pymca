@@ -64,7 +64,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             self.slider = qt.QSlider(self)
             self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setRange(0, 0)
-        
+
         self.mainLayout.addWidget(self.slider)
         self.slider.valueChanged[int].connect(self._showImageSliderSlot)
         self.slider.hide()
@@ -97,7 +97,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         w.sigAddSelection.connect(self._addSelection)
         w.sigRemoveSelection.connect(self._removeSelection)
         w.sigReplaceSelection.connect(self._replaceSelection)
-            
+
     def _addSelection(self, selectionlist):
         if DEBUG:
             print("_addSelection(self, selectionlist)",selectionlist)
@@ -117,7 +117,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             #if len(key.split(".")) > 2: continue
             dataObject = sel['dataobject']
 
-            #only two-dimensional selections considered            
+            #only two-dimensional selections considered
             if dataObject.info.get("selectiontype", "1D") != "2D":
                 continue
             if dataObject.data is None:
@@ -126,7 +126,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                         dataObject.data = dataObject.y[0]
                         data0 = dataObject.y[0]
                         if len(data0.shape) == 1:
-                            #we have to figure out the shape ...                            
+                            #we have to figure out the shape ...
                             if hasattr(dataObject, "x"):
                                 if len(dataObject.x) == 2:
                                     x0 = dataObject.x[0][:]
@@ -161,7 +161,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                                         else:
                                             tmpData = dataObject.y[yIndex][:]
                                         tmpData.shape = nRows, nColumns
-                                        dataObject.data[yIndex] = tmpData                                            
+                                        dataObject.data[yIndex] = tmpData
                     else:
                         print("Nothing to plot")
             self.dataObjectsList = [legend]
@@ -189,7 +189,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 self._nImages = 1
                 for dimension in dataObject.data.shape[:-2]:
                     self._nImages *= dimension
-                #This is a problem for dynamic data        
+                #This is a problem for dynamic data
                 #dataObject.data.shape = self._nImages, shape[-2], shape[-1]
                 self._imageData = self._getImageDataFromSingleIndex(0)
                 self.slider.setRange(0, self._nImages - 1)
@@ -260,7 +260,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             else:
                 self.graphWidget.graph.clear()
                 pass
-            
+
     def _removeSelection(self, selectionlist):
         if DEBUG:
             print("_removeSelection(self, selectionlist)",selectionlist)
@@ -291,11 +291,11 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
     def closeEvent(self, event):
         if self.ownCorrelator:
             self.correlator.close()
-        RGBImageCalculator.RGBImageCalculator.closeEvent(self, event)    
+        RGBImageCalculator.RGBImageCalculator.closeEvent(self, event)
 
     def _showImageSliderSlot(self, index):
         self.showImage(index, moveslider=False)
-            
+
     def showImage(self, index=0, moveslider=True):
         legend = self.dataObjectsList[0]
         dataObject = self.dataObjectsDict[legend]
@@ -303,22 +303,22 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         self.plotImage(True)
         txt = "%s %d" % (legend, index)
         self.setName(txt)
-        
+
         if moveslider:
             self.slider.setValue(index)
 
     def plotImage(self, update=True):
         self.graphWidget.setImageData(self._imageData, xScale=self._xScale, yScale=self._yScale)
         return self.graphWidget.plotImage(update=update)
-        
+
 class TimerLoop:
     def __init__(self, function = None, period = 1000):
         self.__timer = qt.QTimer()
         if function is None: function = self.test
         self._function = function
         self.__setThread(function, period)
-        #self._function = function 
-    
+        #self._function = function
+
     def __setThread(self, function, period):
         self.__timer = qt.QTimer()
         self.__timer.timeout[()].connect(function)

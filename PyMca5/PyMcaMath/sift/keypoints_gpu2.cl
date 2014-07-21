@@ -41,7 +41,7 @@ typedef float4 keypoint;
  *		We have to examine the [-iradius,iradius]^2 zone, maximum [-43,43]^2
  *	To the next power of two, this is a 128*128 zone. Hence, we cannot use one thread per pixel.
  *		Like in SIFT, we divide the patch in 4x4 subregions, each being handled by one thread.
- *	This is, one thread handles at most 32x32=1024 pixels.	
+ *	This is, one thread handles at most 32x32=1024 pixels.
  *	For memory, we take 16x16=256 pixels per thread, so we can use a 2D shared memory (32*32*4=4096).
  *		Additionally, a third dimension in the workgroup (size 8) enables coalesced memory access and more paralellization.
  *
@@ -88,11 +88,11 @@ __kernel void descriptor(
 		return;
 
 	int i,j,j2;
-	
+
 	__local volatile float histogram[128];		//for "final" histogram
 	__local volatile float hist2[128];		//for temporary histogram
 	__local volatile unsigned int hist3[128*8]; //for the atomic_add
-	
+
 	float rx, cx;
 	float one_octsize = 1.0f/octsize;
 	float row = k.s1*one_octsize, col = k.s0*one_octsize;
@@ -100,12 +100,12 @@ __kernel void descriptor(
 	float sine = sin((float) k.s3), cosine = cos((float) k.s3);
 	float spacing = k.s2*one_octsize * 3.0f;
 	int radius = (int) ((1.414f * (k.s2*one_octsize * 3.0f) * 2.5f) + 0.5f);
-	
+
 	int imin = -64 +16*lid1,
 		jmin = -64 +16*lid2;
 	int imax = imin+16,
 		jmax = jmin+16;
-		
+
 	//memset
 	for (i=0; i < 2; i++) {
 		hist3[i*512+lid] = 0;
@@ -115,7 +115,7 @@ __kernel void descriptor(
 	hist2[lid] = 0.0f;
 	}
 	for (i=imin; i < imax; i++) {
-		for (j2=jmin/8; j2 < jmax/8; j2++) {	
+		for (j2=jmin/8; j2 < jmax/8; j2++) {
 			j=j2*8+lid0;
 			rx = ((cosine * i - sine * j) - (row - irow)) / spacing + 1.5f;
 			cx = ((sine * i + cosine * j) - (col - icol)) / spacing + 1.5f;
@@ -155,38 +155,38 @@ __kernel void descriptor(
 											oindex = 0;
 										}
 										int bin = (rindex*4 + cindex)*8+oindex; //value in [0,128[
-										
+
 //										hist2[8*bin+lid0] += cweight * ((orr == 0) ? 1.0f - ofrac : ofrac);
-										
+
 										//we do not have atomic_add on floats, but we know the upper limit of this float
 										//take its 5 first (decimal) digits
 										atomic_add(hist3+bin*8+lid0,
 											(unsigned int) (100000*(cweight * ((orr == 0) ? 1.0f - ofrac : ofrac))));
-									
-										
+
+
 									} //end "for orr"
 								} //end "valid cindex"
 							} //end "for c"
 						} //end "valid rindex"
 					} //end "for r"
-					
-					
+
+
 				}
 			}//end "in the boundaries"
 		} //end j loop
 	}//end i loop
-	
+
 /*
 	barrier(CLK_LOCAL_MEM_FENCE);
 	if (lid < 128)
-		histogram[lid] 
+		histogram[lid]
 			+= hist2[lid*8]+hist2[lid*8+1]+hist2[lid*8+2]+hist2[lid*8+3]
 			+hist2[lid*8+4]+hist2[lid*8+5]+hist2[lid*8+6]+hist2[lid*8+7];
 */
 
 	barrier(CLK_LOCAL_MEM_FENCE);
 	if (lid < 128)
-		histogram[lid] 
+		histogram[lid]
 			+= (float) ((hist3[lid*8]+hist3[lid*8+1]+hist3[lid*8+2]+hist3[lid*8+3]
 			+hist3[lid*8+4]+hist3[lid*8+5]+hist3[lid*8+6]+hist3[lid*8+7])*0.00001f);
 
@@ -196,11 +196,11 @@ __kernel void descriptor(
 
 	//memset of 128 values of hist2 before re-use
 	if (lid < 128) hist2[lid] = histogram[lid]*histogram[lid];
-	
+
 	/*
 	 	Normalization and thre work shared by the 16 threads (8 values per thread)
 	*/
-	
+
 	//parallel reduction to normalize vector
 
 	if (lid < 64) {
@@ -231,7 +231,7 @@ __kernel void descriptor(
 	if (lid == 0) hist2[0] = rsqrt(hist2[1]+hist2[0]);
 	barrier(CLK_LOCAL_MEM_FENCE);
 	//now we have hist2[0] = 1/sqrt(sum(hist[i]^2))
-	
+
 	if (lid < 128) {
 		histogram[lid] *= hist2[0];
 
@@ -244,7 +244,7 @@ __kernel void descriptor(
 		}
 		barrier(CLK_LOCAL_MEM_FENCE);
 		//if values have changed, we have to re-normalize
-		if (changed[0]) { 
+		if (changed[0]) {
 			hist2[lid] = histogram[lid]*histogram[lid];
 			if (lid < 64) {
 				hist2[lid] += hist2[lid+64];
@@ -274,7 +274,7 @@ __kernel void descriptor(
 			barrier(CLK_LOCAL_MEM_FENCE);
 			histogram[lid] *= hist2[0];
 		}
-		
+
 		barrier(CLK_LOCAL_MEM_FENCE);
 		//finally, cast to integer
 		descriptors[128*groupid+lid]

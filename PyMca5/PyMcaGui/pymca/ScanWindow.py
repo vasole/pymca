@@ -100,7 +100,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         self.dataObjectsList = self._curveList
         # but this is tricky
         self.dataObjectsDict = {}
-        
+
         self.setWindowTitle(name)
         self.matplotlibDialog = None
         if PLUGINS_DIR is not None:
@@ -122,7 +122,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                        self.toggleLegendWidget)
             controlMenu.addAction(QString("Show/Hide Info"),
                                        self._toggleInfoWidget)
-            self.setControlMenu(controlMenu)  
+            self.setControlMenu(controlMenu)
         else:
             self.scanWindowInfoWidget = None
         #self.fig = None
@@ -167,7 +167,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         w.sigAddSelection.connect(self._addSelection)
         w.sigRemoveSelection.connect(self._removeSelection)
         w.sigReplaceSelection.connect(self._replaceSelection)
-        
+
     def _addSelection(self, selectionlist, replot=True):
         if DEBUG:
             print("_addSelection(self, selectionlist)",selectionlist)
@@ -198,24 +198,24 @@ class ScanWindow(PlotWindow.PlotWindow):
             dataObject = sel['dataobject']
             #only one-dimensional selections considered
             if dataObject.info["selectiontype"] != "1D": continue
-            
+
             #there must be something to plot
             if not hasattr(dataObject, 'y'):
-                continue                
+                continue
             if not hasattr(dataObject, 'x'):
-                ylen = len(dataObject.y[0]) 
+                ylen = len(dataObject.y[0])
                 if ylen:
                     xdata = numpy.arange(ylen).astype(numpy.float)
                 else:
                     #nothing to be plot
                     continue
             if dataObject.x is None:
-                ylen = len(dataObject.y[0]) 
+                ylen = len(dataObject.y[0])
                 if ylen:
                     xdata = numpy.arange(ylen).astype(numpy.float)
                 else:
                     #nothing to be plot
-                    continue                    
+                    continue
             elif len(dataObject.x) > 1:
                 if DEBUG:
                     print("Mesh plots")
@@ -320,7 +320,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                         if type(sel['selection']) == type({}):
                             if 'x' in sel['selection']:
                                 #proper scan selection
-                                newDataObject.info['selection']['x'] = sel['selection']['x'] 
+                                newDataObject.info['selection']['x'] = sel['selection']['x']
                                 newDataObject.info['selection']['y'] = [sel['selection']['y'][ycounter]]
                                 newDataObject.info['selection']['m'] = sel['selection']['m']
                                 ilabel = newDataObject.info['selection']['y'][0]
@@ -336,7 +336,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                     if 'operations' in dataObject.info:
                         if dataObject.info['operations'][-1] == 'derivate':
                             yaxis = 'right'
-                        
+
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
                                     info=newDataObject.info,
@@ -355,8 +355,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             #self.replot()
             self.resetZoom()
         self.updateLegends()
-            
-            
+
+
     def _removeSelection(self, selectionlist):
         if DEBUG:
             print("_removeSelection(self, selectionlist)",selectionlist)
@@ -426,7 +426,7 @@ class ScanWindow(PlotWindow.PlotWindow):
 
     def _handleMarkerEvent(self, ddict):
         if ddict['event'] == 'markerMoved':
-            label = ddict['label'] 
+            label = ddict['label']
             if label.startswith('ROI'):
                 return self._handleROIMarkerEvent(ddict)
             else:
@@ -444,7 +444,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                     self._xPos.setText('%.7g' % ddict['x'])
                     self._yPos.setText('%.7g' % ddict['y'])
                 elif ddict['distance'] < 20:
-                    #print ddict['point'], ddict['distance'] 
+                    #print ddict['point'], ddict['distance']
                     self._xPos.setText('%.7g' % ddict['xcurve'])
                     self._yPos.setText('%.7g' % ddict['ycurve'])
                 else:
@@ -464,7 +464,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 if DEBUG:
                     print("unknown legend %s" % legend)
                 return
-            
+
             #force the current x label to the appropriate value
             dataObject = self.dataObjectsDict[legend]
             if 'selection' in dataObject.info:
@@ -520,13 +520,13 @@ class ScanWindow(PlotWindow.PlotWindow):
             yplot = ddict['yfit']
             newDataObject.x = [xplot]
             newDataObject.y = [yplot]
-            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]            
+            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]
 
             #here I should check the log or linear status
             self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
             self.addCurve(xplot,
                           yplot,
-                          legend=newDataObject.info['legend'])        
+                          legend=newDataObject.info['legend'])
 
     def _scanFitSignalReceived(self, ddict):
         if DEBUG:
@@ -540,11 +540,11 @@ class ScanWindow(PlotWindow.PlotWindow):
             yplot = self.scanFit.specfit.gendata(parameters=ddict['data'])
             newDataObject.x = [xplot]
             newDataObject.y = [yplot]
-            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]            
+            newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]
 
             self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
             self.addCurve(x=xplot, y=yplot, legend=newDataObject.info['legend'])
-            
+
     def _fitIconSignal(self):
         if DEBUG:
             print("_fitIconSignal")
@@ -564,17 +564,17 @@ class ScanWindow(PlotWindow.PlotWindow):
         if DEBUG:
             print("_saveIconSignal")
         self.__QSimpleOperation("save")
-        
+
     def _averageIconSignal(self):
         if DEBUG:
             print("_averageIconSignal")
         self.__QSimpleOperation("average")
-        
+
     def _smoothIconSignal(self):
         if DEBUG:
             print("_smoothIconSignal")
         self.__QSimpleOperation("smooth")
-        
+
     def _getOutputFileName(self):
         #get outputfile
         self.outputDir = PyMcaDirs.outputDir
@@ -586,7 +586,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         else:
             self.outputDir = os.getcwd()
             wdir = self.outputDir
-            
+
         outfile = qt.QFileDialog(self)
         outfile.setWindowTitle("Output File Selection")
         outfile.setModal(1)
@@ -620,13 +620,13 @@ class ScanWindow(PlotWindow.PlotWindow):
         filetype  = filterused[1]
         extension = filterused[2]
         outdir = qt.safe_str(outfile.selectedFiles()[0])
-        try:            
+        try:
             self.outputDir  = os.path.dirname(outdir)
             PyMcaDirs.outputDir = os.path.dirname(outdir)
         except:
             print("setting output directory to default")
             self.outputDir  = os.getcwd()
-        try:     
+        try:
             outputFile = os.path.basename(outdir)
         except:
             outputFile = outdir
@@ -655,7 +655,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                     tmpstr += "%.7g " % data[i]
             tmpstr += "\n"
         return tmpstr
-        
+
     def __QSimpleOperation(self, operation):
         try:
             self.__simpleOperation(operation)
@@ -664,7 +664,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s" % sys.exc_info()[1])
             msg.exec_()
-    
+
     def __simpleOperation(self, operation):
         if operation == 'subtract':
             self._subtractOperation()
@@ -780,7 +780,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             try:
                 if filetype in ['Scan', 'MultiScan']:
                     ffile.write("#F %s\n" % filename)
-                    savingDate = "#D %s\n"%(time.ctime(time.time()))                    
+                    savingDate = "#D %s\n"%(time.ctime(time.time()))
                     ffile.write(savingDate)
                     ffile.write("\n")
                     ffile.write("#S 1 %s\n" % legend)
@@ -795,7 +795,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                         keylist = list(self.dataObjectsList)
                         for key in self._curveList:
                             if key not in keylist:
-                                keylist.append(key)        
+                                keylist.append(key)
                         for key in keylist:
                             if key not in self.dataObjectsDict.keys():
                                 continue
@@ -834,7 +834,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                     else:
                         csvseparator = "\t"
                     if "OMNIC" not in filterused[0]:
-                        ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel)) 
+                        ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel))
                     for i in range(len(y)):
                         ffile.write("%.7E%s%.7E\n" % (x[i], csvseparator,y[i]))
                 else:
@@ -1009,7 +1009,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         ydata = y
         dataCounter = 1
         alias = "%c" % (96+dataCounter)
-        mtplt.addDataToPlot( xdata, ydata, legend=legend0, alias=alias )        
+        mtplt.addDataToPlot( xdata, ydata, legend=legend0, alias=alias )
         for curve in curveList:
             xdata, ydata, legend, info = curve[0:4]
             if legend == legend0:
@@ -1087,7 +1087,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         yActiveLabel  = ylabel
         xActiveLabel  = xlabel
 
-        operation = "subtract"    
+        operation = "subtract"
         sel_list = []
         i = 0
         ndata = 0
@@ -1187,7 +1187,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         else:
             # create the data object
             self.newCurve(x, y, legend=legend, info=info, **kw)
-    
+
     def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
                  replace=False, replot=True, info=None, **kw):
         if legend is None:
@@ -1288,7 +1288,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                     comment=comment,
                                     commentPosition="LEFT")
         if self.printPreview.isHidden():
-            self.printPreview.show()        
+            self.printPreview.show()
         self.printPreview.raise_()
 
     def getSvgRenderer(self, printer=None):
@@ -1316,7 +1316,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             svgRenderer._svgRawData = svgData
             svgRenderer._svgRendererData = qt.QXmlStreamReader(svgData)
             if not svgRenderer.load(svgRenderer._svgRendererData):
-                raise RuntimeError("Cannot interpret svg data")            
+                raise RuntimeError("Cannot interpret svg data")
             return svgRenderer
 
         # we have what is to be printed
@@ -1324,7 +1324,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             import cStringIO as StringIO
             imgData = StringIO.StringIO()
         else:
-            from io import BytesIO      
+            from io import BytesIO
             imgData = BytesIO()
         self.saveGraph(imgData, fileFormat='svg')
         imgData.flush()
@@ -1375,7 +1375,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 width = availableWidth * width
             if height is not None:
                 height = availableHeight * height
-                            
+
         availableWidth -= xOffset
         availableHeight -= yOffset
 
@@ -1405,7 +1405,7 @@ class ScanWindow(PlotWindow.PlotWindow):
 
             graphRatio = graphHeight / graphWidth
             # that ratio has to be respected
-            
+
             bodyWidth = availableWidth
             bodyHeight = availableWidth * graphRatio
 
@@ -1414,7 +1414,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 bodyWidth = bodyHeight / graphRatio
         else:
             bodyWidth = availableWidth
-            bodyHeight = availableHeight                    
+            bodyHeight = availableHeight
 
         body = qt.QRectF(xOffset,
                          yOffset,
@@ -1425,11 +1425,11 @@ class ScanWindow(PlotWindow.PlotWindow):
         svgRenderer._viewBox = body
         svgRenderer._svgRawData = svgData
         svgRenderer._svgRendererData = qt.QXmlStreamReader(svgData)
-        
+
         if not svgRenderer.load(svgRenderer._svgRendererData):
             raise RuntimeError("Cannot interpret svg data")
         return svgRenderer
-        
+
 def test():
     w = ScanWindow()
     x = numpy.arange(1000.)

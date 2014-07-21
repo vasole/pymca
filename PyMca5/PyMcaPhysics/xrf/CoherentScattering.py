@@ -58,14 +58,14 @@ R0 = 2.82E-13 #electron radius in cm
 
 def getElementFormFactor(ele, theta, energy):
     """
-    Usage: 
+    Usage:
         getFormFactor(ele,theta, energy):
-    
+
     ele   - Element
     theta - Scattering angle or array of scattering angles in degrees
     energy- Photon Energy in keV
-    
-    This routine calculates the atomic form factor in electron units using 
+
+    This routine calculates the atomic form factor in electron units using
     a four gaussians approximation
     """
     wavelength = KEVTOANG / energy

@@ -39,12 +39,12 @@ from . import MatrixImage
 QTVERSION = qt.qVersion()
 
 class MatrixEditor(qt.QWidget):
-    def __init__(self, parent=None, name="Matrix Editor",current=None, 
+    def __init__(self, parent=None, name="Matrix Editor",current=None,
                     table=True,orientation="vertical",thickness=True,
                    density=True, size=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
-            
+
         self._current={'Density':     1.0,
                        'Thickness':   1.0,
                        'AlphaIn':    45.0,
@@ -55,11 +55,11 @@ class MatrixEditor(qt.QWidget):
         if current is not None: self._current.update(current)
         self.build(table,orientation, thickness, density, size)
         self._update()
-        
+
     def build(self, table,orientation, thickness, density, size=None):
         if size is None: size="medium"
         layout = qt.QHBoxLayout(self)
-        
+
         if table:
             #the material definition
             matBox = qt.QWidget(self)
@@ -71,15 +71,15 @@ class MatrixEditor(qt.QWidget):
             matBoxLayout.addWidget(qt.VerticalSpacer(matBox))
         else:
             self.materialEditor = None
-        
+
         #the matrix definition
         sampleBox = qt.QWidget(self)
         layout.addWidget(sampleBox)
         if orientation == "vertical":
             sampleBoxLayout = qt.QVBoxLayout(sampleBox)
         else:
-            sampleBoxLayout = qt.QHBoxLayout(sampleBox)            
-        
+            sampleBoxLayout = qt.QHBoxLayout(sampleBox)
+
         #the image
         if orientation == "vertical":
             labelHBox = qt.QWidget(sampleBox)
@@ -109,8 +109,8 @@ class MatrixEditor(qt.QWidget):
         else:
             gridLayout = qt.QGridLayout(grid)
             gridLayout.setContentsMargins(11, 11, 11, 11)
-            gridLayout.setSpacing(4)            
-        
+            gridLayout.setSpacing(4)
+
         #the angles
         angle1Label  = qt.QLabel(grid)
         angle1Label.setText("Incoming Angle (deg.):")
@@ -193,12 +193,12 @@ class MatrixEditor(qt.QWidget):
 
         if orientation == "vertical":
             sampleBoxLayout.addWidget(qt.VerticalSpacer(sampleBox))
-    
+
     def setParameters(self, param):
         for key in param.keys():
-            self._current[key] = param[key]   
-        self._update()    
-        
+            self._current[key] = param[key]
+        self._update()
+
     def getParameters(self, param = None):
         if param is None:
             return copy.deepcopy(self._current)
@@ -221,12 +221,12 @@ class MatrixEditor(qt.QWidget):
         else:
             self.__angle3Label.setChecked(False)
             self.__angle3LabelSlot()
-            
+
         if self.__densityLine is not None:
             self.__densityLine.setText("%.5g" % self._current['Density'])
         if self.__thicknessLine is not None:
             self.__thicknessLine.setText("%.5g" % self._current['Thickness'])
-    
+
 
     def __angle1Slot(self, ddict):
         if (ddict['value'] < -90.) or (ddict['value'] > 90.):
@@ -240,7 +240,7 @@ class MatrixEditor(qt.QWidget):
                 msg.exec_()
             self.__angle1Line.setFocus()
             return
-        
+
         doit = False
         if self._current['AlphaIn'] > 0:
             if ddict['value'] < 0:
@@ -248,7 +248,7 @@ class MatrixEditor(qt.QWidget):
         elif self._current['AlphaIn'] < 0:
             if ddict['value'] > 0:
                 doit = True
-         
+
         self._current['AlphaIn'] = ddict['value']
         if doit:
             self.__updateImage()
@@ -259,7 +259,7 @@ class MatrixEditor(qt.QWidget):
             self.imageLabel.setPixmap("image2trans")
         else:
             self.imageLabel.setPixmap("image2")
-   
+
     def __angle2Slot(self, ddict):
         if (ddict['value'] <= 0.0) or (ddict['value'] > 180.):
             msg=qt.QMessageBox(self)
@@ -272,7 +272,7 @@ class MatrixEditor(qt.QWidget):
                 msg.exec_()
             self.__angle2Line.setFocus()
             return
-        
+
         self._current['AlphaOut'] = ddict['value']
         self.__updateScattering()
 

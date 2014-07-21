@@ -50,7 +50,7 @@ DEBUG = 0
 
 if DEBUG:
     print("SIFT coming from %s" % os.path.abspath(sift.__file__))
-    
+
 __doc__ ="""The SIFT algorithm belongs to the University of British Columbia. It is
 protected by patent US6711293. If you are on a country where this pattent
 applies (like the USA), please check if you are allowed to use it. The
@@ -78,7 +78,7 @@ Processing SDK.
 Mac users should have OpenCL provided with their operating system.
 
 Linux users probably need to install PyMca as provided by their distribution.
-Please note that introduces an additional dependency of PyMca on PyOpenCL. 
+Please note that introduces an additional dependency of PyMca on PyOpenCL.
 
 sift_pyocl license follows:
 
@@ -109,7 +109,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 class ParametersWidget(qt.QWidget):
     parametersWidgetSignal = qt.pyqtSignal(object)
-        
+
     def __init__(self, parent=None, ndim=2):
         qt.QWidget.__init__(self, parent)
         self._nDimensions = 2
@@ -211,7 +211,7 @@ class OutputFile(qt.QWidget):
         else:
             self.checkBox.setChecked(False)
             self.checkBox.setEnabled(True)
-            
+
 
 class SIFTAlignmentWindow(qt.QWidget):
     def __init__(self, parent=None, stack=None):
@@ -284,7 +284,7 @@ class SIFTAlignmentDialog(qt.QDialog):
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")
-        self.okButton.setAutoDefault(False)   
+        self.okButton.setAutoDefault(False)
         self.dismissButton = qt.QPushButton(hbox)
         self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
@@ -315,14 +315,14 @@ class SIFTAlignmentDialog(qt.QDialog):
                         "Please provide a valid output file name")
                 return
         return qt.QDialog.accept(self)
-        
+
     def reject(self):
         self.setDummyStack()
         return qt.QDialog.reject(self)
 
     def closeEvent(self, ev):
         self.setDummyStack()
-        return qt.QDialog.closeEvent(self, ev) 
+        return qt.QDialog.closeEvent(self, ev)
 
 if __name__ == "__main__":
     #create a dummy stack

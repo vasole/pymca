@@ -39,7 +39,7 @@ from .VerticalSpacer import VerticalSpacer
 from .HorizontalSpacer import HorizontalSpacer
 CONFIGDICT = True
 try:
-    from PyMca5.PyMcaIO import ConfigDict    
+    from PyMca5.PyMcaIO import ConfigDict
 except ImportError:
     try:
         from . import ConfigDict
@@ -54,7 +54,7 @@ except ImportError:
     except ImportError:
         from . import Object3DDirs
 
-    
+
 DEBUG = 0
 
 class ToolBar(GLToolBar.GLToolBar):
@@ -68,7 +68,7 @@ class ToolBar(GLToolBar.GLToolBar):
 
 class SceneManager(qt.QWidget):
     sigSceneManagerSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None, glwindow=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle('Scene Manager')
@@ -132,7 +132,7 @@ class SceneManager(qt.QWidget):
         ddict['object'] = None
         ddict['legend'] = None
         self.sigSceneManagerSignal.emit(ddict)
-        
+
     def saveConfiguration(self):
         wdir = Object3DDirs.outputDir
         message = "Enter output scene configuration file name"

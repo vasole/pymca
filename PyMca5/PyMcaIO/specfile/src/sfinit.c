@@ -22,7 +22,7 @@
  *   Project:       SpecFile library
  *
  *   Description:   Initialization routines ( open/update/close )
- * 
+ *
  *   Author:        V.Rey
  *
  *   Date:          $Date: 2005/05/25 13:01:32 $
@@ -47,7 +47,7 @@
  *   Log:
  * Revision 2.1  2000/07/31  19:04:42  19:04:42  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 2.0  2000/04/13  13:28:54  13:28:54  rey (Vicente Rey-Bakaikoa)
  * New version of the library. Complete rewrite
  * Adds support for MCA
@@ -56,7 +56,7 @@
  *   File:         sfinit.c
  *
  *   Description:  This file implements basic routines on SPEC datafiles
- *                 SfOpen / SfClose / SfError 
+ *                 SfOpen / SfClose / SfError
  *
  *                 SfUpdate is kept but it is obsolete
  *
@@ -87,11 +87,11 @@
  *
  * Revision 2.1  2000/07/31  19:04:42  19:04:42  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 2.0  2000/04/13  13:27:19  13:27:19  rey (Vicente Rey-Bakaikoa)
  * New version of the library. Complete rewrite
  * Adds support for MCA
- * 
+ *
  *
  *********************************************************************/
 #include <sys/types.h>
@@ -159,7 +159,7 @@ static short sfReadIndex   ( int sfi, SpecFile *sf, SfCursor *cursor, int *error
 static void  sfWriteIndex  ( SpecFile *sf, SfCursor *cursor, int *error);
 #endif
 
-/* 
+/*
  * errors
  */
 typedef struct _errors {
@@ -272,7 +272,7 @@ SfOpen2(int fd, char *name,int *error) {
    sf->fd     = fd;
    sf->m_time = mystat.st_mtime;
    sf->sfname = (char *)strdup(name);
-  
+
    sf->list.first      = (ObjectList *)NULL;
    sf->list.last       = (ObjectList *)NULL;
    sf->no_scans        = 0;
@@ -315,7 +315,7 @@ SfOpen2(int fd, char *name,int *error) {
 #else
    idxret = SF_INIT;
 #endif
-   
+
    switch(idxret) {
       case SF_MODIFIED:
           sfResumeRead(sf,&cursor,error);
@@ -325,7 +325,7 @@ SfOpen2(int fd, char *name,int *error) {
       case SF_INIT:
           sfReadFile(sf,&cursor,error);
           break;
-  
+
       case SF_READY:
           break;
 
@@ -356,14 +356,14 @@ SfOpen2(int fd, char *name,int *error) {
  *   Description:	Closes a file previously opened with SfOpen()
  *			and frees all memory .
  *   Parameters:
- *		Input:	
- *			File pointer   
+ *		Input:
+ *			File pointer
  *   Returns:
  *			0 :  close successful
  *		       -1 :  errors occured
  *
  *********************************************************************/
-DllExport int 
+DllExport int
 SfClose( SpecFile *sf )
 {
      register ObjectList  *ptr;
@@ -372,10 +372,10 @@ SfClose( SpecFile *sf )
      freeAllData(sf);
 
      for( ptr=sf->list.last ; ptr ; ptr=prevptr ) {
- 	  free( (SpecScan *)ptr->contents ); 
+          free( (SpecScan *)ptr->contents );
           prevptr = ptr->prev;
 	  free( (ObjectList *)ptr );
-     }     
+     }
 
      free ((char *)sf->sfname);
      if (sf->scanbuffer != NULL)
@@ -410,7 +410,7 @@ SfClose( SpecFile *sf )
  *   Returns:
  *                      ( 0 ) => Nothing done.
  *                      ( 1 ) => File was updated
- *                 
+ *
  *   Possible errors:
  *                      SF_ERR_FILE_OPEN
  *                      SF_ERR_MEMORY_ALLOC
@@ -421,8 +421,8 @@ SfUpdate ( SpecFile *sf, int *error )
 {
     struct stat mystat;
     long   mtime;
-   /*printf("In SfUpdate\n"); 
-   __asm("int3");*/ 
+   /*printf("In SfUpdate\n");
+   __asm("int3");*/
     stat(sf->sfname,&mystat);
 
     mtime = mystat.st_mtime;
@@ -430,8 +430,8 @@ SfUpdate ( SpecFile *sf, int *error )
     if (sf->m_time != mtime)  {
        sfResumeRead (sf,&(sf->cursor),error);
        sfReadFile   (sf,&(sf->cursor),error);
-       
-       sf->m_time = mtime;        
+
+       sf->m_time = mtime;
        sfAssignScanNumbers(sf);
 #ifdef SPECFILE_USE_INDEX_FILE
        sfWriteIndex (sf,&(sf->cursor),error);
@@ -479,7 +479,7 @@ sfReadFile(SpecFile *sf,SfCursor *cursor,int *error) {
 
    size = 1024*1024;
 
-   
+
    if ( (buffer = (char *) malloc(size)) == NULL ) {
         /*
          * Try smaller buffer
@@ -496,12 +496,12 @@ sfReadFile(SpecFile *sf,SfCursor *cursor,int *error) {
               return;
          }
    }
-  
+
    status              = NEWLINE;
-   while ((bytesread = read(fd,buffer,size)) > 0 ) { 
+   while ((bytesread = read(fd,buffer,size)) > 0 ) {
 
       sfStartBuffer(sf,cursor,status,buffer[0],buffer[1],error);
- 
+
       cursor->bytecnt++;
       for (ptr=buffer+1;ptr < buffer + bytesread -1; ptr++,cursor->bytecnt++) {
           if (*(ptr-1) == '\n' ) {
@@ -526,7 +526,7 @@ sfReadFile(SpecFile *sf,SfCursor *cursor,int *error) {
 }
 
 
-static void  
+static void
 sfResumeRead  ( SpecFile *sf, SfCursor *cursor, int *error) {
     cursor->bytecnt      = cursor->cursor;
     cursor->what         = 0;
@@ -542,7 +542,7 @@ sfResumeRead  ( SpecFile *sf, SfCursor *cursor, int *error) {
 
 
 #ifdef SPECFILE_USE_INDEX_FILE
-static short 
+static short
 sfOpenIndex ( SpecFile *sf, SfCursor *cursor, int *error) {
     char *idxname;
     short namelength;
@@ -564,7 +564,7 @@ sfOpenIndex ( SpecFile *sf, SfCursor *cursor, int *error) {
 }
 
 
-static short 
+static short
 sfReadIndex   ( int sfi, SpecFile *sf, SfCursor *cursor, int *error) {
     SfCursor   filecurs;
     char       buffer[200];
@@ -580,7 +580,7 @@ sfReadIndex   ( int sfi, SpecFile *sf, SfCursor *cursor, int *error) {
     if (strcmp(buffer,SF_SIGNATURE) || bytesread == 0 ) {
         return(SF_INIT);
     }
-  
+
    /*
     * read cursor and specfile structure
     */
@@ -603,7 +603,7 @@ sfReadIndex   ( int sfi, SpecFile *sf, SfCursor *cursor, int *error) {
 }
 
 
-static void  
+static void
 sfWriteIndex  ( SpecFile *sf, SfCursor *cursor, int *error) {
 
     int         fdi;
@@ -617,12 +617,12 @@ sfWriteIndex  ( SpecFile *sf, SfCursor *cursor, int *error) {
     idxname = (char *)malloc(sizeof(char) * namelength);
 
     sprintf(idxname,"%s%s",sf->sfname,SF_ISFX);
- 
+
     /* if ((fdi = open(idxname,SF_WRITEFLAG,SF_UMASK)) == -1) { */
     if ((fdi = open(idxname,O_CREAT | O_WRONLY,SF_UMASK)) == -1) {
         printf("    - cannot open. Error: (%d)\n",errno);
-        free(idxname); 
-        return; 
+        free(idxname);
+        return;
     } else {
         mtime = sf->m_time;
         write(fdi,SF_SIGNATURE,sizeof(SF_SIGNATURE));
@@ -635,7 +635,7 @@ sfWriteIndex  ( SpecFile *sf, SfCursor *cursor, int *error) {
            write(fdi,(void *) obj->contents, sizeof(SpecScan));
         close(fdi);
         free(idxname);
-        return; 
+        return;
     }
 }
 #endif
@@ -720,7 +720,7 @@ sfHeaderLine(SpecFile *sf,SfCursor *cursor,char c,int *error) {
 
 static void
 sfNewBlock(SpecFile *sf,SfCursor *cursor,short newblock,int *error) {
- 
+
   /*
    * Dispatch opened block
    */
@@ -744,17 +744,17 @@ sfNewBlock(SpecFile *sf,SfCursor *cursor,short newblock,int *error) {
    cursor->dataoffset   = -1;
    cursor->mcaspectra   = 0;
    cursor->data         = 0;
-   cursor->cursor       = cursor->bytecnt; 
+   cursor->cursor       = cursor->bytecnt;
 }
 
 
-static void 
+static void
 sfSaveScan(SpecFile *sf, SfCursor *cursor,int *error) {
     SpecScan  scan;
     SpecScan  *oldscan;
     register	ObjectList	*ptr;
 
-    
+
     scan.index                 = cursor->scanno;
     scan.offset                = cursor->cursor;
     scan.size                  = cursor->bytecnt - cursor->cursor;
@@ -762,7 +762,7 @@ sfSaveScan(SpecFile *sf, SfCursor *cursor,int *error) {
     scan.data_offset           = cursor->dataoffset;
     scan.hdafter_offset        = cursor->hdafoffset;
     scan.mcaspectra            = cursor->mcaspectra;
-    scan.file_header           = cursor->file_header; 
+    scan.file_header           = cursor->file_header;
 
     if(sf->updating == 1){
         ptr = sf->list.last;
@@ -809,13 +809,13 @@ sfAssignScanNumbers(SpecFile *sf) {
 
         buffer2[i] = '\0';
 
-        scan->scan_no = atol(buffer2); 
+        scan->scan_no = atol(buffer2);
         scan->order   = 1;
         for ( object2 = (sf->list).first; object2 != object; object2=object2->next) {
             scan2 = (SpecScan *) object2->contents;
             if (scan2->scan_no == scan->scan_no) scan->order++;
         }
-  } 
+  }
 }
 
 void

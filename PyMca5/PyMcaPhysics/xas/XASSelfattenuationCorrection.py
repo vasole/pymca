@@ -84,7 +84,7 @@ class XASSelfattenuationCorrection(object):
         edgeEnergy = Elements.Element[element]['binding'][edge]
         userEdgeEnergy = self._configuration['XAS'].get('energy', edgeEnergy)
         energy = numpy.array(energy0, dtype=numpy.float)
-    
+
         #PyMca data ar in keV but XAS data are usually in eV
         if 0.5 * (energy[0] + energy[-1])/edgeEnergy > 100:
             # if the user did not do stupid things most likely
@@ -168,8 +168,8 @@ class XASSelfattenuationCorrection(object):
         for ele in massFractions.keys():
             crossSections = EPDL.getElementCrossSections(ele, fluoLine[0])
             muTotalFluorescence += massFractions[ele] * crossSections['total'][0]
-    
-        #define some convenience variables        
+
+        #define some convenience variables
         sinIn = numpy.sin(numpy.deg2rad(alphaIn))
         sinOut= numpy.sin(numpy.deg2rad(alphaOut))
         g = sinIn / sinOut
@@ -219,7 +219,7 @@ class XASSelfattenuationCorrection(object):
             b = GAMMA * ( ALPHA  - muSampleJump * spectrum + BETA)
             discriminant = b*b + 4 * ALPHA * BETA * GAMMA * (spectrum - 1.0)
             return 1 + (-b + numpy.sqrt(discriminant))/(2 * BETA)
-        
+
 if __name__ == "__main__":
     from PyMca.PyMcaIO import specfilewrapper
     instance = XASSelfattenuationCorrection()

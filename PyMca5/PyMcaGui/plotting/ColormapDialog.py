@@ -47,7 +47,7 @@ class MyQLineEdit(qt.QLineEdit):
     def focusOutEvent(self,event):
         self.setPaletteBackgroundColor(qt.QColor('white'))
         self.returnPressed[()].emit()
-        
+
 """
 Manage colormap Widget class
 """
@@ -57,8 +57,8 @@ class ColormapDialog(qt.QDialog):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle(name)
         self.title = name
-                 
-        
+
+
         self.colormapList = ["Greyscale", "Reverse Grey", "Temperature",
                              "Red", "Green", "Blue", "Many"]
 
@@ -100,15 +100,15 @@ class ColormapDialog(qt.QDialog):
         # autoscale
         self.autoScaleButton = qt.QPushButton("Autoscale", hbox1)
         self.autoScaleButton.setCheckable(True)
-        self.autoScaleButton.setAutoDefault(False)    
+        self.autoScaleButton.setAutoDefault(False)
         self.autoScaleButton.toggled[bool].connect(self.autoscaleChange)
         hlayout1.addWidget(self.autoScaleButton)
 
         # autoscale 90%
         self.autoScale90Button = qt.QPushButton("Autoscale 90%", hbox1)
         self.autoScale90Button.setCheckable(True)
-        self.autoScale90Button.setAutoDefault(False)    
-                
+        self.autoScale90Button.setAutoDefault(False)
+
         self.autoScale90Button.toggled[bool].connect(self.autoscale90Change)
         hlayout1.addWidget(self.autoScale90Button)
 
@@ -170,11 +170,11 @@ class ColormapDialog(qt.QDialog):
         #vlayout.addWidget(hbox2)
         vboxlimitslayout.addWidget(hbox2)
         hlayout2.addStretch(10)
-        
+
         self.minLabel  = qt.QLabel(hbox2)
         self.minLabel.setText("Minimum")
         hlayout2.addWidget(self.minLabel)
-        
+
         hlayout2.addSpacing(5)
         hlayout2.addStretch(1)
         self.minText  = MyQLineEdit(hbox2)
@@ -182,7 +182,7 @@ class ColormapDialog(qt.QDialog):
         self.minText.setAlignment(qt.Qt.AlignRight)
         self.minText.returnPressed[()].connect(self.minTextChanged)
         hlayout2.addWidget(self.minText)
-        
+
         # hlayout 3 : - min label
         #             - min text
         hbox3    = qt.QWidget(vboxlimits)
@@ -192,15 +192,15 @@ class ColormapDialog(qt.QDialog):
         hlayout3.setSpacing(0)
         #vlayout.addWidget(hbox3)
         vboxlimitslayout.addWidget(hbox3)
-        
+
         hlayout3.addStretch(10)
         self.maxLabel = qt.QLabel(hbox3)
         self.maxLabel.setText("Maximum")
         hlayout3.addWidget(self.maxLabel)
-        
+
         hlayout3.addSpacing(5)
         hlayout3.addStretch(1)
-                
+
         self.maxText = MyQLineEdit(hbox3)
         self.maxText.setFixedWidth(150)
         self.maxText.setAlignment(qt.Qt.AlignRight)
@@ -213,7 +213,7 @@ class ColormapDialog(qt.QDialog):
         self.c = PlotWidget.PlotWidget(self, backend=backend)
         self.c.setGraphXLabel("Data Values")
         self.c.setZoomModeEnabled(False)
-        
+
         self.marge = (abs(self.dataMax) + abs(self.dataMin)) / 6.0
         self.minmd = self.dataMin - self.marge
         self.maxpd = self.dataMax + self.marge
@@ -246,7 +246,7 @@ class ColormapDialog(qt.QDialog):
 
         self.c.setMinimumSize(qt.QSize(250,200))
         vlayout.addWidget(self.c)
-        
+
         self.c.sigPlotSignal.connect(self.chval)
         self.c.sigPlotSignal.connect(self.chmap)
 
@@ -340,7 +340,7 @@ class ColormapDialog(qt.QDialog):
             self.setMinValue(x)
         if diam == 3:
             self.setMaxValue(x)
-        
+
     """
     Colormap
     """
@@ -350,7 +350,7 @@ class ColormapDialog(qt.QDialog):
             self.combo.setCurrentItem(colormap)
         else:
             self.combo.setCurrentIndex(colormap)
-    
+
     def colormapChange(self, colormap):
         self.colormapIndex = colormap
         self.sendColormap()
@@ -361,7 +361,7 @@ class ColormapDialog(qt.QDialog):
     """
     def autoscaleChange(self, val):
         self.autoscale = val
-        self.setAutoscale(val)        
+        self.setAutoscale(val)
         self.sendColormap()
 
     def setAutoscale(self, val):
@@ -439,7 +439,7 @@ class ColormapDialog(qt.QDialog):
         self.setMinValue(val)
         if self.minText.hasFocus():
             self.c.setFocus()
-        
+
     """
     change only the displayed min value
     """
@@ -454,7 +454,7 @@ class ColormapDialog(qt.QDialog):
                         "ConstrainedCurve",
                         color='black',
                         symbol='o',
-                        line_style='-')    
+                        line_style='-')
     # MAXIMUM
     """
     change max value and update colormap
@@ -483,7 +483,7 @@ class ColormapDialog(qt.QDialog):
         self.setMaxValue(val)
         if self.maxText.hasFocus():
             self.c.setFocus()
-            
+
     """
     change only the displayed max value
     """
@@ -541,7 +541,7 @@ class ColormapDialog(qt.QDialog):
                     self.dataMin, self.dataMax,
                     self.colormapType]
             self.sigColormapChanged.emit(cmap)
-            
+
         except:
             sys.excepthook(sys.exc_info()[0],
                            sys.exc_info()[1],
@@ -557,7 +557,7 @@ def test():
     x = np.linspace(-10, 10, 50)
     y = abs(9. * np.exp(-x**2) + np.random.randn(len(x)) + 1.)
     demo.plotHistogram((x,y))
-    
+
     def call(*var):
         print("Received", var)
 

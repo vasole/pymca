@@ -73,14 +73,14 @@ class StackPluginBase(object):
         Unless one knows what (s)he is doing, only a proxy should be used.
 
         I pass the actual instance to keep all doors open.
-        """        
+        """
         self._stackWindow = weakref.proxy(stackWindow)
         pass
 
     #stack related functions
     def isStackFinite(self):
         return self._stackWindow.isStackFinite()
-        
+
     def getStackROIImagesAndNames(self):
         return self._stackWindow.getStackROIImagesAndNames()
 
@@ -107,7 +107,7 @@ class StackPluginBase(object):
 
     def setStack(self, *var, **kw):
         return self._stackWindow.setStack(*var, **kw)
-    
+
     def addImage(self, image, name):
         return self._stackWindow.addImage(image, name)
 
@@ -116,7 +116,7 @@ class StackPluginBase(object):
 
     def replaceImage(self, image, name):
         return self._stackWindow.replaceImage(image, name)
-        
+
     #Plot window related functions
     def getActiveCurve(self):
         """
@@ -128,18 +128,18 @@ class StackPluginBase(object):
             where dict is a dictionnary containing curve info.
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
-        """        
+        """
         return self._stackWindow.getActiveCurve()
 
     def getGraphXLimits(self):
         """
-        Get the graph X limits. 
+        Get the graph X limits.
         """
         return self._stackWindow.getGraphXLimits()
 
     def getGraphYLimits(self):
         """
-        Get the graph Y limits. 
+        Get the graph Y limits.
         """
         return self._stackWindow.getGraphYLimits()
 
@@ -162,7 +162,7 @@ class StackPluginBase(object):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified stack.
-        """        
+        """
         print("BASE STACK getMethods not implemented")
         return []
 

@@ -65,7 +65,7 @@ def h5py_sorting(object_list):
         if key in names:
             sorting_key = key
             break
-        
+
     if sorting_key is None:
         if 'name' in sorting_list:
             sorting_key = 'name'
@@ -91,7 +91,7 @@ def h5py_sorting(object_list):
         print("WARNING: Default ordering")
         print("Probably all entries do not have the key %s" % sorting_key)
         return object_list
-    
+
 def _get_number_list(txt):
     rexpr = '[/a-zA-Z:-]'
     nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
@@ -161,7 +161,7 @@ class NexusDataSource(object):
         self.__sourceNameList = self.sourceName
         self._sourceObjectList=[]
         self.refresh()
-        
+
     def refresh(self):
         for instance in self._sourceObjectList:
             instance.close()
@@ -217,10 +217,10 @@ class NexusDataSource(object):
         Returns a dictionary with the key "KeyList" (list of all available keys
         in this source). Each element in "KeyList" has the form 'n1.n2' where
         n1 is the source number and n2 entry number in file both starting at 1.
-        """        
+        """
         return self.__getSourceInfo()
-        
-        
+
+
     def __getSourceInfo(self):
         SourceInfo={}
         SourceInfo["SourceType"]=SOURCE_TYPE
@@ -233,7 +233,7 @@ class NexusDataSource(object):
                 SourceInfo["KeyList"].append("%d.%d" % (i,n+1))
         SourceInfo["Size"]=len(SourceInfo["KeyList"])
         return SourceInfo
-        
+
     def getKeyInfo(self, key):
         if key in self.getSourceInfo()['KeyList']:
             return self.__getKeyInfo(key)
@@ -242,12 +242,12 @@ class NexusDataSource(object):
             if DEBUG:
                 print("Error key not in list ")
             return {}
-    
+
     def __getKeyInfo(self,key):
         try:
             index, entry = key.split(".")
             index = int(index)-1
-            entry = int(entry)-1            
+            entry = int(entry)-1
         except:
             #should we rise an error?
             if DEBUG:
@@ -285,7 +285,7 @@ class NexusDataSource(object):
                 fileIndex = int(key_split[0])-1
                 phynxFile =  self._sourceObjectList[fileIndex]
                 entryIndex = int(key_split[1])-1
-                entry = phynxFile["/"].keys()[entryIndex] 
+                entry = phynxFile["/"].keys()[entryIndex]
             actual_key = "%d.%d" % (fileIndex+1, entryIndex+1)
             if actual_key != key:
                 if entry != "/":
@@ -294,12 +294,12 @@ class NexusDataSource(object):
             #Probably I should find the acual entry following h5py_ordering output
             #and search for an NXdata plot.
             sourcekeys = self.getSourceInfo()['KeyList']
-            #a key corresponds to an image        
+            #a key corresponds to an image
             key_split= key.split(".")
             actual_key= "%d.%d" % (int(key_split[0]), int(key_split[1]))
             if actual_key not in sourcekeys:
                 raise KeyError("Key %s not in source keys" % actual_key)
-            raise NotImplemented("Direct NXdata plot not implemented yet")        
+            raise NotImplemented("Direct NXdata plot not implemented yet")
         #create data object
         output = DataObject.DataObject()
         output.info = self.__getKeyInfo(actual_key)
@@ -347,7 +347,7 @@ class NexusDataSource(object):
                     else:
                         raise TypeError("%s selection is not 1D" % cnt.upper())
                 elif len(data.shape) > 2:
-                    raise TypeError("%s selection is not 1D" % cnt.upper())            
+                    raise TypeError("%s selection is not 1D" % cnt.upper())
             if cnt == 'y':
                 if output.info['selectiontype'] == "2D":
                     output.data = data
@@ -404,7 +404,7 @@ class NexusDataSource(object):
                         if output.m is None:
                             output.m = [dataset]
                         else:
-                            output.m.append(dataset)            
+                            output.m.append(dataset)
                     elif cnt == 'data':
                         if output.data is None:
                             output.data = [dataset]
@@ -432,15 +432,15 @@ def DataSource(name="", source_type=SOURCE_TYPE):
   except KeyError:
      #ERROR invalid source type
      raise TypeError("Invalid Source Type, source type should be one of %s" %\
-                     source_types.keys())  
+                     source_types.keys())
   return sourceClass(name)
 
-        
+
 if __name__ == "__main__":
     import time
     try:
         sourcename=sys.argv[1]
-        key       =sys.argv[2]        
+        key       =sys.argv[2]
     except:
         print("Usage: NexusDataSource <file> <key>")
         sys.exit()
