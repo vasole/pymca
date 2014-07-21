@@ -66,7 +66,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
            (filename.lower().endswith('spe') and twoChar[0] not in ['$']):
             #very likely wrapped as EDF
             return self.addFileList([filename])
-        
+
         text = qt.safe_str(self.windowTitle())
         text += ": " + qt.safe_str(os.path.basename(filename))
 
@@ -126,7 +126,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
             if ret == qt.QDialog.Accepted:
                 filelist = fdialog.selectedFiles()
                 fdialog.close()
-                del fdialog                        
+                del fdialog
             else:
                 fdialog.close()
                 del fdialog
@@ -148,7 +148,7 @@ def test():
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
-                    longoptions)      
+                    longoptions)
     transpose=False
     for opt,arg in opts:
         if opt in '--nativefiledialogs':
@@ -170,7 +170,7 @@ def test():
     if not len(filelist):
         print("Usage:")
         print("python PyMcaPostBatch.py PyMCA_BATCH_RESULT_DOT_DAT_FILE")
-        sys.exit(app.quit())        
+        sys.exit(app.quit())
     if len(filelist) == 1:
         if filelist[0].lower().endswith("dat"):
             try:
@@ -188,4 +188,4 @@ def test():
 
 if __name__ == "__main__":
     test()
-        
+

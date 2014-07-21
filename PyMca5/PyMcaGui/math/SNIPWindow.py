@@ -67,13 +67,13 @@ class SNIP1DParametersWidget(qt.QWidget):
         if smooth:
             textLabels[0] = "SNIP width :"
             self.parametersDict['width'] = 3
-            
+
         for text in textLabels:
             label = qt.QLabel(self)
             label.setText(text)
-            self.mainLayout.addWidget(label, i, 0)        
+            self.mainLayout.addWidget(label, i, 0)
             #self.mainLayout.addWidget(qt.HorizontalSpacer(self), i, 1)
-            i +=1 
+            i +=1
 
         i = 0
         self.widgetDict = {}
@@ -94,17 +94,17 @@ class SNIP1DParametersWidget(qt.QWidget):
         ddict['event']='SNIPParametersChanged'
         ddict.update(self.parametersDict)
         self.sigSNIPParametersSignal.emit(ddict)
-                  
+
     def getParameters(self):
         return self.parametersDict
 
     def setParameters(self, ddict=None):
         if ddict is None:
-            return        
+            return
         actualKeys = self.widgetDict.keys()
         for key in ddict.keys():
             if key in actualKeys:
-                w = self.widgetDict[key] 
+                w = self.widgetDict[key]
                 #w.setMaximum(max(ddict[key], w.value()))
                 #w.setMinimum(min(ddict[key], w.value()))
                 w.setValue(ddict[key])
@@ -122,16 +122,16 @@ class SNIP2DParametersWidget(qt.QWidget):
         self.parametersDict = {'roi_min':[0,0],
                                'roi_max':[shape[0], shape[1]],
                                'width':min(30, int(min(shape)/10)),
-                               'smoothing':1}            
+                               'smoothing':1}
         for text in ["SNIP background width (2 to 3 times fwhm) :",
                      "Minimum ROI channels considered:",
                      "Maximum ROI channels considered:",
                      "Pleliminar smoothing level:"]:
             label = qt.QLabel(self)
             label.setText(text)
-            self.mainLayout.addWidget(label, i, 0)        
+            self.mainLayout.addWidget(label, i, 0)
             #self.mainLayout.addWidget(qt.HorizontalSpacer(self), i, 1)
-            i +=1 
+            i +=1
 
         i = 0
         self.widgetDict = {}
@@ -190,7 +190,7 @@ class SNIP2DParametersWidget(qt.QWidget):
         ddict['event']='SNIPParametersChanged'
         ddict.update(self.parametersDict)
         self.sigSNIPParametersSignal.emit(ddict)
-                  
+
     def getParameters(self):
         return self.parametersDict
 
@@ -232,7 +232,7 @@ class SNIPWindow(qt.QWidget):
                                                             imageicons=False,
                                                             standalonesave=True)
             self.parametersWidget = SNIP2DParametersWidget(self, shape=self.image.shape)
-            self.graph = self.graphWidget.graphWidget.graph            
+            self.graph = self.graphWidget.graphWidget.graph
             self.graphWidget.setImageData(data)
             self.mainLayout.addWidget(self.parametersWidget)
             self.mainLayout.addWidget(self.graphWidget)
@@ -293,7 +293,7 @@ class SNIPWindow(qt.QWidget):
                     self.o3dScene.mesh(imageData,      z=imageData * 1, legend='Data', update_scene=True)
                     self.o3dScene.mesh(backgroundData, z=backgroundData , legend='Background', update_scene=True)
                 else:
-                    self.o3dScene.mesh(difference, z=difference, legend='Data-Background')                                    
+                    self.o3dScene.mesh(difference, z=difference, legend='Data-Background')
                 self.o3dScene.show()
         else:
             self.background = SNIPModule.getSpectrumBackground(self.spectrum, width,
@@ -306,7 +306,7 @@ class SNIPWindow(qt.QWidget):
                 legend0 = "Background"
             self.graph.newCurve(self.xValues,
                             self.background, legend0, replace=False)
-        
+
             #Force information update
             legend = self.graph.getActiveCurve(just_legend=True)
             if legend.startswith(legend0[0:5]):
@@ -343,7 +343,7 @@ class SNIPDialog(qt.QDialog):
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")
-        self.okButton.setAutoDefault(False)   
+        self.okButton.setAutoDefault(False)
         self.dismissButton = qt.QPushButton(hbox)
         self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
@@ -359,7 +359,7 @@ class SNIPDialog(qt.QDialog):
         if self.__image:
             parametersDict['function'] = SNIPModule.subtractSnip2DBackgroundFromStack
         elif self.__smooth:
-            parametersDict['function'] = SNIPModule.replaceStackWithSnip1DBackground            
+            parametersDict['function'] = SNIPModule.replaceStackWithSnip1DBackground
         else:
             parametersDict['function'] = SNIPModule.subtractSnip1DBackgroundFromStack
         parametersDict['arguments'] = [parametersDict['width'],
@@ -378,25 +378,25 @@ class SNIPDialog(qt.QDialog):
             self.parametersWidget.setParameters(ddict)
         else:
             self.parametersWidget.setParameters(ddict0)
-                 
+
 if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
     if 0:
-        noise = numpy.random.randn(1000.) 
+        noise = numpy.random.randn(1000.)
         y=numpy.arange(1000.)
         w = SNIPDialog(None, y+numpy.sqrt(y)* noise)
     elif len(sys.argv) > 1:
         from PyMca5.PyMcaIO import EdfFile
         edf = EdfFile.EdfFile(sys.argv[1])
         data = edf.GetData(0)
-        w = SNIPDialog(None, data)    
+        w = SNIPDialog(None, data)
     else:
         x, y = numpy.ogrid[0:200:200j, 0:200:200j]
         data =  50 * numpy.exp(-(x-64)*(x-64)/20.) +\
                 50 * numpy.exp(-(y-128)*(y-128)/20.) +\
                100 * numpy.exp(-(1./20) * ((x-64)*(x-64) + (y-128)*(y-128)))
-        w = SNIPDialog(None, data)    
+        w = SNIPDialog(None, data)
     w.show()
     ret=w.exec_()
     if ret:

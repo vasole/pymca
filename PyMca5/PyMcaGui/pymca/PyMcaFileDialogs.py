@@ -145,7 +145,7 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
                     filelist = qt.QFileDialog.getOpenFileNames(parent,
                             message,
                             wdir,
-                            filetypes)                    
+                            filetypes)
             else:
                 filelist = qt.QFileDialog.getSaveFileName(parent,
                         message,
@@ -189,7 +189,7 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
         else:
             fdialog.setAcceptMode(fdialog.AcceptSave)
             fdialog.setFileMode(fdialog.AnyFile)
-            
+
         fdialog.setDirectory(wdir)
         if QTVERSION > '4.3.0':
             history = fdialog.history()
@@ -211,7 +211,7 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
             if mode != "OPEN":
                 if "." in filterused:
                     extension = filterused.replace(")", "")
-                    if "(" in extension:   
+                    if "(" in extension:
                         extension = extension.split("(")[-1]
                     extensionList = extension.split()
                     txt = qt.safe_str(filelist[0])

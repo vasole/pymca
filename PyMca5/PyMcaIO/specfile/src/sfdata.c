@@ -22,7 +22,7 @@
  *   Project:       SpecFile library
  *
  *   Description:   Functions for getting data
- * 
+ *
  *   Author:        V.Rey
  *
  *   Date:          $Date: 2005/07/04 15:02:38 $
@@ -56,11 +56,11 @@
  *   Log:
  * Revision 2.1  2000/07/31  19:05:11  19:05:11  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 2.0  2000/04/13  13:28:54  13:28:54  rey (Vicente Rey-Bakaikoa)
  * New version of the library. Complete rewrite
  * Adds support for MCA
- * 
+ *
  */
 #include <SpecFile.h>
 #include <SpecFileP.h>
@@ -88,16 +88,16 @@
  * Declarations
  */
 DllExport long SfNoDataLines  ( SpecFile *sf, long index, int *error );
-DllExport int  SfData         ( SpecFile *sf, long index, double ***retdata, 
+DllExport int  SfData         ( SpecFile *sf, long index, double ***retdata,
                                           long **retinfo, int *error );
-DllExport long SfDataAsString ( SpecFile *sf, long index, 
-                                          char ***data, int *error ); 
-DllExport long SfDataLine     ( SpecFile *sf, long index, long line, 
-                                          double **data_line, int *error ); 
-DllExport long SfDataCol      ( SpecFile *sf, long index, long col, 
-                                          double **data_col, int *error ); 
-DllExport long SfDataColByName( SpecFile *sf, long index, 
-                                  char *label, double **data_col, int *error ); 
+DllExport long SfDataAsString ( SpecFile *sf, long index,
+                                          char ***data, int *error );
+DllExport long SfDataLine     ( SpecFile *sf, long index, long line,
+                                          double **data_line, int *error );
+DllExport long SfDataCol      ( SpecFile *sf, long index, long col,
+                                          double **data_col, int *error );
+DllExport long SfDataColByName( SpecFile *sf, long index,
+                                  char *label, double **data_col, int *error );
 
 
 /*********************************************************************
@@ -106,12 +106,12 @@ DllExport long SfDataColByName( SpecFile *sf, long index,
  *   Description:    Gets number of data lines in a scan
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) Index
  *        Output:
  *            (3) error number
  *   Returns:
- *            Number of data lines , 
+ *            Number of data lines ,
  *            ( -1 ) => errors.
  *   Possible errors:
  *            SF_ERR_SCAN_NOT_FOUND
@@ -137,7 +137,7 @@ SfNoDataLines( SpecFile *sf, long index, int *error )
         printf("Negative number of points!\n");
         /*free(dinfo);*/
         return(-1);
-    }    
+    }
 
     nrlines = dinfo[ROW];
 
@@ -147,8 +147,8 @@ SfNoDataLines( SpecFile *sf, long index, int *error )
     free(data);
     free(dinfo);
 
-    return nrlines; 
-}  
+    return nrlines;
+}
 
 
 
@@ -157,20 +157,20 @@ SfNoDataLines( SpecFile *sf, long index, int *error )
  *
  *   Description:    Gets data.
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) Index
  *        Output:
  *            (3) Data array
  *            (4) Data info : [0] => no_lines
  *                    [1] => no_columns
- *                    [2] = ( 0 ) => regular    
- *                          ( 1 ) => not regular ! 
+ *                    [2] = ( 0 ) => regular
+ *                          ( 1 ) => not regular !
  *            (5) error number
  *   Returns:
  *            (  0 ) => OK
  *                ( -1 ) => errors occured
  *   Possible errors:
- *            SF_ERR_MEMORY_ALLOC   
+ *            SF_ERR_MEMORY_ALLOC
  *            SF_ERR_FILE_READ
  *            SF_ERR_SCAN_NOT_FOUND
  *            SF_ERR_LINE_NOT_FOUND
@@ -178,7 +178,7 @@ SfNoDataLines( SpecFile *sf, long index, int *error )
  *   Remark:  The memory allocated should be freed by the application
  *
  *********************************************************************/
-DllExport int 
+DllExport int
 SfData( SpecFile *sf, long index, double ***retdata, long **retinfo, int *error )
 {
      long     *dinfo    = NULL;
@@ -220,7 +220,7 @@ SfData( SpecFile *sf, long index, double ***retdata, long **retinfo, int *error 
           dinfo[ROW] = sf->data_info[ROW];
           dinfo[COL] = sf->data_info[COL];
           dinfo[REG] = sf->data_info[REG];
-          data =  ( double **) malloc ( sizeof(double *) * dinfo[ROW]); 
+          data =  ( double **) malloc ( sizeof(double *) * dinfo[ROW]);
           for (i=0;i<dinfo[ROW];i++) {
               data[i] = (double *)malloc (sizeof(double) * dinfo[COL]);
               memcpy(data[i],sf->data[i],sizeof(double) * dinfo[COL]);
@@ -263,7 +263,7 @@ SfData( SpecFile *sf, long index, double ***retdata, long **retinfo, int *error 
           return(-1);
      }
 
-     if ( (dinfo = (long *) malloc(sizeof(long) * D_INFO) ) == (long *)NULL) { 
+     if ( (dinfo = (long *) malloc(sizeof(long) * D_INFO) ) == (long *)NULL) {
           free(data);
          *error = SF_ERR_MEMORY_ALLOC;
           return(-1);
@@ -281,12 +281,12 @@ if(0){
          * read all mca block: go while in buffer ( ptr < to - 1 )
          * and while a newline is preceded by a slash
          */
-         for (    ptr = ptr + 2; 
-               (*ptr != '\n' || (*(ptr-1) == MCA_CONT)) && ptr < to ; 
-                  ptr++); 
+         for (    ptr = ptr + 2;
+               (*ptr != '\n' || (*(ptr-1) == MCA_CONT)) && ptr < to ;
+                  ptr++);
      }
      if ( *ptr == '#') {  /* Comment --> pass one line */
-              for (ptr = ptr + 1; *ptr != '\n';ptr++); 
+              for (ptr = ptr + 1; *ptr != '\n';ptr++);
      }
 
     /*
@@ -305,7 +305,7 @@ if(0){
         /* get a complete line */
         i=0;
         cols=0;
-        /*I should be at the start of a line */ 
+        /*I should be at the start of a line */
         while(*(ptr) != '\n'){
             if (*(ptr-1) == '\n'){
                 /*I am at the start of a line */
@@ -327,8 +327,8 @@ if(0){
                     * read all mca block: go while in buffer ( ptr < to - 1 )
                     * and while a newline is preceded by a slash
                     */
-                    for (    ptr = ptr + 2; 
-                        (*ptr != '\n' || (*(ptr-1) == MCA_CONT)) && ptr < to ; 
+                    for (    ptr = ptr + 2;
+                        (*ptr != '\n' || (*(ptr-1) == MCA_CONT)) && ptr < to ;
                         ptr++);
                     if (ptr >= to){
                         break;
@@ -352,8 +352,8 @@ if(0){
                 while (*ptr == ' ' && ptr < to) ptr++;  /* get rid of empty spaces */
             }
            /*
-            * in the middle of a line 
-            */ 
+            * in the middle of a line
+            */
             if (*ptr == ' ' || *ptr == '\t' ) {
                 strval[i] = '\0';
                 i = 0;
@@ -387,9 +387,9 @@ if(0){
         if ((ptr < to) && (cols >0)) {
         rows++;
         /*cols++;*/
-        if (cols >= maxcol) return(-1);            
+        if (cols >= maxcol) return(-1);
         /* printf("Adding a new row, nrows = %ld, ncols= %ld\n",rows,cols);*/
-        /*printf("info col = %d cols = %d\n", dinfo[COL], cols);*/ 
+        /*printf("info col = %d cols = %d\n", dinfo[COL], cols);*/
         if (dinfo[COL] != 0 && cols != dinfo[COL]) {
                     ;
                     /*diffract31 crash -> nextline uncommented */
@@ -417,7 +417,7 @@ if(0){
     setlocale(LC_NUMERIC, localeBuffer);
 #endif
 #endif
-    /* 
+    /*
     * make a copy in specfile structure
     */
     if ( dinfo[ROW] != 0 && dinfo[REG] == 0) {
@@ -471,7 +471,7 @@ if(0){
 }
 
 
-DllExport long 
+DllExport long
 SfDataCol ( SpecFile *sf, long index, long col, double **retdata, int *error )
 {
     double *datacol=NULL;
@@ -485,7 +485,7 @@ SfDataCol ( SpecFile *sf, long index, long col, double **retdata, int *error )
     ret = SfData(sf,index,&data,&dinfo,error);
 
     if (ret == -1) {
-        *error = SF_ERR_COL_NOT_FOUND; 
+        *error = SF_ERR_COL_NOT_FOUND;
         *retdata = datacol;
         return(-1);
     }
@@ -494,7 +494,7 @@ SfDataCol ( SpecFile *sf, long index, long col, double **retdata, int *error )
        selection = dinfo[COL] + col;
     } else {
        selection = col - 1;
-    } 
+    }
 if (selection > dinfo[COL] - 1) {
 selection=dinfo[COL] - 1;
 }
@@ -531,8 +531,8 @@ selection=dinfo[COL] - 1;
 }
 
 
-DllExport long 
-SfDataLine( SpecFile *sf, long index, long line, double **retdata, int *error ) 
+DllExport long
+SfDataLine( SpecFile *sf, long index, long line, double **retdata, int *error )
 {
     double *datarow=NULL;
 
@@ -545,7 +545,7 @@ SfDataLine( SpecFile *sf, long index, long line, double **retdata, int *error )
     ret = SfData(sf,index,&data,&dinfo,error);
 
     if (ret == -1) {
-        *error = SF_ERR_LINE_NOT_FOUND; 
+        *error = SF_ERR_LINE_NOT_FOUND;
         *retdata = datarow;
         return(-1);
     }
@@ -554,7 +554,7 @@ SfDataLine( SpecFile *sf, long index, long line, double **retdata, int *error )
        selection = dinfo[ROW] + line;
     } else {
        selection = line - 1;
-    } 
+    }
 
     if ( selection < 0 || selection > dinfo[ROW] - 1) {
        *error  = SF_ERR_LINE_NOT_FOUND;
@@ -588,8 +588,8 @@ SfDataLine( SpecFile *sf, long index, long line, double **retdata, int *error )
 }
 
 
-DllExport long 
-SfDataColByName( SpecFile *sf, long index, char *label, double **retdata, int *error ) 
+DllExport long
+SfDataColByName( SpecFile *sf, long index, char *label, double **retdata, int *error )
 {
 
       double *datacol;
@@ -618,13 +618,13 @@ SfDataColByName( SpecFile *sf, long index, char *label, double **retdata, int *e
          nb_lab = SfAllLabels(sf,index,&labels,error);
          tofree = 1;
       }
-         
+
       if ( nb_lab == 0 || nb_lab == -1) {
             *retdata = (double *)NULL;
              return(-1);
       }
 
-      for (idx=0;idx<nb_lab;idx++) 
+      for (idx=0;idx<nb_lab;idx++)
           if (!strcmp(label,labels[idx])) break;
 
       if ( idx == nb_lab ) {
@@ -662,13 +662,13 @@ SfDataColByName( SpecFile *sf, long index, char *label, double **retdata, int *e
       free(dinfo);
 
      *retdata = datacol;
-    
+
       return(ret);
 }
 
 
-DllExport long 
-SfDataAsString( SpecFile *sf, long index, char ***retdata, int *error ) 
+DllExport long
+SfDataAsString( SpecFile *sf, long index, char ***retdata, int *error )
 {
      char **data=NULL;
      char   oneline[300];
@@ -689,7 +689,7 @@ SfDataAsString( SpecFile *sf, long index, char ***retdata, int *error )
           return(-1);
      }
 
-     data = (char **) malloc (sizeof(char *)); 
+     data = (char **) malloc (sizeof(char *));
 
      headersize = ((SpecScan *)sf->current->contents)->data_offset
                 - ((SpecScan *)sf->current->contents)->offset;
@@ -709,15 +709,15 @@ SfDataAsString( SpecFile *sf, long index, char ***retdata, int *error )
      if (isnumber(*ptr)) {
          rows++;
          oneline[i] = *ptr;
-         i++; 
+         i++;
      } else if (*ptr == '@') {
         /*
          * read all mca block: go while in buffer ( ptr < to - 1 )
          * and while a newline is preceded by a slash
          */
-         for (    ptr = ptr + 2; 
-               (*(ptr+1) != '\n' || (*ptr == MCA_CONT)) && ptr < to - 1 ; 
-                  ptr++); 
+         for (    ptr = ptr + 2;
+               (*(ptr+1) != '\n' || (*ptr == MCA_CONT)) && ptr < to - 1 ;
+                  ptr++);
      }
 
     /*
@@ -741,17 +741,17 @@ SfDataAsString( SpecFile *sf, long index, char ***retdata, int *error )
            }
 
            if ( *ptr == '@') {  /* Mca --> pass it all */
-               for (    ptr = ptr + 2; 
-                     (*ptr != '\n' || (*(ptr-1) == MCA_CONT)) && ptr < to ; 
-                        ptr++); 
+               for (    ptr = ptr + 2;
+                     (*ptr != '\n' || (*(ptr-1) == MCA_CONT)) && ptr < to ;
+                        ptr++);
            } else if ( *ptr == '#') {  /* Comment --> pass one line */
-              for (ptr = ptr + 1; *ptr != '\n';ptr++); 
+              for (ptr = ptr + 1; *ptr != '\n';ptr++);
            } else if ( isnumber(*ptr) ) {
               rows++;
               oneline[i] = *ptr;
               i++;
-           } 
-        } else { 
+           }
+        } else {
            if (rows == -1) continue;
 
            oneline[i] = *ptr;

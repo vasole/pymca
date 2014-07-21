@@ -44,7 +44,7 @@ class SimpleThread(qt.QThread):
         self._var      = var
         self._kw       = kw
         self._result   = None
-    
+
     def run(self):
         if DEBUG:
             self._result = self._function(*self._var, **self._kw )
@@ -68,7 +68,7 @@ class NNMADialog(qt.QDialog):
         self.mainLayout.addWidget(self.calculateButton)
         self.mainLayout.addWidget(self.showLastButton)
         self._data = None
-        
+
         self.nnmaWindow = NNMAWindow.NNMAWindow(parent = None,
                                             rgbwidget=rgbwidget,
                                             #selection=True,
@@ -88,7 +88,7 @@ class NNMADialog(qt.QDialog):
     def sizeHint(self):
         return qt.QSize(int(4*qt.QDialog.sizeHint(self).width()),
                         qt.QDialog.sizeHint(self).height())
-        
+
     def _calculateSlot(self):
         if self._data is None:
             msg = qt.QMessageBox(self)

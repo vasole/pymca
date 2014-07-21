@@ -86,7 +86,7 @@ class StackScanWindowPlugin(StackPluginBase.StackPluginBase):
         self.__methodKeys = ["ADD",
                              "REPLACE"]
         self.widget = None
-        
+
     #Methods implemented by the plugin
     def getMethods(self):
         return self.__methodKeys

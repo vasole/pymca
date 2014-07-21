@@ -18,10 +18,10 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -29,8 +29,8 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE. 
- * 
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
  **/
 
 
@@ -48,7 +48,7 @@
 #ifndef WORKGROUP_SIZE
     #define WORKGROUP_SIZE 1024
 #endif
-    
+
 #define MAX_CONST_SIZE 16384
 
 
@@ -258,7 +258,7 @@ shrink(const __global     float     *image_in,
  *
  * @param image_in        Float pointer to global memory storing the big image.
  * @param image_ou        Float pointer to global memory storing the small image.
- * @param scale_width:    Binning factor in horizontal           
+ * @param scale_width:    Binning factor in horizontal
  * @param scale_heigth:   Binning factor in vertical
  * @param orig_width:     Original image size in horizontal
  * @param orig_heigth:    Original image size in vertical

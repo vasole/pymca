@@ -35,14 +35,14 @@ from . import Elements
 class ElementHtml(object):
     def __init__(self,element=None):
         self.element = None
-        
+
     def gethtml(self,element=None):
         if element is None:element = self.element
         if element is None:return ""
         ele = element
         #text="<center><b><font color=red size=5>Summary</font></b></center>"
         text=""
-        if ele not in Elements.Element.keys(): 
+        if ele not in Elements.Element.keys():
             text+="<br><b><font color=blue size=4>Unknown Element</font></b>"
             return text
         symbol = Elements.getsymbol(Elements.getz(ele))
@@ -55,7 +55,7 @@ class ElementHtml(object):
                     Elements.Element[ele]['omegam3'],
                     Elements.Element[ele]['omegam4'],
                     Elements.Element[ele]['omegam5'] ]
-        
+
         #text+="<center>
         text+="<br><b><font color=blue size=4>Element Info</font></b>"
         #text+="</center>"
@@ -68,7 +68,7 @@ class ElementHtml(object):
         else:
             hcolor = 'white'
             finalcolor = 'white'
-            
+
 
             text+="<nobr><table>"
             #symbol
@@ -81,7 +81,7 @@ class ElementHtml(object):
             text+="</td>"
             text+='<td align="left" bgcolor="%s">' % finalcolor
             text+="<b><font size=3>%s </font></b>"  % symbol
-            text+="</td>"            
+            text+="</td>"
             #Z
             text+="<tr>"
             text+='<td align="left" bgcolor="%s">' % finalcolor
@@ -92,7 +92,7 @@ class ElementHtml(object):
             text+="</td>"
             text+='<td align="left" bgcolor="%s">' % finalcolor
             text+="<b><font size=3>%d </font></b>"  % Elements.Element[ele]['Z']
-            text+="</td>"                        
+            text+="</td>"
             #name
             text+="<tr>"
             text+='<td align="left" bgcolor="%s">' % finalcolor
@@ -115,7 +115,7 @@ class ElementHtml(object):
             text+="</td>"
             text+='<td align="left" bgcolor="%s">' % finalcolor
             text+="<b><font size=3>%.5f </font></b>"  % Elements.Element[ele]['mass']
-            text+="</td>"                        
+            text+="</td>"
             #density
             text+="<tr>"
             text+='<td align="left" bgcolor="%s">' % finalcolor
@@ -223,7 +223,7 @@ class ElementHtml(object):
                     text+="</td>"
                     text+="</tr>"
                 text+="</table>"
-        
+
         hcolor = 'white'
         finalcolor = 'white'
         for rays in Elements.Element[ele]['rays']:
@@ -289,8 +289,8 @@ class ElementHtml(object):
         text+="</tr>"
         text+="</table>"
         return text
-        
-        
+
+
 if __name__ == "__main__":
     import sys
     from PyMca5 import PyMcaQt as qt

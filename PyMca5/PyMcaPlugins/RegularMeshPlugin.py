@@ -45,16 +45,16 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         self.methodDict['Show Image'] = [self._convert,
                                              "Show mesh as image",
                                              None]
-                           
+
         self.imageWidget = None
-        
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         names = list(self.methodDict.keys())
         names.sort()
@@ -91,7 +91,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         self._y = y
         if 'Header' not in info:
             raise ValueError("Active curve does not seem to be a mesh scan")
-            
+
         header = info['Header'][0]
 
         item = header.split()
@@ -105,7 +105,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         self._motor1Mne = item[7]
 
         #print("Scanned motors are %s and %s" % (motor0Mne, motor1Mne))
-        
+
         #Assume an EXACTLY regular mesh for both motors
         self._motor0 = numpy.linspace(float(item[4]), float(item[5]), int(item[6])+1)
         self._motor1 = numpy.linspace(float(item[8]), float(item[9]), int(item[10])+1)
@@ -138,7 +138,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
                                         scanwindow=self)
         self.imageWidget.setImageData(y,
                                       xScale=(self._motor0[0],
-                                              self._motor0[-1]),                                              
+                                              self._motor0[-1]),
                                       yScale=(self._motor1[0],
                                               self._motor1[-1]))
         self.imageWidget.setXLabel(self._motor0Mne)

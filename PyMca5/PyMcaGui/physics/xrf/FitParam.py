@@ -130,7 +130,7 @@ class FitParamWidget(FitParamForm):
         tabConcentrationsLayout.addWidget(self.concentrationsWidget,0,0)
         self.mainTab.addTab(self.tabConcentrations, str("CONCENTRATIONS"))
         #end concentrations tab
-        
+
         #self.matrixGeometry = self.tabAttenuators.matrixGeometry
         if 0:
             #The compound fit tab
@@ -238,7 +238,7 @@ class FitParamWidget(FitParamForm):
                 else:
                     if abs(pars[key][4] - 1.0) > 1.0e-10:
                         funnyfilters.append(pars[key][1:])
-                    else:                                           
+                    else:
                         attenuators.append(pars[key][1:])
 
         maxenergy = qt.safe_str(self.peakTable.energy.text())
@@ -295,7 +295,7 @@ class FitParamWidget(FitParamForm):
                             ylabel='Efficiency Term',
                             replace=True)
         self.graphDialog.exec_()
-    
+
     def __contComboActivated(self, idx):
         if idx==4:
             self.orderSpin.setEnabled(1)
@@ -313,7 +313,7 @@ class FitParamWidget(FitParamForm):
         else:
             #hypermet flag = 0
             pass
-            
+
     def __orderSpinChanged(self, value):
         continuum= int(self.contCombo.currentIndex())
         if continuum==4:
@@ -355,8 +355,8 @@ class FitParamWidget(FitParamForm):
         if key in pars:
             stripAlgorithm = int(pars[key])
             self.setSNIP(stripAlgorithm)
-            
-        key = "snipwidth"            
+
+        key = "snipwidth"
         if key in pars:
             self.snipWidthSpin.setValue(int(pars[key]))
 
@@ -388,7 +388,7 @@ class FitParamWidget(FitParamForm):
             for value in anchorslist:
                 self.stripAnchorsList[i].setValue(int(value))
                 i += 1
-            
+
 
     def __tabChanged(self, idx):
         if self.prevTabIdx is None:
@@ -397,7 +397,7 @@ class FitParamWidget(FitParamForm):
         if idx != self.prevTabIdx:
             if self.__tabCheck(self.prevTabIdx):
                 self.prevTabIdx= idx
-            
+
     def __tabCheck(self, tabIdx):
         label= self.tabLabel[tabIdx]
         if self.__getPar(label) is None:
@@ -463,7 +463,7 @@ class FitParamWidget(FitParamForm):
         if parname in ["multilayer", "MULTILAYER"]:
             return self.__getMultilayerPar()
         if parname in ["materials", "MATERIALS"]:
-                return self.__getMaterialsPar()            
+                return self.__getMaterialsPar()
         if parname in ["tube", "TUBE"]:
             return self.__getTubePar()
         if parname in ["concentrations", "CONCENTRATIONS"]:
@@ -483,7 +483,7 @@ class FitParamWidget(FitParamForm):
                 filteredkey = Elements.getMaterialKey(key)
                 if filteredkey is None:
                     Elements.Material[key] = copy.deepcopy(pardict['materials'][key])
-                else:  
+                else:
                     Elements.Material[filteredkey] = copy.deepcopy(pardict['materials'][key])
         matlist = list(Elements.Material.keys())
         matlist.sort()
@@ -541,7 +541,7 @@ class FitParamWidget(FitParamForm):
                 self.attTable.setText(row, 5, str(attpar[4]))
             else:
                 self.attTable.setText(row, 5, "1.0")
-        current = self.tabAttenuators.editor.matCombo.currentText()   
+        current = self.tabAttenuators.editor.matCombo.currentText()
         self.tabAttenuators.editor.matCombo.setOptions(matlist)
 
         #force update of all the parameters
@@ -599,7 +599,7 @@ class FitParamWidget(FitParamForm):
                 combo.setOptions(matlist)
                 combo.lineEdit().setText(str(attpar[1]))
             else:
-                print("ERROR in __setAttPar")                
+                print("ERROR in __setAttPar")
             self.multilayerTable.setText(row, 3, str(attpar[2]))
             self.multilayerTable.setText(row, 4, str(attpar[3]))
 
@@ -646,7 +646,7 @@ class FitParamWidget(FitParamForm):
         else:
             index = 1
         self.functionCombo.setCurrentIndex(index)
-            
+
         self.staCheck.setChecked(self.__get("peakshape", "fixedst_arearatio", 0, int))
         self.staValue.setText(self.__get("peakshape", "st_arearatio"))
         self.staError.setText(self.__get("peakshape","deltast_arearatio"))
@@ -712,7 +712,7 @@ class FitParamWidget(FitParamForm):
         #Default 10 eV separation between two peaks only accessible
         #through file editing for the time being
         #self.deltaOnePeak = self.__get("fit", "deltaonepeak", 0.010)
-        
+
         self.linpolOrder= self.__get("fit", "linpolorder", 1, int)
         self.exppolOrder= self.__get("fit", "exppolorder", 1, int)
         continuum= self.__get("fit", "continuum", 0, int)
@@ -720,7 +720,7 @@ class FitParamWidget(FitParamForm):
         self.__contComboActivated(continuum)
 
         self.fitWeight = self.__get("fit", "fitweight", 1, int)
-        self.weightCombo.setCurrentIndex(self.fitWeight)        
+        self.weightCombo.setCurrentIndex(self.fitWeight)
 
         stripAlgorithm = self.__get("fit", "stripalgorithm", 0, int)
         self.setSNIP(stripAlgorithm)
@@ -775,7 +775,7 @@ class FitParamWidget(FitParamForm):
             flaglist    = self.__get("fit", "energyflag", None, None)
             scatterlist    = self.__get("fit", "energyscatter", None, None)
         self.energyTable.setParameters(energylist, weightlist, flaglist, scatterlist)
-        
+
 
     def __getFitPar(self):
         pars= {}
@@ -816,7 +816,7 @@ class FitParamWidget(FitParamForm):
             stepflag= int(self.stepCheck.isChecked())
             index = pars['fitfunction']
             if index == 0:
-                hypermetflag = 1 
+                hypermetflag = 1
             else:
                 hypermetflag = 0
             if hypermetflag:
@@ -917,7 +917,7 @@ class FitParamWidget(FitParamForm):
         idx= self.tabLabel.index(tab)
         self.prevTabIdx= idx
         self.mainTab.setCurrentIndex(idx)
-        qt.QMessageBox.critical(self, "ERROR on %s"%tab, message, 
+        qt.QMessageBox.critical(self, "ERROR on %s"%tab, message,
             qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
 
 class SectionFileDialog(qt.QFileDialog):
@@ -940,7 +940,7 @@ class SectionFileDialog(qt.QFileDialog):
                     self.setDir(qt.QString(initdir))
                 else:
                     self.setDir(qt.safe_str(initdir))
-                
+
         if DEBUG:
             print("right to be added")
         if 0:
@@ -1067,7 +1067,7 @@ class FitParamDialog(qt.QDialog):
         self.setMaximumHeight(maxheight)
         self.resize(qt.QSize(min(800, maxwidth), min(int(0.7 * maxheight), 750)))
 
-        self.loadfit.clicked.connect(self.__loadFromFit)            
+        self.loadfit.clicked.connect(self.__loadFromFit)
         load.clicked.connect(self.load)
         save.clicked.connect(self.save)
         reject.clicked.connect(self.reject)
@@ -1100,7 +1100,7 @@ class FitParamDialog(qt.QDialog):
         #else:
             #self.initDir = None
             qt.QMessageBox.critical(self, "Load Parameters",
-                "ERROR while loading parameters from\n%s"%filename, 
+                "ERROR while loading parameters from\n%s"%filename,
                 qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
             return 0
         self.setParameters(copy.deepcopy(cfg))
@@ -1112,9 +1112,9 @@ class FitParamDialog(qt.QDialog):
         for material in Elements.Material.keys():
             pars[material] = {}
             for key in Elements.Material[material].keys():
-                pars[material][key] = Elements.Material[material][key]      
+                pars[material][key] = Elements.Material[material][key]
         return pars
-        
+
     def saveParameters(self, filename, sections=None):
         pars= self.getParameters()
         if sections is None:
@@ -1127,13 +1127,13 @@ class FitParamDialog(qt.QDialog):
         if sections is not None:
             for key in list(cfg.keys()):
                 if key not in sections:
-                    del cfg[key]            
+                    del cfg[key]
         try:
             cfg.write(filename, sections)
             self.initDir = os.path.dirname(filename)
             return 1
         except:
-            qt.QMessageBox.critical(self, "Save Parameters", 
+            qt.QMessageBox.critical(self, "Save Parameters",
                 "ERROR while saving parameters to\n%s"%filename,
                 qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
             #self.initDir = None
@@ -1153,7 +1153,7 @@ class FitParamDialog(qt.QDialog):
         if self.fitresult is None:
             text =  "Sorry. No fit parameters to be loaded.\n"
             text += "You need to have performed a fit."
-            qt.QMessageBox.critical(self, "No fit data", 
+            qt.QMessageBox.critical(self, "No fit data",
                                     text,
                                     qt.QMessageBox.Ok,
                                     qt.QMessageBox.NoButton,
@@ -1178,7 +1178,7 @@ class FitParamDialog(qt.QDialog):
         if (fitfunction == 0) and (hypermetflag == 0):
             fitfunction = 1
         if fitfunction == 1:
-            name = 'Eta Factor' 
+            name = 'Eta Factor'
             if name in self.fitresult['parameters']:
                 value = self.fitresult['fittedpar'] \
                         [self.fitresult['parameters'].index(name)]
@@ -1189,25 +1189,25 @@ class FitParamDialog(qt.QDialog):
             # hypermetnames = ['ST AreaR', 'ST SlopeR',
             #                 'LT AreaR', 'LT SlopeR',
             #                 'STEP HeightR']
-            name = 'ST AreaR' 
+            name = 'ST AreaR'
             if name in self.fitresult['parameters']:
                 value = self.fitresult['fittedpar'] \
                         [self.fitresult['parameters'].index(name)]
                 self.fitparam.staValue.setText("%.6g" % value)
 
-            name = 'ST SlopeR' 
+            name = 'ST SlopeR'
             if name in self.fitresult['parameters']:
                 value = self.fitresult['fittedpar'] \
                         [self.fitresult['parameters'].index(name)]
                 self.fitparam.stsValue.setText("%.6g" % value)
 
-            name = 'LT AreaR' 
+            name = 'LT AreaR'
             if name in self.fitresult['parameters']:
                 value = self.fitresult['fittedpar'] \
                         [self.fitresult['parameters'].index(name)]
                 self.fitparam.ltaValue.setText("%.6g" % value)
 
-            name = 'LT SlopeR' 
+            name = 'LT SlopeR'
             if name in self.fitresult['parameters']:
                 value = self.fitresult['fittedpar'] \
                         [self.fitresult['parameters'].index(name)]
@@ -1318,7 +1318,7 @@ class FitParamDialog(qt.QDialog):
                 self.saveParameters(filename, None)
                 self.initDir = os.path.dirname(filename)
                 PyMcaDirs.outputDir = os.path.dirname(filename)
-                    
+
 def openWidget():
     app= qt.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)

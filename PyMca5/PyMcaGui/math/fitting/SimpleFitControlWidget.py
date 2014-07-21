@@ -58,7 +58,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.mainLayout.addWidget(qt.HorizontalSpacer(self),   row, 1)
         self.mainLayout.addWidget(self.fitFunctionSetupButton, row, 2)
         self.mainLayout.addWidget(self.fitFunctionCombo,       row, 3)
-        row += 1        
+        row += 1
 
         #background
         self.backgroundCheckBox = qt.QCheckBox(self)
@@ -162,7 +162,7 @@ class FitFunctionDefinition(qt.QGroupBox):
         self.fitFunctionSetupButton.clicked[()].connect(self.setupFitFunction)
         self.backgroundSetupButton.clicked[()].connect(self.setupBackground)
         self.stripSetupButton.clicked[()].connect(self.setupStrip)
-        
+
     def _stripComboActivated(self, iValue):
         if iValue == 1:
             self.setSNIP(True)
@@ -265,7 +265,7 @@ class FitControl(qt.QGroupBox):
         self.mainLayout.addWidget(self.weightCombo,       row, 3)
         row += 1
 
-        
+
         #function estimation policy
         self.functionEstimationLabel    = qt.QLabel(self)
         self.functionEstimationLabel.setText("Function estimation policy")
@@ -324,7 +324,7 @@ class FitControl(qt.QGroupBox):
         self.mainLayout.addWidget(self.chi2Label,         row, 0)
         self.mainLayout.addWidget(qt.HorizontalSpacer(self), row, 1)
         self.mainLayout.addWidget(self.chi2Value,         row, 3)
-        row +=1 
+        row +=1
 
         #fitting region
         self.regionTopLine = qt.QFrame(self)
@@ -335,7 +335,7 @@ class FitControl(qt.QGroupBox):
 
         self.regionCheckBox = qt.QCheckBox(self)
         self.regionCheckBox.setText(str("Limit fitting region to :"))
-        
+
         self.firstLabel = qt.QLabel(self)
         firstLabel_font = qt.QFont(self.firstLabel.font())
         firstLabel_font.setItalic(1)
@@ -365,7 +365,7 @@ class FitControl(qt.QGroupBox):
         self.regionBottomLine.setFrameShape(qt.QFrame.HLine)
 
         self.mainLayout.addWidget(self.regionTopLine,   row, 0, 1, 4)
-        row += 1 
+        row += 1
         self.mainLayout.addWidget(self.regionCheckBox,row, 0)
         self.mainLayout.addWidget(self.firstLabel,    row, 1)
         self.mainLayout.addWidget(self.firstValue,    row, 3)
@@ -403,7 +403,7 @@ class SimpleFitControlWidget(qt.QWidget):
         originalKeys = list(ddict.keys())
         for key in originalKeys:
             workingKeys.append(key.lower())
-            
+
         #get current configuration
         current = self.getConfiguration()
         for key in list(current.keys()):
@@ -445,7 +445,7 @@ class SimpleFitControlWidget(qt.QWidget):
         if ddict['stripalgorithm'] in [0, 1, "0", "1"]:
             idx = int(ddict['stripalgorithm'])
         else:
-            idx = w.stripCombo.findText(ddict['strip_function'])            
+            idx = w.stripCombo.findText(ddict['strip_function'])
         w.stripCombo.setCurrentIndex(idx)
         w.setSNIP(idx)
 
@@ -453,7 +453,7 @@ class SimpleFitControlWidget(qt.QWidget):
         w.stripWidthSpin.setValue(int(ddict["stripwidth"]))
         w.stripFilterSpin.setValue(int(ddict["stripfilterwidth"]))
 
-        w.stripIterSpin.setValue(int(ddict['stripiterations']))             
+        w.stripIterSpin.setValue(int(ddict['stripiterations']))
         ddict['stripconstant'] = 1.0
         w.stripFilterSpin.setValue(int(ddict['stripfilterwidth']))
 
@@ -470,11 +470,11 @@ class SimpleFitControlWidget(qt.QWidget):
         for value in anchorslist:
             w.stripAnchorsList[i].setText("%g" % float(value))
             i += 1
-        
+
         w = self.fitControlWidget
         idx = w.fitAlgorithmCombo.findText(ddict['fit_algorithm'])
         w.fitAlgorithmCombo.setCurrentIndex(idx)
-        
+
         idx = w.weightCombo.findText(ddict['weight'])
         w.weightCombo.setCurrentIndex(idx)
         text = ddict['function_estimation_policy']
@@ -484,7 +484,7 @@ class SimpleFitControlWidget(qt.QWidget):
         text = ddict['background_estimation_policy']
         idx = w.backgroundEstimationCombo.findText(text)
         w.backgroundEstimationCombo.setCurrentIndex(idx)
-        
+
         w.iterSpin.setValue(int(ddict['maximum_fit_iterations']))
         w.chi2Value.setValue(float(ddict['minimum_delta_chi']))
         if ddict['use_limits']:
@@ -518,7 +518,7 @@ class SimpleFitControlWidget(qt.QWidget):
 
         ddict['snipwidth']  = w.snipWidthSpin.value()
         ddict['stripwidth'] = w.stripWidthSpin.value()
-        ddict['stripiterations'] = w.stripIterSpin.value()            
+        ddict['stripiterations'] = w.stripIterSpin.value()
         ddict['stripconstant'] = 1.0
         ddict['stripfilterwidth'] = w.stripFilterSpin.value()
 
@@ -548,7 +548,7 @@ class SimpleFitControlWidget(qt.QWidget):
         else:
             ddict['use_limits']  = 0
         ddict['xmin']       = float(str(w.firstValue.text()))
-        ddict['xmax']       = float(str(w.lastValue.text()))        
+        ddict['xmax']       = float(str(w.lastValue.text()))
         return ddict
 
 def test():

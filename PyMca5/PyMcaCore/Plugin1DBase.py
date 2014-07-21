@@ -40,7 +40,7 @@ inherit the PyMca.Plugin1DBase class and implement the methods:
     applyMethod
 
 and modify the static module variable MENU_TEXT and the static module function
-getPlugin1DInstance according to the defined plugin.    
+getPlugin1DInstance according to the defined plugin.
 
 These plugins will be compatible with any 1D-plot window that implements the Plot1D
 interface. The plot window interface is described in the Plot1DBase Class.
@@ -56,7 +56,7 @@ The main items are reproduced here and can be directly accessed as plugin method
     getGraphXLabel
     getGraphXTitle
     getGraphYLabel
-    getGraphYTitle    
+    getGraphYTitle
     removeCurve
     setActiveCurve
     setGraphTitle
@@ -83,7 +83,7 @@ class Plugin1DBase(object):
         Unless one knows what (s)he is doing, only a proxy should be used.
 
         I pass the actual instance to keep all doors open.
-        """        
+        """
         self._plotWindow = weakref.proxy(plotWindow)
 
     #Window related functions
@@ -111,7 +111,7 @@ class Plugin1DBase(object):
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
         :return: legend of the active curve or list [x, y, legend, info]
-        :rtype: string or list 
+        :rtype: string or list
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
@@ -131,7 +131,7 @@ class Plugin1DBase(object):
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
         :return: legend of the curves or list [[x, y, legend, info], ...]
-        :rtype: list of strings or list of curves 
+        :rtype: list of strings or list of curves
 
         It returns an empty list in case of not having any curve.
         If just_legend is False:
@@ -173,7 +173,7 @@ class Plugin1DBase(object):
             yproc = take(yproc, idx)
             allCurves[i][0:2] = x, y
         return allCurves
-    
+
     def getGraphXLimits(self):
         """
         :return: Two floats with the X axis limits
@@ -183,7 +183,7 @@ class Plugin1DBase(object):
 
     def getGraphYLimits(self):
         """
-        Get the graph Y (left) limits. 
+        Get the graph Y (left) limits.
         :return: Two floats with the Y (left) axis limits
         """
         return self._plotWindow.getGraphYLimits()
@@ -256,7 +256,7 @@ class Plugin1DBase(object):
         :param legend: The legend associated to the curve to be deleted
         :type legend: string or None
         :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True        
+        :type replot: boolean default True
         """
         return self._plotWindow.removeCurve(legend, replot=replot)
 
@@ -289,7 +289,7 @@ class Plugin1DBase(object):
         :type title: string
         """
         return self._plotWindow.setGraphYTitle(title)
-            
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """

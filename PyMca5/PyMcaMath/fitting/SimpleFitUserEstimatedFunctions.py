@@ -43,7 +43,7 @@ class SimpleFitDefaultFunctions(object):
         self.areaLorentzian = SpecfitFuns.alorentz
         self.pseudoVoigt = SpecfitFuns.pvoigt
         self.areaPseudoVoigt = SpecfitFuns.apvoigt
-        
+
     def hypermet(self,pars,x):
         """
         Default hypermet function
@@ -70,7 +70,7 @@ class SimpleFitDefaultFunctions(object):
 
     def atan(self, pars, x):
         return pars[0] * (0.5 + (arctan((1.0*x-pars[1])/pars[2])/pi))
-    
+
     def polynomial(self, pars, x):
         result = numpy.zeros(x.shape, numpy.float) + pars[0]
         if len(pars) == 1:
@@ -100,7 +100,7 @@ FUNCTION=[fitfuns.gaussian,
           fitfuns.polynomial,
           fitfuns.polynomial,
           fitfuns.polynomial]
-          
+
 PARAMETERS=[['Height','Position','Fwhm'],
             ['Height','Position','Fwhm'],
             ['Height','Position','Fwhm','Eta'],
@@ -119,7 +119,7 @@ PARAMETERS=[['Height','Position','Fwhm'],
             ['a(0)', ' a(1)', 'a(2)', 'a(3)'],
             ['a(0)', ' a(1)', 'a(2)', 'a(3)','a(4)'],
             ['a(0)', ' a(1)', 'a(2)', 'a(3)','a(4)', 'a(5)']]
-            
+
 
 THEORY=['User Estimated Gaussians',
         'User Estimated Lorentzians',

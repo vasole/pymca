@@ -7,7 +7,7 @@ void __kernel interpolate(image3d_t volume,
                           int img_height,
                           global float* point,
                           global float3* norm)
-{                       
+{
 int pos_x = get_global_id(0);
 int pos_y = get_global_id(1);
 if ((pos_x>=img_width)||(pos_y>img_height))
@@ -41,7 +41,7 @@ float4 pos_xyz =  (float4)(dot(tx,pos_uvn)+point[0],
 						dot(ty,pos_uvn)+point[1],
 						dot(tz,pos_uvn)+point[2],
 						0.0f);
-			  	 
+
 float4 res = read_imagef(volume, sampler, pos_xyz);
 img[pos_x+img_width*pos_y] = res.x;
 }

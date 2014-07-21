@@ -32,7 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
 This module can be used for plugin testing purposes as well as for doing
-the bookkeeping of actual plot windows. 
+the bookkeeping of actual plot windows.
 
 Functions to be implemented by an actual plotter can be found in the
 abstract class PlotBackend.
@@ -67,7 +67,7 @@ colordict['c'] = colordict['cyan'] = '#00ffff'
 colordict['darkBlue'] = '#000080'
 colordict['darkRed'] = '#800000'
 colordict['darkGreen'] = '#008000'
-colordict['darkBrown'] = '#660000' 
+colordict['darkBrown'] = '#660000'
 colordict['darkCyan'] = '#008080'
 colordict['darkYellow'] = '#808000'
 colordict['darkMagenta'] = '#800080'
@@ -171,7 +171,7 @@ class Plot(PlotBase.PlotBase):
         # item handling
         self._itemList = []
         self._itemDict = {}
-        
+
         # colors and line types
         self._colorList = colorlist
         self._styleList = ['-', '--', '-.', ':']
@@ -185,7 +185,7 @@ class Plot(PlotBase.PlotBase):
         # default properties
         self._logY = False
         self._logX = False
-        
+
         self.setDefaultPlotPoints(False)
         self.setDefaultPlotLines(True)
 
@@ -239,7 +239,7 @@ class Plot(PlotBase.PlotBase):
         if ddict['event'] in ["legendClicked", "curveClicked"]:
             if ddict['button'] == "left":
                 self.setActiveCurve(ddict['label'])
-    
+
     def setDefaultPlotPoints(self, flag):
         if flag:
             self._plotPoints = True
@@ -266,7 +266,7 @@ class Plot(PlotBase.PlotBase):
             self._colorIndex = 0
             self._styleIndex += 1
             if self._styleIndex >= self._nStyles:
-                self._styleIndex = 0            
+                self._styleIndex = 0
         color = self._colorList[self._colorIndex]
         style = self._styleList[self._styleIndex]
         if color == self._activeCurveColor:
@@ -476,7 +476,7 @@ class Plot(PlotBase.PlotBase):
                  selectable=False, draggable=False,
                  colormap=None, **kw):
         """
-        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
+        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array
         :type data: numpy.ndarray
         :param legend: The legend to be associated to the curve
         :type legend: string or None
@@ -544,7 +544,7 @@ class Plot(PlotBase.PlotBase):
         :param legend: The legend associated to the curve to be deleted
         :type legend: string or None
         :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True        
+        :type replot: boolean default True
         """
         if legend is None:
             return
@@ -567,7 +567,7 @@ class Plot(PlotBase.PlotBase):
         :param legend: The legend associated to the image to be deleted
         :type legend: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True        
+        :type replot: boolean default True
         """
         if legend is None:
             return
@@ -586,7 +586,7 @@ class Plot(PlotBase.PlotBase):
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
         :return: legend of the active curve or list [x, y, legend, info]
-        :rtype: string or list 
+        :rtype: string or list
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
@@ -615,7 +615,7 @@ class Plot(PlotBase.PlotBase):
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
         :return: legend of the active image or list [data, legend, info, xScale, yScale, z]
-        :rtype: string or list 
+        :rtype: string or list
         Function to access the plot currently active image.
         It returns None in case of not having an active image.
 
@@ -642,7 +642,7 @@ class Plot(PlotBase.PlotBase):
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
         :return: legend of the curves or list [[x, y, legend, info], ...]
-        :rtype: list of strings or list of curves 
+        :rtype: list of strings or list of curves
 
         It returns an empty list in case of not having any curve.
         If just_legend is False:
@@ -662,7 +662,7 @@ class Plot(PlotBase.PlotBase):
         for key in self._curveList:
             if key in keys:
                 if self.isCurveHidden(key):
-                    continue        
+                    continue
                 if just_legend:
                     output.append(key)
                 else:
@@ -674,7 +674,7 @@ class Plot(PlotBase.PlotBase):
         :param legend: legend assiciated to the curve
         :type legend: boolean
         :return: list [x, y, legend, info]
-        :rtype: list 
+        :rtype: list
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
@@ -793,7 +793,7 @@ class Plot(PlotBase.PlotBase):
             return True
         else:
             return False
-        
+
     def setYAxisLogarithmic(self, flag):
         if flag:
             if self._logY:
@@ -897,7 +897,7 @@ class Plot(PlotBase.PlotBase):
         self._styleIndex = 0
         self._markerDict = {}
         self._imageList = []
-        self._imageDict = {}        
+        self._imageDict = {}
         self._markerList = []
         self._plot.clear()
         self.replot()
@@ -985,7 +985,7 @@ class Plot(PlotBase.PlotBase):
 
     def setGraphYLabel(self, label="Y"):
         self._plot.setGraphYLabel(label)
-        
+
     # Marker handling
     def insertXMarker(self, x, legend=None,
                       label=None,
@@ -1143,7 +1143,7 @@ class Plot(PlotBase.PlotBase):
         :type colors: integer (typically 256)
         """
         return self._plot.getDefaultColormap()
-    
+
     def setDefaultColormap(self, colormap=None):
         """
         Sets the colormap that will be applied by the backend to an image

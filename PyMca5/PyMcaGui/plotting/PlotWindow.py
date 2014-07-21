@@ -70,7 +70,7 @@ DEBUG = 0
 
 class PlotWindow(PlotWidget.PlotWidget):
     sigROISignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None, backend=None, plugins=True, newplot=False,
                  control=False, position=False, **kw):
         if backend is None:
@@ -112,7 +112,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         # default ROI handling
         self.roiWidget = None
         self._middleROIMarkerFlag = False
-        
+
     def _buildGraphBottomWidget(self, control, position):
         widget = self.centralWidget()
         self.graphBottom = qt.QWidget(widget)
@@ -152,7 +152,7 @@ class PlotWindow(PlotWidget.PlotWidget):
 
     def setPrintMenu(self, menu):
         self._printMenu = menu
-        
+
     def setWindowType(self, wtype=None):
         if wtype not in [None, "SCAN", "MCA"]:
             print("Unsupported window type. Default to None")
@@ -203,11 +203,11 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.swapSignIcon	= qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
         self.yMinToZeroIcon	= qt.QIcon(qt.QPixmap(IconDict["ymintozero"]))
         self.subtractIcon	= qt.QIcon(qt.QPixmap(IconDict["subtract"]))
-        
-        self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
-        self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))            
 
-        self.pluginIcon     = qt.QIcon(qt.QPixmap(IconDict["plugin"])) 
+        self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
+        self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))
+
+        self.pluginIcon     = qt.QIcon(qt.QPixmap(IconDict["plugin"]))
 
     def _buildToolBar(self, kw=None):
         if kw is None:
@@ -294,7 +294,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self._addToolButton(self.energyIcon,
                             self._energyIconSignal,
                             'Toggle Energy Axis (On/Off)',
-                            toggle=True)            
+                            toggle=True)
 
         #roi icon
         if kw.get('roi', False):
@@ -406,7 +406,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 self._printConfigurationDialog.getPrintConfiguration())
 
     def _addToolButton(self, icon, action, tip, toggle=None):
-        tb      = qt.QToolButton(self.toolBar)            
+        tb      = qt.QToolButton(self.toolBar)
         tb.setIcon(icon)
         tb.setToolTip(tip)
         if toggle is not None:
@@ -434,7 +434,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.aspectButton.setIcon(self.solidCircleIcon)
             self.aspectButton.setToolTip("Keep data aspect ratio")
         super(PlotWindow, self).keepDataAspectRatio(self._keepDataAspectRatioFlag)
-                
+
     def _zoomReset(self):
         if DEBUG:
             print("_zoomReset")
@@ -467,7 +467,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.setXAxisAutoScale(True)
             self.xAutoScaleButton.setDown(True)
             self.resetZoom()
-                       
+
     def _toggleLogX(self):
         if DEBUG:
             print("toggle logarithmic X scale")
@@ -477,7 +477,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.setXAxisLogarithmic(True)
 
     def setXAxisLogarithmic(self, flag=True):
-        super(PlotWindow, self).setXAxisLogarithmic(flag) 
+        super(PlotWindow, self).setXAxisLogarithmic(flag)
         self.xLogButton.setChecked(flag)
         self.xLogButton.setDown(flag)
         self.replot()
@@ -492,7 +492,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.setYAxisLogarithmic(True)
 
     def setYAxisLogarithmic(self, flag=True):
-        super(PlotWindow, self).setYAxisLogarithmic(flag) 
+        super(PlotWindow, self).setYAxisLogarithmic(flag)
         self.yLogButton.setChecked(flag)
         self.yLogButton.setDown(flag)
         self.replot()
@@ -520,7 +520,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.invertYAxis(False)
         else:
             self.invertYAxis(True)
-        
+
     def _colormapIconSignal(self):
         if DEBUG:
             print("_colormapIconSignal called")
@@ -627,7 +627,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 elif text.endswith('.py'):
                     text = text[:-3]
                 text = QString(text)
-            methods = self.pluginInstanceDict[m].getMethods(plottype=self._plotType) 
+            methods = self.pluginInstanceDict[m].getMethods(plottype=self._plotType)
             if not len(methods):
                 continue
             menu.addAction(text)
@@ -691,7 +691,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 if a.text() == action[0]:
                     idx = actionList.index(action)
         try:
-            self.pluginInstanceDict[key].applyMethod(methods[idx])    
+            self.pluginInstanceDict[key].applyMethod(methods[idx])
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -711,8 +711,8 @@ class PlotWindow(PlotWidget.PlotWidget):
         if DEBUG:
             print("_graphSignalReceived", ddict)
         if ddict['event'] in ['markerMoved', 'markerSelected']:
-            label = ddict['label'] 
-            if label in ['ROI min', 'ROI max', 'ROI middle']:            
+            label = ddict['label']
+            if label in ['ROI min', 'ROI max', 'ROI middle']:
                 self._handleROIMarkerEvent(ddict)
         if ddict['event'] in ["curveClicked", "legendClicked"]:
             legend = ddict["label"]
@@ -723,13 +723,13 @@ class PlotWindow(PlotWidget.PlotWidget):
                 self._yPos.setText('%.7g' % ddict['y'])
         #make sure the signal is forwarded
         #super(PlotWindow, self).graphCallback(ddict)
-        self.sigPlotSignal.emit(ddict)   
+        self.sigPlotSignal.emit(ddict)
 
     def setActiveCurve(self, legend):
         PlotWidget.PlotWidget.setActiveCurve(self, legend)
         self.calculateROIs()
         self.updateLegends()
-        
+
     def _handleROIMarkerEvent(self, ddict):
         if ddict['event'] == 'markerMoved':
             roiList, roiDict = self.roiWidget.getROIListAndDict()
@@ -738,7 +738,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             if self.currentROI not in roiDict:
                 return
             x = ddict['x']
-            label = ddict['label'] 
+            label = ddict['label']
             if label == 'ROI min':
                 roiDict[self.currentROI]['from'] = x
                 if self._middleROIMarkerFlag:
@@ -778,7 +778,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 return
             self.calculateROIs(roiList, roiDict)
             self.emitCurrentROISignal()
-        
+
     def _roiSignal(self, ddict):
         if ddict['event'] == "AddROI":
             xmin,xmax = self.getGraphXLimits()
@@ -816,7 +816,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                 self.insertXMarker(pos, 'ROI middle',
                                    label="",
                                    color='yellow',
-                                   draggable=draggable)                
+                                   draggable=draggable)
             roiList.append(newroi)
             roiDict[newroi] = {}
             roiDict[newroi]['type'] = self.getGraphXLabel()
@@ -867,15 +867,15 @@ class PlotWindow(PlotWidget.PlotWidget):
                                    label="",
                                    color='yellow',
                                    draggable=True)
-            self.currentROI = ddict['key'] 
+            self.currentROI = ddict['key']
             if ddict['colheader'] in ['From', 'To']:
                 dict0 ={}
                 dict0['event']  = "SetActiveCurveEvent"
                 dict0['legend'] = self.graph.getactivecurve(justlegend=1)
                 self.__graphsignal(dict0)
-            elif ddict['colheader'] == 'Raw Counts':    
+            elif ddict['colheader'] == 'Raw Counts':
                 pass
-            elif ddict['colheader'] == 'Net Counts':    
+            elif ddict['colheader'] == 'Net Counts':
                 pass
             else:
                 self.emitCurrentROISignal()
@@ -892,7 +892,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         else:
             self.currentROI = None
         ddict['current'] = self.currentROI
-        self.sigROISignal.emit(ddict)        
+        self.sigROISignal.emit(ddict)
 
     def calculateROIs(self, *var, **kw):
         if not hasattr(self, "roiWidget"):
@@ -986,7 +986,7 @@ class PlotWindow(PlotWidget.PlotWidget):
                                       self.legendDockWidget)
             self.legendWidget.sigLegendSignal.connect(self._legendSignal)
             self.legendDockWidget.setWindowTitle(self.windowTitle()+(" Legend"))
-        
+
     def _legendSignal(self, ddict):
         if DEBUG:
             print("Legend signal ddict = ", ddict)

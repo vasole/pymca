@@ -63,7 +63,7 @@ setup (
                             name          = 'Object3DQhull',
                             sources       = sources,
                             define_macros = define_macros,
-                            libraries  = [], 
+                            libraries  = [],
                             include_dirs  = [numpy.get_include()]
                        ),
        ],
@@ -85,7 +85,7 @@ setup (
                             name          = 'Object3DQhullf',
                             sources       = sources,
                             define_macros = define_macros,
-                            libraries  = [], 
+                            libraries  = [],
                             include_dirs  = [numpy.get_include()]
                        ),
        ],

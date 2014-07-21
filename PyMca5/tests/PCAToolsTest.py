@@ -59,7 +59,7 @@ class testPCATools(unittest.TestCase):
                                                             force=force,
                                                             center=False)
             self.assertTrue(numpy.allclose(tmpArray, pymcaCov * (nData - 1)))
-        
+
         # calculate covariance using numpy
         numpyCov = numpy.cov(x.T)
         numpyAvg = x.sum(axis=0).reshape(-1, 1) / nSpectra
@@ -73,7 +73,7 @@ class testPCATools(unittest.TestCase):
             pymcaCov, pymcaAvg, nData = getCovarianceMatrix(x,
                                                             force=force,
                                                             center=True)
-        
+
             self.assertTrue(numpy.allclose(numpyCov, pymcaCov))
             self.assertTrue(numpy.allclose(numpyAvg, pymcaAvg))
             self.assertTrue(nData == nSpectra)

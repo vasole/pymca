@@ -76,7 +76,7 @@ class __ModuleWrapper:
         else:
             if not len("%s" % value):
                 self.__wrapped.__dict__[name] = os.getcwd()
-            else:  
+            else:
                 raise ValueError("Non existing directory %s" % value)
     elif name == "outputDir":
         if os.path.isdir(value):
@@ -84,7 +84,7 @@ class __ModuleWrapper:
         else:
             if not len("%s" % value):
                 self.__wrapped.__dict__[name] = os.getcwd()
-            else:  
+            else:
                 raise ValueError("Non existing directory %s" % value)
     elif name == "nativeFileDialogs":
         self.__wrapped.__dict__[name]=value

@@ -41,7 +41,7 @@ class GLWidgetCachePixmap(object):
         self.__textureId = None
         self.drawList = 0
         self.__alpha = 1.0
-        self._limits = numpy.zeros((2,3), numpy.float32) 
+        self._limits = numpy.zeros((2,3), numpy.float32)
 
     def getTextureId(self):
         return self.__textureId
@@ -55,11 +55,11 @@ class GLWidgetCachePixmap(object):
         if self.__textureId is not None:
             GL.glDeleteTextures([self.__textureId])
             self.__textureId = None
-    
+
     def setPixmap(self, pixmap, width, height, xmirror = False, ymirror = False, z=0.0):
         if not hasattr(pixmap, "dtype"):
             raise ValueError("Input pixmap has to be an uint8 array")
-    
+
         useNewTexture = True
         if self.__pixmap is not None:
             if (width == self.__width) and (height == self.__height):
@@ -74,7 +74,7 @@ class GLWidgetCachePixmap(object):
         # some cards still need to pad to powers of 2
         self.__tWidth  = self.getPaddedValue(self.__width)
         self.__tHeight = self.getPaddedValue(self.__height)
-        
+
         if (self.__tWidth != self.__width) or (self.__tHeight != self.__height):
             #I have to zero padd the texture to make sure it works on all cards ...
             self.__pixmap = numpy.zeros((self.__tWidth*self.__tHeight, 4), numpy.uint8)
@@ -92,7 +92,7 @@ class GLWidgetCachePixmap(object):
         self._forceListCalculation = True
         self._forceTextureCalculation = True
         self._useNewTexture = useNewTexture
-        self.setLimits(0.0, 0.0, z, self.__width, self.__height, z) 
+        self.setLimits(0.0, 0.0, z, self.__width, self.__height, z)
 
     def getLimits(self):
         """
@@ -109,7 +109,7 @@ class GLWidgetCachePixmap(object):
         self._limits[0,:] = xmin, ymin, zmin
         self._limits[1,:] = xmax, ymax, zmax
         self._forceListCalculation = True
-        
+
     def drawObject(self):
         if self.__pixmap is None:
             return
@@ -140,11 +140,11 @@ class GLWidgetCachePixmap(object):
         Enable 2D textures with glEnable.
         When producing geometry, bind the texture before starting the polygon and then
         set a texture coordinate with glTexCoord before each glVertex.
-        gl.glTexSubImage2D(texture.getTarget(), 
+        gl.glTexSubImage2D(texture.getTarget(),
             0, // no support for mipmapping
             x, y + row, // in texture
             bounds.width, 1,
-            GL.GL_BGRA, 
+            GL.GL_BGRA,
             type,
             dataBuffer
             );
@@ -160,7 +160,7 @@ class GLWidgetCachePixmap(object):
                self.__textureId = GL.glGenTextures(1)
             else:
                 GL.glDeleteTextures([self.__textureId])
-                self.__textureId = GL.glGenTextures(1)            
+                self.__textureId = GL.glGenTextures(1)
         if self.__textureId is None:
             print("no valid texture id?")
             return
@@ -186,16 +186,16 @@ class GLWidgetCachePixmap(object):
             GL.glEnable(GL.GL_TEXTURE_2D)
         else:
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.__textureId)
-            GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 
+            GL.glTexSubImage2D(GL.GL_TEXTURE_2D,
             0,
             0, 0,
             self.__tWidth,
             self.__tHeight,
-            GL.GL_RGBA, 
+            GL.GL_RGBA,
             GL.GL_UNSIGNED_BYTE,
             self.__pixmap)
             GL.glEnable(GL.GL_TEXTURE_2D)
-            
+
         self._forceTextureCalculation = False
 
     def buildQuad(self):

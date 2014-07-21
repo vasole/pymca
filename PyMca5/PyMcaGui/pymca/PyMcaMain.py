@@ -53,7 +53,7 @@ if __name__ == '__main__':
     except getopt.error:
         print(sys.exc_info()[1])
         sys.exit(1)
-    
+
     keywords={}
     debugreport = 0
     qtversion = '4'
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         elif opt in ('--PySide'):
             import PySide
     if qtversion == '3':
-        raise NotImplementedError("Qt3 is not longer supported") 
+        raise NotImplementedError("Qt3 is not longer supported")
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.pymca import PyMcaMdi
@@ -153,8 +153,8 @@ if __name__ == "__main__":
     font = splash.font()
     font.setBold(1)
     splash.setFont(font)
-    splash.showMessage( 'PyMca %s' % __version__, 
-            qt.Qt.AlignLeft|qt.Qt.AlignBottom, 
+    splash.showMessage( 'PyMca %s' % __version__,
+            qt.Qt.AlignLeft|qt.Qt.AlignBottom,
             qt.Qt.white)
     if sys.platform == "darwin":
         qApp = qt.QApplication.instance()
@@ -309,14 +309,14 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     if kw['shm'][0:8] in ['MCA_DATA']:
                         #self.mcaWindow.showMaximized()
                         self.toggleSource()
-                        self._startupSelection(source=kw['spec'], 
+                        self._startupSelection(source=kw['spec'],
                                                 selection=kw['shm'])
                     else:
-                        self._startupSelection(source=kw['spec'], 
+                        self._startupSelection(source=kw['spec'],
                                                 selection=None)
                 else:
-                     self._startupSelection(source=kw['spec'], 
-                                                selection=None)                
+                     self._startupSelection(source=kw['spec'],
+                                                selection=None)
 
     def connectDispatcher(self, viewer, dispatcher = None):
         #I could connect sourceWidget to myself and then
@@ -327,7 +327,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         dispatcher.sigAddSelection.connect(viewer._addSelection)
         dispatcher.sigRemoveSelection.connect(viewer._removeSelection)
         dispatcher.sigReplaceSelection.connect(viewer._replaceSelection)
-            
+
     def currentTabIndexChanged(self, index):
         legend = "%s" % self.mainTabWidget.tabText(index)
         for key in self.imageWindowDict.keys():
@@ -359,11 +359,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             if 'selectiontype' in ddict['selection']:
                 if ddict['selection']['selectiontype'] == '3D':
                     return True
-            
+
             if 'x' in ddict['selection']:
                 if ddict['selection']['x'] is not None:
                     if len(ddict['selection']['x']) > 1:
-                        return True           
+                        return True
         return False
 
     def _isStackSelection(self, ddict):
@@ -405,7 +405,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             ddict = dictOrList[0]
         else:
             ddict = dictOrList
-            
+
         toadd = False
         if self._is2DSelection(ddict):
             if DEBUG:
@@ -473,7 +473,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             widget.setStack(ddict['dataobject'])
             widget.setWindowTitle(legend)
             widget.show()
-            self._widgetDict[id(widget)] = widget        
+            self._widgetDict[id(widget)] = widget
         else:
             if OBJECT3D:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
@@ -510,7 +510,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             ddict = dictOrList
         if self._is2DSelection(ddict):
-            legend = ddict['legend'] 
+            legend = ddict['legend']
             if legend in self.imageWindowDict.keys():
                 index = self.mainTabWidget.indexOf(self.imageWindowDict[legend])
                 if index >0:
@@ -584,7 +584,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 return
             for i in range(self.mainTabWidget.count()):
                 if str(self.mainTabWidget.tabText(i)) == \
-                                   ddict['SelectionType']:                        
+                                   ddict['SelectionType']:
                     self.mainTabWidget.setCurrentIndex(i)
             return
         if ddict['event'] == "SourceTypeChanged":
@@ -592,7 +592,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             return
         if DEBUG:
             print("Unhandled dict")
-        
+
     def setConfig(self, configDict):
         if 'PyMca' in configDict:
             self.__configurePyMca(configDict['PyMca'])
@@ -606,14 +606,14 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.__configureScanSimpleFit(configDict['ScanSimpleFit'])
         if 'ScanCustomFit' in configDict:
             self.__configureScanCustomFit(configDict['ScanCustomFit'])
-        
+
     def getConfig(self):
         d = {}
         d['PyMca']    = {}
         d['PyMca']['VERSION']   = __version__
         d['PyMca']['ConfigDir'] = self.configDir
         d['PyMca']['nativeFileDialogs'] = PyMcaDirs.nativeFileDialogs
-        
+
         #geometry
         d['PyMca']['Geometry']  ={}
         r = self.geometry()
@@ -657,7 +657,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         d['PyMca'][source]['SourceName'].append(key.sourceName)
             selectorWidget = self.sourceWidget.selectorWidget[source]
             if hasattr(selectorWidget,'setWidgetConfiguration'):
-                d['PyMca'][source]['WidgetConfiguration'] = selectorWidget.getWidgetConfiguration()                        
+                d['PyMca'][source]['WidgetConfiguration'] = selectorWidget.getWidgetConfiguration()
 
             #d['PyMca'][source]['Selection'] = self.sourceWidget[source].getSelection()
         #ROIs
@@ -671,7 +671,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d['ROI']['roidict'] = {}
         d['ROI']['roidict'].update(roidict)
 
-        #fit related        
+        #fit related
         d['Elements'] = {}
         d['Elements']['Material'] = {}
         d['Elements']['Material'].update(ElementsInfo.Elements.Material)
@@ -705,7 +705,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             except:
                 print("Error getting ScanFint configuration")
         return d
-        
+
     def saveConfig(self, config, filename = None):
         d = ConfigDict.ConfigDict()
         d.update(config)
@@ -742,7 +742,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                                  qt.QSize(ddict['Geometry']['MainWindow'][2],
                                                           ddict['Geometry']['MainWindow'][3])))
             self.mcaWindow.showMaximized()
-            
+
         PyMcaDirs.nativeFileDialogs = ddict.get('nativeFileDialogs', True)
 
         if 'Sources' in ddict:
@@ -807,7 +807,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             if 'roilist' in ddict:
                 roilist = ddict['roilist']
                 if type(roilist) != type([]):
-                    roilist=[roilist]                
+                    roilist=[roilist]
                 roidict = ddict['roidict']
                 if self.mcaWindow.roiWidget is None:
                     self.mcaWindow.showRoiWidget(qt.Qt.BottomDockWidgetArea)
@@ -827,7 +827,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.mcaWindow.advancedfit.configDir = d['ConfigDir'] * 1
         if False and ('LastFit' in d):
             if (d['LastFit']['ydata0'] != None) and \
-               (d['LastFit']['ydata0'] != 'None'):               
+               (d['LastFit']['ydata0'] != 'None'):
                 self.mcaWindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
                                                    y=d['LastFit']['ydata0'],
                                               sigmay=d['LastFit']['sigmay0'],
@@ -839,10 +839,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         try:
                             self.mcaWindow.advancedfit.fit()
                         except:
-                            pass  
+                            pass
                 else:
                     print("hidden")
-            
+
     def __configureFit(self, d):
         if 'Configuration' in d:
             self.mcaWindow.advancedfit.mcafit.configure(d['Configuration'])
@@ -852,7 +852,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.mcaWindow.advancedfit.configDir = d['ConfigDir'] * 1
         if False and ('LastFit' in d):
             if (d['LastFit']['ydata0'] != None) and \
-               (d['LastFit']['ydata0'] != 'None'):               
+               (d['LastFit']['ydata0'] != 'None'):
                 self.mcaWindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
                                                    y=d['LastFit']['ydata0'],
                                               sigmay=d['LastFit']['sigmay0'],
@@ -864,7 +864,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         try:
                             self.mcaWindow.advancedfit.fit()
                         except:
-                            pass  
+                            pass
                 else:
                     print("hidden")
 
@@ -874,7 +874,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def __configureScanSimpleFit(self, ddict):
         if 'Configuration' in ddict:
             self.scanWindow.scanFit.setConfiguration(ddict['Configuration'])
-                
+
     def initMenuBar(self):
         if self.options["MenuFile"]:
             #build the actions
@@ -966,7 +966,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self.sourceFrameLayout.setContentsMargins(0, 0, 0, 0)
         self.sourceFrameLayout.setSpacing(0)
         #layout.setAutoAdd(1)
-        
+
         sourceToolbar = qt.QWidget(self.sourceFrame)
         layout1       = qt.QHBoxLayout(sourceToolbar)
         #self.line1 = qt.QFrame(sourceToolbar,"line1")
@@ -983,15 +983,15 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         #self.sourceBrowserTab=qt.QTabWidget(self.sourceFrame)
 
         self.sourceFrameLayout.addWidget(sourceToolbar)
-        
+
         #connections
         self.line1.sigLineDoubleClickEvent.connect(self.sourceReparent)
         self.closelabel.sigPixmapLabelMousePressEvent.connect(self.toggleSource)
-    
+
         #tips
         self.line1.setToolTip("DoubleClick toggles floating window mode")
         self.closelabel.setToolTip("Hides Source Area")
-            
+
     def sourceReparent(self,ddict = None):
         if self.sourceFrame.parent() is not None:
             self.sourceFrame.setParent(None)
@@ -1002,7 +1002,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.splitter.insertWidget(0, self.sourceFrame)
             except:
                 self.sourceFrame.setParent(self.splitter)
-            
+
     def initSource(self):
         self.sourceWidget = QDispatcher.QDispatcher(self.sourceFrame)
         self.sourceFrameLayout.addWidget(self.sourceWidget)
@@ -1011,7 +1011,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self.sourceWidget.sourceSelector.openSource(source)
         if selection is None:
             return
-        
+
         if len(selection) >= 8:
             if selection[0:8] == "MCA_DATA":
                 ddict= {}
@@ -1027,7 +1027,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mcaWindow.control._calboxactivated("Internal")
         else:
             return
-        """ 
+        """
         elif selection == "XIA_DATA":
             ddict= {}
             ddict['event'] = "addSelection"
@@ -1061,15 +1061,15 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                      self.__xiaCorrect)
         if XRFMC_FLAG:
             self.menuTools.addAction("XMI-MSIM PyMca",
-                                     self._xrfmcPyMca)                
+                                     self._xrfmcPyMca)
         if DEBUG:
             print("Fit to Specfile missing")
-            
+
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
         if fontd[1]:
             qt.qApp.setFont(fontd[0],1)
-           
+
 
     def toggleSource(self,**kw):
         if DEBUG:
@@ -1079,7 +1079,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.sourceFrame.raise_()
         else:
             self.sourceFrame.hide()
-            
+
     def __elementsInfo(self):
         if self.elementsInfo is None:self.elementsInfo=ElementsInfo.ElementsInfo(None,"Elements Info")
         if self.elementsInfo.isHidden():
@@ -1101,7 +1101,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if self.identifier.isHidden():
             self.identifier.show()
         self.identifier.raise_()
-            
+
     def __batchFitting(self):
         if self.__batch is None:
             self.__batch = PyMcaBatch.McaBatchGUI(fl=0,actions=1)
@@ -1131,7 +1131,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         "EDF Files (*ccd)",
                         "All Files (*)"]
         message = "Open ONE Batch result .dat file or SEVERAL EDF files"
-        filelist = self.__getStackOfFiles(fileTypeList, message) 
+        filelist = self.__getStackOfFiles(fileTypeList, message)
         if not(len(filelist)):
             return
         filelist.sort()
@@ -1150,7 +1150,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             correlator.addFileList(filelist)
 
-    def _deleteCorrelator(self, ddict):        
+    def _deleteCorrelator(self, ddict):
         n = len(self.__correlator)
         if ddict['event'] == "RGBCorrelatorClosed":
             for i in range(n):
@@ -1185,7 +1185,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     for extension in extensions:
                         if sample.endswith(extension[-3:]):
                             filterused = filetype
-                            break                    
+                            break
         else:
             fdialog = qt.QFileDialog(self)
             fdialog.setModal(True)
@@ -1209,7 +1209,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if getfilter:
                     filterused = qt.safe_str(fdialog.selectedFilter())
                 fdialog.close()
-                del fdialog                        
+                del fdialog
             else:
                 fdialog.close()
                 del fdialog
@@ -1232,7 +1232,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                                    rgbwidget=rgbWidget,
                                                    master=True)
                 widget.notifyCloseEventToWidget(self)
-                self.__imagingTool = id(widget)                
+                self.__imagingTool = id(widget)
                 self._widgetDict[self.__imagingTool] = widget
                 #w = StackSelector.StackSelector(self)
                 #stack = w.getStack()
@@ -1247,7 +1247,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 txt = "Input Output Error: %s" % (sys.exc_info()[1])
                 msg.setInformativeText(txt)
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()                
+                msg.exec_()
                 return
             except:
                 widget = None
@@ -1258,7 +1258,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 txt = "Error info = %s" % sys.exc_info()
                 msg.setInformativeText(txt)
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()                
+                msg.exec_()
                 return
         else:
             widget = self._widgetDict[self.__imagingTool]
@@ -1285,7 +1285,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self._xrfmcTool = XRFMCPyMca.XRFMCPyMca()
         self._xrfmcTool.show()
         self._xrfmcTool.raise_()
-    
+
     def onOpen(self):
         self.openMenu.exec_(self.cursor().pos())
 
@@ -1316,7 +1316,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
 
         if os.path.exists(self.configDir):
-            cwd =self.configDir 
+            cwd =self.configDir
         outfile.setDirectory(cwd)
         ret = outfile.exec_()
         if ret:
@@ -1352,7 +1352,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 txt = "Input Output Error: %s" % (sys.exc_info()[1])
                 msg.setInformativeText(txt)
                 msg.setDetailedText(traceback.format_exc())
-                msg.exec_()                
+                msg.exec_()
                 return
         try:
             self._saveAs(filename)
@@ -1368,7 +1368,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if filename is None:
             filename = self.__getDefaultSettingsFile()
         self.saveConfig(self.getConfig(), filename)
-        
+
     def __getDefaultSettingsFile(self):
         filename = "PyMca.ini"
         if sys.platform == 'win32':
@@ -1428,7 +1428,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             outfile = qt.QFileDialog(self)
             outfile.setWindowTitle("Select PyMca Configuration File")
             if os.path.exists(self.configDir):
-                outfile.setDirectory(self.configDir)        
+                outfile.setDirectory(self.configDir)
             outfile.setFilters(['PyMca  *.ini'])
             outfile.setFileMode(outfile.ExistingFile)
             ret = outfile.exec_()
@@ -1455,7 +1455,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         qApp = qt.QApplication.instance()
         qApp.processEvents()
         self.sourceWidget[source].openFile()
-        
+
     def onMenuHelp(self):
         if self.menuBrowser is None:
             self.menuBrowser= qt.QTextBrowser()
@@ -1473,7 +1473,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def onDisplayHowto(self):
         if self.displayBrowser is None:
             self.displayBrowser= qt.QTextBrowser()
-            self.displayBrowser.setWindowTitle(QString("Data Display HOWTO"))                
+            self.displayBrowser.setWindowTitle(QString("Data Display HOWTO"))
             ddir=PyMcaDataDir.PYMCA_DOC_DIR
             if not os.path.exists(os.path.join(ddir,"HTML","Display-HOWTO.html")):
                 ddir = os.path.dirname(ddir)
@@ -1483,7 +1483,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if self.displayBrowser.isHidden():
             self.displayBrowser.show()
         self.displayBrowser.raise_()
-    
+
     def onMcaHowto(self):
         if self.mcaBrowser is None:
             self.mcaBrowser= MyQTextBrowser()
@@ -1500,7 +1500,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if self.mcaBrowser.isHidden():
             self.mcaBrowser.show()
         self.mcaBrowser.raise_()
-            
+
     def onAbout(self):
         qt.QMessageBox.about(self, "PyMca",
                 "PyMca Application\nVersion: "+__version__)
@@ -1531,7 +1531,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.log = ChangeLog.ChangeLog()
                 self.log.setPlainText('Cannot find file changelog.txt')
         self.changeLog.show()
-    
+
     def onDebug(self):
         print("Module name PyQt  ",qt.PYQT_VERSION_STR)
         for module in sys.modules.values():
@@ -1540,8 +1540,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     if module.__name__ != "__main__":
                         print("Module name = ",module.__name__,module.__revision__.replace("$",""))
             except:
-                pass 
-    
+                pass
+
     def onPrint(self):
         if DEBUG:
             print("onPrint called")
@@ -1556,8 +1556,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.mainTabWidget.setCurrentWidget(self.mcaWindow)
         self.mcaWindow.printGraph()
 
-if 0:            
-            
+if 0:
+
     #
     # GraphWindow operations
     #
@@ -1637,8 +1637,8 @@ class MyQTextBrowser(qt.QTextBrowser):
             if self.report.isHidden():self.report.show()
             self.report.raiseW()
         else:
-            qt.QTextBrowser.setSource(self,name)                           
-            
+            qt.QTextBrowser.setSource(self,name)
+
 class Line(qt.QFrame):
     sigLineDoubleClickEvent = qt.pyqtSignal(object)
     def mouseDoubleClickEvent(self,event):
@@ -1670,12 +1670,12 @@ if __name__ == '__main__':
     if debugreport:
         PyMcaMainWidgetInstance.onDebug()
     app.lastWindowClosed.connect(app.quit)
-            
+
     splash.finish(PyMcaMainWidgetInstance)
     PyMcaMainWidgetInstance.show()
     PyMcaMainWidgetInstance.raise_()
     PyMcaMainWidgetInstance.mcaWindow.replot()
-    
+
     #try to interpret rest of command line arguments as data sources
     try:
         for source in args:
@@ -1688,11 +1688,11 @@ if __name__ == '__main__':
         msg.setInformativeText(str(sys.exc_info()[1]))
         msg.setDetailedText(traceback.format_exc())
         msg.exec_()
-                
+
     if PROFILING:
         profile.run('sys.exit(app.exec_())',"test")
         p=pstats.Stats("test")
         p.strip_dirs().sort_stats(-1).print_stats()
     else:
         sys.exit(app.exec_())
-        
+

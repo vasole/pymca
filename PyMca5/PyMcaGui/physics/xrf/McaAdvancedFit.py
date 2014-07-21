@@ -109,10 +109,10 @@ class McaAdvancedFit(qt.QWidget):
     >>> w = McaAdvancedFit.McaAdvancedFit()
     >>> w.setData(x=x, y=y) # x is your channel array and y the counts array
     >>> w.show()
-    
+
     """
     sigMcaAdvancedFitSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None, name="PyMca - McaAdvancedFit",fl=0,
                  sections=None, top=True, margin=11, spacing=6):
         qt.QWidget.__init__(self, parent)
@@ -272,7 +272,7 @@ class McaAdvancedFit(qt.QWidget):
         self.peaksSpectrumButton.setText("Peaks Spectrum")
         self.matrixSpectrumButton.setCheckable(1)
         self.peaksSpectrumButton.setCheckable(1)
-            
+
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.dismissButton = qt.QPushButton(hbox)
         hboxLayout.addWidget(self.dismissButton)
@@ -413,7 +413,7 @@ class McaAdvancedFit(qt.QWidget):
             dialog.setData(self.mcafit.xdata * 1.0,
                            self.mcafit.ydata * 1.0)
 
-            
+
             #dialog.fitparam.regionCheck.setDisabled(True)
             #dialog.fitparam.minSpin.setDisabled(True)
             #dialog.fitparam.maxSpin.setDisabled(True)
@@ -598,7 +598,7 @@ class McaAdvancedFit(qt.QWidget):
         for key in delcurves:
             self.graph.removeCurve(key)
         self.plot()
-        
+
         if DEBUG:
             self.mcafit.configure(config)
         else:
@@ -723,7 +723,7 @@ class McaAdvancedFit(qt.QWidget):
         self.identifier.raise_()
 
     def printActiveTab(self):
-        txt = str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() 
+        txt = str(self.mainTab.tabText(self.mainTab.currentIndex())).upper()
         if txt == "GRAPH":
             self.graph.printps()
         elif txt == "TABLE":
@@ -880,7 +880,7 @@ class McaAdvancedFit(qt.QWidget):
         else:
             self.__clearPeaksSpectrum()
         self.plot()
-        
+
     def __clearPeaksSpectrum(self):
         delcurves = []
         for key in self.graph.getAllCurves(just_legend=True):
@@ -892,7 +892,7 @@ class McaAdvancedFit(qt.QWidget):
                     delcurves.append(key)
         for key in delcurves:
             self.graph.removeCurve(key, replot=False)
-        
+
 
     def matrixSpectrum(self):
         if not self.__fitdone:
@@ -1067,11 +1067,11 @@ class McaAdvancedFit(qt.QWidget):
         #                        "--set-threads=2"]
         i = 0
         for parameter in simulationParameters:
-            i += 1             
+            i += 1
             args.insert(1, parameter)
 
         # show the command on the log widget
-        text = "%s" % scriptFile 
+        text = "%s" % scriptFile
         for arg in args[1:]:
             text += " %s" % arg
         if self.logWidget is None:
@@ -1117,7 +1117,7 @@ class McaAdvancedFit(qt.QWidget):
                         value = corrections[element][key]['correction_factor'][-1]
                         if value != 1.0:
                             text = "%s %s xrays multiple excitation factor = %.3f" % \
-                                   (element, key, value)                
+                                   (element, key, value)
                             self.logWidget.append(text)
 
             from PyMca.PyMcaIO import specfilewrapper as specfile
@@ -1144,7 +1144,7 @@ class McaAdvancedFit(qt.QWidget):
                 except:
                     print("Error generating Monte Carlo matrix output. ")
                     print(sys.exc_info())
-            
+
 
     def peaksSpectrum(self):
         if not self.__fitdone:
@@ -1479,7 +1479,7 @@ class McaAdvancedFit(qt.QWidget):
         """
         The simplest way to use it is to pass at least the y keyword containing
         the channel counts. The other items are not mandatory.
-        
+
         :keywords:
             x
                 channels
@@ -1492,9 +1492,9 @@ class McaAdvancedFit(qt.QWidget):
             xmax
                 maximum channel of the fit
             calibration
-                list of the form [a, b, c] containing the mca calibration 
+                list of the form [a, b, c] containing the mca calibration
         """
-        
+
         self.__fitdone = 0
         self.info ={}
         key = 'legend'
@@ -1563,20 +1563,20 @@ class McaAdvancedFit(qt.QWidget):
     def fit(self):
         """
         Function called to start the fit process.
-        
+
         Interactive use
-                
-        It returns a dictionnary containing the fit results or None in case of 
+
+        It returns a dictionnary containing the fit results or None in case of
         unsuccessfull fit.
-        
+
         Embedded use
-        
+
         In case of successfull fit emits a signal of the form:
-            
+
         self.sigMcaAdvancedFitSignal.emit(ddict)
-        
+
         where ddict['event'] = 'McaAdvancedFitFinished'
-        """    
+        """
         self.__fitdone = 0
         self.mcatable.setRowCount(0)
         if self.concentrationsWidget is not None:

@@ -46,7 +46,7 @@ class Q3SpinBox(qt.QSpinBox):
 
     def setLineStep(self, v):
         self.setSingleStep(v)
-    
+
 class Q3GridLayout(qt.QGridLayout):
     def addMultiCellWidget(self, w, r0, r1, c0, c1, *var):
         self.addWidget(w, r0, c0, 1 + r1 - r0, 1 + c1 - c0)
@@ -116,7 +116,7 @@ class FitParamForm(qt.QWidget):
         self.weightLabel.setText("Statistical weighting of data")
         self.weightCombo = qt.QComboBox(self.tabFit)
         self.weightCombo.insertItem = self.weightCombo.addItem
-        
+
         self.weightCombo.insertItem(str("NO Weight"))
         self.weightCombo.insertItem(str("Poisson (1/Y)"))
         #self.weightCombo.insertItem(str("Poisson (1/Y2)"))
@@ -129,17 +129,17 @@ class FitParamForm(qt.QWidget):
 
         self.contCombo = qt.QComboBox(self.tabFit)
         self.contCombo.insertItem = self.contCombo.addItem
-        
+
         self.contCombo.insertItem(str("NO Continuum"))
         self.contCombo.insertItem(str("Constant"))
         self.contCombo.insertItem(str("Linear"))
         self.contCombo.insertItem(str("Parabolic"))
         self.contCombo.insertItem(str("Linear Polynomial"))
         self.contCombo.insertItem(str("Exp. Polynomial"))
-        
+
         self.stripCombo = qt.QComboBox(self.tabFit)
         self.stripCombo.insertItem = self.stripCombo.addItem
-        
+
         self.stripComboLabel = qt.QLabel(self.tabFit)
         self.stripComboLabel.setText("Non-analytical (or estimation) background algorithm")
         self.stripCombo.insertItem(str("Strip"))
@@ -246,12 +246,12 @@ class FitParamForm(qt.QWidget):
 
         layout5.addMultiCellWidget(self.stripIterLabel,6,6,0,1)
         layout5.addMultiCellWidget(self.stripIterValue,6,6,3,4)
-        
+
         layout5.addMultiCellWidget(self.stripFilterLabel,7,7,0,1)
         layout5.addMultiCellWidget(self.stripFilterSpin,7,7,3,4)
 
         layout5.addMultiCellWidget(self.anchorsContainer,8,8,0,4)
-        
+
         layout5.addWidget(self.weightLabel,9,0)
         layout5.addMultiCellWidget(self.weightCombo,9,9,3,4)
 
@@ -277,7 +277,7 @@ class FitParamForm(qt.QWidget):
 
         tabFitLayout.addLayout(layout5)
 
-        includeWidget = qt.QWidget(self.tabFit)        
+        includeWidget = qt.QWidget(self.tabFit)
         includeLayout = Q3GridLayout(includeWidget)
         includeLayout.setContentsMargins(0, 0, 0, 0)
         includeLayout.setSpacing(3)
@@ -559,7 +559,7 @@ class FitParamForm(qt.QWidget):
         tabPeakShapeLayout = Q3GridLayout(self.tabPeakShape)
         tabPeakShapeLayout.setContentsMargins(11, 11, 11, 11)
         tabPeakShapeLayout.setSpacing(2)
-            
+
         spacer_7 = qt.QSpacerItem(20, 90,\
                                   qt.QSizePolicy.Minimum,\
                                   qt.QSizePolicy.Expanding)

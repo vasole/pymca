@@ -84,7 +84,7 @@ __kernel void matching(
 			dist += ABS4(dval1,dval2);
 
 		}
-		
+
 		if (dist < dist1) { //candidate better than the first
 			dist2 = dist1;
 			dist1 = dist;
@@ -93,9 +93,9 @@ __kernel void matching(
 		else if (dist < dist2) { //candidate better than the second (but not the first)
 			dist2 = dist;
 		}
-		
+
 	}//end "i loop"
-	
+
 	if (dist2 != 0 && dist1/dist2 < ratio_th) {
 		int2 pair = 0;
 		pair.s0 = gid0;
@@ -178,7 +178,7 @@ __kernel void matching_valid(
 				dist += ABS4(dval1,dval2);
 			}
 		}
-		
+
 		if (dist < dist1) { //candidate better than the first
 			dist2 = dist1;
 			dist1 = dist;
@@ -187,7 +187,7 @@ __kernel void matching_valid(
 		else if (dist < dist2) { //candidate better than the second (but not the first)
 			dist2 = dist;
 		}
-		
+
 	}//end "i loop"
 
 	if (dist2 != 0 && dist1/dist2 < ratio_th) {

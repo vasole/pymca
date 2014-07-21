@@ -44,7 +44,7 @@ SOURCE_TYPE="EdfFileStack"
 class SupaVisioMap(DataObject.DataObject):
     def __init__(self, filename):
         DataObject.DataObject.__init__(self)
-        
+
         fileSize = os.path.getsize(filename)
         if sys.platform == 'win32':
             fid = open(filename, 'rb')
@@ -87,7 +87,7 @@ class SupaVisioMap(DataObject.DataObject):
         self.info["FileIndex"] = 0
         self.info["McaCalib"] = [0.0, 1.0, 0.0]
         self.info["Channel0"] = 0.0
-        
+
 if __name__ == "__main__":
     filename = None
     if len(sys.argv) > 1:
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     elif os.path.exists(".\PIGE\010826.pige"):
         filename = ".\PIGE\010826.pige"
     if filename is not None:
-        DEBUG = 1   
+        DEBUG = 1
         w = SupaVisioMap(filename)
     else:
         print("Please supply input filename")

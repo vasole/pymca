@@ -44,7 +44,7 @@ class Object3DConfig(qt.QWidget):
         #drawing
         self.mainTab = qt.QTabWidget(self)
         self.tabDrawing = qt.QWidget(self.mainTab)
-        self.tabDrawing.mainLayout = qt.QVBoxLayout(self.tabDrawing) 
+        self.tabDrawing.mainLayout = qt.QVBoxLayout(self.tabDrawing)
         self.tabDrawing.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.tabDrawing.mainLayout.setSpacing(0)
         self.movementsWidget  = Object3DMovement.Object3DMovement(self.tabDrawing)
@@ -108,8 +108,8 @@ class Object3DConfig(qt.QWidget):
         self._signal(ddict)
 
     def _propertiesSlot(self, ddict):
-        ddict['common'].update(self.movementsWidget.getParameters()) 
-        ddict['common'].update(self.scaleWidget.getParameters()) 
+        ddict['common'].update(self.movementsWidget.getParameters())
+        ddict['common'].update(self.scaleWidget.getParameters())
         self._signal(ddict)
 
     def _clippingPlaneSlot(self, ddict0):
@@ -139,7 +139,7 @@ class Object3DConfig(qt.QWidget):
         self.propertiesWidget.setParameters(ddict)
         self.clippingPlaneWidget.setParameters(ddict['common'])
         self.colormapWidget.setParameters(ddict['common'])
- 
+
 if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)
@@ -149,5 +149,5 @@ if __name__ == "__main__":
 
     w = Object3DConfig()
     w.sigObject3DConfigSignal.connect(myslot)
-    w.show()    
+    w.show()
     app.exec_()

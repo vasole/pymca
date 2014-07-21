@@ -51,7 +51,7 @@ class CustomViewBox(pg.ViewBox):
     def __init__(self, *args, **kwds):
         pg.ViewBox.__init__(self, *args, **kwds)
         self.setMouseMode(self.RectMode)
-        
+
     ## reimplement right-click to zoom out
     def mouseClickEvent(self, ev):
         if ev.button() == QtCore.Qt.RightButton:
@@ -62,8 +62,8 @@ class CustomViewBox(pg.ViewBox):
             else:
                 self.autoRange()
 
-        
-            
+
+
     def mouseDragEvent(self, ev):
         if ev.button() == QtCore.Qt.RightButton:
             ev.ignore()
@@ -98,7 +98,7 @@ class InfiniteLine(pg.InfiniteLine):
     def setMouseHover(self, hover):
         if hasattr(self, "_plot_options"):
             if "selectable" in self._plot_options:
-                if hover != self.mouseHovering:                    
+                if hover != self.mouseHovering:
                     if hover:
                         self._oldCursorShape = self.cursor().shape()
                         self.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -183,7 +183,7 @@ class ScatterPlotItem(pg.ScatterPlotItem):
         if ev.button() == QtCore.Qt.RightButton:
             button = "right"
         else:
-            button = "left"        
+            button = "left"
         if ev.button() == QtCore.Qt.LeftButton:
             pts = self.pointsAt(ev.pos())
             if len(pts) > 0:
@@ -248,7 +248,7 @@ class PlotDataItem(pg.PlotDataItem):
         #self.removeItem(self.scatter)
         self.clear()
         #this restores hover events but it does not work as well as expected
-        #and leaves the mouse always changed 
+        #and leaves the mouse always changed
         #self.setFiltersChildEvents(True)
         self.curve = PlotCurveItem()
         self.scatter = ScatterPlotItem()
@@ -308,7 +308,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
             self._imageItem.setZValue(0)
             #self._imageItem.setCompositionMode(QtGui.QPainter.CompositionMode_Multiply)
             self.addItem(self._imageItem)
-        
+
 
     def _mouseMoved(self, pos):
         if self.sceneBoundingRect().contains(pos):
@@ -352,7 +352,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
     def setCallback(self, ffunction):
         #self.getViewBox().setCallback(ffunction)
         PlotBackend.PlotBackend.setCallback(self, ffunction)
-                        
+
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
@@ -466,7 +466,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
                     selectable=False, draggable=False,
                     colormap=None, **kw):
         """
-        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
+        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array
         :type data: numpy.ndarray
         :param legend: The legend to be associated to the curve
         :type legend: string or None
@@ -481,7 +481,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :param yScale: Two floats defining the y scale
         :type yScale: list or numpy.ndarray
         :param z: level at which the image is to be located (to allow overlays).
-        :type z: A number bigger than or equal to zero (default)  
+        :type z: A number bigger than or equal to zero (default)
         :param selectable: Flag to indicate if the image can be selected
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the image can be moved
@@ -618,7 +618,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         It should autoscale any axis that is in autoscale mode
         """
         xmin, xmax = self.getGraphXLimits()
-        xAuto = self.isXAxisAutoScale() 
+        xAuto = self.isXAxisAutoScale()
         yAuto = self.isYAxisAutoScale()
         if xAuto and yAuto:
             self.plotItem.autoRange()
@@ -648,7 +648,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
     def getGraphYLabel(self):
         # there should be a function for this
         return self.getAxis('left').labelText
-    
+
     def setGraphTitle(self, title=""):
         self.setTitle(title)
 
@@ -657,7 +657,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
 
     def setGraphYLabel(self, label="Y"):
         self.setLabel('left', label)
-    
+
     def getGraphXLimits(self):
         """
         Get the graph X (bottom) limits.
@@ -762,7 +762,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         line.setZValue(10)
         self.addItem(line)
         return line
-        
+
     def insertYMarker(self, y, legend, label=None,
                       color='k', selectable=False, draggable=False,
                       **kw):

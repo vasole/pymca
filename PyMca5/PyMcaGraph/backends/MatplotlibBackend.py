@@ -60,7 +60,7 @@ elif ('PySide' in sys.modules) or ('PySide' in sys.argv) :
     from PySide import QtCore, QtGui
 else:
     from PyQt4 import QtCore, QtGui
-if ("PyQt4" in sys.modules) or ("PySide" in sys.modules): 
+if ("PyQt4" in sys.modules) or ("PySide" in sys.modules):
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     TK = False
     QT = True
@@ -114,7 +114,7 @@ I'm not aware of. Don't expect those to work either.
         super(ModestImage, self).set_extent(extent)
         if self._origExtent is None:
             self._origExtent = self.get_extent()
-        
+
 
     def set_data(self, A):
         """
@@ -122,7 +122,7 @@ I'm not aware of. Don't expect those to work either.
 
         ACCEPTS: numpy/PIL Image A
         """
-            
+
         self._full_res = A
         self._A = A
 
@@ -190,7 +190,7 @@ resolution is matched to the eventual rendering."""
         sx = int(max(1, min((x1 - x0) / 5., np.ceil(dx / ext[0]))))
 
         # have we already calculated what we need?
-        if (self._sx is not None) and (self._sy is not None): 
+        if (self._sx is not None) and (self._sy is not None):
             if sx >= self._sx and sy >= self._sy and \
                 x0 >= self._bounds[0] and x1 <= self._bounds[1] and \
                 y0 >= self._bounds[2] and y1 <= self._bounds[3]:
@@ -331,7 +331,7 @@ class MatplotlibGraph(FigureCanvas):
         # needed
         middleButton = 2
         rightButton = 3
-        button = event.mouseevent.button 
+        button = event.mouseevent.button
         if button == middleButton:
             # do nothing with the midle button
             return
@@ -359,7 +359,7 @@ class MatplotlibGraph(FigureCanvas):
             self._pickingInfo['event_ind'] = ind
             if label.startswith("__MARKER__"):
                 label = label[10:]
-                self._pickingInfo['type'] = 'marker' 
+                self._pickingInfo['type'] = 'marker'
                 self._pickingInfo['label'] = label
                 if 'draggable' in artist._plot_options:
                     self._pickingInfo['draggable'] = True
@@ -374,7 +374,7 @@ class MatplotlibGraph(FigureCanvas):
                 else:
                     self._pickingInfo['infoText'] = None
             else:
-                self._pickingInfo['type'] = 'curve' 
+                self._pickingInfo['type'] = 'curve'
                 self._pickingInfo['label'] = label
                 self._pickingInfo['artist'] = artist
                 xdata = artist.get_xdata()
@@ -409,7 +409,7 @@ class MatplotlibGraph(FigureCanvas):
             self._pickingInfo['artist'] = artist
             #self._pickingInfo['event_ind'] = ind
             label = artist.get_label()
-            self._pickingInfo['type'] = 'image' 
+            self._pickingInfo['type'] = 'image'
             self._pickingInfo['label'] = label
             self._pickingInfo['draggable'] = False
             self._pickingInfo['selectable'] = False
@@ -487,7 +487,7 @@ class MatplotlibGraph(FigureCanvas):
         self._y1 = event.ydata
         self._x1Pixel = event.x
         self._y1Pixel = event.y
-        
+
         self.__movingMarker = 0
         # picking handling
         if self.__picking:
@@ -609,7 +609,7 @@ class MatplotlibGraph(FigureCanvas):
             tmpValue = self._ymin
             self._ymin = self._ymax
             self._ymax = tmpValue
-        
+
         if self.ax.get_aspect() != 'auto':
             self._ratio = (self._ymax - self._ymin) / (self._xmax - self._xmin)
 
@@ -632,7 +632,7 @@ class MatplotlibGraph(FigureCanvas):
                                              closed=True,
                                              fill=False)
                     self.ax.add_patch(self._drawingPatch)
-            
+
     def onMouseMoved(self, event):
         if DEBUG:
             print("onMouseMoved, event = ",event.xdata, event.ydata)
@@ -701,7 +701,7 @@ class MatplotlibGraph(FigureCanvas):
             if marker is not None:
                 ddict = {}
                 ddict['event'] = 'hover'
-                ddict['type'] = 'marker' 
+                ddict['type'] = 'marker'
                 ddict['label'] = marker.get_label()[10:]
                 if 'draggable' in marker._plot_options:
                     ddict['draggable'] = True
@@ -776,7 +776,7 @@ class MatplotlibGraph(FigureCanvas):
         if self._x0 is None:
             # this happened when using the middle button
             return
-        
+
         if self.__zooming or \
            (self.__drawing and (self._drawModePatch == 'rectangle')):
             if self._x1 < self._xmin:
@@ -787,7 +787,7 @@ class MatplotlibGraph(FigureCanvas):
                 self._y1 = self._ymin
             elif self._y1 > self._ymax:
                 self._y1 = self._ymax
-     
+
             if self._x1 < self._x0:
                 x = self._x1
                 w = self._x0 - self._x1
@@ -835,7 +835,7 @@ class MatplotlibGraph(FigureCanvas):
                                                    height=h,
                                                    fill=False)
                     self._drawingPatch.set_hatch('.')
-                    self.ax.add_patch(self._drawingPatch)                    
+                    self.ax.add_patch(self._drawingPatch)
                 else:
                     self._drawingPatch.set_bounds(x, y, w, h)
                     #self._zoomRectangle._update_patch_transform()
@@ -885,8 +885,8 @@ class MatplotlibGraph(FigureCanvas):
                 self._drawingPatch.set_closed(True)
             self.fig.canvas.draw()
             self._emitDrawingSignal(event='drawingProgress')
-            
-        
+
+
     def onMouseReleased(self, event):
         if DEBUG:
             print("onMouseReleased, event = ",event.xdata, event.ydata)
@@ -955,7 +955,7 @@ class MatplotlibGraph(FigureCanvas):
                 print("How can it be here???")
             return
         if self._zoomRectangle is None:
-            currentTime = time.time() 
+            currentTime = time.time()
             deltaT =  currentTime - self.__time0
             if (deltaT < 0.150) or (self.__time0 < 0) or (not self.__zooming) or\
                ((self._x1 == self._x0) and (self._y1 == self._y0)):
@@ -1057,7 +1057,7 @@ class MatplotlibGraph(FigureCanvas):
         if (xmin2 != 0) or (xmax2 != 1):
             xmin = min(xmin, xmin2)
             xmax = max(xmax, xmax2)
-        self.setLimits(xmin, xmax, ymin, ymax)        
+        self.setLimits(xmin, xmax, ymin, ymax)
         #self.ax2.set_autoscaley_on(True)
         self._zoomStack = []
 
@@ -1133,7 +1133,7 @@ class MatplotlibGraph(FigureCanvas):
 
             #l, b, w, h = self.ax.get_position(original=True).bounds
             #box_aspect = figAspect * (h / float(w))
-            
+
             #dataRatio = box_aspect / A
             dataRatio = (ySize / xSize) * A
 
@@ -1174,10 +1174,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.setDrawModeEnabled = self.graph.setDrawModeEnabled
         self.isZoomModeEnabled = self.graph.isZoomModeEnabled
         self.isDrawModeEnabled = self.graph.isDrawModeEnabled
-        self.getDrawMode = self.graph.getDrawMode        
+        self.getDrawMode = self.graph.getDrawMode
         self._oldActiveCurve = None
         self._oldActiveCurveLegend = None
-        # should one have two methods, for enable and for show 
+        # should one have two methods, for enable and for show
         self._rightAxisEnabled = False
         self.enableAxis('right', False)
 
@@ -1222,7 +1222,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 self.enableAxis(axisId, True)
         else:
             axes = self.ax
-            
+
         if self._logY:
             curveList = axes.semilogy( x, y, label=legend,
                                           linestyle=style,
@@ -1305,7 +1305,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                             fill=False,
                             label=label)
             if fill:
-                #item.set_hatch('+')            
+                #item.set_hatch('+')
                 item.set_hatch('/')
         self.ax.add_patch(item)
         if replot:
@@ -1371,7 +1371,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if label.startswith("__MARKER__"):
                     #it is a marker
                     if hasattr(line2d, "_infoText"):
-                        line2d._infoText.remove()    
+                        line2d._infoText.remove()
                     line2d.remove()
                     del line2d
 
@@ -1480,7 +1480,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         print("MatplotlibBackend insertMarker not implemented")
         return legend
-    
+
     def insertXMarker(self, x, legend, label=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
@@ -1525,7 +1525,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             line._plot_options.append('draggable')
         self.replot()
         return line
-        
+
     def insertYMarker(self, y, legend, label=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
@@ -1544,7 +1544,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type draggable: boolean, default False
         :return: Handle used by the backend to univocally access the marker
         """
-        legend = "__MARKER__" + legend 
+        legend = "__MARKER__" + legend
         if selectable or draggable:
             line = self.ax.axhline(y, label=legend, color=color, picker=5)
         else:
@@ -1618,7 +1618,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 for item in self.ax.images:
                     label = item.get_label()
                     if label == legend:
-                        handle = item                
+                        handle = item
             if handle is not None:
                 handle.remove()
                 del handle
@@ -1644,7 +1644,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                             line2d._infoText.remove()
                         line2d.remove()
                         del line2d
-                        done = True 
+                        done = True
         if replot:
             self.replot()
 
@@ -1661,7 +1661,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         xmin, xmax = self.getGraphXLimits()
         ymin, ymax = self.getGraphYLimits()
-        xAuto = self.isXAxisAutoScale() 
+        xAuto = self.isXAxisAutoScale()
         yAuto = self.isYAxisAutoScale()
         if xAuto and yAuto:
             self.graph.resetZoom()
@@ -1809,7 +1809,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def setGraphXLabel(self, label="X"):
         self.ax.set_xlabel(label)
-    
+
     def setGraphXLimits(self, xmin, xmax):
         self.ax.set_xlim(xmin, xmax)
 
@@ -1857,7 +1857,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     selectable=False, draggable=False,
                     colormap=None, **kw):
         """
-        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
+        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array
         :type data: numpy.ndarray
         :param legend: The legend to be associated to the curve
         :type legend: string or None
@@ -1872,7 +1872,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :param yScale: Two floats defining the y scale
         :type yScale: list or numpy.ndarray
         :param z: level at which the image is to be located (to allow overlays).
-        :type z: A number bigger than or equal to zero (default)  
+        :type z: A number bigger than or equal to zero (default)
         :param selectable: Flag to indicate if the image can be selected
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the image can be moved
@@ -1901,24 +1901,24 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         ymin = yScale[0]
         ymax = ymin + yScale[1] * h
         extent = (xmin, xmax, ymax, ymin)
-        
+
         if selectable or draggable:
             picker = True
         else:
             picker = None
-        shape = data.shape 
+        shape = data.shape
         if 0:
             # this supports non regularly spaced coordenates!!!!
-            x = xmin + numpy.arange(w) * xScale[1] 
-            y = ymin + numpy.arange(h) * yScale[1] 
+            x = xmin + numpy.arange(w) * xScale[1]
+            y = ymin + numpy.arange(h) * yScale[1]
             image = NonUniformImage(self.ax,
                                     interpolation='nearest',
                                     #aspect='auto',
                                     extent=extent,
                                     picker=picker,
                                     cmap=cmap)
-                                                     
-                                               
+
+
 
             image.set_data(x, y, data)
             xmin, xmax = self.getGraphXLimits()
@@ -2118,7 +2118,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                  (1.0, 0.0, 0.0)),
                      'blue':    ((0.0, 1.0, 1.0),
                                  (1.0, 0.0, 0.0))}
-                             
+
             self.__reversedGrayCmap = LinearSegmentedColormap('yerg', cdict, 256)
 
         if name == "reversed gray":
@@ -2164,7 +2164,7 @@ if __name__ == "__main__":
         #sys.exit(0)
         w = main(parent)
         widget = w._plot.graph
-    else:        
+    else:
         app = QtGui.QApplication([])
         parent=None
         w = main(parent)
@@ -2197,6 +2197,6 @@ if __name__ == "__main__":
         tkWidget = w.getWidgetHandle()
         tkWidget.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         Tk.mainloop()
-    else:        
+    else:
         widget.show()
         app.exec_()

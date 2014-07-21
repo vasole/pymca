@@ -6,4 +6,4 @@ Object3DCTools implements a marching cubes algorithm based on the code MarchingC
 
 http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
 
-The rest of the Object3D module uses PyQt and is distributed under the same terms of PyQt. That means, it is GPL unless a license is bought. 
+The rest of the Object3D module uses PyQt and is distributed under the same terms of PyQt. That means, it is GPL unless a license is bought.

@@ -1,4 +1,4 @@
-__doc__= "Generate specfile from EPL97 total cross sections in keV and barn" 
+__doc__= "Generate specfile from EPL97 total cross sections in keV and barn"
 import os
 import sys
 import EPDL97Parser as EPDLParser
@@ -81,10 +81,10 @@ for i in range(1, 101):
     cohe    = numpy.zeros(len(energy), numpy.float)
     incohe  = numpy.zeros(len(energy), numpy.float)
     photo   = numpy.zeros(len(energy), numpy.float)
-    total   = numpy.zeros(len(energy), numpy.float)    
+    total   = numpy.zeros(len(energy), numpy.float)
 
     #coherent needs to interpolate
-    indices = numpy.nonzero(energy_cohe<energy_photo[0]) 
+    indices = numpy.nonzero(energy_cohe<energy_photo[0])
     cohe[indices]  = value_cohe[indices]
     for n in range(len(indices),len(energy)):
         x = energy[n]
@@ -131,7 +131,7 @@ for i in range(1, 101):
     text  = '#S %d %s\n' % (i, ele)
     text += '#N 5\n'
     labels = '#L PhotonEnergy[keV]'
-    labels += '  Rayleigh(coherent)[barn/atom]' 
+    labels += '  Rayleigh(coherent)[barn/atom]'
     labels += '  Compton(incoherent)[barn/atom]'
     labels += '  CoherentPlusIncoherent[barn/atom]'
     labels += '  Photoelectric[barn/atom]'

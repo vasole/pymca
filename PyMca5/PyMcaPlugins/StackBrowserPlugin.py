@@ -150,7 +150,7 @@ class StackBrowserPlugin(StackPluginBase.StackPluginBase):
 
         #Show
         self.widget.show()
-        self.widget.raise_()        
+        self.widget.raise_()
 
         #update
         self.stackUpdated()

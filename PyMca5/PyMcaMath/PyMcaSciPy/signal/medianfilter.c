@@ -1,13 +1,13 @@
 /* This is a shameless copy with minor mofifications of the medianfilter
  * provided with scipy. Therefore is distributed under the terms of the
  * scipy license.
- * 
+ *
  * The purpose of having it separately is not to introduce a dependency
- * on scipy that is big and potentially difficult to built on some 
+ * on scipy that is big and potentially difficult to built on some
  * platforms.
- * 
+ *
  * Using this code outside PyMca:
- * 
+ *
  * The check_malloc function has to be provided for error handling.
  *
  *--------------------------------------------------------------------*/
@@ -28,8 +28,8 @@ void long_medfilt2(long*, long*,int*,int*,int);
 void ulong_medfilt2(unsigned long*,unsigned long*,int*,int*,int);
 
 /* The QUICK_SELECT routine is based on Hoare's Quickselect algorithm,
- * with unrolled recursion. 
- * Author: Thouis R. Jones, 2008 
+ * with unrolled recursion.
+ * Author: Thouis R. Jones, 2008
  */
 
 #define ELEM_SWAP(t, a, x, y) {register t temp = (a)[x]; (a)[x] = (a)[y]; (a)[y] = temp;}
@@ -156,14 +156,14 @@ QUICK_SELECT(d_quick_select, double)
 QUICK_SELECT(b_quick_select, unsigned char)
 
 /*define quick_select for rest of common types */
-    
+
 QUICK_SELECT(short_quick_select, short);
 QUICK_SELECT(ushort_quick_select, unsigned short);
 QUICK_SELECT(int_quick_select, int);
 QUICK_SELECT(uint_quick_select, unsigned int);
 QUICK_SELECT(long_quick_select, long);
 QUICK_SELECT(ulong_quick_select, unsigned long);
-    
+
 /* define medfilt for floats, doubles, and unsigned characters */
 MEDIAN_FILTER_2D(f_medfilt2, float, f_quick_select)
 MEDIAN_FILTER_2D(d_medfilt2, double, d_quick_select)

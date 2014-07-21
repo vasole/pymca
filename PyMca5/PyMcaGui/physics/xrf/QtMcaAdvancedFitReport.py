@@ -58,7 +58,7 @@ class QtMcaAdvancedFitReport:
                     fitresult = None,htmltext=None,
                     concentrations=None, table = None,
                     plotdict=None):
-        
+
         self.concentrations = concentrations
         self.concentrationsConversion = ConcentrationsConversion()
         if table is None: table = 2
@@ -97,7 +97,7 @@ class QtMcaAdvancedFitReport:
                              'ymax':None}
         else:
             self.plotDict = plotdict
-    
+
     def writeReport(self,text=None):
         if len(self.outfile) > 5:
             if self.outfile[-5:] != ".html":
@@ -123,7 +123,7 @@ class QtMcaAdvancedFitReport:
         if len(self._concentrationsTextASCII) > 1:
              f=open(concentrationsfile, "w")
              f.write(self._concentrationsTextASCII)
-             f.close()   
+             f.close()
         return outfile
 
     def generateReportFromFitFile(self):
@@ -135,7 +135,7 @@ class QtMcaAdvancedFitReport:
             if 'key' in d['info']:
                 selection=d['info']['key']
             elif 'Key' in d['info']:
-                selection=d['info']['Key']            
+                selection=d['info']['Key']
             for key in d['info'].keys():
                 if key.upper() == 'SOURCENAME':
                     sourcename = d['info'][key]
@@ -156,7 +156,7 @@ class QtMcaAdvancedFitReport:
         self.fitresult=d
         if 'concentrations' in d:
             self.concentrations = d['concentrations']
-    
+
     def getText(self):
         newlinks = []
         for key in self.otherhtmltext.keys():
@@ -177,7 +177,7 @@ class QtMcaAdvancedFitReport:
              text+="<br>"
         text+=self.getFooter()
         return text
-       
+
     def getHeader(self,addlink=None):
         link = [ ['http://pymca.sourceforge.net', 'PyMCA home'],
                  ['http://www.esrf.fr', 'ESRF home'],
@@ -187,7 +187,7 @@ class QtMcaAdvancedFitReport:
         if self.tableFlag:link.append(['#Fit_Peak_Results', 'Fit Peak Results'])
         if addlink is not None:
             for item in addlink:
-                link.append(item)       
+                link.append(item)
         text =""
         text+= "<HTML>"
         text+= "<HEAD>"
@@ -205,7 +205,7 @@ class QtMcaAdvancedFitReport:
         logofile = self.outdir + "/" + "PyMcaLogo.png"
         if not os.path.exists(logofile):
             pixmap = qt.QPixmap(PyMcaLogo.PyMcaLogo)
-            pixmap.save(logofile,"PNG")            
+            pixmap.save(logofile,"PNG")
         text+= "        <img SRC=%s ALT=""ESRF home"" WIDTH=55 HEIGHT=68 BORDER=0></a>" % "PyMcaLogo.png"
         text+= "    </td>"
         text+= "  </tr>"
@@ -287,8 +287,8 @@ class QtMcaAdvancedFitReport:
         text+= "</TD></TR></TABLE>"
         text+= "</LEFT>"
         return text
-        
-        
+
+
     def getParam(self):
         text=""
         zero = self.fitresult['result']['fittedpar'][self.fitresult['result']['parameters'].index('Zero')]
@@ -407,9 +407,9 @@ class QtMcaAdvancedFitReport:
             text+="        </TABLE>"
             text+="    </TD>"
             text+="</TR>"
-        
 
-        
+
+
         # --- Continuum parameters ---
         text+="<TR>"
         text+="    <TD><TABLE border=1 cellpadding=1 cellspacing=0 width=100%>"
@@ -478,7 +478,7 @@ class QtMcaAdvancedFitReport:
                      text+="            <TD>&nbsp;%d</TD>" % anchor
                      text+="        </TR>"
                      i += 1
-                 
+
         # --- Background Function
         if self.fitresult['result']['config']['fit']['continuum']:
              text+="        <TR align=left>"
@@ -507,7 +507,7 @@ class QtMcaAdvancedFitReport:
                  stdvalue = self.fitresult['result']['sigmapar'] [i]
                  text+="            <TD>&nbsp;% .5E +/- % .5E</TD>" % (value, stdvalue)
                  text+="        </TR>"
-             if 0: 
+             if 0:
                  text+="        <TR align=left>"
                  text+="            <TD><I>&nbsp;%s<I></TD>" % 'Constant'
                  value    = self.fitresult['result']['fittedpar'][self.fitresult['result']['parameters'].index('Constant')]
@@ -536,7 +536,7 @@ class QtMcaAdvancedFitReport:
         text+="</TABLE>"
         text+="</CENTER>"
         return text
-        
+
     def getFooter(self):
         now = time.time()
         text =""
@@ -580,7 +580,7 @@ class QtMcaAdvancedFitReport:
         text+= "<IMG SRC=%s ALT=""fit graph"" ALIGN=center>"%filelink
         text+= "</CENTER>"
         return text
-       
+
     def getImage(self):
         ddict=self.fitresult
         try:
@@ -676,9 +676,9 @@ class QtMcaAdvancedFitReport:
             elif (l > 3) or (self.tableFlag == 1):
                 text += '<td align="right" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])
             else:
-                text += '<td align="center" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])                
+                text += '<td align="center" bgcolor=%s><b>%s</b></td>' % (hcolor,labels[l])
         text+="</b></tr>\n"
-        
+
         for group in result['groups']:
             text+=("<tr>")
             ele,group0 = group.split()
@@ -760,5 +760,5 @@ if __name__ == "__main__":
     else:
         outfile = None
     generateoutput(fitfile,outfile)
-    app.quit() 
-    
+    app.quit()
+

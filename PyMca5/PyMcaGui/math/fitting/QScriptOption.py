@@ -71,7 +71,7 @@ class QScriptOption(TabSheets.TabSheets):
                 self.tabWidget.removePage(page)
             else:
                 self.tabWidget.setCurrentIndex(0)
-                self.tabWidget.removeTab(self.tabWidget.currentIndex())            
+                self.tabWidget.removeTab(self.tabWidget.currentIndex())
 
         for sheet in sheets:
             name=sheet['notetitle']
@@ -92,8 +92,8 @@ class QScriptOption(TabSheets.TabSheets):
             self.buttonDefaults.clicked[()].connect(self.defaults)
         if not nohelp:
             self.buttonHelp.clicked[()].connect(self.myhelp)
-        
-        
+
+
     def myaccept(self):
         self.output.update(self.default)
         for name,sheet in self.sheets.items():
@@ -102,11 +102,11 @@ class QScriptOption(TabSheets.TabSheets):
         for key in list(self.output.keys()):
             if self.output[key] is None:
                 if key in self.default:
-                    self.output[key]=self.default[key]    
-        
+                    self.output[key]=self.default[key]
+
         self.accept()
         return
-               
+
     def myreject(self):
         self.output={}
         self.output.update(self.default)
@@ -116,12 +116,12 @@ class QScriptOption(TabSheets.TabSheets):
     def defaults(self):
         self.output={}
         self.output.update(self.default)
-        
-    def myhelp(self):    
+
+    def myhelp(self):
         print("Default - Sets back to the initial parameters")
         print("Cancel  - Sets back to the initial parameters and quits")
         print("OK      - Updates the parameters and quits")
-        
+
 class FieldSheet(qt.QWidget):
     def __init__(self,parent = None,name=None,fl = 0,fields=()):
         if QTVERSION < '4.0.0':
@@ -131,7 +131,7 @@ class FieldSheet(qt.QWidget):
         layout= qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        
+
         #self.fields = ([,,,])
         self.fields=[]
         self.nbfield= 1
@@ -158,7 +158,7 @@ class FieldSheet(qt.QWidget):
                 radioField = RadioField(self,keys=key,params=parameters)
                 self.fields.append(radioField)
                 layout.addWidget(radioField)
-            
+
     def get(self):
         result={}
         for field in self.fields:
@@ -175,13 +175,13 @@ class MyTextField(TextField.TextField):
                     keys=(), params = ()):
         TextField.TextField.__init__(self,parent,name,fl)
         self.TextLabel.setText(str(params))
-                 
+
     def getvalue(self):
         pass
         return
-            
+
     def setvalue(self):
-        pass    
+        pass
         return
 
     def setdefaults(self,dict):
@@ -200,10 +200,10 @@ class MyEntryField(EntryField.EntryField):
             self.dict[keys]=None
         self.TextLabel.setText(str(params))
         self.Entry.textChanged[str].connect(self.setvalue)
-                 
+
     def getvalue(self):
         return self.dict
-            
+
     def setvalue(self,value):
         for key in self.dict.keys():
             self.dict[key]=str(value)
@@ -213,7 +213,7 @@ class MyEntryField(EntryField.EntryField):
         for key in list(self.dict.keys()):
             if key in ddict:
                 self.dict[key] = ddict[key]
-                self.Entry.setText(str(ddict[key])) 
+                self.Entry.setText(str(ddict[key]))
         return
 
 
@@ -230,15 +230,15 @@ class MyCheckField(CheckField.CheckField):
             self.dict[keys]=None
         self.CheckBox.setText(str(params))
         self.CheckBox.stateChanged[int].connect(self.setvalue)
-                 
+
     def getvalue(self):
         return self.dict
-            
+
     def setvalue(self,value):
         if value:
             val=1
         else:
-            val=0                
+            val=0
         for key in self.dict.keys():
             self.dict[key]=val
         return
@@ -251,7 +251,7 @@ class MyCheckField(CheckField.CheckField):
                     self.dict[key]=1
                 else:
                     self.CheckBox.setChecked(0)
-                    self.dict[key]=0 
+                    self.dict[key]=0
         return
 
 class RadioField(qt.QWidget):
@@ -259,7 +259,7 @@ class RadioField(qt.QWidget):
                             keys=(), params = ()):
             if QTVERSION < '4.0.0':
                 qt.QWidget.__init__(self,parent,name,fl)
-    
+
                 if name == None:
                     self.setName("RadioField")
 
@@ -284,7 +284,7 @@ class RadioField(qt.QWidget):
             RadioFieldBoxLayout = qt.QVBoxLayout(self.RadioFieldBox.layout())
             RadioFieldBoxLayout.setAlignment(qt.Qt.AlignTop)
             Layout1 = qt.QVBoxLayout(None,0,6,"Layout1")
-            
+
             self.dict={}
             if type(keys) == TupleType:
                 for key in keys:
@@ -301,20 +301,20 @@ class RadioField(qt.QWidget):
                 self.RadioButton[-1].setText(str(text))
                 Layout1.addWidget(self.RadioButton[-1])
                 i=i+1
-            
+
             RadioFieldBoxLayout.addLayout(Layout1)
             RadioFieldLayout.addWidget(self.RadioFieldBox)
             self.RadioButton[0].setChecked(1)
             self.RadioFieldBox.clicked[int].connect(self.setvalue)
-                 
+
     def getvalue(self):
         return self.dict
-            
+
     def setvalue(self,value):
         if value:
             val=1
         else:
-            val=0                
+            val=0
         for key in self.dict.keys():
             self.dict[key]=val
         return

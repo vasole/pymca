@@ -36,5 +36,5 @@ recursive-include PyMca5/PyMcaPhysics *.py
 recursive-include PyMca5/PyMcaPlugins *.py
 recursive-include PyMca5/scripts *
 recursive-include PyMca5/tests *.py
-recursive-include third-party *.c *.h *.txt 
+recursive-include third-party *.c *.h *.txt
 recursive-include scripts *.py *.bat

@@ -377,7 +377,7 @@ class SixCircle(object):
         :type gamma: float or numpy.ndarray
         :param gamma_first: if delta and gamma are arrays, which one variates first.
         :type gamma_first: boolean
-        
+
         :return: HKL values for all the given delta, gamma values
         """
         PHIi = self.getPhiMatrix(phi).T

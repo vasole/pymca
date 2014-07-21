@@ -35,7 +35,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 
 class SubprocessLogWidget(qt.QWidget):
     sigSubprocessLogWidgetSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None, args=None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle("Subprocess Log Widget")

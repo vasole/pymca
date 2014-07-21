@@ -147,11 +147,11 @@ class MedianFilterStackPlugin(StackPluginBase.StackPluginBase):
             self.widget.setKernelWidth(1)
             self.widget.setSelectionMode(True)
             qt = Median2DBrowser.qt
-            self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)            
+            self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
 
         #Show
         self.widget.show()
-        self.widget.raise_()        
+        self.widget.raise_()
 
         #update
         self.stackUpdated()

@@ -63,5 +63,5 @@ HelpDict= {
 	"fileprint":	FilePrint,
 	"fullscreen":	FullScreen,
 	"nofullscreen": NoFullScreen,
-	
+
 }

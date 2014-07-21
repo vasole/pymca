@@ -32,11 +32,11 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = str
-    
+
 QTVERSION = qt.qVersion()
 
 QTable = qt.QTableWidget
-    
+
 DEBUG=0
 
 class McaTable(QTable):
@@ -44,7 +44,7 @@ class McaTable(QTable):
     def __init__(self, *args,**kw):
         QTable.__init__(self, *args)
         self.setRowCount(1)
-        self.setColumnCount(1)            
+        self.setColumnCount(1)
         self.labels=['Parameter','Estimation','Fit Value','Sigma',
                      'Restrains','Min/Parame','Max/Factor/Delta/']
         self.code_options=["FREE","POSITIVE","QUOTED",
@@ -69,7 +69,7 @@ class McaTable(QTable):
             item.setText(self.labels[i])
             self.resizeColumnToContents(i)
             i=i+1
-                
+
         self.regionlist=[]
         self.regiondict={}
         if DEBUG:
@@ -78,7 +78,7 @@ class McaTable(QTable):
         self.cellClicked[int, int].connect(self.__myslot)
         self.itemSelectionChanged[()].connect(self.__myslot)
 
-                
+
     def fillfrommca(self,mcaresult,diag=1):
         line0=0
         region=0
@@ -142,13 +142,13 @@ class McaTable(QTable):
                             #function introduced in Qt 4.2.0
                             if QTVERSION >= '4.2.0':
                                 item.setBackground(qt.QBrush(color))
-                        item.setFlags(qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)                            
+                        item.setFlags(qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)
                         col=col+1
                     if recolor:
                         if not alreadyforced:
                             alreadyforced = 1
                             self.scrollToItem(self.item(line, 0))
-                    i += 1 
+                    i += 1
 
         i = 0
         for label in self.labels:
@@ -178,7 +178,7 @@ class McaTable(QTable):
                 pass
             elif param['name'].find(fitlabel)!= -1:
                 value      = param['fitresult']
-                sigmavalue = param['sigma'] 
+                sigmavalue = param['sigma']
                 values.append(value)
                 sigmavalues.append(sigmavalue)
         return fitlabel, values, sigmavalues

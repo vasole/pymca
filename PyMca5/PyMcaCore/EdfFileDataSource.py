@@ -52,7 +52,7 @@ class EdfFileDataSource(object):
             stringTypes = [type("a"), type(eval('b"a"'))]
         for name in nameList:
             if type(name) not in stringTypes:
-                raise TypeError("Constructor needs string as first argument")           
+                raise TypeError("Constructor needs string as first argument")
         self.sourceName   = nameInput
         self.sourceType = SOURCE_TYPE
         self.__sourceNameList = nameList
@@ -77,9 +77,9 @@ class EdfFileDataSource(object):
         Returns a dictionary with the key "KeyList" (list of all available keys
         in this source). Each element in "KeyList" has the form 'n1.n2' where
         n1 is the source number and n2 image number in file starting at 1.
-        """        
+        """
         return self.__getSourceInfo()
-        
+
     def __getSourceInfo(self):
         SourceInfo={}
         SourceInfo["SourceType"]=SOURCE_TYPE
@@ -89,10 +89,10 @@ class EdfFileDataSource(object):
             i+=1
             nimages = sourceObject.GetNumImages()
             for n in range(nimages):
-                SourceInfo["KeyList"].append("%d.%d" % (i,n+1))   
+                SourceInfo["KeyList"].append("%d.%d" % (i,n+1))
         SourceInfo["Size"]=len(SourceInfo["KeyList"])
         return SourceInfo
-        
+
     def getKeyInfo(self,key):
         if key in self.getSourceInfo()['KeyList']:
             return self.__getKeyInfo(key)
@@ -101,12 +101,12 @@ class EdfFileDataSource(object):
             if DEBUG:
                 print("Error key not in list ")
             return {}
-    
+
     def __getKeyInfo(self,key):
         try:
             index,image = key.split(".")
             index = int(index)-1
-            image = int(image)-1            
+            image = int(image)-1
         except:
             #should we rise an error?
             if DEBUG:
@@ -159,7 +159,7 @@ class EdfFileDataSource(object):
         """
 
         sourcekeys = self.getSourceInfo()['KeyList']
-        #a key corresponds to an image        
+        #a key corresponds to an image
         key_split= key.split(".")
         image_key= key_split[0]+"."+key_split[1]
         if image_key not in sourcekeys:
@@ -186,7 +186,7 @@ class EdfFileDataSource(object):
                 MCAIMP = 1
                 if key_split[2].upper() == 'R':
                     pos  = (0, int(key_split[3]))
-                    size = (int(data.info['Dim_1']), 1) 
+                    size = (int(data.info['Dim_1']), 1)
                 elif key_split[2].upper() == 'C':
                     pos  = (int(key_split[3]), 0)
                     size = (1,int(data.info['Dim_2']))
@@ -197,7 +197,7 @@ class EdfFileDataSource(object):
                 pos = None
                 size = None
                 data.info['selectiontype'] = "1D"
-           
+
         elif selection is None:
             pos = None
             size = None
@@ -253,15 +253,15 @@ def DataSource(name="", source_type=SOURCE_TYPE):
      #ERROR invalid source type
      raise TypeError("Invalid Source Type, source type should be one of %s" %\
                      source_types.keys())
-  
+
   return sourceClass(name)
 
-        
+
 if __name__ == "__main__":
     import time
     try:
         sourcename=sys.argv[1]
-        key       =sys.argv[2]        
+        key       =sys.argv[2]
     except:
         print("Usage: EdfFileDataSource <file> <key>")
         sys.exit()

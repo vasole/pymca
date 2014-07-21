@@ -4,13 +4,13 @@
 ##   Alessandro MIRONE
 ##   mirone@esrf.fr
 ##
-##   Copyright 2002  by European Synchrotron Radiation Facility, Grenoble, 
+##   Copyright 2002  by European Synchrotron Radiation Facility, Grenoble,
 ##                   France
 ##
 ##                                ----------
-## 
+##
 ##                            All Rights Reserved
-## 
+##
 ##                                ----------
 ##
 ## Permission to use, copy, modify, and distribute this software and its
@@ -18,15 +18,15 @@
 ## provided that the above copyright notice appear in all copies and that
 ## both that copyright notice and this permission notice appear in
 ## supporting documentation, and that the names of European Synchrotron
-## Radiation Facility or ESRF or SCISOFT not be used in advertising or 
-## publicity pertaining to distribution of the software without specific, 
+## Radiation Facility or ESRF or SCISOFT not be used in advertising or
+## publicity pertaining to distribution of the software without specific,
 ## written prior permission.
 ##
 ## EUROPEAN SYNCHROTRON RADIATION FACILITY DISCLAIMS ALL WARRANTIES WITH
 ## REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
 ## MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL EUROPEAN SYNCHROTRON
-## RADIATION FACILITY OR ESRF BE LIABLE FOR ANY SPECIAL, INDIRECT OR 
-## CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, 
+## RADIATION FACILITY OR ESRF BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+## CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
 ## DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 ## TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ## PERFORMANCE OF THIS SOFTWARE.
@@ -73,7 +73,7 @@ class LanczosNumericMatrix(object):
             res.vr[:]+=dotblas.dot(self.mR[0],v.vr)
         else:
             res.vr[:]+=dotblas.dot(self.mR[0],dotblas.dot(self.mR[1],v.vr))
-        
+
         if( self.shift !=0.0):
           res.add_from_vect_with_fact(v,self.shift)
 
@@ -82,7 +82,7 @@ class LanczosNumericMatrix(object):
         if( fattore!=1):
             self.mR[0][:]=self.mR[0]*numpy.array([fattore], self.tipo)
 
-                   
+
     def getClass4Vect(self):
         return LanczosNumericVector
 
@@ -94,7 +94,7 @@ class LanczosNumericVector(object):
             self.vr=numpy.zeros(dim,self.tipo)
         else:
             pass
-        
+
     def __getitem__(self, i):
         res=LanczosNumericVector(0)
         res.vr=self.vr[i]
@@ -116,7 +116,7 @@ class LanczosNumericVector(object):
         duma=numpy.array(self.vr)
         res=numpy.Vector(0)
         res.vr=duma
-        return res 
+        return res
 
     def copy_to_a_from_b(self,b):
         self.vr[:]=b.vr
@@ -126,16 +126,16 @@ class LanczosNumericVector(object):
 
     def set_to_zero(self):
         self.vr[:]=0
-        
+
     def set_to_one(self):
         self.vr[:]=1
 
-        
+
     def set_all_random(self, v):
         self.vr[:]=[random.random() for i in range(len(self.vr)) ]
 
-        
-    
+
+
     def scalare(self,b         ):
         resR =numpy.sum(self.vr*b.vr)
         return resR
@@ -147,7 +147,7 @@ class LanczosNumericVector(object):
     def normalizzaauto(self):
         norma = self.sqrtscalare(self)
         self.vr[:]=self.vr/norma
-        
+
 
     def normalizza(self,norma):
         self.vr.normalizza(norma)
@@ -160,11 +160,11 @@ class LanczosNumericVector(object):
         norma=1.0/fact
         self.normalizza(norma)
 
-        
+
     def add_from_vect(self, b):
-        self.vr[:]=self.vr+b.vr        
-    
-        
+        self.vr[:]=self.vr+b.vr
+
+
     def add_from_vect_with_fact(self, b, fact):
         self.vr[:]=self.vr+numpy.array([fact],self.tipo)*b.vr
 
@@ -184,7 +184,7 @@ def Real(x):
 class Lanczos:
     dump_count=0;
     countdumpab=0
-    
+
     def __init__(self, sparse, metrica=None, tol=1.0e-15):
 
         self.matrice=sparse
@@ -205,12 +205,12 @@ class Lanczos:
         self.alpha = None
         self.beta = None
         self.omega=None
-                
+
         self.tol = tol
         self.maxIt = 50
 
         self.old = False
-        
+
 
 
 
@@ -231,16 +231,16 @@ class Lanczos:
             print("Something wrong in passe k<0 or m>nsteps")
             raise ValueError(\
                 "Lanczos. Something wrong in passe k<0 or m>nsteps")
-        
+
         sn   = math.sqrt(float(self.dim))
         eu   = 1.1e-16
         eusn = eu*sn
 
         if k==0:
 
-                       
+
             self.class4vect.copy_to_a_from_b(self.q[0],start)
-            
+
             if self.metrica is None:
                 self.q[0].normalizzaauto()
             else:
@@ -260,46 +260,46 @@ class Lanczos:
         for i in range(k,m):
             p.set_to_zero()
             # self.q[i].dumptofile("qbef_"+str(self.dump_count) )
-           
+
             self.matrice.Moltiplica(p,self.q[i])
 
 
             if self.metrica is not None:
-                
+
                 self.tmp4met.set_to_zero()
                 self.metrica.Moltiplica(self.tmp4met , self.q[i])
                 self.alpha[i] = REAL(self.class4vect.scalare(p , self.tmp4met))
-                
+
             else:
                 self.alpha[i] = REAL(self.class4vect.scalare(p , self.q[i]))
-            
+
             # p.dumptofile("p"+str(self.dump_count) )
             self.dump_count+=1
 
-            
+
             if i==k:
-                p.add_from_vect_with_fact( self.q[k] ,   -self.alpha[k]     ) 
+                p.add_from_vect_with_fact( self.q[k] ,   -self.alpha[k]     )
                 for l in range(k):
-                    p.add_from_vect_with_fact( self.q[l] ,  -self.beta[l]     ) 
+                    p.add_from_vect_with_fact( self.q[l] ,  -self.beta[l]     )
 
             else:
                 # self.q[i].dumptofile("q_i"+str(self.dump_count) )
                 # self.q[i-1].dumptofile("q_im1"+str(self.dump_count) )
-                p.add_from_vect_with_fact(self.q[i]  ,    -self.alpha[i]    ) 
-                p.add_from_vect_with_fact(self.q[i-1]  ,  -self.beta[i-1]   ) 
+                p.add_from_vect_with_fact(self.q[i]  ,    -self.alpha[i]    )
+                p.add_from_vect_with_fact(self.q[i-1]  ,  -self.beta[i-1]   )
 
 
             # p.dumptofile("pp"+str(self.dump_count) )
             self.dump_count+=1
 
-            
+
             if self.metrica is not None:
                 self.tmp4met.set_to_zero()
                 self.metrica.Moltiplica(self.tmp4met , p)
                 self.beta[i] = math.sqrt(REAL(self.class4vect.scalare(p , self.tmp4met)))
-                
+
             else:
-                self.beta[i]=self.class4vect.sqrtscalare(p,p) 
+                self.beta[i]=self.class4vect.sqrtscalare(p,p)
 
 
             self.omega[i,i]=1.
@@ -321,8 +321,8 @@ class Lanczos:
                             add += self.beta[i-1]*abs(self.omega[i-1,j])
                         self.omega[i+1,j] += add / self.beta[i]
 
-                       
-                    elif j==k :                        
+
+                    elif j==k :
                         add = 2 * eusn + abs(self.alpha[j]-self.alpha[i]) \
                               * abs(self.omega[i,j])
 
@@ -355,7 +355,7 @@ class Lanczos:
                         self.omega[i+1,j] += add / self.beta[i]
 
 
-                            
+
                     else:
 
                         add = eusn
@@ -376,7 +376,7 @@ class Lanczos:
                     #print " GRAMO  self.beta[i]==0 or max0>eu and i>0", i,"  ", self.dump_count
                     self.GramSchmidt(self.q[i],i, NT)
 
-                    
+
                     if self.metrica is None:
                         self.q[i].normalizzaauto()
                     else:
@@ -387,15 +387,15 @@ class Lanczos:
 
 
                     p.set_to_zero()
-                    
+
                     self.matrice.Moltiplica(p, self.q[i])
 
                     if self.metrica is not None:
-                
+
                         self.tmp4met.set_to_zero()
                         self.metrica.Moltiplica(self.tmp4met , self.q[i])
                         self.alpha[i] = REAL(self.class4vect.scalare(p , self.tmp4met))
-                        
+
                     else:
                         self.alpha[i] = REAL(self.class4vect.scalare(p , self.q[i]))
 
@@ -403,20 +403,20 @@ class Lanczos:
 
                 #print " GRAMO bis ", i
 ##                print self.alpha[:20]
-##                raise " OK " 
+##                raise " OK "
 
-                    
+
                 if self.metrica is None:
 
                     self.GramSchmidt(p,i+1,NT)
-                    
+
                     self.beta[i] = self.class4vect.sqrtscalare(p,p)
                     p.normalizzaauto()
                 else:
-                    
+
                     # p.add_from_vect_with_fact( self.q[i] ,   -self.alpha[i]     )
                     # p.add_from_vect_with_fact( self.q[i-1] ,   -self.beta[i-1]     )
-                    
+
                     self.GramSchmidt(p,i+1,NT)
 
                     self.tmp4met.set_to_zero()
@@ -437,11 +437,11 @@ class Lanczos:
 
 
                 if self.beta[i]< condition:
-                    
+
                     self.beta[i]=0.
-                    
+
                     p.set_all_random(1.0)
-                    
+
                     self.GramSchmidt(p,i+1)
 
                     if self.metrica is None:
@@ -458,7 +458,7 @@ class Lanczos:
                     self.omega[i,l]=self.omega[l,i]=eusn
                 for l in range(i+1):
                     self.omega[i+1,l]=self.omega[l,i+1]=eusn
-                    
+
             else:
 
                 if self.metrica is None:
@@ -469,12 +469,12 @@ class Lanczos:
                     tmpfat = math.sqrt(REAL(self.class4vect.scalare(p , self.tmp4met)))
                     p.normalizza(tmpfat)
 
-                
+
                 # p.dumptofile("normprelude"+str(self.dump_count))
 
             self.class4vect.copy_to_a_from_b(self.q[i+1],p)
 
-          
+
 
     def GramSchmidt(self, vect , n, NT=4):
         for h in range(NT):
@@ -487,10 +487,10 @@ class Lanczos:
                 self.tmp4met.set_to_zero()
                 self.metrica.Moltiplica(self.tmp4met, vect)
                 for i in range(n):
-                    
+
                     s=self.class4vect.scalare( self.q[i], self.tmp4met)
                     vect.add_from_vect_with_fact(self.q[i],-s)
-                
+
 
 
     def allocaMemory(self):
@@ -500,21 +500,21 @@ class Lanczos:
         self.evect = numpy.zeros((self.nsteps,self.nsteps),numpy.float64)
         self.eval  = numpy.zeros((self.nsteps),numpy.float64)
         self.oldalpha = numpy.zeros((self.nsteps),numpy.float64)
-        
+
         self.q=self.class4vect(self.nsteps+1,self.dim)
         if self.metrica is not None:
             self.tmp4met = self.class4vect( self.dim )
 
-      
+
     def cerca(self, nd, shift):
-        
+
         self.shift=shift
 
 
 
         self.matrice.trasforma(1.0, shift)
 
-        
+
         m = min(4*nd, self.dim)
 
         self.nsteps = m
@@ -523,20 +523,20 @@ class Lanczos:
 
         vect_init = self.class4vect(self.dim)
         # vect_init.set_value(0,1.0)
-        
+
         vect_init.set_all_random(1.0)
         # vect_init.set_to_one()
 
-        
+
 
         k=0
         nc=0
         self.passeggia(k,m,vect_init)
-        
+
         while nc<nd :
             #print " DIAGONALIZZAZIONE "
             self.diago(k,m)
-        
+
             nc = self.converged(m)
 
             if k and not numpy.sometrue(abs(self.beta[:k])>self.tol) :
@@ -547,13 +547,13 @@ class Lanczos:
             else:
                 k=nc+2*nd
 
-            #print "KKKKKKKKK  " ,  k 
+            #print "KKKKKKKKK  " ,  k
             self.ricipolla(k,m)
             self.countdumpab+=1
-            
+
             #print " k,m , dim", k, m, self.dim
             # return m # sentinell
-        
+
             self.passeggia(k,m,self.q[m])
 
         if m==self.dim:
@@ -610,10 +610,10 @@ class Lanczos:
 
         a=None
 
-        self.class4vect.copy_to_a_from_b(self.q[k]  ,  self.q[m] ) 
+        self.class4vect.copy_to_a_from_b(self.q[k]  ,  self.q[m] )
 
- 
-        o = self.omega[0:m,0:m].copy() 
+
+        o = self.omega[0:m,0:m].copy()
 
 
         o = dotblas.dot(o, numpy.transpose(self.evect))
@@ -622,12 +622,12 @@ class Lanczos:
         for i in range(k):
             self.omega[i,k]=self.omega[k,i]=o[i,k]
 
-        
+
         o = dotblas.dot(self.evect,o)
 
-        
+
         self.omega[0:k,0:k]=o[0:k,0:k]
-         
+
     def diago(self, k, m):
         mat = numpy.zeros([m,m], numpy.float)
         mat.shape=[m*m]
@@ -640,7 +640,7 @@ class Lanczos:
         self.eval,self.evect = numpy.linalg.eigh(mat)
 
 
-def solveEigenSystem( S_base , nsearchedeigen, shift=None, metrica=None,  tol=1.0e-15): 
+def solveEigenSystem( S_base , nsearchedeigen, shift=None, metrica=None,  tol=1.0e-15):
     lnczs=Lanczos( S_base , metrica=metrica, tol=tol)
     lnczs.diagoCustom(minDim=nsearchedeigen, shift=shift)
     return lnczs.eval, lnczs.q

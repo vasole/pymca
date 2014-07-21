@@ -81,7 +81,7 @@ class ElementsInfo(qt.QWidget):
     def __init__(self, parent=None, name="Elements Info"):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
-            
+
         layout = qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -94,12 +94,12 @@ class ElementsInfo(qt.QWidget):
         self.infoWidget = None
         self.table.setMinimumSize(500,
                                   400)
-                                  
+
         self.table.sigElementClicked.connect(self.elementClicked)
-            
+
         self.lastElement = None
         Elements.registerUpdate(self._updateCallback)
-        
+
     def elementClicked(self, symbol):
         if self.infoWidget is None:
             self.__createInfoWidget(symbol)
@@ -111,7 +111,7 @@ class ElementsInfo(qt.QWidget):
         self.lastElement = symbol
         self.infoWidget.setWindowTitle(symbol)
         self.infoWidget.raise_()
-        
+
     def __createInfoWidget(self,symbol=""):
         #Dock window like widget
         frame = qt.QWidget(self.splitter)
@@ -132,7 +132,7 @@ class ElementsInfo(qt.QWidget):
         self.line1.setFrameShadow(qt.QFrame.Sunken)
         self.line1.setFrameShape(qt.QFrame.HLine)
         layout1.addWidget(self.line1)
-        
+
         # --- the close button
         self.closelabel = PixmapLabel(toolbar)
         self.closelabel.setPixmap(qt.QPixmap(CLOSE_ICON))
@@ -149,7 +149,7 @@ class ElementsInfo(qt.QWidget):
         l=qt.QVBoxLayout(w)
         l.setContentsMargins(0, 0, 0, 0)
         l.setSpacing(0)
-        
+
         hbox = qt.QWidget(w)
         hbox.layout = qt.QHBoxLayout(hbox)
         hbox.layout.setContentsMargins(0, 0, 0, 0)
@@ -169,7 +169,7 @@ class ElementsInfo(qt.QWidget):
         #if both signals are emitted and there is an error then we are in an
         #endless loop
         #self.connect(self.energy, qt.SIGNAL('focusOut'), self._energySlot)
-        
+
         self.infoText = qt.QTextEdit(w)
         self.infoText.setReadOnly(1)
         self.infoText.clear()
@@ -178,7 +178,7 @@ class ElementsInfo(qt.QWidget):
         w.show()
         self.infoWidget=frame
         frame.show()
-        
+
     def infoReparent(self):
         if self.infoWidget.parent() is not None:
             self.infoWidget.setParent(None)
@@ -191,7 +191,7 @@ class ElementsInfo(qt.QWidget):
             #,qt.QPoint(),1)
             #self.splitter.moveToFirst(self.sourceFrame)
         self.infoWidget.setFocus()
-    
+
     def infoToggle(self,**kw):
         if DEBUG:
             print("toggleSource called")
@@ -226,7 +226,7 @@ class ElementsInfo(qt.QWidget):
             self.energyValue = None
             self.energy.setText("")
 
-            
+
     def _updateCallback(self):
         if self.lastElement is not None:
             self.elementClicked(self.lastElement)
@@ -282,6 +282,6 @@ def main():
     w= ElementsInfo()
     w.show()
     app.exec_()
-    
+
 if __name__ == "__main__":
-    main()        
+    main()

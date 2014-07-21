@@ -130,7 +130,7 @@ class PeakButtonList(qt.QWidget):
             layout.setContentsMargins(0, 0, 0, 0)
             layout.setSpacing(5)
             #, 0, 5)
-            
+
         layout.addStretch(2)
 
         self.buttondict={}
@@ -141,13 +141,13 @@ class PeakButtonList(qt.QWidget):
 
         layout.addStretch(1)
 
-        #Reset 
+        #Reset
         self.resetBut = qt.QPushButton(self)
         self.resetBut.setText("Reset")
         layout.addWidget(self.resetBut)
         self.resetBut.clicked[()].connect(self.__resetBut)
 
-        layout.addStretch(2)        
+        layout.addStretch(2)
 
     def __resetBut(self):
         for key in self.peaklist:
@@ -160,7 +160,7 @@ class PeakButtonList(qt.QWidget):
             if self.buttondict[key].isSelected():
                 selection.append(key)
         self.sigSelectionChanged.emit(selection)
-            
+
 
     def setSelection(self, selection=[]):
         for key in self.peaklist:
@@ -175,7 +175,7 @@ class PeakButtonList(qt.QWidget):
                 self.buttondict[key].setEnabled(0)
             else:
                 self.buttondict[key].setEnabled(1)
-        
+
 
 class FitPeakSelect(qt.QWidget):
     sigFitPeakSelect = qt.pyqtSignal(object)
@@ -225,7 +225,7 @@ class FitPeakSelect(qt.QWidget):
         line= qt.QFrame(self)
         line.setFrameShape(qt.QFrame.HLine)
         line.setFrameShadow(qt.QFrame.Sunken)
-        
+
         self.peaks = PeakButtonList(self)
         self.peaks.setDisabled(['K','Ka','Kb','L','L1','L2','L3','M'])
 
@@ -250,7 +250,7 @@ class FitPeakSelect(qt.QWidget):
         if add:layout.addWidget(self.energyTable)
         layout.addStretch(1)
 
-        self.current= None 
+        self.current= None
         self.setSelection(peakdict)
 
     def __resetAll(self):
@@ -267,7 +267,7 @@ class FitPeakSelect(qt.QWidget):
 
     def __getZ(self,element):
         return ElementList.index(element) + 1
-       
+
     def setSelection(self,peakdict):
         self.peakdict = {}
         self.peakdict.update(peakdict)
@@ -275,13 +275,13 @@ class FitPeakSelect(qt.QWidget):
                 if type(self.peakdict[key])!= type([]):
                         self.peakdict[key]= [ self.peakdict[key] ]
         self.table.setSelection(list(self.peakdict.keys()))
-        
+
     def getSelection(self):
         ddict={}
         for key in list(self.peakdict.keys()):
                 if len(self.peakdict[key]):
                         ddict[key]= self.peakdict[key]
-        return ddict 
+        return ddict
 
     def peakSelectionChanged(self,selection):
         if self.current is None: return
@@ -357,7 +357,7 @@ class FitPeakSelect(qt.QWidget):
                             disabled.append(peak)
                     else:
                         pass
-        self.peaks.setDisabled(disabled)    
+        self.peaks.setDisabled(disabled)
 
     def setEnergy(self, energy):
         if (energy is None) or (energy == []):
@@ -396,7 +396,7 @@ class FitPeakSelect(qt.QWidget):
                 value = float(string)
                 self.energyValue = value
                 if False:
-                    self.energyButton.setFocus()   
+                    self.energyButton.setFocus()
             except:
                 msg=qt.QMessageBox(self.energy)
                 msg.setIcon(qt.QMessageBox.Critical)
@@ -408,7 +408,7 @@ class FitPeakSelect(qt.QWidget):
             if False:
                 self.energyButton.setFocus()
         self.__updateSelection()
-        
+
     def __updateSelection(self):
         if self.energyValue is not None:
             for ele in list(self.peakdict.keys()):

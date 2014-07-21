@@ -37,7 +37,7 @@ import numpy
 DEBUG = 0
 
 class testElements(unittest.TestCase):
-    ELEMENTS = ['H', 'He', 
+    ELEMENTS = ['H', 'He',
                 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
                 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
                 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -45,12 +45,12 @@ class testElements(unittest.TestCase):
                 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
                 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
                 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-                'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-                'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-                'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-                'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-                'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-                'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+                'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+                'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+                'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+                'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+                'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+                'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
                 'Bh', 'Hs', 'Mt']
 
     def setUp(self):
@@ -136,7 +136,7 @@ class testElements(unittest.TestCase):
             self.assertTrue('PAIR' in xcomLabels[-2].upper())
             self.assertTrue('TOTAL' in xcomLabels[-1].upper())
             xcomData = scan.data()
-            
+
             # WARNING: This call is to read XCOM data
             # only in case energy is None the data are the same as
             # those found later on in the 'xcom' key of the element.
@@ -182,7 +182,7 @@ class testElements(unittest.TestCase):
         #        log(y) = ------------------------------------------
         #                                  log (x1/x0)
         #
-        
+
         log = numpy.log10
 
         # make sure data for the element are loaded

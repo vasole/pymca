@@ -57,12 +57,12 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         if 'depthselection' in kw:
             del ddict['depthselection']
         self._depthSelection = kw.get('depthselection', False)
-        MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict) 
+        MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict)
         self.slider = qt.QSlider(self)
         self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(0)
-        
+
         self.mainLayout.addWidget(self.slider)
         self.slider.valueChanged[int].connect(self._showImage)
 
@@ -85,7 +85,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         dynamic = kw.get("dynamic", False)
         self._dynamic = dynamic
 
-        crop = kw.get("crop", True)                    
+        crop = kw.get("crop", True)
         if crop:
             self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
             infotext = "Crop image to the currently zoomed window"
@@ -157,8 +157,8 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                        clearmask=False,
                        data=None,
                        imagenames=self.imageNames*1)
-        
-        ###self._imageDict[label] = self.getQImage()            
+
+        ###self._imageDict[label] = self.getQImage()
         ###self.imageList.append(self.getImageData())
         self._showImage(index)
 
@@ -213,7 +213,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
     def _showImage(self, index):
         if len(self.imageList):
             self.showImage(index, moveslider=False)
-            
+
     def showImage(self, index=0, moveslider=True):
         if self.imageList is None:
             return
@@ -255,7 +255,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                 self.imageNames.append("ExternalImage %02d" % i)
         else:
             self.imageNames = imagenames
-                
+
         i = 0
         self._imageDict = {}
         self.imageList = []
@@ -263,7 +263,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             self.setQImage(images[i], width, height,
                            clearmask=clearmask,
                            data=data)
-            self._imageDict[label] = self.getQImage()            
+            self._imageDict[label] = self.getQImage()
             self.imageList.append(self.getImageData())
             i += 1
 
@@ -320,7 +320,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
                 self.showImage(current)
             else:
                 self.showImage(0)
-            
+
     def setStack(self, stack, index=None, imagenames=None):
         if index is None:
             index = 0
@@ -349,7 +349,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         if mask is not None:
             shape = imagelist[0].shape
             if mask.shape != shape:
-                mask = numpy.zeros(shape, numpy.uint8)                
+                mask = numpy.zeros(shape, numpy.uint8)
                 self.setSelectionMask(mask, plot=False)
         current = self.slider.value()
         self.slider.setMaximum(len(self.imageList)-1)
@@ -383,7 +383,7 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
             if curve is None:
                 return
             xdata, ydata, legend, info = curve
-            newLegend = self.imageNames[i]+ " " + legend 
+            newLegend = self.imageNames[i]+ " " + legend
             self._profileSelectionWindow.addCurve(xdata, ydata,
                                                   legend=newLegend,
                                                   info=info,

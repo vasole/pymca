@@ -45,7 +45,7 @@ class SimpleFit(object):
         #no data available by default
         self._x0 = None
         self._y0 = None
-        
+
         #get default configuration
         self.getDefaultConfiguration()
 
@@ -65,7 +65,7 @@ class SimpleFit(object):
         self._fitConfiguration['fit']['background_flag'] = 1
         self._fitConfiguration['fit']['strip_function'] = "Strip"
         self._fitConfiguration['fit']['stripalgorithm'] = 0
-        self._fitConfiguration['fit']['strip_flag'] = 1        
+        self._fitConfiguration['fit']['strip_flag'] = 1
         self._fitConfiguration['fit']['fit_algorithm'] = "Levenberg-Marquardt"
         self._fitConfiguration['fit']['weight'] = "NO Weight"
         self._fitConfiguration['fit']['maximum_fit_iterations'] = 10
@@ -85,7 +85,7 @@ class SimpleFit(object):
         self._fitConfiguration['fit']['stripiterations'] = 5000
         self._fitConfiguration['fit']['stripconstant'] = 1.0
         self._fitConfiguration['functions'] = {}
-        
+
     def configure(self, ddict=None):
         if ddict is None:
             return self.getConfiguration()
@@ -124,7 +124,7 @@ class SimpleFit(object):
                 if configureMethod is not None:
                     configureMethod(ddict['functions'][fName]['configuration'])
 
-        #if data are present, update strip background                    
+        #if data are present, update strip background
         if (self._x0 is None) or (self._y0 is None):
             return
         if (oldConfig['fit']['xmin'] != self._fitConfiguration['fit']['xmin']) or\
@@ -213,14 +213,14 @@ class SimpleFit(object):
             newfun=__import__(f)
         else:
             raise ValueError("Cannot interprete/find %s" % modname)
-        
+
         theory = newfun.THEORY
         function=newfun.FUNCTION
         parameters = newfun.PARAMETERS
         try:
             estimate=newfun.ESTIMATE
         except:
-            estimate=None        
+            estimate=None
         try:
             derivative=newfun.DERIVATIVE
         except:
@@ -247,7 +247,7 @@ class SimpleFit(object):
             ddict['configure']  = None
             ddict['widget']     = None
             ddict['file']       = newfun.__file__
-            ddict['configuration'] = {} 
+            ddict['configuration'] = {}
             if estimate is not None:
                 ddict['estimate'] = estimate[i]
             if derivative is not None:
@@ -288,7 +288,7 @@ class SimpleFit(object):
 
     def getBackgroundFunction(self):
         return "%s" % self._fitConfiguration['fit']['background_function']
-    
+
     def _getLimits(self, x, xmin, xmax):
         if self._fitConfiguration['fit']['use_limits']:
             xmin = self._fitConfiguration['fit']['xmin']
@@ -299,7 +299,7 @@ class SimpleFit(object):
         if xmax is None:
             xmax = x[-1]
         return xmin, xmax
-            
+
     def _getStripBackground(self, x=None, y=None):
         #this makes the assumption x are equally spaced
         #and I should build a spline if that is not the case
@@ -333,7 +333,7 @@ class SimpleFit(object):
 
         #work with smoothed data
         ysmooth = self._getSmooth(xwork, ywork)
-        
+
         #SNIP algorithm
         if self._fitConfiguration['fit']['stripalgorithm'] in ["SNIP", 1]:
             if DEBUG:
@@ -349,11 +349,11 @@ class SimpleFit(object):
                     result[lastAnchor:anchor] =\
                             SpecfitFuns.snip1d(ysmooth[lastAnchor:anchor], width, 0)
                     lastAnchor = anchor
-            if lastAnchor < len(ysmooth):                
+            if lastAnchor < len(ysmooth):
                 result[lastAnchor:] =\
                         SpecfitFuns.snip1d(ysmooth[lastAnchor:], width, 0)
             return result
-        
+
         #strip background
         niter = self._fitConfiguration['fit']['stripiterations']
         if niter > 0:
@@ -391,15 +391,15 @@ class SimpleFit(object):
 
         return result
 
-    def _getSmooth(self, x, y): 
+    def _getSmooth(self, x, y):
         f=[0.25,0.5,0.25]
         try:
             if hasattr(y, "shape"):
                 if len(y.shape) > 1:
-                    result=SpecfitFuns.SavitskyGolay(numpy.ravel(y).astype(numpy.float), 
+                    result=SpecfitFuns.SavitskyGolay(numpy.ravel(y).astype(numpy.float),
                                     self._fitConfiguration['fit']['stripfilterwidth'])
-                else:                                
-                    result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float), 
+                else:
+                    result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float),
                                     self._fitConfiguration['fit']['stripfilterwidth'])
             else:
                 result=SpecfitFuns.SavitskyGolay(numpy.array(y).astype(numpy.float),
@@ -431,7 +431,7 @@ class SimpleFit(object):
         backgroundDict  = {'parameters':[]}
         fitFunctionDict = {'parameters':[]}
         backgroundParameters, backgroundConstraints = [], [[],[],[]]
-        backgroundFunction = self.getBackgroundFunction() 
+        backgroundFunction = self.getBackgroundFunction()
         if self._fitConfiguration['fit']['background_flag']:
             if backgroundFunction not in [None, "None", "NONE"]:
                 backgroundParameters, backgroundConstraints =\
@@ -547,7 +547,7 @@ class SimpleFit(object):
             return [],[[],[],[]]
         ddict = self._fitConfiguration['functions'][fname]
         estimateFunction = ddict['estimate']
-        
+
         if estimateFunction is None:
             parameters = []
             constraints = [[],[],[]]
@@ -657,7 +657,7 @@ class SimpleFit(object):
                         fulloutput=True)
             except:
                 text = sys.exc_info()[1]
-                if type(text) is not type(" "): 
+                if type(text) is not type(" "):
                     text = text.args
                     if len(text):
                         text = text[0]
@@ -681,11 +681,11 @@ class SimpleFit(object):
         self._fitResult['parameters'] = []
         for param in self.paramlist:
            if param['code'] != 'IGNORE':
-              self._fitResult['parameters'].append(param['name'])  
+              self._fitResult['parameters'].append(param['name'])
               param['fitresult'] = result[0][i]
               param['sigma']= result[2][i]
            i = i + 1
-        self._setStatus("Fit finished")           
+        self._setStatus("Fit finished")
         return result
 
     def modelFunction(self, pars, t):
@@ -727,7 +727,7 @@ class SimpleFit(object):
         ddict['result'] = self._fitResult
         if configuration:
             ddict['configuration'] = self.getConfiguration()
-        return ddict        
+        return ddict
 
     def _evaluateBackground(self, x=None):
         if x is None:
@@ -737,7 +737,7 @@ class SimpleFit(object):
         if nb:
             y = self._fitConfiguration['functions'][self.getBackgroundFunction()]\
                       ['function'](pars[:nb], x)
-            
+
         else:
             y = numpy.zeros(x.shape, numpy.float)
         if self._fitConfiguration['fit']['strip_flag']:
@@ -764,7 +764,7 @@ class SimpleFit(object):
             x = self._x
         y = self._evaluateBackground(x)
         y += self._evaluateFunction(x)
-        return y 
+        return y
 
 def test():
     from PyMca import SpecfitFunctions

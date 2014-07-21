@@ -45,7 +45,7 @@ def install():
 
     # This shows it
     python_console = prefix + r'\python.exe'
-    
+
     # Lookup path to common startmenu ...
     ip_dir = get_special_folder_path('CSIDL_COMMON_PROGRAMS') + r'\PyMca5'
     lib_dir = prefix+'\Lib\site-packages\PyMca5'
@@ -58,7 +58,7 @@ def install():
     name = 'PyMcaMain'
     script = '"'+lib_dir+r'\%s.py"'%name
     fname = 'PyMca'
-    f = ip_dir + r'\%s.lnk' % fname 
+    f = ip_dir + r'\%s.lnk' % fname
     mkshortcut(python_console,name,f,script, "%HOMEDRIVE%%HOMEPATH%")
 
     name = 'PyMcaMain'

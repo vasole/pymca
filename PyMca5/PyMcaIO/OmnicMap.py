@@ -222,11 +222,11 @@ class OmnicMap(DataObject.DataObject):
 
     def getMapInformation(self, data):
         '''
-        Internal method to help finding spectra coordinates 
+        Internal method to help finding spectra coordinates
         Parameters:
         -----------
             data : Contents of the .map file
-            
+
         Returns:
         --------
             Dictionnary with map gemoetrical acquisition parameters

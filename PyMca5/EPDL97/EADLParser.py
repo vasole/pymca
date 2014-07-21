@@ -9,7 +9,7 @@ This module parses the EADL.DAT file that can be downloaded from:
 http://www-nds.iaea.org/epdl97/libsall.htm
 
 EADL contains atomic relaxation information for use in particle transport
-analysis for atomic number Z = 1-100 and for each subshell. 
+analysis for atomic number Z = 1-100 and for each subshell.
 
 The original units are in cm and MeV.
 
@@ -58,7 +58,7 @@ Columns    Format   Definition
                                   = 91, subshell parameters
                                   = 92, transition probabilities
                                   = 93, whole atom parameters
-                                  
+
 3-5         I2      I  - reaction property:
                                   =   0, integrated cross section
                                   =  10, avg. energy of Yo
@@ -131,7 +131,7 @@ DEBUG = 0
 AVOGADRO_NUMBER = 6.02214179E23
 
 #
-Elements = ['H', 'He', 
+Elements = ['H', 'He',
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
             'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -139,12 +139,12 @@ Elements = ['H', 'He',
             'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
             'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
             'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
 #Read the EPDL library
@@ -326,7 +326,7 @@ def parseHeader1(line):
                                   = 91, subshell parameters
                                   = 92, transition probabilities
                                   = 93, whole atom parameters
-                                      
+
     3-5         I2      I  - reaction property:
                                   =   0, integrated cross section
                                   =  10, avg. energy of Yo
@@ -379,12 +379,12 @@ def parseHeader1(line):
         else:
             ddict['subshell'] = 'none'
     elif (S == 0) and (X1 == 0.0):
-        ddict['subshell_code'] = 0    
+        ddict['subshell_code'] = 0
         ddict['subshell'] = 'none'
     else:
         print("Inconsistent data")
         print("X1 = ", X1, "S = ", S)
-        sys.exit(1) 
+        sys.exit(1)
     return ddict
 
 def parseHeader(line0, line1):
@@ -483,7 +483,7 @@ def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I):
         LAST_INDEX = -1
         return getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I)
     return -1
-    
+
 def getActualDataFromLinesAndOffset(lines, index):
     data_begin = index + 2
     data_end   = index + 2
@@ -515,7 +515,7 @@ def getActualDataFromLinesAndOffset(lines, index):
                     t[1] = t[1].replace('+','E+')
                     value[i]  = float(t[1])
                 else:
-                    raise                    
+                    raise
     else:
         value = []
         for i in range(ndata):
@@ -532,7 +532,7 @@ def getActualDataFromLinesAndOffset(lines, index):
                         tj = tj.replace('+','E+')
                         value[i].append(float(tj))
                     else:
-                        raise                    
+                        raise
     return energy, value
 
 def getBaseShellDict(nvalues=None):
@@ -569,7 +569,7 @@ def getBaseShellList():
             continue
         ddict.append(shell)
     return ddict
-    
+
 def getRadiativeWidths(z, lines=None):
     #Yi    C    S    X1    Yo   I
     #0    91    0    0.    0  921   Radiative widths
@@ -715,7 +715,7 @@ def getBindingEnergies(z, lines=None):
         i += 1
     return ddict
 
-def getFluorescenceYields(z, lines=None):    
+def getFluorescenceYields(z, lines=None):
     if lines is None:
         lines = EADL97_DATA
     radiative_dict = getRadiativeWidths(z, lines)
@@ -765,7 +765,7 @@ def getLShellCosterKronigYields(z, lines=None):
     ddict['f13'] = 0.0
     ddict['f23'] = 0.0
     for i in range(2):
-        shell = 'L%d' % (i+1) 
+        shell = 'L%d' % (i+1)
         try:
             ddict.update(getCosterKronigYields(z, shell=shell))
         except IOError:
@@ -847,7 +847,7 @@ if __name__ == "__main__":
         except IOError:
             continue
         total = 0.0
-        shell_list = getBaseShellList() 
+        shell_list = getBaseShellList()
         for key0 in shell_list:
             for key1 in shell_list:
                 key = "%s-%s%s" % (shell, key0.split()[0], key1.split()[0])
@@ -870,7 +870,7 @@ if __name__ == "__main__":
                                 subtotal += ddict[key][0]
                 print("%s vacancies for nonradiative transition to %s shell = %.7E"%\
                       (key0, shell, subtotal))
-            
+
     #print(getNonradiativeTransitionProbabilities(Elements.index(element)+1, 'L1'))
     print(getMShellCosterKronigYields(Elements.index(element)+1))
     print("atomic weight = ", getAtomicWeights()[Elements.index(element)])

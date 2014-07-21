@@ -60,14 +60,14 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
                                        icon]
         self.widget = None
         self.parameters = None
-        
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         names = list(self.methodDict.keys())
         names.sort()
@@ -109,7 +109,7 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
             self.widget.setData(y, energy=x)
             if abs(oldEMin - x.min()) < 1:
                 if abs(oldEMax - x.max()) < 1:
-                    self.widget.setParameters(oldParameters)            
+                    self.widget.setParameters(oldParameters)
 
         ret = self.widget.exec_()
         if ret:
@@ -129,13 +129,13 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
         if nCurves < 1:
             raise ValueError("At least one curve needed")
             return
-        
+
         #get active curve
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             raise ValueError("Please select an active curve")
             return
-        
+
         x, y, legend0, info = activeCurve
 
         #sort the values
@@ -164,7 +164,7 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
                                                          ['polynomial']
         i = 0
         lastCurve = None
-        for curve in curves:            
+        for curve in curves:
             x, y, legend, info = curve[0:4]
             #take the portion ox x between limits
             idx = numpy.nonzero((x>=xmin) & (x<=xmax))[0]
@@ -180,7 +180,7 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
                 continue
             xi = numpy.take(x0, idx)
             yi = numpy.take(y0, idx)
-            
+
             #perform interpolation
             xi.shape = -1, 1
             yw = SpecfitFuns.interpol([x], y, xi, yi.min())
@@ -214,7 +214,7 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
             lastCurve = [x, y, newLegend]
         self.addCurve(lastCurve[0],
                       lastCurve[1],
-                      legend=lastCurve[2],                      
+                      legend=lastCurve[2],
                       info=info,
                       replot=True,
                       replace=False)

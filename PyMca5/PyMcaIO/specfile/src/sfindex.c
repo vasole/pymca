@@ -22,7 +22,7 @@
  *   Project:       SpecFile library
  *
  *   Description:   functions for scan numbering
- * 
+ *
  *   Author:        V.Rey
  *
  *   Date:          $Date: 2004/05/12 16:56:47 $
@@ -41,7 +41,7 @@
  *   Log:
  * Revision 2.1  2000/07/31  19:05:15  19:05:15  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 2.0  2000/04/13  13:28:54  13:28:54  rey (Vicente Rey-Bakaikoa)
  * New version of the library. Complete rewrite
  * Adds support for MCA
@@ -49,7 +49,7 @@
 /*
  *    File:     sfindex.c
  *
- *    Description: 
+ *    Description:
  *
  *    Project:
  *
@@ -70,11 +70,11 @@
  *
  * Revision 2.1  2000/07/31  19:05:15  19:05:15  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 2.0  2000/04/13  13:26:55  13:26:55  rey (Vicente Rey-Bakaikoa)
  * New version of the library. Complete rewrite
  * Adds support for MCA
- * 
+ *
  */
 
 #include <SpecFile.h>
@@ -96,10 +96,10 @@
 DllExport long * SfList      ( SpecFile *sf, int *error );
 DllExport long SfIndexes     ( SpecFile *sf, long number, long **idxlist );
 DllExport long SfIndex       ( SpecFile *sf, long number, long order );
-DllExport long SfCondList    ( SpecFile *sf, long cond,   long **scan_list, 
+DllExport long SfCondList    ( SpecFile *sf, long cond,   long **scan_list,
                                       int *error );
 DllExport long SfScanNo      ( SpecFile *sf );
-DllExport int  SfNumberOrder ( SpecFile *sf, long index, long *number, 
+DllExport int  SfNumberOrder ( SpecFile *sf, long index, long *number,
                                       long *order );
 DllExport long SfNumber      ( SpecFile *sf, long index  );
 DllExport long SfOrder       ( SpecFile *sf, long index  );
@@ -122,7 +122,7 @@ static int checkAborted( SpecFile *sf, ObjectList *ptr, int *error );
  *			NULL if errors occured.
  *   Possible errors:
  *			SF_ERR_MEMORY_ALLOC
- *			
+ *
  *   Remark:  The memory allocated should be freed by the application
  *
  *********************************************************************/
@@ -139,11 +139,11 @@ SfList( SpecFile *sf, int *error )
 	  *error = SF_ERR_MEMORY_ALLOC;
 	  return( scan_list );
      }
-     
+
      for ( ptr=sf->list.first ; ptr ; ptr=ptr->next ,i++) {
 	  scan_list[i] = ( ((SpecScan *)(ptr->contents))->scan_no );
-     }    
-     /*printf("scanlist[%li] = %li\n",i-1,scan_list[i-1]);*/ 
+     }
+     /*printf("scanlist[%li] = %li\n",i-1,scan_list[i-1]);*/
      return( scan_list );
 }
 
@@ -152,17 +152,17 @@ SfList( SpecFile *sf, int *error )
  *   Function:		long SfIndexes( sf, number , idxlist)
  *
  *   Description:	Creates an array with all indexes with the same scan
- *                      number. 
+ *                      number.
  *
  *   Parameters:
  *                      Input  : SpecFile pointer
- *                               scan number 
+ *                               scan number
  *                      Output : array with scan indexes
  *   Returns:
  *			Number of indexes found
  *   Possible errors:
  *			None possible
- *			
+ *
  *   Remark:  The memory allocated should be freed by the application
  *
  *********************************************************************/
@@ -183,8 +183,8 @@ SfIndexes( SpecFile *sf, long number, long **idxlist )
               i++;
            }
      }
-         
-     if (i == 0) 
+
+     if (i == 0)
         arr = (long *) NULL;
      else {
         arr = (long *)malloc(sizeof(long) * i);
@@ -204,11 +204,11 @@ SfIndexes( SpecFile *sf, long number, long **idxlist )
  *
  *   Parameters:
  *		Input :	(1) Scan number
- *			(2) Scan order 
+ *			(2) Scan order
  *   Returns:
- *			Index number. 
+ *			Index number.
  *			(-1) if not found.
- *			
+ *
  *********************************************************************/
 DllExport long
 SfIndex( SpecFile *sf, long number, long order )
@@ -216,9 +216,9 @@ SfIndex( SpecFile *sf, long number, long order )
      ObjectList		*ptr;
 
      ptr = findScanByNo( &(sf->list), number, order );
-     if ( ptr != (ObjectList *)NULL ) 
-        return( ((SpecScan *)(ptr->contents))->index ); 
-     
+     if ( ptr != (ObjectList *)NULL )
+        return( ((SpecScan *)(ptr->contents))->index );
+
      return( -1 );
 }
 
@@ -234,17 +234,17 @@ SfIndex( SpecFile *sf, long number, long order )
  *				       -1 =>     aborted scans ( ABORTED )
  *				       nn => more than 'nn' data lines
  *		Output: (3) Scan list
- *			(4) error code	
+ *			(4) error code
  *   Returns:
  *			Number of found scans.
  *			( -1 ) if errors occured.
  *   Possible errors:
  *			SF_ERR_MEMORY_ALLOC
- *			
+ *
  *   Remark:  The memory allocated should be freed by the application
  *
  *********************************************************************/
-DllExport long 
+DllExport long
 SfCondList( SpecFile *sf, long cond, long **scan_list, int *error )
 {
      register	ObjectList	*ptr;
@@ -274,10 +274,10 @@ SfCondList( SpecFile *sf, long cond, long **scan_list, int *error )
 		    free( list );
 		    return( -1 );
 	       } else if ( retcheck > 0) {
-	            list[i] = ( ((SpecScan *)(ptr->contents))->scan_no );  
+	            list[i] = ( ((SpecScan *)(ptr->contents))->scan_no );
 	            i++;
                }
-	  }   
+	  }
      } else if ( cond == 0 ) {    /*   not aborted scans */
 	  for ( ptr=sf->list.first ; ptr ; ptr=ptr->next ) {
 
@@ -287,20 +287,20 @@ SfCondList( SpecFile *sf, long cond, long **scan_list, int *error )
 		    free( list );
 		    return( -1 );
 	       } else if ( retcheck == 0 ) {
-	            list[i] = ( ((SpecScan *)(ptr->contents))->scan_no );  
+	            list[i] = ( ((SpecScan *)(ptr->contents))->scan_no );
 	            i++;
                }
-	  }   
+	  }
      } else {   /*  cond > 0   - more than n data_lines */
 	  for ( ptr=sf->list.first ; ptr ; ptr=ptr->next ) {
-	       
-	       index = ( ((SpecScan *)(ptr->contents))->index );  
+
+	       index = ( ((SpecScan *)(ptr->contents))->index );
 	       if ( SfNoDataLines(sf,index,error) <= cond ) continue;
-	       
-	       list[i] = ( ((SpecScan *)(ptr->contents))->scan_no );  
+
+	       list[i] = ( ((SpecScan *)(ptr->contents))->scan_no );
 	       i++;
-	  }   
-     }     
+	  }
+     }
 
      *scan_list = ( long * ) malloc ( i * sizeof(long));
 
@@ -327,7 +327,7 @@ SfCondList( SpecFile *sf, long cond, long **scan_list, int *error )
  *		Number of scans.
  *
  *********************************************************************/
-DllExport long 
+DllExport long
 SfScanNo( SpecFile *sf )
 {
      return( sf->no_scans );
@@ -343,12 +343,12 @@ SfScanNo( SpecFile *sf )
  *		Input :
  *			(1) SpecFile pointer
  *			(2) Scan index
- *		Output:	
+ *		Output:
  *			(3) Scan number
  *			(4) Scan order
  *   Returns:
  *		( -1 ) => not found
- *		(  0 ) => found		
+ *		(  0 ) => found
  *
  *********************************************************************/
 DllExport int
@@ -364,7 +364,7 @@ SfNumberOrder( SpecFile *sf, long index, long *number, long *order )
       */
      list = findScanByIndex( &(sf->list), index );
      if ( list == (ObjectList *)NULL ) return( -1 );
-     
+
      *number = ((SpecScan *)list->contents)->scan_no;
      *order  = ((SpecScan *)list->contents)->order;
 
@@ -395,7 +395,7 @@ SfNumber( SpecFile *sf, long index  )
       */
      list = findScanByIndex( &(sf->list), index );
      if ( list == (ObjectList *)NULL ) return( -1 );
-     
+
      return( ((SpecScan *)list->contents)->scan_no );
 }
 
@@ -424,7 +424,7 @@ SfOrder( SpecFile *sf, long index  )
       */
      list = findScanByIndex( &(sf->list), index );
      if ( list == (ObjectList *)NULL ) return( -1 );
-     
+
      return( ((SpecScan *)list->contents)->order );
 }
 
@@ -436,17 +436,17 @@ SfOrder( SpecFile *sf, long index  )
  *   Parameters:
  *		Input :	(1) SpecScan pointer
  *			(2) Pointer to the scan
- *		Output:	(3) Error number 
+ *		Output:	(3) Error number
  *   Returns:
  *		(-1 )	: error
  *	        ( 0 )	: not aborted
  *	        ( 1 )	: aborted
  *   Possible errors:
- *			SF_ERR_MEMORY_ALLOC	| => readHeader()   
- *			SF_ERR_FILE_READ	
+ *			SF_ERR_MEMORY_ALLOC	| => readHeader()
+ *			SF_ERR_FILE_READ
  *
  *********************************************************************/
-static int 
+static int
 checkAborted( SpecFile *sf, ObjectList *ptr, int *error )
 {
      long       nbytes;
@@ -464,9 +464,9 @@ checkAborted( SpecFile *sf, ObjectList *ptr, int *error )
 
      if ( scan->hdafter_offset == -1  && data_lines > 0) {
            return(0);
-     } else if ( data_lines <= 0 ) {   
-        /* 
-         * maybe aborted on first point 
+     } else if ( data_lines <= 0 ) {
+        /*
+         * maybe aborted on first point
          * we have to all to know ( but no data anyway )
          */
         size   = scan->size;
@@ -501,32 +501,32 @@ checkAborted( SpecFile *sf, ObjectList *ptr, int *error )
          */
          if ( *(cptr-1) == 'a' && *cptr == 'b' && *(cptr+1) == 'o') {
             if ( state == ON_COMMENT ) {
-                state = ON_ABO;  
+                state = ON_ABO;
             }
          }
          if ( *(cptr-1) == 'r' && *cptr == 't' && *(cptr+1) == 'e') {
             if ( state == ON_ABO) {
                 aborted = 1;
-            }   
+            }
          }
         /*
          * Check resume line
          */
          if ( *(cptr-1) == 'r' && *cptr == 'e' && *(cptr+1) == 's') {
             if ( state == ON_COMMENT ) {
-                state = ON_RES;  
+                state = ON_RES;
             }
          }
          if ( *(cptr-1) == 'u' && *cptr == 'm' && *(cptr+1) == 'e') {
             if ( state == ON_RES) {
                 aborted = 0;
-            }   
+            }
          }
 
         /*
          * If data line... aborted is aborted
          */
-         if ( *cptr == '\n' ) { 
+         if ( *cptr == '\n' ) {
               next = *(cptr+1);
               if (isdigit(next) || next == '+' || next == '-' || next == '@') {
                   aborted = 0;

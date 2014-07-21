@@ -37,14 +37,14 @@ double PyMcaAtof(const char * inputString)
 #ifdef _GNU_SOURCE
 	double result;
 	locale_t newLocale;
-	newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL); 
+	newLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
 	result = strtod_l(inputString, NULL, newLocale);
 	freelocale(newLocale);
 	return result;
 #else
 #ifdef PYMCA_POSIX
 	return atof(inputString);
-#else 
+#else
 #ifdef SPECFILE_POSIX
 	char *currentLocaleBuffer;
 	char *restoredLocaleBuffer;

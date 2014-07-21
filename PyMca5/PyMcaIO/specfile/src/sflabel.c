@@ -22,14 +22,14 @@
  *   Project:       SpecFile library
  *
  *   Description:   Access to labels and motors
- * 
+ *
  *   Author:        V.Rey
  *
  *   Date:          $Date: 2003/02/03 13:15:35 $
  *
  ************************************************************************/
 /*
- *   Log: 
+ *   Log:
  * $Log: sflabel.c,v $
  * Revision 1.3  2003/02/03 13:15:35  rey
  * Small change in handling of empty spaces at the beginning of the label buffer
@@ -47,10 +47,10 @@
  *
  * Revision 2.2  2000/12/20 12:12:08  rey
  * bug corrected with SfAllMotors
- *   
+ *
  * Revision 2.1  2000/07/31  19:05:10  19:05:10  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 2.0  2000/04/13  13:28:54  13:28:54  rey (Vicente Rey-Bakaikoa)
  * New version of the library. Complete rewrite
  * Adds support for MCA
@@ -67,19 +67,19 @@
 /*
  * Declarations
  */
-DllExport char * SfLabel         ( SpecFile *sf, long index, long column, 
+DllExport char * SfLabel         ( SpecFile *sf, long index, long column,
                                       int *error );
-DllExport long   SfAllLabels     ( SpecFile *sf, long index, char ***labels, 
+DllExport long   SfAllLabels     ( SpecFile *sf, long index, char ***labels,
                                       int *error );
-DllExport char * SfMotor         ( SpecFile *sf, long index, long number, 
+DllExport char * SfMotor         ( SpecFile *sf, long index, long number,
                                       int *error );
-DllExport long   SfAllMotors     ( SpecFile *sf, long index, char ***names, 
+DllExport long   SfAllMotors     ( SpecFile *sf, long index, char ***names,
                                       int *error );
-DllExport double SfMotorPos      ( SpecFile *sf, long index, long number, 
+DllExport double SfMotorPos      ( SpecFile *sf, long index, long number,
                                       int *error );
-DllExport double SfMotorPosByName( SpecFile *sf, long index, char *name, 
+DllExport double SfMotorPosByName( SpecFile *sf, long index, char *name,
                                       int *error );
-DllExport long   SfAllMotorPos   ( SpecFile *sf, long index, double **pos, 
+DllExport long   SfAllMotorPos   ( SpecFile *sf, long index, double **pos,
                                       int *error );
 
 
@@ -92,10 +92,10 @@ DllExport long   SfAllMotorPos   ( SpecFile *sf, long index, double **pos,
  *		Input :	(1) SpecScan pointer
  *			(2) Scan index
  *			(3) Column number
- *		Output:	(4) Error number 
+ *		Output:	(4) Error number
  *   Returns:
  *			Pointer to the label ,
- *			or NULL if errors occured.			
+ *			or NULL if errors occured.
  *   Possible errors:
  *			SF_ERR_MEMORY_ALLOC	| => getStrFromArr()
  *			SF_ERR_LABEL_NOT_FOUND
@@ -128,7 +128,7 @@ SfLabel( SpecFile *sf, long index, long column, int *error )
      if (no_labels == 0 || no_labels == -1)  return((char *)NULL);
 
      if ( column < 0 ) {
-           selection = no_labels + column;   
+           selection = no_labels + column;
      } else {
            selection = column - 1;
      }
@@ -158,11 +158,11 @@ SfLabel( SpecFile *sf, long index, long column, int *error )
  *   Parameters:
  *		Input :	(1) SpecScan pointer
  *			(2) Scan index
- *		Output:	(3) Labels  
- *			(4) Error number 
+ *		Output:	(3) Labels
+ *			(4) Error number
  *   Returns:
  *			Number of labels
- *			( -1 ) if error.		
+ *			( -1 ) if error.
  *   Possible errors:
  *			SF_ERR_MEMORY_ALLOC	||=> cpyStrArr(),lines2words()
  *			SF_ERR_SCAN_NOT_FOUND	| => SfHeader()
@@ -185,7 +185,7 @@ SfAllLabels( SpecFile *sf, long index, char ***labels, int *error )
 
      long      no_labels = 0;
      short     i;
-     
+
     /*
      * select scan
      */
@@ -212,7 +212,7 @@ SfAllLabels( SpecFile *sf, long index, char ***labels, int *error )
          *labels = NULL;
           return(0);
      }
-     
+
      if ( buf[0] == '\0') {
         *labels = NULL;
          return(0);
@@ -221,14 +221,14 @@ SfAllLabels( SpecFile *sf, long index, char ***labels, int *error )
      if ( (labarr = (char **)malloc( sizeof(char *))) == (char **)NULL) {
          *error = SF_ERR_MEMORY_ALLOC;
           return(-1);
-     } 
+     }
 
      no_labels = 0;
      i = 0;
 
-     /* 
+     /*
       * avoid problem of having too many spaces at the beginning
-      * with bad written macros -> added check for empty string 
+      * with bad written macros -> added check for empty string
       *
       *   get rid of spaces at the beginning of the string buffer
       */
@@ -243,10 +243,10 @@ SfAllLabels( SpecFile *sf, long index, char ***labels, int *error )
              labarr = (char **)realloc( labarr, (no_labels+1) * sizeof(char *));
              onelabel = (char *) malloc (i+2);
              strcpy(onelabel,tmplab);
-             labarr[no_labels]  = onelabel; 
+             labarr[no_labels]  = onelabel;
 
-             no_labels++; 
-             i=-1; 
+             no_labels++;
+             i=-1;
              for(;*(ptr+1) == ' ' && ptr < buf+strlen(buf)-1;ptr++);
          } else {
              tmplab[i] = *ptr;
@@ -254,7 +254,7 @@ SfAllLabels( SpecFile *sf, long index, char ***labels, int *error )
      }
 
      if (*ptr != ' ') {
-        tmplab[i]   = *ptr; 
+        tmplab[i]   = *ptr;
         i++;
      }
      tmplab[i] = '\0';
@@ -262,9 +262,9 @@ SfAllLabels( SpecFile *sf, long index, char ***labels, int *error )
      labarr = (char **)realloc( labarr, (no_labels+1) * sizeof(char *));
      onelabel = (char *) malloc (i+2);
      strcpy(onelabel,tmplab);
-     labarr[no_labels]  = onelabel; 
+     labarr[no_labels]  = onelabel;
 
-     no_labels++; 
+     no_labels++;
 
     /*
      * Save in specfile structure
@@ -273,7 +273,7 @@ SfAllLabels( SpecFile *sf, long index, char ***labels, int *error )
      sf->labels    = (char **) malloc( sizeof(char *) * no_labels);
      for (i=0;i<no_labels;i++)
            sf->labels[i] = (char *) strdup(labarr[i]);
-    
+
     *labels = labarr;
      return( no_labels );
 }
@@ -287,15 +287,15 @@ SfAllLabels( SpecFile *sf, long index, char ***labels, int *error )
  *   Parameters:
  *		Input :	(1) SpecScan pointer
  *			(2) Scan index
- *		Output:	(3) Names  
- *			(4) Error number 
+ *		Output:	(3) Names
+ *			(4) Error number
  *   Returns:
  *			Number of found names
- *			( -1 ) if errors.		
+ *			( -1 ) if errors.
  *   Possible errors:
- *			SF_ERR_SCAN_NOT_FOUND	  
- *			SF_ERR_LINE_NOT_FOUND	
- *			SF_ERR_LINE_EMPTY	
+ *			SF_ERR_SCAN_NOT_FOUND
+ *			SF_ERR_LINE_NOT_FOUND
+ *			SF_ERR_LINE_EMPTY
  *			SF_ERR_MEMORY_ALLOC    || => cpyStrArr(),lines2words()
  *			SF_ERR_FILE_READ	|
  *			SF_ERR_HEADER_NOT_FOUND	| => SfFileHeader()
@@ -320,7 +320,7 @@ SfAllMotors( SpecFile *sf, long index, char ***names, int *error )
      long      motct = 0;
      long      no_lines;
      short     i,j;
-     
+
     /*
      * go to scan
      */
@@ -353,7 +353,7 @@ SfAllMotors( SpecFile *sf, long index, char ***names, int *error )
      if ( (motarr = (char **)malloc( sizeof(char *))) == (char **)NULL) {
          *error = SF_ERR_MEMORY_ALLOC;
           return(-1);
-     } 
+     }
 
      motct = 0;
 
@@ -362,16 +362,16 @@ SfAllMotors( SpecFile *sf, long index, char ***names, int *error )
          endline  = thisline + strlen(thisline);
          for(ptr=thisline;*ptr == ' ';ptr++);
          for (i=0;ptr < endline -2;ptr++,i++) {
-            if (*ptr==' ' && *(ptr+1) == ' ') { 
+            if (*ptr==' ' && *(ptr+1) == ' ') {
                tmpmot[i] = '\0';
 
                motarr = (char **)realloc( motarr, (motct+1) * sizeof(char *));
                onemot = (char *) malloc (i+2);
                strcpy(onemot,tmpmot);
-               motarr[motct]  = onemot; 
+               motarr[motct]  = onemot;
 
-               motct++; 
-               i=-1; 
+               motct++;
+               i=-1;
                for(;*(ptr+1) == ' ' && ptr < endline -1;ptr++);
             } else {
                tmpmot[i] = *ptr;
@@ -386,9 +386,9 @@ SfAllMotors( SpecFile *sf, long index, char ***names, int *error )
 
         onemot = (char *) malloc (i+2);
         strcpy(onemot,tmpmot);
-        motarr[motct]  = onemot; 
+        motarr[motct]  = onemot;
 
-        motct++; 
+        motct++;
 
    }
 
@@ -432,7 +432,7 @@ SfMotor( SpecFile *sf, long index, long motnum, int *error )
      if (nb_mot == 0 || nb_mot == -1)  return((char *)NULL);
 
      if ( motnum < 0 ) {
-           selection = nb_mot + motnum;   
+           selection = nb_mot + motnum;
      } else {
            selection = motnum - 1;
      }
@@ -454,7 +454,7 @@ SfMotor( SpecFile *sf, long index, long motnum, int *error )
 }
 
 
-DllExport long   
+DllExport long
 SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
 {
      char **lines;
@@ -519,26 +519,26 @@ SfAllMotorPos ( SpecFile *sf, long index, double **retpos, int *error )
          endline  = thisline + strlen(thisline);
          for(ptr=thisline;*ptr == ' ';ptr++);
          for (i=0;ptr < endline -1;ptr++,i++) {
-            if (*ptr==' ') { 
+            if (*ptr==' ') {
                posstr[i] = '\0';
 
                pos[motct]  = PyMcaAtof(posstr);
 
-               motct++; 
-               i=-1; 
+               motct++;
+               i=-1;
                for(;*(ptr+1) == ' ' && ptr < endline -1;ptr++);
             } else {
                posstr[i] = *ptr;
             }
          }
          if (*ptr != ' ') {
-            posstr[i]   = *ptr; 
+            posstr[i]   = *ptr;
             i++;
          }
          posstr[i]   = '\0';
          pos[motct]  = PyMcaAtof(posstr);
 
-         motct++; 
+         motct++;
 
 	 }
 
@@ -588,14 +588,14 @@ SfMotorPos( SpecFile *sf, long index, long motnum, int *error )
      if (nb_mot == 0 || nb_mot == -1)  return(HUGE_VAL);
 
      if ( motnum < 0 ) {
-           selection = nb_mot + motnum;   
+           selection = nb_mot + motnum;
      } else {
            selection = motnum - 1;
      }
 
      if (selection < 0 || selection > nb_mot - 1 ) {
          *error = SF_ERR_COL_NOT_FOUND;
-          if (motorpos != (double *)NULL) 
+          if (motorpos != (double *)NULL)
               free(motorpos);
           return(HUGE_VAL);
      }
@@ -610,7 +610,7 @@ SfMotorPos( SpecFile *sf, long index, long motnum, int *error )
 }
 
 
-DllExport double 
+DllExport double
 SfMotorPosByName( SpecFile *sf, long index, char *name, int *error )
 {
      char **motors=NULL;
@@ -643,7 +643,7 @@ SfMotorPosByName( SpecFile *sf, long index, char *name, int *error )
            return(HUGE_VAL);
      }
 
-     selection = idx+1; 
+     selection = idx+1;
 
-     return(SfMotorPos(sf,index,selection,error)); 
+     return(SfMotorPos(sf,index,selection,error));
 }

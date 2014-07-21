@@ -35,7 +35,7 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = qt.safe_str
-    
+
 QTVERSION = qt.qVersion()
 
 from PyMca5.PyMcaCore import PyMcaDirs
@@ -44,7 +44,7 @@ from PyMca5.PyMcaIO import ConfigDict
 DEBUG = 0
 class McaROIWidget(qt.QWidget):
     sigMcaROIWidgetSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None, name=None):
         super(McaROIWidget, self).__init__(parent)
         if name is not None:
@@ -68,18 +68,18 @@ class McaROIWidget(qt.QWidget):
         layout.addWidget(self.mcaROITable)
         self.roiDir = None
         #################
-        
+
         hbox = qt.QWidget(self)
         hboxlayout = qt.QHBoxLayout(hbox)
         hboxlayout.setContentsMargins(0, 0, 0, 0)
         hboxlayout.setSpacing(0)
 
         hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
-        
+
         self.addButton = qt.QPushButton(hbox)
         self.addButton.setText("Add ROI")
         self.delButton = qt.QPushButton(hbox)
-        self.delButton.setText("Delete ROI")        
+        self.delButton.setText("Delete ROI")
         self.resetButton = qt.QPushButton(hbox)
         self.resetButton.setText("Reset")
 
@@ -123,7 +123,7 @@ class McaROIWidget(qt.QWidget):
         if row >= 0:
             index = self.mcaROITable.labels.index('Type')
             text = str(self.mcaROITable.item(row, index).text())
-                
+
             if text.upper() != 'DEFAULT':
                 index = self.mcaROITable.labels.index('ROI')
                 key = str(self.mcaROITable.item(row, index).text())
@@ -140,12 +140,12 @@ class McaROIWidget(qt.QWidget):
             ddict['event']      = "DelROI"
             ddict['roilist']    = roilist
             ddict['roidict']    = roidict
-            self.emitSignal(ddict)        
-    
+            self.emitSignal(ddict)
+
     def _forward(self,ddict):
-        self.emitSignal(ddict) 
-        
-    
+        self.emitSignal(ddict)
+
+
     def _reset(self):
         ddict={}
         ddict['event']   = "ResetROI"
@@ -165,7 +165,7 @@ class McaROIWidget(qt.QWidget):
         ddict['roidict'] = roidict
         self.emitSignal(ddict)
 
-    def _load(self):        
+    def _load(self):
         if self.roiDir is None:
             self.roiDir = PyMcaDirs.inputDir
         elif not os.path.isdir(self.roiDir):
@@ -202,7 +202,7 @@ class McaROIWidget(qt.QWidget):
                 row = d['ROI']['roilist'].index(current, 0)
                 self.mcaROITable.setCurrentCell(row, 0)
                 self.mcaROITable._cellChangedSlot(row, 2)
-                return            
+                return
         self.mcaROITable.setCurrentCell(0, 0)
         self.mcaROITable._cellChangedSlot(0, 2)
 
@@ -241,7 +241,7 @@ class McaROIWidget(qt.QWidget):
                 return
         self.roiDir = os.path.dirname(outputFile)
         self.save(outputFile)
-        
+
     def save(self, filename):
         d= ConfigDict.ConfigDict()
         d['ROI'] = {}
@@ -249,7 +249,7 @@ class McaROIWidget(qt.QWidget):
                     'roidict':{}}
         d['ROI']['roidict'].update(self.mcaROITable.roidict)
         d.write(filename)
-        
+
     def setData(self,*var,**kw):
         self.info ={}
         if 'legend' in kw:
@@ -320,7 +320,7 @@ class McaROITable(qt.QTableWidget):
                     item.setText(label)
                     self.setHorizontalHeaderItem(i,item)
                     i=i+1
-                
+
         self.roidict={}
         self.roilist=[]
         if 'roilist' in kw:
@@ -336,7 +336,7 @@ class McaROITable(qt.QTableWidget):
 
     def build(self):
         self.fillFromROIDict(roilist=self.roilist,roidict=self.roidict)
-    
+
     def fillFromROIDict(self,roilist=[],roidict={},currentroi=None):
         self.building = True
         line0  = 0
@@ -367,7 +367,7 @@ class McaROITable(qt.QTableWidget):
                 else:
                     netcounts = " ?????? "
                 fields  = [ROI,roitype,fromdata,todata,rawcounts,netcounts]
-                col = 0 
+                col = 0
                 for field in fields:
                     key2 = self.item(line, col)
                     if key2 is None:
@@ -378,15 +378,15 @@ class McaROITable(qt.QTableWidget):
                         key2.setText(field)
                     if (ROI.upper() == 'ICR') or (ROI.upper() == 'DEFAULT'):
                             key2.setFlags(qt.Qt.ItemIsSelectable|
-                                          qt.Qt.ItemIsEnabled) 
+                                          qt.Qt.ItemIsEnabled)
                     else:
                         if col in [0, 2, 3]:
                             key2.setFlags(qt.Qt.ItemIsSelectable|
                                           qt.Qt.ItemIsEnabled|
-                                          qt.Qt.ItemIsEditable)                        
+                                          qt.Qt.ItemIsEditable)
                         else:
                             key2.setFlags(qt.Qt.ItemIsSelectable|
-                                          qt.Qt.ItemIsEnabled) 
+                                          qt.Qt.ItemIsEnabled)
                     col=col+1
         self.setRowCount(line0)
         i = 0
@@ -405,7 +405,7 @@ class McaROITable(qt.QTableWidget):
                 self.selectRow(self.roidict[currentroi]['line'])
                 if DEBUG:
                     print("Qt4 ensureCellVisible to be implemented")
-        self.building = False                
+        self.building = False
 
     def addROI(self, roi, key=None):
         nlines = self.numRows()
@@ -433,15 +433,15 @@ class McaROITable(qt.QTableWidget):
             netcounts = " ?????? "
         self.roidict[key]['netcounts']   = netcounts
         fields  = [ROI,roitype,fromdata,todata,rawcounts,netcounts]
-        col = 0 
+        col = 0
         for field in fields:
             if (ROI == 'ICR') or (ROI.upper() == 'DEFAULT'):
                 key=qttable.QTableItem(self,qttable.QTableItem.Never,field)
             else:
                 if col == 0:
-                    key=qttable.QTableItem(self,qttable.QTableItem.OnTyping,field)                
+                    key=qttable.QTableItem(self,qttable.QTableItem.OnTyping,field)
                 else:
-                    key=qttable.QTableItem(self,qttable.QTableItem.Never,field)                
+                    key=qttable.QTableItem(self,qttable.QTableItem.Never,field)
             self.setItem(line,col,key)
             col=col+1
         self.sortByColumn(2, qt.Qt.AscendingOrder)
@@ -453,7 +453,7 @@ class McaROITable(qt.QTableWidget):
         self.ensureCellVisible(self.roidict[key]['line'],0)
 
     def getROIListAndDict(self):
-        return self.roilist,self.roidict 
+        return self.roilist,self.roidict
 
     def _mySlot(self, *var, **kw):
         #selection changed event
@@ -519,7 +519,7 @@ class McaROITable(qt.QTableWidget):
             return
         if col == 2:
             self.roidict[text]['from'] = value
-        elif col ==3:              
+        elif col ==3:
             self.roidict[text]['to'] = value
         ddict = {}
         ddict['event'] = "selectionChanged"
@@ -606,15 +606,15 @@ class McaROITable(qt.QTableWidget):
 class SimpleComboBox(qt.QComboBox):
         def __init__(self,parent = None,name = None,fl = 0,options=['1','2','3']):
             qt.QComboBox.__init__(self,parent)
-            self.setOptions(options) 
-            
+            self.setOptions(options)
+
         def setOptions(self,options=['1','2','3']):
-            self.clear()    
+            self.clear()
             self.insertStrList(options)
-            
+
         def getCurrent(self):
             return   self.currentItem(),str(self.currentText())
-             
+
 if __name__ == '__main__':
     app = qt.QApplication([])
     demo = McaROIWidget()

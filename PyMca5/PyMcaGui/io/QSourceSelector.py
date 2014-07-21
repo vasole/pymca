@@ -96,12 +96,12 @@ class QSourceSelector(qt.QWidget):
         openButton.clicked.connect(self._openFileSlot)
         closeButton.clicked.connect(self.closeFile)
         refreshButton.clicked.connect(self._reload)
-            
+
         specButton.clicked.connect(self.openSpec)
         self.fileCombo.activated[str].connect(self._fileSelection)
 
         fileWidgetLayout.addWidget(self.fileCombo)
-        fileWidgetLayout.addWidget(openButton)            
+        fileWidgetLayout.addWidget(openButton)
         fileWidgetLayout.addWidget(closeButton)
         fileWidgetLayout.addWidget(specButton)
         if sys.platform == "win32":specButton.hide()
@@ -130,11 +130,11 @@ class QSourceSelector(qt.QWidget):
 
     def _openFileSlot(self):
         self.openFile(None, None)
-    
+
     def openSource(self, sourcename, specsession=None):
         if specsession is None:
             if sourcename in sps.getspeclist():
-                specsession=True 
+                specsession=True
             else:
                 specsession=False
         self.openFile(sourcename, specsession=specsession)
@@ -192,11 +192,11 @@ class QSourceSelector(qt.QWidget):
                         self.lastFileFilter = qt.safe_str(\
                                                 fdialog.selectedFilter())
                         fdialog.close()
-                        del fdialog                        
+                        del fdialog
                     else:
                         fdialog.close()
                         del fdialog
-                        return            
+                        return
                 #filelist.sort()
                 filename=[]
                 for f in filelist:
@@ -232,7 +232,7 @@ class QSourceSelector(qt.QWidget):
             key = filename
             if key not in sps.getspeclist():
                 qt.QMessageBox.critical(self,
-                                    "SPS Error", 
+                                    "SPS Error",
                                     "No shared memory source named %s" % key)
                 return
         ddict = {}
@@ -284,7 +284,7 @@ class QSourceSelector(qt.QWidget):
         speclist = sps.getspeclist()
         if not len(speclist):
             qt.QMessageBox.information(self,
-                    "No SPEC Shared Memory Found", 
+                    "No SPEC Shared Memory Found",
                     "No shared memory source available")
             return
         if QTVERSION < '4.0.0':
@@ -293,10 +293,10 @@ class QSourceSelector(qt.QWidget):
         menu = qt.QMenu()
         for spec in speclist:
             if hasattr(qt, "QString"):
-                menu.addAction(qt.QString(spec), 
+                menu.addAction(qt.QString(spec),
                         lambda i=spec:self.openFile(i, specsession=True))
             else:
-                menu.addAction(spec, 
+                menu.addAction(spec,
                         lambda i=spec:self.openFile(i, specsession=True))
         menu.exec_(self.cursor().pos())
 
@@ -321,7 +321,7 @@ def test():
             d = QDataSource.QDataSource(ddict["sourcelist"][0])
             w.specfileWidget.setDataSource(d)
             w.sigSourceSelectorSignal.connect(mySlot)
-    
+
     a.lastWindowClosed.connect(a.quit)
 
     w.show()

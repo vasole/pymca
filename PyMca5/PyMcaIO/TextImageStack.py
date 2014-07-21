@@ -34,7 +34,7 @@ import numpy
 import sys
 import os
 from PyMca5 import DataObject
-        
+
 SOURCE_TYPE = "EdfFileStack"
 DEBUG = 0
 
@@ -70,7 +70,7 @@ class TextImageStack(DataObject.DataObject):
         if self.__dtype is None:
             self.__dtype = arrRet.dtype
         self.__nImagesPerFile = 1
-            
+
         #try to allocate the memory
         shape = self.__nFiles, arrRet.shape[0], arrRet.shape[1]
         samplingStep = 1
@@ -221,11 +221,11 @@ class TextImageStack(DataObject.DataObject):
 
     def isIndexedStack(self):
         return self.__indexedStack
-    
+
     def getZSelectionArray(self,z=0):
         return (self.data[:,:,z]).astype(numpy.float)
-        
+
     def getXYSelectionArray(self,coord=(0,0)):
-        x,y=coord    
+        x,y=coord
         return (self.data[y,x,:]).astype(numpy.float)
 

@@ -7,7 +7,7 @@ def getPackages(directory):
     for fileName in fileList:
         dirName = os.path.dirname(fileName)
         packages.append(dirName)
-        packages += getPackages(dirName)                
+        packages += getPackages(dirName)
     return packages
 
 

@@ -68,21 +68,21 @@ class EnergyTab(qt.QWidget):
         actionsLayout.setSpacing(0)
         #tube setup button
         self.tubeButton = qt.QPushButton(self.tubeActionsBox)
-        self.tubeButton.setText("Open X-Ray Tube Setup")        
+        self.tubeButton.setText("Open X-Ray Tube Setup")
         actionsLayout.addWidget(self.tubeButton, 1)
         #load new energy table
         self.tubeLoadButton = qt.QPushButton(self.tubeActionsBox)
-        self.tubeLoadButton.setText("Load Table")        
-        actionsLayout.addWidget(self.tubeLoadButton, 0)            
+        self.tubeLoadButton.setText("Load Table")
+        actionsLayout.addWidget(self.tubeLoadButton, 0)
         #save seen energy table
         self.tubeSaveButton = qt.QPushButton(self.tubeActionsBox)
-        self.tubeSaveButton.setText("Save Table")        
+        self.tubeSaveButton.setText("Save Table")
         actionsLayout.addWidget(self.tubeSaveButton, 0)
 
         layout.addWidget(self.tubeActionsBox)
         layout.addWidget(hbox)
         self.tubeButton.clicked[()].connect(self.tubeButtonClicked)
-        self.tubeLoadButton.clicked[()].connect(self.loadButtonClicked)            
+        self.tubeLoadButton.clicked[()].connect(self.loadButtonClicked)
         self.tubeSaveButton.clicked[()].connect(self.saveButtonClicked)
         self.tube.sigQXTubeSignal.connect(self.__tubeUpdated)
 
@@ -189,7 +189,7 @@ class EnergyTab(qt.QWidget):
                                  ddict["weightlist"],
                                  ddict["flaglist"],
                                  ddict["scatterlist"])
-        
+
     def saveButtonClicked(self):
         energylist, weightlist, flaglist, scatterlist = self.table.getParameters()
         if self.outputDir is None:
@@ -220,9 +220,9 @@ class EnergyTab(qt.QWidget):
         self.outputFilter = qt.safe_str(outfile.selectedFilter())
         filterused = self.outputFilter.split()
         outputFile = qt.safe_str(outfile.selectedFiles()[0])
-        try:            
+        try:
             self.outputDir  = os.path.dirname(outputFile)
-            PyMcaDirs.outputDir = os.path.dirname(outputFile) 
+            PyMcaDirs.outputDir = os.path.dirname(outputFile)
         except:
             self.outputDir  = "."
         outfile.close()
@@ -246,7 +246,7 @@ class EnergyTab(qt.QWidget):
             csv = ";"
         else:
             csv = "\t"
-            
+
         ffile.write('"energy"%s"weight"%s"flag"%s"scatter"\n' % (csv, csv, csv))
         #write the scatter lines in first instance
         alreadysaved = []
@@ -336,7 +336,7 @@ class EnergyTable(QTable):
                 if item is None:
                     item = qt.QTableWidgetItem(labels[i],qt.QTableWidgetItem.Type)
                 self.setHorizontalHeaderItem(i,item)
-                
+
         self.__rows = 20
         self.__build(self.dataColumns * 20)
         self.__disconnected = False
@@ -359,7 +359,7 @@ class EnergyTable(QTable):
             rheight = self.horizontalHeader().sizeHint().height()
             for idx in range(self.rowCount()):
                 self.setRowHeight(idx, rheight)
-                
+
         coloffset = 0
         rowoffset = 0
         for idx in range(nrows):
@@ -379,7 +379,7 @@ class EnergyTable(QTable):
             if QTVERSION < '4.0.0':
                 #item= qttable.QCheckTableItem(self, text)
                 self.viewport().setPaletteBackgroundColor(color)
-                item= ColorQTableItem(self, text, color)                
+                item= ColorQTableItem(self, text, color)
                 self.setItem(r, 0+coloffset, item)
             else:
                 item = self.cellWidget(r, 0+coloffset)
@@ -423,7 +423,7 @@ class EnergyTable(QTable):
             self.energyList=[weightlist]
         else:
             self.weightList =weightlist
-        
+
         if   isinstance(flaglist, numpy.ndarray):
             self.flagList=flaglist.tolist()
         elif type(flaglist) != type([]):
@@ -431,7 +431,7 @@ class EnergyTable(QTable):
         else:
             self.flagList =flaglist
 
-        
+
         if scatterlist is None:
             scatterlist = numpy.zeros(len(self.energyList)).tolist()
             scatterlist[0] = 1
@@ -534,18 +534,18 @@ class EnergyTable(QTable):
                 if len(s):
                     float(s)
             except:
-                msg = qt.QMessageBox(self)       
+                msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Float")
                 msg.exec_()
-                return 
+                return
         ddict = self._getDict()
         if ddict != {}:
             ddict['event'] = "ValueChanged"
             ddict['row']   = row
             ddict['col']   = col
             self.sigEnergyTableSignal.emit(ddict)
-            
+
     def text(self, row, col):
         if (col % 3) in [1,2]:
             item = self.item(row , col)
@@ -609,7 +609,7 @@ class EnergyTable(QTable):
                             ddict['scatterflag'].append(scatterflag)
                 except:
                 #else:
-                    msg = qt.QMessageBox(self)       
+                    msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("EnergyTable: Error on energy %d" % i)
                     msg.exec_()
@@ -635,7 +635,7 @@ class ColorQTableItem(qt.QCheckBox):
             palette.setColor(role, self.color)
             self.setPalette(palette)
             return qt.QCheckBox.paintEvent(self, painter)
-            
+
 def main(args):
     app=qt.QApplication(args)
     #tab = AttenuatorsTableWidget(None)
@@ -652,7 +652,7 @@ def main(args):
     tab.show()
     app.exec_()
 
-                            
+
 
 if __name__=="__main__":
-    main(sys.argv)	
+    main(sys.argv)

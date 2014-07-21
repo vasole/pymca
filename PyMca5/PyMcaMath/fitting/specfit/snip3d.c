@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-/* 
+/*
    Implementation of the algorithm SNIP in 3D described in
    Miroslav Morhac et al. Nucl. Instruments and Methods in Physics Research A401 (1997) 113-132.
 */
@@ -85,7 +85,7 @@ void snip3d(double *data, int nx, int ny, int nz, int width)
 
 					S1 = data[iplus   + joffset + k-p]; /* S1  = data[i+p][j][k-p] */
 					S2 = data[ioffset + jmin    + k-p]; /* S2  = data[i][j+p][k-p] */
-					S3 = data[imin    + joffset + k-p]; /* S3  = data[i-p][j][k-p] */					
+					S3 = data[imin    + joffset + k-p]; /* S3  = data[i-p][j][k-p] */
 					S4 = data[ioffset + jmin    + k-p]; /* S4  = data[i][j-p][k-p] */
 					S5 = data[imin    + joffset + k+p]; /* S5  = data[i-p][j][k+p] */
 					S6 = data[ioffset + jplus   + k+p]; /* S6  = data[i][j+p][k+p] */
@@ -140,7 +140,7 @@ void snip3d(double *data, int nx, int ny, int nz, int width)
 					S12 = MAX(S12, dhelp) - dhelp;
 
 					/* The published formulae correspond to have:
-					   P7 and P8 interchanged, and S11 and S12 interchanged 
+					   P7 and P8 interchanged, and S11 and S12 interchanged
 					   with respect to the published drawing */
 
 					dhelp = 0.5 * (S1+S2+S3+S4)   + 0.25 * (P1+P2+P3+P4);

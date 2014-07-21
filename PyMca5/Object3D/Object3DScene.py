@@ -77,7 +77,7 @@ class Object3DScene(SceneGLWindow.SceneGLWindow):
         o3d.setData(data, x=x, y=y, z=z, xyz=xyz)
         self.addObject(o3d, legend, update_scene=update_scene)
         return o3d
-        
+
     def stack(self, data, x=None, y=None, z=None, legend=None, update_scene=True):
         """
         I should find a better name for this method ...
@@ -115,7 +115,7 @@ if __name__ == "__main__":
         y = numpy.arange(-2,2,0.01).astype(numpy.float32)
         xsize = len(x)
         ysize = len(y)
-        #generate the vertices 
+        #generate the vertices
         vertices = numpy.zeros((xsize * ysize, 3), numpy.float32)
 
         #generate the grid using simple math operations

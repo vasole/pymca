@@ -53,9 +53,9 @@ if "PyMcaDirs" in sys.modules:
 DEBUG=0
 
 class Buttons(qt.QWidget):
-    
+
     sigButtonsSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None, options=None):
         qt.QWidget.__init__(self, parent)
         self.mainLayout = qt.QGridLayout(self)
@@ -161,7 +161,7 @@ class QNexusWidget(qt.QWidget):
         keys = ddict.keys
         if 'PyMca' in keys():
             ddict = ddict['PyMca']
-        
+
         if 'HDF5' not in ddict.keys():
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
@@ -176,7 +176,7 @@ class QNexusWidget(qt.QWidget):
             msg.exec_()
             return None
 
-        ddict =ddict['HDF5']['WidgetConfiguration'] 
+        ddict =ddict['HDF5']['WidgetConfiguration']
         keys = ddict.keys()
 
         if ('counters' not in keys) or\
@@ -193,7 +193,7 @@ class QNexusWidget(qt.QWidget):
             msg.setText("Number of counters does not match number of aliases")
             msg.exec_()
             return None
-        
+
         return ddict
 
 
@@ -258,7 +258,7 @@ class QNexusWidget(qt.QWidget):
             row = item.row()
             if row not in rowList:
                 rowList.append(row)
-                
+
         rowList.sort()
         rowList.reverse()
         current = self.cntTable.getCounterSelection()
@@ -300,7 +300,7 @@ class QNexusWidget(qt.QWidget):
         if len(ret):
             self._dir = os.path.dirname(ret)
             if "PyMcaDirs" in sys.modules:
-                PyMcaDirs.inputDir = os.path.dirname(ret)                
+                PyMcaDirs.inputDir = os.path.dirname(ret)
         return ret
 
     def getOutputFilename(self):
@@ -322,7 +322,7 @@ class QNexusWidget(qt.QWidget):
         if len(ret):
             self._dir = os.path.dirname(ret)
             if "PyMcaDirs" in sys.modules:
-                PyMcaDirs.outputDir = os.path.dirname(ret)                
+                PyMcaDirs.outputDir = os.path.dirname(ret)
         return ret
 
     def getWidgetConfiguration(self):
@@ -477,7 +477,7 @@ class QNexusWidget(qt.QWidget):
         name = ddict['name']
         self._checkWidgetDict()
         fileIndex = self.data.sourceName.index(filename)
-        phynxFile  = self.data._sourceObjectList[fileIndex]        
+        phynxFile  = self.data._sourceObjectList[fileIndex]
         dataset = phynxFile[name]
         widget = HDF5DatasetTable.HDF5DatasetTable()
         title = os.path.basename(filename)
@@ -513,7 +513,7 @@ class QNexusWidget(qt.QWidget):
         filename = ddict['file']
         name = ddict['name']
         return self.showInfoWidget(filename, name)
-                
+
     def hdf5Slot(self, ddict):
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
@@ -600,7 +600,7 @@ class QNexusWidget(qt.QWidget):
                 sel['selection']['sourcename'] = filename
                 #deal with the case the "entry" is a dataset hunging at root level
                 if isinstance(phynxFile[entry], h5py.Dataset):
-                    entry = "/" 
+                    entry = "/"
                 sel['selection']['entry'] = entry
                 sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['selection']['x'] = cntSelection['x']
@@ -619,7 +619,7 @@ class QNexusWidget(qt.QWidget):
                 else:
                     sel['scanselection'] = False
                     sel['mcaselection']  = False
-                aliases = cntSelection['aliaslist'] 
+                aliases = cntSelection['aliaslist']
                 if len(cntSelection['x']) and len(cntSelection['m']):
                     addLegend = " (%s/%s) vs %s" % (aliases[yCnt],
                                                    aliases[cntSelection['m'][0]],
@@ -681,12 +681,12 @@ class QNexusWidget(qt.QWidget):
                     if ddict['id'] in self._widgetDict:
                         if DEBUG:
                             try:
-                                widget = self._widgetDict[ddict['id']] 
+                                widget = self._widgetDict[ddict['id']]
                                 print("DELETING %s" % widget.windowTitle())
                             except:
                                 pass
                         del self._widgetDict[ddict['id']]
-    
+
 if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)

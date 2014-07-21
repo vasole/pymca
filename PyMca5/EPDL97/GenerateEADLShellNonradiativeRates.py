@@ -1,9 +1,9 @@
-__doc__= "Generate specfiles with EADL97 shell transition probabilities" 
+__doc__= "Generate specfiles with EADL97 shell transition probabilities"
 import os
 import sys
 import EADLParser
 
-Elements = ['H', 'He', 
+Elements = ['H', 'He',
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
             'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -11,12 +11,12 @@ Elements = ['H', 'He',
             'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
             'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
             'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
 def getHeader(filename):
@@ -31,7 +31,7 @@ def getHeader(filename):
     text += '\n'
     return text
 shellList = EADLParser.getBaseShellList()
-workingShells = ['K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5'] 
+workingShells = ['K', 'L1', 'L2', 'L3', 'M1', 'M2', 'M3', 'M4', 'M5']
 for shell in workingShells:
     fname = "EADL97_%sShellNonradiativeRates.dat" % shell[0]
     print("fname = %s" % fname)
@@ -44,7 +44,7 @@ for shell in workingShells:
         if sys.version < '3.0':
             outfile.write(tmpText)
         else:
-            outfile.write(tmpText.encode('UTF-8'))            
+            outfile.write(tmpText.encode('UTF-8'))
     nscan += 1
     for i in range(1,101):
         print("Z = %d, Element = %s" % (i, Elements[i-1]))
@@ -54,12 +54,12 @@ for shell in workingShells:
             tmpKey = key0.split()[0]
             if tmpKey in workingShells:
                 if workingShells.index(tmpKey) <= workingShells.index(shell):
-                    continue                    
+                    continue
             for key1 in shellList:
                 tmpKey = key1.split()[0]
                 if tmpKey in workingShells:
                     if workingShells.index(tmpKey) <= workingShells.index(shell):
-                        continue                    
+                        continue
                 key = "%s-%s%s" % (shell, key0.split()[0], key1.split()[0])
                 if shell in [key0.split()[0], key1.split()[0]]:
                     continue
@@ -81,7 +81,7 @@ for shell in workingShells:
                 tmpKey = key0.split()[0]
                 if tmpKey in workingShells:
                     if workingShells.index(tmpKey) <= workingShells.index(shell):
-                        continue                    
+                        continue
                 for key1 in shellList:
                     tmpKey = key1.split()[0]
                     if tmpKey in workingShells:
@@ -102,12 +102,12 @@ for shell in workingShells:
             tmpKey = key0.split()[0]
             if tmpKey in workingShells:
                 if workingShells.index(tmpKey) <= workingShells.index(shell):
-                    continue                    
+                    continue
             for key1 in shellList:
                 tmpKey = key1.split()[0]
                 if tmpKey in workingShells:
                     if workingShells.index(tmpKey) <= workingShells.index(shell):
-                        continue                    
+                        continue
                 key = "%s-%s%s" % (shell, key0.split()[0], key1.split()[0])
                 total += ddict.get(key, [0.0, 0.0])[0]
         text += '%d  %.7E' % (i, total)
@@ -115,12 +115,12 @@ for shell in workingShells:
             tmpKey = key0.split()[0]
             if tmpKey in workingShells:
                 if workingShells.index(tmpKey) <= workingShells.index(shell):
-                    continue                    
+                    continue
             for key1 in shellList:
                 tmpKey = key1.split()[0]
                 if tmpKey in workingShells:
                     if workingShells.index(tmpKey) <= workingShells.index(shell):
-                        continue                    
+                        continue
                 key = "%s-%s%s" % (shell, key0.split()[0], key1.split()[0])
                 valueToWrite = ddict.get(key, [0.0, 0.0])[0]
                 if valueToWrite == 0.0:

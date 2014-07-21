@@ -52,20 +52,20 @@ class QSelectorWidget(qt.QWidget):
         self.buttonBox = qt.QWidget(self)
         buttonBox = self.buttonBox
         self.buttonBoxLayout = qt.QHBoxLayout(buttonBox)
-        
+
         self.addButton = qt.QPushButton(buttonBox)
         self.addButton.setText("ADD")
         self.removeButton = qt.QPushButton(buttonBox)
         self.removeButton.setText("REMOVE")
         self.replaceButton = qt.QPushButton(buttonBox)
         self.replaceButton.setText("REPLACE")
-        
+
         self.buttonBoxLayout.addWidget(self.addButton)
         self.buttonBoxLayout.addWidget(self.removeButton)
         self.buttonBoxLayout.addWidget(self.replaceButton)
-        
+
         self.mainLayout.addWidget(buttonBox)
-        
+
         self.addButton.clicked[()].connect(self._addClicked)
         self.removeButton.clicked[()].connect(self._removeClicked)
         self.replaceButton.clicked[()].connect(self._replaceClicked)
@@ -73,22 +73,22 @@ class QSelectorWidget(qt.QWidget):
     def _addClicked(self):
         if DEBUG:
             print("_addClicked()")
-    
+
     def _removeClicked(self):
         if DEBUG:
-            print("_removeClicked()")   
+            print("_removeClicked()")
 
     def _replaceClicked(self):
         if DEBUG: print(
             "_replaceClicked()")
 
-            
+
 def test():
     app = qt.QApplication([])
     w = QSelectorWidget()
     w.show()
     app.lastWindowClosed.connect(app.quit)
     app.exec_()
-        
+
 if __name__ == "__main__":
     test()

@@ -59,8 +59,8 @@ colordict['violet'] = '#6600ff'
 colordict['grey']   = '#808080'
 colordict['yellow'] = '#ffff00'
 colordict['darkgreen'] = 'g'
-colordict['darkbrown'] = '#660000' 
-colordict['magenta']   = 'm' 
+colordict['darkbrown'] = '#660000'
+colordict['magenta']   = 'm'
 colordict['cyan']      = 'c'
 colordict['bluegreen'] = '#33ffff'
 colorlist  = [colordict['black'],
@@ -193,7 +193,7 @@ class MatplotlibCurveTable(qt.QTableWidget):
         for i in range(self.rowCount()):
             widget = self.cellWidget(i, 0)
             legend = str(widget.text())
-            ddict['curvelist'].append(legend) 
+            ddict['curvelist'].append(legend)
             ddict['curvedict'][legend] = {}
             alias = str(self.item(i, 1).text())
             if widget.isChecked():
@@ -309,12 +309,12 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
             self.mainLayout.setRowStretch(1, 1)
 
         self.xLabelLine.editingFinished[()].connect(self._xLabelSlot)
-        
+
         self.yLabelLine.editingFinished[()].connect(self._yLabelSlot)
 
 
         self.acceptButton.clicked[()].connect(self.accept)
-        
+
         self.dismissButton.clicked[()].connect(self.reject)
 
     def exec_(self):
@@ -380,7 +380,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
         #self.setLogXEnabled(logx)
         #self.setLogYEnabled(logy)
         #self.setLegendsEnabled(legends)
-        
+
         self.xmin = None
         self.xmax = None
         self.ymin = None
@@ -474,7 +474,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
             self.colorIndex = 0
             self.styleIndex += 1
             if self.styleIndex >= self.nStyles:
-                self.styleIndex = 0        
+                self.styleIndex = 0
         return color, style
 
     def addDataToPlot(self, x, y, legend = None,
@@ -495,7 +495,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
             if DEBUG:
                 print("nothing to plot")
             return
-        
+
         style = None
         if color is None:
             color, style = self._getColorAndStyle()
@@ -527,7 +527,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
             self._legendList[-1] = alias
         if self.curveTable is not None:
             self.curveTable.setCurveListAndDict(self.curveList, self.curveDict)
-        
+
     def setXLabel(self, label):
         self.ax.set_xlabel(label)
 
@@ -536,7 +536,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
 
     def setTitle(self, title):
         self.ax.set_title(title)
-        
+
     def plotLegends(self, legendlist=None):
         if not self._legend:return
         if legendlist is None:
@@ -564,7 +564,7 @@ class QPyMcaMatplotlibSave(FigureCanvas):
                 else:
                     loc = (1.05,  -0.1)
                     fontproperties = FontProperties(size=6)
-        
+
         if matplotlib_version < '0.99.0':
             legend = self.ax.legend(legendlist,
                                 loc = loc,

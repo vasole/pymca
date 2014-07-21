@@ -87,7 +87,7 @@ class MccdHeader(object):
     formatHead = ["nfast",
                   "nslow",
                   "depth"]
-    
+
     gonioHead= [    "xtal_to_detector",
             "beam_x",
             "beam_y",

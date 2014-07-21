@@ -42,7 +42,7 @@ from PyMca5 import PyMcaDirs
 DEBUG = 0
 class McaCalibrationControlGUI(qt.QWidget):
     sigMcaCalibrationControlGUISignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None, name=""):
         qt.QWidget.__init__(self, parent)
         if name is not None:
@@ -80,7 +80,7 @@ class McaCalibrationControlGUI(qt.QWidget):
         #            self._calboxactivated)
         self.calbox.activated.connect(self._calboxactivated)
         self.calbut.clicked.connect(self._calbuttonclicked)
-        
+
     def _calboxactivated(self, item=None):
         if DEBUG:
             item = qt.safe_str(item)
@@ -89,27 +89,27 @@ class McaCalibrationControlGUI(qt.QWidget):
         self._emitpysignal(box=[comboitem,combotext],
                            boxname='Calibration',
                            event='activated')
-        
+
     def _calbuttonclicked(self):
         if DEBUG:
             print("Calibration button clicked")
         self.calmenu.exec_(self.cursor().pos())
-        
+
     def _copysignal(self):
         comboitem,combotext = self.calbox.getCurrent()
         self._emitpysignal(button="CalibrationCopy",
                            box=[comboitem,combotext],
                            event='clicked')
-                
+
     def _computesignal(self):
         comboitem,combotext = self.calbox.getCurrent()
         self._emitpysignal(button="Calibration",
                            box=[comboitem,combotext],
                            event='clicked')
-                
+
     def _loadsignal(self):
         if self.lastInputDir is None:
-            self.lastInputDir = PyMcaDirs.inputDir            
+            self.lastInputDir = PyMcaDirs.inputDir
         if self.lastInputDir is not None:
             if not os.path.exists(self.lastInputDir):
                 self.lastInputDir = None
@@ -121,7 +121,7 @@ class McaCalibrationControlGUI(qt.QWidget):
             filename= qt.safe_str(qt.QFileDialog.getOpenFileName(self,
                           "Load existing calibration file",
                           windir,
-                          self.lastInputFilter))                
+                          self.lastInputFilter))
         else:
             windir = self.lastInputDir
             if windir is None:windir = os.getcwd()
@@ -132,7 +132,7 @@ class McaCalibrationControlGUI(qt.QWidget):
                 strlist = qt.QStringList()
             else:
                 strlist = []
-            tmp = [self.lastInputFilter.replace("\n","")] 
+            tmp = [self.lastInputFilter.replace("\n","")]
             for filetype in tmp:
                 strlist.append(filetype.replace("(","").replace(")",""))
             filename.setFilters(strlist)
@@ -151,14 +151,14 @@ class McaCalibrationControlGUI(qt.QWidget):
         if len(filename) < 6:
             filename = filename + ".calib"
         elif filename[-6:] != ".calib":
-            filename = filename + ".calib"        
+            filename = filename + ".calib"
         self.lastInputDir = os.path.dirname(filename)
         comboitem,combotext = self.calbox.getCurrent()
         self._emitpysignal(button="CalibrationLoad",
                            box=[comboitem,combotext],
                            line_edit = filename,
                            event='clicked')
-                
+
     def _savesignal(self):
         if self.lastInputDir is None:
             self.lastInputDir = PyMcaDirs.outputDir
@@ -173,7 +173,7 @@ class McaCalibrationControlGUI(qt.QWidget):
             filename= qt.safe_str(qt.QFileDialog.getSaveFileName(self,
                           "Save a new calibration file",
                           windir,
-                          self.lastInputFilter))                
+                          self.lastInputFilter))
         else:
             windir = self.lastInputDir
             if windir is None:windir = os.getcwd()
@@ -184,7 +184,7 @@ class McaCalibrationControlGUI(qt.QWidget):
                 strlist = qt.QStringList()
             else:
                 strlist = []
-            tmp = [self.lastInputFilter.replace("\n","")] 
+            tmp = [self.lastInputFilter.replace("\n","")]
             for filetype in tmp:
                 strlist.append(filetype.replace("(","").replace(")",""))
             filename.setFilters(strlist)
@@ -204,7 +204,7 @@ class McaCalibrationControlGUI(qt.QWidget):
         if len(filename) < 6:
             filename = filename + ".calib"
         elif filename[-6:] != ".calib":
-            filename = filename + ".calib"        
+            filename = filename + ".calib"
         self.lastInputDir = os.path.dirname(filename)
         PyMcaDirs.outputDir = os.path.dirname(filename)
         comboitem,combotext = self.calbox.getCurrent()
@@ -242,7 +242,7 @@ class McaCalibrationControlLine(qt.QWidget):
         self.l.setContentsMargins(0, 0, 0, 0)
         self.l.setSpacing(0)
         self.build()
-    
+
     def build(self):
         widget = self
         callabel    = qt.QLabel(widget)
@@ -280,7 +280,7 @@ class McaCalibrationInfoLine(qt.QWidget):
         self.currentcal = calname
         self.build()
         self.setParameters(self.caldict[calname])
-    
+
     def build(self):
         layout= qt.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -319,7 +319,7 @@ class McaCalibrationInfoLine(qt.QWidget):
         elif pars["C"] != 0.0:
             order = 2
         else:
-            order = 1            
+            order = 1
         self.AText.setText("%.8g" % pars["A"])
         self.BText.setText("%.8g" % pars["B"])
         self.CText.setText("%.8g" % pars["C"])
@@ -339,8 +339,8 @@ class McaCalibrationInfoLine(qt.QWidget):
 class SimpleComboBox(qt.QComboBox):
         def __init__(self, parent=None, name=None, options=['1','2','3']):
             qt.QComboBox.__init__(self,parent)
-            self.setOptions(options) 
-            
+            self.setOptions(options)
+
         def setOptions(self,options=['1','2','3']):
             self.clear()
             for item in options:
@@ -348,10 +348,10 @@ class SimpleComboBox(qt.QComboBox):
 
         def getCurrent(self):
             return   self.currentIndex(), qt.safe_str(self.currentText())
-             
+
 
 if __name__ == '__main__':
     app = qt.QApplication(sys.argv)
     demo = McaCalibrationControlGUI()
     demo.show()
-    app.exec_()            
+    app.exec_()

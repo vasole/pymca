@@ -46,7 +46,7 @@ class ChangeLog(qt.QTextDocument):
         f.close()
         text = ""
         for line in lines:
-            text += "%s" % line    
+            text += "%s" % line
         self.setPlainText(text)
 
 def test():

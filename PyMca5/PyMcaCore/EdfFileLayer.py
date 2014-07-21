@@ -32,12 +32,12 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
     EdfFileData.py
-    Data derived class to access Edf files    
+    Data derived class to access Edf files
 """
 
 
 
-################################################################################  
+################################################################################
 #import fast_EdfFile as EdfFile
 from PyMca5.PyMcaIO import EdfFile
 ################################################################################
@@ -47,14 +47,14 @@ DEBUG = 0
 
 class EdfFileLayer(object):
     """
-    Specializes Data class in order to access Edf files.    
+    Specializes Data class in order to access Edf files.
     Interface: Data class interface.
     """
     def __init__(self,refresh_interval=None,info={},fastedf=None):
         """
         See Data.__init__
         """
-        info["Class"]="EdfFileData"        
+        info["Class"]="EdfFileData"
         #Data.__init__(self,refresh_interval,info)
         self.SourceName= None
         self.SourceInfo= None
@@ -66,7 +66,7 @@ class EdfFileLayer(object):
         if 'SourceName' in index:
             self.SetSource(index['SourceName'])
             if 'Key' in index:
-                info=self.GetData(index['Key'])   
+                info=self.GetData(index['Key'])
                 return info[0]
 
     def AppendPage(self,info={}, array=None):
@@ -78,7 +78,7 @@ class EdfFileLayer(object):
         If the file exists, self.Source will be the EdfFile
         object associated to this file.
         Parameters:
-        source_name: name of the edf file 
+        source_name: name of the edf file
         """
         if source_name==self.SourceName: return 1
         if (type(source_name) != type([])):source_name = [source_name]
@@ -95,7 +95,7 @@ class EdfFileLayer(object):
                             self.Source.append(EdfFile.EdfFile(name,fastedf=self.fastedf))
                         except:
                             #print("EdfFileLayer.SetSource: Error trying to read EDF file %s" % name)
-                            self.Source.append( None)                
+                            self.Source.append( None)
                 else:
                     try:
                         self.Source = EdfFile.EdfFile(source_name, fastedf=self.fastedf)
@@ -112,7 +112,7 @@ class EdfFileLayer(object):
             self.SourceName=""
             for name in source_name:
                 if self.SourceName != "":self.SourceName+="|"
-                self.SourceName+= name                
+                self.SourceName+= name
             return 1
 
 
@@ -129,7 +129,7 @@ class EdfFileLayer(object):
         index=self.GetPageListIndex(index)
         if index is None or index >= len(self.Pages): return None
         return self.Pages[index].Array
-            
+
 
     def GetPageListIndex(self,index):
         """
@@ -158,7 +158,7 @@ class EdfFileLayer(object):
         keys to this source) and "KeyList" (list of all available keys
         in this source). Each element in "KeyList" is an integer
         meaning the index of the array in the file.
-        """        
+        """
         if self.SourceName == None: return None
         if type(self.Source) == type([]):
             enumtype = 1
@@ -171,10 +171,10 @@ class EdfFileLayer(object):
                         NumImages=self.Source.GetNumImages()
                         self.SourceInfo={}
                         self.SourceInfo["Size"]=NumImages
-                        self.SourceInfo["KeyList"]=range(NumImages)                    
+                        self.SourceInfo["KeyList"]=range(NumImages)
                     source_info.update(self.SourceInfo)
                     return source_info
-            else:        
+            else:
                 NumImages=self.Source.GetNumImages()
                 source_info={}
                 source_info["Size"]=NumImages
@@ -191,14 +191,14 @@ class EdfFileLayer(object):
                     self.SourceInfo["Size"] += NumImages
                     for imagenumber in range(NumImages):
                         self.SourceInfo["KeyList"].append('%d.%d' % (self.Source.index(source)+1,
-                                                                     imagenumber+1))                    
+                                                                     imagenumber+1))
                     source_info.update(self.SourceInfo)
                 return source_info
             else:
                 try:
                     index,image = key.split(".")
                     index = int(index)-1
-                    image = int(image)-1                    
+                    image = int(image)-1
                 except:
                     print("Error trying to interpret key = %s" % key)
                     return {}
@@ -221,7 +221,7 @@ class EdfFileLayer(object):
                  keys, meaning the indexes to be read from the file.
                  It can be also one integer, if only one array is to be read.
         append: If non-zero appends to the end of page list.
-                Otherwise, initializes the page list                
+                Otherwise, initializes the page list
         invalidate: if non-zero performas an invalidade call after
                     loading
         pos and size: (x), (x,y) or (x,y,z) tuples defining a roi
@@ -234,14 +234,14 @@ class EdfFileLayer(object):
         numimages=sourceinfo['Size']
         if key_list == "ALL": key_list=sourceinfo['KeyList']
         elif type(key_list) != type([]): key_list=[key_list]
-        
+
         #AS elif type(key_list) is types.IntType: key_list=[key_list]
         if pos is not None:
             edf_pos=list(pos)
             for i in range(len(edf_pos)):
                 if edf_pos[i]=="ALL":edf_pos[i]=0
         else: edf_pos=None
-            
+
         if size is not None:
             edf_size=list(size)
             for i in range(len(edf_size)):
@@ -254,7 +254,7 @@ class EdfFileLayer(object):
             sumrequested = 0
             if type(key0) == type({}):
                 if 'Key' in key0:
-                    key = key0['Key']              
+                    key = key0['Key']
             if type(key0) == type(''):
                 if len(key0.split(".")) == 2:
                     f,i = key0.split(".")
@@ -270,7 +270,7 @@ class EdfFileLayer(object):
                         key = sourceinfo['KeyList'][i]
                         f,i = key.split(".")
                         f=int(f)
-                        i=int(i)                       
+                        i=int(i)
                     else:
                         key = "%d.%d" % (f,i)
             else:
@@ -342,7 +342,7 @@ class EdfFileLayer(object):
                         if (f==0) and (i==0):
                             array = 1 * array0
                         else:
-                            array += array0 
+                            array += array0
                     f+=1
             if 'McaCalib' in info:
                 if type(info['McaCalib']) == type(" "):
@@ -352,13 +352,13 @@ class EdfFileLayer(object):
                     info['McaCalib'] = [float(cala),
                                         float(calb),
                                         float(calc)]
-                
+
             output.append([info,array])
             #AS self.AppendPage(info,array)
         if len(output) == 1:
             return output[0]
         else:
-            return output        
+            return output
         #AS if invalidate: self.Invalidate()
 
     def LoadSourceSingle(self,key_list="ALL",append=0,invalidate=1,pos=None,size=None):
@@ -370,7 +370,7 @@ class EdfFileLayer(object):
                  keys, meaning the indexes to be read from the file.
                  It can be also one integer, if only one array is to be read.
         append: If non-zero appends to the end of page list.
-                Otherwise, initializes the page list                
+                Otherwise, initializes the page list
         invalidate: if non-zero performas an invalidade call after
                     loading
         pos and size: (x), (x,y) or (x,y,z) tuples defining a roi
@@ -387,7 +387,7 @@ class EdfFileLayer(object):
             for i in range(len(edf_pos)):
                 if edf_pos[i]=="ALL":edf_pos[i]=0
         else: edf_pos=None
-            
+
         if size is not None:
             edf_size=list(size)
             for i in range(len(edf_size)):
@@ -398,7 +398,7 @@ class EdfFileLayer(object):
         for key in key_list:
             if type(key) == type({}):
                 if 'Key' in key:
-                    key = key['Key']              
+                    key = key['Key']
             if type(key) == type(''):
                 i=int(key)
             else:
@@ -425,23 +425,23 @@ class EdfFileLayer(object):
                 if 'MCA a' in info and 'MCA b' in info and 'MCA c' in info:
                     info['McaCalib'] = [float(info['MCA a']),
                                         float(info['MCA b']),
-                                        float(info['MCA c'])]                    
+                                        float(info['MCA c'])]
             output.append([info,array])
             #AS self.AppendPage(info,array)
         if len(output) == 1:
             return output[0]
         else:
-            return output        
+            return output
         #AS if invalidate: self.Invalidate()
 
 ################################################################################
 #EXAMPLE CODE:
-    
+
 if __name__ == "__main__":
     import sys,time
     try:
         filename=sys.argv[1]
-        key=sys.argv[2]    
+        key=sys.argv[2]
         fast = int(sys.argv[3])
         obj=EdfFileLayer(fastedf=fast)
         if not obj.SetSource([filename]):
@@ -465,5 +465,5 @@ if __name__ == "__main__":
         print(info)
         #print obj.GetPageInfo("%d" % i)
         #print obj.GetPageInfo(i)
-        #print obj.GetPageInfo({'Key':i})        
+        #print obj.GetPageInfo({'Key':i})
         #print obj.GetPageArray(i)

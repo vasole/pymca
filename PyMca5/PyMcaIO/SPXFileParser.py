@@ -82,7 +82,7 @@ class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         data = numpy.array([float(x) for x in root.find('.//Channels').text.split(',')])
         data.shape = len(data), 1
 
-        scanheader = ['#S 1  ' + info.get('name', "Unknown name")] 
+        scanheader = ['#S 1  ' + info.get('name', "Unknown name")]
         i = 0
         if axes is not None:
             for axis in axes:
@@ -97,7 +97,7 @@ class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
 
         scanheader.append("#@CALIB %f %f 0" % (myFloat(info.get('CalibAbs', 0.0)),
                                                myFloat(info.get('CalibLin', 1.0))))
-        
+
         self.scandata = [SpecFileAbstractClass.SpecFileAbstractScan(data,
                                 scantype="MCA",
                                 scanheader=scanheader)]
@@ -107,4 +107,4 @@ def test(filename):
 
 if __name__ == "__main__":
     test(sys.argv[1])
-        
+

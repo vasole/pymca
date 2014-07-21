@@ -5,7 +5,7 @@
 	A *group of threads* handles one keypoint, for additional information is required in the keypoint neighborhood
 
 	WARNING: local workgroup size must be at least 128 for orientation_assignment
-    
+
     Workgroup Size: (128,)
 
 	For descriptors (so far) :

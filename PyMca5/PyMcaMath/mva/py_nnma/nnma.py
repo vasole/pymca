@@ -1,7 +1,7 @@
 #encoding:latin-1
 import numpy as np
 
-try:    
+try:
     import scipy.sparse as sp
     has_sparse = True
     is_sparse = lambda A: isinstance(A, sp.spmatrix)
@@ -27,7 +27,7 @@ NNMA minimizes  dist(Y, A X)
 
                k < min(m,n)
 
-     dist(A,B) can be || A - B ||_fro 
+     dist(A,B) can be || A - B ||_fro
                    or   KL(A,B)
 
 
@@ -40,13 +40,13 @@ The common parameters when calling such a function are:
 
     input:
 
-            Y           --   the matrix for decomposition, maybe dense 
-                             from numpy or sparse from scipy.sparse 
+            Y           --   the matrix for decomposition, maybe dense
+                             from numpy or sparse from scipy.sparse
                              package
 
             k           --   number of componnets to estimate
 
-            Astart 
+            Astart
             Xstart      --   matrices to start iterations. Maybe None
                              for using random start matrices.
 
@@ -60,13 +60,13 @@ The common parameters when calling such a function are:
 
     output:
 
-            A, X        --   result matrices of algorithm 
-            
+            A, X        --   result matrices of algorithm
+
             obj         --   value of objective function of last iteration
 
             count       --   number of iterations done
 
-            converged   --   flag: indicates if iterations stoped within 
+            converged   --   flag: indicates if iterations stoped within
                              max number of iterations
 
 The following extra parameters exist depending on algorithm:
@@ -77,7 +77,7 @@ The following extra parameters exist depending on algorithm:
 
     ALS      :  regularization parameter 'regul' for stabilizing iterations
                 (default value 0). needed if objective value jitters.
- 
+
     GCDLS    :  'regul' for l2-smoothness of X (default 0)
 
     GDCLS_L1 :  'regul' for l1-smoothness of X (default 0)
@@ -129,8 +129,8 @@ This module is based on:
 
     - Daniel D. Lee and H. Sebastian Seung:
 
-          "Algorithms for non-negative matrix factorization", 
-          in Advances in Neural Information Processing 13 
+          "Algorithms for non-negative matrix factorization",
+          in Advances in Neural Information Processing 13
           (Proc. NIPS*2000) MIT Press, 2001.
 
           "Learning the parts of objects by non-negative matrix
@@ -147,7 +147,7 @@ This module is based on:
     - P. O. Hoyer
 
           "Non-negative Matrix Factorization with sparseness
-           constraints", 
+           constraints",
           Journal of Machine Learning Research, vol. 5, pp. 1457-1469,
           2004.
 
@@ -155,9 +155,9 @@ This module is based on:
     - Dongmin Kim, Suvrit Sra,Inderjit S. Dhillon:
 
            "Fast Newton-type Methods for the Least Squares Nonnegative Matrix
-           Approximation Problem" 
-           SIAM Data Mining (SDM), Apr. 2007 
-          
+           Approximation Problem"
+           SIAM Data Mining (SDM), Apr. 2007
+
 
     - Ngoc-Diep Ho:
 
@@ -167,7 +167,7 @@ This module is based on:
 """
 
 #
-# helper functions for handling sparse and dense matrices from numpy 
+# helper functions for handling sparse and dense matrices from numpy
 # and scipy.sparse
 #
 def divide_sparse_matrix(A, by):
@@ -200,7 +200,7 @@ def dot(A, B):
 
 def diff(A, B):
     E = A - B
-    # if A is sparse E is np.matrix 
+    # if A is sparse E is np.matrix
     # if A is dense  E is np.ndarray
     # so: convert np.matrix to np.ndarray if needed:
     if isinstance(E, np.matrix):
@@ -377,7 +377,7 @@ def FNMAI_A_update(Y, YT, A, X, **param):
         A -= alpha*G
         A[A<0] = 0
     return A
-    
+
 def FNMAI_X_update(Y, YT, A, X, **param):
     """ FNMAI (Kim et al) update for V """
 
@@ -419,11 +419,11 @@ def FastHALS_A_update(Y, YT, A, X, **param):
         ai[ai<0] = 0
         ai /= np.linalg.norm(ai)
         A[:,i] = ai
-        
+
     return A
 
 #
-# All NNMA algorithms have the same structure which is implemented 
+# All NNMA algorithms have the same structure which is implemented
 # in AlgorunnerTemplate
 #
 
@@ -431,7 +431,7 @@ class AlgorunnerTemplate(object):
 
     def frob_dist(self, Y, A, X):
         """ frobenius distance between Y and A X """
-        return np.linalg.norm(Y - np.dot(A,X)) 
+        return np.linalg.norm(Y - np.dot(A,X))
 
     def kl_divergence(self, Y, A, X):
         """ kullbach leibler divergence D(Y | A X) """
@@ -448,16 +448,16 @@ class AlgorunnerTemplate(object):
         m, n = Y.shape
 
         # sample start matrices
-        if A is None: 
+        if A is None:
             A = np.random.rand(m,k)
         elif isinstance(A, np.matrix):
             A = A.A
-        if X is None: 
+        if X is None:
             X = np.random.rand(k,n)
         elif isinstance(X, np.matrix):
             X = X.A
 
-        # scale A, X with alpha such that || Y - alpha AX ||_fro is 
+        # scale A, X with alpha such that || Y - alpha AX ||_fro is
         # minimized
 
         AX = np.dot(A,X).flatten()
@@ -476,7 +476,7 @@ class AlgorunnerTemplate(object):
     param_update = None  # default, may be overidden by method which
                          # adapts parametes from iteration to iteration
 
-    def __call__(self, Y, k, A=None, X=None, eps=1e-5, 
+    def __call__(self, Y, k, A=None, X=None, eps=1e-5,
                  maxcount=1000, verbose=False, **param):
 
         """ basic template for NNMA iterations """
@@ -510,7 +510,7 @@ class AlgorunnerTemplate(object):
                     print("RESTART")
                 A, X = self.init_factors(Y, k)
                 count = 0
-            
+
             count += 1
 
             # relative distance which is independeant to scaling of A
@@ -518,12 +518,12 @@ class AlgorunnerTemplate(object):
 
             delta_obj = obj-obj_old
             if verbose:
-                # each 'verbose' iterations report about actual state 
+                # each 'verbose' iterations report about actual state
                 if count % verbose == 0:
-                    print("count=%6d obj=%E d_obj=%E" %(count, obj, 
+                    print("count=%6d obj=%E d_obj=%E" %(count, obj,
                                                         delta_obj))
 
-            if count >= maxcount: break 
+            if count >= maxcount: break
             # delta_obj should be "almost negative" and small enough:
             if -eps < delta_obj <= 1e-12:
                 break
@@ -593,7 +593,7 @@ class RRI_(AlgorunnerTemplate):
     Runtime optimisations from Cichocki applied to
     Damped rank one residual iteration from Ngoc-Diep Ho.
     """
-    
+
     def update(self, Y, YT, A, X,  **param):
 
         E = diff(Y, np.dot(A,X))
@@ -634,11 +634,11 @@ class RRI_(AlgorunnerTemplate):
 SNMF     = SNMF_()
 RRI      = RRI_()
 
-# classical algorithme with frobenius norm for calculating 
+# classical algorithme with frobenius norm for calculating
 # objective function
 NMF      = FactorizedNNMA(A_mult_update, X_mult_update)
 
-# classical algorithme with kl divergence or calculating 
+# classical algorithme with kl divergence or calculating
 # objective function
 NMFKL    = FactorizedNNMA(A_mult_update_kl_div, X_mult_update_kl_div)
 
@@ -649,9 +649,9 @@ NMFKL    = FactorizedNNMA(A_mult_update_kl_div, X_mult_update_kl_div)
 def regul_dec(param):
     param["regul"] = param.get("regul", 0)* .9
 
-ALS      = FactorizedNNMA(A_inexact_lsq_update, X_inexact_lsq_update, 
+ALS      = FactorizedNNMA(A_inexact_lsq_update, X_inexact_lsq_update,
                           regul_dec)
-# GDCLS from 
+# GDCLS from
 # "Document clustering using nonnegative matrix factorization"
 # Information Processing and Management
 # Volume 42 ,  Issue 2  (March 2006) t
@@ -664,11 +664,11 @@ FNMAI    = FactorizedNNMA(FNMAI_A_update, FNMAI_X_update)
 
 # own algorithms for approximation of Y ~ A X
 
-# replace l2-regularisation when updating X by l1-regularization 
+# replace l2-regularisation when updating X by l1-regularization
 # for getting spare coordinates
 GDCLS_L1 = FactorizedNNMA(A_mult_update, X_inexact_lsq_update_l1regul)
 
-# replace FNMAI_X_update by l1 regulraized least squares update 
+# replace FNMAI_X_update by l1 regulraized least squares update
 FNMAI_SPARSE = FactorizedNNMA(FNMAI_A_update, \
                               X_inexact_lsq_update_l1regul)
 
@@ -695,11 +695,11 @@ if __name__ == "__main__":
         print("run %12s" % name,)
         sys.stdout.flush()
         start = time.time()
-        X,Y,obj,count,converged = routine(A, 10, eps=5e-5, verbose=verbose, 
-                                          maxcount=1000, **param) 
+        X,Y,obj,count,converged = routine(A, 10, eps=5e-5, verbose=verbose,
+                                          maxcount=1000, **param)
         print("obj = %E  count=%5d  converged=%d  TIME=%.2f secs" % \
                      (obj,count, converged, time.time()-start))
-    
+
     print("\nTEST WITH DENSE MATRIX\n")
 
     run("NNSC", NNSC, verbose=0)

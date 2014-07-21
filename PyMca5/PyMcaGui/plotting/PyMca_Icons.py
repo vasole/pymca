@@ -91,7 +91,7 @@ plugin = [
 "- c #ffffc0",
 "; c #ffffff",
 ": c None",
-# pixels 
+# pixels
 ":::::::::::::::::::::::  :::::::",
 ":::::::::::::::::::::: -& :  :::",
 ":::::::::::::::::::    &## &+ ::",
@@ -126,7 +126,7 @@ plugin = [
 ":::::::::::   ::::::::::::::::::"
 ]
 
-crop =[ 
+crop =[
 "16 16 2 1",
 "   c none",
 ".  c black",
@@ -148,7 +148,7 @@ crop =[
 "                ",
 ]
 
-togglepoints =[ 
+togglepoints =[
 "16 16 2 1",
 "   c none",
 ".  c blue",
@@ -198,8 +198,8 @@ rectangle16 =[
 "  c none",
 "X c blue",
 "                ",
-"                ", 
-"                ", 
+"                ",
+"                ",
 " XXXXXXXXXXXXXX ",
 " X            X ",
 " X            X ",
@@ -210,8 +210,8 @@ rectangle16 =[
 " X            X ",
 " X            X ",
 " XXXXXXXXXXXXXX ",
-"                ", 
-"                ", 
+"                ",
+"                ",
 "                "
 ]
 
@@ -232,7 +232,7 @@ polygon16 =[
 "   X      X     ",
 "    X     X     ",
 "     X     X    ",
-"    X       X   ", 
+"    X       X   ",
 "   X         X  ",
 "   XXXXXXXXXXX  ",
 "                "
@@ -255,7 +255,7 @@ circle16 =[
 " X            X ",
 " X            X ",
 "  X          X  ",
-"   X        X   ", 
+"   X        X   ",
 "    X      X    ",
 "     XXXXXX     ",
 "                "
@@ -276,7 +276,7 @@ ellipse16 =[
 " X            X ",
 " X            X ",
 "  X          X  ",
-"   X        X   ", 
+"   X        X   ",
 "     XXXXXX     ",
 "                ",
 "                ",
@@ -299,7 +299,7 @@ solid_circle16 =[
 " XXXXXXXXXXXXXX ",
 " XXXXXXXXXXXXXX ",
 "  XXXXXXXXXXXX  ",
-"   XXXXXXXXXX   ", 
+"   XXXXXXXXXX   ",
 "    XXXXXXXX    ",
 "     XXXXXX     ",
 "                "
@@ -320,7 +320,7 @@ solid_ellipse16 =[
 " XXXXXXXXXXXXXX ",
 " XXXXXXXXXXXXXX ",
 "  XXXXXXXXXXXX  ",
-"   XXXXXXXXXX   ", 
+"   XXXXXXXXXX   ",
 "     XXXXXX     ",
 "                ",
 "                ",
@@ -467,7 +467,7 @@ average16=[
 " ..             ",
 "                "
 ]
-""" 
+"""
 average16=[
 "16 16 2 1",
 ". c blue",
@@ -577,7 +577,7 @@ sliderson=[
 "...  .....  ....",
 "................",
 "................"
-]    
+]
 
 slidersoff = [
 "16 16 3 1",
@@ -645,7 +645,7 @@ sigma=[
 ".  .............",
 ".             ..",
 "................"
-]    
+]
 
 
 normalize16=[
@@ -2456,7 +2456,7 @@ MINEcolormap = [
 "G.F.G.u.6 <.7.9.G G ;.' - ; Z.G.",
 "F.G.F.G.f.> v J P J Z > i.S.F.F."]
 
-yauto  =[ 
+yauto  =[
 "16 16 3 1",
 "  c black",
 ". c #0000ff",
@@ -2479,7 +2479,7 @@ yauto  =[
 "XXXXXXXXXXXXXXXX"
 ]
 
-xauto  =[ 
+xauto  =[
 "16 16 3 1",
 "  c black",
 ". c #0000ff",
@@ -2814,7 +2814,7 @@ logy = [
 "oo.ooooooooooooo",
 "oooooooooooooooo"
 ]
-	
+
 normal = [
 "16 16 4 1",
 "  c #303030",
@@ -2838,7 +2838,7 @@ normal = [
 "oooooooooooooooo",
 "oooooooooooooooo"
 ]
-	
+
 peak = [
 "16 16 4 1",
 "  c #303030",
@@ -2862,7 +2862,7 @@ peak = [
 "oooooo...ooooooo",
 "ooooooo.oooooooo"
 ]
-	
+
 peakreset = [
 "16 16 6 1",
 "  c #303030",
@@ -2888,7 +2888,7 @@ peakreset = [
 "+X++++...+++++X+",
 "X++++++.+++++++X"
 ]
-	
+
 peaksearch = [
 "16 16 6 1",
 "  c #303030",
@@ -2914,7 +2914,7 @@ peaksearch = [
 " +++ +++ + + + +",
 " ++++  ++  + + +"
 ]
-	
+
 reload_ = [
 "16 16 51 1",
 "  c #000000",
@@ -2986,7 +2986,7 @@ reload_ = [
 "vvvoO  8a9*Xvvvv",
 "vvvvvo$  O vvvvv"
 ]
-	
+
 roi = [
 "16 16 6 1",
 "  c #000000",
@@ -3012,7 +3012,7 @@ roi = [
 "++.OOOOOO.++++++",
 "++.OOOOOO.++++++"
 ]
-	
+
 roireset = [
 "16 16 8 1",
 "  c #000000",
@@ -3097,7 +3097,7 @@ unselected = [
 
 
 
-	
+
 spec = [
 "16 16 24 1",
 "  c black",
@@ -3141,7 +3141,7 @@ spec = [
 "                ",
 "5555555555555555"
 ]
-	
+
 window_fullscreen = [
 "16 16 23 1",
 "  c black",
@@ -3184,7 +3184,7 @@ window_fullscreen = [
 "                ",
 "4444444444444444"
 ]
-	
+
 window_new = [
 "16 16 53 1",
 "  c #000000",
@@ -3257,7 +3257,7 @@ window_new = [
 "nnnnnnn pn wn pn",
 "nnnnnnnnnn pnnnn"
 ]
-	
+
 window_nofullscreen = [
 "16 16 23 1",
 "  c black",
@@ -3300,7 +3300,7 @@ window_nofullscreen = [
 "                ",
 "4444444444444444"
 ]
-	
+
 zoom = [
 "16 16 56 1",
 "  c #000000",
@@ -3376,7 +3376,7 @@ zoom = [
 "NNNNNNNNNNNN @# ",
 "NNNNNNNNNNNNN  N"
 ]
-	
+
 zoomminus = [
 "16 16 56 1",
 "  c #000000",
@@ -3452,7 +3452,7 @@ zoomminus = [
 "NNNNNNNNNNNN @# ",
 "NNNNNNNNNNNNN  N"
 ]
-	
+
 zoomplus = [
 "16 16 56 1",
 "  c #000000",
@@ -3528,7 +3528,7 @@ zoomplus = [
 "NN NNNNNNNNN @# ",
 "NN NNNNNNNNNN  N"
 ]
-	
+
 zoomreset = [
 "16 16 38 1",
 "  c #000000",

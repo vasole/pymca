@@ -41,7 +41,7 @@ class NumpyArrayTableWidget(qt.QWidget):
         self.view = NumpyArrayTableView.NumpyArrayTableView(self)
         self.mainLayout.addWidget(self.browser)
         self.mainLayout.addWidget(self.view)
-        self.browser.sigIndexChanged.connect(self.browserSlot)                     
+        self.browser.sigIndexChanged.connect(self.browserSlot)
 
     def setArrayData(self, data):
         self._array = data

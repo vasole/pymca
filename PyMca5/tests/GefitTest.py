@@ -32,7 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import unittest
 import os
-import numpy    
+import numpy
 
 class testGefit(unittest.TestCase):
     def setUp(self):

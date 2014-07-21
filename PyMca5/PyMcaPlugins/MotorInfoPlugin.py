@@ -41,7 +41,7 @@ except ImportError:
     except:
         print("MotorInfoPlugin importing from somewhere else")
         import MotorInfoWindow
-    
+
 DEBUG = 0
 class MotorInfo(Plugin1DBase.Plugin1DBase):
     def __init__(self,  plotWindow,  **kw):
@@ -53,7 +53,7 @@ class MotorInfo(Plugin1DBase.Plugin1DBase):
         info = text
         self.methodDict["Show Motor Info"] =[function, info, icon]
         self.widget = None
-    
+
     def getMethods(self, plottype=None):
         names = list(self.methodDict.keys())
         names.sort()
@@ -77,14 +77,14 @@ class MotorInfo(Plugin1DBase.Plugin1DBase):
             self.widget.table.updateTable(legendList,  motorValuesList)
         self.widget.show()
         self.widget.raise_()
-        
+
     def _getLists(self):
         curves = self.getAllCurves()
         nCurves = len(curves)
         if DEBUG:
             print ("Received %d curve(s).." % nCurves)
-        legendList = [leg for (xvals, yvals,  leg,  info) in curves] 
-        infoList = [info for (xvals, yvals,  leg,  info) in curves] 
+        legendList = [leg for (xvals, yvals,  leg,  info) in curves]
+        infoList = [info for (xvals, yvals,  leg,  info) in curves]
         motorValuesList = self._convertInfoDictionary( infoList )
         return legendList,  motorValuesList
 
@@ -116,11 +116,11 @@ class MotorInfo(Plugin1DBase.Plugin1DBase):
             else:
                 print("Number of motors and values does not match!")
         return ret
-    
+
     def _createWidget(self,  legendList,  motorValuesList):
         parent = None
-        self.widget = MotorInfoWindow.MotorInfoDialog(parent,  
-                                                      legendList,  
+        self.widget = MotorInfoWindow.MotorInfoDialog(parent,
+                                                      legendList,
                                                       motorValuesList)
         self.widget.buttonUpdate.clicked.connect(self.showMotorInfo)
         self.widget.updateShortCut.activated.connect(self.showMotorInfo)
@@ -143,5 +143,5 @@ if __name__ == "__main__":
     plot.addCurve(x+100, y, "Curve2", {'MotorNames': "baz",  'MotorValues': "6.28"})
     plugin = getPlugin1DInstance(plot)
     plugin.applyMethod(plugin.getMethods()[0])
-    
+
     app.exec_()

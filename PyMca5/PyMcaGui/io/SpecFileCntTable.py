@@ -69,7 +69,7 @@ class SpecFileCntTable(qt.QTableWidget):
             nmca = 0
         nmca = 0
         if nmca is None:
-            nmca = 0 
+            nmca = 0
         self.cntList = cntlist
         self.mcaList = []
         n = len(cntlist)
@@ -107,7 +107,7 @@ class SpecFileCntTable(qt.QTableWidget):
         self.resizeColumnToContents(1)
         self.resizeColumnToContents(2)
         self.resizeColumnToContents(3)
-        
+
     def __addLine(self, i, cntlabel):
         #the counter name
         item = self.item(i, 0)
@@ -140,7 +140,7 @@ class SpecFileCntTable(qt.QTableWidget):
         else:
             self.__is3DEnabled = False
             if len(self.xSelection) > 1:
-                self.xSelection = [1 * self.xSelection[0]]                    
+                self.xSelection = [1 * self.xSelection[0]]
         self._update()
 
     def set2DEnabled(self, value):
@@ -152,7 +152,7 @@ class SpecFileCntTable(qt.QTableWidget):
         else:
             self.__is2DEnabled = False
             if len(self.xSelection) > 1:
-                self.xSelection = [1 * self.xSelection[0]]                    
+                self.xSelection = [1 * self.xSelection[0]]
         self._update()
 
     def _mySlot(self, ddict):
@@ -221,8 +221,8 @@ class SpecFileCntTable(qt.QTableWidget):
                     widget.setChecked(False)
         ddict = {}
         ddict["event"] = "updated"
-        self.sigSpecFileCntTableSignal.emit(ddict)        
-        
+        self.sigSpecFileCntTableSignal.emit(ddict)
+
 
     def getCounterSelection(self):
         ddict = {}
@@ -230,7 +230,7 @@ class SpecFileCntTable(qt.QTableWidget):
         ddict['mcalist'] = self.mcaList * 1
         ddict['x']       = self.xSelection * 1
         ddict['y']       = self.ySelection * 1
-        ddict['m'] = self.monSelection * 1        
+        ddict['m'] = self.monSelection * 1
         return ddict
 
     def setCounterSelection(self, ddict):
@@ -270,7 +270,7 @@ class SpecFileCntTable(qt.QTableWidget):
                 if counter in self.cntList:
                     self.monSelection.append(self.cntList.index(counter))
         self._update()
-        
+
 
 class CheckBoxItem(qt.QCheckBox):
     sigCheckBoxItemSignal = qt.pyqtSignal(object)
@@ -298,4 +298,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+

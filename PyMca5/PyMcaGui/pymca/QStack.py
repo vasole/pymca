@@ -47,7 +47,7 @@ class SimpleThread(qt.QThread):
         self._var      = var
         self._kw       = kw
         self._result   = None
-    
+
     def run(self):
         if DEBUG:
             self._result = self._function(*self._var, **self._kw )
@@ -56,7 +56,7 @@ class SimpleThread(qt.QThread):
                 self._result = self._function(*self._var, **self._kw )
             except:
                 self._result = ("Exception",) + sys.exc_info()
-                
+
 class QSpecFileStack(SpecFileStack.SpecFileStack):
     def onBegin(self, nfiles):
         self.bars =qt.QWidget()
@@ -67,7 +67,7 @@ class QSpecFileStack(SpecFileStack.SpecFileStack):
         self.progressBar   = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)
         self.progressLabel.setText('Mca Progress:')
-        self.barsLayout.addWidget(self.progressLabel,0,0)        
+        self.barsLayout.addWidget(self.progressLabel,0,0)
         self.barsLayout.addWidget(self.progressBar,0,1)
         self.progressBar.setMaximum(nfiles)
         self.progressBar.setValue(0)
@@ -90,7 +90,7 @@ class QStack(EDFStack.EDFStack):
         self.progressBar   = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)
         self.progressLabel.setText('File Progress:')
-        self.barsLayout.addWidget(self.progressLabel,0,0)        
+        self.barsLayout.addWidget(self.progressLabel,0,0)
         self.barsLayout.addWidget(self.progressBar,0,1)
         self.progressBar.setMaximum(nfiles)
         self.progressBar.setValue(0)

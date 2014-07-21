@@ -36,7 +36,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 #
 #   Symbol  Atomic Number   x y ( positions on table )
-#       name,  mass, density 
+#       name,  mass, density
 #
 DEBUG = 0
 
@@ -159,7 +159,7 @@ class ElementButton(qt.QPushButton):
     sigElementClicked = qt.pyqtSignal(object)
     def __init__(self, parent, symbol, Z, name):
         qt.QPushButton.__init__(self, parent)
-            
+
         self.symbol = symbol
         self.Z      = Z
         self.name   = name
@@ -176,7 +176,7 @@ class ElementButton(qt.QPushButton):
         self.colors= [ qt.QColor(qt.Qt.yellow),
                        qt.QColor(qt.Qt.darkYellow),
                        qt.QColor(qt.Qt.gray) ]
-        
+
         self.brush= qt.QBrush()
 
         self.clicked.connect(self.clickedSlot)
@@ -223,7 +223,7 @@ class ElementButton(qt.QPushButton):
         p.drawRect(pr)
         p.end()
         qt.QPushButton.paintEvent(self, pEvent)
-        
+
     def drawButton(self, p):
         #Qt 2 and Qt3
         wr= self.rect()
@@ -236,7 +236,7 @@ class ElementButton(qt.QPushButton):
 
     def enterEvent(self, e):
         self.sigElementEnter.emit((self.symbol, self.Z, self.name))
-            
+
     def leaveEvent(self, e):
         self.sigElementLeave.emit(self.symbol)
 
@@ -310,7 +310,7 @@ class QPeriodicTable(qt.QWidget):
         self.eltButton[symbol].setCurrent(1)
         self.eltCurrent= self.eltButton[symbol]
         self.sigElementClicked.emit(symbol)
-            
+
     def getSelection(self):
         return [ e for (e,b) in self.eltButton.items() if b.isSelected() ]
 
@@ -375,7 +375,7 @@ class QPeriodicComboTableItem(qt.QComboBox):
             return None
         else:
             return ElementList[idx - self.addnone]
-        
+
 class QPeriodicCombo(qt.QComboBox):
     """ Periodic Table Element list in a QComboBox
         Init options:
@@ -404,7 +404,7 @@ class QPeriodicCombo(qt.QComboBox):
                 txt= "%2s (%d)"%(symbol, Z)
             self.insertItem(i,txt)
             i += 1
-            
+
         self.activated[int].connect(self.__selectionChanged)
 
     def __selectionChanged(self, idx):
@@ -416,7 +416,7 @@ class QPeriodicCombo(qt.QComboBox):
     def setSelection(self, symbol):
         symblist= [ elt[0] for elt in Elements ]
         self.setCurrentItem(symblist.index(symbol))
-        
+
 
 class QPeriodicList(qt.QTreeWidget):
     """ Periodic Table Element list in a QListView
@@ -441,8 +441,8 @@ class QPeriodicList(qt.QTreeWidget):
     def __init__(self, master=None, name=None, fl=0, detailed=1, single=0):
         qt.QTreeWidget.__init__(self, master)
 
-    
-        self.detailed= (detailed==1)    
+
+        self.detailed= (detailed==1)
 
         try:
             strlist= QStringList()
@@ -495,11 +495,11 @@ class QPeriodicList(qt.QTreeWidget):
     """
     def __selectionChanged(self):
         self.sigSelectionChanged.emit(self.getSelection())
-    
+
     def getSelection(self):
         return [ Elements[idx][0] for idx in range(len(self.items)) \
                 if self.isItemSelected(self.items[idx]) ]
-            
+
             #return self.selectedItems()
 
     #TODO: Implement this in Qt4
@@ -527,25 +527,25 @@ def testwidget():
     ol.addWidget(tlabel)
     c = QPeriodicCombo(o)
     ol.addWidget(c)
-    
+
     t = qt.QLabel("QPeriodicList", o)
     ol.addWidget(t)
     l = QPeriodicList(o)
-    ol.addWidget(l)        
+    ol.addWidget(l)
 
     tab = qt.QTableWidget()
     tab.setRowCount(2)
     tab.setColumnCount(1)
     tab.setCellWidget(0, 0, QPeriodicCombo(tab, detailed=0))
     tab.setCellWidget(1, 0, QPeriodicCombo(tab, detailed=0))
-        
+
     w.addTab(f, "QPeriodicTable")
     w.addTab(o, "QPeriodicList/Combo")
     w.addTab(tab, "QPeriodicComboTableItem")
-        
+
 
     f.setSelection(['H', 'Fe', 'Si'])
-    
+
     f.sigElementClicked.connect(f.elementToggle)
     l.sigSelectionChanged.connect(change)
     c.sigSelectionChanged.connect(change)

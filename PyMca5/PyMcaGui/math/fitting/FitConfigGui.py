@@ -28,7 +28,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5.PyMcaGui import PyMcaQt as qt
-    
+
 QTVERSION = qt.qVersion()
 def uic_load_pixmap_FitConfigGui(name):
     pix = qt.QPixmap()
@@ -101,7 +101,7 @@ class FitConfigGui(qt.QWidget):
         Layout6_2 = qt.QGridLayout(None)
         Layout6_2.setContentsMargins(0, 0, 0, 0)
         Layout6_2.setSpacing(6)
-            
+
         self.AutoFWHMCheckBox = qt.QCheckBox(self)
         self.AutoFWHMCheckBox.setText(str("Auto FWHM"))
 

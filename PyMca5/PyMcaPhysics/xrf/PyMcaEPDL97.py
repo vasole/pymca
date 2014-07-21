@@ -30,7 +30,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__doc__= "Interface to the PyMca EPDL97 description" 
+__doc__= "Interface to the PyMca EPDL97 description"
 import os
 import sys
 try:
@@ -43,7 +43,7 @@ from PyMca5 import PyMcaDataDir
 import numpy
 log = numpy.log
 exp = numpy.exp
-ElementList = ['H', 'He', 
+ElementList = ['H', 'He',
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
             'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -51,15 +51,15 @@ ElementList = ['H', 'He',
             'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
             'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
             'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
-dirmod = PyMcaDataDir.PYMCA_DATA_DIR 
+dirmod = PyMcaDataDir.PYMCA_DATA_DIR
 EPDL97_FILE = os.path.join(dirmod,"EPDL97_CrossSections.dat")
 if not os.path.exists(EPDL97_FILE):
     #freeze does bad things with the path ...
@@ -219,8 +219,8 @@ def _initializeElement(element):
     #take care of rounding problems
     idx = EPDL97_DICT[element]['EPDL97']['all other'] < 0.0
     EPDL97_DICT[element]['EPDL97']['all other'][idx] = 0.0
-    
-    
+
+
 def getElementCrossSections(element, energy=None, forced_shells=None):
     """
     getElementCrossSections(element, energy, forced_shells=None)
@@ -245,7 +245,7 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
     try:
         n = len(energy)
     except TypeError:
-        energy = numpy.array([energy])        
+        energy = numpy.array([energy])
     if type(energy) in [type(1), type(1.0)]:
         energy = numpy.array([energy])
     elif type(energy) in [type([]), type((1,))]:
@@ -272,12 +272,12 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
         if x > wdata['energy'][-2]:
             #take last value or extrapolate?
             print("Warning: Extrapolating data at the end")
-            j1 = len(wdata['energy']) - 1 
+            j1 = len(wdata['energy']) - 1
             j0 = j1 - 1
         elif x <= wdata['energy'][0]:
             #take first value or extrapolate?
             print("Warning: Extrapolating data at the beginning")
-            j1 = 1 
+            j1 = 1
             j0 = 0
         else:
             j0 = numpy.max(numpy.nonzero(wdata['energy'] < x), axis=1)
@@ -304,7 +304,7 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
                                      log(y1) * log(x/x0))/log(x1/x0))
                 elif (y1 > 0) and ((x-x0) > 1.E-5):
                     ddict[key][i] = exp((log(y1) * log(x/x0))/log(x1/x0))
-            
+
 
         #partial cross sections
         for key in atomic_shells:
@@ -332,15 +332,15 @@ def getElementCrossSections(element, energy=None, forced_shells=None):
                 y1 = wdata[key][j01]
                 ddict[key][i] = exp((log(y0) * log(x01/x) +\
                                  log(y1) * log(x/x00))/log(x01/x00))
-                                    
-        for key in ['all other'] + atomic_shells:            
+
+        for key in ['all other'] + atomic_shells:
             ddict['photo'][i] += ddict[key][i]
 
         for key in ['coherent', 'compton', 'photo']:
             ddict['total'][i] += ddict[key][i]
     for key in ddict.keys():
         ddict[key] = ddict[key].tolist()
-    return ddict        
+    return ddict
 
 
 def getPhotoelectricWeights(element, shelllist, energy, normalize = None, totals = None):
@@ -359,7 +359,7 @@ def getPhotoelectricWeights(element, shelllist, energy, normalize = None, totals
     """
     if normalize is None:
         normalize = True
-        
+
     if totals is None:
         totals = False
 
@@ -389,4 +389,4 @@ def getPhotoelectricWeights(element, shelllist, energy, normalize = None, totals
     else:
         return w
 
-    
+

@@ -22,7 +22,7 @@
  *   Project:       SpecFile library
  *
  *   Description:   General library tools
- * 
+ *
  *   Author:        V.Rey
  *
  *   Date:          $Date: 2004/05/12 16:57:02 $
@@ -44,7 +44,7 @@
  *   Log:
  * Revision 2.1  2000/07/31  19:05:07  19:05:07  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 2.0  2000/04/13  13:28:54  13:28:54  rey (Vicente Rey-Bakaikoa)
  * New version of the library. Complete rewrite
  * Adds support for MCA
@@ -94,11 +94,11 @@ void        freeAllData     ( SpecFile *sf );
 /*********************************************************************
  *   Function:		void sfSetCurrent( sf, list )
  *
- *   Description:	Sets 'list' to current scan. 
+ *   Description:	Sets 'list' to current scan.
  *			Updates SpecFile structure.
  *   Parameters:
- *		Input :	(1) SpecFile pointer   
- *			(2) New scan 
+ *		Input :	(1) SpecFile pointer
+ *			(2) New scan
  *
  *********************************************************************/
 int
@@ -112,7 +112,7 @@ sfSetCurrent( SpecFile *sf, long index,int *error )
      long        fileheadsize,start;
 
     /*
-     * If same scan nothing to do 
+     * If same scan nothing to do
      */
      if (sfSameScan(sf,index)) return(0);
 
@@ -139,7 +139,7 @@ sfSetCurrent( SpecFile *sf, long index,int *error )
      if (sf->scanbuffer != ( char * ) NULL) free(sf->scanbuffer);
 
      sf->scanbuffer = ( char *) malloc(scan->size);
-          
+
      if (sf->scanbuffer == (char *)NULL) {
          *error = SF_ERR_MEMORY_ALLOC;
          return(-1);
@@ -194,11 +194,11 @@ sfSetCurrent( SpecFile *sf, long index,int *error )
 /*********************************************************************
  *   Function:		int sfSameFile( sf, list )
  *
- *   Description:	Checks if the current scan file header and 
+ *   Description:	Checks if the current scan file header and
  *			the new scan file header are the same.
  *   Parameters:
- *		Input :	(1) SpecFile pointer   
- *			(2) New scan 
+ *		Input :	(1) SpecFile pointer
+ *			(2) New scan
  *   Returns:
  *		1 - the same
  *		0 - not the same
@@ -209,7 +209,7 @@ sfSameFile( SpecFile *sf, ObjectList *list )
 {
      if (sf->current) {
      return ( ((SpecScan *)sf->current->contents)->file_header ==
-	      ((SpecScan *)list->contents)->file_header  ); 
+	      ((SpecScan *)list->contents)->file_header  );
      } else return(0);
 }
 
@@ -217,11 +217,11 @@ sfSameFile( SpecFile *sf, ObjectList *list )
 /*********************************************************************
  *   Function:		int sfSameScan( sf, index )
  *
- *   Description:	Checks if the current scan and 
+ *   Description:	Checks if the current scan and
  *			the new scan are the same.
  *   Parameters:
- *		Input :	(1) SpecFile pointer   
- *			(2) New scan index 
+ *		Input :	(1) SpecFile pointer
+ *			(2) New scan index
  *   Returns:
  *		1 - the same
  *		0 - not the same
@@ -232,17 +232,17 @@ sfSameScan( SpecFile *sf, long index )
 {
      if ( sf->current == (ObjectList *)NULL) return(0);
 
-     return ( ((SpecScan *)sf->current->contents)->index == index ); 
+     return ( ((SpecScan *)sf->current->contents)->index == index );
 }
 
 
 /*********************************************************************
  *   Function:		freePtr( ptr );
- *			       
+ *
  *   Description:	Frees memory pointed to by 'ptr'.
  *
  *   Parameters:
- *		Input :	(1) Pointer   
+ *		Input :	(1) Pointer
  *
  *********************************************************************/
 void
@@ -254,11 +254,11 @@ freePtr( void *ptr )
 
 /*********************************************************************
  *   Function:		freeArrNZ( ptr, lines );
- *			       
+ *
  *   Description:	Frees an array if 'lines' > zero.
  *
  *   Parameters:
- *		Input :	(1) Array pointer   
+ *		Input :	(1) Array pointer
  *			(2) No. of lines
  *
  *********************************************************************/
@@ -282,7 +282,7 @@ freeArrNZ( void ***ptr, long lines )
  *			 'ptr' will be always freed !!!
  *
  *   Parameters:
- *		Input :	(1) Array pointer   
+ *		Input :	(1) Array pointer
  *			(2) No. of lines
  *
  *********************************************************************/
@@ -308,7 +308,7 @@ freeArr( void ***ptr, long lines )
  *
  *   Parameters:
  *		Input :	(1) SpecScan pointer
- *			(2) number 
+ *			(2) number
  *   Returns:
  *			0 : not found
  *			1 : found
@@ -328,7 +328,7 @@ findIndex( void *scan, void *number )
  *
  *   Parameters:
  *		Input :	(1) SpecScan pointer
- *			(2) number 
+ *			(2) number
  *   Returns:
  *			0 : not found
  *			1 : found
@@ -343,14 +343,14 @@ findFirst( void *scan, void *file_offset )
 
 /*********************************************************************
  *   Function:		int findNoAndOr( scan, number )
- *			      ( Number 
+ *			      ( Number
  *				     Order )
  *
  *   Description:	Compares if number1 = scan number and
- *				    number2 = scan order 
+ *				    number2 = scan order
  *   Parameters:
  *		Input:	(1) SpecScan pointer
- *			(2) number[1] 
+ *			(2) number[1]
  *   Returns:
  *			0 : not found
  *			1 : found
@@ -369,13 +369,13 @@ findNoAndOr( void *scan, void *number )
 /*********************************************************************
  *   Function:		ObjectList *findScanByIndex( list, index )
  *
- *   Description:	Looks for a scan . 
+ *   Description:	Looks for a scan .
  *
  *   Parameters:
  *		Input:	(1) List pointer
- *			(2) scan index 
+ *			(2) scan index
  *   Returns:
- *			ObjectList pointer if found ,      
+ *			ObjectList pointer if found ,
  *			NULL if not.
  *
  *********************************************************************/
@@ -389,14 +389,14 @@ findScanByIndex( ListHeader *list, long index )
 /*********************************************************************
  *   Function:		ObjectList findScanByNo( list, scan_no, order )
  *
- *   Description:	Looks for a scan . 
+ *   Description:	Looks for a scan .
  *
  *   Parameters:
  *		Input:	(1) List pointer
  *			(2) scan number
- *			(3) scan order 
+ *			(3) scan order
  *   Returns:
- *			ObjectList pointer if found ,      
+ *			ObjectList pointer if found ,
  *			NULL if not.
  *
  *********************************************************************/
@@ -416,13 +416,13 @@ findScanByNo( ListHeader *list, long scan_no, long order )
 /*********************************************************************
  *   Function:		ObjectList *findFirstInFile( list, file_offset )
  *
- *   Description:	Looks for a scan . 
+ *   Description:	Looks for a scan .
  *
  *   Parameters:
  *		Input:	(1) List pointer
- *			(2) scan index 
+ *			(2) scan index
  *   Returns:
- *			ObjectList pointer if found ,      
+ *			ObjectList pointer if found ,
  *			NULL if not.
  *
  *********************************************************************/
@@ -441,19 +441,19 @@ findFirstInFile( ListHeader *list, long file_offset )
  *   Parameters:
  *        Input :    (1) String
  *
- *        Output:   
+ *        Output:
  *            (2) Data array
  *            (3) error number
  *   Returns:
  *            Number of values.
- *            ( -1 ) in case of errors. 
+ *            ( -1 ) in case of errors.
  *   Possible errors:
  *            SF_ERR_MEMORY_ALLOC
  *
  *   Remark:  The memory allocated should be freed by the application
  *
  *********************************************************************/
-long 
+long
 mulstrtod( char *str, double **arr, int *error )
 {
      int      count,q,i=0;
@@ -464,13 +464,13 @@ mulstrtod( char *str, double **arr, int *error )
      *arr = (double *)NULL;
 
      str2 = str;
-     
+
      while( (q = sscanf(str2, "%lf%n", &(tmpret[i]), &count)) > 0 ) {
         i++;
         str2 += count;
      }
      str2++;
-     
+
      if ( !i ) {
         return( i );
      }
@@ -482,7 +482,7 @@ mulstrtod( char *str, double **arr, int *error )
          return( -1 );
      }
      memcpy(ret, tmpret, i * sizeof(double) );
-     
+
      *arr = ret;
      return( i );
 }
@@ -513,7 +513,7 @@ freeAllData(SpecFile *sf)
     }
 }
 
-DllExport void        
+DllExport void
 SfShow          (SpecFile *sf) {
       printf("<Showing Info>  - specfile: %s\n",sf->sfname);
       printf("    - no_scans: %ld\n",sf->no_scans);
@@ -523,7 +523,7 @@ SfShow          (SpecFile *sf) {
       printf("    - bytecnt:  %ld\n",sf->cursor.bytecnt);
 }
 
-DllExport void        
+DllExport void
 SfShowScan      (SpecFile *sf, long index) {
      int       error;
      SpecScan *scan;
@@ -534,10 +534,10 @@ SfShowScan      (SpecFile *sf, long index) {
          printf("Cannot get scan index %ld\n",index);
      }
 
-     scan = (SpecScan *) sf->current->contents;     
+     scan = (SpecScan *) sf->current->contents;
 
-     printf("     - index:         %ld\n",scan->index); 
-     printf("     - scan_no:       %ld\n",scan->scan_no); 
-     printf("     - offset:        %ld\n",scan->offset); 
-     printf("     - data_offset:   %ld\n",scan->data_offset); 
+     printf("     - index:         %ld\n",scan->index);
+     printf("     - scan_no:       %ld\n",scan->scan_no);
+     printf("     - offset:        %ld\n",scan->offset);
+     printf("     - data_offset:   %ld\n",scan->data_offset);
 }

@@ -52,14 +52,14 @@ class QXTube(qt.QWidget):
         self.l = qt.QVBoxLayout(self)
         self.l.setContentsMargins(0, 0, 0, 0)
         self.l.setSpacing(0)
-        
+
         self.tubeWidget = TubeWidget(self, initdict = initdict)
         self.setParameters = self.tubeWidget.setParameters
         self.getParameters = self.tubeWidget.getParameters
 
         label = qt.QLabel(self)
 
-        
+
         hbox = qt.QWidget(self)
         hboxl = qt.QHBoxLayout(hbox)
         hboxl.setContentsMargins(0, 0, 0, 0)
@@ -72,7 +72,7 @@ class QXTube(qt.QWidget):
 
         #grid.addWidget(self.plotButton, 7, 1)
         #grid.addWidget(self.exportButton, 7, 3)
-        
+
         hboxl.addWidget(self.plotButton)
         hboxl.addWidget(self.exportButton)
 
@@ -84,7 +84,7 @@ class QXTube(qt.QWidget):
         label.setAlignment(qt.Qt.AlignRight)
         label.setText("H. Ebel, X-Ray Spectrometry 28 (1999) 255-266    ")
         self.l.addWidget(label)
-        
+
         self.l.addWidget(hbox)
         self.graph = PlotWidget.PlotWidget(self,
                                                backend=None)
@@ -101,7 +101,7 @@ class QXTube(qt.QWidget):
         anode           = d["anode"]
         anodedensity    = d["anodedensity"]
         anodethickness  = d["anodethickness"]
-        
+
         voltage         = d["voltage"]
         wele            = d["window"]
         wdensity        = d["windowdensity"]
@@ -157,7 +157,7 @@ class QXTube(qt.QWidget):
         anode           = d["anode"]
         anodedensity    = d["anodedensity"]
         anodethickness  = d["anodethickness"]
-        
+
         voltage         = d["voltage"]
         wele            = d["window"]
         wdensity        = d["windowdensity"]
@@ -181,7 +181,7 @@ class QXTube(qt.QWidget):
                                              transmission=transmission,
                                              targetthickness=anodethickness,
                                              filterlist=filterlist)
-        
+
 
         fllines = XRayTubeEbel.characteristicEbel([anode, anodedensity, anodethickness],
                      voltage,
@@ -214,7 +214,7 @@ class QXTube(qt.QWidget):
         d["flaglist"]    = numpy.ones(len(energy))
 
         self.sigQXTubeSignal.emit(d)
-            
+
 
 class TubeWidget(qt.QWidget):
     def __init__(self, parent=None, initdict = None):
@@ -224,7 +224,7 @@ class TubeWidget(qt.QWidget):
         self.windowCombo.sigMyQComboBoxSignal.connect(self._windowSlot)
         self.filter1Combo.sigMyQComboBoxSignal.connect(self._filter1Slot)
         self.transmissionCheckBox.clicked.connect(self._transmissionSlot)
-            
+
         if initdict is not None:
             self.setParameters(initdict)
         else:
@@ -261,13 +261,13 @@ class TubeWidget(qt.QWidget):
         voltage.setText("Voltage")
 
         self.voltage = qt.QLineEdit(gridwidget)
-        
+
         grid.addMultiCellWidget(self.transmissionCheckBox, 0 ,0, 0, 1)
         grid.addWidget(voltage, 0 ,2)
         grid.addWidget(self.voltage, 0 ,3)
 
 
-        #materials            
+        #materials
         mlabel = qt.QLabel(gridwidget)
         mlabel.setText("Material")
         dlabel = qt.QLabel(gridwidget)
@@ -277,13 +277,13 @@ class TubeWidget(qt.QWidget):
 
 
 
-        #anode            
+        #anode
         anodelabel = qt.QLabel(gridwidget)
         anodelabel.setText("Anode")
         self.anodeCombo     = MyQComboBox(gridwidget, options = Elements.ElementList)
         self.anodeDensity   = qt.QLineEdit(gridwidget)
         self.anodeThickness = qt.QLineEdit(gridwidget)
-        
+
         #window
         windowlabel = qt.QLabel(gridwidget)
         windowlabel.setText("Window")
@@ -294,12 +294,12 @@ class TubeWidget(qt.QWidget):
         grid.addWidget(mlabel, 1 ,1)
         grid.addWidget(dlabel, 1 ,2)
         grid.addWidget(tlabel, 1 ,3)
-    
+
         grid.addWidget(anodelabel,          2, 0)
         grid.addWidget(self.anodeCombo,     2, 1)
         grid.addWidget(self.anodeDensity,   2, 2)
         grid.addWidget(self.anodeThickness, 2, 3)
-        
+
         grid.addWidget(windowlabel,          3, 0)
         grid.addWidget(self.windowCombo,     3, 1)
         grid.addWidget(self.windowDensity,   3, 2)
@@ -340,7 +340,7 @@ class TubeWidget(qt.QWidget):
         grid.addWidget(self.delta, 7, 3)
 
         layout.addWidget(gridwidget)
-        
+
     def setParameters(self, d):
         """
             d["transmission"]    = 1
@@ -359,7 +359,7 @@ class TubeWidget(qt.QWidget):
                 self.transmissionCheckBox.setChecked(1)
             else:
                 self.transmissionCheckBox.setChecked(0)
-            self._transmissionSlot()                
+            self._transmissionSlot()
         if "voltage" in d:
             self.voltage.setText("%.1f" % d["voltage"])
         if "anode" in d:
@@ -415,7 +415,7 @@ class TubeWidget(qt.QWidget):
         if DEBUG:
             print("_anodeSlot", ddict)
         self.anodeDensity.setText("%f" % Elements.Element[ddict["element"]]["density"])
-        
+
     def _windowSlot(self, ddict):
         if DEBUG:
             print("_windowSlot", ddict)
@@ -455,7 +455,7 @@ class MyQComboBox(qt.QComboBox):
         else:
             for item in options:
                 self.addItem(item)
-                
+
     def getCurrent(self):
         return   self.currentIndex(),str(self.currentText())
 
@@ -468,10 +468,10 @@ class MyQComboBox(qt.QComboBox):
         d['element'] = text
         #d['z'] = Elemens.ElementList.index(d) + 1
         self.sigMyQComboBoxSignal.emit(d)
-        
+
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = QXTube()
     w.show()
     app.exec_()
-        
+

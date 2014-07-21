@@ -64,7 +64,7 @@ def continuumEbel(target, e0, e=None, window=None,
         thickness the maximal penetration depth of the incident electron beam.
      filterlist : [list]
         Additional filters [[Formula, density, thickness], ...]
- 
+
      Return:
      -------
      result : Array
@@ -88,9 +88,9 @@ def continuumEbel(target, e0, e=None, window=None,
     if e is None:
         energy = numpy.arange(e0 * 1.0)[1:]
     elif type(e) == type([]):
-        energy = numpy.array(e, dtype=numpy.float)        
+        energy = numpy.array(e, dtype=numpy.float)
     elif type(e) == numpy.ndarray:
-        energy = numpy.array(e, dtype=numpy.float)        
+        energy = numpy.array(e, dtype=numpy.float)
     else:
         energy = numpy.array([e], dtype=numpy.float)
 
@@ -115,8 +115,8 @@ def continuumEbel(target, e0, e=None, window=None,
     m   = 0.1382 - 0.9211 / math.sqrt(z)
     logz = math.log(z)
     eta = 0.1904 - 0.2236 * logz + 0.1292 * pow(logz, 2) - \
-          0.0149 * pow(logz, 3) 
-    eta = eta * pow(e0, m) 
+          0.0149 * pow(logz, 3)
+    eta = eta * pow(e0, m)
 
     # dephmax? in Ebel's paper
     p3 = 0.787e-05 * math.sqrt(0.0135 * z) * pow(e0, 1.5) + \
@@ -124,13 +124,13 @@ def continuumEbel(target, e0, e=None, window=None,
     rhozmax = (Elements.Element[element]['mass'] / z) * p3
     # print "max depth = ",2 * rhozmax
 
-    # and finally we get rhoz 
+    # and finally we get rhoz
     u0 = e0 / energy
-    logu0 = numpy.log(u0) 
+    logu0 = numpy.log(u0)
     p1 = logu0 * (0.49269 - 1.09870 * eta + 0.78557 * pow(eta, 2))
     p2 = 0.70256 - 1.09865 * eta + 1.00460 * pow(eta, 2) + logu0
     rhoz = rhozmax * (p1 / p2)
-    
+
 
     # the term dealing with the photoelectric absorption of the Bremsstrahlung
     tau = numpy.array(
@@ -148,7 +148,7 @@ def continuumEbel(target, e0, e=None, window=None,
                          (1.0 - numpy.exp(-rhelp[i])) / rhelp[i]
         else:
             result = const * z * pow(u0 - 1.0, x) * \
-                 (1.0 - numpy.exp(-rhelp)) / rhelp 
+                 (1.0 - numpy.exp(-rhelp)) / rhelp
 
         # the term dealing with absorption in tube's window
         if window is not None:
@@ -167,7 +167,7 @@ def continuumEbel(target, e0, e=None, window=None,
                                                       density = fwindow[1],
                                                       thickness = fwindow[2],
                                                       listoutput=False)['transmission']
-            result *= w                
+            result *= w
         return result
     # transmission case
     if targetthickness is None:
@@ -207,7 +207,7 @@ def continuumEbel(target, e0, e=None, window=None,
                                                  density=fwindow[1],
                                                  thickness=fwindow[2],
                                                  listoutput=False)['transmission']
-            result *= w 
+            result *= w
     return result
 
 def characteristicEbel(target, e0, window=None,
@@ -251,7 +251,7 @@ def characteristicEbel(target, e0, window=None,
         density = target[1]
         thickness = target[2]
         if targetthickness is None:
-            targetthickness = target[2] 
+            targetthickness = target[2]
     else:
         element   = target
         density   = Elements.Element[element]['density']
@@ -277,11 +277,11 @@ def characteristicEbel(target, e0, window=None,
 
     if 0:
         # L shell lines will have to be entered directly by the user
-        # L shell 
+        # L shell
         lpeaks = []
         for label in lines['L xrays']:
             lpeaks.append([lines[label]['energy'],
-                              lines[label]['rate'], 
+                              lines[label]['rate'],
                               element+' '+label])
         lfluo = Elements._filterPeaks(lpeaks, ethreshold=0.020,
                                       ithreshold=0.001,
@@ -437,7 +437,7 @@ def generateLists(target, e0, window=None,
                   filterlist=None):
     """
     Generate a theoretical X-Ray Tube emission profile
-    
+
     Parameters:
     -----------
      target : list [Symbol, density (g/cm2), thickness(cm)] or atomic ymbol
@@ -458,7 +458,7 @@ def generateLists(target, e0, window=None,
         thickness the maximal penetration depth of the incident electron beam.
      filterlist : [list]
         Additional filters [[Formula, density, thickness], ...]
- 
+
      Return:
      -------
      result : Tuple

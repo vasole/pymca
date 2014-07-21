@@ -22,7 +22,7 @@ typedef float4 keypoint;
  * Warning:
  * 			-At this stage, a keypoint is: (peak,r,c,sigma)
  * 			 After this function, it will be (c,r,sigma,angle)
- * 			 
+ *
  *  Workgroup size: (1,)
  *
  * @param keypoints: Pointer to global memory with current keypoints vector.
@@ -73,14 +73,14 @@ __kernel void orientation_assignment(
 	int cmin = MAX(0,col - radius);
 	int rmax = MIN(row + radius,grad_height - 2);
 	int cmax = MIN(col + radius,grad_width - 2);
-	
+
 	for (r = rmin; r <= rmax; r++) {
 		for (c = cmin; c <= cmax; c++) {
 			gval = grad[r*grad_width+c];
-			
+
 			float dif = (r - k.s1);	distsq = dif*dif;
 			dif = (c - k.s2);	distsq += dif*dif;
-			
+
 			//distsq = (r-k.s1)*(r-k.s1) + (c-k.s2)*(c-k.s2);
 
 			if (gval > 0.0f  &&  distsq < ((float) (radius*radius)) + 0.5f) {
@@ -93,9 +93,9 @@ __kernel void orientation_assignment(
 			}
 		}
 	}
-	
-	
-	
+
+
+
 	/*
 		Apply smoothing 6 times for accurate Gaussian approximation
 	*/
@@ -110,7 +110,7 @@ __kernel void orientation_assignment(
 		}
 	}
 
-	
+
 	/* Find maximum value in histogram */
 
 	float maxval = 0.0f;
@@ -121,10 +121,10 @@ __kernel void orientation_assignment(
 			argmax = i;
 		}
 	}
-		
+
 /*
 	This maximum value in the histogram is defined as the orientation of our current keypoint
-*/	
+*/
 	prev = (argmax == 0 ? 35 : argmax - 1);
 	next = (argmax == 35 ? 0 : argmax + 1);
 	hist_prev = hist[prev];
@@ -143,13 +143,13 @@ __kernel void orientation_assignment(
 	k.s2 = k.s3 *octsize; //sigma
 	k.s3 = angle; 		  //angle
 	keypoints[gid0] = k;
-	
+
 	/*
 		An orientation is now assigned to our current keypoint.
 		We can create new keypoints of same (x,y,sigma) but a different angle.
 		For every local peak in histogram, every peak of value >= 80% of maxval generates a new keypoint
 	*/
-	
+
 	for (i=0; i < 36; i++) {
 		int prev = (i == 0 ? 35 : i - 1);
 		int next = (i == 35 ? 0 : i + 1);

@@ -50,8 +50,8 @@ class QSpsDataSource(QSource.QSource):
         #easy speed up by making a local reference
         self.sourceName = self.__dataSource.sourceName
         self.isUpdated  = self.__dataSource.isUpdated
-        self.sourceType = self.__dataSource.sourceType 
-        self.getKeyInfo = self.__dataSource.getKeyInfo 
+        self.sourceType = self.__dataSource.sourceType
+        self.getKeyInfo = self.__dataSource.getKeyInfo
         self.refresh    = self.__dataSource.refresh
         self.getSourceInfo = self.__dataSource.getSourceInfo
 
@@ -63,7 +63,7 @@ class QSpsDataSource(QSource.QSource):
                     return getattr(self.__dataSource, attr)
                 except:
                     pass
-        raise AttributeError        
+        raise AttributeError
 
     def getDataObject(self,key_list,selection=None, poll=True):
         if poll:
@@ -79,11 +79,11 @@ class QSpsDataSource(QSource.QSource):
         ddict['SourceType'] = SOURCE_TYPE
         key = ddict['Key']
 
-        idtolook = [] 
+        idtolook = []
         ddict['selectionlist'] = []
         for object in self.surveyDict[key]:
             idtolook.append(id(object))
-                        
+
         if key in self.selections.keys():
             n = len(self.selections[key])
             if n:
@@ -108,29 +108,29 @@ class QSpsDataSource(QSource.QSource):
                         sel['legend'] = info['legend']
                         legendlist.append(info['legend'])
                         sel['targetwidgetid'] = info.get('targetwidgetid', None)
-                        sel['scanselection'] = info.get('scanselection', False) 
-                        sel['imageselection'] = info.get('imageselection', False) 
+                        sel['scanselection'] = info.get('scanselection', False)
+                        sel['imageselection'] = info.get('imageselection', False)
                         ddict['selectionlist'].append(sel)
                     else:
                         del self.selections[key][i]
-            
+
                 self.sigUpdated.emit(ddict)
             else:
                 print("No info????")
-        
+
 if __name__ == "__main__":
     try:
         specname=sys.argv[1]
-        arrayname=sys.argv[2]        
+        arrayname=sys.argv[2]
     except:
         print("Usage: SpsDataSource <specversion> <arrayname>")
         sys.exit()
     app=qt.QApplication([])
-    obj = QSpsDataSource(specname)    
+    obj = QSpsDataSource(specname)
     def mytest(ddict):
         print(ddict['Key'])
     app.mytest = mytest
     data = obj.getDataObject(arrayname,poll=True)
-    obj.sigUpdated.connect(mytest) 
+    obj.sigUpdated.connect(mytest)
     app.exec_()
-    
+

@@ -38,7 +38,7 @@ __revision__="$Revision: 1.0 $"
 
 QTVERSION = qt.qVersion()
 
-    
+
 ################################################################################
 ##################             Object3DPreview               ###################
 ################################################################################
@@ -96,7 +96,7 @@ class Object3DPrintPreview(qt.QDialog):
         else:
             self.badNews = False
             self.printer = printer
-        
+
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
@@ -106,12 +106,12 @@ class Object3DPrintPreview(qt.QDialog):
         self.scene = qt.QGraphicsScene()
         self.scene.setBackgroundBrush(qt.QColor(qt.Qt.lightGray))
 
-        
+
         self.page = qt.QGraphicsRectItem(0,0, printer.width(), printer.height())
         self.page.setBrush(qt.QColor(qt.Qt.white))
         self.scene.setSceneRect(qt.QRectF(0,0, printer.width(), printer.height()))
         self.scene.addItem(self.page)
-        
+
         self.view = qt.QGraphicsView(self.scene)
 
         self.mainLayout.addWidget(self.view)
@@ -150,10 +150,10 @@ class Object3DPrintPreview(qt.QDialog):
 
         for scale in self.scaleValues:
             scaleCombo.addItem("%3d %%"%scale)
-            
+
         self.scaleCombo = scaleCombo
         self.scaleCombo.activated[int].connect(self.__scaleChanged)
-        
+
         hideBut   = qt.QPushButton("Hide", toolBar)
         #hideBut.setFixedWidth(buttonSize-10)
         hideBut.clicked[()].connect(self.hide)
@@ -173,15 +173,15 @@ class Object3DPrintPreview(qt.QDialog):
         printBut  = qt.QPushButton("Print", toolBar)
         #printBut.setFixedWidth(buttonSize-5)
         printBut.clicked[()].connect(self.__print)
-        
+
         zoomPlusBut  = qt.QPushButton("Zoom +", toolBar)
         #zoomPlusBut.setFixedWidth(buttonSize-5)
         zoomPlusBut.clicked[()].connect(self.__zoomPlus)
-        
+
         zoomMinusBut  = qt.QPushButton("Zoom -", toolBar)
         #zoomMinusBut.setFixedWidth(buttonSize-5)
         zoomMinusBut.clicked[()].connect(self.__zoomMinus)
-        
+
         # now we put widgets in the toolLayout
         toolsLayout.addWidget(hideBut)
         toolsLayout.addWidget(printBut)
@@ -190,7 +190,7 @@ class Object3DPrintPreview(qt.QDialog):
         toolsLayout.addWidget(setupBut)
         #toolsLayout.addStretch()
         #toolsLayout.addWidget(marginLabel)
-        #toolsLayout.addWidget(self.marginSpin)    
+        #toolsLayout.addWidget(self.marginSpin)
         toolsLayout.addStretch()
         #toolsLayout.addWidget(scaleLabel)
         #toolsLayout.addWidget(scaleCombo)
@@ -205,7 +205,7 @@ class Object3DPrintPreview(qt.QDialog):
         statusBar = qt.QStatusBar(self)
         self.targetLabel = qt.QLabel(statusBar)
         self.__updateTargetLabel()
-        statusBar.addWidget(self.targetLabel)            
+        statusBar.addWidget(self.targetLabel)
         self.mainLayout.addWidget(statusBar)
 
     def __updateTargetLabel(self):
@@ -241,17 +241,17 @@ class Object3DPrintPreview(qt.QDialog):
             self.view.scale(1.20, 1.20)
         else:
             self.view.scale(0.80, 0.80)
-            
+
     def __zoomPlus(self):
         if DEBUG:
             print("current scale = ",   self._viewScale)
-        self._viewScale *= 1.20 
+        self._viewScale *= 1.20
         self.view.scale(1.20, 1.20)
-            
+
     def __zoomMinus(self):
         if DEBUG:
             print("current scale = ",   self._viewScale)
-        self._viewScale *= 0.80 
+        self._viewScale *= 0.80
         self.view.scale(0.80, 0.80)
 
     def addImage(self, image, title = None, comment = None):
@@ -278,7 +278,7 @@ class Object3DPrintPreview(qt.QDialog):
         scale = float(0.5 * self.scene.width()/pixmap.width())
         rectItem.setRect(qt.QRectF(1, 1,
                         pixmap.width(), pixmap.height()))
-        
+
         pen = rectItem.pen()
         color = qt.QColor(qt.Qt.red)
         color.setAlpha(1)
@@ -288,7 +288,7 @@ class Object3DPrintPreview(qt.QDialog):
         rectItem.setFlag(qt.QGraphicsItem.ItemIsSelectable, True)
         rectItem.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
         rectItem.setFlag(qt.QGraphicsItem.ItemIsFocusable, False)
-            
+
         #I add the resize tool
         rectItemResizeRect = GraphicsResizeRectItem(rectItem, self.scene)
         rectItemResizeRect.setZValue(2)
@@ -303,7 +303,7 @@ class Object3DPrintPreview(qt.QDialog):
         textItem = qt.QGraphicsTextItem(title, rectItem, self.scene)
         textItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
         offset = 0.5 * textItem.boundingRect().width()
-        textItem.moveBy(0.5 * pixmap.width() - offset, -20) 
+        textItem.moveBy(0.5 * pixmap.width() - offset, -20)
         textItem.setZValue(2)
 
         #I add the comment
@@ -311,9 +311,9 @@ class Object3DPrintPreview(qt.QDialog):
         commentItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
         offset = 0.5 * commentItem.boundingRect().width()
         commentItem.moveBy(0.5 * pixmap.width() - offset,
-                           pixmap.height()+20) 
+                           pixmap.height()+20)
         commentItem.setZValue(2)
-        
+
         rectItem.scale(scale, scale)
         rectItem.moveBy(20 , 40)
 
@@ -333,7 +333,7 @@ class Object3DPrintPreview(qt.QDialog):
         self.scene.setSceneRect(qt.QRectF(0,0, self.printer.width(), self.printer.height()))
         self.page.setPos(qt.QPointF(0.0, 0.0))
         self.page.setRect(qt.QRectF(0,0, self.printer.width(), self.printer.height()))
-        #self.view.scale(1./self._viewScale, 1./self._viewScale) 
+        #self.view.scale(1./self._viewScale, 1./self._viewScale)
         #self.view.fitInView(self.page.rect(), qt.Qt.KeepAspectRatio)
         #self._viewScale = 1.00
         self.__updateTargetLabel()
@@ -356,7 +356,7 @@ class Object3DPrintPreview(qt.QDialog):
             else:
                 self.scene.removeItem(itemlist[0])
             itemlist = self.scene.items()
-        
+
     def __remove(self):
         """
         """
@@ -373,7 +373,7 @@ class Object3DPrintPreview(qt.QDialog):
             self.scene.removeItem(item)
             #this line is not really needed because the list
             #should be deleted at the end of the method
-            del itemlist[i]             
+            del itemlist[i]
 
 class GraphicsResizeRectItem(qt.QGraphicsRectItem):
     def __init__(self, parent = None, scene = None, keepratio = True):
@@ -393,7 +393,7 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
             pen.setColor(color)
             pen.setStyle(qt.Qt.NoPen)
             self.setPen(pen)
-            self.setBrush(color)            
+            self.setBrush(color)
         self.setFlag(self.ItemIsMovable, True)
         self.show()
 
@@ -508,7 +508,7 @@ def testPreview():
         item.load(filename)
         item.show()
         sys.exit(a.exec_())
- 
+
     p = qt.QPrinter()
     p.setOutputFileName(os.path.splitext(filename)[0]+".ps")
     p.setColorMode(qt.QPrinter.Color)
@@ -566,10 +566,10 @@ def testSimple():
     w.show()
     button.clicked[()].connect(printFile)
 
-    a.exec_()    
+    a.exec_()
 
 
-##  MAIN   
+##  MAIN
 if  __name__ == '__main__':
     testPreview()
     #testSimple()

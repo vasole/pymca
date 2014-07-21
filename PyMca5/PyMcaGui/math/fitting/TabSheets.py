@@ -41,7 +41,7 @@ class TabSheets(qt.QDialog):
         TabSheetsLayout = qt.QVBoxLayout(self)
         TabSheetsLayout.setContentsMargins(11, 11, 11, 11)
         TabSheetsLayout.setSpacing(6)
-            
+
         self.tabWidget = qt.QTabWidget(self)
 
         self.Widget8 = qt.QWidget(self.tabWidget)
@@ -74,7 +74,7 @@ class TabSheets(qt.QDialog):
         Layout2.addWidget(self.buttonOk)
 
         self.buttonCancel = qt.QPushButton(self)
-        self.buttonCancel.setText(str("Cancel"))    
+        self.buttonCancel.setText(str("Cancel"))
         Layout2.addWidget(self.buttonCancel)
         TabSheetsLayout.addLayout(Layout2)
 

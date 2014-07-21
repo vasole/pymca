@@ -134,10 +134,10 @@ class SpecFileAbstractScan(object):
 
     def allmotorpos(self):
         return []
-        
+
     def cols(self):
         return self.__cols
-    
+
     def command(self):
         if DEBUG:
             print("command called")
@@ -146,21 +146,21 @@ class SpecFileAbstractScan(object):
             if len(self.scanheader):
                 text = self.scanheader[0]
         return text
-        
+
     def data(self):
         return numpy.transpose(self.__data)
-    
+
     def datacol(self,col):
         return self.__data[:,col]
-        
+
     def dataline(self,line):
         return self.__data[line,:]
-        
-    
+
+
     def date(self):
         text = 'sometime'
         return text
-            
+
     def fileheader(self):
         if DEBUG:
             print("file header called")
@@ -176,7 +176,7 @@ class SpecFileAbstractScan(object):
             if DEBUG:
                 print("returning ",self.scanheader)
             return self.scanheader
-    
+
     def header(self,key):
         if   key == 'S': return self.fileheader()[0]
         elif key == 'N':return self.fileheader()[-2]
@@ -203,22 +203,22 @@ class SpecFileAbstractScan(object):
 
     def order(self):
         return self.__order
-        
+
     def number(self):
         return self.__number
-    
+
     def lines(self):
         if self.scantype == 'SCAN':
             return self.rows
         else:
             return 0
-            
+
     def nbmca(self):
         if self.scantype == 'SCAN':
             return 0
         else:
             return self.__cols
-        
+
     def mca(self,number):
         if number <= 0:
             raise IndexError("Mca numbering starts at 1")
@@ -228,10 +228,10 @@ class SpecFileAbstractScan(object):
             return self.__data[:,number-1]
         else:
             return self.__data[number-1]
-    
+
 def test():
     pass
 
 if __name__ == "__main__":
     test()
-        
+

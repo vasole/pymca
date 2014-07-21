@@ -38,9 +38,9 @@ class NNMAParametersDialog(qt.QDialog):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(11, 11, 11, 11)
         self.mainLayout.setSpacing(0)
-        
+
         self.infoButton = qt.QPushButton(self)
-        self.infoButton.setAutoDefault(False)        
+        self.infoButton.setAutoDefault(False)
         self.infoButton.setText('About NNMA')
         self.mainLayout.addWidget(self.infoButton)
         self.infoButton.clicked[()].connect(self._showInfo)
@@ -119,7 +119,7 @@ class NNMAParametersDialog(qt.QDialog):
         self.speedOptions.mainLayout.addWidget(self.binningLabel, 1, 0)
         self.speedOptions.mainLayout.addWidget(self.binningCombo, 1, 1)
         self.binningCombo.setEnabled(True)
-        
+
 
         #the OK button
         hbox = qt.QWidget(self)
@@ -213,7 +213,7 @@ class NNMAWindow(PCAWindow.PCAWindow):
                     self.imageNames.append("NNMA Image %02d" % i)
             else:
                 self.imageNames = imagenames
-                
+
         if self.imageList is not None:
             self.slider.setMaximum(len(self.imageList)-1)
             self.showImage(0)
@@ -236,9 +236,9 @@ class NNMAWindow(PCAWindow.PCAWindow):
                     self.vectorGraphTitles.append("%g %% explained intensity" %\
                                                    self.eigenValues[i])
                 self.vectorGraph.graph.setTitle(self.vectorGraphTitles[0])
-                
+
         self.slider.setValue(0)
-            
+
 def test2():
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)

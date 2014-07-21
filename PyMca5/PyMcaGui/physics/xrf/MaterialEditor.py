@@ -57,7 +57,7 @@ class MaterialEditor(qt.QWidget):
             else:
                 self.graphDialog = None
                 self.graph = graph
-            
+
         self.__toolMode = toolmode
         self.build(comments, height)
 
@@ -192,7 +192,7 @@ class MaterialEditor(qt.QWidget):
                                 replace=True)
             self.graph.setGraphTitle(ddict['Comment'])
             if self.graphDialog is not None:
-                self.graphDialog.exec_()                
+                self.graphDialog.exec_()
         except:
             msg=qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -245,7 +245,7 @@ class MaterialEditor(qt.QWidget):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()        
+            msg.exec_()
 
     def closeEvent(self, event):
         if self.graph is not None:
@@ -275,7 +275,7 @@ class MaterialComboBox(qt.QComboBox):
     def setOptions(self,options=['1','2','3']):
         self.clear()
         for item in options:
-            self.addItem(item)                
+            self.addItem(item)
 
     def getCurrent(self):
         return   self.currentItem(),str(self.currentText())
@@ -327,7 +327,7 @@ class MaterialComboBox(qt.QComboBox):
                 qstring = qstring0
         text = str(qstring)
 
-        if Elements.isValidFormula(text): 
+        if Elements.isValidFormula(text):
             msg =  qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Material Name %s\n" % text + \
@@ -339,8 +339,8 @@ class MaterialComboBox(qt.QComboBox):
                 selftext = self.itemText(i)
                 if selftext == qstring0:
                     self.removeItem(i)
-                    break                
-            return            
+                    break
+            return
         self.setCurrentText(text)
         ddict = {}
         ddict['event'] = 'activated'
@@ -357,7 +357,7 @@ class MaterialComboBox(qt.QComboBox):
                 insert = False
         if insert:
             self.insertItem(self.count(), qstring)
-                
+
         self.sigMaterialComboBoxSignal.emit(ddict)
 
     def _mySlot(self):
@@ -372,7 +372,7 @@ class MaterialValidator(qt.QValidator):
         if qstring is None:
             return None
         text = str(qstring)
-        key  = Elements.getMaterialKey(text) 
+        key  = Elements.getMaterialKey(text)
         if key is not None:
             return qt.QString(key)
         else:
@@ -417,14 +417,14 @@ class MaterialGUI(qt.QWidget):
             self.buildToolMode(comments,height)
         else:
             self.build(comments,height)
-        
+
     def _setCurrentDefault(self):
         self._current = {'Comment':"New Material",
                          'CompoundList':[],
                          'CompoundFraction':[1.0],
                          'Density':1.0,
                          'Thickness':1.0}
-        
+
     def build(self,comments="True",height=3):
         layout = qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -476,7 +476,7 @@ class MaterialGUI(qt.QWidget):
             vbox = qt.QWidget(commentsHBox)
             commentsHBoxLayout.addWidget(vbox)
             vboxLayout = qt.QVBoxLayout(vbox)
-            
+
             #default thickness and density
             self.__gridVBox = qt.QWidget(vbox)
             grid = self.__gridVBox
@@ -484,7 +484,7 @@ class MaterialGUI(qt.QWidget):
             gridLayout = qt.QGridLayout(grid)
             gridLayout.setContentsMargins(11, 11, 11, 11)
             gridLayout.setSpacing(4)
-            
+
             densityLabel  = qt.QLabel(grid)
             gridLayout.addWidget(densityLabel, 0, 0)
             densityLabel.setText("Default Density (g/cm3):")
@@ -519,13 +519,13 @@ class MaterialGUI(qt.QWidget):
             gridLayout.addWidget(self.__massAttButton, 2, 1)
             self.__transmissionButton.setAutoDefault(False)
             self.__massAttButton.setAutoDefault(False)
-            
+
             self.__transmissionButton.clicked.connect(
                          self.__transmissionSlot)
             self.__massAttButton.clicked.connect(
                          self.__massAttSlot)
             vboxLayout.addWidget(qt.VerticalSpacer(vbox))
-            
+
         if self.__comments:
             #comment
             nameHBox       = qt.QWidget(self)
@@ -546,7 +546,7 @@ class MaterialGUI(qt.QWidget):
         self.__numberSpin.valueChanged[int].connect(self.__numberSpinChanged)
         self.__table.cellChanged[int,int].connect(self.__tableSlot)
         self.__table.cellEntered[int,int].connect(self.__tableSlot2)
-            
+
     def buildToolMode(self, comments="True",height=3):
         layout = qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -667,7 +667,7 @@ class MaterialGUI(qt.QWidget):
                 #make sure the material CANNOT be modified
                 self._current = copy.deepcopy(Elements.Material[matkey])
                 if self.__table.isEnabled():
-                    self.__disableInput()                    
+                    self.__disableInput()
             else:
                 self._current = Elements.Material[matkey]
         else:
@@ -682,7 +682,7 @@ class MaterialGUI(qt.QWidget):
             if self.__toolMode:
                 self.__nameLine.setText("%s" % matkey)
             self.__fillingValues = False
-        
+
     def _fillValues(self):
         if DEBUG:
             print("fillValues(self)")
@@ -699,9 +699,9 @@ class MaterialGUI(qt.QWidget):
                 except:
                     self.__thicknessLine.setText("")
         if type(self._current['CompoundList']) != type([]):
-            self._current['CompoundList'] = [self._current['CompoundList']] 
+            self._current['CompoundList'] = [self._current['CompoundList']]
         if type(self._current['CompoundFraction']) != type([]):
-            self._current['CompoundFraction'] = [self._current['CompoundFraction']] 
+            self._current['CompoundFraction'] = [self._current['CompoundFraction']]
         self.__numberSpin.setValue(max(len(self._current['CompoundList']),1))
         row = 0
         for compound in  self._current['CompoundList']:
@@ -763,7 +763,7 @@ class MaterialGUI(qt.QWidget):
             msg.setText("Invalid Float")
             msg.exec_()
             self.__densityLine.setFocus()
-    
+
     def __thicknessSlot(self, silent=False):
         try:
             qstring = self.__thicknessLine.text()
@@ -791,7 +791,7 @@ class MaterialGUI(qt.QWidget):
         ddict = {}
         ddict.update(self._current)
         ddict['event'] = 'MaterialMassAttenuation'
-        self.sigMaterialMassAttenuationSignal.emit(ddict)        
+        self.sigMaterialMassAttenuationSignal.emit(ddict)
 
     def __nameLineSlot(self):
         if DEBUG:
@@ -823,13 +823,13 @@ class MaterialGUI(qt.QWidget):
                 self.__thicknessLine.setEnabled(True)
         else:
             self._current['Comment'] = text
-            
+
     def __disableInput(self):
         self.__numberSpin.setEnabled(False)
         self.__table.setEnabled(False)
         self.__densityLine.setEnabled(False)
         self.__thicknessLine.setEnabled(True)
-    
+
     def __numberSpinChanged(self,value):
         #size = self.__table.size()
         self.__table.setRowCount(value)
@@ -883,15 +883,15 @@ class MaterialGUI(qt.QWidget):
         if self.__fillingValues:return
         if self.__lastRow is None:
             self.__lastRow = row
-        
+
         if self.__lastColumn is None:
             self.__lastColumn = col
 
-        item = self.__table.item(self.__lastRow, 
+        item = self.__table.item(self.__lastRow,
                                 self.__lastColumn)
         if item is None:
             item = qt.QTableWidgetItem("",qt.QTableWidgetItem.Type)
-            self.__table.setItem(self.__lastRow, 
+            self.__table.setItem(self.__lastRow,
                                  self.__lastColumn,
                                  item)
         qstring = item.text()
@@ -903,16 +903,16 @@ class MaterialGUI(qt.QWidget):
             else:
                 matkey  = Elements.getMaterialKey(compound)
                 if matkey is not None:
-                    item = self.__table.item(self.__lastRow, 
+                    item = self.__table.item(self.__lastRow,
                                         self.__lastColumn)
                     if item is None:
                         item = qt.QTableWidgetItem(matkey,
                                         qt.QTableWidgetItem.Type)
-                        self.__table.setItem(self.__lastRow, 
+                        self.__table.setItem(self.__lastRow,
                                          self.__lastColumn,
                                          item)
                     else:
-                        item.setText(matkey)                        
+                        item.setText(matkey)
                 else:
                     msg=qt.QMessageBox(self.__table)
                     msg.setIcon(qt.QMessageBox.Critical)

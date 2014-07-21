@@ -144,10 +144,10 @@ class FastXRFLinearFitWindow(qt.QWidget):
             ddict['concentrations'] = 0
         ddict['weight_policy'] = self._weightButtonGroup.checkedId()
         return ddict
-        
+
 class FastXRFLinearFitDialog(qt.QDialog):
     def __init__(self, parent=None):
-        qt.QDialog.__init__(self, parent)   
+        qt.QDialog.__init__(self, parent)
         self.setWindowTitle("Fast XRF Linear Fit Dialog")
         self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self.mainLayout = qt.QGridLayout(self)
@@ -157,14 +157,14 @@ class FastXRFLinearFitDialog(qt.QDialog):
         self.rejectButton= qt.QPushButton(self)
         self.rejectButton.setAutoDefault(False)
         self.rejectButton.setText("Cancel")
-        
+
         self.acceptButton= qt.QPushButton(self)
         self.acceptButton.setAutoDefault(False)
         self.acceptButton.setText("OK")
 
         self.rejectButton.clicked.connect(self.reject)
         self.acceptButton.clicked.connect(self.accept)
-        
+
         self.mainLayout.addWidget(self.parametersWidget, 0, 0, 5, 4)
         self.mainLayout.addWidget(self.rejectButton, 6, 1)
         self.mainLayout.addWidget(self.acceptButton, 6, 2)

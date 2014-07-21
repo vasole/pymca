@@ -22,7 +22,7 @@
  *   Project:       SpecFile library
  *
  *   Description:   Functions to access file and scan headers
- * 
+ *
  *   Author:        V.Rey
  *
  *   Date:          $Date: 2002/11/20 09:01:29 $
@@ -44,7 +44,7 @@
  *   Log:
  * Revision 2.1  2000/07/31  19:05:09  19:05:09  rey (Vicente Rey-Bakaikoa)
  * SfUpdate and bug corrected in ReadIndex
- * 
+ *
  * Revision 2.0  2000/04/13  13:28:54  13:28:54  rey (Vicente Rey-Bakaikoa)
  * New version of the library. Complete rewrite
  * Adds support for MCA
@@ -65,7 +65,7 @@ DllExport char   * SfUser           ( SpecFile *sf, long index, int *error );
 DllExport char   * SfTitle          ( SpecFile *sf, long index, int *error );
 DllExport char   * SfFileDate       ( SpecFile *sf, long index, int *error );
 DllExport long     SfNoHeaderBefore ( SpecFile *sf, long index, int *error );
-DllExport long     SfGeometry       ( SpecFile *sf, long index, 
+DllExport long     SfGeometry       ( SpecFile *sf, long index,
                                            char ***lines, int *error);
 DllExport long     SfHeader         ( SpecFile *sf, long index, char *string,
                                            char ***lines, int *error);
@@ -89,7 +89,7 @@ static char *sfOneLine       ( char *from, char *end, int *error);
  *   Description:    Reads '#S' line ( without #S and scan number ).
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) Index
  *        Output:
  *            (3) error number
@@ -97,10 +97,10 @@ static char *sfOneLine       ( char *from, char *end, int *error);
  *            String pointer,
  *            NULL => errors.
  *   Possible errors:
- *            SF_ERR_MEMORY_ALLOC   
+ *            SF_ERR_MEMORY_ALLOC
  *            SF_ERR_FILE_READ
  *            SF_ERR_SCAN_NOT_FOUND
- *            SF_ERR_LINE_NOT_FOUND     
+ *            SF_ERR_LINE_NOT_FOUND
  *
  *   Remark:  The memory allocated should be freed by the application
  *
@@ -118,7 +118,7 @@ SfCommand( SpecFile *sf, long index, int *error )
      if (sfSetCurrent(sf,index,error) == -1)
           return(ret_line);
 
-     cnt = 3; 
+     cnt = 3;
      for ( ptr = sf->scanbuffer + cnt; *ptr != ' ' ; ptr++,cnt++);
      for ( ptr = sf->scanbuffer + cnt; *ptr == ' ' || *ptr == '\t'; ptr++,cnt++);
 
@@ -130,7 +130,7 @@ SfCommand( SpecFile *sf, long index, int *error )
      /*
       * Return the rest .
       */
-     ret_line = (char *) malloc ( sizeof(char) * ( length + 1) );  
+     ret_line = (char *) malloc ( sizeof(char) * ( length + 1) );
      if (ret_line == (char *)NULL) {
           *error = SF_ERR_MEMORY_ALLOC;
           return(ret_line);
@@ -150,7 +150,7 @@ SfCommand( SpecFile *sf, long index, int *error )
  *   Description:    Gets number of columns in a scan
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) Index
  *        Output:
  *            (3) error number
@@ -159,7 +159,7 @@ SfCommand( SpecFile *sf, long index, int *error )
  *            ( -1 ) if errors occured.
  *   Possible errors:
  *            SF_ERR_MEMORY_ALLOC    | => readHeader()
- *            SF_ERR_LINE_NOT_FOUND    
+ *            SF_ERR_LINE_NOT_FOUND
  *            SF_ERR_FILE_READ
  *            SF_ERR_SCAN_NOT_FOUND
  *
@@ -173,7 +173,7 @@ SfNoColumns( SpecFile *sf, long index, int *error )
      if ( sfSetCurrent(sf,index,error) == -1)
           return(-1);
 
-     if ( sfGetHeaderLine( sf, FROM_SCAN, SF_COLUMNS, &buf, error) == -1) 
+     if ( sfGetHeaderLine( sf, FROM_SCAN, SF_COLUMNS, &buf, error) == -1)
           return(-1);
      col   = atol( buf );
      free(buf);
@@ -187,7 +187,7 @@ SfNoColumns( SpecFile *sf, long index, int *error )
  *   Description:    Gets date from scan header
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) Index
  *        Output:
  *            (3) error number
@@ -196,7 +196,7 @@ SfNoColumns( SpecFile *sf, long index, int *error )
  *            NULL => errors.
  *   Possible errors:
  *            SF_ERR_MEMORY_ALLOC    | => readHeader()
- *            SF_ERR_LINE_NOT_FOUND    
+ *            SF_ERR_LINE_NOT_FOUND
  *            SF_ERR_FILE_READ
  *            SF_ERR_SCAN_NOT_FOUND
  *
@@ -212,11 +212,11 @@ SfDate(SpecFile *sf, long index, int *error )
           return(line);
 
      if ( sfGetHeaderLine( sf, FROM_SCAN, SF_DATE, &line, error))
-          return((char *)NULL); 
+          return((char *)NULL);
 
      return( line );
 }
-   
+
 
 /*********************************************************************
  *   Function:        double *SfHKL( sf, index, error )
@@ -224,7 +224,7 @@ SfDate(SpecFile *sf, long index, int *error )
  *   Description:    Reads '#Q' line.
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) Index
  *        Output:
  *            (3) error number
@@ -235,10 +235,10 @@ SfDate(SpecFile *sf, long index, int *error )
  *            NULL => errors.
  *
  *   Possible errors:
- *            SF_ERR_LINE_EMPTY   
+ *            SF_ERR_LINE_EMPTY
  *            SF_ERR_FILE_READ
  *            SF_ERR_SCAN_NOT_FOUND
- *            SF_ERR_LINE_NOT_FOUND     
+ *            SF_ERR_LINE_NOT_FOUND
  *            SF_ERR_MEMORY_ALLOC    | => mulstrtod()
  *
  *   Remark:  The memory allocated should be freed by the application
@@ -263,7 +263,7 @@ SfHKL( SpecFile *sf, long index, int *error )
      i = mulstrtod( line, &HKL, error );
      free(line);
 
-     if ( i < 0) 
+     if ( i < 0)
          return( (double *)NULL );
 
      if ( i != 3 ) {
@@ -282,7 +282,7 @@ SfHKL( SpecFile *sf, long index, int *error )
  *   Description:     Gets epoch from the last file header.
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *                   (2) Index
  *        Output:
  *                   (3) error number
@@ -291,13 +291,13 @@ SfHKL( SpecFile *sf, long index, int *error )
  *            ( -1 ) if errors occured.
  *   Possible errors:
  *            SF_ERR_MEMORY_ALLOC    | => readHeader()
- *            SF_ERR_LINE_NOT_FOUND    
+ *            SF_ERR_LINE_NOT_FOUND
  *            SF_ERR_FILE_READ
  *            SF_ERR_HEADER_NOT_FOUND
  *            SF_ERR_SCAN_NOT_FOUND
  *
  *********************************************************************/
-DllExport long 
+DllExport long
 SfEpoch( SpecFile *sf, long index, int *error )
 {
      char   *buf=NULL;
@@ -306,7 +306,7 @@ SfEpoch( SpecFile *sf, long index, int *error )
      if ( sfSetCurrent(sf,index,error) == -1 )
           return(-1);
 
-     if ( sfGetHeaderLine(sf,FROM_FILE,SF_EPOCH,&buf,error) == -1 ) 
+     if ( sfGetHeaderLine(sf,FROM_FILE,SF_EPOCH,&buf,error) == -1 )
           return(-1);
 
      epoch  = atol( buf );
@@ -322,7 +322,7 @@ SfEpoch( SpecFile *sf, long index, int *error )
  *   Description:     Gets date from the last file header
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *                   (2) Index
  *        Output:
  *            (3) error number
@@ -332,14 +332,14 @@ SfEpoch( SpecFile *sf, long index, int *error )
  *
  *   Possible errors:
  *            SF_ERR_MEMORY_ALLOC   | => readHeader()
- *            SF_ERR_LINE_NOT_FOUND 
+ *            SF_ERR_LINE_NOT_FOUND
  *            SF_ERR_LINE_EMPTY
  *            SF_ERR_FILE_READ
  *            SF_ERR_HEADER_NOT_FOUND
  *            SF_ERR_SCAN_NOT_FOUND
  *
  *********************************************************************/
-DllExport char * 
+DllExport char *
 SfFileDate( SpecFile *sf, long index, int *error )
 {
      char   *date = NULL;
@@ -347,7 +347,7 @@ SfFileDate( SpecFile *sf, long index, int *error )
      if ( sfSetCurrent(sf,index,error) == -1 )
           return((char *)NULL);
 
-     if ( sfGetHeaderLine(sf,FROM_FILE,SF_DATE,&date,error) == -1 ) 
+     if ( sfGetHeaderLine(sf,FROM_FILE,SF_DATE,&date,error) == -1 )
           return((char *)NULL);
 
      return( date );
@@ -360,12 +360,12 @@ SfFileDate( SpecFile *sf, long index, int *error )
  *   Description:    Gets number of scan header lines before data.
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) Scan index
  *        Output:
  *            (3) error number
  *   Returns:
- *            Number of scan header lines before data , 
+ *            Number of scan header lines before data ,
  *            ( -1 ) => errors.
  *   Possible errors:
  *            SF_ERR_SCAN_NOT_FOUND
@@ -381,7 +381,7 @@ SfNoHeaderBefore( SpecFile *sf, long index, int *error )
      * Obsolete... give some reasonable!
      */
      return(-1);
-}  
+}
 
 
 /*********************************************************************
@@ -390,7 +390,7 @@ SfNoHeaderBefore( SpecFile *sf, long index, int *error )
  *   Description:    Gets spec user information from the last file header
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) Index
  *        Output:
  *            (3) error number
@@ -398,14 +398,14 @@ SfNoHeaderBefore( SpecFile *sf, long index, int *error )
  *            User.(From 1st #C line !)
  *   Possible errors:
  *            SF_ERR_MEMORY_ALLOC    ||=>  findWordInLine()
- *            SF_ERR_LINE_NOT_FOUND    | 
+ *            SF_ERR_LINE_NOT_FOUND    |
  *            SF_ERR_FILE_READ    |
  *            SF_ERR_SCAN_NOT_FOUND    | =>  getFirstFileC()
  *            SF_ERR_HEADER_NOT_FOUND    |
- *            SF_ERR_USER_NOT_FOUND    
+ *            SF_ERR_USER_NOT_FOUND
  *
  *********************************************************************/
-DllExport char * 
+DllExport char *
 SfUser( SpecFile *sf, long index, int *error )
 {
 
@@ -416,12 +416,12 @@ SfUser( SpecFile *sf, long index, int *error )
      if (sfSetCurrent(sf,index,error) == -1)
           return((char *)NULL);
 
-     if (sfGetHeaderLine( sf, FROM_FILE, SF_COMMENT, &line, error) == -1) 
+     if (sfGetHeaderLine( sf, FROM_FILE, SF_COMMENT, &line, error) == -1)
           return((char *)NULL);
 
      /*
       * Find user.
-      */     
+      */
      user = sfFindWord( line, word, error );
 
      if ( user == (char *) NULL) {
@@ -440,7 +440,7 @@ SfUser( SpecFile *sf, long index, int *error )
  *   Description:    Gets spec title information from the last file header
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) Index
  *        Output:
  *            (3) error number
@@ -448,15 +448,15 @@ SfUser( SpecFile *sf, long index, int *error )
  *            Title.(From 1st #C line !)
  *            NULL => errors.
  *   Possible errors:
- *            SF_ERR_LINE_EMPTY    
- *            SF_ERR_MEMORY_ALLOC    
- *            SF_ERR_LINE_NOT_FOUND    | 
+ *            SF_ERR_LINE_EMPTY
+ *            SF_ERR_MEMORY_ALLOC
+ *            SF_ERR_LINE_NOT_FOUND    |
  *            SF_ERR_FILE_READ    |
  *            SF_ERR_SCAN_NOT_FOUND    | =>  getFirstFileC()
  *            SF_ERR_HEADER_NOT_FOUND    |
  *
  *********************************************************************/
-DllExport char * 
+DllExport char *
 SfTitle( SpecFile *sf, long index, int *error )
 {
      char        *line=NULL;
@@ -467,12 +467,12 @@ SfTitle( SpecFile *sf, long index, int *error )
      if (sfSetCurrent(sf,index,error) == -1)
           return((char *)NULL);
 
-     if (sfGetHeaderLine( sf, FROM_FILE, SF_COMMENT, &line, error) == -1) 
+     if (sfGetHeaderLine( sf, FROM_FILE, SF_COMMENT, &line, error) == -1)
           return((char *)NULL);
 
      /*
       * Get title.( first word )
-      */    
+      */
      ptr = line;
 
      for ( i=0,ptr=line ; *ptr!='\t' && *ptr!='\n' && *ptr!='\0' ; i++ ) {
@@ -516,8 +516,8 @@ SfGeometry ( SpecFile *sf, long index, char ***lines, int *error)
 }
 
 
-DllExport long     
-SfHeader ( SpecFile *sf, long index, char *string, char ***lines, int *error) 
+DllExport long
+SfHeader ( SpecFile *sf, long index, char *string, char ***lines, int *error)
 {
      char   *headbuf,
             *endheader;
@@ -533,8 +533,8 @@ SfHeader ( SpecFile *sf, long index, char *string, char ***lines, int *error)
 
 
 
-DllExport long     
-SfFileHeader ( SpecFile *sf, long index, char *string, char ***lines, int *error) 
+DllExport long
+SfFileHeader ( SpecFile *sf, long index, char *string, char ***lines, int *error)
 {
      char   *headbuf,
             *endheader;
@@ -561,19 +561,19 @@ sfFindLines(char *from,char *to,char *string,char ***ret,int *error)
      found = 0;
      ptr   = from;
 
-     if ( string == (char *) NULL || strlen(string) == 0) 
+     if ( string == (char *) NULL || strlen(string) == 0)
            all = 1;
-     
+
      /*
       * Allocate memory for an array of strings
-      */    
+      */
      if ( (lines = (char **)malloc( sizeof(char *) )) == (char **)NULL ) {
         *error = SF_ERR_MEMORY_ALLOC;
          return ( -1 );
-     }    
+     }
 
      /*
-      * First line 
+      * First line
       */
      if ( ptr[0] == '#' ) {
         if ( all ) {
@@ -581,15 +581,15 @@ sfFindLines(char *from,char *to,char *string,char ***ret,int *error)
            lines[found] = sfOneLine(ptr,to,error);
            found++;
         } else if ( ptr[1] == string[0]) {
-           for ( j=0; j < strlen(string) && ptr+j< to;j++) 
-               if ( ptr[j+1] != string[j]) break; 
+           for ( j=0; j < strlen(string) && ptr+j< to;j++)
+               if ( ptr[j+1] != string[j]) break;
            if ( j == strlen(string)) {
                 lines = (char **) realloc ( lines, (found+1) * sizeof(char *) );
                 lines[found] = sfOneLine(ptr,to,error);
                 found++;
            }
         }
-     } 
+     }
 
     /*
      * The rest
@@ -601,15 +601,15 @@ sfFindLines(char *from,char *to,char *string,char ***ret,int *error)
                  lines[found] = sfOneLine(ptr,to,error);
                  found++;
               } else if ( *(ptr+1) == string[0]) {
-                 for ( j=0; j < strlen(string) && (ptr + j) < to;j++) 
-                        if ( ptr[j+1] != string[j]) break; 
-                 if ( j == strlen(string)) { 
+                 for ( j=0; j < strlen(string) && (ptr + j) < to;j++)
+                        if ( ptr[j+1] != string[j]) break;
+                 if ( j == strlen(string)) {
                     lines = (char **) realloc ( lines, (found+1) * sizeof(char *) );
                     lines[found] = sfOneLine(ptr,to,error);
                     found++;
                  }
               }
-         } 
+         }
      }
 
      if (found) *ret = lines;
@@ -625,7 +625,7 @@ sfFindLines(char *from,char *to,char *string,char ***ret,int *error)
  *   Description:    Gets one '#sf_char' line.
  *
  *   Parameters:
- *        Input :    (1) File pointer   
+ *        Input :    (1) File pointer
  *            (2) sf_character
  *            (3) end ( where to stop the search )
  *        Output:
@@ -673,7 +673,7 @@ sfGetHeaderLine( SpecFile *sf, int from , char sf_char, char **buf, int *error)
            if ( *(ptr - 1) == '\n' && *ptr == '#' && *(ptr+1) == sf_char) {
                 found = 1;
                 break;
-           } 
+           }
         }
      }
 
@@ -682,18 +682,18 @@ sfGetHeaderLine( SpecFile *sf, int from , char sf_char, char **buf, int *error)
          return(-1);
      }
 
-    /* 
-     * Beginning of the thing after '#X '   
+    /*
+     * Beginning of the thing after '#X '
      */
      ptr = ptr + 3;
 
      *buf = sfOneLine(ptr,endheader,error);
 
-     return( 0 );    
+     return( 0 );
 }
 
 static char *
-sfOneLine(char *from,char *end,int *error) 
+sfOneLine(char *from,char *end,int *error)
 {
      static char linebuf[500];
 
@@ -704,7 +704,7 @@ sfOneLine(char *from,char *end,int *error)
 
      for(i=0;*ptr != '\n' && ptr < end;ptr++,i++) {
          linebuf[i] = *ptr;
-     } 
+     }
 
      linebuf[i]='\0';
 
@@ -712,7 +712,7 @@ sfOneLine(char *from,char *end,int *error)
 
      if (buf == ( char * ) NULL ) {
         *error = SF_ERR_MEMORY_ALLOC;
-         return((char *)NULL);     
+         return((char *)NULL);
      }
      strcpy(buf,(char *)linebuf);
 
@@ -723,11 +723,11 @@ sfOneLine(char *from,char *end,int *error)
 /*********************************************************************
  *   Function:        char *sfFindWord( line, word, error )
  *
- *   Description:    Looks for 'word' in given line and returns a 
+ *   Description:    Looks for 'word' in given line and returns a
  *                   copy of the rest of the line after the found word .
  *
  *   Parameters:
- *        Input :    (1) Line pointer   
+ *        Input :    (1) Line pointer
  *            (2) Word pointer
  *        Output:
  *            (3) error number
@@ -735,15 +735,15 @@ sfOneLine(char *from,char *end,int *error)
  *            Rest of the line after word.
  *            NULL => not found.
  *   Possible errors:
- *            SF_ERR_MEMORY_ALLOC   
+ *            SF_ERR_MEMORY_ALLOC
  *
  *********************************************************************/
 static char *
 sfFindWord( char *line, char *word, int *error )
 {
      char    *ret;
- 
-     line = strstr( line, word ); 
+
+     line = strstr( line, word );
 
      if ( line == (char *)NULL ) {
          return( line );
@@ -752,13 +752,13 @@ sfFindWord( char *line, char *word, int *error )
      line += strlen( word );
 
      /*
-      * Delete blanks. 
-      */     
-     while ( *line == ' ' || *line == '\t' ) line++; 
+      * Delete blanks.
+      */
+     while ( *line == ' ' || *line == '\t' ) line++;
 
      /*
-      * Copy the rest. 
-      */     
+      * Copy the rest.
+      */
      ret = (char *)malloc( sizeof(char) * ( 1 + strlen( line )) );
 
      if ( ret == (char *)NULL ) {

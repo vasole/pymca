@@ -45,11 +45,11 @@ The specific data are:
 
     a) integrated cross section
     b) average energy of the secondary electron and positron (MeV)
-    
+
 - Triplet production reaction
 
     a) integrated cross section
-    b) average energy of the secondary electron and positron (MeV)    
+    b) average energy of the secondary electron and positron (MeV)
 
 
 Photoelectric data are only for photo-ionization. Photo-excitation data
@@ -87,7 +87,7 @@ Columns    Format   Definition
                                   = 74, pair production
                                   = 75, triplet production
                                   = 93, whole atom parameters
-                                  
+
 3-5         I2      I  - reaction property:
                                   =   0, integrated cross section
                                   =  10, avg. energy of Yo
@@ -159,7 +159,7 @@ Yi    C    S    X1    Yo   I          Data Types
 Data sorted in ascending order Z -> C -> S -> X1 -> Yo -> I
 """
 import numpy
-Elements = ['H', 'He', 
+Elements = ['H', 'He',
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
             'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -167,12 +167,12 @@ Elements = ['H', 'He',
             'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
             'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
             'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
 #Translation from EADL index to actual shell (Table VI)
@@ -387,7 +387,7 @@ def parseHeader1(line):
                                       = 74, pair production
                                       = 75, triplet production
                                       = 93, whole atom parameters
-                                      
+
     3-5         I2      I  - reaction property:
                                       =   0, integrated cross section
                                       =  10, avg. energy of Yo
@@ -428,12 +428,12 @@ def parseHeader1(line):
         else:
             ddict['subshell'] = 'none'
     elif (S == 0) and (X1 == 0.0):
-        ddict['subshell_code'] = 0    
+        ddict['subshell_code'] = 0
         ddict['subshell'] = 'none'
     else:
         print("Inconsistent data")
         print("X1 = ", X1, "S = ", S)
-        sys.exit(1) 
+        sys.exit(1)
     return ddict
 
 def parseHeader(line0, line1):
@@ -529,7 +529,7 @@ def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I, getmode=True):
         return -1, 'lin-lin'
     else:
         return -1
-    
+
 def getActualDataFromLinesAndOffset(lines, index):
     data_begin = index + 2
     data_end   = index + 2
@@ -708,7 +708,7 @@ if __name__ == "__main__":
         if energy[i] > 0.010:
             if energy[i] < 0.020:
                 print(energy[i], value[i])
-            
+
     energy, value, mode = getPartialPhotoelectricCrossSection(Z, 'L1', EPDL97_DATA, getmode=True)
     print("L1 SHELL PARTIAL PHOTOELECTRIC IDX")
     for i in range(len(energy)):

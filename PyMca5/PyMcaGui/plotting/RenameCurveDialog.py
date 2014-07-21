@@ -54,7 +54,7 @@ class RenameCurveDialog(qt.QDialog):
 
     def preAccept(self):
         text = str(self.lineEdit.text())
-        addedText = "" 
+        addedText = ""
         if len(text):
             if text not in self.curves:
                 self.accept()

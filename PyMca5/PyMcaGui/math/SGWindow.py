@@ -54,9 +54,9 @@ class SGParametersWidget(qt.QWidget):
                      "Derivative order (0=smoothing):"]:
             label = qt.QLabel(self)
             label.setText(text)
-            self.mainLayout.addWidget(label, i, 0)        
+            self.mainLayout.addWidget(label, i, 0)
             #self.mainLayout.addWidget(qt.HorizontalSpacer(self), i, 1)
-            i +=1 
+            i +=1
 
         i = 0
         self.widgetDict = {}
@@ -91,7 +91,7 @@ class SGParametersWidget(qt.QWidget):
         ddict['event']='SGParametersChanged'
         ddict.update(self.parametersDict)
         self.sigSGParametersSignal.emit(ddict)
-                  
+
     def getParameters(self):
         return self.parametersDict
 
@@ -136,7 +136,7 @@ class SGWindow(qt.QWidget):
                     self.background, "Filtered Spectrum",
                     replace=False,
                     maptoy2=maptoy2)
-    
+
         #Force information update
         legend = self.graph.getActiveCurve(just_legend=True)
         if legend.startswith('Filtered'):
@@ -163,7 +163,7 @@ class SGDialog(qt.QDialog):
         hboxLayout.setSpacing(0)
         self.okButton = qt.QPushButton(hbox)
         self.okButton.setText("OK")
-        self.okButton.setAutoDefault(False)   
+        self.okButton.setAutoDefault(False)
         self.dismissButton = qt.QPushButton(hbox)
         self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
@@ -180,17 +180,17 @@ class SGDialog(qt.QDialog):
         parametersDict['arguments'] = [parametersDict['points'],
                                        parametersDict['degree'],
                                        parametersDict['order']]
-        return parametersDict                                       
+        return parametersDict
 
     def setParameters(self, ddict):
         return self.parametersWidget.setParameters(ddict)
 
-                 
+
 if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
     if 1:
-        noise = numpy.random.randn(1000.) 
+        noise = numpy.random.randn(1000.)
         y=numpy.arange(1000.)
         w = SGDialog(None, y+numpy.sqrt(y)* noise)
     w.show()

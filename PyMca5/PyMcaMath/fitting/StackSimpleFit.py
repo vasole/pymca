@@ -36,7 +36,7 @@ import numpy
 from PyMca5 import ConfigDict
 from . import SimpleFitModule
 from PyMca5.PyMcaIO import ArraySave
-from PyMca5 import PyMcaDirs    
+from PyMca5 import PyMcaDirs
 
 DEBUG = 0
 
@@ -44,7 +44,7 @@ class StackSimpleFit(object):
     def __init__(self, fit=None):
         if fit is None:
             fit = SimpleFitModule.SimpleFit()
-        self.fit = fit    
+        self.fit = fit
         self.stack_y = None
         self.outputDir = PyMcaDirs.outputDir
         self.outputFile = None
@@ -95,11 +95,11 @@ class StackSimpleFit(object):
             raise IOError("File %s does not exist" % fname)
         w = ConfigDict.ConfigDict()
         w.read(fname)
-        self.setConfiguration(w)        
+        self.setConfiguration(w)
 
     def setConfiguration(self, ddict):
         self.fit.setConfiguration(ddict, try_import=True)
-        
+
     def processStack(self, mask=None):
         self.mask = mask
         data_index = self.dataIndex
@@ -110,12 +110,12 @@ class StackSimpleFit(object):
 
         if len(data_index) > 1:
             raise IndexError("Only 1D fitting implemented for the time being")
-            
+
         #this leaves the possibility to fit images by giving
         #two indices specifying the image dimensions
         self.stackDataIndexList = data_index
-        
-        stack = self.stack_y 
+
+        stack = self.stack_y
         if stack is None:
             raise ValueError("No data to be processed")
 
@@ -137,13 +137,13 @@ class StackSimpleFit(object):
                 nPixels *= data.shape[i]
                 outputDimension.append(data.shape[i])
 
-        lenOutput = len(outputDimension) 
+        lenOutput = len(outputDimension)
         if lenOutput > 2:
             raise ValueError("Rank of  output greater than 2")
         elif lenOutput == 2:
             self._nRows = outputDimension[0]
             self._nColumns = outputDimension[1]
-        else:    
+        else:
             self._nRows = outputDimension[0]
             self._nColumns = 1
 
@@ -219,7 +219,7 @@ class StackSimpleFit(object):
         if len(yShape) == 3:
             if data_index == 0:
                 y = self.stack_y[:, row, column]
-            elif data_index == 1:    
+            elif data_index == 1:
                 y = self.stack_y[row, :, column]
             else:
                 y = self.stack_y[row, column]
@@ -245,7 +245,7 @@ class StackSimpleFit(object):
             if len(xShape) == 3:
                 if data_index == 0:
                     x = self.stack_x[:, row, column]
-                elif data_index == 1:    
+                elif data_index == 1:
                     x = self.stack_x[row, :, column]
                 else:
                     x = self.stack_x[row, column]
@@ -275,7 +275,7 @@ class StackSimpleFit(object):
             if len(sigmaShape) == 3:
                 if data_index == 0:
                     sigma = self.stack_sigma[:, row, column]
-                elif data_index == 1:    
+                elif data_index == 1:
                     sigma = self.stack_sigma[row, :, column]
                 else:
                     sigma = self.stack_sigma[row, column]
@@ -358,7 +358,7 @@ class StackSimpleFit(object):
                                         result['sigma_values'][i]
                 i += 1
             self._images['chisq'][row, column] = result['chisq']
-        else:   
+        else:
             #specfile output always available
             specfile = self.getOutputFileNames()['specfile']
             self._appendOneResultToSpecfile(specfile, result=fitOutput)
@@ -400,7 +400,7 @@ class StackSimpleFit(object):
         ddict['csv'] = csv
         ddict['edf'] = edf
         return ddict
-        
+
     def onProcessStackFinished(self):
         if DEBUG:
             print("Stack proccessed")

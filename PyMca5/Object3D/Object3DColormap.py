@@ -71,17 +71,17 @@ class Object3DColormap(qt.QGroupBox):
         # autoscale
         self.autoScaleButton = qt.QPushButton("Autoscale", self)
         self.autoScaleButton.setCheckable(True)
-        self.autoScaleButton.setAutoDefault(False)    
+        self.autoScaleButton.setAutoDefault(False)
         self.autoScaleButton.toggled[bool].connect(self.autoscaleChanged)
         self.mainLayout.addWidget(self.autoScaleButton, 0, 1)
 
         # autoscale 90%
         self.autoScale90Button = qt.QPushButton("Autoscale 90%", self)
         self.autoScale90Button.setCheckable(True)
-        self.autoScale90Button.setAutoDefault(False)    
-                
+        self.autoScale90Button.setAutoDefault(False)
+
         self.autoScale90Button.toggled[bool].connect(self.autoscale90Changed)
-        
+
         self.mainLayout.addWidget(self.autoScale90Button, 0, 2)
 
         #the checkboxes
@@ -335,7 +335,7 @@ class Object3DColormap(qt.QGroupBox):
                         self.colormapType = ddict['colormap']
             self._update()
             self.__disconnected = False
-            
+
 
 def test():
     app = qt.QApplication(sys.argv)

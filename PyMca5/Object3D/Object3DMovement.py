@@ -47,7 +47,7 @@ class Object3DAnchorWidget(qt.QGroupBox):
         if anchor is None:
             anchor = [BBOXCENTER, BBOXCENTER, BBOXCENTER]
         self.setAnchor(anchor)
-        
+
 
     def build(self):
         self.l = qt.QGridLayout(self)
@@ -114,13 +114,13 @@ class Object3DAnchorWidget(qt.QGroupBox):
         anchor = self.getAnchor()
         ddict = {}
         ddict['event']  = 'AnchorUpdated'
-        ddict['anchor'] = anchor 
+        ddict['anchor'] = anchor
         self.sigObject3DAnchorSignal.emit(ddict)
 
     def setAnchor(self, anchor):
         for i in range(3):
             self.buttonGroupList[i].button(anchor[i]).setChecked(True)
-    
+
     def getAnchor(self):
         anchorList = [0, 0, 0]
         for i in range(3):
@@ -143,7 +143,7 @@ class Object3DTranslationWidget(qt.QGroupBox):
         if translation is None:
             translation = [0.0, 0.0, 0.0]
         self.setTranslation(translation)
-        
+
 
     def build(self, labels):
         self.l = qt.QGridLayout(self)
@@ -185,13 +185,13 @@ class Object3DTranslationWidget(qt.QGroupBox):
         translation = self.getTranslation()
         ddict = {}
         ddict['event']  = event
-        ddict['translation'] = translation 
+        ddict['translation'] = translation
         self.sigObject3DTranslationSignal.emit(ddict)
 
     def setTranslation(self, translation):
         for i in range(3):
             self.spinBoxList[i].setValue(translation[i])
-    
+
     def getTranslation(self):
         translationList = [0, 0, 0]
         for i in range(3):
@@ -211,7 +211,7 @@ class Object3DRotationWidget(qt.QGroupBox):
         if rotation is None:
             rotation = [0.0, 0.0, 0.0]
         self.setRotation(rotation)
-        
+
 
     def build(self):
         self.l = qt.QGridLayout(self)
@@ -252,7 +252,7 @@ class Object3DRotationWidget(qt.QGroupBox):
         self.l.setRowStretch(3, 1)
         self.l.setColumnStretch(0, 0)
         """
-        
+
     def _slot(self, value):
         self._signal(emit = True)
 
@@ -275,7 +275,7 @@ class Object3DRotationWidget(qt.QGroupBox):
             self.lineEditList[i].setText("%.2f" % rotation[i])
         ddict = {}
         ddict['event']  = event
-        ddict['rotation'] = rotation 
+        ddict['rotation'] = rotation
         self.sigObject3DRotationSignal.emit(ddict)
 
     def setRotation(self, rotation):
@@ -285,7 +285,7 @@ class Object3DRotationWidget(qt.QGroupBox):
             self.spinList[i].setValue(value)
             self.lineEditList[i].setText("%f" % rotation[i])
 
-    
+
     def getRotation(self):
         rotationList = [0, 0, 0]
         for i in range(3):
@@ -368,5 +368,5 @@ if __name__ == "__main__":
 
     w = Object3DMovement()
     w.sigObject3DMovementSignal.connect( myslot)
-    w.show()    
+    w.show()
     app.exec_()

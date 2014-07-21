@@ -178,7 +178,7 @@ class HtmlIndex(object):
         file.write(text)
         file.close()
 
-    def buildRecursiveIndex(self, directory = None): 
+    def buildRecursiveIndex(self, directory = None):
         if directory is None: directory = self.htmldir
         index = os.path.join(directory, "index.html")
         if os.path.exists(index):
@@ -200,8 +200,8 @@ class HtmlIndex(object):
         file=open(index,'wb')
         file.write(text)
         file.close()
-        
-            
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         a = HtmlIndex(sys.argv[1])

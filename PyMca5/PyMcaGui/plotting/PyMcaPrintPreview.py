@@ -33,7 +33,7 @@ from .. import PyMcaQt as qt
 DEBUG = 0
 
 from .Q4PyMcaPrintPreview import PyMcaPrintPreview as PrintPreview
-    
+
 #SINGLETON
 if 0:
     #It seems sip gets confused by this singleton implementation
@@ -42,7 +42,7 @@ if 0:
         def __new__(self, *var, **kw):
             if self._instance is None:
                 self._instance = PrintPreview.__new__(self,*var, **kw)
-            return self._instance    
+            return self._instance
 else:
     #but sip is happy about this one
     class PyMcaPrintPreview(PrintPreview):
@@ -69,7 +69,7 @@ def testPreview():
     filename = sys.argv[1]
 
     a = qt.QApplication(sys.argv)
- 
+
     p = qt.QPrinter()
     p.setOutputFileName(os.path.splitext(filename)[0]+".ps")
     p.setColorMode(qt.QPrinter.Color)
@@ -87,9 +87,9 @@ def testPreview():
         w2.show()
         sys.exit(w2.exec_())
     sys.exit(w.exec_())
-    
+
 if  __name__ == '__main__':
     testPreview()
 
- 
- 
+
+

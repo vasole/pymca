@@ -121,9 +121,9 @@ def test(filename):
         print("Not a Fit2D .Chi File")
     print(sf[0].alllabels())
     print(dir(sf[0]))
-    
+
 
 
 if __name__ == "__main__":
     test(sys.argv[1])
-        
+

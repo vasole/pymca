@@ -120,6 +120,6 @@ def waitingMessageDialog(thread, message=None, parent=None, modal=True, update_c
                 l3.setText(" "+ticks[i])
                 qApp = qt.QApplication.instance()
                 qApp.processEvents()
-                time.sleep(2)            
+                time.sleep(2)
     finally:
         msg.close()

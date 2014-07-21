@@ -78,7 +78,7 @@ class MatchPlan(object):
         :param devicetype: can be CPU or GPU
         :param profile: set to true to activate profiling information collection
         :param device: 2-tuple of integer, see clinfo
-        :param max_workgroup_size: CPU on MacOS, limit to 1 
+        :param max_workgroup_size: CPU on MacOS, limit to 1
         :param roi: Region Of Interest: TODO
         :param context: Use an external context (discard devicetype and device options)
         """

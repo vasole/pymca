@@ -32,7 +32,7 @@ import weakref
 from . import ObjectTree
 from . import Object3DBase
 
-DEBUG = 0 
+DEBUG = 0
 
 class Scene(object):
     def __init__(self, name = 'Scene'):
@@ -51,7 +51,7 @@ class Scene(object):
                             'phi':0.0,
                             'view':__currentViewMatrix,
                             'zoom':1.0,
-                            'widget':None} 
+                            'widget':None}
         self.__sceneObject.setConfiguration(ddict)
         self.tree = ObjectTree.ObjectTree(self.__sceneObject, name)
         self.__limits = [-100., -100., -100., 100., 100.0, 100.0]
@@ -65,7 +65,7 @@ class Scene(object):
         self.__v = [0.0, 1.0, 0.0]
         self.__w = [0.0, 0.0, 1.0]
         self.__uvw = False
-        
+
     def __getitem__(self, name):
         return self.tree.find(name)
 
@@ -109,7 +109,7 @@ class Scene(object):
             elif DEBUG:
                 print("name %s ignored" % name)
         self.updateTransformationMatrix()
-                
+
     def name(self):
         return self.__sceneObject.name()
 
@@ -137,7 +137,7 @@ class Scene(object):
                 legend = ob.name()
             else:
                 legend = "Unnamed"
-                
+
         parentTree = self.tree.find(parent)
         if parentTree is None:
             raise ValueError("Parent %s does not exist." % parent)
@@ -175,7 +175,7 @@ class Scene(object):
         centerX = 0.5 * (xmax + xmin)
         centerY = 0.5 * (ymax + ymin)
         centerZ = 0.5 * (zmax + zmin)
-        sceneConfig = self.__sceneObject._configuration 
+        sceneConfig = self.__sceneObject._configuration
         scale = sceneConfig['common']['scale']
         anchor = [centerX*scale[0], centerY*scale[1], centerZ*scale[2]]
         if cubeFace == 'front':
@@ -235,7 +235,7 @@ class Scene(object):
             #azimuthal angle phi in spherical coordinates
             #rotate phi around Z axis
             # phi   = self.xRot
-            sceneConfig = self.tree.root[0].getConfiguration() 
+            sceneConfig = self.tree.root[0].getConfiguration()
             #I have to rotate around the center of the scene
             #taking into account the scale it will use
             scale = sceneConfig['common']['scale']
@@ -302,7 +302,7 @@ class Scene(object):
             #just compute the last row
             M[3, 0] = -eyeX * M[0, 0] - eyeY * M[1, 0] - eyeZ * M[2, 0]
             M[3, 1] = -eyeX * M[0, 1] - eyeY * M[1, 1] - eyeZ * M[2, 1]
-            M[3, 2] = -eyeX * M[0, 2] - eyeY * M[1, 2] - eyeZ * M[2, 2]	    
+            M[3, 2] = -eyeX * M[0, 2] - eyeY * M[1, 2] - eyeZ * M[2, 2]
         return M
 
     def setSelectedObject(self, target):
@@ -364,7 +364,7 @@ class Scene(object):
 
     def getAutoScale(self):
         return self.__autoScale
-    
+
     def setAxesVectors(self, u, v, w, use=True):
         tmpMatrix = numpy.zeros((4,4), numpy.float64)
         tmpMatrix [0,0] = u[0]
@@ -386,7 +386,7 @@ class Scene(object):
         self.__w   = w
         self.__uvw = use
         self.__uvwMatrix = tmpMatrix
-  
+
     def setObserverPosition(self, position):
         self.__observerPosition = position
 
@@ -472,7 +472,7 @@ class Scene(object):
             zmax0 *= zScale
         else:
             limits = [[self.__limits[0], self.__limits[1], self.__limits[2]],
-                      [self.__limits[3], self.__limits[4], self.__limits[5]]]                      
+                      [self.__limits[3], self.__limits[4], self.__limits[5]]]
             xmin0, ymin0, zmin0 = limits[0]
             xmax0, ymax0, zmax0 = limits[1]
 
@@ -513,7 +513,7 @@ class Scene(object):
                         ymax0 = ymax
                     if zmax > zmax0:
                         zmax0 = zmax
-                        
+
         if zmax0 == zmin0:
             zmax0 = zmin0 + 1
             zmin0 -= 1
@@ -576,7 +576,7 @@ class Scene(object):
         M[3, 0] = anchorPosition[0]
         M[3, 1] = anchorPosition[1]
         M[3, 2] = anchorPosition[2]
-                                
+
         #this works
         #RotX
         angle = xRot * numpy.pi/180.
@@ -586,8 +586,8 @@ class Scene(object):
         rotX[0,0] =  1
         rotX[1,1] =  1
         rotX[2,2] =  1
-        rotX[3,3] =  1                    
-        rotX[1,1] =  cs; rotX[1,2] = sn   
+        rotX[3,3] =  1
+        rotX[1,1] =  cs; rotX[1,2] = sn
         rotX[2,1] = -sn; rotX[2,2] = cs
 
         #RotY
@@ -598,10 +598,10 @@ class Scene(object):
         rotY[0,0] =  1
         rotY[1,1] =  1
         rotY[2,2] =  1
-        rotY[3,3] =  1                    
+        rotY[3,3] =  1
         rotY[0,0] =  cs; rotY[0,2] = -sn   #inverted respect to the others
         rotY[2,0] =  sn; rotY[2,2] =  cs
-                
+
         #RotZ
         angle = zRot * numpy.pi/180.
         cs = numpy.cos(angle)
@@ -610,10 +610,10 @@ class Scene(object):
         rotZ[0,0] =  1
         rotZ[1,1] =  1
         rotZ[2,2] =  1
-        rotZ[3,3] =  1                    
-        rotZ[0,0] =  cs; rotZ[0,1] = sn   
+        rotZ[3,3] =  1
+        rotZ[0,0] =  cs; rotZ[0,1] = sn
         rotZ[1,0] = -sn; rotZ[1,1] = cs
-        
+
         #The final rotation matrix
         rotMatrix = numpy.dot(rotZ,numpy.dot(rotY, rotX))
 

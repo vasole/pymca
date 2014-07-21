@@ -59,13 +59,13 @@ class Mca2EdfGUI(qt.QWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         #layout.setAutoAdd(1)
-        self.__build(actions)               
+        self.__build(actions)
         if filelist is None: filelist = []
         self.outputDir = None
         self.inputDir  = None
         self.setFileList(filelist)
         self.setOutputDir(outputdir)
-    
+
     def __build(self,actions):
         self.__grid= qt.QWidget(self)
         #self.__grid.setGeometry(qt.QRect(30,30,288,156))
@@ -90,11 +90,11 @@ class Mca2EdfGUI(qt.QWidget):
         self.__listView.setMaximumHeight(30*listlabel.sizeHint().height())
         self.__listButton = qt.QPushButton(self.__grid)
         self.__listButton.setText('Browse')
-        self.__listButton.clicked[()].connect(self.browseList) 
+        self.__listButton.clicked[()].connect(self.browseList)
         grid.addWidget(listlabel,        listrow, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
         grid.addWidget(self.__listView,  listrow, 1)
         grid.addWidget(self.__listButton,listrow, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
-        
+
         #output dir
         outrow    = 1
         outlabel   = qt.QLabel(self.__grid)
@@ -106,7 +106,7 @@ class Mca2EdfGUI(qt.QWidget):
         #self.__outLine.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Maximum, qt.QSizePolicy.Fixed))
         self.__outButton = qt.QPushButton(self.__grid)
         self.__outButton.setText('Browse')
-        self.__outButton.clicked[()].connect(self.browseOutputDir) 
+        self.__outButton.clicked[()].connect(self.browseOutputDir)
         grid.addWidget(outlabel,         outrow, 0, qt.Qt.AlignLeft)
         grid.addWidget(self.__outLine,   outrow, 1)
         grid.addWidget(self.__outButton, outrow, 2, qt.Qt.AlignLeft)
@@ -124,7 +124,7 @@ class Mca2EdfGUI(qt.QWidget):
             self.__fileSpin.setMinimum(1)
             self.__fileSpin.setMaximum(999999)
         self.__fileSpin.setValue(1)
-        
+
         filesteplabel2.setText("mca")
         grid.addWidget(filesteplabel,  filesteprow, 0, qt.Qt.AlignLeft)
         grid.addWidget(self.__fileSpin,filesteprow, 1)
@@ -161,8 +161,8 @@ class Mca2EdfGUI(qt.QWidget):
             self.__listView.setText(text)
             if len(filelist):
                 PyMcaDirs.inputDir = os.path.dirname(filelist[0])
-        
-        
+
+
     def setOutputDir(self,outputdir=None):
         if outputdir is None:return
         if self.__goodOutputDir(outputdir):
@@ -181,7 +181,7 @@ class Mca2EdfGUI(qt.QWidget):
                 self.raiseW()
                 return False
         return True
-        
+
     def __goodOutputDir(self,outputdir):
         if os.path.isdir(outputdir):return True
         else:return False
@@ -216,7 +216,7 @@ class Mca2EdfGUI(qt.QWidget):
             else:
                 self.raise_()
                 return
-            
+
         filelist = []
         for f in filelist0:
             filelist.append(qt.safe_str(f))
@@ -238,7 +238,7 @@ class Mca2EdfGUI(qt.QWidget):
             return
         filename= qt.safe_str(filename)
         if len(filename):
-            self.setConfigFile(filename)  
+            self.setConfigFile(filename)
         self.raiseW()
 
     def browseOutputDir(self):
@@ -275,7 +275,7 @@ class Mca2EdfGUI(qt.QWidget):
             self.raiseW()
         else:
             self.raise_()
-            
+
     def start(self):
         if not len(self.fileList):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
@@ -310,7 +310,7 @@ class Mca2EdfGUI(qt.QWidget):
                 window.pauseButton.setText("Pause")
             else:
                 b.pleasePause=1
-                window.pauseButton.setText("Continue") 
+                window.pauseButton.setText("Continue")
         window.pauseButton.clicked[()].connect(pause)
         window.abortButton.clicked[()].connect(window.close)
         qApp = qt.QApplication.instance()
@@ -336,7 +336,7 @@ class Mca2EdfBatch(qt.QThread):
         counter = 0
         ffile   = SpecFileLayer.SpecFileLayer()
         for fitfile in self._filelist:
-            self.onNewFile(fitfile, self._filelist) 
+            self.onNewFile(fitfile, self._filelist)
             ffile.SetSource(fitfile)
             fileinfo = ffile.GetSourceInfo()
             # nscans = len(fileinfo['KeyList'])
@@ -347,7 +347,7 @@ class Mca2EdfBatch(qt.QThread):
                 if info['NbMca'] > 0:
                     for i in range(info['NbMca']):
                         point = int(i/info['NbMcaDet']) + 1
-                        mca   = (i % info['NbMcaDet'])  + 1 
+                        mca   = (i % info['NbMcaDet'])  + 1
                         key = "%s.%s.%05d.%d" % (scan,order,point,mca)
                         if i == 0:
                             mcainfo,mcadata = ffile.LoadSource(key)
@@ -402,14 +402,14 @@ class Mca2EdfBatch(qt.QThread):
     def onEnd(self):
         qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'onEnd'}))
         if self.pleasePause:self.__pauseMethod()
-        
+
 
     def __pauseMethod(self):
         qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchPaused'}))
         while(self.pleasePause):
             time.sleep(1)
         qt.QApplication.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
-            
+
 
 class Mca2EdfWindow(qt.QWidget):
     def __init__(self,parent=None, name="BatchWindow", fl=0, actions = 0):
@@ -433,8 +433,8 @@ class Mca2EdfWindow(qt.QWidget):
         self.progressBar   = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)
         self.progressLabel.setText('File Progress:')
-        
-        self.barsLayout.addWidget(self.progressLabel,0,0)        
+
+        self.barsLayout.addWidget(self.progressLabel,0,0)
         self.barsLayout.addWidget(self.progressBar,0,1)
         self.status      = qt.QLabel(self)
         self.l.addWidget(self.status)
@@ -455,7 +455,7 @@ class Mca2EdfWindow(qt.QWidget):
         self.actions = 1
         self.buttonsBox = qt.QWidget(self)
         l = qt.QHBoxLayout(self.buttonsBox)
-        l.addWidget(qt.HorizontalSpacer(self.buttonsBox))        
+        l.addWidget(qt.HorizontalSpacer(self.buttonsBox))
         self.pauseButton = qt.QPushButton(self.buttonsBox)
         l.addWidget(self.pauseButton)
         l.addWidget(qt.HorizontalSpacer(self.buttonsBox))
@@ -473,12 +473,12 @@ class Mca2EdfWindow(qt.QWidget):
         elif event.dict['event'] == 'onEnd':    self.onEnd(event.dict)
 
         elif event.dict['event'] == 'batchPaused': self.onPause()
-        
+
         elif event.dict['event'] == 'batchResumed':self.onResume()
 
         else:
             print("Unhandled event %s" % event)
-                                
+
 
     def onNewFile(self, file, filelist):
         indexlist = range(0,len(filelist))
@@ -511,17 +511,17 @@ class Mca2EdfWindow(qt.QWidget):
             self.progressBar.setProgress(n+1)
         else:
             n = self.progressBar.value()
-            self.progressBar.setValue(n+1)            
+            self.progressBar.setValue(n+1)
         self.status.setText  ("Batch Finished")
         self.timeLeft.setText("Estimated time left = 0 sec")
         if self.actions:
             self.pauseButton.hide()
             self.abortButton.setText("OK")
 
-    def onPause(self):    
+    def onPause(self):
         pass
 
-    def onResume(self):    
+    def onResume(self):
         pass
 
 def main():
@@ -543,7 +543,7 @@ def main():
             listfile  = arg
         elif opt in  ('--mcastep'):
             mcastep  = int(arg)
-    if listfile is None: 
+    if listfile is None:
         filelist=[]
         for item in args:
             filelist.append(item)
@@ -553,7 +553,7 @@ def main():
         fd.close()
         for i in range(len(filelist)):
             filelist[i]=filelist[i].replace('\n','')
-    app=qt.QApplication(sys.argv) 
+    app=qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
     app.setPalette(winpalette)
     app.lastWindowClosed.connect(app.quit)
@@ -579,18 +579,18 @@ def main():
                 window.pauseButton.setText("Pause")
             else:
                 b.pleasePause=1
-                window.pauseButton.setText("Continue") 
+                window.pauseButton.setText("Continue")
         window.pauseButton.clicked[()].connect(pause)
         window.abortButton.clicked[()].connect(window.close)
-        app.aboutToQuit[()].connect(cleanup)        
+        app.aboutToQuit[()].connect(cleanup)
         window.show()
         b.start()
         sys.exit(app.exec_())
-                
+
 if __name__ == "__main__":
     main()
- 
+
 # Mca2Edf.py  --outdir=/tmp --mcastep=1 *.mca
- 
+
 # PyMcaBatch.py --cfg=/mntdirect/_bliss/users/sole/COTTE/WithLead.cfg --outdir=/tmp/   /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0007.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0008.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0009.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0010.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0011.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0012.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0013.edf &
 # PyMcaBatch.exe --cfg=E:/COTTE/WithLead.cfg --outdir=C:/tmp/   E:/COTTE/ch09/ch09__mca_0003_0000_0007.edf E:/COTTE/ch09/ch09__mca_0003_0000_0008.edf

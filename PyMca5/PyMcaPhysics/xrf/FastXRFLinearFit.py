@@ -101,7 +101,7 @@ class FastXRFLinearFit(object):
             weightPolicy = 1
             if not config['fit']['fitweight']:
                  config['fit']['fitweight'] = 1
-                 toReconfigure = True               
+                 toReconfigure = True
         elif weight == 2:
            # individual pixel weights (slow)
             weightPolicy = 2
@@ -122,7 +122,7 @@ class FastXRFLinearFit(object):
             config['fit']['linearfitflag'] = 1
             toReconfigure = True
 
-        if toReconfigure: 
+        if toReconfigure:
             # we must configure again the fit
             self._mcaTheory.setConfiguration(config)
 
@@ -177,7 +177,7 @@ class FastXRFLinearFit(object):
 
         # and initialize the derivatives
         self._mcaTheory.estimate()
-        
+
         # now we can get the derivatives respect to the free parameters
         # These are the "derivatives" respect to the peaks
         # linearMatrix = self._mcaTheory.linearMatrix
@@ -227,7 +227,7 @@ class FastXRFLinearFit(object):
             if len(anchorslist) == 0:
                 anchorlist = [0, self._mcaTheory.ydata.size - 1]
             anchorslist.sort()
-            
+
         # find the indices to be used for selecting the appropriate data
         # if the original x data were nor ordered we have a problem
         # TODO: check for original ordering.
@@ -277,7 +277,7 @@ class FastXRFLinearFit(object):
                 if config['fit']['stripflag']:
                     for k in range(jStep):
                         # obtain the smoothed spectrum
-                        background=SpecfitFuns.SavitskyGolay(chunk[:, k], 
+                        background=SpecfitFuns.SavitskyGolay(chunk[:, k],
                                                 config['fit']['stripfilterwidth'])
                         lastAnchor = 0
                         for anchor in anchorslist:
@@ -305,7 +305,7 @@ class FastXRFLinearFit(object):
                             svd=SVD,
                             last_svd=last_svd)
                 last_svd = ddict.get('svd', None)
-                parameters = ddict['parameters'] 
+                parameters = ddict['parameters']
                 results[:, i, jStart:jEnd] = parameters
                 uncertainties[:, i, jStart:jEnd] = ddict['uncertainties']
                 jStart = jEnd
@@ -343,7 +343,7 @@ class FastXRFLinearFit(object):
                 continue
             zeroList.sort()
             zeroList.reverse()
-            
+
             badParameters = []
             badParameters.append(zeroList[0][1])
             badMask = zeroList[0][2]
@@ -375,11 +375,11 @@ class FastXRFLinearFit(object):
                 spectra = data[badMask, iXMin:iXMax+1]
                 spectra.shape = badMask.sum(), -1
                 spectra = spectra.T
-                # 
+                #
                 if config['fit']['stripflag']:
                     for k in range(spectra.shape[1]):
                         # obtain the smoothed spectrum
-                        background=SpecfitFuns.SavitskyGolay(spectra[:, k], 
+                        background=SpecfitFuns.SavitskyGolay(spectra[:, k],
                                                 config['fit']['stripfilterwidth'])
                         lastAnchor = 0
                         for anchor in anchorslist:
@@ -416,7 +416,7 @@ class FastXRFLinearFit(object):
             t0 = time.time()
 
         outputDict = {'parameters':results, 'uncertainties':uncertainties, 'names':freeNames}
-        
+
         if concentrations:
             # check if an internal reference is used and if it is set to auto
             ####################################################
@@ -482,7 +482,7 @@ class FastXRFLinearFit(object):
                                         numpy.float32)
 
 
-            referenceElement = addInfo['ReferenceElement'] 
+            referenceElement = addInfo['ReferenceElement']
             referenceTransitions = addInfo['ReferenceTransitions']
             if DEBUG:
                 print("Reference <%s>  transition <%s>" % (referenceElement, referenceTransitions))
@@ -548,7 +548,7 @@ class FastXRFLinearFit(object):
 
             ####################################################
         return outputDict
-        
+
 if __name__ == "__main__":
     DEBUG = True
     import glob

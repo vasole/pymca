@@ -16,17 +16,17 @@
 #
 #############################################################################*/
 /***************************************************************************
- *  
+ *
  *  File:            Lists.h
- *  
+ *
  *  Description:     Include file for dealing with lists.
- * 
+ *
  *  Author:          Vicente Rey
  *
  *  Created:         22 May 1995
- *  
+ *
  *    (copyright by E.S.R.F.  March 1995)
- * 
+ *
  ***************************************************************************/
 #ifndef LISTS_H
 #define LISTS_H
@@ -44,7 +44,7 @@ typedef struct _ListHeader {
   struct _ObjectList   *last;
 } ListHeader;
 
-extern  ObjectList * findInList     ( ListHeader *list, int (*proc)(void *,void *), void *value );                         
+extern  ObjectList * findInList     ( ListHeader *list, int (*proc)(void *,void *), void *value );
 extern  long         addToList      ( ListHeader *list, void *object,long size);
 extern  void         unlinkFromList ( ListHeader *list,  ObjectList *element);
 

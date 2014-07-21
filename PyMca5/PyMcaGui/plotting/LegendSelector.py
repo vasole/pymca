@@ -205,7 +205,7 @@ class LegendIcon(qt.QWidget):
         # Draw BG rectangle (for debugging)
         #bottomRight = qt.QPointF(
         #    float(rect.right())/scale,
-        #    float(rect.bottom())/scale)               
+        #    float(rect.bottom())/scale)
         #painter.fillRect(qt.QRectF(offset, bottomRight),
         #                 qt.QBrush(qt.Qt.green))
         llist = []
@@ -259,7 +259,7 @@ class LegendModel(qt.QAbstractListModel):
     legendTypeRole    = qt.Qt.UserRole + 5
     selectedRole      = qt.Qt.UserRole + 6
     activeRole        = qt.Qt.UserRole + 7
-    
+
     def __init__(self, legendList=None, parent=None):
         qt.QAbstractListModel.__init__(self, parent)
         if legendList is None:
@@ -287,7 +287,7 @@ class LegendModel(qt.QAbstractListModel):
             return None
         if idx >= len(self.legendList):
             raise IndexError('list index out of range')
-        
+
         item = self.legendList[idx]
         if role == qt.Qt.DisplayRole:
             # Data to be rendered in the form of text
@@ -371,10 +371,10 @@ class LegendModel(qt.QAbstractListModel):
         return True
 
     def insertLegendList(self, row, llist):
-        '''        
+        '''
         :param row: Determines after which row the items are inserted
         :type row: int
-        :param llist: Carries the new legend information 
+        :param llist: Carries the new legend information
         :type count: list
         '''
         modelIndex = self.createIndex(row,0)
@@ -440,7 +440,7 @@ class LegendModel(qt.QAbstractListModel):
         self.editorDict[event] = editor
 
 class LegendListItemWidget(qt.QAbstractItemDelegate):
-        
+
     # Notice: LegendListItem does NOT inherit
     # from QObject, it cannot emit signals!
 
@@ -519,7 +519,7 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
         else:
             backgroundBrush = convertToPyObject(modelIndex.data(qt.Qt.BackgroundRole))
         painter.fillRect(rect, backgroundBrush)
-        
+
         # Draw label
         legendText = convertToPyObject(modelIndex.data(qt.Qt.DisplayRole))
         textBrush  = convertToPyObject(modelIndex.data(qt.Qt.ForegroundRole))
@@ -543,7 +543,7 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
         icon.setSymbol(iconSymbol)
         icon.symbolOutlineBrush = backgroundBrush
         icon.paint(painter, iconRect, option.palette)
-        
+
         # Draw the checkbox
         if convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)):
             checkState = qt.Qt.Checked
@@ -617,7 +617,7 @@ class LegendListView(qt.QListView):
     __mouseClickedEvent  = 'mouseClicked'
     __checkBoxClickedEvent = 'checkBoxClicked'
     __legendClickedEvent = 'legendClicked'
-    
+
     def __init__(self, parent=None, model=None, contextMenu=None):
         qt.QListWidget.__init__(self, parent)
         self.__lastButton   = None
@@ -689,7 +689,7 @@ class LegendListView(qt.QListView):
                     self._contextMenuSlot)
             else:
                 delegate.contextMenu = contextMenu
-            
+
     def __getitem__(self, idx):
         model = self.model()
         try:
@@ -700,7 +700,7 @@ class LegendListView(qt.QListView):
 
     def _contextMenuSlot(self, ddict):
         self.sigLegendSignal.emit(ddict)
-        
+
     def mousePressEvent(self, event):
         self.__lastButton = event.button()
         self.__lastPosition = event.pos()
@@ -716,7 +716,7 @@ class LegendListView(qt.QListView):
             print('LegendListView.mouseReleaseEvent -- '
                  +'is overwritten to subpress unwanted '
                  +'behavior in the delegate.')
-    
+
     def _handleMouseClick(self, modelIndex):
         '''
         :param modelIndex: index of the clicked item
@@ -750,7 +750,7 @@ class LegendListView(qt.QListView):
                     break
 
         # TODO: Check for doubleclicks on legend/icon and spawn editors
-                
+
         # item is tupel: (legend, icon, checkState, curveType)
         item  = model[idx]
         ddict = {
@@ -786,7 +786,7 @@ class BaseContextMenu(qt.QMenu):
     def __init__(self, model):
         qt.QMenu.__init__(self, parent=None)
         self.model = model
-        
+
     def exec_(self, pos, idx):
         self.__currentIdx = idx
         qt.QMenu.exec_(self, pos)
@@ -795,7 +795,7 @@ class BaseContextMenu(qt.QMenu):
         return self.__currentIdx
 
 class LegendListContextMenu(BaseContextMenu):
-    sigContextMenu = qt.pyqtSignal(object)    
+    sigContextMenu = qt.pyqtSignal(object)
 
     def __init__(self, model):
         BaseContextMenu.__init__(self, model)
@@ -821,7 +821,7 @@ class LegendListContextMenu(BaseContextMenu):
             'event': "mapToLeft"
         }
         self.sigContextMenu.emit(ddict)
-                
+
     def mapToRightAction(self):
         if DEBUG:
             print('LegendListContextMenu.mapToRightAction called')
@@ -875,7 +875,7 @@ class LegendListContextMenu(BaseContextMenu):
             ddict['line'] = True
             self.sigContextMenu.emit(ddict)
             self.model.setData(modelIndex, True, LegendModel.showLineRole)
-            
+
     def togglePointsAction(self):
         modelIndex = self.currentIdx()
         legend = qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)))
@@ -966,7 +966,7 @@ if __name__ == '__main__':
     win.setSelectionModel(qt.QItemSelectionModel(model))
     win.setContextMenu()
     #print('Edit triggers: %d'%win.editTriggers())
-    
+
     #win = LegendListWidget(None, legends)
     #win[0].updateItem(ddict)
     #win.setLayout(layout)
@@ -975,5 +975,5 @@ if __name__ == '__main__':
 
     win.clear()
     win.setLegendList(llist)
-    
+
     app.exec_()

@@ -56,7 +56,7 @@ class QSource(qt.QObject):
         self.selections = {}
         self._pollTime = 0.7 #700 ms
         self.pollerThreadId = None
-       
+
     def setPollTime(self, pollTime):
         """Set polling time (in milliseconds)"""
         self._pollTime = max(pollTime * 0.001, 0.001)
@@ -67,20 +67,20 @@ class QSource(qt.QObject):
     def getPollTime(self):
         return self._pollTime * 1000
 
-    
+
     def addToPoller(self, dataObject):
         """Set polling for data object"""
         sourceName = dataObject.info['SourceName']
 
         if sourceName != self.sourceName:
             raise KeyError("Trying to survey key %s on wrong source %s" % (self.sourceName,dataObject.info['SourceName']))
-      
-        #that is general to any source        
+
+        #that is general to any source
         key        = dataObject.info['Key']
         reference        = id(dataObject)
 
         def dataObjectDestroyed(ref, dataObjectKey=key, dataObjectRef=reference):
-            if DEBUG: 
+            if DEBUG:
                 print('data object destroyed, key was %s' % dataObjectKey)
                 print('data object destroyed, ref was 0x%x' % dataObjectRef)
                 print("self.surveyDict[key] = ",self.surveyDict[key])
@@ -95,11 +95,11 @@ class QSource(qt.QObject):
 
             if len(self.surveyDict[dataObjectKey]) == 0:
                 del self.surveyDict[dataObjectKey]
-                
+
             if DEBUG:
-                print("SURVEY DICT AFTER DELETION = ", self.surveyDict)            
+                print("SURVEY DICT AFTER DELETION = ", self.surveyDict)
             return
-            
+
         # create a weak reference to the dataObject and we call it dataObjectRef
         dataObjectRef=weakref.proxy(dataObject, dataObjectDestroyed)
 
@@ -117,7 +117,7 @@ class QSource(qt.QObject):
 
         if DEBUG:
             print("SURVEY DICT AFTER ADDITION = ", self.surveyDict)
-        
+
         if self.pollerThreadId is None:
             # start a new polling thread
             #print "starting new thread"
@@ -166,7 +166,7 @@ class QSource(qt.QObject):
                                     qt.qApp.unlock()
                         else:
                             del self.surveyDict[key]
-                            del self.selections[key] 
+                            del self.selections[key]
                     except KeyError:
                         if DEBUG:
                             print("key error in loop")
@@ -177,7 +177,7 @@ class QSource(qt.QObject):
             time.sleep(self._pollTime)
             if DEBUG:
                 print("woke up")
-            
+
         self.pollerThreadId = None
         self.selections = {}
-        
+

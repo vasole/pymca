@@ -57,7 +57,7 @@ qt = Object3DMeshConfig.qt
 import weakref
 #import buffers
 DEBUG = 0
-import time    
+import time
 DRAW_MODES = ['NONE',
               'POINT',
               'WIRE',
@@ -85,7 +85,7 @@ class Object3DStack(Object3DBase.Object3D):
         for i in range(5):
             self.__isosurfacesDict[i] = {}
             self.__isosurfacesDict[i]['list'] = 0
-            self.__isosurfacesDict[i]['value'] = 0            
+            self.__isosurfacesDict[i]['value'] = 0
             self.__isosurfacesDict[i]['color'] = 'red'
             self.__isosurfacesDict[i]['r'] = 0xFF
             self.__isosurfacesDict[i]['g'] = 0
@@ -115,7 +115,7 @@ class Object3DStack(Object3DBase.Object3D):
         #self._configuration['private']['isosurfaces'] = [[1, 10, None, 0, 0, 0, 0xFF]] #auto
         self._configuration['private']['useminmax']    = [0, 100, 200]
         self._configuration['private']['infolabel'] = "Object3DStack %s" % name
-        
+
     def __del__(self):
         for key in self.drawListDict.keys():
             if key.upper() != "NONE":
@@ -125,7 +125,7 @@ class Object3DStack(Object3DBase.Object3D):
         for key in self.__isosurfacesDict.keys():
             if self.__isosurfacesDict[key]['list'] > 0:
                 GL.glDeleteLists(self.__isosurfacesDict[key]['list'], 1)
-                    
+
         try:
             Object3DBase.Object3D.__del__(self)
         except AttributeError:
@@ -161,7 +161,7 @@ class Object3DStack(Object3DBase.Object3D):
 
     def setStack(self, data, x=None, y=None, z=None, xyz=None):
         """
-        setStack(data, data, xyz=None)        
+        setStack(data, data, xyz=None)
         data    is the array of vertex values.
         xyz = [x,y,z] are three arrays with the grid coordinates
         """
@@ -248,7 +248,7 @@ class Object3DStack(Object3DBase.Object3D):
         self.vertexColors[:, 3] = self._alpha
         #selection colors
         # if I have more than pow(2, 24) vertices
-        # the vertex with number pow(2, 24) will never be selected 
+        # the vertex with number pow(2, 24) will never be selected
         return
         i = numpy.arange(self.nVertices)
         self.vertexSelectionColors = numpy.zeros((self.nVertices,4),
@@ -257,9 +257,9 @@ class Object3DStack(Object3DBase.Object3D):
         self.vertexSelectionColors[:,1] = ((i >> 8) & 255)
         self.vertexSelectionColors[:,2] = ((i >> 16) & 255)
         self.vertexSelectionColors[:,3] = 255 - (i >> 24)
-        
+
     def _obtainLimits(self):
-        xmin, ymin, zmin =  self._x.min(), self._y.min(), self._z.min() 
+        xmin, ymin, zmin =  self._x.min(), self._y.min(), self._z.min()
         xmax, ymax, zmax =  self._x.max(), self._y.max(), self._z.max()
         self.setLimits(xmin, ymin, zmin, xmax, ymax, zmax)
 
@@ -274,7 +274,7 @@ class Object3DStack(Object3DBase.Object3D):
             pass
         elif (GL.glGetIntegerv(GL.GL_RENDER_MODE) == GL.GL_SELECT) or \
            self._vertexSelectionMode:
-            self.buildPointList(selection=True)        
+            self.buildPointList(selection=True)
         elif self.drawMode == 'POINT':
             self.buildPointList(selection=False)
             #self.buildPointListNEW(selection=False)
@@ -323,7 +323,7 @@ class Object3DStack(Object3DBase.Object3D):
                     self.__isosurfacesDict[i]['list'] = GL.glGenLists(1)
                     GL.glNewList(self.__isosurfacesDict[i]['list'],
                                                  GL.GL_COMPILE)
-                    
+
                     GL.glBegin(GL.GL_TRIANGLES)
                     Object3DCTools.gridMarchingCubes(self._x, self._y, self._z, self.values, value, color, (1, 1, 1), 1)
                     #Object3DCTools.gridMarchingCubes(self._x, self._y, self._z, self.values, value, None, (1, 1, 1), 1)
@@ -332,12 +332,12 @@ class Object3DStack(Object3DBase.Object3D):
                     GL.glCallList(self.__isosurfacesDict[i]['list'])
                     GL.glDisable(GL.GL_LIGHTING)
                 i += 1
-            if flag:            
+            if flag:
                 #This is useless, only isosurfaces makes sense
                 Object3DCTools.draw3DGridQuads(self._x,
                                        self._y,
                                        self._z,
-                                       self.vertexColors,                
+                                       self.vertexColors,
                                        self.values,
                                        self._configuration['private']['colorfilter'],
                                        self._configuration['private']['useminmax'])
@@ -367,9 +367,9 @@ class Object3DStack(Object3DBase.Object3D):
         self.vertexSelectionColors[half:,3] = 255 - (i >> 24)
 
     def isVertexSelectionModeSupported(self):
-        return True        
+        return True
 
-    def buildPointList(self, selection=False):        
+    def buildPointList(self, selection=False):
         if selection:
             if self.vertexSelectionColors is None:
                 self._getVertexSelectionColors()
@@ -474,12 +474,12 @@ class Object3DStack(Object3DBase.Object3D):
                                           (0, 255),1)
         image.shape = -1, 4
         image[:,3] = 255
-        #self.vertexColors = image.astype(numpy.float32)            
+        #self.vertexColors = image.astype(numpy.float32)
         x = numpy.arange(n1).astype(numpy.float32)
         y = numpy.arange(n2).astype(numpy.float32)
         z = numpy.arange(n3).astype(numpy.float32)
-        #Object3DCTools.draw3DGridQuads(x, y, y) 
-        #Object3DCTools.draw3DGridLines(x, y, z, image) 
+        #Object3DCTools.draw3DGridQuads(x, y, y)
+        #Object3DCTools.draw3DGridLines(x, y, z, image)
         Object3DCTools.draw3DGridPoints(x, y, z, image)
         self.zdata = zdata
 
@@ -588,7 +588,7 @@ if __name__ == "__main__":
     else:
         if len(sys.argv) > 1:
             stack = EDFStack.EDFStack(dtype=numpy.float32, imagestack=False)
-            filename = args[0]        
+            filename = args[0]
         else:
             stack = EDFStack.EDFStack(dtype=numpy.float32, imagestack=False)
             filename = "..\COTTE\ch09\ch09__mca_0005_0000_0070.edf"
@@ -606,7 +606,7 @@ if __name__ == "__main__":
         window.addObject(object3D, "STACK")
         window.setSelectedObject("STACK")
         print("END ADDING")
-            
+
     window.glWidget.setZoomFactor(1.0)
     window.show()
     app.exec_()

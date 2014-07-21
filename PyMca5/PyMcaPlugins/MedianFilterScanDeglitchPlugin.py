@@ -31,7 +31,7 @@ from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaMath.PyMcaSciPy.signal import medfilt1d
 from PyMca5.PyMcaGui import PyMcaQt as qt
 import numpy
-    
+
 DEBUG = 0
 class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self,  plotWindow,  **kw):
@@ -56,14 +56,14 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
         self.threshold = 0.66
         self.width = 9
         self._widget = None
-    
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         return list(self._methodList)
 
@@ -188,11 +188,11 @@ MENU_TEXT = "Remove glitches from curves"
 def getPlugin1DInstance(plotWindow,  **kw):
     ob = MedianFilterScanDeglitchPlugin(plotWindow)
     return ob
-    
+
 if __name__ == "__main__":
     from PyMca5.PyMcaGui import PlotWindow
     app = qt.QApplication([])
-    
+
     sw = PlotWindow.PlotWindow()
 
     x = numpy.linspace(0, 1999, 2000)
@@ -205,9 +205,9 @@ if __name__ == "__main__":
 
     sw.addCurve(x, y0, legend="Curve0")
     sw.addCurve(x, y1, legend="Curve1")
-    
-    plugin = getPlugin1DInstance(sw)    
+
+    plugin = getPlugin1DInstance(sw)
     plugin.configureFilter()
-    
+
     sw.show()
     app.exec_()

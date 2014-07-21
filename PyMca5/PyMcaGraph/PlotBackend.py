@@ -126,7 +126,7 @@ hover
 legendClicked
     usefull for pop-up menus associated to the click using the xpixel, ypixel
     or to set a curve active using the label and type keys
-    
+
 markerMoving
     Additional keys:
     draggable - True if it is a movable marker (it should be True)
@@ -172,7 +172,7 @@ class PlotBackend(object):
         self._activeCurveHandling = False
         self.setActiveCurveColor("#000000")
         self._callback = self._dummyCallback
-                
+
     def addCurve(self, x, y, legend=None, info=None,
                         replace=False, replot=True, **kw):
         """
@@ -200,7 +200,7 @@ class PlotBackend(object):
                     selectable=False, draggable=False,
                     colormap=None, **kw):
         """
-        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array 
+        :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array
         :type data: numpy.ndarray
         :param legend: The legend to be associated to the curve
         :type legend: string or None
@@ -215,7 +215,7 @@ class PlotBackend(object):
         :param yScale: Two floats defining the y scale
         :type yScale: list or numpy.ndarray
         :param z: level at which the image is to be located (to allow overlays).
-        :type z: A number bigger than or equal to zero (default)  
+        :type z: A number bigger than or equal to zero (default)
         :param selectable: Flag to indicate if the image can be selected
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the image can be moved
@@ -235,7 +235,7 @@ class PlotBackend(object):
         :type shape: string, default polygon
         """
         print("PlotBackend addItem not implemented")
-        return legend        
+        return legend
 
     def clear(self):
         """
@@ -481,7 +481,7 @@ class PlotBackend(object):
         :param legend: The legend associated to the curve to be deleted
         :type legend: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True        
+        :type replot: boolean default True
         """
         print("PlotBackend removeCurve not implemented")
         return
@@ -493,7 +493,7 @@ class PlotBackend(object):
         :param legend: The legend associated to the image to be deleted
         :type legend: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True        
+        :type replot: boolean default True
         """
         print("PlotBackend removeImage not implemented")
         return
@@ -509,8 +509,8 @@ class PlotBackend(object):
         :param label: The handle/label associated to the curve to be deleted
         :type label: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True        
-        """        
+        :type replot: boolean default True
+        """
         print("PlotBackend removeMarker not implemented")
 
     def resetZoom(self):
@@ -621,9 +621,9 @@ class PlotBackend(object):
 
     def setGraphXLimits(self, xmin, xmax):
         """
-        :param xmin: minimum bottom axis value 
+        :param xmin: minimum bottom axis value
         :type xmin: float
-        :param xmax: maximum bottom axis value 
+        :param xmax: maximum bottom axis value
         :type xmax: float
         """
         self._xMin = xmin
@@ -639,9 +639,9 @@ class PlotBackend(object):
 
     def setGraphYLimits(self, ymin, ymax):
         """
-        :param ymin: minimum left axis value 
+        :param ymin: minimum left axis value
         :type ymin: float
-        :param ymax: maximum left axis value 
+        :param ymax: maximum left axis value
         :type ymax: float
         """
         self._yMin = ymin
@@ -651,13 +651,13 @@ class PlotBackend(object):
     def setLimits(self, xmin, xmax, ymin, ymax):
         """
         Convenience method
-        :param xmin: minimum bottom axis value 
+        :param xmin: minimum bottom axis value
         :type xmin: float
-        :param xmax: maximum bottom axis value 
+        :param xmax: maximum bottom axis value
         :type xmax: float
-        :param ymin: minimum left axis value 
+        :param ymin: minimum left axis value
         :type ymin: float
-        :param ymax: maximum left axis value 
+        :param ymax: maximum left axis value
         :type ymax: float
         """
         self.setGraphXLimits(xmin, xmax)
@@ -680,7 +680,7 @@ class PlotBackend(object):
         :type flag: boolean, default True
         """
         print("PlotBackend setXAxisLogarithmic not implemented")
-        
+
     def setYAxisAutoScale(self, flag=True):
         """
         :param flag: If True, the left axis will adjust scale on zomm reset
@@ -691,7 +691,7 @@ class PlotBackend(object):
         else:
             self._yAutoScale = False
         print("PlotBackend setYAxisAutoScale not implemented")
-        
+
     def setYAxisLogarithmic(self, flag):
         """
         :param flag: If True, the left axis will use a log scale
@@ -702,7 +702,7 @@ class PlotBackend(object):
     def setZoomModeEnabled(self, flag=True):
         """
         Zoom and drawing are not compatible
-        :param flag: If True, the user can zoom. 
+        :param flag: If True, the user can zoom.
         :type flag: boolean, default True
         """
         if flag:
@@ -715,11 +715,11 @@ class PlotBackend(object):
 
     def showGrid(self, flag=True):
         """
-        :param flag: If True, the grid will be shown. 
+        :param flag: If True, the grid will be shown.
         :type flag: boolean, default True
         """
         print("PlotBackend showGrid not implemented")
-        
+
 def main():
     import numpy
     from .Plot1D import Plot1D

@@ -70,7 +70,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                     self._graphPolygonSignalReceived)
                 self._pickerSelectionWidthValue.valueChanged[int].connect( \
                              self.setPickerSelectionWith)
-        
+
         self.saveDirectory = os.getcwd()
         self.mainLayout.addWidget(self.graph)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
@@ -92,7 +92,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.zoomResetIcon = qt.QIcon(qt.QPixmap(IconDict["zoomreset"]))
         self.polygonIcon = qt.QIcon(qt.QPixmap(IconDict["polygon"]))
         self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
-        self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))            
+        self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))
         self.xAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["xauto"]))
         self.yAutoIcon	= qt.QIcon(qt.QPixmap(IconDict["yauto"]))
         self.hFlipIcon	= qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"]))
@@ -218,7 +218,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             tb = self._addToolButton(self.additionalIcon,
                                      None,
                                      'Additional Selections Menu')
-            self.additionalSelectionToolButton = tb            
+            self.additionalSelectionToolButton = tb
         else:
             self.imageToolButton = None
         #picker selection
@@ -235,7 +235,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                                      state=False)
                 self.hLineProfileButton = tb
                 self._pickerSelectionButtons.append(tb)
-    
+
                 tb = self._addToolButton(self.vLineIcon,
                                      self._vLineProfileClicked,
                                      'Vertical Profile Selection',
@@ -395,7 +395,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 elif button == self.vLineProfileButton:
                     mode = "VERTICAL"
                 elif button == self.lineProfileButton:
-                    mode = "LINE"        
+                    mode = "LINE"
         ddict = {}
         ddict['event'] = "profileWidthChanged"
         ddict['pixelwidth'] = self._pickerSelectionWidthValue.value()
@@ -470,7 +470,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.sigProfileSignal.emit(ddict)
 
     def _addToolButton(self, icon, action, tip, toggle=None, state=None, position=None):
-        tb      = qt.QToolButton(self.toolBar)            
+        tb      = qt.QToolButton(self.toolBar)
         if icon is not None:
             tb.setIcon(icon)
         tb.setToolTip(tip)
@@ -508,7 +508,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             else:
                 self.graph.setYAxisAutoScale(True)
                 self.yAutoScaleToolButton.setDown(True)
-            
+
     def _xAutoScaleToggle(self):
         if self.graph is not None:
             if self.graph.isXAxisAutoScale():
@@ -551,7 +551,7 @@ class RGBCorrelatorGraph(qt.QWidget):
 
         outstr = qt.safe_str(outfile.selectedFiles()[0])
 
-        try:            
+        try:
             outputFile = os.path.basename(outstr)
         except:
             outputFile = outstr
@@ -619,7 +619,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             self.printPreview.raise_()
 
     def selectColormap(self):
-        qt.QMessageBox.information(self, "Open", "Not implemented (yet)")  
+        qt.QMessageBox.information(self, "Open", "Not implemented (yet)")
 
 
 class MyQLabel(qt.QLabel):
@@ -641,4 +641,4 @@ def test():
 
 if __name__ == "__main__":
     test()
-        
+

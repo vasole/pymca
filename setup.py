@@ -1,7 +1,7 @@
 #
 # This Python module has been developed by V.A. Sole, from the European
 # Synchrotron Radiation Facility (ESRF) to build PyMca.
-# Given the nature of this work, these module can be considered public domain. 
+# Given the nature of this work, these module can be considered public domain.
 # Therefore redistribution and use in source and binary forms, with or without
 # modification, are permitted provided the following disclaimer is accepted:
 #
@@ -39,7 +39,7 @@ except:
     build_ext = None
 global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
-global USE_SMART_INSTALL_SCRIPTS 
+global USE_SMART_INSTALL_SCRIPTS
 
 
 #package maintainers customization
@@ -145,7 +145,7 @@ if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
     SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
     data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
                        SIFT_OPENCL_FILES))
-    
+
 LOCAL_OBJECT3D =False
 if os.path.exists(os.path.join("PyMca5", "Object3D")):
     LOCAL_OBJECT3D = True
@@ -159,7 +159,7 @@ if sys.platform == "win32":
 else:
     define_macros = []
     script_files = glob.glob('PyMca5/scripts/*')
-            
+
 def build_FastEdf(ext_modules):
     module  = Extension(name = 'PyMca5.FastEdf',
                         sources = glob.glob('PyMca5/PyMcaIO/edf/*.c'),
@@ -180,7 +180,7 @@ def build_specfile(ext_modules):
              'sflabel' ,'sfmca', 'sftools','locale_management','specfile_py']
     if sys.version >= '3.0':
         srcfiles[-1] += '3'
-    sources = [] 
+    sources = []
     specfile_source_dir = os.path.join('PyMca5', 'PyMcaIO', 'specfile', 'src')
     specfile_include_dir = os.path.join('PyMca5', 'PyMcaIO', 'specfile', 'include')
     for ffile in srcfiles:
@@ -214,7 +214,7 @@ def build_sps(ext_modules):
                          sources = ['PyMca5/PyMcaIO/sps/Src/sps_lut.c',
                                     'PyMca5/PyMcaIO/sps/Src/spslut_py.c'],
                          define_macros = define_macros,
-                         extra_compile_args = extra_compile_args,          
+                         extra_compile_args = extra_compile_args,
                          include_dirs = ['PyMca5/PyMcaIO/sps/Include',
                                           numpy.get_include()])
     ext_modules.append(module)
@@ -223,7 +223,7 @@ def build_sps(ext_modules):
                                             sources = ['PyMca5/PyMcaIO/sps/Src/sps.c',
                                                        'PyMca5/PyMcaIO/sps/Src/sps_py.c'],
                                             define_macros = define_macros,
-                                 extra_compile_args = extra_compile_args,          
+                                 extra_compile_args = extra_compile_args,
                                             include_dirs = ['PyMca5/PyMcaIO/sps/Include',
                                                              numpy.get_include()]))
         ext_modules.append(module)
@@ -243,7 +243,7 @@ def build_Object3DCTools(ext_modules):
     elif sys.platform == "darwin":
         libraries = []
     else:
-        libraries = ['GL', 'GLU']        
+        libraries = ['GL', 'GLU']
     if sys.platform == 'windows':
         WindowsSDK = os.getenv('WindowsSdkDir')
         #if WindowsSDK is not None:
@@ -352,11 +352,11 @@ if (sys.version < '3.0') and LOCAL_OBJECT3D:
         for python_file in glob.glob('PyMca5/Object3D/*.py'):
             if python_file in ['setup.py', 'cx_setup.py']:
                 continue
-            m = "PyMca5.Object3D.%s" % os.path.basename(python_file)[:-3] 
+            m = "PyMca5.Object3D.%s" % os.path.basename(python_file)[:-3]
             py_modules.append(m)
         for python_file in glob.glob('PyMca5/Object3D/Object3DPlugins/*.py'):
             m = "PyMca5.Object3D.Object3DPlugins.%s" %\
-                                    os.path.basename(python_file)[:-3] 
+                                    os.path.basename(python_file)[:-3]
             py_modules.append(m)
     except:
         print("Object3D Module could not be built")
@@ -456,11 +456,11 @@ if USE_SMART_INSTALL_SCRIPTS:
             #I do not know if to leave it optional ...
             if False:
                 self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca5')
-                self.install_dir = os.path.join(self.install_dir, 'bin')        
+                self.install_dir = os.path.join(self.install_dir, 'bin')
             else:
                 self.install_dir = getattr(install_cmd, 'install_scripts')
             self.install_data = getattr(install_cmd, 'install_data')
-            PYMCA_SCRIPTS_DIR = self.install_dir        
+            PYMCA_SCRIPTS_DIR = self.install_dir
             PYMCA_DATA_DIR = self.install_data
             if sys.platform != "win32":
                 print("PyMca scripts to be installed in %s" %  self.install_dir)
@@ -476,12 +476,12 @@ if USE_SMART_INSTALL_SCRIPTS:
                     modfile = f.readline().replace("\n","")
                     f.close()
                 else:
-                    basename = os.path.basename(filein) 
+                    basename = os.path.basename(filein)
                     if basename.startswith('pymcabatch'):
                         modfile = 'PyMcaBatch.py'
                     elif basename.startswith('pymcapostbatch') or\
                          basename.startswith('rgbcorrelator'):
-                        modfile = 'PyMcaPostBatch.py' 
+                        modfile = 'PyMcaPostBatch.py'
                     elif basename.startswith('pymcaroitool'):
                         modfile = 'QStackWidget.py'
                     elif basename.startswith('mca2edf'):
@@ -496,7 +496,7 @@ if USE_SMART_INSTALL_SCRIPTS:
                         modfile = 'PyMcaMain.py'
                     else:
                         print("ignored %s" % filein)
-                        continue   
+                        continue
                 text  = "#!/bin/bash\n"
                 text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % moddir
                 #deal with sys.executables not named python
@@ -504,7 +504,7 @@ if USE_SMART_INSTALL_SCRIPTS:
                     sys.executable,
                     os.path.join(moddir, modfile)
                     )
-                
+
                 f=open(filedest, 'w')
                 f.write(text)
                 f.close()

@@ -119,7 +119,7 @@ else:
         if f.endswith('.py'):
             continue
         script_files.append(f)
-            
+
 
 def build_Object3DCTools(ext_modules):
     includes = [numpy.get_include()]
@@ -176,7 +176,7 @@ class smart_install_scripts(install_scripts):
             self.install_dir = os.path.join(self.install_dir, 'bin')
         else:
             self.install_dir = getattr(install_cmd, 'install_scripts')
-        OBJECT3D_SCRIPTS_DIR = self.install_dir        
+        OBJECT3D_SCRIPTS_DIR = self.install_dir
         if sys.platform != "win32":
             print("Object3D scripts to be installed in %s" %  self.install_dir)
         self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
@@ -207,7 +207,7 @@ class smart_install_scripts(install_scripts):
                     mode = ((os.stat(ffile)[ST_MODE]) | 365) & 4095
                     log.info("changing mode of %s to %o", ffile, mode)
                     os.chmod(ffile, mode)
-   
+
 description = "LGPL License unless a commercial license is bought. Please contact industry@esrf.fr if needed."
 long_description = """Stand-alone python application and tools for multidimensional data visualization"""
 
@@ -224,7 +224,7 @@ distrib = setup(name="Object3D",
                 platforms='any',
                 ext_modules = ext_modules,
                 data_files = data_files,
-                cmdclass = {'install_data':smart_install_data, 
+                cmdclass = {'install_data':smart_install_data,
                             'install_scripts':smart_install_scripts},
                 scripts=script_files,
                 py_modules=py_modules,

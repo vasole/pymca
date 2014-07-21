@@ -139,7 +139,7 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
 
         #Show
         self.roiWindow.show()
-        self.roiWindow.raise_()        
+        self.roiWindow.raise_()
 
         #update ROIs
         self.stackUpdated()

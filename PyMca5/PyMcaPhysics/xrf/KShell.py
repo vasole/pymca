@@ -84,7 +84,7 @@ for transition in ElementKAlphaTransitions:
 for transition in ElementKBetaTransitions:
     if transition[0] != 'Z':
         data = filedata[ElementKShellTransitions.index(transition)] * 1
-        data.shape = [ndata, 1] 
+        data.shape = [ndata, 1]
         ElementKBetaRates = numpy.concatenate((ElementKBetaRates, data),
                                                 axis = 1)
 for i in range(len(ElementKAlphaTransitions)):
@@ -103,7 +103,7 @@ ElementKShellConstants = sf[0].alllabels()
 ElementKShellValues = numpy.transpose(sf[0].data()).tolist()
 sf=None
 
-Elements = ['H', 'He', 
+Elements = ['H', 'He',
             'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
             'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
             'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
@@ -111,12 +111,12 @@ Elements = ['H', 'He',
             'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo',
             'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
             'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 
-            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 
-            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 
-            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 
-            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 
-            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 
+            'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+            'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W',
+            'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb',
+            'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf',
+            'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
 
@@ -134,7 +134,7 @@ def getomegak(ele):
 #Jump ratios following Veigele: Atomic Data Tables 5 (1973) 51-111. p 54 and 55
 def getjk(z):
     return (125.0/z) + 3.5
-    
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:

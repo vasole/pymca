@@ -95,11 +95,11 @@ class XiaEdfCountFile:
     def reset(self):
         self.data= None
         self.header= None
-        try:    
+        try:
             self.__readStat()
         except:
             raise XiaEdfError("Cannot parse header in <%s>"%filename)
-   
+
     def __readStat(self):
         self.header= self.edf.GetHeader(0)
 
@@ -199,7 +199,7 @@ class XiaEdfCountFile:
                     derr.append("#%02d"%idx)
             if len(derr):
                 message.append("Null OCR on det %s" % " ".join(derr))
-                
+
             self.data[1:,:]= self.data[1:,:] * rate
             self.header["xcorr"]= corrflag|1
 
@@ -254,7 +254,7 @@ class XiaEdfCountFile:
         self.header["xnb"]= len(sums)
 
         return message
-                
+
     def save(self, filename, force=0):
         edf= openEdf(filename, write=1, force=force)
         self.__readData()
@@ -362,7 +362,7 @@ class XiaEdfScanFile:
 
         if deadtime and corrflag&1:
             raise XiaEdfError("det #%02d seems already deadtime corrected"%detector)
-        
+
         self.data= self.data.astype(numpy.float)
         idx= self.detList.index(detector)
         pts= self.statArray.shape[0]
@@ -458,7 +458,7 @@ class XiaEdfScanFile:
                 curr= None
 
         return "["+ ",".join(ptrange)+"]"
-		
+
     def sum(self, detectors=[], deadtime=0, livetime=0, average=0):
         message= []
         if not len(detectors):
@@ -490,7 +490,7 @@ class XiaEdfScanFile:
         self.header["xdet"]= " ".join([str(det) for det in sumdet])
 
         return message
-        
+
     def save(self, filename, force=0):
         if self.data is None:
             raise XiaEdfError("Cannot save. No data loaded.")
@@ -507,12 +507,12 @@ class XiaFilename:
     def setType(self, type, det=None):
         self.type= type
         self.det= det
-	
+
     def getType(self):
         return self.type
 
     def isValid(self):
-        return self.type is not None 
+        return self.type is not None
 
     def isCount(self):
         return (self.type=="ct" or (self.type=="sum" and self.det==-1))
@@ -535,7 +535,7 @@ class XiaFilename:
             return None
 
     def isGroupedWith(self, other):
-        if (self.isScan() and other.isScan()) or (self.isCount() and other.isCount()): 
+        if (self.isScan() and other.isScan()) or (self.isCount() and other.isCount()):
             file1= "%s/%s"%(self.dir is None and "." or self.dir, self.prefix is None and "" or self.prefix)
             file2= "%s/%s"%(other.dir is None and "." or other.dir, other.prefix is None and "" or other.prefix)
             res= cmp(file1, file2)
@@ -654,7 +654,7 @@ class XiaFilename:
                 xia= "xia%02d"%self.det
             elif self.type is not None:
                 xia= "xia%s"%self.type
-                
+
             if xia is not None:
                 self.file= "%s_%s"%(self.file, xia)
 
@@ -700,16 +700,16 @@ def testScan():
     x= XiaEdfScanFile("data/test_xiast_0000_0000_0000.edf",
         ["data/test_xia00_0000_0000_0000.edf",
         "data/test_xia01_0000_0000_0000.edf",
-        "data/test_xia02_0000_0000_0000.edf",            
-        "data/test_xia03_0000_0000_0000.edf",            
-        "data/test_xia04_0000_0000_0000.edf",            
-        "data/test_xia05_0000_0000_0000.edf",            
-        "data/test_xia06_0000_0000_0000.edf",            
-        "data/test_xia07_0000_0000_0000.edf",            
-        "data/test_xia08_0000_0000_0000.edf",            
-        "data/test_xia09_0000_0000_0000.edf",            
-        "data/test_xia10_0000_0000_0000.edf",            
-        "data/test_xia11_0000_0000_0000.edf",            
+        "data/test_xia02_0000_0000_0000.edf",
+        "data/test_xia03_0000_0000_0000.edf",
+        "data/test_xia04_0000_0000_0000.edf",
+        "data/test_xia05_0000_0000_0000.edf",
+        "data/test_xia06_0000_0000_0000.edf",
+        "data/test_xia07_0000_0000_0000.edf",
+        "data/test_xia08_0000_0000_0000.edf",
+        "data/test_xia09_0000_0000_0000.edf",
+        "data/test_xia10_0000_0000_0000.edf",
+        "data/test_xia11_0000_0000_0000.edf",
         ])
 
     x.sum([1,10])
@@ -729,8 +729,8 @@ def testAcq(infile, outfile=None):
             print(x.header)
             print("Saving %s" % outfile)
             x.save(outfile)
-    
-if __name__=="__main__": 
+
+if __name__=="__main__":
     import sys
 
     testScan()

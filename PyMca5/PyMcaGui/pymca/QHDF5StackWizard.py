@@ -58,7 +58,7 @@ class FileListPage(qt.QWizardPage):
         self._listView = qt.QTextEdit(self)
         self._listView.setMaximumHeight(30*listlabel.sizeHint().height())
         self._listView.setReadOnly(True)
-        
+
         self._listButton = qt.QPushButton(self)
         self._listButton.setText('Browse')
         self._listButton.setAutoDefault(False)
@@ -103,7 +103,7 @@ class FileListPage(qt.QWizardPage):
             filelist0=filedialog.selectedFiles()
         else:
             self.raise_()
-            return            
+            return
         filelist = []
         for f in filelist0:
             filelist.append(safe_str(f))
@@ -172,7 +172,7 @@ class DatasetSelectionPage(qt.QWizardPage):
         keys = list(phynxFile.keys())
         if len(keys) != 1:
             return
-        
+
         #check if it is an NXentry
         entry = phynxFile[keys[0]]
         attrs = list(entry.attrs)
@@ -245,7 +245,7 @@ class DatasetSelectionPage(qt.QWizardPage):
         ddict = {}
         ddict['counters'] = []
         ddict['aliases']  = []
-        
+
         for signal in signalList:
             path = posixpath.join("/",nxDataList[0], signal)
             ddict['counters'].append(path)
@@ -302,8 +302,8 @@ class DatasetSelectionPage(qt.QWizardPage):
         msg = qt.QMessageBox(self)
         msg.setIcon(qt.QMessageBox.Information)
         msg.setText(text)
-        msg.exec_()            
-        
+        msg.exec_()
+
 class ShapePage(qt.QWizardPage):
     def __init__(self, parent):
         qt.QWizardPage.__init__(self, parent)
@@ -343,13 +343,13 @@ class QHDF5StackWizard(qt.QWizard):
 
     def setFileList(self, filelist):
         self._fileList.setFileList(filelist)
-        
+
     def createFileListPage(self):
         return FileListPage(self)
 
     def createDatasetSelectionPage(self):
         return DatasetSelectionPage(self)
-    
+
     def createShapePage(self):
         return ShapePage(self)
 
@@ -362,7 +362,7 @@ class QHDF5StackWizard(qt.QWizard):
         return self._fileList.fileList,\
                self._datasetSelection.selection,\
                [x[0] for x in self._datasetSelection.nexusWidget.getSelectedEntries()]
-    
+
 if __name__ == "__main__":
     import sys
     app = qt.QApplication(sys.argv)

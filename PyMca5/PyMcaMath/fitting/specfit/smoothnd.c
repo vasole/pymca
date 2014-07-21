@@ -41,7 +41,7 @@ void smooth1d(double *data, int size)
 	long i;
 	double oldy;
 	double newy;
-	
+
 	if (size < 3)
 	{
 		return;

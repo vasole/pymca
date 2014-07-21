@@ -68,8 +68,8 @@ class SimpleFitBatchParameters(qt.QWidget):
             self.mainLayout.addWidget(self._listView,   0, 1)
             self.mainLayout.addWidget(self._listButton, 0, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
             row += 1
-        
-        #options 
+
+        #options
         labels = ['Fit Configuration File:', 'Output Directory:']
         row0 = 0
         for label in labels:
@@ -86,7 +86,7 @@ class SimpleFitBatchParameters(qt.QWidget):
                 self._fitConfigurationButton = b
             else:
                 self._outputDirectoryLine = line
-                self._outputDirectoryButton = b                
+                self._outputDirectoryButton = b
             row0 += 1
         row += row0
 
@@ -99,7 +99,7 @@ class SimpleFitBatchParameters(qt.QWidget):
         if self._inputDir is None:
             self._inputDir = PyMcaDirs.inputDir
         elif os.path.exists(self._inputDir):
-            PyMcaDirs.inputDir = self._inputDir            
+            PyMcaDirs.inputDir = self._inputDir
         filetypes  = ["Mca Files (*.mca)",
                       "Edf Files (*.edf)"]
         if HDF5SUPPORT:
@@ -144,7 +144,7 @@ class SimpleFitBatchParameters(qt.QWidget):
         if self._inputDir is None:
             self._inputDir = PyMcaDirs.inputDir
         elif os.path.exists(self._inputDir):
-            PyMcaDirs.inputDir = self._inputDir            
+            PyMcaDirs.inputDir = self._inputDir
         filetypes  = ["Configuration Files (*.cfg)"]
         if self._inputDir is None:
             self._inputDir = PyMcaDirs.inputDir
@@ -240,7 +240,7 @@ class SimpleFitBatchGui(qt.QWidget):
         self.mainLayout.setSpacing(2)
 
         self.parametersWidget = SimpleFitBatchParameters(self)
-        self.getParameters = self.parametersWidget.getParameters 
+        self.getParameters = self.parametersWidget.getParameters
         self.mainLayout.addWidget(self.parametersWidget)
         if actions:
             self.actionsBox = qt.QWidget(self)
@@ -258,7 +258,7 @@ class SimpleFitBatchGui(qt.QWidget):
             self.actionsBox.mainLayout.addWidget(qt.HorizontalSpacer(self.actionsBox))
             self.mainLayout.addWidget(self.actionsBox)
             self.closeButton.clicked[()].connect(self.close)
-    
+
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = SimpleFitBatchGui()

@@ -61,7 +61,7 @@ class Object3DMeshConfig(Object3DPrivateConfig.Object3DPrivateConfig):
 
         #value filtering
         self.valueFilter = PrivateConfigTools.ValueFilter(self)
-        
+
         #isosurfaces
         self.isosurfaces = PrivateConfigTools.Isosurfaces(self)
 
@@ -99,7 +99,7 @@ class Object3DMeshConfig(Object3DPrivateConfig.Object3DPrivateConfig):
         self.valueFilter.setParameters(self._configuration)
         self.isosurfaces.setParameters(self._configuration)
         return
-    
+
     def getParameters(self):
         self._configuration.update(self.infoLabel.getParameters())
         self._configuration.update(self.colorFilter.getParameters())

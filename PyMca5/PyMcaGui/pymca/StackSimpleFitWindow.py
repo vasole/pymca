@@ -52,7 +52,7 @@ class OutputParameters(qt.QWidget):
         self.outputDirLine.setReadOnly(True)
         self.outputDirButton = qt.QPushButton(self)
         self.outputDirButton.setText("Browse")
-        
+
         self.outputFileLabel = qt.QLabel(self)
         self.outputFileLabel.setText("Output file root")
         self.outputFileLine  = qt.QLineEdit(self)
@@ -69,7 +69,7 @@ class OutputParameters(qt.QWidget):
         self.mainLayout.addWidget(self.outputFileLabel,  1, 0)
         self.mainLayout.addWidget(self.outputFileLine,   1, 1)
         self.outputDirButton.clicked[()].connect(self.browseDirectory)
-        
+
     def getOutputDirectory(self):
         return safe_str(self.outputDirLine.text())
 
@@ -83,13 +83,13 @@ class OutputParameters(qt.QWidget):
             PyMcaDirs.outputDir = txt
         else:
             raise IOError("Directory does not exists")
-            
+
 
     def setOutputFileBaseName(self, txt):
         if len(txt):
             self.outputFileLine.setText(txt)
             self.outputFile = txt
-        
+
     def browseDirectory(self):
         wdir = self.outputDir
         outputDir = qt.QFileDialog.getExistingDirectory(self,
@@ -182,7 +182,7 @@ class StackSimpleFitWindow(qt.QWidget):
         if deleteFiles == False:
             #nothing to be done (yet)
             return
-        
+
         if deleteFiles:
             try:
                 for key in fileNames.keys():
@@ -191,7 +191,7 @@ class StackSimpleFitWindow(qt.QWidget):
                         os.remove(fileName)
             except:
                 qt.QMessageBox.critical(self, "Delete Error",
-                    "ERROR while deleting file:\n%s"% fileName, 
+                    "ERROR while deleting file:\n%s"% fileName,
                     qt.QMessageBox.Ok,
                     qt.QMessageBox.NoButton,
                     qt.QMessageBox.NoButton)

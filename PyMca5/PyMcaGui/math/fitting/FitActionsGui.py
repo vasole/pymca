@@ -77,7 +77,7 @@ class FitActionsGui(qt.QWidget):
         Layout9.addWidget(self.DismissButton)
 
         FitActionsGUILayout.addLayout(Layout9,0,0)
-        
+
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = FitActionsGui()

@@ -35,7 +35,7 @@ from PyMca5.PyMcaMath.fitting import Specfit
 
 class McaSimpleFit(qt.QWidget):
     sigMcaSimpleFitSignal = qt.pyqtSignal(object)
-    def __init__(self, parent=None, name="McaSimpleFit", specfit=None,fl=0): 
+    def __init__(self, parent=None, name="McaSimpleFit", specfit=None,fl=0):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
         if specfit is None:
@@ -45,7 +45,7 @@ class McaSimpleFit(qt.QWidget):
         layout = qt.QVBoxLayout(self)
         ##############
         self.headerlabel = qt.QLabel(self)
-        self.headerlabel.setAlignment(qt.Qt.AlignHCenter)       
+        self.headerlabel.setAlignment(qt.Qt.AlignHCenter)
         self.setheader('<b>Fit of XXXXXXXXXX from Channel XXXXX to XXXX<\b>')
         ##############
         defaultFunctions = "SpecfitFunctions.py"
@@ -55,7 +55,7 @@ class McaSimpleFit(qt.QWidget):
         self.specfit.importfun(defaultFunctions)
         self.specfit.settheory('Area Gaussians')
         self.specfit.setbackground('Linear')
-            
+
         fitconfig = {}
         fitconfig.update(self.specfit.fitconfig)
         fitconfig['WeightFlag'] = 1
@@ -70,12 +70,12 @@ class McaSimpleFit(qt.QWidget):
         hbox = qt.QWidget(self)
         hboxLayout = qt.QHBoxLayout(hbox)
         self.estimatebutton = qt.QPushButton(hbox)
-        self.estimatebutton.setText("Estimate")            
+        self.estimatebutton.setText("Estimate")
         hs1 = qt.HorizontalSpacer(hbox)
         self.fitbutton = qt.QPushButton(hbox)
         self.fitbutton.setText("Fit Again!")
         self.dismissbutton = qt.QPushButton(hbox)
-        self.dismissbutton.setText("Dismiss")        
+        self.dismissbutton.setText("Dismiss")
         self.estimatebutton.clicked[()].connect(self.estimate)
         self.fitbutton.clicked[()].connect(self.fit)
         self.dismissbutton.clicked[()].connect(self.dismiss)
@@ -136,16 +136,16 @@ class McaSimpleFit(qt.QWidget):
         else:
             #self.specfitGui.estimate()
             self.specfitGui.startfit()
-    
+
     def estimate(self):
         fitconfig = {}
         fitconfig.update(self.specfit.fitconfig)
         self.specfitGui.updateGui(configuration=fitconfig)
-        self.specfitGui.estimate() 
+        self.specfitGui.estimate()
 
     def _emitSignal(self, ddict):
-        self.sigMcaSimpleFitSignal.emit(ddict)       
-    
+        self.sigMcaSimpleFitSignal.emit(ddict)
+
     def __anasignal(self,ddict):
         if type(ddict) != type({}):
             return
@@ -174,7 +174,7 @@ class McaSimpleFit(qt.QWidget):
                     ddict['event'] = 'McaFitFinished'
                     ddict['data'] = [self.specfitGui.specfit.mcagetresult()]
                 self.sigMcaSimpleFitSignal.emit(ddict)
-        
+
     def dismiss(self):
         self.close()
 
@@ -183,7 +183,7 @@ class McaSimpleFit(qt.QWidget):
         ddict["event"] = "McaSimpleFitClosed"
         self.sigMcaSimpleFitSignal.emit(ddict)
         return qt.QWidget.closeEvent(self, event)
-        
+
     def __htmlheader(self):
         try:
             header="Fit of %s from %s %s to %s" % (self.info['legend'],
@@ -239,7 +239,7 @@ class McaSimpleFit(qt.QWidget):
         h+="</CENTER>"
         return h
 
-       
+
     def __print(self,text):
         printer = qt.QPrinter()
         if printer.setup(self):
@@ -261,7 +261,7 @@ class McaSimpleFit(qt.QWidget):
                                                     body.height())
                 view = qt.QRect(body)
                 richtext.setWidth(painter,view.width())
-                page = 1                
+                page = 1
                 while(1):
                     richtext.draw(painter,body.left(),body.top(),
                                 view,qt.QColorGroup())

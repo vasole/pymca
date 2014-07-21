@@ -31,12 +31,12 @@ srcfiles = [ 'sfheader','sfinit','sflists','sfdata','sfindex',
 if sys.version >= '3.0':
     srcfiles[-1] += '3'
 
-sources = [] 
+sources = []
 for ffile in srcfiles:
   sources.append('src/'+ffile+'.c')
 
 if sys.platform == "win32":
-    define_macros = [('WIN32',None)]    
+    define_macros = [('WIN32',None)]
 elif os.name.lower().startswith('posix'):
     define_macros = [('SPECFILE_POSIX', None)]
     #this one is more efficient but keeps the locale
@@ -46,7 +46,7 @@ elif os.name.lower().startswith('posix'):
     #as a compilation flag because that allows the
     #use of strtod_l
     if SPECFILE_USE_GNU_SOURCE:
-        define_macros = [('_GNU_SOURCE', 1)]        
+        define_macros = [('_GNU_SOURCE', 1)]
 else:
     define_macros = []
 setup (

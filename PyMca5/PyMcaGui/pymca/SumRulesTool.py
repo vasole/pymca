@@ -65,14 +65,14 @@ NEWLINE = '\n'
 class Calculations(object):
     def __init__(self):
         pass
-        
+
     def cumtrapz(self, y, x=None, dx=1.0):
         y = y[:]
         if x is None:
             x = numpy.arange(len(y), dtype=y.dtype) * dx
         else:
             x = x[:]
-        
+
         if not numpy.all(numpy.diff(x) > 0.):
             # assure monotonically increasing x
             idx = numpy.argsort(x)
@@ -83,14 +83,14 @@ class Calculations(object):
             idx = numpy.nonzero(numpy.diff(x) > 0)[0]
             x = numpy.take(x, idx)
             y = numpy.take(y, idx)
-        
+
         return numpy.cumsum(.5 * numpy.diff(x) * (y[1:] + y[:-1]))
-    
+
     def magneticMoment(self, p, q, r, n, econf):
         """
         Input
         -----
-        
+
         :param p: Integral over the (first) edge of the XMCD (difference) signal
         :type p: Float
         :param q: Integral over the (second) edge of the XMCD (difference) signal
@@ -101,7 +101,7 @@ class Calculations(object):
         :type n: Float
         :param econf: Determines if material is of 3d or 4f type and thus the number of electronic states in the outer shell
         :type econf: String
-        
+
         Returns the orbital resp. the spin part of the magnetic moment
 
         Paper references:
@@ -144,7 +144,7 @@ class Calculations(object):
         return mOrbt, mSpin, mRatio
 
 class MarkerSpinBox(qt.QDoubleSpinBox):
-    
+
     intersectionsChangedSignal = qt.pyqtSignal()
 
     def __init__(self, window, plotWindow, label='', parent=None):
@@ -158,12 +158,12 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.markerID = self.plotWindow.insertXMarker(0.,
                                                       label,
                                                       label=label)
-        
+
         # Initialize
         self.setMinimum(0.)
         self.setMaximum(10000.)
         self.setValue(0.)
-        
+
         # Connects
         self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
         self.valueChanged.connect(self._valueChanged)
@@ -196,7 +196,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
     def hideMarker(self):
         self.plotWindow.removeMarker(self.label)
         self.markerID = None
-            
+
     def showMarker(self):
         self.plotWindow.removeMarker(self.label)
         self.markerID = self.plotWindow.insertXMarker(
@@ -237,7 +237,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.setValue(markerPos)
         self.blockSignals(False)
         self.intersectionsChangedSignal.emit()
-            
+
     def _valueChanged(self, val):
         try:
             val = float(val)
@@ -254,7 +254,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
                                 selectable=False,
                                 draggable=True)
         self.intersectionsChangedSignal.emit()
-        
+
 class LineEditDisplay(qt.QLineEdit):
     def __init__(self, controller, ddict=None, unit='', parent=None):
         qt.QLineEdit.__init__(self, parent)
@@ -276,7 +276,7 @@ class LineEditDisplay(qt.QLineEdit):
         else:
             raise ValueError('LineEditDisplay: Controller must be of type QComboBox or QDoubleSpinBox')
         #self.controller.destroyed.connect(self.destroy)
-        
+
     def updateDict(self, ddict):
         # Only relevant if type(controller) == QComboBox
         self.ddict = ddict
@@ -294,7 +294,7 @@ class LineEditDisplay(qt.QLineEdit):
                 print('LineEditDisplay.checkController -- Reached untreated case, setting empty string')
             tmp = ''
         self.setText(tmp)
-        
+
     def setText(self, inp):
         inp = str(inp)
         if isinstance(self.controller, qt.QComboBox):
@@ -306,7 +306,7 @@ class LineEditDisplay(qt.QLineEdit):
                     try:
                         text = '%.2f meV'%(1000. * float(tmp))
                     except ValueError:
-                        text = 'NaN' 
+                        text = 'NaN'
                 else:
                     text = '---'
         elif isinstance(self.controller, qt.QDoubleSpinBox):
@@ -334,7 +334,7 @@ class SumRulesWindow(qt.QMainWindow):
     __intP = 'p'
     __intQ = 'q'
     __intR = 'r'
-    
+
     # Lists
     tabList = [__tabElem,
                __tabBG,
@@ -347,7 +347,7 @@ class SumRulesWindow(qt.QMainWindow):
                       __intQ,
                       __intR]
     edgeMarkerList = []
-    
+
     # Elements with 3d final state
     transitionMetals = ['Sc', 'Ti', 'V', 'Cr', 'Mn',
                          'Fe', 'Co', 'Ni', 'Cu']
@@ -364,7 +364,7 @@ class SumRulesWindow(qt.QMainWindow):
     electronConfs = ['3d','4f']
     # Occuring Transitions
     occuringTransitions = ['L3M4', 'L3M5', 'L2M4', 'M5O3','M4O3']
-    
+
     # Signals
     tabChangedSignal = qt.pyqtSignal('QString')
 
@@ -395,7 +395,7 @@ class SumRulesWindow(qt.QMainWindow):
             self.plotWindow.graph.enablemarkermode()
             # Hide unnecessary buttons in the toolbar
             toolbarChildren = self.plotWindow.toolBar
-            # QWidget.findChildren(<qt-type>) matches 
+            # QWidget.findChildren(<qt-type>) matches
             # all child widgets with the specified type
             toolbarButtons  = toolbarChildren.findChildren(qt.QToolButton)
             toolbarButtons[3].hide() # LogX
@@ -410,10 +410,10 @@ class SumRulesWindow(qt.QMainWindow):
             toolbarButtons[14].hide() # Plugins
         else:
             self.plotWindow
-        
+
         self.__savedConf = False
         self.__savedData = False
-        
+
         # Marker Handling
         # spinboxDict connects marker movement to spinbox
         # keys() -> id(MarkerSpinBox)
@@ -421,17 +421,17 @@ class SumRulesWindow(qt.QMainWindow):
         self.spinboxDict = {}
         self.valuesDict = dict(
                     [(item, {}) for item in self.tabList])
-        
+
         # Tab Widget
         tabIdx = 0
-        self.tabWidget = qt.QTabWidget()    
+        self.tabWidget = qt.QTabWidget()
         for window in self.tabList:
             if window == self.__tabElem:
                 # BEGIN sampleGB
                 sampleGB = qt.QGroupBox('Sample definition')
                 sampleLayout = qt.QVBoxLayout()
                 sampleGB.setLayout(sampleLayout)
-                
+
                 # electron shell combo box
                 self.elementEConfCB = qt.QComboBox()
                 self.elementEConfCB.setMinimumWidth(100)
@@ -474,13 +474,13 @@ class SumRulesWindow(qt.QMainWindow):
                 electronOccupationWidget.setLayout(electronOccupationLayout)
                 sampleLayout.addWidget(electronOccupationWidget)
                 # END sampleGB
-                
-                # BEGIN absorptionGB: X-ray absorption edge 
+
+                # BEGIN absorptionGB: X-ray absorption edge
                 # selection combo box by transition (L3M1, etc.)
                 absorptionGB     = qt.QGroupBox('X-ray absorption edges')
                 absorptionLayout = qt.QVBoxLayout()
                 absorptionGB.setLayout(absorptionLayout)
-                
+
                 self.edge1CB = qt.QComboBox()
                 self.edge1CB.setMinimumWidth(100)
                 self.edge1CB.addItems([''])
@@ -494,7 +494,7 @@ class SumRulesWindow(qt.QMainWindow):
                 edge1Widget = qt.QWidget()
                 edge1Widget.setLayout(edge1Layout)
                 absorptionLayout.addWidget(edge1Widget)
-                
+
                 self.edge2CB = qt.QComboBox()
                 self.edge2CB.setMinimumWidth(100)
                 self.edge2CB.addItems([''])
@@ -510,16 +510,16 @@ class SumRulesWindow(qt.QMainWindow):
                 absorptionLayout.addWidget(edge2Widget)
                 absorptionLayout.setAlignment(qt.Qt.AlignTop)
                 # END absorptionGB
-                
+
                 # Combine sampleGB & absorptionGB in one Line
                 topLineLayout = qt.QHBoxLayout()
                 topLineLayout.setContentsMargins(0,0,0,0)
                 topLineLayout.addWidget(sampleGB)
                 topLineLayout.addWidget(absorptionGB)
-                
+
                 topLine = qt.QWidget()
                 topLine.setLayout(topLineLayout)
-                
+
                 # BEGIN tab layouting
                 elementTabLayout = qt.QVBoxLayout()
                 elementTabLayout.setContentsMargins(1,1,1,1)
@@ -534,7 +534,7 @@ class SumRulesWindow(qt.QMainWindow):
                         'Shortcut: F2\n'
                        +'Define sample element here')
                 # END tab layouting
-                
+
                 self.valuesDict[self.__tabElem]\
                     ['element'] = self.elementCB
                 self.valuesDict[self.__tabElem]\
@@ -550,7 +550,7 @@ class SumRulesWindow(qt.QMainWindow):
                 self.valuesDict[self.__tabElem]\
                     ['edge2Energy'] = self.edge2Line
                 self.valuesDict[self.__tabElem]['info'] = {}
-                
+
             elif window == self.__tabBG:
                 # BEGIN Pre/Post edge group box
                 prePostLayout = qt.QGridLayout()
@@ -581,7 +581,7 @@ class SumRulesWindow(qt.QMainWindow):
                 prePostGB = qt.QGroupBox('Pre/Post edge')
                 prePostGB.setLayout(prePostLayout)
                 # END Pre/Post edge group box
-                
+
                 # BEGIN Edge group box
                 numberOfEdges = 2
                 edgeLayout = qt.QVBoxLayout()
@@ -605,7 +605,7 @@ class SumRulesWindow(qt.QMainWindow):
                 edgeGB = qt.QGroupBox('Edge positions')
                 edgeGB.setLayout(edgeLayout)
                 # END Edge group box
-                
+
                 # BEGIN Background model group box
                 stepRatio = qt.QDoubleSpinBox()
                 stepRatio.setMaximumWidth(100)
@@ -621,7 +621,7 @@ class SumRulesWindow(qt.QMainWindow):
                 stepRatioWidget = qt.QWidget()
                 stepRatioWidget.setContentsMargins(0,0,0,-8)
                 stepRatioWidget.setLayout(stepRatioLayout)
-                
+
                 stepWidth = qt.QDoubleSpinBox()
                 stepWidth.setMaximumWidth(100)
                 stepWidth.setAlignment(qt.Qt.AlignRight)
@@ -636,14 +636,14 @@ class SumRulesWindow(qt.QMainWindow):
                 stepWidthWidget = qt.QWidget()
                 stepWidthWidget.setContentsMargins(0,-8,0,0)
                 stepWidthWidget.setLayout(stepWidthLayout)
-                
+
                 fitControlLayout = qt.QVBoxLayout()
                 fitControlLayout.addWidget(stepRatioWidget)
                 fitControlLayout.addWidget(stepWidthWidget)
                 fitControlGB = qt.QGroupBox('Background model control')
                 fitControlGB.setLayout(fitControlLayout)
                 # END Background model group box
-                
+
                 # Combine edge position and background model in single line
                 sndLine = qt.QWidget()
                 sndLineLayout = qt.QHBoxLayout()
@@ -651,7 +651,7 @@ class SumRulesWindow(qt.QMainWindow):
                 sndLine.setLayout(sndLineLayout)
                 sndLineLayout.addWidget(edgeGB)
                 sndLineLayout.addWidget(fitControlGB)
-                
+
                 # Insert into tab
                 backgroundTabLayout = qt.QVBoxLayout()
                 backgroundTabLayout.setContentsMargins(1,1,1,1)
@@ -666,15 +666,15 @@ class SumRulesWindow(qt.QMainWindow):
                 self.tabWidget.setTabToolTip(tabIdx,
                         'Shortcut: F3\n'
                        +'Model background here.')
-                
+
                 stepRatio.valueChanged['double'].connect(self.estimateBG)
                 stepWidth.valueChanged['double'].connect(self.estimateBG)
-                
+
                 self.valuesDict[self.__tabBG]\
                         ['Step Ratio'] = stepRatio
                 self.valuesDict[self.__tabBG]\
                         ['Step Width'] = stepWidth
-            
+
             elif window == self.__tabInt:
                 # BEGIN Integral marker groupbox
                 pqLayout = qt.QVBoxLayout()
@@ -708,7 +708,7 @@ class SumRulesWindow(qt.QMainWindow):
                 pqGB = qt.QGroupBox('XAS/XMCD integrals')
                 pqGB.setLayout(pqLayout)
                 # END Integral marker groupbox
-                
+
                 # BEGIN magnetic moments groupbox
                 mmLayout = qt.QVBoxLayout()
                 mmLayout.setContentsMargins(0,-8,0,-8)
@@ -740,7 +740,7 @@ class SumRulesWindow(qt.QMainWindow):
                 mmLineWidget.setLayout(mmLineLayout)
                 mmLineWidget.setContentsMargins(0,-8,0,-8)
                 mmLayout.addWidget(mmLineWidget)
-                
+
                 text = 'Ratio Magnetic Moments'
                 mmLineLayout = qt.QHBoxLayout()
                 self.mmRatio = qt.QLineEdit()
@@ -754,7 +754,7 @@ class SumRulesWindow(qt.QMainWindow):
                 mmLineWidget.setLayout(mmLineLayout)
                 mmLineWidget.setContentsMargins(0,-8,0,0)
                 mmLayout.addWidget(mmLineWidget)
-                
+
                 mmGB = qt.QGroupBox('Magnetic moments')
                 mmGB.setLayout(mmLayout)
                 # END magnetic moments groupbox
@@ -767,7 +767,7 @@ class SumRulesWindow(qt.QMainWindow):
                 topLineLayout.addWidget(mmGB)
                 topLine = qt.QWidget()
                 topLine.setLayout(topLineLayout)
-                
+
                 # BEGIN XMCD correction
                 self.xmcdDetrend = qt.QCheckBox()
                 self.xmcdDetrend.stateChanged['int'].connect(self.triggerDetrend)
@@ -779,12 +779,12 @@ class SumRulesWindow(qt.QMainWindow):
                 xmcdDetrendLayout.addWidget(self.xmcdDetrend)
                 xmcdDetrendWidget = qt.QWidget()
                 xmcdDetrendWidget.setLayout(xmcdDetrendLayout)
-                
+
                 xmcdDetrendGB = qt.QGroupBox('XMCD Data Preprocessing')
                 xmcdDetrendGB.setLayout(xmcdDetrendLayout)
                 xmcdDetrendLayout.addWidget(xmcdDetrendWidget)
                 # END XMCD correction
-                
+
                 xmcdTabLayout = qt.QVBoxLayout()
                 xmcdTabLayout.setContentsMargins(2,2,2,2)
                 xmcdTabLayout.addWidget(topLine)
@@ -798,7 +798,7 @@ class SumRulesWindow(qt.QMainWindow):
                 self.tabWidget.setTabToolTip(tabIdx,
                         'Shortcut: F4\n'
                        +'Assign Markers p, q and r here')
-                            
+
                 self.valuesDict[self.__tabInt]\
                     ['Orbital Magnetic Moment'] = self.mmOrbt
                 self.valuesDict[self.__tabInt]\
@@ -812,7 +812,7 @@ class SumRulesWindow(qt.QMainWindow):
         # Add to self.valuesDict
         self.tabWidget.currentChanged['int'].connect(
                             self._handleTabChangedSignal)
-        
+
         # Estimate button in bottom of plot window layout
         self.buttonEstimate = qt.QPushButton('Estimate', self)
         self.buttonEstimate.setToolTip(
@@ -827,7 +827,7 @@ class SumRulesWindow(qt.QMainWindow):
         self.plotWindow.toolBar.addWidget(self.buttonEstimate)
 
         self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
-             
+
         # Layout
         mainWidget = qt.QWidget()
         mainLayout = qt.QVBoxLayout()
@@ -836,7 +836,7 @@ class SumRulesWindow(qt.QMainWindow):
         mainLayout.setContentsMargins(1,1,1,1)
         mainWidget.setLayout(mainLayout)
         self.setCentralWidget(mainWidget)
-        
+
         #
         # Data handling:
         #
@@ -851,7 +851,7 @@ class SumRulesWindow(qt.QMainWindow):
         # diminished by one..
         self.xmcdInt     = None
         self.xasInt      = None
-        
+
         #
         # File (name) handling
         #
@@ -861,7 +861,7 @@ class SumRulesWindow(qt.QMainWindow):
 
         self._createMenuBar()
 
-    def _createMenuBar(self):        
+    def _createMenuBar(self):
         # Creates empty menu bar, if none existed before
         menu = self.menuBar()
         menu.clear()
@@ -876,31 +876,31 @@ class SumRulesWindow(qt.QMainWindow):
         openAction.setStatusTip('Opened file')
         openAction.setToolTip('Opens a data file (*.spec)')
         openAction.triggered.connect(self.loadData)
-        
+
         loadAction = qt.QAction('&Load Configuration', self)
         loadAction.setShortcut(qt.Qt.CTRL+qt.Qt.Key_L)
         loadAction.setStatusTip('Loaded analysis file')
         loadAction.setToolTip('Loads an existing analysis file (*.sra)')
         loadAction.triggered.connect(self.loadConfiguration)
-        
+
         saveConfAction = qt.QAction('&Save Configuration', self)
         saveConfAction.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
         saveConfAction.setStatusTip('Saved analysis file')
         saveConfAction.setToolTip('Save analysis in file (*.sra)')
         saveConfAction.triggered.connect(self.saveConfiguration)
-        
+
         saveConfAsAction = qt.QAction('Save &Configuration as', self)
         saveConfAsAction.setShortcut(qt.Qt.SHIFT+qt.Qt.CTRL+qt.Qt.Key_S)
         saveConfAsAction.setStatusTip('Saved analysis file')
         saveConfAsAction.setToolTip('Save analysis in file (*.sra)')
         saveConfAsAction.triggered.connect(self.saveConfigurationAs)
-        
+
         saveDataAction = qt.QAction('Save &Data', self)
         saveDataAction.setShortcut(qt.Qt.CTRL+qt.Qt.Key_D)
         saveDataAction.setStatusTip('Saved analysis file')
         saveDataAction.setToolTip('Save analysis in file (*.sra)')
         saveDataAction.triggered.connect(self.saveData)
-        
+
         saveDataAsAction = qt.QAction('Save D&ata as', self)
         saveDataAsAction.setShortcut(qt.Qt.SHIFT+qt.Qt.CTRL+qt.Qt.Key_D)
         saveDataAsAction.setStatusTip('Saved analysis file')
@@ -908,13 +908,13 @@ class SumRulesWindow(qt.QMainWindow):
         saveDataAsAction.triggered.connect(self.saveDataAs)
 
         # Populate the 'File' menu
-        for action in [openAction, 
+        for action in [openAction,
                        loadAction,
                        'sep',
-                       saveConfAction, 
+                       saveConfAction,
                        saveConfAsAction,
                        'sep',
-                       saveDataAction, 
+                       saveDataAction,
                        saveDataAsAction,
                        'sep']:
             if isinstance(action, qt.QAction):
@@ -959,7 +959,7 @@ class SumRulesWindow(qt.QMainWindow):
             x, y  = self.xmcdData
             preMin = ddict[self.__tabBG][self.__preMin]
             preMax = ddict[self.__tabBG][self.__preMax]
-            
+
             mask = numpy.nonzero((preMin <= x) & (x <= preMax))[0]
             xFit = x.take(mask)
             yFit = y.take(mask)
@@ -1021,7 +1021,7 @@ class SumRulesWindow(qt.QMainWindow):
             dataDict = dial.dataDict
         else:
             return
-            
+
         # Reset calculated data
         self.xasDataCorr  = None
         self.xasDataBG    = None
@@ -1058,7 +1058,7 @@ class SumRulesWindow(qt.QMainWindow):
             msg.setText('Analysis incomplete!\nCannot save generated data')
             msg.exec_()
             return False
-        
+
         if self.__savedData and self.baseFilename:
             pass
         else:
@@ -1082,9 +1082,9 @@ class SumRulesWindow(qt.QMainWindow):
         # Create filenames
         specFilename = self.baseFilename
         baseName = osPathBasename(self.dataInputFilename)
-        
+
         self.__savedData = False
-        
+
         # Acquire filehandle
         try:
             specFilehandle = open(specFilename, 'wb')
@@ -1095,7 +1095,7 @@ class SumRulesWindow(qt.QMainWindow):
             msg.setText('Unable to open file \'%s\''%specFilename)
             msg.exec_()
             return False
-        
+
         delim   = ' '
 
         # 1. Background Modell, XAS, XAS-Background
@@ -1108,7 +1108,7 @@ class SumRulesWindow(qt.QMainWindow):
         else:
             xInt, yXmcd = self.xmcdData
         dataSpec = numpy.vstack((xSpec, yXas, yBG, yXasBG, yXmcd)).T
-        
+
         # 2. Integrals
         # Also share the same x-range
         xInt, yXasInt  = self.xasInt
@@ -1144,24 +1144,24 @@ class SumRulesWindow(qt.QMainWindow):
         for output in [outSpec, outInt]:
             specFilehandle.write(output.encode('ascii'))
         specFilehandle.close()
-        
+
         self.__savedData = True
-        return True        
+        return True
 
     def saveConfigurationAs(self, shortcut=False):
         self.confFilename = None
         self.__savedConf  = False
         self.saveConfiguration()
-        
+
     def saveConfiguration(self):
         ddict    = self.getValuesDict()
-        
+
         if self.__savedConf and self.confFilename:
             filename = self.confFilename
         else:
             saveDir  = PyMcaDirs.outputDir
             filters   = 'Sum Rules Analysis files (*.sra);;All files (*.*)'
-            
+
             filename = qt.QFileDialog.getSaveFileName(self,
                                    'Save Sum Rule Analysis Configuration',
                                    saveDir,
@@ -1187,7 +1187,7 @@ class SumRulesWindow(qt.QMainWindow):
             return False
         self.__savedConf = True
         return True
-    
+
     def loadConfiguration(self):
         confDict = ConfigDict.ConfigDict()
         loadDir  = PyMcaDirs.outputDir
@@ -1224,7 +1224,7 @@ class SumRulesWindow(qt.QMainWindow):
                 msg.setText('Malformed configuration file \'%s\''%filename)
             return
         self.__savedConf = True
-        
+
 
     def close(self):
         if not self.__savedConf:
@@ -1322,8 +1322,8 @@ class SumRulesWindow(qt.QMainWindow):
 
     def setValuesDict(self, ddict):
         markerList  = (self.xasMarkerList + self.xmcdMarkerList)
-        elementList = (self.transitionMetals 
-                       + self.rareEarths 
+        elementList = (self.transitionMetals
+                       + self.rareEarths
                        + self.electronConfs)
         # Check as early as possible if element symbol is present
         try:
@@ -1377,7 +1377,7 @@ class SumRulesWindow(qt.QMainWindow):
                 elif isinstance(obj, qt.QLineEdit):
                     if value:
                         tmp = str(value)
-                        obj.setText(tmp) 
+                        obj.setText(tmp)
                     else:
                         obj.setText('???')
                 elif isinstance(obj, dict):
@@ -1392,7 +1392,7 @@ class SumRulesWindow(qt.QMainWindow):
             cb.setCurrentIndex(idx)
         except KeyError:
             pass
-                
+
     def setRawData(self, x, y, identifier):
         if identifier not in ['xmcd', 'xas']:
             msg  = 'Identifier must either be \'xmcd\' or \'xas\''
@@ -1407,7 +1407,7 @@ class SumRulesWindow(qt.QMainWindow):
             mask = numpy.nonzero(dx)
             xSorted = numpy.take(xSorted, mask)
             ySorted = numpy.take(ySorted, mask)
-        # Add spectrum to plotWindow using the 
+        # Add spectrum to plotWindow using the
         if identifier == 'xmcd':
             self.xmcdData = (xSorted, ySorted)
             #self.plotWindow.graph.mapToY2(intLegend)
@@ -1443,7 +1443,7 @@ class SumRulesWindow(qt.QMainWindow):
         edgeList = [filterEdgeList(edge) for edge in edgeList]
         x, y = self.xasData
         xLimMin, xLimMax = self.plotWindow.getGraphXLimits()
-            
+
         xMin = x[0]
         xMax = x[-1]
         xLen = xMax - xMin
@@ -1483,7 +1483,7 @@ class SumRulesWindow(qt.QMainWindow):
             # Nothing to do...
             return
         ddict = self.getValuesDict()
-        
+
         x, y = self.xasData
         xMin = x[0]
         xMax = x[-1]
@@ -1494,7 +1494,7 @@ class SumRulesWindow(qt.QMainWindow):
         postMax = ddict[self.__tabBG][self.__postMax]
         edge1 = ddict[self.__tabBG]['Edge 1']
         edge2 = ddict[self.__tabBG]['Edge 2']
-        
+
         # Estimate intP
         if edge1 == 0.:
             intP = edge2 + factor * xLen
@@ -1502,18 +1502,18 @@ class SumRulesWindow(qt.QMainWindow):
             intP = edge1 + factor * xLen
         else:
             intP = min(edge1, edge2) + factor * xLen
-            
+
         # Estimate intQ
         intQ = postMin + factor * xLen
-        
+
         # Estimate intR
         intR = postMax - factor * xLen
-        
+
         # Also estimate the p, q, r Markers:
         ddict[self.__tabInt][self.__intP] = intP
         ddict[self.__tabInt][self.__intQ] = intQ
         ddict[self.__tabInt][self.__intR] = intR
-        
+
         self.setValuesDict(ddict)
 
     def estimateBG(self): # Removed default parameter val=None
@@ -1533,7 +1533,7 @@ class SumRulesWindow(qt.QMainWindow):
         postMax = ddict[self.__tabBG][self.__postMax]
         width = ddict[self.__tabBG]['Step Width']
         ratio = ddict[self.__tabBG]['Step Ratio']
-        
+
         if preMin > preMax:
             tmp = preMin
             preMin = preMax
@@ -1542,10 +1542,10 @@ class SumRulesWindow(qt.QMainWindow):
             tmp = preMin
             preMin = preMax
             preMax = tmp
-        
+
         idxPre  = numpy.nonzero((preMin <= x) & (x <= preMax))[0]
         idxPost = numpy.nonzero((postMin <= x) & (x <= postMax))[0]
-        
+
         if (len(idxPre) == 0) or (len(idxPost) == 0):
             if DEBUG:
                 print('estimateBG -- Somethings wrong with pre/post edge markers')
@@ -1556,7 +1556,7 @@ class SumRulesWindow(qt.QMainWindow):
         xPostMin = x[idxPost.min()]
         xPostMax = x[idxPost.max()]
         gap = abs(xPreMax - xPostMin)
-        
+
         avgPre  = numpy.average(y[idxPre])
         avgPost = numpy.average(y[idxPost])
         bottom  = min(avgPre,avgPost)
@@ -1568,7 +1568,7 @@ class SumRulesWindow(qt.QMainWindow):
             sign = -1.
             erf  = downstep
         diff = abs(avgPost - avgPre)
-        
+
         if x02 < x01:
             par1 = (ratio, x02, width)
             par2 = ((1.-ratio), x01, width)
@@ -1586,9 +1586,9 @@ class SumRulesWindow(qt.QMainWindow):
 
         preModel  = numpy.asarray(len(x)*[avgPre])
         postModel = numpy.asarray(len(x)*[avgPost])
-        
+
         self.xasDataBG = x, model
-        
+
         self.plotWindow.addCurve(x,
                                  model,
                                  self.__xasBGmodel,
@@ -1640,7 +1640,7 @@ class SumRulesWindow(qt.QMainWindow):
                       (xasX, xasY, 'xas', {})]
             # At least one of the curve is going
             # to get plotted on secondary y axis
-            mapToY2 = True 
+            mapToY2 = True
         elif window == self.__tabBG:
             xasX, xasY= self.xasData
             xyList = [(xasX, xasY, 'xas', {})]
@@ -1695,7 +1695,7 @@ class SumRulesWindow(qt.QMainWindow):
                     info['plot_yaxis'] = 'right'
             """
             self.plotWindow.addCurve(
-                    x=x, 
+                    x=x,
                     y=y,
                     legend=legend,
                     info=info,
@@ -1721,19 +1721,19 @@ class SumRulesWindow(qt.QMainWindow):
             # Need to force replot here for correct display
             self.plotWindow.replot()
             self.plotWindow.updateLegends()
-        
+
     def addMarker(self, window, label='X MARKER', xpos=None, unit=''):
         # Add spinbox controlling the marker
         spinbox = MarkerSpinBox(window, self.plotWindow, label)
 
         # Connects
         self.tabChangedSignal.connect(spinbox._setMarkerFollowMouse)
-        
+
         if len(unit) > 0:
             text = label + ' ' + unit
         else:
             text = label
-        
+
         # Widget & Layout
         spinboxWidget = qt.QWidget()
         spinboxLayout = qt.QHBoxLayout()
@@ -1741,7 +1741,7 @@ class SumRulesWindow(qt.QMainWindow):
         spinboxLayout.addWidget(qt.HorizontalSpacer())
         spinboxLayout.addWidget(spinbox)
         spinboxWidget.setLayout(spinboxLayout)
-         
+
         return spinboxWidget, spinbox
 
     def _handlePlotSignal(self, ddict):
@@ -1781,7 +1781,7 @@ class SumRulesWindow(qt.QMainWindow):
             for idx, keyElem in enumerate(keys):
                 keyBG = 'Edge %d'%(idx+1)
                 sb = self.valuesDict[self.__tabBG][keyBG]
-                parentWidget  = sb.parent()                
+                parentWidget  = sb.parent()
                 parentWidget.setEnabled(True)
             self.estimateBG()
         elif tab == self.__tabInt:
@@ -1804,7 +1804,7 @@ class SumRulesWindow(qt.QMainWindow):
                     sb = self.valuesDict[self.__tabBG][marker]
                 sb.showMarker()
         self.tabChangedSignal.emit(tab)
-    
+
     def keyPressEvent(self, event):
         if event.key() == qt.Qt.Key_F2:
             # Switch to tab Element
@@ -1823,22 +1823,22 @@ class SumRulesWindow(qt.QMainWindow):
             self.estimate()
         else:
             qt.QWidget.keyPressEvent(self, event)
-        
+
 class LoadDichorismDataDialog(qt.QFileDialog):
-    
+
     dataInputSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None):
         #qt.QDialog.__init__(self, parent)
         qt.QFileDialog.__init__(self, parent)
         self.dataDict = {}
         self.validated = False
-        
+
         self.setWindowTitle('Load Dichorism Data')
         self.setFilter('Spec Files (*.spec);;'
                       +'Text Files (*.txt; *.dat);;'
                       +'All Files (*.*)')
-        
+
         # Take the QSpecFileWidget class as used
         # in the main window to select data and
         # insert it into a QFileDialog. Emit the
@@ -1873,25 +1873,25 @@ class LoadDichorismDataDialog(qt.QFileDialog):
             item.setText(labels[idx])
             table.setHorizontalHeaderItem(idx,item)
 
-        
+
         # Hide the widget containing the Add, Replace, ...
         # PushButtons
         self.specFileWidget.buttonBox.hide()
-        
+
         # Change selection behavior/mode in the scan list so
         # that only a single scan can be selected at a time
         self.specFileWidget.list.setSelectionBehavior(qt.QAbstractItemView.SelectRows)
         self.specFileWidget.list.setSelectionMode(qt.QAbstractItemView.SingleSelection)
-        
+
         # Tinker with the native layout of QFileDialog
         mainLayout = self.layout()
         mainLayout.addWidget(self.specFileWidget, 0, 4, 4, 1)
-        
+
         #
         # Signals
         #
         self.currentChanged.connect(self.setDataSource)
-    
+
     def setDataSource(self, filename):
         # Opens a spec file and allows to browse its
         # contents in the top right widget
@@ -1905,7 +1905,7 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         except ValueError:
             return
         self.specFileWidget.setDataSource(src)
-    
+
     def accept(self):
         llist = self.selectedFiles()
         if len(llist) == 1:
@@ -1915,11 +1915,11 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         self.processSelectedFile(filename)
         if self.validated:
             super(LoadDichorismDataDialog, self).accept()
-        
+
     def processSelectedFile(self, filename):
         self.dataDict = {}
         filename = str(filename)
-            
+
         scanList = self.specFileWidget.list.selectedItems()
         if len(scanList) == 0:
             self.errorMessageBox('No scan selected!')
@@ -1927,7 +1927,7 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         else:
             scan   = scanList[0]
             scanNo = str(scan.text(1))
-            
+
         table = self.specFileWidget.cntTable
         # ddict['x'] -> 'X'
         # ddict['y'] -> 'XAS'
@@ -1942,19 +1942,19 @@ class LoadDichorismDataDialog(qt.QFileDialog):
             return
         else:
             colX = colX[0]
-            
+
         if len(colXas) != 1:
             self.errorMessageBox('Single counter must be set as XAS')
             return
         else:
             colXas = colXas[0]
-            
+
         if len(colXmcd) != 1:
             self.errorMessageBox('Single counter must be set as XMCD')
             return
         else:
             colXmcd = colXmcd[0]
-            
+
         if colXas == colX:
             self.errorMessageBox('X and XAS use the same counter')
             return
@@ -1964,7 +1964,7 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         elif colXmcd == colXas:
             self.errorMessageBox('XAS and XMCD use the same counter')
             return
-            
+
         # Extract data
         dataObj = self.specFileWidget.data.getDataObject(scanNo)
         # data has format (rows, cols) -> (steps, counters)
@@ -1972,10 +1972,10 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         self.dataDict['x']    = dataObj.data[:, colX]
         self.dataDict['xas']  = dataObj.data[:, colXas]
         self.dataDict['xmcd'] = dataObj.data[:, colXmcd]
-        
+
         self.validated = True
         self.dataInputSignal.emit(self.dataDict)
-        
+
     def errorMessageBox(self, msg):
         box = qt.QMessageBox()
         box.setWindowTitle('Sum Rules Load Data Error')
@@ -1984,7 +1984,7 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         box.exec_()
 
 if __name__ == '__main__':
-   
+
     app = qt.QApplication([])
     win = SumRulesWindow()
     #r'C:\Users\tonn\lab\datasets\sum_rules\sum_rules_4f_example_EuRhj2Si2'

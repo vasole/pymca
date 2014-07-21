@@ -39,7 +39,7 @@ __revision__="$Revision: 1.7 $"
 
 QTVERSION = qt.qVersion()
 
-    
+
 ################################################################################
 ##################             PyMcaPrintPreview               ###################
 ################################################################################
@@ -59,7 +59,7 @@ class PyMcaPrintPreview(qt.QDialog):
         if printer is None:
             printer = qt.QPrinter(qt.QPrinter.HighResolution)
             printer.setPageSize(qt.QPrinter.A4)
-            printerName = "%s"  % printer.printerName()            
+            printerName = "%s"  % printer.printerName()
             if printerName in ['id24b2u']:
                 #id24 printer very slow in color mode
                 printer.setColorMode(qt.QPrinter.GrayScale)
@@ -153,10 +153,10 @@ class PyMcaPrintPreview(qt.QDialog):
 
         for scale in self.scaleValues:
             scaleCombo.addItem("%3d %%"%scale)
-            
+
         self.scaleCombo = scaleCombo
         self.scaleCombo.activated[int].connect(self.__scaleChanged)
-        
+
         hideBut   = qt.QPushButton("Hide", toolBar)
         #hideBut.setFixedWidth(buttonSize-10)
         hideBut.clicked.connect(self.hide)
@@ -176,15 +176,15 @@ class PyMcaPrintPreview(qt.QDialog):
         printBut  = qt.QPushButton("Print", toolBar)
         #printBut.setFixedWidth(buttonSize-5)
         printBut.clicked.connect(self.__print)
-        
+
         zoomPlusBut  = qt.QPushButton("Zoom +", toolBar)
         #zoomPlusBut.setFixedWidth(buttonSize-5)
         zoomPlusBut.clicked.connect(self.__zoomPlus)
-        
+
         zoomMinusBut  = qt.QPushButton("Zoom -", toolBar)
         #zoomMinusBut.setFixedWidth(buttonSize-5)
         zoomMinusBut.clicked.connect(self.__zoomMinus)
-        
+
         # now we put widgets in the toolLayout
         toolsLayout.addWidget(hideBut)
         toolsLayout.addWidget(printBut)
@@ -193,7 +193,7 @@ class PyMcaPrintPreview(qt.QDialog):
         toolsLayout.addWidget(setupBut)
         #toolsLayout.addStretch()
         #toolsLayout.addWidget(marginLabel)
-        #toolsLayout.addWidget(self.marginSpin)    
+        #toolsLayout.addWidget(self.marginSpin)
         toolsLayout.addStretch()
         #toolsLayout.addWidget(scaleLabel)
         #toolsLayout.addWidget(scaleCombo)
@@ -208,7 +208,7 @@ class PyMcaPrintPreview(qt.QDialog):
         statusBar = qt.QStatusBar(self)
         self.targetLabel = qt.QLabel(statusBar)
         self.__updateTargetLabel()
-        statusBar.addWidget(self.targetLabel)            
+        statusBar.addWidget(self.targetLabel)
         self.mainLayout.addWidget(statusBar)
 
     def __updateTargetLabel(self):
@@ -258,17 +258,17 @@ class PyMcaPrintPreview(qt.QDialog):
             self.view.scale(1.20, 1.20)
         else:
             self.view.scale(0.80, 0.80)
-            
+
     def __zoomPlus(self):
         if DEBUG:
             print("current scale = ",   self._viewScale)
-        self._viewScale *= 1.20 
+        self._viewScale *= 1.20
         self.view.scale(1.20, 1.20)
-            
+
     def __zoomMinus(self):
         if DEBUG:
             print("current scale = ",   self._viewScale)
-        self._viewScale *= 0.80 
+        self._viewScale *= 0.80
         self.view.scale(0.80, 0.80)
 
     def addImage(self, image, title = None, comment = None, commentPosition=None):
@@ -301,7 +301,7 @@ class PyMcaPrintPreview(qt.QDialog):
         scale = 1.0 # float(0.5 * self.scene.width()/pixmap.width())
         rectItem.setRect(qt.QRectF(1, 1,
                         pixmap.width(), pixmap.height()))
-        
+
         pen = rectItem.pen()
         color = qt.QColor(qt.Qt.red)
         color.setAlpha(1)
@@ -311,7 +311,7 @@ class PyMcaPrintPreview(qt.QDialog):
         rectItem.setFlag(qt.QGraphicsItem.ItemIsSelectable, True)
         rectItem.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
         rectItem.setFlag(qt.QGraphicsItem.ItemIsFocusable, False)
-            
+
         #I add the resize tool
         rectItemResizeRect = GraphicsResizeRectItem(rectItem, self.scene)
         rectItemResizeRect.setZValue(2)
@@ -326,7 +326,7 @@ class PyMcaPrintPreview(qt.QDialog):
         textItem = qt.QGraphicsTextItem(title, rectItem, self.scene)
         textItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
         offset = 0.5 * textItem.boundingRect().width()
-        textItem.moveBy(0.5 * pixmap.width() - offset, -20) 
+        textItem.moveBy(0.5 * pixmap.width() - offset, -20)
         textItem.setZValue(2)
 
         #I add the comment
@@ -337,7 +337,7 @@ class PyMcaPrintPreview(qt.QDialog):
             x = 1
         else:
             x = 0.5 * pixmap.width() - offset
-        commentItem.moveBy(x, pixmap.height()+20) 
+        commentItem.moveBy(x, pixmap.height()+20)
         commentItem.setZValue(2)
 
         #I should adjust text size here
@@ -420,7 +420,7 @@ class PyMcaPrintPreview(qt.QDialog):
         commentItem.scale(scale, scale)
         textItem.moveBy(svgItem.boundingRect().x()+\
                         0.5 * svgItem.boundingRect().width() - offset * scale,
-                        svgItem.boundingRect().y()) 
+                        svgItem.boundingRect().y())
         textItem.scale(scale, scale)
 
     def setup(self):
@@ -474,8 +474,8 @@ class PyMcaPrintPreview(qt.QDialog):
             self.mainLayout.addWidget(self.view)
             self._buildStatusBar()
         self.view.fitInView(self.page.rect(), qt.Qt.KeepAspectRatio)
-        self._viewScale = 1.00 
-        #self.view.scale(1./self._viewScale, 1./self._viewScale) 
+        self._viewScale = 1.00
+        #self.view.scale(1./self._viewScale, 1./self._viewScale)
         #self.view.fitInView(self.page.rect(), qt.Qt.KeepAspectRatio)
         #self._viewScale = 1.00
         self.__updateTargetLabel()
@@ -500,7 +500,7 @@ class PyMcaPrintPreview(qt.QDialog):
             itemlist = self.scene.items()
         self._svgItems = []
         self._toBeCleared = False
-        
+
     def __remove(self):
         """
         """
@@ -517,7 +517,7 @@ class PyMcaPrintPreview(qt.QDialog):
             self.scene.removeItem(item)
             #this line is not really needed because the list
             #should be deleted at the end of the method
-            del itemlist[i]             
+            del itemlist[i]
 
 
 if hasattr(qt, 'QGraphicsSvgItem'):
@@ -567,7 +567,7 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
             pen.setColor(color)
             pen.setStyle(qt.Qt.NoPen)
             self.setPen(pen)
-            self.setBrush(color)            
+            self.setBrush(color)
         self.setFlag(self.ItemIsMovable, True)
         self.show()
 
@@ -580,7 +580,7 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
             self.setCursor(qt.QCursor(qt.Qt.SizeAllCursor))
         self.setBrush(qt.QBrush(qt.Qt.yellow, qt.Qt.SolidPattern))
         return qt.QGraphicsRectItem.hoverEnterEvent(self, event)
-        
+
     def hoverLeaveEvent(self, event):
         self.setCursor(qt.QCursor(qt.Qt.ArrowCursor))
         pen = qt.QPen()
@@ -589,7 +589,7 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
         pen.setColor(color)
         pen.setStyle(qt.Qt.NoPen)
         self.setPen(pen)
-        self.setBrush(color)            
+        self.setBrush(color)
         return qt.QGraphicsRectItem.hoverLeaveEvent(self, event)
 
     def mouseDoubleClickEvent(self, event):
@@ -710,8 +710,8 @@ def testPreview():
             item.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
             item.setCacheMode(qt.QGraphicsItem.NoCache)
         sys.exit(w.exec_())
-            
- 
+
+
     p = qt.QPrinter()
     p.setOutputFileName(os.path.splitext(filename)[0]+".ps")
     p.setColorMode(qt.QPrinter.Color)
@@ -721,7 +721,7 @@ def testPreview():
     w.resize(400,500)
     comment = ""
     for i in range(20):
-        comment += "Line number %d: En un lugar de La Mancha de cuyo nombre ...\n"    
+        comment += "Line number %d: En un lugar de La Mancha de cuyo nombre ...\n"
     w.addPixmap(qt.QPixmap.fromImage(qt.QImage(filename)),
                 title=filename,
                 comment=comment,
@@ -774,10 +774,10 @@ def testSimple():
     w.show()
     button.clicked[()].connect(printFile)
 
-    a.exec_()    
+    a.exec_()
 
 
-##  MAIN   
+##  MAIN
 if  __name__ == '__main__':
     testPreview()
     #testSimple()

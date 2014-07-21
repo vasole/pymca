@@ -39,7 +39,7 @@ setup (
                             name          = 'Object3DCTools',
                             sources       = sources,
                             define_macros = define_macros,
-                            libraries  = libraries, 
+                            libraries  = libraries,
                             include_dirs  = [numpy.get_include()]
                        ),
        ],

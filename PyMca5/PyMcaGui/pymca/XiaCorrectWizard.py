@@ -191,18 +191,18 @@ class XiaCorrectionWidget(qt.QWizardPage):
                     self.sumTable.setText(row, col, "All")
 
     def __sumCheckChanged(self, state):
-        if state: 
+        if state:
             if self.avgCheck.isChecked():
                 self.avgCheck.setChecked(0)
             if not self.sumTable.rowCount():
-                self.addSum() 
+                self.addSum()
 
     def __avgCheckChanged(self, state):
         if state:
             if self.sumCheck.isChecked():
                 self.sumCheck.setChecked(0)
             if not self.sumTable.rowCount():
-                self.addSum() 
+                self.addSum()
 
 
 class XiaInputWidget(qt.QWizardPage):
@@ -238,7 +238,7 @@ class XiaInputWidget(qt.QWizardPage):
 
     def __addFiles(self):
         filetypes = "Edf Files (*.edf)\n All Files (*)\n"
-        files= qt.QFileDialog.getOpenFileNames(self, 
+        files= qt.QFileDialog.getOpenFileNames(self,
                                     "Add XIA Edf Files",
                                     "",
                                     filetypes)
@@ -406,8 +406,8 @@ class XiaOutputWidget(qt.QWizardPage):
 
 
 class XiaRunWidget(qt.QWidget):
-    sigStarted  = qt.pyqtSignal(())	
-    sigFinished  = qt.pyqtSignal(())	
+    sigStarted  = qt.pyqtSignal(())
+    sigFinished  = qt.pyqtSignal(())
     def __init__(self, parent=None, name=None, fl=0):
         qt.QWidget.__init__(self, parent, name, fl)
 
@@ -447,8 +447,8 @@ class XiaRunWidget(qt.QWidget):
             qApp.processEvents()
             time.sleep(.5)
             print(idx)
-        self.sigFinished.emit(())	
-		
+        self.sigFinished.emit(())
+
 class XiaCorrectWizard(qt.QWizard):
     def __init__(self, parent=None, name=None, modal=0, fl=0):
         qt.QWizard.__init__(self, parent)
@@ -494,7 +494,7 @@ class XiaCorrectWizard(qt.QWizard):
         if name==self.title(self.run):
             self.run.set(self.parameters)
             self.setBackEnabled(self.run, 0)
-	   
+
     def accept(self):
         pars= self.output.check()
         if pars is not None:

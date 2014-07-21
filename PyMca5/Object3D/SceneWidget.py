@@ -31,11 +31,11 @@ from . import Object3DQt as qt
 from . import SceneTree
 
 QTVERSION = qt.qVersion()
-DEBUG = 0 
+DEBUG = 0
 
 class SceneWidget(qt.QWidget):
     sigSceneWidgetSignal = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent = None, scene = None):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle('Scene Widget')

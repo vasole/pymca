@@ -44,7 +44,7 @@ DEBUG=0
 class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
     def __init__(self, *var, **kw):
         QNexusWidget.QNexusWidget.__init__(self, *var, **kw)
-        
+
     def itemRightClickedSlot(self, ddict):
         filename = ddict['file']
         name = ddict['name']
@@ -79,7 +79,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
                 stack1D = False
             if interpretation.lower() in ['spectrum']:
                 stack2D = False
-                
+
             if stack1D:
                 _hdf5WidgetDatasetMenu.addAction(QString("Show as 1D Stack"),
                                     self._stack1DSignal)
@@ -193,7 +193,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
                 n = 1
                 for dim in shape[:-2]:
                     n = n * dim
-                stack.shape = n, shape[-2], shape[-1]                
+                stack.shape = n, shape[-2], shape[-1]
                 if len(axesList):
                     if xData.size != n:
                         xData = None
@@ -214,7 +214,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
         actualStack.data = stack
         if xData is not None:
             actualStack.x = [xData]
-        widget.setStack(actualStack, mcaindex=index)        
+        widget.setStack(actualStack, mcaindex=index)
         wid = id(widget)
         self._lastWidgetId = wid
         self._widgetDict[wid] = widget

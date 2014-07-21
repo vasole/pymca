@@ -56,8 +56,8 @@ colordict['violet'] = '#6600ff'
 colordict['grey']   = '#808080'
 colordict['yellow'] = '#ffff00'
 colordict['darkgreen'] = 'g'
-colordict['darkbrown'] = '#660000' 
-colordict['magenta']   = 'm' 
+colordict['darkbrown'] = '#660000'
+colordict['magenta']   = 'm'
 colordict['cyan']      = 'c'
 colordict['bluegreen'] = '#33ffff'
 colorlist  = [colordict['black'],
@@ -159,7 +159,7 @@ class PyMcaMatplotlibSave(FigureCanvas):
             self.colorIndex = 0
             self.styleIndex += 1
             if self.styleIndex >= self.nStyles:
-                self.styleIndex = 0        
+                self.styleIndex = 0
         return color, style
 
     def addDataToPlot(self, x, y, legend = None,
@@ -199,7 +199,7 @@ class PyMcaMatplotlibSave(FigureCanvas):
 
     def setTitle(self, title):
         self.ax.set_title(title)
-        
+
     def plotLegends(self):
         if not self._legend:return
         if not len(self._legendList):return
@@ -225,7 +225,7 @@ class PyMcaMatplotlibSave(FigureCanvas):
                 else:
                     loc = (1.05,  -0.1)
                     fontproperties = FontProperties(size=6)
-        
+
         if matplotlib_version < '0.99.0':
             legend = self.ax.legend(self._legendList,
                                 loc = loc,
@@ -272,7 +272,7 @@ class PyMcaMatplotlibSaveImage:
                      title='',
                      interpolation='nearest',
                      colormap=None,
-                     linlogcolormap='linear',                 
+                     linlogcolormap='linear',
                      origin='lower',
                      contour='off',
                      contourlabels='on',
@@ -301,7 +301,7 @@ class PyMcaMatplotlibSaveImage:
                     'nylabels':nylabels,
                     'colorbar':colorbar,
                     'colormap':colormap,
-                    'linlogcolormap':linlogcolormap,                     
+                    'linlogcolormap':linlogcolormap,
                     'interpolation':interpolation,
                     'origin':origin,
                     'contour':contour,
@@ -362,7 +362,7 @@ class PyMcaMatplotlibSaveImage:
                           (0.25, 1.0, 1.0),
                           (0.5, 0.0, 0.0),
                           (1.0, 0.0, 0.0))}
-        
+
         #Do I really need as many colors?
         self.__temperatureCmap = LinearSegmentedColormap('temperature',
                                                          cdict, 65536)
@@ -374,7 +374,7 @@ class PyMcaMatplotlibSaveImage:
                              (1.0, 0.0, 0.0)),
                  'blue':    ((0.0, 1.0, 1.0),
                              (1.0, 0.0, 0.0))}
-                         
+
         self.__reversedGrayCmap = LinearSegmentedColormap('yerg', cdict, 256)
 
         if fileName is not None:
@@ -488,7 +488,7 @@ class PyMcaMatplotlibSaveImage:
                 extent = (x0, w+x0,
                           y0, h+y0)
         else:
-            extent = self.config['extent'] 
+            extent = self.config['extent']
 
         vlimits = self.__getValueLimits()
         if vlimits is None:
@@ -502,11 +502,11 @@ class PyMcaMatplotlibSaveImage:
 
         if self.config['linlogcolormap'] != 'linear':
             if vmin <= 0:
-                if vmax > 0:                   
+                if vmax > 0:
                     vmin = min(imageData[imageData>0])
                 else:
                     vmin = 0.0
-                    vmax = 1.0                
+                    vmax = 1.0
             self._image  = self.axes.imshow(imageData.clip(vmin,vmax),
                                         interpolation=interpolation,
                                         origin=origin,
@@ -547,7 +547,7 @@ class PyMcaMatplotlibSaveImage:
                      cmap=ccmap,
                      linewidths=contourlinewidth,
                      extent=extent)
-            if self.config['contourlabels'] != 'off':                
+            if self.config['contourlabels'] != 'off':
                 self.axes.clabel(self._contour, fontsize=9,
                          inline=1, fmt=self.config['contourlabelformat'])
             if 0 and  self.config['colorbar'] is not None:
@@ -560,7 +560,7 @@ class PyMcaMatplotlibSaveImage:
                                                      extend='both')
 
         self.__postImage(ylim, filename)
-        
+
 
     def setPixmapImage(self, image=None, bgr=False):
         if bgr:
@@ -633,7 +633,7 @@ class PyMcaMatplotlibSaveImage:
             ylimits = self.config['ylimits']
         else:
             ylimits = None
-        
+
         if ylimits is None:
             self.axes.set_ylim(ylim[0],ylim[1])
         else:
@@ -643,7 +643,7 @@ class PyMcaMatplotlibSaveImage:
                 self.axes.set_ylim(ymin, ymax)
             else:
                 self.axes.set_ylim(ymax, ymin)
-                
+
         if xlimits is not None:
             xmin = min(xlimits)
             xmax = max(xlimits)
@@ -651,7 +651,7 @@ class PyMcaMatplotlibSaveImage:
 
         self.canvas.print_figure(filename)
 
-        
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
@@ -677,4 +677,4 @@ if __name__ == "__main__":
         w.saveFile("filename.png")
         print("Plot filename.png saved")
     sys.exit(0)
-    
+

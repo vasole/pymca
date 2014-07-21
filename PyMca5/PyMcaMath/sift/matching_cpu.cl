@@ -82,12 +82,12 @@ __kernel void matching(
 
 		//L1 distance between desc1[gid0] and desc2[i]
 		int dist = 0;
-		for (int j=0; j<128; j++) { //1 thread handles 4 values (uint4) = 
+		for (int j=0; j<128; j++) { //1 thread handles 4 values (uint4) =
 			unsigned char dval1 = desc1[j], dval2 = ((keypoints2[i]).desc)[j];
 			dist += ((dval1 > dval2) ? (dval1 - dval2) : (-dval1 + dval2));
 
 		}
-		
+
 		if (dist < dist1) { //candidate better than the first
 			dist2 = dist1;
 			dist1 = dist;
@@ -96,7 +96,7 @@ __kernel void matching(
 		else if (dist < dist2) { //candidate better than the second (but not the first)
 			dist2 = dist;
 		}
-		
+
 	}//end "i loop"
 
 	if (dist2 != 0 && dist1/dist2 < ratio_th) {
@@ -177,7 +177,7 @@ __kernel void matching_valid(
 				dist += ((dval1 > dval2) ? (dval1 - dval2) : (-dval1 + dval2));
 			}
 		}
-		
+
 		if (dist < dist1) { //candidate better than the first
 			dist2 = dist1;
 			dist1 = dist;
@@ -186,7 +186,7 @@ __kernel void matching_valid(
 		else if (dist < dist2) { //candidate better than the second (but not the first)
 			dist2 = dist;
 		}
-		
+
 	}//end "i loop"
 
 	if (dist2 != 0 && dist1/dist2 < ratio_th) {

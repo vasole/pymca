@@ -74,7 +74,7 @@ PyMcaIOHelper_fillSupaVisio(PyObject *self, PyObject *args)
 		PyErr_SetString(st->error, "Cannot parse input array");
         return NULL;
     }
-    
+
     dataPointer = (unsigned short *) PyArray_DATA(inputArray);
     dataPointer++;
     dimensions[1] = *dataPointer++;
@@ -84,7 +84,7 @@ PyMcaIOHelper_fillSupaVisio(PyObject *self, PyObject *args)
     PyArray_FILLWBYTE(outputArray, 0);
     /* Do the job */
     maxy=maxch=0;
-    outputPointer = (unsigned int *) PyArray_DATA(outputArray); 
+    outputPointer = (unsigned int *) PyArray_DATA(outputArray);
     for (i = 3; i < PyArray_DIMS(inputArray)[0]; i++)
     {
         y = *dataPointer++;
@@ -112,7 +112,7 @@ PyMcaIOHelper_readAifira(PyObject *self, PyObject *args)
     PyArrayObject *outputArray;
     int nChannels = 2048;
     unsigned short channel;
-    unsigned char x, y; 
+    unsigned char x, y;
     npy_intp dimensions[3];
     unsigned int *outputPointer;
 	struct module_state *st = GETSTATE(self);

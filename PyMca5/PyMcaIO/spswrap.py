@@ -87,7 +87,7 @@ def getarrayinfo(spec,shm):
     spslock.acquire()
     try:
        result = sps.getarrayinfo (spec,shm)
-    except: 
+    except:
        pass
     spslock.release()
     return result
@@ -100,7 +100,7 @@ def getarraylist( spec ):
            result = sps.getarraylist( spec )
            spsdefaultarraylist[spec]=result
         except:
-           pass 
+           pass
         spslock.release()
     else:
         if spec in spsdefaultarraylist:
@@ -133,8 +133,8 @@ def putenv(spec,shmenv,cmd,outp):
     try:
        result = sps.putenv(spec,shmenv,cmd,outp)
     except:
-       pass  
-   
+       pass
+
     spslock.release()
 
     return result
@@ -158,12 +158,12 @@ def getenv(spec,shmenv,key):
 
 def updatedone(spec,shmenv):
     result = 0
-    
+
     spslock.acquire()
 
     try:
        result = sps.updatedone(spec,shmenv)
-    except: 
+    except:
        pass
 
     spslock.release()

@@ -42,7 +42,7 @@ import numpy
 
 def search_peak(xdata, ydata):
      """
-     Search a peak and its position in arrays xdata ad ydata. 
+     Search a peak and its position in arrays xdata ad ydata.
      Return three integer:
        - peak position
        - peak value
@@ -79,7 +79,7 @@ def search_fwhm(xdata,ydata,peak=None,index=None):
     else:
         mypeak     = peak
         index_peak = index
-    
+
     hm = mypeak/2
     idx = index_peak
 
@@ -90,10 +90,10 @@ def search_fwhm(xdata,ydata,peak=None,index=None):
         x1 = xdata[idx+1]
         y0 = ydata[idx]
         y1 = ydata[idx+1]
-    
+
         lhmx = (hm*(x1-x0) - (y0*x1)+(y1*x0)) / (y1-y0)
     except ZeroDivisionError:
-        lhmx = 0 
+        lhmx = 0
     except IndexError:
         lhmx = xdata[0]
 
@@ -101,12 +101,12 @@ def search_fwhm(xdata,ydata,peak=None,index=None):
     try:
         while ydata[idx] >= hm:
             idx = idx+1
-    
+
         x0 = xdata[idx]
         x1 = xdata[idx+1]
         y0 = ydata[idx]
         y1 = ydata[idx+1]
-    
+
         uhmx = (hm*(x1-x0) - (y0*x1)+(y1*x0)) / (y1-y0)
     except ZeroDivisionError:
         uhmx = 0

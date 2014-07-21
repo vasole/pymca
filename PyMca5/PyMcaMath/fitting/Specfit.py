@@ -116,35 +116,35 @@ class Specfit(object):
         self.bkg_internal_oldpars=[0,0]
         self.bkg_internal_oldbkg=numpy.array([])
         self.fitconfig['fittheory']=None
-        self.xdata0=numpy.array([],numpy.float)       
+        self.xdata0=numpy.array([],numpy.float)
         self.ydata0=numpy.array([],numpy.float)
-        self.sigmay0=numpy.array([],numpy.float)       
-        self.xdata=numpy.array([],numpy.float)       
+        self.sigmay0=numpy.array([],numpy.float)
+        self.xdata=numpy.array([],numpy.float)
         self.ydata=numpy.array([],numpy.float)
-        self.sigmay=numpy.array([],numpy.float)       
+        self.sigmay=numpy.array([],numpy.float)
         #if (y is not None):
         #    self.setdata(x,y,sigmay)
         self.setdata(*vars,**kw)
-            
+
     def setdata(self,*vars,**kw):
         if 'x' in kw:
             x=kw['x']
         elif len(vars) >1:
-            x=vars[0]                    
+            x=vars[0]
         else:
             x=None
         if 'y' in kw:
             y=kw['y']
         elif len(vars) > 1:
-            y=vars[1]   
+            y=vars[1]
         elif len(vars) == 1:
-            y=vars[0]              
+            y=vars[0]
         else:
             y=None
         if 'sigmay' in kw:
             sigmay=kw['sigmay']
         elif len(vars) >2:
-            sigmay=vars[2]                    
+            sigmay=vars[2]
         else:
             sigmay=None
         if y is None:
@@ -152,14 +152,14 @@ class Specfit(object):
         else:
             self.ydata0=numpy.array(y)
             self.ydata=numpy.array(y)
-            
+
         if x is None:
             self.xdata0=numpy.arange(len(self.ydata0))
-            self.xdata=numpy.arange(len(self.ydata0))            
+            self.xdata=numpy.arange(len(self.ydata0))
         else:
             self.xdata0=numpy.array(x)
             self.xdata=numpy.array(x)
-        
+
         if sigmay is None:
             dummy = numpy.sqrt(abs(self.ydata0))
             self.sigmay0=numpy.reshape(dummy + numpy.equal(dummy,0),self.ydata0.shape)
@@ -191,9 +191,9 @@ class Specfit(object):
             self.xdata=numpy.take(self.xdata,i1)
             self.ydata=numpy.take(self.ydata,i1)
             self.sigmay=numpy.take(self.sigmay,i1)
-        
+
         return 0
-    
+
     def filter(self,*vars,**kw):
         if len(vars) >0:
             xwork=vars[0]
@@ -231,7 +231,7 @@ class Specfit(object):
             kw['filtername']="Unknown"
         self.filterlist.append([filterfun,vars,kw])
         return addfilterstatus
-        
+
     def deletefilter(self,*vars,**kw):
         """
         deletefilter(self,*vars,**kw)
@@ -249,12 +249,12 @@ class Specfit(object):
                (type(item) == type(())):
                 for item0 in item:
                         try:
-                            newindex=int(item0)                         
+                            newindex=int(item0)
                         except:
                             deleteerror=1
             else:
                 try:
-                    newindex=int(item0)                         
+                    newindex=int(item0)
                 except:
                     deleteerror=1
             if newindex not in index:
@@ -311,7 +311,7 @@ class Specfit(object):
             estimate:   The estimate function if any
         Output:
             Returns 0 if everything went fine or a positive number in-
-            dicating the offending parameter 
+            dicating the offending parameter
         """
         status=0
         if len(vars) > 0:
@@ -354,7 +354,7 @@ class Specfit(object):
             derivative=varslist[5]
         else:
             derivative=None
-        
+
         self.theorydict[theory]=[function,parameters,estimate,configure,derivative]
         if theory not in self.theorylist:
             self.theorylist.append(theory)
@@ -376,7 +376,7 @@ class Specfit(object):
             estimate:   The estimate function if any
         Output:
             Returns 0 if everything went fine or a positive number in-
-            dicating the offending parameter 
+            dicating the offending parameter
         """
         print("addbackground called")
         status=0
@@ -408,7 +408,7 @@ class Specfit(object):
             estimate=varslist[3]
         else:
             estimate=None
-        
+
         self.bkgdict[background]=[function,parameters,estimate]
         if theory not in self.bkglist:
             self.bkglist.append(theory)
@@ -430,7 +430,7 @@ class Specfit(object):
             self.modelderiv = None
             if len(self.theorydict[self.fitconfig['fittheory']]) > 5:
                 if self.theorydict[self.fitconfig['fittheory']][5] is not None:
-                    self.modelderiv = self.myderiv                    
+                    self.modelderiv = self.myderiv
             #I should generate a signal here ...
             return 0
         else:
@@ -446,7 +446,7 @@ class Specfit(object):
         Output:
             returns 0 if everything went fine
         """
-        
+
         if theory in self.bkglist:
             self.fitconfig['fitbkg']=theory
             self.bkgfun=self.bkgdict[self.fitconfig['fitbkg']][0]
@@ -454,10 +454,10 @@ class Specfit(object):
             return 0
         else:
             return 1
-        
+
     def fitfunction(self,pars,t):
         nb=len(self.bkgdict[self.fitconfig['fitbkg']][1])
-        #print "nb = ",nb 
+        #print "nb = ",nb
         #treat differently user and built in functions
         #if self.selected_th in self.conf.theory_list:
         if (0):
@@ -478,13 +478,13 @@ class Specfit(object):
                 result = self.bkgfun(pars[0:nb],t) + u_term
             else:
                 result = u_term
-        
+
         if self.fitconfig['fitbkg'] == "Square Filter":
             result=result-pars[1]
             return pars[1]+self.squarefilter(result,pars[0])
         else:
             return result
-            
+
     def estimate(self,mcafit=0):
         """
         Fill the parameters entries with an estimation made on the given data.
@@ -503,7 +503,7 @@ class Specfit(object):
             'DELTA',
             'SUM',
             'IGNORE']
-       
+
         #make sure data are current
         if self.dataupdate is not None:
             if not mcafit:
@@ -531,12 +531,12 @@ class Specfit(object):
                 else:
                     self.fitconfig['Yscaling']=yscaling
         else:
-            self.fitconfig['AutoScaling']=0 
+            self.fitconfig['AutoScaling']=0
             if 'Yscaling' in self.fitconfig:
                 yscaling=self.fitconfig['Yscaling']
             else:
                 self.fitconfig['Yscaling']=yscaling
-                
+
         #estimate the function
         estimation = self.estimate_fun(xx,yy,zz,xscaling=1.0,yscaling=yscaling)
         fun_esti_parameters = estimation[0]
@@ -545,15 +545,15 @@ class Specfit(object):
         #build the names
         self.final_theory=[]
         for i in self.bkgdict[self.fitconfig['fitbkg']][1]:
-            self.final_theory.append(i)      
+            self.final_theory.append(i)
         i=0
         j=1
-        while (i < len(fun_esti_parameters)):             
-             for k in self.theorydict[self.fitconfig['fittheory']][1]: 
+        while (i < len(fun_esti_parameters)):
+             for k in self.theorydict[self.fitconfig['fittheory']][1]:
                 self.final_theory.append(k+"%d" % j)
                 i=i+1
-             j=j+1      
-             
+             j=j+1
+
         self.paramlist=[]
         param          = self.final_theory
         j=0
@@ -599,7 +599,7 @@ class Specfit(object):
         self.eh.event(FitStatusChanged,data={'chisq':self.chisq,
                                              'status':self.state})
         return self.paramlist
-        
+
     def estimate_bkg(self,xx,yy):
         if self.bkgdict[self.fitconfig['fitbkg']][2] is not None:
             return  self.bkgdict[self.fitconfig['fitbkg']][2](xx,yy)
@@ -607,7 +607,7 @@ class Specfit(object):
             return [],[[],[],[]]
 
     def estimate_fun(self,xx,yy,zz,xscaling=1.0,yscaling=None):
-        if self.theorydict[self.fitconfig['fittheory']][2] is not None:  
+        if self.theorydict[self.fitconfig['fittheory']][2] is not None:
             return  self.theorydict[self.fitconfig['fittheory']][2](xx,
                                                                     yy,
                                                                     zz,
@@ -615,7 +615,7 @@ class Specfit(object):
                                                                     yscaling=yscaling)
         else:
             return [],[[],[],[]]
-        
+
     def importfun(self,file):
         sys.path.append(os.path.dirname(file))
         try:
@@ -647,17 +647,17 @@ class Specfit(object):
         except:
             #tkMessageBox.showerror('Error',"Missing FUNCTION")
             return 1
-        
+
         try:
             estimate=newfun.ESTIMATE
         except:
             estimate=None
-                        
+
         try:
             derivative=newfun.DERIVATIVE
         except:
             derivative=None
-                        
+
         try:
             configure=newfun.CONFIGURE
         except:
@@ -678,7 +678,7 @@ class Specfit(object):
                                  parameters[i],
                                  estimate[i],
                                  configure[i],
-                                 None)                    
+                                 None)
                 if error:
                     #tkMessageBox.showerror('Error',"Problem implementing user theory")
                     badluck=1
@@ -724,7 +724,7 @@ class Specfit(object):
         ywork=self.ydata*1.0
         if self.fitconfig['fitbkg'] == "Square Filter":
             ywork=self.squarefilter(self.ydata,self.paramlist[0]['estimation'])
-            
+
         for xval in self.xdata:
             if self.sigmay is None:
                 data.append([xval,ywork[i]])
@@ -739,15 +739,15 @@ class Specfit(object):
                         weightflag=self.fitconfig['WeightFlag'],
                         model_deriv=self.modelderiv)
            else:
-                found = LeastSquaresFit(self.fitfunction,param_val,data,                
+                found = LeastSquaresFit(self.fitfunction,param_val,data,
                     constrains=param_constrains,
                     weightflag=self.fitconfig['WeightFlag'],
                     model_deriv=self.modelderiv)
         except:
         #except 'LinearAlgebraError' :
             text = "%s" % sys.exc_info()[1]
-            #if type(text) is not string._StringType: 
-            if type(text) is not type(" "): 
+            #if type(text) is not string._StringType:
+            if type(text) is not type(" "):
               text = text.args
               if len(text):
                  text = text[0]
@@ -778,7 +778,7 @@ class Specfit(object):
             if len(self.theorydict[self.fitconfig['fittheory']])  >5:
                 if self.theorydict[self.fitconfig['fittheory']][5] is not None:
                     return self.theorydict[self.fitconfig['fittheory']][5] (param0,index-nb,t0)
-                else:  
+                else:
                     return self.num_deriv(param0,index,t0)
             else:
                 return self.num_deriv(param0,index,t0)
@@ -795,12 +795,12 @@ class Specfit(object):
         newpar[index] = param0[index] - delta
         f2 = self.fitfunction(newpar, x)
         return (f1-f2) / (2.0 * delta)
-       
+
     def gendata(self,*vars,**kw):
         if 'x'in kw:
             x=kw['x']
         elif len(vars) >0:
-            x=vars[0]                    
+            x=vars[0]
         else:
             x=self.xdata
         if 'parameters' in kw:
@@ -808,7 +808,7 @@ class Specfit(object):
         elif 'paramlist' in kw:
             paramlist=kw['paramlist']
         elif len(vars) >1:
-            paramlist=vars[1]                    
+            paramlist=vars[1]
         else:
             paramlist=self.paramlist
         noigno = []
@@ -821,7 +821,7 @@ class Specfit(object):
         #newdata = newdata * self.mondata0
         newdata = self.fitfunction(noigno,numpy.array(x))
         return newdata
-        
+
     def bkg_constant(self,pars,x):
         """
         Constant background
@@ -832,14 +832,14 @@ class Specfit(object):
         """
         Linear background
         """
-        return pars[0] + pars [1] * x  
+        return pars[0] + pars [1] * x
 
     def bkg_internal(self,pars,x):
         """
         Internal Background
         """
         #fast
-        #return self.zz  
+        #return self.zz
         #slow: recalculate the background as function of the parameters
         #yy=SpecfitFuns.subac(self.ydata*self.fitconfig['Yscaling'],
         #                     pars[0],pars[1])
@@ -850,7 +850,7 @@ class Specfit(object):
                     #same parameters
                     if numpy.sum(self.bkg_internal_oldx == x) == len(x):
                         if numpy.sum(self.bkg_internal_oldy == self.ydata) == len(self.ydata):
-                            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)                            
+                            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)
         self.bkg_internal_oldy=self.ydata
         self.bkg_internal_oldx=x
         self.bkg_internal_oldpars=pars
@@ -862,13 +862,13 @@ class Specfit(object):
         nrx=numpy.shape(x)[0]
         nry=numpy.shape(yy)[0]
         if nrx == nry:
-            self.bkg_internal_oldbkg=SpecfitFuns.subac(yy,pars[0],pars[1]) 
-            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)                            
+            self.bkg_internal_oldbkg=SpecfitFuns.subac(yy,pars[0],pars[1])
+            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)
 
         else:
             self.bkg_internal_oldbkg=SpecfitFuns.subac(numpy.take(yy,numpy.arange(0,nry,2)),
                                     pars[0],pars[1])
-            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)                            
+            return self.bkg_internal_oldbkg + pars[2] * numpy.ones(numpy.shape(x),numpy.float)
 
     def bkg_squarefilter(self,pars,x):
         """
@@ -876,18 +876,18 @@ class Specfit(object):
         """
         #yy=self.squarefilter(self.ydata,pars[0])
         return pars[1]  * numpy.ones(numpy.shape(x),numpy.float)
-            
+
     def bkg_none(self,pars,x):
         """
         Internal Background
-        """       
+        """
         return numpy.zeros(x.shape,numpy.float)
 
     def estimate_builtin_bkg(self,xx,yy):
        self.zz=SpecfitFuns.subac(yy,1.0001,1000)
        zz = self.zz
        npoints = len(zz)
-       if self.fitconfig['fitbkg'] == 'Constant':       
+       if self.fitconfig['fitbkg'] == 'Constant':
             #Constant background
             S = float(npoints)
             Sy = min(zz)
@@ -907,7 +907,7 @@ class Specfit(object):
        elif self.fitconfig['fitbkg'] == 'Square Filter':
             fwhm=5
             if 'AutoFwhm' in self.fitconfig:
-                fwhm=self.guess_fwhm(y=y)            
+                fwhm=self.guess_fwhm(y=y)
             elif 'fwhm' in self.fitconfig:
                 fwhm=self.fitconfig['fwhm']
             elif 'Fwhm' in self.fitconfig:
@@ -928,16 +928,16 @@ class Specfit(object):
             S = float(npoints)
             Sy = numpy.sum(zz)
             Sx = float(numpy.sum(xx))
-            Sxx = float(numpy.sum(xx * xx))            
+            Sxx = float(numpy.sum(xx * xx))
             Sxy = float(numpy.sum(xx * zz))
-                                
+
             deno = S * Sxx - (Sx * Sx)
             if (deno != 0):
                 bg = (Sxx * Sy - Sx * Sxy)/deno
                 slop = (S * Sxy - Sx * Sy)/deno
             else:
                 bg = 0.0
-                slop = 0.0        
+                slop = 0.0
             fittedpar=[bg/1.0,slop/1.0]
             cons = numpy.zeros((3,len(fittedpar)),numpy.float)
        return fittedpar,cons,zz
@@ -971,14 +971,14 @@ class Specfit(object):
         if error:
             print("ERROR on background and/or theory configuration")
         result.update(self.fitconfig)
-        return result 
+        return result
 
     def mcafit(self,*var,**kw):
         if (len(var) > 0) or (len(kw.keys()) > 0):
             if 'x' in kw:
                 x=kw['x']
             elif len(var) >1:
-                x=var[0]                    
+                x=var[0]
             else:
                 x=None
             if 'y' in kw:
@@ -992,7 +992,7 @@ class Specfit(object):
             if 'sigmay' in kw:
                 sigmay=kw['sigmay']
             elif len(var) >2:
-                sigmay=var[2]                    
+                sigmay=var[2]
             else:
                 sigmay=None
             if x is None:
@@ -1005,7 +1005,7 @@ class Specfit(object):
             #make sure data are current
             if self.dataupdate is not None:
                 self.dataupdate()
- 
+
         if 'debug' in kw:
             mcadebug = 1
         else:
@@ -1017,17 +1017,17 @@ class Specfit(object):
             if kw['yscaling'] is not None:
                 yscaling=kw['yscaling']
         elif self.fitconfig['AutoScaling']:
-                yscaling=self.guess_yscaling()   
+                yscaling=self.guess_yscaling()
         else:
             yscaling=self.fitconfig['Yscaling']
-        
+
         if 'sensitivity' in kw:
             sensitivity=kw['sensitivity']
         elif 'Sensitivity' in kw:
             sensitivity=kw['Sensitivity']
         else:
-            sensitivity=self.fitconfig['Sensitivity']            
-        
+            sensitivity=self.fitconfig['Sensitivity']
+
         if 'fwhm' in kw:
             fwhm=kw['fwhm']
         elif 'FwhmPoints' in kw:
@@ -1036,7 +1036,7 @@ class Specfit(object):
             fwhm=self.guess_fwhm(y=y)
         else:
             fwhm=self.fitconfig['FwhmPoints']
-            
+
         fwhm=int(fwhm)
         #print self.fitconfig['FwhmPoints']
         #print "yscaling    = ",yscaling
@@ -1044,7 +1044,7 @@ class Specfit(object):
         #print "sensitivity = ",sensitivity
         #removed this line self.fitconfig['fwhm']=fwhm
         #print "mca yscaling = ",yscaling,"fwhm = ",fwhm
-        
+
         #needed to make sure same peaks are found
         self.configure(Yscaling=yscaling,
                         #lowercase on purpose
@@ -1069,14 +1069,14 @@ class Specfit(object):
         if mcadebug:
             print(" regions = ",regions)
         #if the function needs a scaling just give it
-        #removed estimate should deal with it 
+        #removed estimate should deal with it
         #self.configure(Yscaling=yscaling,yscaling=yscaling)
         #removed, configure should deal with it
         #self.configure(fwhm=fwhm,FwhmPoints=fwhm)
         mcaresult=[]
         #import SimplePlot
         xmin0 = self.xdata[0]
-        xmax0 = self.xdata[-1]        
+        xmax0 = self.xdata[-1]
         for region in regions:
             if(0):
                 idx=numpy.argsort(self.xdata0)
@@ -1110,10 +1110,10 @@ class Specfit(object):
                   newpar,newcons=self.mcaresidualssearch()
                   if newpar != []:
                     newg=1
-                    for param in self.paramlist: 
+                    for param in self.paramlist:
                         newg=max(newg,int(float(param['group'])+1))
                         param['estimation']=param['fitresult']
-                    i=-1                    
+                    i=-1
                     for pname in self.theorydict[self.fitconfig['fittheory']][1]:
                         i=i+1
                         name=pname + "%d" % newg
@@ -1141,7 +1141,7 @@ class Specfit(object):
         #    for (pos,area,sigma_area,mca_fwhm) in result['mca_areas']:
         #        print "Pos = ",pos,"Area = ",area,"sigma_area =",sigma_area
         return mcaresult
-        
+
     def mcaregions(self,peaks,fwhm):
         mindelta=3.0*fwhm
         plusdelta=3.0*fwhm
@@ -1161,7 +1161,7 @@ class Specfit(object):
                 else:
                     regions.append([x0,x1])
         return regions
-        
+
     def mcagetresult(self):
         result={}
         result['xbegin']    = min(self.xdata[0], self.xdata[-1])
@@ -1169,7 +1169,7 @@ class Specfit(object):
         try:
             result['fitstate']  = self.state
         except:
-            result['fitstate']  = 'Unknown' 
+            result['fitstate']  = 'Unknown'
         result['fitconfig'] = self.fitconfig
         result['config']    = self.configure()
         result['paramlist'] = self.paramlist
@@ -1242,7 +1242,7 @@ class Specfit(object):
                 deltax = x_around[1:] - x_around[0:-1]
                 area=numpy.sum(neto[0:-1]*deltax)
             sigma_area=(numpy.sqrt(numpy.sum(y_around)))
-            result.append([pos,area,sigma_area,fwhm])           
+            result.append([pos,area,sigma_area,fwhm])
             #import SimplePlot
             #SimplePlot.plot([numpy.take(x,idx),y_around,ybkg_around])
             #SimplePlot.plot([x,y,self.fitfunction(noigno,x)],yname='Peak Area')
@@ -1256,8 +1256,8 @@ class Specfit(object):
             y=vars[0]
         else:
             y=self.ydata
-            
-        zz=SpecfitFuns.subac(y,1.0,10)        
+
+        zz=SpecfitFuns.subac(y,1.0,10)
         if 0:
             idx=numpy.nonzero(zz>(min(y/100.)))[0]
             yy=numpy.take(y,idx)
@@ -1289,12 +1289,12 @@ class Specfit(object):
             y=kw['y']
         else:
             y=self.ydata
-        #set at least a default value for the fwhm    
+        #set at least a default value for the fwhm
         fwhm=4
 
         zz=SpecfitFuns.subac(y,1.000,1000)
         yfit=y-zz
-        
+
         #now I should do some sort of peak search ...
         maximum=max(yfit)
         idx=numpy.nonzero(yfit == maximum)[0]
@@ -1308,8 +1308,8 @@ class Specfit(object):
         while ((yfit[imax] > 0.5*height) & (imax <(len(yfit)-1))):
             imax=imax + 1
         fwhm=max(imax-imin-1,fwhm)
-            
-        return fwhm            
+
+        return fwhm
 
     def mcaresidualssearch(self,**kw):
         if 'y' in kw:
@@ -1337,7 +1337,7 @@ class Specfit(object):
             y=self.squarefilter(y,paramlist[0]['estimation'])
             return newpar,newcodes
         areanotdone=1
-        
+
         #estimate the fwhm
         fwhm=10
         fwhmcode='POSITIVE'
@@ -1370,7 +1370,7 @@ class Specfit(object):
 
         #calculate the residuals
         yfit = self.gendata(x=x,paramlist=paramlist)
-            
+
         residuals=(y-yfit)/(sigmay+numpy.equal(sigmay,0.0))
 
         #set to zero all the residuals around peaks
@@ -1380,17 +1380,17 @@ class Specfit(object):
             y=y*idx
             residuals=residuals*idx
 
-        
+
         #estimate the position
         maxres=max(residuals)
         idx=numpy.nonzero(residuals == maxres)[0]
         pos=numpy.take(x,idx)[-1]
-        
+
         #estimate the height!
         height=numpy.take(y-yfit,idx)[-1]
         if (height <= 0):
             return newpar,newcodes
-        
+
         for pname in self.theorydict[self.fitconfig['fittheory']][1]:
             estimation=0.0
             if pname.find('Position') != -1:
@@ -1399,7 +1399,7 @@ class Specfit(object):
                     cons1=pos-0.5*fwhm
                     cons2=pos+0.5*fwhm
             elif pname.find('Area')!= -1:
-                if areanotdone:                    
+                if areanotdone:
                     areanotdone=0
                     area=(height * fwhm / (2.0*numpy.sqrt(2*numpy.log(2))))* \
                                 numpy.sqrt(2*numpy.pi)
@@ -1453,11 +1453,11 @@ class Specfit(object):
             paramlist=self.paramlist
         areanotdone=1
         newg=1
-        for param in self.paramlist: 
+        for param in self.paramlist:
             newg=max(newg,int(float(param['group'])+1))
         if newg == 1:
             return areanotdone
-        
+
         #estimate the fwhm
         fwhm=10
         fwhmcode='POSITIVE'
@@ -1497,7 +1497,7 @@ class Specfit(object):
             y=y*idx
             residuals=residuals*idx
 
-        
+
         #estimate the position
         maxres=max(residuals)
         idx=numpy.nonzero(residuals == maxres)[0]
@@ -1505,7 +1505,7 @@ class Specfit(object):
 
         #estimate the height!
         height=numpy.take(y-yfit,idx)[-1]
-        
+
         for pname in self.theorydict[self.fitconfig['fittheory']][1]:
             estimation=0.0
             name=pname+ "%d" % newg
@@ -1516,7 +1516,7 @@ class Specfit(object):
                     cons1=pos-0.5*fwhm
                     cons2=pos+0.5*fwhm
             elif pname.find('Area')!= -1:
-                if areanotdone:                    
+                if areanotdone:
                     areanotdone=0
                     estimation=(height * fwhm / (2.0*numpy.sqrt(2*numpy.log(2))))* \
                                 numpy.sqrt(2*numpy.pi)
@@ -1595,7 +1595,7 @@ class Specfit(object):
         else:
             result[0]=result[1]*1.0
         if len(derivlast):
-            result[-1]=derivlast       
+            result[-1]=derivlast
         else:
             result[-1]=result[-2]*1.0
 
@@ -1682,8 +1682,8 @@ class Specfit(object):
                 #import SimplePlot
                 #SimplePlot.plot([self.xdata,y,result],yname='filter')
        	        return result
-   		
-       
+
+
 def test():
     from PyMca5 import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()

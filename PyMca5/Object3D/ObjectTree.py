@@ -271,7 +271,7 @@ if __name__ == "__main__":
     else:
         #append DummyObject01 to DummyObject0'
         tree = w.find("DummyObject0")
-        tree.addChild(o01)        
+        tree.addChild(o01)
     print(w)
     print("LIST")
     print(w.getList())

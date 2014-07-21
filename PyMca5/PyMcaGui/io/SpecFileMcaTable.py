@@ -36,7 +36,7 @@ DEBUG = 0
 
 class SpecFileMcaTable(qt.QWidget):
     sigMcaDeviceSelected = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         self.l = qt.QVBoxLayout(self)
@@ -58,7 +58,7 @@ class SpecFileMcaTable(qt.QWidget):
         #self.table.cellActivated[int, int].connect(self._cellActivated)
         self.table.cellClicked[int, int].connect(self._cellClicked)
         self.table.cellDoubleClicked[int, int].connect(self._cellDoubleClicked)
-        
+
         self.table._hHeader = self.table.horizontalHeader()
         self.table._hHeader.sectionClicked[int].connect(self._horizontalHeaderClicked)
         self.table._hHeader.menu = qt.QMenu()

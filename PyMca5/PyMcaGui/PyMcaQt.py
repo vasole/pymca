@@ -60,7 +60,7 @@ else:
         sip.setapi("QVariant", 2)
     except:
         print("API 1 -> Console widget not available")
-    
+
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
     try:
@@ -100,7 +100,7 @@ if sys.version < '3.0':
             # default, just str
             x = str(potentialQString)
         except UnicodeEncodeError:
-            
+
             # try user OS file system encoding
             # expected to be 'mbcs' under windows
             # and 'utf-8' under MacOS X

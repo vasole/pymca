@@ -52,14 +52,14 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                                    info,
                                    icon]
         self.__methodKeys.append(method)
-        
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
         A list with the NAMES  associated to the callable methods
         that are applicable to the specified plot.
 
-        Plot type can be "SCAN", "MCA", None, ...        
+        Plot type can be "SCAN", "MCA", None, ...
         """
         if self.__randomization:
             return self.__methodKeys[0:1] +  self.__methodKeys[2:]
@@ -110,7 +110,7 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         for curve in curves:
             xmax = float(min(xmax, curve[0][-1]))
             xmin = float(max(xmin, curve[0][0]))
-        
+
         idx = numpy.nonzero((x0 >= xmin) & (x0 <= xmax))[0]
         x0 = numpy.take(x0, idx)
         y0 = numpy.take(y0, idx)
@@ -155,7 +155,7 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
 
             # now calculate the shift
             ffty = numpy.fft.fft(y)
-            
+
             if numpy.allclose(fft0, ffty):
                 shiftList.append(0.0)
             else:

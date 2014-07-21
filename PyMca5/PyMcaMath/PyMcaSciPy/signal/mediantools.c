@@ -55,7 +55,7 @@ char *check_malloc (int);
 char *check_malloc (int size)
 {
     char *the_block;
-    
+
     the_block = (char *)malloc(size);
     if (the_block == NULL)
     {
@@ -65,7 +65,7 @@ char *check_malloc (int size)
     return(the_block);
 }
 
-   
+
 static char doc_median2d[] = "filt = _median2d(data, size, conditional=0)";
 
 extern void f_medfilt2(float*,float*,int*,int*,int);
@@ -98,14 +98,14 @@ static PyObject *mediantools_median2d(PyObject *self, PyObject *args)
     if (size != NULL) {
     a_size = (PyArrayObject *)PyArray_ContiguousFromObject(size, NPY_LONG, 1, 1);
     if (a_size == NULL) goto fail;
-    if ((PyArray_NDIM(a_size) != 1) || (PyArray_DIMS(a_size)[0] < 2)) 
+    if ((PyArray_NDIM(a_size) != 1) || (PyArray_DIMS(a_size)[0] < 2))
         PYERR("Size must be a length two sequence");
     lhelp = (long *) PyArray_DATA(a_size);
     Nwin[0] = (int) (*lhelp);
     Nwin[1] = (int) (*(lhelp++));
     Idims[0] = (int) (PyArray_DIMS(a_image)[0]);
     Idims[1] = (int) (PyArray_DIMS(a_image)[1]);
-    }  
+    }
 
     a_out = (PyArrayObject *)PyArray_SimpleNew(2,PyArray_DIMS(a_image),typenum);
     if (a_out == NULL) goto fail;
@@ -160,7 +160,7 @@ static PyObject *mediantools_median2d(PyObject *self, PyObject *args)
     Py_XDECREF(a_size);
 
     return PyArray_Return(a_out);
- 
+
  fail:
     Py_XDECREF(a_image);
     Py_XDECREF(a_size);

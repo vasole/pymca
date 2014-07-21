@@ -62,14 +62,14 @@ and pass it to the constructor of the classes
 
 Some conventions:
 
-  * All the registered events should have public documented methods as 
+  * All the registered events should have public documented methods as
     alternatives. The classes should not rely on the fact that an eventhandler
     is passed
-  * The eventhandler argument should be a keyword called eh and defaults to 
+  * The eventhandler argument should be a keyword called eh and defaults to
     None and should not be necessary. You should forsee that the functionality
-    can be used via std callbacks (i.e in the constructor selectcb=select), 
+    can be used via std callbacks (i.e in the constructor selectcb=select),
     overriding std methods (i.e. select() or simple methods in your class to
-    set a callback or provide the information directly (i.e SetSelectCB(), 
+    set a callback or provide the information directly (i.e SetSelectCB(),
     GetSelection)
 
 Events: Classes derived from the Event class
@@ -107,8 +107,8 @@ class EventHandler(object):
         except ValueError:
           parent = self.rootevent
           idx = 0
-      #event = new.classobj(fulleventstr[idx:], (parent.event,), globals()) 
-      event = type(fulleventstr[idx:], (parent.event,), globals()) 
+      #event = new.classobj(fulleventstr[idx:], (parent.event,), globals())
+      event = type(fulleventstr[idx:], (parent.event,), globals())
       self.fulldict[fulleventstr] = OneEvent(event = event, parent = parent)
       return self.fulldict[fulleventstr]
 
@@ -129,7 +129,7 @@ class EventHandler(object):
     def register(self, fulleventstr, callback, myid = None, source = None):
       """ Register the event a.b.c with callback . You have to specify the
           full name of the event class as it might be created during this call.
-          A later create call with the same event will just confirm this 
+          A later create call with the same event will just confirm this
           creation. You can specify an id for yourself and an id for the
           source you would like to listen to. The source restrictions are not
           yet implemented because of performance considerations.
@@ -138,7 +138,7 @@ class EventHandler(object):
       oe.callbacks.append((callback, myid, source))
       self.preparefastevents()
       return oe.event
-         
+
     def unregister(self, fulleventstr, callback, myid = None):
       """ Unregister the callback from the eventclass a.b.c. The id has to
           be specified if it has been specified on registering the callback
@@ -157,15 +157,15 @@ class EventHandler(object):
       try:
         oe = self.fulldict[fullname]
       except KeyError:
-        return  s + "undefined\n" 
-      
+        return  s + "undefined\n"
+
       if oe.created == 0:
         creator = "<ONLY REGISTERED>"
       elif oe.creator is None:
         creator = "creator not specified"
       else:
         creator = "created by " + oe.creator
-          
+
       s = s + "(%s)\n" % creator
 
       if cbflag:
@@ -174,7 +174,7 @@ class EventHandler(object):
             cbname = cb.__name__
           except AttributeError:
             cbname = "%s" % cb
-            
+
           s = s + "   %s" % cbname
           if regid:
             s = s + " (reg by: %s)" % str(regid)
@@ -183,7 +183,7 @@ class EventHandler(object):
           s = s + "\n"
 
       return s
-          
+
     def dumpalltostr(self):
       s = ""
       for fullname in self.fulldict.keys():
@@ -194,7 +194,7 @@ class EventHandler(object):
       """ calculate the callback functions for all possible events """
       self.events = {}
       self.callbacks = {}
-      for fullev, oe in self.fulldict.items(): 
+      for fullev, oe in self.fulldict.items():
         events = fullev.split(".")
         self.events[events[-1]] = oe.event  # only for our callers
         cbs = [x[0] for x in self.fulldict[fullev].callbacks]
@@ -213,7 +213,7 @@ class EventHandler(object):
             cb(*args, **kw)
       else:
         print("Warning: missing event ",event)
-        
+
     def getfullevents(self):
       """ return a list with fully specified event names (a.b.c) """
       return self.fulldict.keys()
@@ -227,7 +227,7 @@ class EventHandler(object):
         for i in range(len(events)):
           evname = events[i]
           if not (evname in dict):
-            dict[evname] = {} 
+            dict[evname] = {}
           dict = dict[evname]
       return self._dict2tup(evdict)
 
@@ -239,18 +239,18 @@ class EventHandler(object):
         else:
           li.append((key, self._dict2tup(item)))
       return li
-    
+
 def test(eh = None):
     """EventHandler class test function"""
     def callback1(data, more=None):
          print('Hi callback 1 (Data) with data : %s and %s' % (data, more))
-       
+
     def callback2(data, more=None):
          print('Hi callback 2 (XData) with data : %s and %s' % (data, more))
 
     def callback3(data, more=None):
          print('Hi callback 3 (Ydata) with data : %s and %s' % (data, more))
-       
+
     if eh is None:
       eh = EventHandler()
 

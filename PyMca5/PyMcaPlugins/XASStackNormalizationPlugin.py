@@ -90,7 +90,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
         self.__methodKeys = ["XANES Normalization"]
         self.widget = None
         self.imageWidget = None
-        
+
     #Methods implemented by the plugin
     def stackUpdated(self):
         if self.widget is not None:
@@ -117,7 +117,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
     def applyMethod(self, name):
         return self.methodDict[name][0]()
 
-    
+
     # own stuff
     def mySlot(self, ddict):
         if DEBUG:
@@ -132,7 +132,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
             self.replaceImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "resetSelection":
             self.setStackSelectionMask(None)
-    
+
     def XASNormalize(self):
         stack = self.getStackDataObject()
         if not isinstance(stack.data, numpy.ndarray):
@@ -195,7 +195,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                         usetab=False,profileselection=True)
                 self.imageWidget.buildAndConnectImageButtonBox()
                 qt = StackPluginResultsWindow.qt
-                self.imageWidget.sigMaskImageWidgetSignal.connect(self.mySlot)                
+                self.imageWidget.sigMaskImageWidgetSignal.connect(self.mySlot)
                 self.methodDict["Show Images"] =[self._showImageWidget,
                                                  "Show calculated jump and edge position images",
                                                  None]
@@ -322,7 +322,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
             errors = numpy.zeros(data.shape[-1], numpy.float32)
             total = 0.01 * data.shape[-1]
             for i in range(data.shape[-1]):
-                self._progress = i / total 
+                self._progress = i / total
                 try:
                     ene, spe, ed, jmp = XASNormalization.XASNormalization(data[:, i],
                               energy=energy,

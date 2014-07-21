@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-/* 
+/*
    Implementation of the algorithm SNIP in 2D described in
    Miroslav Morhac et al. Nucl. Instruments and Methods in Physics Research A401 (1997) 113-132.
 */
@@ -61,7 +61,7 @@ void snip2d(double *data, int nrows, int ncolumns, int width)
 		{
 			iminuspxncolumns = (i-p) * ncolumns;
 			ixncolumns = i * ncolumns;
-			ipluspxncolumns = (i+p) * ncolumns; 
+			ipluspxncolumns = (i+p) * ncolumns;
 			for (j=p; j<(ncolumns-p); j++)
 			{
 				P4 = data[ iminuspxncolumns + (j-p)]; /* P4 = data[i-p][j-p] */

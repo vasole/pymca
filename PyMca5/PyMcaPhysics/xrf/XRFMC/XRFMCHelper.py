@@ -225,7 +225,7 @@ def getXRFMCCorrectionFactors(fitConfiguration, xmimsim_pymca=None, verbose=Fals
     else:
         # for the time being we have to build a "fit-like" file with the information
         import numpy
-        from PyMca import ClassMcaTheory 
+        from PyMca import ClassMcaTheory
         fitConfiguration['fit']['linearfitflag']=1
         fitConfiguration['fit']['stripflag']=0
         fitConfiguration['fit']['stripiterations']=0
@@ -303,20 +303,20 @@ def getXRFMCCorrectionFactors(fitConfiguration, xmimsim_pymca=None, verbose=Fals
     xmsoName = None
     removeDirectory(outputDir)
     return corrections
-    
+
 def removeDirectory(dirName):
     if os.path.exists(dirName):
         if os.path.isdir(dirName):
             shutil.rmtree(dirName)
 
 def start(fitFile, outputDir, xmimsim_pymca, parameters=None, verbose=True):
-    args = XRFMCHelper.getBasicSubprocessCommand(fitFile, outputDir, xmimsim_pymca)   
+    args = XRFMCHelper.getBasicSubprocessCommand(fitFile, outputDir, xmimsim_pymca)
     if parameters is None:
         parameters = ["--enable-single-run",
                       "--set-threads=2"]
     i = 0
     for parameter in parameters:
-        i += 1             
+        i += 1
         args.insert(1, parameter)
     process = subprocess.Popen(args,
                                bufsize=0,
@@ -344,7 +344,7 @@ def start(fitFile, outputDir, xmimsim_pymca, parameters=None, verbose=True):
             if verbose:
                 print("ERROR = %s" % line[:-1])
             line = process.stderr.readline()
-        raise IOError("Program terminated with error code %d:\n%s" % (returnCode, text))    
+        raise IOError("Program terminated with error code %d:\n%s" % (returnCode, text))
 
 def getBasicSubprocessCommand(fitFile, outputDir=None, xmimsim_pymca=None):
      ddict = getOutputFileNames(fitFile, outputDir)

@@ -70,7 +70,7 @@ class RGBImageCalculator(qt.QWidget):
         self._y1AxisInverted = False
         self._matplotlibSaveImage = None
         self._build(math = math, replace = replace, scanwindow=scanwindow)
-        
+
 
     def _buildMath(self):
         self.mathBox = qt.QWidget(self)
@@ -87,10 +87,10 @@ class RGBImageCalculator(qt.QWidget):
         text += "The numbers go from 1 to the number of rows in the table.\n"
         text += "If you can suggest useful correlation functions please,\n"
         text += "do not hesitate to contact us in order to implement them."
-        
+
         self.mathExpression.setToolTip(text)
 
-        self.mathAction = qt.QToolButton(self.mathBox) 
+        self.mathAction = qt.QToolButton(self.mathBox)
         self.mathAction.setText("CALCULATE")
 
         self.mathBox.mainLayout.addWidget(self.mathLabel)
@@ -111,12 +111,12 @@ class RGBImageCalculator(qt.QWidget):
                                                            selection=False,
                                                            scanwindow=scanwindow,
                                                            aspect=True)
-        
+
         self.nameBox = qt.QWidget(self)
         self.nameBox.mainLayout = qt.QHBoxLayout(self.nameBox)
 
         self.nameLabel = qt.QLabel(self.nameBox)
-        
+
         self.nameLabel.setText("Image Name = ")
         #self.nameLabel.setText(qt.QString(qt.QChar(0x3A3)))
 
@@ -146,7 +146,7 @@ class RGBImageCalculator(qt.QWidget):
             self.replaceImageButton.setIcon(icon)
             self.replaceImageButton.setText("REPLACE IMAGE")
             self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
-        
+
         #self.mainLayout.addWidget(self.nameBox)
         self.mainLayout.addWidget(self.graphWidget)
         self.mainLayout.addWidget(buttonBox)
@@ -155,7 +155,7 @@ class RGBImageCalculator(qt.QWidget):
         if replace:
             self.replaceImageButton.clicked[()].connect( \
                 self._replaceImageClicked)
-            
+
         #it consumes too much CPU, therefore only on click
         #self.graphWidget.graph.canvas().setMouseTracking(1)
         self.graphWidget.graphWidget.showInfo()
@@ -214,7 +214,7 @@ class RGBImageCalculator(qt.QWidget):
     def setName(self, name):
         self.name.setText(name)
         self.graphWidget.graph.setGraphTitle("%s" % name)
-                    
+
     def _addImageClicked(self):
         if DEBUG:
             print("Add image clicked")
@@ -300,7 +300,7 @@ def test():
                  "array2":{'image':array2},
                  "array3":{'image':array3}}
     w.imageList = imageList
-    w.imageDict = imageDict 
+    w.imageDict = imageDict
     w.show()
     app.exec_()
 

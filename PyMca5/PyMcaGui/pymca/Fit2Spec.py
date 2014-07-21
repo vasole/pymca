@@ -44,12 +44,12 @@ class Fit2SpecGUI(qt.QWidget):
         layout = qt.QVBoxLayout(self)
         layout.setAutoAdd(1)
         self.setCaption(name)
-        self.__build(actions)               
+        self.__build(actions)
         if filelist is None: filelist = []
         self.outputDir  = None
         self.setFileList(filelist)
         self.setOutputDir(outputdir)
-    
+
     def __build(self,actions):
         self.__grid= qt.QWidget(self)
         #self.__grid.setGeometry(qt.QRect(30,30,288,156))
@@ -66,11 +66,11 @@ class Fit2SpecGUI(qt.QWidget):
         self.__listView.setMaximumHeight(30*listlabel.sizeHint().height())
         self.__listButton = qt.QPushButton(self.__grid)
         self.__listButton.setText('Browse')
-        self.__listButton.clicked[()].connect(self.browseList) 
+        self.__listButton.clicked[()].connect(self.browseList)
         grid.addWidget(listlabel,        listrow, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
         grid.addWidget(self.__listView,  listrow, 1)
         grid.addWidget(self.__listButton,listrow, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
-        
+
         #output dir
         outrow    = 1
         outlabel   = qt.QLabel(self.__grid)
@@ -81,7 +81,7 @@ class Fit2SpecGUI(qt.QWidget):
         #self.__outLine.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Maximum, qt.QSizePolicy.Fixed))
         self.__outButton = qt.QPushButton(self.__grid)
         self.__outButton.setText('Browse')
-        self.__outButton.clicked[()].connect(self.browseOutputDir) 
+        self.__outButton.clicked[()].connect(self.browseOutputDir)
         grid.addWidget(outlabel,         outrow, 0, qt.Qt.AlignLeft)
         grid.addWidget(self.__outLine,   outrow, 1)
         grid.addWidget(self.__outButton, outrow, 2, qt.Qt.AlignLeft)
@@ -129,7 +129,7 @@ class Fit2SpecGUI(qt.QWidget):
                 self.raiseW()
                 return False
         return True
-        
+
     def __goodOutputDir(self,outputdir):
         if os.path.isdir(outputdir):return True
         else:return False
@@ -142,10 +142,10 @@ class Fit2SpecGUI(qt.QWidget):
             filelist0= filedialog.selectedFiles()
         else:
             self.raiseW()
-            return    
+            return
         filelist = []
         for f in filelist0:
-            filelist.append(qt.safe_str(f)) 
+            filelist.append(qt.safe_str(f))
         if len(filelist):self.setFileList(filelist)
         self.raiseW()
 
@@ -157,7 +157,7 @@ class Fit2SpecGUI(qt.QWidget):
             filename = filename.selectedFile()
         else:
             self.raiseW()
-            return                
+            return
         filename = qt.safe_str(filename)
         if len(filename):
             self.setConfigFile(filename)
@@ -176,7 +176,7 @@ class Fit2SpecGUI(qt.QWidget):
             outfile.close()
             del outfile
         self.raiseW()
-            
+
     def start(self):
         if not len(self.fileList):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
@@ -204,7 +204,7 @@ class Fit2SpecGUI(qt.QWidget):
                 window.pauseButton.setText("Pause")
             else:
                 b.pleasePause=1
-                window.pauseButton.setText("Continue") 
+                window.pauseButton.setText("Continue")
         window.pauseButton.clicked[()].connect(pause)
         window.abortButton.clicked[()].connect(window.close)
         qApp = qt.QApplication.instance()
@@ -214,7 +214,7 @@ class Fit2SpecGUI(qt.QWidget):
         window.show()
         b.start()
 
-        
+
 class Fit2SpecBatch(qt.QThread):
     def __init__(self, parent, filelist=None, outputdir = None):
         self._filelist  = filelist
@@ -262,14 +262,14 @@ class Fit2SpecBatch(qt.QThread):
     def onEnd(self):
         self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'onEnd'}))
         if self.pleasePause:self.__pauseMethod()
-        
+
 
     def __pauseMethod(self):
         self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchPaused'}))
         while(self.pleasePause):
             time.sleep(1)
         self.postEvent(self.parent, McaCustomEvent.McaCustomEvent({'event':'batchResumed'}))
-            
+
 
 class Fit2SpecWindow(qt.QWidget):
     def __init__(self,parent=None, name="BatchWindow", fl=0, actions = 0):
@@ -282,8 +282,8 @@ class Fit2SpecWindow(qt.QWidget):
         self.progressBar   = qt.QProgressBar(self.bars)
         self.progressLabel = qt.QLabel(self.bars)
         self.progressLabel.setText('File Progress:')
-        
-        self.barsLayout.addWidget(self.progressLabel,0,0)        
+
+        self.barsLayout.addWidget(self.progressLabel,0,0)
         self.barsLayout.addWidget(self.progressBar,0,1)
         self.status      = qt.QLabel(self)
         self.status.setText(" ")
@@ -315,12 +315,12 @@ class Fit2SpecWindow(qt.QWidget):
         elif event.dict['event'] == 'onEnd':    self.onEnd(event.dict)
 
         elif event.dict['event'] == 'batchPaused': self.onPause()
-        
+
         elif event.dict['event'] == 'batchResumed':self.onResume()
 
         else:
             print("Unhandled event",event)
-                                                
+
 
     def onNewFile(self, file, filelist):
         indexlist = range(0,len(filelist))
@@ -349,19 +349,19 @@ class Fit2SpecWindow(qt.QWidget):
             self.pauseButton.hide()
             self.abortButton.setText("OK")
 
-    def onPause(self):    
+    def onPause(self):
         pass
 
-    def onResume(self):    
+    def onResume(self):
         pass
-                
+
 if __name__ == "__main__":
     import getopt
     options     = 'f'
     longoptions = ['outdir=', 'listfile=']
     filelist = None
     outdir   = None
-    listfile = None    
+    listfile = None
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -371,7 +371,7 @@ if __name__ == "__main__":
             outdir = arg
         elif opt in  ('--listfile'):
             listfile  = arg
-    if listfile is None: 
+    if listfile is None:
         filelist=[]
         for item in args:
             filelist.append(item)
@@ -381,10 +381,10 @@ if __name__ == "__main__":
         fd.close()
         for i in range(len(filelist)):
             filelist[i]=filelist[i].replace('\n','')
-             
-    app=qt.QApplication(sys.argv) 
+
+    app=qt.QApplication(sys.argv)
     winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))
-    app.setPalette(winpalette)       
+    app.setPalette(winpalette)
     app.lastWindowClosed.conenct(app.quit)
     if len(filelist) == 0:
         w = Fit2SpecGUI(actions=1)
@@ -408,16 +408,16 @@ if __name__ == "__main__":
                 window.pauseButton.setText("Pause")
             else:
                 b.pleasePause=1
-                window.pauseButton.setText("Continue") 
+                window.pauseButton.setText("Continue")
         window.pauseButton.clicked[()].connect(pause)
         window.abortButton.clicked[()].connect(window.close)
-        app.aboutToQuit.connect(cleanup)        
+        app.aboutToQuit.connect(cleanup)
         window.show()
         b.start()
         app.setMainWidget(window)
         app.exec_loop()
- 
- 
- 
+
+
+
 # PyMcaBatch.py --cfg=/mntdirect/_bliss/users/sole/COTTE/WithLead.cfg --outdir=/tmp/   /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0007.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0008.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0009.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0010.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0011.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0012.edf /mntdirect/_bliss/users/sole/COTTE/ch09/ch09__mca_0003_0000_0013.edf &
 # PyMcaBatch.exe --cfg=E:/COTTE/WithLead.cfg --outdir=C:/tmp/   E:/COTTE/ch09/ch09__mca_0003_0000_0007.edf E:/COTTE/ch09/ch09__mca_0003_0000_0008.edf

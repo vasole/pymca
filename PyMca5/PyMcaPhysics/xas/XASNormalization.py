@@ -117,7 +117,7 @@ def estimateXANESEdge(spectrum, energy=None, full=False):
     npoints = 7
     xPrime = x[npoints:-npoints]
     yPrime = SGModule.getSavitzkyGolay(y, npoints=npoints, degree=2, order=1)
-    
+
     # get the index at maximum value
     iMax = numpy.argmax(yPrime)
 
@@ -133,7 +133,7 @@ def estimateXANESEdge(spectrum, energy=None, full=False):
     else:
         # return the corresponding x value
         return edge
-        
+
 def getRegionsData(x0, y0, regions, edge=0.0):
     """
     x - 1D array
@@ -146,10 +146,10 @@ def getRegionsData(x0, y0, regions, edge=0.0):
     # take a view of the data
     x = x0[:]
     y = y0[:]
-    
+
     x.shape = -1
     y.shape = -1
-    
+
     i = 0
     for region in regions:
         xmin = region[0] + edge
@@ -365,7 +365,7 @@ def XASVictoreenNormalization(spectrum,
 
     p = numpy.array([1.0, 1.0])
     prePol = LeastSquaresFit(pre_edge_function, p, xdata=xPre, ydata=yPre,
-                                 weightflag=0, linear=1)[0]    
+                                 weightflag=0, linear=1)[0]
     postPol = LeastSquaresFit(post_edge_function, p,
                               xdata=xPost,
                               ydata=yPost-pre_edge_function(prePol, xPost),
@@ -379,7 +379,7 @@ def XASVictoreenNormalization(spectrum,
         plot(xPost,
              post_edge_function(postPol, xPost)+pre_edge_function(prePol, xPost), 'y')
         show()
-    return energy, normalizedSpectrum, edge       
+    return energy, normalizedSpectrum, edge
 
 SUPPORTED_ALGORITHMS = {"polynomial":XASPolynomialNormalization,
                         "victoreen": XASVictoreenNormalization}

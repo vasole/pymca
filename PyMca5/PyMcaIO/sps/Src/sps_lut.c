@@ -4,9 +4,9 @@
 # This file is part of the PyMCA X-ray Fluorescence Toolkit developed at
 # the ESRF by the Beamline Instrumentation Software Support (BLISS) group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it 
+# This toolkit is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option) 
+# Software Foundation; either version 2 of the License, or (at your option)
 # any later version.
 #
 # PyMCA is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -19,9 +19,9 @@
 # Suite 330, Boston, MA 02111-1307, USA.
 #
 # PyMCA follows the dual licensing model of Trolltech's Qt and Riverbank's PyQt
-# and cannot be used as a free plugin for a non-free program. 
+# and cannot be used as a free plugin for a non-free program.
 #
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license 
+# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
 # is a problem for you.
 #############################################################################*/
 #include <stdlib.h>
@@ -38,15 +38,15 @@
 	#define	__USE_ISOC99	1
 
 	#include	<math.h>
-	
+
 /*#elif (defined (WIN32) || defined (_WIN32))
 	#include	<math.h>*/
 #elif 0
 
-	/*	Win32 doesn't seem to have these functions. 
+	/*	Win32 doesn't seem to have these functions.
 	**	Therefore implement inline versions of these functions here.
 	*/
-	
+
 	__inline long int lrint (double flt)
 	{	int intgr;
 
@@ -54,10 +54,10 @@
 		{	fld flt
 			fistp intgr
 			} ;
-			
+
 		return intgr ;
-	} 
-	
+	}
+
 	__inline long int lrintf (float flt)
 	{	int intgr;
 
@@ -65,7 +65,7 @@
 		{	fld flt
 			fistp intgr
 			} ;
-			
+
 		return intgr ;
 	}
 
@@ -140,26 +140,26 @@ int SPS_Size_VLUT (int t)
 }
 
 void *CreatePalette( int type, int meth, double min, double max, double gamma,
-		     int mapmin, int mapmax, 
+		     int mapmin, int mapmax,
                      XServer_Info Xservinfo, int palette_code);
 
-unsigned char *SPS_SimplePalette ( int min, int max, 
-                                   XServer_Info Xservinfo, int palette_code) 
+unsigned char *SPS_SimplePalette ( int min, int max,
+                                   XServer_Info Xservinfo, int palette_code)
 {
   int type = SPS_USHORT, meth = SPS_LINEAR;
   int mapmin = 0, mapmax = 0; /* Is not used in this case USHORT LINEAR*/
   double dmin = min, dmax = max, gamma = 0.0;
-  if (Xservinfo.pixel_size == 1) 
+  if (Xservinfo.pixel_size == 1)
     Xservinfo.pixel_size = 3;
-  return CreatePalette(type, meth, dmin, dmax, gamma, mapmin, mapmax, 
+  return CreatePalette(type, meth, dmin, dmax, gamma, mapmin, mapmax,
 		       Xservinfo, palette_code);
-  
+
 
 }
 
-void *SPS_PaletteArray (void *data, int type, int cols, int rows, 
-          int reduc, int fastreduc, int meth, double gamma, int autoscale, 
-	  int mapmin, int mapmax, 
+void *SPS_PaletteArray (void *data, int type, int cols, int rows,
+          int reduc, int fastreduc, int meth, double gamma, int autoscale,
+	  int mapmin, int mapmax,
           XServer_Info Xservinfo, int palette_code,
 	  double *min, double *max, int *pcols, int *prows,
 	  void **pal_return, int *pal_entries)
@@ -181,20 +181,20 @@ void *SPS_PaletteArray (void *data, int type, int cols, int rows,
   /* Calculate the min max minplus of the data only if necessary       */
   /* Calc minplus is very fast if min alread > 0 - always calc minplus */
   calcminmax = (autoscale ? 1 : 0 ) | ((meth != SPS_LINEAR) ? 2 : 0);
- 
+
   if (calcminmax)
-    SPS_FindMinMax(data, type, cols, rows, min, max, &minplus, calcminmax); 
+    SPS_FindMinMax(data, type, cols, rows, min, max, &minplus, calcminmax);
 
   /* Reduce the data with reduction factor - nothing done for reduc == 1 */
   ndata = SPS_ReduceData(data, type, cols, rows, reduc, pcols, prows,
 			 fastreduc);
-  if (ndata == NULL) 
+  if (ndata == NULL)
     return NULL;
 
   if (meth == SPS_LINEAR) {
     use_min = *min;
     use_max = *max;
-  } else if (type == SPS_USHORT || type == SPS_SHORT || type == SPS_CHAR || 
+  } else if (type == SPS_USHORT || type == SPS_SHORT || type == SPS_CHAR ||
 	     type == SPS_UCHAR) {
     use_min = *min; /* Check -  we treat signed types as unsigned ???     */
     use_max = *max; /* Does the palette look like the user expects ???    */
@@ -214,30 +214,30 @@ void *SPS_PaletteArray (void *data, int type, int cols, int rows,
   /* Create the palette if we do not have a hardware palette */
   palette = CreatePalette( type, meth, use_min, use_max, gamma,
                            mapmin, mapmax, Xservinfo, palette_code);
-   
+
   /* Produce an array with data between mapmin and mapmax for reference into
      the palette */
-  Xdata = SPS_MapData(ndata, type, meth, *pcols, *prows, use_min, use_max, 
+  Xdata = SPS_MapData(ndata, type, meth, *pcols, *prows, use_min, use_max,
 		      gamma, mapmin, mapmax, Xservinfo.pixel_size, palette);
-  if (Xdata == NULL) 
+  if (Xdata == NULL)
     return NULL;
-  
+
   if (ndata != data)
     free (ndata);
 
   if (Xservinfo.pixel_size != 1) {
-    if (type == SPS_USHORT || type == SPS_SHORT || type == SPS_CHAR || 
+    if (type == SPS_USHORT || type == SPS_SHORT || type == SPS_CHAR ||
 	type == SPS_UCHAR) {
       *pal_return = (void *) (((unsigned char *)palette) +
 			      (int )(Xservinfo.pixel_size * *min));
       *pal_entries = (int) (*max - *min + 1);
     } else {
-      *pal_return = (void *) (((unsigned char *)palette) + 
+      *pal_return = (void *) (((unsigned char *)palette) +
 			      (int )(Xservinfo.pixel_size * mapmin));
       *pal_entries = (int) (mapmax - mapmin + 1);
     }
   }
-  
+
   if (meth != SPS_LINEAR) {
     *min = minplus;
   }
@@ -330,7 +330,7 @@ void SPS_FindMinMax(void *data, int type, int cols, int rows,
 
  if (dominplus)
    *minplus = dminplus;
- 
+
 }
 
 #define CALCDATA(ty, mty, mapty, logfct, powfct)\
@@ -638,7 +638,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
 			   double Xmin, double Xmax, double gamma,
   			   int mapmin, int mapmax, int mapbytes, void *pal)
 {
- 
+
  double A, B, lmin, lmax;
  void *Xdata;
  int databytes ;
@@ -652,7 +652,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
 	   cols*rows);
    return((unsigned char *)NULL);
  }
- 
+
  if ((Xmax-Xmin) != 0) {
    if (meth == SPS_LINEAR) {
      lmin = Xmin;
@@ -713,7 +713,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
        CALCDATA(int, float, unsigned short, log10f, powf);
      } else if (mapbytes == 4 || mapbytes == 3){
        CALCDATA(int, float, unsigned int, log10f, powf);
-     } 
+     }
      break;
    case SPS_UINT :
      if (mapbytes == 1) {
@@ -726,11 +726,11 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
        CALCDATA(unsigned int, float, unsigned short, log10f, powf);
      } else if (mapbytes == 4 || mapbytes == 3){
        CALCDATA(unsigned int, float, unsigned int, log10f, powf);
-     } 
+     }
      break;
    case SPS_SHORT :
      if (mapbytes == 1) {
-       if (cols*rows > 100000) { 
+       if (cols*rows > 100000) {
 	 CALCPREDATA(short, float, unsigned char, log10f,powf,(-32768),32767);
        } else {
 	 CALCDATA(short, float, unsigned char, log10f, powf);
@@ -743,7 +743,7 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
      break;
    case SPS_USHORT :
      if (mapbytes == 1) {
-       if (cols*rows > 100000) { 
+       if (cols*rows > 100000) {
 	 CALCPREDATA(unsigned short,float,unsigned char,log10f, powf,0,65535);
        } else {
 	 CALCDATA(unsigned short, float, unsigned char, log10f,powf);
@@ -861,14 +861,14 @@ unsigned char *SPS_MapData(void *data, int type, int meth, int cols, int rows,
  free(line);\
 }
 
-void *SPS_ReduceData (void *data, int type, 
-		      int cols, int rows, int reduc, 
+void *SPS_ReduceData (void *data, int type,
+		      int cols, int rows, int reduc,
 		      int *pcols, int *prows, int fastreduction)
 {
  int pw, ph, jump, fastjump;
  void *ndata;
  int length = SPS_Size_VLUT(type);
- 
+
  if (reduc == 1) {
    *pcols = cols;
    *prows = rows;
@@ -878,11 +878,11 @@ void *SPS_ReduceData (void *data, int type,
  pw=*pcols = cols / reduc;
  if (pw == 0) {
    pw=*pcols = 1;
- }   
+ }
  ph=*prows = rows / reduc;
  if (ph == 0) {
    ph=*prows = 1;
- }   
+ }
  jump = cols%reduc;
  fastjump = jump + cols*(reduc-1);
 
@@ -925,7 +925,7 @@ void *SPS_ReduceData (void *data, int type,
    case SPS_ULONG :
      CALCREDUCFAST(unsigned long);
      break;
-   } 
+   }
  } else {
    switch (type) {
    case SPS_DOUBLE :
@@ -965,13 +965,13 @@ void *SPS_ReduceData (void *data, int type,
 
 void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
                  unsigned int *val, int from, int to,
-                 double R1,double G1,double B1,double R2,double G2,double B2, 
+                 double R1,double G1,double B1,double R2,double G2,double B2,
                  int rbit,int gbit,int bbit,int rshift,int gshift,int bshift)
 {
  unsigned int *ptr;
  unsigned int R, G, B;
  double Rcol, Gcol, Bcol, Rcst, Gcst, Bcst;
- double coef, width, rwidth, gwidth, bwidth; 
+ double coef, width, rwidth, gwidth, bwidth;
  swaptype value;
 
 /* R = R1 + (R2 - R1) * (i-from) / (to - from)
@@ -1058,7 +1058,7 @@ void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
  }
 }
 
-unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type) 
+unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type)
 {
   static unsigned int *full_palette = NULL;
   static old_type = -1;
@@ -1066,13 +1066,13 @@ unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type)
   unsigned int col;
   int rbit, gbit, bbit, rshift, gshift, bshift, pcbyteorder;
   swaptype val;
-  
-  if (full_palette && 
+
+  if (full_palette &&
       (old_type != palette_type || old_mapbytes != Xservinfo.pixel_size)){
     free(full_palette);
     full_palette = NULL;
   }
-  
+
   if (full_palette == NULL) {
     full_palette = (void*) malloc (0x10000 * sizeof (unsigned int));
     if (full_palette == NULL) {
@@ -1093,7 +1093,7 @@ unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type)
     rshift = 0;
     while ((col & 1) == 0) {
       col = col >> 1;
-      rshift++;  
+      rshift++;
     }
     rbit=0;
     while ((col & 1) == 1) {
@@ -1105,7 +1105,7 @@ unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type)
     gshift = 0;
     while ((col & 1) == 0) {
       col = col >> 1;
-      gshift++;  
+      gshift++;
     }
     gbit=0;
     while ((col & 1) == 1) {
@@ -1117,7 +1117,7 @@ unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type)
     bshift = 0;
     while ((col & 1) == 0) {
       col = col >> 1;
-      bshift++;  
+      bshift++;
     }
     bbit=0;
     while ((col & 1) == 1) {
@@ -1127,77 +1127,77 @@ unsigned int *CalcPalette (XServer_Info Xservinfo, int palette_type)
 
     if (palette_type == SPS_GREYSCALE) {
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0, 0x10000, 0, 0, 0, 1, 1, 1, 
+                  full_palette, 0, 0x10000, 0, 0, 0, 1, 1, 1,
                   rbit, gbit, bbit, rshift, gshift, bshift);
     } else if (palette_type == SPS_TEMP) {
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0, 0x4000, 0, 0, 1, 0, 1, 1, 
+                  full_palette, 0, 0x4000, 0, 0, 1, 0, 1, 1,
                   rbit, gbit, bbit, rshift, gshift, bshift);
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0x4000, 0x8000, 0, 1, 1, 0, 1, 0, 
+                  full_palette, 0x4000, 0x8000, 0, 1, 1, 0, 1, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0x8000, 0xc000, 0, 1, 0, 1, 1, 0, 
+                  full_palette, 0x8000, 0xc000, 0, 1, 0, 1, 1, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0xc000, 0x10000, 1, 1, 0, 1, 0, 0, 
+                  full_palette, 0xc000, 0x10000, 1, 1, 0, 1, 0, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
     } else if (palette_type == SPS_RED) {
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0, 0x10000, 0, 0, 0, 1, 0, 0, 
+                  full_palette, 0, 0x10000, 0, 0, 0, 1, 0, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
     } else if (palette_type == SPS_GREEN) {
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0, 0x10000, 0, 0, 0, 0, 1, 0, 
+                  full_palette, 0, 0x10000, 0, 0, 0, 0, 1, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
     } else if (palette_type == SPS_BLUE) {
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0, 0x10000, 0, 0, 0, 0, 0, 1, 
+                  full_palette, 0, 0x10000, 0, 0, 0, 0, 0, 1,
                   rbit, gbit, bbit, rshift, gshift, bshift);
     } else if (palette_type == SPS_REVERSEGREY) {
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0, 0x10000, 1, 1, 1, 0, 0, 0, 
+                  full_palette, 0, 0x10000, 1, 1, 1, 0, 0, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
     } else if (palette_type == SPS_MANY) {
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0, 0x2aaa, 0, 0, 1, 0, 1, 1, 
+                  full_palette, 0, 0x2aaa, 0, 0, 1, 0, 1, 1,
                   rbit, gbit, bbit, rshift, gshift, bshift);
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0x2aaa, 0x5555, 0, 1, 1, 0, 1, 0, 
+                  full_palette, 0x2aaa, 0x5555, 0, 1, 1, 0, 1, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0x5555, 0x8000, 0, 1, 0, 1, 1, 0, 
+                  full_palette, 0x5555, 0x8000, 0, 1, 0, 1, 1, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0x8000, 0xaaaa, 1, 1, 0, 1, 0, 0, 
+                  full_palette, 0x8000, 0xaaaa, 1, 1, 0, 1, 0, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0xaaaa, 0xd555, 1, 0, 0, 1, 1, 0, 
+                  full_palette, 0xaaaa, 0xd555, 1, 0, 0, 1, 1, 0,
                   rbit, gbit, bbit, rshift, gshift, bshift);
       FillSegment(pcbyteorder, Xservinfo,
-                  full_palette, 0xd555, 0x10000, 1, 1, 0, 1, 1, 1, 
+                  full_palette, 0xd555, 0x10000, 1, 1, 0, 1, 1, 1,
                   rbit, gbit, bbit, rshift, gshift, bshift);
     }
   }
   return full_palette;
 }
 
-FillPalette (XServer_Info Xservinfo, 
-             void *palette, int fmin, int fmax, 
+FillPalette (XServer_Info Xservinfo,
+             void *palette, int fmin, int fmax,
 	     int palette_type, int meth, double gamma)
 {
   double A, B, round_min;
   double lmin, lmax;
   unsigned int *full_palette;
-  
+
   /*
    SPS_LINEAR:   mapdata = A * data + B
    SPS_LOG   :   mapdata = (A * log(data)) + B
    SPS_GAMMA :   mapdata = A * pow(data, gamma) + B
   */
-  if (fmin == 0 && meth != SPS_LINEAR) 
+  if (fmin == 0 && meth != SPS_LINEAR)
     fmin = 1;
-  
+
   if ((fmax - fmin) != 0) {
     if (meth == SPS_LINEAR) {
       lmin = fmin;
@@ -1223,7 +1223,7 @@ FillPalette (XServer_Info Xservinfo,
     if (meth == SPS_GAMMA) {
       round_min = (A * pow(fmin,gamma)) + B;
     }
-    
+
     if (round_min < 0.0 && round_min > -1E-5 )
       B += round_min;
 
@@ -1235,7 +1235,7 @@ FillPalette (XServer_Info Xservinfo,
 
   /* The full palette has always 0x10000 entries of longs; */
   full_palette = CalcPalette (Xservinfo, palette_type);
-  
+
   /* Squeeze the palette into the data range */
   if (Xservinfo.pixel_size == 2) {
     register unsigned short *pal = palette;
@@ -1246,17 +1246,17 @@ FillPalette (XServer_Info Xservinfo,
     if (meth == SPS_LINEAR) {
       j = 0;
       while (pal <= palend) {
-	*pal++ = *(full_palette + lrint (A * j++)); 
+	*pal++ = *(full_palette + lrint (A * j++));
       }
     } else if (meth == SPS_LOG) {
       j = fmin;
       while (pal <= palend) {
-	*pal++ = *(full_palette + lrint (A * log10 (j++) + B)); 
+	*pal++ = *(full_palette + lrint (A * log10 (j++) + B));
       }
     } else if (meth == SPS_GAMMA) {
       j = fmin;
       while (pal <= palend) {
-	*pal++ = *(full_palette + lrint (A * pow(j++, gamma) + B)); 
+	*pal++ = *(full_palette + lrint (A * pow(j++, gamma) + B));
       }
     }
   } else if (Xservinfo.pixel_size == 4 || Xservinfo.pixel_size == 3) {
@@ -1268,55 +1268,55 @@ FillPalette (XServer_Info Xservinfo,
     if (meth == SPS_LINEAR) {
       j = 0;
       while (pal <= palend) {
-	*pal++ = *(full_palette + lrint(A * j++)); 
+	*pal++ = *(full_palette + lrint(A * j++));
       }
     } else if (meth == SPS_LOG) {
       j = fmin;
       while (pal <= palend) {
-	*pal++ = *(full_palette + lrint(A * log10 (j++) + B)); 
+	*pal++ = *(full_palette + lrint(A * log10 (j++) + B));
       }
     } else if (meth == SPS_GAMMA) {
       j = fmin;
       while (pal <= palend) {
-	*pal++ = *(full_palette + lrint(A * pow(j++, gamma) + B)); 
+	*pal++ = *(full_palette + lrint(A * pow(j++, gamma) + B));
       }
     }
-  } 
+  }
 }
 
 void *CreatePalette( int type, int meth, double min, double max, double gamma,
-		     int mapmin, int mapmax, 
+		     int mapmin, int mapmax,
                      XServer_Info Xservinfo, int palette_type)
 {
   int pmin, pmax; /* palette min max values */
   int fmin, fmax; /* fill from these min max values */
   int newsize;
-  static void *palette = NULL; 
+  static void *palette = NULL;
   static int palette_size = 0;
   int memcorr = 2;
   void *old_palette, *palend;
   int palbytes;
-    
-  if (Xservinfo.pixel_size == 1) 
+
+  if (Xservinfo.pixel_size == 1)
     return NULL;   /* Hardware Palette */
 
   /* The palette of 3 byte results is 4 byte long */
   palbytes = (Xservinfo.pixel_size == 3) ? 4 : Xservinfo.pixel_size;
-  
+
   if ( type == SPS_FLOAT || type == SPS_DOUBLE || type == SPS_INT ||
        type == SPS_UINT || type == SPS_LONG || type == SPS_ULONG) {
-    /* In this case we map first to mapmin and mapmax and use these as an 
+    /* In this case we map first to mapmin and mapmax and use these as an
        index in the palette */
     fmin = pmin = 0 ; fmax = pmax = mapmax - mapmin;
     meth = SPS_LINEAR; /* We will always map to linear palettes as the mapping
 			is not linear - this gives us a higher dynamic range*/
   } else if (type == SPS_USHORT)  {
-    /* In all these cases we use the image values directly as an index in the 
+    /* In all these cases we use the image values directly as an index in the
        palette */
     pmin = 0 ; pmax = 0xffff;
     fmin = (int) min ; if (fmin < 0) fmin = 0;
     fmax = (int) max ; if (fmax > 0xffff) fmax = 0xffff;
-  } else if (type == SPS_UCHAR)  {  
+  } else if (type == SPS_UCHAR)  {
     pmin = 0 ; pmax = 0xff;
     fmin = (int) min ; if (fmin < 0) fmin = 0;
     fmax = (int) max ; if (fmax > 0xff) fmax = 0xff;
@@ -1325,20 +1325,20 @@ void *CreatePalette( int type, int meth, double min, double max, double gamma,
     fmin = (int) min + 0x8000; if (fmin < 0) fmin = 0;
     fmax = (int) max + 0x8000; if (fmax > 0xffff) fmax = 0xffff;
     memcorr = 3;
-  } else if (type == SPS_CHAR )  {  
+  } else if (type == SPS_CHAR )  {
     pmin = 0 ; pmax = 0xff;
     fmin = (int) min + 0x80; if (fmin < 0) fmin = 0;
     fmax = (int) max + 0x80; if (fmax > 0xff) fmax = 0xff;
     memcorr = 3;
   }
-    
+
   /* Size of the alloc is the size of the memory group * 1.5 if we have
      unsigned values. This is done to be able to do the swap with one simple
      memcopy. memcorr is either 2 or 3.
      For 3 mapbytes == 3 the palette is still 4 bytes long;
   */
   newsize = (memcorr * palbytes ) / 2 * (pmax - pmin + 1);
-  
+
   if (palette && newsize > palette_size) {
     free (palette);
     palette = NULL;
@@ -1352,27 +1352,27 @@ void *CreatePalette( int type, int meth, double min, double max, double gamma,
     }
     palette_size = newsize;
   }
-  
+
   /* Prepare the swap by putting everything 1/2 size higher up */
   if (memcorr == 3) {
     old_palette = palette;
     palette = (void *) ((char *) palette + newsize / 3);
   }
-  
+
   /* Now let's fill the palette */
   FillPalette (Xservinfo, palette, fmin, fmax, palette_type, meth, gamma);
-  
+
   /* Now pad the low and high values */
   if (pmin < fmin) {
     if (Xservinfo.pixel_size == 2) {
-      register unsigned short *dest = ((unsigned short *) palette) + pmin; 
-      register unsigned short src = *(((unsigned short *) palette) + fmin); 
+      register unsigned short *dest = ((unsigned short *) palette) + pmin;
+      register unsigned short src = *(((unsigned short *) palette) + fmin);
       register unsigned short *end  = ((unsigned short *) palette) + fmin;
       while (dest < end)
 	*dest++ = src;
     } else if (Xservinfo.pixel_size == 4 || Xservinfo.pixel_size == 3) {
-      register unsigned int *dest = ((unsigned int *) palette) + pmin; 
-      register unsigned int src = *(((unsigned int *) palette) + fmin); 
+      register unsigned int *dest = ((unsigned int *) palette) + pmin;
+      register unsigned int src = *(((unsigned int *) palette) + fmin);
       register unsigned int *end  = ((unsigned int *) palette) + fmin;
       while (dest < end)
 	*dest++ = src;
@@ -1381,14 +1381,14 @@ void *CreatePalette( int type, int meth, double min, double max, double gamma,
 
   if (pmax > fmax) {
     if (Xservinfo.pixel_size == 2) {
-      register unsigned short *dest = ((unsigned short *) palette) + fmax +1; 
-      register unsigned short src = *(((unsigned short *) palette) + fmax); 
+      register unsigned short *dest = ((unsigned short *) palette) + fmax +1;
+      register unsigned short src = *(((unsigned short *) palette) + fmax);
       register unsigned short *end  = ((unsigned short *) palette) + pmax;
       while (dest <= end)
 	*dest++ = src;
     } else if (Xservinfo.pixel_size == 4 || Xservinfo.pixel_size == 3) {
-      register unsigned int *dest = ((unsigned int *) palette) + fmax + 1; 
-      register unsigned int src = *(((unsigned int *) palette) + fmax); 
+      register unsigned int *dest = ((unsigned int *) palette) + fmax + 1;
+      register unsigned int src = *(((unsigned int *) palette) + fmax);
       register unsigned int *end  = ((unsigned int *) palette) + pmax;
       while (dest <= end)
 	*dest++ = src;
@@ -1445,11 +1445,11 @@ double SPS_GetZdata(void *data, int type, int cols, int rows, int x, int y)
  }
 }
 
-void SPS_PutZdata(void *data, int type, int cols, int rows, int x, int y, 
+void SPS_PutZdata(void *data, int type, int cols, int rows, int x, int y,
 		  double z)
 {
   int ind;
-  
+
   ind = y*cols + x;
   if (ind >= (cols*rows))
     ind = cols*rows-1;
@@ -1566,7 +1566,7 @@ void SPS_CalcStat(void *data, int type, int cols, int rows,
 }
 
 void SPS_GetDataDist(void *data, int type, int cols, int rows,
-			 double min, double max, 
+			 double min, double max,
 			 int nbar, double **xdata, double **ydata)
 {
  double step, val, start, *ptr;

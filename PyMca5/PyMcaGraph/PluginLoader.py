@@ -60,7 +60,7 @@ class PluginLoader(object):
         """
         for directory in dirlist:
             if not os.path.exists(directory):
-                raise IOError("Directory:\n%s\ndoes not exist." % directory)                
+                raise IOError("Directory:\n%s\ndoes not exist." % directory)
         self._pluginDirList = dirlist
 
     def getPluginDirectoryList(self):
@@ -136,7 +136,7 @@ class PluginLoader(object):
                         theCall = getattr(sys.modules[plugin], targetMethod)
                         self.pluginInstanceDict[plugin] = theCall(self)
                         self.pluginList.append(plugin)
-                except:                    
+                except:
                     if DEBUG:
                         print("Problem importing module %s" % plugin)
                         raise
@@ -157,7 +157,7 @@ def main(targetMethod, directoryList):
                 text = text[:-4]
             elif text.endswith('.py'):
                 text = text[:-3]
-        print("\tMENU TEXT: %s" % text)  
+        print("\tMENU TEXT: %s" % text)
         methods = loader.pluginInstanceDict[m].getMethods()
         if not len(methods):
             continue

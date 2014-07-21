@@ -49,7 +49,7 @@ class SceneGLWidget(qt.QGLWidget):
     sigObjectSelected = qt.pyqtSignal(object)
     sigVertexSelected = qt.pyqtSignal(object)
     sigMouseMoved = qt.pyqtSignal(object)
-    
+
     def __init__(self, parent = None, scene=None):
         #qt.QGLWidget.__init__(self, qt.QGLFormat(qt.QGL.SampleBuffers), parent)
         qt.QGLWidget.__init__(self, parent)
@@ -61,7 +61,7 @@ class SceneGLWidget(qt.QGLWidget):
             self.scene = Scene.Scene()
         else:
             self.scene = weakref.proxy(scene)
-        self.__ownTree =  ObjectTree.ObjectTree("__Scene__", "_Scene_")   
+        self.__ownTree =  ObjectTree.ObjectTree("__Scene__", "_Scene_")
         self.__ownTree.addChildTree(self.scene.tree)
 
         self._visualVolume = [-100., 100., -100., 100., -100.0, 100.0]
@@ -75,9 +75,9 @@ class SceneGLWidget(qt.QGLWidget):
         self.__sceneModelViewMatrix = numpy.zeros((4,4), numpy.float)
         for i in [0, 1, 2, 3]:
             self.__sceneModelViewMatrix[i, i] = 1
-        self.__sceneProjectionMatrix = self.__sceneModelViewMatrix * 1.0 
-        self.__selectedModelViewMatrix  = self.__sceneModelViewMatrix * 1.0 
-        self.__selectedProjectionMatrix = self.__sceneModelViewMatrix * 1.0 
+        self.__sceneProjectionMatrix = self.__sceneModelViewMatrix * 1.0
+        self.__selectedModelViewMatrix  = self.__sceneModelViewMatrix * 1.0
+        self.__selectedProjectionMatrix = self.__sceneModelViewMatrix * 1.0
 
 
         self.__zoomFactor = 1.0/self.scene.getZoomFactor()
@@ -125,7 +125,7 @@ class SceneGLWidget(qt.QGLWidget):
             self._visualVolume = [xmin, xmax, ymin, ymax, zmin, zmax]
             self.cacheUpdateGL()
         return
-            
+
     def setVisualizationVolume(self, xmin, xmax,
                                      ymin, ymax,
                                      zmin, zmax):
@@ -148,7 +148,7 @@ class SceneGLWidget(qt.QGLWidget):
         self.scale = value
         self.sigScaleChanged.emit(value)
         self.cacheUpdateGL()
-        
+
     def setZoomFactor(self, value):
         # I have to update the viewport
         self.__zoomFactor = 1.0/value
@@ -159,7 +159,7 @@ class SceneGLWidget(qt.QGLWidget):
         value = self.scene.getZoomFactor()
         self.__zoomFactor = 1.0/value
         return value
-            
+
     def getScale(self):
         return self.scale * 1
 
@@ -211,7 +211,7 @@ class SceneGLWidget(qt.QGLWidget):
         GL.glDisable(GL.GL_DITHER) # no dithering, please
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glLoadIdentity()
-        
+
         #initialize own font lists
         self.redBookFont = Object3DRedBookFont.Object3DRedBookFont()
         self.redBookFont.initialize()
@@ -222,11 +222,11 @@ class SceneGLWidget(qt.QGLWidget):
             GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION,  (0.0, 0.0, 1, 0.0))
             GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))
             GL.glEnable(GL.GL_LIGHT0)
-            
+
             GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, (0.0, 0.0, -1.0, 0.0))
             GL.glLightfv(GL.GL_LIGHT1, GL.GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))
             GL.glEnable(GL.GL_LIGHT1)
-            
+
             GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_DIFFUSE)
             GL.glEnable(GL.GL_COLOR_MATERIAL)
             if 1:
@@ -238,34 +238,34 @@ class SceneGLWidget(qt.QGLWidget):
         if 1:
             #lighting from marching cubes example
             GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION,  (1.0, 1.0, 1.0, 0.0))
-            self.afAmbientWhite  = [0.25, 0.25, 0.25, 1.00] 
-            self.afAmbientRed    = [0.25, 0.00, 0.00, 1.00] 
-            self.afAmbientGreen  = [0.00, 0.25, 0.00, 1.00] 
-            self.afAmbientBlue   = [0.00, 0.00, 0.25, 1.00] 
-            self.afDiffuseWhite  = [0.75, 0.75, 0.75, 1.00] 
-            self.afDiffuseRed    = [0.75, 0.00, 0.00, 1.00] 
-            self.afDiffuseGreen  = [0.00, 0.75, 0.00, 1.00] 
-            self.afDiffuseBlue   = [0.00, 0.00, 0.75, 1.00] 
-            self.afSpecularWhite = [1.00, 1.00, 1.00, 1.00] 
-            self.afSpecularRed   = [1.00, 0.25, 0.25, 1.00] 
-            self.afSpecularGreen = [0.25, 1.00, 0.25, 1.00] 
-            self.afSpecularBlue  = [0.25, 0.25, 1.00, 1.00] 
-            self.afPropertiesAmbient  = [0.50, 0.50, 0.50, 1.00] 
-            self.afPropertiesDiffuse  = [0.75, 0.75, 0.75, 1.00] 
-            self.afPropertiesSpecular = [1.00, 1.00, 1.00, 1.00] 
-            GL.glLightfv( GL.GL_LIGHT0, GL.GL_AMBIENT,  self.afPropertiesAmbient) 
-            GL.glLightfv( GL.GL_LIGHT0, GL.GL_DIFFUSE,  self.afPropertiesDiffuse) 
-            GL.glLightfv( GL.GL_LIGHT0, GL.GL_SPECULAR, self.afPropertiesSpecular) 
-            GL.glLightModelf(GL.GL_LIGHT_MODEL_TWO_SIDE, 1.0) 
+            self.afAmbientWhite  = [0.25, 0.25, 0.25, 1.00]
+            self.afAmbientRed    = [0.25, 0.00, 0.00, 1.00]
+            self.afAmbientGreen  = [0.00, 0.25, 0.00, 1.00]
+            self.afAmbientBlue   = [0.00, 0.00, 0.25, 1.00]
+            self.afDiffuseWhite  = [0.75, 0.75, 0.75, 1.00]
+            self.afDiffuseRed    = [0.75, 0.00, 0.00, 1.00]
+            self.afDiffuseGreen  = [0.00, 0.75, 0.00, 1.00]
+            self.afDiffuseBlue   = [0.00, 0.00, 0.75, 1.00]
+            self.afSpecularWhite = [1.00, 1.00, 1.00, 1.00]
+            self.afSpecularRed   = [1.00, 0.25, 0.25, 1.00]
+            self.afSpecularGreen = [0.25, 1.00, 0.25, 1.00]
+            self.afSpecularBlue  = [0.25, 0.25, 1.00, 1.00]
+            self.afPropertiesAmbient  = [0.50, 0.50, 0.50, 1.00]
+            self.afPropertiesDiffuse  = [0.75, 0.75, 0.75, 1.00]
+            self.afPropertiesSpecular = [1.00, 1.00, 1.00, 1.00]
+            GL.glLightfv( GL.GL_LIGHT0, GL.GL_AMBIENT,  self.afPropertiesAmbient)
+            GL.glLightfv( GL.GL_LIGHT0, GL.GL_DIFFUSE,  self.afPropertiesDiffuse)
+            GL.glLightfv( GL.GL_LIGHT0, GL.GL_SPECULAR, self.afPropertiesSpecular)
+            GL.glLightModelf(GL.GL_LIGHT_MODEL_TWO_SIDE, 1.0)
 
-            GL.glEnable( GL.GL_LIGHT0 ) 
+            GL.glEnable( GL.GL_LIGHT0 )
 
-            GL.glMaterialfv(GL.GL_BACK,  GL.GL_AMBIENT,   self.afAmbientGreen) 
-            GL.glMaterialfv(GL.GL_BACK,  GL.GL_DIFFUSE,   self.afDiffuseGreen) 
+            GL.glMaterialfv(GL.GL_BACK,  GL.GL_AMBIENT,   self.afAmbientGreen)
+            GL.glMaterialfv(GL.GL_BACK,  GL.GL_DIFFUSE,   self.afDiffuseGreen)
             GL.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT,   self.afAmbientBlue)
-            GL.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE,   self.afDiffuseBlue) 
-            GL.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR,  self.afSpecularWhite) 
-            GL.glMaterialf( GL.GL_FRONT, GL.GL_SHININESS, 25.0) 
+            GL.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE,   self.afDiffuseBlue)
+            GL.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR,  self.afSpecularWhite)
+            GL.glMaterialf( GL.GL_FRONT, GL.GL_SHININESS, 25.0)
             GL.glEnable(GL.GL_COLOR_MATERIAL)
         else:
             #lighting from appli
@@ -311,8 +311,8 @@ class SceneGLWidget(qt.QGLWidget):
         else:
             #Light on
             GL.glEnable(GL.GL_LIGHTING)
-            
-        
+
+
         if 0:
             GL.glEnable(GL.GL_CULL_FACE) #hides bottom face
         else:
@@ -330,7 +330,7 @@ class SceneGLWidget(qt.QGLWidget):
         self._lineWidthStep = GL.glGetFloatv(GL.GL_LINE_WIDTH_GRANULARITY)
         if not hasattr(self._lineWidths, '__iter__'):
             #some versions give back a single value instead
-            self._lineWidths = [self._lineWidthStep, self._lineWidths] 
+            self._lineWidths = [self._lineWidthStep, self._lineWidths]
 
         #This should be at least 256
         self.__maximumTextureLength = GL.glGetIntegerv(GL.GL_MAX_TEXTURE_SIZE)
@@ -395,7 +395,7 @@ class SceneGLWidget(qt.QGLWidget):
         height = self.height()
         #self.setupViewport(width, height)
         self.setupProjection(width, height)
-        
+
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glLoadIdentity()
@@ -404,7 +404,7 @@ class SceneGLWidget(qt.QGLWidget):
         else:
             #apply the selected face
             GL.glMultMatrixf(self.__currentViewPosition)
-            
+
             # center of the scene
             xmin, ymin, zmin, xmax, ymax, zmax = self.scene.getLimits()
             centerX = 0.5 * (xmax + xmin)
@@ -415,7 +415,7 @@ class SceneGLWidget(qt.QGLWidget):
             #azimuthal angle phi in spherical coordinates
             #rotate phi around Z axis
             theta, phi = self.scene.getThetaPhi()
-            sceneConfig = self.scene.tree.root[0].getConfiguration() 
+            sceneConfig = self.scene.tree.root[0].getConfiguration()
             #I have to rotate around the center of the scene
             #taking into account the scale it will use
             scale = sceneConfig['common']['scale']
@@ -433,7 +433,7 @@ class SceneGLWidget(qt.QGLWidget):
 
         #prepare a pure virtual method for derived classes ???
         self.userPaintGL()
-            
+
         if self.doubleBuffer():
             if not self.autoBufferSwap():
                 if not self.__selectingVertex:
@@ -487,7 +487,7 @@ class SceneGLWidget(qt.QGLWidget):
                            qt.QImage.Format_ARGB32).mirrored(0, 1)
         a=qimage.rgbSwapped()
         return a.save(filename)
-    
+
     def drawTree(self, tree):
         childList = tree.childList()
         for subTree in childList:
@@ -506,7 +506,7 @@ class SceneGLWidget(qt.QGLWidget):
             if self.__selectingVertex:
                 if object3D.selected():
                     #force Object3D GL_SELECT equivalent drawing
-                    object3D.setVertexSelectionMode(True) 
+                    object3D.setVertexSelectionMode(True)
                 else:
                     #We'll only draw the object that can be selected ????
                     #or the different objects will take care?
@@ -531,7 +531,7 @@ class SceneGLWidget(qt.QGLWidget):
                         anchorPosition[i] = 0.5 * (xmax + xmin)
                         continue
                     if anchor[i] == 3:
-                        anchorPosition[i] = xmax 
+                        anchorPosition[i] = xmax
                         continue
 
                 TRANSLATE_BEFORE = True
@@ -545,7 +545,7 @@ class SceneGLWidget(qt.QGLWidget):
                 GL.glTranslated(anchorPosition[0],
                                 anchorPosition[1],
                                 anchorPosition[2])
-                                
+
                 #this works
                 #RotX
                 angle = configDict['rotation'][0]*numpy.pi/180.
@@ -555,8 +555,8 @@ class SceneGLWidget(qt.QGLWidget):
                 rotX[0,0] =  1
                 rotX[1,1] =  1
                 rotX[2,2] =  1
-                rotX[3,3] =  1                    
-                rotX[1,1] =  cs; rotX[1,2] = sn   
+                rotX[3,3] =  1
+                rotX[1,1] =  cs; rotX[1,2] = sn
                 rotX[2,1] = -sn; rotX[2,2] = cs
 
                 #RotY
@@ -567,10 +567,10 @@ class SceneGLWidget(qt.QGLWidget):
                 rotY[0,0] =  1
                 rotY[1,1] =  1
                 rotY[2,2] =  1
-                rotY[3,3] =  1                    
+                rotY[3,3] =  1
                 rotY[0,0] =  cs; rotY[0,2] = -sn   #inverted respect to the others
                 rotY[2,0] =  sn; rotY[2,2] =  cs
-                
+
                 #RotZ
                 angle = configDict['rotation'][2]*numpy.pi/180.
                 cs = numpy.cos(angle)
@@ -579,8 +579,8 @@ class SceneGLWidget(qt.QGLWidget):
                 rotZ[0,0] =  1
                 rotZ[1,1] =  1
                 rotZ[2,2] =  1
-                rotZ[3,3] =  1                    
-                rotZ[0,0] =  cs; rotZ[0,1] = sn   
+                rotZ[3,3] =  1
+                rotZ[0,0] =  cs; rotZ[0,1] = sn
                 rotZ[1,0] = -sn; rotZ[1,1] = cs
 
                 #The final matrix
@@ -623,7 +623,7 @@ class SceneGLWidget(qt.QGLWidget):
                     GL.glTranslated(distance[3,0],
                                     distance[3,1],
                                     distance[3,2])
-                    
+
                 if not SCALE_BEFORE:
                     #print "SCALING AFTER"
                     GL.glScalef(*configDict['scale'])
@@ -698,7 +698,7 @@ class SceneGLWidget(qt.QGLWidget):
         M[3, 0] = anchorPosition[0]
         M[3, 1] = anchorPosition[1]
         M[3, 2] = anchorPosition[2]
-                                
+
         #this works
         #RotX
         angle = xRot * numpy.pi/180.
@@ -708,8 +708,8 @@ class SceneGLWidget(qt.QGLWidget):
         rotX[0,0] =  1
         rotX[1,1] =  1
         rotX[2,2] =  1
-        rotX[3,3] =  1                    
-        rotX[1,1] =  cs; rotX[1,2] = sn   
+        rotX[3,3] =  1
+        rotX[1,1] =  cs; rotX[1,2] = sn
         rotX[2,1] = -sn; rotX[2,2] = cs
 
         #RotY
@@ -720,10 +720,10 @@ class SceneGLWidget(qt.QGLWidget):
         rotY[0,0] =  1
         rotY[1,1] =  1
         rotY[2,2] =  1
-        rotY[3,3] =  1                    
+        rotY[3,3] =  1
         rotY[0,0] =  cs; rotY[0,2] = -sn   #inverted respect to the others
         rotY[2,0] =  sn; rotY[2,2] =  cs
-                
+
         #RotZ
         angle = zRot * numpy.pi/180.
         cs = numpy.cos(angle)
@@ -732,10 +732,10 @@ class SceneGLWidget(qt.QGLWidget):
         rotZ[0,0] =  1
         rotZ[1,1] =  1
         rotZ[2,2] =  1
-        rotZ[3,3] =  1                    
-        rotZ[0,0] =  cs; rotZ[0,1] = sn   
+        rotZ[3,3] =  1
+        rotZ[0,0] =  cs; rotZ[0,1] = sn
         rotZ[1,0] = -sn; rotZ[1,1] = cs
-        
+
         #The final rotation matrix
         rotMatrix = numpy.dot(rotZ,numpy.dot(rotY, rotX))
 
@@ -828,7 +828,7 @@ class SceneGLWidget(qt.QGLWidget):
             zmax *= zScale
             zmin *= zScale
         #end of scene scale correction
-                
+
         xmean = 0.5 * (xmax + xmin)
         ymean = 0.5 * (ymax + ymin)
         zmean = 0.5 * (zmax + zmin)
@@ -868,7 +868,7 @@ class SceneGLWidget(qt.QGLWidget):
                        ymin, ymax,
                       -zmax, -zmin)
         #If the limits are set here, it does not seem to be correct
-        #to store them there ...            
+        #to store them there ...
         self.scene.setOrthoLimits(xmin,
                                   ymin,
                                   zmin,
@@ -910,7 +910,7 @@ class SceneGLWidget(qt.QGLWidget):
             #reset projection matrix
             GL.glMatrixMode(GL.GL_PROJECTION)
             GL.glLoadIdentity()
-            
+
             #I can apply zoom below or now
             viewport = GL.glGetIntegerv(GL.GL_VIEWPORT)
             if 0 and self.__test is None:
@@ -931,7 +931,7 @@ class SceneGLWidget(qt.QGLWidget):
 gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
           GLint viewport[4])
 {
-    if (deltax <= 0 || deltay <= 0) { 
+    if (deltax <= 0 || deltay <= 0) {
         return;
     }
 
@@ -1030,7 +1030,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
 
             # draw the small square (but not visible)
             self.paintGL()
-                
+
             # returns to usual mode and get the select buffer
             self.selectBuffer = list(GL.glRenderMode(GL.GL_RENDER))
 
@@ -1149,13 +1149,13 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
 
             index += pow(2,24) * (255 - color[0][0][3])
             if index == backgroundIndex:
-                searchRegion = range(10) 
+                searchRegion = range(10)
                 for i in searchRegion:
                     if index != backgroundIndex:break
                     for k in range(2):
                         if index != backgroundIndex:break
                         if k == 1:
-                            i = -i                        
+                            i = -i
                         if (x+i) >= width:continue
                         if (x+i) < 0:    continue
                         for j in searchRegion:
@@ -1192,7 +1192,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
 
             #make sure everything is fine ...
             qt.QApplication.postEvent(self,
-                    qt.QResizeEvent(qt.QSize(width,height),self.size()))            
+                    qt.QResizeEvent(qt.QSize(width,height),self.size()))
 
             #emit info
             ddict= {}
@@ -1207,7 +1207,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                     values = object3D.getIndexValues(index)
                     ddict['vertex'] = [values[0], values[1], values[2]]
                     ddict['value']  = values[-1]
-                    ddict['legend'] = object3D._configuration['common']['name']                
+                    ddict['legend'] = object3D._configuration['common']['name']
                     ddict['info'] = "X = %f   Y = %f   Z = %f   I = %f"  %\
                                     (values[0], values[1], values[2], values[3])
                 except:
@@ -1240,7 +1240,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 return
         dx = event.x() - self.lastPos.x()
         dy = event.y() - self.lastPos.y()
-        
+
         if event.buttons() & qt.Qt.LeftButton:
             #try to move the scene
             # I need the viewport size and the orthographic limits
@@ -1256,7 +1256,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 self.__currentViewPosition = self.scene.getCurrentViewMatrix()
             self.__currentViewPosition[3,0] += dx
             self.__currentViewPosition[3,1] -= dy
-            self.scene.setCurrentViewMatrix(self.__currentViewPosition)            
+            self.scene.setCurrentViewMatrix(self.__currentViewPosition)
             self.cacheUpdateGL()
         elif event.buttons() & qt.Qt.RightButton:
             self.setCacheEnabled(False)
@@ -1287,7 +1287,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 if SCENE_MATRIX:
                     self.__currentViewPosition = self.scene.getCurrentViewMatrix()
                 self.__currentViewPosition[3,2] -= dy
-                self.scene.setCurrentViewMatrix(self.__currentViewPosition)            
+                self.scene.setCurrentViewMatrix(self.__currentViewPosition)
                 self.cacheUpdateGL()
         else:
             if DEBUG:
@@ -1307,7 +1307,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 # glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z)
                 z = GL.glReadPixels(x, int(y), 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
                 z = z[0]
-            
+
             #print numpy.dot(numpy.linalg.inv(self.__sceneModelViewMatrix), xyz)
             #x, y, z, w = numpy.dot(numpy.linalg.inv(self.__sceneModelViewMatrix), xyz)
             ddict = {}
@@ -1329,7 +1329,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                                    view=view)
             ddict['xselected'] = glX
             ddict['yselected'] = glY
-            ddict['zselected'] = glZ                        
+            ddict['zselected'] = glZ
             if DEBUG:
                 print("Emitting mouseMoved signal", ddict)
             self.sigMouseMoved.emit(ddict)
@@ -1339,7 +1339,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
         qt.QApplication.postEvent(self,
                  qt.QResizeEvent(self.size(),self.size()))
 
-    
+
     def print3D(self):
         """
         #This worked on Qt3
@@ -1368,7 +1368,7 @@ if __name__ == '__main__':
     app = qt.QApplication(sys.argv)
     class MyObject(Object3DBase.Object3D):
         def drawObject(self):
-            #GL.glShadeModel(GL.GL_FLAT)  
+            #GL.glShadeModel(GL.GL_FLAT)
             GL.glShadeModel(GL.GL_SMOOTH) #in order not to have just blue face
             GL.glBegin(GL.GL_TRIANGLE_STRIP)
             GL.glColor3f(1., 0., 0.)      # Red
@@ -1382,7 +1382,7 @@ if __name__ == '__main__':
     ob3D1 = MyObject()
     ob3D1.setLimits(-25, 0.0, 0.0, 25, 25, 0.0)
 
-    ob3D2 = MyObject()    
+    ob3D2 = MyObject()
     ob3D2.setLimits(-25, 0.0, 0.0, 25, 25, 0.0)
 
 
@@ -1415,7 +1415,7 @@ if __name__ == '__main__':
             window.setZoomFactor(window.getZoomFactor() / 1.1)
         else:
             window.setZoomFactor(window.getZoomFactor() * 1.1)
-            
+
         print("NEW ZOOM = ", window.getZoomFactor())
     window.sigObjectSelected.connect(mySlot)
     window.show()
