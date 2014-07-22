@@ -67,3 +67,30 @@ except:
 
 from .pymca import StackSimpleFitWindow
 from .pymca import QStackWidget
+
+# Make all other modules available via the __path__ variable
+# This is a bit redundant because the same effect can be achieved with
+# from PyMca5.PyMca import whatever
+import os
+import glob
+
+def getPackages(directory):
+    packages = []
+    fileList = glob.glob(os.path.join(directory, "*", "__init__.py"))
+    for fileName in fileList:
+        dirName = os.path.dirname(fileName)
+        packages.append(dirName)
+        packages += getPackages(dirName)
+    return packages
+
+
+# this is the package level directory PyMcaGui
+baseDirectory = os.path.dirname(__file__)
+__path__ += [baseDirectory]
+for directory in ["io", "math", "misc",
+                  "physics", "plotting", "pymca"]:
+    tmpDir = os.path.join(baseDirectory, directory)
+    if os.path.exists(os.path.join(tmpDir, "__init__.py")):
+        __path__ += [tmpDir]
+    __path__ += getPackages(tmpDir)
+
