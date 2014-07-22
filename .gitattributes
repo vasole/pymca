@@ -17,6 +17,7 @@ EGRID.TXT -text
 *.icns -text
 *.png -text
 *.ico -text
+*.xml -text
 
 # sets how git diffs will be displayed
 *.py diff=python
