@@ -44,7 +44,7 @@ try:
     HDF5SUPPORT = True
 except ImportError:
     HDF5SUPPORT = False
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaPhysics.xrf import McaAdvancedFitBatch
 from PyMca5.PyMcaGui.physics.xrf import QtMcaAdvancedFitReport
 from PyMca5.PyMcaCore import EdfFileLayer

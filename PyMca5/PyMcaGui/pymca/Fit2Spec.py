@@ -31,8 +31,8 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import sys
 import time
-import McaCustomEvent
-import ConfigDict
+from . import McaCustomEvent
+from PyMca5.PyMcaIO import ConfigDict
 ROIWIDTH = 250.
 
 from PyMca5.PyMcaGui import PyMcaQt as qt

@@ -46,7 +46,7 @@ try:
     HDF5SUPPORT = True
 except ImportError:
     HDF5SUPPORT = False
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from . import ConcentrationsTool
 
 

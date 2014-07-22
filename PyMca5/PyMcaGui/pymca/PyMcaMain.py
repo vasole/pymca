@@ -192,7 +192,7 @@ from PyMca5.PyMcaGui.pymca import PyMcaPostBatch
 from PyMca5.PyMcaGui import RGBCorrelator
 from PyMca5.PyMcaGui import MaterialEditor
 
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import PyMcaDirs
 
 XIA_CORRECT = False

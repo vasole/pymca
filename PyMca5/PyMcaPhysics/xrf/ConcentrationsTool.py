@@ -723,7 +723,7 @@ def main():
     import sys
     import getopt
 
-    from PyMca5 import ConfigDict
+    from PyMca5.PyMcaIO import ConfigDict
 
     if len(sys.argv) > 1:
         options = ''

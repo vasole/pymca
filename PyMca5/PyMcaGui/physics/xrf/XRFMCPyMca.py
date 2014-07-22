@@ -36,7 +36,7 @@ import time
 import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDirs as xrfmc_dirs
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import SubprocessLogWidget
 from PyMca5.PyMcaPhysics.xrf.XRFMC import XRFMCHelper
 

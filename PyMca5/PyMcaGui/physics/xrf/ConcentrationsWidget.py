@@ -877,7 +877,7 @@ if __name__ == "__main__":
     import copy
     # import sys
     # from PyMca5 import ConcentrationsTool
-    from PyMca5 import ConfigDict
+    from PyMca5.PyMcaIO import ConfigDict
     if len(sys.argv) > 1:
         options = ''
         longoptions = ['flux=', 'time=', 'area=', 'distance=', 'attenuators=',

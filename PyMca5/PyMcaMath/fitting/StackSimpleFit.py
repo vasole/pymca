@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from . import SimpleFitModule
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs

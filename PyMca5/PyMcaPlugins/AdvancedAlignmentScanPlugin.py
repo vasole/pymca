@@ -33,7 +33,7 @@ import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDataDir, PyMcaDirs
 from PyMca5.PyMcaGui import PyMcaFileDialogs
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaMath.fitting import SpecfitFunctions as SF
 from PyMca5.PyMcaMath import SNIPModule as snip
 from PyMca5.PyMcaMath.fitting.Gefit import LeastSquaresFit as LSF

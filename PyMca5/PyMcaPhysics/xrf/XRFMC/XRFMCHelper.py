@@ -36,7 +36,7 @@ import tempfile
 import subprocess
 import time
 import shutil
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from . import XMSOParser
 
 getXMSOFileFluorescenceInformation =\

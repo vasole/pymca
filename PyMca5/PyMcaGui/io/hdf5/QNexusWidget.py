@@ -46,7 +46,7 @@ from . import HDF5Widget
 from . import HDF5Info
 from . import HDF5CounterTable
 from . import HDF5DatasetTable
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 if "PyMcaDirs" in sys.modules:
     from PyMca5 import PyMcaDirs
 

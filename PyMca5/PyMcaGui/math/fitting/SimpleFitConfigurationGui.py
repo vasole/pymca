@@ -33,7 +33,7 @@ import numpy
 from . import SimpleFitControlWidget
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5 import ConfigDict
+from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import PyMca_Icons as Icons
 from PyMca5 import PyMcaDirs
 
