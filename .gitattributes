@@ -14,6 +14,9 @@
 *.lib -text
 *.1 -text
 EGRID.TXT -text
+*.icns -text
+*.png -text
+*.ico -text
 
 # sets how git diffs will be displayed
 *.py diff=python
