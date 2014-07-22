@@ -108,7 +108,7 @@ except:
 from PyMca5.PyMcaGui.pymca.PyMca_help import HelpDict
 from PyMca5 import PyMcaDataDir
 import os
-__version__ = "5.0.0-alpha3"
+__version__ = "5.0.0-beta1"
 
 if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
