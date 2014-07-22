@@ -1,0 +1,33 @@
+package:
+  name: pymca
+  version: master
+
+source:
+  git_url: https://github.com/vasole/pymca.git
+  git_tag: master
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python
+    - cython
+    - numpy
+    - pyqt
+  run:
+    - python
+    - numpy
+    - pyqt
+    - matplotlib
+    - h5py
+
+test:
+  imports:
+    - PyMca5
+
+about:
+  license: MIT
+  home: http://pymca.sourceforge.net
+  summary: Resources for synchrotron data analysis
+
