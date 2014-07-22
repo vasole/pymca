@@ -16,4 +16,7 @@ baseDirectory = os.path.dirname(os.path.dirname(__file__))
 __path__ += [baseDirectory]
 for directory in ["PyMcaCore", "PyMcaGraph", "PyMcaGui",
                   "PyMcaIO", "PyMcaMath", "PyMcaMisc", "PyMcaPhysics"]:
-    __path__ += getPackages(os.path.join(baseDirectory, directory))
+    tmpDir = os.path.join(baseDirectory, directory)
+    if os.path.exists(os.path.join(tmpDir, "__init__.py")):
+        __path__ += [tmpDir]
+    __path__ += getPackages(tmpDir)

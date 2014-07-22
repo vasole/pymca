@@ -17,7 +17,8 @@ except:
 from .PyMcaMath.fitting import SpecfitFuns, Gefit, Specfit
 from .PyMcaMath.fitting import SpecfitFunctions
 
-# this one is slow and responsible of the lost of time
+# this one is slow and responsible of the lost of time ...
+# should I force to use from PyMca5.PyMca import Elements to gain time?
 from .PyMcaPhysics import Elements
 
 #all the rest can be imported using from PyMca5.PyMca import ...
