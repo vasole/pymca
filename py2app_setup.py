@@ -87,6 +87,7 @@ setup(
 
 # move to the proper place
 os.system("mv -f ./dist ../dist")
+os.chdir(os.path.dirname(PyMcaInstallationDir))
 
 #Command line call to Platypus ...
 platypusFile = '/usr/local/bin/platypus'
@@ -105,10 +106,10 @@ if os.path.exists(platypusFile):
             '-I',
             'ESRF.sole.PyMca%s' % __version__,
             '-y', #force overwrite
-            '-f'
-            '/Users/sole/svnsourceforge/pymca/dist/PyMcaMain.app']
+            '-f',
+            os.path.join(os.getcwd(),'dist', 'PyMcaMain.app')]
     if BUNDLE_ICON is not None:
         args.append('-i')
         args.append(BUNDLE_ICON)
-    args.append('/Users/sole/svnsourceforge/pymca/PlatypusScript')
+    args.append(os.path.join(os.getcwd(), 'PlatypusScript'))
     process = subprocess.call(args)
