@@ -27,6 +27,7 @@ __author__ = "T. Rueter - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from .PyMca_Icons import IconDict
 
@@ -548,11 +549,18 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
         if convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)):
             checkState = qt.Qt.Checked
         else:
-            checkState = qt.Qt.Unchecked
-        # Remember the paint device
-        originalPaintDevice = painter.device()
-        # Painter needs to end before
-        painter.end()
+            checkState = qt.Qt.Unchecked            
+        if sys.platform.upper().startswith("DARWIN"):
+            MAC_QT_4_8_4_ISSUE = True
+        else:
+            MAC_QT_4_8_4_ISSUE = False
+        if MAC_QT_4_8_4_ISSUE:
+            painter.save()
+        else:
+            # Remember the paint device
+            originalPaintDevice = painter.device()
+            # Painter needs to end before
+            painter.end()
         try:
             cb = self.cbDict[idx]
         except KeyError:
@@ -566,8 +574,10 @@ class LegendListItemWidget(qt.QAbstractItemDelegate):
                              qt.QWidget.DrawChildren)
 
         # Reset painter
-        painter.begin(originalPaintDevice)
-        #painter.restore()
+        if MAC_QT_4_8_4_ISSUE:
+            painter.restore()
+        else:        
+            painter.begin(originalPaintDevice)
         return
 
     def editorEvent(self, event, model, option, modelIndex):
