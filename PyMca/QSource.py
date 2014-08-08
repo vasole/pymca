@@ -137,8 +137,11 @@ class QSource(qt.QObject):
             if DEBUG:
                 print("In loop")
             dummy = list(self.surveyDict.keys())
+            eventsToPost = {}
             #for key in self.surveyDict:
             for key in dummy:
+                if key not in eventsToPost: 
+                    eventsToPost[key] = []
                 if self.isUpdated(self.sourceName, key):
                     if DEBUG:
                         print(self.sourceName,key,"is updated")
@@ -153,7 +156,7 @@ class QSource(qt.QObject):
                             if 'scanselection' in self.surveyDict[key][0].info:
                                 scanselection = \
                                   self.surveyDict[key][0].info['scanselection']
-                            if ('key' == 'SCAN_D') or scanselection:
+                            if (key == 'SCAN_D') or scanselection:
                                 event.dict['scanselection'] = True
                             else:
                                 event.dict['scanselection'] = False
@@ -161,9 +164,11 @@ class QSource(qt.QObject):
                                 if QTVERSION < '4.0.0':
                                     qt.qApp.processEvents()
                                     qt.qApp.lock()
-                                # Should one make a list of events to prevent
-                                # posting the same event twice?
-                                qt.QApplication.postEvent(self, event)
+                                    # Should one make a list of events to prevent
+                                    # posting the same event twice?
+                                    qt.QApplication.postEvent(self, event)
+                                else:
+                                    eventsToPost[key].append(event)
                             finally:
                                 if QTVERSION < '4.0.0':
                                     qt.qApp.unlock()
@@ -175,6 +180,9 @@ class QSource(qt.QObject):
                             print("key error in loop")
                         pass
             if QTVERSION > '4.0.0':
+                for key in eventsToPost:
+                    for event in eventsToPost[key]:
+                        qt.QApplication.postEvent(self, event)
                 qt.qApp.processEvents()
             time.sleep(self._pollTime)
             if DEBUG:

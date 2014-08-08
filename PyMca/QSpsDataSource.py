@@ -78,8 +78,8 @@ class QSpsDataSource(QSource.QSource):
 
         idtolook = [] 
         ddict['selectionlist'] = []
-        for object in self.surveyDict[key]:
-            idtolook.append(id(object))
+        for oobject in self.surveyDict[key]:
+            idtolook.append(id(oobject))
                         
         if key in self.selections.keys():
             n = len(self.selections[key])
@@ -108,7 +108,7 @@ class QSpsDataSource(QSource.QSource):
                         sel['scanselection'] = info.get('scanselection', False) 
                         sel['imageselection'] = info.get('imageselection', False) 
                         ddict['selectionlist'].append(sel)
-                    else:
+                    #else:
                         del self.selections[key][i]
             
                 if QTVERSION < '4.0.0':
