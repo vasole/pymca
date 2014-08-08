@@ -72,14 +72,19 @@ class BAXSCSVFileParser(object):
             line = _fileObject.readline()
         header.append(line)
         line = _fileObject.readline()
+        line = line.replace('"',"")
         splitLine = line.split(",")
         data = []
         while(len(splitLine)):
             if len(splitLine[0]):
-                data.append([float(x) for x in splitLine if len(x) > 0])
+                try:
+                    data.append([float(x) for x in splitLine if len(x) > 0])
+                except ValueError:
+                    break
             else:
                 break
             line = _fileObject.readline()
+            line = line.replace('"',"")
             splitLine = line.split(",")
         _fileObject.close()
         dataColumnNames = [x for x in header[-1].split(",") if len(x) > 0]
@@ -133,6 +138,8 @@ class BAXSCSVScan(SpecFileAbstractClass.SpecFileAbstractScan):
         return 1
         
     def mca(self, number):
+        # it gives the last column (some files have three columns)
+        # corresponding to channels, counts and (probably) corrected counts
         if number <= 0:
             raise IndexError("Mca numbering starts at 1")
         elif number > self.nbmca():
