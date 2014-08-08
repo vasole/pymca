@@ -22,7 +22,7 @@ def getMultilayerFluorescence(multilayerSample,
                               alphaOut     = None,
                               cascade = None,
                               detector= None,
-                              forcepresent=None,
+                              elementsFromMatrix=False,
                               secondary=None,
                               materials=None):
     if materials is not None:
@@ -66,8 +66,6 @@ def getMultilayerFluorescence(multilayerSample,
     # the attenuators
     if attenuatorList is not None:
         if len(attenuatorList) > 0:
-            if len(attenuatorList[0]) != 4:
-                raise TypeError("Attenuators must include funny factor term")
             xrf.setAttenuators(attenuatorList)
 
     # the geometry
@@ -91,6 +89,21 @@ def getMultilayerFluorescence(multilayerSample,
                                             thickness=detector[2],
                                             funny=detector[3])
         xrf.setDetector(detectorInstance)
+    else:
+        print("DETECTOR HAS TO BE REMOVED!!!!")
+
+    if elementsFromMatrix:
+        newElementsList = []
+        for peak in elementsList:
+            ele = peak.split()[0]
+            considerIt = False
+            for layer in multilayerSample:
+                composition = xcom.getComposition(layer[0])
+                if ele in composition:
+                    considerIt = True
+            if considerIt:
+                newElementsList.append(peak)
+        elementsList = newElementsList
 
     # the detector distance and solid angle ???
     if elementsList in [None, []]:
@@ -104,22 +117,23 @@ def getMultilayerFluorescence(multilayerSample,
         else:
             actualElementList = elementsList
     else:
-        print("elementsList = ", elementsList)
-        ele = "Fe K 0"
-        actualElementList = ["Fe K 0"]
+        actualElementList = []
+        i = 0
+        for layer in multilayerSample:
+            composition = xcom.getComposition(layer[0])
+            for element in composition.keys():
+                actualElementList.append("%s %s %d" % (element, "K", i))
+            i += 1
+
     return xrf.getMultilayerFluorescence(actualElementList, xcom, \
-                                         secondary=secondary)
+                                         secondary=secondary,
+                                         useMassFractions=elementsFromMatrix)
 
-
-def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration):
-    # This is highly inefficient because one has to perform all the parsing
-    # that has been already made when configuring the fit. However, this is
-    # currently the simplest implementation that can work as standalone given
-    # the fit configuration
-
-    # the list of defined elements
-    elementsList = xcom.getElementNames()
-
+def _getFisxMaterials(fitConfiguration):
+    """
+    Given a PyMca fir configuration, return the list of fisx materials to be
+    used by the library for calculation purposes.
+    """
     # define all the needed materials
     inputMaterialDict = fitConfiguration.get("materials", {})
     inputMaterialList = list(inputMaterialDict.keys())
@@ -128,14 +142,12 @@ def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration):
     processedMaterialList = []
 
     while (len(processedMaterialList) != nMaterials):
-        print processedMaterialList
         for i in range(nMaterials):
             materialName = inputMaterialList[i]
             if materialName in processedMaterialList:
                 # already defined
                 pass
             else:
-                print("processing ", materialName)
                 thickness = inputMaterialDict[materialName].get("Thickness", 1.0)
                 density = inputMaterialDict[materialName].get("Density", 1.0)
                 comment = inputMaterialDict[materialName].get("Comment", "")
@@ -164,8 +176,9 @@ def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration):
                   fisxMaterial.setComposition(composition)
                   fisxMaterials.append(fisxMaterial)
                   processedMaterialList.append(materialName)
+    return fisxMaterials
 
-    # extract beam parameters
+def _getBeam(fitConfiguration):
     inputEnergy = fitConfiguration['fit'].get('energy', None)
     if inputEnergy in [None, ""]:
         raise ValueError("Beam energy has to be specified")
@@ -193,10 +206,9 @@ def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration):
                         characteristicList.append(1)
                     else:
                         characteristicList.append(0)
-    #    xrf.setBeam(energyList, weights=weightList,
-    #                        characteristic=characteristicList)
+    return energyList, weightList, characteristicList
 
-    # extract beamFiltes, matrix, geometry, attenuators and detector
+def _getFiltersMatrixAttenuatorsDetectorGeometry(fitConfiguration):
     useMatrix = False
     attenuatorList =[]
     filterList = []
@@ -205,8 +217,8 @@ def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration):
         if not fitConfiguration['attenuators'][attenuator][0]:
             # set to be ignored
             continue
-        if len(fitConfiguration['attenuators'][attenuator]) == 4:
-            fitConfiguration['attenuators'][attenuator].append(1.0)
+        #if len(fitConfiguration['attenuators'][attenuator]) == 4:
+        #    fitConfiguration['attenuators'][attenuator].append(1.0)
         if attenuator.upper() == "MATRIX":
             if fitConfiguration['attenuators'][attenuator][0]:
                 useMatrix = True
@@ -216,11 +228,11 @@ def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration):
             else:
                 useMatrix = False
         elif attenuator.upper() == "DETECTOR":
-            detector = fitConfiguration['attenuators'][attenuator][1:]
-        elif attenuator.upper()[0:-1] == "BEAMFILTER":
-            filterList.append(fitConfiguration['attenuators'][attenuator][1:])
+            detector = fitConfiguration['attenuators'][attenuator][1:5]
+        elif attenuator.upper().startswith("BEAMFILTER"):
+            filterList.append(fitConfiguration['attenuators'][attenuator][1:5])
         else:
-            attenuatorList.append(fitConfiguration['attenuators'][attenuator][1:])
+            attenuatorList.append(fitConfiguration['attenuators'][attenuator][1:5])
     if not useMatrix:
         raise ValueError("Sample matrix has to be specified!")
 
@@ -234,37 +246,92 @@ def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration):
                 multilayerSample.append(fitConfiguration['multilayer'][layer][1:])
     else:
         multilayerSample = [matrix]
+    return filterList, multilayerSample, attenuatorList, detector, \
+           alphaIn, alphaOut
 
-    # The elements and families to be considered
+def _getPeakList(fitConfiguration):
     elementsList = []
     for element in fitConfiguration['peaks'].keys():
-          if len(element) > 1:
-              ele = element[0:1].upper() + element[1:2].lower()
-          else:
-              ele = element.upper()
-          if type(fitConfiguration['peaks'][element]) == type([]):
-              for peak in fitConfiguration['peaks'][element]:
-                  elementsList.append(ele + " " + peak)
-          else:
-              for peak in [fitConfiguration['peaks'][element]]:
-                  elementsList.append(ele + " " + peak)
+        if len(element) > 1:
+            ele = element[0:1].upper() + element[1:2].lower()
+        else:
+            ele = element.upper()
+        if type(fitConfiguration['peaks'][element]) == type([]):
+            for peak in fitConfiguration['peaks'][element]:
+                elementsList.append(ele + " " + peak)
+        else:
+            for peak in [fitConfiguration['peaks'][element]]:
+                elementsList.append(ele + " " + peak)
     elementsList.sort()
+    return elementsList
 
-    return getFisxCorrectionFactors(multilayerSample,
-                              energyList,
-                              weightList = weightList,
-                              flagList = characteristicList,
-                              fulloutput = None,
-                              beamFilters = filterList,
-                              elementsList = elementsList,
-                              attenuatorList = attenuatorList,
-                              alphaIn = alphaIn,
-                              alphaOut = alphaOut,
-                              cascade = None,
-                              detector = detector,
-                              forcepresent=None,
-                              secondary=True,
-                              materials=fisxMaterials)
+def getMultilayerFluorescenceFromFitConfiguration(fitConfiguration,
+                                                  elementsFromMatrix=False):
+    return _fisxFromFitConfigurationAction(fitConfiguration,
+                                        action="fluorescence",
+                                        elementsFromMatrix=elementsFromMatrix)
+
+def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration,
+                                                  elementsFromMatrix=False):
+    return _fisxFromFitConfigurationAction(fitConfiguration,
+                                        action="correction",
+                                        elementsFromMatrix=elementsFromMatrix)
+
+def _fisxFromFitConfigurationAction(fitConfiguration,
+                                    action=None,
+                                    elementsFromMatrix=False):
+    if action is None:
+        raise ValueError("Please specify action")
+    # This is highly inefficient because one has to perform all the parsing
+    # that has been already made when configuring the fit. However, this is
+    # currently the simplest implementation that can work as standalone given
+    # the fit configuration
+
+    # the fisx materials list
+    fisxMaterials = _getFisxMaterials(fitConfiguration)
+
+    # extract beam parameters
+    energyList, weightList, characteristicList = _getBeam(fitConfiguration)
+
+    # extract beamFilters, matrix, geometry, attenuators and detector
+    filterList, multilayerSample, attenuatorList, detector, alphaIn, alphaOut \
+                = _getFiltersMatrixAttenuatorsDetectorGeometry(fitConfiguration)
+
+    # The elements and families to be considered
+    elementsList = _getPeakList(fitConfiguration)
+
+    if action.upper() == "FLUORESCENCE":
+        return getMultilayerFluorescence(multilayerSample,
+                                      energyList,
+                                      weightList = weightList,
+                                      flagList = characteristicList,
+                                      fulloutput = None,
+                                      beamFilters = filterList,
+                                      elementsList = elementsList,
+                                      attenuatorList = attenuatorList,
+                                      alphaIn = alphaIn,
+                                      alphaOut = alphaOut,
+                                      cascade = None,
+                                      detector = detector,
+                                      elementsFromMatrix=elementsFromMatrix,
+                                      secondary=True,
+                                      materials=fisxMaterials)
+    else:
+        return getFisxCorrectionFactors(multilayerSample,
+                                      energyList,
+                                      weightList = weightList,
+                                      flagList = characteristicList,
+                                      fulloutput = None,
+                                      beamFilters = filterList,
+                                      elementsList = elementsList,
+                                      attenuatorList = attenuatorList,
+                                      alphaIn = alphaIn,
+                                      alphaOut = alphaOut,
+                                      cascade = None,
+                                      detector = detector,
+                                      elementsFromMatrix=elementsFromMatrix,
+                                      secondary=True,
+                                      materials=fisxMaterials)
 
 def getFisxCorrectionFactors(*var, **kw):
     expectedFluorescence = getMultilayerFluorescence(*var, **kw)
@@ -307,23 +374,6 @@ def getFisxCorrectionFactorsFromFitConfigurationFile(fileName):
     d = ConfigDict.ConfigDict()
     d.read(fileName)
     return getFisxCorrectionFactorsFromFitConfiguration(d)
-
-"""
-import numpy
-def testThickSample():
-    #both angles are 45
-    omega = 0.3546
-    muPhoto = 41.85
-    muTotal0 = 46.7434
-    muTotalF = 145.63
-    # air
-    TAir = numpy.exp(-19.2544*0.0012648*5)
-    # Be
-    TBe = numpy.exp(-2.088*1.848*0.002)
-    # efficiency
-    Ed = 1.0 - numpy.exp(-122.06*2.33*0.0350)
-    return ((omega * muPhoto) / (muTotal0+muTotalF)) * TAir * TBe * Ed
-"""
 
 if __name__ == "__main__":
     import sys
