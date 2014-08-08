@@ -1,32 +1,35 @@
 #/*##########################################################################
-# Copyright (C) 2004-2012 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
 #
-# This toolkit is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation; either version 2 of the License, or (at your option)
-# any later version.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 #
-# PyMca is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-# details.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 #
-# You should have received a copy of the GNU General Public License along with
-# PyMca; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 #
-# PyMca follows the dual licensing model of Riverbank's PyQt and cannot be
-# used as a free plugin for a non-free program.
-#
-# Please contact the ESRF industrial unit (industry@esrf.fr) if this license
-# is a problem for you.
 #############################################################################*/
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-from PyMca import QSource
-from PyMca import SpsDataSource
+from PyMca5.PyMcaGui.pymca import QSource
+from PyMca5.PyMcaCore import SpsDataSource
 qt = QSource.qt
 QTVERSION = qt.qVersion()
 
@@ -47,8 +50,8 @@ class QSpsDataSource(QSource.QSource):
         #easy speed up by making a local reference
         self.sourceName = self.__dataSource.sourceName
         self.isUpdated  = self.__dataSource.isUpdated
-        self.sourceType = self.__dataSource.sourceType 
-        self.getKeyInfo = self.__dataSource.getKeyInfo 
+        self.sourceType = self.__dataSource.sourceType
+        self.getKeyInfo = self.__dataSource.getKeyInfo
         self.refresh    = self.__dataSource.refresh
         self.getSourceInfo = self.__dataSource.getSourceInfo
 
@@ -60,7 +63,7 @@ class QSpsDataSource(QSource.QSource):
                     return getattr(self.__dataSource, attr)
                 except:
                     pass
-        raise AttributeError        
+        raise AttributeError
 
     def getDataObject(self,key_list,selection=None, poll=True):
         if poll:
@@ -76,11 +79,11 @@ class QSpsDataSource(QSource.QSource):
         ddict['SourceType'] = SOURCE_TYPE
         key = ddict['Key']
 
-        idtolook = [] 
+        idtolook = []
         ddict['selectionlist'] = []
-        for oobject in self.surveyDict[key]:
-            idtolook.append(id(oobject))
-                        
+        for object in self.surveyDict[key]:
+            idtolook.append(id(object))
+
         if key in self.selections.keys():
             n = len(self.selections[key])
             if n:
@@ -105,36 +108,29 @@ class QSpsDataSource(QSource.QSource):
                         sel['legend'] = info['legend']
                         legendlist.append(info['legend'])
                         sel['targetwidgetid'] = info.get('targetwidgetid', None)
-                        sel['scanselection'] = info.get('scanselection', False) 
-                        sel['imageselection'] = info.get('imageselection', False) 
+                        sel['scanselection'] = info.get('scanselection', False)
+                        sel['imageselection'] = info.get('imageselection', False)
                         ddict['selectionlist'].append(sel)
                     #else:
                         del self.selections[key][i]
-            
-                if QTVERSION < '4.0.0':
-                    self.emit(qt.PYSIGNAL("updated"), (ddict,))
-                else:
-                    self.emit(qt.SIGNAL("updated"), ddict)
+
+                self.sigUpdated.emit(ddict)
             else:
                 print("No info????")
-        
+
 if __name__ == "__main__":
     try:
         specname=sys.argv[1]
-        arrayname=sys.argv[2]        
+        arrayname=sys.argv[2]
     except:
         print("Usage: SpsDataSource <specversion> <arrayname>")
         sys.exit()
     app=qt.QApplication([])
-    obj = QSpsDataSource(specname)    
+    obj = QSpsDataSource(specname)
     def mytest(ddict):
         print(ddict['Key'])
     app.mytest = mytest
     data = obj.getDataObject(arrayname,poll=True)
-    if QTVERSION < '4.0.0':
-        qt.QObject.connect(obj,qt.PYSIGNAL('updated'),mytest) 
-        app.exec_loop()
-    else:
-        qt.QObject.connect(obj,qt.SIGNAL('updated'),mytest) 
-        app.exec_()
-    
+    obj.sigUpdated.connect(mytest)
+    app.exec_()
+
