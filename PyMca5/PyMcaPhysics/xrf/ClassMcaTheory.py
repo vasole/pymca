@@ -237,8 +237,9 @@ class McaTheory(object):
             for attenuator in self.config['attenuators'].keys():
                 if not self.config['attenuators'][attenuator][0]:
                     continue
-                if len(self.config['attenuators'][attenuator]) == 4:
-                    self.config['attenuators'][attenuator].append(1.0)
+                # this should not be needed any longer
+                #if len(self.config['attenuators'][attenuator]) == 4:
+                #    self.config['attenuators'][attenuator].append(1.0)
                 if attenuator.upper() == "MATRIX":
                     if self.config['attenuators'][attenuator][0]:
                         usematrix = 1
