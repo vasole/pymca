@@ -39,6 +39,7 @@ from PyMca5.PyMcaIO import Fit2DChiFileParser
 from PyMca5.PyMcaIO import APSMEDFileParser
 from PyMca5.PyMcaIO import SRSFileParser
 from PyMca5.PyMcaIO import BAXSCSVFileParser
+from PyMca5.PyMcaIO import OlympusCSVFileParser
 try:
     from PyMca5.PyMcaIO import SPXFileParser
     SPX = True
@@ -122,6 +123,9 @@ def Specfile(filename):
             return SRSFileParser.SRSFileParser(filename)
         if (not qxas) and (not amptek) and BAXSCSVFileParser.isBAXSCSVFile(filename):
             return BAXSCSVFileParser.BAXSCSVFileParser(filename)
+        if (not qxas) and (not amptek) and \
+           OlympusCSVFileParser.isOlympusCSVFile(filename):
+            return OlympusCSVFileParser.OlympusCSVFileParser(filename)
         output = specfilewrapper(filename, amptek=amptek, qxas=qxas)
     return output
 
