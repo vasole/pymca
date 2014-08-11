@@ -50,7 +50,7 @@ SF_NMCA        = 8        # multi mca (more than 1 mca per acq)
 SF_UMCA        = 16       # mca number does not match pts number
 
 
-class SpecFileDataSource:
+class SpecFileDataSource(object):
     Error= "SpecFileDataError"
 
     def __init__(self, nameInput):

@@ -293,6 +293,8 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             info= self.data.getSourceInfo()
         except:
             #old
+            if not hasattr(self.data, "GetSourceInfo"):
+                raise
             info= self.data.GetSourceInfo()
         self.scans= []
         after= None
