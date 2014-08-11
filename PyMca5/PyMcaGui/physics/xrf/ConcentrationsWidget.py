@@ -44,20 +44,7 @@ XRFMC_FLAG = False
 if QTVERSION > '4.0.0':
     XRFMC_FLAG = True
 
-if QTVERSION < '4.0.0':
-    import qttable
-
-    class QTable(qttable.QTable):
-        def __init__(self, parent=None, name=""):
-            qttable.QTable.__init__(self, parent, name)
-            self.rowCount = self.numRows
-            self.columnCount = self.numCols
-            self.setRowCount = self.setNumRows
-            self.setColumnCount = self.setNumCols
-            self.resizeColumnToContents = self.adjustColumn
-
-else:
-    QTable = qt.QTableWidget
+QTable = qt.QTableWidget
 
 from PyMca5.PyMcaPhysics import ConcentrationsTool
 from PyMca5.PyMcaPhysics import Elements
@@ -162,10 +149,7 @@ class Concentrations(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("%s" % sys.exc_info()[1])
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
 
     def closeEvent(self, event):
         qt.QWidget.closeEvent(self, event)
@@ -179,12 +163,11 @@ class Concentrations(qt.QWidget):
                                 *var, **kw)
 
         sthread.start()
-        if QTVERSION < '4.0.0':
-            msg = qt.QDialog(self, "Please Wait", 1, qt.Qt.WStyle_NoBorder)
-        else:
-            msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
-            msg.setModal(0)
-            msg.setWindowTitle("Please Wait")
+
+        msg = qt.QDialog(self, qt.Qt.FramelessWindowHint)
+        msg.setModal(0)
+        msg.setWindowTitle("Please Wait")
+
         layout = qt.QHBoxLayout(msg)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -202,30 +185,17 @@ class Concentrations(qt.QWidget):
         qApp.processEvents()
         i = 0
         ticks = ['-', '\\', "|", "/", "-", "\\", '|', '/']
-        if QTVERSION < '4.0.0':
-            while (sthread.running()):
-                i = (i + 1) % 8
-                l1.setText(ticks[i])
-                l3.setText(" " + ticks[i])
-                qApp = qt.QApplication.instance()
-                qApp.processEvents()
-                time.sleep(1)
-            msg.close(True)
-        else:
-            while (sthread.isRunning()):
-                i = (i + 1) % 8
-                l1.setText(ticks[i])
-                l3.setText(" " + ticks[i])
-                qApp = qt.QApplication.instance()
-                qApp.processEvents()
-                time.sleep(1)
-            msg.close()
+        while (sthread.isRunning()):
+            i = (i + 1) % 8
+            l1.setText(ticks[i])
+            l3.setText(" " + ticks[i])
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
+            time.sleep(1)
+        msg.close()
         result = sthread._result
         del sthread
-        if QTVERSION < '4.0.0':
-            self.raiseW()
-        else:
-            self.raise_()
+        self.raise_()
         return result
 
 
@@ -272,14 +242,10 @@ class ConcentrationsWidget(qt.QWidget):
         layout = qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        if QTVERSION < '4.0.0':
-            buttonGroup = qt.QVButtonGroup("Estimate concentrations", self)
-            buttonGroup.setExclusive(True)
-        else:
-            buttonGroup = qt.QGroupBox(self)
-            buttonGroup.layout = qt.QVBoxLayout(buttonGroup)
-            buttonGroup.layout.setContentsMargins(0, 0, 0, 0)
-            buttonGroup.layout.setSpacing(0)
+        buttonGroup = qt.QGroupBox(self)
+        buttonGroup.layout = qt.QVBoxLayout(buttonGroup)
+        buttonGroup.layout.setContentsMargins(0, 0, 0, 0)
+        buttonGroup.layout.setSpacing(0)
         layout.addWidget(buttonGroup)
         self.fluxCheckBox = qt.QCheckBox(buttonGroup)
         self.fluxCheckBox.setText("From fundamental parameters")
@@ -417,10 +383,7 @@ class ConcentrationsWidget(qt.QWidget):
                 msg = qt.QMessageBox(self.referenceLine)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Invalid Element %s" % current)
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 self.referenceLine.setFocus()
             else:
                 self.referenceLine.setText(current)
@@ -634,24 +597,15 @@ class ConcentrationsTable(QTable):
                 self.labels.append(label)
         else:
             self.labels = ['Element', 'Group', 'Fit Area', 'Mass fraction']
-        if QTVERSION < '4.0.0':
-            i = 0
-            self.setColumnCount(len(self.labels))
-            self.setRowCount(1)
-            for label in self.labels:
-                qt.QHeader.setLabel(self.horizontalHeader(), i, label)
-                self.adjustColumn(i)
-                i += 1
-        else:
-            self.setColumnCount(len(self.labels))
-            self.setRowCount(1)
-            for i in range(len(self.labels)):
-                item = self.horizontalHeaderItem(i)
-                if item is None:
-                    item = qt.QTableWidgetItem(self.labels[i],
-                                               qt.QTableWidgetItem.Type)
-                self.setHorizontalHeaderItem(i, item)
-                self.resizeColumnToContents(i)
+        self.setColumnCount(len(self.labels))
+        self.setRowCount(1)
+        for i in range(len(self.labels)):
+            item = self.horizontalHeaderItem(i)
+            if item is None:
+                item = qt.QTableWidgetItem(self.labels[i],
+                                           qt.QTableWidgetItem.Type)
+            self.setHorizontalHeaderItem(i, item)
+            self.resizeColumnToContents(i)
 
     def fillFromResult(self, result):
         if 'mmolar' in result:
@@ -672,20 +626,13 @@ class ConcentrationsTable(QTable):
             for label in result['layerlist']:
                 self.labels += [label]
         self.setColumnCount(len(self.labels))
-        if QTVERSION < '4.0.0':
-            i = 0
-            for label in self.labels:
-                qt.QHeader.setLabel(self.horizontalHeader(), i, label)
-                #self.adjustColumn(i)
-                i += 1
-        else:
-            for i in range(len(self.labels)):
-                item = self.horizontalHeaderItem(i)
-                if item is None:
-                    item = qt.QTableWidgetItem(self.labels[i],
-                                               qt.QTableWidgetItem.Type)
-                item.setText(self.labels[i])
-                self.setHorizontalHeaderItem(i, item)
+        for i in range(len(self.labels)):
+            item = self.horizontalHeaderItem(i)
+            if item is None:
+                item = qt.QTableWidgetItem(self.labels[i],
+                                           qt.QTableWidgetItem.Type)
+            item.setText(self.labels[i])
+            self.setHorizontalHeaderItem(i, item)
 
         line = 0
         for group in groupsList:
@@ -721,21 +668,16 @@ class ConcentrationsTable(QTable):
                     fields += [fraction]
             col = 0
             for field in fields:
-                if QTVERSION < '4.0.0':
-                    key = ColorQTableItem(self, qttable.QTableItem.Never,
-                                          field, color=color)
-                    self.setItem(line, col, key)
+                item = self.item(line, col)
+                if item is None:
+                    item = qt.QTableWidgetItem(field,
+                                               qt.QTableWidgetItem.Type)
+                    self.setItem(line, col, item)
                 else:
-                    item = self.item(line, col)
-                    if item is None:
-                        item = qt.QTableWidgetItem(field,
-                                                   qt.QTableWidgetItem.Type)
-                        self.setItem(line, col, item)
-                    else:
-                        item.setText(field)
-                    item.setBackgroundColor(color)
-                    item.setFlags(qt.Qt.ItemIsSelectable |
-                                  qt.Qt.ItemIsEnabled)
+                    item.setText(field)
+                item.setBackgroundColor(color)
+                item.setFlags(qt.Qt.ItemIsSelectable |
+                              qt.Qt.ItemIsEnabled)
                 col += 1
             line += 1
 
@@ -746,22 +688,15 @@ class ConcentrationsTable(QTable):
     def getHtmlText(self):
         lemon = ("#%x%x%x" % (255, 250, 205)).upper()
         white = "#FFFFFF"
-        if QTVERSION < '4.0.0':
-            hb = self.horizontalHeader().paletteBackgroundColor()
-            hcolor = ("#%x%x%x" % (hb.red(), hb.green(), hb.blue())).upper()
-        else:
-            hcolor = ("#%x%x%x" % (230, 240, 249)).upper()
+        hcolor = ("#%x%x%x" % (230, 240, 249)).upper()
         text = ""
         text += ("<nobr>")
         text += ("<table>")
         text += ("<tr>")
         for l in range(self.columnCount()):
             text += ('<td align="left" bgcolor="%s"><b>' % hcolor)
-            if QTVERSION < '4.0.0':
-                text += (str(self.horizontalHeader().label(l)))
-            else:
-                item = self.horizontalHeaderItem(l)
-                text += str(item.text())
+            item = self.horizontalHeaderItem(l)
+            text += str(item.text())
             text += ("</b></td>")
         text += ("</tr>")
         #text+=( str(QString("</br>"))
@@ -774,13 +709,10 @@ class ConcentrationsTable(QTable):
                 b = "<b>"
                 color = lemon
             for c in range(self.columnCount()):
-                if QTVERSION < '4.0.0':
-                    moretext = str(self.text(r, c))
-                else:
-                    moretext = ""
-                    item = self.item(r, c)
-                    if item is not None:
-                        moretext = str(item.text())
+                moretext = ""
+                item = self.item(r, c)
+                if item is not None:
+                    moretext = str(item.text())
                 if len(moretext):
                     finalcolor = color
                 else:
@@ -794,13 +726,10 @@ class ConcentrationsTable(QTable):
                     text += ("</td>")
                 else:
                     text += ("</b></td>")
-            if QTVERSION < '4.0.0':
-                moretext = str(self.text(r, 0))
-            else:
-                moretext = ""
-                item = self.item(r, 0)
-                if item is not None:
-                    moretext = str(item.text())
+            moretext = ""
+            item = self.item(r, 0)
+            if item is not None:
+                moretext = str(item.text())
             if len(moretext):
                 text += ("</b>")
             text += ("</tr>")
@@ -809,30 +738,14 @@ class ConcentrationsTable(QTable):
         text += ("</nobr>")
         return text
 
-if QTVERSION < '4.0.0':
-    class ColorQTableItem(qttable.QTableItem):
-        def __init__(self, table, edittype, text, color=qt.Qt.white, bold=0):
-            qttable.QTableItem.__init__(self, table, edittype, text)
-            self.color = color
-            self.bold = bold
-
-        def paint(self, painter, colorgroup, rect, selected):
-            painter.font().setBold(self.bold)
-            cg = qt.QColorGroup(colorgroup)
-            cg.setColor(qt.QColorGroup.Base, self.color)
-            qttable.QTableItem.paint(self, painter, cg, rect, selected)
-            painter.font().setBold(0)
-
-
 class MyQLineEdit(qt.QLineEdit):
     sigMyQLineEditSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name=None):
         qt.QLineEdit.__init__(self, parent)
         self.editingFinished[()].connect(self._mySignal)
-    #TODO: Focus in to set yellow color
+    #TODO: Focus in to set yellow color, focus out to set white color
 
     def _mySignal(self):
-        self.setPaletteBackgroundColor(qt.QColor('white'))
         ddict = {}
         ddict['event'] = "returnPressed"
         self.sigMyQLineEditSignal.emit(ddict)
@@ -913,11 +826,7 @@ if __name__ == "__main__":
                 Elements.Material[material] = copy.deepcopy(d['result']['config']['materials'][material])
             demo.processFitResult(fitresult=d, elementsfrommatrix=False)
         demo.show()
-        if QTVERSION < '4.0.0':
-            app.setMainWidget(demo)
-            app.exec_loop()
-        else:
-            app.exec_()
+        app.exec_()
 
     else:
         print("Usage:")
