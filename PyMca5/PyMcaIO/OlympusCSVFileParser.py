@@ -139,15 +139,23 @@ class OlympusCSVScan(object):
         self._number = number
         self._motorValues = motorValues
         self._scanHeader = [self.fileheader()[0]]
+        if "TimeStamp" in self._data:
+            self._scanHeader.append("#D %s" % \
+                                    self._data["TimeStamp"][self._number])
+        
         #return the life time, the preset the elapsed?
         # to be safe, I return the LiveTime
-        self._scanHeader.append("#@CTIME %s %s %s" % (self._data["Livetime"][self._number],
+        if "Livetime" in self._data:
+            self._scanHeader.append("#@CTIME %s %s %s" % (self._data["Livetime"][self._number],
                                          self._data["Livetime"][self._number],
                                          self._data["Livetime"][self._number]))
         self._scanHeader.append("#@CHANN %d 0 %d 1" % (self._data["data"].shape[1],
                                            self._data["data"].shape[1]-1))
-        self._scanHeader.append("#@CALIB %s %s 0.0" % (self._data["Offset"][self._number],
-                                           self._data["Slope"][self._number]))
+        if "Offset" in self._data:
+            if "Slope" in self._data:
+                self._scanHeader.append("#@CALIB %s %s 0.0" % \
+                                        (self._data["Offset"][self._number],
+                                        self._data["Slope"][self._number]))
 
     def nbmca(self):
         return 1
@@ -180,13 +188,13 @@ class OlympusCSVScan(object):
     def header(self,key):
         if DEBUG:
             print("Requested key = ", key)
-        if key == 'S':
+        if key in ['S', '#S']:
             return self.fileheader()[0]
         elif key == 'N':
             return []
         elif key == 'L':
             return []
-        elif key in ['@CTIME', '@CALIB', '@CHANN']:
+        elif key in ['D', '@CTIME', '@CALIB', '@CHANN']:
             for item in self._scanHeader:
                 if item.startswith("#" + key):
                     return [item]
