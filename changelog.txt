@@ -1,5 +1,7 @@
 VERSION 5.0.0
 
+Analytical secondary excitation corrections.
+
 Incorporate a new repository layout.
 
 Most of the source code can be used under MIT or LGPL licenses.
