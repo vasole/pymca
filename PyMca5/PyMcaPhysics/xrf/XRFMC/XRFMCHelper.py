@@ -225,7 +225,7 @@ def getXRFMCCorrectionFactors(fitConfiguration, xmimsim_pymca=None, verbose=Fals
     else:
         # for the time being we have to build a "fit-like" file with the information
         import numpy
-        from PyMca import ClassMcaTheory
+        from PyMca5.PyMca import ClassMcaTheory
         fitConfiguration['fit']['linearfitflag']=1
         fitConfiguration['fit']['stripflag']=0
         fitConfiguration['fit']['stripiterations']=0
