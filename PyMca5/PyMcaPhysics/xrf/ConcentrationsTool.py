@@ -35,6 +35,12 @@ import copy
 import numpy
 from . import Elements
 from .XRFMC import XRFMCHelper
+FISX = False
+try:
+    from . import FisxHelper
+    FISX = True
+except ImportError:
+    print("WARNING: fisx features not available")
 
 class ConcentrationsConversion(object):
     def getConcentrationsAsHtml(self, concentrations=None):
@@ -232,8 +238,10 @@ class ConcentrationsTool(object):
         secondary = self.config['usemultilayersecondary']
         xrfmcSecondary = self.config['usexrfmc']
         if secondary and xrfmcSecondary:
-            txt = "Only one of built-in secondary and Monte Carlo correction can be used"
+            txt = "Only one of built-in fisx secondary and Monte Carlo correction can be used"
             raise ValueError(txt)
+        if secondary and (not FISX):
+            raise  ImportError("Module fisx does not seem to be available")
         # get attenuators and matrix from fit
         attenuators = []
         beamfilters = []
@@ -389,7 +397,7 @@ class ConcentrationsTool(object):
                          detector=detectoratt,
                          funnyfilters=funnyfilters * 1,
                          forcepresent=0,
-                         secondary=secondary)
+                         secondary=False)
             fluototal = fluo0[0]
             fluolist = fluo0[1:]
         else:
@@ -411,7 +419,7 @@ class ConcentrationsTool(object):
                              detector=detectoratt,
                              funnyfilters=funnyfilters * 1,
                              forcepresent=1,
-                             secondary=secondary)
+                             secondary=False)
             else:
                 fluo0 = fluorates
             fluototal = fluo0[0]
@@ -644,44 +652,64 @@ class ConcentrationsTool(object):
                     for layer in ddict['layerlist']:
                         if group in ddict[layer]['area'].keys():
                             ddict['area'][group] += ddict[layer]['area'][group]
-        if xrfmcSecondary and (not elementsfrommatrix):
-            xrfmcCorrections = None
-            if 'xrfmc' in fitresult:
-                xrfmcCorrections = fitresult['xrfmc'].get('corrections', None)
-            if xrfmcCorrections is None:
-                if 'xrfmc' in fitresult['result']:
-                    xrfmcCorrections = fitresult['result']['xrfmc'].get('corrections', None)
-            if xrfmcCorrections is None:
-                # try to see if they were in the configuration
-                if 'xrfmc' in fitresult['result']['config']:
-                    xrfmcCorrections = fitresult['result']['config']['xrfmc'].get('corrections',
-                                                                                  None)
-            if xrfmcCorrections is None:
-                # calculate the corrections
-                xrfmcCorrections = XRFMCHelper.getXRFMCCorrectionFactors(fitresult['result']['config'])
-
-
+        if (not elementsfrommatrix) and (xrfmcSecondary or secondary):
+            corrections = None
+            if xrfmcSecondary:
+                if 'xrfmc' in fitresult:
+                    corrections = fitresult['xrfmc'].get('corrections', None)
+                if corrections is None:
+                    if 'xrfmc' in fitresult['result']:
+                        corrections = fitresult['result']['xrfmc'].get('corrections', None)
+                if corrections is None:
+                    # try to see if they were in the configuration
+                    if 'xrfmc' in fitresult['result']['config']:
+                        corrections = fitresult['result']['config']['xrfmc'].get('corrections',
+                                                                                      None)
+                if corrections is None:
+                    # calculate the corrections
+                    corrections = XRFMCHelper.getXRFMCCorrectionFactors(fitresult['result']['config'])
+                    if not ('xrfmc' in fitresult):
+                        fitresult['xrfmc']  = {}
+                    fitresult['xrfmc']['corrections'] = corrections
+            elif secondary:
+                if 'fisx' in fitresult:
+                    corrections = fitresult['fisx'].get('corrections', None)
+                if corrections is None:
+                    if 'fisx' in fitresult['result']:
+                        corrections = fitresult['result']['fisx'].get('corrections', None)
+                if corrections is None:
+                    # try to see if they were in the configuration
+                    if 'fisx' in fitresult['result']['config']:
+                        corrections = fitresult['result']['config']['fisx'].get('corrections',
+                                                                                      None)
+                if corrections is None:
+                    # calculate the corrections
+                    corrections = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration( \
+                                            fitresult['result']['config'])
+                    if not ('fisx' in fitresult):
+                        fitresult['fisx']  = {}
+                    fitresult['fisx']['corrections'] = corrections
             if referenceElement is not None:
                 referenceLines = referenceTransitions.split()[0]
-                referenceCorrection = xrfmcCorrections[referenceElement][referenceLines]\
+                referenceCorrection = corrections[referenceElement][referenceLines]\
                                             ['correction_factor'][-1]
-                xrfmcCorrections[referenceElement][referenceLines]\
+                corrections[referenceElement][referenceLines]\
                                             ['correction_factor'][-1] = 1.0
                 for group in groupsList:
                     item = group.split()
                     element = item[0]
                     lines = item[1]
-                    if element in xrfmcCorrections:
+                    if element in corrections:
                         if element != referenceElement:
                             if lines != referenceLines:
-                                xrfmcCorrections[element][lines]['correction_factor'][-1] *= referenceCorrection
+                                corrections[element][lines]['correction_factor'][-1] *= referenceCorrection
             # now we have to apply the corrections
             for group in groupsList:
                 item = group.split()
                 element = item[0]
                 lines = item[1]
-                if element in xrfmcCorrections:
-                    correction = xrfmcCorrections[element][item[1]]['correction_factor'][-1]
+                if element in corrections:
+                    correction = corrections[element][item[1]]['correction_factor'][-1]
                     ddict['mass fraction'][group] /= correction
         if addinfo:
             addInfo = {}

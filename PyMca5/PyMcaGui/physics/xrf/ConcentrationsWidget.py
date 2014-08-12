@@ -292,7 +292,7 @@ class ConcentrationsWidget(qt.QWidget):
         self.attenuatorsCheckBox.setDisabled(True)
         #Multilayer secondary excitation
         self.secondaryCheckBox = qt.QCheckBox(self)
-        self.secondaryCheckBox.setText("Consider secondary excitation from deeper matrix layers (non intralayer nor above layers)")
+        self.secondaryCheckBox.setText("Consider secondary excitation")
         layout.addWidget(self.attenuatorsCheckBox)
         layout.addWidget( self.secondaryCheckBox)
         #XRFMC secondary excitation

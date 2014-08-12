@@ -365,7 +365,7 @@ def getFisxCorrectionFactors(*var, **kw):
             # only second order for the time being
             firstOrder = ddict[element][family]["counts"][0]
             secondOrder = ddict[element][family]["counts"][1]
-            ddict[element][family]["correction_factor"] = \
+            ddict[element][family]["correction_factor"][1] = \
                        secondOrder / firstOrder
     return ddict
 
