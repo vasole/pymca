@@ -88,6 +88,15 @@ except ImportError:
     print("Cannot import XRFMCHelper module")
     if DEBUG:
         raise
+FISX = False
+try:
+    from PyMca5.PyMca import FisxHelper
+    FISX = True
+except ImportError:
+    print("WARNING: fisx features not available")
+    if DEBUG:
+        raise
+
 USE_BOLD_FONT = True
 
 class McaAdvancedFit(qt.QWidget):
@@ -773,7 +782,6 @@ class McaAdvancedFit(qt.QWidget):
             text+='Energy'
             text+="</b></td>"
             text+="</tr>"
-            text+="<tr>"
             for peak in missed:
                 text+="<tr>"
                 text+='<td align="right" bgcolor="%s">' % finalcolor
@@ -783,6 +791,7 @@ class McaAdvancedFit(qt.QWidget):
                 text+="<b><font size=3>%.3f </font></b>"  % energy[int(peak)]
                 text+="</td>"
             text+="</tr>"
+            text+="<tr>"
             text+="</table>"
         missed =  self.mcafit.detectMissingPeaks(yfit, y, meanfwhm)
         if len(missed):
@@ -795,7 +804,6 @@ class McaAdvancedFit(qt.QWidget):
             text+='Energy'
             text+="</b></td>"
             text+="</tr>"
-            text+="<tr>"
             for peak in missed:
                 text+="<tr>"
                 text+='<td align="right" bgcolor="%s">' % finalcolor
@@ -805,7 +813,56 @@ class McaAdvancedFit(qt.QWidget):
                 text+="<b><font size=3>%.3f </font></b>"  % energy[int(peak)]
                 text+="</td>"
             text+="</tr>"
+            text+="<tr>"
             text+="</table>"
+
+        # check for secondary effects
+        useMatrix = False
+        for attenuator in fitresult['result']['config']['attenuators']:
+            if attenuator.upper() == "MATRIX":
+                if fitresult['result']['config']['attenuators'][attenuator][0]:
+                    useMatrix = True
+                    break
+        if useMatrix and FISX and \
+           (not fitresult['result']['config']['concentrations']['usemultilayersecondary']):
+            warningText ="<br><b><font color=blue size=4>Neglected higher order excitation correction</font></b>"
+            warningText+="<nobr><table><tr>"
+            warningText+='<td align="right" bgcolor="%s"><b>' % hcolor
+            warningText+='Element Family'
+            warningText+="</b></td>"
+            warningText+='<td align="right" bgcolor="%s"><b>' % hcolor
+            warningText+='Correction Factor'
+            warningText+="</b></td>"
+            warningText+="</tr>"
+            doIt = False
+            corrections = None
+            if 'fisx' in fitresult['result']['config']:
+                corrections = fitresult['result']['config']['fisx'].get('corrections',
+                                                                        None)
+            if corrections is None:
+                # calculate the corrections
+                # in principle I should never get here
+                corrections = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration( \
+                                        fitresult['result']['config'])
+            for element in corrections:
+                for family in corrections[element]:
+                    correction = corrections[element] \
+                                 [family]['correction_factor'][-1]
+                    if correction > 1.02:
+                        doIt = True
+                        warningText+="<tr>"
+                        warningText+='<td align="right" bgcolor="%s">' % finalcolor
+                        warningText+="<b><font size=3>%s </font></b>"  % \
+                                              (element + " " + family)
+                        warningText+="</td>"
+                        warningText+='<td align="right" bgcolor="%s">' % finalcolor
+                        warningText+="<b><font size=3>%.3f </font></b>"  % correction
+                        warningText+="</td>"
+                        warningText+="</tr>"
+            if doIt:
+                warningText+="<tr>"
+                warningText+="</table>"
+                text += warningText
         self.diagnosticsWidget.clear()
         self.diagnosticsWidget.insertHtml(text)
 
@@ -924,8 +981,8 @@ class McaAdvancedFit(qt.QWidget):
                                    {'fitresult':fitresult,
                                     'elementsfrommatrix':True,
                                     'addinfo':True},
-                                   "Calculating Matrix Spectrum",
-                                   True)
+                                    "Calculating Matrix Spectrum",
+                                    True)
                 if type(threadResult) == type((1,)):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
@@ -942,6 +999,22 @@ class McaAdvancedFit(qt.QWidget):
 
         if type(groupsList) != type([]):
             groupsList = [groupsList]
+        corrections = None
+        if fitresult['result']['config']['concentrations']['usemultilayersecondary']:
+            if 'fisx' in fitresult:
+                corrections = fitresult['fisx'].get('corrections', None)
+            if corrections is None:
+                # try to see if they were in the configuration
+                # in principle this would be the most appropriate place to be
+                # unless matrix/configuration has been somehow updated.
+                if 'fisx' in fitresult['result']['config']:
+                    corrections = fitresult['result']['config']['fisx'].get('corrections',
+                                                                            None)
+            if corrections is None:
+                # calculate the corrections
+                # in principle I should never get here
+                corrections = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration( \
+                                        fitresult['result']['config'])
         areas = []
         for group in groupsList:
             item = group.split()
@@ -949,9 +1022,12 @@ class McaAdvancedFit(qt.QWidget):
             if len(element) >2:
                 areas.append(0.0)
             else:
-                # transitions = item[1] + " xrays"
-                areas.append(ddict['area'][group])
-
+                area = ddict['area'][group]
+                if corrections is not None:
+                    if element in corrections:
+                        area *= corrections[element][item[1]]['counts'][-1] / \
+                            corrections[element][item[1]]['counts'][0]
+                areas.append(area)
         nglobal    = len(fitresult['result']['parameters']) - len(groupsList)
         parameters = []
         for i in range(len(fitresult['result']['parameters'])):
@@ -997,7 +1073,101 @@ class McaAdvancedFit(qt.QWidget):
             print("continuum shape = ", ddict['result']['continuum'].shape)
             print("zz      shape = ", self.mcafit.zz.shape)
 
+    def fisxSpectrum(self):
+        if not self.__fitdone:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            text = "Sorry, current implementation requires you to perform a fit first\n"
+            msg.setText(text)
+            msg.exec_()
+            return
+        self._xrfmcMatrixSpectra = None
+        from PyMca5.PyMca import FisxHelper
+        fitresult = self.dict
+        self._fisxMatrixSpectra = None
+        if self._concentrationsInfo is None:
+            # concentrations have to be calculated too
+            self.concentrations()
+
+        # force fisx to work on fundamental parameters mode
+        fitConfiguration = copy.deepcopy(self.dict['result']["config"])
+        fitConfiguration['concentrations']['usematrix'] = 0
+        fitConfiguration['concentrations']['flux'] = self._concentrationsInfo['Flux']
+        fitConfiguration['concentrations']['time'] = self._concentrationsInfo['Time']
+
+
+        # calculate expected fluorescence signal from elements present in the sample
+        correctionFactors = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration( \
+                                                            fitConfiguration,
+                                                            elementsFromMatrix=True)
+        groupsList = fitresult['result']['groups']
+        if type(groupsList) != type([]):
+            groupsList = [groupsList]
+
+        areas0 = []
+        areas1 = []
+        for group in groupsList:
+            item = group.split()
+            element = item[0]
+            if element not in correctionFactors:
+                areas0.append(0.0)
+                areas1.append(0.0)
+            else:
+                if len(element) >2:
+                    areas0.append(0.0)
+                    areas1.append(0.0)
+                else:
+                    # transitions = item[1] + " xrays"
+                    areas0.append(correctionFactors[element][item[1]]['counts'][0] * \
+                                 self._concentrationsInfo['Flux'] * self._concentrationsInfo['Time'] * \
+                                 self._concentrationsInfo['SolidAngle'])
+                    areas1.append(correctionFactors[element][item[1]]['counts'][1] * \
+                                 self._concentrationsInfo['Flux'] * self._concentrationsInfo['Time'] * \
+                                 self._concentrationsInfo['SolidAngle'])
+
+        # primary
+        nglobal    = len(fitresult['result']['parameters']) - len(groupsList)
+        parameters = []
+        for i in range(len(fitresult['result']['parameters'])):
+            if i < nglobal:
+                parameters.append(fitresult['result']['fittedpar'][i])
+            else:
+                parameters.append(areas0[i-nglobal])
+        xmatrix = fitresult['result']['xdata']
+        ymatrix0 = self.mcafit.mcatheory(parameters, xmatrix)
+        ymatrix0.shape =  [len(ymatrix0),1]
+
+        #secondary
+        nglobal    = len(fitresult['result']['parameters']) - len(groupsList)
+        parameters = []
+        for i in range(len(fitresult['result']['parameters'])):
+            if i < nglobal:
+                parameters.append(fitresult['result']['fittedpar'][i])
+            else:
+                parameters.append(areas1[i-nglobal])
+        ymatrix1 = self.mcafit.mcatheory(parameters, xmatrix)
+        ymatrix1.shape =  [len(ymatrix1),1]
+
+        zeroindex = fitresult['result']['parameters'].index('Zero')
+        gainindex = fitresult['result']['parameters'].index('Gain')
+        zero = fitresult['result']['fittedpar'][zeroindex]
+        gain = fitresult['result']['fittedpar'][gainindex]
+
+        if self.mcafit.STRIP:
+            ymatrix0  += self.mcafit.zz
+            ymatrix1  += self.mcafit.zz
+
+        # channels, energy, single, multiple
+        self._xrfmcMatrixSpectra = [xmatrix, xmatrix * gain + zero, ymatrix0, ymatrix1]
+
+        #self.logWidget.hide()
+        self.plot()
+        ddict=copy.deepcopy(self.dict)
+        ddict['event'] = "McaAdvancedFitXRFMCMatrixFinished"
+
     def xrfmcSpectrum(self):
+        #print "SKIPPING"
+        #return self.fisxSpectrum()
         if not self.__fitdone:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -1120,7 +1290,7 @@ class McaAdvancedFit(qt.QWidget):
                                    (element, key, value)
                             self.logWidget.append(text)
 
-            from PyMca.PyMcaIO import specfilewrapper as specfile
+            from PyMca5.PyMcaIO import specfilewrapper as specfile
             sf = specfile.Specfile(self._xrfmcFileNamesDict['csv'])
             nScans = len(sf)
             scan = sf[nScans - 1]
@@ -2531,7 +2701,7 @@ class McaGraphWindow(PlotWindow.PlotWindow):
         self.sigPlotSignal.emit(ddict)
 
 def test(ffile='03novs060sum.mca', cfg=None):
-    from PyMca.PyMcaIO import specfilewrapper as specfile
+    from PyMca5.PyMcaIO import specfilewrapper as specfile
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
     sf=specfile.Specfile(ffile)

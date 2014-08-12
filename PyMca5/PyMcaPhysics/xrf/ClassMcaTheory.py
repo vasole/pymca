@@ -34,6 +34,12 @@ import os
 import sys
 import numpy
 import copy
+FISX = False
+try:
+    from . import FisxHelper
+    FISX = True
+except ImportError:
+    print("WARNING: fisx features not available")
 from . import Elements
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
@@ -351,6 +357,17 @@ class McaTheory(object):
                                      beamfilters=filterlist,
                                      forcepresent = 1)
               dict = self._fluoRates[0]
+
+          # this will not be needed once fisx replaces the Elements module
+          secondary = False
+          if 'concentrations' in self.config:
+              secondary = self.config['concentrations'].get('usemultilayersecondary', False)
+              if secondary and FISX:
+                  self.config['fisx'] = {}
+                  self.config['fisx']['corrections'] = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration(self.config)
+          # done with the calculation of the corrections to the total rate. For accurate line ratios, the correction is to be
+          # applied layer by layer -> use fisx library for *everything*
+
           #print "getMatrixFluorescence elapsed = ",time.time()-t0
           for item in data:
             newpeaks      = []

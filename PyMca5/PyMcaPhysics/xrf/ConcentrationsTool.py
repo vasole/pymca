@@ -679,9 +679,11 @@ class ConcentrationsTool(object):
                         corrections = fitresult['result']['fisx'].get('corrections', None)
                 if corrections is None:
                     # try to see if they were in the configuration
+                    # in principle this would be the most appropriate place to be
+                    # unless matrix/configuration has been somehow updated.
                     if 'fisx' in fitresult['result']['config']:
                         corrections = fitresult['result']['config']['fisx'].get('corrections',
-                                                                                      None)
+                                                                                None)
                 if corrections is None:
                     # calculate the corrections
                     corrections = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration( \
