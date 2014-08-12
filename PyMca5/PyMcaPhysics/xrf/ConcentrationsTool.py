@@ -709,8 +709,33 @@ class ConcentrationsTool(object):
                 element = item[0]
                 lines = item[1]
                 if element in corrections:
+                    if config['mmolarflag']:
+                        if ddict['mass fraction'][group] > 0.0:
+                            conversionFactor = ddict['mmolar'][group] / ddict['mass fraction'][group]
+                        else:
+                            conversionFactor = 1.0
                     correction = corrections[element][item[1]]['correction_factor'][-1]
                     ddict['mass fraction'][group] /= correction
+                    if config['mmolarflag']:
+                        ddict['mmolar'][group] = ddict['mass fraction'][group] * conversionFactor
+                    if (matrix[0].upper() == "MULTILAYER") and (not xrfmcSecondary):
+                        iLayer = 0
+                        for layer in layerlist:
+                            if fitresult['result']['config']['multilayer'][layer][0]:
+                                if config['mmolarflag']:
+                                    if dict2['mass fraction'][group] > 0.0:
+                                        conversionFactor = dict2['mmolar'][group] / dict2['mass fraction'][group]
+                                    else:
+                                        conversionFactor = 1.0
+                                dict2 = ddict[layer]
+                                layerKey = "layer %d" % iLayer
+                                correction = corrections[element][item[1]][layerKey]['correction_factor'][-1]
+                                dict2['mass fraction'][group] /= correction
+                                if config['mmolarflag']:
+                                    dict2['mmolar'][group] = dict2['mass fraction'][group] * \
+                                                             conversionFactor
+                                iLayer += 1
+
         if addinfo:
             addInfo = {}
             addInfo['ReferenceElement'] = referenceElement

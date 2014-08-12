@@ -381,6 +381,11 @@ def getFisxCorrectionFactors(*var, **kw):
                                       'counts':[0.0, 0.0]}
         for iLayer in range(len(expectedFluorescence[key])):
             layerOutput = expectedFluorescence[key][iLayer]
+            layerKey = "layer %d" % iLayer
+            if layerKey not in ddict[element][family]:
+                ddict[element][family][layerKey] = {'total':0.0,
+                                    'correction_factor':[1.0, 1.0],
+                                    'counts':[0.0, 0.0]}
             for line in layerOutput:
                 rate = layerOutput[line]["rate"]
                 primary = layerOutput[line]["primary"]
@@ -388,10 +393,14 @@ def getFisxCorrectionFactors(*var, **kw):
                 if rate <= 0.0:
                     continue
                 # primary counts
-                ddict[element][family]["counts"][0] += \
-                                            rate * (primary / (primary + secondary))
+                tmpDouble = rate * (primary / (primary + secondary))
+                ddict[element][family]["counts"][0] += tmpDouble
                 ddict[element][family]["counts"][1] += rate
                 ddict[element][family]["total"] += rate
+                #layer by layer information
+                ddict[element][family][layerKey]["counts"][0] += tmpDouble
+                ddict[element][family][layerKey]["counts"][1] += rate
+                ddict[element][family][layerKey]["total"] += rate
     for element in ddict:
         for family in ddict[element]:
             # only second order for the time being
@@ -399,6 +408,15 @@ def getFisxCorrectionFactors(*var, **kw):
             secondOrder = ddict[element][family]["counts"][1]
             ddict[element][family]["correction_factor"][1] = \
                        secondOrder / firstOrder
+            i = 0
+            layerKey = "layer %d" % i
+            while layerKey in ddict[element][family]:
+                firstOrder = ddict[element][family][layerKey]["counts"][0]
+                secondOrder = ddict[element][family][layerKey]["counts"][1]
+                ddict[element][family][layerKey]["correction_factor"][1] = \
+                       secondOrder / firstOrder
+                i += 1
+                layerKey = "layer %d" % i
     return ddict
 
 def getFisxCorrectionFactorsFromFitConfigurationFile(fileName):
