@@ -364,7 +364,8 @@ class McaTheory(object):
               secondary = self.config['concentrations'].get('usemultilayersecondary', False)
               if secondary and FISX:
                   self.config['fisx'] = {}
-                  self.config['fisx']['corrections'] = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration(self.config)
+                  self.config['fisx']['corrections'] = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration(self.config,
+                                                                                elementsFromMatrix=False)
           # done with the calculation of the corrections to the total rate. For accurate line ratios, the correction is to be
           # applied layer by layer -> use fisx library for *everything*
 
