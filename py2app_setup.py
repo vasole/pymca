@@ -63,7 +63,7 @@ application=os.path.join(pymcapath, 'PyMcaGui','pymca', "PyMcaMain.py")
 #The options below are equivalent to running from the command line
 #python py2app_setup.py py2app --packages=matplotlib,ctypes,h5py,Object3D
 #probably matplotlib and PyOpenGL are properly detected by py2app
-PACKAGES = ['h5py','OpenGL','ctypes','matplotlib','logging', 'PyMca5']
+PACKAGES = ['fisx', 'h5py','OpenGL','ctypes','matplotlib','logging', 'PyMca5']
 try:
     import mdp
     PACKAGES.append('mdp')
