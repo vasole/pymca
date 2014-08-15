@@ -81,15 +81,19 @@ class Concentrations(qt.QWidget):
                         self.mySlot)
         self.concentrationsTool.configure(
             self.concentrationsWidget.getParameters())
+        self.__connected = True
 
     def mySlot(self, ddict={}):
-        self.concentrationsWidget.sigConcentrationsWidgetSignal.disconnect( \
-                    self.mySlot)
-        self.concentrationsTable.setFocus()
-        app = qt.QApplication.instance()
-        app.processEvents()
-        self.concentrationsWidget.sigConcentrationsWidgetSignal.connect( \
-            self.mySlot)
+        if not self.__connected:
+            return
+        try:
+            # try to avoid multiple triggering on Mac OS
+            self.__connected = False
+            self.concentrationsTable.setFocus()
+            app = qt.QApplication.instance()
+            app.processEvents()
+        finally:
+            self.__connected = True
         if ddict['event'] == 'updated':
             self.concentrationsTool.configure(ddict)
             if self.__lastKw is not None:
