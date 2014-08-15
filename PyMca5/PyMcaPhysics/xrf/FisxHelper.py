@@ -156,10 +156,41 @@ def getMultilayerFluorescence(multilayerSample,
             for element in composition.keys():
                 actualElementList.append("%s %s %d" % (element, "K", i))
             i += 1
-
-    return xrf.getMultilayerFluorescence(actualElementList, xcom, \
+    import time
+    #t0 = time.time()
+    #expectedFluorescence =  xrf.getMultilayerFluorescence(actualElementList, xcom, \
+    #                                     secondary=secondary,
+    #                                     useMassFractions=elementsFromMatrix)
+    #print("C++ elapsed = ", time.time() - t0)
+    t0 = time.time()
+    for layer in multilayerSample:
+        composition = xcom.getComposition(layer[0])
+        for element in composition.keys():
+            xcom.setElementCascadeCacheEnabled(element, 1)
+    for element in actualElementList:
+        xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
+    result2 =  xrf.getMultilayerFluorescence(actualElementList, xcom, \
                                          secondary=secondary,
                                          useMassFractions=elementsFromMatrix)
+    print("C++ elapsed TWO = ", time.time() - t0)
+    """
+    for key in expectedFluorescence:
+        element, family = key.split()
+        print key
+        if key not in result2:
+            print("Error with element ", element, "family = ", family, " not present")
+            continue
+        for iLayer in range(len(expectedFluorescence[key])):
+            layerOutput = expectedFluorescence[key][iLayer]
+            for line in layerOutput:
+                for data in ["rate", "primary", "secondary"]:
+                    delta = layerOutput[line][data] - \
+                            result2[key][iLayer][line][data]
+                    if abs(delta) > 1.0e-6:
+                        print("Error on ", data, " delta = ", delta)
+    """
+    #return expectedFluorescence
+    return result2
 
 def _getFisxMaterials(fitConfiguration):
     """
