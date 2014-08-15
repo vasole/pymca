@@ -359,6 +359,10 @@ class McaTheory(object):
               dict = self._fluoRates[0]
 
           # this will not be needed once fisx replaces the Elements module
+          if 'fisx' in self.config:
+              if 'corrections' in self.config['fisx']:
+                  del self.config['fisx']['corrections']
+          self.config['fisx'] = {}
           secondary = False
           if 'concentrations' in self.config:
               secondary = self.config['concentrations'].get('usemultilayersecondary', False)

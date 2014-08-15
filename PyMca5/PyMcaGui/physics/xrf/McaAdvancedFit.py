@@ -460,6 +460,8 @@ class McaAdvancedFit(qt.QWidget):
             self.concentrationsWidget.concentrationsTable.setRowCount(0)
         if self.mcatable is not None:
             self.mcatable.setRowCount(0)
+        self.diagnosticsWidget.clear()
+
 
         #make sure newly or redefined materials are added to the
         #materials in the fit configuration
@@ -598,6 +600,8 @@ class McaAdvancedFit(qt.QWidget):
         #erase concentrations
         if self.concentrationsWidget is not None:
             self.concentrationsWidget.concentrationsTable.setRowCount(0)
+        #erase diagnostics
+        self.diagnosticsWidget.clear()
         #update graph
         curveList = self.graph.getAllCurves(just_legend=True)
         delcurves = []
@@ -745,6 +749,7 @@ class McaAdvancedFit(qt.QWidget):
             pass
 
     def diagnostics(self):
+        self.diagnosticsWidget.clear()
         if not self.__fitdone:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -864,7 +869,6 @@ class McaAdvancedFit(qt.QWidget):
                 warningText+="<tr>"
                 warningText+="</table>"
                 text += warningText
-        self.diagnosticsWidget.clear()
         self.diagnosticsWidget.insertHtml(text)
 
     def concentrations(self):
@@ -1752,6 +1756,7 @@ class McaAdvancedFit(qt.QWidget):
         self.mcatable.setRowCount(0)
         if self.concentrationsWidget is not None:
             self.concentrationsWidget.concentrationsTable.setRowCount(0)
+        self.diagnosticsWidget.clear()
         fitconfig = {}
         fitconfig.update(self.mcafit.configure())
         if fitconfig['peaks'] == {}:
