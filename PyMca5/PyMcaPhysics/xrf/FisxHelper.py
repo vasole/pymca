@@ -156,23 +156,25 @@ def getMultilayerFluorescence(multilayerSample,
             for element in composition.keys():
                 actualElementList.append("%s %s %d" % (element, "K", i))
             i += 1
-    import time
-    #t0 = time.time()
-    #expectedFluorescence =  xrf.getMultilayerFluorescence(actualElementList, xcom, \
-    #                                     secondary=secondary,
-    #                                     useMassFractions=elementsFromMatrix)
-    #print("C++ elapsed = ", time.time() - t0)
-    t0 = time.time()
-    for layer in multilayerSample:
-        composition = xcom.getComposition(layer[0])
-        for element in composition.keys():
-            xcom.setElementCascadeCacheEnabled(element, 1)
-    for element in actualElementList:
-        xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
+    if 0:
+        import time
+        t0 = time.time()
+        expectedFluorescence =  xrf.getMultilayerFluorescence(actualElementList, xcom, \
+                                             secondary=0,
+                                             useMassFractions=elementsFromMatrix)
+        print("C++ elapsed NO SECONDARY = ", time.time() - t0)
+        t0 = time.time()
+    if 1:
+        for layer in multilayerSample:
+            composition = xcom.getComposition(layer[0])
+            for element in composition.keys():
+                xcom.setElementCascadeCacheEnabled(element, 1)
+        for element in actualElementList:
+            xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
     result2 =  xrf.getMultilayerFluorescence(actualElementList, xcom, \
                                          secondary=secondary,
                                          useMassFractions=elementsFromMatrix)
-    print("C++ elapsed TWO = ", time.time() - t0)
+    #print("C++ elapsed TWO = ", time.time() - t0)
     """
     for key in expectedFluorescence:
         element, family = key.split()
