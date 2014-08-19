@@ -689,9 +689,9 @@ class ConcentrationsTool(object):
                     corrections = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration( \
                                             fitresult['result']['config'],
                                             elementsFromMatrix=False)
-                    if not ('fisx' in fitresult):
-                        fitresult['fisx']  = {}
-                    fitresult['fisx']['corrections'] = corrections
+                    if not ('fisx' in fitresult['result']['config']):
+                        fitresult['result']['config']['fisx']  = {}
+                    fitresult['result']['config']['corrections'] = copy.deepcopy(corrections)
             if referenceElement is not None:
                 referenceLines = referenceTransitions.split()[0]
                 referenceCorrection = corrections[referenceElement][referenceLines]\
