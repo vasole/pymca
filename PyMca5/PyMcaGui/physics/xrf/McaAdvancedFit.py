@@ -524,6 +524,8 @@ class McaAdvancedFit(qt.QWidget):
                     self.mainTab.setCurrentIndex(0)
 
     def __configureFromConcentrations(self,ddict):
+        if DEBUG:
+            print("McaAdvancedFit.__configureFromConcentrations", ddict)
         config = self.concentrationsWidget.getParameters()
         self.mcafit.config['concentrations'].update(config)
         if ddict['event'] == 'updated':

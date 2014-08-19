@@ -83,7 +83,9 @@ class Concentrations(qt.QWidget):
             self.concentrationsWidget.getParameters())
         self.__connected = True
 
-    def mySlot(self, ddict={}):
+    def mySlot(self, ddict=None):
+        if ddict is None:
+            ddict = {}
         if not self.__connected:
             return
         try:
@@ -298,7 +300,7 @@ class ConcentrationsWidget(qt.QWidget):
         self.secondaryCheckBox = qt.QCheckBox(self)
         self.secondaryCheckBox.setText("Consider secondary excitation")
         layout.addWidget(self.attenuatorsCheckBox)
-        layout.addWidget( self.secondaryCheckBox)
+        layout.addWidget(self.secondaryCheckBox)
         #XRFMC secondary excitation
         if XRFMC_FLAG:
             self.xrfmcCheckBox = qt.QCheckBox(self)
@@ -358,7 +360,6 @@ class ConcentrationsWidget(qt.QWidget):
             self.fundamentalWidget.setInputDisabled(False)
             self.referenceLine.setEnabled(False)
             self.fluxCheckBox.setChecked(True)
-            self.secondaryCheckBox.clicked[()].connect(self.checkBoxSlot)
         self._mySignal()
 
     def _referenceLineSlot(self, ddict):
