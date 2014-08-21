@@ -857,10 +857,14 @@ class PlotWindow(PlotWidget.PlotWidget):
             else:
                 draggable = True
                 color = 'blue'
-            self.insertXMarker(fromdata, label = 'ROI min',
+            self.insertXMarker(fromdata,
+                               legend = 'ROI min',
+                               label = 'ROI min',
                                color=color,
                                draggable=draggable)
-            self.insertXMarker(todata, label = 'ROI max',
+            self.insertXMarker(todata,
+                               legend = 'ROI max',
+                               label = 'ROI max',
                                color=color,
                                draggable=draggable)
             if draggable and self._middleROIMarkerFlag:
