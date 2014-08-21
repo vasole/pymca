@@ -780,6 +780,8 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.emitCurrentROISignal()
 
     def _roiSignal(self, ddict):
+        if DEBUG:
+            print("PlotWindow._roiSignal ", ddict)
         if ddict['event'] == "AddROI":
             xmin,xmax = self.getGraphXLimits()
             fromdata = xmin + 0.25 * (xmax - xmin)
@@ -871,8 +873,8 @@ class PlotWindow(PlotWidget.PlotWidget):
             if ddict['colheader'] in ['From', 'To']:
                 dict0 ={}
                 dict0['event']  = "SetActiveCurveEvent"
-                dict0['legend'] = self.graph.getactivecurve(justlegend=1)
-                self.__graphsignal(dict0)
+                dict0['legend'] = self.getActiveCurve(just_legend=1)
+                self.setActiveCurve(dict0['legend'])
             elif ddict['colheader'] == 'Raw Counts':
                 pass
             elif ddict['colheader'] == 'Net Counts':

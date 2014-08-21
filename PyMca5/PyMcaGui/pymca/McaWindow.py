@@ -786,7 +786,7 @@ class McaWindow(ScanWindow.ScanWindow):
         else:
             A = 0.0
             try:
-                legend = self.graph.getActiveCurve(just_legend=True)
+                legend = self.getActiveCurve(just_legend=True)
                 if legend in self.dataObjectsDict.keys():
                     A = self.dataObjectsDict[legend].x[0][0]
             except:
@@ -1160,6 +1160,8 @@ class McaWindow(ScanWindow.ScanWindow):
                     calib[1]* x0 + \
                     calib[2]* x0 * x0
         else:
+            print("Received legend = ", legend)
+            print("legends recognized = ", self.dataObjectsDict.keys())
             print("Should not be here")
             return
         try:
