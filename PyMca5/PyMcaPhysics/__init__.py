@@ -30,6 +30,6 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-from .xrf import Elements, ClassMcaTheory, PyMcaEPDL97, \
-                 XRayTubeEbel, ConcentrationsTool, FastXRFLinearFit
-from .xas import XASNormalization, XASSelfattenuationCorrection
+import os
+__path__ += [os.path.join(os.path.dirname(__file__), "xrf")]
+__path__ += [os.path.join(os.path.dirname(__file__), "xas")]
