@@ -67,7 +67,7 @@ if SPECFILE_USE_GNU_SOURCE is None:
 else:
     SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
 
-ffile = open(os.path.join('PyMca5', 'PyMcaGui', 'pymca', 'PyMcaMain.py'), 'r').readlines()
+ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
 for line in ffile:
     if line.startswith('__version__'):
         #remove spaces and split
@@ -345,7 +345,7 @@ build_specfile(ext_modules)
 build_specfit(ext_modules)
 build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
-if (sys.version < '3.0') and LOCAL_OBJECT3D:
+if True or (sys.version < '3.0') and LOCAL_OBJECT3D:
     try:
         build_Object3DCTools(ext_modules)
         build_Object3DQhull(ext_modules)

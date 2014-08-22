@@ -105,10 +105,11 @@ try:
 except:
     XRFMC_FLAG = False
 
+import PyMca5
 from PyMca5.PyMcaGui.pymca.PyMca_help import HelpDict
 from PyMca5 import PyMcaDataDir
 import os
-__version__ = "5.0.0-beta3"
+__version__ = PyMca5.version()
 
 if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
