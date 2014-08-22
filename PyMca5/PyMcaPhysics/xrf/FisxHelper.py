@@ -36,10 +36,25 @@ from fisx import Elements as FisxElements
 from fisx import Material
 from fisx import Detector
 from fisx import XRF
-dataDir = DataDir.DATA_DIR
-bindingEnergies = os.path.join(dataDir, "BindingEnergies.dat")
-xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
-xcom = FisxElements(dataDir, bindingEnergies, xcomFile)
+xcom = None
+DEBUG = 0
+if DEBUG:
+    import time
+
+def _getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
+    if dataDir is None:
+        dataDir = DataDir.DATA_DIR
+    if bindingEnergies is None:
+        bindingEnergies = os.path.join(dataDir, "BindingEnergies.dat")
+    if xcomFile is None:
+        xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
+    if DEBUG:
+        t0 = time.time()
+        instance = FisxElements(dataDir, bindingEnergies, xcomFile)
+        print("Reading Elapsed = ", time.time() - t0)
+        return instance
+    else:
+        return FisxElements(dataDir, bindingEnergies, xcomFile)
 
 def getMultilayerFluorescence(multilayerSample,
                               energyList,
@@ -57,6 +72,10 @@ def getMultilayerFluorescence(multilayerSample,
                               elementsFromMatrix=False,
                               secondary=None,
                               materials=None):
+    global xcom
+    if xcom is None:
+        xcom = _getElementsInstance()
+
     if materials is not None:
         for material in materials:
             xcom.addMaterial(material, errorOnReplace=0)
@@ -156,49 +175,56 @@ def getMultilayerFluorescence(multilayerSample,
             for element in composition.keys():
                 actualElementList.append("%s %s %d" % (element, "K", i))
             i += 1
-    if 0:
-        import time
+    if DEBUG:
         t0 = time.time()
-        expectedFluorescence =  xrf.getMultilayerFluorescence(actualElementList, xcom, \
+        result0 =  xrf.getMultilayerFluorescence(actualElementList, xcom, \
                                              secondary=0,
                                              useMassFractions=elementsFromMatrix)
         print("C++ elapsed NO SECONDARY = ", time.time() - t0)
+    if DEBUG:
         t0 = time.time()
-    if 1:
-        for layer in multilayerSample:
-            composition = xcom.getComposition(layer[0])
-            for element in composition.keys():
-                xcom.setElementCascadeCacheEnabled(element, 1)
-        for element in actualElementList:
-            xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
-    result2 =  xrf.getMultilayerFluorescence(actualElementList, xcom, \
+
+    # enable the cache to get a 30 % speed up
+    for layer in multilayerSample:
+        composition = xcom.getComposition(layer[0])
+        for element in composition.keys():
+            xcom.setElementCascadeCacheEnabled(element, 1)
+    for element in actualElementList:
+        xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
+
+    expectedFluorescence = xrf.getMultilayerFluorescence(actualElementList,
+                                         xcom,
                                          secondary=secondary,
                                          useMassFractions=elementsFromMatrix)
-    #print("C++ elapsed TWO = ", time.time() - t0)
-    """
-    for key in expectedFluorescence:
-        element, family = key.split()
-        print key
-        if key not in result2:
-            print("Error with element ", element, "family = ", family, " not present")
-            continue
-        for iLayer in range(len(expectedFluorescence[key])):
-            layerOutput = expectedFluorescence[key][iLayer]
-            for line in layerOutput:
-                for data in ["rate", "primary", "secondary"]:
-                    delta = layerOutput[line][data] - \
-                            result2[key][iLayer][line][data]
-                    if abs(delta) > 1.0e-6:
-                        print("Error on ", data, " delta = ", delta)
-    """
-    #return expectedFluorescence
-    return result2
+    if DEBUG:
+        print("C++ elapsed TWO = ", time.time() - t0)
+        """
+        for key in expectedFluorescence:
+            element, family = key.split()
+            print key
+            if key not in result2:
+                print("Error with element ", element, "family = ", family, " not present")
+                continue
+            for iLayer in range(len(expectedFluorescence[key])):
+                layerOutput = expectedFluorescence[key][iLayer]
+                for line in layerOutput:
+                    for data in ["rate", "primary", "secondary"]:
+                        delta = layerOutput[line][data] - \
+                                result2[key][iLayer][line][data]
+                        if abs(delta) > 1.0e-6:
+                            print("Error on ", data, " delta = ", delta)
+        """
+    return expectedFluorescence
 
 def _getFisxMaterials(fitConfiguration):
     """
     Given a PyMca fir configuration, return the list of fisx materials to be
     used by the library for calculation purposes.
     """
+    global xcom
+    if xcom is None:
+        xcom = _getElementsInstance()
+
     # define all the needed materials
     inputMaterialDict = fitConfiguration.get("materials", {})
     inputMaterialList = list(inputMaterialDict.keys())

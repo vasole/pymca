@@ -58,6 +58,9 @@ except:
     pass
 
 from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
+FISX = ClassMcaTheory.FISX
+if FISX:
+    FisxHelper = ClassMcaTheory.FisxHelper
 from . import FitParam
 from . import McaAdvancedTable
 from . import QtMcaAdvancedFitReport
@@ -88,9 +91,6 @@ except ImportError:
     print("Cannot import XRFMCHelper module")
     if DEBUG:
         raise
-FISX = ConcentrationsTool.FISX
-if FISX:
-    FisxHelper = ConcentrationsTool.FisxHelper
 USE_BOLD_FONT = True
 
 class McaAdvancedFit(qt.QWidget):
