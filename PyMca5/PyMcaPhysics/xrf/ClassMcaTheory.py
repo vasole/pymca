@@ -34,12 +34,10 @@ import os
 import sys
 import numpy
 import copy
-FISX = False
-try:
-    from . import FisxHelper
-    FISX = True
-except ImportError:
-    print("WARNING: fisx features not available")
+from . import ConcentrationsTool
+FISX = ConcentrationsTool.FISX
+if FISX:
+    FisxHelper = ConcentrationsTool.FisxHelper
 from . import Elements
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict

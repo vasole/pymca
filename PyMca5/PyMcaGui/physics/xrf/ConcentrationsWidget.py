@@ -46,8 +46,8 @@ if QTVERSION > '4.0.0':
 
 QTable = qt.QTableWidget
 
-from PyMca5.PyMcaPhysics import ConcentrationsTool
-from PyMca5.PyMcaPhysics import Elements
+from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
+from PyMca5.PyMcaPhysics.xrf import Elements
 import time
 DEBUG = 0
 if DEBUG:

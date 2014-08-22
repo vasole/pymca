@@ -48,7 +48,7 @@ MATPLOTLIB = True
 
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaCore import PyMcaLogo
-from PyMca5.PyMcaPhysics import ConcentrationsTool
+from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
 ConcentrationsConversion = ConcentrationsTool.ConcentrationsConversion
 
 class QtMcaAdvancedFitReport:

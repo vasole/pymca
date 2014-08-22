@@ -88,15 +88,9 @@ except ImportError:
     print("Cannot import XRFMCHelper module")
     if DEBUG:
         raise
-FISX = False
-try:
-    from PyMca5.PyMca import FisxHelper
-    FISX = True
-except ImportError:
-    print("WARNING: fisx features not available")
-    if DEBUG:
-        raise
-
+FISX = ConcentrationsTool.FISX
+if FISX:
+    FisxHelper = ConcentrationsTool.FisxHelper
 USE_BOLD_FONT = True
 
 class McaAdvancedFit(qt.QWidget):
@@ -1092,7 +1086,6 @@ class McaAdvancedFit(qt.QWidget):
             msg.exec_()
             return
         self._xrfmcMatrixSpectra = None
-        from PyMca5.PyMca import FisxHelper
         fitresult = self.dict
         self._fisxMatrixSpectra = None
         if self._concentrationsInfo is None:
