@@ -37,7 +37,7 @@ os.system("/bin/rm -rf *.pyc")
 BUNDLE_ICON = os.path.join(os.path.abspath('icons'), 'PyMca.icns')
 
 #obtain the current PyMca version from the source file
-ffile = open(os.path.join('PyMca5', 'PyMcaGui','pymca','PyMcaMain.py'), 'r').readlines()
+ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
 for line in ffile:
     if line.startswith('__version__'):
         #remove spaces and split
