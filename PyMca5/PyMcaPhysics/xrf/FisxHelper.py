@@ -143,18 +143,20 @@ def getMultilayerFluorescence(multilayerSample,
     else:
         print("DETECTOR HAS TO BE REMOVED!!!!")
 
+    matrixElementsList = []
+    for peak in elementsList:
+        ele = peak.split()[0]
+        considerIt = False
+        for layer in multilayerSample:
+            composition = xcom.getComposition(layer[0])
+            if ele in composition:
+                considerIt = True
+        if considerIt:
+            if peak not in matrixElementsList:
+                matrixElementsList.append(peak)
+
     if elementsFromMatrix:
-        newElementsList = []
-        for peak in elementsList:
-            ele = peak.split()[0]
-            considerIt = False
-            for layer in multilayerSample:
-                composition = xcom.getComposition(layer[0])
-                if ele in composition:
-                    considerIt = True
-            if considerIt:
-                newElementsList.append(peak)
-        elementsList = newElementsList
+        elementsList = matrixElementsList
 
     # the detector distance and solid angle ???
     if elementsList in [None, []]:
@@ -167,22 +169,6 @@ def getMultilayerFluorescence(multilayerSample,
             actualElementList = [x[0] + " " + x[1] for x in elementsList]
         else:
             actualElementList = elementsList
-    else:
-        actualElementList = []
-        i = 0
-        for layer in multilayerSample:
-            composition = xcom.getComposition(layer[0])
-            for element in composition.keys():
-                actualElementList.append("%s %s %d" % (element, "K", i))
-            i += 1
-    if DEBUG:
-        t0 = time.time()
-        result0 =  xrf.getMultilayerFluorescence(actualElementList, xcom, \
-                                             secondary=0,
-                                             useMassFractions=elementsFromMatrix)
-        print("C++ elapsed NO SECONDARY = ", time.time() - t0)
-    if DEBUG:
-        t0 = time.time()
 
     # enable the cache to get a 30 % speed up
     for layer in multilayerSample:
@@ -192,28 +178,28 @@ def getMultilayerFluorescence(multilayerSample,
     for element in actualElementList:
         xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
 
+    if DEBUG:
+        t0 = time.time()
     expectedFluorescence = xrf.getMultilayerFluorescence(actualElementList,
                                          xcom,
                                          secondary=secondary,
                                          useMassFractions=elementsFromMatrix)
     if DEBUG:
         print("C++ elapsed TWO = ", time.time() - t0)
-        """
-        for key in expectedFluorescence:
-            element, family = key.split()
-            print key
-            if key not in result2:
-                print("Error with element ", element, "family = ", family, " not present")
-                continue
-            for iLayer in range(len(expectedFluorescence[key])):
-                layerOutput = expectedFluorescence[key][iLayer]
-                for line in layerOutput:
-                    for data in ["rate", "primary", "secondary"]:
-                        delta = layerOutput[line][data] - \
-                                result2[key][iLayer][line][data]
-                        if abs(delta) > 1.0e-6:
-                            print("Error on ", data, " delta = ", delta)
-        """
+
+    if not elementsFromMatrix:
+        # If one element was present in one layer and not on others, PyMca only
+        # calculated contributions from the layers in which the element was
+        # present
+        for peakFamily in matrixElementsList:
+            element, family = peakFamily.split()[0:2]
+            key = element + " " + family
+            if key in expectedFluorescence:
+                # those layers where the amount of the material was 0 have
+                # to present no contribution
+                for iLayer in range(len(expectedFluorescence[key])):
+                    if element not in xcom.getComposition(layer[iLayer]):
+                        expectedFluorescence[key][iLayer] = {}
     return expectedFluorescence
 
 def _getFisxMaterials(fitConfiguration):
@@ -242,6 +228,8 @@ def _getFisxMaterials(fitConfiguration):
                 thickness = inputMaterialDict[materialName].get("Thickness", 1.0)
                 density = inputMaterialDict[materialName].get("Density", 1.0)
                 comment = inputMaterialDict[materialName].get("Comment", "")
+                if not len(comment):
+                    comment = ""
                 compoundList = inputMaterialDict[materialName]["CompoundList"]
                 fractionList = inputMaterialDict[materialName]["CompoundFraction"]
                 if not hasattr(fractionList, "__getitem__"):
@@ -405,7 +393,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       cascade = None,
                                       detector = detector,
                                       elementsFromMatrix=elementsFromMatrix,
-                                      secondary=True,
+                                      secondary=1,
                                       materials=fisxMaterials)
     else:
         return getFisxCorrectionFactors(multilayerSample,
@@ -421,7 +409,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       cascade = None,
                                       detector = detector,
                                       elementsFromMatrix=elementsFromMatrix,
-                                      secondary=True,
+                                      secondary=1,
                                       materials=fisxMaterials)
 
 def getFisxCorrectionFactors(*var, **kw):
@@ -449,17 +437,18 @@ def getFisxCorrectionFactors(*var, **kw):
                 rate = layerOutput[line]["rate"]
                 primary = layerOutput[line]["primary"]
                 secondary = layerOutput[line]["secondary"]
+                tertiary = layerOutput[line].get("tertiary", 0.0)
                 if rate <= 0.0:
                     continue
                 # primary counts
                 tmpDouble = rate * (primary / (primary + secondary))
                 ddict[element][family]["counts"][0] += tmpDouble
-                ddict[element][family]["counts"][1] += rate
-                ddict[element][family]["total"] += rate
+                ddict[element][family]["counts"][1] += rate * (primary + secondary + tertiary)/(primary + secondary)
+                ddict[element][family]["total"] += rate * (primary + secondary + tertiary)/(primary + secondary)
                 #layer by layer information
                 ddict[element][family][layerKey]["counts"][0] += tmpDouble
-                ddict[element][family][layerKey]["counts"][1] += rate
-                ddict[element][family][layerKey]["total"] += rate
+                ddict[element][family][layerKey]["counts"][1] += rate * (primary + secondary + tertiary)/(primary + secondary)
+                ddict[element][family][layerKey]["total"] += rate * (primary + secondary + tertiary)/(primary + secondary)
     for element in ddict:
         for family in ddict[element]:
             # only second order for the time being
@@ -485,6 +474,8 @@ def getFisxCorrectionFactorsFromFitConfigurationFile(fileName):
     return getFisxCorrectionFactorsFromFitConfiguration(d)
 
 if __name__ == "__main__":
+    DEBUG = 1
+    import time
     import sys
     if len(sys.argv) < 2:
         print("Usage: python FisxHelper FitConfigurationFile")
