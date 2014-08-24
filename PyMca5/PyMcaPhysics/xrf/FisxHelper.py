@@ -356,7 +356,6 @@ def _getFisxDetector(fitConfiguration, attenuatorsDetector=None):
     distance = fitConfiguration["concentrations"]["distance"]
     area = fitConfiguration["concentrations"]["area"]
     detectorMaterial = fitConfiguration["detector"]["detele"]
-    nThreshold = fitConfiguration["detector"]["nthreshold"]
 
     if attenuatorsDetector is None:
         # user is not interested on accounting for detection efficiency
@@ -389,6 +388,9 @@ def _getFisxDetector(fitConfiguration, attenuatorsDetector=None):
                                 funny=attenuatorsDetector[3])
         fisxDetector.setActiveArea(area)
         fisxDetector.setDistance(distance)
+    if fisxDetector is not None:
+        nThreshold = fitConfiguration["detector"]["nthreshold"]
+        fisxDetector.setMaximumNumberOfEscapePeaks(nThreshold)
     return fisxDetector
 
 def getMultilayerFluorescenceFromFitConfiguration(fitConfiguration,
