@@ -128,20 +128,27 @@ def getMultilayerFluorescence(multilayerSample,
 
     # the detector
     if detector is not None:
-        # Detector must be a list as [material, density, thickness]
-        if len(detector) > 0:
-            if len(detector) == 3:
-                detectorInstance = Detector(detector[0],
+        # Detector can be a list as [material, density, thickness]
+        # or a Detector instance
+        if isinstance(detector, Detector):
+            detectorInstance = detector
+        elif len(detector) == 3:
+            detectorInstance = Detector(detector[0],
                                             density=detector[1],
                                             thickness=detector[2])
-            else:
-                detectorInstance = Detector(detector[0],
+        else:
+            detectorInstance = Detector(detector[0],
                                             density=detector[1],
                                             thickness=detector[2],
                                             funny=detector[3])
-        xrf.setDetector(detectorInstance)
     else:
-        print("DETECTOR HAS TO BE REMOVED!!!!")
+        detectorInstance = Detector("")
+        
+    xrf.setDetector(detectorInstance)
+    if detectorInstance.getActiveArea() > 0.0:
+        useGeometricEfficiency = 1
+    else:
+        useGeometricEfficiency = 0        
 
     matrixElementsList = []
     for peak in elementsList:
@@ -181,9 +188,10 @@ def getMultilayerFluorescence(multilayerSample,
     if DEBUG:
         t0 = time.time()
     expectedFluorescence = xrf.getMultilayerFluorescence(actualElementList,
-                                         xcom,
-                                         secondary=secondary,
-                                         useMassFractions=elementsFromMatrix)
+                                xcom,
+                                secondary=secondary,
+                                useGeometricEfficiency=useGeometricEfficiency,
+                                useMassFractions=elementsFromMatrix)
     if DEBUG:
         print("C++ elapsed TWO = ", time.time() - t0)
 
@@ -344,6 +352,45 @@ def _getPeakList(fitConfiguration):
     elementsList.sort()
     return elementsList
 
+def _getFisxDetector(fitConfiguration, attenuatorsDetector=None):
+    distance = fitConfiguration["concentrations"]["distance"]
+    area = fitConfiguration["concentrations"]["area"]
+    detectorMaterial = fitConfiguration["detector"]["detele"]
+    nThreshold = fitConfiguration["detector"]["nthreshold"]
+
+    if attenuatorsDetector is None:
+        # user is not interested on accounting for detection efficiency
+        if fitConfiguration["fit"]["escapeflag"]:
+            # but wants to account for escape peaks
+            # we can forget about efficiency but not about detector composition
+            # assign "infinite" efficiency
+            density = 0.0
+            thickness = 0.0
+            fisxDetector = Detector(detectorMaterial,
+                                    density=density,
+                                    thickness=thickness)
+        else:
+            # user is not interested on considering the escape peaks
+            fisxDetector = None
+    else:
+        # make sure information is consistent
+        if attenuatorsDetector[0] not in [detectorMaterial, detectorMaterial+"1"]:
+            print("%s not equal to %s" % (detector[0], detectorMaterial))
+            msg = "Inconsistent detector material between DETECTOR and ATTENUATORS tab"
+            raise ValueError(msg)
+        if len(attenuatorsDetector) == 3:
+            fisxDetector = Detector(detectorMaterial,
+                                density=attenuatorsDetector[1],
+                                thickness=attenuatorsDetector[2])
+        else:
+            fisxDetector = Detector(detectorMaterial,
+                                density=attenuatorsDetector[1],
+                                thickness=attenuatorsDetector[2],
+                                funny=attenuatorsDetector[3])
+        fisxDetector.setActiveArea(area)
+        fisxDetector.setDistance(distance)
+    return fisxDetector
+
 def getMultilayerFluorescenceFromFitConfiguration(fitConfiguration,
                                                   elementsFromMatrix=False):
     return _fisxFromFitConfigurationAction(fitConfiguration,
@@ -379,6 +426,9 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
     # The elements and families to be considered
     elementsList = _getPeakList(fitConfiguration)
 
+    # The detection setup
+    detectorInstance = _getFisxDetector(fitConfiguration, detector)
+
     if action.upper() == "FLUORESCENCE":
         return getMultilayerFluorescence(multilayerSample,
                                       energyList,
@@ -391,7 +441,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       alphaIn = alphaIn,
                                       alphaOut = alphaOut,
                                       cascade = None,
-                                      detector = detector,
+                                      detector = detectorInstance,
                                       elementsFromMatrix=elementsFromMatrix,
                                       secondary=1,
                                       materials=fisxMaterials)
@@ -407,7 +457,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       alphaIn = alphaIn,
                                       alphaOut = alphaOut,
                                       cascade = None,
-                                      detector = detector,
+                                      detector = detectorInstance,
                                       elementsFromMatrix=elementsFromMatrix,
                                       secondary=1,
                                       materials=fisxMaterials)
@@ -441,17 +491,18 @@ def getFisxCorrectionFactors(*var, **kw):
                 if rate <= 0.0:
                     continue
                 # primary counts
-                tmpDouble = rate * (primary / (primary + secondary))
+                tmpDouble = rate * (primary / (primary + secondary + tertiary))
                 ddict[element][family]["counts"][0] += tmpDouble
-                ddict[element][family]["counts"][1] += rate * (primary + secondary + tertiary)/(primary + secondary)
-                ddict[element][family]["total"] += rate * (primary + secondary + tertiary)/(primary + secondary)
+                ddict[element][family]["counts"][1] += rate
+                ddict[element][family]["total"] += rate
                 #layer by layer information
                 ddict[element][family][layerKey]["counts"][0] += tmpDouble
-                ddict[element][family][layerKey]["counts"][1] += rate * (primary + secondary + tertiary)/(primary + secondary)
-                ddict[element][family][layerKey]["total"] += rate * (primary + secondary + tertiary)/(primary + secondary)
+                ddict[element][family][layerKey]["counts"][1] += rate
+                ddict[element][family][layerKey]["total"] += rate
+
     for element in ddict:
         for family in ddict[element]:
-            # only second order for the time being
+            # second order includes tertiary!!!
             firstOrder = ddict[element][family]["counts"][0]
             secondOrder = ddict[element][family]["counts"][1]
             ddict[element][family]["correction_factor"][1] = \
