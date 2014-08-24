@@ -657,7 +657,7 @@ class MaterialGUI(qt.QWidget):
 
         self.__transmissionButton.clicked[()].connect(self.__transmissionSlot)
 
-        self.__massAttButton.editingFinished[()].connect(self.__massAttSlot)
+        self.__massAttButton.clicked[()].connect(self.__massAttSlot)
 
     def setCurrent(self, matkey0):
         if DEBUG:"setCurrent(self, matkey0) ", matkey0
