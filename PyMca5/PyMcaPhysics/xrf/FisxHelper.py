@@ -431,6 +431,13 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
     # The detection setup
     detectorInstance = _getFisxDetector(fitConfiguration, detector)
 
+    try:
+        secondary = fitConfiguration["concentrations"]["usemultilayersecondary"]
+        if secondary == 0:
+            secondary = 1
+    except:
+        secondary = 1
+
     if action.upper() == "FLUORESCENCE":
         return getMultilayerFluorescence(multilayerSample,
                                       energyList,
@@ -445,7 +452,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       cascade = None,
                                       detector = detectorInstance,
                                       elementsFromMatrix=elementsFromMatrix,
-                                      secondary=1,
+                                      secondary=secondary,
                                       materials=fisxMaterials)
     else:
         return getFisxCorrectionFactors(multilayerSample,
@@ -461,7 +468,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       cascade = None,
                                       detector = detectorInstance,
                                       elementsFromMatrix=elementsFromMatrix,
-                                      secondary=1,
+                                      secondary=secondary,
                                       materials=fisxMaterials)
 
 def getFisxCorrectionFactors(*var, **kw):
