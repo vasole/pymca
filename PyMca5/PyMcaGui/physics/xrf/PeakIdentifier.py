@@ -42,18 +42,10 @@ DEBUG = 0
 class PeakIdentifier(qt.QWidget):
     sigPeakIdentifierSignal = qt.pyqtSignal(object)
     def __init__(self,parent=None,energy=None,threshold=None,useviewer=None,
-                 name="Peak Identifier",fl=0):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self,parent,name,fl)
-            self.setCaption(name)
-            self.setIcon(qt.QPixmap(IconDict['gioconda16']))
-        else:
-            if fl == 0:
-                qt.QWidget.__init__(self, parent)
-            else:
-                qt.QWidget.__init__(self, parent, fl)
-            self.setWindowTitle(name)
-            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+                 name="Peak Identifier"):
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle(name)
+        self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
 
         if energy    is None: energy    = 5.9
         if threshold is None: threshold = 0.030
@@ -75,12 +67,9 @@ class PeakIdentifier(qt.QWidget):
         hbox.layout.addWidget(l1)
         self.energy=MyQLineEdit(hbox)
         self.energy.setText("%.3f" % energy)
-        if QTVERSION < '4.0.0':
-            qt.QToolTip.add(self.energy,'Press enter to validate your energy')
-        else:
-            self.energy._validator = qt.QDoubleValidator(self.energy)
-            self.energy.setValidator(self.energy._validator)
-            self.energy.setToolTip('Press enter to validate your energy')
+        self.energy._validator = qt.QDoubleValidator(self.energy)
+        self.energy.setValidator(self.energy._validator)
+        self.energy.setToolTip('Press enter to validate your energy')
         hbox.layout.addWidget(self.energy)
         hbox.layout.addWidget(qt.HorizontalSpacer(hbox))
         self.energy.editingFinished.connect(self._energySlot)
@@ -100,12 +89,8 @@ class PeakIdentifier(qt.QWidget):
         l2=qt.QLabel(hbox2)
         l2.setText('Energy Threshold (eV)')
         self.threshold=qt.QSpinBox(hbox2)
-        if QTVERSION < '4.0.0':
-            self.threshold.setMinValue(0)
-            self.threshold.setMaxValue(1000)
-        else:
-            self.threshold.setMinimum(0)
-            self.threshold.setMaximum(1000)
+        self.threshold.setMinimum(0)
+        self.threshold.setMaximum(1000)
         self.threshold.setValue(int(threshold*1000))
         self.k = qt.QCheckBox(hbox2)
         self.k.setText('K')
@@ -181,11 +166,8 @@ class PeakIdentifier(qt.QWidget):
             msg=qt.QMessageBox(self.energy)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Energy Value")
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.setWindowTitle("Invalid energy")
-                msg.exec_()
+            msg.setWindowTitle("Invalid energy")
+            msg.exec_()
             self.energy.setFocus()
             return
 
@@ -206,13 +188,10 @@ class PeakIdentifier(qt.QWidget):
         ddict['event']='Candidates'
         ddict['lines']=lines
         if self.__useviewer:
-            if QTVERSION < '4.0.0':
-                self.__browsertext.setText(ddict['text'])
-            else:
-                self.__browsertext.clear()
-                #self.__browsertext.insertHtml("<CENTER>"+dict['text']+\
-                #                              "</CENTER>")
-                self.__browsertext.insertHtml(ddict['text'])
+            self.__browsertext.clear()
+            #self.__browsertext.insertHtml("<CENTER>"+dict['text']+\
+            #                              "</CENTER>")
+            self.__browsertext.insertHtml(ddict['text'])
         self.sigPeakIdentifierSignal.emit(ddict)
 
 
