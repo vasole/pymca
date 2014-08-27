@@ -263,11 +263,8 @@ class SingleLayerStrategy(qt.QWidget):
         if strategy.upper() == "SINGLELAYERSTRATEGY":
             self.setParameters(fitConfiguration[strategy])
 
-    def getFitConfiguration(self):
-        pass
-
     def getParameters(self):
-        pass
+        self._table.getParameters()
 
     def setParameters(self, ddict):
         layer = ddict.get("layer", "Auto")
@@ -287,6 +284,7 @@ class SingleLayerStrategy(qt.QWidget):
         for i in range(len(flags)):
             doIt = 0
             if flags[i] in [1, True, "1", "True"]:
+                flag = 1
                 if families[i] in layerPeaks[layer]:
                     if materials[i] in ["-"]:
                         doIt = 1
@@ -296,10 +294,12 @@ class SingleLayerStrategy(qt.QWidget):
                                                 [materials[i]], [1.0]):
                             doIt = 1
                     if doIt:
-                        self._table.setData(nItem, 1, families[i], materials[i])
+                        self._table.setData(nItem, flag, families[i], materials[i])
                     else:
-                        self._table.setData(nItem, 1, families[i], element)
-                    nItem += 1
+                        self._table.setData(nItem, flag, families[i], element)
+            else:
+                self._table.setData(nItem, 0, "-", "-")
+            nItem += 1
 
 class IterationTable(qt.QTableWidget):
     sigValueChanged = qt.pyqtSignal(int, int)
@@ -324,7 +324,10 @@ class IterationTable(qt.QTableWidget):
         row = idx % 5
         c = 3 * (idx // self.rowCount())
         item = self.cellWidget(row, 0 + c)
-        item.setChecked(use)
+        if use:
+            item.setChecked(True)
+        else:
+            item.setChecked(False)
         item = self.cellWidget(row, 1 + c)
         n = item.findText(peak)
         item.setCurrentIndex(n)
@@ -337,15 +340,33 @@ class IterationTable(qt.QTableWidget):
         item.setEditText(material)
 
     def mySlot(self,row,col):
-        if 1 or DEBUG:
+        if DEBUG:
             print("Value changed row = %d col = %d" % (row, col))
             if col != 0:
                 print("Text = %s" % self.cellWidget(row, col).currentText())
             
-    def _itemSlot(self, *var):
-        if (self.currentRow() < 0) or (self.currentColumn() < 0):
-            return
-        self.mySlot(self.currentRow(), self.currentColumn())
+    def _checkBoxSlot(self, ddict):
+        # check we do not have duplicates
+        row = ddict['row']
+        col = ddict['col']
+        target = str(self.cellWidget(row, 1 + col).currentText()).split()[0]
+        for idx in range(10):
+            r = idx % 5
+            c = 3 * (idx // self.rowCount())
+            if r == row:
+                if c  == col:
+                    continue
+            item = self.cellWidget(r, 0 + c)
+            if item.isChecked():
+                element = str(self.cellWidget(r, 1 + c).currentText()).split()[0]
+                if target == element:
+                    # reset the just changed one
+                    self.cellWidget(row, col).setChecked(False)
+                    self.cellWidget(row, col + 1).setCurrentIndex(0)
+                    self.cellWidget(row, col + 2).setCurrentText("-")
+                    return
+        self.setCurrentCell(row, col)
+        self.sigValueChanged.emit(row, col)
 
     def build(self):
         materialList = list(Elements.Material.keys())
@@ -358,9 +379,9 @@ class IterationTable(qt.QTableWidget):
             c = 3 * (idx // self.rowCount())
             item = self.cellWidget(row, 0 + c)
             if item is None:
-                item = qt.QCheckBox(self)
+                item = MyCheckBox(self, row, 0 + c)
                 self.setCellWidget(row, 0 + c, item)
-                item.stateChanged[int].connect(self._itemSlot)
+                item.sigMyCheckBoxSignal.connect(self._checkBoxSlot)
 
             item = self.cellWidget(row, 1 + c)
             if item is None:
@@ -387,10 +408,10 @@ class IterationTable(qt.QTableWidget):
             row = idx % 5
             c = 3 * (idx // self.rowCount())
             item = self.cellWidget(row, 1 + c)
-            item.setOptions(layerPeaks)
+            item.setOptions(["-"] + layerPeaks)
             # reset material form
             item = self.cellWidget(row, 2 + c)
-            item.setCurrentText("-")            
+            item.setCurrentIndex(0)            
 
     def __updateMaterialOptions(self, ddict):
         row = ddict['row']
@@ -417,9 +438,25 @@ class IterationTable(qt.QTableWidget):
     def _peakFamilySlot(self, ddict):
         if DEBUG:
             print("_peakFamilySlot", ddict)
-        self.__updateMaterialOptions(ddict)
+        # check we do not have duplicates
+        target = ddict["text"].split()[0]
         row = ddict['row']
         col = ddict['col']
+        for idx in range(10):
+            r = idx % 5
+            c = 3 * (idx // self.rowCount())
+            if r == row:
+                if (c + 1) == col:
+                    continue
+            item = self.cellWidget(r, 0 + c)
+            if item.isChecked():
+                element = str(self.cellWidget(r, 1 + c).currentText()).split()[0]
+                if target == element:
+                    # reset the just changed one
+                    self.cellWidget(row, col - 1).setChecked(False)
+                    return
+
+        self.__updateMaterialOptions(ddict)
         self.setCurrentCell(row, col)
         self.sigValueChanged.emit(row, col)
 
@@ -431,6 +468,27 @@ class IterationTable(qt.QTableWidget):
         text = ddict['text']
         self.setCurrentCell(row, col)
         self.sigValueChanged.emit(row, col)
+
+    def getParameters(self):
+        ddict = {}
+        ddict["flags"] = []
+        ddict["peaks"] = []
+        ddict["materials"] = []
+        for idx in range(10):
+            row = idx % 5
+            c = 3 * (idx // self.rowCount())
+            item = self.cellWidget(row, 0 + c)
+            if item.isChecked():
+                ddict["flags"].append(1)
+                peak = str(self.cellWidget(row, 1 + c).currentText())
+                if peak in ["-"]:
+                    raise ValueError("Invalid peak family in row %d" % row)
+                ddict["peaks"].append(peak)
+                ddict["materials"].append(self.cellWidget(row, 2 + c).currentText())
+            else:
+                ddict["flags"].append(0)
+                ddict["peaks"].append(self.cellWidget(row, 1 + c).currentText())
+                ddict["materials"].append(self.cellWidget(row, 2 + c).currentText())
 
 class SimpleComboBox(qt.QComboBox):
     sigSimpleComboBoxSignal = qt.pyqtSignal(object)
@@ -498,6 +556,20 @@ class MyQComboBox(MaterialComboBox):
         # signal defined in the superclass.
         self.sigMaterialComboBoxSignal.emit(ddict)
 
+class MyCheckBox(qt.QCheckBox):
+    sigMyCheckBoxSignal = qt.pyqtSignal(object)
+    def __init__(self, parent=None, row=0, col=0):
+        qt.QCheckBox.__init__(self, parent)
+        self._row = row
+        self._col = col
+        self.stateChanged[int].connect(self._emitSignal)
+
+    def _emitSignal(self, *var):
+        ddict = {}
+        ddict["row"] = self._row
+        ddict["col"] = self._col
+        self.sigMyCheckBoxSignal.emit(ddict)
+
 def main(fileName=None):
     app  = qt.QApplication(sys.argv)
     w = QuantificationStrategy()
@@ -508,7 +580,7 @@ def main(fileName=None):
         d.read(fileName)
         d["strategy"] = "SingleLayerStrategy"
         d["SingleLayerStrategy"] = {}
-        d["SingleLayerStrategy"]["flags"] = 1, 1, 1
+        d["SingleLayerStrategy"]["flags"] = 1, 1, 0
         d["SingleLayerStrategy"]["peaks"] = "Cr K", "Fe K", "Mn K"
         d["SingleLayerStrategy"]["materials"] = "-", "Goethite", "-"
         w.setFitConfiguration(d)
