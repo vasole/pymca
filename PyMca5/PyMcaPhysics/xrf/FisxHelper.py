@@ -435,6 +435,7 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
     try:
         secondary = fitConfiguration["concentrations"]["usemultilayersecondary"]
         if secondary == 0:
+            # otherways it is meaning less to call this function
             secondary = 1
     except:
         secondary = 1
