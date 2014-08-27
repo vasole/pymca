@@ -250,15 +250,56 @@ class SingleLayerStrategy(qt.QWidget):
         self._layerOptions.clear()
         for item in layerList:
             self._layerOptions.addItem(item)
+        self._layerList = layerList
 
         if oldOption not in layerList:
             oldOption = layerList[0]
 
         self._layerOptions.setCurrentIndex(layerList.index(oldOption))
+        self._layerList = layerList
+        self._layerPeaks = layerPeaks
         self._table.setLayerPeakFamilies(layerPeaks[oldOption])
+        strategy = fitConfiguration.get("strategy", None)
+        if strategy.upper() == "SINGLELAYERSTRATEGY":
+            self.setParameters(fitConfiguration[strategy])
 
     def getFitConfiguration(self):
         pass
+
+    def getParameters(self):
+        pass
+
+    def setParameters(self, ddict):
+        layer = ddict.get("layer", "Auto")
+        if layer not in self._layerList:
+            raise ValueError("Layer %s not among fitted layers" % layer)
+
+        layerList = self._layerList
+        layerPeaks = self._layerPeaks
+        self._layerOptions.setCurrentIndex(layerList.index(layer))
+        self._table.setLayerPeakFamilies(layerPeaks[layer])
+        
+        flags     = ddict["flags"]
+        families  = ddict["peaks"]
+        materials = ddict["materials"]
+
+        nItem = 0
+        for i in range(len(flags)):
+            doIt = 0
+            if flags[i] in [1, True, "1", "True"]:
+                if families[i] in layerPeaks[layer]:
+                    if materials[i] in ["-"]:
+                        doIt = 1
+                    else:
+                        element = families[i].split()[0]
+                        if element in Elements.getMaterialMassFractions( \
+                                                [materials[i]], [1.0]):
+                            doIt = 1
+                    if doIt:
+                        self._table.setData(nItem, 1, families[i], materials[i])
+                    else:
+                        self._table.setData(nItem, 1, families[i], element)
+                    nItem += 1
 
 class IterationTable(qt.QTableWidget):
     sigValueChanged = qt.pyqtSignal(int, int)
@@ -279,13 +320,31 @@ class IterationTable(qt.QTableWidget):
         self.resizeColumnToContents(3)        
         self.cellChanged[int, int].connect(self.mySlot)
 
+    def setData(self, idx, use, peak, material="-"):
+        row = idx % 5
+        c = 3 * (idx // self.rowCount())
+        item = self.cellWidget(row, 0 + c)
+        item.setChecked(use)
+        item = self.cellWidget(row, 1 + c)
+        n = item.findText(peak)
+        item.setCurrentIndex(n)
+        ddict = {}
+        ddict['row'] = row
+        ddict['col'] = 1 + c
+        ddict['text'] = peak
+        self.__updateMaterialOptions(ddict)
+        item = self.cellWidget(row, 2 + c)
+        item.setEditText(material)
+
     def mySlot(self,row,col):
         if 1 or DEBUG:
-            print("Value changed row = %d col = &d" % (row, col))
+            print("Value changed row = %d col = %d" % (row, col))
             if col != 0:
                 print("Text = %s" % self.cellWidget(row, col).currentText())
             
     def _itemSlot(self, *var):
+        if (self.currentRow() < 0) or (self.currentColumn() < 0):
+            return
         self.mySlot(self.currentRow(), self.currentColumn())
 
     def build(self):
@@ -331,15 +390,36 @@ class IterationTable(qt.QTableWidget):
             item.setOptions(layerPeaks)
             # reset material form
             item = self.cellWidget(row, 2 + c)
-            item.setCurrentText("-")
-            
+            item.setCurrentText("-")            
+
+    def __updateMaterialOptions(self, ddict):
+        row = ddict['row']
+        col = ddict['col']
+        text = ddict['text']
+        element = text.split()[0]
+        materialItem = self.cellWidget(row, col + 1)
+        associatedMaterial = str(materialItem.currentText())
+
+        goodCandidates = [element]
+        for i in range(materialItem.count()):
+            material = str(materialItem.itemText(i))
+            if material not in ["-", element]:
+                if element in Elements.getMaterialMassFractions([material],
+                                                                    [1.0]):
+                    goodCandidates.append(material)
+        materialItem.clear()
+        materialItem.setOptions(goodCandidates)
+        if associatedMaterial in goodCandidates:
+            materialItem.setCurrentIndex(goodCandidates.index(associatedMaterial))
+        else:
+            materialItem.setCurrentIndex(0)
 
     def _peakFamilySlot(self, ddict):
         if DEBUG:
             print("_peakFamilySlot", ddict)
+        self.__updateMaterialOptions(ddict)
         row = ddict['row']
         col = ddict['col']
-        text = ddict['text']
         self.setCurrentCell(row, col)
         self.sigValueChanged.emit(row, col)
 
@@ -426,6 +506,11 @@ def main(fileName=None):
         from PyMca5.PyMca import ConfigDict
         d = ConfigDict.ConfigDict()
         d.read(fileName)
+        d["strategy"] = "SingleLayerStrategy"
+        d["SingleLayerStrategy"] = {}
+        d["SingleLayerStrategy"]["flags"] = 1, 1, 1
+        d["SingleLayerStrategy"]["peaks"] = "Cr K", "Fe K", "Mn K"
+        d["SingleLayerStrategy"]["materials"] = "-", "Goethite", "-"
         w.setFitConfiguration(d)
     app.exec_()
 
