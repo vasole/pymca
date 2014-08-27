@@ -143,12 +143,12 @@ def getMultilayerFluorescence(multilayerSample,
                                             funny=detector[3])
     else:
         detectorInstance = Detector("")
-        
+
     xrf.setDetector(detectorInstance)
     if detectorInstance.getActiveArea() > 0.0:
         useGeometricEfficiency = 1
     else:
-        useGeometricEfficiency = 0        
+        useGeometricEfficiency = 0
 
     matrixElementsList = []
     for peak in elementsList:
@@ -206,7 +206,8 @@ def getMultilayerFluorescence(multilayerSample,
                 # those layers where the amount of the material was 0 have
                 # to present no contribution
                 for iLayer in range(len(expectedFluorescence[key])):
-                    if element not in xcom.getComposition(layer[iLayer]):
+                    layerMaterial = multilayerSample[iLayer][0]
+                    if element not in xcom.getComposition(layerMaterial):
                         expectedFluorescence[key][iLayer] = {}
     return expectedFluorescence
 
@@ -539,6 +540,7 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
         print("Usage: python FisxHelper FitConfigurationFile")
+        sys.exit(0)
     fileName = sys.argv[1]
     print(getFisxCorrectionFactorsFromFitConfigurationFile(fileName))
 
