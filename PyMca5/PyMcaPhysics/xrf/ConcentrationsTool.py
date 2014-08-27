@@ -673,12 +673,12 @@ class ConcentrationsTool(object):
                     fitresult['xrfmc']['corrections'] = corrections
             elif secondary:
                 corrections = None
-                if 0:
-                    if 'fisx' in fitresult:
-                        corrections = fitresult['fisx'].get('corrections', None)
-                    if corrections is None:
-                        if 'fisx' in fitresult['result']:
-                            corrections = fitresult['result']['fisx'].get('corrections', None)
+                if 'fisx' in fitresult:
+                    corrections = fitresult['fisx'].get('corrections', None)
+                    if corrections is not None:
+                        if fitresult['fisx']['secondary'] != secondary:
+                            # it was calculated with wrong secondary level
+                            corrections = None
                 if corrections is None:
                     # try to see if they were in the configuration
                     # in principle this would be the most appropriate place to be
@@ -686,35 +686,29 @@ class ConcentrationsTool(object):
                     if 'fisx' in fitresult['result']['config']:
                         corrections = fitresult['result']['config']['fisx'].get('corrections',
                                                                                 None)
-                        if "concentrations" in fitresult['result']['config']:
-                            if fitresult['result']['config'] \
-                               ["concentrations"]["usemultilayersecondary"] != secondary:
-                                print("RECALCULATING")
-                                fitresult['result']['config']["concentrations"]\
-                                            ["usemultilayersecondary"]= secondary
-                                corrections = None
+                    if corrections is not None:
+                        # check they were corrected with proper secondary level
+                        if fitresult['result']['config']['fisx'].get("secondary", -1) != \
+                                               secondary:
+                            corrections = None
                 if corrections is None:
                     # calculate the corrections
+                    oldValue = fitresult['result']['config']['concentrations']['usemultilayersecondary']
+                    fitresult['result']['config']['concentrations']['usemultilayersecondary'] = secondary
                     corrections = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration( \
                                             fitresult['result']['config'],
                                             elementsFromMatrix=False)
-                    if not ('fisx' in fitresult['result']['config']):
-                        fitresult['result']['config']['fisx']  = {}
-                    fitresult['result']['config']['corrections'] = copy.deepcopy(corrections)
+                    fitresult['result']['config']['concentrations']['usemultilayersecondary'] = oldValue                    
+                    if not ('fisx' in fitresult['result']):
+                        fitresult['fisx']  = {}
+                    fitresult['fisx']['corrections'] = copy.deepcopy(corrections)
+                    fitresult['fisx']['secondary'] = secondary
             if referenceElement is not None:
                 referenceLines = referenceTransitions.split()[0]
                 referenceCorrection = corrections[referenceElement][referenceLines]\
                                             ['correction_factor'][-1]
-                corrections[referenceElement][referenceLines]\
-                                            ['correction_factor'][-1] = 1.0
-                for group in groupsList:
-                    item = group.split()
-                    element = item[0]
-                    lines = item[1]
-                    if element in corrections:
-                        if element != referenceElement:
-                            if lines != referenceLines:
-                                corrections[element][lines]['correction_factor'][-1] *= referenceCorrection
+            else:
+                referenceCorrection = 1.0
             # now we have to apply the corrections
             for group in groupsList:
                 item = group.split()
@@ -726,7 +720,8 @@ class ConcentrationsTool(object):
                             conversionFactor = ddict['mmolar'][group] / ddict['mass fraction'][group]
                         else:
                             conversionFactor = 1.0
-                    correction = corrections[element][item[1]]['correction_factor'][-1]
+                    correction = corrections[element][item[1]]['correction_factor'][-1] / \
+                                 referenceCorrection
                     ddict['mass fraction'][group] /= correction
                     if config['mmolarflag']:
                         ddict['mmolar'][group] = ddict['mass fraction'][group] * conversionFactor
@@ -741,7 +736,8 @@ class ConcentrationsTool(object):
                                         conversionFactor = 1.0
                                 dict2 = ddict[layer]
                                 layerKey = "layer %d" % iLayer
-                                correction = corrections[element][item[1]][layerKey]['correction_factor'][-1]
+                                correction = corrections[element][item[1]][layerKey] \
+                                                 ['correction_factor'][-1] / referenceCorrection                                            
                                 dict2['mass fraction'][group] /= correction
                                 if config['mmolarflag']:
                                     dict2['mmolar'][group] = dict2['mass fraction'][group] * \

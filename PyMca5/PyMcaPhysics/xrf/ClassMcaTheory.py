@@ -360,6 +360,8 @@ class McaTheory(object):
           if 'fisx' in self.config:
               if 'corrections' in self.config['fisx']:
                   del self.config['fisx']['corrections']
+              if 'secondary' in self.config['fisx']:
+                  del self.config['fisx']['secondary']
           self.config['fisx'] = {}
           secondary = False
           if 'concentrations' in self.config:
@@ -368,8 +370,10 @@ class McaTheory(object):
                   self.config['fisx'] = {}
                   self.config['fisx']['corrections'] = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration(self.config,
                                                                                 elementsFromMatrix=False)
-          # done with the calculation of the corrections to the total rate. For accurate line ratios, the correction is to be
-          # applied layer by layer -> use fisx library for *everything*
+                  self.config['fisx']['secondary'] = secondary  
+          # done with the calculation of the corrections to the total rate. For accurate line ratios,
+          # the correction is to be applied layer by layer.
+          # TODO:That implies the future use of fisx library for *everything*
 
           #print "getMatrixFluorescence elapsed = ",time.time()-t0
           for item in data:
@@ -2007,9 +2011,11 @@ class McaTheory(object):
                     self.linearMatrix = self.getPeakMatrixContribution(newpar)
         return newpar, codes
 
-    def startfit(self,digest=0, linear=None):
+    def startfit(self,digest=0, linear=None, iterations=None):
         if linear is None:
             linear = self.config['fit'].get("linearfitflag", 0)
+        if iterations is None:
+            iterations = 0
 
         if linear and self._batchFlag and (self.linearMatrix is not None):
             fitresult =  Gefit.LeastSquaresFit(self.linearMcaTheory,
@@ -2075,7 +2081,34 @@ class McaTheory(object):
         self.sigmapar =fitresult[2]
         self.__niter  =fitresult[3]
         self.__lastdeltachi = fitresult[4]
-        self.digest   = digest
+        newConfig = {}
+        if iterations > 0:
+            if not hasattr(self, "_tool"):
+                self._tool = ConcentrationsTool.ConcentrationsTool()
+            newConfig = copy.deepcopy(self.configure())
+            if (iterations > 0) and (len(newConfig.keys())):
+                print("ITERATIONS = ", iterations)
+                ddict = {}
+                ddict.update(newConfig['concentrations'])                
+                ddict, addInfo, newConfig = self._tool.processFitResult( \
+                                config=ddict,
+                                fitresult={"result":self.digestresult()},
+                                elementsfrommatrix=False,
+                                fluorates = self._fluoRates,
+                                addinfo=True,
+                                iteration=iterations)
+                iterations = iterations - 1
+                if len(newConfig.keys()):
+                    print("REPEATING")
+                    self.configure(newConfig)
+                    self.estimate()
+                    fitresult = self.startfit(digest=digest, linear=linear, iterations=iterations)[0]
+                    self.fittedpar=fitresult[0]
+                    self.chisq    =fitresult[1]
+                    self.sigmapar =fitresult[2]
+                    self.__niter  =fitresult[3]
+                    self.__lastdeltachi = fitresult[4]
+        self.digest = digest
         if digest:
             #self.result=self.digestresult()
             return fitresult, self.digestresult()
