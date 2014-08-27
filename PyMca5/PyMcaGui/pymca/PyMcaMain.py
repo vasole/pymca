@@ -661,6 +661,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 d['PyMca'][source]['WidgetConfiguration'] = selectorWidget.getWidgetConfiguration()
 
             #d['PyMca'][source]['Selection'] = self.sourceWidget[source].getSelection()
+
+        # McaWindow calibrations
+        d["PyMca"]["McaWindow"] = {}
+        d["PyMca"]["McaWindow"]["calibrations"] = self.mcaWindow.getCalibrations()
+
         #ROIs
         d['ROI']={}
         if self.mcaWindow.roiWidget is None:
@@ -802,6 +807,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                             msg.setInformativeText(txt)
                             msg.setDetailedText(traceback.format_exc())
                             msg.exec_()
+        if "McaWindow" in ddict:
+            self.mcaWindow.setCalibrations(ddict["McaWindow"]["calibrations"])
 
     def __configureRoi(self, ddict):
         if 'roidict' in ddict:

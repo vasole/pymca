@@ -1922,6 +1922,27 @@ class McaWindow(ScanWindow.ScanWindow):
             print("_subtractIconSignal")
         self.__QSimpleOperation('subtract')
 
+    def getCalibrations(self):
+        return copy.deepcopy(self.caldict)
+
+    def setCalibrations(self, ddict=None):
+        if ddict is None:
+            ddict = {}
+        self.caldict = ddict
+        item, text = self.controlWidget.calbox.getCurrent()
+        options = []
+        for option in self.calboxoptions:
+            options.append(option)
+        for key in self.caldict.keys():
+            if key not in options:
+                options.append(key)
+        try:
+            self.controlWidget.calbox.setOptions(options)
+        except:
+            pass
+        self.controlWidget.calbox.setCurrentIndex(item)
+        self.refresh()
+
     def _subtractOperation(self):
         #identical to twice the average with the negative active curve
         #get active curve
