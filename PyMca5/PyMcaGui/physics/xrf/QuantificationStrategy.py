@@ -118,7 +118,7 @@ class QuantificationStrategy(qt.QWidget):
     def setDescription(self, txt):
         self._description.setPlainText(txt)
         self._descriptionWidget.setDocument(self._description)
-        
+
     def build(self):
         self.strategy = SingleLayerStrategy(self)
         self.setDescription(self.strategy.getDescription())
@@ -127,7 +127,7 @@ class QuantificationStrategy(qt.QWidget):
     def setFitConfiguration(self, fitConfiguration):
         self._fitConfiguration = copy.deepcopy(fitConfiguration)
         self.strategy.setFitConfiguration(self._fitConfiguration)
-        
+
     def getParameters(self):
         pass
 
@@ -139,7 +139,7 @@ class SingleLayerStrategy(qt.QWidget):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
         self.build()
-        
+
     def getDescription(self):
         txt  = "This matrix iteration procedure is implemented as follows:\n"
         txt += "The concentration of the elements selected to be updated, will "
@@ -156,7 +156,7 @@ class SingleLayerStrategy(qt.QWidget):
         txt += "activate this option and any secondary or tertiary excitation "
         txt += "calculation once you are ready for quantification."
         return txt
-        
+
     def build(self):
         self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -170,7 +170,7 @@ class SingleLayerStrategy(qt.QWidget):
         self.mainLayout.addWidget(label, 0, 0)
         self.mainLayout.addWidget(qt.HorizontalSpacer(self), 1, 0)
         self.mainLayout.addWidget(self._nIterations, 0, 2)
-        
+
         label = qt.QLabel("Layer in wich the algorithm is to be applied:")
         self._layerOptions = qt.QComboBox(self)
         self._layerOptions.addItem("Auto")
@@ -189,8 +189,8 @@ class SingleLayerStrategy(qt.QWidget):
         self.mainLayout.addWidget(label, 2, 0)
         self.mainLayout.addWidget(self._materialOptions, 2, 2)
         self._table = IterationTable(self)
-        self.mainLayout.addWidget(self._table, 3, 0, 5, 5)  
-        
+        self.mainLayout.addWidget(self._table, 3, 0, 5, 5)
+
         self.mainLayout.addWidget(qt.VerticalSpacer(self), 10, 0)
 
     def setFitConfiguration(self, fitConfiguration):
@@ -198,7 +198,7 @@ class SingleLayerStrategy(qt.QWidget):
         _peakList = _getPeakList(fitConfiguration)
         if not len(_peakList):
             raise ValueError("No peaks to fit!!!!")
-        
+
         matrixDescription = _getMatrixDescription(fitConfiguration)
         layerList = list(matrixDescription.keys())
         layerList.sort()
@@ -264,18 +264,25 @@ class SingleLayerStrategy(qt.QWidget):
             self.setParameters(fitConfiguration[strategy])
 
     def getParameters(self):
-        self._table.getParameters()
+        ddict = self._table.getParameters()
+        ddict["layer"] = str(self._layerOptions.getCurrentText())
+        ddict["iterations"] = self._nIterations.value()
+        ddict["fill"] = str(self._materialOptions.getCurrentText())
+        return ddict
 
     def setParameters(self, ddict):
         layer = ddict.get("layer", "Auto")
         if layer not in self._layerList:
             raise ValueError("Layer %s not among fitted layers" % layer)
 
+        nIterations = ddict.get("iterations", 3)
+        self._nIterations.setValue(nIterations)
+
         layerList = self._layerList
         layerPeaks = self._layerPeaks
         self._layerOptions.setCurrentIndex(layerList.index(layer))
         self._table.setLayerPeakFamilies(layerPeaks[layer])
-        
+
         flags     = ddict["flags"]
         families  = ddict["peaks"]
         materials = ddict["materials"]
@@ -316,8 +323,8 @@ class IterationTable(qt.QTableWidget):
                                            qt.QTableWidgetItem.Type)
             self.setHorizontalHeaderItem(i,item)
         self.build()
-        self.resizeColumnToContents(0)        
-        self.resizeColumnToContents(3)        
+        self.resizeColumnToContents(0)
+        self.resizeColumnToContents(3)
         self.cellChanged[int, int].connect(self.mySlot)
 
     def setData(self, idx, use, peak, material="-"):
@@ -344,7 +351,7 @@ class IterationTable(qt.QTableWidget):
             print("Value changed row = %d col = %d" % (row, col))
             if col != 0:
                 print("Text = %s" % self.cellWidget(row, col).currentText())
-            
+
     def _checkBoxSlot(self, ddict):
         # check we do not have duplicates
         row = ddict['row']
@@ -399,7 +406,7 @@ class IterationTable(qt.QTableWidget):
     def setMaterialOptions(self, options):
         for idx in range(10):
             row = idx % 5
-            c = 3 * (idx // self.rowCount())            
+            c = 3 * (idx // self.rowCount())
             item = self.cellWidget(row, 2 + c)
             item.setOptions(options)
 
@@ -411,7 +418,7 @@ class IterationTable(qt.QTableWidget):
             item.setOptions(["-"] + layerPeaks)
             # reset material form
             item = self.cellWidget(row, 2 + c)
-            item.setCurrentIndex(0)            
+            item.setCurrentIndex(0)
 
     def __updateMaterialOptions(self, ddict):
         row = ddict['row']
@@ -489,6 +496,7 @@ class IterationTable(qt.QTableWidget):
                 ddict["flags"].append(0)
                 ddict["peaks"].append(self.cellWidget(row, 1 + c).currentText())
                 ddict["materials"].append(self.cellWidget(row, 2 + c).currentText())
+        return ddict
 
 class SimpleComboBox(qt.QComboBox):
     sigSimpleComboBoxSignal = qt.pyqtSignal(object)
@@ -514,7 +522,7 @@ class SimpleComboBox(qt.QComboBox):
         ddict["col"] = self.col
         ddict["text"] = self.currentText()
         self.sigSimpleComboBoxSignal.emit(ddict)
-                
+
 class MyQComboBox(MaterialComboBox):
     def _mySignal(self, qstring0):
         qstring = qstring0
@@ -580,6 +588,7 @@ def main(fileName=None):
         d.read(fileName)
         d["strategy"] = "SingleLayerStrategy"
         d["SingleLayerStrategy"] = {}
+        d["SingleLayerStrategy"]["iterations"] = 4
         d["SingleLayerStrategy"]["flags"] = 1, 1, 0
         d["SingleLayerStrategy"]["peaks"] = "Cr K", "Fe K", "Mn K"
         d["SingleLayerStrategy"]["materials"] = "-", "Goethite", "-"
