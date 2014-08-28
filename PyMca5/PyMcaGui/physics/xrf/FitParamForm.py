@@ -93,6 +93,14 @@ class FitParamForm(qt.QWidget):
         self.linearFitFlagCheck = qt.QCheckBox(self.tabFit)
         self.linearFitFlagCheck.setText(str("Perform a Linear Fit Fixing non-linear Parameters to Initial Values"))
 
+        self.strategyCheckBox = qt.QCheckBox(self.tabFit)
+        self.strategyCheckBox.setText(str("Perform a fit using the selected strategy"))
+        self.strategyCombo = qt.QComboBox(self.tabFit)
+        self.strategyCombo.addItem(str("Single Layer"))
+        self.strategySetupButton = qt.QPushButton(self.tabFit)
+        self.strategySetupButton.setText('SETUP')
+        self.strategySetupButton.setAutoDefault(False)
+
         self.mainTab.addTab(self.tabFit,str("FIT"))
 
         self.lastLabel = qt.QLabel(self.tabFit)
@@ -262,18 +270,21 @@ class FitParamForm(qt.QWidget):
         layout5.addWidget(self.chi2Label, 11, 0)
         layout5.addMultiCellWidget(self.chi2Value, 11, 11,3,4)
 
-        layout5.addMultiCellWidget(self.linearFitFlagCheck, 12, 12, 0, 4)
+        layout5.addMultiCellWidget(self.strategyCheckBox, 12, 12, 0, 4)
+        layout5.addWidget(self.strategyCombo, 12, 3)
+        layout5.addWidget(self.strategySetupButton, 12, 4)
+        layout5.addMultiCellWidget(self.linearFitFlagCheck, 13, 13, 0, 4)
 
-        layout5.addMultiCellWidget(self.topLine, 13, 14,0,4)
+        layout5.addMultiCellWidget(self.topLine, 14, 15,0,4)
 
-        layout5.addMultiCellWidget(self.minSpin,14, 15,4,4)
+        layout5.addMultiCellWidget(self.minSpin,15, 16,4,4)
 
-        layout5.addWidget(self.regionCheck,15,0)
-        layout5.addMultiCellWidget(self.firstLabel,15, 15,2,3)
+        layout5.addWidget(self.regionCheck,16,0)
+        layout5.addMultiCellWidget(self.firstLabel,16, 16,2,3)
 
-        layout5.addMultiCellWidget(self.lastLabel,16,16,2,3)
-        layout5.addWidget(self.maxSpin,16,4)
-        layout5.addMultiCellWidget(self.bottomLine,17,17,0,4)
+        layout5.addMultiCellWidget(self.lastLabel,17,17,2,3)
+        layout5.addWidget(self.maxSpin,17,4)
+        layout5.addMultiCellWidget(self.bottomLine,18,18,0,4)
 
         tabFitLayout.addLayout(layout5)
 
@@ -801,8 +812,8 @@ class FitParamForm(qt.QWidget):
         self.setTabOrder(self.longCheck,self.stepCheck)
         self._stripComboActivated(0)
 
-    def _stripComboActivated(self, iValue):
-        if iValue == 1:
+    def _stripComboActivated(self, intValue):
+        if intValue == 1:
             self.setSNIP(True)
         else:
             self.setSNIP(False)
