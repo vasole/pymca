@@ -33,8 +33,10 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import copy
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaPhysics import Elements
 from PyMca5.PyMcaGui import PyMca_Icons
+from PyMca5.PyMcaIO import ConfigDict
 from .MaterialEditor import MaterialComboBox
 
 IconDict = PyMca_Icons.IconDict
@@ -89,8 +91,8 @@ def _getMatrixDescription(fitConfiguration):
         multilayerSample = {"Auto":matrix}
     return multilayerSample
 
-class QuantificationStrategy(qt.QWidget):
-    sigQuantificationStrategySignal = qt.pyqtSignal(object)
+class StrategyHandlerWidget(qt.QWidget):
+    sigStrategyHandlerSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="Single Layer Matrix Iteration Strategy"):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
@@ -120,19 +122,27 @@ class QuantificationStrategy(qt.QWidget):
         self._descriptionWidget.setDocument(self._description)
 
     def build(self):
-        self.strategy = SingleLayerStrategy(self)
-        self.setDescription(self.strategy.getDescription())
-        self.mainLayout.addWidget(self.strategy)
+        self.strategy = {}
+        self.strategy["SingleLayerStrategy"] = SingleLayerStrategy(self)
+        currentStrategy = self.strategy["SingleLayerStrategy"]
+        self.setDescription(currentStrategy.getDescription())
+        self.mainLayout.addWidget(currentStrategy)
 
     def setFitConfiguration(self, fitConfiguration):
         self._fitConfiguration = copy.deepcopy(fitConfiguration)
-        self.strategy.setFitConfiguration(self._fitConfiguration)
+        strategy = self._fitConfiguration["fit"].get("strategy", "SingleLayerStrategy")
+        self.strategy[strategy].setFitConfiguration(self._fitConfiguration)
 
     def getParameters(self):
-        pass
+        strategy = self._fitConfiguration["fit"].get("strategy", "SingleLayerStrategy")
+        return self.strategy[strategy].getParameters()
 
     def setParameters(self, ddict):
-        pass
+        # this is used to use the current fit configuration but with other strategy configuration
+        # from other file
+        strategy = self._fitConfiguration["fit"].get("strategy", "SingleLayerStrategy")
+        if strategy in ddict:
+            return self.strategy[strategy].setParameters(ddict[strategy])
 
 class SingleLayerStrategy(qt.QWidget):
     def __init__(self, parent=None, name="Single Layer Matrix Iteration Strategy"):
@@ -259,15 +269,15 @@ class SingleLayerStrategy(qt.QWidget):
         self._layerList = layerList
         self._layerPeaks = layerPeaks
         self._table.setLayerPeakFamilies(layerPeaks[oldOption])
-        strategy = fitConfiguration.get("strategy", None)
+        strategy = fitConfiguration["fit"].get("strategy", "SingleLayerStrategy")
         if strategy.upper() == "SINGLELAYERSTRATEGY":
-            self.setParameters(fitConfiguration[strategy])
+            self.setParameters(fitConfiguration["SingleLayerStrategy"])
 
     def getParameters(self):
         ddict = self._table.getParameters()
-        ddict["layer"] = str(self._layerOptions.getCurrentText())
+        ddict["layer"] = str(self._layerOptions.currentText())
         ddict["iterations"] = self._nIterations.value()
-        ddict["fill"] = str(self._materialOptions.getCurrentText())
+        ddict["completer"] = str(self._materialOptions.currentText())
         return ddict
 
     def setParameters(self, ddict):
@@ -282,6 +292,9 @@ class SingleLayerStrategy(qt.QWidget):
         layerPeaks = self._layerPeaks
         self._layerOptions.setCurrentIndex(layerList.index(layer))
         self._table.setLayerPeakFamilies(layerPeaks[layer])
+
+        completer = ddict.get("completer", "-")
+        self._materialOptions.setCurrentText(completer)
 
         flags     = ddict["flags"]
         families  = ddict["peaks"]
@@ -578,26 +591,85 @@ class MyCheckBox(qt.QCheckBox):
         ddict["col"] = self._col
         self.sigMyCheckBoxSignal.emit(ddict)
 
+class StrategyHandlerDialog(qt.QDialog):
+    def __init__(self, parent=None):
+        qt.QDialog.__init__(self, parent)
+        self.setWindowTitle("Fit Strategy Configuration Window")
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.mainLayout.setSpacing(2)
+        self.handlerWidget = StrategyHandlerWidget(self)
+
+        # mimic behavior
+        self.setFitConfiguration = self.handlerWidget.setFitConfiguration
+        self.getParameters = self.handlerWidget.getParameters
+        self.setParameters = self.handlerWidget.setParameters
+
+        # the actions
+        hbox = qt.QWidget(self)
+        hboxLayout = qt.QHBoxLayout(hbox)
+        hboxLayout.setContentsMargins(0, 0, 0, 0)
+        hboxLayout.setSpacing(2)
+        self.loadButton = qt.QPushButton(hbox)
+        self.loadButton.setText("Load")
+        self.loadButton.setAutoDefault(False)
+        self.loadButton.setToolTip("Read the strategy parameters from other fit configuration file")
+        self.okButton = qt.QPushButton(hbox)
+        self.okButton.setText("OK")
+        self.okButton.setAutoDefault(False)
+        self.dismissButton = qt.QPushButton(hbox)
+        self.dismissButton.setText("Cancel")
+        self.dismissButton.setAutoDefault(False)
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
+        hboxLayout.addWidget(self.okButton)
+        hboxLayout.addWidget(self.dismissButton)
+        hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
+
+        # layout
+        self.mainLayout.addWidget(self.handlerWidget)
+        self.mainLayout.addWidget(hbox)
+
+        # connect
+        self.loadButton.clicked[()].connect(self.load)
+        self.dismissButton.clicked[()].connect(self.reject)
+        self.okButton.clicked[()].connect(self.accept)
+        
+    def sizeHint(self):
+        return qt.QSize(int(1.5*qt.QDialog.sizeHint(self).width()),
+                        qt.QDialog.sizeHint(self).height())
+
+    def load(self):
+        fileList = PyMcaFileDialogs.getFileList(parent=self,
+                                                filetypelist=["Fit files (*.cfg)"],
+                                                message="Select a fit configuration file",
+                                                mode="OPEN",
+                                                getfilter=False,
+                                                single=True)
+        if len(fileList):
+            d = ConfigDict.ConfigDict()
+            d.read(fileList[0])
+            self.setParameters(d)        
+
 def main(fileName=None):
     app  = qt.QApplication(sys.argv)
-    w = QuantificationStrategy()
-    w.show()
+    w = StrategyHandlerDialog()
     if fileName is not None:
-        from PyMca5.PyMca import ConfigDict
         d = ConfigDict.ConfigDict()
         d.read(fileName)
-        d["strategy"] = "SingleLayerStrategy"
+        d["fit"]["strategy"] = "SingleLayerStrategy"
         d["SingleLayerStrategy"] = {}
         d["SingleLayerStrategy"]["iterations"] = 4
-        d["SingleLayerStrategy"]["flags"] = 1, 1, 0
-        d["SingleLayerStrategy"]["peaks"] = "Cr K", "Fe K", "Mn K"
-        d["SingleLayerStrategy"]["materials"] = "-", "Goethite", "-"
+        d["SingleLayerStrategy"]["flags"] = 1, 1, 0, 1
+        d["SingleLayerStrategy"]["peaks"] = "Cr K", "Fe K", "Mn K",  "Fe Ka"
+        d["SingleLayerStrategy"]["materials"] = "-", "Goethite", "-", "Goethite"
+        d["SingleLayerStrategy"]["completer"] = "Mo"
         w.setFitConfiguration(d)
-    app.exec_()
+    if w.exec_() == qt.QDialog.Accepted:
+        print(w.getParameters())
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python QuantificationStrategy FitConfigurationFile")
+        print("Usage: python StrategyHandler FitConfigurationFile")
         main()
     else:
         fileName = sys.argv[1]
