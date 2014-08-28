@@ -45,7 +45,7 @@ DEBUG = 0
 
 def _getPeakList(fitConfiguration):
     elementsList = []
-    for element in fitConfiguration['peaks'].keys():
+    for element in fitConfiguration['peaks']:
         if len(element) > 1:
             ele = element[0:1].upper() + element[1:2].lower()
         else:
@@ -95,6 +95,7 @@ class StrategyHandlerWidget(qt.QWidget):
     sigStrategyHandlerSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, name="Single Layer Matrix Iteration Strategy"):
         qt.QWidget.__init__(self, parent)
+        self._fitConfiguration = None
         self.setWindowTitle(name)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -134,12 +135,16 @@ class StrategyHandlerWidget(qt.QWidget):
         self.strategy[strategy].setFitConfiguration(self._fitConfiguration)
 
     def getParameters(self):
+        if self._fitConfiguration is None:
+            return {}
         strategy = self._fitConfiguration["fit"].get("strategy", "SingleLayerStrategy")
-        return self.strategy[strategy].getParameters()
+        return {strategy:self.strategy[strategy].getParameters()}
 
     def setParameters(self, ddict):
         # this is used to use the current fit configuration but with other strategy configuration
         # from other file
+        if self._fitConfiguration is None:
+            return
         strategy = self._fitConfiguration["fit"].get("strategy", "SingleLayerStrategy")
         if strategy in ddict:
             return self.strategy[strategy].setParameters(ddict[strategy])
@@ -270,7 +275,7 @@ class SingleLayerStrategy(qt.QWidget):
         self._layerPeaks = layerPeaks
         self._table.setLayerPeakFamilies(layerPeaks[oldOption])
         strategy = fitConfiguration["fit"].get("strategy", "SingleLayerStrategy")
-        if strategy.upper() == "SINGLELAYERSTRATEGY":
+        if strategy in fitConfiguration:
             self.setParameters(fitConfiguration["SingleLayerStrategy"])
 
     def getParameters(self):
@@ -666,6 +671,7 @@ def main(fileName=None):
         w.setFitConfiguration(d)
     if w.exec_() == qt.QDialog.Accepted:
         print(w.getParameters())
+    
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

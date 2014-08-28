@@ -56,6 +56,7 @@ except ImportError:
     pass
 from PyMca5.PyMcaGui.math import StripBackgroundWidget
 from PyMca5.PyMcaGui import PlotWindow
+from PyMca5.PyMcaGui.physics.xrf import StrategyHandler
 import numpy
 
 DEBUG = 0
@@ -71,6 +72,7 @@ class FitParamWidget(FitParamForm):
         self._channels = None
         self._counts   = None
         self._stripDialog = None
+        self._strategyDialog  = None
         self.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
         self.tabAtt = qt.QWidget()
         tabAttLayout = qt.QGridLayout(self.tabAtt)
@@ -212,6 +214,11 @@ class FitParamWidget(FitParamForm):
         self._backgroundWindow = None
         self.stripSetupButton.clicked.connect(self.__stripSetupButtonClicked)
 
+        #strategy related
+        self.strategyCheckBox.clicked.connect(self._strategyCheckBoxClicked)
+        self.strategySetupButton.clicked.connect(self._strategySetupButtonClicked)
+        self.strategyCombo.activated[int].connect(self._strategyComboActivated)
+
     def __attPlotButtonSlot(self):
         try:
             self.computeEfficiency()
@@ -324,6 +331,58 @@ class FitParamWidget(FitParamForm):
     def setData(self, x, y):
         self._channels = x
         self._counts = y
+
+    def _strategyCheckBoxClicked(self, *var):
+        if self.strategyCheckBox.isChecked():
+            maxEnergy = qt.safe_str(self.peakTable.energy.text())
+            if maxEnergy == 'None':
+                self.strategyCheckBox.setChecked(False)
+                msg=qt.QMessageBox(self)
+                msg.setWindowTitle("Strategy Error")
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error configuring strategy")
+                msg.setInformativeText("You need to specify incident beam energy")
+                msg.exec_()
+        #print("TO check for matrix composition")
+        #print("TO check for peaks")
+
+    def _strategySetupButtonClicked(self):
+        maxEnergy = qt.safe_str(self.peakTable.energy.text())
+        if maxEnergy == 'None':
+            self.strategyCheckBox.setChecked(False)
+            msg=qt.QMessageBox(self)
+            msg.setWindowTitle("Strategy Error")
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error configuring strategy")
+            msg.setInformativeText("You need to specify incident beam energy")
+            msg.exec_()
+        if self._strategyDialog is None:
+            self._strategyDialog = StrategyHandler.StrategyHandlerDialog()
+            self._strategyDialog.setWindowIcon(qt.QIcon(\
+                                qt.QPixmap(Icons.IconDict["gioconda16"])))
+            if self.height() < 801:
+                self._strategyDialog.setMinimumHeight(int(0.85*self.height()))
+                self._strategyDialog.setMaximumHeight(int(0.85*self.height()))
+        before = self.getParameters()
+        try:
+            self._strategyDialog.setFitConfiguration(before)
+        except:
+            msg=qt.QMessageBox(self)
+            msg.setWindowTitle("Strategy Error: %s" % \
+                               qt.safe_str(sys.exc_info()[1]))
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error configuring strategy")
+            msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
+            return
+        ret = self._strategyDialog.exec_()
+        if ret != qt.QDialog.Accepted:
+            self._strategyDialog.setFitConfiguration(before)
+
+    def _strategyComboActivated(self, intValue):
+        # only one strategy implemented untill now
+        pass
 
     def  __stripSetupButtonClicked(self):
         if self._counts is None:
@@ -447,6 +506,8 @@ class FitParamWidget(FitParamForm):
             sections.append('xrfmc')
         for key in sections:
             pars[key]= self.__getPar(key)
+        if self._strategyDialog is not None:
+            pars.update(self._strategyDialog.getParameters())
         return pars
 
     def __getPar(self, parname):
@@ -775,14 +836,18 @@ class FitParamWidget(FitParamForm):
             flaglist    = self.__get("fit", "energyflag", None, None)
             scatterlist    = self.__get("fit", "energyscatter", None, None)
         self.energyTable.setParameters(energylist, weightlist, flaglist, scatterlist)
-
-
+        self.strategyCheckBox.setChecked(self.__get("fit", "strategyflag", 0, int))
+        
     def __getFitPar(self):
         pars= {}
         #Default 10 eV separation between two peaks accessible through file
         pars['deltaonepeak'] = self.__get("fit", "deltaonepeak", 0.010, float)
         err = "__getFitPar"
         #if 1:
+        # fot the time being is nto necessary to read the combo box and
+        # ask the strategy handler
+        pars["strategy"] = "SingleLayerStrategy"
+        pars["strategyflag"] = int(self.strategyCheckBox.isChecked())
         try:
             pars["fitfunction"]= int(self.functionCombo.currentIndex())
             pars["continuum"]= int(self.contCombo.currentIndex())
@@ -1099,9 +1164,12 @@ class FitParamDialog(qt.QDialog):
         except:
         #else:
             #self.initDir = None
-            qt.QMessageBox.critical(self, "Load Parameters",
-                "ERROR while loading parameters from\n%s"%filename,
-                qt.QMessageBox.Ok, qt.QMessageBox.NoButton, qt.QMessageBox.NoButton)
+            msg=qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            text = "Error %s" % sys.exc_info()[1]
+            msg.setInformativeText(text)
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()            
             return 0
         self.setParameters(copy.deepcopy(cfg))
         return 1
