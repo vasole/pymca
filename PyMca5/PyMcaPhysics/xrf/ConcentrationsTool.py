@@ -698,7 +698,7 @@ class ConcentrationsTool(object):
                     corrections = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration( \
                                             fitresult['result']['config'],
                                             elementsFromMatrix=False)
-                    fitresult['result']['config']['concentrations']['usemultilayersecondary'] = oldValue                    
+                    fitresult['result']['config']['concentrations']['usemultilayersecondary'] = oldValue
                     if not ('fisx' in fitresult['result']):
                         fitresult['fisx']  = {}
                     fitresult['fisx']['corrections'] = copy.deepcopy(corrections)
@@ -737,7 +737,7 @@ class ConcentrationsTool(object):
                                 dict2 = ddict[layer]
                                 layerKey = "layer %d" % iLayer
                                 correction = corrections[element][item[1]][layerKey] \
-                                                 ['correction_factor'][-1] / referenceCorrection                                            
+                                                 ['correction_factor'][-1] / referenceCorrection
                                 dict2['mass fraction'][group] /= correction
                                 if config['mmolarflag']:
                                     dict2['mmolar'][group] = dict2['mass fraction'][group] * \

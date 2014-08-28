@@ -842,13 +842,15 @@ class McaAdvancedFit(qt.QWidget):
                                                                         None)
             if corrections is None:
                 # calculate the corrections
-                # in principle I should never get here
                 corrections = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration( \
                                         fitresult['result']['config'],
                                         elementsFromMatrix=False)
+                # to put it into config is misleading because it was not made at
+                # configuration time.
                 if 'fisx' not in fitresult['result']['config']:
                     fitresult['result']['config']['fisx'] = {}
                 fitresult['result']['config']['fisx']['corrections'] = corrections
+                fitresult['result']['config']['fisx']['secondary'] = 1
             for element in corrections:
                 for family in corrections[element]:
                     correction = corrections[element] \

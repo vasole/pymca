@@ -299,8 +299,11 @@ class ConcentrationsWidget(qt.QWidget):
         #Multilayer secondary excitation
         self.secondaryCheckBox = qt.QCheckBox(self)
         self.secondaryCheckBox.setText("Consider secondary excitation")
+        self.tertiaryCheckBox = qt.QCheckBox(self)
+        self.tertiaryCheckBox.setText("Consider tertiary excitation")
         layout.addWidget(self.attenuatorsCheckBox)
         layout.addWidget(self.secondaryCheckBox)
+        layout.addWidget(self.tertiaryCheckBox)
         #XRFMC secondary excitation
         if XRFMC_FLAG:
             self.xrfmcCheckBox = qt.QCheckBox(self)
@@ -317,11 +320,10 @@ class ConcentrationsWidget(qt.QWidget):
         self.fluxCheckBox.clicked[()].connect(self._fluxCheckBoxSlot)
         self.matrixCheckBox.clicked[()].connect(self.checkBoxSlot)
         self.attenuatorsCheckBox.clicked[()].connect(self.checkBoxSlot)
+        self.secondaryCheckBox.clicked[()].connect(self._secondaryCheckBoxSlot)
+        self.tertiaryCheckBox.clicked[()].connect(self._tertiaryCheckBoxSlot)
         if XRFMC_FLAG:
-            self.secondaryCheckBox.clicked[()].connect(self._secondaryCheckBoxSlot)
             self.xrfmcCheckBox.clicked[()].connect(self._xrfmcCheckBoxSlot)
-        else:
-            self.secondaryCheckBox.clicked[()].connect(self.checkBoxSlot)
 
         self.mMolarCheckBox.clicked[()].connect(self.checkBoxSlot)
 
@@ -343,7 +345,16 @@ class ConcentrationsWidget(qt.QWidget):
 
     def _secondaryCheckBoxSlot(self):
         if self.secondaryCheckBox.isChecked():
-            self.xrfmcCheckBox.setChecked(False)
+            if XRFMC_FLAG:
+                self.xrfmcCheckBox.setChecked(False)
+            self.tertiaryCheckBox.setChecked(False)
+        self.checkBoxSlot()
+
+    def _tertiaryCheckBoxSlot(self):
+        if self.tertiaryCheckBox.isChecked():
+            if XRFMC_FLAG:
+                self.xrfmcCheckBox.setChecked(False)
+            self.secondaryCheckBox.setChecked(False)
         self.checkBoxSlot()
 
     def _xrfmcCheckBoxSlot(self):
@@ -410,7 +421,9 @@ class ConcentrationsWidget(qt.QWidget):
             ddict['useattenuators'] = 1
         else:
             ddict['useattenuators'] = 0
-        if self.secondaryCheckBox.isChecked():
+        if self.tertiaryCheckBox.isChecked():
+            ddict['usemultilayersecondary'] = 2
+        elif self.secondaryCheckBox.isChecked():
             ddict['usemultilayersecondary'] = 1
         else:
             ddict['usemultilayersecondary'] = 0
@@ -435,11 +448,18 @@ class ConcentrationsWidget(qt.QWidget):
             signal = True
         if 'usemultilayersecondary' in ddict:
             if ddict['usemultilayersecondary']:
-                self.secondaryCheckBox.setChecked(True)
+                if ddict['usemultilayersecondary'] == 2:
+                    self.tertiaryCheckBox.setChecked(True)
+                    self.secondaryCheckBox.setChecked(False)
+                else:
+                    self.tertiaryCheckBox.setChecked(False)
+                    self.secondaryCheckBox.setChecked(True)
             else:
                 self.secondaryCheckBox.setChecked(False)
+                self.tertiaryCheckBox.setChecked(False)
         else:
             self.secondaryCheckBox.setChecked(False)
+            self.tertiaryCheckBox.setChecked(False)
 
         if XRFMC_FLAG:
             if 'usexrfmc' in ddict:
