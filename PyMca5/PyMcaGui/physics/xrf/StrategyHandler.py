@@ -124,7 +124,7 @@ class StrategyHandlerWidget(qt.QWidget):
 
     def build(self):
         self.strategy = {}
-        self.strategy["SingleLayerStrategy"] = SingleLayerStrategy(self)
+        self.strategy["SingleLayerStrategy"] = SingleLayerStrategyWidget(self)
         currentStrategy = self.strategy["SingleLayerStrategy"]
         self.setDescription(currentStrategy.getDescription())
         self.mainLayout.addWidget(currentStrategy)
@@ -149,14 +149,17 @@ class StrategyHandlerWidget(qt.QWidget):
         if strategy in ddict:
             return self.strategy[strategy].setParameters(ddict[strategy])
 
-class SingleLayerStrategy(qt.QWidget):
+class SingleLayerStrategyWidget(qt.QWidget):
     def __init__(self, parent=None, name="Single Layer Matrix Iteration Strategy"):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
         self.build()
 
     def getDescription(self):
-        txt  = "This matrix iteration procedure is implemented as follows:\n"
+        txt =  "WARNING: Not recommended for use with internal standard if the "
+        txt += "internal standard is present in the refining layer. You will "
+        txt += "get better results working in fundamental parameters mode.\n"
+        txt += "This matrix iteration procedure is implemented as follows:\n"
         txt += "The concentration of the elements selected to be updated, will "
         txt += "be incorporated in the matrix in the specified form.\n"
         txt += "If the sum of the mass fractions of those elements is above 1 "
@@ -167,7 +170,7 @@ class SingleLayerStrategy(qt.QWidget):
         txt += "- The incorporated elements cannot be on different layers.\n"
         txt += "- One element cannot be selected more than once.\n"
         txt += "Recommendations:\n"
-        txt += "- In order to avoid unnecessary slow setups, "
+        txt += "- In order to avoid unnecessarily slow setups, "
         txt += "activate this option and any secondary or tertiary excitation "
         txt += "calculation once you are ready for quantification."
         return txt
@@ -639,7 +642,7 @@ class StrategyHandlerDialog(qt.QDialog):
         self.loadButton.clicked[()].connect(self.load)
         self.dismissButton.clicked[()].connect(self.reject)
         self.okButton.clicked[()].connect(self.accept)
-        
+
     def sizeHint(self):
         return qt.QSize(int(1.5*qt.QDialog.sizeHint(self).width()),
                         qt.QDialog.sizeHint(self).height())
@@ -654,7 +657,7 @@ class StrategyHandlerDialog(qt.QDialog):
         if len(fileList):
             d = ConfigDict.ConfigDict()
             d.read(fileList[0])
-            self.setParameters(d)        
+            self.setParameters(d)
 
 def main(fileName=None):
     app  = qt.QApplication(sys.argv)
@@ -672,7 +675,7 @@ def main(fileName=None):
         w.setFitConfiguration(d)
     if w.exec_() == qt.QDialog.Accepted:
         print(w.getParameters())
-    
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

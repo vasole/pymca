@@ -55,6 +55,7 @@ class McaTheory(object):
         self.xdata0  = None
         self.sigmay0 = None
         self.strategyInstances = {}
+        self.__toBeConfigured = False
         if initdict is None:
             dirname = PyMcaDataDir.PYMCA_DATA_DIR
             initdict = os.path.join(dirname, "McaTheory.cfg")
@@ -126,12 +127,24 @@ class McaTheory(object):
         """
         return self.configure()
 
-    def configure(self,newdict=None):
-        if newdict is None:
-            return copy.deepcopy(self.config)
-        if newdict == {}:
+    def getStartingConfiguration(self):
+        # same output as calling configure but with the calling program
+        # knowing what is going on (no warning)
+        if self.__toBeConfigured:
+            return copy.deepcopy(self.__originalConfiguration)
+        else:
+            return self.configure()
+
+    def configure(self, newdict=None):
+        if newdict in [None, {}]:
+            if self.__toBeConfigured:
+                if DEBUG:
+                    txt = "WARNING: This configuration is the one of last fit.\n"
+                    txt += "It does not correspond to the one of next fit."
+                    print(txt)
             return copy.deepcopy(self.config)
         self.config.update(newdict)
+        self.__toBeConfigured = False
         self.__configure()
         return copy.deepcopy(self.config)
 
@@ -947,6 +960,10 @@ class McaTheory(object):
                set, they will be ignored. If xmin and xmax are not given, the
                whole given spectrum will be considered for fitting.
         """
+        if self.__toBeConfigured:
+            if DEBUG:
+                print("setData RESTORE ORIGINAL CONFIGURATION")
+            self.configure(self.__originalConfiguration)
         if 'x' in kw:
             x=kw['x']
         elif len(var) >1:
@@ -1685,6 +1702,10 @@ class McaTheory(object):
             return (f1-f2) / (2.0 * delta)
 
     def estimate(self):
+        if self.__toBeConfigured:
+            if DEBUG:
+                print("CONFIGURING FROM ESTIMATION")
+            self.configure(self.__originalConfiguration)
         self.parameters, self.codes = self.specfitestimate(self.xdata, self.ydata,self.zz)
         #self.estimatelinpoly(self.xdata, self.ydata,self.zz)
         #self.estimateexppoly(self.xdata, self.ydata,self.zz)
@@ -2013,6 +2034,8 @@ class McaTheory(object):
         return newpar, codes
 
     def startfit(self,digest=0, linear=None, currentIteration=None):
+        if self.__toBeConfigured:
+            self.estimate()
         if linear is None:
             linear = self.config['fit'].get("linearfitflag", 0)
 
@@ -2085,6 +2108,7 @@ class McaTheory(object):
         if currentIteration is None:
             if self.config['fit'].get("strategyflag", False):
                 callStrategy = True
+                self.__originalConfiguration = copy.deepcopy(self.config)
         elif currentIteration > 0:
             callStrategy = True
 
@@ -2098,7 +2122,7 @@ class McaTheory(object):
                                             self.digestresult(),
                                             self._fluoRates,
                                             currentIteration=currentIteration)
-            if (iteration > 0) and (len(newConfig.keys())):
+            if (iteration >= 0) and (len(newConfig.keys())):
                 self.configure(newConfig)
                 self.estimate()
                 if digest:
@@ -2117,9 +2141,22 @@ class McaTheory(object):
 
         self.digest = digest
         if digest:
+            digestedResult = self.digestresult()
             #self.result=self.digestresult()
-            return fitresult, self.digestresult()
+            if currentIteration is None:
+                if callStrategy:
+                    # restore old configuration with the new materials
+                    self.__originalConfiguration["materials"].update(\
+                        self.config["materials"])
+                    self.__toBeConfigured = True
+            return fitresult, digestedResult
         else:
+            if currentIteration is None:
+                if callStrategy:
+                    # restore old configuration with the new materials
+                    self.__originalConfiguration["materials"].update(\
+                        self.config["materials"])
+                    self.__toBeConfigured = True
             return fitresult
 
     def imagingDigestResult(self):

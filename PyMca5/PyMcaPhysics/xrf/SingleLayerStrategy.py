@@ -60,7 +60,7 @@ class SingleLayerStrategy(object):
 
         # calculate concentrations with current configuration
         ddict = {}
-        ddict.update(newConfiguration['concentrations'])                
+        ddict.update(newConfiguration['concentrations'])
         ddict, addInfo = self._tool.processFitResult( \
                                 config=ddict,
                                 fitresult={"result":fitResult},
@@ -106,7 +106,7 @@ class SingleLayerStrategy(object):
                     daughterKey = firstLayer
                 if daugther is None:
                     raise ValueError("Cannot find appropriate sample layer")
-        
+
         # newConfiguration[parentKey][daughterKey] composition is to be updated
         # get the new composition
         total = 0.0

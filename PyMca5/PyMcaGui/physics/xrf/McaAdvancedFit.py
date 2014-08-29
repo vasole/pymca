@@ -412,10 +412,9 @@ class McaAdvancedFit(qt.QWidget):
                     dialog.setFitResult(self.dict['result'])
                 else:
                     dialog.setFitResult(None)
-            dialog.setParameters(config)
+            dialog.setParameters(self.mcafit.getStartingConfiguration())
             dialog.setData(self.mcafit.xdata * 1.0,
                            self.mcafit.ydata * 1.0)
-
 
             #dialog.fitparam.regionCheck.setDisabled(True)
             #dialog.fitparam.minSpin.setDisabled(True)
