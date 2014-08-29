@@ -221,7 +221,7 @@ class ConcentrationsTool(object):
 
     def processFitResult(self, config=None, fitresult=None,
                          elementsfrommatrix=False, fluorates=None,
-                         addinfo=False, iteration=None):
+                         addinfo=False):
         # I should check if fit was successful ...
         if fitresult is None:
             fitresult = self.fitresult
@@ -743,42 +743,6 @@ class ConcentrationsTool(object):
                                     dict2['mmolar'][group] = dict2['mass fraction'][group] * \
                                                              conversionFactor
                                 iLayer += 1
-        UPDATE_CONFIG = False
-        if iteration is not None:
-            UPDATE_CONFIG = True
-            newConfiguration = {}
-
-        if iteration > 0:
-            # just matrix to be changed
-            newConfiguration = copy.deepcopy(fitresult['result']['config'])
-            for attenuator in list(newConfiguration['attenuators'].keys()):
-                if not newConfiguration['attenuators'][attenuator][0]:
-                    continue
-                if attenuator.upper() == "MATRIX":
-                    total = 0.0
-                    newConfiguration["materials"]["_ITER_MATERIAL_"] = {}
-                    CompoundList = []
-                    CompoundFraction = []
-                    for group in ["Ni K", "Mn K", "Cr K"]:
-                        ele = group.split()[0]
-                        total += ddict["mass fraction"][group]
-                        CompoundList.append(ele)
-                        CompoundFraction.append(\
-                                            ddict["mass fraction"][group])
-                    CompoundList.append("Fe")
-                    if total > 1.0:
-                        CompoundFraction.append(ddict["mass fraction"]["Fe K"])
-                    else:
-                        CompoundFraction.append(1.0 - total)
-                    newConfiguration["materials"]["_ITER_MATERIAL_"] = \
-                        {"Density": newConfiguration['attenuators'][attenuator][2],
-                         "Thickness":newConfiguration['attenuators'][attenuator][3],
-                         "CompoundList":CompoundList,
-                         "CompoundFraction":CompoundFraction,
-                         "Comment":"Last internal iteration"}
-                    newConfiguration['attenuators'][attenuator][1] = "_ITER_MATERIAL_"
-                    break
-
         if addinfo:
             addInfo = {}
             addInfo['ReferenceElement'] = referenceElement
@@ -792,15 +756,9 @@ class ConcentrationsTool(object):
             addInfo['I0'] = flux
             addInfo['DetectorDistance'] = config['distance']
             addInfo['DetectorArea'] = config['area']
-            if UPDATE_CONFIG:
-                return ddict , addInfo, newConfiguration
-            else:
-                return ddict , addInfo
+            return ddict , addInfo
         else:
-            if UPDATE_CONFIG:
-                return ddict, newConfiguration
-            else:
-                return ddict
+            return ddict
 
     def _figureOfMerit(self, element, fluo, fitresult):
         weight = 0.0

@@ -34,6 +34,7 @@ import os
 import sys
 import numpy
 import copy
+from .Strategies import STRATEGIES
 from . import ConcentrationsTool
 FISX = ConcentrationsTool.FISX
 if FISX:
@@ -53,7 +54,7 @@ class McaTheory(object):
         self.ydata0  = None
         self.xdata0  = None
         self.sigmay0 = None
-
+        self.strategyInstances = {}
         if initdict is None:
             dirname = PyMcaDataDir.PYMCA_DATA_DIR
             initdict = os.path.join(dirname, "McaTheory.cfg")
@@ -370,7 +371,7 @@ class McaTheory(object):
                   self.config['fisx'] = {}
                   self.config['fisx']['corrections'] = FisxHelper.getFisxCorrectionFactorsFromFitConfiguration(self.config,
                                                                                 elementsFromMatrix=False)
-                  self.config['fisx']['secondary'] = secondary  
+                  self.config['fisx']['secondary'] = secondary
           # done with the calculation of the corrections to the total rate. For accurate line ratios,
           # the correction is to be applied layer by layer.
           # TODO:That implies the future use of fisx library for *everything*
@@ -2011,11 +2012,9 @@ class McaTheory(object):
                     self.linearMatrix = self.getPeakMatrixContribution(newpar)
         return newpar, codes
 
-    def startfit(self,digest=0, linear=None, iterations=None):
+    def startfit(self,digest=0, linear=None, currentIteration=None):
         if linear is None:
             linear = self.config['fit'].get("linearfitflag", 0)
-        if iterations is None:
-            iterations = 0
 
         if linear and self._batchFlag and (self.linearMatrix is not None):
             fitresult =  Gefit.LeastSquaresFit(self.linearMcaTheory,
@@ -2081,33 +2080,44 @@ class McaTheory(object):
         self.sigmapar =fitresult[2]
         self.__niter  =fitresult[3]
         self.__lastdeltachi = fitresult[4]
-        newConfig = {}
-        if iterations > 0:
-            if not hasattr(self, "_tool"):
-                self._tool = ConcentrationsTool.ConcentrationsTool()
-            newConfig = copy.deepcopy(self.configure())
-            if (iterations > 0) and (len(newConfig.keys())):
-                print("ITERATIONS = ", iterations)
-                ddict = {}
-                ddict.update(newConfig['concentrations'])                
-                ddict, addInfo, newConfig = self._tool.processFitResult( \
-                                config=ddict,
-                                fitresult={"result":self.digestresult()},
-                                elementsfrommatrix=False,
-                                fluorates = self._fluoRates,
-                                addinfo=True,
-                                iteration=iterations)
-                iterations = iterations - 1
-                if len(newConfig.keys()):
-                    print("REPEATING")
-                    self.configure(newConfig)
-                    self.estimate()
-                    fitresult = self.startfit(digest=digest, linear=linear, iterations=iterations)[0]
-                    self.fittedpar=fitresult[0]
-                    self.chisq    =fitresult[1]
-                    self.sigmapar =fitresult[2]
-                    self.__niter  =fitresult[3]
-                    self.__lastdeltachi = fitresult[4]
+
+        callStrategy = False
+        if currentIteration is None:
+            if self.config['fit'].get("strategyflag", False):
+                callStrategy = True
+        elif currentIteration > 0:
+            callStrategy = True
+
+        if callStrategy:
+            # get the strategy to be applied
+            strategyKey = self.config['fit']["strategy"]
+            if strategyKey not in self.strategyInstances:
+                self.strategyInstances[strategyKey] = STRATEGIES[strategyKey]()
+            strategyInstance = self.strategyInstances[strategyKey]
+            newConfig, iteration = strategyInstance.applyStrategy( \
+                                            self.digestresult(),
+                                            self._fluoRates,
+                                            currentIteration=currentIteration)
+            if (iteration > 0) and (len(newConfig.keys())):
+                print("REPEATING")
+                print newConfig["materials"].keys()
+                print newConfig["materials"]["SingleLayerStrategyMaterial"]
+                self.configure(newConfig)
+                self.estimate()
+                if digest:
+                    fitresult = self.startfit(digest=digest,
+                                          linear=linear,
+                                          currentIteration=iteration)[0]
+                else:
+                    fitresult = self.startfit(digest=digest,
+                                          linear=linear,
+                                          currentIteration=iteration)
+                self.fittedpar=fitresult[0]
+                self.chisq    =fitresult[1]
+                self.sigmapar =fitresult[2]
+                self.__niter  =fitresult[3]
+                self.__lastdeltachi = fitresult[4]
+
         self.digest = digest
         if digest:
             #self.result=self.digestresult()
