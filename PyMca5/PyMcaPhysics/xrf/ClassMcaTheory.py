@@ -2099,9 +2099,6 @@ class McaTheory(object):
                                             self._fluoRates,
                                             currentIteration=currentIteration)
             if (iteration > 0) and (len(newConfig.keys())):
-                print("REPEATING")
-                print newConfig["materials"].keys()
-                print newConfig["materials"]["SingleLayerStrategyMaterial"]
                 self.configure(newConfig)
                 self.estimate()
                 if digest:
