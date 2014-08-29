@@ -189,7 +189,7 @@ class FitParamWidget(FitParamForm):
             layout.addWidget(self.peakTable, 0, 0)
             #self.peakTable.setMaximumSize(self.tabDetector.sizeHint())
         #self.energyTable = self.peakTable.energyTable
-        self.input = None
+        self._inputParameters = None
         self.linpolOrder= None
         self.exppolOrder= None
         pardict={'attenuators':{'Air'       :[0,"Air",0.001204790,1.0],
@@ -464,7 +464,7 @@ class FitParamWidget(FitParamForm):
         return 1
 
     def __get(self, section, key, default=0., conv=str):
-        sect = self.input.get(section, None)
+        sect = self._inputParameters.get(section, None)
         if sect is None:
             ret = default
         else:
@@ -475,9 +475,9 @@ class FitParamWidget(FitParamForm):
             return ret
 
     def __setInput(self, ndict):
-        if self.input is None:
-            self.input = {}
-        self.input.update(ndict)
+        if self._inputParameters is None:
+            self._inputParameters = {}
+        self._inputParameters.update(ndict)
 
     def setParameters(self, pardict=None):
         if pardict is None:
@@ -497,7 +497,7 @@ class FitParamWidget(FitParamForm):
                 self.tabXRFMCWidget.setParameters(pardict)
 
     def getParameters(self):
-        pars= {}
+        pars = copy.deepcopy(self._inputParameters)
         sections = FitParamSections * 1
         sections.append('multilayer')
         sections.append('materials')
@@ -837,7 +837,7 @@ class FitParamWidget(FitParamForm):
             scatterlist    = self.__get("fit", "energyscatter", None, None)
         self.energyTable.setParameters(energylist, weightlist, flaglist, scatterlist)
         self.strategyCheckBox.setChecked(self.__get("fit", "strategyflag", 0, int))
-        
+
     def __getFitPar(self):
         pars= {}
         #Default 10 eV separation between two peaks accessible through file
@@ -897,7 +897,7 @@ class FitParamWidget(FitParamForm):
             return None
 
     def __setPeaksPar(self):
-        pars= self.input.get("peaks", {})
+        pars= self._inputParameters.get("peaks", {})
         self.peakTable.setSelection(pars)
 
     def __getPeaksPar(self):
@@ -1169,7 +1169,7 @@ class FitParamDialog(qt.QDialog):
             text = "Error %s" % sys.exc_info()[1]
             msg.setInformativeText(text)
             msg.setDetailedText(traceback.format_exc())
-            msg.exec_()            
+            msg.exec_()
             return 0
         self.setParameters(copy.deepcopy(cfg))
         return 1

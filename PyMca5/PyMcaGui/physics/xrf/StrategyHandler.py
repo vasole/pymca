@@ -625,6 +625,7 @@ class StrategyHandlerDialog(qt.QDialog):
         self.dismissButton = qt.QPushButton(hbox)
         self.dismissButton.setText("Cancel")
         self.dismissButton.setAutoDefault(False)
+        hboxLayout.addWidget(self.loadButton)
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.okButton)
         hboxLayout.addWidget(self.dismissButton)
