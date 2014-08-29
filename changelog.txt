@@ -2,6 +2,10 @@ VERSION 5.0.0
 
 Analytical secondary excitation corrections.
 
+Approximated tertiary excitation corrections.
+
+Automatic matrix update.
+
 Incorporate a new repository layout.
 
 Most of the source code can be used under MIT or LGPL licenses.
