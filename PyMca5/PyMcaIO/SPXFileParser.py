@@ -100,7 +100,7 @@ class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         if liveTime is not None:
             scanheader.append("#@CTIME %f %f %f" % (myFloat(realTime),
                                                     myFloat(liveTime),
-                                                    myFloat(realTime))
+                                                    myFloat(realTime)))
 
         scanheader.append("#@CALIB %f %f 0" % (myFloat(info.get('CalibAbs', 0.0)),
                                                myFloat(info.get('CalibLin', 1.0))))
