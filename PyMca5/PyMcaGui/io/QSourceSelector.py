@@ -157,13 +157,15 @@ class QSourceSelector(qt.QWidget):
                     filetypes = ""
                     for filetype in self.fileTypeList:
                         filetypes += filetype+"\n"
-                    if sys.version < '3.0':
+                    try:
+                        # API 1
                         filelist = qt.QFileDialog.getOpenFileNames(self,
                                 "Open a new source file",
                                 wdir,
                                 filetypes,
                                 self.lastFileFilter)
-                    else:
+                    except:
+                        # API 2
                         filelist, self.lastFileFilter =\
                                 qt.QFileDialog.getOpenFileNamesAndFilter(\
                                 self,
