@@ -414,7 +414,8 @@ class McaAdvancedFit(qt.QWidget):
                     dialog.setFitResult(None)
             dialog.setParameters(self.mcafit.getStartingConfiguration())
             dialog.setData(self.mcafit.xdata * 1.0,
-                           self.mcafit.ydata * 1.0)
+                           self.mcafit.ydata * 1.0,
+                           info=copy.deepcopy(self.info))
 
             #dialog.fitparam.regionCheck.setDisabled(True)
             #dialog.fitparam.minSpin.setDisabled(True)
@@ -1667,6 +1668,9 @@ class McaAdvancedFit(qt.QWidget):
                 maximum channel of the fit
             calibration
                 list of the form [a, b, c] containing the mca calibration
+            time
+                float containing the time or monitor factor to be used in
+                the concentrations if requested.
         """
 
         self.__fitdone = 0
@@ -1696,12 +1700,18 @@ class McaAdvancedFit(qt.QWidget):
             self.info[key] = "%s" % kw[key]
         else:
             self.info[key] = "Unknown Source"
+        key = 'time'
+        if key in kw:
+            self.info[key] = kw[key]
+        else:
+            self.info[key] = None
         self.__var = var
         self.__kw  = kw
         self.mcafit.setData(*var,**kw)
         if self.configDialog is not None:
             self.configDialog.setData(self.mcafit.xdata * 1.0,
-                           self.mcafit.ydata * 1.0)
+                           self.mcafit.ydata * 1.0,
+                           info=copy.deepcopy(self.info))
 
         if 'calibration' in kw:
             if kw['calibration'] is not None:

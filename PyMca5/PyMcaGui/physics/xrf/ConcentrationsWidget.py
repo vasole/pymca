@@ -230,6 +230,7 @@ class ConcentrationsWidget(qt.QWidget):
     def __init__(self, parent=None, name="Concentrations"):
         qt.QWidget.__init__(self, parent)
         self.setWindowTitle(name)
+        self._liveTime = None
 
         self.build()
         ddict = {}
@@ -238,6 +239,7 @@ class ConcentrationsWidget(qt.QWidget):
         ddict['usexrfmc'] = 0
         ddict['flux'] = 1.0E10
         ddict['time'] = 1.0
+        ddict['useautotime'] = 0
         ddict['area'] = 30.0
         ddict['distance'] = 10.0
         ddict['reference'] = "Auto"
@@ -335,6 +337,30 @@ class ConcentrationsWidget(qt.QWidget):
             self._mySignal)
         self.fundamentalWidget.distance.sigMyQLineEditSignal.connect( \
             self._mySignal)
+        self.fundamentalWidget.autoTimeCheckBox.clicked[()].connect( \
+            self._autoTimeSlot)
+
+    def _autoTimeSlot(self, signal=True):
+        if self.fundamentalWidget.autoTimeCheckBox.isChecked():
+            if self._liveTime is None:
+                self.fundamentalWidget.autoTimeCheckBox.setChecked(False)
+                self.fundamentalWidget.time.setEnabled(True)
+            else:
+                self.fundamentalWidget.time.setText("%.6g" % self._liveTime)
+                self.fundamentalWidget.time.setEnabled(False)
+                if signal:
+                    self._mySignal()
+        else:
+            self.fundamentalWidget.time.setEnabled(True)
+
+    def setTimeFactor(self, factor=None, signal=False):
+        self._liveTime = factor
+        if factor is None:
+            self.fundamentalWidget.autoTimeCheckBox.setChecked(False)
+            self.fundamentalWidget.time.setEnabled(True)
+        else:
+            # act according to the settings
+            self._autoTimeSlot(signal=signal)
 
     def _fluxCheckBoxSlot(self):
         if self.fluxCheckBox.isChecked():
@@ -441,6 +467,10 @@ class ConcentrationsWidget(qt.QWidget):
         ddict['distance'] = float(str(self.fundamentalWidget.distance.text()))
         #ddict['reference'] = str(self.referenceCombo.currentText())
         ddict['reference'] = str(self.referenceLine.text())
+        if self.fundamentalWidget.autoTimeCheckBox.isChecked():
+            ddict['useautotime'] = 1
+        else:
+            ddict['useautotime'] = 0
         return ddict
 
     def setParameters(self, ddict, signal=None):
@@ -499,6 +529,12 @@ class ConcentrationsWidget(qt.QWidget):
         self.fundamentalWidget.area.setText("%.6g" % ddict['area'])
         self.fundamentalWidget.distance.setText("%.6g" % ddict['distance'])
         self.fundamentalWidget.time.setText("%.6g" % ddict['time'])
+        autotime = ddict.get("useautotime", False)
+        if autotime:
+            self.fundamentalWidget.autoTimeCheckBox.setChecked(True)
+        else:
+            self.fundamentalWidget.autoTimeCheckBox.setChecked(False)
+                
         if self.matrixCheckBox.isChecked():
             self.fundamentalWidget.setInputDisabled(True)
             self.referenceLine.setEnabled(True)
@@ -579,18 +615,24 @@ class FundamentalWidget(qt.QWidget):
 
         #column 3
         c3 = qt.QWidget(self)
-        c3.layout = qt.QVBoxLayout(c3)
+        c3.layout = qt.QGridLayout(c3)
         c3.layout.setContentsMargins(0, 0, 0, 0)
         c3.layout.setSpacing(spacing)
 
         self.time = MyQLineEdit(c3)
         self.time.setValidator(qt.QDoubleValidator(self.time))
 
+        self.autoTimeCheckBox = qt.QCheckBox(c3)
+        self.autoTimeCheckBox.setText("Use Automatic Factor")
+        self.autoTimeCheckBox.setChecked(False)
+        self.autoTimeCheckBox.setToolTip("Attempt to read from the incoming data generating an error if factor not present")
+
         self.distance = MyQLineEdit(c3)
         self.distance.setValidator(qt.QDoubleValidator(self.distance))
 
-        c3.layout.addWidget(self.time)
-        c3.layout.addWidget(self.distance)
+        c3.layout.addWidget(self.time, 0, 0)
+        c3.layout.addWidget(self.autoTimeCheckBox, 0, 1)
+        c3.layout.addWidget(self.distance, 1, 0)
 
         layout.addWidget(c0)
         layout.addWidget(c1)

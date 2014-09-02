@@ -328,9 +328,12 @@ class FitParamWidget(FitParamForm):
         elif continuum==5:
             self.exppolOrder= self.orderSpin.value()
 
-    def setData(self, x, y):
+    def setData(self, x, y, info=None):
         self._channels = x
         self._counts = y
+        self._info = info
+        autoTime = info.get("time", None)
+        self.concentrationsWidget.setTimeFactor(autoTime, signal=False) 
 
     def _strategyCheckBoxClicked(self, *var):
         if self.strategyCheckBox.isChecked():

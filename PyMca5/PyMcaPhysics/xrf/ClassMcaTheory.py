@@ -54,6 +54,7 @@ class McaTheory(object):
         self.ydata0  = None
         self.xdata0  = None
         self.sigmay0 = None
+        self.__lastTime = None
         self.strategyInstances = {}
         self.__toBeConfigured = False
         if initdict is None:
@@ -916,7 +917,8 @@ class McaTheory(object):
                              y=self.ydata0,
                              sigmay=self.sigmay0,
                              xmin = self.config['fit']['xmin'],
-                             xmax = self.config['fit']['xmax'])
+                             xmax = self.config['fit']['xmax'],
+                             time = self.__lastTime)
                 return
 
         if hasattr(self, "xdata"):
@@ -959,6 +961,8 @@ class McaTheory(object):
                If the fit configuration flag self.config['fit']['use_limit'] is
                set, they will be ignored. If xmin and xmax are not given, the
                whole given spectrum will be considered for fitting.
+        time (seconds) is the factor associated to the flux, only used when using
+               a strategy based on concentrations
         """
         if self.__toBeConfigured:
             if DEBUG:
@@ -1004,6 +1008,16 @@ class McaTheory(object):
         else:
             self.sigmay0=numpy.array(sigmay)
             self.sigmay=numpy.array(sigmay)
+
+        timeFactor = kw.get("time", None)
+        if time is None:
+            if "concentrations" in self.config:
+                if self.config["concentrations"].get("useautotime", False):
+                    msg = "Requested to use time from data but not present!!"
+                    raise ValueError(msg)
+                else:
+                    self.config["concentrations"]["time"] = time
+        self.__lastTime = time
 
         xmin = self.config['fit']['xmin']
         if not self.config['fit']['use_limit']:

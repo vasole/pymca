@@ -287,7 +287,8 @@ class McaWindow(ScanWindow.ScanWindow):
                                      legend=legend,
                                      xlabel=xlabel,
                                      calibration=calib,
-                                     sourcename=info['SourceName'])
+                                     sourcename=info['SourceName'],
+                                     time=info.get('McaLiveTime', None))
             self.advancedfit.fit()
         else:
             msg = qt.QMessageBox(self)
@@ -887,7 +888,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     simplefitplot = False
                 try:
                     calib = [0.0,1.0,0.0]
-                    for inputkey in ['baseline', 'regions']:
+                    for inputkey in ['baseline', 'regions', 'McaLiveTime']:
                         if inputkey in info:
                             curveinfo[inputkey] = info[inputkey]
                     curveinfo['McaCalib'] = calib
