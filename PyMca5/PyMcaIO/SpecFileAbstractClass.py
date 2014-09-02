@@ -189,6 +189,15 @@ class SpecFileAbstractScan(object):
                    line.startswith('#'+key):
                     output.append(line)
             return output
+        elif key == '@CTIME':
+            # expected to send Preset Time, Live Time, Real (Elapsed) Time
+            output = []
+            if self.scanheader is None: return output
+            for line in self.scanheader:
+                if line.startswith(key) or\
+                   line.startswith('#'+key):
+                    output.append(line)
+            return output
         elif key == "" or key == " ":
             return self.fileheader()
         elif self.scanheader is None:

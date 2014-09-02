@@ -146,11 +146,46 @@ class BAXSCSVScan(SpecFileAbstractClass.SpecFileAbstractScan):
     def mca(self, number):
         # it gives the last column (some files have three columns)
         # corresponding to channels, counts and (probably) corrected counts
+        # this seems to be confirmed by the fact the Live Time is 0.0 in those
+        # files
         if number <= 0:
             raise IndexError("Mca numbering starts at 1")
         elif number > self.nbmca():
             raise IndexError("Only %d MCA's" % number)
         return self._data[:, -1]
+
+    def header(self, key):
+        if key == "@CALIB":
+            gain = 1.0
+            offset = 0.0
+            for item in self.scanheader:
+                if item.startswith("eV per channel,"):
+                    gain = 0.001 * float(item.split(",")[-1])
+            return ["#@CALIB %f %f %f" % (offset, gain, 0.0)] 
+        elif key == "@CTIME":
+            preset = -1
+            live = -1
+            duration = -1
+            for item in self.scanheader:
+                if item.startswith("Duration Time,"):
+                    duration = float(item.split(",")[-1])
+                elif item.startswith("Live Time,"):
+                    live = float(item.split(",")[-1])
+            if self._data.shape[1] == 3:
+                # counts are already corrected
+                live = duration
+            if (preset > 0) and (duration > 0) and (live > 0):
+                return ["#CTIME %f %f %f" % (preset, live, duration)]
+            elif (duration > 0) and (live > 0):
+                return ["#CTIME %f %f %f" % (duration, live, duration)]
+            elif (live > 0):
+                return ["#CTIME %f %f %f" % (live, live, live)]
+            elif (duration > 0):
+                return ["#CTIME %f %f %f" % (duration, duration, duration)]
+            else:
+                return []
+        else:
+            return super(BAXSCSVScan, self).header(key)
 
 def isBAXSCSVFile(filename):
     f = open(filename, 'r')
