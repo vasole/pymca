@@ -518,7 +518,9 @@ class SpecFileLayer(object):
         return info
 
 
-    def __GetMcaInfo(self, mcano, scandata, info={}):
+    def __GetMcaInfo(self, mcano, scandata, info=None):
+        if info is None:
+            info = {}
         mcainfo= {}
         if "NbMcaDet" in info:
             det= info["NbMcaDet"]
@@ -531,25 +533,35 @@ class SpecFileLayer(object):
                 mcainfo["McaPoint"]= 0
                 mcainfo["McaDet"]= mcano
                 mcainfo["LabelValues"]= None
+
+        # TODO: This implementation seems to ignore the case of having different
+        # detectors in the same same scan
         calib= scandata.header("@CALIB")
         mcainfo["McaCalib"]=[0.0,1.0,0.0]
         if len(calib):
-                ctxt= calib[0].split()
-                if len(ctxt)==4:
-                        try:
-                                cval= [ float(ctxt[1]), float(ctxt[2]), float(ctxt[3]) ]
-                                mcainfo["McaCalib"]= cval
-                        except:
-                            mcainfo["McaCalib"]=[0.0,1.0,0.0]
+            # TODO: Instead of 0, one should use the index of the MCA detector
+            # requested.
+            ctxt= calib[0].split()
+            if len(ctxt)==4:
+                try:
+                    cval= [ float(ctxt[1]), float(ctxt[2]), float(ctxt[3]) ]
+                    mcainfo["McaCalib"]= cval
+                except:
+                    mcainfo["McaCalib"]=[0.0,1.0,0.0]
+
+        # TODO: This implementation seems to ignore the case of having different
+        # detectors in the same scan, and the fact one can have more than one
+        # measurement in a single scan (different McaLiveTime)
         ctime= scandata.header("@CTIME")
         if len(ctime):
-                ctxt= ctime[0].split()
-                if len(ctxt)==4:
-                        try:
-                                mcainfo["McaPresetTime"]= float(ctxt[1])
-                                mcainfo["McaLiveTime"]= float(ctxt[2])
-                                mcainfo["McaRealTime"]= float(ctxt[3])
-                        except: pass
+            ctxt= ctime[0].split()
+            if len(ctxt)==4:
+                    try:
+                        mcainfo["McaPresetTime"]= float(ctxt[1])
+                        mcainfo["McaLiveTime"]= float(ctxt[2])
+                        mcainfo["McaRealTime"]= float(ctxt[3])
+                    except:
+                        pass
 
         chann = scandata.header("@CHANN")
         if len(chann):
