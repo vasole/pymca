@@ -95,6 +95,13 @@ class SPXFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
             scanheader.append("#U%d %s %s" % (i, key, info.get(key, "Unknown")))
             i += 1
 
+        liveTime = info.get('LifeTime', None)
+        realTime = info.get('RealTime', liveTime)
+        if liveTime is not None:
+            scanheader.append("#@CTIME %f %f %f" % (myFloat(realTime),
+                                                    myFloat(liveTime),
+                                                    myFloat(realTime))
+
         scanheader.append("#@CALIB %f %f 0" % (myFloat(info.get('CalibAbs', 0.0)),
                                                myFloat(info.get('CalibLin', 1.0))))
 
