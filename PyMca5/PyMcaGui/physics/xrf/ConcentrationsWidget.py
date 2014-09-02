@@ -63,6 +63,7 @@ class Concentrations(qt.QWidget):
         self.build()
         self.setParameters = self.concentrationsWidget.setParameters
         self.getParameters = self.concentrationsWidget.getParameters
+        self.setTimeFactor = self.concentrationsWidget.setTimeFactor
         self.__lastVar = None
         self.__lastKw = None
 
@@ -469,6 +470,9 @@ class ConcentrationsWidget(qt.QWidget):
         ddict['reference'] = str(self.referenceLine.text())
         if self.fundamentalWidget.autoTimeCheckBox.isChecked():
             ddict['useautotime'] = 1
+            if self._liveTime is None:
+                raise ValueError("Cannot use automatic concentrations time setting!!!")
+            ddict['time'] = float(self._liveTime)
         else:
             ddict['useautotime'] = 0
         return ddict
@@ -532,9 +536,11 @@ class ConcentrationsWidget(qt.QWidget):
         autotime = ddict.get("useautotime", False)
         if autotime:
             self.fundamentalWidget.autoTimeCheckBox.setChecked(True)
+            if self._liveTime is not None:
+                self.fundamentalWidget.time.setText("%.6g" % self._liveTime)
         else:
             self.fundamentalWidget.autoTimeCheckBox.setChecked(False)
-                
+
         if self.matrixCheckBox.isChecked():
             self.fundamentalWidget.setInputDisabled(True)
             self.referenceLine.setEnabled(True)

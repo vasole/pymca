@@ -897,6 +897,7 @@ class McaAdvancedFit(qt.QWidget):
            self.concentrationsWidget = ConcentrationsWidget.Concentrations()
            self.concentrationsWidget.sigConcentrationsSignal.connect( \
                         self.__configureFromConcentrations)
+        self.concentrationsWidget.setTimeFactor(self.mcafit.getLastTime(), signal=False)
         tool = self.concentrationsWidget
         #this forces update
         tool.getParameters()
@@ -1712,6 +1713,9 @@ class McaAdvancedFit(qt.QWidget):
             self.configDialog.setData(self.mcafit.xdata * 1.0,
                            self.mcafit.ydata * 1.0,
                            info=copy.deepcopy(self.info))
+        if self.concentrationsWidget is not None:
+            self.concentrationsWidget.setTimeFactor(self.info["time"],
+                                                    signal=False)
 
         if 'calibration' in kw:
             if kw['calibration'] is not None:

@@ -333,7 +333,7 @@ class FitParamWidget(FitParamForm):
         self._counts = y
         self._info = info
         autoTime = info.get("time", None)
-        self.concentrationsWidget.setTimeFactor(autoTime, signal=False) 
+        self.concentrationsWidget.setTimeFactor(autoTime, signal=False)
 
     def _strategyCheckBoxClicked(self, *var):
         if self.strategyCheckBox.isChecked():

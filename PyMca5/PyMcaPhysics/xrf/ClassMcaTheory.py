@@ -1010,14 +1010,16 @@ class McaTheory(object):
             self.sigmay=numpy.array(sigmay)
 
         timeFactor = kw.get("time", None)
-        if time is None:
+        if timeFactor is None:
             if "concentrations" in self.config:
                 if self.config["concentrations"].get("useautotime", False):
                     msg = "Requested to use time from data but not present!!"
                     raise ValueError(msg)
                 else:
-                    self.config["concentrations"]["time"] = time
-        self.__lastTime = time
+                    self.config["concentrations"]["time"] = timeFactor
+        elif self.config["concentrations"].get("useautotime", False):
+            self.config["concentrations"]["time"] = timeFactor
+        self.__lastTime = timeFactor
 
         xmin = self.config['fit']['xmin']
         if not self.config['fit']['use_limit']:
@@ -1082,6 +1084,9 @@ class McaTheory(object):
                     self.laststrip = None
                 else:
                     self.laststrip = 0
+
+    def getLastTime(self):
+        return self.__lastTime
 
     def __smooth(self,y):
         f=[0.25,0.5,0.25]
