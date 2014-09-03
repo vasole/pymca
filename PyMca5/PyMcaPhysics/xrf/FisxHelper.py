@@ -171,6 +171,7 @@ def getMultilayerFluorescence(multilayerSample,
 
     if len(elementsList):
         if len(elementsList[0]) == 3:
+            # PyMca can send [atomic number, element, peak]
             actualElementList = [x[1] + " " + x[2] for x in elementsList]
         elif len(elementsList[0]) == 2:
             actualElementList = [x[0] + " " + x[1] for x in elementsList]
@@ -529,19 +530,31 @@ def getFisxCorrectionFactors(*var, **kw):
                 layerKey = "layer %d" % i
     return ddict
 
-def getFisxCorrectionFactorsFromFitConfigurationFile(fileName):
+def getFisxCorrectionFactorsFromFitConfigurationFile(fileName,
+                                                     elementsFromMatrix=False):
     from PyMca5.PyMca import ConfigDict
     d = ConfigDict.ConfigDict()
     d.read(fileName)
-    return getFisxCorrectionFactorsFromFitConfiguration(d)
+    return getFisxCorrectionFactorsFromFitConfiguration(d,
+                                        elementsFromMatrix=elementsFromMatrix)
 
 if __name__ == "__main__":
     DEBUG = 1
     import time
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python FisxHelper FitConfigurationFile")
+        print("Usage: python FisxHelper FitConfigurationFile [element] [matrix_flag]")
         sys.exit(0)
     fileName = sys.argv[1]
-    print(getFisxCorrectionFactorsFromFitConfigurationFile(fileName))
+    if len(sys.argv) > 2:
+        element = sys.argv[2]
+        if len(sys.argv) > 3:
+            matrix = int(sys.argv[3])    
+            print(getFisxCorrectionFactorsFromFitConfigurationFile(\
+                fileName, elementsFromMatrix=matrix))[element]
+        else:
+            print(getFisxCorrectionFactorsFromFitConfigurationFile(fileName)) \
+                                                                    [element]
+    else:
+        print(getFisxCorrectionFactorsFromFitConfigurationFile(fileName))
 
