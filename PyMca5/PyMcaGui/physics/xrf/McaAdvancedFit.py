@@ -1708,13 +1708,36 @@ class McaAdvancedFit(qt.QWidget):
             self.info[key] = None
         self.__var = var
         self.__kw  = kw
-        self.mcafit.setData(*var,**kw)
+        try:
+            self.mcafit.setData(*var,**kw)
+        except ValueError:
+            if self.info["time"] is None:
+                if "concentrations" in self.mcafit.config:
+                    if self.mcafit.config["concentrations"].get("useautotime", False):
+                        if not self.mcafit.config["concentrations"]["usematrix"]:
+                            msg = qt.QMessageBox(self)
+                            msg.setIcon(qt.QMessageBox.Information)
+                            txt = "No time information associated to spectrum but requested in configuration.\n"
+                            txt += "Please correct the acquisition time in your configuration."
+                            msg.setText(txt)
+                            msg.exec_()
+                            self.mcafit.config["concentrations"] ["useautotime"] = 0
+                            kw["time"] = None
+                            self.mcafit.setData(*var, **kw)
+                    else:
+                        raise
+                else:
+                    raise
+            else:
+                raise
+
         if self.configDialog is not None:
             self.configDialog.setData(self.mcafit.xdata * 1.0,
                            self.mcafit.ydata * 1.0,
                            info=copy.deepcopy(self.info))
         if self.concentrationsWidget is not None:
-            self.concentrationsWidget.setTimeFactor(self.info["time"],
+            if self.mcafit.config["concentrations"] ["useautotime"]:
+                self.concentrationsWidget.setTimeFactor(self.info["time"],
                                                     signal=False)
 
         if 'calibration' in kw:

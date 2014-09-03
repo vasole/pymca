@@ -1010,16 +1010,17 @@ class McaTheory(object):
             self.sigmay=numpy.array(sigmay)
 
         timeFactor = kw.get("time", None)
+        self.__lastTime = timeFactor
         if timeFactor is None:
             if "concentrations" in self.config:
                 if self.config["concentrations"].get("useautotime", False):
-                    msg = "Requested to use time from data but not present!!"
-                    raise ValueError(msg)
+                    if not self.config["concentrations"]["usematrix"]:
+                        msg = "Requested to use time from data but not present!!"
+                        raise ValueError(msg)
                 else:
                     self.config["concentrations"]["time"] = timeFactor
         elif self.config["concentrations"].get("useautotime", False):
             self.config["concentrations"]["time"] = timeFactor
-        self.__lastTime = timeFactor
 
         xmin = self.config['fit']['xmin']
         if not self.config['fit']['use_limit']:

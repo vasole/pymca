@@ -532,7 +532,8 @@ class ConcentrationsWidget(qt.QWidget):
         self.fundamentalWidget.flux.setText("%.6g" % ddict['flux'])
         self.fundamentalWidget.area.setText("%.6g" % ddict['area'])
         self.fundamentalWidget.distance.setText("%.6g" % ddict['distance'])
-        self.fundamentalWidget.time.setText("%.6g" % ddict['time'])
+        if ddict['time'] is not None:
+            self.fundamentalWidget.time.setText("%.6g" % ddict['time'])
         autotime = ddict.get("useautotime", False)
         if autotime:
             self.fundamentalWidget.autoTimeCheckBox.setChecked(True)
