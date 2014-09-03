@@ -134,8 +134,12 @@ class SingleLayerStrategy(object):
             if total < 1.0:
                 CompoundList.append(strategyConfiguration["completer"])
                 CompoundFraction.append(1.0 - total)
-        for i in range(len(CompoundFraction)):
-            CompoundFraction[i] /= total;
+            else:
+                for i in range(len(CompoundFraction)):
+                    CompoundFraction[i] /= total;
+        else:
+            for i in range(len(CompoundFraction)):
+                CompoundFraction[i] /= total;
         materialName = "SingleLayerStrategyMaterial"
         newConfiguration["materials"][materialName] = \
             {"Density": newConfiguration['attenuators'][attenuator][2],
