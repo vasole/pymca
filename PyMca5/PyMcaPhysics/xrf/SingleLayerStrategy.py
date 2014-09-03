@@ -84,7 +84,7 @@ class SingleLayerStrategy(object):
         else:
             parentKey = "multilayer"
             daughterKey = None
-            if newConfiguration["SingleLayerSrategy"]["layer"].upper() == \
+            if newConfiguration["SingleLayerStrategy"]["layer"].upper() == \
                                                        ["AUTO"]:
                 # we have to find the layer where we should work
                 firstLayer = None
@@ -104,9 +104,10 @@ class SingleLayerStrategy(object):
                             firstLayer = layer
                 if daughterKey is None:
                     daughterKey = firstLayer
-                if daugther is None:
-                    raise ValueError("Cannot find appropriate sample layer")
-
+            else:
+                daughterKey = newConfiguration["SingleLayerStrategy"]["layer"]
+            if daughterKey is None:
+                raise ValueError("Cannot find appropriate sample layer")
         # newConfiguration[parentKey][daughterKey] composition is to be updated
         # get the new composition
         total = 0.0

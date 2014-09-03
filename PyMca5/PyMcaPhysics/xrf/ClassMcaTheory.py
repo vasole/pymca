@@ -1017,8 +1017,6 @@ class McaTheory(object):
                     if not self.config["concentrations"]["usematrix"]:
                         msg = "Requested to use time from data but not present!!"
                         raise ValueError(msg)
-                else:
-                    self.config["concentrations"]["time"] = timeFactor
         elif self.config["concentrations"].get("useautotime", False):
             self.config["concentrations"]["time"] = timeFactor
 
