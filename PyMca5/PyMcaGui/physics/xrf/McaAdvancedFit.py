@@ -412,6 +412,11 @@ class McaAdvancedFit(qt.QWidget):
                     dialog.setFitResult(self.dict['result'])
                 else:
                     dialog.setFitResult(None)
+            if self.__fitdone:
+                # a direct fit without loading the file can lead to errors
+                lastTime = self.mcafit.getLastTime()
+                self.info["time"] = lastTime
+
             dialog.setParameters(self.mcafit.getStartingConfiguration())
             dialog.setData(self.mcafit.xdata * 1.0,
                            self.mcafit.ydata * 1.0,

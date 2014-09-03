@@ -471,8 +471,14 @@ class ConcentrationsWidget(qt.QWidget):
         if self.fundamentalWidget.autoTimeCheckBox.isChecked():
             ddict['useautotime'] = 1
             if self._liveTime is None:
-                raise ValueError("Cannot use automatic concentrations time setting!!!")
-            ddict['time'] = float(self._liveTime)
+                #ddict["useautotime"] = 0
+                #self.fundamentalWidget.autoTimeCheckBox.setChecked(False)
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Cannot use automatic concentrations time setting!!!")
+                msg.exec_()
+            else:
+                ddict['time'] = float(self._liveTime)
         else:
             ddict['useautotime'] = 0
         return ddict
