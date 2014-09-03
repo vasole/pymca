@@ -916,6 +916,9 @@ class McaBatchGUI(qt.QWidget):
             try:
                 dirname = os.path.dirname(__file__)
                 frozen = False
+                if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
+                    # script usage case
+                    dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             except:
                 # __file__ is not defined
                 dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
@@ -1074,10 +1077,7 @@ class McaBatchGUI(qt.QWidget):
                     if not os.path.exists(os.path.join(dirname, myself)):
                         text  = 'Cannot locate PyMcaBatch.py file.\n'
                         qt.QMessageBox.critical(self, "ERROR",text)
-                        if QTVERSION < '4.0.0':
-                            self.raiseW()
-                        else:
-                            self.raise_()
+                        self.raise_()
                         return
                 myself  = sys.executable+" "+ os.path.join(dirname, myself)
                 viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
