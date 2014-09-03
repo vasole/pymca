@@ -63,33 +63,13 @@ def load_PyQt4_Qt(finder, module):
 
 _hooks.load_PyQt4_Qt = load_PyQt4_Qt
 
-if 0:
-    #This does not seem to solve the OpenGL problem
-    def _load_OpenGL(finder, module):
-        """
-        OpenGL >= 3.0.0 is ctypes and setuptools based. Therefore, a plethora of
-        modules are missed by the finder. So force inclusion of them all.
-        """
-        import OpenGL
-        version = -1
-        try:
-            version = int(OpenGL.version.__version__.split(".")[0])
-        except:
-            pass
-        if version >= 3:
-            basedir, sep, basemod = module.path[0].rpartition(os.sep)
-        for root, dirs, files in os.walk(module.path[0]):
-            package = root.replace(basedir, "", 1).strip(sep).replace(sep, ".")
-        if package != "OpenGL.tests": # ignore the OpenGL.tests package
-            finder.IncludePackage(package)
-    _hooks.load_OpenGL = _load_OpenGL
-
 
 PyMcaInstallationDir = "build"
 if sys.platform != "windows":
-    PyMcaDir = os.path.join(PyMcaInstallationDir, "PyMca").replace(" ","_")
+    PyMcaDir = os.path.join(PyMcaInstallationDir, "PyMca5").replace(" ","_")
 else:
-    PyMcaDir =os.path.join(PyMcaInstallationDir, "PyMca")
+    PyMcaDir =os.path.join(PyMcaInstallationDir, "PyMca5")
+
 #make sure PyMca is freshly built
 if sys.platform == 'win32':
     if MINGW:
@@ -104,17 +84,12 @@ if os.system(cmd):
     print("Error building PyMca")
     sys.exit(1)
 
+
+# PyMca expected to be properly installed
 include_files = []
 
 # this is critical for Qt to find image format plugins
 include_files.append(("qtconffile", "qt.conf"))
-
-# PyMca data
-include_files.append(("changelog.txt", os.path.join("PyMcaData", "changelog.txt")))
-include_files.append((os.path.join("PyMca", "PyMcaData"), "PyMcaData"))
-
-# put the PyMca plugins as "data" to allow the user to add his own plugins
-include_files.append((os.path.join("PyMca", "PyMcaPlugins"), "PyMcaPlugins"))
 
 # Add the qt plugins directory
 import PyQt4.Qt as qt
@@ -136,20 +111,12 @@ for pluginSet in glob.glob(os.path.join(pluginsDir,'*')):
                                  os.path.join(destination,os.path.basename(f))))
 
 #I should use somehow absolute import ...
-sys.path = [PyMcaDir, os.path.dirname(PyMcaDir)] + sys.path
+sys.path = [PyMcaInstallationDir] + sys.path[1:]
 try:
     import ctypes
     import OpenGL
-    import Object3D
+    from PyMca5 import Object3D
     OBJECT3D = True
-    try:
-        #ESRF very special distribution ...
-        import Object3DCTools
-        import Object3DQhull
-        OBJECT3DCTOOLS = True
-    except:
-        #fine, it is inside Object3D
-        OBJECT3DCTOOLS = False
 except:
     OBJECT3D = False
 
@@ -164,8 +131,6 @@ except:
 # For the time being I leave SciPy out
 SCIPY = False
 
-import PyMcaMain
-import PyMcaPlugins
 try:
     import matplotlib
     MATPLOTLIB = True
@@ -175,7 +140,7 @@ except ImportError:
 try:
     import pyopencl
     OPENCL = True
-    import sift
+    from PyMca5.PyMcaMath import sift
 except :
     OPENCL = False
 
@@ -205,34 +170,33 @@ try:
 except:
     includes = []
 
+try:
+    import fisx
+    FISX = True
+except ImportError:
+    FISX = False
+
 #some standard encodings
 includes.append('encodings.ascii')
 includes.append('encodings.utf_8')
 includes.append('encodings.latin_1')
+import PyMca5
 
-#make sure all PyMca modules are there
-for module in glob.glob(os.path.join('PyMca', '*.py')):
-    m = "PyMca."+os.path.basename(module)[:-3]
-    if DEBUG:
-        print("Adding %s" % m)
-    includes.append(m)
+special_modules = [os.path.dirname(PyMca5.__file__),
+                  os.path.dirname(ctypes.__file__)]
 
 if OBJECT3D:
     includes.append("logging")
-    excludes = ["OpenGL", "Tkinter", "PyMca.Object3D", "Object3D",
-                "PyMca.PyMcaPlugins", "PyMcaPlugins",
+    excludes = ["OpenGL", "Tkinter",
+                'tcl','_tkagg', 'Tkconstants',
                 "scipy", "Numeric", "numarray"]
     #This requieres the use of the environmental variable MATPLOTLIBDATA
     #pointing to mpl-data directory to work
-    special_modules =[os.path.dirname(ctypes.__file__),
-                  os.path.dirname(OpenGL.__file__),
-                  os.path.dirname(Object3D.__file__)]
+    special_modules.append(os.path.dirname(OpenGL.__file__))
     if H5PY_SPECIAL:
         special_modules.append(os.path.dirname(h5py.__file__))
     if OPENCL:
         special_modules.append(os.path.dirname(pyopencl.__file__))
-        excludes.append("PyMca.sift")
-        special_modules.append(os.path.dirname(sift.__file__))
     else:
         excludes.append("pyopencl")
     if MDP:
@@ -245,22 +209,13 @@ if OBJECT3D:
         special_modules.append(os.path.dirname(scipy.__file__))
     for f in special_modules:
             include_files.append((f,os.path.basename(f)))
-    if OBJECT3DCTOOLS:
-        excludes.append("Object3DCTools")
-        excludes.append("Object3DQhull")
-        for f in [Object3DCTools.__file__,Object3DQhull.__file__]:
-            o3ddir = os.path.dirname(Object3D.__file__)
-            include_files.append((f,
-                            os.path.join(os.path.basename(o3ddir), os.path.basename(f))))
 else:
-    excludes = ["Tkinter", "PyMca.PyMcaPlugins",
-                "PyMcaPlugins", "scipy", "Numeric", "numarray"]
-    special_modules = [os.path.dirname(ctypes.__file__)]
+    excludes = ["Tkinter",
+                'tcl','_tkagg', 'Tkconstants',
+                "scipy", "Numeric", "numarray"]
     if H5PY_SPECIAL:
         special_modules.append(os.path.dirname(h5py.__file__))
     if OPENCL:
-        excludes.append("PyMca.sift")
-        special_modules.append(os.path.dirname(sift.__file__))
         special_modules.append(os.path.dirname(pyopencl.__file__))
     else:
         excludes.append("pyopencl")
@@ -272,8 +227,12 @@ else:
         special_modules.append(os.path.dirname(matplotlib.__file__))
     if SCIPY:
         special_modules.append(os.path.dirname(scipy.__file__))
-    for f in special_modules:
-            include_files.append((f,os.path.basename(f)))
+
+if FISX:
+    special_modules.append(os.path.dirname(fisx.__file__))
+
+for f in special_modules:
+        include_files.append((f,os.path.basename(f)))
 
 for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
     excludes.append(f)
@@ -291,7 +250,7 @@ buildOptions = dict(
         #includes = ["Object3D"],
         #path = [PyMcaDir] + sys.path
         )
-install_dir = PyMcaDir + " " + PyMcaMain.__version__
+install_dir = PyMcaDir + " " + PyMca5.version()
 if not sys.platform.startswith('win'):
     install_dir = install_dir.replace(" ","")
 if os.path.exists(install_dir):
@@ -322,36 +281,46 @@ installOptions = dict(
     install_dir= install_dir,
 )
 
-exec_list = ["PyMcaMain",
-             "PyMcaBatch",
-             "QStackWidget",
-             "PeakIdentifier",
-             "EdfFileSimpleViewer",
-             "PyMcaPostBatch",
-             "Mca2Edf",
-             "ElementsInfo"]
 
-for f in exec_list:
+exec_list = {"PyMcaMain": os.path.join(PyMcaDir, "PyMcaGui", \
+                                       "pymca", "PyMcaMain.py"),
+             "PyMcaBatch": os.path.join(PyMcaDir, "PyMcaGui", \
+                                        "pymca", "PyMcaBatch.py"),
+             "QStackWidget":os.path.join(PyMcaDir, "PyMcaGui", \
+                                         "pymca", "QStackWidget.py"),
+             "PeakIdentifier":os.path.join(PyMcaDir, "PyMcaGui", \
+                                        "physics", "xrf", "PeakIdentifier.py"),
+             "EdfFileSimpleViewer": os.path.join(PyMcaDir, "PyMcaGui", \
+                                                 "pymca", "EdfFileSimpleViewer.py"),
+             "PyMcaPostBatch": os.path.join(PyMcaDir, "PyMcaGui", \
+                                            "pymca", "PyMcaPostBatch.py"),
+             "Mca2Edf": os.path.join(PyMcaDir, "PyMcaGui", \
+                                     "pymca", "Mca2Edf.py"),
+             "ElementsInfo":os.path.join(PyMcaDir, "PyMcaGui", \
+                                         "physics", "xrf", "ElementsInfo.py"),
+             }
+
+for f in list(exec_list.keys()):
     executable = os.path.join(install_dir, f)
     if os.path.exists(executable):
         os.remove(executable)
 
 
 executables = []
-for python_module in exec_list:
+for key in exec_list:
     icon = None
     # this allows to map a different icon to each executable
     if sys.platform.startswith('win'):
-        if python_module in ["PyMcaMain", "QStackWidget"]:
+        if key in ["PyMcaMain", "QStackWidget"]:
             icon = os.path.join(os.path.dirname(__file__), "icons", "PyMca.ico")
-    executables.append(Executable(os.path.join(PyMcaDir, python_module+".py"),
+    python_module = exec_list[key]
+    executables.append(Executable(python_module,
                                   icon=icon))
 
-
 setup(
-        name = "PyMca",
-        version = PyMcaMain.__version__,
-        description = "PyMca %s" % PyMcaMain.__version__,
+        name = "PyMca5",
+        version = PyMca5.version(),
+        description = "PyMca %s" % PyMca5.version(),
         options = dict(build_exe = buildOptions,
                        install_exe = installOptions
                        ),
