@@ -11,5 +11,5 @@ export QTDIR=$BASE/PyMcaMain.app/Contents/Frameworks
 export DYLD_LIBRARY_PATH=$QTDIR:$QTDIR/QtCore.framework:$QTDIR/QtGui.framework:$QTDIR/QtNetwork.framework:$QTDIR/QtOpenGL.network:$QTDIR/QtSgl.framework:$QTDIR/QtSvg.framework:$QTDIR/QtTest.framework:$QTDIR/QtXml.framework:$QTDIR/QtAssistant.framework:$QTDIR/QtScriptFramework:$DYLD_LIBRARY_PATH
 $BASE/PyMcaMain.app/Contents/MacOS/PyMcaMain &
 
-sleep 10
+sleep 30
 exit
