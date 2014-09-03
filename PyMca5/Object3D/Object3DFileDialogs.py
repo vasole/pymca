@@ -32,6 +32,10 @@ try:
 except:
     from . import Object3DQt as qt
     from . import Object3DDirs
+if hasattr(qt, "QStringList"):
+    qtQStringList = qt.QStringList
+else:
+    qtQStringList = list
 import os
 QTVERSION = qt.qVersion()
 
@@ -116,7 +120,7 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
         fdialog = qt.QFileDialog(parent)
         fdialog.setModal(True)
         fdialog.setWindowTitle(message)
-        strlist = qt.QStringList()
+        strlist = qtQStringList()
         for filetype in fileTypeList:
             strlist.append(filetype)
         fdialog.setFilters(strlist)

@@ -67,6 +67,10 @@ from . import SceneManager
 from . import GLToolBar
 from . import Object3DPrintPreview
 
+if hasattr(qt, "QString"):
+    qtQString = qt.QString
+else:
+    qtQString = qt.safe_str
 
 DEBUG = 0
 
@@ -437,14 +441,14 @@ class SceneGLWindow(qt.QWidget):
         for m in moduleList:
             function = m.getObject3DInstance
             if hasattr(m, 'MENU_TEXT'):
-                text = qt.QString(m.MENU_TEXT)
+                text = qtQString(m.MENU_TEXT)
             else:
                 text = os.path.basename(m.__file__)
                 if text.endswith('.pyc'):
                     text = text[:-4]
                 elif text.endswith('.py'):
                     text = text[:-3]
-                text = qt.QString(text)
+                text = qtQString(text)
             menu.addAction(text)
             actionList.append(text)
         a = menu.exec_(qt.QCursor.pos())
