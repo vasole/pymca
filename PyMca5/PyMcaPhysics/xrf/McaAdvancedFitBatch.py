@@ -369,6 +369,7 @@ class McaAdvancedFitBatch(object):
                         infoDict = {}
                         infoDict['SourceName'] = info['SourceName']
                         infoDict['Key']        = key
+                        infoDict['McaLiveTime'] = info.get('McaLiveTime', None)
                         self.__processOneMca(x,y0,filename,key,info=infoDict)
                         self.onMca(mca, numberofmca, filename=filename,
                                                     key=key,
@@ -402,9 +403,15 @@ class McaAdvancedFitBatch(object):
                             point = int(i/info['NbMcaDet']) + 1
                             mca   = (i % info['NbMcaDet'])  + 1
                             key = "%s.%s.%05d.%d" % (scan,order,point,mca)
-                            #get rid of slow info reading methods
-                            #mcainfo,mcadata = ffile.LoadSource(key)
-                            mcadata = scan_obj.mca(i+1)
+                            autotime = self.mcafit.config["concentrations"].get(\
+                                        "useautotime", False)
+                            if autotime:
+                                #slow info reading methods needed to access time
+                                mcainfo,mcadata = ffile.LoadSource(key)
+                                info['McaLiveTime'] = mcainfo.get('McaLiveTime',
+                                                              None)
+                            else:
+                                mcadata = scan_obj.mca(i+1)
                             y0  = numpy.array(mcadata)
                             x = numpy.arange(len(y0))*1.0 + \
                                 self.__chann0List[mca-1]
@@ -413,6 +420,8 @@ class McaAdvancedFitBatch(object):
                             infoDict = {}
                             infoDict['SourceName'] = info['SourceName']
                             infoDict['Key']        = key
+                            infoDict['McaLiveTime'] = info.get('McaLiveTime',
+                                                               None)
                             self.__processOneMca(x,y0,filename,key,info=infoDict)
                             self.onMca(i, info['NbMca'],filename=filename,
                                                     key=key,
@@ -488,10 +497,10 @@ class McaAdvancedFitBatch(object):
                 try:
                     #I make sure I take the fit limits configuration
                     self.mcafit.config['fit']['use_limit'] = 1
-                    self.mcafit.setData(x,y)
+                    self.mcafit.setData(x,y, time=info.get("McaLiveTime", None))
                 except:
-                    print("Error entering data of file with output = %s" %\
-                          filename)
+                    print("Error entering data of file with output = %s\n%s" %\
+                          (filename, sys.exc_info()[1]))
                     return
                 try:
                     self.mcafit.estimate()

@@ -780,10 +780,7 @@ class McaBatchGUI(qt.QWidget):
     def start(self):
         if not len(self.fileList):
             qt.QMessageBox.critical(self, "ERROR",'Empty file list')
-            if QTVERSION < '4.0.0':
-                self.raiseW()
-            else:
-                self.raise_()
+            self.raise_()
             return
 
         if self.__splitBox.isChecked():
@@ -810,34 +807,22 @@ class McaBatchGUI(qt.QWidget):
                     if not allowSingleFileSplitProcesses:
                         text = "Multiple processes can only be used with multiple input files."
                         qt.QMessageBox.critical(self, "ERROR",text)
-                        if QTVERSION < '4.0.0':
-                            self.raiseW()
-                        else:
-                            self.raise_()
+                        self.raise_()
                         return
 
         if (self.configFile is None) or (not self.__goodConfigFile(self.configFile)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid fit configuration file')
-            if QTVERSION < '4.0.0':
-                self.raiseW()
-            else:
-                self.raise_()
+            self.raise_()
             return
         if type(self.configFile) == type([]):
             if len(self.configFile) != len(self.fileList):
                 qt.QMessageBox.critical(self, "ERROR",
       'Number of config files should be either one or equal to number of files')
-                if QTVERSION < '4.0.0':
-                    self.raiseW()
-                else:
-                    self.raise_()
+                self.raise_()
                 return
         if (self.outputDir is None) or (not self.__goodOutputDir(self.outputDir)):
             qt.QMessageBox.critical(self, "ERROR",'Invalid output directory')
-            if QTVERSION < '4.0.0':
-                self.raiseW()
-            else:
-                self.raise_()
+            self.raise_()
             return
         name = "Batch from %s to %s " % (os.path.basename(self.fileList[ 0]),
                                           os.path.basename(self.fileList[-1]))
@@ -949,7 +934,7 @@ class McaBatchGUI(qt.QWidget):
         elif sys.platform == 'win32':
             listfile = os.path.join(self.outputDir, "tmpfile")
             self.genListFile(listfile, config=False)
-            dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+            dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             tmpDirname = os.path.dirname(dirname)
             if tmpDirname.lower().endswith("exe") or\
                tmpDirname.lower().endswith(".zip"):
@@ -964,9 +949,6 @@ class McaBatchGUI(qt.QWidget):
                     rgb = None
             else:
                 frozen = False
-                myself = os.path.join(dirname, "PyMcaBatch.py")
-                if not os.path.exists(myself):
-                    dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
                 myself = os.path.join(dirname, "PyMcaBatch.py")
                 viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
@@ -1082,7 +1064,7 @@ class McaBatchGUI(qt.QWidget):
         else:
             listfile = os.path.join(self.outputDir, "tmpfile")
             self.genListFile(listfile, config=False)
-            dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+            dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             tmpDirname = os.path.dirname(dirname)
             if tmpDirname.lower().endswith("exe") or\
                tmpDirname.lower().endswith(".zip"):
@@ -1098,7 +1080,7 @@ class McaBatchGUI(qt.QWidget):
             else:
                 myself = os.path.join(dirname, "PyMcaBatch.py")
                 if not os.path.exists(os.path.join(dirname, myself)):
-                    dirname = os.path.dirname(McaAdvancedFitBatch.__file__)
+                    dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
                     if not os.path.exists(os.path.join(dirname, myself)):
                         text  = 'Cannot locate PyMcaBatch.py file.\n'
                         qt.QMessageBox.critical(self, "ERROR",text)
@@ -1692,7 +1674,7 @@ class McaBatchWindow(qt.QWidget):
                 dirname = os.path.dirname(__file__)
             except:
                 dirname = os.path.dirname(\
-                        os.path.dirname(McaAdvancedFitBatch.__file__))
+                        os.path.dirname(EdfFileSimpleViewer.__file__))
             if (dirname[-3:] == "exe") or\
                (dirname.lower().endswith(".zip")):
                 myself  = os.path.dirname(dirname)
@@ -1718,7 +1700,7 @@ class McaBatchWindow(qt.QWidget):
                 dirname = os.path.dirname(__file__)
             except:
                 dirname = os.path.dirname(\
-                        os.path.dirname(McaAdvancedFitBatch.__file__))
+                        os.path.dirname(EdfFileSimpleViewer.__file__))
             if DEBUG:
                 print("final dirname = %s" % dirname)
             if (dirname[-3:] == "exe") or\
