@@ -62,16 +62,9 @@ DEBUG = 0
 class McaBatchGUI(qt.QWidget):
     def __init__(self,parent=None,name="PyMca batch fitting",fl=None,
                 filelist=None,config=None,outputdir=None, actions=0):
-        if QTVERSION < '4.0.0':
-            if fl is None:
-                fl = qt.Qt.WDestructiveClose
-            qt.QWidget.__init__(self,parent,name,fl)
-            self.setIcon(qt.QPixmap(IconDict['gioconda16']))
-            self.setCaption(name)
-        else:
-            qt.QWidget.__init__(self, parent)
-            self.setWindowTitle(name)
-            self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
+        qt.QWidget.__init__(self, parent)
+        self.setWindowTitle(name)
+        self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['gioconda16'])))
         self._layout = qt.QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
@@ -932,14 +925,24 @@ class McaBatchGUI(qt.QWidget):
             window.show()
             b.start()
         elif sys.platform == 'win32':
+            try:
+                dirname = os.path.dirname(__file__)
+                frozen = False
+            except:
+                # __file__ is not defined
+                dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
+                frozen = True
+                print("__file__ is not defined!!!!!!!")
             listfile = os.path.join(self.outputDir, "tmpfile")
             self.genListFile(listfile, config=False)
-            dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
-            tmpDirname = os.path.dirname(dirname)
-            if tmpDirname.lower().endswith("exe") or\
-               tmpDirname.lower().endswith(".zip"):
-                frozen = True
-                dirname  = os.path.dirname(tmpDirname)
+            if frozen:
+                # we are at level PyMca5\PyMcaGui\pymca
+                dirname  = os.path.dirname(dirname)
+                # level PyMcaGui
+                dirname  = os.path.dirname(dirname)
+                # level PyMca5
+                dirname  = os.path.dirname(dirname)
+                # directory level with exe files
                 myself   = os.path.join(dirname, "PyMcaBatch.exe")
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer.exe")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.exe")
@@ -948,7 +951,6 @@ class McaBatchGUI(qt.QWidget):
                 if not os.path.exists(rgb):
                     rgb = None
             else:
-                frozen = False
                 myself = os.path.join(dirname, "PyMcaBatch.py")
                 viewer = os.path.join(dirname, "EdfFileSimpleViewer.py")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch.py")
