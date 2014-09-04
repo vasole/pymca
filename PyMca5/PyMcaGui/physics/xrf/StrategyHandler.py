@@ -515,10 +515,11 @@ class IterationTable(qt.QTableWidget):
             c = 3 * (idx // self.rowCount())
             item = self.cellWidget(row, 0 + c)
             if item.isChecked():
-                ddict["flags"].append(1)
                 peak = str(self.cellWidget(row, 1 + c).currentText())
                 if peak in ["-"]:
-                    raise ValueError("Invalid peak family in row %d" % row)
+                    continue
+                    #raise ValueError("Invalid peak family in row %d" % row)
+                ddict["flags"].append(1)
                 ddict["peaks"].append(peak)
                 ddict["materials"].append(self.cellWidget(row, 2 + c).currentText())
             else:

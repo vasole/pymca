@@ -178,7 +178,7 @@ def getMultilayerFluorescence(multilayerSample,
         else:
             actualElementList = elementsList
 
-    # enable the cache to get a 30 % speed up
+    # enable the cache to get a (miserable) 25 % speed up
     for layer in multilayerSample:
         composition = xcom.getComposition(layer[0])
         for element in composition.keys():
