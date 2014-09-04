@@ -396,7 +396,6 @@ class FitParamForm(qt.QWidget):
         layout5_2 = Q3GridLayout(None)
         layout5_2.setContentsMargins(11, 11, 11, 11)
         layout5_2.setSpacing(2)
-
         self.zeroError = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.zeroError,1,5)
@@ -554,6 +553,17 @@ class FitParamForm(qt.QWidget):
         self.gainError = qt.QLineEdit(self.tabDetector)
 
         layout5_2.addWidget(self.gainError, 2, 5)
+
+        self.ignoreSpectrumCalibration = qt.QCheckBox(self.tabDetector)
+        ignoreToolTip = "If checked, the starting calibration parameters "
+        ignoreToolTip += "will not be replaced by the input spectrum "
+        ignoreToolTip += "ones.\n"
+        self.ignoreSpectrumCalibration.setToolTip(ignoreToolTip)
+        ignoreText = "Ignore calibration from input data"
+        self.ignoreSpectrumCalibration.setText(ignoreText)
+        self.ignoreSpectrumCalibration.setChecked(False)
+        layout5_2.addWidget(self.ignoreSpectrumCalibration, 6, 0)
+
         tabDetectorLayout.addLayout(layout5_2)
         spacer_6 = qt.QSpacerItem(20, 2,\
                                   qt.QSizePolicy.Minimum,\

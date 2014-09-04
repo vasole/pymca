@@ -73,6 +73,7 @@ class FitParamWidget(FitParamForm):
         self._counts   = None
         self._stripDialog = None
         self._strategyDialog  = None
+        self._info = None
         self.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
         self.tabAtt = qt.QWidget()
         tabAttLayout = qt.QGridLayout(self.tabAtt)
@@ -214,10 +215,24 @@ class FitParamWidget(FitParamForm):
         self._backgroundWindow = None
         self.stripSetupButton.clicked.connect(self.__stripSetupButtonClicked)
 
-        #strategy related
+        # strategy related
         self.strategyCheckBox.clicked.connect(self._strategyCheckBoxClicked)
         self.strategySetupButton.clicked.connect(self._strategySetupButtonClicked)
         self.strategyCombo.activated[int].connect(self._strategyComboActivated)
+
+        # calibration update handling related
+        self.ignoreSpectrumCalibration.clicked[()].connect( \
+                            self._ignoreSpectrumCalibrationClicked)
+
+    def _ignoreSpectrumCalibrationClicked(self):
+        if not self.ignoreSpectrumCalibration.isChecked():
+            # update the values with the received ones (if any)
+            if self._info is not None:
+                calibration = self._info.get('calibration', [])
+                if calibration is not None:
+                    if len(calibration) > 1:
+                        self.zeroValue.setText("%f" % calibration[0])
+                        self.gainValue.setText("%f" % calibration[1])
 
     def __attPlotButtonSlot(self):
         try:
@@ -933,6 +948,8 @@ class FitParamWidget(FitParamForm):
         self.sumfacValue.setText(self.__get("detector", "sum"))
         self.sumfacError.setText(self.__get("detector", "deltasum"))
         self.sumfacCheck.setChecked(self.__get("detector", "fixedsum", 0, int))
+        self.ignoreSpectrumCalibration.setChecked( \
+                    self.__get("detector", "ignoreinputcalibration", 0, int))
 
     def __getDetPar(self):
         pars= {}
@@ -975,6 +992,8 @@ class FitParamWidget(FitParamForm):
             err= "Sum Factor error"
             pars["deltasum"]= float(str(self.sumfacError.text()))
             pars["fixedsum"]= int(self.sumfacCheck.isChecked())
+            pars["ignoreinputcalibration"] = \
+                        int(self.ignoreSpectrumCalibration.isChecked())
             return pars
         #else:
         except:

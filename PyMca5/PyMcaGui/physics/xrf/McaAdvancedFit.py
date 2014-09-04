@@ -1736,22 +1736,25 @@ class McaAdvancedFit(qt.QWidget):
             else:
                 raise
 
-        if self.configDialog is not None:
-            self.configDialog.setData(self.mcafit.xdata * 1.0,
-                           self.mcafit.ydata * 1.0,
-                           info=copy.deepcopy(self.info))
-        if self.concentrationsWidget is not None:
-            if self.mcafit.config["concentrations"].get("useautotime", False):
-                self.concentrationsWidget.setTimeFactor(self.info["time"],
-                                                    signal=False)
-
+        self.info["calibration"] = kw.get('calibration', None)
         if 'calibration' in kw:
             if kw['calibration'] is not None:
                 # The condition below gave troubles because it was using the
                 # current calibration even if the x data where actual energies.
                 # if (kw['calibration'] != [0.0,1.0,0.0]):
-                self.mcafit.config['detector']['zero']=kw['calibration'][0] * 1
-                self.mcafit.config['detector']['gain']=kw['calibration'][1] * 1
+                if not self.mcafit.config['detector'].get('ignoreinputcalibration', False):
+                    self.mcafit.config['detector']['zero']=kw['calibration'][0] * 1
+                    self.mcafit.config['detector']['gain']=kw['calibration'][1] * 1
+
+        if self.configDialog is not None:
+            self.configDialog.setData(self.mcafit.xdata * 1.0,
+                           self.mcafit.ydata * 1.0,
+                           info=copy.deepcopy(self.info))
+
+        if self.concentrationsWidget is not None:
+            if self.mcafit.config["concentrations"].get("useautotime", False):
+                self.concentrationsWidget.setTimeFactor(self.info["time"],
+                                                    signal=False)
 
         self.setHeader(text="Fit of %s from %s %s to %s" % (self.info['legend'],
                                                             self.info['xlabel'],
