@@ -72,20 +72,33 @@ def getMultilayerFluorescence(multilayerSample,
                               elementsFromMatrix=False,
                               secondary=None,
                               materials=None):
+    if DEBUG:
+        print("Library actually using secondary = ", secondary)
     global xcom
     if xcom is None:
+        if DEBUG:
+            print("Getting fisx elements instance")
         xcom = _getElementsInstance()
 
     if materials is not None:
+        if DEBUG:
+            print("Deleting materials")
+        xcom.removeMaterials()
         for material in materials:
-            xcom.addMaterial(material, errorOnReplace=0)
+            if DEBUG:
+                print("Adding material making sure no duplicates")
+            xcom.addMaterial(material, errorOnReplace=1)
 
     # the instance
+    if DEBUG:
+        print("creating XRF instance")
     xrf = XRF()
 
     # the beam energies
     if not len(energyList):
         raise ValueError("Empty list of beam energies!!!")
+    if DEBUG:
+        print("setting beam")
     xrf.setBeam(energyList, weights=weightList,
                             characteristic=flagList)
     # the beam filters (if any)
@@ -100,6 +113,8 @@ def getMultilayerFluorescence(multilayerSample,
 
     Unless you know what you are doing, the funny factors must be 1.0
     """
+    if DEBUG:
+        print("setting beamFilters")
     xrf.setBeamFilters(beamFilters)
 
     # the sample description
@@ -112,14 +127,20 @@ def getMultilayerFluorescence(multilayerSample,
 
     Unless you know what you are doing, the funny factors must be 1.0
     """
+    if DEBUG:
+        print("setting sample")
     xrf.setSample(multilayerSample)
 
     # the attenuators
     if attenuatorList is not None:
         if len(attenuatorList) > 0:
+            if DEBUG:
+                print("setting attenuators")
             xrf.setAttenuators(attenuatorList)
 
     # the geometry
+    if DEBUG:
+        print("setting Geometry")
     if alphaIn is None:
         alphaIn = 45
     if alphaOut is None:
@@ -127,6 +148,8 @@ def getMultilayerFluorescence(multilayerSample,
     xrf.setGeometry(alphaIn, alphaOut)
 
     # the detector
+    if DEBUG:
+        print("setting Detector")
     if detector is not None:
         # Detector can be a list as [material, density, thickness]
         # or a Detector instance
@@ -187,6 +210,7 @@ def getMultilayerFluorescence(multilayerSample,
         xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
 
     if DEBUG:
+        print("Calling getMultilayerFluorescence")
         t0 = time.time()
     expectedFluorescence = xrf.getMultilayerFluorescence(actualElementList,
                                 xcom,
