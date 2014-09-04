@@ -1741,7 +1741,7 @@ class McaAdvancedFit(qt.QWidget):
                            self.mcafit.ydata * 1.0,
                            info=copy.deepcopy(self.info))
         if self.concentrationsWidget is not None:
-            if self.mcafit.config["concentrations"] ["useautotime"]:
+            if self.mcafit.config["concentrations"].get("useautotime", False):
                 self.concentrationsWidget.setTimeFactor(self.info["time"],
                                                     signal=False)
 
