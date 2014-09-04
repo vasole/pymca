@@ -263,7 +263,6 @@ class SingleLayerStrategyWidget(qt.QWidget):
                 else:
                     layerPeaks[presentInLayer].append(peak)
 
-
         oldOption  = self._layerOptions.currentText()
         self._layerOptions.clear()
         for item in layerList:
@@ -291,15 +290,24 @@ class SingleLayerStrategyWidget(qt.QWidget):
     def setParameters(self, ddict):
         layer = ddict.get("layer", "Auto")
         if layer not in self._layerList:
-            raise ValueError("Layer %s not among fitted layers" % layer)
+            if layer.upper() != "AUTO":
+                raise ValueError("Layer %s not among fitted layers" % layer)
+            else:
+                layerList = self._layerList + ["Auto"]
+                self._layerOptions.clear()
+                for item in layerList:
+                    self._layerOptions.addItem(item)
+                self._layerList = layerList
 
         nIterations = ddict.get("iterations", 3)
         self._nIterations.setValue(nIterations)
 
         layerList = self._layerList
         layerPeaks = self._layerPeaks
+
         self._layerOptions.setCurrentIndex(layerList.index(layer))
-        self._table.setLayerPeakFamilies(layerPeaks[layer])
+        if layer in layerPeaks:
+            self._table.setLayerPeakFamilies(layerPeaks[layer])
 
         completer = ddict.get("completer", "-")
         self._materialOptions.setCurrentText(completer)
@@ -311,7 +319,7 @@ class SingleLayerStrategyWidget(qt.QWidget):
         nItem = 0
         for i in range(len(flags)):
             doIt = 0
-            if flags[i] in [1, True, "1", "True"]:
+            if (flags[i] in [1, True, "1", "True"]) and (layer in layerPeaks):
                 flag = 1
                 if families[i] in layerPeaks[layer]:
                     if materials[i] in ["-"]:
