@@ -374,8 +374,9 @@ class FitParamWidget(FitParamForm):
             msg.setText("Error configuring strategy")
             msg.setInformativeText("You need to specify incident beam energy")
             msg.exec_()
+            return
         if self._strategyDialog is None:
-            self._strategyDialog = StrategyHandler.StrategyHandlerDialog()
+            self._strategyDialog = StrategyHandler.StrategyHandlerDialog(self)
             self._strategyDialog.setWindowIcon(qt.QIcon(\
                                 qt.QPixmap(Icons.IconDict["gioconda16"])))
             if self.height() < 801:
@@ -394,6 +395,7 @@ class FitParamWidget(FitParamForm):
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
             return
+        self._strategyDialog.show()
         ret = self._strategyDialog.exec_()
         if ret != qt.QDialog.Accepted:
             self._strategyDialog.setFitConfiguration(before)
@@ -415,7 +417,7 @@ class FitParamWidget(FitParamForm):
         y = numpy.ravel(numpy.array(self._counts)).astype(numpy.float)
         x = numpy.ravel(numpy.array(self._channels))
         if self._stripDialog is None:
-            self._stripDialog = StripBackgroundWidget.StripBackgroundDialog()
+            self._stripDialog = StripBackgroundWidget.StripBackgroundDialog(self)
             self._stripDialog.setWindowIcon(qt.QIcon(\
                                 qt.QPixmap(Icons.IconDict["gioconda16"])))
             if self.height() < 801:
