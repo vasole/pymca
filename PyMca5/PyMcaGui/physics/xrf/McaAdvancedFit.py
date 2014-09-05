@@ -78,6 +78,7 @@ Elements = ElementsInfo.Elements
 from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
+from PyMca5.PyMcaGui import CalculationThread
 DEBUG = 0
 if DEBUG:
     print("############################################")
@@ -481,6 +482,34 @@ class McaAdvancedFit(qt.QWidget):
 
         if DEBUG:
             self.mcafit.configure(config)
+        elif 1:
+            try:
+                thread = CalculationThread.CalculationThread( \
+                                      calculation_method = self.mcafit.configure,
+                                      calculation_vars = config,
+                                      expand_vars=False,
+                                      expand_kw=False)
+                thread.start()
+                CalculationThread.waitingMessageDialog(thread,
+                                    message = "Configuring, please wait",
+                                    parent=self,
+                                    modal=True,
+                                    update_callback=None,
+                                    frameless=True)
+                threadResult = thread.result
+                if type(threadResult) == type((1,)):
+                    if len(threadResult):
+                        if threadResult[0] == "Exception":
+                            raise Exception(threadResult[1], threadResult[2])
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setWindowTitle("Configuration error")
+                msg.setText("Error configuring fit:")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
+                return
         else:
             try:
                 threadResult=self._submitThread(self.mcafit.configure, config,
@@ -615,13 +644,47 @@ class McaAdvancedFit(qt.QWidget):
 
         if DEBUG:
             self.mcafit.configure(config)
+        elif 1:
+            try:
+                thread = CalculationThread.CalculationThread( \
+                                      calculation_method = self.mcafit.configure,
+                                      calculation_vars = config,
+                                      expand_vars=False,
+                                      expand_kw=False)
+                thread.start()
+                CalculationThread.waitingMessageDialog(thread,
+                                    message = "Configuring, please wait",
+                                    parent=self,
+                                    modal=True,
+                                    update_callback=None)
+                threadResult = thread.result
+                if type(threadResult) == type((1,)):
+                    if len(threadResult):
+                        if threadResult[0] == "Exception":
+                            raise Exception(threadResult[1], threadResult[2])
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setWindowTitle("Configuration error")
+                msg.setText("Error configuring fit:")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
+                return
         else:
-            threadResult=self._submitThread(self.mcafit.configure, config,
-                             "Configuring, please wait")
-            if type(threadResult) == type((1,)):
-                if len(threadResult):
-                    if threadResult[0] == "Exception":
-                        raise Exception(threadResult[1], threadResult[2])
+            try:
+                threadResult=self._submitThread(self.mcafit.configure, config,
+                                 "Configuring, please wait")
+                if type(threadResult) == type((1,)):
+                    if len(threadResult):
+                        if threadResult[0] == "Exception":
+                            raise Exception(threadResult[1], threadResult[2])
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error: %s" % (sys.exc_info()[1]))
+                msg.exec_()
+                return
 
     def _tabChanged(self, value):
         if DEBUG:
@@ -987,6 +1050,33 @@ class McaAdvancedFit(qt.QWidget):
             ddict, info = tool.processFitResult(fitresult=fitresult,
                                          elementsfrommatrix=True,
                                          addinfo=True)
+        elif 1:
+            try:
+                thread = CalculationThread.CalculationThread( \
+                                      calculation_method = tool.processFitResult,
+                                  calculation_kw = {'fitresult':fitresult,
+                                    'elementsfrommatrix':True,
+                                    'addinfo':True},
+                                      expand_vars=True,
+                                      expand_kw=True)
+                thread.start()
+                CalculationThread.waitingMessageDialog(thread,
+                                    message = "Calculating Matrix Spectrum",
+                                    parent=self,
+                                    modal=True,
+                                    update_callback=None)
+                threadResult = thread.result
+                if type(threadResult) == type((1,)):
+                    if len(threadResult):
+                        if threadResult[0] == "Exception":
+                            raise Exception(threadResult[1], threadResult[2])
+                ddict, info = threadResult
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error: %s" % (sys.exc_info()[1]))
+                msg.exec_()
+                return
         else:
             try:
                 threadResult = self._submitThread(tool.processFitResult,
@@ -1596,60 +1686,23 @@ class McaAdvancedFit(qt.QWidget):
         h+="</CENTER>"
         return h
 
-
-    if QTVERSION < '4.0.0':
-        def __print(self,text):
-            printer = qt.QPrinter()
-            if printer.setup(self):
-                painter = qt.QPainter()
-                if not(painter.begin(printer)):
-                    return 0
-                metrics = qt.QPaintDeviceMetrics(printer)
-                dpiy    = metrics.logicalDpiY()
-                margin  = int((2/2.54) * dpiy) #2cm margin
-                body = qt.QRect(0.5*margin, margin, metrics.width()- 1 * margin, metrics.height() - 2 * margin)
-                #html output -> print text
-                richtext = qt.QSimpleRichText(text, qt.QFont(),
-                                                    QString(""),
-                                                    #0,
-                                                    qt.QStyleSheet.defaultSheet(),
-                                                    qt.QMimeSourceFactory.defaultFactory(),
-                                                    body.height())
-                view = qt.QRect(body)
-                richtext.setWidth(painter,view.width())
-                page = 1
-                while(1):
-                    richtext.draw(painter,body.left(),body.top(),
-                                view,qt.QColorGroup())
-                    view.moveBy(0, body.height())
-                    painter.translate(0, -body.height())
-                    painter.drawText(view.right()  - painter.fontMetrics().width(QString.number(page)),
-                                     view.bottom() - painter.fontMetrics().ascent() + 5,QString.number(page))
-                    if view.top() >= richtext.height():
-                        break
-                    printer.newPage()
-                    page += 1
-
-                #painter.flush()
-                painter.end()
-    else:
-        # pyflakes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
-        def __print(self,text):
-            printer = qt.QPrinter()
-            printDialog = qt.QPrintDialog(printer, self)
-            if printDialog.exec_():
-                if 0:
-                    #this was crashing in Qt 4.2.2
-                    #with the PyQt snapshot of 20061203
-                    editor = qt.QTextEdit()
-                    cursor = editor.textCursor()
-                    cursor.movePosition(qt.QTextCursor.Start)
-                    editor.insertHtml(text)
-                    document = editor.document()
-                else:
-                    document = qt.QTextDocument()
-                    document.setHtml(text)
-                document.print_(printer)
+    # pyflakes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
+    def __print(self,text):
+        printer = qt.QPrinter()
+        printDialog = qt.QPrintDialog(printer, self)
+        if printDialog.exec_():
+            if 0:
+                #this was crashing in Qt 4.2.2
+                #with the PyQt snapshot of 20061203
+                editor = qt.QTextEdit()
+                cursor = editor.textCursor()
+                cursor.movePosition(qt.QTextCursor.Start)
+                editor.insertHtml(text)
+                document = editor.document()
+            else:
+                document = qt.QTextDocument()
+                document.setHtml(text)
+            document.print_(printer)
 
     def setdata(self, *var, **kw):
         if DEBUG:
@@ -1821,6 +1874,34 @@ class McaAdvancedFit(qt.QWidget):
             self.mcatable.fillfrommca(result)
             if DEBUG:
                 print("finished")
+        elif 1:
+            self.mcafit.estimate()
+            try:
+                thread = CalculationThread.CalculationThread( \
+                                      calculation_method = self.mcafit.startfit,
+                                      calculation_kw = {'digest':1},
+                                      expand_vars=True,
+                                      expand_kw=True)
+                thread.start()
+                CalculationThread.waitingMessageDialog(thread,
+                                    message = "Calculating Fit",
+                                    parent=self,
+                                    modal=True,
+                                    update_callback=None,
+                                    frameless=True)
+                threadResult = thread.result
+                if type(threadResult) == type((1,)):
+                    if len(threadResult):
+                        if threadResult[0] == "Exception":
+                            raise Exception(threadResult[1], threadResult[2])
+                fitresult = threadResult[0]
+                result    = threadResult[1]
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error: %s" % (sys.exc_info()[1]))
+                msg.exec_()
+                return
         else:
             try:
                 self.mcafit.estimate()
@@ -2690,7 +2771,8 @@ class Line(qt.QFrame):
 
 class SimpleThread(qt.QThread):
     def __init__(self, function = None, kw = None):
-        if kw is None:kw={}
+        if kw is None:
+            kw={}
         qt.QThread.__init__(self)
         self._function = function
         self._kw       = kw

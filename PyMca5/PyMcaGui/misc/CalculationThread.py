@@ -36,11 +36,17 @@ except ImportError:
 
 class CalculationThread(qt.QThread):
     def __init__(self, parent=None, calculation_method=None,
-                 calculation_vars=None, calculation_kw=None):
+                 calculation_vars=None, calculation_kw=None,
+                 expand_vars=True, expand_kw=True):
         qt.QThread.__init__(self, parent)
         self.calculation_method = calculation_method
         self.calculation_vars = calculation_vars
         self.calculation_kw = calculation_kw
+        self.expand_vars = expand_vars
+        self.expand_kw = expand_kw
+        if self.expand_vars:
+            if not self.expand_kw:
+                raise ValueError("Cannot expand vars without expanding kw")
         self.result = None
 
     def run(self):
@@ -48,19 +54,32 @@ class CalculationThread(qt.QThread):
             if self.calculation_vars is None and self.calculation_kw is None:
                 self.result = self.calculation_method()
             elif self.calculation_vars is None:
-                self.result = self.calculation_method(**self.calculation_kw)
+                if self.expand_kw:
+                    self.result = self.calculation_method(**self.calculation_kw)
+                else:
+                    self.result = self.calculation_method(self.calculation_kw)
             elif self.calculation_kw is None:
-                self.result = self.calculation_method(*self.calculation_vars)
-            else:
+                if self.expand_vars:
+                    self.result = self.calculation_method(*self.calculation_vars)
+                else:
+                    self.result = self.calculation_method(self.calculation_vars)
+            elif self.expand_vars and self.expand_kw:
                 self.result = self.calculation_method(*self.calculation_vars,
                                                       **self.calculation_kw)
+            elif self.expand_kw:
+                self.result = self.calculation_method(self.calculation_vars,
+                                                      **self.calculation_kw)
+            else:
+                raise ValueError("Impossible combination of vars and kw")
         except:
             self.result = ("Exception",) + sys.exc_info()
         finally:
             self.calculation_vars = None
             self.calculation_kw = None
 
-def waitingMessageDialog(thread, message=None, parent=None, modal=True, update_callback=None):
+def waitingMessageDialog(thread, message=None, parent=None,
+                         modal=True, update_callback=None,
+                         frameless=False):
     """
     thread  - The thread to be polled
     message - The initial message to be diplayed
@@ -77,7 +96,10 @@ def waitingMessageDialog(thread, message=None, parent=None, modal=True, update_c
         if message is None:
             message = "Please wait. Calculation going on."
         windowTitle = "Please Wait"
-        msg = qt.QDialog(parent)#, qt.Qt.FramelessWindowHint)
+        if frameless:
+            msg = qt.QDialog(parent, qt.Qt.FramelessWindowHint)
+        else:
+            msg = qt.QDialog(parent)#, qt.Qt.FramelessWindowHint)
         #if modal:
         #    msg.setWindowFlags(qt.Qt.Window | qt.Qt.CustomizeWindowHint | qt.Qt.WindowTitleHint)
         msg.setModal(modal)
