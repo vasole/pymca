@@ -2130,6 +2130,7 @@ class McaTheory(object):
         elif currentIteration > 0:
             callStrategy = True
 
+        self.__toBeConfigured = False
         if callStrategy:
             # get the strategy to be applied
             strategyKey = self.config['fit']["strategy"]
