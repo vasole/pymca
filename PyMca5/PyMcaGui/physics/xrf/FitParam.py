@@ -395,7 +395,10 @@ class FitParamWidget(FitParamForm):
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
             return
+        # On Arlen's Mac the Dialog does not appears
         self._strategyDialog.show()
+        # and even remains behind the dialog
+        self._strategyDialog.raise_()
         ret = self._strategyDialog.exec_()
         if ret != qt.QDialog.Accepted:
             self._strategyDialog.setFitConfiguration(before)
