@@ -31,6 +31,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
+import time
 from fisx import DataDir
 from fisx import Elements as FisxElements
 from fisx import Material
@@ -38,10 +39,8 @@ from fisx import Detector
 from fisx import XRF
 xcom = None
 DEBUG = 0
-if DEBUG:
-    import time
 
-def _getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
+def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
     if dataDir is None:
         dataDir = DataDir.DATA_DIR
     if bindingEnergies is None:
@@ -78,7 +77,7 @@ def getMultilayerFluorescence(multilayerSample,
     if xcom is None:
         if DEBUG:
             print("Getting fisx elements instance")
-        xcom = _getElementsInstance()
+        xcom = getElementsInstance()
 
     if materials is not None:
         if DEBUG:
@@ -243,7 +242,7 @@ def _getFisxMaterials(fitConfiguration):
     """
     global xcom
     if xcom is None:
-        xcom = _getElementsInstance()
+        xcom = getElementsInstance()
 
     # define all the needed materials
     inputMaterialDict = fitConfiguration.get("materials", {})
