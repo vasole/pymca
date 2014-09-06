@@ -2137,6 +2137,7 @@ class McaTheory(object):
             if strategyKey not in self.strategyInstances:
                 self.strategyInstances[strategyKey] = STRATEGIES[strategyKey]()
             strategyInstance = self.strategyInstances[strategyKey]
+            # digestresult takes about 0.1 seconds per iteration
             newConfig, iteration = strategyInstance.applyStrategy( \
                                             self.digestresult(),
                                             self._fluoRates,
@@ -2202,8 +2203,6 @@ class McaTheory(object):
             result[group]['sigmaarea'] = sigmaarea
             i += 1
         return result
-
-
 
     def digestresult(self,outfile=None, info=None):
         param = self.fittedpar

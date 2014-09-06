@@ -67,8 +67,10 @@ class McaAdvancedFitBatch(object):
         if type(initdict) == type([]):
             self.mcafit = ClassMcaTheory.McaTheory(initdict[mcaoffset])
             self.__configList = initdict
+            self.__currentConfig = mcaoffset
         else:
-            self.__configList = None
+            self.__configList = [initdict]
+            self.__currentConfig = 0
             self.mcafit = ClassMcaTheory.McaTheory(initdict)
         self.__concentrationsKeys = []
         if self._concentrations:
@@ -157,9 +159,10 @@ class McaAdvancedFitBatch(object):
                        len(self._filelist)-self.fileEndOffset,
                        self.fileStep):
             if not self.roiFit:
-                if self.__configList is not None:
+                if len(self.__configList) > 1:
                     if i != 0:
                         self.mcafit = ClassMcaTheory.McaTheory(self.__configList[i])
+                        self.__currentConfig = i
             self.mcafit.enableOptimizedLinearFit()
             inputfile   = self._filelist[i]
             self.__row += 1 #should be plus fileStep?
@@ -501,6 +504,11 @@ class McaAdvancedFitBatch(object):
                 except:
                     print("Error entering data of file with output = %s\n%s" %\
                           (filename, sys.exc_info()[1]))
+                    # make sure the configuration is restored
+                    if self.mcafit.config['fit'].get("strategyflag", False):
+                        config = self.__configList[self.__currentConfig]
+                        print("Restoring fitconfiguration")
+                        self.mcafit.configure(config)
                     return
                 try:
                     self.mcafit.estimate()
@@ -536,6 +544,10 @@ class McaAdvancedFitBatch(object):
                 except:
                     print("Error fitting file with output = %s: %s)" %\
                           (filename, sys.exc_info()[1]))
+                    if self.mcafit.config['fit'].get("strategyflag", False):
+                        config = self.__configList[self.__currentConfig]
+                        print("Restoring fitconfiguration")
+                        self.mcafit.configure(config)
                     return
             if self._concentrations:
                 if concentrationsdone == 0:
@@ -633,9 +645,11 @@ class McaAdvancedFitBatch(object):
                 if not useExistingResult:
                     if 0:
                         #this is very slow and not needed just for imaging
-                        if result is None:result = self.mcafit.digestresult()
+                        if result is None:
+                            result = self.mcafit.digestresult()
                     else:
-                        if result is None:result = self.mcafit.imagingDigestResult()
+                        if result is None:
+                            result = self.mcafit.imagingDigestResult()
 
             #IMAGES
             if self.fitImages:
