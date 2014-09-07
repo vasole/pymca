@@ -360,9 +360,10 @@ class Specfit(object):
             self.theorylist.append(theory)
         return 0
 
-    def addbackground(self,*vars,**kw):
+    def addbackground(self, background, function,
+                      parameters, estimate=None):
         """
-        method addbackground(self,*vars,**kw)
+        method addbackground(self, background, function, parameters, estimate)
         Usage: self.addtheory(background,function,parameters,estimate)
                or
                self.addtheory(background=background,
@@ -375,44 +376,13 @@ class Specfit(object):
             parameters: Parameters names ['p1','p2','p3',...]
             estimate:   The estimate function if any
         Output:
-            Returns 0 if everything went fine or a positive number in-
-            dicating the offending parameter
+            None
         """
         print("addbackground called")
-        status=0
-        if len(vars) > 0:
-            varslist=list(vars)
-        else:
-            varslist=[]
-        if 'background' in kw:
-            theory=kw['background']
-        elif len(varslist) > 0:
-            theory=varslist[0]
-        else:
-            return 1
-        if 'function' in kw:
-            function=kw['function']
-        elif len(varslist) > 1:
-            theory=varslist[1]
-        else:
-            return 2
-        if 'parameters' in kw:
-            function=kw['parameters']
-        elif len(varslist) > 2:
-            theory=varslist[2]
-        else:
-            return 3
-        if 'estimate' in kw:
-            estimate=kw['estimate']
-        elif len(varslist) > 3:
-            estimate=varslist[3]
-        else:
-            estimate=None
 
-        self.bkgdict[background]=[function,parameters,estimate]
-        if theory not in self.bkglist:
-            self.bkglist.append(theory)
-        return 0
+        self.bkgdict[background] = [function, parameters, estimate]
+        if background not in self.bkglist:
+            self.bkglist.append(background)
 
     def settheory(self,theory):
         """
