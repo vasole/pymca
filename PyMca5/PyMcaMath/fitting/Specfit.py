@@ -295,10 +295,11 @@ class Specfit(object):
                 del(self.filterlist[i])
         return 0
 
-    def addtheory(self, *vars, **kw):
+    def addtheory(self, theory=None, function=None, parameters=None, estimate=None,
+                  configure=None, derivative=None):
         """
-        method addtheory(self,*vars,**kw)
-        Usage: self.addtheory(theory,function,parameters,estimate)
+        method addtheory(self, theory, function, parameters, estimate)
+        Usage: self.addtheory(theory,function,parameters,estimate,configure=None)
                or
                self.addtheory(theory=theory,
                               function=function,
@@ -308,110 +309,52 @@ class Specfit(object):
             theory:     String with the name describing the function
             function:   The actual function
             parameters: Parameters names ['p1','p2','p3',...]
-            estimate:   The estimate function if any
+            estimate:   The initial parameters estimation function to be called if any
+            configure:  Optional function to be called to initialize parameters prior to fit
+            derivative: Optional analytical derivative function.
+                        Its signature should be function(parameter_values, parameter_index, x)
+                        See Gefit.py module for more information.
         Output:
-            Returns 0 if everything went fine or a positive number in-
-            dicating the offending parameter
+            Returns 0 if everything went fine or a positive number indicating the
+            offending parameter
         """
-        status=0
-        if len(vars) > 0:
-            varslist=list(vars)
-        else:
-            varslist=[]
-        if 'theory' in kw:
-            theory=kw['theory']
-        elif len(varslist) > 0:
-            theory=varslist[0]
-        else:
+        if theory is None:
             return 1
-        if 'function' in kw:
-            function=kw['function']
-        elif len(varslist) > 1:
-            function=varslist[1]
-        else:
+        if function is None:
             return 2
-        if 'parameters' in kw:
-            parameters=kw['parameters']
-        elif len(varslist) > 2:
-            parameters=varslist[2]
-        else:
+        if parameters is None:
             return 3
-        if 'estimate' in kw:
-            estimate=kw['estimate']
-        elif len(varslist) > 3:
-            estimate=varslist[3]
-        else:
-            estimate=None
-        if 'configure' in kw:
-            configure=kw['configure']
-        elif len(varslist) > 4:
-            configure=varslist[4]
-        else:
-            configure=None
-        if 'derivative' in kw:
-            derivative=kw['derivative']
-        elif len(varslist) > 5:
-            derivative=varslist[5]
-        else:
-            derivative=None
 
-        self.theorydict[theory]=[function,parameters,estimate,configure,derivative]
+        self.theorydict[theory] = [function, parameters,
+                                   estimate, configure, derivative]
         if theory not in self.theorylist:
             self.theorylist.append(theory)
         return 0
 
-    def addbackground(self,*vars,**kw):
+    def addbackground(self, background=None, function=None,
+                      parameters=None, estimate=None):
         """
-        method addbackground(self,*vars,**kw)
-        Usage: self.addtheory(background,function,parameters,estimate)
-               or
-               self.addtheory(background=background,
-                              function=function,
-                              parameters=parameters,
-                              estimate=estimate)
+        method addbackground(self, background, function, parameters, estimate)
+        Usage: self.addbackground(background,function,parameters,estimate=None)
         Input:
             background: String with the name describing the function
             function:   The actual function
             parameters: Parameters names ['p1','p2','p3',...]
-            estimate:   The estimate function if any
+            estimate:   The initial parameters estimation function if any
         Output:
             Returns 0 if everything went fine or a positive number in-
             dicating the offending parameter
         """
-        print("addbackground called")
-        status=0
-        if len(vars) > 0:
-            varslist=list(vars)
-        else:
-            varslist=[]
-        if 'background' in kw:
-            theory=kw['background']
-        elif len(varslist) > 0:
-            theory=varslist[0]
-        else:
+        if background is None:
             return 1
-        if 'function' in kw:
-            function=kw['function']
-        elif len(varslist) > 1:
-            theory=varslist[1]
-        else:
+        if function is None:
             return 2
-        if 'parameters' in kw:
-            function=kw['parameters']
-        elif len(varslist) > 2:
-            theory=varslist[2]
-        else:
+        if parameters is None:
             return 3
-        if 'estimate' in kw:
-            estimate=kw['estimate']
-        elif len(varslist) > 3:
-            estimate=varslist[3]
-        else:
-            estimate=None
 
-        self.bkgdict[background]=[function,parameters,estimate]
-        if theory not in self.bkglist:
-            self.bkglist.append(theory)
+        self.bkgdict[background] = [function, parameters, estimate]
+        if background not in self.bkglist:
+            self.bkglist.append(bkg)
         return 0
 
     def settheory(self,theory):
@@ -1685,7 +1628,7 @@ class Specfit(object):
 
 
 def test():
-    from PyMca5 import SpecfitFunctions
+    from PyMca5.PyMcaMath.fitting import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = numpy.arange(1000).astype(numpy.float)
     p1 = numpy.array([1500,100.,50.0])
@@ -1694,7 +1637,7 @@ def test():
     y = y + a.gauss(p2,x)
     fit=Specfit()
     fit.setdata(x=x,y=y)
-    fit.importfun("SpecfitFunctions.py")
+    fit.importfun(os.path.join(os.path.dirname(__file__),"SpecfitFunctions.py"))
     fit.settheory('Gaussians')
     #print fit.configure()
     fit.setbackground('Constant')
