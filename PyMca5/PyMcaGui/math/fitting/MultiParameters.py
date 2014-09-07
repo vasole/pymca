@@ -27,6 +27,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import os
 import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from . import Parameters
@@ -323,44 +324,32 @@ def test():
     a.lastWindowClosed.connect(a.quit)
     w = ParametersTab()
     w.show()
-    import specfile
-    import Specfit
+    from PyMca5.PyMca import specfilewrapper as specfile
+    from PyMca5.PyMca import Specfit
+    from PyMca5 import PyMcaDataDir
     import numpy
-    sf=specfile.Specfile('02021201.dat')
-    scan=sf.select('14')
-    #sf=specfile.Specfile('02022101.dat')
-    #scan=sf.select('11')
+    sf=specfile.Specfile(os.path.join(PyMcaDataDir.PYMCA_DATA_DIR,
+                                      "XRFSpectrum.mca"))
+    scan=sf.select('2.1')
     mcadata=scan.mca(1)
     y=numpy.array(mcadata)
     #x=numpy.arange(len(y))
-    x=numpy.arange(len(y))*0.0200511-0.003186
+    x=numpy.arange(len(y))*0.0502883-0.492773
     fit=Specfit.Specfit()
     fit.setdata(x=x,y=y)
-    fit.importfun("SpecfitFunctions.py")
+    fit.importfun(os.path.join(os.path.dirname(Specfit.__file__),
+                                   "SpecfitFunctions.py"))
     fit.settheory('Hypermet')
     fit.configure(Yscaling=1.,
                   WeightFlag=1,
                   PosFwhmFlag=1,
                   HeightAreaFlag=1,
-                  FwhmPoints=50,
+                  FwhmPoints=16,
                   PositionFlag=1,
                   HypermetTails=1)
     fit.setbackground('Linear')
-    if 0:
-        # build a spectrum array
-        f=open("spec.arsp",'r')
-        #read the spectrum data
-        x=numpy.array([], numpy.float)
-        y=numpy.array([], numpy.float)
-        tmp=f.readline()[:-1]
-        while (tmp != ""):
-            tmpSeq=tmp.split()
-            x=numpy.concatenate((x,[float(tmpSeq[0])]))
-            y=numpy.concatenate((y,[float(tmpSeq[1])]))
-            tmp=f.readline()[:-1]
-        fit.setdata(x=x,y=y)
     if 1:
-        mcaresult=fit.mcafit(x=x,xmin=x[70],xmax=x[500])
+        mcaresult=fit.mcafit(x=x,xmin=x[300],xmax=x[1000])
         w.fillfrommca(mcaresult)
     else:
         fit.estimate()
