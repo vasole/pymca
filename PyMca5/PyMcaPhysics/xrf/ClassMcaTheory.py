@@ -2746,6 +2746,9 @@ class McaTheory(object):
         fittedpar[0] = numpy.exp(fittedpar[0])
         return fittedpar,numpy.zeros((3,len(fittedpar)),numpy.float)
 
+class ClassMcaTheory(McaTheory):
+    pass
+
 """
 def agauss(param0,t0):
         param=resize(ravel(array(param0)),(len(param0),3))
