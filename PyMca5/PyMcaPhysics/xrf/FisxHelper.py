@@ -70,7 +70,8 @@ def getMultilayerFluorescence(multilayerSample,
                               detector= None,
                               elementsFromMatrix=False,
                               secondary=None,
-                              materials=None):
+                              materials=None,
+                              secondaryCalculationLimit=0.0):
     if DEBUG:
         print("Library actually using secondary = ", secondary)
     global xcom
@@ -212,10 +213,11 @@ def getMultilayerFluorescence(multilayerSample,
         print("Calling getMultilayerFluorescence")
         t0 = time.time()
     expectedFluorescence = xrf.getMultilayerFluorescence(actualElementList,
-                                xcom,
-                                secondary=secondary,
-                                useGeometricEfficiency=useGeometricEfficiency,
-                                useMassFractions=elementsFromMatrix)
+                            xcom,
+                            secondary=secondary,
+                            useGeometricEfficiency=useGeometricEfficiency,
+                            useMassFractions=elementsFromMatrix,
+                            secondaryCalculationLimit=secondaryCalculationLimit)
     if DEBUG:
         print("C++ elapsed TWO = ", time.time() - t0)
 
@@ -419,20 +421,27 @@ def _getFisxDetector(fitConfiguration, attenuatorsDetector=None):
     return fisxDetector
 
 def getMultilayerFluorescenceFromFitConfiguration(fitConfiguration,
-                                                  elementsFromMatrix=False):
+                                                  elementsFromMatrix=False,
+                                                  secondaryCalculationLimit=0.0):
     return _fisxFromFitConfigurationAction(fitConfiguration,
                                         action="fluorescence",
-                                        elementsFromMatrix=elementsFromMatrix)
+                                        elementsFromMatrix=elementsFromMatrix,
+                                        secondaryCalculationLimit= \
+                                           secondaryCalculationLimit)
 
 def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration,
-                                                  elementsFromMatrix=False):
+                                                 elementsFromMatrix=False,
+                                                 secondaryCalculationLimit=0.0):
     return _fisxFromFitConfigurationAction(fitConfiguration,
                                         action="correction",
-                                        elementsFromMatrix=elementsFromMatrix)
+                                        elementsFromMatrix=elementsFromMatrix,
+                                        secondaryCalculationLimit= \
+                                           secondaryCalculationLimit)
 
 def _fisxFromFitConfigurationAction(fitConfiguration,
                                     action=None,
-                                    elementsFromMatrix=False):
+                                    elementsFromMatrix=False, \
+                                    secondaryCalculationLimit=0.0):
     if action is None:
         raise ValueError("Please specify action")
     # This is highly inefficient because one has to perform all the parsing
@@ -479,7 +488,9 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       detector = detectorInstance,
                                       elementsFromMatrix=elementsFromMatrix,
                                       secondary=secondary,
-                                      materials=fisxMaterials)
+                                      materials=fisxMaterials,
+                                      secondaryCalculationLimit= \
+                                          secondaryCalculationLimit)
     else:
         return getFisxCorrectionFactors(multilayerSample,
                                       energyList,
@@ -495,7 +506,9 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       detector = detectorInstance,
                                       elementsFromMatrix=elementsFromMatrix,
                                       secondary=secondary,
-                                      materials=fisxMaterials)
+                                      materials=fisxMaterials,
+                                      secondaryCalculationLimit= \
+                                          secondaryCalculationLimit)
 
 def getFisxCorrectionFactors(*var, **kw):
     expectedFluorescence = getMultilayerFluorescence(*var, **kw)
@@ -554,12 +567,15 @@ def getFisxCorrectionFactors(*var, **kw):
     return ddict
 
 def getFisxCorrectionFactorsFromFitConfigurationFile(fileName,
-                                                     elementsFromMatrix=False):
+                                                     elementsFromMatrix=False,
+                                                secondaryCalculationLimit=0.0):
     from PyMca5.PyMca import ConfigDict
     d = ConfigDict.ConfigDict()
     d.read(fileName)
     return getFisxCorrectionFactorsFromFitConfiguration(d,
-                                        elementsFromMatrix=elementsFromMatrix)
+                                        elementsFromMatrix=elementsFromMatrix,
+                                        secondaryCalculationLimit= \
+                                            secondaryCalculationLimit)
 
 if __name__ == "__main__":
     DEBUG = 1
