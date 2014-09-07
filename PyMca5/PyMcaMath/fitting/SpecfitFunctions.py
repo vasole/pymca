@@ -1242,9 +1242,9 @@ CONFIGURE=[fitfuns.configure,
            fitfuns.configure]
 
 def test(a):
-    from PyMca import PyMcaQt as qt
-    from PyMca import Specfit
-    from PyMca import ScanWindow
+    from PyMca5.PyMcaGui import PyMcaQt as qt
+    from PyMca5.PyMcaMath.fitting import Specfit
+    from PyMca5.PyMcaGui.pymca import ScanWindow
     #print dir(a)
     x = numpy.arange(1000).astype(numpy.float)
     p1 = numpy.array([1500,100.,50.0])
@@ -1252,11 +1252,6 @@ def test(a):
     y = a.gauss(p1,x)+1
     y = y + a.gauss(p2,x)
     app=qt.QApplication([])
-    #fit=Specfit.Specfit(root,x,y,
-    #                    user_theory='New Theory',
-    #                    user_function=a.gauss,
-    #                    user_parameters=['Height','Position','FWHM'])
-    #                    #user_estimate=estimate)
     fit=Specfit.Specfit(x,y)
     fit.addtheory('Gaussians',a.gauss,['Height','Position','FWHM'],
                     a.estimate_gauss)
@@ -1276,5 +1271,3 @@ def test(a):
 
 if __name__ == "__main__":
     test(fitfuns)
-
-

@@ -812,9 +812,12 @@ class Parameters(QTable):
 
 
 def main(args):
-    import specfile
-    import Specfit
+    from PyMca5.PyMca import specfile
+    from PyMca5.PyMca import specfilewrapper as specfile
+    from PyMca5.PyMca import Specfit
+    from PyMca5 import PyMcaDataDir
     import numpy
+    import os
     app = qt.QApplication(args)
     tab = Parameters(labels=['Parameter', 'Estimation', 'Fit Value', 'Sigma',
                              'Restrains', 'Min/Parame', 'Max/Factor/Delta/'],
@@ -824,37 +827,29 @@ def main(args):
     tab.configure(name='Position', code='FIXED', group=1)
     tab.configure(name='FWHM', group=1)
 
-    if len(args) > 1:
-        fit = Specfit.Specfit()
-        fit.importfun("SpecfitFunctions.py")
-        fit.settheory('Hypermet')
-        fit.configure(Yscaling=1.,
-                      WeightFlag=1,
-                      PosFwhmFlag=1,
-                      HeightAreaFlag=1,
-                      FwhmPoints=50,
-                      PositionFlag=1,
-                      HypermetTails=1)
-        fit.setbackground('Linear')
-
-        fname = args[1]
-        sf = specfile.Specfile(fname)
-        scan = sf[0]
-        nbmca = scan.nbmca()
-        if nbmca > 0:
-            mcadata = scan.mca(1)
-            y = numpy.array(mcadata)
-            x = numpy.arange(len(y)) * 0.0200511 - 0.003186
-            fit.setdata(x=x, y=y)
-            mcaresult=fit.mcafit(x=x,xmin=x[70],xmax=x[500])
-        else:
-            data = scan.data()
-            x = data[0, :]
-            y = data[-1,:]
-            fit.setdata(x=x, y=y)
-            fit.estimate()
-            fit.startfit()
-        tab.fillfromfit(fit.paramlist)
+    sf=specfile.Specfile(os.path.join(PyMcaDataDir.PYMCA_DATA_DIR,
+                                      "XRFSpectrum.mca"))
+    scan=sf.select('2.1')
+    mcadata=scan.mca(1)
+    y=numpy.array(mcadata)
+    #x=numpy.arange(len(y))
+    x=numpy.arange(len(y))*0.0502883-0.492773
+    fit=Specfit.Specfit()
+    fit.setdata(x=x,y=y)
+    fit.importfun(os.path.join(os.path.dirname(Specfit.__file__),
+                                   "SpecfitFunctions.py"))
+    fit.settheory('Hypermet')
+    fit.configure(Yscaling=1.,
+                  WeightFlag=1,
+                  PosFwhmFlag=1,
+                  HeightAreaFlag=1,
+                  FwhmPoints=16,
+                  PositionFlag=1,
+                  HypermetTails=1)
+    fit.setbackground('Linear')
+    fit.estimate()
+    fit.startfit()
+    tab.fillfromfit(fit.paramlist)
     tab.show()
     app.lastWindowClosed.connect(app.quit)
     app.exec_()

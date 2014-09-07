@@ -36,7 +36,7 @@ import numpy
 import copy
 import types
 from . import Gefit
-from PyMca5 import SpecfitFuns
+from . import SpecfitFuns
 
 DEBUG = 0
 
@@ -767,7 +767,7 @@ class SimpleFit(object):
         return y
 
 def test():
-    from PyMca import SpecfitFunctions
+    from PyMca5.PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = numpy.arange(1000).astype(numpy.float)
     p1 = numpy.array([1500,100.,50.0])
@@ -783,10 +783,11 @@ def test():
     fit.setData(x, y)
     fit.fit()
     print("Expected parameters 1500,100.,50.0, 1500,700.,50.0")
-    from PyMca import PyMcaQt as qt
-    from PyMca import Parameters
+    print("Found: ", fit.paramlist)
+    from PyMca5.PyMca import PyMcaQt as qt
+    from PyMca5.PyMca import Parameters
     a = qt.QApplication(sys.argv)
-    qt.QObject.connect(a,qt.SIGNAL("lastWindowClosed()"),a,qt.SLOT("quit()"))
+    a.lastWindowClosed.connect(a.quit)
     w =Parameters.Parameters()
     w.fillfromfit(fit.paramlist)
     w.show()

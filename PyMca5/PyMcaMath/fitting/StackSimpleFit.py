@@ -433,7 +433,7 @@ class StackSimpleFit(object):
 
 def test():
     import numpy
-    from PyMca import SpecfitFuns
+    from PyMca5.PyMcaMath.fitting import SpecfitFuns
     x = numpy.arange(1000.)
     data = numpy.zeros((50, 1000), numpy.float)
 
@@ -452,6 +452,7 @@ def test():
 
     instance = StackSimpleFit()
     instance.setData(x, data)
+    # TODO: Generate this file "on-the-fly" to be able to test everywhere
     instance.setConfigurationFile("C:\StackSimpleFit.cfg")
     instance.processStack()
 
