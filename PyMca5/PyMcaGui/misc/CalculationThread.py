@@ -34,11 +34,22 @@ try:
 except ImportError:
     import PyMcaQt as qt
 
-class CalculationThread(qt.QThread):
+QTHREAD = True
+if QTHREAD:
+    QThread = qt.QThread
+else:
+    import threading
+    QThread =  threading.Thread
+
+class CalculationThread(QThread):
     def __init__(self, parent=None, calculation_method=None,
                  calculation_vars=None, calculation_kw=None,
                  expand_vars=True, expand_kw=True):
-        qt.QThread.__init__(self, parent)
+        if QTHREAD:
+            QThread.__init__(self, parent)
+        else:
+            QThread.__init__(self)
+            self._threadRunning = False
         self.calculation_method = calculation_method
         self.calculation_vars = calculation_vars
         self.calculation_kw = calculation_kw
@@ -49,8 +60,13 @@ class CalculationThread(qt.QThread):
                 raise ValueError("Cannot expand vars without expanding kw")
         self.result = None
 
+    if not QTHREAD:
+        def isRunning(self):
+            return self._threadRunning
+
     def run(self):
         try:
+            self._threadRunning = True
             if self.calculation_vars is None and self.calculation_kw is None:
                 self.result = self.calculation_method()
             elif self.calculation_vars is None:
@@ -70,12 +86,15 @@ class CalculationThread(qt.QThread):
                 self.result = self.calculation_method(self.calculation_vars,
                                                       **self.calculation_kw)
             else:
+                self._threadRunning = False
                 raise ValueError("Impossible combination of vars and kw")
         except:
+            self._threadRunning = False
             self.result = ("Exception",) + sys.exc_info()
         finally:
             self.calculation_vars = None
             self.calculation_kw = None
+            self._threadRunning = False
 
 def waitingMessageDialog(thread, message=None, parent=None,
                          modal=True, update_callback=None,
