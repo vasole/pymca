@@ -508,7 +508,8 @@ class McaAdvancedFitBatch(object):
                     if self.mcafit.config['fit'].get("strategyflag", False):
                         config = self.__configList[self.__currentConfig]
                         print("Restoring fitconfiguration")
-                        self.mcafit.configure(config)
+                        self.mcafit = ClassMcaTheory.McaTheory(config)
+                        self.mcafit.enableOptimizedLinearFit()
                     return
                 try:
                     self.mcafit.estimate()
@@ -547,7 +548,8 @@ class McaAdvancedFitBatch(object):
                     if self.mcafit.config['fit'].get("strategyflag", False):
                         config = self.__configList[self.__currentConfig]
                         print("Restoring fitconfiguration")
-                        self.mcafit.configure(config)
+                        self.mcafit = ClassMcaTheory.McaTheory(config)
+                        self.mcafit.enableOptimizedLinearFit()
                     return
             if self._concentrations:
                 if concentrationsdone == 0:
