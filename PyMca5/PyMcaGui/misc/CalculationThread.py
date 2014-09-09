@@ -118,60 +118,57 @@ def waitingMessageDialog(thread, message=None, parent=None,
              progress: A number between 0 and 100 indicating the progress of the task.
              status: Status of the calculation thread.
     """
-    try:
-        if message is None:
-            message = "Please wait. Calculation going on."
-        windowTitle = "Please Wait"
-        if frameless:
-            msg = qt.QDialog(None, qt.Qt.FramelessWindowHint)
-        else:
-            msg = qt.QDialog(None)#, qt.Qt.FramelessWindowHint)
+    if message is None:
+        message = "Please wait. Calculation going on."
+    windowTitle = "Please Wait"
+    if frameless:
+        msg = qt.QDialog(None, qt.Qt.FramelessWindowHint)
+    else:
+        msg = qt.QDialog(None)#, qt.Qt.FramelessWindowHint)
 
-        #if modal:
-        #    msg.setWindowFlags(qt.Qt.Window | qt.Qt.CustomizeWindowHint | qt.Qt.WindowTitleHint)
-        msg.setModal(modal)
-        msg.setWindowTitle(windowTitle)
-        layout = qt.QHBoxLayout(msg)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        l1 = qt.QLabel(msg)
-        l1.setFixedWidth(l1.fontMetrics().width('##'))
-        l2 = qt.QLabel(msg)
-        l2.setText("%s" % message)
-        l3 = qt.QLabel(msg)
-        l3.setFixedWidth(l3.fontMetrics().width('##'))
-        layout.addWidget(l1)
-        layout.addWidget(l2)
-        layout.addWidget(l3)
-        msg.show()
-        if parent is not None:
-            parentGeometry = parent.geometry()
-            x = parentGeometry.x() + 0.5 * parentGeometry.width()
-            y = parentGeometry.y() + 0.5 * parentGeometry.height()
-            msg.move(int(x - 0.5 * msg.width()), int(y))
-        t0 = time.time()
-        i = 0
-        ticks = ['-','\\', "|", "/","-","\\",'|','/']
-        if update_callback is None:
-            while (thread.isRunning()):
-                i = (i+1) % 8
-                l1.setText(ticks[i])
-                l3.setText(" "+ticks[i])
-                qApp = qt.QApplication.instance()
-                qApp.processEvents()
-                time.sleep(2)
-        else:
-            while (thread.isRunning()):
-                updateInfo = update_callback()
-                message = updateInfo.get('message', message)
-                windowTitle = updateInfo.get('title', windowTitle)
-                msg.setWindowTitle(windowTitle)
-                i = (i+1) % 8
-                l1.setText(ticks[i])
-                l2.setText(message)
-                l3.setText(" "+ticks[i])
-                qApp = qt.QApplication.instance()
-                qApp.processEvents()
-                time.sleep(2)
-    finally:
-        msg.close()
+    #if modal:
+    #    msg.setWindowFlags(qt.Qt.Window | qt.Qt.CustomizeWindowHint | qt.Qt.WindowTitleHint)
+    msg.setModal(modal)
+    msg.setWindowTitle(windowTitle)
+    layout = qt.QHBoxLayout(msg)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(0)
+    l1 = qt.QLabel(msg)
+    l1.setFixedWidth(l1.fontMetrics().width('##'))
+    l2 = qt.QLabel(msg)
+    l2.setText("%s" % message)
+    l3 = qt.QLabel(msg)
+    l3.setFixedWidth(l3.fontMetrics().width('##'))
+    layout.addWidget(l1)
+    layout.addWidget(l2)
+    layout.addWidget(l3)
+    msg.show()
+    if parent is not None:
+        parentGeometry = parent.geometry()
+        x = parentGeometry.x() + 0.5 * parentGeometry.width()
+        y = parentGeometry.y() + 0.5 * parentGeometry.height()
+        msg.move(int(x - 0.5 * msg.width()), int(y))
+    t0 = time.time()
+    i = 0
+    ticks = ['-','\\', "|", "/","-","\\",'|','/']
+    qApp = qt.QApplication.instance()
+    if update_callback is None:
+        while (thread.isRunning()):
+            i = (i+1) % 8
+            l1.setText(ticks[i])
+            l3.setText(" "+ticks[i])
+            qApp.processEvents()
+            time.sleep(2)
+    else:
+        while (thread.isRunning()):
+            updateInfo = update_callback()
+            message = updateInfo.get('message', message)
+            windowTitle = updateInfo.get('title', windowTitle)
+            msg.setWindowTitle(windowTitle)
+            i = (i+1) % 8
+            l1.setText(ticks[i])
+            l2.setText(message)
+            l3.setText(" "+ticks[i])
+            qApp.processEvents()
+            time.sleep(2)
+    msg.close()

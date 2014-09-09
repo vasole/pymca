@@ -496,7 +496,7 @@ class McaAdvancedFit(qt.QWidget):
                                     modal=True,
                                     update_callback=None,
                                     frameless=True)
-                threadResult = thread.result
+                threadResult = thread.getResult()
                 if type(threadResult) == type((1,)):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
@@ -657,7 +657,7 @@ class McaAdvancedFit(qt.QWidget):
                                     parent=self,
                                     modal=True,
                                     update_callback=None)
-                threadResult = thread.result
+                threadResult = thread.getResult()
                 if type(threadResult) == type((1,)):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
@@ -1065,7 +1065,7 @@ class McaAdvancedFit(qt.QWidget):
                                     parent=self,
                                     modal=True,
                                     update_callback=None)
-                threadResult = thread.result
+                threadResult = thread.getResult()
                 if type(threadResult) == type((1,)):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
@@ -1096,6 +1096,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setText("Error: %s" % (sys.exc_info()[1]))
                 msg.exec_()
                 return
+
         self._concentrationsInfo = info
         groupsList = fitresult['result']['groups']
 
@@ -1416,7 +1417,6 @@ class McaAdvancedFit(qt.QWidget):
                     print("Error generating Monte Carlo matrix output. ")
                     print(sys.exc_info())
 
-
     def peaksSpectrum(self):
         if not self.__fitdone:
             msg = qt.QMessageBox(self)
@@ -1688,6 +1688,8 @@ class McaAdvancedFit(qt.QWidget):
 
     # pyflakes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
     def __print(self,text):
+        print("__print not working yet")
+        return
         printer = qt.QPrinter()
         printDialog = qt.QPrintDialog(printer, self)
         if printDialog.exec_():
@@ -1875,8 +1877,8 @@ class McaAdvancedFit(qt.QWidget):
             if DEBUG:
                 print("finished")
         elif 1:
-            self.mcafit.estimate()
             try:
+                self.mcafit.estimate()
                 thread = CalculationThread.CalculationThread( \
                                       calculation_method = self.mcafit.startfit,
                                       calculation_kw = {'digest':1},
@@ -1889,7 +1891,7 @@ class McaAdvancedFit(qt.QWidget):
                                     modal=True,
                                     update_callback=None,
                                     frameless=True)
-                threadResult = thread.result
+                threadResult = thread.getResult()
                 if type(threadResult) == type((1,)):
                     if len(threadResult):
                         if threadResult[0] == "Exception":
@@ -1899,7 +1901,19 @@ class McaAdvancedFit(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error: %s" % (sys.exc_info()[1]))
+                msg.setWindowTitle("Fit error")
+                msg.setText("Error on fit:")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
+                return
+            try:
+                #self.mcatable.fillfrommca(self.mcafit.result)
+                self.mcatable.fillfrommca(result)
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Error filling Table: %s" % (sys.exc_info()[1]))
                 msg.exec_()
                 return
         else:
@@ -1923,7 +1937,6 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setInformativeText(str(sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
                 msg.exec_()
-                msg.exec_()
                 return
             try:
                 #self.mcatable.fillfrommca(self.mcafit.result)
@@ -1934,6 +1947,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setText("Error filling Table: %s" % (sys.exc_info()[1]))
                 msg.exec_()
                 return
+
         dict={}
         dict['event']     = "McaAdvancedFitFinished"
         dict['fitresult'] = fitresult
@@ -2787,7 +2801,6 @@ class SimpleThread(qt.QThread):
                 self._result = self._function(self._kw)
         except:
             self._result = ("Exception",) + sys.exc_info()
-
 
 class McaGraphWindow(PlotWindow.PlotWindow):
     def __init__(self, parent=None, backend=None, plugins=False,
