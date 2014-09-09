@@ -770,10 +770,7 @@ class McaBatchGUI(qt.QWidget):
                     text  = 'Multiple processes only supported on MacOS X when built from source\n'
                     text += 'and not when running the frozen binary.'
                     qt.QMessageBox.critical(self, "ERROR",text)
-                    if QTVERSION < '4.0.0':
-                        self.raiseW()
-                    else:
-                        self.raise_()
+                    self.raise_()
                     return
             if len(self.fileList) == 1:
                 if int(qt.safe_str(self.__splitSpin.text())) > 1:
@@ -1124,7 +1121,7 @@ class McaBatchGUI(qt.QWidget):
                             (beginoffset, endoffset, i)
                     # unfortunately I have to set shell = True
                     # otherways I get a file not found error in the
-                    # chold process
+                    # child process
                     processList.append(\
                         subprocess.Popen(cmd1,
                                          cwd=os.getcwd(),
@@ -1148,10 +1145,7 @@ class McaBatchGUI(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Information)
                 text = "Your batch has been started as an independent process."
                 msg.setText(text)
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
 
     def genListFile(self, listfile, config=None):
         if os.path.exists(listfile):
