@@ -116,9 +116,10 @@ def waitingMessageDialog(thread, message=None, parent=None,
             message = "Please wait. Calculation going on."
         windowTitle = "Please Wait"
         if frameless:
-            msg = qt.QDialog(parent, qt.Qt.FramelessWindowHint)
+            msg = qt.QDialog(None, qt.Qt.FramelessWindowHint)
         else:
-            msg = qt.QDialog(parent)#, qt.Qt.FramelessWindowHint)
+            msg = qt.QDialog(None)#, qt.Qt.FramelessWindowHint)
+
         #if modal:
         #    msg.setWindowFlags(qt.Qt.Window | qt.Qt.CustomizeWindowHint | qt.Qt.WindowTitleHint)
         msg.setModal(modal)
@@ -136,6 +137,11 @@ def waitingMessageDialog(thread, message=None, parent=None,
         layout.addWidget(l2)
         layout.addWidget(l3)
         msg.show()
+        if parent is not None:
+            parentGeometry = parent.geometry()
+            x = parentGeometry.x() + 0.5 * parentGeometry.width()
+            y = parentGeometry.y() + 0.5 * parentGeometry.height()
+            msg.move(int(x - 0.5 * msg.width()), int(y))
         qApp = qt.QApplication.instance()
         qApp.processEvents()
         t0 = time.time()
