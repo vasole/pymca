@@ -58,7 +58,6 @@ class CalculationThread(QThread):
         if self.expand_vars:
             if not self.expand_kw:
                 raise ValueError("Cannot expand vars without expanding kw")
-        self.result = None
 
     if not QTHREAD:
         def isRunning(self):
@@ -67,6 +66,7 @@ class CalculationThread(QThread):
     def run(self):
         try:
             self._threadRunning = True
+            self.result = None
             if self.calculation_vars is None and self.calculation_kw is None:
                 self.result = self.calculation_method()
             elif self.calculation_vars is None:
@@ -86,6 +86,7 @@ class CalculationThread(QThread):
                 self.result = self.calculation_method(self.calculation_vars,
                                                       **self.calculation_kw)
             else:
+                print("Impossible combination of vars and kw")
                 self._threadRunning = False
                 raise ValueError("Impossible combination of vars and kw")
         except:
@@ -95,6 +96,12 @@ class CalculationThread(QThread):
             self.calculation_vars = None
             self.calculation_kw = None
             self._threadRunning = False
+
+    def getResult(self):
+        if hasattr(self, "result"):
+            return self.result
+        else:
+            return None
 
 def waitingMessageDialog(thread, message=None, parent=None,
                          modal=True, update_callback=None,
@@ -142,8 +149,6 @@ def waitingMessageDialog(thread, message=None, parent=None,
             x = parentGeometry.x() + 0.5 * parentGeometry.width()
             y = parentGeometry.y() + 0.5 * parentGeometry.height()
             msg.move(int(x - 0.5 * msg.width()), int(y))
-        qApp = qt.QApplication.instance()
-        qApp.processEvents()
         t0 = time.time()
         i = 0
         ticks = ['-','\\', "|", "/","-","\\",'|','/']
