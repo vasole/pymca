@@ -49,11 +49,32 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
     if DEBUG:
         t0 = time.time()
-        instance = FisxElements(dataDir, bindingEnergies, xcomFile)
+    instance = FisxElements(dataDir, bindingEnergies, xcomFile)
+    if DEBUG:
+        print("Shell constants")
+    for key in ["K", "L", "M"]:
+        fname = instance.getShellConstantsFile(key)
+        if DEBUG:
+            print("Before %s" % fname) 
+        fname = os.path.join(os.path.dirname(fname), key + "ShellConstants.dat")
+        instance.setShellConstantsFile(key, fname)
+        if DEBUG:
+            print("After %s" % instance.getShellConstantsFile(key))
+    if DEBUG:
+        print("Radiative transitions")
+
+    for key in ["K", "L", "M"]:
+        fname = instance.getShellRadiativeTransitionsFile(key)
+        if DEBUG:
+            print("Before %s" % fname) 
+        fname = os.path.join(os.path.dirname(fname), key + "ShellRates.dat")
+        instance.setShellRadiativeTransitionsFile(key, fname)
+        if DEBUG:
+            print("After %s " % instance.getShellRadiativeTransitionsFile(key))
+    
+    if DEBUG:
         print("Reading Elapsed = ", time.time() - t0)
-        return instance
-    else:
-        return FisxElements(dataDir, bindingEnergies, xcomFile)
+    return instance
 
 def getMultilayerFluorescence(multilayerSample,
                               energyList,
@@ -201,7 +222,9 @@ def getMultilayerFluorescence(multilayerSample,
         else:
             actualElementList = elementsList
 
-    # enable the cache to get a (miserable) 25 % speed up
+    # enabling the cache gets a (miserable) 15 % speed up
+    if DEBUG:
+        print("Using cascade cache")
     for layer in multilayerSample:
         composition = xcom.getComposition(layer[0])
         for element in composition.keys():
