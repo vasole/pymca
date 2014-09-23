@@ -42,6 +42,7 @@ from PyMca5.PyMcaIO import SupaVisioMap
 from PyMca5.PyMcaIO import AifiraMap
 from PyMca5.PyMcaIO import TextImageStack
 from PyMca5.PyMcaIO import TiffStack
+from PyMca5.PyMcaIO import RTXMap
 from .QStack import QStack, QSpecFileStack
 try:
     from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
@@ -148,6 +149,9 @@ class StackSelector(object):
                 if imagestack is None:
                     imagestack = True
                 stack = QStack(imagestack=imagestack)
+            elif filelist[0].upper().endswith(".RTX"):
+                stack = RTXMap.RTXMap(filelist[0])
+                omnicfile = True
             elif filelist[0][-4:].upper() in ["PIGE", "PIGE"]:
                 stack = SupaVisioMap.SupaVisioMap(filelist[0])
                 omnicfile = True
@@ -396,6 +400,7 @@ class StackSelector(object):
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
                         "OPUS-DPT Files (*.DPT *.dpt)",
+                        "RTX Files (*.rtx *.RTX)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "MRC files (*.mrc *.st)",
