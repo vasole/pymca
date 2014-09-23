@@ -31,6 +31,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
+import sys
 import time
 from fisx import DataDir
 from fisx import Elements as FisxElements
@@ -54,6 +55,10 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         print("Shell constants")
     for key in ["K", "L", "M"]:
         fname = instance.getShellConstantsFile(key)
+        if sys.version > '3.0':
+            # we have to make sure we have got a string
+            if hasattr(fname, "decode"):
+                fname = fname.decode("latin-1")
         if DEBUG:
             print("Before %s" % fname) 
         fname = os.path.join(os.path.dirname(fname), key + "ShellConstants.dat")
@@ -65,6 +70,10 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
 
     for key in ["K", "L", "M"]:
         fname = instance.getShellRadiativeTransitionsFile(key)
+        if sys.version > '3.0':
+            # we have to make sure we have got a string ...
+            if hasattr(fname, "decode"):
+                fname = fname.decode("latin-1")
         if DEBUG:
             print("Before %s" % fname) 
         fname = os.path.join(os.path.dirname(fname), key + "ShellRates.dat")
@@ -542,7 +551,7 @@ def getFisxCorrectionFactors(*var, **kw):
         if element not in ddict:
             ddict[element] = {}
         if family not in transitions:
-            raise KeyError("Invalid transition family: " + family)
+            raise KeyError("Invalid transition family: %s" % family)
         if family not in ddict[element]:
             ddict[element][family] = {'total':0.0,
                                       'correction_factor':[1.0, 1.0],

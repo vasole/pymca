@@ -2138,12 +2138,18 @@ class McaTheory(object):
                 self.strategyInstances[strategyKey] = STRATEGIES[strategyKey]()
             strategyInstance = self.strategyInstances[strategyKey]
             # digestresult takes about 0.1 seconds per iteration
+            import time
+            t0 = time.time()
             newConfig, iteration = strategyInstance.applyStrategy( \
                                             self.digestresult(),
                                             self._fluoRates,
                                             currentIteration=currentIteration)
+            #print("Strategy elapsed = ", time.time() - t0)
             if (iteration >= 0) and (len(newConfig.keys())):
+                print("RECONFIGURING")
+                t0 = time.time()
                 self.configure(newConfig)
+                print("RECONFIGURING elapsed = ", time.time() - t0)
                 self.estimate()
                 if digest:
                     fitresult = self.startfit(digest=digest,
