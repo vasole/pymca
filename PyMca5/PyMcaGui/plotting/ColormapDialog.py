@@ -48,6 +48,11 @@ class MyQLineEdit(qt.QLineEdit):
         self.setPaletteBackgroundColor(qt.QColor('white'))
         self.returnPressed[()].emit()
 
+    def setPaletteBackgroundColor(self, color):
+        if DEBUG:
+            print("setPalettebackgroundColor not implemented yet")
+        pass
+
 """
 Manage colormap Widget class
 """
