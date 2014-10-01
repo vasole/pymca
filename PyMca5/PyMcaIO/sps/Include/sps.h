@@ -28,7 +28,7 @@
 *
 ****************************************************************************/
 /****************************************************************************
-*   @(#)sps.h	6.1  07/13/13 CSS
+*   @(#)sps.h	6.2  11/20/13 CSS
 *
 *   "spec" Release 6
 *
@@ -264,10 +264,14 @@
 #define SPS_STRING      8
 #define SPS_LONG        9
 #define SPS_ULONG       10
+#define SPS_LONG64      11
+#define SPS_ULONG64     12
 
 #ifndef SPEC_TYPE_DEFS
 typedef int     s32_t;
 typedef unsigned int    u32_t;
+typedef long long       s64_t;
+typedef unsigned long long      u64_t;
 #endif
 
 #ifdef __cplusplus

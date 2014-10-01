@@ -43,10 +43,12 @@ static void sps_cleanup(void);
 static int sps_type2py (int t)
 {
   switch (t) {
+  case SPS_ULONG:  return(NPY_UINT64);
   case SPS_USHORT: return(NPY_USHORT);
   case SPS_UINT:   return(NPY_UINT32);
   case SPS_UCHAR:  return(NPY_UBYTE);
   case SPS_SHORT:  return(NPY_SHORT);
+  case SPS_LONG:   return(NPY_INT64);
   case SPS_INT:    return(NPY_INT32);
   case SPS_CHAR:   return(NPY_BYTE);
   case SPS_STRING: return(NPY_STRING);
@@ -61,6 +63,10 @@ static int sps_py2type (int t)
   int type;
 
   switch (t) {
+  case NPY_INT64:
+    type = SPS_LONG; break;
+  case NPY_UINT64:
+    type = SPS_ULONG64; break;
   case NPY_INT32:
     type = SPS_INT; break;
   case NPY_UINT32:
