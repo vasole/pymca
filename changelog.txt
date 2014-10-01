@@ -2,6 +2,10 @@ VERSION 4.7.4
 
 Support readout of top level datasets in HDF5 files.
 
+Improved handling of Tracer csv files.
+
+Correct problems reading spec 6.02.07+ shared memory.
+
 VERSION 4.7.3
 
 Correct bug using SNIP background with the Fast XRF linear fit stack plugin.
