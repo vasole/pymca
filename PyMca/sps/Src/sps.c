@@ -28,7 +28,7 @@
 *
 ****************************************************************************/
 /****************************************************************************
-*   @(#)sps.c	6.5  10/16/13 CSS
+*   @(#)sps.c	6.7  11/20/13 CSS
 *
 *   "spec" Release 6
 *
@@ -866,8 +866,10 @@ static size_t typedsize(int t) {
 	switch (t) {
 	  case SHM_USHORT: return(sizeof(unsigned short));
 	  case SHM_ULONG:  return(sizeof(u32_t));
+	  case SHM_ULONG64: return(sizeof(u64_t));
 	  case SHM_SHORT:  return(sizeof(short));
 	  case SHM_LONG:   return(sizeof(s32_t));
+	  case SHM_LONG64: return(sizeof(s64_t));
 	  case SHM_UCHAR:  return(sizeof(unsigned char));
 	  case SHM_CHAR:   return(sizeof(char));
 	  case SHM_STRING: return(sizeof(char));
@@ -889,21 +891,33 @@ int SPS_Size(int t) {
  *             rev == 1 offset in from in every point (copy cols from shm)
  *             rev == 2 offset in to in every point  (copy cols to shm)
 */
-
 #define ONECP(tto, tfrom) do {\
-				tto     *a = (tto *)   t; \
-				tfrom   *b = (tfrom *) f; \
-				n = np; \
-				offs = offset; \
-				if (n > 0) { if (rev == 0) \
-				  while (n--) *a++ = *b++; \
-				else if (rev == 1) \
-				  while (n--) { *a++ = *b; b+= offs; }\
-				else if (rev == 2) \
-				  while (n--) { *a = *b++; a+= offs; }\
-				} else if (rev < 0) while (n++) *a-- = *b++; \
-				else while (n++) *a++ = *b--; \
-			} while (0)
+	tto     *a = (tto *)   t; \
+	tfrom   *b = (tfrom *) f; \
+\
+	n = np; \
+	offs = offset; \
+	if (n > 0) { \
+		if (rev == 0) \
+			while (n--) \
+				*a++ = (tto) *b++; \
+		else if (rev == 1) \
+			while (n--) { \
+				*a++ = (tto) *b; \
+				b += offs; \
+			} \
+		else if (rev == 2) \
+			while (n--) { \
+				*a = (tto) *b++; \
+				a += offs; \
+			} \
+	} else if (rev < 0) \
+		 while (n++) \
+			*a-- = (tto) *b++; \
+	else \
+		while (n++) \
+			*a++ = (tto) *b--; \
+} while (0)
 
 static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset) {
 	int     n, offs;
@@ -922,12 +936,14 @@ static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset
 	    case SHM_DOUBLE:  ONECP(s32_t, double);                  break;
 	    case SHM_FLOAT:   ONECP(s32_t, float);                   break;
 	    case SHM_ULONG:   ONECP(s32_t, u32_t);                   break;
+	    case SHM_ULONG64: ONECP(s32_t, u64_t);                   break;
 	    case SHM_USHORT:  ONECP(s32_t, unsigned short);          break;
 	    case SHM_UCHAR:   ONECP(s32_t, unsigned char);           break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(s32_t, char);                    break;
 	    case SHM_SHORT:   ONECP(s32_t, short);                   break;
 	    case SHM_LONG:    ONECP(s32_t, s32_t);                   break;
+	    case SHM_LONG64:  ONECP(s32_t, s64_t);                   break;
 	   }
 	   break;
 	 case SHM_ULONG:
@@ -935,12 +951,44 @@ static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset
 	    case SHM_DOUBLE:  ONECP(u32_t, double);                  break;
 	    case SHM_FLOAT:   ONECP(u32_t, float);                   break;
 	    case SHM_ULONG:   ONECP(u32_t, u32_t);                   break;
+	    case SHM_ULONG64: ONECP(u32_t, u64_t);                   break;
 	    case SHM_USHORT:  ONECP(u32_t, unsigned short);          break;
 	    case SHM_UCHAR:   ONECP(u32_t, unsigned char);           break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(u32_t, char);                    break;
 	    case SHM_SHORT:   ONECP(u32_t, short);                   break;
 	    case SHM_LONG:    ONECP(u32_t, s32_t);                   break;
+	    case SHM_LONG64:  ONECP(u32_t, s64_t);                   break;
+	   }
+	   break;
+	 case SHM_LONG64:
+	   switch (ft) {
+	    case SHM_DOUBLE:  ONECP(s64_t, double);                  break;
+	    case SHM_FLOAT:   ONECP(s64_t, float);                   break;
+	    case SHM_ULONG:   ONECP(s64_t, u32_t);                   break;
+	    case SHM_ULONG64: ONECP(s64_t, u64_t);                   break;
+	    case SHM_USHORT:  ONECP(s64_t, unsigned short);          break;
+	    case SHM_UCHAR:   ONECP(s64_t, unsigned char);           break;
+	    case SHM_STRING:  /*FALLTHROUGH*/
+	    case SHM_CHAR:    ONECP(s64_t, char);                    break;
+	    case SHM_SHORT:   ONECP(s64_t, short);                   break;
+	    case SHM_LONG:    ONECP(s64_t, s32_t);                   break;
+	    case SHM_LONG64:  ONECP(s64_t, s64_t);                   break;
+	   }
+	   break;
+	 case SHM_ULONG64:
+	   switch (ft) {
+	    case SHM_DOUBLE:  ONECP(u64_t, double);                  break;
+	    case SHM_FLOAT:   ONECP(u64_t, float);                   break;
+	    case SHM_ULONG:   ONECP(u64_t, u32_t);                   break;
+	    case SHM_ULONG64: ONECP(u64_t, u64_t);                   break;
+	    case SHM_USHORT:  ONECP(u64_t, unsigned short);          break;
+	    case SHM_UCHAR:   ONECP(u64_t, unsigned char);           break;
+	    case SHM_STRING:  /*FALLTHROUGH*/
+	    case SHM_CHAR:    ONECP(u64_t, char);                    break;
+	    case SHM_SHORT:   ONECP(u64_t, short);                   break;
+	    case SHM_LONG:    ONECP(u64_t, s32_t);                   break;
+	    case SHM_LONG64:  ONECP(u64_t, s64_t);                   break;
 	   }
 	   break;
 	 case SHM_USHORT:
@@ -948,12 +996,14 @@ static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset
 	    case SHM_DOUBLE:  ONECP(unsigned short, double);         break;
 	    case SHM_FLOAT:   ONECP(unsigned short, float);          break;
 	    case SHM_ULONG:   ONECP(unsigned short, u32_t);          break;
+	    case SHM_ULONG64: ONECP(unsigned short, u64_t);          break;
 	    case SHM_USHORT:  ONECP(unsigned short, unsigned short); break;
 	    case SHM_UCHAR:   ONECP(unsigned short, unsigned char);  break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(unsigned short, char);           break;
 	    case SHM_SHORT:   ONECP(unsigned short, short);          break;
 	    case SHM_LONG:    ONECP(unsigned short, s32_t);          break;
+	    case SHM_LONG64:  ONECP(unsigned short, s64_t);          break;
 	   }
 	   break;
 	 case SHM_UCHAR:
@@ -961,12 +1011,14 @@ static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset
 	    case SHM_DOUBLE:  ONECP(unsigned char, double);          break;
 	    case SHM_FLOAT:   ONECP(unsigned char, float);           break;
 	    case SHM_ULONG:   ONECP(unsigned char, u32_t);           break;
+	    case SHM_ULONG64: ONECP(unsigned char, u64_t);           break;
 	    case SHM_USHORT:  ONECP(unsigned char, unsigned short);  break;
 	    case SHM_UCHAR:   ONECP(unsigned char, unsigned char);   break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(unsigned char, char);            break;
 	    case SHM_SHORT:   ONECP(unsigned char, short);           break;
 	    case SHM_LONG:    ONECP(unsigned char, s32_t);           break;
+	    case SHM_LONG64:  ONECP(unsigned char, s64_t);           break;
 	   }
 	   break;
 	 case SHM_SHORT:
@@ -974,12 +1026,14 @@ static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset
 	    case SHM_DOUBLE:  ONECP(short, double);                  break;
 	    case SHM_FLOAT:   ONECP(short, float);                   break;
 	    case SHM_ULONG:   ONECP(short, u32_t);                   break;
+	    case SHM_ULONG64: ONECP(short, u64_t);                   break;
 	    case SHM_USHORT:  ONECP(short, unsigned short);          break;
 	    case SHM_UCHAR:   ONECP(short, unsigned char);           break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(short, char);                    break;
 	    case SHM_SHORT:   ONECP(short, short);                   break;
 	    case SHM_LONG:    ONECP(short, s32_t);                   break;
+	    case SHM_LONG64:  ONECP(short, s64_t);                   break;
 	   }
 	   break;
 	 case SHM_STRING:  /*FALLTHROUGH*/
@@ -988,12 +1042,14 @@ static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset
 	    case SHM_DOUBLE:  ONECP(char, double);                   break;
 	    case SHM_FLOAT:   ONECP(char, float);                    break;
 	    case SHM_ULONG:   ONECP(char, u32_t);                    break;
+	    case SHM_ULONG64: ONECP(char, u64_t);                    break;
 	    case SHM_USHORT:  ONECP(char, unsigned short);           break;
 	    case SHM_UCHAR:   ONECP(char, unsigned char);            break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(char, char);                     break;
 	    case SHM_SHORT:   ONECP(char, short);                    break;
 	    case SHM_LONG:    ONECP(char, s32_t);                    break;
+	    case SHM_LONG64:  ONECP(char, s64_t);                    break;
 	   }
 	   break;
 	 case SHM_FLOAT:
@@ -1001,12 +1057,14 @@ static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset
 	    case SHM_DOUBLE:  ONECP(float, double);                  break;
 	    case SHM_FLOAT:   ONECP(float, float);                   break;
 	    case SHM_ULONG:   ONECP(float, u32_t);                   break;
+	    case SHM_ULONG64: ONECP(float, u64_t);                   break;
 	    case SHM_USHORT:  ONECP(float, unsigned short);          break;
 	    case SHM_UCHAR:   ONECP(float, unsigned char);           break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(float, char);                    break;
 	    case SHM_SHORT:   ONECP(float, short);                   break;
 	    case SHM_LONG:    ONECP(float, s32_t);                   break;
+	    case SHM_LONG64:  ONECP(float, s64_t);                   break;
 	   }
 	   break;
 	 case SHM_DOUBLE:
@@ -1014,12 +1072,14 @@ static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset
 	    case SHM_DOUBLE:  ONECP(double, double);                 break;
 	    case SHM_FLOAT:   ONECP(double, float);                  break;
 	    case SHM_ULONG:   ONECP(double, u32_t);                  break;
+	    case SHM_ULONG64: ONECP(double, u64_t);                  break;
 	    case SHM_USHORT:  ONECP(double, unsigned short);         break;
 	    case SHM_UCHAR:   ONECP(double, unsigned char);          break;
 	    case SHM_STRING:  /*FALLTHROUGH*/
 	    case SHM_CHAR:    ONECP(double, char);                   break;
 	    case SHM_SHORT:   ONECP(double, short);                  break;
 	    case SHM_LONG:    ONECP(double, s32_t);                  break;
+	    case SHM_LONG64:  ONECP(double, s64_t);                  break;
 	   }
 	   break;
 	}
@@ -2073,7 +2133,7 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
   static char value[SHM_MAX_STR_LEN + 1];
   SPS_ARRAY private_shm;
   char *res = NULL;
-  int was_attached, i;
+  int was_attached, i, parsed;
   char strange[SHM_MAX_STR_LEN + 1];
   static int loop_count = 0; 
   static int keyNO = 0;
@@ -2083,10 +2143,10 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
     if (loop_count >= keyNO) {
       loop_count = 0;
       if (keys != NULL) {
-	for (i = 0; i < keyNO; i++) 
-	  free(keys[i]);
-	free(keys);
-	keys = NULL;
+         for (i = 0; i < keyNO; i++) 
+             free(keys[i]);
+         free(keys);
+         keys = NULL;
       }
       return NULL;
     } else {
@@ -2108,7 +2168,7 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
 
   if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
     return NULL;
-  
+
   was_attached = private_shm->attached;
   
   if (ReconnectToArray(private_shm, 0))
@@ -2130,16 +2190,25 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
   keys = malloc(sizeof(char *) * rows);
   for (i = 0; i < rows; i++) {
     strcpy(strange, data + cols *i); /* sscanf core-dumps if in shared mem*/
-    if (sscanf(strange,"%[^=]=%[^\n]", id, value) == 2) {
-      /* OK we have a pair */
+    parsed = sscanf(strange,"%[^=]=%[^\n]", id, value);
+    if ( parsed == 2) {
+      /* OK we have a pair */ 
       keys[i] = (char*) strdup(id);
       keyNO++;
+    }
+    else
+    {
+        if (parsed == 1)
+        {
+            // Empty string
+            keys[i] = (char*) strdup(id);
+        }
     }
   }
  back:
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   if (keyNO) {
     loop_count = 1;
     return keys[0];

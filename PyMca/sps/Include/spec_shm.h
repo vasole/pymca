@@ -1,5 +1,5 @@
 /****************************************************************************
-*   @(#)spec_shm.h	6.5  09/30/13 CSS
+*   @(#)spec_shm.h	6.7  11/20/13 CSS
 *
 *   "spec" Release 6
 *
@@ -64,6 +64,8 @@
 #define SHM_CHAR        6
 #define SHM_UCHAR       7
 #define SHM_STRING      8
+#define SHM_LONG64      9
+#define SHM_ULONG64     10
 
 #define NAME_LENGTH     32
 #define INFO_LENGTH     512
@@ -83,6 +85,8 @@
 #ifndef SPEC_TYPE_DEFS
 typedef int     s32_t;
 typedef unsigned int    u32_t;
+typedef long long       s64_t;
+typedef unsigned long long      u64_t;
 #endif
 
 struct  shm_head {
