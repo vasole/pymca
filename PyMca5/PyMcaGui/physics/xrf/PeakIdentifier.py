@@ -107,12 +107,12 @@ class PeakIdentifier(qt.QWidget):
         self.m = qt.QCheckBox(hbox2)
         self.m.setText('M')
         self.m.setChecked(1)
-        self.threshold.valueChanged[int].connect(self.myslot)
-        self.k.clicked[()].connect(self.myslot)
-        self.l1.clicked[()].connect(self.myslot)
-        self.l2.clicked[()].connect(self.myslot)
-        self.l3.clicked[()].connect(self.myslot)
-        self.m.clicked[()].connect(self.myslot)
+        self.threshold.valueChanged[int].connect(self.mySlot)
+        self.k.clicked.connect(self.mySlot)
+        self.l1.clicked.connect(self.mySlot)
+        self.l2.clicked.connect(self.mySlot)
+        self.l3.clicked.connect(self.mySlot)
+        self.m.clicked.connect(self.mySlot)
 
         hbox2.layout.addWidget(l2)
         hbox2.layout.addWidget(self.threshold)
@@ -140,26 +140,22 @@ class PeakIdentifier(qt.QWidget):
         try:
             value = float(str(qstring))
             self.energyvalue = value
-            self.myslot(event='coeff')
+            self.mySlot()
             self.energy.setPaletteBackgroundColor(qt.Qt.white)
-            if QTVERSION > '4.0.0':
-                cursor = self.__browsertext.textCursor()
-                cursor.movePosition(qt.QTextCursor.Start)
-                self.__browsertext.setTextCursor(cursor)
+            cursor = self.__browsertext.textCursor()
+            cursor.movePosition(qt.QTextCursor.Start)
+            self.__browsertext.setTextCursor(cursor)
             self.threshold.setFocus()
         except:
             msg=qt.QMessageBox(self.energy)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Invalid Float")
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.setWindowTitle("Invalid entry")
-                msg.exec_()
+            msg.setWindowTitle("Invalid entry")
+            msg.exec_()
             self.energy.setFocus()
             return
 
-    def myslot(self,*var,**kw):
+    def mySlot(self):
         try:
             energy    = float(str(self.energy.text()))
         except ValueError:
@@ -193,7 +189,6 @@ class PeakIdentifier(qt.QWidget):
             #                              "</CENTER>")
             self.__browsertext.insertHtml(ddict['text'])
         self.sigPeakIdentifierSignal.emit(ddict)
-
 
     def getHtmlText(self, ddict):
         text  = ""
