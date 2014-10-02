@@ -27,50 +27,6 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-from .pymca import PyMcaFileDialogs
-from .plotting import PyMca_Icons, PyMcaPrintPreview
-from .plotting.PyMca_Icons import IconDict
-from .pymca import QPyMcaMatplotlibSave1D, QPyMcaMatplotlibSave
-from .misc import DoubleSlider, CalculationThread, SubprocessLogWidget, \
-                  NumpyArrayTableWidget, FrameBrowser, CloseEventNotifyingWidget
-from .plotting import PlotWidget, PlotWindow, MaskImageWidget, \
-                      ColormapDialog, \
-                      RGBCorrelatorGraph
-from .physics import McaAdvancedFit, FastXRFLinearFitWindow, \
-                     XASNormalizationWindow, XASSelfattenuationWindow, \
-                     QPeriodicTable, ElementsInfo, PeakIdentifier
-from .pymca import ScanWindow, ExternalImagesWindow
-from .math.fitting import SpecfitGui, SimpleFitGui, SimpleFitBatchGui
-
-from .pymca import StackPluginResultsWindow
-from .math import FFTAlignmentWindow, NNMADialog, NNMAWindow, PCADialog, \
-                  PCAWindow, SGWindow, SNIPWindow, \
-                  StripBackgroundWidget
-try:
-    from .math import SIFTAlignmentWindow
-except:
-    # sift or PyOpenCL might not be installed
-    pass
-from .pymca import StackPluginResultsWindow, ExternalImagesWindow
-
-from .pymca import RGBImageCalculator
-from .io import QSourceSelector
-from .io import QEdfFileWidget
-from .pymca import RGBCorrelator
-from .physics.xrf import MaterialEditor
-# Should they be moved to files in this directory?
-try:
-    from .io.hdf5 import HDF5Widget, QNexusWidget
-except:
-#    # HDF5 is not a forced dependency
-    pass
-
-from .pymca import StackSimpleFitWindow
-from .pymca import QStackWidget
-
-# Make all other modules available via the __path__ variable
-# This is a bit redundant because the same effect can be achieved with
-# from PyMca5.PyMca import whatever
 import os
 import glob
 
@@ -83,6 +39,8 @@ def getPackages(directory):
         packages += getPackages(dirName)
     return packages
 
+from .plotting import PyMca_Icons, PyMcaPrintPreview
+from .plotting.PyMca_Icons import IconDict
 
 # this is the package level directory PyMcaGui
 baseDirectory = os.path.dirname(__file__)
@@ -93,4 +51,3 @@ for directory in ["io", "math", "misc",
     if os.path.exists(os.path.join(tmpDir, "__init__.py")):
         __path__ += [tmpDir]
     __path__ += getPackages(tmpDir)
-
