@@ -216,7 +216,7 @@ class StackBase(object):
         """
         self._tryNumpy = True
         if hasattr(self._stack.data, "size"):
-            if self._stack.data.size >= self._dynamicLimit:
+            if self._stack.data.size > self._dynamicLimit:
                 self._tryNumpy = False
         else:
             # is not a numpy ndarray in any case
@@ -286,10 +286,10 @@ class StackBase(object):
         if self._stack.x in [None, []]:
             self._stack.x = [numpy.arange(len(mcaData0)).astype(numpy.float)+\
                                 self._stack.info.get('Channel0', 0.0)]
-            dataObject.x = [self._stack.x * 1]
+            dataObject.x = [self._stack.x[0]]
         else:
             # for the time being it can only contain one axis
-            dataObject.x = [self._stack.x[0]]            
+            dataObject.x = [self._stack.x[0]]
 
         dataObject.y = [mcaData0]
 
@@ -790,25 +790,37 @@ class StackBase(object):
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
                     rightImage = roiImage * 1
-                    maxImage = roiImage * 1
-                    minImage = roiImage * 1
+                    maxImage = numpy.zeros(roiImage.shape, numpy.int32)
+                    minImage = numpy.zeros(roiImage.shape, numpy.int32)
                     istep = 1
                     for i in range(i1, i2):
                         tmpData = self._stack.data[i:i + istep]
                         tmpData.shape = roiImage.shape
-                        numpy.add(roiImage, tmpData, roiImage)
                         if i == i1:
-                            minImage = tmpData * 1
-                            maxImage = tmpData * 1
+                            minImageData = tmpData
+                            maxImageData = tmpData * 1.0
+                            minImage[:,:] = i1
+                            maxImage[:,:] = i1
                         else:
-                            minImage = numpy.minimum(minImage, tmpData, minImage)
-                            maxImage = numpy.maximum(maxImage, tmpData, minImage)
+                            tmpIndex = numpy.where(tmpData < minImageData)
+                            minImage[tmpIndex] = i
+                            minImageData[tmpIndex] = tmpData[tmpIndex]
+
+                            tmpIndex = numpy.where(tmpData > maxImageData)
+                            maxImage[tmpIndex] = i
+                            maxImageData[tmpIndex] = tmpData[tmpIndex]
+                        numpy.add(roiImage, tmpData, roiImage)
                         if (i == i1):
                             leftImage = tmpData
                         elif (i == imiddle):
                             middleImage = tmpData
                         elif i == (i2 - 1):
                             rightImage = tmpData
+                    # the used approach is twice slower than argmax, but it
+                    # requires much less memory
+                    isUsingSuppliedEnergyAxis = True
+                    minImage = energy[minImage]
+                    maxImage = energy[maxImage]
                     if i2 > i1:
                         background = (leftImage + rightImage) * 0.5 * (i2 - i1)
                     if DEBUG:
