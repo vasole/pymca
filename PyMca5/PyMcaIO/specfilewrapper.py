@@ -144,7 +144,6 @@ def Specfile(filename):
             if DEBUG:
                 print("ThermoEMSFileParser")
             return ThermoEMSFileParser.ThermoEMSFileParser(filename)
-        print("NOT THERMO")
         output = specfilewrapper(filename, amptek=amptek, qxas=qxas)
     return output
 
