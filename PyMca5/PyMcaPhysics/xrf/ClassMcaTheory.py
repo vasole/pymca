@@ -104,6 +104,7 @@ class McaTheory(object):
         self.laststripanchorslist = None
         self.disableOptimizedLinearFit()
         self.__configure()
+        self.startFit = self.startfit
         #incompatible with multiple energies
         #Elements.registerUpdate(self._updateCallback)
 
