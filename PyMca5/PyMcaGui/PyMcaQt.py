@@ -53,6 +53,22 @@ if ('PySide' in sys.modules) or ('PySide' in sys.argv):
         matplotlib.rcParams['backend.qt4']='PySide'
     except:
         pass
+elif ("PyQt5" in sys.modules) or ('PyQt5' in sys.argv):
+    print("WARNING: PyQt5 is for testing purposes")
+    import sip
+    try:
+        sip.setapi("QString", 2)
+        sip.setapi("QVariant", 2)
+    except:
+        print("API 1 -> Console widget not available")
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtWidgets import *
+    from PyQt5.QtPrintSupport import *
+    try:
+        from PyQt5.QtOpenGL import *
+    except:
+        pass
 else:
     import sip
     try:
