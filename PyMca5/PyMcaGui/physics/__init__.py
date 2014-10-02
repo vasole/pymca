@@ -30,5 +30,5 @@ __author__ = "V. Armando Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-from .xrf import McaAdvancedFit, FastXRFLinearFitWindow, QPeriodicTable, \
-                 ElementsInfo, PeakIdentifier, QXTube
+import os
+__path__ += [os.path.join(os.path.dirname(__file__), "xrf")]
