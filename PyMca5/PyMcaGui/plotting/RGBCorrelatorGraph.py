@@ -33,7 +33,7 @@ import os
 from . import PlotWidget
 from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
                     import MatplotlibBackend as backend
-from .. import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from .PyMca_Icons import IconDict
 from . import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs

@@ -59,7 +59,7 @@ if ("matplotlib" in sys.argv) or (not PYQTGRAPH):
     MATPLOTLIB = True
 
 from .PyMca_Icons import IconDict
-from .. import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
