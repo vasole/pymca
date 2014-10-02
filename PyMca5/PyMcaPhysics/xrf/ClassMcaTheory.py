@@ -2849,7 +2849,7 @@ def test(inputfile=None,scankey=None,pkm=None,
     #except:
     else:
         if plotflag:
-            import PyMca5.PyMcaGui import PyMcaQt as qt
+            from PyMca5.PyMcaGui import PyMcaQt as qt
             from PyMca5.PyMcaGui import ScanWindow
             app = qt.QApplication(sys.argv)
             graph = ScanWindow.ScanWindow()
