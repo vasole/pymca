@@ -27,4 +27,6 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-from .hdf5 import HDF5Widget, QNexusWidget
+import os
+baseDirectory = os.path.dirname(__file__)
+__path__ += [os.path.join(baseDirectory, "hdf5")]
