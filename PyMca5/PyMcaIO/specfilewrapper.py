@@ -40,6 +40,7 @@ from PyMca5.PyMcaIO import APSMEDFileParser
 from PyMca5.PyMcaIO import SRSFileParser
 from PyMca5.PyMcaIO import BAXSCSVFileParser
 from PyMca5.PyMcaIO import OlympusCSVFileParser
+from PyMca5.PyMcaIO import ThermoEMSFileParser
 try:
     from PyMca5.PyMcaIO import SPXFileParser
     SPX = True
@@ -94,6 +95,9 @@ def Specfile(filename):
     while(len(line)):
         if len(line) > 1:
             if line[0:2] == '#S':
+                if ('#SIGNALTYPE' in line) or \
+                   ('#SPECTRUM' in line):
+                    line = ""
                 break
         line = f.readline()
     f.close()
@@ -101,9 +105,12 @@ def Specfile(filename):
     qxas   = False
     if len(line):
         #it is a Specfile
+        if DEBUG:
+            print("This looks as a specfile")
         output=specfile.Specfile(filename)
     elif SPX and filename.upper().endswith("SPX"):
-        #spx file
+        if DEBUG:
+            print("This looks as an SPX file")
         output = SPXFileParser.SPXFileParser(filename)
     else:
         if DEBUG:
@@ -120,12 +127,24 @@ def Specfile(filename):
         if (not qxas) and (not amptek) and APSMEDFileParser.isAPSMEDFile(filename):
             return APSMEDFileParser.APSMEDFileParser(filename)
         if (not qxas) and (not amptek) and SRSFileParser.isSRSFile(filename):
+            if DEBUG:
+                print("SRSFileParser")
             return SRSFileParser.SRSFileParser(filename)
         if (not qxas) and (not amptek) and BAXSCSVFileParser.isBAXSCSVFile(filename):
+            if DEBUG:
+                print("BAXSCSVFileParser")
             return BAXSCSVFileParser.BAXSCSVFileParser(filename)
         if (not qxas) and (not amptek) and \
            OlympusCSVFileParser.isOlympusCSVFile(filename):
+            if DEBUG:
+                print("OlympusCSVFileParser")
             return OlympusCSVFileParser.OlympusCSVFileParser(filename)
+        if (not qxas) and (not amptek) and \
+           ThermoEMSFileParser.isThermoEMSFile(filename):
+            if DEBUG:
+                print("ThermoEMSFileParser")
+            return ThermoEMSFileParser.ThermoEMSFileParser(filename)
+        print("NOT THERMO")
         output = specfilewrapper(filename, amptek=amptek, qxas=qxas)
     return output
 

@@ -41,7 +41,6 @@ class BufferedFile(object):
         f = open(filename, 'r')
         self.__buffer = f.read()
         f.close()
-        self.__buffer = self.__buffer.replace("\x00", "")
         self.__buffer = self.__buffer.replace("\r", "\n")
         self.__buffer = self.__buffer.replace("\n\n", "\n")
         self.__buffer = self.__buffer.split("\n")
@@ -59,34 +58,49 @@ class BufferedFile(object):
         self.__currentLine = 0
         return
 
-class OlympusCSVFileParser(object):
+class ThermoEMSFileParser(object):
     def __init__(self, filename):
         if not os.path.exists(filename):
             raise IOError("File %s does not exists"  % filename)
 
         _fileObject = BufferedFile(filename)
 
-        #Several measurement per file
+        #Only one measurement per file
+        header = []
         ddict = {}
         line = _fileObject.readline()
-        if not line.startswith("\xff\xfeTestID"):
-            raise IOError("This does not look an Olympus CSV file")
-        splitLine = line[2:].split("\t")
-        nSpectra = len(splitLine) - 1
-        channel = 0
-        while(len(splitLine) > 1):
-            key = splitLine[0]
-            if len(key):
-                ddict[key] = splitLine[1:]
-                if key == "NumData":
-                    nChannels = int(splitLine[1])
-                    ddict['data'] = numpy.zeros((nSpectra, nChannels), numpy.float)
-            else:
-                ddict['data'][:, channel] = [float(x) for x in splitLine[1:]]
-                channel += 1
+        ok = False
+        if filename.lower().endswith(".ems"):
+            if line.startswith("#FORMAT") or \
+               (("EMSA" in line) and ("Spectral" in line)):
+                ok = True
+        if not ok:
+            raise IOError("This does look as a Thermo EMS file")
+        while not line.startswith("#SPECTRUM"):
+            splitLine = line.split(":")
+            if len(splitLine) == 2:
+                ddict[splitLine[0][1:].strip()] = splitLine[1] 
+            header.append(line)
             line = _fileObject.readline()
-            splitLine = line.split("\t")
+        header.append(line)
+        line = _fileObject.readline().strip()
+        line = line.replace(','," ")
+        splitLine = line.split()
+        data = []
+        while(len(splitLine)):
+            if len(splitLine[0]):
+                try:
+                    data.append([float(x) for x in splitLine if len(x) > 0])
+                except ValueError:
+                    break
+            else:
+                break
+            line = _fileObject.readline().strip()
+            line = line.replace(','," ")
+            splitLine = line.split()
         _fileObject.close()
+        data = numpy.array(data, dtype=numpy.float)
+        ddict["data"] = data
         interestingMotors = ["VacPressure",
                              "TubeVoltageSet",
                              "AmbientPressure",
@@ -105,16 +119,18 @@ class OlympusCSVFileParser(object):
         self._data = ddict
 
     def __getitem__(self, item):
+        if item >= self.scanno():
+            raise IndexError("Only %d scans in file" % self.scanno)
         motorValues = []
         for key in self._motorNames:
             motorValues.append(float(self._data[key][item]))
-        return OlympusCSVScan(self._data, item, motorValues=motorValues)
+        return ThermoEMSScan(self._data, item, motorValues=motorValues)
 
     def scanno(self):
         """
         Gives back the number of scans in the file
         """
-        return self._data['data'].shape[0]
+        return 1
 
     def list(self):
         return "1:%d" % self.scanno()
@@ -130,31 +146,41 @@ class OlympusCSVFileParser(object):
     def allmotors(self):
         return self._motorNames
 
-class OlympusCSVScan(object):
+class ThermoEMSScan(object):
     def __init__(self, data, number, motorValues=None):
         if motorValues is None:
             motorValues = []
         self._data = data
         self._number = number
         self._motorValues = motorValues
-        self._scanHeader = [self.fileheader()[0]]
-        if "TimeStamp" in self._data:
-            self._scanHeader.append("#D %s" % \
-                                    self._data["TimeStamp"][self._number])
+        self._scanHeader = ["#S %d %s" % (number + 1,self._data['TITLE'])]
+        if ("DATE" in self._data) and ("TIME" in self._data):
+            self._scanHeader.append("#D %s %s" % \
+                                    (self._data["DATE"], self._data["TIME"]))
         
         #return the life time, the preset the elapsed?
         # to be safe, I return the LiveTime
-        if "Livetime" in self._data:
-            self._scanHeader.append("#@CTIME %s %s %s" % (self._data["Livetime"][self._number],
-                                         self._data["Livetime"][self._number],
-                                         self._data["Livetime"][self._number]))
-        self._scanHeader.append("#@CHANN %d 0 %d 1" % (self._data["data"].shape[1],
-                                           self._data["data"].shape[1]-1))
-        if "Offset" in self._data:
-            if "Slope" in self._data:
+        if "LIVETIME  -s" in self._data:
+            if "REALTIME  -s"  in self._data:
+                self._scanHeader.append("#@CTIME %s %s %s" % (self._data["REALTIME  -s"],
+                                         self._data["LIVETIME  -s"],
+                                         self._data["LIVETIME  -s"]))
+            else:
+                self._scanHeader.append("#@CTIME %s %s %s" % (self._data["LIVETIME  -s"],
+                                         self._data["LIVETIME  -s"],
+                                         self._data["LIVETIME  -s"]))
+        if ("CHOFFSET" in self._data)  and ("NPOINTS" in self._data):
+            self._scanHeader.append("#@CHANN %d %d %d 1" % (int(float(self._data["NPOINTS"])),
+                                                            int(float(self._data["CHOFFSET"])),
+                                                            int(float(self._data["NPOINTS"])-1)))
+        else:
+            self._scanHeader.append("#@CHANN %d 0 %d 1" % (self._data["data"].shape[0],
+                                           self._data["data"].shape[0]-1))
+        if "OFFSET" in self._data:
+            if "XPERCHAN" in self._data:
                 self._scanHeader.append("#@CALIB %s %s 0.0" % \
-                                        (self._data["Offset"][self._number],
-                                        self._data["Slope"][self._number]))
+                                        (self._data["OFFSET"],
+                                         self._data["XPERCHAN"]))
 
     def nbmca(self):
         return 1
@@ -166,7 +192,7 @@ class OlympusCSVScan(object):
             raise IndexError("Mca numbering starts at 1")
         elif number > self.nbmca():
             raise IndexError("Only %d MCA's" % number)
-        return self._data['data'][self._number]
+        return self._data['data'][:, 1]
 
     def alllabels(self):
         return []
@@ -175,14 +201,15 @@ class OlympusCSVScan(object):
         return self._motorValues
 
     def command(self):
-        return self._data['TestID'][self._number]
+        return self._data['TITLE']
 
     def date(self):
-        return self._data["TimeStamp"][self._number]
+        return self._data["DATE"] + " " + self._data["TIME"]
 
     def fileheader(self):
-        a = "#S %d %s" % (self._number + 1, self.command()) 
-        return [a]
+        return self._scanHeader
+        #a = "#S %d %s" % (self._number + 1, self.command()) 
+        #return [a]
 
     def header(self,key):
         if DEBUG:
@@ -212,28 +239,27 @@ class OlympusCSVScan(object):
     def lines(self):
         return 0
 
-def isOlympusCSVFile(filename):
+def isThermoEMSFile(filename):
     f = open(filename, 'r')
     try:
         line = f.readline()
     except:
         f.close()
         return False
-    line = line.replace("\x00","")
     try:
-        if filename.lower().endswith(".csv"):
-            if line[2:].startswith("TestID"):
+        if filename.lower().endswith(".ems"):
+            if line.startswith("#FORMAT") or \
+               (("EMSA" in line) and ("Spectral" in line)):
                 return True
     except:
         pass
     return False
 
 def test(filename):
-    if isOlympusCSVFile(filename):
-        sf=OlympusCSVFileParser(filename)
+    if isThermoEMSFile(filename):
+        sf=ThermoEMSFileParser(filename)
     else:
-        print("Not an Olympus CSV File")
-        return
+        print("Not a Thermo EMS File")
     print(sf[0].header('S'))
     print(sf[0].header('D'))
     print(sf[0].alllabels())
