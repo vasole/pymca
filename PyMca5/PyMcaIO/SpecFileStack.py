@@ -182,13 +182,13 @@ class SpecFileStack(DataObject.DataObject):
             except MemoryError:
                 qtflag = False
                 if ('PyQt4.QtCore' in sys.modules) or\
-                   ('PyMcaQt' in sys.modules) or\
-                   ('PyMca.PyMcaQt' in sys.modules):
+                   ('PySide' in sys.modules) or\
+                   ('PyMca5.PyMcaGui.PyMcaQt' in sys.modules):
                     qtflag = True
                 hdf5done = False
                 if HDF5 and qtflag:
-                    import PyMcaQt as qt
-                    import ArraySave
+                    from PyMca5.PyMcaGui import PyMcaQt as qt
+                    from PyMca5.PyMcaIO import ArraySave
                     msg=qt.QMessageBox.information( None,
                       "Memory error\n",
                       "Do you want to convert your data to HDF5?\n",

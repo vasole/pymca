@@ -398,8 +398,8 @@ def test():
             print("Test small ROI %f" %\
                   stackData.data[10:11,[29],:].sum())
     else:
-        from PyMca5 import PyMcaQt as qt
-        from PyMca5 import QStackWidget
+        from PyMca5.PyMca import PyMcaQt as qt
+        from PyMca5.PyMca import QStackWidget
         app = qt.QApplication([])
         w = QStackWidget.QStackWidget()
         print("Setting stack")

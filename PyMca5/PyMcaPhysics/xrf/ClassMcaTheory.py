@@ -2849,8 +2849,8 @@ def test(inputfile=None,scankey=None,pkm=None,
     #except:
     else:
         if plotflag:
-            import PyMca.PyMcaQt as qt
-            from PyMca.widgets import ScanWindow
+            import PyMca5.PyMcaGui import PyMcaQt as qt
+            from PyMca5.PyMcaGui import ScanWindow
             app = qt.QApplication(sys.argv)
             graph = ScanWindow.ScanWindow()
             xw = numpy.ravel(mcafit.xdata)
@@ -2888,8 +2888,8 @@ def test(inputfile=None,scankey=None,pkm=None,
     print(mcafit.roifit(mcafit.xdata,mcafit.ydata))
 
     if plotflag:
-        import PyMca.PyMcaQt as qt
-        from PyMca.widgets import ScanWindow
+        from PyMca5.PyMcaGui import PyMcaQt as qt
+        from PyMca5.PyMcaGui import ScanWindow
         app = qt.QApplication(sys.argv)
         graph = ScanWindow.ScanWindow()
         xw = numpy.ravel(mcafit.xdata)
