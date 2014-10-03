@@ -2623,12 +2623,12 @@ class Top(qt.QWidget):
         self.stripbox = qt.QCheckBox(f)
         self.stripbox.setText('Strip Back.')
         #checkbox connections
-        self.stbox.clicked[()].connect(self.mysignal)
-        self.ltbox.clicked[()].connect(self.mysignal)
-        self.stepbox.clicked[()].connect(self.mysignal)
-        self.escapebox.clicked[()].connect(self.mysignal)
-        self.sumbox.clicked[()].connect(self.mysignal)
-        self.stripbox.clicked[()].connect(self.mysignal)
+        self.stbox.clicked.connect(self.mysignal)
+        self.ltbox.clicked.connect(self.mysignal)
+        self.stepbox.clicked.connect(self.mysignal)
+        self.escapebox.clicked.connect(self.mysignal)
+        self.sumbox.clicked.connect(self.mysignal)
+        self.stripbox.clicked.connect(self.mysignal)
         #f.layout.addWidget(hyplabel,flagsoffset,coffset +1)
         f.layout.addWidget(self.stbox,flagsoffset+1,coffset +0)
         f.layout.addWidget(self.ltbox,flagsoffset+1,coffset +1)
@@ -2759,7 +2759,7 @@ class Top(qt.QWidget):
             ddict['continuum'] = self.BkgComBox.currentIndex()
         return ddict
 
-    def mysignal(self,*var):
+    def mysignal(self, *var):
         ddict = self.getParameters()
         self.sigTopSignal.emit(ddict)
 

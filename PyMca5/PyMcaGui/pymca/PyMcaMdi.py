@@ -65,8 +65,11 @@ class PyMcaMdi(qt.QMainWindow):
         #self.splitterLayout.setSpacing(0)
 
         self.printer= qt.QPrinter()
-        self.mdi = qt.QWorkspace(self.splitter)
-        self.mdi.setScrollBarsEnabled(1)
+        if QTVERSION > '5.0.0':
+            self.mdi = qt.QMdiArea(self.splitter)
+        else:
+            self.mdi = qt.QWorkspace(self.splitter)
+            self.mdi.setScrollBarsEnabled(1)
         #if QTVERSION > '4.0.0':self.mdi.setBackground(qt.QBrush(qt.QColor(238,234,238)))
         #self.setCentralWidget(self.mdi)
         #self.splitterLayout.addWidget(self.mdi)
@@ -75,7 +78,11 @@ class PyMcaMdi(qt.QMainWindow):
 
         self.splitter.insertWidget(1, self.mdi)
         self.windowMapper = qt.QSignalMapper(self)
-        self.windowMapper.mapped[qt.QWidget].connect(self.mdi.setActiveWindow)
+
+        if QTVERSION > '5.0.0':
+            self.windowMapper.mapped[qt.QWidget].connect(self.mdi.setActiveSubWindow)
+        else:
+            self.windowMapper.mapped[qt.QWidget].connect(self.mdi.setActiveWindow)
 
 
         #self.setDockEnabled(qt.Qt.DockTop, 0)

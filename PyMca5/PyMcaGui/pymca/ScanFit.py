@@ -99,9 +99,9 @@ class ScanFit(qt.QWidget):
 
         self.dismissbutton = qt.QPushButton(hbox)
         self.dismissbutton.setText("Dismiss")
-        self.estimatebutton.clicked[()].connect(self.estimate)
-        self.fitbutton.clicked[()].connect(self.fit)
-        self.dismissbutton.clicked[()].connect(self.dismiss)
+        self.estimatebutton.clicked.connect(self.estimate)
+        self.fitbutton.clicked.connect(self.fit)
+        self.dismissbutton.clicked.connect(self.dismiss)
         self.specfitGui.sigSpecfitGuiSignal.connect(self._specfitGuiSignal)
         hboxlayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxlayout.addWidget(self.dismissbutton)

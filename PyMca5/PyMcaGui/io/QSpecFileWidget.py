@@ -142,7 +142,13 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         #self.list.header().resizeSection(4, size)
 
         self.list.header().setStretchLastSection(False)
-        if QTVERSION < '4.2.0':
+        if QTVERSION > '5.0.0':
+            self.list.header().setSectionResizeMode(0, qt.QHeaderView.ResizeToContents)
+            self.list.header().setSectionResizeMode(1, qt.QHeaderView.ResizeToContents)
+            self.list.header().setSectionResizeMode(2, qt.QHeaderView.Interactive)
+            self.list.header().setSectionResizeMode(3, qt.QHeaderView.ResizeToContents)
+            self.list.header().setSectionResizeMode(4, qt.QHeaderView.ResizeToContents)
+        elif QTVERSION < '4.2.0':
             self.list.header().setResizeMode(0, qt.QHeaderView.Stretch)
             self.list.header().setResizeMode(1, qt.QHeaderView.Stretch)
             self.list.header().setResizeMode(2, qt.QHeaderView.Interactive)

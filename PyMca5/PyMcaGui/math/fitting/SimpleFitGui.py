@@ -191,7 +191,7 @@ class SimpleFitGui(qt.QWidget):
             self.mainLayout.addWidget(self.fitActions)
 
         #connect top widget
-        self.topWidget.addFunctionButton.clicked[()].connect(\
+        self.topWidget.addFunctionButton.clicked.connect(\
                     self.importFunctions)
 
         self.topWidget.fitFunctionCombo.currentIndexChanged[int].connect(\
@@ -200,14 +200,14 @@ class SimpleFitGui(qt.QWidget):
         self.topWidget.backgroundCombo.currentIndexChanged[int].connect(\
                      self.backgroundComboSlot)
 
-        self.topWidget.configureButton.clicked[()].connect(\
+        self.topWidget.configureButton.clicked.connect(\
                     self.configureButtonSlot)
 
         if actions:
             #connect actions
-            self.fitActions.estimateButton.clicked[()].connect(self.estimate)
-            self.fitActions.startFitButton.clicked[()].connect(self.startFit)
-            self.fitActions.dismissButton.clicked[()].connect(self.dismiss)
+            self.fitActions.estimateButton.clicked.connect(self.estimate)
+            self.fitActions.startFitButton.clicked.connect(self.startFit)
+            self.fitActions.dismissButton.clicked.connect(self.dismiss)
 
     def importFunctions(self, functionsfile=None):
         if functionsfile is None:

@@ -263,7 +263,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mainTabWidget.addTab(self.scanWindow, "SCAN")
                 if OBJECT3D:
                     self.mainTabWidget.addTab(self.glWindow, "OpenGL")
-                self.mdi.addWindow(self.mainTabWidget)
+                if QTVERSION < '5.0.0':
+                    self.mdi.addWindow(self.mainTabWidget)
+                else:
+                    self.mdi.addSubWindow(self.mainTabWidget)
                 #print "Markus patch"
                 #self.mainTabWidget.show()
                 #print "end Markus patch"

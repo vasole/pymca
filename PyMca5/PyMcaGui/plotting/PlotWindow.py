@@ -66,6 +66,8 @@ if hasattr(qt, 'QString'):
 else:
     QString = qt.safe_str
 
+QTVERSION = qt.qVersion()
+
 DEBUG = 0
 
 class PlotWindow(PlotWidget.PlotWidget):
@@ -413,7 +415,10 @@ class PlotWindow(PlotWidget.PlotWidget):
             if toggle:
                 tb.setCheckable(1)
         self.toolBar.addWidget(tb)
-        tb.clicked[()].connect(action)
+        if QTVERSION < '5.0.0':
+            tb.clicked[()].connect(action)
+        else:
+            tb.clicked.connect(action)
         return tb
 
     def _aspectButtonSignal(self):

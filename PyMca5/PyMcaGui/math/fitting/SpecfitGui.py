@@ -82,8 +82,12 @@ class SpecfitGui(qt.QWidget):
             self.guiconfig.WeightCheckBox.stateChanged[int].connect(self.weightevent)
             self.guiconfig.AutoFWHMCheckBox.stateChanged[int].connect(self.autofwhmevent)
             self.guiconfig.AutoScalingCheckBox.stateChanged[int].connect(self.autoscaleevent)
-            self.guiconfig.ConfigureButton.clicked[()].connect(self.__configureGui)
-            self.guiconfig.PrintPushButton.clicked[()].connect(self.printps)
+            if QTVERSION < '5.0.0':
+                self.guiconfig.ConfigureButton.clicked[()].connect(self.__configureGui)
+                self.guiconfig.PrintPushButton.clicked[()].connect(self.printps)
+            else:
+                self.guiconfig.ConfigureButton.clicked.connect(self.__configureGui)
+                self.guiconfig.PrintPushButton.clicked.connect(self.printps)
             self.guiconfig.BkgComBox.activated[str].connect(self.bkgevent)
             self.guiconfig.FunComBox.activated[str].connect(self.funevent)
             layout.addWidget(self.guiconfig)

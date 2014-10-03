@@ -320,15 +320,15 @@ class ConcentrationsWidget(qt.QWidget):
 
         layout.addWidget(qt.VerticalSpacer(self))
         buttonGroup.show()
-        self.fluxCheckBox.clicked[()].connect(self._fluxCheckBoxSlot)
-        self.matrixCheckBox.clicked[()].connect(self.checkBoxSlot)
-        self.attenuatorsCheckBox.clicked[()].connect(self.checkBoxSlot)
-        self.secondaryCheckBox.clicked[()].connect(self._secondaryCheckBoxSlot)
-        self.tertiaryCheckBox.clicked[()].connect(self._tertiaryCheckBoxSlot)
+        self.fluxCheckBox.clicked.connect(self._fluxCheckBoxSlot)
+        self.matrixCheckBox.clicked.connect(self.checkBoxSlot)
+        self.attenuatorsCheckBox.clicked.connect(self.checkBoxSlot)
+        self.secondaryCheckBox.clicked.connect(self._secondaryCheckBoxSlot)
+        self.tertiaryCheckBox.clicked.connect(self._tertiaryCheckBoxSlot)
         if XRFMC_FLAG:
-            self.xrfmcCheckBox.clicked[()].connect(self._xrfmcCheckBoxSlot)
+            self.xrfmcCheckBox.clicked.connect(self._xrfmcCheckBoxSlot)
 
-        self.mMolarCheckBox.clicked[()].connect(self.checkBoxSlot)
+        self.mMolarCheckBox.clicked.connect(self.checkBoxSlot)
 
         self.fundamentalWidget.flux.sigMyQLineEditSignal.connect( \
             self._mySignal)
@@ -338,9 +338,13 @@ class ConcentrationsWidget(qt.QWidget):
             self._mySignal)
         self.fundamentalWidget.distance.sigMyQLineEditSignal.connect( \
             self._mySignal)
-        self.fundamentalWidget.autoTimeCheckBox.clicked[()].connect( \
-            self._autoTimeSlot)
-
+        if QTVERSION < '5.0.0':
+            self.fundamentalWidget.autoTimeCheckBox.clicked[()].connect( \
+                self._autoTimeSlot)
+        else:
+            self.fundamentalWidget.autoTimeCheckBox.clicked.connect( \
+                self._autoTimeSlot)
+    
     def _autoTimeSlot(self, signal=True):
         if self.fundamentalWidget.autoTimeCheckBox.isChecked():
             if self._liveTime is None:

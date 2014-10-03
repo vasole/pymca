@@ -64,7 +64,10 @@ class McaTable(QTable):
 
         self.regionlist=[]
         self.regiondict={}
-        self.verticalHeader().setClickable(True)
+        if QTVERSION < '5.0.0':
+            self.verticalHeader().setClickable(True)
+        else:
+            self.verticalHeader().setSectionsClickable(True)
         self.verticalHeader().sectionClicked.connect(self.__myslot)
 
         self.itemSelectionChanged.connect(self.__myslot)
