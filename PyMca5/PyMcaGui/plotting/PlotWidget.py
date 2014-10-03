@@ -38,6 +38,17 @@ if "PySide" in sys.modules:
         from PySide import QtSvg
     except ImportError:
         SVG = False
+elif ("PyQt5" in sys.modules) or ("PyQt5" in sys.argv):
+    from PyQt5 import QtCore, QtGui, QtWidgets
+    QtGui.QApplication = QtWidgets.QApplication
+    QtGui.QMainWindow = QtWidgets.QMainWindow
+    QtGui.QWidget = QtWidgets.QWidget
+    QtGui.QVBoxLayout = QtWidgets.QVBoxLayout
+    QtGui.qApp = QtWidgets.qApp
+    try:
+        from PyQt5 import QtSvg
+    except ImportError:
+        SVG = False
 else:
     from PyQt4 import QtCore, QtGui
     try:

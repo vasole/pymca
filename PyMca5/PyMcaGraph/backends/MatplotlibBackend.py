@@ -58,10 +58,28 @@ elif ('PySide' in sys.modules) or ('PySide' in sys.argv) :
     import matplotlib
     matplotlib.rcParams['backend.qt4']='PySide'
     from PySide import QtCore, QtGui
+elif ('PyQt5' in sys.modules):
+    import matplotlib
+    matplotlib.rcParams['backend']='Qt5Agg'
+    from PyQt5 import QtCore, QtGui, QtWidgets
+    QtGui.QApplication = QtWidgets.QApplication
 else:
-    from PyQt4 import QtCore, QtGui
+    try:
+        from PyQt4 import QtCore, QtGui
+    except ImportError:
+        try:
+            from PyQt5 import QtCore, QtGui, QtWidgets
+            QtGui.QApplication = QtWidgets.QApplication
+            import matplotlib
+            matplotlib.rcParams['backend']='Qt5Agg'
+        except ImportError:
+            from PySide import QtCore, QtGui
 if ("PyQt4" in sys.modules) or ("PySide" in sys.modules):
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    TK = False
+    QT = True
+elif "PyQt5" in sys.modules:
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     TK = False
     QT = True
 elif ("Tkinter" in sys.modules) or ("tkinter") in sys.modules:
