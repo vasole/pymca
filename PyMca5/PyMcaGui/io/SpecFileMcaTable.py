@@ -181,7 +181,7 @@ class SpecFileMcaTable(qt.QWidget):
 
 def test():
     import sys
-    from PyMca5 import SpecFileLayer
+    from PyMca5.PyMcaCore import SpecFileLayer
     app = qt.QApplication([])
     tab = SpecFileMcaTable()
     d = SpecFileLayer.SpecFileLayer()
