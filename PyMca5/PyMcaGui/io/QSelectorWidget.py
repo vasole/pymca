@@ -66,9 +66,9 @@ class QSelectorWidget(qt.QWidget):
 
         self.mainLayout.addWidget(buttonBox)
 
-        self.addButton.clicked[()].connect(self._addClicked)
-        self.removeButton.clicked[()].connect(self._removeClicked)
-        self.replaceButton.clicked[()].connect(self._replaceClicked)
+        self.addButton.clicked.connect(self._addClicked)
+        self.removeButton.clicked.connect(self._removeClicked)
+        self.replaceButton.clicked.connect(self._replaceClicked)
 
     def _addClicked(self):
         if DEBUG:
