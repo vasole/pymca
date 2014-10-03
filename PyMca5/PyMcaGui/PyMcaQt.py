@@ -53,7 +53,7 @@ if ('PySide' in sys.modules) or ('PySide' in sys.argv):
         matplotlib.rcParams['backend.qt4']='PySide'
     except:
         pass
-elif ("PyQt5" in sys.modules) or ('PyQt5' in sys.argv):
+elif "PyQt5" in sys.modules:
     print("WARNING: PyQt5 is for testing purposes")
     import sip
     try:
@@ -69,27 +69,63 @@ elif ("PyQt5" in sys.modules) or ('PyQt5' in sys.argv):
         from PyQt5.QtOpenGL import *
     except:
         pass
+    try:
+        from PyQt5.QtSvg import *
+    except:
+        pass
 else:
-    import sip
+    if sys.version < "3.0.0":
+        import sip
+        try:
+            sip.setapi("QString", 2)
+            sip.setapi("QVariant", 2)
+        except:
+            print("API 1 -> Console widget not available")
     try:
-        sip.setapi("QString", 2)
-        sip.setapi("QVariant", 2)
-    except:
-        print("API 1 -> Console widget not available")
+        from PyQt4.QtCore import *
+        from PyQt4.QtGui import *
+        try:
+            from PyQt4.QtOpenGL import *
+        except:
+            pass
+        try:
+            from PyQt4.QtSvg import *
+        except:
+            pass
+    except ImportError:
+        try:
+            # try PySide
+            from PySide.QtCore import *
+            from PySide.QtGui import *
+            try:
+                from PySide.QtSvg import *
+            except:
+                pass
+            try:
+                from PySide.QtOpenGL import *
+            except:
+                pass
+            pyqtSignal = Signal
 
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-    try:
-        from PyQt4.QtOpenGL import *
-    except:
-        pass
-    try:
-        # In case PyQwt is compiled with QtSvg this forces
-        # cx_freeze to add PyQt4.QtSvg to the list of modules
-        from PyQt4.QtSvg import *
-    except:
-        pass
-
+            #matplotlib has difficulties to identify PySide
+            try:
+                import matplotlib
+                matplotlib.rcParams['backend.qt4']='PySide'
+            except:
+                pass
+        except ImportError:
+            from PyQt5.QtCore import *
+            from PyQt5.QtGui import *
+            from PyQt5.QtWidgets import *
+            from PyQt5.QtPrintSupport import *
+            try:
+                from PyQt5.QtOpenGL import *
+            except:
+                pass
+            try:
+                from PyQt5.QtSvg import *
+            except:
+                pass
 
 class HorizontalSpacer(QWidget):
     def __init__(self, *args):
