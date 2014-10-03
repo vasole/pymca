@@ -184,15 +184,23 @@ class QSourceSelector(qt.QWidget):
                         strlist = []
                     for filetype in self.fileTypeList:
                         strlist.append(filetype)
-                    fdialog.setFilters(strlist)
-                    fdialog.selectFilter(self.lastFileFilter)
+                    if QTVERSION < '5.0.0':
+                        fdialog.setFilters(strlist)
+                        fdialog.selectFilter(self.lastFileFilter)
+                    else:
+                        fdialog.setNameFilters(strlist)
+                        fdialog.selectNameFilter(self.lastFileFilter)                        
                     fdialog.setFileMode(fdialog.ExistingFiles)
                     fdialog.setDirectory(wdir)
                     ret = fdialog.exec_()
                     if ret == qt.QDialog.Accepted:
                         filelist = fdialog.selectedFiles()
-                        self.lastFileFilter = qt.safe_str(\
-                                                fdialog.selectedFilter())
+                        if QTVERSION < '5.0.0':
+                            self.lastFileFilter = qt.safe_str(\
+                                                    fdialog.selectedFilter())
+                        else:
+                            self.lastFileFilter = qt.safe_str(\
+                                                    fdialog.selectedNameFilter())
                         fdialog.close()
                         del fdialog
                     else:
