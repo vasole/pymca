@@ -125,10 +125,16 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
                         filetypes)
                 filterused = qt.safe_str(filterused)
             else:
-                filelist = qt.QFileDialog.getSaveFileNameAndFilter(parent,
-                        message,
-                        wdir,
-                        filetypes)
+                if QTVERSION < '5.0.0':
+                    filelist = qt.QFileDialog.getSaveFileNameAndFilter(parent,
+                            message,
+                            wdir,
+                            filetypes)
+                else:
+                    filelist = qt.QFileDialog.getSaveFileName(parent,
+                            message,
+                            wdir,
+                            filetypes)
                 if len(filelist[0]):
                     filterused = qt.safe_str(filelist[1])
                     filelist=[filelist[0]]
@@ -183,7 +189,11 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
         for filetype in fileTypeList:
             if filetype != currentfilter:
                 strlist.append(filetype)
-        fdialog.setFilters(strlist)
+        if hasattr(fdialog, "setFilters"):
+            fdialog.setFilters(strlist)
+        else:
+            fdialog.setNameFilters(strlist)
+
         if mode == "OPEN":
             fdialog.setFileMode(fdialog.ExistingFiles)
         else:
@@ -207,7 +217,10 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
             filelist = fdialog.selectedFiles()
             if single:
                 filelist = [filelist[0]]
-            filterused = qt.safe_str(fdialog.selectedFilter())
+            if QTVERSION < "5.0.0":
+                filterused = qt.safe_str(fdialog.selectedFilter())
+            else:
+                filterused = qt.safe_str(fdialog.selectedNameFilter())
             if mode != "OPEN":
                 if "." in filterused:
                     extension = filterused.replace(")", "")
@@ -246,12 +259,23 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
 
 if __name__ == "__main__":
     app = qt.QApplication([])
-    fileTypeList = ['PNG Files (*.png *.jpg)']
+    fileTypeList = ['PNG Files (*.png *.jpg)', 'TIFF Files (*.tif *.tiff)']
     print(getExistingDirectory())
     PyMcaDirs.nativeFileDialogs = False
     print(getExistingDirectory())
     PyMcaDirs.nativeFileDialogs = True
-    print(getFileList(None, fileTypeList,"Please select a file", "SAVE", True, single=True))
+    print(getFileList(parent=None,
+                      filetypelist=fileTypeList,
+                      message="Please select a file",
+                      mode="SAVE",
+                      getfilter=True,
+                      single=True))
     PyMcaDirs.nativeFileDialogs = False
-    print(getFileList(None, fileTypeList,"Please select files", "LOAD", getfilter=False, single=False))
+    print(getFileList(parent=None,
+                      filetypelist=fileTypeList,
+                      message="Please select input files",
+                      mode="OPEN",
+                      getfilter=False,
+                      currentfilter='TIFF Files (*.tif *.tiff)',
+                      single=False))
     #app.exec_()
