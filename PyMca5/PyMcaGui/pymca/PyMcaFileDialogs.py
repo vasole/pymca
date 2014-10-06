@@ -275,7 +275,7 @@ if __name__ == "__main__":
                       filetypelist=fileTypeList,
                       message="Please select input files",
                       mode="OPEN",
-                      getfilter=False,
+                      getfilter=True,
                       currentfilter='TIFF Files (*.tif *.tiff)',
                       single=False))
     #app.exec_()

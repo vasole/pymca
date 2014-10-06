@@ -46,6 +46,7 @@ from . import AttenuatorsTable
 from . import ConcentrationsWidget
 from . import EnergyTable
 from PyMca5.PyMcaCore import PyMcaDirs
+from PyMca5.PyMcaGui.pymca import PyMcaFileDialogs
 XRFMC_FLAG = False
 try:
     from . import XRFMCPyMca
@@ -95,7 +96,7 @@ class FitParamWidget(FitParamForm):
         self.graphDialog.okButton.setText('OK')
         self.graphDialog.okButton.setAutoDefault(True)
         self.graphDialog.mainLayout.addWidget(self.graphDialog.okButton)
-        self.graphDialog.okButton.clicked[()].connect( \
+        self.graphDialog.okButton.clicked.connect( \
                                  self.graphDialog.accept)
         self.attTable = self.tabAttenuators.table
         #self.multilayerTable =self.tabAttenuators.matrixTable
@@ -221,8 +222,11 @@ class FitParamWidget(FitParamForm):
         self.strategyCombo.activated[int].connect(self._strategyComboActivated)
 
         # calibration update handling related
-        self.ignoreSpectrumCalibration.clicked[()].connect( \
-                            self._ignoreSpectrumCalibrationClicked)
+        self.ignoreSpectrumCalibration.clicked.connect( \
+                            self.__ignoreSpectrumCalibrationClicked)
+
+    def __ignoreSpectrumCalibrationClicked(self):
+        return self._ignoreSpectrumCalibrationClicked()
 
     def _ignoreSpectrumCalibrationClicked(self):
         if not self.ignoreSpectrumCalibration.isChecked():
@@ -1320,45 +1324,17 @@ class FitParamDialog(qt.QDialog):
                                 "Batch tip",
                                 text)
     def load(self):
-        #diag= SectionFileDialog(self, "Load parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.ExistingFile)
         if self.initDir is None:
             self.initDir = PyMcaDirs.inputDir
-        if PyMcaDirs.nativeFileDialogs:
-            filedialog = qt.QFileDialog(self)
-            filedialog.setFileMode(filedialog.ExistingFiles)
-            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-            initdir = os.path.curdir
-            if self.initDir is not None:
-                if os.path.isdir(self.initDir):
-                    initdir = self.initDir
-            filename = filedialog.getOpenFileName(
-                        self,
-                        "Choose fit configuration file",
-                        initdir,
-                        "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = qt.safe_str(filename)
-            if len(filename):
-                self.loadParameters(filename, None)
-                self.initDir = os.path.dirname(filename)
-        else:
-            filedialog = qt.QFileDialog(self)
-            filedialog.setFileMode(filedialog.ExistingFiles)
-            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-            initdir = os.path.curdir
-            if self.initDir is not None:
-                if os.path.isdir(self.initDir):
-                    initdir = self.initDir
-            filename = filedialog.getOpenFileName(
-                        self,
-                        "Choose fit configuration file",
-                        initdir,
-                        "Fit configuration files (*.cfg)\nAll Files (*)")
-            if "PySide" in sys.modules:
-                # PySide returns filename and filter
-                if type(filename) in [type((1,)), type([])]:
-                    if len(filename):
-                        filename = filename[0]
-            filename = qt.safe_str(filename)
+        filename = PyMcaFileDialogs.getFileList(self,
+                            filetypelist=["Fit configuration files (*.cfg)",
+                                          "All Files (*)"],
+                            mode="OPEN",
+                            message="Choose fit configuration file",
+                            currentdir=self.initDir,
+                            single=True)
+        if len(filename):
+            filename = qt.safe_str(filename[0])
             if len(filename):
                 self.loadParameters(filename, None)
                 self.initDir = os.path.dirname(filename)
