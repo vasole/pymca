@@ -1346,7 +1346,7 @@ class FitParamDialog(qt.QDialog):
         filename = PyMcaFileDialogs.getFileList(self,
                             filetypelist=["Fit configuration files (*.cfg)"],
                             mode="SAVE",
-                            message="Choose fit configuration file",
+                            message="Enter output fit configuration file",
                             currentdir=self.initDir,
                             single=True)
         if len(filename):
