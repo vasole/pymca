@@ -36,6 +36,7 @@ import numpy
 from . import QXTube
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaGui import PyMca_Icons as Icons
+from PyMca5.PyMcaGui.pymca import PyMcaFileDialogs
 qt = QXTube.qt
 
 QTVERSION = qt.qVersion()
@@ -107,16 +108,14 @@ class EnergyTab(qt.QWidget):
         wdir = self.inputDir
         if not os.path.exists(wdir):
             wdir = os.getcwd()
-        if 1 or PyMcaDirs.nativeFileDialogs:
-            filedialog = qt.QFileDialog(self)
-            filedialog.setFileMode(filedialog.ExistingFiles)
-            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-            filename = filedialog.getOpenFileName(
-                        self,
-                        "Choose energy table file",
-                        wdir,
-                        "Energy table files (*.csv)\n")
-            filename = qt.safe_str(filename)
+        filename = PyMcaFileDialogs.getFileList(self,
+                            filetypelist=["Energy table files (*.csv)"],
+                            mode="OPEN",
+                            message="Choose energy table file",
+                            currentdir=wdir,
+                            single=True)
+        if len(filename):
+            filename = qt.safe_str(filename[0])
             if len(filename):
                 try:
                     self.loadEnergyTableParameters(filename)
@@ -129,10 +128,10 @@ class EnergyTab(qt.QWidget):
                     msg.exec_()
 
     def loadEnergyTableParameters(self, filename):
-        if sys.platform == "win32":
+        if sys.platform == "win32" and (sys.version < "3.0.0"):
             ffile = open(filename, "rb")
         else:
-            ffile = open(filename)
+            ffile = open(filename, "r")
         lines = ffile.read()
         ffile.close()
         lines = lines.replace("\r","\n")
@@ -198,42 +197,40 @@ class EnergyTab(qt.QWidget):
             else:
                 self.outputDir = PyMcaDirs.outputDir
         wdir = self.outputDir
-        outfile = qt.QFileDialog(self)
-        outfile.setWindowTitle("Output File Selection")
-        outfile.setModal(1)
         format_list = ['";"-separated CSV *.csv',
                        '","-separated CSV *.csv',
                        '"tab"-separated CSV *.csv']
         if self.outputFilter is None:
             self.outputFilter = format_list[0]
-        outfile.setFilters(format_list)
-        outfile.selectFilter(self.outputFilter)
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(outfile.AcceptSave)
-        outfile.setDirectory(wdir)
-        ret = outfile.exec_()
-        if not ret:
-            outfile.close()
-            del outfile
+        outfile, filterused = PyMcaFileDialogs.getFileList(self,
+                                        filetypelist=format_list,                                          
+                                        mode="SAVE",
+                                        message="Output File Selection",
+                                        currentdir=wdir,
+                                        currentfilter=self.outputFilter,
+                                        getfilter=True,
+                                        single=True)
+        if len(outfile):
+            outputFile = qt.safe_str(outfile[0])
+        else:
             return
-        # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
-        self.outputFilter = qt.safe_str(outfile.selectedFilter())
+        self.outputFilter = qt.safe_str(filterused)
         filterused = self.outputFilter.split()
-        outputFile = qt.safe_str(outfile.selectedFiles()[0])
         try:
             self.outputDir  = os.path.dirname(outputFile)
             PyMcaDirs.outputDir = os.path.dirname(outputFile)
         except:
             self.outputDir  = "."
-        outfile.close()
-        del outfile
         if not outputFile.endswith('.csv'):
             outputFile += '.csv'
         #always overwrite
         if os.path.exists(outputFile):
             os.remove(outputFile)
         try:
-            ffile=open(outputFile,'wb')
+            if sys.version < "3.0.0":
+                ffile=open(outputFile,'wb')
+            else:
+                ffile=open(outputFile,'w')
         except IOError:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -269,7 +266,6 @@ class EnergyTab(qt.QWidget):
                         flaglist[i], csv,
                         scatterlist[i]))
         ffile.close()
-
 
     def __tubeUpdated(self, d):
         if    self.__calculating:return
