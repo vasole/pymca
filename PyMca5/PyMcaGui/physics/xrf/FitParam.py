@@ -1343,49 +1343,19 @@ class FitParamDialog(qt.QDialog):
         #diag= SectionFileDialog(self, "Save Parameters", FitParamSections, FitParamHeaders, qt.QFileDialog.AnyFile)
         if self.initDir is None:
             self.initDir = PyMcaDirs.outputDir
-        if PyMcaDirs.nativeFileDialogs:
-            filedialog = qt.QFileDialog(self)
-            filedialog.setFileMode(filedialog.AnyFile)
-            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-            initdir = os.path.curdir
-            if self.initDir is not None:
-                if os.path.isdir(self.initDir):
-                    initdir = self.initDir
-            filename = filedialog.getSaveFileName(
-                        self,
-                        "Enter output fit configuration file",
-                        initdir,
-                        "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = qt.safe_str(filename)
+        filename = PyMcaFileDialogs.getFileList(self,
+                            filetypelist=["Fit configuration files (*.cfg)"],
+                            mode="SAVE",
+                            message="Choose fit configuration file",
+                            currentdir=self.initDir,
+                            single=True)
+        if len(filename):
+            filename = qt.safe_str(filename[0])
             if len(filename):
-                if len(filename) < 4:
-                    filename = filename+".cfg"
-                elif filename[-4:] != ".cfg":
-                    filename = filename+".cfg"
+                if not filename.endswith(".cfg"):
+                    filename += ".cfg"
                 self.saveParameters(filename, None)
                 self.initDir = os.path.dirname(filename)
-        else:
-            filedialog = qt.QFileDialog(self)
-            filedialog.setFileMode(filedialog.AnyFile)
-            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-            initdir = os.path.curdir
-            if self.initDir is not None:
-                if os.path.isdir(self.initDir):
-                    initdir = self.initDir
-            filename = filedialog.getSaveFileName(
-                        self,
-                        "Enter output fit configuration file",
-                        initdir,
-                        "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = qt.safe_str(filename)
-            if len(filename):
-                if len(filename) < 4:
-                    filename = filename+".cfg"
-                elif filename[-4:] != ".cfg":
-                    filename = filename+".cfg"
-                self.saveParameters(filename, None)
-                self.initDir = os.path.dirname(filename)
-                PyMcaDirs.outputDir = os.path.dirname(filename)
 
 def openWidget():
     app= qt.QApplication(sys.argv)
