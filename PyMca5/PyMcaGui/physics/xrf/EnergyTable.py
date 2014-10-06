@@ -81,9 +81,9 @@ class EnergyTab(qt.QWidget):
 
         layout.addWidget(self.tubeActionsBox)
         layout.addWidget(hbox)
-        self.tubeButton.clicked[()].connect(self.tubeButtonClicked)
-        self.tubeLoadButton.clicked[()].connect(self.loadButtonClicked)
-        self.tubeSaveButton.clicked[()].connect(self.saveButtonClicked)
+        self.tubeButton.clicked.connect(self.tubeButtonClicked)
+        self.tubeLoadButton.clicked.connect(self.loadButtonClicked)
+        self.tubeSaveButton.clicked.connect(self.saveButtonClicked)
         self.tube.sigQXTubeSignal.connect(self.__tubeUpdated)
 
     def tubeButtonClicked(self):

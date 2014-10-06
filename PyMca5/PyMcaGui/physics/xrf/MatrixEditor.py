@@ -189,7 +189,7 @@ class MatrixEditor(qt.QWidget):
             self.__densityLine.sigMyQLineEditSignal.connect(self.__densitySlot)
         if self.__thicknessLine is not None:
             self.__thicknessLine.sigMyQLineEditSignal.connect(self.__thicknessSlot)
-        self.__angle3Label.clicked[()].connect(self.__angle3LabelSlot)
+        self.__angle3Label.clicked.connect(self.__angle3LabelSlot)
 
         if orientation == "vertical":
             sampleBoxLayout.addWidget(qt.VerticalSpacer(sampleBox))
