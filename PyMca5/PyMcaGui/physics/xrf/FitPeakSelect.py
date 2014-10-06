@@ -64,7 +64,7 @@ class PeakButton(qt.QPushButton):
         self.selected= 0
         self.brush= qt.QBrush(qt.QColor(qt.Qt.yellow))
 
-        self.clicked[()].connect(self.clickedSlot)
+        self.clicked.connect(self.clickedSlot)
 
     def toggle(self):
         self.selected= not self.selected
@@ -92,18 +92,18 @@ class PeakButton(qt.QPushButton):
         self.sigPeakClicked.emit(self.peak)
 
     def paintEvent(self, pEvent):
-        if QTVERSION < '4.0.0':
-            qt.QPushButton.paintEvent(self, pEvent)
-        else:
-            p = qt.QPainter(self)
-            wr= self.rect()
-            pr= qt.QRect(wr.left()+1, wr.top()+1, wr.width()-2, wr.height()-2)
-            if self.selected:
-                p.fillRect(pr, self.brush)
-            p.setPen(qt.Qt.black)
+        p = qt.QPainter(self)
+        wr= self.rect()
+        pr= qt.QRect(wr.left()+1, wr.top()+1, wr.width()-2, wr.height()-2)
+        if self.selected:
+            p.fillRect(pr, self.brush)
+        p.setPen(qt.Qt.black)
+        if hasattr(p, "drawRoundRect"):
             p.drawRoundRect(pr)
-            p.end()
-            qt.QPushButton.paintEvent(self, pEvent)
+        else:
+            p.drawRoundedRect(pr, 1., 1., qt.Qt.RelativeSize)
+        p.end()
+        qt.QPushButton.paintEvent(self, pEvent)
 
     def drawButton(self, p):
         wr= self.rect()
@@ -145,7 +145,7 @@ class PeakButtonList(qt.QWidget):
         self.resetBut = qt.QPushButton(self)
         self.resetBut.setText("Reset")
         layout.addWidget(self.resetBut)
-        self.resetBut.clicked[()].connect(self.__resetBut)
+        self.resetBut.clicked.connect(self.__resetBut)
 
         layout.addStretch(2)
 
@@ -215,7 +215,7 @@ class FitPeakSelect(qt.QWidget):
             self.energyButton = qt.QPushButton(hbox)
             hboxLayout.addWidget(self.energyButton)
             self.energyButton.setText("Update")
-            self.energyButton.clicked[()].connect(self._energyClicked)
+            self.energyButton.clicked.connect(self._energyClicked)
 
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         layout.addSpacing(20)
@@ -242,7 +242,7 @@ class FitPeakSelect(qt.QWidget):
         self.resetAllButton.setText("Reset All")
         self.peaks.layout().addWidget(self.resetAllButton)
 
-        self.resetAllButton.clicked[()].connect(self.__resetAll)
+        self.resetAllButton.clicked.connect(self.__resetAll)
 
         layout.addWidget(self.table)
         layout.addWidget(line)
