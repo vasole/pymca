@@ -356,8 +356,8 @@ class StripBackgroundDialog(qt.QDialog):
         hboxLayout.addWidget(self.okButton)
         hboxLayout.addWidget(self.dismissButton)
         self.mainLayout.addWidget(hbox)
-        self.dismissButton.clicked[()].connect(self.reject)
-        self.okButton.clicked[()].connect(self.accept)
+        self.dismissButton.clicked.connect(self.reject)
+        self.okButton.clicked.connect(self.accept)
 
     def sizeHint(self):
         return qt.QSize(int(1.5*qt.QDialog.sizeHint(self).width()),
@@ -369,7 +369,8 @@ if __name__ == "__main__":
     w = StripBackgroundDialog()
     def mySlot(ddict):
         print(ddict)
-    w.parametersWidget.sigStripParametersWidgetSignal.connect(mySlot)
+    w.parametersWidget.parametersWidget.\
+                        sigStripParametersWidgetSignal.connect(mySlot)
     x = numpy.arange(1000.).astype(numpy.float32)
     y = 100 + x + 100 * numpy.exp(-0.5*(x-500) * (x-500)/ 30.)
     w.setData(x, y)

@@ -40,6 +40,8 @@ from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import SubprocessLogWidget
 from PyMca5.PyMcaPhysics.xrf.XRFMC import XRFMCHelper
 
+QTVERSION = qt.qVersion()
+
 class VerticalSpacer(qt.QWidget):
     def __init__(self, *args):
         qt.QWidget.__init__(self, *args)
@@ -102,6 +104,9 @@ class GetFileList(qt.QGroupBox):
                         wdir,
                         filetypes,
                         None)
+            if QTVERSION > "5.0.0":
+                # in PyQt5 the call corresponds to getOpenFileNameAndFilter
+                filelist = filelist[0]
             if len(filelist):
                 filelist = [filelist]
         else:
@@ -110,6 +115,9 @@ class GetFileList(qt.QGroupBox):
                         wdir,
                         filetypes,
                         None)
+            if QTVERSION > "5.0.0":
+                # in PyQt5 the call corresponds to getOpenFileNameAndFilter
+                filelist = filelist[0]
         if len(filelist):
             filelist = [str(x) for x in filelist]
             self.setFileList(filelist)
@@ -189,9 +197,13 @@ class XRFMCProgramFile(GetFileList):
                         wdir,
                         filetypes,
                         None)
+            if QTVERSION > "5.0.0":
+                # in PyQt5 the call corresponds to getOpenFileNameAndFilter
+                filelist = filelist[0]
             if len(filelist):
                 filelist = [filelist]
-        self.setFileList(filelist)
+        if len(filelist):
+            self.setFileList(filelist)
 
     def setFileList(self, fileList):
         oldInputDir = xrfmc_dirs.inputDir
