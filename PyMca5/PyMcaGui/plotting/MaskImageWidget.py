@@ -1798,11 +1798,11 @@ class MaskImageWidget(qt.QWidget):
                                                   safe=True)
             if i1 == i2:
                 i2 += 1
-            elif (ddict['x'] + w) < shape[1]:
+            elif (ddict['x'] + w) < self.__imageData.shape[1]:
                 i2 += 1
             if j1 == j2:
                 j2 += 1
-            elif (ddict['y'] + h) < shape[0]:
+            elif (ddict['y'] + h) < self.__imageData.shape[0]:
                 j2 += 1
             if self.__selectionMask is None:
                 self.__selectionMask = numpy.zeros(self.__imageData.shape,
