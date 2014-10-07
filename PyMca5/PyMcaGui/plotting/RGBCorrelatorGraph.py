@@ -614,7 +614,10 @@ class RGBCorrelatorGraph(qt.QWidget):
             return False
 
     def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self.graph.getWidgetHandle())
+        if hasattr(qt.QPixmap, "grabWidget"):
+            pixmap = qt.QPixmap.grabWidget(self.graph.getWidgetHandle())
+        else:
+            pixmap = self.graph.getWidgetHandle().grab()
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isReady():
             if self.printPreview.isHidden():
@@ -623,7 +626,6 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def selectColormap(self):
         qt.QMessageBox.information(self, "Open", "Not implemented (yet)")
-
 
 class MyQLabel(qt.QLabel):
     def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):
