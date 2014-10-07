@@ -1274,8 +1274,8 @@ class DoubleDialog(qt.QDialog):
         self.mainLayout.addWidget(self.okButton, 1, 0)
         self.mainLayout.addWidget(self.cancelButton, 1, 1)
 
-        self.okButton.clicked[()].connect(self.accept)
-        self.cancelButton.clicked[()].connect(self.reject)
+        self.okButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
 
 
 class InputLine(qt.QDialog):
@@ -1531,7 +1531,7 @@ class McaCalCopy(qt.QDialog):
             copybut = qt.QPushButton(wid)
             copybut.setText('Copy From')
             copybut.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed,qt.QSizePolicy.Fixed))
-            copybut.clicked[()].connect(self.__copybuttonclicked)
+            copybut.clicked.connect(self.__copybuttonclicked)
 
             self.combo = SimpleComboBox(wid,options=caldict.keys())
             self.combo.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Expanding,qt.QSizePolicy.Fixed))

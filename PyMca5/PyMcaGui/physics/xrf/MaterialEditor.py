@@ -153,7 +153,7 @@ class MaterialEditor(qt.QWidget):
         self.graphDialog.okButton.setText('OK')
         self.graphDialog.okButton.setAutoDefault(True)
         self.graphDialog.mainLayout.addWidget(self.graphDialog.okButton)
-        self.graphDialog.okButton.clicked[()].connect( \
+        self.graphDialog.okButton.clicked.connect( \
                                  self.graphDialog.accept)
 
 
@@ -655,9 +655,9 @@ class MaterialGUI(qt.QWidget):
 
         self.__thicknessLine.editingFinished[()].connect(self.__thicknessSlot)
 
-        self.__transmissionButton.clicked[()].connect(self.__transmissionSlot)
+        self.__transmissionButton.clicked.connect(self.__transmissionSlot)
 
-        self.__massAttButton.clicked[()].connect(self.__massAttSlot)
+        self.__massAttButton.clicked.connect(self.__massAttSlot)
 
     def setCurrent(self, matkey0):
         if DEBUG:"setCurrent(self, matkey0) ", matkey0
