@@ -301,7 +301,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         #roi icon
         if kw.get('roi', False):
             self.roiButton = self._addToolButton(self.roiIcon,
-                                         self._toggleROI,
+                                         self.__toggleROI,
                                          'Show/Hide ROI widget',
                                          toggle=False)
             self.currentROI = None
@@ -533,6 +533,9 @@ class PlotWindow(PlotWidget.PlotWidget):
     def showRoiWidget(self, position=None):
         self._toggleROI(position)
 
+    def __toggleROI(self):
+        self._toggleROI()
+
     def _toggleROI(self, position=None):
         if DEBUG:
             print("_toggleROI called")
@@ -541,7 +544,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.roiDockWidget = qt.QDockWidget(self)
             self.roiDockWidget.layout().setContentsMargins(0, 0, 0, 0)
             self.roiDockWidget.setWidget(self.roiWidget)
-            if position is None:
+            if position in [None, False]:
                 w = self.centralWidget().width()
                 h = self.centralWidget().height()
                 if w > (1.25 * h):
