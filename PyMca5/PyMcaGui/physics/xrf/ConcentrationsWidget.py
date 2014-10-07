@@ -338,13 +338,12 @@ class ConcentrationsWidget(qt.QWidget):
             self._mySignal)
         self.fundamentalWidget.distance.sigMyQLineEditSignal.connect( \
             self._mySignal)
-        if QTVERSION < '5.0.0':
-            self.fundamentalWidget.autoTimeCheckBox.clicked[()].connect( \
-                self._autoTimeSlot)
-        else:
-            self.fundamentalWidget.autoTimeCheckBox.clicked.connect( \
-                self._autoTimeSlot)
-    
+        self.fundamentalWidget.autoTimeCheckBox.clicked.connect( \
+                self.__autoTimeSlot)
+
+    def __autoTimeSlot(self):
+        return self._autoTimeSlot()
+
     def _autoTimeSlot(self, signal=True):
         if self.fundamentalWidget.autoTimeCheckBox.isChecked():
             if self._liveTime is None:
