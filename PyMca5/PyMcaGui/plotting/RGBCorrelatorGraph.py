@@ -114,7 +114,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         #Autoscale
         if standalonezoom:
             tb = self._addToolButton(self.zoomResetIcon,
-                            self._zoomReset,
+                            self.__zoomReset,
                             'Auto-Scale the Graph')
         else:
             tb = self._addToolButton(self.zoomResetIcon,
@@ -487,8 +487,11 @@ class RGBCorrelatorGraph(qt.QWidget):
         else:
             self.toolBarLayout.addWidget(tb)
         if action is not None:
-            tb.clicked[()].connect(action)
+            tb.clicked.connect(action)
         return tb
+
+    def __zoomReset(self):
+        self._zoomReset()
 
     def _zoomReset(self, replot=None):
         if DEBUG:

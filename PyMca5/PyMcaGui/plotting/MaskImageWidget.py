@@ -200,7 +200,7 @@ class MaskImageWidget(qt.QWidget):
         if standalonesave:
             self.buildStandaloneSaveMenu()
 
-        self.graphWidget.zoomResetToolButton.clicked[()].connect(self._zoomResetSignal)
+        self.graphWidget.zoomResetToolButton.clicked.connect(self._zoomResetSignal)
         self.graphWidget.graph.setDrawModeEnabled(False)
         self.graphWidget.graph.setZoomModeEnabled(True)
         if self.__selectionFlag:
@@ -219,7 +219,7 @@ class MaskImageWidget(qt.QWidget):
             self.mainLayout.addWidget(self.graphWidget)
 
     def buildStandaloneSaveMenu(self):
-        self.graphWidget.saveToolButton.clicked[()].connect(self._saveToolButtonSignal)
+        self.graphWidget.saveToolButton.clicked.connect(self._saveToolButtonSignal)
         self._saveMenu = qt.QMenu()
         self._saveMenu.addAction(QString("Image Data"),
                                  self.saveImageList)
@@ -263,9 +263,9 @@ class MaskImageWidget(qt.QWidget):
         self._roiTags = list(range(1, self._maxNRois + 1))
 
     def _buildConnections(self, widget = None):
-        self.graphWidget.hFlipToolButton.clicked[()].connect(self._hFlipIconSignal)
+        self.graphWidget.hFlipToolButton.clicked.connect(self._hFlipIconSignal)
 
-        self.graphWidget.colormapToolButton.clicked[()].connect(self.selectColormap)
+        self.graphWidget.colormapToolButton.clicked.connect(self.selectColormap)
 
         if self.__selectionFlag:
             self.graphWidget.selectionToolButton.clicked.connect(self._toggleSelectionMode)
@@ -273,19 +273,19 @@ class MaskImageWidget(qt.QWidget):
             self.graphWidget.selectionToolButton.setToolTip(text)
 
         if self.__imageIconsFlag:
-            self.graphWidget.imageToolButton.clicked[()].connect(\
+            self.graphWidget.imageToolButton.clicked.connect(\
                 self.__resetSelection)
 
-            self.graphWidget.eraseSelectionToolButton.clicked[()].connect(\
+            self.graphWidget.eraseSelectionToolButton.clicked.connect(\
                 self._setEraseSelectionMode)
 
-            self.graphWidget.rectSelectionToolButton.clicked[()].connect(\
+            self.graphWidget.rectSelectionToolButton.clicked.connect(\
                 self._setRectSelectionMode)
 
-            self.graphWidget.brushSelectionToolButton.clicked[()].connect(\
+            self.graphWidget.brushSelectionToolButton.clicked.connect(\
                 self._setBrushSelectionMode)
 
-            self.graphWidget.brushToolButton.clicked[()].connect(self._setBrush)
+            self.graphWidget.brushToolButton.clicked.connect(self._setBrush)
 
             if hasattr(self.graphWidget, "polygonSelectionToolButton"):
                 self.graphWidget.polygonSelectionToolButton.clicked.connect(\
