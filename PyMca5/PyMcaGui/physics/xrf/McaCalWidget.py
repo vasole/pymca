@@ -1062,7 +1062,7 @@ class CalibrationParameters(qt.QWidget):
         self.AText.editingFinished[()].connect(self._Aslot)
         self.BText.editingFinished[()].connect(self._Bslot)
         self.CText.editingFinished[()].connect(self._Cslot)
-        self.CFixed.clicked[()].connect(self._CFixSlot)
+        self.CFixed.clicked.connect(self._CFixSlot)
 
         self.orderbox.activated[str].connect(self.__orderbox)
         self.savebox.activated[str].connect(self.__savebox)
@@ -1302,8 +1302,8 @@ class InputLine(qt.QDialog):
         okbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         cancelbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         self.bottom.layout.addWidget(qt.HorizontalSpacer(self.bottom))
-        cancelbutton.clicked[()].connect(self.reject)
-        okbutton.clicked[()].connect(self.accept)
+        cancelbutton.clicked.connect(self.reject)
+        okbutton.clicked.connect(self.accept)
         if 'name' in peakpars:
             peakname = peakpars['name']
         else:
@@ -1561,8 +1561,8 @@ class McaCalCopy(qt.QDialog):
         cancelbutton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         bottomlayout.addWidget(qt.HorizontalSpacer(bottom))
 
-        cancelbutton.clicked[()].connect(self.reject)
-        okbutton.clicked[()].connect(self.accept)
+        cancelbutton.clicked.connect(self.reject)
+        okbutton.clicked.connect(self.accept)
 
         self.AText.setFocus()
 
