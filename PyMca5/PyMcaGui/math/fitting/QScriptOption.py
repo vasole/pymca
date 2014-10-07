@@ -86,12 +86,12 @@ class QScriptOption(TabSheets.TabSheets):
             else:
                 self.tabWidget.setCurrentWidget(self.sheets[name])
         #perform the binding to the buttons
-        self.buttonOk.clicked[()].connect(self.myaccept)
-        self.buttonCancel.clicked[()].connect(self.myreject)
+        self.buttonOk.clicked.connect(self.myaccept)
+        self.buttonCancel.clicked.connect(self.myreject)
         if not nodefaults:
-            self.buttonDefaults.clicked[()].connect(self.defaults)
+            self.buttonDefaults.clicked.connect(self.defaults)
         if not nohelp:
-            self.buttonHelp.clicked[()].connect(self.myhelp)
+            self.buttonHelp.clicked.connect(self.myhelp)
 
 
     def myaccept(self):
@@ -124,10 +124,7 @@ class QScriptOption(TabSheets.TabSheets):
 
 class FieldSheet(qt.QWidget):
     def __init__(self,parent = None,name=None,fl = 0,fields=()):
-        if QTVERSION < '4.0.0':
-            qt.QWidget.__init__(self,parent,name,fl)
-        else:
-            qt.QWidget.__init__(self,parent)
+        qt.QWidget.__init__(self,parent)
         layout= qt.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)

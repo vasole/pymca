@@ -43,7 +43,7 @@ class NNMAParametersDialog(qt.QDialog):
         self.infoButton.setAutoDefault(False)
         self.infoButton.setText('About NNMA')
         self.mainLayout.addWidget(self.infoButton)
-        self.infoButton.clicked[()].connect(self._showInfo)
+        self.infoButton.clicked.connect(self._showInfo)
 
         #
         self.methodOptions = qt.QGroupBox(self)
@@ -139,8 +139,8 @@ class NNMAParametersDialog(qt.QDialog):
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         self.mainLayout.addWidget(self.speedOptions)
         self.mainLayout.addWidget(hbox)
-        self.okButton.clicked[()].connect(self.accept)
-        self.dismissButton.clicked[()].connect(self.reject)
+        self.okButton.clicked.connect(self.accept)
+        self.dismissButton.clicked.connect(self.reject)
 
         self._infoDocument = qt.QTextEdit()
         self._infoDocument.setReadOnly(True)

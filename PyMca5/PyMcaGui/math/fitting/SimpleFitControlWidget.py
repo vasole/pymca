@@ -159,9 +159,9 @@ class FitFunctionDefinition(qt.QGroupBox):
 
 
         #signals
-        self.fitFunctionSetupButton.clicked[()].connect(self.setupFitFunction)
-        self.backgroundSetupButton.clicked[()].connect(self.setupBackground)
-        self.stripSetupButton.clicked[()].connect(self.setupStrip)
+        self.fitFunctionSetupButton.clicked.connect(self.setupFitFunction)
+        self.backgroundSetupButton.clicked.connect(self.setupBackground)
+        self.stripSetupButton.clicked.connect(self.setupStrip)
 
     def _stripComboActivated(self, iValue):
         if iValue == 1:

@@ -82,12 +82,8 @@ class SpecfitGui(qt.QWidget):
             self.guiconfig.WeightCheckBox.stateChanged[int].connect(self.weightevent)
             self.guiconfig.AutoFWHMCheckBox.stateChanged[int].connect(self.autofwhmevent)
             self.guiconfig.AutoScalingCheckBox.stateChanged[int].connect(self.autoscaleevent)
-            if QTVERSION < '5.0.0':
-                self.guiconfig.ConfigureButton.clicked[()].connect(self.__configureGui)
-                self.guiconfig.PrintPushButton.clicked[()].connect(self.printps)
-            else:
-                self.guiconfig.ConfigureButton.clicked.connect(self.__configureGui)
-                self.guiconfig.PrintPushButton.clicked.connect(self.printps)
+            self.guiconfig.ConfigureButton.clicked.connect(self.__configureGuiSlot)
+            self.guiconfig.PrintPushButton.clicked.connect(self.printps)
             self.guiconfig.BkgComBox.activated[str].connect(self.bkgevent)
             self.guiconfig.FunComBox.activated[str].connect(self.funevent)
             layout.addWidget(self.guiconfig)
@@ -142,9 +138,9 @@ class SpecfitGui(qt.QWidget):
             layout.addWidget(self.guistatus)
         if buttons:
             self.guibuttons = FitActionsGui.FitActionsGui(self)
-            self.guibuttons.EstimateButton.clicked[()].connect(self.estimate)
-            self.guibuttons.StartfitButton.clicked[()].connect(self.startfit)
-            self.guibuttons.DismissButton.clicked[()].connect(self.dismiss)
+            self.guibuttons.EstimateButton.clicked.connect(self.estimate)
+            self.guibuttons.StartfitButton.clicked.connect(self.startfit)
+            self.guibuttons.DismissButton.clicked.connect(self.dismiss)
             layout.addWidget(self.guibuttons)
 
     def updateGui(self,configuration=None):
@@ -152,6 +148,9 @@ class SpecfitGui(qt.QWidget):
 
     def _emitSignal(self, ddict):
         self.sigSpecfitGuiSignal.emit(ddict)
+
+    def __configureGuiSlot(self):
+        self.__configureGui()
 
     def __configureGui(self, newconfiguration=None):
         if self.guiconfig is not None:

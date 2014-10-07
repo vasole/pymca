@@ -63,7 +63,7 @@ class SimpleFitBatchParameters(qt.QWidget):
             self._listButton = qt.QPushButton(self)
             self._listButton.setText('Browse')
             self._listButton.setAutoDefault(False)
-            self._listButton.clicked[()].connect(self.browseList)
+            self._listButton.clicked.connect(self.browseList)
             self.mainLayout.addWidget(self._listLabel,  0, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
             self.mainLayout.addWidget(self._listView,   0, 1)
             self.mainLayout.addWidget(self._listButton, 0, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
@@ -90,9 +90,9 @@ class SimpleFitBatchParameters(qt.QWidget):
             row0 += 1
         row += row0
 
-        self._outputDirectoryButton.clicked[()].connect( \
+        self._outputDirectoryButton.clicked.connect( \
                     self.browseOutputDirectory)
-        self._fitConfigurationButton.clicked[()].connect( \
+        self._fitConfigurationButton.clicked.connect( \
                     self.browseFitConfiguration)
 
     def browseList(self):
@@ -257,7 +257,7 @@ class SimpleFitBatchGui(qt.QWidget):
             self.actionsBox.mainLayout.addWidget(self.startButton)
             self.actionsBox.mainLayout.addWidget(qt.HorizontalSpacer(self.actionsBox))
             self.mainLayout.addWidget(self.actionsBox)
-            self.closeButton.clicked[()].connect(self.close)
+            self.closeButton.clicked.connect(self.close)
 
 if __name__ == "__main__":
     app = qt.QApplication([])

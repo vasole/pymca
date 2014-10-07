@@ -78,5 +78,5 @@ class TabSheets(qt.QDialog):
         Layout2.addWidget(self.buttonCancel)
         TabSheetsLayout.addLayout(Layout2)
 
-        self.buttonOk.clicked[()].connect(self.accept)
-        self.buttonCancel.clicked[()].connect(self.reject)
+        self.buttonOk.clicked.connect(self.accept)
+        self.buttonCancel.clicked.connect(self.reject)

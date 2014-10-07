@@ -61,7 +61,7 @@ class QCheckBoxItem(qt.QCheckBox):
         self._row = row
         self._col = col
         qt.QCheckBox.__init__(self, parent)
-        self.clicked[()].connect(self._cellChanged)
+        self.clicked.connect(self._cellChanged)
 
     def _cellChanged(self):
         self.sigCellChanged.emit(self._row, self._col)

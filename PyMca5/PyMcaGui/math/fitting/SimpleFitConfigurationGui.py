@@ -311,10 +311,10 @@ class SimpleFitConfigurationGui(qt.QDialog):
         buts.layout.addWidget(accept)
         self.mainLayout.addWidget(buts)
 
-        load.clicked[()].connect(self.load)
-        save.clicked[()].connect(self.save)
-        reject.clicked[()].connect(self.reject)
-        accept.clicked[()].connect(self.accept)
+        load.clicked.connect(self.load)
+        save.clicked.connect(self.save)
+        reject.clicked.connect(self.reject)
+        accept.clicked.connect(self.accept)
 
     def setSimpleFitInstance(self, fitInstance):
         self.simpleFitInstance = fitInstance

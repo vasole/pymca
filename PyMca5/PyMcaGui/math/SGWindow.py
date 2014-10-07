@@ -171,8 +171,8 @@ class SGDialog(qt.QDialog):
         hboxLayout.addWidget(qt.HorizontalSpacer(hbox))
         hboxLayout.addWidget(self.dismissButton)
         self.mainLayout.addWidget(hbox)
-        self.dismissButton.clicked([]).connect(self.reject)
-        self.okButton.clicked([]).connect(self.accept)
+        self.dismissButton.clicked.connect(self.reject)
+        self.okButton.clicked.connect(self.accept)
 
     def getParameters(self):
         parametersDict = self.parametersWidget.getParameters()

@@ -82,8 +82,8 @@ class NNMADialog(qt.QDialog):
         self.nnmaWindow.hide()
 
         #connections
-        self.calculateButton.clicked([]).connect(sself._calculateSlot)
-        self.showLastButton.clicked([]).connect(sself._showLastSlot)
+        self.calculateButton.clicked.connect(self._calculateSlot)
+        self.showLastButton.clicked.connect(self._showLastSlot)
 
     def sizeHint(self):
         return qt.QSize(int(4*qt.QDialog.sizeHint(self).width()),

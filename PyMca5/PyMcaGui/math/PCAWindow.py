@@ -150,7 +150,7 @@ class PCAParametersDialog(qt.QDialog):
         if self.scanWindow is not None:
             self.mainLayout.addWidget(self.scanWindow)
 
-        self.okButton.clicked[()].connect(self.accept)
+        self.okButton.clicked.connect(self.accept)
 
     def __addRegionsWidget(self):
         #Region handling
@@ -434,7 +434,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         self.vectorGraphTitles = None
         standalonesave = kw.get("standalonesave", True)
         if standalonesave:
-            self.graphWidget.saveToolButton.clicked[()].connect( \
+            self.graphWidget.saveToolButton.clicked.connect( \
                          self._saveToolButtonSignal)
             self._saveMenu = qt.QMenu()
             self._saveMenu.addAction(QString("Image Data"),
