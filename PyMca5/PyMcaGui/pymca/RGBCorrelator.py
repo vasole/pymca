@@ -64,14 +64,14 @@ class RGBCorrelator(qt.QWidget):
             self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.splitter,
                                             standalonesave=standaloneSaving)
             if not standaloneSaving:
-                self.graphWidget.saveToolButton.clicked[()].connect( \
+                self.graphWidget.saveToolButton.clicked.connect( \
                          self._saveToolButtonSignal)
                 self._saveMenu = qt.QMenu()
                 self._saveMenu.addAction(QString("Standard"),    self.graphWidget._saveIconSignal)
                 self._saveMenu.addAction(QString("Matplotlib") , self._saveMatplotlibImage)
             self.graph = self.graphWidget.graph
             #add flip Icon
-            self.graphWidget.hFlipToolButton.clicked[()].connect( \
+            self.graphWidget.hFlipToolButton.clicked.connect( \
                          self._hFlipIconSignal)
             self._handleGraph    = True
         else:

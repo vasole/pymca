@@ -67,7 +67,7 @@ class FileListPage(qt.QWizardPage):
         self.mainLayout.addWidget(self._listView)
         self.mainLayout.addWidget(self._listButton)
 
-        self._listButton.clicked[()].connect(self.browseList)
+        self._listButton.clicked.connect(self.browseList)
 
     def setFileList(self, filelist):
         text = ""

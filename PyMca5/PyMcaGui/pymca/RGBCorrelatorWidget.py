@@ -196,9 +196,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__blueImage = None
         self.outputDir   = None
 
-        self.loadButton.clicked[()].connect(self.addFileList)
-
-        self.saveButton.clicked[()].connect(self.saveButtonClicked)
+        self.loadButton.clicked.connect(self.addFileList)
+        self.saveButton.clicked.connect(self.saveButtonClicked)
         self._saveButtonMenu = qt.QMenu()
         self._saveButtonMenu.addAction(QString("Save all"),
                                     self.saveImageList)
@@ -206,19 +205,19 @@ class RGBCorrelatorWidget(qt.QWidget):
                                     self.saveSelectedImages)
 
 
-        self.removeButton.clicked[()].connect(self.removeButtonClicked)
+        self.removeButton.clicked.connect(self.removeButtonClicked)
 
-        self.toggleSlidersButton.clicked[()].connect(self.toggleSliders)
+        self.toggleSlidersButton.clicked.connect(self.toggleSliders)
 
-        self.calculationButton.clicked[()].connect(self._showCalculationDialog)
+        self.calculationButton.clicked.connect(self._showCalculationDialog)
 
-        self.profileButton.clicked[()].connect(self.profileSelectedImages)
+        self.profileButton.clicked.connect(self.profileSelectedImages)
 
         self._calculationMenu = None
         self.pcaDialog  = None
         self.nnmaDialog = None
 
-        self.__imageResizeButton.clicked[()].connect(self._imageResizeSlot)
+        self.__imageResizeButton.clicked.connect(self._imageResizeSlot)
         self.sliderWidget.sigRGBCorrelatorSliderSignal.connect(self._sliderSlot)
 
         self.tableWidget.sigRGBCorrelatorTableSignal.connect(self._tableSlot)
@@ -1189,8 +1188,8 @@ class ImageShapeDialog(qt.QDialog):
         self.mainLayout.addWidget(self.columns, 1, 1)
         self.mainLayout.addWidget(self.cancelButton, 2, 0)
         self.mainLayout.addWidget(self.okButton, 2, 1)
-        self.cancelButton.clicked[()].connect(self.reject)
-        self.okButton.clicked[()].connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.okButton.clicked.connect(self.accept)
 
     def _rowsChanged(self):
         nrows, ncolumns = self.getImageShape()

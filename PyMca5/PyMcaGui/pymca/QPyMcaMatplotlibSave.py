@@ -126,11 +126,11 @@ class SaveImageSetup(qt.QWidget):
         self._buttonContainer = ButtonsWidget(self)
         self.mainLayout.addWidget(self._buttonContainer, 0, 1)
 
-        self._buttonContainer.updateButton.clicked[()].connect(\
+        self._buttonContainer.updateButton.clicked.connect(\
                 self.updateClicked)
 
-        self._buttonContainer.printButton.clicked[()].connect(self.printClicked)
-        self._buttonContainer.saveButton.clicked[()].connect(self.saveClicked)
+        self._buttonContainer.printButton.clicked.connect(self.printClicked)
+        self._buttonContainer.saveButton.clicked.connect(self.saveClicked)
 
 
     def sizeHint(self):

@@ -238,7 +238,7 @@ def main():
     def slot(ddict):
         print("received dict = ", ddict)
     tab = RGBCorrelatorTable()
-    tab.sigRGBCorrelatorTableSignal.conenct(slot)
+    tab.sigRGBCorrelatorTableSignal.connect(slot)
 
     tab.build(["Cnt1", "Cnt2", "Cnt3"])
     tab.setElementSelection({'r':[1], 'g':[4], 'elementlist':["dummy", "Ca K", "Fe K", "Pb M", "U l"]})

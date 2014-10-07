@@ -90,7 +90,7 @@ class Mca2EdfGUI(qt.QWidget):
         self.__listView.setMaximumHeight(30*listlabel.sizeHint().height())
         self.__listButton = qt.QPushButton(self.__grid)
         self.__listButton.setText('Browse')
-        self.__listButton.clicked[()].connect(self.browseList)
+        self.__listButton.clicked.connect(self.browseList)
         grid.addWidget(listlabel,        listrow, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
         grid.addWidget(self.__listView,  listrow, 1)
         grid.addWidget(self.__listButton,listrow, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
@@ -106,7 +106,7 @@ class Mca2EdfGUI(qt.QWidget):
         #self.__outLine.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Maximum, qt.QSizePolicy.Fixed))
         self.__outButton = qt.QPushButton(self.__grid)
         self.__outButton.setText('Browse')
-        self.__outButton.clicked[()].connect(self.browseOutputDir)
+        self.__outButton.clicked.connect(self.browseOutputDir)
         grid.addWidget(outlabel,         outrow, 0, qt.Qt.AlignLeft)
         grid.addWidget(self.__outLine,   outrow, 1)
         grid.addWidget(self.__outButton, outrow, 2, qt.Qt.AlignLeft)
@@ -146,8 +146,8 @@ class Mca2EdfGUI(qt.QWidget):
         boxLayout.addWidget(qt.HorizontalSpacer(box))
         self.__startButton.setText("Start")
         self.mainLayout.addWidget(box)
-        self.__dismissButton.clicked[()].connect(self.close)
-        self.__startButton.clicked[()].connect(self.start)
+        self.__dismissButton.clicked.connect(self.close)
+        self.__startButton.clicked.connect(self.start)
 
     def setFileList(self,filelist=None):
         if filelist is None:filelist = []
@@ -311,8 +311,8 @@ class Mca2EdfGUI(qt.QWidget):
             else:
                 b.pleasePause=1
                 window.pauseButton.setText("Continue")
-        window.pauseButton.clicked[()].connect(pause)
-        window.abortButton.clicked[()].connect(window.close)
+        window.pauseButton.clicked.connect(pause)
+        window.abortButton.clicked.connect(window.close)
         qApp = qt.QApplication.instance()
         qApp.aboutToQuit.connect(cleanup)
         self.__window = window
@@ -580,9 +580,9 @@ def main():
             else:
                 b.pleasePause=1
                 window.pauseButton.setText("Continue")
-        window.pauseButton.clicked[()].connect(pause)
-        window.abortButton.clicked[()].connect(window.close)
-        app.aboutToQuit[()].connect(cleanup)
+        window.pauseButton.clicked.connect(pause)
+        window.abortButton.clicked.connect(window.close)
+        app.aboutToQuit.connect(cleanup)
         window.show()
         b.start()
         sys.exit(app.exec_())

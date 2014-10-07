@@ -140,7 +140,7 @@ class QStackWidget(StackBase.StackBase,
                                              self.saveStackAsFloat32TiffImages)
         self._stackSaveMenu.addAction(QString("Standard Graphics"),
                             self.stackWidget.graphWidget._saveIconSignal)
-        self.stackWidget.graphWidget.saveToolButton.clicked[()].connect( \
+        self.stackWidget.graphWidget.saveToolButton.clicked.connect( \
                      self._stackSaveToolButtonSignal)
 
         self.stackGraphWidget = self.stackWidget.graphWidget

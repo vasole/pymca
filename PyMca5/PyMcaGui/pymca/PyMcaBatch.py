@@ -109,7 +109,7 @@ class McaBatchGUI(qt.QWidget):
         self.__listView.setMaximumHeight(30*listlabel.sizeHint().height())
         self.__listButton = qt.QPushButton(self.__grid)
         self.__listButton.setText('Browse')
-        self.__listButton.clicked[()].connect(self.browseList)
+        self.__listButton.clicked.connect(self.browseList)
         grid.addWidget(listlabel,        listrow, 0, qt.Qt.AlignTop|qt.Qt.AlignLeft)
         grid.addWidget(self.__listView,  listrow, 1)
         grid.addWidget(self.__listButton,listrow, 2, qt.Qt.AlignTop|qt.Qt.AlignRight)
@@ -131,7 +131,7 @@ class McaBatchGUI(qt.QWidget):
         self.__configLine.setReadOnly(True)
         self.__configButton = qt.QPushButton(self.__grid)
         self.__configButton.setText('Browse')
-        self.__configButton.clicked[()].connect(self.browseConfig)
+        self.__configButton.clicked.connect(self.browseConfig)
         grid.addWidget(configlabel,         configrow, 0, qt.Qt.AlignLeft)
         grid.addWidget(self.__configLine,   configrow, 1)
         grid.addWidget(self.__configButton, configrow, 2, qt.Qt.AlignLeft)
@@ -148,7 +148,7 @@ class McaBatchGUI(qt.QWidget):
         #self.__outLine.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Maximum, qt.QSizePolicy.Fixed))
         self.__outButton = qt.QPushButton(self.__grid)
         self.__outButton.setText('Browse')
-        self.__outButton.clicked[()].connect(self.browseOutputDir)
+        self.__outButton.clicked.connect(self.browseOutputDir)
         grid.addWidget(outlabel,         outrow, 0, qt.Qt.AlignLeft)
         grid.addWidget(self.__outLine,   outrow, 1)
         grid.addWidget(self.__outButton, outrow, 2, qt.Qt.AlignLeft)
@@ -264,10 +264,10 @@ class McaBatchGUI(qt.QWidget):
             self.__useExisting.setChecked(False)
             vBox.l.addWidget(self.__useExisting)
 
-            self.__overwrite.clicked[()].connect(self.__clickSignal0)
-            self.__useExisting.clicked[()].connect(self.__clickSignal1)
-        self.__concentrationsBox.clicked[()].connect(self.__clickSignal2)
-        self.__htmlBox.clicked[()].connect(self.__clickSignal3)
+            self.__overwrite.clicked.connect(self.__clickSignal0)
+            self.__useExisting.clicked.connect(self.__clickSignal1)
+        self.__concentrationsBox.clicked.connect(self.__clickSignal2)
+        self.__htmlBox.clicked.connect(self.__clickSignal3)
 
         boxStep0   = qt.QWidget(bigbox)
         boxStep0.l = qt.QVBoxLayout(boxStep0)
@@ -420,8 +420,8 @@ class McaBatchGUI(qt.QWidget):
         box.l.addWidget(self.__startButton)
         box.l.addWidget(qt.HorizontalSpacer(box))
         self.__startButton.setText("Start")
-        self.__dismissButton.clicked[()].connect(self.close)
-        self.__startButton.clicked[()].connect(self.start)
+        self.__dismissButton.clicked.connect(self.close)
+        self.__startButton.clicked.connect(self.start)
         self._layout.addWidget(box)
 
     def close(self):
@@ -466,7 +466,7 @@ class McaBatchGUI(qt.QWidget):
                         button = qt.QPushButton(dialog)
                         button.setText("Done")
                         button.setAutoDefault(True)
-                        button.clicked[()].connect(dialog.accept)
+                        button.clicked.connect(dialog.accept)
                         dialog.mainLayout.addWidget(nexusWidget)
                         dialog.mainLayout.addWidget(button)
                         ret = dialog.exec_()
@@ -870,8 +870,8 @@ class McaBatchGUI(qt.QWidget):
                 else:
                     b.pleasePause=1
                     window.pauseButton.setText("Continue")
-            window.pauseButton.clicked[()].connect(pause)
-            window.abortButton.clicked[()].connect(window.close)
+            window.pauseButton.clicked.connect(pause)
+            window.abortButton.clicked.connect(window.close)
             qApp = qt.QApplication.instance()
             qApp.aboutToQuit[()].connect(cleanup)
             self.__window = window
@@ -900,8 +900,8 @@ class McaBatchGUI(qt.QWidget):
                 else:
                     b.pleasePause=1
                     window.pauseButton.setText("Continue")
-            window.pauseButton.clicked[()].connect(pause)
-            window.abortButton.clicked[()].connect(window.close)
+            window.pauseButton.clicked.connect(pause)
+            window.abortButton.clicked.connect(window.close)
             qApp = qt.QApplication.instance()
             qApp.aboutToQuit[()].connect(cleanup)
             window._rootname = "%s"% b._rootname
@@ -1853,8 +1853,8 @@ def main():
             else:
                 b.pleasePause=1
                 window.pauseButton.setText("Continue")
-        window.pauseButton.clicked[()].connect(pause)
-        window.abortButton.clicked[()].connect(window.close)
+        window.pauseButton.clicked.connect(pause)
+        window.abortButton.clicked.connect(window.close)
         app.aboutToQuit[()].connect(cleanup)
         window._rootname = "%s"% b._rootname
         window.show()

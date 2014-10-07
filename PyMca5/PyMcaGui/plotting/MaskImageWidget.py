@@ -956,14 +956,14 @@ class MaskImageWidget(qt.QWidget):
 
         self.mainLayout.addWidget(buttonBox)
 
-        self.addImageButton.clicked[()].connect(self._addImageClicked)
-        self.removeImageButton.clicked[()].connect(self._removeImageClicked)
+        self.addImageButton.clicked.connect(self._addImageClicked)
+        self.removeImageButton.clicked.connect(self._removeImageClicked)
         if replace:
             self.replaceImageButton = qt.QPushButton(buttonBox)
             self.replaceImageButton.setIcon(icon)
             self.replaceImageButton.setText("REPLACE IMAGE")
             self.imageButtonBoxLayout.addWidget(self.replaceImageButton)
-            self.replaceImageButton.clicked[()].connect( \
+            self.replaceImageButton.clicked.connect( \
                                 self._replaceImageClicked)
 
     def _setEraseSelectionMode(self):

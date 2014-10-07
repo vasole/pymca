@@ -309,13 +309,10 @@ class QPyMcaMatplotlibSaveDialog(qt.QDialog):
             self.mainLayout.setRowStretch(1, 1)
 
         self.xLabelLine.editingFinished[()].connect(self._xLabelSlot)
-
         self.yLabelLine.editingFinished[()].connect(self._yLabelSlot)
 
-
-        self.acceptButton.clicked[()].connect(self.accept)
-
-        self.dismissButton.clicked[()].connect(self.reject)
+        self.acceptButton.clicked.connect(self.accept)
+        self.dismissButton.clicked.connect(self.reject)
 
     def exec_(self):
         self.plot.draw()
