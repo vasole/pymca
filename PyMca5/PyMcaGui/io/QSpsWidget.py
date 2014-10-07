@@ -495,8 +495,8 @@ class QSpsWidget(qt.QWidget):
         specLayout.addWidget(refreshButton)
         specLayout.addWidget(closeButton)
 
-        refreshButton.clicked[()].connect(self.refreshSpecList)
-        closeButton.clicked[()].connect(self.closeCurrentSpec)
+        refreshButton.clicked.connect(self.refreshSpecList)
+        closeButton.clicked.connect(self.closeCurrentSpec)
         self.specCombo.activated[str].connect(self.refreshArrayList)
 
         # --- splitter
@@ -534,9 +534,9 @@ class QSpsWidget(qt.QWidget):
         butLayout.addWidget(replaceButton)
         butLayout.setContentsMargins(5, 5, 5, 5)
 
-        addButton.clicked[()].connect(self._addClicked)
-        replaceButton.clicked[()].connect(self.__replaceClicked)
-        removeButton.clicked[()].connect(self.__removeClicked)
+        addButton.clicked.connect(self.__addClicked)
+        replaceButton.clicked.connect(self.__replaceClicked)
+        removeButton.clicked.connect(self.__removeClicked)
 
         # --- main layout
         mainLayout.setContentsMargins(5, 5, 5, 5)
@@ -834,6 +834,9 @@ class QSpsWidget(qt.QWidget):
 
     def currentSelectionList(self):
         return self._addCliked(emit = False)
+
+    def __addClicked(self):
+        return self._addClicked()
 
     def _addClicked(self, emit=True):
         if DEBUG:
