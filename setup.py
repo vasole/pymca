@@ -49,8 +49,13 @@ global USE_SMART_INSTALL_SCRIPTS
 # The sift module implements a patented algorithm. The algorithm can be used
 # for non-commercial research purposes. If you do not want to distribute it
 # with the PyMca sources you just need to delete the PyMca5/PyMcaMath/sift directory.
-PYMCA_DATA_DIR = os.path.join('PyMca5','PyMcaData')
-PYMCA_DOC_DIR = os.path.join('PyMca5','PyMcaData')
+PYMCA_DATA_DIR = os.getenv("PYMCA_DATA_DIR")
+PYMCA_DOC_DIR = os.getenv("PYMCA_DOC_DIR")
+if PYMCA_DATA_DIR is None:
+    PYMCA_DATA_DIR = os.path.join('PyMca5','PyMcaData')
+if PYMCA_DOC_DIR is None:
+    PYMCA_DOC_DIR = os.path.join('PyMca5','PyMcaData')
+
 USE_SMART_INSTALL_SCRIPTS = False
 if "--install-scripts" in sys.argv:
     USE_SMART_INSTALL_SCRIPTS = True
