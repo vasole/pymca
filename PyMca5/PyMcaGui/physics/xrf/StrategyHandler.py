@@ -103,7 +103,7 @@ class StrategyHandlerWidget(qt.QWidget):
         self._descriptionButton = qt.QPushButton(self)
         self._descriptionButton.setText("Hide algorithm description")
         self._descriptionButton.setAutoDefault(False)
-        self._descriptionButton.clicked[()].connect(self.toggleDescription)
+        self._descriptionButton.clicked.connect(self.toggleDescription)
         self._descriptionWidget = qt.QTextEdit(self)
         self._description = qt.QTextDocument()
         self.mainLayout.addWidget(self._descriptionButton)
@@ -648,9 +648,9 @@ class StrategyHandlerDialog(qt.QDialog):
         self.mainLayout.addWidget(hbox)
 
         # connect
-        self.loadButton.clicked[()].connect(self.load)
-        self.dismissButton.clicked[()].connect(self.reject)
-        self.okButton.clicked[()].connect(self.accept)
+        self.loadButton.clicked.connect(self.load)
+        self.dismissButton.clicked.connect(self.reject)
+        self.okButton.clicked.connect(self.accept)
 
     def sizeHint(self):
         return qt.QSize(int(1.5*qt.QDialog.sizeHint(self).width()),
