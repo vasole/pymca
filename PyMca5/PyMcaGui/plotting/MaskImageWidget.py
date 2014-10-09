@@ -1816,11 +1816,7 @@ class MaskImageWidget(qt.QWidget):
         elif ddict['event'] in ["mouseMoved", "MouseAt", "mouseClicked"]:
             if ownsignal:
                 pass
-            if self.__brushMode:
-                if self.graphWidget.graph.isZoomModeEnabled():
-                    return
-                if ddict['button'] != "left":
-                    return
+            if self.graphWidget.infoWidget.isHidden() or self.__brushMode:
                 y, x = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
                                                       xScale=self._xScale,
                                                       yScale=self._yScale,
@@ -1843,6 +1839,13 @@ class MaskImageWidget(qt.QWidget):
                     i2 = i1+1
                 if j1 == j2:
                     j2 = j1+1
+                self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[j1, i1]))
+
+            if self.__brushMode:
+                if self.graphWidget.graph.isZoomModeEnabled():
+                    return
+                if ddict['button'] != "left":
+                    return
                 if self.__selectionMask is None:
                     self.__selectionMask = numpy.zeros(self.__imageData.shape,
                                      numpy.uint8)
@@ -2014,6 +2017,9 @@ class MaskImageWidget(qt.QWidget):
 
     def setInfoText(self, text):
         return self.graphWidget.setInfoText(text)
+
+    def setMouseText(self, text=""):
+        return self.graphWidget.setMouseText(text)
 
 class MaskImageDialog(qt.QDialog):
     def __init__(self, parent=None, image=None, mask=None):

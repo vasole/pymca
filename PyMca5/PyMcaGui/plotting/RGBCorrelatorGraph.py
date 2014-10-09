@@ -319,6 +319,19 @@ class RGBCorrelatorGraph(qt.QWidget):
     def setInfoText(self, text):
         self.infoWidget.label.setText(text)
 
+    def setMouseText(self, text=""):
+        try:
+            if len(text):
+                qt.QToolTip.showText(self.cursor().pos(),
+                                     text, self, qt.QRect())
+            else:
+                qt.QToolTip.hideText()
+        except:
+            print("Error trying to show mouse text <%s>" % text)
+
+    def focusOutEvent(self, ev):
+        qt.QToolTip.hideText()
+
     def infoText(self):
         return self.infoWidget.label.text()
 
