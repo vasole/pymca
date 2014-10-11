@@ -91,8 +91,8 @@ class XiaCorrectionWidget(qt.QWizardPage):
         butLayout.addWidget(buttonDel)
         butLayout.addStretch()
 
-        buttonAdd.clicked[()].connect(self.__add)
-        buttonDel.clicked[()].connect(self.__remove)
+        buttonAdd.clicked.connect(self.__add)
+        buttonDel.clicked.connect(self.__remove)
 
         sumLayout.addWidget(self.sumTable)
         sumLayout.addWidget(butWidget)
@@ -225,9 +225,9 @@ class XiaInputWidget(qt.QWizardPage):
         butFiles= qt.QPushButton("Add Files", butWidget)
         butDirectory= qt.QPushButton("Add Directory", butWidget)
 
-        butRemove.clicked[()].connect(self.__remove)
-        butFiles.clicked[()].connect(self.__addFiles)
-        butDirectory.clicked[()].connect(self.__addDirectory)
+        butRemove.clicked.connect(self.__remove)
+        butFiles.clicked.connect(self.__addFiles)
+        butDirectory.clicked.connect(self.__addDirectory)
 
         butLayout.addWidget(butRemove)
         butLayout.addWidget(butFiles)
@@ -335,8 +335,8 @@ class XiaOutputWidget(qt.QWizardPage):
         topLayout.addWidget(butDirectory, 0, 2)
         topLayout.addWidget(butOutname, 1, 2)
 
-        butDirectory.clicked[()].connect(self.__openDirectory)
-        butOutname.clicked[()].connect(self.__defaultOutname)
+        butDirectory.clicked.connect(self.__openDirectory)
+        butOutname.clicked.connect(self.__defaultOutname)
 
         lineSep= qt.QFrame(self)
         lineSep.setFrameStyle(qt.QFrame.HLine|qt.QFrame.Sunken)
@@ -476,7 +476,7 @@ class XiaCorrectWizard(qt.QWizard):
         finish.setText("Start")
 
         nnext = self.button(self.NextButton)
-        nnext.clicked[()].connect(self.next)
+        nnext.clicked.connect(self.next)
 
         #self.setFinishEnabled(self.output, 1)
         self.output.setFinalPage(True)
