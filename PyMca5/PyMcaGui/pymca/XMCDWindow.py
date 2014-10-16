@@ -28,6 +28,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy, copy
+import sys
 from os.path import splitext, basename, dirname, exists, join as pathjoin
 from PyMca5.PyMcaGui import IconDict
 from PyMca5 import PyMcaDirs
@@ -1027,12 +1028,20 @@ class XMCDScanWindow(sw.ScanWindow):
 
         for fh in [filehandle, seperateFile]:
             if fh is not None:
-                fh.write(bytes(NEWLINE, 'ascii'))
-                fh.write(bytes(header, 'ascii'))
-                for line in outArray:
-                    tmp = delim.join(['%f'%num for num in line])
-                    fh.write(bytes(tmp + NEWLINE, 'ascii'))
-                fh.write(bytes(NEWLINE, 'ascii'))
+                if sys.version < "3.0":
+                    fh.write(bytes(NEWLINE))
+                    fh.write(bytes(header))
+                    for line in outArray:
+                        tmp = delim.join(['%f'%num for num in line])
+                        fh.write(bytes(tmp + NEWLINE))
+                    fh.write(bytes(NEWLINE))
+                else:
+                    fh.write(bytes(NEWLINE, 'ascii'))
+                    fh.write(bytes(header, 'ascii'))
+                    for line in outArray:
+                        tmp = delim.join(['%f'%num for num in line])
+                        fh.write(bytes(tmp + NEWLINE, 'ascii'))
+                    fh.write(bytes(NEWLINE, 'ascii'))
                 fh.close()
 
         # Emit saveOptionsSignal to save config file
