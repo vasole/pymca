@@ -1196,6 +1196,11 @@ class SumRulesWindow(qt.QMainWindow):
                                'Load Sum Rule Analysis Configuration',
                                loadDir,
                                filters)
+
+        if type(filename) in [type(list()), type(tuple())]:
+            if len(filename):
+                filename = filename[0]
+
         if len(filename) == 0:
             return
         else:
@@ -1834,9 +1839,15 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         self.validated = False
 
         self.setWindowTitle('Load Dichorism Data')
-        self.setFilter('Spec Files (*.spec);;'
-                      +'Text Files (*.txt; *.dat);;'
-                      +'All Files (*.*)')
+        if hasattr(self, "setNameFilters"):
+            self.setNameFilters(['Spec Files (*.spec)',
+                                 'Text Files (*.txt; *.dat)',
+                                 'All Files (*.*)'])
+            self.setOption(qt.QFileDialog.DontUseNativeDialog, True)
+        else:
+            self.setFilter('Spec Files (*.spec);;'
+                          +'Text Files (*.txt; *.dat);;'
+                          +'All Files (*.*)')
 
         # Take the QSpecFileWidget class as used
         # in the main window to select data and
