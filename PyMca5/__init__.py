@@ -1,5 +1,5 @@
 import os
-__version__ = "5.0.0-rc1"
+__version__ = "5.0.0~rc2"
 
 def version():
     return __version__
