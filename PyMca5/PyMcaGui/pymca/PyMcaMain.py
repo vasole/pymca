@@ -105,6 +105,12 @@ try:
 except:
     XRFMC_FLAG = False
 
+try:
+    from PyMca5.PyMcaGui.pymca import SumRulesTool
+    SUMRULES_FLAG = True
+except:
+    SUMRULES_FLAG = False
+
 import PyMca5
 from PyMca5.PyMcaGui.pymca.PyMca_help import HelpDict
 from PyMca5 import PyMcaDataDir
@@ -232,6 +238,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.__correlator  = None
             self.__imagingTool = None
             self._xrfmcTool = None
+            self._sumRulesTool = None
             self.openMenu = qt.QMenu()
             self.openMenu.addAction("PyMca Configuration", self.openSource)
             self.openMenu.addAction("Data Source",
@@ -1073,6 +1080,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if XRFMC_FLAG:
             self.menuTools.addAction("XMI-MSIM PyMca",
                                      self._xrfmcPyMca)
+        if SUMRULES_FLAG:
+            self.menuTools.addAction("Sum Rules Tool", self._sumRules)
         if DEBUG:
             print("Fit to Specfile missing")
 
@@ -1092,7 +1101,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.sourceFrame.hide()
 
     def __elementsInfo(self):
-        if self.elementsInfo is None:self.elementsInfo=ElementsInfo.ElementsInfo(None,"Elements Info")
+        if self.elementsInfo is None:
+            self.elementsInfo=ElementsInfo.ElementsInfo(None,"Elements Info")
         if self.elementsInfo.isHidden():
            self.elementsInfo.show()
         self.elementsInfo.raise_()
@@ -1160,6 +1170,11 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             correlator.addBatchDatFile(filelist[0])
         else:
             correlator.addFileList(filelist)
+
+    def __sumRules(self):
+        if self.__correlator is None:
+            self.__correlator = []
+
 
     def _deleteCorrelator(self, ddict):
         n = len(self.__correlator)
@@ -1296,6 +1311,12 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self._xrfmcTool = XRFMCPyMca.XRFMCPyMca()
         self._xrfmcTool.show()
         self._xrfmcTool.raise_()
+
+    def _sumRules(self):
+        if self._sumRulesTool is None:
+            self._sumRulesTool = SumRulesTool.SumRulesWindow()
+        self._sumRulesTool.show()
+        self._sumRulesTool.raise_()
 
     def onOpen(self):
         self.openMenu.exec_(self.cursor().pos())

@@ -33,19 +33,18 @@ from os.path import basename as osPathBasename
 from os.path import join as osPathJoin
 
 import numpy
-from PyMca5.SpecfitFuns import upstep, downstep
+from PyMca5.PyMcaMath.fitting.SpecfitFuns import upstep, downstep
 
-from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
-from PyMca5.PyMcaGui.plotting import PlotWindow as DataDisplay
-from PyMca5.PyMcaPhysics.xrf import Elements
-from PyMca5.PyMcaIO import ConfigDict
+from PyMca5.PyMca import PyMcaQt as qt
+from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
+from PyMca5.PyMca import PlotWindow as DataDisplay
+from PyMca5.PyMca import Elements
+from PyMca5.PyMca import ConfigDict
 
-from PyMca5 import PyMcaDataDir
-from PyMca5.PyMcaCore import PyMcaDirs
-from PyMca5.PyMcaGui.io import QSpecFileWidget
-from PyMca5.PyMcaCore import SpecFileDataSource
-from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
+from PyMca5.PyMca import PyMcaDataDir, PyMcaDirs
+from PyMca5.PyMca import QSpecFileWidget
+from PyMca5.PyMca import SpecFileDataSource
+from PyMca5.PyMcaGui import IconDict
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -461,7 +460,7 @@ class SumRulesWindow(qt.QMainWindow):
                 # electron occupation number
                 self.electronOccupation = qt.QLineEdit('e.g. 3.14')
                 self.electronOccupation.setMaximumWidth(120)
-                electronOccupationValidator = qt.QDoubleValidator()
+                electronOccupationValidator = qt.QDoubleValidator(self.electronOccupation)
                 electronOccupationValidator.setBottom(0.)
                 electronOccupationValidator.setTop(14.)
                 self.electronOccupation.setValidator(electronOccupationValidator)
