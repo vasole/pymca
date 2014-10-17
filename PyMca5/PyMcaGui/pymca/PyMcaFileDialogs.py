@@ -116,7 +116,6 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
                 filetypes += filetype+"\n"
         if getfilter:
             if mode == "OPEN":
-                single = 1
                 if single and hasattr(qt.QFileDialog, "getOpenFileNameAndFilter"):
                     filelist, filterused = qt.QFileDialog.getOpenFileNameAndFilter(parent,
                         message,
