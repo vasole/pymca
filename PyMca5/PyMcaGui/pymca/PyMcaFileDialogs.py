@@ -72,7 +72,7 @@ def getExistingDirectory(parent=None, message=None, mode=None):
     return outdir
 
 def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
-                mode=None, getfilter=None, single=False, currentfilter=None):
+                mode=None, getfilter=None, single=False, currentfilter=None, native=None):
     if filetypelist is None:
         fileTypeList = ['All Files (*)']
     else:
@@ -95,6 +95,10 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
             wdir = PyMcaDirs.outputDir
     else:
         wdir = currentdir
+    if native is None:
+        nativeFileDialogs = PyMcaDirs.nativeFileDialogs
+    else:
+        nativeFileDialogs = native
     if getfilter is None:
         getfilter = False
     if getfilter:
@@ -105,24 +109,42 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
     else:
         native_possible = True
     filterused = None
-    if native_possible and PyMcaDirs.nativeFileDialogs:
+    if native_possible and nativeFileDialogs:
         filetypes = currentfilter+"\n"
         for filetype in fileTypeList:
             if filetype != currentfilter:
                 filetypes += filetype+"\n"
         if getfilter:
             if mode == "OPEN":
-                if single:
+                single = 1
+                if single and hasattr(qt.QFileDialog, "getOpenFileNameAndFilter"):
                     filelist, filterused = qt.QFileDialog.getOpenFileNameAndFilter(parent,
                         message,
                         wdir,
-                        filetypes)
+                        filetypes,
+                        currentfilter)
                     filelist =[filelist]
-                else:
+                elif single:
+                    # PyQt5
+                    filelist, filterused = qt.QFileDialog.getOpenFileName(parent,
+                        message,
+                        wdir,
+                        filetypes,
+                        currentfilter)
+                    filelist =[filelist]
+                elif hasattr(qt.QFileDialog, "getOpenFileNamesAndFilter"):
                     filelist, filterused = qt.QFileDialog.getOpenFileNamesAndFilter(parent,
                         message,
                         wdir,
-                        filetypes)
+                        filetypes,
+                        currentfilter)
+                else:
+                    # PyQt5
+                    filelist, filterused = qt.QFileDialog.getOpenFileNames(parent,
+                        message,
+                        wdir,
+                        filetypes,
+                        currentfilter)
                 filterused = qt.safe_str(filterused)
             else:
                 if QTVERSION < '5.0.0':
@@ -167,7 +189,7 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
                 return [], filterused
             else:
                 return []
-        else:
+        elif filterused is None:
             sample  = qt.safe_str(filelist[0])
             for filetype in fileTypeList:
                 ftype = filetype.replace("(", "")
@@ -250,7 +272,7 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
         PyMcaDirs.outputDir = os.path.dirname(filelist[0])
         if PyMcaDirs.inputDir is None:
             PyMcaDirs.inputDir = os.path.dirname(filelist[0])
-    #do not sort file list
+    #do not sort file list in order to allow the user other choices
     #filelist.sort()
     if getfilter:
         return filelist, filterused

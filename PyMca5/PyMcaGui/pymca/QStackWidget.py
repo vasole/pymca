@@ -1045,7 +1045,7 @@ if __name__ == "__main__":
     options = ''
     longoptions = ["fileindex=","old",
                    "filepattern=", "begin=", "end=", "increment=",
-                   "nativefiledialogs=", "imagestack="]
+                   "nativefiledialogs=", "imagestack=", "image=",]
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1060,6 +1060,7 @@ if __name__ == "__main__":
     end = None
     imagestack=None
     increment=None
+    PyMcaDirs.nativeFileDialogs=True
     for opt, arg in opts:
         if opt in '--begin':
             if "," in arg:
@@ -1081,7 +1082,7 @@ if __name__ == "__main__":
             filepattern = filepattern.replace("'","")
         elif opt in '--fileindex':
             fileindex = int(arg)
-        elif opt in '--imagestack':
+        elif opt in ['--imagestack', "--image"]:
             imagestack = int(arg)
         elif opt in '--nativefiledialogs':
             if int(arg):

@@ -34,6 +34,7 @@ import copy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDirs
 from PyMca5 import DataObject
+from PyMca5.PyMcaGui.pymca import PyMcaFileDialogs
 from PyMca5.PyMcaIO import MRCMap
 from PyMca5.PyMcaIO import OmnicMap
 from PyMca5.PyMcaIO import OpusDPTMap
@@ -298,90 +299,30 @@ class StackSelector(object):
             getfilter = False
         wdir = PyMcaDirs.inputDir
         filterused = None
-        if QTVERSION < '4.0.0':
-            if sys.platform != 'darwin':
-                filetypes = ""
-                for filetype in fileTypeList:
-                    filetypes += filetype + "\n"
-                filelist = qt.QFileDialog.getOpenFileNames(filetypes,
-                            wdir,
-                            self.parent,
-                            message,
-                            message)
-                if not len(filelist):
-                    if getfilter:
-                        return [], filterused
-                    else:
-                        return []
+        if getfilter:
+            filelist, filterused = PyMcaFileDialogs.getFileList(self.parent,
+                            filetypelist=fileTypeList,
+                            mode="OPEN",
+                            message=message,
+                            currentdir=wdir,
+                            getfilter=True,
+                            single=False,
+                            native=True)
         else:
-            #if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
-            if (PyMcaDirs.nativeFileDialogs) and (not getfilter):
-                filetypes = ""
-                for filetype in fileTypeList:
-                    filetypes += filetype + "\n"
-                filelist = qt.QFileDialog.getOpenFileNames(self.parent,
-                        message,
-                        wdir,
-                        filetypes)
-                if not len(filelist):
-                    if getfilter:
-                        return [], filterused
-                    else:
-                        return []
-                else:
-                    sample = qt.safe_str(filelist[0])
-                    for filetype in fileTypeList:
-                        ftype = filetype.replace("(", "")
-                        ftype = ftype.replace(")", "")
-                        extensions = ftype.split()[2:]
-                        for extension in extensions:
-                            if sample.endswith(extension[-3:]):
-                                filterused = filetype
-                                break
-            else:
-                fdialog = qt.QFileDialog(self.parent)
-                fdialog.setModal(True)
-                fdialog.setWindowTitle(message)
-                if hasattr(qt, "QStringList"):
-                    strlist = qt.QStringList()
-                else:
-                    strlist = []
-                for filetype in fileTypeList:
-                    strlist.append(filetype)
-                fdialog.setFilters(strlist)
-                fdialog.setFileMode(fdialog.ExistingFiles)
-                fdialog.setDirectory(wdir)
-                if QTVERSION > '4.3.0':
-                    history = fdialog.history()
-                    if len(history) > 6:
-                        fdialog.setHistory(history[-6:])
-                ret = fdialog.exec_()
-                if ret == qt.QDialog.Accepted:
-                    filelist = fdialog.selectedFiles()
-                    if getfilter:
-                        filterused = qt.safe_str(fdialog.selectedFilter())
-                    fdialog.close()
-                    del fdialog
-                else:
-                    fdialog.close()
-                    del fdialog
-                    if getfilter:
-                        return [], filterused
-                    else:
-                        return []
-        if sys.version < '3.0':
-            try:
-                filelist = [qt.safe_str(x) for x in filelist]
-            except UnicodeEncodeError:
-                filelist = [unicode(x) for x in filelist]
+            filelist = PyMcaFileDialogs.getFileList(self.parent,
+                            filetypelist=fileTypeList,
+                            mode="OPEN",
+                            message=message,
+                            currentdir=wdir,
+                            getfilter=False,
+                            single=False,
+                            native=True)
         if not(len(filelist)):
             return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
         if PyMcaDirs.outputDir is None:
             PyMcaDirs.outputDir = os.path.dirname(filelist[0])
 
-        #This should not be there in order to allow the user other choices
-        #filelist.sort()
         if getfilter:
             return filelist, filterused
         else:
