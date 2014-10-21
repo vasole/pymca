@@ -29,7 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
-from .. import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 DEBUG = 0
 __revision__="$Revision: 1.7 $"
 
