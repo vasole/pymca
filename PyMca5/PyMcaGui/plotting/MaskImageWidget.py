@@ -1837,8 +1837,16 @@ class MaskImageWidget(qt.QWidget):
                 j2 = min(int(round(ymax)), r)
                 if i1 == i2:
                     i2 = i1+1
+                elif (i2 - i1) > self.__brushWidth:
+                    # python 3 implements banker's rounding
+                    # test case ddict['x'] = 23.3 gives:
+                    # i1 = 22 and i2 = 24 in python 3
+                    # i1 = 23 and i2 = 24 in python 2
+                    i1 = i2 - self.__brushWidth
                 if j1 == j2:
                     j2 = j1+1
+                elif (j2 - j1) > self.__brushWidth:
+                    j1 = j2 - self.__brushWidth
                 self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[j1, i1]))
 
             if self.__brushMode:
