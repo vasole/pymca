@@ -4,7 +4,7 @@ PyMcaPlugins Package
 :mod:`AlignmentScanPlugin` Module
 ---------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.AlignmentScanPlugin
+.. automodule:: PyMca5.PyMcaPlugins.AlignmentScanPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ PyMcaPlugins Package
 :mod:`BackgroundScanPlugin` Module
 ----------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.BackgroundScanPlugin
+.. automodule:: PyMca5.PyMcaPlugins.BackgroundScanPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ PyMcaPlugins Package
 :mod:`BackgroundStackPlugin` Module
 -----------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.BackgroundStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.BackgroundStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ PyMcaPlugins Package
 :mod:`CalculationThread` Module
 -------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.CalculationThread
+.. automodule:: PyMca5.PyMcaPlugins.CalculationThread
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ PyMcaPlugins Package
 :mod:`ExternalImagesStackPlugin` Module
 ---------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.ExternalImagesStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.ExternalImagesStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ PyMcaPlugins Package
 :mod:`FastXRFLinearFitStackPlugin` Module
 -----------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.FastXRFLinearFitStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.FastXRFLinearFitStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,7 +52,7 @@ PyMcaPlugins Package
 :mod:`FitStackPlugin` Module
 ----------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.FitStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.FitStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -60,7 +60,7 @@ PyMcaPlugins Package
 :mod:`ImageAlignmentStackPlugin` Module
 ---------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.ImageAlignmentStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.ImageAlignmentStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -68,7 +68,7 @@ PyMcaPlugins Package
 :mod:`MathPlugins` Module
 -------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.MathPlugins
+.. automodule:: PyMca5.PyMcaPlugins.MathPlugins
     :members:
     :undoc-members:
     :show-inheritance:
@@ -76,7 +76,7 @@ PyMcaPlugins Package
 :mod:`MedianFilterScanDeglitchPlugin` Module
 --------------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.MedianFilterScanDeglitchPlugin
+.. automodule:: PyMca5.PyMcaPlugins.MedianFilterScanDeglitchPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -84,7 +84,7 @@ PyMcaPlugins Package
 :mod:`MedianFilterScanPlugin` Module
 ------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.MedianFilterScanPlugin
+.. automodule:: PyMca5.PyMcaPlugins.MedianFilterScanPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -92,7 +92,7 @@ PyMcaPlugins Package
 :mod:`MedianFilterStackPlugin` Module
 -------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.MedianFilterStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.MedianFilterStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -100,7 +100,7 @@ PyMcaPlugins Package
 :mod:`MotorInfoPlugin` Module
 -----------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.MotorInfoPlugin
+.. automodule:: PyMca5.PyMcaPlugins.MotorInfoPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -108,7 +108,7 @@ PyMcaPlugins Package
 :mod:`MotorInfoWindow` Module
 -----------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.MotorInfoWindow
+.. automodule:: PyMca5.PyMcaPlugins.MotorInfoWindow
     :members:
     :undoc-members:
     :show-inheritance:
@@ -116,7 +116,7 @@ PyMcaPlugins Package
 :mod:`MultipleScanToMeshPlugin` Module
 --------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.MultipleScanToMeshPlugin
+.. automodule:: PyMca5.PyMcaPlugins.MultipleScanToMeshPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -124,7 +124,7 @@ PyMcaPlugins Package
 :mod:`NNMAStackPlugin` Module
 -----------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.NNMAStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.NNMAStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -132,7 +132,7 @@ PyMcaPlugins Package
 :mod:`NormalizationPlugins` Module
 ----------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.NormalizationPlugins
+.. automodule:: PyMca5.PyMcaPlugins.NormalizationPlugins
     :members:
     :undoc-members:
     :show-inheritance:
@@ -140,7 +140,7 @@ PyMcaPlugins Package
 :mod:`PCAStackPlugin` Module
 ----------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.PCAStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.PCAStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -148,7 +148,7 @@ PyMcaPlugins Package
 :mod:`Plugin1DBase` Module
 --------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.Plugin1DBase
+.. automodule:: PyMca5.PyMcaPlugins.Plugin1DBase
     :members:
     :undoc-members:
     :show-inheritance:
@@ -156,7 +156,7 @@ PyMcaPlugins Package
 :mod:`ROIStackPlugin` Module
 ----------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.ROIStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.ROIStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -164,7 +164,7 @@ PyMcaPlugins Package
 :mod:`RegularMeshPlugin` Module
 -------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.RegularMeshPlugin
+.. automodule:: PyMca5.PyMcaPlugins.RegularMeshPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -172,7 +172,7 @@ PyMcaPlugins Package
 :mod:`ReverseStackPlugin` Module
 --------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.ReverseStackPlugin
+.. automodule:: PyMca5.PyMcaPlugins.ReverseStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -180,7 +180,7 @@ PyMcaPlugins Package
 :mod:`StackAxesPlugin` Module
 -----------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.StackAxesPlugin
+.. automodule:: PyMca5.PyMcaPlugins.StackAxesPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -188,7 +188,7 @@ PyMcaPlugins Package
 :mod:`StackBrowserPlugin` Module
 --------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.StackBrowserPlugin
+.. automodule:: PyMca5.PyMcaPlugins.StackBrowserPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -196,7 +196,7 @@ PyMcaPlugins Package
 :mod:`StackNormalizationPlugin` Module
 --------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.StackNormalizationPlugin
+.. automodule:: PyMca5.PyMcaPlugins.StackNormalizationPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -204,7 +204,7 @@ PyMcaPlugins Package
 :mod:`StackPluginBase` Module
 -----------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.StackPluginBase
+.. automodule:: PyMca5.PyMcaPlugins.StackPluginBase
     :members:
     :undoc-members:
     :show-inheritance:
@@ -212,7 +212,7 @@ PyMcaPlugins Package
 :mod:`StackScanWindowPlugin` Module
 -----------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.StackScanWindowPlugin
+.. automodule:: PyMca5.PyMcaPlugins.StackScanWindowPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -220,15 +220,15 @@ PyMcaPlugins Package
 :mod:`XASScanNormalizationPlugin` Module
 ----------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.XASScanNormalizationPlugin
+.. automodule:: PyMca5.PyMcaPlugins.XASScanNormalizationPlugin
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`XASSelfAttenuationPlugin` Module
+:mod:`XASSelfattenuationPlugin` Module
 --------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.XASSelfAttenuationPlugin
+.. automodule:: PyMca5.PyMcaPlugins.XASSelfattenuationPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -236,7 +236,7 @@ PyMcaPlugins Package
 :mod:`XASStackNormalizationPlugin` Module
 -----------------------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.XASStackNormalizationPlugin
+.. automodule:: PyMca5.PyMcaPlugins.XASStackNormalizationPlugin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -244,7 +244,7 @@ PyMcaPlugins Package
 :mod:`XMCDPlugin` Module
 ------------------------
 
-.. automodule:: PyMca.PyMcaPlugins.XMCDPlugin
+.. automodule:: PyMca5.PyMcaPlugins.XMCDPlugin
     :members:
     :undoc-members:
     :show-inheritance:

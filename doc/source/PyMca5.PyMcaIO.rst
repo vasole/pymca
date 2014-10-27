@@ -1,11 +1,11 @@
-PyMca.PyMcaIO Package
+PyMca5.PyMcaIO Package
 =====================
 
 
 :mod:`APSMEDFileParser` Module
 ------------------------------
 
-.. automodule:: PyMca.PyMcaIO.APSMEDFileParser
+.. automodule:: PyMca5.PyMcaIO.APSMEDFileParser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -13,7 +13,7 @@ PyMca.PyMcaIO Package
 :mod:`AifiraMap` Module
 -----------------------
 
-.. automodule:: PyMca.PyMcaIO.AifiraMap
+.. automodule:: PyMca5.PyMcaIO.AifiraMap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -21,7 +21,7 @@ PyMca.PyMcaIO Package
 :mod:`ArraySave` Module
 -----------------------
 
-.. automodule:: PyMca.PyMcaIO.ArraySave
+.. automodule:: PyMca5.PyMcaIO.ArraySave
     :members:
     :undoc-members:
     :show-inheritance:
@@ -29,7 +29,7 @@ PyMca.PyMcaIO Package
 :mod:`BAXSCSVFileParser` Module
 -------------------------------
 
-.. automodule:: PyMca.PyMcaIO.BAXSCSVFileParser
+.. automodule:: PyMca5.PyMcaIO.BAXSCSVFileParser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -37,7 +37,7 @@ PyMca.PyMcaIO Package
 :mod:`EDFStack` Module
 ----------------------
 
-.. automodule:: PyMca.PyMcaIO.EDFStack
+.. automodule:: PyMca5.PyMcaIO.EDFStack
     :members:
     :undoc-members:
     :show-inheritance:
@@ -45,7 +45,7 @@ PyMca.PyMcaIO Package
 :mod:`EdfFile` Module
 ---------------------
 
-.. automodule:: PyMca.PyMcaIO.EdfFile
+.. automodule:: PyMca5.PyMcaIO.EdfFile
     :members:
     :undoc-members:
     :show-inheritance:
@@ -53,7 +53,7 @@ PyMca.PyMcaIO Package
 :mod:`Fit2DChiFileParser` Module
 --------------------------------
 
-.. automodule:: PyMca.PyMcaIO.Fit2DChiFileParser
+.. automodule:: PyMca5.PyMcaIO.Fit2DChiFileParser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -61,7 +61,7 @@ PyMca.PyMcaIO Package
 :mod:`LuciaMap` Module
 ----------------------
 
-.. automodule:: PyMca.PyMcaIO.LuciaMap
+.. automodule:: PyMca5.PyMcaIO.LuciaMap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -69,7 +69,7 @@ PyMca.PyMcaIO Package
 :mod:`MEDFile` Module
 ---------------------
 
-.. automodule:: PyMca.PyMcaIO.MEDFile
+.. automodule:: PyMca5.PyMcaIO.MEDFile
     :members:
     :undoc-members:
     :show-inheritance:
@@ -77,7 +77,7 @@ PyMca.PyMcaIO Package
 :mod:`MRCMap` Module
 --------------------
 
-.. automodule:: PyMca.PyMcaIO.MRCMap
+.. automodule:: PyMca5.PyMcaIO.MRCMap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -85,7 +85,7 @@ PyMca.PyMcaIO Package
 :mod:`MarCCD` Module
 --------------------
 
-.. automodule:: PyMca.PyMcaIO.MarCCD
+.. automodule:: PyMca5.PyMcaIO.MarCCD
     :members:
     :undoc-members:
     :show-inheritance:
@@ -93,7 +93,7 @@ PyMca.PyMcaIO Package
 :mod:`OmnicMap` Module
 ----------------------
 
-.. automodule:: PyMca.PyMcaIO.OmnicMap
+.. automodule:: PyMca5.PyMcaIO.OmnicMap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -101,7 +101,7 @@ PyMca.PyMcaIO Package
 :mod:`OpusDPTMap` Module
 ------------------------
 
-.. automodule:: PyMca.PyMcaIO.OpusDPTMap
+.. automodule:: PyMca5.PyMcaIO.OpusDPTMap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -109,7 +109,7 @@ PyMca.PyMcaIO Package
 :mod:`PilatusCBF` Module
 ------------------------
 
-.. automodule:: PyMca.PyMcaIO.PilatusCBF
+.. automodule:: PyMca5.PyMcaIO.PilatusCBF
     :members:
     :undoc-members:
     :show-inheritance:
@@ -117,7 +117,7 @@ PyMca.PyMcaIO Package
  :mod:`SpecFileAbstractClass` Module
 -----------------------------------
 
-.. automodule:: PyMca.PyMcaIO.SpecFileAbstractClass
+.. automodule:: PyMca5.PyMcaIO.SpecFileAbstractClass
     :members:
     :undoc-members:
     :show-inheritance:
@@ -125,7 +125,7 @@ PyMca.PyMcaIO Package
 :mod:`SPXFileParser` Module
 ---------------------------
 
-.. automodule:: PyMca.PyMcaIO.SPXFileParser
+.. automodule:: PyMca5.PyMcaIO.SPXFileParser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -133,7 +133,7 @@ PyMca.PyMcaIO Package
 :mod:`SRSFileParser` Module
 ---------------------------
 
-.. automodule:: PyMca.PyMcaIO.SRSFileParser
+.. automodule:: PyMca5.PyMcaIO.SRSFileParser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -141,7 +141,7 @@ PyMca.PyMcaIO Package
 :mod:`SupaVisioMap` Module
 --------------------------
 
-.. automodule:: PyMca.PyMcaIO.SupaVisioMap
+.. automodule:: PyMca5.PyMcaIO.SupaVisioMap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -149,7 +149,7 @@ PyMca.PyMcaIO Package
 :mod:`TextImageStack` Module
 ----------------------------
 
-.. automodule:: PyMca.PyMcaIO.TextImageStack
+.. automodule:: PyMca5.PyMcaIO.TextImageStack
     :members:
     :undoc-members:
     :show-inheritance:
@@ -157,7 +157,7 @@ PyMca.PyMcaIO Package
 :mod:`TiffIO` Module
 --------------------
 
-.. automodule:: PyMca.PyMcaIO.TiffIO
+.. automodule:: PyMca5.PyMcaIO.TiffIO
     :members:
     :undoc-members:
     :show-inheritance:
@@ -165,7 +165,7 @@ PyMca.PyMcaIO Package
 :mod:`TiffStack` Module
 -----------------------
 
-.. automodule:: PyMca.PyMcaIO.TiffStack
+.. automodule:: PyMca5.PyMcaIO.TiffStack
     :members:
     :undoc-members:
     :show-inheritance:
@@ -173,7 +173,7 @@ PyMca.PyMcaIO Package
 :mod:`specfilewrapper` Module
 -----------------------------
 
-.. automodule:: PyMca.PyMcaIO.specfilewrapper
+.. automodule:: PyMca5.PyMcaIO.specfilewrapper
     :members:
     :undoc-members:
     :show-inheritance:
@@ -181,7 +181,7 @@ PyMca.PyMcaIO Package
 :mod:`spswrap` Module
 ---------------------
 
-.. automodule:: PyMca.PyMcaIO.spswrap
+.. automodule:: PyMca5.PyMcaIO.spswrap
     :members:
     :undoc-members:
     :show-inheritance:

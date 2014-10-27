@@ -4,7 +4,7 @@ Object3D Package
 :mod:`Object3D` Package
 -----------------------
 
-.. automodule:: PyMca.Object3D
+.. automodule:: PyMca5.Object3D
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ Object3D Package
 :mod:`ClippingPlaneConfiguration` Module
 ----------------------------------------
 
-.. automodule:: PyMca.Object3D.ClippingPlaneConfiguration
+.. automodule:: PyMca5.Object3D.ClippingPlaneConfiguration
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ Object3D Package
 :mod:`GLToolBar` Module
 -----------------------
 
-.. automodule:: PyMca.Object3D.GLToolBar
+.. automodule:: PyMca5.Object3D.GLToolBar
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ Object3D Package
 :mod:`GLWidgetCachePixmap` Module
 ---------------------------------
 
-.. automodule:: PyMca.Object3D.GLWidgetCachePixmap
+.. automodule:: PyMca5.Object3D.GLWidgetCachePixmap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ Object3D Package
 :mod:`HorizontalSpacer` Module
 ------------------------------
 
-.. automodule:: PyMca.Object3D.HorizontalSpacer
+.. automodule:: PyMca5.Object3D.HorizontalSpacer
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ Object3D Package
 :mod:`Object3DBase` Module
 --------------------------
 
-.. automodule:: PyMca.Object3D.Object3DBase
+.. automodule:: PyMca5.Object3D.Object3DBase
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,7 +52,7 @@ Object3D Package
 :mod:`Object3DColormap` Module
 ------------------------------
 
-.. automodule:: PyMca.Object3D.Object3DColormap
+.. automodule:: PyMca5.Object3D.Object3DColormap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -60,7 +60,7 @@ Object3D Package
 :mod:`Object3DConfig` Module
 ----------------------------
 
-.. automodule:: PyMca.Object3D.Object3DConfig
+.. automodule:: PyMca5.Object3D.Object3DConfig
     :members:
     :undoc-members:
     :show-inheritance:
@@ -68,7 +68,7 @@ Object3D Package
 :mod:`Object3DCoordinates` Module
 ---------------------------------
 
-.. automodule:: PyMca.Object3D.Object3DCoordinates
+.. automodule:: PyMca5.Object3D.Object3DCoordinates
     :members:
     :undoc-members:
     :show-inheritance:
@@ -76,7 +76,7 @@ Object3D Package
 :mod:`Object3DDirs` Module
 --------------------------
 
-.. automodule:: PyMca.Object3D.Object3DDirs
+.. automodule:: PyMca5.Object3D.Object3DDirs
     :members:
     :undoc-members:
     :show-inheritance:
@@ -84,7 +84,7 @@ Object3D Package
 :mod:`Object3DFileDialogs` Module
 ---------------------------------
 
-.. automodule:: PyMca.Object3D.Object3DFileDialogs
+.. automodule:: PyMca5.Object3D.Object3DFileDialogs
     :members:
     :undoc-members:
     :show-inheritance:
@@ -92,7 +92,7 @@ Object3D Package
 :mod:`Object3DIcons` Module
 ---------------------------
 
-.. automodule:: PyMca.Object3D.Object3DIcons
+.. automodule:: PyMca5.Object3D.Object3DIcons
     :members:
     :undoc-members:
     :show-inheritance:
@@ -100,7 +100,7 @@ Object3D Package
 :mod:`Object3DMovement` Module
 ------------------------------
 
-.. automodule:: PyMca.Object3D.Object3DMovement
+.. automodule:: PyMca5.Object3D.Object3DMovement
     :members:
     :undoc-members:
     :show-inheritance:
@@ -108,7 +108,7 @@ Object3D Package
 :mod:`Object3DPrintPreview` Module
 ----------------------------------
 
-.. automodule:: PyMca.Object3D.Object3DPrintPreview
+.. automodule:: PyMca5.Object3D.Object3DPrintPreview
     :members:
     :undoc-members:
     :show-inheritance:
@@ -116,7 +116,7 @@ Object3D Package
 :mod:`Object3DPrivateConfig` Module
 -----------------------------------
 
-.. automodule:: PyMca.Object3D.Object3DPrivateConfig
+.. automodule:: PyMca5.Object3D.Object3DPrivateConfig
     :members:
     :undoc-members:
     :show-inheritance:
@@ -124,7 +124,7 @@ Object3D Package
 :mod:`Object3DProperties` Module
 --------------------------------
 
-.. automodule:: PyMca.Object3D.Object3DProperties
+.. automodule:: PyMca5.Object3D.Object3DProperties
     :members:
     :undoc-members:
     :show-inheritance:
@@ -132,7 +132,7 @@ Object3D Package
 :mod:`Object3DQt` Module
 ------------------------
 
-.. automodule:: PyMca.Object3D.Object3DQt
+.. automodule:: PyMca5.Object3D.Object3DQt
     :members:
     :undoc-members:
     :show-inheritance:
@@ -140,7 +140,7 @@ Object3D Package
 :mod:`Object3DRedBookFont` Module
 ---------------------------------
 
-.. automodule:: PyMca.Object3D.Object3DRedBookFont
+.. automodule:: PyMca5.Object3D.Object3DRedBookFont
     :members:
     :undoc-members:
     :show-inheritance:
@@ -148,7 +148,7 @@ Object3D Package
 :mod:`Object3DScene` Module
 ---------------------------
 
-.. automodule:: PyMca.Object3D.Object3DScene
+.. automodule:: PyMca5.Object3D.Object3DScene
     :members:
     :undoc-members:
     :show-inheritance:
@@ -156,7 +156,7 @@ Object3D Package
 :mod:`ObjectTree` Module
 ------------------------
 
-.. automodule:: PyMca.Object3D.ObjectTree
+.. automodule:: PyMca5.Object3D.ObjectTree
     :members:
     :undoc-members:
     :show-inheritance:
@@ -164,7 +164,7 @@ Object3D Package
 :mod:`PrivateConfigTools` Module
 --------------------------------
 
-.. automodule:: PyMca.Object3D.PrivateConfigTools
+.. automodule:: PyMca5.Object3D.PrivateConfigTools
     :members:
     :undoc-members:
     :show-inheritance:
@@ -172,7 +172,7 @@ Object3D Package
 :mod:`Scene` Module
 -------------------
 
-.. automodule:: PyMca.Object3D.Scene
+.. automodule:: PyMca5.Object3D.Scene
     :members:
     :undoc-members:
     :show-inheritance:
@@ -180,7 +180,7 @@ Object3D Package
 :mod:`SceneControl` Module
 --------------------------
 
-.. automodule:: PyMca.Object3D.SceneControl
+.. automodule:: PyMca5.Object3D.SceneControl
     :members:
     :undoc-members:
     :show-inheritance:
@@ -188,7 +188,7 @@ Object3D Package
 :mod:`SceneCoordinates` Module
 ------------------------------
 
-.. automodule:: PyMca.Object3D.SceneCoordinates
+.. automodule:: PyMca5.Object3D.SceneCoordinates
     :members:
     :undoc-members:
     :show-inheritance:
@@ -196,7 +196,7 @@ Object3D Package
 :mod:`SceneGLWidget` Module
 ---------------------------
 
-.. automodule:: PyMca.Object3D.SceneGLWidget
+.. automodule:: PyMca5.Object3D.SceneGLWidget
     :members:
     :undoc-members:
     :show-inheritance:
@@ -204,7 +204,7 @@ Object3D Package
 :mod:`SceneGLWindow` Module
 ---------------------------
 
-.. automodule:: PyMca.Object3D.SceneGLWindow
+.. automodule:: PyMca5.Object3D.SceneGLWindow
     :members:
     :undoc-members:
     :show-inheritance:
@@ -212,7 +212,7 @@ Object3D Package
 :mod:`SceneManager` Module
 --------------------------
 
-.. automodule:: PyMca.Object3D.SceneManager
+.. automodule:: PyMca5.Object3D.SceneManager
     :members:
     :undoc-members:
     :show-inheritance:
@@ -220,7 +220,7 @@ Object3D Package
 :mod:`SceneTree` Module
 -----------------------
 
-.. automodule:: PyMca.Object3D.SceneTree
+.. automodule:: PyMca5.Object3D.SceneTree
     :members:
     :undoc-members:
     :show-inheritance:
@@ -228,7 +228,7 @@ Object3D Package
 :mod:`SceneWidget` Module
 -------------------------
 
-.. automodule:: PyMca.Object3D.SceneWidget
+.. automodule:: PyMca5.Object3D.SceneWidget
     :members:
     :undoc-members:
     :show-inheritance:
@@ -236,23 +236,7 @@ Object3D Package
 :mod:`VerticalSpacer` Module
 ----------------------------
 
-.. automodule:: PyMca.Object3D.VerticalSpacer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`cx_setup` Module
-----------------------
-
-.. automodule:: PyMca.Object3D.cx_setup
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`setup` Module
--------------------
-
-.. automodule:: PyMca.Object3D.setup
+.. automodule:: PyMca5.Object3D.VerticalSpacer
     :members:
     :undoc-members:
     :show-inheritance:
@@ -262,5 +246,5 @@ Subpackages
 
 .. toctree::
 
-    PyMca.Object3D.Object3DPlugins
+    PyMca5.Object3D.Object3DPlugins
 

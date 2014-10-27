@@ -4,7 +4,7 @@ Object3DPlugins Package
 :mod:`ChimeraStack` Module
 --------------------------
 
-.. automodule:: PyMca.Object3D.Object3DPlugins.ChimeraStack
+.. automodule:: PyMca5.Object3D.Object3DPlugins.ChimeraStack
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ Object3DPlugins Package
 :mod:`Object3DMesh` Module
 --------------------------
 
-.. automodule:: PyMca.Object3D.Object3DPlugins.Object3DMesh
+.. automodule:: PyMca5.Object3D.Object3DPlugins.Object3DMesh
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ Object3DPlugins Package
 :mod:`Object3DMeshConfig` Module
 --------------------------------
 
-.. automodule:: PyMca.Object3D.Object3DPlugins.Object3DMeshConfig
+.. automodule:: PyMca5.Object3D.Object3DPlugins.Object3DMeshConfig
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ Object3DPlugins Package
 :mod:`Object3DPixmap` Module
 ----------------------------
 
-.. automodule:: PyMca.Object3D.Object3DPlugins.Object3DPixmap
+.. automodule:: PyMca5.Object3D.Object3DPlugins.Object3DPixmap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ Object3DPlugins Package
 :mod:`Object3DStack` Module
 ---------------------------
 
-.. automodule:: PyMca.Object3D.Object3DPlugins.Object3DStack
+.. automodule:: PyMca5.Object3D.Object3DPlugins.Object3DStack
     :members:
     :undoc-members:
     :show-inheritance:

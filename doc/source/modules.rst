@@ -1,7 +1,7 @@
-PyMca
+PyMca5
 =====
 
 .. toctree::
    :maxdepth: 4
 
-   PyMca
+   PyMca5

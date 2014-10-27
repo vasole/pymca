@@ -4,7 +4,7 @@ EPDL97 Package
 :mod:`EPDL97` Package
 ---------------------
 
-.. automodule:: PyMca.EPDL97
+.. automodule:: PyMca5.EPDL97
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ EPDL97 Package
 :mod:`EADLParser` Module
 ------------------------
 
-.. automodule:: PyMca.EPDL97.EADLParser
+.. automodule:: PyMca5.EPDL97.EADLParser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ EPDL97 Package
 :mod:`EADLSubshells` Module
 ---------------------------
 
-.. automodule:: PyMca.EPDL97.EADLSubshells
+.. automodule:: PyMca5.EPDL97.EADLSubshells
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ EPDL97 Package
 :mod:`EPDL97Parser` Module
 --------------------------
 
-.. automodule:: PyMca.EPDL97.EPDL97Parser
+.. automodule:: PyMca5.EPDL97.EPDL97Parser
     :members:
     :undoc-members:
     :show-inheritance:
