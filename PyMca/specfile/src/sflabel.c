@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -344,7 +344,7 @@ SfAllMotors( SpecFile *sf, long index, char ***names, int *error )
     /*
      * else
      */
-     no_lines =  SfFileHeader(sf, index,"O",&lines,error);
+     no_lines =  SfHeader(sf, index,"O",&lines,error);
      if (no_lines == -1 || no_lines == 0 ) {
          *names = (char **) NULL;
           return(-1);

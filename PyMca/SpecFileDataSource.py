@@ -216,8 +216,16 @@ class SpecFileDataSource:
         except: info["Lines"] = 0
         try: info["Date"] = scandata.date()
         except: info["Date"] = None
-        try: info["MotorNames"] = sourceObject.allmotors()
-        except: info["MotorNames"] = None
+        if hasattr(scandata, "allmotors"):
+            try:
+                info["MotorNames"] = scandata.allmotors()
+            except:
+                info["MotorNames"] = None
+        else:
+            try:
+                info["MotorNames"] = sourceObject.allmotors()
+            except:
+                info["MotorNames"] = None
         try: info["MotorValues"] = scandata.allmotorpos()
         except: info["MotorValues"] = None
         try: info["LabelNames"] = scandata.alllabels()

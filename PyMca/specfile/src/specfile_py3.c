@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -441,6 +441,7 @@ static PyObject   * scandata_data         (PyObject *self,PyObject *args);
 static PyObject   * scandata_dataline     (PyObject *self,PyObject *args);
 static PyObject   * scandata_datacol      (PyObject *self,PyObject *args);
 static PyObject   * scandata_alllabels    (PyObject *self,PyObject *args);
+static PyObject   * scandata_allmotors    (PyObject *self,PyObject *args);
 static PyObject   * scandata_allmotorpos  (PyObject *self,PyObject *args);
 static PyObject   * scandata_motorpos     (PyObject *self,PyObject *args);
 static PyObject   * scandata_hkl          (PyObject *self,PyObject *args);
@@ -461,6 +462,7 @@ static struct PyMethodDef  scandata_methods[] = {
    {"dataline",    scandata_dataline,    1},
    {"datacol",     scandata_datacol,     1},
    {"alllabels",   scandata_alllabels,   1},
+   {"allmotors",   scandata_allmotors,   1},
    {"allmotorpos", scandata_allmotorpos, 1},
    {"motorpos",    scandata_motorpos,    1},
    {"hkl",         scandata_hkl,         1},
@@ -710,6 +712,30 @@ scandata_alllabels  (PyObject *self,PyObject *args)
     t = PyList_New(nb_labels);
     for ( i = 0 ;i<nb_labels;i++) {
        x = PyUnicode_FromString(labels[i]);
+       PyList_SetItem(t,i,x);
+    }
+
+    return t;
+}
+
+static PyObject * 
+scandata_allmotors  (PyObject *self,PyObject *args)
+{
+    int error,i;
+    char **motors;
+    long nb_motors;
+    PyObject *t,*x;
+
+    scandataobject *v = (scandataobject *) self;
+
+    if (!PyArg_ParseTuple(args, ""))   
+        return NULL;
+
+    nb_motors = SfAllMotors((v->file)->sf,v->index,&motors,&error);
+
+    t = PyList_New(nb_motors);
+    for ( i = 0 ;i<nb_motors;i++) {
+       x = PyUnicode_FromString(motors[i]);
        PyList_SetItem(t,i,x);
     }
 
