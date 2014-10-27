@@ -587,6 +587,7 @@ class Plot(PlotBase.PlotBase):
         :type just_legend: boolean
         :return: legend of the active curve or list [x, y, legend, info]
         :rtype: string or list
+
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
@@ -616,6 +617,7 @@ class Plot(PlotBase.PlotBase):
         :type just_legend: boolean
         :return: legend of the active image or list [data, legend, info, xScale, yScale, z]
         :rtype: string or list
+
         Function to access the plot currently active image.
         It returns None in case of not having an active image.
 
@@ -675,6 +677,7 @@ class Plot(PlotBase.PlotBase):
         :type legend: boolean
         :return: list [x, y, legend, info]
         :rtype: list
+
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
