@@ -19,11 +19,6 @@ Elements = ['H', 'He',
             'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
-if len(sys.argv) > 1:
-    fname = sys.argv[1]
-else:
-    fname = "EADL97_BindingEnergies.dat"
-
 def getHeader(filename):
     text  = '#F %s\n' % filename
     text += '#U00 This file is a conversion to specfile format of \n'
@@ -36,36 +31,42 @@ def getHeader(filename):
     text += '\n'
     return text
 
-if os.path.exists(fname):
-    os.remove(fname)
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        fname = sys.argv[1]
+    else:
+        fname = "EADL97_BindingEnergies.dat"
 
-outfile = open(fname, 'wb')
-outfile.write(getHeader(fname))
+    if os.path.exists(fname):
+        os.remove(fname)
+
+    outfile = open(fname, 'wb')
+    outfile.write(getHeader(fname))
 
 
-shells = EADLParser.getBaseShellList()
-LONG_LABEL = True
-for i in range(1,101):
-    print(i, Elements[i-1])
-    if i == 1:
-        text  = '#S 1 Binding energies in keV\n'
-        label_text = ""
-        n = 0
-        for label in shells:
-            if LONG_LABEL:
-                label_text += "  "+label.replace(' ','')
-            else:
-                label_text += '  %s' % label.replace(' ','').split("(")[0]
-            n += 1
-        text += '#N %d\n' % n
-        text += '#L Z' + label_text
+    shells = EADLParser.getBaseShellList()
+    LONG_LABEL = True
+    for i in range(1,101):
+        print(i, Elements[i-1])
+        if i == 1:
+            text  = '#S 1 Binding energies in keV\n'
+            label_text = ""
+            n = 0
+            for label in shells:
+                if LONG_LABEL:
+                    label_text += "  "+label.replace(' ','')
+                else:
+                    label_text += '  %s' % label.replace(' ','').split("(")[0]
+                n += 1
+            text += '#N %d\n' % n
+            text += '#L Z' + label_text
+            text += '\n'
+            outfile.write(text)
+        text = "%d" % i
+        ddict = EADLParser.getBindingEnergies(i)
+        for shell in shells:
+            text += '  %.7E' % (ddict[shell] * 1000.)
         text += '\n'
         outfile.write(text)
-    text = "%d" % i
-    ddict = EADLParser.getBindingEnergies(i)
-    for shell in shells:
-        text += '  %.7E' % (ddict[shell] * 1000.)
-    text += '\n'
-    outfile.write(text)
-outfile.write("\n")
-outfile.close()
+    outfile.write("\n")
+    outfile.close()
