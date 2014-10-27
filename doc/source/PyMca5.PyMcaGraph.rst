@@ -1,13 +1,5 @@
-PyMca5.PyMcaGraph Package
-=========================
-
-:mod:`PyMca5.PyMcaGraph` Package
---------------------------------
-
-.. automodule:: PyMca5.PyMcaGraph.__init__
-    :members:
-    :undoc-members:
-    :show-inheritance:
+PyMcaGraph Package
+==================
 
 :mod:`Plot` Module
 ------------------
@@ -41,4 +33,11 @@ PyMca5.PyMcaGraph Package
     :undoc-members:
     :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+
+    PyMca5.PyMcaGraph.backends
+    PyMca5.PyMcaGraph.ctools
 

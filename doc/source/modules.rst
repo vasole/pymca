@@ -1,5 +1,5 @@
 PyMca5
-=====
+======
 
 .. toctree::
    :maxdepth: 4

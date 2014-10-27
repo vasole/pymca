@@ -153,6 +153,14 @@ Object3D Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`Object3DSlider` Module
+----------------------------
+
+.. automodule:: PyMca5.Object3D.Object3DSlider
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`ObjectTree` Module
 ------------------------
 
@@ -240,6 +248,7 @@ Object3D Package
     :members:
     :undoc-members:
     :show-inheritance:
+
 
 Subpackages
 -----------

@@ -33,51 +33,51 @@ EPDL97 Package
     :undoc-members:
     :show-inheritance:
 
-#:mod:`GenerateEADLBindingEnergies` Module
-#-----------------------------------------
-#
-#.. automodule:: PyMca.EPDL97.GenerateEADLBindingEnergies
-#    :members:
-#    :undoc-members:
-#    :show-inheritance:
-#
-#:mod:`GenerateEADLShellConstants` Module
-#----------------------------------------
-#
-#.. automodule:: PyMca.EPDL97.GenerateEADLShellConstants
-#    :members:
-#    :undoc-members:
-#    :show-inheritance:
-#
-#:mod:`GenerateEADLShellNonradiativeRates` Module
-#------------------------------------------------
-#
-#.. automodule:: PyMca.EPDL97.GenerateEADLShellNonradiativeRates
-#    :members:
-#    :undoc-members:
-#    :show-inheritance:
-#
-#:mod:`GenerateEADLShellRadiativeRates` Module
-#---------------------------------------------
-#
-#.. automodule:: PyMca.EPDL97.GenerateEADLShellRadiativeRates
-#    :members:
-#    :undoc-members:
-#    :show-inheritance:
-#
-#:mod:`GenerateEPDL97CrossSections` Module
-#-----------------------------------------
-#
-#.. automodule:: PyMca.EPDL97.GenerateEPDL97CrossSections
-#    :members:
-#    :undoc-members:
-#    :show-inheritance:
-#
-#:mod:`GenerateEPDL97TotalCrossSections` Module
-#----------------------------------------------
-#
-#.. automodule:: PyMca.EPDL97.GenerateEPDL97TotalCrossSections
-#    :members:
-#    :undoc-members:
-#    :show-inheritance:
-#
+:mod:`GenerateEADLBindingEnergies` Module
+-----------------------------------------
+
+.. automodule:: PyMca5.EPDL97.GenerateEADLBindingEnergies
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`GenerateEADLShellConstants` Module
+----------------------------------------
+
+.. automodule:: PyMca5.EPDL97.GenerateEADLShellConstants
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`GenerateEADLShellNonradiativeRates` Module
+------------------------------------------------
+
+.. automodule:: PyMca5.EPDL97.GenerateEADLShellNonradiativeRates
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`GenerateEADLShellRadiativeRates` Module
+---------------------------------------------
+
+.. automodule:: PyMca5.EPDL97.GenerateEADLShellRadiativeRates
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`GenerateEPDL97CrossSections` Module
+-----------------------------------------
+
+.. automodule:: PyMca5.EPDL97.GenerateEPDL97CrossSections
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`GenerateEPDL97TotalCrossSections` Module
+----------------------------------------------
+
+.. automodule:: PyMca5.EPDL97.GenerateEPDL97TotalCrossSections
+    :members:
+    :undoc-members:
+    :show-inheritance:
+

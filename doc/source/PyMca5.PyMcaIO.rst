@@ -1,6 +1,5 @@
-PyMca5.PyMcaIO Package
-=====================
-
+PyMcaIO Package
+===============
 
 :mod:`APSMEDFileParser` Module
 ------------------------------
@@ -34,6 +33,14 @@ PyMca5.PyMcaIO Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`ConfigDict` Module
+------------------------
+
+.. automodule:: PyMca5.PyMcaIO.ConfigDict
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`EDFStack` Module
 ----------------------
 
@@ -54,6 +61,14 @@ PyMca5.PyMcaIO Package
 --------------------------------
 
 .. automodule:: PyMca5.PyMcaIO.Fit2DChiFileParser
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`HDF5Stack1D` Module
+-------------------------
+
+.. automodule:: PyMca5.PyMcaIO.HDF5Stack1D
     :members:
     :undoc-members:
     :show-inheritance:
@@ -90,6 +105,14 @@ PyMca5.PyMcaIO Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`OlympusCSVFileParser` Module
+----------------------------------
+
+.. automodule:: PyMca5.PyMcaIO.OlympusCSVFileParser
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`OmnicMap` Module
 ----------------------
 
@@ -114,10 +137,10 @@ PyMca5.PyMcaIO Package
     :undoc-members:
     :show-inheritance:
 
- :mod:`SpecFileAbstractClass` Module
------------------------------------
+:mod:`RTXMap` Module
+--------------------
 
-.. automodule:: PyMca5.PyMcaIO.SpecFileAbstractClass
+.. automodule:: PyMca5.PyMcaIO.RTXMap
     :members:
     :undoc-members:
     :show-inheritance:
@@ -138,6 +161,22 @@ PyMca5.PyMcaIO Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`SpecFileAbstractClass` Module
+-----------------------------------
+
+.. automodule:: PyMca5.PyMcaIO.SpecFileAbstractClass
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`SpecFileStack` Module
+---------------------------
+
+.. automodule:: PyMca5.PyMcaIO.SpecFileStack
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`SupaVisioMap` Module
 --------------------------
 
@@ -150,6 +189,14 @@ PyMca5.PyMcaIO Package
 ----------------------------
 
 .. automodule:: PyMca5.PyMcaIO.TextImageStack
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`ThermoEMSFileParser` Module
+---------------------------------
+
+.. automodule:: PyMca5.PyMcaIO.ThermoEMSFileParser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -185,8 +232,4 @@ PyMca5.PyMcaIO Package
     :members:
     :undoc-members:
     :show-inheritance:
-
-
-
-
 

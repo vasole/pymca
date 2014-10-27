@@ -1,6 +1,22 @@
 PyMcaPlugins Package
 ====================
 
+:mod:`PyMcaPlugins` Package
+---------------------------
+
+.. automodule:: PyMca5.PyMcaPlugins
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`AdvancedAlignmentScanPlugin` Module
+-----------------------------------------
+
+.. automodule:: PyMca5.PyMcaPlugins.AdvancedAlignmentScanPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`AlignmentScanPlugin` Module
 ---------------------------------
 
@@ -29,6 +45,22 @@ PyMcaPlugins Package
 -------------------------------
 
 .. automodule:: PyMca5.PyMcaPlugins.CalculationThread
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`ConsolePlugin` Module
+---------------------------
+
+.. automodule:: PyMca5.PyMcaPlugins.ConsolePlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`ConsoleStackPlugin` Module
+--------------------------------
+
+.. automodule:: PyMca5.PyMcaPlugins.ConsoleStackPlugin
     :members:
     :undoc-members:
     :show-inheritance:
