@@ -2136,8 +2136,9 @@ class McaAdvancedFit(qt.QWidget):
         self.graph.updateLegends()
 
     def _saveGraph(self, dict=None):
-        curves = self.graph.curves.keys()
-        if not len(curves):return
+        curves = self.graph.getAllCurves()
+        if not len(curves):
+            return
         if not self.__fitdone:
             if False:
                 # just save the data ?
@@ -2149,10 +2150,7 @@ class McaAdvancedFit(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 text = "Sorry, You need to perform a fit first.\n"
                 msg.setText(text)
-                if QTVERSION < '4.0.0':
-                    msg.exec_loop()
-                else:
-                    msg.exec_()
+                msg.exec_()
                 return
         if dict is None:
             #everything
@@ -2177,55 +2175,39 @@ class McaAdvancedFit(qt.QWidget):
         outfile.setModal(1)
         if self.lastInputDir is None:
             self.lastInputDir = PyMcaDirs.outputDir
-        if QTVERSION < '4.0.0':
-            outfile.setCaption("Output File Selection")
-            filterlist = 'Specfile MCA  *.mca\nSpecfile Scan *.dat\nRaw ASCII  *.txt'
-            if MATPLOTLIB:
-                filterlist += '\nGraphics EPS *.eps\nGraphics PNG *.png'
-                if not self.peaksSpectrumButton.isChecked():
-                    filterlist += '\nB/WGraphics EPS *.eps\nB/WGraphics PNG *.png'
-            outfile.setFilters(filterlist)
-            outfile.setMode(outfile.AnyFile)
-            outfile.setDir(self.lastInputDir)
-            ret = outfile.exec_loop()
+        outfile.setWindowTitle("Output File Selection")
+        if hasattr(qt, "QStringList"):
+            strlist = qt.QStringList()
         else:
-            outfile.setWindowTitle("Output File Selection")
-            if hasattr(qt, "QStringList"):
-                strlist = qt.QStringList()
-            else:
-                strlist = []
-            format_list = ['Specfile MCA  *.mca',
-                           'Specfile Scan *.dat',
-                           'Raw ASCII  *.txt',
-                           '";"-separated CSV *.csv',
-                           '","-separated CSV *.csv',
-                           '"tab"-separated CSV *.csv']
-            if MATPLOTLIB:
-                format_list.append('Graphics PNG *.png')
-                format_list.append('Graphics EPS *.eps')
-                format_list.append('Graphics SVG *.svg')
-                if not self.peaksSpectrumButton.isChecked():
-                    format_list.append('B/WGraphics PNG *.png')
-                    format_list.append('B/WGraphics EPS *.eps')
-                    format_list.append('B/WGraphics SVG *.svg')
-            for f in format_list:
-                strlist.append(f)
-            outfile.setFilters(strlist)
+            strlist = []
+        format_list = ['Specfile MCA  *.mca',
+                       'Specfile Scan *.dat',
+                       'Raw ASCII  *.txt',
+                       '";"-separated CSV *.csv',
+                       '","-separated CSV *.csv',
+                       '"tab"-separated CSV *.csv',
+                       'Graphics PNG *.png',
+                       'Graphics EPS *.eps',
+                       'Graphics SVG *.svg']
+        if not self.peaksSpectrumButton.isChecked():
+            format_list.append('B/WGraphics PNG *.png')
+            format_list.append('B/WGraphics EPS *.eps')
+            format_list.append('B/WGraphics SVG *.svg')
+        for f in format_list:
+            strlist.append(f)
+        outfile.setFilters(strlist)
 
-            outfile.setFileMode(outfile.AnyFile)
-            outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
-            outfile.setDirectory(self.lastInputDir)
-            ret = outfile.exec_()
+        outfile.setFileMode(outfile.AnyFile)
+        outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
+        outfile.setDirectory(self.lastInputDir)
+        ret = outfile.exec_()
 
         if ret:
             filterused = qt.safe_str(outfile.selectedFilter()).split()
             filedescription = filterused[0]
             filetype  = filterused[1]
             extension = filterused[2]
-            if QTVERSION < '4.0.0':
-                outstr = qt.safe_str(outfile.selectedFile())
-            else:
-                outstr = qt.safe_str(outfile.selectedFiles()[0])
+            outstr = qt.safe_str(outfile.selectedFiles()[0])
             try:
                 outputDir  = os.path.dirname(outstr)
                 self.lastInputDir   = outputDir
@@ -2289,8 +2271,8 @@ class McaAdvancedFit(qt.QWidget):
                         x = fitresult['result']['energy']
                     else:
                         x = fitresult['result']['xdata']
-                    xmin, xmax = self.graph.getx1axislimits()
-                    ymin, ymax = self.graph.gety1axislimits()
+                    xmin, xmax = self.graph.getGraphXLimits()
+                    ymin, ymax = self.graph.getGraphYLimits()
                     mtplt.setLimits(xmin, xmax, ymin, ymax)
                     index = numpy.nonzero((xmin <= x) & (x <= xmax))[0]
                     x = numpy.take(x, index)
@@ -2366,11 +2348,10 @@ class McaAdvancedFit(qt.QWidget):
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Matplotlib or Input Output Error: %s" % (sys.exc_info()[1]))
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.setInformativeText("Matplotlib or Input Output Error: %s" \
+                                   % (sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
             return
         try:
             file=open(specFile,'wb')
