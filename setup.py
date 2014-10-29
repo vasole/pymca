@@ -155,6 +155,12 @@ LOCAL_OBJECT3D =False
 if os.path.exists(os.path.join("PyMca5", "Object3D")):
     LOCAL_OBJECT3D = True
 
+if os.path.exists(os.path.join("PyMca5", "PyMcaGraph", "backends", "GLSupport")):
+    packages.append('PyMca5.PyMcaGraph.backends.GLSupport')
+    data_files.append((PYMCA_DATA_DIR+'/GLSupport',\
+                       ['PyMca5/PyMcaGraph/backends/GLSupport/font_latin1_12.pgm']))
+
+
 sources = glob.glob('*.c')
 if sys.platform == "win32":
     define_macros = [('WIN32',None)]

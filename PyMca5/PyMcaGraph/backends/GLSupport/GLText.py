@@ -96,15 +96,22 @@ def loadPGMFile(fileName):
 
 # Font ########################################################################
 
-
-_FONT = {
-    'filename': os.path.join(os.path.dirname(__file__), 'font_latin1_12.pgm'),
-    'minChar': 0, 'maxChar': 255,
-    'cExtent': 1/16., 'rExtent': 1/12.,
-    'cWidth': 8, 'cHeight': 15,
-    'bearingY': 11
-}
-
+#TODO: Should this be configurable by the main program?
+_FONT= {
+        'minChar': 0, 'maxChar': 255,
+        'cExtent': 1/16., 'rExtent': 1/12.,
+        'cWidth': 8, 'cHeight': 15,
+        'bearingY': 11
+        }
+fname = os.path.join(os.path.dirname(__file__), 'font_latin1_12.pgm')
+if os.path.exists(fname):
+    # this is the expected situation
+    _FONT['filename'] = fname
+else:
+    # Linux distributions like to have code and data separated
+    # awfull patch for the time being
+    from PyMca5 import PyMcaDataDir
+    _FONT['filename'] = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, "GLSupport",'font_latin1_12.pgm')
 
 def _fontTexCoords(char):
     """Returns the texture coordinates corresponding to a character
