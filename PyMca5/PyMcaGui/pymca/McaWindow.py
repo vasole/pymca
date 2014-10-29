@@ -1257,13 +1257,12 @@ class McaWindow(ScanWindow.ScanWindow):
                        '"tab"-separated CSV *.csv',
                        'OMNIC CSV *.csv',
                        'Widget PNG *.png',
-                       'Widget JPG *.jpg']
+                       'Widget JPG *.jpg',
+                       'Graphics PNG *.png',
+                       'Graphics EPS *.eps',
+                       'Graphics SVG *.svg']
         if self.outputFilter is None:
             self.outputFilter = format_list[0]
-        if MATPLOTLIB:
-            format_list.append('Graphics PNG *.png')
-            format_list.append('Graphics EPS *.eps')
-            format_list.append('Graphics SVG *.svg')
 
         outfile.setFilters(format_list)
         outfile.selectFilter(self.outputFilter)
@@ -1361,7 +1360,10 @@ class McaWindow(ScanWindow.ScanWindow):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
+                msg.setWindowTitle("Save error")
+                msg.setInformativeText("Graphics Saving Error: %s" % \
+                                       (sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
                 msg.exec_()
                 return
 
@@ -1471,11 +1473,10 @@ class McaWindow(ScanWindow.ScanWindow):
                       '"tab"-separated CSV *.csv',
                       'OMNIC CSV *.csv',
                       'Widget PNG *.png',
-                      'Widget JPG *.jpg']
-        if MATPLOTLIB:
-            filterlist.append('Graphics PNG *.png')
-            filterlist.append('Graphics EPS *.eps')
-            filterlist.append('Graphics SVG *.svg')
+                      'Widget JPG *.jpg',
+                      'Graphics PNG *.png',
+                      'Graphics EPS *.eps',
+                      'Graphics SVG *.svg']
 
         if self.outputFilter is None:
             self.outputFilter = filterlist[0]
@@ -1614,7 +1615,8 @@ class McaWindow(ScanWindow.ScanWindow):
         if operation == "save":
             #getOutputFileName
             filename = self._getOutputFileName()
-            if filename is None:return
+            if filename is None:
+                return
             filterused = filename[2]
             filetype = filename[1]
             filename = filename[0]
@@ -1628,17 +1630,16 @@ class McaWindow(ScanWindow.ScanWindow):
                                         "Save Error",
                                         "%s" % sys.exc_info()[1])
                 return
-            if MATPLOTLIB:
-                try:
-                    if filename[-3:].upper() in ['EPS', 'PNG', 'SVG']:
-                        self.graphicsSave(filename)
-                        return
-                except:
-                    msg = qt.QMessageBox(self)
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
-                    msg.exec_()
+            try:
+                if filename[-3:].upper() in ['EPS', 'PNG', 'SVG']:
+                    self.graphicsSave(filename)
                     return
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
+                msg.exec_()
+                return
             systemline = os.linesep
             os.linesep = '\n'
             try:
@@ -1855,7 +1856,7 @@ class McaWindow(ScanWindow.ScanWindow):
         x, y, legend, info = self.getActiveCurve()
         size = (6, 3) #in inches
         bw = False
-        if len(self.graph.curves.keys()) > 1:
+        if len(self.getAllCurves(just_legend=1)) > 1:
             legends = True
         else:
             legends = False
@@ -1891,11 +1892,11 @@ class McaWindow(ScanWindow.ScanWindow):
             mtplt.addDataToPlot( xdata, ydata, legend=legend, alias=alias )
 
         if sys.version < '3.0':
-            self.matplotlibDialog.setXLabel(qt.safe_str(self.graph.x1Label()))
-            self.matplotlibDialog.setYLabel(qt.safe_str(self.graph.y1Label()))
+            self.matplotlibDialog.setXLabel(qt.safe_str(self.getGraphXLabel()))
+            self.matplotlibDialog.setYLabel(qt.safe_str(self.getGraphYLabel()))
         else:
-            self.matplotlibDialog.setXLabel(self.graph.x1Label())
-            self.matplotlibDialog.setYLabel(self.graph.y1Label())
+            self.matplotlibDialog.setXLabel(self.getGraphXLabel())
+            self.matplotlibDialog.setYLabel(self.getGraphYLabel())
         if legends:
             mtplt.plotLegends()
         ret = self.matplotlibDialog.exec_()

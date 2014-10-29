@@ -599,11 +599,10 @@ class ScanWindow(PlotWindow.PlotWindow):
                       '"tab"-separated CSV *.csv',
                       'OMNIC CSV *.csv',
                       'Widget PNG *.png',
-                      'Widget JPG *.jpg']
-        if MATPLOTLIB:
-            filterlist.append('Graphics PNG *.png')
-            filterlist.append('Graphics EPS *.eps')
-            filterlist.append('Graphics SVG *.svg')
+                      'Widget JPG *.jpg',
+                      'Graphics PNG *.png',
+                      'Graphics EPS *.eps',
+                      'Graphics SVG *.svg']
 
         if self.outputFilter is None:
             self.outputFilter = filterlist[0]
@@ -756,17 +755,16 @@ class ScanWindow(PlotWindow.PlotWindow):
                                         "Save Error",
                                         "%s" % sys.exc_info()[1])
                 return
-            if MATPLOTLIB:
-                try:
-                    if filename[-3:].upper() in ['EPS', 'PNG', 'SVG']:
-                        self.graphicsSave(filename)
-                        return
-                except:
-                    msg = qt.QMessageBox(self)
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
-                    msg.exec_()
+            try:
+                if filename[-3:].upper() in ['EPS', 'PNG', 'SVG']:
+                    self.graphicsSave(filename)
                     return
+            except:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
+                msg.exec_()
+                return
             systemline = os.linesep
             os.linesep = '\n'
             try:
