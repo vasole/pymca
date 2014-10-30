@@ -996,7 +996,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         for x, y, label in self._labels:
             glUniformMatrix4fv(self._progTex.uniforms['matrix'], 1, GL_TRUE,
                                matScreenProj * mat4Translate(x, y, 0))
-            label.render(self._progTex.attributes['position'],
+            label.render(self, self._progTex.attributes['position'],
                          self._progTex.attributes['texCoords'],
                          textTexUnit)
 
@@ -1116,7 +1116,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
     def addImage(self, data, legend=None, info=None,
                  replace=True, replot=True,
-                 xScale=(0, 1), yScale=(0, 1), z=0,
+                 xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
         if info:
@@ -1131,6 +1131,10 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         oldImage = self._images.get(legend, None)
 
         height, width = data.shape[0:2]
+        if xScale is None:
+            xScale = (0, 1)
+        if yScale is None:
+            yScale = (0, 1)
         bbox = {'xMin': xScale[0],
                 'xMax': xScale[0] + xScale[1] * width,
                 'xStep': xScale[1],

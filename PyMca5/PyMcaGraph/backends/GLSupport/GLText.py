@@ -56,6 +56,7 @@ ROTATE_90, ROTATE_180, ROTATE_270 = 90, 180, 270
 
 
 class Text2D(object):
+    _textures = {}
 
     def __init__(self, text, align=LEFT, valign=BASELINE,
                  rotate=0):
@@ -74,14 +75,10 @@ class Text2D(object):
         self._rotate = rotate
 
     @classmethod
-    def _getTexture(cls):
-        try:
-            return cls._texture
-        except AttributeError:
-            assert(font.dataPixelSize == 1)
-            # Loaded once for all Text2D instances
-            cls._texture = font.loadTexture()
-            return cls._texture
+    def _getTexture(cls, context):
+        # Loaded once for all Text2D instances per OpenGL context
+        # TODO proper support of multiple contexts
+        return cls._textures.setdefault(context, font.loadTexture())
 
     @property
     def text(self):
@@ -140,8 +137,8 @@ class Text2D(object):
         vertices = self.getVertices()
         return vertices.shape[-1] * vertices.itemsize
 
-    def render(self, posAttrib, texAttrib, texUnit=0):
-        self._getTexture().bind(texUnit)
+    def render(self, context, posAttrib, texAttrib, texUnit=0):
+        self._getTexture(context).bind(texUnit)
         glEnableVertexAttribArray(posAttrib)
         glVertexAttribPointer(posAttrib,
                               2,
@@ -329,7 +326,8 @@ if __name__ == "__main__":
             for x, y, text in self.texts:
                 glUniformMatrix4fv(self.prog.uniforms['transform'], 1, GL_TRUE,
                                    self.matScreenProj * mat4Translate(x, y, 0))
-                text.render(self.prog.attributes['position'],
+                text.render(self.context(),
+                            self.prog.attributes['position'],
                             self.prog.attributes['texCoords'],
                             self.texUnit)
 
@@ -338,6 +336,8 @@ if __name__ == "__main__":
             self.matScreenProj = mat4Ortho(0, w, h, 0, 1, -1)
 
     app = QApplication([])
-    w = TestText()
-    w.show()
+    widget1 = TestText()
+    widget1.show()
+    widget2 = TestText()
+    widget2.show()
     sys.exit(app.exec_())
