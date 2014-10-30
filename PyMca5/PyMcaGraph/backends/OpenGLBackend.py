@@ -1029,16 +1029,18 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                     height, width = data.shape
                     texture = Image(GL_R32F, width, height,
                                     format_=GL_RED, type_=GL_FLOAT,
-                                    data=image['data'])
+                                    data=image['data'], texUnit=dataTexUnit)
                     image['_texture'] = texture
                 else:
                     height, width, depth = data.shape
-                    format_=GL_RGBA if depth == 4 else GL_RGB
+                    format_ = GL_RGBA if depth == 4 else GL_RGB
+                    if data.dtype == np.uint8:
+                        type_ = GL_UNSIGNED_BYTE
+                    else:
+                        type_ = GL_FLOAT
                     texture = Image(format_, width, height,
-                                    format_=format_,
-                                    type_=GL_UNSIGNED_BYTE
-                                    if data.dtype == np.uint8 else GL_FLOAT,
-                                    data=image['data'])
+                                    format_=format_, type_=type_,
+                                    data=image['data'], texUnit=dataTexUnit)
                     image['_texture'] = texture
 
             bbox = image['bBox']
@@ -1241,7 +1243,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
     # Draw mode #
 
     def isDrawModeEnabled(self):
-        return isinstance(self.eventHandler, Draw)
+        return isinstance(self.eventHandler, Select)
 
     _drawModes = {
         'polygon': SelectPolygon,
