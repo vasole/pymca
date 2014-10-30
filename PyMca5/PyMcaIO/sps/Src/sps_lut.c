@@ -970,6 +970,7 @@ void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
 {
  unsigned int *ptr;
  unsigned int R, G, B;
+ unsigned int alpha;
  double Rcol, Gcol, Bcol, Rcst, Gcst, Bcst;
  double coef, width, rwidth, gwidth, bwidth;
  swaptype value;
@@ -990,7 +991,12 @@ void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
  rwidth = Rcol * (R2 - R1) / width;
  gwidth = Gcol * (G2 - G1) / width;
  bwidth = Bcol * (B2 - B1) / width;
-
+ 
+ if (rshift == 0) {
+   alpha = 0xff000000;
+ }else{
+   alpha = 0xff;
+ }
  if (pcbyteorder == SPS_LSB) {
    if (Xservinfo.byte_order == SPS_LSB) {
      if (Xservinfo.pixel_size == 3) {
@@ -1006,7 +1012,7 @@ void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
          R = (unsigned int) (Rcst + rwidth * coef);
          G = (unsigned int) (Gcst + gwidth * coef);
          B = (unsigned int) (Bcst + bwidth * coef);
-         *ptr++ = (R << rshift) | (G << gshift) | (B << bshift);
+         *ptr++ = alpha | ((R << rshift) | (G << gshift) | (B << bshift));
        }
      }
    } else {
@@ -1052,7 +1058,7 @@ void FillSegment(int pcbyteorder, XServer_Info Xservinfo,
        R = (unsigned int) (Rcst + rwidth * coef);
        G = (unsigned int) (Gcst + gwidth * coef);
        B = (unsigned int) (Bcst + bwidth * coef);
-       *ptr++ = (R << rshift) | (G << gshift) | (B << bshift);
+       *ptr++ = alpha | ((R << rshift) | (G << gshift) | (B << bshift));
      }
    }
  }
@@ -1651,14 +1657,4 @@ void SPS_GetDataDist(void *data, int type, int cols, int rows,
 
  (*ydata)[nbar-1] += (*ydata)[nbar]; /* on a honte  pour *ptr = max */\
 }
-
-
-
-
-
-
-
-
-
-
 
