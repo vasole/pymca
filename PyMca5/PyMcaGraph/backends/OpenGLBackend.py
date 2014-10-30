@@ -316,6 +316,24 @@ class Zoom(ClicOrDrag):
                                yCenter + (1. - yOffset) * yRange)
 
 
+def prepareDrawingSignal(event, type_, points, parameters={}):
+    eventDict = {}
+    eventDict['event'] = event
+    eventDict['type'] = type_
+    points = np.array(points, dtype=np.float32)
+    points.shape = -1, 2
+    eventDict['points'] = points
+    eventDict['xdata'] = points[:, 0]
+    eventDict['ydata'] = points[:, 1]
+    if type_ in ('rectangle'):
+        eventDict['x'] = eventDict['xdata'].min()
+        eventDict['y'] = eventDict['ydata'].min()
+        eventDict['width'] = eventDict['xdata'].max() - eventDict['x']
+        eventDict['height'] = eventDict['ydata'].max() - eventDict['y']
+    eventDict['parameters'] = parameters.copy()
+    return eventDict
+
+
 class Select(object):
     parameters = {}
 
@@ -331,38 +349,41 @@ class SelectPolygon(StateMachine, Select):
             x, y = self.machine.backend.pixelToDataCoords(x, y)
             self.points = [(x, y), (x, y)]
 
+        def updateSelectionArea(self):
+            self.machine.backend.setSelectionArea(*self.points)
+            eventDict = prepareDrawingSignal('drawingProgress',
+                                             'polygon',
+                                             self.points,
+                                             self.machine.parameters)
+            self.machine.backend._callback(eventDict)
+
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
                 x, y = self.machine.backend.pixelToDataCoords(x, y)
                 self.points[-1] = (x, y)
-                self.machine.backend.setSelectionArea(*self.points)
+                self.updateSelectionArea()
                 if self.points[-2] != self.points[-1]:
                     self.points.append((x, y))
 
         def onMove(self, x, y):
             x, y = self.machine.backend.pixelToDataCoords(x, y)
             self.points[-1] = (x, y)
-            self.machine.backend.setSelectionArea(*self.points)
+            self.updateSelectionArea()
 
         def onPress(self, x, y, btn):
             if btn == RIGHT_BTN:
+                self.machine.backend.setSelectionArea()
+
                 x, y = self.machine.backend.pixelToDataCoords(x, y)
                 self.points[-1] = (x, y)
                 if self.points[-2] == self.points[-1]:
                     self.points.pop()
-                self.machine.backend.setSelectionArea()
+                self.points.append(self.points[0])
 
-                # Signal drawingFinished
-                points = np.array(self.points, dtype=np.float32)
-                transPoints = np.transpose(points)
-                eventDict = {
-                    'parameters': self.machine.parameters,
-                    'points': points,
-                    'xdata': transPoints[0],
-                    'ydata': transPoints[1],
-                    'type': 'polygon',
-                    'event': 'drawingFinished'
-                }
+                eventDict = prepareDrawingSignal('drawingFinished',
+                                                 'polygon',
+                                                 self.points,
+                                                 self.machine.parameters)
                 self.machine.backend._callback(eventDict)
                 self.goto(SelectPolygon.Idle)
 
@@ -427,27 +448,21 @@ class SelectRectangle(Select2Points):
                                       (x, y),
                                       (x, self.startPt[1]))
 
+        eventDict = prepareDrawingSignal('drawingProgress',
+                                         'rectangle',
+                                         (self.startPt, (x, y)),
+                                         self.parameters)
+        self.backend._callback(eventDict)
+
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
         x, y = self.backend.pixelToDataCoords(x, y)
 
-        # Signal drawingFinished
-        points = np.array((self.startPt, (x, y)), dtype=np.float32)
-        transPoints = np.transpose(points)
-        eventDict = {
-            'parameters': self.parameters,
-            'points': points,
-            'xdata': transPoints[0],
-            'ydata': transPoints[1],
-            'x': transPoints[0].min(),
-            'y': transPoints[1].max(),
-            'width': math.fabs(points[0][0] - points[1][0]),
-            'height': math.fabs(points[0][1] - points[1][1]),
-            'type': 'rectangle',
-            'event': 'drawingFinished'
-        }
+        eventDict = prepareDrawingSignal('drawingFinished',
+                                         'rectangle',
+                                         (self.startPt, (x, y)),
+                                         self.parameters)
         self.backend._callback(eventDict)
-
 
 class SelectLine(Select2Points):
     def beginSelect(self, x, y):
@@ -457,21 +472,20 @@ class SelectLine(Select2Points):
         x, y = self.backend.pixelToDataCoords(x, y)
         self.backend.setSelectionArea(self.startPt, (x, y))
 
+        eventDict = prepareDrawingSignal('drawingProgress',
+                                         'line',
+                                         (self.startPt, (x, y)),
+                                         self.parameters)
+        self.backend._callback(eventDict)
+
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
         x, y = self.backend.pixelToDataCoords(x, y)
 
-        # Signal drawingFinished
-        points = np.array((self.startPt, (x, y)), dtype=np.float32)
-        transPoints = np.transpose(points)
-        eventDict = {
-            'parameters': self.parameters,
-            'points': points,
-            'xdata': transPoints[0],
-            'ydata': transPoints[1],
-            'type': 'line',
-            'event': 'drawingFinished'
-        }
+        eventDict = prepareDrawingSignal('drawingFinished',
+                                         'line',
+                                         (self.startPt, (x, y)),
+                                         self.parameters)
         self.backend._callback(eventDict)
 
 
@@ -511,47 +525,48 @@ class SelectHLine(Select1Point):
         return (self.backend._xMin, y), (self.backend._xMax, y)
 
     def select(self, x, y):
-        self.backend.setSelectionArea(*self._hLine(y))
+        points = self._hLine(y)
+        self.backend.setSelectionArea(*points)
+
+        eventDict = prepareDrawingSignal('drawingProgress',
+                                         'hline',
+                                         points,
+                                         self.parameters)
+        self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
 
-        # Signal drawingFinished
-        points = np.array((self._hLine(y)), dtype=np.float32)
-        transPoints = np.transpose(points)
-        eventDict = {
-            'parameters': self.parameters,
-            'points': points,
-            'xdata': transPoints[0],
-            'ydata': transPoints[1],
-            'type': 'hline',
-            'event': 'drawingFinished'
-        }
+        eventDict = prepareDrawingSignal('drawingFinished',
+                                         'hline',
+                                         self._hLine(y),
+                                         self.parameters)
         self.backend._callback(eventDict)
 
 
 class SelectVLine(Select1Point):
     def _vLine(self, x):
         x = self.backend.pixelToDataCoords(xPixel=x)
+        print(x)
         return (x, self.backend._yMin), (x, self.backend._yMax)
 
     def select(self, x, y):
-        self.backend.setSelectionArea(*self._vLine(x))
+        points = self._vLine(x)
+        self.backend.setSelectionArea(*points)
+
+        eventDict = prepareDrawingSignal('drawingProgress',
+                                         'vline',
+                                         points,
+                                         self.parameters)
+        self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
 
-        # Signal drawingFinished
-        points = np.array(self._vLine(x), dtype=np.float32)
-        transPoints = np.transpose(points)
-        eventDict = {
-            'parameters': self.parameters,
-            'points': points,
-            'xdata': transPoints[0],
-            'ydata': transPoints[1],
-            'type': 'vline',
-            'event': 'drawingFinished'
-        }
+        eventDict = prepareDrawingSignal('drawingFinished',
+                                         'vline',
+                                         self._vLine(x),
+                                         self.parameters)
         self.backend._callback(eventDict)
 
 
@@ -584,6 +599,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self._plotHasFocus = set()
 
         QGLWidget.__init__(self, parent)
+        self.setMinimumSize(300, 300)  # TODO better way ?
         PlotBackend.__init__(self, parent, **kw)
         self.setMouseTracking(True)
 
@@ -996,7 +1012,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         for x, y, label in self._labels:
             glUniformMatrix4fv(self._progTex.uniforms['matrix'], 1, GL_TRUE,
                                matScreenProj * mat4Translate(x, y, 0))
-            label.render(self._progTex.attributes['position'],
+            label.render(self, self._progTex.attributes['position'],
                          self._progTex.attributes['texCoords'],
                          textTexUnit)
 
@@ -1029,16 +1045,18 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                     height, width = data.shape
                     texture = Image(GL_R32F, width, height,
                                     format_=GL_RED, type_=GL_FLOAT,
-                                    data=image['data'])
+                                    data=image['data'], texUnit=dataTexUnit)
                     image['_texture'] = texture
                 else:
                     height, width, depth = data.shape
-                    format_=GL_RGBA if depth == 4 else GL_RGB
+                    format_ = GL_RGBA if depth == 4 else GL_RGB
+                    if data.dtype == np.uint8:
+                        type_ = GL_UNSIGNED_BYTE
+                    else:
+                        type_ = GL_FLOAT
                     texture = Image(format_, width, height,
-                                    format_=format_,
-                                    type_=GL_UNSIGNED_BYTE
-                                    if data.dtype == np.uint8 else GL_FLOAT,
-                                    data=image['data'])
+                                    format_=format_, type_=type_,
+                                    data=image['data'], texUnit=dataTexUnit)
                     image['_texture'] = texture
 
             bbox = image['bBox']
@@ -1095,7 +1113,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                 shape2D = item['_shape2D']
             except KeyError:
                 shape2D = Shape2D(zip(item['x'], item['y']),
-                                  fill=item['fill'], stroke=not item['fill'])
+                                  fill=item['fill'], stroke=True)
                 item['_shape2D'] = shape2D
 
             glUniform4f(self._progBase.uniforms['color'], *item['color'])
@@ -1114,7 +1132,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
     def addImage(self, data, legend=None, info=None,
                  replace=True, replot=True,
-                 xScale=(0, 1), yScale=(0, 1), z=0,
+                 xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
         if info:
@@ -1129,6 +1147,10 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         oldImage = self._images.get(legend, None)
 
         height, width = data.shape[0:2]
+        if xScale is None:
+            xScale = (0, 1)
+        if yScale is None:
+            yScale = (0, 1)
         bbox = {'xMin': xScale[0],
                 'xMax': xScale[0] + xScale[1] * width,
                 'xStep': xScale[1],
@@ -1176,11 +1198,16 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         if replot:
             self.replot()
 
+        return legend  # This is the 'handle'
+
     def removeImage(self, legend, replot=True):
         try:
             del self._images[legend]
         except KeyError:
             pass
+        else:
+            self._plotDirtyFlag = True
+
         if replot:
             self.replot()
 
@@ -1191,7 +1218,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                 replace=False, replot=True,
                 shape="polygon", fill=True, **kwargs):
         if info:
-            raise NotImplementedError("info not implemented")
+            print("addItem: info ignored", info)
 
         if shape not in self._drawModes:
             raise NotImplementedError("Unsupported shape {0}".format(shape))
@@ -1220,12 +1247,16 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
         if replot:
             self.replot()
+        return legend  # this is the 'handle'
 
     def removeItem(self, legend, replot=True):
         try:
             del self._items[legend]
         except KeyError:
             pass
+        else:
+            self._plotDirtyFlag = True
+
         if replot:
             self.replot()
 
@@ -1241,7 +1272,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
     # Draw mode #
 
     def isDrawModeEnabled(self):
-        return isinstance(self.eventHandler, Draw)
+        return isinstance(self.eventHandler, Select)
 
     _drawModes = {
         'polygon': SelectPolygon,

@@ -157,9 +157,6 @@ if os.path.exists(os.path.join("PyMca5", "Object3D")):
 
 if os.path.exists(os.path.join("PyMca5", "PyMcaGraph", "backends", "GLSupport")):
     packages.append('PyMca5.PyMcaGraph.backends.GLSupport')
-    data_files.append((PYMCA_DATA_DIR+'/GLSupport',\
-                       ['PyMca5/PyMcaGraph/backends/GLSupport/font_latin1_12.pgm']))
-
 
 sources = glob.glob('*.c')
 if sys.platform == "win32":

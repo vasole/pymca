@@ -39,95 +39,13 @@ It provides Latin-1 (ISO8859-1) characters for one monospace font at one size.
 
 
 # import ######################################################################
-
-import re
 import numpy as np
 import math
 from ctypes import c_void_p, sizeof, c_float
 from OpenGL.GL import *  # noqa
-from .GLTexture import Texture2D
-import os.path
+from . import FontLatin1_12 as font
 
-
-# PGM Format ##################################################################
-
-_PGM_HEADER = b'P5\s+(?P<width>\d+)\s+(?P<height>\d+)\s+(?P<grayscale>\d+)\s'
-_PGM_HEADER_REGEXP = re.compile(_PGM_HEADER)
-
-
-def parsePGMHeader(data):
-    """Parse 'Portable Gray Map' (PGM) image format header
-    PGM Specification: http://netpbm.sourceforge.net/doc/pgm.html
-    PGM comments are not supported
-
-    :param str data: Content of a PGM file
-    :returns: Image width, height, max gray value,
-    pixel size (bytes), offset (bytes) of raw image in file
-    :rtype: tuple
-    """
-    match = _PGM_HEADER_REGEXP.match(data)
-    if not match:
-        raise RuntimeError('No PGM formatted header')
-
-    width, height = int(match.group('width')), int(match.group('height'))
-    grayscale = int(match.group('grayscale'))
-    if grayscale <= 0 or grayscale >= 65536:
-        raise RuntimeError('PGM format: incorrect gray max value')
-
-    pixelSize = 1 if grayscale < 256 else 2
-    offset = match.end()
-    return width, height, grayscale, pixelSize, offset
-
-
-def loadPGMFile(fileName):
-    """Read a 'Portable Gray Map' (PGM) image file
-    PGM Specification: http://netpbm.sourceforge.net/doc/pgm.html
-    PGM comments are not supported
-
-    :returns: Image width, height, max gray value,
-    pixel size (bytes), raw image data
-    :rtype: tuple
-    """
-    with open(fileName, 'rb') as f:
-        data = f.read()
-    w, h, maxVal, pixelSize, offset = parsePGMHeader(data)
-    return w, h, maxVal, pixelSize, data[offset:]
-
-
-# Font ########################################################################
-
-#TODO: Should this be configurable by the main program?
-_FONT= {
-        'minChar': 0, 'maxChar': 255,
-        'cExtent': 1/16., 'rExtent': 1/12.,
-        'cWidth': 8, 'cHeight': 15,
-        'bearingY': 11
-        }
-fname = os.path.join(os.path.dirname(__file__), 'font_latin1_12.pgm')
-if os.path.exists(fname):
-    # this is the expected situation
-    _FONT['filename'] = fname
-else:
-    # Linux distributions like to have code and data separated
-    # awfull patch for the time being
-    from PyMca5 import PyMcaDataDir
-    _FONT['filename'] = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR, "GLSupport",'font_latin1_12.pgm')
-
-def _fontTexCoords(char):
-    """Returns the texture coordinates corresponding to a character
-    :param str char: One Latin-1 character
-    :returns: Texture coords uMin, vMin, uMax, vMax
-    :rtype: tuple
-    """
-    index = ord(char.encode('latin1'))
-    if index > ord('~'):
-        index = max(96, index - 64)
-    else:
-        index = max(index - 32, 0)
-
-    row, col = index // 16, index % 16
-    return (col * _FONT['cExtent'],       row * _FONT['rExtent'],
-            (col + 1) * _FONT['cExtent'], (row + 1) * _FONT['rExtent'])
+# TODO: Font should be configurable by the main program
 
 
 # Text2D ######################################################################
@@ -138,6 +56,7 @@ ROTATE_90, ROTATE_180, ROTATE_270 = 90, 180, 270
 
 
 class Text2D(object):
+    _textures = {}
 
     def __init__(self, text, align=LEFT, valign=BASELINE,
                  rotate=0):
@@ -156,21 +75,10 @@ class Text2D(object):
         self._rotate = rotate
 
     @classmethod
-    def _getTexture(cls):
-        try:
-            return cls._texture
-        except AttributeError:
-            w, h, maxVal, pixelSize, data = loadPGMFile(_FONT['filename'])
-            assert(pixelSize == 1)
-            # Loaded once for all Text2D instances
-            cls._texture = Texture2D(GL_ALPHA, w, h,
-                                     type_=GL_UNSIGNED_BYTE,
-                                     minFilter=GL_NEAREST,
-                                     magFilter=GL_NEAREST,
-                                     wrapS=GL_CLAMP_TO_EDGE,
-                                     wrapT=GL_CLAMP_TO_EDGE,
-                                     data=data, unpackAlign=1)
-            return cls._texture
+    def _getTexture(cls, context):
+        # Loaded once for all Text2D instances per OpenGL context
+        # TODO proper support of multiple contexts
+        return cls._textures.setdefault(context, font.loadTexture())
 
     @property
     def text(self):
@@ -183,38 +91,39 @@ class Text2D(object):
             self._text = text
 
     def getSize(self):
-        return len(self._text) * _FONT['cWidth'], _FONT['cHeight']
+        return len(self._text) * font.cWidth, font.cHeight
 
     def getVertices(self):
         try:
             return self._vertices
         except AttributeError:
             self._vertices = np.empty((len(self.text), 4, 4), dtype='float32')
-            cw, ch = _FONT['cWidth'], _FONT['cHeight']
-            bearingY = _FONT['bearingY']
 
             if self._align == LEFT:
                 xOrig = 0
             elif self._align == RIGHT:
-                xOrig = - len(self._text) * cw
+                xOrig = - len(self._text) * font.cWidth
             else:  # CENTER
-                xOrig = - (len(self._text) * cw) // 2
+                xOrig = - (len(self._text) * font.cWidth) // 2
 
             if self._valign == BASELINE:
-                yOrig = - bearingY
+                yOrig = - font.bearingY
             elif self._valign == TOP:
                 yOrig = 0
             elif self._valign == BOTTOM:
-                yOrig = - ch
+                yOrig = - font.cHeight
             else:  # CENTER
-                yOrig = -ch // 2
+                yOrig = - font.cHeight // 2
 
             for index, char in enumerate(self.text):
-                uMin, vMin, uMax, vMax = _fontTexCoords(char)
-                vertices = ((xOrig + index * cw, yOrig + ch, uMin, vMax),
-                            (xOrig + index * cw, yOrig, uMin, vMin),
-                            (xOrig + (index + 1) * cw, yOrig + ch, uMax, vMax),
-                            (xOrig + (index + 1) * cw, yOrig, uMax, vMin))
+                uMin, vMin, uMax, vMax = font.charTexCoords(char)
+                vertices = ((xOrig + index * font.cWidth, yOrig + font.cHeight,
+                             uMin, vMax),
+                            (xOrig + index * font.cWidth, yOrig, uMin, vMin),
+                            (xOrig + (index + 1) * font.cWidth,
+                             yOrig + font.cHeight, uMax, vMax),
+                            (xOrig + (index + 1) * font.cWidth, yOrig,
+                             uMax, vMin))
 
                 rotate = math.radians(self._rotate)
                 cos, sin = math.cos(rotate), math.sin(rotate)
@@ -228,8 +137,8 @@ class Text2D(object):
         vertices = self.getVertices()
         return vertices.shape[-1] * vertices.itemsize
 
-    def render(self, posAttrib, texAttrib, texUnit=0):
-        self._getTexture().bind(texUnit)
+    def render(self, context, posAttrib, texAttrib, texUnit=0):
+        self._getTexture(context).bind(texUnit)
         glEnableVertexAttribArray(posAttrib)
         glVertexAttribPointer(posAttrib,
                               2,
@@ -417,7 +326,8 @@ if __name__ == "__main__":
             for x, y, text in self.texts:
                 glUniformMatrix4fv(self.prog.uniforms['transform'], 1, GL_TRUE,
                                    self.matScreenProj * mat4Translate(x, y, 0))
-                text.render(self.prog.attributes['position'],
+                text.render(self.context(),
+                            self.prog.attributes['position'],
                             self.prog.attributes['texCoords'],
                             self.texUnit)
 
@@ -426,6 +336,8 @@ if __name__ == "__main__":
             self.matScreenProj = mat4Ortho(0, w, h, 0, 1, -1)
 
     app = QApplication([])
-    w = TestText()
-    w.show()
+    widget1 = TestText()
+    widget1.show()
+    widget2 = TestText()
+    widget2.show()
     sys.exit(app.exec_())

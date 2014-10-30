@@ -113,15 +113,18 @@ class FBOTexture(Texture2D):
 
     def discard(self):
         if hasattr(self, '_fbo'):
-            glDeleteFramebuffers(self._fbo)
+            if bool(glDeleteFramebuffers):  # Test for __del__
+                glDeleteFramebuffers(self._fbo)
             del self._fbo
         if hasattr(self, '_stencilId'):
-            _deleteRenderbuffer(self._stencilId)
+            if bool(glDeleteRenderbuffers):  # Test for __del__
+                _deleteRenderbuffer(self._stencilId)
             if self._stencilId == getattr(self, '_depthId', -1):
                 del self._depthId
             del self._stencilId
         if hasattr(self, '_depthId'):
-            _deleteRenderbuffer(self._depthId)
+            if bool(glDeleteRenderbuffers):  # Test for __del__
+                _deleteRenderbuffer(self._depthId)
             del self._depthId
         super(FBOTexture, self).discard()
 
