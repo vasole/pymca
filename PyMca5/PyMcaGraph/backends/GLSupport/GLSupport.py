@@ -129,7 +129,8 @@ class Program(object):
             raise RuntimeError("No OpenGL program resource, \
                                discard has already been called")
         else:
-            glDeleteProgram(prog)
+            if bool(glDeleteProgram):  # Test for __del__
+                glDeleteProgram(prog)
             del self._prog
 
     def __del__(self):
