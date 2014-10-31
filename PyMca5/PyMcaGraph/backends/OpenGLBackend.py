@@ -51,10 +51,13 @@ import numpy as np
 import math
 
 import OpenGL
-if 1:  # Debug
+if 0:  # Debug
+    OpenGL.FULL_LOGGING = True
     OpenGL.ERROR_ON_COPY = True
 else:
+    OpenGL.ERROR_LOGGING = False
     OpenGL.ERROR_CHECKING = False
+    OpenGL.ERROR_ON_COPY = False
 
 from OpenGL.GL import *  # noqa
 from OpenGL.GL.ARB.texture_rg import GL_R32F  # Core in OpenGL 3
@@ -464,6 +467,7 @@ class SelectRectangle(Select2Points):
                                          self.parameters)
         self.backend._callback(eventDict)
 
+
 class SelectLine(Select2Points):
     def beginSelect(self, x, y):
         self.startPt = self.backend.pixelToDataCoords(x, y)
@@ -572,6 +576,7 @@ class SelectVLine(Select1Point):
 
 # OpenGLBackend ###############################################################
 
+
 class OpenGLBackend(PlotBackend, QGLWidget):
     def __init__(self, parent=None, **kw):
         self._xMin, self._xMax = 0., 1.
@@ -588,7 +593,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self._labels = []
         self._selectionArea = None
 
-        self._margins = {'left': 50, 'right': 50, 'top': 50, 'bottom': 50}
+        self._margins = {'left': 100, 'right': 50, 'top': 50, 'bottom': 50}
         self._lineWidth = 1
         self._tickLen = 5
 
@@ -686,18 +691,6 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         if plotWidth <= 2 or plotHeight <= 2:
             return
 
-        # Plot frame
-        xLeft = self._margins['left'] - .5 * self._lineWidth
-        xRight = self.winWidth - self._margins['right'] + .5 * self._lineWidth
-        yBottom = self.winHeight - self._margins['bottom'] + \
-            .5 * self._lineWidth
-        yTop = self._margins['top'] - .5 * self._lineWidth
-
-        self._frameVertices = np.array(
-            ((xLeft,  yBottom), (xLeft,  yTop),
-             (xRight, yTop), (xRight, yBottom),
-             (xLeft,  yBottom)), dtype=np.float32)
-
         # Ticks
         self._labels = []
 
@@ -713,51 +706,75 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         yTicks = [y for y in _ticks(yMin, yMax, yStep)
                   if y >= self._yMin and y <= self._yMax]
 
-        self._tickVertices = np.empty((len(xTicks) + len(yTicks), 4, 2),
-                                      dtype=np.float32)
+        nbLinePairs = 2 + len(xTicks) + len(yTicks)
+        self._frameVertices = np.empty((nbLinePairs, 4, 2), dtype=np.float32)
 
         plotBottom = self.winHeight - self._margins['bottom']
         for index, xTick in enumerate(xTicks):
             tickText = ('{:.' + str(xNbFrac) + 'f}').format(xTick)
             xTick = self.dataToPixelCoords(xData=xTick)
-            self._tickVertices[index][0] = xTick, plotBottom
-            self._tickVertices[index][1] = xTick, plotBottom + self._tickLen
-            self._tickVertices[index][2] = xTick, self._margins['top']
-            self._tickVertices[index][3] = (xTick, self._margins['top'] -
-                                            self._tickLen)
+            self._frameVertices[index][0] = xTick, plotBottom
+            self._frameVertices[index][1] = xTick, plotBottom - self._tickLen
 
-            self._labels.append((xTick, plotBottom + self._tickLen + 2,
+            self._frameVertices[index][2] = xTick, self._margins['top']
+            self._frameVertices[index][3] = (xTick, self._margins['top'] +
+                                             self._tickLen)
+
+            self._labels.append((xTick, plotBottom + self._tickLen,
                                  Text2D(tickText, align=CENTER, valign=TOP)))
 
         plotRight = self.winWidth - self._margins['right']
         for index, yTick in enumerate(yTicks, len(xTicks)):
             tickText = ('{:.' + str(yNbFrac) + 'f}').format(yTick)
             yTick = self.dataToPixelCoords(yData=yTick)
-            self._tickVertices[index][0] = self._margins['left'], yTick
-            self._tickVertices[index][1] = (self._margins['left'] -
-                                            self._tickLen, yTick)
-            self._tickVertices[index][2] = plotRight, yTick
-            self._tickVertices[index][3] = plotRight + self._tickLen, yTick
+            self._frameVertices[index][0] = self._margins['left'], yTick
+            self._frameVertices[index][1] = (self._margins['left'] +
+                                             self._tickLen, yTick)
 
-            self._labels.append((self._margins['left'] - self._tickLen - 2,
+            self._frameVertices[index][2] = plotRight, yTick
+            self._frameVertices[index][3] = plotRight - self._tickLen, yTick
+
+            self._labels.append((self._margins['left'] - self._tickLen,
                                  yTick,
                                  Text2D(tickText, align=RIGHT, valign=CENTER)))
 
+        self._frameVertices.shape = (4 * nbLinePairs, 2)
+
+        # Plot frame
+        xLeft = self._margins['left']
+        xRight = self.winWidth - self._margins['right']
+        yBottom = self.winHeight - self._margins['bottom']
+        yTop = self._margins['top']
+
+        self._frameVertices[-8] = xLeft, yBottom
+        self._frameVertices[-7] = xLeft, yTop
+
+        self._frameVertices[-6] = xLeft, yTop
+        self._frameVertices[-5] = xRight, yTop
+
+        self._frameVertices[-4] = xRight, yTop
+        self._frameVertices[-3] = xRight, yBottom
+
+        self._frameVertices[-2] = xRight, yBottom
+        self._frameVertices[-1] = xLeft, yBottom
+
         # Title, Labels
+        plotCenterX = self._margins['left'] + plotWidth // 2
+        plotCenterY = self._margins['top'] + plotHeight // 2
         if self._title:
-            self._labels.append((self.winWidth // 2,
-                                 self._margins['top'] - self._tickLen - 2,
+            self._labels.append((plotCenterX,
+                                 self._margins['top'] - self._tickLen,
                                  Text2D(self._title, align=CENTER,
                                         valign=BOTTOM)))
         if self._xLabel:
-            self._labels.append((self.winWidth // 2,
+            self._labels.append((plotCenterX,
                                 self.winHeight - self._margins['bottom'] // 2,
                                 Text2D(self._xLabel, align=CENTER,
                                        valign=TOP)))
 
         if self._yLabel:
-            self._labels.append((self._margins['left'] // 2,
-                                self.winHeight // 2,
+            self._labels.append((self._margins['left'] // 4,
+                                plotCenterY,
                                 Text2D(self._yLabel, align=CENTER,
                                        valign=CENTER, rotate=ROTATE_270)))
 
@@ -844,7 +861,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self._progImg = Program(_vertexSrc, _fragmentSrc)
 
     def _paintGLDirect(self):
-        self._renderPlot()
+        self._renderPlotArea()
+        self._renderPlotFrame()
         self._renderSelection()
 
     def _paintGLFBO(self):
@@ -868,7 +886,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                                            wrapT=GL_CLAMP_TO_EDGE)
             with self._plotTex:
                 glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
-                self._renderPlot()
+                self._renderPlotArea()
+                self._renderPlotFrame()
 
         # Render plot in screen coords
         glViewport(0, 0, self.winWidth, self.winHeight)
@@ -969,21 +988,18 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
             glDisable(GL_SCISSOR_TEST)
 
-    def _renderPlot(self):
+    def _renderPlotFrame(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         # Render plot in screen coords
         glViewport(0, 0, self.winWidth, self.winHeight)
-        matScreenProj = mat4Ortho(0, self.winWidth,
-                                  self.winHeight, 0,
-                                  1, -1)
 
         self._updateAxis()
 
         # Render Plot frame
         self._progBase.use()
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                           matScreenProj)
+                           self.matScreenProj)
         glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 1.)
         glVertexAttribPointer(self._progBase.attributes['position'],
                               2,
@@ -991,18 +1007,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                               GL_FALSE,
                               0, self._frameVertices)
         glLineWidth(self._lineWidth)
-        glDrawArrays(GL_LINE_STRIP, 0, len(self._frameVertices))
-
-        # Render Ticks
-        glVertexAttribPointer(self._progBase.attributes['position'],
-                              2,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              0, self._tickVertices)
-
-        glLineWidth(self._lineWidth)
-        nbTicks, nbVertPerTick, _ = self._tickVertices.shape
-        glDrawArrays(GL_LINES, 0, nbTicks * nbVertPerTick)
+        glDrawArrays(GL_LINES, 0, len(self._frameVertices))
 
         # Render Text
         self._progTex.use()
@@ -1011,12 +1016,14 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
         for x, y, label in self._labels:
             glUniformMatrix4fv(self._progTex.uniforms['matrix'], 1, GL_TRUE,
-                               matScreenProj * mat4Translate(x, y, 0))
+                               self.matScreenProj * mat4Translate(x, y, 0))
             label.render(self, self._progTex.attributes['position'],
                          self._progTex.attributes['texCoords'],
                          textTexUnit)
 
-        # Render in plot area
+    def _renderPlotArea(self):
+        plotWidth, plotHeight = self.plotSizeInPixels()
+
         glScissor(self._margins['left'], self._margins['bottom'],
                   plotWidth, plotHeight)
         glEnable(GL_SCISSOR_TEST)
@@ -1123,6 +1130,9 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
     def resizeGL(self, width, height):
         self.winWidth, self.winHeight = width, height
+        self.matScreenProj = mat4Ortho(0, self.winWidth,
+                                       self.winHeight, 0,
+                                       1, -1)
         self.setLimits(self._xMin, self._xMax, self._yMin, self._yMax)
 
         self.updateAxis()
@@ -1135,16 +1145,17 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                  xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
-        if info:
-            print('addImage info ignored:', info)
+        # info is ignored
         if z != 0 or selectable or draggable:
             raise NotImplementedError("z, selectable and draggable \
                                       not implemented")
 
+        oldImage = self._images.get(legend, None)
+        if oldImage is not None and oldImage['data'].shape != data.shape:
+            oldImage = None
+
         if replace:
             self.clearImages()
-
-        oldImage = self._images.get(legend, None)
 
         height, width = data.shape[0:2]
         if xScale is None:
@@ -1178,13 +1189,33 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                 else colormap['vmax'],
                 'bBox': bbox
             }
+            if oldImage is not None and '_texture' in oldImage:
+                # Reuse texture and update early
+                texture = oldImage['_texture']
+                texture.updateAll(format_=GL_RED, type_=GL_FLOAT,
+                                  data=data)
+                self._images[legend]['_texture'] = texture
 
         elif len(data.shape) == 3:
             # For RGB, RGBA data
             assert(data.shape[2] in (3, 4))
             assert(data.dtype == np.uint8 or
                    np.can_cast(data.dtype, np.float32))
+
             self._images[legend] = {'data': data, 'bBox': bbox}
+            if oldImage is not None and '_texture' in oldImage:
+                # Reuse texture and update early
+                format_ = GL_RGBA if depth == 4 else GL_RGB
+                if data.dtype == np.uint8:
+                    type_ = GL_UNSIGNED_BYTE
+                else:
+                    type_ = GL_FLOAT
+
+                texture = oldImage['_texture']
+                texture.updateAll(format_=format_, type_=type_,
+                                  data=data)
+                self._images[legend]['_texture'] = texture
+
         else:
             raise RuntimeError("Unsupported data shape {0}".format(data.shape))
 
@@ -1217,9 +1248,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
     def addItem(self, xList, yList, legend=None, info=None,
                 replace=False, replot=True,
                 shape="polygon", fill=True, **kwargs):
-        if info:
-            print("addItem: info ignored", info)
-
+        # info is ignored
         if shape not in self._drawModes:
             raise NotImplementedError("Unsupported shape {0}".format(shape))
 
@@ -1375,9 +1404,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
         if self._keepDataAspectRatio:
             self._ensureAspectRatio()
-
             self.updateAxis()
-            self.updateGL()
 
     def setGraphXLimits(self, xMin, xMax):
         self._setGraphXLimits(xMin, xMax)
@@ -1385,7 +1412,6 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self._ensureAspectRatio()
 
         self.updateAxis()
-        self.updateGL()
 
     def setGraphYLimits(self, yMin, yMax):
         self._setGraphYLimits(yMin, yMax)
@@ -1394,7 +1420,6 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self._ensureAspectRatio()
 
         self.updateAxis()
-        self.updateGL()
 
     def setLimits(self, xMin, xMax, yMin, yMax):
         self._setGraphXLimits(xMin, xMax)
@@ -1404,13 +1429,11 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self._ensureAspectRatio()
 
         self.updateAxis()
-        self.updateGL()
 
     def invertYAxis(self, flag=True):
         if flag != self._isYInverted:
             self._isYInverted = flag
             self.updateAxis()
-            self.updateGL()
 
     def isYAxisInverted(self):
         return self._isYInverted
@@ -1432,21 +1455,18 @@ class OpenGLBackend(PlotBackend, QGLWidget):
     # Title, Labels
     def setGraphTitle(self, title=""):
         self._title = title
-        self.updateGL()
 
     def getGraphTitle(self):
         return self._title
 
     def setGraphXLabel(self, label="X"):
         self._xLabel = label
-        self.updateGL()
 
     def getGraphXLabel(self):
         return self._xLabel
 
     def setGraphYLabel(self, label="Y"):
         self._yLabel = label
-        self.updateGL()
 
     def getGraphYLabel(self):
         return self._yLabel
