@@ -284,6 +284,15 @@ class Image(object):
             texture.discard()
         self.tiles = ()
 
+    def updateAll(self, format_, type_, data, texUnit=0, unpackAlign=1):
+        if len(self.tiles) == 1:
+            self.tiles[0][0].update(format_, type_, data,
+                                    width=self.width, height=self.height,
+                                    texUnit=texUnit, unpackAlign=unpackAlign)
+        else:
+            raise NotImplementedError("Updating image spanning over mulitple \
+                                      tiles not implemented")
+
     def render(self, posAttrib, texAttrib, texUnit=0):
         for texture, vertices in self.tiles:
             texture.bind(texUnit)
