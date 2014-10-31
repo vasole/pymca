@@ -464,6 +464,7 @@ class SelectRectangle(Select2Points):
                                          self.parameters)
         self.backend._callback(eventDict)
 
+
 class SelectLine(Select2Points):
     def beginSelect(self, x, y):
         self.startPt = self.backend.pixelToDataCoords(x, y)
@@ -588,7 +589,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self._labels = []
         self._selectionArea = None
 
-        self._margins = {'left': 50, 'right': 50, 'top': 50, 'bottom': 50}
+        self._margins = {'left': 100, 'right': 50, 'top': 50, 'bottom': 50}
         self._lineWidth = 1
         self._tickLen = 5
 
@@ -687,11 +688,10 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             return
 
         # Plot frame
-        xLeft = self._margins['left'] - .5 * self._lineWidth
-        xRight = self.winWidth - self._margins['right'] + .5 * self._lineWidth
-        yBottom = self.winHeight - self._margins['bottom'] + \
-            .5 * self._lineWidth
-        yTop = self._margins['top'] - .5 * self._lineWidth
+        xLeft = self._margins['left']
+        xRight = self.winWidth - self._margins['right']
+        yBottom = self.winHeight - self._margins['bottom']
+        yTop = self._margins['top']
 
         self._frameVertices = np.array(
             ((xLeft,  yBottom), (xLeft,  yTop),
@@ -721,12 +721,12 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             tickText = ('{:.' + str(xNbFrac) + 'f}').format(xTick)
             xTick = self.dataToPixelCoords(xData=xTick)
             self._tickVertices[index][0] = xTick, plotBottom
-            self._tickVertices[index][1] = xTick, plotBottom + self._tickLen
+            self._tickVertices[index][1] = xTick, plotBottom - self._tickLen
             self._tickVertices[index][2] = xTick, self._margins['top']
-            self._tickVertices[index][3] = (xTick, self._margins['top'] -
+            self._tickVertices[index][3] = (xTick, self._margins['top'] +
                                             self._tickLen)
 
-            self._labels.append((xTick, plotBottom + self._tickLen + 2,
+            self._labels.append((xTick, plotBottom + self._tickLen,
                                  Text2D(tickText, align=CENTER, valign=TOP)))
 
         plotRight = self.winWidth - self._margins['right']
@@ -734,30 +734,32 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             tickText = ('{:.' + str(yNbFrac) + 'f}').format(yTick)
             yTick = self.dataToPixelCoords(yData=yTick)
             self._tickVertices[index][0] = self._margins['left'], yTick
-            self._tickVertices[index][1] = (self._margins['left'] -
+            self._tickVertices[index][1] = (self._margins['left'] +
                                             self._tickLen, yTick)
             self._tickVertices[index][2] = plotRight, yTick
-            self._tickVertices[index][3] = plotRight + self._tickLen, yTick
+            self._tickVertices[index][3] = plotRight - self._tickLen, yTick
 
-            self._labels.append((self._margins['left'] - self._tickLen - 2,
+            self._labels.append((self._margins['left'] - self._tickLen,
                                  yTick,
                                  Text2D(tickText, align=RIGHT, valign=CENTER)))
 
         # Title, Labels
+        plotCenterX = self._margins['left'] + plotWidth // 2
+        plotCenterY = self._margins['top'] + plotHeight // 2
         if self._title:
-            self._labels.append((self.winWidth // 2,
-                                 self._margins['top'] - self._tickLen - 2,
+            self._labels.append((plotCenterX,
+                                 self._margins['top'] - self._tickLen,
                                  Text2D(self._title, align=CENTER,
                                         valign=BOTTOM)))
         if self._xLabel:
-            self._labels.append((self.winWidth // 2,
+            self._labels.append((plotCenterX,
                                 self.winHeight - self._margins['bottom'] // 2,
                                 Text2D(self._xLabel, align=CENTER,
                                        valign=TOP)))
 
         if self._yLabel:
-            self._labels.append((self._margins['left'] // 2,
-                                self.winHeight // 2,
+            self._labels.append((self._margins['left'] // 4,
+                                plotCenterY,
                                 Text2D(self._yLabel, align=CENTER,
                                        valign=CENTER, rotate=ROTATE_270)))
 
@@ -844,7 +846,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self._progImg = Program(_vertexSrc, _fragmentSrc)
 
     def _paintGLDirect(self):
-        self._renderPlot()
+        self._renderPlotArea()
+        self._renderPlotFrame()
         self._renderSelection()
 
     def _paintGLFBO(self):
@@ -868,7 +871,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                                            wrapT=GL_CLAMP_TO_EDGE)
             with self._plotTex:
                 glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
-                self._renderPlot()
+                self._renderPlotArea()
+                self._renderPlotFrame()
 
         # Render plot in screen coords
         glViewport(0, 0, self.winWidth, self.winHeight)
@@ -969,7 +973,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
             glDisable(GL_SCISSOR_TEST)
 
-    def _renderPlot(self):
+    def _renderPlotFrame(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         # Render plot in screen coords
@@ -1016,7 +1020,9 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                          self._progTex.attributes['texCoords'],
                          textTexUnit)
 
-        # Render in plot area
+    def _renderPlotArea(self):
+        plotWidth, plotHeight = self.plotSizeInPixels()
+
         glScissor(self._margins['left'], self._margins['bottom'],
                   plotWidth, plotHeight)
         glEnable(GL_SCISSOR_TEST)
@@ -1135,8 +1141,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                  xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
-        if info:
-            print('addImage info ignored:', info)
+        # info is ignored
         if z != 0 or selectable or draggable:
             raise NotImplementedError("z, selectable and draggable \
                                       not implemented")
@@ -1217,9 +1222,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
     def addItem(self, xList, yList, legend=None, info=None,
                 replace=False, replot=True,
                 shape="polygon", fill=True, **kwargs):
-        if info:
-            print("addItem: info ignored", info)
-
+        # info is ignored
         if shape not in self._drawModes:
             raise NotImplementedError("Unsupported shape {0}".format(shape))
 
