@@ -48,7 +48,10 @@ from .GLTexture import Texture2D
 # utils #######################################################################
 
 def _deleteRenderbuffer(bufferId):
-    OpenGL.GL.glDeleteRenderbuffers(1, (c_int * 1)(bufferId))
+    glDeleteRenderbuffers(1, (c_int * 1)(bufferId))
+
+def _deleteFramebuffer(bufferId):
+    glDeleteFramebuffers(1, (c_int * 1)(bufferId))
 
 
 # framebuffer #################################################################
@@ -63,7 +66,7 @@ class FBOTexture(Texture2D):
         super(FBOTexture, self).__init__(internalFormat, width, height,
                                          **kwargs)
 
-        self._fbo = int(glGenFramebuffers(1))
+        self._fbo = glGenFramebuffers(1)
         glBindFramebuffer(GL_FRAMEBUFFER, self._fbo)
 
         # Attachments
@@ -114,7 +117,7 @@ class FBOTexture(Texture2D):
     def discard(self):
         if hasattr(self, '_fbo'):
             if bool(glDeleteFramebuffers):  # Test for __del__
-                glDeleteFramebuffers(self._fbo)
+                _deleteFramebuffer(self._fbo)
             del self._fbo
         if hasattr(self, '_stencilId'):
             if bool(glDeleteRenderbuffers):  # Test for __del__

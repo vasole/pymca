@@ -78,7 +78,12 @@ class Text2D(object):
     def _getTexture(cls, context):
         # Loaded once for all Text2D instances per OpenGL context
         # TODO proper support of multiple contexts
-        return cls._textures.setdefault(context, font.loadTexture())
+        try:
+            tex = cls._textures[context]
+        except KeyError:
+            cls._textures[context] = font.loadTexture()
+            tex = cls._textures[context]
+        return tex
 
     @property
     def text(self):
