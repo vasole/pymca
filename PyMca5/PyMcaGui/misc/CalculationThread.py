@@ -41,7 +41,92 @@ else:
     import threading
     QThread =  threading.Thread
 
-class CalculationThread(QThread):
+
+class CalculationObject(qt.QObject):
+    finished = qt.pyqtSignal()
+    started = qt.pyqtSignal()
+    def __init__(self, parent=None, calculation_method=None,
+                 calculation_vars=None, calculation_kw=None,
+                 expand_vars=True, expand_kw=True):
+        qt.QObject.__init__(self, parent)
+        self.calculation_method = calculation_method
+        self.calculation_vars = calculation_vars
+        self.calculation_kw = calculation_kw
+        self.expand_vars = expand_vars
+        self.expand_kw = expand_kw
+        if self.expand_vars:
+            if not self.expand_kw:
+                raise ValueError("Cannot expand vars without expanding kw")
+        self.__result = None
+
+    def run(self):
+        try:
+            self.__result = None
+            if self.calculation_vars is None and self.calculation_kw is None:
+                self.__result = self.calculation_method()
+            elif self.calculation_vars is None:
+                if self.expand_kw:
+                    self.__result = self.calculation_method(**self.calculation_kw)
+                else:
+                    self.__result = self.calculation_method(self.calculation_kw)
+            elif self.calculation_kw is None:
+                if self.expand_vars:
+                    self.__result = self.calculation_method(*self.calculation_vars)
+                else:
+                    self.__result = self.calculation_method(self.calculation_vars)
+            elif self.expand_vars and self.expand_kw:
+                self.__result = self.calculation_method(*self.calculation_vars,
+                                                      **self.calculation_kw)
+            elif self.expand_kw:
+                self.__result = self.calculation_method(self.calculation_vars,
+                                                      **self.calculation_kw)
+            else:
+                print("Impossible combination of vars and kw")
+                self._threadRunning = False
+                raise ValueError("Impossible combination of vars and kw")
+        except:
+            self.__result = ("Exception",) + sys.exc_info()
+        finally:
+            # comment lines to allow to call again????
+            #self.calculation_vars = None
+            #self.calculation_kw = None
+            self.finished.emit()
+
+    def getResult(self):
+        return self.__result
+        
+class NewCalculationThread(object):
+    def __init__(self, parent=None, calculation_method=None,
+                 calculation_vars=None, calculation_kw=None,
+                 expand_vars=True, expand_kw=True):
+        self._calculationObject = CalculationObject(parent,
+                                    calculation_method=calculation_method,
+                                    calculation_vars=calculation_vars,
+                                    calculation_kw=calculation_kw,
+                                    expand_vars=expand_vars,
+                                    expand_kw=expand_kw)
+        self._calculationThread = qt.QThread()
+        self._calculationObject.moveToThread(self._calculationThread)
+        self._calculationObject.finished.connect(self._calculationThread.quit)
+        self._calculationThread.started.connect(self._calculationObject.run)
+        self._calculationThread.finished.connect(self._threadFinishedSlot)
+        self._threadRunning = False
+
+    def isRunning(self):
+        #return self.calculationThread.isRunning()
+        return self._threadRunning
+
+    def _threadFinishedSlot(self):
+        self._threadRunning = False
+
+    def start(self):
+        self._threadRunning = True
+        self._calculationThread.start()
+
+    def getResult(self):
+        return self._calculationObject.getResult()
+
+class OldCalculationThread(QThread):
     def __init__(self, parent=None, calculation_method=None,
                  calculation_vars=None, calculation_kw=None,
                  expand_vars=True, expand_kw=True):
@@ -102,6 +187,8 @@ class CalculationThread(QThread):
             return self.result
         else:
             return None
+
+CalculationThread=OldCalculationThread
 
 def waitingMessageDialog(thread, message=None, parent=None,
                          modal=True, update_callback=None,
