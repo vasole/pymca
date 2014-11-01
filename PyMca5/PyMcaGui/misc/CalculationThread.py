@@ -107,9 +107,12 @@ class NewCalculationThread(object):
                                     expand_kw=expand_kw)
         self._calculationThread = qt.QThread()
         self._calculationObject.moveToThread(self._calculationThread)
-        self._calculationObject.finished.connect(self._calculationThread.quit)
-        self._calculationThread.started.connect(self._calculationObject.run)
-        self._calculationThread.finished.connect(self._threadFinishedSlot)
+        self._calculationObject.finished.connect(self._calculationThread.quit,
+                                                qt.Qt.DirectConnection)
+        self._calculationThread.started.connect(self._calculationObject.run,
+                                                qt.Qt.DirectConnection)
+        self._calculationThread.finished.connect(self._threadFinishedSlot,
+                                                qt.Qt.DirectConnection)
         self._threadRunning = False
 
     def isRunning(self):
@@ -188,7 +191,7 @@ class OldCalculationThread(QThread):
         else:
             return None
 
-CalculationThread=OldCalculationThread
+CalculationThread=NewCalculationThread
 
 def waitingMessageDialog(thread, message=None, parent=None,
                          modal=True, update_callback=None,
