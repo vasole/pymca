@@ -604,6 +604,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self._plotHasFocus = set()
 
         QGLWidget.__init__(self, parent)
+        self.setAutoFillBackground(False)
         self.setMinimumSize(300, 300)  # TODO better way ?
         PlotBackend.__init__(self, parent, **kw)
         self.setMouseTracking(True)
@@ -1190,7 +1191,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                 'bBox': bbox
             }
             if oldImage is not None and '_texture' in oldImage:
-                # Reuse texture and update early
+                # Reuse texture and update
                 texture = oldImage['_texture']
                 texture.updateAll(format_=GL_RED, type_=GL_FLOAT,
                                   data=data)
@@ -1204,8 +1205,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
             self._images[legend] = {'data': data, 'bBox': bbox}
             if oldImage is not None and '_texture' in oldImage:
-                # Reuse texture and update early
-                format_ = GL_RGBA if depth == 4 else GL_RGB
+                # Reuse texture and update
+                format_ = GL_RGBA if data.shape[2] == 4 else GL_RGB
                 if data.dtype == np.uint8:
                     type_ = GL_UNSIGNED_BYTE
                 else:
