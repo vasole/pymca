@@ -1071,7 +1071,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         # Render Images
         dataTexUnit = 0
 
-        for image in self._images.values():
+        # sorted is stable: original order is preserved when key is the same
+        for image in sorted(self._images.values(), key=lambda d: d['zOrder']):
             try:
                 texture = image['_texture']
             except KeyError:
@@ -1179,9 +1180,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
         # info is ignored
-        if z != 0 or selectable or draggable:
-            raise NotImplementedError("z, selectable and draggable \
-                                      not implemented")
+        if selectable or draggable:
+            raise NotImplementedError("selectable and draggable not implemented")
 
         oldImage = self._images.get(legend, None)
         if oldImage is not None and oldImage['data'].shape != data.shape:
@@ -1213,6 +1213,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                     "Colors: {0}".format(colormap['colors']))
 
             self._images[legend] = {
+                'zOrder': z,
                 'data': data,
                 'colormapName': colormap['name'][:],
                 'colormapIsLog': colormap['normalization'].startswith('log'),
@@ -1235,7 +1236,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             assert(data.dtype == np.uint8 or
                    np.can_cast(data.dtype, np.float32))
 
-            self._images[legend] = {'data': data, 'bBox': bbox}
+            self._images[legend] = {'zOrder': z, 'data': data, 'bBox': bbox}
             if oldImage is not None and '_texture' in oldImage:
                 # Reuse texture and update
                 format_ = GL_RGBA if data.shape[2] == 4 else GL_RGB
