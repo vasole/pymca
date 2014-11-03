@@ -46,7 +46,6 @@ except ImportError:
     except ImportError:
         from PyQt5.QtOpenGL import QGLWidget
 
-from collections import OrderedDict
 import numpy as np
 import math
 
@@ -64,6 +63,31 @@ from OpenGL.GL.ARB.texture_rg import GL_R32F  # Core in OpenGL 3
 from ..PlotBackend import PlotBackend
 from ..Plot import colordict
 from .GLSupport import *  # noqa
+
+
+# OrderedDict #################################################################
+
+class MiniOrderedDict(object):
+    """Simple subset of OrderedDict for python 2.6 support"""
+
+    def __init__(self):
+        self._dict = {}
+        self._orderedKeys = []
+
+    def __setitem__(self, key, value):
+        if key not in self._orderedKeys:
+            self._orderedKeys.append(key)
+        self._dict[key] = value
+
+    def __delitem__(self, key):
+        del self._dict[key]
+        self._orderedKeys.remove(key)
+
+    def values(self):
+        return [self._dict[key] for key in self._orderedKeys]
+
+    def get(self, key, default=None):
+        return self._dict.get(key, default)
 
 
 # shaders #####################################################################
@@ -606,8 +630,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self.winWidth, self.winHeight = 0, 0
         self._dataBBox = {'xMin': 0., 'xMax': 0., 'xStep': 1.,
                           'yMin': 0., 'yMax': 0., 'yStep': 1.}
-        self._images = OrderedDict()
-        self._items = OrderedDict()
+        self._images = MiniOrderedDict()
+        self._items = MiniOrderedDict()
         self._labels = []
         self._selectionArea = None
 
@@ -1252,7 +1276,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self.replot()
 
     def clearImages(self):
-        self._images = OrderedDict()
+        self._images = MiniOrderedDict()
 
     def addItem(self, xList, yList, legend=None, info=None,
                 replace=False, replot=True,
@@ -1299,7 +1323,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self.replot()
 
     def clearItems(self):
-        self._items = OrderedDict()
+        self._items = MiniOrderedDict()
 
     def clear(self):
         self.clearItems()
