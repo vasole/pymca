@@ -97,10 +97,13 @@ class CalculationObject(qt.QObject):
     def getResult(self):
         return self.__result
         
-class NewCalculationThread(object):
+class NewCalculationThread(qt.QObject):
+    finished = qt.pyqtSignal()
+    started = qt.pyqtSignal()
     def __init__(self, parent=None, calculation_method=None,
                  calculation_vars=None, calculation_kw=None,
                  expand_vars=True, expand_kw=True):
+        qt.QObject.__init__(self, parent)
         self._calculationObject = CalculationObject(parent,
                                     calculation_method=calculation_method,
                                     calculation_vars=calculation_vars,
@@ -123,13 +126,17 @@ class NewCalculationThread(object):
 
     def _threadFinishedSlot(self):
         self._threadRunning = False
+        self.finished.emit()
 
     def start(self):
         self._threadRunning = True
         self._calculationThread.start()
+        self.started.emit()
 
     def getResult(self):
         return self._calculationObject.getResult()
+
+    result = property(getResult)
 
 class OldCalculationThread(QThread):
     def __init__(self, parent=None, calculation_method=None,
@@ -216,16 +223,10 @@ def waitingMessageDialog(thread, message=None, parent=None,
     if message is None:
         message = "Please wait. Calculation going on."
     windowTitle = "Please Wait"
-    if USE_MOVE_TO_THREAD:
-        if frameless:
-            msg = qt.QDialog(parent, qt.Qt.FramelessWindowHint)
-        else:
-            msg = qt.QDialog(parent)
+    if frameless:
+        msg = qt.QDialog(None, qt.Qt.FramelessWindowHint)
     else:
-        if frameless:
-            msg = qt.QDialog(None, qt.Qt.FramelessWindowHint)
-        else:
-            msg = qt.QDialog(None)
+        msg = qt.QDialog(None)
 
     #if modal:
     #    msg.setWindowFlags(qt.Qt.Window | qt.Qt.CustomizeWindowHint | qt.Qt.WindowTitleHint)
@@ -244,7 +245,7 @@ def waitingMessageDialog(thread, message=None, parent=None,
     layout.addWidget(l2)
     layout.addWidget(l3)
     msg.show()
-    if (not USE_MOVE_TO_THREAD) and (parent is not None):
+    if parent is not None:
         # place the dialog at appropriate point
         parentGeometry = parent.geometry()
         x = parentGeometry.x() + 0.5 * parentGeometry.width()
