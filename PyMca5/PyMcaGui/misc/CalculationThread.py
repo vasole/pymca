@@ -34,13 +34,15 @@ try:
 except ImportError:
     import PyMcaQt as qt
 
+USE_MOVE_TO_THREAD = True
 QTHREAD = True
 if QTHREAD:
     QThread = qt.QThread
 else:
     import threading
     QThread =  threading.Thread
-
+    # Python threads do not support moveToThread (untested)
+    USE_MOVE_TO_THREAD = False
 
 class CalculationObject(qt.QObject):
     finished = qt.pyqtSignal()
@@ -87,7 +89,7 @@ class CalculationObject(qt.QObject):
         except:
             self.__result = ("Exception",) + sys.exc_info()
         finally:
-            # comment lines to allow to call again????
+            # uncomment lines to allow to call again????
             #self.calculation_vars = None
             #self.calculation_kw = None
             self.finished.emit()
@@ -107,9 +109,12 @@ class NewCalculationThread(object):
                                     expand_kw=expand_kw)
         self._calculationThread = qt.QThread()
         self._calculationObject.moveToThread(self._calculationThread)
-        self._calculationObject.finished.connect(self._calculationThread.quit)
-        self._calculationThread.started.connect(self._calculationObject.run)
-        self._calculationThread.finished.connect(self._threadFinishedSlot)
+        self._calculationObject.finished.connect(self._calculationThread.quit,
+                                                qt.Qt.DirectConnection)
+        self._calculationThread.started.connect(self._calculationObject.run,
+                                                qt.Qt.DirectConnection)
+        self._calculationThread.finished.connect(self._threadFinishedSlot,
+                                                qt.Qt.DirectConnection)
         self._threadRunning = False
 
     def isRunning(self):
@@ -188,7 +193,10 @@ class OldCalculationThread(QThread):
         else:
             return None
 
-CalculationThread=OldCalculationThread
+if USE_MOVE_TO_THREAD:
+    CalculationThread=NewCalculationThread
+else:
+    CalculationThread=OldCalculationThread
 
 def waitingMessageDialog(thread, message=None, parent=None,
                          modal=True, update_callback=None,
@@ -208,10 +216,16 @@ def waitingMessageDialog(thread, message=None, parent=None,
     if message is None:
         message = "Please wait. Calculation going on."
     windowTitle = "Please Wait"
-    if frameless:
-        msg = qt.QDialog(None, qt.Qt.FramelessWindowHint)
+    if USE_MOVE_TO_THREAD:
+        if frameless:
+            msg = qt.QDialog(parent, qt.Qt.FramelessWindowHint)
+        else:
+            msg = qt.QDialog(parent)
     else:
-        msg = qt.QDialog(None)#, qt.Qt.FramelessWindowHint)
+        if frameless:
+            msg = qt.QDialog(None, qt.Qt.FramelessWindowHint)
+        else:
+            msg = qt.QDialog(None)
 
     #if modal:
     #    msg.setWindowFlags(qt.Qt.Window | qt.Qt.CustomizeWindowHint | qt.Qt.WindowTitleHint)
@@ -230,7 +244,8 @@ def waitingMessageDialog(thread, message=None, parent=None,
     layout.addWidget(l2)
     layout.addWidget(l3)
     msg.show()
-    if parent is not None:
+    if (not USE_MOVE_TO_THREAD) and (parent is not None):
+        # place the dialog at appropriate point
         parentGeometry = parent.geometry()
         x = parentGeometry.x() + 0.5 * parentGeometry.width()
         y = parentGeometry.y() + 0.5 * parentGeometry.height()
@@ -245,7 +260,10 @@ def waitingMessageDialog(thread, message=None, parent=None,
             l1.setText(ticks[i])
             l3.setText(" "+ticks[i])
             qApp.processEvents()
-            time.sleep(2)
+            if QTHREAD:
+                qt.QThread.msleep(1000)
+            else:
+                time.sleep(2)
     else:
         while (thread.isRunning()):
             updateInfo = update_callback()
@@ -257,5 +275,8 @@ def waitingMessageDialog(thread, message=None, parent=None,
             l2.setText(message)
             l3.setText(" "+ticks[i])
             qApp.processEvents()
-            time.sleep(2)
+            if QTHREAD:
+                qt.QThread.msleep(1000)
+            else:
+                time.sleep(2)
     msg.close()
