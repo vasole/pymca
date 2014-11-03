@@ -525,6 +525,7 @@ class Plot(PlotBase.PlotBase):
                                               z=z,
                                               selectable=selectable,
                                               draggable=draggable,
+                                              colormap=colormap,
                                               **kw)
             info['plot_handle'] = imageHandle
         else:
