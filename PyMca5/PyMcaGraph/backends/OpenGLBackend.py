@@ -52,7 +52,6 @@ import math
 
 import OpenGL
 if 0:  # Debug
-    OpenGL.FULL_LOGGING = True
     OpenGL.ERROR_ON_COPY = True
 else:
     OpenGL.ERROR_LOGGING = False
@@ -80,9 +79,15 @@ _baseVertShd = """
 
 _baseFragShd = """
     uniform vec4 color;
+    uniform int hatchStep;
 
     void main(void) {
-        gl_FragColor = color;
+        if (hatchStep == 0 ||
+            mod(gl_FragCoord.x - gl_FragCoord.y, hatchStep) == 0) {
+            gl_FragColor = color;
+        } else {
+            gl_FragColor = vec4(0., 0., 0., 0.);
+        }
     }
     """
 
@@ -270,6 +275,7 @@ class Zoom(ClicOrDrag):
                 self.backend.resetZoom()
             else:
                 self.backend.setLimits(xMin, xMax, yMin, yMax)
+            self.backend.replot()
 
     def beginDrag(self, x, y):
         self.x0, self.y0 = self.backend.pixelToDataCoords(x, y)
@@ -283,6 +289,7 @@ class Zoom(ClicOrDrag):
                                       (self.x0, y1),
                                       (x1, y1),
                                       (x1, self.y0))
+        self.backend.replot()
 
     def endDrag(self, startPos, endPos):
         xMin, xMax = self.backend.getGraphXLimits()
@@ -297,6 +304,7 @@ class Zoom(ClicOrDrag):
         xMin, xMax = min(x0, x1), max(x0, x1)
         yMin, yMax = min(y0, y1), max(y0, y1)
         self.backend.setLimits(xMin, xMax, yMin, yMax)
+        self.backend.replot()
 
     def onWheel(self, x, y, angle):
         scaleF = 1.1 if angle > 0 else 1./1.1
@@ -317,6 +325,7 @@ class Zoom(ClicOrDrag):
                                xCenter + (1. - xOffset) * xRange,
                                yCenter - yOffset * yRange,
                                yCenter + (1. - yOffset) * yRange)
+        self.backend.replot()
 
 
 def prepareDrawingSignal(event, type_, points, parameters={}):
@@ -354,6 +363,7 @@ class SelectPolygon(StateMachine, Select):
 
         def updateSelectionArea(self):
             self.machine.backend.setSelectionArea(*self.points)
+            self.machine.backend.replot()
             eventDict = prepareDrawingSignal('drawingProgress',
                                              'polygon',
                                              self.points,
@@ -376,6 +386,7 @@ class SelectPolygon(StateMachine, Select):
         def onPress(self, x, y, btn):
             if btn == RIGHT_BTN:
                 self.machine.backend.setSelectionArea()
+                self.machine.backend.replot()
 
                 x, y = self.machine.backend.pixelToDataCoords(x, y)
                 self.points[-1] = (x, y)
@@ -450,6 +461,7 @@ class SelectRectangle(Select2Points):
                                       (self.startPt[0], y),
                                       (x, y),
                                       (x, self.startPt[1]))
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'rectangle',
@@ -459,8 +471,9 @@ class SelectRectangle(Select2Points):
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
-        x, y = self.backend.pixelToDataCoords(x, y)
+        self.backend.replot()
 
+        x, y = self.backend.pixelToDataCoords(x, y)
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'rectangle',
                                          (self.startPt, (x, y)),
@@ -475,6 +488,7 @@ class SelectLine(Select2Points):
     def select(self, x, y):
         x, y = self.backend.pixelToDataCoords(x, y)
         self.backend.setSelectionArea(self.startPt, (x, y))
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'line',
@@ -484,8 +498,9 @@ class SelectLine(Select2Points):
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
-        x, y = self.backend.pixelToDataCoords(x, y)
+        self.backend.replot()
 
+        x, y = self.backend.pixelToDataCoords(x, y)
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'line',
                                          (self.startPt, (x, y)),
@@ -531,6 +546,7 @@ class SelectHLine(Select1Point):
     def select(self, x, y):
         points = self._hLine(y)
         self.backend.setSelectionArea(*points)
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'hline',
@@ -540,6 +556,7 @@ class SelectHLine(Select1Point):
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'hline',
@@ -551,12 +568,12 @@ class SelectHLine(Select1Point):
 class SelectVLine(Select1Point):
     def _vLine(self, x):
         x = self.backend.pixelToDataCoords(xPixel=x)
-        print(x)
         return (x, self.backend._yMin), (x, self.backend._yMax)
 
     def select(self, x, y):
         points = self._vLine(x)
         self.backend.setSelectionArea(*points)
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'vline',
@@ -566,6 +583,7 @@ class SelectVLine(Select1Point):
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'vline',
@@ -581,7 +599,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
     def __init__(self, parent=None, **kw):
         self._xMin, self._xMax = 0., 1.
         self._yMin, self._yMax = 0., 1.
-        self.keepDataAspectRatio(False)
+        self._keepDataAspectRatio = False
         self._isYInverted = False
         self._title, self._xLabel, self._yLabel = '', '', ''
 
@@ -655,8 +673,13 @@ class OpenGLBackend(PlotBackend, QGLWidget):
     # Manage Plot #
 
     def setSelectionArea(self, *points):
-        self._selectionArea = Shape2D(points) if points else None
-        self.updateGL()
+        if points:
+            self._selectionArea = Shape2D(points, fill='hatch',
+                                          fillColor=(0., 0., 0., 0.5),
+                                          stroke=True,
+                                          strokeColor=(0., 0., 0., 1.))
+        else:
+            self._selectionArea = None
 
     def _updateDataBBox(self):
         xMin, xMax, xStep = float('inf'), -float('inf'), float('inf')
@@ -961,31 +984,10 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             # Render fill
             glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                                matDataProj)
-            glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 0.5)
-
             posAttrib = self._progBase.attributes['position']
-            self._selectionArea.prepareFillMask(posAttrib)
-
-            matPlotScreenProj = mat4Ortho(0, plotWidth,
-                                          plotHeight, 0,
-                                          1, -1)
-            glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                               matPlotScreenProj)
-            vertices = linesVertices(plotWidth, plotHeight, 20)
-            glVertexAttribPointer(self._progBase.attributes['position'],
-                                  2,
-                                  GL_FLOAT,
-                                  GL_FALSE,
-                                  0, vertices)
-            glDrawArrays(GL_LINES, 0, len(vertices))
-
-            glDisable(GL_STENCIL_TEST)
-
-            # Render stroke
-            glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                               matDataProj)
-            glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 1.)
-            self._selectionArea.renderStroke(posAttrib)
+            colorUnif = self._progBase.uniforms['color']
+            hatchStepUnif = self._progBase.uniforms['hatchStep']
+            self._selectionArea.render(posAttrib, colorUnif, hatchStepUnif)
 
             glDisable(GL_SCISSOR_TEST)
 
@@ -1002,6 +1004,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                            self.matScreenProj)
         glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 1.)
+        glUniform1i(self._progBase.uniforms['hatchStep'], 0)
         glVertexAttribPointer(self._progBase.attributes['position'],
                               2,
                               GL_FLOAT,
@@ -1121,11 +1124,16 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                 shape2D = item['_shape2D']
             except KeyError:
                 shape2D = Shape2D(zip(item['x'], item['y']),
-                                  fill=item['fill'], stroke=True)
+                                  fill=item['fill'],
+                                  fillColor=item['color'],
+                                  stroke=True,
+                                  strokeColor=item['color'])
                 item['_shape2D'] = shape2D
 
-            glUniform4f(self._progBase.uniforms['color'], *item['color'])
-            shape2D.render(self._progBase.attributes['position'])
+            posAttrib = self._progBase.attributes['position']
+            colorUnif = self._progBase.uniforms['color']
+            hatchStepUnif = self._progBase.uniforms['hatchStep']
+            shape2D.render(posAttrib, colorUnif, hatchStepUnif)
 
         glDisable(GL_SCISSOR_TEST)
 
@@ -1137,7 +1145,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self.setLimits(self._xMin, self._xMax, self._yMin, self._yMax)
 
         self.updateAxis()
-        self.updateGL()
+        self.replot()
 
     # PlotBackend API #
 
@@ -1269,7 +1277,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self._items[legend] = {
             'shape': shape,
             'color': rgba(colorCode),
-            'fill': fill,
+            'fill': 'hatch' if fill else None,
             'x': xList,
             'y': yList
         }
@@ -1405,7 +1413,9 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
         if self._keepDataAspectRatio:
             self._ensureAspectRatio()
-            self.updateAxis()
+
+        self.resetZoom()
+        self.replot()
 
     def setGraphXLimits(self, xMin, xMax):
         self._setGraphXLimits(xMin, xMax)

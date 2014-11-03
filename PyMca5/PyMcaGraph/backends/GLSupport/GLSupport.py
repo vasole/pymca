@@ -40,6 +40,7 @@ This module provides convenient classes for the OpenGL rendering backend
 from OpenGL.GL import *  # noqa
 from ctypes import c_float
 import numpy as np
+import math
 
 
 # utils #######################################################################
@@ -143,7 +144,11 @@ class Program(object):
 # shape2D #####################################################################
 
 class Shape2D(object):
-    def __init__(self, points, fill=True, stroke=True):
+    _NO_HATCH = 0
+    _HATCH_STEP = 20
+
+    def __init__(self, points, fill='solid', stroke=True,
+                 fillColor=(0., 0., 0., 1.), strokeColor=(0., 0., 0., 1.)):
         self.vertices = np.array(points, dtype=np.float32, copy=False)
 
         size = len(self.vertices)
@@ -158,9 +163,12 @@ class Shape2D(object):
         self.bboxVertices = np.array(((xMin, yMin), (xMin, yMax),
                                       (xMax, yMin), (xMax, yMax)),
                                      dtype=np.float32)
+        self._bounds = xMin, yMin, xMax - xMin, yMax - yMin
 
         self.fill = fill
+        self.fillColor = fillColor
         self.stroke = stroke
+        self.strokeColor = strokeColor
 
     def prepareFillMask(self, posAttrib):
         glEnableVertexAttribArray(posAttrib)
@@ -206,11 +214,17 @@ class Shape2D(object):
                               0, self.vertices)
         glDrawArrays(GL_LINE_LOOP, 0, len(self.vertices))
 
-    def render(self, posAttrib):
-        if self.fill:
+    def render(self, posAttrib, colorUnif, hatchStepUnif):
+        assert(self.fill in ['hatch', 'solid', None])
+        if self.fill is not None:
+            glUniform4f(colorUnif, *self.fillColor)
+            step = self._HATCH_STEP if self.fill == 'hatch' else self._NO_HATCH
+            glUniform1i(hatchStepUnif, step)
             self.renderFill(posAttrib)
 
         if self.stroke:
+            glUniform4f(colorUnif, *self.strokeColor)
+            glUniform1i(hatchStepUnif, self._NO_HATCH)
             self.renderStroke(posAttrib)
 
 
