@@ -34,7 +34,7 @@ try:
 except ImportError:
     import PyMcaQt as qt
 
-USE_MOVE_TO_THREAD = True
+USE_MOVE_TO_THREAD = False
 QTHREAD = True
 if QTHREAD:
     QThread = qt.QThread
