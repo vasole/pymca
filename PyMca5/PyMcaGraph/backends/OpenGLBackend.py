@@ -74,6 +74,9 @@ class MiniOrderedDict(object):
         self._dict = {}
         self._orderedKeys = []
 
+    def __getitem__(self, key):
+        return self._dict[key]
+
     def __setitem__(self, key, value):
         if key not in self._orderedKeys:
             self._orderedKeys.append(key)
@@ -247,13 +250,32 @@ def _ticks(start, stop, step):
             start += step
 
 
-def linesVertices(width, height, step):
-    nbLines = int(math.ceil((width + height) / float(step)))
-    vertices = np.empty((nbLines * 2, 2), dtype=np.float32)
-    for line in range(nbLines):
-        vertices[2 * line] = 0., step * line
-        vertices[2 * line + 1] = step * line, 0.
-    return vertices
+# signals #####################################################################
+
+def prepareDrawingSignal(event, type_, points, parameters={}):
+    eventDict = {}
+    eventDict['event'] = event
+    eventDict['type'] = type_
+    points = np.array(points, dtype=np.float32)
+    points.shape = -1, 2
+    eventDict['points'] = points
+    eventDict['xdata'] = points[:, 0]
+    eventDict['ydata'] = points[:, 1]
+    if type_ in ('rectangle'):
+        eventDict['x'] = eventDict['xdata'].min()
+        eventDict['y'] = eventDict['ydata'].min()
+        eventDict['width'] = eventDict['xdata'].max() - eventDict['x']
+        eventDict['height'] = eventDict['ydata'].max() - eventDict['y']
+    eventDict['parameters'] = parameters.copy()
+    return eventDict
+
+def prepareMouseMovedSignal(button, xData, yData, xPixel, yPixel):
+    return {'event': 'mouseMoved',
+            'x': xData,
+            'y': yData,
+            'xpixel': xPixel,
+            'ypixel': yPixel,
+            'button': button}
 
 
 # Interaction #################################################################
@@ -350,24 +372,6 @@ class Zoom(ClicOrDrag):
                                yCenter - yOffset * yRange,
                                yCenter + (1. - yOffset) * yRange)
         self.backend.replot()
-
-
-def prepareDrawingSignal(event, type_, points, parameters={}):
-    eventDict = {}
-    eventDict['event'] = event
-    eventDict['type'] = type_
-    points = np.array(points, dtype=np.float32)
-    points.shape = -1, 2
-    eventDict['points'] = points
-    eventDict['xdata'] = points[:, 0]
-    eventDict['ydata'] = points[:, 1]
-    if type_ in ('rectangle'):
-        eventDict['x'] = eventDict['xdata'].min()
-        eventDict['y'] = eventDict['ydata'].min()
-        eventDict['width'] = eventDict['xdata'].max() - eventDict['x']
-        eventDict['height'] = eventDict['ydata'].max() - eventDict['y']
-    eventDict['parameters'] = parameters.copy()
-    return eventDict
 
 
 class Select(object):
@@ -618,7 +622,6 @@ class SelectVLine(Select1Point):
 
 # OpenGLBackend ###############################################################
 
-
 class OpenGLBackend(PlotBackend, QGLWidget):
     def __init__(self, parent=None, **kw):
         self._xMin, self._xMax = 0., 1.
@@ -652,6 +655,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self.setMouseTracking(True)
 
     # Mouse events #
+    _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle', 0: None}
 
     def _mouseInPlotArea(self, x, y):
         xPlot = clamp(x, self._margins['left'],
@@ -663,20 +667,28 @@ class OpenGLBackend(PlotBackend, QGLWidget):
     def mousePressEvent(self, event):
         x, y = event.x(), event.y()
         if (self._mouseInPlotArea(x, y) == (x, y)):
-            btn = event.button()
+            btn = self._MOUSE_BTNS[event.button()]
             self._plotHasFocus.add(btn)
             if self.eventHandler is not None:
                 self.eventHandler.handleEvent('press', x, y, btn)
         event.accept()
 
     def mouseMoveEvent(self, event):
+        # Signal mouse move event
+        btn = self._MOUSE_BTNS[event.button()]
+        xPixel, yPixel = event.x(), event.y()
+        xData, yData = self.pixelToDataCoords(xPixel, yPixel)
+        if xData is not None and yData is not None:
+            eventDict = prepareMouseMovedSignal(btn, xData, yData, xPixel, yPixel)
+            self._callback(eventDict)
+
         if self.eventHandler:
-            x, y = self._mouseInPlotArea(event.x(), event.y())
-            self.eventHandler.handleEvent('move', x, y)
+            xPlot, yPlot = self._mouseInPlotArea(xPixel, yPixel)
+            self.eventHandler.handleEvent('move', xPlot, yPlot)
         event.accept()
 
     def mouseReleaseEvent(self, event):
-        btn = event.button()
+        btn = self._MOUSE_BTNS[event.button()]
         try:
             self._plotHasFocus.remove(btn)
         except KeyError:
@@ -1440,6 +1452,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self._ensureAspectRatio()
 
         self.resetZoom()
+        self.updateAxis()
         self.replot()
 
     def setGraphXLimits(self, xMin, xMax):
