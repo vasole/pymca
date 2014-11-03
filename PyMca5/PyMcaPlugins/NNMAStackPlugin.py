@@ -179,9 +179,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         self.widget = None
         self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
-        qt.QObject.connect(self.thread,
-                     qt.SIGNAL('finished()'),
-                     self.threadFinished)
+        self.thread.finished.connect(self.threadFinished)
         self.configurationWidget.show()
         message = "Please wait. NNMA Calculation going on."
         if DEBUG:

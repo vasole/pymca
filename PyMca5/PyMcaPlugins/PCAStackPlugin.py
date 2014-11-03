@@ -177,9 +177,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         else:
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
-            qt.QObject.connect(self.thread,
-                         qt.SIGNAL('finished()'),
-                         self.threadFinished)
+            self.thread.finished.connect(self.threadFinished)
             self.thread.start()
             message = "Please wait. PCA Calculation going on."
             CalculationThread.waitingMessageDialog(self.thread,
@@ -223,7 +221,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         return result
 
     def threadFinished(self):
-        result = self.thread.result
+        result = self.thread.getResult()
         self.thread = None
         if type(result) == type((1,)):
             #if we receive a tuple there was an error

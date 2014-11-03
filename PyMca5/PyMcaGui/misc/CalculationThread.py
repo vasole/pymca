@@ -89,9 +89,9 @@ class CalculationObject(qt.QObject):
         except:
             self.__result = ("Exception",) + sys.exc_info()
         finally:
-            # uncomment lines to allow to call again????
-            #self.calculation_vars = None
-            #self.calculation_kw = None
+            # comment lines to allow to other call ????
+            self.calculation_vars = None
+            self.calculation_kw = None
             self.finished.emit()
 
     def getResult(self):
