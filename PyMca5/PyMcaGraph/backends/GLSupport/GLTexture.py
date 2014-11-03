@@ -135,7 +135,7 @@ class Texture2D(object):
         if unpackSkipPixels:
             glPixelStorei(GL_UNPACK_SKIP_PIXELS, unpackSkipPixels)
         if unpackSkipRows:
-            glPixelStorei(GL_UNPACK_SKIP_ROWS, unpackSkipRow)
+            glPixelStorei(GL_UNPACK_SKIP_ROWS, unpackSkipRows)
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, unpackAlign)
 
@@ -215,7 +215,9 @@ class Image(object):
                 (width, 0.,     1., 0.),
                 (0., height,    0., 1.),
                 (width, height, 1., 1.)), dtype=np.float32)
-            self.tiles = ((texture, vertices),)
+            self.tiles = ((texture, vertices,
+                           {'xOrigData': 0, 'yOrigData': 0,
+                            'wData': width, 'hData': height}),)
 
         else:
             # Handle dimension too large: make tiles
@@ -231,18 +233,19 @@ class Image(object):
             rowHeights[-1] += height % nRows
 
             tiles = []
+            tilesInfo = []
             yOrig = 0
-            for h in rowHeights:
+            for hData in rowHeights:
                 xOrig = 0
-                for w in colWidths:
-                    if (h < MIN_TEXTURE_SIZE or w < MIN_TEXTURE_SIZE) and \
-                        not _checkTexture2D(internalFormat, w, h,
+                for wData in colWidths:
+                    if (hData < MIN_TEXTURE_SIZE or wData < MIN_TEXTURE_SIZE) \
+                        and not _checkTexture2D(internalFormat, wData, hData,
                                             format_, type_):
                         # Ensure texture size is at least MIN_TEXTURE_SIZE
-                        tH = max(h, MIN_TEXTURE_SIZE)
-                        tW = max(w, MIN_TEXTURE_SIZE)
+                        tH = max(hData, MIN_TEXTURE_SIZE)
+                        tW = max(wData, MIN_TEXTURE_SIZE)
 
-                        uMax, vMax = float(w)/tW, float(h)/tH
+                        uMax, vMax = float(wData)/tW, float(hData)/tH
 
                         texture = Texture2D(internalFormat, tW, tH,
                                             format_, type_,
@@ -252,13 +255,14 @@ class Image(object):
                                             wrapS=self._WRAP_S,
                                             wrapT=self._WRAP_T,
                                             unpackAlign=unpackAlign)
-                        texture.update(format_, type_, data, width=w, height=h,
+                        texture.update(format_, type_, data,
+                                       width=wData, height=hData,
                                        unpackRowLength=width,
                                        unpackSkipPixels=xOrig,
                                        unpackSkipRows=yOrig)
                     else:
                         uMax, vMax = 1, 1
-                        texture = Texture2D(internalFormat, w, h,
+                        texture = Texture2D(internalFormat, wData, hData,
                                             format_, type_,
                                             data, texUnit=texUnit,
                                             minFilter=self._MIN_FILTER,
@@ -271,12 +275,15 @@ class Image(object):
                                             unpackSkipRows=yOrig)
                     vertices = np.array((
                         (xOrig, yOrig,         0., 0.),
-                        (xOrig + w, yOrig,     uMax, 0.),
-                        (xOrig, yOrig + h,     0., vMax),
-                        (xOrig + w, yOrig + h, uMax, vMax)), dtype=np.float32)
-                    tiles.append((texture, vertices))
-                    xOrig += w
-                yOrig += h
+                        (xOrig + wData, yOrig,     uMax, 0.),
+                        (xOrig, yOrig + hData,     0., vMax),
+                        (xOrig + wData, yOrig + hData, uMax, vMax)),
+                        dtype=np.float32)
+                    tiles.append((texture, vertices,
+                                  {'xOrigData': xOrig, 'yOrigData': yOrig,
+                                   'wData': wData, 'hData': hData}))
+                    xOrig += wData
+                yOrig += hData
             self.tiles = tuple(tiles)
 
     def discard(self):
@@ -285,16 +292,22 @@ class Image(object):
         self.tiles = ()
 
     def updateAll(self, format_, type_, data, texUnit=0, unpackAlign=1):
+        assert(data.shape[:2] == self.height, self.width)
         if len(self.tiles) == 1:
             self.tiles[0][0].update(format_, type_, data,
                                     width=self.width, height=self.height,
                                     texUnit=texUnit, unpackAlign=unpackAlign)
         else:
-            raise NotImplementedError("Updating image spanning over mulitple \
-                                      tiles not implemented")
+            for texture, _, info in self.tiles:
+                texture.update(format_, type_, data,
+                               width=info['wData'], height=info['hData'],
+                               texUnit=texUnit, unpackAlign=unpackAlign,
+                               unpackRowLength=self.width,
+                               unpackSkipPixels=info['xOrigData'],
+                               unpackSkipRows=info['yOrigData'])
 
     def render(self, posAttrib, texAttrib, texUnit=0):
-        for texture, vertices in self.tiles:
+        for texture, vertices, _ in self.tiles:
             texture.bind(texUnit)
 
             stride = vertices.shape[-1] * vertices.itemsize
