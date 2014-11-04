@@ -41,5 +41,6 @@ from .GLFramebuffer import *  # noqa
 from .GLSupport import *  # noqa
 from .GLText import *  # noqa
 from .GLTexture import *  # noqa
+from .GLVertexBuffer import *  # noqa
 from .Interaction import *  # noqa
 from .LabelLayout import *  # noqa

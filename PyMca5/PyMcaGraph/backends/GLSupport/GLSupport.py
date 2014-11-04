@@ -62,11 +62,16 @@ def clamp(value, min_=0., max_=1.):
     return min(max(value, min_), max_)
 
 
-def rgba(code):
+def rgba(code, colorDict={}):
     """Convert color code '#RRGGBB' and '#RRGGBBAA' to (R, G, B, A)
+    :param str code: The color code to conver
+    :param dict colorDict: A dictionary of color name conversion to color code
     :returns: RGBA colors as floats in [0., 1.]
     :rtype: tuple
     """
+    if not code.startswith('#'):
+        code = colorDict[code]
+
     assert(len(code) in (7, 9) and code[0] == '#')
     r = int(code[1:3], 16) / 255.
     g = int(code[3:5], 16) / 255.
@@ -212,6 +217,7 @@ class Shape2D(object):
                               GL_FLOAT,
                               GL_FALSE,
                               0, self.vertices)
+        glLineWidth(1)
         glDrawArrays(GL_LINE_LOOP, 0, len(self.vertices))
 
     def render(self, posAttrib, colorUnif, hatchStepUnif):
