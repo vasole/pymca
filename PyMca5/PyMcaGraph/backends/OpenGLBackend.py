@@ -635,6 +635,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                           'yMin': 0., 'yMax': 0., 'yStep': 1.}
         self._images = MiniOrderedDict()
         self._items = MiniOrderedDict()
+        self._curves = MiniOrderedDict()
         self._labels = []
         self._selectionArea = None
 
@@ -728,6 +729,13 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             yMin = min(yMin, bbox['yMin'])
             yMax = max(yMax, bbox['yMax'])
             yStep = min(yStep, bbox['yStep'])
+        for curve in self._curves.values():
+            bbox = curve['bBox']
+            xMin = min(xMin, bbox['xMin'])
+            xMax = max(xMax, bbox['xMax'])
+            yMin = min(yMin, bbox['yMin'])
+            yMax = max(yMax, bbox['yMax'])
+
         if xMin >= xMax:
                 xMin, xMax = 0., 1.
         if yMin >= yMax:
@@ -1151,6 +1159,34 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                                self._progImg.attributes['texCoords'],
                                dataTexUnit)
 
+        # Render Curves
+        self._progBase.use()
+        glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
+                           matDataProj)
+
+        for curve in self._curves.values():
+            try:
+                vbo = curve['_vbo']
+            except KeyError:
+                vbo = VertexBuffer(curve['data'], usage=GL_STATIC_DRAW)
+                curve['_vbo'] = vbo
+
+            glUniform4f(self._progBase.uniforms['color'], *curve['color'])
+            glUniform1i(self._progBase.uniforms['hatchStep'], 0)
+            posAttrib = self._progBase.attributes['position']
+
+            glEnableVertexAttribArray(posAttrib)
+            with vbo:
+                glVertexAttribPointer(posAttrib,
+                                      2,
+                                      GL_FLOAT,
+                                      GL_FALSE,
+                                      0, c_void_p(0))
+            glLineWidth(curve['lineWidth'])
+            glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
+            glDrawArrays(GL_LINE_STRIP, 0, len(curve['data']))
+
+
         # Render Items
         self._progBase.use()
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
@@ -1290,6 +1326,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
     def clearImages(self):
         self._images = MiniOrderedDict()
+        self._plotDirtyFlag = True
 
     def addItem(self, xList, yList, legend=None, info=None,
                 replace=False, replot=True,
@@ -1302,8 +1339,6 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self.clearItems()
 
         colorCode = kwargs.get('color', 'black')
-        if colorCode[0] != '#':
-            colorCode = colordict[colorCode]
 
         if shape == 'rectangle':
             xMin, xMax = xList
@@ -1313,7 +1348,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
         self._items[legend] = {
             'shape': shape,
-            'color': rgba(colorCode),
+            'color': rgba(colorCode, colordict),
             'fill': 'hatch' if fill else None,
             'x': xList,
             'y': yList
@@ -1337,9 +1372,76 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
     def clearItems(self):
         self._items = MiniOrderedDict()
+        self._plotDirtyFlag = True
+
+    def addCurve(self, x, y, legend=None, info=None,
+                 replace=False, replot=True, **kw):
+        if replace:
+            self.clearCurves()
+
+        # Copied from MatplotlibBackend, can be common
+        if info is None:
+            info = {}
+        color = info.get('plot_color', self._activeCurveColor)
+        color = kw.get('color', color)
+        symbol = info.get('plot_symbol', None)
+        symbol = kw.get('symbol', symbol)
+        style = info.get('plot_line_style', '-')
+        style = info.get('line_style', style)
+        lineWidth = 1
+        axisId = info.get('plot_yaxis', 'left')
+        axisId = kw.get('yaxis', axisId)
+        fill = info.get('plot_fill', False)
+
+        data = np.array((x, y), dtype=np.float32, order='F').T
+
+        bbox = {
+            'xMin': min(x),
+            'xMax': max(x),
+            'yMin': min(y),
+            'yMax': max(y)
+        }
+
+        self._curves[legend] = {
+            'data': data,
+            # 'lineStyle': style,
+            'lineWidth': lineWidth,
+            'color': rgba(color, colordict),
+            # 'symbol': symbol,
+            # 'axes': axisId,
+            # 'fill': fill,
+            'bBox': bbox
+        }
+
+        # TODO early loading and update
+
+        self._updateDataBBox()
+        self.setLimits(self._dataBBox['xMin'], self._dataBBox['xMax'],
+                       self._dataBBox['yMin'], self._dataBBox['yMax'])
+
+        self._plotDirtyFlag = True
+
+        if replot:
+            self.replot()
+
+    def removeCurve(self, legend, replot=True):
+        try:
+            del self._curves[legend]
+        except KeyError:
+            pass
+        else:
+            self._plotDirtyFlag = True
+
+        if replot:
+            self.replot()
+
+    def clearCurves(self):
+        self._curves = MiniOrderedDict()
+        self._plotDirtyFlag = True
 
     def clear(self):
         self.clearItems()
+        self.clearCurves()
 
     def replot(self):
         self.updateGL()
