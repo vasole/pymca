@@ -468,6 +468,13 @@ if USE_SMART_INSTALL_SCRIPTS:
             else:
                 self.install_dir = getattr(install_cmd, 'install_scripts')
             self.install_data = getattr(install_cmd, 'install_data')
+            if "." in self.install_data:
+                self.install_data = os.path.abspath(self.install_data)
+            global PYMCA_INSTALL_DIR
+            if "." in PYMCA_INSTALL_DIR:
+                PYMCA_INSTALL_DIR = os.path.abspath(PYMCA_INSTALL_DIR)
+            if "." in self.install_dir:
+                self.install_dir = os.path.abspath(self.install_dir)
             PYMCA_SCRIPTS_DIR = self.install_dir
             PYMCA_DATA_DIR = self.install_data
             if sys.platform != "win32":
@@ -478,7 +485,7 @@ if USE_SMART_INSTALL_SCRIPTS:
                 filedest = os.path.join(self.install_dir, os.path.basename(filein))
                 if os.path.exists(filedest):
                     os.remove(filedest)
-                moddir = os.path.join(getattr(install_cmd,'install_lib'), "PyMca5", "PyMcaGui")
+                moddir = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMcaGui")
                 if 0:
                     f = open(filein, 'r')
                     modfile = f.readline().replace("\n","")
@@ -506,7 +513,7 @@ if USE_SMART_INSTALL_SCRIPTS:
                         print("ignored %s" % filein)
                         continue
                 text  = "#!/bin/bash\n"
-                text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % moddir
+                text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % PYMCA_INSTALL_DIR
                 #deal with sys.executables not named python
                 text += "exec %s %s $*\n" %  (
                     sys.executable,
