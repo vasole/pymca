@@ -269,6 +269,7 @@ def prepareDrawingSignal(event, type_, points, parameters={}):
     eventDict['parameters'] = parameters.copy()
     return eventDict
 
+
 def prepareMouseMovedSignal(button, xData, yData, xPixel, yPixel):
     return {'event': 'mouseMoved',
             'x': xData,
@@ -680,7 +681,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         xPixel, yPixel = event.x(), event.y()
         xData, yData = self.pixelToDataCoords(xPixel, yPixel)
         if xData is not None and yData is not None:
-            eventDict = prepareMouseMovedSignal(btn, xData, yData, xPixel, yPixel)
+            eventDict = prepareMouseMovedSignal(btn, xData, yData,
+                                                xPixel, yPixel)
             self._callback(eventDict)
 
         if self.eventHandler:
@@ -1186,7 +1188,6 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
             glDrawArrays(GL_LINE_STRIP, 0, len(curve['data']))
 
-
         # Render Items
         self._progBase.use()
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
@@ -1229,7 +1230,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                  colormap=None, **kwargs):
         # info is ignored
         if selectable or draggable:
-            raise NotImplementedError("selectable and draggable not implemented")
+            raise NotImplementedError("selectable and draggable \
+                                      not implemented")
 
         oldImage = self._images.get(legend, None)
         if oldImage is not None and oldImage['data'].shape != data.shape:
@@ -1384,14 +1386,14 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             info = {}
         color = info.get('plot_color', self._activeCurveColor)
         color = kw.get('color', color)
-        symbol = info.get('plot_symbol', None)
-        symbol = kw.get('symbol', symbol)
-        style = info.get('plot_line_style', '-')
-        style = info.get('line_style', style)
+        # symbol = info.get('plot_symbol', None)
+        # symbol = kw.get('symbol', symbol)
+        # style = info.get('plot_line_style', '-')
+        # style = info.get('line_style', style)
         lineWidth = 1
-        axisId = info.get('plot_yaxis', 'left')
-        axisId = kw.get('yaxis', axisId)
-        fill = info.get('plot_fill', False)
+        # axisId = info.get('plot_yaxis', 'left')
+        # axisId = kw.get('yaxis', axisId)
+        # fill = info.get('plot_fill', False)
 
         data = np.array((x, y), dtype=np.float32, order='F').T
 

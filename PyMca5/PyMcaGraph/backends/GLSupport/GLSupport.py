@@ -40,7 +40,6 @@ This module provides convenient classes for the OpenGL rendering backend
 from OpenGL.GL import *  # noqa
 from ctypes import c_float
 import numpy as np
-import math
 
 
 # utils #######################################################################

@@ -233,14 +233,13 @@ class Image(object):
             rowHeights[-1] += height % nRows
 
             tiles = []
-            tilesInfo = []
             yOrig = 0
             for hData in rowHeights:
                 xOrig = 0
                 for wData in colWidths:
                     if (hData < MIN_TEXTURE_SIZE or wData < MIN_TEXTURE_SIZE) \
                         and not _checkTexture2D(internalFormat, wData, hData,
-                                            format_, type_):
+                                                format_, type_):
                         # Ensure texture size is at least MIN_TEXTURE_SIZE
                         tH = max(hData, MIN_TEXTURE_SIZE)
                         tW = max(wData, MIN_TEXTURE_SIZE)
