@@ -38,7 +38,7 @@ This module provides a class managing a vertex buffer
 # import ######################################################################
 
 from OpenGL.GL import *  # noqa
-from ctypes import c_void_p
+from ctypes import c_void_p, c_int
 import numpy as np
 
 
@@ -91,17 +91,16 @@ class VertexBuffer(object):
 
     def update(self, data, offsetInBytes=0, sizeInBytes=None):
         assert(isinstance(data, np.ndarray) and data.flags['C_CONTIGUOUS'])
-        self.bind()
         if sizeInBytes is None:
             sizeInBytes = data.nbytes
-        glBufferSubData(GL_ARRAY_BUFFER, offsetInBytes, sizeInBytes, data)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        with self:
+            glBufferSubData(GL_ARRAY_BUFFER, offsetInBytes, sizeInBytes, data)
 
     def discard(self):
         if hasattr(self, '_vboId'):
             if bool(glDeleteBuffers):  # Test for __del__
-                glDeleteBuffers(self._vboId)
-            del self._vboIid
+                glDeleteBuffers(1, (c_int * 1)(self._vboId))
+            del self._vboId
             del self._size
 
     def __del__(self):
