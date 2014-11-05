@@ -332,10 +332,10 @@ class Zoom(ClicOrDrag):
         if self.backend.isKeepDataAspectRatio():
             x1, y1 = self._ensureAspectRatio(self.x0, self.y0, x1, y1)
 
-        self.backend.setSelectionArea((self.x0, self.y0),
-                                      (self.x0, y1),
-                                      (x1, y1),
-                                      (x1, self.y0))
+        self.backend.setSelectionArea(((self.x0, self.y0),
+                                       (self.x0, y1),
+                                       (x1, y1),
+                                       (x1, self.y0)), fill=None)
         self.backend.replot()
 
     def endDrag(self, startPos, endPos):
@@ -391,7 +391,7 @@ class SelectPolygon(StateMachine, Select):
             self.points = [(x, y), (x, y)]
 
         def updateSelectionArea(self):
-            self.machine.backend.setSelectionArea(*self.points)
+            self.machine.backend.setSelectionArea(self.points)
             self.machine.backend.replot()
             eventDict = prepareDrawingSignal('drawingProgress',
                                              'polygon',
@@ -486,10 +486,10 @@ class SelectRectangle(Select2Points):
 
     def select(self, x, y):
         x, y = self.backend.pixelToDataCoords(x, y)
-        self.backend.setSelectionArea(self.startPt,
+        self.backend.setSelectionArea((self.startPt,
                                       (self.startPt[0], y),
                                       (x, y),
-                                      (x, self.startPt[1]))
+                                      (x, self.startPt[1])))
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -516,7 +516,7 @@ class SelectLine(Select2Points):
 
     def select(self, x, y):
         x, y = self.backend.pixelToDataCoords(x, y)
-        self.backend.setSelectionArea(self.startPt, (x, y))
+        self.backend.setSelectionArea((self.startPt, (x, y)))
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -574,7 +574,7 @@ class SelectHLine(Select1Point):
 
     def select(self, x, y):
         points = self._hLine(y)
-        self.backend.setSelectionArea(*points)
+        self.backend.setSelectionArea(points)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -601,7 +601,7 @@ class SelectVLine(Select1Point):
 
     def select(self, x, y):
         points = self._vLine(x)
-        self.backend.setSelectionArea(*points)
+        self.backend.setSelectionArea(points)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -699,9 +699,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Manage Plot #
 
-    def setSelectionArea(self, *points):
+    def setSelectionArea(self, points=None, fill='hatch'):
         if points:
-            self._selectionArea = Shape2D(points, fill='hatch',
+            self._selectionArea = Shape2D(points, fill=fill,
                                           fillColor=(0., 0., 0., 0.5),
                                           stroke=True,
                                           strokeColor=(0., 0., 0., 1.))
