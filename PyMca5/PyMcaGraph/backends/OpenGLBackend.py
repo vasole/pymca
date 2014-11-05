@@ -656,9 +656,6 @@ class OpenGLPlotCanvas(PlotBackend):
         raise NotImplementedError("This method must be provided by \
                                   subclass to trigger redraw")
 
-    # Mouse events #
-    _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle', 0: None}
-
     def _mouseInPlotArea(self, x, y):
         xPlot = clamp(x, self._margins['left'],
                       self.winWidth - self._margins['right'])
@@ -733,6 +730,10 @@ class OpenGLPlotCanvas(PlotBackend):
                 xMin, xMax = 0., 1.
         if yMin >= yMax:
                 yMin, yMax = 0., 1.
+        if xStep == float('inf'):
+            xStep = 1.
+        if yStep == float('inf'):
+            yStep = 1.
 
         self._dataBBox = {'xMin': xMin, 'xMax': xMax, 'xStep': xStep,
                           'yMin': yMin, 'yMax': yMax, 'yStep': yStep}
@@ -1369,6 +1370,13 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def addCurve(self, x, y, legend=None, info=None,
                  replace=False, replot=True, **kw):
+
+        data = np.array((x, y), dtype=np.float32, order='F').T
+
+        oldCurve = self._curves.get(legend, None)
+        if oldCurve is not None and oldCurve['data'].shape != data.shape:
+            oldCurve = None
+
         if replace:
             self.clearCurves()
 
@@ -1385,8 +1393,6 @@ class OpenGLPlotCanvas(PlotBackend):
         # axisId = info.get('plot_yaxis', 'left')
         # axisId = kw.get('yaxis', axisId)
         # fill = info.get('plot_fill', False)
-
-        data = np.array((x, y), dtype=np.float32, order='F').T
 
         bbox = {
             'xMin': min(x),
@@ -1406,16 +1412,23 @@ class OpenGLPlotCanvas(PlotBackend):
             'bBox': bbox
         }
 
-        # TODO early loading and update
+        if oldCurve is not None and '_vbo' in oldCurve:
+            # Reuse vbo and update
+            vbo = oldCurve['_vbo']
+            vbo.update(data)
+            self._curves[legend]['_vbo'] = vbo
 
-        self._updateDataBBox()
-        self.setLimits(self._dataBBox['xMin'], self._dataBBox['xMax'],
-                       self._dataBBox['yMin'], self._dataBBox['yMax'])
+        if oldCurve is None: # or bbox != oldCurve['bBox']:
+            self._updateDataBBox()
+            self.setLimits(self._dataBBox['xMin'], self._dataBBox['xMax'],
+                           self._dataBBox['yMin'], self._dataBBox['yMax'])
 
         self._plotDirtyFlag = True
 
         if replot:
             self.replot()
+
+        return legend
 
     def removeCurve(self, legend, replot=True):
         try:
@@ -1628,7 +1641,7 @@ class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
         OpenGLPlotCanvas.__init__(self, parent, **kw)
 
     # Mouse events #
-    _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle', 0: None}
+    _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle'}
 
     def mousePressEvent(self, event):
         xPixel, yPixel = event.x(), event.y()
