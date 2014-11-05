@@ -31,7 +31,7 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-OpenGL backend
+OpenGL/Qt backend
 """
 
 
@@ -621,9 +621,9 @@ class SelectVLine(Select1Point):
         self.backend._callback(eventDict)
 
 
-# OpenGLBackend ###############################################################
+# OpenGLPlotCanvas ############################################################
 
-class OpenGLBackend(PlotBackend, QGLWidget):
+class OpenGLPlotCanvas(PlotBackend):
     def __init__(self, parent=None, **kw):
         self._xMin, self._xMax = 0., 1.
         self._yMin, self._yMax = 0., 1.
@@ -650,11 +650,11 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self.eventHandler = None
         self._plotHasFocus = set()
 
-        QGLWidget.__init__(self, parent)
-        self.setAutoFillBackground(False)
-        self.setMinimumSize(300, 300)  # TODO better way ?
         PlotBackend.__init__(self, parent, **kw)
-        self.setMouseTracking(True)
+
+    def updateGL(self):
+        raise NotImplementedError("This method must be provided by \
+                                  subclass to trigger redraw")
 
     # Mouse events #
     _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle', 0: None}
@@ -666,48 +666,39 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                       self.winHeight - self._margins['bottom'])
         return xPlot, yPlot
 
-    def mousePressEvent(self, event):
-        x, y = event.x(), event.y()
-        if (self._mouseInPlotArea(x, y) == (x, y)):
-            btn = self._MOUSE_BTNS[event.button()]
+    def onMousePress(self, xPixel, yPixel, btn):
+        if (self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel)):
             self._plotHasFocus.add(btn)
             if self.eventHandler is not None:
-                self.eventHandler.handleEvent('press', x, y, btn)
-        event.accept()
+                self.eventHandler.handleEvent('press', xPixel, yPixel, btn)
 
-    def mouseMoveEvent(self, event):
+    def onMouseMove(self, xPixel, yPixel):
         # Signal mouse move event
-        btn = self._MOUSE_BTNS[event.button()]
-        xPixel, yPixel = event.x(), event.y()
         xData, yData = self.pixelToDataCoords(xPixel, yPixel)
         if xData is not None and yData is not None:
-            eventDict = prepareMouseMovedSignal(btn, xData, yData,
+            eventDict = prepareMouseMovedSignal(None, xData, yData,
                                                 xPixel, yPixel)
             self._callback(eventDict)
 
         if self.eventHandler:
             xPlot, yPlot = self._mouseInPlotArea(xPixel, yPixel)
             self.eventHandler.handleEvent('move', xPlot, yPlot)
-        event.accept()
 
-    def mouseReleaseEvent(self, event):
-        btn = self._MOUSE_BTNS[event.button()]
+    def onMouseRelease(self, xPixel, yPixel, btn):
         try:
             self._plotHasFocus.remove(btn)
         except KeyError:
             pass
         else:
             if self.eventHandler:
-                x, y = self._mouseInPlotArea(event.x(), event.y())
-                self.eventHandler.handleEvent('release', x, y, btn)
-        event.accept()
+                xPixel, yPixel = self._mouseInPlotArea(xPixel, yPixel)
+                self.eventHandler.handleEvent('release', xPixel, yPixel, btn)
 
-    def wheelEvent(self, event):
-        x, y = event.x(), event.y()
-        if self.eventHandler and (self._mouseInPlotArea(x, y) == (x, y)):
-            angle = event.delta() / 8.  # in degrees
-            self.eventHandler.handleEvent('wheel', x, y, angle)
-        event.accept()
+    def onMouseWheel(self, xPixel, yPixel, angleInDegrees):
+        if self.eventHandler and \
+           self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
+            self.eventHandler.handleEvent('wheel', xPixel, yPixel,
+                                          angleInDegrees)
 
     # Manage Plot #
 
@@ -1623,6 +1614,44 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
     def getGraphYLabel(self):
         return self._yLabel
+
+
+# OpenGLBackend ###############################################################
+
+class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
+    def __init__(self, parent=None, **kw):
+        QGLWidget.__init__(self, parent)
+        self.setAutoFillBackground(False)
+        self.setMinimumSize(300, 300)  # TODO better way ?
+        self.setMouseTracking(True)
+
+        OpenGLPlotCanvas.__init__(self, parent, **kw)
+
+    # Mouse events #
+    _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle', 0: None}
+
+    def mousePressEvent(self, event):
+        xPixel, yPixel = event.x(), event.y()
+        btn = self._MOUSE_BTNS[event.button()]
+        self.onMousePress(xPixel, yPixel, btn)
+        event.accept()
+
+    def mouseMoveEvent(self, event):
+        xPixel, yPixel = event.x(), event.y()
+        self.onMouseMove(xPixel, yPixel)
+        event.accept()
+
+    def mouseReleaseEvent(self, event):
+        xPixel, yPixel = event.x(), event.y()
+        btn = self._MOUSE_BTNS[event.button()]
+        self.onMouseRelease(xPixel, yPixel, btn)
+        event.accept()
+
+    def wheelEvent(self, event):
+        xPixel, yPixel = event.x(), event.y()
+        angleInDegrees = event.delta() / 8.
+        self.onMouseWheel(xPixel, yPixel, angleInDegrees)
+        event.accept()
 
 
 # main ########################################################################
