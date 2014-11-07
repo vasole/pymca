@@ -87,7 +87,7 @@ class SampleConfiguration(qt.QWidget):
         energyLabel = qt.QLabel(self)
         energyLabel.setText("Energy (eV)")
         self.energyWidget = qt.QLineEdit(self)
-        self.energyWidget._validator = qt.QDoubleValidator()
+        self.energyWidget._validator = qt.QDoubleValidator(self.energyWidget)
         self.energyWidget.setValidator(self.energyWidget._validator)
         if orientation.lower().startswith("v"):
             self.mainLayout.addWidget(elementLabel, 0, 0)
@@ -265,7 +265,7 @@ class GeometryConfiguration(qt.QWidget):
             label = qt.QLabel(self)
             label.setText(item +"(deg) :")
             lineEdit = qt.QLineEdit(self)
-            validator = qt.QDoubleValidator()
+            validator = qt.QDoubleValidator(lineEdit)
             lineEdit.setValidator(validator)
             lineEdit._v = validator
             lineEdit.setText("45.0")
