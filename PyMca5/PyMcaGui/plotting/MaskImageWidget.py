@@ -71,13 +71,13 @@ def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
     else:
         if x < xScale[0]:
             x = xScale[0]
-        c = xScale[0] + xScale[1] * x
+        c = (x - xScale[0]) / xScale[1]
     if yScale is None:
         r = y
     else:
         if y < yScale[0]:
             y = yScale[0]
-        r = yScale[0] + yScale[1] * y
+        r = ( y - yScale[0]) / yScale[1]
 
     if safe:
         c = min(int(c), shape[1] - 1)
@@ -1738,7 +1738,7 @@ class MaskImageWidget(qt.QWidget):
             self._xScale = [0, 1]
         if self._yScale is None:
             self._yScale = [0, 1]
-        x = self._yScale[0] + self._xScale[1] * numpy.arange(self.__imageData.shape[1])
+        x = self._xScale[0] + self._xScale[1] * numpy.arange(self.__imageData.shape[1])
         y = self._yScale[0] + self._yScale[1] * numpy.arange(self.__imageData.shape[0])
         X, Y = numpy.meshgrid(x, y)
         X.shape = -1
@@ -1817,37 +1817,59 @@ class MaskImageWidget(qt.QWidget):
             if ownsignal:
                 pass
             if self.graphWidget.infoWidget.isHidden() or self.__brushMode:
-                y, x = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
+                row, column = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
                                                       xScale=self._xScale,
                                                       yScale=self._yScale,
                                                       safe=True)
-                width = self.__brushWidth   #in (row, column) units
-                height = self.__brushWidth  #in (row, column) units
-                r = self.__imageData.shape[0]
-                c = self.__imageData.shape[1]
 
-                xmin = max((x-0.5*width), 0)
-                xmax = min((x+0.5*width), c)
-                ymin = max((y-0.5*height), 0)
-                ymax = min((y+0.5*height), r)
+                halfWidth = 0.5 * self.__brushWidth   #in (row, column) units
+                halfHeight = 0.5 * self.__brushWidth  #in (row, column) units
+                shape = self.__imageData.shape
 
-                i1 = min(int(round(xmin)), c-1)
-                i2 = min(int(round(xmax)), c)
-                j1 = min(int(round(ymin)),r-1)
-                j2 = min(int(round(ymax)), r)
-                if i1 == i2:
-                    i2 = i1+1
-                elif (i2 - i1) > self.__brushWidth:
+                columnMin = max(column - halfWidth, 0)
+                columnMax = min(column + halfWidth, shape[1])
+
+                rowMin = max(row - halfHeight, 0)
+                rowMax = min(row + halfHeight, shape[0])
+
+                rowMin = min(int(round(rowMin)), shape[0] - 1)
+                rowMax = min(int(round(rowMax)), shape[0])
+                columnMin = min(int(round(columnMin)), shape[1] - 1)
+                columnMax = min(int(round(columnMax)), shape[1])
+
+                if rowMin == rowMax:
+                    rowMax = rowMin + 1
+                elif (rowMax - rowMin) > self.__brushWidth:
                     # python 3 implements banker's rounding
                     # test case ddict['x'] = 23.3 gives:
                     # i1 = 22 and i2 = 24 in python 3
                     # i1 = 23 and i2 = 24 in python 2
-                    i1 = i2 - self.__brushWidth
-                if j1 == j2:
-                    j2 = j1+1
-                elif (j2 - j1) > self.__brushWidth:
-                    j1 = j2 - self.__brushWidth
-                self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[j1, i1]))
+                    rowMin = rowMax - self.__brushWidth
+
+                if columnMin == columnMax:
+                    columnMax = columnMin + 1
+                elif (columnMax - columnMin) > self.__brushWidth:
+                    # python 3 implements banker's rounding
+                    # test case ddict['x'] = 23.3 gives:
+                    # i1 = 22 and i2 = 24 in python 3
+                    # i1 = 23 and i2 = 24 in python 2
+                    columnMin = columnMax - self.__brushWidth
+
+                #To show array coordinates:
+                #x = self._xScale[0] + columnMin * self._xScale[1]
+                #y = self._yScale[0] + rowMin * self._yScale[1]
+                #self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[rowMin, columnMin]))
+                #To show row and column:
+                #self.setMouseText("%g, %g, %g" % (row, column, self.__imageData[rowMin, columnMin]))
+                #To show mouse coordinates:
+                #self.setMouseText("%g, %g, %g" % (ddict['x'], ddict['y'], self.__imageData[rowMin, columnMin]))
+                if self._xScale is not None:
+                    x = self._xScale[0] + column * self._xScale[1]
+                    y = self._yScale[0] + row * self._yScale[1]
+                else:
+                    x = column
+                    y = row
+                self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[row, column]))
 
             if self.__brushMode:
                 if self.graphWidget.graph.isZoomModeEnabled():
@@ -1858,9 +1880,9 @@ class MaskImageWidget(qt.QWidget):
                     self.__selectionMask = numpy.zeros(self.__imageData.shape,
                                      numpy.uint8)
                 if self.__eraseMode:
-                    self.__selectionMask[j1:j2, i1:i2] = 0
+                    self.__selectionMask[rowMin:rowMax, columnMin:columnMax] = 0
                 else:
-                    self.__selectionMask[j1:j2, i1:i2] = self._roiTags[self._nRoi - 1]
+                    self.__selectionMask[rowMin:rowMax, columnMin:columnMax] = self._roiTags[self._nRoi - 1]
                 emitsignal = True
         if emitsignal:
             #should this be made by the parent?
@@ -2115,7 +2137,7 @@ def test():
         data = numpy.arange(400 * 400).astype(numpy.int32)
         data.shape = 200, 800
         #data = numpy.eye(200)
-        container.setImageData(data, xScale=(0.0, 1.0), yScale=(0., 1.))
+        container.setImageData(data, xScale=(1000.0, 1.0), yScale=(0., 1.))
         mask = (data*0).astype(numpy.uint8)
         n, m = data.shape
         mask[ n/4:n/4+n/8, m/4:m/4+m/8] = 1
