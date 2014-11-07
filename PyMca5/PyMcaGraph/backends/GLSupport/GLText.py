@@ -72,7 +72,7 @@ class Text2D(object):
                 "Vertical alignment not supported: {0}".format(valign))
         self._valign = valign
 
-        self._rotate = rotate
+        self._rotate = math.radians(rotate)
 
     @classmethod
     def _getTexture(cls, context):
@@ -120,6 +120,8 @@ class Text2D(object):
             else:  # CENTER
                 yOrig = - font.cHeight // 2
 
+            cos, sin = math.cos(self._rotate), math.sin(self._rotate)
+
             for index, char in enumerate(self.text):
                 uMin, vMin, uMax, vMax = font.charTexCoords(char)
                 vertices = ((xOrig + index * font.cWidth, yOrig + font.cHeight,
@@ -130,8 +132,6 @@ class Text2D(object):
                             (xOrig + (index + 1) * font.cWidth, yOrig,
                              uMax, vMin))
 
-                rotate = math.radians(self._rotate)
-                cos, sin = math.cos(rotate), math.sin(rotate)
                 self._vertices[index] = [
                     (cos * x - sin * y, sin * x + cos * y, u, v)
                     for x, y, u, v in vertices]

@@ -90,7 +90,7 @@ class StateMachine(object):
 
 # clicOrDrag ##################################################################
 
-LEFT_BTN, RIGHT_BTN, MIDDLE_BTN = 1, 2, 4
+LEFT_BTN, RIGHT_BTN, MIDDLE_BTN = 'left', 'right', 'middle'
 
 
 class ClicOrDrag(StateMachine):
@@ -170,11 +170,11 @@ if __name__ == "__main__":
             print('endDrag', x, y)
 
     clicOrDrag = DumpClicOrDrag()
-    for event in (('press', 10, 10, 1),
-                  ('release', 10, 10, 1),
-                  ('press', 10, 10, 1),
+    for event in (('press', 10, 10, LEFT_BTN),
+                  ('release', 10, 10, LEFT_BTN),
+                  ('press', 10, 10, LEFT_BTN),
                   ('move', 11, 10),
                   ('move', 12, 10),
-                  ('release', 12, 10, 1)):
+                  ('release', 12, 10, LEFT_BTN)):
         print('Event:', event)
         clicOrDrag.handleEvent(*event)

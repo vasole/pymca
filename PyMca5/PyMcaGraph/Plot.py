@@ -525,6 +525,7 @@ class Plot(PlotBase.PlotBase):
                                               z=z,
                                               selectable=selectable,
                                               draggable=draggable,
+                                              colormap=colormap,
                                               **kw)
             info['plot_handle'] = imageHandle
         else:
@@ -534,7 +535,7 @@ class Plot(PlotBase.PlotBase):
             self.setActiveImage(key)
         if replot:
             self.resetZoom()
-            self.replot()
+            #self.replot()
         return key
 
     def removeCurve(self, legend, replot=True):

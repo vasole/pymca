@@ -31,7 +31,7 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-OpenGL backend
+OpenGL/Qt backend
 """
 
 
@@ -46,13 +46,11 @@ except ImportError:
     except ImportError:
         from PyQt5.QtOpenGL import QGLWidget
 
-from collections import OrderedDict
 import numpy as np
 import math
 
 import OpenGL
 if 0:  # Debug
-    OpenGL.FULL_LOGGING = True
     OpenGL.ERROR_ON_COPY = True
 else:
     OpenGL.ERROR_LOGGING = False
@@ -65,6 +63,34 @@ from OpenGL.GL.ARB.texture_rg import GL_R32F  # Core in OpenGL 3
 from ..PlotBackend import PlotBackend
 from ..Plot import colordict
 from .GLSupport import *  # noqa
+
+
+# OrderedDict #################################################################
+
+class MiniOrderedDict(object):
+    """Simple subset of OrderedDict for python 2.6 support"""
+
+    def __init__(self):
+        self._dict = {}
+        self._orderedKeys = []
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def __setitem__(self, key, value):
+        if key not in self._orderedKeys:
+            self._orderedKeys.append(key)
+        self._dict[key] = value
+
+    def __delitem__(self, key):
+        del self._dict[key]
+        self._orderedKeys.remove(key)
+
+    def values(self):
+        return [self._dict[key] for key in self._orderedKeys]
+
+    def get(self, key, default=None):
+        return self._dict.get(key, default)
 
 
 # shaders #####################################################################
@@ -80,9 +106,15 @@ _baseVertShd = """
 
 _baseFragShd = """
     uniform vec4 color;
+    uniform int hatchStep;
 
     void main(void) {
-        gl_FragColor = color;
+        if (hatchStep == 0 ||
+            mod(gl_FragCoord.x - gl_FragCoord.y, hatchStep) == 0) {
+            gl_FragColor = color;
+        } else {
+            gl_FragColor = vec4(0., 0., 0., 0.);
+        }
     }
     """
 
@@ -218,13 +250,33 @@ def _ticks(start, stop, step):
             start += step
 
 
-def linesVertices(width, height, step):
-    nbLines = int(math.ceil((width + height) / float(step)))
-    vertices = np.empty((nbLines * 2, 2), dtype=np.float32)
-    for line in range(nbLines):
-        vertices[2 * line] = 0., step * line
-        vertices[2 * line + 1] = step * line, 0.
-    return vertices
+# signals #####################################################################
+
+def prepareDrawingSignal(event, type_, points, parameters={}):
+    eventDict = {}
+    eventDict['event'] = event
+    eventDict['type'] = type_
+    points = np.array(points, dtype=np.float32)
+    points.shape = -1, 2
+    eventDict['points'] = points
+    eventDict['xdata'] = points[:, 0]
+    eventDict['ydata'] = points[:, 1]
+    if type_ in ('rectangle'):
+        eventDict['x'] = eventDict['xdata'].min()
+        eventDict['y'] = eventDict['ydata'].min()
+        eventDict['width'] = eventDict['xdata'].max() - eventDict['x']
+        eventDict['height'] = eventDict['ydata'].max() - eventDict['y']
+    eventDict['parameters'] = parameters.copy()
+    return eventDict
+
+
+def prepareMouseMovedSignal(button, xData, yData, xPixel, yPixel):
+    return {'event': 'mouseMoved',
+            'x': xData,
+            'y': yData,
+            'xpixel': xPixel,
+            'ypixel': yPixel,
+            'button': button}
 
 
 # Interaction #################################################################
@@ -270,6 +322,7 @@ class Zoom(ClicOrDrag):
                 self.backend.resetZoom()
             else:
                 self.backend.setLimits(xMin, xMax, yMin, yMax)
+            self.backend.replot()
 
     def beginDrag(self, x, y):
         self.x0, self.y0 = self.backend.pixelToDataCoords(x, y)
@@ -279,10 +332,11 @@ class Zoom(ClicOrDrag):
         if self.backend.isKeepDataAspectRatio():
             x1, y1 = self._ensureAspectRatio(self.x0, self.y0, x1, y1)
 
-        self.backend.setSelectionArea((self.x0, self.y0),
-                                      (self.x0, y1),
-                                      (x1, y1),
-                                      (x1, self.y0))
+        self.backend.setSelectionArea(((self.x0, self.y0),
+                                       (self.x0, y1),
+                                       (x1, y1),
+                                       (x1, self.y0)), fill=None)
+        self.backend.replot()
 
     def endDrag(self, startPos, endPos):
         xMin, xMax = self.backend.getGraphXLimits()
@@ -297,6 +351,7 @@ class Zoom(ClicOrDrag):
         xMin, xMax = min(x0, x1), max(x0, x1)
         yMin, yMax = min(y0, y1), max(y0, y1)
         self.backend.setLimits(xMin, xMax, yMin, yMax)
+        self.backend.replot()
 
     def onWheel(self, x, y, angle):
         scaleF = 1.1 if angle > 0 else 1./1.1
@@ -317,24 +372,7 @@ class Zoom(ClicOrDrag):
                                xCenter + (1. - xOffset) * xRange,
                                yCenter - yOffset * yRange,
                                yCenter + (1. - yOffset) * yRange)
-
-
-def prepareDrawingSignal(event, type_, points, parameters={}):
-    eventDict = {}
-    eventDict['event'] = event
-    eventDict['type'] = type_
-    points = np.array(points, dtype=np.float32)
-    points.shape = -1, 2
-    eventDict['points'] = points
-    eventDict['xdata'] = points[:, 0]
-    eventDict['ydata'] = points[:, 1]
-    if type_ in ('rectangle'):
-        eventDict['x'] = eventDict['xdata'].min()
-        eventDict['y'] = eventDict['ydata'].min()
-        eventDict['width'] = eventDict['xdata'].max() - eventDict['x']
-        eventDict['height'] = eventDict['ydata'].max() - eventDict['y']
-    eventDict['parameters'] = parameters.copy()
-    return eventDict
+        self.backend.replot()
 
 
 class Select(object):
@@ -353,7 +391,8 @@ class SelectPolygon(StateMachine, Select):
             self.points = [(x, y), (x, y)]
 
         def updateSelectionArea(self):
-            self.machine.backend.setSelectionArea(*self.points)
+            self.machine.backend.setSelectionArea(self.points)
+            self.machine.backend.replot()
             eventDict = prepareDrawingSignal('drawingProgress',
                                              'polygon',
                                              self.points,
@@ -376,6 +415,7 @@ class SelectPolygon(StateMachine, Select):
         def onPress(self, x, y, btn):
             if btn == RIGHT_BTN:
                 self.machine.backend.setSelectionArea()
+                self.machine.backend.replot()
 
                 x, y = self.machine.backend.pixelToDataCoords(x, y)
                 self.points[-1] = (x, y)
@@ -446,10 +486,11 @@ class SelectRectangle(Select2Points):
 
     def select(self, x, y):
         x, y = self.backend.pixelToDataCoords(x, y)
-        self.backend.setSelectionArea(self.startPt,
+        self.backend.setSelectionArea((self.startPt,
                                       (self.startPt[0], y),
                                       (x, y),
-                                      (x, self.startPt[1]))
+                                      (x, self.startPt[1])))
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'rectangle',
@@ -459,8 +500,9 @@ class SelectRectangle(Select2Points):
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
-        x, y = self.backend.pixelToDataCoords(x, y)
+        self.backend.replot()
 
+        x, y = self.backend.pixelToDataCoords(x, y)
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'rectangle',
                                          (self.startPt, (x, y)),
@@ -474,7 +516,8 @@ class SelectLine(Select2Points):
 
     def select(self, x, y):
         x, y = self.backend.pixelToDataCoords(x, y)
-        self.backend.setSelectionArea(self.startPt, (x, y))
+        self.backend.setSelectionArea((self.startPt, (x, y)))
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'line',
@@ -484,8 +527,9 @@ class SelectLine(Select2Points):
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
-        x, y = self.backend.pixelToDataCoords(x, y)
+        self.backend.replot()
 
+        x, y = self.backend.pixelToDataCoords(x, y)
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'line',
                                          (self.startPt, (x, y)),
@@ -530,7 +574,8 @@ class SelectHLine(Select1Point):
 
     def select(self, x, y):
         points = self._hLine(y)
-        self.backend.setSelectionArea(*points)
+        self.backend.setSelectionArea(points)
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'hline',
@@ -540,6 +585,7 @@ class SelectHLine(Select1Point):
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'hline',
@@ -551,12 +597,12 @@ class SelectHLine(Select1Point):
 class SelectVLine(Select1Point):
     def _vLine(self, x):
         x = self.backend.pixelToDataCoords(xPixel=x)
-        print(x)
         return (x, self.backend._yMin), (x, self.backend._yMax)
 
     def select(self, x, y):
         points = self._vLine(x)
-        self.backend.setSelectionArea(*points)
+        self.backend.setSelectionArea(points)
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'vline',
@@ -566,6 +612,7 @@ class SelectVLine(Select1Point):
 
     def endSelect(self, x, y):
         self.backend.setSelectionArea()
+        self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'vline',
@@ -574,22 +621,22 @@ class SelectVLine(Select1Point):
         self.backend._callback(eventDict)
 
 
-# OpenGLBackend ###############################################################
+# OpenGLPlotCanvas ############################################################
 
-
-class OpenGLBackend(PlotBackend, QGLWidget):
+class OpenGLPlotCanvas(PlotBackend):
     def __init__(self, parent=None, **kw):
         self._xMin, self._xMax = 0., 1.
         self._yMin, self._yMax = 0., 1.
-        self.keepDataAspectRatio(False)
+        self._keepDataAspectRatio = False
         self._isYInverted = False
         self._title, self._xLabel, self._yLabel = '', '', ''
 
         self.winWidth, self.winHeight = 0, 0
         self._dataBBox = {'xMin': 0., 'xMax': 0., 'xStep': 1.,
                           'yMin': 0., 'yMax': 0., 'yStep': 1.}
-        self._images = OrderedDict()
-        self._items = OrderedDict()
+        self._images = MiniOrderedDict()
+        self._items = MiniOrderedDict()
+        self._curves = MiniOrderedDict()
         self._labels = []
         self._selectionArea = None
 
@@ -603,12 +650,11 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self.eventHandler = None
         self._plotHasFocus = set()
 
-        QGLWidget.__init__(self, parent)
-        self.setMinimumSize(300, 300)  # TODO better way ?
         PlotBackend.__init__(self, parent, **kw)
-        self.setMouseTracking(True)
 
-    # Mouse events #
+    def updateGL(self):
+        raise NotImplementedError("This method must be provided by \
+                                  subclass to trigger redraw")
 
     def _mouseInPlotArea(self, x, y):
         xPlot = clamp(x, self._margins['left'],
@@ -617,45 +663,50 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                       self.winHeight - self._margins['bottom'])
         return xPlot, yPlot
 
-    def mousePressEvent(self, event):
-        x, y = event.x(), event.y()
-        if (self._mouseInPlotArea(x, y) == (x, y)):
-            btn = event.button()
+    def onMousePress(self, xPixel, yPixel, btn):
+        if (self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel)):
             self._plotHasFocus.add(btn)
             if self.eventHandler is not None:
-                self.eventHandler.handleEvent('press', x, y, btn)
-        event.accept()
+                self.eventHandler.handleEvent('press', xPixel, yPixel, btn)
 
-    def mouseMoveEvent(self, event):
+    def onMouseMove(self, xPixel, yPixel):
+        # Signal mouse move event
+        xData, yData = self.pixelToDataCoords(xPixel, yPixel)
+        if xData is not None and yData is not None:
+            eventDict = prepareMouseMovedSignal(None, xData, yData,
+                                                xPixel, yPixel)
+            self._callback(eventDict)
+
         if self.eventHandler:
-            x, y = self._mouseInPlotArea(event.x(), event.y())
-            self.eventHandler.handleEvent('move', x, y)
-        event.accept()
+            xPlot, yPlot = self._mouseInPlotArea(xPixel, yPixel)
+            self.eventHandler.handleEvent('move', xPlot, yPlot)
 
-    def mouseReleaseEvent(self, event):
-        btn = event.button()
+    def onMouseRelease(self, xPixel, yPixel, btn):
         try:
             self._plotHasFocus.remove(btn)
         except KeyError:
             pass
         else:
             if self.eventHandler:
-                x, y = self._mouseInPlotArea(event.x(), event.y())
-                self.eventHandler.handleEvent('release', x, y, btn)
-        event.accept()
+                xPixel, yPixel = self._mouseInPlotArea(xPixel, yPixel)
+                self.eventHandler.handleEvent('release', xPixel, yPixel, btn)
 
-    def wheelEvent(self, event):
-        x, y = event.x(), event.y()
-        if self.eventHandler and (self._mouseInPlotArea(x, y) == (x, y)):
-            angle = event.delta() / 8.  # in degrees
-            self.eventHandler.handleEvent('wheel', x, y, angle)
-        event.accept()
+    def onMouseWheel(self, xPixel, yPixel, angleInDegrees):
+        if self.eventHandler and \
+           self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
+            self.eventHandler.handleEvent('wheel', xPixel, yPixel,
+                                          angleInDegrees)
 
     # Manage Plot #
 
-    def setSelectionArea(self, *points):
-        self._selectionArea = Shape2D(points) if points else None
-        self.updateGL()
+    def setSelectionArea(self, points=None, fill='hatch'):
+        if points:
+            self._selectionArea = Shape2D(points, fill=fill,
+                                          fillColor=(0., 0., 0., 0.5),
+                                          stroke=True,
+                                          strokeColor=(0., 0., 0., 1.))
+        else:
+            self._selectionArea = None
 
     def _updateDataBBox(self):
         xMin, xMax, xStep = float('inf'), -float('inf'), float('inf')
@@ -668,10 +719,21 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             yMin = min(yMin, bbox['yMin'])
             yMax = max(yMax, bbox['yMax'])
             yStep = min(yStep, bbox['yStep'])
+        for curve in self._curves.values():
+            bbox = curve['bBox']
+            xMin = min(xMin, bbox['xMin'])
+            xMax = max(xMax, bbox['xMax'])
+            yMin = min(yMin, bbox['yMin'])
+            yMax = max(yMax, bbox['yMax'])
+
         if xMin >= xMax:
                 xMin, xMax = 0., 1.
         if yMin >= yMax:
                 yMin, yMax = 0., 1.
+        if xStep == float('inf'):
+            xStep = 1.
+        if yStep == float('inf'):
+            yStep = 1.
 
         self._dataBBox = {'xMin': xMin, 'xMax': xMax, 'xStep': xStep,
                           'yMin': yMin, 'yMax': yMax, 'yStep': yStep}
@@ -851,6 +913,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
+
         # Create basic program
         self._progBase = Program(_baseVertShd, _baseFragShd)
 
@@ -960,31 +1024,10 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             # Render fill
             glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                                matDataProj)
-            glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 0.5)
-
             posAttrib = self._progBase.attributes['position']
-            self._selectionArea.prepareFillMask(posAttrib)
-
-            matPlotScreenProj = mat4Ortho(0, plotWidth,
-                                          plotHeight, 0,
-                                          1, -1)
-            glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                               matPlotScreenProj)
-            vertices = linesVertices(plotWidth, plotHeight, 20)
-            glVertexAttribPointer(self._progBase.attributes['position'],
-                                  2,
-                                  GL_FLOAT,
-                                  GL_FALSE,
-                                  0, vertices)
-            glDrawArrays(GL_LINES, 0, len(vertices))
-
-            glDisable(GL_STENCIL_TEST)
-
-            # Render stroke
-            glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                               matDataProj)
-            glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 1.)
-            self._selectionArea.renderStroke(posAttrib)
+            colorUnif = self._progBase.uniforms['color']
+            hatchStepUnif = self._progBase.uniforms['hatchStep']
+            self._selectionArea.render(posAttrib, colorUnif, hatchStepUnif)
 
             glDisable(GL_SCISSOR_TEST)
 
@@ -1001,6 +1044,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                            self.matScreenProj)
         glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 1.)
+        glUniform1i(self._progBase.uniforms['hatchStep'], 0)
         glVertexAttribPointer(self._progBase.attributes['position'],
                               2,
                               GL_FLOAT,
@@ -1043,7 +1087,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         # Render Images
         dataTexUnit = 0
 
-        for image in self._images.values():
+        # sorted is stable: original order is preserved when key is the same
+        for image in sorted(self._images.values(), key=lambda d: d['zOrder']):
             try:
                 texture = image['_texture']
             except KeyError:
@@ -1110,6 +1155,37 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                                self._progImg.attributes['texCoords'],
                                dataTexUnit)
 
+        # Render Curves
+        self._progBase.use()
+        glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
+                           matDataProj)
+
+        glEnable(GL_LINE_SMOOTH)
+
+        for curve in self._curves.values():
+            try:
+                vbo = curve['_vbo']
+            except KeyError:
+                vbo = VertexBuffer(curve['data'], usage=GL_STATIC_DRAW)
+                curve['_vbo'] = vbo
+
+            glUniform4f(self._progBase.uniforms['color'], *curve['color'])
+            glUniform1i(self._progBase.uniforms['hatchStep'], 0)
+            posAttrib = self._progBase.attributes['position']
+
+            glEnableVertexAttribArray(posAttrib)
+            with vbo:
+                glVertexAttribPointer(posAttrib,
+                                      2,
+                                      GL_FLOAT,
+                                      GL_FALSE,
+                                      0, c_void_p(0))
+            glLineWidth(curve['lineWidth'])
+            glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
+            glDrawArrays(GL_LINE_STRIP, 0, len(curve['data']))
+
+        glDisable(GL_LINE_SMOOTH)
+
         # Render Items
         self._progBase.use()
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
@@ -1120,11 +1196,16 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                 shape2D = item['_shape2D']
             except KeyError:
                 shape2D = Shape2D(zip(item['x'], item['y']),
-                                  fill=item['fill'], stroke=True)
+                                  fill=item['fill'],
+                                  fillColor=item['color'],
+                                  stroke=True,
+                                  strokeColor=item['color'])
                 item['_shape2D'] = shape2D
 
-            glUniform4f(self._progBase.uniforms['color'], *item['color'])
-            shape2D.render(self._progBase.attributes['position'])
+            posAttrib = self._progBase.attributes['position']
+            colorUnif = self._progBase.uniforms['color']
+            hatchStepUnif = self._progBase.uniforms['hatchStep']
+            shape2D.render(posAttrib, colorUnif, hatchStepUnif)
 
         glDisable(GL_SCISSOR_TEST)
 
@@ -1136,7 +1217,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         self.setLimits(self._xMin, self._xMax, self._yMin, self._yMax)
 
         self.updateAxis()
-        self.updateGL()
+        self.replot()
 
     # PlotBackend API #
 
@@ -1146,8 +1227,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
         # info is ignored
-        if z != 0 or selectable or draggable:
-            raise NotImplementedError("z, selectable and draggable \
+        if selectable or draggable:
+            raise NotImplementedError("selectable and draggable \
                                       not implemented")
 
         oldImage = self._images.get(legend, None)
@@ -1180,6 +1261,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                     "Colors: {0}".format(colormap['colors']))
 
             self._images[legend] = {
+                'zOrder': z,
                 'data': data,
                 'colormapName': colormap['name'][:],
                 'colormapIsLog': colormap['normalization'].startswith('log'),
@@ -1190,7 +1272,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
                 'bBox': bbox
             }
             if oldImage is not None and '_texture' in oldImage:
-                # Reuse texture and update early
+                # Reuse texture and update
                 texture = oldImage['_texture']
                 texture.updateAll(format_=GL_RED, type_=GL_FLOAT,
                                   data=data)
@@ -1202,10 +1284,10 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             assert(data.dtype == np.uint8 or
                    np.can_cast(data.dtype, np.float32))
 
-            self._images[legend] = {'data': data, 'bBox': bbox}
+            self._images[legend] = {'zOrder': z, 'data': data, 'bBox': bbox}
             if oldImage is not None and '_texture' in oldImage:
-                # Reuse texture and update early
-                format_ = GL_RGBA if depth == 4 else GL_RGB
+                # Reuse texture and update
+                format_ = GL_RGBA if data.shape[2] == 4 else GL_RGB
                 if data.dtype == np.uint8:
                     type_ = GL_UNSIGNED_BYTE
                 else:
@@ -1243,7 +1325,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self.replot()
 
     def clearImages(self):
-        self._images = OrderedDict()
+        self._images = MiniOrderedDict()
+        self._plotDirtyFlag = True
 
     def addItem(self, xList, yList, legend=None, info=None,
                 replace=False, replot=True,
@@ -1256,8 +1339,6 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self.clearItems()
 
         colorCode = kwargs.get('color', 'black')
-        if colorCode[0] != '#':
-            colorCode = colordict[colorCode]
 
         if shape == 'rectangle':
             xMin, xMax = xList
@@ -1267,8 +1348,8 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
         self._items[legend] = {
             'shape': shape,
-            'color': rgba(colorCode),
-            'fill': fill,
+            'color': rgba(colorCode, colordict),
+            'fill': 'hatch' if fill else None,
             'x': xList,
             'y': yList
         }
@@ -1290,10 +1371,89 @@ class OpenGLBackend(PlotBackend, QGLWidget):
             self.replot()
 
     def clearItems(self):
-        self._items = OrderedDict()
+        self._items = MiniOrderedDict()
+        self._plotDirtyFlag = True
+
+    def addCurve(self, x, y, legend=None, info=None,
+                 replace=False, replot=True, **kw):
+
+        data = np.array((x, y), dtype=np.float32, order='F').T
+
+        oldCurve = self._curves.get(legend, None)
+        if oldCurve is not None and oldCurve['data'].shape != data.shape:
+            oldCurve = None
+
+        if replace:
+            self.clearCurves()
+
+        # Copied from MatplotlibBackend, can be common
+        if info is None:
+            info = {}
+        color = info.get('plot_color', self._activeCurveColor)
+        color = kw.get('color', color)
+        # symbol = info.get('plot_symbol', None)
+        # symbol = kw.get('symbol', symbol)
+        # style = info.get('plot_line_style', '-')
+        # style = info.get('line_style', style)
+        lineWidth = 1
+        # axisId = info.get('plot_yaxis', 'left')
+        # axisId = kw.get('yaxis', axisId)
+        # fill = info.get('plot_fill', False)
+
+        bbox = {
+            'xMin': min(x),
+            'xMax': max(x),
+            'yMin': min(y),
+            'yMax': max(y)
+        }
+
+        self._curves[legend] = {
+            'data': data,
+            # 'lineStyle': style,
+            'lineWidth': lineWidth,
+            'color': rgba(color, colordict),
+            # 'symbol': symbol,
+            # 'axes': axisId,
+            # 'fill': fill,
+            'bBox': bbox
+        }
+
+        if oldCurve is not None and '_vbo' in oldCurve:
+            # Reuse vbo and update
+            vbo = oldCurve['_vbo']
+            vbo.update(data)
+            self._curves[legend]['_vbo'] = vbo
+
+        if oldCurve is None or bbox != oldCurve['bBox']:
+            self._updateDataBBox()
+            self.setLimits(self._dataBBox['xMin'], self._dataBBox['xMax'],
+                           self._dataBBox['yMin'], self._dataBBox['yMax'])
+
+        self._plotDirtyFlag = True
+
+        if replot:
+            self.replot()
+
+        return legend
+
+    def removeCurve(self, legend, replot=True):
+        try:
+            del self._curves[legend]
+        except KeyError:
+            pass
+        else:
+            self._plotDirtyFlag = True
+
+        if replot:
+            self.replot()
+
+    def clearCurves(self):
+        self._curves = MiniOrderedDict()
+        self._plotDirtyFlag = True
 
     def clear(self):
         self.clearItems()
+        self.clearCurves()
 
     def replot(self):
         self.updateGL()
@@ -1350,6 +1510,7 @@ class OpenGLBackend(PlotBackend, QGLWidget):
         elif self.isYAxisAutoScale():
             self.setGraphYLimits(self._dataBBox['yMin'],
                                  self._dataBBox['yMax'])
+        self.replot()
 
     # Limits #
 
@@ -1404,7 +1565,10 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
         if self._keepDataAspectRatio:
             self._ensureAspectRatio()
-            self.updateAxis()
+
+        self.resetZoom()
+        self.updateAxis()
+        self.replot()
 
     def setGraphXLimits(self, xMin, xMax):
         self._setGraphXLimits(xMin, xMax)
@@ -1470,6 +1634,44 @@ class OpenGLBackend(PlotBackend, QGLWidget):
 
     def getGraphYLabel(self):
         return self._yLabel
+
+
+# OpenGLBackend ###############################################################
+
+class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
+    def __init__(self, parent=None, **kw):
+        QGLWidget.__init__(self, parent)
+        self.setAutoFillBackground(False)
+        self.setMinimumSize(300, 300)  # TODO better way ?
+        self.setMouseTracking(True)
+
+        OpenGLPlotCanvas.__init__(self, parent, **kw)
+
+    # Mouse events #
+    _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle'}
+
+    def mousePressEvent(self, event):
+        xPixel, yPixel = event.x(), event.y()
+        btn = self._MOUSE_BTNS[event.button()]
+        self.onMousePress(xPixel, yPixel, btn)
+        event.accept()
+
+    def mouseMoveEvent(self, event):
+        xPixel, yPixel = event.x(), event.y()
+        self.onMouseMove(xPixel, yPixel)
+        event.accept()
+
+    def mouseReleaseEvent(self, event):
+        xPixel, yPixel = event.x(), event.y()
+        btn = self._MOUSE_BTNS[event.button()]
+        self.onMouseRelease(xPixel, yPixel, btn)
+        event.accept()
+
+    def wheelEvent(self, event):
+        xPixel, yPixel = event.x(), event.y()
+        angleInDegrees = event.delta() / 8.
+        self.onMouseWheel(xPixel, yPixel, angleInDegrees)
+        event.accept()
 
 
 # main ########################################################################
