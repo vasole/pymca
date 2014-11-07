@@ -913,7 +913,6 @@ class OpenGLPlotCanvas(PlotBackend):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-        glEnable(GL_LINE_SMOOTH)
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
 
         # Create basic program
@@ -1161,6 +1160,8 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                            matDataProj)
 
+        glEnable(GL_LINE_SMOOTH)
+
         for curve in self._curves.values():
             try:
                 vbo = curve['_vbo']
@@ -1182,6 +1183,8 @@ class OpenGLPlotCanvas(PlotBackend):
             glLineWidth(curve['lineWidth'])
             glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
             glDrawArrays(GL_LINE_STRIP, 0, len(curve['data']))
+
+        glDisable(GL_LINE_SMOOTH)
 
         # Render Items
         self._progBase.use()
@@ -1421,7 +1424,7 @@ class OpenGLPlotCanvas(PlotBackend):
             vbo.update(data)
             self._curves[legend]['_vbo'] = vbo
 
-        if oldCurve is None: # or bbox != oldCurve['bBox']:
+        if oldCurve is None or bbox != oldCurve['bBox']:
             self._updateDataBBox()
             self.setLimits(self._dataBBox['xMin'], self._dataBBox['xMax'],
                            self._dataBBox['yMin'], self._dataBBox['yMax'])
