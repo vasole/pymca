@@ -1855,16 +1855,21 @@ class MaskImageWidget(qt.QWidget):
                     # i1 = 23 and i2 = 24 in python 2
                     columnMin = columnMax - self.__brushWidth
 
-                # To show coordinates:    
+                #To show array coordinates:
                 #x = self._xScale[0] + columnMin * self._xScale[1]
                 #y = self._yScale[0] + rowMin * self._yScale[1]
                 #self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[rowMin, columnMin]))
-                #To show pixels:
+                #To show row and column:
                 #self.setMouseText("%g, %g, %g" % (row, column, self.__imageData[rowMin, columnMin]))
-                
-                x = self._xScale[0] + columnMin * self._xScale[1]
-                y = self._yScale[0] + rowMin * self._yScale[1]
-                self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[rowMin, columnMin]))
+                #To show mouse coordinates:
+                #self.setMouseText("%g, %g, %g" % (ddict['x'], ddict['y'], self.__imageData[rowMin, columnMin]))
+                if self._xScale is not None:
+                    x = self._xScale[0] + column * self._xScale[1]
+                    y = self._yScale[0] + row * self._yScale[1]
+                else:
+                    x = column
+                    y = row
+                self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[row, column]))
 
             if self.__brushMode:
                 if self.graphWidget.graph.isZoomModeEnabled():
