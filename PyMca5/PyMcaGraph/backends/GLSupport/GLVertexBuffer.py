@@ -45,7 +45,11 @@ import numpy as np
 # VBO #########################################################################
 
 class VertexBuffer(object):
-    def __init__(self, data=None, sizeInBytes=None, usage=GL_STATIC_DRAW):
+    def __init__(self, data=None, sizeInBytes=None,
+                 usage=None):
+        if usage is None:
+            usage = GL_STATIC_DRAW
+
         self._vboId = glGenBuffers(1)
         self.bind()
         if data is None:
@@ -70,7 +74,9 @@ class VertexBuffer(object):
 
     @property
     def vboId(self):
-        """OpenGL Vertex Buffer Object ID"""
+        """OpenGL Vertex Buffer Object ID
+        :type: int
+        """
         try:
             return self._vboId
         except AttributeError:
@@ -79,7 +85,9 @@ class VertexBuffer(object):
 
     @property
     def size(self):
-        """Size in bytes of the Vertex Buffer Object"""
+        """Size in bytes of the Vertex Buffer Object
+        :type: int
+        """
         try:
             return self._size
         except AttributeError:

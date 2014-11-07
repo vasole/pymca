@@ -913,6 +913,9 @@ class OpenGLPlotCanvas(PlotBackend):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+        glEnable(GL_LINE_SMOOTH)
+        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
+
         # Create basic program
         self._progBase = Program(_baseVertShd, _baseFragShd)
 
@@ -1504,6 +1507,7 @@ class OpenGLPlotCanvas(PlotBackend):
         elif self.isYAxisAutoScale():
             self.setGraphYLimits(self._dataBBox['yMin'],
                                  self._dataBBox['yMax'])
+        self.replot()
 
     # Limits #
 

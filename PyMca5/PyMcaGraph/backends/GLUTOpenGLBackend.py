@@ -37,7 +37,7 @@ OpenGL/GLUT backend
 
 # import ######################################################################
 
-from OpenGL.GLUT import *
+from OpenGL.GLUT import *  # noqa
 from .OpenGLBackend import OpenGLPlotCanvas
 
 
