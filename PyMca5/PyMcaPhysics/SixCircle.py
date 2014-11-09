@@ -55,9 +55,9 @@ class SixCircle(object):
     def setUB(self, ublist):
         """
         :param ublist: the ub matrix element values
-        :type ublist: list(float)
+        :type ublist: list, tuple or array to convert to a 3x3 matrix
         """
-        self._ub = numpy.array(ublist).astype(numpy.float)
+        self._ub = numpy.array(ublist, copy=True, dtype=numpy.float)
         self._ub.shape = 3, 3
 
     def getUB(self):
@@ -397,6 +397,8 @@ class SixCircle(object):
 def getHKL(wavelength, ub, phi=0., chi=0., theta=0., mu=0.,
            delta=0., gamma=0., gamma_first=False):
     """
+    A convenience function that takes the whole input in one go.
+
     :param wavelength: the wavelength in Angstroms
     :type wavelength: float
     :param ub: the ub matrix element values
@@ -417,8 +419,6 @@ def getHKL(wavelength, ub, phi=0., chi=0., theta=0., mu=0.,
     :type gamma_first: boolean
 
     :return: HKL values for all the given delta, gamma values
-
-    A convenience function that takes the whole input in one go
     """
     a = SixCircle()
     a.setLambda(wavelength)
