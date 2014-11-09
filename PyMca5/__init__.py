@@ -21,7 +21,7 @@ except:
 from .PyMcaMath.fitting import SpecfitFuns, Gefit, Specfit
 from .PyMcaMath.fitting import SpecfitFunctions
 
-from .PyMcaPhysics import Elements
+from .PyMcaPhysics.xrf import Elements
 
 #all the rest can be imported using from PyMca5.PyMca import ...
 from . import PyMca
