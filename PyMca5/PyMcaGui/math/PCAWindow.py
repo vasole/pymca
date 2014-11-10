@@ -50,10 +50,7 @@ class PCAParametersDialog(qt.QDialog):
     def __init__(self, parent=None, options=[1, 2, 3, 4, 5, 10],
                  regions=False):
         qt.QDialog.__init__(self, parent)
-        if QTVERSION < '4.0.0':
-            self.setCaption("PCA Configuration Dialog")
-        else:
-            self.setWindowTitle("PCA Configuration Dialog")
+        self.setWindowTitle("PCA Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(11, 11, 11, 11)
         self.mainLayout.setSpacing(0)
@@ -472,9 +469,9 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         if self.eigenVectors is not None:
             legend = self.vectorNames[index]
             y = self.eigenVectors[index]
-            self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True)
+            self.vectorGraph.addCurve(range(len(y)), y, legend, replace=True)
             if self.vectorGraphTitles is not None:
-                self.vectorGraph.graph.setTitle(self.vectorGraphTitles[index])
+                self.vectorGraph.setGraphTitle(self.vectorGraphTitles[index])
 
     def showImage(self, index=0, moveslider=True):
         if self.imageList is None:
