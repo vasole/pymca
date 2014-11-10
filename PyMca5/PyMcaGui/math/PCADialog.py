@@ -32,15 +32,13 @@ import sys
 import time
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-PCA = False
-MDP = False
-if qt.qVersion() > '4.0.0':
-    try:
-        from PyMca5 import PCAWindow
-        PCA = True
-        MDP = PCAWindow.MDP
-    except ImportError:
-        pass
+try:
+    from . import PCAWindow
+    PCA = True
+    MDP = PCAWindow.MDP
+except ImportError:
+    PCA = False
+    MDP = False
 DEBUG = 0
 
 
