@@ -1318,7 +1318,7 @@ compList(long *nolist,long howmany)
 {
      long this,colon;
      char buf[30];
-     static char str[5000];
+     static char str[10000];
      char *retstr;
 
      if (howmany < 1) { return((char *)NULL);}
