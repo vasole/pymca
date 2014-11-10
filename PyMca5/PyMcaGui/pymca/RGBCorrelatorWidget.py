@@ -55,9 +55,9 @@ else:
 
 QTVERSION = qt.qVersion()
 try:
-    from PyMca5 import NNMADialog
+    from PyMca5.PyMcaGui import NNMADialog
     NNMA = NNMADialog.NNMA
-    from PyMca5 import PCADialog
+    from PyMca5.PyMcaGui import PCADialog
     PCA = PCADialog.PCA
 except:
     NNMA = False
