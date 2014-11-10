@@ -31,8 +31,12 @@ import sys
 import os
 
 from . import PlotWidget
-from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
+if 1:
+    from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
                     import MatplotlibBackend as backend
+else:
+    from PyMca5.PyMcaGraph.backends.OpenGLBackend \
+                    import OpenGLBackend as backend
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from .PyMca_Icons import IconDict
 from . import PyMcaPrintPreview
@@ -40,6 +44,8 @@ from PyMca5.PyMcaCore import PyMcaDirs
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
+if DEBUG:
+    print("Backend = ", backend)
 
 class RGBCorrelatorGraph(qt.QWidget):
     sigProfileSignal = qt.pyqtSignal(object)
@@ -220,6 +226,11 @@ class RGBCorrelatorGraph(qt.QWidget):
                                      'Additional Selections Menu')
             self.additionalSelectionToolButton = tb
         else:
+            if polygon:
+                tb = self._addToolButton(self.polygonIcon,
+                                     None,
+                        'Polygon selection\nRight click to finish')
+                self.polygonSelectionToolButton = tb                
             self.imageToolButton = None
         #picker selection
         self._pickerSelectionButtons = []
