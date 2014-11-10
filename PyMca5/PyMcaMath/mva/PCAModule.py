@@ -407,6 +407,11 @@ def numpyPCA(stack, ncomponents=10, binning=None, **kw):
         print("PCAModule.numpyPCA called")
     if hasattr(stack, "info"):
         index = stack.info.get('McaIndex', -1)
+    elif "index" in kw:
+        index = kw["index"]
+    else:
+        print("WARNING: Assuming index is -1 in numpyPCA")
+        index = -1
     return PCATools.numpyPCA(stack,
                              index=index,
                              ncomponents=ncomponents,

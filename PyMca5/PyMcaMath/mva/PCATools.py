@@ -43,7 +43,7 @@ except ImportError:
 DEBUG = 0
 
 def getCovarianceMatrix(stack,
-                        index=-1,
+                        index=None,
                         binning=None,
                         dtype=numpy.float64,
                         force=True,
@@ -64,8 +64,13 @@ def getCovarianceMatrix(stack,
     if hasattr(stack, "info") and hasattr(stack, "data"):
         #we are dealing with a PyMca data object
         data = stack.data
+        if index is None:
+            index = stack.info.get("McaWindex", -1)
     else:
         data = stack
+
+    if index is None:
+        index = -1
 
     oldShape = data.shape
     if index not in [0, -1, len(oldShape) - 1]:
