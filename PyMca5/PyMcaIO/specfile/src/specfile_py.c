@@ -814,7 +814,7 @@ scandata_alllabels  (PyObject *self,PyObject *args)
     return t;
 }
 
-static PyObject * 
+static PyObject *
 scandata_allmotors  (PyObject *self,PyObject *args)
 {
     int error,i;
@@ -824,7 +824,7 @@ scandata_allmotors  (PyObject *self,PyObject *args)
 
     scandataobject *v = (scandataobject *) self;
 
-    if (!PyArg_ParseTuple(args, ""))   
+    if (!PyArg_ParseTuple(args, ""))
         return NULL;
 
     nb_motors = SfAllMotors((v->file)->sf,v->index,&motors,&error);
@@ -1504,11 +1504,11 @@ initspecfile(void) {
  * Utility functions
  */
 static char *
-compList(long *nolist,long howmany)
+compList(long *nolist, long howmany)
 {
      long this,colon;
      char buf[30];
-     static char str[5000];
+     static char str[10000];
      char *retstr;
 
      if (howmany < 1) { return((char *)NULL);}
