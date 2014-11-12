@@ -40,11 +40,12 @@ OpenGL/Qt backend
 try:
     from PyMca5.PyMcaGui import PyMcaQt as qt
     QGLWidget = qt.QGLWidget
+    QGLContext = qt.QGLContext
 except ImportError:
     try:
-        from PyQt4.QtOpenGL import QGLWidget
+        from PyQt4.QtOpenGL import QGLWidget, QGLContext
     except ImportError:
-        from PyQt5.QtOpenGL import QGLWidget
+        from PyQt5.QtOpenGL import QGLWidget, QGLContext
 
 import numpy as np
 import math
@@ -85,6 +86,9 @@ class MiniOrderedDict(object):
     def __delitem__(self, key):
         del self._dict[key]
         self._orderedKeys.remove(key)
+
+    def keys(self):
+        return self._orderedKeys[:]
 
     def values(self):
         return [self._dict[key] for key in self._orderedKeys]
@@ -656,6 +660,13 @@ class OpenGLPlotCanvas(PlotBackend):
         raise NotImplementedError("This method must be provided by \
                                   subclass to trigger redraw")
 
+    def makeCurrent(self):
+        """Override this method in subclass to support multiple
+        OpenGL context, making the context associated to this plot
+        the current OpenGL context
+        """
+        pass
+
     def _mouseInPlotArea(self, x, y):
         xPlot = clamp(x, self._margins['left'],
                       self.winWidth - self._margins['right'])
@@ -1061,7 +1072,7 @@ class OpenGLPlotCanvas(PlotBackend):
         for x, y, label in self._labels:
             glUniformMatrix4fv(self._progTex.uniforms['matrix'], 1, GL_TRUE,
                                self.matScreenProj * mat4Translate(x, y, 0))
-            label.render(self, self._progTex.attributes['position'],
+            label.render(self._progTex.attributes['position'],
                          self._progTex.attributes['texCoords'],
                          textTexUnit)
 
@@ -1226,6 +1237,8 @@ class OpenGLPlotCanvas(PlotBackend):
                  xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
+        self.makeCurrent()
+
         # info is ignored
         if selectable or draggable:
             raise NotImplementedError("selectable and draggable \
@@ -1314,18 +1327,27 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend  # This is the 'handle'
 
     def removeImage(self, legend, replot=True):
+        self.makeCurrent()
         try:
-            del self._images[legend]
+            image = self._images[legend]
         except KeyError:
             pass
         else:
+            try:
+                texture = image['_texture']
+            except KeyError:
+                pass
+            else:
+                texture.discard()
+            del self._images[legend]
             self._plotDirtyFlag = True
 
         if replot:
             self.replot()
 
     def clearImages(self):
-        self._images = MiniOrderedDict()
+        for image in self._images.keys():
+            self.removeImage(image, replot=False)
         self._plotDirtyFlag = True
 
     def addItem(self, xList, yList, legend=None, info=None,
@@ -1376,6 +1398,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def addCurve(self, x, y, legend=None, info=None,
                  replace=False, replot=True, **kw):
+        self.makeCurrent()
 
         data = np.array((x, y), dtype=np.float32, order='F').T
 
@@ -1437,17 +1460,26 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend
 
     def removeCurve(self, legend, replot=True):
+        self.makeCurrent()
         try:
-            del self._curves[legend]
+            curve = self._curves[legend]
         except KeyError:
             pass
         else:
+            try:
+                vbo = curve['_vbo']
+            except KeyError:
+                pass
+            else:
+                vbo.discard()
+            del self._curves[legend]
             self._plotDirtyFlag = True
 
         if replot:
             self.replot()
 
     def clearCurves(self):
+        self.makeCurrent()
         self._curves = MiniOrderedDict()
         self._plotDirtyFlag = True
 
@@ -1637,6 +1669,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
 
 # OpenGLBackend ###############################################################
+
+# Init GL context getter
+setGLContextGetter(QGLContext.currentContext)
 
 class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
     def __init__(self, parent=None, **kw):

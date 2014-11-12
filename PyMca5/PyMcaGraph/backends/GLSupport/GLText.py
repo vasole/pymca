@@ -44,6 +44,7 @@ import math
 from ctypes import c_void_p, sizeof, c_float
 from OpenGL.GL import *  # noqa
 from . import FontLatin1_12 as font
+from .GLContext import getGLContext
 
 # TODO: Font should be configurable by the main program
 
@@ -75,9 +76,9 @@ class Text2D(object):
         self._rotate = math.radians(rotate)
 
     @classmethod
-    def _getTexture(cls, context):
+    def _getTexture(cls):
         # Loaded once for all Text2D instances per OpenGL context
-        # TODO proper support of multiple contexts
+        context = getGLContext()
         try:
             tex = cls._textures[context]
         except KeyError:
@@ -142,8 +143,8 @@ class Text2D(object):
         vertices = self.getVertices()
         return vertices.shape[-1] * vertices.itemsize
 
-    def render(self, context, posAttrib, texAttrib, texUnit=0):
-        self._getTexture(context).bind(texUnit)
+    def render(self, posAttrib, texAttrib, texUnit=0):
+        self._getTexture().bind(texUnit)
         glEnableVertexAttribArray(posAttrib)
         glVertexAttribPointer(posAttrib,
                               2,
@@ -172,12 +173,15 @@ if __name__ == "__main__":
 
     try:
         from PyQt4.QtGui import QApplication
-        from PyQt4.QtOpenGL import QGLWidget
+        from PyQt4.QtOpenGL import QGLWidget, QGLContext
     except ImportError:
         from PyQt5.QtWidgets import QApplication
-        from PyQt5.QtOpenGL import QGLWidget
+        from PyQt5.QtOpenGL import QGLWidget, QGLContext
 
-    from .GLSupport import Program, mat4Ortho, mat4Translate
+    from .GLSupport import setGLContextGetter, Program, \
+        mat4Ortho, mat4Translate
+
+    setGLContextGetter(QGLContext.currentContext)
 
     class TestText(QGLWidget):
         _vertexShaderSrc = """
@@ -331,8 +335,7 @@ if __name__ == "__main__":
             for x, y, text in self.texts:
                 glUniformMatrix4fv(self.prog.uniforms['transform'], 1, GL_TRUE,
                                    self.matScreenProj * mat4Translate(x, y, 0))
-                text.render(self.context(),
-                            self.prog.attributes['position'],
+                text.render(self.prog.attributes['position'],
                             self.prog.attributes['texCoords'],
                             self.texUnit)
 
