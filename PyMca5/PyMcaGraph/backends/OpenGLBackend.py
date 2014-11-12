@@ -286,10 +286,23 @@ def prepareMouseMovedSignal(button, xData, yData, xPixel, yPixel):
 # Interaction #################################################################
 
 class Zoom(ClicOrDrag):
+
+    class ZoomIdle(ClicOrDrag.Idle):
+        def onWheel(self, x, y, angle):
+            scaleF = 1.1 if angle > 0 else 1./1.1
+            self.machine._zoom(x, y, scaleF)
+
     def __init__(self, backend):
         self.backend = backend
         self.zoomStack = []
-        super(Zoom, self).__init__()
+
+        states = {
+            'idle': Zoom.ZoomIdle,
+            'rightClic': ClicOrDrag.RightClic,
+            'clicOrDrag': ClicOrDrag.ClicOrDrag,
+            'drag': ClicOrDrag.Drag
+        }
+        StateMachine.__init__(self, states, 'idle')
 
     def _ensureAspectRatio(self, x0, y0, x1, y1):
         plotW, plotH = self.backend.plotSizeInPixels()
@@ -357,10 +370,6 @@ class Zoom(ClicOrDrag):
         self.backend.setLimits(xMin, xMax, yMin, yMax)
         self.backend.replot()
 
-    def onWheel(self, x, y, angle):
-        scaleF = 1.1 if angle > 0 else 1./1.1
-        self._zoom(x, y, scaleF)
-
     def _zoom(self, cx, cy, scaleF):
         xCenter, yCenter = self.backend.pixelToDataCoords(cx, cy)
 
@@ -387,7 +396,7 @@ class SelectPolygon(StateMachine, Select):
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto(SelectPolygon.Select, x, y)
+                self.goto('select', x, y)
 
     class Select(State):
         def enter(self, x, y):
@@ -432,30 +441,34 @@ class SelectPolygon(StateMachine, Select):
                                                  self.points,
                                                  self.machine.parameters)
                 self.machine.backend._callback(eventDict)
-                self.goto(SelectPolygon.Idle)
+                self.goto('idle')
 
     def __init__(self, backend, parameters):
         self.parameters = parameters
         self.backend = backend
-        super(SelectPolygon, self).__init__(SelectPolygon.Idle)
+        states = {
+            'idle': SelectPolygon.Idle,
+            'select': SelectPolygon.Select
+        }
+        super(SelectPolygon, self).__init__(states, 'idle')
 
 
 class Select2Points(StateMachine, Select):
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto(Select2Points.Start, x, y)
+                self.goto('start', x, y)
 
     class Start(State):
         def enter(self, x, y):
             self.machine.beginSelect(x, y)
 
         def onMove(self, x, y):
-            self.goto(Select2Points.Select, x, y)
+            self.goto('select', x, y)
 
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto(Select2Points.Select, x, y)
+                self.goto('select', x, y)
 
     class Select(State):
         def enter(self, x, y):
@@ -467,12 +480,17 @@ class Select2Points(StateMachine, Select):
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.machine.endSelect(x, y)
-                self.goto(Select2Points.Idle)
+                self.goto('idle')
 
     def __init__(self, backend, parameters):
         self.parameters = parameters
         self.backend = backend
-        super(Select2Points, self).__init__(Select2Points.Idle)
+        states = {
+            'idle': Select2Points.Idle,
+            'start': Select2Points.Start,
+            'select': Select2Points.Select
+        }
+        super(Select2Points, self).__init__(states, 'idle')
 
     def beginSelect(self, x, y):
         pass
@@ -545,7 +563,7 @@ class Select1Point(StateMachine, Select):
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto(Select1Point.Select, x, y)
+                self.goto('select', x, y)
 
     class Select(State):
         def enter(self, x, y):
@@ -557,12 +575,16 @@ class Select1Point(StateMachine, Select):
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.machine.endSelect(x, y)
-                self.goto(Select1Point.Idle)
+                self.goto('idle')
 
     def __init__(self, backend, parameters):
         self.parameters = parameters
         self.backend = backend
-        super(Select1Point, self).__init__(Select1Point.Idle)
+        states = {
+            'idle': Select1Point.Idle,
+            'select': Select1Point.Select
+        }
+        super(Select1Point, self).__init__(states, 'idle')
 
     def select(self, x, y):
         pass
