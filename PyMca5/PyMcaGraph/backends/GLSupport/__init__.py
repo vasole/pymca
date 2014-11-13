@@ -39,6 +39,7 @@ This module provides convenient classes for the OpenGL rendering backend
 
 from .GLContext import *  # noqa
 from .GLFramebuffer import *  # noqa
+from .GLLinePlot import *  # noqa
 from .GLSupport import *  # noqa
 from .GLText import *  # noqa
 from .GLTexture import *  # noqa
