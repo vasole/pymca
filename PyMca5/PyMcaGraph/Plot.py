@@ -202,7 +202,7 @@ class Plot(PlotBase.PlotBase):
         else:
             self._activeCurveHandling = True
         self._plot.enableActiveCurveHandling(self._activeCurveHandling)
-        if activeCurve is not None:
+        if activeCurve not in [None, []]:
             self.addCurve(activeCurve[0],
                           activeCurve[1],
                           legend=activeCurve[2],
