@@ -55,9 +55,9 @@ else:
 
 QTVERSION = qt.qVersion()
 try:
-    from PyMca5 import NNMADialog
+    from PyMca5.PyMcaGui import NNMADialog
     NNMA = NNMADialog.NNMA
-    from PyMca5 import PCADialog
+    from PyMca5.PyMcaGui import PCADialog
     PCA = PCADialog.PCA
 except:
     NNMA = False
@@ -196,7 +196,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.__blueImage = None
         self.outputDir   = None
 
-        self.loadButton.clicked.connect(self.addFileList)
+        self.loadButton.clicked.connect(self._addFileList)
         self.saveButton.clicked.connect(self.saveButtonClicked)
         self._saveButtonMenu = qt.QMenu()
         self._saveButtonMenu.addAction(QString("Save all"),
@@ -734,6 +734,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         else:
             return filename
 
+    def _addFileList(self):
+        self.addFileList()
 
     def addFileList(self, filelist = None, filterused=""):
         if filelist is None:

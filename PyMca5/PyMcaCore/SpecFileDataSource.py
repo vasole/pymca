@@ -230,11 +230,11 @@ class SpecFileDataSource(object):
             try:
                 info["MotorNames"] = sourceObject.allmotors()
             except:
-                info["MotorNames"] = None            
+                info["MotorNames"] = None
         try: info["MotorValues"] = scandata.allmotorpos()
         except: info["MotorValues"] = None
         try: info["LabelNames"] = scandata.alllabels()
-        except: info["LabelNames"] = None
+        except: info["LabelNames"] = []
         try: info["Command"] = scandata.command()
         except: info["Command"] = None
         try: info["Header"] = scandata.header("")
@@ -821,5 +821,4 @@ if __name__ == "__main__":
         #print dataObject.x
         print(dataObject.y)
         #print dataObject.x
-
 

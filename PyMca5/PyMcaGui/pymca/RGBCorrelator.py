@@ -39,8 +39,11 @@ else:
     QString = str
 from PyMca5.PyMcaGui import RGBCorrelatorGraph
 from PyMca5.PyMcaGui import QPyMcaMatplotlibSave
+USE_MASK_WIDGET = False
+if USE_MASK_WIDGET:
+    from PyMca5.PyMcaGui import MaskImageWidget
+    
 MATPLOTLIB = True
-
 
 class RGBCorrelator(qt.QWidget):
     sigRGBCorrelatorSignal = qt.pyqtSignal(object)
@@ -61,7 +64,16 @@ class RGBCorrelator(qt.QWidget):
         if graph is None:
             if MATPLOTLIB:
                 standaloneSaving = False
-            self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.splitter,
+            if USE_MASK_WIDGET:
+                self.graphWidgetContainer = MaskImageWidget.MaskImageWidget(self.splitter,
+                                            selection=True,
+                                            imageicons=True,
+                                            standalonesave=standaloneSaving,
+                                            profileselection=False,
+                                            polygon=True)
+                self.graphWidget = self.graphWidgetContainer.graphWidget
+            else:
+                self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self.splitter,
                                             standalonesave=standaloneSaving)
             if not standaloneSaving:
                 self.graphWidget.saveToolButton.clicked.connect( \

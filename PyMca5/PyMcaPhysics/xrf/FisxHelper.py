@@ -43,7 +43,7 @@ DEBUG = 0
 
 def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
     if dataDir is None:
-        dataDir = DataDir.DATA_DIR
+        dataDir = DataDir.FISX_DATA_DIR
     if bindingEnergies is None:
         bindingEnergies = os.path.join(dataDir, "BindingEnergies.dat")
     if xcomFile is None:

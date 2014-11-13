@@ -1236,15 +1236,19 @@ class MaskImageWidget(qt.QWidget):
             pixmap.shape = height, width, 4
         else:
             self.__image = self.__image.convertToFormat(qt.QImage.Format_ARGB32)
-            #TODO: It remains in BGR :( invertPixels does nothing and rgbSwapped
             pixmap = numpy.fromstring(self.__image.bits().asstring(width * height * 4),
                                  dtype = numpy.uint8)
-        pixmap.shape = height, width,-1
+            pixmap.shape = height, width,-1
+            # Qt uses BGRA, convert to RGBA
+            tmpBuffer = numpy.array(pixmap[:,:,0], copy=True, dtype=pixmap.dtype)
+            pixmap[:,:,0] = pixmap[:,:,2]
+            pixmap[:,:,2] = tmpBuffer
+
         if data is None:
             self.__imageData = numpy.zeros((height, width), numpy.float)
-            self.__imageData = pixmap[:,:,0] * 0.114 +\
+            self.__imageData = pixmap[:,:,0] * 0.299 +\
                                pixmap[:,:,1] * 0.587 +\
-                               pixmap[:,:,2] * 0.299
+                               pixmap[:,:,2] * 0.114
         else:
             self.__imageData = data
             self.__imageData.shape = height, width
@@ -1738,18 +1742,27 @@ class MaskImageWidget(qt.QWidget):
             self._xScale = [0, 1]
         if self._yScale is None:
             self._yScale = [0, 1]
-        x = self._xScale[0] + self._xScale[1] * numpy.arange(self.__imageData.shape[1])
-        y = self._yScale[0] + self._yScale[1] * numpy.arange(self.__imageData.shape[0])
+
+        # this is when we have __imageData
+        if self.__imageData is not None:
+            imageShape = self.__imageData.shape
+        elif self.__pixmap0 is not None:
+            imageShape = self.__pixmap0.shape[0:2]
+        else:
+            print("Cannot handle polygon mask")
+            return
+        x = self._xScale[0] + self._xScale[1] * numpy.arange(imageShape[1])
+        y = self._yScale[0] + self._yScale[1] * numpy.arange(imageShape[0])
         X, Y = numpy.meshgrid(x, y)
         X.shape = -1
         Y.shape = -1
-        Z = numpy.zeros((self.__imageData.shape[1]*self.__imageData.shape[0], 2))
+        Z = numpy.zeros((imageShape[1]*imageShape[0], 2))
         Z[:, 0] = X
         Z[:, 1] = Y
         X = None
         Y = None
         mask = pnpoly(ddict['points'][:-1], Z, 1)
-        mask.shape = self.__imageData.shape
+        mask.shape = imageShape
         if self.__selectionMask is None:
             self.__selectionMask = mask
         else:
@@ -1763,6 +1776,11 @@ class MaskImageWidget(qt.QWidget):
             ownsignal = True
         emitsignal = False
         if self.__imageData is None:
+            if ddict['event'] == "drawingFinished":
+                label = ddict['parameters']['label']
+                shape = ddict['parameters']['shape']
+                if shape == "polygon":
+                    return self._handlePolygonMask(ddict)
             return
         if ddict['event'] == "drawingFinished":
             # TODO: when drawing a shape, set a legend to it in order

@@ -235,7 +235,7 @@ class NNMAWindow(PCAWindow.PCAWindow):
                 for i in range(nimages):
                     self.vectorGraphTitles.append("%g %% explained intensity" %\
                                                    self.eigenValues[i])
-                self.vectorGraph.graph.setTitle(self.vectorGraphTitles[0])
+                self.vectorGraph.setGraphTitle(self.vectorGraphTitles[0])
 
         self.slider.setValue(0)
 

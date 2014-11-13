@@ -39,18 +39,17 @@ from PyMca5.PyMcaGui.io import SpecFileMcaTable
 QTVERSION = qt.qVersion()
 
 DEBUG = 0
-if QTVERSION > '4.0.0':
-    if QTVERSION > '4.2.0':
-        class MyQTreeWidgetItem(qt.QTreeWidgetItem):
-            def __lt__(self, other):
-                c = self.treeWidget().sortColumn()
-                if  c == 0:
-                    return False
-                if c !=  2:
-                    return (float(self.text(c)) <  float(other.text(c)))
-                return (self.text(c) < other.text(c))
-    else:
-        MyQTreeWidgetItem = qt.QTreeWidgetItem
+if QTVERSION > '4.2.0':
+    class MyQTreeWidgetItem(qt.QTreeWidgetItem):
+        def __lt__(self, other):
+            c = self.treeWidget().sortColumn()
+            if  c == 0:
+                return False
+            if c !=  2:
+                return (float(self.text(c)) <  float(other.text(c)))
+            return (self.text(c) < other.text(c))
+else:
+    MyQTreeWidgetItem = qt.QTreeWidgetItem
 
 #class QSpecFileWidget(qt.QWidget):
 class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
@@ -362,8 +361,9 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
             return
         info = self.data.getKeyInfo(sel[0])
         self.mcaTable.build(info)
-        if True:
-            #This does not work properly yet
+        if False:
+            # This does not work properly yet
+            # TODO: mca as function of other parameter
             NbMca = info.get('NbMcaDet', 0)
             self.cntTable.build(info['LabelNames'], nmca=NbMca)
         else:
