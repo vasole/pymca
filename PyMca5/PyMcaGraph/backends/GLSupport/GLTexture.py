@@ -286,11 +286,14 @@ class Image(object):
             self.tiles = tuple(tiles)
 
     def discard(self):
-        for texture, _ in self.tiles:
+        for texture, vertices, _ in self.tiles:
             texture.discard()
-        self.tiles = ()
+        del self.tiles
 
     def updateAll(self, format_, type_, data, texUnit=0, unpackAlign=1):
+        if not hasattr(self, 'tiles'):
+            raise RuntimeError("No texture, discard has already been called")
+
         assert(data.shape[:2] == self.height, self.width)
         if len(self.tiles) == 1:
             self.tiles[0][0].update(format_, type_, data,
@@ -306,7 +309,12 @@ class Image(object):
                                unpackSkipRows=info['yOrigData'])
 
     def render(self, posAttrib, texAttrib, texUnit=0):
-        for texture, vertices, _ in self.tiles:
+        try:
+            tiles = self.tiles
+        except AttributeError:
+            raise RuntimeError("No texture, discard has already been called")
+
+        for texture, vertices, _ in tiles:
             texture.bind(texUnit)
 
             stride = vertices.shape[-1] * vertices.itemsize

@@ -101,6 +101,7 @@ class VertexBuffer(object):
         assert(isinstance(data, np.ndarray) and data.flags['C_CONTIGUOUS'])
         if sizeInBytes is None:
             sizeInBytes = data.nbytes
+        assert(offsetInBytes + sizeInBytes <= self.size)
         with self:
             glBufferSubData(GL_ARRAY_BUFFER, offsetInBytes, sizeInBytes, data)
 
@@ -121,3 +122,83 @@ class VertexBuffer(object):
 
     def __exit__(self, excType, excValue, traceback):
         glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+
+# VBOAttrib ###################################################################
+
+class VBOAttrib(object):
+    """Describes data stored in a VBO
+    """
+
+    _GL_TYPES = GL_FLOAT, GL_INT
+
+    def __init__(self, vbo, type_,
+                 size, dimension=1,
+                 offset=0, stride=0):
+        """
+        :param VertexBuffer vbo: The VBO storing the data
+        :param int type_: The OpenGL type of the data
+        :param int size: The number of data elements stored in the VBO
+        :param int dimension: The number of type_  in [1, 4]
+        :param int offset: Start offset of data in the VBO
+        :param int stride: Data stride in the VBO
+        """
+        self.vbo = vbo
+        assert(type_ in self._GL_TYPES)
+        self.type_ = type_
+        self.size = size
+        assert(dimension >= 1 and dimension <= 4)
+        self.dimension = dimension
+        self.offset = offset
+        self.stride = stride
+
+    def setVertexAttrib(self, attrib):
+        with self.vbo:
+            glVertexAttribPointer(attrib,
+                                  self.dimension,
+                                  self.type_,
+                                  GL_FALSE,
+                                  self.stride,
+                                  c_void_p(self.offset))
+
+
+def convertNumpyToGLType(type_):
+    if type_ == np.float32:
+        return GL_FLOAT
+    else:
+        raise RuntimeError("Cannot convert dtype {} to GL type".format(type_))
+
+_GL_TYPE_SIZES = {
+    GL_FLOAT: 4,
+    GL_INT: 4
+}
+
+
+def createVBOFromArrays(arrays, usage=None):
+    """
+    Create a single VBO from multiple 1D or 2D numpy arrays
+    :param arrays: Arrays of data to store
+    :type arrays: An iterable of numpy.ndarray
+    :param int usage: VBO usage hint or None for default
+    :returns: A list of VBOAttrib objects sharing the same VBO
+    """
+    arraysInfo = []
+    vboSize = 0
+    for data in arrays:
+        shape = data.shape
+        assert(len(shape) <= 2)
+        type_ = convertNumpyToGLType(data.dtype)
+        size = shape[0]
+        dimension = 1 if len(shape) == 1 else shape[1]
+        sizeInBytes = size * dimension * _GL_TYPE_SIZES[type_]
+        sizeInBytes = 4 * (((sizeInBytes) + 3) >> 2)  # 4 bytes alignment
+        arraysInfo.append((data, type_, size, dimension, vboSize, sizeInBytes))
+        vboSize += sizeInBytes
+
+    vbo = VertexBuffer(sizeInBytes=vboSize, usage=usage)
+
+    result = []
+    for data, type_, size, dimension, offset, sizeInBytes in arraysInfo:
+        vbo.update(data, offsetInBytes=offset, sizeInBytes=sizeInBytes)
+        result.append(VBOAttrib(vbo, type_, size, dimension, offset, 0))
+    return result

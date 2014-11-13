@@ -50,7 +50,7 @@ class State(object):
     def goto(self, state, *args, **kwargs):
         """Performs a transition to state
         Extra arguments are passed to the enter method of state
-        :param State state: The class of the state to go to
+        :param str state: The name of the state to go to
         """
         self.machine._goto(state, *args, **kwargs)
 
@@ -61,15 +61,18 @@ class State(object):
 
 class StateMachine(object):
     """State machine controller"""
-    def __init__(self, initState, *args, **kwargs):
+    def __init__(self, states, initState, *args, **kwargs):
         """Create a state machine controller with an initial state
         Extra arguments are passed to the enter method of the initState
-        :param State initState: Class of the initial state of the state machine
+        :param states: All states of the state machine
+        :type states: Dictionary: {str name: State subclass}
+        :param str initState: Key of the initial state in states
         """
+        self.states = states
         self._goto(initState, *args, **kwargs)
 
     def _goto(self, state, *args, **kwargs):
-        self.state = state(self)
+        self.state = self.states[state](self)
         self.state.enter(*args, **kwargs)
 
     def handleEvent(self, eventName, *args, **kwargs):
@@ -98,30 +101,30 @@ class ClicOrDrag(StateMachine):
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto(ClicOrDrag.ClicOrDrag, x, y)
+                self.goto('clicOrDrag', x, y)
             elif btn == RIGHT_BTN:
-                self.goto(ClicOrDrag.RightClic, x, y)
+                self.goto('rightClic', x, y)
 
     class RightClic(State):
         def onMove(self, x, y):
-            self.goto(ClicOrDrag.Idle)
+            self.goto('idle')
 
         def onRelease(self, x, y, btn):
             if btn == RIGHT_BTN:
                 self.machine.clic(x, y, btn)
-                self.goto(ClicOrDrag.Idle)
+                self.goto('idle')
 
     class ClicOrDrag(State):
         def enter(self, x, y):
             self.initPos = x, y
 
         def onMove(self, x, y):
-            self.goto(ClicOrDrag.Drag, self.initPos, (x, y))
+            self.goto('drag', self.initPos, (x, y))
 
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.machine.clic(x, y, btn)
-                self.goto(ClicOrDrag.Idle)
+                self.goto('idle')
 
     class Drag(State):
         def enter(self, initPos, curPos):
@@ -135,10 +138,16 @@ class ClicOrDrag(StateMachine):
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.machine.endDrag(self.initPos, (x, y))
-                self.goto(ClicOrDrag.Idle)
+                self.goto('idle')
 
     def __init__(self):
-        super(ClicOrDrag, self).__init__(self.Idle)
+        states = {
+            'idle': ClicOrDrag.Idle,
+            'rightClic': ClicOrDrag.RightClic,
+            'clicOrDrag': ClicOrDrag.ClicOrDrag,
+            'drag': ClicOrDrag.Drag
+        }
+        super(ClicOrDrag, self).__init__(states, 'idle')
 
     def clic(self, x, y, btn):
         pass

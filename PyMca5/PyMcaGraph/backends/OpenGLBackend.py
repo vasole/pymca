@@ -40,11 +40,12 @@ OpenGL/Qt backend
 try:
     from PyMca5.PyMcaGui import PyMcaQt as qt
     QGLWidget = qt.QGLWidget
+    QGLContext = qt.QGLContext
 except ImportError:
     try:
-        from PyQt4.QtOpenGL import QGLWidget
+        from PyQt4.QtOpenGL import QGLWidget, QGLContext
     except ImportError:
-        from PyQt5.QtOpenGL import QGLWidget
+        from PyQt5.QtOpenGL import QGLWidget, QGLContext
 
 import numpy as np
 import math
@@ -85,6 +86,9 @@ class MiniOrderedDict(object):
     def __delitem__(self, key):
         del self._dict[key]
         self._orderedKeys.remove(key)
+
+    def keys(self):
+        return self._orderedKeys[:]
 
     def values(self):
         return [self._dict[key] for key in self._orderedKeys]
@@ -282,10 +286,23 @@ def prepareMouseMovedSignal(button, xData, yData, xPixel, yPixel):
 # Interaction #################################################################
 
 class Zoom(ClicOrDrag):
+
+    class ZoomIdle(ClicOrDrag.Idle):
+        def onWheel(self, x, y, angle):
+            scaleF = 1.1 if angle > 0 else 1./1.1
+            self.machine._zoom(x, y, scaleF)
+
     def __init__(self, backend):
         self.backend = backend
         self.zoomStack = []
-        super(Zoom, self).__init__()
+
+        states = {
+            'idle': Zoom.ZoomIdle,
+            'rightClic': ClicOrDrag.RightClic,
+            'clicOrDrag': ClicOrDrag.ClicOrDrag,
+            'drag': ClicOrDrag.Drag
+        }
+        StateMachine.__init__(self, states, 'idle')
 
     def _ensureAspectRatio(self, x0, y0, x1, y1):
         plotW, plotH = self.backend.plotSizeInPixels()
@@ -353,10 +370,6 @@ class Zoom(ClicOrDrag):
         self.backend.setLimits(xMin, xMax, yMin, yMax)
         self.backend.replot()
 
-    def onWheel(self, x, y, angle):
-        scaleF = 1.1 if angle > 0 else 1./1.1
-        self._zoom(x, y, scaleF)
-
     def _zoom(self, cx, cy, scaleF):
         xCenter, yCenter = self.backend.pixelToDataCoords(cx, cy)
 
@@ -383,7 +396,7 @@ class SelectPolygon(StateMachine, Select):
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto(SelectPolygon.Select, x, y)
+                self.goto('select', x, y)
 
     class Select(State):
         def enter(self, x, y):
@@ -428,30 +441,34 @@ class SelectPolygon(StateMachine, Select):
                                                  self.points,
                                                  self.machine.parameters)
                 self.machine.backend._callback(eventDict)
-                self.goto(SelectPolygon.Idle)
+                self.goto('idle')
 
     def __init__(self, backend, parameters):
         self.parameters = parameters
         self.backend = backend
-        super(SelectPolygon, self).__init__(SelectPolygon.Idle)
+        states = {
+            'idle': SelectPolygon.Idle,
+            'select': SelectPolygon.Select
+        }
+        super(SelectPolygon, self).__init__(states, 'idle')
 
 
 class Select2Points(StateMachine, Select):
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto(Select2Points.Start, x, y)
+                self.goto('start', x, y)
 
     class Start(State):
         def enter(self, x, y):
             self.machine.beginSelect(x, y)
 
         def onMove(self, x, y):
-            self.goto(Select2Points.Select, x, y)
+            self.goto('select', x, y)
 
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto(Select2Points.Select, x, y)
+                self.goto('select', x, y)
 
     class Select(State):
         def enter(self, x, y):
@@ -463,12 +480,17 @@ class Select2Points(StateMachine, Select):
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.machine.endSelect(x, y)
-                self.goto(Select2Points.Idle)
+                self.goto('idle')
 
     def __init__(self, backend, parameters):
         self.parameters = parameters
         self.backend = backend
-        super(Select2Points, self).__init__(Select2Points.Idle)
+        states = {
+            'idle': Select2Points.Idle,
+            'start': Select2Points.Start,
+            'select': Select2Points.Select
+        }
+        super(Select2Points, self).__init__(states, 'idle')
 
     def beginSelect(self, x, y):
         pass
@@ -541,7 +563,7 @@ class Select1Point(StateMachine, Select):
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto(Select1Point.Select, x, y)
+                self.goto('select', x, y)
 
     class Select(State):
         def enter(self, x, y):
@@ -553,12 +575,16 @@ class Select1Point(StateMachine, Select):
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.machine.endSelect(x, y)
-                self.goto(Select1Point.Idle)
+                self.goto('idle')
 
     def __init__(self, backend, parameters):
         self.parameters = parameters
         self.backend = backend
-        super(Select1Point, self).__init__(Select1Point.Idle)
+        states = {
+            'idle': Select1Point.Idle,
+            'select': Select1Point.Select
+        }
+        super(Select1Point, self).__init__(states, 'idle')
 
     def select(self, x, y):
         pass
@@ -655,6 +681,13 @@ class OpenGLPlotCanvas(PlotBackend):
     def updateGL(self):
         raise NotImplementedError("This method must be provided by \
                                   subclass to trigger redraw")
+
+    def makeCurrent(self):
+        """Override this method in subclass to support multiple
+        OpenGL context, making the context associated to this plot
+        the current OpenGL context
+        """
+        pass
 
     def _mouseInPlotArea(self, x, y):
         xPlot = clamp(x, self._margins['left'],
@@ -913,7 +946,13 @@ class OpenGLPlotCanvas(PlotBackend):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+        # For lines
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
+
+        # For points
+        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)  # OpenGL 2
+        glEnable(GL_POINT_SPRITE)  # OpenGL 2
+        # glEnable(GL_PROGRAM_POINT_SIZE)
 
         # Create basic program
         self._progBase = Program(_baseVertShd, _baseFragShd)
@@ -1061,7 +1100,7 @@ class OpenGLPlotCanvas(PlotBackend):
         for x, y, label in self._labels:
             glUniformMatrix4fv(self._progTex.uniforms['matrix'], 1, GL_TRUE,
                                self.matScreenProj * mat4Translate(x, y, 0))
-            label.render(self, self._progTex.attributes['position'],
+            label.render(self._progTex.attributes['position'],
                          self._progTex.attributes['texCoords'],
                          textTexUnit)
 
@@ -1156,35 +1195,20 @@ class OpenGLPlotCanvas(PlotBackend):
                                dataTexUnit)
 
         # Render Curves
-        self._progBase.use()
-        glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                           matDataProj)
-
-        glEnable(GL_LINE_SMOOTH)
-
         for curve in self._curves.values():
             try:
-                vbo = curve['_vbo']
+                curve2d = curve['_curve2d']
             except KeyError:
-                vbo = VertexBuffer(curve['data'], usage=GL_STATIC_DRAW)
-                curve['_vbo'] = vbo
+                curve2d = curveFromArrays(curve['xData'], curve['yData'],
+                                          lineStyle=curve['lineStyle'],
+                                          lineWidth=curve['lineWidth'],
+                                          lineColor=curve['color'],
+                                          marker=curve['marker'],
+                                          markerColor=curve['color'])
+                curve['_curve2d'] = curve2d
+                curve['_vbo'] = curve2d.xVboData.vbo
 
-            glUniform4f(self._progBase.uniforms['color'], *curve['color'])
-            glUniform1i(self._progBase.uniforms['hatchStep'], 0)
-            posAttrib = self._progBase.attributes['position']
-
-            glEnableVertexAttribArray(posAttrib)
-            with vbo:
-                glVertexAttribPointer(posAttrib,
-                                      2,
-                                      GL_FLOAT,
-                                      GL_FALSE,
-                                      0, c_void_p(0))
-            glLineWidth(curve['lineWidth'])
-            glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
-            glDrawArrays(GL_LINE_STRIP, 0, len(curve['data']))
-
-        glDisable(GL_LINE_SMOOTH)
+            curve2d.render(matDataProj)
 
         # Render Items
         self._progBase.use()
@@ -1226,6 +1250,8 @@ class OpenGLPlotCanvas(PlotBackend):
                  xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
+        self.makeCurrent()
+
         # info is ignored
         if selectable or draggable:
             raise NotImplementedError("selectable and draggable \
@@ -1234,6 +1260,7 @@ class OpenGLPlotCanvas(PlotBackend):
         oldImage = self._images.get(legend, None)
         if oldImage is not None and oldImage['data'].shape != data.shape:
             oldImage = None
+            self.removeImage(legend)
 
         if replace:
             self.clearImages()
@@ -1314,18 +1341,28 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend  # This is the 'handle'
 
     def removeImage(self, legend, replot=True):
+        self.makeCurrent()
         try:
-            del self._images[legend]
+            image = self._images[legend]
         except KeyError:
             pass
         else:
+            try:
+                texture = image['_texture']
+            except KeyError:
+                pass
+            else:
+                del image['_texture']
+                texture.discard()
+            del self._images[legend]
             self._plotDirtyFlag = True
 
         if replot:
             self.replot()
 
     def clearImages(self):
-        self._images = MiniOrderedDict()
+        for image in list(self._images.keys()):
+            self.removeImage(image, replot=False)
         self._plotDirtyFlag = True
 
     def addItem(self, xList, yList, legend=None, info=None,
@@ -1376,12 +1413,15 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def addCurve(self, x, y, legend=None, info=None,
                  replace=False, replot=True, **kw):
+        self.makeCurrent()
 
-        data = np.array((x, y), dtype=np.float32, order='F').T
+        x = np.array(x, dtype=np.float32, copy=False, order='C')
+        y = np.array(y, dtype=np.float32, copy=False, order='C')
 
         oldCurve = self._curves.get(legend, None)
-        if oldCurve is not None and oldCurve['data'].shape != data.shape:
-            oldCurve = None
+        if oldCurve is not None:
+            oldBBox = oldCurve['bBox']
+            self.removeCurve(legend)
 
         if replace:
             self.clearCurves()
@@ -1391,10 +1431,10 @@ class OpenGLPlotCanvas(PlotBackend):
             info = {}
         color = info.get('plot_color', self._activeCurveColor)
         color = kw.get('color', color)
-        # symbol = info.get('plot_symbol', None)
-        # symbol = kw.get('symbol', symbol)
-        # style = info.get('plot_line_style', '-')
-        # style = info.get('line_style', style)
+        symbol = info.get('plot_symbol', None)
+        symbol = kw.get('symbol', symbol)
+        style = info.get('plot_line_style', '-')
+        style = info.get('line_style', style)
         lineWidth = 1
         # axisId = info.get('plot_yaxis', 'left')
         # axisId = kw.get('yaxis', axisId)
@@ -1408,23 +1448,18 @@ class OpenGLPlotCanvas(PlotBackend):
         }
 
         self._curves[legend] = {
-            'data': data,
-            # 'lineStyle': style,
+            'xData': x,
+            'yData': y,
+            'lineStyle': style,
             'lineWidth': lineWidth,
             'color': rgba(color, colordict),
-            # 'symbol': symbol,
+            'marker': symbol,
             # 'axes': axisId,
             # 'fill': fill,
             'bBox': bbox
         }
 
-        if oldCurve is not None and '_vbo' in oldCurve:
-            # Reuse vbo and update
-            vbo = oldCurve['_vbo']
-            vbo.update(data)
-            self._curves[legend]['_vbo'] = vbo
-
-        if oldCurve is None or bbox != oldCurve['bBox']:
+        if oldCurve is None or bbox != oldBBox:
             self._updateDataBBox()
             self.setLimits(self._dataBBox['xMin'], self._dataBBox['xMax'],
                            self._dataBBox['yMin'], self._dataBBox['yMax'])
@@ -1437,17 +1472,26 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend
 
     def removeCurve(self, legend, replot=True):
+        self.makeCurrent()
         try:
-            del self._curves[legend]
+            curve = self._curves[legend]
         except KeyError:
             pass
         else:
+            try:
+                vbo = curve['_vbo']
+            except KeyError:
+                pass
+            else:
+                vbo.discard()
+            del self._curves[legend]
             self._plotDirtyFlag = True
 
         if replot:
             self.replot()
 
     def clearCurves(self):
+        self.makeCurrent()
         self._curves = MiniOrderedDict()
         self._plotDirtyFlag = True
 
@@ -1637,6 +1681,10 @@ class OpenGLPlotCanvas(PlotBackend):
 
 
 # OpenGLBackend ###############################################################
+
+# Init GL context getter
+setGLContextGetter(QGLContext.currentContext)
+
 
 class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
     def __init__(self, parent=None, **kw):
