@@ -946,7 +946,13 @@ class OpenGLPlotCanvas(PlotBackend):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+        # For lines
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
+
+        # For points
+        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)  # OpenGL 2
+        glEnable(GL_POINT_SPRITE)  # OpenGL 2
+        # glEnable(GL_PROGRAM_POINT_SIZE)
 
         # Create basic program
         self._progBase = Program(_baseVertShd, _baseFragShd)
@@ -1189,35 +1195,20 @@ class OpenGLPlotCanvas(PlotBackend):
                                dataTexUnit)
 
         # Render Curves
-        self._progBase.use()
-        glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                           matDataProj)
-
-        glEnable(GL_LINE_SMOOTH)
-
         for curve in self._curves.values():
             try:
-                vbo = curve['_vbo']
+                curve2d = curve['_curve2d']
             except KeyError:
-                vbo = VertexBuffer(curve['data'], usage=GL_STATIC_DRAW)
-                curve['_vbo'] = vbo
+                curve2d = curveFromArrays(curve['xData'], curve['yData'],
+                                          lineStyle=curve['lineStyle'],
+                                          lineWidth=curve['lineWidth'],
+                                          lineColor=curve['color'],
+                                          marker=curve['marker'],
+                                          markerColor=curve['color'])
+                curve['_curve2d'] = curve2d
+                curve['_vbo'] = curve2d.xVboData.vbo
 
-            glUniform4f(self._progBase.uniforms['color'], *curve['color'])
-            glUniform1i(self._progBase.uniforms['hatchStep'], 0)
-            posAttrib = self._progBase.attributes['position']
-
-            glEnableVertexAttribArray(posAttrib)
-            with vbo:
-                glVertexAttribPointer(posAttrib,
-                                      2,
-                                      GL_FLOAT,
-                                      GL_FALSE,
-                                      0, c_void_p(0))
-            glLineWidth(curve['lineWidth'])
-            glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
-            glDrawArrays(GL_LINE_STRIP, 0, len(curve['data']))
-
-        glDisable(GL_LINE_SMOOTH)
+            curve2d.render(matDataProj)
 
         # Render Items
         self._progBase.use()
@@ -1269,6 +1260,7 @@ class OpenGLPlotCanvas(PlotBackend):
         oldImage = self._images.get(legend, None)
         if oldImage is not None and oldImage['data'].shape != data.shape:
             oldImage = None
+            self.removeImage(legend)
 
         if replace:
             self.clearImages()
@@ -1360,6 +1352,7 @@ class OpenGLPlotCanvas(PlotBackend):
             except KeyError:
                 pass
             else:
+                del image['_texture']
                 texture.discard()
             del self._images[legend]
             self._plotDirtyFlag = True
@@ -1368,7 +1361,7 @@ class OpenGLPlotCanvas(PlotBackend):
             self.replot()
 
     def clearImages(self):
-        for image in self._images.keys():
+        for image in list(self._images.keys()):
             self.removeImage(image, replot=False)
         self._plotDirtyFlag = True
 
@@ -1422,11 +1415,13 @@ class OpenGLPlotCanvas(PlotBackend):
                  replace=False, replot=True, **kw):
         self.makeCurrent()
 
-        data = np.array((x, y), dtype=np.float32, order='F').T
+        x = np.array(x, dtype=np.float32, copy=False, order='C')
+        y = np.array(y, dtype=np.float32, copy=False, order='C')
 
         oldCurve = self._curves.get(legend, None)
-        if oldCurve is not None and oldCurve['data'].shape != data.shape:
-            oldCurve = None
+        if oldCurve is not None:
+            oldBBox = oldCurve['bBox']
+            self.removeCurve(legend)
 
         if replace:
             self.clearCurves()
@@ -1436,10 +1431,10 @@ class OpenGLPlotCanvas(PlotBackend):
             info = {}
         color = info.get('plot_color', self._activeCurveColor)
         color = kw.get('color', color)
-        # symbol = info.get('plot_symbol', None)
-        # symbol = kw.get('symbol', symbol)
-        # style = info.get('plot_line_style', '-')
-        # style = info.get('line_style', style)
+        symbol = info.get('plot_symbol', None)
+        symbol = kw.get('symbol', symbol)
+        style = info.get('plot_line_style', '-')
+        style = info.get('line_style', style)
         lineWidth = 1
         # axisId = info.get('plot_yaxis', 'left')
         # axisId = kw.get('yaxis', axisId)
@@ -1453,23 +1448,18 @@ class OpenGLPlotCanvas(PlotBackend):
         }
 
         self._curves[legend] = {
-            'data': data,
-            # 'lineStyle': style,
+            'xData': x,
+            'yData': y,
+            'lineStyle': style,
             'lineWidth': lineWidth,
             'color': rgba(color, colordict),
-            # 'symbol': symbol,
+            'marker': symbol,
             # 'axes': axisId,
             # 'fill': fill,
             'bBox': bbox
         }
 
-        if oldCurve is not None and '_vbo' in oldCurve:
-            # Reuse vbo and update
-            vbo = oldCurve['_vbo']
-            vbo.update(data)
-            self._curves[legend]['_vbo'] = vbo
-
-        if oldCurve is None or bbox != oldCurve['bBox']:
+        if oldCurve is None or bbox != oldBBox:
             self._updateDataBBox()
             self.setLimits(self._dataBBox['xMin'], self._dataBBox['xMax'],
                            self._dataBBox['yMin'], self._dataBBox['yMax'])
@@ -1694,6 +1684,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
 # Init GL context getter
 setGLContextGetter(QGLContext.currentContext)
+
 
 class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
     def __init__(self, parent=None, **kw):
