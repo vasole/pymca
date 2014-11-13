@@ -31,18 +31,31 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-This module provides convenient classes for the OpenGL rendering backend
+Basic abstraction of platform dependent OpenGL context useful for
+detecting rendering across multiple OpenGL context
 """
 
+# context #####################################################################
 
-# import ######################################################################
 
-from .GLContext import *  # noqa
-from .GLFramebuffer import *  # noqa
-from .GLLinePlot import *  # noqa
-from .GLSupport import *  # noqa
-from .GLText import *  # noqa
-from .GLTexture import *  # noqa
-from .GLVertexBuffer import *  # noqa
-from .Interaction import *  # noqa
-from .LabelLayout import *  # noqa
+def _defaultGLContextGetter():
+    return None
+
+_glContextGetter = _defaultGLContextGetter
+
+
+def getGLContext():
+    """Returns an instance (platform dependent) corresponding to the
+    current OpenGL context in use
+    :return: OpenGL context
+    :rtype: None by default or a platform dependent object"""
+    return _glContextGetter()
+
+
+def setGLContextGetter(getter=_defaultGLContextGetter):
+    """Allows to set a platform dependent function to get the GL context
+    :param getter: Platform dependent GL context getter
+    :type getter: Function with no args returning the current OpenGL context
+    """
+    global _glContextGetter
+    _glContextGetter = getter
