@@ -88,7 +88,7 @@ class StateMachine(object):
             except AttributeError:
                 handler = None
         if handler is not None:
-            handler(*args, **kwargs)
+            return handler(*args, **kwargs)
 
 
 # clicOrDrag ##################################################################
@@ -102,8 +102,10 @@ class ClicOrDrag(StateMachine):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.goto('clicOrDrag', x, y)
+                return True
             elif btn == RIGHT_BTN:
                 self.goto('rightClic', x, y)
+                return True
 
     class RightClic(State):
         def onMove(self, x, y):

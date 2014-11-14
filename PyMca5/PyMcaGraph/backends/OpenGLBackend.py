@@ -397,6 +397,7 @@ class SelectPolygon(StateMachine, Select):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.goto('select', x, y)
+                return True
 
     class Select(State):
         def enter(self, x, y):
@@ -419,6 +420,7 @@ class SelectPolygon(StateMachine, Select):
                 self.updateSelectionArea()
                 if self.points[-2] != self.points[-1]:
                     self.points.append((x, y))
+                return True
 
         def onMove(self, x, y):
             x, y = self.machine.backend.pixelToDataCoords(x, y)
@@ -458,6 +460,7 @@ class Select2Points(StateMachine, Select):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.goto('start', x, y)
+                return True
 
     class Start(State):
         def enter(self, x, y):
@@ -469,6 +472,7 @@ class Select2Points(StateMachine, Select):
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.goto('select', x, y)
+                return True
 
     class Select(State):
         def enter(self, x, y):
@@ -564,6 +568,7 @@ class Select1Point(StateMachine, Select):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
                 self.goto('select', x, y)
+                return True
 
     class Select(State):
         def enter(self, x, y):
@@ -647,6 +652,139 @@ class SelectVLine(Select1Point):
         self.backend._callback(eventDict)
 
 
+class MarkerInteraction(ClicOrDrag):
+    _PICK_OFFSET = 3
+
+    class Idle(ClicOrDrag.Idle):
+        def onPress(self, x, y, btn):
+            if btn == LEFT_BTN:
+                marker = self.machine.pick(x, y, 'selectable', 'draggable')
+                if marker is not None:
+                    #TODO change cursor
+                    self.goto('clicOrDrag', x, y)
+                    return True
+            return False
+
+        def onMove(self, x, y):
+            #TODO pick and update cursor for hover behavior
+            return True
+
+        def enter(self):
+            pass #TODO reset cursor to default
+
+    def __init__(self, backend):
+        self.backend = backend
+
+        states = {
+            'idle': MarkerInteraction.Idle,
+            'clicOrDrag': ClicOrDrag.ClicOrDrag,
+            'drag': ClicOrDrag.Drag
+        }
+        StateMachine.__init__(self, states, 'idle')
+
+    def pick(self, x, y, *behaviors):
+        for marker in reversed(self.backend._markers.values()):
+            if marker['x'] is not None:
+                xMarker = self.backend.dataToPixelCoords(xData=marker['x'])
+                xDist = math.fabs(x - xMarker)
+            else:
+                xDist = 0
+
+            if marker['y'] is not None:
+                yMarker = self.backend.dataToPixelCoords(yData=marker['y'])
+                yDist = math.fabs(y - yMarker)
+            else:
+                yDist = 0
+
+            if xDist <= self._PICK_OFFSET and yDist <= self._PICK_OFFSET:
+                if marker['behaviors'] & set(behaviors):
+                    return marker
+
+        return None
+
+    def clic(self, x, y, btn):
+        if btn == LEFT_BTN:
+            marker = self.pick(x, y, 'selectable')
+            if marker is not None:
+                marker['selected'] = True #TODO
+                self.backend.replot()
+
+    def beginDrag(self, x, y):
+        self.marker = self.pick(x, y, 'draggable')
+
+    def drag(self, x, y):
+        if self.marker is not None:
+            x, y = self.backend.pixelToDataCoords(x, y)
+            if self.marker['x'] is not None:
+                self.marker['x'] = x
+            if self.marker['y'] is not None:
+                self.marker['y'] = y
+            self.backend.replot()
+
+    def endDrag(self, startPos, endPos):
+        del self.marker
+
+
+class FocusManager(StateMachine):
+    """Manages focus across multiple event handlers
+
+    On press an event handler can acquire focus.
+    By default it looses focus when all buttons are released.
+    """
+    class Idle(State):
+        def onPress(self, x, y, btn):
+            for eventHandler in self.machine.eventHandlers:
+                requestFocus = eventHandler.handleEvent('press', x, y, btn)
+                if requestFocus:
+                    self.goto('focus', eventHandler, btn)
+                    break
+
+        def _processEvent(self, *args):
+            for eventHandler in self.machine.eventHandlers:
+                consumeEvent = eventHandler.handleEvent(*args)
+                if consumeEvent:
+                    break
+
+        def onMove(self, x, y):
+            self._processEvent('move', x, y)
+
+        def onRelease(self, x, y, btn):
+            self._processEvent('release', x, y, btn)
+
+        def onWheel(self, x, y, angle):
+            self._processEvent('wheel', x, y, angle)
+
+    class Focus(State):
+        def enter(self, eventHandler, btn):
+            self.eventHandler = eventHandler
+            self.focusBtns = set((btn,))
+
+        def onPress(self, x, y, btn):
+            self.focusBtns.add(btn)
+            self.eventHandler.handleEvent('press', x, y, btn)
+
+        def onMove(self, x, y):
+            self.eventHandler.handleEvent('move', x, y)
+
+        def onRelease(self, x, y, btn):
+            self.focusBtns.discard(btn)
+            requestFocus = self.eventHandler.handleEvent('release', x, y, btn)
+            if len(self.focusBtns) == 0 and not requestFocus:
+                self.goto('idle')
+
+        def onWheel(self, x, y, angleInDegrees):
+            self.eventHandler.handleEvent('wheel', x, y, angleInDegrees)
+
+    def __init__(self, eventHandlers=()):
+        self.eventHandlers = list(eventHandlers)
+
+        states = {
+            'idle': FocusManager.Idle,
+            'focus': FocusManager.Focus
+        }
+        super(FocusManager, self).__init__(states, 'idle')
+
+
 # OpenGLPlotCanvas ############################################################
 
 class OpenGLPlotCanvas(PlotBackend):
@@ -660,6 +798,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self.winWidth, self.winHeight = 0, 0
         self._dataBBox = {'xMin': 0., 'xMax': 0., 'xStep': 1.,
                           'yMin': 0., 'yMax': 0., 'yStep': 1.}
+
+        self._markers = MiniOrderedDict()
         self._images = MiniOrderedDict()
         self._items = MiniOrderedDict()
         self._curves = MiniOrderedDict()
@@ -673,7 +813,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self._axisDirtyFlag = True
         self._plotDirtyFlag = True
 
-        self.eventHandler = None
+        self.focusManager = FocusManager((MarkerInteraction(self),))
+
         self._plotHasFocus = set()
 
         PlotBackend.__init__(self, parent, **kw)
@@ -689,6 +830,23 @@ class OpenGLPlotCanvas(PlotBackend):
         """
         pass
 
+    @property
+    def eventHandler(self):
+        eventHandlers = self.focusManager.eventHandlers
+        if len(eventHandlers) == 1:
+            return None
+        else:
+            return eventHandlers[-1]
+
+    @eventHandler.setter
+    def eventHandler(self, handler):
+        eventHandlers = self.focusManager.eventHandlers
+        if handler is None:
+            self.focusManager = FocusManager((MarkerInteraction(self),))
+        else:
+            self.focusManager = FocusManager((MarkerInteraction(self),
+                                             handler))
+
     def _mouseInPlotArea(self, x, y):
         xPlot = clamp(x, self._margins['left'],
                       self.winWidth - self._margins['right'])
@@ -699,8 +857,7 @@ class OpenGLPlotCanvas(PlotBackend):
     def onMousePress(self, xPixel, yPixel, btn):
         if (self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel)):
             self._plotHasFocus.add(btn)
-            if self.eventHandler is not None:
-                self.eventHandler.handleEvent('press', xPixel, yPixel, btn)
+            self.focusManager.handleEvent('press', xPixel, yPixel, btn)
 
     def onMouseMove(self, xPixel, yPixel):
         # Signal mouse move event
@@ -710,9 +867,8 @@ class OpenGLPlotCanvas(PlotBackend):
                                                 xPixel, yPixel)
             self._callback(eventDict)
 
-        if self.eventHandler:
-            xPlot, yPlot = self._mouseInPlotArea(xPixel, yPixel)
-            self.eventHandler.handleEvent('move', xPlot, yPlot)
+        xPlot, yPlot = self._mouseInPlotArea(xPixel, yPixel)
+        self.focusManager.handleEvent('move', xPlot, yPlot)
 
     def onMouseRelease(self, xPixel, yPixel, btn):
         try:
@@ -720,14 +876,12 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
-            if self.eventHandler:
-                xPixel, yPixel = self._mouseInPlotArea(xPixel, yPixel)
-                self.eventHandler.handleEvent('release', xPixel, yPixel, btn)
+            xPixel, yPixel = self._mouseInPlotArea(xPixel, yPixel)
+            self.focusManager.handleEvent('release', xPixel, yPixel, btn)
 
     def onMouseWheel(self, xPixel, yPixel, angleInDegrees):
-        if self.eventHandler and \
-           self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
-            self.eventHandler.handleEvent('wheel', xPixel, yPixel,
+        if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
+            self.focusManager.handleEvent('wheel', xPixel, yPixel,
                                           angleInDegrees)
 
     # Manage Plot #
@@ -897,6 +1051,24 @@ class OpenGLPlotCanvas(PlotBackend):
         else:
             return xPixel, yPixel
 
+    def pixelToDataSize(self, xPixel=None, yPixel=None):
+        plotWidth, plotHeight = self.plotSizeInPixels()
+
+        if xPixel is not None:
+            xData = xPixel * (self._xMax - self._xMin) / float(plotWidth)
+
+        if yPixel is not None:
+            if not self._isYInverted:
+                yData = - yPixel
+            yData = yData * (self._yMax - self._yMin) / float(plotHeight)
+
+        if xPixel is None:
+            return yData
+        elif yPixel is None:
+            return xData
+        else:
+            return xData, yData
+
     def pixelToDataCoords(self, xPixel=None, yPixel=None):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
@@ -1023,6 +1195,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glDrawArrays(GL_TRIANGLE_STRIP, 0, len(self._plotVertices))
         glBindTexture(GL_TEXTURE_2D, 0)
 
+        self._renderMarkers()
         self._renderSelection()
 
     def paintGL(self):
@@ -1035,6 +1208,101 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # self._paintGLDirect()
         self._paintGLFBO()
+
+    def _renderMarkers(self):
+        if not self._markers:
+            return
+
+        plotWidth, plotHeight = self.plotSizeInPixels()
+
+        # Render in plot area
+        glScissor(self._margins['left'], self._margins['bottom'],
+                  plotWidth, plotHeight)
+        glEnable(GL_SCISSOR_TEST)
+
+        glViewport(self._margins['left'], self._margins['right'],
+                   plotWidth, plotHeight)
+
+        # Matrix
+        if self._isYInverted:
+            matDataProj = mat4Ortho(self._xMin, self._xMax,
+                                    self._yMax, self._yMin,
+                                    1, -1)
+        else:
+            matDataProj = mat4Ortho(self._xMin, self._xMax,
+                                    self._yMin, self._yMax,
+                                    1, -1)
+
+        self._progBase.use()
+        glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
+                           matDataProj)
+        glUniform1i(self._progBase.uniforms['hatchStep'], 0)
+        posAttrib = self._progBase.attributes['position']
+        glEnableVertexAttribArray(posAttrib)
+
+        labels = []
+        pixelOffset = 2
+
+        for marker in self._markers.values():
+            xCoord, yCoord = marker['x'], marker['y']
+
+            if marker['label'] is not None:
+                labels.append((xCoord, yCoord, marker['label']))
+
+            glUniform4f(self._progBase.uniforms['color'], * marker['color'])
+
+            if xCoord is None:
+                vertices = np.array(((self._xMin, yCoord),
+                                     (self._xMax, yCoord)),
+                                    dtype=np.float32)
+            elif yCoord is None:
+                vertices = np.array(((xCoord, self._yMin),
+                                    (xCoord, self._yMax)),
+                                    dtype=np.float32)
+            else:
+                xSize, ySize = self.pixelToDataSize(2 * pixelOffset,
+                                                    2 * pixelOffset)
+                vertices = np.array(((xCoord - xSize, yCoord),
+                                     (xCoord + xSize, yCoord),
+                                     (xCoord, yCoord - ySize),
+                                     (xCoord, yCoord + ySize)),
+                                    dtype=np.float32)
+            glVertexAttribPointer(posAttrib,
+                                  2,
+                                  GL_FLOAT,
+                                  GL_FALSE,
+                                  0, vertices)
+            glLineWidth(1)
+            glDrawArrays(GL_LINES, 0, len(vertices))
+
+        glViewport(0, 0, self.winWidth, self.winHeight)
+
+        # Render marker labels
+        self._progTex.use()
+        textTexUnit = 0
+        glUniform1i(self._progTex.uniforms['tex'], textTexUnit)
+        posAttrib = self._progTex.attributes['position']
+        texAttrib = self._progTex.attributes['texCoords']
+
+        for x, y, label in labels:
+            if x is None:
+                x = self.winWidth - self._margins['right'] - pixelOffset
+                y = self.dataToPixelCoords(yData=y) - pixelOffset
+                label = Text2D(label, align=RIGHT, valign=BOTTOM)
+            elif y is None:
+                x = self.dataToPixelCoords(xData=x) + pixelOffset
+                y = self._margins['top'] + pixelOffset
+                label = Text2D(label, align=LEFT, valign=TOP)
+            else:
+                x, y = self.dataToPixelCoords(x, y)
+                x, y = x + pixelOffset, y + pixelOffset
+                label = Text2D(label, align=LEFT, valign=TOP)
+
+            glUniformMatrix4fv(self._progTex.uniforms['matrix'], 1, GL_TRUE,
+                               self.matScreenProj * mat4Translate(x, y, 0))
+            label.render(posAttrib, texAttrib, textTexUnit)
+
+        glDisable(GL_SCISSOR_TEST)
 
     def _renderSelection(self):
         # Render selection area
@@ -1244,6 +1512,55 @@ class OpenGLPlotCanvas(PlotBackend):
         self.replot()
 
     # PlotBackend API #
+
+    def insertMarker(self, x, y, legend, label=None, color='k',
+                     selectable=False, draggable=False,
+                     **kwargs):
+        behaviors = set()
+        if selectable:
+            behaviors.add('selectable')
+        if draggable:
+            behaviors.add('draggable')
+
+        self._markers[legend] = {
+            'x': x,
+            'y': y,
+            'label': label,
+            'color': rgba(color, colordict),
+            'behaviors': behaviors,
+            'selected': False
+        }
+
+        self._plotDirtyFlag = True
+
+        return legend
+
+    def insertXMarker(self, x, legend, label=None, color='k',
+                      selectable=False, draggable=False,
+                      **kwargs):
+        return self.insertMarker(x, None, legend, label, color,
+                                 selectable, draggable, **kwargs)
+
+    def insertYMarker(self, y, legend, label=None, color='k',
+                      selectable=False, draggable=False,
+                      **kwargs):
+        return self.insertMarker(None, y, legend, label, color,
+                                 selectable, draggable, **kwargs)
+
+    def removeMarker(self, legend, replot=True):
+        try:
+            del self._markers[legend]
+        except KeyError:
+            pass
+        else:
+            self._plotDirtyFlag = True
+
+        if replot:
+            self.replot()
+
+    def clearMarkers(self):
+        self._markers = MiniOrderedDict()
+        self._plotDirtyFlag = True
 
     def addImage(self, data, legend=None, info=None,
                  replace=True, replot=True,
@@ -1491,8 +1808,8 @@ class OpenGLPlotCanvas(PlotBackend):
             self.replot()
 
     def clearCurves(self):
-        self.makeCurrent()
-        self._curves = MiniOrderedDict()
+        for curve in list(self._curves.keys()):
+            self.removeCurve(curve, replot=False)
         self._plotDirtyFlag = True
 
     def clear(self):
