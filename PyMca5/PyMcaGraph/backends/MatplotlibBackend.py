@@ -91,6 +91,7 @@ import matplotlib.patches as patches
 Rectangle = patches.Rectangle
 Polygon = patches.Polygon
 from matplotlib.lines import Line2D
+from matplotlib.collections import PathCollection
 from matplotlib.text import Text
 from matplotlib.image import AxesImage, NonUniformImage
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
@@ -363,7 +364,8 @@ class MatplotlibGraph(FigureCanvas):
             return
         self.__picking = False
         self._pickingInfo = {}
-        if isinstance(event.artist, Line2D):
+        if isinstance(event.artist, Line2D) or \
+           isinstance(event.artist, PathCollection):
             # we only handle curves and markers for the time being
             self.__picking = True
             artist = event.artist
@@ -391,7 +393,19 @@ class MatplotlibGraph(FigureCanvas):
                     self._pickingInfo['infoText'] = artist._infoText
                 else:
                     self._pickingInfo['infoText'] = None
+            elif isinstance(event.artist, PathCollection):
+                # almost identical to line 2D
+                self._pickingInfo['type'] = 'curve'
+                self._pickingInfo['label'] = label
+                self._pickingInfo['artist'] = artist
+                data = artist.get_offsets()
+                xdata = data[:, 0]
+                ydata = data[:, 1]
+                self._pickingInfo['xdata'] = xdata[ind]
+                self._pickingInfo['ydata'] = ydata[ind]
+                self._pickingInfo['infoText'] = None
             else:
+                # line2D
                 self._pickingInfo['type'] = 'curve'
                 self._pickingInfo['label'] = label
                 self._pickingInfo['artist'] = artist
@@ -441,7 +455,7 @@ class MatplotlibGraph(FigureCanvas):
                 else:
                     self._pickingInfo['selectable'] = False
         else:
-            print("unhandled", event.artist)
+            print("unhandled event", event.artist)
 
     def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
         if flag:
@@ -1287,21 +1301,54 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                           linewidth=linewidth,
                                           picker=3,
                                           **kw)
-        elif 1:
-            curveList = axes.plot( x, y, label=legend,
+        elif hasattr(color, "__len__"):
+            if len(color) == len(x):
+                # scatter plot
+                pathObject = axes.scatter(x, y,
+                                          label=legend,
+                                          color=color,
+                                          marker=symbol,
+                                          picker=3)
+
+                if style not in [" ", None]:
+                    # scatter plot with an actual line ...
+                    # we need to assign a color ...
+                    curveList = axes.plot(x, y, label=legend,
+                                          linestyle=style,
+                                          color=color[0],
+                                          linewidth=linewidth,
+                                          picker=3,
+                                          marker=None,
+                                          **kw)
+                    curveList[-1]._plot_info = {'color':color,
+                                                  'linewidth':linewidth,
+                                                  'brush':brush,
+                                                  'style':style,
+                                                  'symbol':symbol,
+                                                  'label':legend,
+                                                  'axes':axisId,
+                                                  'fill':fill}
+                    if hasattr(x, "min") and hasattr(y, "min"):
+                        curveList[-1]._plot_info['xmin'] = x.min()
+                        curveList[-1]._plot_info['xmax'] = x.max()
+                        curveList[-1]._plot_info['ymin'] = y.min()
+                        curveList[-1]._plot_info['ymax'] = y.max()
+                # scatter plot is a collection
+                curveList = [pathObject]
+            else:
+                curveList = axes.plot( x, y, label=legend,
                                       linestyle=style,
                                       color=color,
                                       linewidth=linewidth,
                                       picker=3,
                                       **kw)
         else:
-            # scatter plot is a collection
-            pathObject = axes.scatter(x, y,
-                                      label=legend,
-                                      color=color,
-                                      marker=symbol)
-            curveList = [pathObject]
-
+            curveList = axes.plot( x, y, label=legend,
+                                  linestyle=style,
+                                  color=color,
+                                  linewidth=linewidth,
+                                  picker=3,
+                                  **kw)
         # nice effects:
         #curveList[-1].set_drawstyle('steps-mid')
         if fill:
