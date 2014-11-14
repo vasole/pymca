@@ -61,11 +61,11 @@ else:
                        QSpsDataSource.SOURCE_TYPE: QSpsWidget.QSpsWidget}
 
 NEXUS = True
-if 1:#try:
+try:
     from PyMca5.PyMcaCore import NexusDataSource
     from PyMca5.PyMcaGui.pymca import PyMcaNexusWidget
     import h5py
-else:#except:
+except:
     # HDF5 file format support is not mandatory
     NEXUS = False
 
