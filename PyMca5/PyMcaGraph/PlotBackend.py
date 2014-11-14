@@ -360,7 +360,7 @@ class PlotBackend(object):
         """
         return None
 
-    def insertMarker(self, x, y, label, color='k',
+    def insertMarker(self, x, y, legend, label=None, color='k',
                       selectable=False, draggable=False,
                       **kw):
         """
