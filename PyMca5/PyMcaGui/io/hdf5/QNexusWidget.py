@@ -119,7 +119,8 @@ class QNexusWidget(qt.QWidget):
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
         if ('PyMca.Object3D' in sys.modules) or \
-           ('Object3D' in sys.modules):
+           ('Object3D' in sys.modules) or \
+           ('PyMca5.Object3D' in sys.modules):
             self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
             self.cntTable.set3DEnabled(True)
         else:
