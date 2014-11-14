@@ -656,21 +656,38 @@ class MarkerInteraction(ClicOrDrag):
     _PICK_OFFSET = 3
 
     class Idle(ClicOrDrag.Idle):
+        def __init__(self, *args, **kwargs):
+            super(MarkerInteraction.Idle, self).__init__(*args, **kwargs)
+            self._hoverMarker = None
+
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
                 marker = self.machine.pick(x, y, 'selectable', 'draggable')
                 if marker is not None:
-                    #TODO change cursor
                     self.goto('clicOrDrag', x, y)
                     return True
             return False
 
         def onMove(self, x, y):
-            #TODO pick and update cursor for hover behavior
-            return True
+            marker = self.machine.pick(x, y, 'selectable', 'draggable')
+            if marker != self._hoverMarker:
+                self._hoverMarker = marker
 
-        def enter(self):
-            pass #TODO reset cursor to default
+                if marker is None:
+                    self.machine.backend.setCursor()
+
+                elif 'draggable' in marker['behaviors']:
+                    if marker['x'] is None:
+                        self.machine.backend.setCursor(CURSOR_SIZE_VER)
+                    elif marker['y'] is None:
+                        self.machine.backend.setCursor(CURSOR_SIZE_HOR)
+                    else:
+                        self.machine.backend.setCursor(CURSOR_SIZE_ALL)
+
+                elif 'selectable' in marker['behaviors']:
+                    self.machine.backend.setCursor(CURSOR_POINTING)
+
+            return True
 
     def __init__(self, backend):
         self.backend = backend
@@ -706,7 +723,7 @@ class MarkerInteraction(ClicOrDrag):
         if btn == LEFT_BTN:
             marker = self.pick(x, y, 'selectable')
             if marker is not None:
-                marker['selected'] = True #TODO
+                # TODO signal
                 self.backend.replot()
 
     def beginDrag(self, x, y):
@@ -787,6 +804,10 @@ class FocusManager(StateMachine):
 
 # OpenGLPlotCanvas ############################################################
 
+(CURSOR_DEFAULT, CURSOR_POINTING, CURSOR_SIZE_HOR,
+ CURSOR_SIZE_VER, CURSOR_SIZE_ALL) = range(5)
+
+
 class OpenGLPlotCanvas(PlotBackend):
     def __init__(self, parent=None, **kw):
         self._xMin, self._xMax = 0., 1.
@@ -830,6 +851,11 @@ class OpenGLPlotCanvas(PlotBackend):
         """
         pass
 
+    def setCursor(self, cursor=CURSOR_DEFAULT):
+        """Override this method in subclass to enable cursor shape changes
+        """
+        print('setCursor:', cursor)
+
     @property
     def eventHandler(self):
         eventHandlers = self.focusManager.eventHandlers
@@ -840,7 +866,6 @@ class OpenGLPlotCanvas(PlotBackend):
 
     @eventHandler.setter
     def eventHandler(self, handler):
-        eventHandlers = self.focusManager.eventHandlers
         if handler is None:
             self.focusManager = FocusManager((MarkerInteraction(self),))
         else:
@@ -1528,7 +1553,6 @@ class OpenGLPlotCanvas(PlotBackend):
             'label': label,
             'color': rgba(color, colordict),
             'behaviors': behaviors,
-            'selected': False
         }
 
         self._plotDirtyFlag = True
@@ -1931,12 +1955,18 @@ class OpenGLPlotCanvas(PlotBackend):
         self.updateAxis()
         self.replot()
 
+    def getGraphXLimits(self):
+        return self._xMin, self._xMax
+
     def setGraphXLimits(self, xMin, xMax):
         self._setGraphXLimits(xMin, xMax)
         if self._keepDataAspectRatio:
             self._ensureAspectRatio()
 
         self.updateAxis()
+
+    def getGraphYLimits(self):
+        return self._yMin, self._yMax
 
     def setGraphYLimits(self, yMin, yMax):
         self._setGraphYLimits(yMin, yMax)
@@ -2037,6 +2067,18 @@ class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
         angleInDegrees = event.delta() / 8.
         self.onMouseWheel(xPixel, yPixel, angleInDegrees)
         event.accept()
+
+    _CURSORS = {
+        CURSOR_DEFAULT: qt.Qt.ArrowCursor,
+        CURSOR_POINTING: qt.Qt.PointingHandCursor,
+        CURSOR_SIZE_HOR: qt.Qt.SizeHorCursor,
+        CURSOR_SIZE_VER: qt.Qt.SizeVerCursor,
+        CURSOR_SIZE_ALL: qt.Qt.SizeAllCursor,
+    }
+
+    def setCursor(self, cursor=CURSOR_DEFAULT):
+        cursor = self._CURSORS[cursor]
+        super(OpenGLBackend, self).setCursor(qt.QCursor(cursor))
 
 
 # main ########################################################################
