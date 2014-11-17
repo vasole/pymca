@@ -1092,9 +1092,16 @@ class MatplotlibGraph(FigureCanvas):
 
     def resetZoom(self):
         xmin, xmax, ymin, ymax = self.getDataLimits('left')
-        xmin2, xmax2, ymin2, ymax2 = self.getDataLimits('right')
+        if hasattr(self.ax2, "get_visible"):
+            if self.ax2.get_visible():
+                xmin2, xmax2, ymin2, ymax2 = self.getDataLimits('right')
+            else:
+                xmin2 = None
+                xmax2 = None
+        else:
+            xmin2, xmax2, ymin2, ymax2 = self.getDataLimits('right')
         #self.ax2.set_ylim(ymin2, ymax2)
-        if (xmin2 != 0) or (xmax2 != 1):
+        if (xmin2 is not None) and ((xmin2 != 0) or (xmax2 != 1)):
             xmin = min(xmin, xmin2)
             xmax = max(xmax, xmax2)
         self.setLimits(xmin, xmax, ymin, ymax)
@@ -1202,6 +1209,8 @@ class MatplotlibGraph(FigureCanvas):
             xmax = 1
             ymin = 0
             ymax = 1
+            if axesLabel == 'right':
+                return None, None, None, None
 
         xSize = float(xmax - xmin)
         ySize = float(ymax - ymin)
