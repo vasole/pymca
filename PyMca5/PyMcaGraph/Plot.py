@@ -173,9 +173,9 @@ class Plot(PlotBase.PlotBase):
         self._itemDict = {}
 
         # colors and line types
-        self._colorList = colorlist
+        self._colorList = self.colorList
         self._styleList = ['-', '--', '-.', ':']
-        self._nColors   = len(colorlist)
+        self._nColors   = len(self.colorList)
         self._nStyles   = len(self._styleList)
 
         self._colorIndex = 0

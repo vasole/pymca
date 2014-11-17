@@ -1312,9 +1312,13 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         elif hasattr(color, "__len__"):
             if len(color) == len(x):
                 # scatter plot
+                if color.dtype not in [numpy.float32, numpy.float]:
+                    actualColor = color / 255.
+                else:
+                    actualColor = color
                 pathObject = axes.scatter(x, y,
                                           label=legend,
-                                          color=color,
+                                          color=actualColor,
                                           marker=symbol,
                                           picker=3)
 
@@ -1323,12 +1327,12 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     # we need to assign a color ...
                     curveList = axes.plot(x, y, label=legend,
                                           linestyle=style,
-                                          color=color[0],
+                                          color=actualColor[0],
                                           linewidth=linewidth,
                                           picker=3,
                                           marker=None,
                                           **kw)
-                    curveList[-1]._plot_info = {'color':color,
+                    curveList[-1]._plot_info = {'color':actualColor,
                                                   'linewidth':linewidth,
                                                   'brush':brush,
                                                   'style':style,
