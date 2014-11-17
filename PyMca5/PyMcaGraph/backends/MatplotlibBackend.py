@@ -558,10 +558,6 @@ class MatplotlibGraph(FigureCanvas):
                     else:
                         self.fig.canvas.draw()
                     ddict = {}
-                    if self.__markerMoving:
-                        ddict['event'] = "markerMoving"
-                    else:
-                        ddict['event'] = "markerClicked"
                     ddict['label'] = self._pickingInfo['label']
                     ddict['type'] = self._pickingInfo['type']
                     ddict['draggable'] = self._pickingInfo['draggable']
@@ -570,12 +566,22 @@ class MatplotlibGraph(FigureCanvas):
                     ddict['ypixel'] = self._y0Pixel
                     ddict['xdata'] = artist.get_xdata()
                     ddict['ydata'] = artist.get_ydata()
-                    if hasattr(ddict['xdata'], "__len__"):
-                        ddict['x'] = ddict['xdata'][-1]
-                        ddict['y'] = ddict['ydata'][-1]
+
+                    if self.__markerMoving:
+                        ddict['event'] = "markerMoving"
+                        ddict['x'] = self._x0
+                        ddict['y'] = self._y0
                     else:
-                        ddict['x'] = ddict['xdata']
-                        ddict['y'] = ddict['ydata']
+                        ddict['event'] = "markerClicked"
+                        if hasattr(ddict['xdata'], "__len__"):
+                            ddict['x'] = ddict['xdata'][-1]
+                        else:
+                            ddict['x'] = ddict['xdata']
+                        if hasattr(ddict['ydata'], "__len__"):
+                            ddict['y'] = ddict['ydata'][-1]
+                        else:
+                            ddict['y'] = ddict['ydata']
+
                     if button == leftButton:
                         ddict['button'] = "left"
                     else:
@@ -800,6 +806,8 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['y'] = self._y1
                 ddict['xpixel'] = self._x1Pixel
                 ddict['ypixel'] = self._y1Pixel
+                ddict['xdata'] = artist.get_xdata()
+                ddict['ydata'] = artist.get_ydata()
                 self._callback(ddict)
             return
         if (not self.__zooming) and (not self.__drawing):
