@@ -297,25 +297,44 @@ def prepareHoverSignal(label, type_, posData, posPixel, draggable, selectable):
 
 def prepareMarkerSignal(eventType, button, label, type_,
                         draggable, selectable,
-                        pos, posData, posPixel=None):
-    assert(eventType in ('markerMoving', 'markerMoved', 'markerClicked'))
+                        posDataMarker,
+                        posPixelCursor=None, posDataCursor=None):
+    if eventType == 'markerClicked':
+        assert(posPixelCursor is not None)
+        assert(posDataCursor is None)
+
+        posDataCursor = list(posDataMarker)
+        if hasattr(posDataCursor[0], "__len__"):
+            posDataCursor[0] = posDataCursor[0][-1]
+        if hasattr(posDataCursor[1], "__len__"):
+            posDataCursor[1] = posDataCursor[1][-1]
+
+    elif eventType == 'markerMoving':
+        assert(posPixelCursor is not None)
+        assert(posDataCursor is not None)
+
+    elif eventType == 'markerMoved':
+        assert(posPixelCursor is None)
+        assert(posDataCursor is None)
+
+        posDataCursor = posDataMarker
+    else:
+        raise NotImplementedError("Unknown event type {}".format(eventType))
 
     eventDict = {'event': eventType,
                  'button': button,
                  'label': label,
                  'type': type_,
-                 'x': pos[0],
-                 'y': pos[1],
-                 'xdata': posData[0],
-                 'ydata': posData[1],
+                 'x': posDataCursor[0],
+                 'y': posDataCursor[1],
+                 'xdata': posDataMarker[0],
+                 'ydata': posDataMarker[1],
                  'draggable': draggable,
                  'selectable': selectable}
+
     if eventType in ('markerMoving', 'markerClicked'):
-        assert(posPixel is not None)
-        eventDict['xpixel'] = posPixel[0]
-        eventDict['ypixel'] = posPixel[1]
-    else:
-        assert(posPixel is None)
+        eventDict['xpixel'] = posPixelCursor[0]
+        eventDict['ypixel'] = posPixelCursor[1]
 
     return eventDict
 
@@ -776,36 +795,54 @@ class MarkerInteraction(ClicOrDrag):
             marker = self.pick(
                 x, y, lambda marker: 'selectable' in marker['behaviors'])
             if marker is not None:
-                self._signalMarkerEvent('markerClicked', marker, x, y)
+                # Mimic MatplotlibBackend signal
+                xData, yData = marker['x'], marker['y']
+                if xData is None:
+                    xData = [0, 1]
+                if yData is None:
+                    yData = [0, 1]
+
+                draggable = 'draggable' in marker['behaviors']
+                selectable = 'selectable' in marker['behaviors']
+                eventDict = prepareMarkerSignal('markerClicked',
+                                                'left',
+                                                marker['label'],
+                                                'marker',
+                                                draggable,
+                                                selectable,
+                                                (xData, yData),
+                                                (x, y), None)
+                self.backend._callback(eventDict)
+
                 self.backend.replot()
 
-    def _signalMarkerEvent(self, evtType, marker, x, y):
+    def _signalMarkerMovingEvent(self, eventType, marker, x, y):
         assert(marker is not None)
 
-        pos = self.backend.pixelToDataCoords(x, y)
-        xData, yData = marker['x'], marker['y']
-
         # Mimic MatplotlibBackend signal
+        xData, yData = marker['x'], marker['y']
         if xData is None:
             xData = [0, 1]
         if yData is None:
             yData = [0, 1]
 
-        eventDict = prepareMarkerSignal(evtType,
+        posDataCursor = self.backend.pixelToDataCoords(x, y)
+
+        eventDict = prepareMarkerSignal(eventType,
                                         'left',
                                         marker['label'],
                                         'marker',
                                         'draggable' in marker['behaviors'],
                                         'selectable' in marker['behaviors'],
-                                        pos,
                                         (xData, yData),
-                                        (x, y))
+                                        (x, y),
+                                        posDataCursor)
         self.backend._callback(eventDict)
 
     def beginDrag(self, x, y):
         self.marker = self.pick(
             x, y, lambda marker: 'draggable' in marker['behaviors'])
-        self._signalMarkerEvent('markerMoving', self.marker, x, y)
+        self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
 
     def drag(self, x, y):
         if self.marker is not None:
@@ -815,7 +852,7 @@ class MarkerInteraction(ClicOrDrag):
             if self.marker['y'] is not None:
                 self.marker['y'] = yData
 
-            self._signalMarkerEvent('markerMoving', self.marker, x, y)
+            self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
 
             self.backend.replot()
 
@@ -835,7 +872,6 @@ class MarkerInteraction(ClicOrDrag):
                 'marker',
                 'draggable' in self.marker['behaviors'],
                 'selectable' in self.marker['behaviors'],
-                posData,
                 posData)
             self.backend._callback(eventDict)
 
