@@ -1047,7 +1047,7 @@ class Plot(PlotBase.PlotBase):
                 i += 1
                 legend = "Unnamed Y Marker %d" % i
         if legend in self._markerList:
-            self.clearMarker(legend)
+            self.removeMarker(legend)
         marker = self._plot.insertYMarker(y, legend,
                                           label=label,
                                           color=color,
@@ -1077,7 +1077,7 @@ class Plot(PlotBase.PlotBase):
                 legend = "Unnamed Marker %d" % i
 
         if legend in self._markerList:
-            self.clearMarker(legend)
+            self.removeMarker(legend)
         marker = self._plot.insertMarker(x, y, legend,
                                           label=label,
                                           color=color,

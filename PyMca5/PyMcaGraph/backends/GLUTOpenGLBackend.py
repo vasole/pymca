@@ -39,6 +39,8 @@ OpenGL/GLUT backend
 
 from OpenGL.GLUT import *  # noqa
 from .OpenGLBackend import OpenGLPlotCanvas
+from .OpenGLBackend import CURSOR_DEFAULT, CURSOR_POINTING, CURSOR_SIZE_HOR, \
+    CURSOR_SIZE_VER, CURSOR_SIZE_ALL
 
 
 # GLUT ########################################################################
@@ -48,6 +50,14 @@ class GLUTOpenGLBackend(OpenGLPlotCanvas):
         GLUT_LEFT_BUTTON: 'left',
         GLUT_RIGHT_BUTTON: 'right',
         GLUT_MIDDLE_BUTTON: 'middle'
+    }
+
+    _CURSORS = {
+        CURSOR_DEFAULT: GLUT_CURSOR_INHERIT,
+        CURSOR_POINTING: GLUT_CURSOR_INFO,
+        CURSOR_SIZE_HOR: GLUT_CURSOR_LEFT_RIGHT,
+        CURSOR_SIZE_VER: GLUT_CURSOR_UP_DOWN,
+        CURSOR_SIZE_ALL: GLUT_CURSOR_LEFT_RIGHT
     }
 
     def __init__(self, parent=None, **kw):
@@ -66,6 +76,9 @@ class GLUTOpenGLBackend(OpenGLPlotCanvas):
 
     def updateGL(self):
         glutPostRedisplay()
+
+    def setCursor(self, cursor=CURSOR_DEFAULT):
+        glutSetCursor(self._CURSORS[cursor])
 
     def glutDisplay(self):
         self.paintGL()
@@ -108,5 +121,13 @@ if __name__ == "__main__":
     w.addImage(data, legend="image 1",
                xScale=(25, 1.0), yScale=(-1000, 1.0),
                replot=False, colormap=colormap)
+    w.insertXMarker(1000, 'testX', 'markerX', color='pink',
+                    selectable=False, draggable=True)
+    w.insertYMarker(600, 'testY', 'markerY', color='black',
+                    selectable=False, draggable=True)
+    w.insertMarker(1000, 500, 'testXY', 'markerPt', color='black',
+                   selectable=False, draggable=True)
+    w.insertMarker(100, 500, 'testS', 'markerSelect', color='black',
+            selectable=True, draggable=False)
 
     sys.exit(glutMainLoop())
