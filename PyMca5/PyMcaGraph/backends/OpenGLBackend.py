@@ -49,6 +49,7 @@ except ImportError:
 
 import numpy as np
 import math
+import time
 
 import OpenGL
 if 0:  # Debug
@@ -274,8 +275,11 @@ def prepareDrawingSignal(event, type_, points, parameters={}):
     return eventDict
 
 
-def prepareMouseMovedSignal(button, xData, yData, xPixel, yPixel):
-    return {'event': 'mouseMoved',
+def prepareMouseSignal(eventType, button, xData, yData, xPixel, yPixel):
+    assert(eventType in ('mouseMoved', 'mouseClicked', 'mouseDoubleClicked'))
+    assert(button in (None, 'left', 'right'))
+
+    return {'event': eventType,
             'x': xData,
             'y': yData,
             'xpixel': xPixel,
@@ -342,6 +346,7 @@ def prepareMarkerSignal(eventType, button, label, type_,
 # Interaction #################################################################
 
 class Zoom(ClicOrDrag):
+    _DOUBLE_CLICK_TIMEOUT = 0.4
 
     class ZoomIdle(ClicOrDrag.Idle):
         def onWheel(self, x, y, angle):
@@ -351,6 +356,7 @@ class Zoom(ClicOrDrag):
     def __init__(self, backend):
         self.backend = backend
         self.zoomStack = []
+        self._lastClic = 0., None
 
         states = {
             'idle': Zoom.ZoomIdle,
@@ -384,10 +390,34 @@ class Zoom(ClicOrDrag):
 
     def clic(self, x, y, btn):
         if btn == LEFT_BTN:
-            xMin, xMax = self.backend.getGraphXLimits()
-            yMin, yMax = self.backend.getGraphYLimits()
-            self.zoomStack.append((xMin, xMax, yMin, yMax))
-            self._zoom(x, y, 2)
+            lastClicTime, lastClicPos = self._lastClic
+            print(time.time() - lastClicTime, lastClicPos)
+
+            # Signal mouse double clicked event first
+            if (time.time() - lastClicTime) <= self._DOUBLE_CLICK_TIMEOUT:
+                # Use position of first clic
+                eventDict = prepareMouseSignal('mouseDoubleClicked', 'left',
+                                               *lastClicPos)
+                self.backend._callback(eventDict)
+
+                self._lastClic = 0., None
+
+            else:
+                # Signal mouse clicked event
+                xData, yData = self.backend.pixelToDataCoords(x, y)
+                assert(xData is not None and yData is not None)
+                eventDict = prepareMouseSignal('mouseClicked', 'left',
+                                               xData, yData,
+                                               x, y)
+                self.backend._callback(eventDict)
+
+                self._lastClic = time.time(), (xData, yData, x, y)
+
+            # Zoom-in centered on mouse cursor
+            # xMin, xMax = self.backend.getGraphXLimits()
+            # yMin, yMax = self.backend.getGraphYLimits()
+            # self.zoomStack.append((xMin, xMax, yMin, yMax))
+            # self._zoom(x, y, 2)
         else:
             try:
                 xMin, xMax, yMin, yMax = self.zoomStack.pop()
@@ -1025,8 +1055,9 @@ class OpenGLPlotCanvas(PlotBackend):
         # Signal mouse move event
         xData, yData = self.pixelToDataCoords(xPixel, yPixel)
         if xData is not None and yData is not None:
-            eventDict = prepareMouseMovedSignal(None, xData, yData,
-                                                xPixel, yPixel)
+            eventDict = prepareMouseSignal('mouseMoved', None,
+                                           xData, yData,
+                                           xPixel, yPixel)
             self._callback(eventDict)
 
         if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
