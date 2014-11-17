@@ -749,7 +749,7 @@ class MatplotlibGraph(FigureCanvas):
                     ddict['selectable'] = False
                 ddict['x'] = self._x1
                 ddict['y'] = self._y1
-                ddict['xpixel'] = self._x1Pixel,
+                ddict['xpixel'] = self._x1Pixel
                 ddict['ypixel'] = self._y1Pixel
                 self._callback(ddict)
             elif QT:
@@ -798,7 +798,7 @@ class MatplotlibGraph(FigureCanvas):
                 ddict['selectable'] = self._pickingInfo['selectable']
                 ddict['x'] = self._x1
                 ddict['y'] = self._y1
-                ddict['xpixel'] = self._x1Pixel,
+                ddict['xpixel'] = self._x1Pixel
                 ddict['ypixel'] = self._y1Pixel
                 self._callback(ddict)
             return
