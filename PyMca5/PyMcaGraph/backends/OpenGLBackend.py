@@ -283,6 +283,43 @@ def prepareMouseMovedSignal(button, xData, yData, xPixel, yPixel):
             'button': button}
 
 
+def prepareHoverSignal(label, type_, posData, posPixel, draggable, selectable):
+    return {'event': 'hover',
+            'label': label,
+            'type': type_,
+            'x': posData[0],
+            'y': posData[1],
+            'xpixel': posPixel[0],
+            'ypixel': posPixel[1],
+            'draggable': draggable,
+            'selectable': selectable}
+
+
+def prepareMarkerSignal(eventType, button, label, type_,
+                        draggable, selectable,
+                        pos, posData, posPixel=None):
+    assert(eventType in ('markerMoving', 'markerMoved', 'markerClicked'))
+
+    eventDict = {'event': eventType,
+                 'button': button,
+                 'label': label,
+                 'type': type_,
+                 'x': pos[0],
+                 'y': pos[1],
+                 'xdata': posData[0],
+                 'ydata': posData[1],
+                 'draggable': draggable,
+                 'selectable': selectable}
+    if eventType in ('markerMoving', 'markerClicked'):
+        assert(posPixel is not None)
+        eventDict['xpixel'] = posPixel[0]
+        eventDict['ypixel'] = posPixel[1]
+    else:
+        assert(posPixel is None)
+
+    return eventDict
+
+
 # Interaction #################################################################
 
 class Zoom(ClicOrDrag):
@@ -662,14 +699,27 @@ class MarkerInteraction(ClicOrDrag):
 
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
-                marker = self.machine.pick(x, y, 'selectable', 'draggable')
+                testBehaviors = set(('selectable', 'draggable'))
+                marker = self.machine.pick(
+                    x, y,
+                    lambda marker: marker['behaviors'] & testBehaviors)
+
                 if marker is not None:
                     self.goto('clicOrDrag', x, y)
                     return True
             return False
 
         def onMove(self, x, y):
-            marker = self.machine.pick(x, y, 'selectable', 'draggable')
+            marker = self.machine.pick(x, y)
+            if marker is not None:
+                posData = self.machine.backend.pixelToDataCoords(x, y)
+                eventDict = prepareHoverSignal(
+                    marker['label'], 'marker',
+                    posData, (x, y),
+                    'draggable' in marker['behaviors'],
+                    'selectable' in marker['behaviors'])
+                self.machine.backend._callback(eventDict)
+
             if marker != self._hoverMarker:
                 self._hoverMarker = marker
 
@@ -699,7 +749,9 @@ class MarkerInteraction(ClicOrDrag):
         }
         StateMachine.__init__(self, states, 'idle')
 
-    def pick(self, x, y, *behaviors):
+    def pick(self, x, y, test=None):
+        if test is None:
+            test = lambda marker: True
         for marker in reversed(self.backend._markers.values()):
             if marker['x'] is not None:
                 xMarker = self.backend.dataToPixelCoords(xData=marker['x'])
@@ -714,31 +766,79 @@ class MarkerInteraction(ClicOrDrag):
                 yDist = 0
 
             if xDist <= self._PICK_OFFSET and yDist <= self._PICK_OFFSET:
-                if marker['behaviors'] & set(behaviors):
+                if test(marker):
                     return marker
 
         return None
 
     def clic(self, x, y, btn):
         if btn == LEFT_BTN:
-            marker = self.pick(x, y, 'selectable')
+            marker = self.pick(
+                x, y, lambda marker: 'selectable' in marker['behaviors'])
             if marker is not None:
-                # TODO signal
+                self._signalMarkerEvent('markerClicked', marker, x, y)
                 self.backend.replot()
 
+    def _signalMarkerEvent(self, evtType, marker, x, y):
+        assert(marker is not None)
+
+        pos = self.backend.pixelToDataCoords(x, y)
+        xData, yData = marker['x'], marker['y']
+
+        # Mimic MatplotlibBackend signal
+        if xData is None:
+            xData = [0, 1]
+        if yData is None:
+            yData = [0, 1]
+
+        eventDict = prepareMarkerSignal(evtType,
+                                        'left',
+                                        marker['label'],
+                                        'marker',
+                                        'draggable' in marker['behaviors'],
+                                        'selectable' in marker['behaviors'],
+                                        pos,
+                                        (xData, yData),
+                                        (x, y))
+        self.backend._callback(eventDict)
+
     def beginDrag(self, x, y):
-        self.marker = self.pick(x, y, 'draggable')
+        self.marker = self.pick(
+            x, y, lambda marker: 'draggable' in marker['behaviors'])
+        self._signalMarkerEvent('markerMoving', self.marker, x, y)
 
     def drag(self, x, y):
         if self.marker is not None:
-            x, y = self.backend.pixelToDataCoords(x, y)
+            xData, yData = self.backend.pixelToDataCoords(x, y)
             if self.marker['x'] is not None:
-                self.marker['x'] = x
+                self.marker['x'] = xData
             if self.marker['y'] is not None:
-                self.marker['y'] = y
+                self.marker['y'] = yData
+
+            self._signalMarkerEvent('markerMoving', self.marker, x, y)
+
             self.backend.replot()
 
     def endDrag(self, startPos, endPos):
+        if self.marker is not None:
+            posData = [self.marker['x'], self.marker['y']]
+            # Mimic MatplotlibBackend signal
+            if posData[0] is None:
+                posData[0] = [0, 1]
+            if posData[1] is None:
+                posData[1] = [0, 1]
+
+            eventDict = prepareMarkerSignal(
+                'markerMoved',
+                'left',
+                self.marker['label'],
+                'marker',
+                'draggable' in self.marker['behaviors'],
+                'selectable' in self.marker['behaviors'],
+                posData,
+                posData)
+            self.backend._callback(eventDict)
+
         del self.marker
 
 
@@ -834,6 +934,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._axisDirtyFlag = True
         self._plotDirtyFlag = True
 
+        self._mousePosition = 0, 0
         self.focusManager = FocusManager((MarkerInteraction(self),))
 
         self._plotHasFocus = set()
@@ -880,7 +981,7 @@ class OpenGLPlotCanvas(PlotBackend):
         return xPlot, yPlot
 
     def onMousePress(self, xPixel, yPixel, btn):
-        if (self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel)):
+        if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
             self._plotHasFocus.add(btn)
             self.focusManager.handleEvent('press', xPixel, yPixel, btn)
 
@@ -892,8 +993,9 @@ class OpenGLPlotCanvas(PlotBackend):
                                                 xPixel, yPixel)
             self._callback(eventDict)
 
-        xPlot, yPlot = self._mouseInPlotArea(xPixel, yPixel)
-        self.focusManager.handleEvent('move', xPlot, yPlot)
+        if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
+            self._mousePosition = xPixel, yPixel
+            self.focusManager.handleEvent('move', xPixel, yPixel)
 
     def onMouseRelease(self, xPixel, yPixel, btn):
         try:
@@ -901,7 +1003,8 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
-            xPixel, yPixel = self._mouseInPlotArea(xPixel, yPixel)
+            # Use position of last move inside
+            xPixel, yPixel = self._mousePosition
             self.focusManager.handleEvent('release', xPixel, yPixel, btn)
 
     def onMouseWheel(self, xPixel, yPixel, angleInDegrees):
