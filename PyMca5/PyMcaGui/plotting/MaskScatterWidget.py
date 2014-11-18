@@ -40,7 +40,10 @@ IconDict = PlotWindow.IconDict
 
 class MaskScatterWidget(PlotWindow.PlotWindow):
     def __init__(self, parent=None, backend=None, plugins=False, newplot=False,
-                 control=False, position=False, maxNRois=1, grid=False, **kw):
+                 control=False, position=False, maxNRois=1, grid=False,
+                 logx=False, logy=False, togglePoints=False, normal=True,
+                 polygon=True, colormap=False, aspect=True,
+                 imageIcons=True, **kw):
         super(MaskScatterWidget, self).__init__(parent=parent,
                                                 backend=backend,
                                                 plugins=plugins,
@@ -48,6 +51,14 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                                                 control=control,
                                                 position=position,
                                                 grid=grid,
+                                                logx=logx,
+                                                logy=logy,
+                                                togglePoints=togglePoints,
+                                                normal=normal,
+                                                aspect=aspect,
+                                                colormap=colormap,
+                                                imageIcons=imageIcons,
+                                                polygon=polygon,
                                                 **kw)
         self._selectionCurve = None
         self._selectionMask = None
@@ -64,7 +75,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._brushMode = False
         self.setDrawModeEnabled(False)
 
-    def setSelectionCurveData(self, x, y, legend="MaskScatterWidget", info=None, 
+    def setSelectionCurveData(self, x, y, legend="MaskScatterWidget", info=None,
                  replot=True, replace=True, line_style=" ", color="r", symbol=None, **kw):
         self.enableActiveCurveHandling(False)
         if symbol is None:
