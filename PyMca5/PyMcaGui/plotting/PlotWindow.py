@@ -1196,7 +1196,12 @@ if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * x
     app = qt.QApplication([])
-    plot = PlotWindow(roi=True, control=True, position=True)#uselegendmenu=True)
+    if "opengl" in sys.argv:
+        from PyMca5.PyMcaGraph.backends import OpenGLBackend
+        plot = PlotWindow(backend=OpenGLBackend.OpenGLBackend, roi=True, control=True,
+                          position=True)#uselegendmenu=True)
+    else:
+        plot = PlotWindow(roi=True, control=True, position=True)#uselegendmenu=True)
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)

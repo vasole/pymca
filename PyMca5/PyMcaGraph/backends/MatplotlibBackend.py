@@ -744,7 +744,12 @@ class MatplotlibGraph(FigureCanvas):
                 if 'draggable' in marker._plot_options:
                     ddict['draggable'] = True
                     if QT:
-                        self.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
+                        if 'ymarker' in artist._plot_options:
+                            self.setCursor(QtGui.QCursor(QtCore.Qt.SizeVerCursor))
+                        if 'xmarker' in artist._plot_options:
+                            self.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
+                        else:
+                            self.setCursor(QtGui.QCursor(QtCore.Qt.SizeAllCursor))
                 else:
                     ddict['draggable'] = False
                 if 'selectable' in marker._plot_options:
