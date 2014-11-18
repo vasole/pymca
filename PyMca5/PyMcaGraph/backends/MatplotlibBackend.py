@@ -1311,58 +1311,58 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             axes = self.ax
 
-        if self._logY:
+        scatterPlot = False
+        if hasattr(color, "dtype"):
+            if len(color) == len(x):
+                scatterPlot = True
+        if "color" in kw:
+            del kw["color"]
+        if scatterPlot:
+            # scatter plot
+            if color.dtype not in [numpy.float32, numpy.float]:
+                actualColor = color / 255.
+            else:
+                actualColor = color
+            pathObject = axes.scatter(x, y,
+                                      label=legend,
+                                      color=actualColor,
+                                      marker=symbol,
+                                      picker=3)
+
+            if style not in [" ", None]:
+                # scatter plot with an actual line ...
+                # we need to assign a color ...
+                curveList = axes.plot(x, y, label=legend,
+                                      linestyle=style,
+                                      color=actualColor[0],
+                                      linewidth=linewidth,
+                                      picker=3,
+                                      marker=None,
+                                      **kw)
+                curveList[-1]._plot_info = {'color':actualColor,
+                                              'linewidth':linewidth,
+                                              'brush':brush,
+                                              'style':style,
+                                              'symbol':symbol,
+                                              'label':legend,
+                                              'axes':axisId,
+                                              'fill':fill}
+                if hasattr(x, "min") and hasattr(y, "min"):
+                    curveList[-1]._plot_info['xmin'] = x.min()
+                    curveList[-1]._plot_info['xmax'] = x.max()
+                    curveList[-1]._plot_info['ymin'] = y.min()
+                    curveList[-1]._plot_info['ymax'] = y.max()
+            # scatter plot is a collection
+            curveList = [pathObject]
+            if self._logY:
+                axes.set_yscale('log')
+        elif self._logY:
             curveList = axes.semilogy( x, y, label=legend,
                                           linestyle=style,
                                           color=color,
                                           linewidth=linewidth,
                                           picker=3,
                                           **kw)
-        elif hasattr(color, "__len__"):
-            if len(color) == len(x):
-                # scatter plot
-                if color.dtype not in [numpy.float32, numpy.float]:
-                    actualColor = color / 255.
-                else:
-                    actualColor = color
-                pathObject = axes.scatter(x, y,
-                                          label=legend,
-                                          color=actualColor,
-                                          marker=symbol,
-                                          picker=3)
-
-                if style not in [" ", None]:
-                    # scatter plot with an actual line ...
-                    # we need to assign a color ...
-                    curveList = axes.plot(x, y, label=legend,
-                                          linestyle=style,
-                                          color=actualColor[0],
-                                          linewidth=linewidth,
-                                          picker=3,
-                                          marker=None,
-                                          **kw)
-                    curveList[-1]._plot_info = {'color':actualColor,
-                                                  'linewidth':linewidth,
-                                                  'brush':brush,
-                                                  'style':style,
-                                                  'symbol':symbol,
-                                                  'label':legend,
-                                                  'axes':axisId,
-                                                  'fill':fill}
-                    if hasattr(x, "min") and hasattr(y, "min"):
-                        curveList[-1]._plot_info['xmin'] = x.min()
-                        curveList[-1]._plot_info['xmax'] = x.max()
-                        curveList[-1]._plot_info['ymin'] = y.min()
-                        curveList[-1]._plot_info['ymax'] = y.max()
-                # scatter plot is a collection
-                curveList = [pathObject]
-            else:
-                curveList = axes.plot( x, y, label=legend,
-                                      linestyle=style,
-                                      color=color,
-                                      linewidth=linewidth,
-                                      picker=3,
-                                      **kw)
         else:
             curveList = axes.plot( x, y, label=legend,
                                   linestyle=style,
@@ -1724,22 +1724,26 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if hasattr(handle, "remove"):
             if handle in self.ax.lines:
                 handle.remove()
+            if handle in self.ax2.lines:
+                handle.remove()
+            if handle in self.ax.collections:
+                handle.remove()
+            if handle in self.ax2.collections:
+                handle.remove()
         else:
             # we have received a legend!
             legend = handle
             handle = None
-            for line2d in self.ax.lines:
-                label = line2d.get_label()
-                if label == legend:
-                    handle = line2d
-            if handle is None:
-                for line2d in self.ax2.lines:
+            testLists = [self.ax.lines, self.ax2.lines,
+                         self.ax.collections, self.ax2.collections]
+            for container in testLists:
+                for line2d in container:
                     label = line2d.get_label()
                     if label == legend:
                         handle = line2d
-            if handle is not None:
-                handle.remove()
-                del handle
+                    if handle is not None:
+                        handle.remove()
+                        del handle
         if replot:
             self.replot()
 

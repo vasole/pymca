@@ -40,13 +40,14 @@ IconDict = PlotWindow.IconDict
 
 class MaskScatterWidget(PlotWindow.PlotWindow):
     def __init__(self, parent=None, backend=None, plugins=False, newplot=False,
-                 control=False, position=False, maxNRois=1, **kw):
+                 control=False, position=False, maxNRois=1, grid=False, **kw):
         super(MaskScatterWidget, self).__init__(parent=parent,
                                                 backend=backend,
                                                 plugins=plugins,
                                                 newplot=newplot,
                                                 control=control,
                                                 position=position,
+                                                grid=grid,
                                                 **kw)
         self._selectionCurve = None
         self._selectionMask = None
