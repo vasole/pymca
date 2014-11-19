@@ -343,6 +343,20 @@ def prepareMarkerSignal(eventType, button, label, type_,
     return eventDict
 
 
+def prepareImageSignal(button, label, type_, col, row,
+                       x, y, xPixel, yPixel):
+    return {'event': 'imageClicked',
+            'button': button,
+            'label': label,
+            'type': type_,
+            'col': col,
+            'row': row,
+            'x': x,
+            'y': y,
+            'xpixel': xPixel,
+            'ypixel': yPixel}
+
+
 # Interaction #################################################################
 
 class Zoom(ClicOrDrag):
@@ -391,7 +405,6 @@ class Zoom(ClicOrDrag):
     def clic(self, x, y, btn):
         if btn == LEFT_BTN:
             lastClicTime, lastClicPos = self._lastClic
-            print(time.time() - lastClicTime, lastClicPos)
 
             # Signal mouse double clicked event first
             if (time.time() - lastClicTime) <= self._DOUBLE_CLICK_TIMEOUT:
@@ -739,8 +752,6 @@ class SelectVLine(Select1Point):
 
 
 class MarkerInteraction(ClicOrDrag):
-    _PICK_OFFSET = 3
-
     class Idle(ClicOrDrag.Idle):
         def __init__(self, *args, **kwargs):
             super(MarkerInteraction.Idle, self).__init__(*args, **kwargs)
@@ -749,17 +760,26 @@ class MarkerInteraction(ClicOrDrag):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
                 testBehaviors = set(('selectable', 'draggable'))
-                marker = self.machine.pick(
+
+                marker = self.machine.backend.pickMarker(
                     x, y,
                     lambda marker: marker['behaviors'] & testBehaviors)
-
                 if marker is not None:
                     self.goto('clicOrDrag', x, y)
                     return True
+
+                else:
+                    image, _ = self.machine.backend.pickImage(
+                        x, y,
+                        lambda image: image['behaviors'] & testBehaviors)
+                    if image is not None:
+                        self.goto('clicOrDrag', x, y)
+                        return True
+
             return False
 
         def onMove(self, x, y):
-            marker = self.machine.pick(x, y)
+            marker = self.machine.backend.pickMarker(x, y)
             if marker is not None:
                 posData = self.machine.backend.pixelToDataCoords(x, y)
                 eventDict = prepareHoverSignal(
@@ -798,31 +818,9 @@ class MarkerInteraction(ClicOrDrag):
         }
         StateMachine.__init__(self, states, 'idle')
 
-    def pick(self, x, y, test=None):
-        if test is None:
-            test = lambda marker: True
-        for marker in reversed(self.backend._markers.values()):
-            if marker['x'] is not None:
-                xMarker = self.backend.dataToPixelCoords(xData=marker['x'])
-                xDist = math.fabs(x - xMarker)
-            else:
-                xDist = 0
-
-            if marker['y'] is not None:
-                yMarker = self.backend.dataToPixelCoords(yData=marker['y'])
-                yDist = math.fabs(y - yMarker)
-            else:
-                yDist = 0
-
-            if xDist <= self._PICK_OFFSET and yDist <= self._PICK_OFFSET:
-                if test(marker):
-                    return marker
-
-        return None
-
     def clic(self, x, y, btn):
         if btn == LEFT_BTN:
-            marker = self.pick(
+            marker = self.backend.pickMarker(
                 x, y, lambda marker: 'selectable' in marker['behaviors'])
             if marker is not None:
                 # Mimic MatplotlibBackend signal
@@ -845,6 +843,17 @@ class MarkerInteraction(ClicOrDrag):
                 self.backend._callback(eventDict)
 
                 self.backend.replot()
+            else:
+                image, posImage = self.backend.pickImage(
+                    x, y, lambda image: 'selectable' in image['behaviors'])
+                if image is not None:
+                    xData, yData = self.backend.pixelToDataCoords(x, y)
+                    eventDict = prepareImageSignal('left',
+                                                   image['legend'],
+                                                   'image',
+                                                   posImage[0], posImage[1],
+                                                   xData, yData, x, y)
+                    self.backend._callback(eventDict)
 
     def _signalMarkerMovingEvent(self, eventType, marker, x, y):
         assert(marker is not None)
@@ -870,13 +879,19 @@ class MarkerInteraction(ClicOrDrag):
         self.backend._callback(eventDict)
 
     def beginDrag(self, x, y):
-        self.marker = self.pick(
+        self._lastPos = self.backend.pixelToDataCoords(x, y)
+        self.image = None
+        self.marker = self.backend.pickMarker(
             x, y, lambda marker: 'draggable' in marker['behaviors'])
-        self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
+        if self.marker is not None:
+            self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
+        else:
+            self.image, _ = self.backend.pickImage(
+                x, y, lambda image: 'draggable' in image['behaviors'])
 
     def drag(self, x, y):
+        xData, yData = self.backend.pixelToDataCoords(x, y)
         if self.marker is not None:
-            xData, yData = self.backend.pixelToDataCoords(x, y)
             if self.marker['x'] is not None:
                 self.marker['x'] = xData
             if self.marker['y'] is not None:
@@ -885,6 +900,18 @@ class MarkerInteraction(ClicOrDrag):
             self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
 
             self.backend.replot()
+
+        if self.image is not None:
+            dx, dy = xData - self._lastPos[0], yData - self._lastPos[1]
+            self.image['bBox']['xMin'] += dx
+            self.image['bBox']['xMax'] += dx
+            self.image['bBox']['yMin'] += dy
+            self.image['bBox']['yMax'] += dy
+
+            self.backend._plotDirtyFlag = True
+            self.backend.replot()
+
+        self._lastPos = xData, yData
 
     def endDrag(self, startPos, endPos):
         if self.marker is not None:
@@ -906,6 +933,8 @@ class MarkerInteraction(ClicOrDrag):
             self.backend._callback(eventDict)
 
         del self.marker
+        del self.image
+        del self._lastPos
 
 
 class FocusManager(StateMachine):
@@ -975,6 +1004,8 @@ class FocusManager(StateMachine):
 
 
 class OpenGLPlotCanvas(PlotBackend):
+    _PICK_OFFSET = 3
+
     def __init__(self, parent=None, **kw):
         self._xMin, self._xMax = 0., 1.
         self._yMin, self._yMax = 0., 1.
@@ -1078,6 +1109,44 @@ class OpenGLPlotCanvas(PlotBackend):
         if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
             self.focusManager.handleEvent('wheel', xPixel, yPixel,
                                           angleInDegrees)
+
+    # Picking #
+
+    def pickMarker(self, x, y, test=None):
+        if test is None:
+            test = lambda marker: True
+        for marker in reversed(self._markers.values()):
+            if marker['x'] is not None:
+                xMarker = self.dataToPixelCoords(xData=marker['x'])
+                xDist = math.fabs(x - xMarker)
+            else:
+                xDist = 0
+
+            if marker['y'] is not None:
+                yMarker = self.dataToPixelCoords(yData=marker['y'])
+                yDist = math.fabs(y - yMarker)
+            else:
+                yDist = 0
+
+            if xDist <= self._PICK_OFFSET and yDist <= self._PICK_OFFSET:
+                if test(marker):
+                    return marker
+        return None
+
+    def pickImage(self, x, y, test=None):
+        if test is None:
+            test = lambda image: True
+        for image in reversed(self._images.values()):
+            xPick, yPick = self.pixelToDataCoords(x, y)
+            bbox = image['bBox']
+
+            if bbox['xMin'] <= xPick and xPick <= bbox['xMax'] and \
+               bbox['yMin'] <= yPick and yPick <= bbox['yMax']:
+                if test(image):
+                    xPick = int((xPick - bbox['xMin']) / bbox['xStep'])
+                    yPick = int((yPick - bbox['yMin']) / bbox['yStep'])
+                    return image, (xPick, yPick)
+        return None, None
 
     # Manage Plot #
 
@@ -1254,8 +1323,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if yPixel is not None:
             if not self._isYInverted:
-                yData = - yPixel
-            yData = yData * (self._yMax - self._yMin) / float(plotHeight)
+                yPixel = - yPixel
+            yData = yPixel * (self._yMax - self._yMin) / float(plotHeight)
 
         if xPixel is None:
             return yData
@@ -1764,9 +1833,12 @@ class OpenGLPlotCanvas(PlotBackend):
         self.makeCurrent()
 
         # info is ignored
-        if selectable or draggable:
-            raise NotImplementedError("selectable and draggable \
-                                      not implemented")
+
+        behaviors = set()
+        if selectable:
+            behaviors.add('selectable')
+        if draggable:
+            behaviors.add('draggable')
 
         oldImage = self._images.get(legend, None)
         if oldImage is not None and oldImage['data'].shape != data.shape:
@@ -1799,6 +1871,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     "Colors: {0}".format(colormap['colors']))
 
             self._images[legend] = {
+                'legend': legend,
                 'zOrder': z,
                 'data': data,
                 'colormapName': colormap['name'][:],
@@ -1807,7 +1880,8 @@ class OpenGLPlotCanvas(PlotBackend):
                 else colormap['vmin'],
                 'vmax': data.max() if colormap['autoscale']
                 else colormap['vmax'],
-                'bBox': bbox
+                'bBox': bbox,
+                'behaviors': behaviors
             }
             if oldImage is not None and '_texture' in oldImage:
                 # Reuse texture and update
@@ -1822,7 +1896,13 @@ class OpenGLPlotCanvas(PlotBackend):
             assert(data.dtype == np.uint8 or
                    np.can_cast(data.dtype, np.float32))
 
-            self._images[legend] = {'zOrder': z, 'data': data, 'bBox': bbox}
+            self._images[legend] = {
+                'legend': legend,
+                'zOrder': z,
+                'data': data,
+                'bBox': bbox,
+                'behaviors': behaviors
+            }
             if oldImage is not None and '_texture' in oldImage:
                 # Reuse texture and update
                 format_ = GL_RGBA if data.shape[2] == 4 else GL_RGB
