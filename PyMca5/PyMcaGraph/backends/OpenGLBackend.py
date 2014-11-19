@@ -1221,10 +1221,10 @@ class OpenGLPlotCanvas(PlotBackend):
             xOffset = max(xMarkOffset, xLineOffset)
             yOffset = max(yMarkOffset, yLineOffset)
 
-            if bbox['xMin'] <= xPick - xOffset and \
-               xPick + xOffset <= bbox['xMax'] and \
-               bbox['yMin'] <= yPick - yOffset and \
-               yPick + yOffset <= bbox['yMax']:
+            if bbox['xMin'] - xOffset <= xPick and \
+               xPick <= bbox['xMax'] + xOffset and \
+               bbox['yMin'] - yOffset <= yPick and \
+               yPick <= bbox['yMax'] + yOffset:
                 picked = []
                 if curve['_curve2d'].marker is not None:
                     # Marker picking
