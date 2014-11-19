@@ -254,6 +254,23 @@ def _ticks(start, stop, step):
             yield start
             start += step
 
+def xyOffsetsToSegment(x, y, x0, y0, x1, y1):
+    seg = x1 - x0, y1 - y0
+    vec = x - x0, y - y0
+    if seg[0] == 0. and seg[1] == 0.:
+        return vec
+
+    alpha = seg[0] * vec[0] + seg[1] * vec[1]
+    alpha /= seg[0] ** 2 + seg[1] ** 2
+    if alpha <= 0.:
+        compPt = x0, y0
+    elif alpha >= 1.:
+        compPt = x1, y1
+    else:
+        compPt = x0 + alpha * seg[0], y0 + alpha * seg[1]
+
+    return compPt[0] - x, compPt[1] - y
+
 
 # signals #####################################################################
 
@@ -351,6 +368,20 @@ def prepareImageSignal(button, label, type_, col, row,
             'type': type_,
             'col': col,
             'row': row,
+            'x': x,
+            'y': y,
+            'xpixel': xPixel,
+            'ypixel': yPixel}
+
+
+def prepareCurveSignal(button, label, type_, xData, yData,
+                       x, y, xPixel, yPixel):
+    return {'event': 'curveClicked',
+            'button': button,
+            'label': label,
+            'type': type_,
+            'xdata': xData,
+            'ydata': yData,
             'x': x,
             'y': y,
             'xpixel': xPixel,
@@ -769,12 +800,18 @@ class MarkerInteraction(ClicOrDrag):
                     return True
 
                 else:
-                    image, _ = self.machine.backend.pickImage(
-                        x, y,
-                        lambda image: image['behaviors'] & testBehaviors)
-                    if image is not None:
+                    curve, _ = self.machine.backend.pickCurve(x, y)
+                    if curve is not None:
                         self.goto('clicOrDrag', x, y)
                         return True
+
+                    else:
+                        image, _ = self.machine.backend.pickImage(
+                            x, y,
+                            lambda image: image['behaviors'] & testBehaviors)
+                        if image is not None:
+                            self.goto('clicOrDrag', x, y)
+                            return True
 
             return False
 
@@ -844,16 +881,30 @@ class MarkerInteraction(ClicOrDrag):
 
                 self.backend.replot()
             else:
-                image, posImage = self.backend.pickImage(
-                    x, y, lambda image: 'selectable' in image['behaviors'])
-                if image is not None:
+                curve, posCurve = self.backend.pickCurve(x, y)
+                posCurve = np.array(posCurve, dtype=np.float32)
+
+                if curve is not None:
                     xData, yData = self.backend.pixelToDataCoords(x, y)
-                    eventDict = prepareImageSignal('left',
-                                                   image['legend'],
-                                                   'image',
-                                                   posImage[0], posImage[1],
+                    eventDict = prepareCurveSignal('left',
+                                                   curve['legend'],
+                                                   'curve',
+                                                   posCurve[:,0],
+                                                   posCurve[:,1],
                                                    xData, yData, x, y)
                     self.backend._callback(eventDict)
+
+                else:
+                    image, posImg = self.backend.pickImage(
+                        x, y, lambda image: 'selectable' in image['behaviors'])
+                    if image is not None:
+                        xData, yData = self.backend.pixelToDataCoords(x, y)
+                        eventDict = prepareImageSignal('left',
+                                                       image['legend'],
+                                                       'image',
+                                                       posImg[0], posImg[1],
+                                                       xData, yData, x, y)
+                        self.backend._callback(eventDict)
 
     def _signalMarkerMovingEvent(self, eventType, marker, x, y):
         assert(marker is not None)
@@ -1146,6 +1197,63 @@ class OpenGLPlotCanvas(PlotBackend):
                     xPick = int((xPick - bbox['xMin']) / bbox['xStep'])
                     yPick = int((yPick - bbox['yMin']) / bbox['yStep'])
                     return image, (xPick, yPick)
+        return None, None
+
+    def pickCurve(self, x, y):
+        for curve in reversed(self._curves.values()):
+            xPick, yPick = self.pixelToDataCoords(x, y)
+            bbox = curve['bBox']
+            offset = max(curve['_curve2d'].markerSize / 2,
+                         self._PICK_OFFSET)
+            xMarkOffset, yMarkOffset = self.pixelToDataSize(offset,
+                                                            offset)
+            xMarkOffset = math.fabs(xMarkOffset)
+            yMarkOffset = math.fabs(yMarkOffset)
+
+            offset = max(curve['_curve2d'].lineWidth / 2,
+                         self._PICK_OFFSET)
+
+            xLineOffset, yLineOffset = self.pixelToDataSize(offset, offset)
+            xLineOffset = math.fabs(xLineOffset)
+            yLineOffset = math.fabs(yLineOffset)
+
+            xOffset = max(xMarkOffset, xLineOffset)
+            yOffset = max(yMarkOffset, yLineOffset)
+
+
+            if bbox['xMin'] <= xPick - xOffset and \
+               xPick + xOffset <= bbox['xMax'] and \
+               bbox['yMin'] <= yPick - yOffset and \
+               yPick + yOffset <= bbox['yMax']:
+                picked = []
+                if curve['_curve2d'].marker is not None:
+                    # Marker picking
+                    xPickMin = xPick - xMarkOffset
+                    xPickMax = xPick + xMarkOffset
+                    yPickMin = yPick - yMarkOffset
+                    yPickMax = yPick + yMarkOffset
+
+                    picked = [(xData, yData)
+                        for xData, yData in zip(curve['xData'], curve['yData'])
+                        if xData >= xPickMin and xData <= xPickMax and
+                           yData >= yPickMin and yData <= yPickMax]
+
+                if curve['_curve2d'].lineStyle is not None:
+                    # Curve picking as well
+
+                    x0, y0 = curve['xData'][0], curve['yData'][0]
+                    for x1, y1 in zip(curve['xData'], curve['yData']):
+                        xDist, yDist = xyOffsetsToSegment(xPick, yPick,
+                                                          x0, y0, x1, y1)
+                        if math.fabs(xDist) <= xLineOffset and \
+                           math.fabs(yDist) <= yLineOffset:
+                            picked.append((x0, y0))
+
+                        x0, y0 = x1, y1
+
+                if picked:
+                    return curve, sorted(set(picked))
+
         return None, None
 
     # Manage Plot #
@@ -2039,6 +2147,7 @@ class OpenGLPlotCanvas(PlotBackend):
         }
 
         self._curves[legend] = {
+            'legend': legend,
             'xData': x,
             'yData': y,
             'lineStyle': style,
