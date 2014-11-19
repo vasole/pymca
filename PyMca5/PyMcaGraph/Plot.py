@@ -448,12 +448,18 @@ class Plot(PlotBase.PlotBase):
         info.get('plot_yaxis', 'left')
 
         if self.isXAxisLogarithmic() or self.isYAxisLogarithmic():
-            xplot, yplot = self.logFilterData(x, y)
+            if hasattr(color, "size"):
+                xplot, yplot, colorplot = self.logFilterData(x, y, color=color)
+            else:
+                xplot, yplot, colorplot = self.logFilterData(x, y, color=None)
+                colorplot = color
         else:
             xplot, yplot = x, y
+            colorplot = color
         if len(xplot):
             curveHandle = self._plot.addCurve(xplot, yplot, key, info,
-                                              replot=False, replace=replace)
+                                              replot=False, replace=replace,
+                                              color=colorplot)
             info['plot_handle'] = curveHandle
         else:
             info['plot_handle'] = key
@@ -847,7 +853,7 @@ class Plot(PlotBase.PlotBase):
                     print("x axis was already linear mode")
         return
 
-    def logFilterData(self, x, y, xLog=None, yLog=None):
+    def logFilterData(self, x, y, xLog=None, yLog=None, color=None):
         if xLog is None:
             xLog = self._logX
         if yLog is None:
@@ -865,7 +871,15 @@ class Plot(PlotBase.PlotBase):
             idx = numpy.nonzero(x > 0)[0]
             x = numpy.take(x, idx)
             y = numpy.take(y, idx)
-        return x, y
+        if isinstance(color, numpy.ndarray):
+            colors = numpy.zeros((x.size, 4), color.dtype)
+            colors[:, 0] = color[idx, 0]
+            colors[:, 1] = color[idx, 1]
+            colors[:, 2] = color[idx, 2]
+            colors[:, 3] = color[idx, 3]
+        else:
+            colors = color
+        return x, y, colors
 
     def _update(self):
         if DEBUG:
