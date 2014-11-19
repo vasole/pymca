@@ -254,6 +254,7 @@ def _ticks(start, stop, step):
             yield start
             start += step
 
+
 def xyOffsetsToSegment(x, y, x0, y0, x1, y1):
     seg = x1 - x0, y1 - y0
     vec = x - x0, y - y0
@@ -889,8 +890,8 @@ class MarkerInteraction(ClicOrDrag):
                     eventDict = prepareCurveSignal('left',
                                                    curve['legend'],
                                                    'curve',
-                                                   posCurve[:,0],
-                                                   posCurve[:,1],
+                                                   posCurve[:, 0],
+                                                   posCurve[:, 1],
                                                    xData, yData, x, y)
                     self.backend._callback(eventDict)
 
@@ -1220,7 +1221,6 @@ class OpenGLPlotCanvas(PlotBackend):
             xOffset = max(xMarkOffset, xLineOffset)
             yOffset = max(yMarkOffset, yLineOffset)
 
-
             if bbox['xMin'] <= xPick - xOffset and \
                xPick + xOffset <= bbox['xMax'] and \
                bbox['yMin'] <= yPick - yOffset and \
@@ -1233,10 +1233,12 @@ class OpenGLPlotCanvas(PlotBackend):
                     yPickMin = yPick - yMarkOffset
                     yPickMax = yPick + yMarkOffset
 
-                    picked = [(xData, yData)
+                    picked = [
+                        (xData, yData)
                         for xData, yData in zip(curve['xData'], curve['yData'])
                         if xData >= xPickMin and xData <= xPickMax and
-                           yData >= yPickMin and yData <= yPickMax]
+                        yData >= yPickMin and yData <= yPickMax
+                    ]
 
                 if curve['_curve2d'].lineStyle is not None:
                     # Curve picking as well
@@ -1839,12 +1841,21 @@ class OpenGLPlotCanvas(PlotBackend):
             try:
                 curve2d = curve['_curve2d']
             except KeyError:
-                curve2d = curveFromArrays(curve['xData'], curve['yData'],
-                                          lineStyle=curve['lineStyle'],
-                                          lineWidth=curve['lineWidth'],
-                                          lineColor=curve['color'],
-                                          marker=curve['marker'],
-                                          markerColor=curve['color'])
+                if isinstance(curve['color'], np.ndarray):
+                    curve2d = curveFromArrays(curve['xData'], curve['yData'],
+                                              curve['color'],
+                                              lineStyle=curve['lineStyle'],
+                                              lineWidth=curve['lineWidth'],
+                                              marker=curve['marker'])
+
+                else:
+                    curve2d = curveFromArrays(curve['xData'], curve['yData'],
+                                              None,
+                                              lineStyle=curve['lineStyle'],
+                                              lineWidth=curve['lineWidth'],
+                                              lineColor=curve['color'],
+                                              marker=curve['marker'],
+                                              markerColor=curve['color'])
                 curve['_curve2d'] = curve2d
                 curve['_vbo'] = curve2d.xVboData.vbo
 
@@ -2139,6 +2150,9 @@ class OpenGLPlotCanvas(PlotBackend):
         # axisId = kw.get('yaxis', axisId)
         # fill = info.get('plot_fill', False)
 
+        if not isinstance(color, np.ndarray):
+            color = rgba(color, colordict)
+
         bbox = {
             'xMin': min(x),
             'xMax': max(x),
@@ -2152,7 +2166,7 @@ class OpenGLPlotCanvas(PlotBackend):
             'yData': y,
             'lineStyle': style,
             'lineWidth': lineWidth,
-            'color': rgba(color, colordict),
+            'color': color,
             'marker': symbol,
             # 'axes': axisId,
             # 'fill': fill,
