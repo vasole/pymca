@@ -206,6 +206,14 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.yMinToZeroIcon	= qt.QIcon(qt.QPixmap(IconDict["ymintozero"]))
         self.subtractIcon	= qt.QIcon(qt.QPixmap(IconDict["subtract"]))
 
+        self.imageIcon     = qt.QIcon(qt.QPixmap(IconDict["image"]))
+        self.eraseSelectionIcon = qt.QIcon(qt.QPixmap(IconDict["eraseselect"]))
+        self.rectSelectionIcon  = qt.QIcon(qt.QPixmap(IconDict["boxselect"]))
+        self.brushSelectionIcon = qt.QIcon(qt.QPixmap(IconDict["brushselect"]))
+        self.brushIcon          = qt.QIcon(qt.QPixmap(IconDict["brush"]))
+        self.additionalIcon     = qt.QIcon(qt.QPixmap(IconDict["additionalselect"]))
+        self.polygonIcon = qt.QIcon(qt.QPixmap(IconDict["polygon"]))
+
         self.printIcon	= qt.QIcon(qt.QPixmap(IconDict["fileprint"]))
         self.saveIcon	= qt.QIcon(qt.QPixmap(IconDict["filesave"]))
 
@@ -263,12 +271,64 @@ class PlotWindow(PlotWidget.PlotWidget):
                                 toggle = False)
             self.aspectButton.setChecked(False)
             #self.aspectButton.setDown(False)
+
         #colormap
         if kw.get('colormap', False):
             tb = self._addToolButton(self.colormapIcon,
                                      self._colormapIconSignal,
                                     'Change Colormap')
             self.colormapToolButton = tb
+
+        if kw.get('normal', False):
+            tb = self._addToolButton(self.normalIcon,
+                                     self._normalIconSignal,
+                                    'Set normal (default) mode')
+            self.normalToolButton = tb
+
+        # image and selection related icons
+        if kw.get('imageIcons', False) or kw.get('imageicons', False):
+            tb = self._addToolButton(self.imageIcon,
+                                     self._imageIconSignal,
+                                     'Reset')
+            self.imageToolButton = tb
+
+            tb = self._addToolButton(self.eraseSelectionIcon,
+                                     self._eraseSelectionIconSignal,
+                                     'Erase Selection')
+            self.eraseSelectionToolButton = tb
+
+            tb = self._addToolButton(self.rectSelectionIcon,
+                                     self._rectSelectionIconSignal,
+                                     'Rectangular Selection')
+            self.rectSelectionToolButton = tb
+
+            tb = self._addToolButton(self.brushSelectionIcon,
+                                     self._brushSelectionIconSignal,
+                                     'Brush Selection')
+            self.brushSelectionToolButton = tb
+
+
+            tb = self._addToolButton(self.brushIcon,
+                                     self._brushIconSignal,
+                                     'Select Brush')
+            self.brushToolButton = tb
+
+            if kw.get("polygon", False):
+                tb = self._addToolButton(self.polygonIcon,
+                                self._polygonIconSignal,
+                                'Polygon selection')
+                self.polygonSelectionToolButton = tb
+            tb = self._addToolButton(self.additionalIcon,
+                                     self._additionalIconSignal,
+                                     'Additional Selections Menu')
+            self.additionalSelectionToolButton = tb
+        else:
+            if kw.get("polygon", False):
+                tb = self._addToolButton(self.polygonIcon,
+                                self._polygonIconSignal,
+                                'Polygon selection')
+                self.polygonSelectionToolButton = tb
+            self.imageToolButton = None
 
         #flip
         if kw.get('flip', False):
@@ -287,9 +347,10 @@ class PlotWindow(PlotWidget.PlotWidget):
 
 
         #toggle Points/Lines
-        tb = self._addToolButton(self.togglePointsIcon,
-                             self._togglePointsSignal,
-                             'Toggle Points/Lines')
+        if kw.get('togglePoints', True):
+            tb = self._addToolButton(self.togglePointsIcon,
+                                     self._togglePointsSignal,
+                                     'Toggle Points/Lines')
 
         #energy icon
         if kw.get('energy', False):
@@ -337,6 +398,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             tb = self._addToolButton(self.subtractIcon,
                                 self._subtractIconSignal,
                                 'Subtract Active Curve')
+
         #save
         infotext = 'Save Active Curve or Widget'
         tb = self._addToolButton(self.saveIcon,
@@ -530,6 +592,12 @@ class PlotWindow(PlotWidget.PlotWidget):
         if DEBUG:
             print("_colormapIconSignal called")
 
+    def _normalIconSignal(self):
+        if DEBUG:
+            print("_normalIconSignal")
+        # default implementation is setting zoom mode
+        self.setZoomModeEnabled(True)
+
     def showRoiWidget(self, position=None):
         self._toggleROI(position)
 
@@ -603,6 +671,33 @@ class PlotWindow(PlotWidget.PlotWidget):
 
     def _saveIconSignal(self):
         print("_saveIconSignal")
+
+    def _imageIconSignal(self):
+        print("_imageIconSignal")
+
+    def _eraseSelectionIconSignal(self):
+        print("_eraseSelectionIconSignal")
+
+    def _rectSelectionIconSignal(self):
+        if DEBUG:
+            print("_rectSelectionIconSignal")
+        #default implementation set drawing mode with a mask
+        self.setDrawModeEnabled(True, shape="rectangle", label="mask")
+
+    def _brushSelectionIconSignal(self):
+        print("_brushSelectionIconSignal")
+
+    def _brushIconSignal(self):
+        print("_brushIconSignal")
+
+    def _additionalIconSignal(self):
+        print("_additionalIconSignal")
+
+    def _polygonIconSignal(self):
+        if DEBUG:
+            print("_polygonIconSignal")
+        #default implementation set drawing mode with a mask
+        self.setDrawModeEnabled(True, shape="polygon", label="mask")
 
     def _pluginClicked(self):
         actionList = []
@@ -1101,7 +1196,12 @@ if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * x
     app = qt.QApplication([])
-    plot = PlotWindow(roi=True, control=True, position=True)#uselegendmenu=True)
+    if "opengl" in sys.argv:
+        from PyMca5.PyMcaGraph.backends import OpenGLBackend
+        plot = PlotWindow(backend=OpenGLBackend.OpenGLBackend, roi=True, control=True,
+                          position=True)#uselegendmenu=True)
+    else:
+        plot = PlotWindow(roi=True, control=True, position=True)#uselegendmenu=True)
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)
