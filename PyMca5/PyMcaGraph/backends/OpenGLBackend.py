@@ -49,6 +49,7 @@ except ImportError:
 
 import numpy as np
 import math
+import time
 
 import OpenGL
 if 0:  # Debug
@@ -254,6 +255,24 @@ def _ticks(start, stop, step):
             start += step
 
 
+def xyOffsetsToSegment(x, y, x0, y0, x1, y1):
+    seg = x1 - x0, y1 - y0
+    vec = x - x0, y - y0
+    if seg[0] == 0. and seg[1] == 0.:
+        return vec
+
+    alpha = seg[0] * vec[0] + seg[1] * vec[1]
+    alpha /= seg[0] ** 2 + seg[1] ** 2
+    if alpha <= 0.:
+        compPt = x0, y0
+    elif alpha >= 1.:
+        compPt = x1, y1
+    else:
+        compPt = x0 + alpha * seg[0], y0 + alpha * seg[1]
+
+    return compPt[0] - x, compPt[1] - y
+
+
 # signals #####################################################################
 
 def prepareDrawingSignal(event, type_, points, parameters={}):
@@ -274,8 +293,11 @@ def prepareDrawingSignal(event, type_, points, parameters={}):
     return eventDict
 
 
-def prepareMouseMovedSignal(button, xData, yData, xPixel, yPixel):
-    return {'event': 'mouseMoved',
+def prepareMouseSignal(eventType, button, xData, yData, xPixel, yPixel):
+    assert(eventType in ('mouseMoved', 'mouseClicked', 'mouseDoubleClicked'))
+    assert(button in (None, 'left', 'right'))
+
+    return {'event': eventType,
             'x': xData,
             'y': yData,
             'xpixel': xPixel,
@@ -339,9 +361,38 @@ def prepareMarkerSignal(eventType, button, label, type_,
     return eventDict
 
 
+def prepareImageSignal(button, label, type_, col, row,
+                       x, y, xPixel, yPixel):
+    return {'event': 'imageClicked',
+            'button': button,
+            'label': label,
+            'type': type_,
+            'col': col,
+            'row': row,
+            'x': x,
+            'y': y,
+            'xpixel': xPixel,
+            'ypixel': yPixel}
+
+
+def prepareCurveSignal(button, label, type_, xData, yData,
+                       x, y, xPixel, yPixel):
+    return {'event': 'curveClicked',
+            'button': button,
+            'label': label,
+            'type': type_,
+            'xdata': xData,
+            'ydata': yData,
+            'x': x,
+            'y': y,
+            'xpixel': xPixel,
+            'ypixel': yPixel}
+
+
 # Interaction #################################################################
 
 class Zoom(ClicOrDrag):
+    _DOUBLE_CLICK_TIMEOUT = 0.4
 
     class ZoomIdle(ClicOrDrag.Idle):
         def onWheel(self, x, y, angle):
@@ -351,6 +402,7 @@ class Zoom(ClicOrDrag):
     def __init__(self, backend):
         self.backend = backend
         self.zoomStack = []
+        self._lastClic = 0., None
 
         states = {
             'idle': Zoom.ZoomIdle,
@@ -384,10 +436,33 @@ class Zoom(ClicOrDrag):
 
     def clic(self, x, y, btn):
         if btn == LEFT_BTN:
-            xMin, xMax = self.backend.getGraphXLimits()
-            yMin, yMax = self.backend.getGraphYLimits()
-            self.zoomStack.append((xMin, xMax, yMin, yMax))
-            self._zoom(x, y, 2)
+            lastClicTime, lastClicPos = self._lastClic
+
+            # Signal mouse double clicked event first
+            if (time.time() - lastClicTime) <= self._DOUBLE_CLICK_TIMEOUT:
+                # Use position of first clic
+                eventDict = prepareMouseSignal('mouseDoubleClicked', 'left',
+                                               *lastClicPos)
+                self.backend._callback(eventDict)
+
+                self._lastClic = 0., None
+
+            else:
+                # Signal mouse clicked event
+                xData, yData = self.backend.pixelToDataCoords(x, y)
+                assert(xData is not None and yData is not None)
+                eventDict = prepareMouseSignal('mouseClicked', 'left',
+                                               xData, yData,
+                                               x, y)
+                self.backend._callback(eventDict)
+
+                self._lastClic = time.time(), (xData, yData, x, y)
+
+            # Zoom-in centered on mouse cursor
+            # xMin, xMax = self.backend.getGraphXLimits()
+            # yMin, yMax = self.backend.getGraphYLimits()
+            # self.zoomStack.append((xMin, xMax, yMin, yMax))
+            # self._zoom(x, y, 2)
         else:
             try:
                 xMin, xMax, yMin, yMax = self.zoomStack.pop()
@@ -709,8 +784,6 @@ class SelectVLine(Select1Point):
 
 
 class MarkerInteraction(ClicOrDrag):
-    _PICK_OFFSET = 3
-
     class Idle(ClicOrDrag.Idle):
         def __init__(self, *args, **kwargs):
             super(MarkerInteraction.Idle, self).__init__(*args, **kwargs)
@@ -719,17 +792,32 @@ class MarkerInteraction(ClicOrDrag):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
                 testBehaviors = set(('selectable', 'draggable'))
-                marker = self.machine.pick(
+
+                marker = self.machine.backend.pickMarker(
                     x, y,
                     lambda marker: marker['behaviors'] & testBehaviors)
-
                 if marker is not None:
                     self.goto('clicOrDrag', x, y)
                     return True
+
+                else:
+                    curve, _ = self.machine.backend.pickCurve(x, y)
+                    if curve is not None:
+                        self.goto('clicOrDrag', x, y)
+                        return True
+
+                    else:
+                        image, _ = self.machine.backend.pickImage(
+                            x, y,
+                            lambda image: image['behaviors'] & testBehaviors)
+                        if image is not None:
+                            self.goto('clicOrDrag', x, y)
+                            return True
+
             return False
 
         def onMove(self, x, y):
-            marker = self.machine.pick(x, y)
+            marker = self.machine.backend.pickMarker(x, y)
             if marker is not None:
                 posData = self.machine.backend.pixelToDataCoords(x, y)
                 eventDict = prepareHoverSignal(
@@ -768,31 +856,9 @@ class MarkerInteraction(ClicOrDrag):
         }
         StateMachine.__init__(self, states, 'idle')
 
-    def pick(self, x, y, test=None):
-        if test is None:
-            test = lambda marker: True
-        for marker in reversed(self.backend._markers.values()):
-            if marker['x'] is not None:
-                xMarker = self.backend.dataToPixelCoords(xData=marker['x'])
-                xDist = math.fabs(x - xMarker)
-            else:
-                xDist = 0
-
-            if marker['y'] is not None:
-                yMarker = self.backend.dataToPixelCoords(yData=marker['y'])
-                yDist = math.fabs(y - yMarker)
-            else:
-                yDist = 0
-
-            if xDist <= self._PICK_OFFSET and yDist <= self._PICK_OFFSET:
-                if test(marker):
-                    return marker
-
-        return None
-
     def clic(self, x, y, btn):
         if btn == LEFT_BTN:
-            marker = self.pick(
+            marker = self.backend.pickMarker(
                 x, y, lambda marker: 'selectable' in marker['behaviors'])
             if marker is not None:
                 # Mimic MatplotlibBackend signal
@@ -815,6 +881,31 @@ class MarkerInteraction(ClicOrDrag):
                 self.backend._callback(eventDict)
 
                 self.backend.replot()
+            else:
+                curve, posCurve = self.backend.pickCurve(x, y)
+                posCurve = np.array(posCurve, dtype=np.float32)
+
+                if curve is not None:
+                    xData, yData = self.backend.pixelToDataCoords(x, y)
+                    eventDict = prepareCurveSignal('left',
+                                                   curve['legend'],
+                                                   'curve',
+                                                   posCurve[:, 0],
+                                                   posCurve[:, 1],
+                                                   xData, yData, x, y)
+                    self.backend._callback(eventDict)
+
+                else:
+                    image, posImg = self.backend.pickImage(
+                        x, y, lambda image: 'selectable' in image['behaviors'])
+                    if image is not None:
+                        xData, yData = self.backend.pixelToDataCoords(x, y)
+                        eventDict = prepareImageSignal('left',
+                                                       image['legend'],
+                                                       'image',
+                                                       posImg[0], posImg[1],
+                                                       xData, yData, x, y)
+                        self.backend._callback(eventDict)
 
     def _signalMarkerMovingEvent(self, eventType, marker, x, y):
         assert(marker is not None)
@@ -840,13 +931,19 @@ class MarkerInteraction(ClicOrDrag):
         self.backend._callback(eventDict)
 
     def beginDrag(self, x, y):
-        self.marker = self.pick(
+        self._lastPos = self.backend.pixelToDataCoords(x, y)
+        self.image = None
+        self.marker = self.backend.pickMarker(
             x, y, lambda marker: 'draggable' in marker['behaviors'])
-        self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
+        if self.marker is not None:
+            self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
+        else:
+            self.image, _ = self.backend.pickImage(
+                x, y, lambda image: 'draggable' in image['behaviors'])
 
     def drag(self, x, y):
+        xData, yData = self.backend.pixelToDataCoords(x, y)
         if self.marker is not None:
-            xData, yData = self.backend.pixelToDataCoords(x, y)
             if self.marker['x'] is not None:
                 self.marker['x'] = xData
             if self.marker['y'] is not None:
@@ -855,6 +952,18 @@ class MarkerInteraction(ClicOrDrag):
             self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
 
             self.backend.replot()
+
+        if self.image is not None:
+            dx, dy = xData - self._lastPos[0], yData - self._lastPos[1]
+            self.image['bBox']['xMin'] += dx
+            self.image['bBox']['xMax'] += dx
+            self.image['bBox']['yMin'] += dy
+            self.image['bBox']['yMax'] += dy
+
+            self.backend._plotDirtyFlag = True
+            self.backend.replot()
+
+        self._lastPos = xData, yData
 
     def endDrag(self, startPos, endPos):
         if self.marker is not None:
@@ -876,6 +985,8 @@ class MarkerInteraction(ClicOrDrag):
             self.backend._callback(eventDict)
 
         del self.marker
+        del self.image
+        del self._lastPos
 
 
 class FocusManager(StateMachine):
@@ -945,6 +1056,8 @@ class FocusManager(StateMachine):
 
 
 class OpenGLPlotCanvas(PlotBackend):
+    _PICK_OFFSET = 3
+
     def __init__(self, parent=None, **kw):
         self._xMin, self._xMax = 0., 1.
         self._yMin, self._yMax = 0., 1.
@@ -1025,8 +1138,9 @@ class OpenGLPlotCanvas(PlotBackend):
         # Signal mouse move event
         xData, yData = self.pixelToDataCoords(xPixel, yPixel)
         if xData is not None and yData is not None:
-            eventDict = prepareMouseMovedSignal(None, xData, yData,
-                                                xPixel, yPixel)
+            eventDict = prepareMouseSignal('mouseMoved', None,
+                                           xData, yData,
+                                           xPixel, yPixel)
             self._callback(eventDict)
 
         if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
@@ -1047,6 +1161,102 @@ class OpenGLPlotCanvas(PlotBackend):
         if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
             self.focusManager.handleEvent('wheel', xPixel, yPixel,
                                           angleInDegrees)
+
+    # Picking #
+
+    def pickMarker(self, x, y, test=None):
+        if test is None:
+            test = lambda marker: True
+        for marker in reversed(self._markers.values()):
+            if marker['x'] is not None:
+                xMarker = self.dataToPixelCoords(xData=marker['x'])
+                xDist = math.fabs(x - xMarker)
+            else:
+                xDist = 0
+
+            if marker['y'] is not None:
+                yMarker = self.dataToPixelCoords(yData=marker['y'])
+                yDist = math.fabs(y - yMarker)
+            else:
+                yDist = 0
+
+            if xDist <= self._PICK_OFFSET and yDist <= self._PICK_OFFSET:
+                if test(marker):
+                    return marker
+        return None
+
+    def pickImage(self, x, y, test=None):
+        if test is None:
+            test = lambda image: True
+        for image in reversed(self._images.values()):
+            xPick, yPick = self.pixelToDataCoords(x, y)
+            bbox = image['bBox']
+
+            if bbox['xMin'] <= xPick and xPick <= bbox['xMax'] and \
+               bbox['yMin'] <= yPick and yPick <= bbox['yMax']:
+                if test(image):
+                    xPick = int((xPick - bbox['xMin']) / bbox['xStep'])
+                    yPick = int((yPick - bbox['yMin']) / bbox['yStep'])
+                    return image, (xPick, yPick)
+        return None, None
+
+    def pickCurve(self, x, y):
+        for curve in reversed(self._curves.values()):
+            xPick, yPick = self.pixelToDataCoords(x, y)
+            bbox = curve['bBox']
+            offset = max(curve['_curve2d'].markerSize / 2,
+                         self._PICK_OFFSET)
+            xMarkOffset, yMarkOffset = self.pixelToDataSize(offset,
+                                                            offset)
+            xMarkOffset = math.fabs(xMarkOffset)
+            yMarkOffset = math.fabs(yMarkOffset)
+
+            offset = max(curve['_curve2d'].lineWidth / 2,
+                         self._PICK_OFFSET)
+
+            xLineOffset, yLineOffset = self.pixelToDataSize(offset, offset)
+            xLineOffset = math.fabs(xLineOffset)
+            yLineOffset = math.fabs(yLineOffset)
+
+            xOffset = max(xMarkOffset, xLineOffset)
+            yOffset = max(yMarkOffset, yLineOffset)
+
+            if bbox['xMin'] - xOffset <= xPick and \
+               xPick <= bbox['xMax'] + xOffset and \
+               bbox['yMin'] - yOffset <= yPick and \
+               yPick <= bbox['yMax'] + yOffset:
+                picked = []
+                if curve['_curve2d'].marker is not None:
+                    # Marker picking
+                    xPickMin = xPick - xMarkOffset
+                    xPickMax = xPick + xMarkOffset
+                    yPickMin = yPick - yMarkOffset
+                    yPickMax = yPick + yMarkOffset
+
+                    picked = [
+                        (xData, yData)
+                        for xData, yData in zip(curve['xData'], curve['yData'])
+                        if xData >= xPickMin and xData <= xPickMax and
+                        yData >= yPickMin and yData <= yPickMax
+                    ]
+
+                if curve['_curve2d'].lineStyle is not None:
+                    # Curve picking as well
+
+                    x0, y0 = curve['xData'][0], curve['yData'][0]
+                    for x1, y1 in zip(curve['xData'], curve['yData']):
+                        xDist, yDist = xyOffsetsToSegment(xPick, yPick,
+                                                          x0, y0, x1, y1)
+                        if math.fabs(xDist) <= xLineOffset and \
+                           math.fabs(yDist) <= yLineOffset:
+                            picked.append((x0, y0))
+
+                        x0, y0 = x1, y1
+
+                if picked:
+                    return curve, sorted(set(picked))
+
+        return None, None
 
     # Manage Plot #
 
@@ -1223,8 +1433,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if yPixel is not None:
             if not self._isYInverted:
-                yData = - yPixel
-            yData = yData * (self._yMax - self._yMin) / float(plotHeight)
+                yPixel = - yPixel
+            yData = yPixel * (self._yMax - self._yMin) / float(plotHeight)
 
         if xPixel is None:
             return yData
@@ -1631,12 +1841,21 @@ class OpenGLPlotCanvas(PlotBackend):
             try:
                 curve2d = curve['_curve2d']
             except KeyError:
-                curve2d = curveFromArrays(curve['xData'], curve['yData'],
-                                          lineStyle=curve['lineStyle'],
-                                          lineWidth=curve['lineWidth'],
-                                          lineColor=curve['color'],
-                                          marker=curve['marker'],
-                                          markerColor=curve['color'])
+                if isinstance(curve['color'], np.ndarray):
+                    curve2d = curveFromArrays(curve['xData'], curve['yData'],
+                                              curve['color'],
+                                              lineStyle=curve['lineStyle'],
+                                              lineWidth=curve['lineWidth'],
+                                              marker=curve['marker'])
+
+                else:
+                    curve2d = curveFromArrays(curve['xData'], curve['yData'],
+                                              None,
+                                              lineStyle=curve['lineStyle'],
+                                              lineWidth=curve['lineWidth'],
+                                              lineColor=curve['color'],
+                                              marker=curve['marker'],
+                                              markerColor=curve['color'])
                 curve['_curve2d'] = curve2d
                 curve['_vbo'] = curve2d.xVboData.vbo
 
@@ -1733,9 +1952,12 @@ class OpenGLPlotCanvas(PlotBackend):
         self.makeCurrent()
 
         # info is ignored
-        if selectable or draggable:
-            raise NotImplementedError("selectable and draggable \
-                                      not implemented")
+
+        behaviors = set()
+        if selectable:
+            behaviors.add('selectable')
+        if draggable:
+            behaviors.add('draggable')
 
         oldImage = self._images.get(legend, None)
         if oldImage is not None and oldImage['data'].shape != data.shape:
@@ -1768,6 +1990,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     "Colors: {0}".format(colormap['colors']))
 
             self._images[legend] = {
+                'legend': legend,
                 'zOrder': z,
                 'data': data,
                 'colormapName': colormap['name'][:],
@@ -1776,7 +1999,8 @@ class OpenGLPlotCanvas(PlotBackend):
                 else colormap['vmin'],
                 'vmax': data.max() if colormap['autoscale']
                 else colormap['vmax'],
-                'bBox': bbox
+                'bBox': bbox,
+                'behaviors': behaviors
             }
             if oldImage is not None and '_texture' in oldImage:
                 # Reuse texture and update
@@ -1791,7 +2015,13 @@ class OpenGLPlotCanvas(PlotBackend):
             assert(data.dtype == np.uint8 or
                    np.can_cast(data.dtype, np.float32))
 
-            self._images[legend] = {'zOrder': z, 'data': data, 'bBox': bbox}
+            self._images[legend] = {
+                'legend': legend,
+                'zOrder': z,
+                'data': data,
+                'bBox': bbox,
+                'behaviors': behaviors
+            }
             if oldImage is not None and '_texture' in oldImage:
                 # Reuse texture and update
                 format_ = GL_RGBA if data.shape[2] == 4 else GL_RGB
@@ -1920,6 +2150,9 @@ class OpenGLPlotCanvas(PlotBackend):
         # axisId = kw.get('yaxis', axisId)
         # fill = info.get('plot_fill', False)
 
+        if not isinstance(color, np.ndarray):
+            color = rgba(color, colordict)
+
         bbox = {
             'xMin': min(x),
             'xMax': max(x),
@@ -1928,11 +2161,12 @@ class OpenGLPlotCanvas(PlotBackend):
         }
 
         self._curves[legend] = {
+            'legend': legend,
             'xData': x,
             'yData': y,
             'lineStyle': style,
             'lineWidth': lineWidth,
-            'color': rgba(color, colordict),
+            'color': color,
             'marker': symbol,
             # 'axes': axisId,
             # 'fill': fill,

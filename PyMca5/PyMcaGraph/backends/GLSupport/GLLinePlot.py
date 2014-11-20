@@ -66,18 +66,22 @@ class Lines2D(object):
         uniform mat4 matrix;
         attribute float xPos;
         attribute float yPos;
+        attribute vec4 color;
+
+        varying vec4 vColor;
 
         void main(void) {
             gl_Position = matrix * vec4(xPos, yPos, 0.0, 1.0);
+            vColor = color;
         }
         """,
             'fragment': """
         #version 120
 
-        uniform vec4 color;
+        varying vec4 vColor;
 
         void main(void) {
-            gl_FragColor = color;
+            gl_FragColor = vColor;
         }
         """
         },
@@ -94,9 +98,11 @@ class Lines2D(object):
         uniform vec2 halfViewportSize;
         attribute float xPos;
         attribute float yPos;
+        attribute vec4 color;
         attribute float distance;
 
         varying float vDist;
+        varying vec4 vColor;
 
         void main(void) {
             gl_Position = matrix * vec4(xPos, yPos, 0.0, 1.0);
@@ -105,21 +111,22 @@ class Lines2D(object):
                          halfViewportSize;
             float pixelPerDataEstimate = length(probe)/sqrt(2.);
             vDist = distance * pixelPerDataEstimate;
+            vColor = color;
         }
         """,
             'fragment': """
         #version 120
 
-        uniform vec4 color;
         uniform float dashPeriod;
 
         varying float vDist;
+        varying vec4 vColor;
 
         void main(void) {
             if (mod(vDist, dashPeriod) > 0.5 * dashPeriod) {
                 discard;
             } else {
-                gl_FragColor = color;
+                gl_FragColor = vColor;
             }
         }
         """
@@ -128,7 +135,8 @@ class Lines2D(object):
 
     _programs = defaultdict(dict)
 
-    def __init__(self, xVboData, yVboData, distVboData=None,
+    def __init__(self, xVboData, yVboData,
+                 colorVboData=None, distVboData=None,
                  style=SOLID, color=(0., 0., 0., 1.),
                  width=1, dashPeriod=20):
         assert(xVboData.size == yVboData.size)
@@ -137,6 +145,9 @@ class Lines2D(object):
         if distVboData is not None:
             assert(distVboData.size == xVboData.size)
             self.distVboData = distVboData
+
+        self.colorVboData = colorVboData
+        assert(colorVboData is None or colorVboData.size == xVboData.size)
 
         self.color = color
         self.width = width
@@ -205,7 +216,14 @@ class Lines2D(object):
         prog.use()
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
-        glUniform4f(prog.uniforms['color'], *self.color)
+
+        colorAttrib = prog.attributes['color']
+        if self.colorVboData is not None:
+            glEnableVertexAttribArray(colorAttrib)
+            self.colorVboData.setVertexAttrib(colorAttrib)
+        else:
+            glDisableVertexAttribArray(colorAttrib)
+            glVertexAttrib4f(colorAttrib, *self.color)
 
         xPosAttrib = prog.attributes['xPos']
         glEnableVertexAttribArray(xPosAttrib)
@@ -252,9 +270,13 @@ class Lines2D(object):
         glDisable(GL_LINE_SMOOTH)
 
 
-def lines2DFromArrays(xData, yData, *args, **kwargs):
-    xVboAttrib, yVboAttrib = createVBOFromArrays((xData, yData))
-    return Lines2D(xVboAttrib, yVboAttrib, None, *args, **kwargs)
+def lines2DFromArrays(xData, yData, cData=None, **kwargs):
+    if cData is None:
+        xAttrib, yAttrib = createVBOFromArrays((xData, yData))
+        return Lines2D(xAttrib, yAttrib, None, None, **kwargs)
+    else:
+        xAttrib, yAttrib, cAttrib = createVBOFromArrays((xData, yData, cData))
+        return Lines2D(xAttrib, yAttrib, cAttrib, None, **kwargs)
 
 
 def distancesFromArrays(xData, yData):
@@ -270,10 +292,19 @@ def distancesFromArrays(xData, yData):
     return dists
 
 
-def dashedLines2DFromArrays(xData, yData, *args, **kwargs):
+def dashedLines2DFromArrays(xData, yData, cData=None, **kwargs):
     dists = distancesFromArrays(xData, yData)
-    xAttrib, yAttrib, distAttrib = createVBOFromArrays((xData, yData, dists))
-    return Lines2D(xAttrib, yAttrib, distAttrib, style=DASHED, *args, **kwargs)
+    if cData is None:
+        arrays = xData, yData, dists
+        xAttrib, yAttrib, dAttrib = createVBOFromArrays(arrays)
+        return Lines2D(xAttrib, yAttrib, None, dAttrib,
+                       style=DASHED, *args, **kwargs)
+
+    else:
+        arrays = xData, yData, cData, dists
+        xAttrib, yAttrib, cAttrib, dAttrib = createVBOFromArrays(arrays)
+        return Lines2D(xAttrib, yAttrib, cAttrib, dAttrib,
+                       style=DASHED, *args, **kwargs)
 
 
 # points ######################################################################
@@ -292,9 +323,13 @@ class Points2D(object):
     uniform float size;
     attribute float xPos;
     attribute float yPos;
+    attribute vec4 color;
+
+    varying vec4 vColor;
 
     void main(void) {
         gl_Position = matrix * vec4(xPos, yPos, 0.0, 1.0);
+        vColor = color;
         gl_PointSize = size;
     }
     """
@@ -347,8 +382,9 @@ class Points2D(object):
         """
     #version 120
 
-    uniform vec4 color;
     uniform float size;
+
+    varying vec4 vColor;
     """,
         """
     void main(void) {
@@ -356,7 +392,7 @@ class Points2D(object):
         if (alpha <= 0.) {
             discard;
         } else {
-            gl_FragColor = color;
+            gl_FragColor = vColor;
             gl_FragColor.a = mix(0., gl_FragColor.a, alpha);
         }
     }
@@ -364,7 +400,7 @@ class Points2D(object):
 
     _programs = defaultdict(dict)
 
-    def __init__(self, xVboData, yVboData,
+    def __init__(self, xVboData, yVboData, colorVboData=None,
                  marker=SQUARE, color=(0., 0., 0., 1.), size=7):
         self.color = color
         self.marker = marker
@@ -373,6 +409,9 @@ class Points2D(object):
         assert(xVboData.size == yVboData.size)
         self.xVboData = xVboData
         self.yVboData = yVboData
+        self.colorVboData = colorVboData
+        if colorVboData is not None:
+            assert(colorVboData.size == xVboData.size)
 
     @property
     def marker(self):
@@ -437,13 +476,20 @@ class Points2D(object):
         prog = self._getProgram(self.marker)
         prog.use()
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
-        glUniform4f(prog.uniforms['color'], *self.color)
         if self.marker in (POINT, PIXEL):
             size = 1
         else:
             size = self.size
         glUniform1f(prog.uniforms['size'], size)
         # glPointSize(self.size)
+
+        cAttrib = prog.attributes['color']
+        if self.colorVboData:
+            glEnableVertexAttribArray(cAttrib)
+            self.colorVboData.setVertexAttrib(cAttrib)
+        else:
+            glDisableVertexAttribArray(cAttrib)
+            glVertexAttrib4f(cAttrib, *self.color)
 
         xAttrib = prog.attributes['xPos']
         glEnableVertexAttribArray(xAttrib)
@@ -458,9 +504,14 @@ class Points2D(object):
         glUseProgram(0)
 
 
-def points2DFromArrays(xData, yData, *args, **kwargs):
-    xVboAttrib, yVboAttrib = createVBOFromArrays((xData, yData))
-    return Points2D(xVboAttrib, yVboAttrib, *args, **kwargs)
+def points2DFromArrays(xData, yData, cData=None, *kwargs):
+    if cData is None:
+        xAttrib, yAttrib = createVBOFromArrays((xData, yData))
+        cAttrib = None
+    else:
+        xAttrib, yAttrib, cAttrib = createVBOFromArrays((xData, yData, cData))
+
+    return Points2D(xVboAttrib, yVboAttrib, **kwargs)
 
 
 # curves ######################################################################
@@ -486,7 +537,8 @@ def _proxyProperty(componentName, attributeName):
 
 class Curve2D(object):
 
-    def __init__(self, xVboData, yVboData, distVboData=None,
+    def __init__(self, xVboData, yVboData,
+                 colorVboData=None, distVboData=None,
                  lineStyle=None, lineColor=None,
                  lineWidth=None, lineDashPeriod=None,
                  marker=None, markerColor=None, markerSize=None):
@@ -497,18 +549,21 @@ class Curve2D(object):
             kwargs['width'] = lineWidth
         if lineDashPeriod is not None:
             kwargs['dashPeriod'] = lineDashPeriod
-        self.lines = Lines2D(xVboData, yVboData, distVboData, **kwargs)
+        self.lines = Lines2D(xVboData, yVboData,
+                             colorVboData, distVboData, **kwargs)
 
         kwargs = {'marker': marker}
         if markerColor is not None:
             kwargs['color'] = markerColor
         if markerSize is not None:
             kwargs['size'] = markerSize
-        self.points = Points2D(xVboData, yVboData, **kwargs)
+        self.points = Points2D(xVboData, yVboData, colorVboData, **kwargs)
 
     xVboData = _proxyProperty('lines', 'xVboData')
 
     yVboData = _proxyProperty('lines', 'yVboData')
+
+    colorVboData = _proxyProperty('lines', 'colorVboData')
 
     distVboData = _proxyProperty('lines', 'distVboData')
 
@@ -536,15 +591,26 @@ class Curve2D(object):
         self.points.render(matrix)
 
 
-def curveFromArrays(xData, yData, **kwargs):
+def curveFromArrays(xData, yData, cData=None, **kwargs):
     lineStyle = kwargs.get('lineStyle', None)
     if lineStyle == '--':
         dists = distancesFromArrays(xData, yData)
-        xAttrib, yAttrib, dAttrib = createVBOFromArrays((xData, yData, dists))
-    else:
+        if colorData is None:
+            arrays = xData, yData, dists
+            xAttrib, yAttrib, dAttrib = createVBOFromArrays(arrays)
+            return Curve2D(xAttrib, yAttrib, None, dAttrib, **kwargs)
+        else:
+            arrays = xData, yData, cData, dists
+            xAttrib, yAttrib, cAttrib, dAttrib = createVBOFromArrays(arrays)
+            return Curve2D(xAttrib, yAttrib, cAttrib, dAttrib, **kwargs)
+
+    elif cData is None:
         xAttrib, yAttrib = createVBOFromArrays((xData, yData))
-        dAttrib = None
-    return Curve2D(xAttrib, yAttrib, dAttrib, **kwargs)
+        return Curve2D(xAttrib, yAttrib, None, None, **kwargs)
+        cAttrib, dAttrib = None, None
+    else:
+        xAttrib, yAttrib, cAttrib = createVBOFromArrays((xData, yData, cData))
+        return Curve2D(xAttrib, yAttrib, cAttrib, None, **kwargs)
 
 
 # main ########################################################################
