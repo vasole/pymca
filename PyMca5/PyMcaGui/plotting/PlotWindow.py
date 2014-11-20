@@ -855,7 +855,8 @@ class PlotWindow(PlotWidget.PlotWidget):
             label = ddict['label']
             if label in ['ROI min', 'ROI max', 'ROI middle']:
                 self._handleROIMarkerEvent(ddict)
-        if ddict['event'] in ["curveClicked", "legendClicked"]:
+        if ddict['event'] in ["curveClicked", "legendClicked"] and \
+           self.isActiveCurveHandlingEnabled():
             legend = ddict["label"]
             self.setActiveCurve(legend)
         if ddict['event'] in ['mouseMoved']:
