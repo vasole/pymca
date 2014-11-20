@@ -32,7 +32,7 @@ import os
 import numpy
 from PyMca5.PyMcaGraph.ctools import pnpoly
 
-DEBUG = 0
+DEBUG = 1
 
 from . import PlotWindow
 qt = PlotWindow.qt
@@ -42,7 +42,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
     def __init__(self, parent=None, backend=None, plugins=False, newplot=False,
                  control=False, position=False, maxNRois=1, grid=False,
                  logx=False, logy=False, togglePoints=False, normal=True,
-                 polygon=True, colormap=False, aspect=True,
+                 polygon=True, colormap=True, aspect=True,
                  imageIcons=True, **kw):
         super(MaskScatterWidget, self).__init__(parent=parent,
                                                 backend=backend,
@@ -60,6 +60,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                                                 imageIcons=imageIcons,
                                                 polygon=polygon,
                                                 **kw)
+        self.setPlotViewMode("scatter")
         self._selectionCurve = None
         self._selectionMask = None
         self._selectionColors = numpy.zeros((len(self.colorList), 4), numpy.uint8)
@@ -74,6 +75,31 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._eraseMode = False
         self._brushMode = False
         self.setDrawModeEnabled(False)
+
+    def setPlotViewMode(self, mode="scatter", bins=None):
+        if mode.upper() != "DENSITY":
+            self._activateScatterPlotView()
+        else:
+            self._activateDensityPlotView(bins)
+
+    def _activateScatterPlotView(self):
+        for key in ["colormap", "brushSelection", "brush", "rectangle"]:
+            self.setToolBarActionVisible(key, False)
+        if hasattr(self, "eraseSelectionToolButton"):
+            self.eraseSelectionToolButton.setToolTip("Set erase mode if checked")            
+            self.eraseSelectionToolButton.setCheckable(True)
+            self.eraseSelectionToolButton.setChecked(True)
+        if hasattr(self, "polygonSelectionToolButton"):
+            self.polygonSelectionToolButton.setCheckable(True)
+
+    def _activateDensityPlotView(self, bins):
+        for key in ["colormap", "brushSelection", "brush", "rectangle"]:
+            self.setToolBarActionVisible(key, True)
+        if hasattr(self, "eraseSelectionToolButton"):
+            self.eraseSelectionToolButton.setCheckable(False)
+        if hasattr(self, "polygonSelectionToolButton"):
+            self.polygonSelectionToolButton.setCheckable(False)
+        raise NotImplemented("Density plot view not implemented yet")
 
     def setSelectionCurveData(self, x, y, legend="MaskScatterWidget", info=None,
                  replot=True, replace=True, line_style=" ", color="r", symbol=None, **kw):
@@ -135,6 +161,30 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             raise ValueError("Value %d outside the interval [0, %d]" % (intValue, self._maxNRois))
         self._nRoi = intValue
 
+    def _polygonIconSignal(self):
+        if self.polygonSelectionToolButton.isChecked():
+            self.setPolygonSelectionMode()
+        else:
+            self.setZoomModeEnabled(True)
+
+    def setZoomModeEnabled(self, flag):
+        super(MaskScatterWidget, self).setZoomModeEnabled(flag)
+        if flag:
+            if hasattr(self,"polygonSelectionToolButton"):
+                self.polygonSelectionToolButton.setChecked(False)
+
+    def graphCallback(self, ddict):
+        if DEBUG:
+            print("MaskScatterWidget graphCallback", ddict)
+        if ddict["event"] == "mouseClicked":
+            print("mouseClicked")
+        elif ddict["event"] == "drawingFinished":
+            print("drawing")
+        elif ddict["event"] == "mouseMoved":
+            print("mouseMoved")
+        # the base implementation handles ROIs, mouse poistion and activeCurve
+        super(MaskScatterWidget, self).graphCallback(ddict)
+
     def setPolygonSelectionMode(self):
         """
         Resets zoom mode and enters selection mode with the current active ROI index
@@ -144,6 +194,21 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         # one should be able to erase with a polygonal mask
         self._eraseMode = False
         self.setDrawModeEnabled(True, shape="polygon", label="mask")
+        self.setZoomModeEnabled(False)
+        if hasattr(self,"polygonSelectionToolButton"):
+            self.polygonSelectionToolButton.setChecked(True)
+
+    def setEraseSelectionMode(self, erase=True):
+        if erase:
+            self._eraseMode = True
+        else:
+            self._eraseMode = False
+        if hasattr(self, "eraseSelectionToolButton"):
+            self.eraseSelectionToolButton.setCheckable(True)
+            if erase:
+                self.eraseSelectionToolButton.setChecked(True)
+            else:
+                self.eraseSelectionToolButton.setChecked(False)
 
 if __name__ == "__main__":
     app = qt.QApplication([])
