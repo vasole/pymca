@@ -1375,6 +1375,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                   linewidth=linewidth,
                                   picker=3,
                                   **kw)
+
+        # errorbar is a container?   
+        #axes.errorbar(x,y, label=legend,yerr=numpy.sqrt(y), linestyle=" ",color='b')
+
         # nice effects:
         #curveList[-1].set_drawstyle('steps-mid')
         if fill:
@@ -1738,11 +1742,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             # we have received a legend!
             legend = handle
-            handle = None
             testLists = [self.ax.lines, self.ax2.lines,
                          self.ax.collections, self.ax2.collections]
             for container in testLists:
                 for line2d in container:
+                    handle = None
                     label = line2d.get_label()
                     if label == legend:
                         handle = line2d
