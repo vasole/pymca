@@ -1279,7 +1279,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
-                 xlabel=None, ylabel=None, yaxis="left",
+                 xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
         if legend is None:
             legend = "Unnamed curve"
@@ -1287,19 +1287,16 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.clearCurves()
         else:
             self.removeCurve(legend, replot=False)
-        if info is None:
-            info = {}
-        color = info.get('plot_color', self._activeCurveColor)
-        color = kw.get('color', color)
-        symbol = info.get('plot_symbol', None)
-        symbol = kw.get('symbol', symbol)
+        if color is None:
+            color = self._activeCurveColor
         brush = color
-        style = info.get('plot_line_style', '-')
-        style = info.get('line_style', style)
+        style = linestyle
         linewidth = 1
-        axisId = info.get('plot_yaxis', 'left')
-        axisId = kw.get('yaxis', axisId)
-        fill = info.get('plot_fill', False)
+        if yaxis == "right":
+            axisId = yaxis
+        else:
+            axisId = "left"
+        fill = kw.get('plot_fill', False)
         if axisId == "right":
             axes = self.ax2
             if self._rightAxisEnabled is None:
@@ -1312,8 +1309,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if hasattr(color, "dtype"):
             if len(color) == len(x):
                 scatterPlot = True
-        if "color" in kw:
-            del kw["color"]
         if scatterPlot:
             # scatter plot
             if color.dtype not in [numpy.float32, numpy.float]:

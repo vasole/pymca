@@ -325,40 +325,26 @@ class Plot(PlotBase.PlotBase):
         """
         return self._plot.getDrawMode()
 
-    def addCurve(self, x, y, legend=None, info=None, replace=False,
-                 replot=True, **kw):
-        """
-        Add the 1D curve given by x an y to the graph.
-        :param x: The data corresponding to the x axis
-        :type x: list or numpy.ndarray
-        :param y: The data corresponding to the y axis
-        :type y: list or numpy.ndarray
-        :param legend: The legend to be associated to the curve
-        :type legend: string or None
-        :param info: Dictionary of information associated to the curve
-        :type info: dict or None
-        :param replace: Flag to indicate if already existing curves are to be deleted
-        :type replace: boolean default False
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True
-        """
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
         if legend is None:
             key = "Unnamed curve 1.1"
         else:
             key = str(legend)
         if info is None:
             info = {}
-        xlabel = info.get('xlabel', 'X')
-        ylabel = info.get('ylabel', 'Y')
-        if 'xlabel' in kw:
-            info['xlabel'] = kw['xlabel']
-        if 'ylabel' in kw:
-            info['ylabel'] = kw['ylabel']
+        if xlabel is None:
+            xlabel = info.get('xlabel', 'X')
+        if ylabel is None:
+            ylabel = info.get('ylabel', 'Y')
         info['xlabel'] = str(xlabel)
         info['ylabel'] = str(ylabel)
-        yaxis = info.get('yaxis', 'left')
-        yaxis = kw.get('yaxis', yaxis)
-        info['plot_yaxis'] = yaxis
+        if xerror is None:
+            xerror = info.get("sigmax", xerror)
+        if yerror is None:
+            yerror = info.get("sigmay", yerror)
 
         if replace:
             self._curveList = []
@@ -367,9 +353,6 @@ class Plot(PlotBase.PlotBase):
             self._styleIndex = 0
             self._plot.clearCurves()
 
-        symbol = None
-        color = None
-        line_style = None
         if key in self._curveList:
             idx = self._curveList.index(key)
             self._curveList[idx] = key
@@ -379,8 +362,8 @@ class Plot(PlotBase.PlotBase):
                 self._plot.removeCurve(key, replot=False)
                 symbol = self._curveDict[key][3].get('plot_symbol', symbol)
                 color = self._curveDict[key][3].get('plot_color', color)
-                line_style = self._curveDict[key][3].get('plot_line_style',
-                                                    line_style)
+                linestyle = self._curveDict[key][3].get('plot_linestyle',
+                                                    linestyle)
         else:
             self._curveList.append(key)
         #print("TODO: Here we can add properties to the info dictionnary")
@@ -395,7 +378,6 @@ class Plot(PlotBase.PlotBase):
 
         # deal with the symbol
         symbol = info.get("plot_symbol", symbol)
-        symbol = kw.get("symbol", symbol)
         if self._plotPoints and (symbol is None):
             symbol = 'o'
         elif symbol == "":
@@ -403,26 +385,24 @@ class Plot(PlotBase.PlotBase):
             pass
         info["plot_symbol"] = symbol
         color = info.get("plot_color", color)
-        color = kw.get("color", color)
+        linestyle = info.get("plot_linestyle", linestyle)
 
-        line_style = info.get("plot_line_style", None)
-        line_style = kw.get("line_style", line_style)
+        if self._plotLines and (linestyle is None):
+            linestyle = '-'
+        elif linestyle is None:
+            linestyle = ' '
 
-        if self._plotLines and (line_style is None):
-            line_style = '-'
-        elif line_style is None:
-            line_style = ' '
-
-        if (color is None) and (line_style is None):
-            color, line_style = self._getColorAndStyle()
-        elif line_style is None:
-            dummy, line_style = self._getColorAndStyle()
+        if (color is None) and (linestyle is None):
+            color, linestyle = self._getColorAndStyle()
+        elif linestyle is None:
+            dummy, linestyle = self._getColorAndStyle()
         elif color is None:
             color, dummy = self._getColorAndStyle()
-        #print("Legend = ", legend, "color = ", color, "style = ", line_style)
+
         info["plot_color"] = color
-        info["plot_line_style"] = line_style
-        info.get('plot_yaxis', 'left')
+        info["plot_linestyle"] = linestyle
+        if yaxis is None:
+            yaxis = info.get('plot_yaxis', 'left')
 
         if self.isXAxisLogarithmic() or self.isYAxisLogarithmic():
             if hasattr(color, "size"):
@@ -436,7 +416,15 @@ class Plot(PlotBase.PlotBase):
         if len(xplot):
             curveHandle = self._plot.addCurve(xplot, yplot, key, info,
                                               replot=False, replace=replace,
-                                              color=colorplot)
+                                              color=colorplot,
+                            symbol=info["plot_symbol"],
+                            linestyle=info["plot_linestyle"],
+                            xlabel=info["xlabel"],
+                            ylabel=info["ylabel"],
+                            yaxis=yaxis,
+                            xerror=xerror,
+                            yerror=yerror,
+                            **kw)
             info['plot_handle'] = curveHandle
         else:
             info['plot_handle'] = key

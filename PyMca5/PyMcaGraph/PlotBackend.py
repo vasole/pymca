@@ -183,7 +183,7 @@ class PlotBackend(object):
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
-                 xlabel=None, ylabel=None, yaxis="left",
+                 xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
         """
         Add the 1D curve given by x an y to the graph.
@@ -222,8 +222,8 @@ class PlotBackend(object):
         :type xlabel: string
         :ylabel: Label associated to the Y axis when the curve is active
         :type ylabel: string
-        :yaxis: "left" or "right"
-        :type yaxis: string
+        :yaxis: Anything different from "right" is equivalent to "left"
+        :type yaxis: string or None
         :xerror: Values with the uncertainties on the x values
         :type xlabel: array
         :yerror: Values with the uncertainties on the y values
