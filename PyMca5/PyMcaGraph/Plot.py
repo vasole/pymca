@@ -47,50 +47,27 @@ DEBUG = 0
 if DEBUG:
     PlotBase.DEBUG = True
 
-# should the color handling belong to the PlotBase class?
-colordict = {}
-colordict['b'] = colordict['blue']   = '#0000ff'
-colordict['r'] = colordict['red']    = '#ff0000'
-colordict['g'] = colordict['green']  = '#00ff00'
-colordict['k'] = colordict['black']  = '#000000'
-colordict['white']  = '#ffffff'
-colordict['pink']   = '#ff66ff'
-colordict['brown']  = '#a52a2a'
-colordict['orange'] = '#ff9900'
-colordict['violet'] = '#6600ff'
-colordict['gray'] = colordict['grey']   = '#a0a0a4'
-#colordict['darkGray'] = colordict['darkGrey']   = '#808080'
-#colordict['lightGray'] = colordict['lightGrey']   = '#c0c0c0'
-colordict['y'] = colordict['yellow'] = '#ffff00'
-colordict['m'] = colordict['magenta'] = '#ff00ff'
-colordict['c'] = colordict['cyan'] = '#00ffff'
-colordict['darkBlue'] = '#000080'
-colordict['darkRed'] = '#800000'
-colordict['darkGreen'] = '#008000'
-colordict['darkBrown'] = '#660000'
-colordict['darkCyan'] = '#008080'
-colordict['darkYellow'] = '#808000'
-colordict['darkMagenta'] = '#800080'
-colorlist  = [colordict['black'],
-              colordict['blue'],
-              colordict['red'],
-              colordict['green'],
-              colordict['pink'],
-              colordict['yellow'],
-              colordict['brown'],
-              colordict['cyan'],
-              colordict['magenta'],
-              colordict['orange'],
-              colordict['violet'],
-              #colordict['bluegreen'],
-              colordict['grey'],
-              colordict['darkBlue'],
-              colordict['darkRed'],
-              colordict['darkGreen'],
-              colordict['darkCyan'],
-              colordict['darkMagenta'],
-              colordict['darkYellow'],
-              colordict['darkBrown']]
+_COLORDICT =  PlotBackend.COLORDICT
+_COLORLIST = [_COLORDICT['black'],
+              _COLORDICT['blue'],
+              _COLORDICT['red'],
+              _COLORDICT['green'],
+              _COLORDICT['pink'],
+              _COLORDICT['yellow'],
+              _COLORDICT['brown'],
+              _COLORDICT['cyan'],
+              _COLORDICT['magenta'],
+              _COLORDICT['orange'],
+              _COLORDICT['violet'],
+              #_COLORDICT['bluegreen'],
+              _COLORDICT['grey'],
+              _COLORDICT['darkBlue'],
+              _COLORDICT['darkRed'],
+              _COLORDICT['darkGreen'],
+              _COLORDICT['darkCyan'],
+              _COLORDICT['darkMagenta'],
+              _COLORDICT['darkYellow'],
+              _COLORDICT['darkBrown']]
 
 #PyQtGraph symbols ['o', 's', 't', 'd', '+', 'x']
 #
@@ -127,8 +104,8 @@ colorlist  = [colordict['black'],
 class Plot(PlotBase.PlotBase):
     PLUGINS_DIR = None
 
-    colorList = colorlist
-    colorDict = colordict
+    _colorList = _COLORLIST
+    _colorDict = _COLORDICT
 
     def __init__(self, parent=None, backend=None, callback=None):
         self._parent = parent
@@ -172,10 +149,9 @@ class Plot(PlotBase.PlotBase):
         self._itemList = []
         self._itemDict = {}
 
-        # colors and line types
-        self._colorList = self.colorList
+        # line types
         self._styleList = ['-', '--', '-.', ':']
-        self._nColors   = len(self.colorList)
+        self._nColors   = len(self._colorList)
         self._nStyles   = len(self._styleList)
 
         self._colorIndex = 0
@@ -767,8 +743,8 @@ class Plot(PlotBase.PlotBase):
     def setActiveCurveColor(self, color="#000000"):
         if color is None:
             color = "black"
-        if color in colordict:
-            color = colordict[color]
+        if color in self._colorDict:
+            color = self._colorDict[color]
         self._activeCurveColor = color
         self._plot.setActiveCurveColor(color)
 
@@ -1017,9 +993,9 @@ class Plot(PlotBase.PlotBase):
         if DEBUG:
             print("Received label = %s" % label)
         if color is None:
-            color = colordict['black']
-        elif color in colordict:
-            color = colordict[color]
+            color = self._colorDict['black']
+        elif color in self._colorDict:
+            color = self._colorDict[color]
         if legend is None:
             i = 0
             legend = "Unnamed X Marker %d" % i
@@ -1051,9 +1027,9 @@ class Plot(PlotBase.PlotBase):
         kw -> color, symbol
         """
         if color is None:
-            color = colordict['black']
-        elif color in colordict:
-            color = colordict[color]
+            color = self._colorDict['black']
+        elif color in self._colorDict:
+            color = self._colorDict[color]
         if legend is None:
             i = 0
             legend = "Unnamed Y Marker %d" % i
@@ -1080,9 +1056,9 @@ class Plot(PlotBase.PlotBase):
                      draggable=False,
                      **kw):
         if color is None:
-            color = colordict['black']
-        elif color in colordict:
-            color = colordict[color]
+            color = self._colorDict['black']
+        elif color in self._colorDict:
+            color = self._colorDict[color]
         if legend is None:
             i = 0
             legend = "Unnamed Marker %d" % i

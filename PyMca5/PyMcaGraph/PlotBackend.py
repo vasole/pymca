@@ -160,7 +160,15 @@ MouseZoom
 
 DEBUG = 0
 
+from . import Colors
+
 class PlotBackend(object):
+
+    COLORDICT = Colors.COLORDICT
+    """
+    Dictionnary of predefined colors
+    """
+
     def __init__(self, parent=None):
         self._parent = parent
         self._zoomEnabled = True
@@ -174,7 +182,7 @@ class PlotBackend(object):
         self._callback = self._dummyCallback
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
-                 color=None, symbol=None, linestyle=None,  
+                 color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis="left",
                  xerror=None, yerror=None, **kw):
         """
