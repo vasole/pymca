@@ -173,8 +173,10 @@ class PlotBackend(object):
         self.setActiveCurveColor("#000000")
         self._callback = self._dummyCallback
 
-    def addCurve(self, x, y, legend=None, info=None,
-                        replace=False, replot=True, **kw):
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,  
+                 xlabel=None, ylabel=None, yaxis="left",
+                 xerror=None, yerror=None, **kw):
         """
         Add the 1D curve given by x an y to the graph.
         :param x: The data corresponding to the x axis
@@ -189,6 +191,35 @@ class PlotBackend(object):
         :type replace: boolean default False
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
+        :param color: color(s) to be used
+        :type color: string ("#RRGGBB") or (npoints, 4) unsigned byte array or
+                     one of the predefined color names defined in Colors.py
+        :symbol: Symbol to be drawn at each (x, y) position
+        :type symbol: None or one of the predefined symbols:
+                      'o' - circle
+                      '.' - point
+                      ',' - pixel
+                      '+' - cross
+                      'x' - x-cross
+                      'd' - diamond
+                      's' - square
+        :linestyle: Type of line
+        :type linestyle: None or one of the predefined symbols:
+                      ' '  - no line
+                      '-'  - solid line
+                      '--' - dashed line
+                      '-.' - dash-dot line
+                      ':'  - dotted line
+        :xlabel: Label associated to the X axis when the curve is active
+        :type xlabel: string
+        :ylabel: Label associated to the Y axis when the curve is active
+        :type ylabel: string
+        :yaxis: "left" or "right"
+        :type yaxis: string
+        :xerror: Values with the uncertainties on the x values
+        :type xlabel: array
+        :yerror: Values with the uncertainties on the y values
+        :type ylabel: array
         :returns: The legend/handle used by the backend to univocally access it.
         """
         print("PlotBackend addCurve not implemented")
