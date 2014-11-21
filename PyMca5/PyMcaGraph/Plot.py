@@ -41,13 +41,14 @@ abstract class PlotBackend.
 import sys
 import numpy
 from . import PlotBase
-from .PlotBase import PlotBackend
+from . import PlotBackend
+from . import Colors
 
 DEBUG = 0
 if DEBUG:
     PlotBase.DEBUG = True
 
-_COLORDICT =  PlotBackend.COLORDICT
+_COLORDICT =  Colors.COLORDICT
 _COLORLIST = [_COLORDICT['black'],
               _COLORDICT['blue'],
               _COLORDICT['red'],
@@ -104,8 +105,8 @@ _COLORLIST = [_COLORDICT['black'],
 class Plot(PlotBase.PlotBase):
     PLUGINS_DIR = None
 
-    _colorList = _COLORLIST
-    _colorDict = _COLORDICT
+    colorList = _COLORLIST
+    colorDict = _COLORDICT
 
     def __init__(self, parent=None, backend=None, callback=None):
         self._parent = parent
@@ -151,7 +152,7 @@ class Plot(PlotBase.PlotBase):
 
         # line types
         self._styleList = ['-', '--', '-.', ':']
-        self._nColors   = len(self._colorList)
+        self._nColors   = len(self.colorList)
         self._nStyles   = len(self._styleList)
 
         self._colorIndex = 0
@@ -243,7 +244,7 @@ class Plot(PlotBase.PlotBase):
             self._styleIndex += 1
             if self._styleIndex >= self._nStyles:
                 self._styleIndex = 0
-        color = self._colorList[self._colorIndex]
+        color = self.colorList[self._colorIndex]
         style = self._styleList[self._styleIndex]
         if color == self._activeCurveColor:
             self._colorIndex += 1
@@ -252,7 +253,7 @@ class Plot(PlotBase.PlotBase):
                 self._styleIndex += 1
                 if self._styleIndex >= self._nStyles:
                     self._styleIndex = 0
-            color = self._colorList[self._colorIndex]
+            color = self.colorList[self._colorIndex]
             style = self._styleList[self._styleIndex]
         self._colorIndex += 1
         return color, style
@@ -743,8 +744,8 @@ class Plot(PlotBase.PlotBase):
     def setActiveCurveColor(self, color="#000000"):
         if color is None:
             color = "black"
-        if color in self._colorDict:
-            color = self._colorDict[color]
+        if color in self.colorDict:
+            color = self.colorDict[color]
         self._activeCurveColor = color
         self._plot.setActiveCurveColor(color)
 
@@ -993,9 +994,9 @@ class Plot(PlotBase.PlotBase):
         if DEBUG:
             print("Received label = %s" % label)
         if color is None:
-            color = self._colorDict['black']
-        elif color in self._colorDict:
-            color = self._colorDict[color]
+            color = self.colorDict['black']
+        elif color in self.colorDict:
+            color = self.colorDict[color]
         if legend is None:
             i = 0
             legend = "Unnamed X Marker %d" % i
@@ -1027,9 +1028,9 @@ class Plot(PlotBase.PlotBase):
         kw -> color, symbol
         """
         if color is None:
-            color = self._colorDict['black']
-        elif color in self._colorDict:
-            color = self._colorDict[color]
+            color = self.colorDict['black']
+        elif color in self.colorDict:
+            color = self.colorDict[color]
         if legend is None:
             i = 0
             legend = "Unnamed Y Marker %d" % i
@@ -1056,9 +1057,9 @@ class Plot(PlotBase.PlotBase):
                      draggable=False,
                      **kw):
         if color is None:
-            color = self._colorDict['black']
-        elif color in self._colorDict:
-            color = self._colorDict[color]
+            color = self.colorDict['black']
+        elif color in self.colorDict:
+            color = self.colorDict[color]
         if legend is None:
             i = 0
             legend = "Unnamed Marker %d" % i

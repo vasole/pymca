@@ -45,11 +45,14 @@ import numpy
 from numpy import vstack as numpyvstack
 import sys
 import types
-from .. import PlotBackend
+try:
+    from .. import PlotBackend
+except ImportError:
+    from PyMca5.PyMca import PlotBackend
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 # This should be independent of Qt
-if "tk" in sys.argv:
+if "tk" in sys.argv or ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
     if sys.version < '3.0':
         import Tkinter as Tk
     else:
@@ -1274,23 +1277,12 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self._rightAxisEnabled = False
         self.enableAxis('right', False)
 
-    def addCurve(self, x, y, legend, info=None, replace=False, replot=True, **kw):
-        """
-        Add the 1D curve given by x an y to the graph.
-        :param x: The data corresponding to the x axis
-        :type x: list or numpy.ndarray
-        :param y: The data corresponding to the y axis
-        :type y: list or numpy.ndarray
-        :param legend: The legend to be associated to the curve
-        :type legend: string or None
-        :param info: Dictionary of information associated to the curve
-        :type info: dict or None
-        :param replace: Flag to indicate if already existing curves are to be deleted
-        :type replace: boolean default False
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True
-        :returns: The legend/handle used by the backend to univocally access it.
-        """
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis="left",
+                 xerror=None, yerror=None, **kw):
+        if legend is None:
+            legend = "Unnamed curve"
         if replace:
             self.clearCurves()
         else:
