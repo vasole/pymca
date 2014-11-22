@@ -627,8 +627,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.invertYAxis(True)
 
     def _colormapIconSignal(self):
-        if DEBUG:
-            print("_colormapIconSignal called")
+        print("_colormapIconSignal not implemented")
 
     def _normalIconSignal(self):
         if DEBUG:
@@ -684,37 +683,37 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.replot()
 
     def _energyIconSignal(self):
-        print("energy icon signal")
+        print("energy icon signal not implemented")
 
     def _fitIconSignal(self):
-        print("fit icon signal")
+        print("fit icon signal not implemented")
 
     def _averageIconSignal(self):
-        print("average icon signal")
+        print("average icon signal not implemented")
 
     def _deriveIconSignal(self):
-        print("deriveIconSignal")
+        print("deriveIconSignal not implemented")
 
     def _smoothIconSignal(self):
-        print("smoothIconSignal")
+        print("smoothIconSignal not implemented")
 
     def _swapSignIconSignal(self):
-        print("_swapSignIconSignal")
+        print("_swapSignIconSignal not implemented")
 
     def _yMinToZeroIconSignal(self):
-        print("_yMinToZeroIconSignal")
+        print("_yMinToZeroIconSignal not implemented")
 
     def _subtractIconSignal(self):
-        print("_subtractIconSignal")
+        print("_subtractIconSignal not implemented")
 
     def _saveIconSignal(self):
-        print("_saveIconSignal")
+        print("_saveIconSignal not implemented")
 
     def _imageIconSignal(self):
-        print("_imageIconSignal")
+        print("_imageIconSignal not implemented")
 
     def _eraseSelectionIconSignal(self):
-        print("_eraseSelectionIconSignal")
+        print("_eraseSelectionIconSignal not implemented")
 
     def _rectSelectionIconSignal(self):
         if DEBUG:
@@ -723,13 +722,13 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.setDrawModeEnabled(True, shape="rectangle", label="mask")
 
     def _brushSelectionIconSignal(self):
-        print("_brushSelectionIconSignal")
+        print("_brushSelectionIconSignal not implemented")
 
     def _brushIconSignal(self):
-        print("_brushIconSignal")
+        print("_brushIconSignal not implemented")
 
     def _additionalIconSignal(self):
-        print("_additionalIconSignal")
+        print("_additionalIconSignal not implemented")
 
     def _polygonIconSignal(self):
         if DEBUG:
