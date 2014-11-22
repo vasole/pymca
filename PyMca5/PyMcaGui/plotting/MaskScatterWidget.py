@@ -60,7 +60,6 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                                                 imageIcons=imageIcons,
                                                 polygon=polygon,
                                                 **kw)
-        self.setPlotViewMode("scatter")
         self._selectionCurve = None
         self._selectionMask = None
         self._selectionColors = numpy.zeros((len(self.colorList), 4), numpy.uint8)
@@ -74,6 +73,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._zoomMode = True
         self._eraseMode = False
         self._brushMode = False
+        self.setPlotViewMode("scatter")
         self.setDrawModeEnabled(False)
 
     def setPlotViewMode(self, mode="scatter", bins=None):
@@ -88,7 +88,10 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         if hasattr(self, "eraseSelectionToolButton"):
             self.eraseSelectionToolButton.setToolTip("Set erase mode if checked")            
             self.eraseSelectionToolButton.setCheckable(True)
-            self.eraseSelectionToolButton.setChecked(True)
+            if self._eraseMode:
+                self.eraseSelectionToolButton.setChecked(True)
+            else:
+                self.eraseSelectionToolButton.setChecked(False)
         if hasattr(self, "polygonSelectionToolButton"):
             self.polygonSelectionToolButton.setCheckable(True)
 
@@ -102,12 +105,12 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         raise NotImplemented("Density plot view not implemented yet")
 
     def setSelectionCurveData(self, x, y, legend="MaskScatterWidget", info=None,
-                 replot=True, replace=True, line_style=" ", color="r", symbol=None, **kw):
+                 replot=True, replace=True, linestyle=" ", color="r", symbol=None, **kw):
         self.enableActiveCurveHandling(False)
         if symbol is None:
             symbol = "o"
         self.addCurve(x=x, y=y, legend=legend, info=info,
-                 replace=replace, replot=replot, line_style=line_style, color=color, symbol=symbol, **kw)
+                 replace=replace, replot=replot, linestyle=linestyle, color=color, symbol=symbol, **kw)
         self._selectionCurve = legend
 
     def setSelectionMask(self, mask=None):
@@ -146,20 +149,27 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         x, y, legend, info = self.getCurve(self._selectionCurve)
         x.shape = -1
         y.shape = -1
-        mask = numpy.zeros(y.shape, dtype=numpy.uint8)
         colors = numpy.zeros((y.size, 4), dtype=numpy.uint8)
         if self._selectionMask is not None:
             tmpMask = self._selectionMask[:]
             tmpMask.shape = -1
-            for i in range(1, self._maxNRois):
+            for i in range(0, self._maxNRois):
                 colors[tmpMask == i, :] = self._selectionColors[i]
-        self.setSelectionCurveData(x, y, legend=legend, info=info, color=colors, line_style=" ",
+        self.setSelectionCurveData(x, y, legend=legend, info=info,
+                                   color=colors, linestyle=" ",
                                    replot=replot, replace=replace)
 
     def setActiveRoiNumber(self, intValue):
         if (intValue < 0) or (intValue > self._maxNRois):
             raise ValueError("Value %d outside the interval [0, %d]" % (intValue, self._maxNRois))
         self._nRoi = intValue
+
+
+    def _eraseSelectionIconSignal(self):
+        if self.eraseSelectionToolButton.isChecked():
+            self._eraseMode = True
+        else:
+            self._eraseMode = False
 
     def _polygonIconSignal(self):
         if self.polygonSelectionToolButton.isChecked():
@@ -173,12 +183,34 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             if hasattr(self,"polygonSelectionToolButton"):
                 self.polygonSelectionToolButton.setChecked(False)
 
+    def _handlePolygonMask(self, points):
+        if self._eraseMode:
+            value = 0
+        else:
+            value = self._nRoi
+        x, y, legend, info = self.getCurve(self._selectionCurve)
+        x.shape = -1
+        y.shape = -1
+        currentMask = self.getSelectionMask()
+        if currentMask is None:
+            currentMask = numpy.zeros(y.shape, dtype=numpy.uint8)
+            if value == 0:
+                return
+        Z = numpy.zeros((y.size, 2), numpy.float64)
+        Z[:, 0] = x
+        Z[:, 1] = y
+        mask = pnpoly(points, Z, 1)
+        mask.shape = currentMask.shape
+        currentMask[mask > 0] = value        
+        self.setSelectionMask(currentMask)
+
     def graphCallback(self, ddict):
         if DEBUG:
             print("MaskScatterWidget graphCallback", ddict)
         if ddict["event"] == "mouseClicked":
             print("mouseClicked")
         elif ddict["event"] == "drawingFinished":
+            self._handlePolygonMask(ddict["points"])
             print("drawing")
         elif ddict["event"] == "mouseMoved":
             print("mouseMoved")
@@ -214,7 +246,7 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     x = numpy.arange(1000.)
     y = x * x
-    w = MaskScatterWidget(maxNRois=8)
+    w = MaskScatterWidget(maxNRois=10)
     w.setSelectionCurveData(x, y, color="k", symbol="o")
     import numpy.random
     w.setSelectionMask(numpy.random.permutation(1000) % 10)

@@ -361,7 +361,8 @@ class Plot(PlotBase.PlotBase):
                 # this can give errors if it is not present in the plot
                 self._plot.removeCurve(key, replot=False)
                 symbol = self._curveDict[key][3].get('plot_symbol', symbol)
-                color = self._curveDict[key][3].get('plot_color', color)
+                if color is None:
+                    color = self._curveDict[key][3].get('plot_color', color)
                 linestyle = self._curveDict[key][3].get('plot_linestyle',
                                                     linestyle)
         else:
@@ -384,7 +385,8 @@ class Plot(PlotBase.PlotBase):
             #symbol = None
             pass
         info["plot_symbol"] = symbol
-        color = info.get("plot_color", color)
+        if color is None:
+            color = info.get("plot_color", color)
         linestyle = info.get("plot_linestyle", linestyle)
 
         if self._plotLines and (linestyle is None):
