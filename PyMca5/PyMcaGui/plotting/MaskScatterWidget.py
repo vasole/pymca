@@ -36,6 +36,10 @@ DEBUG = 0
 
 from . import PlotWindow
 qt = PlotWindow.qt
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = qt.safe_str
 IconDict = PlotWindow.IconDict
 
 class MaskScatterWidget(PlotWindow.PlotWindow):
@@ -62,6 +66,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                                                 imageIcons=imageIcons,
                                                 polygon=polygon,
                                                 **kw)
+        self._buildAdditionalSelectionMenuDict()
         self._selectionCurve = None
         self._selectionMask = None
         self._selectionColors = numpy.zeros((len(self.colorList), 4), numpy.uint8)
@@ -79,12 +84,13 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self.setDrawModeEnabled(False)
 
     def setPlotViewMode(self, mode="scatter", bins=None):
-        if mode.upper() != "DENSITY":
+        if mode.lower() != "density":
             self._activateScatterPlotView()
         else:
             self._activateDensityPlotView(bins)
 
     def _activateScatterPlotView(self):
+        self._plotViewMode = "scatter"
         for key in ["colormap", "brushSelection", "brush", "rectangle"]:
             self.setToolBarActionVisible(key, False)
         if hasattr(self, "eraseSelectionToolButton"):
@@ -98,6 +104,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             self.polygonSelectionToolButton.setCheckable(True)
 
     def _activateDensityPlotView(self, bins):
+        self._plotViewMode = "density"
         for key in ["colormap", "brushSelection", "brush", "rectangle"]:
             self.setToolBarActionVisible(key, True)
         if hasattr(self, "eraseSelectionToolButton"):
@@ -256,6 +263,102 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
 
     def emitMaskScatterWidgetSignal(self, ddict):
         self.sigMaskScatterWidgetSignal.emit(ddict)
+
+    def _buildAdditionalSelectionMenuDict(self):
+        self._additionalSelectionMenu = {}
+        #scatter view menu
+        menu = qt.QMenu()
+        menu.addAction(QString("Reset Selection"), self.__resetSelection)
+        menu.addAction(QString("Invert Selection"), self._invertSelection)
+        self._additionalSelectionMenu["scatter"] = menu
+
+        # density view menu
+        menu = qt.QMenu()
+        menu.addAction(QString("Reset Selection"), self.__resetSelection)
+        menu.addAction(QString("Invert Selection"), self._invertSelection)
+        menu.addAction(QString("I >= Colormap Max"), self._selectMax)
+        menu.addAction(QString("Colormap Min < I < Colormap Max"),
+                                                self._selectMiddle)
+        menu.addAction(QString("I <= Colormap Min"), self._selectMin)
+        self._additionalSelectionMenu["density"] = menu
+
+    def _additionalIconSignal(self):
+        if self._plotViewMode == "density": # and imageData is not none ...
+            self._additionalSelectionMenu["density"].exec_(self.cursor().pos())
+        else:
+            self._additionalSelectionMenu["scatter"].exec_(self.cursor().pos())
+
+    def __resetSelection(self):
+        # Needed because receiving directly in _resetSelection it was passing
+        # False as argument
+        self._resetSelection(True)
+
+    def _resetSelection(self, owncall=True):
+        if DEBUG:
+            print("_resetSelection")
+
+        if self._selectionMask is None:
+            print("Selection mask is None, doing nothing")
+            return
+        else:
+            self._selectionMask[:] = 0
+
+        self._updatePlot()
+
+        #inform the others
+        if owncall:
+            ddict = {}
+            ddict['event'] = "resetSelection"
+            ddict['id'] = id(self)
+            self.emitMaskScatterWidgetSignal(ddict)
+
+    def _invertSelection(self):
+        if self._selectionMask is None:
+            return
+        mask = numpy.ones(self._selectionMask.shape, numpy.uint8)
+        mask[self._selectionMask > 0] = 0
+        self.setSelectionMask(mask, plot=True)
+        self._emitMaskChangedSignal()
+
+    def _selectMax(self):
+        print("NOT IMPLEMENTED")
+        return
+        selectionMask = numpy.zeros(self.__imageData.shape,
+                                             numpy.uint8)
+        minValue, maxValue = self._getSelectionMinMax()
+        tmpData = numpy.array(self.__imageData, copy=True)
+        tmpData[True - numpy.isfinite(self.__imageData)] = minValue
+        selectionMask[tmpData >= maxValue] = 1
+        self.setSelectionMask(selectionMask, plot=False)
+        self.plotImage(update=False)
+        self._emitMaskChangedSignal()
+
+    def _selectMiddle(self):
+        print("NOT IMPLEMENTED")
+        return
+        selectionMask = numpy.ones(self.__imageData.shape,
+                                             numpy.uint8)
+        minValue, maxValue = self._getSelectionMinMax()
+        tmpData = numpy.array(self.__imageData, copy=True)
+        tmpData[True - numpy.isfinite(self.__imageData)] = maxValue
+        selectionMask[tmpData >= maxValue] = 0
+        selectionMask[tmpData <= minValue] = 0
+        self.setSelectionMask(selectionMask, plot=False)
+        self.plotImage(update=False)
+        self._emitMaskChangedSignal()
+
+    def _selectMin(self):
+        print("NOT IMPLEMENTED")
+        return
+        selectionMask = numpy.zeros(self.__imageData.shape,
+                                             numpy.uint8)
+        minValue, maxValue = self._getSelectionMinMax()
+        tmpData = numpy.array(self.__imageData, copy=True)
+        tmpData[True - numpy.isfinite(self.__imageData)] = maxValue
+        selectionMask[tmpData <= minValue] = 1
+        self.setSelectionMask(selectionMask, plot=False)
+        self.plotImage(update=False)
+        self._emitMaskChangedSignal()
 
 if __name__ == "__main__":
     app = qt.QApplication([])
