@@ -32,13 +32,15 @@ import os
 import numpy
 from PyMca5.PyMcaGraph.ctools import pnpoly
 
-DEBUG = 1
+DEBUG = 0
 
 from . import PlotWindow
 qt = PlotWindow.qt
 IconDict = PlotWindow.IconDict
 
 class MaskScatterWidget(PlotWindow.PlotWindow):
+    sigMaskScatterWidgetSignal = qt.pyqtSignal(object)
+
     def __init__(self, parent=None, backend=None, plugins=False, newplot=False,
                  control=False, position=False, maxNRois=1, grid=False,
                  logx=False, logy=False, togglePoints=False, normal=True,
@@ -86,7 +88,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         for key in ["colormap", "brushSelection", "brush", "rectangle"]:
             self.setToolBarActionVisible(key, False)
         if hasattr(self, "eraseSelectionToolButton"):
-            self.eraseSelectionToolButton.setToolTip("Set erase mode if checked")            
+            self.eraseSelectionToolButton.setToolTip("Set erase mode if checked")
             self.eraseSelectionToolButton.setCheckable(True)
             if self._eraseMode:
                 self.eraseSelectionToolButton.setChecked(True)
@@ -113,7 +115,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                  replace=replace, replot=replot, linestyle=linestyle, color=color, symbol=symbol, **kw)
         self._selectionCurve = legend
 
-    def setSelectionMask(self, mask=None):
+    def setSelectionMask(self, mask=None, plot=True):
         if self._selectionCurve is not None:
             selectionCurve = self.getCurve(self._selectionCurve)
         if selectionCurve in [[], None]:
@@ -137,7 +139,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                         self._selectionMask = mask
                 else:
                     raise ValueError("Mask size = %d while data size = %d" % (mask.size(), x.size()))
-        self._updatePlot()
+        if plot:
+            self._updatePlot()
 
     def getSelectionMask(self):
         # TODO: Deal with non-finite data like in MaskImageWidget
@@ -201,8 +204,9 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         Z[:, 1] = y
         mask = pnpoly(points, Z, 1)
         mask.shape = currentMask.shape
-        currentMask[mask > 0] = value        
-        self.setSelectionMask(currentMask)
+        currentMask[mask > 0] = value
+        self.setSelectionMask(currentMask, plot=True)
+        self._emitMaskChangedSignal()
 
     def graphCallback(self, ddict):
         if DEBUG:
@@ -242,6 +246,17 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             else:
                 self.eraseSelectionToolButton.setChecked(False)
 
+    def _emitMaskChangedSignal(self):
+        #inform the other widgets
+        ddict = {}
+        ddict['event'] = "selectionMaskChanged"
+        ddict['current'] = self._selectionMask * 1
+        ddict['id'] = id(self)
+        self.emitMaskScatterWidgetSignal(ddict)
+
+    def emitMaskScatterWidgetSignal(self, ddict):
+        self.sigMaskScatterWidgetSignal.emit(ddict)
+
 if __name__ == "__main__":
     app = qt.QApplication([])
     x = numpy.arange(1000.)
@@ -252,5 +267,8 @@ if __name__ == "__main__":
     w.setSelectionMask(numpy.random.permutation(1000) % 10)
     w.setPolygonSelectionMode()
     w.show()
+    def receivingSlot(ddict):
+        print("Received: ", ddict)
+    w.sigMaskScatterWidgetSignal.connect(receivingSlot)
     app.exec_()
 
