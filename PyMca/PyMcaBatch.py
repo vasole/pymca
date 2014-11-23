@@ -33,6 +33,36 @@ import subprocess
 
 from PyMca import PyMcaQt as qt
 
+if (__name__ == "__main__") and sys.platform.startswith("win"):
+    try:
+        #try to avoid matplotlib config dir problem under windows
+        if os.getenv("MPLCONFIGDIR") is None:
+            import ctypes
+            from ctypes.wintypes import MAX_PATH
+            # recipe based on: http://bugs.python.org/issue1763#msg62242
+            dll = ctypes.windll.shell32
+            buf = ctypes.create_unicode_buffer(MAX_PATH + 1)
+            if dll.SHGetSpecialFolderPathW(None, buf, 0x0005, False):
+                directory = buf.value
+            else:
+                # the above should have worked
+                home = os.getenv('USERPROFILE')
+                try:
+                    l = len(home)
+                    directory = os.path.join(home, "My Documents")
+                except:
+                    home = '\\'
+                    directory = '\\'
+            if os.path.isdir('%s' % directory):
+                directory = os.path.join(directory, "PyMca")
+            else:
+                directory = os.path.join(home, "PyMca")
+            if not os.path.exists('%s' % directory):
+                os.mkdir('%s' % directory)
+            os.environ[ 'MPLCONFIGDIR' ] = directory
+    except:
+        print("WARNING: Could not set MPLCONFIGDIR.", sys.exc_info()[1])
+
 QTVERSION = qt.qVersion()
 if QTVERSION > '4.0.0':
     try:
