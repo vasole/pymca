@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
 A 1D plugin is a module that will be automatically added to the PyMca 1D window
 in order to perform user defined operations of the plotted 1D data. It has to
-inherit the PyMca.Plugin1DBase class and implement the methods:
+inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
 
     getMethods
     getMethodToolTip
@@ -43,7 +43,7 @@ and modify the static module variable MENU_TEXT and the static module function
 getPlugin1DInstance according to the defined plugin.
 
 These plugins will be compatible with any 1D-plot window that implements the Plot1D
-interface. The plot window interface is described in the Plot1DBase Class.
+interface. The plot window interface is described in the Plot1DBase class.
 
 The main items are reproduced here and can be directly accessed as plugin methods.
 
@@ -87,7 +87,8 @@ class Plugin1DBase(object):
         self._plotWindow = weakref.proxy(plotWindow)
 
     #Window related functions
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
+    def addCurve(self, x, y, legend=None, info=None,
+                 replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
         :param x: The data corresponding to the x axis
@@ -102,9 +103,10 @@ class Plugin1DBase(object):
         :type replace: boolean default False
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
+        :param **kw: Additional keywords recognized by the plot window
         """
         return self._plotWindow.addCurve(x, y, legend=legend, info=info,
-                                          replace=replace, replot=replot)
+                                    replace=replace, replot=replot, **kw)
 
     def getActiveCurve(self, just_legend=False):
         """

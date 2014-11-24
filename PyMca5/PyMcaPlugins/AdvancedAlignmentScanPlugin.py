@@ -720,7 +720,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
 
         if DEBUG == 1:
             print('applyShifts -- Shifting ...')
-        for idx, (x,y,legend,info) in enumerate(curves):
+        for idx, (x, y, legend, info) in enumerate(curves):
             shift = self.shiftDict[legend]
 
             if shift is None:
@@ -738,21 +738,24 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             mask = numpy.nonzero((xmin<=x) & (x<=xmax))[0]
             # Execute method stored in self.shiftMethod
             xShifted, yShifted = self.shiftMethod(shift, x[mask], y[mask])
-
             if idx == 0:
-                replace, replot = True, False
-            elif idx == (len(curves)-1):
-                replace, replot = False, True
+                replace = True
             else:
-                replace, replot = False, False
+                replace = False
+            if idx == (len(curves)-1):
+                replot = True
+            else:
+                replot = False
             # Check if scan number is adopted by new curve
             if DEBUG == 1:
                 print('\'%s\' -- shifts -> \'%s\' by %f'%(self.shiftList[idx], legend, shift))
-            selectionlegend = info.get('selectionlegend',legend)
+            #selectionlegend = info.get('selectionlegend', legend)
+            selectionlegend = legend
             self.addCurve(xShifted, yShifted,
                           (selectionlegend + ' SHIFT'),
-                          info,
-                          replace, replot)
+                          info=info,
+                          replace=replace,
+                          replot=replot)
         return True
 
 
