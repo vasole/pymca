@@ -76,7 +76,7 @@ def charTexCoords(char):
 
 def loadTexture():
     data = zlib.decompress(dataZip)
-    return Texture2D(GL_ALPHA, dataWidth, dataHeight,
+    return Texture2D(GL_RED, dataWidth, dataHeight,
                      type_=GL_UNSIGNED_BYTE,
                      minFilter=GL_NEAREST, magFilter=GL_NEAREST,
                      wrapS=GL_CLAMP_TO_EDGE, wrapT=GL_CLAMP_TO_EDGE,

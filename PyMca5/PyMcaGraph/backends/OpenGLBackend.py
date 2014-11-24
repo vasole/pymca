@@ -1621,7 +1621,8 @@ class OpenGLPlotCanvas(PlotBackend):
             xCoord, yCoord = marker['x'], marker['y']
 
             if marker['label'] is not None:
-                labels.append((xCoord, yCoord, marker['label']))
+                labels.append((xCoord, yCoord,
+                               marker['label'], marker['color']))
 
             glUniform4f(self._progBase.uniforms['color'], * marker['color'])
 
@@ -1652,29 +1653,22 @@ class OpenGLPlotCanvas(PlotBackend):
         glViewport(0, 0, self.winWidth, self.winHeight)
 
         # Render marker labels
-        self._progTex.use()
-        textTexUnit = 0
-        glUniform1i(self._progTex.uniforms['tex'], textTexUnit)
-        posAttrib = self._progTex.attributes['position']
-        texAttrib = self._progTex.attributes['texCoords']
-
-        for x, y, label in labels:
+        for x, y, label, color in labels:
             if x is None:
                 x = self.winWidth - self._margins['right'] - pixelOffset
                 y = self.dataToPixelCoords(yData=y) - pixelOffset
-                label = Text2D(label, align=RIGHT, valign=BOTTOM)
+                label = Text2D(label, color=color, align=RIGHT, valign=BOTTOM)
             elif y is None:
                 x = self.dataToPixelCoords(xData=x) + pixelOffset
                 y = self._margins['top'] + pixelOffset
-                label = Text2D(label, align=LEFT, valign=TOP)
+                label = Text2D(label, color=color, align=LEFT, valign=TOP)
             else:
                 x, y = self.dataToPixelCoords(x, y)
                 x, y = x + pixelOffset, y + pixelOffset
-                label = Text2D(label, align=LEFT, valign=TOP)
+                label = Text2D(label, color=color, align=LEFT, valign=TOP)
 
-            glUniformMatrix4fv(self._progTex.uniforms['matrix'], 1, GL_TRUE,
-                               self.matScreenProj * mat4Translate(x, y, 0))
-            label.render(posAttrib, texAttrib, textTexUnit)
+            matrix = self.matScreenProj * mat4Translate(x, y, 0)
+            label.render(matrix)
 
         glDisable(GL_SCISSOR_TEST)
 
@@ -1735,16 +1729,9 @@ class OpenGLPlotCanvas(PlotBackend):
         glDrawArrays(GL_LINES, 0, len(self._frameVertices))
 
         # Render Text
-        self._progTex.use()
-        textTexUnit = 0
-        glUniform1i(self._progTex.uniforms['tex'], textTexUnit)
-
         for x, y, label in self._labels:
-            glUniformMatrix4fv(self._progTex.uniforms['matrix'], 1, GL_TRUE,
-                               self.matScreenProj * mat4Translate(x, y, 0))
-            label.render(self._progTex.attributes['position'],
-                         self._progTex.attributes['texCoords'],
-                         textTexUnit)
+            matrix = self.matScreenProj * mat4Translate(x, y, 0)
+            label.render(matrix)
 
     def _renderPlotArea(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
