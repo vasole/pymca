@@ -45,7 +45,7 @@ from ctypes import c_void_p, sizeof, c_float
 from OpenGL.GL import *  # noqa
 from . import FontLatin1_12 as font
 from .GLContext import getGLContext
-from .GLSupport import Program
+from .GLSupport import Program, mat4Translate
 
 # TODO: Font should be configurable by the main program
 
@@ -90,11 +90,13 @@ class Text2D(object):
     """
     }
 
-
-    def __init__(self, text, color=(0., 0., 0., 1.),
+    def __init__(self, text, x=0, y=0,
+                 color=(0., 0., 0., 1.),
                  align=LEFT, valign=BASELINE,
                  rotate=0):
         self._text = text
+        self.x = x
+        self.y = y
         self.color = color
 
         if align not in (LEFT, CENTER, RIGHT):
@@ -197,7 +199,9 @@ class Text2D(object):
 
         glUniform1i(prog.uniforms['texText'], texUnit)
 
-        glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
+        glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE,
+                           matrix * mat4Translate(self.x, self.y))
+
         glUniform4f(prog.uniforms['color'], *self.color)
 
         stride, vertices = self.getStride(), self.getVertices()
@@ -240,7 +244,7 @@ if __name__ == "__main__":
         from PyQt5.QtOpenGL import QGLWidget, QGLContext
 
     from .GLContext import setGLContextGetter
-    from .GLSupport import mat4Ortho, mat4Translate
+    from .GLSupport import mat4Ortho
 
     setGLContextGetter(QGLContext.currentContext)
 
