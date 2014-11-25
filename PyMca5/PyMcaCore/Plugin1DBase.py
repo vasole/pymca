@@ -35,9 +35,9 @@ A 1D plugin is a module that will be automatically added to the PyMca 1D window
 in order to perform user defined operations of the plotted 1D data. It has to
 inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
 
-    getMethods
-    getMethodToolTip
-    applyMethod
+    - getMethods
+    - getMethodToolTip
+    - applyMethod
 
 and modify the static module variable MENU_TEXT and the static module function
 getPlugin1DInstance according to the defined plugin.
@@ -47,25 +47,66 @@ interface. The plot window interface is described in the Plot1DBase class.
 
 The main items are reproduced here and can be directly accessed as plugin methods.
 
-    addCurve
-    getActiveCurve
-    getAllCurves
-    getGraphXLimits
-    getGraphYLimits
-    getGraphTitle
-    getGraphXLabel
-    getGraphXTitle
-    getGraphYLabel
-    getGraphYTitle
-    removeCurve
-    setActiveCurve
-    setGraphTitle
-    setGraphXLimits
-    setGraphYLimits
-    setGraphXLabel
-    setGraphYLabel
-    setGraphXTitle
-    setGraphYTitle
+    - addCurve
+    - getActiveCurve
+    - getAllCurves
+    - getGraphXLimits
+    - getGraphYLimits
+    - getGraphTitle
+    - getGraphXLabel
+    - getGraphXTitle
+    - getGraphYLabel
+    - getGraphYTitle
+    - removeCurve
+    - setActiveCurve
+    - setGraphTitle
+    - setGraphXLimits
+    - setGraphYLimits
+    - setGraphXLabel
+    - setGraphYLabel
+    - setGraphXTitle
+    - setGraphYTitle
+
+A simple plugin example, normalizing to maximum and shifting the curves.
+
+.. code-block:: python
+
+    from PyMca5 import Plugin1DBase
+
+    class Shifting(Plugin1DBase.Plugin1DBase):
+        def getMethods(self, plottype=None):
+            return ["Shift"]
+
+        def getMethodToolTip(self, methodName):
+            if methodName != "Shift":
+                raise InvalidArgument("Method %s not valid" % methodName)
+            return "Subtract minimum and shift up by 100"
+
+        def applyMethod(self, methodName):
+            if methodName != "Shift":
+                raise InvalidArgument("Method %s not valid" % methodName)
+            allCurves = self.getAllCurves()
+            for i in range(len(allCurves)):
+                x, y, legend, info = allCurves[i][:4]
+                delta = y.max() - y.min()
+                if delta < 1.0e-15:
+                    delta = 1.0
+                y = (y - y.min())/delta + i * 100.
+                if i == len(allCurves):
+                    replot = True
+                else:
+                    replot = False
+                if i == 0:
+                    replace = True
+                else:
+                    replace = False
+                self.addCurve(x, y, legend=legend + " %d" % (i * 100),
+                                    info=info, replace=replace, replot=replot)
+     
+    MENU_TEXT="Simple Shift Example"
+    def getPlugin1DInstance(plotWindow, **kw):
+        ob = Shifting(plotWindow)
+        return ob
 
 """
 import weakref
