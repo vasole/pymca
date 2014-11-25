@@ -31,5 +31,5 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
-__path__ += [os.path.join(os.path.dirname(__file__), "xrf")]
 __path__ += [os.path.join(os.path.dirname(__file__), "xas")]
+__path__ += [os.path.join(os.path.dirname(__file__), "xrf")]

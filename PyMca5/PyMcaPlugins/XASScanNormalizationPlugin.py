@@ -35,7 +35,7 @@ except ImportError:
 
 try:
     from PyMca5.PyMcaPhysics.xas import XASNormalization
-    from PyMca5.PyMcaGui import XASNormalizationWindow
+    from PyMca5.PyMcaGui.physics.xas import XASNormalizationWindow
     from PyMca5.PyMcaMath.fitting import SpecfitFuns
 except ImportError:
     print("XASScanNormalizationPlugin problem")
