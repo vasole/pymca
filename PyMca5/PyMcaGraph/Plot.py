@@ -329,6 +329,8 @@ class Plot(PlotBase.PlotBase):
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
+        if "line_style" in kw:
+            print("DEPRECATION WARNING: line_style deprecated, use linestyle")
         if legend is None:
             key = "Unnamed curve 1.1"
         else:
