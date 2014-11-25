@@ -1178,7 +1178,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             if symbol is None:
                 symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
             if linestyle is None:
-                line_style =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
+                linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
         if legend in self.dataObjectsDict:
             # the info is changing
             super(ScanWindow, self).addCurve(x, y, legend=legend, info=info,

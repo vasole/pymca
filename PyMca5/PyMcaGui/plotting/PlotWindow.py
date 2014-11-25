@@ -1172,9 +1172,9 @@ class PlotWindow(PlotWidget.PlotWidget):
             legend = ddict['legend']
             x, y, legend, info = self._curveDict[legend][0:4]
             if ddict['line']:
-                self.addCurve(x, y, legend=legend, info=info, line_style="-")
+                self.addCurve(x, y, legend=legend, info=info, linestyle="-")
             else:
-                self.addCurve(x, y, legend, info=info, line_style="")
+                self.addCurve(x, y, legend, info=info, linestyle="")
             self.updateLegends()
         elif DEBUG:
             print("unhandled event", ddict['event'])
