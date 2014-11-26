@@ -309,6 +309,7 @@ class MatplotlibGraph(FigureCanvas):
         self.__lastMouseClick = ["middle", time.time()]
         self.__zooming = False
         self.__picking = False
+        self.__markerMoving = False
         self._zoomStack = []
         self.xAutoScale = True
         self.yAutoScale = True
