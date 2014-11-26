@@ -128,7 +128,7 @@ drawingFinished
 hover
     Emitted the mouse pass over an item with hover notification (markers)
 
-legendClicked
+imageClicked, curveClicked
     usefull for pop-up menus associated to the click using the xpixel, ypixel
     or to set a curve active using the label and type keys
 
@@ -145,7 +145,7 @@ markerMoved
     - selectable - True if the marker can be selected
     - xdata, ydata - Final position of the marker
 
-markerSelected
+markerClicked
     Additional keys:
     
     - draggable - True if it is a movable marker
@@ -155,10 +155,10 @@ mouseMoved
     Export the mouse position in pixel and graph coordenates
 
 mouseClicked
-    Emitted on mouse relase when not zooming, nor drawing, nor picking
+    Emitted on mouse release when not zooming, nor drawing, nor picking
 
 mouseDoubleClicked
-    Emitted on mouse relase when not zooming, nor drawing, nor picking
+    Emitted on mouse release when not zooming, nor drawing, nor picking
 
 MouseZoom
     TODO: NOT USED? Figure out how to implement a limitsChanged signal?

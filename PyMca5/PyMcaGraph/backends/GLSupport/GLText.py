@@ -45,6 +45,7 @@ from ctypes import c_void_p, sizeof, c_float
 from OpenGL.GL import *  # noqa
 from . import FontLatin1_12 as font
 from .GLContext import getGLContext
+from .GLSupport import Program, mat4Translate
 
 # TODO: Font should be configurable by the main program
 
@@ -57,11 +58,46 @@ ROTATE_90, ROTATE_180, ROTATE_270 = 90, 180, 270
 
 
 class Text2D(object):
-    _textures = {}
+    _textures, _programs = {}, {}
 
-    def __init__(self, text, align=LEFT, valign=BASELINE,
+    _SHADER_SRCS = {
+        'vertex': """
+    #version 120
+
+    attribute vec2 position;
+    attribute vec2 texCoords;
+    uniform mat4 matrix;
+
+    varying vec2 vCoords;
+
+    void main(void) {
+        gl_Position = matrix * vec4(position, 0.0, 1.0);
+        vCoords = texCoords;
+    }
+    """,
+        'fragment': """
+    #version 120
+
+    uniform sampler2D texText;
+    uniform vec4 color;
+
+    varying vec2 vCoords;
+
+    void main(void) {
+        gl_FragColor = color;
+        gl_FragColor.a = mix(0., color.a, texture2D(texText, vCoords).r);
+    }
+    """
+    }
+
+    def __init__(self, text, x=0, y=0,
+                 color=(0., 0., 0., 1.),
+                 align=LEFT, valign=BASELINE,
                  rotate=0):
         self._text = text
+        self.x = x
+        self.y = y
+        self.color = color
 
         if align not in (LEFT, CENTER, RIGHT):
             raise RuntimeError(
@@ -74,6 +110,17 @@ class Text2D(object):
         self._valign = valign
 
         self._rotate = math.radians(rotate)
+
+    @classmethod
+    def _getProgram(cls):
+        context = getGLContext()
+        try:
+            program = cls._programs[context]
+        except KeyError:
+            program = Program(cls._SHADER_SRCS['vertex'],
+                              cls._SHADER_SRCS['fragment'])
+            cls._programs[context] = program
+        return program
 
     @classmethod
     def _getTexture(cls):
@@ -143,24 +190,42 @@ class Text2D(object):
         vertices = self.getVertices()
         return vertices.shape[-1] * vertices.itemsize
 
-    def render(self, posAttrib, texAttrib, texUnit=0):
+    def render(self, matrix):
+        prog = self._getProgram()
+        prog.use()
+
+        texUnit = 0
         self._getTexture().bind(texUnit)
+
+        glUniform1i(prog.uniforms['texText'], texUnit)
+
+        glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE,
+                           matrix * mat4Translate(self.x, self.y))
+
+        glUniform4f(prog.uniforms['color'], *self.color)
+
+        stride, vertices = self.getStride(), self.getVertices()
+
+        posAttrib = prog.attributes['position']
         glEnableVertexAttribArray(posAttrib)
         glVertexAttribPointer(posAttrib,
                               2,
                               GL_FLOAT,
                               GL_FALSE,
-                              self.getStride(), self.getVertices())
+                              stride, vertices)
+
+        texAttrib = prog.attributes['texCoords']
         glEnableVertexAttribArray(texAttrib)
         glVertexAttribPointer(texAttrib,
                               2,
                               GL_FLOAT,
                               GL_FALSE,
-                              self.getStride(),
-                              c_void_p(self.getVertices().ctypes.data +
-                                       2 * sizeof(c_float))  # Other way?
+                              stride,
+                              c_void_p(vertices.ctypes.data +
+                                       2 * sizeof(c_float))
                               )
-        nbChar, nbVert, _ = self.getVertices().shape
+
+        nbChar, nbVert, _ = vertices.shape
         glDrawArrays(GL_TRIANGLE_STRIP, 0, nbChar * nbVert)
 
         glBindTexture(GL_TEXTURE_2D, 0)
@@ -178,34 +243,27 @@ if __name__ == "__main__":
         from PyQt5.QtWidgets import QApplication
         from PyQt5.QtOpenGL import QGLWidget, QGLContext
 
-    from .GLSupport import setGLContextGetter, Program, \
-        mat4Ortho, mat4Translate
+    from .GLContext import setGLContextGetter
+    from .GLSupport import mat4Ortho
 
     setGLContextGetter(QGLContext.currentContext)
 
     class TestText(QGLWidget):
-        _vertexShaderSrc = """
-            uniform mat4 transform;
-            attribute vec2 position;
-            attribute vec2 texCoords;
-            varying vec2 coords;
+        _SHADER_SRCS = {
+            'vertex': """
+        uniform mat4 matrix;
+        attribute vec2 position;
 
-            void main(void) {
-                gl_Position = transform * vec4(position, 0.0, 1.0);
-                coords = texCoords;
-            }
-            """
-
-        _fragmentShaderSrc = """
-            uniform sampler2D texture;
-            uniform vec4 color;
-            varying vec2 coords;
-
-            void main(void) {
-                gl_FragColor = vec4(color.rgb,
-                    color.a * texture2D(texture, coords).a);
-            }
-            """
+        void main(void) {
+            gl_Position = matrix * vec4(position, 0.0, 1.0);
+        }
+        """,
+            'fragment': """
+        void main(void) {
+            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        }
+        """
+        }
 
         def __init__(self, parent=None):
             QGLWidget.__init__(self, parent)
@@ -215,8 +273,8 @@ if __name__ == "__main__":
             glEnable(GL_BLEND)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-            self.prog = Program(self._vertexShaderSrc, self._fragmentShaderSrc)
-            self.prog.use()
+            self.prog = Program(self._SHADER_SRCS['vertex'],
+                                self._SHADER_SRCS['fragment'])
 
             self.matScreenProj = np.matrix((
                 (1., 0., 0., 0.),
@@ -224,9 +282,6 @@ if __name__ == "__main__":
                 (0., 0., 1., 0.),
                 (0., 0., 0., 1.)),
                 dtype=np.float32)
-
-            self.texUnit = 0
-            glUniform1i(self.prog.uniforms['texture'], self.texUnit)
 
             self.lines = np.array((
                 (100, 0), (100, 1000),
@@ -244,7 +299,8 @@ if __name__ == "__main__":
                 ), dtype=np.float32)
             self.texts = [
                 (100, 25, Text2D('left_top', align=LEFT, valign=TOP)),
-                (100, 50, Text2D('center_top', align=CENTER, valign=TOP)),
+                (100, 50, Text2D('center_top', color=(1., 0., 1., 1.),
+                                 align=CENTER, valign=TOP)),
                 (100, 75, Text2D('right_top', align=RIGHT, valign=TOP)),
 
                 (220, 25, Text2D('left_center', align=LEFT, valign=CENTER)),
@@ -313,9 +369,10 @@ if __name__ == "__main__":
         def paintGL(self):
             glClear(GL_COLOR_BUFFER_BIT)
 
-            glUniformMatrix4fv(self.prog.uniforms['transform'], 1, GL_TRUE,
+            # Draw lines
+            self.prog.use()
+            glUniformMatrix4fv(self.prog.uniforms['matrix'], 1, GL_TRUE,
                                self.matScreenProj)
-            glUniform4f(self.prog.uniforms['color'], 1., 0., 0., 1.)
             glLineWidth(1.)
             glEnableVertexAttribArray(self.prog.attributes['position'])
             glVertexAttribPointer(self.prog.attributes['position'],
@@ -323,21 +380,12 @@ if __name__ == "__main__":
                                   GL_FLOAT,
                                   GL_FALSE,
                                   0, self.lines)
-            glDisableVertexAttribArray(self.prog.attributes['texCoords'])
-            glVertexAttrib2f(self.prog.attributes['texCoords'], 0., 0.)
 
-            # Hack to avoiding using another shader
-            glDisable(GL_BLEND)
             glDrawArrays(GL_LINES, 0, len(self.lines))
-            glEnable(GL_BLEND)
 
-            glUniform4f(self.prog.uniforms['color'], 0., 0., 0., 1.)
             for x, y, text in self.texts:
-                glUniformMatrix4fv(self.prog.uniforms['transform'], 1, GL_TRUE,
-                                   self.matScreenProj * mat4Translate(x, y, 0))
-                text.render(self.prog.attributes['position'],
-                            self.prog.attributes['texCoords'],
-                            self.texUnit)
+                matrix = self.matScreenProj * mat4Translate(x, y, 0)
+                text.render(matrix)
 
         def resizeGL(self, w, h):
             glViewport(0, 0, w, h)
