@@ -59,8 +59,13 @@ if "tk" in sys.argv or ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
         import tkinter as Tk
 elif ('PySide' in sys.modules) or ('PySide' in sys.argv) :
     import matplotlib
+    matplotlib.rcParams['backend']='Qt4Agg'
     matplotlib.rcParams['backend.qt4']='PySide'
     from PySide import QtCore, QtGui
+elif ("PyQt4" in sys.modules) or ('PyQt4' in sys.argv):
+    from PyQt4 import QtCore, QtGui
+    import matplotlib
+    matplotlib.rcParams['backend']='Qt4Agg'
 elif ('PyQt5' in sys.modules):
     import matplotlib
     matplotlib.rcParams['backend']='Qt5Agg'
@@ -89,6 +94,7 @@ elif ("Tkinter" in sys.modules) or ("tkinter") in sys.modules:
     TK = True
     QT = False
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
+    
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
 Rectangle = patches.Rectangle
