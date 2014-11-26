@@ -62,8 +62,11 @@ else:
 from OpenGL.GL import *  # noqa
 from OpenGL.GL.ARB.texture_rg import GL_R32F  # Core in OpenGL 3
 
-from ..PlotBackend import PlotBackend
-from ..Plot import colordict
+try:
+    from ..PlotBackend import PlotBackend
+except ImportError:
+    from PyMca5.PyMcaGraph.PlotBackend import PlotBackend
+
 from .GLSupport import *  # noqa
 
 
@@ -1905,7 +1908,7 @@ class OpenGLPlotCanvas(PlotBackend):
             'x': x,
             'y': y,
             'label': label,
-            'color': rgba(color, colordict),
+            'color': rgba(color, PlotBackend.COLORDICT),
             'behaviors': behaviors,
         }
 
@@ -2091,7 +2094,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._items[legend] = {
             'shape': shape,
-            'color': rgba(colorCode, colordict),
+            'color': rgba(colorCode, PlotBackend.COLORDICT),
             'fill': 'hatch' if fill else None,
             'x': xList,
             'y': yList
@@ -2118,7 +2121,21 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDirtyFlag = True
 
     def addCurve(self, x, y, legend=None, info=None,
-                 replace=False, replot=True, **kw):
+                 replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
+        if xlabel is not None:
+            print('OpenGLBackend.addCurve xlabel not implemented')
+        if ylabel is not None:
+            print('OpenGLBackend.addCurve ylabel not implemented')
+        if yaxis is not None:
+            print('OpenGLBackend.addCurve yaxis not implemented')
+        if xerror is not None:
+            print('OpenGLBackend.addCurve xerror not implemented')
+        if yerror is not None:
+            print('OpenGLBackend.addCurve yerror not implemented')
+
         self.makeCurrent()
 
         x = np.array(x, dtype=np.float32, copy=False, order='C')
@@ -2132,22 +2149,12 @@ class OpenGLPlotCanvas(PlotBackend):
         if replace:
             self.clearCurves()
 
-        # Copied from MatplotlibBackend, can be common
-        if info is None:
-            info = {}
-        color = info.get('plot_color', self._activeCurveColor)
-        color = kw.get('color', color)
-        symbol = info.get('plot_symbol', None)
-        symbol = kw.get('symbol', symbol)
-        style = info.get('plot_line_style', '-')
-        style = info.get('line_style', style)
         lineWidth = 1
-        # axisId = info.get('plot_yaxis', 'left')
-        # axisId = kw.get('yaxis', axisId)
-        # fill = info.get('plot_fill', False)
 
+        if color is None:
+            color = self._activeCurveColor
         if not isinstance(color, np.ndarray):
-            color = rgba(color, colordict)
+            color = rgba(color, PlotBackend.COLORDICT)
 
         bbox = {
             'xMin': min(x),
@@ -2160,12 +2167,10 @@ class OpenGLPlotCanvas(PlotBackend):
             'legend': legend,
             'xData': x,
             'yData': y,
-            'lineStyle': style,
+            'lineStyle': linestyle,
             'lineWidth': lineWidth,
             'color': color,
             'marker': symbol,
-            # 'axes': axisId,
-            # 'fill': fill,
             'bBox': bbox
         }
 
