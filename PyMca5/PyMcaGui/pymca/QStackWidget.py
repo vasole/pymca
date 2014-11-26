@@ -718,9 +718,10 @@ class QStackWidget(StackBase.StackBase,
             widget.sigMaskImageWidgetSignal.connect(self._maskImageWidgetSlot)
 
         #self.stackGraphWidget.graph.canvas().setMouseTracking(1)
-        if QTVERSION < "5.0.0":
-            self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
-            self.stackGraphWidget.showInfo()
+
+        # infoText gives problems with recent matplotlib versions
+        # self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
+        # self.stackGraphWidget.showInfo()
 
         self.stackGraphWidget.graph.sigPlotSignal.connect(\
                                     self._stackGraphSignal)
