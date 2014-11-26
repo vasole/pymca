@@ -232,7 +232,7 @@ class ColormapDialog(qt.QDialog):
                         "ConstrainedCurve",
                         color='black',
                         symbol='o',
-                        line_style='-')
+                        linestyle='-')
         self.markers = []
         self.__x = x
         self.__y = y
@@ -288,7 +288,7 @@ class ColormapDialog(qt.QDialog):
                         "ConstrainedCurve",
                         color='black',
                         symbol='o',
-                        line_style='-')
+                        linestyle='-')
         #self.c.clearMarkers()
         for i in range(4):
             if i in [1, 2]:
@@ -431,7 +431,7 @@ class ColormapDialog(qt.QDialog):
                         "ConstrainedCurve",
                         color='black',
                         symbol='o',
-                        line_style='-')
+                        linestyle='-')
         self.sendColormap()
 
     """
@@ -459,7 +459,7 @@ class ColormapDialog(qt.QDialog):
                         "ConstrainedCurve",
                         color='black',
                         symbol='o',
-                        line_style='-')
+                        linestyle='-')
     # MAXIMUM
     """
     change max value and update colormap
@@ -475,7 +475,7 @@ class ColormapDialog(qt.QDialog):
                         "ConstrainedCurve",
                         color='black',
                         symbol='o',
-                        line_style='-')
+                        linestyle='-')
         self.sendColormap()
 
     """
@@ -503,7 +503,7 @@ class ColormapDialog(qt.QDialog):
                         "ConstrainedCurve",
                         color='black',
                         symbol='o',
-                        line_style='-')
+                        linestyle='-')
 
 
     # DATA values

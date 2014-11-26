@@ -1161,8 +1161,10 @@ class ScanWindow(PlotWindow.PlotWindow):
         return super(ScanWindow, self).getGraphYLimits()
 
     #end of plugins interface
-    def addCurve(self, x, y, legend=None, info=None, **kw):
-        #administrate the colors properly
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
         if legend in self._curveList:
             if info is None:
                 info = {}
@@ -1171,23 +1173,29 @@ class ScanWindow(PlotWindow.PlotWindow):
                 oldX, oldY, oldLegend, oldInfo = oldStuff
             else:
                 oldInfo = {}
-            color = info.get("plot_color", oldInfo.get("plot_color", None))
-            color = kw.get('color', color)
-            symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
-            symbol = kw.get('symbol', symbol)
-            line_style =  info.get("plot_line_style",oldInfo.get("plot_line_style", None))
-            info['plot_color'] = color
-            info['plot_symbol'] = symbol
-            info['plot_line_style'] = line_style
+            if color is None:
+                color = info.get("plot_color", oldInfo.get("plot_color", None))
+            if symbol is None:
+                symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
+            if linestyle is None:
+                linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
         if legend in self.dataObjectsDict:
             # the info is changing
-            super(ScanWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
+            super(ScanWindow, self).addCurve(x, y, legend=legend, info=info,
+                                replace=replace, replot=replot, color=color, symbol=symbol,
+                                linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
+                                xerror=xerror, yerror=yerror, **kw)
         else:
             # create the data object
-            self.newCurve(x, y, legend=legend, info=info, **kw)
+            self.newCurve(x, y, legend=legend, info=info,
+                                replace=replace, replot=replot, color=color, symbol=symbol,
+                                linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
+                                xerror=xerror, yerror=yerror, **kw)
 
-    def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
-                 replace=False, replot=True, info=None, **kw):
+    def newCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
         if legend is None:
             legend = "Unnamed curve 1.1"
         if xlabel is None:
@@ -1196,6 +1204,14 @@ class ScanWindow(PlotWindow.PlotWindow):
             ylabel = "Y"
         if info is None:
             info = {}
+            # this is awfull but I have no other way to pass the plot information ...
+        if color is not None:
+            info["plot_color"] = color
+        if symbol is not None:
+            info["plot_symbol"] = symbol
+        if linestyle is not None:
+            info["plot_linestyle"] = linestyle
+
         newDataObject = DataObject.DataObject()
         newDataObject.x = [x]
         newDataObject.y = [y]

@@ -9,6 +9,14 @@ backends Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`OpenGLBackend` Module
+-------------------------------
+
+.. automodule:: PyMca5.PyMcaGraph.backends.OpenGLBackend
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`PyQtGraphBackend` Module
 ------------------------------
 

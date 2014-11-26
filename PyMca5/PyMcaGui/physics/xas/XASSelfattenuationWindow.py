@@ -36,8 +36,8 @@ import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.pymca import PyMcaFileDialogs
 from PyMca5.PyMcaPhysics.xrf import Elements
-from .xrf import MatrixImage
-from .xrf import MaterialEditor
+from PyMca5.PyMcaGui.physics.xrf import MatrixImage
+from PyMca5.PyMcaGui.physics.xrf import MaterialEditor
 from PyMca5.PyMcaIO import ConfigDict
 
 if hasattr(qt, "QString"):

@@ -30,7 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
 from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaPhysics.xas import XASSelfattenuationCorrection
-from PyMca5.PyMcaGui import XASSelfattenuationWindow
+from PyMca5.PyMcaGui.physics.xas import XASSelfattenuationWindow
 
 class XASSelfattenuationPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):

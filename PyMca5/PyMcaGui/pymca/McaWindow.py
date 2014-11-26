@@ -2069,10 +2069,10 @@ class McaWindow(ScanWindow.ScanWindow):
                 oldInfo = {}
             color = info.get("plot_color", oldInfo.get("plot_color", None))
             symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
-            line_style =  info.get("plot_line_style",oldInfo.get("plot_line_style", None))
+            linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
             info['plot_color'] = color
             info['plot_symbol'] = symbol
-            info['plot_line_style'] = line_style
+            info['plot_linestyle'] = linestyle
         if legend in self.dataObjectsDict:
             # the info is changing
             super(McaWindow, self).addCurve(x, y, legend=legend, info=info, **kw)

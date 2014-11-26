@@ -353,30 +353,20 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         #self.getViewBox().setCallback(ffunction)
         PlotBackend.PlotBackend.setCallback(self, ffunction)
 
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True, **kw):
-        """
-        Add the 1D curve given by x an y to the graph.
-        :param x: The data corresponding to the x axis
-        :type x: list or numpy.ndarray
-        :param y: The data corresponding to the y axis
-        :type y: list or numpy.ndarray
-        :param legend: The legend to be associated to the curve
-        :type legend: string or None
-        :param info: Dictionary of information associated to the curve
-        :type info: dict or None
-        :param replace: Flag to indicate if already existing curves are to be deleted
-        :type replace: boolean default False
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True
-        :returns: The legend/handle used by the backend to univocally access it.
-        """
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
+        if legend is None:
+            legend = "Unnamed curve"
         self.removeCurve(legend, replot=False)
-        if info is None:
-            info = {}
-        color = info.get('plot_color', '#000000')
-        symbol = info.get('plot_symbol', None)
+        if color is None:
+            color = '#000000'
         brush = color
-        style = info.get('plot_line_style', '-')
+        if linestyle is None:
+            style = '-'
+        else:
+            style = linestyle
         linewidth = 1
         if hasattr(x, "shape"):
             if len(x.shape) == 2:

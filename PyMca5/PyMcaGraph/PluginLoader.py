@@ -55,7 +55,7 @@ class PluginLoader(object):
 
     def setPluginDirectoryList(self, dirlist):
         """
-        :param dirlist: Set directories to search for Plot1D plugins
+        :param dirlist: Set directories to search for plugins
         :type dirlist: list
         """
         for directory in dirlist:
@@ -72,6 +72,7 @@ class PluginLoader(object):
     def getPlugins(self, method=None, directoryList=None):
         """
         Import or reloads all the available plugins with the target method
+
         :param method: The method to be searched for.
         :type method: string, default "getPlugin1DInstance"
         :param directoryList: The list of directories for the search.

@@ -41,56 +41,34 @@ abstract class PlotBackend.
 import sys
 import numpy
 from . import PlotBase
-from .PlotBase import PlotBackend
+from . import PlotBackend
+from . import Colors
 
 DEBUG = 0
 if DEBUG:
     PlotBase.DEBUG = True
 
-# should the color handling belong to the PlotBase class?
-colordict = {}
-colordict['b'] = colordict['blue']   = '#0000ff'
-colordict['r'] = colordict['red']    = '#ff0000'
-colordict['g'] = colordict['green']  = '#00ff00'
-colordict['k'] = colordict['black']  = '#000000'
-colordict['white']  = '#ffffff'
-colordict['pink']   = '#ff66ff'
-colordict['brown']  = '#a52a2a'
-colordict['orange'] = '#ff9900'
-colordict['violet'] = '#6600ff'
-colordict['gray'] = colordict['grey']   = '#a0a0a4'
-#colordict['darkGray'] = colordict['darkGrey']   = '#808080'
-#colordict['lightGray'] = colordict['lightGrey']   = '#c0c0c0'
-colordict['y'] = colordict['yellow'] = '#ffff00'
-colordict['m'] = colordict['magenta'] = '#ff00ff'
-colordict['c'] = colordict['cyan'] = '#00ffff'
-colordict['darkBlue'] = '#000080'
-colordict['darkRed'] = '#800000'
-colordict['darkGreen'] = '#008000'
-colordict['darkBrown'] = '#660000'
-colordict['darkCyan'] = '#008080'
-colordict['darkYellow'] = '#808000'
-colordict['darkMagenta'] = '#800080'
-colorlist  = [colordict['black'],
-              colordict['blue'],
-              colordict['red'],
-              colordict['green'],
-              colordict['pink'],
-              colordict['yellow'],
-              colordict['brown'],
-              colordict['cyan'],
-              colordict['magenta'],
-              colordict['orange'],
-              colordict['violet'],
-              #colordict['bluegreen'],
-              colordict['grey'],
-              colordict['darkBlue'],
-              colordict['darkRed'],
-              colordict['darkGreen'],
-              colordict['darkCyan'],
-              colordict['darkMagenta'],
-              colordict['darkYellow'],
-              colordict['darkBrown']]
+_COLORDICT =  Colors.COLORDICT
+_COLORLIST = [_COLORDICT['black'],
+              _COLORDICT['blue'],
+              _COLORDICT['red'],
+              _COLORDICT['green'],
+              _COLORDICT['pink'],
+              _COLORDICT['yellow'],
+              _COLORDICT['brown'],
+              _COLORDICT['cyan'],
+              _COLORDICT['magenta'],
+              _COLORDICT['orange'],
+              _COLORDICT['violet'],
+              #_COLORDICT['bluegreen'],
+              _COLORDICT['grey'],
+              _COLORDICT['darkBlue'],
+              _COLORDICT['darkRed'],
+              _COLORDICT['darkGreen'],
+              _COLORDICT['darkCyan'],
+              _COLORDICT['darkMagenta'],
+              _COLORDICT['darkYellow'],
+              _COLORDICT['darkBrown']]
 
 #PyQtGraph symbols ['o', 's', 't', 'd', '+', 'x']
 #
@@ -127,8 +105,8 @@ colorlist  = [colordict['black'],
 class Plot(PlotBase.PlotBase):
     PLUGINS_DIR = None
 
-    colorList = colorlist
-    colorDict = colordict
+    colorList = _COLORLIST
+    colorDict = _COLORDICT
 
     def __init__(self, parent=None, backend=None, callback=None):
         self._parent = parent
@@ -172,8 +150,7 @@ class Plot(PlotBase.PlotBase):
         self._itemList = []
         self._itemDict = {}
 
-        # colors and line types
-        self._colorList = self.colorList
+        # line types
         self._styleList = ['-', '--', '-.', ':']
         self._nColors   = len(self.colorList)
         self._nStyles   = len(self._styleList)
@@ -267,7 +244,7 @@ class Plot(PlotBase.PlotBase):
             self._styleIndex += 1
             if self._styleIndex >= self._nStyles:
                 self._styleIndex = 0
-        color = self._colorList[self._colorIndex]
+        color = self.colorList[self._colorIndex]
         style = self._styleList[self._styleIndex]
         if color == self._activeCurveColor:
             self._colorIndex += 1
@@ -276,7 +253,7 @@ class Plot(PlotBase.PlotBase):
                 self._styleIndex += 1
                 if self._styleIndex >= self._nStyles:
                     self._styleIndex = 0
-            color = self._colorList[self._colorIndex]
+            color = self.colorList[self._colorIndex]
             style = self._styleList[self._styleIndex]
         self._colorIndex += 1
         return color, style
@@ -348,40 +325,28 @@ class Plot(PlotBase.PlotBase):
         """
         return self._plot.getDrawMode()
 
-    def addCurve(self, x, y, legend=None, info=None, replace=False,
-                 replot=True, **kw):
-        """
-        Add the 1D curve given by x an y to the graph.
-        :param x: The data corresponding to the x axis
-        :type x: list or numpy.ndarray
-        :param y: The data corresponding to the y axis
-        :type y: list or numpy.ndarray
-        :param legend: The legend to be associated to the curve
-        :type legend: string or None
-        :param info: Dictionary of information associated to the curve
-        :type info: dict or None
-        :param replace: Flag to indicate if already existing curves are to be deleted
-        :type replace: boolean default False
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True
-        """
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
+        if "line_style" in kw:
+            print("DEPRECATION WARNING: line_style deprecated, use linestyle")
         if legend is None:
             key = "Unnamed curve 1.1"
         else:
             key = str(legend)
         if info is None:
             info = {}
-        xlabel = info.get('xlabel', 'X')
-        ylabel = info.get('ylabel', 'Y')
-        if 'xlabel' in kw:
-            info['xlabel'] = kw['xlabel']
-        if 'ylabel' in kw:
-            info['ylabel'] = kw['ylabel']
+        if xlabel is None:
+            xlabel = info.get('xlabel', 'X')
+        if ylabel is None:
+            ylabel = info.get('ylabel', 'Y')
         info['xlabel'] = str(xlabel)
         info['ylabel'] = str(ylabel)
-        yaxis = info.get('yaxis', 'left')
-        yaxis = kw.get('yaxis', yaxis)
-        info['plot_yaxis'] = yaxis
+        if xerror is None:
+            xerror = info.get("sigmax", xerror)
+        if yerror is None:
+            yerror = info.get("sigmay", yerror)
 
         if replace:
             self._curveList = []
@@ -390,9 +355,6 @@ class Plot(PlotBase.PlotBase):
             self._styleIndex = 0
             self._plot.clearCurves()
 
-        symbol = None
-        color = None
-        line_style = None
         if key in self._curveList:
             idx = self._curveList.index(key)
             self._curveList[idx] = key
@@ -401,9 +363,10 @@ class Plot(PlotBase.PlotBase):
                 # this can give errors if it is not present in the plot
                 self._plot.removeCurve(key, replot=False)
                 symbol = self._curveDict[key][3].get('plot_symbol', symbol)
-                color = self._curveDict[key][3].get('plot_color', color)
-                line_style = self._curveDict[key][3].get('plot_line_style',
-                                                    line_style)
+                if color is None:
+                    color = self._curveDict[key][3].get('plot_color', color)
+                linestyle = self._curveDict[key][3].get('plot_linestyle',
+                                                    linestyle)
         else:
             self._curveList.append(key)
         #print("TODO: Here we can add properties to the info dictionnary")
@@ -418,34 +381,32 @@ class Plot(PlotBase.PlotBase):
 
         # deal with the symbol
         symbol = info.get("plot_symbol", symbol)
-        symbol = kw.get("symbol", symbol)
         if self._plotPoints and (symbol is None):
             symbol = 'o'
         elif symbol == "":
             #symbol = None
             pass
         info["plot_symbol"] = symbol
-        color = info.get("plot_color", color)
-        color = kw.get("color", color)
+        if color is None:
+            color = info.get("plot_color", color)
+        linestyle = info.get("plot_linestyle", linestyle)
 
-        line_style = info.get("plot_line_style", None)
-        line_style = kw.get("line_style", line_style)
+        if self._plotLines and (linestyle is None):
+            linestyle = '-'
+        elif linestyle is None:
+            linestyle = ' '
 
-        if self._plotLines and (line_style is None):
-            line_style = '-'
-        elif line_style is None:
-            line_style = ' '
-
-        if (color is None) and (line_style is None):
-            color, line_style = self._getColorAndStyle()
-        elif line_style is None:
-            dummy, line_style = self._getColorAndStyle()
+        if (color is None) and (linestyle is None):
+            color, linestyle = self._getColorAndStyle()
+        elif linestyle is None:
+            dummy, linestyle = self._getColorAndStyle()
         elif color is None:
             color, dummy = self._getColorAndStyle()
-        #print("Legend = ", legend, "color = ", color, "style = ", line_style)
+
         info["plot_color"] = color
-        info["plot_line_style"] = line_style
-        info.get('plot_yaxis', 'left')
+        info["plot_linestyle"] = linestyle
+        if yaxis is None:
+            yaxis = info.get('plot_yaxis', 'left')
 
         if self.isXAxisLogarithmic() or self.isYAxisLogarithmic():
             if hasattr(color, "size"):
@@ -459,7 +420,15 @@ class Plot(PlotBase.PlotBase):
         if len(xplot):
             curveHandle = self._plot.addCurve(xplot, yplot, key, info,
                                               replot=False, replace=replace,
-                                              color=colorplot)
+                                              color=colorplot,
+                            symbol=info["plot_symbol"],
+                            linestyle=info["plot_linestyle"],
+                            xlabel=info["xlabel"],
+                            ylabel=info["ylabel"],
+                            yaxis=yaxis,
+                            xerror=xerror,
+                            yerror=yerror,
+                            **kw)
             info['plot_handle'] = curveHandle
         else:
             info['plot_handle'] = key
@@ -767,8 +736,8 @@ class Plot(PlotBase.PlotBase):
     def setActiveCurveColor(self, color="#000000"):
         if color is None:
             color = "black"
-        if color in colordict:
-            color = colordict[color]
+        if color in self.colorDict:
+            color = self.colorDict[color]
         self._activeCurveColor = color
         self._plot.setActiveCurveColor(color)
 
@@ -1017,9 +986,9 @@ class Plot(PlotBase.PlotBase):
         if DEBUG:
             print("Received label = %s" % label)
         if color is None:
-            color = colordict['black']
-        elif color in colordict:
-            color = colordict[color]
+            color = self.colorDict['black']
+        elif color in self.colorDict:
+            color = self.colorDict[color]
         if legend is None:
             i = 0
             legend = "Unnamed X Marker %d" % i
@@ -1051,9 +1020,9 @@ class Plot(PlotBase.PlotBase):
         kw -> color, symbol
         """
         if color is None:
-            color = colordict['black']
-        elif color in colordict:
-            color = colordict[color]
+            color = self.colorDict['black']
+        elif color in self.colorDict:
+            color = self.colorDict[color]
         if legend is None:
             i = 0
             legend = "Unnamed Y Marker %d" % i
@@ -1080,9 +1049,9 @@ class Plot(PlotBase.PlotBase):
                      draggable=False,
                      **kw):
         if color is None:
-            color = colordict['black']
-        elif color in colordict:
-            color = colordict[color]
+            color = self.colorDict['black']
+        elif color in self.colorDict:
+            color = self.colorDict[color]
         if legend is None:
             i = 0
             legend = "Unnamed Marker %d" % i

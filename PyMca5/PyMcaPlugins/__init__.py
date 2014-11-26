@@ -28,9 +28,9 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-PyMca.PyMcaPlugins contains plugins associated to PyMca.
+PyMca5.PyMcaPlugins contains plugins associated to PyMca.
 
-They inherit either from PyMca5.Plugin1DBase (for instances of classes
-respecting the PyMca.Plot1DBase interface) or PyMca.StackPluginBase (for
-instances repecting the PyMca.StackBase interface)
+They import either from Plugin1DBase (for instances of classes
+respecting the Plot1DBase interface) or from StackPluginBase (for
+instances repecting the StackBase interface)
 """

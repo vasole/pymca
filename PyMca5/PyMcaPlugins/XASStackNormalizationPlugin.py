@@ -70,7 +70,7 @@ except ImportError:
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaPhysics.xas import XASNormalization
-from PyMca5.PyMcaGui import XASNormalizationWindow
+from PyMca5.PyMcaGui.physics.xas import XASNormalizationWindow
 
 DEBUG = 0
 

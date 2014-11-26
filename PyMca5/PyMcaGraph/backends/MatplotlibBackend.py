@@ -45,11 +45,14 @@ import numpy
 from numpy import vstack as numpyvstack
 import sys
 import types
-from .. import PlotBackend
+try:
+    from .. import PlotBackend
+except ImportError:
+    from PyMca5.PyMca import PlotBackend
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 # This should be independent of Qt
-if "tk" in sys.argv:
+if "tk" in sys.argv or ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
     if sys.version < '3.0':
         import Tkinter as Tk
     else:
@@ -1275,40 +1278,26 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self._rightAxisEnabled = False
         self.enableAxis('right', False)
 
-    def addCurve(self, x, y, legend, info=None, replace=False, replot=True, **kw):
-        """
-        Add the 1D curve given by x an y to the graph.
-        :param x: The data corresponding to the x axis
-        :type x: list or numpy.ndarray
-        :param y: The data corresponding to the y axis
-        :type y: list or numpy.ndarray
-        :param legend: The legend to be associated to the curve
-        :type legend: string or None
-        :param info: Dictionary of information associated to the curve
-        :type info: dict or None
-        :param replace: Flag to indicate if already existing curves are to be deleted
-        :type replace: boolean default False
-        :param replot: Flag to indicate plot is to be immediately updated
-        :type replot: boolean default True
-        :returns: The legend/handle used by the backend to univocally access it.
-        """
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
+        if legend is None:
+            legend = "Unnamed curve"
         if replace:
             self.clearCurves()
         else:
             self.removeCurve(legend, replot=False)
-        if info is None:
-            info = {}
-        color = info.get('plot_color', self._activeCurveColor)
-        color = kw.get('color', color)
-        symbol = info.get('plot_symbol', None)
-        symbol = kw.get('symbol', symbol)
+        if color is None:
+            color = self._activeCurveColor
         brush = color
-        style = info.get('plot_line_style', '-')
-        style = info.get('line_style', style)
+        style = linestyle
         linewidth = 1
-        axisId = info.get('plot_yaxis', 'left')
-        axisId = kw.get('yaxis', axisId)
-        fill = info.get('plot_fill', False)
+        if yaxis == "right":
+            axisId = yaxis
+        else:
+            axisId = "left"
+        fill = kw.get('plot_fill', False)
         if axisId == "right":
             axes = self.ax2
             if self._rightAxisEnabled is None:
@@ -1321,8 +1310,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if hasattr(color, "dtype"):
             if len(color) == len(x):
                 scatterPlot = True
-        if "color" in kw:
-            del kw["color"]
         if scatterPlot:
             # scatter plot
             if color.dtype not in [numpy.float32, numpy.float]:
@@ -1376,6 +1363,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                   linewidth=linewidth,
                                   picker=3,
                                   **kw)
+
+        # errorbar is a container?   
+        #axes.errorbar(x,y, label=legend,yerr=numpy.sqrt(y), linestyle=" ",color='b')
+
         # nice effects:
         #curveList[-1].set_drawstyle('steps-mid')
         if fill:
@@ -1739,11 +1730,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             # we have received a legend!
             legend = handle
-            handle = None
             testLists = [self.ax.lines, self.ax2.lines,
                          self.ax.collections, self.ax2.collections]
             for container in testLists:
                 for line2d in container:
+                    handle = None
                     label = line2d.get_label()
                     if label == legend:
                         handle = line2d

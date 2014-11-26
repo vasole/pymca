@@ -33,39 +33,80 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
 A 1D plugin is a module that will be automatically added to the PyMca 1D window
 in order to perform user defined operations of the plotted 1D data. It has to
-inherit the PyMca.Plugin1DBase class and implement the methods:
+inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
 
-    getMethods
-    getMethodToolTip
-    applyMethod
+    - getMethods
+    - getMethodToolTip
+    - applyMethod
 
 and modify the static module variable MENU_TEXT and the static module function
 getPlugin1DInstance according to the defined plugin.
 
 These plugins will be compatible with any 1D-plot window that implements the Plot1D
-interface. The plot window interface is described in the Plot1DBase Class.
+interface. The plot window interface is described in the Plot1DBase class.
 
 The main items are reproduced here and can be directly accessed as plugin methods.
 
-    addCurve
-    getActiveCurve
-    getAllCurves
-    getGraphXLimits
-    getGraphYLimits
-    getGraphTitle
-    getGraphXLabel
-    getGraphXTitle
-    getGraphYLabel
-    getGraphYTitle
-    removeCurve
-    setActiveCurve
-    setGraphTitle
-    setGraphXLimits
-    setGraphYLimits
-    setGraphXLabel
-    setGraphYLabel
-    setGraphXTitle
-    setGraphYTitle
+    - addCurve
+    - getActiveCurve
+    - getAllCurves
+    - getGraphXLimits
+    - getGraphYLimits
+    - getGraphTitle
+    - getGraphXLabel
+    - getGraphXTitle
+    - getGraphYLabel
+    - getGraphYTitle
+    - removeCurve
+    - setActiveCurve
+    - setGraphTitle
+    - setGraphXLimits
+    - setGraphYLimits
+    - setGraphXLabel
+    - setGraphYLabel
+    - setGraphXTitle
+    - setGraphYTitle
+
+A simple plugin example, normalizing to maximum and shifting the curves.
+
+.. code-block:: python
+
+    from PyMca5 import Plugin1DBase
+
+    class Shifting(Plugin1DBase.Plugin1DBase):
+        def getMethods(self, plottype=None):
+            return ["Shift"]
+
+        def getMethodToolTip(self, methodName):
+            if methodName != "Shift":
+                raise InvalidArgument("Method %s not valid" % methodName)
+            return "Subtract minimum and shift up by 100"
+
+        def applyMethod(self, methodName):
+            if methodName != "Shift":
+                raise InvalidArgument("Method %s not valid" % methodName)
+            allCurves = self.getAllCurves()
+            for i in range(len(allCurves)):
+                x, y, legend, info = allCurves[i][:4]
+                delta = y.max() - y.min()
+                if delta < 1.0e-15:
+                    delta = 1.0
+                y = (y - y.min())/delta + i * 100.
+                if i == len(allCurves):
+                    replot = True
+                else:
+                    replot = False
+                if i == 0:
+                    replace = True
+                else:
+                    replace = False
+                self.addCurve(x, y, legend=legend + " %d" % (i * 100),
+                                    info=info, replace=replace, replot=replot)
+     
+    MENU_TEXT="Simple Shift Example"
+    def getPlugin1DInstance(plotWindow, **kw):
+        ob = Shifting(plotWindow)
+        return ob
 
 """
 import weakref
@@ -87,7 +128,8 @@ class Plugin1DBase(object):
         self._plotWindow = weakref.proxy(plotWindow)
 
     #Window related functions
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True):
+    def addCurve(self, x, y, legend=None, info=None,
+                 replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
         :param x: The data corresponding to the x axis
@@ -102,9 +144,10 @@ class Plugin1DBase(object):
         :type replace: boolean default False
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
+        :param **kw: Additional keywords recognized by the plot window
         """
         return self._plotWindow.addCurve(x, y, legend=legend, info=info,
-                                          replace=replace, replot=replot)
+                                    replace=replace, replot=replot, **kw)
 
     def getActiveCurve(self, just_legend=False):
         """

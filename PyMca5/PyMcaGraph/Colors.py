@@ -26,10 +26,34 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V. Armando Sole - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import os
-__path__ += [os.path.join(os.path.dirname(__file__), "xas")]
-__path__ += [os.path.join(os.path.dirname(__file__), "xrf")]
+__doc__ = """
+Dictionary of common colors.
+"""
+
+COLORDICT = {}
+COLORDICT['b'] = COLORDICT['blue']   = '#0000ff'
+COLORDICT['r'] = COLORDICT['red']    = '#ff0000'
+COLORDICT['g'] = COLORDICT['green']  = '#00ff00'
+COLORDICT['k'] = COLORDICT['black']  = '#000000'
+COLORDICT['white']  = '#ffffff'
+COLORDICT['pink']   = '#ff66ff'
+COLORDICT['brown']  = '#a52a2a'
+COLORDICT['orange'] = '#ff9900'
+COLORDICT['violet'] = '#6600ff'
+COLORDICT['gray'] = COLORDICT['grey']   = '#a0a0a4'
+#COLORDICT['darkGray'] = COLORDICT['darkGrey']   = '#808080'
+#COLORDICT['lightGray'] = COLORDICT['lightGrey']   = '#c0c0c0'
+COLORDICT['y'] = COLORDICT['yellow'] = '#ffff00'
+COLORDICT['m'] = COLORDICT['magenta'] = '#ff00ff'
+COLORDICT['c'] = COLORDICT['cyan'] = '#00ffff'
+COLORDICT['darkBlue'] = '#000080'
+COLORDICT['darkRed'] = '#800000'
+COLORDICT['darkGreen'] = '#008000'
+COLORDICT['darkBrown'] = '#660000'
+COLORDICT['darkCyan'] = '#008080'
+COLORDICT['darkYellow'] = '#808000'
+COLORDICT['darkMagenta'] = '#800080'

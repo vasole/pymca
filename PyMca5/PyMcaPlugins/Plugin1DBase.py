@@ -27,6 +27,8 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+# What does it make more sense: to import from PyMca5.PyMcaPlugins, from
+# PyMca5.PyMcaCore or from PyMca5?
 print("Please update your plugins")
 print("Use from PyMca5 import Plugin1DBase")
 try:

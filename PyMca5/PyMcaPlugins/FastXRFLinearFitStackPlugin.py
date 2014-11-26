@@ -162,17 +162,12 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         else:
             self.thread = CalculationThread.CalculationThread(\
                             calculation_method=self.actualCalculation)
-            #qt.QObject.connect(self.thread,
-            #             qt.SIGNAL('finished()'),
-            #             self.threadFinished)
+            self.thread.finished.connect(self.threadFinished)
             self.thread.start()
             message = "Please wait. Calculation going on."
             CalculationThread.waitingMessageDialog(self.thread,
                                 parent=self.configurationWidget,
                                 message=message)
-            while self.thread.isRunning():
-                time.sleep(2)
-            self.threadFinished()
 
     def actualCalculation(self):
         activeCurve = self.getActiveCurve()

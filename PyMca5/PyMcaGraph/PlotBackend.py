@@ -38,87 +38,92 @@ TODO: Still to be worked out: handling of the right vertical axis.
 
 PlotBackend Functions (Functions marked by (*) only needed for handling images)
 
-addCurve
-addImage (*)
-addItem (*)
-clear
-clearCurves
-clearImages (*)
-clearMarkers
-enableActiveCurveHandling
-getDefaultColormap (*)
-getDrawMode
-getGraphXLabel
-getGraphXLimits
-getGraphYLabel
-getGraphYLimits
-getGraphTitle
-getSupportedColormaps (*)
-getWidgetHandle
-insertMarker
-insertXMarker
-insertYMarker
-invertYAxis
-isDrawModeEnabled
-isXAxisAutoScale
-isYAxisAutoScale
-keepDataAspectRatio(*)
-removeCurve
-removeImage (*)
-removeMarker
-resetZoom
-replot
-replot_
-saveGraph
-setActiveCurve
-setActiveImage (*)
-setCallback
-setDefaultColormap (*)
-setDrawModeEnabled
-setGraphTitle
-setGraphXLabel
-setGraphXLimits
-setGraphYLabel
-setGraphYLimits
-setLimits
-setXAxisAutoScale
-setXAxisLogarithmic
-setYAxisAutoScale
-setYAxisLogarithmic
-setZoomModeEnabled
-showGrid
+- addCurve
+- addImage (*)
+- addItem (*)
+- clear
+- clearCurves
+- clearImages (*)
+- clearMarkers
+- enableActiveCurveHandling
+- getDefaultColormap (*)
+- getDrawMode
+- getGraphXLabel
+- getGraphXLimits
+- getGraphYLabel
+- getGraphYLimits
+- getGraphTitle
+- getSupportedColormaps (*)
+- getWidgetHandle
+- insertMarker
+- insertXMarker
+- insertYMarker
+- invertYAxis
+- isDrawModeEnabled
+- isXAxisAutoScale
+- isYAxisAutoScale
+- keepDataAspectRatio(*)
+- removeCurve
+- removeImage (*)
+- removeMarker
+- resetZoom
+- replot
+- replot_
+- saveGraph
+- setActiveCurve
+- setActiveImage (*)
+- setCallback
+- setDefaultColormap (*)
+- setDrawModeEnabled
+- setGraphTitle
+- setGraphXLabel
+- setGraphXLimits
+- setGraphYLabel
+- setGraphYLimits
+- setLimits
+- setXAxisAutoScale
+- setXAxisLogarithmic
+- setYAxisAutoScale
+- setYAxisLogarithmic
+- setZoomModeEnabled
+- showGrid
 
 PlotBackend "signals/events"
 
 All the events pass via the callback_function supplied.
+
 They consist on a dictionnary in which the 'event' key is mandatory.
 
 The following keys will be present or not depending on the type of event, but
 if present, their meaning should be:
 
 KEY - Meaning
-button - "left", "right", "middle"
-label - The label or legend associated to the item associated to the event
-type - The type of item associated to event ('curve', 'marker', ...)
-x - Bottom axis value in graph coordenates
-y - Vertical axis value in graph coordenates
-xpixel - x position in pixel coordenates
-ypixel - y position in pixel coordenates
-xdata - Horizontal graph coordinate associated to the item
-ydata - Vertical graph coordinate associated to the item
+
+- button - "left", "right", "middle"
+- label - The label or legend associated to the item associated to the event
+- type - The type of item associated to event ('curve', 'marker', ...)
+- x - Bottom axis value in graph coordenates
+- y - Vertical axis value in graph coordenates
+- xpixel - x position in pixel coordenates
+- ypixel - y position in pixel coordenates
+- xdata - Horizontal graph coordinate associated to the item
+- ydata - Vertical graph coordinate associated to the item
 
 
 drawingFinished
-    Still to be implemented.
+
     It looks as it should export xdata, ydata and type.
-    line - two points in graph and pixel coordinates
-    hline - one point in graph and pixel coordinates
-    vline - one point in graph and pixel coordinates
-    rectangle - four points in graph and pixel coordinates, x, y, width, height
-    polygone - n points in graph and pixel coordinates
-    ellipse - four points in graph and pixel coordinates?
-    circle - four points in graph and pixel coordinates, center and radius
-    parameters - Parameters passed to setDrawMode when enabling it
+
+    The information will depend on the type of item being drawn:
+    
+    - line - two points in graph and pixel coordinates
+    - hline - one point in graph and pixel coordinates
+    - vline - one point in graph and pixel coordinates
+    - rectangle - four points in graph and pixel coordinates, x, y, width, height
+    - polygone - n points in graph and pixel coordinates
+    - ellipse - four points in graph and pixel coordinates?
+    - circle - four points in graph and pixel coordinates, center and radius
+    - parameters - Parameters passed to setDrawMode when enabling it
 
 hover
     Emitted the mouse pass over an item with hover notification (markers)
@@ -129,22 +134,25 @@ imageClicked, curveClicked
 
 markerMoving
     Additional keys:
-    draggable - True if it is a movable marker (it should be True)
-    selectable - True if the marker can be selected
+    
+    - draggable - True if it is a movable marker (it should be True)
+    - selectable - True if the marker can be selected
 
 markerMoved
     Additional keys:
-    draggable - True if it is a movable marker (it should be True)
-    selectable - True if the marker can be selected
-    xdata, ydata - Final position of the marker
+    
+    - draggable - True if it is a movable marker (it should be True)
+    - selectable - True if the marker can be selected
+    - xdata, ydata - Final position of the marker
 
 markerClicked
     Additional keys:
-    draggable - True if it is a movable marker
-    selectable - True if the marker can be selected (it should be True)
+    
+    - draggable - True if it is a movable marker
+    - selectable - True if the marker can be selected (it should be True)
 
 mouseMoved
-    To export the mouse position in pixel and graph coordenates
+    Export the mouse position in pixel and graph coordenates
 
 mouseClicked
     Emitted on mouse release when not zooming, nor drawing, nor picking
@@ -153,14 +161,23 @@ mouseDoubleClicked
     Emitted on mouse release when not zooming, nor drawing, nor picking
 
 MouseZoom
-    NOT USED?
+    TODO: NOT USED? Figure out how to implement a limitsChanged signal?
+    
     keys xmin, xmax, ymin, ymax in graph coordenates
     keys xpixel_min, xpixel_max, ypixel_min, ypixel_max in pixel coordenates
 """
 
 DEBUG = 0
 
+from . import Colors
+
 class PlotBackend(object):
+
+    COLORDICT = Colors.COLORDICT
+    """
+    Dictionnary of predefined colors
+    """
+
     def __init__(self, parent=None):
         self._parent = parent
         self._zoomEnabled = True
@@ -173,8 +190,10 @@ class PlotBackend(object):
         self.setActiveCurveColor("#000000")
         self._callback = self._dummyCallback
 
-    def addCurve(self, x, y, legend=None, info=None,
-                        replace=False, replot=True, **kw):
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
         """
         Add the 1D curve given by x an y to the graph.
         :param x: The data corresponding to the x axis
@@ -189,6 +208,35 @@ class PlotBackend(object):
         :type replace: boolean default False
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
+        :param color: color(s) to be used
+        :type color: string ("#RRGGBB") or (npoints, 4) unsigned byte array or
+                     one of the predefined color names defined in Colors.py
+        :symbol: Symbol to be drawn at each (x, y) position
+        :type symbol: None or one of the predefined symbols:
+                      'o' - circle
+                      '.' - point
+                      ',' - pixel
+                      '+' - cross
+                      'x' - x-cross
+                      'd' - diamond
+                      's' - square
+        :linestyle: Type of line
+        :type linestyle: None or one of the predefined symbols:
+                      ' '  - no line
+                      '-'  - solid line
+                      '--' - dashed line
+                      '-.' - dash-dot line
+                      ':'  - dotted line
+        :xlabel: Label associated to the X axis when the curve is active
+        :type xlabel: string
+        :ylabel: Label associated to the Y axis when the curve is active
+        :type ylabel: string
+        :yaxis: Anything different from "right" is equivalent to "left"
+        :type yaxis: string or None
+        :xerror: Values with the uncertainties on the x values
+        :type xlabel: array
+        :yerror: Values with the uncertainties on the y values
+        :type ylabel: array
         :returns: The legend/handle used by the backend to univocally access it.
         """
         print("PlotBackend addCurve not implemented")
@@ -282,13 +330,15 @@ class PlotBackend(object):
         """
         Return the colormap that will be applied by the backend to an image
         if no colormap is applied to it.
+        
         A colormap is a dictionnary with the keys:
-        :type name: string
-        :type normalization: string (linear, log)
-        :type autoscale: boolean
-        :type vmin: float, minimum value
-        :type vmax: float, maximum value
-        :type colors: integer (typically 256)
+
+        - name: string
+        - normalization: string (linear, log)
+        - autoscale: boolean
+        - vmin: float, minimum value
+        - vmax: float, maximum value
+        - colors: integer (typically 256)
         """
         print("PlotBackend getDefaultColormap called")
         return {'name': 'gray', 'normalization':'linear',
@@ -299,8 +349,10 @@ class PlotBackend(object):
         """
         Return a dictionnary (or None) with the parameters passed when setting
         the draw mode.
-        :key shape: The shape being drawn
-        :key label: Associated text (or None)
+        
+        - shape: The shape being drawn
+        - label: Associated text (or None)
+
         and any other info passed to setDrawMode
         """
         print("PlotBackend getDrawMode not implemented")
@@ -564,8 +616,7 @@ class PlotBackend(object):
 
     def setCallback(self, callback_function):
         """
-        :param callback_function: function accepting a dictionnary as input and that will
-        handle the graph events
+        :param callback_function: function accepting a dictionnary as input to handle the graph events
         :type callback_function: callable
         """
         self._callback = callback_function
@@ -574,7 +625,9 @@ class PlotBackend(object):
         """
         Sets the colormap that will be applied by the backend to an image
         if no colormap is applied to it.
+        
         A colormap is a dictionnary with the keys:
+
         :type name: string
         :type normalization: string (linear, log)
         :type autoscale: boolean
@@ -589,7 +642,8 @@ class PlotBackend(object):
 
     def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
         """
-        Zoom and drawing are not compatible
+        Zoom and drawing are not compatible and cannot be enabled simultanelously
+
         :param flag: Enable drawing mode disabling zoom and picking mode
         :type flag: boolean, default True
         :param shape: Type of item to be drawn (line, hline, vline, rectangle...)
@@ -651,6 +705,7 @@ class PlotBackend(object):
     def setLimits(self, xmin, xmax, ymin, ymax):
         """
         Convenience method
+
         :param xmin: minimum bottom axis value
         :type xmin: float
         :param xmax: maximum bottom axis value
@@ -701,7 +756,8 @@ class PlotBackend(object):
 
     def setZoomModeEnabled(self, flag=True):
         """
-        Zoom and drawing are not compatible
+        Zoom and drawing cannot be simultaneously enabled.
+
         :param flag: If True, the user can zoom.
         :type flag: boolean, default True
         """
