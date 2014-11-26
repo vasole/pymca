@@ -67,7 +67,7 @@ The main items are reproduced here and can be directly accessed as plugin method
     - setGraphXTitle
     - setGraphYTitle
 
-A simple plugin example, normalizing to maximum and shifting the curves.
+A simple plugin example, normalizing to maximum and verticaly shifting the curves.
 
 .. code-block:: python
 
@@ -91,7 +91,7 @@ A simple plugin example, normalizing to maximum and shifting the curves.
                 delta = y.max() - y.min()
                 if delta < 1.0e-15:
                     delta = 1.0
-                y = (y - y.min())/delta + i * 100.
+                y = (y - y.min())/delta + i * 1.
                 if i == len(allCurves):
                     replot = True
                 else:
