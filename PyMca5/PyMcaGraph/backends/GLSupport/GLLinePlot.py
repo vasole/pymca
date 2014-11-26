@@ -58,9 +58,34 @@ class Lines2D(object):
     STYLES = SOLID, DASHED
     """Supported line styles (missing '-.' ':')"""
 
+    _LINEAR, _LOG10_X, _LOG10_Y, _LOG10_X_Y = 0, 1, 2, 3
+
     _SHADER_SRCS = {
+        'vertexTransforms': {
+            _LINEAR: """
+        vec4 transformXY(float x, float y) {
+            return vec4(x, y, 0.0, 1.0);
+        }
+        """,
+            _LOG10_X: """
+        vec4 transformXY(float x, float y) {
+            return vec4(log(x)/log(10.), y, 0.0, 1.0);
+        }
+        """,
+            _LOG10_Y: """
+        vec4 transformXY(float x, float y) {
+            return vec4(x, log(y)/log(10.), 0.0, 1.0);
+        }
+        """,
+            _LOG10_X_Y: """
+        vec4 transformXY(float x, float y) {
+            return vec4(log(x)/log(10.), log(y)/log(10.), 0.0, 1.0);
+        }
+        """
+    },
         SOLID: {
-            'vertex': """
+            'vertex': (
+            """
         #version 120
 
         uniform mat4 matrix;
@@ -69,12 +94,13 @@ class Lines2D(object):
         attribute vec4 color;
 
         varying vec4 vColor;
-
+        """,
+            """
         void main(void) {
-            gl_Position = matrix * vec4(xPos, yPos, 0.0, 1.0);
+            gl_Position = matrix * transformXY(xPos, yPos);
             vColor = color;
         }
-        """,
+        """),
             'fragment': """
         #version 120
 
@@ -91,7 +117,8 @@ class Lines2D(object):
         # to avoid computing distance when
         # results in inequal dashes when viewport aspect ratio is far from 1
         DASHED: {
-            'vertex': """
+            'vertex': (
+            """
         #version 120
 
         uniform mat4 matrix;
@@ -103,9 +130,10 @@ class Lines2D(object):
 
         varying float vDist;
         varying vec4 vColor;
-
+        """,
+            """
         void main(void) {
-            gl_Position = matrix * vec4(xPos, yPos, 0.0, 1.0);
+            gl_Position = matrix * transformXY(xPos, yPos);
             //Estimate distance in pixels
             vec2 probe = vec2(matrix * vec4(1., 1., 0., 0.)) *
                          halfViewportSize;
@@ -113,7 +141,7 @@ class Lines2D(object):
             vDist = distance * pixelPerDataEstimate;
             vColor = color;
         }
-        """,
+        """),
             'fragment': """
         #version 120
 
@@ -138,21 +166,24 @@ class Lines2D(object):
     def __init__(self, xVboData, yVboData,
                  colorVboData=None, distVboData=None,
                  style=SOLID, color=(0., 0., 0., 1.),
-                 width=1, dashPeriod=20):
+                 width=1, dashPeriod=20,
+                 isXLog=False, isYLog=False):
         assert(xVboData.size == yVboData.size)
         self.xVboData = xVboData
         self.yVboData = yVboData
-        if distVboData is not None:
-            assert(distVboData.size == xVboData.size)
-            self.distVboData = distVboData
 
-        self.colorVboData = colorVboData
+        assert(distVboData is None or distVboData.size == xVboData.size)
+        self.distVboData = distVboData
+
         assert(colorVboData is None or colorVboData.size == xVboData.size)
+        self.colorVboData = colorVboData
 
         self.color = color
         self.width = width
         self.style = style
         self.dashPeriod = dashPeriod
+        self.isXLog = isXLog
+        self.isYLog = isYLog
 
     @property
     def style(self):
@@ -188,14 +219,17 @@ class Lines2D(object):
         self._width = width
 
     @classmethod
-    def _getProgram(cls, style):
+    def _getProgram(cls, transform, style):
         context = getGLContext()
         programsForStyle = cls._programs[style]
         try:
             prgm = programsForStyle[context]
         except KeyError:
             sources = cls._SHADER_SRCS[style]
-            prgm = Program(sources['vertex'],
+            vertexShdr = sources['vertex'][0] + \
+                cls._SHADER_SRCS['vertexTransforms'][transform] + \
+                sources['vertex'][1]
+            prgm = Program(vertexShdr,
                            sources['fragment'])
             programsForStyle[context] = prgm
         return prgm
@@ -210,10 +244,15 @@ class Lines2D(object):
     render = _renderNone  # Overridden in style setter
 
     def _renderSolid(self, matrix):
-        glEnable(GL_LINE_SMOOTH)
+        if self.isXLog:
+            transform = self._LOG10_X_Y if self.isYLog else self._LOG10_X
+        else:
+            transform = self._LOG10_Y if self.isYLog else self._LINEAR
 
-        prog = self._getProgram(SOLID)
+        prog = self._getProgram(transform, SOLID)
         prog.use()
+
+        glEnable(GL_LINE_SMOOTH)
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
 
@@ -239,10 +278,15 @@ class Lines2D(object):
         glDisable(GL_LINE_SMOOTH)
 
     def _renderDash(self, matrix):
-        glEnable(GL_LINE_SMOOTH)
+        if self.isXLog:
+            transform = self._LOG10_X_Y if self.isYLog else self._LOG10_X
+        else:
+            transform = self._LOG10_Y if self.isYLog else self._LINEAR
 
-        prog = self._getProgram(DASHED)
+        prog = self._getProgram(transform, DASHED)
         prog.use()
+
+        glEnable(GL_LINE_SMOOTH)
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
         glUniform4f(prog.uniforms['color'], *self.color)
@@ -316,69 +360,96 @@ DIAMOND, CIRCLE, SQUARE, PLUS, X_MARKER, POINT, PIXEL = \
 class Points2D(object):
     MARKERS = DIAMOND, CIRCLE, SQUARE, PLUS, X_MARKER, POINT, PIXEL
 
-    _vertShdr = """
+    _LINEAR, _LOG10_X, _LOG10_Y, _LOG10_X_Y = 0, 1, 2, 3
+
+    _SHDRS = {
+        'vertexTransforms': {
+            _LINEAR: """
+        vec4 transformXY(float x, float y) {
+            return vec4(x, y, 0.0, 1.0);
+        }
+        """,
+            _LOG10_X: """
+        vec4 transformXY(float x, float y) {
+            return vec4(log(x)/log(10.), y, 0.0, 1.0);
+        }
+        """,
+            _LOG10_Y: """
+        vec4 transformXY(float x, float y) {
+            return vec4(x, log(y)/log(10.), 0.0, 1.0);
+        }
+        """,
+            _LOG10_X_Y: """
+        vec4 transformXY(float x, float y) {
+            return vec4(log(x)/log(10.), log(y)/log(10.), 0.0, 1.0);
+        }
+        """
+    },
+        'vertex': (
+        """
     #version 120
 
     uniform mat4 matrix;
+    uniform int transform;
     uniform float size;
     attribute float xPos;
     attribute float yPos;
     attribute vec4 color;
 
     varying vec4 vColor;
-
+    """,
+        """
     void main(void) {
-        gl_Position = matrix * vec4(xPos, yPos, 0.0, 1.0);
+        gl_Position = matrix * transformXY(xPos, yPos);
         vColor = color;
         gl_PointSize = size;
     }
-    """
+    """),
 
-    _fragTests = {
-        DIAMOND: """
-    float alphaSymbol(vec2 coord, float size) {
-        vec2 centerCoord = abs(coord - vec2(0.5, 0.5));
-        float f = centerCoord.x + centerCoord.y;
-        return clamp(size * (0.5 - f), 0., 1.);
-    }
-    """,
-        CIRCLE: """
-    float alphaSymbol(vec2 coord, float size) {
-        float radius = 0.5;
-        float r = distance(coord, vec2(0.5, 0.5));
-        return clamp(size * (radius - r), 0., 1.);
-    }
-    """,
-        SQUARE: """
-    float alphaSymbol(vec2 coord, float size) {
-        return 1.;
-    }
-    """,
-
-        PLUS: """
-    float alphaSymbol(vec2 coord, float size) {
-        vec2 d = abs(size * (coord - vec2(0.5, 0.5)));
-        if (min(d.x, d.y) < 0.5) {
-            return 1.;
-        } else {
-            return 0.;
+        'fragmentSymbols': {
+            DIAMOND: """
+        float alphaSymbol(vec2 coord, float size) {
+            vec2 centerCoord = abs(coord - vec2(0.5, 0.5));
+            float f = centerCoord.x + centerCoord.y;
+            return clamp(size * (0.5 - f), 0., 1.);
         }
-    }
-    """,
-        X_MARKER: """
-    float alphaSymbol(vec2 coord, float size) {
-        float d1 = abs(coord.x - coord.y);
-        float d2 = abs(coord.x + coord.y - 1.);
-        if (min(d1, d2) < 0.5/size) {
-            return 1.;
-        } else {
-            return 0.;
+        """,
+            CIRCLE: """
+        float alphaSymbol(vec2 coord, float size) {
+            float radius = 0.5;
+            float r = distance(coord, vec2(0.5, 0.5));
+            return clamp(size * (radius - r), 0., 1.);
         }
-    }
-    """
-    }
+        """,
+            SQUARE: """
+        float alphaSymbol(vec2 coord, float size) {
+            return 1.;
+        }
+        """,
+            PLUS: """
+        float alphaSymbol(vec2 coord, float size) {
+            vec2 d = abs(size * (coord - vec2(0.5, 0.5)));
+            if (min(d.x, d.y) < 0.5) {
+                return 1.;
+            } else {
+                return 0.;
+            }
+        }
+        """,
+            X_MARKER: """
+        float alphaSymbol(vec2 coord, float size) {
+            float d1 = abs(coord.x - coord.y);
+            float d2 = abs(coord.x + coord.y - 1.);
+            if (min(d1, d2) < 0.5/size) {
+                return 1.;
+            } else {
+                return 0.;
+            }
+        }
+        """
+        },
 
-    _fragShdr = (
+        'fragment': (
         """
     #version 120
 
@@ -397,14 +468,18 @@ class Points2D(object):
         }
     }
     """)
+    }
 
     _programs = defaultdict(dict)
 
     def __init__(self, xVboData, yVboData, colorVboData=None,
-                 marker=SQUARE, color=(0., 0., 0., 1.), size=7):
+                 marker=SQUARE, color=(0., 0., 0., 1.), size=7,
+                 isXLog=False, isYLog=False):
         self.color = color
         self.marker = marker
         self.size = size
+        self.isXLog = isXLog
+        self.isYLog = isYLog
 
         assert(xVboData.size == yVboData.size)
         self.xVboData = xVboData
@@ -443,18 +518,23 @@ class Points2D(object):
         self._size = size
 
     @classmethod
-    def _getProgram(cls, marker):
+    def _getProgram(cls, transform, marker):
         context = getGLContext()
         if marker in (POINT, PIXEL):
             marker = SQUARE
-        programsForMarker = cls._programs[marker]
+        programs = cls._programs[(transform, marker)]
         try:
-            prgm = programsForMarker[context]
+            prgm = programs[context]
         except KeyError:
-            fragShdr = cls._fragShdr[0] + cls._fragTests[marker] + \
-                cls._fragShdr[1]
-            prgm = Program(cls._vertShdr, fragShdr)
-            programsForMarker[context] = prgm
+            vertShdr = cls._SHDRS['vertex'][0] + \
+                       cls._SHDRS['vertexTransforms'][transform] + \
+                       cls._SHDRS['vertex'][1]
+            fragShdr = cls._SHDRS['fragment'][0] + \
+                       cls._SHDRS['fragmentSymbols'][marker] + \
+                       cls._SHDRS['fragment'][1]
+            prgm = Program(vertShdr, fragShdr)
+
+            programs[context] = prgm
         return prgm
 
     @classmethod
@@ -473,7 +553,12 @@ class Points2D(object):
     render = _renderNone
 
     def _renderMarkers(self, matrix):
-        prog = self._getProgram(self.marker)
+        if self.isXLog:
+            transform = self._LOG10_X_Y if self.isYLog else self._LOG10_X
+        else:
+            transform = self._LOG10_Y if self.isYLog else self._LINEAR
+
+        prog = self._getProgram(transform, self.marker)
         prog.use()
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
         if self.marker in (POINT, PIXEL):
@@ -516,33 +601,39 @@ def points2DFromArrays(xData, yData, cData=None, *kwargs):
 
 # curves ######################################################################
 
-def _proxyProperty(componentName, attributeName):
-    """Create a property to access an attribute of an attribute.
+def _proxyProperty(*componentsAttributes):
+    """Create a property to access an attribute of attribute(s).
     Useful for composition.
-    Getter returns None if component is not found.
+    Supports multiple components this way:
+    getter returns the first found, setter sets all
     """
     def getter(self):
-        try:
-            component = getattr(self, componentName)
-        except AttributeError:
-            return None
-        else:
-            return getattr(component, attributeName)
+        for compName, attrName in componentsAttributes:
+            try:
+                component = getattr(self, compName)
+            except AttributeError:
+                pass
+            else:
+                return getattr(component, attrName)
 
     def setter(self, value):
-        component = getattr(self, componentName)
-        setattr(component, attributeName, value)
+        for compName, attrName in componentsAttributes:
+            component = getattr(self, compName)
+            setattr(component, attrName, value)
     return property(getter, setter)
 
-
 class Curve2D(object):
-
     def __init__(self, xVboData, yVboData,
                  colorVboData=None, distVboData=None,
                  lineStyle=None, lineColor=None,
                  lineWidth=None, lineDashPeriod=None,
-                 marker=None, markerColor=None, markerSize=None):
-        kwargs = {'style': lineStyle}
+                 marker=None, markerColor=None, markerSize=None,
+                 isXLog=False, isYLog=False):
+        kwargs = {
+            'style': lineStyle,
+            'isXLog': isXLog,
+            'isYLog': isYLog
+        }
         if lineColor is not None:
             kwargs['color'] = lineColor
         if lineWidth is not None:
@@ -552,34 +643,43 @@ class Curve2D(object):
         self.lines = Lines2D(xVboData, yVboData,
                              colorVboData, distVboData, **kwargs)
 
-        kwargs = {'marker': marker}
+        kwargs = {
+            'marker': marker,
+            'isXLog': isXLog,
+            'isYLog': isYLog
+        }
         if markerColor is not None:
             kwargs['color'] = markerColor
         if markerSize is not None:
             kwargs['size'] = markerSize
         self.points = Points2D(xVboData, yVboData, colorVboData, **kwargs)
 
-    xVboData = _proxyProperty('lines', 'xVboData')
+    xVboData = _proxyProperty(('lines', 'xVboData'), ('points', 'xVboData'))
 
-    yVboData = _proxyProperty('lines', 'yVboData')
+    yVboData = _proxyProperty(('lines', 'yVboData'), ('points', 'yVboData'))
 
-    colorVboData = _proxyProperty('lines', 'colorVboData')
+    colorVboData = _proxyProperty(('lines', 'colorVboData'),
+                                  ('points', 'colorVboData'))
 
-    distVboData = _proxyProperty('lines', 'distVboData')
+    distVboData = _proxyProperty(('lines', 'distVboData'))
 
-    lineStyle = _proxyProperty('lines', 'style')
+    lineStyle = _proxyProperty(('lines', 'style'))
 
-    lineColor = _proxyProperty('lines', 'color')
+    lineColor = _proxyProperty(('lines', 'color'))
 
-    lineWidth = _proxyProperty('lines', 'width')
+    lineWidth = _proxyProperty(('lines', 'width'))
 
-    lineDashPeriod = _proxyProperty('lines', 'dashPeriod')
+    lineDashPeriod = _proxyProperty(('lines', 'dashPeriod'))
 
-    marker = _proxyProperty('points', 'marker')
+    marker = _proxyProperty(('points', 'marker'))
 
-    markerColor = _proxyProperty('points', 'color')
+    markerColor = _proxyProperty(('points', 'color'))
 
-    markerSize = _proxyProperty('points', 'size')
+    markerSize = _proxyProperty(('points', 'size'))
+
+    isXLog = _proxyProperty(('lines', 'isXLog'), ('points', 'isXLog'))
+
+    isYLog = _proxyProperty(('lines', 'isYLog'), ('points', 'isYLog'))
 
     @classmethod
     def init(cls):

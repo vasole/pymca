@@ -1066,7 +1066,11 @@ class OpenGLPlotCanvas(PlotBackend):
         self._yMin, self._yMax = 0., 1.
         self._keepDataAspectRatio = False
         self._isYInverted = False
-        self._title, self._xLabel, self._yLabel = '', '', ''
+        self._title = ''
+        self._xLabel = ''
+        self._yLabel = ''
+        self._isXLog = False
+        self._isYLog = False
 
         self.winWidth, self.winHeight = 0, 0
         self._dataBBox = {'xMin': 0., 'xMax': 0., 'xStep': 1.,
@@ -1302,37 +1306,93 @@ class OpenGLPlotCanvas(PlotBackend):
         self._dataBBox = {'xMin': xMin, 'xMax': xMax, 'xStep': xStep,
                           'yMin': yMin, 'yMax': yMax, 'yStep': yStep}
 
+    @property
+    def displayRange(self):
+        return self._xMin, self._xMax, self._yMin, self._YMax
+
+    @property
+    def displayRangeTransformed(self):
+        if self._isXLog:
+            try:
+                xMin = math.log10(self._xMin)
+            except ValueError:
+                print('xMin: warning log10({})'.format(self._xMin))
+                xMin = 0.
+            try:
+                xMax = math.log10(self._xMax)
+            except ValueError:
+                print('xMax: warning log10({})'.format(self._xMax))
+                xMax = 0.
+        else:
+            xMin = self._xMin
+            xMax = self._xMax
+
+        if self._isYLog:
+            try:
+                yMin = math.log10(self._yMin)
+            except ValueError:
+                print('yMin: warning log10({})'.format(self._yMin))
+                yMin = 0.
+            try:
+                yMax = math.log10(self._yMax)
+            except ValueError:
+                print('yMax: warning log10({})'.format(self._yMax))
+                yMax = 0.
+
+        else:
+            yMin = self._yMin
+            yMax = self._yMax
+
+        return xMin, xMax, yMin, yMax
+
+
     def updateAxis(self):
         self._axisDirtyFlag = True
         self._plotDirtyFlag = True
 
     def _updateAxis(self):
-        if not self._axisDirtyFlag:
-            return
-        else:
-            self._axisDirtyFlag = False
-
         # Check if window is large enough
         plotWidth, plotHeight = self.plotSizeInPixels()
         if plotWidth <= 2 or plotHeight <= 2:
             return
 
+        if not self._axisDirtyFlag:
+            return
+        else:
+            self._axisDirtyFlag = False
+
         # Ticks
         self._labels = []
+        nbLinePairs = 2
 
-        nTicks = 5
+        trXMin, trXMax, trYMin, trYMax = self.displayRangeTransformed
 
-        xMin, xMax, xStep, xNbFrac = niceNumbers(self._xMin, self._xMax,
-                                                 nTicks)
-        xTicks = [x for x in _ticks(xMin, xMax, xStep)
-                  if x >= self._xMin and x <= self._xMax]
+        if trXMin != trXMax and trYMin != trYMax:
+            # We get some ticks
+            nTicks = 5
 
-        yMin, yMax, yStep, yNbFrac = niceNumbers(self._yMin, self._yMax,
-                                                 nTicks)
-        yTicks = [y for y in _ticks(yMin, yMax, yStep)
-                  if y >= self._yMin and y <= self._yMax]
+            xMin, xMax, xStep, xNbFrac = niceNumbers(trXMin, trXMax,
+                                                     nTicks)
+            if self._isXLog:
+                xTicks = [pow(10, x) for x in _ticks(xMin, xMax, xStep)
+                          if x >= trXMin and x <= trXMax]
+            else:
+                xTicks = [x for x in _ticks(xMin, xMax, xStep)
+                          if x >= trXMin and x <= trXMax]
 
-        nbLinePairs = 2 + len(xTicks) + len(yTicks)
+            yMin, yMax, yStep, yNbFrac = niceNumbers(trYMin, trYMax,
+                                                     nTicks)
+            if self._isYLog:
+                yTicks = [pow(10, y) for y in _ticks(yMin, yMax, yStep)
+                          if y >= trYMin and y <= trYMax]
+            else:
+                yTicks = [y for y in _ticks(yMin, yMax, yStep)
+                          if y >= trYMin and y <= trYMax]
+
+            nbLinePairs += len(xTicks) + len(yTicks)
+        else:
+            xTicks, yTicks = (), ()
+
         self._frameVertices = np.empty((nbLinePairs, 4, 2), dtype=np.float32)
 
         plotBottom = self.winHeight - self._margins['bottom']
@@ -1417,11 +1477,25 @@ class OpenGLPlotCanvas(PlotBackend):
     def dataToPixelCoords(self, xData=None, yData=None):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
+        trXMin, trXMax, trYMin, trYMax = self.displayRangeTransformed
+
         if xData is not None:
+            if self._isXLog:
+                try:
+                    xData = math.log10(xData)
+                except ValueError:
+                    print('xData: warning log10({})'.format(xData))
+                    xData = 0.
             xPixel = self._margins['left'] + \
-                (xData - self._xMin) / (self._xMax - self._xMin) * plotWidth
+                (xData - trXMin) / (trXMax - trXMin) * plotWidth
         if yData is not None:
-            yOffset = (yData - self._yMin) / (self._yMax - self._yMin)
+            if self._isYLog:
+                try:
+                    yData = math.log10(yData)
+                except ValueError:
+                    print('yData: warning log10({})'.format(yData))
+                    yData = 0.
+            yOffset = (yData - trYMin) / (trYMax - trYMin)
             yOffset *= plotHeight
             if self._isYInverted:
                 yPixel = self._margins['top'] + yOffset
@@ -1439,6 +1513,10 @@ class OpenGLPlotCanvas(PlotBackend):
             return xPixel, yPixel
 
     def pixelToDataSize(self, xPixel=None, yPixel=None):
+        #TODO this cannot work with log scale!
+        if self._isXLog or self._isYLog:
+            raise RuntimeError('pixelToDataSize impossible with log')
+
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         if xPixel is not None:
@@ -1459,6 +1537,8 @@ class OpenGLPlotCanvas(PlotBackend):
     def pixelToDataCoords(self, xPixel=None, yPixel=None):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
+        trXMin, trXMax, trYMin, trYMax = self.displayRangeTransformed
+
         if xPixel is not None:
             if xPixel < self._margins['left'] or \
                xPixel > (self.winWidth - self._margins['right']):
@@ -1466,7 +1546,8 @@ class OpenGLPlotCanvas(PlotBackend):
             else:
                 xData = (xPixel - self._margins['left']) + 0.5
                 xData /= float(plotWidth)
-                xData = self._xMin + xData * (self._xMax - self._xMin)
+                xData = trXMin + xData * (trXMax - trXMin)
+                xData = pow(10, xData)
 
         if yPixel is not None:
             if yPixel < self._margins['top'] or \
@@ -1475,11 +1556,13 @@ class OpenGLPlotCanvas(PlotBackend):
             elif self._isYInverted:
                 yData = yPixel - self._margins['top'] + 0.5
                 yData /= float(plotHeight)
-                yData = self._yMin + yData * (self._yMax - self._yMin)
+                yData = trYMin + yData * (trYMax - trYMin)
+                yData = pow(10, yData)
             else:
                 yData = self.winHeight - self._margins['bottom'] - yPixel - 0.5
                 yData /= float(plotHeight)
-                yData = self._yMin + yData * (self._yMax - self._yMin)
+                yData = trYMin + yData * (trYMax - trYMin)
+                yData = pow(10, yData)
 
         if xPixel is None:
             try:
@@ -1748,24 +1831,29 @@ class OpenGLPlotCanvas(PlotBackend):
     def _renderPlotArea(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
+        # Matrix
+        dispXMin, dispXMax, dispYMin, dispYMax = self.displayRangeTransformed
+        if dispXMin == dispXMax or dispYMin == dispYMax:
+            return
+
+        if self._isYInverted:
+            matDataProj = mat4Ortho(dispXMin, dispXMax,
+                                    dispYMax, dispYMin,
+                                    1, -1)
+        else:
+            matDataProj = mat4Ortho(dispXMin, dispXMax,
+                                    dispYMin, dispYMax,
+                                    1, -1)
+        # Render Images
+        dataTexUnit = 0
+
+
         glScissor(self._margins['left'], self._margins['bottom'],
                   plotWidth, plotHeight)
         glEnable(GL_SCISSOR_TEST)
 
         glViewport(self._margins['left'], self._margins['right'],
                    plotWidth, plotHeight)
-
-        # Matrix
-        if self._isYInverted:
-            matDataProj = mat4Ortho(self._xMin, self._xMax,
-                                    self._yMax, self._yMin,
-                                    1, -1)
-        else:
-            matDataProj = mat4Ortho(self._xMin, self._xMax,
-                                    self._yMin, self._yMax,
-                                    1, -1)
-        # Render Images
-        dataTexUnit = 0
 
         # sorted is stable: original order is preserved when key is the same
         for image in sorted(self._images.values(), key=lambda d: d['zOrder']):
@@ -1819,7 +1907,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 glUniform1i(self._progImg.uniforms['cmap.id'],
                             _shaderColormapIds[colormapName])
                 if image['colormapIsLog']:
-                    logVMin = math.log(image['vmin'])
+                    logVMin = math.log(image['vmin']) #TODO use log 10 for image
                     glUniform1f(self._progImg.uniforms['cmap.logMin'], logVMin)
                     glUniform1f(self._progImg.uniforms['cmap.oneOverRange'],
                                 0.)
@@ -1858,6 +1946,8 @@ class OpenGLPlotCanvas(PlotBackend):
                 curve['_curve2d'] = curve2d
                 curve['_vbo'] = curve2d.xVboData.vbo
 
+            curve2d.isXLog = self._isXLog
+            curve2d.isYLog = self._isYLog
             curve2d.render(matDataProj)
 
         # Render Items
@@ -2380,6 +2470,14 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def setYAxisAutoScale(self, flag=True):
         self._yAutoScale = flag
+
+    # Log axis #
+
+    def setXAxisLogarithmic(self, flag=True):
+        self._isXLog = flag
+
+    def setYAxisLogarithmic(self, flag=True):
+        self._isYLog = flag
 
     # Title, Labels
     def setGraphTitle(self, title=""):
