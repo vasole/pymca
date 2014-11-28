@@ -91,6 +91,9 @@ class MiniOrderedDict(object):
         del self._dict[key]
         self._orderedKeys.remove(key)
 
+    def __len__(self):
+        return len(self._dict)
+
     def keys(self):
         return self._orderedKeys[:]
 
@@ -1091,7 +1094,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDirtyFlag = True
 
         self._mousePosition = 0, 0
-        self.focusManager = FocusManager((MarkerInteraction(self),))
+        self.focusManager = FocusManager((MarkerInteraction(self), Zoom(self)))
 
         self._plotHasFocus = set()
 
@@ -1547,7 +1550,8 @@ class OpenGLPlotCanvas(PlotBackend):
                 xData = (xPixel - self._margins['left']) + 0.5
                 xData /= float(plotWidth)
                 xData = trXMin + xData * (trXMax - trXMin)
-                xData = pow(10, xData)
+                if self._isXLog:
+                    xData = pow(10, xData)
 
         if yPixel is not None:
             if yPixel < self._margins['top'] or \
@@ -1557,12 +1561,14 @@ class OpenGLPlotCanvas(PlotBackend):
                 yData = yPixel - self._margins['top'] + 0.5
                 yData /= float(plotHeight)
                 yData = trYMin + yData * (trYMax - trYMin)
-                yData = pow(10, yData)
+                if self._isYLog:
+                    yData = pow(10, yData)
             else:
                 yData = self.winHeight - self._margins['bottom'] - yPixel - 0.5
                 yData /= float(plotHeight)
                 yData = trYMin + yData * (trYMax - trYMin)
-                yData = pow(10, yData)
+                if self._isYLog:
+                    yData = pow(10, yData)
 
         if xPixel is None:
             try:
@@ -1634,6 +1640,11 @@ class OpenGLPlotCanvas(PlotBackend):
                 self._renderPlotArea()
                 self._renderPlotFrame()
 
+        # Check if there is something to render
+        dispXMin, dispXMax, dispYMin, dispYMax = self.displayRangeTransformed
+        if dispXMin == dispXMax or dispYMin == dispYMax:
+            return
+
         # Render plot in screen coords
         glViewport(0, 0, self.winWidth, self.winHeight)
 
@@ -1680,7 +1691,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._paintGLFBO()
 
     def _renderMarkers(self):
-        if not self._markers:
+        if len(self._markers) == 0:
             return
 
         plotWidth, plotHeight = self.plotSizeInPixels()
@@ -2385,26 +2396,16 @@ class OpenGLPlotCanvas(PlotBackend):
             self._yMax = yCenter + dataH / 2.
 
     def _setGraphXLimits(self, xMin, xMax):
-        xMin = clamp(xMin, self._dataBBox['xMin'], self._dataBBox['xMax'])
-        xMax = clamp(xMax, self._dataBBox['xMin'], self._dataBBox['xMax'])
-        if xMax - xMin < self._dataBBox['xStep'] * 2:
-            xCenter = clamp((xMax + xMin) / 2.,
-                            self._dataBBox['xMin'] + self._dataBBox['xStep'],
-                            self._dataBBox['xMax'] - self._dataBBox['xStep'])
-            xMin = xCenter - self._dataBBox['xStep']
-            xMax = xCenter + self._dataBBox['xStep']
-        self._xMin, self._xMax = xMin, xMax
+        self._xMin = clamp(xMin, self._dataBBox['xMin'],
+                           self._dataBBox['xMax'])
+        self._xMax = clamp(xMax, self._dataBBox['xMin'],
+                           self._dataBBox['xMax'])
 
     def _setGraphYLimits(self, yMin, yMax):
-        yMin = clamp(yMin, self._dataBBox['yMin'], self._dataBBox['yMax'])
-        yMax = clamp(yMax, self._dataBBox['yMin'], self._dataBBox['yMax'])
-        if yMax - yMin < self._dataBBox['yStep'] * 2:
-            yCenter = clamp((yMax + yMin) / 2.,
-                            self._dataBBox['yMin'] + self._dataBBox['yStep'],
-                            self._dataBBox['yMax'] - self._dataBBox['yStep'])
-            yMin = yCenter - self._dataBBox['yStep']
-            yMax = yCenter + self._dataBBox['yStep']
-        self._yMin, self._yMax = yMin, yMax
+        self._yMin = clamp(yMin, self._dataBBox['yMin'],
+                           self._dataBBox['yMax'])
+        self._yMax = clamp(yMax, self._dataBBox['yMin'],
+                           self._dataBBox['yMax'])
 
     def isKeepDataAspectRatio(self):
         return self._keepDataAspectRatio

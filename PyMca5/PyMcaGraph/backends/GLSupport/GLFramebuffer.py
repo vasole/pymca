@@ -39,7 +39,7 @@ off-screen rendering
 # import ######################################################################
 
 from OpenGL.GL import *  # noqa
-import OpenGL.GL.ARB.framebuffer_object  # noqa Core in OpenGL 3
+from OpenGL.GL.ARB.framebuffer_object import *  # noqa Core in OpenGL 3
 from ctypes import c_int
 
 from .GLTexture import Texture2D
