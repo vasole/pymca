@@ -432,7 +432,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             if label.startswith('ROI'):
                 return self._handleROIMarkerEvent(ddict)
             else:
-                print("Unhandled marker %s" % label)
+                if DEBUG:
+                    print("Unhandled marker %s" % label)
                 return
 
     def graphCallback(self, ddict):
