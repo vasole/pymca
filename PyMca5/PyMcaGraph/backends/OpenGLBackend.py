@@ -2556,6 +2556,11 @@ class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
         cursor = self._CURSORS[cursor]
         super(OpenGLBackend, self).setCursor(qt.QCursor(cursor))
 
+    # Widget
+
+    def getWidgetHandle(self):
+        return self
+
 
 # main ########################################################################
 
