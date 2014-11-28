@@ -139,7 +139,7 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
             text = "This method does not work with dynamically loaded stacks"
             raise TypeError(text)
         activeCurve = self.getActiveCurve()
-        if activeCurve is None:
+        if activeCurve in [None, []]:
             return
         x, spectrum, legend, info = activeCurve
         if self.widget is None:
