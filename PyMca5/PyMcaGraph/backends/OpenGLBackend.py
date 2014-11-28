@@ -2382,6 +2382,9 @@ class OpenGLPlotCanvas(PlotBackend):
         plotRatio = plotWidth / float(plotHeight)
 
         dataW, dataH = self._xMax - self._xMin, self._yMax - self._yMin
+        if dataH == 0.:
+            return
+
         dataRatio = dataW / float(dataH)
 
         if dataRatio < plotRatio:
