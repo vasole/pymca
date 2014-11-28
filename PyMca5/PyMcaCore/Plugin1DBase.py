@@ -36,7 +36,8 @@ in order to perform user defined operations of the plotted 1D data. It has to
 inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
 
     - getMethods
-    - getMethodToolTip
+    - getMethodToolTip (optional but convenient)
+    - getMethodPixmap (optional)
     - applyMethod
 
 and modify the static module variable MENU_TEXT and the static module function

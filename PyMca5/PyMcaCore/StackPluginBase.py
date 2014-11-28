@@ -33,34 +33,44 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__="""
 
 A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
+in order to perform user defined operations on the data stack. It has to
+inherit the StackPluginBase.StackPluginBase class and implement the methods:
+
+    - getMethods
+    - getMethodToolTip (optional but convenient)
+    - getMethodPixmap (optional)
+    - applyMethod
+
+and modify the static module variable MENU_TEXT and the static module function
+getStackPluginInstance according to the defined plugin.
 
 These plugins will be compatible with any stack window that provides the functions:
     #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
-    getStackROIImagesAndNames
-    isStackFinite
+    - getStackDataObject
+    - getStackData
+    - getStackInfo
+    - setStack
+    - getStackROIImagesAndNames
+    - isStackFinite
 
     #mask related
-    setStackSelectionMask
-    getStackSelectionMask
+    - setStackSelectionMask
+    - getStackSelectionMask
 
     #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
+    - getActiveCurve
+    - getGraphXLimits
+    - getGraphYLimits
 
     #images
-    addImage
-    removeImage
-    replaceImage
+    - addImage
+    - removeImage
+    - replaceImage
 
     #information method
-    stackUpdated
-    selectionMaskUpdated
+    - stackUpdated
+    - selectionMaskUpdated
+
 """
 import weakref
 DEBUG = 0
