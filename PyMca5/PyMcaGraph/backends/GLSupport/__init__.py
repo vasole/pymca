@@ -46,3 +46,15 @@ from .GLTexture import *  # noqa
 from .GLVertexBuffer import *  # noqa
 from .Interaction import *  # noqa
 from .LabelLayout import *  # noqa
+
+def testGLExtensions():
+    from OpenGL.GL.ARB.framebuffer_object import glInitFramebufferObjectARB
+    from OpenGL.GL.ARB.texture_rg import glInitTextureRgARB
+
+    if not glInitFramebufferObjectARB():
+        raise RuntimeError(
+            "OpenGL GL_ARB_framebuffer_object extension required !")
+
+    if not glInitTextureRgARB():
+        raise RuntimeError("OpenGL GL_ARB_texture_rg extension required !")
+
