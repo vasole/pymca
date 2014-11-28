@@ -333,7 +333,9 @@ class ScanWindow(PlotWindow.PlotWindow):
                         newDataObject.info['legend'] = legend + " " + ylegend
                         newDataObject.info['selectionlegend'] = legend
                     yaxis = 'left'
-                    if 'operations' in dataObject.info:
+                    if "plot_yaxis" in dataObject.info:
+                        yaxis = dataObject.info.get("plot_yaxis", "left")
+                    elif 'operations' in dataObject.info:
                         if dataObject.info['operations'][-1] == 'derivate':
                             yaxis = 'right'
 
@@ -430,7 +432,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             if label.startswith('ROI'):
                 return self._handleROIMarkerEvent(ddict)
             else:
-                print("Unhandled marker %s" % label)
+                if DEBUG:
+                    print("Unhandled marker %s" % label)
                 return
 
     def graphCallback(self, ddict):
@@ -1179,6 +1182,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                 symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
             if linestyle is None:
                 linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
+            if yaxis is None:
+                yaxis =  info.get("plot_yaxis",oldInfo.get("plot_yaxis", None))
         if legend in self.dataObjectsDict:
             # the info is changing
             super(ScanWindow, self).addCurve(x, y, legend=legend, info=info,
@@ -1211,6 +1216,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             info["plot_symbol"] = symbol
         if linestyle is not None:
             info["plot_linestyle"] = linestyle
+        if yaxis is not None:
+            info["plot_yaxis"] = yaxis
 
         newDataObject = DataObject.DataObject()
         newDataObject.x = [x]

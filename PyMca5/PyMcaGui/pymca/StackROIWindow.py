@@ -111,20 +111,20 @@ class StackROIWindow(ExternalImagesWindow.ExternalImagesWindow):
                         break
         mfText = self._medianTitle()
         if backgroundIndex is None:
-            self.setImageData(self.imageList[index])
             if self.imageNames is None:
                 self.graphWidget.graph.setGraphTitle(mfText+"Image %d" % index)
             else:
                 self.graphWidget.graph.setGraphTitle(mfText+self.imageNames[index])
+            self.setImageData(self.imageList[index])
         else:
             # TODO: Should the channel at max. and channel at min. be
             # recalculated?
-            self.setImageData(self.imageList[index]-\
-                              self.imageList[backgroundIndex])
             if self.imageNames is None:
                 self.graphWidget.graph.setGraphTitle(mfText+"Image %d Net" % index)
             else:
                 self.graphWidget.graph.setGraphTitle(mfText+self.imageNames[index]+ " Net")
+            self.setImageData(self.imageList[index]-\
+                              self.imageList[backgroundIndex])
         if moveslider:
             self.slider.setValue(index)
 

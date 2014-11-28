@@ -27,6 +27,13 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-print("Please update your plugins")
-print("Use from PyMca5 import StackPluginBase")
-from PyMca5.PyMcaCore.StackPluginBase import *
+# What does it make more sense: to import from PyMca5.PyMcaPlugins, from
+# PyMca5.PyMcaCore or from PyMca5?
+# All the possibilities make sense, message removed
+# print("Please update your plugins")
+# print("Use from PyMca5 import StackPluginBase")
+try:
+    from PyMca5.PyMcaCore.StackPluginBase import *
+except:
+    from PyMca5.StackPluginBase import *
+

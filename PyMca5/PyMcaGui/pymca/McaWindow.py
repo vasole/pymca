@@ -2057,7 +2057,10 @@ class McaWindow(ScanWindow.ScanWindow):
         return super(McaWindow, self).getGraphYLimits()
 
     #end of plugins interface
-    def addCurve(self, x, y, legend=None, info=None, **kw):
+    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
         #administrate the colors properly
         if legend in self._curveList:
             if info is None:
@@ -2067,12 +2070,12 @@ class McaWindow(ScanWindow.ScanWindow):
                 oldX, oldY, oldLegend, oldInfo = oldStuff
             else:
                 oldInfo = {}
-            color = info.get("plot_color", oldInfo.get("plot_color", None))
-            symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
-            linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
-            info['plot_color'] = color
-            info['plot_symbol'] = symbol
-            info['plot_linestyle'] = linestyle
+            if color is None:
+                color = info.get("plot_color", oldInfo.get("plot_color", None))
+            if symbol is None:
+                symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
+            if linestyle is None:
+                linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
         if legend in self.dataObjectsDict:
             # the info is changing
             super(McaWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
@@ -2080,10 +2083,16 @@ class McaWindow(ScanWindow.ScanWindow):
             # create the data object (Is this necessary????)
             self.newCurve(x, y, legend=legend, info=info, **kw)
 
-    def newCurve(self, x, y, legend=None, xlabel=None, ylabel=None,
-                 replace=False, replot=True, info=None, **kw):
-        print("DATA OBJECT CREATION TO BE IMPLEMENTED FOR MCAs")
-        return
+    def newCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
+                 color=None, symbol=None, linestyle=None,
+                 xlabel=None, ylabel=None, yaxis=None,
+                 xerror=None, yerror=None, **kw):
+        print("WARNING DATA OBJECT CREATION TO BE IMPLEMENTED FOR MCAs")
+        return super(McaWindow, self).newCurve(x, y, legend=legend, info=info,
+                                replace=replace, replot=replot, color=color, symbol=symbol,
+                                linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
+                                xerror=xerror, yerror=yerror, **kw)
+
         if legend is None:
             legend = "Unnamed curve 1.1"
         if xlabel is None:
@@ -2092,6 +2101,13 @@ class McaWindow(ScanWindow.ScanWindow):
             ylabel = "Y"
         if info is None:
             info = {}
+        # this is awfull but I have no other way to pass the plot information ...
+        if color is not None:
+            info["plot_color"] = color
+        if symbol is not None:
+            info["plot_symbol"] = symbol
+        if linestyle is not None:
+            info["plot_linestyle"] = linestyle
         newDataObject = DataObject.DataObject()
         newDataObject.x = [x]
         newDataObject.y = [y]

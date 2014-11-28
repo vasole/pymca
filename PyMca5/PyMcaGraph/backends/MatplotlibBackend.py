@@ -59,8 +59,13 @@ if "tk" in sys.argv or ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
         import tkinter as Tk
 elif ('PySide' in sys.modules) or ('PySide' in sys.argv) :
     import matplotlib
+    matplotlib.rcParams['backend']='Qt4Agg'
     matplotlib.rcParams['backend.qt4']='PySide'
     from PySide import QtCore, QtGui
+elif ("PyQt4" in sys.modules) or ('PyQt4' in sys.argv):
+    from PyQt4 import QtCore, QtGui
+    import matplotlib
+    matplotlib.rcParams['backend']='Qt4Agg'
 elif ('PyQt5' in sys.modules):
     import matplotlib
     matplotlib.rcParams['backend']='Qt5Agg'
@@ -69,6 +74,7 @@ elif ('PyQt5' in sys.modules):
 else:
     try:
         from PyQt4 import QtCore, QtGui
+        matplotlib.rcParams['backend']='Qt4Agg'
     except ImportError:
         try:
             from PyQt5 import QtCore, QtGui, QtWidgets
@@ -89,6 +95,7 @@ elif ("Tkinter" in sys.modules) or ("tkinter") in sys.modules:
     TK = True
     QT = False
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
+    
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
 Rectangle = patches.Rectangle
@@ -715,8 +722,6 @@ class MatplotlibGraph(FigureCanvas):
             # this corresponds to moving without click
             marker = None
             for artist in self.ax.lines:
-                if marker is not None:
-                    break
                 label = artist.get_label()
                 if label.startswith("__MARKER__"):
                     #data = artist.get_xydata()[0:1]
@@ -731,7 +736,9 @@ class MatplotlibGraph(FigureCanvas):
                             marker = artist
                     elif (abs(xPixel-event.x) < 5) and \
                          (abs(yPixel-event.y) < 5):
-                            marker = artist
+                        marker = artist
+                if marker is not None:
+                    break
             if QT:
                 oldShape = self.cursor().shape()
                 if oldShape not in [QtCore.Qt.SizeHorCursor,

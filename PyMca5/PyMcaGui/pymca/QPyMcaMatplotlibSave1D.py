@@ -32,17 +32,17 @@ import sys
 import os
 import numpy
 
-from matplotlib import cm
-from matplotlib import __version__ as matplotlib_version
-from matplotlib.font_manager import FontProperties
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs
+
+from matplotlib import cm
+from matplotlib import __version__ as matplotlib_version
+from matplotlib.font_manager import FontProperties
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 DEBUG = 0
 

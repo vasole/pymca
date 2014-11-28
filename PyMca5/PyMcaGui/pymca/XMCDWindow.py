@@ -663,12 +663,20 @@ class XMCDScanWindow(sw.ScanWindow):
             if normAfter:
                 avg_y = normalization(avg_x, avg_y)
             avgName = 'avg_' + idx
-            info = {'xlabel': xlabel, 'ylabel': ylabel}
+            #info = {'xlabel': xlabel, 'ylabel': ylabel}
+            info = {}
             if idx == 'A':
-                info.update({'plot_color':'red'})
+                #info.update({'plot_color':'red'})
+                color="red"
             else:
-                info.update({'plot_color':'blue'})
-            self.addCurve(avg_x, avg_y, avgName, info)
+                #info.update({'plot_color':'blue'})
+                color="blue"
+            self.addCurve(avg_x, avg_y,
+                          legend=avgName,
+                          info=info,
+                          xlabel=xlabel,
+                          ylabel=ylabel,
+                          color=color)
             if idx == 'A':
                 self.avgA = self.dataObjectsList[-1]
             if idx == 'B':
@@ -868,8 +876,14 @@ class XMCDScanWindow(sw.ScanWindow):
                                        b.x[0])
         xmcdLegend = 'XAS'
         xlabel, ylabel = self.extractLabels(a.info)
-        info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_color': 'pink'}
-        self.addCurve(a.x[0], avg, xmcdLegend, info)
+        #info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_color': 'pink'}
+        info = {}
+        self.addCurve(a.x[0], avg,
+                      legend=xmcdLegend,
+                      info=info,
+                      xlabel=xlabel,
+                      ylabel=ylabel,
+                      color="pink")
         self.xas = self.dataObjectsList[-1]
 
     def performXMCD(self):
@@ -894,8 +908,15 @@ class XMCDScanWindow(sw.ScanWindow):
                                             b.x[0])
         xmcdLegend = 'XMCD'
         xlabel, ylabel = self.extractLabels(a.info)
-        info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_yaxis': 'right', 'plot_color': 'green'}
-        self.addCurve(b.x[0], diff, xmcdLegend, info)
+        #info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_yaxis': 'right', 'plot_color': 'green'}
+        info={}
+        self.addCurve(b.x[0], diff,
+                      legend=xmcdLegend,
+                      info=info,
+                      color="green",
+                      xlabel=xlabel,
+                      ylabel=ylabel,
+                      yaxis="right")
         # DELETE ME self.graph.mapToY2(' '.join([xmcdLegend, ylabel]))
         self._zoomReset()
         self.xmcd = self.dataObjectsList[-1]
@@ -1065,8 +1086,8 @@ class XMCDScanWindow(sw.ScanWindow):
         newLegend = legend
         self.plotWindow.addCurve(xVal,
                                  yVal,
-                                 newLegend,
-                                 info)
+                                 legend=newLegend,
+                                 info=info)
         self.plotModifiedSignal.emit()
 
     def addAll(self):
@@ -1080,8 +1101,8 @@ class XMCDScanWindow(sw.ScanWindow):
             newLegend = legend
             self.plotWindow.addCurve(xVal,
                                      yVal,
-                                     newLegend,
-                                     info)
+                                     legend=newLegend,
+                                     info=info)
         self.plotModifiedSignal.emit()
 
     def replace(self):
@@ -1099,8 +1120,8 @@ class XMCDScanWindow(sw.ScanWindow):
             newLegend = (legend + self.title)
         self.plotWindow.addCurve(xVal,
                                  yVal,
-                                 newLegend,
-                                 info,
+                                 legend=newLegend,
+                                 info=info,
                                  replace=True)
         self.plotModifiedSignal.emit()
 
@@ -1116,14 +1137,14 @@ class XMCDScanWindow(sw.ScanWindow):
             if idx == 0:
                 self.plotWindow.addCurve(xVal,
                                          yVal,
-                                         newLegend,
-                                         info,
+                                         legend=newLegend,
+                                         info=info,
                                          replace=True)
             else:
                 self.plotWindow.addCurve(xVal,
                                          yVal,
-                                         newLegend,
-                                         info)
+                                         legend=newLegend,
+                                         info=info)
         self.plotModifiedSignal.emit()
 
 class XMCDMenu(qt.QMenu):

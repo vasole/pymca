@@ -36,7 +36,8 @@ in order to perform user defined operations of the plotted 1D data. It has to
 inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
 
     - getMethods
-    - getMethodToolTip
+    - getMethodToolTip (optional but convenient)
+    - getMethodPixmap (optional)
     - applyMethod
 
 and modify the static module variable MENU_TEXT and the static module function
@@ -67,7 +68,8 @@ The main items are reproduced here and can be directly accessed as plugin method
     - setGraphXTitle
     - setGraphYTitle
 
-A simple plugin example, normalizing to maximum and shifting the curves.
+A simple plugin example, normalizing each curve to its maximum and verticaly
+shifting the curves.
 
 .. code-block:: python
 
@@ -86,12 +88,13 @@ A simple plugin example, normalizing to maximum and shifting the curves.
             if methodName != "Shift":
                 raise InvalidArgument("Method %s not valid" % methodName)
             allCurves = self.getAllCurves()
+            increment = 0.1
             for i in range(len(allCurves)):
                 x, y, legend, info = allCurves[i][:4]
-                delta = y.max() - y.min()
+                delta = float(y.max() - y.min())
                 if delta < 1.0e-15:
                     delta = 1.0
-                y = (y - y.min())/delta + i * 100.
+                y = (y - y.min())/delta + i * increment
                 if i == len(allCurves):
                     replot = True
                 else:
@@ -100,7 +103,7 @@ A simple plugin example, normalizing to maximum and shifting the curves.
                     replace = True
                 else:
                     replace = False
-                self.addCurve(x, y, legend=legend + " %d" % (i * 100),
+                self.addCurve(x, y, legend=legend + " %.2f" % (i * increment),
                                     info=info, replace=replace, replot=replot)
      
     MENU_TEXT="Simple Shift Example"
