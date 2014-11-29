@@ -379,6 +379,10 @@ class Plot(PlotBase.PlotBase):
         fill = kw.get("fill", fill)
         info["plot_fill"] = fill
 
+        if yaxis is None:
+            yaxis = info.get("plot_yaxis", "left")
+        info["plot_yaxis"] = yaxis
+
         # deal with the symbol
         symbol = info.get("plot_symbol", symbol)
         if self._plotPoints and (symbol is None):
@@ -405,9 +409,6 @@ class Plot(PlotBase.PlotBase):
 
         info["plot_color"] = color
         info["plot_linestyle"] = linestyle
-        if yaxis is None:
-            yaxis = info.get('plot_yaxis', 'left')
-
         if self.isXAxisLogarithmic() or self.isYAxisLogarithmic():
             if hasattr(color, "size"):
                 xplot, yplot, colorplot = self.logFilterData(x, y, color=color)

@@ -2061,7 +2061,6 @@ class McaWindow(ScanWindow.ScanWindow):
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
-        #administrate the colors properly
         if legend in self._curveList:
             if info is None:
                 info = {}
@@ -2076,12 +2075,19 @@ class McaWindow(ScanWindow.ScanWindow):
                 symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
             if linestyle is None:
                 linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
+            if yaxis is None:
+                yaxis =  info.get("plot_yaxis",oldInfo.get("plot_yaxis", None))
         if legend in self.dataObjectsDict:
-            # the info is changing
-            super(McaWindow, self).addCurve(x, y, legend=legend, info=info, **kw)
+            super(McaWindow, self).addCurve(x, y, legend=legend, info=info,
+                                replace=replace, replot=replot, color=color, symbol=symbol,
+                                linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
+                                xerror=xerror, yerror=yerror, **kw)
         else:
             # create the data object (Is this necessary????)
-            self.newCurve(x, y, legend=legend, info=info, **kw)
+            self.newCurve(x, y, legend=legend, info=info,
+                                replace=replace, replot=replot, color=color, symbol=symbol,
+                                linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
+                                xerror=xerror, yerror=yerror, **kw)
 
     def newCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
