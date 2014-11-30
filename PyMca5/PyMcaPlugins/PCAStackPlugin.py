@@ -200,6 +200,12 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         del pcaParameters['methodlabel']
         # binning = pcaParameters['binning']
         # mask = pcaParameters['mask']
+        regions = pcaParameters['regions']
+        spatial_mask = pcaParameters['spectral_mask']
+        print("regions = ", regions)
+        del pcaParameters['regions']
+        del pcaParameters['spectral_mask']
+        print("Regions and spectral mask not handled yet")
         if not self.isStackFinite():
             # one has to check for NaNs in the used region(s)
             # for the time being only in the global image
