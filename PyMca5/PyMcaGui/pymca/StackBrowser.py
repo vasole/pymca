@@ -291,13 +291,13 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         legend = self.dataObjectsList[0]
         dataObject = self.dataObjectsDict[legend]
         data = self._getImageDataFromSingleIndex(index)
+        txt = self._buildTitle(legend, index)
+        self.graphWidget.graph.setGraphTitle(txt)
+        self.name.setText(txt)
         if self._backgroundSubtraction and (self._backgroundImage is not None):
             self.setImageData(data - self._backgroundImage)
         else:
             self.setImageData(data, clearmask=False)
-        txt = self._buildTitle(legend, index)
-        self.graphWidget.graph.setGraphTitle(txt)
-        self.name.setText(txt)
         if moveslider:
             self.slider.setValue(index)
         self.updateProfileSelectionWindow()
