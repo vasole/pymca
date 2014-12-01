@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2013 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -434,7 +434,7 @@ class StackBase(object):
         if self.__ROIImageCalculationIsUsingSuppliedEnergyAxis:
             imageNames[1] = "%s %s at Max." % (title, cursor)
             imageNames[2] = "%s %s at Min." % (title, cursor)
-            
+
         self.showROIImageList(imageList, image_names=imageNames)
 
     def showOriginalImage(self):
@@ -794,7 +794,7 @@ class StackBase(object):
                     minImage = numpy.zeros(roiImage.shape, numpy.int32)
                     istep = 1
                     for i in range(i1, i2):
-                        tmpData = self._stack.data[i:i + istep]
+                        tmpData = self._stack.data[i:i + istep] * 1.0
                         tmpData.shape = roiImage.shape
                         if i == i1:
                             minImageData = tmpData
@@ -864,7 +864,7 @@ class StackBase(object):
                                   minImage[i:i+step,:])
                         numpy.add(maxImage[i:i+step,:],
                                   numpy.max(tmpData, 2),
-                                  maxImage[i:i+step,:])                            
+                                  maxImage[i:i+step,:])
                         leftImage[i:i+step, :]   += tmpData[:, :, 0]
                         middleImage[i:i+step, :] += tmpData[:, :, imiddle-i1]
                         rightImage[i:i+step, :]  += tmpData[:, :,-1]
