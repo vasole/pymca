@@ -802,10 +802,10 @@ class StackBase(object):
                         maxImage = numpy.zeros(leftImage.shape, numpy.int32)
                         minImage = numpy.zeros(leftImage.shape, numpy.int32)
                         for i in range(i1, i2):
-                            tmpData = self._stack.data[i] * 1.0
+                            tmpData = self._stack.data[i]
                             tmpData.shape = leftImage.shape
                             if i == i1:
-                                minImageData = tmpData
+                                minImageData = tmpData * 1.0
                                 maxImageData = tmpData * 1.0
                                 minImage[:,:] = i1
                                 maxImage[:,:] = i1
@@ -837,10 +837,10 @@ class StackBase(object):
                     minImage = numpy.zeros(roiImage.shape, numpy.int32)
                     istep = 1
                     for i in range(i1, i2):
-                        tmpData = self._stack.data[i:i + istep] * 1.0
+                        tmpData = self._stack.data[i:i + istep]
                         tmpData.shape = roiImage.shape
                         if i == i1:
-                            minImageData = tmpData
+                            minImageData = tmpData * 1.0
                             maxImageData = tmpData * 1.0
                             minImage[:,:] = i1
                             maxImage[:,:] = i1
