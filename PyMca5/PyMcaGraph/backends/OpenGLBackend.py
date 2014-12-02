@@ -469,11 +469,17 @@ class Zoom(ClickOrDrag):
             # yMin, yMax = self.backend.getGraphYLimits()
             # self.zoomStack.append((xMin, xMax, yMin, yMax))
             # self._zoom(x, y, 2)
-        else:
+        elif btn == RIGHT_BTN:
             try:
                 xMin, xMax, yMin, yMax = self.zoomStack.pop()
             except IndexError:
-                self.backend.resetZoom()
+                # Signal mouse clicked event
+                xData, yData = self.backend.pixelToDataCoords(x, y)
+                assert(xData is not None and yData is not None)
+                eventDict = prepareMouseSignal('mouseClicked', 'right',
+                                               xData, yData,
+                                               x, y)
+                self.backend._callback(eventDict)
             else:
                 self.backend.setLimits(xMin, xMax, yMin, yMax)
             self.backend.replot()
