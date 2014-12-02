@@ -244,7 +244,7 @@ class PCAParametersDialog(qt.QDialog):
         y.shape = -1
         self._binnedX = x
         self._binnedY = y
-        self.scanWindow.newCurve(x, y, self._legend, replace=True)
+        self.scanWindow.addCurve(x, y, legend=self._legend, replace=True)
 
     def setParameters(self, ddict):
         if 'options' in ddict:
@@ -264,6 +264,8 @@ class PCAParametersDialog(qt.QDialog):
                 self.binningCombo.setEnabled(True)
             else:
                 self.binningCombo.setEnabled(False)
+        if 'regions' in ddict:
+            self.regionsWidget.setRegions(regions)
         return
 
     def getParameters(self):
@@ -280,13 +282,20 @@ class PCAParametersDialog(qt.QDialog):
             if not len(regions):
                 mask = None
             else:
-                mask = numpy.zeros(self._binnedX.shape, numpy.int32)
+                mask = numpy.zeros(self._binnedX.shape, dtype=numpy.uint8)
                 for region in regions:
                     mask[(self._binnedX >= region[0]) *\
                          (self._binnedX <= region[1])] = 1
-        ddict['mask'] = mask
+            ddict['regions'] = regions
+            # try to simplify life to the caller but can be hard if
+            # spectral_binning has been applied because of the ambiguity
+            # about if the spectral_mask is to be applied before or after
+            # binning. The use of the 'regions' should be less prone to errors
+            ddict['spectral_mask'] = mask
+        else:
+            ddict['regions'] = []
+            ddict['spectral_mask'] = mask
         return ddict
-
 
 class RegionsWidget(qt.QGroupBox):
     sigRegionsWidgetSignal = qt.pyqtSignal(object)
@@ -403,6 +412,24 @@ class RegionsWidget(qt.QGroupBox):
                 regions.append(self.regionList[i])
         return regions
 
+    def setRegions(self, regionList=None):
+        """
+        :param regionList: List of couple of "from" and to "values"
+        :type param: List
+        """
+        if regionList is None:
+            regionList = []
+        nRegions = len(regionList)
+        # the number of regions is small so, we can afford to loop
+        # instead of a direct copy
+        self.regionList = []
+        for i in range(nRegions):
+            fromValue, toValue = regionList[i]
+            self.regionList.append([fromValue, toValue])
+        self.currentRegionSpinBox.setValue(nRegions)        
+        if nRegions > 0:
+            self._editingSlot(signal=False)
+        self._regionsChanged(self, nRegions)
 
 class PCAWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):

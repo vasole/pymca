@@ -1264,6 +1264,11 @@ class MatplotlibGraph(FigureCanvas):
             print("CALCULATED LIMITS = ", xmin, xmax, ymin, ymax)
         return xmin, xmax, ymin, ymax
 
+    if DEBUG:
+        def draw(self):
+            print("Draw called")
+            super(MatplotlibGraph, self).draw()
+
 class MatplotlibBackend(PlotBackend.PlotBackend):
     def __init__(self, parent=None, **kw):
        	#self.figure = Figure(figsize=size, dpi=dpi) #in inches
@@ -1844,7 +1849,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             if not len(self.ax2.lines):
                 self.enableAxis('right', False)
                 self._rightAxisEnabled = None
+        #print("Calling draw")
         self.graph.draw()
+        #print("Back from draw")
         """
         if QT:
             w = self.getWidgetHandle()

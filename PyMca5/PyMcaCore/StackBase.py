@@ -805,7 +805,7 @@ class StackBase(object):
                             tmpData = self._stack.data[i]
                             tmpData.shape = leftImage.shape
                             if i == i1:
-                                minImageData = tmpData
+                                minImageData = tmpData * 1.0
                                 maxImageData = tmpData * 1.0
                                 minImage[:,:] = i1
                                 maxImage[:,:] = i1
@@ -840,7 +840,7 @@ class StackBase(object):
                         tmpData = self._stack.data[i:i + istep]
                         tmpData.shape = roiImage.shape
                         if i == i1:
-                            minImageData = tmpData
+                            minImageData = tmpData * 1.0
                             maxImageData = tmpData * 1.0
                             minImage[:,:] = i1
                             maxImage[:,:] = i1

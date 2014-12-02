@@ -50,6 +50,37 @@ def getCovarianceMatrix(stack,
                         center=True,
                         weights=None,
                         spatial_mask=None):
+    """
+    Calculate the covariance matrix of input data (stack) array. The input array is to be
+    understood as a set of observables (spectra) taken at different instances (for instance
+    spatial coordinates).
+    
+    :param stack: Array of data. Dimension greater than one.
+    :type stack: Numpy ndarray.
+    :param index: Integer specifying the array dimension containing the "observables". Only the first
+    the first (index = 0) or the last dimension (index = -1 or index = (ndimensions - 1)) supported. 
+    :type index: Integer (default is -1 to indicate it is the last dimension of input array)
+    :param binning: Current implementation corresponds to a sampling of the spectral data and not to
+    an actual binning. This may change in future versions.
+    :type binning: Positive integer (default 1)
+    :param dtype: Keyword indicating the data type of the returned covariance matrix.
+    :type dtype: A valid numpy data type (default numpy.float64)
+    :param force: Indicate how to calculate the covariance matrix:
+
+            - False : Perform the product data.T * data in one call 
+            - True  : Perform the product data.T * data progressively (smaller memory footprint)
+
+    :type force: Boolean (default True)
+    :param center: Indicate if the mean is to be subtracted from the observables.
+    :type center: Boolean (default True)
+    :param weights: Weight to be applied to each observable. It can therefore be used as a spectral mask
+    setting them to 0 on those values to ignore.
+    :type weights: Numpy ndarray of same size as the observables or None (default).
+    :spatial_mask: Array of size n where n is the number of measurement instances. In mapping
+    experiments, n would be equal to the number of pixels.
+    :type spatial_mask: Numpy array of unsigned bytes (numpy.uint8) or None (default).
+    :returns: The covMatrix, the average spectrum and the number of used pixels.
+    """
     #the 1D mask should correspond to the values, before or after
     #sampling?  it could be handled as weigths to be applied to the
     #spectra. That would allow two uses, as mask and as weights, at
@@ -352,7 +383,7 @@ def getCovarianceMatrix(stack,
             chunk1 = None
             chunk2 = None
         else:
-            raise ValueError("Unhandled case")
+            raise ValueError("PCATools.getCovarianceMatrix: Unhandled case")
 
         #should one divide by N or by N-1 ??  if we use images, we
         #assume the observables are the images, not the spectra!!!

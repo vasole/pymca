@@ -184,7 +184,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         for selectionIndex in range(nSelection):
             sel = sellist[selectionIndex]
             if selectionIndex == (nSelection - 1):
-                actualReplot = True
+                actualReplot = replot
             else:
                 actualReplot = False
             source = sel['SourceName']
@@ -257,8 +257,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                 ylegend = dataObject.info['LabelNames'][ilabel]
                     newLegend = legend + " " + ylegend
                     self.dataObjectsDict[newLegend] = dataObject
-                    self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info,
-                                  replot=actualReplot)
+                    self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info, replot=False)
+                    #              replot=actualReplot)
                     if self.scanWindowInfoWidget is not None:
                         if not self.infoDockWidget.isHidden():
                             activeLegend = self.getActiveCurve(just_legend=True)
@@ -338,26 +338,27 @@ class ScanWindow(PlotWindow.PlotWindow):
                     elif 'operations' in dataObject.info:
                         if dataObject.info['operations'][-1] == 'derivate':
                             yaxis = 'right'
-
+                    #print("sending legend = ", newDataObject.info['legend'], "replot = ", False)
                     self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
                     self.addCurve(xdata, ydata, legend=newDataObject.info['legend'],
                                     info=newDataObject.info,
                                     symbol=symbol,
                                     yaxis=yaxis,
-                                    replot=actualReplot)
+                                    replot=False)
         self.dataObjectsList = self._curveList
-        if activeCurve is None:
-            if len(self._curveList) > 0:
-                activeCurve = self._curveList[0]
-            ddict = {}
-            ddict['event'] = "curveClicked"
-            ddict['label'] = activeCurve
-            self.graphCallback(ddict)
-        elif replot:
-            #self.replot()
-            self.resetZoom()
+        try:
+            if activeCurve is None:
+                if len(self._curveList) > 0:
+                    activeCurve = self._curveList[0]
+                ddict = {}
+                ddict['event'] = "curveClicked"
+                ddict['label'] = activeCurve
+                self.graphCallback(ddict)
+        finally:
+            if replot:
+                #self.replot()
+                self.resetZoom()
         self.updateLegends()
-
 
     def _removeSelection(self, selectionlist):
         if DEBUG:
@@ -424,7 +425,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         self.clearCurves()
         self.dataObjectsDict={}
         self.dataObjectsList=self._curveList
-        self._addSelection(selectionlist)
+        self._addSelection(selectionlist, replot=True)
 
     def _handleMarkerEvent(self, ddict):
         if ddict['event'] == 'markerMoved':

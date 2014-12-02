@@ -1157,16 +1157,18 @@ class PlotWindow(PlotWidget.PlotWidget):
             legend = ddict['legend']
             x, y, legend, info = self._curveDict[legend][0:4]
             if ddict['event'] == "mapToRight":
-                self.addCurve(x, y, legend=legend, info=info, yaxis="right")
+                yaxis = "right"
             else:
-                self.addCurve(x, y, legend=legend, info=info, yaxis="left")
+                yaxis = "left"
+            self.addCurve(x, y, legend=legend, info=info, yaxis=yaxis)
         elif ddict['event'] == "togglePoints":
             legend = ddict['legend']
             x, y, legend, info = self._curveDict[legend][0:4]
             if ddict['points']:
-                self.addCurve(x, y, legend=legend, info=info, symbol='o')
+                symbol = 'o'
             else:
-                self.addCurve(x, y, legend, info, symbol='')
+                symbol = ''
+            self.addCurve(x, y, legend=legend, info=info, symbol=symbol)
             self.updateLegends()
         elif ddict['event'] == "toggleLine":
             legend = ddict['legend']
