@@ -990,8 +990,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self._isYLog = False
 
         self.winWidth, self.winHeight = 0, 0
-        self._dataBBox = {'xMin': 0., 'xMax': 0., 'xStep': 1.,
-                          'yMin': 0., 'yMax': 0., 'yStep': 1.}
+        self._dataBBox = {'xMin': 0., 'xMax': 0.,
+                          'yMin': 0., 'yMax': 0.}
 
         self._markers = MiniOrderedDict()
         self._images = MiniOrderedDict()
@@ -1190,15 +1190,13 @@ class OpenGLPlotCanvas(PlotBackend):
             self._selectionArea = None
 
     def _updateDataBBox(self):
-        xMin, xMax, xStep = float('inf'), -float('inf'), float('inf')
-        yMin, yMax, yStep = float('inf'), -float('inf'), float('inf')
+        xMin, xMax = float('inf'), -float('inf')
+        yMin, yMax = float('inf'), -float('inf')
         for image in self._images.values():
             xMin = min(xMin, image.xMin)
             xMax = max(xMax, image.xMax)
-            xStep = min(xStep, image.xScale)
             yMin = min(yMin, image.yMin)
             yMax = max(yMax, image.yMax)
-            yStep = min(yStep, image.yScale)
         for curve in self._curves.values():
             bbox = curve['bBox']
             xMin = min(xMin, bbox['xMin'])
@@ -1210,13 +1208,9 @@ class OpenGLPlotCanvas(PlotBackend):
                 xMin, xMax = 0., 1.
         if yMin >= yMax:
                 yMin, yMax = 0., 1.
-        if xStep == float('inf'):
-            xStep = 1.
-        if yStep == float('inf'):
-            yStep = 1.
 
-        self._dataBBox = {'xMin': xMin, 'xMax': xMax, 'xStep': xStep,
-                          'yMin': yMin, 'yMax': yMax, 'yStep': yStep}
+        self._dataBBox = {'xMin': xMin, 'xMax': xMax,
+                          'yMin': yMin, 'yMax': yMax}
 
     @property
     def displayRange(self):
