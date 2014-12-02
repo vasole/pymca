@@ -858,6 +858,8 @@ class MarkerInteraction(ClickOrDrag):
         else:
             self.image, _ = self.backend.pickImage(
                 x, y, lambda img: 'draggable' in img.info['behaviors'])
+            if self.image is None:  # No draggable item
+                self.backend.setCursor()
 
     def drag(self, x, y):
         xData, yData = self.backend.pixelToDataCoords(x, y)
