@@ -418,33 +418,35 @@ def numpyPCA(stack, ncomponents=10, binning=None, **kw):
                              binning=binning,
                              **kw)
 
-def mdpPCASVDFloat32(stack, ncomponents=10, binning=None, mask=None):
+def mdpPCASVDFloat32(stack, ncomponents=10, binning=None, mask=None, **kw):
     return mdpPCA(stack, ncomponents,
-                  binning=binning, dtype='float32', svd='True', mask=mask)
+                  binning=binning, dtype='float32', svd='True', mask=mask, **kw)
 
 
-def mdpPCASVDFloat64(stack, ncomponents=10, binning=None, mask=None):
+def mdpPCASVDFloat64(stack, ncomponents=10, binning=None, mask=None, **kw):
     return mdpPCA(stack, ncomponents,
-                  binning=binning, dtype='float64', svd='True', mask=mask)
+                  binning=binning, dtype='float64', svd='True', mask=mask, **kw)
 
 
-def mdpICAFloat32(stack, ncomponents=10, binning=None, mask=None):
+def mdpICAFloat32(stack, ncomponents=10, binning=None, mask=None, *kw):
     return mdpICA(stack, ncomponents,
-                  binning=binning, dtype='float32', svd='True', mask=mask)
+                  binning=binning, dtype='float32', svd='True', mask=mask, **kw)
 
 
-def mdpICAFloat64(stack, ncomponents=10, binning=None, mask=None):
+def mdpICAFloat64(stack, ncomponents=10, binning=None, mask=None, **kw):
     return mdpICA(stack, ncomponents,
-                  binning=binning, dtype='float64', svd='True', mask=mask)
+                  binning=binning, dtype='float64', svd='True', mask=mask, **kw)
 
 
 def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
-           mask=None):
+           mask=None, **kw):
     if DEBUG:
         print("MDP Method")
         print("binning =", binning)
         print("dtype = ", dtype)
         print("svd = ", svd)
+    for key in kw:
+        print("mdpPCA Key ignored: %s" % key)
     #This part is common to all ...
     if binning is None:
         binning = 1
@@ -613,7 +615,9 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
 
 
 def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
-           mask=None):
+           mask=None, **kw):
+    for key in kw:
+        print("mdpICA Key ignored: %s" % key)
     #This part is common to all ...
     if binning is None:
         binning = 1
