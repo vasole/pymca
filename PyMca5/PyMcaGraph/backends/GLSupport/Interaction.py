@@ -91,32 +91,32 @@ class StateMachine(object):
             return handler(*args, **kwargs)
 
 
-# clicOrDrag ##################################################################
+# clickOrDrag #################################################################
 
 LEFT_BTN, RIGHT_BTN, MIDDLE_BTN = 'left', 'right', 'middle'
 
 
-class ClicOrDrag(StateMachine):
-    """State machine for left and right clic and left drag interaction"""
+class ClickOrDrag(StateMachine):
+    """State machine for left and right click and left drag interaction"""
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.goto('clicOrDrag', x, y)
+                self.goto('clickOrDrag', x, y)
                 return True
             elif btn == RIGHT_BTN:
-                self.goto('rightClic', x, y)
+                self.goto('rightClick', x, y)
                 return True
 
-    class RightClic(State):
+    class RightClick(State):
         def onMove(self, x, y):
             self.goto('idle')
 
         def onRelease(self, x, y, btn):
             if btn == RIGHT_BTN:
-                self.machine.clic(x, y, btn)
+                self.machine.click(x, y, btn)
                 self.goto('idle')
 
-    class ClicOrDrag(State):
+    class ClickOrDrag(State):
         def enter(self, x, y):
             self.initPos = x, y
 
@@ -125,7 +125,7 @@ class ClicOrDrag(StateMachine):
 
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
-                self.machine.clic(x, y, btn)
+                self.machine.click(x, y, btn)
                 self.goto('idle')
 
     class Drag(State):
@@ -144,14 +144,14 @@ class ClicOrDrag(StateMachine):
 
     def __init__(self):
         states = {
-            'idle': ClicOrDrag.Idle,
-            'rightClic': ClicOrDrag.RightClic,
-            'clicOrDrag': ClicOrDrag.ClicOrDrag,
-            'drag': ClicOrDrag.Drag
+            'idle': ClickOrDrag.Idle,
+            'rightClick': ClickOrDrag.RightClick,
+            'clickOrDrag': ClickOrDrag.ClickOrDrag,
+            'drag': ClickOrDrag.Drag
         }
-        super(ClicOrDrag, self).__init__(states, 'idle')
+        super(ClickOrDrag, self).__init__(states, 'idle')
 
-    def clic(self, x, y, btn):
+    def click(self, x, y, btn):
         pass
 
     def beginDrag(self, x, y):
@@ -167,9 +167,9 @@ class ClicOrDrag(StateMachine):
 # main ########################################################################
 
 if __name__ == "__main__":
-    class DumpClicOrDrag(ClicOrDrag):
-        def clic(self, x, y, btn):
-            print('clic', x, y, btn)
+    class DumpClickOrDrag(ClickOrDrag):
+        def click(self, x, y, btn):
+            print('click', x, y, btn)
 
         def beginDrag(self, x, y):
             print('beginDrag', x, y)
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         def endDrag(self, x, y):
             print('endDrag', x, y)
 
-    clicOrDrag = DumpClicOrDrag()
+    clickOrDrag = DumpClickOrDrag()
     for event in (('press', 10, 10, LEFT_BTN),
                   ('release', 10, 10, LEFT_BTN),
                   ('press', 10, 10, LEFT_BTN),
@@ -188,4 +188,4 @@ if __name__ == "__main__":
                   ('move', 12, 10),
                   ('release', 12, 10, LEFT_BTN)):
         print('Event:', event)
-        clicOrDrag.handleEvent(*event)
+        clickOrDrag.handleEvent(*event)

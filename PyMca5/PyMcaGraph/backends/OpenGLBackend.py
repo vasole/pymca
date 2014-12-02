@@ -397,10 +397,10 @@ def prepareCurveSignal(button, label, type_, xData, yData,
 
 # Interaction #################################################################
 
-class Zoom(ClicOrDrag):
+class Zoom(ClickOrDrag):
     _DOUBLE_CLICK_TIMEOUT = 0.4
 
-    class ZoomIdle(ClicOrDrag.Idle):
+    class ZoomIdle(ClickOrDrag.Idle):
         def onWheel(self, x, y, angle):
             scaleF = 1.1 if angle > 0 else 1./1.1
             self.machine._zoom(x, y, scaleF)
@@ -408,13 +408,13 @@ class Zoom(ClicOrDrag):
     def __init__(self, backend):
         self.backend = backend
         self.zoomStack = []
-        self._lastClic = 0., None
+        self._lastClick = 0., None
 
         states = {
             'idle': Zoom.ZoomIdle,
-            'rightClic': ClicOrDrag.RightClic,
-            'clicOrDrag': ClicOrDrag.ClicOrDrag,
-            'drag': ClicOrDrag.Drag
+            'rightClick': ClickOrDrag.RightClick,
+            'clickOrDrag': ClickOrDrag.ClickOrDrag,
+            'drag': ClickOrDrag.Drag
         }
         StateMachine.__init__(self, states, 'idle')
 
@@ -440,18 +440,18 @@ class Zoom(ClicOrDrag):
             y1 = y0 + np.sign(y1 - y0) * height
         return x1, y1
 
-    def clic(self, x, y, btn):
+    def click(self, x, y, btn):
         if btn == LEFT_BTN:
-            lastClicTime, lastClicPos = self._lastClic
+            lastClickTime, lastClickPos = self._lastClick
 
             # Signal mouse double clicked event first
-            if (time.time() - lastClicTime) <= self._DOUBLE_CLICK_TIMEOUT:
-                # Use position of first clic
+            if (time.time() - lastClickTime) <= self._DOUBLE_CLICK_TIMEOUT:
+                # Use position of first click
                 eventDict = prepareMouseSignal('mouseDoubleClicked', 'left',
-                                               *lastClicPos)
+                                               *lastClickPos)
                 self.backend._callback(eventDict)
 
-                self._lastClic = 0., None
+                self._lastClick = 0., None
 
             else:
                 # Signal mouse clicked event
@@ -462,7 +462,7 @@ class Zoom(ClicOrDrag):
                                                x, y)
                 self.backend._callback(eventDict)
 
-                self._lastClic = time.time(), (xData, yData, x, y)
+                self._lastClick = time.time(), (xData, yData, x, y)
 
             # Zoom-in centered on mouse cursor
             # xMin, xMax = self.backend.getGraphXLimits()
@@ -789,8 +789,8 @@ class SelectVLine(Select1Point):
         self.backend._callback(eventDict)
 
 
-class MarkerInteraction(ClicOrDrag):
-    class Idle(ClicOrDrag.Idle):
+class MarkerInteraction(ClickOrDrag):
+    class Idle(ClickOrDrag.Idle):
         def __init__(self, *args, **kwargs):
             super(MarkerInteraction.Idle, self).__init__(*args, **kwargs)
             self._hoverMarker = None
@@ -803,13 +803,13 @@ class MarkerInteraction(ClicOrDrag):
                     x, y,
                     lambda marker: marker['behaviors'] & testBehaviors)
                 if marker is not None:
-                    self.goto('clicOrDrag', x, y)
+                    self.goto('clickOrDrag', x, y)
                     return True
 
                 else:
                     curve, _ = self.machine.backend.pickCurve(x, y)
                     if curve is not None:
-                        self.goto('clicOrDrag', x, y)
+                        self.goto('clickOrDrag', x, y)
                         return True
 
                     else:
@@ -817,7 +817,7 @@ class MarkerInteraction(ClicOrDrag):
                             x, y,
                             lambda image: image['behaviors'] & testBehaviors)
                         if image is not None:
-                            self.goto('clicOrDrag', x, y)
+                            self.goto('clickOrDrag', x, y)
                             return True
 
             return False
@@ -857,12 +857,12 @@ class MarkerInteraction(ClicOrDrag):
 
         states = {
             'idle': MarkerInteraction.Idle,
-            'clicOrDrag': ClicOrDrag.ClicOrDrag,
-            'drag': ClicOrDrag.Drag
+            'clickOrDrag': ClickOrDrag.ClickOrDrag,
+            'drag': ClickOrDrag.Drag
         }
         StateMachine.__init__(self, states, 'idle')
 
-    def clic(self, x, y, btn):
+    def click(self, x, y, btn):
         if btn == LEFT_BTN:
             marker = self.backend.pickMarker(
                 x, y, lambda marker: 'selectable' in marker['behaviors'])
