@@ -67,6 +67,11 @@ try:
 except ImportError:
     from PyMca5.PyMcaGraph.PlotBackend import PlotBackend
 
+try:
+    from ...ctools import minMax
+except ImportError:
+    from PyMca5.PyMcaGraph.ctools import minMax
+
 from .GLSupport import *  # noqa
 
 
@@ -452,7 +457,6 @@ class Zoom(ClickOrDrag):
                 self.backend._callback(eventDict)
 
                 self._lastClick = 0., None
-
             else:
                 # Signal mouse clicked event
                 xData, yData = self.backend.pixelToDataCoords(x, y)
@@ -2097,16 +2101,19 @@ class OpenGLPlotCanvas(PlotBackend):
                 raise NotImplementedError(
                     "Colors: {0}".format(colormap['colors']))
 
+            if colormap['autoscale']:
+                vMin, vMax = minMax(data)
+            else:
+                vMin, vMax = colormap['vmin'], colormap['vmax']
+
             self._images[legend] = {
                 'legend': legend,
                 'zOrder': z,
                 'data': data,
                 'colormapName': colormap['name'][:],
                 'colormapIsLog': colormap['normalization'].startswith('log'),
-                'vmin': data.min() if colormap['autoscale']
-                else colormap['vmin'],
-                'vmax': data.max() if colormap['autoscale']
-                else colormap['vmax'],
+                'vmin': vMin,
+                'vmax': vMax,
                 'bBox': bbox,
                 'behaviors': behaviors
             }
@@ -2265,11 +2272,13 @@ class OpenGLPlotCanvas(PlotBackend):
         if not isinstance(color, np.ndarray):
             color = rgba(color, PlotBackend.COLORDICT)
 
+        xMin, xMax = minMax(x)
+        yMin, yMax = minMax(y)
         bbox = {
-            'xMin': min(x),
-            'xMax': max(x),
-            'yMin': min(y),
-            'yMax': max(y)
+            'xMin': xMin,
+            'xMax': xMax,
+            'yMin': yMin,
+            'yMax': yMax
         }
 
         self._curves[legend] = {
