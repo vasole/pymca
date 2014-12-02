@@ -14,7 +14,7 @@ from minMax cimport getMinMaxInt32, getMinMaxUInt32
 from minMax cimport getMinMaxInt64, getMinMaxUInt64
 
 
-def _minMaxFloat(numpy.ndarray[numpy.float32_t, mode="c"] data):
+def _minMaxFloat(numpy.ndarray data):
     cdef float[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef float minValue
@@ -23,7 +23,7 @@ def _minMaxFloat(numpy.ndarray[numpy.float32_t, mode="c"] data):
     return minValue, maxValue
 
 
-def _minMaxDouble(numpy.ndarray[numpy.float64_t, mode="c"] data):
+def _minMaxDouble(numpy.ndarray data):
     cdef double[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef double minValue
@@ -32,7 +32,7 @@ def _minMaxDouble(numpy.ndarray[numpy.float64_t, mode="c"] data):
     return minValue, maxValue
 
 
-def _minMaxInt8(numpy.ndarray[numpy.int8_t, mode="c"] data):
+def _minMaxInt8(numpy.ndarray data):
     cdef int8_t[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef int8_t minValue
@@ -41,7 +41,7 @@ def _minMaxInt8(numpy.ndarray[numpy.int8_t, mode="c"] data):
     return minValue, maxValue
 
 
-def _minMaxUInt8(numpy.ndarray[numpy.uint8_t, mode="c"] data):
+def _minMaxUInt8(numpy.ndarray data):
     cdef uint8_t[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef uint8_t minValue
@@ -50,7 +50,7 @@ def _minMaxUInt8(numpy.ndarray[numpy.uint8_t, mode="c"] data):
     return minValue, maxValue
 
 
-def _minMaxInt16(numpy.ndarray[numpy.int16_t, mode="c"] data):
+def _minMaxInt16(numpy.ndarray data):
     cdef int16_t[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef int16_t minValue
@@ -59,7 +59,7 @@ def _minMaxInt16(numpy.ndarray[numpy.int16_t, mode="c"] data):
     return minValue, maxValue
 
 
-def _minMaxUInt16(numpy.ndarray[numpy.uint16_t, mode="c"] data):
+def _minMaxUInt16(numpy.ndarray data):
     cdef uint16_t[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef uint16_t minValue
@@ -68,7 +68,7 @@ def _minMaxUInt16(numpy.ndarray[numpy.uint16_t, mode="c"] data):
     return minValue, maxValue
 
 
-def _minMaxInt32(numpy.ndarray[numpy.int32_t, mode="c"] data):
+def _minMaxInt32(numpy.ndarray data):
     cdef int32_t[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef int32_t minValue
@@ -77,7 +77,7 @@ def _minMaxInt32(numpy.ndarray[numpy.int32_t, mode="c"] data):
     return minValue, maxValue
 
 
-def _minMaxUInt32(numpy.ndarray[numpy.uint32_t, mode="c"] data):
+def _minMaxUInt32(numpy.ndarray data):
     cdef uint32_t[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef uint32_t minValue
@@ -86,7 +86,7 @@ def _minMaxUInt32(numpy.ndarray[numpy.uint32_t, mode="c"] data):
     return minValue, maxValue
 
 
-def _minMaxInt64(numpy.ndarray[numpy.int64_t, mode="c"] data):
+def _minMaxInt64(numpy.ndarray data):
     cdef int64_t[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef int64_t minValue
@@ -95,7 +95,7 @@ def _minMaxInt64(numpy.ndarray[numpy.int64_t, mode="c"] data):
     return minValue, maxValue
 
 
-def _minMaxUInt64(numpy.ndarray[numpy.uint64_t, mode="c"] data):
+def _minMaxUInt64(numpy.ndarray data):
     cdef uint64_t[:] c_data = data
     cdef unsigned int length = c_data.size
     cdef uint64_t minValue
@@ -125,4 +125,4 @@ def minMax(numpy.ndarray data):
     except KeyError:
         raise NotImplementedError(
             "Unsupported numpy.ndarray dtype: {}".format(data.dtype))
-    return minMaxFunc(data)
+    return minMaxFunc(numpy.ravel(data, order='C'))
