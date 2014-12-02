@@ -39,6 +39,7 @@ This module provides convenient classes for the OpenGL rendering backend
 
 from .GLContext import *  # noqa
 from .GLFramebuffer import *  # noqa
+from .GLImagePlot import *  # noqa
 from .GLLinePlot import *  # noqa
 from .GLSupport import *  # noqa
 from .GLText import *  # noqa
@@ -46,6 +47,7 @@ from .GLTexture import *  # noqa
 from .GLVertexBuffer import *  # noqa
 from .Interaction import *  # noqa
 from .LabelLayout import *  # noqa
+
 
 def testGLExtensions():
     from OpenGL.GL.ARB.framebuffer_object import glInitFramebufferObjectARB
@@ -57,4 +59,3 @@ def testGLExtensions():
 
     if not glInitTextureRgARB():
         raise RuntimeError("OpenGL GL_ARB_texture_rg extension required !")
-

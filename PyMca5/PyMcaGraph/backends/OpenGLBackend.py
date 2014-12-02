@@ -60,7 +60,6 @@ else:
     OpenGL.ERROR_ON_COPY = False
 
 from OpenGL.GL import *  # noqa
-from OpenGL.GL.ARB.texture_rg import GL_R32F  # Core in OpenGL 3
 
 try:
     from ..PlotBackend import PlotBackend
@@ -156,104 +155,6 @@ _texFragShd = """
         gl_FragColor = texture2D(tex, coords);
     }
     """
-
-
-_vertexSrc = """
-    attribute vec2 position;
-    attribute vec2 texCoords;
-    uniform mat4 matrix;
-
-    varying vec2 coords;
-
-    void main(void) {
-        coords = texCoords;
-        gl_Position = matrix * vec4(position, 0.0, 1.0);
-    }
-    """
-
-_fragmentSrc = """
-    #define CMAP_GRAY   0
-    #define CMAP_R_GRAY 1
-    #define CMAP_RED    2
-    #define CMAP_GREEN  3
-    #define CMAP_BLUE   4
-    #define CMAP_TEMP   5
-
-    uniform sampler2D data;
-    uniform struct {
-        int id;
-        float min;
-        float oneOverRange;
-        float logMin;
-        float oneOverLogRange;
-    } cmap;
-
-    varying vec2 coords;
-
-    vec4 cmapGray(float normValue) {
-        return vec4(normValue, normValue, normValue, 1.);
-    }
-
-    vec4 cmapReversedGray(float normValue) {
-        float invValue = 1. - normValue;
-        return vec4(invValue, invValue, invValue, 1.);
-    }
-
-    vec4 cmapRed(float normValue) {
-        return vec4(normValue, 0., 0., 1.);
-    }
-
-    vec4 cmapGreen(float normValue) {
-        return vec4(0., normValue, 0., 1.);
-    }
-
-    vec4 cmapBlue(float normValue) {
-        return vec4(0., 0., normValue, 1.);
-    }
-
-    //red: 0.5->0.75: 0->1
-    //green: 0.->0.25: 0->1; 0.75->1.: 1->0
-    //blue: 0.25->0.5: 1->0
-    vec4 cmapTemperature(float normValue) {
-        float red = clamp(4. * normValue - 2., 0., 1.);
-        float green = 1. - clamp(4. * abs(normValue - 0.5) - 1., 0., 1.);
-        float blue = 1. - clamp(4. * normValue - 1., 0., 1.);
-        return vec4(red, green, blue, 1.);
-    }
-
-    void main(void) {
-        float value = texture2D(data, coords).r;
-        if (cmap.oneOverRange != 0.) {
-            value = clamp(cmap.oneOverRange * (value - cmap.min), 0., 1.);
-        } else {
-            value = clamp(cmap.oneOverLogRange * (log(value) - cmap.logMin),
-                          0., 1.);
-        }
-
-        if (cmap.id == CMAP_GRAY) {
-            gl_FragColor = cmapGray(value);
-        } else if (cmap.id == CMAP_R_GRAY) {
-            gl_FragColor = cmapReversedGray(value);
-        } else if (cmap.id == CMAP_RED) {
-            gl_FragColor = cmapRed(value);
-        } else if (cmap.id == CMAP_GREEN) {
-            gl_FragColor = cmapGreen(value);
-        } else if (cmap.id == CMAP_BLUE) {
-            gl_FragColor = cmapBlue(value);
-        } else if (cmap.id == CMAP_TEMP) {
-            gl_FragColor = cmapTemperature(value);
-        }
-    }
-    """
-
-_shaderColormapIds = {
-    'gray': 0,
-    'reversed gray': 1,
-    'red': 2,
-    'green': 3,
-    'blue': 4,
-    'temperature': 5
-}
 
 
 # utils #######################################################################
@@ -825,7 +726,7 @@ class MarkerInteraction(ClickOrDrag):
                     else:
                         image, _ = self.machine.backend.pickImage(
                             x, y,
-                            lambda image: image['behaviors'] & testBehaviors)
+                            lambda img: img.info['behaviors'] & testBehaviors)
                         if image is not None:
                             self.goto('clickOrDrag', x, y)
                             return True
@@ -913,7 +814,8 @@ class MarkerInteraction(ClickOrDrag):
 
                 else:
                     image, posImg = self.backend.pickImage(
-                        x, y, lambda image: 'selectable' in image['behaviors'])
+                        x, y,
+                        lambda img: 'selectable' in img.info['behaviors'])
                     if image is not None:
                         xData, yData = self.backend.pixelToDataCoords(x, y)
                         eventDict = prepareImageSignal('left',
@@ -955,7 +857,7 @@ class MarkerInteraction(ClickOrDrag):
             self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
         else:
             self.image, _ = self.backend.pickImage(
-                x, y, lambda image: 'draggable' in image['behaviors'])
+                x, y, lambda img: 'draggable' in img.info['behaviors'])
 
     def drag(self, x, y):
         xData, yData = self.backend.pixelToDataCoords(x, y)
@@ -1208,16 +1110,12 @@ class OpenGLPlotCanvas(PlotBackend):
     def pickImage(self, x, y, test=None):
         if test is None:
             test = lambda image: True
-        for image in reversed(self._images.values()):
-            xPick, yPick = self.pixelToDataCoords(x, y)
-            bbox = image['bBox']
 
-            if bbox['xMin'] <= xPick and xPick <= bbox['xMax'] and \
-               bbox['yMin'] <= yPick and yPick <= bbox['yMax']:
-                if test(image):
-                    xPick = int((xPick - bbox['xMin']) / bbox['xStep'])
-                    yPick = int((yPick - bbox['yMin']) / bbox['yStep'])
-                    return image, (xPick, yPick)
+        xPick, yPick = self.pixelToDataCoords(x, y)
+        for image in reversed(self._images.values()):
+            pickedPos = image.pick(xPick, yPick)
+            if pickedPos is not None and test(image):
+                return image, pickedPos
         return None, None
 
     def pickCurve(self, x, y):
@@ -1293,13 +1191,12 @@ class OpenGLPlotCanvas(PlotBackend):
         xMin, xMax, xStep = float('inf'), -float('inf'), float('inf')
         yMin, yMax, yStep = float('inf'), -float('inf'), float('inf')
         for image in self._images.values():
-            bbox = image['bBox']
-            xMin = min(xMin, bbox['xMin'])
-            xMax = max(xMax, bbox['xMax'])
-            xStep = min(xStep, bbox['xStep'])
-            yMin = min(yMin, bbox['yMin'])
-            yMax = max(yMax, bbox['yMax'])
-            yStep = min(yStep, bbox['yStep'])
+            xMin = min(xMin, image.xMin)
+            xMax = max(xMax, image.xMax)
+            xStep = min(xStep, image.xScale)
+            yMin = min(yMin, image.yMin)
+            yMax = max(yMax, image.yMax)
+            yStep = min(yStep, image.yScale)
         for curve in self._curves.values():
             bbox = curve['bBox']
             xMin = min(xMin, bbox['xMin'])
@@ -1357,7 +1254,6 @@ class OpenGLPlotCanvas(PlotBackend):
             yMax = self._yMax
 
         return xMin, xMax, yMin, yMax
-
 
     def updateAxis(self):
         self._axisDirtyFlag = True
@@ -1526,7 +1422,7 @@ class OpenGLPlotCanvas(PlotBackend):
             return xPixel, yPixel
 
     def pixelToDataSize(self, xPixel=None, yPixel=None):
-        #TODO this cannot work with log scale!
+        # TODO this cannot work with log scale!
         if self._isXLog or self._isYLog:
             raise RuntimeError('pixelToDataSize impossible with log')
 
@@ -1619,9 +1515,6 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # Create texture program
         self._progTex = Program(_texVertShd, _texFragShd)
-
-        # Create image program
-        self._progImg = Program(_vertexSrc, _fragmentSrc)
 
     def _paintGLDirect(self):
         self._renderPlotArea()
@@ -1868,9 +1761,6 @@ class OpenGLPlotCanvas(PlotBackend):
                                     dispYMin, dispYMax,
                                     1, -1)
         # Render Images
-        dataTexUnit = 0
-
-
         glScissor(self._margins['left'], self._margins['bottom'],
                   plotWidth, plotHeight)
         glEnable(GL_SCISSOR_TEST)
@@ -1879,72 +1769,9 @@ class OpenGLPlotCanvas(PlotBackend):
                    plotWidth, plotHeight)
 
         # sorted is stable: original order is preserved when key is the same
-        for image in sorted(self._images.values(), key=lambda d: d['zOrder']):
-            try:
-                texture = image['_texture']
-            except KeyError:
-                data = image['data']
-                if len(data.shape) == 2:
-                    height, width = data.shape
-                    texture = Image(GL_R32F, width, height,
-                                    format_=GL_RED, type_=GL_FLOAT,
-                                    data=image['data'], texUnit=dataTexUnit)
-                    image['_texture'] = texture
-                else:
-                    height, width, depth = data.shape
-                    format_ = GL_RGBA if depth == 4 else GL_RGB
-                    if data.dtype == np.uint8:
-                        type_ = GL_UNSIGNED_BYTE
-                    else:
-                        type_ = GL_FLOAT
-                    texture = Image(format_, width, height,
-                                    format_=format_, type_=type_,
-                                    data=image['data'], texUnit=dataTexUnit)
-                    image['_texture'] = texture
-
-            bbox = image['bBox']
-            mat = matDataProj * mat4Translate(bbox['xMin'], bbox['yMin'])
-            mat *= mat4Scale(
-                float(bbox['xMax'] - bbox['xMin'])/texture.width,
-                float(bbox['yMax'] - bbox['yMin'])/texture.height,
-            )
-
-            try:
-                colormapName = image['colormapName']
-            except KeyError:
-                # Pixmap
-                self._progTex.use()
-                glUniform1i(self._progTex.uniforms['tex'], dataTexUnit)
-                glUniformMatrix4fv(self._progTex.uniforms['matrix'],
-                                   1, GL_TRUE, mat)
-                texture.render(self._progTex.attributes['position'],
-                               self._progTex.attributes['texCoords'],
-                               dataTexUnit)
-            else:
-                # Colormap
-                self._progImg.use()
-                glUniform1i(self._progImg.uniforms['data'], dataTexUnit)
-                glUniformMatrix4fv(self._progImg.uniforms['matrix'],
-                                   1, GL_TRUE, mat)
-
-                glUniform1i(self._progImg.uniforms['cmap.id'],
-                            _shaderColormapIds[colormapName])
-                if image['colormapIsLog']:
-                    logVMin = math.log(image['vmin']) #TODO use log 10 for image
-                    glUniform1f(self._progImg.uniforms['cmap.logMin'], logVMin)
-                    glUniform1f(self._progImg.uniforms['cmap.oneOverRange'],
-                                0.)
-                    glUniform1f(self._progImg.uniforms['cmap.oneOverLogRange'],
-                                1./(math.log(image['vmax']) - logVMin))
-                else:
-                    glUniform1f(self._progImg.uniforms['cmap.min'],
-                                image['vmin'])
-                    glUniform1f(self._progImg.uniforms['cmap.oneOverRange'],
-                                1./(image['vmax'] - image['vmin']))
-
-                texture.render(self._progImg.attributes['position'],
-                               self._progImg.attributes['texCoords'],
-                               dataTexUnit)
+        for image in sorted(self._images.values(),
+                            key=lambda img: img.info['zOrder']):
+            image.render(matDataProj)
 
         # Render Curves
         for curve in self._curves.values():
@@ -2072,28 +1899,26 @@ class OpenGLPlotCanvas(PlotBackend):
             behaviors.add('draggable')
 
         oldImage = self._images.get(legend, None)
-        if oldImage is not None and oldImage['data'].shape != data.shape:
-            oldImage = None
-            self.removeImage(legend)
+        if oldImage is not None:
+            if oldImage.data.shape == data.shape:
+                oldXScale = oldImage.xMin, oldImage.xScale
+                oldYScale = oldImage.yMin, oldImage.yScale
+            else:
+                oldImage = None
+                self.removeImage(legend)
 
         if replace:
             self.clearImages()
 
-        height, width = data.shape[0:2]
         if xScale is None:
             xScale = (0, 1)
         if yScale is None:
             yScale = (0, 1)
-        bbox = {'xMin': xScale[0],
-                'xMax': xScale[0] + xScale[1] * width,
-                'xStep': xScale[1],
-                'yMin': yScale[0],
-                'yMax': yScale[0] + yScale[1] * height,
-                'yStep': yScale[1]}
 
         if len(data.shape) == 2:
             if colormap is None:
                 colormap = self.getDefaultColormap()
+
             if colormap['normalization'] not in ('linear', 'log'):
                 raise NotImplementedError(
                     "Normalisation: {0}".format(colormap['normalization']))
@@ -2101,28 +1926,37 @@ class OpenGLPlotCanvas(PlotBackend):
                 raise NotImplementedError(
                     "Colors: {0}".format(colormap['colors']))
 
-            if colormap['autoscale']:
-                vMin, vMax = minMax(data)
-            else:
-                vMin, vMax = colormap['vmin'], colormap['vmax']
+            colormapIsLog = colormap['normalization'].startswith('log')
 
-            self._images[legend] = {
+            if colormap['autoscale']:
+                cmapRange = None
+            else:
+                cmapRange = colormap['vmin'], colormap['vmax']
+                assert(cmapRange[0] <= cmapRange[1])
+
+            if oldImage is not None:  # TODO check if benefit
+                image = oldImage
+                image.xMin = xScale[0]
+                image.xScale = xScale[1]
+                image.yMin = yScale[0]
+                image.yScale = yScale[1]
+                image.colormap = colormap
+                image.cmapIsLog = colormapIsLog
+                image.cmapRange = cmapRange
+                image.updateData(data)
+            else:
+                image = GLColormap(data,
+                                   xScale[0], xScale[1],
+                                   yScale[0], yScale[1],
+                                   colormap['name'][:],
+                                   colormapIsLog,
+                                   cmapRange)
+            image.info = {
                 'legend': legend,
                 'zOrder': z,
-                'data': data,
-                'colormapName': colormap['name'][:],
-                'colormapIsLog': colormap['normalization'].startswith('log'),
-                'vmin': vMin,
-                'vmax': vMax,
-                'bBox': bbox,
                 'behaviors': behaviors
             }
-            if oldImage is not None and '_texture' in oldImage:
-                # Reuse texture and update
-                texture = oldImage['_texture']
-                texture.updateAll(format_=GL_RED, type_=GL_FLOAT,
-                                  data=data)
-                self._images[legend]['_texture'] = texture
+            self._images[legend] = image
 
         elif len(data.shape) == 3:
             # For RGB, RGBA data
@@ -2130,30 +1964,31 @@ class OpenGLPlotCanvas(PlotBackend):
             assert(data.dtype == np.uint8 or
                    np.can_cast(data.dtype, np.float32))
 
-            self._images[legend] = {
+            if oldImage is not None:
+                image.xMin = xScale[0]
+                image.xScale = xScale[1]
+                image.yMin = yScale[0]
+                image.yScale = yScale[1]
+                image.updateData(data)
+            else:
+                image = GLRGBAImage(data,
+                                    xScale[0], xScale[1],
+                                    yScale[0], yScale[1])
+
+            image.info = {
                 'legend': legend,
                 'zOrder': z,
-                'data': data,
-                'bBox': bbox,
                 'behaviors': behaviors
             }
-            if oldImage is not None and '_texture' in oldImage:
-                # Reuse texture and update
-                format_ = GL_RGBA if data.shape[2] == 4 else GL_RGB
-                if data.dtype == np.uint8:
-                    type_ = GL_UNSIGNED_BYTE
-                else:
-                    type_ = GL_FLOAT
-
-                texture = oldImage['_texture']
-                texture.updateAll(format_=format_, type_=type_,
-                                  data=data)
-                self._images[legend]['_texture'] = texture
+            self._images[legend] = image
 
         else:
             raise RuntimeError("Unsupported data shape {0}".format(data.shape))
 
-        if oldImage is None or bbox != oldImage['bBox']:
+        if oldImage is None or \
+           oldXScale != image.xScale or \
+           oldYScale != image.yScale:
+
             self._updateDataBBox()
             self.setLimits(self._dataBBox['xMin'], self._dataBBox['xMax'],
                            self._dataBBox['yMin'], self._dataBBox['yMax'])
@@ -2172,13 +2007,7 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
-            try:
-                texture = image['_texture']
-            except KeyError:
-                pass
-            else:
-                del image['_texture']
-                texture.discard()
+            image.discard()
             del self._images[legend]
             self._plotDirtyFlag = True
 
