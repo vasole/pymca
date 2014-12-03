@@ -787,7 +787,7 @@ class MarkerInteraction(ClickOrDrag):
                 if curve is not None:
                     xData, yData = self.backend.pixelToDataCoords(x, y)
                     eventDict = prepareCurveSignal('left',
-                                                   curve['legend'],
+                                                   curve.info['legend'],
                                                    'curve',
                                                    posCurve[:, 0],
                                                    posCurve[:, 1],
@@ -1105,10 +1105,10 @@ class OpenGLPlotCanvas(PlotBackend):
     def pickCurve(self, x, y):
         for curve in reversed(self._curves.values()):
             offset = self._PICK_OFFSET
-            if curve['_curve2d'].marker is not None:
-                offset = max(curve['_curve2d'].markerSize / 2., offset)
-            if curve['_curve2d'].lineStyle is not None:
-                offset = max(curve['_curve2d'].lineWidth / 2., offset)
+            if curve.marker is not None:
+                offset = max(curve.markerSize / 2., offset)
+            if curve.lineStyle is not None:
+                offset = max(curve.lineWidth / 2., offset)
 
             xPick0, yPick0 = self.pixelToDataCoords(x - offset, y - offset)
             xPick1, yPick1 = self.pixelToDataCoords(x + offset, y + offset)
@@ -1123,8 +1123,7 @@ class OpenGLPlotCanvas(PlotBackend):
             else:
                 yPickMin, yPickMax = yPick1, yPick0
 
-            picked = curve['_curve2d'].pick(xPickMin, yPickMin,
-                                            xPickMax, yPickMax)
+            picked = curve.pick(xPickMin, yPickMin, xPickMax, yPickMax)
             if picked:
                 return curve, picked
         return None, None
@@ -1149,11 +1148,10 @@ class OpenGLPlotCanvas(PlotBackend):
             yMin = min(yMin, image.yMin)
             yMax = max(yMax, image.yMax)
         for curve in self._curves.values():
-            bbox = curve['bBox']
-            xMin = min(xMin, bbox['xMin'])
-            xMax = max(xMax, bbox['xMax'])
-            yMin = min(yMin, bbox['yMin'])
-            yMax = max(yMax, bbox['yMax'])
+            xMin = min(xMin, curve.xMin)
+            xMax = max(xMax, curve.xMax)
+            yMin = min(yMin, curve.yMin)
+            yMax = max(yMax, curve.yMax)
 
         if xMin >= xMax:
                 xMin, xMax = 0., 1.
@@ -1707,7 +1705,7 @@ class OpenGLPlotCanvas(PlotBackend):
             matDataProj = mat4Ortho(dispXMin, dispXMax,
                                     dispYMin, dispYMax,
                                     1, -1)
-        # Render Images
+
         glScissor(self._margins['left'], self._margins['bottom'],
                   plotWidth, plotHeight)
         glEnable(GL_SCISSOR_TEST)
@@ -1715,6 +1713,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glViewport(self._margins['left'], self._margins['right'],
                    plotWidth, plotHeight)
 
+        # Render Images
         # sorted is stable: original order is preserved when key is the same
         for image in sorted(self._images.values(),
                             key=lambda img: img.info['zOrder']):
@@ -1722,30 +1721,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # Render Curves
         for curve in self._curves.values():
-            try:
-                curve2d = curve['_curve2d']
-            except KeyError:
-                if isinstance(curve['color'], np.ndarray):
-                    curve2d = curveFromArrays(curve['xData'], curve['yData'],
-                                              curve['color'],
-                                              lineStyle=curve['lineStyle'],
-                                              lineWidth=curve['lineWidth'],
-                                              marker=curve['marker'])
-
-                else:
-                    curve2d = curveFromArrays(curve['xData'], curve['yData'],
-                                              None,
-                                              lineStyle=curve['lineStyle'],
-                                              lineWidth=curve['lineWidth'],
-                                              lineColor=curve['color'],
-                                              marker=curve['marker'],
-                                              markerColor=curve['color'])
-                curve['_curve2d'] = curve2d
-                curve['_vbo'] = curve2d.xVboData.vbo
-
-            curve2d.isXLog = self._isXLog
-            curve2d.isYLog = self._isYLog
-            curve2d.render(matDataProj)
+            curve.isXLog = self._isXLog
+            curve.isYLog = self._isYLog
+            curve.render(matDataProj)
 
         # Render Items
         self._progBase.use()
@@ -1950,12 +1928,11 @@ class OpenGLPlotCanvas(PlotBackend):
     def removeImage(self, legend, replot=True):
         self.makeCurrent()
         try:
-            image = self._images[legend]
+            image = self._images[legend].pop()
         except KeyError:
             pass
         else:
             image.discard()
-            del self._images[legend]
             self._plotDirtyFlag = True
 
         if replot:
@@ -2035,40 +2012,33 @@ class OpenGLPlotCanvas(PlotBackend):
 
         oldCurve = self._curves.get(legend, None)
         if oldCurve is not None:
-            oldBBox = oldCurve['bBox']
             self.removeCurve(legend)
 
         if replace:
             self.clearCurves()
 
-        lineWidth = 1
-
         if color is None:
             color = self._activeCurveColor
-        if not isinstance(color, np.ndarray):
+
+        if isinstance(color, np.ndarray):
+            colorArray = color
+            color = None
+        else:
+            colorArray = None
             color = rgba(color, PlotBackend.COLORDICT)
 
-        xMin, xMax = minMax(x)
-        yMin, yMax = minMax(y)
-        bbox = {
-            'xMin': xMin,
-            'xMax': xMax,
-            'yMin': yMin,
-            'yMax': yMax
-        }
+        curve = Curve2D(x, y, colorArray,
+                        lineStyle=linestyle,
+                        lineColor=color,
+                        lineWidth=1,
+                        marker=symbol,
+                        markerColor=color)
+        curve.info = {'legend': legend}
+        self._curves[legend] = curve
 
-        self._curves[legend] = {
-            'legend': legend,
-            'xData': x,
-            'yData': y,
-            'lineStyle': linestyle,
-            'lineWidth': lineWidth,
-            'color': color,
-            'marker': symbol,
-            'bBox': bbox
-        }
-
-        if oldCurve is None or bbox != oldBBox:
+        if oldCurve is None or \
+           oldCurve.xMin != curve.xMin or oldCurve.xMax != curve.xMax or \
+           oldCurve.yMin != curve.yMin or oldCurve.yMax != curve.yMax:
             self._updateDataBBox()
             self.setLimits(self._dataBBox['xMin'], self._dataBBox['xMax'],
                            self._dataBBox['yMin'], self._dataBBox['yMax'])
@@ -2083,17 +2053,11 @@ class OpenGLPlotCanvas(PlotBackend):
     def removeCurve(self, legend, replot=True):
         self.makeCurrent()
         try:
-            curve = self._curves[legend]
+            curve = self._curves[legend].pop()
         except KeyError:
             pass
         else:
-            try:
-                vbo = curve['_vbo']
-            except KeyError:
-                pass
-            else:
-                vbo.discard()
-            del self._curves[legend]
+            curve.discard()
             self._plotDirtyFlag = True
 
         if replot:

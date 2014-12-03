@@ -167,19 +167,14 @@ class _Lines2D(object):
 
     _programs = defaultdict(dict)
 
-    def __init__(self, xVboData, yVboData,
+    def __init__(self, xVboData=None, yVboData=None,
                  colorVboData=None, distVboData=None,
                  style=SOLID, color=(0., 0., 0., 1.),
                  width=1, dashPeriod=20,
                  isXLog=False, isYLog=False):
-        assert(xVboData.size == yVboData.size)
         self.xVboData = xVboData
         self.yVboData = yVboData
-
-        assert(distVboData is None or distVboData.size == xVboData.size)
         self.distVboData = distVboData
-
-        assert(colorVboData is None or colorVboData.size == xVboData.size)
         self.colorVboData = colorVboData
 
         self.color = color
@@ -204,7 +199,6 @@ class _Lines2D(object):
             if style == SOLID:
                 self.render = self._renderSolid
             elif style == DASHED:
-                assert(self.distVboData is not None)
                 self.render = self._renderDash
 
     @property
@@ -293,12 +287,19 @@ class _Lines2D(object):
         glEnable(GL_LINE_SMOOTH)
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
-        glUniform4f(prog.uniforms['color'], *self.color)
         x, y, viewWidth, viewHeight = glGetFloat(GL_VIEWPORT)
         glUniform2f(prog.uniforms['halfViewportSize'],
                     0.5 * viewWidth, 0.5 * viewHeight)
 
         glUniform1f(prog.uniforms['dashPeriod'], self.dashPeriod)
+
+        colorAttrib = prog.attributes['color']
+        if self.colorVboData is not None:
+            glEnableVertexAttribArray(colorAttrib)
+            self.colorVboData.setVertexAttrib(colorAttrib)
+        else:
+            glDisableVertexAttribArray(colorAttrib)
+            glVertexAttrib4f(colorAttrib, *self.color)
 
         distAttrib = prog.attributes['distance']
         glEnableVertexAttribArray(distAttrib)
@@ -476,7 +477,7 @@ class _Points2D(object):
 
     _programs = defaultdict(dict)
 
-    def __init__(self, xVboData, yVboData, colorVboData=None,
+    def __init__(self, xVboData=None, yVboData=None, colorVboData=None,
                  marker=SQUARE, color=(0., 0., 0., 1.), size=7,
                  isXLog=False, isYLog=False):
         self.color = color
@@ -485,12 +486,9 @@ class _Points2D(object):
         self.isXLog = isXLog
         self.isYLog = isYLog
 
-        assert(xVboData.size == yVboData.size)
         self.xVboData = xVboData
         self.yVboData = yVboData
         self.colorVboData = colorVboData
-        if colorVboData is not None:
-            assert(colorVboData.size == xVboData.size)
 
     @property
     def marker(self):
@@ -627,14 +625,12 @@ def _proxyProperty(*componentsAttributes):
     return property(getter, setter)
 
 class Curve2D(object):
-    def __init__(self, xData, yData,
-                 xVboData, yVboData,
-                 colorVboData=None, distVboData=None,
+    def __init__(self, xData, yData, colorData=None,
                  lineStyle=None, lineColor=None,
                  lineWidth=None, lineDashPeriod=None,
                  marker=None, markerColor=None, markerSize=None,
                  isXLog=False, isYLog=False):
-        self.xData, self.yData = xData, yData
+        self.xData, self.yData, self.colorData = xData, yData, colorData
         self.xMin, self.xMax = minMax(xData)
         self.yMin, self.yMax = minMax(yData)
 
@@ -649,8 +645,7 @@ class Curve2D(object):
             kwargs['width'] = lineWidth
         if lineDashPeriod is not None:
             kwargs['dashPeriod'] = lineDashPeriod
-        self.lines = _Lines2D(xVboData, yVboData,
-                              colorVboData, distVboData, **kwargs)
+        self.lines = _Lines2D(**kwargs)
 
         kwargs = {
             'marker': marker,
@@ -661,7 +656,7 @@ class Curve2D(object):
             kwargs['color'] = markerColor
         if markerSize is not None:
             kwargs['size'] = markerSize
-        self.points = _Points2D(xVboData, yVboData, colorVboData, **kwargs)
+        self.points = _Points2D(**kwargs)
 
     xVboData = _proxyProperty(('lines', 'xVboData'), ('points', 'xVboData'))
 
@@ -695,7 +690,32 @@ class Curve2D(object):
         _Lines2D.init()
         _Points2D.init()
 
+    def prepare(self):
+        if self.xVboData is None:
+            xAttrib, yAttrib, cAttrib, dAttrib = None, None, None, None
+            if self.lineStyle == '--':
+                dists = _distancesFromArrays(self.xData, self.yData)
+                if self.colorData is None:
+                    xAttrib, yAttrib, dAttrib = createVBOFromArrays(
+                        (self.xData, self.yData, dists))
+                else:
+                    xAttrib, yAttrib, cAttrib, dAttrib = createVBOFromArrays(
+                        (self.xData, self.yData, self.colorData, dists))
+
+            elif self.colorData is None:
+                xAttrib, yAttrib = createVBOFromArrays(
+                    (self.xData, self.yData))
+            else:
+                xAttrib, yAttrib, cAttrib = createVBOFromArrays(
+                    (self.xData, self.yData, self.colorData))
+
+            self.xVboData = xAttrib
+            self.yVboData = yAttrib
+            self.colorVboData = cAttrib
+            self.distVboData = dAttrib
+
     def render(self, matrix):
+        self.prepare()
         self.lines.render(matrix)
         self.points.render(matrix)
 
@@ -755,31 +775,6 @@ class Curve2D(object):
 
         return picked if picked else None
 
-def curveFromArrays(xData, yData, cData=None, **kwargs):
-    lineStyle = kwargs.get('lineStyle', None)
-    if lineStyle == '--':
-        dists = _distancesFromArrays(xData, yData)
-        if colorData is None:
-            arrays = xData, yData, dists
-            xAttrib, yAttrib, dAttrib = createVBOFromArrays(arrays)
-            return Curve2D(xData, yData, xAttrib, yAttrib,
-                           None, dAttrib, **kwargs)
-        else:
-            arrays = xData, yData, cData, dists
-            xAttrib, yAttrib, cAttrib, dAttrib = createVBOFromArrays(arrays)
-            return Curve2D(xData, yData, xAttrib, yAttrib,
-                           cAttrib, dAttrib, **kwargs)
-
-    elif cData is None:
-        xAttrib, yAttrib = createVBOFromArrays((xData, yData))
-        return Curve2D(xData, yData, xAttrib, yAttrib,
-                       None, None, **kwargs)
-        cAttrib, dAttrib = None, None
-    else:
-        xAttrib, yAttrib, cAttrib = createVBOFromArrays((xData, yData, cData))
-        return Curve2D(xData, yData, xAttrib, yAttrib,
-                       cAttrib, None, **kwargs)
-
 
 # main ########################################################################
 
@@ -807,13 +802,11 @@ if __name__ == "__main__":
     yData1 = np.asarray(np.random.random(10) * 500, dtype=np.float32)
     yData1 = np.array((100, 100, 200, 400, 100, 100, 400, 400, 401, 400),
                       dtype=np.float32)
-    curve1 = curveFromArrays(xData1, yData1,
-                             marker='o',
-                             lineStyle='--')
+    curve1 = Curve2D(xData1, yData1, marker='o', lineStyle='--')
 
     xData2 = np.arange(1000, dtype=np.float32) * 1
     yData2 = np.asarray(500 + np.random.random(1000) * 500, dtype=np.float32)
-    curve2 = curveFromArrays(xData2, yData2, lineStyle='', marker='s')
+    curve2 = Curve2D(xData2, yData2, lineStyle='', marker='s')
 
     projMatrix = mat4Ortho(0, 1000, 0, 1000, -1, 1)
 
