@@ -45,6 +45,10 @@ from .GLContext import getGLContext
 from .GLSupport import Program
 from .GLVertexBuffer import createVBOFromArrays
 
+try:
+    from ....ctools import minMax
+except ImportError:
+    from PyMca5.PyMcaGraph.ctools import minMax
 
 _MPL_NONES = None, 'None', '', ' '
 
@@ -54,7 +58,7 @@ _MPL_NONES = None, 'None', '', ' '
 SOLID, DASHED = '-', '--'
 
 
-class Lines2D(object):
+class _Lines2D(object):
     STYLES = SOLID, DASHED
     """Supported line styles (missing '-.' ':')"""
 
@@ -114,7 +118,7 @@ class Lines2D(object):
 
 
         # Limitation: Dash using an estimate of distance in screen coord
-        # to avoid computing distance when
+        # to avoid computing distance when viewport is resized
         # results in inequal dashes when viewport aspect ratio is far from 1
         DASHED: {
             'vertex': (
@@ -214,7 +218,7 @@ class Lines2D(object):
         except AttributeError:
             widthRange = glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE)
             # Shared among contexts, this should be enough..
-            Lines2D._widthRange = widthRange
+            _Lines2D._widthRange = widthRange
         assert(width >= widthRange[0] and width <= widthRange[1])
         self._width = width
 
@@ -314,16 +318,16 @@ class Lines2D(object):
         glDisable(GL_LINE_SMOOTH)
 
 
-def lines2DFromArrays(xData, yData, cData=None, **kwargs):
+def _lines2DFromArrays(xData, yData, cData=None, **kwargs):
     if cData is None:
         xAttrib, yAttrib = createVBOFromArrays((xData, yData))
-        return Lines2D(xAttrib, yAttrib, None, None, **kwargs)
+        return _Lines2D(xAttrib, yAttrib, None, None, **kwargs)
     else:
         xAttrib, yAttrib, cAttrib = createVBOFromArrays((xData, yData, cData))
-        return Lines2D(xAttrib, yAttrib, cAttrib, None, **kwargs)
+        return _Lines2D(xAttrib, yAttrib, cAttrib, None, **kwargs)
 
 
-def distancesFromArrays(xData, yData):
+def _distancesFromArrays(xData, yData):
     dists = np.empty((xData.size, 2), dtype=np.float32)
     totalDist = 0.
     point = None
@@ -336,19 +340,19 @@ def distancesFromArrays(xData, yData):
     return dists
 
 
-def dashedLines2DFromArrays(xData, yData, cData=None, **kwargs):
-    dists = distancesFromArrays(xData, yData)
+def _dashedLines2DFromArrays(xData, yData, cData=None, **kwargs):
+    dists = _distancesFromArrays(xData, yData)
     if cData is None:
         arrays = xData, yData, dists
         xAttrib, yAttrib, dAttrib = createVBOFromArrays(arrays)
-        return Lines2D(xAttrib, yAttrib, None, dAttrib,
-                       style=DASHED, *args, **kwargs)
+        return _Lines2D(xAttrib, yAttrib, None, dAttrib,
+                        style=DASHED, *args, **kwargs)
 
     else:
         arrays = xData, yData, cData, dists
         xAttrib, yAttrib, cAttrib, dAttrib = createVBOFromArrays(arrays)
-        return Lines2D(xAttrib, yAttrib, cAttrib, dAttrib,
-                       style=DASHED, *args, **kwargs)
+        return _Lines2D(xAttrib, yAttrib, cAttrib, dAttrib,
+                        style=DASHED, *args, **kwargs)
 
 
 # points ######################################################################
@@ -357,7 +361,7 @@ DIAMOND, CIRCLE, SQUARE, PLUS, X_MARKER, POINT, PIXEL = \
     'd', 'o', 's', '+', 'x', '.', ','
 
 
-class Points2D(object):
+class _Points2D(object):
     MARKERS = DIAMOND, CIRCLE, SQUARE, PLUS, X_MARKER, POINT, PIXEL
 
     _LINEAR, _LOG10_X, _LOG10_Y, _LOG10_X_Y = 0, 1, 2, 3
@@ -513,7 +517,7 @@ class Points2D(object):
         except AttributeError:
             sizeRange = glGetFloatv(GL_POINT_SIZE_RANGE)
             # Shared among contexts, this should be enough..
-            Points2D._sizeRange = sizeRange
+            _Points2D._sizeRange = sizeRange
         assert(size >= sizeRange[0] and size <= sizeRange[1])
         self._size = size
 
@@ -589,14 +593,14 @@ class Points2D(object):
         glUseProgram(0)
 
 
-def points2DFromArrays(xData, yData, cData=None, *kwargs):
+def _points2DFromArrays(xData, yData, cData=None, *kwargs):
     if cData is None:
         xAttrib, yAttrib = createVBOFromArrays((xData, yData))
         cAttrib = None
     else:
         xAttrib, yAttrib, cAttrib = createVBOFromArrays((xData, yData, cData))
 
-    return Points2D(xVboAttrib, yVboAttrib, **kwargs)
+    return _Points2D(xVboAttrib, yVboAttrib, **kwargs)
 
 
 # curves ######################################################################
@@ -623,12 +627,17 @@ def _proxyProperty(*componentsAttributes):
     return property(getter, setter)
 
 class Curve2D(object):
-    def __init__(self, xVboData, yVboData,
+    def __init__(self, xData, yData,
+                 xVboData, yVboData,
                  colorVboData=None, distVboData=None,
                  lineStyle=None, lineColor=None,
                  lineWidth=None, lineDashPeriod=None,
                  marker=None, markerColor=None, markerSize=None,
                  isXLog=False, isYLog=False):
+        self.xData, self.yData = xData, yData
+        self.xMin, self.xMax = minMax(xData)
+        self.yMin, self.yMax = minMax(yData)
+
         kwargs = {
             'style': lineStyle,
             'isXLog': isXLog,
@@ -640,8 +649,8 @@ class Curve2D(object):
             kwargs['width'] = lineWidth
         if lineDashPeriod is not None:
             kwargs['dashPeriod'] = lineDashPeriod
-        self.lines = Lines2D(xVboData, yVboData,
-                             colorVboData, distVboData, **kwargs)
+        self.lines = _Lines2D(xVboData, yVboData,
+                              colorVboData, distVboData, **kwargs)
 
         kwargs = {
             'marker': marker,
@@ -652,7 +661,7 @@ class Curve2D(object):
             kwargs['color'] = markerColor
         if markerSize is not None:
             kwargs['size'] = markerSize
-        self.points = Points2D(xVboData, yVboData, colorVboData, **kwargs)
+        self.points = _Points2D(xVboData, yVboData, colorVboData, **kwargs)
 
     xVboData = _proxyProperty(('lines', 'xVboData'), ('points', 'xVboData'))
 
@@ -683,34 +692,93 @@ class Curve2D(object):
 
     @classmethod
     def init(cls):
-        Lines2D.init()
-        Points2D.init()
+        _Lines2D.init()
+        _Points2D.init()
 
     def render(self, matrix):
         self.lines.render(matrix)
         self.points.render(matrix)
 
+    def pick(self, xPickMin, yPickMin, xPickMax, yPickMax):
+        if (self.marker is None and self.lineStyle is None) or \
+           self.xMin > xPickMax or xPickMin > self.xMax or \
+           self.yMin > yPickMax or yPickMin > self.yMax:
+            return None
+
+        elif self.lineStyle is not None:
+            # Using Cohen-Sutherland algorithm for line clipping
+            picked = []
+
+            pt0Code = int('1111', 2)  # Initialisation trick
+
+            for x1, y1 in zip(self.xData, self.yData):
+                pt1Code = ((y1 > yPickMax) << 3) | \
+                          ((y1 < yPickMin) << 2) | \
+                          ((x1 > xPickMax) << 1) | \
+                          (x1 < xPickMin)
+
+                if pt0Code == 0:  # Already added
+                    pass
+                elif pt1Code == 0:  # pt1 inside
+                    picked.append((x1, y1))
+                elif (pt0Code & pt1Code) == 0:  # check for crossing
+                    if y1 > yPickMax:
+                        x = x0 + (x1 - x0) * (yPickMax - y0) / (y1 - y0)
+                    elif y1 < yPickMin:
+                        x = x0 + (x1 - x0) * (yPickMin - y0) / (y1 - y0)
+                    else:
+                        x = xPickMin
+
+                    if x >= xPickMin and x <= xPickMax:  # Intersection
+                        picked.append((x0, y0))
+
+                    else:
+                        if x1 > xPickMax:
+                            y = y0 + (y1 - y0) * (xPickMax - x0) / (x1 - x0)
+                        elif x1 < xPickMin:
+                            y = y0 + (y1 - y0) * (xPickMin - x0) / (x1 - x0)
+                        else:
+                            y = yPickMin
+
+                        if y >= yPickMin and y <= yPickMax:  # Intersection
+                            picked.append((x0, y0))
+
+                x0, y0, pt0Code = x1, y1, pt1Code
+
+        else:
+            picked = [
+                (xData, yData)
+                for xData, yData in zip(self.xData, self.yData)
+                if xData >= xPickMin and xData <= xPickMax and
+                yData >= yPickMin and yData <= yPickMax
+            ]
+
+        return picked if picked else None
 
 def curveFromArrays(xData, yData, cData=None, **kwargs):
     lineStyle = kwargs.get('lineStyle', None)
     if lineStyle == '--':
-        dists = distancesFromArrays(xData, yData)
+        dists = _distancesFromArrays(xData, yData)
         if colorData is None:
             arrays = xData, yData, dists
             xAttrib, yAttrib, dAttrib = createVBOFromArrays(arrays)
-            return Curve2D(xAttrib, yAttrib, None, dAttrib, **kwargs)
+            return Curve2D(xData, yData, xAttrib, yAttrib,
+                           None, dAttrib, **kwargs)
         else:
             arrays = xData, yData, cData, dists
             xAttrib, yAttrib, cAttrib, dAttrib = createVBOFromArrays(arrays)
-            return Curve2D(xAttrib, yAttrib, cAttrib, dAttrib, **kwargs)
+            return Curve2D(xData, yData, xAttrib, yAttrib,
+                           cAttrib, dAttrib, **kwargs)
 
     elif cData is None:
         xAttrib, yAttrib = createVBOFromArrays((xData, yData))
-        return Curve2D(xAttrib, yAttrib, None, None, **kwargs)
+        return Curve2D(xData, yData, xAttrib, yAttrib,
+                       None, None, **kwargs)
         cAttrib, dAttrib = None, None
     else:
         xAttrib, yAttrib, cAttrib = createVBOFromArrays((xData, yData, cData))
-        return Curve2D(xAttrib, yAttrib, cAttrib, None, **kwargs)
+        return Curve2D(xData, yData, xAttrib, yAttrib,
+                       cAttrib, None, **kwargs)
 
 
 # main ########################################################################
@@ -730,8 +798,8 @@ if __name__ == "__main__":
     glClearColor(1., 1., 1., 1.)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    Lines2D.init()
-    Points2D.init()
+    _Lines2D.init()
+    _Points2D.init()
 
     # Plot data init
     xData1 = np.arange(10, dtype=np.float32) * 100
