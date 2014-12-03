@@ -48,7 +48,7 @@ QTVERSION = MaskImageWidget.QTVERSION
 
 class PCAParametersDialog(qt.QDialog):
     def __init__(self, parent=None, options=[1, 2, 3, 4, 5, 10],
-                 regions=False):
+                 regions=False, index=-1):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("PCA Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
@@ -69,7 +69,7 @@ class PCAParametersDialog(qt.QDialog):
         if 0:
             self.methods.append("Covariance Numpy")
             self.functions.append(PCAModule.numpyPCA)
-        if MDP:
+        if MDP and (index != 0):
             #self.methods.append("MDP (PCA + ICA)")
             self.methods.append("MDP (SVD float32)")
             self.methods.append("MDP (SVD float64)")

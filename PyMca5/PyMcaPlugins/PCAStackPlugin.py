@@ -132,7 +132,12 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
     #The specific part
     def calculate(self):
         if self.configurationWidget is None:
-            self.configurationWidget = PCAParametersDialog(None, regions=True)
+            stack = self.getStackDataObject()
+            index = stack.info.get("McaIndex", -1)
+            stack = None
+            self.configurationWidget = PCAParametersDialog(None,
+                                                           regions=True,
+                                                           index=index)
             self._status = qt.QLabel(self.configurationWidget)
             self._status.setAlignment(qt.Qt.AlignHCenter)
             font = qt.QFont(self._status.font())
