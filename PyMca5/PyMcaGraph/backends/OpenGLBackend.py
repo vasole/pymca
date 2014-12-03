@@ -801,7 +801,7 @@ class MarkerInteraction(ClickOrDrag):
                     if image is not None:
                         xData, yData = self.backend.pixelToDataCoords(x, y)
                         eventDict = prepareImageSignal('left',
-                                                       image['legend'],
+                                                       image.info['legend'],
                                                        'image',
                                                        posImg[0], posImg[1],
                                                        xData, yData, x, y)
