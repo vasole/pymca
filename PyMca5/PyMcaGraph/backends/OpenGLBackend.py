@@ -164,7 +164,10 @@ def _ticks(start, stop, step):
 
 # signals #####################################################################
 
-def prepareDrawingSignal(event, type_, points, parameters={}):
+def prepareDrawingSignal(event, type_, points, parameters=None):
+    if parameters is None:
+        parameters = {}
+
     eventDict = {}
     eventDict['event'] = event
     eventDict['type'] = type_
@@ -1369,28 +1372,6 @@ class OpenGLPlotCanvas(PlotBackend):
         else:
             return xPixel, yPixel
 
-    def pixelToDataSize(self, xPixel=None, yPixel=None):
-        # TODO this cannot work with log scale!
-        if self._isXLog or self._isYLog:
-            raise RuntimeError('pixelToDataSize impossible with log')
-
-        plotWidth, plotHeight = self.plotSizeInPixels()
-
-        if xPixel is not None:
-            xData = xPixel * (self._xMax - self._xMin) / float(plotWidth)
-
-        if yPixel is not None:
-            if not self._isYInverted:
-                yPixel = - yPixel
-            yData = yPixel * (self._yMax - self._yMin) / float(plotHeight)
-
-        if xPixel is None:
-            return yData
-        elif yPixel is None:
-            return xData
-        else:
-            return xData, yData
-
     def pixelToDataCoords(self, xPixel=None, yPixel=None):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
@@ -1604,12 +1585,20 @@ class OpenGLPlotCanvas(PlotBackend):
                                     (xCoord, self._yMax)),
                                     dtype=np.float32)
             else:
-                xSize, ySize = self.pixelToDataSize(2 * pixelOffset,
-                                                    2 * pixelOffset)
-                vertices = np.array(((xCoord - xSize, yCoord),
-                                     (xCoord + xSize, yCoord),
-                                     (xCoord, yCoord - ySize),
-                                     (xCoord, yCoord + ySize)),
+                xPixel, yPixel = self.dataToPixelCoords(xCoord, yCoord)
+                x0, y0 = self.pixelToDataCoords(xPixel - 2 * pixelOffset,
+                                                yPixel - 2 * pixelOffset)
+                x1, y1 = self.pixelToDataCoords(xPixel + 2 * pixelOffset,
+                                                yPixel + 2 * pixelOffset)
+                if self._isXLog:
+                    x0 = math.log10(x0)
+                    x1 = math.log10(x1)
+                if self._isYLog:
+                    y0 = math.log10(y0)
+                    y1 = math.log10(y1)
+
+                vertices = np.array(((x0, yCoord), (x1, yCoord),
+                                     (xCoord, y0), (xCoord, y1)),
                                     dtype=np.float32)
             glVertexAttribPointer(posAttrib,
                                   2,
@@ -1715,7 +1704,7 @@ class OpenGLPlotCanvas(PlotBackend):
         # sorted is stable: original order is preserved when key is the same
         for image in sorted(self._images.values(),
                             key=lambda img: img.info['zOrder']):
-            image.render(matDataProj)
+            image.render(matDataProj, self._isXLog, self._isYLog)
 
         # Render Curves
         for curve in self._curves.values():

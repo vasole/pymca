@@ -92,12 +92,12 @@ class _GL2DDataPlot(object):
 class GLColormap(_GL2DDataPlot):
 
     _SHADERS = {
-        'vertex': """
+        'vertex_linear': """
     #version 120
 
-    attribute vec2 position;
-    attribute vec2 texCoords;
     uniform mat4 matrix;
+    attribute vec2 texCoords;
+    attribute vec2 position;
 
     varying vec2 coords;
 
@@ -105,8 +105,59 @@ class GLColormap(_GL2DDataPlot):
         coords = texCoords;
         gl_Position = matrix * vec4(position, 0.0, 1.0);
     }
+    """,
+        'vertex_log': """
+    #version 120
+
+    attribute vec2 position;
+    uniform mat4 matrix;
+    uniform mat4 matOffset;
+    uniform vec2 isLog;
+
+    varying vec2 coords;
+
+    const float oneOverLog10 = 1./log(10.);
+
+    void main(void) {
+        vec4 dataPos = matOffset * vec4(position, 0.0, 1.0);
+        if (isLog.x != 0.) {
+            dataPos.x = oneOverLog10 * log(dataPos.x);
+        }
+        if (isLog.y != 0.) {
+            dataPos.y = oneOverLog10 * log(dataPos.y);
+        }
+        coords = dataPos.xy;
+        //coords = mix(dataPos.xy, oneOverLog10 * log(dataPos.xy), isLog);
+        gl_Position = matrix * dataPos;
+    }
+    """,
+        'fragment_transform': {
+            'linear': """
+        vec2 textureCoords(void) {
+            return coords;
+        }
         """,
-        'fragment': """
+            'log': """
+        uniform vec2 isLog;
+        uniform struct {
+            vec2 oneOverRange;
+            vec2 minOverRange;
+        } bounds;
+
+        vec2 textureCoords(void) {
+            vec2 pos = coords;
+            if (isLog.x != 0.) {
+                pos.x = pow(10., coords.x);
+            }
+            if (isLog.y != 0.) {
+                pos.y = pow(10., coords.y);
+            }
+            //vec2 pos = mix(coords, pow(vec2(10.0, 10.0), coords), isLog);
+            return pos * bounds.oneOverRange - bounds.minOverRange;
+            // TODO texture coords in range different from [0, 1]
+        }
+        """},
+        'fragment': ("""
     #version 120
 
     #define CMAP_GRAY   0
@@ -126,7 +177,8 @@ class GLColormap(_GL2DDataPlot):
     } cmap;
 
     varying vec2 coords;
-
+    """,
+                     """
     vec4 cmapGray(float normValue) {
         return vec4(normValue, normValue, normValue, 1.);
     }
@@ -161,7 +213,7 @@ class GLColormap(_GL2DDataPlot):
     const float oneOverLog10 = 1./log(10.);
 
     void main(void) {
-        float value = texture2D(data, coords).r;
+        float value = texture2D(data, textureCoords()).r;
         if (cmap.oneOverRange != 0.) {
             value = clamp(cmap.oneOverRange * (value - cmap.min), 0., 1.);
         } else {
@@ -184,7 +236,7 @@ class GLColormap(_GL2DDataPlot):
             gl_FragColor = cmapTemperature(value);
         }
     }
-    """
+    """)
     }
 
     _SHADER_CMAP_IDS = {
@@ -200,7 +252,8 @@ class GLColormap(_GL2DDataPlot):
 
     _DATA_TEX_UNIT = 0
 
-    _programs = {}
+    _linearPrograms = {}
+    _logPrograms = {}
 
     def __init__(self, data, xMin, xScale, yMin, yScale,
                  colormap, cmapIsLog=False, cmapRange=None):
@@ -252,17 +305,37 @@ class GLColormap(_GL2DDataPlot):
                                         data=data)
 
     @classmethod
-    def _getProgram(cls):
+    def _getLinearProgram(cls):
         context = getGLContext()
         try:
-            prog = cls._programs[context]
+            prog = cls._linearPrograms[context]
         except KeyError:
-            prog = Program(cls._SHADERS['vertex'], cls._SHADERS['fragment'])
+            prog = Program(cls._SHADERS['vertex_linear'],
+                           cls._SHADERS['fragment'][0] + \
+                           cls._SHADERS['fragment_transform']['linear']+ \
+                           cls._SHADERS['fragment'][1])
 
             # Done once forever for each program
             glUniform1i(prog.uniforms['data'], cls._DATA_TEX_UNIT)
 
-            cls._programs[context] = prog
+            cls._linearPrograms[context] = prog
+        return prog
+
+    @classmethod
+    def _getLogProgram(cls):
+        context = getGLContext()
+        try:
+            prog = cls._logPrograms[context]
+        except KeyError:
+            prog = Program(cls._SHADERS['vertex_log'],
+                           cls._SHADERS['fragment'][0] + \
+                           cls._SHADERS['fragment_transform']['log']+ \
+                           cls._SHADERS['fragment'][1])
+
+            # Done once forever for each program
+            glUniform1i(prog.uniforms['data'], cls._DATA_TEX_UNIT)
+
+            cls._logPrograms[context] = prog
         return prog
 
     def prepare(self):
@@ -272,34 +345,88 @@ class GLColormap(_GL2DDataPlot):
                                   format_=GL_RED, type_=GL_FLOAT,
                                   data=self.data, texUnit=self._DATA_TEX_UNIT)
 
-    def render(self, matrix):
-        self.prepare()
-
-        prog = self._getProgram()
-        prog.use()
-
-        mat = matrix * mat4Translate(self.xMin, self.yMin)
-        mat *= mat4Scale(self.xScale, self.yScale)
-        glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, mat)
-
+    def _setCMap(self, prog):
         glUniform1i(prog.uniforms['cmap.id'],
                     self._SHADER_CMAP_IDS[self.colormap])
 
         dataMin, dataMax = self.cmapRange
         if self.cmapIsLog:
-            logVMin = math.log10(dataMin)
+            logVMin, logVMax = math.log10(dataMin), math.log10(dataMax)
             glUniform1f(prog.uniforms['cmap.logMin'], logVMin)
             glUniform1f(prog.uniforms['cmap.oneOverRange'], 0.)
             glUniform1f(prog.uniforms['cmap.oneOverLogRange'],
-                        1./(math.log10(dataMax) - logVMin))
+                        1./(logVMax - logVMin))
         else:
             glUniform1f(prog.uniforms['cmap.min'], dataMin)
             glUniform1f(prog.uniforms['cmap.oneOverRange'],
                         1./(dataMax - dataMin))
 
+    def _renderLinear(self, matrix):
+        self.prepare()
+
+        prog = self._getLinearProgram()
+        prog.use()
+
+        mat = matrix * mat4Translate(self.xMin, self.yMin) * \
+            mat4Scale(self.xScale, self.yScale)
+        glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, mat)
+
+        self._setCMap(prog)
+
         self._texture.render(prog.attributes['position'],
                              prog.attributes['texCoords'],
                              self._DATA_TEX_UNIT)
+
+    def _renderLog10(self, matrix, isXLog, isYLog):
+        self.prepare()
+
+        prog = self._getLogProgram()
+        prog.use()
+
+        glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
+        mat = mat4Translate(self.xMin, self.yMin) * \
+            mat4Scale(self.xScale, self.yScale)
+        glUniformMatrix4fv(prog.uniforms['matOffset'], 1, GL_TRUE, mat)
+
+        glUniform2f(prog.uniforms['isLog'], isXLog, isYLog)
+
+        xOneOverRange = 1. / (self.xMax - self.xMin)
+        yOneOverRange = 1. / (self.yMax - self.yMin)
+        glUniform2f(prog.uniforms['bounds.minOverRange'],
+                    self.xMin * xOneOverRange, self.yMin * yOneOverRange)
+        glUniform2f(prog.uniforms['bounds.oneOverRange'],
+                    xOneOverRange, yOneOverRange)
+
+        self._setCMap(prog)
+
+        try:
+            tiles = self._texture.tiles
+        except AttributeError:
+            raise RuntimeError("No texture, discard has already been called")
+        if len(tiles) > 1:
+            raise NotImplementedError(
+                "Image over multiple textures not supported with log scale")
+
+        texture, vertices, info = tiles[0]
+
+        texture.bind(self._DATA_TEX_UNIT)
+
+        posAttrib = prog.attributes['position']
+        stride = vertices.shape[-1] * vertices.itemsize
+        glEnableVertexAttribArray(posAttrib)
+        glVertexAttribPointer(posAttrib,
+                              2,
+                              GL_FLOAT,
+                              GL_FALSE,
+                              stride, vertices)
+
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, len(vertices))
+
+    def render(self, matrix, isXLog, isYLog):
+        if any((isXLog, isYLog)):
+            self._renderLog10(matrix, isXLog, isYLog)
+        else:
+            self._renderLinear(matrix)
 
 
 # image #######################################################################
@@ -310,17 +437,17 @@ class GLRGBAImage(_GL2DDataPlot):
         'vertex': """
     #version 120
 
-   attribute vec2 position;
-   attribute vec2 texCoords;
-   uniform mat4 matrix;
+    attribute vec2 position;
+    attribute vec2 texCoords;
+    uniform mat4 matrix;
 
-   varying vec2 coords;
+    varying vec2 coords;
 
-   void main(void) {
+    void main(void) {
         gl_Position = matrix * vec4(position, 0.0, 1.0);
         coords = texCoords;
-   }
-   """,
+    }
+    """,
         'fragment': """
     #version 120
 
@@ -334,9 +461,67 @@ class GLRGBAImage(_GL2DDataPlot):
     """
     }
 
+    _SHADERS_LOG = {
+        'vertex': """
+    #version 120
+
+    attribute vec2 position;
+    uniform mat4 matrix;
+    uniform mat4 matOffset;
+    uniform vec2 isLog;
+
+    varying vec2 coords;
+
+    const float oneOverLog10 = 1. / log(10.);
+
+    void main(void) {
+        vec4 dataPos = matOffset * vec4(position, 0.0, 1.0);
+        if (isLog.x != 0.) {
+            dataPos.x = oneOverLog10 * log(dataPos.x);
+        }
+        if (isLog.y != 0.) {
+            dataPos.y = oneOverLog10 * log(dataPos.y);
+        }
+        //dataPos.xy = mix(dataPos.xy, oneOverLog10 * log(dataPos.xy), isLog);
+        coords = dataPos.xy;
+        gl_Position = matrix * dataPos;
+    }
+    """,
+        'fragment': """
+    #version 120
+
+    uniform sampler2D tex;
+    uniform vec2 isLog;
+    uniform struct {
+        vec2 oneOverRange;
+        vec2 minOverRange;
+    } bounds;
+
+    varying vec2 coords;
+
+    vec2 textureCoords(void) {
+        vec2 pos = coords;
+        if (isLog.x != 0.) {
+            pos.x = pow(10., coords.x);
+        }
+        if (isLog.y != 0.) {
+            pos.y = pow(10., coords.y);
+        }
+        //vec2 pos = mix(coords, pow(vec2(10.0, 10.0), coords), isLog);
+        return pos * bounds.oneOverRange - bounds.minOverRange;
+        // TODO texture coords in range different from [0, 1]
+    }
+
+    void main(void) {
+        gl_FragColor = texture2D(tex, textureCoords());
+    }
+    """
+    }
+
     _DATA_TEX_UNIT = 0
 
-    _programs = {}
+    _linearPrograms = {}
+    _logPrograms = {}
 
     def __init__(self, data, xMin, xScale, yMin, yScale):
         """Create a 2D RGB(A) image from data
@@ -359,17 +544,32 @@ class GLRGBAImage(_GL2DDataPlot):
             del self._texture
 
     @classmethod
-    def _getProgram(cls):
+    def _getLinearProgram(cls):
         context = getGLContext()
         try:
-            prog = cls._programs[context]
+            prog = cls._linearPrograms[context]
         except KeyError:
             prog = Program(cls._SHADERS['vertex'], cls._SHADERS['fragment'])
 
             # Done once forever for each program
             glUniform1i(prog.uniforms['tex'], cls._DATA_TEX_UNIT)
 
-            cls._programs[context] = prog
+            cls._linearPrograms[context] = prog
+        return prog
+
+    @classmethod
+    def _getLogProgram(cls):
+        context = getGLContext()
+        try:
+            prog = cls._logPrograms[context]
+        except KeyError:
+            prog = Program(cls._SHADERS_LOG['vertex'],
+                           cls._SHADERS_LOG['fragment'])
+
+            # Done once forever for each program
+            glUniform1i(prog.uniforms['tex'], cls._DATA_TEX_UNIT)
+
+            cls._logPrograms[context] = prog
         return prog
 
     def _convertNPToGLType(self, numpyType):
@@ -407,10 +607,10 @@ class GLRGBAImage(_GL2DDataPlot):
                                   data=self.data,
                                   texUnit=self._DATA_TEX_UNIT)
 
-    def render(self, matrix):
+    def _renderLinear(self, matrix):
         self.prepare()
 
-        prog = self._getProgram()
+        prog = self._getLinearProgram()
         prog.use()
 
         mat = matrix * mat4Translate(self.xMin, self.yMin)
@@ -420,3 +620,52 @@ class GLRGBAImage(_GL2DDataPlot):
         self._texture.render(prog.attributes['position'],
                              prog.attributes['texCoords'],
                              self._DATA_TEX_UNIT)
+
+    def _renderLog(self, matrix, isXLog, isYLog):
+        self.prepare()
+
+        prog = self._getLogProgram()
+        prog.use()
+
+        glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
+        mat = mat4Translate(self.xMin, self.yMin) * \
+            mat4Scale(self.xScale, self.yScale)
+        glUniformMatrix4fv(prog.uniforms['matOffset'], 1, GL_TRUE, mat)
+
+        glUniform2f(prog.uniforms['isLog'], isXLog, isYLog)
+
+        xOneOverRange = 1. / (self.xMax - self.xMin)
+        yOneOverRange = 1. / (self.yMax - self.yMin)
+        glUniform2f(prog.uniforms['bounds.minOverRange'],
+                    self.xMin * xOneOverRange, self.yMin * yOneOverRange)
+        glUniform2f(prog.uniforms['bounds.oneOverRange'],
+                    xOneOverRange, yOneOverRange)
+
+        try:
+            tiles = self._texture.tiles
+        except AttributeError:
+            raise RuntimeError("No texture, discard has already been called")
+        if len(tiles) > 1:
+            raise NotImplementedError(
+                "Image over multiple textures not supported with log scale")
+
+        texture, vertices, info = tiles[0]
+
+        texture.bind(self._DATA_TEX_UNIT)
+
+        posAttrib = prog.attributes['position']
+        stride = vertices.shape[-1] * vertices.itemsize
+        glEnableVertexAttribArray(posAttrib)
+        glVertexAttribPointer(posAttrib,
+                              2,
+                              GL_FLOAT,
+                              GL_FALSE,
+                              stride, vertices)
+
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, len(vertices))
+
+    def render(self, matrix, isXLog, isYLog):
+        if any((isXLog, isYLog)):
+            self._renderLog(matrix, isXLog, isYLog)
+        else:
+            self._renderLinear(matrix)
