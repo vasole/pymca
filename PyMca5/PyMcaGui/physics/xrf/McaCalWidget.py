@@ -358,7 +358,7 @@ class McaCalWidget(qt.QDialog):
             #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
             self.graph.insertXMarker(self.specfit.xdata[int(idx)],
                                      legend="%d" % i,
-                                     label=None,
+                                     text=None,
                                      selectable=True,
                                      draggable=False)
             i += 1
@@ -498,7 +498,9 @@ class McaCalWidget(qt.QDialog):
             marker = int(ddict['label'])
             #The marker corresponds to the peak number
             channel = self.foundPeaks[marker]
-            self.graph.insertXMarker(channel, ddict['label'], color='red')
+            self.graph.insertXMarker(channel,
+                                     legend=ddict['label'],
+                                     color='red')
             self.graph.replot()
             current = self.current
             calenergy = self.caldict[current]['A']+ \
@@ -565,7 +567,7 @@ class McaCalWidget(qt.QDialog):
                 if DEBUG:
                     print("Dialog cancelled or closed ")
                 self.graph.insertXMarker(channel,
-                                         ddict['label'],
+                                         legend=ddict['label'],
                                          color='black')
                 self.graph.replot()
             del linewidget
@@ -589,7 +591,7 @@ class McaCalWidget(qt.QDialog):
                 self.foundPeaks.append(x)
                 legend = "%d" % (len(self.foundPeaks)-1)
                 #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-                self.graph.insertXMarker(x, legend, selectable=True)
+                self.graph.insertXMarker(x, legend=legend, selectable=True)
                 self.graph.replot()
                 self.markermode = 0
                 self.__peakmarkermode()

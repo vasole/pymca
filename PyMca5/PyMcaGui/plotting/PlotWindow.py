@@ -886,8 +886,8 @@ class PlotWindow(PlotWidget.PlotWidget):
                     pos = 0.5 * (roiDict[self.currentROI]['to'] +\
                                  roiDict[self.currentROI]['from'])
                     self.insertXMarker(pos,
-                                      'ROI middle',
-                                       label='',
+                                       legend='ROI middle',
+                                       text='',
                                        color='yellow',
                                        draggable=True)
             elif label == 'ROI max':
@@ -896,8 +896,8 @@ class PlotWindow(PlotWidget.PlotWidget):
                     pos = 0.5 * (roiDict[self.currentROI]['to'] +\
                                  roiDict[self.currentROI]['from'])
                     self.insertXMarker(pos,
-                                      'ROI middle',
-                                       label='',
+                                       legend='ROI middle',
+                                       text='',
                                        color='yellow',
                                        draggable=True)
             elif label == 'ROI middle':
@@ -906,13 +906,13 @@ class PlotWindow(PlotWidget.PlotWidget):
                 roiDict[self.currentROI]['from'] += delta
                 roiDict[self.currentROI]['to'] += delta
                 self.insertXMarker(roiDict[self.currentROI]['from'],
-                                   'ROI min',
-                                   label='ROI min',
+                                   legend='ROI min',
+                                   text='ROI min',
                                    color='blue',
                                    draggable=True)
                 self.insertXMarker(roiDict[self.currentROI]['to'],
-                                   'ROI max',
-                                   label='ROI max',
+                                   legend='ROI max',
+                                   text='ROI max',
                                    color='blue',
                                    draggable=True)
             else:
@@ -946,18 +946,21 @@ class PlotWindow(PlotWidget.PlotWidget):
                         break
                 color = 'blue'
                 draggable = True
-            self.insertXMarker(fromdata, 'ROI min',
-                               label='ROI min',
+            self.insertXMarker(fromdata,
+                               legend='ROI min',
+                               text='ROI min',
                                color=color,
                                draggable=draggable)
-            self.insertXMarker(todata,'ROI max',
-                               label='ROI max',
+            self.insertXMarker(todata,
+                               legend='ROI max',
+                               text='ROI max',
                                color=color,
                                draggable=draggable)
             if draggable and self._middleROIMarkerFlag:
                 pos = 0.5 * (fromdata + todata)
-                self.insertXMarker(pos, 'ROI middle',
-                                   label="",
+                self.insertXMarker(pos,
+                                   legend='ROI middle',
+                                   text="",
                                    color='yellow',
                                    draggable=draggable)
             roiList.append(newroi)
@@ -999,19 +1002,20 @@ class PlotWindow(PlotWidget.PlotWidget):
                 draggable = True
                 color = 'blue'
             self.insertXMarker(fromdata,
-                               legend = 'ROI min',
-                               label = 'ROI min',
+                               legend= 'ROI min',
+                               text= 'ROI min',
                                color=color,
                                draggable=draggable)
             self.insertXMarker(todata,
-                               legend = 'ROI max',
-                               label = 'ROI max',
+                               legend= 'ROI max',
+                               text= 'ROI max',
                                color=color,
                                draggable=draggable)
             if draggable and self._middleROIMarkerFlag:
                 pos = 0.5 * (fromdata + todata)
-                self.insertXMarker(pos, 'ROI middle',
-                                   label="",
+                self.insertXMarker(pos,
+                                   legend='ROI middle',
+                                   text="",
                                    color='yellow',
                                    draggable=True)
             self.currentROI = ddict['key']

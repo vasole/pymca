@@ -248,7 +248,7 @@ class ColormapDialog(qt.QDialog):
             legend = "%d" % i
             self.c.insertXMarker(x[i],
                                  legend=legend,
-                                 label=labelList[i],
+                                 text=labelList[i],
                                  draggable=draggable,
                                  color=color)
             self.markers.append((legend, ""))
@@ -304,7 +304,7 @@ class ColormapDialog(qt.QDialog):
             label = self.markers[i][1]
             self.c.insertXMarker(self.__x[i],
                                  legend=key,
-                                 label=label,
+                                 text=label,
                                  draggable=draggable,
                                  color=color)
         self.c.replot()
@@ -426,7 +426,7 @@ class ColormapDialog(qt.QDialog):
         self.__x[1] = v
         key = self.markers[1][0]
         label = self.markers[1][1]
-        self.c.insertXMarker(v, legend=key, label=label, color="blue", draggable=True)
+        self.c.insertXMarker(v, legend=key, text=label, color="blue", draggable=True)
         self.c.addCurve(self.__x,
                         self.__y,
                         legend="ConstrainedCurve",
@@ -457,7 +457,7 @@ class ColormapDialog(qt.QDialog):
         self.__x[1] = val
         key = self.markers[1][0]
         label = self.markers[1][1]
-        self.c.insertXMarker(val, legend=key, label=label, color="blue", draggable=True)
+        self.c.insertXMarker(val, legend=key, text=label, color="blue", draggable=True)
         self.c.addCurve(self.__x, self.__y,
                         legend="ConstrainedCurve",
                         color='black',
@@ -474,7 +474,7 @@ class ColormapDialog(qt.QDialog):
         self.__x[2] = v
         key = self.markers[2][0]
         label = self.markers[2][1]
-        self.c.insertXMarker(v, legend=key, label=label, color="blue", draggable=True)
+        self.c.insertXMarker(v, legend=key, text=label, color="blue", draggable=True)
         self.c.addCurve(self.__x, self.__y,
                         legend="ConstrainedCurve",
                         color='black',
@@ -503,7 +503,7 @@ class ColormapDialog(qt.QDialog):
         self.__x[2] = val
         key = self.markers[2][0]
         label = self.markers[2][1]
-        self.c.insertXMarker(val, legend=key, label=label, color="blue", draggable=True)
+        self.c.insertXMarker(val, legend=key, text=label, color="blue", draggable=True)
         self.c.addCurve(self.__x, self.__y,
                         legend="ConstrainedCurve",
                         color='black',

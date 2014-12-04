@@ -155,8 +155,8 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.plotWindow = plotWindow
         #self.graph = graph
         self.markerID = self.plotWindow.insertXMarker(0.,
-                                                      label,
-                                                      label=label)
+                                                      legend=label,
+                                                      text=label)
 
         # Initialize
         self.setMinimum(0.)
@@ -200,8 +200,8 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.plotWindow.removeMarker(self.label)
         self.markerID = self.plotWindow.insertXMarker(
                                 self.value(),
-                                self.label,
-                                label=self.label,
+                                legend=self.label,
+                                text=self.label,
                                 color='blue',
                                 selectable=False,
                                 draggable=True)
@@ -220,8 +220,8 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         # If marker is not present, removeMarker just passes..
         self.markerID = self.plotWindow.insertXMarker(
                                 self.value(),
-                                self.label,
-                                label=self.label,
+                                legend=self.label,
+                                text=self.label,
                                 color=color,
                                 selectable=False,
                                 draggable=draggable)
@@ -247,8 +247,8 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         # Marker of same label as self.label gets replaced..
         self.markerID = self.plotWindow.insertXMarker(
                                 val,
-                                self.label,
-                                label=self.label,
+                                legend=self.label,
+                                text=self.label,
                                 color='blue',
                                 selectable=False,
                                 draggable=True)
