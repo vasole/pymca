@@ -1490,11 +1490,6 @@ class OpenGLPlotCanvas(PlotBackend):
                 self._renderPlotArea()
                 self._renderPlotFrame()
 
-        # Check if there is something to render
-        dispXMin, dispXMax, dispYMin, dispYMax = self.displayRangeTransformed
-        if dispXMin == dispXMax or dispYMin == dispYMax:
-            return
-
         # Render plot in screen coords
         glViewport(0, 0, self.winWidth, self.winHeight)
 
