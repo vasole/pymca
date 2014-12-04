@@ -74,14 +74,14 @@ def getCovarianceMatrix(stack,
     :param center: Indicate if the mean is to be subtracted from the observables.
     :type center: Boolean (default True)
     :param weights: Weight to be applied to each observable. It can therefore be used as a spectral mask
-    setting them to 0 on those values to ignore.
+    setting the weight to 0 on the values to ignore.
     :type weights: Numpy ndarray of same size as the observables or None (default).
     :spatial_mask: Array of size n where n is the number of measurement instances. In mapping
     experiments, n would be equal to the number of pixels.
     :type spatial_mask: Numpy array of unsigned bytes (numpy.uint8) or None (default).
     :returns: The covMatrix, the average spectrum and the number of used pixels.
     """
-    #the 1D mask should correspond to the values, before or after
+    #the 1D mask = weights should correspond to the values, before or after
     #sampling?  it could be handled as weigths to be applied to the
     #spectra. That would allow two uses, as mask and as weights, at
     #the cost of a multiplication.
@@ -132,9 +132,6 @@ def getCovarianceMatrix(stack,
     if binning is None:
         binning = 1
 
-    if weights is None:
-        weights = numpy.ones(N, numpy.float)
-
     if spatial_mask is not None:
         cleanMask = spatial_mask[:].reshape(nPixels)
         usedPixels = cleanMask.sum()
@@ -145,8 +142,16 @@ def getCovarianceMatrix(stack,
         usedPixels = nPixels
 
     nChannels = int(N / binning)
-    cleanWeights = weights[::binning]
 
+    if weights is None:
+        weights = numpy.ones(N, numpy.float)
+
+    if weights.size == nChannels:
+        # binning was taken into account
+        cleanWeights = weights[:]
+    else:
+        cleanWeights = weights[::binning]
+        
     #end of checking part
     eigenvectorLength = nChannels
 
@@ -530,7 +535,7 @@ def getCovarianceMatrix(stack,
 
 
 def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
-                center=True, scale=False, mask=None, **kw):
+                center=True, scale=False, mask=None, spectral_mask=None, **kw):
     if DEBUG:
         print("PCATools.numpyPCA")
         print("index = %d" % index)
@@ -596,7 +601,8 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                                                              binning=binning,
                                                              force=force,
                                                              center=center,
-                                                             spatial_mask=mask)
+                                                             spatial_mask=mask,
+                                                             weights=spectral_mask)
 
     #the total variance is the sum of the elements of the diagonal
     totalVariance = numpy.diag(cov)

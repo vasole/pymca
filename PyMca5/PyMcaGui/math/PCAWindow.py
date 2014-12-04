@@ -48,7 +48,7 @@ QTVERSION = MaskImageWidget.QTVERSION
 
 class PCAParametersDialog(qt.QDialog):
     def __init__(self, parent=None, options=[1, 2, 3, 4, 5, 10],
-                 regions=False):
+                 regions=False, index=-1):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("PCA Configuration Dialog")
         self.mainLayout = qt.QVBoxLayout(self)
@@ -69,7 +69,7 @@ class PCAParametersDialog(qt.QDialog):
         if 0:
             self.methods.append("Covariance Numpy")
             self.functions.append(PCAModule.numpyPCA)
-        if MDP:
+        if MDP and (index != 0):
             #self.methods.append("MDP (PCA + ICA)")
             self.methods.append("MDP (SVD float32)")
             self.methods.append("MDP (SVD float64)")
@@ -127,7 +127,7 @@ class PCAParametersDialog(qt.QDialog):
         else:
             self.__regions = False
             #the optional plot
-            self.scanWindow = None
+            self.graph = None
 
         #the OK button
         hbox = qt.QWidget(self)
@@ -144,41 +144,46 @@ class PCAParametersDialog(qt.QDialog):
         if regions:
             self.mainLayout.addWidget(self.regionsWidget)
         self.mainLayout.addWidget(hbox)
-        if self.scanWindow is not None:
-            self.mainLayout.addWidget(self.scanWindow)
+        if self.graph is not None:
+            self.mainLayout.addWidget(self.graph)
 
         self.okButton.clicked.connect(self.accept)
 
     def __addRegionsWidget(self):
         #Region handling
         self.regionsWidget = RegionsWidget(self)
-        self.regionsWidget.setEnabled(False)
+        self.regionsWidget.setEnabled(True)
         self.regionsWidget.sigRegionsWidgetSignal.connect( \
             self.regionsWidgetSlot)
         #the plot
-        self.scanWindow = ScanWindow.ScanWindow(self)
-        self.scanWindow.sigPlotSignal.connect(self._graphSlot)
+        self.graph = ScanWindow.ScanWindow(self)
+        self.graph.setEnabled(False)
+        self.graph.sigPlotSignal.connect(self._graphSlot)
         if not self.__regions:
             #I am adding after instantiation
             self.mainLayout.insertWidget(2,self.regionsWidget)
-            self.mainLayout.addWidget(self.scanWindow)
+            self.mainLayout.addWidget(self.graph)
         self.__regions = True
 
     def regionsWidgetSlot(self, ddict):
-        fromValue = ddict['from']
-        toValue   = ddict['to']
-        self.graph = self.scanWindow
-        self.graph.clearMarkers()
-        self.graph.insertXMarker(fromValue,
-                                  'From',
-                                   label='From',
-                                   color='blue',
-                                   draggable=True)
-        self.graph.insertXMarker(toValue,
-                                 'To', label = 'To',
-                                  color='blue',
-                                  draggable=True)
-        self.graph.replot()
+        if ddict["nRegions"] > 0:
+            fromValue = ddict['from']
+            toValue   = ddict['to']
+            self.graph.setEnabled(True)
+            self.graph.clearMarkers()
+            self.graph.insertXMarker(fromValue,
+                                      'From',
+                                       label='From',
+                                       color='blue',
+                                       draggable=True)
+            self.graph.insertXMarker(toValue,
+                                     'To', label = 'To',
+                                      color='blue',
+                                      draggable=True)
+            self.graph.replot()
+        else:
+            self.graph.clearMarkers()
+            self.graph.setEnabled(False)
 
     def _graphSlot(self, ddict):
         if ddict['event'] == "markerMoved":
@@ -202,14 +207,16 @@ class PCAParametersDialog(qt.QDialog):
         else:
             self.binningCombo.setEnabled(False)
         if self.__regions:
-            if index < 3:
-                self.regionsWidget.setEnabled(False)
-            else:
+            if index != 2:
                 self.regionsWidget.setEnabled(True)
+                self.graph.setEnabled(True)
+            else:
+                self.regionsWidget.setEnabled(False)
+                self.graph.setEnabled(False)
         return
 
     def setSpectrum(self, x, y, legend=None):
-        if self.scanWindow is None:
+        if self.graph is None:
             self.__addRegionsWidget()
         if legend is None:
             legend = "Current Active Spectrum"
@@ -225,7 +232,7 @@ class PCAParametersDialog(qt.QDialog):
 
     # value unused, but received with the Qt signal
     def _updatePlotFromBinningCombo(self, value):
-        if self.scanWindow is None:
+        if self.graph is None:
             return
         self.updatePlot()
 
@@ -244,7 +251,7 @@ class PCAParametersDialog(qt.QDialog):
         y.shape = -1
         self._binnedX = x
         self._binnedY = y
-        self.scanWindow.addCurve(x, y, legend=self._legend, replace=True)
+        self.graph.addCurve(x, y, legend=self._legend, replace=True)
 
     def setParameters(self, ddict):
         if 'options' in ddict:
@@ -377,12 +384,13 @@ class RegionsWidget(qt.QGroupBox):
             self.currentRegionSpinBox.setDisabled(False)
             if current > value:
                 self.currentRegionSpinBox.setValue(value)
-                self._currentRegionChanged(value)
+        self._currentRegionChanged(value)
 
     def _currentRegionChanged(self, value):
-        fromValue, toValue = self.regionList[value - 1]
-        self.fromLine.setText("%f" % fromValue)
-        self.toLine.setText("%f" % toValue)
+        if value > 0:
+            fromValue, toValue = self.regionList[value - 1]
+            self.fromLine.setText("%f" % fromValue)
+            self.toLine.setText("%f" % toValue)            
         self.mySignal()
 
     def _editingSlot(self, signal=True):
@@ -400,8 +408,11 @@ class RegionsWidget(qt.QGroupBox):
         current = self.currentRegionSpinBox.value() - 1
         ddict={}
         ddict['event'] = 'regionChanged'
-        ddict['from'] = self.regionList[current][0]
-        ddict['to'] = self.regionList[current][1]
+        ddict['nRegions'] = self.nRegionsSpinBox.value()
+        ddict['current'] = current
+        if current >= 0:
+            ddict['from'] = self.regionList[current][0]
+            ddict['to'] = self.regionList[current][1]
         self.sigRegionsWidgetSignal.emit(ddict)
 
     def getRegions(self):

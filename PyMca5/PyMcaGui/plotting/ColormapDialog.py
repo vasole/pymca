@@ -229,13 +229,14 @@ class ColormapDialog(qt.QDialog):
         x = [self.minmd, self.dataMin, self.dataMax, self.maxpd]
         y = [-10, -10, 10, 10 ]
         self.c.addCurve(x, y,
-                        "ConstrainedCurve",
+                        legend="ConstrainedCurve",
                         color='black',
                         symbol='o',
                         linestyle='-')
         self.markers = []
         self.__x = x
         self.__y = y
+        labelList = ["","Min", "Max", ""]
         for i in range(4):
             if i in [1, 2]:
                 draggable = True
@@ -244,16 +245,18 @@ class ColormapDialog(qt.QDialog):
                 draggable = False
                 color = "black"
             #TODO symbol
+            legend = "%d" % i
             self.c.insertXMarker(x[i],
-                                 "%d" % i,
+                                 legend=legend,
+                                 label=labelList[i],
                                  draggable=draggable,
                                  color=color)
+            self.markers.append((legend, ""))
 
         self.c.setMinimumSize(qt.QSize(250,200))
         vlayout.addWidget(self.c)
 
         self.c.sigPlotSignal.connect(self.chval)
-        self.c.sigPlotSignal.connect(self.chmap)
 
         # colormap window can not be resized
         self.setFixedSize(vlayout.minimumSize())
@@ -268,9 +271,9 @@ class ColormapDialog(qt.QDialog):
                         "Histogram",
                         color='pink', # TODO: Change fill color
                         symbol='s',
-                        style='_', # Line style
-                        fill=True,
-                        info={'plot_yaxis': 'right'})
+                        linestyle='-', # Line style
+                        #fill=True,
+                        yaxis='right')
                         # TODO: Do not use info!
 
     def _update(self):
@@ -285,11 +288,11 @@ class ColormapDialog(qt.QDialog):
         self.__x = [self.minmd, self.dataMin, self.dataMax, self.maxpd]
         self.__y = [-10, -10, 10, 10]
         self.c.addCurve(self.__x, self.__y,
-                        "ConstrainedCurve",
+                        legend="ConstrainedCurve",
                         color='black',
                         symbol='o',
                         linestyle='-')
-        #self.c.clearMarkers()
+        self.c.clearMarkers()
         for i in range(4):
             if i in [1, 2]:
                 draggable = True
@@ -297,9 +300,11 @@ class ColormapDialog(qt.QDialog):
             else:
                 draggable = False
                 color = "black"
-            key =self.c._markerList[i]
+            key = self.markers[i][0]
+            label = self.markers[i][1]
             self.c.insertXMarker(self.__x[i],
-                                 key,
+                                 legend=key,
+                                 label=label,
                                  draggable=draggable,
                                  color=color)
         self.c.replot()
@@ -324,27 +329,22 @@ class ColormapDialog(qt.QDialog):
             self._update()
 
     def chval(self, ddict):
-        if ddict['event'] != 'markerMoving':
-            return
-
-        diam = int(ddict['label']) + 1
-        x = ddict['x']
-        if diam == 2:
-            self.setDisplayedMinValue(x)
-        if diam == 3:
-            self.setDisplayedMaxValue(x)
-
-    def chmap(self, ddict):
-        if ddict['event'] != 'markerMoved':
-            return
-
-        diam = int(ddict['label']) + 1
-
-        x = ddict['x']
-        if diam == 2:
-            self.setMinValue(x)
-        if diam == 3:
-            self.setMaxValue(x)
+        if DEBUG:
+            print("Received ", ddict)
+        if ddict['event'] == 'markerMoving':
+            diam = int(ddict['label'])
+            x = ddict['x']
+            if diam == 1:
+                self.setDisplayedMinValue(x)
+            elif diam == 2:
+                self.setDisplayedMaxValue(x)
+        elif ddict['event'] == 'markerMoved':
+            diam = int(ddict['label'])
+            x = ddict['x']
+            if diam == 1:
+                self.setMinValue(x)
+            if diam == 2:
+                self.setMaxValue(x)
 
     """
     Colormap
@@ -422,13 +422,14 @@ class ColormapDialog(qt.QDialog):
     def setMinValue(self, val):
         v = float(str(val))
         self.minValue = v
-        self.minText.setText("%g"%v)
+        self.minText.setText("%g" % v)
         self.__x[1] = v
-        key = self.c._markerList[1]
-        self.c.insertXMarker(v, key, color="blue", draggable=True)
+        key = self.markers[1][0]
+        label = self.markers[1][1]
+        self.c.insertXMarker(v, legend=key, label=label, color="blue", draggable=True)
         self.c.addCurve(self.__x,
                         self.__y,
-                        "ConstrainedCurve",
+                        legend="ConstrainedCurve",
                         color='black',
                         symbol='o',
                         linestyle='-')
@@ -439,7 +440,8 @@ class ColormapDialog(qt.QDialog):
     """
     def minTextChanged(self):
         text = str(self.minText.text())
-        if not len(text):return
+        if not len(text):
+            return
         val = float(text)
         self.setMinValue(val)
         if self.minText.hasFocus():
@@ -453,10 +455,11 @@ class ColormapDialog(qt.QDialog):
         self.minValue = val
         self.minText.setText("%g"%val)
         self.__x[1] = val
-        key = self.c._markerList[1]
-        self.c.insertXMarker(val, key, color="blue", draggable=True)
+        key = self.markers[1][0]
+        label = self.markers[1][1]
+        self.c.insertXMarker(val, legend=key, label=label, color="blue", draggable=True)
         self.c.addCurve(self.__x, self.__y,
-                        "ConstrainedCurve",
+                        legend="ConstrainedCurve",
                         color='black',
                         symbol='o',
                         linestyle='-')
@@ -469,10 +472,11 @@ class ColormapDialog(qt.QDialog):
         self.maxValue = v
         self.maxText.setText("%g"%v)
         self.__x[2] = v
-        key = self.c._markerList[2]
-        self.c.insertXMarker(v, key, color="blue", draggable=True)
+        key = self.markers[2][0]
+        label = self.markers[2][1]
+        self.c.insertXMarker(v, legend=key, label=label, color="blue", draggable=True)
         self.c.addCurve(self.__x, self.__y,
-                        "ConstrainedCurve",
+                        legend="ConstrainedCurve",
                         color='black',
                         symbol='o',
                         linestyle='-')
@@ -497,10 +501,11 @@ class ColormapDialog(qt.QDialog):
         self.maxValue = val
         self.maxText.setText("%g"%val)
         self.__x[2] = val
-        key = self.c._markerList[2]
-        self.c.insertXMarker(val, key, color="blue", draggable=True)
+        key = self.markers[2][0]
+        label = self.markers[2][1]
+        self.c.insertXMarker(val, legend=key, label=label, color="blue", draggable=True)
         self.c.addCurve(self.__x, self.__y,
-                        "ConstrainedCurve",
+                        legend="ConstrainedCurve",
                         color='black',
                         symbol='o',
                         linestyle='-')

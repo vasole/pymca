@@ -132,7 +132,12 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
     #The specific part
     def calculate(self):
         if self.configurationWidget is None:
-            self.configurationWidget = PCAParametersDialog(None, regions=True)
+            stack = self.getStackDataObject()
+            index = stack.info.get("McaIndex", -1)
+            stack = None
+            self.configurationWidget = PCAParametersDialog(None,
+                                                           regions=True,
+                                                           index=index)
             self._status = qt.QLabel(self.configurationWidget)
             self._status.setAlignment(qt.Qt.AlignHCenter)
             font = qt.QFont(self._status.font())
@@ -201,11 +206,11 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         # binning = pcaParameters['binning']
         # mask = pcaParameters['mask']
         regions = pcaParameters['regions']
-        spatial_mask = pcaParameters['spectral_mask']
-        print("regions = ", regions)
-        del pcaParameters['regions']
-        del pcaParameters['spectral_mask']
-        print("Regions and spectral mask not handled yet")
+        spectral_mask = pcaParameters['spectral_mask']
+        #print("regions = ", regions)
+        #del pcaParameters['regions']
+        #del pcaParameters['spectral_mask']
+        #print("Regions and spectral mask not handled yet")
         if not self.isStackFinite():
             # one has to check for NaNs in the used region(s)
             # for the time being only in the global image

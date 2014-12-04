@@ -418,28 +418,32 @@ def numpyPCA(stack, ncomponents=10, binning=None, **kw):
                              binning=binning,
                              **kw)
 
-def mdpPCASVDFloat32(stack, ncomponents=10, binning=None, mask=None, **kw):
-    return mdpPCA(stack, ncomponents,
-                  binning=binning, dtype='float32', svd='True', mask=mask, **kw)
+def mdpPCASVDFloat32(stack, ncomponents=10, binning=None,
+                     mask=None, spectral_mask=None, **kw):
+    return mdpPCA(stack, ncomponents, binning=binning, dtype='float32',
+                  svd='True', mask=mask, spectral_mask=spectral_mask, **kw)
 
 
-def mdpPCASVDFloat64(stack, ncomponents=10, binning=None, mask=None, **kw):
-    return mdpPCA(stack, ncomponents,
-                  binning=binning, dtype='float64', svd='True', mask=mask, **kw)
+def mdpPCASVDFloat64(stack, ncomponents=10, binning=None,
+                    mask=None, spectral_mask=None, **kw):
+    return mdpPCA(stack, ncomponents, binning=binning, dtype='float64',
+                  svd='True', mask=mask, spectral_mask=spectral_mask, **kw)
 
 
-def mdpICAFloat32(stack, ncomponents=10, binning=None, mask=None, *kw):
-    return mdpICA(stack, ncomponents,
-                  binning=binning, dtype='float32', svd='True', mask=mask, **kw)
+def mdpICAFloat32(stack, ncomponents=10, binning=None,
+                  mask=None, spectral_mask=None, **kw):
+    return mdpICA(stack, ncomponents, binning=binning, dtype='float32',
+                  svd='True', mask=mask, spectral_mask=spectral_mask, **kw)
 
 
-def mdpICAFloat64(stack, ncomponents=10, binning=None, mask=None, **kw):
-    return mdpICA(stack, ncomponents,
-                  binning=binning, dtype='float64', svd='True', mask=mask, **kw)
+def mdpICAFloat64(stack, ncomponents=10, binning=None,
+                  mask=None, spectral_mask=None, **kw):
+    return mdpICA(stack, ncomponents, binning=binning, dtype='float64',
+                  svd='True', mask=mask, spectral_mask=spectral_mask, **kw)
 
 
 def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
-           mask=None, **kw):
+           mask=None, spectral_mask=None, **kw):
     if DEBUG:
         print("MDP Method")
         print("binning =", binning)
@@ -499,10 +503,10 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                     tmpData = numpy.sum(tmpData, axis=-1)
                 else:
                     tmpData.shape = step * shape[1], shape[2]
-                if mask is None:
+                if spectral_mask is None:
                     pca.train(tmpData)
                 else:
-                    pca.train(tmpData[:, mask > 0])
+                    pca.train(tmpData[:, spectral_mask > 0])
             tmpData = None
             last = i + step
         else:
@@ -513,23 +517,23 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                 tmpData = data[i, :, :]
                 tmpData.shape = shape[1], shape[2] / binning, binning
                 tmpData = numpy.sum(tmpData, axis=-1)
-                if mask is None:
+                if spectral_mask is None:
                     pca.train(tmpData)
                 else:
-                    pca.train(tmpData[:, mask > 0])
+                    pca.train(tmpData[:, spectral_mask > 0])
             tmpData = None
         else:
             for i in range(last, r):
                 print("Training data %d out of %d" % (i + 1, r))
-                if mask is None:
+                if spectral_mask is None:
                     pca.train(data[i, :, :])
                 else:
-                    pca.train(data[i, :, mask > 0])
+                    pca.train(data[i, :, spectral_mask > 0])
     else:
         if data.shape[0] > 10000:
             step = 1000
             last = step * (int(data.shape[0] / step) - 1)
-            if mask is None:
+            if spectral_mask is None:
                 for i in range(0, last, step):
                     print("Training data from %d to %d of %d" %\
                           (i + 1, i + step, data.shape[0]))
@@ -541,30 +545,30 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                 for i in range(0, last, step):
                     print("Training data from %d to %d of %d" %\
                           (i + 1, i + step, data.shape[0]))
-                    pca.train(data[i:(i + step), mask > 0])
+                    pca.train(data[i:(i + step), spectral_mask > 0])
                 # TODO i is undefined here in the print statement
                 print("Training data from %d to end of %d" %\
                       (i + step + 1, data.shape[0]))
-                pca.train(data[(i + step):, mask > 0])
+                pca.train(data[(i + step):, spectral_mask > 0])
         elif data.shape[0] > 1000:
             i = int(data.shape[0] / 2)
-            if mask is None:
+            if spectral_mask is None:
                 pca.train(data[:i, :])
             else:
-                pca.train(data[:i, mask > 0])
+                pca.train(data[:i, spectral_mask > 0])
             if DEBUG:
                 print("Half training")
-            if mask is None:
+            if spectral_mask is None:
                 pca.train(data[i:, :])
             else:
-                pca.train(data[i:, mask > 0])
+                pca.train(data[i:, spectral_mask > 0])
             if DEBUG:
                 print("Full training")
         else:
-            if mask is None:
+            if spectral_mask is None:
                 pca.train(data)
             else:
-                pca.train(data[:, mask > 0])
+                pca.train(data[:, spectral_mask > 0])
     pca.stop_training()
 
     # avg = pca.avg
@@ -576,25 +580,25 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
         for i in range(r):
             print("Building images. Projecting data %d out of %d" % (i + 1, r))
             if binning > 1:
-                if mask is None:
+                if spectral_mask is None:
                     tmpData = data[i, :, :]
                 else:
-                    tmpData = data[i, :, mask > 0]
+                    tmpData = data[i, :, spectral_mask > 0]
                 tmpData.shape = data.shape[1], data.shape[2] / binning, binning
                 tmpData = numpy.sum(tmpData, axis=-1)
                 images[:, i, :] = numpy.dot(proj.astype(data.dtype), tmpData.T)
             else:
-                if mask is None:
+                if spectral_mask is None:
                     images[:, i, :] = numpy.dot(proj.astype(data.dtype),
                                                 data[i, :, :].T)
                 else:
                     images[:, i, :] = numpy.dot(proj.astype(data.dtype),
-                                                data[i, :, mask > 0].T)
+                                                data[i, :, spectral_mask > 0].T)
     else:
-        if mask is None:
+        if spectral_mask is None:
             images = numpy.dot(proj.astype(data.dtype), data.T)
         else:
-            images = numpy.dot(proj.astype(data.dtype), data[:, mask > 0].T)
+            images = numpy.dot(proj.astype(data.dtype), data[:, spectral_mask > 0].T)
 
     #make sure the shape of the original data is not modified
     if hasattr(stack, "info") and hasattr(stack, "data"):
@@ -604,18 +608,18 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
         if stack.shape != oldShape:
             stack.shape = oldShape
 
-    if mask is not None:
+    if spectral_mask is not None:
         eigenvectors = numpy.zeros((ncomponents, N), pca.v.dtype)
         for i in range(ncomponents):
-            eigenvectors[i, mask > 0] = pca.v.T[i]
+            eigenvectors[i, spectral_mask > 0] = pca.v.T[i]
 
     #reshape the images
     images.shape = ncomponents, r, c
     return images, eigenvalues, eigenvectors
 
 
-def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
-           mask=None, **kw):
+def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
+           svd='True', mask=None, spectral_mask=None, **kw):
     for key in kw:
         print("mdpICA Key ignored: %s" % key)
     #This part is common to all ...
@@ -676,10 +680,10 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                             tmpData = numpy.sum(tmpData, axis=-1)
                         else:
                             tmpData.shape = step * shape[1], shape[2]
-                        if mask is None:
+                        if spectral_mask is None:
                             ica.train(tmpData)
                         else:
-                            ica.train(tmpData[:, mask > 0])
+                            ica.train(tmpData[:, spectral_mask > 0])
                     tmpData = None
                     last = i + step
                 else:
@@ -690,18 +694,18 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                         tmpData = data[i, :, :]
                         tmpData.shape = shape[1], shape[2] / binning, binning
                         tmpData = numpy.sum(tmpData, axis=-1)
-                        if mask is None:
+                        if spectral_mask is None:
                             ica.train(tmpData)
                         else:
-                            ica.train(tmpData[:, mask > 0])
+                            ica.train(tmpData[:, spectral_mask > 0])
                     tmpData = None
                 else:
                     for i in range(last, r):
                         print("Training data %d out of %d" % (i + 1, r))
-                        if mask is None:
+                        if spectral_mask is None:
                             ica.train(data[i, :, :])
                         else:
-                            ica.train(data[i, :, mask > 0])
+                            ica.train(data[i, :, spectral_mask > 0])
             else:
                 if data.shape[0] > 10000:
                     step = 1000
@@ -709,35 +713,35 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                     for i in range(0, last, step):
                         print("Training data from %d to %d of %d" %\
                               (i + 1, i + step, data.shape[0]))
-                        if mask is None:
+                        if spectral_mask is None:
                             ica.train(data[i:(i + step), :])
                         else:
-                            ica.train(data[i:(i + step), mask > 0])
+                            ica.train(data[i:(i + step), spectral_mask > 0])
                     print("Training data from %d to end of %d" %\
                           (i + step + 1, data.shape[0]))
-                    if mask is None:
+                    if spectral_mask is None:
                         ica.train(data[(i + step):, :])
                     else:
-                        ica.train(data[(i + step):, mask > 0])
+                        ica.train(data[(i + step):, spectral_mask > 0])
                 elif data.shape[0] > 1000:
                     i = int(data.shape[0] / 2)
-                    if mask is None:
+                    if spectral_mask is None:
                         ica.train(data[:i, :])
                     else:
-                        ica.train(data[:i, mask > 0])
+                        ica.train(data[:i, spectral_mask > 0])
                     if DEBUG:
                         print("Half training")
-                    if mask is None:
+                    if spectral_mask is None:
                         ica.train(data[i:, :])
                     else:
-                        ica.train(data[i:, mask > 0])
+                        ica.train(data[i:, spectral_mask > 0])
                     if DEBUG:
                         print("Full training")
                 else:
-                    if mask is None:
+                    if spectral_mask is None:
                         ica.train(data)
                     else:
-                        ica.train(data[:, mask > 0])
+                        ica.train(data[:, spectral_mask > 0])
             ica.stop_training()
             if DEBUG:
                 print("training elapsed = %f" % (time.time() - t0))
@@ -770,13 +774,13 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
         eigenvalues = ica.white.d * 1
         eigenvectors = ica.white.v.T * 1
         vectors = numpy.zeros((ncomponents * 2, N), data.dtype)
-        if mask is None:
+        if spectral_mask is None:
             vectors[0:ncomponents, :] = proj * 1  # ica components?
             vectors[ncomponents:, :] = eigenvectors
         else:
             vectors = numpy.zeros((2 * ncomponents, N), eigenvectors.dtype)
-            vectors[0:ncomponents, mask > 0] = proj * 1
-            vectors[ncomponents:, mask > 0] = eigenvectors
+            vectors[0:ncomponents, spectral_mask > 0] = proj * 1
+            vectors[ncomponents:, spectral_mask > 0] = eigenvectors
 
         if (len(data.shape) == 3):
             images = numpy.zeros((2 * ncomponents, r, c), data.dtype)
@@ -784,39 +788,39 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
                 print("Building images. Projecting data %d out of %d" %\
                           (i + 1, r))
                 if binning > 1:
-                    if mask is None:
+                    if spectral_mask is None:
                         tmpData = data[i, :, :]
                     else:
-                        tmpData = data[i, :, mask > 0]
+                        tmpData = data[i, :, spectral_mask > 0]
                     tmpData.shape = (data.shape[1],
                                      data.shape[2] / binning,
                                      binning)
                     tmpData = numpy.sum(tmpData, axis=-1)
                     tmpData = ica.white.execute(tmpData)
                 else:
-                    if mask is None:
+                    if spectral_mask is None:
                         tmpData = ica.white.execute(data[i, :, :])
                     else:
-                        tmpData = ica.white.execute(data[i, :, mask > 0])
+                        tmpData = ica.white.execute(data[i, :, spectral_mask > 0])
                 images[ncomponents:(2 * ncomponents), i, :] = tmpData.T[:, :]
                 images[0:ncomponents, i, :] =\
                     numpy.dot(tmpData, ica.filters).T[:, :]
         else:
             images = numpy.zeros((2 * ncomponents, r * c), data.dtype)
-            if mask is None:
+            if spectral_mask is None:
                 images[0:ncomponents, :] =\
                     numpy.dot(proj.astype(data.dtype), data.T)
             else:
-                tmpData = data[:, mask > 0]
+                tmpData = data[:, spectral_mask > 0]
                 images[0:ncomponents, :] =\
                     numpy.dot(proj.astype(data.dtype), tmpData.T)
             proj = ica.white.get_projmatrix(transposed=0)
-            if mask is None:
+            if spectral_mask is None:
                 images[ncomponents:(2 * ncomponents), :] =\
                     numpy.dot(proj.astype(data.dtype), data.T)
             else:
                 images[ncomponents:(2 * ncomponents), :] =\
-                    numpy.dot(proj.astype(data.dtype), data[:, mask > 0].T)
+                    numpy.dot(proj.astype(data.dtype), data[:, spectral_mask > 0].T)
         images.shape = 2 * ncomponents, r, c
     else:
         ica = mdp.nodes.FastICANode(white_comp=ncomponents,
