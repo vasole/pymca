@@ -86,10 +86,9 @@ class _Lines2D(object):
             return vec4(log(x)/log(10.), log(y)/log(10.), 0.0, 1.0);
         }
         """
-    },
+        },
         SOLID: {
-            'vertex': (
-            """
+            'vertex': ("""
         #version 120
 
         uniform mat4 matrix;
@@ -99,7 +98,7 @@ class _Lines2D(object):
 
         varying vec4 vColor;
         """,
-            """
+                       """
         void main(void) {
             gl_Position = matrix * transformXY(xPos, yPos);
             vColor = color;
@@ -121,8 +120,7 @@ class _Lines2D(object):
         # to avoid computing distance when viewport is resized
         # results in inequal dashes when viewport aspect ratio is far from 1
         DASHED: {
-            'vertex': (
-            """
+            'vertex': ("""
         #version 120
 
         uniform mat4 matrix;
@@ -135,7 +133,7 @@ class _Lines2D(object):
         varying float vDist;
         varying vec4 vColor;
         """,
-            """
+                       """
         void main(void) {
             gl_Position = matrix * transformXY(xPos, yPos);
             //Estimate distance in pixels
@@ -389,9 +387,8 @@ class _Points2D(object):
             return vec4(log(x)/log(10.), log(y)/log(10.), 0.0, 1.0);
         }
         """
-    },
-        'vertex': (
-        """
+        },
+        'vertex': ("""
     #version 120
 
     uniform mat4 matrix;
@@ -403,7 +400,7 @@ class _Points2D(object):
 
     varying vec4 vColor;
     """,
-        """
+                   """
     void main(void) {
         gl_Position = matrix * transformXY(xPos, yPos);
         vColor = color;
@@ -454,15 +451,14 @@ class _Points2D(object):
         """
         },
 
-        'fragment': (
-        """
+        'fragment': ("""
     #version 120
 
     uniform float size;
 
     varying vec4 vColor;
     """,
-        """
+                     """
     void main(void) {
         float alpha = alphaSymbol(gl_PointCoord, size);
         if (alpha <= 0.) {
@@ -529,11 +525,11 @@ class _Points2D(object):
             prgm = programs[context]
         except KeyError:
             vertShdr = cls._SHDRS['vertex'][0] + \
-                       cls._SHDRS['vertexTransforms'][transform] + \
-                       cls._SHDRS['vertex'][1]
+                cls._SHDRS['vertexTransforms'][transform] + \
+                cls._SHDRS['vertex'][1]
             fragShdr = cls._SHDRS['fragment'][0] + \
-                       cls._SHDRS['fragmentSymbols'][marker] + \
-                       cls._SHDRS['fragment'][1]
+                cls._SHDRS['fragmentSymbols'][marker] + \
+                cls._SHDRS['fragment'][1]
             prgm = Program(vertShdr, fragShdr)
 
             programs[context] = prgm
@@ -623,6 +619,11 @@ def _proxyProperty(*componentsAttributes):
             component = getattr(self, compName)
             setattr(component, attrName, value)
     return property(getter, setter)
+
+
+def _and(a, b):
+    return a and b
+
 
 class Curve2D(object):
     def __init__(self, xData, yData, colorData=None,
@@ -729,22 +730,21 @@ class Curve2D(object):
             # Using Cohen-Sutherland algorithm for line clipping
             picked = []
 
-            pt0Code = int('1111', 2)  # Initialisation trick
+            pt0Code = True, True, True, True  # Initialisation trick
 
             for x1, y1 in zip(self.xData, self.yData):
-                pt1Code = ((y1 > yPickMax) << 3) | \
-                          ((y1 < yPickMin) << 2) | \
-                          ((x1 > xPickMax) << 1) | \
-                          (x1 < xPickMin)
+                pt1Code = (y1 > yPickMax, y1 < yPickMin,
+                           x1 > xPickMax, x1 < xPickMin)
 
-                if pt0Code == 0:  # Already added
+                if not any(pt0Code):  # Already added
                     pass
-                elif pt1Code == 0:  # pt1 inside
+                elif not any(pt1Code):  # pt1 inside
                     picked.append((x1, y1))
-                elif (pt0Code & pt1Code) == 0:  # check for crossing
-                    if y1 > yPickMax:
+                elif not any(map(_and, pt0Code, pt1Code)):
+                    # check for crossing
+                    if pt1Code[0]:
                         x = x0 + (x1 - x0) * (yPickMax - y0) / (y1 - y0)
-                    elif y1 < yPickMin:
+                    elif pt1Code[1]:
                         x = x0 + (x1 - x0) * (yPickMin - y0) / (y1 - y0)
                     else:
                         x = xPickMin
@@ -753,9 +753,9 @@ class Curve2D(object):
                         picked.append((x0, y0))
 
                     else:
-                        if x1 > xPickMax:
+                        if pt1Code[2]:
                             y = y0 + (y1 - y0) * (xPickMax - x0) / (x1 - x0)
-                        elif x1 < xPickMin:
+                        elif pt1Code[3]:
                             y = y0 + (y1 - y0) * (xPickMin - x0) / (x1 - x0)
                         else:
                             y = yPickMin

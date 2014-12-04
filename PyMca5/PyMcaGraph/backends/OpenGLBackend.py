@@ -66,11 +66,6 @@ try:
 except ImportError:
     from PyMca5.PyMcaGraph.PlotBackend import PlotBackend
 
-try:
-    from ...ctools import minMax
-except ImportError:
-    from PyMca5.PyMcaGraph.ctools import minMax
-
 from .GLSupport import *  # noqa
 
 
@@ -1143,15 +1138,23 @@ class OpenGLPlotCanvas(PlotBackend):
         xMin, xMax = float('inf'), -float('inf')
         yMin, yMax = float('inf'), -float('inf')
         for image in self._images.values():
-            xMin = min(xMin, image.xMin)
-            xMax = max(xMax, image.xMax)
-            yMin = min(yMin, image.yMin)
-            yMax = max(yMax, image.yMax)
+            if image.xMin < xMin:
+                xMin = image.xMin
+            if image.xMax > xMax:
+                xMax = image.xMax
+            if image.yMin < yMin:
+                yMin = image.yMin
+            if image.yMax > yMax:
+                yMax = image.yMax
         for curve in self._curves.values():
-            xMin = min(xMin, curve.xMin)
-            xMax = max(xMax, curve.xMax)
-            yMin = min(yMin, curve.yMin)
-            yMax = max(yMax, curve.yMax)
+            if curve.xMin < xMin:
+                xMin = curve.xMin
+            if curve.xMax > xMax:
+                xMax = curve.xMax
+            if curve.yMin < yMin:
+                yMin = curve.yMin
+            if curve.yMax > yMax:
+                yMax = curve.yMax
 
         if xMin >= xMax:
                 xMin, xMax = 0., 1.
