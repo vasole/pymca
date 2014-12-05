@@ -1747,7 +1747,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # PlotBackend API #
 
-    def insertMarker(self, x, y, legend, label=None, color='k',
+    def insertMarker(self, x, y, legend=None, text=None, color='k',
                      selectable=False, draggable=False,
                      **kwargs):
         behaviors = set()
@@ -1759,7 +1759,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._markers[legend] = {
             'x': x,
             'y': y,
-            'label': label,
+            'label': text,
             'color': rgba(color, PlotBackend.COLORDICT),
             'behaviors': behaviors,
         }
@@ -1768,16 +1768,16 @@ class OpenGLPlotCanvas(PlotBackend):
 
         return legend
 
-    def insertXMarker(self, x, legend, label=None, color='k',
+    def insertXMarker(self, x, legend=None, text=None, color='k',
                       selectable=False, draggable=False,
                       **kwargs):
-        return self.insertMarker(x, None, legend, label, color,
+        return self.insertMarker(x, None, legend, text, color,
                                  selectable, draggable, **kwargs)
 
-    def insertYMarker(self, y, legend, label=None, color='k',
+    def insertYMarker(self, y, legend=None, text=None, color='k',
                       selectable=False, draggable=False,
                       **kwargs):
-        return self.insertMarker(None, y, legend, label, color,
+        return self.insertMarker(None, y, legend, text, color,
                                  selectable, draggable, **kwargs)
 
     def removeMarker(self, legend, replot=True):
