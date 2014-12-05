@@ -72,18 +72,26 @@ class _Lines2D(object):
         }
         """,
             _LOG10_X: """
+        const float oneOverLog10 = 1./log(10.);
+
         vec4 transformXY(float x, float y) {
-            return vec4(log(x)/log(10.), y, 0.0, 1.0);
+            return vec4(oneOverLog10 * log(x), y, 0.0, 1.0);
         }
         """,
             _LOG10_Y: """
+        const float oneOverLog10 = 1./log(10.);
+
         vec4 transformXY(float x, float y) {
-            return vec4(x, log(y)/log(10.), 0.0, 1.0);
+            return vec4(x, oneOverLog10 * log(y), 0.0, 1.0);
         }
         """,
             _LOG10_X_Y: """
+        const float oneOverLog10 = 1./log(10.);
+
         vec4 transformXY(float x, float y) {
-            return vec4(log(x)/log(10.), log(y)/log(10.), 0.0, 1.0);
+            return vec4(oneOverLog10 * log(x),
+                        oneOverLog10 * log(y),
+                        0.0, 1.0);
         }
         """
         },
@@ -168,8 +176,7 @@ class _Lines2D(object):
     def __init__(self, xVboData=None, yVboData=None,
                  colorVboData=None, distVboData=None,
                  style=SOLID, color=(0., 0., 0., 1.),
-                 width=1, dashPeriod=20,
-                 isXLog=False, isYLog=False):
+                 width=1, dashPeriod=20):
         self.xVboData = xVboData
         self.yVboData = yVboData
         self.distVboData = distVboData
@@ -179,8 +186,6 @@ class _Lines2D(object):
         self.width = width
         self.style = style
         self.dashPeriod = dashPeriod
-        self.isXLog = isXLog
-        self.isYLog = isYLog
 
     @property
     def style(self):
@@ -234,16 +239,16 @@ class _Lines2D(object):
     def init(cls):
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
 
-    def _renderNone(self, matrix):
+    def _renderNone(self, matrix, isXLog, isYLog):
         pass
 
     render = _renderNone  # Overridden in style setter
 
-    def _renderSolid(self, matrix):
-        if self.isXLog:
-            transform = self._LOG10_X_Y if self.isYLog else self._LOG10_X
+    def _renderSolid(self, matrix, isXLog, isYLog):
+        if isXLog:
+            transform = self._LOG10_X_Y if isYLog else self._LOG10_X
         else:
-            transform = self._LOG10_Y if self.isYLog else self._LINEAR
+            transform = self._LOG10_Y if isYLog else self._LINEAR
 
         prog = self._getProgram(transform, SOLID)
         prog.use()
@@ -273,11 +278,11 @@ class _Lines2D(object):
 
         glDisable(GL_LINE_SMOOTH)
 
-    def _renderDash(self, matrix):
-        if self.isXLog:
-            transform = self._LOG10_X_Y if self.isYLog else self._LOG10_X
+    def _renderDash(self, matrix, isXLog, isYLog):
+        if isXLog:
+            transform = self._LOG10_X_Y if isYLog else self._LOG10_X
         else:
-            transform = self._LOG10_Y if self.isYLog else self._LINEAR
+            transform = self._LOG10_Y if isYLog else self._LINEAR
 
         prog = self._getProgram(transform, DASHED)
         prog.use()
@@ -373,18 +378,26 @@ class _Points2D(object):
         }
         """,
             _LOG10_X: """
+        const float oneOverLog10 = 1./log(10.);
+
         vec4 transformXY(float x, float y) {
-            return vec4(log(x)/log(10.), y, 0.0, 1.0);
+            return vec4(oneOverLog10 * log(x), y, 0.0, 1.0);
         }
         """,
             _LOG10_Y: """
+        const float oneOverLog10 = 1./log(10.);
+
         vec4 transformXY(float x, float y) {
-            return vec4(x, log(y)/log(10.), 0.0, 1.0);
+            return vec4(x, oneOverLog10 * log(y), 0.0, 1.0);
         }
         """,
             _LOG10_X_Y: """
+        const float oneOverLog10 = 1./log(10.);
+
         vec4 transformXY(float x, float y) {
-            return vec4(log(x)/log(10.), log(y)/log(10.), 0.0, 1.0);
+            return vec4(oneOverLog10 * log(x),
+                        oneOverLog10 * log(y),
+                        0.0, 1.0);
         }
         """
         },
@@ -464,8 +477,7 @@ class _Points2D(object):
         if (alpha <= 0.) {
             discard;
         } else {
-            gl_FragColor = vColor;
-            gl_FragColor.a = mix(0., gl_FragColor.a, alpha);
+            gl_FragColor = vec4(vColor.rgb, mix(0., vColor.a, alpha));
         }
     }
     """)
@@ -474,13 +486,10 @@ class _Points2D(object):
     _programs = defaultdict(dict)
 
     def __init__(self, xVboData=None, yVboData=None, colorVboData=None,
-                 marker=SQUARE, color=(0., 0., 0., 1.), size=7,
-                 isXLog=False, isYLog=False):
+                 marker=SQUARE, color=(0., 0., 0., 1.), size=7):
         self.color = color
         self.marker = marker
         self.size = size
-        self.isXLog = isXLog
-        self.isYLog = isYLog
 
         self.xVboData = xVboData
         self.yVboData = yVboData
@@ -545,16 +554,16 @@ class _Points2D(object):
         if majorVersion >= 3:  # OpenGL 3
             glEnable(GL_PROGRAM_POINT_SIZE)
 
-    def _renderNone(self, matrix):
+    def _renderNone(self, matrix, isXLog, isYLog):
         pass
 
     render = _renderNone
 
-    def _renderMarkers(self, matrix):
-        if self.isXLog:
-            transform = self._LOG10_X_Y if self.isYLog else self._LOG10_X
+    def _renderMarkers(self, matrix, isXLog, isYLog):
+        if isXLog:
+            transform = self._LOG10_X_Y if isYLog else self._LOG10_X
         else:
-            transform = self._LOG10_Y if self.isYLog else self._LINEAR
+            transform = self._LOG10_Y if isYLog else self._LINEAR
 
         prog = self._getProgram(transform, self.marker)
         prog.use()
@@ -629,17 +638,12 @@ class Curve2D(object):
     def __init__(self, xData, yData, colorData=None,
                  lineStyle=None, lineColor=None,
                  lineWidth=None, lineDashPeriod=None,
-                 marker=None, markerColor=None, markerSize=None,
-                 isXLog=False, isYLog=False):
+                 marker=None, markerColor=None, markerSize=None):
         self.xData, self.yData, self.colorData = xData, yData, colorData
         self.xMin, self.xMax = minMax(xData)
         self.yMin, self.yMax = minMax(yData)
 
-        kwargs = {
-            'style': lineStyle,
-            'isXLog': isXLog,
-            'isYLog': isYLog
-        }
+        kwargs = {'style': lineStyle}
         if lineColor is not None:
             kwargs['color'] = lineColor
         if lineWidth is not None:
@@ -648,11 +652,7 @@ class Curve2D(object):
             kwargs['dashPeriod'] = lineDashPeriod
         self.lines = _Lines2D(**kwargs)
 
-        kwargs = {
-            'marker': marker,
-            'isXLog': isXLog,
-            'isYLog': isYLog
-        }
+        kwargs = {'marker': marker}
         if markerColor is not None:
             kwargs['color'] = markerColor
         if markerSize is not None:
@@ -681,10 +681,6 @@ class Curve2D(object):
     markerColor = _proxyProperty(('points', 'color'))
 
     markerSize = _proxyProperty(('points', 'size'))
-
-    isXLog = _proxyProperty(('lines', 'isXLog'), ('points', 'isXLog'))
-
-    isYLog = _proxyProperty(('lines', 'isYLog'), ('points', 'isYLog'))
 
     @classmethod
     def init(cls):
@@ -715,10 +711,10 @@ class Curve2D(object):
             self.colorVboData = cAttrib
             self.distVboData = dAttrib
 
-    def render(self, matrix):
+    def render(self, matrix, isXLog, isYLog):
         self.prepare()
-        self.lines.render(matrix)
-        self.points.render(matrix)
+        self.lines.render(matrix, isXLog, isYLog)
+        self.points.render(matrix, isXLog, isYLog)
 
     def pick(self, xPickMin, yPickMin, xPickMax, yPickMax):
         if (self.marker is None and self.lineStyle is None) or \
@@ -812,8 +808,8 @@ if __name__ == "__main__":
 
     def display():
         glClear(GL_COLOR_BUFFER_BIT)
-        curve1.render(projMatrix)
-        curve2.render(projMatrix)
+        curve1.render(projMatrix, False, False)
+        curve2.render(projMatrix, False, False)
         glutSwapBuffers()
 
     def resize(width, height):

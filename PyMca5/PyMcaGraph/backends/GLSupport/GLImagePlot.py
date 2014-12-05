@@ -112,7 +112,7 @@ class GLColormap(_GL2DDataPlot):
     attribute vec2 position;
     uniform mat4 matrix;
     uniform mat4 matOffset;
-    uniform vec2 isLog;
+    uniform bvec2 isLog;
 
     varying vec2 coords;
 
@@ -120,14 +120,13 @@ class GLColormap(_GL2DDataPlot):
 
     void main(void) {
         vec4 dataPos = matOffset * vec4(position, 0.0, 1.0);
-        if (isLog.x != 0.) {
+        if (isLog.x) {
             dataPos.x = oneOverLog10 * log(dataPos.x);
         }
-        if (isLog.y != 0.) {
+        if (isLog.y) {
             dataPos.y = oneOverLog10 * log(dataPos.y);
         }
         coords = dataPos.xy;
-        //coords = mix(dataPos.xy, oneOverLog10 * log(dataPos.xy), isLog);
         gl_Position = matrix * dataPos;
     }
     """,
@@ -138,7 +137,7 @@ class GLColormap(_GL2DDataPlot):
         }
         """,
             'log': """
-        uniform vec2 isLog;
+        uniform bvec2 isLog;
         uniform struct {
             vec2 oneOverRange;
             vec2 minOverRange;
@@ -146,13 +145,12 @@ class GLColormap(_GL2DDataPlot):
 
         vec2 textureCoords(void) {
             vec2 pos = coords;
-            if (isLog.x != 0.) {
+            if (isLog.x) {
                 pos.x = pow(10., coords.x);
             }
-            if (isLog.y != 0.) {
+            if (isLog.y) {
                 pos.y = pow(10., coords.y);
             }
-            //vec2 pos = mix(coords, pow(vec2(10.0, 10.0), coords), isLog);
             return pos * bounds.oneOverRange - bounds.minOverRange;
             // TODO texture coords in range different from [0, 1]
         }
@@ -388,7 +386,7 @@ class GLColormap(_GL2DDataPlot):
             mat4Scale(self.xScale, self.yScale)
         glUniformMatrix4fv(prog.uniforms['matOffset'], 1, GL_TRUE, mat)
 
-        glUniform2f(prog.uniforms['isLog'], isXLog, isYLog)
+        glUniform2i(prog.uniforms['isLog'], isXLog, isYLog)
 
         xOneOverRange = 1. / (self.xMax - self.xMin)
         yOneOverRange = 1. / (self.yMax - self.yMin)
@@ -468,7 +466,7 @@ class GLRGBAImage(_GL2DDataPlot):
     attribute vec2 position;
     uniform mat4 matrix;
     uniform mat4 matOffset;
-    uniform vec2 isLog;
+    uniform bvec2 isLog;
 
     varying vec2 coords;
 
@@ -476,13 +474,12 @@ class GLRGBAImage(_GL2DDataPlot):
 
     void main(void) {
         vec4 dataPos = matOffset * vec4(position, 0.0, 1.0);
-        if (isLog.x != 0.) {
+        if (isLog.x) {
             dataPos.x = oneOverLog10 * log(dataPos.x);
         }
-        if (isLog.y != 0.) {
+        if (isLog.y) {
             dataPos.y = oneOverLog10 * log(dataPos.y);
         }
-        //dataPos.xy = mix(dataPos.xy, oneOverLog10 * log(dataPos.xy), isLog);
         coords = dataPos.xy;
         gl_Position = matrix * dataPos;
     }
@@ -491,7 +488,7 @@ class GLRGBAImage(_GL2DDataPlot):
     #version 120
 
     uniform sampler2D tex;
-    uniform vec2 isLog;
+    uniform bvec2 isLog;
     uniform struct {
         vec2 oneOverRange;
         vec2 minOverRange;
@@ -501,13 +498,12 @@ class GLRGBAImage(_GL2DDataPlot):
 
     vec2 textureCoords(void) {
         vec2 pos = coords;
-        if (isLog.x != 0.) {
+        if (isLog.x) {
             pos.x = pow(10., coords.x);
         }
-        if (isLog.y != 0.) {
+        if (isLog.y) {
             pos.y = pow(10., coords.y);
         }
-        //vec2 pos = mix(coords, pow(vec2(10.0, 10.0), coords), isLog);
         return pos * bounds.oneOverRange - bounds.minOverRange;
         // TODO texture coords in range different from [0, 1]
     }
@@ -632,7 +628,7 @@ class GLRGBAImage(_GL2DDataPlot):
             mat4Scale(self.xScale, self.yScale)
         glUniformMatrix4fv(prog.uniforms['matOffset'], 1, GL_TRUE, mat)
 
-        glUniform2f(prog.uniforms['isLog'], isXLog, isYLog)
+        glUniform2i(prog.uniforms['isLog'], isXLog, isYLog)
 
         xOneOverRange = 1. / (self.xMax - self.xMin)
         yOneOverRange = 1. / (self.yMax - self.yMin)
