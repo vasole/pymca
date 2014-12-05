@@ -1610,7 +1610,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             print("unhandled axis %s" % axis)
 
-    def insertMarker(self, x, y, legend, label=None, color='k',
+    def insertMarker(self, x, y, legend=None, text=None, color='k',
                       selectable=False, draggable=False,
                       **kw):
         """
@@ -1631,7 +1631,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         print("MatplotlibBackend insertMarker not implemented")
         return legend
 
-    def insertXMarker(self, x, legend, label=None,
+    def insertXMarker(self, x, legend=None, text=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
         """
@@ -1650,14 +1650,20 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :return: Handle used by the backend to univocally access the marker
         """
         #line = self.ax.axvline(x, picker=True)
+        if legend is None:
+            legend = "Unnamed marker"
+        if text is None:
+            text = kw.get("label", None)
+            if text is not None:
+                print("Deprecation warning: use 'text' instead of 'label'")
         self.removeMarker(legend, replot=False)
         legend = "__MARKER__" + legend
         if selectable or draggable:
             line = self.ax.axvline(x, label=legend, color=color, picker=5)
         else:
             line = self.ax.axvline(x, label=legend, color=color)
-        if label is not None:
-            text = " " + label
+        if text is not None:
+            text = " " + text
             ymin, ymax = self.getGraphYLimits()
             delta = abs(ymax - ymin)
             if ymin > ymax:
@@ -1676,7 +1682,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.replot()
         return line
 
-    def insertYMarker(self, y, legend, label=None,
+    def insertYMarker(self, y, legend=None, text=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
         """
@@ -1694,13 +1700,19 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type draggable: boolean, default False
         :return: Handle used by the backend to univocally access the marker
         """
+        if legend is None:
+            legend = "Unnamed marker"
+        if text is None:
+            text = kw.get("label", None)
+            if text is not None:
+                print("Deprecation warning: use 'text' instead of 'label'")
         legend = "__MARKER__" + legend
         if selectable or draggable:
             line = self.ax.axhline(y, label=legend, color=color, picker=5)
         else:
             line = self.ax.axhline(y, label=legend, color=color)
-        if label is not None:
-            text = " " + label
+        if text is not None:
+            text = " " + text
             xmin, xmax = self.getGraphXLimits()
             delta = abs(xmax - xmin)
             if xmin > xmax:
@@ -2345,7 +2357,7 @@ if __name__ == "__main__":
     widget.ax.axis('auto') # appropriate for curves, no aspect ratio
     #w.widget.ax.axis('equal') # candidate for keepting aspect ratio
     #w.widget.ax.axis('scaled') # candidate for keepting aspect ratio
-    w.insertXMarker(50., label="Label", color='pink', draggable=True)
+    w.insertXMarker(50., text="Label", color='pink', draggable=True)
     w.resetZoom()
     #print(w.widget.ax.get_images())
     #print(w.widget.ax.get_lines())

@@ -714,7 +714,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
 
     # Marker handling
     def insertXMarker(self, x, legend,
-                      label=None,
+                      text=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
         """
@@ -741,7 +741,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         line = InfiniteLine(angle=90, movable=movable)
         line.setPos(x)
         line.setY(1.)
-        line._plot_info = {'label':legend}
+        line._plot_info = {'label':legend, 'text':text}
         line._plot_options = ["xmarker"]
         if selectable:
             line._plot_options.append('selectable')
@@ -753,7 +753,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         self.addItem(line)
         return line
 
-    def insertYMarker(self, y, legend, label=None,
+    def insertYMarker(self, y, legend, text=None,
                       color='k', selectable=False, draggable=False,
                       **kw):
         """
@@ -771,7 +771,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         :type draggable: boolean, default False
         :return: Handle used by the backend to univocally access the marker
         """
-        label = "__MARKER__" + label
+        label = "__MARKER__" + legend
         if selectable or draggable:
             movable = True
         else:
@@ -779,7 +779,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         line = InfiniteLine(angle=0, movable=movable)
         line.setPos(y)
         line.setX(1.)
-        line._plot_info = {'label':legend}
+        line._plot_info = {'label':legend, 'text':text}
         line._plot_options = ["ymarker"]
         if selectable:
             line._plot_options.append('selectable')
@@ -791,7 +791,7 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         self.addItem(line)
         return line
 
-    def insertMarker(self, x, y, label, **kw):
+    def insertMarker(self, x, y, legend, text=None, **kw):
         print("PlotBackend insertMarker not implemented")
 
     def invertYAxis(self, flag=True):

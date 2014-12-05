@@ -412,7 +412,7 @@ class PlotBackend(object):
         """
         return None
 
-    def insertMarker(self, x, y, legend, label=None, color='k',
+    def insertMarker(self, x, y, legend=None, text=None, color='k',
                       selectable=False, draggable=False,
                       **kw):
         """
@@ -420,10 +420,10 @@ class PlotBackend(object):
         :type x: float
         :param y: Vertical position of the marker in graph coordenates
         :type y: float
-        :param legend: Legend associated to the marker
+        :param legend: Legend associated to the marker to identify it
         :type legend: string
-        :param label: Text associated to the marker
-        :type label: string or None
+        :param text: Text associated to the marker
+        :type text: string or None
         :param color: Color to be used for instance 'blue', 'b', '#FF0000'
         :type color: string, default 'k' (black)
         :param selectable: Flag to indicate if the marker can be selected
@@ -433,18 +433,18 @@ class PlotBackend(object):
         :return: Handle used by the backend to univocally access the marker
         """
         print("PlotBackend insertMarker not implemented")
-        return label
+        return legend
 
-    def insertXMarker(self, x, legend, label=None, color='k',
+    def insertXMarker(self, x, legend=None, text=None, color='k',
                       selectable=False, draggable=False,
                       **kw):
         """
         :param x: Horizontal position of the marker in graph coordenates
         :type x: float
-        :param legend: Legend associated to the marker
+        :param legend: Legend associated to the marker to identify it
         :type legend: string
-        :param label: Text associated to the marker
-        :type label: string or None
+        :param text: Text associated to the marker
+        :type text: string or None
         :param color: Color to be used for instance 'blue', 'b', '#FF0000'
         :type color: string, default 'k' (black)
         :param selectable: Flag to indicate if the marker can be selected
@@ -456,16 +456,16 @@ class PlotBackend(object):
         print("PlotBackend insertXMarker not implemented")
         return legend
 
-    def insertYMarker(self, y, legend, label=None, color='k',
+    def insertYMarker(self, y, legend=None, text=None, color='k',
                       selectable=False, draggable=False,
                       **kw):
         """
         :param y: Vertical position of the marker in graph coordenates
         :type y: float
-        :param legend: Legend associated to the marker
+        :param legend: Legend associated to the marker to identify it
         :type legend: string
-        :param label: Text associated to the marker
-        :type label: string or None
+        :param text: Text associated to the marker
+        :type text: string or None
         :param color: Color to be used for instance 'blue', 'b', '#FF0000'
         :type color: string, default 'k' (black)
         :param selectable: Flag to indicate if the marker can be selected
@@ -475,7 +475,7 @@ class PlotBackend(object):
         :return: Handle used by the backend to univocally access the marker
         """
         print("PlotBackend insertYMarker not implemented")
-        return label
+        return legend
 
     def invertYAxis(self, flag=True):
         """

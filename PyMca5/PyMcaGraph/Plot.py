@@ -976,7 +976,7 @@ class Plot(PlotBase.PlotBase):
 
     # Marker handling
     def insertXMarker(self, x, legend=None,
-                      label=None,
+                      text=None,
                       color=None,
                       selectable=False,
                       draggable=False,
@@ -985,7 +985,11 @@ class Plot(PlotBase.PlotBase):
         kw ->symbol
         """
         if DEBUG:
-            print("Received label = %s" % label)
+            print("Received legend = %s" % legend)
+        if text is None:
+            text = kw.get("label", None)
+            if text is not None:
+                print("insertXMarker deprecation warning: Use 'text' instead of 'label'")
         if color is None:
             color = self.colorDict['black']
         elif color in self.colorDict:
@@ -1000,7 +1004,7 @@ class Plot(PlotBase.PlotBase):
         if legend in self._markerList:
             self.removeMarker(legend)
         marker = self._plot.insertXMarker(x, legend,
-                                          label=label,
+                                          text=text,
                                           color=color,
                                           selectable=selectable,
                                           draggable=draggable,
@@ -1012,7 +1016,7 @@ class Plot(PlotBase.PlotBase):
 
     def insertYMarker(self, y,
                       legend=None,
-                      label=None,
+                      text=None,
                       color=None,
                       selectable=False,
                       draggable=False,
@@ -1020,6 +1024,10 @@ class Plot(PlotBase.PlotBase):
         """
         kw -> color, symbol
         """
+        if text is None:
+            text = kw.get("label", None)
+            if text is not None:
+                print("insertYMarker deprecation warning: Use 'text' instead of 'label'")
         if color is None:
             color = self.colorDict['black']
         elif color in self.colorDict:
@@ -1032,8 +1040,8 @@ class Plot(PlotBase.PlotBase):
                 legend = "Unnamed Y Marker %d" % i
         if legend in self._markerList:
             self.removeMarker(legend)
-        marker = self._plot.insertYMarker(y, legend,
-                                          label=label,
+        marker = self._plot.insertYMarker(y, legend=legend,
+                                          text=text,
                                           color=color,
                                           selectable=selectable,
                                           draggable=draggable,
@@ -1044,11 +1052,15 @@ class Plot(PlotBase.PlotBase):
         return marker
 
     def insertMarker(self, x, y, legend=None,
-                     label=None,
+                     text=None,
                      color=None,
                      selectable=False,
                      draggable=False,
                      **kw):
+        if text is None:
+            text = kw.get("label", None)
+            if text is not None:
+                print("insertMarker deprecation warning: Use 'text' instead of 'label'")
         if color is None:
             color = self.colorDict['black']
         elif color in self.colorDict:
@@ -1062,8 +1074,8 @@ class Plot(PlotBase.PlotBase):
 
         if legend in self._markerList:
             self.removeMarker(legend)
-        marker = self._plot.insertMarker(x, y, legend,
-                                          label=label,
+        marker = self._plot.insertMarker(x, y, legend=legend,
+                                          text=text,
                                           color=color,
                                           selectable=selectable,
                                           draggable=draggable,
