@@ -309,8 +309,8 @@ class GLColormap(_GL2DDataPlot):
             prog = cls._linearPrograms[context]
         except KeyError:
             prog = Program(cls._SHADERS['vertex_linear'],
-                           cls._SHADERS['fragment'][0] + \
-                           cls._SHADERS['fragment_transform']['linear']+ \
+                           cls._SHADERS['fragment'][0] +
+                           cls._SHADERS['fragment_transform']['linear'] +
                            cls._SHADERS['fragment'][1])
 
             # Done once forever for each program
@@ -326,8 +326,8 @@ class GLColormap(_GL2DDataPlot):
             prog = cls._logPrograms[context]
         except KeyError:
             prog = Program(cls._SHADERS['vertex_log'],
-                           cls._SHADERS['fragment'][0] + \
-                           cls._SHADERS['fragment_transform']['log']+ \
+                           cls._SHADERS['fragment'][0] +
+                           cls._SHADERS['fragment_transform']['log'] +
                            cls._SHADERS['fragment'][1])
 
             # Done once forever for each program

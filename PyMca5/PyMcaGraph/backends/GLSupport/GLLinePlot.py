@@ -726,6 +726,7 @@ class Curve2D(object):
             # Using Cohen-Sutherland algorithm for line clipping
             picked = []
 
+            x0, y0 = None, None
             pt0Code = True, True, True, True  # Initialisation trick
 
             for x1, y1 in zip(self.xData, self.yData):

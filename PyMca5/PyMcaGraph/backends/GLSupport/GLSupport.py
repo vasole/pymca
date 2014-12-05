@@ -41,7 +41,7 @@ from OpenGL.GL import *  # noqa
 from ctypes import c_float, c_char
 import numpy as np
 
-#PyOpenGL 3.0.1 does not define it
+# PyOpenGL 3.0.1 does not define it
 try:
     GLchar
 except NameError:

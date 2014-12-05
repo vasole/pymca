@@ -1678,12 +1678,6 @@ class OpenGLPlotCanvas(PlotBackend):
                                                 yPixel - 2 * pixelOffset)
                 x1, y1 = self.pixelToDataCoords(xPixel + 2 * pixelOffset,
                                                 yPixel + 2 * pixelOffset)
-                #if self._isXLog:
-                #    x0 = math.log10(x0)
-                #    x1 = math.log10(x1)
-                #if self._isYLog:
-                #    y0 = math.log10(y0)
-                #    y1 = math.log10(y1)
 
                 vertices = np.array(((x0, yCoord), (x1, yCoord),
                                      (xCoord, y0), (xCoord, y1)),
@@ -1781,9 +1775,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # Render Curves
         for curve in self._curves.values():
-            curve.isXLog = self._isXLog
-            curve.isYLog = self._isYLog
-            curve.render(self.matrixPlotDataTransformedProj)
+            curve.render(self.matrixPlotDataTransformedProj,
+                         self._isXLog, self._isYLog)
 
         # Render Items
         self._progBase.use()
