@@ -1333,9 +1333,9 @@ class OpenGLPlotCanvas(PlotBackend):
                     yMax = curve.yMax
 
             if xMin >= xMax:
-                xMin, xMax = 0., 1.
+                xMin, xMax = 1., 100.
             if yMin >= yMax:
-                yMin, yMax = 0., 1.
+                yMin, yMax = 1., 100.
 
             self._dataBounds = Bounds(xMin, xMax, yMin, yMax)
             return self._dataBounds
@@ -1355,6 +1355,12 @@ class OpenGLPlotCanvas(PlotBackend):
     @plotDataBounds.setter
     def plotDataBounds(self, bounds):
         if bounds != self.plotDataBounds:
+            if self._isXLog and bounds.xMin <= 0.:
+                raise RuntimeError(
+                    'Cannot use plot area with X <= 0 with X axis log scale')
+            if self._isYLog and bounds.yMin <= 0.:
+                raise RuntimeError(
+                    'Cannot use plot area with Y <= 0 with Y axis log scale')
             self._plotDataBounds = bounds
             self._dirtyPlotDataTransformedBounds()
 
@@ -1825,6 +1831,13 @@ class OpenGLPlotCanvas(PlotBackend):
         if draggable:
             behaviors.add('draggable')
 
+        if x is not None and self._isXLog and x <= 0.:
+            raise RuntimeError(
+                'Cannot add marker with X <= 0 with X axis log scale')
+        if y is not None and self._isYLog and y <= 0.:
+            raise RuntimeError(
+                'Cannot add marker with Y <= 0 with Y axis log scale')
+
         self._markers[legend] = {
             'x': x,
             'y': y,
@@ -1961,6 +1974,14 @@ class OpenGLPlotCanvas(PlotBackend):
                 'zOrder': z,
                 'behaviors': behaviors
             }
+
+            if self._isXLog and image.xMin <= 0.:
+                raise RuntimeError(
+                    'Cannot add image with X <= 0 with X axis log scale')
+            if self._isYLog and image.yMin <= 0.:
+                raise RuntimeError(
+                    'Cannot add image with Y <= 0 with Y axis log scale')
+
             self._images[legend] = image
 
         else:
@@ -2013,9 +2034,19 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if shape == 'rectangle':
             xMin, xMax = xList
-            xList = xMin, xMin, xMax, xMax
+            xList = np.array((xMin, xMin, xMax, xMax))
             yMin, yMax = yList
-            yList = yMin, yMax, yMax, yMin
+            yList = np.array((yMin, yMax, yMax, yMin))
+        else:
+            xList = np.array(xList, copy=False)
+            yList = np.array(yList, copy=False)
+
+        if self._isXLog and xList.min() <= 0.:
+            raise RuntimeError(
+                'Cannot add item with X <= 0 with X axis log scale')
+        if self._isYLog and yList.min() <= 0.:
+            raise RuntimeError(
+                'Cannot add item with Y <= 0 with Y axis log scale')
 
         self._items[legend] = {
             'shape': shape,
@@ -2060,6 +2091,8 @@ class OpenGLPlotCanvas(PlotBackend):
             print('OpenGLBackend.addCurve xerror not implemented')
         if yerror is not None:
             print('OpenGLBackend.addCurve yerror not implemented')
+        if kw.has_key('plot_fill'):
+            print('OpenGLBackend.addCurve plot_fill not implemented')
 
         self.makeCurrent()
 
@@ -2090,6 +2123,14 @@ class OpenGLPlotCanvas(PlotBackend):
                         marker=symbol,
                         markerColor=color)
         curve.info = {'legend': legend}
+
+        if self._isXLog and curve.xMin <= 0.:
+            raise RuntimeError(
+                'Cannot add curve with X <= 0 with X axis log scale')
+        if self._isYLog and curve.yMin <= 0.:
+            raise RuntimeError(
+                'Cannot add curve with Y <= 0 with Y axis log scale')
+
         self._curves[legend] = curve
 
         if oldCurve is None or \
@@ -2288,11 +2329,17 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def setXAxisLogarithmic(self, flag=True):
         if flag != self._isXLog:
+            if flag and self.dataBounds.xMin <= 0.:
+                raise RuntimeError(
+                   'Cannot use log scale for X axis: Some data is <= 0.')
             self._isXLog = flag
             self._dirtyPlotDataTransformedBounds()
 
     def setYAxisLogarithmic(self, flag=True):
         if flag != self._isYLog:
+            if flag and self.dataBounds.yMin <= 0.:
+                raise RuntimeError(
+                    'Cannot use log scale for Y axis: Some data is <= 0.')
             self._isYLog = flag
             self._dirtyPlotDataTransformedBounds()
 
