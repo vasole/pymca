@@ -197,7 +197,7 @@ class _Lines2D(object):
             self._style = None
             self.render = self._renderNone
         else:
-            assert(style in self.STYLES)
+            assert style in self.STYLES
             self._style = style
             if style == SOLID:
                 self.render = self._renderSolid
@@ -216,7 +216,7 @@ class _Lines2D(object):
             widthRange = glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE)
             # Shared among contexts, this should be enough..
             _Lines2D._widthRange = widthRange
-        assert(width >= widthRange[0] and width <= widthRange[1])
+        assert width >= widthRange[0] and width <= widthRange[1]
         self._width = width
 
     @classmethod
@@ -505,7 +505,7 @@ class _Points2D(object):
             self._marker = None
             self.render = self._renderNone
         else:
-            assert(marker in self.MARKERS)
+            assert marker in self.MARKERS
             self._marker = marker
             self.render = self._renderMarkers
 
@@ -521,7 +521,7 @@ class _Points2D(object):
             sizeRange = glGetFloatv(GL_POINT_SIZE_RANGE)
             # Shared among contexts, this should be enough..
             _Points2D._sizeRange = sizeRange
-        assert(size >= sizeRange[0] and size <= sizeRange[1])
+        assert size >= sizeRange[0] and size <= sizeRange[1]
         self._size = size
 
     @classmethod
@@ -548,7 +548,7 @@ class _Points2D(object):
     def init(cls):
         version = glGetString(GL_VERSION)
         majorVersion = int(version[0])
-        assert(majorVersion >= 2)
+        assert majorVersion >= 2
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)  # OpenGL 2
         glEnable(GL_POINT_SPRITE)  # OpenGL 2
         if majorVersion >= 3:  # OpenGL 3

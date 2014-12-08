@@ -77,7 +77,7 @@ def rgba(code, colorDict={}):
     if not code.startswith('#'):
         code = colorDict[code]
 
-    assert(len(code) in (7, 9) and code[0] == '#')
+    assert len(code) in (7, 9) and code[0] == '#'
     r = int(code[1:3], 16) / 255.
     g = int(code[3:5], 16) / 255.
     b = int(code[5:7], 16) / 255.
@@ -162,7 +162,7 @@ class Shape2D(object):
         self.vertices = np.array(points, dtype=np.float32, copy=False)
 
         size = len(self.vertices)
-        assert(size <= np.iinfo(np.uint16).max + 1)
+        assert size <= np.iinfo(np.uint16).max + 1
         self._indices = np.fromfunction(lambda i: ((i + 1) % 2) * (i // 2) +
                                         (i % 2) * (size - 1 - (i // 2)),
                                         (size,), dtype=np.uint16)
@@ -226,7 +226,7 @@ class Shape2D(object):
         glDrawArrays(GL_LINE_LOOP, 0, len(self.vertices))
 
     def render(self, posAttrib, colorUnif, hatchStepUnif):
-        assert(self.fill in ['hatch', 'solid', None])
+        assert self.fill in ['hatch', 'solid', None]
         if self.fill is not None:
             glUniform4f(colorUnif, *self.fillColor)
             step = self._HATCH_STEP if self.fill == 'hatch' else self._NO_HATCH

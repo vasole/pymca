@@ -93,8 +93,8 @@ class FBOTexture(Texture2D):
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                                       GL_RENDERBUFFER, self._depthId)
 
-        assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) ==
-               GL_FRAMEBUFFER_COMPLETE)
+        assert glCheckFramebufferStatus(GL_FRAMEBUFFER) == \
+            GL_FRAMEBUFFER_COMPLETE
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
     @property

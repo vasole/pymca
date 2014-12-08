@@ -219,8 +219,8 @@ def prepareDrawingSignal(event, type_, points, parameters=None):
 
 
 def prepareMouseSignal(eventType, button, xData, yData, xPixel, yPixel):
-    assert(eventType in ('mouseMoved', 'mouseClicked', 'mouseDoubleClicked'))
-    assert(button in (None, 'left', 'right'))
+    assert eventType in ('mouseMoved', 'mouseClicked', 'mouseDoubleClicked')
+    assert button in (None, 'left', 'right')
 
     return {'event': eventType,
             'x': xData,
@@ -247,8 +247,8 @@ def prepareMarkerSignal(eventType, button, label, type_,
                         posDataMarker,
                         posPixelCursor=None, posDataCursor=None):
     if eventType == 'markerClicked':
-        assert(posPixelCursor is not None)
-        assert(posDataCursor is None)
+        assert posPixelCursor is not None
+        assert posDataCursor is None
 
         posDataCursor = list(posDataMarker)
         if hasattr(posDataCursor[0], "__len__"):
@@ -257,12 +257,12 @@ def prepareMarkerSignal(eventType, button, label, type_,
             posDataCursor[1] = posDataCursor[1][-1]
 
     elif eventType == 'markerMoving':
-        assert(posPixelCursor is not None)
-        assert(posDataCursor is not None)
+        assert posPixelCursor is not None
+        assert posDataCursor is not None
 
     elif eventType == 'markerMoved':
-        assert(posPixelCursor is None)
-        assert(posDataCursor is None)
+        assert posPixelCursor is None
+        assert posDataCursor is None
 
         posDataCursor = posDataMarker
     else:
@@ -374,7 +374,7 @@ class Zoom(ClickOrDrag):
             else:
                 # Signal mouse clicked event
                 xData, yData = self.backend.pixelToDataCoords(x, y)
-                assert(xData is not None and yData is not None)
+                assert xData is not None and yData is not None
                 eventDict = prepareMouseSignal('mouseClicked', 'left',
                                                xData, yData,
                                                x, y)
@@ -393,7 +393,7 @@ class Zoom(ClickOrDrag):
             except IndexError:
                 # Signal mouse clicked event
                 xData, yData = self.backend.pixelToDataCoords(x, y)
-                assert(xData is not None and yData is not None)
+                assert xData is not None and yData is not None
                 eventDict = prepareMouseSignal('mouseClicked', 'right',
                                                xData, yData,
                                                x, y)
@@ -841,7 +841,7 @@ class MarkerInteraction(ClickOrDrag):
                         self.backend._callback(eventDict)
 
     def _signalMarkerMovingEvent(self, eventType, marker, x, y):
-        assert(marker is not None)
+        assert marker is not None
 
         # Mimic MatplotlibBackend signal
         xData, yData = marker['x'], marker['y']
@@ -1926,7 +1926,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 cmapRange = None
             else:
                 cmapRange = colormap['vmin'], colormap['vmax']
-                assert(cmapRange[0] <= cmapRange[1])
+                assert cmapRange[0] <= cmapRange[1]
 
             if oldImage is not None:  # TODO check if benefit
                 image = oldImage
@@ -1954,9 +1954,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
         elif len(data.shape) == 3:
             # For RGB, RGBA data
-            assert(data.shape[2] in (3, 4))
-            assert(data.dtype == np.uint8 or
-                   np.can_cast(data.dtype, np.float32))
+            assert data.shape[2] in (3, 4)
+            assert data.dtype == np.uint8 or \
+                np.can_cast(data.dtype, np.float32)
 
             if oldImage is not None:
                 image.xMin = xScale[0]

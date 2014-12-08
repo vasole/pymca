@@ -294,7 +294,7 @@ class Image(object):
         if not hasattr(self, 'tiles'):
             raise RuntimeError("No texture, discard has already been called")
 
-        assert(data.shape[:2] == self.height, self.width)
+        assert data.shape[:2] == (self.height, self.width)
         if len(self.tiles) == 1:
             self.tiles[0][0].update(format_, type_, data,
                                     width=self.width, height=self.height,
