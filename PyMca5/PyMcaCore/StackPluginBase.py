@@ -45,7 +45,9 @@ and modify the static module variable MENU_TEXT and the static module function
 getStackPluginInstance according to the defined plugin.
 
 These plugins will be compatible with any stack window that provides the functions:
+
     #data related
+
     - getStackDataObject
     - getStackData
     - getStackInfo
@@ -54,20 +56,24 @@ These plugins will be compatible with any stack window that provides the functio
     - isStackFinite
 
     #mask related
+
     - setStackSelectionMask
     - getStackSelectionMask
 
     #displayed curves
+
     - getActiveCurve
     - getGraphXLimits
     - getGraphYLimits
 
     #images
+
     - addImage
     - removeImage
     - replaceImage
 
     #information method
+
     - stackUpdated
     - selectionMaskUpdated
 
