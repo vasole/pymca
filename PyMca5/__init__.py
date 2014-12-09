@@ -88,7 +88,6 @@ def getDefaultUserPluginsDirectory():
     """
     try:
         settingsDir = os.path.dirname(getDefaultSettingsFile())
-        print settingsDir
         if os.path.exists(settingsDir):
             userPluginDir = os.path.join(settingsDir, "plugins")
             if not os.path.exists(userPluginDir):
