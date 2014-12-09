@@ -43,6 +43,12 @@ def version():
     return __version__
 
 def getDefaultSettingsFile():
+    """
+    Return the path to the default settings file (PyMca.ini).
+
+    The file itself may not exist, but this function tries to create
+    the containing directory if not already created.
+    """
     filename = "PyMca.ini"
     if sys.platform == 'win32':
         # recipe based on: http://bugs.python.org/issue1763#msg62242
@@ -73,6 +79,26 @@ def getDefaultSettingsFile():
             os.mkdir('%s' % directory)
         finalfile =  os.path.join(directory, filename)
     return finalfile
+
+def getDefaultUserPluginsDirectory():
+    """
+    Return the default directory to look for user defined plugins.
+
+    The directory will be created if not existing. In case of error it returns None.
+    """
+    try:
+        settingsDir = os.path.dirname(getDefaultSettingsFile())
+        print settingsDir
+        if os.path.exists(settingsDir):
+            userPluginDir = os.path.join(settingsDir, "plugins")
+            if not os.path.exists(userPluginDir):
+                os.mkdir(userPluginDir)
+            return userPluginDir
+        else:
+            return None
+    except:
+        print("WARNING: Cannot initialize plugis directory")
+        return None
 
 # workaround matplotlib MPLCONFIGDIR issues under windows
 if sys.platform.startswith("win"):

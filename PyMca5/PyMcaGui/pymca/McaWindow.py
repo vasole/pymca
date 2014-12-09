@@ -80,7 +80,7 @@ class McaWindow(ScanWindow.ScanWindow):
                                          fit=fit,
                                          **kw)
         self.setWindowType("MCA")
-        # this two objects are the same
+        # these two objects are the same
         self.dataObjectsList = self._curveList
         # but this is tricky
         self.dataObjectsDict = {}
