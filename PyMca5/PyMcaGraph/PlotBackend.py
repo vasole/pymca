@@ -115,7 +115,7 @@ drawingFinished
     It looks as it should export xdata, ydata and type.
 
     The information will depend on the type of item being drawn:
-    
+
     - line - two points in graph and pixel coordinates
     - hline - one point in graph and pixel coordinates
     - vline - one point in graph and pixel coordinates
@@ -134,20 +134,20 @@ imageClicked, curveClicked
 
 markerMoving
     Additional keys:
-    
+
     - draggable - True if it is a movable marker (it should be True)
     - selectable - True if the marker can be selected
 
 markerMoved
     Additional keys:
-    
+
     - draggable - True if it is a movable marker (it should be True)
     - selectable - True if the marker can be selected
     - xdata, ydata - Final position of the marker
 
 markerClicked
     Additional keys:
-    
+
     - draggable - True if it is a movable marker
     - selectable - True if the marker can be selected (it should be True)
 
@@ -162,7 +162,7 @@ mouseDoubleClicked
 
 MouseZoom
     TODO: NOT USED? Figure out how to implement a limitsChanged signal?
-    
+
     keys xmin, xmax, ymin, ymax in graph coordenates
     keys xpixel_min, xpixel_max, ypixel_min, ypixel_max in pixel coordenates
 """
@@ -196,6 +196,7 @@ class PlotBackend(object):
                  xerror=None, yerror=None, **kw):
         """
         Add the 1D curve given by x an y to the graph.
+
         :param x: The data corresponding to the x axis
         :type x: list or numpy.ndarray
         :param y: The data corresponding to the y axis
@@ -211,32 +212,37 @@ class PlotBackend(object):
         :param color: color(s) to be used
         :type color: string ("#RRGGBB") or (npoints, 4) unsigned byte array or
                      one of the predefined color names defined in Colors.py
-        :symbol: Symbol to be drawn at each (x, y) position
-        :type symbol: None or one of the predefined symbols:
-                      'o' - circle
-                      '.' - point
-                      ',' - pixel
-                      '+' - cross
-                      'x' - x-cross
-                      'd' - diamond
-                      's' - square
-        :linestyle: Type of line
-        :type linestyle: None or one of the predefined symbols:
-                      ' '  - no line
-                      '-'  - solid line
-                      '--' - dashed line
-                      '-.' - dash-dot line
-                      ':'  - dotted line
-        :xlabel: Label associated to the X axis when the curve is active
+        :param symbol: Symbol to be drawn at each (x, y) position::
+
+            - 'o' circle
+            - '.' point
+            - ',' pixel
+            - '+' cross
+            - 'x' x-cross
+            - 'd' diamond
+            - 's' square
+
+        :type symbol: None or one of the predefined symbols
+        :param linestyle: Type of line::
+
+            - ' '  no line
+            - '-'  solid line
+            - '--' dashed line
+            - '-.' dash-dot line
+            - ':'  dotted line
+
+        :type linestyle: None or one of the predefined styles.
+
+        :param xlabel: Label associated to the X axis when the curve is active
         :type xlabel: string
-        :ylabel: Label associated to the Y axis when the curve is active
+        :param ylabel: Label associated to the Y axis when the curve is active
         :type ylabel: string
-        :yaxis: Anything different from "right" is equivalent to "left"
+        :param yaxis: Anything different from "right" is equivalent to "left"
         :type yaxis: string or None
-        :xerror: Values with the uncertainties on the x values
+        :param xerror: Values with the uncertainties on the x values
         :type xlabel: array
-        :yerror: Values with the uncertainties on the y values
-        :type ylabel: array
+        :param yerror: Values with the uncertainties on the y values
+        :param type ylabel: array
         :returns: The legend/handle used by the backend to univocally access it.
         """
         print("PlotBackend addCurve not implemented")
@@ -330,7 +336,7 @@ class PlotBackend(object):
         """
         Return the colormap that will be applied by the backend to an image
         if no colormap is applied to it.
-        
+
         A colormap is a dictionnary with the keys:
 
         - name: string
@@ -349,7 +355,7 @@ class PlotBackend(object):
         """
         Return a dictionnary (or None) with the parameters passed when setting
         the draw mode.
-        
+
         - shape: The shape being drawn
         - label: Associated text (or None)
 
@@ -625,7 +631,7 @@ class PlotBackend(object):
         """
         Sets the colormap that will be applied by the backend to an image
         if no colormap is applied to it.
-        
+
         A colormap is a dictionnary with the keys:
 
         :type name: string
