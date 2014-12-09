@@ -85,7 +85,7 @@ class PluginLoader(object):
         if directoryList in [None, [] ]:
             directoryList = self._pluginDirList
             if directoryList in [None, []]:
-                directoryList = [self.PLUGINS_DIR]
+                directoryList = [PLUGINS_DIR]
         if DEBUG:
             print("method: %s" % targetMethod)
             print("directoryList: %s" % directoryList)

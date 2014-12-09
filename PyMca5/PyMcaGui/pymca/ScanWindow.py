@@ -75,6 +75,12 @@ try:
             directory = os.path.dirname(directory)
             if len(directory) < 5:
                 break
+    userPluginsDirectory = PyMca5.getDefaultUserPluginsDirectory()
+    if userPluginsDirectory is not None:
+        if PLUGINS_DIR is None:
+            PLUGINS_DIR = userPluginsDirectory
+        else:
+            PLUGINS_DIR = [PLUGINS_DIR, userPluginsDirectory]
 except:
     pass
 
@@ -103,10 +109,14 @@ class ScanWindow(PlotWindow.PlotWindow):
 
         self.setWindowTitle(name)
         self.matplotlibDialog = None
+
         if PLUGINS_DIR is not None:
-            pluginDir = [PLUGINS_DIR]
+            if type(PLUGINS_DIR) == type([]):
+                pluginDir = PLUGINS_DIR
+            else:
+                pluginDir = [PLUGINS_DIR]
             self.getPlugins(method="getPlugin1DInstance",
-                        directoryList=pluginDir)
+                            directoryList=pluginDir)
 
         if info:
             self.scanWindowInfoWidget = ScanWindowInfoWidget.\
