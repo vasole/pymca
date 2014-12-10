@@ -73,6 +73,7 @@ elif ('PyQt5' in sys.modules):
     QtGui.QApplication = QtWidgets.QApplication
 else:
     try:
+        import matplotlib
         from PyQt4 import QtCore, QtGui
         matplotlib.rcParams['backend']='Qt4Agg'
     except ImportError:
