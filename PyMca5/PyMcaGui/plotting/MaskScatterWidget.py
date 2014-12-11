@@ -160,10 +160,11 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         x.shape = -1
         y.shape = -1
         colors = numpy.zeros((y.size, 4), dtype=numpy.uint8)
+        colors[:, 3] = 255
         if self._selectionMask is not None:
             tmpMask = self._selectionMask[:]
             tmpMask.shape = -1
-            for i in range(0, self._maxNRois):
+            for i in range(0, self._maxNRois + 1):
                 colors[tmpMask == i, :] = self._selectionColors[i]
         self.setSelectionCurveData(x, y, legend=legend, info=info,
                                    color=colors, linestyle=" ",
@@ -362,6 +363,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
 
 if __name__ == "__main__":
     app = qt.QApplication([])
+    def receivingSlot(ddict):
+        print("Received: ", ddict)
     x = numpy.arange(1000.)
     y = x * x
     w = MaskScatterWidget(maxNRois=10)
@@ -369,9 +372,7 @@ if __name__ == "__main__":
     import numpy.random
     w.setSelectionMask(numpy.random.permutation(1000) % 10)
     w.setPolygonSelectionMode()
-    w.show()
-    def receivingSlot(ddict):
-        print("Received: ", ddict)
     w.sigMaskScatterWidgetSignal.connect(receivingSlot)
+    w.show()
     app.exec_()
 
