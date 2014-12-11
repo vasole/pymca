@@ -115,13 +115,16 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         xLabel = self._itemLabels[ddict[xKey][0]]
         yLabel = self._itemLabels[ddict[yKey][0]]
         self.setSelectionCurveData(x, y, legend="ScatterPlotWidget",
-                                   color="k", symbol="o",
+                                   color="k", symbol=None,
                                    replot=False,
-                                   replace=False)
-                                   #xlabel=xLabel, ylabel=yLabel)
+                                   replace=False,
+                                   xlabel=xLabel,
+                                   ylabel=yLabel)
+        # active curve handling is disabled
+        self.setGraphXLabel(xLabel)
+        self.setGraphYLabel(yLabel)
         self._updatePlot(replot=True)
-        
-        
+
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = ScatterPlotCorrelatorWidget(labels=["Legend",
