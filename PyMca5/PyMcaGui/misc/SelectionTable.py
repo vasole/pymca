@@ -79,6 +79,7 @@ class SelectionTable(qt.QTableWidget):
 
         self._labels = labels
         self._types = types
+        self._buttonGroups = [None] * len(self._labels)
         # set a minimum of 5 rows
         self.setMinimumHeight(5*rheight)
 
@@ -117,6 +118,10 @@ class SelectionTable(qt.QTableWidget):
                     self.setCellWidget(row, column, widget)
                     widget.sigRadioButtonItemSignal.connect( \
                                         self._radioButtonSlot)
+                    if self._buttonGroups[column] is None:
+                        self._buttonGroups[column] = qt.QButtonGroup()
+                        widget.setChecked(True)
+                    self._buttonGroups[column].addButton(widget)
                 widget.setText(content)
             else:
                 # text
@@ -137,14 +142,8 @@ class SelectionTable(qt.QTableWidget):
         self.emitSelectionChangedSignal(cell=(row, column))
 
     def _radioButtonSlot(self, ddict):
-        row = ddict["row"]
-        column = ddict["column"]
-        if ddict["state"]:
-            for i in range(self.rowCount()):
-                if i != row:
-                    widget = self.cellWidget(row, column)
-                    widget.setChecked(False)
-        self.emitSelectionChangedSignal(cell=(row, column))
+        # I handle them in the same way
+        return self._checkBoxSlot(ddict)
 
     def getSelection(self):
         ddict = {}
@@ -229,7 +228,7 @@ if __name__ == "__main__":
     def slot(ddict):
         print("received dict = ", ddict)
     tab = SelectionTable(labels=["Legend", "X", "Y"],
-                         types=["Text", "RadioButton", "CheckBox"])
+                         types=["Text", "RadioButton", "RadioButton"])
     tab.sigSelectionTableSignal.connect(slot)
     tab.fillTable([["Cnt1", "", ""],
                    ["Cnt2", "", ""],
