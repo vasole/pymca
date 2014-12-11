@@ -117,7 +117,15 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                  replot=True, replace=True, linestyle=" ", color="r", symbol=None, **kw):
         self.enableActiveCurveHandling(False)
         if symbol is None:
-            symbol = "o"
+            if x.size < 1000:
+                # circle
+                symbol = "o"
+            elif x.size < 1.0e6:
+                # dot
+                symbol = "."
+            else:
+                # pixel
+                symbol = ","
         self.addCurve(x=x, y=y, legend=legend, info=info,
                  replace=replace, replot=replot, linestyle=linestyle, color=color, symbol=symbol, **kw)
         self._selectionCurve = legend
@@ -368,7 +376,7 @@ if __name__ == "__main__":
     x = numpy.arange(1000.)
     y = x * x
     w = MaskScatterWidget(maxNRois=10)
-    w.setSelectionCurveData(x, y, color="k", symbol="o")
+    w.setSelectionCurveData(x, y, color="k")
     import numpy.random
     w.setSelectionMask(numpy.random.permutation(1000) % 10)
     w.setPolygonSelectionMode()
