@@ -1310,10 +1310,6 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             axisId = yaxis
         else:
             axisId = "left"
-        if xlabel is None:
-            xlabel = "X"
-        if ylabel is None:
-            ylabel = "Y"
         fill = kw.get('plot_fill', False)
         if axisId == "right":
             axes = self.ax2
