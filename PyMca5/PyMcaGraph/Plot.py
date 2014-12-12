@@ -684,22 +684,42 @@ class Plot(PlotBase.PlotBase):
         for key in keys:
             x = self._curveDict[key][0]
             y = self._curveDict[key][1]
-            if xmin is None:
-                xmin = x.min()
+            if hasattr(x, "min") and hasattr(x, "max"):
+                if xmin is None:
+                    xmin = x.min()
+                else:
+                    xmin = min(xmin, x.min())
+                if xmax is None:
+                    xmax = x.max()
+                else:
+                    xmax = max(xmax, x.max())
             else:
-                xmin = min(xmin, x.min())
-            if ymin is None:
-                ymin = y.min()
+                if xmin is None:
+                    xmin = min(x)
+                else:
+                    xmin = min(xmin, min(x))
+                if xmax is None:
+                    xmax = max(x)
+                else:
+                    xmax = max(xmax, max(x))
+            if hasattr(y, "min") and hasattr(y, "max"):
+                if ymin is None:
+                    ymin = y.min()
+                else:
+                    ymin = min(ymin, y.min())
+                if ymax is None:
+                    ymax = y.max()
+                else:
+                    ymax = max(ymax, y.max())
             else:
-                ymin = min(ymin, y.min())
-            if xmax is None:
-                xmax = x.max()
-            else:
-                xmax = max(xmax, x.max())
-            if ymax is None:
-                ymax = y.max()
-            else:
-                ymax = max(ymax, y.max())
+                if ymin is None:
+                    ymin = min(y)
+                else:
+                    ymin = min(ymin, min(y))
+                if ymax is None:
+                    ymax = max(y)
+                else:
+                    ymax = max(ymax, max(y))
         return xmin, ymin, xmax, ymax
 
     def saveGraph(self, filename, fileFormat='svg', dpi=None, **kw):
