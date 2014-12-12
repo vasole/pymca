@@ -665,6 +665,9 @@ class PlotWindow(PlotWidget.PlotWidget):
                                       self.roiDockWidget)
             self.roiWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
             self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
+            # initialize with the ICR
+            self._roiSignal({'event': "AddROI"})
+
         if self.roiDockWidget.isHidden():
             self.roiDockWidget.show()
         else:
@@ -965,7 +968,10 @@ class PlotWindow(PlotWidget.PlotWidget):
                                    draggable=draggable)
             roiList.append(newroi)
             roiDict[newroi] = {}
-            roiDict[newroi]['type'] = self.getGraphXLabel()
+            if newroi == "ICR":
+                roiDict[newroi]['type'] = "Default"
+            else:
+                roiDict[newroi]['type'] = self.getGraphXLabel()
             roiDict[newroi]['from'] = fromdata
             roiDict[newroi]['to'] = todata
             self.roiWidget.fillFromROIDict(roilist=roiList,
@@ -979,7 +985,14 @@ class PlotWindow(PlotWidget.PlotWidget):
             if self._middleROIMarkerFlag:
                 self.removeMarker('ROI middle')
             roiList, roiDict = self.roiWidget.getROIListAndDict()
-            currentroi = list(roiDict.keys())[0]
+            roiDictKeys = list(roiDict.keys())
+            if len(roiDictKeys):
+                currentroi = roiDictKeys[0]
+            else:
+                # create again the ICR
+                ddict = {"event":"AddROI"}
+                return self._roiSignal(ddict)
+                currentroi = None
             self.roiWidget.fillFromROIDict(roilist=roiList,
                                            roidict=roiDict,
                                            currentroi=currentroi)

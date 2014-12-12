@@ -123,19 +123,25 @@ class McaROIWidget(qt.QWidget):
         if row >= 0:
             index = self.mcaROITable.labels.index('Type')
             text = str(self.mcaROITable.item(row, index).text())
-
             if text.upper() != 'DEFAULT':
                 index = self.mcaROITable.labels.index('ROI')
                 key = str(self.mcaROITable.item(row, index).text())
             else:
+                # This is to prevent deleting ICR ROI, that is
+                # usually initialized as "Default" type.
                 return
             roilist,roidict    = self.mcaROITable.getROIListAndDict()
             row = roilist.index(key)
             del roilist[row]
             del roidict[key]
+            if len(roilist) > 0:
+                currentroi = roilist[0]
+            else:
+                currentroi = None
+
             self.mcaROITable.fillFromROIDict(roilist=roilist,
                                              roidict=roidict,
-                                             currentroi=roilist[0])
+                                             currentroi=currentroi)
             ddict={}
             ddict['event']      = "DelROI"
             ddict['roilist']    = roilist
