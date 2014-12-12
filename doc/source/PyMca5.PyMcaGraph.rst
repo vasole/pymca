@@ -1,6 +1,11 @@
 PyMcaGraph Package
 ==================
 
+.. automodule:: PyMca5.PyMcaGraph.__init__
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`Plot` Module
 ------------------
 

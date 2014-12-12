@@ -73,6 +73,7 @@ elif ('PyQt5' in sys.modules):
     QtGui.QApplication = QtWidgets.QApplication
 else:
     try:
+        import matplotlib
         from PyQt4 import QtCore, QtGui
         matplotlib.rcParams['backend']='Qt4Agg'
     except ImportError:
@@ -95,7 +96,7 @@ elif ("Tkinter" in sys.modules) or ("tkinter") in sys.modules:
     TK = True
     QT = False
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
-    
+
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
 Rectangle = patches.Rectangle
@@ -1351,7 +1352,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                               'symbol':symbol,
                                               'label':legend,
                                               'axes':axisId,
-                                              'fill':fill}
+                                              'fill':fill,
+                                              'xlabel':xlabel,
+                                              'ylabel':ylabel}
                 if hasattr(x, "min") and hasattr(y, "min"):
                     curveList[-1]._plot_info['xmin'] = x.min()
                     curveList[-1]._plot_info['xmax'] = x.max()
@@ -1376,7 +1379,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                   picker=3,
                                   **kw)
 
-        # errorbar is a container?   
+        # errorbar is a container?
         #axes.errorbar(x,y, label=legend,yerr=numpy.sqrt(y), linestyle=" ",color='b')
 
         # nice effects:
@@ -1393,7 +1396,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       'symbol':symbol,
                                       'label':legend,
                                       'axes':axisId,
-                                      'fill':fill}
+                                      'fill':fill,
+                                      'xlabel':xlabel,
+                                      'ylabel':ylabel}
         if hasattr(x, "min") and hasattr(y, "min"):
             # this is needed for scatter plots because I do not know
             # how to recover the data yet, it can speed up limits too

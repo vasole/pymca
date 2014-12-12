@@ -31,9 +31,15 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-A 1D plugin is a module that will be automatically added to the PyMca 1D window
-in order to perform user defined operations of the plotted 1D data. It has to
-inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
+A 1D plugin is a module that can be added to the PyMca 1D window in order to
+perform user defined operations of the plotted 1D data.
+
+Plugins can be automatically installed provided they are in the appropriate place:
+
+    - In the user home directory: ${HOME}/PyMca/plugins (POSIX systems)
+    - In "My Documents\PyMca\plugins" (Windows)
+
+A plugin inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
 
     - getMethods
     - getMethodToolTip (optional but convenient)
