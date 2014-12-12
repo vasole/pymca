@@ -329,6 +329,11 @@ class Plot(PlotBase.PlotBase):
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
+        # Convert everything to arrays (not forcing type) in order to avoid
+        # problems at unexpected places: missing min or max attributes, problem
+        # when using numpy.nonzero on lists, ...
+        x = numpy.asarray(x)
+        y = numpy.asarray(y)
         if "line_style" in kw:
             print("DEPRECATION WARNING: line_style deprecated, use linestyle")
         if legend is None:
@@ -684,42 +689,22 @@ class Plot(PlotBase.PlotBase):
         for key in keys:
             x = self._curveDict[key][0]
             y = self._curveDict[key][1]
-            if hasattr(x, "min") and hasattr(x, "max"):
-                if xmin is None:
-                    xmin = x.min()
-                else:
-                    xmin = min(xmin, x.min())
-                if xmax is None:
-                    xmax = x.max()
-                else:
-                    xmax = max(xmax, x.max())
+            if xmin is None:
+                xmin = x.min()
             else:
-                if xmin is None:
-                    xmin = min(x)
-                else:
-                    xmin = min(xmin, min(x))
-                if xmax is None:
-                    xmax = max(x)
-                else:
-                    xmax = max(xmax, max(x))
-            if hasattr(y, "min") and hasattr(y, "max"):
-                if ymin is None:
-                    ymin = y.min()
-                else:
-                    ymin = min(ymin, y.min())
-                if ymax is None:
-                    ymax = y.max()
-                else:
-                    ymax = max(ymax, y.max())
+                xmin = min(xmin, x.min())
+            if xmax is None:
+                xmax = x.max()
             else:
-                if ymin is None:
-                    ymin = min(y)
-                else:
-                    ymin = min(ymin, min(y))
-                if ymax is None:
-                    ymax = max(y)
-                else:
-                    ymax = max(ymax, max(y))
+                xmax = max(xmax, x.max())
+            if ymin is None:
+                ymin = y.min()
+            else:
+                ymin = min(ymin, y.min())
+            if ymax is None:
+                ymax = y.max()
+            else:
+                ymax = max(ymax, y.max())
         return xmin, ymin, xmax, ymax
 
     def saveGraph(self, filename, fileFormat='svg', dpi=None, **kw):
