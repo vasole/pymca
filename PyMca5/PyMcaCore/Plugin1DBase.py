@@ -37,7 +37,7 @@ perform user defined operations of the plotted 1D data.
 Plugins can be automatically installed provided they are in the appropriate place:
 
     - In the user home directory: ${HOME}/PyMca/plugins (POSIX systems)
-    - In "My Documents\PyMca\plugins" (Windows)
+    - In "My Documents\\\\PyMca\\\\plugins" (Windows)
 
 A plugin inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
 
@@ -74,7 +74,7 @@ The main items are reproduced here and can be directly accessed as plugin method
     - setGraphXTitle
     - setGraphYTitle
 
-A simple plugin example, normalizing each curve to its maximum and verticaly
+A simple plugin example, normalizing each curve to its maximum and vertically
 shifting the curves.
 
 .. code-block:: python
@@ -141,6 +141,7 @@ class Plugin1DBase(object):
                  replace=False, replot=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
+
         :param x: The data corresponding to the x axis
         :type x: list or numpy.ndarray
         :param y: The data corresponding to the y axis
@@ -164,6 +165,7 @@ class Plugin1DBase(object):
         :type just_legend: boolean
         :return: legend of the active curve or list [x, y, legend, info]
         :rtype: string or list
+
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
@@ -204,6 +206,7 @@ class Plugin1DBase(object):
         """
         Convenience method that calls getAllCurves and makes sure that all of
         the X values are strictly increasing.
+
         :return: It returns a list of the form:
                 [[xvalues0, yvalues0, legend0, dict0],
                  [xvalues1, yvalues1, legend1, dict1],
@@ -228,14 +231,16 @@ class Plugin1DBase(object):
 
     def getGraphXLimits(self):
         """
-        :return: Two floats with the X axis limits
         Get the graph X limits.
+
+        :return: Two floats with the X axis limits
         """
         return self._plotWindow.getGraphXLimits()
 
     def getGraphYLimits(self):
         """
         Get the graph Y (left) limits.
+
         :return: Two floats with the Y (left) axis limits
         """
         return self._plotWindow.getGraphYLimits()
@@ -280,6 +285,7 @@ class Plugin1DBase(object):
     def setGraphXLimits(self, xmin, xmax, replot=False):
         """
         Set the graph X limits.
+
         :param xmin:  minimum value of the axis
         :type xmin: float
         :param xmax:  minimum value of the axis
@@ -292,6 +298,7 @@ class Plugin1DBase(object):
     def setGraphYLimits(self, ymin, ymax, replot=False):
         """
         Set the graph Y (left) limits.
+
         :param ymin:  minimum value of the axis
         :type ymin: float
         :param ymax:  minimum value of the axis
@@ -305,6 +312,7 @@ class Plugin1DBase(object):
         """
         Remove the curve associated to the supplied legend from the graph.
         The graph will be updated if replot is true.
+
         :param legend: The legend associated to the curve to be deleted
         :type legend: string or None
         :param replot: Flag to indicate plot is to be immediately updated
@@ -316,6 +324,7 @@ class Plugin1DBase(object):
         """
         Funtion to request the plot window to set the curve with the specified legend
         as the active curve.
+
         :param legend: The legend associated to the curve
         :type legend: string
         """
@@ -345,10 +354,10 @@ class Plugin1DBase(object):
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
-        :plottype: string or None for the case the plugin only support
-        one type of plots. Implemented values "SCAN", "MCA" or None
+        :param plottype: string or None for the case the plugin only support
+         one type of plots. Implemented values "SCAN", "MCA" or None
         :return:  A list with the NAMES  associated to the callable methods
-        that are applicable to the specified type plot. The list can be empty.
+         that are applicable to the specified type plot. The list can be empty.
         :rtype: list[string]
         """
         print("getMethods not implemented")
@@ -357,6 +366,7 @@ class Plugin1DBase(object):
     def getMethodToolTip(self, name):
         """
         Returns the help associated to the particular method name or None.
+
         :param name: The method for which a tooltip is asked
         :rtype: string
         """
