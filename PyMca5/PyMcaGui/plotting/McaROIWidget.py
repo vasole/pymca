@@ -145,7 +145,6 @@ class McaROIWidget(qt.QWidget):
     def _forward(self,ddict):
         self.emitSignal(ddict)
 
-
     def _reset(self):
         ddict={}
         ddict['event']   = "ResetROI"
@@ -291,35 +290,26 @@ class McaROITable(qt.QTableWidget):
         self.labels=['ROI','Type','From','To','Raw Counts','Net Counts']
         self.setColumnCount(len(self.labels))
         i=0
-        if QTVERSION < '4.0.0':
-            if 'labels' in kw:
-                for label in kw['labels']:
-                    qt.QHeader.setLabel(self.horizontalHeader(),i,label)
-                    i = i + 1
-            else:
-                for label in self.labels:
-                    qt.QHeader.setLabel(self.horizontalHeader(),i,label)
-                    i = i + 1
+        if QTVERSION > '4.2.0':
+            self.setSortingEnabled(False)
+        if 'labels' in kw:
+            for label in kw['labels']:
+                item = self.horizontalHeaderItem(i)
+                if item is None:
+                    item = qt.QTableWidgetItem(label,
+                                           qt.QTableWidgetItem.Type)
+                item.setText(label)
+                self.setHorizontalHeaderItem(i,item)
+                i = i + 1
         else:
-            if QTVERSION > '4.2.0':self.setSortingEnabled(False)
-            if 'labels' in kw:
-                for label in kw['labels']:
-                    item = self.horizontalHeaderItem(i)
-                    if item is None:
-                        item = qt.QTableWidgetItem(label,
-                                               qt.QTableWidgetItem.Type)
-                    item.setText(label)
-                    self.setHorizontalHeaderItem(i,item)
-                    i = i + 1
-            else:
-                for label in self.labels:
-                    item = self.horizontalHeaderItem(i)
-                    if item is None:
-                        item = qt.QTableWidgetItem(label,
-                                               qt.QTableWidgetItem.Type)
-                    item.setText(label)
-                    self.setHorizontalHeaderItem(i,item)
-                    i=i+1
+            for label in self.labels:
+                item = self.horizontalHeaderItem(i)
+                if item is None:
+                    item = qt.QTableWidgetItem(label,
+                                           qt.QTableWidgetItem.Type)
+                item.setText(label)
+                self.setHorizontalHeaderItem(i,item)
+                i=i+1
 
         self.roidict={}
         self.roilist=[]
@@ -333,6 +323,8 @@ class McaROITable(qt.QTableWidget):
         #self.connect(self,qt.SIGNAL("cellChanged(int, int)"),self._cellChangedSlot)
         self.cellClicked[(int, int)].connect(self._mySlot)
         self.cellChanged[(int, int)].connect(self._cellChangedSlot)
+        verticalHeader = self.verticalHeader()
+        verticalHeader.sectionClicked[int].connect(self._rowChangedSlot)
 
     def build(self):
         self.fillFromROIDict(roilist=self.roilist,roidict=self.roidict)
@@ -482,6 +474,9 @@ class McaROITable(qt.QTableWidget):
             ddict['rowheader'] = "%d" % row
             self.emitSignal(ddict)
 
+    def _rowChangedSlot(self, row):
+        self._emitSelectionChangedSignal(row, 0)
+
     def _cellChangedSlot(self, row, col):
         if DEBUG:
             print("_cellChangedSlot(%d, %d)" % (row, col))
@@ -521,15 +516,7 @@ class McaROITable(qt.QTableWidget):
             self.roidict[text]['from'] = value
         elif col ==3:
             self.roidict[text]['to'] = value
-        ddict = {}
-        ddict['event'] = "selectionChanged"
-        ddict['row'  ] = row
-        ddict['col'  ] = col
-        ddict['roi'  ] = self.roidict[self.roilist[row]]
-        ddict['key']   = self.roilist[row]
-        ddict['colheader'] = self.labels[col]
-        ddict['rowheader'] = "%d" % row
-        self.emitSignal(ddict)
+        self.emitSelectionChangedSignal(row, col)
 
     def nameSlot(self, row, col):
         if col != 0: return
@@ -548,15 +535,18 @@ class McaROITable(qt.QTableWidget):
             self.roidict[text] = {}
             self.roidict[text].update(self.roidict[old])
             del self.roidict[old]
-            ddict = {}
-            ddict['event'] = "selectionChanged"
-            ddict['row'  ] = row
-            ddict['col'  ] = col
-            ddict['roi'  ] = self.roidict[self.roilist[row]]
-            ddict['key']   = self.roilist[row]
-            ddict['colheader'] = self.labels[col]
-            ddict['rowheader'] = "%d" % row
-            self.emitSignal(ddict)
+            self._emitSelectionChangedSignal(row, col)
+
+    def _emitSelectionChangedSignal(self, row, col):
+        ddict = {}
+        ddict['event'] = "selectionChanged"
+        ddict['row'  ] = row
+        ddict['col'  ] = col
+        ddict['roi'  ] = self.roidict[self.roilist[row]]
+        ddict['key']   = self.roilist[row]
+        ddict['colheader'] = self.labels[col]
+        ddict['rowheader'] = "%d" % row
+        self.emitSignal(ddict)
 
     def mySlot(self,*var,**kw):
         if len(var) == 0:
