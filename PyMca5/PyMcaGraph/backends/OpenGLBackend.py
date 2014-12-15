@@ -1188,6 +1188,110 @@ class OpenGLPlotCanvas(PlotBackend):
         self._axisDirtyFlag = True
         self._plotDirtyFlag = True
 
+    def _axesTicksAndLabels(self):
+        trXMin, trXMax, trYMin, trYMax = self.plotDataTransformedBounds
+
+        vertices = []
+        labels = []
+
+        if trXMin != trXMax:
+            plotBottom = self.winHeight - self._margins['bottom']
+
+            if self._isXLog:
+                xMin, xMax, xStep = niceNumbersForLog10(trXMin, trXMax)
+
+                for xDataLog in _ticks(xMin, xMax, xStep):
+                    if xDataLog >= trXMin and xDataLog <= trXMax:
+                        xPixel = self.dataToPixelCoords(xData=10 ** xDataLog)
+
+                        vertices.append((xPixel, plotBottom))
+                        vertices.append((xPixel, plotBottom - self._tickLen))
+                        vertices.append((xPixel, self._margins['top']))
+                        vertices.append((xPixel,
+                                         self._margins['top'] + self._tickLen))
+
+                        tickText = ('1e{:+03d}').format(xDataLog)
+                        labels.append(Text2D(text=tickText,
+                                             x=xPixel,
+                                             y=plotBottom + self._tickLen,
+                                             align=CENTER,
+                                             valign=TOP))
+
+            else:  # linear scale
+                xMin, xMax, xStep, xNbFrac = niceNumbers(trXMin, trXMax)
+
+                for xData in _ticks(xMin, xMax, xStep):
+                    if xData >= trXMin and xData <= trXMax:
+                        xPixel = self.dataToPixelCoords(xData=xData)
+
+                        vertices.append((xPixel, plotBottom))
+                        vertices.append((xPixel, plotBottom - self._tickLen))
+                        vertices.append((xPixel, self._margins['top']))
+                        vertices.append((xPixel,
+                                         self._margins['top'] + self._tickLen))
+
+                        if xNbFrac == 0:
+                            tickText = ('{:g}').format(xData)
+                        else:
+                            tickText = ('{:.' + str(xNbFrac) + 'f}').format(xData)
+
+                        labels.append(Text2D(text=tickText,
+                                             x=xPixel,
+                                             y=plotBottom + self._tickLen,
+                                             align=CENTER,
+                                             valign=TOP))
+
+        if trYMin != trYMax:
+            plotRight = self.winWidth - self._margins['right']
+
+            if self._isYLog:
+                yMin, yMax, yStep = niceNumbersForLog10(trYMin, trYMax)
+
+                for yDataLog in _ticks(yMin, yMax, yStep):
+                    if yDataLog >= trYMin and yDataLog <= trYMax:
+                        yPixel = self.dataToPixelCoords(yData=10 ** yDataLog)
+
+                        vertices.append((self._margins['left'], yPixel))
+                        vertices.append((self._margins['left'] + self._tickLen,
+                                         yPixel))
+                        vertices.append((plotRight, yPixel))
+                        vertices.append((plotRight - self._tickLen, yPixel))
+
+                        tickText = ('1e{:+03d}').format(yDataLog)
+                        labels.append(Text2D(text=tickText,
+                                             x=self._margins['left'] -
+                                             self._tickLen,
+                                             y=yPixel,
+                                             align=RIGHT,
+                                             valign=CENTER))
+
+            else:  # linear scale
+                yMin, yMax, yStep, yNbFrac = niceNumbers(trYMin, trYMax)
+
+                for yData in _ticks(yMin, yMax, yStep):
+                    if yData >= trYMin and yData <= trYMax:
+                        yPixel = self.dataToPixelCoords(yData=yData)
+
+                        vertices.append((self._margins['left'], yPixel))
+                        vertices.append((self._margins['left'] + self._tickLen,
+                                         yPixel))
+                        vertices.append((plotRight, yPixel))
+                        vertices.append((plotRight - self._tickLen, yPixel))
+
+                        if yNbFrac == 0:
+                            tickText = '{:g}'.format(yData)
+                        else:
+                            tickText = ('{:.' + str(yNbFrac) + 'f}').format(yData)
+
+                        labels.append(Text2D(text=tickText,
+                                             x=self._margins['left'] -
+                                             self._tickLen,
+                                             y=yPixel,
+                                             align=RIGHT,
+                                             valign=CENTER))
+
+        return vertices, labels
+
     def _updateAxis(self):
         # Check if window is large enough
         plotWidth, plotHeight = self.plotSizeInPixels()
@@ -1200,74 +1304,8 @@ class OpenGLPlotCanvas(PlotBackend):
             self._axisDirtyFlag = False
 
         # Ticks
-        self._labels = []
-        nbLinePairs = 2
-
-        trXMin, trXMax, trYMin, trYMax = self.plotDataTransformedBounds
-
-        if trXMin != trXMax and trYMin != trYMax:
-            # We get some ticks
-            nTicks = 5
-
-            xMin, xMax, xStep, xNbFrac = niceNumbers(trXMin, trXMax,
-                                                     nTicks)
-            if self._isXLog:
-                xTicks = [pow(10, x) for x in _ticks(xMin, xMax, xStep)
-                          if x >= trXMin and x <= trXMax]
-            else:
-                xTicks = [x for x in _ticks(xMin, xMax, xStep)
-                          if x >= trXMin and x <= trXMax]
-
-            yMin, yMax, yStep, yNbFrac = niceNumbers(trYMin, trYMax,
-                                                     nTicks)
-            if self._isYLog:
-                yTicks = [pow(10, y) for y in _ticks(yMin, yMax, yStep)
-                          if y >= trYMin and y <= trYMax]
-            else:
-                yTicks = [y for y in _ticks(yMin, yMax, yStep)
-                          if y >= trYMin and y <= trYMax]
-
-            nbLinePairs += len(xTicks) + len(yTicks)
-        else:
-            xTicks, yTicks = (), ()
-
-        self._frameVertices = np.empty((nbLinePairs, 4, 2), dtype=np.float32)
-
-        plotBottom = self.winHeight - self._margins['bottom']
-        for index, xTick in enumerate(xTicks):
-            tickText = ('{:.' + str(xNbFrac) + 'f}').format(xTick)
-            xTick = self.dataToPixelCoords(xData=xTick)
-            self._frameVertices[index][0] = xTick, plotBottom
-            self._frameVertices[index][1] = xTick, plotBottom - self._tickLen
-
-            self._frameVertices[index][2] = xTick, self._margins['top']
-            self._frameVertices[index][3] = (xTick, self._margins['top'] +
-                                             self._tickLen)
-
-            self._labels.append(Text2D(tickText,
-                                       x=xTick,
-                                       y=plotBottom + self._tickLen,
-                                       align=CENTER,
-                                       valign=TOP))
-
-        plotRight = self.winWidth - self._margins['right']
-        for index, yTick in enumerate(yTicks, len(xTicks)):
-            tickText = ('{:.' + str(yNbFrac) + 'f}').format(yTick)
-            yTick = self.dataToPixelCoords(yData=yTick)
-            self._frameVertices[index][0] = self._margins['left'], yTick
-            self._frameVertices[index][1] = (self._margins['left'] +
-                                             self._tickLen, yTick)
-
-            self._frameVertices[index][2] = plotRight, yTick
-            self._frameVertices[index][3] = plotRight - self._tickLen, yTick
-
-            self._labels.append(Text2D(tickText,
-                                       x=self._margins['left'] - self._tickLen,
-                                       y=yTick,
-                                       align=RIGHT,
-                                       valign=CENTER))
-
-        self._frameVertices.shape = (4 * nbLinePairs, 2)
+        vertices, tickLabels = self._axesTicksAndLabels()
+        self._labels = tickLabels
 
         # Plot frame
         xLeft = self._margins['left']
@@ -1275,17 +1313,20 @@ class OpenGLPlotCanvas(PlotBackend):
         yBottom = self.winHeight - self._margins['bottom']
         yTop = self._margins['top']
 
-        self._frameVertices[-8] = xLeft, yBottom
-        self._frameVertices[-7] = xLeft, yTop
+        vertices.append((xLeft, yBottom))
+        vertices.append((xLeft, yTop))
 
-        self._frameVertices[-6] = xLeft, yTop
-        self._frameVertices[-5] = xRight, yTop
+        vertices.append((xLeft, yTop))
+        vertices.append((xRight, yTop))
 
-        self._frameVertices[-4] = xRight, yTop
-        self._frameVertices[-3] = xRight, yBottom
+        vertices.append((xRight, yTop))
+        vertices.append((xRight, yBottom))
 
-        self._frameVertices[-2] = xRight, yBottom
-        self._frameVertices[-1] = xLeft, yBottom
+        vertices.append((xRight, yBottom))
+        vertices.append((xLeft, yBottom))
+
+        # Build numpy array from ticks and frame vertices
+        self._frameVertices = np.array(vertices, dtype=np.float32)
 
         # Title, Labels
         plotCenterX = self._margins['left'] + plotWidth // 2
@@ -2104,7 +2145,7 @@ class OpenGLPlotCanvas(PlotBackend):
             print('OpenGLBackend.addCurve xerror not implemented')
         if yerror is not None:
             print('OpenGLBackend.addCurve yerror not implemented')
-        if kw.has_key('plot_fill'):
+        if 'plot_fill' in kw:
             print('OpenGLBackend.addCurve plot_fill not implemented')
 
         self.makeCurrent()
@@ -2355,7 +2396,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
             if flag and self.dataBounds.xMin <= 0.:
                 raise RuntimeError(
-                   'Cannot use log scale for X axis: Some data is <= 0.')
+                    'Cannot use log scale for X axis: Some data is <= 0.')
             self._isXLog = flag
             self._dirtyPlotDataTransformedBounds()
 
