@@ -50,6 +50,7 @@ except ImportError:
 import numpy as np
 import math
 import time
+import warnings
 from collections import namedtuple
 
 import OpenGL
@@ -2270,12 +2271,19 @@ class OpenGLPlotCanvas(PlotBackend):
         self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax)
 
     def isKeepDataAspectRatio(self):
-        return self._keepDataAspectRatio
+        if self._isXLog or self._isYLog:
+            return False
+        else:
+            return self._keepDataAspectRatio
 
     def keepDataAspectRatio(self, flag=True):
+        if flag and (self._isXLog or self._isYLog):
+            warnings.warn("KeepDataAspectRatio is ignored with log axes",
+                          RuntimeWarning)
+
         self._keepDataAspectRatio = flag
 
-        if self._keepDataAspectRatio:
+        if self.isKeepDataAspectRatio():
             self._ensureAspectRatio()
 
         self.resetZoom()
@@ -2289,7 +2297,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self.plotDataBounds = Bounds(xMin, xMax,
                                      self.plotDataBounds.yMin,
                                      self.plotDataBounds.yMax)
-        if self._keepDataAspectRatio:
+        if self.isKeepDataAspectRatio():
             self._ensureAspectRatio()
 
         self.updateAxis()
@@ -2301,7 +2309,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self.plotDataBounds = Bounds(self.plotDataBounds.xMin,
                                      self.plotDataBounds.xMax,
                                      yMin, yMax)
-        if self._keepDataAspectRatio:
+        if self.isKeepDataAspectRatio():
             self._ensureAspectRatio()
 
         self.updateAxis()
@@ -2309,7 +2317,7 @@ class OpenGLPlotCanvas(PlotBackend):
     def setLimits(self, xMin, xMax, yMin, yMax):
         self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax)
 
-        if self._keepDataAspectRatio:
+        if self.isKeepDataAspectRatio():
             self._ensureAspectRatio()
 
         self.updateAxis()
@@ -2341,6 +2349,10 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def setXAxisLogarithmic(self, flag=True):
         if flag != self._isXLog:
+            if flag and self._keepDataAspectRatio:
+                warnings.warn("KeepDataAspectRatio is ignored with log axes",
+                              RuntimeWarning)
+
             if flag and self.dataBounds.xMin <= 0.:
                 raise RuntimeError(
                    'Cannot use log scale for X axis: Some data is <= 0.')
@@ -2349,6 +2361,10 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def setYAxisLogarithmic(self, flag=True):
         if flag != self._isYLog:
+            if flag and self._keepDataAspectRatio:
+                warnings.warn("KeepDataAspectRatio is ignored with log axes",
+                              RuntimeWarning)
+
             if flag and self.dataBounds.yMin <= 0.:
                 raise RuntimeError(
                     'Cannot use log scale for Y axis: Some data is <= 0.')
