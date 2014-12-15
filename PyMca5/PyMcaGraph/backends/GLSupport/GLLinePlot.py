@@ -716,6 +716,15 @@ class Curve2D(object):
         self.lines.render(matrix, isXLog, isYLog)
         self.points.render(matrix, isXLog, isYLog)
 
+    def discard(self):
+        if self.xVboData is not None:
+            self.xVboData.vbo.discard()
+
+        self.xVboData = None
+        self.yVboData = None
+        self.colorVboData = None
+        self.distVboData = None
+
     def pick(self, xPickMin, yPickMin, xPickMax, yPickMax):
         if (self.marker is None and self.lineStyle is None) or \
            self.xMin > xPickMax or xPickMin > self.xMax or \

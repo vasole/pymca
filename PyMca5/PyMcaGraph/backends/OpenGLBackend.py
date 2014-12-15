@@ -75,6 +75,8 @@ from .GLSupport import *  # noqa
 class MiniOrderedDict(object):
     """Simple subset of OrderedDict for python 2.6 support"""
 
+    _DEFAULT_ARG = object()
+
     def __init__(self):
         self._dict = {}
         self._orderedKeys = []
@@ -102,6 +104,16 @@ class MiniOrderedDict(object):
 
     def get(self, key, default=None):
         return self._dict.get(key, default)
+
+    def pop(self, key, default=_DEFAULT_ARG):
+        value = self._dict.pop(key, self._DEFAULT_ARG)
+        if value is not self._DEFAULT_ARG:
+            self._orderedKeys.remove(key)
+            return value
+        elif default is self._DEFAULT_ARG:
+            raise KeyError
+        else:
+            return default
 
 
 # Bounds ######################################################################
@@ -2005,7 +2017,7 @@ class OpenGLPlotCanvas(PlotBackend):
     def removeImage(self, legend, replot=True):
         self.makeCurrent()
         try:
-            image = self._images[legend].pop()
+            image = self._images.pop(legend)
         except KeyError:
             pass
         else:
@@ -2150,7 +2162,7 @@ class OpenGLPlotCanvas(PlotBackend):
     def removeCurve(self, legend, replot=True):
         self.makeCurrent()
         try:
-            curve = self._curves[legend].pop()
+            curve = self._curves.pop(legend)
         except KeyError:
             pass
         else:
