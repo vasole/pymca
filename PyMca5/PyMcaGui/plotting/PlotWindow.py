@@ -781,11 +781,13 @@ class PlotWindow(PlotWidget.PlotWidget):
             return None
         idx = actionList.index(a.text())
         if idx == 0:
-            n = self.getPlugins()
+            n, message = self.getPlugins(exceptions=True)
             if n < 1:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Information)
-                msg.setText("Problem loading plugins")
+                msg.setWindowTitle("No plugins")
+                msg.setInformativeText(" Problem loading plugins ")
+                msg.setDetailedText(message)
                 msg.exec_()
             return
         if idx == 1:
