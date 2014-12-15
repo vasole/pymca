@@ -69,7 +69,7 @@ class PluginLoader(object):
         """
         return self._pluginDirList
 
-    def getPlugins(self, method=None, directoryList=None):
+    def getPlugins(self, method=None, directoryList=None, exceptions=False):
         """
         Import or reloads all the available plugins with the target method
 
@@ -77,7 +77,10 @@ class PluginLoader(object):
         :type method: string, default "getPlugin1DInstance"
         :param directoryList: The list of directories for the search.
         :type directoryList: list or None (default).
-        :return: The number of plugins loaded.
+        :param exceptions: If True, return the list of error messages
+        :type exceptions: boolean (default False)
+        :return: The number of plugins loaded. If exceptions is True, also the
+                 text with the error encountered.
         """
         if method is None:
             method = 'getPlugin1DInstance'
@@ -89,6 +92,7 @@ class PluginLoader(object):
         if DEBUG:
             print("method: %s" % targetMethod)
             print("directoryList: %s" % directoryList)
+        exceptionMessage = ""
         self._pluginDirList = directoryList
         self.pluginList = []
         for directory in self._pluginDirList:
@@ -126,7 +130,7 @@ class PluginLoader(object):
                         del self.pluginInstanceDict[plugin]
                     if plugin in sys.modules:
                         if hasattr(sys.modules[plugin], targetMethod):
-                            if sys.version.startswith('3.3'):
+                            if sys.version.startswith('3'):
                                 import imp
                                 imp.reload(sys.modules[plugin])
                             else:
@@ -138,10 +142,19 @@ class PluginLoader(object):
                         self.pluginInstanceDict[plugin] = theCall(self)
                         self.pluginList.append(plugin)
                 except:
-                    if DEBUG:
-                        print("Problem importing module %s" % plugin)
-                        raise
-        return len(self.pluginList)
+                    exceptionMessage += \
+                        "Problem importing module %s\n" % plugin
+                    exceptionMessage += "%s\n" % sys.exc_info()[0]
+                    exceptionMessage += "%s\n" % sys.exc_info()[1]
+                    exceptionMessage += "%s\n" % sys.exc_info()[2]
+
+        if len(exceptionMessage):
+            if DEBUG:
+                raise IOError(exceptionMessage)
+        if exceptions:
+            return len(self.pluginList), exceptionMessage
+        else:
+            return len(self.pluginList)
 
 def main(targetMethod, directoryList):
     loader = PluginLoader()

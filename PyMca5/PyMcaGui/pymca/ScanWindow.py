@@ -173,6 +173,24 @@ class ScanWindow(PlotWindow.PlotWindow):
         else:
             self.infoDockWidget.hide()
 
+    def _buildLegendWidget(self):
+        if self.legendWidget is None:
+            super(ScanWindow, self)._buildLegendWidget()
+            if hasattr(self, "infoDockWidget") and \
+               hasattr(self, "roiDockWidget"):
+                self.tabifyDockWidget(self.infoDockWidget,
+                                      self.roiDockWidget,
+                                      self.legendDockWidget)
+            elif hasattr(self, "infoDockWidget"):
+                self.tabifyDockWidget(self.infoDockWidget,
+                                      self.legendDockWidget)
+
+    def _toggleROI(self, position=None):
+        super(ScanWindow, self)._toggleROI(position=position)
+        if hasattr(self, "infoDockWidget"):
+            self.tabifyDockWidget(self.infoDockWidget,
+                                  self.roiDockWidget)
+
     def setDispatcher(self, w):
         w.sigAddSelection.connect(self._addSelection)
         w.sigRemoveSelection.connect(self._removeSelection)

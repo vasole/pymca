@@ -665,6 +665,9 @@ class PlotWindow(PlotWidget.PlotWidget):
                                       self.roiDockWidget)
             self.roiWidget.sigMcaROIWidgetSignal.connect(self._roiSignal)
             self.roiDockWidget.setWindowTitle(self.windowTitle()+(" ROI"))
+            # initialize with the ICR
+            self._roiSignal({'event': "AddROI"})
+
         if self.roiDockWidget.isHidden():
             self.roiDockWidget.show()
         else:
@@ -778,11 +781,13 @@ class PlotWindow(PlotWidget.PlotWidget):
             return None
         idx = actionList.index(a.text())
         if idx == 0:
-            n = self.getPlugins()
+            n, message = self.getPlugins(exceptions=True)
             if n < 1:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Information)
-                msg.setText("Problem loading plugins")
+                msg.setWindowTitle("No plugins")
+                msg.setInformativeText(" Problem loading plugins ")
+                msg.setDetailedText(message)
                 msg.exec_()
             return
         if idx == 1:
@@ -965,7 +970,10 @@ class PlotWindow(PlotWidget.PlotWidget):
                                    draggable=draggable)
             roiList.append(newroi)
             roiDict[newroi] = {}
-            roiDict[newroi]['type'] = self.getGraphXLabel()
+            if newroi == "ICR":
+                roiDict[newroi]['type'] = "Default"
+            else:
+                roiDict[newroi]['type'] = self.getGraphXLabel()
             roiDict[newroi]['from'] = fromdata
             roiDict[newroi]['to'] = todata
             self.roiWidget.fillFromROIDict(roilist=roiList,
@@ -979,7 +987,14 @@ class PlotWindow(PlotWidget.PlotWidget):
             if self._middleROIMarkerFlag:
                 self.removeMarker('ROI middle')
             roiList, roiDict = self.roiWidget.getROIListAndDict()
-            currentroi = list(roiDict.keys())[0]
+            roiDictKeys = list(roiDict.keys())
+            if len(roiDictKeys):
+                currentroi = roiDictKeys[0]
+            else:
+                # create again the ICR
+                ddict = {"event":"AddROI"}
+                return self._roiSignal(ddict)
+                currentroi = None
             self.roiWidget.fillFromROIDict(roilist=roiList,
                                            roidict=roiDict,
                                            currentroi=currentroi)
