@@ -1210,8 +1210,8 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((xPixel,
                                          self._margins['top'] + self._tickLen))
 
-                        tickText = ('1e{:+03d}').format(xDataLog)
-                        labels.append(Text2D(text=tickText,
+                        text = ('1e{:+03d}').format(xDataLog)
+                        labels.append(Text2D(text=text,
                                              x=xPixel,
                                              y=plotBottom + self._tickLen,
                                              align=CENTER,
@@ -1231,11 +1231,11 @@ class OpenGLPlotCanvas(PlotBackend):
                                          self._margins['top'] + self._tickLen))
 
                         if xNbFrac == 0:
-                            tickText = ('{:g}').format(xData)
+                            text = ('{:g}').format(xData)
                         else:
-                            tickText = ('{:.' + str(xNbFrac) + 'f}').format(xData)
+                            text = ('{:.' + str(xNbFrac) + 'f}').format(xData)
 
-                        labels.append(Text2D(text=tickText,
+                        labels.append(Text2D(text=text,
                                              x=xPixel,
                                              y=plotBottom + self._tickLen,
                                              align=CENTER,
@@ -1257,8 +1257,8 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((plotRight, yPixel))
                         vertices.append((plotRight - self._tickLen, yPixel))
 
-                        tickText = ('1e{:+03d}').format(yDataLog)
-                        labels.append(Text2D(text=tickText,
+                        text = ('1e{:+03d}').format(yDataLog)
+                        labels.append(Text2D(text=text,
                                              x=self._margins['left'] -
                                              self._tickLen,
                                              y=yPixel,
@@ -1279,11 +1279,11 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((plotRight - self._tickLen, yPixel))
 
                         if yNbFrac == 0:
-                            tickText = '{:g}'.format(yData)
+                            text = '{:g}'.format(yData)
                         else:
-                            tickText = ('{:.' + str(yNbFrac) + 'f}').format(yData)
+                            text = ('{:.' + str(yNbFrac) + 'f}').format(yData)
 
-                        labels.append(Text2D(text=tickText,
+                        labels.append(Text2D(text=text,
                                              x=self._margins['left'] -
                                              self._tickLen,
                                              y=yPixel,
@@ -1495,33 +1495,36 @@ class OpenGLPlotCanvas(PlotBackend):
 
         trBounds = self.plotDataTransformedBounds
 
-        if xData is not None:
+        if xData is None:
+            xPixel = None
+        else:
             if self._isXLog:
-                try:
+                if xData > 0.:
                     xData = math.log10(xData)
-                except ValueError:
+                else:
                     print('xData: warning log10({})'.format(xData))
                     xData = 0.
-            xPixel = self._margins['left'] + \
-                plotWidth * (xData - trBounds.xMin) / trBounds.width
-        if yData is not None:
+            xPixel = int(self._margins['left'] +
+                         plotWidth * (xData - trBounds.xMin) / trBounds.width)
+
+        if yData is None:
+            yPixel = None
+        else:
             if self._isYLog:
-                try:
+                if yData > 0.:
                     yData = math.log10(yData)
-                except ValueError:
+                else:
                     print('yData: warning log10({})'.format(yData))
                     yData = 0.
             yOffset = plotHeight * (yData - trBounds.yMin) / trBounds.height
             if self._isYInverted:
-                yPixel = self._margins['top'] + yOffset
+                yPixel = int(self._margins['top'] + yOffset)
             else:
-                yPixel = self.winHeight - self._margins['bottom'] - yOffset
+                yPixel = int(self.winHeight - self._margins['bottom'] -
+                             yOffset)
 
         if xData is None:
-            try:
-                return yPixel
-            except NameError:
-                return None
+            return yPixel
         elif yData is None:
             return xPixel
         else:
@@ -1736,8 +1739,8 @@ class OpenGLPlotCanvas(PlotBackend):
                 xPixel, yPixel = self.dataToPixelCoords(xCoord, yCoord)
                 x0, y0 = self.pixelToDataCoords(xPixel - 2 * pixelOffset,
                                                 yPixel - 2 * pixelOffset)
-                x1, y1 = self.pixelToDataCoords(xPixel + 2 * pixelOffset,
-                                                yPixel + 2 * pixelOffset)
+                x1, y1 = self.pixelToDataCoords(xPixel + 2 * pixelOffset + 1.,
+                                                yPixel + 2 * pixelOffset + 1.)
 
                 vertices = np.array(((x0, yCoord), (x1, yCoord),
                                      (xCoord, y0), (xCoord, y1)),
