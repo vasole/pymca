@@ -2445,13 +2445,15 @@ class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
     def __init__(self, parent=None, **kw):
         QGLWidget.__init__(self, parent)
         self.setAutoFillBackground(False)
-        self.setMinimumSize(300, 300)  # TODO better way ?
         self.setMouseTracking(True)
 
         OpenGLPlotCanvas.__init__(self, parent, **kw)
 
     # Mouse events #
     _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle'}
+
+    def sizeHint(self):
+        return qt.QSize(8 * 80, 6 * 80)  # Mimic MatplotlibBackend
 
     def mousePressEvent(self, event):
         xPixel, yPixel = event.x(), event.y()
