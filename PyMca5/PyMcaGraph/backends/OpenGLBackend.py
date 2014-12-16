@@ -1031,7 +1031,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDirtyFlag = True
 
         self._mousePosition = 0, 0
-        self.focusManager = FocusManager((MarkerInteraction(self), Zoom(self)))
+        self.eventHandler = FocusManager((MarkerInteraction(self), Zoom(self)))
 
         self._plotHasFocus = set()
 
@@ -1057,22 +1057,6 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # User event handling #
 
-    @property
-    def eventHandler(self):
-        eventHandlers = self.focusManager.eventHandlers
-        if len(eventHandlers) == 1:
-            return None
-        else:
-            return eventHandlers[-1]
-
-    @eventHandler.setter
-    def eventHandler(self, handler):
-        if handler is None:
-            self.focusManager = FocusManager((MarkerInteraction(self),))
-        else:
-            self.focusManager = FocusManager((MarkerInteraction(self),
-                                             handler))
-
     def _mouseInPlotArea(self, x, y):
         xPlot = clamp(x, self._margins['left'],
                       self.winWidth - self._margins['right'])
@@ -1083,7 +1067,7 @@ class OpenGLPlotCanvas(PlotBackend):
     def onMousePress(self, xPixel, yPixel, btn):
         if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
             self._plotHasFocus.add(btn)
-            self.focusManager.handleEvent('press', xPixel, yPixel, btn)
+            self.eventHandler.handleEvent('press', xPixel, yPixel, btn)
 
     def onMouseMove(self, xPixel, yPixel):
         # Signal mouse move event
@@ -1096,7 +1080,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
             self._mousePosition = xPixel, yPixel
-            self.focusManager.handleEvent('move', xPixel, yPixel)
+            self.eventHandler.handleEvent('move', xPixel, yPixel)
 
     def onMouseRelease(self, xPixel, yPixel, btn):
         try:
@@ -1106,11 +1090,11 @@ class OpenGLPlotCanvas(PlotBackend):
         else:
             # Use position of last move inside
             xPixel, yPixel = self._mousePosition
-            self.focusManager.handleEvent('release', xPixel, yPixel, btn)
+            self.eventHandler.handleEvent('release', xPixel, yPixel, btn)
 
     def onMouseWheel(self, xPixel, yPixel, angleInDegrees):
         if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
-            self.focusManager.handleEvent('wheel', xPixel, yPixel,
+            self.eventHandler.handleEvent('wheel', xPixel, yPixel,
                                           angleInDegrees)
 
     # Picking #
@@ -1991,7 +1975,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 image.xScale = xScale[1]
                 image.yMin = yScale[0]
                 image.yScale = yScale[1]
-                image.colormap = colormap
+                image.colormap = colormap['name'][:]
                 image.cmapIsLog = colormapIsLog
                 image.cmapRange = cmapRange
                 image.updateData(data)
@@ -2251,7 +2235,7 @@ class OpenGLPlotCanvas(PlotBackend):
             if not isinstance(self.eventHandler, eventHandlerClass):
                 self.eventHandler = eventHandlerClass(self, parameters)
         elif isinstance(self.eventHandler, eventHandlerClass):
-            self.eventHandler = None
+            self.eventHandler = MarkerInteraction(self)
 
     def getDrawMode(self):
         if self.isDrawModeEnabled():
@@ -2262,14 +2246,15 @@ class OpenGLPlotCanvas(PlotBackend):
     # Zoom #
 
     def isZoomModeEnabled(self):
-        return isinstance(self.eventHandler, Zoom)
+        return isinstance(self.eventHandler, FocusManager)
 
     def setZoomModeEnabled(self, flag=True):
         if flag:
-            if not isinstance(self.eventHandler, Zoom):
-                self.eventHandler = Zoom(self)
-        elif isinstance(self.eventHandler, Zoom):
-            self.eventHandler = None
+            if not isinstance(self.eventHandler, FocusManager):
+                self.eventHandler = FocusManager((MarkerInteraction(self),
+                                                 Zoom(self)))
+        elif isinstance(self.eventHandler, FocusManager):
+            self.eventHandler = MarkerInteraction(self)
 
     def resetZoom(self):
         if self.isXAxisAutoScale() and self.isYAxisAutoScale():
