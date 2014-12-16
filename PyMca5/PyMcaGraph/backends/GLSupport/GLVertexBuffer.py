@@ -53,16 +53,16 @@ class VertexBuffer(object):
         self._vboId = glGenBuffers(1)
         self.bind()
         if data is None:
-            assert(sizeInBytes is not None)
+            assert sizeInBytes is not None
             self._size = sizeInBytes
             glBufferData(GL_ARRAY_BUFFER,
                          self._size,
                          c_void_p(0),
                          usage)
         else:
-            assert(isinstance(data, np.ndarray) and data.flags['C_CONTIGUOUS'])
+            assert isinstance(data, np.ndarray) and data.flags['C_CONTIGUOUS']
             if sizeInBytes is not None:
-                assert(sizeInBytes <= data.nbytes)
+                assert sizeInBytes <= data.nbytes
 
             self._size = sizeInBytes or data.nbytes
             glBufferData(GL_ARRAY_BUFFER,
@@ -98,10 +98,10 @@ class VertexBuffer(object):
         glBindBuffer(GL_ARRAY_BUFFER, self.vboId)
 
     def update(self, data, offsetInBytes=0, sizeInBytes=None):
-        assert(isinstance(data, np.ndarray) and data.flags['C_CONTIGUOUS'])
+        assert isinstance(data, np.ndarray) and data.flags['C_CONTIGUOUS']
         if sizeInBytes is None:
             sizeInBytes = data.nbytes
-        assert(offsetInBytes + sizeInBytes <= self.size)
+        assert offsetInBytes + sizeInBytes <= self.size
         with self:
             glBufferSubData(GL_ARRAY_BUFFER, offsetInBytes, sizeInBytes, data)
 
@@ -130,7 +130,7 @@ class VBOAttrib(object):
     """Describes data stored in a VBO
     """
 
-    _GL_TYPES = GL_FLOAT, GL_INT
+    _GL_TYPES = GL_UNSIGNED_BYTE, GL_FLOAT, GL_INT
 
     def __init__(self, vbo, type_,
                  size, dimension=1,
@@ -144,10 +144,10 @@ class VBOAttrib(object):
         :param int stride: Data stride in the VBO
         """
         self.vbo = vbo
-        assert(type_ in self._GL_TYPES)
+        assert type_ in self._GL_TYPES
         self.type_ = type_
         self.size = size
-        assert(dimension >= 1 and dimension <= 4)
+        assert dimension >= 1 and dimension <= 4
         self.dimension = dimension
         self.offset = offset
         self.stride = stride
@@ -165,10 +165,13 @@ class VBOAttrib(object):
 def convertNumpyToGLType(type_):
     if type_ == np.float32:
         return GL_FLOAT
+    elif type_ == np.uint8:
+        return GL_UNSIGNED_BYTE
     else:
         raise RuntimeError("Cannot convert dtype {} to GL type".format(type_))
 
 _GL_TYPE_SIZES = {
+    GL_UNSIGNED_BYTE: 1,
     GL_FLOAT: 4,
     GL_INT: 4
 }
@@ -186,7 +189,7 @@ def createVBOFromArrays(arrays, usage=None):
     vboSize = 0
     for data in arrays:
         shape = data.shape
-        assert(len(shape) <= 2)
+        assert len(shape) <= 2
         type_ = convertNumpyToGLType(data.dtype)
         size = shape[0]
         dimension = 1 if len(shape) == 1 else shape[1]

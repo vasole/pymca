@@ -318,6 +318,7 @@ class MatplotlibGraph(FigureCanvas):
                                    QtGui.QSizePolicy.Expanding)
 
         self.__lastMouseClick = ["middle", time.time()]
+        self._zoomEnabled = False
         self.__zooming = False
         self.__picking = False
         self.__markerMoving = False

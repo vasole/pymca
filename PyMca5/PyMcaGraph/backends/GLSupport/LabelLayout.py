@@ -31,9 +31,7 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-This module implements graph labels layout using nice numbers by Paul Heckbert
-From "Graphics Gems", Academic Press, 1990
-http://tog.acm.org/resources/GraphicsGems/gems/Label.c
+This module implements labels layout on graph axes
 """
 
 
@@ -44,11 +42,10 @@ import math
 
 # Nice Numbers ################################################################
 
-
-def _niceNum(value, round_=False):
+def _niceNum(value, isRound=False):
     expValue = math.floor(math.log10(value))
     frac = value/pow(10., expValue)
-    if round_:
+    if isRound:
         if frac < 1.5:
             niceFrac = 1.
         elif frac < 3.:
@@ -69,26 +66,75 @@ def _niceNum(value, round_=False):
     return niceFrac * pow(10., expValue)
 
 
-def niceNumbers(min_, max_, nTick):
-    """Return tick positions
-    :param float min_: The min value on the axis
-    :param float max_: The max value on the axis
-    :param int nTick: The number of ticks to position
+def niceNumbers(vMin, vMax, nTicks=5):
+    """Returns tick positions
+
+    This function implements graph labels layout using nice numbers
+    by Paul Heckbert from "Graphics Gems", Academic Press, 1990.
+    See `C code <http://tog.acm.org/resources/GraphicsGems/gems/Label.c>`_.
+
+    :param float vMin: The min value on the axis
+    :param float vMax: The max value on the axis
+    :param int nTicks: The number of ticks to position
     :returns: min, max, increment value of tick positions and
     number of fractional digit to show
     :rtype: tuple
     """
-    range_ = _niceNum(max_ - min_, False)
-    tickSpacing = _niceNum(range_/nTick, True)
-    graphMin = math.floor(min_/tickSpacing) * tickSpacing
-    graphMax = math.ceil(max_/tickSpacing) * tickSpacing
-    nFrac = max(int(-math.floor(math.log10(tickSpacing))), 0)
-    return (graphMin, graphMax, tickSpacing, nFrac)
+    vRange = _niceNum(vMax - vMin, False)
+    tickSpacing = _niceNum(vRange / nTicks, True)
+    graphMin = math.floor(vMin / tickSpacing) * tickSpacing
+    graphMax = math.ceil(vMax / tickSpacing) * tickSpacing
+    nFrac = int(-math.floor(math.log10(tickSpacing)))
+    if nFrac < 0:
+        nFrac = 0
+    return graphMin, graphMax, tickSpacing, nFrac
+
+
+# Nice Numbers for log scale ##################################################
+
+def niceNumbersForLog10(minLog, maxLog, nTicks=5):
+    """Return tick positions for logarithmic scale
+
+    :param float minLog: log10 of the min value on the axis
+    :param float maxLog: log10 of the max value on the axis
+    :param int nTicks: The number of ticks to position
+    :returns: log10 of min, max and increment value of tick positions
+    :rtype: tuple of int
+    """
+    graphMinLog = math.floor(minLog)
+    graphMaxLog = math.ceil(maxLog)
+    rangeLog = graphMaxLog - graphMinLog
+
+    if rangeLog <= nTicks:
+        tickSpacing = 1.
+    else:
+        tickSpacing = math.floor(rangeLog / nTicks)
+
+        graphMinLog = math.floor(graphMinLog / tickSpacing) * tickSpacing
+        graphMaxLog = math.ceil(graphMaxLog / tickSpacing) * tickSpacing
+
+    return int(graphMinLog), int(graphMaxLog), int(tickSpacing)
 
 
 # main ########################################################################
 
 if __name__ == "__main__":
-    nTick = 5
-    for min_, max_ in [(0.5, 10.5), (10000., 10000.5), (0.001, 0.005)]:
-        print(min_, max_, niceNumbers(min_, max_, nTick))
+    niceNumbersTests = [
+        (0.5, 10.5),
+        (10000., 10000.5),
+        (0.001, 0.005)
+    ]
+
+    for vMin, vMax in niceNumbersTests:
+        print("niceNumbers({}, {}): {}".format(
+            vMin, vMax, niceNumbers(vMin, vMax)))
+
+    niceNumbersForLog10Tests = [  # This are log10 min, max
+        (0., 3.),
+        (-3., 3),
+        (-32., 0.)
+    ]
+
+    for vMin, vMax in niceNumbersForLog10Tests:
+        print("niceNumbersForLog10({}, {}): {}".format(
+            vMin, vMax, niceNumbersForLog10(vMin, vMax)))
