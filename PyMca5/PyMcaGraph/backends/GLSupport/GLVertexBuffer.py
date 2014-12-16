@@ -130,7 +130,7 @@ class VBOAttrib(object):
     """Describes data stored in a VBO
     """
 
-    _GL_TYPES = GL_FLOAT, GL_INT
+    _GL_TYPES = GL_UNSIGNED_BYTE, GL_FLOAT, GL_INT
 
     def __init__(self, vbo, type_,
                  size, dimension=1,
@@ -165,10 +165,13 @@ class VBOAttrib(object):
 def convertNumpyToGLType(type_):
     if type_ == np.float32:
         return GL_FLOAT
+    elif type_ == np.uint8:
+        return GL_UNSIGNED_BYTE
     else:
         raise RuntimeError("Cannot convert dtype {} to GL type".format(type_))
 
 _GL_TYPE_SIZES = {
+    GL_UNSIGNED_BYTE: 1,
     GL_FLOAT: 4,
     GL_INT: 4
 }
