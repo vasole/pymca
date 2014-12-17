@@ -2000,6 +2000,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 np.can_cast(data.dtype, np.float32)
 
             if oldImage is not None:
+                image = oldImage
                 image.xMin = xScale[0]
                 image.xScale = xScale[1]
                 image.yMin = yScale[0]
