@@ -2030,8 +2030,8 @@ class OpenGLPlotCanvas(PlotBackend):
             raise RuntimeError("Unsupported data shape {0}".format(data.shape))
 
         if oldImage is None or \
-           oldXScale != image.xScale or \
-           oldYScale != image.yScale:
+           oldXScale != xScale or \
+           oldYScale != yScale:
 
             self._dirtyDataBounds()
             self.setLimits(self.dataBounds.xMin, self.dataBounds.xMax,
