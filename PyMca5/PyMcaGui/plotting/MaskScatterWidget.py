@@ -31,10 +31,10 @@ import sys
 import os
 import numpy
 from PyMca5.PyMcaGraph.ctools import pnpoly
-
 DEBUG = 0
 
 from . import PlotWindow
+from . import MaskImageWidget
 qt = PlotWindow.qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -49,7 +49,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                  control=False, position=False, maxNRois=1, grid=False,
                  logx=False, logy=False, togglePoints=False, normal=True,
                  polygon=True, colormap=True, aspect=True,
-                 imageIcons=True, **kw):
+                 imageIcons=True, bins=None, **kw):
         super(MaskScatterWidget, self).__init__(parent=parent,
                                                 backend=backend,
                                                 plugins=plugins,
@@ -80,7 +80,10 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._zoomMode = True
         self._eraseMode = False
         self._brushMode = False
-        self.setPlotViewMode("scatter")
+        self._bins = bins
+        self._densityPlotWidget = None
+        self._pixmap = None
+        self.setPlotViewMode("scatter", bins=bins)
         self.setDrawModeEnabled(False)
 
     def setPlotViewMode(self, mode="scatter", bins=None):
@@ -103,15 +106,72 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         if hasattr(self, "polygonSelectionToolButton"):
             self.polygonSelectionToolButton.setCheckable(True)
 
-    def _activateDensityPlotView(self, bins):
-        self._plotViewMode = "density"
-        for key in ["colormap", "brushSelection", "brush", "rectangle"]:
-            self.setToolBarActionVisible(key, True)
-        if hasattr(self, "eraseSelectionToolButton"):
-            self.eraseSelectionToolButton.setCheckable(False)
-        if hasattr(self, "polygonSelectionToolButton"):
-            self.polygonSelectionToolButton.setCheckable(False)
-        raise NotImplemented("Density plot view not implemented yet")
+    def _activateDensityPlotView(self, bins=None):
+        if 0:
+            self._plotViewMode = "density"
+            for key in ["colormap", "brushSelection", "brush", "rectangle"]:
+                self.setToolBarActionVisible(key, True)
+            if hasattr(self, "eraseSelectionToolButton"):
+                self.eraseSelectionToolButton.setCheckable(False)
+            if hasattr(self, "polygonSelectionToolButton"):
+                self.polygonSelectionToolButton.setCheckable(False)
+
+        if self._densityPlotWidget is None:
+            self._densityPlotWidget = MaskImageWidget.MaskImageWidget(
+                            imageicons=True,
+                            selection=True,
+                            profileselection=True,
+                            aspect=True,
+                            polygon=True)
+            self._densityPlotWidget.sigMaskImageWidgetSignal.connect(self._densityPlotSlot)
+        self._updateDensityPlot(bins)
+        self._densityPlotWidget.show()
+
+    def _updateDensityPlot(self, bins=None):
+        if self._densityPlotWidget is None:
+            return
+        curve = self.getCurve(self._selectionCurve)
+        if curve is None:
+            return
+        x, y, legend, info = curve[0:4]
+        if bins is not None:
+            if type(bins) == type(1):
+                bins = (bins, bins)
+            elif len(bins) == 0:
+                bins = (bins[0], bins[0])
+            else:
+                bins = bins[0:2]
+        elif self._bins is None:
+            bins = [int(x.size/ 10), int(y.size/10)]
+            if bins[0] > 100:
+                bins[0] = 100
+            if bins[1] > 100:
+                bins[1] = 100            
+        else:
+            bins = self._bins
+        x0 = x.min()
+        y0 = y.min()
+        deltaX = (x.max() - x0)/float(bins[0] - 1)
+        deltaY = (y.max() - y0)/float(bins[1] - 1)
+        self.xScale = (x0, deltaX)
+        self.yScale = (y0, deltaY)
+        binsX = numpy.arange(bins[0]) * deltaX
+        binsY = numpy.arange(bins[1]) * deltaY
+        image = numpy.histogram2d(y, x, bins=(binsY, binsX), normed=False)
+        self._binsX = image[2]
+        self._binsY = image[1]
+        self._bins = bins
+        self._densityPlotWidget.graphWidget.graph.setGraphXLabel(self.getGraphXLabel())
+        self._densityPlotWidget.graphWidget.graph.setGraphYLabel(self.getGraphYLabel())
+        self._densityPlotWidget.setImageData(image[0], xScale=self.xScale,
+                                                      yScale=self.yScale)
+        if 0:
+            # do not ovelay plot (yet)
+            pixmap = self._densityPlotWidget.getPixmap() * 1
+            pixmap[:, :, 3] = 128
+            self.addImage(pixmap, xScale=(x0, deltaX), yScale=(y0, deltaY), z=10)
+            self._pixmap = pixmap
+            #raise NotImplemented("Density plot view not implemented yet")
 
     def setSelectionCurveData(self, x, y, legend="MaskScatterWidget", info=None,
                  replot=True, replace=True, linestyle=" ", color="r", symbol=None, **kw):
@@ -128,6 +188,10 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 symbol = ","
         self.addCurve(x=x, y=y, legend=legend, info=info,
                  replace=replace, replot=replot, linestyle=linestyle, color=color, symbol=symbol, **kw)
+        if self._pixmap is not None:
+            self._updateDensityPlot()
+            self.addImage(self._pixmap, xScale=self.xScale,
+                                        yScale=self.yScale, z=10)
         self._selectionCurve = legend
 
     def setSelectionMask(self, mask=None, plot=True):
@@ -153,7 +217,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                     else:
                         self._selectionMask = mask
                 else:
-                    raise ValueError("Mask size = %d while data size = %d" % (mask.size(), x.size()))
+                    raise ValueError("Mask size = %d while data size = %d" % (mask.size, x.size))
         if plot:
             self._updatePlot()
 
@@ -277,12 +341,14 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._additionalSelectionMenu = {}
         #scatter view menu
         menu = qt.QMenu()
+        menu.addAction(QString("Density plot view"), self.__setDensityPlotView)
         menu.addAction(QString("Reset Selection"), self.__resetSelection)
         menu.addAction(QString("Invert Selection"), self._invertSelection)
         self._additionalSelectionMenu["scatter"] = menu
 
         # density view menu
         menu = qt.QMenu()
+        menu.addAction(QString("Scatter plot view"), self.__setScatterPlotView)
         menu.addAction(QString("Reset Selection"), self.__resetSelection)
         menu.addAction(QString("Invert Selection"), self._invertSelection)
         menu.addAction(QString("I >= Colormap Max"), self._selectMax)
@@ -290,6 +356,12 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                                                 self._selectMiddle)
         menu.addAction(QString("I <= Colormap Min"), self._selectMin)
         self._additionalSelectionMenu["density"] = menu
+
+    def __setScatterPlotView(self):
+        self.setPlotViewMode(mode="scatter")
+
+    def __setDensityPlotView(self):
+        self.setPlotViewMode(mode="density")
 
     def _additionalIconSignal(self):
         if self._plotViewMode == "density": # and imageData is not none ...
@@ -369,16 +441,88 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self.plotImage(update=False)
         self._emitMaskChangedSignal()
 
+    def _densityPlotSlot(self, ddict):
+        if ddict["event"] == "resetSelection":
+            self.__resetSelection()
+            return
+        if ddict["event"] not in ["selectionMaskChanged"]:
+            return
+        densityPlotMask = ddict["current"]
+        curve = self.getCurve(self._selectionCurve)
+        if curve is None:
+            return
+        x, y, legend, info = curve[0:4]
+        bins = self._bins
+        x0 = x.min()
+        y0 = y.min()
+        deltaX = (x.max() - x0)/float(bins[0])
+        deltaY = (y.max() - y0)/float(bins[1])
+        if self._selectionMask is None:
+            view = numpy.zeros(x.size, dtype=numpy.uint8)
+        else:
+            view = numpy.zeros(self._selectionMask.size, dtype=self._selectionMask.dtype)
+        if DEBUG:
+            # this works even on unordered data
+            for i in range(x.size):
+                row = int((y[i] - y0) /deltaY)
+                column = int((x[i] - x0) /deltaX)
+                try:
+                    value = densityPlotMask[row, column]
+                except:
+                    if row >= densityPlotMask.shape[0]:
+                        row = densityPlotMask.shape[0] - 1
+                    if column >= densityPlotMask.shape[1]:
+                        column = densityPlotMask.shape[1] - 1
+                    value = densityPlotMask[row, column]
+                if value:
+                    view[i] = value
+            if self._selectionMask is not None:
+                view.shape = self._selectionMask.shape
+        if self._selectionMask is None:
+            view2 = numpy.zeros(x.size, dtype=numpy.uint8)
+        else:
+            view2 = numpy.zeros(self._selectionMask.size, dtype=self._selectionMask.dtype)
+        columns = numpy.digitize(x, self._binsX, right=True)
+        columns[columns>=densityPlotMask.shape[1]] = densityPlotMask.shape[1] - 1
+        rows = numpy.digitize(y, self._binsY, right=True)
+        rows[rows>=densityPlotMask.shape[0]] = densityPlotMask.shape[0] - 1
+        values = densityPlotMask[rows, columns]
+        values.shape = -1
+        view2[:] = values[:]
+        if self._selectionMask is not None:
+            view2.shape = self._selectionMask.shape
+        if DEBUG:
+            if not numpy.allclose(view, view2):
+                a = view[:]
+                b = view2[:]
+                a.shape = -1
+                b.shape = -1
+                c = 0
+                for i in range(a.size):
+                    if a[i] != b[i]:
+                        print(i, "a = ", a[i], "b = ", b[i], "(x, y) = ", x[i], y[i])
+                        c += 1
+                        if c > 10:
+                            break
+            else:
+                print("OK!!!")
+        if DEBUG:
+            self.setSelectionMask(view)
+        else:
+            self.setSelectionMask(view2)
+
 if __name__ == "__main__":
+    from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
+    #from PyMca5.PyMcaGraph.backends.OpenGLBackend import OpenGLBackend as backend
     app = qt.QApplication([])
     def receivingSlot(ddict):
         print("Received: ", ddict)
-    x = numpy.arange(1000.)
-    y = x * x
-    w = MaskScatterWidget(maxNRois=10)
+    x = numpy.arange(100.)
+    y = x * 1
+    w = MaskScatterWidget(maxNRois=10, bins=(100,100), backend=backend)
     w.setSelectionCurveData(x, y, color="k")
     import numpy.random
-    w.setSelectionMask(numpy.random.permutation(1000) % 10)
+    w.setSelectionMask(numpy.random.permutation(100) % 10)
     w.setPolygonSelectionMode()
     w.sigMaskScatterWidgetSignal.connect(receivingSlot)
     w.show()
