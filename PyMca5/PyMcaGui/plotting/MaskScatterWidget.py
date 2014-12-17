@@ -145,8 +145,12 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             bins = [int(x.size/ 10), int(y.size/10)]
             if bins[0] > 100:
                 bins[0] = 100
+            elif bins[0] < 2:
+                bins[0] = 2
             if bins[1] > 100:
                 bins[1] = 100            
+            elif bins[1] < 2:
+                bins[1] = 2
         else:
             bins = self._bins
         x0 = x.min()
@@ -506,10 +510,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                             break
             else:
                 print("OK!!!")
-        if DEBUG:
-            self.setSelectionMask(view)
-        else:
-            self.setSelectionMask(view2)
+        self.setSelectionMask(view2)
 
 if __name__ == "__main__":
     from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
