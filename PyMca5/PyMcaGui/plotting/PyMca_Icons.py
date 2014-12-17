@@ -3661,19 +3661,21 @@ def showIcons():
     import sys
     from PyMca5.PyMcaGui import PyMcaQt as qt
     a= qt.QApplication(sys.argv)
-    app.lastWindowClosed.connect(app.quit)
+    a.lastWindowClosed.connect(a.quit)
     w= qt.QWidget()
     g= qt.QGridLayout(w)
 
     idx= 0
     for name,icon in IconDict.items():
+        column = int(idx / 10)
+        row = idx % 10
         #print "name",name
         lab= qt.QLabel(w)
         lab.setText(str(name))
-        g.addWidget(lab, idx, 0)
+        g.addWidget(lab, row, 2 * column + 1)
         lab= qt.QLabel(w)
         lab.setPixmap(qt.QPixmap(icon))
-        g.addWidget(lab, idx, 1)
+        g.addWidget(lab, row, 2 * column)
         idx+= 1
 
     w.show()
