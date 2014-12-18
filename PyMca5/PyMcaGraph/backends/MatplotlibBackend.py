@@ -1295,7 +1295,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, **kw):
+                 xerror=None, yerror=None, z=1, **kw):
         if legend is None:
             legend = "Unnamed curve"
         if replace:
@@ -1414,7 +1414,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             elif self._oldActiveCurveLegend == legend:
                 curveList[-1].set_color(self._activeCurveColor)
         curveList[-1].set_axes(axes)
-        curveList[-1].set_zorder(2)
+        curveList[-1].set_zorder(z)
         if replot:
             self.replot()
         # If I return the instance, later on cannot make a copy.deepcopy

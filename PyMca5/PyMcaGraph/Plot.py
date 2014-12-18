@@ -328,7 +328,7 @@ class Plot(PlotBase.PlotBase):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, **kw):
+                 xerror=None, yerror=None, z=1, **kw):
         # Convert everything to arrays (not forcing type) in order to avoid
         # problems at unexpected places: missing min or max attributes, problem
         # when using numpy.nonzero on lists, ...
