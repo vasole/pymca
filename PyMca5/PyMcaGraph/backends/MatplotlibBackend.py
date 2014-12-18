@@ -679,9 +679,11 @@ class MatplotlibGraph(FigureCanvas):
                         self._mouseData[0,1] = self._ymin
                         self._mouseData[1,0] = self._x0
                         self._mouseData[1,1] = self._ymax
+                    color=self._drawingParameters.get("color", "black")
                     self._drawingPatch = Polygon(self._mouseData,
                                              closed=True,
-                                             fill=False)
+                                             fill=False,
+                                             color=color)
                     self.ax.add_patch(self._drawingPatch)
 
     def onMouseMoved(self, event):
@@ -904,9 +906,11 @@ class MatplotlibGraph(FigureCanvas):
                 self._mouseData[0,1] = self._y0
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
+                color = self._drawingParameters.get("color", "black")
                 self._drawingPatch = Polygon(self._mouseData,
                                              closed=True,
-                                             fill=False)
+                                             fill=False,
+                                             color=color)
                 self.ax.add_patch(self._drawingPatch)
             elif self._drawModePatch == 'rectangle':
                 # already handled, just for compatibility
@@ -1452,7 +1456,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             item = Rectangle(xy=(xMin,yMin),
                              width=w,
                              height=h,
-                             fill=False)
+                             fill=False,
+                             color=color)
             if fill:
                 item.set_hatch('.')
         elif shape in ['polygon']:
@@ -1461,7 +1466,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             item = Polygon(numpyvstack((xView, yView)).T,
                             closed=True,
                             fill=False,
-                            label=label)
+                            label=label,
+                            color=color)
             if fill:
                 #item.set_hatch('+')
                 item.set_hatch('/')
