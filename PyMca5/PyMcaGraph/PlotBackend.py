@@ -193,7 +193,7 @@ class PlotBackend(object):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, z=1, **kw):
+                 xerror=None, yerror=None, z=1, selectable=True, **kw):
         """
         Add the 1D curve given by x an y to the graph.
 
@@ -245,6 +245,8 @@ class PlotBackend(object):
         :type ylabel: array
         :param z: level at which the curve is to be located (to allow overlays).
         :type z: A number bigger than or equal to zero (default: one)
+        :param selectable: indicate if the curve can be picked.
+        :type selectable: boolean default: True
         :returns: The legend/handle used by the backend to univocally access it.
         """
         print("PlotBackend addCurve not implemented")
