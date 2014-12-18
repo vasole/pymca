@@ -110,6 +110,8 @@ class MaskImageWidget(qt.QWidget):
         self._y1AxisInverted = False
         self.__selectionMask = None
         self.__imageData = None
+        self.__pixmap0 = None
+        self.__pixmap = None
         self.__image = None
         self._xScale = None
         self._yScale = None
@@ -1376,6 +1378,17 @@ class MaskImageWidget(qt.QWidget):
         self.__pixmap.shape = [data.shape[0], data.shape[1], 4]
         if not goodData:
             self.__pixmap[finiteData < 1] = 255
+        return self.__pixmap
+
+    def getPixmap(self, original=True):
+        if original:
+            if self.__pixmap0 is None:
+                return self.__pixmap
+            else:
+                return self.__pixmap0
+        else:
+            # in this case also the mask may been applied
+            return self.__pixmap
 
     def tagRoi(self, intValue):
         #get current ROI tag

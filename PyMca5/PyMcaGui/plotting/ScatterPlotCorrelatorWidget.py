@@ -39,24 +39,27 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
     def __init__(self, parent=None,
                        labels=("Legend", "X", "Y"),
                        types=("Text","RadioButton", "RadioButton"),
+                       toolbar=False,
                        **kw):
         super(ScatterPlotCorrelatorWidget, self).__init__(None, **kw)
         self._splitter = qt.QSplitter(parent)
         self._splitter.setOrientation(qt.Qt.Horizontal)
 
-        # add a toolbar on top of the table
         self.container = qt.QWidget(self._splitter)
         self.container.mainLayout = qt.QVBoxLayout(self.container)
         self.container.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.container.mainLayout.setSpacing(0)
-        self.toolBar = qt.QToolBar(self.container)
+
+        # add a toolbar on top of the table
+        if toolbar:
+            self.toolBar = qt.QToolBar(self.container)
 
         # the selection table
         self.table = SelectionTable.SelectionTable(self.container,
                                                    labels=labels,
                                                    types=types)
-        # the plot widget
-        self.container.mainLayout.addWidget(self.toolBar)
+        if toolbar:
+            self.container.mainLayout.addWidget(self.toolBar)
         self.container.mainLayout.addWidget(self.table)
         self._splitter.addWidget(self.container)
         self._splitter.addWidget(self)
@@ -126,6 +129,8 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         self._updatePlot(replot=True)
 
 if __name__ == "__main__":
+    #from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
+    from PyMca5.PyMcaGraph.backends.OpenGLBackend import OpenGLBackend as backend
     app = qt.QApplication([])
     w = ScatterPlotCorrelatorWidget(labels=["Legend",
                                             "X",
@@ -133,15 +138,25 @@ if __name__ == "__main__":
                                     types=["Text",
                                            "RadioButton",
                                            "RadioButton"],
-                                    maxNRois=2)
+                                    maxNRois=2,
+                                    backend=backend)
     w.show()
     # fill some data
     import numpy
     import numpy.random
-    x = numpy.arange(1000.)
-    w.addSelectableItem(x, "range(1000)")
-    w.addSelectableItem(x * x, "range(1000) ** 2")
-    x = numpy.random.random(1000)
-    w.addSelectableItem(x, "random(1000)")
+    import time
+    t0 = time.time()
+    x = numpy.arange(1000000.)
+    w.addSelectableItem(x, "range(%d)" % x.size)
+    print("elapsed = ", time.time() - t0)
+    w.addSelectableItem(x * x, "range(%d) ** 2"  % x.size)
+    x = numpy.random.random(x.size)
+    w.addSelectableItem(x, "random(%d)" % x.size)
     w.setPolygonSelectionMode()
+
+    def theSlot(ddict):
+        print(ddict['event'])
+
+    w.sigMaskScatterWidgetSignal.connect(theSlot)
+
     app.exec_()

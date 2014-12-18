@@ -2106,7 +2106,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             if len(data.shape) == 3:
                 if data.shape[-1] == 4:
                     # force alpha(?)
-                    data[:,:,3] = 255
+                    # data[:,:,3] = 255
                     pass
             if len(shape) == 3:
                 # RGBA image
