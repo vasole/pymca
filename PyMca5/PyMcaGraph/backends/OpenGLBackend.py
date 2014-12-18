@@ -827,16 +827,15 @@ class MarkerInteraction(ClickOrDrag):
 
                 self.backend.replot()
             else:
-                curve, posCurve = self.backend.pickCurve(x, y)
-                posCurve = np.array(posCurve, dtype=np.float32)
+                curve, pickedIndices = self.backend.pickCurve(x, y)
 
                 if curve is not None:
                     xData, yData = self.backend.pixelToDataCoords(x, y)
                     eventDict = prepareCurveSignal('left',
                                                    curve.info['legend'],
                                                    'curve',
-                                                   posCurve[:, 0],
-                                                   posCurve[:, 1],
+                                                   curve.xData[pickedIndices],
+                                                   curve.yData[pickedIndices],
                                                    xData, yData, x, y)
                     self.backend._callback(eventDict)
 
@@ -1017,9 +1016,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self.winWidth, self.winHeight = 0, 0
 
         self._markers = MiniOrderedDict()
-        self._images = MiniOrderedDict()
         self._items = MiniOrderedDict()
-        self._curves = MiniOrderedDict()
+        self._zOrderedItems = MiniOrderedDict()  # For images and curves
         self._labels = []
         self._selectionArea = None
 
@@ -1125,36 +1123,41 @@ class OpenGLPlotCanvas(PlotBackend):
             test = lambda image: True
 
         xPick, yPick = self.pixelToDataCoords(x, y)
-        for image in reversed(self._images.values()):
-            pickedPos = image.pick(xPick, yPick)
-            if pickedPos is not None and test(image):
-                return image, pickedPos
+        for item in sorted(self._zOrderedItems.values(),
+                           key=lambda item: - item.info['zOrder']):
+            if isinstance(item, (GLColormap, GLRGBAImage)):
+                pickedPos = item.pick(xPick, yPick)
+                if pickedPos is not None and test(item):
+                    return item, pickedPos
         return None, None
 
     def pickCurve(self, x, y):
-        for curve in reversed(self._curves.values()):
-            offset = self._PICK_OFFSET
-            if curve.marker is not None:
-                offset = max(curve.markerSize / 2., offset)
-            if curve.lineStyle is not None:
-                offset = max(curve.lineWidth / 2., offset)
+        for item in sorted(self._zOrderedItems.values(),
+                           key=lambda item: - item.info['zOrder']):
+            if isinstance(item, Curve2D):
+                offset = self._PICK_OFFSET
+                if item.marker is not None:
+                    offset = max(item.markerSize / 2., offset)
+                if item.lineStyle is not None:
+                    offset = max(item.lineWidth / 2., offset)
 
-            xPick0, yPick0 = self.pixelToDataCoords(x - offset, y - offset)
-            xPick1, yPick1 = self.pixelToDataCoords(x + offset, y + offset)
+                xPick0, yPick0 = self.pixelToDataCoords(x - offset, y - offset)
+                xPick1, yPick1 = self.pixelToDataCoords(x + offset, y + offset)
 
-            if xPick0 < xPick1:
-                xPickMin, xPickMax = xPick0, xPick1
-            else:
-                xPickMin, xPickMax = xPick1, xPick0
+                if xPick0 < xPick1:
+                    xPickMin, xPickMax = xPick0, xPick1
+                else:
+                    xPickMin, xPickMax = xPick1, xPick0
 
-            if yPick0 < yPick1:
-                yPickMin, yPickMax = yPick0, yPick1
-            else:
-                yPickMin, yPickMax = yPick1, yPick0
+                if yPick0 < yPick1:
+                    yPickMin, yPickMax = yPick0, yPick1
+                else:
+                    yPickMin, yPickMax = yPick1, yPick0
 
-            picked = curve.pick(xPickMin, yPickMin, xPickMax, yPickMax)
-            if picked:
-                return curve, picked
+                pickedIndices = item.pick(xPickMin, yPickMin,
+                                          xPickMax, yPickMax)
+                if pickedIndices:
+                    return item, pickedIndices
         return None, None
 
     # Manage Plot #
@@ -1351,24 +1354,15 @@ class OpenGLPlotCanvas(PlotBackend):
         except AttributeError:
             xMin, xMax = float('inf'), -float('inf')
             yMin, yMax = float('inf'), -float('inf')
-            for image in self._images.values():
-                if image.xMin < xMin:
-                    xMin = image.xMin
-                if image.xMax > xMax:
-                    xMax = image.xMax
-                if image.yMin < yMin:
-                    yMin = image.yMin
-                if image.yMax > yMax:
-                    yMax = image.yMax
-            for curve in self._curves.values():
-                if curve.xMin < xMin:
-                    xMin = curve.xMin
-                if curve.xMax > xMax:
-                    xMax = curve.xMax
-                if curve.yMin < yMin:
-                    yMin = curve.yMin
-                if curve.yMax > yMax:
-                    yMax = curve.yMax
+            for item in self._zOrderedItems.values():
+                if item.xMin < xMin:
+                    xMin = item.xMin
+                if item.xMax > xMax:
+                    xMax = item.xMax
+                if item.yMin < yMin:
+                    yMin = item.yMin
+                if item.yMax > yMax:
+                    yMax = item.yMax
 
             if xMin >= xMax:
                 xMin, xMax = 1., 100.
@@ -1571,7 +1565,8 @@ class OpenGLPlotCanvas(PlotBackend):
         glClearStencil(0)
 
         glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE)
 
         # For lines
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
@@ -1813,16 +1808,11 @@ class OpenGLPlotCanvas(PlotBackend):
         glViewport(self._margins['left'], self._margins['right'],
                    plotWidth, plotHeight)
 
-        # Render Images
+        # Render images and curves
         # sorted is stable: original order is preserved when key is the same
-        for image in sorted(self._images.values(),
-                            key=lambda img: img.info['zOrder']):
-            image.render(self.matrixPlotDataTransformedProj,
-                         self._isXLog, self._isYLog)
-
-        # Render Curves
-        for curve in self._curves.values():
-            curve.render(self.matrixPlotDataTransformedProj,
+        for item in sorted(self._zOrderedItems.values(),
+                           key=lambda item: item.info['zOrder']):
+            item.render(self.matrixPlotDataTransformedProj,
                          self._isXLog, self._isYLog)
 
         # Render Items
@@ -1933,7 +1923,7 @@ class OpenGLPlotCanvas(PlotBackend):
         if draggable:
             behaviors.add('draggable')
 
-        oldImage = self._images.get(legend, None)
+        oldImage = self._zOrderedItems.get(('image', legend), None)
         if oldImage is not None:
             if oldImage.data.shape == data.shape:
                 oldXScale = oldImage.xMin, oldImage.xScale
@@ -1991,7 +1981,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 'zOrder': z,
                 'behaviors': behaviors
             }
-            self._images[legend] = image
+            self._zOrderedItems[('image', legend)] = image
 
         elif len(data.shape) == 3:
             # For RGB, RGBA data
@@ -2024,7 +2014,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 raise RuntimeError(
                     'Cannot add image with Y <= 0 with Y axis log scale')
 
-            self._images[legend] = image
+            self._zOrderedItems[('image', legend)] = image
 
         else:
             raise RuntimeError("Unsupported data shape {0}".format(data.shape))
@@ -2045,12 +2035,12 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend  # This is the 'handle'
 
     def removeImage(self, legend, replot=True):
-        self.makeCurrent()
         try:
-            image = self._images.pop(legend)
+            image = self._zOrderedItems.pop(('image', legend))
         except KeyError:
             pass
         else:
+            self.makeCurrent()
             image.discard()
             self._plotDirtyFlag = True
 
@@ -2058,8 +2048,10 @@ class OpenGLPlotCanvas(PlotBackend):
             self.replot()
 
     def clearImages(self):
-        for image in list(self._images.keys()):
-            self.removeImage(image, replot=False)
+        # Copy keys as it removes items from the dict
+        for type_, legend in list(self._zOrderedItems.keys()):
+            if type_ == 'image':
+                self.removeImage(legend, replot=False)
         self._plotDirtyFlag = True
 
     def addItem(self, xList, yList, legend=None, info=None,
@@ -2122,7 +2114,7 @@ class OpenGLPlotCanvas(PlotBackend):
                  replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, **kw):
+                 xerror=None, yerror=None, z=1, **kw):
         if xlabel is not None:
             print('OpenGLBackend.addCurve xlabel not implemented')
         if ylabel is not None:
@@ -2141,7 +2133,7 @@ class OpenGLPlotCanvas(PlotBackend):
         x = np.array(x, dtype=np.float32, copy=False, order='C')
         y = np.array(y, dtype=np.float32, copy=False, order='C')
 
-        oldCurve = self._curves.get(legend, None)
+        oldCurve = self._zOrderedItems.get(('curve', legend), None)
         if oldCurve is not None:
             self.removeCurve(legend)
 
@@ -2164,7 +2156,7 @@ class OpenGLPlotCanvas(PlotBackend):
                         lineWidth=1,
                         marker=symbol,
                         markerColor=color)
-        curve.info = {'legend': legend}
+        curve.info = {'legend': legend, 'zOrder': z}
 
         if self._isXLog and curve.xMin <= 0.:
             raise RuntimeError(
@@ -2173,7 +2165,7 @@ class OpenGLPlotCanvas(PlotBackend):
             raise RuntimeError(
                 'Cannot add curve with Y <= 0 with Y axis log scale')
 
-        self._curves[legend] = curve
+        self._zOrderedItems[('curve', legend)] = curve
 
         if oldCurve is None or \
            oldCurve.xMin != curve.xMin or oldCurve.xMax != curve.xMax or \
@@ -2192,7 +2184,7 @@ class OpenGLPlotCanvas(PlotBackend):
     def removeCurve(self, legend, replot=True):
         self.makeCurrent()
         try:
-            curve = self._curves.pop(legend)
+            curve = self._zOrderedItems.pop(('curve', legend))
         except KeyError:
             pass
         else:
@@ -2203,8 +2195,10 @@ class OpenGLPlotCanvas(PlotBackend):
             self.replot()
 
     def clearCurves(self):
-        for curve in list(self._curves.keys()):
-            self.removeCurve(curve, replot=False)
+        # Copy keys as dict is changed
+        for type_, legend in list(self._zOrderedItems.keys()):
+            if type_ == 'curve':
+                self.removeCurve(legend, replot=False)
         self._plotDirtyFlag = True
 
     def clear(self):
