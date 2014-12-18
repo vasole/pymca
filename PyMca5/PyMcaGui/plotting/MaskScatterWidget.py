@@ -167,8 +167,10 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._bins = bins
         self._densityPlotWidget.graphWidget.graph.setGraphXLabel(self.getGraphXLabel())
         self._densityPlotWidget.graphWidget.graph.setGraphYLabel(self.getGraphYLabel())
-        self._densityPlotWidget.setImageData(image[0], xScale=self.xScale,
-                                                      yScale=self.yScale)
+        self._densityPlotWidget.setImageData(image[0],
+                                             clearmask=False,
+                                             xScale=self.xScale,
+                                             yScale=self.yScale)
         if 0:
             # do not ovelay plot (yet)
             pixmap = self._densityPlotWidget.getPixmap() * 1
@@ -178,20 +180,28 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             #raise NotImplemented("Density plot view not implemented yet")
 
     def setSelectionCurveData(self, x, y, legend="MaskScatterWidget", info=None,
-                 replot=True, replace=True, linestyle=" ", color="r", symbol=None, **kw):
+                 replot=True, replace=True, linestyle=" ", color="r",
+                 symbol=None, selectable=None, **kw):
         self.enableActiveCurveHandling(False)
         if symbol is None:
             if x.size < 1000:
                 # circle
                 symbol = "o"
-            elif x.size < 1.0e6:
+            elif x.size < 1.0e5:
                 # dot
                 symbol = "."
             else:
                 # pixel
                 symbol = ","
+        if selectable is None:
+            if symbol == ",":
+                selectable = False
+            else:
+                selectable = True
         self.addCurve(x=x, y=y, legend=legend, info=info,
-                 replace=replace, replot=replot, linestyle=linestyle, color=color, symbol=symbol, **kw)
+                 replace=replace, replot=replot, linestyle=linestyle,
+                      color=color, symbol=symbol, selectable=selectable,
+                      **kw)
         if self._pixmap is not None:
             self._updateDensityPlot()
             self.addImage(self._pixmap, xScale=self.xScale,
@@ -313,7 +323,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._brushMode = False
         # one should be able to erase with a polygonal mask
         self._eraseMode = False
-        self.setDrawModeEnabled(True, shape="polygon", label="mask")
+        self.setDrawModeEnabled(True, shape="polygon", label="mask",
+                                color=self._selectionColors[self._nRoi])
         self.setZoomModeEnabled(False)
         if hasattr(self,"polygonSelectionToolButton"):
             self.polygonSelectionToolButton.setChecked(True)
@@ -461,11 +472,11 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         y0 = y.min()
         deltaX = (x.max() - x0)/float(bins[0])
         deltaY = (y.max() - y0)/float(bins[1])
-        if self._selectionMask is None:
-            view = numpy.zeros(x.size, dtype=numpy.uint8)
-        else:
-            view = numpy.zeros(self._selectionMask.size, dtype=self._selectionMask.dtype)
         if DEBUG:
+            if self._selectionMask is None:
+                view = numpy.zeros(x.size, dtype=numpy.uint8)
+            else:
+                view = numpy.zeros(self._selectionMask.size, dtype=self._selectionMask.dtype)
             # this works even on unordered data
             for i in range(x.size):
                 row = int((y[i] - y0) /deltaY)

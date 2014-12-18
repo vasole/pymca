@@ -138,7 +138,7 @@ if __name__ == "__main__":
                                     types=["Text",
                                            "RadioButton",
                                            "RadioButton"],
-                                    maxNRois=2,
+                                    maxNRois=1,
                                     backend=backend)
     w.show()
     # fill some data
