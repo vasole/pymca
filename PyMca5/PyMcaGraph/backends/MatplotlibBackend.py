@@ -1295,7 +1295,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, **kw):
+                 xerror=None, yerror=None, z=1, selectable=True, **kw):
         if legend is None:
             legend = "Unnamed curve"
         if replace:
@@ -1319,7 +1319,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 self.enableAxis(axisId, True)
         else:
             axes = self.ax
-
+        if selectable:
+            picker = 3
+        else:
+            picker = None
         scatterPlot = False
         if hasattr(color, "dtype"):
             if len(color) == len(x):
@@ -1334,7 +1337,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       label=legend,
                                       color=actualColor,
                                       marker=symbol,
-                                      picker=3)
+                                      picker=picker)
 
             if style not in [" ", None]:
                 # scatter plot with an actual line ...
@@ -1343,7 +1346,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                       linestyle=style,
                                       color=actualColor[0],
                                       linewidth=linewidth,
-                                      picker=3,
+                                      picker=picker,
                                       marker=None,
                                       **kw)
                 curveList[-1]._plot_info = {'color':actualColor,
@@ -1370,14 +1373,14 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                           linestyle=style,
                                           color=color,
                                           linewidth=linewidth,
-                                          picker=3,
+                                          picker=picker,
                                           **kw)
         else:
             curveList = axes.plot( x, y, label=legend,
                                   linestyle=style,
                                   color=color,
                                   linewidth=linewidth,
-                                  picker=3,
+                                  picker=picker,
                                   **kw)
 
         # errorbar is a container?
@@ -1414,14 +1417,13 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             elif self._oldActiveCurveLegend == legend:
                 curveList[-1].set_color(self._activeCurveColor)
         curveList[-1].set_axes(axes)
-        curveList[-1].set_zorder(2)
+        curveList[-1].set_zorder(z)
         if replot:
             self.replot()
         # If I return the instance, later on cannot make a copy.deepcopy
         # of the info and asks me to use "frozen" instead
         #return curveList[-1]
         return legend
-
 
     def addItem(self, x, y, legend, info=None, replace=False, replot=True, **kw):
         if replace:
