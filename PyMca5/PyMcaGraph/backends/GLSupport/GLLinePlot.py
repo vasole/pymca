@@ -39,7 +39,7 @@ This module provides classes to render 2D lines and scatter plots
 
 from OpenGL.GL import *  # noqa
 import numpy as np
-from math import sqrt as math_sqrt
+import math
 from collections import defaultdict
 from .GLContext import getGLContext
 from .GLSupport import Program
@@ -338,7 +338,7 @@ def _distancesFromArrays(xData, yData):
     # TODO make it better
     for index, (x, y) in enumerate(zip(xData, yData)):
         if point is not None:
-            totalDist += math_sqrt((x - point[0]) ** 2 + (y - point[1]) ** 2)
+            totalDist += math.sqrt((x - point[0]) ** 2 + (y - point[1]) ** 2)
         dists[index] = totalDist
         point = (x, y)
     return dists
@@ -477,7 +477,7 @@ class _Points2D(object):
         if (alpha <= 0.) {
             discard;
         } else {
-            gl_FragColor = vec4(vColor.rgb, mix(0., vColor.a, alpha));
+            gl_FragColor = vec4(vColor.rgb, alpha * clamp(vColor.a, 0., 1.));
         }
     }
     """)
@@ -527,8 +527,10 @@ class _Points2D(object):
     @classmethod
     def _getProgram(cls, transform, marker):
         context = getGLContext()
-        if marker in (POINT, PIXEL):
+        if marker == PIXEL:
             marker = SQUARE
+        elif marker == POINT:
+            marker = CIRCLE
         programs = cls._programs[(transform, marker)]
         try:
             prgm = programs[context]
@@ -568,8 +570,10 @@ class _Points2D(object):
         prog = self._getProgram(transform, self.marker)
         prog.use()
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
-        if self.marker in (POINT, PIXEL):
+        if self.marker == PIXEL:
             size = 1
+        elif self.marker == POINT:
+            size = math.ceil(0.5 * self.size) + 1  # Mimic Matplotlib point
         else:
             size = self.size
         glUniform1f(prog.uniforms['size'], size)
@@ -628,10 +632,6 @@ def _proxyProperty(*componentsAttributes):
             component = getattr(self, compName)
             setattr(component, attrName, value)
     return property(getter, setter)
-
-
-def _and(a, b):
-    return a and b
 
 
 class Curve2D(object):
@@ -726,6 +726,18 @@ class Curve2D(object):
         self.distVboData = None
 
     def pick(self, xPickMin, yPickMin, xPickMax, yPickMax):
+        """Perform picking on the curve according to its rendering.
+
+        The picking area is [xPickMin, xPickMax], [yPickMin, yPickMax].
+
+        In case a segment between 2 points with indices i, i+1 is picked,
+        only its lower index end point (i.e., i) is added to the result.
+        In case an end point with index i is picked it is added to the result,
+        and the segment [i-1, i] is not tested for picking.
+
+        :return: The indices of the picked data
+        :rtype: list of int
+        """
         if (self.marker is None and self.lineStyle is None) or \
            self.xMin > xPickMax or xPickMin > self.xMax or \
            self.yMin > yPickMax or yPickMin > self.yMax:
@@ -733,53 +745,64 @@ class Curve2D(object):
 
         elif self.lineStyle is not None:
             # Using Cohen-Sutherland algorithm for line clipping
-            picked = []
+            codes = ((self.yData > yPickMax) << 3) | \
+                    ((self.yData < yPickMin) << 2) | \
+                    ((self.xData > xPickMax) << 1) | \
+                     (self.xData < xPickMin)
 
-            x0, y0 = None, None
-            pt0Code = True, True, True, True  # Initialisation trick
+            # Add all points that are inside the picking area
+            indices = np.nonzero(codes == 0)[0].tolist()
 
-            for x1, y1 in zip(self.xData, self.yData):
-                pt1Code = (y1 > yPickMax, y1 < yPickMin,
-                           x1 > xPickMax, x1 < xPickMin)
+            # Segment that might cross the area with no end point inside it
+            segToTestIdx = np.nonzero((codes[:-1] != 0) &
+                                      (codes[1:] != 0) &
+                                      ((codes[:-1] & codes[1:]) == 0))[0]
 
-                if not any(pt0Code):  # Already added
-                    pass
-                elif not any(pt1Code):  # pt1 inside
-                    picked.append((x1, y1))
-                elif not any(map(_and, pt0Code, pt1Code)):
-                    # check for crossing
-                    if pt1Code[0]:
+            TOP, BOTTOM, RIGHT, LEFT = (1 << 3), (1 << 2), (1 << 1), (1 << 0)
+
+            for index in segToTestIdx:
+                if index not in indices:
+                    x0, y0 = self.xData[index], self.yData[index]
+                    x1, y1 = self.xData[index + 1], self.yData[index + 1]
+                    code1 = codes[index + 1]
+
+                    # check for crossing with horizontal bounds
+                    # y0 == y1 is a never event:
+                    # => pt0 and pt1 in same vertical area are not in segToTest
+                    if code1 & TOP:
                         x = x0 + (x1 - x0) * (yPickMax - y0) / (y1 - y0)
-                    elif pt1Code[1]:
+                    elif code1 & BOTTOM:
                         x = x0 + (x1 - x0) * (yPickMin - y0) / (y1 - y0)
                     else:
-                        x = xPickMin
+                        x = None  # No horizontal bounds intersection test
 
-                    if x >= xPickMin and x <= xPickMax:  # Intersection
-                        picked.append((x0, y0))
+                    if x is not None and x >= xPickMin and x <= xPickMax:
+                        # Intersection
+                        indices.append(index)
 
                     else:
-                        if pt1Code[2]:
+                        # check for crossing with vertical bounds
+                        # x0 == x1 is a never event (see remark for y)
+                        if code1 & RIGHT:
                             y = y0 + (y1 - y0) * (xPickMax - x0) / (x1 - x0)
-                        elif pt1Code[3]:
+                        elif code1 & LEFT:
                             y = y0 + (y1 - y0) * (xPickMin - x0) / (x1 - x0)
                         else:
-                            y = yPickMin
+                            y = None  # No vertical bounds intersection test
 
-                        if y >= yPickMin and y <= yPickMax:  # Intersection
-                            picked.append((x0, y0))
+                        if y is not None and y >= yPickMin and y <= yPickMax:
+                            # Intersection
+                            indices.append(index)
 
-                x0, y0, pt0Code = x1, y1, pt1Code
+            indices.sort()
 
         else:
-            picked = [
-                (xData, yData)
-                for xData, yData in zip(self.xData, self.yData)
-                if xData >= xPickMin and xData <= xPickMax and
-                yData >= yPickMin and yData <= yPickMax
-            ]
+            indices = np.nonzero((self.xData >= xPickMin) &
+                                 (self.xData <= xPickMax) &
+                                 (self.yData >= yPickMin) &
+                                 (self.yData <= yPickMax))[0].tolist()
 
-        return picked if picked else None
+        return indices
 
 
 # main ########################################################################

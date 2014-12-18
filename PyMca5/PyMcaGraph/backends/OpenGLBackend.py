@@ -827,16 +827,15 @@ class MarkerInteraction(ClickOrDrag):
 
                 self.backend.replot()
             else:
-                curve, posCurve = self.backend.pickCurve(x, y)
-                posCurve = np.array(posCurve, dtype=np.float32)
+                curve, pickedIndices = self.backend.pickCurve(x, y)
 
                 if curve is not None:
                     xData, yData = self.backend.pixelToDataCoords(x, y)
                     eventDict = prepareCurveSignal('left',
                                                    curve.info['legend'],
                                                    'curve',
-                                                   posCurve[:, 0],
-                                                   posCurve[:, 1],
+                                                   curve.xData[pickedIndices],
+                                                   curve.yData[pickedIndices],
                                                    xData, yData, x, y)
                     self.backend._callback(eventDict)
 
@@ -1152,9 +1151,9 @@ class OpenGLPlotCanvas(PlotBackend):
             else:
                 yPickMin, yPickMax = yPick1, yPick0
 
-            picked = curve.pick(xPickMin, yPickMin, xPickMax, yPickMax)
-            if picked:
-                return curve, picked
+            pickedIndices = curve.pick(xPickMin, yPickMin, xPickMax, yPickMax)
+            if pickedIndices:
+                return curve, pickedIndices
         return None, None
 
     # Manage Plot #
@@ -1571,7 +1570,8 @@ class OpenGLPlotCanvas(PlotBackend):
         glClearStencil(0)
 
         glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE)
 
         # For lines
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
