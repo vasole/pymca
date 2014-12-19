@@ -434,14 +434,16 @@ class Zoom(ClickOrDrag):
         yMin, yMax = self.backend.getGraphYLimits()
         self.zoomStack.append((xMin, xMax, yMin, yMax))
 
-        self.backend.setSelectionArea()
         x0, y0 = self.backend.pixelToDataCoords(*startPos)
         x1, y1 = self.backend.pixelToDataCoords(*endPos)
         if self.backend.isKeepDataAspectRatio():
             x1, y1 = self._ensureAspectRatio(x0, y0, x1, y1)
         xMin, xMax = min(x0, x1), max(x0, x1)
         yMin, yMax = min(y0, y1), max(y0, y1)
-        self.backend.setLimits(xMin, xMax, yMin, yMax)
+        if xMin != xMax and yMin != yMax:  # Avoid null zoom area
+            self.backend.setLimits(xMin, xMax, yMin, yMax)
+
+        self.backend.setSelectionArea()
         self.backend.replot()
 
     def _zoom(self, cx, cy, scaleF):
@@ -999,6 +1001,12 @@ class FocusManager(StateMachine):
         super(FocusManager, self).__init__(states, 'idle')
 
 
+class ZoomAndSelect(FocusManager):
+    def __init__(self, backend):
+        eventHandlers = MarkerInteraction(backend), Zoom(backend)
+        super(ZoomAndSelect, self).__init__(eventHandlers)
+
+
 # OpenGLPlotCanvas ############################################################
 
 (CURSOR_DEFAULT, CURSOR_POINTING, CURSOR_SIZE_HOR,
@@ -1034,7 +1042,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDirtyFlag = True
 
         self._mousePosition = 0, 0
-        self.eventHandler = FocusManager((MarkerInteraction(self), Zoom(self)))
+        self.eventHandler = ZoomAndSelect(self)
 
         self._plotHasFocus = set()
 
@@ -2254,14 +2262,13 @@ class OpenGLPlotCanvas(PlotBackend):
     # Zoom #
 
     def isZoomModeEnabled(self):
-        return isinstance(self.eventHandler, FocusManager)
+        return isinstance(self.eventHandler, ZoomAndSelect)
 
     def setZoomModeEnabled(self, flag=True):
         if flag:
-            if not isinstance(self.eventHandler, FocusManager):
-                self.eventHandler = FocusManager((MarkerInteraction(self),
-                                                 Zoom(self)))
-        elif isinstance(self.eventHandler, FocusManager):
+            if not isinstance(self.eventHandler, ZoomAndSelect):
+                self.eventHandler = ZoomAndSelect(self)
+        elif isinstance(self.eventHandler, ZoomAndSelect):
             self.eventHandler = MarkerInteraction(self)
 
     def resetZoom(self):
