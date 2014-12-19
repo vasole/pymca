@@ -43,9 +43,15 @@ from . import LegendSelector
 from .ObjectPrintConfigurationDialog import ObjectPrintConfigurationDialog
 from . import McaROIWidget
 from . import PlotWidget
+from . import MaskImageTools
+DEFAULT_COLORMAP_INDEX = MaskImageTools.DEFAULT_COLORMAP_INDEX
+DEFAULT_COLORMAP_LOG_FLAG = MaskImageTools.DEFAULT_COLORMAP_LOG_FLAG
 
-if "PySide" in sys.argv:
-    import PySide
+try:
+    from . import ColormapDialog
+    COLORMAP_DIALOG = True
+except:
+    COLORMAP_DIALOG = False
 
 # pyqtgraph has a SciPy dependency
 PYQTGRAPH = False
@@ -114,6 +120,9 @@ class PlotWindow(PlotWidget.PlotWidget):
         # default ROI handling
         self.roiWidget = None
         self._middleROIMarkerFlag = False
+
+        #colormap handling
+        self.colormapDialog = None
 
     def _buildGraphBottomWidget(self, control, position):
         widget = self.centralWidget()
@@ -627,7 +636,76 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.invertYAxis(True)
 
     def _colormapIconSignal(self):
-        print("_colormapIconSignal not implemented")
+        image = self.getActiveImage()
+        if image is None:
+            return
+        image, legend, info, pixmap = image[:4]
+        if (pixmap is None) and (info["plot_colormap"] is None):
+            print("No colormap to be handled")
+            return
+        elif info["plot_colormap"] is not None:
+            print("backend colormap handling not implemented yet")
+            return
+        elif pixmap is None:
+            print("Cannot know if original data were data or pixmap")
+            return
+
+        # image contains the data and pixmap contains its representation
+        if self.colormapDialog is None:
+            self._initColormapDialog(image)
+
+    def _initColormapDialog(self, imageData):
+        if not COLORMAP_DIALOG:
+            raise ImportError("ColormapDialog could not be imported")
+        goodData = imageData[numpy.isfinite(imageData)]
+        if goodData.size > 0:
+            maxData = goodData.max()
+            minData = goodData.min()
+        else:
+            qt.QMessageBox.critical(self, "No Data",
+                "Image data does not contain any real value")
+            return
+        self.colormapDialog = ColormapDialog.ColormapDialog(self)
+        self.colormapDialog.show()
+        colormapIndex = DEFAULT_COLORMAP_INDEX
+        if colormapIndex == 1:
+            colormapIndex = 0
+        elif colormapIndex == 6:
+            colormapIndex = 1
+        self.colormapDialog.colormapIndex  = colormapIndex
+        self.colormapDialog.colormapString = self.colormapDialog.colormapList[colormapIndex]
+        self.colormapDialog.setDataMinMax(minData, maxData)
+        self.colormapDialog.setAutoscale(1)
+        self.colormapDialog.setColormap(self.colormapDialog.colormapIndex)
+        # linear or logarithmic
+        self.colormapDialog.setColormapType(DEFAULT_COLORMAP_LOG_FLAG,
+                                            update=False)
+        self.colormap = (self.colormapDialog.colormapIndex,
+                              self.colormapDialog.autoscale,
+                              self.colormapDialog.minValue,
+                              self.colormapDialog.maxValue,
+                              minData, maxData, DEFAULT_COLORMAP_LOG_FLAG)
+        self.colormapDialog.setWindowTitle("Colormap Dialog")
+        self.colormapDialog.sigColormapChanged.connect(\
+                    self.updateActiveImageColormap)
+        self.colormapDialog._update()
+
+    def updateActiveImageColormap(self, colormap, replot=True):
+        if len(colormap) == 1:
+            colormap = colormap[0]
+        image = self.getActiveImage()
+        if image is None:
+            if self.colormapDialog is not None:
+                self.colormapDialog.hide()
+            return
+        image, legend, info, pixmap = image[:4]
+        if pixmap is None:
+            if self.colormapDialog is not None:
+                self.colormapDialog.hide()
+            return    
+        pixmap = MaskImageTools.getPixmapFromData(image, colormap)
+        self.addImage(image, legend=legend, info=info,
+                      pixmap=pixmap, replot=replot)
 
     def _normalIconSignal(self):
         if DEBUG:
@@ -1258,9 +1336,9 @@ if __name__ == "__main__":
     if "opengl" in sys.argv:
         from PyMca5.PyMcaGraph.backends import OpenGLBackend
         plot = PlotWindow(backend=OpenGLBackend.OpenGLBackend, roi=True, control=True,
-                          position=True)#uselegendmenu=True)
+                          position=True, colormap=True)#uselegendmenu=True)
     else:
-        plot = PlotWindow(roi=True, control=True, position=True)#uselegendmenu=True)
+        plot = PlotWindow(roi=True, control=True, position=True, colormap=True)#uselegendmenu=True)
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)
@@ -1269,6 +1347,8 @@ if __name__ == "__main__":
     print("X Limits = ",     plot.getGraphXLimits())
     print("Y Limits = ",     plot.getGraphYLimits())
     print("All curves = ",   plot.getAllCurves(just_legend=True))
+    image = numpy.arange(10000).reshape(100, 100)
+    plot.addImage(image, xScale=(0, 1), yScale=(0, 10), pixmap=MaskImageTools.getPixmapFromData(image))
     #plot.removeCurve("dummy")
     #plot.addCurve(x, 2 * y, "dummy 2")
     #print("All curves = ",   plot.getAllCurves())
