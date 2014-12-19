@@ -41,6 +41,31 @@ COLORMAP_LIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 DEFAULT_COLORMAP_INDEX = 2
 DEFAULT_COLORMAP_LOG_FLAG = False
 
+def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
+    """
+    Convert from plot coordinates to image row and column.
+    """
+    if xScale is None:
+        c = x
+    else:
+        if x < xScale[0]:
+            x = xScale[0]
+        c = (x - xScale[0]) / xScale[1]
+    if yScale is None:
+        r = y
+    else:
+        if y < yScale[0]:
+            y = yScale[0]
+        r = ( y - yScale[0]) / yScale[1]
+
+    if safe:
+        c = min(int(c), shape[1] - 1)
+        r = min(int(r), shape[0] - 1)
+    else:
+        c = int(c)
+        r = int(r)
+    return r, c
+
 def getPixmapFromData(ndarray, colormap=None, mask=None, colors=None):
     """
     Calculate a colormap and apply a mask (given as a set of unsigned ints) to
@@ -100,12 +125,15 @@ def getPixmapFromData(ndarray, colormap=None, mask=None, colors=None):
     if colormap is None:
         colormapName = COLORMAP_LIST[min(DEFAULT_COLORMAP_INDEX,
                                     len(COLORMAP_LIST) - 1)]
-        colormapScaling = DEFAULT_COLORMAP_LOG_FLAG
+        if DEFAULT_COLORMAP_LOG_FLAG:
+            colormapScaling = spslut.log
+        else:
+            colormapScaling = spslut.LINEAR
         if minData is None:
             (pixmap, size, minmax)= spslut.transform(\
                             data,
                             (1,0),
-                            (colormapScaling,3.0),
+                            (colormapScaling, 3.0),
                             "RGBX",
                             colormapName,
                             1,
@@ -172,11 +200,11 @@ def getPixmapFromData(ndarray, colormap=None, mask=None, colors=None):
                             (0,255), 1)
 
     # make sure alpha is set
+    pixmap.shape = -1, 4
     pixmap[:, 3] = 255
     pixmap.shape = list(data.shape) + [4]
     if not goodData:
         pixmap[finiteData < 1] = 255
-    pixmap.shape = oldShape + [4]
     if mask is not None:
         return applyMaskToImage(pixmap, mask, colors=colors, copy=False)
     return pixmap
