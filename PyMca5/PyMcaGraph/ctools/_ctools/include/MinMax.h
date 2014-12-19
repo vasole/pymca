@@ -1,5 +1,5 @@
-#ifndef __minMax_H__
-#define __minMax_H__
+#ifndef __MinMax_H__
+#define __MinMax_H__
 
 /* Make sure we work with 32 bit integers */
 #if defined (_MSC_VER)
@@ -82,4 +82,4 @@ void
 getMinMaxUInt64(uint64_t* data, unsigned int length,
                 uint64_t * min, uint64_t * max);
 
-#endif /*__minMax_H__*/
+#endif /*__MinMax_H__*/
