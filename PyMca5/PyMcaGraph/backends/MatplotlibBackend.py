@@ -679,12 +679,21 @@ class MatplotlibGraph(FigureCanvas):
                         self._mouseData[0,1] = self._ymin
                         self._mouseData[1,0] = self._x0
                         self._mouseData[1,1] = self._ymax
-                    color=self._drawingParameters.get("color", "black")
+                    color=self._getDrawingColor()
                     self._drawingPatch = Polygon(self._mouseData,
                                              closed=True,
                                              fill=False,
                                              color=color)
                     self.ax.add_patch(self._drawingPatch)
+
+    def _getDrawingColor(self):
+        color = "black"
+        if "color" in self._drawingParameters:
+            color = self._drawingParameters["color"]
+            if len(color) == 4:
+                if type(color[3]) in [type(1), numpy.uint8, numpy.int8]:
+                    color = numpy.array(color, dtype=numpy.float)/255.
+        return color
 
     def onMouseMoved(self, event):
         if DEBUG:
@@ -906,7 +915,7 @@ class MatplotlibGraph(FigureCanvas):
                 self._mouseData[0,1] = self._y0
                 self._mouseData[1,0] = self._x1
                 self._mouseData[1,1] = self._y1
-                color = self._drawingParameters.get("color", "black")
+                color = self._getDrawingColor()
                 self._drawingPatch = Polygon(self._mouseData,
                                              closed=True,
                                              fill=False,
