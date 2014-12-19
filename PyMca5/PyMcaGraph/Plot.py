@@ -515,7 +515,7 @@ class Plot(PlotBase.PlotBase):
         if pixmap is not None:
             dataToSend = pixmap
         else:
-            dataTosend = data
+            dataToSend = data
         if data is not None:
             imageHandle = self._plot.addImage(dataToSend, legend=key, info=info,
                                               replot=False, replace=replace,
