@@ -424,7 +424,7 @@ class Plot(PlotBase.PlotBase):
             xplot, yplot = x, y
             colorplot = color
         info["plot_z"] = z
-        info["plot_selectable"] = selectable,
+        info["plot_selectable"] = selectable
         if len(xplot):
             curveHandle = self._plot.addCurve(xplot, yplot, key, info,
                                               replot=False, replace=replace,
