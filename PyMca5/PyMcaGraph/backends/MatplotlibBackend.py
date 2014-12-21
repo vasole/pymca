@@ -1317,6 +1317,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.removeCurve(legend, replot=False)
         if color is None:
             color = self._activeCurveColor
+        if len(color) == 4:
+                if type(color[3]) in [type(1), numpy.uint8, numpy.int8]:
+                    color = numpy.array(color, dtype=numpy.float)/255.
+
         brush = color
         style = linestyle
         linewidth = 1
