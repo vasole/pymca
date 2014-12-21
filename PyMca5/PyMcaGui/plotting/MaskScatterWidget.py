@@ -116,6 +116,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 self.eraseSelectionToolButton.setChecked(False)
         if hasattr(self, "polygonSelectionToolButton"):
             self.polygonSelectionToolButton.setCheckable(True)
+        self.clearImages()
+        self._updatePlot()
 
     def _activateDensityPlotView(self, bins=None):
         self._plotViewMode = "density"
@@ -138,6 +140,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             self._updateDensityPlot(bins)
             # only show it in debug mode
             self._densityPlotWidget.show()
+        self._updatePlot()
 
     def getDensityData(self, bins=None):
         curve = self.getCurve(self._selectionCurve)
@@ -315,8 +318,6 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         # update the plot if it was requested
         if replot:
             self.replot()
-        else:
-            print("no replot requested")
 
         if 0 :#or self._plotViewMode == "density":
             # get the binned data
