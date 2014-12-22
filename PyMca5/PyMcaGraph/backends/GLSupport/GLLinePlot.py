@@ -37,7 +37,7 @@ This module provides classes to render 2D lines and scatter plots
 
 # import ######################################################################
 
-from OpenGL.GL import *  # noqa
+from .gl import *  # noqa
 import numpy as np
 import math
 from collections import defaultdict
@@ -748,7 +748,7 @@ class Curve2D(object):
             codes = ((self.yData > yPickMax) << 3) | \
                     ((self.yData < yPickMin) << 2) | \
                     ((self.xData > xPickMax) << 1) | \
-                     (self.xData < xPickMin)
+                    (self.xData < xPickMin)
 
             # Add all points that are inside the picking area
             indices = np.nonzero(codes == 0)[0].tolist()

@@ -37,7 +37,7 @@ This module provides a class managing a vertex buffer
 
 # import ######################################################################
 
-from OpenGL.GL import *  # noqa
+from .gl import *  # noqa
 from ctypes import c_void_p, c_int
 import numpy as np
 

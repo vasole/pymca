@@ -37,8 +37,7 @@ This module provides a class to render 2D array as a colormap or RGB(A) image
 
 # import ######################################################################
 
-from OpenGL.GL import *  # noqa
-from OpenGL.GL.ARB.texture_rg import GL_R32F  # Core in OpenGL 3
+from .gl import *  # noqa
 
 import math
 import numpy as np

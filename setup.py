@@ -208,6 +208,10 @@ if os.path.exists(os.path.join("PyMca5", "Object3D")):
 if os.path.exists(os.path.join("PyMca5", "PyMcaGraph", "backends", "GLSupport")):
     packages.append('PyMca5.PyMcaGraph.backends.GLSupport')
 
+if os.path.exists(os.path.join("PyMca5", "PyMcaGraph", "backends", "GLSupport", "gl")):
+    packages.append('PyMca5.PyMcaGraph.backends.GLSupport.gl')
+
+
 sources = glob.glob('*.c')
 if sys.platform == "win32":
     define_macros = [('WIN32',None)]

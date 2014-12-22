@@ -53,15 +53,7 @@ import time
 import warnings
 from collections import namedtuple
 
-import OpenGL
-if 0:  # Debug
-    OpenGL.ERROR_ON_COPY = True
-else:
-    OpenGL.ERROR_LOGGING = False
-    OpenGL.ERROR_CHECKING = False
-    OpenGL.ERROR_ON_COPY = False
-
-from OpenGL.GL import *  # noqa
+from .GLSupport.gl import *  # noqa
 
 try:
     from ..PlotBackend import PlotBackend
