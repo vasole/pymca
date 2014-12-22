@@ -328,7 +328,7 @@ class Plot(PlotBase.PlotBase):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, z=1, selectable=True, **kw):
+                 xerror=None, yerror=None, z=1, selectable=None, **kw):
         # Convert everything to arrays (not forcing type) in order to avoid
         # problems at unexpected places: missing min or max attributes, problem
         # when using numpy.nonzero on lists, ...
@@ -424,6 +424,8 @@ class Plot(PlotBase.PlotBase):
             xplot, yplot = x, y
             colorplot = color
         info["plot_z"] = z
+        if selectable is None:
+            selectable = info.get("plot_selectable", True)
         info["plot_selectable"] = selectable
         if len(xplot):
             curveHandle = self._plot.addCurve(xplot, yplot, key, info,
@@ -457,9 +459,9 @@ class Plot(PlotBase.PlotBase):
 
     def addImage(self, data, legend=None, info=None,
                  replace=True, replot=True,
-                 xScale=None, yScale=None, z=0,
+                 xScale=None, yScale=None, z=None,
                  selectable=False, draggable=False,
-                 colormap=None, **kw):
+                 colormap=None, pixmap=None, **kw):
         """
         :param data: (nrows, ncolumns) data or (nrows, ncolumns, RGBA) ubyte array
         :type data: numpy.ndarray
@@ -483,6 +485,8 @@ class Plot(PlotBase.PlotBase):
         :type draggable: boolean, default False
         :param colormap: Dictionary describing the colormap to use (or None)
         :type colormap: Dictionnary or None (default). Ignored if data is RGB(A)
+        :param pixmap: Pixmap representation of the data (if any)
+        :type pixmap: (nrows, ncolumns, RGBA) ubyte array or None (default)
         :returns: The legend/handle used by the backend to univocally access it.
         """
         if legend is None:
@@ -500,11 +504,22 @@ class Plot(PlotBase.PlotBase):
         info['xlabel'] = str(xlabel)
         info['ylabel'] = str(ylabel)
 
+        if xScale is None:
+            xScale = info.get("plot_xScale", None)
+        if yScale is None:
+            yScale = info.get("plot_yScale", None)
+        if z is None:
+            z = info.get("plot_z", 0)
+
         if replace:
             self._imageList = []
             self._imageDict = {}
+        if pixmap is not None:
+            dataToSend = pixmap
+        else:
+            dataToSend = data
         if data is not None:
-            imageHandle = self._plot.addImage(data, legend=key, info=info,
+            imageHandle = self._plot.addImage(dataToSend, legend=key, info=info,
                                               replot=False, replace=replace,
                                               xScale=xScale, yScale=yScale,
                                               z=z,
@@ -515,7 +530,13 @@ class Plot(PlotBase.PlotBase):
             info['plot_handle'] = imageHandle
         else:
             info['plot_handle'] = key
-        self._imageDict[key] = [data, key, info, xScale, yScale, z]
+        info["plot_xScale"] = xScale
+        info["plot_yScale"] = yScale
+        info["plot_z"] = z
+        info["plot_selectable"] = selectable
+        info["plot_draggable"] = draggable
+        info["plot_colormap"] = colormap
+        self._imageDict[key] = [data, key, info, pixmap]
         if len(self._imageDict) == 1:
             self.setActiveImage(key)
         if replot:

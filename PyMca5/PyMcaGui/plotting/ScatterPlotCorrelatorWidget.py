@@ -117,20 +117,25 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         y = self._itemList[ddict[yKey][0]]
         xLabel = self._itemLabels[ddict[xKey][0]]
         yLabel = self._itemLabels[ddict[yKey][0]]
-        self.setSelectionCurveData(x, y, legend="ScatterPlotWidget",
-                                   color="k", symbol=None,
-                                   replot=False,
-                                   replace=False,
-                                   xlabel=xLabel,
-                                   ylabel=yLabel)
         # active curve handling is disabled
         self.setGraphXLabel(xLabel)
         self.setGraphYLabel(yLabel)
-        self._updatePlot(replot=True)
+        self.setSelectionCurveData(x, y, legend="ScatterPlotWidget",
+                                   color="k",
+                                   symbol=".",
+                                   replot=False,
+                                   replace=True,
+                                   xlabel=xLabel,
+                                   ylabel=yLabel,
+                                   selectable=False)
+        self._updatePlot(replot=False, replace=True)
+        #matplotlib needs a zoom reset to update the scales
+        # that problem does not seem to be present with OpenGL
+        self.resetZoom()
 
 if __name__ == "__main__":
-    #from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
-    from PyMca5.PyMcaGraph.backends.OpenGLBackend import OpenGLBackend as backend
+    from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
+    #from PyMca5.PyMcaGraph.backends.OpenGLBackend import OpenGLBackend as backend
     app = qt.QApplication([])
     w = ScatterPlotCorrelatorWidget(labels=["Legend",
                                             "X",
