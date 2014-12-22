@@ -328,8 +328,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             tmpMask = self._selectionMask[:]
             tmpMask.shape = -1
             for i in range(1, self._maxNRois + 1):
-                xMask = x[tmpMask == i, :]
-                yMask = y[tmpMask == i, :]
+                xMask = x[tmpMask == i]
+                yMask = y[tmpMask == i]
                 color = self._selectionColors[i]
                 self.addCurve(xMask, yMask, legend=legend + " %02d" % i,
                               info=info, color=color, linestyle=" ",
