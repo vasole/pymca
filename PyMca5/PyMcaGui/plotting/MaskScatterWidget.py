@@ -298,6 +298,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                           z=0,
                           pixmap=pixmap,
                           replot=False)
+            self._imageData = imageData
+            self._pixmap = pixmap
 
         # draw the mask as a set of curves
         hasMaskedData = False
@@ -374,7 +376,10 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             self._updatePlot()
 
     def getSelectionMask(self):
-        # TODO: Deal with non-finite data like in MaskImageWidget
+        if self._selectionMask is None:
+            if self._selectionCurve is not None:
+                x, y, legend, info = self.getCurve(self._selectionCurve)
+                self._selectionMask = numpy.zeros(x.shape, numpy.uint8)
         return self._selectionMask
 
     def _updatePlot(self, replot=True, replace=True):
@@ -556,45 +561,80 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self.setSelectionMask(mask, plot=True)
         self._emitMaskChangedSignal()
 
+    def _getSelectionMinMax(self):
+        if self.colormap is None:
+            goodData = self._imageData[numpy.isfinite(self._imageData)]
+            maxValue = goodData.max()
+            minValue = goodData.min()
+        else:
+            minValue = self.colormap[2]
+            maxValue = self.colormap[3]
+        return minValue, maxValue
+
     def _selectMax(self):
-        print("NOT IMPLEMENTED")
-        return
-        selectionMask = numpy.zeros(self.__imageData.shape,
-                                             numpy.uint8)
+        if (self._plotViewMode != "density") or \
+           (self._imageData is None):
+            return
+
+        selectionMask = numpy.zeros(self._imageData.shape, numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
-        tmpData = numpy.array(self.__imageData, copy=True)
-        tmpData[True - numpy.isfinite(self.__imageData)] = minValue
-        selectionMask[tmpData >= maxValue] = 1
-        self.setSelectionMask(selectionMask, plot=False)
-        self.plotImage(update=False)
+        tmpData = numpy.array(self._imageData, copy=True)
+        tmpData[True - numpy.isfinite(self._imageData)] = minValue
+        selectionMask[tmpData >= maxValue] = self._nRoi
+        self._setSelectionMaskFromDensityMask(selectionMask)
         self._emitMaskChangedSignal()
 
     def _selectMiddle(self):
-        print("NOT IMPLEMENTED")
-        return
-        selectionMask = numpy.ones(self.__imageData.shape,
-                                             numpy.uint8)
+        if (self._plotViewMode != "density") or \
+           (self._imageData is None):
+            return
+        selectionMask = numpy.zeros(self._imageData.shape, numpy.uint8)
+        selectionMask[:] = self._nRoi
         minValue, maxValue = self._getSelectionMinMax()
-        tmpData = numpy.array(self.__imageData, copy=True)
-        tmpData[True - numpy.isfinite(self.__imageData)] = maxValue
+        tmpData = numpy.array(self._imageData, copy=True)
+        tmpData[True - numpy.isfinite(self._imageData)] = minValue
         selectionMask[tmpData >= maxValue] = 0
         selectionMask[tmpData <= minValue] = 0
-        self.setSelectionMask(selectionMask, plot=False)
-        self.plotImage(update=False)
+        self._setSelectionMaskFromDensityMask(selectionMask)
         self._emitMaskChangedSignal()
 
     def _selectMin(self):
-        print("NOT IMPLEMENTED")
-        return
-        selectionMask = numpy.zeros(self.__imageData.shape,
-                                             numpy.uint8)
+        if (self._plotViewMode != "density") or \
+           (self._imageData is None):
+            return
+        selectionMask = numpy.zeros(self._imageData.shape, numpy.uint8)
         minValue, maxValue = self._getSelectionMinMax()
-        tmpData = numpy.array(self.__imageData, copy=True)
-        tmpData[True - numpy.isfinite(self.__imageData)] = maxValue
-        selectionMask[tmpData <= minValue] = 1
-        self.setSelectionMask(selectionMask, plot=False)
-        self.plotImage(update=False)
+        tmpData = numpy.array(self._imageData, copy=True)
+        tmpData[True - numpy.isfinite(self._imageData)] = maxValue
+        selectionMask[tmpData <= minValue] = self._nRoi
+        self._setSelectionMaskFromDensityMask(selectionMask)
         self._emitMaskChangedSignal()
+
+    def _setSelectionMaskFromDensityMask(self, densityPlotMask):
+        curve = self.getCurve(self._selectionCurve)
+        if curve is None:
+            return
+        x, y, legend, info = curve[0:4]
+        bins = self._bins
+        x0 = x.min()
+        y0 = y.min()
+        deltaX = (x.max() - x0)/float(bins[0])
+        deltaY = (y.max() - y0)/float(bins[1])
+        if self._selectionMask is None:
+            view = numpy.zeros(x.size, dtype=numpy.uint8)
+        else:
+            view = numpy.zeros(self._selectionMask.size,
+                               dtype=self._selectionMask.dtype)
+        columns = numpy.digitize(x, self._binsX, right=True)
+        columns[columns>=densityPlotMask.shape[1]] = densityPlotMask.shape[1] - 1
+        rows = numpy.digitize(y, self._binsY, right=True)
+        rows[rows>=densityPlotMask.shape[0]] = densityPlotMask.shape[0] - 1
+        values = densityPlotMask[rows, columns]
+        values.shape = -1
+        view[:] = values[:]
+        if self._selectionMask is not None:
+            view.shape = self._selectionMask.shape
+        self.setSelectionMask(view, plot=True)
 
     def _densityPlotSlot(self, ddict):
         if ddict["event"] == "resetSelection":

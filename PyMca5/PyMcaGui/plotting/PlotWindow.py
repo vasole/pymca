@@ -123,6 +123,7 @@ class PlotWindow(PlotWidget.PlotWidget):
 
         #colormap handling
         self.colormapDialog = None
+        self.colormap = None
 
     def _buildGraphBottomWidget(self, control, position):
         widget = self.centralWidget()
