@@ -305,10 +305,11 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             # get the binned data
             imageData = self.getDensityData()
             # get the associated pixmap
-            if self.colormap is None:
+            if self.colormapDialog is None:
                 self._initColormapDialog(imageData)
+            cmap = self.colormapDialog.getColormap()
             pixmap=MaskImageTools.getPixmapFromData(imageData,
-                                                    colormap=self.colormap)
+                                                    colormap=cmap)
             self.addImage(imageData, legend=legend + "density",
                           xScale=self._xScale,
                           yScale=self._yScale,

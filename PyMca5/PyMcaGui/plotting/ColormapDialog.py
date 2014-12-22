@@ -527,31 +527,28 @@ class ColormapDialog(qt.QDialog):
             # are current values in the good range ?
             self._update()
 
-    """
-    send 'ColormapChanged' signal
-    """
-    def sendColormap(self):
-        if DEBUG:
-            print("sending colormap")
-        #prevent unexpected behaviour because of bad limits
+    def getColormap(self):
         if self.minValue > self.maxValue:
             vmax = self.minValue
             vmin = self.maxValue
         else:
             vmax = self.maxValue
             vmin = self.minValue
-        try:
-            #self.emit(qt.SIGNAL("ColormapChanged"),
-            #        self.colormapIndex, self.autoscale,
-            #        vmin, vmax,
-            #        self.dataMin, self.dataMax,
-            #        self.colormapType)
-            cmap = [self.colormapIndex, self.autoscale,
-                    vmin, vmax,
-                    self.dataMin, self.dataMax,
-                    self.colormapType]
-            self.sigColormapChanged.emit(cmap)
+        cmap = [self.colormapIndex, self.autoscale,
+                vmin, vmax,
+                self.dataMin, self.dataMax,
+                self.colormapType]
+        return cmap
 
+    """
+    send 'ColormapChanged' signal
+    """
+    def sendColormap(self):
+        if DEBUG:
+            print("sending colormap")
+        try:
+            cmap = self.getColormap()
+            self.sigColormapChanged.emit(cmap)
         except:
             sys.excepthook(sys.exc_info()[0],
                            sys.exc_info()[1],
