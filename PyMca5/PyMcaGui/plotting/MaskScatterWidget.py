@@ -35,7 +35,7 @@ ___doc__ = """
     - First (deepest) layer containing the original points as they came.
     - Second layer containing the scatter plot density map.
     - Final layer containing the selected points with the selected colors.
-    
+
 """
 import sys
 import os
@@ -55,6 +55,8 @@ IconDict = PlotWindow.IconDict
 
 class MaskScatterWidget(PlotWindow.PlotWindow):
     sigMaskScatterWidgetSignal = qt.pyqtSignal(object)
+    DEFAULT_COLORMAP_INDEX = 1
+    DEFAULT_COLORMAP_LOG_FLAG = False
 
     def __init__(self, parent=None, backend=None, plugins=False, newplot=False,
                  control=False, position=False, maxNRois=1, grid=False,
@@ -161,7 +163,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             elif bins[0] < 2:
                 bins[0] = 2
             if bins[1] > 100:
-                bins[1] = 100            
+                bins[1] = 100
             elif bins[1] < 2:
                 bins[1] = 2
         else:
@@ -201,7 +203,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             elif bins[0] < 2:
                 bins[0] = 2
             if bins[1] > 100:
-                bins[1] = 100            
+                bins[1] = 100
             elif bins[1] < 2:
                 bins[1] = 2
         else:
@@ -256,12 +258,15 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         #              legend=legend+" density",
         #              xScale=(x0, deltaX), yScale=(y0, deltaY), z=10)
         self._pixmap = pixmap
-        self._imageData = image[0] 
+        self._imageData = image[0]
         #raise NotImplemented("Density plot view not implemented yet")
 
     def setSelectionCurveData(self, x, y, legend="MaskScatterWidget", info=None,
                  replot=True, replace=True, linestyle=" ", color="r",
                  symbol=None, selectable=None, **kw):
+        # TODO: Implement a method or use additional keywords to avoid
+        # recalculating the image or the base plot when just the mask is
+        # changed.
         self.enableActiveCurveHandling(False)
         if symbol is None:
             if x.size < 1000:
@@ -291,7 +296,10 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             # get the binned data
             imageData = self.getDensityData()
             # get the associated pixmap
-            pixmap=MaskImageTools.getPixmapFromData(imageData)
+            if self.colormap is None:
+                self._initColormapDialog(imageData)
+            pixmap=MaskImageTools.getPixmapFromData(imageData,
+                                                    colormap=self.colormap)
             self.addImage(imageData, legend=legend + "density",
                           xScale=self._xScale,
                           yScale=self._yScale,

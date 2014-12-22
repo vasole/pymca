@@ -44,8 +44,6 @@ from .ObjectPrintConfigurationDialog import ObjectPrintConfigurationDialog
 from . import McaROIWidget
 from . import PlotWidget
 from . import MaskImageTools
-DEFAULT_COLORMAP_INDEX = MaskImageTools.DEFAULT_COLORMAP_INDEX
-DEFAULT_COLORMAP_LOG_FLAG = MaskImageTools.DEFAULT_COLORMAP_LOG_FLAG
 
 try:
     from . import ColormapDialog
@@ -78,6 +76,8 @@ DEBUG = 0
 
 class PlotWindow(PlotWidget.PlotWidget):
     sigROISignal = qt.pyqtSignal(object)
+    DEFAULT_COLORMAP_INDEX = MaskImageTools.DEFAULT_COLORMAP_INDEX
+    DEFAULT_COLORMAP_LOG_FLAG = MaskImageTools.DEFAULT_COLORMAP_LOG_FLAG
 
     def __init__(self, parent=None, backend=None, plugins=True, newplot=False,
                  control=False, position=False, **kw):
@@ -654,6 +654,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         # image contains the data and pixmap contains its representation
         if self.colormapDialog is None:
             self._initColormapDialog(image)
+        self.colormapDialog.show()
 
     def _initColormapDialog(self, imageData):
         if not COLORMAP_DIALOG:
@@ -667,11 +668,8 @@ class PlotWindow(PlotWidget.PlotWidget):
                 "Image data does not contain any real value")
             return
         self.colormapDialog = ColormapDialog.ColormapDialog(self)
-        self.colormapDialog.show()
-        colormapIndex = DEFAULT_COLORMAP_INDEX
-        if colormapIndex == 1:
-            colormapIndex = 0
-        elif colormapIndex == 6:
+        colormapIndex = self.DEFAULT_COLORMAP_INDEX
+        if colormapIndex == 6:
             colormapIndex = 1
         self.colormapDialog.colormapIndex  = colormapIndex
         self.colormapDialog.colormapString = self.colormapDialog.colormapList[colormapIndex]
@@ -679,13 +677,13 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.colormapDialog.setAutoscale(1)
         self.colormapDialog.setColormap(self.colormapDialog.colormapIndex)
         # linear or logarithmic
-        self.colormapDialog.setColormapType(DEFAULT_COLORMAP_LOG_FLAG,
+        self.colormapDialog.setColormapType(self.DEFAULT_COLORMAP_LOG_FLAG,
                                             update=False)
         self.colormap = (self.colormapDialog.colormapIndex,
                               self.colormapDialog.autoscale,
                               self.colormapDialog.minValue,
                               self.colormapDialog.maxValue,
-                              minData, maxData, DEFAULT_COLORMAP_LOG_FLAG)
+                              minData, maxData, self.DEFAULT_COLORMAP_LOG_FLAG)
         self.colormapDialog.setWindowTitle("Colormap Dialog")
         self.colormapDialog.sigColormapChanged.connect(\
                     self.updateActiveImageColormap)
