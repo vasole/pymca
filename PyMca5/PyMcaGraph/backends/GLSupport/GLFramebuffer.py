@@ -38,9 +38,8 @@ off-screen rendering
 
 # import ######################################################################
 
-from OpenGL.GL import *  # noqa
-from OpenGL.GL.ARB.framebuffer_object import *  # noqa Core in OpenGL 3
-from ctypes import c_int
+from .gl import *  # noqa
+from ctypes import c_uint
 
 from .GLTexture import Texture2D
 
@@ -48,11 +47,11 @@ from .GLTexture import Texture2D
 # utils #######################################################################
 
 def _deleteRenderbuffer(bufferId):
-    glDeleteRenderbuffers(1, (c_int * 1)(bufferId))
+    glDeleteRenderbuffers(1, (c_uint * 1)(bufferId))
 
 
 def _deleteFramebuffer(bufferId):
-    glDeleteFramebuffers(1, (c_int * 1)(bufferId))
+    glDeleteFramebuffers(1, (c_uint * 1)(bufferId))
 
 
 # framebuffer #################################################################

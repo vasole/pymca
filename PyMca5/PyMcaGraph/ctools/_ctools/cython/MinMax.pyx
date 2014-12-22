@@ -7,25 +7,15 @@ import numpy
 #from libc.stdint cimport int32_t, uint32_t
 #from libc.stdint cimport int64_t, uint64_t
 
-#from minMax cimport getMinMaxFloat, getMinMaxDouble
-#from minMax cimport getMinMaxInt8, getMinMaxUInt8
-#from minMax cimport getMinMaxInt16, getMinMaxUInt16
-#from minMax cimport getMinMaxInt32, getMinMaxUInt32
-#from minMax cimport getMinMaxInt64, getMinMaxUInt64
-from minMax cimport *
-
+from MinMax cimport *
 
 def _minMaxFloat(numpy.ndarray data):
     cdef float[:] c_data = data
     cdef unsigned int length = c_data.size
-    cdef float a
-    cdef float b
-    cdef float *minValue
-    cdef float *maxValue
-    minValue = &a
-    maxValue = &b
-    getMinMaxFloat(&c_data[0], length, minValue, maxValue)
-    return a, b
+    cdef float minValue
+    cdef float maxValue
+    getMinMaxFloat(&c_data[0], length, &minValue, &maxValue)
+    return minValue, maxValue
 
 
 def _minMaxDouble(numpy.ndarray data):

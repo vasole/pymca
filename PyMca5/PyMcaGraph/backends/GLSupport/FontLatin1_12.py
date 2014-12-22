@@ -38,7 +38,7 @@ This module provides a standalone Latin-1 monospace font as a texture.
 # import ######################################################################
 
 import zlib
-from OpenGL.GL import *  # noqa
+from .gl import *  # noqa
 from .GLTexture import Texture2D
 
 

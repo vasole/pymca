@@ -5,7 +5,7 @@ from InsidePolygonWithBounds cimport PointsInsidePolygonInt as _pnpolyInt32
 cimport numpy
 import numpy
 
-include "minMax.pyx"
+include "MinMax.pyx"
 
 @cython.boundscheck(False)
 def pnpoly(vertices, points, bint border=True):

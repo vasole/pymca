@@ -37,8 +37,8 @@ This module provides a class managing a vertex buffer
 
 # import ######################################################################
 
-from OpenGL.GL import *  # noqa
-from ctypes import c_void_p, c_int
+from .gl import *  # noqa
+from ctypes import c_void_p, c_uint
 import numpy as np
 
 
@@ -108,7 +108,7 @@ class VertexBuffer(object):
     def discard(self):
         if hasattr(self, '_vboId'):
             if bool(glDeleteBuffers):  # Test for __del__
-                glDeleteBuffers(1, (c_int * 1)(self._vboId))
+                glDeleteBuffers(1, (c_uint * 1)(self._vboId))
             del self._vboId
             del self._size
 

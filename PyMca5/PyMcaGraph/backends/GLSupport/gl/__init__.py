@@ -31,19 +31,40 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-This module provides convenient classes for the OpenGL rendering backend
+This module provides a ctypes wrapper over OpenGL
 """
 
 
 # import ######################################################################
 
-from .GLContext import *  # noqa
-from .GLFramebuffer import *  # noqa
-from .GLImagePlot import *  # noqa
-from .GLLinePlot import *  # noqa
-from .GLSupport import *  # noqa
-from .GLText import *  # noqa
-from .GLTexture import *  # noqa
-from .GLVertexBuffer import *  # noqa
-from .Interaction import *  # noqa
-from .LabelLayout import *  # noqa
+import OpenGL
+if 0:  # Debug
+    OpenGL.ERROR_ON_COPY = True
+else:
+    OpenGL.ERROR_LOGGING = False
+    OpenGL.ERROR_CHECKING = False
+    OpenGL.ERROR_ON_COPY = False
+
+from OpenGL.GL import *  # noqa
+
+from OpenGL.GL.ARB.framebuffer_object import *  # noqa Core in OpenGL 3
+from OpenGL.GL.ARB.texture_rg import GL_R32F  # noqa Core in OpenGL 3
+
+# PyOpenGL 3.0.1 does not define it
+try:
+    GLchar
+except NameError:
+    from ctypes import c_char
+    GLchar = c_char
+
+
+def testGLExtensions():
+    from OpenGL.GL.ARB.framebuffer_object import glInitFramebufferObjectARB
+    from OpenGL.GL.ARB.texture_rg import glInitTextureRgARB
+
+    if not glInitFramebufferObjectARB():
+        raise RuntimeError(
+            "OpenGL GL_ARB_framebuffer_object extension required !")
+
+    if not glInitTextureRgARB():
+        raise RuntimeError("OpenGL GL_ARB_texture_rg extension required !")

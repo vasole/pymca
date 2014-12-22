@@ -42,7 +42,7 @@ It provides Latin-1 (ISO8859-1) characters for one monospace font at one size.
 import numpy as np
 import math
 from ctypes import c_void_p, sizeof, c_float
-from OpenGL.GL import *  # noqa
+from .gl import *  # noqa
 from . import FontLatin1_12 as font
 from .GLContext import getGLContext
 from .GLSupport import Program, mat4Translate

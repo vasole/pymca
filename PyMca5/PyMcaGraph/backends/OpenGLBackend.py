@@ -53,15 +53,7 @@ import time
 import warnings
 from collections import namedtuple
 
-import OpenGL
-if 0:  # Debug
-    OpenGL.ERROR_ON_COPY = True
-else:
-    OpenGL.ERROR_LOGGING = False
-    OpenGL.ERROR_CHECKING = False
-    OpenGL.ERROR_ON_COPY = False
-
-from OpenGL.GL import *  # noqa
+from .GLSupport.gl import *  # noqa
 
 try:
     from ..PlotBackend import PlotBackend
@@ -434,14 +426,16 @@ class Zoom(ClickOrDrag):
         yMin, yMax = self.backend.getGraphYLimits()
         self.zoomStack.append((xMin, xMax, yMin, yMax))
 
-        self.backend.setSelectionArea()
         x0, y0 = self.backend.pixelToDataCoords(*startPos)
         x1, y1 = self.backend.pixelToDataCoords(*endPos)
         if self.backend.isKeepDataAspectRatio():
             x1, y1 = self._ensureAspectRatio(x0, y0, x1, y1)
         xMin, xMax = min(x0, x1), max(x0, x1)
         yMin, yMax = min(y0, y1), max(y0, y1)
-        self.backend.setLimits(xMin, xMax, yMin, yMax)
+        if xMin != xMax and yMin != yMax:  # Avoid null zoom area
+            self.backend.setLimits(xMin, xMax, yMin, yMax)
+
+        self.backend.setSelectionArea()
         self.backend.replot()
 
     def _zoom(self, cx, cy, scaleF):
@@ -746,18 +740,13 @@ class MarkerInteraction(ClickOrDrag):
                     return True
 
                 else:
-                    curve, _ = self.machine.backend.pickCurve(x, y)
-                    if curve is not None:
+                    picked = self.machine.backend.pickImageOrCurve(
+                        x,
+                        y,
+                        lambda item: item.info['behaviors'] & testBehaviors)
+                    if picked is not None:
                         self.goto('clickOrDrag', x, y)
                         return True
-
-                    else:
-                        image, _ = self.machine.backend.pickImage(
-                            x, y,
-                            lambda img: img.info['behaviors'] & testBehaviors)
-                        if image is not None:
-                            self.goto('clickOrDrag', x, y)
-                            return True
 
             return False
 
@@ -827,30 +816,34 @@ class MarkerInteraction(ClickOrDrag):
 
                 self.backend.replot()
             else:
-                curve, pickedIndices = self.backend.pickCurve(x, y)
+                picked = self.backend.pickImageOrCurve(
+                    x,
+                    y,
+                    lambda item: 'selectable' in item.info['behaviors'])
 
-                if curve is not None:
+                if picked is None:
+                    pass
+                elif picked[0] == 'curve':
+                    _, curve, indices = picked
                     xData, yData = self.backend.pixelToDataCoords(x, y)
                     eventDict = prepareCurveSignal('left',
                                                    curve.info['legend'],
                                                    'curve',
-                                                   curve.xData[pickedIndices],
-                                                   curve.yData[pickedIndices],
+                                                   curve.xData[indices],
+                                                   curve.yData[indices],
                                                    xData, yData, x, y)
                     self.backend._callback(eventDict)
 
-                else:
-                    image, posImg = self.backend.pickImage(
-                        x, y,
-                        lambda img: 'selectable' in img.info['behaviors'])
-                    if image is not None:
-                        xData, yData = self.backend.pixelToDataCoords(x, y)
-                        eventDict = prepareImageSignal('left',
-                                                       image.info['legend'],
-                                                       'image',
-                                                       posImg[0], posImg[1],
-                                                       xData, yData, x, y)
-                        self.backend._callback(eventDict)
+                elif picked[0] == 'image':
+                    _, image, posImg = picked
+
+                    xData, yData = self.backend.pixelToDataCoords(x, y)
+                    eventDict = prepareImageSignal('left',
+                                                   image.info['legend'],
+                                                   'image',
+                                                   posImg[0], posImg[1],
+                                                   xData, yData, x, y)
+                    self.backend._callback(eventDict)
 
     def _signalMarkerMovingEvent(self, eventType, marker, x, y):
         assert marker is not None
@@ -883,10 +876,16 @@ class MarkerInteraction(ClickOrDrag):
         if self.marker is not None:
             self._signalMarkerMovingEvent('markerMoving', self.marker, x, y)
         else:
-            self.image, _ = self.backend.pickImage(
-                x, y, lambda img: 'draggable' in img.info['behaviors'])
-            if self.image is None:  # No draggable item
+            picked = self.backend.pickImageOrCurve(
+                x,
+                y,
+                lambda item: 'draggable' in item.info['behaviors'])
+            if picked is None:
+                self.image = None
                 self.backend.setCursor()
+            else:
+                assert picked[0] == 'image'  # For now, only drag images
+                self.image = picked[1]
 
     def drag(self, x, y):
         xData, yData = self.backend.pixelToDataCoords(x, y)
@@ -994,6 +993,12 @@ class FocusManager(StateMachine):
         super(FocusManager, self).__init__(states, 'idle')
 
 
+class ZoomAndSelect(FocusManager):
+    def __init__(self, backend):
+        eventHandlers = MarkerInteraction(backend), Zoom(backend)
+        super(ZoomAndSelect, self).__init__(eventHandlers)
+
+
 # OpenGLPlotCanvas ############################################################
 
 (CURSOR_DEFAULT, CURSOR_POINTING, CURSOR_SIZE_HOR,
@@ -1029,7 +1034,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDirtyFlag = True
 
         self._mousePosition = 0, 0
-        self.eventHandler = FocusManager((MarkerInteraction(self), Zoom(self)))
+        self.eventHandler = ZoomAndSelect(self)
 
         self._plotHasFocus = set()
 
@@ -1118,47 +1123,46 @@ class OpenGLPlotCanvas(PlotBackend):
                     return marker
         return None
 
-    def pickImage(self, x, y, test=None):
+    def pickImageOrCurve(self, x, y, test=None):
         if test is None:
-            test = lambda image: True
+            test = lambda item: True
 
         xPick, yPick = self.pixelToDataCoords(x, y)
         for item in sorted(self._zOrderedItems.values(),
                            key=lambda item: - item.info['zOrder']):
-            if isinstance(item, (GLColormap, GLRGBAImage)):
-                pickedPos = item.pick(xPick, yPick)
-                if pickedPos is not None and test(item):
-                    return item, pickedPos
-        return None, None
+            if test(item):
+                if isinstance(item, (GLColormap, GLRGBAImage)):
+                    pickedPos = item.pick(xPick, yPick)
+                    if pickedPos is not None:
+                        return 'image', item, pickedPos
 
-    def pickCurve(self, x, y):
-        for item in sorted(self._zOrderedItems.values(),
-                           key=lambda item: - item.info['zOrder']):
-            if isinstance(item, Curve2D):
-                offset = self._PICK_OFFSET
-                if item.marker is not None:
-                    offset = max(item.markerSize / 2., offset)
-                if item.lineStyle is not None:
-                    offset = max(item.lineWidth / 2., offset)
+                elif isinstance(item, Curve2D):
+                    offset = self._PICK_OFFSET
+                    if item.marker is not None:
+                        offset = max(item.markerSize / 2., offset)
+                    if item.lineStyle is not None:
+                        offset = max(item.lineWidth / 2., offset)
 
-                xPick0, yPick0 = self.pixelToDataCoords(x - offset, y - offset)
-                xPick1, yPick1 = self.pixelToDataCoords(x + offset, y + offset)
+                    xPick0, yPick0 = self.pixelToDataCoords(x - offset,
+                                                            y - offset)
+                    xPick1, yPick1 = self.pixelToDataCoords(x + offset,
+                                                            y + offset)
 
-                if xPick0 < xPick1:
-                    xPickMin, xPickMax = xPick0, xPick1
-                else:
-                    xPickMin, xPickMax = xPick1, xPick0
+                    if xPick0 < xPick1:
+                        xPickMin, xPickMax = xPick0, xPick1
+                    else:
+                        xPickMin, xPickMax = xPick1, xPick0
 
-                if yPick0 < yPick1:
-                    yPickMin, yPickMax = yPick0, yPick1
-                else:
-                    yPickMin, yPickMax = yPick1, yPick0
+                    if yPick0 < yPick1:
+                        yPickMin, yPickMax = yPick0, yPick1
+                    else:
+                        yPickMin, yPickMax = yPick1, yPick0
 
-                pickedIndices = item.pick(xPickMin, yPickMin,
-                                          xPickMax, yPickMax)
-                if pickedIndices:
-                    return item, pickedIndices
-        return None, None
+                    pickedIndices = item.pick(xPickMin, yPickMin,
+                                              xPickMax, yPickMax)
+                    if pickedIndices:
+                        return 'curve', item, pickedIndices
+        return None
 
     # Manage Plot #
 
@@ -1566,7 +1570,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
         glEnable(GL_BLEND)
         # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE)
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+                            GL_ONE, GL_ONE)
 
         # For lines
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
@@ -1813,7 +1818,7 @@ class OpenGLPlotCanvas(PlotBackend):
         for item in sorted(self._zOrderedItems.values(),
                            key=lambda item: item.info['zOrder']):
             item.render(self.matrixPlotDataTransformedProj,
-                         self._isXLog, self._isYLog)
+                        self._isXLog, self._isYLog)
 
         # Render Items
         self._progBase.use()
@@ -2114,7 +2119,7 @@ class OpenGLPlotCanvas(PlotBackend):
                  replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, z=1, **kw):
+                 xerror=None, yerror=None, z=1, selectable=True, **kw):
         if xlabel is not None:
             print('OpenGLBackend.addCurve xlabel not implemented')
         if ylabel is not None:
@@ -2132,6 +2137,10 @@ class OpenGLPlotCanvas(PlotBackend):
 
         x = np.array(x, dtype=np.float32, copy=False, order='C')
         y = np.array(y, dtype=np.float32, copy=False, order='C')
+
+        behaviors = set()
+        if selectable:
+            behaviors.add('selectable')
 
         oldCurve = self._zOrderedItems.get(('curve', legend), None)
         if oldCurve is not None:
@@ -2156,7 +2165,11 @@ class OpenGLPlotCanvas(PlotBackend):
                         lineWidth=1,
                         marker=symbol,
                         markerColor=color)
-        curve.info = {'legend': legend, 'zOrder': z}
+        curve.info = {
+            'legend': legend,
+            'zOrder': z,
+            'behaviors': behaviors
+        }
 
         if self._isXLog and curve.xMin <= 0.:
             raise RuntimeError(
@@ -2241,14 +2254,13 @@ class OpenGLPlotCanvas(PlotBackend):
     # Zoom #
 
     def isZoomModeEnabled(self):
-        return isinstance(self.eventHandler, FocusManager)
+        return isinstance(self.eventHandler, ZoomAndSelect)
 
     def setZoomModeEnabled(self, flag=True):
         if flag:
-            if not isinstance(self.eventHandler, FocusManager):
-                self.eventHandler = FocusManager((MarkerInteraction(self),
-                                                 Zoom(self)))
-        elif isinstance(self.eventHandler, FocusManager):
+            if not isinstance(self.eventHandler, ZoomAndSelect):
+                self.eventHandler = ZoomAndSelect(self)
+        elif isinstance(self.eventHandler, ZoomAndSelect):
             self.eventHandler = MarkerInteraction(self)
 
     def resetZoom(self):

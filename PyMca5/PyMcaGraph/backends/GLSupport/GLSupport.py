@@ -37,15 +37,9 @@ This module provides convenient classes for the OpenGL rendering backend
 
 # import ######################################################################
 
-from OpenGL.GL import *  # noqa
-from ctypes import c_float, c_char
+from .gl import *  # noqa
+from ctypes import c_float
 import numpy as np
-
-# PyOpenGL 3.0.1 does not define it
-try:
-    GLchar
-except NameError:
-    GLchar = c_char
 
 
 # utils #######################################################################
