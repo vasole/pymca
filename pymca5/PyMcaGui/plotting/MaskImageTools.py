@@ -36,7 +36,7 @@ import numpy
 
 from PyMca5 import spslut
 COLORMAP_LIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
-                spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
+                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
 DEFAULT_COLORMAP_INDEX = 2
 DEFAULT_COLORMAP_LOG_FLAG = False

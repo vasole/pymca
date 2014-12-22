@@ -93,6 +93,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._zoomMode = True
         self._eraseMode = False
         self._brushMode = False
+        self._brushWidth = 5
+        self._brushMenu = None
         self._bins = bins
         self._densityPlotWidget = None
         self._pixmap = None
@@ -107,7 +109,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
 
     def _activateScatterPlotView(self):
         self._plotViewMode = "scatter"
-        for key in ["colormap", "brushSelection", "brush", "rectangle"]:
+        for key in ["colormap", "brushSelection", "brush"]:
             self.setToolBarActionVisible(key, False)
         if hasattr(self, "eraseSelectionToolButton"):
             self.eraseSelectionToolButton.setToolTip("Set erase mode if checked")
@@ -118,6 +120,9 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 self.eraseSelectionToolButton.setChecked(False)
         if hasattr(self, "polygonSelectionToolButton"):
             self.polygonSelectionToolButton.setCheckable(True)
+        if hasattr(self, "rectSelectionToolButton"):
+            self.rectSelectionToolButton.setCheckable(True)
+
         self.clearImages()
         self._updatePlot()
 
@@ -126,9 +131,13 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         for key in ["colormap", "brushSelection", "brush", "rectangle"]:
             self.setToolBarActionVisible(key, True)
         if hasattr(self, "eraseSelectionToolButton"):
-            self.eraseSelectionToolButton.setCheckable(False)
+            self.eraseSelectionToolButton.setCheckable(True)
+        if hasattr(self, "brushSelectionToolButton"):
+            self.brushSelectionToolButton.setCheckable(True)
         if hasattr(self, "polygonSelectionToolButton"):
-            self.polygonSelectionToolButton.setCheckable(False)
+            self.polygonSelectionToolButton.setCheckable(True)
+        if hasattr(self, "rectSelectionToolButton"):
+            self.rectSelectionToolButton.setCheckable(True)
 
         if DEBUG:
             if self._densityPlotWidget is None:
@@ -278,11 +287,11 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             else:
                 # pixel
                 symbol = ","
-        if selectable is None:
-            if symbol == ",":
-                selectable = False
-            else:
-                selectable = True
+        #if selectable is None:
+        #    if symbol == ",":
+        #        selectable = False
+        #    else:
+        #        selectable = True
 
         # the basic curve is drawn
         self.addCurve(x=x, y=y, legend=legend, info=info,
@@ -323,6 +332,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 color = self._selectionColors[i]
                 self.addCurve(xMask, yMask, legend=legend + " %02d" % i,
                               info=info, color=color, linestyle=" ",
+                              selectable=False,
                               replot=False, replace=False)
 
         # update the plot if it was requested
@@ -427,11 +437,21 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         else:
             self.setZoomModeEnabled(True)
 
+    def _rectSelectionIconSignal(self):
+        if DEBUG:
+            print("_rectSelectionIconSignal")
+        if self.rectSelectionToolButton.isChecked():
+            self.setRectangularSelectionMode()
+        else:
+            self.setZoomModeEnabled(True)
+
     def setZoomModeEnabled(self, flag):
         super(MaskScatterWidget, self).setZoomModeEnabled(flag)
         if flag:
             if hasattr(self,"polygonSelectionToolButton"):
                 self.polygonSelectionToolButton.setChecked(False)
+            if hasattr(self,"brushSelectionToolButton"):
+                self.brushSelectionToolButton.setChecked(False)
 
     def _handlePolygonMask(self, points):
         if self._eraseMode:
@@ -458,15 +478,167 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
     def graphCallback(self, ddict):
         if DEBUG:
             print("MaskScatterWidget graphCallback", ddict)
-        if ddict["event"] == "mouseClicked":
-            print("mouseClicked")
-        elif ddict["event"] == "drawingFinished":
-            self._handlePolygonMask(ddict["points"])
-            print("drawing")
-        elif ddict["event"] == "mouseMoved":
-            print("mouseMoved")
-        # the base implementation handles ROIs, mouse poistion and activeCurve
+        if ddict["event"] == "drawingFinished":
+            if ddict["parameters"]["shape"].lower() == "rectangle":
+                points = numpy.zeros((5,2), dtype=ddict["points"].dtype)
+                points[0] = ddict["points"][0]
+                points[1, 0] = ddict["points"][0, 0]
+                points[1, 1] = ddict["points"][1, 1]
+                points[2] = ddict["points"][1]
+                points[3, 0] = ddict["points"][1, 0]
+                points[3, 1] = ddict["points"][0, 1]
+                points[4] = ddict["points"][0]
+                self._handlePolygonMask(points)
+            else:
+                self._handlePolygonMask(ddict["points"])
+        elif ddict['event'] in ["mouseMoved", "MouseAt", "mouseClicked"]:
+            if (self._plotViewMode == "density") and \
+               (self._imageData is not None):
+                shape = self._imageData.shape
+                row, column = MaskImageTools.convertToRowAndColumn( \
+                                                      ddict['x'],
+                                                      ddict['y'],
+                                                      shape,
+                                                      xScale=self._xScale,
+                                                      yScale=self._yScale,
+                                                      safe=True)
+
+                halfWidth = 0.5 * self._brushWidth   #in (row, column) units
+                halfHeight = 0.5 * self._brushWidth  #in (row, column) units
+
+                columnMin = max(column - halfWidth, 0)
+                columnMax = min(column + halfWidth, shape[1])
+
+                rowMin = max(row - halfHeight, 0)
+                rowMax = min(row + halfHeight, shape[0])
+
+                rowMin = min(int(round(rowMin)), shape[0] - 1)
+                rowMax = min(int(round(rowMax)), shape[0])
+                columnMin = min(int(round(columnMin)), shape[1] - 1)
+                columnMax = min(int(round(columnMax)), shape[1])
+
+                if rowMin == rowMax:
+                    rowMax = rowMin + 1
+                elif (rowMax - rowMin) > self._brushWidth:
+                    # python 3 implements banker's rounding
+                    # test case ddict['x'] = 23.3 gives:
+                    # i1 = 22 and i2 = 24 in python 3
+                    # i1 = 23 and i2 = 24 in python 2
+                    rowMin = rowMax - self._brushWidth
+
+                if columnMin == columnMax:
+                    columnMax = columnMin + 1
+                elif (columnMax - columnMin) > self._brushWidth:
+                    # python 3 implements banker's rounding
+                    # test case ddict['x'] = 23.3 gives:
+                    # i1 = 22 and i2 = 24 in python 3
+                    # i1 = 23 and i2 = 24 in python 2
+                    columnMin = columnMax - self._brushWidth
+
+                #To show array coordinates:
+                #x = self._xScale[0] + columnMin * self._xScale[1]
+                #y = self._yScale[0] + rowMin * self._yScale[1]
+                #self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[rowMin, columnMin]))
+                #To show row and column:
+                #self.setMouseText("%g, %g, %g" % (row, column, self.__imageData[rowMin, columnMin]))
+                #To show mouse coordinates:
+                #self.setMouseText("%g, %g, %g" % (ddict['x'], ddict['y'], self.__imageData[rowMin, columnMin]))
+                if self._xScale is not None:
+                    x = self._xScale[0] + column * self._xScale[1]
+                    y = self._yScale[0] + row * self._yScale[1]
+                else:
+                    x = column
+                    y = row
+                self.setMouseText("%g, %g, %g" % (x, y, self._imageData[row, column]))
+
+            if self._brushMode:
+                if self.isZoomModeEnabled():
+                    return
+                if ddict['button'] != "left":
+                    return
+                selectionMask = numpy.zeros(self._imageData.shape,
+                                            numpy.uint8)
+                if self._eraseMode:
+                    selectionMask[rowMin:rowMax, columnMin:columnMax] = 1
+                else:
+                    selectionMask[rowMin:rowMax, columnMin:columnMax] = \
+                                                                self._nRoi
+                self._setSelectionMaskFromDensityMask(selectionMask,
+                                                      update=True)
+        #if emitsignal:
+        #    #should this be made by the parent?
+        #    self.plotImage(update = False)
+        #
+        #    #inform the other widgets
+        #    self._emitMaskChangedSignal()
+        # the base implementation handles ROIs, mouse position and activeCurve
         super(MaskScatterWidget, self).graphCallback(ddict)
+
+    def _brushIconSignal(self):
+        if DEBUG:
+            print("brushIconSignal")
+        if self._brushMenu is None:
+            self._brushMenu = qt.QMenu()
+            self._brushMenu.addAction(QString(" 1 Image Pixel Width"),
+                                       self._setBrush1)
+            self._brushMenu.addAction(QString(" 2 Image Pixel Width"),
+                                       self._setBrush2)
+            self._brushMenu.addAction(QString(" 3 Image Pixel Width"),
+                                       self._setBrush3)
+            self._brushMenu.addAction(QString(" 5 Image Pixel Width"),
+                                       self._setBrush4)
+            self._brushMenu.addAction(QString("10 Image Pixel Width"),
+                                       self._setBrush5)
+            self._brushMenu.addAction(QString("20 Image Pixel Width"),
+                                       self._setBrush6)
+        self._brushMenu.exec_(self.cursor().pos())
+
+    def _brushSelectionIconSignal(self):
+        if DEBUG:
+            print("_setBrushSelectionMode")
+        if hasattr(self, "polygonSelectionToolButton"):
+            self.polygonSelectionToolButton.setChecked(False)
+            self.setDrawModeEnabled(False)
+        if self.brushSelectionToolButton.isChecked():
+            self._brushMode = True
+            self.setZoomModeEnabled(False)
+        else:
+            self._brushMode = False
+            self.setZoomModeEnabled(True)
+
+    def _setBrush1(self):
+        self._brushWidth = 1
+
+    def _setBrush2(self):
+        self._brushWidth = 2
+
+    def _setBrush3(self):
+        self._brushWidth = 3
+
+    def _setBrush4(self):
+        self._brushWidth = 5
+
+    def _setBrush5(self):
+        self._brushWidth = 10
+
+    def _setBrush6(self):
+        self._brushWidth = 20
+
+    def setRectangularSelectionMode(self):
+        """
+        Resets zoom mode and enters selection mode with the current active ROI index
+        """
+        self._zoomMode = False
+        self._brushMode = False
+        self.setDrawModeEnabled(True, shape="rectangle", label="mask",
+                                color=self._selectionColors[self._nRoi])
+        self.setZoomModeEnabled(False)
+        if hasattr(self, "brushSelectionToolButton"):
+            self.brushSelectionToolButton.setChecked(False)
+        if hasattr(self,"polygonSelectionToolButton"):
+            self.polygonSelectionToolButton.setChecked(False)
+        if hasattr(self,"rectSelectionToolButton"):
+            self.rectSelectionToolButton.setChecked(True)
 
     def setPolygonSelectionMode(self):
         """
@@ -474,11 +646,13 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         """
         self._zoomMode = False
         self._brushMode = False
-        # one should be able to erase with a polygonal mask
-        self._eraseMode = False
         self.setDrawModeEnabled(True, shape="polygon", label="mask",
                                 color=self._selectionColors[self._nRoi])
         self.setZoomModeEnabled(False)
+        if hasattr(self, "brushSelectionToolButton"):
+            self.brushSelectionToolButton.setChecked(False)
+        if hasattr(self,"rectSelectionToolButton"):
+            self.rectSelectionToolButton.setChecked(False)
         if hasattr(self,"polygonSelectionToolButton"):
             self.polygonSelectionToolButton.setChecked(True)
 
@@ -504,6 +678,9 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
 
     def emitMaskScatterWidgetSignal(self, ddict):
         self.sigMaskScatterWidgetSignal.emit(ddict)
+
+    def _imageIconSignal(self):
+        self.__resetSelection()
 
     def _buildAdditionalSelectionMenuDict(self):
         self._additionalSelectionMenu = {}
@@ -618,7 +795,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._setSelectionMaskFromDensityMask(selectionMask)
         self._emitMaskChangedSignal()
 
-    def _setSelectionMaskFromDensityMask(self, densityPlotMask):
+    def _setSelectionMaskFromDensityMask(self, densityPlotMask, update=None):
         curve = self.getCurve(self._selectionCurve)
         if curve is None:
             return
@@ -628,18 +805,27 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         y0 = y.min()
         deltaX = (x.max() - x0)/float(bins[0])
         deltaY = (y.max() - y0)/float(bins[1])
-        if self._selectionMask is None:
-            view = numpy.zeros(x.size, dtype=numpy.uint8)
-        else:
-            view = numpy.zeros(self._selectionMask.size,
-                               dtype=self._selectionMask.dtype)
         columns = numpy.digitize(x, self._binsX, right=True)
-        columns[columns>=densityPlotMask.shape[1]] = densityPlotMask.shape[1] - 1
+        columns[columns>=densityPlotMask.shape[1]] = \
+                                                   densityPlotMask.shape[1] - 1
         rows = numpy.digitize(y, self._binsY, right=True)
         rows[rows>=densityPlotMask.shape[0]] = densityPlotMask.shape[0] - 1
         values = densityPlotMask[rows, columns]
         values.shape = -1
-        view[:] = values[:]
+
+        if self._selectionMask is None:
+            view = numpy.zeros(x.size, dtype=numpy.uint8)
+            view[:] = values[:]
+        elif update:
+            view = self._selectionMask.copy()
+            if self._eraseMode:
+                view[values > 0] = 0
+            else:
+                view[values > 0] = values[values > 0]
+        else:
+            view = numpy.zeros(self._selectionMask.size,
+                               dtype=self._selectionMask.dtype)
+            view[:] = values[:]
         if self._selectionMask is not None:
             view.shape = self._selectionMask.shape
         self.setSelectionMask(view, plot=True)

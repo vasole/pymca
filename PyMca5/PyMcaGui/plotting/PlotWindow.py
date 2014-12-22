@@ -1328,6 +1328,16 @@ class PlotWindow(PlotWidget.PlotWidget):
         else:
             self._middleROIMarkerFlag= False
 
+    def setMouseText(self, text=""):
+        try:
+            if len(text):
+                qt.QToolTip.showText(self.cursor().pos(),
+                                     text, self, qt.QRect())
+            else:
+                qt.QToolTip.hideText()
+        except:
+            print("Error trying to show mouse text <%s>" % text)
+
 if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * x

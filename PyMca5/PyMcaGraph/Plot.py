@@ -328,7 +328,7 @@ class Plot(PlotBase.PlotBase):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, z=1, selectable=True, **kw):
+                 xerror=None, yerror=None, z=1, selectable=None, **kw):
         # Convert everything to arrays (not forcing type) in order to avoid
         # problems at unexpected places: missing min or max attributes, problem
         # when using numpy.nonzero on lists, ...
@@ -424,7 +424,9 @@ class Plot(PlotBase.PlotBase):
             xplot, yplot = x, y
             colorplot = color
         info["plot_z"] = z
-        info["plot_selectable"] = selectable,
+        if selectable is None:
+            selectable = info.get("plot_selectable", True)
+        info["plot_selectable"] = selectable
         if len(xplot):
             curveHandle = self._plot.addCurve(xplot, yplot, key, info,
                                               replot=False, replace=replace,
