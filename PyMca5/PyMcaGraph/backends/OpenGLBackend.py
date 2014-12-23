@@ -155,9 +155,16 @@ _baseVertShd = """
 _baseFragShd = """
     uniform vec4 color;
     uniform int hatchStep;
+    uniform float tickLen;
 
     void main(void) {
-        if (hatchStep == 0 ||
+        if (tickLen != 0) {
+            if (mod((gl_FragCoord.x + gl_FragCoord.y) / tickLen, 2.) < 1.) {
+                gl_FragColor = color;
+            } else {
+                discard;
+            }
+        } else if (hatchStep == 0 ||
             mod(gl_FragCoord.x - gl_FragCoord.y, hatchStep) == 0) {
             gl_FragColor = color;
         } else {
@@ -1027,6 +1034,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._isXLog = False
         self._isYLog = False
 
+        self._grid = False
         self._activeCurve = None
 
         self.winWidth, self.winHeight = 0, 0
@@ -1694,6 +1702,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniform2i(self._progBase.uniforms['isLog'],
                     self._isXLog, self._isYLog)
         glUniform1i(self._progBase.uniforms['hatchStep'], 0)
+        glUniform1f(self._progBase.uniforms['tickLen'], 0.)
         posAttrib = self._progBase.attributes['position']
         glEnableVertexAttribArray(posAttrib)
 
@@ -1777,6 +1786,7 @@ class OpenGLPlotCanvas(PlotBackend):
                                self.matrixPlotDataTransformedProj)
             glUniform2i(self._progBase.uniforms['isLog'],
                         self._isXLog, self._isYLog)
+            glUniform1f(self._progBase.uniforms['tickLen'], 0.)
             posAttrib = self._progBase.attributes['position']
             colorUnif = self._progBase.uniforms['color']
             hatchStepUnif = self._progBase.uniforms['hatchStep']
@@ -1799,6 +1809,8 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniform2i(self._progBase.uniforms['isLog'], 0, 0)
         glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 1.)
         glUniform1i(self._progBase.uniforms['hatchStep'], 0)
+        glUniform1f(self._progBase.uniforms['tickLen'], 0.)
+
         glVertexAttribPointer(self._progBase.attributes['position'],
                               2,
                               GL_FLOAT,
@@ -1813,6 +1825,30 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def _renderPlotArea(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
+
+        # Render grid by reusing tick vertices and a stride
+        if self._grid:
+            self._updateAxis()
+
+            # Render plot in screen coords
+            glViewport(0, 0, self.winWidth, self.winHeight)
+            self._progBase.use()
+            glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
+                               self.matScreenProj)
+            glUniform2i(self._progBase.uniforms['isLog'], 0, 0)
+            glUniform4f(self._progBase.uniforms['color'], 0.5, 0.5, 0.5, 1.)
+            glUniform1i(self._progBase.uniforms['hatchStep'], 0)
+            glUniform1f(self._progBase.uniforms['tickLen'], 2.)
+
+            stride = 2 * self._frameVertices.shape[-1] * \
+                     self._frameVertices.itemsize
+            glVertexAttribPointer(self._progBase.attributes['position'],
+                                  2,
+                                  GL_FLOAT,
+                                  GL_FALSE,
+                                  stride, self._frameVertices)
+            glLineWidth(self._lineWidth)
+            glDrawArrays(GL_LINES, 0, (len(self._frameVertices) - 8) / 2)
 
         # Matrix
         trBounds = self.plotDataTransformedBounds
@@ -1839,6 +1875,7 @@ class OpenGLPlotCanvas(PlotBackend):
                            self.matrixPlotDataTransformedProj)
         glUniform2i(self._progBase.uniforms['isLog'],
                     self._isXLog, self._isYLog)
+        glUniform1f(self._progBase.uniforms['tickLen'], 0.)
 
         for item in self._items.values():
             try:
@@ -2479,6 +2516,11 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def getGraphYLabel(self):
         return self._yLabel
+
+    def showGrid(self, flag=True):
+        self._grid = flag
+        self._plotDirtyFlag = True
+        self.replot()
 
 
 # OpenGLBackend ###############################################################
