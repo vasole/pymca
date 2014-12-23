@@ -1027,6 +1027,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self._isXLog = False
         self._isYLog = False
 
+        self._activeCurve = None
+
         self.winWidth, self.winHeight = 0, 0
 
         self._markers = MiniOrderedDict()
@@ -2131,10 +2133,6 @@ class OpenGLPlotCanvas(PlotBackend):
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, z=1, selectable=True, **kw):
-        if xlabel is not None:
-            print('OpenGLBackend.addCurve xlabel not implemented')
-        if ylabel is not None:
-            print('OpenGLBackend.addCurve ylabel not implemented')
         if yaxis is not None:
             print('OpenGLBackend.addCurve yaxis not implemented')
         if xerror is not None:
@@ -2179,7 +2177,9 @@ class OpenGLPlotCanvas(PlotBackend):
         curve.info = {
             'legend': legend,
             'zOrder': z,
-            'behaviors': behaviors
+            'behaviors': behaviors,
+            'xLabel': xlabel,
+            'yLabel': ylabel,
         }
 
         if self._isXLog and curve.xMin <= 0.:
@@ -2224,6 +2224,43 @@ class OpenGLPlotCanvas(PlotBackend):
             if type_ == 'curve':
                 self.removeCurve(legend, replot=False)
         self._plotDirtyFlag = True
+
+    def setActiveCurve(self, legend, replot=True):
+        if not self._activeCurveHandling:
+            return
+
+        curve = self._zOrderedItems.get(('curve', legend), None)
+        if curve is None:
+            raise KeyError("Curve %s not found" % legend)
+
+        if self._activeCurve is not None:
+            inactiveState =  self._activeCurve._inactiveState
+            del self._activeCurve._inactiveState
+            self._activeCurve.lineColor = inactiveState['lineColor']
+            self._activeCurve.markerColor = inactiveState['markerColor']
+            self._activeCurve.useColorVboData = inactiveState['useColorVbo']
+            self.setGraphXLabel(inactiveState['xLabel'])
+            self.setGraphYLabel(inactiveState['yLabel'])
+
+        curve._inactiveState = {'lineColor': curve.lineColor,
+                                'markerColor': curve.markerColor,
+                                'useColorVbo': curve.useColorVboData,
+                                'xLabel': self.getGraphXLabel(),
+                                'yLabel': self.getGraphYLabel()}
+
+        if curve.info['xLabel'] is not None:
+            self.setGraphXLabel(curve.info['xLabel'])
+        if curve.info['yLabel'] is not None:
+            self.setGraphYLabel(curve.info['yLabel'])
+
+        color = rgba(self._activeCurveColor, PlotBackend.COLORDICT)
+        curve.lineColor = color
+        curve.markerColor = color
+        curve.useColorVboData = False
+        self._activeCurve = curve
+
+        if replot:
+            self.replot()
 
     def clear(self):
         self.clearItems()
@@ -2431,12 +2468,14 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def setGraphXLabel(self, label="X"):
         self._xLabel = label
+        self.updateAxis()
 
     def getGraphXLabel(self):
         return self._xLabel
 
     def setGraphYLabel(self, label="Y"):
         self._yLabel = label
+        self.updateAxis()
 
     def getGraphYLabel(self):
         return self._yLabel
