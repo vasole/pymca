@@ -1371,8 +1371,9 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((xPixel,
                                          plotBottom - 0.5 * self._tickLen))
                         vertices.append((xPixel, self._margins['top']))
-                        vertices.append((xPixel,
-                            self._margins['top'] + 0.5 * self._tickLen))
+                        vertices.append(
+                            (xPixel,
+                             self._margins['top'] + 0.5 * self._tickLen))
 
         if trYMin != trYMax and self._isYLog and yStep == 1:
             for yDataLog in list(_ticks(yMin, yMax, yStep))[:-1]:
@@ -1383,9 +1384,8 @@ class OpenGLPlotCanvas(PlotBackend):
                         yPixel = self.dataToPixelCoords(yData=yData)
 
                         vertices.append((self._margins['left'], yPixel))
-                        vertices.append((self._margins['left'] + \
-                             0.5 * self._tickLen,
-                             yPixel))
+                        vertices.append((self._margins['left'] +
+                                         0.5 * self._tickLen, yPixel))
                         vertices.append((plotRight, yPixel))
                         vertices.append((plotRight - 0.5 * self._tickLen,
                                          yPixel))
@@ -1934,7 +1934,7 @@ class OpenGLPlotCanvas(PlotBackend):
             glUniform1f(self._progBase.uniforms['tickLen'], 2.)
 
             stride = 2 * self._frameVertices.shape[-1] * \
-                     self._frameVertices.itemsize
+                self._frameVertices.itemsize
             glVertexAttribPointer(self._progBase.attributes['position'],
                                   2,
                                   GL_FLOAT,
@@ -2371,7 +2371,7 @@ class OpenGLPlotCanvas(PlotBackend):
             raise KeyError("Curve %s not found" % legend)
 
         if self._activeCurve is not None:
-            inactiveState =  self._activeCurve._inactiveState
+            inactiveState = self._activeCurve._inactiveState
             del self._activeCurve._inactiveState
             self._activeCurve.lineColor = inactiveState['lineColor']
             self._activeCurve.markerColor = inactiveState['markerColor']
