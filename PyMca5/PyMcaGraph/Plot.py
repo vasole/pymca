@@ -176,6 +176,7 @@ class Plot(PlotBase.PlotBase):
             if self.isActiveCurveHandlingEnabled():
                 activeCurve = self.getActiveCurve()
             self._activeCurveHandling = False
+            self._activeCurve = None
         else:
             self._activeCurveHandling = True
         self._plot.enableActiveCurveHandling(self._activeCurveHandling)
@@ -328,7 +329,7 @@ class Plot(PlotBase.PlotBase):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, z=1, selectable=None, **kw):
+                 xerror=None, yerror=None, z=None, selectable=None, **kw):
         # Convert everything to arrays (not forcing type) in order to avoid
         # problems at unexpected places: missing min or max attributes, problem
         # when using numpy.nonzero on lists, ...
@@ -423,7 +424,12 @@ class Plot(PlotBase.PlotBase):
         else:
             xplot, yplot = x, y
             colorplot = color
-        info["plot_z"] = z
+
+        if z is None:
+            info["plot_z"] = info.get("plot_z", 1)
+        else:
+            info["plot_z"] = z
+
         if selectable is None:
             selectable = info.get("plot_selectable", True)
         info["plot_selectable"] = selectable
