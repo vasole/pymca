@@ -61,21 +61,34 @@ def clamp(value, min_=0., max_=1.):
     return min(max(value, min_), max_)
 
 
-def rgba(code, colorDict={}):
+def rgba(color, colorDict={}):
     """Convert color code '#RRGGBB' and '#RRGGBBAA' to (R, G, B, A)
+
     :param str code: The color code to conver
     :param dict colorDict: A dictionary of color name conversion to color code
     :returns: RGBA colors as floats in [0., 1.]
     :rtype: tuple
     """
-    if not code.startswith('#'):
-        code = colorDict[code]
+    if len(color) == 4:
+        r, g, b, a = color
+        if type(color[3]) in [type(1), np.uint8, np.int8]:
+            return r / 255., g / 255., b / 255., a / 255.
+        if type(color[3]) in [type(1.), np.float32, np.float64]:
+            assert r >= 0. and r <= 1.
+            assert g >= 0. and g <= 1.
+            assert b >= 0. and b <= 1.
+            assert a >= 0. and a <= 1.
+            return r, g, b, a
 
-    assert len(code) in (7, 9) and code[0] == '#'
-    r = int(code[1:3], 16) / 255.
-    g = int(code[3:5], 16) / 255.
-    b = int(code[5:7], 16) / 255.
-    a = int(code[7:9], 16) / 255. if len(code) == 9 else 1.
+    # We assume color is a string
+    if not color.startswith('#'):
+        color = colorDict[color]
+
+    assert len(color) in (7, 9) and color[0] == '#'
+    r = int(color[1:3], 16) / 255.
+    g = int(color[3:5], 16) / 255.
+    b = int(color[5:7], 16) / 255.
+    a = int(color[7:9], 16) / 255. if len(color) == 9 else 1.
     return r, g, b, a
 
 

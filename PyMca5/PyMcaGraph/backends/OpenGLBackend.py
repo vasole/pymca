@@ -418,7 +418,9 @@ class Zoom(ClickOrDrag):
         self.backend.setSelectionArea(((self.x0, self.y0),
                                        (self.x0, y1),
                                        (x1, y1),
-                                       (x1, self.y0)), fill=None)
+                                       (x1, self.y0)),
+                                      fill=None,
+                                      color=(0., 0., 0., 1.))
         self.backend.replot()
 
     def endDrag(self, startPos, endPos):
@@ -459,6 +461,10 @@ class Zoom(ClickOrDrag):
 class Select(object):
     parameters = {}
 
+    @property
+    def color(self):
+        return self.parameters.get('color', None)
+
 
 class SelectPolygon(StateMachine, Select):
     class Idle(State):
@@ -473,7 +479,8 @@ class SelectPolygon(StateMachine, Select):
             self.points = [(x, y), (x, y)]
 
         def updateSelectionArea(self):
-            self.machine.backend.setSelectionArea(self.points)
+            self.machine.backend.setSelectionArea(self.points,
+                                                  color=self.machine.color)
             self.machine.backend.replot()
             eventDict = prepareDrawingSignal('drawingProgress',
                                              'polygon',
@@ -583,7 +590,8 @@ class SelectRectangle(Select2Points):
         self.backend.setSelectionArea((self.startPt,
                                       (self.startPt[0], y),
                                       (x, y),
-                                      (x, self.startPt[1])))
+                                      (x, self.startPt[1])),
+                                      color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -610,7 +618,8 @@ class SelectLine(Select2Points):
 
     def select(self, x, y):
         x, y = self.backend.pixelToDataCoords(x, y)
-        self.backend.setSelectionArea((self.startPt, (x, y)))
+        self.backend.setSelectionArea((self.startPt, (x, y)),
+                                      color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -674,7 +683,7 @@ class SelectHLine(Select1Point):
 
     def select(self, x, y):
         points = self._hLine(y)
-        self.backend.setSelectionArea(points)
+        self.backend.setSelectionArea(points, color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -702,7 +711,7 @@ class SelectVLine(Select1Point):
 
     def select(self, x, y):
         points = self._vLine(x)
-        self.backend.setSelectionArea(points)
+        self.backend.setSelectionArea(points, color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -1166,12 +1175,14 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Manage Plot #
 
-    def setSelectionArea(self, points=None, fill='hatch'):
+    def setSelectionArea(self, points=None, fill='hatch', color=None):
         if points:
+            if color is None:
+                color = (0., 0., 0., 1.)
             self._selectionArea = Shape2D(points, fill=fill,
-                                          fillColor=(0., 0., 0., 0.5),
+                                          fillColor=color,
                                           stroke=True,
-                                          strokeColor=(0., 0., 0., 1.))
+                                          strokeColor=color)
         else:
             self._selectionArea = None
 
@@ -2152,7 +2163,7 @@ class OpenGLPlotCanvas(PlotBackend):
         if color is None:
             color = self._activeCurveColor
 
-        if isinstance(color, np.ndarray):
+        if isinstance(color, np.ndarray) and len(color) > 4:
             colorArray = color
             color = None
         else:
@@ -2234,12 +2245,16 @@ class OpenGLPlotCanvas(PlotBackend):
         'hline': SelectHLine,
     }
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
+    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None,
+                           color=None, **kw):
         eventHandlerClass = self._drawModes[shape]
         if flag:
             parameters = kw
             parameters['shape'] = shape
             parameters['label'] = label
+            if color is not None:
+                parameters['color'] = rgba(color, PlotBackend.COLORDICT)
+
             if not isinstance(self.eventHandler, eventHandlerClass):
                 self.eventHandler = eventHandlerClass(self, parameters)
         elif isinstance(self.eventHandler, eventHandlerClass):

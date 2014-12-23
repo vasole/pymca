@@ -470,7 +470,8 @@ class MatplotlibGraph(FigureCanvas):
         else:
             print("unhandled event", event.artist)
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
+    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None,
+                           color=None, **kw):
         if flag:
             shape = shape.lower()
             if shape not in self.__drawModeList:
@@ -481,6 +482,8 @@ class MatplotlibGraph(FigureCanvas):
                 self.setZoomModeEnabled(False)
                 self._drawModePatch = shape
             self._drawingParameters = kw
+            if color is not None:
+                self._drawingParameters['color'] = color
             self._drawingParameters['shape'] = shape
             self._drawingParameters['label'] = label
         else:

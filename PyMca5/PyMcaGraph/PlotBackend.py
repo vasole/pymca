@@ -650,7 +650,8 @@ class PlotBackend(object):
         print("PlotBackend setDefaultColormap not implemented")
         return
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
+    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None,
+                           color=None, **kw):
         """
         Zoom and drawing are not compatible and cannot be enabled simultanelously
 
@@ -660,6 +661,9 @@ class PlotBackend(object):
         :type shape: string (default polygon)
         :param label: Associated text (for identifying the signals)
         :type label: string, default None
+        :param color: The color to use to draw the selection area
+        :type color: string ("#RRGGBB") or 4 column unsigned byte array or
+                     one of the predefined color names defined in Colors.py
         """
         if flag:
             self._drawModeEnabled = True
