@@ -277,9 +277,6 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
     def setSelectionCurveData(self, x, y, legend="MaskScatterWidget", info=None,
                  replot=True, replace=True, linestyle=" ", color=None,
                  symbol=None, selectable=None, **kw):
-        # TODO: Implement a method or use additional keywords to avoid
-        # recalculating the image or the base plot when just the mask is
-        # changed.
         self.enableActiveCurveHandling(False)
         if symbol is None:
             if x.size < 1000:
@@ -328,18 +325,9 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         if self._selectionMask is not None:
             if self._selectionMask.max():
                 hasMaskedData = True
-        if hasMaskedData:
-            tmpMask = self._selectionMask[:]
-            tmpMask.shape = -1
-            for i in range(1, self._maxNRois + 1):
-                xMask = x[tmpMask == i]
-                yMask = y[tmpMask == i]
-                color = self._selectionColors[i]
-                self.addCurve(xMask, yMask, legend=legend + " %02d" % i,
-                              info=info, color=color, linestyle=" ",
-                              z=1,
-                              selectable=False,
-                              replot=False, replace=False)
+
+        if hasMaskedData or (replace==False):
+            self._updatePlot(replot=False)
 
         # update the plot if it was requested
         if replot:
@@ -969,7 +957,6 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._alphaLevel /= 2
         if self._alphaLevel < 2:
             self._alphaLevel = 2
-        print self._alphaLevel
         self._updatePlot()
 
 if __name__ == "__main__":
