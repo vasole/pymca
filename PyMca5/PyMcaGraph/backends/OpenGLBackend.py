@@ -1202,6 +1202,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def _axesTicksAndLabels(self):
         trXMin, trXMax, trYMin, trYMax = self.plotDataTransformedBounds
+        dataXMin, dataXMax, dataYMin, dataYMax = self.plotDataBounds
 
         vertices = []
         labels = []
@@ -1302,7 +1303,40 @@ class OpenGLPlotCanvas(PlotBackend):
                                              align=RIGHT,
                                              valign=CENTER))
 
-        return vertices, labels
+        nbMainTicks = len(vertices) / 4
+
+        if trXMin != trXMax and self._isXLog and xStep == 1:
+            for xDataLog in list(_ticks(xMin, xMax, xStep))[:-1]:
+                xDataOrig = 10 ** xDataLog
+                for index in range(2, 10):
+                    xData = xDataOrig * index
+                    if xData >= dataXMin and xData <= dataXMax:
+                        xPixel = self.dataToPixelCoords(xData=xData)
+
+                        vertices.append((xPixel, plotBottom))
+                        vertices.append((xPixel,
+                                         plotBottom - 0.5 * self._tickLen))
+                        vertices.append((xPixel, self._margins['top']))
+                        vertices.append((xPixel,
+                            self._margins['top'] + 0.5 * self._tickLen))
+
+        if trYMin != trYMax and self._isYLog and yStep == 1:
+            for yDataLog in list(_ticks(yMin, yMax, yStep))[:-1]:
+                yDataOrig = 10 ** yDataLog
+                for index in range(2, 10):
+                    yData = yDataOrig * index
+                    if yData >= dataYMin and yData <= dataYMax:
+                        yPixel = self.dataToPixelCoords(yData=yData)
+
+                        vertices.append((self._margins['left'], yPixel))
+                        vertices.append((self._margins['left'] + \
+                             0.5 * self._tickLen,
+                             yPixel))
+                        vertices.append((plotRight, yPixel))
+                        vertices.append((plotRight - 0.5 * self._tickLen,
+                                         yPixel))
+
+        return vertices, labels, nbMainTicks
 
     def _updateAxis(self):
         # Check if window is large enough
@@ -1316,7 +1350,7 @@ class OpenGLPlotCanvas(PlotBackend):
             self._axisDirtyFlag = False
 
         # Ticks
-        vertices, tickLabels = self._axesTicksAndLabels()
+        vertices, tickLabels, nbMainTicks = self._axesTicksAndLabels()
         self._labels = tickLabels
 
         # Plot frame
@@ -1339,6 +1373,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # Build numpy array from ticks and frame vertices
         self._frameVertices = np.array(vertices, dtype=np.float32)
+        self._frameVerticesNbMainTicks = nbMainTicks
 
         # Title, Labels
         plotCenterX = self._margins['left'] + plotWidth // 2
@@ -1826,6 +1861,10 @@ class OpenGLPlotCanvas(PlotBackend):
     def _renderPlotArea(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
+        glScissor(self._margins['left'], self._margins['bottom'],
+                  plotWidth, plotHeight)
+        glEnable(GL_SCISSOR_TEST)
+
         # Render grid by reusing tick vertices and a stride
         if self._grid:
             self._updateAxis()
@@ -1848,16 +1887,23 @@ class OpenGLPlotCanvas(PlotBackend):
                                   GL_FALSE,
                                   stride, self._frameVertices)
             glLineWidth(self._lineWidth)
-            glDrawArrays(GL_LINES, 0, (len(self._frameVertices) - 8) / 2)
+
+            if self._grid == 1:
+                firstVertex = 0
+                nbVertices = self._frameVerticesNbMainTicks * 2
+            elif self._grid == 2:
+                firstVertex = self._frameVerticesNbMainTicks * 2
+                nbVertices = (len(self._frameVertices) - 8) / 2 - firstVertex
+            else:
+                firstVertex = 0
+                nbVertices = (len(self._frameVertices) - 8) / 2
+
+            glDrawArrays(GL_LINES, firstVertex, nbVertices)
 
         # Matrix
         trBounds = self.plotDataTransformedBounds
         if trBounds.xMin == trBounds.xMax or trBounds.yMin == trBounds.yMax:
             return
-
-        glScissor(self._margins['left'], self._margins['bottom'],
-                  plotWidth, plotHeight)
-        glEnable(GL_SCISSOR_TEST)
 
         glViewport(self._margins['left'], self._margins['right'],
                    plotWidth, plotHeight)
