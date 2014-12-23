@@ -676,7 +676,9 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             if type(color[-1]) in [numpy.uint8, numpy.int8]:
                 color = color.copy()
                 color[-1] = 255
-        self.setDrawModeEnabled(True, shape="rectangle", label="mask",
+        self.setDrawModeEnabled(True,
+                                shape="rectangle",
+                                label="mask",
                                 color=color)
         self.setZoomModeEnabled(False)
         if hasattr(self, "brushSelectionToolButton"):
