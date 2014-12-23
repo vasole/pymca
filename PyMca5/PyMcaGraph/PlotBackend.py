@@ -768,12 +768,17 @@ class PlotBackend(object):
         """
         print("PlotBackend setYAxisLogarithmic not implemented")
 
-    def setZoomModeEnabled(self, flag=True):
+    def setZoomModeEnabled(self, flag=True, color=None):
         """
         Zoom and drawing cannot be simultaneously enabled.
 
         :param flag: If True, the user can zoom.
         :type flag: boolean, default True
+        :param color: The color to use to draw the selection area.
+                      Default 'black"
+        :param color: The (optional) color to use to draw the selection area.
+        :type color: string ("#RRGGBB") or 4 column unsigned byte array or
+                     one of the predefined color names defined in Colors.py
         """
         if flag:
             self._zoomEnabled = True
