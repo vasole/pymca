@@ -2637,6 +2637,29 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDirtyFlag = True
         self.replot()
 
+    # Save
+    def saveGraph(self, fileName, fileFormat='ppm', dpi=None, **kw):
+        if fileFormat not in ['ppm']:
+            raise NotImplementedError('Unsupported format: %s' % fileFormat)
+
+        self.makeCurrent()
+
+        data = np.empty((self.winHeight, self.winWidth, 3),
+                        dtype=np.uint8, order='C')
+
+        glPixelStorei(GL_PACK_ALIGNMENT, 1)
+        glReadPixels(0, 0, self.winWidth, self.winHeight,
+                     GL_RGB, GL_UNSIGNED_BYTE, data)
+
+        # glReadPixels gives bottom to top, ppm stores as top to bottom
+        data = np.flipud(data)
+
+        with open(fileName, 'w') as f:
+            f.write('P6\n')
+            f.write('%d %d\n' % (self.winWidth, self.winHeight))
+            f.write('255\n')
+            f.write(data.tostring())
+
 
 # OpenGLBackend ###############################################################
 
