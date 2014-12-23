@@ -867,7 +867,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                                           dict['Geometry']['MainWindow'][3])))
             self.mcawindow.showMaximized()
             
-        PyMcaDirs.nativeFileDialogs = dict.get('nativeFileDialogs', True)
+        native = dict.get('nativeFileDialogs', True)
+        if native in ["False", "0", 0]:
+            native = False
+        PyMcaDirs.nativeFileDialogs = native
 
         if 'Sources' in dict:
             if 'lastFileFilter' in dict['Sources']:
