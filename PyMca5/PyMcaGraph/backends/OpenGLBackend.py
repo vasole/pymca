@@ -465,6 +465,11 @@ class Zoom(ClickOrDrag):
                                yCenter + (1. - yOffset) * yRange)
         self.backend.replot()
 
+    def cancel(self):
+        if isinstance(self.state, self.states['drag']):
+            self.backend.setSelectionArea()
+            self.backend.replot()
+
 
 class Select(object):
     parameters = {}
@@ -537,6 +542,11 @@ class SelectPolygon(StateMachine, Select):
         }
         super(SelectPolygon, self).__init__(states, 'idle')
 
+    def cancel(self):
+        if isinstance(self.state, self.states['select']):
+            self.backend.setSelectionArea()
+            self.backend.replot()
+
 
 class Select2Points(StateMachine, Select):
     class Idle(State):
@@ -588,6 +598,13 @@ class Select2Points(StateMachine, Select):
     def endSelect(self, x, y):
         pass
 
+    def cancelSelect(self):
+        pass
+
+    def cancel(self):
+        if isinstance(self.state, self.states['select']):
+            self.cancelSelect()
+
 
 class SelectRectangle(Select2Points):
     def beginSelect(self, x, y):
@@ -619,6 +636,10 @@ class SelectRectangle(Select2Points):
                                          self.parameters)
         self.backend._callback(eventDict)
 
+    def cancelSelect(self):
+        self.backend.setSelectionArea()
+        self.backend.replot()
+
 
 class SelectLine(Select2Points):
     def beginSelect(self, x, y):
@@ -646,6 +667,10 @@ class SelectLine(Select2Points):
                                          (self.startPt, (x, y)),
                                          self.parameters)
         self.backend._callback(eventDict)
+
+    def cancelSelect(self):
+        self.backend.setSelectionArea()
+        self.backend.replot()
 
 
 class Select1Point(StateMachine, Select):
@@ -682,6 +707,13 @@ class Select1Point(StateMachine, Select):
     def endSelect(self, x, y):
         pass
 
+    def cancelSelect(self):
+        pass
+
+    def cancel(self):
+        if isinstance(self.state, self.states['select']):
+            self.cancelSelect()
+
 
 class SelectHLine(Select1Point):
     def _hLine(self, y):
@@ -710,6 +742,10 @@ class SelectHLine(Select1Point):
                                          self.parameters)
         self.backend._callback(eventDict)
 
+    def cancelSelect(self):
+        self.backend.setSelectionArea()
+        self.backend.replot()
+
 
 class SelectVLine(Select1Point):
     def _vLine(self, x):
@@ -737,6 +773,10 @@ class SelectVLine(Select1Point):
                                          self._vLine(x),
                                          self.parameters)
         self.backend._callback(eventDict)
+
+    def cancelSelect(self):
+        self.backend.setSelectionArea()
+        self.backend.replot()
 
 
 class ItemsInteraction(ClickOrDrag):
@@ -949,6 +989,9 @@ class ItemsInteraction(ClickOrDrag):
         del self.image
         del self._lastPos
 
+    def cancel(self):
+        self.backend.setCursor()
+
 
 class FocusManager(StateMachine):
     """Manages focus across multiple event handlers
@@ -1008,6 +1051,10 @@ class FocusManager(StateMachine):
             'focus': FocusManager.Focus
         }
         super(FocusManager, self).__init__(states, 'idle')
+
+    def cancel(self):
+        for handler in self.eventHandlers:
+            handler.cancel()
 
 
 class ZoomAndSelect(FocusManager):
@@ -2379,8 +2426,10 @@ class OpenGLPlotCanvas(PlotBackend):
                 parameters['color'] = rgba(color, PlotBackend.COLORDICT)
 
             if not isinstance(self.eventHandler, eventHandlerClass):
+                self.eventHandler.cancel()
                 self.eventHandler = eventHandlerClass(self, parameters)
         elif isinstance(self.eventHandler, eventHandlerClass):
+            self.eventHandler.cancel()
             self.eventHandler = ItemsInteraction(self)
 
     def getDrawMode(self):
@@ -2401,9 +2450,11 @@ class OpenGLPlotCanvas(PlotBackend):
             elif self._zoomColor is None:
                 self._zoomColor = 0., 0., 0., 1.
 
+            self.eventHandler.cancel()
             self.eventHandler = ZoomAndSelect(self, self._zoomColor)
 
         elif isinstance(self.eventHandler, ZoomAndSelect):
+            self.eventHandler.cancel()
             self.eventHandler = ItemsInteraction(self)
 
     def resetZoom(self):
