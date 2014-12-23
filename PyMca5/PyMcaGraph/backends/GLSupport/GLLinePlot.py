@@ -181,6 +181,7 @@ class _Lines2D(object):
         self.yVboData = yVboData
         self.distVboData = distVboData
         self.colorVboData = colorVboData
+        self.useColorVboData = colorVboData is not None
 
         self.color = color
         self.width = width
@@ -258,7 +259,7 @@ class _Lines2D(object):
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
 
         colorAttrib = prog.attributes['color']
-        if self.colorVboData is not None:
+        if self.useColorVboData and self.colorVboData is not None:
             glEnableVertexAttribArray(colorAttrib)
             self.colorVboData.setVertexAttrib(colorAttrib)
         else:
@@ -297,7 +298,7 @@ class _Lines2D(object):
         glUniform1f(prog.uniforms['dashPeriod'], self.dashPeriod)
 
         colorAttrib = prog.attributes['color']
-        if self.colorVboData is not None:
+        if self.useColorVboData and self.colorVboData is not None:
             glEnableVertexAttribArray(colorAttrib)
             self.colorVboData.setVertexAttrib(colorAttrib)
         else:
@@ -494,6 +495,7 @@ class _Points2D(object):
         self.xVboData = xVboData
         self.yVboData = yVboData
         self.colorVboData = colorVboData
+        self.useColorVboData = colorVboData is not None
 
     @property
     def marker(self):
@@ -580,7 +582,7 @@ class _Points2D(object):
         # glPointSize(self.size)
 
         cAttrib = prog.attributes['color']
-        if self.colorVboData:
+        if self.useColorVboData and self.colorVboData is not None:
             glEnableVertexAttribArray(cAttrib)
             self.colorVboData.setVertexAttrib(cAttrib)
         else:
@@ -665,6 +667,9 @@ class Curve2D(object):
 
     colorVboData = _proxyProperty(('lines', 'colorVboData'),
                                   ('points', 'colorVboData'))
+
+    useColorVboData = _proxyProperty(('lines', 'useColorVboData'),
+                                     ('points', 'useColorVboData'))
 
     distVboData = _proxyProperty(('lines', 'distVboData'))
 
