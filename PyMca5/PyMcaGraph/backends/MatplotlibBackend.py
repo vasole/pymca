@@ -321,6 +321,7 @@ class MatplotlibGraph(FigureCanvas):
         self._zoomEnabled = False
         self.__zooming = False
         self.__picking = False
+        self._background = None
         self.__markerMoving = False
         self._zoomStack = []
         self.xAutoScale = True
@@ -898,7 +899,18 @@ class MatplotlibGraph(FigureCanvas):
                 else:
                     self._zoomRectangle.set_bounds(x, y, w, h)
                     #self._zoomRectangle._update_patch_transform()
-                self.fig.canvas.draw()
+                if BLITTING:
+                    artist = self._zoomRectangle
+                    canvas = artist.figure.canvas
+                    axes = artist.axes
+                    artist.set_animated(True)
+                    if self._background is None:
+                        self._background = canvas.copy_from_bbox(axes.bbox)
+                    canvas.restore_region(self._background)
+                    axes.draw_artist(artist)
+                    canvas.blit(axes.bbox)
+                else:
+                    self.fig.canvas.draw()
                 return
             else:
                 if self._drawingPatch is None:
@@ -959,7 +971,21 @@ class MatplotlibGraph(FigureCanvas):
                 self._drawingPatch.set_xy(self._mouseData)
                 self._drawingPatch.set_hatch('/')
                 self._drawingPatch.set_closed(True)
-            self.fig.canvas.draw()
+            if BLITTING:
+                if self._background is None:
+                    artist = self._drawingPatch
+                    canvas = artist.figure.canvas
+                    axes = artist.axes
+                    self._background = canvas.copy_from_bbox(axes.bbox)
+                artist = self._drawingPatch
+                canvas = artist.figure.canvas
+                axes = artist.axes
+                artist.set_animated(True)
+                canvas.restore_region(self._background)
+                axes.draw_artist(artist)
+                canvas.blit(axes.bbox)
+            else:
+                self.fig.canvas.draw()
             self._emitDrawingSignal(event='drawingProgress')
 
 
@@ -1067,6 +1093,11 @@ class MatplotlibGraph(FigureCanvas):
             self._zoomRectangle.remove()
             self._x0 = None
             self._y0 = None
+            if BLITTING:
+                artist = self._zoomRectangle
+                axes = artist.axes
+                artist.set_animated(False)
+                self._background = None
             self._zoomRectangle = None
             if (w != 0) and (h != 0):
                 # don't do anything
@@ -1106,6 +1137,11 @@ class MatplotlibGraph(FigureCanvas):
         if event == "drawingFinished":
             self.__drawingParameters = None
             self.__drawing = False
+            if self._drawingPatch is not None:
+                if BLITTING:
+                    artist = self._drawingPatch
+                    artist.set_animated(False)
+                    self._background = None
             self._drawingPatch.remove()
             self._drawingPatch = None
             self.draw()
