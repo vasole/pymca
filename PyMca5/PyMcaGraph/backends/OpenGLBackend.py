@@ -739,10 +739,10 @@ class SelectVLine(Select1Point):
         self.backend._callback(eventDict)
 
 
-class MarkerInteraction(ClickOrDrag):
+class ItemsInteraction(ClickOrDrag):
     class Idle(ClickOrDrag.Idle):
         def __init__(self, *args, **kwargs):
-            super(MarkerInteraction.Idle, self).__init__(*args, **kwargs)
+            super(ItemsInteraction.Idle, self).__init__(*args, **kwargs)
             self._hoverMarker = None
 
         def onPress(self, x, y, btn):
@@ -801,7 +801,7 @@ class MarkerInteraction(ClickOrDrag):
         self.backend = backend
 
         states = {
-            'idle': MarkerInteraction.Idle,
+            'idle': ItemsInteraction.Idle,
             'clickOrDrag': ClickOrDrag.ClickOrDrag,
             'drag': ClickOrDrag.Drag
         }
@@ -1012,7 +1012,7 @@ class FocusManager(StateMachine):
 
 class ZoomAndSelect(FocusManager):
     def __init__(self, backend, color):
-        eventHandlers = MarkerInteraction(backend), Zoom(backend, color)
+        eventHandlers = ItemsInteraction(backend), Zoom(backend, color)
         super(ZoomAndSelect, self).__init__(eventHandlers)
 
 
@@ -2381,7 +2381,7 @@ class OpenGLPlotCanvas(PlotBackend):
             if not isinstance(self.eventHandler, eventHandlerClass):
                 self.eventHandler = eventHandlerClass(self, parameters)
         elif isinstance(self.eventHandler, eventHandlerClass):
-            self.eventHandler = MarkerInteraction(self)
+            self.eventHandler = ItemsInteraction(self)
 
     def getDrawMode(self):
         if self.isDrawModeEnabled():
@@ -2404,7 +2404,7 @@ class OpenGLPlotCanvas(PlotBackend):
             self.eventHandler = ZoomAndSelect(self, self._zoomColor)
 
         elif isinstance(self.eventHandler, ZoomAndSelect):
-            self.eventHandler = MarkerInteraction(self)
+            self.eventHandler = ItemsInteraction(self)
 
     def resetZoom(self):
         if self.isXAxisAutoScale() and self.isYAxisAutoScale():
