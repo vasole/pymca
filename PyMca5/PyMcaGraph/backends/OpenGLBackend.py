@@ -336,8 +336,9 @@ class Zoom(ClickOrDrag):
             scaleF = 1.1 if angle > 0 else 1./1.1
             self.machine._zoom(x, y, scaleF)
 
-    def __init__(self, backend):
+    def __init__(self, backend, color):
         self.backend = backend
+        self.color = color
         self.zoomStack = []
         self._lastClick = 0., None
 
@@ -427,7 +428,7 @@ class Zoom(ClickOrDrag):
                                        (x1, y1),
                                        (x1, self.y0)),
                                       fill=None,
-                                      color=(0., 0., 0., 1.))
+                                      color=self.color)
         self.backend.replot()
 
     def endDrag(self, startPos, endPos):
@@ -1010,8 +1011,8 @@ class FocusManager(StateMachine):
 
 
 class ZoomAndSelect(FocusManager):
-    def __init__(self, backend):
-        eventHandlers = MarkerInteraction(backend), Zoom(backend)
+    def __init__(self, backend, color):
+        eventHandlers = MarkerInteraction(backend), Zoom(backend, color)
         super(ZoomAndSelect, self).__init__(eventHandlers)
 
 
@@ -1037,6 +1038,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self._grid = False
         self._activeCurve = None
 
+        self._zoomColor = None
+
         self.winWidth, self.winHeight = 0, 0
 
         self._markers = MiniOrderedDict()
@@ -1053,7 +1056,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDirtyFlag = True
 
         self._mousePosition = 0, 0
-        self.eventHandler = ZoomAndSelect(self)
+        self.eventHandler = ZoomAndSelect(self, (0., 0., 0., 1.))
 
         self._plotHasFocus = set()
 
@@ -2391,10 +2394,15 @@ class OpenGLPlotCanvas(PlotBackend):
     def isZoomModeEnabled(self):
         return isinstance(self.eventHandler, ZoomAndSelect)
 
-    def setZoomModeEnabled(self, flag=True):
+    def setZoomModeEnabled(self, flag=True, color=None):
         if flag:
-            if not isinstance(self.eventHandler, ZoomAndSelect):
-                self.eventHandler = ZoomAndSelect(self)
+            if color is not None:
+                self._zoomColor = rgba(color, PlotBackend.COLORDICT)
+            elif self._zoomColor is None:
+                self._zoomColor = 0., 0., 0., 1.
+
+            self.eventHandler = ZoomAndSelect(self, self._zoomColor)
+
         elif isinstance(self.eventHandler, ZoomAndSelect):
             self.eventHandler = MarkerInteraction(self)
 
