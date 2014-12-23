@@ -83,7 +83,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._selectionCurve = None
         self._selectionMask = None
         self._selectionColors = numpy.zeros((len(self.colorList), 4), numpy.uint8)
-        self._alphaLevel = 0x10
+        self._alphaLevel = None
         for i in range(len(self.colorList)):
             self._selectionColors[i, 0] = eval("0x" + self.colorList[i][-2:])
             self._selectionColors[i, 1] = eval("0x" + self.colorList[i][3:-2])
@@ -123,6 +123,11 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             self.polygonSelectionToolButton.setCheckable(True)
         if hasattr(self, "rectSelectionToolButton"):
             self.rectSelectionToolButton.setCheckable(True)
+        if hasattr(self, "brushSelectionToolButton"):
+            if self.brushSelectionToolButton.isChecked():
+                self.brushSelectionToolButton.setChecked(False)
+                self._brushMode = False
+                self.setZoomModeEnabled(True)
         self.clearImages()
         self._updatePlot()
 
@@ -354,8 +359,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                                     aspect=True,
                                     polygon=True)
                 self._updateDensityPlot()
-                print "CLOSE = ", numpy.allclose(imageData, self._imageData)
-                print "CLOSE PIXMAP = ", numpy.allclose(pixmap, self._pixmap)
+                print("CLOSE = ", numpy.allclose(imageData, self._imageData))
+                print("CLOSE PIXMAP = ", numpy.allclose(pixmap, self._pixmap))
             self._imageData = imageData
             self._pixmap = pixmap
         #self._updatePlot()
@@ -422,6 +427,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 tmpMask.shape = -1
                 if self._plotViewMode == "density":
                     useAlpha = True
+                    if self._alphaLevel is None:
+                        self._initializeAlpha()
                 else:
                     useAlpha = False
                 for i in range(1, self._maxNRois + 1):
@@ -584,20 +591,20 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                     y = row
                 self.setMouseText("%g, %g, %g" % (x, y, self._imageData[row, column]))
 
-                if self._brushMode:
-                    if self.isZoomModeEnabled():
-                        return
-                    if ddict['button'] != "left":
-                        return
-                    selectionMask = numpy.zeros(self._imageData.shape,
-                                                numpy.uint8)
-                    if self._eraseMode:
-                        selectionMask[rowMin:rowMax, columnMin:columnMax] = 1
-                    else:
-                        selectionMask[rowMin:rowMax, columnMin:columnMax] = \
-                                                                    self._nRoi
-                    self._setSelectionMaskFromDensityMask(selectionMask,
-                                                          update=True)
+            if self._brushMode:
+                if self.isZoomModeEnabled():
+                    return
+                if ddict['button'] != "left":
+                    return
+                selectionMask = numpy.zeros(self._imageData.shape,
+                                            numpy.uint8)
+                if self._eraseMode:
+                    selectionMask[rowMin:rowMax, columnMin:columnMax] = 1
+                else:
+                    selectionMask[rowMin:rowMax, columnMin:columnMax] = \
+                                                                self._nRoi
+                self._setSelectionMaskFromDensityMask(selectionMask,
+                                                      update=True)
         #if emitsignal:
         #    #should this be made by the parent?
         #    self.plotImage(update = False)
@@ -946,15 +953,23 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 print("OK!!!")
         self.setSelectionMask(view2)
 
+
+    def _initializeAlpha(self):
+        self._alphaLevel = 128
+
     def _increaseMaskAlpha(self):
-        self._alphaLevel *= 2
+        if self._alphaLevel is None:
+            self._initializeAlpha()
+        self._alphaLevel *= 4
         if self._alphaLevel > 255:
             self._alphaLevel = 255
         self._alphaLevel
         self._updatePlot()
 
     def _decreaseMaskAlpha(self):
-        self._alphaLevel /= 2
+        if self._alphaLevel is None:
+            self._initializeAlpha()
+        self._alphaLevel /= 4
         if self._alphaLevel < 2:
             self._alphaLevel = 2
         self._updatePlot()
@@ -968,7 +983,7 @@ if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * 1
     w = MaskScatterWidget(maxNRois=10, bins=(100,100), backend=backend)
-    w.setSelectionCurveData(x, y, color="k")
+    w.setSelectionCurveData(x, y, color="k", selectable=False)
     import numpy.random
     w.setSelectionMask(numpy.random.permutation(100) % 10)
     w.setPolygonSelectionMode()
