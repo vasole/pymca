@@ -259,18 +259,37 @@ class Plot(PlotBase.PlotBase):
         self._colorIndex += 1
         return color, style
 
-    def setZoomModeEnabled(self, flag=True):
-        self._plot.setZoomModeEnabled(flag)
-
-    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None, **kw):
+    def setZoomModeEnabled(self, flag=True, color="black"):
         """
-        Zoom and drawing are not compatible
+        Zoom and drawing are not compatible and cannot be enabled simultanelously
+
+        :param flag: If True, the user can zoom.
+        :type flag: boolean, default True
+        :param color: The color to use to draw the selection area.
+                      Default 'black"
+        :param color: The color to use to draw the selection area
+        :type color: string ("#RRGGBB") or 4 column unsigned byte array or
+                     one of the predefined color names defined in Colors.py
+        """
+        self._plot.setZoomModeEnabled(flag=flag, color=color)
+
+    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None,
+                           color=None, **kw):
+        """
+        Zoom and drawing are not compatible and cannot be enabled simultanelously
+
         :param flag: Enable drawing mode disabling zoom and picking mode
         :type flag: boolean, default True
-        :param shape: Type of item to be drawn
-        :type shape: string, default polygon
+        :param shape: Type of item to be drawn (line, hline, vline, rectangle...)
+        :type shape: string (default polygon)
+        :param label: Associated text (for identifying the signals)
+        :type label: string, default None
+        :param color: The color to use to draw the selection area
+        :type color: string ("#RRGGBB") or 4 column unsigned byte array or
+                     one of the predefined color names defined in Colors.py
         """
-        self._plot.setDrawModeEnabled(flag=flag, shape=shape, label=label, **kw)
+        self._plot.setDrawModeEnabled(flag=flag, shape=shape, label=label,
+                                      color=color, **kw)
 
     def addItem(self, xdata, ydata, legend=None, info=None,
                 replot=True, replace=False,

@@ -319,6 +319,7 @@ class MatplotlibGraph(FigureCanvas):
 
         self.__lastMouseClick = ["middle", time.time()]
         self._zoomEnabled = False
+        self._zoomColor = "black"
         self.__zooming = False
         self.__picking = False
         self._background = None
@@ -490,7 +491,13 @@ class MatplotlibGraph(FigureCanvas):
         else:
             self._drawModeEnabled = False
 
-    def setZoomModeEnabled(self, flag=True):
+    def setZoomModeEnabled(self, flag=True, color=None):
+        if color is None:
+            color = self._zoomColor
+        if len(color) == 4:
+            if type(color[3]) in [type(1), numpy.uint8, numpy.int8]:
+                color = numpy.array(color, dtype=numpy.float)/255.
+        self._zoomColor = color
         if flag:
             self._zoomEnabled = True
             self.setDrawModeEnabled(False)
@@ -894,6 +901,7 @@ class MatplotlibGraph(FigureCanvas):
                     self._zoomRectangle = Rectangle(xy=(x,y),
                                                    width=w,
                                                    height=h,
+                                                   color=self._zoomColor,
                                                    fill=False)
                     self.ax.add_patch(self._zoomRectangle)
                 else:
