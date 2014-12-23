@@ -662,7 +662,7 @@ class PlotBackend(object):
         :param label: Associated text (for identifying the signals)
         :type label: string, default None
         :param color: The color to use to draw the selection area
-        :type color: string ("#RRGGBB") or 4 unsigned byte array or
+        :type color: string ("#RRGGBB") or 4 column unsigned byte array or
                      one of the predefined color names defined in Colors.py
         """
         if flag:
