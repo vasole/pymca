@@ -155,9 +155,16 @@ _baseVertShd = """
 _baseFragShd = """
     uniform vec4 color;
     uniform int hatchStep;
+    uniform float tickLen;
 
     void main(void) {
-        if (hatchStep == 0 ||
+        if (tickLen != 0) {
+            if (mod((gl_FragCoord.x + gl_FragCoord.y) / tickLen, 2.) < 1.) {
+                gl_FragColor = color;
+            } else {
+                discard;
+            }
+        } else if (hatchStep == 0 ||
             mod(gl_FragCoord.x - gl_FragCoord.y, hatchStep) == 0) {
             gl_FragColor = color;
         } else {
@@ -329,8 +336,9 @@ class Zoom(ClickOrDrag):
             scaleF = 1.1 if angle > 0 else 1./1.1
             self.machine._zoom(x, y, scaleF)
 
-    def __init__(self, backend):
+    def __init__(self, backend, color):
         self.backend = backend
+        self.color = color
         self.zoomStack = []
         self._lastClick = 0., None
 
@@ -420,7 +428,7 @@ class Zoom(ClickOrDrag):
                                        (x1, y1),
                                        (x1, self.y0)),
                                       fill=None,
-                                      color=(0., 0., 0., 1.))
+                                      color=self.color)
         self.backend.replot()
 
     def endDrag(self, startPos, endPos):
@@ -441,6 +449,10 @@ class Zoom(ClickOrDrag):
         self.backend.replot()
 
     def _zoom(self, cx, cy, scaleF):
+        if self.backend.isXAxisLogaritmic() or \
+           self.backend.isYAxisLogaritmic():
+            return  # In case of logarithmic scale, not wheel support
+
         xCenter, yCenter = self.backend.pixelToDataCoords(cx, cy)
 
         xMin, xMax = self.backend.getGraphXLimits()
@@ -456,6 +468,11 @@ class Zoom(ClickOrDrag):
                                yCenter - yOffset * yRange,
                                yCenter + (1. - yOffset) * yRange)
         self.backend.replot()
+
+    def cancel(self):
+        if isinstance(self.state, self.states['drag']):
+            self.backend.setSelectionArea()
+            self.backend.replot()
 
 
 class Select(object):
@@ -529,6 +546,11 @@ class SelectPolygon(StateMachine, Select):
         }
         super(SelectPolygon, self).__init__(states, 'idle')
 
+    def cancel(self):
+        if isinstance(self.state, self.states['select']):
+            self.backend.setSelectionArea()
+            self.backend.replot()
+
 
 class Select2Points(StateMachine, Select):
     class Idle(State):
@@ -580,6 +602,13 @@ class Select2Points(StateMachine, Select):
     def endSelect(self, x, y):
         pass
 
+    def cancelSelect(self):
+        pass
+
+    def cancel(self):
+        if isinstance(self.state, self.states['select']):
+            self.cancelSelect()
+
 
 class SelectRectangle(Select2Points):
     def beginSelect(self, x, y):
@@ -611,6 +640,10 @@ class SelectRectangle(Select2Points):
                                          self.parameters)
         self.backend._callback(eventDict)
 
+    def cancelSelect(self):
+        self.backend.setSelectionArea()
+        self.backend.replot()
+
 
 class SelectLine(Select2Points):
     def beginSelect(self, x, y):
@@ -638,6 +671,10 @@ class SelectLine(Select2Points):
                                          (self.startPt, (x, y)),
                                          self.parameters)
         self.backend._callback(eventDict)
+
+    def cancelSelect(self):
+        self.backend.setSelectionArea()
+        self.backend.replot()
 
 
 class Select1Point(StateMachine, Select):
@@ -674,6 +711,13 @@ class Select1Point(StateMachine, Select):
     def endSelect(self, x, y):
         pass
 
+    def cancelSelect(self):
+        pass
+
+    def cancel(self):
+        if isinstance(self.state, self.states['select']):
+            self.cancelSelect()
+
 
 class SelectHLine(Select1Point):
     def _hLine(self, y):
@@ -701,6 +745,10 @@ class SelectHLine(Select1Point):
                                          self._hLine(y),
                                          self.parameters)
         self.backend._callback(eventDict)
+
+    def cancelSelect(self):
+        self.backend.setSelectionArea()
+        self.backend.replot()
 
 
 class SelectVLine(Select1Point):
@@ -730,11 +778,15 @@ class SelectVLine(Select1Point):
                                          self.parameters)
         self.backend._callback(eventDict)
 
+    def cancelSelect(self):
+        self.backend.setSelectionArea()
+        self.backend.replot()
 
-class MarkerInteraction(ClickOrDrag):
+
+class ItemsInteraction(ClickOrDrag):
     class Idle(ClickOrDrag.Idle):
         def __init__(self, *args, **kwargs):
-            super(MarkerInteraction.Idle, self).__init__(*args, **kwargs)
+            super(ItemsInteraction.Idle, self).__init__(*args, **kwargs)
             self._hoverMarker = None
 
         def onPress(self, x, y, btn):
@@ -793,7 +845,7 @@ class MarkerInteraction(ClickOrDrag):
         self.backend = backend
 
         states = {
-            'idle': MarkerInteraction.Idle,
+            'idle': ItemsInteraction.Idle,
             'clickOrDrag': ClickOrDrag.ClickOrDrag,
             'drag': ClickOrDrag.Drag
         }
@@ -941,6 +993,9 @@ class MarkerInteraction(ClickOrDrag):
         del self.image
         del self._lastPos
 
+    def cancel(self):
+        self.backend.setCursor()
+
 
 class FocusManager(StateMachine):
     """Manages focus across multiple event handlers
@@ -1001,10 +1056,14 @@ class FocusManager(StateMachine):
         }
         super(FocusManager, self).__init__(states, 'idle')
 
+    def cancel(self):
+        for handler in self.eventHandlers:
+            handler.cancel()
+
 
 class ZoomAndSelect(FocusManager):
-    def __init__(self, backend):
-        eventHandlers = MarkerInteraction(backend), Zoom(backend)
+    def __init__(self, backend, color):
+        eventHandlers = ItemsInteraction(backend), Zoom(backend, color)
         super(ZoomAndSelect, self).__init__(eventHandlers)
 
 
@@ -1027,7 +1086,10 @@ class OpenGLPlotCanvas(PlotBackend):
         self._isXLog = False
         self._isYLog = False
 
+        self._grid = False
         self._activeCurve = None
+
+        self._zoomColor = None
 
         self.winWidth, self.winHeight = 0, 0
 
@@ -1045,7 +1107,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDirtyFlag = True
 
         self._mousePosition = 0, 0
-        self.eventHandler = ZoomAndSelect(self)
+        self.eventHandler = ZoomAndSelect(self, (0., 0., 0., 1.))
 
         self._plotHasFocus = set()
 
@@ -1194,6 +1256,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def _axesTicksAndLabels(self):
         trXMin, trXMax, trYMin, trYMax = self.plotDataTransformedBounds
+        dataXMin, dataXMax, dataYMin, dataYMax = self.plotDataBounds
 
         vertices = []
         labels = []
@@ -1294,7 +1357,40 @@ class OpenGLPlotCanvas(PlotBackend):
                                              align=RIGHT,
                                              valign=CENTER))
 
-        return vertices, labels
+        nbMainTicks = len(vertices) / 4
+
+        if trXMin != trXMax and self._isXLog and xStep == 1:
+            for xDataLog in list(_ticks(xMin, xMax, xStep))[:-1]:
+                xDataOrig = 10 ** xDataLog
+                for index in range(2, 10):
+                    xData = xDataOrig * index
+                    if xData >= dataXMin and xData <= dataXMax:
+                        xPixel = self.dataToPixelCoords(xData=xData)
+
+                        vertices.append((xPixel, plotBottom))
+                        vertices.append((xPixel,
+                                         plotBottom - 0.5 * self._tickLen))
+                        vertices.append((xPixel, self._margins['top']))
+                        vertices.append(
+                            (xPixel,
+                             self._margins['top'] + 0.5 * self._tickLen))
+
+        if trYMin != trYMax and self._isYLog and yStep == 1:
+            for yDataLog in list(_ticks(yMin, yMax, yStep))[:-1]:
+                yDataOrig = 10 ** yDataLog
+                for index in range(2, 10):
+                    yData = yDataOrig * index
+                    if yData >= dataYMin and yData <= dataYMax:
+                        yPixel = self.dataToPixelCoords(yData=yData)
+
+                        vertices.append((self._margins['left'], yPixel))
+                        vertices.append((self._margins['left'] +
+                                         0.5 * self._tickLen, yPixel))
+                        vertices.append((plotRight, yPixel))
+                        vertices.append((plotRight - 0.5 * self._tickLen,
+                                         yPixel))
+
+        return vertices, labels, nbMainTicks
 
     def _updateAxis(self):
         # Check if window is large enough
@@ -1308,7 +1404,7 @@ class OpenGLPlotCanvas(PlotBackend):
             self._axisDirtyFlag = False
 
         # Ticks
-        vertices, tickLabels = self._axesTicksAndLabels()
+        vertices, tickLabels, nbMainTicks = self._axesTicksAndLabels()
         self._labels = tickLabels
 
         # Plot frame
@@ -1331,6 +1427,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # Build numpy array from ticks and frame vertices
         self._frameVertices = np.array(vertices, dtype=np.float32)
+        self._frameVerticesNbMainTicks = nbMainTicks
 
         # Title, Labels
         plotCenterX = self._margins['left'] + plotWidth // 2
@@ -1694,6 +1791,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniform2i(self._progBase.uniforms['isLog'],
                     self._isXLog, self._isYLog)
         glUniform1i(self._progBase.uniforms['hatchStep'], 0)
+        glUniform1f(self._progBase.uniforms['tickLen'], 0.)
         posAttrib = self._progBase.attributes['position']
         glEnableVertexAttribArray(posAttrib)
 
@@ -1777,6 +1875,7 @@ class OpenGLPlotCanvas(PlotBackend):
                                self.matrixPlotDataTransformedProj)
             glUniform2i(self._progBase.uniforms['isLog'],
                         self._isXLog, self._isYLog)
+            glUniform1f(self._progBase.uniforms['tickLen'], 0.)
             posAttrib = self._progBase.attributes['position']
             colorUnif = self._progBase.uniforms['color']
             hatchStepUnif = self._progBase.uniforms['hatchStep']
@@ -1799,6 +1898,8 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniform2i(self._progBase.uniforms['isLog'], 0, 0)
         glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 1.)
         glUniform1i(self._progBase.uniforms['hatchStep'], 0)
+        glUniform1f(self._progBase.uniforms['tickLen'], 0.)
+
         glVertexAttribPointer(self._progBase.attributes['position'],
                               2,
                               GL_FLOAT,
@@ -1814,14 +1915,49 @@ class OpenGLPlotCanvas(PlotBackend):
     def _renderPlotArea(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
+        glScissor(self._margins['left'], self._margins['bottom'],
+                  plotWidth, plotHeight)
+        glEnable(GL_SCISSOR_TEST)
+
+        # Render grid by reusing tick vertices and a stride
+        if self._grid:
+            self._updateAxis()
+
+            # Render plot in screen coords
+            glViewport(0, 0, self.winWidth, self.winHeight)
+            self._progBase.use()
+            glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
+                               self.matScreenProj)
+            glUniform2i(self._progBase.uniforms['isLog'], 0, 0)
+            glUniform4f(self._progBase.uniforms['color'], 0.5, 0.5, 0.5, 1.)
+            glUniform1i(self._progBase.uniforms['hatchStep'], 0)
+            glUniform1f(self._progBase.uniforms['tickLen'], 2.)
+
+            stride = 2 * self._frameVertices.shape[-1] * \
+                self._frameVertices.itemsize
+            glVertexAttribPointer(self._progBase.attributes['position'],
+                                  2,
+                                  GL_FLOAT,
+                                  GL_FALSE,
+                                  stride, self._frameVertices)
+            glLineWidth(self._lineWidth)
+
+            if self._grid == 1:
+                firstVertex = 0
+                nbVertices = self._frameVerticesNbMainTicks * 2
+            elif self._grid == 2:
+                firstVertex = self._frameVerticesNbMainTicks * 2
+                nbVertices = (len(self._frameVertices) - 8) / 2 - firstVertex
+            else:
+                firstVertex = 0
+                nbVertices = (len(self._frameVertices) - 8) / 2
+
+            glDrawArrays(GL_LINES, firstVertex, nbVertices)
+
         # Matrix
         trBounds = self.plotDataTransformedBounds
         if trBounds.xMin == trBounds.xMax or trBounds.yMin == trBounds.yMax:
             return
-
-        glScissor(self._margins['left'], self._margins['bottom'],
-                  plotWidth, plotHeight)
-        glEnable(GL_SCISSOR_TEST)
 
         glViewport(self._margins['left'], self._margins['right'],
                    plotWidth, plotHeight)
@@ -1839,6 +1975,7 @@ class OpenGLPlotCanvas(PlotBackend):
                            self.matrixPlotDataTransformedProj)
         glUniform2i(self._progBase.uniforms['isLog'],
                     self._isXLog, self._isYLog)
+        glUniform1f(self._progBase.uniforms['tickLen'], 0.)
 
         for item in self._items.values():
             try:
@@ -2234,7 +2371,7 @@ class OpenGLPlotCanvas(PlotBackend):
             raise KeyError("Curve %s not found" % legend)
 
         if self._activeCurve is not None:
-            inactiveState =  self._activeCurve._inactiveState
+            inactiveState = self._activeCurve._inactiveState
             del self._activeCurve._inactiveState
             self._activeCurve.lineColor = inactiveState['lineColor']
             self._activeCurve.markerColor = inactiveState['markerColor']
@@ -2293,9 +2430,11 @@ class OpenGLPlotCanvas(PlotBackend):
                 parameters['color'] = rgba(color, PlotBackend.COLORDICT)
 
             if not isinstance(self.eventHandler, eventHandlerClass):
+                self.eventHandler.cancel()
                 self.eventHandler = eventHandlerClass(self, parameters)
         elif isinstance(self.eventHandler, eventHandlerClass):
-            self.eventHandler = MarkerInteraction(self)
+            self.eventHandler.cancel()
+            self.eventHandler = ItemsInteraction(self)
 
     def getDrawMode(self):
         if self.isDrawModeEnabled():
@@ -2308,12 +2447,19 @@ class OpenGLPlotCanvas(PlotBackend):
     def isZoomModeEnabled(self):
         return isinstance(self.eventHandler, ZoomAndSelect)
 
-    def setZoomModeEnabled(self, flag=True):
+    def setZoomModeEnabled(self, flag=True, color=None):
         if flag:
-            if not isinstance(self.eventHandler, ZoomAndSelect):
-                self.eventHandler = ZoomAndSelect(self)
+            if color is not None:
+                self._zoomColor = rgba(color, PlotBackend.COLORDICT)
+            elif self._zoomColor is None:
+                self._zoomColor = 0., 0., 0., 1.
+
+            self.eventHandler.cancel()
+            self.eventHandler = ZoomAndSelect(self, self._zoomColor)
+
         elif isinstance(self.eventHandler, ZoomAndSelect):
-            self.eventHandler = MarkerInteraction(self)
+            self.eventHandler.cancel()
+            self.eventHandler = ItemsInteraction(self)
 
     def resetZoom(self):
         if self.isXAxisAutoScale() and self.isYAxisAutoScale():
@@ -2459,6 +2605,12 @@ class OpenGLPlotCanvas(PlotBackend):
             self._isYLog = flag
             self._dirtyPlotDataTransformedBounds()
 
+    def isXAxisLogaritmic(self):
+        return self._isXLog
+
+    def isYAxisLogaritmic(self):
+        return self._isYLog
+
     # Title, Labels
     def setGraphTitle(self, title=""):
         self._title = title
@@ -2479,6 +2631,11 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def getGraphYLabel(self):
         return self._yLabel
+
+    def showGrid(self, flag=True):
+        self._grid = flag
+        self._plotDirtyFlag = True
+        self.replot()
 
 
 # OpenGLBackend ###############################################################
