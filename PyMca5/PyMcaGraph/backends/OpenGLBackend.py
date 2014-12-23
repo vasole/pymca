@@ -449,6 +449,10 @@ class Zoom(ClickOrDrag):
         self.backend.replot()
 
     def _zoom(self, cx, cy, scaleF):
+        if self.backend.isXAxisLogaritmic() or \
+           self.backend.isYAxisLogaritmic():
+            return  # In case of logarithmic scale, not wheel support
+
         xCenter, yCenter = self.backend.pixelToDataCoords(cx, cy)
 
         xMin, xMax = self.backend.getGraphXLimits()
@@ -2600,6 +2604,12 @@ class OpenGLPlotCanvas(PlotBackend):
                     'Cannot use log scale for Y axis: Some data is <= 0.')
             self._isYLog = flag
             self._dirtyPlotDataTransformedBounds()
+
+    def isXAxisLogaritmic(self):
+        return self._isXLog
+
+    def isYAxisLogaritmic(self):
+        return self._isYLog
 
     # Title, Labels
     def setGraphTitle(self, title=""):
