@@ -1605,8 +1605,10 @@ class QEdfFileWidget(qt.QWidget):
             print(self.selection)
             print("self.data.SourceName = ",self.data.sourceName)
         if self.selection is not None:
-            if self.data is None:return
-            if self.data.sourceName is None: return
+            if self.data is None:
+                return
+            if self.data.sourceName is None:
+                return
             if type(self.data.sourceName) == type([]):
                 i = 0
                 for sname in self.data.sourceName:
@@ -1644,29 +1646,29 @@ class QEdfFileWidget(qt.QWidget):
             if not ('cols' in imagedict):
                 imagedict['cols'] = []
             rows = []
-            for dict in imagedict['rows']:
-                if 'y' in dict:
-                    if dict['y'] not in rows:
-                        rows.append(dict['y'])
+            for ddict in imagedict['rows']:
+                if 'y' in ddict:
+                    if ddict['y'] not in rows:
+                        rows.append(ddict['y'])
             wid.markRowSelected(rows)
             cols = []
-            for dict in imagedict['cols']:
-                if 'y' in dict:
-                    if dict['y'] not in cols:
-                        cols.append(dict['y'])
+            for ddict in imagedict['cols']:
+                if 'y' in ddict:
+                    if ddict['y'] not in cols:
+                        cols.append(ddict['y'])
             wid.markColSelected(cols)
             self.graph.clearMarkers()
             for i in rows:
                 label = "R%d" % i
                 marker=self.graph.insertYMarker(i,
                                                 label,
-                                                label=label,
+                                                text=label,
                                                 color='white')
             for i in cols:
                 label = "C%d" % i
                 marker=self.graph.insertXMarker(i,
                                                 label,
-                                                label=label,
+                                                text=label,
                                                 color='white')
             self.graph.replot()
             return
@@ -1719,6 +1721,4 @@ def test():
 
 if __name__=="__main__":
     test()
-
-
 
