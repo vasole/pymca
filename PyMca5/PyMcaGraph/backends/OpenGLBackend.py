@@ -278,7 +278,7 @@ def prepareMarkerSignal(eventType, button, label, type_,
 
         posDataCursor = posDataMarker
     else:
-        raise NotImplementedError("Unknown event type {}".format(eventType))
+        raise NotImplementedError("Unknown event type {0}".format(eventType))
 
     eventDict = {'event': eventType,
                  'button': button,
@@ -1277,7 +1277,7 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((xPixel,
                                          self._margins['top'] + self._tickLen))
 
-                        text = ('1e{:+03d}').format(xDataLog)
+                        text = '1e{0:+03d}'.format(xDataLog)
                         labels.append(Text2D(text=text,
                                              x=xPixel,
                                              y=plotBottom + self._tickLen,
@@ -1298,9 +1298,9 @@ class OpenGLPlotCanvas(PlotBackend):
                                          self._margins['top'] + self._tickLen))
 
                         if xNbFrac == 0:
-                            text = ('{:g}').format(xData)
+                            text = '{0:g}'.format(xData)
                         else:
-                            text = ('{:.' + str(xNbFrac) + 'f}').format(xData)
+                            text = ('{0:.' + str(xNbFrac) + 'f}').format(xData)
 
                         labels.append(Text2D(text=text,
                                              x=xPixel,
@@ -1324,7 +1324,7 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((plotRight, yPixel))
                         vertices.append((plotRight - self._tickLen, yPixel))
 
-                        text = ('1e{:+03d}').format(yDataLog)
+                        text = '1e{0:+03d}'.format(yDataLog)
                         labels.append(Text2D(text=text,
                                              x=self._margins['left'] -
                                              self._tickLen,
@@ -1346,9 +1346,9 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((plotRight - self._tickLen, yPixel))
 
                         if yNbFrac == 0:
-                            text = '{:g}'.format(yData)
+                            text = '{0:g}'.format(yData)
                         else:
-                            text = ('{:.' + str(yNbFrac) + 'f}').format(yData)
+                            text = ('{0:.' + str(yNbFrac) + 'f}').format(yData)
 
                         labels.append(Text2D(text=text,
                                              x=self._margins['left'] -
@@ -1528,24 +1528,24 @@ class OpenGLPlotCanvas(PlotBackend):
                     try:
                         xMin = math.log10(xMin)
                     except ValueError:
-                        print('xMin: warning log10({})'.format(xMin))
+                        print('xMin: warning log10({0})'.format(xMin))
                         xMin = 0.
                     try:
                         xMax = math.log10(xMax)
                     except ValueError:
-                        print('xMax: warning log10({})'.format(xMax))
+                        print('xMax: warning log10({0})'.format(xMax))
                         xMax = 0.
 
                 if self._isYLog:
                     try:
                         yMin = math.log10(yMin)
                     except ValueError:
-                        print('yMin: warning log10({})'.format(yMin))
+                        print('yMin: warning log10({0})'.format(yMin))
                         yMin = 0.
                     try:
                         yMax = math.log10(yMax)
                     except ValueError:
-                        print('yMax: warning log10({})'.format(yMax))
+                        print('yMax: warning log10({0})'.format(yMax))
                         yMax = 0.
 
                 self._plotDataTransformedBounds = \
@@ -1594,7 +1594,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 if xData > 0.:
                     xData = math.log10(xData)
                 else:
-                    print('xData: warning log10({})'.format(xData))
+                    print('xData: warning log10({0})'.format(xData))
                     xData = 0.
             xPixel = int(self._margins['left'] +
                          plotWidth * (xData - trBounds.xMin) / trBounds.width)
@@ -1606,7 +1606,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 if yData > 0.:
                     yData = math.log10(yData)
                 else:
-                    print('yData: warning log10({})'.format(yData))
+                    print('yData: warning log10({0})'.format(yData))
                     yData = 0.
             yOffset = plotHeight * (yData - trBounds.yMin) / trBounds.height
             if self._isYInverted:

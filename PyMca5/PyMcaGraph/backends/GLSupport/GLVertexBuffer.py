@@ -168,7 +168,7 @@ def convertNumpyToGLType(type_):
     elif type_ == np.uint8:
         return GL_UNSIGNED_BYTE
     else:
-        raise RuntimeError("Cannot convert dtype {} to GL type".format(type_))
+        raise RuntimeError("Cannot convert dtype {0} to GL type".format(type_))
 
 _GL_TYPE_SIZES = {
     GL_UNSIGNED_BYTE: 1,
