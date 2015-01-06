@@ -131,6 +131,57 @@ class Bounds(namedtuple('Bounds', ('xMin', 'xMax', 'yMin', 'yMax'))):
         return 0.5 * (self.yMin + self.yMax)
 
 
+# PNG writer ##################################################################
+
+def convertRGBDataToPNG(data):
+    """Convert a RGB bitmap to PNG.
+
+    It only supports RGB bitmap with one byte per channel stored as a 3D array.
+    See `Definitive Guide <http://www.libpng.org/pub/png/book/>`_ and
+    `Specification <http://www.libpng.org/pub/png/spec/1.2/>`_ for details.
+
+    :param data: An array with 3 dimensions (h, w, rgb) storing the RGB image
+    :type data: numpy.ndarray of unsigned bytes
+    :returns: The PNG encoded data
+    :rtype: bytes
+    """
+    import struct
+    import zlib
+
+    height, width = data.shape[0], data.shape[1]
+    depth = 8  # 8 bit per channel
+    colorType = 2  # 'truecolor' = RGB
+    interlace = 0  # No
+
+    pngData = []
+
+    # PNG signature
+    pngData.append(b'\x89PNG\r\n\x1a\n')
+
+    # IHDR chunk: Image Header
+    pngData.append(struct.pack(">I", 13))  # length
+    IHDRdata = struct.pack(">ccccIIBBBBB", b'I', b'H', b'D', b'R',
+                           width, height, depth, colorType,
+                           0, 0, interlace)
+    pngData.append(IHDRdata)
+    pngData.append(struct.pack(">I", zlib.crc32(IHDRdata) & 0xffffffff))  # CRC
+
+    # Add filter 'None' before each scanline
+    preparedData = b'\x00' + b'\x00'.join(line.tostring() for line in data)
+    compressedData = zlib.compress(preparedData, 8)
+
+    # IDAT chunk: Payload
+    pngData.append(struct.pack(">I", len(compressedData)))
+    IDATdata = struct.pack("cccc", b'I', b'D', b'A', b'T')
+    IDATdata += compressedData
+    pngData.append(IDATdata)
+    pngData.append(struct.pack(">I", zlib.crc32(IDATdata) & 0xffffffff))  # CRC
+
+    # IEND chunk: footer
+    pngData.append(b'\x00\x00\x00\x00IEND\xaeB`\x82')
+    return b''.join(pngData)
+
+
 # shaders #####################################################################
 
 _baseVertShd = """
@@ -2639,7 +2690,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Save
     def saveGraph(self, fileName, fileFormat='ppm', dpi=None, **kw):
-        if fileFormat not in ['ppm']:
+        if fileFormat not in ['ppm', 'png']:
             raise NotImplementedError('Unsupported format: %s' % fileFormat)
 
         self.makeCurrent()
@@ -2651,14 +2702,19 @@ class OpenGLPlotCanvas(PlotBackend):
         glReadPixels(0, 0, self.winWidth, self.winHeight,
                      GL_RGB, GL_UNSIGNED_BYTE, data)
 
-        # glReadPixels gives bottom to top, ppm stores as top to bottom
+        # glReadPixels gives bottom to top, images are stored as top to bottom
         data = np.flipud(data)
 
-        with open(fileName, 'w') as f:
-            f.write('P6\n')
-            f.write('%d %d\n' % (self.winWidth, self.winHeight))
-            f.write('255\n')
-            f.write(data.tostring())
+        if fileFormat == 'ppm':
+            with open(fileName, 'w') as f:
+                f.write('P6\n')
+                f.write('%d %d\n' % (self.winWidth, self.winHeight))
+                f.write('255\n')
+                f.write(data.tostring())
+
+        elif fileFormat == 'png':
+            with open(fileName, 'wb') as f:
+                f.write(convertRGBDataToPNG(data))
 
 
 # OpenGLBackend ###############################################################
