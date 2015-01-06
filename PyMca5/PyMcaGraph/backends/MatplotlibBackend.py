@@ -52,7 +52,11 @@ except ImportError:
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
 # This should be independent of Qt
-if "tk" in sys.argv or ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
+TK = False
+if ("tk" in sys.argv) or ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
+    TK = True
+if TK and ("PyQt4" not in sys.modules) and ("PyQt5" not in sys.modules) and\
+    ("PySide" not in sys.modules):
     if sys.version < '3.0':
         import Tkinter as Tk
     else:
