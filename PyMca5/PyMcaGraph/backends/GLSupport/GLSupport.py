@@ -128,12 +128,12 @@ class Program(object):
 
         self.attributes = {}
         for index in range(glGetProgramiv(self._prog, GL_ACTIVE_ATTRIBUTES)):
-            name = _glGetActiveAttrib(self._prog, index)[0]
+            name = (_glGetActiveAttrib(self._prog, index)[0]).decode('ascii')
             self.attributes[name] = glGetAttribLocation(self._prog, name)
 
         self.uniforms = {}
         for index in range(glGetProgramiv(self._prog, GL_ACTIVE_UNIFORMS)):
-            name = glGetActiveUniform(self._prog, index)[0]
+            name = (glGetActiveUniform(self._prog, index)[0]).decode('ascii')
             self.uniforms[name] = glGetUniformLocation(self._prog, name)
 
     @property

@@ -1357,7 +1357,7 @@ class OpenGLPlotCanvas(PlotBackend):
                                              align=RIGHT,
                                              valign=CENTER))
 
-        nbMainTicks = len(vertices) / 4
+        nbMainTicks = len(vertices) // 4
 
         if trXMin != trXMax and self._isXLog and xStep == 1:
             for xDataLog in list(_ticks(xMin, xMax, xStep))[:-1]:
@@ -1947,10 +1947,10 @@ class OpenGLPlotCanvas(PlotBackend):
                 nbVertices = self._frameVerticesNbMainTicks * 2
             elif self._grid == 2:
                 firstVertex = self._frameVerticesNbMainTicks * 2
-                nbVertices = (len(self._frameVertices) - 8) / 2 - firstVertex
+                nbVertices = (len(self._frameVertices) - 8) // 2 - firstVertex
             else:
                 firstVertex = 0
-                nbVertices = (len(self._frameVertices) - 8) / 2
+                nbVertices = (len(self._frameVertices) - 8) // 2
 
             glDrawArrays(GL_LINES, firstVertex, nbVertices)
 
@@ -1981,7 +1981,7 @@ class OpenGLPlotCanvas(PlotBackend):
             try:
                 shape2D = item['_shape2D']
             except KeyError:
-                shape2D = Shape2D(zip(item['x'], item['y']),
+                shape2D = Shape2D(tuple(zip(item['x'], item['y'])),
                                   fill=item['fill'],
                                   fillColor=item['color'],
                                   stroke=True,
