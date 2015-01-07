@@ -2093,12 +2093,6 @@ class McaWindow(ScanWindow.ScanWindow):
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
-        print("WARNING DATA OBJECT CREATION TO BE IMPLEMENTED FOR MCAs")
-        return super(McaWindow, self).newCurve(x, y, legend=legend, info=info,
-                                replace=replace, replot=replot, color=color, symbol=symbol,
-                                linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
-                                xerror=xerror, yerror=yerror, **kw)
-
         if legend is None:
             legend = "Unnamed curve 1.1"
         if xlabel is None:
@@ -2114,6 +2108,9 @@ class McaWindow(ScanWindow.ScanWindow):
             info["plot_symbol"] = symbol
         if linestyle is not None:
             info["plot_linestyle"] = linestyle
+        if yaxis is not None:
+            info["plot_yaxis"] = yaxis
+
         newDataObject = DataObject.DataObject()
         newDataObject.x = [x]
         newDataObject.y = [y]
@@ -2123,18 +2120,14 @@ class McaWindow(ScanWindow.ScanWindow):
         newDataObject.info['SourceName'] = legend
         newDataObject.info['Key'] = ""
         newDataObject.info['selectiontype'] = "1D"
-        newDataObject.info['LabelNames'] = [xlabel, ylabel]
-        newDataObject.info['selection'] = {'x':[0], 'y':[1]}
         sel_list = []
         sel = {}
         sel['SourceType'] = "Operation"
         sel['SourceName'] = legend
-        sel['Key']    = ""
+        sel['Key'] = legend
         sel['legend'] = legend
         sel['dataobject'] = newDataObject
         sel['scanselection'] = False
-        sel['selection'] = {'x':[0], 'y':[1], 'm':[], 'cntlist':[xlabel, ylabel]}
-        #sel['selection']['y'] = [ilabel]
         sel['selectiontype'] = "1D"
         sel_list.append(sel)
         if replace:
