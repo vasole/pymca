@@ -2690,7 +2690,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Save
     def saveGraph(self, fileName, fileFormat='ppm', dpi=None, **kw):
-        if fileFormat not in ['ppm', 'png']:
+        if fileFormat not in ['ppm', 'png', 'tiff']:
             raise NotImplementedError('Unsupported format: %s' % fileFormat)
 
         self.makeCurrent()
@@ -2715,6 +2715,11 @@ class OpenGLPlotCanvas(PlotBackend):
         elif fileFormat == 'png':
             with open(fileName, 'wb') as f:
                 f.write(convertRGBDataToPNG(data))
+
+        elif fileFormat == 'tiff':
+            from PyMca5.PyMcaIO.TiffIO import TiffIO
+            tif = TiffIO(fileName, mode='wb+')
+            tif.writeImage(data, info={'Title': 'PyMCA GL Snapshot'})
 
 
 # OpenGLBackend ###############################################################
