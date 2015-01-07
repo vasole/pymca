@@ -2689,8 +2689,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self.replot()
 
     # Save
-    def saveGraph(self, fileName, fileFormat='ppm', dpi=None, **kw):
-        if fileFormat not in ['ppm', 'png', 'tiff']:
+    def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
+        if fileFormat not in ['png', 'ppm', 'svg', 'tiff']:
             raise NotImplementedError('Unsupported format: %s' % fileFormat)
 
         self.makeCurrent()
@@ -2705,7 +2705,30 @@ class OpenGLPlotCanvas(PlotBackend):
         # glReadPixels gives bottom to top, images are stored as top to bottom
         data = np.flipud(data)
 
-        if fileFormat == 'ppm':
+        if fileFormat == 'svg':
+            import base64
+
+            height, width = data.shape[:2]
+            base64Data = base64.b64encode(convertRGBDataToPNG(data))
+
+            with open(fileName, 'w') as f:
+                f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+                f.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
+                f.write('     xmlns="http://www.w3.org/2000/svg"\n')
+                f.write('     version="1.1"\n')
+                f.write('     width="%d"\n' % width)
+                f.write('     height="%d">\n' % height)
+                f.write('    <image xlink:href="data:image/png;base64,')
+                f.write(base64Data.decode('ascii'))
+                f.write('"\n')
+                f.write('           x="0"\n')
+                f.write('           y="0"\n')
+                f.write('           width="%d"\n' % width)
+                f.write('           height="%d"\n' % height)
+                f.write('           id="image" />\n')
+                f.write('</svg>')
+
+        elif fileFormat == 'ppm':
             with open(fileName, 'w') as f:
                 f.write('P6\n')
                 f.write('%d %d\n' % (self.winWidth, self.winHeight))
