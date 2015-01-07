@@ -388,7 +388,7 @@ class XASNormalizationWindow(qt.QWidget):
         #self.graph.clearMarkers()
         self.graph.insertXMarker(edgeEnergy,
                                 'EDGE',
-                                 label='EDGE',
+                                 text='EDGE',
                                  color='pink',
                                  draggable=draggable,
                                  replot=False)
@@ -400,7 +400,7 @@ class XASNormalizationWindow(qt.QWidget):
                 label = 'MAX'
             self.graph.insertXMarker(x,
                                 'Pre-'+ label,
-                                label=label,
+                                text=label,
                                 color='blue',
                                 draggable=True,
                                 replot=False)
@@ -414,7 +414,7 @@ class XASNormalizationWindow(qt.QWidget):
                 replot=True
             self.graph.insertXMarker(x,
                                 'Post-'+ label,
-                                label=label,
+                                text=label,
                                 color='blue',
                                 draggable=True,
                                 replot=replot)
