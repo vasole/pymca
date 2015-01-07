@@ -110,8 +110,9 @@ class TaurusPlugin1D(Plugin1DBase.Plugin1DBase, QObjectTaurusListener):
 
         Plot type can be "SCAN", "MCA", None, ...
         """
-        if plottype in ["MCA"]:
-            return []
+        # visualize everywhere, therefore ignore MCA or SCAN
+        # if plottype in ["MCA"]:
+        #    return []
         names = list(self.methodDict.keys())
         names.sort()
         return names
