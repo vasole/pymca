@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -488,6 +488,19 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
                                         toggle=False,
                                         position=12)
 
+        # The density plot window
+        from PyMca5.PyMcaGui import ScatterPlotCorrelatorWidget
+        self.scatterPlotWidget = ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(None,
+                                    labels=["Legend",
+                                            "X",
+                                            "Y"],
+                                    types=["Text",
+                                           "RadioButton",
+                                           "RadioButton"],
+                                    maxNRois=1)
+        self.scatterPlotWidget.show()
+        self.sigMaskImageWidgetSignal.connect(self._internalSlot)
+
     def sizeHint(self):
         return qt.QSize(400, 400)
 
@@ -561,6 +574,21 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             self.vectorGraph.newCurve(range(len(y)), y, legend, replace=True)
 
         self.slider.setValue(0)
+        self._updateScatterPlotWidget()
+
+    def _updateScatterPlotWidget(self):
+        w = self.scatterPlotWidget
+        for i in range(len(self.imageNames)):
+            w.addSelectableItem(self.imageList[i], self.imageNames[i])
+        w.setPolygonSelectionMode()
+        w.setSelectionMask(self.getSelectionMask())
+
+    def _internalSlot(self, ddict):
+        if ddict["event"] in ["selectionMaskChanged", "resetSelection", "invertSelection"]:
+            mask = self.getSelectionMask()
+            if mask is None:
+                mask = numpy.zeros(self.imageList[0].shape, numpy.uint8)
+            self.scatterPlotWidget.setSelectionMask(mask)
 
     def saveImageList(self, filename=None, imagelist=None, labels=None):
         if self.imageList is None:
