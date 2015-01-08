@@ -2712,7 +2712,11 @@ class OpenGLPlotCanvas(PlotBackend):
             base64Data = base64.b64encode(convertRGBDataToPNG(data))
 
             with open(fileName, 'w') as f:
-                f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+                f.write(
+                    '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
+                f.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
+                f.write(
+                    '  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
                 f.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
                 f.write('     xmlns="http://www.w3.org/2000/svg"\n')
                 f.write('     version="1.1"\n')
