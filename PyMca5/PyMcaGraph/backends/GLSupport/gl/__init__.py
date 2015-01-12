@@ -31,11 +31,13 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-This module provides a ctypes wrapper over OpenGL
+This module loads PyOpenGL
 """
 
 
 # import ######################################################################
+
+import numpy as np
 
 import OpenGL
 if 0:  # Debug
@@ -68,3 +70,30 @@ def testGLExtensions():
 
     if not glInitTextureRgARB():
         raise RuntimeError("OpenGL GL_ARB_texture_rg extension required !")
+
+
+# utils #######################################################################
+
+_GL_TYPE_SIZES = {
+    GL_UNSIGNED_BYTE: 1,
+    GL_FLOAT: 4,
+    GL_INT: 4
+}
+
+
+def sizeofGLType(type_):
+    """Returns the size in bytes of an element of type type_"""
+    return _GL_TYPE_SIZES[type_]
+
+
+_TYPE_CONVERTER = {
+    np.dtype(np.float32): GL_FLOAT,
+    np.dtype(np.uint8): GL_UNSIGNED_BYTE,
+    np.dtype(np.uint16): GL_UNSIGNED_SHORT,
+    np.dtype(np.uint32): GL_UNSIGNED_INT,
+}
+
+
+def numpyToGLType(type_):
+    """Returns the GL type corresponding the provided numpy type or dtype"""
+    return _TYPE_CONVERTER[np.dtype(type_)]

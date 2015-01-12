@@ -44,7 +44,6 @@ from collections import defaultdict
 from .GLContext import getGLContext
 from .GLSupport import Program, buildFillMaskIndices
 from .GLVertexBuffer import createVBOFromArrays, VBOAttrib
-from .GLVertexBuffer import convertNumpyToGLType
 
 try:
     from ....ctools import minMax
@@ -144,7 +143,7 @@ class _Fill2D(object):
     def prepare(self):
         if self._indices is None:
             self._indices = buildFillMaskIndices(self.xFillVboData.size)
-            self._indicesType = convertNumpyToGLType(self._indices.dtype)
+            self._indicesType = numpyToGLType(self._indices.dtype)
 
         if self._bboxVertices is None:
             yMin, yMax = min(self.yMin, 1e-32), max(self.yMax, 1e-32)
