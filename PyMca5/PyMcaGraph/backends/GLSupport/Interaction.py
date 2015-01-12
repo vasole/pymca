@@ -98,6 +98,8 @@ LEFT_BTN, RIGHT_BTN, MIDDLE_BTN = 'left', 'right', 'middle'
 
 class ClickOrDrag(StateMachine):
     """State machine for left and right click and left drag interaction"""
+    DRAG_THRESHOLD_SQUARE_DIST = 5 ** 2
+
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
@@ -121,7 +123,10 @@ class ClickOrDrag(StateMachine):
             self.initPos = x, y
 
         def onMove(self, x, y):
-            self.goto('drag', self.initPos, (x, y))
+            dx = (x - self.initPos[0]) ** 2
+            dy = (y - self.initPos[1]) ** 2
+            if (dx ** 2 + dy ** 2) >= self.machine.DRAG_THRESHOLD_SQUARE_DIST:
+                self.goto('drag', self.initPos, (x, y))
 
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
