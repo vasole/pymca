@@ -1197,16 +1197,18 @@ class OpenGLPlotCanvas(PlotBackend):
             self.eventHandler.handleEvent('press', xPixel, yPixel, btn)
 
     def onMouseMove(self, xPixel, yPixel):
-        # Signal mouse move event
-        xData, yData = self.pixelToDataCoords(xPixel, yPixel)
-        if xData is not None and yData is not None:
+        if self._plotHasFocus:
+            xPixel, yPixel = self._mouseInPlotArea(xPixel, yPixel)
+
+            # Signal mouse move event
+            xData, yData = self.pixelToDataCoords(xPixel, yPixel)
+            assert xData is not None
+            assert yData is not None
             eventDict = prepareMouseSignal('mouseMoved', None,
                                            xData, yData,
                                            xPixel, yPixel)
             self._callback(eventDict)
 
-        if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
-            self._mousePosition = xPixel, yPixel
             self.eventHandler.handleEvent('move', xPixel, yPixel)
 
     def onMouseRelease(self, xPixel, yPixel, btn):
@@ -1215,8 +1217,7 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
-            # Use position of last move inside
-            xPixel, yPixel = self._mousePosition
+            xPixel, yPixel = self._mouseInPlotArea(xPixel, yPixel)
             self.eventHandler.handleEvent('release', xPixel, yPixel, btn)
 
     def onMouseWheel(self, xPixel, yPixel, angleInDegrees):
