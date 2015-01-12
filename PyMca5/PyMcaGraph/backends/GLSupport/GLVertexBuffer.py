@@ -126,6 +126,13 @@ class VertexBuffer(object):
 
 # VBOAttrib ###################################################################
 
+_GL_TYPE_SIZES = {
+    GL_UNSIGNED_BYTE: 1,
+    GL_FLOAT: 4,
+    GL_INT: 4
+}
+
+
 class VBOAttrib(object):
     """Describes data stored in a VBO
     """
@@ -139,7 +146,7 @@ class VBOAttrib(object):
         :param VertexBuffer vbo: The VBO storing the data
         :param int type_: The OpenGL type of the data
         :param int size: The number of data elements stored in the VBO
-        :param int dimension: The number of type_  in [1, 4]
+        :param int dimension: The number of type_ element(s) in [1, 4]
         :param int offset: Start offset of data in the VBO
         :param int stride: Data stride in the VBO
         """
@@ -152,6 +159,11 @@ class VBOAttrib(object):
         self.offset = offset
         self.stride = stride
 
+    @property
+    def itemSize(self):
+        """Size of a VBO element in bytes"""
+        return self.dimension * _GL_TYPE_SIZES[self.type_]
+
     def setVertexAttrib(self, attrib):
         with self.vbo:
             glVertexAttribPointer(attrib,
@@ -161,47 +173,58 @@ class VBOAttrib(object):
                                   self.stride,
                                   c_void_p(self.offset))
 
-
-def convertNumpyToGLType(type_):
-    if type_ == np.float32:
-        return GL_FLOAT
-    elif type_ == np.uint8:
-        return GL_UNSIGNED_BYTE
-    else:
-        raise RuntimeError("Cannot convert dtype {0} to GL type".format(type_))
-
-_GL_TYPE_SIZES = {
-    GL_UNSIGNED_BYTE: 1,
-    GL_FLOAT: 4,
-    GL_INT: 4
+_TYPE_CONVERTER = {
+    np.dtype(np.float32): GL_FLOAT,
+    np.dtype(np.uint8): GL_UNSIGNED_BYTE,
+    np.dtype(np.uint16): GL_UNSIGNED_SHORT,
+    np.dtype(np.uint32): GL_UNSIGNED_INT,
 }
 
 
-def createVBOFromArrays(arrays, usage=None):
+def convertNumpyToGLType(type_):
+    return _TYPE_CONVERTER[np.dtype(type_)]
+
+
+def createVBOFromArrays(arrays, prefix=None, suffix=None, usage=None):
     """
     Create a single VBO from multiple 1D or 2D numpy arrays
+    It is possible to reserve memory before and after each array in the VBO
+
     :param arrays: Arrays of data to store
-    :type arrays: An iterable of numpy.ndarray
+    :type arrays: Iterable of numpy.ndarray
+    :param prefix: If given, number of elements to reserve before each array
+    :type prefix: Iterable of int or None
+    :param suffix: If given, number of elements to reserve after each array
+    :type suffix: Iterable of int or None
     :param int usage: VBO usage hint or None for default
-    :returns: A list of VBOAttrib objects sharing the same VBO
+    :returns: List of VBOAttrib objects sharing the same VBO
     """
-    arraysInfo = []
+    info = []
     vboSize = 0
-    for data in arrays:
+
+    if prefix is None:
+        prefix = (0,) * len(arrays)
+    if suffix is None:
+        suffix = (0,) * len(arrays)
+
+    for data, pre, post in zip(arrays, prefix, suffix):
         shape = data.shape
         assert len(shape) <= 2
         type_ = convertNumpyToGLType(data.dtype)
-        size = shape[0]
+        size = shape[0] + pre + post
         dimension = 1 if len(shape) == 1 else shape[1]
         sizeInBytes = size * dimension * _GL_TYPE_SIZES[type_]
         sizeInBytes = 4 * (((sizeInBytes) + 3) >> 2)  # 4 bytes alignment
-        arraysInfo.append((data, type_, size, dimension, vboSize, sizeInBytes))
+        copyOffset = vboSize + pre * dimension * _GL_TYPE_SIZES[type_]
+        info.append((data, type_, size, dimension,
+                     vboSize, sizeInBytes, copyOffset))
         vboSize += sizeInBytes
 
     vbo = VertexBuffer(sizeInBytes=vboSize, usage=usage)
 
     result = []
-    for data, type_, size, dimension, offset, sizeInBytes in arraysInfo:
-        vbo.update(data, offsetInBytes=offset, sizeInBytes=sizeInBytes)
+    for data, type_, size, dimension, offset, sizeInBytes, copyOffset in info:
+        copySize = data.shape[0] * dimension * _GL_TYPE_SIZES[type_]
+        vbo.update(data, offsetInBytes=copyOffset, sizeInBytes=copySize)
         result.append(VBOAttrib(vbo, type_, size, dimension, offset, 0))
     return result

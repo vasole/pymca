@@ -2320,7 +2320,8 @@ class OpenGLPlotCanvas(PlotBackend):
                  replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, z=1, selectable=True, **kw):
+                 xerror=None, yerror=None, z=1, selectable=True,
+                 fill=None, **kw):
         if yaxis is not None:
             print('OpenGLBackend.addCurve yaxis not implemented')
         if xerror is not None:
@@ -2356,12 +2357,16 @@ class OpenGLPlotCanvas(PlotBackend):
             colorArray = None
             color = rgba(color, PlotBackend.COLORDICT)
 
+        if fill is None:  # To make it run with Plot.py
+            fill = info.get('plot_fill', False)
+
         curve = Curve2D(x, y, colorArray,
                         lineStyle=linestyle,
                         lineColor=color,
                         lineWidth=1,
                         marker=symbol,
-                        markerColor=color)
+                        markerColor=color,
+                        fillColor=color if fill else None)
         curve.info = {
             'legend': legend,
             'zOrder': z,
