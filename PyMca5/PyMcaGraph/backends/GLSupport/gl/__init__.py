@@ -75,9 +75,11 @@ def testGLExtensions():
 # utils #######################################################################
 
 _GL_TYPE_SIZES = {
-    GL_UNSIGNED_BYTE: 1,
     GL_FLOAT: 4,
-    GL_INT: 4
+    GL_INT: 4,
+    GL_UNSIGNED_BYTE: 1,
+    GL_UNSIGNED_SHORT: 2,
+    GL_UNSIGNED_INT: 4,
 }
 
 
@@ -88,6 +90,7 @@ def sizeofGLType(type_):
 
 _TYPE_CONVERTER = {
     np.dtype(np.float32): GL_FLOAT,
+    np.dtype(np.int32): GL_INT,
     np.dtype(np.uint8): GL_UNSIGNED_BYTE,
     np.dtype(np.uint16): GL_UNSIGNED_SHORT,
     np.dtype(np.uint32): GL_UNSIGNED_INT,
