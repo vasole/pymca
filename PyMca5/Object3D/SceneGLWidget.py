@@ -1134,14 +1134,21 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
 
             # returns to usual mode and get the select buffer
             color = GL.glReadPixelsub(x, y, 1, 1, GL.GL_RGBA)
-            #workaround a PyOpenGL bug
-            if color.dtype == 'int8':
-                if DEBUG:
-                    print('######### workaround pyopengl bug #########')
-                color = color.astype(numpy.uint8)
-
-            if DEBUG:
-                print("color = ", color)
+            #workaround a couple of PyOpenGL bugs
+            # sometimes I get an int8 and sometimes a string
+            if hasattr(color, "dtype"):
+                if color.dtype == 'int8':
+                    if DEBUG:
+                        print('######### workaround pyopengl bug #########')
+                    color = color.astype(numpy.uint8)
+            else:
+                #assume to have received a string
+                color0 = color
+                color = numpy.zeros((1,1,4), dtype=numpy.uint8)
+                color[0][0][0] = ord(color0[0])
+                color[0][0][1] = ord(color0[1])
+                color[0][0][2] = ord(color0[2])
+                color[0][0][3] = ord(color0[3])
 
             index =  color[0][0][0] + \
                     (color[0][0][1] << 8) +\
@@ -1166,9 +1173,21 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                                 if (y+j) >= height:continue
                                 if (y+j) < 0:    continue
                                 color = GL.glReadPixelsub(x+i, y+j, 1, 1, GL.GL_RGBA)
-                                #workaround a PyOpenGL bug
-                                if color.dtype == 'int8':
-                                    color = color.astype(numpy.uint8)
+                                #workaround a couple of PyOpenGL bugs
+                                # sometimes I get an int8 and sometimes a string
+                                if hasattr(color, "dtype"):
+                                    if color.dtype == 'int8':
+                                        if DEBUG:
+                                            print('######### workaround pyopengl bug #########')
+                                        color = color.astype(numpy.uint8)
+                                else:
+                                    #assume to have received a string
+                                    color0 = color
+                                    color = numpy.zeros((1,1,4), dtype=numpy.uint8)
+                                    color[0][0][0] = ord(color0[0])
+                                    color[0][0][1] = ord(color0[1])
+                                    color[0][0][2] = ord(color0[2])
+                                    color[0][0][3] = ord(color0[3])
                                 index = color[0][0][0] + \
                                         (color[0][0][1] << 8) + \
                                         (color[0][0][2] << 16)
