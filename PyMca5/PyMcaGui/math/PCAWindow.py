@@ -499,6 +499,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
                                            "RadioButton"],
                                     maxNRois=1)
         self.__scatterPlotWidgetDataToUpdate = True
+        self.__maskToScatterConnected = True
         self.sigMaskImageWidgetSignal.connect(self._internalSlot)
         self.scatterPlotWidget.sigMaskScatterWidgetSignal.connect( \
                                               self._internalSlot)
@@ -506,7 +507,7 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
         # add the command to show it to the menu
         self.additionalSelectionMenu().addAction(QString("Show scatter plot"),
                                                  self.showScatterPlot)
-                                            
+
     def sizeHint(self):
         return qt.QSize(400, 400)
 
@@ -612,11 +613,17 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
                                   "invertSelection"]:
                 mask = self.scatterPlotWidget.getSelectionMask()
                 super(PCAWindow, self).setSelectionMask(mask, plot=True)
+                ddict["id"] = id(self)
+                try:
+                    self.__maskToScatterConnected = False
+                    self.sigMaskImageWidgetSignal.emit(ddict)
+                finally:
+                    self.__maskToScatterConnected = True
 
     def setSelectionMask(self, *var, **kw):
         super(PCAWindow, self).setSelectionMask(*var, **kw)
         if not self.scatterPlotWidget.isHidden():
-            self._updateScatterPlotWidget(self)
+            self._updateScatterPlotWidget()
 
     def saveImageList(self, filename=None, imagelist=None, labels=None):
         if self.imageList is None:
