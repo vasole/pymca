@@ -1191,7 +1191,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._axisDirtyFlag = True
         self._plotDirtyFlag = True
 
-        self._hasRightYAxis = weakref.WeakKeyDictionary()
+        self._hasRightYAxis = set()
 
         self._mousePosition = 0, 0
         self.eventHandler = ZoomAndSelect(self, (0., 0., 0., 1.))
@@ -2559,7 +2559,7 @@ class OpenGLPlotCanvas(PlotBackend):
         }
 
         if yaxis == "right":
-            self._hasRightYAxis[curve] = None  # It is a set of weakref
+            self._hasRightYAxis.add(curve)
 
         if self._isXLog and curve.xMin <= 0.:
             raise RuntimeError(
@@ -2596,6 +2596,9 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
+            self._hasRightYAxis.discard(curve)
+            if not self._hasRightYAxis:
+                self.updateAxis()
             curve.discard()
             self._plotDirtyFlag = True
 
