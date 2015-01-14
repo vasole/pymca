@@ -51,6 +51,7 @@ import numpy as np
 import math
 import time
 import warnings
+import weakref
 from collections import namedtuple
 
 from .GLSupport.gl import *  # noqa
@@ -1190,6 +1191,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self._axisDirtyFlag = True
         self._plotDirtyFlag = True
 
+        self._hasRightYAxis = weakref.WeakKeyDictionary()
+
         self._mousePosition = 0, 0
         self.eventHandler = ZoomAndSelect(self, (0., 0., 0., 1.))
 
@@ -1449,7 +1452,7 @@ class OpenGLPlotCanvas(PlotBackend):
                                              align=RIGHT,
                                              valign=CENTER))
 
-        if trY2Min != trY2Max:
+        if self._hasRightYAxis and trY2Min != trY2Max:
             plotRight = self.winWidth - self._margins['right']
 
             if self._isYLog:
@@ -1532,7 +1535,8 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((plotRight - 0.5 * self._tickLen,
                                          yPixel))
 
-        if trY2Min != trY2Max and self._isYLog and y2Step == 1:
+        if (self._hasRightYAxis and trY2Min != trY2Max and
+            self._isYLog and y2Step == 1):
             for y2DataLog in list(_ticks(y2Min, y2Max, y2Step))[:-1]:
                 y2DataOrig = 10 ** y2DataLog
                 for index in range(2, 10):
@@ -1653,7 +1657,6 @@ class OpenGLPlotCanvas(PlotBackend):
                 y2Min, y2Max = 1., 100.
 
             self._dataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
-            print(self._dataBounds)
             return self._dataBounds
 
     def _dirtyDataBounds(self):
@@ -1811,7 +1814,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     print('xData: warning log10({0})'.format(xData))
                     xData = 0.
             xPixel = int(self._margins['left'] +
-                         plotWidth * (xData - trBounds.xAxis.min_)  
+                         plotWidth * (xData - trBounds.xAxis.min_) /
                          trBounds.xAxis.range_)
 
         if yData is None:
@@ -2555,6 +2558,9 @@ class OpenGLPlotCanvas(PlotBackend):
             'yaxis': 'left' if yaxis is None else yaxis,
         }
 
+        if yaxis == "right":
+            self._hasRightYAxis[curve] = None  # It is a set of weakref
+
         if self._isXLog and curve.xMin <= 0.:
             raise RuntimeError(
                 'Cannot add curve with X <= 0 with X axis log scale')
@@ -2610,6 +2616,11 @@ class OpenGLPlotCanvas(PlotBackend):
         curve = self._zOrderedItems.get(('curve', legend), None)
         if curve is None:
             raise KeyError("Curve %s not found" % legend)
+
+        if curve.info['yaxis'] == "right":
+            warnings.warn("Ignore setActiveCurve for curve on right Y axis",
+                          RuntimeWarning)
+            return
 
         if self._activeCurve is not None:
             inactiveState = self._activeCurve._inactiveState
