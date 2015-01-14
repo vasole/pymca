@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -161,6 +161,10 @@ if __name__ == "__main__":
     w.addSelectableItem(x * x, "range(%d) ** 2"  % x.size)
     x = numpy.random.random(x.size)
     w.addSelectableItem(x, "random(%d)" % x.size)
+    x = numpy.random.normal(500000., 1.0, 1000000)
+    w.addSelectableItem(x, "Gauss 0")
+    x = numpy.random.normal(500000., 1.0, 1000000)
+    w.addSelectableItem(x, "Gauss 1")
     w.setPolygonSelectionMode()
 
     def theSlot(ddict):

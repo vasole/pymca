@@ -188,19 +188,25 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
             bins = self._bins
         x0 = x.min()
         y0 = y.min()
-        deltaX = (x.max() - x0)/float(bins[0] - 1)
-        deltaY = (y.max() - y0)/float(bins[1] - 1)
-        self._xScale = (x0, deltaX)
-        self._yScale = (y0, deltaY)
-        binsX = numpy.arange(bins[0]) * deltaX
-        binsY = numpy.arange(bins[1]) * deltaY
-        image = numpy.histogram2d(y, x, bins=(binsY, binsX), normed=False)
+        image = numpy.histogram2d(y, x,
+                                  bins=bins,
+                                  #range=(binsY, binsX),
+                                  normed=False)
         self._binsX = image[2]
         self._binsY = image[1]
         self._bins = bins
+        #print("shape", image[0].shape, "image max  min ", image[0].max(), image[0].min())
+        #print("deltaxmin and max", (self._binsX[1:] - self._binsX[:-1]).min(),
+        #      (self._binsX[1:] - self._binsX[:-1]).max())
+        deltaX = (self._binsX[1:]- self._binsX[:-1]).mean()
+        deltaY = (self._binsY[1:]- self._binsY[:-1]).mean()
+        self._xScale = (x0, deltaX)
+        self._yScale = (y0, deltaY)
         return image[0]
 
     def _updateDensityPlot(self, bins=None):
+        if DEBUG:
+            print("_updateDensityPlot called")
         if self._densityPlotWidget is None:
             return
         curve = self.getCurve(self._selectionCurve)
@@ -457,6 +463,7 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                                   replot=False, replace=False)
                 if replot:
                     self.replot()
+                    #self.resetZoom()
 
     def setActiveRoiNumber(self, intValue):
         if (intValue < 0) or (intValue > self._maxNRois):
@@ -503,6 +510,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 self.brushSelectionToolButton.setChecked(False)
 
     def _handlePolygonMask(self, points):
+        if DEBUG:
+            print("_handlePolygonMask called")
         if self._eraseMode:
             value = 0
         else:
@@ -861,6 +870,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._emitMaskChangedSignal()
 
     def _setSelectionMaskFromDensityMask(self, densityPlotMask, update=None):
+        if DEBUG:
+            print("_setSelectionMaskFromDensityMask called")
         curve = self.getCurve(self._selectionCurve)
         if curve is None:
             return
@@ -896,6 +907,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self.setSelectionMask(view, plot=True)
 
     def _densityPlotSlot(self, ddict):
+        if DEBUG:
+            print("_densityPlotSlot called")
         if ddict["event"] == "resetSelection":
             self.__resetSelection()
             return
