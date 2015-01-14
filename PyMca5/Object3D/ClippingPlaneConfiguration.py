@@ -141,9 +141,12 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
         if 'limits' in ddict:
             xmin, ymin, zmin = ddict['limits'][0]
             xmax, ymax, zmax = ddict['limits'][1]
-            self.planeList[0][5].setRange(-abs(zmax), abs(zmax))
-            self.planeList[1][5].setRange(-abs(ymax), abs(ymax))
-            self.planeList[2][5].setRange(-abs(xmax), abs(xmax))
+            vxmax = max(xmax, xmin)
+            vymax = max(ymax, ymin)
+            vzmax = max(zmax, zmin)
+            self.planeList[0][5].setRange(-abs(vzmax), abs(vzmax))
+            self.planeList[1][5].setRange(-abs(vymax), abs(vymax))
+            self.planeList[2][5].setRange(-abs(vxmax), abs(vxmax))
         if 'clippingplanes' in ddict:
             i = 0
             self.__disconnected = True

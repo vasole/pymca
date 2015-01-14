@@ -64,7 +64,7 @@ class Object3DSlider(qt.QWidget):
 
     def setRange(self, minValue, maxValue, increment=None):
         if increment is None:
-            self.__factor = (maxValue - minValue) / 0.01
+            self.__factor = 201.
         else:
             self.__factor = (maxValue - minValue) / float(increment)
 
