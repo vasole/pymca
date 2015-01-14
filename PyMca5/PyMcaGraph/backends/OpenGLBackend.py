@@ -131,6 +131,57 @@ class Bounds(namedtuple('Bounds', ('xMin', 'xMax', 'yMin', 'yMax'))):
         return 0.5 * (self.yMin + self.yMax)
 
 
+# PNG writer ##################################################################
+
+def convertRGBDataToPNG(data):
+    """Convert a RGB bitmap to PNG.
+
+    It only supports RGB bitmap with one byte per channel stored as a 3D array.
+    See `Definitive Guide <http://www.libpng.org/pub/png/book/>`_ and
+    `Specification <http://www.libpng.org/pub/png/spec/1.2/>`_ for details.
+
+    :param data: An array with 3 dimensions (h, w, rgb) storing the RGB image
+    :type data: numpy.ndarray of unsigned bytes
+    :returns: The PNG encoded data
+    :rtype: bytes
+    """
+    import struct
+    import zlib
+
+    height, width = data.shape[0], data.shape[1]
+    depth = 8  # 8 bit per channel
+    colorType = 2  # 'truecolor' = RGB
+    interlace = 0  # No
+
+    pngData = []
+
+    # PNG signature
+    pngData.append(b'\x89PNG\r\n\x1a\n')
+
+    # IHDR chunk: Image Header
+    pngData.append(struct.pack(">I", 13))  # length
+    IHDRdata = struct.pack(">ccccIIBBBBB", b'I', b'H', b'D', b'R',
+                           width, height, depth, colorType,
+                           0, 0, interlace)
+    pngData.append(IHDRdata)
+    pngData.append(struct.pack(">I", zlib.crc32(IHDRdata) & 0xffffffff))  # CRC
+
+    # Add filter 'None' before each scanline
+    preparedData = b'\x00' + b'\x00'.join(line.tostring() for line in data)
+    compressedData = zlib.compress(preparedData, 8)
+
+    # IDAT chunk: Payload
+    pngData.append(struct.pack(">I", len(compressedData)))
+    IDATdata = struct.pack("cccc", b'I', b'D', b'A', b'T')
+    IDATdata += compressedData
+    pngData.append(IDATdata)
+    pngData.append(struct.pack(">I", zlib.crc32(IDATdata) & 0xffffffff))  # CRC
+
+    # IEND chunk: footer
+    pngData.append(b'\x00\x00\x00\x00IEND\xaeB`\x82')
+    return b''.join(pngData)
+
+
 # shaders #####################################################################
 
 _baseVertShd = """
@@ -278,7 +329,7 @@ def prepareMarkerSignal(eventType, button, label, type_,
 
         posDataCursor = posDataMarker
     else:
-        raise NotImplementedError("Unknown event type {}".format(eventType))
+        raise NotImplementedError("Unknown event type {0}".format(eventType))
 
     eventDict = {'event': eventType,
                  'button': button,
@@ -1277,7 +1328,7 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((xPixel,
                                          self._margins['top'] + self._tickLen))
 
-                        text = ('1e{:+03d}').format(xDataLog)
+                        text = '1e{0:+03d}'.format(xDataLog)
                         labels.append(Text2D(text=text,
                                              x=xPixel,
                                              y=plotBottom + self._tickLen,
@@ -1298,9 +1349,9 @@ class OpenGLPlotCanvas(PlotBackend):
                                          self._margins['top'] + self._tickLen))
 
                         if xNbFrac == 0:
-                            text = ('{:g}').format(xData)
+                            text = '{0:g}'.format(xData)
                         else:
-                            text = ('{:.' + str(xNbFrac) + 'f}').format(xData)
+                            text = ('{0:.' + str(xNbFrac) + 'f}').format(xData)
 
                         labels.append(Text2D(text=text,
                                              x=xPixel,
@@ -1324,7 +1375,7 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((plotRight, yPixel))
                         vertices.append((plotRight - self._tickLen, yPixel))
 
-                        text = ('1e{:+03d}').format(yDataLog)
+                        text = '1e{0:+03d}'.format(yDataLog)
                         labels.append(Text2D(text=text,
                                              x=self._margins['left'] -
                                              self._tickLen,
@@ -1346,9 +1397,9 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((plotRight - self._tickLen, yPixel))
 
                         if yNbFrac == 0:
-                            text = '{:g}'.format(yData)
+                            text = '{0:g}'.format(yData)
                         else:
-                            text = ('{:.' + str(yNbFrac) + 'f}').format(yData)
+                            text = ('{0:.' + str(yNbFrac) + 'f}').format(yData)
 
                         labels.append(Text2D(text=text,
                                              x=self._margins['left'] -
@@ -1357,7 +1408,7 @@ class OpenGLPlotCanvas(PlotBackend):
                                              align=RIGHT,
                                              valign=CENTER))
 
-        nbMainTicks = len(vertices) / 4
+        nbMainTicks = len(vertices) // 4
 
         if trXMin != trXMax and self._isXLog and xStep == 1:
             for xDataLog in list(_ticks(xMin, xMax, xStep))[:-1]:
@@ -1528,24 +1579,24 @@ class OpenGLPlotCanvas(PlotBackend):
                     try:
                         xMin = math.log10(xMin)
                     except ValueError:
-                        print('xMin: warning log10({})'.format(xMin))
+                        print('xMin: warning log10({0})'.format(xMin))
                         xMin = 0.
                     try:
                         xMax = math.log10(xMax)
                     except ValueError:
-                        print('xMax: warning log10({})'.format(xMax))
+                        print('xMax: warning log10({0})'.format(xMax))
                         xMax = 0.
 
                 if self._isYLog:
                     try:
                         yMin = math.log10(yMin)
                     except ValueError:
-                        print('yMin: warning log10({})'.format(yMin))
+                        print('yMin: warning log10({0})'.format(yMin))
                         yMin = 0.
                     try:
                         yMax = math.log10(yMax)
                     except ValueError:
-                        print('yMax: warning log10({})'.format(yMax))
+                        print('yMax: warning log10({0})'.format(yMax))
                         yMax = 0.
 
                 self._plotDataTransformedBounds = \
@@ -1594,7 +1645,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 if xData > 0.:
                     xData = math.log10(xData)
                 else:
-                    print('xData: warning log10({})'.format(xData))
+                    print('xData: warning log10({0})'.format(xData))
                     xData = 0.
             xPixel = int(self._margins['left'] +
                          plotWidth * (xData - trBounds.xMin) / trBounds.width)
@@ -1606,7 +1657,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 if yData > 0.:
                     yData = math.log10(yData)
                 else:
-                    print('yData: warning log10({})'.format(yData))
+                    print('yData: warning log10({0})'.format(yData))
                     yData = 0.
             yOffset = plotHeight * (yData - trBounds.yMin) / trBounds.height
             if self._isYInverted:
@@ -1947,10 +1998,10 @@ class OpenGLPlotCanvas(PlotBackend):
                 nbVertices = self._frameVerticesNbMainTicks * 2
             elif self._grid == 2:
                 firstVertex = self._frameVerticesNbMainTicks * 2
-                nbVertices = (len(self._frameVertices) - 8) / 2 - firstVertex
+                nbVertices = (len(self._frameVertices) - 8) // 2 - firstVertex
             else:
                 firstVertex = 0
-                nbVertices = (len(self._frameVertices) - 8) / 2
+                nbVertices = (len(self._frameVertices) - 8) // 2
 
             glDrawArrays(GL_LINES, firstVertex, nbVertices)
 
@@ -1981,7 +2032,7 @@ class OpenGLPlotCanvas(PlotBackend):
             try:
                 shape2D = item['_shape2D']
             except KeyError:
-                shape2D = Shape2D(zip(item['x'], item['y']),
+                shape2D = Shape2D(tuple(zip(item['x'], item['y'])),
                                   fill=item['fill'],
                                   fillColor=item['color'],
                                   stroke=True,
@@ -2269,7 +2320,8 @@ class OpenGLPlotCanvas(PlotBackend):
                  replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, z=1, selectable=True, **kw):
+                 xerror=None, yerror=None, z=1, selectable=True,
+                 fill=None, **kw):
         if yaxis is not None:
             print('OpenGLBackend.addCurve yaxis not implemented')
         if xerror is not None:
@@ -2305,12 +2357,16 @@ class OpenGLPlotCanvas(PlotBackend):
             colorArray = None
             color = rgba(color, PlotBackend.COLORDICT)
 
+        if fill is None:  # To make it run with Plot.py
+            fill = info.get('plot_fill', False)
+
         curve = Curve2D(x, y, colorArray,
                         lineStyle=linestyle,
                         lineColor=color,
                         lineWidth=1,
                         marker=symbol,
-                        markerColor=color)
+                        markerColor=color,
+                        fillColor=color if fill else None)
         curve.info = {
             'legend': legend,
             'zOrder': z,
@@ -2638,8 +2694,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self.replot()
 
     # Save
-    def saveGraph(self, fileName, fileFormat='ppm', dpi=None, **kw):
-        if fileFormat not in ['ppm']:
+    def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
+        if fileFormat not in ['png', 'ppm', 'svg', 'tiff']:
             raise NotImplementedError('Unsupported format: %s' % fileFormat)
 
         self.makeCurrent()
@@ -2651,14 +2707,51 @@ class OpenGLPlotCanvas(PlotBackend):
         glReadPixels(0, 0, self.winWidth, self.winHeight,
                      GL_RGB, GL_UNSIGNED_BYTE, data)
 
-        # glReadPixels gives bottom to top, ppm stores as top to bottom
+        # glReadPixels gives bottom to top, images are stored as top to bottom
         data = np.flipud(data)
 
-        with open(fileName, 'w') as f:
-            f.write('P6\n')
-            f.write('%d %d\n' % (self.winWidth, self.winHeight))
-            f.write('255\n')
-            f.write(data.tostring())
+        if fileFormat == 'svg':
+            import base64
+
+            height, width = data.shape[:2]
+            base64Data = base64.b64encode(convertRGBDataToPNG(data))
+
+            with open(fileName, 'w') as f:
+                f.write(
+                    '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
+                f.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
+                f.write(
+                    '  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
+                f.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
+                f.write('     xmlns="http://www.w3.org/2000/svg"\n')
+                f.write('     version="1.1"\n')
+                f.write('     width="%d"\n' % width)
+                f.write('     height="%d">\n' % height)
+                f.write('    <image xlink:href="data:image/png;base64,')
+                f.write(base64Data.decode('ascii'))
+                f.write('"\n')
+                f.write('           x="0"\n')
+                f.write('           y="0"\n')
+                f.write('           width="%d"\n' % width)
+                f.write('           height="%d"\n' % height)
+                f.write('           id="image" />\n')
+                f.write('</svg>')
+
+        elif fileFormat == 'ppm':
+            with open(fileName, 'w') as f:
+                f.write('P6\n')
+                f.write('%d %d\n' % (self.winWidth, self.winHeight))
+                f.write('255\n')
+                f.write(data.tostring())
+
+        elif fileFormat == 'png':
+            with open(fileName, 'wb') as f:
+                f.write(convertRGBDataToPNG(data))
+
+        elif fileFormat == 'tiff':
+            from PyMca5.PyMcaIO.TiffIO import TiffIO
+            tif = TiffIO(fileName, mode='wb+')
+            tif.writeImage(data, info={'Title': 'PyMCA GL Snapshot'})
 
 
 # OpenGLBackend ###############################################################

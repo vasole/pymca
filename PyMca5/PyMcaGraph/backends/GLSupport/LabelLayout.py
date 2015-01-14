@@ -126,7 +126,7 @@ if __name__ == "__main__":
     ]
 
     for vMin, vMax in niceNumbersTests:
-        print("niceNumbers({}, {}): {}".format(
+        print("niceNumbers({0}, {1}): {2}".format(
             vMin, vMax, niceNumbers(vMin, vMax)))
 
     niceNumbersForLog10Tests = [  # This are log10 min, max
@@ -136,5 +136,5 @@ if __name__ == "__main__":
     ]
 
     for vMin, vMax in niceNumbersForLog10Tests:
-        print("niceNumbersForLog10({}, {}): {}".format(
+        print("niceNumbersForLog10({0}, {1}): {2}".format(
             vMin, vMax, niceNumbersForLog10(vMin, vMax)))

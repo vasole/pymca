@@ -129,12 +129,14 @@ class Program(object):
         self.attributes = {}
         for index in range(glGetProgramiv(self._prog, GL_ACTIVE_ATTRIBUTES)):
             name = _glGetActiveAttrib(self._prog, index)[0]
-            self.attributes[name] = glGetAttribLocation(self._prog, name)
+            nameStr = name.decode('ascii')
+            self.attributes[nameStr] = glGetAttribLocation(self._prog, name)
 
         self.uniforms = {}
         for index in range(glGetProgramiv(self._prog, GL_ACTIVE_UNIFORMS)):
             name = glGetActiveUniform(self._prog, index)[0]
-            self.uniforms[name] = glGetUniformLocation(self._prog, name)
+            nameStr = name.decode('ascii')
+            self.uniforms[nameStr] = glGetUniformLocation(self._prog, name)
 
     @property
     def prog_id(self):
@@ -160,6 +162,21 @@ class Program(object):
 
 # shape2D #####################################################################
 
+def buildFillMaskIndices(nIndices):
+    if nIndices <= np.iinfo(np.uint16).max + 1:
+        dtype = np.uint16
+    else:
+        dtype = np.uint32
+
+    lastIndex = nIndices - 1
+    splitIndex = lastIndex // 2 + 1
+    indices = np.empty(nIndices, dtype=dtype)
+    indices[::2] = np.arange(0, splitIndex, step=1, dtype=dtype)
+    indices[1::2] = np.arange(lastIndex, splitIndex - 1, step=-1,
+                              dtype=dtype)
+    return indices
+
+
 class Shape2D(object):
     _NO_HATCH = 0
     _HATCH_STEP = 20
@@ -168,11 +185,7 @@ class Shape2D(object):
                  fillColor=(0., 0., 0., 1.), strokeColor=(0., 0., 0., 1.)):
         self.vertices = np.array(points, dtype=np.float32, copy=False)
 
-        size = len(self.vertices)
-        assert size <= np.iinfo(np.uint16).max + 1
-        self._indices = np.fromfunction(lambda i: ((i + 1) % 2) * (i // 2) +
-                                        (i % 2) * (size - 1 - (i // 2)),
-                                        (size,), dtype=np.uint16)
+        self._indices = buildFillMaskIndices(len(self.vertices))
 
         tVertex = np.transpose(self.vertices)
         xMin, xMax = min(tVertex[0]), max(tVertex[0])

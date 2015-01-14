@@ -42,8 +42,9 @@ import numpy as np
 import math
 from collections import defaultdict
 from .GLContext import getGLContext
-from .GLSupport import Program
-from .GLVertexBuffer import createVBOFromArrays
+from .GLSupport import Program, buildFillMaskIndices
+from .GLVertexBuffer import createVBOFromArrays, VBOAttrib
+from .GLVertexBuffer import convertNumpyToGLType
 
 try:
     from ....ctools import minMax
@@ -51,6 +52,154 @@ except ImportError:
     from PyMca5.PyMcaGraph.ctools import minMax
 
 _MPL_NONES = None, 'None', '', ' '
+
+
+# fill ########################################################################
+
+class _Fill2D(object):
+    _LINEAR, _LOG10_X, _LOG10_Y, _LOG10_X_Y = 0, 1, 2, 3
+
+    _SHADER_SRCS = {
+        'vertexTransforms': {
+            _LINEAR: """
+        vec4 transformXY(float x, float y) {
+            return vec4(x, y, 0.0, 1.0);
+        }
+        """,
+            _LOG10_X: """
+        const float oneOverLog10 = 1./log(10.);
+
+        vec4 transformXY(float x, float y) {
+            return vec4(oneOverLog10 * log(x), y, 0.0, 1.0);
+        }
+        """,
+            _LOG10_Y: """
+        const float oneOverLog10 = 1./log(10.);
+
+        vec4 transformXY(float x, float y) {
+            return vec4(x, oneOverLog10 * log(y), 0.0, 1.0);
+        }
+        """,
+            _LOG10_X_Y: """
+        const float oneOverLog10 = 1./log(10.);
+
+        vec4 transformXY(float x, float y) {
+            return vec4(oneOverLog10 * log(x),
+                        oneOverLog10 * log(y),
+                        0.0, 1.0);
+        }
+        """
+        },
+        'vertex': """
+        #version 120
+
+        uniform mat4 matrix;
+        attribute float xPos;
+        attribute float yPos;
+
+        %s
+
+        void main(void) {
+            gl_Position = matrix * transformXY(xPos, yPos);
+        }
+        """,
+        'fragment': """
+        #version 120
+
+        uniform vec4 color;
+
+        void main(void) {
+            gl_FragColor = color;
+        }
+        """
+    }
+
+    _programs = defaultdict(dict)
+
+    def __init__(self, xFillVboData=None, yFillVboData=None,
+                 xMin=None, yMin=None, xMax=None, yMax=None,
+                 color=(0., 0., 0., 1.)):
+        self.xFillVboData = xFillVboData
+        self.yFillVboData = yFillVboData
+        self.xMin, self.yMin = xMin, yMin
+        self.xMax, self.yMax = xMax, yMax
+        self.color = color
+
+        self._bboxVertices = None
+        self._indices = None
+
+    @classmethod
+    def _getProgram(cls, transform):
+        context = getGLContext()
+        programs = cls._programs[transform]
+        try:
+            prgm = programs[context]
+        except KeyError:
+            srcs = cls._SHADER_SRCS
+            vertexShdr = srcs['vertex'] % srcs['vertexTransforms'][transform]
+            prgm = Program(vertexShdr, srcs['fragment'])
+            programs[context] = prgm
+        return prgm
+
+    def prepare(self):
+        if self._indices is None:
+            self._indices = buildFillMaskIndices(self.xFillVboData.size)
+            self._indicesType = convertNumpyToGLType(self._indices.dtype)
+
+        if self._bboxVertices is None:
+            yMin, yMax = min(self.yMin, 1e-32), max(self.yMax, 1e-32)
+            self._bboxVertices = np.array(((self.xMin, self.xMin,
+                                            self.xMax, self.xMax),
+                                           (yMin, yMax, yMin, yMax)),
+                                          dtype=np.float32)
+
+    def render(self, matrix, isXLog, isYLog):
+        self.prepare()
+
+        if isXLog:
+            transform = self._LOG10_X_Y if isYLog else self._LOG10_X
+        else:
+            transform = self._LOG10_Y if isYLog else self._LINEAR
+
+        prog = self._getProgram(transform)
+        prog.use()
+
+        glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
+
+        glUniform4f(prog.uniforms['color'], *self.color)
+
+        xPosAttrib = prog.attributes['xPos']
+        yPosAttrib = prog.attributes['yPos']
+
+        glEnableVertexAttribArray(xPosAttrib)
+        self.xFillVboData.setVertexAttrib(xPosAttrib)
+
+        glEnableVertexAttribArray(yPosAttrib)
+        self.yFillVboData.setVertexAttrib(yPosAttrib)
+
+        # Prepare fill mask
+        glEnable(GL_STENCIL_TEST)
+        glStencilMask(1)
+        glStencilFunc(GL_ALWAYS, 1, 1)
+        glStencilOp(GL_INVERT, GL_INVERT, GL_INVERT)
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)
+        glDepthMask(GL_FALSE)
+
+        glDrawElements(GL_TRIANGLE_STRIP, self._indices.size,
+                       self._indicesType, self._indices)
+
+        glStencilFunc(GL_EQUAL, 1, 1)
+        glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO)  # Reset stencil while drawing
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
+        glDepthMask(GL_TRUE)
+
+        glVertexAttribPointer(xPosAttrib, 1, GL_FLOAT, GL_FALSE, 0,
+                              self._bboxVertices[0])
+        glVertexAttribPointer(yPosAttrib, 1, GL_FLOAT, GL_FALSE, 0,
+                              self._bboxVertices[1])
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, self._bboxVertices[0].size)
+
+        glDisable(GL_STENCIL_TEST)
 
 
 # line ########################################################################
@@ -223,9 +372,9 @@ class _Lines2D(object):
     @classmethod
     def _getProgram(cls, transform, style):
         context = getGLContext()
-        programsForStyle = cls._programs[style]
+        programs = cls._programs[(transform, style)]
         try:
-            prgm = programsForStyle[context]
+            prgm = programs[context]
         except KeyError:
             sources = cls._SHADER_SRCS[style]
             vertexShdr = sources['vertex'][0] + \
@@ -233,7 +382,7 @@ class _Lines2D(object):
                 sources['vertex'][1]
             prgm = Program(vertexShdr,
                            sources['fragment'])
-            programsForStyle[context] = prgm
+            programs[context] = prgm
         return prgm
 
     @classmethod
@@ -323,41 +472,10 @@ class _Lines2D(object):
         glDisable(GL_LINE_SMOOTH)
 
 
-def _lines2DFromArrays(xData, yData, cData=None, **kwargs):
-    if cData is None:
-        xAttrib, yAttrib = createVBOFromArrays((xData, yData))
-        return _Lines2D(xAttrib, yAttrib, None, None, **kwargs)
-    else:
-        xAttrib, yAttrib, cAttrib = createVBOFromArrays((xData, yData, cData))
-        return _Lines2D(xAttrib, yAttrib, cAttrib, None, **kwargs)
-
-
 def _distancesFromArrays(xData, yData):
-    dists = np.empty((xData.size, 2), dtype=np.float32)
-    totalDist = 0.
-    point = None
-    # TODO make it better
-    for index, (x, y) in enumerate(zip(xData, yData)):
-        if point is not None:
-            totalDist += math.sqrt((x - point[0]) ** 2 + (y - point[1]) ** 2)
-        dists[index] = totalDist
-        point = (x, y)
-    return dists
-
-
-def _dashedLines2DFromArrays(xData, yData, cData=None, **kwargs):
-    dists = _distancesFromArrays(xData, yData)
-    if cData is None:
-        arrays = xData, yData, dists
-        xAttrib, yAttrib, dAttrib = createVBOFromArrays(arrays)
-        return _Lines2D(xAttrib, yAttrib, None, dAttrib,
-                        style=DASHED, *args, **kwargs)
-
-    else:
-        arrays = xData, yData, cData, dists
-        xAttrib, yAttrib, cAttrib, dAttrib = createVBOFromArrays(arrays)
-        return _Lines2D(xAttrib, yAttrib, cAttrib, dAttrib,
-                        style=DASHED, *args, **kwargs)
+    deltas = np.dstack((np.ediff1d(xData, to_begin=np.float32(0.)),
+                        np.ediff1d(yData, to_begin=np.float32(0.))))[0]
+    return np.cumsum(np.sqrt((deltas ** 2).sum(axis=1)))
 
 
 # points ######################################################################
@@ -602,16 +720,6 @@ class _Points2D(object):
         glUseProgram(0)
 
 
-def _points2DFromArrays(xData, yData, cData=None, *kwargs):
-    if cData is None:
-        xAttrib, yAttrib = createVBOFromArrays((xData, yData))
-        cAttrib = None
-    else:
-        xAttrib, yAttrib, cAttrib = createVBOFromArrays((xData, yData, cData))
-
-    return _Points2D(xVboAttrib, yVboAttrib, **kwargs)
-
-
 # curves ######################################################################
 
 def _proxyProperty(*componentsAttributes):
@@ -640,10 +748,16 @@ class Curve2D(object):
     def __init__(self, xData, yData, colorData=None,
                  lineStyle=None, lineColor=None,
                  lineWidth=None, lineDashPeriod=None,
-                 marker=None, markerColor=None, markerSize=None):
+                 marker=None, markerColor=None, markerSize=None,
+                 fillColor=None):
         self.xData, self.yData, self.colorData = xData, yData, colorData
         self.xMin, self.xMax = minMax(xData)
         self.yMin, self.yMax = minMax(yData)
+
+        if fillColor is not None:
+            self.fill = _Fill2D(color=fillColor)
+        else:
+            self.fill = None
 
         kwargs = {'style': lineStyle}
         if lineColor is not None:
@@ -693,31 +807,69 @@ class Curve2D(object):
         _Points2D.init()
 
     def prepare(self):
+        # init once, does not support update
         if self.xVboData is None:
             xAttrib, yAttrib, cAttrib, dAttrib = None, None, None, None
-            if self.lineStyle == '--':
+            if self.lineStyle == DASHED:
                 dists = _distancesFromArrays(self.xData, self.yData)
                 if self.colorData is None:
                     xAttrib, yAttrib, dAttrib = createVBOFromArrays(
-                        (self.xData, self.yData, dists))
+                        (self.xData, self.yData, dists),
+                        prefix=(1, 1, 0), suffix=(1, 1, 0))
                 else:
                     xAttrib, yAttrib, cAttrib, dAttrib = createVBOFromArrays(
-                        (self.xData, self.yData, self.colorData, dists))
-
+                        (self.xData, self.yData, self.colorData, dists),
+                        prefix=(1, 1, 0, 0), suffix=(1, 1, 0, 0))
             elif self.colorData is None:
                 xAttrib, yAttrib = createVBOFromArrays(
-                    (self.xData, self.yData))
+                    (self.xData, self.yData),
+                    prefix=(1, 1), suffix=(1, 1))
             else:
                 xAttrib, yAttrib, cAttrib = createVBOFromArrays(
-                    (self.xData, self.yData, self.colorData))
+                    (self.xData, self.yData, self.colorData),
+                    prefix=(1, 1, 0))
 
-            self.xVboData = xAttrib
-            self.yVboData = yAttrib
+            # Shrink VBO
+            self.xVboData = VBOAttrib(xAttrib.vbo, xAttrib.type_,
+                                      xAttrib.size - 2, xAttrib.dimension,
+                                      xAttrib.offset + xAttrib.itemSize,
+                                      xAttrib.stride)
+            self.yVboData = VBOAttrib(yAttrib.vbo, yAttrib.type_,
+                                      yAttrib.size - 2, yAttrib.dimension,
+                                      yAttrib.offset + yAttrib.itemSize,
+                                      yAttrib.stride)
             self.colorVboData = cAttrib
             self.distVboData = dAttrib
 
+            if self.fill is not None:
+                xData = self.xData[:]
+                xData.shape = xData.size, 1
+                zero = np.array((1e-32,), dtype=self.yData.dtype)
+
+                # Add one point before data: (x0, 0.)
+                xAttrib.vbo.update(xData[0], xAttrib.offset,
+                                   xData[0].itemsize)
+                yAttrib.vbo.update(zero, yAttrib.offset, zero.itemsize)
+
+                # Add one point after data: (xN, 0.)
+                xAttrib.vbo.update(xData[-1],
+                                   xAttrib.offset +
+                                   (xAttrib.size - 1) * xAttrib.itemSize,
+                                   xData[-1].itemsize)
+                yAttrib.vbo.update(zero,
+                                   yAttrib.offset +
+                                   (yAttrib.size - 1) * yAttrib.itemSize,
+                                   zero.itemsize)
+
+                self.fill.xFillVboData = xAttrib
+                self.fill.yFillVboData = yAttrib
+                self.fill.xMin, self.fill.yMin = self.xMin, self.yMin
+                self.fill.xMax, self.fill.yMax = self.xMax, self.yMax
+
     def render(self, matrix, isXLog, isYLog):
         self.prepare()
+        if self.fill is not None:
+            self.fill.render(matrix, isXLog, isYLog)
         self.lines.render(matrix, isXLog, isYLog)
         self.points.render(matrix, isXLog, isYLog)
 
@@ -812,7 +964,6 @@ class Curve2D(object):
 
 # main ########################################################################
 
-
 if __name__ == "__main__":
     from OpenGL.GLUT import *  # noqa
     from .GLSupport import mat4Ortho
@@ -827,8 +978,7 @@ if __name__ == "__main__":
     glClearColor(1., 1., 1., 1.)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    _Lines2D.init()
-    _Points2D.init()
+    Curve2D.init()
 
     # Plot data init
     xData1 = np.arange(10, dtype=np.float32) * 100
@@ -836,7 +986,8 @@ if __name__ == "__main__":
     yData1 = np.asarray(np.random.random(10) * 500, dtype=np.float32)
     yData1 = np.array((100, 100, 200, 400, 100, 100, 400, 400, 401, 400),
                       dtype=np.float32)
-    curve1 = Curve2D(xData1, yData1, marker='o', lineStyle='--')
+    curve1 = Curve2D(xData1, yData1, marker='o', lineStyle='--',
+                     fillColor=(1., 0., 0., 0.5))
 
     xData2 = np.arange(1000, dtype=np.float32) * 1
     yData2 = np.asarray(500 + np.random.random(1000) * 500, dtype=np.float32)

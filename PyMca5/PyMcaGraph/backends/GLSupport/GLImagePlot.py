@@ -574,7 +574,7 @@ class GLRGBAImage(_GL2DDataPlot):
             return GL_FLOAT
         else:
             raise NotImplementedError(
-                "Data type not supported {}".format(self.data.dtype))
+                "Data type not supported {0}".format(self.data.dtype))
 
     def updateData(self, data):
         oldData = self.data
