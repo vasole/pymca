@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -279,10 +279,12 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._imageData = image[0]
         #raise NotImplemented("Density plot view not implemented yet")
 
-    def setSelectionCurveData(self, x, y, legend="MaskScatterWidget", info=None,
+    def setSelectionCurveData(self, x, y, legend=None, info=None,
                  replot=True, replace=True, linestyle=" ", color=None,
                  symbol=None, selectable=None, **kw):
         self.enableActiveCurveHandling(False)
+        if legend is None:
+            legend = "MaskScatterWidget"
         if symbol is None:
             if x.size < 1000:
                 # circle
@@ -402,7 +404,10 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
     def _updatePlot(self, replot=True, replace=True):
         if self._selectionCurve is None:
             return
-        x, y, legend, info = self.getCurve(self._selectionCurve)
+        x0, y0, legend, info = self.getCurve(self._selectionCurve)
+        # make sure we work with views
+        x = x0[:]
+        y = y0[:]
         x.shape = -1
         y.shape = -1
         if 0:
@@ -434,6 +439,10 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
                 for i in range(1, self._maxNRois + 1):
                     xMask = x[tmpMask == i]
                     yMask = y[tmpMask == i]
+                    if xMask.size < 1:
+                        self.removeCurve(legend=legend + " %02d" % i,
+                                         replot=False)
+                        continue
                     color = self._selectionColors[i].copy()
                     if useAlpha:
                         if len(color) == 4:
