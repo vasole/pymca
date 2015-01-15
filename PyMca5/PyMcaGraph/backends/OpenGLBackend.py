@@ -570,32 +570,43 @@ class Zoom(ClickOrDrag):
         self.backend.resetSelectionArea()
         self.backend.replot()
 
+    def _newZoomRange(self, min_, max_, center, scale, isLog):
+        if isLog:
+            center = math.log10(center)
+            oldMin, oldMax = math.log10(min_), math.log10(max_)
+        else:
+            oldMin, oldMax = min_, max_
+
+        offset = (center - oldMin) / (oldMax - oldMin)
+        range_ = (oldMax - oldMin) / scale
+        newMin = center - offset * range_
+        newMax = center + (1. - offset) * range_
+        if isLog:
+            try:
+                newMin, newMax = 10. ** newMin, 10. ** newMax
+            except OverflowError:  # Limit case
+                newMin, newMax = min_, max_
+            if newMin <= 0. or newMax <= 0.:  # Limit case
+                newMin, newMax = min_, max_
+        return newMin, newMax
+
     def _zoom(self, cx, cy, scaleF):
-        if self.backend.isXAxisLogaritmic() or \
-           self.backend.isYAxisLogaritmic():
-            return  # In case of logarithmic scale, not wheel support
-
-        xCenter, yCenter = self.backend.pixelToDataCoords(cx, cy)
-        y2Center = self.backend.pixelToDataCoords(yPixel=cy, axis="right")
-
+        xCenter = self.backend.pixelToDataCoords(xPixel=cx)
         xMin, xMax = self.backend.getGraphXLimits()
-        xOffset = (xCenter - xMin)/(xMax - xMin)
-        xRange = (xMax - xMin) / scaleF
+        xMin, xMax = self._newZoomRange(xMin, xMax, xCenter, scaleF,
+                                        self.backend.isXAxisLogaritmic())
 
+        yCenter = self.backend.pixelToDataCoords(yPixel=cy)
         yMin, yMax = self.backend.getGraphYLimits()
-        yOffset = (yCenter - yMin)/(yMax - yMin)
-        yRange = (yMax - yMin) / scaleF
+        yMin, yMax = self._newZoomRange(yMin, yMax, yCenter, scaleF,
+                                        self.backend.isYAxisLogaritmic())
 
+        y2Center = self.backend.pixelToDataCoords(yPixel=cy, axis="right")
         y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
-        y2Offset = (y2Center - y2Min)/(y2Max - y2Min)
-        y2Range = (y2Max - y2Min) / scaleF
+        y2Min, y2Max = self._newZoomRange(y2Min, y2Max, y2Center, scaleF,
+                                          self.backend.isYAxisLogaritmic())
 
-        self.backend.setLimits(xCenter - xOffset * xRange,
-                               xCenter + (1. - xOffset) * xRange,
-                               yCenter - yOffset * yRange,
-                               yCenter + (1. - yOffset) * yRange,
-                               y2Center - y2Offset * y2Range,
-                               y2Center + (1. - y2Offset) * y2Range)
+        self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
         self.backend.replot()
 
     def cancel(self):
