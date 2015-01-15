@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -41,6 +41,7 @@ from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaCore import EdfFileDataSource
 from PyMca5.PyMcaGui.pymca import ExternalImagesWindow
 from PyMca5.PyMcaIO import TiffIO
+from PyMca5.PyMcaGui import ScatterPlotCorrelatorWidget
 
 DataReader = EdfFileDataSource.EdfFileDataSource
 USE_STRING = False
@@ -210,10 +211,12 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.toggleSlidersButton.clicked.connect(self.toggleSliders)
 
         self.calculationButton.clicked.connect(self._showCalculationDialog)
+        self.calculationButton.clicked.connect(self._showCalculationDialog)
 
         self.profileButton.clicked.connect(self.profileSelectedImages)
 
         self._calculationMenu = None
+        self.scatterPlotWidget = None
         self.pcaDialog  = None
         self.nnmaDialog = None
 
@@ -229,8 +232,10 @@ class RGBCorrelatorWidget(qt.QWidget):
             return self.showCalculationDialog()
         if self._calculationMenu is None:
             self._calculationMenu = qt.QMenu()
-            self._calculationMenu.addAction(QString("Image calculator"),
+            self._calculationMenu.addAction(QString("Image Calculator"),
                                             self.showCalculationDialog)
+            self._calculationMenu.addAction(QString("Scatter Plot"),
+                                            self.showScatterPlotDialog)
             if PCA:
                 if PCADialog.MDP:
                     self._calculationMenu.addAction(QString("PCA/ICA Analysis"),
@@ -1025,6 +1030,28 @@ class RGBCorrelatorWidget(qt.QWidget):
         if self.calculationDialog.isHidden():
             self.calculationDialog.show()
         self.calculationDialog.raise_()
+
+    def showScatterPlotDialog(self):
+        if self.scatterPlotWidget is None:
+            self.scatterPlotWidget = \
+                ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(\
+                                    labels=("Legend", "X", "Y"),
+                                    types=("Text","RadioButton", "RadioButton"))
+            self.scatterPlotWidget.show()
+        # I should check if the list is to be updated instead of systematically
+        # send it
+        initialize = True
+        for label in self._imageList:
+            item = self._imageDict[label]["image"]
+            if initialize:
+                self.scatterPlotWidget.setSelectableItemList([item],
+                                                             labels=[label])
+                initialize = False
+            else:
+                self.scatterPlotWidget.addSelectableItem(item, label=label)
+        if self.scatterPlotWidget.isHidden():
+            self.scatterPlotWidget.show()
+        self.scatterPlotWidget.raise_()
 
     def getSelectedDataList(self):
         itemList = self.tableWidget.selectedItems()
