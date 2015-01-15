@@ -77,9 +77,18 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         else:
             super(ScatterPlotCorrelatorWidget, self).show()
 
-    def addSelectableItem(self, item, label = None):
-        # we always keep a copy
-        item = numpy.array(item, dtype=numpy.float32, copy=True)
+    def setSelectableItemList(self, items, labels=None, copy=True):
+        self._itemList = []
+        self._itemLabels = []
+        if labels is None:
+            labels = [None] * len(items)
+        for i in range(len(items)):
+            print items[i]
+            self.addSelectableItem(items[i], label=labels[i], copy=copy)
+
+    def addSelectableItem(self, item, label=None, copy=True):
+        # we always keep a copy by default
+        item = numpy.array(item, dtype=numpy.float32, copy=copy)
         if label is None:
             label = "Unnamed 00"
             i = 0
