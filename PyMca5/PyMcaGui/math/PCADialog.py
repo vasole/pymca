@@ -127,7 +127,7 @@ class PCADialog(qt.QDialog):
             function = pcaParameters['function']
             binning = pcaParameters['binning']
             npc = pcaParameters['npc']
-            mask = pcaParameters['mask']
+            mask = pcaParameters.get('mask', None)
             kw = pcaParameters.get('kw', {})
             data = self._data
             old_shape = self._data.shape

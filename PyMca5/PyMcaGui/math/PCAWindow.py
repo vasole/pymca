@@ -505,8 +505,10 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
                                               self._internalSlot)
 
         # add the command to show it to the menu
-        self.additionalSelectionMenu().addAction(QString("Show scatter plot"),
-                                                 self.showScatterPlot)
+        if hasattr(self, "_additionalSelectionMenu"):
+            self.additionalSelectionMenu().addAction(\
+                                            QString("Show scatter plot"),
+                                            self.showScatterPlot)
 
     def sizeHint(self):
         return qt.QSize(400, 400)
