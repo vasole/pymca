@@ -51,7 +51,6 @@ import numpy as np
 import math
 import time
 import warnings
-import weakref
 from collections import namedtuple
 
 from .GLSupport.gl import *  # noqa
@@ -420,27 +419,53 @@ class Zoom(ClickOrDrag):
         }
         StateMachine.__init__(self, states, 'idle')
 
-    def _ensureAspectRatio(self, x0, y0, x1, y1):
+    # Selection area constrained by aspect ratio
+    # def _ensureAspectRatio(self, x0, y0, x1, y1):
+    #    plotW, plotH = self.backend.plotSizeInPixels()
+    #    try:
+    #        plotRatio = plotW / float(plotH)
+    #    except ZeroDivisionError:
+    #        pass
+    #    else:
+    #        width, height = math.fabs(x1 - x0), math.fabs(y1 - y0)
+    #
+    #        try:
+    #            selectRatio = width / height
+    #        except ZeroDivisionError:
+    #            width, height = 1., 1.
+    #        else:
+    #            if selectRatio < plotRatio:
+    #                height = width / plotRatio
+    #            else:
+    #                width = height * plotRatio
+    #        x1 = x0 + np.sign(x1 - x0) * width
+    #        y1 = y0 + np.sign(y1 - y0) * height
+    #    return x1, y1
+
+    def _areaWithAspectRatio(self, x0, y0, x1, y1):
         plotW, plotH = self.backend.plotSizeInPixels()
-        try:
+
+        if plotH != 0.:
             plotRatio = plotW / float(plotH)
-        except ZeroDivisionError:
-            pass
-        else:
             width, height = math.fabs(x1 - x0), math.fabs(y1 - y0)
 
-            try:
-                selectRatio = width / height
-            except ZeroDivisionError:
-                width, height = 1., 1.
+            if height == 0. or width == 0.:
+                areaX0, areaY0, areaX1, areaY1 = x0, y0, x1, y1
             else:
-                if selectRatio < plotRatio:
-                    height = width / plotRatio
+                if width / height > plotRatio:
+                    areaHeight = width / plotRatio
+                    areaX0, areaX1 = x0, x1
+                    center = 0.5 * (y0 + y1)
+                    areaY0 = center - np.sign(y1 - y0) * 0.5 * areaHeight
+                    areaY1 = center + np.sign(y1 - y0) * 0.5 * areaHeight
                 else:
-                    width = height * plotRatio
-            x1 = x0 + np.sign(x1 - x0) * width
-            y1 = y0 + np.sign(y1 - y0) * height
-        return x1, y1
+                    areaWidth = height * plotRatio
+                    areaY0, areaY1 = y0, y1
+                    center = 0.5 * (x0 + x1)
+                    areaX0 = center - np.sign(x1 - x0) * 0.5 * areaWidth
+                    areaX1 = center + np.sign(x1 - x0) * 0.5 * areaWidth
+
+        return areaX0, areaY0, areaX1, areaY1
 
     def click(self, x, y, btn):
         if btn == LEFT_BTN:
@@ -491,13 +516,30 @@ class Zoom(ClickOrDrag):
 
     def drag(self, x1, y1):
         x1, y1 = self.backend.pixelToDataCoords(x1, y1)
-        if self.backend.isKeepDataAspectRatio():
-            x1, y1 = self._ensureAspectRatio(self.x0, self.y0, x1, y1)
 
-        self.backend.setSelectionArea(((self.x0, self.y0),
-                                       (self.x0, y1),
-                                       (x1, y1),
-                                       (x1, self.y0)),
+        # Selection area constrained by aspect ratio
+        # if self.backend.isKeepDataAspectRatio():
+        #    x1, y1 = self._ensureAspectRatio(self.x0, self.y0, x1, y1)
+
+        if self.backend.isKeepDataAspectRatio():
+            area = self._areaWithAspectRatio(self.x0, self.y0, x1, y1)
+            areaX0, areaY0, areaX1, areaY1 = area
+            areaPoints = ((areaX0, areaY0),
+                          (areaX1, areaY0),
+                          (areaX1, areaY1),
+                          (areaX0, areaY1))
+            areaColor = list(self.color)
+            areaColor[3] *= 0.25
+            self.backend.setSelectionArea(areaPoints,
+                                          fill=None,
+                                          color=areaColor,
+                                          name="zoomedArea")
+
+        points = ((self.x0, self.y0),
+                  (self.x0, y1),
+                  (x1, y1),
+                  (x1, self.y0))
+        self.backend.setSelectionArea(points,
                                       fill=None,
                                       color=self.color)
         self.backend.replot()
@@ -513,8 +555,10 @@ class Zoom(ClickOrDrag):
         x1, y1 = self.backend.pixelToDataCoords(*endPos)
         y2_1 = self.backend.pixelToDataCoords(yPixel=endPos[1], axis="right")
 
-        if self.backend.isKeepDataAspectRatio():
-            x1, y1 = self._ensureAspectRatio(x0, y0, x1, y1)
+        # Selection area constrained by aspect ratio
+        # if self.backend.isKeepDataAspectRatio():
+        #     x1, y1 = self._ensureAspectRatio(x0, y0, x1, y1)
+
         xMin, xMax = min(x0, x1), max(x0, x1)
         yMin, yMax = min(y0, y1), max(y0, y1)
         y2Min, y2Max = min(y2_0, y2_1), max(y2_0, y2_1)
@@ -523,7 +567,7 @@ class Zoom(ClickOrDrag):
             # Avoid null zoom area
             self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
     def _zoom(self, cx, cy, scaleF):
@@ -556,7 +600,7 @@ class Zoom(ClickOrDrag):
 
     def cancel(self):
         if isinstance(self.state, self.states['drag']):
-            self.backend.setSelectionArea()
+            self.backend.resetSelectionArea()
             self.backend.replot()
 
 
@@ -582,6 +626,7 @@ class SelectPolygon(StateMachine, Select):
 
         def updateSelectionArea(self):
             self.machine.backend.setSelectionArea(self.points,
+                                                  fill='hatch',
                                                   color=self.machine.color)
             self.machine.backend.replot()
             eventDict = prepareDrawingSignal('drawingProgress',
@@ -606,7 +651,7 @@ class SelectPolygon(StateMachine, Select):
 
         def onPress(self, x, y, btn):
             if btn == RIGHT_BTN:
-                self.machine.backend.setSelectionArea()
+                self.machine.backend.resetSelectionArea()
                 self.machine.backend.replot()
 
                 x, y = self.machine.backend.pixelToDataCoords(x, y)
@@ -633,7 +678,7 @@ class SelectPolygon(StateMachine, Select):
 
     def cancel(self):
         if isinstance(self.state, self.states['select']):
-            self.backend.setSelectionArea()
+            self.backend.resetSelectionArea()
             self.backend.replot()
 
 
@@ -705,6 +750,7 @@ class SelectRectangle(Select2Points):
                                       (self.startPt[0], y),
                                       (x, y),
                                       (x, self.startPt[1])),
+                                      fill='hatch',
                                       color=self.color)
         self.backend.replot()
 
@@ -715,7 +761,7 @@ class SelectRectangle(Select2Points):
         self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
         x, y = self.backend.pixelToDataCoords(x, y)
@@ -726,7 +772,7 @@ class SelectRectangle(Select2Points):
         self.backend._callback(eventDict)
 
     def cancelSelect(self):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
 
@@ -737,6 +783,7 @@ class SelectLine(Select2Points):
     def select(self, x, y):
         x, y = self.backend.pixelToDataCoords(x, y)
         self.backend.setSelectionArea((self.startPt, (x, y)),
+                                      fill='hatch',
                                       color=self.color)
         self.backend.replot()
 
@@ -747,7 +794,7 @@ class SelectLine(Select2Points):
         self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
         x, y = self.backend.pixelToDataCoords(x, y)
@@ -758,7 +805,7 @@ class SelectLine(Select2Points):
         self.backend._callback(eventDict)
 
     def cancelSelect(self):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
 
@@ -812,7 +859,7 @@ class SelectHLine(Select1Point):
 
     def select(self, x, y):
         points = self._hLine(y)
-        self.backend.setSelectionArea(points, color=self.color)
+        self.backend.setSelectionArea(points, fill='hatch', color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -822,7 +869,7 @@ class SelectHLine(Select1Point):
         self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingFinished',
@@ -832,7 +879,7 @@ class SelectHLine(Select1Point):
         self.backend._callback(eventDict)
 
     def cancelSelect(self):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
 
@@ -844,7 +891,7 @@ class SelectVLine(Select1Point):
 
     def select(self, x, y):
         points = self._vLine(x)
-        self.backend.setSelectionArea(points, color=self.color)
+        self.backend.setSelectionArea(points, fill='hatch', color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -854,7 +901,7 @@ class SelectVLine(Select1Point):
         self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingFinished',
@@ -864,7 +911,7 @@ class SelectVLine(Select1Point):
         self.backend._callback(eventDict)
 
     def cancelSelect(self):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
 
@@ -1182,7 +1229,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._items = MiniOrderedDict()
         self._zOrderedItems = MiniOrderedDict()  # For images and curves
         self._labels = []
-        self._selectionArea = None
+        self._selectionAreas = MiniOrderedDict()
 
         self._margins = {'left': 100, 'right': 50, 'top': 50, 'bottom': 50}
         self._lineWidth = 1
@@ -1333,16 +1380,34 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Manage Plot #
 
-    def setSelectionArea(self, points=None, fill='hatch', color=None):
-        if points:
-            if color is None:
-                color = (0., 0., 0., 1.)
-            self._selectionArea = Shape2D(points, fill=fill,
-                                          fillColor=color,
-                                          stroke=True,
-                                          strokeColor=color)
-        else:
-            self._selectionArea = None
+    def setSelectionArea(self, points, fill=None, color=None, name=None):
+        """Set a polygon selection area overlaid on the plot.
+        Multiple simultaneous areas are supported through the name parameter.
+
+        :param points: The 2D coordinates of the points of the polygon
+        :type points: An iterable of (x, y) coordinates
+        :param str fill: The fill mode: 'hatch', 'solid' or None (default)
+        :param color: RGBA color to use (default: black)
+        :type color: list or tuple of 4 float in the range [0, 1]
+        :param name: The key associated with this selection area
+        """
+        if color is None:
+            color = (0., 0., 0., 1.)
+        self._selectionAreas[name] = Shape2D(points, fill=fill,
+                                             fillColor=color,
+                                             stroke=True,
+                                             strokeColor=color)
+
+    def resetSelectionArea(self, name=None):
+        """Remove the name selection area set by setSelectionArea.
+        If name is None (the default), it removes all selection areas.
+
+        :param name: The name key provided to setSelectionArea or None
+        """
+        if name is None:
+            self._selectionAreas = MiniOrderedDict()
+        elif name in self._selectionAreas:
+            del self._selectionAreas[name]
 
     def updateAxis(self):
         self._axisDirtyFlag = True
@@ -1536,7 +1601,7 @@ class OpenGLPlotCanvas(PlotBackend):
                                          yPixel))
 
         if (self._hasRightYAxis and trY2Min != trY2Max and
-            self._isYLog and y2Step == 1):
+                self._isYLog and y2Step == 1):
             for y2DataLog in list(_ticks(y2Min, y2Max, y2Step))[:-1]:
                 y2DataOrig = 10 ** y2DataLog
                 for index in range(2, 10):
@@ -1783,12 +1848,12 @@ class OpenGLPlotCanvas(PlotBackend):
 
             if self._isYInverted:
                 self._matrixY2PlotDataTransformedProj = mat4Ortho(xMin, xMax,
-                                                                y2Max, y2Min,
-                                                                1, -1)
+                                                                  y2Max, y2Min,
+                                                                  1, -1)
             else:
                 self._matrixY2PlotDataTransformedProj = mat4Ortho(xMin, xMax,
-                                                                y2Min, y2Max,
-                                                                1, -1)
+                                                                  y2Min, y2Max,
+                                                                  1, -1)
             return self._matrixY2PlotDataTransformedProj
 
     def _dirtyMatrixPlotDataTransformedProj(self):
@@ -2005,7 +2070,7 @@ class OpenGLPlotCanvas(PlotBackend):
                   plotWidth, plotHeight)
         glEnable(GL_SCISSOR_TEST)
 
-        glViewport(self._margins['left'], self._margins['right'],
+        glViewport(self._margins['left'], self._margins['bottom'],
                    plotWidth, plotHeight)
 
         self._progBase.use()
@@ -2083,7 +2148,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def _renderSelection(self):
         # Render selection area
-        if self._selectionArea is not None:
+        if self._selectionAreas:
             plotWidth, plotHeight = self.plotSizeInPixels()
 
             # Render in plot area
@@ -2091,7 +2156,7 @@ class OpenGLPlotCanvas(PlotBackend):
                       plotWidth, plotHeight)
             glEnable(GL_SCISSOR_TEST)
 
-            glViewport(self._margins['left'], self._margins['right'],
+            glViewport(self._margins['left'], self._margins['bottom'],
                        plotWidth, plotHeight)
 
             # Render fill
@@ -2104,7 +2169,8 @@ class OpenGLPlotCanvas(PlotBackend):
             posAttrib = self._progBase.attributes['position']
             colorUnif = self._progBase.uniforms['color']
             hatchStepUnif = self._progBase.uniforms['hatchStep']
-            self._selectionArea.render(posAttrib, colorUnif, hatchStepUnif)
+            for shape in self._selectionAreas.values():
+                shape.render(posAttrib, colorUnif, hatchStepUnif)
 
             glDisable(GL_SCISSOR_TEST)
 
@@ -2185,7 +2251,7 @@ class OpenGLPlotCanvas(PlotBackend):
            trBounds.yAxis.min_ == trBounds.yAxis.max_:
             return
 
-        glViewport(self._margins['left'], self._margins['right'],
+        glViewport(self._margins['left'], self._margins['bottom'],
                    plotWidth, plotHeight)
 
         # Render images and curves
