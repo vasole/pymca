@@ -2059,13 +2059,13 @@ class OpenGLPlotCanvas(PlotBackend):
         # Create texture program
         self._progTex = Program(_texVertShd, _texFragShd)
 
-    def _paintGLDirect(self):
-        self._renderPlotArea()
-        self._renderPlotFrame()
-        self._renderMarkers()
-        self._renderSelection()
+    def _paintDirectGL(self):
+        self._renderPlotAreaGL()
+        self._renderPlotFrameGL()
+        self._renderMarkersGL()
+        self._renderSelectionGL()
 
-    def _paintGLFBO(self):
+    def _paintFBOGL(self):
         if self._plotDirtyFlag or not hasattr(self, '_plotTex'):
             self._plotDirtyFlag = False
             self._plotVertices = np.array(((-1., -1., 0., 0.),
@@ -2086,8 +2086,8 @@ class OpenGLPlotCanvas(PlotBackend):
                                            wrapT=GL_CLAMP_TO_EDGE)
             with self._plotTex:
                 glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
-                self._renderPlotArea()
-                self._renderPlotFrame()
+                self._renderPlotAreaGL()
+                self._renderPlotFrameGL()
 
         # Render plot in screen coords
         glViewport(0, 0, self.winWidth, self.winHeight)
@@ -2120,8 +2120,8 @@ class OpenGLPlotCanvas(PlotBackend):
         glDrawArrays(GL_TRIANGLE_STRIP, 0, len(self._plotVertices))
         glBindTexture(GL_TEXTURE_2D, 0)
 
-        self._renderMarkers()
-        self._renderSelection()
+        self._renderMarkersGL()
+        self._renderSelectionGL()
 
     def paintGL(self):
         # Release OpenGL resources
@@ -2136,12 +2136,12 @@ class OpenGLPlotCanvas(PlotBackend):
         if plotWidth <= 2 or plotHeight <= 2:
             return
 
-        # self._paintGLDirect()
-        self._paintGLFBO()
+        # self._paintDirectGL()
+        self._paintFBOGL()
 
         self._deferredSaveGraphGL()
 
-    def _renderMarkers(self):
+    def _renderMarkersGL(self):
         if len(self._markers) == 0:
             return
 
@@ -2228,7 +2228,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         glDisable(GL_SCISSOR_TEST)
 
-    def _renderSelection(self):
+    def _renderSelectionGL(self):
         # Render selection area
         if self._selectionAreas:
             plotWidth, plotHeight = self.plotSizeInPixels()
@@ -2256,7 +2256,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
             glDisable(GL_SCISSOR_TEST)
 
-    def _renderPlotFrame(self):
+    def _renderPlotFrameGL(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         # Render plot in screen coords
@@ -2285,7 +2285,7 @@ class OpenGLPlotCanvas(PlotBackend):
         for label in self._labels:
             label.render(self.matScreenProj)
 
-    def _renderPlotArea(self):
+    def _renderPlotAreaGL(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         glScissor(self._margins['left'], self._margins['bottom'],
