@@ -312,6 +312,8 @@ class GLColormap(_GL2DDataPlot):
                            cls._SHADERS['fragment_transform']['linear'] +
                            cls._SHADERS['fragment'][1])
 
+            prog.use()
+
             # Done once forever for each program
             glUniform1i(prog.uniforms['data'], cls._DATA_TEX_UNIT)
 
@@ -328,6 +330,8 @@ class GLColormap(_GL2DDataPlot):
                            cls._SHADERS['fragment'][0] +
                            cls._SHADERS['fragment_transform']['log'] +
                            cls._SHADERS['fragment'][1])
+
+            prog.use()
 
             # Done once forever for each program
             glUniform1i(prog.uniforms['data'], cls._DATA_TEX_UNIT)
