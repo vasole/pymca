@@ -274,11 +274,17 @@ class McaTheory(object):
                 elif attenuator.upper()[0:-1] == "BEAMFILTER":
                     filterlist.append(self.config['attenuators'][attenuator][1:])
                 else:
-                    if abs(self.config['attenuators'][attenuator][4]-1.0) > 1.0e-10:
-                        #funny attenuator
-                        funnyfilters.append(self.config['attenuators'][attenuator][1:])
+                    if len(self.config['attenuators'][attenuator]) > 4:
+                        if abs(self.config['attenuators'][attenuator][4]-1.0) > 1.0e-10:
+                            #funny attenuator
+                            funnyfilters.append( \
+                                self.config['attenuators'][attenuator][1:])
+                        else:
+                            attenuatorlist.append( \
+                                self.config['attenuators'][attenuator][1:])
                     else:
-                        attenuatorlist.append(self.config['attenuators'][attenuator][1:])
+                        attenuatorlist.append( \
+                            self.config['attenuators'][attenuator][1:])
             if usematrix:
                 layerkeys = list(self.config['multilayer'].keys())
                 if len(layerkeys):
