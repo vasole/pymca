@@ -74,7 +74,7 @@ class GLUTOpenGLBackend(OpenGLPlotCanvas):
         glutMotionFunc(self.glutMouseMoved)
         glutPassiveMotionFunc(self.glutMouseMoved)
 
-    def updateGL(self):
+    def postRedisplay(self):
         glutPostRedisplay()
 
     def setCursor(self, cursor=CURSOR_DEFAULT):
