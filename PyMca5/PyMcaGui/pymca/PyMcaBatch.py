@@ -1830,21 +1830,23 @@ def main():
                                 chunk=chunk, exitonend=exitonend)
 
         if html:fitfiles=1
-        if 1:#try:
+        try:
             b = McaBatch(window,cfg,filelist,outdir,roifit=roifit,roiwidth=roiwidth,
                      overwrite = overwrite, filestep=filestep, mcastep=mcastep,
                       concentrations=concentrations, fitfiles=fitfiles,
                       filebeginoffset=filebeginoffset,fileendoffset=fileendoffset,
                       mcaoffset=mcaoffset, chunk=chunk, selection=selection)
-        else:#except:
-            msg = qt.QMessageBox()
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("%s" % sys.exc_info()[1])
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
+        except:
+            if exitonend:
+                print("Error: " % sys.exc_info()[1])
+                print("Quitting as requested")
+                qt.QApplication.instance().quit()
             else:
-                msg.exec_()
-            return
+                msg = qt.QMessageBox()
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("%s" % sys.exc_info()[1])
+                msg.exec_loop()
+                return
 
 
         def cleanup():
