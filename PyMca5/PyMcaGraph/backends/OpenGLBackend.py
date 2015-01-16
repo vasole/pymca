@@ -37,29 +37,36 @@ OpenGL/Qt backend
 
 # import ######################################################################
 
+from collections import namedtuple
+import math
+import numpy as np
+import time
+import warnings
+import sys
+if sys.version_info[0] == 3:
+    import queue
+else:
+    import Queue as queue
+
 try:
     from PyMca5.PyMcaGui import PyMcaQt as qt
     QGLWidget = qt.QGLWidget
     QGLContext = qt.QGLContext
+    pyqtSignal = qt.pyqtSignal
 except ImportError:
     try:
+        from PyQt4.QtCore import pyqtSignal
         from PyQt4.QtOpenGL import QGLWidget, QGLContext
     except ImportError:
+        from PyQt5.QtCore import pyqtSignal
         from PyQt5.QtOpenGL import QGLWidget, QGLContext
-
-import numpy as np
-import math
-import time
-import warnings
-from collections import namedtuple
-
-from .GLSupport.gl import *  # noqa
 
 try:
     from ..PlotBackend import PlotBackend
 except ImportError:
     from PyMca5.PyMcaGraph.PlotBackend import PlotBackend
 
+from .GLSupport.gl import *  # noqa
 from .GLSupport import *  # noqa
 
 
@@ -149,7 +156,7 @@ class Bounds(object):
         return self._y2Axis
 
 
-# PNG writer ##################################################################
+# Image writer ################################################################
 
 def convertRGBDataToPNG(data):
     """Convert a RGB bitmap to PNG.
@@ -158,7 +165,7 @@ def convertRGBDataToPNG(data):
     See `Definitive Guide <http://www.libpng.org/pub/png/book/>`_ and
     `Specification <http://www.libpng.org/pub/png/spec/1.2/>`_ for details.
 
-    :param data: An array with 3 dimensions (h, w, rgb) storing the RGB image
+    :param data: A 3D array (h, w, rgb) storing an RGB image
     :type data: numpy.ndarray of unsigned bytes
     :returns: The PNG encoded data
     :rtype: bytes
@@ -198,6 +205,59 @@ def convertRGBDataToPNG(data):
     # IEND chunk: footer
     pngData.append(b'\x00\x00\x00\x00IEND\xaeB`\x82')
     return b''.join(pngData)
+
+def saveImageToFile(data, fileName, fileFormat):
+    """Save a RGB image to a file.
+
+    :param data: A 3D array (h, w, 3) storing an RGB image
+    :type data: numpy.ndarray with of unsigned bytes
+    :param str fileName: The fileName where to write the image
+    :param str fileType: The type of the file in: 'png', 'ppm', 'svg', 'tiff'
+    """
+    assert len(data.shape) == 3
+    assert data.shape[2] == 3
+    assert fileFormat in ('png', 'ppm', 'svg', 'tiff')
+
+    if fileFormat == 'svg':
+        import base64
+
+        height, width = data.shape[:2]
+        base64Data = base64.b64encode(convertRGBDataToPNG(data))
+
+        with open(fileName, 'w') as f:
+            f.write('<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
+            f.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
+            f.write('  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
+            f.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
+            f.write('     xmlns="http://www.w3.org/2000/svg"\n')
+            f.write('     version="1.1"\n')
+            f.write('     width="%d"\n' % width)
+            f.write('     height="%d">\n' % height)
+            f.write('    <image xlink:href="data:image/png;base64,')
+            f.write(base64Data.decode('ascii'))
+            f.write('"\n')
+            f.write('           x="0"\n')
+            f.write('           y="0"\n')
+            f.write('           width="%d"\n' % width)
+            f.write('           height="%d"\n' % height)
+            f.write('           id="image" />\n')
+            f.write('</svg>')
+
+    elif fileFormat == 'ppm':
+        with open(fileName, 'w') as f:
+            f.write('P6\n')
+            f.write('%d %d\n' % (self.winWidth, self.winHeight))
+            f.write('255\n')
+            f.write(data.tostring())
+
+    elif fileFormat == 'png':
+        with open(fileName, 'wb') as f:
+            f.write(convertRGBDataToPNG(data))
+
+    elif fileFormat == 'tiff':
+        from PyMca5.PyMcaIO.TiffIO import TiffIO
+        tif = TiffIO(fileName, mode='wb+')
+        tif.writeImage(data, info={'Title': 'PyMCA GL Snapshot'})
 
 
 # shaders #####################################################################
@@ -1250,6 +1310,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._labels = []
         self._selectionAreas = MiniOrderedDict()
         self._glGarbageCollector = []
+        self._graphsToSave = queue.Queue()
 
         self._margins = {'left': 100, 'right': 50, 'top': 50, 'bottom': 50}
         self._lineWidth = 1
@@ -1269,16 +1330,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Link with embedding toolkit #
 
-    def update(self):
+    def postRedisplay(self):
         raise NotImplementedError("This method must be provided by \
                                   subclass to trigger redraw")
-
-    def makeCurrent(self):
-        """Override this method in subclass to support multiple
-        OpenGL context, making the context associated to this plot
-        the current OpenGL context
-        """
-        pass
 
     def setCursor(self, cursor=CURSOR_DEFAULT):
         """Override this method in subclass to enable cursor shape changes
@@ -2085,6 +2139,8 @@ class OpenGLPlotCanvas(PlotBackend):
         # self._paintGLDirect()
         self._paintGLFBO()
 
+        self._deferredSaveGraphGL()
+
     def _renderMarkers(self):
         if len(self._markers) == 0:
             return
@@ -2749,7 +2805,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self.clearCurves()
 
     def replot(self):
-        self.update()
+        self.postRedisplay()
 
     # Draw mode #
 
@@ -3020,6 +3076,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Save
     def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
+        """This method is thread-safe if replot is thread safe.
+        """
         if dpi is not None:
             warnings.warn("saveGraph ignores dpi parameter",
                           RuntimeWarning)
@@ -3030,8 +3088,12 @@ class OpenGLPlotCanvas(PlotBackend):
         if fileFormat not in ['png', 'ppm', 'svg', 'tiff']:
             raise NotImplementedError('Unsupported format: %s' % fileFormat)
 
-        self.makeCurrent()
+        self._graphsToSave.put_nowait((fileName, fileFormat))
+        self.replot()
 
+    def _deferredSaveGraphGL(self):
+        """This method MUST be called with an active OpenGL context.
+        """
         data = np.empty((self.winHeight, self.winWidth, 3),
                         dtype=np.uint8, order='C')
 
@@ -3042,48 +3104,13 @@ class OpenGLPlotCanvas(PlotBackend):
         # glReadPixels gives bottom to top, images are stored as top to bottom
         data = np.flipud(data)
 
-        if fileFormat == 'svg':
-            import base64
-
-            height, width = data.shape[:2]
-            base64Data = base64.b64encode(convertRGBDataToPNG(data))
-
-            with open(fileName, 'w') as f:
-                f.write(
-                    '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
-                f.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
-                f.write(
-                    '  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
-                f.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
-                f.write('     xmlns="http://www.w3.org/2000/svg"\n')
-                f.write('     version="1.1"\n')
-                f.write('     width="%d"\n' % width)
-                f.write('     height="%d">\n' % height)
-                f.write('    <image xlink:href="data:image/png;base64,')
-                f.write(base64Data.decode('ascii'))
-                f.write('"\n')
-                f.write('           x="0"\n')
-                f.write('           y="0"\n')
-                f.write('           width="%d"\n' % width)
-                f.write('           height="%d"\n' % height)
-                f.write('           id="image" />\n')
-                f.write('</svg>')
-
-        elif fileFormat == 'ppm':
-            with open(fileName, 'w') as f:
-                f.write('P6\n')
-                f.write('%d %d\n' % (self.winWidth, self.winHeight))
-                f.write('255\n')
-                f.write(data.tostring())
-
-        elif fileFormat == 'png':
-            with open(fileName, 'wb') as f:
-                f.write(convertRGBDataToPNG(data))
-
-        elif fileFormat == 'tiff':
-            from PyMca5.PyMcaIO.TiffIO import TiffIO
-            tif = TiffIO(fileName, mode='wb+')
-            tif.writeImage(data, info={'Title': 'PyMCA GL Snapshot'})
+        for i in range(self._graphsToSave.qsize()):
+            try:
+                fileName, fileFormat = self._graphsToSave.get_nowait()
+            except queue.Full:
+                break
+            else:
+                saveImageToFile(data, fileName, fileFormat)
 
 
 # OpenGLBackend ###############################################################
@@ -3093,12 +3120,20 @@ setGLContextGetter(QGLContext.currentContext)
 
 
 class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
+    _signalRedisplay = pyqtSignal()  # PyQt binds it to instances
+
     def __init__(self, parent=None, **kw):
         QGLWidget.__init__(self, parent)
+        self._signalRedisplay.connect(self.update)
+
         self.setAutoFillBackground(False)
         self.setMouseTracking(True)
 
         OpenGLPlotCanvas.__init__(self, parent, **kw)
+
+    def postRedisplay(self):
+        """Thread-safe call to QWidget.update."""
+        self._signalRedisplay.emit()
 
     # Mouse events #
     _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle'}
