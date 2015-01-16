@@ -1217,6 +1217,14 @@ class ZoomAndSelect(FocusManager):
 
 
 class OpenGLPlotCanvas(PlotBackend):
+    """Implements PlotBackend API using OpenGL.
+
+    WARNINGS:
+    This API is NOT thread-safe and should be called from the main thread.
+    Also, when numpy arrays are passed as arguments to the API (through addCurve and addImage methods), they are copied only if required.
+    So, the caller should not modify these arrays afterwards.
+    """
+
     _PICK_OFFSET = 3
 
     def __init__(self, parent=None, **kw):
@@ -1241,6 +1249,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._zOrderedItems = MiniOrderedDict()  # For images and curves
         self._labels = []
         self._selectionAreas = MiniOrderedDict()
+        self._glGarbageCollector = []
 
         self._margins = {'left': 100, 'right': 50, 'top': 50, 'bottom': 50}
         self._lineWidth = 1
@@ -1260,7 +1269,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Link with embedding toolkit #
 
-    def updateGL(self):
+    def update(self):
         raise NotImplementedError("This method must be provided by \
                                   subclass to trigger redraw")
 
@@ -1999,6 +2008,7 @@ class OpenGLPlotCanvas(PlotBackend):
     def _paintGLDirect(self):
         self._renderPlotArea()
         self._renderPlotFrame()
+        self._renderMarkers()
         self._renderSelection()
 
     def _paintGLFBO(self):
@@ -2060,6 +2070,11 @@ class OpenGLPlotCanvas(PlotBackend):
         self._renderSelection()
 
     def paintGL(self):
+        # Release OpenGL resources
+        for item in self._glGarbageCollector:
+            item.discard()
+        self._glGarbageCollector = []
+
         glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
 
         # Check if window is large enough
@@ -2378,9 +2393,9 @@ class OpenGLPlotCanvas(PlotBackend):
                  xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
-        self.makeCurrent()
-
-        # info is ignored
+        if info is not None:
+            warnings.warn("Ignore info parameter of addImage",
+                          RuntimeWarning)
 
         behaviors = set()
         if selectable:
@@ -2509,8 +2524,7 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
-            self.makeCurrent()
-            image.discard()
+            self._glGarbageCollector.append(image)
             self._plotDirtyFlag = True
 
         if replot:
@@ -2586,11 +2600,11 @@ class OpenGLPlotCanvas(PlotBackend):
                  xerror=None, yerror=None, z=1, selectable=True,
                  fill=None, **kw):
         if xerror is not None:
-            print('OpenGLBackend.addCurve xerror not implemented')
+            warnings.warn("Ignore xerror parameter of addCurve",
+                          RuntimeWarning)
         if yerror is not None:
-            print('OpenGLBackend.addCurve yerror not implemented')
-
-        self.makeCurrent()
+            warnings.warn("Ignore yerror parameter of addCurve",
+                          RuntimeWarning)
 
         x = np.array(x, dtype=np.float32, copy=False, order='C')
         y = np.array(y, dtype=np.float32, copy=False, order='C')
@@ -2616,7 +2630,7 @@ class OpenGLPlotCanvas(PlotBackend):
             colorArray = None
             color = rgba(color, PlotBackend.COLORDICT)
 
-        if fill is None:  # To make it run with Plot.py
+        if fill is None and info is not None:  # To make it run with Plot.py
             fill = info.get('plot_fill', False)
 
         curve = Curve2D(x, y, colorArray,
@@ -2667,7 +2681,6 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend
 
     def removeCurve(self, legend, replot=True):
-        self.makeCurrent()
         try:
             curve = self._zOrderedItems.pop(('curve', legend))
         except KeyError:
@@ -2676,7 +2689,7 @@ class OpenGLPlotCanvas(PlotBackend):
             self._hasRightYAxis.discard(curve)
             if not self._hasRightYAxis:
                 self.updateAxis()
-            curve.discard()
+            self._glGarbageCollector.append(curve)
             self._plotDirtyFlag = True
 
         if replot:
@@ -2736,7 +2749,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self.clearCurves()
 
     def replot(self):
-        self.updateGL()
+        self.update()
 
     # Draw mode #
 
@@ -3007,6 +3020,13 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Save
     def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
+        if dpi is not None:
+            warnings.warn("saveGraph ignores dpi parameter",
+                          RuntimeWarning)
+        if kw:
+            warnings.warn("saveGraph ignores additional parameters",
+                          RuntimeWarning)
+
         if fileFormat not in ['png', 'ppm', 'svg', 'tiff']:
             raise NotImplementedError('Unsupported format: %s' % fileFormat)
 
