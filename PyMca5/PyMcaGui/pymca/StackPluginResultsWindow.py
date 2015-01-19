@@ -116,6 +116,9 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.spectrumList[index] *= -1
 
         self._showImage(index)
+        # scatter plot related
+        self.__scatterPlotWidgetDataToUpdate = True
+        self._updateScatterPlotWidget()
 
     def _showImage(self, index):
         if len(self.imageList):

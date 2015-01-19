@@ -522,6 +522,8 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             self.eigenVectors[index] *= -1
 
         self._showImage(index)
+        self.__scatterPlotWidgetDataToUpdate = True
+        self._updateScatterPlotWidget()
 
     def _showImage(self, index):
         if self.eigenVectors is not None:
