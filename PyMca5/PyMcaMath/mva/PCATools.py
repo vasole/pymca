@@ -535,7 +535,7 @@ def getCovarianceMatrix(stack,
 
 
 def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
-                center=True, scale=False, mask=None, spectral_mask=None, **kw):
+                center=True, scale=True, mask=None, spectral_mask=None, **kw):
     if DEBUG:
         print("PCATools.numpyPCA")
         print("index = %d" % index)
@@ -608,13 +608,14 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     totalVariance = numpy.diag(cov)
     print("Total Variance = ", totalVariance.sum())
 
-    #option to normalize to unit standard deviation
     normalizeToUnitStandardDeviation = scale
-    if normalizeToUnitStandardDeviation:
-        for i in range(cov.shape[0]):
-            if totalVariance[i] > 0:
-                cov[i, :] /= numpy.sqrt(totalVariance[i])
-                cov[:, i] /= numpy.sqrt(totalVariance[i])
+    if 0:
+        #option to normalize to unit standard deviation
+        if normalizeToUnitStandardDeviation:
+            for i in range(cov.shape[0]):
+                if totalVariance[i] > 0:
+                    cov[i, :] /= numpy.sqrt(totalVariance[i])
+                    cov[:, i] /= numpy.sqrt(totalVariance[i])
 
     if DEBUG:
         import time
@@ -628,6 +629,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     images = numpy.zeros((ncomponents, nPixels), dtype)
     eigenvectors = numpy.zeros((ncomponents, N), dtype)
     eigenvalues = numpy.zeros((ncomponents,), dtype)
+    standardDeviation = numpy.zeros((ncomponents,), dtype)
     #sort eigenvalues
     if 1:
         a = [(evalues[i], i) for i in range(len(evalues))]
@@ -645,6 +647,8 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                                         (i0 + 1, partialExplainedVariance))
             totalExplainedVariance += partialExplainedVariance
             eigenvectors[i0, :] = evectors[:, i]
+            standardDeviation[i0] = totalVariance[i]
+            #print("NORMA = ", numpy.dot(evectors[:, i].T, evectors[:, i]))
         print("Total explained variance = %.2f %% " % totalExplainedVariance)
     else:
         idx = numpy.argsort(evalues)
@@ -654,9 +658,10 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     #calculate the projections
     if actualIndex in [0]:
         for i in range(oldShape[actualIndex]):
-            tmpData = data[i].reshape(1, -1)
+            tmpData = data[i].reshape(1, -1) - avgSpectrum[i])
             for j in range(ncomponents):
-                images[j:j + 1, :] += tmpData * eigenvectors[j, i]
+                images[j:j + 1, :] += (tmpData/standardDeviation[j]) * \
+                                      eigenvectors[j, i]
         if len(oldShape) == 3:
             #reshape the images
             images.shape = ncomponents, oldShape[1], oldShape[2]
@@ -667,9 +672,10 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                 #print i
                 tmpData = data[i, :]
                 tmpData.shape = 1, nChannels
-                tmpData = tmpData[:, ::binning]
+                tmpData = tmpData[:, ::binning] - avgSpectrum
                 for j in range(ncomponents):
-                    images[j, i] = numpy.dot(tmpData, eigenvectors[j])
+                    images[j, i] = numpy.dot(tmpData/standardDeviation[j],
+                                             eigenvectors[j])
             #reshape the images
             images.shape = ncomponents, nPixels
         elif len(oldShape) == 3:
@@ -679,9 +685,10 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                     #print i
                     tmpData = data[r, c, :]
                     tmpData.shape = 1, nChannels
-                    tmpData = tmpData[:, ::binning]
+                    tmpData = tmpData[:, ::binning] - avgSpectrum
                     for j in range(ncomponents):
-                        images[j, i] = numpy.dot(tmpData, eigenvectors[j])
+                        images[j, i] = numpy.dot(tmpData/standardDeviation[j],
+                                                 eigenvectors[j])
                     i += 1
             #reshape the images
             images.shape = ncomponents, oldShape[0], oldShape[1]
@@ -803,143 +810,3 @@ def test():
 
 if __name__ == "__main__":
     test()
-    sys.exit(0)
-    from PyMca.PyMcaIO import EDFStack
-    from PyMca.PyMcaIO import EdfFile
-    import os
-    import time
-    #inputfile = ".\PierreSue\CH1777\G4-Sb\G4_mca_0012_0000_0000.edf"
-    inputfile = "D:\DATA\COTTE\ch09\ch09__mca_0005_0000_0000.edf"
-    if len(sys.argv) > 1:
-        inputfile = sys.argv[1]
-        print(inputfile)
-    elif os.path.exists(inputfile):
-        print("Using a default test case")
-    else:
-        print("Usage:")
-        print("python PCAModule.py indexed_edf_stack")
-        sys.exit(0)
-    if 1:
-        if 0:
-            stack = EDFStack.EDFStack(inputfile, imagestack=True, dtype=numpy.float64)
-            nImages, r, c = stack.data.shape
-            stack.data.shape = nImages, r * c
-            x = stack.data
-            t0 = time.time()
-            cov = numpy.cov(x)
-            print("COV SHAPE = ", cov.shape)
-            print(cov[0,79])
-
-            stack = EDFStack.EDFStack(inputfile, imagestack=True, dtype=numpy.float64)
-            nImages, r, c = stack.data.shape
-            stack.data.shape = nImages, r * c
-            t0 = time.time()
-            covMatrix0, sumSpectrum0, nPixels0 = getCovarianceMatrix(stack,
-                                                                   index=0,
-                                                                   dtype='float64',
-                                                                   force=False)
-            print("Standard Elapsed = ", time.time() - t0)
-            stack = EDFStack.EDFStack(inputfile, imagestack=True, dtype=numpy.float64)
-            nImages, r, c = stack.data.shape
-            stack.data.shape = nImages, r * c
-            t0 = time.time()
-            covMatrix1, sumSpectrum1, nPixels1 = getCovarianceMatrix(stack,
-                                                                   index=0,
-                                                                   dtype='float64',
-                                                                   force=True)
-            print("Dynamic Elapsed = ", time.time() - t0)
-            print(covMatrix0.max(), covMatrix0.min(), "Reference  = ", covMatrix0[10,50:60])
-            print(covMatrix1.max(), covMatrix1.min(), "Calculated = ", covMatrix1[10,50:60])
-            delta = covMatrix1-covMatrix0
-            maxDiff = delta.max()
-            print("Max diff   = ", maxDiff)
-            minDiff = delta.min()
-            print("Min diff   = ", minDiff)
-            print(numpy.nonzero(delta==maxDiff))
-            print("delta[0,79] = ", delta[0,79])
-            print("reference[0,79] = ", covMatrix0[0,79])
-            print("dynamic  [0,79] = ", covMatrix1[0,79])
-            print("reference[79,0] = ", covMatrix0[79,0])
-            print("dynamic  [79,0] = ", covMatrix1[79,0])
-            print("ratio  [0,79] = ", covMatrix1[0,79]/covMatrix0[0,79])
-            print("ratio  [60,60] = ", covMatrix1[60,60]/covMatrix0[60,60])
-            print("SHAPES = ", covMatrix0.shape, covMatrix1.shape)
-        else:
-            #stack = EDFStack.EDFStack(inputfile, imagestack=True)
-            from PyMca import DataObject
-            import h5py
-            f=h5py.File(inputfile, access='r')
-            stack = DataObject.DataObject()
-            stack.data = f['/data/NXdata/data']
-            print("PCA Calculation")
-            images, eigenvalues, eigenvectors = numpyPCA(stack, index=0, binning=1)
-            for i in range(10):
-                a = images[i]
-                #a.shape = r, c
-                print("Eigenvalue %d = %f" % (i, eigenvalues[i]))
-                fname = "Image%02d.edf" % i
-                if os.path.exists(fname):
-                    os.remove(fname)
-                edf = EdfFile.EdfFile(fname,'wb')
-                edf.WriteImage({},a)
-                edf = None
-            inputfile = "D:\DATA\COTTE\CH1777\G4_mca_0012_0000_0000.edf"
-            stack = EDFStack.EDFStack(inputfile,dtype=numpy.float64)
-            images, eigenvalues, eigenvectors = numpyPCA(stack,
-                                                         index=-1,
-                                                         dtype='float64',
-                                                         force=True,
-                                                         binning=1)
-            for i in range(10):
-                a = images[i]
-                #a.shape = r, c
-                print("Eigenvalue %d = %f" % (i, eigenvalues[i]))
-                fname = "Image%02d.edf" % (i+10)
-                if os.path.exists(fname):
-                    os.remove(fname)
-                edf = EdfFile.EdfFile(fname,'wb')
-                edf.WriteImage({},a)
-                edf = None
-    else:
-        stack = EDFStack.EDFStack(inputfile, imagestack=False, dtype=numpy.float64)
-        r, c, nChannels = stack.data.shape
-        if 0:
-            stack.data.shape = r * c, nChannels
-            t0 = time.time()
-            covMatrix0 = dotblas.dot(stack.data.T, stack.data)
-            print("Standard Elapsed = ", time.time() - t0)
-            print("Standard Shape = ", covMatrix0.shape)
-            t0 = time.time()
-            stack.data.shape = r , c, nChannels
-            covMatrix1, sumSpectrum, nPixels = getCovarianceMatrix(stack,
-                                                                   index=-1,
-                                                                   dtype='float64',
-                                                                   force=True)
-            print("Dynamic Elapsed = ", time.time() - t0)
-            print("Dynamic Shape = ", covMatrix1.shape)
-            print(covMatrix0.max(), covMatrix0.min(), "Reference  = ", covMatrix0[1300, 1350:1360])
-            print(covMatrix1.max(), covMatrix1.min(), "Calculated = ", covMatrix1[1300, 1350:1360])
-            delta = covMatrix1-covMatrix0
-            maxDiff = delta.max()
-            print("Max diff   = ", maxDiff)
-            minDiff = delta.min()
-            print("Min diff   = ", minDiff)
-            print(numpy.nonzero(delta==maxDiff))
-            print("delta[79, 0] = ", delta[79, 0])
-            print("reference[0,79] = ", covMatrix0[0,79])
-            print("dynamic  [0,79] = ", covMatrix1[0,79])
-            print("reference[79,0] = ", covMatrix0[79,0])
-            print("dynamic  [79,0] = ", covMatrix1[79,0])
-        else:
-            print("PCA Calculation")
-            images, eigenvalues, eigenvectors = numpyPCA(stack, index=-1)
-            for i in range(10):
-                a = images[i]
-                #a.shape = r, c
-                print("Eigenvalue %d = %f" % (i, eigenvalues[i]))
-                fname = "Image%02d.edf" % i
-                if os.path.exists(fname):
-                    os.remove(fname)
-                edf = EdfFile.EdfFile(fname,'wb')
-                edf.WriteImage({},a)
-                edf = None
