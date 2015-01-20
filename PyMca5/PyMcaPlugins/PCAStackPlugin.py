@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -145,6 +145,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             self._status.setFont(font)
             self._status.setText("Ready")
             self.configurationWidget.layout().addWidget(self._status)
+        self.configurationWidget.setEnabled(True)
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             #I could get some defaults from the stack itslef

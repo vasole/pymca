@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1324,7 +1324,7 @@ class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
 
 class McaBatchWindow(qt.QWidget):
     def __init__(self,parent=None, name="BatchWindow", fl=0, actions = 0, outputdir=None, html=0,
-                    htmlindex = None, table=2, chunk = None):
+                    htmlindex = None, table=2, chunk=None, exitonend=False):
         if QTVERSION < '4.0.0':
             qt.QWidget.__init__(self, parent, name, fl)
             self.setCaption(name)
@@ -1332,6 +1332,7 @@ class McaBatchWindow(qt.QWidget):
             qt.QWidget.__init__(self, parent)
             self.setWindowTitle(name)
         self.chunk = chunk
+        self.exitonend = exitonend
         self.l = qt.QVBoxLayout(self)
         #self.l.setAutoAdd(1)
         self.bars =qt.QWidget(self)
@@ -1635,6 +1636,9 @@ class McaBatchWindow(qt.QWidget):
             else:
                 #this seems to work properly
                 self.close()
+        if self.exitonend:
+            app = qt.QApplication.instance()
+            app.quit()
 
     def onReportWritten(self):
         if self.__ended:
@@ -1705,7 +1709,7 @@ def main():
                    'overwrite=', 'filestep=', 'mcastep=', 'html=','htmlindex=',
                    'listfile=','cfglistfile=', 'concentrations=', 'table=', 'fitfiles=',
                    'filebeginoffset=','fileendoffset=','mcaoffset=', 'chunk=',
-                   'nativefiledialogs=','selection=']
+                   'nativefiledialogs=','selection=', 'exitonend=']
     filelist = None
     outdir   = None
     cfg      = None
@@ -1726,6 +1730,7 @@ def main():
     fileendoffset = 0
     mcaoffset = 0
     chunk = None
+    exitonend = False
     opts, args = getopt.getopt(
                     sys.argv[1:],
                     options,
@@ -1778,6 +1783,9 @@ def main():
                 PyMcaDirs.nativeFileDialogs = True
             else:
                 PyMcaDirs.nativeFileDialogs = False
+        elif opt in ('--exitonend'):
+            exitonend = int(arg)
+
     if listfile is None:
         filelist=[]
         for item in args:
@@ -1819,7 +1827,7 @@ def main():
         text = "Batch from %s to %s" % (os.path.basename(filelist[0]), os.path.basename(filelist[-1]))
         window =  McaBatchWindow(name=text,actions=1,
                                 outputdir=outdir,html=html, htmlindex=htmlindex, table=table,
-                                chunk = chunk)
+                                chunk=chunk, exitonend=exitonend)
 
         if html:fitfiles=1
         try:
@@ -1829,14 +1837,16 @@ def main():
                       filebeginoffset=filebeginoffset,fileendoffset=fileendoffset,
                       mcaoffset=mcaoffset, chunk=chunk, selection=selection)
         except:
-            msg = qt.QMessageBox()
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("%s" % sys.exc_info()[1])
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
+            if exitonend:
+                print("Error: " % sys.exc_info()[1])
+                print("Quitting as requested")
+                qt.QApplication.instance().quit()
             else:
-                msg.exec_()
-            return
+                msg = qt.QMessageBox()
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("%s" % sys.exc_info()[1])
+                msg.exec_loop()
+                return
 
 
         def cleanup():

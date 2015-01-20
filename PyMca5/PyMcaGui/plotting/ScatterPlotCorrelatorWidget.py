@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -77,9 +77,18 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         else:
             super(ScatterPlotCorrelatorWidget, self).show()
 
-    def addSelectableItem(self, item, label = None):
-        # we always keep a copy
-        item = numpy.array(item, dtype=numpy.float32, copy=True)
+    def setSelectableItemList(self, items, labels=None, copy=True):
+        self._itemList = []
+        self._itemLabels = []
+        if labels is None:
+            labels = [None] * len(items)
+        for i in range(len(items)):
+            print items[i]
+            self.addSelectableItem(items[i], label=labels[i], copy=copy)
+
+    def addSelectableItem(self, item, label=None, copy=True):
+        # we always keep a copy by default
+        item = numpy.array(item, dtype=numpy.float32, copy=copy)
         if label is None:
             label = "Unnamed 00"
             i = 0
@@ -161,6 +170,10 @@ if __name__ == "__main__":
     w.addSelectableItem(x * x, "range(%d) ** 2"  % x.size)
     x = numpy.random.random(x.size)
     w.addSelectableItem(x, "random(%d)" % x.size)
+    x = numpy.random.normal(500000., 1.0, 1000000)
+    w.addSelectableItem(x, "Gauss 0")
+    x = numpy.random.normal(500000., 1.0, 1000000)
+    w.addSelectableItem(x, "Gauss 1")
     w.setPolygonSelectionMode()
 
     def theSlot(ddict):
