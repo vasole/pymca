@@ -1280,8 +1280,11 @@ class OpenGLPlotCanvas(PlotBackend):
     """Implements PlotBackend API using OpenGL.
 
     WARNINGS:
-    This API is NOT thread-safe and should be called from the main thread.
-    Also, when numpy arrays are passed as arguments to the API (through addCurve and addImage methods), they are copied only if required.
+    Unless stated otherwise, this API is NOT thread-safe and MUST be
+    called from the main thread.
+    When numpy arrays are passed as arguments to the API (through
+    :func:`addCurve` and :func:`addImage`), they are copied only if
+    required.
     So, the caller should not modify these arrays afterwards.
     """
 
@@ -2308,6 +2311,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
             stride = 2 * self._frameVertices.shape[-1] * \
                 self._frameVertices.itemsize
+            glEnableVertexAttribArray(self._progBase.attributes['position'])
             glVertexAttribPointer(self._progBase.attributes['position'],
                                   2,
                                   GL_FLOAT,
@@ -3076,7 +3080,10 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Save
     def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
-        """This method is thread-safe if replot is thread safe.
+        """Save the graph as an image to a file.
+
+        WARNING: The file will be created asynchronously.
+        This method is thread-safe if :func:`postRedisplay` is thread-safe.
         """
         if dpi is not None:
             warnings.warn("saveGraph ignores dpi parameter",
