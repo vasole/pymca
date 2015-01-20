@@ -658,7 +658,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     #calculate the projections
     if actualIndex in [0]:
         for i in range(oldShape[actualIndex]):
-            tmpData = data[i].reshape(1, -1) - avgSpectrum[i])
+            tmpData = data[i].reshape(1, -1) - avgSpectrum[i]
             for j in range(ncomponents):
                 images[j:j + 1, :] += (tmpData/standardDeviation[j]) * \
                                       eigenvectors[j, i]
