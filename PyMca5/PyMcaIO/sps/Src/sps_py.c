@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-*   Copyright (c) 1998-2013 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2015 European Synchrotron Radiation Facility (ESRF)
 *
 *   The software contained in this file "sps_py.c" is designed to interface
 *   the shared-data structures used and defined by the CSS "spec" package
@@ -186,6 +186,42 @@ static PyObject *sps_updatedone(PyObject *self, PyObject *args)
 
   return PyInt_FromLong(SPS_UpdateDone(spec_version, array_name));
 }
+static PyObject *sps_getinfo(PyObject *self, PyObject *args)
+{
+  char *spec_version, *array_name, *ret;
+
+  if (!PyArg_ParseTuple(args, "ss", &spec_version, &array_name)) {
+    return NULL;
+  }
+
+  ret = SPS_GetInfoString(spec_version, array_name);
+
+  if (ret) { 
+  	return PyString_FromString(ret);
+  } else {
+        PyErr_SetString(SPSError, "Array Info cannot be read");
+  	return NULL;
+  }
+}    
+
+static PyObject *sps_getmetadata(PyObject *self, PyObject *args)
+{
+  char *spec_version, *array_name,  *ret;
+  u32_t length;
+
+  if (!PyArg_ParseTuple(args, "ss", &spec_version, &array_name)) {
+    return NULL;
+  }
+
+  ret = SPS_GetMetaData(spec_version, array_name, &length);
+
+  if (ret) { 
+  	return PyString_FromString(ret);
+  } else {
+        PyErr_SetString(SPSError, "Array metadata cannot be read");
+  	return NULL;
+  }
+}
 
 static PyObject *sps_getenvstr(PyObject *self, PyObject *args)
 {
@@ -200,7 +236,7 @@ static PyObject *sps_getenvstr(PyObject *self, PyObject *args)
   if (ret) {
     return PyString_FromString(ret);
   } else {
-        PyErr_SetString(SPSError, "Key not found");
+    PyErr_SetString(SPSError, "Key not found");
     return NULL;
   }
 }
@@ -521,7 +557,7 @@ static PyObject *sps_putdata(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  no_items = src->dimensions[0] * src->dimensions[1];
+  no_items = (int) (src->dimensions[0] * src->dimensions[1]);
 
   if (SPS_CopyToShared(spec_version, array_name, src->data, stype, no_items)
       == -1) {
@@ -565,7 +601,7 @@ static PyObject *sps_putdatarow(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  no_items = src->dimensions[0];
+  no_items = (int) (src->dimensions[0]);
 
   if (SPS_CopyRowToShared(spec_version, array_name, src->data, stype,
               in_row, no_items, NULL)
@@ -604,7 +640,7 @@ static PyObject *sps_putdatacol(PyObject *self, PyObject *args)
   ptype = src->descr->type_num;
   stype = sps_py2type(ptype);
 
-  no_items = src->dimensions[0];
+  no_items = (int) (src->dimensions[0]);
 
   if (SPS_CopyColToShared(spec_version, array_name, src->data, stype,
               in_col, no_items, NULL)
@@ -644,6 +680,8 @@ static PyMethodDef SPSMethods[] = {
   { "putdata",       sps_putdata,    METH_VARARGS},
   { "putdatarow",    sps_putdatarow, METH_VARARGS},
   { "putdatacol",    sps_putdatacol, METH_VARARGS},
+  { "getinfo",       sps_getinfo,    METH_VARARGS},
+  { "getmetadata",   sps_getmetadata, METH_VARARGS},
   { NULL, NULL}
 };
 
