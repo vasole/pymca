@@ -1447,7 +1447,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     if item.lineStyle is not None:
                         offset = max(item.lineWidth / 2., offset)
 
-                    yAxis = item.info['yaxis']
+                    yAxis = item.info['yAxis']
                     xPick0, yPick0 = self.pixelToDataCoords(x - offset,
                                                             y - offset,
                                                             axis=yAxis)
@@ -1796,7 +1796,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 if item.xMax > xMax:
                     xMax = item.xMax
 
-                if item.info.get('yaxis') == 'right':
+                if item.info.get('yAxis') == 'right':
                     if item.yMin < y2Min:
                         y2Min = item.yMin
                     if item.yMax > y2Max:
@@ -2072,7 +2072,6 @@ class OpenGLPlotCanvas(PlotBackend):
         glEnable(GL_POINT_SPRITE)  # OpenGL 2
         # glEnable(GL_PROGRAM_POINT_SIZE)
 
-        print('INIT', getGLContext())
         # Create basic program
         self._progBase = Program(_baseVertShd, _baseFragShd)
 
@@ -2360,7 +2359,7 @@ class OpenGLPlotCanvas(PlotBackend):
         # sorted is stable: original order is preserved when key is the same
         for item in sorted(self._zOrderedItems.values(),
                            key=lambda item: item.info['zOrder']):
-            if item.info.get('yaxis') == 'right':
+            if item.info.get('yAxis') == 'right':
                 item.render(self.matrixY2PlotDataTransformedProj,
                             self._isXLog, self._isYLog)
             else:
@@ -2690,8 +2689,11 @@ class OpenGLPlotCanvas(PlotBackend):
         if selectable:
             behaviors.add('selectable')
 
+        wasActiveCurve = False
         oldCurve = self._zOrderedItems.get(('curve', legend), None)
         if oldCurve is not None:
+            if oldCurve == self._activeCurve:
+                wasActiveCurve = True
             self.removeCurve(legend)
 
         if replace:
@@ -2723,7 +2725,7 @@ class OpenGLPlotCanvas(PlotBackend):
             'behaviors': behaviors,
             'xLabel': xlabel,
             'yLabel': ylabel,
-            'yaxis': 'left' if yaxis is None else yaxis,
+            'yAxis': 'left' if yaxis is None else yaxis,
         }
 
         if yaxis == "right":
@@ -2752,6 +2754,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._plotDirtyFlag = True
 
+        if wasActiveCurve:
+            self.setActiveCurve(legend, replot=False)
+
         if replot:
             self.replot()
 
@@ -2763,9 +2768,13 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
+            if curve == self._activeCurve:
+                self._activeCurve = None
+
             self._hasRightYAxis.discard(curve)
             if not self._hasRightYAxis:
                 self.updateAxis()
+
             self._glGarbageCollector.append(curve)
             self._plotDirtyFlag = True
 
@@ -2787,11 +2796,6 @@ class OpenGLPlotCanvas(PlotBackend):
         if curve is None:
             raise KeyError("Curve %s not found" % legend)
 
-        if curve.info['yaxis'] == "right":
-            warnings.warn("Ignore setActiveCurve for curve on right Y axis",
-                          RuntimeWarning)
-            return
-
         if self._activeCurve is not None:
             inactiveState = self._activeCurve._inactiveState
             del self._activeCurve._inactiveState
@@ -2809,7 +2813,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if curve.info['xLabel'] is not None:
             self.setGraphXLabel(curve.info['xLabel'])
-        if curve.info['yLabel'] is not None:
+        if curve.info['yAxis'] == 'left' and curve.info['yLabel'] is not None:
             self.setGraphYLabel(curve.info['yLabel'])
 
         color = rgba(self._activeCurveColor, PlotBackend.COLORDICT)
