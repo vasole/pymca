@@ -159,7 +159,8 @@ class SimpleMath(object):
                 ynew   += numpy.asarray(yinter)
         num = len(yarr)
         ynew /= num
-        return xnew[numpy.isfinite(xnew)], ynew[numpy.isfinite(ynew)]
+        idx = numpy.isfinite(ynew)
+        return xnew[idx], ynew[idx]
 
     def smooth(self, *var, **kw):
         """
