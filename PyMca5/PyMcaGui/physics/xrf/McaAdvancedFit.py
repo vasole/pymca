@@ -593,12 +593,16 @@ class McaAdvancedFit(qt.QWidget):
             if not self._energyAxis:
                 if abs(calib[1]) > 0.0000001:
                     marker=self.graph.insertXMarker(x,
-                                                    label=transition,
-                                                    color='orange')
+                                                    legend=transition,
+                                                    text=transition,
+                                                    color='orange',
+                                                    replot=False)
             else:
                 marker=self.graph.insertXMarker(energy,
-                                                label=transition,
-                                                color='orange')
+                                                legend=transition,
+                                                text=transition,
+                                                color='orange',
+                                                replot=False)
         self.graph.replot()
 
     def _updateTop(self):
