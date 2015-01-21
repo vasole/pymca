@@ -2277,6 +2277,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniform1i(self._progBase.uniforms['hatchStep'], 0)
         glUniform1f(self._progBase.uniforms['tickLen'], 0.)
 
+        glEnableVertexAttribArray(self._progBase.attributes['position'])
         glVertexAttribPointer(self._progBase.attributes['position'],
                               2,
                               GL_FLOAT,
