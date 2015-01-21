@@ -359,13 +359,13 @@ class _Lines2D(object):
 
     @width.setter
     def width(self, width):
-        #try:
+        # try:
         #    widthRange = self._widthRange
-        #except AttributeError:
+        # except AttributeError:
         #    widthRange = glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE)
         #    # Shared among contexts, this should be enough..
         #    _Lines2D._widthRange = widthRange
-        #assert width >= widthRange[0] and width <= widthRange[1]
+        # assert width >= widthRange[0] and width <= widthRange[1]
         self._width = width
 
     @classmethod
@@ -634,13 +634,13 @@ class _Points2D(object):
 
     @size.setter
     def size(self, size):
-        #try:
+        # try:
         #    sizeRange = self._sizeRange
-        #except AttributeError:
+        # except AttributeError:
         #    sizeRange = glGetFloatv(GL_POINT_SIZE_RANGE)
         #    # Shared among contexts, this should be enough..
         #    _Points2D._sizeRange = sizeRange
-        #assert size >= sizeRange[0] and size <= sizeRange[1]
+        # assert size >= sizeRange[0] and size <= sizeRange[1]
         self._size = size
 
     @classmethod

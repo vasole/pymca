@@ -40,7 +40,6 @@ This module provides a class to render 2D array as a colormap or RGB(A) image
 from .gl import *  # noqa
 
 import math
-import numpy as np
 from .GLContext import getGLContext
 from .GLSupport import Program, mat4Translate, mat4Scale
 from .GLTexture import Image

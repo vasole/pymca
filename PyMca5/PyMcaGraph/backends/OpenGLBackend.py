@@ -206,6 +206,7 @@ def convertRGBDataToPNG(data):
     pngData.append(b'\x00\x00\x00\x00IEND\xaeB`\x82')
     return b''.join(pngData)
 
+
 def saveImageToFile(data, fileName, fileFormat):
     """Save a RGB image to a file.
 
@@ -3101,23 +3102,25 @@ class OpenGLPlotCanvas(PlotBackend):
     def _deferredSaveGraphGL(self):
         """This method MUST be called with an active OpenGL context.
         """
-        data = np.empty((self.winHeight, self.winWidth, 3),
-                        dtype=np.uint8, order='C')
+        if not self._graphsToSave.empty():
+            data = np.empty((self.winHeight, self.winWidth, 3),
+                            dtype=np.uint8, order='C')
 
-        glPixelStorei(GL_PACK_ALIGNMENT, 1)
-        glReadPixels(0, 0, self.winWidth, self.winHeight,
-                     GL_RGB, GL_UNSIGNED_BYTE, data)
+            glPixelStorei(GL_PACK_ALIGNMENT, 1)
+            glReadPixels(0, 0, self.winWidth, self.winHeight,
+                         GL_RGB, GL_UNSIGNED_BYTE, data)
 
-        # glReadPixels gives bottom to top, images are stored as top to bottom
-        data = np.flipud(data)
+            # glReadPixels gives bottom to top,
+            # while images are stored as top to bottom
+            data = np.flipud(data)
 
-        for i in range(self._graphsToSave.qsize()):
-            try:
-                fileName, fileFormat = self._graphsToSave.get_nowait()
-            except queue.Full:
-                break
-            else:
-                saveImageToFile(data, fileName, fileFormat)
+            for i in range(self._graphsToSave.qsize()):
+                try:
+                    fileName, fileFormat = self._graphsToSave.get_nowait()
+                except queue.Full:
+                    break
+                else:
+                    saveImageToFile(data, fileName, fileFormat)
 
 
 # OpenGLBackend ###############################################################

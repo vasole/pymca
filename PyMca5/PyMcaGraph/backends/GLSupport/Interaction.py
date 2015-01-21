@@ -154,7 +154,9 @@ class StateMachine(object):
         :param str initState: Key of the initial state in states
         """
         self.states = states
-        self._goto(initState, *args, **kwargs)
+
+        self.state = self.states[initState](self)
+        self.state.enter(*args, **kwargs)
 
     def _goto(self, state, *args, **kwargs):
         self.state.leave()
