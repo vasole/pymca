@@ -51,7 +51,7 @@ class SpecArithmetic(object):
     Correct peak positions and fwhm information
     have to be made via a fit.
     """
-    def search_peak(self, xdata,ydata):
+    def search_peak(self, xdata, ydata):
          """
          Search a peak and its position in arrays xdata ad ydata.
          Return three integer:
@@ -60,9 +60,10 @@ class SpecArithmetic(object):
            - index of peak position in array xdata
              This result may accelerate the fwhm search.
          """
-         ymax   = max(ydata)
-         idx    = self.__give_index(ymax,ydata)
-         return xdata[idx],ymax,idx
+         ydata = numpy.array(ydata, copy=False)
+         ymax   = ydata[numpy.isfinite(ydata)].max()
+         idx    = self.__give_index(ymax, ydata)
+         return xdata[idx], ymax, idx
 
 
     def search_com(self, xdata,ydata):

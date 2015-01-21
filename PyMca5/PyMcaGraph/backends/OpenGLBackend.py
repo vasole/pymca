@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1071,7 +1071,7 @@ class ItemsInteraction(ClickOrDrag):
                 selectable = 'selectable' in marker['behaviors']
                 eventDict = prepareMarkerSignal('markerClicked',
                                                 'left',
-                                                marker['label'],
+                                                marker['legend'],
                                                 'marker',
                                                 draggable,
                                                 selectable,
@@ -2414,6 +2414,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._markers[legend] = {
             'x': x,
             'y': y,
+            'legend':legend,
             'label': text,
             'color': rgba(color, PlotBackend.COLORDICT),
             'behaviors': behaviors,

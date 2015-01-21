@@ -1953,22 +1953,13 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         return
 
     def saveGraph(self, fileName, fileFormat='svg', dpi=None , **kw):
-        if 0 and type(fileName) not in [types.ModuleType]:
-            print("Filename to open")
-            fig = self.ax.figure
-            if dpi is not None:
-                fig.savefig(fileName, format=fileFormat, dpi=dpi)
-            else:
-                fig.savefig(fileName, format=fileFormat)
-            fig = None
+        # fileName can be also a StringIO or file instance
+        fig = self.ax.figure
+        if dpi is not None:
+            fig.savefig(fileName, format=fileFormat, dpi=dpi)
         else:
-            print("MatplotlibBackend, check missing")
-            fig = self.ax.figure
-            if dpi is not None:
-                fig.savefig(fileName, format=fileFormat, dpi=dpi)
-            else:
-                fig.savefig(fileName, format=fileFormat)
-            fig = None
+            fig.savefig(fileName, format=fileFormat)
+        fig = None
         return
 
     def setActiveCurve(self, legend, replot=True):

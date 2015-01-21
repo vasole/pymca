@@ -693,7 +693,8 @@ class ScanWindow(PlotWindow.PlotWindow):
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("%s" % sys.exc_info()[1])
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
             msg.exec_()
 
     def __simpleOperation(self, operation):

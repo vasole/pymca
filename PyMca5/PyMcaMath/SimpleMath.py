@@ -49,7 +49,12 @@ class SimpleMath(object):
         i1=numpy.nonzero(abs(deltax)>0.0000001)[0]
         x=numpy.take(x, i1)
         y=numpy.take(y, i1)
-        minDelta = deltax.min()
+        minDelta = deltax[deltax > 0]
+        if minDelta.size:
+            minDelta = minDelta.min()
+        else:
+            # all points are equal
+            minDelta = 1.0
         xInter = numpy.arange(x[0]-minDelta,x[-1]+minDelta,minDelta)
         yInter = numpy.interp(xInter, x, y, left=y[0], right=y[-1])
         if len(yInter) > 499:
@@ -154,7 +159,7 @@ class SimpleMath(object):
                 ynew   += numpy.asarray(yinter)
         num = len(yarr)
         ynew /= num
-        return xnew, ynew
+        return xnew[numpy.isfinite(xnew)], ynew[numpy.isfinite(ynew)]
 
     def smooth(self, *var, **kw):
         """
