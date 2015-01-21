@@ -1020,7 +1020,7 @@ class ItemsInteraction(ClickOrDrag):
             if marker is not None:
                 posData = self.machine.backend.pixelToDataCoords(x, y)
                 eventDict = prepareHoverSignal(
-                    marker['label'], 'marker',
+                    marker['legend'], 'marker',
                     posData, (x, y),
                     'draggable' in marker['behaviors'],
                     'selectable' in marker['behaviors'])
@@ -1124,7 +1124,7 @@ class ItemsInteraction(ClickOrDrag):
 
         eventDict = prepareMarkerSignal(eventType,
                                         'left',
-                                        marker['label'],
+                                        marker['legend'],
                                         'marker',
                                         'draggable' in marker['behaviors'],
                                         'selectable' in marker['behaviors'],
@@ -1186,7 +1186,7 @@ class ItemsInteraction(ClickOrDrag):
             eventDict = prepareMarkerSignal(
                 'markerMoved',
                 'left',
-                self.marker['label'],
+                self.marker['legend'],
                 'marker',
                 'draggable' in self.marker['behaviors'],
                 'selectable' in self.marker['behaviors'],
@@ -2175,21 +2175,21 @@ class OpenGLPlotCanvas(PlotBackend):
         for marker in self._markers.values():
             xCoord, yCoord = marker['x'], marker['y']
 
-            if marker['label'] is not None:
+            if marker['text'] is not None:
                 if xCoord is None:
                     x = self.winWidth - self._margins['right'] - pixelOffset
                     y = self.dataToPixelCoords(yData=yCoord) - pixelOffset
-                    label = Text2D(marker['label'], x, y, marker['color'],
+                    label = Text2D(marker['text'], x, y, marker['color'],
                                    align=RIGHT, valign=BOTTOM)
                 elif yCoord is None:
                     x = self.dataToPixelCoords(xData=xCoord) + pixelOffset
                     y = self._margins['top'] + pixelOffset
-                    label = Text2D(marker['label'], x, y, marker['color'],
+                    label = Text2D(marker['text'], x, y, marker['color'],
                                    align=LEFT, valign=TOP)
                 else:
                     x, y = self.dataToPixelCoords(xCoord, yCoord)
                     x, y = x + pixelOffset, y + pixelOffset
-                    label = Text2D(marker['label'], x, y, marker['color'],
+                    label = Text2D(marker['text'], x, y, marker['color'],
                                    align=LEFT, valign=TOP)
                 labels.append(label)
 
@@ -2414,8 +2414,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self._markers[legend] = {
             'x': x,
             'y': y,
-            'legend':legend,
-            'label': text,
+            'legend': legend,
+            'text': text,
             'color': rgba(color, PlotBackend.COLORDICT),
             'behaviors': behaviors,
         }
