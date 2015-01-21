@@ -550,6 +550,7 @@ class GLRGBAImage(_GL2DDataPlot):
             prog = Program(cls._SHADERS['vertex'], cls._SHADERS['fragment'])
 
             # Done once forever for each program
+            prog.use()
             glUniform1i(prog.uniforms['tex'], cls._DATA_TEX_UNIT)
 
             cls._linearPrograms[context] = prog
@@ -565,6 +566,7 @@ class GLRGBAImage(_GL2DDataPlot):
                            cls._SHADERS_LOG['fragment'])
 
             # Done once forever for each program
+            prog.use()
             glUniform1i(prog.uniforms['tex'], cls._DATA_TEX_UNIT)
 
             cls._logPrograms[context] = prog
