@@ -207,17 +207,23 @@ def convertRGBDataToPNG(data):
     return b''.join(pngData)
 
 
-def saveImageToFile(data, fileName, fileFormat):
+def saveImageToFile(data, fileNameOrObj, fileFormat):
     """Save a RGB image to a file.
 
-    :param data: A 3D array (h, w, 3) storing an RGB image
-    :type data: numpy.ndarray with of unsigned bytes
-    :param str fileName: The fileName where to write the image
-    :param str fileType: The type of the file in: 'png', 'ppm', 'svg', 'tiff'
+    :param data: A 3D array (h, w, 3) storing an RGB image.
+    :type data: numpy.ndarray with of unsigned bytes.
+    :param fileNameOrObj: Filename or object to use to write the image.
+    :type fileNameOrObj: A str or a 'file-like' object with a 'write' method.
+    :param str fileType: The type of the file in: 'png', 'ppm', 'svg', 'tiff'.
     """
     assert len(data.shape) == 3
     assert data.shape[2] == 3
     assert fileFormat in ('png', 'ppm', 'svg', 'tiff')
+
+    if not hasattr(fileNameOrObj, 'write'):
+        fileObj = open(fileNameOrObj, 'wb')
+    else:  # Use as a file-like object
+        fileObj = fileNameOrObj
 
     if fileFormat == 'svg':
         import base64
@@ -225,40 +231,46 @@ def saveImageToFile(data, fileName, fileFormat):
         height, width = data.shape[:2]
         base64Data = base64.b64encode(convertRGBDataToPNG(data))
 
-        with open(fileName, 'w') as f:
-            f.write('<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
-            f.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
-            f.write('  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
-            f.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
-            f.write('     xmlns="http://www.w3.org/2000/svg"\n')
-            f.write('     version="1.1"\n')
-            f.write('     width="%d"\n' % width)
-            f.write('     height="%d">\n' % height)
-            f.write('    <image xlink:href="data:image/png;base64,')
-            f.write(base64Data.decode('ascii'))
-            f.write('"\n')
-            f.write('           x="0"\n')
-            f.write('           y="0"\n')
-            f.write('           width="%d"\n' % width)
-            f.write('           height="%d"\n' % height)
-            f.write('           id="image" />\n')
-            f.write('</svg>')
+        fileObj.write(
+            '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
+        fileObj.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
+        fileObj.write('  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
+        fileObj.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
+        fileObj.write('     xmlns="http://www.w3.org/2000/svg"\n')
+        fileObj.write('     version="1.1"\n')
+        fileObj.write('     width="%d"\n' % width)
+        fileObj.write('     height="%d">\n' % height)
+        fileObj.write('    <image xlink:href="data:image/png;base64,')
+        fileObj.write(base64Data.decode('ascii'))
+        fileObj.write('"\n')
+        fileObj.write('           x="0"\n')
+        fileObj.write('           y="0"\n')
+        fileObj.write('           width="%d"\n' % width)
+        fileObj.write('           height="%d"\n' % height)
+        fileObj.write('           id="image" />\n')
+        fileObj.write('</svg>')
 
     elif fileFormat == 'ppm':
-        with open(fileName, 'w') as f:
-            f.write('P6\n')
-            f.write('%d %d\n' % (self.winWidth, self.winHeight))
-            f.write('255\n')
-            f.write(data.tostring())
+        fileObj.write('P6\n')
+        fileObj.write('%d %d\n' % (self.winWidth, self.winHeight))
+        fileObj.write('255\n')
+        fileObj.write(data.tostring())
 
     elif fileFormat == 'png':
-        with open(fileName, 'wb') as f:
-            f.write(convertRGBDataToPNG(data))
+        fileObj.write(convertRGBDataToPNG(data))
 
     elif fileFormat == 'tiff':
+        if fileObj == fileNameOrObj:
+            raise NotImplementedError(
+                'Save TIFF to a file-like object not implemented')
+
         from PyMca5.PyMcaIO.TiffIO import TiffIO
-        tif = TiffIO(fileName, mode='wb+')
+
+        tif = TiffIO(fileNameOrObj, mode='wb+')
         tif.writeImage(data, info={'Title': 'PyMCA GL Snapshot'})
+
+    if fileObj != fileNameOrObj:
+        fileObj.close()
 
 
 # shaders #####################################################################
@@ -3116,12 +3128,13 @@ class OpenGLPlotCanvas(PlotBackend):
             # while images are stored as top to bottom
             data = np.flipud(data)
 
-            for i in range(self._graphsToSave.qsize()):
+            for index in range(self._graphsToSave.qsize()):
                 try:
                     fileName, fileFormat = self._graphsToSave.get_nowait()
                 except queue.Full:
                     break
                 else:
+                    # fileName is either a file-like object or a str
                     saveImageToFile(data, fileName, fileFormat)
 
 
