@@ -1326,7 +1326,6 @@ class OpenGLPlotCanvas(PlotBackend):
         self._labels = []
         self._selectionAreas = MiniOrderedDict()
         self._glGarbageCollector = []
-        self._graphsToSave = queue.Queue()
 
         self._margins = {'left': 100, 'right': 50, 'top': 50, 'bottom': 50}
         self._lineWidth = 1
@@ -1345,6 +1344,10 @@ class OpenGLPlotCanvas(PlotBackend):
         PlotBackend.__init__(self, parent, **kw)
 
     # Link with embedding toolkit #
+
+    def makeCurrent(self):
+        """Override this method to allow to set the current OpenGL context."""
+        pass
 
     def postRedisplay(self):
         raise NotImplementedError("This method must be provided by \
@@ -2069,6 +2072,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glEnable(GL_POINT_SPRITE)  # OpenGL 2
         # glEnable(GL_PROGRAM_POINT_SIZE)
 
+        print('INIT', getGLContext())
         # Create basic program
         self._progBase = Program(_baseVertShd, _baseFragShd)
 
@@ -2154,8 +2158,6 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # self._paintDirectGL()
         self._paintFBOGL()
-
-        self._deferredSaveGraphGL()
 
     def _renderMarkersGL(self):
         if len(self._markers) == 0:
@@ -3097,8 +3099,8 @@ class OpenGLPlotCanvas(PlotBackend):
     def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
         """Save the graph as an image to a file.
 
-        WARNING: The file will be created asynchronously.
-        This method is thread-safe if :func:`postRedisplay` is thread-safe.
+        WARNING: This method is performing some OpenGL calls.
+        It must be called from the main thread.
         """
         if dpi is not None:
             warnings.warn("saveGraph ignores dpi parameter",
@@ -3110,32 +3112,22 @@ class OpenGLPlotCanvas(PlotBackend):
         if fileFormat not in ['png', 'ppm', 'svg', 'tiff']:
             raise NotImplementedError('Unsupported format: %s' % fileFormat)
 
-        self._graphsToSave.put_nowait((fileName, fileFormat))
-        self.replot()
+        self.makeCurrent()
 
-    def _deferredSaveGraphGL(self):
-        """This method MUST be called with an active OpenGL context.
-        """
-        if not self._graphsToSave.empty():
-            data = np.empty((self.winHeight, self.winWidth, 3),
-                            dtype=np.uint8, order='C')
+        data = np.empty((self.winHeight, self.winWidth, 3),
+                        dtype=np.uint8, order='C')
 
-            glPixelStorei(GL_PACK_ALIGNMENT, 1)
-            glReadPixels(0, 0, self.winWidth, self.winHeight,
-                         GL_RGB, GL_UNSIGNED_BYTE, data)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        glPixelStorei(GL_PACK_ALIGNMENT, 1)
+        glReadPixels(0, 0, self.winWidth, self.winHeight,
+                     GL_RGB, GL_UNSIGNED_BYTE, data)
 
-            # glReadPixels gives bottom to top,
-            # while images are stored as top to bottom
-            data = np.flipud(data)
+        # glReadPixels gives bottom to top,
+        # while images are stored as top to bottom
+        data = np.flipud(data)
 
-            for index in range(self._graphsToSave.qsize()):
-                try:
-                    fileName, fileFormat = self._graphsToSave.get_nowait()
-                except queue.Full:
-                    break
-                else:
-                    # fileName is either a file-like object or a str
-                    saveImageToFile(data, fileName, fileFormat)
+        # fileName is either a file-like object or a str
+        saveImageToFile(data, fileName, fileFormat)
 
 
 # OpenGLBackend ###############################################################
