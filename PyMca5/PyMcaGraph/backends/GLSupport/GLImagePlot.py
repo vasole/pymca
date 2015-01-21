@@ -40,7 +40,6 @@ This module provides a class to render 2D array as a colormap or RGB(A) image
 from .gl import *  # noqa
 
 import math
-import numpy as np
 from .GLContext import getGLContext
 from .GLSupport import Program, mat4Translate, mat4Scale
 from .GLTexture import Image
@@ -312,6 +311,8 @@ class GLColormap(_GL2DDataPlot):
                            cls._SHADERS['fragment_transform']['linear'] +
                            cls._SHADERS['fragment'][1])
 
+            prog.use()
+
             # Done once forever for each program
             glUniform1i(prog.uniforms['data'], cls._DATA_TEX_UNIT)
 
@@ -328,6 +329,8 @@ class GLColormap(_GL2DDataPlot):
                            cls._SHADERS['fragment'][0] +
                            cls._SHADERS['fragment_transform']['log'] +
                            cls._SHADERS['fragment'][1])
+
+            prog.use()
 
             # Done once forever for each program
             glUniform1i(prog.uniforms['data'], cls._DATA_TEX_UNIT)
@@ -567,15 +570,6 @@ class GLRGBAImage(_GL2DDataPlot):
             cls._logPrograms[context] = prog
         return prog
 
-    def _convertNPToGLType(self, numpyType):
-        if numpyType == np.uint8:
-            return GL_UNSIGNED_BYTE
-        elif numpyType == np.float32:
-            return GL_FLOAT
-        else:
-            raise NotImplementedError(
-                "Data type not supported {0}".format(self.data.dtype))
-
     def updateData(self, data):
         oldData = self.data
         self.data = data
@@ -586,7 +580,7 @@ class GLRGBAImage(_GL2DDataPlot):
             else:
                 # We should check that internal format is the same
                 format_ = GL_RGBA if data.shape[2] == 4 else GL_RGB
-                type_ = self._convertNPToGLType(data.dtype)
+                type_ = numpyToGLType(data.dtype)
 
                 self._texture.updateAll(format_=format_, type_=type_,
                                         data=data)
@@ -595,7 +589,7 @@ class GLRGBAImage(_GL2DDataPlot):
         if not hasattr(self, '_texture'):
             height, width, depth = self.data.shape
             format_ = GL_RGBA if depth == 4 else GL_RGB
-            type_ = self._convertNPToGLType(self.data.dtype)
+            type_ = numpyToGLType(self.data.dtype)
 
             self._texture = Image(format_, width, height,
                                   format_=format_, type_=type_,

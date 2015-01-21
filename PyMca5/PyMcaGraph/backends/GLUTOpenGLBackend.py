@@ -74,7 +74,7 @@ class GLUTOpenGLBackend(OpenGLPlotCanvas):
         glutMotionFunc(self.glutMouseMoved)
         glutPassiveMotionFunc(self.glutMouseMoved)
 
-    def updateGL(self):
+    def postRedisplay(self):
         glutPostRedisplay()
 
     def setCursor(self, cursor=CURSOR_DEFAULT):
@@ -128,6 +128,6 @@ if __name__ == "__main__":
     w.insertMarker(1000, 500, 'testXY', 'markerPt', color='black',
                    selectable=False, draggable=True)
     w.insertMarker(100, 500, 'testS', 'markerSelect', color='black',
-            selectable=True, draggable=False)
+                   selectable=True, draggable=False)
 
     sys.exit(glutMainLoop())

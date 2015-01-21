@@ -44,7 +44,6 @@ from collections import defaultdict
 from .GLContext import getGLContext
 from .GLSupport import Program, buildFillMaskIndices
 from .GLVertexBuffer import createVBOFromArrays, VBOAttrib
-from .GLVertexBuffer import convertNumpyToGLType
 
 try:
     from ....ctools import minMax
@@ -144,7 +143,7 @@ class _Fill2D(object):
     def prepare(self):
         if self._indices is None:
             self._indices = buildFillMaskIndices(self.xFillVboData.size)
-            self._indicesType = convertNumpyToGLType(self._indices.dtype)
+            self._indicesType = numpyToGLType(self._indices.dtype)
 
         if self._bboxVertices is None:
             yMin, yMax = min(self.yMin, 1e-32), max(self.yMax, 1e-32)
@@ -360,13 +359,13 @@ class _Lines2D(object):
 
     @width.setter
     def width(self, width):
-        try:
-            widthRange = self._widthRange
-        except AttributeError:
-            widthRange = glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE)
-            # Shared among contexts, this should be enough..
-            _Lines2D._widthRange = widthRange
-        assert width >= widthRange[0] and width <= widthRange[1]
+        # try:
+        #    widthRange = self._widthRange
+        # except AttributeError:
+        #    widthRange = glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE)
+        #    # Shared among contexts, this should be enough..
+        #    _Lines2D._widthRange = widthRange
+        # assert width >= widthRange[0] and width <= widthRange[1]
         self._width = width
 
     @classmethod
@@ -635,13 +634,13 @@ class _Points2D(object):
 
     @size.setter
     def size(self, size):
-        try:
-            sizeRange = self._sizeRange
-        except AttributeError:
-            sizeRange = glGetFloatv(GL_POINT_SIZE_RANGE)
-            # Shared among contexts, this should be enough..
-            _Points2D._sizeRange = sizeRange
-        assert size >= sizeRange[0] and size <= sizeRange[1]
+        # try:
+        #    sizeRange = self._sizeRange
+        # except AttributeError:
+        #    sizeRange = glGetFloatv(GL_POINT_SIZE_RANGE)
+        #    # Shared among contexts, this should be enough..
+        #    _Points2D._sizeRange = sizeRange
+        # assert size >= sizeRange[0] and size <= sizeRange[1]
         self._size = size
 
     @classmethod

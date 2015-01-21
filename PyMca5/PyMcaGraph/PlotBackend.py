@@ -392,13 +392,20 @@ class PlotBackend(object):
         print("PlotBackend getGraphXLabel not implemented")
         return "X"
 
-    def getGraphYLimits(self):
+    def getGraphYLimits(self, axis="left"):
         """
         Get the graph Y (left) limits.
+
+        :param axis: The axis for which to get the limits
+        :type axis: str, either "left" (default) or "right"
         :return:  Minimum and maximum values of the Y axis
         """
         print("Get the graph Y (left) limits")
-        return self._yMin, self._yMax
+        assert axis in ("left", "right")
+        if axis == "left":
+            return self._yMin, self._yMax
+        else:
+            return self._yRightMin, self._yRightMax
 
     def getGraphYLabel(self):
         """
@@ -705,15 +712,22 @@ class PlotBackend(object):
         """
         print("PlotBackend setGraphYLabel not implemented")
 
-    def setGraphYLimits(self, ymin, ymax):
+    def setGraphYLimits(self, ymin, ymax, axis="left"):
         """
         :param ymin: minimum left axis value
         :type ymin: float
         :param ymax: maximum left axis value
         :type ymax: float
+        :param axis: The axis for which to set the limits
+        :type axis: str, either "left" (default) or "right"
         """
-        self._yMin = ymin
-        self._yMax = ymax
+        assert axis in ("left", "right")
+        if axis == "left":
+            self._yMin = ymin
+            self._yMax = ymax
+        else:
+            self._yRightMin = ymin
+            self._yRightMax = ymax
         print("PlotBackend setGraphYLimits not implemented")
 
     def setLimits(self, xmin, xmax, ymin, ymax):

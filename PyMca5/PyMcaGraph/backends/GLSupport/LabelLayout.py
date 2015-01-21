@@ -31,7 +31,7 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-This module implements labels layout on graph axes
+This module implements labels layout on graph axes.
 """
 
 
@@ -67,7 +67,7 @@ def _niceNum(value, isRound=False):
 
 
 def niceNumbers(vMin, vMax, nTicks=5):
-    """Returns tick positions
+    """Returns tick positions.
 
     This function implements graph labels layout using nice numbers
     by Paul Heckbert from "Graphics Gems", Academic Press, 1990.
@@ -77,7 +77,7 @@ def niceNumbers(vMin, vMax, nTicks=5):
     :param float vMax: The max value on the axis
     :param int nTicks: The number of ticks to position
     :returns: min, max, increment value of tick positions and
-    number of fractional digit to show
+              number of fractional digit to show
     :rtype: tuple
     """
     vRange = _niceNum(vMax - vMin, False)

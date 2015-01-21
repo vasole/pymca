@@ -37,29 +37,36 @@ OpenGL/Qt backend
 
 # import ######################################################################
 
+from collections import namedtuple
+import math
+import numpy as np
+import time
+import warnings
+import sys
+if sys.version_info[0] == 3:
+    import queue
+else:
+    import Queue as queue
+
 try:
     from PyMca5.PyMcaGui import PyMcaQt as qt
     QGLWidget = qt.QGLWidget
     QGLContext = qt.QGLContext
+    pyqtSignal = qt.pyqtSignal
 except ImportError:
     try:
+        from PyQt4.QtCore import pyqtSignal
         from PyQt4.QtOpenGL import QGLWidget, QGLContext
     except ImportError:
+        from PyQt5.QtCore import pyqtSignal
         from PyQt5.QtOpenGL import QGLWidget, QGLContext
-
-import numpy as np
-import math
-import time
-import warnings
-from collections import namedtuple
-
-from .GLSupport.gl import *  # noqa
 
 try:
     from ..PlotBackend import PlotBackend
 except ImportError:
     from PyMca5.PyMcaGraph.PlotBackend import PlotBackend
 
+from .GLSupport.gl import *  # noqa
 from .GLSupport import *  # noqa
 
 
@@ -111,27 +118,45 @@ class MiniOrderedDict(object):
 
 # Bounds ######################################################################
 
-class Bounds(namedtuple('Bounds', ('xMin', 'xMax', 'yMin', 'yMax'))):
-    """Describes rectangular bounds"""
+class Range(namedtuple('Range', ('min_', 'max_'))):
+    """Describes a 1D range"""
 
     @property
-    def width(self):
-        return self.xMax - self.xMin
+    def range_(self):
+        return self.max_ - self.min_
 
     @property
-    def height(self):
-        return self.yMax - self.yMin
+    def center(self):
+        return 0.5 * (self.min_ + self.max_)
+
+
+class Bounds(object):
+    """Describes plot bounds with 2 y axis"""
+
+    def __init__(self, xMin, xMax, yMin, yMax, y2Min, y2Max):
+        self._xAxis = Range(xMin, xMax)
+        self._yAxis = Range(yMin, yMax)
+        self._y2Axis = Range(y2Min, y2Max)
+
+    def __repr__(self):
+        return "x: %s, y: %s, y2: %s" % (repr(self._xAxis),
+                                         repr(self._yAxis),
+                                         repr(self._y2Axis))
 
     @property
-    def xCenter(self):
-        return 0.5 * (self.xMin + self.xMax)
+    def xAxis(self):
+        return self._xAxis
 
     @property
-    def yCenter(self):
-        return 0.5 * (self.yMin + self.yMax)
+    def yAxis(self):
+        return self._yAxis
+
+    @property
+    def y2Axis(self):
+        return self._y2Axis
 
 
-# PNG writer ##################################################################
+# Image writer ################################################################
 
 def convertRGBDataToPNG(data):
     """Convert a RGB bitmap to PNG.
@@ -140,7 +165,7 @@ def convertRGBDataToPNG(data):
     See `Definitive Guide <http://www.libpng.org/pub/png/book/>`_ and
     `Specification <http://www.libpng.org/pub/png/spec/1.2/>`_ for details.
 
-    :param data: An array with 3 dimensions (h, w, rgb) storing the RGB image
+    :param data: A 3D array (h, w, rgb) storing an RGB image
     :type data: numpy.ndarray of unsigned bytes
     :returns: The PNG encoded data
     :rtype: bytes
@@ -180,6 +205,60 @@ def convertRGBDataToPNG(data):
     # IEND chunk: footer
     pngData.append(b'\x00\x00\x00\x00IEND\xaeB`\x82')
     return b''.join(pngData)
+
+
+def saveImageToFile(data, fileName, fileFormat):
+    """Save a RGB image to a file.
+
+    :param data: A 3D array (h, w, 3) storing an RGB image
+    :type data: numpy.ndarray with of unsigned bytes
+    :param str fileName: The fileName where to write the image
+    :param str fileType: The type of the file in: 'png', 'ppm', 'svg', 'tiff'
+    """
+    assert len(data.shape) == 3
+    assert data.shape[2] == 3
+    assert fileFormat in ('png', 'ppm', 'svg', 'tiff')
+
+    if fileFormat == 'svg':
+        import base64
+
+        height, width = data.shape[:2]
+        base64Data = base64.b64encode(convertRGBDataToPNG(data))
+
+        with open(fileName, 'w') as f:
+            f.write('<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
+            f.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
+            f.write('  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
+            f.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
+            f.write('     xmlns="http://www.w3.org/2000/svg"\n')
+            f.write('     version="1.1"\n')
+            f.write('     width="%d"\n' % width)
+            f.write('     height="%d">\n' % height)
+            f.write('    <image xlink:href="data:image/png;base64,')
+            f.write(base64Data.decode('ascii'))
+            f.write('"\n')
+            f.write('           x="0"\n')
+            f.write('           y="0"\n')
+            f.write('           width="%d"\n' % width)
+            f.write('           height="%d"\n' % height)
+            f.write('           id="image" />\n')
+            f.write('</svg>')
+
+    elif fileFormat == 'ppm':
+        with open(fileName, 'w') as f:
+            f.write('P6\n')
+            f.write('%d %d\n' % (self.winWidth, self.winHeight))
+            f.write('255\n')
+            f.write(data.tostring())
+
+    elif fileFormat == 'png':
+        with open(fileName, 'wb') as f:
+            f.write(convertRGBDataToPNG(data))
+
+    elif fileFormat == 'tiff':
+        from PyMca5.PyMcaIO.TiffIO import TiffIO
+        tif = TiffIO(fileName, mode='wb+')
+        tif.writeImage(data, info={'Title': 'PyMCA GL Snapshot'})
 
 
 # shaders #####################################################################
@@ -401,27 +480,53 @@ class Zoom(ClickOrDrag):
         }
         StateMachine.__init__(self, states, 'idle')
 
-    def _ensureAspectRatio(self, x0, y0, x1, y1):
+    # Selection area constrained by aspect ratio
+    # def _ensureAspectRatio(self, x0, y0, x1, y1):
+    #    plotW, plotH = self.backend.plotSizeInPixels()
+    #    try:
+    #        plotRatio = plotW / float(plotH)
+    #    except ZeroDivisionError:
+    #        pass
+    #    else:
+    #        width, height = math.fabs(x1 - x0), math.fabs(y1 - y0)
+    #
+    #        try:
+    #            selectRatio = width / height
+    #        except ZeroDivisionError:
+    #            width, height = 1., 1.
+    #        else:
+    #            if selectRatio < plotRatio:
+    #                height = width / plotRatio
+    #            else:
+    #                width = height * plotRatio
+    #        x1 = x0 + np.sign(x1 - x0) * width
+    #        y1 = y0 + np.sign(y1 - y0) * height
+    #    return x1, y1
+
+    def _areaWithAspectRatio(self, x0, y0, x1, y1):
         plotW, plotH = self.backend.plotSizeInPixels()
-        try:
+
+        if plotH != 0.:
             plotRatio = plotW / float(plotH)
-        except ZeroDivisionError:
-            pass
-        else:
             width, height = math.fabs(x1 - x0), math.fabs(y1 - y0)
 
-            try:
-                selectRatio = width / height
-            except ZeroDivisionError:
-                width, height = 1., 1.
+            if height == 0. or width == 0.:
+                areaX0, areaY0, areaX1, areaY1 = x0, y0, x1, y1
             else:
-                if selectRatio < plotRatio:
-                    height = width / plotRatio
+                if width / height > plotRatio:
+                    areaHeight = width / plotRatio
+                    areaX0, areaX1 = x0, x1
+                    center = 0.5 * (y0 + y1)
+                    areaY0 = center - np.sign(y1 - y0) * 0.5 * areaHeight
+                    areaY1 = center + np.sign(y1 - y0) * 0.5 * areaHeight
                 else:
-                    width = height * plotRatio
-            x1 = x0 + np.sign(x1 - x0) * width
-            y1 = y0 + np.sign(y1 - y0) * height
-        return x1, y1
+                    areaWidth = height * plotRatio
+                    areaY0, areaY1 = y0, y1
+                    center = 0.5 * (x0 + x1)
+                    areaX0 = center - np.sign(x1 - x0) * 0.5 * areaWidth
+                    areaX1 = center + np.sign(x1 - x0) * 0.5 * areaWidth
+
+        return areaX0, areaY0, areaX1, areaY1
 
     def click(self, x, y, btn):
         if btn == LEFT_BTN:
@@ -449,11 +554,12 @@ class Zoom(ClickOrDrag):
             # Zoom-in centered on mouse cursor
             # xMin, xMax = self.backend.getGraphXLimits()
             # yMin, yMax = self.backend.getGraphYLimits()
-            # self.zoomStack.append((xMin, xMax, yMin, yMax))
+            # y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
+            # self.zoomStack.append((xMin, xMax, yMin, yMax, y2Min, y2Max))
             # self._zoom(x, y, 2)
         elif btn == RIGHT_BTN:
             try:
-                xMin, xMax, yMin, yMax = self.zoomStack.pop()
+                xMin, xMax, yMin, yMax, y2Min, y2Max = self.zoomStack.pop()
             except IndexError:
                 # Signal mouse clicked event
                 xData, yData = self.backend.pixelToDataCoords(x, y)
@@ -463,7 +569,7 @@ class Zoom(ClickOrDrag):
                                                x, y)
                 self.backend._callback(eventDict)
             else:
-                self.backend.setLimits(xMin, xMax, yMin, yMax)
+                self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
             self.backend.replot()
 
     def beginDrag(self, x, y):
@@ -471,13 +577,30 @@ class Zoom(ClickOrDrag):
 
     def drag(self, x1, y1):
         x1, y1 = self.backend.pixelToDataCoords(x1, y1)
-        if self.backend.isKeepDataAspectRatio():
-            x1, y1 = self._ensureAspectRatio(self.x0, self.y0, x1, y1)
 
-        self.backend.setSelectionArea(((self.x0, self.y0),
-                                       (self.x0, y1),
-                                       (x1, y1),
-                                       (x1, self.y0)),
+        # Selection area constrained by aspect ratio
+        # if self.backend.isKeepDataAspectRatio():
+        #    x1, y1 = self._ensureAspectRatio(self.x0, self.y0, x1, y1)
+
+        if self.backend.isKeepDataAspectRatio():
+            area = self._areaWithAspectRatio(self.x0, self.y0, x1, y1)
+            areaX0, areaY0, areaX1, areaY1 = area
+            areaPoints = ((areaX0, areaY0),
+                          (areaX1, areaY0),
+                          (areaX1, areaY1),
+                          (areaX0, areaY1))
+            areaColor = list(self.color)
+            areaColor[3] *= 0.25
+            self.backend.setSelectionArea(areaPoints,
+                                          fill=None,
+                                          color=areaColor,
+                                          name="zoomedArea")
+
+        points = ((self.x0, self.y0),
+                  (self.x0, y1),
+                  (x1, y1),
+                  (x1, self.y0))
+        self.backend.setSelectionArea(points,
                                       fill=None,
                                       color=self.color)
         self.backend.replot()
@@ -485,44 +608,71 @@ class Zoom(ClickOrDrag):
     def endDrag(self, startPos, endPos):
         xMin, xMax = self.backend.getGraphXLimits()
         yMin, yMax = self.backend.getGraphYLimits()
-        self.zoomStack.append((xMin, xMax, yMin, yMax))
+        y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
+        self.zoomStack.append((xMin, xMax, yMin, yMax, y2Min, y2Max))
 
         x0, y0 = self.backend.pixelToDataCoords(*startPos)
+        y2_0 = self.backend.pixelToDataCoords(yPixel=startPos[1], axis="right")
         x1, y1 = self.backend.pixelToDataCoords(*endPos)
-        if self.backend.isKeepDataAspectRatio():
-            x1, y1 = self._ensureAspectRatio(x0, y0, x1, y1)
+        y2_1 = self.backend.pixelToDataCoords(yPixel=endPos[1], axis="right")
+
+        # Selection area constrained by aspect ratio
+        # if self.backend.isKeepDataAspectRatio():
+        #     x1, y1 = self._ensureAspectRatio(x0, y0, x1, y1)
+
         xMin, xMax = min(x0, x1), max(x0, x1)
         yMin, yMax = min(y0, y1), max(y0, y1)
-        if xMin != xMax and yMin != yMax:  # Avoid null zoom area
-            self.backend.setLimits(xMin, xMax, yMin, yMax)
+        y2Min, y2Max = min(y2_0, y2_1), max(y2_0, y2_1)
 
-        self.backend.setSelectionArea()
+        if xMin != xMax and yMin != yMax and y2Min != y2Max:
+            # Avoid null zoom area
+            self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
+
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
+    def _newZoomRange(self, min_, max_, center, scale, isLog):
+        if isLog:
+            center = math.log10(center)
+            oldMin, oldMax = math.log10(min_), math.log10(max_)
+        else:
+            oldMin, oldMax = min_, max_
+
+        offset = (center - oldMin) / (oldMax - oldMin)
+        range_ = (oldMax - oldMin) / scale
+        newMin = center - offset * range_
+        newMax = center + (1. - offset) * range_
+        if isLog:
+            try:
+                newMin, newMax = 10. ** newMin, 10. ** newMax
+            except OverflowError:  # Limit case
+                newMin, newMax = min_, max_
+            if newMin <= 0. or newMax <= 0.:  # Limit case
+                newMin, newMax = min_, max_
+        return newMin, newMax
+
     def _zoom(self, cx, cy, scaleF):
-        if self.backend.isXAxisLogaritmic() or \
-           self.backend.isYAxisLogaritmic():
-            return  # In case of logarithmic scale, not wheel support
-
-        xCenter, yCenter = self.backend.pixelToDataCoords(cx, cy)
-
+        xCenter = self.backend.pixelToDataCoords(xPixel=cx)
         xMin, xMax = self.backend.getGraphXLimits()
-        xOffset = (xCenter - xMin)/(xMax - xMin)
-        xRange = (xMax - xMin) / scaleF
+        xMin, xMax = self._newZoomRange(xMin, xMax, xCenter, scaleF,
+                                        self.backend.isXAxisLogaritmic())
 
+        yCenter = self.backend.pixelToDataCoords(yPixel=cy)
         yMin, yMax = self.backend.getGraphYLimits()
-        yOffset = (yCenter - yMin)/(yMax - yMin)
-        yRange = (yMax - yMin) / scaleF
+        yMin, yMax = self._newZoomRange(yMin, yMax, yCenter, scaleF,
+                                        self.backend.isYAxisLogaritmic())
 
-        self.backend.setLimits(xCenter - xOffset * xRange,
-                               xCenter + (1. - xOffset) * xRange,
-                               yCenter - yOffset * yRange,
-                               yCenter + (1. - yOffset) * yRange)
+        y2Center = self.backend.pixelToDataCoords(yPixel=cy, axis="right")
+        y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
+        y2Min, y2Max = self._newZoomRange(y2Min, y2Max, y2Center, scaleF,
+                                          self.backend.isYAxisLogaritmic())
+
+        self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
         self.backend.replot()
 
     def cancel(self):
         if isinstance(self.state, self.states['drag']):
-            self.backend.setSelectionArea()
+            self.backend.resetSelectionArea()
             self.backend.replot()
 
 
@@ -548,6 +698,7 @@ class SelectPolygon(StateMachine, Select):
 
         def updateSelectionArea(self):
             self.machine.backend.setSelectionArea(self.points,
+                                                  fill='hatch',
                                                   color=self.machine.color)
             self.machine.backend.replot()
             eventDict = prepareDrawingSignal('drawingProgress',
@@ -572,7 +723,7 @@ class SelectPolygon(StateMachine, Select):
 
         def onPress(self, x, y, btn):
             if btn == RIGHT_BTN:
-                self.machine.backend.setSelectionArea()
+                self.machine.backend.resetSelectionArea()
                 self.machine.backend.replot()
 
                 x, y = self.machine.backend.pixelToDataCoords(x, y)
@@ -599,7 +750,7 @@ class SelectPolygon(StateMachine, Select):
 
     def cancel(self):
         if isinstance(self.state, self.states['select']):
-            self.backend.setSelectionArea()
+            self.backend.resetSelectionArea()
             self.backend.replot()
 
 
@@ -671,6 +822,7 @@ class SelectRectangle(Select2Points):
                                       (self.startPt[0], y),
                                       (x, y),
                                       (x, self.startPt[1])),
+                                      fill='hatch',
                                       color=self.color)
         self.backend.replot()
 
@@ -681,7 +833,7 @@ class SelectRectangle(Select2Points):
         self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
         x, y = self.backend.pixelToDataCoords(x, y)
@@ -692,7 +844,7 @@ class SelectRectangle(Select2Points):
         self.backend._callback(eventDict)
 
     def cancelSelect(self):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
 
@@ -703,6 +855,7 @@ class SelectLine(Select2Points):
     def select(self, x, y):
         x, y = self.backend.pixelToDataCoords(x, y)
         self.backend.setSelectionArea((self.startPt, (x, y)),
+                                      fill='hatch',
                                       color=self.color)
         self.backend.replot()
 
@@ -713,7 +866,7 @@ class SelectLine(Select2Points):
         self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
         x, y = self.backend.pixelToDataCoords(x, y)
@@ -724,7 +877,7 @@ class SelectLine(Select2Points):
         self.backend._callback(eventDict)
 
     def cancelSelect(self):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
 
@@ -778,7 +931,7 @@ class SelectHLine(Select1Point):
 
     def select(self, x, y):
         points = self._hLine(y)
-        self.backend.setSelectionArea(points, color=self.color)
+        self.backend.setSelectionArea(points, fill='hatch', color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -788,7 +941,7 @@ class SelectHLine(Select1Point):
         self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingFinished',
@@ -798,7 +951,7 @@ class SelectHLine(Select1Point):
         self.backend._callback(eventDict)
 
     def cancelSelect(self):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
 
@@ -810,7 +963,7 @@ class SelectVLine(Select1Point):
 
     def select(self, x, y):
         points = self._vLine(x)
-        self.backend.setSelectionArea(points, color=self.color)
+        self.backend.setSelectionArea(points, fill='hatch', color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
@@ -820,7 +973,7 @@ class SelectVLine(Select1Point):
         self.backend._callback(eventDict)
 
     def endSelect(self, x, y):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingFinished',
@@ -830,7 +983,7 @@ class SelectVLine(Select1Point):
         self.backend._callback(eventDict)
 
     def cancelSelect(self):
-        self.backend.setSelectionArea()
+        self.backend.resetSelectionArea()
         self.backend.replot()
 
 
@@ -1125,10 +1278,21 @@ class ZoomAndSelect(FocusManager):
 
 
 class OpenGLPlotCanvas(PlotBackend):
+    """Implements PlotBackend API using OpenGL.
+
+    WARNINGS:
+    Unless stated otherwise, this API is NOT thread-safe and MUST be
+    called from the main thread.
+    When numpy arrays are passed as arguments to the API (through
+    :func:`addCurve` and :func:`addImage`), they are copied only if
+    required.
+    So, the caller should not modify these arrays afterwards.
+    """
+
     _PICK_OFFSET = 3
 
     def __init__(self, parent=None, **kw):
-        self._plotDataBounds = Bounds(1., 100., 1., 100.)
+        self._plotDataBounds = Bounds(1., 100., 1., 100., 1., 100.)
         self._keepDataAspectRatio = False
         self._isYInverted = False
         self._title = ''
@@ -1148,7 +1312,9 @@ class OpenGLPlotCanvas(PlotBackend):
         self._items = MiniOrderedDict()
         self._zOrderedItems = MiniOrderedDict()  # For images and curves
         self._labels = []
-        self._selectionArea = None
+        self._selectionAreas = MiniOrderedDict()
+        self._glGarbageCollector = []
+        self._graphsToSave = queue.Queue()
 
         self._margins = {'left': 100, 'right': 50, 'top': 50, 'bottom': 50}
         self._lineWidth = 1
@@ -1156,6 +1322,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._axisDirtyFlag = True
         self._plotDirtyFlag = True
+
+        self._hasRightYAxis = set()
 
         self._mousePosition = 0, 0
         self.eventHandler = ZoomAndSelect(self, (0., 0., 0., 1.))
@@ -1166,16 +1334,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Link with embedding toolkit #
 
-    def updateGL(self):
+    def postRedisplay(self):
         raise NotImplementedError("This method must be provided by \
                                   subclass to trigger redraw")
-
-    def makeCurrent(self):
-        """Override this method in subclass to support multiple
-        OpenGL context, making the context associated to this plot
-        the current OpenGL context
-        """
-        pass
 
     def setCursor(self, cursor=CURSOR_DEFAULT):
         """Override this method in subclass to enable cursor shape changes
@@ -1197,17 +1358,22 @@ class OpenGLPlotCanvas(PlotBackend):
             self.eventHandler.handleEvent('press', xPixel, yPixel, btn)
 
     def onMouseMove(self, xPixel, yPixel):
-        # Signal mouse move event
-        xData, yData = self.pixelToDataCoords(xPixel, yPixel)
-        if xData is not None and yData is not None:
+        inXPixel, inYPixel = self._mouseInPlotArea(xPixel, yPixel)
+        isCursorInPlot = inXPixel == xPixel and inYPixel == yPixel
+
+        if isCursorInPlot:
+            # Signal mouse move event
+            xData, yData = self.pixelToDataCoords(inXPixel, inYPixel)
+            assert xData is not None
+            assert yData is not None
             eventDict = prepareMouseSignal('mouseMoved', None,
                                            xData, yData,
                                            xPixel, yPixel)
             self._callback(eventDict)
 
-        if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
-            self._mousePosition = xPixel, yPixel
-            self.eventHandler.handleEvent('move', xPixel, yPixel)
+        # Either button was pressed in the plot or cursor is in the plot
+        if isCursorInPlot or self._plotHasFocus:
+            self.eventHandler.handleEvent('move', inXPixel, inYPixel)
 
     def onMouseRelease(self, xPixel, yPixel, btn):
         try:
@@ -1215,8 +1381,7 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
-            # Use position of last move inside
-            xPixel, yPixel = self._mousePosition
+            xPixel, yPixel = self._mouseInPlotArea(xPixel, yPixel)
             self.eventHandler.handleEvent('release', xPixel, yPixel, btn)
 
     def onMouseWheel(self, xPixel, yPixel, angleInDegrees):
@@ -1267,10 +1432,13 @@ class OpenGLPlotCanvas(PlotBackend):
                     if item.lineStyle is not None:
                         offset = max(item.lineWidth / 2., offset)
 
+                    yAxis = item.info['yaxis']
                     xPick0, yPick0 = self.pixelToDataCoords(x - offset,
-                                                            y - offset)
+                                                            y - offset,
+                                                            axis=yAxis)
                     xPick1, yPick1 = self.pixelToDataCoords(x + offset,
-                                                            y + offset)
+                                                            y + offset,
+                                                            axis=yAxis)
 
                     if xPick0 < xPick1:
                         xPickMin, xPickMax = xPick0, xPick1
@@ -1290,24 +1458,43 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Manage Plot #
 
-    def setSelectionArea(self, points=None, fill='hatch', color=None):
-        if points:
-            if color is None:
-                color = (0., 0., 0., 1.)
-            self._selectionArea = Shape2D(points, fill=fill,
-                                          fillColor=color,
-                                          stroke=True,
-                                          strokeColor=color)
-        else:
-            self._selectionArea = None
+    def setSelectionArea(self, points, fill=None, color=None, name=None):
+        """Set a polygon selection area overlaid on the plot.
+        Multiple simultaneous areas are supported through the name parameter.
+
+        :param points: The 2D coordinates of the points of the polygon
+        :type points: An iterable of (x, y) coordinates
+        :param str fill: The fill mode: 'hatch', 'solid' or None (default)
+        :param color: RGBA color to use (default: black)
+        :type color: list or tuple of 4 float in the range [0, 1]
+        :param name: The key associated with this selection area
+        """
+        if color is None:
+            color = (0., 0., 0., 1.)
+        self._selectionAreas[name] = Shape2D(points, fill=fill,
+                                             fillColor=color,
+                                             stroke=True,
+                                             strokeColor=color)
+
+    def resetSelectionArea(self, name=None):
+        """Remove the name selection area set by setSelectionArea.
+        If name is None (the default), it removes all selection areas.
+
+        :param name: The name key provided to setSelectionArea or None
+        """
+        if name is None:
+            self._selectionAreas = MiniOrderedDict()
+        elif name in self._selectionAreas:
+            del self._selectionAreas[name]
 
     def updateAxis(self):
         self._axisDirtyFlag = True
         self._plotDirtyFlag = True
 
     def _axesTicksAndLabels(self):
-        trXMin, trXMax, trYMin, trYMax = self.plotDataTransformedBounds
-        dataXMin, dataXMax, dataYMin, dataYMax = self.plotDataBounds
+        trXMin, trXMax = self.plotDataTransformedBounds.xAxis
+        trYMin, trYMax = self.plotDataTransformedBounds.yAxis
+        trY2Min, trY2Max = self.plotDataTransformedBounds.y2Axis
 
         vertices = []
         labels = []
@@ -1408,14 +1595,63 @@ class OpenGLPlotCanvas(PlotBackend):
                                              align=RIGHT,
                                              valign=CENTER))
 
+        if self._hasRightYAxis and trY2Min != trY2Max:
+            plotRight = self.winWidth - self._margins['right']
+
+            if self._isYLog:
+                y2Min, y2Max, y2Step = niceNumbersForLog10(trY2Min, trY2Max)
+
+                for y2DataLog in _ticks(y2Min, y2Max, y2Step):
+                    if y2DataLog >= trY2Min and y2DataLog <= trY2Max:
+                        y2Pixel = self.dataToPixelCoords(yData=10 ** y2DataLog,
+                                                         axis="right")
+
+                        vertices.append((self._margins['left'], y2Pixel))
+                        vertices.append((self._margins['left'] + self._tickLen,
+                                         y2Pixel))
+                        vertices.append((plotRight, y2Pixel))
+                        vertices.append((plotRight - self._tickLen, y2Pixel))
+
+                        text = '1e{0:+03d}'.format(y2DataLog)
+                        labels.append(Text2D(text=text,
+                                             x=plotRight + self._tickLen,
+                                             y=y2Pixel,
+                                             align=LEFT,
+                                             valign=CENTER))
+
+            else:  # linear scale
+                y2Min, y2Max, y2Step, y2NbFrac = niceNumbers(trY2Min, trY2Max)
+
+                for y2Data in _ticks(y2Min, y2Max, y2Step):
+                    if y2Data >= trY2Min and y2Data <= trY2Max:
+                        y2Pixel = self.dataToPixelCoords(yData=y2Data,
+                                                         axis="right")
+
+                        vertices.append((self._margins['left'], y2Pixel))
+                        vertices.append((self._margins['left'] + self._tickLen,
+                                         y2Pixel))
+                        vertices.append((plotRight, y2Pixel))
+                        vertices.append((plotRight - self._tickLen, y2Pixel))
+
+                        if y2NbFrac == 0:
+                            text = '{0:g}'.format(y2Data)
+                        else:
+                            text = ('%.' + str(y2NbFrac) + 'f') % y2Data
+
+                        labels.append(Text2D(text=text,
+                                             x=plotRight + self._tickLen,
+                                             y=y2Pixel,
+                                             align=LEFT,
+                                             valign=CENTER))
         nbMainTicks = len(vertices) // 4
 
         if trXMin != trXMax and self._isXLog and xStep == 1:
             for xDataLog in list(_ticks(xMin, xMax, xStep))[:-1]:
                 xDataOrig = 10 ** xDataLog
                 for index in range(2, 10):
+                    plotXMin, plotXMax = self.plotDataBounds.xAxis
                     xData = xDataOrig * index
-                    if xData >= dataXMin and xData <= dataXMax:
+                    if xData >= plotXMin and xData <= plotXMax:
                         xPixel = self.dataToPixelCoords(xData=xData)
 
                         vertices.append((xPixel, plotBottom))
@@ -1430,8 +1666,9 @@ class OpenGLPlotCanvas(PlotBackend):
             for yDataLog in list(_ticks(yMin, yMax, yStep))[:-1]:
                 yDataOrig = 10 ** yDataLog
                 for index in range(2, 10):
+                    plotYMin, plotYMax = self.plotDataBounds.yAxis
                     yData = yDataOrig * index
-                    if yData >= dataYMin and yData <= dataYMax:
+                    if yData >= plotYMin and yData <= plotYMax:
                         yPixel = self.dataToPixelCoords(yData=yData)
 
                         vertices.append((self._margins['left'], yPixel))
@@ -1440,6 +1677,24 @@ class OpenGLPlotCanvas(PlotBackend):
                         vertices.append((plotRight, yPixel))
                         vertices.append((plotRight - 0.5 * self._tickLen,
                                          yPixel))
+
+        if (self._hasRightYAxis and trY2Min != trY2Max and
+                self._isYLog and y2Step == 1):
+            for y2DataLog in list(_ticks(y2Min, y2Max, y2Step))[:-1]:
+                y2DataOrig = 10 ** y2DataLog
+                for index in range(2, 10):
+                    plotY2Min, plotY2Max = self.plotDataBounds.y2Axis
+                    y2Data = y2DataOrig * index
+                    if y2Data >= plotY2Min and y2Data <= plotY2Max:
+                        y2Pixel = self.dataToPixelCoords(yData=y2Data,
+                                                         axis="right")
+
+                        vertices.append((self._margins['left'], y2Pixel))
+                        vertices.append((self._margins['left'] +
+                                         0.5 * self._tickLen, y2Pixel))
+                        vertices.append((plotRight, y2Pixel))
+                        vertices.append((plotRight - 0.5 * self._tickLen,
+                                         y2Pixel))
 
         return vertices, labels, nbMainTicks
 
@@ -1519,22 +1774,32 @@ class OpenGLPlotCanvas(PlotBackend):
         except AttributeError:
             xMin, xMax = float('inf'), -float('inf')
             yMin, yMax = float('inf'), -float('inf')
+            y2Min, y2Max = float('inf'), -float('inf')
             for item in self._zOrderedItems.values():
                 if item.xMin < xMin:
                     xMin = item.xMin
                 if item.xMax > xMax:
                     xMax = item.xMax
-                if item.yMin < yMin:
-                    yMin = item.yMin
-                if item.yMax > yMax:
-                    yMax = item.yMax
+
+                if item.info.get('yaxis') == 'right':
+                    if item.yMin < y2Min:
+                        y2Min = item.yMin
+                    if item.yMax > y2Max:
+                        y2Max = item.yMax
+                else:
+                    if item.yMin < yMin:
+                        yMin = item.yMin
+                    if item.yMax > yMax:
+                        yMax = item.yMax
 
             if xMin >= xMax:
                 xMin, xMax = 1., 100.
             if yMin >= yMax:
                 yMin, yMax = 1., 100.
+            if y2Min >= y2Max:
+                y2Min, y2Max = 1., 100.
 
-            self._dataBounds = Bounds(xMin, xMax, yMin, yMax)
+            self._dataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
             return self._dataBounds
 
     def _dirtyDataBounds(self):
@@ -1552,10 +1817,11 @@ class OpenGLPlotCanvas(PlotBackend):
     @plotDataBounds.setter
     def plotDataBounds(self, bounds):
         if bounds != self.plotDataBounds:
-            if self._isXLog and bounds.xMin <= 0.:
+            if self._isXLog and bounds.xAxis.min_ <= 0.:
                 raise RuntimeError(
                     'Cannot use plot area with X <= 0 with X axis log scale')
-            if self._isYLog and bounds.yMin <= 0.:
+            if self._isYLog and (bounds.yAxis.min_ <= 0. or
+                                 bounds.y2Axis.min_ <= 0.):
                 raise RuntimeError(
                     'Cannot use plot area with Y <= 0 with Y axis log scale')
             self._plotDataBounds = bounds
@@ -1574,7 +1840,10 @@ class OpenGLPlotCanvas(PlotBackend):
             if not self._isXLog and not self._isYLog:
                 self._plotDataTransformedBounds = self.plotDataBounds
             else:
-                xMin, xMax, yMin, yMax = self.plotDataBounds
+                xMin, xMax = self.plotDataBounds.xAxis
+                yMin, yMax = self.plotDataBounds.yAxis
+                y2Min, y2Max = self.plotDataBounds.y2Axis
+
                 if self._isXLog:
                     try:
                         xMin = math.log10(xMin)
@@ -1599,8 +1868,19 @@ class OpenGLPlotCanvas(PlotBackend):
                         print('yMax: warning log10({0})'.format(yMax))
                         yMax = 0.
 
+                    try:
+                        y2Min = math.log10(y2Min)
+                    except ValueError:
+                        print('yMin: warning log10({0})'.format(y2Min))
+                        y2Min = 0.
+                    try:
+                        y2Max = math.log10(y2Max)
+                    except ValueError:
+                        print('yMax: warning log10({0})'.format(y2Max))
+                        y2Max = 0.
+
                 self._plotDataTransformedBounds = \
-                    Bounds(xMin, xMax, yMin, yMax)
+                    Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
             return self._plotDataTransformedBounds
 
@@ -1618,7 +1898,9 @@ class OpenGLPlotCanvas(PlotBackend):
         try:
             return self._matrixPlotDataTransformedProj
         except AttributeError:
-            xMin, xMax, yMin, yMax = self.plotDataTransformedBounds
+            xMin, xMax = self.plotDataTransformedBounds.xAxis
+            yMin, yMax = self.plotDataTransformedBounds.yAxis
+
             if self._isYInverted:
                 self._matrixPlotDataTransformedProj = mat4Ortho(xMin, xMax,
                                                                 yMax, yMin,
@@ -1629,11 +1911,38 @@ class OpenGLPlotCanvas(PlotBackend):
                                                                 1, -1)
             return self._matrixPlotDataTransformedProj
 
+    @property
+    def matrixY2PlotDataTransformedProj(self):
+        """Orthographic projection matrix for rendering transformed data
+        for the 2nd Y axis
+
+        :type: numpy.matrix
+        """
+        try:
+            return self._matrixY2PlotDataTransformedProj
+        except AttributeError:
+            xMin, xMax = self.plotDataTransformedBounds.xAxis
+            y2Min, y2Max = self.plotDataTransformedBounds.y2Axis
+
+            if self._isYInverted:
+                self._matrixY2PlotDataTransformedProj = mat4Ortho(xMin, xMax,
+                                                                  y2Max, y2Min,
+                                                                  1, -1)
+            else:
+                self._matrixY2PlotDataTransformedProj = mat4Ortho(xMin, xMax,
+                                                                  y2Min, y2Max,
+                                                                  1, -1)
+            return self._matrixY2PlotDataTransformedProj
+
     def _dirtyMatrixPlotDataTransformedProj(self):
         if hasattr(self, '_matrixPlotDataTransformedProj'):
             del self._matrixPlotDataTransformedProj
+        if hasattr(self, '_matrixY2PlotDataTransformedProj'):
+            del self._matrixY2PlotDataTransformedProj
 
-    def dataToPixelCoords(self, xData=None, yData=None):
+    def dataToPixelCoords(self, xData=None, yData=None, axis="left"):
+        assert axis in ("left", "right")
+
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         trBounds = self.plotDataTransformedBounds
@@ -1648,7 +1957,8 @@ class OpenGLPlotCanvas(PlotBackend):
                     print('xData: warning log10({0})'.format(xData))
                     xData = 0.
             xPixel = int(self._margins['left'] +
-                         plotWidth * (xData - trBounds.xMin) / trBounds.width)
+                         plotWidth * (xData - trBounds.xAxis.min_) /
+                         trBounds.xAxis.range_)
 
         if yData is None:
             yPixel = None
@@ -1659,7 +1969,9 @@ class OpenGLPlotCanvas(PlotBackend):
                 else:
                     print('yData: warning log10({0})'.format(yData))
                     yData = 0.
-            yOffset = plotHeight * (yData - trBounds.yMin) / trBounds.height
+            usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
+            yOffset = plotHeight * (yData - usedAxis.min_) / usedAxis.range_
+
             if self._isYInverted:
                 yPixel = int(self._margins['top'] + yOffset)
             else:
@@ -1673,7 +1985,9 @@ class OpenGLPlotCanvas(PlotBackend):
         else:
             return xPixel, yPixel
 
-    def pixelToDataCoords(self, xPixel=None, yPixel=None):
+    def pixelToDataCoords(self, xPixel=None, yPixel=None, axis="left"):
+        assert axis in ("left", "right")
+
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         trBounds = self.plotDataTransformedBounds
@@ -1685,24 +1999,25 @@ class OpenGLPlotCanvas(PlotBackend):
             else:
                 xData = (xPixel - self._margins['left']) + 0.5
                 xData /= float(plotWidth)
-                xData = trBounds.xMin + xData * trBounds.width
+                xData = trBounds.xAxis.min_ + xData * trBounds.xAxis.range_
                 if self._isXLog:
                     xData = pow(10, xData)
 
         if yPixel is not None:
+            usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
             if yPixel < self._margins['top'] or \
                yPixel > self.winHeight - self._margins['bottom']:
                 yData = None
             elif self._isYInverted:
                 yData = yPixel - self._margins['top'] + 0.5
                 yData /= float(plotHeight)
-                yData = trBounds.yMin + yData * trBounds.height
+                yData = usedAxis.min_ + yData * usedAxis.range_
                 if self._isYLog:
                     yData = pow(10, yData)
             else:
                 yData = self.winHeight - self._margins['bottom'] - yPixel - 0.5
                 yData /= float(plotHeight)
-                yData = trBounds.yMin + yData * trBounds.height
+                yData = usedAxis.min_ + yData * usedAxis.range_
                 if self._isYLog:
                     yData = pow(10, yData)
 
@@ -1748,12 +2063,13 @@ class OpenGLPlotCanvas(PlotBackend):
         # Create texture program
         self._progTex = Program(_texVertShd, _texFragShd)
 
-    def _paintGLDirect(self):
-        self._renderPlotArea()
-        self._renderPlotFrame()
-        self._renderSelection()
+    def _paintDirectGL(self):
+        self._renderPlotAreaGL()
+        self._renderPlotFrameGL()
+        self._renderMarkersGL()
+        self._renderSelectionGL()
 
-    def _paintGLFBO(self):
+    def _paintFBOGL(self):
         if self._plotDirtyFlag or not hasattr(self, '_plotTex'):
             self._plotDirtyFlag = False
             self._plotVertices = np.array(((-1., -1., 0., 0.),
@@ -1774,8 +2090,8 @@ class OpenGLPlotCanvas(PlotBackend):
                                            wrapT=GL_CLAMP_TO_EDGE)
             with self._plotTex:
                 glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
-                self._renderPlotArea()
-                self._renderPlotFrame()
+                self._renderPlotAreaGL()
+                self._renderPlotFrameGL()
 
         # Render plot in screen coords
         glViewport(0, 0, self.winWidth, self.winHeight)
@@ -1808,10 +2124,15 @@ class OpenGLPlotCanvas(PlotBackend):
         glDrawArrays(GL_TRIANGLE_STRIP, 0, len(self._plotVertices))
         glBindTexture(GL_TEXTURE_2D, 0)
 
-        self._renderMarkers()
-        self._renderSelection()
+        self._renderMarkersGL()
+        self._renderSelectionGL()
 
     def paintGL(self):
+        # Release OpenGL resources
+        for item in self._glGarbageCollector:
+            item.discard()
+        self._glGarbageCollector = []
+
         glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
 
         # Check if window is large enough
@@ -1819,10 +2140,12 @@ class OpenGLPlotCanvas(PlotBackend):
         if plotWidth <= 2 or plotHeight <= 2:
             return
 
-        # self._paintGLDirect()
-        self._paintGLFBO()
+        # self._paintDirectGL()
+        self._paintFBOGL()
 
-    def _renderMarkers(self):
+        self._deferredSaveGraphGL()
+
+    def _renderMarkersGL(self):
         if len(self._markers) == 0:
             return
 
@@ -1833,7 +2156,7 @@ class OpenGLPlotCanvas(PlotBackend):
                   plotWidth, plotHeight)
         glEnable(GL_SCISSOR_TEST)
 
-        glViewport(self._margins['left'], self._margins['right'],
+        glViewport(self._margins['left'], self._margins['bottom'],
                    plotWidth, plotHeight)
 
         self._progBase.use()
@@ -1872,7 +2195,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
             glUniform4f(self._progBase.uniforms['color'], * marker['color'])
 
-            xMin, xMax, yMin, yMax = self.plotDataBounds
+            xMin, xMax = self.plotDataBounds.xAxis
+            yMin, yMax = self.plotDataBounds.yAxis
+
             if xCoord is None:
                 vertices = np.array(((xMin, yCoord),
                                      (xMax, yCoord)),
@@ -1907,9 +2232,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
         glDisable(GL_SCISSOR_TEST)
 
-    def _renderSelection(self):
+    def _renderSelectionGL(self):
         # Render selection area
-        if self._selectionArea is not None:
+        if self._selectionAreas:
             plotWidth, plotHeight = self.plotSizeInPixels()
 
             # Render in plot area
@@ -1917,7 +2242,7 @@ class OpenGLPlotCanvas(PlotBackend):
                       plotWidth, plotHeight)
             glEnable(GL_SCISSOR_TEST)
 
-            glViewport(self._margins['left'], self._margins['right'],
+            glViewport(self._margins['left'], self._margins['bottom'],
                        plotWidth, plotHeight)
 
             # Render fill
@@ -1930,11 +2255,12 @@ class OpenGLPlotCanvas(PlotBackend):
             posAttrib = self._progBase.attributes['position']
             colorUnif = self._progBase.uniforms['color']
             hatchStepUnif = self._progBase.uniforms['hatchStep']
-            self._selectionArea.render(posAttrib, colorUnif, hatchStepUnif)
+            for shape in self._selectionAreas.values():
+                shape.render(posAttrib, colorUnif, hatchStepUnif)
 
             glDisable(GL_SCISSOR_TEST)
 
-    def _renderPlotFrame(self):
+    def _renderPlotFrameGL(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         # Render plot in screen coords
@@ -1963,7 +2289,7 @@ class OpenGLPlotCanvas(PlotBackend):
         for label in self._labels:
             label.render(self.matScreenProj)
 
-    def _renderPlotArea(self):
+    def _renderPlotAreaGL(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         glScissor(self._margins['left'], self._margins['bottom'],
@@ -1986,6 +2312,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
             stride = 2 * self._frameVertices.shape[-1] * \
                 self._frameVertices.itemsize
+            glEnableVertexAttribArray(self._progBase.attributes['position'])
             glVertexAttribPointer(self._progBase.attributes['position'],
                                   2,
                                   GL_FLOAT,
@@ -2007,18 +2334,23 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # Matrix
         trBounds = self.plotDataTransformedBounds
-        if trBounds.xMin == trBounds.xMax or trBounds.yMin == trBounds.yMax:
+        if trBounds.xAxis.min_ == trBounds.xAxis.max_ or \
+           trBounds.yAxis.min_ == trBounds.yAxis.max_:
             return
 
-        glViewport(self._margins['left'], self._margins['right'],
+        glViewport(self._margins['left'], self._margins['bottom'],
                    plotWidth, plotHeight)
 
         # Render images and curves
         # sorted is stable: original order is preserved when key is the same
         for item in sorted(self._zOrderedItems.values(),
                            key=lambda item: item.info['zOrder']):
-            item.render(self.matrixPlotDataTransformedProj,
-                        self._isXLog, self._isYLog)
+            if item.info.get('yaxis') == 'right':
+                item.render(self.matrixY2PlotDataTransformedProj,
+                            self._isXLog, self._isYLog)
+            else:
+                item.render(self.matrixPlotDataTransformedProj,
+                            self._isXLog, self._isYLog)
 
         # Render Items
         self._progBase.use()
@@ -2051,8 +2383,11 @@ class OpenGLPlotCanvas(PlotBackend):
         self.matScreenProj = mat4Ortho(0, self.winWidth,
                                        self.winHeight, 0,
                                        1, -1)
-        xMin, xMax, yMin, yMax = self.plotDataBounds
-        self.setLimits(xMin, xMax, yMin, yMax)
+
+        xMin, xMax = self.plotDataBounds.xAxis
+        yMin, yMax = self.plotDataBounds.yAxis
+        y2Min, y2Max = self.plotDataBounds.y2Axis
+        self.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
         self.updateAxis()
         self.replot()
@@ -2119,9 +2454,9 @@ class OpenGLPlotCanvas(PlotBackend):
                  xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
                  colormap=None, **kwargs):
-        self.makeCurrent()
-
-        # info is ignored
+        if info is not None:
+            warnings.warn("Ignore info parameter of addImage",
+                          RuntimeWarning)
 
         behaviors = set()
         if selectable:
@@ -2230,8 +2565,12 @@ class OpenGLPlotCanvas(PlotBackend):
            oldYScale != yScale:
 
             self._dirtyDataBounds()
-            self.setLimits(self.dataBounds.xMin, self.dataBounds.xMax,
-                           self.dataBounds.yMin, self.dataBounds.yMax)
+            self.setLimits(self.dataBounds.xAxis.min_,
+                           self.dataBounds.xAxis.max_,
+                           self.dataBounds.yAxis.min_,
+                           self.dataBounds.yAxis.max_,
+                           self.dataBounds.y2Axis.min_,
+                           self.dataBounds.y2Axis.max_)
 
         self._plotDirtyFlag = True
 
@@ -2246,8 +2585,7 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
-            self.makeCurrent()
-            image.discard()
+            self._glGarbageCollector.append(image)
             self._plotDirtyFlag = True
 
         if replot:
@@ -2322,16 +2660,12 @@ class OpenGLPlotCanvas(PlotBackend):
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, z=1, selectable=True,
                  fill=None, **kw):
-        if yaxis is not None:
-            print('OpenGLBackend.addCurve yaxis not implemented')
         if xerror is not None:
-            print('OpenGLBackend.addCurve xerror not implemented')
+            warnings.warn("Ignore xerror parameter of addCurve",
+                          RuntimeWarning)
         if yerror is not None:
-            print('OpenGLBackend.addCurve yerror not implemented')
-        if 'plot_fill' in kw:
-            print('OpenGLBackend.addCurve plot_fill not implemented')
-
-        self.makeCurrent()
+            warnings.warn("Ignore yerror parameter of addCurve",
+                          RuntimeWarning)
 
         x = np.array(x, dtype=np.float32, copy=False, order='C')
         y = np.array(y, dtype=np.float32, copy=False, order='C')
@@ -2357,7 +2691,7 @@ class OpenGLPlotCanvas(PlotBackend):
             colorArray = None
             color = rgba(color, PlotBackend.COLORDICT)
 
-        if fill is None:  # To make it run with Plot.py
+        if fill is None and info is not None:  # To make it run with Plot.py
             fill = info.get('plot_fill', False)
 
         curve = Curve2D(x, y, colorArray,
@@ -2373,7 +2707,11 @@ class OpenGLPlotCanvas(PlotBackend):
             'behaviors': behaviors,
             'xLabel': xlabel,
             'yLabel': ylabel,
+            'yaxis': 'left' if yaxis is None else yaxis,
         }
+
+        if yaxis == "right":
+            self._hasRightYAxis.add(curve)
 
         if self._isXLog and curve.xMin <= 0.:
             raise RuntimeError(
@@ -2386,10 +2724,15 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if oldCurve is None or \
            oldCurve.xMin != curve.xMin or oldCurve.xMax != curve.xMax or \
+           oldCurve.info['axis'] != curve.info['axis'] or \
            oldCurve.yMin != curve.yMin or oldCurve.yMax != curve.yMax:
             self._dirtyDataBounds()
-            self.setLimits(self.dataBounds.xMin, self.dataBounds.xMax,
-                           self.dataBounds.yMin, self.dataBounds.yMax)
+            self.setLimits(self.dataBounds.xAxis.min_,
+                           self.dataBounds.xAxis.max_,
+                           self.dataBounds.yAxis.min_,
+                           self.dataBounds.yAxis.max_,
+                           self.dataBounds.y2Axis.min_,
+                           self.dataBounds.y2Axis.max_)
 
         self._plotDirtyFlag = True
 
@@ -2399,13 +2742,15 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend
 
     def removeCurve(self, legend, replot=True):
-        self.makeCurrent()
         try:
             curve = self._zOrderedItems.pop(('curve', legend))
         except KeyError:
             pass
         else:
-            curve.discard()
+            self._hasRightYAxis.discard(curve)
+            if not self._hasRightYAxis:
+                self.updateAxis()
+            self._glGarbageCollector.append(curve)
             self._plotDirtyFlag = True
 
         if replot:
@@ -2425,6 +2770,11 @@ class OpenGLPlotCanvas(PlotBackend):
         curve = self._zOrderedItems.get(('curve', legend), None)
         if curve is None:
             raise KeyError("Curve %s not found" % legend)
+
+        if curve.info['yaxis'] == "right":
+            warnings.warn("Ignore setActiveCurve for curve on right Y axis",
+                          RuntimeWarning)
+            return
 
         if self._activeCurve is not None:
             inactiveState = self._activeCurve._inactiveState
@@ -2460,7 +2810,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self.clearCurves()
 
     def replot(self):
-        self.updateGL()
+        self.postRedisplay()
 
     # Draw mode #
 
@@ -2519,14 +2869,25 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def resetZoom(self):
         if self.isXAxisAutoScale() and self.isYAxisAutoScale():
-            self.setLimits(self.dataBounds.xMin, self.dataBounds.xMax,
-                           self.dataBounds.yMin, self.dataBounds.yMax)
+            self.setLimits(self.dataBounds.xAxis.min_,
+                           self.dataBounds.xAxis.max_,
+                           self.dataBounds.yAxis.min_,
+                           self.dataBounds.yAxis.max_,
+                           self.dataBounds.y2Axis.min_,
+                           self.dataBounds.y2Axis.max_)
+
         elif self.isXAxisAutoScale():
-            self.setGraphXLimits(self.dataBounds.xMin,
-                                 self.dataBounds.xMax)
+            self.setGraphXLimits(self.dataBounds.xAxis.min_,
+                                 self.dataBounds.xAxis.max_)
+
         elif self.isYAxisAutoScale():
-            self.setGraphYLimits(self.dataBounds.yMin,
-                                 self.dataBounds.yMax)
+            xMin, xMax = self.getGraphXLimits()
+            self.setLimits(xMin, xMax,
+                           self.dataBounds.yAxis.min_,
+                           self.dataBounds.yAxis.max_,
+                           self.dataBounds.y2Axis.min_,
+                           self.dataBounds.y2Axis.max_)
+
         self.replot()
 
     # Limits #
@@ -2538,27 +2899,30 @@ class OpenGLPlotCanvas(PlotBackend):
 
         plotRatio = plotWidth / float(plotHeight)
 
-        dataW = self.plotDataBounds.width
-        dataH = self.plotDataBounds.height
+        dataW = self.plotDataBounds.xAxis.range_
+        dataH = self.plotDataBounds.yAxis.range_
         if dataH == 0.:
             return
 
         dataRatio = dataW / float(dataH)
 
-        xMin, xMax, yMin, yMax = self.plotDataBounds
+        xMin, xMax = self.plotDataBounds.xAxis
+        yMin, yMax = self.plotDataBounds.yAxis
+        y2Min, y2Max = self.plotDataBounds.y2Axis
 
         if dataRatio < plotRatio:
             dataW = dataH * plotRatio
-            xCenter = self.plotDataBounds.xCenter
+            xCenter = self.plotDataBounds.xAxis.center
             xMin = xCenter - 0.5 * dataW
             xMax = xCenter + 0.5 * dataW
+
         else:
             dataH = dataW / plotRatio
-            yCenter = self.plotDataBounds.yCenter
+            yCenter = self.plotDataBounds.yAxis.center
             yMin = yCenter - 0.5 * dataH
             yMax = yCenter + 0.5 * dataH
 
-        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax)
+        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
     def isKeepDataAspectRatio(self):
         if self._isXLog or self._isYLog:
@@ -2581,31 +2945,52 @@ class OpenGLPlotCanvas(PlotBackend):
         self.replot()
 
     def getGraphXLimits(self):
-        return self.plotDataBounds.xMin, self.plotDataBounds.xMax
+        return self.plotDataBounds.xAxis.min_, self.plotDataBounds.xAxis.max_
 
     def setGraphXLimits(self, xMin, xMax):
-        self.plotDataBounds = Bounds(xMin, xMax,
-                                     self.plotDataBounds.yMin,
-                                     self.plotDataBounds.yMax)
+        yMin, yMax = self.plotDataBounds.yAxis
+        y2Min, y2Max = self.plotDataBounds.y2Axis
+        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
+
         if self.isKeepDataAspectRatio():
             self._ensureAspectRatio()
 
         self.updateAxis()
 
-    def getGraphYLimits(self):
-        return self.plotDataBounds.yMin, self.plotDataBounds.yMax
+    def getGraphYLimits(self, axis="left"):
+        assert axis in ("left", "right")
+        if axis == "left":
+            return (self.plotDataBounds.yAxis.min_,
+                    self.plotDataBounds.yAxis.max_)
+        else:
+            return (self.plotDataBounds.y2Axis.min_,
+                    self.plotDataBounds.y2Axis.max_)
 
-    def setGraphYLimits(self, yMin, yMax):
-        self.plotDataBounds = Bounds(self.plotDataBounds.xMin,
-                                     self.plotDataBounds.xMax,
-                                     yMin, yMax)
+    def setGraphYLimits(self, yMin, yMax, axis="left"):
+        assert axis in ("left", "right")
+
+        if axis == "left":
+            y2Min, y2Max = self.plotDataBounds.y2Axis
+        else:
+            y2Min, y2Max = yMin, yMax
+            yMin, yMax = self.plotDataBounds.yAxis
+
+        xMin, xMax = self.plotDataBounds.xAxis
+        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
+
         if self.isKeepDataAspectRatio():
             self._ensureAspectRatio()
 
         self.updateAxis()
 
-    def setLimits(self, xMin, xMax, yMin, yMax):
-        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax)
+    def setLimits(self, xMin, xMax, yMin, yMax, y2Min=None, y2Max=None):
+        if y2Min is None or y2Max is None:
+            y2Min, y2Max = self.plotDataBounds.y2Axis
+            if y2Min is None:
+                y2Min = 1.
+            if y2Max is None:
+                y2Max = 100.
+        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
         if self.isKeepDataAspectRatio():
             self._ensureAspectRatio()
@@ -2643,7 +3028,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 warnings.warn("KeepDataAspectRatio is ignored with log axes",
                               RuntimeWarning)
 
-            if flag and self.dataBounds.xMin <= 0.:
+            if flag and self.dataBounds.xAxis.min_ <= 0.:
                 raise RuntimeError(
                     'Cannot use log scale for X axis: Some data is <= 0.')
             self._isXLog = flag
@@ -2655,7 +3040,8 @@ class OpenGLPlotCanvas(PlotBackend):
                 warnings.warn("KeepDataAspectRatio is ignored with log axes",
                               RuntimeWarning)
 
-            if flag and self.dataBounds.yMin <= 0.:
+            if flag and (self.dataBounds.yAxis.min_ <= 0. or
+                         self.dataBounds.y2Axis.min_ <= 0.):
                 raise RuntimeError(
                     'Cannot use log scale for Y axis: Some data is <= 0.')
             self._isYLog = flag
@@ -2695,63 +3081,46 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Save
     def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
+        """Save the graph as an image to a file.
+
+        WARNING: The file will be created asynchronously.
+        This method is thread-safe if :func:`postRedisplay` is thread-safe.
+        """
+        if dpi is not None:
+            warnings.warn("saveGraph ignores dpi parameter",
+                          RuntimeWarning)
+        if kw:
+            warnings.warn("saveGraph ignores additional parameters",
+                          RuntimeWarning)
+
         if fileFormat not in ['png', 'ppm', 'svg', 'tiff']:
             raise NotImplementedError('Unsupported format: %s' % fileFormat)
 
-        self.makeCurrent()
+        self._graphsToSave.put_nowait((fileName, fileFormat))
+        self.replot()
 
-        data = np.empty((self.winHeight, self.winWidth, 3),
-                        dtype=np.uint8, order='C')
+    def _deferredSaveGraphGL(self):
+        """This method MUST be called with an active OpenGL context.
+        """
+        if not self._graphsToSave.empty():
+            data = np.empty((self.winHeight, self.winWidth, 3),
+                            dtype=np.uint8, order='C')
 
-        glPixelStorei(GL_PACK_ALIGNMENT, 1)
-        glReadPixels(0, 0, self.winWidth, self.winHeight,
-                     GL_RGB, GL_UNSIGNED_BYTE, data)
+            glPixelStorei(GL_PACK_ALIGNMENT, 1)
+            glReadPixels(0, 0, self.winWidth, self.winHeight,
+                         GL_RGB, GL_UNSIGNED_BYTE, data)
 
-        # glReadPixels gives bottom to top, images are stored as top to bottom
-        data = np.flipud(data)
+            # glReadPixels gives bottom to top,
+            # while images are stored as top to bottom
+            data = np.flipud(data)
 
-        if fileFormat == 'svg':
-            import base64
-
-            height, width = data.shape[:2]
-            base64Data = base64.b64encode(convertRGBDataToPNG(data))
-
-            with open(fileName, 'w') as f:
-                f.write(
-                    '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
-                f.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
-                f.write(
-                    '  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
-                f.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
-                f.write('     xmlns="http://www.w3.org/2000/svg"\n')
-                f.write('     version="1.1"\n')
-                f.write('     width="%d"\n' % width)
-                f.write('     height="%d">\n' % height)
-                f.write('    <image xlink:href="data:image/png;base64,')
-                f.write(base64Data.decode('ascii'))
-                f.write('"\n')
-                f.write('           x="0"\n')
-                f.write('           y="0"\n')
-                f.write('           width="%d"\n' % width)
-                f.write('           height="%d"\n' % height)
-                f.write('           id="image" />\n')
-                f.write('</svg>')
-
-        elif fileFormat == 'ppm':
-            with open(fileName, 'w') as f:
-                f.write('P6\n')
-                f.write('%d %d\n' % (self.winWidth, self.winHeight))
-                f.write('255\n')
-                f.write(data.tostring())
-
-        elif fileFormat == 'png':
-            with open(fileName, 'wb') as f:
-                f.write(convertRGBDataToPNG(data))
-
-        elif fileFormat == 'tiff':
-            from PyMca5.PyMcaIO.TiffIO import TiffIO
-            tif = TiffIO(fileName, mode='wb+')
-            tif.writeImage(data, info={'Title': 'PyMCA GL Snapshot'})
+            for i in range(self._graphsToSave.qsize()):
+                try:
+                    fileName, fileFormat = self._graphsToSave.get_nowait()
+                except queue.Full:
+                    break
+                else:
+                    saveImageToFile(data, fileName, fileFormat)
 
 
 # OpenGLBackend ###############################################################
@@ -2761,12 +3130,20 @@ setGLContextGetter(QGLContext.currentContext)
 
 
 class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
+    _signalRedisplay = pyqtSignal()  # PyQt binds it to instances
+
     def __init__(self, parent=None, **kw):
         QGLWidget.__init__(self, parent)
+        self._signalRedisplay.connect(self.update)
+
         self.setAutoFillBackground(False)
         self.setMouseTracking(True)
 
         OpenGLPlotCanvas.__init__(self, parent, **kw)
+
+    def postRedisplay(self):
+        """Thread-safe call to QWidget.update."""
+        self._signalRedisplay.emit()
 
     # Mouse events #
     _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle'}

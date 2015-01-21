@@ -34,7 +34,6 @@ __doc__ = """
 This module provides a class managing a vertex buffer
 """
 
-
 # import ######################################################################
 
 from .gl import *  # noqa
@@ -126,13 +125,6 @@ class VertexBuffer(object):
 
 # VBOAttrib ###################################################################
 
-_GL_TYPE_SIZES = {
-    GL_UNSIGNED_BYTE: 1,
-    GL_FLOAT: 4,
-    GL_INT: 4
-}
-
-
 class VBOAttrib(object):
     """Describes data stored in a VBO
     """
@@ -162,7 +154,7 @@ class VBOAttrib(object):
     @property
     def itemSize(self):
         """Size of a VBO element in bytes"""
-        return self.dimension * _GL_TYPE_SIZES[self.type_]
+        return self.dimension * sizeofGLType(self.type_)
 
     def setVertexAttrib(self, attrib):
         with self.vbo:
@@ -172,17 +164,6 @@ class VBOAttrib(object):
                                   GL_FALSE,
                                   self.stride,
                                   c_void_p(self.offset))
-
-_TYPE_CONVERTER = {
-    np.dtype(np.float32): GL_FLOAT,
-    np.dtype(np.uint8): GL_UNSIGNED_BYTE,
-    np.dtype(np.uint16): GL_UNSIGNED_SHORT,
-    np.dtype(np.uint32): GL_UNSIGNED_INT,
-}
-
-
-def convertNumpyToGLType(type_):
-    return _TYPE_CONVERTER[np.dtype(type_)]
 
 
 def createVBOFromArrays(arrays, prefix=None, suffix=None, usage=None):
@@ -210,12 +191,12 @@ def createVBOFromArrays(arrays, prefix=None, suffix=None, usage=None):
     for data, pre, post in zip(arrays, prefix, suffix):
         shape = data.shape
         assert len(shape) <= 2
-        type_ = convertNumpyToGLType(data.dtype)
+        type_ = numpyToGLType(data.dtype)
         size = shape[0] + pre + post
         dimension = 1 if len(shape) == 1 else shape[1]
-        sizeInBytes = size * dimension * _GL_TYPE_SIZES[type_]
+        sizeInBytes = size * dimension * sizeofGLType(type_)
         sizeInBytes = 4 * (((sizeInBytes) + 3) >> 2)  # 4 bytes alignment
-        copyOffset = vboSize + pre * dimension * _GL_TYPE_SIZES[type_]
+        copyOffset = vboSize + pre * dimension * sizeofGLType(type_)
         info.append((data, type_, size, dimension,
                      vboSize, sizeInBytes, copyOffset))
         vboSize += sizeInBytes
@@ -224,7 +205,7 @@ def createVBOFromArrays(arrays, prefix=None, suffix=None, usage=None):
 
     result = []
     for data, type_, size, dimension, offset, sizeInBytes, copyOffset in info:
-        copySize = data.shape[0] * dimension * _GL_TYPE_SIZES[type_]
+        copySize = data.shape[0] * dimension * sizeofGLType(type_)
         vbo.update(data, offsetInBytes=copyOffset, sizeInBytes=copySize)
         result.append(VBOAttrib(vbo, type_, size, dimension, offset, 0))
     return result
