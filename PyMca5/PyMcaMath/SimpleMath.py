@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -159,7 +159,8 @@ class SimpleMath(object):
                 ynew   += numpy.asarray(yinter)
         num = len(yarr)
         ynew /= num
-        return xnew[numpy.isfinite(xnew)], ynew[numpy.isfinite(ynew)]
+        idx = numpy.isfinite(ynew)
+        return xnew[idx], ynew[idx]
 
     def smooth(self, *var, **kw):
         """

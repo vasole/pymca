@@ -1713,7 +1713,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def insertXMarker(self, x, legend=None, text=None,
                       color='k', selectable=False, draggable=False,
-                      **kw):
+                      replot=True, **kw):
         """
         :param x: Horizontal position of the marker in graph coordenates
         :type x: float
@@ -1727,6 +1727,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the marker can be moved
         :type draggable: boolean, default False
+        :param replot: Flag to indicate if the plot is to be updated
+        :type replot: boolean, default True
         :return: Handle used by the backend to univocally access the marker
         """
         #line = self.ax.axvline(x, picker=True)
@@ -1759,7 +1761,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             line._plot_options.append('selectable')
         if draggable:
             line._plot_options.append('draggable')
-        self.replot()
+        if replot:
+            self.replot()
         return line
 
     def insertYMarker(self, y, legend=None, text=None,
@@ -1778,6 +1781,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the marker can be moved
         :type draggable: boolean, default False
+        :param replot: Flag to indicate if the plot is to be updated
+        :type replot: boolean, default True
         :return: Handle used by the backend to univocally access the marker
         """
         if legend is None:
@@ -1807,6 +1812,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             line._plot_options.append('selectable')
         if draggable:
             line._plot_options.append('draggable')
+        if replot:
+            self.replot()
         return line
 
     def isXAxisAutoScale(self):

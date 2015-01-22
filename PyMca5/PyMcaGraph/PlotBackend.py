@@ -430,7 +430,7 @@ class PlotBackend(object):
         return None
 
     def insertMarker(self, x, y, legend=None, text=None, color='k',
-                      selectable=False, draggable=False,
+                      selectable=False, draggable=False, replot=True,
                       **kw):
         """
         :param x: Horizontal position of the marker in graph coordenates
@@ -447,13 +447,15 @@ class PlotBackend(object):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the marker can be moved
         :type draggable: boolean, default False
+        :param replot: Flag to indicate if the plot is to be updated
+        :type replot: boolean, default True
         :return: Handle used by the backend to univocally access the marker
         """
         print("PlotBackend insertMarker not implemented")
         return legend
 
     def insertXMarker(self, x, legend=None, text=None, color='k',
-                      selectable=False, draggable=False,
+                      selectable=False, draggable=False, replot=True,
                       **kw):
         """
         :param x: Horizontal position of the marker in graph coordenates
@@ -468,13 +470,15 @@ class PlotBackend(object):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the marker can be moved
         :type draggable: boolean, default False
+        :param replot: Flag to indicate if the plot is to be updated
+        :type replot: boolean, default True
         :return: Handle used by the backend to univocally access the marker
         """
         print("PlotBackend insertXMarker not implemented")
         return legend
 
     def insertYMarker(self, y, legend=None, text=None, color='k',
-                      selectable=False, draggable=False,
+                      selectable=False, draggable=False, replot=True,
                       **kw):
         """
         :param y: Vertical position of the marker in graph coordenates
@@ -489,6 +493,8 @@ class PlotBackend(object):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the marker can be moved
         :type draggable: boolean, default False
+        :param replot: Flag to indicate if the plot is to be updated
+        :type replot: boolean, default True
         :return: Handle used by the backend to univocally access the marker
         """
         print("PlotBackend insertYMarker not implemented")

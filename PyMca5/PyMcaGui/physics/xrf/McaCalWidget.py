@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -360,7 +360,8 @@ class McaCalWidget(qt.QDialog):
                                      legend="%d" % i,
                                      text=None,
                                      selectable=True,
-                                     draggable=False)
+                                     draggable=False,
+                                     replot=False)
             i += 1
         self.graph.replot()
         #make sure marker mode is on
@@ -500,7 +501,8 @@ class McaCalWidget(qt.QDialog):
             channel = self.foundPeaks[marker]
             self.graph.insertXMarker(channel,
                                      legend=ddict['label'],
-                                     color='red')
+                                     color='red',
+                                     replot=False)
             self.graph.replot()
             current = self.current
             calenergy = self.caldict[current]['A']+ \
@@ -568,7 +570,8 @@ class McaCalWidget(qt.QDialog):
                     print("Dialog cancelled or closed ")
                 self.graph.insertXMarker(channel,
                                          legend=ddict['label'],
-                                         color='black')
+                                         color='black',
+                                         replot=False)
                 self.graph.replot()
             del linewidget
         elif ddict['event'] in ["mouseMoved", 'MouseAt']:
@@ -591,7 +594,8 @@ class McaCalWidget(qt.QDialog):
                 self.foundPeaks.append(x)
                 legend = "%d" % (len(self.foundPeaks)-1)
                 #self.graph.insertx1marker(self.specfit.xdata[int(idx)],self.specfit.ydata[int(idx)])
-                self.graph.insertXMarker(x, legend=legend, selectable=True)
+                self.graph.insertXMarker(x, legend=legend,
+                                         selectable=True, replot=False)
                 self.graph.replot()
                 self.markermode = 0
                 self.__peakmarkermode()
