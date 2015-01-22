@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1691,7 +1691,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             print("unhandled axis %s" % axis)
 
     def insertMarker(self, x, y, legend=None, text=None, color='k',
-                      selectable=False, draggable=False,
+                      selectable=False, draggable=False, replot=True,
                       **kw):
         """
         :param x: Horizontal position of the marker in graph coordenates
@@ -1706,6 +1706,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type selectable: boolean, default False
         :param draggable: Flag to indicate if the marker can be moved
         :type draggable: boolean, default False
+        :param replot: Flag to indicate if the plot is to be updated
+        :type replot: boolean, default True
         :return: Handle used by the backend to univocally access the marker
         """
         print("MatplotlibBackend insertMarker not implemented")
@@ -1767,7 +1769,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def insertYMarker(self, y, legend=None, text=None,
                       color='k', selectable=False, draggable=False,
-                      **kw):
+                      replot=True, **kw):
         """
         :param y: Vertical position of the marker in graph coordenates
         :type y: float
