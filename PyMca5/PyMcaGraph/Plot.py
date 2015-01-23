@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -352,6 +352,8 @@ class Plot(PlotBase.PlotBase):
         # Convert everything to arrays (not forcing type) in order to avoid
         # problems at unexpected places: missing min or max attributes, problem
         # when using numpy.nonzero on lists, ...
+        received_symbol = symbol
+        received_linestyle = linestyle
         x = numpy.asarray(x)
         y = numpy.asarray(y)
         if "line_style" in kw:
@@ -387,11 +389,13 @@ class Plot(PlotBase.PlotBase):
             if handle is not None:
                 # this can give errors if it is not present in the plot
                 self._plot.removeCurve(key, replot=False)
-                symbol = self._curveDict[key][3].get('plot_symbol', symbol)
+                if received_symbol is None:
+                    symbol = self._curveDict[key][3].get('plot_symbol', symbol)
                 if color is None:
                     color = self._curveDict[key][3].get('plot_color', color)
-                linestyle = self._curveDict[key][3].get('plot_linestyle',
-                                                    linestyle)
+                if received_linestyle is None:
+                    linestyle = self._curveDict[key][3].get( \
+                                        'plot_linestyle', linestyle)
         else:
             self._curveList.append(key)
         #print("TODO: Here we can add properties to the info dictionnary")
@@ -418,10 +422,14 @@ class Plot(PlotBase.PlotBase):
         info["plot_symbol"] = symbol
         if color is None:
             color = info.get("plot_color", color)
-        linestyle = info.get("plot_linestyle", linestyle)
 
-        if self._plotLines and (linestyle is None):
+        if received_linestyle is None:
+            linestyle = info.get("plot_linestyle", linestyle)
+
+        if self._plotLines and (received_linestyle is None):
             linestyle = '-'
+        elif received_linestyle is None:
+            linestyle = ' '
         elif linestyle is None:
             linestyle = ' '
 
