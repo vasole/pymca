@@ -606,6 +606,8 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
 
     #the total variance is the sum of the elements of the diagonal
     totalVariance = numpy.diag(cov)
+    standardDeviation = numpy.sqrt(totalVariance)
+    standardDeviation = standardDeviation + (standardDeviation == 0)
     print("Total Variance = ", totalVariance.sum())
 
     normalizeToUnitStandardDeviation = scale
@@ -629,7 +631,6 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     images = numpy.zeros((ncomponents, nPixels), dtype)
     eigenvectors = numpy.zeros((ncomponents, N), dtype)
     eigenvalues = numpy.zeros((ncomponents,), dtype)
-    standardDeviation = numpy.zeros((ncomponents,), dtype)
     #sort eigenvalues
     if 1:
         a = [(evalues[i], i) for i in range(len(evalues))]
@@ -639,15 +640,11 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
         for i0 in range(ncomponents):
             i = a[i0][1]
             eigenvalues[i0] = evalues[i]
-            if normalizeToUnitStandardDeviation:
-                partialExplainedVariance = 100. * evalues[i] / totalVariance.shape[0]
-            else:
-                partialExplainedVariance = 100. * evalues[i] / totalVariance.sum()
+            partialExplainedVariance = 100. * evalues[i] / totalVariance.sum()
             print("PC%02d  Explained variance %.5f %% " %\
                                         (i0 + 1, partialExplainedVariance))
             totalExplainedVariance += partialExplainedVariance
             eigenvectors[i0, :] = evectors[:, i]
-            standardDeviation[i0] = totalVariance[i]
             #print("NORMA = ", numpy.dot(evectors[:, i].T, evectors[:, i]))
         print("Total explained variance = %.2f %% " % totalExplainedVariance)
     else:
@@ -658,10 +655,9 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     #calculate the projections
     if actualIndex in [0]:
         for i in range(oldShape[actualIndex]):
-            tmpData = data[i].reshape(1, -1) - avgSpectrum[i]
+            tmpData = (data[i].reshape(1, -1) - avgSpectrum[i]) / standardDeviation[i]
             for j in range(ncomponents):
-                images[j:j + 1, :] += (tmpData/standardDeviation[j]) * \
-                                      eigenvectors[j, i]
+                images[j:j + 1, :] += tmpData * eigenvectors[j, i]
         if len(oldShape) == 3:
             #reshape the images
             images.shape = ncomponents, oldShape[1], oldShape[2]
@@ -672,10 +668,9 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                 #print i
                 tmpData = data[i, :]
                 tmpData.shape = 1, nChannels
-                tmpData = tmpData[:, ::binning] - avgSpectrum
+                tmpData = (tmpData[:, ::binning] - avgSpectrum) / standardDeviation
                 for j in range(ncomponents):
-                    images[j, i] = numpy.dot(tmpData/standardDeviation[j],
-                                             eigenvectors[j])
+                    images[j, i] = numpy.dot(tmpData, eigenvectors[j])
             #reshape the images
             images.shape = ncomponents, nPixels
         elif len(oldShape) == 3:
@@ -685,10 +680,9 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                     #print i
                     tmpData = data[r, c, :]
                     tmpData.shape = 1, nChannels
-                    tmpData = tmpData[:, ::binning] - avgSpectrum
+                    tmpData = (tmpData[:, ::binning] - avgSpectrum) / standardDeviation
                     for j in range(ncomponents):
-                        images[j, i] = numpy.dot(tmpData/standardDeviation[j],
-                                                 eigenvectors[j])
+                        images[j, i] = numpy.dot(tmpData, eigenvectors[j])
                     i += 1
             #reshape the images
             images.shape = ncomponents, oldShape[0], oldShape[1]
