@@ -40,6 +40,7 @@ This module provides convenient classes for the OpenGL rendering backend
 from .gl import *  # noqa
 from ctypes import c_float
 import numpy as np
+import warnings
 
 
 # utils #######################################################################
@@ -124,7 +125,9 @@ class Program(object):
 
         glValidateProgram(self._prog)
         if glGetProgramiv(self._prog, GL_VALIDATE_STATUS) != GL_TRUE:
-            raise RuntimeError(glGetProgramInfoLog(self._prog))
+            warnings.warn(
+                'Cannot validate program: ' + glGetProgramInfoLog(self._prog),
+                RuntimeWarning)
 
         self.attributes = {}
         for index in range(glGetProgramiv(self._prog, GL_ACTIVE_ATTRIBUTES)):
