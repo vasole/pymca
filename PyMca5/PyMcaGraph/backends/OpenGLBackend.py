@@ -207,17 +207,23 @@ def convertRGBDataToPNG(data):
     return b''.join(pngData)
 
 
-def saveImageToFile(data, fileName, fileFormat):
+def saveImageToFile(data, fileNameOrObj, fileFormat):
     """Save a RGB image to a file.
 
-    :param data: A 3D array (h, w, 3) storing an RGB image
-    :type data: numpy.ndarray with of unsigned bytes
-    :param str fileName: The fileName where to write the image
-    :param str fileType: The type of the file in: 'png', 'ppm', 'svg', 'tiff'
+    :param data: A 3D array (h, w, 3) storing an RGB image.
+    :type data: numpy.ndarray with of unsigned bytes.
+    :param fileNameOrObj: Filename or object to use to write the image.
+    :type fileNameOrObj: A str or a 'file-like' object with a 'write' method.
+    :param str fileType: The type of the file in: 'png', 'ppm', 'svg', 'tiff'.
     """
     assert len(data.shape) == 3
     assert data.shape[2] == 3
     assert fileFormat in ('png', 'ppm', 'svg', 'tiff')
+
+    if not hasattr(fileNameOrObj, 'write'):
+        fileObj = open(fileNameOrObj, 'wb')
+    else:  # Use as a file-like object
+        fileObj = fileNameOrObj
 
     if fileFormat == 'svg':
         import base64
@@ -225,40 +231,46 @@ def saveImageToFile(data, fileName, fileFormat):
         height, width = data.shape[:2]
         base64Data = base64.b64encode(convertRGBDataToPNG(data))
 
-        with open(fileName, 'w') as f:
-            f.write('<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
-            f.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
-            f.write('  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
-            f.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
-            f.write('     xmlns="http://www.w3.org/2000/svg"\n')
-            f.write('     version="1.1"\n')
-            f.write('     width="%d"\n' % width)
-            f.write('     height="%d">\n' % height)
-            f.write('    <image xlink:href="data:image/png;base64,')
-            f.write(base64Data.decode('ascii'))
-            f.write('"\n')
-            f.write('           x="0"\n')
-            f.write('           y="0"\n')
-            f.write('           width="%d"\n' % width)
-            f.write('           height="%d"\n' % height)
-            f.write('           id="image" />\n')
-            f.write('</svg>')
+        fileObj.write(
+            '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
+        fileObj.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
+        fileObj.write('  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
+        fileObj.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
+        fileObj.write('     xmlns="http://www.w3.org/2000/svg"\n')
+        fileObj.write('     version="1.1"\n')
+        fileObj.write('     width="%d"\n' % width)
+        fileObj.write('     height="%d">\n' % height)
+        fileObj.write('    <image xlink:href="data:image/png;base64,')
+        fileObj.write(base64Data.decode('ascii'))
+        fileObj.write('"\n')
+        fileObj.write('           x="0"\n')
+        fileObj.write('           y="0"\n')
+        fileObj.write('           width="%d"\n' % width)
+        fileObj.write('           height="%d"\n' % height)
+        fileObj.write('           id="image" />\n')
+        fileObj.write('</svg>')
 
     elif fileFormat == 'ppm':
-        with open(fileName, 'w') as f:
-            f.write('P6\n')
-            f.write('%d %d\n' % (self.winWidth, self.winHeight))
-            f.write('255\n')
-            f.write(data.tostring())
+        fileObj.write('P6\n')
+        fileObj.write('%d %d\n' % (self.winWidth, self.winHeight))
+        fileObj.write('255\n')
+        fileObj.write(data.tostring())
 
     elif fileFormat == 'png':
-        with open(fileName, 'wb') as f:
-            f.write(convertRGBDataToPNG(data))
+        fileObj.write(convertRGBDataToPNG(data))
 
     elif fileFormat == 'tiff':
+        if fileObj == fileNameOrObj:
+            raise NotImplementedError(
+                'Save TIFF to a file-like object not implemented')
+
         from PyMca5.PyMcaIO.TiffIO import TiffIO
-        tif = TiffIO(fileName, mode='wb+')
+
+        tif = TiffIO(fileNameOrObj, mode='wb+')
         tif.writeImage(data, info={'Title': 'PyMCA GL Snapshot'})
+
+    if fileObj != fileNameOrObj:
+        fileObj.close()
 
 
 # shaders #####################################################################
@@ -268,7 +280,7 @@ _baseVertShd = """
     uniform mat4 matrix;
     uniform bvec2 isLog;
 
-    const float oneOverLog10 = 1.0 / log(10.0);
+    const float oneOverLog10 = 0.43429448190325176;
 
     void main(void) {
         vec2 posTransformed = position;
@@ -288,14 +300,14 @@ _baseFragShd = """
     uniform float tickLen;
 
     void main(void) {
-        if (tickLen != 0) {
+        if (tickLen != 0.) {
             if (mod((gl_FragCoord.x + gl_FragCoord.y) / tickLen, 2.) < 1.) {
                 gl_FragColor = color;
             } else {
                 discard;
             }
         } else if (hatchStep == 0 ||
-            mod(gl_FragCoord.x - gl_FragCoord.y, hatchStep) == 0) {
+            mod(gl_FragCoord.x - gl_FragCoord.y, float(hatchStep)) == 0.) {
             gl_FragColor = color;
         } else {
             discard;
@@ -1020,7 +1032,7 @@ class ItemsInteraction(ClickOrDrag):
             if marker is not None:
                 posData = self.machine.backend.pixelToDataCoords(x, y)
                 eventDict = prepareHoverSignal(
-                    marker['label'], 'marker',
+                    marker['legend'], 'marker',
                     posData, (x, y),
                     'draggable' in marker['behaviors'],
                     'selectable' in marker['behaviors'])
@@ -1124,7 +1136,7 @@ class ItemsInteraction(ClickOrDrag):
 
         eventDict = prepareMarkerSignal(eventType,
                                         'left',
-                                        marker['label'],
+                                        marker['legend'],
                                         'marker',
                                         'draggable' in marker['behaviors'],
                                         'selectable' in marker['behaviors'],
@@ -1186,7 +1198,7 @@ class ItemsInteraction(ClickOrDrag):
             eventDict = prepareMarkerSignal(
                 'markerMoved',
                 'left',
-                self.marker['label'],
+                self.marker['legend'],
                 'marker',
                 'draggable' in self.marker['behaviors'],
                 'selectable' in self.marker['behaviors'],
@@ -1292,6 +1304,10 @@ class OpenGLPlotCanvas(PlotBackend):
     _PICK_OFFSET = 3
 
     def __init__(self, parent=None, **kw):
+        self._basePrograms = {}
+        self._texPrograms = {}
+        self._plotFBOs = {}
+
         self._plotDataBounds = Bounds(1., 100., 1., 100., 1., 100.)
         self._keepDataAspectRatio = False
         self._isYInverted = False
@@ -1314,7 +1330,6 @@ class OpenGLPlotCanvas(PlotBackend):
         self._labels = []
         self._selectionAreas = MiniOrderedDict()
         self._glGarbageCollector = []
-        self._graphsToSave = queue.Queue()
 
         self._margins = {'left': 100, 'right': 50, 'top': 50, 'bottom': 50}
         self._lineWidth = 1
@@ -1333,6 +1348,10 @@ class OpenGLPlotCanvas(PlotBackend):
         PlotBackend.__init__(self, parent, **kw)
 
     # Link with embedding toolkit #
+
+    def makeCurrent(self):
+        """Override this method to allow to set the current OpenGL context."""
+        pass
 
     def postRedisplay(self):
         raise NotImplementedError("This method must be provided by \
@@ -1432,7 +1451,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     if item.lineStyle is not None:
                         offset = max(item.lineWidth / 2., offset)
 
-                    yAxis = item.info['yaxis']
+                    yAxis = item.info['yAxis']
                     xPick0, yPick0 = self.pixelToDataCoords(x - offset,
                                                             y - offset,
                                                             axis=yAxis)
@@ -1781,7 +1800,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 if item.xMax > xMax:
                     xMax = item.xMax
 
-                if item.info.get('yaxis') == 'right':
+                if item.info.get('yAxis') == 'right':
                     if item.yMin < y2Min:
                         y2Min = item.yMin
                     if item.yMax > y2Max:
@@ -2036,6 +2055,26 @@ class OpenGLPlotCanvas(PlotBackend):
         h = self.winHeight - self._margins['top'] - self._margins['bottom']
         return w, h
 
+    @property
+    def _progBase(self):
+        context = getGLContext()
+        try:
+            prog = self._basePrograms[context]
+        except KeyError:
+            prog = Program(_baseVertShd, _baseFragShd)
+            self._basePrograms[context] = prog
+        return prog
+
+    @property
+    def _progTex(self):
+        context = getGLContext()
+        try:
+            prog = self._texPrograms[context]
+        except KeyError:
+            prog = Program(_texVertShd, _texFragShd)
+            self._texPrograms[context] = prog
+        return prog
+
     # QGLWidget API #
 
     def initializeGL(self):
@@ -2057,11 +2096,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glEnable(GL_POINT_SPRITE)  # OpenGL 2
         # glEnable(GL_PROGRAM_POINT_SIZE)
 
-        # Create basic program
-        self._progBase = Program(_baseVertShd, _baseFragShd)
-
-        # Create texture program
-        self._progTex = Program(_texVertShd, _texFragShd)
+        # Building shader programs here failed on Mac OS X 10.7.5
 
     def _paintDirectGL(self):
         self._renderPlotAreaGL()
@@ -2070,25 +2105,29 @@ class OpenGLPlotCanvas(PlotBackend):
         self._renderSelectionGL()
 
     def _paintFBOGL(self):
-        if self._plotDirtyFlag or not hasattr(self, '_plotTex'):
+        context = getGLContext()
+        plotFBOTex = self._plofFBOs.get(context)
+        if self._plotDirtyFlag or plotFBOTex is None:
             self._plotDirtyFlag = False
             self._plotVertices = np.array(((-1., -1., 0., 0.),
                                            (1., -1., 1., 0.),
                                            (-1., 1., 0., 1.),
                                            (1., 1., 1., 1.)),
                                           dtype=np.float32)
-            if not hasattr(self, '_plotTex') or \
-               self._plotTex.width != self.winWidth or \
-               self._plotTex.height != self.winHeight:
-                if hasattr(self, '_plotTex'):
-                    self._plotTex.discard()
-                self._plotTex = FBOTexture(GL_RGBA,
-                                           self.winWidth, self.winHeight,
-                                           minFilter=GL_NEAREST,
-                                           magFilter=GL_NEAREST,
-                                           wrapS=GL_CLAMP_TO_EDGE,
-                                           wrapT=GL_CLAMP_TO_EDGE)
-            with self._plotTex:
+            if plotFBOTex is None or \
+               plotFBOTex.width != self.winWidth or \
+               plotFBOTex.height != self.winHeight:
+                if plotFBO is not None:
+                    plotFBO.discard()
+                plotFBOTex = FBOTexture(GL_RGBA,
+                                        self.winWidth, self.winHeight,
+                                        minFilter=GL_NEAREST,
+                                        magFilter=GL_NEAREST,
+                                        wrapS=GL_CLAMP_TO_EDGE,
+                                        wrapT=GL_CLAMP_TO_EDGE)
+                self._plotFBOs[context] = plotFBOTex
+
+            with plotFBOTex:
                 glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
                 self._renderPlotAreaGL()
                 self._renderPlotFrameGL()
@@ -2120,7 +2159,7 @@ class OpenGLPlotCanvas(PlotBackend):
                               GL_FALSE,
                               stride, texCoordsPtr)
 
-        self._plotTex.bind(texUnit)
+        plotFBOTex.bind(texUnit)
         glDrawArrays(GL_TRIANGLE_STRIP, 0, len(self._plotVertices))
         glBindTexture(GL_TEXTURE_2D, 0)
 
@@ -2142,8 +2181,6 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # self._paintDirectGL()
         self._paintFBOGL()
-
-        self._deferredSaveGraphGL()
 
     def _renderMarkersGL(self):
         if len(self._markers) == 0:
@@ -2175,21 +2212,21 @@ class OpenGLPlotCanvas(PlotBackend):
         for marker in self._markers.values():
             xCoord, yCoord = marker['x'], marker['y']
 
-            if marker['label'] is not None:
+            if marker['text'] is not None:
                 if xCoord is None:
                     x = self.winWidth - self._margins['right'] - pixelOffset
                     y = self.dataToPixelCoords(yData=yCoord) - pixelOffset
-                    label = Text2D(marker['label'], x, y, marker['color'],
+                    label = Text2D(marker['text'], x, y, marker['color'],
                                    align=RIGHT, valign=BOTTOM)
                 elif yCoord is None:
                     x = self.dataToPixelCoords(xData=xCoord) + pixelOffset
                     y = self._margins['top'] + pixelOffset
-                    label = Text2D(marker['label'], x, y, marker['color'],
+                    label = Text2D(marker['text'], x, y, marker['color'],
                                    align=LEFT, valign=TOP)
                 else:
                     x, y = self.dataToPixelCoords(xCoord, yCoord)
                     x, y = x + pixelOffset, y + pixelOffset
-                    label = Text2D(marker['label'], x, y, marker['color'],
+                    label = Text2D(marker['text'], x, y, marker['color'],
                                    align=LEFT, valign=TOP)
                 labels.append(label)
 
@@ -2277,6 +2314,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniform1i(self._progBase.uniforms['hatchStep'], 0)
         glUniform1f(self._progBase.uniforms['tickLen'], 0.)
 
+        glEnableVertexAttribArray(self._progBase.attributes['position'])
         glVertexAttribPointer(self._progBase.attributes['position'],
                               2,
                               GL_FLOAT,
@@ -2345,7 +2383,7 @@ class OpenGLPlotCanvas(PlotBackend):
         # sorted is stable: original order is preserved when key is the same
         for item in sorted(self._zOrderedItems.values(),
                            key=lambda item: item.info['zOrder']):
-            if item.info.get('yaxis') == 'right':
+            if item.info.get('yAxis') == 'right':
                 item.render(self.matrixY2PlotDataTransformedProj,
                             self._isXLog, self._isYLog)
             else:
@@ -2413,8 +2451,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self._markers[legend] = {
             'x': x,
             'y': y,
-            'legend':legend,
-            'label': text,
+            'legend': legend,
+            'text': text,
             'color': rgba(color, PlotBackend.COLORDICT),
             'behaviors': behaviors,
         }
@@ -2675,8 +2713,11 @@ class OpenGLPlotCanvas(PlotBackend):
         if selectable:
             behaviors.add('selectable')
 
+        wasActiveCurve = False
         oldCurve = self._zOrderedItems.get(('curve', legend), None)
         if oldCurve is not None:
+            if oldCurve == self._activeCurve:
+                wasActiveCurve = True
             self.removeCurve(legend)
 
         if replace:
@@ -2708,7 +2749,7 @@ class OpenGLPlotCanvas(PlotBackend):
             'behaviors': behaviors,
             'xLabel': xlabel,
             'yLabel': ylabel,
-            'yaxis': 'left' if yaxis is None else yaxis,
+            'yAxis': 'left' if yaxis is None else yaxis,
         }
 
         if yaxis == "right":
@@ -2737,6 +2778,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._plotDirtyFlag = True
 
+        if wasActiveCurve:
+            self.setActiveCurve(legend, replot=False)
+
         if replot:
             self.replot()
 
@@ -2748,9 +2792,13 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
+            if curve == self._activeCurve:
+                self._activeCurve = None
+
             self._hasRightYAxis.discard(curve)
             if not self._hasRightYAxis:
                 self.updateAxis()
+
             self._glGarbageCollector.append(curve)
             self._plotDirtyFlag = True
 
@@ -2772,11 +2820,6 @@ class OpenGLPlotCanvas(PlotBackend):
         if curve is None:
             raise KeyError("Curve %s not found" % legend)
 
-        if curve.info['yaxis'] == "right":
-            warnings.warn("Ignore setActiveCurve for curve on right Y axis",
-                          RuntimeWarning)
-            return
-
         if self._activeCurve is not None:
             inactiveState = self._activeCurve._inactiveState
             del self._activeCurve._inactiveState
@@ -2794,7 +2837,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if curve.info['xLabel'] is not None:
             self.setGraphXLabel(curve.info['xLabel'])
-        if curve.info['yLabel'] is not None:
+        if curve.info['yAxis'] == 'left' and curve.info['yLabel'] is not None:
             self.setGraphYLabel(curve.info['yLabel'])
 
         color = rgba(self._activeCurveColor, PlotBackend.COLORDICT)
@@ -3084,8 +3127,8 @@ class OpenGLPlotCanvas(PlotBackend):
     def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
         """Save the graph as an image to a file.
 
-        WARNING: The file will be created asynchronously.
-        This method is thread-safe if :func:`postRedisplay` is thread-safe.
+        WARNING: This method is performing some OpenGL calls.
+        It must be called from the main thread.
         """
         if dpi is not None:
             warnings.warn("saveGraph ignores dpi parameter",
@@ -3097,31 +3140,22 @@ class OpenGLPlotCanvas(PlotBackend):
         if fileFormat not in ['png', 'ppm', 'svg', 'tiff']:
             raise NotImplementedError('Unsupported format: %s' % fileFormat)
 
-        self._graphsToSave.put_nowait((fileName, fileFormat))
-        self.replot()
+        self.makeCurrent()
 
-    def _deferredSaveGraphGL(self):
-        """This method MUST be called with an active OpenGL context.
-        """
-        if not self._graphsToSave.empty():
-            data = np.empty((self.winHeight, self.winWidth, 3),
-                            dtype=np.uint8, order='C')
+        data = np.empty((self.winHeight, self.winWidth, 3),
+                        dtype=np.uint8, order='C')
 
-            glPixelStorei(GL_PACK_ALIGNMENT, 1)
-            glReadPixels(0, 0, self.winWidth, self.winHeight,
-                         GL_RGB, GL_UNSIGNED_BYTE, data)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        glPixelStorei(GL_PACK_ALIGNMENT, 1)
+        glReadPixels(0, 0, self.winWidth, self.winHeight,
+                     GL_RGB, GL_UNSIGNED_BYTE, data)
 
-            # glReadPixels gives bottom to top,
-            # while images are stored as top to bottom
-            data = np.flipud(data)
+        # glReadPixels gives bottom to top,
+        # while images are stored as top to bottom
+        data = np.flipud(data)
 
-            for i in range(self._graphsToSave.qsize()):
-                try:
-                    fileName, fileFormat = self._graphsToSave.get_nowait()
-                except queue.Full:
-                    break
-                else:
-                    saveImageToFile(data, fileName, fileFormat)
+        # fileName is either a file-like object or a str
+        saveImageToFile(data, fileName, fileFormat)
 
 
 # OpenGLBackend ###############################################################

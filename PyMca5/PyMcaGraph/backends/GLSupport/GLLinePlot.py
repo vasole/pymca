@@ -66,21 +66,21 @@ class _Fill2D(object):
         }
         """,
             _LOG10_X: """
-        const float oneOverLog10 = 1./log(10.);
+        const float oneOverLog10 = 0.43429448190325176;
 
         vec4 transformXY(float x, float y) {
             return vec4(oneOverLog10 * log(x), y, 0.0, 1.0);
         }
         """,
             _LOG10_Y: """
-        const float oneOverLog10 = 1./log(10.);
+        const float oneOverLog10 = 0.43429448190325176;
 
         vec4 transformXY(float x, float y) {
             return vec4(x, oneOverLog10 * log(y), 0.0, 1.0);
         }
         """,
             _LOG10_X_Y: """
-        const float oneOverLog10 = 1./log(10.);
+        const float oneOverLog10 = 0.43429448190325176;
 
         vec4 transformXY(float x, float y) {
             return vec4(oneOverLog10 * log(x),
@@ -220,21 +220,21 @@ class _Lines2D(object):
         }
         """,
             _LOG10_X: """
-        const float oneOverLog10 = 1./log(10.);
+        const float oneOverLog10 = 0.43429448190325176;
 
         vec4 transformXY(float x, float y) {
             return vec4(oneOverLog10 * log(x), y, 0.0, 1.0);
         }
         """,
             _LOG10_Y: """
-        const float oneOverLog10 = 1./log(10.);
+        const float oneOverLog10 = 0.43429448190325176;
 
         vec4 transformXY(float x, float y) {
             return vec4(x, oneOverLog10 * log(y), 0.0, 1.0);
         }
         """,
             _LOG10_X_Y: """
-        const float oneOverLog10 = 1./log(10.);
+        const float oneOverLog10 = 0.43429448190325176;
 
         vec4 transformXY(float x, float y) {
             return vec4(oneOverLog10 * log(x),
@@ -496,21 +496,21 @@ class _Points2D(object):
         }
         """,
             _LOG10_X: """
-        const float oneOverLog10 = 1./log(10.);
+        const float oneOverLog10 = 0.43429448190325176;
 
         vec4 transformXY(float x, float y) {
             return vec4(oneOverLog10 * log(x), y, 0.0, 1.0);
         }
         """,
             _LOG10_Y: """
-        const float oneOverLog10 = 1./log(10.);
+        const float oneOverLog10 = 0.43429448190325176;
 
         vec4 transformXY(float x, float y) {
             return vec4(x, oneOverLog10 * log(y), 0.0, 1.0);
         }
         """,
             _LOG10_X_Y: """
-        const float oneOverLog10 = 1./log(10.);
+        const float oneOverLog10 = 0.43429448190325176;
 
         vec4 transformXY(float x, float y) {
             return vec4(oneOverLog10 * log(x),
