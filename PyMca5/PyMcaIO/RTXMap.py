@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -83,7 +83,7 @@ class RTXMap(DataObject.DataObject):
             for key in ["XFirst", "YFirst", "ZFirst", "XLast", "YLast", "ZLast", "MeasNo"]:
                 element = root.find(".//ClassInstance/%s" % key)
                 if element is not None:
-                    info[key] = float(element.text)
+                    info[key] = myFloat(element.text)
         if "MeasNo" in info:
             nSpectra = int(info["MeasNo"])
         else:
@@ -114,6 +114,8 @@ class RTXMap(DataObject.DataObject):
                 i += 1
             #print("Found %d positions" % i)
             #print("nColumns = %d" % nColumns)
+            if nColumns == 0:
+                nColumns = 1
             nRows = i //nColumns
             #print("nRows = %d"  % nRows)
             if nSpectra is None:
@@ -150,5 +152,4 @@ def test(filename):
 
 if __name__ == "__main__":
     test(sys.argv[1])
-
 
