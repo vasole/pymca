@@ -415,9 +415,11 @@ class Plot(PlotBase.PlotBase):
         # deal with the symbol
         if received_symbol is None:
             symbol = info.get("plot_symbol", symbol)
-        if self._plotPoints and (symbol is None):
-            symbol = 'o'
-        elif symbol in ["", " "]:
+
+        if self._plotPoints and (received_symbol is None):
+            if symbol in [None, "", " "]:
+                symbol = 'o'
+        elif symbol == "":
             #symbol = None
             pass
         info["plot_symbol"] = symbol
@@ -428,7 +430,8 @@ class Plot(PlotBase.PlotBase):
             linestyle = info.get("plot_linestyle", linestyle)
 
         if self._plotLines and (received_linestyle is None):
-            linestyle = '-'
+            if linestyle in [None, " ", ""]:
+                linestyle = '-'
         elif received_linestyle is None:
             linestyle = ' '
         elif linestyle is None:
