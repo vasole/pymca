@@ -114,7 +114,7 @@ class GLColormap(_GL2DDataPlot):
 
     varying vec2 coords;
 
-    const float oneOverLog10 = 1./log(10.);
+    const float oneOverLog10 = 0.43429448190325176;
 
     void main(void) {
         vec4 dataPos = matOffset * vec4(position, 0.0, 1.0);
@@ -206,7 +206,7 @@ class GLColormap(_GL2DDataPlot):
         return vec4(red, green, blue, 1.);
     }
 
-    const float oneOverLog10 = 1./log(10.);
+    const float oneOverLog10 = 0.43429448190325176;
 
     void main(void) {
         float value = texture2D(data, textureCoords()).r;

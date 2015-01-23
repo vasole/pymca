@@ -280,7 +280,7 @@ _baseVertShd = """
     uniform mat4 matrix;
     uniform bvec2 isLog;
 
-    const float oneOverLog10 = 1.0 / log(10.0);
+    const float oneOverLog10 = 0.43429448190325176;
 
     void main(void) {
         vec2 posTransformed = position;
@@ -300,14 +300,14 @@ _baseFragShd = """
     uniform float tickLen;
 
     void main(void) {
-        if (tickLen != 0) {
+        if (tickLen != 0.) {
             if (mod((gl_FragCoord.x + gl_FragCoord.y) / tickLen, 2.) < 1.) {
                 gl_FragColor = color;
             } else {
                 discard;
             }
         } else if (hatchStep == 0 ||
-            mod(gl_FragCoord.x - gl_FragCoord.y, hatchStep) == 0) {
+            mod(gl_FragCoord.x - gl_FragCoord.y, float(hatchStep)) == 0.) {
             gl_FragColor = color;
         } else {
             discard;
@@ -1304,6 +1304,10 @@ class OpenGLPlotCanvas(PlotBackend):
     _PICK_OFFSET = 3
 
     def __init__(self, parent=None, **kw):
+        self._basePrograms = {}
+        self._texPrograms = {}
+        self._plotFBOs = {}
+
         self._plotDataBounds = Bounds(1., 100., 1., 100., 1., 100.)
         self._keepDataAspectRatio = False
         self._isYInverted = False
@@ -2051,6 +2055,26 @@ class OpenGLPlotCanvas(PlotBackend):
         h = self.winHeight - self._margins['top'] - self._margins['bottom']
         return w, h
 
+    @property
+    def _progBase(self):
+        context = getGLContext()
+        try:
+            prog = self._basePrograms[context]
+        except KeyError:
+            prog = Program(_baseVertShd, _baseFragShd)
+            self._basePrograms[context] = prog
+        return prog
+
+    @property
+    def _progTex(self):
+        context = getGLContext()
+        try:
+            prog = self._texPrograms[context]
+        except KeyError:
+            prog = Program(_texVertShd, _texFragShd)
+            self._texPrograms[context] = prog
+        return prog
+
     # QGLWidget API #
 
     def initializeGL(self):
@@ -2072,11 +2096,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glEnable(GL_POINT_SPRITE)  # OpenGL 2
         # glEnable(GL_PROGRAM_POINT_SIZE)
 
-        # Create basic program
-        self._progBase = Program(_baseVertShd, _baseFragShd)
-
-        # Create texture program
-        self._progTex = Program(_texVertShd, _texFragShd)
+        # Building shader programs here failed on Mac OS X 10.7.5
 
     def _paintDirectGL(self):
         self._renderPlotAreaGL()
@@ -2085,25 +2105,29 @@ class OpenGLPlotCanvas(PlotBackend):
         self._renderSelectionGL()
 
     def _paintFBOGL(self):
-        if self._plotDirtyFlag or not hasattr(self, '_plotTex'):
+        context = getGLContext()
+        plotFBOTex = self._plofFBOs.get(context)
+        if self._plotDirtyFlag or plotFBOTex is None:
             self._plotDirtyFlag = False
             self._plotVertices = np.array(((-1., -1., 0., 0.),
                                            (1., -1., 1., 0.),
                                            (-1., 1., 0., 1.),
                                            (1., 1., 1., 1.)),
                                           dtype=np.float32)
-            if not hasattr(self, '_plotTex') or \
-               self._plotTex.width != self.winWidth or \
-               self._plotTex.height != self.winHeight:
-                if hasattr(self, '_plotTex'):
-                    self._plotTex.discard()
-                self._plotTex = FBOTexture(GL_RGBA,
-                                           self.winWidth, self.winHeight,
-                                           minFilter=GL_NEAREST,
-                                           magFilter=GL_NEAREST,
-                                           wrapS=GL_CLAMP_TO_EDGE,
-                                           wrapT=GL_CLAMP_TO_EDGE)
-            with self._plotTex:
+            if plotFBOTex is None or \
+               plotFBOTex.width != self.winWidth or \
+               plotFBOTex.height != self.winHeight:
+                if plotFBO is not None:
+                    plotFBO.discard()
+                plotFBOTex = FBOTexture(GL_RGBA,
+                                        self.winWidth, self.winHeight,
+                                        minFilter=GL_NEAREST,
+                                        magFilter=GL_NEAREST,
+                                        wrapS=GL_CLAMP_TO_EDGE,
+                                        wrapT=GL_CLAMP_TO_EDGE)
+                self._plotFBOs[context] = plotFBOTex
+
+            with plotFBOTex:
                 glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
                 self._renderPlotAreaGL()
                 self._renderPlotFrameGL()
@@ -2135,7 +2159,7 @@ class OpenGLPlotCanvas(PlotBackend):
                               GL_FALSE,
                               stride, texCoordsPtr)
 
-        self._plotTex.bind(texUnit)
+        plotFBOTex.bind(texUnit)
         glDrawArrays(GL_TRIANGLE_STRIP, 0, len(self._plotVertices))
         glBindTexture(GL_TEXTURE_2D, 0)
 
