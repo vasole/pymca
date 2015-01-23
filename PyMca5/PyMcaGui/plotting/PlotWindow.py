@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -621,8 +621,8 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.setDefaultPlotLines(True)
             self.setDefaultPlotPoints(True)
         elif self._toggleCounter == 2:
-            self.setDefaultPlotPoints(True)
             self.setDefaultPlotLines(False)
+            self.setDefaultPlotPoints(True)
         else:
             self.setDefaultPlotLines(True)
             self.setDefaultPlotPoints(False)
