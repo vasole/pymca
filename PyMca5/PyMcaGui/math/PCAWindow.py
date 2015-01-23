@@ -174,11 +174,12 @@ class PCAParametersDialog(qt.QDialog):
             self.graph.clearMarkers()
             self.graph.insertXMarker(fromValue,
                                       'From',
-                                       label='From',
+                                       text='From',
                                        color='blue',
                                        draggable=True)
             self.graph.insertXMarker(toValue,
-                                     'To', label = 'To',
+                                     'To',
+                                      text= 'To',
                                       color='blue',
                                       draggable=True)
             self.graph.replot()
