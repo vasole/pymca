@@ -413,10 +413,11 @@ class Plot(PlotBase.PlotBase):
         info["plot_yaxis"] = yaxis
 
         # deal with the symbol
-        symbol = info.get("plot_symbol", symbol)
+        if received_symbol is None:
+            symbol = info.get("plot_symbol", symbol)
         if self._plotPoints and (symbol is None):
             symbol = 'o'
-        elif symbol == "":
+        elif symbol in ["", " "]:
             #symbol = None
             pass
         info["plot_symbol"] = symbol
