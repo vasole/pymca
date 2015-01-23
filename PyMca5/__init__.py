@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -108,7 +108,7 @@ if sys.platform.startswith("win"):
     except:
         print("WARNING: Could not set MPLCONFIGDIR.", sys.exc_info()[1])
 
-# mandatory modules for compatibility
+# mandatory modules for backwards compatibility
 from .PyMcaCore import Plugin1DBase, StackPluginBase, PyMcaDirs, DataObject
 
 #convenience modules that could be directly imported
