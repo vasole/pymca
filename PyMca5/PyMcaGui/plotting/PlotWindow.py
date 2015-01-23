@@ -1264,11 +1264,13 @@ class PlotWindow(PlotWidget.PlotWidget):
                 symbol = 'o'
             else:
                 symbol = ''
+            # TODO: Limits should be kept
             self.addCurve(x, y, legend=legend, info=info, symbol=symbol)
             self.updateLegends()
         elif ddict['event'] == "toggleLine":
             legend = ddict['legend']
             x, y, legend, info = self._curveDict[legend][0:4]
+            # TODO: Limits should be kept
             if ddict['line']:
                 self.addCurve(x, y, legend=legend, info=info, linestyle="-")
             else:
