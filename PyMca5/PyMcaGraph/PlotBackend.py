@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -330,6 +330,24 @@ class PlotBackend(object):
         print("PlotBackend default callback called")
         print(ddict)
 
+    def dataToPixel(self, xData=None, yData=None, axis="left"):
+        """
+        Convert a position in data space to a position in pixels in the widget.
+
+        :param float xData: The X coordinate in data space. If None (default)
+                            the middle position of the displayed data is used.
+        :param float yData: The Y coordinate in data space. If None (default)
+                            the middle position of the displayed data is used.
+        :param str axis: The Y axis to use for the conversion
+                         ('left' or 'right').
+        :returns: The corresponding position in pixels or
+                  None if the data position is not in the displayed area.
+        :rtype: A tuple of 2 floats: (xPixel, yPixel) or None.
+        """
+        assert axis in ("left", "right")
+        print("PlotBackend dataToPixel not implemented")
+        return
+
     def enableActiveCurveHandling(self, flag=True):
         if flag:
             self._activeCurveHandling = True
@@ -548,6 +566,25 @@ class PlotBackend(object):
         :type flag: Boolean, default True
         """
         print("PlotBackend keepDataAspectRatio not implemented")
+
+    def pixelToData(self, xPixel=None, yPixel=None, axis="left"):
+        """
+        Convert a position in pixels in the widget to a position in
+        the data space.
+
+        :param float xData: The X coordinate in pixels. If None (default)
+                            the center of the widget is used.
+        :param float yData: The Y coordinate in pixels. If None (default)
+                            the center of the widget is used.
+        :param str axis: The Y axis to use for the conversion
+                         ('left' or 'right').
+        :returns: The corresponding position in data space or
+                  None if the pixel position is not in the plot area.
+        :rtype: A tuple of 2 floats: (xData, yData) or None.
+        """
+        assert axis in ("left", "right")
+        print("PlotBackend pixelToData not implemented")
+        return
 
     def removeCurve(self, legend, replot=True):
         """
