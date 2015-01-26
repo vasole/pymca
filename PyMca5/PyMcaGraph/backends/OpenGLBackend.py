@@ -631,7 +631,7 @@ class Zoom(ClickOrDrag):
         assert dataPos is not None
         x0, y0 = dataPos
 
-        dataPos = self.backend.pixelToData(yPixel=startPos[1], axis="right")
+        dataPos = self.backend.pixelToData(y=startPos[1], axis="right")
         assert dataPos is not None
         y2_0 = dataPos[1]
 
@@ -639,7 +639,7 @@ class Zoom(ClickOrDrag):
         assert dataPos is not None
         x1, y1 = dataPos
 
-        dataPos = self.backend.pixelToData(yPixel=endPos[1], axis="right")
+        dataPos = self.backend.pixelToData(y=endPos[1], axis="right")
         assert dataPos is not None
         y2_1 = dataPos[1]
 
@@ -679,7 +679,7 @@ class Zoom(ClickOrDrag):
         return newMin, newMax
 
     def _zoom(self, cx, cy, scaleF):
-        dataCenterPos = self.backend.pixelToData(xPixel=cx, yPixel=cy)
+        dataCenterPos = self.backend.pixelToData(cx, cy)
         assert dataCenterPos is not None
 
         xMin, xMax = self.backend.getGraphXLimits()
@@ -690,7 +690,7 @@ class Zoom(ClickOrDrag):
         yMin, yMax = self._newZoomRange(yMin, yMax, dataCenterPos[1], scaleF,
                                         self.backend.isYAxisLogaritmic())
 
-        dataPos = self.backend.pixelToData(yPixel=cy, axis="right")
+        dataPos = self.backend.pixelToData(y=cy, axis="right")
         assert dataPos is not None
         y2Center = dataPos[1]
         y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
@@ -969,7 +969,7 @@ class Select1Point(StateMachine, Select):
 
 class SelectHLine(Select1Point):
     def _hLine(self, y):
-        dataPos = self.backend.pixelToData(yPixel=y)
+        dataPos = self.backend.pixelToData(y=y)
         assert dataPos is not None
 
         xMin, xMax = self.backend.getGraphXLimits()
@@ -1003,7 +1003,7 @@ class SelectHLine(Select1Point):
 
 class SelectVLine(Select1Point):
     def _vLine(self, x):
-        dataPos = self.backend.pixelToData(xPixel=x)
+        dataPos = self.backend.pixelToData(x=x)
         assert dataPos is not None
 
         yMin, yMax = self.backend.getGraphYLimits()
@@ -1582,7 +1582,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for xDataLog in _ticks(xMin, xMax, xStep):
                     if xDataLog >= trXMin and xDataLog <= trXMax:
-                        pixelPos = self.dataToPixel(xData=10 ** xDataLog)
+                        pixelPos = self.dataToPixel(x=10 ** xDataLog)
                         assert pixelPos is not None
                         xPixel = pixelPos[0]
 
@@ -1604,7 +1604,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for xData in _ticks(xMin, xMax, xStep):
                     if xData >= trXMin and xData <= trXMax:
-                        pixelPos = self.dataToPixel(xData=xData)
+                        pixelPos = self.dataToPixel(x=xData)
                         assert pixelPos is not None
                         xPixel = pixelPos[0]
 
@@ -1633,7 +1633,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for yDataLog in _ticks(yMin, yMax, yStep):
                     if yDataLog >= trYMin and yDataLog <= trYMax:
-                        pixelPos = self.dataToPixel(yData=10 ** yDataLog)
+                        pixelPos = self.dataToPixel(y=10 ** yDataLog)
                         assert pixelPos is not None
                         yPixel = pixelPos[1]
 
@@ -1656,7 +1656,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for yData in _ticks(yMin, yMax, yStep):
                     if yData >= trYMin and yData <= trYMax:
-                        pixelPos = self.dataToPixel(yData=yData)
+                        pixelPos = self.dataToPixel(y=yData)
                         assert pixelPos is not None
                         yPixel = pixelPos[1]
 
@@ -1686,7 +1686,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for y2DataLog in _ticks(y2Min, y2Max, y2Step):
                     if y2DataLog >= trY2Min and y2DataLog <= trY2Max:
-                        pixelPos = self.dataToPixel(yData=10 ** y2DataLog,
+                        pixelPos = self.dataToPixel(y=10 ** y2DataLog,
                                                     axis="right")
                         assert pixelPos is not None
                         y2Pixel = pixelPos[1]
@@ -1709,7 +1709,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for y2Data in _ticks(y2Min, y2Max, y2Step):
                     if y2Data >= trY2Min and y2Data <= trY2Max:
-                        pixelPos = self.dataToPixel(yData=y2Data, axis="right")
+                        pixelPos = self.dataToPixel(y=y2Data, axis="right")
                         assert pixelPos is not None
                         y2Pixel = pixelPos[1]
 
@@ -1738,7 +1738,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     plotXMin, plotXMax = self.plotDataBounds.xAxis
                     xData = xDataOrig * index
                     if xData >= plotXMin and xData <= plotXMax:
-                        pixelPos = self.dataToPixel(xData=xData)
+                        pixelPos = self.dataToPixel(x=xData)
                         assert pixelPos is not None
                         xPixel = pixelPos[0]
 
@@ -1757,7 +1757,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     plotYMin, plotYMax = self.plotDataBounds.yAxis
                     yData = yDataOrig * index
                     if yData >= plotYMin and yData <= plotYMax:
-                        pixelPos = self.dataToPixel(yData=yData)
+                        pixelPos = self.dataToPixel(y=yData)
                         assert pixelPos is not None
                         yPixel = pixelPos[1]
 
@@ -1776,7 +1776,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     plotY2Min, plotY2Max = self.plotDataBounds.y2Axis
                     y2Data = y2DataOrig * index
                     if y2Data >= plotY2Min and y2Data <= plotY2Max:
-                        pixelPos = self.dataToPixel(yData=y2Data, axis="right")
+                        pixelPos = self.dataToPixel(y=y2Data, axis="right")
                         assert pixelPos is not None
                         y2Pixel = pixelPos[1]
 
@@ -2031,42 +2031,48 @@ class OpenGLPlotCanvas(PlotBackend):
         if hasattr(self, '_matrixY2PlotDataTransformedProj'):
             del self._matrixY2PlotDataTransformedProj
 
-    def dataToPixel(self, xData=None, yData=None, axis='left', check=True):
+    def dataToPixel(self, x=None, y=None, axis='left', check=True):
         """
         :param bool check: Toggle checking if data position is in displayed
                            area.
                            If False, this method never returns None.
-        :raises: ValueError if xData or yData < 0. with log axis.
+        :raises: ValueError if x or y < 0. with log axis.
         """
         assert axis in ('left', 'right')
 
         trBounds = self.plotDataTransformedBounds
 
-        if xData is None:
+        if x is None:
             xDataTr = trBounds.xAxis.center
         else:
             if self._isXLog:
-                if xData < 0.:
-                    raise ValueError('Cannot convert xData < 0 with log axis.')
-                xDataTr = math.log10(xData)
+                if x <= 0.:
+                    raise ValueError('Cannot convert x < 0 with log axis.')
+                xDataTr = math.log10(x)
             else:
-                xDataTr = xData
+                xDataTr = x
 
-        if yData is None:
-            yDataTr = trBounds.yAxis.center
+        if y is None:
+            if axis == 'left':
+                yDataTr = trBounds.yAxis.center
+            else:
+                yDataTr = trBounds.y2Axis.center
         else:
             if self._isYLog:
-                if yData < 0.:
-                    raise ValueError('Cannot convert yData < 0 with log axis.')
-                yDataTr = math.log10(yData)
+                if y <= 0.:
+                    raise ValueError('Cannot convert y < 0 with log axis.')
+                yDataTr = math.log10(y)
             else:
-                yDataTr = yData
+                yDataTr = y
 
         if check and (xDataTr < trBounds.xAxis.min_ or
-                      xDataTr > trBounds.xAxis.max_ or
-                      yDataTr < trBounds.yAxis.min_ or
-                      yDataTr > trBounds.yAxis.max_):
-            return None  # (xDataTr, yDataTr) is out of displaayed area
+                      xDataTr > trBounds.xAxis.max_):
+            if ((axis == 'left' and
+                 (yDataTr < trBounds.yAxis.min_ or
+                  yDataTr > trBounds.yAxis.max_)) or
+                (yDataTr < trBounds.y2Axis.min_ or
+                 yDataTr > trBounds.y2Axis.max_)):
+                return None  # (xDataTr, yDataTr) is out of displaayed area
 
         plotWidth, plotHeight = self.plotSizeInPixels()
 
@@ -2085,30 +2091,29 @@ class OpenGLPlotCanvas(PlotBackend):
 
         return xPixel, yPixel
 
-    def pixelToData(self, xPixel=None, yPixel=None, axis="left",
-                    check=True):
+    def pixelToData(self, x=None, y=None, axis="left", check=True):
         """
         :param bool check: Toggle checking if pixel is in plot area.
                            If False, this method never returns None.
         """
         assert axis in ("left", "right")
 
-        if xPixel is None:
-            xPixel = self.winWidth / 2.
-        if yPixel is None:
-            yPixel = self.winHeight / 2.
+        if x is None:
+            x = self.winWidth / 2.
+        if y is None:
+            y = self.winHeight / 2.
 
-        if check and (xPixel < self._margins['left'] or
-                      xPixel > (self.winWidth - self._margins['right']) or
-                      yPixel < self._margins['top'] or
-                      yPixel > self.winHeight - self._margins['bottom']):
-            return None  # (xPixel, yPixel) is out of plot area
+        if check and (x < self._margins['left'] or
+                      x > (self.winWidth - self._margins['right']) or
+                      y < self._margins['top'] or
+                      y > self.winHeight - self._margins['bottom']):
+            return None  # (x, y) is out of plot area
 
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         trBounds = self.plotDataTransformedBounds
 
-        xData = (xPixel - self._margins['left']) + 0.5
+        xData = (x - self._margins['left']) + 0.5
         xData /= float(plotWidth)
         xData = trBounds.xAxis.min_ + xData * trBounds.xAxis.range_
         if self._isXLog:
@@ -2116,13 +2121,13 @@ class OpenGLPlotCanvas(PlotBackend):
 
         usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
         if self._isYInverted:
-            yData = yPixel - self._margins['top'] + 0.5
+            yData = y - self._margins['top'] + 0.5
             yData /= float(plotHeight)
             yData = usedAxis.min_ + yData * usedAxis.range_
             if self._isYLog:
                 yData = pow(10, yData)
         else:
-            yData = self.winHeight - self._margins['bottom'] - yPixel - 0.5
+            yData = self.winHeight - self._margins['bottom'] - y - 0.5
             yData /= float(plotHeight)
             yData = usedAxis.min_ + yData * usedAxis.range_
             if self._isYLog:
