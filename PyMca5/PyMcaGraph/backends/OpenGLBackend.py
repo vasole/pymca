@@ -2106,7 +2106,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def _paintFBOGL(self):
         context = getGLContext()
-        plotFBOTex = self._plofFBOs.get(context)
+        plotFBOTex = self._plotFBOs.get(context)
         if self._plotDirtyFlag or plotFBOTex is None:
             self._plotDirtyFlag = False
             self._plotVertices = np.array(((-1., -1., 0., 0.),
@@ -2117,8 +2117,8 @@ class OpenGLPlotCanvas(PlotBackend):
             if plotFBOTex is None or \
                plotFBOTex.width != self.winWidth or \
                plotFBOTex.height != self.winHeight:
-                if plotFBO is not None:
-                    plotFBO.discard()
+                if plotFBOTex is not None:
+                    plotFBOTex.discard()
                 plotFBOTex = FBOTexture(GL_RGBA,
                                         self.winWidth, self.winHeight,
                                         minFilter=GL_NEAREST,
