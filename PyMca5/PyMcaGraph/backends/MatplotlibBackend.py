@@ -1656,12 +1656,12 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             return vmin, vmax
 
-    def getGraphYLimits(self):
-        """
-        Get the graph Y (left) limits.
-        :return:  Minimum and maximum values of the Y axis
-        """
-        vmin, vmax = self.ax.get_ylim()
+    def getGraphYLimits(self, axis="left"):
+        if axis == "right":
+            ax = self.ax2
+        else:
+            ax = self.ax
+        vmin, vmax = ax.get_ylim()
         if vmin > vmax:
             return vmax, vmin
         else:
@@ -2382,6 +2382,60 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             # built in
             return cm.get_cmap(name)
+
+    def dataToPixel(self, x=None, y=None, axis="left"):
+        """
+        Convert a position in data space to a position in pixels in the widget.
+
+        :param float x: The X coordinate in data space. If None (default)
+                            the middle position of the displayed data is used.
+        :param float y: The Y coordinate in data space. If None (default)
+                            the middle position of the displayed data is used.
+        :param str axis: The Y axis to use for the conversion
+                         ('left' or 'right').
+        :returns: The corresponding position in pixels or
+                  None if the data position is not in the displayed area.
+        :rtype: A tuple of 2 floats: (xPixel, yPixel) or None.
+        """
+        assert axis in ("left", "right")
+        if "axis" == "right":
+            ax = self.ax2
+        else:
+            ax = self.ax
+        xmin, xmax = self.getGraphXLimits()
+        ymin, ymax = self.getGraphYLimits(axis=axis)
+
+        if x is None:
+            x = 0.5 * (xmax - xmin)
+        if y is None:
+            y = 0.5 * (ymax - ymin)
+
+        if (x > xmax)  or (x < xmin):
+            return None
+
+        if (y > ymax)  or (y < ymin):
+            return None
+
+        pixels = ax.transData.transform([x, y])
+        xPixel, yPixel = pixels.T
+        return xPixel, yPixel
+
+    def pixelToData(self, x=None, y=None, axis="left"):
+        assert axis in ("left", "right")
+        if "axis" == "right":
+            ax = self.ax2
+        else:
+            ax = self.ax
+        inv = ax.transData.inverted()
+        x, y = inv.transform(x, y)
+
+        if (x > xmax)  or (x < xmin):
+            return None
+
+        if (y > ymax)  or (y < ymin):
+            return None
+
+        return x, y
 
 def main(parent=None):
     from .. import Plot

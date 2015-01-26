@@ -330,13 +330,13 @@ class PlotBackend(object):
         print("PlotBackend default callback called")
         print(ddict)
 
-    def dataToPixel(self, xData=None, yData=None, axis="left"):
+    def dataToPixel(self, x=None, y=None, axis="left"):
         """
         Convert a position in data space to a position in pixels in the widget.
 
-        :param float xData: The X coordinate in data space. If None (default)
+        :param float x: The X coordinate in data space. If None (default)
                             the middle position of the displayed data is used.
-        :param float yData: The Y coordinate in data space. If None (default)
+        :param float y: The Y coordinate in data space. If None (default)
                             the middle position of the displayed data is used.
         :param str axis: The Y axis to use for the conversion
                          ('left' or 'right').
@@ -567,14 +567,14 @@ class PlotBackend(object):
         """
         print("PlotBackend keepDataAspectRatio not implemented")
 
-    def pixelToData(self, xPixel=None, yPixel=None, axis="left"):
+    def pixelToData(self, x=None, y=None, axis="left"):
         """
         Convert a position in pixels in the widget to a position in
         the data space.
 
-        :param float xData: The X coordinate in pixels. If None (default)
+        :param float x: The X coordinate in pixels. If None (default)
                             the center of the widget is used.
-        :param float yData: The Y coordinate in pixels. If None (default)
+        :param float y: The Y coordinate in pixels. If None (default)
                             the center of the widget is used.
         :param str axis: The Y axis to use for the conversion
                          ('left' or 'right').
