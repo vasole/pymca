@@ -1251,6 +1251,39 @@ class Plot(PlotBase.PlotBase):
     def isCurveHidden(self, legend):
         return legend in self._hiddenCurves
 
+    def dataToPixel(self, x=None, y=None, axis="left"):
+        """
+        Convert a position in data space to a position in pixels in the widget.
+
+        :param float x: The X coordinate in data space. If None (default)
+                            the middle position of the displayed data is used.
+        :param float y: The Y coordinate in data space. If None (default)
+                            the middle position of the displayed data is used.
+        :param str axis: The Y axis to use for the conversion
+                         ('left' or 'right').
+        :returns: The corresponding position in pixels or
+                  None if the data position is not in the displayed area.
+        :rtype: A tuple of 2 floats: (xPixel, yPixel) or None.
+        """
+        return self._plot.dataToPixel(x, y, axis=axis)
+
+    def pixelToData(self, x=None, y=None, axis="left"):
+        """
+        Convert a position in pixels in the widget to a position in
+        the data space.
+
+        :param float x: The X coordinate in pixels. If None (default)
+                            the center of the widget is used.
+        :param float y: The Y coordinate in pixels. If None (default)
+                            the center of the widget is used.
+        :param str axis: The Y axis to use for the conversion
+                         ('left' or 'right').
+        :returns: The corresponding position in data space or
+                  None if the pixel position is not in the plot area.
+        :rtype: A tuple of 2 floats: (xData, yData) or None.
+        """
+        return self._plot.pixelToData(x, y, axis=axis)
+
 def main():
     x = numpy.arange(100.)
     y = x * x
