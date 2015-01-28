@@ -830,6 +830,12 @@ class MatplotlibGraph(FigureCanvas):
                 else:
                     artist.set_xdata(event.xdata)
                     artist.set_ydata(event.ydata)
+                    if infoText is not None:
+                        xtmp, ytmp = self.ax.transData.transform((event.xdata, event.ydata))
+                        inv = self.ax.transData.inverted()
+                        xtmp, ytmp = inv.transform((xtmp, ytmp + 15))
+                        infoText.set_position((event.xdata,
+                                               ytmp))
                 if BLITTING:
                     canvas = artist.figure.canvas
                     axes = artist.axes
@@ -1710,8 +1716,55 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type replot: boolean, default True
         :return: Handle used by the backend to univocally access the marker
         """
-        print("MatplotlibBackend insertMarker not implemented")
-        return legend
+        #line = self.ax.axvline(x, picker=True)
+        xmin, xmax = self.getGraphXLimits()
+        ymin, ymax = self.getGraphYLimits()
+        if x is None:
+            x = 0.5 * (xmax + xmin)
+        if y is None:
+            y = 0.5 * (ymax + ymin)
+        if legend is None:
+            legend = "Unnamed marker"
+        if text is None:
+            text = kw.get("label", None)
+            if text is not None:
+                print("Deprecation warning: use 'text' instead of 'label'")
+        self.removeMarker(legend, replot=False)
+
+        legend = "__MARKER__" + legend
+        marker = "+"
+        markersize=20.
+        if selectable or draggable:
+            line = self.ax.plot(x, y, label=legend,
+                                      linestyle=" ",
+                                      color=color,
+                                      picker=5,
+                                      marker=marker,
+                                      markersize=markersize)[-1]
+        else:
+            line = self.ax.plot(x, y, label=legend,
+                                      linestyle=" ",
+                                      color=color,
+                                      marker=marker,
+                                      markersize=markersize)[-1]
+        if text is not None:
+            xtmp, ytmp = self.ax.transData.transform((x, y))
+            inv = self.ax.transData.inverted()
+            xtmp, ytmp = inv.transform((xtmp, ytmp + 15))
+            text = " " + text
+            line._infoText = self.ax.text(x, ytmp, text,
+                                          color=color,
+                                          horizontalalignment='left',
+                                          verticalalignment='top')
+        #line.set_ydata(numpy.array([1.0, 10.], dtype=numpy.float32))
+        line._plot_options = ["marker"]
+        if selectable:
+            line._plot_options.append('selectable')
+        if draggable:
+            line._plot_options.append('draggable')
+        if replot:
+            self.replot()
+        return line
 
     def insertXMarker(self, x, legend=None, text=None,
                       color='k', selectable=False, draggable=False,
@@ -2492,6 +2545,7 @@ if __name__ == "__main__":
     #w.widget.ax.axis('equal') # candidate for keepting aspect ratio
     #w.widget.ax.axis('scaled') # candidate for keepting aspect ratio
     w.insertXMarker(50., text="Label", color='pink', draggable=True)
+    w.insertMarker(25, -5000, text="Label\n", color='pink', draggable=True)
     w.resetZoom()
     #print(w.widget.ax.get_images())
     #print(w.widget.ax.get_lines())
