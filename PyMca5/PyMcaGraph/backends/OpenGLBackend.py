@@ -554,14 +554,14 @@ class Zoom(ClickOrDrag):
                 self._lastClick = 0., None
             else:
                 # Signal mouse clicked event
-                xData, yData = self.backend.pixelToDataCoords(x, y)
-                assert xData is not None and yData is not None
+                dataPos = self.backend.pixelToData(x, y)
+                assert dataPos is not None
                 eventDict = prepareMouseSignal('mouseClicked', 'left',
-                                               xData, yData,
+                                               dataPos[0], dataPos[1],
                                                x, y)
                 self.backend._callback(eventDict)
 
-                self._lastClick = time.time(), (xData, yData, x, y)
+                self._lastClick = time.time(), (dataPos[0], dataPos[1], x, y)
 
             # Zoom-in centered on mouse cursor
             # xMin, xMax = self.backend.getGraphXLimits()
@@ -574,10 +574,10 @@ class Zoom(ClickOrDrag):
                 xMin, xMax, yMin, yMax, y2Min, y2Max = self.zoomStack.pop()
             except IndexError:
                 # Signal mouse clicked event
-                xData, yData = self.backend.pixelToDataCoords(x, y)
-                assert xData is not None and yData is not None
+                dataPos = self.backend.pixelToData(x, y)
+                assert dataPos is not None
                 eventDict = prepareMouseSignal('mouseClicked', 'right',
-                                               xData, yData,
+                                               dataPos[0], dataPos[1],
                                                x, y)
                 self.backend._callback(eventDict)
             else:
@@ -585,10 +585,14 @@ class Zoom(ClickOrDrag):
             self.backend.replot()
 
     def beginDrag(self, x, y):
-        self.x0, self.y0 = self.backend.pixelToDataCoords(x, y)
+        dataPos = self.backend.pixelToData(x, y)
+        assert dataPos is not None
+        self.x0, self.y0 = dataPos
 
     def drag(self, x1, y1):
-        x1, y1 = self.backend.pixelToDataCoords(x1, y1)
+        dataPos = self.backend.pixelToData(x1, y1)
+        assert dataPos is not None
+        x1, y1 = dataPos
 
         # Selection area constrained by aspect ratio
         # if self.backend.isKeepDataAspectRatio():
@@ -623,10 +627,21 @@ class Zoom(ClickOrDrag):
         y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
         self.zoomStack.append((xMin, xMax, yMin, yMax, y2Min, y2Max))
 
-        x0, y0 = self.backend.pixelToDataCoords(*startPos)
-        y2_0 = self.backend.pixelToDataCoords(yPixel=startPos[1], axis="right")
-        x1, y1 = self.backend.pixelToDataCoords(*endPos)
-        y2_1 = self.backend.pixelToDataCoords(yPixel=endPos[1], axis="right")
+        dataPos = self.backend.pixelToData(*startPos)
+        assert dataPos is not None
+        x0, y0 = dataPos
+
+        dataPos = self.backend.pixelToData(y=startPos[1], axis="right")
+        assert dataPos is not None
+        y2_0 = dataPos[1]
+
+        dataPos = self.backend.pixelToData(*endPos)
+        assert dataPos is not None
+        x1, y1 = dataPos
+
+        dataPos = self.backend.pixelToData(y=endPos[1], axis="right")
+        assert dataPos is not None
+        y2_1 = dataPos[1]
 
         # Selection area constrained by aspect ratio
         # if self.backend.isKeepDataAspectRatio():
@@ -664,17 +679,20 @@ class Zoom(ClickOrDrag):
         return newMin, newMax
 
     def _zoom(self, cx, cy, scaleF):
-        xCenter = self.backend.pixelToDataCoords(xPixel=cx)
+        dataCenterPos = self.backend.pixelToData(cx, cy)
+        assert dataCenterPos is not None
+
         xMin, xMax = self.backend.getGraphXLimits()
-        xMin, xMax = self._newZoomRange(xMin, xMax, xCenter, scaleF,
+        xMin, xMax = self._newZoomRange(xMin, xMax, dataCenterPos[0], scaleF,
                                         self.backend.isXAxisLogaritmic())
 
-        yCenter = self.backend.pixelToDataCoords(yPixel=cy)
         yMin, yMax = self.backend.getGraphYLimits()
-        yMin, yMax = self._newZoomRange(yMin, yMax, yCenter, scaleF,
+        yMin, yMax = self._newZoomRange(yMin, yMax, dataCenterPos[1], scaleF,
                                         self.backend.isYAxisLogaritmic())
 
-        y2Center = self.backend.pixelToDataCoords(yPixel=cy, axis="right")
+        dataPos = self.backend.pixelToData(y=cy, axis="right")
+        assert dataPos is not None
+        y2Center = dataPos[1]
         y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
         y2Min, y2Max = self._newZoomRange(y2Min, y2Max, y2Center, scaleF,
                                           self.backend.isYAxisLogaritmic())
@@ -705,8 +723,9 @@ class SelectPolygon(StateMachine, Select):
 
     class Select(State):
         def enter(self, x, y):
-            x, y = self.machine.backend.pixelToDataCoords(x, y)
-            self.points = [(x, y), (x, y)]
+            dataPos = self.machine.backend.pixelToData(x, y)
+            assert dataPos is not None
+            self.points = [dataPos, dataPos]
 
         def updateSelectionArea(self):
             self.machine.backend.setSelectionArea(self.points,
@@ -721,16 +740,18 @@ class SelectPolygon(StateMachine, Select):
 
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
-                x, y = self.machine.backend.pixelToDataCoords(x, y)
-                self.points[-1] = (x, y)
+                dataPos = self.machine.backend.pixelToData(x, y)
+                assert dataPos is not None
+                self.points[-1] = dataPos
                 self.updateSelectionArea()
                 if self.points[-2] != self.points[-1]:
-                    self.points.append((x, y))
+                    self.points.append(dataPos)
                 return True
 
         def onMove(self, x, y):
-            x, y = self.machine.backend.pixelToDataCoords(x, y)
-            self.points[-1] = (x, y)
+            dataPos = self.machine.backend.pixelToData(x, y)
+            assert dataPos is not None
+            self.points[-1] = dataPos
             self.updateSelectionArea()
 
         def onPress(self, x, y, btn):
@@ -738,8 +759,9 @@ class SelectPolygon(StateMachine, Select):
                 self.machine.backend.resetSelectionArea()
                 self.machine.backend.replot()
 
-                x, y = self.machine.backend.pixelToDataCoords(x, y)
-                self.points[-1] = (x, y)
+                dataPos = self.machine.backend.pixelToData(x, y)
+                assert dataPos is not None
+                self.points[-1] = dataPos
                 if self.points[-2] == self.points[-1]:
                     self.points.pop()
                 self.points.append(self.points[0])
@@ -826,21 +848,24 @@ class Select2Points(StateMachine, Select):
 
 class SelectRectangle(Select2Points):
     def beginSelect(self, x, y):
-        self.startPt = self.backend.pixelToDataCoords(x, y)
+        self.startPt = self.backend.pixelToData(x, y)
+        assert self.startPt is not None
 
     def select(self, x, y):
-        x, y = self.backend.pixelToDataCoords(x, y)
+        dataPos = self.backend.pixelToData(x, y)
+        assert dataPos is not None
+
         self.backend.setSelectionArea((self.startPt,
-                                      (self.startPt[0], y),
-                                      (x, y),
-                                      (x, self.startPt[1])),
+                                      (self.startPt[0], dataPos[1]),
+                                      dataPos,
+                                      (dataPos[0], self.startPt[1])),
                                       fill='hatch',
                                       color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'rectangle',
-                                         (self.startPt, (x, y)),
+                                         (self.startPt, dataPos),
                                          self.parameters)
         self.backend._callback(eventDict)
 
@@ -848,10 +873,12 @@ class SelectRectangle(Select2Points):
         self.backend.resetSelectionArea()
         self.backend.replot()
 
-        x, y = self.backend.pixelToDataCoords(x, y)
+        dataPos = self.backend.pixelToData(x, y)
+        assert dataPos is not None
+
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'rectangle',
-                                         (self.startPt, (x, y)),
+                                         (self.startPt, dataPos),
                                          self.parameters)
         self.backend._callback(eventDict)
 
@@ -862,18 +889,21 @@ class SelectRectangle(Select2Points):
 
 class SelectLine(Select2Points):
     def beginSelect(self, x, y):
-        self.startPt = self.backend.pixelToDataCoords(x, y)
+        self.startPt = self.backend.pixelToData(x, y)
+        assert self.startPt is not None
 
     def select(self, x, y):
-        x, y = self.backend.pixelToDataCoords(x, y)
-        self.backend.setSelectionArea((self.startPt, (x, y)),
+        dataPos = self.backend.pixelToData(x, y)
+        assert dataPos is not None
+
+        self.backend.setSelectionArea((self.startPt, dataPos),
                                       fill='hatch',
                                       color=self.color)
         self.backend.replot()
 
         eventDict = prepareDrawingSignal('drawingProgress',
                                          'line',
-                                         (self.startPt, (x, y)),
+                                         (self.startPt, dataPos),
                                          self.parameters)
         self.backend._callback(eventDict)
 
@@ -881,10 +911,12 @@ class SelectLine(Select2Points):
         self.backend.resetSelectionArea()
         self.backend.replot()
 
-        x, y = self.backend.pixelToDataCoords(x, y)
+        dataPos = self.backend.pixelToData(x, y)
+        assert dataPos is not None
+
         eventDict = prepareDrawingSignal('drawingFinished',
                                          'line',
-                                         (self.startPt, (x, y)),
+                                         (self.startPt, dataPos),
                                          self.parameters)
         self.backend._callback(eventDict)
 
@@ -937,9 +969,11 @@ class Select1Point(StateMachine, Select):
 
 class SelectHLine(Select1Point):
     def _hLine(self, y):
-        y = self.backend.pixelToDataCoords(yPixel=y)
+        dataPos = self.backend.pixelToData(y=y)
+        assert dataPos is not None
+
         xMin, xMax = self.backend.getGraphXLimits()
-        return (xMin, y), (xMax, y)
+        return (xMin, dataPos[1]), (xMax, dataPos[1])
 
     def select(self, x, y):
         points = self._hLine(y)
@@ -969,9 +1003,11 @@ class SelectHLine(Select1Point):
 
 class SelectVLine(Select1Point):
     def _vLine(self, x):
-        x = self.backend.pixelToDataCoords(xPixel=x)
+        dataPos = self.backend.pixelToData(x=x)
+        assert dataPos is not None
+
         yMin, yMax = self.backend.getGraphYLimits()
-        return (x, yMin), (x, yMax)
+        return (dataPos[0], yMin), (dataPos[0], yMax)
 
     def select(self, x, y):
         points = self._vLine(x)
@@ -1030,10 +1066,11 @@ class ItemsInteraction(ClickOrDrag):
         def onMove(self, x, y):
             marker = self.machine.backend.pickMarker(x, y)
             if marker is not None:
-                posData = self.machine.backend.pixelToDataCoords(x, y)
+                dataPos = self.machine.backend.pixelToData(x, y)
+                assert dataPos is not None
                 eventDict = prepareHoverSignal(
                     marker['legend'], 'marker',
-                    posData, (x, y),
+                    dataPos, (x, y),
                     'draggable' in marker['behaviors'],
                     'selectable' in marker['behaviors'])
                 self.machine.backend._callback(eventDict)
@@ -1102,24 +1139,28 @@ class ItemsInteraction(ClickOrDrag):
                     pass
                 elif picked[0] == 'curve':
                     _, curve, indices = picked
-                    xData, yData = self.backend.pixelToDataCoords(x, y)
+                    dataPos = self.backend.pixelToData(x, y)
+                    assert dataPos is not None
                     eventDict = prepareCurveSignal('left',
                                                    curve.info['legend'],
                                                    'curve',
                                                    curve.xData[indices],
                                                    curve.yData[indices],
-                                                   xData, yData, x, y)
+                                                   dataPos[0], dataPos[1],
+                                                   x, y)
                     self.backend._callback(eventDict)
 
                 elif picked[0] == 'image':
                     _, image, posImg = picked
 
-                    xData, yData = self.backend.pixelToDataCoords(x, y)
+                    dataPos = self.backend.pixelToData(x, y)
+                    assert dataPos is not None
                     eventDict = prepareImageSignal('left',
                                                    image.info['legend'],
                                                    'image',
                                                    posImg[0], posImg[1],
-                                                   xData, yData, x, y)
+                                                   dataPos[0], dataPos[1],
+                                                   x, y)
                     self.backend._callback(eventDict)
 
     def _signalMarkerMovingEvent(self, eventType, marker, x, y):
@@ -1132,7 +1173,8 @@ class ItemsInteraction(ClickOrDrag):
         if yData is None:
             yData = [0, 1]
 
-        posDataCursor = self.backend.pixelToDataCoords(x, y)
+        posDataCursor = self.backend.pixelToData(x, y)
+        assert posDataCursor is not None
 
         eventDict = prepareMarkerSignal(eventType,
                                         'left',
@@ -1146,7 +1188,9 @@ class ItemsInteraction(ClickOrDrag):
         self.backend._callback(eventDict)
 
     def beginDrag(self, x, y):
-        self._lastPos = self.backend.pixelToDataCoords(x, y)
+        self._lastPos = self.backend.pixelToData(x, y)
+        assert self._lastPos is not None
+
         self.image = None
         self.marker = self.backend.pickMarker(
             x, y, lambda marker: 'draggable' in marker['behaviors'])
@@ -1165,7 +1209,10 @@ class ItemsInteraction(ClickOrDrag):
                 self.image = picked[1]
 
     def drag(self, x, y):
-        xData, yData = self.backend.pixelToDataCoords(x, y)
+        dataPos = self.backend.pixelToData(x, y)
+        assert dataPos is not None
+        xData, yData = dataPos
+
         if self.marker is not None:
             if self.marker['x'] is not None:
                 self.marker['x'] = xData
@@ -1382,11 +1429,10 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if isCursorInPlot:
             # Signal mouse move event
-            xData, yData = self.pixelToDataCoords(inXPixel, inYPixel)
-            assert xData is not None
-            assert yData is not None
+            dataPos = self.pixelToData(inXPixel, inYPixel)
+            assert dataPos is not None
             eventDict = prepareMouseSignal('mouseMoved', None,
-                                           xData, yData,
+                                           dataPos[0], dataPos[1],
                                            xPixel, yPixel)
             self._callback(eventDict)
 
@@ -1414,14 +1460,16 @@ class OpenGLPlotCanvas(PlotBackend):
         if test is None:
             test = lambda marker: True
         for marker in reversed(self._markers.values()):
+            pixelPos = self.dataToPixel(marker['x'], marker['y'], check=False)
+
             if marker['x'] is not None:
-                xMarker = self.dataToPixelCoords(xData=marker['x'])
+                xMarker = pixelPos[0]
                 xDist = math.fabs(x - xMarker)
             else:
                 xDist = 0
 
             if marker['y'] is not None:
-                yMarker = self.dataToPixelCoords(yData=marker['y'])
+                yMarker = pixelPos[1]
                 yDist = math.fabs(y - yMarker)
             else:
                 yDist = 0
@@ -1435,12 +1483,14 @@ class OpenGLPlotCanvas(PlotBackend):
         if test is None:
             test = lambda item: True
 
-        xPick, yPick = self.pixelToDataCoords(x, y)
+        dataPos = self.pixelToData(x, y)
+        assert dataPos is not None
+
         for item in sorted(self._zOrderedItems.values(),
                            key=lambda item: - item.info['zOrder']):
             if test(item):
                 if isinstance(item, (GLColormap, GLRGBAImage)):
-                    pickedPos = item.pick(xPick, yPick)
+                    pickedPos = item.pick(*dataPos)
                     if pickedPos is not None:
                         return 'image', item, pickedPos
 
@@ -1452,12 +1502,18 @@ class OpenGLPlotCanvas(PlotBackend):
                         offset = max(item.lineWidth / 2., offset)
 
                     yAxis = item.info['yAxis']
-                    xPick0, yPick0 = self.pixelToDataCoords(x - offset,
-                                                            y - offset,
-                                                            axis=yAxis)
-                    xPick1, yPick1 = self.pixelToDataCoords(x + offset,
-                                                            y + offset,
-                                                            axis=yAxis)
+
+                    dataPos = self.pixelToData(x - offset,
+                                               y - offset,
+                                               axis=yAxis)
+                    assert dataPos is not None
+                    xPick0, yPick0 = dataPos
+
+                    dataPos = self.pixelToData(x + offset,
+                                               y + offset,
+                                               axis=yAxis)
+                    assert dataPos is not None
+                    xPick1, yPick1 = dataPos
 
                     if xPick0 < xPick1:
                         xPickMin, xPickMax = xPick0, xPick1
@@ -1526,7 +1582,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for xDataLog in _ticks(xMin, xMax, xStep):
                     if xDataLog >= trXMin and xDataLog <= trXMax:
-                        xPixel = self.dataToPixelCoords(xData=10 ** xDataLog)
+                        pixelPos = self.dataToPixel(x=10 ** xDataLog)
+                        assert pixelPos is not None
+                        xPixel = pixelPos[0]
 
                         vertices.append((xPixel, plotBottom))
                         vertices.append((xPixel, plotBottom - self._tickLen))
@@ -1546,7 +1604,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for xData in _ticks(xMin, xMax, xStep):
                     if xData >= trXMin and xData <= trXMax:
-                        xPixel = self.dataToPixelCoords(xData=xData)
+                        pixelPos = self.dataToPixel(x=xData)
+                        assert pixelPos is not None
+                        xPixel = pixelPos[0]
 
                         vertices.append((xPixel, plotBottom))
                         vertices.append((xPixel, plotBottom - self._tickLen))
@@ -1573,7 +1633,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for yDataLog in _ticks(yMin, yMax, yStep):
                     if yDataLog >= trYMin and yDataLog <= trYMax:
-                        yPixel = self.dataToPixelCoords(yData=10 ** yDataLog)
+                        pixelPos = self.dataToPixel(y=10 ** yDataLog)
+                        assert pixelPos is not None
+                        yPixel = pixelPos[1]
 
                         vertices.append((self._margins['left'], yPixel))
                         vertices.append((self._margins['left'] + self._tickLen,
@@ -1594,7 +1656,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for yData in _ticks(yMin, yMax, yStep):
                     if yData >= trYMin and yData <= trYMax:
-                        yPixel = self.dataToPixelCoords(yData=yData)
+                        pixelPos = self.dataToPixel(y=yData)
+                        assert pixelPos is not None
+                        yPixel = pixelPos[1]
 
                         vertices.append((self._margins['left'], yPixel))
                         vertices.append((self._margins['left'] + self._tickLen,
@@ -1622,8 +1686,10 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for y2DataLog in _ticks(y2Min, y2Max, y2Step):
                     if y2DataLog >= trY2Min and y2DataLog <= trY2Max:
-                        y2Pixel = self.dataToPixelCoords(yData=10 ** y2DataLog,
-                                                         axis="right")
+                        pixelPos = self.dataToPixel(y=10 ** y2DataLog,
+                                                    axis="right")
+                        assert pixelPos is not None
+                        y2Pixel = pixelPos[1]
 
                         vertices.append((self._margins['left'], y2Pixel))
                         vertices.append((self._margins['left'] + self._tickLen,
@@ -1643,8 +1709,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 for y2Data in _ticks(y2Min, y2Max, y2Step):
                     if y2Data >= trY2Min and y2Data <= trY2Max:
-                        y2Pixel = self.dataToPixelCoords(yData=y2Data,
-                                                         axis="right")
+                        pixelPos = self.dataToPixel(y=y2Data, axis="right")
+                        assert pixelPos is not None
+                        y2Pixel = pixelPos[1]
 
                         vertices.append((self._margins['left'], y2Pixel))
                         vertices.append((self._margins['left'] + self._tickLen,
@@ -1671,7 +1738,9 @@ class OpenGLPlotCanvas(PlotBackend):
                     plotXMin, plotXMax = self.plotDataBounds.xAxis
                     xData = xDataOrig * index
                     if xData >= plotXMin and xData <= plotXMax:
-                        xPixel = self.dataToPixelCoords(xData=xData)
+                        pixelPos = self.dataToPixel(x=xData)
+                        assert pixelPos is not None
+                        xPixel = pixelPos[0]
 
                         vertices.append((xPixel, plotBottom))
                         vertices.append((xPixel,
@@ -1688,7 +1757,9 @@ class OpenGLPlotCanvas(PlotBackend):
                     plotYMin, plotYMax = self.plotDataBounds.yAxis
                     yData = yDataOrig * index
                     if yData >= plotYMin and yData <= plotYMax:
-                        yPixel = self.dataToPixelCoords(yData=yData)
+                        pixelPos = self.dataToPixel(y=yData)
+                        assert pixelPos is not None
+                        yPixel = pixelPos[1]
 
                         vertices.append((self._margins['left'], yPixel))
                         vertices.append((self._margins['left'] +
@@ -1705,8 +1776,9 @@ class OpenGLPlotCanvas(PlotBackend):
                     plotY2Min, plotY2Max = self.plotDataBounds.y2Axis
                     y2Data = y2DataOrig * index
                     if y2Data >= plotY2Min and y2Data <= plotY2Max:
-                        y2Pixel = self.dataToPixelCoords(yData=y2Data,
-                                                         axis="right")
+                        pixelPos = self.dataToPixel(y=y2Data, axis="right")
+                        assert pixelPos is not None
+                        y2Pixel = pixelPos[1]
 
                         vertices.append((self._margins['left'], y2Pixel))
                         vertices.append((self._margins['left'] +
@@ -1959,96 +2031,109 @@ class OpenGLPlotCanvas(PlotBackend):
         if hasattr(self, '_matrixY2PlotDataTransformedProj'):
             del self._matrixY2PlotDataTransformedProj
 
-    def dataToPixelCoords(self, xData=None, yData=None, axis="left"):
-        assert axis in ("left", "right")
-
-        plotWidth, plotHeight = self.plotSizeInPixels()
+    def dataToPixel(self, x=None, y=None, axis='left', check=True):
+        """
+        :param bool check: Toggle checking if data position is in displayed
+                           area.
+                           If False, this method never returns None.
+        :raises: ValueError if x or y < 0. with log axis.
+        """
+        assert axis in ('left', 'right')
 
         trBounds = self.plotDataTransformedBounds
 
-        if xData is None:
-            xPixel = None
+        if x is None:
+            xDataTr = trBounds.xAxis.center
         else:
             if self._isXLog:
-                if xData > 0.:
-                    xData = math.log10(xData)
-                else:
-                    print('xData: warning log10({0})'.format(xData))
-                    xData = 0.
-            xPixel = int(self._margins['left'] +
-                         plotWidth * (xData - trBounds.xAxis.min_) /
-                         trBounds.xAxis.range_)
+                if x <= 0.:
+                    raise ValueError('Cannot convert x < 0 with log axis.')
+                xDataTr = math.log10(x)
+            else:
+                xDataTr = x
 
-        if yData is None:
-            yPixel = None
+        if y is None:
+            if axis == 'left':
+                yDataTr = trBounds.yAxis.center
+            else:
+                yDataTr = trBounds.y2Axis.center
         else:
             if self._isYLog:
-                if yData > 0.:
-                    yData = math.log10(yData)
-                else:
-                    print('yData: warning log10({0})'.format(yData))
-                    yData = 0.
-            usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
-            yOffset = plotHeight * (yData - usedAxis.min_) / usedAxis.range_
-
-            if self._isYInverted:
-                yPixel = int(self._margins['top'] + yOffset)
+                if y <= 0.:
+                    raise ValueError('Cannot convert y < 0 with log axis.')
+                yDataTr = math.log10(y)
             else:
-                yPixel = int(self.winHeight - self._margins['bottom'] -
-                             yOffset)
+                yDataTr = y
 
-        if xData is None:
-            return yPixel
-        elif yData is None:
-            return xPixel
+        if check and (xDataTr < trBounds.xAxis.min_ or
+                      xDataTr > trBounds.xAxis.max_):
+            if ((axis == 'left' and
+                 (yDataTr < trBounds.yAxis.min_ or
+                  yDataTr > trBounds.yAxis.max_)) or
+                (yDataTr < trBounds.y2Axis.min_ or
+                 yDataTr > trBounds.y2Axis.max_)):
+                return None  # (xDataTr, yDataTr) is out of displaayed area
+
+        plotWidth, plotHeight = self.plotSizeInPixels()
+
+        xPixel = int(self._margins['left'] +
+                     plotWidth * (xDataTr - trBounds.xAxis.min_) /
+                     trBounds.xAxis.range_)
+
+        usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
+        yOffset = plotHeight * (yDataTr - usedAxis.min_) / usedAxis.range_
+
+        if self._isYInverted:
+            yPixel = int(self._margins['top'] + yOffset)
         else:
-            return xPixel, yPixel
+            yPixel = int(self.winHeight - self._margins['bottom'] -
+                         yOffset)
 
-    def pixelToDataCoords(self, xPixel=None, yPixel=None, axis="left"):
+        return xPixel, yPixel
+
+    def pixelToData(self, x=None, y=None, axis="left", check=True):
+        """
+        :param bool check: Toggle checking if pixel is in plot area.
+                           If False, this method never returns None.
+        """
         assert axis in ("left", "right")
+
+        if x is None:
+            x = self.winWidth / 2.
+        if y is None:
+            y = self.winHeight / 2.
+
+        if check and (x < self._margins['left'] or
+                      x > (self.winWidth - self._margins['right']) or
+                      y < self._margins['top'] or
+                      y > self.winHeight - self._margins['bottom']):
+            return None  # (x, y) is out of plot area
 
         plotWidth, plotHeight = self.plotSizeInPixels()
 
         trBounds = self.plotDataTransformedBounds
 
-        if xPixel is not None:
-            if xPixel < self._margins['left'] or \
-               xPixel > (self.winWidth - self._margins['right']):
-                xData = None
-            else:
-                xData = (xPixel - self._margins['left']) + 0.5
-                xData /= float(plotWidth)
-                xData = trBounds.xAxis.min_ + xData * trBounds.xAxis.range_
-                if self._isXLog:
-                    xData = pow(10, xData)
+        xData = (x - self._margins['left']) + 0.5
+        xData /= float(plotWidth)
+        xData = trBounds.xAxis.min_ + xData * trBounds.xAxis.range_
+        if self._isXLog:
+            xData = pow(10, xData)
 
-        if yPixel is not None:
-            usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
-            if yPixel < self._margins['top'] or \
-               yPixel > self.winHeight - self._margins['bottom']:
-                yData = None
-            elif self._isYInverted:
-                yData = yPixel - self._margins['top'] + 0.5
-                yData /= float(plotHeight)
-                yData = usedAxis.min_ + yData * usedAxis.range_
-                if self._isYLog:
-                    yData = pow(10, yData)
-            else:
-                yData = self.winHeight - self._margins['bottom'] - yPixel - 0.5
-                yData /= float(plotHeight)
-                yData = usedAxis.min_ + yData * usedAxis.range_
-                if self._isYLog:
-                    yData = pow(10, yData)
-
-        if xPixel is None:
-            try:
-                return yData
-            except NameError:
-                return None
-        elif yPixel is None:
-            return xData
+        usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
+        if self._isYInverted:
+            yData = y - self._margins['top'] + 0.5
+            yData /= float(plotHeight)
+            yData = usedAxis.min_ + yData * usedAxis.range_
+            if self._isYLog:
+                yData = pow(10, yData)
         else:
-            return xData, yData
+            yData = self.winHeight - self._margins['bottom'] - y - 0.5
+            yData /= float(plotHeight)
+            yData = usedAxis.min_ + yData * usedAxis.range_
+            if self._isYLog:
+                yData = pow(10, yData)
+
+        return xData, yData
 
     def plotSizeInPixels(self):
         w = self.winWidth - self._margins['left'] - self._margins['right']
@@ -2213,46 +2298,54 @@ class OpenGLPlotCanvas(PlotBackend):
             xCoord, yCoord = marker['x'], marker['y']
 
             if marker['text'] is not None:
+                pixelPos = self.dataToPixel(xCoord, yCoord, check=False)
+
+                xMin, xMax = self.plotDataBounds.xAxis
+                yMin, yMax = self.plotDataBounds.yAxis
+
                 if xCoord is None:
                     x = self.winWidth - self._margins['right'] - pixelOffset
-                    y = self.dataToPixelCoords(yData=yCoord) - pixelOffset
+                    y = pixelPos[1] - pixelOffset
                     label = Text2D(marker['text'], x, y, marker['color'],
                                    align=RIGHT, valign=BOTTOM)
+
+                    vertices = np.array(((xMin, yCoord),
+                                         (xMax, yCoord)),
+                                        dtype=np.float32)
+
                 elif yCoord is None:
-                    x = self.dataToPixelCoords(xData=xCoord) + pixelOffset
+                    x = pixelPos[0] + pixelOffset
                     y = self._margins['top'] + pixelOffset
                     label = Text2D(marker['text'], x, y, marker['color'],
                                    align=LEFT, valign=TOP)
+
+                    vertices = np.array(((xCoord, yMin),
+                                         (xCoord, yMax)),
+                                        dtype=np.float32)
+
                 else:
-                    x, y = self.dataToPixelCoords(xCoord, yCoord)
-                    x, y = x + pixelOffset, y + pixelOffset
+                    xPixel, yPixel = pixelPos
+
+                    x, y = xPixel + pixelOffset, yPixel + pixelOffset
                     label = Text2D(marker['text'], x, y, marker['color'],
                                    align=LEFT, valign=TOP)
+
+                    x0, y0 = self.pixelToData(xPixel - 2 * pixelOffset,
+                                              yPixel - 2 * pixelOffset,
+                                              check=False)
+
+                    x1, y1 = self.pixelToData(xPixel + 2 * pixelOffset + 1.,
+                                              yPixel + 2 * pixelOffset + 1.,
+                                              check=False)
+
+                    vertices = np.array(((x0, yCoord), (x1, yCoord),
+                                         (xCoord, y0), (xCoord, y1)),
+                                        dtype=np.float32)
+
                 labels.append(label)
 
             glUniform4f(self._progBase.uniforms['color'], * marker['color'])
 
-            xMin, xMax = self.plotDataBounds.xAxis
-            yMin, yMax = self.plotDataBounds.yAxis
-
-            if xCoord is None:
-                vertices = np.array(((xMin, yCoord),
-                                     (xMax, yCoord)),
-                                    dtype=np.float32)
-            elif yCoord is None:
-                vertices = np.array(((xCoord, yMin),
-                                    (xCoord, yMax)),
-                                    dtype=np.float32)
-            else:
-                xPixel, yPixel = self.dataToPixelCoords(xCoord, yCoord)
-                x0, y0 = self.pixelToDataCoords(xPixel - 2 * pixelOffset,
-                                                yPixel - 2 * pixelOffset)
-                x1, y1 = self.pixelToDataCoords(xPixel + 2 * pixelOffset + 1.,
-                                                yPixel + 2 * pixelOffset + 1.)
-
-                vertices = np.array(((x0, yCoord), (x1, yCoord),
-                                     (xCoord, y0), (xCoord, y1)),
-                                    dtype=np.float32)
             glVertexAttribPointer(posAttrib,
                                   2,
                                   GL_FLOAT,
