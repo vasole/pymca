@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -126,6 +126,18 @@ else:
                 from PyQt5.QtSvg import *
             except:
                 pass
+
+
+# Overwrite the QFileDialog to make sure that by default it 
+# returns non-native dialogs as it was the traditional behavior of Qt
+_QFileDialog = QFileDialog
+class QFileDialog(_QFileDialog):
+    def __init__(self, *args, **kwargs):
+        _QFileDialog.__init__(self, *args, **kwargs)
+        try:
+            self.setOptions(_QFileDialog.DontUseNativeDialog)
+        except:
+            print("WARNING: Cannot force default QFileDialog behavior")
 
 class HorizontalSpacer(QWidget):
     def __init__(self, *args):
