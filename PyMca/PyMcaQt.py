@@ -55,7 +55,11 @@ else:
 _QFileDialog = QFileDialog
 class QFileDialog(_QFileDialog):
     def __init__(self, *args, **kwargs):
-        _QFileDialog.__init__(self, *args, **kwargs)
+        try:
+            _QFileDialog.__init__(self, *args, **kwargs)
+        except:
+            # not all versions support kwargs
+            _QFileDialog.__init__(self, *args)
         try:
             self.setOptions(_QFileDialog.DontUseNativeDialog)
         except:
