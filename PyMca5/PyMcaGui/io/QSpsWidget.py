@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -113,7 +113,13 @@ class SPSScanArrayWidget(SpecFileCntTable.SpecFileCntTable):
     def setInfo(self, info):
         if DEBUG:
             print("info = ", info)
-        if "envdict" in info:
+        if "LabelNames" in info:
+            # new style
+            cntList = info.get("LabelNames", [])
+            self.build(cntList)
+            return        
+        elif "envdict" in info:
+            # old style
             if len(info["envdict"].keys()):
                 #We have environment information
                 if "datafile" in info["envdict"]:
