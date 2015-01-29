@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -94,6 +94,7 @@ class Text2D(object):
                  color=(0., 0., 0., 1.),
                  align=LEFT, valign=BASELINE,
                  rotate=0):
+        self._vertices = None
         self._text = text
         self.x = x
         self.y = y
@@ -140,16 +141,15 @@ class Text2D(object):
     @text.setter
     def text(self, text):
         if self._text != text:
-            del self._vertices
+            self._vertices = None
             self._text = text
 
-    def getSize(self):
+    @property
+    def size(self):
         return len(self._text) * font.cWidth, font.cHeight
 
     def getVertices(self):
-        try:
-            return self._vertices
-        except AttributeError:
+        if self._vertices is None:
             self._vertices = np.empty((len(self.text), 4, 4), dtype='float32')
 
             if self._align == LEFT:
@@ -184,13 +184,16 @@ class Text2D(object):
                     (cos * x - sin * y, sin * x + cos * y, u, v)
                     for x, y, u, v in vertices]
 
-            return self._vertices
+        return self._vertices
 
     def getStride(self):
         vertices = self.getVertices()
         return vertices.shape[-1] * vertices.itemsize
 
     def render(self, matrix):
+        if not self.text:
+            return
+
         prog = self._getProgram()
         prog.use()
 

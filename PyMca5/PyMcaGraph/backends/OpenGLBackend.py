@@ -42,11 +42,6 @@ import math
 import numpy as np
 import time
 import warnings
-import sys
-if sys.version_info[0] == 3:
-    import queue
-else:
-    import Queue as queue
 
 try:
     from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -234,7 +229,8 @@ def saveImageToFile(data, fileNameOrObj, fileFormat):
         fileObj.write(
             '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
         fileObj.write('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n')
-        fileObj.write('  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
+        fileObj.write(
+            '  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
         fileObj.write('<svg xmlns:xlink="http://www.w3.org/1999/xlink"\n')
         fileObj.write('     xmlns="http://www.w3.org/2000/svg"\n')
         fileObj.write('     version="1.1"\n')
@@ -1357,14 +1353,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._plotDataBounds = Bounds(1., 100., 1., 100., 1., 100.)
         self._keepDataAspectRatio = False
-        self._isYInverted = False
-        self._title = ''
-        self._xLabel = ''
-        self._yLabel = ''
-        self._isXLog = False
-        self._isYLog = False
 
-        self._grid = False
         self._activeCurve = None
 
         self._zoomColor = None
@@ -1374,7 +1363,6 @@ class OpenGLPlotCanvas(PlotBackend):
         self._markers = MiniOrderedDict()
         self._items = MiniOrderedDict()
         self._zOrderedItems = MiniOrderedDict()  # For images and curves
-        self._labels = []
         self._selectionAreas = MiniOrderedDict()
         self._glGarbageCollector = []
 
@@ -1382,7 +1370,6 @@ class OpenGLPlotCanvas(PlotBackend):
         self._lineWidth = 1
         self._tickLen = 5
 
-        self._axisDirtyFlag = True
         self._plotDirtyFlag = True
 
         self._hasRightYAxis = set()
@@ -1391,6 +1378,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self.eventHandler = ZoomAndSelect(self, (0., 0., 0., 1.))
 
         self._plotHasFocus = set()
+
+        self._plotFrame = GLPlotFrame(self._margins)
 
         PlotBackend.__init__(self, parent, **kw)
 
@@ -1563,293 +1552,7 @@ class OpenGLPlotCanvas(PlotBackend):
             del self._selectionAreas[name]
 
     def updateAxis(self):
-        self._axisDirtyFlag = True
         self._plotDirtyFlag = True
-
-    def _axesTicksAndLabels(self):
-        trXMin, trXMax = self.plotDataTransformedBounds.xAxis
-        trYMin, trYMax = self.plotDataTransformedBounds.yAxis
-        trY2Min, trY2Max = self.plotDataTransformedBounds.y2Axis
-
-        vertices = []
-        labels = []
-
-        if trXMin != trXMax:
-            plotBottom = self.winHeight - self._margins['bottom']
-
-            if self._isXLog:
-                xMin, xMax, xStep = niceNumbersForLog10(trXMin, trXMax)
-
-                for xDataLog in _ticks(xMin, xMax, xStep):
-                    if xDataLog >= trXMin and xDataLog <= trXMax:
-                        pixelPos = self.dataToPixel(x=10 ** xDataLog)
-                        assert pixelPos is not None
-                        xPixel = pixelPos[0]
-
-                        vertices.append((xPixel, plotBottom))
-                        vertices.append((xPixel, plotBottom - self._tickLen))
-                        vertices.append((xPixel, self._margins['top']))
-                        vertices.append((xPixel,
-                                         self._margins['top'] + self._tickLen))
-
-                        text = '1e{0:+03d}'.format(xDataLog)
-                        labels.append(Text2D(text=text,
-                                             x=xPixel,
-                                             y=plotBottom + self._tickLen,
-                                             align=CENTER,
-                                             valign=TOP))
-
-            else:  # linear scale
-                xMin, xMax, xStep, xNbFrac = niceNumbers(trXMin, trXMax)
-
-                for xData in _ticks(xMin, xMax, xStep):
-                    if xData >= trXMin and xData <= trXMax:
-                        pixelPos = self.dataToPixel(x=xData)
-                        assert pixelPos is not None
-                        xPixel = pixelPos[0]
-
-                        vertices.append((xPixel, plotBottom))
-                        vertices.append((xPixel, plotBottom - self._tickLen))
-                        vertices.append((xPixel, self._margins['top']))
-                        vertices.append((xPixel,
-                                         self._margins['top'] + self._tickLen))
-
-                        if xNbFrac == 0:
-                            text = '{0:g}'.format(xData)
-                        else:
-                            text = ('{0:.' + str(xNbFrac) + 'f}').format(xData)
-
-                        labels.append(Text2D(text=text,
-                                             x=xPixel,
-                                             y=plotBottom + self._tickLen,
-                                             align=CENTER,
-                                             valign=TOP))
-
-        if trYMin != trYMax:
-            plotRight = self.winWidth - self._margins['right']
-
-            if self._isYLog:
-                yMin, yMax, yStep = niceNumbersForLog10(trYMin, trYMax)
-
-                for yDataLog in _ticks(yMin, yMax, yStep):
-                    if yDataLog >= trYMin and yDataLog <= trYMax:
-                        pixelPos = self.dataToPixel(y=10 ** yDataLog)
-                        assert pixelPos is not None
-                        yPixel = pixelPos[1]
-
-                        vertices.append((self._margins['left'], yPixel))
-                        vertices.append((self._margins['left'] + self._tickLen,
-                                         yPixel))
-                        vertices.append((plotRight, yPixel))
-                        vertices.append((plotRight - self._tickLen, yPixel))
-
-                        text = '1e{0:+03d}'.format(yDataLog)
-                        labels.append(Text2D(text=text,
-                                             x=self._margins['left'] -
-                                             self._tickLen,
-                                             y=yPixel,
-                                             align=RIGHT,
-                                             valign=CENTER))
-
-            else:  # linear scale
-                yMin, yMax, yStep, yNbFrac = niceNumbers(trYMin, trYMax)
-
-                for yData in _ticks(yMin, yMax, yStep):
-                    if yData >= trYMin and yData <= trYMax:
-                        pixelPos = self.dataToPixel(y=yData)
-                        assert pixelPos is not None
-                        yPixel = pixelPos[1]
-
-                        vertices.append((self._margins['left'], yPixel))
-                        vertices.append((self._margins['left'] + self._tickLen,
-                                         yPixel))
-                        vertices.append((plotRight, yPixel))
-                        vertices.append((plotRight - self._tickLen, yPixel))
-
-                        if yNbFrac == 0:
-                            text = '{0:g}'.format(yData)
-                        else:
-                            text = ('{0:.' + str(yNbFrac) + 'f}').format(yData)
-
-                        labels.append(Text2D(text=text,
-                                             x=self._margins['left'] -
-                                             self._tickLen,
-                                             y=yPixel,
-                                             align=RIGHT,
-                                             valign=CENTER))
-
-        if self._hasRightYAxis and trY2Min != trY2Max:
-            plotRight = self.winWidth - self._margins['right']
-
-            if self._isYLog:
-                y2Min, y2Max, y2Step = niceNumbersForLog10(trY2Min, trY2Max)
-
-                for y2DataLog in _ticks(y2Min, y2Max, y2Step):
-                    if y2DataLog >= trY2Min and y2DataLog <= trY2Max:
-                        pixelPos = self.dataToPixel(y=10 ** y2DataLog,
-                                                    axis="right")
-                        assert pixelPos is not None
-                        y2Pixel = pixelPos[1]
-
-                        vertices.append((self._margins['left'], y2Pixel))
-                        vertices.append((self._margins['left'] + self._tickLen,
-                                         y2Pixel))
-                        vertices.append((plotRight, y2Pixel))
-                        vertices.append((plotRight - self._tickLen, y2Pixel))
-
-                        text = '1e{0:+03d}'.format(y2DataLog)
-                        labels.append(Text2D(text=text,
-                                             x=plotRight + self._tickLen,
-                                             y=y2Pixel,
-                                             align=LEFT,
-                                             valign=CENTER))
-
-            else:  # linear scale
-                y2Min, y2Max, y2Step, y2NbFrac = niceNumbers(trY2Min, trY2Max)
-
-                for y2Data in _ticks(y2Min, y2Max, y2Step):
-                    if y2Data >= trY2Min and y2Data <= trY2Max:
-                        pixelPos = self.dataToPixel(y=y2Data, axis="right")
-                        assert pixelPos is not None
-                        y2Pixel = pixelPos[1]
-
-                        vertices.append((self._margins['left'], y2Pixel))
-                        vertices.append((self._margins['left'] + self._tickLen,
-                                         y2Pixel))
-                        vertices.append((plotRight, y2Pixel))
-                        vertices.append((plotRight - self._tickLen, y2Pixel))
-
-                        if y2NbFrac == 0:
-                            text = '{0:g}'.format(y2Data)
-                        else:
-                            text = ('%.' + str(y2NbFrac) + 'f') % y2Data
-
-                        labels.append(Text2D(text=text,
-                                             x=plotRight + self._tickLen,
-                                             y=y2Pixel,
-                                             align=LEFT,
-                                             valign=CENTER))
-        nbMainTicks = len(vertices) // 4
-
-        if trXMin != trXMax and self._isXLog and xStep == 1:
-            for xDataLog in list(_ticks(xMin, xMax, xStep))[:-1]:
-                xDataOrig = 10 ** xDataLog
-                for index in range(2, 10):
-                    plotXMin, plotXMax = self.plotDataBounds.xAxis
-                    xData = xDataOrig * index
-                    if xData >= plotXMin and xData <= plotXMax:
-                        pixelPos = self.dataToPixel(x=xData)
-                        assert pixelPos is not None
-                        xPixel = pixelPos[0]
-
-                        vertices.append((xPixel, plotBottom))
-                        vertices.append((xPixel,
-                                         plotBottom - 0.5 * self._tickLen))
-                        vertices.append((xPixel, self._margins['top']))
-                        vertices.append(
-                            (xPixel,
-                             self._margins['top'] + 0.5 * self._tickLen))
-
-        if trYMin != trYMax and self._isYLog and yStep == 1:
-            for yDataLog in list(_ticks(yMin, yMax, yStep))[:-1]:
-                yDataOrig = 10 ** yDataLog
-                for index in range(2, 10):
-                    plotYMin, plotYMax = self.plotDataBounds.yAxis
-                    yData = yDataOrig * index
-                    if yData >= plotYMin and yData <= plotYMax:
-                        pixelPos = self.dataToPixel(y=yData)
-                        assert pixelPos is not None
-                        yPixel = pixelPos[1]
-
-                        vertices.append((self._margins['left'], yPixel))
-                        vertices.append((self._margins['left'] +
-                                         0.5 * self._tickLen, yPixel))
-                        vertices.append((plotRight, yPixel))
-                        vertices.append((plotRight - 0.5 * self._tickLen,
-                                         yPixel))
-
-        if (self._hasRightYAxis and trY2Min != trY2Max and
-                self._isYLog and y2Step == 1):
-            for y2DataLog in list(_ticks(y2Min, y2Max, y2Step))[:-1]:
-                y2DataOrig = 10 ** y2DataLog
-                for index in range(2, 10):
-                    plotY2Min, plotY2Max = self.plotDataBounds.y2Axis
-                    y2Data = y2DataOrig * index
-                    if y2Data >= plotY2Min and y2Data <= plotY2Max:
-                        pixelPos = self.dataToPixel(y=y2Data, axis="right")
-                        assert pixelPos is not None
-                        y2Pixel = pixelPos[1]
-
-                        vertices.append((self._margins['left'], y2Pixel))
-                        vertices.append((self._margins['left'] +
-                                         0.5 * self._tickLen, y2Pixel))
-                        vertices.append((plotRight, y2Pixel))
-                        vertices.append((plotRight - 0.5 * self._tickLen,
-                                         y2Pixel))
-
-        return vertices, labels, nbMainTicks
-
-    def _updateAxis(self):
-        # Check if window is large enough
-        plotWidth, plotHeight = self.plotSizeInPixels()
-        if plotWidth <= 2 or plotHeight <= 2:
-            return
-
-        if not self._axisDirtyFlag:
-            return
-        else:
-            self._axisDirtyFlag = False
-
-        # Ticks
-        vertices, tickLabels, nbMainTicks = self._axesTicksAndLabels()
-        self._labels = tickLabels
-
-        # Plot frame
-        xLeft = self._margins['left']
-        xRight = self.winWidth - self._margins['right']
-        yBottom = self.winHeight - self._margins['bottom']
-        yTop = self._margins['top']
-
-        vertices.append((xLeft, yBottom))
-        vertices.append((xLeft, yTop))
-
-        vertices.append((xLeft, yTop))
-        vertices.append((xRight, yTop))
-
-        vertices.append((xRight, yTop))
-        vertices.append((xRight, yBottom))
-
-        vertices.append((xRight, yBottom))
-        vertices.append((xLeft, yBottom))
-
-        # Build numpy array from ticks and frame vertices
-        self._frameVertices = np.array(vertices, dtype=np.float32)
-        self._frameVerticesNbMainTicks = nbMainTicks
-
-        # Title, Labels
-        plotCenterX = self._margins['left'] + plotWidth // 2
-        plotCenterY = self._margins['top'] + plotHeight // 2
-        if self._title:
-            self._labels.append(Text2D(self._title,
-                                       x=plotCenterX,
-                                       y=self._margins['top'] - self._tickLen,
-                                       align=CENTER,
-                                       valign=BOTTOM))
-        if self._xLabel:
-            self._labels.append(Text2D(self._xLabel,
-                                       x=plotCenterX,
-                                       y=self.winHeight -
-                                       self._margins['bottom'] // 2,
-                                       align=CENTER,
-                                       valign=TOP))
-
-        if self._yLabel:
-            self._labels.append(Text2D(self._yLabel,
-                                       x=self._margins['left'] // 4,
-                                       y=plotCenterY,
-                                       align=CENTER,
-                                       valign=CENTER,
-                                       rotate=ROTATE_270))
 
     # Coordinate systems #
 
@@ -1908,14 +1611,20 @@ class OpenGLPlotCanvas(PlotBackend):
     @plotDataBounds.setter
     def plotDataBounds(self, bounds):
         if bounds != self.plotDataBounds:
-            if self._isXLog and bounds.xAxis.min_ <= 0.:
+            if self._plotFrame.xAxis.isLog and bounds.xAxis.min_ <= 0.:
                 raise RuntimeError(
                     'Cannot use plot area with X <= 0 with X axis log scale')
-            if self._isYLog and (bounds.yAxis.min_ <= 0. or
-                                 bounds.y2Axis.min_ <= 0.):
+            if self._plotFrame.yAxis.isLog and (bounds.yAxis.min_ <= 0. or
+                                                bounds.y2Axis.min_ <= 0.):
                 raise RuntimeError(
                     'Cannot use plot area with Y <= 0 with Y axis log scale')
             self._plotDataBounds = bounds
+
+            # Update plot frame bounds
+            self._plotFrame.xAxis.dataRange = self.plotDataBounds.xAxis
+            self._plotFrame.yAxis.dataRange = self.plotDataBounds.yAxis
+            self._plotFrame.y2Axis.dataRange = self.plotDataBounds.y2Axis
+
             self._dirtyPlotDataTransformedBounds()
 
     @property
@@ -1928,14 +1637,15 @@ class OpenGLPlotCanvas(PlotBackend):
         try:
             return self._plotDataTransformedBounds
         except AttributeError:
-            if not self._isXLog and not self._isYLog:
+            if not (self._plotFrame.xAxis.isLog or
+                    self._plotFrame.yAxis.isLog):
                 self._plotDataTransformedBounds = self.plotDataBounds
             else:
                 xMin, xMax = self.plotDataBounds.xAxis
                 yMin, yMax = self.plotDataBounds.yAxis
                 y2Min, y2Max = self.plotDataBounds.y2Axis
 
-                if self._isXLog:
+                if self._plotFrame.xAxis.isLog:
                     try:
                         xMin = math.log10(xMin)
                     except ValueError:
@@ -1947,7 +1657,7 @@ class OpenGLPlotCanvas(PlotBackend):
                         print('xMax: warning log10({0})'.format(xMax))
                         xMax = 0.
 
-                if self._isYLog:
+                if self._plotFrame.yAxis.isLog:
                     try:
                         yMin = math.log10(yMin)
                     except ValueError:
@@ -1992,7 +1702,7 @@ class OpenGLPlotCanvas(PlotBackend):
             xMin, xMax = self.plotDataTransformedBounds.xAxis
             yMin, yMax = self.plotDataTransformedBounds.yAxis
 
-            if self._isYInverted:
+            if self._plotFrame.isYAxisInverted:
                 self._matrixPlotDataTransformedProj = mat4Ortho(xMin, xMax,
                                                                 yMax, yMin,
                                                                 1, -1)
@@ -2015,7 +1725,7 @@ class OpenGLPlotCanvas(PlotBackend):
             xMin, xMax = self.plotDataTransformedBounds.xAxis
             y2Min, y2Max = self.plotDataTransformedBounds.y2Axis
 
-            if self._isYInverted:
+            if self._plotFrame.isYAxisInverted:
                 self._matrixY2PlotDataTransformedProj = mat4Ortho(xMin, xMax,
                                                                   y2Max, y2Min,
                                                                   1, -1)
@@ -2045,7 +1755,7 @@ class OpenGLPlotCanvas(PlotBackend):
         if x is None:
             xDataTr = trBounds.xAxis.center
         else:
-            if self._isXLog:
+            if self._plotFrame.xAxis.isLog:
                 if x <= 0.:
                     raise ValueError('Cannot convert x < 0 with log axis.')
                 xDataTr = math.log10(x)
@@ -2058,7 +1768,7 @@ class OpenGLPlotCanvas(PlotBackend):
             else:
                 yDataTr = trBounds.y2Axis.center
         else:
-            if self._isYLog:
+            if self._plotFrame.yAxis.isLog:
                 if y <= 0.:
                     raise ValueError('Cannot convert y < 0 with log axis.')
                 yDataTr = math.log10(y)
@@ -2083,7 +1793,7 @@ class OpenGLPlotCanvas(PlotBackend):
         usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
         yOffset = plotHeight * (yDataTr - usedAxis.min_) / usedAxis.range_
 
-        if self._isYInverted:
+        if self._plotFrame.isYAxisInverted:
             yPixel = int(self._margins['top'] + yOffset)
         else:
             yPixel = int(self.winHeight - self._margins['bottom'] -
@@ -2116,21 +1826,21 @@ class OpenGLPlotCanvas(PlotBackend):
         xData = (x - self._margins['left']) + 0.5
         xData /= float(plotWidth)
         xData = trBounds.xAxis.min_ + xData * trBounds.xAxis.range_
-        if self._isXLog:
+        if self._plotFrame.xAxis.isLog:
             xData = pow(10, xData)
 
         usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
-        if self._isYInverted:
+        if self._plotFrame.isYAxisInverted:
             yData = y - self._margins['top'] + 0.5
             yData /= float(plotHeight)
             yData = usedAxis.min_ + yData * usedAxis.range_
-            if self._isYLog:
+            if self._plotFrame.yAxis.isLog:
                 yData = pow(10, yData)
         else:
             yData = self.winHeight - self._margins['bottom'] - y - 0.5
             yData /= float(plotHeight)
             yData = usedAxis.min_ + yData * usedAxis.range_
-            if self._isYLog:
+            if self._plotFrame.yAxis.isLog:
                 yData = pow(10, yData)
 
         return xData, yData
@@ -2185,14 +1895,15 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def _paintDirectGL(self):
         self._renderPlotAreaGL()
-        self._renderPlotFrameGL()
+        self._plotFrame.render()
         self._renderMarkersGL()
         self._renderSelectionGL()
 
     def _paintFBOGL(self):
         context = getGLContext()
         plotFBOTex = self._plotFBOs.get(context)
-        if self._plotDirtyFlag or plotFBOTex is None:
+        if (self._plotDirtyFlag or self._plotFrame.isDirty or
+                plotFBOTex is None):
             self._plotDirtyFlag = False
             self._plotVertices = np.array(((-1., -1., 0., 0.),
                                            (1., -1., 1., 0.),
@@ -2215,7 +1926,7 @@ class OpenGLPlotCanvas(PlotBackend):
             with plotFBOTex:
                 glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
                 self._renderPlotAreaGL()
-                self._renderPlotFrameGL()
+                self._plotFrame.render()
 
         # Render plot in screen coords
         glViewport(0, 0, self.winWidth, self.winHeight)
@@ -2285,7 +1996,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                            self.matrixPlotDataTransformedProj)
         glUniform2i(self._progBase.uniforms['isLog'],
-                    self._isXLog, self._isYLog)
+                    self._plotFrame.xAxis.isLog, self._plotFrame.yAxis.isLog)
         glUniform1i(self._progBase.uniforms['hatchStep'], 0)
         glUniform1f(self._progBase.uniforms['tickLen'], 0.)
         posAttrib = self._progBase.attributes['position']
@@ -2380,7 +2091,8 @@ class OpenGLPlotCanvas(PlotBackend):
             glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                                self.matrixPlotDataTransformedProj)
             glUniform2i(self._progBase.uniforms['isLog'],
-                        self._isXLog, self._isYLog)
+                        self._plotFrame.xAxis.isLog,
+                        self._plotFrame.yAxis.isLog)
             glUniform1f(self._progBase.uniforms['tickLen'], 0.)
             posAttrib = self._progBase.attributes['position']
             colorUnif = self._progBase.uniforms['color']
@@ -2390,78 +2102,14 @@ class OpenGLPlotCanvas(PlotBackend):
 
             glDisable(GL_SCISSOR_TEST)
 
-    def _renderPlotFrameGL(self):
-        plotWidth, plotHeight = self.plotSizeInPixels()
-
-        # Render plot in screen coords
-        glViewport(0, 0, self.winWidth, self.winHeight)
-
-        self._updateAxis()
-
-        # Render Plot frame
-        self._progBase.use()
-        glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                           self.matScreenProj)
-        glUniform2i(self._progBase.uniforms['isLog'], 0, 0)
-        glUniform4f(self._progBase.uniforms['color'], 0., 0., 0., 1.)
-        glUniform1i(self._progBase.uniforms['hatchStep'], 0)
-        glUniform1f(self._progBase.uniforms['tickLen'], 0.)
-
-        glEnableVertexAttribArray(self._progBase.attributes['position'])
-        glVertexAttribPointer(self._progBase.attributes['position'],
-                              2,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              0, self._frameVertices)
-        glLineWidth(self._lineWidth)
-        glDrawArrays(GL_LINES, 0, len(self._frameVertices))
-
-        # Render Text
-        for label in self._labels:
-            label.render(self.matScreenProj)
-
     def _renderPlotAreaGL(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
+
+        self._plotFrame.renderGrid()
 
         glScissor(self._margins['left'], self._margins['bottom'],
                   plotWidth, plotHeight)
         glEnable(GL_SCISSOR_TEST)
-
-        # Render grid by reusing tick vertices and a stride
-        if self._grid:
-            self._updateAxis()
-
-            # Render plot in screen coords
-            glViewport(0, 0, self.winWidth, self.winHeight)
-            self._progBase.use()
-            glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                               self.matScreenProj)
-            glUniform2i(self._progBase.uniforms['isLog'], 0, 0)
-            glUniform4f(self._progBase.uniforms['color'], 0.5, 0.5, 0.5, 1.)
-            glUniform1i(self._progBase.uniforms['hatchStep'], 0)
-            glUniform1f(self._progBase.uniforms['tickLen'], 2.)
-
-            stride = 2 * self._frameVertices.shape[-1] * \
-                self._frameVertices.itemsize
-            glEnableVertexAttribArray(self._progBase.attributes['position'])
-            glVertexAttribPointer(self._progBase.attributes['position'],
-                                  2,
-                                  GL_FLOAT,
-                                  GL_FALSE,
-                                  stride, self._frameVertices)
-            glLineWidth(self._lineWidth)
-
-            if self._grid == 1:
-                firstVertex = 0
-                nbVertices = self._frameVerticesNbMainTicks * 2
-            elif self._grid == 2:
-                firstVertex = self._frameVerticesNbMainTicks * 2
-                nbVertices = (len(self._frameVertices) - 8) // 2 - firstVertex
-            else:
-                firstVertex = 0
-                nbVertices = (len(self._frameVertices) - 8) // 2
-
-            glDrawArrays(GL_LINES, firstVertex, nbVertices)
 
         # Matrix
         trBounds = self.plotDataTransformedBounds
@@ -2478,17 +2126,20 @@ class OpenGLPlotCanvas(PlotBackend):
                            key=lambda item: item.info['zOrder']):
             if item.info.get('yAxis') == 'right':
                 item.render(self.matrixY2PlotDataTransformedProj,
-                            self._isXLog, self._isYLog)
+                            self._plotFrame.xAxis.isLog,
+                            self._plotFrame.yAxis.isLog)
             else:
                 item.render(self.matrixPlotDataTransformedProj,
-                            self._isXLog, self._isYLog)
+                            self._plotFrame.xAxis.isLog,
+                            self._plotFrame.yAxis.isLog)
 
         # Render Items
         self._progBase.use()
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                            self.matrixPlotDataTransformedProj)
         glUniform2i(self._progBase.uniforms['isLog'],
-                    self._isXLog, self._isYLog)
+                    self._plotFrame.xAxis.isLog,
+                    self._plotFrame.yAxis.isLog)
         glUniform1f(self._progBase.uniforms['tickLen'], 0.)
 
         for item in self._items.values():
@@ -2510,6 +2161,8 @@ class OpenGLPlotCanvas(PlotBackend):
         glDisable(GL_SCISSOR_TEST)
 
     def resizeGL(self, width, height):
+        self._plotFrame.size = width, height
+
         self.winWidth, self.winHeight = width, height
         self.matScreenProj = mat4Ortho(0, self.winWidth,
                                        self.winHeight, 0,
@@ -2534,10 +2187,10 @@ class OpenGLPlotCanvas(PlotBackend):
         if draggable:
             behaviors.add('draggable')
 
-        if x is not None and self._isXLog and x <= 0.:
+        if x is not None and self._plotFrame.xAxis.isLog and x <= 0.:
             raise RuntimeError(
                 'Cannot add marker with X <= 0 with X axis log scale')
-        if y is not None and self._isYLog and y <= 0.:
+        if y is not None and self._plotFrame.yAxis.isLog and y <= 0.:
             raise RuntimeError(
                 'Cannot add marker with Y <= 0 with Y axis log scale')
 
@@ -2680,10 +2333,10 @@ class OpenGLPlotCanvas(PlotBackend):
                 'behaviors': behaviors
             }
 
-            if self._isXLog and image.xMin <= 0.:
+            if self._plotFrame.xAxis.isLog and image.xMin <= 0.:
                 raise RuntimeError(
                     'Cannot add image with X <= 0 with X axis log scale')
-            if self._isYLog and image.yMin <= 0.:
+            if self._plotFrame.yAxis.isLog and image.yMin <= 0.:
                 raise RuntimeError(
                     'Cannot add image with Y <= 0 with Y axis log scale')
 
@@ -2751,10 +2404,10 @@ class OpenGLPlotCanvas(PlotBackend):
             xList = np.array(xList, copy=False)
             yList = np.array(yList, copy=False)
 
-        if self._isXLog and xList.min() <= 0.:
+        if self._plotFrame.xAxis.isLog and xList.min() <= 0.:
             raise RuntimeError(
                 'Cannot add item with X <= 0 with X axis log scale')
-        if self._isYLog and yList.min() <= 0.:
+        if self._plotFrame.yAxis.isLog and yList.min() <= 0.:
             raise RuntimeError(
                 'Cannot add item with Y <= 0 with Y axis log scale')
 
@@ -2847,11 +2500,12 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if yaxis == "right":
             self._hasRightYAxis.add(curve)
+            self._plotFrame.isY2Axis = True
 
-        if self._isXLog and curve.xMin <= 0.:
+        if self._plotFrame.xAxis.isLog and curve.xMin <= 0.:
             raise RuntimeError(
                 'Cannot add curve with X <= 0 with X axis log scale')
-        if self._isYLog and curve.yMin <= 0.:
+        if self._plotFrame.yAxis.isLog and curve.yMin <= 0.:
             raise RuntimeError(
                 'Cannot add curve with Y <= 0 with Y axis log scale')
 
@@ -2889,8 +2543,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 self._activeCurve = None
 
             self._hasRightYAxis.discard(curve)
-            if not self._hasRightYAxis:
-                self.updateAxis()
+            self._plotFrame.isY2Axis = self._hasRightYAxis
 
             self._glGarbageCollector.append(curve)
             self._plotDirtyFlag = True
@@ -3062,13 +2715,14 @@ class OpenGLPlotCanvas(PlotBackend):
         self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
     def isKeepDataAspectRatio(self):
-        if self._isXLog or self._isYLog:
+        if self._plotFrame.xAxis.isLog or self._plotFrame.yAxis.isLog:
             return False
         else:
             return self._keepDataAspectRatio
 
     def keepDataAspectRatio(self, flag=True):
-        if flag and (self._isXLog or self._isYLog):
+        if flag and (self._plotFrame.xAxis.isLog or
+                     self._plotFrame.yAxis.isLog):
             warnings.warn("KeepDataAspectRatio is ignored with log axes",
                           RuntimeWarning)
 
@@ -3135,13 +2789,13 @@ class OpenGLPlotCanvas(PlotBackend):
         self.updateAxis()
 
     def invertYAxis(self, flag=True):
-        if flag != self._isYInverted:
-            self._isYInverted = flag
+        if flag != self._plotFrame.isYAxisInverted:
+            self._plotFrame.isYAxisInverted = flag
             self._dirtyMatrixPlotDataTransformedProj()
             self.updateAxis()
 
     def isYAxisInverted(self):
-        return self._isYInverted
+        return self._plotFrame.isYAxisInverted
 
     # Autoscale #
 
@@ -3160,7 +2814,7 @@ class OpenGLPlotCanvas(PlotBackend):
     # Log axis #
 
     def setXAxisLogarithmic(self, flag=True):
-        if flag != self._isXLog:
+        if flag != self._plotFrame.xAxis.isLog:
             if flag and self._keepDataAspectRatio:
                 warnings.warn("KeepDataAspectRatio is ignored with log axes",
                               RuntimeWarning)
@@ -3168,11 +2822,11 @@ class OpenGLPlotCanvas(PlotBackend):
             if flag and self.dataBounds.xAxis.min_ <= 0.:
                 raise RuntimeError(
                     'Cannot use log scale for X axis: Some data is <= 0.')
-            self._isXLog = flag
+            self._plotFrame.xAxis.isLog = flag
             self._dirtyPlotDataTransformedBounds()
 
     def setYAxisLogarithmic(self, flag=True):
-        if flag != self._isYLog:
+        if flag != self._plotFrame.yAxis.isLog:
             if flag and self._keepDataAspectRatio:
                 warnings.warn("KeepDataAspectRatio is ignored with log axes",
                               RuntimeWarning)
@@ -3181,38 +2835,38 @@ class OpenGLPlotCanvas(PlotBackend):
                          self.dataBounds.y2Axis.min_ <= 0.):
                 raise RuntimeError(
                     'Cannot use log scale for Y axis: Some data is <= 0.')
-            self._isYLog = flag
+            self._plotFrame.yAxis.isLog = flag
             self._dirtyPlotDataTransformedBounds()
 
     def isXAxisLogaritmic(self):
-        return self._isXLog
+        return self._plotFrame.xAxis.isLog
 
     def isYAxisLogaritmic(self):
-        return self._isYLog
+        return self._plotFrame.yAxis.isLog
 
     # Title, Labels
     def setGraphTitle(self, title=""):
-        self._title = title
+        self._plotFrame.title = title
 
     def getGraphTitle(self):
-        return self._title
+        return self._plotFrame.title
 
     def setGraphXLabel(self, label="X"):
-        self._xLabel = label
+        self._plotFrame.xAxis.title = label
         self.updateAxis()
 
     def getGraphXLabel(self):
-        return self._xLabel
+        return self._plotFrame.xAxis.title
 
     def setGraphYLabel(self, label="Y"):
-        self._yLabel = label
+        self._plotFrame.yAxis.title = label
         self.updateAxis()
 
     def getGraphYLabel(self):
-        return self._yLabel
+        return self._plotFrame.yAxis.title
 
     def showGrid(self, flag=True):
-        self._grid = flag
+        self._plotFrame.grid = flag
         self._plotDirtyFlag = True
         self.replot()
 
