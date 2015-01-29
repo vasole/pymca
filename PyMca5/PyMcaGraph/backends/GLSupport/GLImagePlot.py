@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -269,6 +269,8 @@ class GLColormap(_GL2DDataPlot):
             TODO: check consistency with matplotlib
         :type cmapRange: (float, float) or None
         """
+        assert data.dtype in (np.float32, np.uint16, np.uint8)
+
         super(GLColormap, self).__init__(data, xMin, xScale, yMin, yScale)
         self.colormap = colormap
         self.cmapIsLog = cmapIsLog
@@ -276,7 +278,17 @@ class GLColormap(_GL2DDataPlot):
         if cmapRange is not None:
             self.cmapRange = cmapRange
         else:
-            self.cmapRange = minMax(data)
+            if data.dtype == np.float32: #TODO update minMax
+                self.cmapRange = minMax(data)
+            else:
+                self.cmapRange = data.min(), data.max()
+
+        if data.dtype in (np.uint16, np.uint8):
+            # Using unsigned int as normalized integer in OpenGL
+            # So normalize range
+            max_int = float(np.iinfo(data.dtype).max)
+            self.cmapRange = (self.cmapRange[0] / max_int,
+                              self.cmapRange[1] / max_int)
 
     def __del__(self):
         self.discard()
@@ -294,10 +306,12 @@ class GLColormap(_GL2DDataPlot):
             self.cmapRange = minMax(data)
 
         if hasattr(self, '_texture'):
-            if self.data.shape != oldData.shape:
+            if (self.data.shape != oldData.shape or
+                    self.data.dtype != oldData.dtype):
                 self.discard()
             else:
-                self._texture.updateAll(format_=GL_RED, type_=GL_FLOAT,
+                self._texture.updateAll(format_=GL_RED,
+                                        type_=numpyToGLType(self.data.dtype),
                                         data=data)
 
     @classmethod
@@ -338,12 +352,23 @@ class GLColormap(_GL2DDataPlot):
             cls._logPrograms[context] = prog
         return prog
 
+    _INTERNAL_FORMATS = {
+        np.dtype(np.float32): GL_R32F,
+        # Use normalized integer for unsigned int formats
+        np.dtype(np.uint16): GL_R16,
+        np.dtype(np.uint8): GL_R8
+    }
+
     def prepare(self):
         if not hasattr(self, '_texture'):
+            internalFormat = self._INTERNAL_FORMATS[self.data.dtype]
             height, width = self.data.shape
-            self._texture = Image(GL_R32F, width, height,
-                                  format_=GL_RED, type_=GL_FLOAT,
-                                  data=self.data, texUnit=self._DATA_TEX_UNIT)
+
+            self._texture = Image(internalFormat, width, height,
+                                  format_=GL_RED,
+                                  type_=numpyToGLType(self.data.dtype),
+                                  data=self.data,
+                                  texUnit=self._DATA_TEX_UNIT)
 
     def _setCMap(self, prog):
         glUniform1i(prog.uniforms['cmap.id'],

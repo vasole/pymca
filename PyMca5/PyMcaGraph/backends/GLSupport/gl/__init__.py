@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -49,8 +49,9 @@ else:
 
 from OpenGL.GL import *  # noqa
 
-from OpenGL.GL.ARB.framebuffer_object import *  # noqa Core in OpenGL 3
-from OpenGL.GL.ARB.texture_rg import GL_R32F  # noqa Core in OpenGL 3
+# Extentions core in OpenGL 3
+from OpenGL.GL.ARB.framebuffer_object import *  # noqa
+from OpenGL.GL.ARB.texture_rg import GL_R32F, GL_R16, GL_R8  # noqa
 
 # PyOpenGL 3.0.1 does not define it
 try:
