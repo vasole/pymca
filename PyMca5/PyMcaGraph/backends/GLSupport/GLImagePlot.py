@@ -283,12 +283,7 @@ class GLColormap(_GL2DDataPlot):
             else:
                 self.cmapRange = data.min(), data.max()
 
-        if data.dtype in (np.uint16, np.uint8):
-            # Using unsigned int as normalized integer in OpenGL
-            # So normalize range
-            max_int = float(np.iinfo(data.dtype).max)
-            self.cmapRange = (self.cmapRange[0] / max_int,
-                              self.cmapRange[1] / max_int)
+        self._textureIsDirty = False
 
     def __del__(self):
         self.discard()
@@ -297,22 +292,24 @@ class GLColormap(_GL2DDataPlot):
         if hasattr(self, '_texture'):
             self._texture.discard()
             del self._texture
+        self._textureIsDirty = False
 
     def updateData(self, data):
         oldData = self.data
         self.data = data
 
         if self.cmapRangeIsAuto:
-            self.cmapRange = minMax(data)
+            if data.dtype == np.float32: #TODO update minMax
+                self.cmapRange = minMax(data)
+            else:
+                self.cmapRange = data.min(), data.max()
 
         if hasattr(self, '_texture'):
             if (self.data.shape != oldData.shape or
                     self.data.dtype != oldData.dtype):
                 self.discard()
             else:
-                self._texture.updateAll(format_=GL_RED,
-                                        type_=numpyToGLType(self.data.dtype),
-                                        data=data)
+                self._textureIsDirty = True
 
     @classmethod
     def _getLinearProgram(cls):
@@ -369,12 +366,24 @@ class GLColormap(_GL2DDataPlot):
                                   type_=numpyToGLType(self.data.dtype),
                                   data=self.data,
                                   texUnit=self._DATA_TEX_UNIT)
+        elif self._textureIsDirty:
+            self._textureIsDirty = True
+            self._texture.updateAll(format_=GL_RED,
+                                    type_=numpyToGLType(self.data.dtype),
+                                    data=self.data)
 
     def _setCMap(self, prog):
         glUniform1i(prog.uniforms['cmap.id'],
                     self._SHADER_CMAP_IDS[self.colormap])
 
         dataMin, dataMax = self.cmapRange
+
+        if self.data.dtype in (np.uint16, np.uint8):
+            # Using unsigned int as normalized integer in OpenGL
+            # So normalize range
+            maxInt = float(np.iinfo(self.data.dtype).max)
+            dataMin, dataMax = dataMin / maxInt, dataMax / maxInt
+
         if self.cmapIsLog:
             logVMin, logVMax = math.log10(dataMin), math.log10(dataMax)
             glUniform1f(prog.uniforms['cmap.logMin'], logVMin)
@@ -557,6 +566,7 @@ class GLRGBAImage(_GL2DDataPlot):
         :param float yScale: Y scale of the data array
         """
         super(GLRGBAImage, self).__init__(data, xMin, xScale, yMin, yScale)
+        self._textureIsDirty = False
 
     def __del__(self):
         self.discard()
@@ -565,6 +575,7 @@ class GLRGBAImage(_GL2DDataPlot):
         if hasattr(self, '_texture'):
             self._texture.discard()
             del self._texture
+        self._textureIsDirty = False
 
     @classmethod
     def _getLinearProgram(cls):
@@ -605,12 +616,7 @@ class GLRGBAImage(_GL2DDataPlot):
             if self.data.shape != oldData.shape:
                 self.discard()
             else:
-                # We should check that internal format is the same
-                format_ = GL_RGBA if data.shape[2] == 4 else GL_RGB
-                type_ = numpyToGLType(data.dtype)
-
-                self._texture.updateAll(format_=format_, type_=type_,
-                                        data=data)
+                self._textureIsDirty = True
 
     def prepare(self):
         if not hasattr(self, '_texture'):
@@ -622,6 +628,14 @@ class GLRGBAImage(_GL2DDataPlot):
                                   format_=format_, type_=type_,
                                   data=self.data,
                                   texUnit=self._DATA_TEX_UNIT)
+        elif self._textureIsDirty:
+            self._textureIsDirty = False
+
+            # We should check that internal format is the same
+            format_ = GL_RGBA if self.data.shape[2] == 4 else GL_RGB
+            type_ = numpyToGLType(self.data.dtype)
+            self._texture.updateAll(format_=format_, type_=type_,
+                                    data=self.data)
 
     def _renderLinear(self, matrix):
         self.prepare()
