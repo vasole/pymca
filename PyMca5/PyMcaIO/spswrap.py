@@ -270,6 +270,9 @@ def getmetadata(spec, shm):
                         return None
                 else:
                     print("NOT READ TO PREVENT PROBLEMS")
+        else:
+            # shared memory not populated yet
+            return
     else:
         return None
     motors = []
