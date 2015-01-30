@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -156,6 +156,15 @@ class QDispatcher(qt.QWidget):
                             else:
                                 #this may happen on deletion??
                                 return
+                            if sel['Key'] == "SCAN_D":
+                                # I have to inform the widget about any possible
+                                # change in the associated environment
+                                #print source.sourceType
+                                #print source.sourceName
+                                #print sel['Key']
+                                #print self.selectorWidget[source.sourceType] 
+                                pass                               
+                             
                         ddict['dataobject'] = dataObject
                         selectionList.append(ddict)
                     else:
