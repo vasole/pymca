@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -93,7 +93,9 @@ class SpsDataSource(object):
                             data.x = None
                             data.y = None
                             data.m = None
-                            if 'nopts' in data.info['envdict']:
+                            if 'nopts' in data.info:
+                                nopts = data.info['nopts']
+                            elif 'nopts' in data.info['envdict']:
                                 nopts = int(data.info['envdict']['nopts']) + 1
                             else:
                                 nopts = data.info['rows']
@@ -180,6 +182,7 @@ class SpsDataSource(object):
         counter = sps.updatecounter(self.name, array)
         info["updatecounter"] = counter
 
+
         envdict = {}
         keylist = sps.getkeylist(self.name, array + "_ENV")
         for i in keylist:
@@ -187,7 +190,28 @@ class SpsDataSource(object):
             envdict[i] = val
         info["envdict"] = envdict
         scantest = (info['flag'] & sps.TAG_SCAN) == sps.TAG_SCAN
-        if (array in ["SCAN_D"]) or scantest:
+        metdata = None
+        if array in ["SCAN_D"]:
+            # try to get new style SCAN_D metadata
+            metadata = sps.getmetadata(self.name, array)
+            if metadata is not None:
+                motors, metadata = metadata
+                #info["LabelNames"] = metadata["allcounters"].split(";")
+                labels = list(motors.keys())
+                labels.sort()
+                info["LabelNames"] = [motors[x] for x in labels]
+                info["MotorNames"] = metadata["allmotorm"].split(";")
+                info["MotorValues"] = [float(x) \
+                                for x in metadata["allpositions"].split(";")]
+                info["nopts"] = int(metadata["npts"])
+                supplied_info = sps.getinfo(self.name, array)
+                if len(supplied_info):
+                    info["nopts"] = int(supplied_info[0]) 
+                if 'hkl' in metadata:
+                    info['hkl'] = [float(x) \
+                                for x in metadata["hkl"].split(";")]
+        if (metdata is None) and ((array in ["SCAN_D"]) or scantest):
+            # old style SCAN_D metadata
             if 'axistitles' in info["envdict"]:
                 info["LabelNames"] = self._buildLabelsList(info['envdict']['axistitles'])
             if 'H' in info["envdict"]:

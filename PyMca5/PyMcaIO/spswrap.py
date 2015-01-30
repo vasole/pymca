@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -61,6 +61,12 @@ except:
     TAG_FRAMES=0x0100
     #windows does not use it
     pass
+
+try:
+    import json
+    JSON = True
+except ImportError:
+    JSON = False
 
 import threading
 import time
@@ -245,4 +251,44 @@ def specrunning(spec):
         return 0
     else:
         return 1
+
+def getmetadata(spec, shm):
+    if hasattr(sps, "getmetadata"):
+        metadata = sps.getmetadata(spec, shm)
+        if metadata.strip():
+            if JSON:
+                uncoded_data = json.loads(metadata)
+            else:
+                if shm != "SCAN_D":
+                    return None
+                # try to put a minimum of protection
+                if ("os." not in medatadata) and ("sys." not in metadata):
+                    try:
+                        uncoded_data = eval(metadata)
+                    except:
+                        print("Error accessing SCAN_D information without json")
+                        return None
+                else:
+                    print("NOT READ TO PREVENT PROBLEMS")
+    else:
+        return None
+    motors = []
+    metadata = {}
+    if type(uncoded_data) in [type([]), type((1,))]:
+        if len(uncoded_data) == 2:
+            motors = uncoded_data[0]
+            metadata = uncoded_data[1]
+        else:
+            print("Unexpected metdata length %d instead of 2"  % len(uncoded_data))
+    elif type(uncoded_data) == type({}):
+        metadata = uncoded_data
+    else:
+        print("Cannot decode metadata")
+    return motors, metadata
+
+def getinfo(spec, shm):
+    try:
+        return eval(sps.getinfo(spec, shm))
+    except:
+        return []
 
