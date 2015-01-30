@@ -257,7 +257,8 @@ class ScanWindow(PlotWindow.PlotWindow):
 
             if sps_source:
                 ycounter = -1
-                dataObject.info['selection'] = copy.deepcopy(sel['selection'])
+                if 'selection' not in dataObject.info: 
+                    dataObject.info['selection'] = copy.deepcopy(sel['selection'])
                 for ydata in dataObject.y:
                     xlabel = None
                     ylabel = None
