@@ -485,6 +485,8 @@ class Plot(PlotBase.PlotBase):
 
         if len(self._curveList) == 1:
             if self.isActiveCurveHandlingEnabled():
+                self._plot.setGraphXLabel(info["xlabel"])
+                self._plot.setGraphYLabel(info["ylabel"])
                 self.setActiveCurve(key)
 
         if self.isCurveHidden(key):
@@ -795,6 +797,7 @@ class Plot(PlotBase.PlotBase):
         if key in self._curveDict.keys():
             self._activeCurve = key
         if self._activeCurve == oldActiveCurve:
+            # the labels may need to be updated!!!!
             return self._activeCurve
         # this was giving troubles in the PyQtGraph binding
         #if self._activeCurve != oldActiveCurve:
