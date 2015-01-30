@@ -353,6 +353,8 @@ class MatplotlibGraph(FigureCanvas):
                                     self.onMouseReleased)
         self.fig.canvas.mpl_connect('motion_notify_event',
                                     self.onMouseMoved)
+        self.fig.canvas.mpl_connect('scroll_event',
+                                    self.onMouseWheel)
         self.fig.canvas.mpl_connect('pick_event',
                                     self.onPick)
 
@@ -1124,6 +1126,50 @@ class MatplotlibGraph(FigureCanvas):
                 self._zoomStack.append((xmin, xmax, ymin, ymax))
                 self.setLimits(x, x+w, y, y+h)
             self.draw()
+
+    @staticmethod
+    def _newZoomRange(min_, max_, center, scale, isLog):
+        import math
+        if isLog:
+            center = math.log10(center)
+            oldMin, oldMax = math.log10(min_), math.log10(max_)
+        else:
+            oldMin, oldMax = min_, max_
+
+        offset = (center - oldMin) / (oldMax - oldMin)
+        range_ = (oldMax - oldMin) / scale
+        newMin = center - offset * range_
+        newMax = center + (1. - offset) * range_
+        if isLog:
+            try:
+                newMin, newMax = 10. ** newMin, 10. ** newMax
+            except OverflowError:  # Limit case
+                newMin, newMax = min_, max_
+            if newMin <= 0. or newMax <= 0.:  # Limit case
+                newMin, newMax = min_, max_
+        return newMin, newMax
+
+    def onMouseWheel(self, event):
+        if not self.isZoomModeEnabled():
+            return
+
+        if event.xdata is None or event.ydata is None:
+            return
+
+        scaleF = 1.1 if event.step > 0 else 1 / 1.1
+
+        xMin, xMax = self.ax.get_xlim()
+        xMin, xMax = self._newZoomRange(xMin, xMax, event.xdata, scaleF,
+                                        self.ax.get_xscale() == 'log')
+
+        yMin, yMax = self.ax.get_ylim()
+        yMin, yMax = self._newZoomRange(yMin, yMax, event.ydata, scaleF,
+                                        self.ax.get_yscale() == 'log')
+
+        # Zoom on right Y axis is not done
+
+        self.setLimits(xMin, xMax, yMin, yMax)
+        self.draw()
 
     def _emitDrawingSignal(self, event="drawingFinished"):
         ddict = {}
@@ -2480,7 +2526,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             ax = self.ax
         inv = ax.transData.inverted()
-        x, y = inv.transform(x, y)
+        x, y = inv.transform((x, y))
+
+        xmin, xmax = self.getGraphXLimits()
+        ymin, ymax = self.getGraphYLimits(axis=axis)
 
         if (x > xmax)  or (x < xmin):
             return None
