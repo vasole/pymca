@@ -680,18 +680,18 @@ class Zoom(ClickOrDrag):
 
         xMin, xMax = self.backend.getGraphXLimits()
         xMin, xMax = self._newZoomRange(xMin, xMax, dataCenterPos[0], scaleF,
-                                        self.backend.isXAxisLogaritmic())
+                                        self.backend.isXAxisLogarithmic())
 
         yMin, yMax = self.backend.getGraphYLimits()
         yMin, yMax = self._newZoomRange(yMin, yMax, dataCenterPos[1], scaleF,
-                                        self.backend.isYAxisLogaritmic())
+                                        self.backend.isYAxisLogarithmic())
 
         dataPos = self.backend.pixelToData(y=cy, axis="right")
         assert dataPos is not None
         y2Center = dataPos[1]
         y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
         y2Min, y2Max = self._newZoomRange(y2Min, y2Max, y2Center, scaleF,
-                                          self.backend.isYAxisLogaritmic())
+                                          self.backend.isYAxisLogarithmic())
 
         self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
         self.backend.replot()
@@ -1345,8 +1345,13 @@ class OpenGLPlotCanvas(PlotBackend):
     """
 
     _PICK_OFFSET = 3
+    _DEFAULT_COLORMAP = {'name': 'gray', 'normalization':'linear',
+                         'autoscale':True, 'vmin':0.0, 'vmax':1.0,
+                         'colors':256}
 
     def __init__(self, parent=None, **kw):
+        self._defaultColormap = self._DEFAULT_COLORMAP
+
         self._basePrograms = {}
         self._texPrograms = {}
         self._plotFBOs = {}
@@ -1519,6 +1524,24 @@ class OpenGLPlotCanvas(PlotBackend):
                     if pickedIndices:
                         return 'curve', item, pickedIndices
         return None
+
+    # Default colormap #
+
+    def getSupportedColormaps(self):
+        return GLColormap.COLORMAPS
+
+    def getDefaultColormap(self):
+        return self._defaultColormap.copy()
+
+    def setDefaultColormap(self, colormap=None):
+        if colormap is None:
+            self._defaultColormap = self._DEFAULT_COLORMAP
+        else:
+            assert colormap['name'] in self.getSupportedColormaps()
+            if colormap['colors'] != 256:
+                warnings.warn("Colormap 'colors' field is ignored",
+                              RuntimeWarning)
+            self._defaultColormap = colormap.copy()
 
     # Manage Plot #
 
@@ -2838,10 +2861,10 @@ class OpenGLPlotCanvas(PlotBackend):
             self._plotFrame.yAxis.isLog = flag
             self._dirtyPlotDataTransformedBounds()
 
-    def isXAxisLogaritmic(self):
+    def isXAxisLogarithmic(self):
         return self._plotFrame.xAxis.isLog
 
-    def isYAxisLogaritmic(self):
+    def isYAxisLogarithmic(self):
         return self._plotFrame.yAxis.isLog
 
     # Title, Labels
