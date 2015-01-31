@@ -832,13 +832,13 @@ class McaWindow(ScanWindow.ScanWindow):
                     continue
             mcakeys    = [key]
             for mca in mcakeys:
-                curveinfo={}
                 legend = sel['legend']
                 dataObject = sel['dataobject']
                 info = dataObject.info
                 data  = dataObject.y[0]
                 if "selectiontype" in dataObject.info:
                     if dataObject.info["selectiontype"] != "1D": continue
+                curveinfo=copy.deepcopy(info)
                 if dataObject.x is None:
                     xhelp = None
                 else:
@@ -2098,14 +2098,14 @@ class McaWindow(ScanWindow.ScanWindow):
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
+        if info is None:
+            info = {}
         if legend is None:
             legend = "Unnamed curve 1.1"
         if xlabel is None:
-            xlabel = "X"
+            xlabel = info.get("xlabel", "X")
         if ylabel is None:
-            ylabel = "Y"
-        if info is None:
-            info = {}
+            ylabel = info.get("ylabel", "Y")
         # this is awfull but I have no other way to pass the plot information ...
         if color is not None:
             info["plot_color"] = color
@@ -2113,6 +2113,8 @@ class McaWindow(ScanWindow.ScanWindow):
             info["plot_symbol"] = symbol
         if linestyle is not None:
             info["plot_linestyle"] = linestyle
+        if yaxis is None:
+            yaxis = info.get("plot_yaxis", None)
         if yaxis is not None:
             info["plot_yaxis"] = yaxis
 
