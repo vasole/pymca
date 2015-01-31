@@ -147,8 +147,10 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         self.resetZoom()
 
 if __name__ == "__main__":
-    from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
-    #from PyMca5.PyMcaGraph.backends.OpenGLBackend import OpenGLBackend as backend
+    if "opengl" in sys.argv:
+        backend = "opengl"
+    else:
+        backend = None
     app = qt.QApplication([])
     w = ScatterPlotCorrelatorWidget(labels=["Legend",
                                             "X",

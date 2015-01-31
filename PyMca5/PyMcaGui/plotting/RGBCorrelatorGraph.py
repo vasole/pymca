@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,12 +31,6 @@ import sys
 import os
 
 from . import PlotWidget
-if 1:
-    from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
-                    import MatplotlibBackend as backend
-else:
-    from PyMca5.PyMcaGraph.backends.OpenGLBackend \
-                    import OpenGLBackend as backend
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from .PyMca_Icons import IconDict
 from . import PyMcaPrintPreview
@@ -44,8 +38,6 @@ from PyMca5.PyMcaCore import PyMcaDirs
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
-if DEBUG:
-    print("Backend = ", backend)
 
 class RGBCorrelatorGraph(qt.QWidget):
     sigProfileSignal = qt.pyqtSignal(object)
@@ -65,7 +57,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                            profileselection=profileselection,
                            aspect=aspect,
                            polygon=polygon)
-        self.graph = PlotWidget.PlotWidget(self, backend=backend, aspect=aspect)
+        self.graph = PlotWidget.PlotWidget(self, backend=None, aspect=aspect)
         self.graph.setGraphXLabel("Column")
         self.graph.setGraphYLabel("Row")
         self.graph.setYAxisAutoScale(True)

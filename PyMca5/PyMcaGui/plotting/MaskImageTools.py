@@ -253,7 +253,6 @@ def applyMaskToImage(pixmap, mask=None, colors=None, copy=True):
 
 if __name__ == "__main__":
     from PyMca5.PyMcaGui import PyMcaQt as qt
-    from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
     from PyMca5.PyMcaGui import PlotWidget
     app = qt.QApplication([])
     w = PlotWidget.PlotWidget()

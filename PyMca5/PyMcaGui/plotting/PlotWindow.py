@@ -51,17 +51,6 @@ try:
 except:
     COLORMAP_DIALOG = False
 
-# pyqtgraph has a SciPy dependency
-PYQTGRAPH = False
-if 'pyqtgraph' in sys.argv:
-    from PyMca5.PyMcaGraph.backends import PyQtGraphBackend
-    PYQTGRAPH = True
-
-MATPLOTLIB = False
-if ("matplotlib" in sys.argv) or (not PYQTGRAPH):
-    from PyMca5.PyMcaGraph.backends import MatplotlibBackend
-    MATPLOTLIB = True
-
 from .PyMca_Icons import IconDict
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
@@ -81,11 +70,6 @@ class PlotWindow(PlotWidget.PlotWidget):
 
     def __init__(self, parent=None, backend=None, plugins=True, newplot=False,
                  control=False, position=False, **kw):
-        if backend is None:
-            if MATPLOTLIB:
-                backend = MatplotlibBackend.MatplotlibBackend
-            elif PYQTGRAPH:
-                backend = PyQtGraphBackend.PyQtGraphBackend
         super(PlotWindow, self).__init__(parent=parent, backend=backend)
         self.pluginsIconFlag = plugins
         self.newplotIconsFlag = newplot
@@ -1344,12 +1328,11 @@ if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * x
     app = qt.QApplication([])
+    backend = None
     if "opengl" in sys.argv:
-        from PyMca5.PyMcaGraph.backends import OpenGLBackend
-        plot = PlotWindow(backend=OpenGLBackend.OpenGLBackend, roi=True, control=True,
+        backend = "opengl"
+    plot = PlotWindow(backend=backend, roi=True, control=True,
                           position=True, colormap=True)#uselegendmenu=True)
-    else:
-        plot = PlotWindow(roi=True, control=True, position=True, colormap=True)#uselegendmenu=True)
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)

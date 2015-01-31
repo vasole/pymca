@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -84,14 +84,6 @@ if __name__ == '__main__':
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.pymca import PyMcaMdi
 IconDict = PyMcaMdi.IconDict
-if backend is None:
-    backend = "matplotlib"
-
-if backend.lower() == "matplotlib":
-    from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
-elif backend.lower() == "pyqtgraph":
-    from PyMca5.PyMcaGraph.backends.PyQtGraphBackend import PyQtGraphBackend as backend
-
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
