@@ -369,9 +369,9 @@ class ScanWindow(PlotWindow.PlotWindow):
                         symbol=None
                         newDataObject.info['legend'] = legend + " " + ylegend
                         newDataObject.info['selectionlegend'] = legend
-                    yaxis = 'left'
+                    yaxis = None
                     if "plot_yaxis" in dataObject.info:
-                        yaxis = dataObject.info.get("plot_yaxis", "left")
+                        yaxis = dataObject.info["plot_yaxis"]
                     elif 'operations' in dataObject.info:
                         if dataObject.info['operations'][-1] == 'derivate':
                             yaxis = 'right'
