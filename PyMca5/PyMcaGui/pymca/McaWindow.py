@@ -724,7 +724,7 @@ class McaWindow(ScanWindow.ScanWindow):
                     self.removeMarker(self.peakmarker)
                 self.insertXMarker(pos,
                                    label,
-                                   label=label,
+                                   text=label,
                                    color='pink',
                                    draggable=False)
                 self.peakmarker = label
