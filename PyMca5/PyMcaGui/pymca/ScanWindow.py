@@ -915,6 +915,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             ilabel = dataObject.info['selection']['y'][0]
             ylabel = dataObject.info['LabelNames'][ilabel]
             newDataObject.info['LabelNames'][ilabel] = ylabel+"'"
+            newDataObject.info['plot_yaxis'] = "right"
             sel['SourceName'] = legend
             sel['Key']    = "'"
             sel['legend'] = legend + sel['Key']
