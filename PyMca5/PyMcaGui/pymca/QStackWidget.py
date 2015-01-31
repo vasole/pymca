@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -773,12 +773,12 @@ class QStackWidget(StackBase.StackBase,
 
     def showROIImageList(self, imageList, image_names=None):
         if self.roiBackgroundButton.isChecked():
-            self.roiWidget.setImageData(imageList[0]-imageList[-1])
             self.roiWidget.graphWidget.graph.setGraphTitle(image_names[0]+\
                                                       " Net")
+            self.roiWidget.setImageData(imageList[0]-imageList[-1])
         else:
-            self.roiWidget.setImageData(imageList[0])
             self.roiWidget.graphWidget.graph.setGraphTitle(image_names[0])
+            self.roiWidget.setImageData(imageList[0])
         self._ROIImageList = imageList
         self._ROIImageNames = image_names
         self._stackROIImageListUpdated()
