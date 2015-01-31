@@ -102,8 +102,17 @@ _COLORLIST = [_COLORDICT['black'],
 #"" 	nothing
 #
 
+try:
+    from .backends.MatplotlibBackend import MatplotlibBackend
+    DEFAULT_BACKEND = "matplotlib"
+except:
+    DEFAULT_BACKEND = PlotBackend.PlotBackend
+
 class Plot(PlotBase.PlotBase):
     PLUGINS_DIR = None
+    # give the possibility to set the default backend for all instances
+    # via a class attribute.
+    defaultBackend = DEFAULT_BACKEND
 
     colorList = _COLORLIST
     colorDict = _COLORDICT
@@ -111,15 +120,28 @@ class Plot(PlotBase.PlotBase):
     def __init__(self, parent=None, backend=None, callback=None):
         self._parent = parent
         if backend is None:
-            # an empty backend for testing purposes
-            if "matplotlib" in sys.modules:
-                from .backends.MatplotlibBackend import MatplotlibBackend as backend
-                self._plot = backend(parent)
-            else:
-                self._plot = PlotBackend.PlotBackend(parent)
+            backend = self.defaultBackend
+            self._default = True
         else:
-            self._plot = backend(parent)
             self._default = False
+        if hasattr(backend, "__call__"):
+            # to be called
+            self._plot = backend(parent)
+        elif isinstance(backend, PlotBackend.PlotBackend):
+            self._plot = backend
+        elif hasattr(backend, "lower"):
+            lowerCaseString = backend.lower()
+            if lowerCaseString in ["matplotlib", "mpl"]:
+                from .backends.MatplotlibBackend import MatplotlibBackend as be
+            elif lowerCaseString in ["gl", "opengl"]:
+                from .backends.OpenGLBackend import OpenGLBackend as be
+            elif lowerCaseString in ["pyqtgraph"]:
+                from .backends.PyQtGraphBackend import PyQtGraphBackend as be
+            elif lowerCaseString in ["glut"]:
+                from .backends.GLUTOpenGLBackend import GLUTOpenGLBackend as be
+            else:
+                raise ValueError("Backend not understood %s" % backend)
+            self._plot = be(parent)
         super(Plot, self).__init__()
         widget = self._plot.getWidgetHandle()
         if widget is None:
@@ -366,7 +388,7 @@ class Plot(PlotBase.PlotBase):
             info = {}
             if key in self._curveDict:
                 # prevent curves from changing attributes when updated
-                oldInfo = self._curveDict[key]
+                oldInfo = self._curveDict[key][3]
                 for savedKey in ["xlabel", "ylabel",
                                  "plot_symbol", "plot_color",
                                  "plot_linestyle", "plot_fill",
