@@ -364,6 +364,14 @@ class Plot(PlotBase.PlotBase):
             key = str(legend)
         if info is None:
             info = {}
+            if key in self._curveDict:
+                # prevent curves from changing attributes when updated
+                oldInfo = self._curveDict[key]
+                for savedKey in ["xlabel", "ylabel",
+                                 "plot_symbol", "plot_color",
+                                 "plot_linestyle", "plot_fill",
+                                 "plot_yaxis"]:
+                    info[savedKey] = oldInfo[savedKey]
         if xlabel is None:
             xlabel = info.get('xlabel', 'X')
         if ylabel is None:
@@ -492,8 +500,8 @@ class Plot(PlotBase.PlotBase):
         if self.isCurveHidden(key):
             self._plot.removeCurve(key, replot=False)
         if replot:
-            self.resetZoom()
-            #self.replot()
+            #self.resetZoom()
+            self.replot()
         return legend
 
     def addImage(self, data, legend=None, info=None,
