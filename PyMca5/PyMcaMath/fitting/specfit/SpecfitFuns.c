@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -2668,13 +2668,7 @@ SpecfitFuns_ahypermet(PyObject *self, PyObject *args)
     px = (double *) PyArray_DATA(x);
     pret = (double *) PyArray_DATA(ret);
     phyper = (hypermet *) PyArray_DATA(param);
-if(0){
-if(debug !=0){
-    for (i=0;i<(npars/expected_pars);i++){
-printf("Area%d=%f,Pos%d=%f,FWHM%d=%f\n",i,phyper[i].area,i,phyper[i].position,i,phyper[i].fwhm);
-    }
-}
-}
+
     if (nd_x == 0){
        *pret = 0;
         phyper = (hypermet *) PyArray_DATA(param);
@@ -2989,13 +2983,7 @@ SpecfitFuns_fastahypermet(PyObject *self, PyObject *args)
     px = (double *) PyArray_DATA(x);
     pret = (double *) PyArray_DATA(ret);
     phyper = (hypermet *) PyArray_DATA(param);
-if(0){
-if(debug !=0){
-    for (i=0;i<(npars/expected_pars);i++){
-printf("Area%d=%f,Pos%d=%f,FWHM%d=%f\n",i,phyper[i].area,i,phyper[i].position,i,phyper[i].fwhm);
-    }
-}
-}
+
     if (nd_x == 0){
        *pret = 0;
         phyper = (hypermet *) PyArray_DATA(param);
@@ -3400,9 +3388,9 @@ long SpecfitFuns_seek2(long BeginChannel, long EndChannel,
             }
             /* there is a peak */
             if (debug_info){
-                printf("At cch = %ld y[cch] = %g ",cch,yspec[cch]);
-                printf("yspec2[0] = %g ",yspec2[0]);
-                printf("yspec2[1] = %g ",yspec2[1]);
+                printf("At cch = %ld y[cch] = %g\n",cch,yspec[cch]);
+                printf("yspec2[0] = %g\n",yspec2[0]);
+                printf("yspec2[1] = %g\n",yspec2[1]);
                 printf("Sensitivity = %g\n",Sensitivity);
             }
             if(peakstarted == 1){
@@ -3702,23 +3690,6 @@ SpecfitFuns_interpol(PyObject *self, PyObject *args)
                                 }
                             }
                             index1=jl;
-                        }
-                    }
-                    /* test against the other version */
-                    if (0){
-                        k=0;
-                        ju = -1;
-                        while(k < (PyArray_DIMS(xdata[j])[0] - 1)){
-                            nvalue = (double *) (PyArray_BYTES(xdata[j]) + k * (PyArray_STRIDES(xdata[j])[0]));
-                            /*printf("nvalue = %g\n",*nvalue);*/
-                            if (value >= *nvalue){
-                                ju = k;
-                             }
-                            k++;
-                        }
-                        if (ju != index1){
-                            printf("i = %d, j= %d, value = %.5f indexvalue = %d, newvalue = %d\n",\
-                        (int) i, (int) j,value, (int) ju, (int) index1);
                         }
                     }
                     if (index1 < 0){
