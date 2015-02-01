@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -162,14 +162,16 @@ class MRCMap(DataObject.DataObject):
         self.info["Channel0"] = 0.0
 
 def _isMRCHeader(header):
-    if sys.version < '3.0':
-        test = "MAP "
-    else:
-        test = bytes("MAP ", "utf-8")
-    if struct.unpack("4s", header[208:212])[0] == test:
-        return True
-    else:
-        return False
+    try:
+        if sys.version < '3.0':
+            test = "MAP "
+        else:
+            test = bytes("MAP ", "utf-8")
+        if struct.unpack("4s", header[208:212])[0] == test:
+            return True
+    except:
+        pass
+    return False
 
 def isMRCFile(filename):
     try:
