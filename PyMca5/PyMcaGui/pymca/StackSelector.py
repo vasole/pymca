@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -44,6 +44,7 @@ from PyMca5.PyMcaIO import AifiraMap
 from PyMca5.PyMcaIO import TextImageStack
 from PyMca5.PyMcaIO import TiffStack
 from PyMca5.PyMcaIO import RTXMap
+from PyMca5.PyMcaIO import RawMap
 from .QStack import QStack, QSpecFileStack
 try:
     from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
@@ -168,6 +169,9 @@ class StackSelector(object):
                 stack = MRCMap.MRCMap(filelist[0])
                 omnicfile = True
                 imagestack = True
+            elif RawMap.isRawMapFile(filelist[0]):
+                stack = RawMap.RawMap(filelist[0])
+                omnicfile = True
             else:
                 stack = QSpecFileStack()
 
@@ -342,6 +346,7 @@ class StackSelector(object):
                         "OMNIC Files (*map)",
                         "OPUS-DPT Files (*.DPT *.dpt)",
                         "RTX Files (*.rtx *.RTX)",
+                        "RPL Files (*.rpl)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "MRC files (*.mrc *.st)",
