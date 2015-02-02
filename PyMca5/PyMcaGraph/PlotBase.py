@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -42,6 +42,7 @@ The plugins will be compatible with any plot window that provides the methods:
     getActiveImage
     getAllCurves
     getCurve
+    getImage
     getMonotonicCurves
     hideCurve
     hideImage
@@ -133,20 +134,38 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
 
     def getCurve(self, legend):
         """
-        :param legend: legend assiciated to the curve
+        :param legend: legend associated to the curve
         :type legend: boolean
         :return: list [x, y, legend, info]
         :rtype: list
-        Function to access the graph currently active curve.
-        It returns None in case of not having an active curve.
+        Function to access the graph specified curve.
+        It returns None in case of not having the curve.
 
         Default output has the form:
-            xvalues, yvalues, legend, dict
-            where dict is a dictionnary containing curve info.
+            xvalues, yvalues, legend, info
+            where info is a dictionnary containing curve info.
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
         """
         print("PlotBase getCurve not implemented")
+        return []
+
+    def getImage(self, legend):
+        """
+        :param legend: legend associated to the curve
+        :type legend: boolean
+        :return: list [image, legend, info]
+        :rtype: list
+        Function to access the graph specified image.
+        It returns None in case of not having that image.
+
+        Default output has the form:
+            image, legend, info
+            where info is a dictionnary containing curve info.
+            For the time being, only the plot labels associated to the
+            curve are warranted to be present under the keys xlabel, ylabel.
+        """
+        print("PlotBase getImage not implemented")
         return []
 
     def getMonotonicCurves(self):

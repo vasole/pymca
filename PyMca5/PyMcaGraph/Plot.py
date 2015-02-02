@@ -749,7 +749,28 @@ class Plot(PlotBase.PlotBase):
 
     def getCurve(self, legend):
         """
-        :param legend: legend assiciated to the curve
+        :param legend: legend associated to the curve
+        :type legend: boolean
+        :return: list [x, y, legend, info]
+        :rtype: list
+
+        Function to access the graph specified curve.
+        It returns None in case of not having the curve.
+
+        Default output has the form:
+            xvalues, yvalues, legend, info
+            where info is a dictionnary containing curve info.
+            For the time being, only the plot labels associated to the
+            curve are warranted to be present under the keys xlabel, ylabel.
+        """
+        if legend in self._curveDict:
+            return self._curveDict[legend] * 1
+        else:
+            return None
+
+    def getImage(self, legend):
+        """
+        :param legend: legend associated to the curve
         :type legend: boolean
         :return: list [x, y, legend, info]
         :rtype: list
@@ -763,9 +784,10 @@ class Plot(PlotBase.PlotBase):
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
         """
-        # let it raise en exception if not present
-        return self._curveDict[legend] * 1
-
+        if legend in self._imageDict:
+            return self._imageDict[legend] * 1
+        else:
+            return None
 
     def _getAllLimits(self):
         """
