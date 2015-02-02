@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -43,8 +43,9 @@ import glob
 DEBUG = 0
 PLUGINS_DIR = None
 try:
+    import PyMca5
     if os.path.exists(os.path.join(os.path.dirname(__file__), "PyMcaPlugins")):
-        import PyMcaPlugins
+        from PyMca5 import PyMcaPlugins
         PLUGINS_DIR = os.path.dirname(PyMcaPlugins.__file__)
     else:
         directory = os.path.dirname(__file__)
@@ -55,6 +56,12 @@ try:
             directory = os.path.dirname(directory)
             if len(directory) < 5:
                 break
+    userPluginsDirectory = PyMca5.getDefaultUserPluginsDirectory()
+    if userPluginsDirectory is not None:
+        if PLUGINS_DIR is None:
+            PLUGINS_DIR = userPluginsDirectory
+        else:
+            PLUGINS_DIR = [PLUGINS_DIR, userPluginsDirectory]
 except:
     pass
 
@@ -111,8 +118,12 @@ class StackBase(object):
         It returns the number of plugins loaded.
         """
 
-        if self.__pluginDirList == []:
-            self.__pluginDirList = [PLUGINS_DIR]
+        if PLUGINS_DIR is not None:
+            if self.__pluginDirList == []:
+                if type(PLUGINS_DIR) == type([]):
+                    self.__pluginDirList = PLUGINS_DIR
+                else:
+                    self.__pluginDirList = [PLUGINS_DIR]
         self.pluginList = []
         for directory in self.__pluginDirList:
             if directory is None:
