@@ -83,7 +83,6 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         if labels is None:
             labels = [None] * len(items)
         for i in range(len(items)):
-            print items[i]
             self.addSelectableItem(items[i], label=labels[i], copy=copy)
 
     def addSelectableItem(self, item, label=None, copy=True):
