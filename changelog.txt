@@ -8,7 +8,7 @@ Automatic matrix update.
 
 Support .rtx file format stacks
 
-Support .rpl described stacks
+Support .rpl + .raw described stacks (Lispix file format)
 
 Support SPEC 6.02+ shared memory
 
