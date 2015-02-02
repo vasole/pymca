@@ -44,7 +44,7 @@ from PyMca5.PyMcaIO import AifiraMap
 from PyMca5.PyMcaIO import TextImageStack
 from PyMca5.PyMcaIO import TiffStack
 from PyMca5.PyMcaIO import RTXMap
-from PyMca5.PyMcaIO import RawMap
+from PyMca5.PyMcaIO import LispixMap
 from .QStack import QStack, QSpecFileStack
 try:
     from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
@@ -169,8 +169,8 @@ class StackSelector(object):
                 stack = MRCMap.MRCMap(filelist[0])
                 omnicfile = True
                 imagestack = True
-            elif RawMap.isRawMapFile(filelist[0]):
-                stack = RawMap.RawMap(filelist[0])
+            elif LispixMap.isLispixMapFile(filelist[0]):
+                stack = LispixMap.LispixMap(filelist[0])
                 omnicfile = True
             else:
                 stack = QSpecFileStack()
@@ -346,7 +346,7 @@ class StackSelector(object):
                         "OMNIC Files (*map)",
                         "OPUS-DPT Files (*.DPT *.dpt)",
                         "RTX Files (*.rtx *.RTX)",
-                        "RPL Files (*.rpl)",
+                        "Lispix-RPL Files (*.rpl)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "MRC files (*.mrc *.st)",

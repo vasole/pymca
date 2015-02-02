@@ -39,9 +39,9 @@ from PyMca5 import DataObject
 DEBUG = 0
 SOURCE_TYPE = "EdfFileStack"
 
-class RawMap(DataObject.DataObject):
+class LispixMap(DataObject.DataObject):
     '''
-    Class to read Raw described by a header file
+    Class to read Lispix files (Raw file described by a header file)
 
     It reads the spectra into a DataObject instance.
     This class info member contains all the parsed information.
@@ -287,7 +287,7 @@ def _parseHeaderFile(headerFile):
     return description
 
 
-def isRawMapFile(filename):
+def isLispixMapFile(filename):
     dataFile, descriptionFile = _getDataAndDescriptionFileName(filename)
     if os.path.exists(descriptionFile) and os.path.exists(dataFile):
         return True
@@ -297,7 +297,7 @@ if __name__ == "__main__":
     filename = None
     if len(sys.argv) > 1:
         filename = sys.argv[1]
-    print("is RAW File?", isRawMapFile(filename))
-    instance = RawMap(filename)
+    print("is Lispix File?", isLispixMapFile(filename))
+    instance = LispixMap(filename)
     print(instance.info)
     print(instance.data.size)
