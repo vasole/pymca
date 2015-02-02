@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 T. Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -36,7 +36,6 @@ import numpy
 from PyMca5.PyMcaMath.fitting.SpecfitFuns import upstep, downstep
 
 from PyMca5.PyMca import PyMcaQt as qt
-from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
 from PyMca5.PyMca import PlotWindow as DataDisplay
 from PyMca5.PyMca import Elements
 from PyMca5.PyMca import ConfigDict
@@ -373,7 +372,7 @@ class SumRulesWindow(qt.QMainWindow):
         if hasattr(DataDisplay,'PlotWindow'):
             self.plotWindow = DataDisplay.PlotWindow(
                 parent=self,
-                backend=backend,
+                backend=None,
                 plugins=False, # Hide plugin tool button
                 newplot=False, # Hide mirror active curve, ... functionality
                 roi=False,     # No ROI widget
