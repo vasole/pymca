@@ -772,17 +772,15 @@ class Plot(PlotBase.PlotBase):
         """
         :param legend: legend associated to the curve
         :type legend: boolean
-        :return: list [x, y, legend, info]
+        :return: list [image, legend, info, pixmap]
         :rtype: list
 
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
         Default output has the form:
-            xvalues, yvalues, legend, dict
-            where dict is a dictionnary containing curve info.
-            For the time being, only the plot labels associated to the
-            curve are warranted to be present under the keys xlabel, ylabel.
+            image, legend, info, pixmap
+            where info is a dictionnary containing image information.
         """
         if legend in self._imageDict:
             return self._imageDict[legend] * 1

@@ -154,16 +154,14 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         """
         :param legend: legend associated to the curve
         :type legend: boolean
-        :return: list [image, legend, info]
+        :return: list [image, legend, info, pixmap]
         :rtype: list
         Function to access the graph specified image.
         It returns None in case of not having that image.
 
         Default output has the form:
-            image, legend, info
-            where info is a dictionnary containing curve info.
-            For the time being, only the plot labels associated to the
-            curve are warranted to be present under the keys xlabel, ylabel.
+            image, legend, info, pixmap
+            where info is a dictionnary containing image information.
         """
         print("PlotBase getImage not implemented")
         return []
