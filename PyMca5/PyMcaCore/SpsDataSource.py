@@ -225,16 +225,19 @@ class SpsDataSource(object):
                 #info["LabelNames"] = metadata["allcounters"].split(";")
                 labels = list(motors.keys())
                 labels.sort()
-                info["LabelNames"] = [motors[x] for x in labels]
-                info["MotorNames"] = metadata["allmotorm"].split(";")
-                info["MotorValues"] = [float(x) \
+                if len(labels):
+                    info["LabelNames"] = [motors[x] for x in labels]
+                if len(metadata["allmotorm"]):
+                    info["MotorNames"] = metadata["allmotorm"].split(";")
+                    info["MotorValues"] = [float(x) \
                                 for x in metadata["allpositions"].split(";")]
                 info["nopts"] = int(metadata["npts"])
                 supplied_info = sps.getinfo(self.name, array)
                 if len(supplied_info):
                     info["nopts"] = int(supplied_info[0]) 
                 if 'hkl' in metadata:
-                    info['hkl'] = [float(x) \
+                    if len(metadata["hkl"]):
+                        info['hkl'] = [float(x) \
                                 for x in metadata["hkl"].split(";")]
                 # current SCAN
                 info["scanno"] = int(metadata["scanno"])
@@ -243,9 +246,10 @@ class SpsDataSource(object):
                 # put any missing information
                 info["selectedcounters"] = [x \
                                 for x in metadata["selectedcounters"].split()]
-                for key in metadata:
-                    if key not in info:
-                        info[key] = metadata[key]
+                # do not confuse with unhandled keys ...
+                #for key in metadata:
+                #    if key not in info:
+                #        info[key] = metadata[key]
         if (metdata is None) and ((array in ["SCAN_D"]) or scantest):
             # old style SCAN_D metadata
             if 'axistitles' in info["envdict"]:
