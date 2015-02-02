@@ -609,8 +609,8 @@ class Plot(PlotBase.PlotBase):
         if len(self._imageDict) == 1:
             self.setActiveImage(key)
         if replot:
-            self.resetZoom()
-            #self.replot()
+            #self.resetZoom()
+            self.replot()
         return key
 
     def removeCurve(self, legend, replot=True):
