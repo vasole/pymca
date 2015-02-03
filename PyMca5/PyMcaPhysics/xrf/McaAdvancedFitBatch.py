@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -40,6 +40,7 @@ from PyMca5.PyMcaIO import EdfFile
 from PyMca5.PyMcaIO import LuciaMap
 from PyMca5.PyMcaIO import AifiraMap
 from PyMca5.PyMcaIO import EDFStack
+from PyMca5.PyMcaIO import LispixMap
 try:
     import h5py
     from PyMca5.PyMcaIO import HDF5Stack1D
@@ -209,6 +210,9 @@ class McaAdvancedFitBatch(object):
             if ffile is None:
                 if inputfile[-3:] == "DAT":
                     ffile = self.__tryAifira(inputfile)
+            if ffile is None:
+                if LispixMap.isLispixMapFile(inputfile):
+                    ffile = LispixMap.LispixMap(inputfile, native=False)
             if (ffile is None):
                 del ffile
                 ffile   = SpecFileLayer.SpecFileLayer()

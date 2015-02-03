@@ -999,8 +999,8 @@ class MaskScatterWidget(PlotWindow.PlotWindow):
         self._updatePlot()
 
 if __name__ == "__main__":
-    from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
-    #from PyMca5.PyMcaGraph.backends.OpenGLBackend import OpenGLBackend as backend
+    backend = "matplotlib"
+    #backend = "opengl"
     app = qt.QApplication([])
     def receivingSlot(ddict):
         print("Received: ", ddict)

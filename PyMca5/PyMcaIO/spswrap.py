@@ -254,7 +254,12 @@ def specrunning(spec):
 
 def getmetadata(spec, shm):
     if hasattr(sps, "getmetadata"):
-        metadata = sps.getmetadata(spec, shm)
+        try:        
+            metadata = sps.getmetadata(spec, shm)
+        except:
+            # this error arrives when accessing old SPEC versions
+            # with new versions of the library
+            return None
         if metadata.strip():
             if JSON:
                 uncoded_data = json.loads(metadata)
@@ -270,6 +275,9 @@ def getmetadata(spec, shm):
                         return None
                 else:
                     print("NOT READ TO PREVENT PROBLEMS")
+        else:
+            # shared memory not populated yet
+            return
     else:
         return None
     motors = []

@@ -663,21 +663,17 @@ class QSpsWidget(qt.QWidget):
         self.__getParamWidget("empty")
 
     def __arraySelection(self):
-        if QTVERSION < '4.0.0':
-            item= self.arrayList.selectedItem()
-            if item is not None:
-                self.currentArray= str(item.text(1))
-            else:
-                #click on empty space
-                return
+        """
+        Method called when selecting an array in the view
+        """
+        item= self.arrayList.selectedItems()
+        if len(item):
+            item = item[0]
+            self.currentArray= str(item.text(1))
         else:
-            item= self.arrayList.selectedItems()
-            if len(item):
-                item = item[0]
-                self.currentArray= str(item.text(1))
-            else:
-                #click on empty space
-                return
+            #click on empty space
+            return
+                
         #self.data.SetSource(self.currentSpec)
         #self.data.LoadSource(self.currentArray)
         info= self.data.getKeyInfo(self.currentArray)

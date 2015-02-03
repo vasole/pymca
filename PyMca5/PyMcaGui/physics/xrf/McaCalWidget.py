@@ -38,12 +38,6 @@ import copy
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PlotWidget
-try:
-    from PyMca5.PyMcaGraph.backends.MatplotlibBackend\
-         import MatplotlibBackend as GraphBackend
-except:
-    from PyMca5.PyMcaGraph.backends.PyQtGraphBackend\
-         import PyQtGraphBackend as GraphBackend
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -143,7 +137,7 @@ class McaCalWidget(qt.QDialog):
         self.layout.addWidget(self.container)
         #The graph
         self.graph= PlotWidget.PlotWidget(self.container,
-                                          backend=GraphBackend)
+                                          backend=None)
         self.graph.setGraphXLabel('Channel')
         self.graph.setGraphYLabel('Counts')
 

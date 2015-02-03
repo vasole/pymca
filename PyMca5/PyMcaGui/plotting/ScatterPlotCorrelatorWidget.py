@@ -83,7 +83,6 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         if labels is None:
             labels = [None] * len(items)
         for i in range(len(items)):
-            print items[i]
             self.addSelectableItem(items[i], label=labels[i], copy=copy)
 
     def addSelectableItem(self, item, label=None, copy=True):
@@ -147,8 +146,10 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         self.resetZoom()
 
 if __name__ == "__main__":
-    from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
-    #from PyMca5.PyMcaGraph.backends.OpenGLBackend import OpenGLBackend as backend
+    if "opengl" in sys.argv:
+        backend = "opengl"
+    else:
+        backend = None
     app = qt.QApplication([])
     w = ScatterPlotCorrelatorWidget(labels=["Legend",
                                             "X",

@@ -257,8 +257,11 @@ class ScanWindow(PlotWindow.PlotWindow):
 
             if sps_source:
                 ycounter = -1
-                dataObject.info['selection'] = copy.deepcopy(sel['selection'])
+                if 'selection' not in dataObject.info: 
+                    dataObject.info['selection'] = copy.deepcopy(sel['selection'])
                 for ydata in dataObject.y:
+                    xlabel = None
+                    ylabel = None
                     ycounter += 1
                     if dataObject.m is None:
                         mdata = [numpy.ones(len(ydata)).astype(numpy.float)]
@@ -277,15 +280,21 @@ class ScanWindow(PlotWindow.PlotWindow):
                     else:
                         mdata = [numpy.ones(len(ydata)).astype(numpy.float)]
                     ylegend = 'y%d' % ycounter
-                    if sel['selection'] is not None:
-                        if type(sel['selection']) == type({}):
-                            if 'x' in sel['selection']:
+                    if dataObject.info['selection'] is not None:
+                        if type(dataObject.info['selection']) == type({}):
+                            if 'x' in dataObject.info['selection']:
                                 #proper scan selection
                                 ilabel = dataObject.info['selection']['y'][ycounter]
                                 ylegend = dataObject.info['LabelNames'][ilabel]
+                                ylabel = ylegend
+                                if sel['selection']['x'] is not None:
+                                    if len(dataObject.info['selection']['x']):
+                                        xlabel = dataObject.info['LabelNames'] \
+                                                    [dataObject.info['selection']['x'][0]]
                     newLegend = legend + " " + ylegend
                     self.dataObjectsDict[newLegend] = dataObject
-                    self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info, replot=False)
+                    self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info, 
+                                                    xlabel=xlabel, ylabel=ylabel, replot=False)
                     #              replot=actualReplot)
                     if self.scanWindowInfoWidget is not None:
                         if not self.infoDockWidget.isHidden():
@@ -360,9 +369,9 @@ class ScanWindow(PlotWindow.PlotWindow):
                         symbol=None
                         newDataObject.info['legend'] = legend + " " + ylegend
                         newDataObject.info['selectionlegend'] = legend
-                    yaxis = 'left'
+                    yaxis = None
                     if "plot_yaxis" in dataObject.info:
-                        yaxis = dataObject.info.get("plot_yaxis", "left")
+                        yaxis = dataObject.info["plot_yaxis"]
                     elif 'operations' in dataObject.info:
                         if dataObject.info['operations'][-1] == 'derivate':
                             yaxis = 'right'
@@ -906,6 +915,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             ilabel = dataObject.info['selection']['y'][0]
             ylabel = dataObject.info['LabelNames'][ilabel]
             newDataObject.info['LabelNames'][ilabel] = ylabel+"'"
+            newDataObject.info['plot_yaxis'] = "right"
             sel['SourceName'] = legend
             sel['Key']    = "'"
             sel['legend'] = legend + sel['Key']

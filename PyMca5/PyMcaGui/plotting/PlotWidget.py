@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -247,17 +247,25 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
 
 if __name__ == "__main__":
     import time
-    if "matplotlib" in sys.argv:
-        from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
+    backend = None
+    if ("matplotlib" in sys.argv) or ("mpl" in sys.argv):
+        backend = "matplotlib"
         print("USING matplotlib")
         time.sleep(1)
+    elif ("pyqtgraph" in sys.argv):
+        backend = "pyqtgraph"
+        print("USING PyQtGraph")
+        time.sleep(1)
+    elif ("OpenGL" in sys.argv) or ("opengl" in sys.argv) or ("gl" in sys.argv):
+        backend = "opengl"
+        print("USING OpenGL")
+        time.sleep(1)  
+    elif ("GLUT" in sys.argv) or ("glut" in sys.argv):
+        backend = "glut"
+        print("USING GLUT")
+        time.sleep(1)
     else:
-        try:
-            from PyMca5.PyMcaGraph.backends.PyQtGraphBackend import PyQtGraphBackend as backend
-            print("USING PyQtGraph")
-        except:
-            from PyMca5.PyMcaGraph.backends.MatplotlibBackend import MatplotlibBackend as backend
-            print("USING matplotlib")
+        print ("USING default backend")
         time.sleep(1)
     import numpy
     x = numpy.arange(100.)

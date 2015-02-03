@@ -6,6 +6,14 @@ Approximated tertiary excitation corrections.
 
 Automatic matrix update.
 
+Support .rtx file format stacks
+
+Support .rpl + .raw described stacks (Lispix file format)
+
+Support SPEC 6.02+ shared memory
+
+Possibility to generate PCA scores plot.
+
 Incorporate a new repository layout.
 
 Most of the source code can be used under MIT or LGPL licenses.
@@ -19,6 +27,12 @@ Improved print preview.
 MCA Window accepts plugins.
 
 Any plot accepts ROI selection.
+
+VERSION 4.7.4
+
+Correct bug reading HDF5 top level datasets.
+
+Improved handling of Bruker/Tracer CSV files
 
 VERSION 4.7.3
 

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,8 +33,6 @@ import numpy
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PlotWidget
-from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
-     import MatplotlibBackend as backend
 
 if not hasattr(qt, 'QString'):
     QString = qt.safe_str
@@ -247,7 +245,7 @@ class QEdfFileWidget(qt.QWidget):
         self.splitter.setOrientation(qt.Qt.Vertical)
 
         # --- graph
-        self.graph=PlotWidget.PlotWidget(self.splitter, backend=backend)
+        self.graph=PlotWidget.PlotWidget(self.splitter, backend=None)
         self.graph.setGraphTitle('')
         self.graph.setGraphXLabel('Columns')
         self.graph.setGraphYLabel('Rows')

@@ -30,6 +30,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import copy
 import types
 from . import DataObject
 from PyMca5.PyMcaIO import spswrap as sps
@@ -102,8 +103,18 @@ class SpsDataSource(object):
                             if not 'LabelNames' in data.info:
                                 data.info['LabelNames'] =\
                                     selection['cntlist'] * 1
+                            newMemoryProblem = len(data.info['LabelNames']) != len(selection['cntlist'])
+                            # check the current information is up-to-date
+                            # (new HKL handling business)
+                            actualLabelSelection = {'x':[], 'y':[], 'm':[]}
+                            for tmpKey in ['x', 'y', 'm']:
+                                if tmpKey in selection:
+                                    for labelIndex in selection[tmpKey]:
+                                        actualLabelSelection[tmpKey].append( \
+                                                    selection['cntlist'][labelIndex])
                             if 'x' in selection:
                                 for labelindex in selection['x']:
+                                    #label = selection['cntlist'][labelindex]
                                     label = data.info['LabelNames'][labelindex]
                                     if label not in data.info['LabelNames']:
                                         raise ValueError("Label %s not in scan labels" % label)
@@ -111,16 +122,18 @@ class SpsDataSource(object):
                                     if data.x is None: data.x = []
                                     data.x.append(data.data[:nopts, index])
                             if 'y' in selection:
-                                for labelindex in selection['y']:
-                                    label = data.info['LabelNames'][labelindex]
+                                #for labelindex in selection['y']:
+                                for label in actualLabelSelection['y']:                                
+                                    #label = data.info['LabelNames'][labelindex]
                                     if label not in data.info['LabelNames']:
                                         raise ValueError("Label %s not in scan labels" % label)
                                     index = data.info['LabelNames'].index(label)
                                     if data.y is None: data.y = []
                                     data.y.append(data.data[:nopts, index])
                             if 'm' in selection:
-                                for labelindex in selection['m']:
-                                    label = data.info['LabelNames'][labelindex]
+                                #for labelindex in selection['m']:
+                                for label in actualLabelSelection['m']:                                
+                                    #label = data.info['LabelNames'][labelindex]
                                     if label not in data.info['LabelNames']:
                                         raise ValueError("Label %s not in scan labels" % label)
                                     index = data.info['LabelNames'].index(label)
@@ -128,6 +141,19 @@ class SpsDataSource(object):
                                     data.m.append(data.data[:nopts, index])
                             data.info['selectiontype'] = "1D"
                             data.info['scanselection'] = True
+                            if newMemoryProblem:
+                                newSelection = copy.deepcopy(selection)
+                                for tmpKey in ['x', 'y', 'm']:
+                                    if tmpKey in selection:
+                                        for i in range(len(selection[tmpKey])):
+                                            if tmpKey == "x":
+                                                label = data.info['LabelNames'][selection[tmpKey][i]]
+                                            else:
+                                                label = selection['cntlist'][selection[tmpKey][i]]
+                                            newSelection[tmpKey][i] = data.info['LabelNames'].index(label)
+                                data.info['selection'] = newSelection
+                                data.info['selection']['cntlist'] = data.info['LabelNames']
+                                selection = newSelection
                             data.data = None
                             return data
                         if (key in ["XIA_DATA"]) and 'XIA' in selection:
@@ -199,17 +225,31 @@ class SpsDataSource(object):
                 #info["LabelNames"] = metadata["allcounters"].split(";")
                 labels = list(motors.keys())
                 labels.sort()
-                info["LabelNames"] = [motors[x] for x in labels]
-                info["MotorNames"] = metadata["allmotorm"].split(";")
-                info["MotorValues"] = [float(x) \
+                if len(labels):
+                    info["LabelNames"] = [motors[x] for x in labels]
+                if len(metadata["allmotorm"]):
+                    info["MotorNames"] = metadata["allmotorm"].split(";")
+                    info["MotorValues"] = [float(x) \
                                 for x in metadata["allpositions"].split(";")]
                 info["nopts"] = int(metadata["npts"])
                 supplied_info = sps.getinfo(self.name, array)
                 if len(supplied_info):
                     info["nopts"] = int(supplied_info[0]) 
                 if 'hkl' in metadata:
-                    info['hkl'] = [float(x) \
+                    if len(metadata["hkl"]):
+                        info['hkl'] = [float(x) \
                                 for x in metadata["hkl"].split(";")]
+                # current SCAN
+                info["scanno"] = int(metadata["scanno"])
+                # current SPEC file
+                info["datafile"] = metadata["datafile"]
+                # put any missing information
+                info["selectedcounters"] = [x \
+                                for x in metadata["selectedcounters"].split()]
+                # do not confuse with unhandled keys ...
+                #for key in metadata:
+                #    if key not in info:
+                #        info[key] = metadata[key]
         if (metdata is None) and ((array in ["SCAN_D"]) or scantest):
             # old style SCAN_D metadata
             if 'axistitles' in info["envdict"]:

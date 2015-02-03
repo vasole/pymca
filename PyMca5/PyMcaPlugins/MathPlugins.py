@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -103,6 +103,7 @@ class MathPlugins(Plugin1DBase.Plugin1DBase):
         operations = info.get("operations", [])
         operations.append("derivate")
         info['operations'] = operations
+        info['plot_yaxis'] = "right"
         legend = legend+"'"
         self.addCurve(x, y, legend=legend, info=info, replot=True)
 

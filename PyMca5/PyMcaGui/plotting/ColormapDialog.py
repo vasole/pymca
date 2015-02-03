@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,8 +30,6 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGraph.backends.MatplotlibBackend import \
-                            MatplotlibBackend as backend
 from . import PlotWidget
 
 QTVERSION = qt.qVersion()
@@ -215,7 +213,7 @@ class ColormapDialog(qt.QDialog):
 
 
         # Graph widget for color curve...
-        self.c = PlotWidget.PlotWidget(self, backend=backend)
+        self.c = PlotWidget.PlotWidget(self, backend=None)
         self.c.setGraphXLabel("Data Values")
         self.c.setZoomModeEnabled(False)
 

@@ -102,8 +102,17 @@ _COLORLIST = [_COLORDICT['black'],
 #"" 	nothing
 #
 
+try:
+    from .backends.MatplotlibBackend import MatplotlibBackend
+    DEFAULT_BACKEND = "matplotlib"
+except:
+    DEFAULT_BACKEND = PlotBackend.PlotBackend
+
 class Plot(PlotBase.PlotBase):
     PLUGINS_DIR = None
+    # give the possibility to set the default backend for all instances
+    # via a class attribute.
+    defaultBackend = DEFAULT_BACKEND
 
     colorList = _COLORLIST
     colorDict = _COLORDICT
@@ -111,15 +120,28 @@ class Plot(PlotBase.PlotBase):
     def __init__(self, parent=None, backend=None, callback=None):
         self._parent = parent
         if backend is None:
-            # an empty backend for testing purposes
-            if "matplotlib" in sys.modules:
-                from .backends.MatplotlibBackend import MatplotlibBackend as backend
-                self._plot = backend(parent)
-            else:
-                self._plot = PlotBackend.PlotBackend(parent)
+            backend = self.defaultBackend
+            self._default = True
         else:
-            self._plot = backend(parent)
             self._default = False
+        if hasattr(backend, "__call__"):
+            # to be called
+            self._plot = backend(parent)
+        elif isinstance(backend, PlotBackend.PlotBackend):
+            self._plot = backend
+        elif hasattr(backend, "lower"):
+            lowerCaseString = backend.lower()
+            if lowerCaseString in ["matplotlib", "mpl"]:
+                from .backends.MatplotlibBackend import MatplotlibBackend as be
+            elif lowerCaseString in ["gl", "opengl"]:
+                from .backends.OpenGLBackend import OpenGLBackend as be
+            elif lowerCaseString in ["pyqtgraph"]:
+                from .backends.PyQtGraphBackend import PyQtGraphBackend as be
+            elif lowerCaseString in ["glut"]:
+                from .backends.GLUTOpenGLBackend import GLUTOpenGLBackend as be
+            else:
+                raise ValueError("Backend not understood %s" % backend)
+            self._plot = be(parent)
         super(Plot, self).__init__()
         widget = self._plot.getWidgetHandle()
         if widget is None:
@@ -364,6 +386,14 @@ class Plot(PlotBase.PlotBase):
             key = str(legend)
         if info is None:
             info = {}
+            if key in self._curveDict:
+                # prevent curves from changing attributes when updated
+                oldInfo = self._curveDict[key][3]
+                for savedKey in ["xlabel", "ylabel",
+                                 "plot_symbol", "plot_color",
+                                 "plot_linestyle", "plot_fill",
+                                 "plot_yaxis"]:
+                    info[savedKey] = oldInfo[savedKey]
         if xlabel is None:
             xlabel = info.get('xlabel', 'X')
         if ylabel is None:
@@ -485,13 +515,15 @@ class Plot(PlotBase.PlotBase):
 
         if len(self._curveList) == 1:
             if self.isActiveCurveHandlingEnabled():
+                self._plot.setGraphXLabel(info["xlabel"])
+                self._plot.setGraphYLabel(info["ylabel"])
                 self.setActiveCurve(key)
 
         if self.isCurveHidden(key):
             self._plot.removeCurve(key, replot=False)
         if replot:
-            self.resetZoom()
-            #self.replot()
+            #self.resetZoom()
+            self.replot()
         return legend
 
     def addImage(self, data, legend=None, info=None,
@@ -577,8 +609,8 @@ class Plot(PlotBase.PlotBase):
         if len(self._imageDict) == 1:
             self.setActiveImage(key)
         if replot:
-            self.resetZoom()
-            #self.replot()
+            #self.resetZoom()
+            self.replot()
         return key
 
     def removeCurve(self, legend, replot=True):
@@ -717,23 +749,43 @@ class Plot(PlotBase.PlotBase):
 
     def getCurve(self, legend):
         """
-        :param legend: legend assiciated to the curve
+        :param legend: legend associated to the curve
         :type legend: boolean
         :return: list [x, y, legend, info]
+        :rtype: list
+
+        Function to access the graph specified curve.
+        It returns None in case of not having the curve.
+
+        Default output has the form:
+            xvalues, yvalues, legend, info
+            where info is a dictionnary containing curve info.
+            For the time being, only the plot labels associated to the
+            curve are warranted to be present under the keys xlabel, ylabel.
+        """
+        if legend in self._curveDict:
+            return self._curveDict[legend] * 1
+        else:
+            return None
+
+    def getImage(self, legend):
+        """
+        :param legend: legend associated to the curve
+        :type legend: boolean
+        :return: list [image, legend, info, pixmap]
         :rtype: list
 
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
         Default output has the form:
-            xvalues, yvalues, legend, dict
-            where dict is a dictionnary containing curve info.
-            For the time being, only the plot labels associated to the
-            curve are warranted to be present under the keys xlabel, ylabel.
+            image, legend, info, pixmap
+            where info is a dictionnary containing image information.
         """
-        # let it raise en exception if not present
-        return self._curveDict[legend] * 1
-
+        if legend in self._imageDict:
+            return self._imageDict[legend] * 1
+        else:
+            return None
 
     def _getAllLimits(self):
         """
@@ -795,6 +847,7 @@ class Plot(PlotBase.PlotBase):
         if key in self._curveDict.keys():
             self._activeCurve = key
         if self._activeCurve == oldActiveCurve:
+            # the labels may need to be updated!!!!
             return self._activeCurve
         # this was giving troubles in the PyQtGraph binding
         #if self._activeCurve != oldActiveCurve:
