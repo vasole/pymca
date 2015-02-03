@@ -81,7 +81,9 @@ def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
 
     if safe:
         c = min(int(c), shape[1] - 1)
+        c = max(c, 0)
         r = min(int(r), shape[0] - 1)
+        r = max(r, 0)
     else:
         c = int(c)
         r = int(r)
