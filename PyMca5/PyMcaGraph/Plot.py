@@ -522,8 +522,11 @@ class Plot(PlotBase.PlotBase):
         if self.isCurveHidden(key):
             self._plot.removeCurve(key, replot=False)
         if replot:
-            #self.resetZoom()
-            self.replot()
+            # We ask for a zoom reset in order to handle the plot scaling
+            # if the user does not want that, autoscale of the different
+            # axes has to be set to off.
+            self.resetZoom()
+            #self.replot()
         return legend
 
     def addImage(self, data, legend=None, info=None,
@@ -609,8 +612,11 @@ class Plot(PlotBase.PlotBase):
         if len(self._imageDict) == 1:
             self.setActiveImage(key)
         if replot:
-            #self.resetZoom()
-            self.replot()
+            # We ask for a zoom reset in order to handle the plot scaling
+            # if the user does not want that, autoscale of the different
+            # axes has to be set to off.
+            self.resetZoom()
+            #self.replot()
         return key
 
     def removeCurve(self, legend, replot=True):
