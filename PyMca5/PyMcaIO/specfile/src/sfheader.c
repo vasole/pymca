@@ -703,7 +703,7 @@ sfGetHeaderLine( SpecFile *sf, int from , char sf_char, char **buf, int *error)
 static char *
 sfOneLine(char *from,char *end,int *error)
 {
-     static char linebuf[500];
+     static char linebuf[1000];
 
      char *ptr,*buf;
      long  i;
