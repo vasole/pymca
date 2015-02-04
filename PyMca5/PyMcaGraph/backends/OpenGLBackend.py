@@ -1033,8 +1033,8 @@ class SelectVLine(Select1Point):
 
 class ItemsInteraction(ClickOrDrag):
     class Idle(ClickOrDrag.Idle):
-        def __init__(self, *args, **kwargs):
-            super(ItemsInteraction.Idle, self).__init__(*args, **kwargs)
+        def __init__(self, *args, **kw):
+            super(ItemsInteraction.Idle, self).__init__(*args, **kw)
             self._hoverMarker = None
 
         def onPress(self, x, y, btn):
@@ -2203,7 +2203,10 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def insertMarker(self, x, y, legend=None, text=None, color='k',
                      selectable=False, draggable=False,
-                     **kwargs):
+                     **kw):
+        if kw:
+            warnings.warn("insertMarker ignores additional parameters",
+                          RuntimeWarning)
         behaviors = set()
         if selectable:
             behaviors.add('selectable')
@@ -2232,15 +2235,21 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def insertXMarker(self, x, legend=None, text=None, color='k',
                       selectable=False, draggable=False,
-                      **kwargs):
+                      **kw):
+        if kw:
+            warnings.warn("insertXMarker ignores additional parameters",
+                          RuntimeWarning)
         return self.insertMarker(x, None, legend, text, color,
-                                 selectable, draggable, **kwargs)
+                                 selectable, draggable, **kw)
 
     def insertYMarker(self, y, legend=None, text=None, color='k',
                       selectable=False, draggable=False,
-                      **kwargs):
+                      **kw):
+        if kw:
+            warnings.warn("insertYMarker ignores additional parameters",
+                          RuntimeWarning)
         return self.insertMarker(None, y, legend, text, color,
-                                 selectable, draggable, **kwargs)
+                                 selectable, draggable, **kw)
 
     def removeMarker(self, legend, replot=True):
         try:
@@ -2261,9 +2270,12 @@ class OpenGLPlotCanvas(PlotBackend):
                  replace=True, replot=True,
                  xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
-                 colormap=None, **kwargs):
+                 colormap=None, **kw):
         if info is not None:
             warnings.warn("Ignore info parameter of addImage",
+                          RuntimeWarning)
+        if kw:
+            warnings.warn("addImage ignores additional parameters",
                           RuntimeWarning)
 
         behaviors = set()
@@ -2371,14 +2383,9 @@ class OpenGLPlotCanvas(PlotBackend):
         if oldImage is None or \
            oldXScale != xScale or \
            oldYScale != yScale:
-
             self._dirtyDataBounds()
-            self.setLimits(self.dataBounds.xAxis.min_,
-                           self.dataBounds.xAxis.max_,
-                           self.dataBounds.yAxis.min_,
-                           self.dataBounds.yAxis.max_,
-                           self.dataBounds.y2Axis.min_,
-                           self.dataBounds.y2Axis.max_)
+
+        self._resetZoom()
 
         self._plotDirtyFlag = True
 
@@ -2408,15 +2415,18 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def addItem(self, xList, yList, legend=None, info=None,
                 replace=False, replot=True,
-                shape="polygon", fill=True, **kwargs):
+                shape="polygon", fill=True, color=None, **kw):
         # info is ignored
         if shape not in self._drawModes:
             raise NotImplementedError("Unsupported shape {0}".format(shape))
+        if kw:
+            warnings.warn("addItem ignores additional parameters",
+                          RuntimeWarning)
 
         if replace:
             self.clearItems()
 
-        colorCode = kwargs.get('color', 'black')
+        colorCode = color if color is not None else 'black'
 
         if shape == 'rectangle':
             xMin, xMax = xList
@@ -2473,6 +2483,9 @@ class OpenGLPlotCanvas(PlotBackend):
                           RuntimeWarning)
         if yerror is not None:
             warnings.warn("Ignore yerror parameter of addCurve",
+                          RuntimeWarning)
+        if kw:
+            warnings.warn("addCurve ignores additional parameters",
                           RuntimeWarning)
 
         x = np.array(x, dtype=np.float32, copy=False, order='C')
@@ -2539,12 +2552,8 @@ class OpenGLPlotCanvas(PlotBackend):
            oldCurve.info['axis'] != curve.info['axis'] or \
            oldCurve.yMin != curve.yMin or oldCurve.yMax != curve.yMax:
             self._dirtyDataBounds()
-            self.setLimits(self.dataBounds.xAxis.min_,
-                           self.dataBounds.xAxis.max_,
-                           self.dataBounds.yAxis.min_,
-                           self.dataBounds.yAxis.max_,
-                           self.dataBounds.y2Axis.min_,
-                           self.dataBounds.y2Axis.max_)
+
+        self._resetZoom()
 
         self._plotDirtyFlag = True
 
@@ -2680,7 +2689,7 @@ class OpenGLPlotCanvas(PlotBackend):
             self.eventHandler.cancel()
             self.eventHandler = ItemsInteraction(self)
 
-    def resetZoom(self):
+    def _resetZoom(self):
         if self.isXAxisAutoScale() and self.isYAxisAutoScale():
             self.setLimits(self.dataBounds.xAxis.min_,
                            self.dataBounds.xAxis.max_,
@@ -2701,6 +2710,8 @@ class OpenGLPlotCanvas(PlotBackend):
                            self.dataBounds.y2Axis.min_,
                            self.dataBounds.y2Axis.max_)
 
+    def resetZoom(self):
+        self._resetZoom()
         self.replot()
 
     # Limits #
