@@ -732,7 +732,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             key = 'Splitter'
             if key in ddict['Geometry'].keys():
                 self.splitter.setSizes(ddict['Geometry'][key])
-            if backend is None:
+            if hasattr(self.mcaWindow, "graph"):
                 # this was the way of working of 4.x.x versions
                 key = 'McaWindow'
                 if key in ddict['Geometry'].keys():
