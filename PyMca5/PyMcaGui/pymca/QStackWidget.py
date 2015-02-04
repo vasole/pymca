@@ -1047,7 +1047,8 @@ if __name__ == "__main__":
     options = ''
     longoptions = ["fileindex=","old",
                    "filepattern=", "begin=", "end=", "increment=",
-                   "nativefiledialogs=", "imagestack=", "image=",]
+                   "nativefiledialogs=", "imagestack=", "image=",
+                   "backend="]
     try:
         opts, args = getopt.getopt(
                      sys.argv[1:],
@@ -1062,6 +1063,7 @@ if __name__ == "__main__":
     end = None
     imagestack=None
     increment=None
+    backend=None
     PyMcaDirs.nativeFileDialogs=True
     for opt, arg in opts:
         if opt in '--begin':
@@ -1091,6 +1093,8 @@ if __name__ == "__main__":
                 PyMcaDirs.nativeFileDialogs=True
             else:
                 PyMcaDirs.nativeFileDialogs=False
+        elif opt in '--backend':
+            backend = arg
         #elif opt in '--old':
         #    import QEDFStackWidget
         #    sys.exit(QEDFStackWidget.runAsMain())
@@ -1098,6 +1102,13 @@ if __name__ == "__main__":
         if (begin is None) or (end is None):
             raise ValueError("A file pattern needs at least a set of begin and end indices")
     app = qt.QApplication([])
+    if backend is not None:
+        # set the default backend
+        try:
+            from PyMca5.PyMcaGraph.Plot import Plot
+            Plot.defaultBackend = backend
+        except:
+            print("WARNING: Cannot set backend to %s" % backend)
     widget = QStackWidget()
     w = StackSelector.StackSelector(widget)
     if filepattern is not None:

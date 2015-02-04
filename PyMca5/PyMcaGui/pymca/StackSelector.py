@@ -45,6 +45,7 @@ from PyMca5.PyMcaIO import TextImageStack
 from PyMca5.PyMcaIO import TiffStack
 from PyMca5.PyMcaIO import RTXMap
 from PyMca5.PyMcaIO import LispixMap
+from PyMca5.PyMcaIO import RenishawMap
 from .QStack import QStack, QSpecFileStack
 try:
     from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
@@ -117,6 +118,9 @@ class StackSelector(object):
                  (filelist[0].upper().endswith("TIF") or\
                   filelist[0].upper().endswith("TIFF")):
                 stack = TiffStack.TiffStack(imagestack=True)
+            elif filefilter.upper().startswith("RENISHAW"):
+                stack = RenishawMap.RenishawMap(filelist[0])
+                omnicfile = True
             elif filefilter == "" and\
                  (filelist[0].upper().endswith("TIF") or\
                   filelist[0].upper().endswith("TIFF")):
@@ -171,6 +175,13 @@ class StackSelector(object):
                 imagestack = True
             elif LispixMap.isLispixMapFile(filelist[0]):
                 stack = LispixMap.LispixMap(filelist[0])
+                omnicfile = True
+            elif RenishawMap.isRenishawMapFile(filelist[0]):
+                # This is dangerous. Any .txt file with four
+                # columns would be accepted as a Renishaw Map
+                # by other hand, I do not know how to handle
+                # that case as a stack.
+                stack = RenishawMap.RenishawMap(filelist[0])
                 omnicfile = True
             else:
                 stack = QSpecFileStack()
@@ -347,6 +358,7 @@ class StackSelector(object):
                         "OPUS-DPT Files (*.DPT *.dpt)",
                         "RTX Files (*.rtx *.RTX)",
                         "Lispix-RPL Files (*.rpl)",
+                        "Renishaw-ASCII Files (*.txt *.TXT)",
                         "AIFIRA Files (*DAT)",
                         "SupaVisio Files (*pige *pixe *rbs)",
                         "MRC files (*.mrc *.st)",
