@@ -2401,6 +2401,7 @@ class OpenGLPlotCanvas(PlotBackend):
             pass
         else:
             self._glGarbageCollector.append(image)
+            self._dirtyDataBounds()
             self._plotDirtyFlag = True
 
         if replot:
@@ -2411,7 +2412,6 @@ class OpenGLPlotCanvas(PlotBackend):
         for type_, legend in list(self._zOrderedItems.keys()):
             if type_ == 'image':
                 self.removeImage(legend, replot=False)
-        self._plotDirtyFlag = True
 
     def addItem(self, xList, yList, legend=None, info=None,
                 replace=False, replot=True,
@@ -2578,6 +2578,7 @@ class OpenGLPlotCanvas(PlotBackend):
             self._plotFrame.isY2Axis = self._hasRightYAxis
 
             self._glGarbageCollector.append(curve)
+            self._dirtyDataBounds()
             self._plotDirtyFlag = True
 
         if replot:
@@ -2588,7 +2589,6 @@ class OpenGLPlotCanvas(PlotBackend):
         for type_, legend in list(self._zOrderedItems.keys()):
             if type_ == 'curve':
                 self.removeCurve(legend, replot=False)
-        self._plotDirtyFlag = True
 
     def setActiveCurve(self, legend, replot=True):
         if not self._activeCurveHandling:

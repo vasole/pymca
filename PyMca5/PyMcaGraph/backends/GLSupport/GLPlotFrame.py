@@ -47,6 +47,7 @@ import logging
 import numpy as np
 import math
 import weakref
+import warnings
 
 from .gl import *  # noqa
 from .GLContext import getGLContext
@@ -97,13 +98,8 @@ class PlotAxis(object):
         dataRange = tuple(dataRange)
 
         if dataRange != self._dataRange:
-            if self.isLog and dataRange[0] <= 0.:
-                warning.warns(
-                    "Ignore set dataRange value <= 0. while isLog=True",
-                    RuntimeError)
-            else:
-                self._dataRange = dataRange
-                self._dirtyTicks()
+            self._dataRange = dataRange
+            self._dirtyTicks()
 
     @property
     def isLog(self):
@@ -114,12 +110,8 @@ class PlotAxis(object):
     def isLog(self, isLog):
         isLog = bool(isLog)
         if isLog != self._isLog:
-            if isLog and self.dataRange[0] <= 0.:
-                warning.warns("Ignore isLog=True with dataRange value <= 0.",
-                              RuntimeError)
-            else:
-                self._isLog = isLog
-                self._dirtyTicks()
+            self._isLog = isLog
+            self._dirtyTicks()
 
     @property
     def displayCoords(self):
@@ -236,11 +228,18 @@ class PlotAxis(object):
         ((x, y) in display, dataPos, textLabel).
         """
         dataMin, dataMax = self.dataRange
+        if self.isLog and dataMin <= 0.:
+            warnings.warn(
+                'Getting ticks with isLog=True and dataRange[0]<=0.',
+                RuntimeWarning)
+            dataMin = 1.
+            if dataMax < dataMin:
+                dataMax = 1.
+
         if dataMin != dataMax:  # data range is not null
             (x0, y0), (x1, y1) = self.displayCoords
 
             if self.isLog:
-
                 logMin, logMax = math.log10(dataMin), math.log10(dataMax)
                 tickMin, tickMax, step = niceNumbersForLog10(logMin, logMax)
 
@@ -474,7 +473,7 @@ class GLPlotFrame(object):
         elif self._grid == self.GRID_ALL_TICKS:
             test = lambda text: True
         else:
-            logging.warn('Wrong grid mode: %d' % self._grid)
+            logging.warning('Wrong grid mode: %d' % self._grid)
             return []
 
         vertices = []
