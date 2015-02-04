@@ -80,13 +80,12 @@ class RenishawMap(DataObject.DataObject):
                 elif wl[nChannels] == firstChannel:
                     break
                 nChannels += 1
-            if y[0] == y[nChannels + 1]:
+            if y[0] == y[nChannels]:
                 firstChangesFirst = False
             else:
                 firstChangesFirst = True
             nLines = nChannels + 1 + sum([1 for l in f])
         #print("ELAPSED 0 = ", time.time() - t0)
-
         if nLines % nChannels:
             raise IOError("Not a regular Renishaw map or a not a complete file")
         nSpectra = int(nLines / nChannels)
@@ -96,41 +95,47 @@ class RenishawMap(DataObject.DataObject):
 
         rows = numpy.zeros((nSpectra,), numpy.float32)
         columns = numpy.zeros((nSpectra,), numpy.float32)
-        wl = numpy.zeros((nChannels,), numpy.float32)        
+        wl = numpy.array(wl[:nChannels], dtype=numpy.float32)        
         data = numpy.zeros((nSpectra, nChannels), numpy.float32)
         nRows = 0
         nColumns = 0
         #t0 = time.time()
         myFloat = numpy.float32
+        actualRows = []
+        actualColumns = []
+        indices = [None] * nSpectra
         with open(filename, 'r') as f:
             for i in range(nSpectra):
                 for j in range(nChannels):
                     line = f.readline()
-                    if firstChangesFirst:
-                        column, row, wl[j], data[i, j] = \
-                              [myFloat(value) for value in line.split("\t")]
-                    else:
-                        row, column, wl[j], data[i, j] = \
-                              [myFloat(value) for value in line.split("\t")]
-                rows[i] = row
-                columns[i] = column
-
-        # get the number of rows and columns
-        nColumns = 1
-        nRows = 1
-        if nSpectra > 1:
-            for i in range(1, nSpectra):
-                if rows[i] == rows[0]:
-                    nColumns += 1
+                if firstChangesFirst:
+                    column, row, dummy1, dummy2 = \
+                            [float(value) for value in line.split("\t")]
                 else:
-                    break
-            nRows = nSpectra / nColumns
+                    row, column, dummy1, dummy2 = \
+                            [float(value) for value in line.split("\t")]
+                #positions.append((row, column, i))
+                if row not in actualRows:
+                    actualRows.append(row)
+                if column not in actualColumns:
+                    actualColumns.append(column)
+                indices[i] = (actualRows.index(row), actualColumns.index(column))
+        nRows = len(actualRows)
+        nColumns = len(actualColumns)
+        #positions.sort()
+        data.shape = nRows, nColumns, nChannels
+        with open(filename, 'r') as f:
+            for i in range(nSpectra):
+                row, column = indices[i]
+                for j in range(nChannels):
+                    line = f.readline()
+                    d1, d2, d3, data[row, column, j] = \
+                              [myFloat(value) for value in line.split("\t")]
         #print "nRows = ", nRows
         #print "nColumns= ", nColumns
         #print columns[::nColumns]
         #print rows[::nRows]
         #print "product = ", nRows * nColumns
-        data.shape = nRows, nColumns, nChannels
         #print("ELAPSED tinal = ", time.time() - t0)
 
         # arrange as EDF stack
@@ -149,6 +154,7 @@ class RenishawMap(DataObject.DataObject):
         self.info["McaIndex"] = 2
         self.info["McaCalib"] = [0.0, 1.0, 0.0]
         self.info["Channel0"] = 0.0
+        #self.x = [wl]
 
 def isRenishawMapFile(filename):
     try:
