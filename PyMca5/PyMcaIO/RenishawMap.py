@@ -154,7 +154,7 @@ class RenishawMap(DataObject.DataObject):
         self.info["McaIndex"] = 2
         self.info["McaCalib"] = [0.0, 1.0, 0.0]
         self.info["Channel0"] = 0.0
-        #self.x = [wl]
+        self.x = [wl]
 
 def isRenishawMapFile(filename):
     try:

@@ -416,19 +416,28 @@ class StackBase(object):
         else:
             i1 = numpy.nonzero(ddict['from'] <= self._mcaData0.x[0])[0]
             if len(i1):
-                i1 = min(i1)
+                if self._mcaData0.x[0][0] > self._mcaData0.x[0][-1]:
+                    i1 = max(i1)
+                else:
+                    i1 = min(i1)
             else:
                 i1 = 0
             i1 = max(i1, 0)
 
             i2 = numpy.nonzero(self._mcaData0.x[0] <= ddict['to'])[0]
             if len(i2):
-                i2 = max(i2)
+                if self._mcaData0.x[0][0] > self._mcaData0.x[0][-1]:
+                    i2 = min(i2)
+                else:
+                    i2 = max(i2)
             else:
                 i2 = 0
             i2 = min(i2 + 1, self._stack.data.shape[self.mcaIndex])
             pos = 0.5 * (ddict['from'] + ddict['to'])
-            imiddle = max(numpy.nonzero(self._mcaData0.x[0] <= pos)[0])
+            if self._mcaData0.x[0][0] > self._mcaData0.x[0][-1]:
+                imiddle = min(numpy.nonzero(self._mcaData0.x[0] <= pos)[0])
+            else:
+                imiddle = max(numpy.nonzero(self._mcaData0.x[0] <= pos)[0])
             xw = self._mcaData0.x[0]
 
         self._ROIImageDict = self.calculateROIImages(i1, i2, imiddle, energy=xw)
