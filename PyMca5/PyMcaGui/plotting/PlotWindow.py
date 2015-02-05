@@ -932,8 +932,8 @@ class PlotWindow(PlotWidget.PlotWidget):
         #super(PlotWindow, self).graphCallback(ddict)
         self.sigPlotSignal.emit(ddict)
 
-    def setActiveCurve(self, legend):
-        PlotWidget.PlotWidget.setActiveCurve(self, legend)
+    def setActiveCurve(self, legend, replot=True):
+        PlotWidget.PlotWidget.setActiveCurve(self, legend, replot=replot)
         self.calculateROIs()
         self.updateLegends()
 
