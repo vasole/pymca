@@ -1513,14 +1513,14 @@ class OpenGLPlotCanvas(PlotBackend):
 
                     yAxis = item.info['yAxis']
 
-                    dataPos = self.pixelToData(x - offset,
-                                               y - offset,
+                    inAreaPos = self._mouseInPlotArea(x - offset, y - offset)
+                    dataPos = self.pixelToData(inAreaPos[0], inAreaPos[1],
                                                axis=yAxis)
                     assert dataPos is not None
                     xPick0, yPick0 = dataPos
 
-                    dataPos = self.pixelToData(x + offset,
-                                               y + offset,
+                    inAreaPos = self._mouseInPlotArea(x + offset, y + offset)
+                    dataPos = self.pixelToData(inAreaPos[0], inAreaPos[1],
                                                axis=yAxis)
                     assert dataPos is not None
                     xPick1, yPick1 = dataPos
