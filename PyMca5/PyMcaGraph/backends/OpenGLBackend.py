@@ -1611,7 +1611,7 @@ class OpenGLPlotCanvas(PlotBackend):
             for item in self._zOrderedItems.values():
                 if self._plotFrame.xAxis.isLog and hasattr(item, 'xMinPos'):
                     # Supports curve <= 0. and log
-                    if item.xMinPos < xMin:
+                    if item.xMinPos is not None and item.xMinPos < xMin:
                         xMin = item.xMinPos
                 elif item.xMin < xMin:
                     xMin = item.xMin
@@ -1622,7 +1622,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     if (self._plotFrame.y2Axis.isLog and
                             hasattr(item, 'yMinPos')):
                         # Supports curve <= 0. and log
-                        if item.yMinPos < y2Min:
+                        if item.yMinPos is not None and item.yMinPos < y2Min:
                             y2Min = item.yMinPos
                     elif item.yMin < y2Min:
                         y2Min = item.yMin
@@ -1632,7 +1632,7 @@ class OpenGLPlotCanvas(PlotBackend):
                     if (self._plotFrame.yAxis.isLog and
                             hasattr(item, 'yMinPos')):
                         # Supports curve <= 0. and log
-                        if item.yMinPos < yMin:
+                        if item.yMinPos is not None and item.yMinPos < yMin:
                             yMin = item.yMinPos
                     elif item.yMin < yMin:
                         yMin = item.yMin

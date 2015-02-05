@@ -757,11 +757,14 @@ class Curve2D(object):
         self.yMin, self.yMax = minMax(yData)
 
         if self.xMin <= 0.:
-            self.xMinPos = np.nonzero(xData > 0.)[0].min()
+            xPos = np.nonzero(xData > 0.)[0]
+            self.xMinPos = xPos.min() if len(xPos) > 0 else None
         else:
             self.xMinPos = self.xMin
+
         if self.yMin <= 0.:
-            self.yMinPos = np.nonzero(yData > 0.)[0].min()
+            yPos = np.nonzero(yData > 0.)[0]
+            self.yMinPos = yPos.min() if len(yPos) > 0 else None
         else:
             self.yMinPos = self.yMin
 
