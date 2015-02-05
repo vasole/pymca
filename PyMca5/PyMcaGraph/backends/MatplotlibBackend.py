@@ -1129,10 +1129,24 @@ class MatplotlibGraph(FigureCanvas):
 
     @staticmethod
     def _newZoomRange(min_, max_, center, scale, isLog):
-        import math
         if isLog:
-            center = math.log10(center)
-            oldMin, oldMax = math.log10(min_), math.log10(max_)
+            if min_ > 0.:
+                oldMin = numpy.log10(min_)
+            else:
+                # Happens when autoscale is off and switch to log scale
+                # while displaying area < 0.
+                oldMin = numpy.log10(numpy.nextafter(0, 1))
+
+            if center > 0.:
+                center = numpy.log10(center)
+            else:
+                center = numpy.log10(numpy.nextafter(0, 1))
+
+            if max_ > 0.:
+                oldMax = numpy.log10(max_)
+            else:
+                # Should not happen
+                oldMax = 0.
         else:
             oldMin, oldMax = min_, max_
 
@@ -1142,7 +1156,7 @@ class MatplotlibGraph(FigureCanvas):
         newMax = center + (1. - offset) * range_
         if isLog:
             try:
-                newMin, newMax = 10. ** newMin, 10. ** newMax
+                newMin, newMax = 10. ** float(newMin), 10. ** float(newMax)
             except OverflowError:  # Limit case
                 newMin, newMax = min_, max_
             if newMin <= 0. or newMax <= 0.:  # Limit case
