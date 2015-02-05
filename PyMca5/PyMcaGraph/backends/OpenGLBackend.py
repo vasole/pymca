@@ -657,8 +657,23 @@ class Zoom(ClickOrDrag):
 
     def _newZoomRange(self, min_, max_, center, scale, isLog):
         if isLog:
-            center = math.log10(center)
-            oldMin, oldMax = math.log10(min_), math.log10(max_)
+            if min_ > 0.:
+                oldMin = np.log10(min_)
+            else:
+                # Happens when autoscale is off and switch to log scale
+                # while displaying area < 0.
+                oldMin = np.log10(np.nextafter(0, 1))
+
+            if center > 0.:
+                center = np.log10(center)
+            else:
+                center = np.log10(np.nextafter(0, 1))
+
+            if max_ > 0.:
+                oldMax = np.log10(max_)
+            else:
+                # Should not happen
+                oldMax = 0.
         else:
             oldMin, oldMax = min_, max_
 
@@ -668,7 +683,7 @@ class Zoom(ClickOrDrag):
         newMax = center + (1. - offset) * range_
         if isLog:
             try:
-                newMin, newMax = 10. ** newMin, 10. ** newMax
+                newMin, newMax = 10. ** float(newMin), 10. ** float(newMax)
             except OverflowError:  # Limit case
                 newMin, newMax = min_, max_
             if newMin <= 0. or newMax <= 0.:  # Limit case
@@ -1594,18 +1609,32 @@ class OpenGLPlotCanvas(PlotBackend):
             yMin, yMax = float('inf'), -float('inf')
             y2Min, y2Max = float('inf'), -float('inf')
             for item in self._zOrderedItems.values():
-                if item.xMin < xMin:
+                if self._plotFrame.xAxis.isLog and hasattr(item, 'xMinPos'):
+                    # Supports curve <= 0. and log
+                    if item.xMinPos < xMin:
+                        xMin = item.xMinPos
+                elif item.xMin < xMin:
                     xMin = item.xMin
                 if item.xMax > xMax:
                     xMax = item.xMax
 
                 if item.info.get('yAxis') == 'right':
-                    if item.yMin < y2Min:
+                    if (self._plotFrame.y2Axis.isLog and
+                            hasattr(item, 'yMinPos')):
+                        # Supports curve <= 0. and log
+                        if item.yMinPos < y2Min:
+                            y2Min = item.yMinPos
+                    elif item.yMin < y2Min:
                         y2Min = item.yMin
                     if item.yMax > y2Max:
                         y2Max = item.yMax
                 else:
-                    if item.yMin < yMin:
+                    if (self._plotFrame.yAxis.isLog and
+                            hasattr(item, 'yMinPos')):
+                        # Supports curve <= 0. and log
+                        if item.yMinPos < yMin:
+                            yMin = item.yMinPos
+                    elif item.yMin < yMin:
                         yMin = item.yMin
                     if item.yMax > yMax:
                         yMax = item.yMax
@@ -2539,13 +2568,6 @@ class OpenGLPlotCanvas(PlotBackend):
             self._hasRightYAxis.add(curve)
             self._plotFrame.isY2Axis = True
 
-        # if self._plotFrame.xAxis.isLog and curve.xMin <= 0.:
-        #    raise RuntimeError(
-        #        'Cannot add curve with X <= 0 with X axis log scale')
-        # if self._plotFrame.yAxis.isLog and curve.yMin <= 0.:
-        #    raise RuntimeError(
-        #        'Cannot add curve with Y <= 0 with Y axis log scale')
-
         self._zOrderedItems[('curve', legend)] = curve
 
         if oldCurve is None or \
@@ -2854,21 +2876,21 @@ class OpenGLPlotCanvas(PlotBackend):
                 warnings.warn("KeepDataAspectRatio is ignored with log axes",
                               RuntimeWarning)
 
-            if flag and self.dataBounds.xAxis.min_ <= 0.:
-                logging.warning('Log scale for X axis with some data <= 0.')
             self._plotFrame.xAxis.isLog = flag
+            self._dirtyDataBounds()
             self._dirtyPlotDataTransformedBounds()
 
     def setYAxisLogarithmic(self, flag=True):
-        if flag != self._plotFrame.yAxis.isLog:
+        if (flag != self._plotFrame.yAxis.isLog or
+                flag != self._plotFrame.y2Axis.isLog):
             if flag and self._keepDataAspectRatio:
                 warnings.warn("KeepDataAspectRatio is ignored with log axes",
                               RuntimeWarning)
 
-            if flag and (self.dataBounds.yAxis.min_ <= 0. or
-                         self.dataBounds.y2Axis.min_ <= 0.):
-                logging.warning('Log scale for Y axis with some data <= 0.')
             self._plotFrame.yAxis.isLog = flag
+            self._plotFrame.y2Axis.isLog = flag
+
+            self._dirtyDataBounds()
             self._dirtyPlotDataTransformedBounds()
 
     def isXAxisLogarithmic(self):

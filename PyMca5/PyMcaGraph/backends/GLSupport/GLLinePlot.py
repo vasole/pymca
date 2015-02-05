@@ -752,10 +752,18 @@ class Curve2D(object):
         self._isXLog = False
         self._isYLog = False
         self.xData, self.yData, self.colorData = xData, yData, colorData
-        self._xDataLog, self._yDataLog, self._colorDataLog = None, None, None
 
         self.xMin, self.xMax = minMax(xData)
         self.yMin, self.yMax = minMax(yData)
+
+        if self.xMin <= 0.:
+            self.xMinPos = np.nonzero(xData > 0.)[0].min()
+        else:
+            self.xMinPos = self.xMin
+        if self.yMin <= 0.:
+            self.yMinPos = np.nonzero(yData > 0.)[0].min()
+        else:
+            self.yMinPos = self.yMin
 
         if fillColor is not None:
             self.fill = _Fill2D(color=fillColor)
@@ -835,26 +843,22 @@ class Curve2D(object):
         return x, y, colors
 
     def prepare(self, isXLog, isYLog):
+        # init only supports updating isXLog, isYLog
         xData, yData, color = self.xData, self.yData, self.colorData
 
         if self._isXLog != isXLog or self._isYLog != isYLog:
             # Log state has changed
             self._isXLog, self._isYLog = isXLog, isYLog
 
-            # Check if data <=0. with log scale
+            # Check if data <= 0. with log scale
             if (isXLog and self.xMin <= 0.) or (isYLog and self.yMin <= 0.):
                 # Filtering data is needed
                 xData, yData, color = self._logFilterData(
                     self.xData, self.yData, self.colorData,
                     self._isXLog, self._isYLog)
 
-            # Update min and max (Not so correct to do it here)
-            self.xMin, self.xMax = minMax(xData)
-            self.yMin, self.yMax = minMax(yData)
+                self.discard()  # discard existing VBOs
 
-            self.discard()
-
-        # init once, does not support update
         if self.xVboData is None:
             xAttrib, yAttrib, cAttrib, dAttrib = None, None, None, None
             if self.lineStyle == DASHED:
@@ -943,8 +947,10 @@ class Curve2D(object):
         :rtype: list of int
         """
         if (self.marker is None and self.lineStyle is None) or \
-           self.xMin > xPickMax or xPickMin > self.xMax or \
-           self.yMin > yPickMax or yPickMin > self.yMax:
+                self.xMin > xPickMax or xPickMin > self.xMax or \
+                self.yMin > yPickMax or yPickMin > self.yMax:
+            # Note: With log scale the bounding box is too large if
+            # some data <= 0.
             return None
 
         elif self.lineStyle is not None:

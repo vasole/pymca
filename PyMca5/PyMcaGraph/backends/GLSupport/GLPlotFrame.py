@@ -230,7 +230,7 @@ class PlotAxis(object):
         dataMin, dataMax = self.dataRange
         if self.isLog and dataMin <= 0.:
             warnings.warn(
-                'Getting ticks with isLog=True and dataRange[0]<=0.',
+                'Getting ticks while isLog=True and dataRange[0]<=0.',
                 RuntimeWarning)
             dataMin = 1.
             if dataMax < dataMin:
