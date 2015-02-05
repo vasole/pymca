@@ -527,7 +527,7 @@ class Plot(PlotBase.PlotBase):
             # axes has to be set to off.
             self.resetZoom()
             #self.replot()
-        return legend
+        return key
 
     def addImage(self, data, legend=None, info=None,
                  replace=True, replot=True,

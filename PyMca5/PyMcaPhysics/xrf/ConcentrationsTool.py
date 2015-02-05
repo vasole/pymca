@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -275,7 +275,7 @@ class ConcentrationsTool(object):
             raise ValueError("Invalid or undefined sample matrix")
 
         if matrix[0].upper() == "MULTILAYER":
-            layerlist = fitresult['result']['config']['multilayer'].keys()
+            layerlist = list(fitresult['result']['config']['multilayer'].keys())
             layerlist.sort()
             for layer in layerlist:
                 if fitresult['result']['config']['multilayer'][layer][0]:
