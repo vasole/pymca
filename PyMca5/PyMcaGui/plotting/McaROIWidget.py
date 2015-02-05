@@ -161,9 +161,9 @@ class McaROIWidget(qt.QWidget):
                 index = roilist0.index(key)
                 break
         roilist=[]
-        roilist.append(roilist0[index])
         roidict = {}
-        if len(roilist):
+        if len(roilist0):
+            roilist.append(roilist0[index])
             roidict[roilist[0]] = {}
             roidict[roilist[0]].update(roidict0[roilist[0]])
             self.mcaROITable.fillFromROIDict(roilist=roilist,
