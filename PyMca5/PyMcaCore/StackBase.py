@@ -57,12 +57,14 @@ try:
             if len(directory) < 5:
                 break
     userPluginsDirectory = PyMca5.getDefaultUserPluginsDirectory()
+    PYMCA_PLUGINS_DIR = PLUGINS_DIR
     if userPluginsDirectory is not None:
         if PLUGINS_DIR is None:
             PLUGINS_DIR = userPluginsDirectory
         else:
             PLUGINS_DIR = [PLUGINS_DIR, userPluginsDirectory]
 except:
+    PYMCA_PLUGINS_DIR = None
     pass
 
 
@@ -149,7 +151,7 @@ class StackBase(object):
             for module in moduleList:
                 try:
                     pluginName = os.path.basename(module)[:-3]
-                    if directory == PLUGINS_DIR:
+                    if directory == PYMCA_PLUGINS_DIR:
                         plugin = "PyMcaPlugins." + pluginName
                     else:
                         plugin = pluginName
@@ -171,7 +173,7 @@ class StackBase(object):
                         try:
                             __import__(plugin)
                         except:
-                            if directory == PLUGINS_DIR:
+                            if directory == PYMCA_PLUGINS_DIR:
                                 plugin = "PyMca5.PyMcaPlugins." + pluginName
                                 __import__(plugin)
                             else:

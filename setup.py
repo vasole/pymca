@@ -114,7 +114,11 @@ def use_fisx():
     return False
 
 if use_fisx():
-    fisx_src = os.path.join(os.path.dirname(__file__), "third-party", "fisx") 
+    # fisx is expected to be an independent library and
+    # ideally one would use git subtree to put it in third-party
+    # but one needs  git > 1.9.x
+    fisx_src = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "third-party", "fisx") 
     if not os.path.exists(fisx_src):
         print("fisx library not found but installation requested")
         raise IOError("Installation of fisx requested but library not found")
@@ -129,6 +133,13 @@ for line in ffile:
         #remove " or ' present
         __version__ = __version__[1:-1]
         break
+
+# Make sure we work with a clean MANIFEST file
+if "sdist" in sys.argv:
+    manifestFile  = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 "MANIFEST")
+    if os.path.exists(manifestFile):
+        os.remove(manifestFile)
 
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
@@ -775,10 +786,17 @@ except:
     #I really do not see how this may happen but ...
     pass
 
-if fisx_src is None:
+if fisx_src is None or ("sdist" in sys.argv):
     sys.exit(0)
-else:
-    fisx_src = os.path.abspath(fisx_src)
+
+#
+# What follows is ugly and it is not intended for 
+# use outside the ESRF
+#
+# fisx should be installed as a separated Debian/RedHat/... package
+#
+
+fisx_src = os.path.abspath(fisx_src)
 
 # reproduce fisx setup.py file here ...
 # deal with required data
@@ -949,3 +967,5 @@ setup(
     data_files=data_files,
     cmdclass=cmdclass,
 )
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
+
