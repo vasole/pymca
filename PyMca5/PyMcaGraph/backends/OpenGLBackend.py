@@ -38,6 +38,7 @@ OpenGL/Qt backend
 # import ######################################################################
 
 from collections import namedtuple
+import logging
 import math
 import numpy as np
 import time
@@ -1634,13 +1635,13 @@ class OpenGLPlotCanvas(PlotBackend):
     @plotDataBounds.setter
     def plotDataBounds(self, bounds):
         if bounds != self.plotDataBounds:
-            if self._plotFrame.xAxis.isLog and bounds.xAxis.min_ <= 0.:
-                raise RuntimeError(
-                    'Cannot use plot area with X <= 0 with X axis log scale')
-            if self._plotFrame.yAxis.isLog and (bounds.yAxis.min_ <= 0. or
-                                                bounds.y2Axis.min_ <= 0.):
-                raise RuntimeError(
-                    'Cannot use plot area with Y <= 0 with Y axis log scale')
+            # if self._plotFrame.xAxis.isLog and bounds.xAxis.min_ <= 0.:
+            #    raise RuntimeError(
+            #        'Cannot use plot area with X <= 0 with X axis log scale')
+            # if self._plotFrame.yAxis.isLog and (bounds.yAxis.min_ <= 0. or
+            #                                    bounds.y2Axis.min_ <= 0.):
+            #    raise RuntimeError(
+            #        'Cannot use plot area with Y <= 0 with Y axis log scale')
             self._plotDataBounds = bounds
 
             # Update plot frame bounds
@@ -2401,6 +2402,7 @@ class OpenGLPlotCanvas(PlotBackend):
             pass
         else:
             self._glGarbageCollector.append(image)
+            self._dirtyDataBounds()
             self._plotDirtyFlag = True
 
         if replot:
@@ -2411,7 +2413,6 @@ class OpenGLPlotCanvas(PlotBackend):
         for type_, legend in list(self._zOrderedItems.keys()):
             if type_ == 'image':
                 self.removeImage(legend, replot=False)
-        self._plotDirtyFlag = True
 
     def addItem(self, xList, yList, legend=None, info=None,
                 replace=False, replot=True,
@@ -2538,12 +2539,12 @@ class OpenGLPlotCanvas(PlotBackend):
             self._hasRightYAxis.add(curve)
             self._plotFrame.isY2Axis = True
 
-        if self._plotFrame.xAxis.isLog and curve.xMin <= 0.:
-            raise RuntimeError(
-                'Cannot add curve with X <= 0 with X axis log scale')
-        if self._plotFrame.yAxis.isLog and curve.yMin <= 0.:
-            raise RuntimeError(
-                'Cannot add curve with Y <= 0 with Y axis log scale')
+        # if self._plotFrame.xAxis.isLog and curve.xMin <= 0.:
+        #    raise RuntimeError(
+        #        'Cannot add curve with X <= 0 with X axis log scale')
+        # if self._plotFrame.yAxis.isLog and curve.yMin <= 0.:
+        #    raise RuntimeError(
+        #        'Cannot add curve with Y <= 0 with Y axis log scale')
 
         self._zOrderedItems[('curve', legend)] = curve
 
@@ -2578,6 +2579,7 @@ class OpenGLPlotCanvas(PlotBackend):
             self._plotFrame.isY2Axis = self._hasRightYAxis
 
             self._glGarbageCollector.append(curve)
+            self._dirtyDataBounds()
             self._plotDirtyFlag = True
 
         if replot:
@@ -2588,7 +2590,6 @@ class OpenGLPlotCanvas(PlotBackend):
         for type_, legend in list(self._zOrderedItems.keys()):
             if type_ == 'curve':
                 self.removeCurve(legend, replot=False)
-        self._plotDirtyFlag = True
 
     def setActiveCurve(self, legend, replot=True):
         if not self._activeCurveHandling:
@@ -2854,8 +2855,7 @@ class OpenGLPlotCanvas(PlotBackend):
                               RuntimeWarning)
 
             if flag and self.dataBounds.xAxis.min_ <= 0.:
-                raise RuntimeError(
-                    'Cannot use log scale for X axis: Some data is <= 0.')
+                logging.warning('Log scale for X axis with some data <= 0.')
             self._plotFrame.xAxis.isLog = flag
             self._dirtyPlotDataTransformedBounds()
 
@@ -2867,8 +2867,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
             if flag and (self.dataBounds.yAxis.min_ <= 0. or
                          self.dataBounds.y2Axis.min_ <= 0.):
-                raise RuntimeError(
-                    'Cannot use log scale for Y axis: Some data is <= 0.')
+                logging.warning('Log scale for Y axis with some data <= 0.')
             self._plotFrame.yAxis.isLog = flag
             self._dirtyPlotDataTransformedBounds()
 

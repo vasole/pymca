@@ -749,7 +749,11 @@ class Curve2D(object):
                  lineWidth=None, lineDashPeriod=None,
                  marker=None, markerColor=None, markerSize=None,
                  fillColor=None):
+        self._isXLog = False
+        self._isYLog = False
         self.xData, self.yData, self.colorData = xData, yData, colorData
+        self._xDataLog, self._yDataLog, self._colorDataLog = None, None, None
+
         self.xMin, self.xMax = minMax(xData)
         self.yMin, self.yMax = minMax(yData)
 
@@ -805,7 +809,51 @@ class Curve2D(object):
         _Lines2D.init()
         _Points2D.init()
 
-    def prepare(self):
+    @staticmethod
+    def _logFilterData(x, y, color=None, xLog=False, yLog=False):
+        # Copied from Plot.py
+        if xLog and yLog:
+            idx = np.nonzero((x > 0) & (y > 0))[0]
+            x = np.take(x, idx)
+            y = np.take(y, idx)
+        elif yLog:
+            idx = np.nonzero(y > 0)[0]
+            x = np.take(x, idx)
+            y = np.take(y, idx)
+        elif xLog:
+            idx = np.nonzero(x > 0)[0]
+            x = np.take(x, idx)
+            y = np.take(y, idx)
+        if isinstance(color, np.ndarray):
+            colors = np.zeros((x.size, 4), color.dtype)
+            colors[:, 0] = color[idx, 0]
+            colors[:, 1] = color[idx, 1]
+            colors[:, 2] = color[idx, 2]
+            colors[:, 3] = color[idx, 3]
+        else:
+            colors = color
+        return x, y, colors
+
+    def prepare(self, isXLog, isYLog):
+        xData, yData, color = self.xData, self.yData, self.colorData
+
+        if self._isXLog != isXLog or self._isYLog != isYLog:
+            # Log state has changed
+            self._isXLog, self._isYLog = isXLog, isYLog
+
+            # Check if data <=0. with log scale
+            if (isXLog and self.xMin <= 0.) or (isYLog and self.yMin <= 0.):
+                # Filtering data is needed
+                xData, yData, color = self._logFilterData(
+                    self.xData, self.yData, self.colorData,
+                    self._isXLog, self._isYLog)
+
+            # Update min and max (Not so correct to do it here)
+            self.xMin, self.xMax = minMax(xData)
+            self.yMin, self.yMax = minMax(yData)
+
+            self.discard()
+
         # init once, does not support update
         if self.xVboData is None:
             xAttrib, yAttrib, cAttrib, dAttrib = None, None, None, None
@@ -866,7 +914,7 @@ class Curve2D(object):
                 self.fill.xMax, self.fill.yMax = self.xMax, self.yMax
 
     def render(self, matrix, isXLog, isYLog):
-        self.prepare()
+        self.prepare(isXLog, isYLog)
         if self.fill is not None:
             self.fill.render(matrix, isXLog, isYLog)
         self.lines.render(matrix, isXLog, isYLog)
