@@ -31,35 +31,26 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-This module provides convenient classes for the OpenGL rendering backend
+This module provides convenient classes and functions for OpenGL rendering.
 """
 
 
 # import ######################################################################
 
-from .gl import *  # noqa
-from ctypes import c_float
 import numpy as np
-import warnings
+
+from .gl import *  # noqa
 
 
 # utils #######################################################################
 
-def _glGetActiveAttrib(program, index):
-    """Wrap PyOpenGL glGetActiveAttrib as for glGetActiveUniform
-    """
-    bufSize = glGetProgramiv(program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH)
-    length = GLsizei()
-    size = GLint()
-    type_ = GLenum()
-    name = (GLchar * bufSize)()
-
-    glGetActiveAttrib(program, index, bufSize, length, size, type_, name)
-    return name.value, size.value, type_.value
-
-
 def clamp(value, min_=0., max_=1.):
-    return min(max(value, min_), max_)
+    if value < min_:
+        return min_
+    elif value > max_:
+        return max_
+    else:
+        return value
 
 
 def rgba(color, colorDict={}):
@@ -91,76 +82,6 @@ def rgba(color, colorDict={}):
     b = int(color[5:7], 16) / 255.
     a = int(color[7:9], 16) / 255. if len(color) == 9 else 1.
     return r, g, b, a
-
-
-# program #####################################################################
-
-class Program(object):
-    """Wrap shader program
-
-    Provides access to attributes and uniforms locations
-    """
-    def __init__(self, vertexShaderSrc, fragmentShaderSrc):
-        self._prog = glCreateProgram()
-
-        vertexShader = glCreateShader(GL_VERTEX_SHADER)
-        glShaderSource(vertexShader, vertexShaderSrc)
-        glCompileShader(vertexShader)
-        if glGetShaderiv(vertexShader, GL_COMPILE_STATUS) != GL_TRUE:
-            raise RuntimeError(glGetShaderInfoLog(vertexShader))
-        glAttachShader(self._prog, vertexShader)
-        glDeleteShader(vertexShader)
-
-        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
-        glShaderSource(fragmentShader, fragmentShaderSrc)
-        glCompileShader(fragmentShader)
-        if glGetShaderiv(fragmentShader, GL_COMPILE_STATUS) != GL_TRUE:
-            raise RuntimeError(glGetShaderInfoLog(fragmentShader))
-        glAttachShader(self._prog, fragmentShader)
-        glDeleteShader(fragmentShader)
-
-        glLinkProgram(self._prog)
-        if glGetProgramiv(self._prog, GL_LINK_STATUS) != GL_TRUE:
-            raise RuntimeError(glGetProgramInfoLog(self._prog))
-
-        glValidateProgram(self._prog)
-        if glGetProgramiv(self._prog, GL_VALIDATE_STATUS) != GL_TRUE:
-            warnings.warn(
-                'Cannot validate program: ' + glGetProgramInfoLog(self._prog),
-                RuntimeWarning)
-
-        self.attributes = {}
-        for index in range(glGetProgramiv(self._prog, GL_ACTIVE_ATTRIBUTES)):
-            name = _glGetActiveAttrib(self._prog, index)[0]
-            nameStr = name.decode('ascii')
-            self.attributes[nameStr] = glGetAttribLocation(self._prog, name)
-
-        self.uniforms = {}
-        for index in range(glGetProgramiv(self._prog, GL_ACTIVE_UNIFORMS)):
-            name = glGetActiveUniform(self._prog, index)[0]
-            nameStr = name.decode('ascii')
-            self.uniforms[nameStr] = glGetUniformLocation(self._prog, name)
-
-    @property
-    def prog_id(self):
-        return self._prog
-
-    def discard(self):
-        try:
-            prog = self._prog
-        except AttributeError:
-            raise RuntimeError("No OpenGL program resource, \
-                               discard has already been called")
-        else:
-            if bool(glDeleteProgram):  # Test for __del__
-                glDeleteProgram(prog)
-            del self._prog
-
-    def __del__(self):
-        self.discard()
-
-    def use(self):
-        glUseProgram(self.prog_id)
 
 
 # shape2D #####################################################################
@@ -298,73 +219,3 @@ def mat4Identity():
         (0., 1., 0., 0.),
         (0., 0., 1., 0.),
         (0., 0., 0., 1.)), dtype=np.float32)
-
-
-# main ########################################################################
-
-if __name__ == "__main__":
-    import sys
-    try:
-        from PyQt4.QtGui import QApplication
-        from PyQt4.QtOpenGL import QGLWidget
-    except ImportError:
-        from PyQt5.QtWidgets import QApplication
-        from PyQt5.QtOpenGL import QGLWidget
-
-    # TODO a better test example
-    class Test(QGLWidget):
-        _vertexShaderSrc = """
-            attribute vec2 position;
-
-            void main(void) {
-                gl_Position = vec4(position, 0.0, 1.0);
-            }
-            """
-
-        _fragmentShaderSrc = """
-            uniform vec4 color;
-
-            void main(void) {
-                gl_FragColor = color;
-            }
-            """
-
-        def initializeGL(self):
-            glClearColor(1., 1., 1., 0.)
-
-            self.glProgram = Program(self._vertexShaderSrc,
-                                     self._fragmentShaderSrc)
-            print("Attributes: {0}".format(self.glProgram.attributes))
-            print("Uniforms: {0}".format(self.glProgram.uniforms))
-
-            self.glProgram.use()
-
-            w, h = 128, 128
-            data = (c_float * (w * h * 3))()
-            for i in range(w * h):
-                data[3*i] = i/float(w*h)
-                data[3*i+1] = i/float(w*h)
-                data[3*i+2] = i/float(w*h)
-
-            glUniform4f(self.glProgram.uniforms['color'], 1., 0., 0., 1.)
-
-            positions = (c_float * (4 * 2))(
-                0., 0.,   1., 0.,   0., 1.,   1., 1.)
-            glEnableVertexAttribArray(self.glProgram.attributes['position'])
-            glVertexAttribPointer(self.glProgram.attributes['position'],
-                                  2,
-                                  GL_FLOAT,
-                                  GL_FALSE,
-                                  0, positions)
-
-        def paintGL(self):
-            glClear(GL_COLOR_BUFFER_BIT)
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
-
-        def resizeGL(self, w, h):
-            glViewport(0, 0, w, h)
-
-    app = QApplication([])
-    widget = Test()
-    widget.show()
-    sys.exit(app.exec_())

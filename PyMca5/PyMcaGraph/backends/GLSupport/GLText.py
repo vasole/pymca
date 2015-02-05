@@ -45,7 +45,8 @@ from ctypes import c_void_p, sizeof, c_float
 from .gl import *  # noqa
 from . import FontLatin1_12 as font
 from .GLContext import getGLContext
-from .GLSupport import Program, mat4Translate
+from .GLSupport import mat4Translate
+from .GLProgram import GLProgram
 
 # TODO: Font should be configurable by the main program
 
@@ -58,9 +59,8 @@ ROTATE_90, ROTATE_180, ROTATE_270 = 90, 180, 270
 
 
 class Text2D(object):
-    _textures, _programs = {}, {}
 
-    _SHADER_SRCS = {
+    _SHADERS = {
         'vertex': """
     #version 120
 
@@ -90,6 +90,11 @@ class Text2D(object):
     """
     }
 
+    _program = GLProgram(_SHADERS['vertex'],
+                         _SHADERS['fragment'])
+
+    _textures = {}
+
     def __init__(self, text, x=0, y=0,
                  color=(0., 0., 0., 1.),
                  align=LEFT, valign=BASELINE,
@@ -111,17 +116,6 @@ class Text2D(object):
         self._valign = valign
 
         self._rotate = math.radians(rotate)
-
-    @classmethod
-    def _getProgram(cls):
-        context = getGLContext()
-        try:
-            program = cls._programs[context]
-        except KeyError:
-            program = Program(cls._SHADER_SRCS['vertex'],
-                              cls._SHADER_SRCS['fragment'])
-            cls._programs[context] = program
-        return program
 
     @classmethod
     def _getTexture(cls):
@@ -194,7 +188,7 @@ class Text2D(object):
         if not self.text:
             return
 
-        prog = self._getProgram()
+        prog = self._program
         prog.use()
 
         texUnit = 0
@@ -276,8 +270,8 @@ if __name__ == "__main__":
             glEnable(GL_BLEND)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-            self.prog = Program(self._SHADER_SRCS['vertex'],
-                                self._SHADER_SRCS['fragment'])
+            self.prog = GLProgram(self._SHADER_SRCS['vertex'],
+                                  self._SHADER_SRCS['fragment'])
 
             self.matScreenProj = np.matrix((
                 (1., 0., 0., 0.),

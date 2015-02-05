@@ -42,6 +42,7 @@ from .GLFramebuffer import *  # noqa
 from .GLImagePlot import *  # noqa
 from .GLLinePlot import *  # noqa
 from .GLPlotFrame import GLPlotFrame, PlotAxis  # noqa
+from .GLProgram import GLProgram  # noqa
 from .GLSupport import *  # noqa
 from .GLText import *  # noqa
 from .GLTexture import *  # noqa

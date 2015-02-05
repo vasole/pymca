@@ -38,7 +38,6 @@ OpenGL/Qt backend
 # import ######################################################################
 
 from collections import namedtuple
-import logging
 import math
 import numpy as np
 import time
@@ -1361,15 +1360,16 @@ class OpenGLPlotCanvas(PlotBackend):
     """
 
     _PICK_OFFSET = 3
-    _DEFAULT_COLORMAP = {'name': 'gray', 'normalization':'linear',
-                         'autoscale':True, 'vmin':0.0, 'vmax':1.0,
-                         'colors':256}
+
+    _DEFAULT_COLORMAP = {'name': 'gray', 'normalization': 'linear',
+                         'autoscale': True, 'vmin': 0.0, 'vmax': 1.0,
+                         'colors': 256}
 
     def __init__(self, parent=None, **kw):
         self._defaultColormap = self._DEFAULT_COLORMAP
 
-        self._basePrograms = {}
-        self._texPrograms = {}
+        self._progBase = GLProgram(_baseVertShd, _baseFragShd)
+        self._progTex = GLProgram(_texVertShd, _texFragShd)
         self._plotFBOs = {}
 
         self._plotDataBounds = Bounds(1., 100., 1., 100., 1., 100.)
@@ -1902,26 +1902,6 @@ class OpenGLPlotCanvas(PlotBackend):
         w = self.winWidth - self._margins['left'] - self._margins['right']
         h = self.winHeight - self._margins['top'] - self._margins['bottom']
         return w, h
-
-    @property
-    def _progBase(self):
-        context = getGLContext()
-        try:
-            prog = self._basePrograms[context]
-        except KeyError:
-            prog = Program(_baseVertShd, _baseFragShd)
-            self._basePrograms[context] = prog
-        return prog
-
-    @property
-    def _progTex(self):
-        context = getGLContext()
-        try:
-            prog = self._texPrograms[context]
-        except KeyError:
-            prog = Program(_texVertShd, _texFragShd)
-            self._texPrograms[context] = prog
-        return prog
 
     # QGLWidget API #
 
