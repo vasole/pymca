@@ -26,6 +26,8 @@ Improved print preview.
 
 MCA Window accepts plugins.
 
+Automatic download of user plugins.
+
 Any plot accepts ROI selection.
 
 VERSION 4.7.4
