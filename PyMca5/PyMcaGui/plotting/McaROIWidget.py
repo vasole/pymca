@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -154,7 +154,7 @@ class McaROIWidget(qt.QWidget):
     def _reset(self):
         ddict={}
         ddict['event']   = "ResetROI"
-        roilist0,roidict0  = self.mcaROITable.getROIListAndDict()
+        roilist0, roidict0  = self.mcaROITable.getROIListAndDict()
         index = 0
         for key in roilist0:
             if roidict0[key]['type'].upper() == 'DEFAULT':
@@ -163,9 +163,11 @@ class McaROIWidget(qt.QWidget):
         roilist=[]
         roilist.append(roilist0[index])
         roidict = {}
-        roidict[roilist[0]] = {}
-        roidict[roilist[0]].update(roidict0[roilist[0]])
-        self.mcaROITable.fillFromROIDict(roilist=roilist,roidict=roidict)
+        if len(roilist):
+            roidict[roilist[0]] = {}
+            roidict[roilist[0]].update(roidict0[roilist[0]])
+            self.mcaROITable.fillFromROIDict(roilist=roilist,
+                                             roidict=roidict)
         ddict['roilist'] = roilist
         ddict['roidict'] = roidict
         self.emitSignal(ddict)
