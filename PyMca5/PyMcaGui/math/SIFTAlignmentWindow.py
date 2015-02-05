@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -34,17 +34,7 @@ import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import ExternalImagesWindow
 from PyMca5.PyMcaGui import PyMcaFileDialogs
-try:
-    from PyMca5.PyMcaMath import sift
-except:
-    if sys.platform.lower().startswith("linux"):
-        raise
-    if ".zip" in os.path.abspath(__file__):
-        #frozen version
-        import pyopencl
-        import sift
-    else:
-        raise
+from PyMca5.PyMcaMath import sift
 
 DEBUG = 0
 

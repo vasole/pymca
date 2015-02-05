@@ -185,48 +185,31 @@ import PyMca5
 special_modules = [os.path.dirname(PyMca5.__file__),
                   os.path.dirname(ctypes.__file__)]
 
+excludes = ["Tkinter",
+            'tcl','_tkagg', 'Tkconstants',
+            "scipy", "Numeric", "numarray"]
+
+if H5PY_SPECIAL:
+    special_modules.append(os.path.dirname(h5py.__file__))
+if OPENCL:
+    special_modules.append(os.path.dirname(pyopencl.__file__))
+    includes.append("pytools")
+    includes.append("decorator")
+else:
+    excludes.append("pyopencl")
+if MDP:
+    #mdp versions above 2.5 need special treatment
+    if mdp.__version__  > '2.5':
+        special_modules.append(os.path.dirname(mdp.__file__))
+if MATPLOTLIB:
+    special_modules.append(os.path.dirname(matplotlib.__file__))
+if SCIPY:
+    special_modules.append(os.path.dirname(scipy.__file__))
+
 if OBJECT3D:
     includes.append("logging")
-    excludes = ["OpenGL", "Tkinter",
-                'tcl','_tkagg', 'Tkconstants',
-                "scipy", "Numeric", "numarray"]
-    #This requieres the use of the environmental variable MATPLOTLIBDATA
-    #pointing to mpl-data directory to work
+    excludes.append("OpenGL")
     special_modules.append(os.path.dirname(OpenGL.__file__))
-    if H5PY_SPECIAL:
-        special_modules.append(os.path.dirname(h5py.__file__))
-    if OPENCL:
-        special_modules.append(os.path.dirname(pyopencl.__file__))
-    else:
-        excludes.append("pyopencl")
-    if MDP:
-        #mdp versions above 2.5 need special treatment
-        if mdp.__version__  > '2.5':
-            special_modules.append(os.path.dirname(mdp.__file__))
-    if MATPLOTLIB:
-        special_modules.append(os.path.dirname(matplotlib.__file__))
-    if SCIPY:
-        special_modules.append(os.path.dirname(scipy.__file__))
-    for f in special_modules:
-            include_files.append((f,os.path.basename(f)))
-else:
-    excludes = ["Tkinter",
-                'tcl','_tkagg', 'Tkconstants',
-                "scipy", "Numeric", "numarray"]
-    if H5PY_SPECIAL:
-        special_modules.append(os.path.dirname(h5py.__file__))
-    if OPENCL:
-        special_modules.append(os.path.dirname(pyopencl.__file__))
-    else:
-        excludes.append("pyopencl")
-    if MDP:
-        #mdp versions above 2.5 need special treatment
-        if mdp.__version__  > '2.5':
-            special_modules.append(os.path.dirname(mdp.__file__))
-    if MATPLOTLIB:
-        special_modules.append(os.path.dirname(matplotlib.__file__))
-    if SCIPY:
-        special_modules.append(os.path.dirname(scipy.__file__))
 
 if FISX:
     special_modules.append(os.path.dirname(fisx.__file__))
@@ -237,8 +220,6 @@ for f in special_modules:
 for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
     excludes.append(f)
 
-#Next line was for the plugins in frozen but now is in shared zip library
-#include_files.append((PyMcaDir, "PyMca"))
 buildOptions = dict(
         compressed = True,
         include_files = include_files,
@@ -250,6 +231,7 @@ buildOptions = dict(
         #includes = ["Object3D"],
         #path = [PyMcaDir] + sys.path
         )
+
 install_dir = PyMcaDir + " " + PyMca5.version()
 if not sys.platform.startswith('win'):
     install_dir = install_dir.replace(" ","")
