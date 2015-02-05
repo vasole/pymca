@@ -52,7 +52,7 @@ except ImportError:
 
 # colormap ####################################################################
 
-class _GL2DDataPlot(object):
+class _GLPlotData2D(object):
     def __init__(self, data, xMin, xScale, yMin, yScale):
         self.data = data
         self.xMin = xMin
@@ -87,7 +87,7 @@ class _GL2DDataPlot(object):
         pass
 
 
-class GLColormap(_GL2DDataPlot):
+class GLPlotColormap(_GLPlotData2D):
 
     _SHADERS = {
         'linear': {
@@ -280,7 +280,7 @@ class GLColormap(_GL2DDataPlot):
         """
         assert data.dtype in (np.float32, np.uint16, np.uint8)
 
-        super(GLColormap, self).__init__(data, xMin, xScale, yMin, yScale)
+        super(GLPlotColormap, self).__init__(data, xMin, xScale, yMin, yScale)
         self.colormap = colormap
         self.cmapIsLog = cmapIsLog
         self.cmapRangeIsAuto = cmapRange is None
@@ -440,7 +440,7 @@ class GLColormap(_GL2DDataPlot):
 
 # image #######################################################################
 
-class GLRGBAImage(_GL2DDataPlot):
+class GLPlotRGBAImage(_GLPlotData2D):
 
     _SHADERS = {
         'linear': {
@@ -543,7 +543,7 @@ class GLRGBAImage(_GL2DDataPlot):
         :param float yMin: Min Y coordinate of the data array
         :param float yScale: Y scale of the data array
         """
-        super(GLRGBAImage, self).__init__(data, xMin, xScale, yMin, yScale)
+        super(GLPlotRGBAImage, self).__init__(data, xMin, xScale, yMin, yScale)
         self._textureIsDirty = False
 
     def __del__(self):

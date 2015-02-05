@@ -739,7 +739,7 @@ def _proxyProperty(*componentsAttributes):
     return property(getter, setter)
 
 
-class Curve2D(object):
+class GLPlotCurve2D(object):
     def __init__(self, xData, yData, colorData=None,
                  lineStyle=None, lineColor=None,
                  lineWidth=None, lineDashPeriod=None,
@@ -1030,7 +1030,7 @@ if __name__ == "__main__":
     glClearColor(1., 1., 1., 1.)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    Curve2D.init()
+    GLPlotCurve2D.init()
 
     # Plot data init
     xData1 = np.arange(10, dtype=np.float32) * 100
@@ -1038,12 +1038,12 @@ if __name__ == "__main__":
     yData1 = np.asarray(np.random.random(10) * 500, dtype=np.float32)
     yData1 = np.array((100, 100, 200, 400, 100, 100, 400, 400, 401, 400),
                       dtype=np.float32)
-    curve1 = Curve2D(xData1, yData1, marker='o', lineStyle='--',
-                     fillColor=(1., 0., 0., 0.5))
+    curve1 = GLPlotCurve2D(xData1, yData1, marker='o', lineStyle='--',
+                           fillColor=(1., 0., 0., 0.5))
 
     xData2 = np.arange(1000, dtype=np.float32) * 1
     yData2 = np.asarray(500 + np.random.random(1000) * 500, dtype=np.float32)
-    curve2 = Curve2D(xData2, yData2, lineStyle='', marker='s')
+    curve2 = GLPlotCurve2D(xData2, yData2, lineStyle='', marker='s')
 
     projMatrix = mat4Ortho(0, 1000, 0, 1000, -1, 1)
 

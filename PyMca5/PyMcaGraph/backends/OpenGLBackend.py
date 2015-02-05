@@ -1499,12 +1499,12 @@ class OpenGLPlotCanvas(PlotBackend):
         for item in sorted(self._zOrderedItems.values(),
                            key=lambda item: - item.info['zOrder']):
             if test(item):
-                if isinstance(item, (GLColormap, GLRGBAImage)):
+                if isinstance(item, (GLPlotColormap, GLPlotRGBAImage)):
                     pickedPos = item.pick(*dataPos)
                     if pickedPos is not None:
                         return 'image', item, pickedPos
 
-                elif isinstance(item, Curve2D):
+                elif isinstance(item, GLPlotCurve2D):
                     offset = self._PICK_OFFSET
                     if item.marker is not None:
                         offset = max(item.markerSize / 2., offset)
@@ -1544,7 +1544,7 @@ class OpenGLPlotCanvas(PlotBackend):
     # Default colormap #
 
     def getSupportedColormaps(self):
-        return GLColormap.COLORMAPS
+        return GLPlotColormap.COLORMAPS
 
     def getDefaultColormap(self):
         return self._defaultColormap.copy()
@@ -2341,12 +2341,12 @@ class OpenGLPlotCanvas(PlotBackend):
                 image.cmapRange = cmapRange
                 image.updateData(data)
             else:
-                image = GLColormap(data,
-                                   xScale[0], xScale[1],
-                                   yScale[0], yScale[1],
-                                   colormap['name'][:],
-                                   colormapIsLog,
-                                   cmapRange)
+                image = GLPlotColormap(data,
+                                       xScale[0], xScale[1],
+                                       yScale[0], yScale[1],
+                                       colormap['name'][:],
+                                       colormapIsLog,
+                                       cmapRange)
             image.info = {
                 'legend': legend,
                 'zOrder': z,
@@ -2368,9 +2368,9 @@ class OpenGLPlotCanvas(PlotBackend):
                 image.yScale = yScale[1]
                 image.updateData(data)
             else:
-                image = GLRGBAImage(data,
-                                    xScale[0], xScale[1],
-                                    yScale[0], yScale[1])
+                image = GLPlotRGBAImage(data,
+                                        xScale[0], xScale[1],
+                                        yScale[0], yScale[1])
 
             image.info = {
                 'legend': legend,
@@ -2528,13 +2528,13 @@ class OpenGLPlotCanvas(PlotBackend):
         if fill is None and info is not None:  # To make it run with Plot.py
             fill = info.get('plot_fill', False)
 
-        curve = Curve2D(x, y, colorArray,
-                        lineStyle=linestyle,
-                        lineColor=color,
-                        lineWidth=1,
-                        marker=symbol,
-                        markerColor=color,
-                        fillColor=color if fill else None)
+        curve = GLPlotCurve2D(x, y, colorArray,
+                              lineStyle=linestyle,
+                              lineColor=color,
+                              lineWidth=1,
+                              marker=symbol,
+                              markerColor=color,
+                              fillColor=color if fill else None)
         curve.info = {
             'legend': legend,
             'zOrder': z,
