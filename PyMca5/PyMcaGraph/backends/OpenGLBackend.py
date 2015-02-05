@@ -1358,6 +1358,7 @@ class OpenGLPlotCanvas(PlotBackend):
     required.
     So, the caller should not modify these arrays afterwards.
     """
+    _UNNAMED_ITEM = '__unnamed_item__'
 
     _PICK_OFFSET = 3
 
@@ -2217,6 +2218,10 @@ class OpenGLPlotCanvas(PlotBackend):
         if kw:
             warnings.warn("insertMarker ignores additional parameters",
                           RuntimeWarning)
+
+        if legend is None:
+            legend = self._UNNAMED_ITEM
+
         behaviors = set()
         if selectable:
             behaviors.add('selectable')
@@ -2293,6 +2298,9 @@ class OpenGLPlotCanvas(PlotBackend):
             behaviors.add('selectable')
         if draggable:
             behaviors.add('draggable')
+
+        if legend is None:
+            legend = self._UNNAMED_ITEM
 
         oldImage = self._zOrderedItems.get(('image', legend), None)
         if oldImage is not None:
@@ -2405,6 +2413,9 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend  # This is the 'handle'
 
     def removeImage(self, legend, replot=True):
+        if legend is None:
+            legend = self._UNNAMED_ITEM
+
         try:
             image = self._zOrderedItems.pop(('image', legend))
         except KeyError:
@@ -2432,6 +2443,9 @@ class OpenGLPlotCanvas(PlotBackend):
         if kw:
             warnings.warn("addItem ignores additional parameters",
                           RuntimeWarning)
+
+        if legend is None:
+            legend = self._UNNAMED_ITEM
 
         if replace:
             self.clearItems()
@@ -2468,6 +2482,9 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend  # this is the 'handle'
 
     def removeItem(self, legend, replot=True):
+        if legend is None:
+            legend = self._UNNAMED_ITEM
+
         try:
             del self._items[legend]
         except KeyError:
@@ -2497,6 +2514,9 @@ class OpenGLPlotCanvas(PlotBackend):
         if kw:
             warnings.warn("addCurve ignores additional parameters",
                           RuntimeWarning)
+
+        if legend is None:
+            legend = self._UNNAMED_ITEM
 
         x = np.array(x, dtype=np.float32, copy=False, order='C')
         y = np.array(y, dtype=np.float32, copy=False, order='C')
@@ -2569,6 +2589,9 @@ class OpenGLPlotCanvas(PlotBackend):
         return legend
 
     def removeCurve(self, legend, replot=True):
+        if legend is None:
+            legend = self._UNNAMED_ITEM
+
         try:
             curve = self._zOrderedItems.pop(('curve', legend))
         except KeyError:
@@ -2596,6 +2619,9 @@ class OpenGLPlotCanvas(PlotBackend):
     def setActiveCurve(self, legend, replot=True):
         if not self._activeCurveHandling:
             return
+
+        if legend is None:
+            legend = self._UNNAMED_ITEM
 
         curve = self._zOrderedItems.get(('curve', legend), None)
         if curve is None:
