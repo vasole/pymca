@@ -1,3 +1,6 @@
+__contact__ = "jerome.kieffer@esrf.eu"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
 Module Sift for calculating SIFT keypoint using PyOpenCL
 """
