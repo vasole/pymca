@@ -1,4 +1,6 @@
 #encoding:latin-1
+__copyright__ = "Uwe Schmitt, uschmitt@gateway.de"
+__license__ = "BSD"
 __doc__="""
 
 Routines for nonnegative matrix approximation (nnma)
