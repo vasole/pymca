@@ -389,7 +389,7 @@ class FastXRFLinearFit(object):
                         if j != oldDataRow:
                             tmpData = data[j]
                             olddataRow = j
-                        spectra[i] = tmpData[selectedIndices[1][i]]
+                        spectra[i] = tmpData[selectedIndices[1][i], iXMin:iXMax+1]
                 spectra = spectra.T
                 #
                 if config['fit']['stripflag']:
