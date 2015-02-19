@@ -15,12 +15,14 @@ requirements:
     - cython
     - numpy
     - pyqt
+    - fisx
   run:
     - python
     - numpy
     - pyqt
     - matplotlib
     - h5py
+    - fisx
 
 test:
   imports:
