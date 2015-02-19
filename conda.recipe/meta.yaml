@@ -4,7 +4,7 @@ package:
 
 source:
   git_url: ../
-  git_tag: master # change to branch or tag name, as needed
+  git_tag: #master # change to branch or tag name, as needed
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
@@ -14,8 +14,6 @@ requirements:
     - python
     - cython
     - numpy
-    - pyqt
-    #- fisx
   run:
     - python
     - numpy
