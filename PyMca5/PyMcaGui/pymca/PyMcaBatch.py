@@ -920,7 +920,8 @@ class McaBatchGUI(qt.QWidget):
                 # __file__ is not defined
                 dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
                 frozen = True
-            if os.path.basename(sys.executable) == "PyMcaMain.exe":
+            if os.path.basename(sys.executable) in ["PyMcaMain.exe",
+                                                    "PyMcaBatch.exe"]:
                 frozen = True
                 dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
             listfile = os.path.join(self.outputDir, "tmpfile")
