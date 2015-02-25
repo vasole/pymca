@@ -1057,12 +1057,31 @@ class McaBatchGUI(qt.QWidget):
         else:
             listfile = os.path.join(self.outputDir, "tmpfile")
             self.genListFile(listfile, config=False)
-            dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
-            tmpDirname = os.path.dirname(dirname)
-            if tmpDirname.lower().endswith("exe") or\
-               tmpDirname.lower().endswith(".zip"):
+            try:
+                dirname = os.path.dirname(__file__)
+                frozen = False
+                if not os.path.exists(os.path.join(dirname, "PyMcaBatch.py")):
+                    # script usage case
+                    dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
+            except:
+                # __file__ is not defined
+                dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
                 frozen = True
-                dirname  = os.path.dirname(tmpDirname)
+            if not frozen:
+                if os.path.basename(sys.executable) in ["PyMcaMain.exe",
+                                                        "PyMcaBatch.exe",
+                                                        "PyMcaMain",
+                                                        "PyMcaBatch"]:
+                    frozen = True
+                    dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
+            if frozen:
+                # we are at level PyMca5\PyMcaGui\pymca
+                dirname  = os.path.dirname(dirname)
+                # level PyMcaGui
+                dirname  = os.path.dirname(dirname)
+                # level PyMca5
+                dirname  = os.path.dirname(dirname)
+                # directory level with exe files
                 myself   = os.path.join(dirname, "PyMcaBatch")
                 viewer   = os.path.join(dirname, "EdfFileSimpleViewer")
                 rgb    = os.path.join(dirname, "PyMcaPostBatch")
@@ -1144,6 +1163,7 @@ class McaBatchGUI(qt.QWidget):
                 return
             else:
                 os.system(cmd)
+                print(" COMMAND = ", cmd)
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Information)
                 text = "Your batch has been started as an independent process."
@@ -1658,46 +1678,34 @@ class McaBatchWindow(qt.QWidget):
 
     def plotImages(self,imagelist):
         if (sys.platform == 'win32') or (sys.platform == 'darwin'):
-            filelist = " "
-            for ffile in imagelist:
-                filelist+=" %s" % ffile
-            try:
-                dirname = os.path.dirname(__file__)
-            except:
-                dirname = os.path.dirname(\
-                        os.path.dirname(EdfFileSimpleViewer.__file__))
-            if (dirname[-3:] == "exe") or\
-               (dirname.lower().endswith(".zip")):
-                myself  = os.path.dirname(dirname)
-                myself  = os.path.join(myself, "EdfFileSimpleViewer.exe")
-            else:
-                myself  = os.path.join(dirname, "EdfFileSimpleViewer.py")
-            cmd = '"%s" %s ' % (myself, filelist)
-            if 0:
-                self.hide()
-                qApp = qt.QApplication.instance()
-                qApp.processEvents()
-                os.system(cmd)
-                self.show()
-            else:
-                self.__viewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
-                self.__viewer.setFileList(imagelist)
-                self.__viewer.show()
+            self.__viewer = EdfFileSimpleViewer.EdfFileSimpleViewer()
+            self.__viewer.setFileList(imagelist)
+            self.__viewer.show()
         else:
             filelist = " "
             for ffile in imagelist:
                 filelist+=" %s" % ffile
             try:
                 dirname = os.path.dirname(__file__)
+                frozen = False
             except:
-                dirname = os.path.dirname(\
-                        os.path.dirname(EdfFileSimpleViewer.__file__))
+                frozen = True
+                dirname = os.path.dirname(EdfFileSimpleViewer.__file__)
+            if not frozen:
+                if sys.executable in ["PyMcaMain", "PyMcaMain.exe",
+                                      "PyMcaBatch", "PyMcaBatch.exe"]:
+                    frozen = True
             if DEBUG:
                 print("final dirname = %s" % dirname)
-            if (dirname[-3:] == "exe") or\
-               (dirname.lower().endswith(".zip")):
-                myself  = os.path.dirname(dirname)
-                myself  = os.path.join(myself, "EdfFileSimpleViewer")
+            if frozen:
+                # we are at level PyMca5\PyMcaGui\pymca
+                dirname  = os.path.dirname(dirname)
+                # level PyMcaGui
+                dirname  = os.path.dirname(dirname)
+                # level PyMca5
+                dirname  = os.path.dirname(dirname)
+                # directory level with exe files
+                myself   = os.path.join(dirname, "EdfFileSimpleViewer")
             else:
                 myself  = sys.executable+" "+os.path.join(dirname, "EdfFileSimpleViewer.py")
             cmd = "%s %s &" % (myself, filelist)
