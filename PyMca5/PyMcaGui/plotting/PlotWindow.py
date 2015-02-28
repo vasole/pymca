@@ -65,6 +65,7 @@ DEBUG = 0
 
 class PlotWindow(PlotWidget.PlotWidget):
     sigROISignal = qt.pyqtSignal(object)
+    sigIconSignal = qt.pyqtSignal(object)
     DEFAULT_COLORMAP_INDEX = MaskImageTools.DEFAULT_COLORMAP_INDEX
     DEFAULT_COLORMAP_LOG_FLAG = MaskImageTools.DEFAULT_COLORMAP_LOG_FLAG
 
@@ -95,7 +96,6 @@ class PlotWindow(PlotWidget.PlotWidget):
                                     "height": 0.9,
                                     "units": "page",
                                     "keepAspectRatio": True}
-
 
         # activeCurve handling
         self.enableActiveCurveHandling(True)
@@ -746,38 +746,66 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.showGrid(2)
         self.replot()
 
-    def _energyIconSignal(self):
-        print("energy icon signal not implemented")
+    def emitIconSignal(self, key, event="iconClicked"):
+        ddict = {}
+        ddict["key"] = key
+        ddict["event"] = event
+        self.sigIconSignal.emit(ddict)
 
+    def _energyIconSignal(self):
+        if DEBUG:
+            print("energy icon signal default implementation")
+        self.emitIconSignal("energy")
+        
     def _fitIconSignal(self):
-        print("fit icon signal not implemented")
+        if DEBUG:
+            print("fit icon signal default implementation")
+        self.emitIconSignal("fit")
 
     def _averageIconSignal(self):
-        print("average icon signal not implemented")
+        if DEBUG:
+            print("average icon signal default implementation")
+        self.emitIconSignal("average")
 
     def _deriveIconSignal(self):
-        print("deriveIconSignal not implemented")
+        if DEBUG:
+            print("deriveIconSignal default implementation")
+        self.emitIconSignal("derive")
 
     def _smoothIconSignal(self):
-        print("smoothIconSignal not implemented")
+        if DEBUG:
+            print("smoothIconSignal default implementation")
+        self.emitIconSignal("smooth")
 
     def _swapSignIconSignal(self):
-        print("_swapSignIconSignal not implemented")
+        if DEBUG:
+            print("_swapSignIconSignal default implementation")
+        self.emitIconSignal("swap")
 
     def _yMinToZeroIconSignal(self):
-        print("_yMinToZeroIconSignal not implemented")
+        if DEBUG:
+            print("_yMinToZeroIconSignal default implementation")
+        self.emitIconSignal("ymintozero")
 
     def _subtractIconSignal(self):
-        print("_subtractIconSignal not implemented")
+        if DEBUG:
+            print("_subtractIconSignal default implementation")
+        self.emitIconSignal("subtract")
 
     def _saveIconSignal(self):
-        print("_saveIconSignal not implemented")
+        if DEBUG:
+            print("_saveIconSignal default implementation")
+        self.emitIconSignal("save")
 
     def _imageIconSignal(self):
-        print("_imageIconSignal not implemented")
+        if DEBUG:
+            print("_imageIconSignal default implementation")
+        self.emitIconSignal("image")
 
     def _eraseSelectionIconSignal(self):
-        print("_eraseSelectionIconSignal not implemented")
+        if DEBUG:
+            print("_eraseSelectionIconSignal default implementation")
+        self.emitIconSignal("erase")
 
     def _rectSelectionIconSignal(self):
         if DEBUG:
@@ -786,13 +814,19 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.setDrawModeEnabled(True, shape="rectangle", label="mask")
 
     def _brushSelectionIconSignal(self):
-        print("_brushSelectionIconSignal not implemented")
+        if DEBUG:
+            print("_brushSelectionIconSignal default implementation")
+        self.emitIconSignal("brushSelection")
 
     def _brushIconSignal(self):
-        print("_brushIconSignal not implemented")
+        if DEBUG:
+            print("_brushIconSignal default implementation")
+        self.emitIconSignal("brush")
 
     def _additionalIconSignal(self):
-        print("_additionalIconSignal not implemented")
+        if DEBUG:
+            print("_additionalIconSignal default implementation")
+        self.emitIconSignal("additional")
 
     def _polygonIconSignal(self):
         if DEBUG:
@@ -1331,6 +1365,8 @@ if __name__ == "__main__":
     backend = None
     if "opengl" in sys.argv:
         backend = "opengl"
+    elif "pyqtgraph" in sys.argv:
+        backend = "pyqtgraph"
     plot = PlotWindow(backend=backend, roi=True, control=True,
                           position=True, colormap=True)#uselegendmenu=True)
     plot.show()
@@ -1343,6 +1379,9 @@ if __name__ == "__main__":
     print("All curves = ",   plot.getAllCurves(just_legend=True))
     image = numpy.arange(10000).reshape(100, 100)
     plot.addImage(image, xScale=(0, 1), yScale=(0, 10), pixmap=MaskImageTools.getPixmapFromData(image))
+    def iconSlot(ddict):
+        print(ddict)
+    plot.sigIconSignal.connect(iconSlot)
     #plot.removeCurve("dummy")
     #plot.addCurve(x, 2 * y, "dummy 2")
     #print("All curves = ",   plot.getAllCurves())
