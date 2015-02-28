@@ -678,24 +678,6 @@ class ScanWindow(PlotWindow.PlotWindow):
             outputFile = outputFile + extension[-4:]
         return os.path.join(self.outputDir, outputFile), filetype, filterused
 
-    def array2SpecMca(self, data):
-        """ Write a python array into a Spec array.
-            Return the string containing the Spec array
-        """
-        tmpstr = "@A "
-        length = len(data)
-        for idx in range(0, length, 16):
-            if idx+15 < length:
-                for i in range(0,16):
-                    tmpstr += "%.7g " % data[idx+i]
-                if idx+16 != length:
-                    tmpstr += "\\"
-            else:
-                for i in range(idx, length):
-                    tmpstr += "%.7g " % data[i]
-            tmpstr += "\n"
-        return tmpstr
-
     def __QSimpleOperation(self, operation):
         try:
             self.__simpleOperation(operation)
@@ -815,7 +797,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-                msg.exec_loop()
+                msg.exec_()
                 return
             try:
                 if filetype in ['Scan', 'MultiScan']:
