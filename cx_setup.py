@@ -101,7 +101,9 @@ for pluginSet in glob.glob(os.path.join(pluginsDir,'*')):
         if sys.platform == 'win32':
             ext = "*dll"
         else:
-            #for darwin platfrom I use py2app
+            if sys.platform.startswith("darwin"):
+                print("WARNING: Not ready for this platform")
+            #for darwin platform I use py2app
             #this only applies to linux
             ext = "*so"
         destination = os.path.join("plugins", plugin)
