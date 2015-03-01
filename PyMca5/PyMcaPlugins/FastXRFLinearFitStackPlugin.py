@@ -186,6 +186,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         concentrations = self._parameters['concentrations']
         self.fitInstance.setFitConfigurationFile(fitConfigurationFile)
         weightPolicy = self._parameters['weight_policy']
+        refit = self._parameters['refit']
         if weightPolicy:
             # force calculation of the unnormalized sum spectrum
             spectrum = None
@@ -197,7 +198,8 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                                                      y=stack,
                                                      weight=weightPolicy,
                                                      concentrations=concentrations,
-                                                     ysum=spectrum)
+                                                     ysum=spectrum,
+                                                     refit=refit)
         return result
 
     def threadFinished(self):

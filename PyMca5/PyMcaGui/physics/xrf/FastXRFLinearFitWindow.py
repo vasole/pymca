@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -82,6 +82,17 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._concentrationsBox.setChecked(False)
         self._concentrationsBox.setEnabled(True)
 
+        # repeat fit on negative contributions
+        self._fitAgainBox = qt.QCheckBox(self)
+        self._fitAgainBox.setText("Repeat fit on negative contributions")
+        self._fitAgainBox.setChecked(True)
+        self._fitAgainBox.setEnabled(True)
+        text  = "Fit of pixels with negative peak area\n"
+        text += "contributions will be repeated.\n"
+        text += "This can seriously slow down the process\n"
+        text += "if your sample model is far from the truth."
+        self._fitAgainBox.setToolTip(text)
+
         # weight method
         self._weightWidget = qt.QWidget(self)
         self._weightWidget.mainLayout = qt.QHBoxLayout(self._weightWidget)
@@ -109,9 +120,10 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self.mainLayout.addWidget(self._outButton, 1, 2)
         self.mainLayout.addWidget(fileLabel, 2, 0)
         self.mainLayout.addWidget(self._fileLine, 2, 1)
-        self.mainLayout.addWidget(self._concentrationsBox, 4, 0, 1, 2)
         self.mainLayout.addWidget(weightLabel, 3, 0)
         self.mainLayout.addWidget(self._weightWidget, 3, 1, 1, 1)
+        self.mainLayout.addWidget(self._concentrationsBox, 4, 0)
+        self.mainLayout.addWidget(self._fitAgainBox, 4, 1)
 
     def sizeHint(self):
         return qt.QSize(int(1.8 * qt.QWidget.sizeHint(self).width()),
@@ -143,6 +155,10 @@ class FastXRFLinearFitWindow(qt.QWidget):
         else:
             ddict['concentrations'] = 0
         ddict['weight_policy'] = self._weightButtonGroup.checkedId()
+        if self._fitAgainBox.isChecked():
+            ddict['refit'] = 1
+        else:
+            ddict['refit'] = 0
         return ddict
 
 class FastXRFLinearFitDialog(qt.QDialog):
