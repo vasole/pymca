@@ -1,10 +1,14 @@
 VERSION 5.0.1
 
+Fast XRF fitting: Give the user the option not to check for negative peak
+contributions in order to maximize speed. The default behavior is unchanged.
+
 Add copyright information to files missing it.
 
 Correct bug: Windows frozen binary could not start batch from main window.
 
-Correct bug: Fast XRF fit was not working on dynamically loaded stacks.
+Correct bug: Fast XRF fit was not working on dynamically loaded stacks when
+negative peak contributions were detected.
 
 Correct bug: Save action was not active on some plots.
 
