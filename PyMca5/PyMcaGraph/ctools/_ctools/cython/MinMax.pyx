@@ -24,11 +24,37 @@ _NUMPY_TO_TYPE_DESC = {
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def minMax(np.ndarray data):
+def minMax(np.ndarray data, bint minPositive=False):
+    """Get min, max and optionally min positive of data.
+
+    :param np.ndarray data: Array of data
+    :param bool minPositive: Wheither to compute min positive or not.
+    :returns: (min, max) or (min, minPositive, max) if minPositive is True
+              If all data < 0, minPositive is None.
+    :rtype: tuple of float
+    :raises: ValueError if data is empty
+    """
     cdef np.ndarray c_data = np.ascontiguousarray(data)
-    cdef double dataMin, dataMax
+    cdef void * c_dataPtr = c_data.data
+    cdef unsigned int c_dataSize = c_data.size
 
-    type_ = _NUMPY_TO_TYPE_DESC[data.dtype.str[1:]]
+    if c_dataSize == 0:
+        raise ValueError("zero-size array")
 
-    getMinMax(c_data.data, type_, c_data.size, &dataMin, &dataMax)
-    return dataMin, dataMax
+    cdef double c_dataMin, c_dataMinPos, c_dataMax
+
+    cdef unsigned int c_type = _NUMPY_TO_TYPE_DESC[data.dtype.str[1:]]
+
+    if minPositive:
+        with nogil:
+            getMinMax(c_dataPtr, c_type, c_dataSize,
+                      &c_dataMin, &c_dataMinPos, &c_dataMax)
+        if c_dataMinPos == 0:
+            return c_dataMin, None, c_dataMax
+        else:
+            return c_dataMin, c_dataMinPos, c_dataMax
+    else:
+        with nogil:
+            getMinMax(c_dataPtr, c_type, c_dataSize,
+                      &c_dataMin, NULL, &c_dataMax)
+        return c_dataMin, c_dataMax

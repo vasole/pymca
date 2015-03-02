@@ -59,7 +59,7 @@ class TestColormap(unittest.TestCase):
     def _log(self, *args):
         """Logging used by test for debugging."""
         pass
-        # print(*args)
+        # print(args)
 
     def _testColormap(self, data, colormap, min_, max_):
         """Test pixmap built with C code against Python control code."""

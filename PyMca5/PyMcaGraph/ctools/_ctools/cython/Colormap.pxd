@@ -1,9 +1,4 @@
-# check on Windows
-# try:
-#    from libc.stdint cimport uint8_t
-# except ImportError:
-#    ctypedef unsigned char uint8_t
-ctypedef unsigned char uint8_t
+ctypedef unsigned char uint8_t  # TODO use libc.stdint when available
 
 cdef extern from "Colormap.h":
     void colormapFillPixmap(void * data,

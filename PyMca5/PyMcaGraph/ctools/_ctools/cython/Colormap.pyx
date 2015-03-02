@@ -38,26 +38,27 @@ def dataToRGBAColormap(data,
     pixmap = np.empty((data.size, 4), dtype=np.uint8)
     cdef unsigned char[:, :] c_pixmap = pixmap
 
-    cdef unsigned int type_ = _NUMPY_TO_TYPE_DESC[data.dtype.str[1:]]
+    cdef unsigned int c_type = _NUMPY_TO_TYPE_DESC[data.dtype.str[1:]]
 
-    cdef double min_, max_
+    cdef double c_min, c_max
     if dataMin is None or dataMax is None:
         with nogil:
-            getMinMax(c_dataPtr, type_, c_dataSize, &min_, &max_)
+            getMinMax(c_dataPtr, c_type, c_dataSize,
+                      &c_min, NULL, &c_max)
         if dataMin is not None:
-            min_ = dataMin
+            c_min = dataMin
         if dataMax is not None:
-            max_ = dataMax
+            c_max = dataMax
     else:
-        min_ = dataMin
-        max_ = dataMax
+        c_min = dataMin
+        c_max = dataMax
 
     with nogil:
         colormapFillPixmap(c_dataPtr,
-                           type_,
+                           c_type,
                            c_dataSize,
-                           min_,
-                           max_,
+                           c_min,
+                           c_max,
                            &c_colormap[0, 0],
                            c_colormapLength,
                            &c_pixmap[0, 0])

@@ -1,10 +1,12 @@
 #include "MinMax.h"
 #include "Types.h"
 
+
 #define GET_MINMAX_DEFINITION(TYPE)\
 static void getMinMax_ ## TYPE(TYPE * data,\
                  unsigned int length,\
                  double * min,\
+                 double * minPos,\
                  double * max)\
 {\
     TYPE tmpMin = data[0];\
@@ -12,18 +14,56 @@ static void getMinMax_ ## TYPE(TYPE * data,\
     TYPE * endPtr = &data[length];\
     TYPE * curPtr;\
 \
-    for (curPtr = data; curPtr < endPtr; curPtr++) {\
-        TYPE value = *curPtr;\
-        if (value < tmpMin) {\
-            tmpMin = value;\
+    if (minPos != 0) {\
+        TYPE tmpMinPos = (TYPE) 0;\
+\
+        /* First loop until tmpMinPos is initialized */\
+        for (curPtr = data; curPtr < endPtr; curPtr++) {\
+            TYPE value = *curPtr;\
+            if (value < tmpMin) {\
+                tmpMin = value;\
+            }\
+            else if (value > tmpMax) {\
+                tmpMax = value;\
+            }\
+            if (value > (TYPE) 0) {\
+                tmpMinPos = value;\
+                break;\
+            }\
         }\
-        else if (value > tmpMax) {\
-            tmpMax = value;\
+\
+        /* Second loop with tmpMinPos initialized */\
+        for (; curPtr < endPtr; curPtr++) {\
+            TYPE value = *curPtr;\
+            if (value < tmpMin) {\
+                tmpMin = value;\
+            }\
+            else if (value > tmpMax) {\
+                tmpMax = value;\
+            }\
+            if (value > (TYPE) 0 && value < tmpMinPos) {\
+                tmpMinPos = value;\
+            }\
+        }\
+\
+        *minPos = (double) tmpMinPos;\
+    }\
+    else {\
+        for (curPtr = data; curPtr < endPtr; curPtr++) {\
+            TYPE value = *curPtr;\
+            if (value < tmpMin) {\
+                tmpMin = value;\
+            }\
+            else if (value > tmpMax) {\
+                tmpMax = value;\
+            }\
         }\
     }\
+\
     *min = (double) tmpMin;\
     *max = (double) tmpMax;\
 }
+
 
 GET_MINMAX_DEFINITION(float)
 GET_MINMAX_DEFINITION(double)
@@ -45,6 +85,7 @@ GET_MINMAX_DEFINITION(uint64_t)
     getMinMax_ ## TYPE((TYPE *) data,\
         length,\
         minOut,\
+        minPosOut,\
         maxOut)
 
 
@@ -53,6 +94,7 @@ getMinMax(void * data,
           unsigned int type,
           unsigned int length,
           double * minOut,
+          double * minPosOut,
           double * maxOut)
 {
     switch (type) {

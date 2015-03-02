@@ -3,4 +3,5 @@ cdef extern from "MinMax.h":
                    unsigned int type,
                    unsigned int length,
                    double * minOut,
+                   double * minPosOut,
                    double * maxOut) nogil
