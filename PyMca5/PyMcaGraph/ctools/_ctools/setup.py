@@ -11,6 +11,7 @@ except:
 
 c_files = glob.glob(os.path.join('src', 'InsidePolygonWithBounds.c'))
 c_files += glob.glob(os.path.join('src', 'MinMaxImpl.c'))
+c_files += glob.glob(os.path.join('src', 'Colormap.c'))
 
 if build_ext:
     src = glob.glob(os.path.join('cython', '_ctools.pyx'))
