@@ -19,6 +19,7 @@
  * @param RGBAColormap Pointer the RGBA colormap.
  *        It is a contiguous array of RGBA values (1 byte per channel).
  * @param colormapLength The number of values in the colormap.
+ * @param isLog10Mapping True for log10 mapping, False for linear mapping.
  * @param RGBPixmapOut Pointer to the pixmap to fill.
  *        It is a contiguous memory block of RGBA pixels (1 byte per channel).
  *        The size of the pixmap MUST be at least 4 * length bytes.
@@ -31,6 +32,7 @@ colormapFillPixmap(void * data,
                    double max,
                    uint8_t * RGBAColormap,
                    unsigned int colormapLength,
+                   unsigned int isLog10Mapping,
                    uint8_t * RGBAPixmapOut);
 
 #endif /*__Colormap_H__*/

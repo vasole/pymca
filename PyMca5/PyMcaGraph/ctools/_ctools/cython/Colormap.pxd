@@ -8,4 +8,5 @@ cdef extern from "Colormap.h":
                             double max,
                             uint8_t * RGBAColormap,
                             unsigned int colormapLength,
+                            unsigned int isLog10Mapping,
                             uint8_t * RGBAPixmapOut) nogil
