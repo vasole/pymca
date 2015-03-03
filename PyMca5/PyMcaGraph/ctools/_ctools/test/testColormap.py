@@ -28,22 +28,22 @@ class _TestColormap(unittest.TestCase):
     DTYPES = SIGNED_DTYPES + UNSIGNED_DTYPES
 
     # Array sizes to test
-    SIZES = 2, 10, 256, 1024 #, 2048, 4096
+    SIZES = 2, 10, 256, 1024  # , 2048, 4096
 
     # Colormaps definitions
     _LUT_RED_256 = np.zeros((256, 4), dtype=np.uint8)
     _LUT_RED_256[:, 0] = np.arange(256, dtype=np.uint8)
-    _LUT_RED_256[:,3] = 255
+    _LUT_RED_256[:, 3] = 255
 
     _LUT_RGB_3 = np.array(((255, 0, 0, 255),
                            (0, 255, 0, 255),
-                           (0, 0, 255,255)), dtype=np.uint8)
+                           (0, 0, 255, 255)), dtype=np.uint8)
 
     _LUT_RGB_768 = np.zeros((768, 4), dtype=np.uint8)
     _LUT_RGB_768[0:256, 0] = np.arange(256, dtype=np.uint8)
     _LUT_RGB_768[256:512, 1] = np.arange(256, dtype=np.uint8)
     _LUT_RGB_768[512:768, 1] = np.arange(256, dtype=np.uint8)
-    _LUT_RGB_768[:,3] = 255
+    _LUT_RGB_768[:, 3] = 255
 
     COLORMAPS = {
         'red 256': _LUT_RED_256,
@@ -66,7 +66,7 @@ class _TestColormap(unittest.TestCase):
         if range_ <= 0:  # Then set pixmap to min color
             indices = np.zeros(data.shape, dtype=np.uint8)
         else:
-            clipData = np.clip(data, min_, max_) # Clip first avoid overflow
+            clipData = np.clip(data, min_, max_)  # Clip first avoid overflow
             scale = len(colormap) / range_
             normData = scale * np.asarray(clipData - min_, np.float64)
 
@@ -128,7 +128,7 @@ class TestLinearColormap(_TestColormap):
                         data = data[::-1]
                         duration = self._testColormap(data, colormap,
                                                       min_, max_)
-                    
+
                         self._log('1D', cmapName, dtype, size, (min_, max_),
                                   duration)
 

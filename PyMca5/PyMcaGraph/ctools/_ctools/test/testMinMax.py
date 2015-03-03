@@ -32,7 +32,7 @@ class TestMinMax(unittest.TestCase):
     DTYPES = SIGNED_DTYPES + UNSIGNED_DTYPES
 
     # Array sizes to test
-    SIZES = 10, 256, 1024, 2048, 4096 #, 4096 ** 2, 8192 ** 2
+    SIZES = 10, 256, 1024, 2048, 4096  # , 4096 ** 2, 8192 ** 2
 
     def _log(self, *args):
         """Logging used by test for debugging."""
@@ -141,10 +141,10 @@ class TestMinMax(unittest.TestCase):
             # No data
             data = np.array((), dtype=dtype)
             with self.assertRaises(ValueError):
-                result = ctools.minMax(data, minPositive=False)
+                ctools.minMax(data, minPositive=False)
 
             with self.assertRaises(ValueError):
-                result = ctools.minMax(data, minPositive=True)
+                ctools.minMax(data, minPositive=True)
 
 
 # main ########################################################################
