@@ -2051,7 +2051,9 @@ class OpenGLPlotCanvas(PlotBackend):
                 if xCoord is None:
                     x = self.winWidth - self._margins['right'] - pixelOffset
                     y = pixelPos[1] - pixelOffset
-                    label = Text2D(marker['text'], x, y, marker['color'],
+                    label = Text2D(marker['text'], x, y,
+                                   color=marker['color'],
+                                   bgColor=(1., 1., 1., 0.5),
                                    align=RIGHT, valign=BOTTOM)
 
                     vertices = np.array(((xMin, yCoord),
@@ -2061,7 +2063,9 @@ class OpenGLPlotCanvas(PlotBackend):
                 elif yCoord is None:
                     x = pixelPos[0] + pixelOffset
                     y = self._margins['top'] + pixelOffset
-                    label = Text2D(marker['text'], x, y, marker['color'],
+                    label = Text2D(marker['text'], x, y,
+                                   color=marker['color'],
+                                   bgColor=(1., 1., 1., 0.5),
                                    align=LEFT, valign=TOP)
 
                     vertices = np.array(((xCoord, yMin),
@@ -2072,7 +2076,9 @@ class OpenGLPlotCanvas(PlotBackend):
                     xPixel, yPixel = pixelPos
 
                     x, y = xPixel + pixelOffset, yPixel + pixelOffset
-                    label = Text2D(marker['text'], x, y, marker['color'],
+                    label = Text2D(marker['text'], x, y,
+                                   color=marker['color'],
+                                   bgColor=(1., 1., 1., 0.5),
                                    align=LEFT, valign=TOP)
 
                     x0, y0 = self.pixelToData(xPixel - 2 * pixelOffset,

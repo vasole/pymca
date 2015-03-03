@@ -80,12 +80,12 @@ class Text2D(object):
 
     uniform sampler2D texText;
     uniform vec4 color;
+    uniform vec4 bgColor;
 
     varying vec2 vCoords;
 
     void main(void) {
-        gl_FragColor = color;
-        gl_FragColor.a = mix(0., color.a, texture2D(texText, vCoords).r);
+        gl_FragColor = mix(bgColor, color, texture2D(texText, vCoords).r);
     }
     """
     }
@@ -97,6 +97,7 @@ class Text2D(object):
 
     def __init__(self, text, x=0, y=0,
                  color=(0., 0., 0., 1.),
+                 bgColor=None,
                  align=LEFT, valign=BASELINE,
                  rotate=0):
         self._vertices = None
@@ -104,6 +105,7 @@ class Text2D(object):
         self.x = x
         self.y = y
         self.color = color
+        self.bgColor = bgColor
 
         if align not in (LEFT, CENTER, RIGHT):
             raise RuntimeError(
@@ -200,6 +202,11 @@ class Text2D(object):
                            matrix * mat4Translate(self.x, self.y))
 
         glUniform4f(prog.uniforms['color'], *self.color)
+        if self.bgColor is not None:
+            bgColor = self.bgColor
+        else:
+            bgColor = self.color[0], self.color[1], self.color[2], 0.
+        glUniform4f(prog.uniforms['bgColor'], *bgColor)
 
         stride, vertices = self.getStride(), self.getVertices()
 
