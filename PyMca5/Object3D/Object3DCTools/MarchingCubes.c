@@ -537,7 +537,7 @@ void vMarchingCubes()
 		if (iUseGridPointers)
 		{
 			/* printf("Using grid pointers\n"); */
-			if ((fSourceXPointer == NULL) && (fSourceXPointer == NULL) && (fSourceXPointer == NULL))
+			if ((fSourceXPointer == NULL) || (fSourceYPointer == NULL) || (fSourceZPointer == NULL))
 			{
 				printf("Grid pointers not initialized\n");
 				return;

@@ -165,7 +165,7 @@ This module is based on:
         http://edoc.bib.ucl.ac.be:81/ETD-db/collection/available/BelnUcetd-06052008-235205/
 
 """
-
+__license__ = "BSD"
 #
 # helper functions for handling sparse and dense matrices from numpy
 # and scipy.sparse

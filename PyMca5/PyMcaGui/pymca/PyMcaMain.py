@@ -1276,7 +1276,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.__imagingTool = None
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                txt = "Error info = %s" % sys.exc_info()
+                txt = "Error info = %s" % (sys.exc_info()[1])
                 msg.setInformativeText(txt)
                 msg.setDetailedText(traceback.format_exc())
                 msg.exec_()

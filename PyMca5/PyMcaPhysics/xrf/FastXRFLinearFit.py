@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -62,7 +62,7 @@ class FastXRFLinearFit(object):
 
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
-                           ysum=None, weight=None):
+                           ysum=None, weight=None, refit=True):
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
 
@@ -229,7 +229,7 @@ class FastXRFLinearFit(object):
             anchorslist.sort()
 
         # find the indices to be used for selecting the appropriate data
-        # if the original x data were nor ordered we have a problem
+        # if the original x data were not ordered we have a problem
         # TODO: check for original ordering.
         if x is None:
             # we have an enumerated channels axis
@@ -317,16 +317,23 @@ class FastXRFLinearFit(object):
 
         # cleanup zeros
         # start with the parameter with the largest amount of negative values
-        negativePresent = True
+        if refit:
+            negativePresent = True
+        else:
+            negativePresent = False
         nFits = 0
         while negativePresent:
             zeroList = []
+            #totalNegative = 0
             for i in range(nFree):
                 #we have to skip the background parameters
                 if i >= nFreeBackgroundParameters:
                     t = results[i] < 0
-                    if t.sum() > 0:
-                        zeroList.append((t.sum(), i, t))
+                    tsum = t.sum()
+                    if tsum > 0:
+                        zeroList.append((tsum, i, t))
+                    #totalNegative += tsum
+            #print("totalNegative = ", totalNegative)
 
             if len(zeroList) == 0:
                 negativePresent = False
@@ -339,7 +346,7 @@ class FastXRFLinearFit(object):
                     i = item[1]
                     badMask = item[2]
                     results[i][badMask] = 0.0
-                    print("WARNING: %d pixels of parameter %s set to zero" % (item[0], freeNames[i]))
+                    print("WARNING: %d pixels of parameter %s forced to zero" % (item[0], freeNames[i]))
                 continue
             zeroList.sort()
             zeroList.reverse()
@@ -372,8 +379,24 @@ class FastXRFLinearFit(object):
                 nFits += 1
                 A = derivatives[:, [i for i in range(nFree) if i not in badParameters]]
                 #assume we'll not have too many spectra
-                spectra = data[badMask, iXMin:iXMax+1]
-                spectra.shape = badMask.sum(), -1
+                try:
+                    spectra = data[badMask, iXMin:iXMax+1]
+                    spectra.shape = badMask.sum(), -1
+                except TypeError:
+                    # in case of dynamic arrays, two dimensional indices are not
+                    # supported by h5py
+                    spectra = numpy.zeros((int(badMask.sum()), 1 + iXMax - iXMin),
+                                          data.dtype)
+                    selectedIndices = numpy.nonzero(badMask > 0)
+                    tmpData = numpy.zeros((1, 1 + iXMax - iXMin), data.dtype)
+                    oldDataRow = -1
+                    j = 0
+                    for i in range(len(selectedIndices[0])):
+                        j = selectedIndices[0][i]
+                        if j != oldDataRow:
+                            tmpData = data[j]
+                            olddataRow = j
+                        spectra[i] = tmpData[selectedIndices[1][i], iXMin:iXMax+1]
                 spectra = spectra.T
                 #
                 if config['fit']['stripflag']:
@@ -410,7 +433,7 @@ class FastXRFLinearFit(object):
                         uncertainties[i][badMask] = ddict['uncertainties'][idx]
                         idx += 1
 
-        if DEBUG:
+        if DEBUG and refit:
             t = time.time() - t0
             print("Fit of negative peaks elapsed = %f" % t)
             t0 = time.time()
@@ -552,11 +575,16 @@ class FastXRFLinearFit(object):
 if __name__ == "__main__":
     DEBUG = True
     import glob
-    from PyMca.PyMcaIO import EDFStack
-    if 1:
+    from PyMca5.PyMca import EDFStack
+    if 0:
         #configurationFile = "G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
         configurationFile = "G4-4720eV-WEIGHT-NO_Constant-batch.cfg"
         fileList = glob.glob("E:\DATA\COTTE\CH1777\G4_mca_0012_0000_*.edf")
+        concentrations = False
+        dataStack = EDFStack.EDFStack(filelist=fileList)
+    elif 1:
+        configurationFile = "E:\DATA\COTTE\CH09\WithLeadBatch.cfg"
+        fileList = glob.glob("E:\DATA\COTTE\CH09\ch09__mca_0005_0000_*.edf")
         concentrations = False
         dataStack = EDFStack.EDFStack(filelist=fileList)
     elif 0:

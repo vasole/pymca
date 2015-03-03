@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -186,6 +186,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         concentrations = self._parameters['concentrations']
         self.fitInstance.setFitConfigurationFile(fitConfigurationFile)
         weightPolicy = self._parameters['weight_policy']
+        refit = self._parameters['refit']
         if weightPolicy:
             # force calculation of the unnormalized sum spectrum
             spectrum = None
@@ -197,7 +198,8 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
                                                      y=stack,
                                                      weight=weightPolicy,
                                                      concentrations=concentrations,
-                                                     ysum=spectrum)
+                                                     ysum=spectrum,
+                                                     refit=refit)
         return result
 
     def threadFinished(self):

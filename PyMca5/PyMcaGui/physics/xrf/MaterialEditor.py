@@ -106,6 +106,7 @@ class MaterialEditor(qt.QWidget):
                                         control=True,
                                         position=True)
                 self.graph._togglePointsSignal()
+                self.graph.enableOwnSave(True)
             layout.addWidget(self.materialGUI)
             layout.addWidget(self.graph)
         else:

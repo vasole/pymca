@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -44,15 +44,27 @@ DEBUG = 0
 def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
     if dataDir is None:
         dataDir = DataDir.FISX_DATA_DIR
+    try:
+        from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR as pymcaDataDir
+    except:
+        print("Using fisx shell constants and ratios")
+        pymcaDataDir = None
     if bindingEnergies is None:
-        bindingEnergies = os.path.join(dataDir, "BindingEnergies.dat")
+        if pymcaDataDir is None:
+            bindingEnergies = os.path.join(dataDir, "BindingEnergies.dat")
+        else:
+            bindingEnergies = os.path.join(pymcaDataDir, "BindingEnergies.dat")
     if xcomFile is None:
-        xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
+        if pymcaDataDir is None:
+            xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
+        else:
+            xcomFile = os.path.join(pymcaDataDir, "XCOM_CrossSections.dat")            
     if DEBUG:
         t0 = time.time()
     instance = FisxElements(dataDir, bindingEnergies, xcomFile)
     if DEBUG:
         print("Shell constants")
+    # the files should be taken from PyMca to make sure the same data are used
     for key in ["K", "L", "M"]:
         fname = instance.getShellConstantsFile(key)
         if sys.version > '3.0':
@@ -60,8 +72,12 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
             if hasattr(fname, "decode"):
                 fname = fname.decode("latin-1")
         if DEBUG:
-            print("Before %s" % fname) 
-        fname = os.path.join(os.path.dirname(fname), key + "ShellConstants.dat")
+            print("Before %s" % fname)
+        if pymcaDataDir is not None:
+            fname = os.path.join(pymcaDataDir, key + "ShellConstants.dat")
+        else:
+            fname = os.path.join(os.path.dirname(fname),
+                                 key + "ShellConstants.dat")
         instance.setShellConstantsFile(key, fname)
         if DEBUG:
             print("After %s" % instance.getShellConstantsFile(key))
@@ -76,11 +92,14 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
                 fname = fname.decode("latin-1")
         if DEBUG:
             print("Before %s" % fname) 
-        fname = os.path.join(os.path.dirname(fname), key + "ShellRates.dat")
+        if pymcaDataDir is not None:
+            fname = os.path.join(pymcaDataDir, key + "ShellRates.dat")
+        else:
+            fname = os.path.join(os.path.dirname(fname), key + "ShellRates.dat")
         instance.setShellRadiativeTransitionsFile(key, fname)
         if DEBUG:
             print("After %s " % instance.getShellRadiativeTransitionsFile(key))
-    
+
     if DEBUG:
         print("Reading Elapsed = ", time.time() - t0)
     return instance

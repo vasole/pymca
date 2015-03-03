@@ -679,7 +679,7 @@ class QEdfFileWidget(qt.QWidget):
                 if row < 0: row = 0
                 if col < 0: col = 0
                 if self.data is None:
-                    self.graph.removeImage()
+                    self.graph.removeImage(legend="QEdfFileWidget")
                     wid = self.__getParamWidget('array')
                     wid.setImages(1)
                     return
@@ -1002,7 +1002,7 @@ class QEdfFileWidget(qt.QWidget):
                              var[5]]
         #self.graph.invertYAxis(True)
         pixmap = self.getPixmapFromData(self.lastData, self.colormap)
-        self.graph.addImage(pixmap)
+        self.graph.addImage(pixmap, legend="QEdfFileWidget")
         self.graph.replot()
 
     def closeFile(self, filename=None):
@@ -1059,9 +1059,9 @@ class QEdfFileWidget(qt.QWidget):
                 break
 
     def _reset(self):
-        self.graph.removeImage()
+        self.graph.removeImage(legend="QEdfFileWidget")
         self.oldsource = None
-        self.graph.clearmarkers()
+        self.graph.clearMarkers()
         self.graph.replot()
         wid = self.__getParamWidget('array')
         wid.setImages(1)
@@ -1180,7 +1180,7 @@ class QEdfFileWidget(qt.QWidget):
             #self.graph.imagePlot(data=data, colormap = self.colormap)
             self.colormapDialog._update()
             pixmap = self.getPixmapFromData(data, self.colormap)
-            self.graph.addImage(pixmap)
+            self.graph.addImage(pixmap, legend="QEdfFileWidget")
         self.__refreshSelection()
         self.graph.replot()
         self.oldsource       = "%s" % self.data.sourceName

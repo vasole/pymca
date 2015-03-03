@@ -101,7 +101,9 @@ for pluginSet in glob.glob(os.path.join(pluginsDir,'*')):
         if sys.platform == 'win32':
             ext = "*dll"
         else:
-            #for darwin platfrom I use py2app
+            if sys.platform.startswith("darwin"):
+                print("WARNING: Not ready for this platform")
+            #for darwin platform I use py2app
             #this only applies to linux
             ext = "*so"
         destination = os.path.join("plugins", plugin)
@@ -381,37 +383,35 @@ for f in glob.glob(os.path.join(os.path.dirname(__file__),"PyMca", "*.pyc")):
 
 if not sys.platform.startswith('win'):
     #Unix binary ...
-    readline = 'libreadline.so.4'
-    for dirname in ['/lib','/usr/lib']:
-        fname = os.path.join(dirname, readline)
-        if os.path.exists(fname):
-            cmd =  "cp -f %s %s" % (fname, os.path.join(install_dir, readline))
-            os.system(cmd)
-            if dirname == '/lib':
-                #readline is from suse82 systems at ESRF
-                #and at a certain point I had to add these two libraries
-                fname = '/usr/lib/libg2c.so.0'
-                cmd = "cp -f %s %s" % (fname,
-                                       os.path.join(install_dir, 'libg2c.so.0'))
+    for dirname in ['/lib','/usr/lib', '/usr/X11R6/lib/']:
+        for fname0 in ["libreadline.so.4",
+                       "libgthread-2.0.so.0",
+                       "libglib-2.0.so.0",
+                       "libpng12.so.0",
+                       "libfreetype.so.6",
+                       "libXrender.so.1",
+                       "libXxf86vm.so.1",
+                       "libfontconfig.so.1",
+                       "libexpat.so.0",
+                      ]:
+            fname = os.path.join(dirname, fname0)
+            if os.path.exists(fname):
+                cmd =  "cp -f %s %s" % (fname, os.path.join(install_dir, fname0))
                 os.system(cmd)
-                fname = '/usr/lib/libpng.so.3'
-                cmd = "cp -f %s %s" % (fname,
-                                       os.path.join(install_dir, 'libpng.so.3'))
-                os.system(cmd)
-
         #numpy is now compiled with libgfortran at the ESRF
         for fname in glob.glob(os.path.join(dirname, "libgfortra*")):
-            cmd = "cp -f %s %s" % (fname,
+            if os.path.exists(fname):
+                cmd = "cp -f %s %s" % (fname,
                                     os.path.join(install_dir, os.path.basename(fname)))
-            os.system(cmd)
+                os.system(cmd)
 
     #remove libX of the packaging system to use that of the target system
-    for fname in glob.glob(os.path.join(install_dir,"libX*")):
-        os.remove(fname)
+    #for fname in glob.glob(os.path.join(install_dir,"libX*")):
+    #    os.remove(fname)
 
     #remove libfontconfig.so of the package in order to use the one in the target system
-    for fname in glob.glob(os.path.join(install_dir,"libfontconf*")):
-        os.remove(fname)
+    #for fname in glob.glob(os.path.join(install_dir,"libfontconf*")):
+    #    os.remove(fname)
 
     #end linux binary
 

@@ -36,6 +36,7 @@ Currently the only dependency on PyMca is through the Icons.
 import copy
 import sys
 import os
+import time
 import traceback
 import numpy
 from numpy import argsort, nonzero, take
@@ -65,6 +66,7 @@ DEBUG = 0
 
 class PlotWindow(PlotWidget.PlotWidget):
     sigROISignal = qt.pyqtSignal(object)
+    sigIconSignal = qt.pyqtSignal(object)
     DEFAULT_COLORMAP_INDEX = MaskImageTools.DEFAULT_COLORMAP_INDEX
     DEFAULT_COLORMAP_LOG_FLAG = MaskImageTools.DEFAULT_COLORMAP_LOG_FLAG
 
@@ -95,7 +97,8 @@ class PlotWindow(PlotWidget.PlotWidget):
                                     "height": 0.9,
                                     "units": "page",
                                     "keepAspectRatio": True}
-
+        # own save action
+        self.enableOwnSave(True)
 
         # activeCurve handling
         self.enableActiveCurveHandling(True)
@@ -108,6 +111,12 @@ class PlotWindow(PlotWidget.PlotWidget):
         #colormap handling
         self.colormapDialog = None
         self.colormap = None
+
+    def enableOwnSave(self, flag=True):
+        if flag:
+            self._ownSave = True
+        else:
+            self._ownSave = False
 
     def _buildGraphBottomWidget(self, control, position):
         widget = self.centralWidget()
@@ -746,38 +755,69 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.showGrid(2)
         self.replot()
 
-    def _energyIconSignal(self):
-        print("energy icon signal not implemented")
+    def emitIconSignal(self, key, event="iconClicked"):
+        ddict = {}
+        ddict["key"] = key
+        ddict["event"] = event
+        self.sigIconSignal.emit(ddict)
 
+    def _energyIconSignal(self):
+        if DEBUG:
+            print("energy icon signal default implementation")
+        self.emitIconSignal("energy")
+        
     def _fitIconSignal(self):
-        print("fit icon signal not implemented")
+        if DEBUG:
+            print("fit icon signal default implementation")
+        self.emitIconSignal("fit")
 
     def _averageIconSignal(self):
-        print("average icon signal not implemented")
+        if DEBUG:
+            print("average icon signal default implementation")
+        self.emitIconSignal("average")
 
     def _deriveIconSignal(self):
-        print("deriveIconSignal not implemented")
+        if DEBUG:
+            print("deriveIconSignal default implementation")
+        self.emitIconSignal("derive")
 
     def _smoothIconSignal(self):
-        print("smoothIconSignal not implemented")
+        if DEBUG:
+            print("smoothIconSignal default implementation")
+        self.emitIconSignal("smooth")
 
     def _swapSignIconSignal(self):
-        print("_swapSignIconSignal not implemented")
+        if DEBUG:
+            print("_swapSignIconSignal default implementation")
+        self.emitIconSignal("swap")
 
     def _yMinToZeroIconSignal(self):
-        print("_yMinToZeroIconSignal not implemented")
+        if DEBUG:
+            print("_yMinToZeroIconSignal default implementation")
+        self.emitIconSignal("ymintozero")
 
     def _subtractIconSignal(self):
-        print("_subtractIconSignal not implemented")
+        if DEBUG:
+            print("_subtractIconSignal default implementation")
+        self.emitIconSignal("subtract")
 
     def _saveIconSignal(self):
-        print("_saveIconSignal not implemented")
+        if DEBUG:
+            print("_saveIconSignal default implementation")
+        if self._ownSave:
+            self.defaultSaveAction()
+        else:
+            self.emitIconSignal("save")
 
     def _imageIconSignal(self):
-        print("_imageIconSignal not implemented")
+        if DEBUG:
+            print("_imageIconSignal default implementation")
+        self.emitIconSignal("image")
 
     def _eraseSelectionIconSignal(self):
-        print("_eraseSelectionIconSignal not implemented")
+        if DEBUG:
+            print("_eraseSelectionIconSignal default implementation")
+        self.emitIconSignal("erase")
 
     def _rectSelectionIconSignal(self):
         if DEBUG:
@@ -786,13 +826,19 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.setDrawModeEnabled(True, shape="rectangle", label="mask")
 
     def _brushSelectionIconSignal(self):
-        print("_brushSelectionIconSignal not implemented")
+        if DEBUG:
+            print("_brushSelectionIconSignal default implementation")
+        self.emitIconSignal("brushSelection")
 
     def _brushIconSignal(self):
-        print("_brushIconSignal not implemented")
+        if DEBUG:
+            print("_brushIconSignal default implementation")
+        self.emitIconSignal("brush")
 
     def _additionalIconSignal(self):
-        print("_additionalIconSignal not implemented")
+        if DEBUG:
+            print("_additionalIconSignal default implementation")
+        self.emitIconSignal("additional")
 
     def _polygonIconSignal(self):
         if DEBUG:
@@ -1324,6 +1370,173 @@ class PlotWindow(PlotWidget.PlotWidget):
         except:
             print("Error trying to show mouse text <%s>" % text)
 
+    def defaultSaveAction(self):
+        """
+        Default save implementation.
+
+        It handles saving of curves or the complete widget.
+        """
+        filename = self._getOutputFileName()
+        if filename is None:
+            return
+        filterused = filename[2]
+        filetype = filename[1]
+        filename = filename[0]
+
+        if os.path.exists(filename):
+            os.remove(filename)
+        if filterused[0].upper() == "WIDGET":
+            fformat = filename[-3:].upper()
+            pixmap = qt.QPixmap.grabWidget(self)
+            if not pixmap.save(filename, fformat):
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
+            return
+        try:
+            ffile=open(filename,'wb')
+        except IOError:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setInformativeText("Input Output Error: %s" % (sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
+            return
+        try:
+            if not len(self._curveList):
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setInformativeText("No curve to be saved")
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
+                return
+            activeCurve = self.getActiveCurve()
+            if activeCurve is None:
+                activeCurve = self._curveDict[self._curveList[0]]
+            x, y, legend, info = activeCurve
+            xlabel = self.getGraphXLabel()
+            ylabel = self.getGraphYLabel()
+            if filetype.lower() in ["scan", "multiscan"]:
+                # write header
+                ffile.write("#F %s\n" % filename)
+                savingDate = "#D %s\n"%(time.ctime(time.time()))
+                ffile.write(savingDate)
+                ffile.write("\n")
+                ffile.write("#S 1 %s\n" % legend)
+                ffile.write(savingDate)
+                ffile.write("#N 2\n")
+                ffile.write("#L %s  %s\n" % (info.get("xlabel", xlabel),
+                                             info.get("ylabel", ylabel)))
+                for i in range(len(y)):
+                    ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                ffile.write("\n")
+                if filetype.lower() == "multiscan":
+                    scan_n  = 1
+                    for key in self._curveList:
+                        if key not in self._curveDict:
+                            continue
+                        if key == legend:
+                            # active curve already saved
+                            continue
+                        x, y, newLegend, info = self._curveDict[key]
+                        scan_n += 1
+                        ffile.write("#S %d %s\n" % (scan_n, key))
+                        ffile.write(savingDate)
+                        ffile.write("#N 2\n")
+                        ffile.write("#L %s  %s\n" % (info.get("xlabel", xlabel),
+                                                     info.get("ylabel", ylabel)))
+                        for i in range(len(y)):
+                            ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                        ffile.write("\n")
+            elif filetype == 'ASCII':
+                for i in range(len(y)):
+                    ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+            elif filetype == 'CSV':
+                if "," in filterused[0]:
+                    csvseparator = ","
+                elif ";" in filterused[0]:
+                    csvseparator = ";"
+                elif "OMNIC" in filterused[0]:
+                    csvseparator = ","
+                else:
+                    csvseparator = "\t"
+                if "OMNIC" not in filterused[0]:
+                    ffile.write('"%s"%s"%s"\n' % (xlabel, csvseparator, ylabel))
+                for i in range(len(y)):
+                    ffile.write("%.7E%s%.7E\n" % (x[i], csvseparator,y[i]))
+            else:
+                ffile.write("#F %s\n" % filename)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("\n")
+                ffile.write("#S 1 %s\n" % legend)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("#@MCA %16C\n")
+                ffile.write("#@CHANN %d %d %d 1\n" %  (len(y), x[0], x[-1]))
+                ffile.write("#@CALIB %.7g %.7g %.7g\n" % (0, 1, 0))
+                ffile.write(self.array2SpecMca(y))
+                ffile.write("\n")
+            ffile.close()
+        except:
+            ffile.close()
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setInformativeText("Error while saving: %s" % (sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
+
+    def _getOutputFileName(self):
+        outfile = qt.QFileDialog(self)
+        outfile.setWindowTitle("Output File Selection")
+        outfile.setModal(1)
+        filterlist = ['Specfile MultiScan *.dat',
+                      'Specfile Scan *.dat',
+                      'Specfile MCA  *.mca',
+                      'Raw ASCII *.txt',
+                      '","-separated CSV *.csv',
+                      '";"-separated CSV *.csv',
+                      '"tab"-separated CSV *.csv',
+                      'OMNIC CSV *.csv',
+                      'Widget PNG *.png',
+                      'Widget JPG *.jpg']
+        outfile.setFilters(filterlist)
+        outfile.setFileMode(outfile.AnyFile)
+        outfile.setAcceptMode(outfile.AcceptSave)
+        ret = outfile.exec_()
+        if not ret:
+            return None
+        outputFilter = qt.safe_str(outfile.selectedFilter())
+        filterused = outputFilter.split()
+        filetype  = filterused[1]
+        extension = filterused[2]
+        outputFile = qt.safe_str(outfile.selectedFiles()[0])
+        outfile.close()
+        del outfile
+        if len(outputFile) < 5:
+            outputFile = outputFile + extension[-4:]
+        elif outputFile[-4:] != extension[-4:]:
+            outputFile = outputFile + extension[-4:]
+        return outputFile, filetype, filterused
+        
+    def array2SpecMca(self, data):
+        """ Write a python array into a Spec array.
+            Return the string containing the Spec array
+        """
+        tmpstr = "@A "
+        length = len(data)
+        for idx in range(0, length, 16):
+            if idx+15 < length:
+                for i in range(0, 16):
+                    tmpstr += "%.7g " % data[idx+i]
+                if idx+16 != length:
+                    tmpstr += "\\"
+            else:
+                for i in range(idx, length):
+                    tmpstr += "%.7g " % data[i]
+            tmpstr += "\n"
+        return tmpstr
+
 if __name__ == "__main__":
     x = numpy.arange(100.)
     y = x * x
@@ -1331,6 +1544,8 @@ if __name__ == "__main__":
     backend = None
     if "opengl" in sys.argv:
         backend = "opengl"
+    elif "pyqtgraph" in sys.argv:
+        backend = "pyqtgraph"
     plot = PlotWindow(backend=backend, roi=True, control=True,
                           position=True, colormap=True)#uselegendmenu=True)
     plot.show()
@@ -1343,6 +1558,9 @@ if __name__ == "__main__":
     print("All curves = ",   plot.getAllCurves(just_legend=True))
     image = numpy.arange(10000).reshape(100, 100)
     plot.addImage(image, xScale=(0, 1), yScale=(0, 10), pixmap=MaskImageTools.getPixmapFromData(image))
+    def iconSlot(ddict):
+        print(ddict)
+    plot.sigIconSignal.connect(iconSlot)
     #plot.removeCurve("dummy")
     #plot.addCurve(x, 2 * y, "dummy 2")
     #print("All curves = ",   plot.getAllCurves())
