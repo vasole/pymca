@@ -287,10 +287,7 @@ class GLPlotColormap(_GLPlotData2D):
         if cmapRange is not None:
             self.cmapRange = cmapRange
         else:
-            if data.dtype == np.float32:  #TODO update minMax
-                self.cmapRange = minMax(data)
-            else:
-                self.cmapRange = data.min(), data.max()
+            self.cmapRange = minMax(data)
 
         self._textureIsDirty = False
 
@@ -308,10 +305,7 @@ class GLPlotColormap(_GLPlotData2D):
         self.data = data
 
         if self.cmapRangeIsAuto:
-            if data.dtype == np.float32:  #TODO update minMax
-                self.cmapRange = minMax(data)
-            else:
-                self.cmapRange = data.min(), data.max()
+            self.cmapRange = minMax(data)
 
         if hasattr(self, '_texture'):
             if (self.data.shape != oldData.shape or

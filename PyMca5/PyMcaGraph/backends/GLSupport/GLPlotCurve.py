@@ -749,20 +749,8 @@ class GLPlotCurve2D(object):
         self._isYLog = False
         self.xData, self.yData, self.colorData = xData, yData, colorData
 
-        self.xMin, self.xMax = minMax(xData)
-        self.yMin, self.yMax = minMax(yData)
-
-        if self.xMin <= 0.:
-            xPos = np.nonzero(xData > 0.)[0]
-            self.xMinPos = xPos.min() if len(xPos) > 0 else None
-        else:
-            self.xMinPos = self.xMin
-
-        if self.yMin <= 0.:
-            yPos = np.nonzero(yData > 0.)[0]
-            self.yMinPos = yPos.min() if len(yPos) > 0 else None
-        else:
-            self.yMinPos = self.yMin
+        self.xMin, self.xMinPos, self.xMax = minMax(xData, minPositive=True)
+        self.yMin, self.yMinPos, self.yMax = minMax(yData, minPositive=True)
 
         if fillColor is not None:
             self.fill = _Fill2D(color=fillColor)
