@@ -24,7 +24,7 @@ class TestMinMax(unittest.TestCase):
     """
 
     # Array data types to test
-    SIGNED_DTYPES = (np.float32, np.float64,
+    SIGNED_DTYPES = (np.float16, np.float32, np.float64,
                      np.int8, np.int16,
                      np.int32, np.int64)
     UNSIGNED_DTYPES = (np.uint8, np.uint16,
@@ -53,6 +53,7 @@ class TestMinMax(unittest.TestCase):
         self.assertEqual(min_, minNumpy)
         self.assertEqual(max_, maxNumpy)
 
+    # @unittest.skip("")
     def testMinMax(self):
         """Test C minMax vs Numpy min/max for different data types and sizes.
         """
@@ -94,6 +95,7 @@ class TestMinMax(unittest.TestCase):
         self.assertEqual(minPositive, minPositiveNumpy)
         self.assertEqual(max_, maxNumpy)
 
+    # @unittest.skip("")
     def testMinMinPosMax(self):
         """Test C minMax and min positive vs Numpy.
         """
@@ -108,7 +110,7 @@ class TestMinMax(unittest.TestCase):
                 data = np.arange(size, 0, -1, dtype=dtype)
                 self._testMinMinPositiveMax(data)
 
-    @unittest.skip("")
+    # @unittest.skip("")
     def testMinMinPosMaxSomeNegative(self):
         """Test C minMax and min positive vs Numpy with some negative data.
         """
@@ -119,7 +121,7 @@ class TestMinMax(unittest.TestCase):
                 data = np.arange(-int(size/2.), 0, dtype=dtype)
                 self._testMinMinPositiveMax(data)
 
-    @unittest.skip("")
+    # @unittest.skip("")
     def testMinMinPosMaxAllNegative(self):
         """Test C minMax and min positive vs Numpy with all negative data.
         """
@@ -130,7 +132,7 @@ class TestMinMax(unittest.TestCase):
                 data = np.arange(-size, 0, dtype=dtype)
                 self._testMinMinPositiveMax(data)
 
-    @unittest.skip("")
+    # @unittest.skip("")
     def testMinMaxNoData(self):
         """Test C minMax and min positive with no data.
         """

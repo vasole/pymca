@@ -34,6 +34,10 @@ def minMax(np.ndarray data, bint minPositive=False):
     :rtype: tuple of float
     :raises: ValueError if data is empty
     """
+    #Convert float16 to float32
+    if data.dtype.str[1:] == 'f2':
+        data = np.asarray(data, dtype=np.float32)
+
     cdef np.ndarray c_data = np.ascontiguousarray(data)
     cdef void * c_dataPtr = c_data.data
     cdef unsigned int c_dataSize = c_data.size

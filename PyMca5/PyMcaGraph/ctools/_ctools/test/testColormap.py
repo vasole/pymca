@@ -12,11 +12,15 @@ except ImportError:
 from PyMca5.PyMcaGraph import ctools
 
 
+# TODOs:
+# test with inf, nan for floats
+# benchmark perf
+
 # common ######################################################################
 
 class _TestColormap(unittest.TestCase):
     # Array data types to test
-    SIGNED_DTYPES = (np.float32, np.float64,
+    SIGNED_DTYPES = (np.float16, np.float32, np.float64,
                      np.int8, np.int16,
                      np.int32, np.int64)
     UNSIGNED_DTYPES = (np.uint8, np.uint16,
@@ -51,7 +55,7 @@ class _TestColormap(unittest.TestCase):
     def _log(*args):
         """Logging used by test for debugging."""
         pass
-        #print(args)
+        # print(args)
 
     @staticmethod
     def buildControlPixmap(data, colormap, min_, max_):
@@ -99,6 +103,7 @@ class TestLinearColormap(_TestColormap):
         if max_ is None:
             max_ = data.max()
         pixmapControl = self.buildControlPixmap(data, colormap, min_, max_)
+
         self.assertTrue(np.all(pixmap == pixmapControl))
 
         return duration
@@ -137,6 +142,7 @@ class TestLinearColormap(_TestColormap):
                     for min_, max_ in self.RANGES:
                         # Increasing values
                         data = np.arange(size * size, dtype=dtype)
+                        data = np.nan_to_num(data)
                         data.shape = size, size
                         duration = self._testColormap(data, colormap,
                                                       min_, max_)
@@ -248,6 +254,7 @@ class TestLog10Colormap(_TestColormap):
                     for min_, max_ in self.RANGES:
                         # Increasing values
                         data = np.arange(size * size, dtype=dtype) + 1
+                        data = np.nan_to_num(data)
                         data.shape = size, size
                         duration = self._testColormap(data, colormap,
                                                       min_, max_)

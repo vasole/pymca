@@ -40,6 +40,10 @@ def dataToRGBAColormap(data,
     :returns: The corresponding pixmap of RGBA pixel.
     :rtype: Array of 4 uint8 with same dimensions as data
     """
+    #Convert float16 to float32
+    if data.dtype.str[1:] == 'f2':
+        data = np.asarray(data, dtype=np.float32)
+
     cdef np.ndarray c_data = np.ascontiguousarray(data)
     cdef void * c_dataPtr = c_data.data  # &c_data[0] needs dim
     cdef unsigned int c_dataSize = c_data.size
