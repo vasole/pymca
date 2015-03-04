@@ -2807,7 +2807,7 @@ printf("LT_Area=%f,LT_Slope=%f\n",phyper[i].lt_area_r,phyper[i].lt_slope_r);
 double fastexp(double x)
 {
 int expindex;
-static double EXP[5000];
+static double EXP[5000] = {0.0};
 int i;
 
 /*initialize */
