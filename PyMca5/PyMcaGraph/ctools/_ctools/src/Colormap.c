@@ -4,6 +4,57 @@
 #include "Colormap.h"
 
 
+/* Fast log ******************************************************************/
+
+/* Implements fast log using the fact that double is stored as m * 2^n,
+ * so log2(m * 2^n) = log2(m) + n and a look-up table for log2(m).
+ *
+ * See: Vinyals, O. and Friedland, G.
+ * A Hardware-Independent Fast Logarithm Approximation with Adjustable Accuracy.
+ * In Proc. Tenth IEEE International Symposium on Multimedia (ISM 2008).
+ * IEEE. pp 61-65.
+ * http://dx.doi.org/10.1109/ISM.2008.83
+ *
+ * We use frexp (C99 but available in Visual Studio 2008) to get exponent and
+ * mantissa.
+ */
+
+#define LOG_LUT_SIZE (1 << 12) /* 4096 */
+
+static double logLUT[LOG_LUT_SIZE + 1]; /* indexLUT can overflow of 1 ! */
+const double oneOverLog2 = 0x1.71547652b82fep+0;
+const double oneOverLog10 = 0x1.34413509f79fep-2;
+
+void
+initFastLog10(void)
+{
+    unsigned int index;
+
+    for (index=0; index<LOG_LUT_SIZE; index++) {
+        /* normFrac in [0.5, 1) */
+        double normFrac = 0.5 + ((double) index) / (2.0 * LOG_LUT_SIZE);
+        logLUT[index] = oneOverLog2 * log(normFrac);
+    }
+
+    /* Cope with indexLUT == 1 overflow */
+    logLUT[LOG_LUT_SIZE] = logLUT[LOG_LUT_SIZE - 1];
+}
+
+//TODO handle limit cases 0, NaN, +/-inf
+
+double
+fastLog10(double value)
+{
+    int exponent;
+    double mantissa; /* in [0.5, 1) unless value == 0 NaN or +/-inf */
+    int indexLUT;
+
+    mantissa = frexp(value, &exponent);
+    indexLUT = (int) (LOG_LUT_SIZE * 2 * (mantissa - 0.5));
+    return oneOverLog10 * ((double) exponent + logLUT[indexLUT]);
+}
+
+
 /* Colormap with linear mapping **********************************************/
 
 /** Fill a RGBA pixmap from data using the colormap with linear mapping.
@@ -228,8 +279,8 @@ static void fillPixmapLog10_ ## TYPE(\
     }\
 }
 
-FILL_PIXMAP_LOG10_DEFINITION(float, log10f, float)
-FILL_PIXMAP_LOG10_DEFINITION(double, log10, double)
+FILL_PIXMAP_LOG10_DEFINITION(float, fastLog10, double) //log10f, float)
+FILL_PIXMAP_LOG10_DEFINITION(double, fastLog10, double)
 
 FILL_PIXMAP_LOG10_DEFINITION(uint8_t, log10f, float)
 FILL_PIXMAP_LOG10_DEFINITION(int8_t, log10f, float)
@@ -237,11 +288,11 @@ FILL_PIXMAP_LOG10_DEFINITION(int8_t, log10f, float)
 FILL_PIXMAP_LOG10_DEFINITION(uint16_t, log10f, float)
 FILL_PIXMAP_LOG10_DEFINITION(int16_t, log10f, float)
 
-FILL_PIXMAP_LOG10_DEFINITION(uint32_t, log10f, float)
-FILL_PIXMAP_LOG10_DEFINITION(int32_t, log10f, float)
+FILL_PIXMAP_LOG10_DEFINITION(uint32_t, fastLog10, double)
+FILL_PIXMAP_LOG10_DEFINITION(int32_t, fastLog10, double)
 
-FILL_PIXMAP_LOG10_DEFINITION(uint64_t, log10, double)
-FILL_PIXMAP_LOG10_DEFINITION(int64_t, log10, double)
+FILL_PIXMAP_LOG10_DEFINITION(uint64_t, fastLog10, double)
+FILL_PIXMAP_LOG10_DEFINITION(int64_t, fastLog10, double)
 
 
 #define CALL_FILL_PIXMAP_LOG10(TYPE)\
@@ -447,7 +498,7 @@ colormapFillPixmap(void * data,
 {
     /* Convert pointers to uint32_t to copy the 4 RGBA uint8_t at once. */
     uint32_t * colormap = (uint32_t *) RGBAColormap;
-    uint32_t * pixmap = (uint32_t *) pixmap;
+    uint32_t * pixmap = (uint32_t *) RGBAPixmapOut;
 
     /* Look-up table-based pixmap filling for uint8 and uint16
      * Using number of elements as a rule of thumb to choose using it */

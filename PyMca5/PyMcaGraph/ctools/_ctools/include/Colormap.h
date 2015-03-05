@@ -6,6 +6,18 @@
 
 #include "Types.h"
 
+/** Initialize the look-up table used by fastLog10.
+ *
+ * This function MUST be called before any call to fastLog10.
+ */
+void
+initFastLog10(void);
+
+/** Compute a fast log10 approximation.
+ */
+double
+fastLog10(double value);
+
 /** Fill a RGBA pixmap from data using the provided colormap.
  *
  * The index in the colormap is computed using casting and not rounding.

@@ -2,9 +2,12 @@ cimport cython
 cimport numpy as np
 import numpy as np
 
-from Colormap cimport colormapFillPixmap
+
+from Colormap cimport colormapFillPixmap, initFastLog10, fastLog10
 from MinMax cimport getMinMax
 
+# Init fastLog10 look-up table
+initFastLog10()
 
 # Convert numpy dtype array-protocol string to bit field to pass to C function
 # 4th bit for type: 1: floating point, 0: integer
@@ -47,6 +50,7 @@ def dataToRGBAColormap(data,
     cdef np.ndarray c_data = np.ascontiguousarray(data)
     cdef void * c_dataPtr = c_data.data  # &c_data[0] needs dim
     cdef unsigned int c_dataSize = c_data.size
+    cdef unsigned int c_dataItemSize = c_data.itemsize
 
     cdef unsigned char[:, :] c_colormap = colormap
     cdef unsigned int c_colormapLength = len(colormap)
