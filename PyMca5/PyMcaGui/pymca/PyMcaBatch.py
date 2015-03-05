@@ -1856,7 +1856,7 @@ def main():
                 msg = qt.QMessageBox()
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("%s" % sys.exc_info()[1])
-                msg.exec_loop()
+                msg.exec_()
                 return
 
 
