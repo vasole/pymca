@@ -30,6 +30,9 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+__doc__ = """
+Module to perform a fast linear fit on a stack of fluorescence spectra.
+"""
 import os
 import numpy
 from PyMca5.PyMcaMath.linalg import lstsq
@@ -63,6 +66,18 @@ class FastXRFLinearFit(object):
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
                            ysum=None, weight=None, refit=True):
+        """
+        This method performs the actual fit. The y keyword is the only mandatory input argument.
+
+        :param x: 1D array containing the x axis (usually the channels) of the spectra.
+        :param y: 3D array containing the spectra as [nrows, ncolumns, nchannels]
+        :param xmin: lower limit of the fitting region
+        :param xmax: upper limit of the fitting region
+        :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
+        :param concentrations: 0 Means no calculation, 1 Calculate them
+        :param refit: if False, no check for negative results. Default is True.
+        :return: A dictionnary with the parameters, uncertainties and names as keys.
+        """
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
 
