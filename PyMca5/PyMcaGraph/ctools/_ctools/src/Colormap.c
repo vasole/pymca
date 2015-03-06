@@ -40,18 +40,33 @@ initFastLog10(void)
     logLUT[LOG_LUT_SIZE] = logLUT[LOG_LUT_SIZE - 1];
 }
 
-//TODO handle limit cases 0, NaN, +/-inf
 
 double
 fastLog10(double value)
 {
-    int exponent;
-    double mantissa; /* in [0.5, 1) unless value == 0 NaN or +/-inf */
-    int indexLUT;
+    if (value <= 0.0 || ! isfinite(value)) {
+        if (value < 0.0) {
+            return NAN;
+        }
+        else if (value == 0.0) {
+            return - HUGE_VAL;
+        }
+        else if (isinf(value)) {
+            return INFINITY;
+        }
+        else if (isnan(value)) {
+            return NAN;
+        }
+    }
+    else {
+        int exponent;
+        double mantissa; /* in [0.5, 1) unless value == 0 NaN or +/-inf */
+        int indexLUT;
 
-    mantissa = frexp(value, &exponent);
-    indexLUT = (int) (LOG_LUT_SIZE * 2 * (mantissa - 0.5));
-    return oneOverLog10 * ((double) exponent + logLUT[indexLUT]);
+        mantissa = frexp(value, &exponent);
+        indexLUT = lrint(LOG_LUT_SIZE * 2 * (mantissa - 0.5));
+        return oneOverLog10 * ((double) exponent + logLUT[indexLUT]);
+    }
 }
 
 

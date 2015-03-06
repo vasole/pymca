@@ -4,6 +4,8 @@ import numpy as np
 
 
 from Colormap cimport colormapFillPixmap, initFastLog10, fastLog10
+from Colormap cimport fastLog10 as _fastLog10
+
 from MinMax cimport getMinMax
 
 # Init fastLog10 look-up table
@@ -92,3 +94,6 @@ def dataToRGBAColormap(data,
 
     pixmap.shape = data.shape + (4,)
     return pixmap
+
+def fastLog10(double value):
+    return _fastLog10(value)

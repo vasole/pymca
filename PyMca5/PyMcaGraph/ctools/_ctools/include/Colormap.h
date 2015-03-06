@@ -14,6 +14,18 @@ void
 initFastLog10(void);
 
 /** Compute a fast log10 approximation.
+ *
+ * If value is negative, returns NaN.
+ * If value is zero, returns - HUGE_VAL
+ * If value positive infinity, returns INFINITY
+ * If value is NaN, returns NaN.
+ *
+ * This function uses lrint and expect rounding to be: FE_TONEAREST.
+ * See lrint and fegetround man for more information.
+ * Note: rounding mode impacts approximation error.
+ *
+ * @param value
+ * @return An approximation of log10(value)
  */
 double
 fastLog10(double value);
