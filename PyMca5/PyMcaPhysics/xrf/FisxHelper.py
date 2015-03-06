@@ -334,13 +334,17 @@ def _getFisxMaterials(fitConfiguration):
                         # probably we have a material defined in terms of other material
                         totallyDefined = False
                 if totallyDefined:
-                  fisxMaterial = Material(materialName,
-                                          density=density,
-                                          thickness=thickness,
-                                          comment=comment)
-                  fisxMaterial.setComposition(composition)
-                  fisxMaterials.append(fisxMaterial)
-                  processedMaterialList.append(materialName)
+                    try:
+                        fisxMaterial = Material(materialName,
+                                              density=density,
+                                              thickness=thickness,
+                                              comment=comment)
+                        fisxMaterial.setComposition(composition)
+                        fisxMaterials.append(fisxMaterial)
+                    except:
+                        raise TypeError("Error defining material %s" % \
+                                        materialName)
+                    processedMaterialList.append(materialName)                        
     return fisxMaterials
 
 def _getBeam(fitConfiguration):
