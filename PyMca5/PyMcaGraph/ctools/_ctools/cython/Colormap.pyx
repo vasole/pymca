@@ -3,7 +3,7 @@ cimport numpy as np
 import numpy as np
 
 
-from Colormap cimport colormapFillPixmap, initFastLog10, fastLog10
+from Colormap cimport colormapFillPixmap, initFastLog10
 from Colormap cimport fastLog10 as _fastLog10
 
 from MinMax cimport getMinMax
