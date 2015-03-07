@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -85,7 +85,7 @@ class testSpecfile(unittest.TestCase):
     def testSpecfileImport(self):
         #"""Test successful import"""
         self.assertTrue(self.specfileClass is not None,
-                        'Unsuccessful PyMca.specfile import')
+                        'Unsuccessful PyMca5.PyMcaIO.specfile import')
 
     def testSpecfileReading(self):
         #"""Test specfile readout"""
