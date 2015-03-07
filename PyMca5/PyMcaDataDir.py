@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -50,12 +50,12 @@ if not os.path.exists(PYMCA_DATA_DIR):
 if not os.path.exists(PYMCA_DATA_DIR):
     tmp_dir = os.path.dirname(__file__)
     basename = os.path.basename(PYMCA_DATA_DIR)
-    PYMCA_DATA_DIR = os.path.join(tmp_dir, "PyMca", basename)
+    PYMCA_DATA_DIR = os.path.join(tmp_dir, "PyMca5", basename)
     while len(PYMCA_DATA_DIR) > 14:
         if os.path.exists(PYMCA_DATA_DIR):
             break
         tmp_dir = os.path.dirname(tmp_dir)
-        PYMCA_DATA_DIR = os.path.join(tmp_dir, "PyMca", basename)
+        PYMCA_DATA_DIR = os.path.join(tmp_dir, "PyMca5", basename)
 
 if not os.path.exists(PYMCA_DATA_DIR):
     raise IOError('%s directory not found' % basename)
@@ -75,11 +75,11 @@ if not os.path.exists(PYMCA_DOC_DIR):
 if not os.path.exists(PYMCA_DOC_DIR):
     tmp_dir = os.path.dirname(__file__)
     basename = os.path.basename(PYMCA_DOC_DIR)
-    PYMCA_DOC_DIR = os.path.join(tmp_dir, "PyMca", basename)
+    PYMCA_DOC_DIR = os.path.join(tmp_dir, "PyMca5", basename)
     while len(PYMCA_DOC_DIR) > 14:
         if os.path.exists(PYMCA_DOC_DIR):
             break
         tmp_dir = os.path.dirname(tmp_dir)
-        PYMCA_DOC_DIR = os.path.join(tmp_dir, "PyMca", basename)
+        PYMCA_DOC_DIR = os.path.join(tmp_dir, "PyMca5", basename)
 if not os.path.exists(PYMCA_DOC_DIR):
     raise IOError('%s directory not found' % basename)
