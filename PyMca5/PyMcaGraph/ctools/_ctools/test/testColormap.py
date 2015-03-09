@@ -188,6 +188,66 @@ class _TestColormap(unittest.TestCase):
         return duration
 
 
+# TestColormap ################################################################
+
+class TestColormap(_TestColormap):
+    """Test common limit case for colormap in C with both linear and log mode.
+
+    Test with different: data types, sizes, colormaps (with different sizes),
+    mapping range.
+    """
+
+    def testNoData(self):
+        """Test pixmap generation with empty data."""
+        self._log("TestColormap.testNoData")
+        cmapName = 'red 256'
+        colormap = self.COLORMAPS[cmapName]
+        min_, max_ = None, None
+
+        for dtype in self.DTYPES:
+            for isLog10 in (False, True):
+                data = np.array((), dtype=dtype)
+                result = np.array((), dtype=np.uint8)
+                result.shape = 0, 4
+                duration = self._testColormap(data, self.COLORMAPS['red 256'],
+                                              None, None, result, isLog10)
+                self._log('No data', 'red 256', dtype, len(data), (None, None),
+                          'isLog10:', isLog10, duration)
+
+    def testNan(self):
+        """Test pixmap generation with NaN values."""
+        self._log("TestColormap.testNan")
+        cmapName = 'red 256'
+        colormap = self.COLORMAPS[cmapName]
+        min_, max_ = None, None
+
+        for dtype in self.FLOATING_DTYPES:
+            for isLog10 in (False, True):
+                # All NaNs
+                data = np.array((float('nan'),) * 4, dtype=dtype)
+                result = np.array(((0, 0, 0, 255),
+                                   (0, 0, 0, 255),
+                                   (0, 0, 0, 255),
+                                   (0, 0, 0, 255)), dtype=np.uint8)
+                duration = self._testColormap(data, self.COLORMAPS['red 256'],
+                                              None, None, result, isLog10)
+                self._log('All NaNs', 'red 256', dtype, len(data),
+                          (None, None),'isLog10:', isLog10, duration)
+
+                # Some NaNs
+                data = np.array((1., float('nan'), 0., float('nan')),
+                                dtype=dtype)
+                result = np.array(((255, 0, 0, 255),
+                                   (0, 0, 0, 255),
+                                   (0, 0, 0, 255),
+                                   (0, 0, 0, 255)), dtype=np.uint8)
+                duration = self._testColormap(data, self.COLORMAPS['red 256'],
+                                              None, None, result, isLog10)
+                self._log('Some NaNs', 'red 256', dtype, len(data),
+                          (None, None), 'isLog10:', isLog10, duration)
+
+
+
 # TestLinearColormap ##########################################################
 
 class TestLinearColormap(_TestColormap):
@@ -200,9 +260,9 @@ class TestLinearColormap(_TestColormap):
     # Colormap ranges to map
     RANGES = (None, None), (1, 10)
 
-    def testLinear1DData(self):
+    def test1DData(self):
         """Test pixmap generation for 1D data of different size and types."""
-        self._log("testLinear1DData")
+        self._log("TestLinearColormap.test1DData")
         for cmapName, colormap in self.COLORMAPS.items():
             for size in self.SIZES:
                 for dtype in self.DTYPES:
@@ -223,9 +283,9 @@ class TestLinearColormap(_TestColormap):
                         self._log('1D', cmapName, dtype, size, (min_, max_),
                                   duration)
 
-    def testLinear2DData(self):
+    def test2DData(self):
         """Test pixmap generation for 2D data of different size and types."""
-        self._log("testLinear2DData")
+        self._log("TestLinearColormap.test2DData")
         for cmapName, colormap in self.COLORMAPS.items():
             for size in self.SIZES:
                 for dtype in self.DTYPES:
@@ -248,39 +308,9 @@ class TestLinearColormap(_TestColormap):
                         self._log('2D', cmapName, dtype, size, (start, end),
                                   duration)
 
-    def testLinearNan(self):
-        """Test pixmap generation with NaN values."""
-        self._log("testLinearNan")
-        cmapName = 'red 256'
-        colormap = self.COLORMAPS[cmapName]
-        min_, max_ = None, None
-
-        for dtype in self.FLOATING_DTYPES:
-            # All NaNs
-            data = np.array((float('nan'),) * 4, dtype=dtype)
-            result = np.array(((0, 0, 0, 255),
-                               (0, 0, 0, 255),
-                               (0, 0, 0, 255),
-                               (0, 0, 0, 255)), dtype=np.uint8)
-            duration = self._testColormap(data, self.COLORMAPS['red 256'],
-                                          None, None, result)
-            self._log('All NaNs', 'red 256', dtype, len(data), (None, None),
-                      duration)
-
-            # Some NaNs
-            data = np.array((1., float('nan'), 0., float('nan')), dtype=dtype)
-            result = np.array(((255, 0, 0, 255),
-                               (0, 0, 0, 255),
-                               (0, 0, 0, 255),
-                               (0, 0, 0, 255)), dtype=np.uint8)
-            duration = self._testColormap(data, self.COLORMAPS['red 256'],
-                                          None, None, result)
-            self._log('Some NaNs', 'red 256', dtype, len(data), (None, None),
-                      duration)
-
-    def testLinearInf(self):
+    def testInf(self):
         """Test pixmap generation with Inf values."""
-        self._log("testLinearInf")
+        self._log("TestLinearColormap.testInf")
 
         for dtype in self.FLOATING_DTYPES:
             # All positive Inf
@@ -331,9 +361,9 @@ class TestLinearColormap(_TestColormap):
                       duration)
 
     @unittest.skip("Not for reproductible tests")
-    def testLinear1DDataRandom(self):
+    def test1DDataRandom(self):
         """Test pixmap generation for 1D data of different size and types."""
-        self._log("testLinear1DDataRandom")
+        self._log("TestLinearColormap.test1DDataRandom")
         for cmapName, colormap in self.COLORMAPS.items():
             for size in self.SIZES:
                 for dtype in self.DTYPES:
@@ -362,9 +392,9 @@ class TestLog10Colormap(_TestColormap):
     # Colormap ranges to map
     RANGES = (None, None), (1, 10) #, (10, 1)
 
-    def testLog101DDataAllPositive(self):
+    def test1DDataAllPositive(self):
         """Test pixmap generation for all positive 1D data."""
-        self._log("testLog101DData")
+        self._log("TestLog10Colormap.test1DDataAllPositive")
         for cmapName, colormap in self.COLORMAPS.items():
             for size in self.SIZES:
                 for dtype in self.DTYPES:
@@ -387,9 +417,9 @@ class TestLog10Colormap(_TestColormap):
                         self._log('1D', cmapName, dtype, size, (start, end),
                                   duration)
 
-    def testLog102DDataAllPositive(self):
+    def test2DDataAllPositive(self):
         """Test pixmap generation for all positive 2D data."""
-        self._log("testLog102DData")
+        self._log("TestLog10Colormap.test2DDataAllPositive")
         for cmapName, colormap in self.COLORMAPS.items():
             for size in self.SIZES:
                 for dtype in self.DTYPES:
@@ -414,9 +444,9 @@ class TestLog10Colormap(_TestColormap):
                         self._log('2D', cmapName, dtype, size, (start, end),
                                   duration)
 
-    def testLog10AllNegative(self):
+    def testAllNegative(self):
         """Test pixmap generation for all negative 1D data."""
-        self._log("testLog10AllNegative")
+        self._log("TestLog10Colormap.testAllNegative")
         for cmapName, colormap in self.COLORMAPS.items():
             for size in self.SIZES:
                 for dtype in self.SIGNED_DTYPES:
@@ -439,9 +469,9 @@ class TestLog10Colormap(_TestColormap):
                         self._log('1D', cmapName, dtype, size, (start, end),
                                   duration)
 
-    def testLog10CrossingZero(self):
+    def testCrossingZero(self):
         """Test pixmap generation for 1D data with negative and zero."""
-        self._log("testLog10CrossingZero")
+        self._log("TestLog10Colormap.testCrossingZero")
         for cmapName, colormap in self.COLORMAPS.items():
             for size in self.SIZES:
                 for dtype in self.SIGNED_DTYPES:
@@ -465,9 +495,9 @@ class TestLog10Colormap(_TestColormap):
                                   duration)
 
     @unittest.skip("Not for reproductible tests")
-    def testLog1DDataRandom(self):
+    def test1DDataRandom(self):
         """Test pixmap generation for 1D data of different size and types."""
-        self._log("testLog1DDataRandom")
+        self._log("TestLog10Colormap.test1DDataRandom")
         for cmapName, colormap in self.COLORMAPS.items():
             for size in self.SIZES:
                 for dtype in self.DTYPES:
@@ -492,6 +522,57 @@ class TestLog10Colormap(_TestColormap):
 
                         self._log('1D Random', cmapName, dtype, size,
                                   (start, end), duration)
+
+    def testInf(self):
+        """Test pixmap generation with Inf values."""
+        self._log("TestLog10Colormap.testInf")
+
+        for dtype in self.FLOATING_DTYPES:
+            # All positive Inf
+            data = np.array((float('inf'),) * 4, dtype=dtype)
+            result = np.array(((255, 0, 0, 255),
+                               (255, 0, 0, 255),
+                               (255, 0, 0, 255),
+                               (255, 0, 0, 255)), dtype=np.uint8)
+            duration = self._testColormap(data, self.COLORMAPS['red 256'],
+                                          None, None, result, isLog10=True)
+            self._log('All +Inf', 'red 256', dtype, len(data), (None, None),
+                      duration)
+
+            # All negative Inf
+            data = np.array((float('-inf'),) * 4, dtype=dtype)
+            result = np.array(((0, 0, 0, 255),
+                               (0, 0, 0, 255),
+                               (0, 0, 0, 255),
+                               (0, 0, 0, 255)), dtype=np.uint8)
+            duration = self._testColormap(data, self.COLORMAPS['red 256'],
+                                          None, None, result, isLog10=True)
+            self._log('All -Inf', 'red 256', dtype, len(data), (None, None),
+                      duration)
+
+            # All +/-Inf
+            data = np.array((float('inf'), float('-inf'),
+                             float('-inf'), float('inf')), dtype=dtype)
+            result = np.array(((255, 0, 0, 255),
+                               (0, 0, 0, 255),
+                               (0, 0, 0, 255),
+                               (255, 0, 0, 255)), dtype=np.uint8)
+            duration = self._testColormap(data, self.COLORMAPS['red 256'],
+                                          None, None, result, isLog10=True)
+            self._log('All +/-Inf', 'red 256', dtype, len(data), (None, None),
+                      duration)
+
+            # Some +/-Inf
+            data = np.array((float('inf'), 0., float('-inf'), -10.),
+                            dtype=dtype)
+            result = np.array(((255, 0, 0, 255),
+                               (0, 0, 0, 255),
+                               (0, 0, 0, 255),
+                               (0, 0, 0, 255)), dtype=np.uint8)
+            duration = self._testColormap(data, self.COLORMAPS['red 256'],
+                                          None, None, result, isLog10=True)
+            self._log('Some +/-Inf', 'red 256', dtype, len(data), (None, None),
+                      duration)
 
 
 # main ########################################################################
