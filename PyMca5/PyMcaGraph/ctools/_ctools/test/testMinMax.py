@@ -35,8 +35,8 @@ class TestMinMax(unittest.TestCase):
 
     def _log(self, *args):
         """Logging used by test for debugging."""
-        # pass
-        print(args)
+        pass
+        # print(args)
 
     @staticmethod
     def _minPos(data):
@@ -72,7 +72,6 @@ class TestMinMax(unittest.TestCase):
             self.assertEqual(minPositive, minPositiveNumpy)
         self.assertEqual(max_, maxNumpy)
 
-    # @unittest.skip("")
     def testMinMaxOnly(self):
         """Test C minMax vs Numpy min/max for different data types and sizes.
         """
@@ -85,7 +84,6 @@ class TestMinMax(unittest.TestCase):
                 data = np.arange(size, 0, -1, dtype=dtype)
                 self._testMinMaxVsNumpy(data, False)
 
-    # @unittest.skip("")
     def testMinMax(self):
         """Test C minMax and min positive vs Numpy.
         """
@@ -100,7 +98,6 @@ class TestMinMax(unittest.TestCase):
                 data = np.arange(size, 0, -1, dtype=dtype)
                 self._testMinMaxVsNumpy(data)
 
-    # @unittest.skip("")
     def testMinMinPosMaxSomeNegative(self):
         """Test C minMax and min positive vs Numpy with some negative data.
         """
@@ -111,7 +108,6 @@ class TestMinMax(unittest.TestCase):
                 data = np.arange(-int(size/2.), size, dtype=dtype)
                 self._testMinMaxVsNumpy(data)
 
-    # @unittest.skip("")
     def testMinMinPosMaxAllNegative(self):
         """Test C minMax and min positive vs Numpy with all negative data.
         """
@@ -122,7 +118,6 @@ class TestMinMax(unittest.TestCase):
                 data = np.arange(-size, 0, dtype=dtype)
                 self._testMinMaxVsNumpy(data)
 
-    # @unittest.skip("")
     def testMinMaxNoData(self):
         """Test C minMax and min positive with no data.
         """
@@ -136,7 +131,6 @@ class TestMinMax(unittest.TestCase):
             with self.assertRaises(ValueError):
                 ctools.minMax(data, minPositive=True)
 
-    # @unittest.skip("")
     def testMinMaxNan(self):
         """Test C minMax and min positive with NaN.
         """
@@ -170,7 +164,6 @@ class TestMinMax(unittest.TestCase):
             data = np.array((1.0, float('nan'), -1.0), dtype=dtype)
             self._testMinMaxVsNumpy(data)
 
-    # @unittest.skip("")
     def testMinMaxInf(self):
         """Test C minMax and min positive with Inf.
         """

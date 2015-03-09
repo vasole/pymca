@@ -35,15 +35,17 @@ fastLog10(double value);
  * The index in the colormap is computed using casting and not rounding.
  * It provides equally spaced bins even on the edges (as opposed to rounding).
  *
+ * startValue and endValue can be equal or startValue > endValue
+ *
  * @param data Pointer to the data to convert to colormap.
  * @param type Bit field describing the data type.
  * @param length Number of elements in data.
- * @param min Data value to convert to the minimum of the colormap.
- * @param max Data value to convert to the maximum of the colormap.
+ * @param startValue Data value to convert to the first color of the colormap.
+ * @param endValue Data value to convert to the last color of the colormap.
+ * @param isLog10Mapping True for log10 mapping, False for linear mapping.
  * @param RGBAColormap Pointer the RGBA colormap.
  *        It is a contiguous array of RGBA values (1 byte per channel).
  * @param colormapLength The number of values in the colormap.
- * @param isLog10Mapping True for log10 mapping, False for linear mapping.
  * @param RGBPixmapOut Pointer to the pixmap to fill.
  *        It is a contiguous memory block of RGBA pixels (1 byte per channel).
  *        The size of the pixmap MUST be at least 4 * length bytes.
@@ -52,11 +54,11 @@ void
 colormapFillPixmap(void * data,
                    unsigned int type,
                    unsigned int length,
-                   double min,
-                   double max,
+                   double startValue,
+                   double endValue,
+                   unsigned int isLog10Mapping,
                    uint8_t * RGBAColormap,
                    unsigned int colormapLength,
-                   unsigned int isLog10Mapping,
                    uint8_t * RGBAPixmapOut);
 
 #endif /*__Colormap_H__*/

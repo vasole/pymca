@@ -92,32 +92,38 @@ fastLog10(double value)
 static void fillPixmap_ ## TYPE(\
     TYPE * data,\
     unsigned int length,\
-    double min,\
-    double max,\
+    double startValue,\
+    double endValue,\
     unsigned int isLog10Mapping,\
     uint32_t * colormap,\
     unsigned int colormapLength,\
     uint32_t * pixmapOut)\
 {\
+    double min, max;\
     unsigned int cmapMax = colormapLength - 1;\
+\
+    min = (startValue < endValue) ? startValue : endValue;\
+    max = (startValue < endValue) ? endValue : startValue;\
 \
     if (isLog10Mapping) {\
         unsigned int index;\
-        double minLog, maxLog, scale;\
+        double startLog, endLog, scale;\
 \
-        if (min <= 0.0 || max <= 0.0) {\
+        if (startValue <= 0.0 || endValue <= 0.0) {\
+            startValue = 0.0;\
+            endValue = 0.0;\
             min = 0.0;\
             max = 0.0;\
-            minLog = 0.0;\
-            maxLog = 0.0;\
+            startLog = 0.0;\
+            endLog = 0.0;\
         }\
         else {\
-            maxLog = fastLog10(max);\
-            minLog = fastLog10(min);\
+            startLog = fastLog10(startValue);\
+            endLog = fastLog10(endValue);\
         }\
 \
-        if (maxLog > minLog) {\
-            scale = ((double) colormapLength) / (maxLog - minLog);\
+        if (startLog != endLog) {\
+            scale = ((double) colormapLength) / (endLog - startLog);\
         }\
         else {\
             scale = 0.0; /* Should never be used */\
@@ -134,7 +140,7 @@ static void fillPixmap_ ## TYPE(\
                 cmapIndex = 0;\
             }\
             else {\
-                cmapIndex = (unsigned int) (scale * (fastLog10(value) - minLog));\
+                cmapIndex = (unsigned int) (scale * (fastLog10(value) - startLog));\
                 if (cmapIndex > cmapMax) {\
                     cmapIndex = cmapMax;\
                 }\
@@ -147,8 +153,8 @@ static void fillPixmap_ ## TYPE(\
         unsigned int index;\
         double scale;\
 \
-        if (max > min) {\
-            scale = ((double) colormapLength) / ((double) (max - min));\
+        if (startValue != endValue) {\
+            scale = ((double) colormapLength) / (endValue - startValue);\
         }\
         else {\
             scale = 0.0; /* Should never be used */\
@@ -165,7 +171,7 @@ static void fillPixmap_ ## TYPE(\
                 cmapIndex = 0;\
             }\
             else {\
-                cmapIndex = (unsigned int) (scale * (value - min));\
+                cmapIndex = (unsigned int) (scale * (value - startValue));\
                 if (cmapIndex > cmapMax) {\
                     cmapIndex = cmapMax;\
                 }\
@@ -214,8 +220,8 @@ FILL_PIXMAP_DEFINITION(int64_t)
 static void \
 fillPixmapWithLUT_ ## TYPE(TYPE * data,\
     unsigned int length,\
-    double min,\
-    double max,\
+    double startValue,\
+    double endValue,\
     unsigned int isLog10Mapping,\
     uint32_t * colormap,\
     unsigned int colormapLength,\
@@ -233,8 +239,8 @@ fillPixmapWithLUT_ ## TYPE(TYPE * data,\
 \
     fillPixmap_ ## TYPE(indices,\
         TYPE_NBELEM,\
-        min,\
-        max,\
+        startValue,\
+        endValue,\
         isLog10Mapping,\
         colormap,\
         colormapLength,\
@@ -260,8 +266,8 @@ FILL_PIXMAP_WITH_LUT_DEFINITION(uint16_t, 0, 65536)
 #define CALL_FILL_PIXMAP(TYPE)\
     fillPixmap_ ## TYPE((TYPE *) data,\
         length,\
-        min,\
-        max,\
+        startValue,\
+        endValue,\
         isLog10Mapping,\
         colormap,\
         colormapLength,\
@@ -270,8 +276,8 @@ FILL_PIXMAP_WITH_LUT_DEFINITION(uint16_t, 0, 65536)
 #define CALL_FILL_PIXMAP_WITH_LUT(TYPE)\
     fillPixmapWithLUT_ ## TYPE((TYPE *) data,\
         length,\
-        min,\
-        max,\
+        startValue,\
+        endValue,\
         isLog10Mapping,\
         colormap,\
         colormapLength,\
@@ -281,11 +287,11 @@ void
 colormapFillPixmap(void * data,
                    unsigned int type,
                    unsigned int length,
-                   double min,
-                   double max,
+                   double startValue,
+                   double endValue,
+                   unsigned int isLog10Mapping,
                    uint8_t * RGBAColormap,
                    unsigned int colormapLength,
-                   unsigned int isLog10Mapping,
                    uint8_t * RGBAPixmapOut)
 {
     /* Convert pointers to uint32_t to copy the 4 RGBA uint8_t at once. */

@@ -87,9 +87,9 @@ def dataToRGBAColormap(data,
                            c_dataSize,
                            c_min,
                            c_max,
+                           isLog10Mapping,
                            &c_colormap[0, 0],
                            c_colormapLength,
-                           isLog10Mapping,
                            &c_pixmap[0, 0])
 
     pixmap.shape = data.shape + (4,)

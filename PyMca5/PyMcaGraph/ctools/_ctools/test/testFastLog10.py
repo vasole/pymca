@@ -27,8 +27,8 @@ class TestFastLog10(unittest.TestCase):
     @staticmethod
     def _log(*args):
         """Logging used by test for debugging."""
-        #pass
-        print(args)
+        pass
+        # print(args)
 
     def testReturnDefined(self):
         """Test specific values."""
