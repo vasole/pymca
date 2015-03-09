@@ -1,3 +1,9 @@
+VERSION 5.0.2
+
+Fast XRF fitting: Correct concentrations calculation.
+
+Make license information detectable by licensecheck.
+
 VERSION 5.0.1
 
 Fast XRF fitting: Give the user the option not to check for negative peak
