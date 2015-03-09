@@ -76,7 +76,7 @@ class FastXRFLinearFit(object):
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
         :param concentrations: 0 Means no calculation, 1 Calculate them
         :param refit: if False, no check for negative results. Default is True.
-        :return: A dictionnary with the parameters, uncertainties and names as keys.
+        :return: A dictionnary with the parameters, uncertainties, concentrations and names as keys.
         """
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
@@ -535,12 +535,14 @@ class FastXRFLinearFit(object):
                         continue
                     outputDict['names'].append("C(%s)" % group)
                     massFractions[counter] = results[nFreeBackgroundParameters+i] *\
-                        (concentrationsResult['mass fraction'][group]/fitresult['result'][param]['fitarea'])
+                        (concentrationsResult['mass fraction'][group]/fitresult['result'][group]['fitarea'])
+                    counter += 1
                     if len(concentrationsResult['layerlist']) > 1:
                         for layer in concentrationsResult['layerlist']:
                             outputDict['names'].append("C(%s)-%s" % (group, layer))
                             massFractions[counter] = results[nFreeBackgroundParameters+i] *\
-                        (concentrationsResult[layer]['mass fraction'][group]/fitresult['result'][param]['fitarea'])
+                        (concentrationsResult[layer]['mass fraction'][group]/fitresult['result'][group]['fitarea'])
+                            counter += 1
             else:
                 if DEBUG:
                     print("With reference")
@@ -565,25 +567,24 @@ class FastXRFLinearFit(object):
                             print("skept %s" % group)
                         continue
                     outputDict['names'].append("C(%s)" % group)
-                    if i == idx:
-                        continue
                     goodI = results[nFreeBackgroundParameters+i] > 0
                     tmp = results[nFreeBackgroundParameters+idx][goodI]
-                    massFractions[i][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
+                    massFractions[counter][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
                                 ((referenceArea/fitresult['result'][group]['fitarea']) *\
                                 (concentrationsResult['mass fraction'][group]))
+                    counter += 1
                     if len(concentrationsResult['layerlist']) > 1:
                         for layer in concentrationsResult['layerlist']:
                             outputDict['names'].append("C(%s)-%s" % (group, layer))
-                            massFractions[i][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
+                            massFractions[counter][goodI] = (results[nFreeBackgroundParameters+i][goodI]/(tmp + (tmp == 0))) *\
                                 ((referenceArea/fitresult['result'][group]['fitarea']) *\
                                 (concentrationsResult[layer]['mass fraction'][group]))
+                            counter += 1
             outputDict['concentrations'] = massFractions
             if DEBUG:
                 t = time.time() - t0
                 print("Calculation of concentrations elapsed = %f" % t)
                 t0 = time.time()
-
             ####################################################
         return outputDict
 
@@ -591,13 +592,20 @@ if __name__ == "__main__":
     DEBUG = True
     import glob
     from PyMca5.PyMca import EDFStack
-    if 0:
-        #configurationFile = "G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
-        configurationFile = "G4-4720eV-WEIGHT-NO_Constant-batch.cfg"
+    outputDir = None
+    refit = False
+    if 1:
+        #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
+        #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
+        configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-SINGLELAYER-batch.cfg"
+        configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-SINGLELAYER-Auto-batch.cfg"
+        #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-MULTILAYER-batch.cfg"
+        configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-MULTILAYER-Pb-batch.cfg"
         fileList = glob.glob("E:\DATA\COTTE\CH1777\G4_mca_0012_0000_*.edf")
-        concentrations = False
+        concentrations = True
         dataStack = EDFStack.EDFStack(filelist=fileList)
-    elif 1:
+        outputDir = "E:\\CHTEST\\"
+    elif 0:
         configurationFile = "E:\DATA\COTTE\CH09\WithLeadBatch.cfg"
         fileList = glob.glob("E:\DATA\COTTE\CH09\ch09__mca_0005_0000_*.edf")
         concentrations = False
@@ -618,6 +626,13 @@ if __name__ == "__main__":
     fastFit.setFitConfigurationFile(configurationFile)
     print("Main configuring Elapsed = % s " % (time.time() - t0))
     results = fastFit.fitMultipleSpectra(y=dataStack,
+                                         refit=refit,
                                          concentrations=concentrations)
     print("Total Elapsed = % s " % (time.time() - t0))
+    if outputDir is not None:
+        i = 0
+        for name in results["names"]:
+            if name.startswith("C("):
+                print("name = ", name, " max = ", results["concentrations"][i].max())
+                i += 1
 
