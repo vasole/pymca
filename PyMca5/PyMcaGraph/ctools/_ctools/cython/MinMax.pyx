@@ -55,6 +55,10 @@ _NUMPY_TO_TYPE_DESC = {
 def minMax(np.ndarray data, bint minPositive=False):
     """Get min, max and optionally min positive of data.
 
+    NaNs are ignored while computing min/max.
+    If all data is NaNs, returned min/max are NaNs and
+    returned minPositive is None.
+
     :param np.ndarray data: Array of data
     :param bool minPositive: Wheither to compute min positive or not.
     :returns: (min, max) or (min, minPositive, max) if minPositive is True

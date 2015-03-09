@@ -26,11 +26,29 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+#include <math.h>
+
 #include "MinMax.h"
 #include "Types.h"
 
+/* To support NaN, for floating type, we skip all first NaN data
+ * If all data is NaNs: min/max are NaNs
+ * Else min/max are computed ignoring NaNs,
+ * as NaN is never < or > to a number.
+ */
+#define INIT_SKIP_NAN(TYPE) \
+    for (; curPtr < endPtr; curPtr++) {\
+        TYPE value = *curPtr;\
+        if (!isnan(value)) {\
+            tmpMin = value;\
+            tmpMax = value;\
+            break;\
+        }\
+    }
 
-#define GET_MINMAX_DEFINITION(TYPE)\
+#define INIT_NOOP(TYPE)
+
+#define GET_MINMAX_DEFINITION(TYPE, INIT_CODE)\
 static void getMinMax_ ## TYPE(TYPE * data,\
                  unsigned int length,\
                  double * min,\
@@ -40,13 +58,15 @@ static void getMinMax_ ## TYPE(TYPE * data,\
     TYPE tmpMin = data[0];\
     TYPE tmpMax = tmpMin;\
     TYPE * endPtr = &data[length];\
-    TYPE * curPtr;\
+    TYPE * curPtr = data;\
+\
+    INIT_CODE(TYPE)\
 \
     if (minPos != 0) {\
         TYPE tmpMinPos = (TYPE) 0;\
 \
         /* First loop until tmpMinPos is initialized */\
-        for (curPtr = data; curPtr < endPtr; curPtr++) {\
+        for (; curPtr < endPtr; curPtr++) {\
             TYPE value = *curPtr;\
             if (value < tmpMin) {\
                 tmpMin = value;\
@@ -77,7 +97,7 @@ static void getMinMax_ ## TYPE(TYPE * data,\
         *minPos = (double) tmpMinPos;\
     }\
     else {\
-        for (curPtr = data; curPtr < endPtr; curPtr++) {\
+        for (; curPtr < endPtr; curPtr++) {\
             TYPE value = *curPtr;\
             if (value < tmpMin) {\
                 tmpMin = value;\
@@ -93,20 +113,20 @@ static void getMinMax_ ## TYPE(TYPE * data,\
 }
 
 
-GET_MINMAX_DEFINITION(float)
-GET_MINMAX_DEFINITION(double)
+GET_MINMAX_DEFINITION(float, INIT_SKIP_NAN)
+GET_MINMAX_DEFINITION(double, INIT_SKIP_NAN)
 
-GET_MINMAX_DEFINITION(int8_t)
-GET_MINMAX_DEFINITION(uint8_t)
+GET_MINMAX_DEFINITION(int8_t, INIT_NOOP)
+GET_MINMAX_DEFINITION(uint8_t, INIT_NOOP)
 
-GET_MINMAX_DEFINITION(int16_t)
-GET_MINMAX_DEFINITION(uint16_t)
+GET_MINMAX_DEFINITION(int16_t, INIT_NOOP)
+GET_MINMAX_DEFINITION(uint16_t, INIT_NOOP)
 
-GET_MINMAX_DEFINITION(int32_t)
-GET_MINMAX_DEFINITION(uint32_t)
+GET_MINMAX_DEFINITION(int32_t, INIT_NOOP)
+GET_MINMAX_DEFINITION(uint32_t, INIT_NOOP)
 
-GET_MINMAX_DEFINITION(int64_t)
-GET_MINMAX_DEFINITION(uint64_t)
+GET_MINMAX_DEFINITION(int64_t, INIT_NOOP)
+GET_MINMAX_DEFINITION(uint64_t, INIT_NOOP)
 
 
 #define CALL_GET_MINMAX(TYPE)\
