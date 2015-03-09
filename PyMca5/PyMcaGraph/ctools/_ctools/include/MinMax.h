@@ -20,7 +20,7 @@
 void
 getMinMax(void * data,
           unsigned int type,
-          unsigned int length,
+          unsigned long length,
           double * minOut,
           double * minPositiveOut,
           double * maxOut);

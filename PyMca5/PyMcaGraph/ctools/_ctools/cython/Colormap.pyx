@@ -52,7 +52,7 @@ def dataToRGBAColormap(data,
 
     cdef np.ndarray c_data = np.ascontiguousarray(data)
     cdef void * c_dataPtr = c_data.data  # &c_data[0] needs dim
-    cdef unsigned int c_dataSize = c_data.size
+    cdef unsigned long c_dataSize = c_data.size
     cdef unsigned int c_dataItemSize = c_data.itemsize
 
     cdef unsigned char[:, :] c_colormap = colormap

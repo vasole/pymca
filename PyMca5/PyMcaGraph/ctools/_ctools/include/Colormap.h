@@ -53,7 +53,7 @@ fastLog10(double value);
 void
 colormapFillPixmap(void * data,
                    unsigned int type,
-                   unsigned int length,
+                   unsigned long length,
                    double startValue,
                    double endValue,
                    unsigned int isLog10Mapping,

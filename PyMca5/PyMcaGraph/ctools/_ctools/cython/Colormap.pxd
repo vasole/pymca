@@ -3,7 +3,7 @@ ctypedef unsigned char uint8_t  # TODO use libc.stdint when available
 cdef extern from "Colormap.h":
     void colormapFillPixmap(void * data,
                             unsigned int type,
-                            unsigned int length,
+                            unsigned long length,
                             double startValue,
                             double endValue,
                             unsigned int isLog10Mapping,

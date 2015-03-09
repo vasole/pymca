@@ -50,7 +50,7 @@
 
 #define GET_MINMAX_DEFINITION(TYPE, INIT_CODE)\
 static void getMinMax_ ## TYPE(TYPE * data,\
-                 unsigned int length,\
+                 unsigned long length,\
                  double * min,\
                  double * minPos,\
                  double * max)\
@@ -140,7 +140,7 @@ GET_MINMAX_DEFINITION(uint64_t, INIT_NOOP)
 void
 getMinMax(void * data,
           unsigned int type,
-          unsigned int length,
+          unsigned long length,
           double * minOut,
           double * minPosOut,
           double * maxOut)

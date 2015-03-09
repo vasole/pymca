@@ -72,7 +72,7 @@ def minMax(np.ndarray data, bint minPositive=False):
 
     cdef np.ndarray c_data = np.ascontiguousarray(data)
     cdef void * c_dataPtr = c_data.data
-    cdef unsigned int c_dataSize = c_data.size
+    cdef unsigned long c_dataSize = c_data.size
 
     if c_dataSize == 0:
         raise ValueError("zero-size array")

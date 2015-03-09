@@ -91,7 +91,7 @@ fastLog10(double value)
 #define FILL_PIXMAP_DEFINITION(TYPE)\
 static void fillPixmap_ ## TYPE(\
     TYPE * data,\
-    unsigned int length,\
+    unsigned long length,\
     double startValue,\
     double endValue,\
     unsigned int isLog10Mapping,\
@@ -106,7 +106,7 @@ static void fillPixmap_ ## TYPE(\
     max = (startValue < endValue) ? endValue : startValue;\
 \
     if (isLog10Mapping) {\
-        unsigned int index;\
+        unsigned long index;\
         double startLog, endLog, scale;\
 \
         if (startValue <= 0.0 || endValue <= 0.0) {\
@@ -150,7 +150,7 @@ static void fillPixmap_ ## TYPE(\
         }\
     }\
     else {\
-        unsigned int index;\
+        unsigned long index;\
         double scale;\
 \
         if (startValue != endValue) {\
@@ -219,7 +219,7 @@ FILL_PIXMAP_DEFINITION(int64_t)
 #define FILL_PIXMAP_WITH_LUT_DEFINITION(TYPE, TYPE_MIN, TYPE_NBELEM) \
 static void \
 fillPixmapWithLUT_ ## TYPE(TYPE * data,\
-    unsigned int length,\
+    unsigned long length,\
     double startValue,\
     double endValue,\
     unsigned int isLog10Mapping,\
@@ -227,7 +227,7 @@ fillPixmapWithLUT_ ## TYPE(TYPE * data,\
     unsigned int colormapLength,\
     uint32_t * pixmapOut)\
 {\
-    unsigned int index;\
+    unsigned long index;\
     uint32_t colorLUT[TYPE_NBELEM];\
     TYPE indices[TYPE_NBELEM];\
 \
@@ -286,7 +286,7 @@ FILL_PIXMAP_WITH_LUT_DEFINITION(uint16_t, 0, 65536)
 void
 colormapFillPixmap(void * data,
                    unsigned int type,
-                   unsigned int length,
+                   unsigned long length,
                    double startValue,
                    double endValue,
                    unsigned int isLog10Mapping,
