@@ -32,18 +32,19 @@ _NUMPY_TO_TYPE_DESC = {
 @cython.wraparound(False)
 def dataToRGBAColormap(data,
                        np.ndarray[np.uint8_t, ndim=2, mode="c"] colormap,
-                       dataMin, dataMax,
+                       startValue, endValue,
                        bint isLog10Mapping=False):
     """Compute a pixmap by applying a colormap to data.
 
     :param np.ndarray data: Array of data value to convert to pixmap.
     :param np.ndarray colormap: palette to use as colormap as an array of
                                 RGBA color.
-    :param dataMin: The min value to map to the first color of the colormap.
-    :param dataMax: The max value to map to the last color of the colormap.
-    :param bool isLog10Mapping: False for linear mapping, True for log mapping.
-    :returns: The corresponding pixmap of RGBA pixel.
-    :rtype: Array of 4 uint8 with same dimensions as data
+    :param startValue: The value to map to the first color of the colormap.
+    :param endValue: The value to map to the last color of the colormap.
+    :param bool isLog10Mapping: The mapping: False for linear, True for log10.
+    :returns: The corresponding pixmap of RGBA pixels as an array of 4 uint8
+              with same dimensions as data and used min and max.
+    :rtype: A tuple : (pixmap , (usedMin, usedMax)).
     """
     #Convert float16 to float32
     if data.dtype.str[1:] == 'f2':
@@ -62,38 +63,38 @@ def dataToRGBAColormap(data,
 
     cdef unsigned int c_type = _NUMPY_TO_TYPE_DESC[data.dtype.str[1:]]
 
-    cdef double c_min, c_minExtra, c_max
-    if dataMin is None or dataMax is None:
+    cdef double c_start, c_startExtra, c_end
+    if startValue is None or endValue is None:
         if isLog10Mapping:
             with nogil:
                 getMinMax(c_dataPtr, c_type, c_dataSize,
-                          &c_minExtra, &c_min, &c_max)
+                          &c_startExtra, &c_start, &c_end)
         else:
             with nogil:
                 getMinMax(c_dataPtr, c_type, c_dataSize,
-                          &c_min, NULL, &c_max)
+                          &c_start, NULL, &c_end)
 
-        if dataMin is not None:
-            c_min = dataMin
-        if dataMax is not None:
-            c_max = dataMax
+        if startValue is not None:
+            c_start = startValue
+        if endValue is not None:
+            c_end = endValue
     else:
-        c_min = dataMin
-        c_max = dataMax
+        c_start = startValue
+        c_end = endValue
 
     with nogil:
         colormapFillPixmap(c_dataPtr,
                            c_type,
                            c_dataSize,
-                           c_min,
-                           c_max,
+                           c_start,
+                           c_end,
                            isLog10Mapping,
                            &c_colormap[0, 0],
                            c_colormapLength,
                            &c_pixmap[0, 0])
 
     pixmap.shape = data.shape + (4,)
-    return pixmap
+    return pixmap, (c_start, c_end)
 
 def fastLog10(double value):
     return _fastLog10(value)

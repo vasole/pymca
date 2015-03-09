@@ -14,6 +14,7 @@ from PyMca5 import spslut
 
 # TODOs:
 # what to do with max < min: as SPS LUT or also invert outside boundaries?
+# test usedMin and usedMax
 # benchmark
 
 
@@ -137,7 +138,11 @@ class _TestColormap(unittest.TestCase):
         """Test pixmap built with C code against SPS LUT if possible,
         else against Python control code."""
         startTime = time.time()
-        pixmap = ctools.dataToRGBAColormap(data, colormap, start, end, isLog10)
+        pixmap, (usedMin, usedMax) = ctools.dataToRGBAColormap(data,
+                                                               colormap,
+                                                               start,
+                                                               end,
+                                                               isLog10)
         duration = time.time() - startTime
 
         # Compare with result
