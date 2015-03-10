@@ -37,8 +37,8 @@
  * as NaN is never < or > to a number.
  */
 #define INIT_SKIP_NAN(TYPE) \
-    for (; curPtr < endPtr; curPtr++) {\
-        TYPE value = *curPtr;\
+    for (; index < length; index++) {\
+        TYPE value = data[index];\
         if (!isnan(value)) {\
             tmpMin = value;\
             tmpMax = value;\
@@ -57,8 +57,7 @@ static void getMinMax_ ## TYPE(TYPE * data,\
 {\
     TYPE tmpMin = data[0];\
     TYPE tmpMax = tmpMin;\
-    TYPE * endPtr = &data[length];\
-    TYPE * curPtr = data;\
+    unsigned long index = 0;\
 \
     INIT_CODE(TYPE)\
 \
@@ -66,45 +65,32 @@ static void getMinMax_ ## TYPE(TYPE * data,\
         TYPE tmpMinPos = (TYPE) 0;\
 \
         /* First loop until tmpMinPos is initialized */\
-        for (; curPtr < endPtr; curPtr++) {\
-            TYPE value = *curPtr;\
-            if (value < tmpMin) {\
-                tmpMin = value;\
-            }\
-            else if (value > tmpMax) {\
-                tmpMax = value;\
-            }\
+        for (; index < length; index++) {\
+            TYPE value = data[index];\
+            tmpMin = (value < tmpMin) ? value : tmpMin;\
+            tmpMax = (value > tmpMax) ? value : tmpMax;\
             if (value > (TYPE) 0) {\
                 tmpMinPos = value;\
                 break;\
             }\
+            /*tmpMinPos = (value > (TYPE) 0) ? value : tmpMinPos;*/\
         }\
 \
         /* Second loop with tmpMinPos initialized */\
-        for (; curPtr < endPtr; curPtr++) {\
-            TYPE value = *curPtr;\
-            if (value < tmpMin) {\
-                tmpMin = value;\
-            }\
-            else if (value > tmpMax) {\
-                tmpMax = value;\
-            }\
-            if (value > (TYPE) 0 && value < tmpMinPos) {\
-                tmpMinPos = value;\
-            }\
+        for (; index < length; index++) {\
+            TYPE value = data[index];\
+            tmpMin = (value < tmpMin) ? value : tmpMin;\
+            tmpMax = (value > tmpMax) ? value : tmpMax;\
+            tmpMinPos = (value > (TYPE) 0 && value < tmpMinPos) ? value : tmpMinPos;\
         }\
 \
         *minPos = (double) tmpMinPos;\
     }\
     else {\
-        for (; curPtr < endPtr; curPtr++) {\
-            TYPE value = *curPtr;\
-            if (value < tmpMin) {\
-                tmpMin = value;\
-            }\
-            else if (value > tmpMax) {\
-                tmpMax = value;\
-            }\
+        for (; index < length; index++) {\
+            TYPE value = data[index];\
+            tmpMin = (value < tmpMin) ? value : tmpMin;\
+            tmpMax = (value > tmpMax) ? value : tmpMax;\
         }\
     }\
 \
