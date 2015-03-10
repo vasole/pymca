@@ -74,6 +74,9 @@ fastLog10(double value);
  * @param RGBAColormap Pointer the RGBA colormap.
  *        It is a contiguous array of RGBA values (1 byte per channel).
  * @param colormapLength The number of values in the colormap.
+ * @param RGBANaNColor Pointer to 4 bytes describing the RGBA color
+ *        to use for NaNs.
+ *        If NULL, then the first color of the colormap is used.
  * @param RGBPixmapOut Pointer to the pixmap to fill.
  *        It is a contiguous memory block of RGBA pixels (1 byte per channel).
  *        The size of the pixmap MUST be at least 4 * length bytes.
@@ -87,6 +90,7 @@ colormapFillPixmap(void * data,
                    unsigned int isLog10Mapping,
                    uint8_t * RGBAColormap,
                    unsigned int colormapLength,
+                   uint8_t * RGBANaNColor,
                    uint8_t * RGBAPixmapOut);
 
 #endif /*__Colormap_H__*/
