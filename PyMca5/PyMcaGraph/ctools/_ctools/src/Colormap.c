@@ -123,9 +123,13 @@ fastLog10(double value)
  * - For the sake of simplicity, if min or max <= 0, the pixmap is filled
  *   with the last color of the colormap.
  *
+ * For floating types, the nanColor is used for NaNs.
+ *
  * @param TYPE The type of the input data of the function
+ * @param FIRST_IN_LOOP Allow to inject code at the beginning of each loop.
+ *        Used to add isnan test for floating types.
  */
-#define FILL_PIXMAP_DEFINITION(TYPE)\
+#define FILL_PIXMAP_DEFINITION(TYPE, FIRST_IN_LOOP)\
 static void fillPixmap_ ## TYPE(\
     TYPE * data,\
     unsigned long length,\
@@ -134,6 +138,7 @@ static void fillPixmap_ ## TYPE(\
     unsigned int isLog10Mapping,\
     uint32_t * colormap,\
     unsigned int colormapLength,\
+    uint32_t nanColor,\
     uint32_t * pixmapOut)\
 {\
     double min, max;\
@@ -171,6 +176,8 @@ static void fillPixmap_ ## TYPE(\
             unsigned int cmapIndex;\
             double value = (double) data[index];\
 \
+            FIRST_IN_LOOP\
+\
             if (value >= max) {\
                 cmapIndex = cmapMax;\
             }\
@@ -203,6 +210,8 @@ static void fillPixmap_ ## TYPE(\
             unsigned int cmapIndex;\
             double value = (double) data[index];\
 \
+            FIRST_IN_LOOP\
+\
             if (value >= max) {\
                 cmapIndex = cmapMax;\
             }\
@@ -221,21 +230,29 @@ static void fillPixmap_ ## TYPE(\
     }\
 }
 
+/* Code to handle NaN color for floating type */
+#define HANDLE_NAN \
+    if (isnan(value)) {\
+        pixmapOut[index] = nanColor;\
+        continue;\
+    }
 
-FILL_PIXMAP_DEFINITION(float)
-FILL_PIXMAP_DEFINITION(double)
+#define NOOP
 
-FILL_PIXMAP_DEFINITION(uint8_t)
-FILL_PIXMAP_DEFINITION(int8_t)
+FILL_PIXMAP_DEFINITION(float, HANDLE_NAN)
+FILL_PIXMAP_DEFINITION(double, HANDLE_NAN)
 
-FILL_PIXMAP_DEFINITION(uint16_t)
-FILL_PIXMAP_DEFINITION(int16_t)
+FILL_PIXMAP_DEFINITION(uint8_t, NOOP)
+FILL_PIXMAP_DEFINITION(int8_t, NOOP)
 
-FILL_PIXMAP_DEFINITION(uint32_t)
-FILL_PIXMAP_DEFINITION(int32_t)
+FILL_PIXMAP_DEFINITION(uint16_t, NOOP)
+FILL_PIXMAP_DEFINITION(int16_t, NOOP)
 
-FILL_PIXMAP_DEFINITION(uint64_t)
-FILL_PIXMAP_DEFINITION(int64_t)
+FILL_PIXMAP_DEFINITION(uint32_t, NOOP)
+FILL_PIXMAP_DEFINITION(int32_t, NOOP)
+
+FILL_PIXMAP_DEFINITION(uint64_t, NOOP)
+FILL_PIXMAP_DEFINITION(int64_t, NOOP)
 
 
 /* Fill pixmap with LUT ******************************************************/
@@ -283,6 +300,7 @@ fillPixmapWithLUT_ ## TYPE(TYPE * data,\
         isLog10Mapping,\
         colormap,\
         colormapLength,\
+        0, /* NaN color is useless */\
         colorLUT);\
 \
     /* Fill pixmap using look-up table */\
@@ -311,6 +329,7 @@ FILL_PIXMAP_WITH_LUT_DEFINITION(uint16_t, 0, 65536)
         isLog10Mapping,\
         colormap,\
         colormapLength,\
+        nanColor, \
         pixmapOut)
 
 #define CALL_FILL_PIXMAP_WITH_LUT(TYPE)\
@@ -332,11 +351,15 @@ colormapFillPixmap(void * data,
                    unsigned int isLog10Mapping,
                    uint8_t * RGBAColormap,
                    unsigned int colormapLength,
+                   uint8_t * RGBANaNColor,
                    uint8_t * RGBAPixmapOut)
 {
     /* Convert pointers to uint32_t to copy the 4 RGBA uint8_t at once. */
     uint32_t * colormap = (uint32_t *) RGBAColormap;
     uint32_t * pixmapOut = (uint32_t *) RGBAPixmapOut;
+
+    /* Color for NaNs, only used for floating types */
+    uint32_t nanColor = 0;
 
     /* Choose implementation according to type, length and isLog10Mapping */
 
@@ -361,9 +384,15 @@ colormapFillPixmap(void * data,
     else { /* Generic approach */
         switch (type) {
             case (FLOATING | SIZE_32): /*float*/
+                /* If NaN color is NULL, use the first color of the colormap */
+                nanColor = (RGBANaNColor == 0) ? *((uint32_t *) RGBAColormap) :
+                                                 *((uint32_t *) RGBANaNColor);
                 CALL_FILL_PIXMAP(float);
                 break;
             case (FLOATING | SIZE_64): /*double*/
+                /* If NaN color is NULL, use the first color of the colormap */
+                nanColor = (RGBANaNColor == 0) ? *((uint32_t *) RGBAColormap) :
+                                                 *((uint32_t *) RGBANaNColor);
                 CALL_FILL_PIXMAP(double);
                 break;
 

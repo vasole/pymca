@@ -61,15 +61,20 @@ _NUMPY_TO_TYPE_DESC = {
 def dataToRGBAColormap(data,
                        np.ndarray[np.uint8_t, ndim=2, mode="c"] colormap,
                        startValue, endValue,
-                       bint isLog10Mapping=False):
+                       bint isLog10Mapping=False,
+                       nanColor=None):
     """Compute a pixmap by applying a colormap to data.
 
-    :param np.ndarray data: Array of data value to convert to pixmap.
-    :param np.ndarray colormap: palette to use as colormap as an array of
-                                RGBA color.
+    :param numpy.ndarray data: Array of data value to convert to pixmap.
+    :param numpy.ndarray colormap: palette to use as colormap as an array of
+                                   RGBA color.
     :param startValue: The value to map to the first color of the colormap.
     :param endValue: The value to map to the last color of the colormap.
     :param bool isLog10Mapping: The mapping: False for linear, True for log10.
+    :param nanColor: RGBA color to use for NaNs.
+                     If None, the first color of the colormap.
+    :type nanColor: None (the default) or a container that can be converted
+                    to a numpy.ndarray containing 4 elements in [0, 255].
     :returns: The corresponding pixmap of RGBA pixels as an array of 4 uint8
               with same dimensions as data and used min and max.
     :rtype: A tuple : (pixmap , (usedMin, usedMax)).
@@ -85,6 +90,14 @@ def dataToRGBAColormap(data,
 
     cdef unsigned char[:, :] c_colormap = colormap
     cdef unsigned int c_colormapLength = len(colormap)
+
+    cdef unsigned char * c_nanColorPtr
+    cdef np.ndarray c_nanColor
+    if nanColor is None:
+        c_nanColorPtr = NULL
+    else:
+        c_nanColor = np.asarray(nanColor, dtype=np.uint8, order='C')
+        c_nanColorPtr = <unsigned char *> c_nanColor.data
 
     pixmap = np.empty((data.size, 4), dtype=np.uint8)
     cdef unsigned char[:, :] c_pixmap = pixmap
@@ -119,6 +132,7 @@ def dataToRGBAColormap(data,
                            isLog10Mapping,
                            &c_colormap[0, 0],
                            c_colormapLength,
+                           c_nanColorPtr,
                            &c_pixmap[0, 0])
 
     pixmap.shape = data.shape + (4,)

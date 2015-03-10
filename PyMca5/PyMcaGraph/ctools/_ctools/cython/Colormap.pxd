@@ -37,6 +37,7 @@ cdef extern from "Colormap.h":
                             unsigned int isLog10Mapping,
                             uint8_t * RGBAColormap,
                             unsigned int colormapLength,
+                            uint8_t * RGBANaNColor,
                             uint8_t * RGBAPixmapOut) nogil
 
     void initFastLog10() nogil
