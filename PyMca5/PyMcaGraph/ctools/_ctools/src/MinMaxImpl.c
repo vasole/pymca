@@ -73,7 +73,6 @@ static void getMinMax_ ## TYPE(TYPE * data,\
                 tmpMinPos = value;\
                 break;\
             }\
-            /*tmpMinPos = (value > (TYPE) 0) ? value : tmpMinPos;*/\
         }\
 \
         /* Second loop with tmpMinPos initialized */\

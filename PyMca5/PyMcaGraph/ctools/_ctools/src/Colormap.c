@@ -31,6 +31,15 @@
 #include "Colormap.h"
 #include "Types.h"
 
+#ifdef _OPENMP
+#define PRAGMA_OMP(ompString) _Pragma(ompString)
+#else
+#define PRAGMA_OMP(ompString)
+#endif /* _OPEMMP */
+
+/* OpenMP parallel for if test is length >= 1024^2.
+ * This is an arbitrary value.
+ */
 
 /* Fast log ******************************************************************/
 
@@ -157,6 +166,7 @@ static void fillPixmap_ ## TYPE(\
             scale = 0.0; /* Should never be used */\
         }\
 \
+        PRAGMA_OMP("omp parallel for schedule(static) if (length > 1048576)")\
         for (index=0; index<length; index++) {\
             unsigned int cmapIndex;\
             double value = (double) data[index];\
@@ -188,6 +198,7 @@ static void fillPixmap_ ## TYPE(\
             scale = 0.0; /* Should never be used */\
         }\
 \
+        PRAGMA_OMP("omp parallel for schedule(static) if (length > 1048576)")\
         for (index=0; index<length; index++) {\
             unsigned int cmapIndex;\
             double value = (double) data[index];\
@@ -275,6 +286,7 @@ fillPixmapWithLUT_ ## TYPE(TYPE * data,\
         colorLUT);\
 \
     /* Fill pixmap using look-up table */\
+    PRAGMA_OMP("omp parallel for schedule(static) if (length > 1048576)")\
     for (index=0; index<length; index++) {\
         /* Revert offset for signed types */\
         pixmapOut[index] = colorLUT[data[index] - TYPE_MIN];\
