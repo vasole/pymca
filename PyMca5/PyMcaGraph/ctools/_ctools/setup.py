@@ -56,6 +56,8 @@ if sys.platform == 'win32':
     extra_compile_args = []
     extra_link_args = []
 else:
+    # OpenMP and auto-vectorization flags for Colormap and MinMax
+    # extra_compile_args = ['-fopenmp', '-ftree-vectorize']
     extra_compile_args = []
     extra_link_args = []
 
