@@ -4,7 +4,6 @@
 #    Project: Sift implementation in Python + OpenCL
 #             https://github.com/kif/sift_pyocl
 #
-
 """
 Contains a class for creating a plan, allocating arrays, compiling kernels and other things like that
 """
@@ -18,6 +17,8 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __date__ = "2013-06-13"
 __status__ = "beta"
 __license__ = """
+Copyright (c) J. Kieffer, European Synchrotron Radiation Facility
+
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without

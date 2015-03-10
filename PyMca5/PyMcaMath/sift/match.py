@@ -18,6 +18,8 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __date__ = "2013-07-23"
 __status__ = "beta"
 __license__ = """
+Copyright (c) J. Kieffer, European Synchrotron Radiation Facility
+
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without

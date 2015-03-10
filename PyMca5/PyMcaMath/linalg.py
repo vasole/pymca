@@ -1,30 +1,40 @@
-#    Copyright (c) 2008-2014 V.A. Sole, ESRF
+#/*##########################################################################
 #
-#   Permission to use and redistribute the source code or binary forms of
-#   this software and its documentation, with or without modification is
-#   hereby granted provided that the above notice of copyright, these
-#   terms of use, and the disclaimer of warranty below appear in the
-#   source code and documentation, and that none of the names of The
-#   European Synchrotron Radiation Facility, or the authors
-#   appear in advertising or endorsement of works derived from this
-#   software without specific prior written permission from all parties.
+# The PyMca X-Ray Fluorescence Toolkit
 #
-#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-#   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-#   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-#   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-#   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-#   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-#   SOFTWARE OR THE USE OR OTHER DEALINGS IN THIS SOFTWARE.
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
-import numpy
-__license__ = "BSD"
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+#############################################################################*/
 __author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import numpy
 __doc__ = """
 Similar function to the numpy lstsq function with a more rigorous uncertainty
 treatement besides other optimizations in view of simultaneously solving several
-equations of the form `a x = b`. Hopefully licensed under the same terms as
-numpy itself (BSD license).
+equations of the form `a x = b`.
 """
 
 # Linear Least Squares

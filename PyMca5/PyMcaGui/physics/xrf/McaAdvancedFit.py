@@ -1392,7 +1392,7 @@ class McaAdvancedFit(qt.QWidget):
                     if corrections[element][key]['total'] > 0.0:
                         value = corrections[element][key]['correction_factor'][-1]
                         if value != 1.0:
-                            text = "%s %s xrays multiple excitation factor = %.3f" % \
+                            text = "%s %s xrays multiple excitation factor = %.4f" % \
                                    (element, key, value)
                             self.logWidget.append(text)
 

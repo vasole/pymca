@@ -1,24 +1,25 @@
 #!/usr/bin/python
 #    Copyright (c) 2010 Matthew Newville, The University of Chicago
 #
-#   Permission to use and redistribute the source code or binary forms of
-#   this software and its documentation, with or without modification is
-#   hereby granted provided that the above notice of copyright, these
-#   terms of use, and the disclaimer of warranty below appear in the
-#   source code and documentation, and that none of the names of The
-#   University of Chicago, The University of Washington, or the authors
-#   appear in advertising or endorsement of works derived from this
-#   software without specific prior written permission from all parties.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 #
-#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-#   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-#   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-#   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-#   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-#   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-#   SOFTWARE OR THE USE OR OTHER DEALINGS IN THIS SOFTWARE.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 #
-__license__ = "BSD"
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+__license__ = "MIT"
 __author__ = "M. Newville - The University of Chicago"
 """
 Simple interface to M. River's Multi-Element MCA Data Format
