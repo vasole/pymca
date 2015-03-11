@@ -60,7 +60,7 @@ _NUMPY_TO_TYPE_DESC = {
 @cython.wraparound(False)
 def dataToRGBAColormap(data,
                        np.ndarray[np.uint8_t, ndim=2, mode="c"] colormap,
-                       startValue, endValue,
+                       startValue=None, endValue=None,
                        bint isLog10Mapping=False,
                        nanColor=None):
     """Compute a pixmap by applying a colormap to data.
