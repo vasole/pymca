@@ -2246,6 +2246,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         #http://wiki.scipy.org/Cookbook/Histograms
         # Non-linear axes
         #http://stackoverflow.com/questions/11488800/non-linear-axes-for-imshow-in-matplotlib
+        if legend is None:
+            legend = 'Unnamed image'
+
         if replace:
             self.clearImages()
         else:
@@ -2487,11 +2490,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         elif name == "temperature":
             return self.__temperatureCmap
         elif name == "red":
-            self.__redCmap
+            return self.__redCmap
         elif name == "green":
-            self.__greenCmap
+            return self.__greenCmap
         elif name == "blue":
-            self.__blueCmap
+            return self.__blueCmap
         else:
             # built in
             return cm.get_cmap(name)
