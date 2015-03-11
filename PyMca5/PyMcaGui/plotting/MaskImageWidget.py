@@ -944,7 +944,7 @@ class MaskImageWidget(qt.QWidget):
     def getYLabel(self):
         return self.graphWidget.getYLabel()
 
-    def buildAndConnectImageButtonBox(self, replace=True):
+    def buildAndConnectImageButtonBox(self, replace=True, multiple=False):
         # The IMAGE selection
         self.imageButtonBox = qt.QWidget(self)
         buttonBox = self.imageButtonBox
@@ -955,12 +955,20 @@ class MaskImageWidget(qt.QWidget):
         icon = qt.QIcon(qt.QPixmap(IconDict["rgb16"]))
         self.addImageButton.setIcon(icon)
         self.addImageButton.setText("ADD IMAGE")
+
+        self.imageButtonBoxLayout.addWidget(self.addImageButton)
+        if multiple:
+            self.addAllImageButton = qt.QPushButton(buttonBox)
+            self.addAllImageButton.setIcon(icon)
+            self.addAllImageButton.setText("ADD ALL")
+            self.imageButtonBoxLayout.addWidget(self.addAllImageButton)
+            self.addAllImageButton.clicked.connect( \
+                                self._addAllImageClicked)
+
         self.removeImageButton = qt.QPushButton(buttonBox)
         self.removeImageButton.setIcon(icon)
         self.removeImageButton.setText("REMOVE IMAGE")
-        self.imageButtonBoxLayout.addWidget(self.addImageButton)
         self.imageButtonBoxLayout.addWidget(self.removeImageButton)
-
 
         self.mainLayout.addWidget(buttonBox)
 
@@ -1681,6 +1689,14 @@ class MaskImageWidget(qt.QWidget):
     def _addImageClicked(self):
         ddict = {}
         ddict['event'] = "addImageClicked"
+        ddict['image'] = self.__imageData
+        ddict['title'] = self.getGraphTitle()
+        ddict['id'] = id(self)
+        self.emitMaskImageSignal(ddict)
+
+    def _addAllImageClicked(self):
+        ddict = {}
+        ddict['event'] = "addAllClicked"
         ddict['image'] = self.__imageData
         ddict['title'] = self.getGraphTitle()
         ddict['id'] = id(self)

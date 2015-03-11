@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -106,6 +106,9 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
             self.addImage(ddict['image'], ddict['title'])
+        elif ddict['event'] == "addAllClicked":
+            for i in range(len(ddict["images"])):
+                self.addImage(ddict['images'][i], ddict['titles'][i])            
         elif ddict['event'] == "removeImageClicked":
             self.removeImage(ddict['title'])
         elif ddict['event'] == "replaceImageClicked":
@@ -258,7 +261,8 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                                         usetab=True)
         if DEBUG:
             print("NNMAStackPlugin threadFinished. Widget created")
-        self.widget.buildAndConnectImageButtonBox()
+        self.widget.buildAndConnectImageButtonBox(replace=True,
+                                                  multiple=True)
         qt = StackPluginResultsWindow.qt
         self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
         self.widget.setStackPluginResults(images,

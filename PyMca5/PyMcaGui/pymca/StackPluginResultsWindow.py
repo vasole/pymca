@@ -131,6 +131,10 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             if self.spectrumGraphTitles is not None:
                 self.spectrumGraph.setGraphTitle(self.spectrumGraphTitles[index])
 
+    def buildAndConnectImageButtonBox(self, replace=True, multiple=False):
+        super(StackPluginResultsWindow, self).\
+                                buildAndConnectImageButtonBox(replace=replace,
+                                                            multiple=multiple)
 
     def showImage(self, index=0, moveslider=True):
         if self.imageList is None:
@@ -269,6 +273,13 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
             self.slider.setMaximum(len(self.imageList)-1)
             self.showImage(0)
 
+    def _addAllImageClicked(self):
+        ddict = {}
+        ddict['event'] = "addAllClicked"
+        ddict['images'] = self.imageList
+        ddict['titles'] = self.imageNames
+        ddict['id'] = id(self)
+        self.emitMaskImageSignal(ddict)
 
 def test():
     app = qt.QApplication([])
