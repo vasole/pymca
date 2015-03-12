@@ -2189,9 +2189,15 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
     def setXAxisLogarithmic(self, flag):
         if flag:
             self._logX = True
+            if hasattr(self.ax2, "get_visible"):
+                if self.ax2.get_visible():
+                    self.ax2.set_xscale('log')
             self.ax.set_xscale('log')
         else:
             self._logX = False
+            if hasattr(self.ax2, "get_visible"):
+                if self.ax2.get_visible():
+                    self.ax2.set_xscale('linear')
             self.ax.set_xscale('linear')
 
     def setYAxisAutoScale(self, flag=True):
@@ -2207,9 +2213,15 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         if flag:
             self._logY = True
+            if hasattr(self.ax2, "get_visible"):
+                if self.ax2.get_visible():
+                    self.ax2.set_yscale('log')
             self.ax.set_yscale('log')
         else:
             self._logY = False
+            if hasattr(self.ax2, "get_visible"):
+                if self.ax2.get_visible():
+                    self.ax2.set_yscale('linear')
             self.ax.set_yscale('linear')
 
     def addImage(self, data, legend=None, info=None,
