@@ -361,7 +361,9 @@ class StackBase(object):
         return self._finiteData
 
     def handleNonFiniteData(self):
-        pass
+        text  = "Your data contain infinite values or nans.\n"
+        text += "Pixels containing those values will be ignored."
+        print(text)
 
     def updateROIImages(self, ddict=None):
         if ddict is None:

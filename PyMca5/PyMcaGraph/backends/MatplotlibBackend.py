@@ -33,7 +33,6 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
 Matplotlib Plot backend.
 """
-import numpy as np
 from matplotlib import cbook
 # blitting enabled by default
 # it provides faster response at the cost of missing minor updates
@@ -43,6 +42,7 @@ from matplotlib import cbook
 BLITTING = True
 import numpy
 from numpy import vstack as numpyvstack
+from numpy import nanmax, nanmin
 import sys
 import types
 try:
@@ -160,8 +160,8 @@ I'm not aware of. Don't expect those to work either.
         self._full_res = A
         self._A = A
 
-        if self._A.dtype != np.uint8 and not np.can_cast(self._A.dtype,
-                                                         np.float):
+        if self._A.dtype != numpy.uint8 and not numpy.can_cast(self._A.dtype,
+                                                         numpy.float):
             raise TypeError("Image data can not convert to float")
 
         if (self._A.ndim not in (2, 3) or
@@ -220,8 +220,8 @@ resolution is matched to the eventual rendering."""
         x1 = min(self._full_res.shape[1], xlim[1] + 5)
         y0, y1, x0, x1 = [int(a) for a in [y0, y1, x0, x1]]
 
-        sy = int(max(1, min((y1 - y0) / 5., np.ceil(dy / ext[1]))))
-        sx = int(max(1, min((x1 - x0) / 5., np.ceil(dx / ext[0]))))
+        sy = int(max(1, min((y1 - y0) / 5., numpy.ceil(dy / ext[1]))))
+        sx = int(max(1, min((x1 - x0) / 5., numpy.ceil(dx / ext[0]))))
 
         # have we already calculated what we need?
         if (self._sx is not None) and (self._sy is not None):
@@ -1285,10 +1285,10 @@ class MatplotlibGraph(FigureCanvas):
                 y = line2d.get_ydata()
                 if not len(x) or not len(y):
                     continue
-                lineXMin = x.min()
-                lineXMax = x.max()
-                lineYMin = y.min()
-                lineYMax = y.max()
+                lineXMin = nanmin(x)
+                lineXMax = nanmax(x)
+                lineYMin = nanmin(y)
+                lineYMax = nanmax(y)
             if xmin is None:
                 xmin = lineXMin
                 xmax = lineXMax
@@ -1496,10 +1496,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                               'xlabel':xlabel,
                                               'ylabel':ylabel}
                 if hasattr(x, "min") and hasattr(y, "min"):
-                    curveList[-1]._plot_info['xmin'] = x.min()
-                    curveList[-1]._plot_info['xmax'] = x.max()
-                    curveList[-1]._plot_info['ymin'] = y.min()
-                    curveList[-1]._plot_info['ymax'] = y.max()
+                    curveList[-1]._plot_info['xmin'] = nanmin(x)
+                    curveList[-1]._plot_info['xmax'] = nanmax(x)
+                    curveList[-1]._plot_info['ymin'] = nanmin(y)
+                    curveList[-1]._plot_info['ymax'] = nanmax(y)
             # scatter plot is a collection
             curveList = [pathObject]
             if self._logY:
@@ -1542,10 +1542,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if hasattr(x, "min") and hasattr(y, "min"):
             # this is needed for scatter plots because I do not know
             # how to recover the data yet, it can speed up limits too
-            curveList[-1]._plot_info['xmin'] = x.min()
-            curveList[-1]._plot_info['xmax'] = x.max()
-            curveList[-1]._plot_info['ymin'] = y.min()
-            curveList[-1]._plot_info['ymax'] = y.max()
+            curveList[-1]._plot_info['xmin'] = nanmin(x)
+            curveList[-1]._plot_info['xmax'] = nanmax(x)
+            curveList[-1]._plot_info['ymin'] = nanmin(y)
+            curveList[-1]._plot_info['ymax'] = nanmax(y)
         if self._activeCurveHandling:
             if self._oldActiveCurve in self.ax.lines:
                 if self._oldActiveCurve.get_label() == legend:
@@ -1579,10 +1579,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if shape in ["line"]:
             return legend
         elif shape in ['rectangle']:
-            xMin = xView.min()
-            xMax = xView.max()
-            yMin = yView.min()
-            yMax = yView.max()
+            xMin = nanmin(xView)
+            xMax = nanmax(xView)
+            yMin = nanmin(yView)
+            yMax = nanmax(yView)
             w = xMax - xMin
             h = yMax - yMin
             item = Rectangle(xy=(xMin,yMin),
@@ -2189,9 +2189,15 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
     def setXAxisLogarithmic(self, flag):
         if flag:
             self._logX = True
+            if hasattr(self.ax2, "get_visible"):
+                if self.ax2.get_visible():
+                    self.ax2.set_xscale('log')
             self.ax.set_xscale('log')
         else:
             self._logX = False
+            if hasattr(self.ax2, "get_visible"):
+                if self.ax2.get_visible():
+                    self.ax2.set_xscale('linear')
             self.ax.set_xscale('linear')
 
     def setYAxisAutoScale(self, flag=True):
@@ -2207,9 +2213,15 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         """
         if flag:
             self._logY = True
+            if hasattr(self.ax2, "get_visible"):
+                if self.ax2.get_visible():
+                    self.ax2.set_yscale('log')
             self.ax.set_yscale('log')
         else:
             self._logY = False
+            if hasattr(self.ax2, "get_visible"):
+                if self.ax2.get_visible():
+                    self.ax2.set_yscale('linear')
             self.ax.set_yscale('linear')
 
     def addImage(self, data, legend=None, info=None,
@@ -2305,7 +2317,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 # extend = (xmin, xmax, ymax, ymin)
                 # instead of (xmin, xmax, ymin, ymax)
                 extent = (xmin, xmax, ymin, ymax)
-                if (shape[0] * shape[1]) > 5.0e5:
+                if (xmin < 0) or (xmax < 0) or (ymin < 0) or (ymax < 0):
+                    # for the time being not properly handled
+                    imageClass = AxesImage
+                elif (shape[0] * shape[1]) > 5.0e5:
                     imageClass = ModestImage
                 else:
                     imageClass = AxesImage
@@ -2334,7 +2349,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 else:
                     norm = Normalize(vmin, vmax)
                 # try as data
-                if (shape[0] * shape[1]) > 5.0e5:
+                if (xmin < 0) or (xmax < 0) or (ymin < 0) or (ymax < 0):
+                    # for the time being not properly handled
+                    imageClass = AxesImage
+                elif (shape[0] * shape[1]) > 5.0e5:
                     imageClass = ModestImage
                 else:
                     imageClass = AxesImage

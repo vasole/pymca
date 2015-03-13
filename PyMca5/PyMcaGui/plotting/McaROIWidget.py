@@ -524,7 +524,7 @@ class McaROITable(qt.QTableWidget):
             self.roidict[text]['from'] = value
         elif col ==3:
             self.roidict[text]['to'] = value
-        self.emitSelectionChangedSignal(row, col)
+        self._emitSelectionChangedSignal(row, col)
 
     def nameSlot(self, row, col):
         if col != 0: return

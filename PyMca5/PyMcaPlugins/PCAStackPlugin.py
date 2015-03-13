@@ -106,6 +106,9 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
             self.addImage(ddict['image'], ddict['title'])
+        elif ddict['event'] == "addAllClicked":
+            for i in range(len(ddict["images"])):
+                self.addImage(ddict['images'][i], ddict['titles'][i])            
         elif ddict['event'] == "removeImageClicked":
             self.removeImage(ddict['title'])
         elif ddict['event'] == "replaceImageClicked":
@@ -265,7 +268,8 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
 
         self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=True)
-        self.widget.buildAndConnectImageButtonBox()
+        self.widget.buildAndConnectImageButtonBox(replace=True,
+                                                  multiple=True)
         qt = StackPluginResultsWindow.qt
         self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
         self.widget.setStackPluginResults(images,
