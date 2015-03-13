@@ -1398,6 +1398,11 @@ class MatplotlibGraph(FigureCanvas):
             print("CALCULATED LIMITS = ", xmin, xmax, ymin, ymax)
         return xmin, xmax, ymin, ymax
 
+    def resizeEvent(self, ev):
+        # we have to get rid of the copy of the underlying image
+        self._background = None
+        FigureCanvas.resizeEvent(self, ev)
+
     if DEBUG:
         def draw(self):
             print("Draw called")
