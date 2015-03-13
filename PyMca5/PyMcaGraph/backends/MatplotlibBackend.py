@@ -838,7 +838,7 @@ class MatplotlibGraph(FigureCanvas):
                         xtmp, ytmp = inv.transform((xtmp, ytmp + 15))
                         infoText.set_position((event.xdata,
                                                ytmp))
-                if BLITTING:
+                if BLITTING and (self._background is not None):
                     canvas = artist.figure.canvas
                     axes = artist.axes
                     artist.set_animated(True)
