@@ -42,7 +42,7 @@ DEBUG = 0
 class RGBCorrelatorGraph(qt.QWidget):
     sigProfileSignal = qt.pyqtSignal(object)
 
-    def __init__(self, parent = None, selection=False, aspect=True,
+    def __init__(self, parent = None, backend=None, selection=False, aspect=True,
                  colormap=False,
                  imageicons=False, standalonesave=True, standalonezoom=True,
                  profileselection=False, polygon=False):
@@ -57,7 +57,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                            profileselection=profileselection,
                            aspect=aspect,
                            polygon=polygon)
-        self.graph = PlotWidget.PlotWidget(self, backend=None, aspect=aspect)
+        self.graph = PlotWidget.PlotWidget(self, backend=backend, aspect=aspect)
         self.graph.setGraphXLabel("Column")
         self.graph.setGraphYLabel("Row")
         self.graph.setYAxisAutoScale(True)

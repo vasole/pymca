@@ -92,7 +92,7 @@ def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
 class MaskImageWidget(qt.QWidget):
     sigMaskImageWidgetSignal = qt.pyqtSignal(object)
 
-    def __init__(self, parent = None, rgbwidget=None, selection=True, colormap=False,
+    def __init__(self, parent = None, rgbwidget=None, backend=None, selection=True, colormap=False,
                  imageicons=True, standalonesave=True, usetab=False,
                  profileselection=False, scanwindow=None, aspect=False, polygon=None,
                  maxNRois=1):
@@ -118,6 +118,7 @@ class MaskImageWidget(qt.QWidget):
         self._xScale = None
         self._yScale = None
 
+        self._backend = backend
         self.colormap = None
         self.colormapDialog = None
         self.setDefaultColormap(DEFAULT_COLORMAP_INDEX,
@@ -169,6 +170,7 @@ class MaskImageWidget(qt.QWidget):
             #self.graphContainer.mainLayout.setContentsMargins(0, 0, 0, 0)
             #self.graphContainer.mainLayout.setSpacing(0)
             self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
+                                                   backend=self._backend,
                                                    selection = self.__selectionFlag,
                                                    colormap=True,
                                                    imageicons=self.__imageIconsFlag,
@@ -180,6 +182,7 @@ class MaskImageWidget(qt.QWidget):
             self.mainTab.addTab(self.graphWidget, 'IMAGES')
         else:
             self.graphWidget = RGBCorrelatorGraph.RGBCorrelatorGraph(self,
+                                               backend=self._backend,
                                                selection =self.__selectionFlag,
                                                colormap=True,
                                                imageicons=self.__imageIconsFlag,
