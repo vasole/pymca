@@ -202,7 +202,8 @@ class McaWindow(ScanWindow.ScanWindow):
         activeCurve = legend
         if not len(activeCurve):
             return None
-
+        x = activeCurve[0]
+        y = activeCurve[1]
         legend = activeCurve[2]
         curveinfo = activeCurve[3]
 
