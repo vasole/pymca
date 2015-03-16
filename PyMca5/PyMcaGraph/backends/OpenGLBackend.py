@@ -44,17 +44,18 @@ import time
 import warnings
 
 try:
-    from PyMca5.PyMcaGui import PyMcaQt as qt
-    QGLWidget = qt.QGLWidget
-    QGLContext = qt.QGLContext
-    pyqtSignal = qt.pyqtSignal
+    from PyMca5.PyMcaGui.PyMcaQt import pyqtSignal, QSize, Qt
+    from PyMca5.PyMcaGui.PyMcaQt import QGLWidget, QGLContext
+    from PyMca5.PyMcaGui.PyMcaQt import QCursor
 except ImportError:
     try:
-        from PyQt4.QtCore import pyqtSignal
+        from PyQt4.QtCore import pyqtSignal, QSize, Qt
         from PyQt4.QtOpenGL import QGLWidget, QGLContext
+        from PyQt4.Qt import QCursor
     except ImportError:
-        from PyQt5.QtCore import pyqtSignal
+        from PyQt5.QtCore import pyqtSignal, QSize, Qt
         from PyQt5.QtOpenGL import QGLWidget, QGLContext
+        from PyQt5.Qt import QCursor
 
 try:
     from ..PlotBackend import PlotBackend
@@ -3067,7 +3068,7 @@ class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
     _MOUSE_BTNS = {1: 'left', 2: 'right', 4: 'middle'}
 
     def sizeHint(self):
-        return qt.QSize(8 * 80, 6 * 80)  # Mimic MatplotlibBackend
+        return QSize(8 * 80, 6 * 80)  # Mimic MatplotlibBackend
 
     def mousePressEvent(self, event):
         xPixel, yPixel = event.x(), event.y()
@@ -3093,16 +3094,16 @@ class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
         event.accept()
 
     _CURSORS = {
-        CURSOR_DEFAULT: qt.Qt.ArrowCursor,
-        CURSOR_POINTING: qt.Qt.PointingHandCursor,
-        CURSOR_SIZE_HOR: qt.Qt.SizeHorCursor,
-        CURSOR_SIZE_VER: qt.Qt.SizeVerCursor,
-        CURSOR_SIZE_ALL: qt.Qt.SizeAllCursor,
+        CURSOR_DEFAULT: Qt.ArrowCursor,
+        CURSOR_POINTING: Qt.PointingHandCursor,
+        CURSOR_SIZE_HOR: Qt.SizeHorCursor,
+        CURSOR_SIZE_VER: Qt.SizeVerCursor,
+        CURSOR_SIZE_ALL: Qt.SizeAllCursor,
     }
 
     def setCursor(self, cursor=CURSOR_DEFAULT):
         cursor = self._CURSORS[cursor]
-        super(OpenGLBackend, self).setCursor(qt.QCursor(cursor))
+        super(OpenGLBackend, self).setCursor(QCursor(cursor))
 
     # Widget
 
