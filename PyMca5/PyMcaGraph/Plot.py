@@ -1343,6 +1343,40 @@ class Plot(PlotBase.PlotBase):
         """
         return self._plot.pixelToData(x, y, axis=axis)
 
+    def setGraphCursor(self, flag=None, color=None,
+                       linewidth=None, linestyle=None):
+        """
+        Toggle the display of a crosshair cursor and set its attributes.
+
+        :param bool flag: Toggle the display of a crosshair cursor.
+                           The crosshair cursor is hidden by default.
+        :param color: The color to use for the crosshair.
+        :type color: A string (either a predefined color name in Colors.py
+                    or "#RRGGBB")) or a 4 columns unsigned byte array.
+                    Default is black.
+        :param int linewidth: The width of the lines of the crosshair.
+                    Default is 1.
+        :param linestyle: Type of line::
+        
+                - ' ' no line
+                - '-' solid line
+                - '--' dashed line
+                - '-.' dash-dot line
+                - ':' dotted line
+
+        :type linestyle: None or one of the predefined styles.
+        """
+        self._plot.setGraphCursor(flag=flag, color=color,
+                                  linewidth=linewidth, linestyle=linestyle)
+    def getGraphCursor(self):
+        """
+        Returns the current state of the crosshair cursor.
+
+        :return: None if the crosshair cursor is not active,
+                 else a tuple (color, linewidth, linestyle).
+        """
+        return self._plot.getGraphCursor()
+
 def main():
     x = numpy.arange(100.)
     y = x * x

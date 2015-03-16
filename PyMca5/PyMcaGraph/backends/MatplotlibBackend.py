@@ -51,6 +51,10 @@ except ImportError:
     from PyMca5.PyMca import PlotBackend
 from matplotlib import cm
 from matplotlib.font_manager import FontProperties
+try:
+    from matplotlib.widgets import Cursor
+except:
+    print("matplotlib.widgets Cursor not available")
 # This should be independent of Qt
 TK = False
 if ("tk" in sys.argv) or ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
@@ -1428,9 +1432,38 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         # should one have two methods, for enable and for show
         self._rightAxisEnabled = False
         self.enableAxis('right', False)
+        self._graphCursor = None
+
+    def setGraphCursor(self, flag=True, color=None, linewidth=None, linestyle=None):
+        if color is None:
+            color = "black"
+        if linewidth is None:
+            linewidth = 1
+        if linestyle is None:
+            linestyle="-"
+        self._graphCursorConfiguration = (color, linewidth, linestyle)
+        if flag:
+            if self._graphCursor is None:
+                self._graphCursor = Cursor(self.ax,
+                                       useblit=True,
+                                       color=color,
+                                       linewidth=linewidth,
+                                       linestyle=linestyle)
+            self._graphCursor.visible = True
+        else:
+            if self._graphCursor is not None:
+                self._graphCursor.visible = False
+
+    def getGraphCursor(self):
+        if self._graphCursor is None:
+            return None
+        elif not self._graphCursor.visible:
+            return None
+        else:
+            return self._graphCursorConfiguration * 1            
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
-                 color=None, symbol=None, linestyle=None,
+                 color=None, symbol=None, linewidth=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, z=1, selectable=True, **kw):
         if legend is None:
@@ -1447,7 +1480,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
         brush = color
         style = linestyle
-        linewidth = 1
+        if linewidth is None:
+            linewidth = 1
         if yaxis == "right":
             axisId = yaxis
         else:
