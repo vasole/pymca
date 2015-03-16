@@ -169,6 +169,8 @@ class PlotWindow(PlotWidget.PlotWidget):
             controlMenu = qt.QMenu()
             controlMenu.addAction(QString("Show/Hide Legends"),
                                        self.toggleLegendWidget)
+            controlMenu.addAction(QString("Toggle Crosshair"),
+                                       self.toggleCrosshairCursor)
             controlMenu.exec_(self.cursor().pos())
         else:
             self._controlMenu.exec_(self.cursor().pos())
@@ -1316,6 +1318,12 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.showLegends(True)
         else:
             self.showLegends(False)
+
+    def toggleCrosshairCursor(self):
+        if self.getGraphCursor():
+            self.setGraphCursor(False)
+        else:
+            self.setGraphCursor(True, color="red", linewidth=1, linestyle="-")
 
     def showLegends(self, flag=True):
         if self.legendWidget is None:
