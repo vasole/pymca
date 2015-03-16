@@ -1378,6 +1378,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._activeCurve = None
 
+        self._crosshairCursor = None
+        self._mousePosInPixels = None
+
         self._zoomColor = None
 
         self.winWidth, self.winHeight = 0, 0
@@ -1396,7 +1399,6 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._hasRightYAxis = set()
 
-        self._mousePosition = 0, 0
         self.eventHandler = ZoomAndSelect(self, (0., 0., 0., 1.))
 
         self._plotHasFocus = set()
@@ -1437,6 +1439,13 @@ class OpenGLPlotCanvas(PlotBackend):
     def onMouseMove(self, xPixel, yPixel):
         inXPixel, inYPixel = self._mouseInPlotArea(xPixel, yPixel)
         isCursorInPlot = inXPixel == xPixel and inYPixel == yPixel
+
+        previousMousePosInPixels = self._mousePosInPixels
+        self._mousePosInPixels = (xPixel, yPixel) if isCursorInPlot else None
+        if (self._crosshairCursor is not None and
+                previousMousePosInPixels != self._crosshairCursor):
+            # Avoid replot when cursor remains outside plot area
+            self.replot()
 
         if isCursorInPlot:
             # Signal mouse move event
@@ -1931,7 +1940,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._renderPlotAreaGL()
         self._plotFrame.render()
         self._renderMarkersGL()
-        self._renderSelectionGL()
+        self._renderOverlayGL()
 
     def _paintFBOGL(self):
         context = getGLContext()
@@ -1994,7 +2003,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glBindTexture(GL_TEXTURE_2D, 0)
 
         self._renderMarkersGL()
-        self._renderSelectionGL()
+        self._renderOverlayGL()
 
     def paintGL(self):
         # Release OpenGL resources
@@ -2113,34 +2122,66 @@ class OpenGLPlotCanvas(PlotBackend):
 
         glDisable(GL_SCISSOR_TEST)
 
-    def _renderSelectionGL(self):
-        # Render selection area
-        if self._selectionAreas:
+    def _renderOverlayGL(self):
+        # Render selection area and crosshair cursor
+        if self._selectionAreas or self._crosshairCursor is not None:
             plotWidth, plotHeight = self.plotSizeInPixels()
 
-            # Render in plot area
+            # Scissor to plot area
             glScissor(self._margins['left'], self._margins['bottom'],
                       plotWidth, plotHeight)
             glEnable(GL_SCISSOR_TEST)
 
-            glViewport(self._margins['left'], self._margins['bottom'],
-                       plotWidth, plotHeight)
-
-            # Render fill
             self._progBase.use()
-            glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
-                               self.matrixPlotDataTransformedProj)
             glUniform2i(self._progBase.uniforms['isLog'],
                         self._plotFrame.xAxis.isLog,
                         self._plotFrame.yAxis.isLog)
             glUniform1f(self._progBase.uniforms['tickLen'], 0.)
             posAttrib = self._progBase.attributes['position']
+            matrixUnif = self._progBase.uniforms['matrix']
             colorUnif = self._progBase.uniforms['color']
             hatchStepUnif = self._progBase.uniforms['hatchStep']
-            for shape in self._selectionAreas.values():
-                shape.render(posAttrib, colorUnif, hatchStepUnif)
+
+            # Render selection area in plot area
+            if self._selectionAreas:
+                glViewport(self._margins['left'], self._margins['bottom'],
+                           plotWidth, plotHeight)
+
+                glUniformMatrix4fv(matrixUnif, 1, GL_TRUE,
+                                   self.matrixPlotDataTransformedProj)
+
+                for shape in self._selectionAreas.values():
+                    shape.render(posAttrib, colorUnif, hatchStepUnif)
+
+            # Render crosshair cursor is screen frame but with scissor
+            if (self._crosshairCursor is not None and
+                    self._mousePosInPixels is not None):
+                glViewport(0, 0, self.winWidth, self.winHeight)
+
+                glUniformMatrix4fv(matrixUnif, 1, GL_TRUE,
+                                   self.matScreenProj)
+
+                color, lineWidth = self._crosshairCursor
+                glUniform4f(colorUnif, *color)
+                glUniform1i(hatchStepUnif, 0)
+
+                xPixel, yPixel = self._mousePosInPixels
+                xPixel, yPixel = xPixel + 0.5, yPixel + 0.5
+                vertices = np.array(((0., yPixel), (self.winWidth, yPixel),
+                                     (xPixel, 0.), (xPixel, self.winHeight)),
+                                    dtype=np.float32)
+
+                glEnableVertexAttribArray(posAttrib)
+                glVertexAttribPointer(posAttrib,
+                                      2,
+                                      GL_FLOAT,
+                                      GL_FALSE,
+                                      0, vertices)
+                glLineWidth(lineWidth)
+                glDrawArrays(GL_LINES, 0, len(vertices))
 
             glDisable(GL_SCISSOR_TEST)
+
 
     def _renderPlotAreaGL(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
@@ -2507,7 +2548,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def addCurve(self, x, y, legend=None, info=None,
                  replace=False, replot=True,
-                 color=None, symbol=None, linestyle=None,
+                 color=None, symbol=None, linewidth=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, z=1, selectable=True,
                  fill=None, **kw):
@@ -2557,7 +2598,7 @@ class OpenGLPlotCanvas(PlotBackend):
         curve = GLPlotCurve2D(x, y, colorArray,
                               lineStyle=linestyle,
                               lineColor=color,
-                              lineWidth=1,
+                              lineWidth=1 if linewidth is None else linewidth,
                               marker=symbol,
                               markerColor=color,
                               fillColor=color if fill else None)
@@ -2936,6 +2977,34 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotFrame.grid = flag
         self._plotDirtyFlag = True
         self.replot()
+
+    # Cursor
+
+    def setGraphCursor(self, flag=True, color=None,
+                       linewidth=1, linestyle=None):
+        if linestyle is not None:
+            warnings.warn(
+                "OpenGLBackend.setGraphCursor linestyle parameter ignored",
+                RuntimeWarning)
+
+        if flag:
+            # Default values
+            if color is None:
+                color = 'black'
+            if linewidth is None:
+                linewidth = 1
+
+            color = rgba(color, PlotBackend.COLORDICT)
+            crosshairCursor = color, linewidth
+        else:
+            crosshairCursor = None
+
+        if crosshairCursor != self._crosshairCursor:
+            self._crosshairCursor = crosshairCursor
+            self.replot()
+
+    def getGraphCursor(self):
+        return self._crosshairCursor
 
     # Save
     def saveGraph(self, fileName, fileFormat='svg', dpi=None, **kw):
