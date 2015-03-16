@@ -191,7 +191,7 @@ class PlotBackend(object):
         self._callback = self._dummyCallback
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
-                 color=None, symbol=None, linestyle=None,
+                 color=None, symbol=None,  linewidth=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, z=1, selectable=True, **kw):
         """
@@ -223,6 +223,8 @@ class PlotBackend(object):
             - 's' square
 
         :type symbol: None or one of the predefined symbols
+        :param linewidth: The width of the curve in pixels (Default: 1).
+        :type linewidth: None or float.
         :param linestyle: Type of line::
 
             - ' '  no line
@@ -353,6 +355,16 @@ class PlotBackend(object):
             self._activeCurveHandling = True
         else:
             self._activeCurveHandling = False
+
+    def getGraphCursor(self):
+        """
+        Returns the current state of the crosshair cursor.
+
+        :return: None if the crosshair cursor is not active,
+                 else a tuple (color, linewidth, linestyle).
+        """
+        print("PlotBackend getGraphCursor not implemented")
+        return None
 
     def getDefaultColormap(self):
         """
@@ -680,6 +692,31 @@ class PlotBackend(object):
         :type callback_function: callable
         """
         self._callback = callback_function
+
+    def setGraphCursor(self, flag=None, color=None,
+                       linewidth=None, linestyle=None):
+        """
+        Toggle the display of a crosshair cursor and set its attributes.
+
+        :param bool flag: Toggle the display of a crosshair cursor.
+                          The crosshair cursor is hidden by default.
+        :param color: The color to use for the crosshair.
+        :type color: A string (either a predefined color name in Colors.py
+                     or "#RRGGBB")) or a 4 columns unsigned byte array.
+                     Default is black.
+        :param int linewidth: The width of the lines of the crosshair.
+                              Default is 1.
+        :param linestyle: Type of line::
+
+            - ' '  no line
+            - '-'  solid line
+            - '--' dashed line
+            - '-.' dash-dot line
+            - ':'  dotted line
+
+        :type linestyle: None or one of the predefined styles.
+        """
+        print("PlotBackend setGraphCursor not implemented")
 
     def setDefaultColormap(self, colormap=None):
         """
