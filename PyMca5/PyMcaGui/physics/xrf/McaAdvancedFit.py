@@ -215,8 +215,6 @@ class McaAdvancedFit(qt.QWidget):
             self.mainTab.addTab(w, "DIAGNOSTICS")
             self.mainTab.currentChanged[int].connect(self._tabChanged)
 
-
-        self._logY       = False
         self._energyAxis = False
         self.__printmenu = qt.QMenu()
         self.__printmenu.addAction(QString("Calibrate"),     self._calibrate)
@@ -1516,7 +1514,7 @@ class McaAdvancedFit(qt.QWidget):
                     outfile,self.outdir,self.info['sourcename'],
                     self.info['legend'],self.dict,
                     concentrations=self._concentrationsDict,
-                    plotdict={'logy':self._logY})
+                    plotdict={'logy':self.graph.isYAxisLogarithmic()})
         if 0:
             #this forces to open and read the file
             self.__lastreport = report.writeReport()
@@ -2049,7 +2047,7 @@ class McaAdvancedFit(qt.QWidget):
         self.plot()
 
     def plot(self, ddict=None):
-        if self._logY:
+        if self.graph.isYAxisLogarithmic():
             logfilter = 1
         else:
             logfilter = 0
@@ -2246,7 +2244,7 @@ class McaAdvancedFit(qt.QWidget):
             if MATPLOTLIB:
                 if filetype in ['EPS', 'PNG', 'SVG']:
                     size = (7, 3.5) #in inches
-                    logy = self._logY
+                    logy = self.graph.isYAxisLogarithmic()
                     if filedescription == "B/WGraphics":
                         bw = True
                     else:
