@@ -588,7 +588,7 @@ class FastXRFLinearFit(object):
             ####################################################
         return outputDict
 
-def getFileListFromPattern(self, pattern, begin, end, increment=None):
+def getFileListFromPattern(pattern, begin, end, increment=None):
     if type(begin) == type(1):
         begin = [begin]
     if type(end) == type(1):
@@ -688,7 +688,7 @@ if __name__ == "__main__":
             raise ValueError(\
                 "A file pattern needs at least a set of begin and end indices")
     if filepattern is not None:
-        fileList = getFileListFromPattern(filepattern, begin=begin, end=end, increment=increment)
+        fileList = getFileListFromPattern(filepattern, begin, end, increment=increment)
     else:
         fileList = args
     if 0:
