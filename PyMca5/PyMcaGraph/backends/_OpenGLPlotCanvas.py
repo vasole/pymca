@@ -2783,30 +2783,26 @@ class OpenGLPlotCanvas(PlotBackend):
         if plotWidth <= 2 or plotHeight <= 2:
             return
 
-        plotRatio = plotWidth / float(plotHeight)
+        if self.dataBounds.yAxis.range_ > self.dataBounds.xAxis.range_:
+            yMin, yMax = self.plotDataBounds.yAxis
+            y2Min, y2Max = self.plotDataBounds.y2Axis
 
-        dataW = self.plotDataBounds.xAxis.range_
-        dataH = self.plotDataBounds.yAxis.range_
-        if dataH == 0.:
-            return
-
-        dataRatio = dataW / float(dataH)
-
-        xMin, xMax = self.plotDataBounds.xAxis
-        yMin, yMax = self.plotDataBounds.yAxis
-        y2Min, y2Max = self.plotDataBounds.y2Axis
-
-        if dataRatio < plotRatio:
-            dataW = dataH * plotRatio
+            dataW = self.plotDataBounds.yAxis.range_ * \
+                    plotWidth / float(plotHeight)
             xCenter = self.plotDataBounds.xAxis.center
             xMin = xCenter - 0.5 * dataW
             xMax = xCenter + 0.5 * dataW
-
         else:
-            dataH = dataW / plotRatio
+            xMin, xMax = self.plotDataBounds.xAxis
+
+            dataH = self.plotDataBounds.xAxis.range_ * \
+                plotHeight / float(plotWidth)
             yCenter = self.plotDataBounds.yAxis.center
             yMin = yCenter - 0.5 * dataH
             yMax = yCenter + 0.5 * dataH
+            y2Center = self.plotDataBounds.y2Axis.center
+            y2Min = y2Center - 0.5 * dataH
+            y2Max = y2Center + 0.5 * dataH
 
         self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
