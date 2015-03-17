@@ -38,9 +38,9 @@ OpenGL/GLUT backend
 # import ######################################################################
 
 from OpenGL.GLUT import *  # noqa
-from .OpenGLBackend import OpenGLPlotCanvas
-from .OpenGLBackend import CURSOR_DEFAULT, CURSOR_POINTING, CURSOR_SIZE_HOR, \
-    CURSOR_SIZE_VER, CURSOR_SIZE_ALL
+from ._OpenGLPlotCanvas import OpenGLPlotCanvas
+from ._OpenGLPlotCanvas import CURSOR_DEFAULT, CURSOR_POINTING, \
+    CURSOR_SIZE_HOR, CURSOR_SIZE_VER, CURSOR_SIZE_ALL
 
 
 # GLUT ########################################################################

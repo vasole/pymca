@@ -58,6 +58,7 @@ import numpy as np
 
 # PyOpenGL
 # Tells PyOpenGL to use libOSMesa
+# This only works if PyOpenGL has not yet been imported
 import os
 os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
 
@@ -72,6 +73,7 @@ except:
     raise RuntimeError(
         """PyOpenGL is not set to use OSMesa.
          Add PYOPENGL_PLATFORM=osmesa to the environment variables.""")
+
 from .GLSupport import gl
 from .GLSupport import setGLContextGetter
 
@@ -89,9 +91,9 @@ except ImportError:
         from PyQt5.QtGui import QLabel, QPixmap
         from PyQt5.Qt import QCursor
 
-from .OpenGLBackend import OpenGLPlotCanvas
-from .OpenGLBackend import CURSOR_DEFAULT, CURSOR_POINTING, CURSOR_SIZE_HOR, \
-    CURSOR_SIZE_VER, CURSOR_SIZE_ALL
+from ._OpenGLPlotCanvas import OpenGLPlotCanvas
+from ._OpenGLPlotCanvas import CURSOR_DEFAULT, CURSOR_POINTING, \
+    CURSOR_SIZE_HOR, CURSOR_SIZE_VER, CURSOR_SIZE_ALL
 
 
 # OS Mesa #####################################################################
