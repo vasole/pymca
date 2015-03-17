@@ -1068,17 +1068,17 @@ if __name__ == "__main__":
     for opt, arg in opts:
         if opt in '--begin':
             if "," in arg:
-                begin = map(int,arg.split(","))
+                begin = [int(x) for x in arg.split(",")]
             else:
                 begin = [int(arg)]
         elif opt in '--end':
             if "," in arg:
-                end = map(int,arg.split(","))
+                end = [int(x) for x in arg.split(",")]
             else:
                 end = int(arg)
         elif opt in '--increment':
             if "," in arg:
-                increment = map(int,arg.split(","))
+                increment = [int(x) for x in arg.split(",")]
             else:
                 increment = int(arg)
         elif opt in '--filepattern':

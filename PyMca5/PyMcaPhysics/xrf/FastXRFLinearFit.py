@@ -588,13 +588,110 @@ class FastXRFLinearFit(object):
             ####################################################
         return outputDict
 
+def getFileListFromPattern(self, pattern, begin, end, increment=None):
+    if type(begin) == type(1):
+        begin = [begin]
+    if type(end) == type(1):
+        end = [end]
+    if len(begin) != len(end):
+        raise ValueError(\
+            "Begin list and end list do not have same length")
+    if increment is None:
+        increment = [1] * len(begin)
+    elif type(increment) == type(1):
+        increment = [increment]
+    if len(increment) != len(begin):
+        raise ValueError(\
+            "Increment list and begin list do not have same length")
+    fileList = []
+    if len(begin) == 1:
+        for j in range(begin[0], end[0] + increment[0], increment[0]):
+            fileList.append(pattern % (j))
+    elif len(begin) == 2:
+        for j in range(begin[0], end[0] + increment[0], increment[0]):
+            for k in range(begin[1], end[1] + increment[1], increment[1]):
+                fileList.append(pattern % (j, k))
+    elif len(begin) == 3:
+        raise ValueError("Cannot handle three indices yet.")
+        for j in range(begin[0], end[0] + increment[0], increment[0]):
+            for k in range(begin[1], end[1] + increment[1], increment[1]):
+                for l in range(begin[2], end[2] + increment[2], increment[2]):
+                    fileList.append(pattern % (j, k, l))
+    else:
+        raise ValueError("Cannot handle more than three indices.")
+    return fileList
+
 if __name__ == "__main__":
     DEBUG = True
     import glob
+    import sys
     from PyMca5.PyMca import EDFStack
+    from PyMca5.PyMca import ArraySave
+    import getopt
+    options     = ''
+    longoptions = ['cfg=', 'outdir=', 'concentrations=', 'weight=', 'refit=',
+                   #'listfile=',
+                   'filepattern=', 'begin=', 'end=', 'increment=',
+                   "outfileroot="]
+    try:
+        opts, args = getopt.getopt(
+                     sys.argv[1:],
+                     options,
+                     longoptions)
+    except:
+        print(sys.exc_info()[1])
+        sys.exit(1)
+    fileRoot = ""
     outputDir = None
     refit = False
-    if 1:
+    fileindex = 0
+    filepattern=None
+    begin = None
+    end = None
+    increment=None
+    backend=None
+    weight=0
+    concentrations=0
+    for opt, arg in opts:
+        if opt in ('--cfg'):
+            configurationFile = arg
+        elif opt in '--begin':
+            if "," in arg:
+                begin = [int(x) for x in arg.split(",")]
+            else:
+                begin = [int(arg)]
+        elif opt in '--end':
+            if "," in arg:
+                end = [int(x) for x in arg.split(",")]
+            else:
+                end = int(arg)
+        elif opt in '--increment':
+            if "," in arg:
+                increment = [int(x) for x in arg.split(",")]
+            else:
+                increment = int(arg)
+        elif opt in '--filepattern':
+            filepattern = arg.replace('"', '')
+            filepattern = filepattern.replace("'", "")
+        elif opt in '--outdir':
+            outputDir = arg
+        elif opt in '--weight':
+            weight = int(arg)
+        elif opt in '--refit':
+            refit = int(arg)
+        elif opt in '--concentrations':
+            concentrations = int(arg)
+        elif opt in '--outfileroot':
+            fileRoot = arg
+    if filepattern is not None:
+        if (begin is None) or (end is None):
+            raise ValueError(\
+                "A file pattern needs at least a set of begin and end indices")
+    if filepattern is not None:
+        fileList = getFileListFromPattern(filepattern, begin=begin, end=end, increment=increment)
+    else:
+        fileList = args
+    if 0:
         #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
         #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
         configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-SINGLELAYER-batch.cfg"
@@ -615,24 +712,60 @@ if __name__ == "__main__":
         fileList = glob.glob("D:\RIVARD\m*.edf")
         concentrations = False
         dataStack = EDFStack.EDFStack(filelist=fileList)
-    else:
+    elif 0:
         configurationFile = "E2_line.cfg"
         fileList = glob.glob("E:\DATA\PyMca-Training\FDM55\AS_EDF\E2_line*.edf")
         concentrations = False
         dataStack = EDFStack.EDFStack(filelist=fileList)
-
+    elif len(fileList):
+        dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
+    else:
+        print("OPTIONS:", longoptions)
+        sys.exit(0)
+    if outputDir is None:
+        print("RESULTS WILL NOT BE SAVED: No output directory specified")
     t0 = time.time()
     fastFit = FastXRFLinearFit()
     fastFit.setFitConfigurationFile(configurationFile)
     print("Main configuring Elapsed = % s " % (time.time() - t0))
-    results = fastFit.fitMultipleSpectra(y=dataStack,
+    result = fastFit.fitMultipleSpectra(y=dataStack,
+                                         weight=weight,
                                          refit=refit,
                                          concentrations=concentrations)
     print("Total Elapsed = % s " % (time.time() - t0))
     if outputDir is not None:
-        i = 0
-        for name in results["names"]:
-            if name.startswith("C("):
-                print("name = ", name, " max = ", results["concentrations"][i].max())
-                i += 1
+        if 'concentrations' in result:
+            imageNames = result['names']
+            images = numpy.concatenate((result['parameters'],
+                                        result['concentrations']), axis=0)
+        else:
+            images = result['parameters']
+            imageNames = result['names']
+        nImages = images.shape[0]
 
+        if fileRoot in [None, ""]:
+            fileRoot = "images"
+        if not os.path.exists(outputDir):
+            os.mkdir(outputDir)
+        imagesDir = os.path.join(outputDir, "IMAGES")
+        if not os.path.exists(imagesDir):
+            os.mkdir(imagesDir)
+        imageList = [None] * (nImages + len(result['uncertainties']))
+        fileImageNames = [None] * (nImages + len(result['uncertainties']))
+        j = 0
+        for i in range(nImages):
+            name = imageNames[i].replace(" ","-")
+            fileImageNames[j] = name
+            imageList[j] = images[i]
+            j += 1
+            if not imageNames[i].startswith("C("):
+                # fitted parameter
+                fileImageNames[j] = "s(%s)" % name
+                imageList[j] = result['uncertainties'][i]
+                j += 1
+        fileName = os.path.join(imagesDir, fileRoot+".edf")
+        ArraySave.save2DArrayListAsEDF(imageList, fileName,
+                                       labels=fileImageNames)
+        fileName = os.path.join(imagesDir, fileRoot+".csv")
+        ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
+                                         labels=fileImageNames)
