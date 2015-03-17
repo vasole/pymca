@@ -1903,7 +1903,7 @@ class OpenGLPlotCanvas(PlotBackend):
     # QGLWidget API #
 
     def initializeGL(self):
-        testGLExtensions()
+        testGL()
 
         glClearColor(1., 1., 1., 1.)
         glClearStencil(0)
