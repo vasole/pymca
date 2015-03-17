@@ -77,6 +77,10 @@ initFastLog10(void)
     logLUT[LOG_LUT_SIZE] = logLUT[LOG_LUT_SIZE - 1];
 }
 
+/* No lrint before Microsoft Visual Studio 2013*/
+#if (defined (_MSC_VER) && _MSC_VER < 1800)
+#define lrint(v) ((int) round((v)))
+#endif
 
 double
 fastLog10(double value)
