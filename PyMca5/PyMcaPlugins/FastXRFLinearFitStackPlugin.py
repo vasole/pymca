@@ -61,6 +61,7 @@ import sys
 import os
 import numpy
 import time
+import traceback
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaPhysics import FastXRFLinearFit
 from PyMca5.PyMcaGui import FastXRFLinearFitWindow
@@ -203,6 +204,16 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         return result
 
     def threadFinished(self):
+        try:
+            self._threadFinished()
+        except:
+            msg = qt.QMessageBox()
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
+
+    def _threadFinished(self):
         result = self.thread.result
         self.thread = None
         if type(result) == type((1,)):
@@ -210,7 +221,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             if len(result):
                 if result[0] == "Exception":
                     # somehow this exception is not caught
-                    raise Exception(result[1], result[2])
+                    raise Exception(result[1], result[2])#, result[3])
                     return
         if 'concentrations' in result:
             imageNames = result['names']
@@ -266,6 +277,22 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         fileName = os.path.join(imagesDir, fileRoot+".csv")
         ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
                                          labels=fileImageNames)
+        if parameters["tiff"]:
+            i = 0
+            for i in range(len(fileImageNames)):
+                label = fileImageNames[i]
+                if label.startswith("s("):
+                    continue
+                elif label.startswith("C("):
+                    mass_fraction = "_" + label[2:-1] + "_mass_fraction"
+                else:
+                    mass_fraction  = "_" + label
+                fileName = os.path.join(imagesDir,
+                                        fileRoot + mass_fraction + ".tif")
+                ArraySave.save2DArrayListAsMonochromaticTiff([imageList[i]],
+                                        fileName,
+                                        labels=[label],
+                                        dtype=numpy.float32)
 
     def _showWidget(self):
         if self._widget is None:

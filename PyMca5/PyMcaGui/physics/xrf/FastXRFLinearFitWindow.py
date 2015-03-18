@@ -76,14 +76,22 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._fileLine.setReadOnly(False)
         self._fileLine.setText("images")
 
+
+        boxLabel   = qt.QLabel(self)
+        boxLabel.setText("Misc. flags:")
+
+        self._boxContainer = qt.QWidget(self) 
+        self._boxContainerLayout = qt.QHBoxLayout(self._boxContainer)
+        self._boxContainerLayout.setContentsMargins(0, 0, 0, 0)
+        self._boxContainerLayout.setSpacing(0)
         # concentrations
-        self._concentrationsBox = qt.QCheckBox(self)
+        self._concentrationsBox = qt.QCheckBox(self._boxContainer)
         self._concentrationsBox.setText("calculate concentrations")
         self._concentrationsBox.setChecked(False)
         self._concentrationsBox.setEnabled(True)
 
         # repeat fit on negative contributions
-        self._fitAgainBox = qt.QCheckBox(self)
+        self._fitAgainBox = qt.QCheckBox(self._boxContainer)
         self._fitAgainBox.setText("Repeat fit on negative contributions")
         self._fitAgainBox.setChecked(True)
         self._fitAgainBox.setEnabled(True)
@@ -93,6 +101,16 @@ class FastXRFLinearFitWindow(qt.QWidget):
         text += "if your sample model is far from the truth."
         self._fitAgainBox.setToolTip(text)
 
+        # generate tiff files
+        self._tiffBox = qt.QCheckBox(self._boxContainer)
+        self._tiffBox.setText("generate TIFF files")
+        self._tiffBox.setChecked(False)
+        self._tiffBox.setEnabled(True)
+
+        self._boxContainerLayout.addWidget(self._concentrationsBox)
+        self._boxContainerLayout.addWidget(self._fitAgainBox)
+        self._boxContainerLayout.addWidget(self._tiffBox)
+        
         # weight method
         self._weightWidget = qt.QWidget(self)
         self._weightWidget.mainLayout = qt.QHBoxLayout(self._weightWidget)
@@ -112,6 +130,8 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._weightButtonGroup.buttons()[0].setChecked(True)
         #self._weightWidget.mainLayout.addWidget(qt.HorizontalSpacer(self._weightWidget))
 
+
+
         self.mainLayout.addWidget(configLabel, 0, 0)
         self.mainLayout.addWidget(self._configLine, 0, 1)
         self.mainLayout.addWidget(self._configButton, 0, 2)
@@ -122,8 +142,8 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self.mainLayout.addWidget(self._fileLine, 2, 1)
         self.mainLayout.addWidget(weightLabel, 3, 0)
         self.mainLayout.addWidget(self._weightWidget, 3, 1, 1, 1)
-        self.mainLayout.addWidget(self._concentrationsBox, 4, 0)
-        self.mainLayout.addWidget(self._fitAgainBox, 4, 1)
+        self.mainLayout.addWidget(boxLabel, 4, 0)
+        self.mainLayout.addWidget(self._boxContainer, 4, 1, 1, 1)
 
     def sizeHint(self):
         return qt.QSize(int(1.8 * qt.QWidget.sizeHint(self).width()),
@@ -159,6 +179,10 @@ class FastXRFLinearFitWindow(qt.QWidget):
             ddict['refit'] = 1
         else:
             ddict['refit'] = 0
+        if self._tiffBox.isChecked():
+            ddict['tiff'] = 1
+        else:
+            ddict['tiff'] = 0
         return ddict
 
 class FastXRFLinearFitDialog(qt.QDialog):

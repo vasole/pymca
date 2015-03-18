@@ -164,28 +164,58 @@ def save2DArrayListAsMonochromaticTiff(datalist, filename,
             elif dtypeI != dtype:
                 dtype = numpy.float32
                 break
-    if os.path.exists(filename):
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
     if labels is None:
         labels = []
         for i in range(ndata):
             labels.append("Array_%d" % i)
     if len(labels) != ndata:
         raise ValueError("Incorrect number of labels")
-    outfileInstance = TiffIO.TiffIO(filename, mode="wb+")
-    for i in range(ndata):
-        if i == 1:
-            outfileInstance = TiffIO.TiffIO(filename, mode="rb+")
-        if dtype is None:
-            data = datalist[i]
+    multifile = False
+    if type(filename) in [type([]), type((1,))]:
+        if len(filename) == 1:
+            fileList = filename
+        elif len(filename) != len(labels):
+            raise ValueError("Incorrect number of files")
         else:
-            data = datalist[i].astype(dtype)
-        outfileInstance.writeImage(data, info={'Title': labels[i]})
-    outfileInstance.close()  # force file close
+            fileList = filename
+            multifile = True
+    else:
+        fileList = [filename]
 
+    savedData = 0
+    while savedData < ndata:
+        if multifile:
+            fname = fileList[savedData]
+        else:
+            fname = fileList[0]
+        if os.path.exists(fname):
+            try:
+                os.remove(fname)
+            except OSError:
+                print("Cannot remove file %s" % fname)
+                pass
+        if (savedData == 0) or multifile:
+            outfileInstance = TiffIO.TiffIO(fname, mode="wb+")
+        if multifile:
+            # multiple files
+            if dtype is None:
+                data = datalist[savedData]
+            else:
+                data = datalist[savedData].astype(dtype)
+            outfileInstance.writeImage(data, info={'Title': labels[savedData]})
+            savedData += 1
+        else:
+            # a single file
+            for i in range(ndata):
+                if i == 1:
+                    outfileInstance = TiffIO.TiffIO(fname, mode="rb+")
+                if dtype is None:
+                    data = datalist[i]
+                else:
+                    data = datalist[i].astype(dtype)
+                outfileInstance.writeImage(data, info={'Title': labels[i]})
+                savedData += 1
+        outfileInstance.close()  # force file close
 
 def openHDF5File(name, mode='a', **kwargs):
     """
