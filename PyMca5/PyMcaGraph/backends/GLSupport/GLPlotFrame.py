@@ -50,8 +50,8 @@ import weakref
 import warnings
 
 from .gl import *  # noqa
-from .GLContext import getGLContext
-from .GLSupport import Program, mat4Ortho
+from .GLSupport import mat4Ortho
+from .GLProgram import GLProgram
 from .GLText import Text2D, CENTER, BOTTOM, TOP, LEFT, RIGHT, ROTATE_270
 from .LabelLayout import niceNumbers, niceNumbersForLog10
 
@@ -539,17 +539,7 @@ class GLPlotFrame(object):
 
         self._renderResources = (vertices, gridVertices, labels)
 
-    _programs = dict()
-
-    @classmethod
-    def _getProgram(cls):
-        context = getGLContext()
-        try:
-            prgm = cls._programs[context]
-        except KeyError:
-            prgm = Program(cls._SHADERS['vertex'], cls._SHADERS['fragment'])
-            cls._programs[context] = prgm
-        return prgm
+    _program = GLProgram(_SHADERS['vertex'], _SHADERS['fragment'])
 
     def render(self):
         if self._renderResources is None:
@@ -561,7 +551,7 @@ class GLPlotFrame(object):
 
         glViewport(0, 0, width, height)
 
-        prog = self._getProgram()
+        prog = self._program
         prog.use()
 
         glLineWidth(self._LINE_WIDTH)
@@ -594,7 +584,7 @@ class GLPlotFrame(object):
 
         glViewport(0, 0, width, height)
 
-        prog = self._getProgram()
+        prog = self._program
         prog.use()
 
         glLineWidth(self._LINE_WIDTH)

@@ -26,38 +26,146 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-#include "MinMax.h"
+#include <math.h>
 
-#define GET_MINMAX(NAME, TYPE) \
-void NAME(TYPE * data, unsigned int length, TYPE * min, TYPE * max) \
-{ \
-    TYPE tmpMin = data[0]; \
-    TYPE tmpMax = tmpMin; \
-    TYPE * endPtr = &data[length]; \
-    TYPE * curPtr; \
+#include "MinMax.h"
+#include "Types.h"
+
+/* To support NaN, for floating type, we skip all first NaN data
+ * If all data is NaNs: min/max are NaNs
+ * Else min/max are computed ignoring NaNs,
+ * as NaN is never < or > to a number.
+ */
+#define INIT_SKIP_NAN(TYPE) \
+    for (; index < length; index++) {\
+        TYPE value = data[index];\
+        if (!isnan(value)) {\
+            tmpMin = value;\
+            tmpMax = value;\
+            break;\
+        }\
+    }
+
+#define INIT_NOOP(TYPE)
+
+#define GET_MINMAX_DEFINITION(TYPE, INIT_CODE)\
+static void getMinMax_ ## TYPE(TYPE * data,\
+                 unsigned long length,\
+                 double * min,\
+                 double * minPos,\
+                 double * max)\
+{\
+    TYPE tmpMin = data[0];\
+    TYPE tmpMax = tmpMin;\
+    unsigned long index = 0;\
 \
-    for (curPtr = data; curPtr < endPtr; curPtr++) { \
-        TYPE value = *curPtr; \
-        if (value < tmpMin) { \
-            tmpMin = value; \
-        } \
-        else if (value > tmpMax) { \
-            tmpMax = value; \
-        } \
-    } \
-    *min = tmpMin; \
-    *max = tmpMax; \
+    INIT_CODE(TYPE)\
+\
+    if (minPos != 0) {\
+        TYPE tmpMinPos = (TYPE) 0;\
+\
+        /* First loop until tmpMinPos is initialized */\
+        for (; index < length; index++) {\
+            TYPE value = data[index];\
+            tmpMin = (value < tmpMin) ? value : tmpMin;\
+            tmpMax = (value > tmpMax) ? value : tmpMax;\
+            if (value > (TYPE) 0) {\
+                tmpMinPos = value;\
+                break;\
+            }\
+        }\
+\
+        /* Second loop with tmpMinPos initialized */\
+        for (; index < length; index++) {\
+            TYPE value = data[index];\
+            tmpMin = (value < tmpMin) ? value : tmpMin;\
+            tmpMax = (value > tmpMax) ? value : tmpMax;\
+            tmpMinPos = (value > (TYPE) 0 && value < tmpMinPos) ? value : tmpMinPos;\
+        }\
+\
+        *minPos = (double) tmpMinPos;\
+    }\
+    else {\
+        for (; index < length; index++) {\
+            TYPE value = data[index];\
+            tmpMin = (value < tmpMin) ? value : tmpMin;\
+            tmpMax = (value > tmpMax) ? value : tmpMax;\
+        }\
+    }\
+\
+    *min = (double) tmpMin;\
+    *max = (double) tmpMax;\
 }
 
-GET_MINMAX(getMinMaxDouble, double)
-GET_MINMAX(getMinMaxFloat, float)
 
-GET_MINMAX(getMinMaxInt8, int8_t)
-GET_MINMAX(getMinMaxUInt8, uint8_t)
-GET_MINMAX(getMinMaxInt16, int16_t)
-GET_MINMAX(getMinMaxUInt16, uint16_t)
-GET_MINMAX(getMinMaxInt32, int32_t)
-GET_MINMAX(getMinMaxUInt32, uint32_t)
-GET_MINMAX(getMinMaxInt64, int64_t)
-GET_MINMAX(getMinMaxUInt64, uint64_t)
+GET_MINMAX_DEFINITION(float, INIT_SKIP_NAN)
+GET_MINMAX_DEFINITION(double, INIT_SKIP_NAN)
 
+GET_MINMAX_DEFINITION(int8_t, INIT_NOOP)
+GET_MINMAX_DEFINITION(uint8_t, INIT_NOOP)
+
+GET_MINMAX_DEFINITION(int16_t, INIT_NOOP)
+GET_MINMAX_DEFINITION(uint16_t, INIT_NOOP)
+
+GET_MINMAX_DEFINITION(int32_t, INIT_NOOP)
+GET_MINMAX_DEFINITION(uint32_t, INIT_NOOP)
+
+GET_MINMAX_DEFINITION(int64_t, INIT_NOOP)
+GET_MINMAX_DEFINITION(uint64_t, INIT_NOOP)
+
+
+#define CALL_GET_MINMAX(TYPE)\
+    getMinMax_ ## TYPE((TYPE *) data,\
+        length,\
+        minOut,\
+        minPosOut,\
+        maxOut)
+
+
+void
+getMinMax(void * data,
+          unsigned int type,
+          unsigned long length,
+          double * minOut,
+          double * minPosOut,
+          double * maxOut)
+{
+    switch (type) {
+        case (FLOATING | SIZE_32): /*float*/
+            CALL_GET_MINMAX(float);
+            break;
+        case (FLOATING | SIZE_64): /*double*/
+            CALL_GET_MINMAX(double);
+            break;
+
+        case (SIZE_8): /*int8_t*/
+            CALL_GET_MINMAX(int8_t);
+            break;
+        case (UNSIGNED | SIZE_8): /*uint8_t*/
+           CALL_GET_MINMAX(uint8_t);
+           break;
+
+        case (SIZE_16): /*int16_t*/
+            CALL_GET_MINMAX(int16_t);
+            break;
+        case (UNSIGNED | SIZE_16): /*uint16_t*/
+            CALL_GET_MINMAX(uint16_t);
+            break;
+
+        case (SIZE_32): /*int32_t*/
+            CALL_GET_MINMAX(int32_t);
+            break;
+        case (UNSIGNED | SIZE_32): /*uint32_t*/
+            CALL_GET_MINMAX(uint32_t);
+            break;
+
+        case (SIZE_64): /*int64_t*/
+            CALL_GET_MINMAX(int64_t);
+            break;
+        case (UNSIGNED | SIZE_64): /*uint64_t*/
+            CALL_GET_MINMAX(uint64_t);
+            break;
+        default:
+            break;
+    }
+}

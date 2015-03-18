@@ -40,9 +40,8 @@ This module provides classes to render 2D lines and scatter plots
 from .gl import *  # noqa
 import numpy as np
 import math
-from collections import defaultdict
-from .GLContext import getGLContext
-from .GLSupport import Program, buildFillMaskIndices
+from .GLSupport import buildFillMaskIndices
+from .GLProgram import GLProgram
 from .GLVertexBuffer import createVBOFromArrays, VBOAttrib
 
 try:
@@ -58,7 +57,7 @@ _MPL_NONES = None, 'None', '', ' '
 class _Fill2D(object):
     _LINEAR, _LOG10_X, _LOG10_Y, _LOG10_X_Y = 0, 1, 2, 3
 
-    _SHADER_SRCS = {
+    _SHADERS = {
         'vertexTransforms': {
             _LINEAR: """
         vec4 transformXY(float x, float y) {
@@ -113,7 +112,20 @@ class _Fill2D(object):
         """
     }
 
-    _programs = defaultdict(dict)
+    _programs = {
+        _LINEAR: GLProgram(
+            _SHADERS['vertex'] % _SHADERS['vertexTransforms'][_LINEAR],
+            _SHADERS['fragment']),
+        _LOG10_X: GLProgram(
+            _SHADERS['vertex'] % _SHADERS['vertexTransforms'][_LOG10_X],
+            _SHADERS['fragment']),
+        _LOG10_Y: GLProgram(
+            _SHADERS['vertex'] % _SHADERS['vertexTransforms'][_LOG10_Y],
+            _SHADERS['fragment']),
+        _LOG10_X_Y: GLProgram(
+            _SHADERS['vertex'] % _SHADERS['vertexTransforms'][_LOG10_X_Y],
+            _SHADERS['fragment']),
+    }
 
     def __init__(self, xFillVboData=None, yFillVboData=None,
                  xMin=None, yMin=None, xMax=None, yMax=None,
@@ -126,19 +138,6 @@ class _Fill2D(object):
 
         self._bboxVertices = None
         self._indices = None
-
-    @classmethod
-    def _getProgram(cls, transform):
-        context = getGLContext()
-        programs = cls._programs[transform]
-        try:
-            prgm = programs[context]
-        except KeyError:
-            srcs = cls._SHADER_SRCS
-            vertexShdr = srcs['vertex'] % srcs['vertexTransforms'][transform]
-            prgm = Program(vertexShdr, srcs['fragment'])
-            programs[context] = prgm
-        return prgm
 
     def prepare(self):
         if self._indices is None:
@@ -160,7 +159,7 @@ class _Fill2D(object):
         else:
             transform = self._LOG10_Y if isYLog else self._LINEAR
 
-        prog = self._getProgram(transform)
+        prog = self._programs[transform]
         prog.use()
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
@@ -212,7 +211,7 @@ class _Lines2D(object):
 
     _LINEAR, _LOG10_X, _LOG10_Y, _LOG10_X_Y = 0, 1, 2, 3
 
-    _SHADER_SRCS = {
+    _SHADERS = {
         'vertexTransforms': {
             _LINEAR: """
         vec4 transformXY(float x, float y) {
@@ -244,7 +243,7 @@ class _Lines2D(object):
         """
         },
         SOLID: {
-            'vertex': ("""
+            'vertex': """
         #version 120
 
         uniform mat4 matrix;
@@ -253,13 +252,14 @@ class _Lines2D(object):
         attribute vec4 color;
 
         varying vec4 vColor;
-        """,
-                       """
+
+        %s
+
         void main(void) {
             gl_Position = matrix * transformXY(xPos, yPos);
             vColor = color;
         }
-        """),
+        """,
             'fragment': """
         #version 120
 
@@ -276,7 +276,7 @@ class _Lines2D(object):
         # to avoid computing distance when viewport is resized
         # results in inequal dashes when viewport aspect ratio is far from 1
         DASHED: {
-            'vertex': ("""
+            'vertex': """
         #version 120
 
         uniform mat4 matrix;
@@ -288,8 +288,9 @@ class _Lines2D(object):
 
         varying float vDist;
         varying vec4 vColor;
-        """,
-                       """
+
+        %s
+
         void main(void) {
             gl_Position = matrix * transformXY(xPos, yPos);
             //Estimate distance in pixels
@@ -299,7 +300,7 @@ class _Lines2D(object):
             vDist = distance * pixelPerDataEstimate;
             vColor = color;
         }
-        """),
+        """,
             'fragment': """
         #version 120
 
@@ -319,7 +320,7 @@ class _Lines2D(object):
         }
     }
 
-    _programs = defaultdict(dict)
+    _programs = {}
 
     def __init__(self, xVboData=None, yVboData=None,
                  colorVboData=None, distVboData=None,
@@ -370,18 +371,14 @@ class _Lines2D(object):
 
     @classmethod
     def _getProgram(cls, transform, style):
-        context = getGLContext()
-        programs = cls._programs[(transform, style)]
         try:
-            prgm = programs[context]
+            prgm = cls._programs[(transform, style)]
         except KeyError:
-            sources = cls._SHADER_SRCS[style]
-            vertexShdr = sources['vertex'][0] + \
-                cls._SHADER_SRCS['vertexTransforms'][transform] + \
-                sources['vertex'][1]
-            prgm = Program(vertexShdr,
-                           sources['fragment'])
-            programs[context] = prgm
+            sources = cls._SHADERS[style]
+            vertexShdr = sources['vertex'] % \
+                cls._SHADERS['vertexTransforms'][transform]
+            prgm = GLProgram(vertexShdr, sources['fragment'])
+            cls._programs[(transform, style)] = prgm
         return prgm
 
     @classmethod
@@ -488,7 +485,7 @@ class _Points2D(object):
 
     _LINEAR, _LOG10_X, _LOG10_Y, _LOG10_X_Y = 0, 1, 2, 3
 
-    _SHDRS = {
+    _SHADERS = {
         'vertexTransforms': {
             _LINEAR: """
         vec4 transformXY(float x, float y) {
@@ -519,7 +516,7 @@ class _Points2D(object):
         }
         """
         },
-        'vertex': ("""
+        'vertex': """
     #version 120
 
     uniform mat4 matrix;
@@ -530,14 +527,15 @@ class _Points2D(object):
     attribute vec4 color;
 
     varying vec4 vColor;
-    """,
-                   """
+
+    %s
+
     void main(void) {
         gl_Position = matrix * transformXY(xPos, yPos);
         vColor = color;
         gl_PointSize = size;
     }
-    """),
+    """,
 
         'fragmentSymbols': {
             DIAMOND: """
@@ -582,14 +580,15 @@ class _Points2D(object):
         """
         },
 
-        'fragment': ("""
+        'fragment': """
     #version 120
 
     uniform float size;
 
     varying vec4 vColor;
-    """,
-                     """
+
+    %s
+
     void main(void) {
         float alpha = alphaSymbol(gl_PointCoord, size);
         if (alpha <= 0.) {
@@ -598,10 +597,10 @@ class _Points2D(object):
             gl_FragColor = vec4(vColor.rgb, alpha * clamp(vColor.a, 0., 1.));
         }
     }
-    """)
+    """
     }
 
-    _programs = defaultdict(dict)
+    _programs = {}
 
     def __init__(self, xVboData=None, yVboData=None, colorVboData=None,
                  marker=SQUARE, color=(0., 0., 0., 1.), size=7):
@@ -645,24 +644,21 @@ class _Points2D(object):
 
     @classmethod
     def _getProgram(cls, transform, marker):
-        context = getGLContext()
+        """On-demand shader program creation."""
         if marker == PIXEL:
             marker = SQUARE
         elif marker == POINT:
             marker = CIRCLE
-        programs = cls._programs[(transform, marker)]
         try:
-            prgm = programs[context]
+            prgm = cls._programs[(transform, marker)]
         except KeyError:
-            vertShdr = cls._SHDRS['vertex'][0] + \
-                cls._SHDRS['vertexTransforms'][transform] + \
-                cls._SHDRS['vertex'][1]
-            fragShdr = cls._SHDRS['fragment'][0] + \
-                cls._SHDRS['fragmentSymbols'][marker] + \
-                cls._SHDRS['fragment'][1]
-            prgm = Program(vertShdr, fragShdr)
+            vertShdr = cls._SHADERS['vertex'] % \
+                cls._SHADERS['vertexTransforms'][transform]
+            fragShdr = cls._SHADERS['fragment'] % \
+                cls._SHADERS['fragmentSymbols'][marker]
+            prgm = GLProgram(vertShdr, fragShdr)
 
-            programs[context] = prgm
+            cls._programs[(transform, marker)] = prgm
         return prgm
 
     @classmethod
@@ -743,7 +739,7 @@ def _proxyProperty(*componentsAttributes):
     return property(getter, setter)
 
 
-class Curve2D(object):
+class GLPlotCurve2D(object):
     def __init__(self, xData, yData, colorData=None,
                  lineStyle=None, lineColor=None,
                  lineWidth=None, lineDashPeriod=None,
@@ -753,20 +749,8 @@ class Curve2D(object):
         self._isYLog = False
         self.xData, self.yData, self.colorData = xData, yData, colorData
 
-        self.xMin, self.xMax = minMax(xData)
-        self.yMin, self.yMax = minMax(yData)
-
-        if self.xMin <= 0.:
-            xPos = np.nonzero(xData > 0.)[0]
-            self.xMinPos = xPos.min() if len(xPos) > 0 else None
-        else:
-            self.xMinPos = self.xMin
-
-        if self.yMin <= 0.:
-            yPos = np.nonzero(yData > 0.)[0]
-            self.yMinPos = yPos.min() if len(yPos) > 0 else None
-        else:
-            self.yMinPos = self.yMin
+        self.xMin, self.xMinPos, self.xMax = minMax(xData, minPositive=True)
+        self.yMin, self.yMinPos, self.yMax = minMax(yData, minPositive=True)
 
         if fillColor is not None:
             self.fill = _Fill2D(color=fillColor)
@@ -1034,7 +1018,7 @@ if __name__ == "__main__":
     glClearColor(1., 1., 1., 1.)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    Curve2D.init()
+    GLPlotCurve2D.init()
 
     # Plot data init
     xData1 = np.arange(10, dtype=np.float32) * 100
@@ -1042,12 +1026,12 @@ if __name__ == "__main__":
     yData1 = np.asarray(np.random.random(10) * 500, dtype=np.float32)
     yData1 = np.array((100, 100, 200, 400, 100, 100, 400, 400, 401, 400),
                       dtype=np.float32)
-    curve1 = Curve2D(xData1, yData1, marker='o', lineStyle='--',
-                     fillColor=(1., 0., 0., 0.5))
+    curve1 = GLPlotCurve2D(xData1, yData1, marker='o', lineStyle='--',
+                           fillColor=(1., 0., 0., 0.5))
 
     xData2 = np.arange(1000, dtype=np.float32) * 1
     yData2 = np.asarray(500 + np.random.random(1000) * 500, dtype=np.float32)
-    curve2 = Curve2D(xData2, yData2, lineStyle='', marker='s')
+    curve2 = GLPlotCurve2D(xData2, yData2, lineStyle='', marker='s')
 
     projMatrix = mat4Ortho(0, 1000, 0, 1000, -1, 1)
 

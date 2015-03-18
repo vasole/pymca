@@ -43,6 +43,7 @@ except:
 
 c_files = glob.glob(os.path.join('src', 'InsidePolygonWithBounds.c'))
 c_files += glob.glob(os.path.join('src', 'MinMaxImpl.c'))
+c_files += glob.glob(os.path.join('src', 'Colormap.c'))
 
 if build_ext:
     src = glob.glob(os.path.join('cython', '_ctools.pyx'))
@@ -55,6 +56,9 @@ if sys.platform == 'win32':
     extra_compile_args = []
     extra_link_args = []
 else:
+    # OpenMP and auto-vectorization flags for Colormap and MinMax
+    # extra_compile_args = ['-fopenmp', '-ftree-vectorize']
+    # extra_link_args = ['-fopenmp']
     extra_compile_args = []
     extra_link_args = []
 

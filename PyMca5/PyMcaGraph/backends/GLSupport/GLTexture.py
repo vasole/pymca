@@ -114,7 +114,7 @@ class Texture2D(object):
     def discard(self):
         if hasattr(self, '_tid'):
             if bool(glDeleteTextures):  # Test for __del__
-                glDeleteTextures(self._tid)
+                glDeleteTextures((self._tid,))
             del self._tid
 
     def __del__(self):

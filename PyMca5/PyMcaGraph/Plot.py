@@ -139,6 +139,8 @@ class Plot(PlotBase.PlotBase):
                 from .backends.PyQtGraphBackend import PyQtGraphBackend as be
             elif lowerCaseString in ["glut"]:
                 from .backends.GLUTOpenGLBackend import GLUTOpenGLBackend as be
+            elif lowerCaseString in ["osmesa", "mesa"]:
+                from .backends.OSMesaGLBackend import OSMesaGLBackend as be
             else:
                 raise ValueError("Backend not understood %s" % backend)
             self._plot = be(parent)

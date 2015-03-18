@@ -31,7 +31,7 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-This module provides convenient classes for the OpenGL rendering backend
+This module provides convenient classes for the OpenGL rendering backend.
 """
 
 
@@ -39,9 +39,10 @@ This module provides convenient classes for the OpenGL rendering backend
 
 from .GLContext import *  # noqa
 from .GLFramebuffer import *  # noqa
-from .GLImagePlot import *  # noqa
-from .GLLinePlot import *  # noqa
+from .GLPlotCurve import *  # noqa
 from .GLPlotFrame import GLPlotFrame, PlotAxis  # noqa
+from .GLPlotImage import *  # noqa
+from .GLProgram import GLProgram  # noqa
 from .GLSupport import *  # noqa
 from .GLText import *  # noqa
 from .GLTexture import *  # noqa

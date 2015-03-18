@@ -374,6 +374,7 @@ def build_plotting_ctools(ext_modules):
     basedir = os.path.join(os.getcwd(),'PyMca5', 'PyMcaGraph','ctools', '_ctools')
     c_files = glob.glob(os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'))
     c_files += glob.glob(os.path.join(basedir, 'src', 'MinMaxImpl.c'))
+    c_files += glob.glob(os.path.join(basedir, 'src', 'Colormap.c'))
 
     if build_ext:
         src = glob.glob(os.path.join(basedir, 'cython','_ctools.pyx'))

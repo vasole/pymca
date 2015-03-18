@@ -40,8 +40,8 @@ This module provides a class to render 2D array as a colormap or RGB(A) image
 from .gl import *  # noqa
 
 import math
-from .GLContext import getGLContext
-from .GLSupport import Program, mat4Translate, mat4Scale
+from .GLSupport import mat4Translate, mat4Scale
+from .GLProgram import GLProgram
 from .GLTexture import Image
 
 try:
@@ -52,7 +52,7 @@ except ImportError:
 
 # colormap ####################################################################
 
-class _GL2DDataPlot(object):
+class _GLPlotData2D(object):
     def __init__(self, data, xMin, xScale, yMin, yScale):
         self.data = data
         self.xMin = xMin
@@ -87,10 +87,11 @@ class _GL2DDataPlot(object):
         pass
 
 
-class GLColormap(_GL2DDataPlot):
+class GLPlotColormap(_GLPlotData2D):
 
     _SHADERS = {
-        'vertex_linear': """
+        'linear': {
+            'vertex': """
     #version 120
 
     uniform mat4 matrix;
@@ -104,7 +105,14 @@ class GLColormap(_GL2DDataPlot):
         gl_Position = matrix * vec4(position, 0.0, 1.0);
     }
     """,
-        'vertex_log': """
+            'fragTransform': """
+    vec2 textureCoords(void) {
+        return coords;
+    }
+    """},
+
+        'log': {
+            'vertex': """
     #version 120
 
     attribute vec2 position;
@@ -128,32 +136,27 @@ class GLColormap(_GL2DDataPlot):
         gl_Position = matrix * dataPos;
     }
     """,
-        'fragment_transform': {
-            'linear': """
-        vec2 textureCoords(void) {
-            return coords;
-        }
-        """,
-            'log': """
-        uniform bvec2 isLog;
-        uniform struct {
-            vec2 oneOverRange;
-            vec2 minOverRange;
-        } bounds;
+            'fragTransform': """
+    uniform bvec2 isLog;
+    uniform struct {
+        vec2 oneOverRange;
+        vec2 minOverRange;
+    } bounds;
 
-        vec2 textureCoords(void) {
-            vec2 pos = coords;
-            if (isLog.x) {
-                pos.x = pow(10., coords.x);
-            }
-            if (isLog.y) {
-                pos.y = pow(10., coords.y);
-            }
-            return pos * bounds.oneOverRange - bounds.minOverRange;
-            // TODO texture coords in range different from [0, 1]
+    vec2 textureCoords(void) {
+        vec2 pos = coords;
+        if (isLog.x) {
+            pos.x = pow(10., coords.x);
         }
-        """},
-        'fragment': ("""
+        if (isLog.y) {
+            pos.y = pow(10., coords.y);
+        }
+        return pos * bounds.oneOverRange - bounds.minOverRange;
+        // TODO texture coords in range different from [0, 1]
+    }
+    """},
+
+        'fragment': """
     #version 120
 
     #define CMAP_GRAY   0
@@ -173,8 +176,9 @@ class GLColormap(_GL2DDataPlot):
     } cmap;
 
     varying vec2 coords;
-    """,
-                     """
+
+    %s
+
     vec4 cmapGray(float normValue) {
         return vec4(normValue, normValue, normValue, 1.);
     }
@@ -232,7 +236,7 @@ class GLColormap(_GL2DDataPlot):
             gl_FragColor = cmapTemperature(value);
         }
     }
-    """)
+    """
     }
 
     _SHADER_CMAP_IDS = {
@@ -248,8 +252,13 @@ class GLColormap(_GL2DDataPlot):
 
     _DATA_TEX_UNIT = 0
 
-    _linearPrograms = {}
-    _logPrograms = {}
+    _linearProgram = GLProgram(_SHADERS['linear']['vertex'],
+                               _SHADERS['fragment'] %
+                               _SHADERS['linear']['fragTransform'])
+
+    _logProgram = GLProgram(_SHADERS['log']['vertex'],
+                            _SHADERS['fragment'] %
+                            _SHADERS['log']['fragTransform'])
 
     def __init__(self, data, xMin, xScale, yMin, yScale,
                  colormap, cmapIsLog=False, cmapRange=None):
@@ -271,17 +280,14 @@ class GLColormap(_GL2DDataPlot):
         """
         assert data.dtype in (np.float32, np.uint16, np.uint8)
 
-        super(GLColormap, self).__init__(data, xMin, xScale, yMin, yScale)
+        super(GLPlotColormap, self).__init__(data, xMin, xScale, yMin, yScale)
         self.colormap = colormap
         self.cmapIsLog = cmapIsLog
         self.cmapRangeIsAuto = cmapRange is None
         if cmapRange is not None:
             self.cmapRange = cmapRange
         else:
-            if data.dtype == np.float32: #TODO update minMax
-                self.cmapRange = minMax(data)
-            else:
-                self.cmapRange = data.min(), data.max()
+            self.cmapRange = minMax(data)
 
         self._textureIsDirty = False
 
@@ -299,10 +305,7 @@ class GLColormap(_GL2DDataPlot):
         self.data = data
 
         if self.cmapRangeIsAuto:
-            if data.dtype == np.float32: #TODO update minMax
-                self.cmapRange = minMax(data)
-            else:
-                self.cmapRange = data.min(), data.max()
+            self.cmapRange = minMax(data)
 
         if hasattr(self, '_texture'):
             if (self.data.shape != oldData.shape or
@@ -310,44 +313,6 @@ class GLColormap(_GL2DDataPlot):
                 self.discard()
             else:
                 self._textureIsDirty = True
-
-    @classmethod
-    def _getLinearProgram(cls):
-        context = getGLContext()
-        try:
-            prog = cls._linearPrograms[context]
-        except KeyError:
-            prog = Program(cls._SHADERS['vertex_linear'],
-                           cls._SHADERS['fragment'][0] +
-                           cls._SHADERS['fragment_transform']['linear'] +
-                           cls._SHADERS['fragment'][1])
-
-            prog.use()
-
-            # Done once forever for each program
-            glUniform1i(prog.uniforms['data'], cls._DATA_TEX_UNIT)
-
-            cls._linearPrograms[context] = prog
-        return prog
-
-    @classmethod
-    def _getLogProgram(cls):
-        context = getGLContext()
-        try:
-            prog = cls._logPrograms[context]
-        except KeyError:
-            prog = Program(cls._SHADERS['vertex_log'],
-                           cls._SHADERS['fragment'][0] +
-                           cls._SHADERS['fragment_transform']['log'] +
-                           cls._SHADERS['fragment'][1])
-
-            prog.use()
-
-            # Done once forever for each program
-            glUniform1i(prog.uniforms['data'], cls._DATA_TEX_UNIT)
-
-            cls._logPrograms[context] = prog
-        return prog
 
     _INTERNAL_FORMATS = {
         np.dtype(np.float32): GL_R32F,
@@ -398,8 +363,10 @@ class GLColormap(_GL2DDataPlot):
     def _renderLinear(self, matrix):
         self.prepare()
 
-        prog = self._getLinearProgram()
+        prog = self._linearProgram
         prog.use()
+
+        glUniform1i(prog.uniforms['data'], self._DATA_TEX_UNIT)
 
         mat = matrix * mat4Translate(self.xMin, self.yMin) * \
             mat4Scale(self.xScale, self.yScale)
@@ -414,8 +381,10 @@ class GLColormap(_GL2DDataPlot):
     def _renderLog10(self, matrix, isXLog, isYLog):
         self.prepare()
 
-        prog = self._getLogProgram()
+        prog = self._logProgram
         prog.use()
+
+        glUniform1i(prog.uniforms['data'], self._DATA_TEX_UNIT)
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
         mat = mat4Translate(self.xMin, self.yMin) * \
@@ -465,10 +434,11 @@ class GLColormap(_GL2DDataPlot):
 
 # image #######################################################################
 
-class GLRGBAImage(_GL2DDataPlot):
+class GLPlotRGBAImage(_GLPlotData2D):
 
     _SHADERS = {
-        'vertex': """
+        'linear': {
+            'vertex': """
     #version 120
 
     attribute vec2 position;
@@ -482,7 +452,7 @@ class GLRGBAImage(_GL2DDataPlot):
         coords = texCoords;
     }
     """,
-        'fragment': """
+            'fragment': """
     #version 120
 
     uniform sampler2D tex;
@@ -492,11 +462,10 @@ class GLRGBAImage(_GL2DDataPlot):
     void main(void) {
         gl_FragColor = texture2D(tex, coords);
     }
-    """
-    }
+    """},
 
-    _SHADERS_LOG = {
-        'vertex': """
+        'log': {
+            'vertex': """
     #version 120
 
     attribute vec2 position;
@@ -506,7 +475,7 @@ class GLRGBAImage(_GL2DDataPlot):
 
     varying vec2 coords;
 
-    const float oneOverLog10 = 1. / log(10.);
+    const float oneOverLog10 = 0.43429448190325176;
 
     void main(void) {
         vec4 dataPos = matOffset * vec4(position, 0.0, 1.0);
@@ -520,7 +489,7 @@ class GLRGBAImage(_GL2DDataPlot):
         gl_Position = matrix * dataPos;
     }
     """,
-        'fragment': """
+            'fragment': """
     #version 120
 
     uniform sampler2D tex;
@@ -547,13 +516,16 @@ class GLRGBAImage(_GL2DDataPlot):
     void main(void) {
         gl_FragColor = texture2D(tex, textureCoords());
     }
-    """
+    """}
     }
 
     _DATA_TEX_UNIT = 0
 
-    _linearPrograms = {}
-    _logPrograms = {}
+    _linearProgram = GLProgram(_SHADERS['linear']['vertex'],
+                               _SHADERS['linear']['fragment'])
+
+    _logProgram = GLProgram(_SHADERS['log']['vertex'],
+                            _SHADERS['log']['fragment'])
 
     def __init__(self, data, xMin, xScale, yMin, yScale):
         """Create a 2D RGB(A) image from data
@@ -565,7 +537,7 @@ class GLRGBAImage(_GL2DDataPlot):
         :param float yMin: Min Y coordinate of the data array
         :param float yScale: Y scale of the data array
         """
-        super(GLRGBAImage, self).__init__(data, xMin, xScale, yMin, yScale)
+        super(GLPlotRGBAImage, self).__init__(data, xMin, xScale, yMin, yScale)
         self._textureIsDirty = False
 
     def __del__(self):
@@ -576,37 +548,6 @@ class GLRGBAImage(_GL2DDataPlot):
             self._texture.discard()
             del self._texture
         self._textureIsDirty = False
-
-    @classmethod
-    def _getLinearProgram(cls):
-        context = getGLContext()
-        try:
-            prog = cls._linearPrograms[context]
-        except KeyError:
-            prog = Program(cls._SHADERS['vertex'], cls._SHADERS['fragment'])
-
-            # Done once forever for each program
-            prog.use()
-            glUniform1i(prog.uniforms['tex'], cls._DATA_TEX_UNIT)
-
-            cls._linearPrograms[context] = prog
-        return prog
-
-    @classmethod
-    def _getLogProgram(cls):
-        context = getGLContext()
-        try:
-            prog = cls._logPrograms[context]
-        except KeyError:
-            prog = Program(cls._SHADERS_LOG['vertex'],
-                           cls._SHADERS_LOG['fragment'])
-
-            # Done once forever for each program
-            prog.use()
-            glUniform1i(prog.uniforms['tex'], cls._DATA_TEX_UNIT)
-
-            cls._logPrograms[context] = prog
-        return prog
 
     def updateData(self, data):
         oldData = self.data
@@ -640,8 +581,10 @@ class GLRGBAImage(_GL2DDataPlot):
     def _renderLinear(self, matrix):
         self.prepare()
 
-        prog = self._getLinearProgram()
+        prog = self._linearProgram
         prog.use()
+
+        glUniform1i(prog.uniforms['tex'], self._DATA_TEX_UNIT)
 
         mat = matrix * mat4Translate(self.xMin, self.yMin)
         mat *= mat4Scale(self.xScale, self.yScale)
@@ -654,8 +597,10 @@ class GLRGBAImage(_GL2DDataPlot):
     def _renderLog(self, matrix, isXLog, isYLog):
         self.prepare()
 
-        prog = self._getLogProgram()
+        prog = self._logProgram
         prog.use()
+
+        glUniform1i(prog.uniforms['tex'], self._DATA_TEX_UNIT)
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
         mat = mat4Translate(self.xMin, self.yMin) * \
