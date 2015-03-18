@@ -60,12 +60,12 @@
 
         #ifndef int32_t
             #define int32_t int
-            #define INT32_MIN INT_MIN
-            #define INT32_MAX INT_MAX
+            /*#define INT32_MIN INT_MIN
+            #define INT32_MAX INT_MAX*/
         #endif
         #ifndef uint32_t
             #define uint32_t unsigned int
-            #define UINT32_MAX UINT_MAX
+            /*#define UINT32_MAX UINT_MAX*/
         #endif
 
         #ifndef int64_t

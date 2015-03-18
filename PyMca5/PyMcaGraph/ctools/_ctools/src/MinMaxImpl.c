@@ -31,6 +31,12 @@
 #include "MinMax.h"
 #include "Types.h"
 
+#if (defined (_MSC_VER) && _MSC_VER < 1800)
+#include <float.h>
+
+#define isnan(v) _isnan(v)
+#endif
+
 /* To support NaN, for floating type, we skip all first NaN data
  * If all data is NaNs: min/max are NaNs
  * Else min/max are computed ignoring NaNs,

@@ -31,6 +31,15 @@
 #include "Colormap.h"
 #include "Types.h"
 
+/* No lrint before Microsoft Visual Studio 2013*/
+#if (defined (_MSC_VER) && _MSC_VER < 1800)
+#include <float.h>
+
+#define lrint(v) ((int) (v))
+#define isnan(v) _isnan(v)
+#define isfinite(v) _finite(v)
+#endif
+
 #ifdef _OPENMP
 #define PRAGMA_OMP(ompString) _Pragma(ompString)
 #else
@@ -59,8 +68,8 @@
 #define LOG_LUT_SIZE (1 << 12) /* 4096 */
 
 static double logLUT[LOG_LUT_SIZE + 1]; /* indexLUT can overflow of 1 ! */
-const double oneOverLog2 = 0x1.71547652b82fep+0;
-const double oneOverLog10 = 0x1.34413509f79fep-2;
+const double oneOverLog2 = 1.4426950408889634;
+const double oneOverLog10 = 0.43429448190325176;
 
 void
 initFastLog10(void)
@@ -77,22 +86,18 @@ initFastLog10(void)
     logLUT[LOG_LUT_SIZE] = logLUT[LOG_LUT_SIZE - 1];
 }
 
-/* No lrint before Microsoft Visual Studio 2013*/
-#if (defined (_MSC_VER) && _MSC_VER < 1800)
-#define lrint(v) ((int) round((v)))
-#endif
 
 double
 fastLog10(double value)
 {
-    double result = NAN; /* if value < 0.0 or value == NAN */
+    double result = 0.; /* TODO NAN;*/ /* if value < 0.0 or value == NAN */
 
     if (value <= 0.0 || ! isfinite(value)) {
         if (value == 0.0) {
             result = - HUGE_VAL;
         }
         else if (value > 0.0) { /* i.e., value = +INFINITY */
-            result = INFINITY;
+            result = value; /* i.e. +INFINITY */
         }
     }
     else {
