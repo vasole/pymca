@@ -630,7 +630,7 @@ if __name__ == "__main__":
     import getopt
     options     = ''
     longoptions = ['cfg=', 'outdir=', 'concentrations=', 'weight=', 'refit=',
-                   #'listfile=',
+                   'tif=', #'listfile=',
                    'filepattern=', 'begin=', 'end=', 'increment=',
                    "outfileroot="]
     try:
@@ -651,6 +651,7 @@ if __name__ == "__main__":
     increment=None
     backend=None
     weight=0
+    tif=0
     concentrations=0
     for opt, arg in opts:
         if opt in ('--cfg'):
@@ -683,6 +684,8 @@ if __name__ == "__main__":
             concentrations = int(arg)
         elif opt in '--outfileroot':
             fileRoot = arg
+        elif opt in ['--tif', '--tiff']:
+            tif = int(arg)
     if filepattern is not None:
         if (begin is None) or (end is None):
             raise ValueError(\
@@ -769,3 +772,19 @@ if __name__ == "__main__":
         fileName = os.path.join(imagesDir, fileRoot+".csv")
         ArraySave.save2DArrayListAsASCII(imageList, fileName, csv=True,
                                          labels=fileImageNames)
+        if tif:
+            i = 0
+            for i in range(len(fileImageNames)):
+                label = fileImageNames[i]
+                if label.startswith("s("):
+                    continue
+                elif label.startswith("C("):
+                    mass_fraction = "_" + label[2:-1] + "_mass_fraction"
+                else:
+                    mass_fraction  = "_" + label
+                fileName = os.path.join(imagesDir,
+                                        fileRoot + mass_fraction + ".tif")
+                ArraySave.save2DArrayListAsMonochromaticTiff([imageList[i]],
+                                        fileName,
+                                        labels=[label],
+                                        dtype=numpy.float32)
