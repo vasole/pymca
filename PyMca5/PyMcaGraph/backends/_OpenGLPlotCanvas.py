@@ -2240,9 +2240,6 @@ class OpenGLPlotCanvas(PlotBackend):
         y2Min, y2Max = self.plotDataBounds.y2Axis
         self.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
-        self.updateAxis()
-        self.replot()
-
     # PlotBackend API #
 
     def insertMarker(self, x, y, legend=None, text=None, color='k',
@@ -2824,8 +2821,6 @@ class OpenGLPlotCanvas(PlotBackend):
             self._ensureAspectRatio()
 
         self.resetZoom()
-        self.updateAxis()
-        self.replot()
 
     def getGraphXLimits(self):
         return self.plotDataBounds.xAxis.min_, self.plotDataBounds.xAxis.max_
