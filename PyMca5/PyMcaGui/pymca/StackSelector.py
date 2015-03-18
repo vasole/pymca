@@ -34,7 +34,7 @@ import copy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDirs
 from PyMca5 import DataObject
-from PyMca5.PyMcaGui.pymca import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaIO import MRCMap
 from PyMca5.PyMcaIO import OmnicMap
 from PyMca5.PyMcaIO import OpusDPTMap
