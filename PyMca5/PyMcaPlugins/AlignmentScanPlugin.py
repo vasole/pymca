@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -158,6 +158,7 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
 
             if numpy.allclose(fft0, ffty):
                 shiftList.append(0.0)
+                x.shape = -1
             else:
                 shift = numpy.fft.ifft(fft0 * ffty.conjugate()).real
                 shift2 = numpy.zeros(shift.shape, dtype=shift.dtype)
