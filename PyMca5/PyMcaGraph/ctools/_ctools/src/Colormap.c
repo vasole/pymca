@@ -38,6 +38,9 @@
 #define lrint(v) ((int) (v))
 #define isnan(v) _isnan(v)
 #define isfinite(v) _finite(v)
+
+#define INFINITY (DBL_MAX+DBL_MAX)
+#define NAN (INFINITY-INFINITY)
 #endif
 
 #ifdef _OPENMP
@@ -68,8 +71,8 @@
 #define LOG_LUT_SIZE (1 << 12) /* 4096 */
 
 static double logLUT[LOG_LUT_SIZE + 1]; /* indexLUT can overflow of 1 ! */
-const double oneOverLog2 = 1.4426950408889634;
-const double oneOverLog10 = 0.43429448190325176;
+const double oneOverLog_2 = 1.4426950408889634;
+const double oneOverLog2_10 = 0.30102999566398114;
 
 void
 initFastLog10(void)
@@ -79,7 +82,7 @@ initFastLog10(void)
     for (index=0; index<LOG_LUT_SIZE; index++) {
         /* normFrac in [0.5, 1) */
         double normFrac = 0.5 + ((double) index) / (2.0 * LOG_LUT_SIZE);
-        logLUT[index] = oneOverLog2 * log(normFrac);
+        logLUT[index] = oneOverLog_2 * log(normFrac);
     }
 
     /* Cope with indexLUT == 1 overflow */
@@ -90,7 +93,7 @@ initFastLog10(void)
 double
 fastLog10(double value)
 {
-    double result = 0.; /* TODO NAN;*/ /* if value < 0.0 or value == NAN */
+    double result = NAN; /* if value < 0.0 or value == NAN */
 
     if (value <= 0.0 || ! isfinite(value)) {
         if (value == 0.0) {
@@ -107,7 +110,7 @@ fastLog10(double value)
 
         mantissa = frexp(value, &exponent);
         indexLUT = lrint(LOG_LUT_SIZE * 2 * (mantissa - 0.5));
-        result = oneOverLog10 * ((double) exponent + logLUT[indexLUT]);
+        result = oneOverLog2_10 * ((double) exponent + logLUT[indexLUT]);
     }
     return result;
 }
