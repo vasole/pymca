@@ -257,7 +257,7 @@ class ScanWindow(PlotWindow.PlotWindow):
 
             if sps_source:
                 ycounter = -1
-                if 'selection' not in dataObject.info: 
+                if 'selection' not in dataObject.info:
                     dataObject.info['selection'] = copy.deepcopy(sel['selection'])
                 for ydata in dataObject.y:
                     xlabel = None
@@ -291,9 +291,11 @@ class ScanWindow(PlotWindow.PlotWindow):
                                     if len(dataObject.info['selection']['x']):
                                         xlabel = dataObject.info['LabelNames'] \
                                                     [dataObject.info['selection']['x'][0]]
+                    dataObject.info["xlabel"] = xlabel
+                    dataObject.info["ylabel"] = ylabel
                     newLegend = legend + " " + ylegend
                     self.dataObjectsDict[newLegend] = dataObject
-                    self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info, 
+                    self.addCurve(xdata, ydata, legend=newLegend, info=dataObject.info,
                                                     xlabel=xlabel, ylabel=ylabel, replot=False)
                     #              replot=actualReplot)
                     if self.scanWindowInfoWidget is not None:
@@ -353,6 +355,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                     newDataObject.m = [mdata]
                     newDataObject.info['selection'] = copy.deepcopy(sel['selection'])
                     ylegend = 'y%d' % ycounter
+                    xlabel = None
+                    ylabel = None
                     if sel['selection'] is not None:
                         if type(sel['selection']) == type({}):
                             if 'x' in sel['selection']:
@@ -362,6 +366,12 @@ class ScanWindow(PlotWindow.PlotWindow):
                                 newDataObject.info['selection']['m'] = sel['selection']['m']
                                 ilabel = newDataObject.info['selection']['y'][0]
                                 ylegend = newDataObject.info['LabelNames'][ilabel]
+                                ylabel = ylegend
+                                if len(newDataObject.info['selection']['x']):
+                                    ilabel = newDataObject.info['selection']['x'][0]
+                                    xlabel = newDataObject.info['LabelNames'][ilabel]
+                                else:
+                                    xlabel = "Point number"
                     if ('operations' in dataObject.info) and len(dataObject.y) == 1:
                         newDataObject.info['legend'] = legend
                         symbol = 'x'
@@ -381,6 +391,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                     info=newDataObject.info,
                                     symbol=symbol,
                                     yaxis=yaxis,
+                                    xlabel=xlabel,
+                                    ylabel=ylabel,
                                     replot=False)
         self.dataObjectsList = self._curveList
         try:
@@ -688,9 +700,143 @@ class ScanWindow(PlotWindow.PlotWindow):
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
 
+    def _saveOperation(self, fileName, fileType, fileFilter):
+        filterused = fileFilter
+        filetype = fileType
+        filename = fileName
+        if os.path.exists(filename):
+            os.remove(filename)
+        if filterused[0].upper() == "WIDGET":
+            fformat = filename[-3:].upper()
+            pixmap = qt.QPixmap.grabWidget(self)
+            if not pixmap.save(filename, fformat):
+                qt.QMessageBox.critical(self,
+                                    "Save Error",
+                                    "%s" % sys.exc_info()[1])
+            return
+        try:
+            if filename[-3:].upper() in ['EPS', 'PNG', 'SVG']:
+                self.graphicsSave(filename)
+                return
+        except:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
+            msg.exec_()
+            return
+        systemline = os.linesep
+        os.linesep = '\n'
+        try:
+            ffile=open(filename,'wb')
+        except IOError:
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+            msg.exec_()
+            return
+        x, y, legend, info = self.getActiveCurve()
+        xlabel = info.get("xlabel", "X")
+        ylabel = info.get("ylabel", "Y")
+        if 0:
+            if "selection" in info:
+                if type(info['selection']) == type({}):
+                    if 'x' in info['selection']:
+                        #proper scan selection
+                        ilabel = info['selection']['y'][0]
+                        ylegend = info['LabelNames'][ilabel]
+                        ylabel = ylegend
+                        if info['selection']['x'] is not None:
+                            if len(info['selection']['x']):
+                                xlabel = info['LabelNames'] [info['selection']['x'][0]]
+                            else:
+                                xlabel = "Point number"
+        try:
+            if filetype in ['Scan', 'MultiScan']:
+                ffile.write("#F %s\n" % filename)
+                savingDate = "#D %s\n"%(time.ctime(time.time()))
+                ffile.write(savingDate)
+                ffile.write("\n")
+                ffile.write("#S 1 %s\n" % legend)
+                ffile.write(savingDate)
+                ffile.write("#N 2\n")
+                ffile.write("#L %s  %s\n" % (xlabel, ylabel) )
+                for i in range(len(y)):
+                    ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                ffile.write("\n")
+                if filetype == 'MultiScan':
+                    scan_n  = 1
+                    curveList = self.getAllCurves()
+                    for x, y, key, info in curveList:
+                        if key == legend:
+                            continue
+                        xlabel = info.get("xlabel", "X")
+                        ylabel = info.get("ylabel", "Y")
+                        if 0:
+                            if "selection" in info:
+                                if type(info['selection']) == type({}):
+                                    if 'x' in info['selection']:
+                                        #proper scan selection
+                                        ilabel = info['selection']['y'][0]
+                                        ylegend = info['LabelNames'][ilabel]
+                                        ylabel = ylegend
+                                        if info['selection']['x'] is not None:
+                                            if len(info['selection']['x']):
+                                                xlabel = info['LabelNames'] [info['selection']['x'][0]]
+                                            else:
+                                                xlabel = "Point number"
+                        scan_n += 1
+                        ffile.write("#S %d %s\n" % (scan_n, key))
+                        ffile.write(savingDate)
+                        ffile.write("#N 2\n")
+                        ffile.write("#L %s  %s\n" % (xlabel, ylabel) )
+                        for i in range(len(y)):
+                            ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+                        ffile.write("\n")
+            elif filetype == 'ASCII':
+                for i in range(len(y)):
+                    ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
+            elif filetype == 'CSV':
+                if "," in filterused[0]:
+                    csvseparator = ","
+                elif ";" in filterused[0]:
+                    csvseparator = ";"
+                elif "OMNIC" in filterused[0]:
+                    csvseparator = ","
+                else:
+                    csvseparator = "\t"
+                if "OMNIC" not in filterused[0]:
+                    ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel))
+                for i in range(len(y)):
+                    ffile.write("%.7E%s%.7E\n" % (x[i], csvseparator,y[i]))
+            else:
+                ffile.write("#F %s\n" % filename)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("\n")
+                ffile.write("#S 1 %s\n" % legend)
+                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("#@MCA %16C\n")
+                ffile.write("#@CHANN %d %d %d 1\n" %  (len(y), x[0], x[-1]))
+                ffile.write("#@CALIB %.7g %.7g %.7g\n" % (0, 1, 0))
+                ffile.write(self.array2SpecMca(y))
+                ffile.write("\n")
+            ffile.close()
+            os.linesep = systemline
+        except:
+            os.linesep = systemline
+            raise
+        return
+
+
     def __simpleOperation(self, operation):
         if operation == 'subtract':
             self._subtractOperation()
+            return
+        if operation == "save":
+            #getOutputFileName
+            filename = self._getOutputFileName()
+            if filename is None:
+                return
+            self._saveOperation(filename[0], filename[1], filename[2])
             return
         if operation != "average":
             #get active curve
@@ -761,121 +907,6 @@ class ScanWindow(PlotWindow.PlotWindow):
                     ndata += 1
             if ndata == 0: return #nothing to average
             dataObject = self.dataObjectsDict[firstcurve]
-
-        if operation == "save":
-            #getOutputFileName
-            filename = self._getOutputFileName()
-            if filename is None:return
-            filterused = filename[2]
-            filetype = filename[1]
-            filename = filename[0]
-            if os.path.exists(filename):
-                os.remove(filename)
-            if filterused[0].upper() == "WIDGET":
-                fformat = filename[-3:].upper()
-                pixmap = qt.QPixmap.grabWidget(self)
-                if not pixmap.save(filename, fformat):
-                    qt.QMessageBox.critical(self,
-                                        "Save Error",
-                                        "%s" % sys.exc_info()[1])
-                return
-            try:
-                if filename[-3:].upper() in ['EPS', 'PNG', 'SVG']:
-                    self.graphicsSave(filename)
-                    return
-            except:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Graphics Saving Error: %s" % (sys.exc_info()[1]))
-                msg.exec_()
-                return
-            systemline = os.linesep
-            os.linesep = '\n'
-            try:
-                ffile=open(filename,'wb')
-            except IOError:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-                msg.exec_()
-                return
-            try:
-                if filetype in ['Scan', 'MultiScan']:
-                    ffile.write("#F %s\n" % filename)
-                    savingDate = "#D %s\n"%(time.ctime(time.time()))
-                    ffile.write(savingDate)
-                    ffile.write("\n")
-                    ffile.write("#S 1 %s\n" % legend)
-                    ffile.write(savingDate)
-                    ffile.write("#N 2\n")
-                    ffile.write("#L %s  %s\n" % (xlabel, ylabel) )
-                    for i in range(len(y)):
-                        ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
-                    ffile.write("\n")
-                    if filetype == 'MultiScan':
-                        scan_n  = 1
-                        keylist = list(self.dataObjectsList)
-                        for key in self._curveList:
-                            if key not in keylist:
-                                keylist.append(key)
-                        for key in keylist:
-                            if key not in self.dataObjectsDict.keys():
-                                continue
-                            if key == legend: continue
-                            dataObject = self.dataObjectsDict[key]
-                            y = dataObject.y[0]
-                            if dataObject.x is not None:
-                                x = dataObject.x[0]
-                            else:
-                                x = numpy.arange(len(y)).astype(numpy.float)
-                            ilabel = dataObject.info['selection']['y'][0]
-                            ylabel = dataObject.info['LabelNames'][ilabel]
-                            if len(dataObject.info['selection']['x']):
-                                ilabel = dataObject.info['selection']['x'][0]
-                                xlabel = dataObject.info['LabelNames'][ilabel]
-                            else:
-                                xlabel = "Point Number"
-                            scan_n += 1
-                            ffile.write("#S %d %s\n" % (scan_n, key))
-                            ffile.write(savingDate)
-                            ffile.write("#N 2\n")
-                            ffile.write("#L %s  %s\n" % (xlabel, ylabel) )
-                            for i in range(len(y)):
-                                ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
-                            ffile.write("\n")
-                elif filetype == 'ASCII':
-                    for i in range(len(y)):
-                        ffile.write("%.7g  %.7g\n" % (x[i], y[i]))
-                elif filetype == 'CSV':
-                    if "," in filterused[0]:
-                        csvseparator = ","
-                    elif ";" in filterused[0]:
-                        csvseparator = ";"
-                    elif "OMNIC" in filterused[0]:
-                        csvseparator = ","
-                    else:
-                        csvseparator = "\t"
-                    if "OMNIC" not in filterused[0]:
-                        ffile.write('"%s"%s"%s"\n' % (xlabel,csvseparator,ylabel))
-                    for i in range(len(y)):
-                        ffile.write("%.7E%s%.7E\n" % (x[i], csvseparator,y[i]))
-                else:
-                    ffile.write("#F %s\n" % filename)
-                    ffile.write("#D %s\n"%(time.ctime(time.time())))
-                    ffile.write("\n")
-                    ffile.write("#S 1 %s\n" % legend)
-                    ffile.write("#D %s\n"%(time.ctime(time.time())))
-                    ffile.write("#@MCA %16C\n")
-                    ffile.write("#@CHANN %d %d %d 1\n" %  (len(y), x[0], x[-1]))
-                    ffile.write("#@CALIB %.7g %.7g %.7g\n" % (0, 1, 0))
-                    ffile.write(self.array2SpecMca(y))
-                    ffile.write("\n")
-                ffile.close()
-                os.linesep = systemline
-            except:
-                os.linesep = systemline
-                raise
-            return
 
         #create the output data object
         newDataObject = DataObject.DataObject()
