@@ -96,7 +96,7 @@ class _TestColormap(unittest.TestCase):
                 if posValue.size != 0:
                     start = np.nanmin(posValue)
                 else:
-                    start = None  # if no value above 0
+                    start = 0.
 
             if end is None:
                 end = np.nanmax(data)
@@ -181,7 +181,8 @@ class _TestColormap(unittest.TestCase):
             startTime = time.time()
 
             # Compare with SPS LUT if possible
-            if (np.all(colormap == self.COLORMAPS['red 256']) and
+            if (colormap.shape == self.COLORMAPS['red 256'].shape and
+                    np.all(np.equal(colormap, self.COLORMAPS['red 256'])) and
                     data.size % 2 == 0 and
                     data.dtype in (np.float32, np.float64)):
                 # Only works with red colormap and even size

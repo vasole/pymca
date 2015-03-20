@@ -120,10 +120,11 @@ class TestFastLog10(unittest.TestCase):
         refLogValues = map(math.log10, values)
 
         # Comparison
-        errors = map(lambda a, b: math.fabs(a - b), logValues, refLogValues)
-        bigErrors = filter(lambda a : a > 0.0001, errors)
+        errors = list(map(lambda a, b: math.fabs(a - b),
+                      logValues, refLogValues))
+        bigErrors = list(filter(lambda a : a > 0.00011, errors))
 
-        self._log("Nb errors > 0.0001", len(bigErrors))
+        self._log("Nb errors > 0.00011", len(bigErrors))
         self._log("Max Error:", max(errors))
 
         self.assertEqual(len(bigErrors), 0)

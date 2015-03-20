@@ -91,8 +91,8 @@ class TestMinMax(unittest.TestCase):
             minPositiveNumpy = self._minPos(data)
         durationNumpy = time.time() - startTime
 
-        self._log(data.dtype, data.size, 'duration (s):', duration, 'Numpy/C:',
-                  durationNumpy / duration)
+        self._log(data.dtype, data.size, 'duration C (s):', duration,
+                  'duration Numpy (s):', durationNumpy)
 
         self.assertEqual(min_, minNumpy)
         if minPos:
