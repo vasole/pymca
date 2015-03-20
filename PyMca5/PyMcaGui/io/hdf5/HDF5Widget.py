@@ -629,6 +629,57 @@ class HDF5Widget(FileView):
                 entryList.append((entry, item.file.filename))
         return entryList
 
+def getDatasetDialog(filename=None, value=False, message=None):
+    """
+    Simple dialog to select a dataset via a double click on the tree
+
+    :param filename: Name of the HDF5 file
+    :param value: If True returns dataset value instead of just the dataset
+    """
+    if filename is None:
+        from PyMca5.PyMca import PyMcaFileDialogs
+        fileTypeList = ['HDF5 Files (*.h5 *.nxs *.hdf)',
+                        'HDF5 Files (*)']
+        message = "Open HDF5 file"
+        filenamelist, ffilter = PyMcaFileDialogs.getFileList(parent=None,
+                                    filetypelist=fileTypeList,
+                                    message=message,
+                                    getfilter=True,
+                                    single=True,
+                                    currentfilter=None)
+        if len(filenamelist) < 1:
+            return None
+        filename = filenamelist[0]
+    if message is None:
+        message = 'Select your item by a double click'
+    hdf5Dialog = qt.QDialog()
+    hdf5Dialog.setWindowTitle(message)
+    hdf5Dialog.mainLayout = qt.QVBoxLayout(hdf5Dialog)
+    hdf5Dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
+    hdf5Dialog.mainLayout.setSpacing(0)
+    fileModel = FileModel()
+    fileView = HDF5Widget(fileModel)
+    hdf5File = fileModel.openFile(filename, "r")
+    def _hdf5WidgetSlot(ddict):
+        if ddict['event'] == "itemDoubleClicked":
+            if ddict['type'].lower() in ['dataset']:
+                hdf5Dialog._hdf5Datatset = ddict['name']
+                hdf5Dialog.accept()    
+    fileView.sigHDF5WidgetSignal.connect(_hdf5WidgetSlot)
+    hdf5Dialog.mainLayout.addWidget(fileView)
+    hdf5Dialog.resize(400, 200)
+    ret = hdf5Dialog.exec_()
+    if not ret:
+        return None
+    dataset = hdf5Dialog._hdf5Datatset
+    hdf5Dialog = None
+    if value:
+        data = hdf5File[dataset].value
+        # is it dangerous to close the file?
+        hdf5File.close()
+    else:
+        data = hdf5File[dataset]
+    return data
 
 if __name__ == "__main__":
     app = qt.QApplication(sys.argv)
