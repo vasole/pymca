@@ -691,7 +691,7 @@ class Plot(PlotBase.PlotBase):
         if just_legend:
             return self._activeCurve
         if self._activeCurve is None:
-            return []
+            return None
         else:
             return self._curveDict[self._activeCurve] * 1
 
