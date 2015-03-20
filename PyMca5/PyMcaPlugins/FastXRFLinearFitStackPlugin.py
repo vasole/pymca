@@ -116,6 +116,9 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":
             self.addImage(ddict['image'], ddict['title'])
+        elif ddict['event'] == "addAllClicked":
+            for i in range(len(ddict["images"])):
+                self.addImage(ddict['images'][i], ddict['titles'][i])
         elif ddict['event'] == "removeImageClicked":
             self.removeImage(ddict['title'])
         elif ddict['event'] == "replaceImageClicked":
@@ -233,7 +236,8 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         nImages = images.shape[0]
         self._widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=False)
-        self._widget.buildAndConnectImageButtonBox()
+        self._widget.buildAndConnectImageButtonBox(replace=True,
+                                                  multiple=True)
         qt = StackPluginResultsWindow.qt
         self._widget.sigMaskImageWidgetSignal.connect(self.mySlot)
         self._widget.setStackPluginResults(images,
