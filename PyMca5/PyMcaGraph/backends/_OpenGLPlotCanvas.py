@@ -1363,7 +1363,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDataBounds = Bounds(1., 100., 1., 100., 1., 100.)
         self._keepDataAspectRatio = False
 
-        self._activeCurve = None
+        self._activeCurveLegend = None
 
         self._crosshairCursor = None
         self._mousePosInPixels = None
@@ -2555,11 +2555,9 @@ class OpenGLPlotCanvas(PlotBackend):
         if selectable:
             behaviors.add('selectable')
 
-        wasActiveCurve = False
+        wasActiveCurve = (legend == self._activeCurveLegend)
         oldCurve = self._zOrderedItems.get(('curve', legend), None)
         if oldCurve is not None:
-            if oldCurve == self._activeCurve:
-                wasActiveCurve = True
             self.removeCurve(legend)
 
         if replace:
@@ -2627,9 +2625,6 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
-            if curve == self._activeCurve:
-                self._activeCurve = None
-
             self._hasRightYAxis.discard(curve)
             self._plotFrame.isY2Axis = self._hasRightYAxis
 
@@ -2657,14 +2652,20 @@ class OpenGLPlotCanvas(PlotBackend):
         if curve is None:
             raise KeyError("Curve %s not found" % legend)
 
-        if self._activeCurve is not None:
-            inactiveState = self._activeCurve._inactiveState
-            del self._activeCurve._inactiveState
-            self._activeCurve.lineColor = inactiveState['lineColor']
-            self._activeCurve.markerColor = inactiveState['markerColor']
-            self._activeCurve.useColorVboData = inactiveState['useColorVbo']
-            self.setGraphXLabel(inactiveState['xLabel'])
-            self.setGraphYLabel(inactiveState['yLabel'])
+        if self._activeCurveLegend is not None:
+            activeCurve = self._zOrderedItems.get(('curve',
+                                                   self._activeCurveLegend),
+                                                  None)
+            # _inactiveState might not exists as
+            # _activeCurveLegend is not reset when curve is removed.
+            inactiveState = getattr(activeCurve, '_inactiveState', None)
+            if inactiveState is not None:
+                del activeCurve._inactiveState
+                activeCurve.lineColor = inactiveState['lineColor']
+                activeCurve.markerColor = inactiveState['markerColor']
+                activeCurve.useColorVboData = inactiveState['useColorVbo']
+                self.setGraphXLabel(inactiveState['xLabel'])
+                self.setGraphYLabel(inactiveState['yLabel'])
 
         curve._inactiveState = {'lineColor': curve.lineColor,
                                 'markerColor': curve.markerColor,
@@ -2681,7 +2682,7 @@ class OpenGLPlotCanvas(PlotBackend):
         curve.lineColor = color
         curve.markerColor = color
         curve.useColorVboData = False
-        self._activeCurve = curve
+        self._activeCurveLegend = legend
 
         if replot:
             self.replot()
