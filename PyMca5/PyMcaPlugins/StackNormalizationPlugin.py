@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -59,6 +59,14 @@ These plugins will be compatible with any stack window that provides the functio
 """
 import numpy
 from PyMca5 import StackPluginBase
+# Add support for normalization by data
+from PyMca5.PyMca import PyMcaFileDialogs
+from PyMca5.PyMca import EdfFile
+try:
+    import h5py
+    HDF5 = True
+except:
+    HDF5 = False
 
 DEBUG = 0
 
@@ -74,6 +82,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
         self.methodDict["I/I0 Normalization"] =[function,
                                                 info,
                                                 icon]
+
         text  = "-log(Stack/I0) Normalization where I0 is the active curve\n"
         function = self.logNormalizeByCurve
         info = text
@@ -81,8 +90,28 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
         self.methodDict["-log(I/I0) Normalization"] =[function,
                                                       info,
                                                       icon]
+
+        text  = "External Image I/I0 Normalization where\n"
+        text += "I0 is an image read from file\n"
+        function = self.divideByExternalImage
+        info = text
+        icon = None
+        self.methodDict["Image I/I0 Normalization"] =[function,
+                                                info,
+                                                icon]
+
+        text  = "External Image -log(Stack/I0) Normalization\n"
+        text += "where I0 is an image read from file\n"
+        function = self.logNormalizeByExternalImage
+        info = text
+        icon = None
+        self.methodDict["Image -log(I/I0) Normalization"] =[function,
+                                                info,
+                                                icon]
         self.__methodKeys = ["I/I0 Normalization",
-                             "-log(I/I0) Normalization"]
+                             "-log(I/I0) Normalization",
+                             "Image I/I0 Normalization",
+                             "Image -log(I/I0) Normalization"]
 
     #Methods implemented by the plugin
     def getMethods(self):
@@ -96,6 +125,106 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
 
     def applyMethod(self, name):
         return self.methodDict[name][0]()
+
+    def _loadExternalData(self):
+        getfilter = True
+        fileTypeList = ["EDF Files (*edf *ccd *tif)"]
+        if HDF5:
+            fileTypeList.append('HDF5 Files (*.h5 *.nxs *.hdf)')
+        fileTypeList.append('ASCII Files (*)') 
+        fileTypeList.append("EDF Files (*)")
+        message = "Open data file"
+        filenamelist, ffilter = PyMcaFileDialogs.getFileList(parent=None,
+                                    filetypelist=fileTypeList,
+                                    message=message,
+                                    getfilter=getfilter,
+                                    single=True,
+                                    currentfilter=None)
+        if len(filenamelist) < 1:
+            return
+        filename = filenamelist[0]
+        if ffilter.startswith('HDF5'):
+            data = HDF5Widget.getDatasetDialog(filename, value=True,
+                            message='Select your data set by a double click')
+        elif ffilter.startswith("EDF"):
+            edf = EdfFile.EdfFile(filename, "rb")
+            if edf.GetNumImages() > 1:
+                # TODO: A dialog showing the different images
+                # based on the external images browser needed
+                print("WARNING: Taking first image")
+            data = edf.GetData(0)
+            edf = None
+        elif ffilter.startswith("ASCII"):
+            data=numpy.loadtxt(filename)
+        return data
+
+    def divideByExternalImage(self):
+        self._externalImageOperation("divide")
+
+    def logNormalizeByExternalImage(self):
+        self._externalImageOperation("log")
+
+    def _externalImageOperation(self, operation="divide"):
+        if operation == "log":
+            operator = numpy.log
+        stack = self.getStackDataObject()
+        if stack is None:
+            return
+        if not isinstance(stack.data, numpy.ndarray):
+            text = "This method does not work with dynamically loaded stacks yet"
+            raise TypeError(text)
+        normalizationData = self._loadExternalData()
+        if normalizationData is None:
+            return
+        mcaIndex = stack.info.get('McaIndex', -1)
+        stackShape = stack.data.shape
+        if mcaIndex < 0:
+            mcaIndex = len(stackShape) - mcaIndex
+        imageSize = stack.data.size / stackShape[mcaIndex]
+        if normalizationData.size != imageSize:
+            raise ValueError("Loaded data size does not match required size")
+        if normalizationData.dtype not in [numpy.float,
+                                           numpy.float32,
+                                           numpy.float64]:
+            normalizationData = normalizationData.astype(numpy.float32)
+        # TODO: Use an intermediate array and set divisions 0/0 to 0.
+        if mcaIndex == 0:
+            normalizationData.shape = stackShape[1:]
+            if operation == "divide":
+                for i in range(stackShape[mcaIndex]):
+                    stack.data[i] /= normalizationData
+            elif operation == "log":
+                for i in range(stackShape[mcaIndex]):
+                    stack.data[i] = -operator(stack.data[i]/normalizationData)
+        elif mcaIndex == 2:
+            normalizationData.shape = stackShape[:2]
+            if operation == "divide":
+                for i in range(stackShape[mcaIndex]):
+                    stack.data[:, :, i] /= normalizationData
+            else:
+                for i in range(stackShape[mcaIndex]):
+                    stack.data[:, :, i] = -operator(stack.data[:, :, i]/ \
+                                                    normalizationData)
+        elif mcaIndex == 1:
+            normalizationData.shape = stackShape[0], stackShape[2]
+            if operation == "divide":
+                for i in range(stackShape[mcaIndex]):
+                    stack.data[:, i, :] /= normalizationData
+            else:
+                for i in range(stackShape[mcaIndex]):
+                    stack.data[:, i, :] = -operator(stack.data[:, i, :]/ \
+                                                    normalizationData)
+        else:
+            raise ValueError("Unsupported 1D index %d" % mcaIndex)
+        self.setStack(stack)
+
+    def divideByExternalCurve(self):
+        stack = self.getStackDataObject()
+        if stack is None:
+            return
+        if not isinstance(stack.data, numpy.ndarray):
+            text = "This method does not work with dynamically loaded stacks yet"
+            raise TypeError(text)
 
     def divideByCurve(self):
         stack = self.getStackDataObject()
