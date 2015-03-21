@@ -62,6 +62,7 @@ from PyMca5 import StackPluginBase
 # Add support for normalization by data
 from PyMca5.PyMca import PyMcaFileDialogs
 from PyMca5.PyMca import EdfFile
+from PyMca5.PyMca import specfilewrapper
 try:
     import h5py
     HDF5 = True
@@ -155,7 +156,12 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
             data = edf.GetData(0)
             edf = None
         elif ffilter.startswith("ASCII"):
-            data=numpy.loadtxt(filename)
+            #data=numpy.loadtxt(filename)
+            sf = specfilewrapper.Specfile(filename)
+            targetScan = sf[0]
+            data = numpy.array(targetScan.data().T, copy=True)
+            targetScan = None
+            sf = None
         return data
 
     def divideByExternalImage(self):
@@ -182,7 +188,12 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
             mcaIndex = len(stackShape) - mcaIndex
         imageSize = stack.data.size / stackShape[mcaIndex]
         if normalizationData.size != imageSize:
-            raise ValueError("Loaded data size does not match required size")
+            if normalizationData.shape[0] == imageSize:
+                if len(normalizationData.shape) == 2:
+                    # assume the last column are the normalization data
+                    normalizationData = normalizationData[:, -1]
+        if normalizationData.size != imageSize:
+                raise ValueError("Loaded data size does not match required size")
         if normalizationData.dtype not in [numpy.float,
                                            numpy.float32,
                                            numpy.float64]:
