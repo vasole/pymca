@@ -527,9 +527,10 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
         secondary = fitConfiguration["concentrations"]["usemultilayersecondary"]
         if secondary == 0:
             # otherways it is meaning less to call this function
-            secondary = 1
+            secondary = 2
     except:
-        secondary = 1
+        print("Exception. Forcing tertiary")
+        secondary = 2
 
     if action.upper() == "FLUORESCENCE":
         return getMultilayerFluorescence(multilayerSample,
@@ -572,6 +573,10 @@ def getFisxCorrectionFactors(*var, **kw):
     expectedFluorescence = getMultilayerFluorescence(*var, **kw)
     ddict = {}
     transitions = ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M']
+    if kw["secondary"] == 2:
+        nItems = 3
+    else:
+        nItems = 2
     for key in expectedFluorescence:
         element, family = key.split()
         if element not in ddict:
@@ -580,15 +585,15 @@ def getFisxCorrectionFactors(*var, **kw):
             raise KeyError("Invalid transition family: %s" % family)
         if family not in ddict[element]:
             ddict[element][family] = {'total':0.0,
-                                      'correction_factor':[1.0, 1.0],
-                                      'counts':[0.0, 0.0]}
+                                      'correction_factor':[1.0] * nItems,
+                                      'counts':[0.0] * nItems}
         for iLayer in range(len(expectedFluorescence[key])):
             layerOutput = expectedFluorescence[key][iLayer]
             layerKey = "layer %d" % iLayer
             if layerKey not in ddict[element][family]:
                 ddict[element][family][layerKey] = {'total':0.0,
-                                    'correction_factor':[1.0, 1.0],
-                                    'counts':[0.0, 0.0]}
+                                    'correction_factor':[1.0] * nItems,
+                                    'counts':[0.0] * nItems}
             for line in layerOutput:
                 rate = layerOutput[line]["rate"]
                 primary = layerOutput[line]["primary"]
@@ -599,11 +604,18 @@ def getFisxCorrectionFactors(*var, **kw):
                 # primary counts
                 tmpDouble = rate * (primary / (primary + secondary + tertiary))
                 ddict[element][family]["counts"][0] += tmpDouble
-                ddict[element][family]["counts"][1] += rate
+                secondaryCounts = rate * \
+                    ((primary  + secondary)/ (primary + secondary + tertiary))
+                ddict[element][family]["counts"][1] += secondaryCounts
+                if nItems == 3:
+                    ddict[element][family]["counts"][2] += rate
                 ddict[element][family]["total"] += rate
+
                 #layer by layer information
                 ddict[element][family][layerKey]["counts"][0] += tmpDouble
-                ddict[element][family][layerKey]["counts"][1] += rate
+                ddict[element][family][layerKey]["counts"][1] += secondaryCounts
+                if nItems == 3:
+                    ddict[element][family][layerKey]["counts"][2] += rate
                 ddict[element][family][layerKey]["total"] += rate
 
     for element in ddict:
@@ -613,13 +625,27 @@ def getFisxCorrectionFactors(*var, **kw):
             secondOrder = ddict[element][family]["counts"][1]
             ddict[element][family]["correction_factor"][1] = \
                        secondOrder / firstOrder
+            if nItems == 3:
+                thirdOrder = ddict[element][family]["counts"][2]
+                ddict[element][family]["correction_factor"][2] = \
+                                   thirdOrder / firstOrder
             i = 0
             layerKey = "layer %d" % i
             while layerKey in ddict[element][family]:
                 firstOrder = ddict[element][family][layerKey]["counts"][0]
                 secondOrder = ddict[element][family][layerKey]["counts"][1]
-                ddict[element][family][layerKey]["correction_factor"][1] = \
+                if firstOrder <= 0:
+                    if secondOrder > 0.0:
+                        print("Inconsistency? secondary with no primary?")
+                    ddict[element][family][layerKey]["correction_factor"][1] = 1
+                    if nItems == 3:
+                        ddict[element][family][layerKey]["correction_factor"][2] = 1
+                else:
+                    ddict[element][family][layerKey]["correction_factor"][1] =\
                        secondOrder / firstOrder
+                    if nItems == 3:
+                        ddict[element][family][layerKey]["correction_factor"][2] =\
+                           thirdOrder / firstOrder
                 i += 1
                 layerKey = "layer %d" % i
     return ddict
