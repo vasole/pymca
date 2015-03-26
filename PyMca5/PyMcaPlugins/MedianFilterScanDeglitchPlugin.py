@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 T.Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 T.Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -136,19 +136,21 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
             msg.inputThreshold = inpThreshold
             msg.applyToAll =  buttonAll
             self._widget = msg
+            self._widget.buttonActive = buttonActive
+            self._widget.buttonAll = buttonAll
         if self._widget.exec_():
             self.threshold = float(self._widget.inputThreshold.value())
             self.width = int(self._widget.inputWidth.value())
             if not (self.width%2):
                 self.width += 1
-            if buttonActive.isChecked():
-                if DEBUG:
-                    print('ActiveChecked')
-                self.removeSpikesActive()
-            if buttonAll.isChecked():
+            if self._widget.buttonAll.isChecked():
                 if DEBUG:
                     print('AllChecked')
                 self.removeSpikesAll()
+            elif self._widget.buttonActive.isChecked():
+                if DEBUG:
+                    print('ActiveChecked')
+                self.removeSpikesActive()
 
     def removeSpikesAll(self):
         self.medianThresholdFilter(False, self.threshold, self.width)
@@ -172,7 +174,7 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
             filtered = medfilt1d(y, length)
             diff = filtered-y
             mean = diff.mean()
-            sigma = (x-mean)**2
+            sigma = (y-mean)**2
             sigma = numpy.sqrt(sigma.sum()/float(len(sigma)))
             ynew = numpy.where(abs(diff) > threshold * sigma, filtered, y)
             legend = info.get('selectionlegend',legend) + ' SR'
