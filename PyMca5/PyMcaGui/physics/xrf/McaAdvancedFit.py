@@ -896,15 +896,6 @@ class McaAdvancedFit(qt.QWidget):
                     break
         if useMatrix and FISX and \
            (not fitresult['result']['config']['concentrations']['usemultilayersecondary']):
-            warningText ="<br><b><font color=blue size=4>Neglected higher order excitation correction</font></b>"
-            warningText+="<nobr><table><tr>"
-            warningText+='<td align="right" bgcolor="%s"><b>' % hcolor
-            warningText+='Element Family'
-            warningText+="</b></td>"
-            warningText+='<td align="right" bgcolor="%s"><b>' % hcolor
-            warningText+='Correction Factor'
-            warningText+="</b></td>"
-            warningText+="</tr>"
             doIt = False
             corrections = None
             if 'fisx' in fitresult['result']['config']:
@@ -919,27 +910,54 @@ class McaAdvancedFit(qt.QWidget):
                 # configuration time.
                 if 'fisx' not in fitresult['result']['config']:
                     fitresult['result']['config']['fisx'] = {}
+                    fitresult['result']['config']['fisx']['secondary'] = 2
                 fitresult['result']['config']['fisx']['corrections'] = corrections
-                fitresult['result']['config']['fisx']['secondary'] = 1
+            tertiary = False
+            bodyText = ""
             for element in corrections:
                 for family in corrections[element]:
-                    correction = corrections[element] \
-                                 [family]['correction_factor'][-1]
-                    if correction > 1.02:
+                    correction = corrections[element][family]['correction_factor']
+                    if correction[-1] > 1.02:
                         doIt = True
-                        warningText+="<tr>"
-                        warningText+='<td align="right" bgcolor="%s">' % finalcolor
-                        warningText+="<b><font size=3>%s </font></b>"  % \
+                        bodyText += "<tr>"
+                        bodyText += '<td align="right" bgcolor="%s">' % finalcolor
+                        bodyText += "<b><font size=3>%s&nbsp;&nbsp;</font></b>"  % \
                                               (element + " " + family)
-                        warningText+="</td>"
-                        warningText+='<td align="right" bgcolor="%s">' % finalcolor
-                        warningText+="<b><font size=3>%.3f </font></b>"  % correction
-                        warningText+="</td>"
-                        warningText+="</tr>"
+                        bodyText += "</td>"
+                        bodyText += '<td align="right" bgcolor="%s">' % finalcolor
+                        bodyText += "<b><font size=3>"
+                        bodyText += "%.3f</font></b>"  % correction[1]
+                        bodyText += "&nbsp;&nbsp;&nbsp;"
+                        if len(corrections[element][family]['correction_factor']) > 2:
+                            tertiary = True
+                            bodyText+= "</td>"
+                            bodyText += '<td align="right" bgcolor="%s">' % finalcolor
+                            bodyText += "<b><font size=3>"
+                            bodyText+= "%.3f </font></b>"  % correction[2]
+                            bodyText += "&nbsp;&nbsp;&nbsp;"
+                        bodyText+= "</td>"
+                        bodyText+= "</tr>"
             if doIt:
-                warningText+="<tr>"
-                warningText+="</table>"
-                text += warningText
+                bodyText += "<tr>"
+                bodyText += "</table>"
+                warningText  = "<br><b><font color=blue size=4>"
+                warningText += "Neglected higher order excitation correction</font></b>"
+                warningText += "<nobr><table>"
+                warningText += "<tr>"
+                warningText += '<td align="right" bgcolor="%s"><b>' % hcolor
+                warningText += 'Peak Family'
+                warningText += "</b></td>"
+                warningText += '<td align="right" bgcolor="%s"><b>' % hcolor
+                warningText += ('&nbsp;' * 10)
+                warningText += '2nd Order'
+                warningText += "</b></td>"
+                if tertiary:
+                    warningText += '<td align="right" bgcolor="%s"><b>' % hcolor
+                    warningText += ('&nbsp;' * 10)
+                    warningText += '3rd Order'
+                    warningText += "</b></td>"
+                warningText += "</tr>"
+                text += (warningText + bodyText)
         self.diagnosticsWidget.insertHtml(text)
 
     def concentrations(self):

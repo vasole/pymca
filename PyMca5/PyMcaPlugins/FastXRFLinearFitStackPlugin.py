@@ -79,7 +79,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         function = self.calculate
-        info = "Fit stack with current fit configuration"
+        info = "Fit stack with a fit configuration"
         icon = PyMca_Icons.fit
         self.methodDict["Fit Stack"] =[function,
                                        info,
@@ -118,7 +118,7 @@ class FastXRFLinearFitStackPlugin(StackPluginBase.StackPluginBase):
             self.addImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "addAllClicked":
             for i in range(len(ddict["images"])):
-                self.addImage(ddict['images'][i], ddict['titles'][i])
+                self.addImage(ddict['images'][i], ddict['titles'][i])            
         elif ddict['event'] == "removeImageClicked":
             self.removeImage(ddict['title'])
         elif ddict['event'] == "replaceImageClicked":

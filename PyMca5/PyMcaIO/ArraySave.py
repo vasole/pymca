@@ -573,7 +573,10 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
             elif axes[i] is not None:
                 dim = axes[i]
                 try:
-                    dimlabel = "%s" % labels[i]
+                    if labels[i] in [None, 'None']:
+                        dimlabel = 'dim_%d' % i
+                    else:
+                        dimlabel = "%s" % labels[i]
                 except:
                     dimlabel = 'dim_%d' % i
             else:

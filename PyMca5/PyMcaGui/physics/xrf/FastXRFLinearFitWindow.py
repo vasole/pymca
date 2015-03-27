@@ -130,8 +130,6 @@ class FastXRFLinearFitWindow(qt.QWidget):
         self._weightButtonGroup.buttons()[0].setChecked(True)
         #self._weightWidget.mainLayout.addWidget(qt.HorizontalSpacer(self._weightWidget))
 
-
-
         self.mainLayout.addWidget(configLabel, 0, 0)
         self.mainLayout.addWidget(self._configLine, 0, 1)
         self.mainLayout.addWidget(self._configButton, 0, 2)
@@ -152,7 +150,7 @@ class FastXRFLinearFitWindow(qt.QWidget):
     def browseConfigurationFile(self):
         f = PyMcaFileDialogs.getFileList(parent=self,
                                      filetypelist=["Configuration files (*.cfg)"],
-                                     message="Open a new fit config file",
+                                     message="Open a fit configuration file",
                                      mode="OPEN",
                                      single=True)
         if len(f):
