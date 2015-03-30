@@ -2091,21 +2091,28 @@ class McaAdvancedFit(qt.QWidget):
             xdata = ddict['result']['energy'][:]
         else:
             xdata = ddict['result']['xdata'][:]
-        self.graph.addCurve(xdata, ddict['result']['ydata'], legend="Data", replot=False)
-        self.graph.addCurve(xdata, ddict['result']['yfit'], legend="Fit", replot=True)
-        self.graph.addCurve(xdata, ddict['result']['continuum'], legend="Continuum", replot=True)
+        self.graph.addCurve(xdata, ddict['result']['ydata'], legend="Data",
+                            replot=False)
+        self.graph.addCurve(xdata, ddict['result']['yfit'], legend="Fit",
+                            replot=False)
+        self.graph.addCurve(xdata, ddict['result']['continuum'],
+                            legend="Continuum",
+                            replot=False)
 
         curveList = self.graph.getAllCurves(just_legend=True)
 
         if config['fit']['sumflag']:
-            self.graph.addCurve(xdata, ddict['result']['pileup'] + ddict['result']['continuum'],
-                                legend="Pile-up", replot=True)
+            self.graph.addCurve(xdata, ddict['result']['pileup'] + \
+                                       ddict['result']['continuum'],
+                                       legend="Pile-up", replot=False)
         elif "Pile-up" in curveList:
-            self.graph.removeCurve("Pile-up", replot=True)
+            self.graph.removeCurve("Pile-up", replot=False)
 
         if self.matrixSpectrumButton.isChecked():
             if 'ymatrix' in ddict['result']:
-                self.graph.addCurve(xdata, ddict['result']['ymatrix'], legend="Matrix")
+                self.graph.addCurve(xdata,
+                                    ddict['result']['ymatrix'],
+                                    legend="Matrix")
             else:
                 self.graph.removeCurve("Matrix")
         else:
@@ -2126,7 +2133,7 @@ class McaAdvancedFit(qt.QWidget):
                 self.graph.addCurve(mcxdata,
                                     mcydatan,
                                     legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
-                                    replot=True)
+                                    replot=False)
 
         if self.peaksSpectrumButton.isChecked():
             keep = ['Data','Fit','Continuum','Matrix','Pile-up']
@@ -2817,6 +2824,11 @@ class McaGraphWindow(PlotWindow.PlotWindow):
                                        control=control,
                                        **kw)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
+        self.setGraphYLabel("Counts")
+        if self.energyButton.isChecked():
+            self.setGraphXLabel("Energy")
+        else:
+            self.setGraphXLabel("Channel")
 
     def printGraph(self):
         pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
@@ -2845,6 +2857,16 @@ class McaGraphWindow(PlotWindow.PlotWindow):
         ddict['event']  = 'SaveClicked'
         ddict['active'] = legend
         self.sigPlotSignal.emit(ddict)
+
+    def setActiveCurve(self, legend, replot=True):
+        super(McaGraphWindow, self).setActiveCurve(legend, replot=False)
+        self.setGraphYLabel("Counts")
+        if self.energyButton.isChecked():
+            self.setGraphXLabel("Energy")
+        else:
+            self.setGraphXLabel("Channel")
+        if replot:
+            self.replot()
 
 def test(ffile='03novs060sum.mca', cfg=None):
     from PyMca5.PyMcaIO import specfilewrapper as specfile
