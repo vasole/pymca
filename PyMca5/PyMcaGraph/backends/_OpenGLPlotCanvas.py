@@ -2600,7 +2600,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if oldCurve is None or \
            oldCurve.xMin != curve.xMin or oldCurve.xMax != curve.xMax or \
-           oldCurve.info['axis'] != curve.info['axis'] or \
+           oldCurve.info['yAxis'] != curve.info['yAxis'] or \
            oldCurve.yMin != curve.yMin or oldCurve.yMax != curve.yMax:
             self._dirtyDataBounds()
 
