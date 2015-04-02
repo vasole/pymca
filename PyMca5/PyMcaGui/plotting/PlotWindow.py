@@ -380,7 +380,7 @@ class PlotWindow(PlotWidget.PlotWidget):
 
         #energy icon
         if kw.get('energy', False):
-            self._addToolButton(self.energyIcon,
+            self.energyButton = self._addToolButton(self.energyIcon,
                             self._energyIconSignal,
                             'Toggle Energy Axis (On/Off)',
                             toggle=True,
@@ -961,9 +961,11 @@ class PlotWindow(PlotWidget.PlotWidget):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
 
     ########### ROI HANDLING ###############
-    def graphCallback(self, ddict):
+    def graphCallback(self, ddict=None):
         if DEBUG:
             print("_graphSignalReceived", ddict)
+        if ddict is None:
+            ddict = {}
         if ddict['event'] in ['markerMoved', 'markerSelected']:
             label = ddict['label']
             if label in ['ROI min', 'ROI max', 'ROI middle']:

@@ -200,7 +200,7 @@ class McaWindow(ScanWindow.ScanWindow):
         if just_legend:
             return legend
         activeCurve = legend
-        if not len(activeCurve):
+        if activeCurve in [None, []]:
             return None
         x = activeCurve[0]
         y = activeCurve[1]
@@ -251,7 +251,7 @@ class McaWindow(ScanWindow.ScanWindow):
 
     def mcaAdvancedFitSignal(self):
         legend = self.getActiveCurve(just_legend=True)
-        if legend is None:
+        if legend in [None, []]:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Please Select an active curve")
@@ -840,6 +840,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 if "selectiontype" in dataObject.info:
                     if dataObject.info["selectiontype"] != "1D": continue
                 curveinfo=copy.deepcopy(info)
+                curveinfo["ylabel"] = info.get("ylabel", "Counts")
                 if dataObject.x is None:
                     xhelp = None
                 else:
@@ -1176,8 +1177,12 @@ class McaWindow(ScanWindow.ScanWindow):
             self.controlWidget.calinfo.AText.setText("?????")
             self.controlWidget.calinfo.BText.setText("?????")
             self.controlWidget.calinfo.CText.setText("?????")
-        super(McaWindow, self).setActiveCurve(legend)
-
+        xlabel = self.getGraphXLabel()
+        ylabel = self.getGraphYLabel()
+        super(McaWindow, self).setActiveCurve(legend, replot=False)
+        self.setGraphXLabel(xlabel)
+        self.setGraphYLabel(ylabel)
+        self.replot()
 
     def _customFitSignalReceived(self, ddict):
         if ddict['event'] == "FitFinished":
