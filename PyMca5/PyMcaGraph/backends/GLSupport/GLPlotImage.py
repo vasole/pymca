@@ -283,11 +283,7 @@ class GLPlotColormap(_GLPlotData2D):
         super(GLPlotColormap, self).__init__(data, xMin, xScale, yMin, yScale)
         self.colormap = colormap
         self.cmapIsLog = cmapIsLog
-        self.cmapRangeIsAuto = cmapRange is None
-        if cmapRange is not None:
-            self.cmapRange = cmapRange
-        else:
-            self.cmapRange = minMax(data)
+        self.cmapRange = cmapRange  # Init _cmapRange and _cmapRangeIsAuto
 
         self._textureIsDirty = False
 
@@ -300,12 +296,26 @@ class GLPlotColormap(_GLPlotData2D):
             del self._texture
         self._textureIsDirty = False
 
+    @property
+    def cmapRange(self):
+        if self._cmapRange is None:  # Lazy computation
+            self._cmapRange = minMax(self.data)
+        return self._cmapRange
+
+    @cmapRange.setter
+    def cmapRange(self, cmapRange):
+        self._cmapRangeIsAuto = cmapRange is None
+        if cmapRange is None:
+            self._cmapRange = None
+        else:
+            self._cmapRange = tuple(cmapRange)
+
     def updateData(self, data):
         oldData = self.data
         self.data = data
 
-        if self.cmapRangeIsAuto:
-            self.cmapRange = minMax(data)
+        if self._cmapRangeIsAuto:  # Reset cmapRange cache as data is updated
+            self._cmapRange = None
 
         if hasattr(self, '_texture'):
             if (self.data.shape != oldData.shape or

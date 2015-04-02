@@ -2433,8 +2433,6 @@ class OpenGLPlotCanvas(PlotBackend):
            oldYScale != yScale:
             self._dirtyDataBounds()
 
-        self._resetZoom()
-
         self._plotDirtyFlag = True
 
         if replot:
