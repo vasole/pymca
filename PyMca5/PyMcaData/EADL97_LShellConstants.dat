@@ -1,6 +1,6 @@
 #F EADL97_LShellConstants.dat
-#U00 This file is a conversion to specfile format of
-#U01 directly extracted EADL97 Binding energies.
+#U00 This file is a conversion to specfile format of 
+#U01 directly extracted EADL97 Shell constants.
 #U02 EADL itself can be found at:
 #U03           http://www-nds.iaea.org/epdl97/libsall.htm
 #U04 The code used to generate this file has been:
