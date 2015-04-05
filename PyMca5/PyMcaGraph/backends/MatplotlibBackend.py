@@ -1231,6 +1231,8 @@ class MatplotlibGraph(FigureCanvas):
 
     def setLimits(self, xmin, xmax, ymin, ymax):
         self.ax.set_xlim(xmin, xmax)
+        if ymax < ymin:
+            ymin, ymax = ymax, ymin
         if self.ax.yaxis_inverted():
             self.ax.set_ylim(ymax, ymin)
         else:

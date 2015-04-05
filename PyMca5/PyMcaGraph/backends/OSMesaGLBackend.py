@@ -177,7 +177,7 @@ class OSMesaGLBackend(QLabel, OpenGLPlotCanvas):
         mesa.OSMesaPixelStore(mesa.OSMESA_Y_UP, 0)
 
         self.makeCurrent()
-        gl.testGLExtensions()
+        gl.testGL()
         self.initializeGL()
         self.resizeGL(width, height)
 
