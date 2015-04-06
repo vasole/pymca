@@ -1,3 +1,21 @@
+VERSION 5.0.3
+
+Recover Advanced fit graphics saving in logarithmic mode.
+
+Slower but correct reading of SPE files.
+
+Correctly handle Energy and Channel plot labels.
+
+Calculate tertiary excitation in diagnostics tab.
+
+Allow stack normalization by an external image.
+
+Correct saving of curves in the SCAN window.
+
+Add OSMesa backend to the list of available plot backends.
+
+Add crosshair cursor option.
+
 VERSION 5.0.2
 
 Fast XRF fitting: Correct concentrations calculation.
