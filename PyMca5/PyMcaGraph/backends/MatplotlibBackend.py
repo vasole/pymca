@@ -2219,7 +2219,10 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.ax.set_ylabel(label)
 
     def setGraphYLimits(self, ymin, ymax):
-        self.ax.set_ylim(ymin, ymax)
+        if self.ax.yaxis_inverted():
+            self.ax.set_ylim(ymax, ymin)
+        else:
+            self.ax.set_ylim(ymin, ymax)
 
     def setXAxisAutoScale(self, flag=True):
         if flag:
