@@ -81,7 +81,7 @@ def use_cython():
         if os.environ["WITH_CYTHON"] == "False":
             print("No Cython requested by environment")
             return False
-    
+
     if ("--no-cython" in sys.argv):
         sys.argv.remove("--no-cython")
         os.environ["WITH_CYTHON"] = "False"
@@ -104,7 +104,7 @@ def use_fisx():
         if os.environ["WITH_FISX"] == "True":
             print("Use of fisx library requested by environment")
             return True
-    
+
     if ("--fisx" in sys.argv):
         sys.argv.remove("--fisx")
         os.environ["WITH_FISX"] = "True"
@@ -118,7 +118,7 @@ if use_fisx():
     # ideally one would use git subtree to put it in third-party
     # but one needs  git > 1.9.x
     fisx_src = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "third-party", "fisx") 
+                            "third-party", "fisx")
     if not os.path.exists(fisx_src):
         print("fisx library not found but installation requested")
         raise IOError("Installation of fisx requested but library not found")
@@ -191,6 +191,12 @@ data_files = [(PYMCA_DATA_DIR, ['LICENSE.GPL',
                          'PyMca5/PyMcaData/EADL97_KShellConstants.dat',
                          'PyMca5/PyMcaData/EADL97_LShellConstants.dat',
                          'PyMca5/PyMcaData/EADL97_MShellConstants.dat',
+                         'PyMca5/PyMcaData/EADL97_KShellNonradiativeRates.dat',
+                         'PyMca5/PyMcaData/EADL97_LShellNonradiativeRates.dat',
+                         'PyMca5/PyMcaData/EADL97_MShellNonradiativeRates.dat',
+                         'PyMca5/PyMcaData/EADL97_KShellRadiativeRates.dat',
+                         'PyMca5/PyMcaData/EADL97_LShellRadiativeRates.dat',
+                         'PyMca5/PyMcaData/EADL97_MShellRadiativeRates.dat',
                          'PyMca5/PyMcaData/EPDL97_CrossSections.dat',
                          'PyMca5/PyMcaData/XCOM_CrossSections.dat',
                          'PyMca5/PyMcaData/XRFSpectrum.mca']),
@@ -791,7 +797,7 @@ if fisx_src is None or ("sdist" in sys.argv):
     sys.exit(0)
 
 #
-# What follows is ugly and it is not intended for 
+# What follows is ugly and it is not intended for
 # use outside the ESRF
 #
 # fisx should be installed as a separated Debian/RedHat/... package
