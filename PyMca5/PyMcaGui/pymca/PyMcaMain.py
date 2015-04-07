@@ -1518,7 +1518,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             ddir=PyMcaDataDir.PYMCA_DOC_DIR
             if not os.path.exists(ddir+"/HTML"+"/MCA-HOWTO.html"):
                 ddir = os.path.dirname(ddir)
-            self.mcaBrowser.setSearchPaths([os.path.join(ddir,"HTML")])
+            self.mcaBrowser.setSearchPaths([os.path.join(ddir,"HTML"),
+                                            os.path.join(ddir,"HTML", "PyMCA_files"),
+                                            os.path.join(ddir,"HTML", "images")])
             self.mcaBrowser.setSource(qt.QUrl(QString("MCA-HOWTO.html")))
             #f = open(os.path.join(dir,"HTML","MCA-HOWTO.html"))
             #self.mcaBrowser.setHtml(f.read())
@@ -1643,13 +1645,13 @@ if 0:
             return "Graph %d"%(idx)
 
 class MyQTextBrowser(qt.QTextBrowser):
-    def  setSource(self,name):
-        if name == QString("./PyMCA.html"):
+    def setSource(self, name):
+        if name == QString("./PyMCA.html") or ("PyMCA.html" in ("%s" % name)):
             if sys.platform == 'win32':
                 ddir=PyMcaDataDir.PYMCA_DOC_DIR
-                if not os.path.exists(ddir+"/HTML"+"/PyMCA.html"):
+                if not os.path.exists(os.path.join(ddir, "HTML", "PyMCA.html")):
                     ddir = os.path.dirname(ddir)
-                cmd = ddir+"/HTML/PyMCA.pdf"
+                cmd = os.path.join(ddir,"HTML", "PyMCA.pdf")
                 os.system('"%s"' % cmd)
                 return
             try:
@@ -1664,7 +1666,7 @@ class MyQTextBrowser(qt.QTextBrowser):
             if self.report.isHidden():self.report.show()
             self.report.raiseW()
         else:
-            qt.QTextBrowser.setSource(self,name)
+            qt.QTextBrowser.setSource(self, name)
 
 class Line(qt.QFrame):
     sigLineDoubleClickEvent = qt.pyqtSignal(object)

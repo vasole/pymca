@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -246,7 +246,11 @@ class specfilewrapper(object):
                     break
                 line = f.readline().replace("\n","")
         if qxas:
-            outdata = [float(x) for x in f.read().split()]
+            outdata = []
+            line = f.readline().replace("\n","")
+            while len(line) and (line[0] != "$"):
+                outdata += [float(x) for x in line.split()]
+                line = f.readline().replace("\n","")
             nlines = len(outdata)
             f.close()
             self.data = numpy.resize(numpy.array(outdata).astype(numpy.float),(nlines,1))
