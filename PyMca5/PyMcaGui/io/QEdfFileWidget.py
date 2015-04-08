@@ -436,7 +436,7 @@ class QEdfFileWidget(qt.QWidget):
     def _zoomReset(self):
         if DEBUG:
             print("_zoomReset")
-        self.graph.zoomReset()
+        self.graph.resetZoom()
 
     def _saveMatplotlibImage(self):
         if self._matplotlibSaveImage is None:
