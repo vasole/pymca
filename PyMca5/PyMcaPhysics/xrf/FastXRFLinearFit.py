@@ -643,7 +643,7 @@ if __name__ == "__main__":
         sys.exit(1)
     fileRoot = ""
     outputDir = None
-    refit = False
+    refit = None
     fileindex = 0
     filepattern=None
     begin = None
@@ -694,6 +694,9 @@ if __name__ == "__main__":
         fileList = getFileListFromPattern(filepattern, begin, end, increment=increment)
     else:
         fileList = args
+    if refit is None:
+        refit = 0
+        print("WARNING: --refit=%d taken as default" % refit)
     if 0:
         #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
         #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
