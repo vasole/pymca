@@ -153,6 +153,13 @@ I'm not aware of. Don't expect those to work either.
         if self._origExtent is None:
             self._origExtent = self.get_extent()
 
+    def get_extent(self):
+        # Override get_extent to return _orgiExtent when available
+        # as AxesImage extent is updated at each redraw
+        if self._origExtent is not None:
+            return self._origExtent
+        else:
+            return super(ModestImage, self).get_extent()
 
     def set_data(self, A):
         """
