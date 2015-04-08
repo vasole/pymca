@@ -248,7 +248,9 @@ class specfilewrapper(object):
         if qxas:
             outdata = []
             line = f.readline().replace("\n","")
-            while len(line) and (line[0] != "$"):
+            while len(line):
+                if line[0] == "$":
+                    break
                 outdata += [float(x) for x in line.split()]
                 line = f.readline().replace("\n","")
             nlines = len(outdata)
