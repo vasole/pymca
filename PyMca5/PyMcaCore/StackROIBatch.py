@@ -58,8 +58,8 @@ class StackROIBatch(object):
         self.setConfiguration(configuration)
 
     def batchROIMultipleSpectra(self, x=None, y=None,
-                           configuration=None, net=False,
-                           xAtMax=False, index=None):
+                           configuration=None, net=True,
+                           xAtMinMax=False, index=None):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -67,7 +67,7 @@ class StackROIBatch(object):
         :param y: 3D array containing the data, usually [nrows, ncolumns, nchannels]
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
         :param net: 0 Means no subtraction, 1 Calculate
-        :param xAtMax: if True, calculate X at maximum Y . Default is false.
+        :param xAtMinMax: if True, calculate X at maximum and minimum Y . Default is false.
         :param index: Index of dimension where to apply the ROIs.
         :return: A dictionnary with the ROIs, concentrations and names as keys.
         """
@@ -83,6 +83,24 @@ class StackROIBatch(object):
             index = mcaIndex
         if index < 0:
             index = len(data.shape) - 1
+
+        #workaround a problem with h5py
+        try:
+            if index in [0]:
+                testException = data[0:1]
+            else:
+                if len(data.shape) == 2:
+                    testException = data[0:1,-1]
+                elif len(data.shape) == 3:
+                    testException = data[0:1,0:1,-1]
+        except AttributeError:
+            txt = "%s" % type(data)
+            if 'h5py' in txt:
+                print("Implementing h5py workaround")
+                import h5py
+                data = h5py.Dataset(data.id)
+            else:
+                raise
 
         # make sure to get x data
         if x is None:
@@ -128,8 +146,12 @@ class StackROIBatch(object):
         iXMaxList = [None] * nRois
         nRows = data.shape[0]
         nColumns = data.shape[1]
-        results = numpy.zeros((nRois * 2, nRows, nColumns), numpy.float)
-        names = [None] * 2 * nRois
+        if xAtMinMax:
+            results = numpy.zeros((nRois * 4, nRows, nColumns), numpy.float)
+            names = [None] * 4 * nRois
+        else:
+            results = numpy.zeros((nRois * 2, nRows, nColumns), numpy.float)
+            names = [None] * 2 * nRois
         for i in range(0, data.shape[0]):
             #print(i)
             #chunks of nColumns spectra
@@ -155,7 +177,10 @@ class StackROIBatch(object):
                             iXMinList[j] = numpy.nonzero(x <= roiFrom)[0][-1]
                             iXMaxList[j] = numpy.nonzero(x >= roiTo)[0][0] + 1
                         names[j] = "ROI " + roiLine
-                        names[j + nRois] = "ROI "+ roiLine + " Net" 
+                        names[j + nRois] = "ROI "+ roiLine + " Net"
+                        if xAtMinMax:
+                            names[j + 2 * nRois] = "ROI "+ roiLine + (" %s at Max." % roiType)
+                            names[j + 3 * nRois] = "ROI "+ roiLine + (" %s at Min." % roiType)
                     iXMin = iXMinList[j]
                     iXMax = iXMaxList[j]
                     #if i == 0:
@@ -167,6 +192,14 @@ class StackROIBatch(object):
                     netSum = rawSum - (0.5 * (left + right) * (iXMax - iXMin + 1))
                     results[j][i,:(jEnd - jStart)] = rawSum
                     results[j + nRois][i,:(jEnd - jStart)] = netSum
+                    if xAtMinMax:
+                        # maxImage
+                        results[j + 2 * nRois][i, :(jEnd - jStart)] = \
+                                 numpy.argmax(tmpArray, axis=1) + iXMin                        
+                        # minImage
+                        results[j + 3 * nRois][i, :(jEnd - jStart)] = \
+                                 numpy.argmin(tmpArray, axis=1) + iXMin                            
+                    
                 jStart = jEnd
         outputDict = {'images':results,
                       'names':names}
@@ -279,7 +312,6 @@ if __name__ == "__main__":
     worker = StackROIBatch()
     worker.setConfigurationFile(configurationFile)
     result = worker.batchROIMultipleSpectra(y=dataStack)
-    print("Total Elapsed = % s " % (time.time() - t0))
     if outputDir is not None:
         imageNames = result['names']
         images = result['images']

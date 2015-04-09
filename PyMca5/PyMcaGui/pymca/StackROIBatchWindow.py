@@ -86,17 +86,17 @@ class StackROIBatchWindow(qt.QWidget):
         self._boxContainerLayout.setSpacing(0)
         # Net ROI
         self._netBox = qt.QCheckBox(self._boxContainer)
-        self._netBox.setText("Use Net ROI")
-        self._netBox.setChecked(False)
-        self._netBox.setEnabled(True)
+        self._netBox.setText("Calculate Net ROI")
+        self._netBox.setChecked(True)
+        self._netBox.setEnabled(False)
 
         # xAtMax
         self._xAtMaxBox = qt.QCheckBox(self._boxContainer)
-        self._xAtMaxBox.setText("Image X at Max. Y")
+        self._xAtMaxBox.setText("Image X at Min/Max. Y")
         self._xAtMaxBox.setChecked(False)
         self._xAtMaxBox.setEnabled(True)
-        text  = "Calculate the channel of the maximum\n"
-        text += "value in the region.\n"
+        text  = "Calculate the channel of the maximum and\n"
+        text += "the minimum value in the region.\n"
         self._xAtMaxBox.setToolTip(text)
 
         # generate tiff files
@@ -150,9 +150,9 @@ class StackROIBatchWindow(qt.QWidget):
         else:
             ddict['net'] = 0
         if self._xAtMaxBox.isChecked():
-            ddict['xAtMax'] = 1
+            ddict['xAtMinMax'] = 1
         else:
-            ddict['xAtMax'] = 0
+            ddict['xAtMinMax'] = 0
         if self._tiffBox.isChecked():
             ddict['tiff'] = 1
         else:
