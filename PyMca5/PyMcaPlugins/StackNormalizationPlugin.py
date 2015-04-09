@@ -293,7 +293,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
             text = "Please make sure to have an active curve"
             raise TypeError(text)
         x, y, legend, info = self.getActiveCurve()
-        yWork = y[y>0]
+        yWork = y[y>0].astype(numpy.float)
         mcaIndex = stack.info.get('McaIndex', -1)
         if mcaIndex in [-1, 2]:
             for i, value in enumerate(yWork):
