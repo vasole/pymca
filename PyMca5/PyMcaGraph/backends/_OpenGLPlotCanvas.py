@@ -450,6 +450,12 @@ def prepareCurveSignal(button, label, type_, xData, yData,
             'xpixel': xPixel,
             'ypixel': yPixel}
 
+def prepareLimitsChangedSignal(xRange, yRange, y2Range):
+    return {'event': 'limitsChanged',
+            'xdata': xRange,
+            'ydata': yRange,
+            'y2data': y2Range}
+
 
 # Interaction #################################################################
 
@@ -2774,6 +2780,18 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Limits #
 
+    def _sendLimitsChanged(self):
+        bounds = self.plotDataBounds
+        if self._hasRightYAxis:
+            y2Range = (bounds.y2Axis.min_, bounds.y2Axis.max_)
+        else:
+            y2Range = None
+        eventDict = prepareLimitsChangedSignal(
+            (bounds.xAxis.min_, bounds.xAxis.max_),
+            (bounds.yAxis.min_, bounds.yAxis.max_),
+            y2Range)
+        self._callback(eventDict)
+
     def _ensureAspectRatio(self):
         plotWidth, plotHeight = self.plotSizeInPixels()
         if plotWidth <= 2 or plotHeight <= 2:
@@ -2834,6 +2852,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self.updateAxis()
 
+        self._sendLimitsChanged()
+
     def getGraphYLimits(self, axis="left"):
         assert axis in ("left", "right")
         if axis == "left":
@@ -2860,6 +2880,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self.updateAxis()
 
+        self._sendLimitsChanged()
+
     def setLimits(self, xMin, xMax, yMin, yMax, y2Min=None, y2Max=None):
         if y2Min is None or y2Max is None:
             y2Min, y2Max = self.plotDataBounds.y2Axis
@@ -2873,6 +2895,8 @@ class OpenGLPlotCanvas(PlotBackend):
             self._ensureAspectRatio()
 
         self.updateAxis()
+
+        self._sendLimitsChanged()
 
     def invertYAxis(self, flag=True):
         if flag != self._plotFrame.isYAxisInverted:
