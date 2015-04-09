@@ -59,7 +59,8 @@ class StackROIBatch(object):
 
     def batchROIMultipleSpectra(self, x=None, y=None,
                            configuration=None, net=True,
-                           xAtMinMax=False, index=None):
+                           xAtMinMax=False, index=None,
+                           xLabel=None):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -69,7 +70,8 @@ class StackROIBatch(object):
         :param net: 0 Means no subtraction, 1 Calculate
         :param xAtMinMax: if True, calculate X at maximum and minimum Y . Default is false.
         :param index: Index of dimension where to apply the ROIs.
-        :return: A dictionnary with the ROIs, concentrations and names as keys.
+        :param xLabel: Type of ROI to be used.
+        :return: A dictionnary with the images and the image names as keys.
         """
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
@@ -115,9 +117,20 @@ class StackROIBatch(object):
         config = self.getConfiguration()
 
         # start the work
-        roiList = config["ROI"]["roilist"]
-        if type(roiList) not in [type([]), type((1,))]:
-            roiList = [roiList]
+        roiList0 = config["ROI"]["roilist"]
+        if type(roiList0) not in [type([]), type((1,))]:
+            roiList0 = [roiList0]
+
+        # operate only on compatible ROIs
+        roiList = []
+        for roi in roiList0:
+            if roi.upper() == "ICR":
+                roiList.append(roi)
+            roiType = config["ROI"]["roidict"][roi]["type"]
+            if xLabel is None:
+                roiList.append(roi)
+            elif xLabel.lower() == roiType.lower():
+                roiList.append(roi)
 
         # only usual spectra case supported
         if index != (len(data.shape) - 1):

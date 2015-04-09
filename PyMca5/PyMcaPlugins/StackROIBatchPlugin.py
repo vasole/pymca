@@ -183,10 +183,12 @@ class StackROIBatchPlugin(StackPluginBase.StackPluginBase):
         net = self._parameters['net']
         self.workerInstance.setConfigurationFile(configurationFile)
         xAtMinMax = self._parameters['xAtMinMax']
+        xLabel = self.getGraphXLabel()
         result = self.workerInstance.batchROIMultipleSpectra(x=x,
                                                         y=stack,
                                                         net=net,
-                                                        xAtMinMax=xAtMinMax)
+                                                        xAtMinMax=xAtMinMax,
+                                                        xLabel=xLabel)
         return result
 
     def threadFinished(self):

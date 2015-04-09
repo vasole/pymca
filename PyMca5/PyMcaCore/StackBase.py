@@ -1032,6 +1032,14 @@ class StackBase(object):
         print("removeCurve not implemented")
         return None
 
+    def getGraphXLabel(self):
+        print("getGraphXLabel not implemented")
+        return None
+
+    def getGraphYLabel(self):
+        print("getGraphYLabel not implemented")
+        return None
+
     def getActiveCurve(self):
         """
         Function to access the currently active curve.
