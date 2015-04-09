@@ -1242,6 +1242,28 @@ class MatplotlibGraph(FigureCanvas):
             self.draw()
         self._callback(ddict)
 
+    def emitLimitsChangedSignal(self):
+        # Send event about limits changed
+        left, right = self.ax.get_xlim()
+        xRange = (left, right) if left < right else (right, left)
+
+        bottom, top = self.ax.get_ylim()
+        yRange = (bottom, top) if bottom < top else (top, bottom)
+
+        if hasattr(self.ax2, "get_visible") and self.ax2.get_visible():
+            bottom2, top2 = self.ax2.get_ylim()
+            y2Range = (bottom2, top2) if bottom2 < top2 else (top2, bottom2)
+        else:
+            y2Range = None
+
+        eventDict = {
+            'event': 'limitsChanged',
+            'xdata': xRange,
+            'ydata': yRange,
+            'y2data': y2Range,
+        }
+        self._callback(eventDict)
+
     def setLimits(self, xmin, xmax, ymin, ymax):
         self.ax.set_xlim(xmin, xmax)
         if ymax < ymin:
@@ -1252,12 +1274,8 @@ class MatplotlibGraph(FigureCanvas):
             self.ax.set_ylim(ymin, ymax)
         # Next line forces a square display region
         #self.ax.set_aspect((xmax-xmin)/float(ymax-ymin))
-        self.xmin = xmin
-        self.xmax = xmax
-        self.ymin = ymin
-        self.ymax = ymax
-        self.limitsSet = True
         #self.draw()
+        self.emitLimitsChangedSignal()
 
     def resetZoom(self):
         xmin, xmax, ymin, ymax = self.getDataLimits('left')
@@ -2230,6 +2248,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def setGraphXLimits(self, xmin, xmax):
         self.ax.set_xlim(xmin, xmax)
+        self.graph.emitLimitsChangedSignal()
 
     def setGraphYLabel(self, label="Y"):
         self.ax.set_ylabel(label)
@@ -2239,6 +2258,16 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.ax.set_ylim(ymax, ymin)
         else:
             self.ax.set_ylim(ymin, ymax)
+        self.graph.emitLimitsChangedSignal()
+
+    def setLimits(self, xmin, xmax, ymin, ymax):
+        # Overrides PlotBackend to send a single limitsChanged event.
+        self.ax.set_xlim(xmin, xmax)
+        if self.ax.yaxis_inverted():
+            self.ax.set_ylim(ymax, ymin)
+        else:
+            self.ax.set_ylim(ymin, ymax)
+        self.graph.emitLimitsChangedSignal()
 
     def setXAxisAutoScale(self, flag=True):
         if flag:

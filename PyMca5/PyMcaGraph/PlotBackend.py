@@ -160,11 +160,15 @@ mouseClicked
 mouseDoubleClicked
     Emitted on mouse release when not zooming, nor drawing, nor picking
 
-MouseZoom
-    TODO: NOT USED? Figure out how to implement a limitsChanged signal?
+limitsChanged
+    Emitted when limits of visible plot area are changed.
+    This can results from user interaction or API calls.
 
-    keys xmin, xmax, ymin, ymax in graph coordenates
-    keys xpixel_min, xpixel_max, ypixel_min, ypixel_max in pixel coordenates
+    Keys:
+
+    - xdata: Range of X in graph coordinates: (xMin, xMax).
+    - ydata: Range of Y in graph coordinates: (yMin, yMax).
+    - y2data: Range of right axis in graph coordinates (y2Min, y2Max) or None.
 """
 
 DEBUG = 0
@@ -179,6 +183,7 @@ class PlotBackend(object):
     """
 
     def __init__(self, parent=None):
+        self._callback = self._dummyCallback
         self._parent = parent
         self._zoomEnabled = True
         self._drawModeEnabled = False
@@ -188,7 +193,6 @@ class PlotBackend(object):
         self.setGraphYLimits(0., 100.)
         self._activeCurveHandling = False
         self.setActiveCurveColor("#000000")
-        self._callback = self._dummyCallback
 
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linewidth=None, linestyle=None,
