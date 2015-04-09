@@ -153,13 +153,19 @@ I'm not aware of. Don't expect those to work either.
         if self._origExtent is None:
             self._origExtent = self.get_extent()
 
-    def get_extent(self):
-        # Override get_extent to return _orgiExtent when available
-        # as AxesImage extent is updated at each redraw
+    def get_image_extent(self):
+        """Returns the extent of the whole image.
+
+        get_extent returns the extent of the drawn area and not of the full
+        image.
+
+        :return: Bounds of the image (x0, x1, y0, y1).
+        :rtype: Tuple of 4 floats.
+        """
         if self._origExtent is not None:
             return self._origExtent
         else:
-            return super(ModestImage, self).get_extent()
+            return self.get_extent()
 
     def set_data(self, A):
         """
@@ -1356,7 +1362,10 @@ class MatplotlibGraph(FigureCanvas):
         for artist in axes.artists:
             label = artist.get_label()
             if label.startswith("__IMAGE__"):
-                x0, x1, y0, y1 = artist.get_extent()
+                if hasattr(artist, 'get_image_extent'):
+                    x0, x1, y0, y1 = artist.get_image_extent()
+                else:
+                    x0, x1, y0, y1 = artist.get_extent()
                 if (xmin is None):
                     xmin = x0
                     xmax = x1
