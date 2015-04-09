@@ -538,7 +538,7 @@ class Zoom(ClickOrDrag):
                 # Use position of first click
                 eventDict = prepareMouseSignal('mouseDoubleClicked', 'left',
                                                *lastClickPos)
-                self.backend._callback(eventDict)
+                self.backend.sendEvent(eventDict)
 
                 self._lastClick = 0., None
             else:
@@ -548,7 +548,7 @@ class Zoom(ClickOrDrag):
                 eventDict = prepareMouseSignal('mouseClicked', 'left',
                                                dataPos[0], dataPos[1],
                                                x, y)
-                self.backend._callback(eventDict)
+                self.backend.sendEvent(eventDict)
 
                 self._lastClick = time.time(), (dataPos[0], dataPos[1], x, y)
 
@@ -568,7 +568,7 @@ class Zoom(ClickOrDrag):
                 eventDict = prepareMouseSignal('mouseClicked', 'right',
                                                dataPos[0], dataPos[1],
                                                x, y)
-                self.backend._callback(eventDict)
+                self.backend.sendEvent(eventDict)
             else:
                 self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
             self.backend.replot()
@@ -740,7 +740,7 @@ class SelectPolygon(StateMachine, Select):
                                              'polygon',
                                              self.points,
                                              self.machine.parameters)
-            self.machine.backend._callback(eventDict)
+            self.machine.backend.sendEvent(eventDict)
 
         def onRelease(self, x, y, btn):
             if btn == LEFT_BTN:
@@ -774,7 +774,7 @@ class SelectPolygon(StateMachine, Select):
                                                  'polygon',
                                                  self.points,
                                                  self.machine.parameters)
-                self.machine.backend._callback(eventDict)
+                self.machine.backend.sendEvent(eventDict)
                 self.goto('idle')
 
     def __init__(self, backend, parameters):
@@ -871,7 +871,7 @@ class SelectRectangle(Select2Points):
                                          'rectangle',
                                          (self.startPt, dataPos),
                                          self.parameters)
-        self.backend._callback(eventDict)
+        self.backend.sendEvent(eventDict)
 
     def endSelect(self, x, y):
         self.backend.resetSelectionArea()
@@ -884,7 +884,7 @@ class SelectRectangle(Select2Points):
                                          'rectangle',
                                          (self.startPt, dataPos),
                                          self.parameters)
-        self.backend._callback(eventDict)
+        self.backend.sendEvent(eventDict)
 
     def cancelSelect(self):
         self.backend.resetSelectionArea()
@@ -909,7 +909,7 @@ class SelectLine(Select2Points):
                                          'line',
                                          (self.startPt, dataPos),
                                          self.parameters)
-        self.backend._callback(eventDict)
+        self.backend.sendEvent(eventDict)
 
     def endSelect(self, x, y):
         self.backend.resetSelectionArea()
@@ -922,7 +922,7 @@ class SelectLine(Select2Points):
                                          'line',
                                          (self.startPt, dataPos),
                                          self.parameters)
-        self.backend._callback(eventDict)
+        self.backend.sendEvent(eventDict)
 
     def cancelSelect(self):
         self.backend.resetSelectionArea()
@@ -988,7 +988,7 @@ class SelectHLine(Select1Point):
                                          'hline',
                                          points,
                                          self.parameters)
-        self.backend._callback(eventDict)
+        self.backend.sendEvent(eventDict)
 
     def endSelect(self, x, y):
         self.backend.resetSelectionArea()
@@ -998,7 +998,7 @@ class SelectHLine(Select1Point):
                                          'hline',
                                          self._hLine(y),
                                          self.parameters)
-        self.backend._callback(eventDict)
+        self.backend.sendEvent(eventDict)
 
     def cancelSelect(self):
         self.backend.resetSelectionArea()
@@ -1022,7 +1022,7 @@ class SelectVLine(Select1Point):
                                          'vline',
                                          points,
                                          self.parameters)
-        self.backend._callback(eventDict)
+        self.backend.sendEvent(eventDict)
 
     def endSelect(self, x, y):
         self.backend.resetSelectionArea()
@@ -1032,7 +1032,7 @@ class SelectVLine(Select1Point):
                                          'vline',
                                          self._vLine(x),
                                          self.parameters)
-        self.backend._callback(eventDict)
+        self.backend.sendEvent(eventDict)
 
     def cancelSelect(self):
         self.backend.resetSelectionArea()
@@ -1077,7 +1077,7 @@ class ItemsInteraction(ClickOrDrag):
                     dataPos, (x, y),
                     'draggable' in marker['behaviors'],
                     'selectable' in marker['behaviors'])
-                self.machine.backend._callback(eventDict)
+                self.machine.backend.sendEvent(eventDict)
 
             if marker != self._hoverMarker:
                 self._hoverMarker = marker
@@ -1130,7 +1130,7 @@ class ItemsInteraction(ClickOrDrag):
                                                 selectable,
                                                 (xData, yData),
                                                 (x, y), None)
-                self.backend._callback(eventDict)
+                self.backend.sendEvent(eventDict)
 
                 self.backend.replot()
             else:
@@ -1152,7 +1152,7 @@ class ItemsInteraction(ClickOrDrag):
                                                    curve.yData[indices],
                                                    dataPos[0], dataPos[1],
                                                    x, y)
-                    self.backend._callback(eventDict)
+                    self.backend.sendEvent(eventDict)
 
                 elif picked[0] == 'image':
                     _, image, posImg = picked
@@ -1165,7 +1165,7 @@ class ItemsInteraction(ClickOrDrag):
                                                    posImg[0], posImg[1],
                                                    dataPos[0], dataPos[1],
                                                    x, y)
-                    self.backend._callback(eventDict)
+                    self.backend.sendEvent(eventDict)
 
     def _signalMarkerMovingEvent(self, eventType, marker, x, y):
         assert marker is not None
@@ -1189,7 +1189,7 @@ class ItemsInteraction(ClickOrDrag):
                                         (xData, yData),
                                         (x, y),
                                         posDataCursor)
-        self.backend._callback(eventDict)
+        self.backend.sendEvent(eventDict)
 
     def beginDrag(self, x, y):
         self._lastPos = self.backend.pixelToData(x, y)
@@ -1254,7 +1254,7 @@ class ItemsInteraction(ClickOrDrag):
                 'draggable' in self.marker['behaviors'],
                 'selectable' in self.marker['behaviors'],
                 posData)
-            self.backend._callback(eventDict)
+            self.backend.sendEvent(eventDict)
 
         del self.marker
         del self.image
@@ -1360,6 +1360,7 @@ class OpenGLPlotCanvas(PlotBackend):
                          'colors': 256}
 
     def __init__(self, parent=None, glContextGetter=None, **kw):
+        self._eventCallback = self._noopCallback
         self._defaultColormap = self._DEFAULT_COLORMAP
 
         self._progBase = GLProgram(_baseVertShd, _baseFragShd)
@@ -1399,6 +1400,27 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotFrame = GLPlotFrame(self._margins)
 
         PlotBackend.__init__(self, parent, **kw)
+
+    # Callback #
+
+    @staticmethod
+    def _noopCallback(eventDict):
+        """Default no-op callback."""
+        pass
+
+    def setCallback(self, func):
+        if func is None:
+            self._eventCallback = self._noopCallback
+        else:
+            assert callable(func)
+            self._eventCallback = func
+
+    def sendEvent(self, event):
+        """Send the event to the registered callback.
+
+        :param dict event: The event information (See PlotBackend for details).
+        """
+        self._eventCallback(event)
 
     # Link with embedding toolkit #
 
@@ -1447,7 +1469,7 @@ class OpenGLPlotCanvas(PlotBackend):
             eventDict = prepareMouseSignal('mouseMoved', None,
                                            dataPos[0], dataPos[1],
                                            xPixel, yPixel)
-            self._callback(eventDict)
+            self.sendEvent(eventDict)
 
         # Either button was pressed in the plot or cursor is in the plot
         if isCursorInPlot or self._plotHasFocus:
@@ -2790,7 +2812,7 @@ class OpenGLPlotCanvas(PlotBackend):
             (bounds.xAxis.min_, bounds.xAxis.max_),
             (bounds.yAxis.min_, bounds.yAxis.max_),
             y2Range)
-        self._callback(eventDict)
+        self.sendEvent(eventDict)
 
     def _ensureAspectRatio(self, keepDim=None):
         """Update plotDataBounds in order to keep aspect ratio.
