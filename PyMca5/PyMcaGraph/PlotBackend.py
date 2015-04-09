@@ -60,6 +60,7 @@ PlotBackend Functions (Functions marked by (*) only needed for handling images)
 - insertYMarker
 - invertYAxis
 - isDrawModeEnabled
+- isKeepDataAspectRatio
 - isXAxisAutoScale
 - isYAxisAutoScale
 - keepDataAspectRatio(*)
@@ -546,6 +547,14 @@ class PlotBackend(object):
         :return: True if user can draw
         """
         print("PlotBackend isDrawModeEnabled not implemented")
+        return False
+
+    def isKeepDataAspectRatio(self):
+        """Returns whether the plot is keeping data aspect ratio or not.
+
+        :return: True if keeping data aspect ratio else False.
+        """
+        print("PlotBackend isKeepDataAspectRatio not implemented")
         return False
 
     def isXAxisAutoScale(self):

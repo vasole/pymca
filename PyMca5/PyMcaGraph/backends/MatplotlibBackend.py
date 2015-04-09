@@ -2520,6 +2520,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     axes.set_aspect('auto')
                     self.resetZoom()
 
+    def isKeepDataAspectRatio(self):
+        return self.ax.get_aspect() in (1.0, 'equal')
+
     def setDefaultColormap(self, colormap=None):
         if colormap is None:
             colormap = {'name': 'gray', 'normalization':'linear',
