@@ -2792,12 +2792,25 @@ class OpenGLPlotCanvas(PlotBackend):
             y2Range)
         self._callback(eventDict)
 
-    def _ensureAspectRatio(self):
+    def _ensureAspectRatio(self, keepDim=None):
+        """Update plotDataBounds in order to keep aspect ratio.
+
+        Warning: keepDim on right Y axis is not implemented !
+
+        :param str keepDim: The dimension to maintain: 'x', 'y' or None.
+            If None (the default), the dimension with the largest range.
+        """
         plotWidth, plotHeight = self.plotSizeInPixels()
         if plotWidth <= 2 or plotHeight <= 2:
             return
 
-        if self.dataBounds.yAxis.range_ > self.dataBounds.xAxis.range_:
+        if keepDim is None:
+            if self.dataBounds.yAxis.range_ > self.dataBounds.xAxis.range_:
+                keepDim = 'y'
+            else:
+                keepDim = 'x'
+
+        if keepDim == 'y':
             yMin, yMax = self.plotDataBounds.yAxis
             y2Min, y2Max = self.plotDataBounds.y2Axis
 
@@ -2806,7 +2819,7 @@ class OpenGLPlotCanvas(PlotBackend):
             xCenter = self.plotDataBounds.xAxis.center
             xMin = xCenter - 0.5 * dataW
             xMax = xCenter + 0.5 * dataW
-        else:
+        elif keepDim == 'x':
             xMin, xMax = self.plotDataBounds.xAxis
 
             dataH = self.plotDataBounds.xAxis.range_ * \
@@ -2817,6 +2830,8 @@ class OpenGLPlotCanvas(PlotBackend):
             y2Center = self.plotDataBounds.y2Axis.center
             y2Min = y2Center - 0.5 * dataH
             y2Max = y2Center + 0.5 * dataH
+        else:
+            raise RuntimeError('Unsupported dimension to keep: %s' % keepDim)
 
         self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
@@ -2848,7 +2863,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
         if self.isKeepDataAspectRatio():
-            self._ensureAspectRatio()
+            self._ensureAspectRatio('x')
 
         self.updateAxis()
 
@@ -2876,7 +2891,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
         if self.isKeepDataAspectRatio():
-            self._ensureAspectRatio()
+            self._ensureAspectRatio('y')
 
         self.updateAxis()
 
