@@ -132,7 +132,7 @@ class JcampReader(object):
                        "ORIGIN", "OWNER",
                        "XUNITS", "YUNITS",
                        "XFACTOR", "YFACTOR",
-                       "FIRSTX", "LASTX", "NPOINTS",
+                       "FIRSTX", "LASTX", "DELTAX", "NPOINTS",
                        "FIRSTY",
                        "XYDATA"]
         ddict = {}
@@ -158,14 +158,34 @@ class JcampReader(object):
                 yValues += values[1:]
                 nValues.append(len(values) - 1)
             # the y values are all there, but the x values are not
-            xValues.append(float(self.info["LASTX"]))
-            x = numpy.zeros((len(yValues),), dtype=numpy.float)
-            start = 0
-            for i in range(len(nValues)):
-                n = nValues[i]
-                end = start + n
-                x[start:end] = numpy.linspace(xValues[i], xValues[i+1], n)
-                start = end
+            lastX = float(self.info["LASTX"])
+            try:
+                # try to apply the formula given in the article
+                firstX = float(self.info["FIRSTX"])
+                deltaX = float(self.info["DELTAX"])
+                nPoints = int(self.info.get("NPOINTS", 0))
+                if nPoints != len(yValues):
+                    print("Number of points does not match number of values")
+                    nPoints = len(yValues)
+                # this formula is given in the article
+                x = firstX + numpy.arange(nPoints) * \
+                    ((lastX - firstX) / (nPoints - 1.0))
+            except KeyError:
+                xValues.append(lastX)
+                x = numpy.zeros((len(yValues),), dtype=numpy.float)
+                start = 0
+                nDataLines = len(nValues)
+                for i in range(nDataLines):
+                    n = nValues[i]
+                    end = start + n
+                    if i == (nDataLines - 1):
+                        endpoint = True
+                    else:
+                        endpoint = False
+                    x[start:end] = numpy.linspace(xValues[i],
+                                              xValues[i+1],
+                                              n, endpoint=endpoint)
+                    start = end
         else:
             # XY, XY, ...
             values = []
