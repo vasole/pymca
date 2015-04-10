@@ -101,6 +101,15 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                                 info,
                                                 icon]
 
+        text  = "External Image (I/I0) * max(I0) Normalization where\n"
+        text += "I0 is an image read from file\n"
+        function = self.scaleByExternalImage
+        info = text
+        icon = None
+        self.methodDict["Image I * (max(I0)/I0) Scaling"] =[function,
+                                                info,
+                                                icon]
+
         text  = "External Image -log(Stack/I0) Normalization\n"
         text += "where I0 is an image read from file\n"
         function = self.logNormalizeByExternalImage
@@ -112,6 +121,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
         self.__methodKeys = ["I/I0 Normalization",
                              "-log(I/I0) Normalization",
                              "Image I/I0 Normalization",
+                             "Image I * (max(I0)/I0) Scaling",
                              "Image -log(I/I0) Normalization"]
 
     #Methods implemented by the plugin
@@ -164,6 +174,9 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
             sf = None
         return data
 
+    def scaleByExternalImage(self):
+        self._externalImageOperation("scale")
+
     def divideByExternalImage(self):
         self._externalImageOperation("divide")
 
@@ -198,36 +211,44 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
                                            numpy.float32,
                                            numpy.float64]:
             normalizationData = normalizationData.astype(numpy.float32)
+        if operation == "scale":
+            normalizationData /= normalizationData.max()
         # TODO: Use an intermediate array and set divisions 0/0 to 0.
+        if stack.data.dtype in [numpy.int32, numpy.uint32]:
+            view = stack.data.view(numpy.float32)
+        elif stack.data.dtype in [numpy.int64, numpy.uint64]:
+            view = stack.data.view(numpy.float64)
+        else:
+            view = stack.data
         if mcaIndex == 0:
             normalizationData.shape = stackShape[1:]
-            if operation == "divide":
+            if operation in ["divide", "scale"]:
                 for i in range(stackShape[mcaIndex]):
-                    stack.data[i] /= normalizationData
+                    view[i] = stack.data[i] / normalizationData
             elif operation == "log":
                 for i in range(stackShape[mcaIndex]):
-                    stack.data[i] = -operator(stack.data[i]/normalizationData)
+                    view[i] = -operator(stack.data[i]/normalizationData)
         elif mcaIndex == 2:
             normalizationData.shape = stackShape[:2]
-            if operation == "divide":
+            if operation in ["divide", "scale"]:
                 for i in range(stackShape[mcaIndex]):
-                    stack.data[:, :, i] /= normalizationData
+                    view[:, :, i] = stack.data[:, :, i] / normalizationData
             else:
                 for i in range(stackShape[mcaIndex]):
-                    stack.data[:, :, i] = -operator(stack.data[:, :, i]/ \
+                    view[:, :, i] = -operator(stack.data[:, :, i]/ \
                                                     normalizationData)
         elif mcaIndex == 1:
             normalizationData.shape = stackShape[0], stackShape[2]
-            if operation == "divide":
+            if operation in ["divide", "scale"]:
                 for i in range(stackShape[mcaIndex]):
-                    stack.data[:, i, :] /= normalizationData
+                    view[:, i, :] = stack.data[:, i, :] / normalizationData
             else:
                 for i in range(stackShape[mcaIndex]):
-                    stack.data[:, i, :] = -operator(stack.data[:, i, :]/ \
+                    view[:, i, :] = -operator(stack.data[:, i, :]/ \
                                                     normalizationData)
         else:
             raise ValueError("Unsupported 1D index %d" % mcaIndex)
-        self.setStack(stack)
+        self.setStack(view)
 
     def divideByExternalCurve(self):
         stack = self.getStackDataObject()
@@ -272,7 +293,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
             text = "Please make sure to have an active curve"
             raise TypeError(text)
         x, y, legend, info = self.getActiveCurve()
-        yWork = y[y>0]
+        yWork = y[y>0].astype(numpy.float)
         mcaIndex = stack.info.get('McaIndex', -1)
         if mcaIndex in [-1, 2]:
             for i, value in enumerate(yWork):

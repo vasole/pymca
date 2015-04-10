@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -65,6 +65,8 @@ These plugins will be compatible with any stack window that provides the functio
     - getActiveCurve
     - getGraphXLimits
     - getGraphYLimits
+    - getGraphXLabel
+    - getGraphYLabel
 
     #images
 
@@ -159,6 +161,17 @@ class StackPluginBase(object):
         """
         return self._stackWindow.getGraphYLimits()
 
+    def getGraphXLabel(self):
+        """
+        Get the graph X label
+        """
+        return self._stackWindow.getGraphXLabel()
+
+    def getGraphYLabel(self):
+        """
+        Get the graph Y label
+        """
+        return self._stackWindow.getGraphYLabel()
 
     def stackUpdated(self):
         if DEBUG:

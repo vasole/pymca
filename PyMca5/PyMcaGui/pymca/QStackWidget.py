@@ -1027,6 +1027,12 @@ class QStackWidget(StackBase.StackBase,
     def getGraphYLimits(self):
         return self.mcaWidget.getGraphYLimits()
 
+    def getGraphXLabel(self):
+        return self.mcaWidget.getGraphXLabel()
+
+    def getGraphYLabel(self):
+        return self.mcaWidget.getGraphYLabel()
+
 def test():
     #create a dummy stack
     nrows = 100
