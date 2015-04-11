@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -126,8 +126,8 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         width = qimage.width()
         height = qimage.height()
 
-        xmin, xmax = self.graphWidget.graph.getX1AxisLimits()
-        ymin, ymax = self.graphWidget.graph.getY1AxisLimits()
+        xmin, xmax = self.graphWidget.graph.getGraphXLimits()
+        ymin, ymax = self.graphWidget.graph.getGraphYLimits()
         xmin = int(xmin)
         xmax = int(xmax)
         ymin = int(ymin)
@@ -314,6 +314,11 @@ class ExternalImagesWindow(MaskImageWidget.MaskImageWidget):
         self.imageList = imagelist
         self.imageNames = imagenames
         if imagelist is not None:
+            if imagenames is None:
+                nImages = len(self.imageList)
+                self.imageNames = [None] * nImages
+                for i in range(nImages):
+                    self.imageNames[i] = "Image %02d" % i
             current = self.slider.value()
             self.slider.setMaximum(len(self.imageList)-1)
             if current < len(self.imageList):
