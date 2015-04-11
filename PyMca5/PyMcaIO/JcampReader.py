@@ -62,8 +62,15 @@ import sys
 import re
 import numpy
 patternKey=re.compile(r'^[#][#]\s*(?P<name>[^=]+)=(?P<value>.*)$')
-patternNumber = re.compile(r'([+-]?\d+\.?\d*)')
-#re.findall(patternNumber, text)
+#patternNumber = re.compile(r'([+-]?\d+\.?\d*)')
+patternNumber = re.compile(r'[+-]?[0-9]+\.?[0-9]*(?:[eE][+-]?[0-9]+)?')
+DEBUG = 0
+if DEBUG:
+    text = '1.23 +2 456-7.98+5 10+3.4E+01 98-7.6E-2+3'
+    print("RESULT:")
+    print(re.findall(patternNumber, text))
+    print("EXPECTED:")
+    print(['1.23', '+2', '456', '-7.98', '+5', '10', '+3.4E+01', '98', '-7.6E-2', '+3'])
 
 class BufferedFile(object):
     def __init__(self, filename):
@@ -98,7 +105,7 @@ class JcampReader(object):
         header = []
         # test we are actually using a JCAMP-DX file
         testKeys = ["TITLE", "JCAMP-DX", "DATA TYPE"]
-        for i, key in enumerate(testKeys):            
+        for i, key in enumerate(testKeys):
             line = _fileObject.readline()
             info = re.findall(patternKey, line)
             if len(info):
