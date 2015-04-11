@@ -168,6 +168,7 @@ class JcampReader(object):
             lastX = float(self.info["LASTX"])
             try:
                 # try to apply the formula given in the article
+                # the problem is that DELTAX is not mandatory
                 firstX = float(self.info["FIRSTX"])
                 deltaX = float(self.info["DELTAX"])
                 nPoints = int(self.info.get("NPOINTS", 0))
