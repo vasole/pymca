@@ -83,6 +83,7 @@ _COLORMAP_CURSOR_COLORS = {
     'green': 'gray',
     'blue': 'gray'}
 
+
 def _cursorColorForColormap(colormapName):
     """Get a color suitable for overlay over a colormap.
 
@@ -111,7 +112,7 @@ class _ColormapDialogHelper(qt.QObject):
     # Workaround: PlotBackend and ColormapDialog cmap names mismatch
     # Names as used in PlotBackend in the order of colormapDialog
     _COLORMAP_NAMES = ('gray', 'reversed gray', 'temperature',
-                      'red', 'green', 'blue', 'temperature')
+                       'red', 'green', 'blue', 'temperature')
 
     def __init__(self, imageView):
         super(_ColormapDialogHelper, self).__init__()
@@ -196,7 +197,7 @@ class _ColormapDialogHelper(qt.QObject):
 class RadarView(qt.QGraphicsView):
     """Present a synthetic view of a 2D image and the current visible area.
 
-    Used coordinates are as in QGraphicsView: x goes from left to right and 
+    Used coordinates are as in QGraphicsView: x goes from left to right and
     y goes from top to bottom.
     This widget preserves the aspect ratio of the data.
     """
@@ -328,7 +329,7 @@ class RadarView(qt.QGraphicsView):
 
     def setDataRect(self, left, top, width, height):
         """Set the bounds of the data rectangular area.
-        
+
         This sets the coordinate system.
         """
         self._dataRect.setRect(left, top, width, height)
@@ -389,6 +390,7 @@ class ImageView(qt.QWidget):
         self._updatingLimits = False
 
         super(ImageView, self).__init__(parent, windowFlags)
+        self.setStyleSheet('background-color: white;')
         self._initWidgets(_getBackendClass(backend))
 
         # Sync PlotBackend and ImageView
@@ -451,7 +453,7 @@ class ImageView(qt.QWidget):
 
             height, width = self._data.shape
             if (xMin <= width and xMax >= 0 and
-                yMin <= height and yMax >= 0):
+                    yMin <= height and yMax >= 0):
                 # The image is at least partly in the plot area
                 visibleXMin = 0 if xMin < 0 else int(xMin)
                 visibleXMax = width if xMax >= width else int(xMax + 1)
@@ -470,7 +472,7 @@ class ImageView(qt.QWidget):
                                              visibleXMin:visibleXMax]
                     histoHVisibleData = np.sum(visibleData, axis=0)
                     histoVVisibleData = np.sum(visibleData, axis=1)
-                    
+
                     self._cache = {
                         'visibleXMin': visibleXMin,
                         'visibleXMax': visibleXMax,
@@ -512,7 +514,7 @@ class ImageView(qt.QWidget):
 
     def _updateRadarView(self, xMin, xMax, yMin, yMax):
         """Update radar view visible area.
-        
+
         Takes care of y coordinate conversion.
         """
         if self.isYAxisInverted():
@@ -521,7 +523,7 @@ class ImageView(qt.QWidget):
             top = self._data.shape[0] - yMax
         else:
             top = 0
-        self._radarView.setVisibleRect(xMin, top, xMax -xMin, yMax - yMin)
+        self._radarView.setVisibleRect(xMin, top, xMax - xMin, yMax - yMin)
 
     # Plots event listeners
     def _imagePlotCB(self, eventDict):
@@ -705,7 +707,7 @@ class ImageView(qt.QWidget):
     # Colormap API
     def colormap(self):
         """Get the current colormap description.
-        
+
         :return: A dict (See PlotBackend getDefaultColormap for details).
         """
         return self._colormap.copy()
@@ -733,7 +735,7 @@ class ImageView(qt.QWidget):
     # Image API
     def setImage(self, image, copy=True, reset=True):
         """Set the image to display.
-        
+
         :param image: A 2D array representing the image or None to empty plot.
         :type image: numpy.ndarray-like with 2 dimensions or None.
         :param bool copy: Whether to copy image data (default) or not.
@@ -786,7 +788,7 @@ class ImageView(qt.QWidget):
 
 class ImageViewMainWindow(qt.QMainWindow):
     """QMainWindow embedding an ImageView.
-    
+
     Surrounds the ImageView with an associated toolbar and status bar.
     """
 
@@ -864,7 +866,8 @@ if __name__ == "__main__":
     edfFile = EdfFile(args.filename)
     nbFrames = edfFile.GetNumImages()
     if nbFrames == 0:
-        raise RuntimeError('Cannot read image(s) from file: %s' % args.filename)
+        raise RuntimeError(
+            'Cannot read image(s) from file: %s' % args.filename)
 
     # Set-up Qt application and main window
     app = qt.QApplication([])
@@ -879,6 +882,7 @@ if __name__ == "__main__":
 
         spinBox = qt.QSpinBox()
         spinBox.setRange(0, nbFrames-1)
+
         def updateImage(index):
             mainWindow.setImage(edfFile.GetData(index), reset=False)
         spinBox.valueChanged[int].connect(updateImage)
