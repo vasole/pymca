@@ -384,7 +384,8 @@ class ImageView(qt.QWidget):
 
     def __init__(self, parent=None, windowFlags=qt.Qt.Widget, backend=None):
         self._data = None  # Store current image
-        self._cache = None  # Stores currently visible data information
+        self._cache = None  # Store currently visible data information
+        self._cacheHisto = None  # cache histogram for colormap dialog
         self._updatingLimits = False
 
         super(ImageView, self).__init__(parent, windowFlags)
@@ -739,6 +740,7 @@ class ImageView(qt.QWidget):
         :param bool reset: Whether to reset zoom and ROI (default) or not.
         """
         self._cache = None
+        self._cacheHisto = None
 
         if image is None:
             self._data = None
@@ -763,16 +765,19 @@ class ImageView(qt.QWidget):
             self._histoVPlot.replot()
             self._imagePlot.replot()
 
-    def imageHistogram(self, *args, **kwargs):
+    def imageHistogram(self, bins):
         """Calls numpy.histogram on the current image.
 
         Intended for ColormapDialog histogram.
 
-        If no image is currently set, returns None.
-        See numpy.histogram for more details.
+        :param bins: See numpy.histogram for more details.
+        :return: None if no image is set or the histogram of the image.
+        :rtype: None or 2 arrays: counts and binEdges.
         """
         if self._data is not None:
-            return np.histogram(self._data, *args, **kwargs)
+            if self._cacheHisto is None or self._cacheHisto[0] != bins:
+                self._cacheHisto = bins, np.histogram(self._data, bins)
+            return self._cacheHisto[1]
         else:
             return None
 
