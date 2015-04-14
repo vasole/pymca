@@ -642,6 +642,11 @@ class Zoom(ClickOrDrag):
 
         if xMin != xMax and yMin != yMax and y2Min != y2Max:
             # Avoid null zoom area
+            if self.backend.isKeepDataAspectRatio():
+                area = self._areaWithAspectRatio(xMin, yMin, xMax, yMax)
+                xMin, yMin, xMax, yMax = area
+
+
             self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
         self.backend.resetSelectionArea()
