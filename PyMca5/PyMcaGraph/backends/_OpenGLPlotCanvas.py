@@ -450,8 +450,9 @@ def prepareCurveSignal(button, label, type_, xData, yData,
             'xpixel': xPixel,
             'ypixel': yPixel}
 
-def prepareLimitsChangedSignal(xRange, yRange, y2Range):
+def prepareLimitsChangedSignal(sourceObj, xRange, yRange, y2Range):
     return {'event': 'limitsChanged',
+            'source': id(sourceObj),
             'xdata': xRange,
             'ydata': yRange,
             'y2data': y2Range}
@@ -2814,6 +2815,7 @@ class OpenGLPlotCanvas(PlotBackend):
         else:
             y2Range = None
         eventDict = prepareLimitsChangedSignal(
+            self.getWidgetHandle(),
             (bounds.xAxis.min_, bounds.xAxis.max_),
             (bounds.yAxis.min_, bounds.yAxis.max_),
             y2Range)

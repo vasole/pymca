@@ -1256,8 +1256,14 @@ class MatplotlibGraph(FigureCanvas):
         else:
             y2Range = None
 
+        if hasattr(self, "get_tk_widget"):
+            sourceObj = self.get_tk_widget()
+        else:
+            sourceObj = self
+
         eventDict = {
             'event': 'limitsChanged',
+            'source': id(sourceObj),
             'xdata': xRange,
             'ydata': yRange,
             'y2data': y2Range,

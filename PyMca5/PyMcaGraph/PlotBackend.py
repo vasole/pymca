@@ -167,6 +167,7 @@ limitsChanged
 
     Keys:
 
+    - source: id of the widget that emitted this event.
     - xdata: Range of X in graph coordinates: (xMin, xMax).
     - ydata: Range of Y in graph coordinates: (yMin, yMax).
     - y2data: Range of right axis in graph coordinates (y2Min, y2Max) or None.
