@@ -2827,9 +2827,14 @@ class OpenGLPlotCanvas(PlotBackend):
             return
 
         if keepDim is None:
-            if self.dataBounds.yAxis.range_ > self.dataBounds.xAxis.range_:
-                keepDim = 'y'
-            else:
+            if self.dataBounds.yAxis.range_ != 0.:
+                dataRatio = self.dataBounds.xAxis.range_
+                dataRatio /= float(self.dataBounds.yAxis.range_)
+
+                plotRatio = plotWidth / float(plotHeight)  # Test != 0 before
+
+                keepDim = 'x' if dataRatio > plotRatio else 'y'
+            else: # Limit case
                 keepDim = 'x'
 
         if keepDim == 'y':
