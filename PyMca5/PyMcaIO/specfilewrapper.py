@@ -41,6 +41,7 @@ from PyMca5.PyMcaIO import SRSFileParser
 from PyMca5.PyMcaIO import BAXSCSVFileParser
 from PyMca5.PyMcaIO import OlympusCSVFileParser
 from PyMca5.PyMcaIO import ThermoEMSFileParser
+from PyMca5.PyMcaIO import JcampFileParser
 try:
     from PyMca5.PyMcaIO import SPXFileParser
     SPX = True
@@ -144,6 +145,11 @@ def Specfile(filename):
             if DEBUG:
                 print("ThermoEMSFileParser")
             return ThermoEMSFileParser.ThermoEMSFileParser(filename)
+        if (not qxas) and (not amptek) and \
+           JcampFileParser.isJcampFile(filename):
+            if DEBUG:
+                print("JcampFileParser")
+            return JcampFileParser.JcampFileParser(filename)
         output = specfilewrapper(filename, amptek=amptek, qxas=qxas)
     return output
 

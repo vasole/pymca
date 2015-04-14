@@ -263,20 +263,35 @@ class SNIPWindow(qt.QWidget):
         smoothing = ddict['smoothing']
         if self.__image:
             if self.xMarkers == []:
-                xMin, xMax = self.graph.getX1AxisLimits()
-                yMin, yMax = self.graph.getY1AxisLimits()
+                xMin, xMax = self.graph.getGraphXLimits()
+                yMin, yMax = self.graph.getGraphYLimits()
                 xMean = 0.5 * (xMin + xMax)
                 yMean = 0.5 * (yMin + yMax)
-                self.xMarkers.append(self.graph.insertX1Marker(roi_min[1], yMean, label='C Min'))
-                self.xMarkers.append(self.graph.insertX1Marker(roi_max[1], yMean, label='C Max'))
-                self.yMarkers.append(self.graph.insertY1Marker(xMean, roi_min[0], label='R Min'))
-                self.yMarkers.append(self.graph.insertY1Marker(xMean, roi_max[0], label='R Max'))
+                self.xMarkers.append(self.graph.insertXMarker(roi_min[1],
+                                                              legend='C Min',
+                                                              text='C Min'))
+                self.xMarkers.append(self.graph.insertXMarker(roi_max[1],
+                                                            legend='C Max',
+                                                            text='C Max'))
+                self.yMarkers.append(self.graph.insertYMarker(roi_min[0],
+                                                            legend='R Min',
+                                                            text='R Min'))
+                self.yMarkers.append(self.graph.insertYMarker(roi_max[0],
+                                                            legend='R Max',
+                                                            text='R Max'))
             else:
-                self.graph.markersdict[self.xMarkers[0]]['marker'].setXValue(roi_min[1])
-                self.graph.markersdict[self.xMarkers[1]]['marker'].setXValue(roi_max[1])
-                self.graph.markersdict[self.yMarkers[0]]['marker'].setYValue(roi_min[0])
-                self.graph.markersdict[self.yMarkers[1]]['marker'].setYValue(roi_max[0])
-
+                self.graph.insertXMarker(roi_min[1],
+                                         legend='C Min',
+                                         text='C Min')
+                self.graph.insertXMarker(roi_max[1],
+                                         legend='C Max',
+                                         text='C Max')
+                self.graph.insertYMarker(roi_min[0],
+                                         legend='R Min',
+                                         text='R Min')
+                self.graph.insertYMarker(roi_max[0],
+                                         legend='R Max',
+                                         text='R Max')
             self.background = SNIPModule.getImageBackground(self.image, width,
                                                    roi_min=roi_min,
                                                    roi_max=roi_max,
@@ -304,7 +319,7 @@ class SNIPWindow(qt.QWidget):
                 legend0 = "Smoothed Spectrum"
             else:
                 legend0 = "Background"
-            self.graph.newCurve(self.xValues,
+            self.graph.addCurve(self.xValues,
                             self.background, legend0, replace=False)
 
             #Force information update
