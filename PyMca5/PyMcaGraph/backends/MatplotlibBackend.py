@@ -2433,16 +2433,48 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if colormap is None:
                     colormap = self.getDefaultColormap()
                 cmap = self.__getColormap(colormap['name'])
-                if colormap['autoscale']:
-                    vmin = data.min()
-                    vmax = data.max()
-                else:
-                    vmin = colormap['vmin']
-                    vmax = colormap['vmax']
                 if colormap['normalization'].startswith('log'):
+                    vmin, vmax = None, None
+                    if not colormap['autoscale']:
+                        if colormap['vmin'] > 0.:
+                            vmin = colormap['vmin']
+                        if colormap['vmax'] > 0.:
+                            vmax = colormap['vmax']
+
+                        if vmin is None or vmax is None:
+                            print('Warning: ' +
+                                  'Log colormap with negative bounds, ' +
+                                  'changing bounds to positive ones.')
+                        elif vmin > vmax:
+                            print('Warning: Colormap bounds are inverted.')
+                            vmin, vmax = vmax, vmin
+
+                    # Set unset/negative bounds to positive bounds
+                    if vmin is None or vmax is None:
+                        posData = data[data > 0]
+                        if vmax is None:
+                            # 1. as an ultimate fallback
+                            vmax = posData.max() if posData.size > 0 else 1.
+                        if vmin is None:
+                            vmin = posData.min() if posData.size > 0 else vmax
+                        if vmin > vmax:
+                            vmin = vmax
+
                     norm = LogNorm(vmin, vmax)
-                else:
+
+                else:  # Linear normalization
+                    if colormap['autoscale']:
+                        vmin = data.min()
+                        vmax = data.max()
+                    else:
+                        vmin = colormap['vmin']
+                        vmax = colormap['vmax']
+                        if vmin > vmax:
+                            print('Warning: Colormap bounds are inverted.')
+                            vmin, vmax = vmax, vmin
+
                     norm = Normalize(vmin, vmax)
+
                 # try as data
                 if (xmin < 0) or (xmax < 0) or (ymin < 0) or (ymax < 0):
                     # for the time being not properly handled
