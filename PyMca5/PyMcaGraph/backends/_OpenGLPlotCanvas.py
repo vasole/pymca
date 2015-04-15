@@ -2749,8 +2749,6 @@ class OpenGLPlotCanvas(PlotBackend):
            oldCurve.yMin != curve.yMin or oldCurve.yMax != curve.yMax:
             self._dirtyDataBounds()
 
-        self._resetZoom()
-
         self._plotDirtyFlag = True
 
         if wasActiveCurve:

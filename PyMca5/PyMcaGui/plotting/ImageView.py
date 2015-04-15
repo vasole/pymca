@@ -497,6 +497,13 @@ class ImageView(qt.QWidget):
                                               color=self.HISTOGRAMS_COLOR,
                                               linestyle='-',
                                               selectable=False)
+                    vMin = self._cache['histoHMin']
+                    vMax = self._cache['histoHMax']
+                    vOffset = 0.1 * (vMax - vMin)
+                    if vOffset == 0.:
+                        vOffset = 1.
+                    self._histoHPlot.setGraphYLimits(vMin - vOffset,
+                                                     vMax + vOffset)
 
                     coords = np.arange(2 * histoVVisibleData.size)
                     yCoords = (coords + 1) // 2 + visibleYMin
@@ -506,17 +513,27 @@ class ImageView(qt.QWidget):
                                               color=self.HISTOGRAMS_COLOR,
                                               linestyle='-',
                                               selectable=False)
+                    vMin = self._cache['histoVMin']
+                    vMax = self._cache['histoVMax']
+                    vOffset = 0.1 * (vMax - vMin)
+                    if vOffset == 0.:
+                        vOffset = 1.
+                    self._histoVPlot.setGraphXLimits(vMin - vOffset,
+                                                     vMax + vOffset)
             else:
                 self._cache = None
 
                 self._histoHPlot.clearCurves()
                 self._histoVPlot.clearCurves()
 
-    def _updateRadarView(self, xMin, xMax, yMin, yMax):
+    def _updateRadarView(self):
         """Update radar view visible area.
 
         Takes care of y coordinate conversion.
         """
+        xMin, xMax = self._imagePlot.getGraphXLimits()
+        yMin, yMax = self._imagePlot.getGraphYLimits()
+
         if self.isYAxisInverted():
             top = yMin
         elif self._data is not None:
@@ -548,32 +565,14 @@ class ImageView(qt.QWidget):
             yMin, yMax = self._imagePlot.getGraphYLimits()
 
             # Set horizontal histo limits
-            if self._cache is not None:
-                vMin = self._cache['histoHMin']
-                vMax = self._cache['histoHMax']
-                vOffset = 0.1 * (vMax - vMin)
-                if vOffset == 0.:
-                    vOffset = 1.
-                self._histoHPlot.setGraphYLimits(
-                    vMin - vOffset,
-                    vMax + vOffset)
             self._histoHPlot.setGraphXLimits(xMin, xMax)
             self._histoHPlot.replot()
 
             # Set vertical histo limits
-            if self._cache is not None:
-                vMin = self._cache['histoVMin']
-                vMax = self._cache['histoVMax']
-                vOffset = 0.1 * (vMax - vMin)
-                if vOffset == 0.:
-                    vOffset = 1.
-                self._histoVPlot.setGraphXLimits(
-                    vMin - vOffset,
-                    vMax + vOffset)
             self._histoVPlot.setGraphYLimits(yMin, yMax)
             self._histoVPlot.replot()
 
-            self._updateRadarView(xMin, xMax, yMin, yMax)
+            self._updateRadarView()
 
             self._updatingLimits = False
 
@@ -630,9 +629,7 @@ class ImageView(qt.QWidget):
     def _setYAxisInverted(self, inverted):
         self._imagePlot.invertYAxis(inverted)
         self._histoVPlot.invertYAxis(inverted)
-        xMin, xMax = self._imagePlot.getGraphXLimits()
-        yMin, yMax = self._imagePlot.getGraphYLimits()
-        self._updateRadarView(xMin, xMax, yMin, yMax)
+        self._updateRadarView()
 
         self._imagePlot.replot()
         self._histoVPlot.replot()
