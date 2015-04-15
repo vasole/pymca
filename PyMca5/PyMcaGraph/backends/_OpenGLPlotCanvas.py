@@ -42,6 +42,7 @@ import math
 import numpy as np
 import time
 import warnings
+import weakref
 
 try:
     from ..PlotBackend import PlotBackend
@@ -322,16 +323,6 @@ _texFragShd = """
     """
 
 
-# utils #######################################################################
-
-def _ticks(start, stop, step):
-    """range for float (including stop)
-    """
-    while start <= stop:
-            yield start
-            start += step
-
-
 # signals #####################################################################
 
 def prepareDrawingSignal(event, type_, points, parameters=None):
@@ -458,29 +449,171 @@ def prepareLimitsChangedSignal(sourceObj, xRange, yRange, y2Range):
             'y2data': y2Range}
 
 
-# Interaction #################################################################
+###############################################################################
+#
+#  Interaction
+#
+###############################################################################
 
-class Zoom(ClickOrDrag):
-    _DOUBLE_CLICK_TIMEOUT = 0.4
+class _ZoomOnWheel(ClickOrDrag):
+    """:class:`ClickOrDrag` state machine with zooming on mouse wheel.
 
+    Base class for :class:`Pan` and :class:`Zoom`
+    """
     class ZoomIdle(ClickOrDrag.Idle):
         def onWheel(self, x, y, angle):
             scaleF = 1.1 if angle > 0 else 1./1.1
             self.machine._zoom(x, y, scaleF)
 
-    def __init__(self, backend, color):
-        self.backend = backend
-        self.color = color
-        self.zoomStack = []
-        self._lastClick = 0., None
+    def __init__(self, backend):
+        """
+
+        :param backend: The backend to apply modifications to.
+        """
+        self._backend = weakref.ref(backend)  # Avoid cyclic-ref
 
         states = {
-            'idle': Zoom.ZoomIdle,
+            'idle': _ZoomOnWheel.ZoomIdle,
             'rightClick': ClickOrDrag.RightClick,
             'clickOrDrag': ClickOrDrag.ClickOrDrag,
             'drag': ClickOrDrag.Drag
         }
         StateMachine.__init__(self, states, 'idle')
+
+    @property
+    def backend(self):
+        backend = self._backend()
+        assert backend is not None
+        return backend
+
+    @staticmethod
+    def _scale1DRange(min_, max_, center, scale, isLog):
+        """Scale a 1D range given a scale factor and an center point.
+
+        :param float min_: The current min value of the range.
+        :param float max_: The current max value of the range.
+        :param float center: The center of the zoom (i.e., invariant point).
+        :param float scale: The scale to use for zoom
+        :param bool isLog: Whether using log scale or not.
+        :return: The zoomed range.
+        :rtype: tuple of 2 floats: (min, max)
+        """
+        if isLog:
+            if min_ > 0.:
+                oldMin = np.log10(min_)
+            else:
+                # Happens when autoscale is off and switch to log scale
+                # while displaying area < 0.
+                oldMin = np.log10(np.nextafter(0, 1))
+
+            if center > 0.:
+                center = np.log10(center)
+            else:
+                center = np.log10(np.nextafter(0, 1))
+
+            if max_ > 0.:
+                oldMax = np.log10(max_)
+            else:
+                # Should not happen
+                oldMax = 0.
+        else:
+            oldMin, oldMax = min_, max_
+
+        offset = (center - oldMin) / (oldMax - oldMin)
+        range_ = (oldMax - oldMin) / scale
+        newMin = center - offset * range_
+        newMax = center + (1. - offset) * range_
+        if isLog:
+            try:
+                newMin, newMax = 10. ** float(newMin), 10. ** float(newMax)
+            except OverflowError:  # Limit case
+                newMin, newMax = min_, max_
+            if newMin <= 0. or newMax <= 0.:  # Limit case
+                newMin, newMax = min_, max_
+        return newMin, newMax
+
+    def _zoom(self, cx, cy, scaleF):
+        """Zoom in/out backend given a scale and a center point.
+
+        :param float cx: X coord in data coordinates of the zoom center.
+        :param float cy: Y coord in data coordinates of the zoom center.
+        :param float scaleF: Scale factor of zoom.
+        """
+        dataCenterPos = self.backend.pixelToData(cx, cy)
+        assert dataCenterPos is not None
+
+        xMin, xMax = self.backend.getGraphXLimits()
+        xMin, xMax = self._scale1DRange(xMin, xMax, dataCenterPos[0], scaleF,
+                                        self.backend.isXAxisLogarithmic())
+
+        yMin, yMax = self.backend.getGraphYLimits()
+        yMin, yMax = self._scale1DRange(yMin, yMax, dataCenterPos[1], scaleF,
+                                        self.backend.isYAxisLogarithmic())
+
+        dataPos = self.backend.pixelToData(y=cy, axis="right")
+        assert dataPos is not None
+        y2Center = dataPos[1]
+        y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
+        y2Min, y2Max = self._scale1DRange(y2Min, y2Max, y2Center, scaleF,
+                                          self.backend.isYAxisLogarithmic())
+
+        self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
+        self.backend.replot()
+
+
+# Pan #########################################################################
+
+class Pan(_ZoomOnWheel):
+    """Pan plot content and zoom on wheel state machine."""
+
+    def _pixelToData(self, x, y):
+        xData, yData = self.backend.pixelToData(x, y)
+        _, y2Data = self.backend.pixelToData(x, y, axis='right')
+        return xData, yData, y2Data
+
+    def beginDrag(self, x, y):
+        self._previousDataPos = self._pixelToData(x, y)
+
+    def drag(self, x, y):
+        xData, yData, y2Data = self._pixelToData(x, y)
+        lastX, lastY, lastY2 = self._previousDataPos
+        dx = xData - lastX
+        dy = yData - lastY
+        dy2 = y2Data - lastY2
+
+        xMin, xMax = self.backend.getGraphXLimits()
+        yMin, yMax = self.backend.getGraphYLimits(axis='left')
+        y2Min, y2Max = self.backend.getGraphYLimits(axis='right')
+        self.backend.setLimits(xMin - dx, xMax - dx,
+                               yMin - dy, yMax - dy,
+                               y2Min - dy2, y2Max - dy2)
+        self.backend.replot()
+
+        self._previousDataPos = self._pixelToData(x, y)
+
+    def endDrag(self, startPos, endPos):
+        del self._previousDataPos
+
+    def cancel(self):
+        pass
+
+
+# Zoom ########################################################################
+
+class Zoom(_ZoomOnWheel):
+    """Zoom-in/out state machine.
+
+    Zoom-in on selected area, zoom-out on right click,
+    and zoom on mouse wheel.
+    """
+    _DOUBLE_CLICK_TIMEOUT = 0.4
+
+    def __init__(self, backend, color):
+        self.color = color
+        self.zoomStack = []
+        self._lastClick = 0., None
+
+        super(Zoom, self).__init__(backend)
 
     # Selection area constrained by aspect ratio
     # def _ensureAspectRatio(self, x0, y0, x1, y1):
@@ -653,78 +786,42 @@ class Zoom(ClickOrDrag):
         self.backend.resetSelectionArea()
         self.backend.replot()
 
-    def _newZoomRange(self, min_, max_, center, scale, isLog):
-        if isLog:
-            if min_ > 0.:
-                oldMin = np.log10(min_)
-            else:
-                # Happens when autoscale is off and switch to log scale
-                # while displaying area < 0.
-                oldMin = np.log10(np.nextafter(0, 1))
-
-            if center > 0.:
-                center = np.log10(center)
-            else:
-                center = np.log10(np.nextafter(0, 1))
-
-            if max_ > 0.:
-                oldMax = np.log10(max_)
-            else:
-                # Should not happen
-                oldMax = 0.
-        else:
-            oldMin, oldMax = min_, max_
-
-        offset = (center - oldMin) / (oldMax - oldMin)
-        range_ = (oldMax - oldMin) / scale
-        newMin = center - offset * range_
-        newMax = center + (1. - offset) * range_
-        if isLog:
-            try:
-                newMin, newMax = 10. ** float(newMin), 10. ** float(newMax)
-            except OverflowError:  # Limit case
-                newMin, newMax = min_, max_
-            if newMin <= 0. or newMax <= 0.:  # Limit case
-                newMin, newMax = min_, max_
-        return newMin, newMax
-
-    def _zoom(self, cx, cy, scaleF):
-        dataCenterPos = self.backend.pixelToData(cx, cy)
-        assert dataCenterPos is not None
-
-        xMin, xMax = self.backend.getGraphXLimits()
-        xMin, xMax = self._newZoomRange(xMin, xMax, dataCenterPos[0], scaleF,
-                                        self.backend.isXAxisLogarithmic())
-
-        yMin, yMax = self.backend.getGraphYLimits()
-        yMin, yMax = self._newZoomRange(yMin, yMax, dataCenterPos[1], scaleF,
-                                        self.backend.isYAxisLogarithmic())
-
-        dataPos = self.backend.pixelToData(y=cy, axis="right")
-        assert dataPos is not None
-        y2Center = dataPos[1]
-        y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
-        y2Min, y2Max = self._newZoomRange(y2Min, y2Max, y2Center, scaleF,
-                                          self.backend.isYAxisLogarithmic())
-
-        self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
-        self.backend.replot()
-
     def cancel(self):
         if isinstance(self.state, self.states['drag']):
             self.backend.resetSelectionArea()
             self.backend.replot()
 
 
-class Select(object):
-    parameters = {}
+# Select ######################################################################
+
+class Select(StateMachine):
+    """Base class for drawing selection areas."""
+
+    def __init__(self, backend, parameters, states, state):
+        """Init a state machine.
+
+        :param backend: The backend to apply changes to.
+        :param dict parameters: A dict of parameters such as color.
+        :param dict states: The states of the state machine.
+        :param str state: The name of the initial state.
+        """
+        self._backend = weakref.ref(backend)  # Avoid cyclic-ref
+        self.parameters = parameters
+        super(Select, self).__init__(states, state)
+
+    @property
+    def backend(self):
+        backend = self._backend()
+        assert backend is not None
+        return backend
 
     @property
     def color(self):
         return self.parameters.get('color', None)
 
 
-class SelectPolygon(StateMachine, Select):
+class SelectPolygon(Select):
+    """Drawing selection polygon area state machine."""
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
@@ -784,13 +881,12 @@ class SelectPolygon(StateMachine, Select):
                 self.goto('idle')
 
     def __init__(self, backend, parameters):
-        self.parameters = parameters
-        self.backend = backend
         states = {
             'idle': SelectPolygon.Idle,
             'select': SelectPolygon.Select
         }
-        super(SelectPolygon, self).__init__(states, 'idle')
+        super(SelectPolygon, self).__init__(backend, parameters,
+                                            states, 'idle')
 
     def cancel(self):
         if isinstance(self.state, self.states['select']):
@@ -798,7 +894,8 @@ class SelectPolygon(StateMachine, Select):
             self.backend.replot()
 
 
-class Select2Points(StateMachine, Select):
+class Select2Points(Select):
+    """Base class for drawing selection based on 2 input points."""
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
@@ -830,14 +927,13 @@ class Select2Points(StateMachine, Select):
                 self.goto('idle')
 
     def __init__(self, backend, parameters):
-        self.parameters = parameters
-        self.backend = backend
         states = {
             'idle': Select2Points.Idle,
             'start': Select2Points.Start,
             'select': Select2Points.Select
         }
-        super(Select2Points, self).__init__(states, 'idle')
+        super(Select2Points, self).__init__(backend, parameters,
+                                            states, 'idle')
 
     def beginSelect(self, x, y):
         pass
@@ -857,6 +953,7 @@ class Select2Points(StateMachine, Select):
 
 
 class SelectRectangle(Select2Points):
+    """Drawing rectangle selection area state machine."""
     def beginSelect(self, x, y):
         self.startPt = self.backend.pixelToData(x, y)
         assert self.startPt is not None
@@ -898,6 +995,7 @@ class SelectRectangle(Select2Points):
 
 
 class SelectLine(Select2Points):
+    """Drawing line selection area state machine."""
     def beginSelect(self, x, y):
         self.startPt = self.backend.pixelToData(x, y)
         assert self.startPt is not None
@@ -935,7 +1033,8 @@ class SelectLine(Select2Points):
         self.backend.replot()
 
 
-class Select1Point(StateMachine, Select):
+class Select1Point(Select):
+    """Base class for drawing selection area based on one input point."""
     class Idle(State):
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
@@ -955,13 +1054,12 @@ class Select1Point(StateMachine, Select):
                 self.goto('idle')
 
     def __init__(self, backend, parameters):
-        self.parameters = parameters
-        self.backend = backend
         states = {
             'idle': Select1Point.Idle,
             'select': Select1Point.Select
         }
-        super(Select1Point, self).__init__(states, 'idle')
+        super(Select1Point, self).__init__(backend, parameters,
+                                           states, 'idle')
 
     def select(self, x, y):
         pass
@@ -978,6 +1076,7 @@ class Select1Point(StateMachine, Select):
 
 
 class SelectHLine(Select1Point):
+    """Drawing a horizontal line selection area state machine."""
     def _hLine(self, y):
         dataPos = self.backend.pixelToData(y=y)
         assert dataPos is not None
@@ -1012,6 +1111,7 @@ class SelectHLine(Select1Point):
 
 
 class SelectVLine(Select1Point):
+    """Drawing a vertical line selection area state machine."""
     def _vLine(self, x):
         dataPos = self.backend.pixelToData(x=x)
         assert dataPos is not None
@@ -1044,6 +1144,8 @@ class SelectVLine(Select1Point):
         self.backend.resetSelectionArea()
         self.backend.replot()
 
+
+# ItemInteraction #############################################################
 
 class ItemsInteraction(ClickOrDrag):
     class Idle(ClickOrDrag.Idle):
@@ -1105,7 +1207,7 @@ class ItemsInteraction(ClickOrDrag):
             return True
 
     def __init__(self, backend):
-        self.backend = backend
+        self._backend = weakref.ref(backend)  # Avoid cyclic-ref
 
         states = {
             'idle': ItemsInteraction.Idle,
@@ -1113,6 +1215,12 @@ class ItemsInteraction(ClickOrDrag):
             'drag': ClickOrDrag.Drag
         }
         StateMachine.__init__(self, states, 'idle')
+
+    @property
+    def backend(self):
+        backend = self._backend()
+        assert backend is not None
+        return backend
 
     def click(self, x, y, btn):
         if btn == LEFT_BTN:
@@ -1270,6 +1378,8 @@ class ItemsInteraction(ClickOrDrag):
         self.backend.setCursor()
 
 
+# FocusManager ################################################################
+
 class FocusManager(StateMachine):
     """Manages focus across multiple event handlers
 
@@ -1335,9 +1445,14 @@ class FocusManager(StateMachine):
 
 
 class ZoomAndSelect(FocusManager):
+    """Combine Zoom and ItemInteraction state machine."""
     def __init__(self, backend, color):
         eventHandlers = ItemsInteraction(backend), Zoom(backend, color)
         super(ZoomAndSelect, self).__init__(eventHandlers)
+
+    @property
+    def color(self):
+        return self.eventHandlers[1].color
 
 
 # OpenGLPlotCanvas ############################################################
@@ -1380,8 +1495,6 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._crosshairCursor = None
         self._mousePosInPixels = None
-
-        self._zoomColor = None
 
         self.winWidth, self.winHeight = 0, 0
 
@@ -2726,10 +2839,7 @@ class OpenGLPlotCanvas(PlotBackend):
     def replot(self):
         self.postRedisplay()
 
-    # Draw mode #
-
-    def isDrawModeEnabled(self):
-        return isinstance(self.eventHandler, Select)
+    # Interaction modes #
 
     _drawModes = {
         'polygon': SelectPolygon,
@@ -2739,47 +2849,83 @@ class OpenGLPlotCanvas(PlotBackend):
         'hline': SelectHLine,
     }
 
-    def setDrawModeEnabled(self, flag=True, shape="polygon", label=None,
-                           color=None, **kw):
-        eventHandlerClass = self._drawModes[shape]
-        if flag:
-            parameters = kw
-            parameters['shape'] = shape
-            parameters['label'] = label
-            if color is not None:
-                parameters['color'] = rgba(color, PlotBackend.COLORDICT)
+    def getInteractiveMode(self):
+        if isinstance(self.eventHandler, ZoomAndSelect):
+            return {'mode': 'zoom', 'color': self.eventHandler.color}
 
-            if not isinstance(self.eventHandler, eventHandlerClass):
-                self.eventHandler.cancel()
-                self.eventHandler = eventHandlerClass(self, parameters)
-        elif isinstance(self.eventHandler, eventHandlerClass):
+        elif isinstance(self.eventHandler, Select):
+            result = self.eventHandler.parameters.copy()
+            result['mode'] = 'draw'
+            return result
+
+        elif isinstance(self.eventHandler, Pan):
+            return {'mode': 'pan'}
+
+        else:
+            return {'mode': 'select'}
+
+    def setInteractiveMode(self, mode=None, color=None, shape=None,
+                           label=None, **kwargs):
+        assert mode in (None, 'draw', 'pan', 'select', 'zoom')
+
+        if kwargs:
+            warnings.warn('setInteractiveMode ignores additional parameters',
+                          RuntimeWarning)
+
+        if color is None:
+            color = 'black'
+        color = rgba(color, PlotBackend.COLORDICT)
+
+        if mode == 'draw':
+            eventHandlerClass = self._drawModes[shape]
+            parameters = kwargs
+            parameters['shape'] = shape or 'polygon'  # The default
+            parameters['label'] = label
+            parameters['color'] = color
+
+            self.eventHandler.cancel()
+            self.eventHandler = eventHandlerClass(self, parameters)
+
+        elif mode == 'pan':
+            # Ignores color, shape and label
+            self.eventHandler.cancel()
+            self.eventHandler = Pan(self)
+
+        elif mode == 'zoom':
+            # Ignores shape and label
+            self.eventHandler.cancel()
+            self.eventHandler = ZoomAndSelect(self, color)
+
+        else:  # Default mode: interaction with plot objects
+            # Ignores color, shape and label
             self.eventHandler.cancel()
             self.eventHandler = ItemsInteraction(self)
 
-    def getDrawMode(self):
-        if self.isDrawModeEnabled():
-            return self.eventHandler.parameters
-        else:
-            None
+    def isDrawModeEnabled(self):
+        return self.getInteractiveMode()['mode'] == 'draw'
 
-    # Zoom #
+    def setDrawModeEnabled(self, flag=True, shape=None, label=None,
+                           color=None, **kwargs):
+        if flag:
+            self.setInteractiveMode(mode='draw', shape=shape,
+                                    label=label, color=color, **kwargs)
+        elif self.getInteractiveMode()['mode'] == 'draw':
+            self.setInteractiveMode(mode=None)
+
+    def getDrawMode(self):
+        mode = self.getInteractiveMode()
+        return mode if mode['mode'] == 'draw' else None
 
     def isZoomModeEnabled(self):
-        return isinstance(self.eventHandler, ZoomAndSelect)
+        return self.getInteractiveMode()['mode'] == 'zoom'
 
     def setZoomModeEnabled(self, flag=True, color=None):
         if flag:
-            if color is not None:
-                self._zoomColor = rgba(color, PlotBackend.COLORDICT)
-            elif self._zoomColor is None:
-                self._zoomColor = 0., 0., 0., 1.
+            self.setInteractiveMode(mode='zoom', color=color)
+        elif self.getInteractiveMode()['mode'] == 'zoom':
+            self.setInteractiveMode(mode=None)
 
-            self.eventHandler.cancel()
-            self.eventHandler = ZoomAndSelect(self, self._zoomColor)
-
-        elif isinstance(self.eventHandler, ZoomAndSelect):
-            self.eventHandler.cancel()
-            self.eventHandler = ItemsInteraction(self)
+    # Zoom #
 
     def _resetZoom(self):
         if self.isXAxisAutoScale() and self.isYAxisAutoScale():
