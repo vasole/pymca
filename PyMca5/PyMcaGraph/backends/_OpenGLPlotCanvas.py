@@ -597,7 +597,7 @@ class Pan(_ZoomOnWheel):
 
         else:
             dx = xData - lastX
-            xMin, xMax = xMax - dx, xMax - dx
+            xMin, xMax = xMin - dx, xMax - dx
 
         if self.backend.isYAxisLogarithmic():
             try:
