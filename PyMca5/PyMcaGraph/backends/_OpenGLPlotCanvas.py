@@ -40,6 +40,7 @@ OpenGL plot backend with no dependencies on the control of the OpenGL context.
 from collections import namedtuple
 import math
 import numpy as np
+import sys
 import time
 import warnings
 import weakref
@@ -577,16 +578,55 @@ class Pan(_ZoomOnWheel):
     def drag(self, x, y):
         xData, yData, y2Data = self._pixelToData(x, y)
         lastX, lastY, lastY2 = self._previousDataPos
-        dx = xData - lastX
-        dy = yData - lastY
-        dy2 = y2Data - lastY2
 
         xMin, xMax = self.backend.getGraphXLimits()
         yMin, yMax = self.backend.getGraphYLimits(axis='left')
         y2Min, y2Max = self.backend.getGraphYLimits(axis='right')
-        self.backend.setLimits(xMin - dx, xMax - dx,
-                               yMin - dy, yMax - dy,
-                               y2Min - dy2, y2Max - dy2)
+
+        if self.backend.isXAxisLogarithmic():
+            try:
+                dx = math.log10(xData) - math.log10(lastX)
+                xLogMin = 10 ** (math.log10(xMin) - dx)
+                xLogMax = 10 ** (math.log10(xMax) - dx)
+            except (ValueError, OverflowError):
+                xLogMin, xLogMax = xMin, xMax
+
+            if xLogMin > sys.float_info.min and xLogMax > sys.float_info.min:
+                # Small positive float limit
+                xMin, xMax = xLogMin, xLogMax
+
+        else:
+            dx = xData - lastX
+            xMin, xMax = xMax - dx, xMax - dx
+
+        if self.backend.isYAxisLogarithmic():
+            try:
+                dy = math.log10(yData) - math.log10(lastY)
+                yLogMin = 10 ** (math.log10(yMin) - dy)
+                yLogMax = 10 ** (math.log10(yMax) - dy)
+
+                dy2 = math.log10(y2Data) - math.log10(lastY2)
+                y2LogMin = 10 ** (math.log10(y2Min) - dy2)
+                y2LogMax = 10 ** (math.log10(y2Max) - dy2)
+            except (ValueError, OverflowError):
+                yLogMin, yLogMax = yMin, yMax
+                y2LogMin, y2LogMax = y2Min, y2Max
+
+            if (yLogMin > sys.float_info.min and
+                    yLogMax > sys.float_info.min and
+                    y2LogMin > sys.float_info.min and
+                    y2LogMax > sys.float_info.min):
+                # Stop pan at small positive float limit
+                # and keep y and y2 sync
+                yMin, yMax = yLogMin, yLogMax
+                y2Min, y2Max = y2LogMin, y2LogMax
+        else:
+            dy = yData - lastY
+            dy2 = y2Data - lastY2
+            yMin, yMax = yMin - dy, yMax - dy
+            y2Min, y2Max = y2Min - dy2, y2Max - dy2
+
+        self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
         self.backend.replot()
 
         self._previousDataPos = self._pixelToData(x, y)
@@ -2831,8 +2871,10 @@ class OpenGLPlotCanvas(PlotBackend):
             self.replot()
 
     def clear(self):
-        self.clearItems()
         self.clearCurves()
+        self.clearImages()
+        self.clearItems()
+        self.clearMarkers()
 
     def replot(self):
         self.postRedisplay()
