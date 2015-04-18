@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -115,6 +115,8 @@ class SpecFileDataSource(object):
                 try:
                     self.__fileHeaderList[0] = sel.fileheader('')
                 except:
+                    if DEBUG:
+                        print("getSourceInfo %s" % sys.exc_info()[1])
                     self.__fileHeaderList[0] = None
             try: n= sel.nbmca()
             except: n= 0
@@ -209,6 +211,8 @@ class SpecFileDataSource(object):
             try:
                 self.__fileHeaderList[index] = scandata.fileheader('')
             except:
+                if DEBUG:
+                    print("getScanInfo %s" % sys.exc_info()[1])
                 self.__fileHeaderList[index] = None
         info["FileHeader"] = self.__fileHeaderList[index]
         try: info["Number"] = scandata.number()

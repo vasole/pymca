@@ -47,12 +47,18 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         scanheader = ["#S 1 %s" % title,
                       "#N 2",
                       "#L %s  %s" % (xLabel, yLabel)]
+        try:
+            fileheader = instance._header
+        except:
+            print("JCampFileParser cannot access '_header' attribute")
+            fileheader=None
         data = numpy.zeros((x.size, 2), numpy.float32)
         data[:, 0] = x
         data[:, 1] = y
         self.scanData = self.scandata = JCAMPFileScan(data, scantype="SCAN",
                                                       scanheader=scanheader,
-                                                      labels=[xLabel, yLabel])
+                                                      labels=[xLabel, yLabel],
+                                                      fileheader=fileheader)
 
     def __getitem__(self, item):
         if item not in [-1, 0]:
@@ -61,10 +67,44 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
 
     def scanno(self):
         return 1
-        
 
 class JCAMPFileScan(SpecFileAbstractClass.SpecFileAbstractScan):
-    pass
+    def __init__(self, data, scantype="SCAN",
+                 scanheader=None, labels=None, fileheader=None):
+        SpecFileAbstractClass.SpecFileAbstractScan.__init__(self, data,
+                            scantype=scantype, scanheader=scanheader,
+                            labels=labels)
+        self._fileHeader = fileheader
+
+    def fileheader(self, key=''):
+        return self._fileHeader
+
+    def header(self, key=''):
+        if   key == 'S':
+            return self.scanheader[0]
+        elif key == 'N':
+            return self.scanheader[-2]
+        elif key == 'L':
+            return self.scanheader[-1]
+        elif key == '@CALIB':
+            output = []
+            if self.scanheader is None: return output
+            for line in self.scanheader:
+                if line.startswith(key) or\
+                   line.startswith('#'+key):
+                    output.append(line)
+            return output
+        elif key == '@CTIME':
+            # expected to send Preset Time, Live Time, Real (Elapsed) Time
+            output = []
+            if self.scanheader is None: return output
+            for line in self.scanheader:
+                if line.startswith(key) or\
+                   line.startswith('#'+key):
+                    output.append(line)
+            return output
+        elif key == "" or key == " ":
+            return self.scanheader
 
 def isJcampFile(filename):
     return JcampReader.isJcampFile(filename)
