@@ -53,7 +53,7 @@ from .gl import *  # noqa
 from .GLSupport import mat4Ortho
 from .GLProgram import GLProgram
 from .GLText import Text2D, CENTER, BOTTOM, TOP, LEFT, RIGHT, ROTATE_270
-from .LabelLayout import niceNumbers, niceNumbersForLog10
+from .LabelLayout import niceNumbersAdaptative, niceNumbersForLog10
 
 
 # PlotAxis ####################################################################
@@ -270,7 +270,12 @@ class PlotAxis(object):
                 xScale = (x1 - x0) / (dataMax - dataMin)
                 yScale = (y1 - y0) / (dataMax - dataMin)
 
-                tickMin, tickMax, step, nbFrac = niceNumbers(dataMin, dataMax)
+                nbPixels = math.sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2))
+
+                # Density of 1.3 label per 92 pixels
+                # i.e., 1.3 label per inch on a 92 dpi screen
+                tickMin, tickMax, step, nbFrac = niceNumbersAdaptative(
+                    dataMin, dataMax, nbPixels, 1.3 / 92)
 
                 for dataPos in self._frange(tickMin, tickMax, step):
                     if dataPos >= dataMin and dataPos <= dataMax:

@@ -40,6 +40,21 @@ This module implements labels layout on graph axes.
 import math
 
 
+# utils #######################################################################
+
+def numberOfDigits(tickSpacing):
+    """Returns the number of digits to display for text label.
+
+    :param float tickSpacing: Step between ticks in data space.
+    :return: Number of digits to show for labels.
+    :rtype: int
+    """
+    nFrac = int(-math.floor(math.log10(tickSpacing)))
+    if nFrac < 0:
+        nFrac = 0
+    return nFrac
+
+
 # Nice Numbers ################################################################
 
 def _niceNum(value, isRound=False):
@@ -84,10 +99,29 @@ def niceNumbers(vMin, vMax, nTicks=5):
     tickSpacing = _niceNum(vRange / nTicks, True)
     graphMin = math.floor(vMin / tickSpacing) * tickSpacing
     graphMax = math.ceil(vMax / tickSpacing) * tickSpacing
-    nFrac = int(-math.floor(math.log10(tickSpacing)))
-    if nFrac < 0:
-        nFrac = 0
+    nFrac = numberOfDigits(tickSpacing)
     return graphMin, graphMax, tickSpacing, nFrac
+
+
+def niceNumbersAdaptative(vMin, vMax, axisLength, tickDensity):
+    """Returns tick positions using :func:`niceNumbers` and a
+    density of ticks.
+
+    axisLength and tickDensity are based on the same unit (e.g., pixel).
+
+    :param float vMin: The min value on the axis
+    :param float vMax: The max value on the axis
+    :param float axisLength: The length of the axis.
+    :param float tickDensity: The density of ticks along the axis.
+    :returns: min, max, increment value of tick positions and
+              number of fractional digit to show
+    :rtype: tuple
+    """
+    # At least 2 ticks
+    nTicks = max(2, int(round(tickDensity * axisLength)))
+    tickMin, tickMax, step, nbFrac = niceNumbers(vMin, vMax, nTicks)
+
+    return tickMin, tickMax, step, nbFrac
 
 
 # Nice Numbers for log scale ##################################################
