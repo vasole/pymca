@@ -100,6 +100,15 @@ class MiniOrderedDict(object):
             return default
 
 
+# Float 32 info ###############################################################
+# Using min/max value below limits of float32
+# so operation with such value (e.g., max - min) do not overflow
+
+FLOAT32_SAFE_MIN = -1e37  # np.finfo(np.float32).min
+FLOAT32_SAFE_MINPOS = np.finfo(np.float32).tiny
+FLOAT32_SAFE_MAX = 1e37  # np.finfo(np.float32).max
+
+
 # Bounds ######################################################################
 
 class Range(namedtuple('Range', ('min_', 'max_'))):
@@ -491,6 +500,8 @@ class _ZoomOnWheel(ClickOrDrag):
     def _scale1DRange(min_, max_, center, scale, isLog):
         """Scale a 1D range given a scale factor and an center point.
 
+        Keeps the values in a smaller range than float32.
+
         :param float min_: The current min value of the range.
         :param float max_: The current max value of the range.
         :param float center: The center of the zoom (i.e., invariant point).
@@ -500,37 +511,27 @@ class _ZoomOnWheel(ClickOrDrag):
         :rtype: tuple of 2 floats: (min, max)
         """
         if isLog:
-            if min_ > 0.:
-                oldMin = np.log10(min_)
-            else:
-                # Happens when autoscale is off and switch to log scale
-                # while displaying area < 0.
-                oldMin = np.log10(np.nextafter(0, 1))
+            # Min and center can be < 0 when
+            # autoscale is off and switch to log scale
+            # max_ < 0 should not happen
+            min_ = np.log10(min_) if min_ > 0. else FLOAT32_SAFE_MINPOS
+            center = np.log10(center) if center > 0. else FLOAT32_SAFE_MINPOS
+            max_ = np.log10(max_) if max_ > 0. else FLOAT32_SAFE_MINPOS
 
-            if center > 0.:
-                center = np.log10(center)
-            else:
-                center = np.log10(np.nextafter(0, 1))
-
-            if max_ > 0.:
-                oldMax = np.log10(max_)
-            else:
-                # Should not happen
-                oldMax = 0.
-        else:
-            oldMin, oldMax = min_, max_
-
-        offset = (center - oldMin) / (oldMax - oldMin)
-        range_ = (oldMax - oldMin) / scale
+        offset = (center - min_) / (max_ - min_)
+        range_ = (max_ - min_) / scale
         newMin = center - offset * range_
         newMax = center + (1. - offset) * range_
+
         if isLog:
-            try:
-                newMin, newMax = 10. ** float(newMin), 10. ** float(newMax)
-            except OverflowError:  # Limit case
-                newMin, newMax = min_, max_
-            if newMin <= 0. or newMax <= 0.:  # Limit case
-                newMin, newMax = min_, max_
+            # No overflow as exponent is log10 of a float32
+            newMin = pow(10., newMin)
+            newMax = pow(10., newMax)
+            newMin = np.clip(newMin, FLOAT32_SAFE_MINPOS, FLOAT32_SAFE_MAX)
+            newMax = np.clip(newMax, FLOAT32_SAFE_MINPOS, FLOAT32_SAFE_MAX)
+        else:
+            newMin = np.clip(newMin, FLOAT32_SAFE_MIN, FLOAT32_SAFE_MAX)
+            newMax = np.clip(newMax, FLOAT32_SAFE_MIN, FLOAT32_SAFE_MAX)
         return newMin, newMax
 
     def _zoom(self, cx, cy, scaleF):
@@ -586,47 +587,59 @@ class Pan(_ZoomOnWheel):
         if self.backend.isXAxisLogarithmic():
             try:
                 dx = math.log10(xData) - math.log10(lastX)
-                xLogMin = 10 ** (math.log10(xMin) - dx)
-                xLogMax = 10 ** (math.log10(xMax) - dx)
+                newXMin = pow(10., (math.log10(xMin) - dx))
+                newXMax = pow(10., (math.log10(xMax) - dx))
             except (ValueError, OverflowError):
-                xLogMin, xLogMax = xMin, xMax
+                newXMin, newXMax = xMin, xMax
 
-            if xLogMin > sys.float_info.min and xLogMax > sys.float_info.min:
-                # Small positive float limit
-                xMin, xMax = xLogMin, xLogMax
-
+            # Makes sure both values stays in positive float32 range
+            if newXMin < FLOAT32_SAFE_MINPOS or newXMax > FLOAT32_SAFE_MAX:
+                newXMin, newXMax = xMin, xMax
         else:
             dx = xData - lastX
-            xMin, xMax = xMin - dx, xMax - dx
+            newXMin, newXMax = xMin - dx, xMax - dx
+
+            # Makes sure both values stays in float32 range
+            if newXMin < FLOAT32_SAFE_MIN or newXMax > FLOAT32_SAFE_MAX:
+                newXMin, newXMax = xMin, xMax
 
         if self.backend.isYAxisLogarithmic():
             try:
                 dy = math.log10(yData) - math.log10(lastY)
-                yLogMin = 10 ** (math.log10(yMin) - dy)
-                yLogMax = 10 ** (math.log10(yMax) - dy)
+                newYMin = pow(10., math.log10(yMin) - dy)
+                newYMax = pow(10., math.log10(yMax) - dy)
 
                 dy2 = math.log10(y2Data) - math.log10(lastY2)
-                y2LogMin = 10 ** (math.log10(y2Min) - dy2)
-                y2LogMax = 10 ** (math.log10(y2Max) - dy2)
+                newY2Min = pow(10., math.log10(y2Min) - dy2)
+                newY2Max = pow(10., math.log10(y2Max) - dy2)
             except (ValueError, OverflowError):
-                yLogMin, yLogMax = yMin, yMax
-                y2LogMin, y2LogMax = y2Min, y2Max
+                newYMin, newYMax = yMin, yMax
+                newY2Min, newY2Max = y2Min, y2Max
 
-            if (yLogMin > sys.float_info.min and
-                    yLogMax > sys.float_info.min and
-                    y2LogMin > sys.float_info.min and
-                    y2LogMax > sys.float_info.min):
-                # Stop pan at small positive float limit
-                # and keep y and y2 sync
-                yMin, yMax = yLogMin, yLogMax
-                y2Min, y2Max = y2LogMin, y2LogMax
+            # Makes sure y and y2 stays in positive float32 range
+            if (newYMin < FLOAT32_SAFE_MINPOS or
+                    newYMax > FLOAT32_SAFE_MAX or
+                    newY2Min < FLOAT32_SAFE_MINPOS or
+                    newY2Max > FLOAT32_SAFE_MAX):
+                newYMin, newYMax = yMin, yMax
+                newY2Min, newY2Max = y2Min, y2Max
         else:
             dy = yData - lastY
             dy2 = y2Data - lastY2
-            yMin, yMax = yMin - dy, yMax - dy
-            y2Min, y2Max = y2Min - dy2, y2Max - dy2
+            newYMin, newYMax = yMin - dy, yMax - dy
+            newY2Min, newY2Max = y2Min - dy2, y2Max - dy2
 
-        self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
+            # Makes sure y and y2 stays in float32 range
+            if (newYMin < FLOAT32_SAFE_MIN or
+                    newYMax > FLOAT32_SAFE_MAX or
+                    newY2Min < FLOAT32_SAFE_MIN or
+                    newY2Max > FLOAT32_SAFE_MAX):
+                newYMin, newYMax = yMin, yMax
+                newY2Min, newY2Max = y2Min, y2Max
+
+        self.backend.setLimits(newXMin, newXMax,
+                               newYMin, newYMax,
+                               newY2Min, newY2Max)
         self.backend.replot()
 
         self._previousDataPos = self._pixelToData(x, y)
@@ -1600,9 +1613,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def _mouseInPlotArea(self, x, y):
         xPlot = clamp(x, self._margins['left'],
-                      self.winWidth - self._margins['right'])
+                      self.winWidth - self._margins['right'] - 1)
         yPlot = clamp(y, self._margins['top'],
-                      self.winHeight - self._margins['bottom'])
+                      self.winHeight - self._margins['bottom'] - 1)
         return xPlot, yPlot
 
     def onMousePress(self, xPixel, yPixel, btn):
@@ -1848,14 +1861,24 @@ class OpenGLPlotCanvas(PlotBackend):
     @plotDataBounds.setter
     def plotDataBounds(self, bounds):
         if bounds != self.plotDataBounds:
-            # if self._plotFrame.xAxis.isLog and bounds.xAxis.min_ <= 0.:
-            #    raise RuntimeError(
-            #        'Cannot use plot area with X <= 0 with X axis log scale')
-            # if self._plotFrame.yAxis.isLog and (bounds.yAxis.min_ <= 0. or
-            #                                    bounds.y2Axis.min_ <= 0.):
-            #    raise RuntimeError(
-            #        'Cannot use plot area with Y <= 0 with Y axis log scale')
-            self._plotDataBounds = bounds
+            # Maintains bounds in float32 range
+            # and positive float32 range when log scale
+            xMin, xMax = bounds.xAxis
+            xMinLimit = (FLOAT32_SAFE_MINPOS if self.isXAxisLogarithmic()
+                         else FLOAT32_SAFE_MIN)
+            xMin = np.clip(xMin, xMinLimit, FLOAT32_SAFE_MAX)
+            xMax = np.clip(xMax, xMinLimit, FLOAT32_SAFE_MAX)
+
+            yMin, yMax = bounds.yAxis
+            y2Min, y2Max = bounds.y2Axis
+            yMinLimit = (FLOAT32_SAFE_MINPOS if self.isYAxisLogarithmic()
+                         else FLOAT32_SAFE_MIN)
+            yMin = np.clip(yMin, yMinLimit, FLOAT32_SAFE_MAX)
+            yMax = np.clip(yMax, yMinLimit, FLOAT32_SAFE_MAX)
+            y2Min = np.clip(y2Min, yMinLimit, FLOAT32_SAFE_MAX)
+            y2Max = np.clip(y2Max, yMinLimit, FLOAT32_SAFE_MAX)
+
+            self._plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
             # Update plot frame bounds
             self._plotFrame.xAxis.dataRange = self.plotDataBounds.xAxis
