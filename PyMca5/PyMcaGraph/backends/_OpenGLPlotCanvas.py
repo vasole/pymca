@@ -1541,7 +1541,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._progTex = GLProgram(_texVertShd, _texFragShd)
         self._plotFBOs = {}
 
-        self._plotDataBounds = Bounds(1., 100., 1., 100., 1., 100.)
+        self._plotDataTransformedBounds = None
         self._keepDataAspectRatio = False
 
         self._activeCurveLegend = None
@@ -1562,8 +1562,6 @@ class OpenGLPlotCanvas(PlotBackend):
         self._tickLen = 5
 
         self._plotDirtyFlag = True
-
-        self._hasRightYAxis = set()
 
         self.eventHandler = ZoomAndSelect(self, (0., 0., 0., 1.))
 
@@ -1851,103 +1849,59 @@ class OpenGLPlotCanvas(PlotBackend):
             del self._dataBounds
 
     @property
-    def plotDataBounds(self):
-        """Bounds of the displayed area in data coordinates
-
-        :type: Bounds
-        """
-        return self._plotDataBounds
-
-    @plotDataBounds.setter
-    def plotDataBounds(self, bounds):
-        if bounds != self.plotDataBounds:
-            # Maintains bounds in float32 range
-            # and positive float32 range when log scale
-            xMin, xMax = bounds.xAxis
-            xMinLimit = (FLOAT32_SAFE_MINPOS if self.isXAxisLogarithmic()
-                         else FLOAT32_SAFE_MIN)
-            xMin = np.clip(xMin, xMinLimit, FLOAT32_SAFE_MAX)
-            xMax = np.clip(xMax, xMinLimit, FLOAT32_SAFE_MAX)
-
-            yMin, yMax = bounds.yAxis
-            y2Min, y2Max = bounds.y2Axis
-            yMinLimit = (FLOAT32_SAFE_MINPOS if self.isYAxisLogarithmic()
-                         else FLOAT32_SAFE_MIN)
-            yMin = np.clip(yMin, yMinLimit, FLOAT32_SAFE_MAX)
-            yMax = np.clip(yMax, yMinLimit, FLOAT32_SAFE_MAX)
-            y2Min = np.clip(y2Min, yMinLimit, FLOAT32_SAFE_MAX)
-            y2Max = np.clip(y2Max, yMinLimit, FLOAT32_SAFE_MAX)
-
-            self._plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
-
-            # Update plot frame bounds
-            self._plotFrame.xAxis.dataRange = self.plotDataBounds.xAxis
-            self._plotFrame.yAxis.dataRange = self.plotDataBounds.yAxis
-            self._plotFrame.y2Axis.dataRange = self.plotDataBounds.y2Axis
-
-            self._dirtyPlotDataTransformedBounds()
-
-    @property
     def plotDataTransformedBounds(self):
         """Bounds of the displayed area in transformed data coordinates
         (i.e., log scale applied if any)
 
         :type: Bounds
         """
-        try:
-            return self._plotDataTransformedBounds
-        except AttributeError:
-            if not (self._plotFrame.xAxis.isLog or
-                    self._plotFrame.yAxis.isLog):
-                self._plotDataTransformedBounds = self.plotDataBounds
-            else:
-                xMin, xMax = self.plotDataBounds.xAxis
-                yMin, yMax = self.plotDataBounds.yAxis
-                y2Min, y2Max = self.plotDataBounds.y2Axis
+        if self._plotDataTransformedBounds is None:
+            xMin, xMax = self._plotFrame.xAxis.dataRange
+            yMin, yMax = self._plotFrame.yAxis.dataRange
+            y2Min, y2Max = self._plotFrame.y2Axis.dataRange
 
-                if self._plotFrame.xAxis.isLog:
-                    try:
-                        xMin = math.log10(xMin)
-                    except ValueError:
-                        print('xMin: warning log10({0})'.format(xMin))
-                        xMin = 0.
-                    try:
-                        xMax = math.log10(xMax)
-                    except ValueError:
-                        print('xMax: warning log10({0})'.format(xMax))
-                        xMax = 0.
+            if self._plotFrame.xAxis.isLog:
+                try:
+                    xMin = math.log10(xMin)
+                except ValueError:
+                    print('xMin: warning log10({0})'.format(xMin))
+                    xMin = 0.
+                try:
+                    xMax = math.log10(xMax)
+                except ValueError:
+                    print('xMax: warning log10({0})'.format(xMax))
+                    xMax = 0.
 
-                if self._plotFrame.yAxis.isLog:
-                    try:
-                        yMin = math.log10(yMin)
-                    except ValueError:
-                        print('yMin: warning log10({0})'.format(yMin))
-                        yMin = 0.
-                    try:
-                        yMax = math.log10(yMax)
-                    except ValueError:
-                        print('yMax: warning log10({0})'.format(yMax))
-                        yMax = 0.
+            if self._plotFrame.yAxis.isLog:
+                try:
+                    yMin = math.log10(yMin)
+                except ValueError:
+                    print('yMin: warning log10({0})'.format(yMin))
+                    yMin = 0.
+                try:
+                    yMax = math.log10(yMax)
+                except ValueError:
+                    print('yMax: warning log10({0})'.format(yMax))
+                    yMax = 0.
 
-                    try:
-                        y2Min = math.log10(y2Min)
-                    except ValueError:
-                        print('yMin: warning log10({0})'.format(y2Min))
-                        y2Min = 0.
-                    try:
-                        y2Max = math.log10(y2Max)
-                    except ValueError:
-                        print('yMax: warning log10({0})'.format(y2Max))
-                        y2Max = 0.
+                try:
+                    y2Min = math.log10(y2Min)
+                except ValueError:
+                    print('yMin: warning log10({0})'.format(y2Min))
+                    y2Min = 0.
+                try:
+                    y2Max = math.log10(y2Max)
+                except ValueError:
+                    print('yMax: warning log10({0})'.format(y2Max))
+                    y2Max = 0.
 
-                self._plotDataTransformedBounds = \
-                    Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
+            self._plotDataTransformedBounds = \
+                Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
-            return self._plotDataTransformedBounds
+        return self._plotDataTransformedBounds
 
     def _dirtyPlotDataTransformedBounds(self):
-        if hasattr(self, '_plotDataTransformedBounds'):
-            del self._plotDataTransformedBounds
+        self._plotDataTransformedBounds = None
         self._dirtyMatrixPlotDataTransformedProj()
 
     @property
@@ -2251,8 +2205,8 @@ class OpenGLPlotCanvas(PlotBackend):
             if marker['text'] is not None:
                 pixelPos = self.dataToPixel(xCoord, yCoord, check=False)
 
-                xMin, xMax = self.plotDataBounds.xAxis
-                yMin, yMax = self.plotDataBounds.yAxis
+                xMin, xMax = self._plotFrame.xAxis.dataRange
+                yMin, yMax = self._plotFrame.yAxis.dataRange
 
                 if xCoord is None:
                     x = self.winWidth - self._margins['right'] - pixelOffset
@@ -2445,9 +2399,9 @@ class OpenGLPlotCanvas(PlotBackend):
                                        self.winHeight, 0,
                                        1, -1)
 
-        xMin, xMax = self.plotDataBounds.xAxis
-        yMin, yMax = self.plotDataBounds.yAxis
-        y2Min, y2Max = self.plotDataBounds.y2Axis
+        xMin, xMax = self._plotFrame.xAxis.dataRange
+        yMin, yMax = self._plotFrame.yAxis.dataRange
+        y2Min, y2Max = self._plotFrame.y2Axis.dataRange
         self.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
     # PlotBackend API #
@@ -2801,7 +2755,6 @@ class OpenGLPlotCanvas(PlotBackend):
         }
 
         if yaxis == "right":
-            self._hasRightYAxis.add(curve)
             self._plotFrame.isY2Axis = True
 
         self._zOrderedItems[('curve', legend)] = curve
@@ -2831,8 +2784,10 @@ class OpenGLPlotCanvas(PlotBackend):
         except KeyError:
             pass
         else:
-            self._hasRightYAxis.discard(curve)
-            self._plotFrame.isY2Axis = self._hasRightYAxis
+            # Check if some curves remains on the right Y axis
+            y2AxisItems = (item for item in self._zOrderedItems.values()
+                           if item.info.get('yAxis', 'left') == 'right')
+            self._plotFrame.isY2Axis = (next(y2AxisItems, None) is not None)
 
             self._glGarbageCollector.append(curve)
             self._dirtyDataBounds()
@@ -3017,21 +2972,21 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Limits #
 
-    def _sendLimitsChanged(self):
-        bounds = self.plotDataBounds
-        if self._hasRightYAxis:
-            y2Range = (bounds.y2Axis.min_, bounds.y2Axis.max_)
-        else:
-            y2Range = None
-        eventDict = prepareLimitsChangedSignal(
-            self.getWidgetHandle(),
-            (bounds.xAxis.min_, bounds.xAxis.max_),
-            (bounds.yAxis.min_, bounds.yAxis.max_),
-            y2Range)
-        self.sendEvent(eventDict)
+    @staticmethod
+    def _clampAxisRange(min_, max_, isLog):
+        """Clamp axis data range to a 'safe' float32 range.
+
+        Clamp to a range smaller than float32 range.
+        If isLog is True, clamp to a stricly positive range.
+        """
+        minLimit = FLOAT32_SAFE_MINPOS if isLog else FLOAT32_SAFE_MIN
+        min_ = clamp(min_, minLimit, FLOAT32_SAFE_MAX)
+        max_ = clamp(max_, minLimit, FLOAT32_SAFE_MAX)
+        assert min_ < max_
+        return min_, max_
 
     def _ensureAspectRatio(self, keepDim=None):
-        """Update plotDataBounds in order to keep aspect ratio.
+        """Update plot bounds in order to keep aspect ratio.
 
         Warning: keepDim on right Y axis is not implemented !
 
@@ -3053,30 +3008,69 @@ class OpenGLPlotCanvas(PlotBackend):
             else: # Limit case
                 keepDim = 'x'
 
+        xMax, xMin = self._plotFrame.xAxis.dataRange
+        yMin, yMax = self._plotFrame.yAxis.dataRange
+        y2Min, y2Max = self._plotFrame.y2Axis.dataRange
         if keepDim == 'y':
-            yMin, yMax = self.plotDataBounds.yAxis
-            y2Min, y2Max = self.plotDataBounds.y2Axis
-
-            dataW = self.plotDataBounds.yAxis.range_ * \
-                    plotWidth / float(plotHeight)
-            xCenter = self.plotDataBounds.xAxis.center
+            dataW = (yMax - yMin) * plotWidth / float(plotHeight)
+            xCenter = 0.5 * (xMin + xMax)
             xMin = xCenter - 0.5 * dataW
             xMax = xCenter + 0.5 * dataW
         elif keepDim == 'x':
-            xMin, xMax = self.plotDataBounds.xAxis
+            xMin, xMax = self._plotFrame.xAxis.dataRange
 
-            dataH = self.plotDataBounds.xAxis.range_ * \
-                plotHeight / float(plotWidth)
-            yCenter = self.plotDataBounds.yAxis.center
+            dataH = (xMax - xMin) * plotHeight / float(plotWidth)
+            yCenter = 0.5 * (yMin + yMax)
             yMin = yCenter - 0.5 * dataH
             yMax = yCenter + 0.5 * dataH
-            y2Center = self.plotDataBounds.y2Axis.center
+            y2Center = 0.5 * (y2Min + y2Max)
             y2Min = y2Center - 0.5 * dataH
             y2Max = y2Center + 0.5 * dataH
         else:
             raise RuntimeError('Unsupported dimension to keep: %s' % keepDim)
 
-        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
+        # Update plot frame bounds
+        self._plotFrame.xAxis.dataRange = self._clampAxisRange(
+            xMin, xMax, self.isXAxisLogarithmic())
+        self._plotFrame.yAxis.dataRange = self._clampAxisRange(
+            yMin, yMax, self.isYAxisLogarithmic())
+        self._plotFrame.y2Axis.dataRange = self._clampAxisRange(
+            y2Min, y2Max, self.isYAxisLogarithmic())
+
+    def _setPlotBounds(self, xRange=None, yRange=None, y2Range=None,
+                       keepDim=None):
+        # Update axes range with a clipped range if too wide
+        if xRange is not None:
+            self._plotFrame.xAxis.dataRange = self._clampAxisRange(
+                xRange[0], xRange[1], self.isXAxisLogarithmic())
+
+        if yRange is not None:
+            self._plotFrame.yAxis.dataRange = self._clampAxisRange(
+                yRange[0], yRange[1], self.isYAxisLogarithmic())
+
+        if y2Range is not None:
+            self._plotFrame.y2Axis.dataRange = self._clampAxisRange(
+                y2Range[0], y2Range[1], self.isYAxisLogarithmic())
+
+        # Keep data aspect ratio
+        if self.isKeepDataAspectRatio():
+            self._ensureAspectRatio(keepDim)
+
+        # Raise dirty flags
+        self._dirtyPlotDataTransformedBounds()
+        self.updateAxis()
+
+        # Send limits changed to callback
+        if self._plotFrame.isY2Axis:
+            y2Range = self._plotFrame.y2Axis.dataRange
+        else:
+            y2Range = None
+        eventDict = prepareLimitsChangedSignal(
+            self.getWidgetHandle(),
+            self._plotFrame.xAxis.dataRange,
+            self._plotFrame.y2Axis.dataRange,
+            y2Range)
+        self.sendEvent(eventDict)
 
     def isKeepDataAspectRatio(self):
         if self._plotFrame.xAxis.isLog or self._plotFrame.yAxis.isLog:
@@ -3098,63 +3092,38 @@ class OpenGLPlotCanvas(PlotBackend):
         self.resetZoom()
 
     def getGraphXLimits(self):
-        return self.plotDataBounds.xAxis.min_, self.plotDataBounds.xAxis.max_
+        return self._plotFrame.xAxis.dataRange
 
     def setGraphXLimits(self, xMin, xMax):
-        yMin, yMax = self.plotDataBounds.yAxis
-        y2Min, y2Max = self.plotDataBounds.y2Axis
-        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
-
-        if self.isKeepDataAspectRatio():
-            self._ensureAspectRatio('x')
-
-        self.updateAxis()
-
-        self._sendLimitsChanged()
+        assert xMin < xMax
+        self._setPlotBounds(xRange=(xMin, xMax), keepDim='x')
 
     def getGraphYLimits(self, axis="left"):
         assert axis in ("left", "right")
         if axis == "left":
-            return (self.plotDataBounds.yAxis.min_,
-                    self.plotDataBounds.yAxis.max_)
+            return self._plotFrame.yAxis.dataRange
         else:
-            return (self.plotDataBounds.y2Axis.min_,
-                    self.plotDataBounds.y2Axis.max_)
+            return self._plotFrame.y2Axis.dataRange
 
     def setGraphYLimits(self, yMin, yMax, axis="left"):
+        assert yMin < yMax
         assert axis in ("left", "right")
 
         if axis == "left":
-            y2Min, y2Max = self.plotDataBounds.y2Axis
+            self._setPlotBounds(yRange=(yMin, yMax), keepDim='y')
         else:
-            y2Min, y2Max = yMin, yMax
-            yMin, yMax = self.plotDataBounds.yAxis
-
-        xMin, xMax = self.plotDataBounds.xAxis
-        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
-
-        if self.isKeepDataAspectRatio():
-            self._ensureAspectRatio('y')
-
-        self.updateAxis()
-
-        self._sendLimitsChanged()
+            self._setPlotBounds(y2Range=(yMin, yMax), keepDim='y')
 
     def setLimits(self, xMin, xMax, yMin, yMax, y2Min=None, y2Max=None):
+        assert xMin < xMax
+        assert yMin < yMax
+
         if y2Min is None or y2Max is None:
-            y2Min, y2Max = self.plotDataBounds.y2Axis
-            if y2Min is None:
-                y2Min = 1.
-            if y2Max is None:
-                y2Max = 100.
-        self.plotDataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
-
-        if self.isKeepDataAspectRatio():
-            self._ensureAspectRatio()
-
-        self.updateAxis()
-
-        self._sendLimitsChanged()
+            y2Range=None
+        else:
+            assert y2Min < y2Max
+            y2Range = y2Min, y2Max
+        self._setPlotBounds((xMin, xMax), (yMin, yMax), y2Range)
 
     def invertYAxis(self, flag=True):
         if flag != self._plotFrame.isYAxisInverted:
