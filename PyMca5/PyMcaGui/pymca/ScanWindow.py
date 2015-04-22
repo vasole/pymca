@@ -132,6 +132,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                        self.toggleLegendWidget)
             controlMenu.addAction(QString("Show/Hide Info"),
                                        self._toggleInfoWidget)
+            controlMenu.addAction(QString("Toggle Crosshair"),
+                                       self.toggleCrosshairCursor)
             self.setControlMenu(controlMenu)
         else:
             self.scanWindowInfoWidget = None
