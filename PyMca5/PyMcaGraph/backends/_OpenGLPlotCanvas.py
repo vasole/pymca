@@ -1458,12 +1458,14 @@ class OpenGLPlotCanvas(PlotBackend):
         self._zOrderedItems[('curve', legend)] = curve
 
         if oldCurve is None or \
+           oldCurve.xMinPos != curve.xMinPos or \
            oldCurve.xMin != curve.xMin or oldCurve.xMax != curve.xMax or \
            oldCurve.info['yAxis'] != curve.info['yAxis'] or \
            oldCurve.yMin != curve.yMin or oldCurve.yMax != curve.yMax:
             self._dirtyDataBounds()
 
         self._plotDirtyFlag = True
+        self._resetZoom()
 
         if wasActiveCurve:
             self.setActiveCurve(legend, replot=False)
@@ -1778,7 +1780,7 @@ class OpenGLPlotCanvas(PlotBackend):
         eventDict = prepareLimitsChangedSignal(
             self.getWidgetHandle(),
             self._plotFrame.xAxis.dataRange,
-            self._plotFrame.y2Axis.dataRange,
+            self._plotFrame.yAxis.dataRange,
             y2Range)
         self.sendEvent(eventDict)
 

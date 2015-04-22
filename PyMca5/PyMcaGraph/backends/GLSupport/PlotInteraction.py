@@ -113,6 +113,9 @@ class _ZoomOnWheel(ClickOrDrag):
             center = np.log10(center) if center > 0. else FLOAT32_SAFE_MINPOS
             max_ = np.log10(max_) if max_ > 0. else FLOAT32_SAFE_MINPOS
 
+        if min_ == max_:
+            return min_, max_
+
         offset = (center - min_) / (max_ - min_)
         range_ = (max_ - min_) / scale
         newMin = center - offset * range_
