@@ -1542,6 +1542,10 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotFBOs = {}
 
         self._plotDataTransformedBounds = None
+        self._dataBounds = None
+        self._matrixPlotDataTransformedProj = None
+        self._matrixY2PlotDataTransformedProj = None
+
         self._keepDataAspectRatio = False
 
         self._activeCurveLegend = None
@@ -1797,9 +1801,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         :type: Bounds
         """
-        try:
-            return self._dataBounds
-        except AttributeError:
+        if self._dataBounds is None:
             xMin, xMax = float('inf'), -float('inf')
             yMin, yMax = float('inf'), -float('inf')
             y2Min, y2Max = float('inf'), -float('inf')
@@ -1842,11 +1844,11 @@ class OpenGLPlotCanvas(PlotBackend):
                 y2Min, y2Max = 1., 100.
 
             self._dataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
-            return self._dataBounds
+
+        return self._dataBounds
 
     def _dirtyDataBounds(self):
-        if hasattr(self, '_dataBounds'):
-            del self._dataBounds
+        self._dataBounds = None
 
     @property
     def plotDataTransformedBounds(self):
@@ -1910,9 +1912,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         :type: numpy.matrix
         """
-        try:
-            return self._matrixPlotDataTransformedProj
-        except AttributeError:
+        if self._matrixPlotDataTransformedProj is None:
             xMin, xMax = self.plotDataTransformedBounds.xAxis
             yMin, yMax = self.plotDataTransformedBounds.yAxis
 
@@ -1924,7 +1924,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 self._matrixPlotDataTransformedProj = mat4Ortho(xMin, xMax,
                                                                 yMin, yMax,
                                                                 1, -1)
-            return self._matrixPlotDataTransformedProj
+        return self._matrixPlotDataTransformedProj
 
     @property
     def matrixY2PlotDataTransformedProj(self):
@@ -1933,9 +1933,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         :type: numpy.matrix
         """
-        try:
-            return self._matrixY2PlotDataTransformedProj
-        except AttributeError:
+        if self._matrixY2PlotDataTransformedProj is None:
             xMin, xMax = self.plotDataTransformedBounds.xAxis
             y2Min, y2Max = self.plotDataTransformedBounds.y2Axis
 
@@ -1947,13 +1945,11 @@ class OpenGLPlotCanvas(PlotBackend):
                 self._matrixY2PlotDataTransformedProj = mat4Ortho(xMin, xMax,
                                                                   y2Min, y2Max,
                                                                   1, -1)
-            return self._matrixY2PlotDataTransformedProj
+        return self._matrixY2PlotDataTransformedProj
 
     def _dirtyMatrixPlotDataTransformedProj(self):
-        if hasattr(self, '_matrixPlotDataTransformedProj'):
-            del self._matrixPlotDataTransformedProj
-        if hasattr(self, '_matrixY2PlotDataTransformedProj'):
-            del self._matrixY2PlotDataTransformedProj
+        self._matrixPlotDataTransformedProj = None
+        self._matrixY2PlotDataTransformedProj = None
 
     def dataToPixel(self, x=None, y=None, axis='left', check=True):
         """
@@ -2945,7 +2941,28 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Zoom #
 
+    def isXAxisAutoScale(self):
+        return self._xAutoScale
+
+    def setXAxisAutoScale(self, flag=True):
+        self._xAutoScale = flag
+
+    def isYAxisAutoScale(self):
+        return self._yAutoScale
+
+    def setYAxisAutoScale(self, flag=True):
+        self._yAutoScale = flag
+
     def _resetZoom(self):
+        print('_resetZoom',
+              self.isXAxisAutoScale(),
+              self.isYAxisAutoScale(),
+              self.dataBounds.xAxis.min_,
+              self.dataBounds.xAxis.max_,
+              self.dataBounds.yAxis.min_,
+              self.dataBounds.yAxis.max_,
+              self.dataBounds.y2Axis.min_,
+              self.dataBounds.y2Axis.max_)
         if self.isXAxisAutoScale() and self.isYAxisAutoScale():
             self.setLimits(self.dataBounds.xAxis.min_,
                            self.dataBounds.xAxis.max_,
@@ -3086,9 +3103,6 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._keepDataAspectRatio = flag
 
-        if self.isKeepDataAspectRatio():
-            self._ensureAspectRatio()
-
         self.resetZoom()
 
     def getGraphXLimits(self):
@@ -3134,20 +3148,6 @@ class OpenGLPlotCanvas(PlotBackend):
     def isYAxisInverted(self):
         return self._plotFrame.isYAxisInverted
 
-    # Autoscale #
-
-    def isXAxisAutoScale(self):
-        return self._xAutoScale
-
-    def isYAxisAutoScale(self):
-        return self._yAutoScale
-
-    def setXAxisAutoScale(self, flag=True):
-        self._xAutoScale = flag
-
-    def setYAxisAutoScale(self, flag=True):
-        self._yAutoScale = flag
-
     # Log axis #
 
     def setXAxisLogarithmic(self, flag=True):
@@ -3159,6 +3159,8 @@ class OpenGLPlotCanvas(PlotBackend):
             self._plotFrame.xAxis.isLog = flag
             self._dirtyDataBounds()
             self._dirtyPlotDataTransformedBounds()
+
+            self._resetZoom()
 
     def setYAxisLogarithmic(self, flag=True):
         if (flag != self._plotFrame.yAxis.isLog or
@@ -3172,6 +3174,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
             self._dirtyDataBounds()
             self._dirtyPlotDataTransformedBounds()
+
+            self._resetZoom()
 
     def isXAxisLogarithmic(self):
         return self._plotFrame.xAxis.isLog

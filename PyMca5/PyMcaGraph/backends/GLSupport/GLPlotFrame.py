@@ -335,8 +335,7 @@ class GLPlotFrame(object):
                               titleAlign=CENTER, titleVAlign=TOP,
                               titleRotate=0,
                               titleOffset=(0, self._margins['bottom'] // 2))
-
-        self._x2AxisCoords = None
+        self._x2AxisCoords = ()
 
         self.yAxis = PlotAxis(self,
                               tickLength=(5., 0.),
@@ -351,7 +350,7 @@ class GLPlotFrame(object):
                                titleAlign=CENTER, titleVAlign=TOP,
                                titleRotate=ROTATE_270,
                                titleOffset=(3*self._margins['right'] // 4, 0))
-        self._y2AxisCoords = None
+        self._y2AxisCoords = ()
 
         self._grid = False
         self._isY2Axis = False
