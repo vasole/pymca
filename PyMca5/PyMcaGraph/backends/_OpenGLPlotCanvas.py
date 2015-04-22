@@ -469,16 +469,22 @@ class OpenGLPlotCanvas(PlotBackend):
         :param points: The 2D coordinates of the points of the polygon
         :type points: An iterable of (x, y) coordinates
         :param str fill: The fill mode: 'hatch', 'solid' or None (default)
-        :param color: RGBA color to use (default: black)
+        :param color: RGBA color to use (default: black) or 'video inverted'
+                      to use video inverted mode.
         :type color: list or tuple of 4 float in the range [0, 1]
         :param name: The key associated with this selection area
         """
         if color is None:
-            color = (0., 0., 0., 1.)
-        self._selectionAreas[name] = Shape2D(points, fill=fill,
-                                             fillColor=color,
-                                             stroke=True,
-                                             strokeColor=color)
+            color = 0., 0., 0., 1.
+
+        isVideoInverted = (color == 'video inverted')
+        if isVideoInverted:
+            color = 1., 1., 1., 1.
+
+        shape = Shape2D(points, fill=fill, fillColor=color,
+                        stroke=True, strokeColor=color)
+        shape.isVideoInverted = isVideoInverted
+        self._selectionAreas[name] = shape
 
     def resetSelectionArea(self, name=None):
         """Remove the name selection area set by setSelectionArea.
@@ -764,6 +770,12 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # QGLWidget API #
 
+    @staticmethod
+    def _setBlendFuncGL():
+        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+                            GL_ONE, GL_ONE)
+
     def initializeGL(self):
         testGL()
 
@@ -771,9 +783,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glClearStencil(0)
 
         glEnable(GL_BLEND)
-        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
-                            GL_ONE, GL_ONE)
+        self._setBlendFuncGL()
 
         # For lines
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
@@ -999,8 +1009,15 @@ class OpenGLPlotCanvas(PlotBackend):
                 glUniformMatrix4fv(matrixUnif, 1, GL_TRUE,
                                    self.matrixPlotDataTransformedProj)
 
+
                 for shape in self._selectionAreas.values():
+                    if shape.isVideoInverted:
+                        glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
+
                     shape.render(posAttrib, colorUnif, hatchStepUnif)
+
+                    if shape.isVideoInverted:
+                        self._setBlendFuncGL()
 
             # Render crosshair cursor is screen frame but with scissor
             if (self._crosshairCursor is not None and
@@ -1592,14 +1609,13 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if color is None:
             color = 'black'
-        color = rgba(color, PlotBackend.COLORDICT)
 
         if mode == 'draw':
             eventHandlerClass = self._drawModes[shape]
             parameters = kwargs
             parameters['shape'] = shape or 'polygon'  # The default
             parameters['label'] = label
-            parameters['color'] = color
+            parameters['color'] = rgba(color, PlotBackend.COLORDICT)
 
             self.eventHandler.cancel()
             self.eventHandler = eventHandlerClass(self, parameters)
@@ -1611,6 +1627,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
         elif mode == 'zoom':
             # Ignores shape and label
+            if color != 'video inverted':
+                color = rgba(color, PlotBackend.COLORDICT)
             self.eventHandler.cancel()
             self.eventHandler = ZoomAndSelect(self, color)
 

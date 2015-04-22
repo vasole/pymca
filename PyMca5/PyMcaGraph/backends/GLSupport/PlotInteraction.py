@@ -379,12 +379,13 @@ class Zoom(_ZoomOnWheel):
                           (areaX1, areaY0),
                           (areaX1, areaY1),
                           (areaX0, areaY1))
-            areaColor = list(self.color)
-            areaColor[3] *= 0.25
-            self.backend.setSelectionArea(areaPoints,
-                                          fill=None,
-                                          color=areaColor,
-                                          name="zoomedArea")
+            if self.color != 'video inverted':
+                areaColor = list(self.color)
+                areaColor[3] *= 0.25
+                self.backend.setSelectionArea(areaPoints,
+                                              fill=None,
+                                              color=areaColor,
+                                              name="zoomedArea")
 
         points = ((self.x0, self.y0),
                   (self.x0, y1),

@@ -106,8 +106,10 @@ class Shape2D(object):
     _HATCH_STEP = 20
 
     def __init__(self, points, fill='solid', stroke=True,
-                 fillColor=(0., 0., 0., 1.), strokeColor=(0., 0., 0., 1.)):
+                 fillColor=(0., 0., 0., 1.), strokeColor=(0., 0., 0., 1.),
+                 strokeClosed=True):
         self.vertices = np.array(points, dtype=np.float32, copy=False)
+        self.strokeClosed = strokeClosed
 
         self._indices = buildFillMaskIndices(len(self.vertices))
 
@@ -167,7 +169,8 @@ class Shape2D(object):
                               GL_FALSE,
                               0, self.vertices)
         glLineWidth(1)
-        glDrawArrays(GL_LINE_LOOP, 0, len(self.vertices))
+        drawMode = GL_LINE_LOOP if self.strokeClosed else GL_LINE_STRIP
+        glDrawArrays(drawMode, 0, len(self.vertices))
 
     def render(self, posAttrib, colorUnif, hatchStepUnif):
         assert self.fill in ['hatch', 'solid', None]
