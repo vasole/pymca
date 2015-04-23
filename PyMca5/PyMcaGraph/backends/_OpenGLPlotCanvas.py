@@ -142,6 +142,146 @@ class Bounds(object):
         return self._y2Axis
 
 
+# Content #####################################################################
+
+class PlotDataContent(object):
+    """Manage plot data content: images and curves.
+
+    This class is only meant to work with _OpenGLPlotCanvas.
+    """
+
+    _PRIMITIVE_TYPES = 'curve', 'image'
+
+    def __init__(self):
+        self._primitives = MiniOrderedDict()  # For images and curves
+
+    def add(self, primitive):
+        """Add a curve or image to the content dictionary.
+
+        This function generates the key in the dict from the primitive.
+
+        :param primitive: The primitive to add.
+        :type primitive: Instance of GLPlotCurve2D, GLPlotColormap,
+                         GLPlotRGBAImage.
+        """
+        if isinstance(primitive, GLPlotCurve2D):
+            primitiveType = 'curve'
+        elif isinstance(primitive, (GLPlotColormap, GLPlotRGBAImage)):
+            primitiveType = 'image'
+        else:
+            raise RuntimeError('Unsupported object type: %s', primitive)
+
+        key = primitiveType, primitive.info['legend']
+        self._primitives[key] = primitive
+
+    def get(self, primitiveType, legend):
+        """Get the corresponding primitive of given type with given legend.
+
+        :param str primitiveType: Type of primitive ('curve' or 'image').
+        :param str legend: The legend of the primitive to retrieve.
+        :return: The corresponding curve or None if no such curve.
+        """
+        assert primitiveType in self._PRIMITIVE_TYPES
+        return self._primitives.get((primitiveType, legend))
+
+    def pop(self, primitiveType, key):
+        """Pop the corresponding curve or return None if no such curve.
+
+        :param str primitiveType:
+        :param str key:
+        :return:
+        """
+        assert primitiveType in self._PRIMITIVE_TYPES
+        return self._primitives.pop((primitiveType, key), None)
+
+    def zOrderedPrimitives(self, reverse=False):
+        """List of primitives sorted according to their z order.
+
+        It is a stable sort (as sorted):
+        Original order is preserved when key is the same.
+
+        :param bool reverse: Ascending (True, default) or descending (False).
+        """
+        return sorted(self._primitives.values(),
+                      key=lambda primitive: primitive.info['zOrder'],
+                      reverse=reverse)
+
+    def primitives(self):
+        """Iterator over all primitives."""
+        return self._primitives.values()
+
+    def primitiveKeys(self, primitiveType):
+        """Iterator over primitives of a specific type."""
+        assert primitiveType in self._PRIMITIVE_TYPES
+        for type_, key in self._primitives.keys():
+            if type_ == primitiveType:
+                yield key
+
+    def getBounds(self, xPositive=False, yPositive=False):
+        """Bounds of the data.
+
+        Can return strictly positive bounds (for log scale).
+        In this case, curves are clipped to their smaller positive value
+        and images with negative min are ignored.
+
+        :param bool xPositive: True to get strictly positive range.
+        :param bool yPositive: True to get strictly positive range.
+        :return: The range of data for x, y and y2, or default (1., 100.)
+                 if no range found for one dimension.
+        :rtype: Bounds
+        """
+        xMin, yMin, y2Min = float('inf'), float('inf'), float('inf')
+        xMax = 0. if xPositive else -float('inf')
+        if yPositive:
+            yMax, y2Max = 0., 0.
+        else:
+            yMax, y2Max = -float('inf'), -float('inf')
+
+        for item in self._primitives.values():
+            # To support curve <= 0. and log and bypass images:
+            # If positive only, uses x|yMinPos if available
+            # and bypass other data with negative min bounds
+            if xPositive:
+                itemXMin = getattr(item, 'xMinPos', item.xMin)
+                if itemXMin is None or itemXMin <= 0.:
+                    continue
+            else:
+                itemXMin = item.xMin
+
+            if yPositive:
+                itemYMin = getattr(item, 'yMinPos', item.yMin)
+                if itemYMin is None or itemYMin <= 0.:
+                    continue
+            else:
+                itemYMin = item.yMin
+
+            if itemXMin < xMin:
+                xMin = itemXMin
+            if item.xMax > xMax:
+                xMax = item.xMax
+
+            if item.info.get('yAxis') == 'right':
+                if itemYMin < y2Min:
+                    y2Min = itemYMin
+                if item.yMax > y2Max:
+                    y2Max = item.yMax
+            else:
+                if itemYMin < yMin:
+                    yMin = itemYMin
+                if item.yMax > yMax:
+                    yMax = item.yMax
+
+        # One of the limit has not been updated, return default range
+        if xMin >= xMax:
+            xMin, xMax = 1., 100.
+        if yMin >= yMax:
+            yMin, yMax = 1., 100.
+        if y2Min >= y2Max:
+            y2Min, y2Max = 1., 100.
+
+        return Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
+
+
 # shaders #####################################################################
 
 _baseVertShd = """
@@ -245,7 +385,6 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotFBOs = {}
 
         self._plotDataTransformedBounds = None
-        self._dataBounds = None
         self._matrixPlotDataTransformedProj = None
         self._matrixY2PlotDataTransformedProj = None
 
@@ -260,7 +399,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._markers = MiniOrderedDict()
         self._items = MiniOrderedDict()
-        self._zOrderedItems = MiniOrderedDict()  # For images and curves
+        self._plotContent = PlotDataContent()  # For images and curves
         self._selectionAreas = MiniOrderedDict()
         self._glGarbageCollector = []
 
@@ -399,8 +538,7 @@ class OpenGLPlotCanvas(PlotBackend):
         dataPos = self.pixelToData(x, y)
         assert dataPos is not None
 
-        for item in sorted(self._zOrderedItems.values(),
-                           key=lambda item: - item.info['zOrder']):
+        for item in self._plotContent.zOrderedPrimitives(reverse=True):
             if test(item):
                 if isinstance(item, (GLPlotColormap, GLPlotRGBAImage)):
                     pickedPos = item.pick(*dataPos)
@@ -503,62 +641,6 @@ class OpenGLPlotCanvas(PlotBackend):
         self._plotDirtyFlag = True
 
     # Coordinate systems #
-
-    @property
-    def dataBounds(self):
-        """Bounds of the currently loaded data
-        Not including markers (TODO check consistency with MPLBackend)
-
-        :type: Bounds
-        """
-        if self._dataBounds is None:
-            xMin, xMax = float('inf'), -float('inf')
-            yMin, yMax = float('inf'), -float('inf')
-            y2Min, y2Max = float('inf'), -float('inf')
-            for item in self._zOrderedItems.values():
-                if self._plotFrame.xAxis.isLog and hasattr(item, 'xMinPos'):
-                    # Supports curve <= 0. and log
-                    if item.xMinPos is not None and item.xMinPos < xMin:
-                        xMin = item.xMinPos
-                elif item.xMin < xMin:
-                    xMin = item.xMin
-                if item.xMax > xMax:
-                    xMax = item.xMax
-
-                if item.info.get('yAxis') == 'right':
-                    if (self._plotFrame.y2Axis.isLog and
-                            hasattr(item, 'yMinPos')):
-                        # Supports curve <= 0. and log
-                        if item.yMinPos is not None and item.yMinPos < y2Min:
-                            y2Min = item.yMinPos
-                    elif item.yMin < y2Min:
-                        y2Min = item.yMin
-                    if item.yMax > y2Max:
-                        y2Max = item.yMax
-                else:
-                    if (self._plotFrame.yAxis.isLog and
-                            hasattr(item, 'yMinPos')):
-                        # Supports curve <= 0. and log
-                        if item.yMinPos is not None and item.yMinPos < yMin:
-                            yMin = item.yMinPos
-                    elif item.yMin < yMin:
-                        yMin = item.yMin
-                    if item.yMax > yMax:
-                        yMax = item.yMax
-
-            if xMin >= xMax:
-                xMin, xMax = 1., 100.
-            if yMin >= yMax:
-                yMin, yMax = 1., 100.
-            if y2Min >= y2Max:
-                y2Min, y2Max = 1., 100.
-
-            self._dataBounds = Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
-
-        return self._dataBounds
-
-    def _dirtyDataBounds(self):
-        self._dataBounds = None
 
     @property
     def plotDataTransformedBounds(self):
@@ -1070,8 +1152,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         # Render images and curves
         # sorted is stable: original order is preserved when key is the same
-        for item in sorted(self._zOrderedItems.values(),
-                           key=lambda item: item.info['zOrder']):
+        for item in self._plotContent.zOrderedPrimitives():
             if item.info.get('yAxis') == 'right':
                 item.render(self.matrixY2PlotDataTransformedProj,
                             self._plotFrame.xAxis.isLog,
@@ -1213,7 +1294,7 @@ class OpenGLPlotCanvas(PlotBackend):
         if legend is None:
             legend = self._UNNAMED_ITEM
 
-        oldImage = self._zOrderedItems.get(('image', legend), None)
+        oldImage = self._plotContent.get('image', legend)
         if oldImage is not None:
             if oldImage.data.shape == data.shape:
                 oldXScale = oldImage.xMin, oldImage.xScale
@@ -1271,7 +1352,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 'zOrder': z,
                 'behaviors': behaviors
             }
-            self._zOrderedItems[('image', legend)] = image
+            self._plotContent.add(image)
 
         elif len(data.shape) == 3:
             # For RGB, RGBA data
@@ -1304,15 +1385,10 @@ class OpenGLPlotCanvas(PlotBackend):
                 raise RuntimeError(
                     'Cannot add image with Y <= 0 with Y axis log scale')
 
-            self._zOrderedItems[('image', legend)] = image
+            self._plotContent.add(image)
 
         else:
             raise RuntimeError("Unsupported data shape {0}".format(data.shape))
-
-        if oldImage is None or \
-           oldXScale != xScale or \
-           oldYScale != yScale:
-            self._dirtyDataBounds()
 
         self._plotDirtyFlag = True
 
@@ -1325,23 +1401,18 @@ class OpenGLPlotCanvas(PlotBackend):
         if legend is None:
             legend = self._UNNAMED_ITEM
 
-        try:
-            image = self._zOrderedItems.pop(('image', legend))
-        except KeyError:
-            pass
-        else:
+        image = self._plotContent.pop('image', legend)
+        if image is not None:
             self._glGarbageCollector.append(image)
-            self._dirtyDataBounds()
             self._plotDirtyFlag = True
 
         if replot:
             self.replot()
 
     def clearImages(self):
-        # Copy keys as it removes items from the dict
-        for type_, legend in list(self._zOrderedItems.keys()):
-            if type_ == 'image':
-                self.removeImage(legend, replot=False)
+        # Copy keys as it removes primitives from the dict
+        for legend in list(self._plotContent.primitiveKeys('image')):
+            self.removeImage(legend, replot=False)
 
     def addItem(self, xList, yList, legend=None, info=None,
                 replace=False, replot=True,
@@ -1435,7 +1506,7 @@ class OpenGLPlotCanvas(PlotBackend):
             behaviors.add('selectable')
 
         wasActiveCurve = (legend == self._activeCurveLegend)
-        oldCurve = self._zOrderedItems.get(('curve', legend), None)
+        oldCurve = self._plotContent.get('curve', legend)
         if oldCurve is not None:
             self.removeCurve(legend)
 
@@ -1474,14 +1545,7 @@ class OpenGLPlotCanvas(PlotBackend):
         if yaxis == "right":
             self._plotFrame.isY2Axis = True
 
-        self._zOrderedItems[('curve', legend)] = curve
-
-        if oldCurve is None or \
-           oldCurve.xMinPos != curve.xMinPos or \
-           oldCurve.xMin != curve.xMin or oldCurve.xMax != curve.xMax or \
-           oldCurve.info['yAxis'] != curve.info['yAxis'] or \
-           oldCurve.yMin != curve.yMin or oldCurve.yMax != curve.yMax:
-            self._dirtyDataBounds()
+        self._plotContent.add(curve)
 
         self._plotDirtyFlag = True
         self._resetZoom()
@@ -1498,18 +1562,14 @@ class OpenGLPlotCanvas(PlotBackend):
         if legend is None:
             legend = self._UNNAMED_ITEM
 
-        try:
-            curve = self._zOrderedItems.pop(('curve', legend))
-        except KeyError:
-            pass
-        else:
+        curve = self._plotContent.pop('curve', legend)
+        if curve is not None:
             # Check if some curves remains on the right Y axis
-            y2AxisItems = (item for item in self._zOrderedItems.values()
+            y2AxisItems = (item for item in self._plotContent.primitives()
                            if item.info.get('yAxis', 'left') == 'right')
             self._plotFrame.isY2Axis = (next(y2AxisItems, None) is not None)
 
             self._glGarbageCollector.append(curve)
-            self._dirtyDataBounds()
             self._plotDirtyFlag = True
 
         if replot:
@@ -1517,9 +1577,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def clearCurves(self):
         # Copy keys as dict is changed
-        for type_, legend in list(self._zOrderedItems.keys()):
-            if type_ == 'curve':
-                self.removeCurve(legend, replot=False)
+        for legend in list(self._plotContent.primitiveKeys('curve')):
+            self.removeCurve(legend, replot=False)
 
     def setActiveCurve(self, legend, replot=True):
         if not self._activeCurveHandling:
@@ -1528,14 +1587,13 @@ class OpenGLPlotCanvas(PlotBackend):
         if legend is None:
             legend = self._UNNAMED_ITEM
 
-        curve = self._zOrderedItems.get(('curve', legend), None)
+        curve = self._plotContent.get('curve', legend)
         if curve is None:
             raise KeyError("Curve %s not found" % legend)
 
         if self._activeCurveLegend is not None:
-            activeCurve = self._zOrderedItems.get(('curve',
-                                                   self._activeCurveLegend),
-                                                  None)
+            activeCurve = self._plotContent.get('curve',
+                                                self._activeCurveLegend)
             # _inactiveState might not exists as
             # _activeCurveLegend is not reset when curve is removed.
             inactiveState = getattr(activeCurve, '_inactiveState', None)
@@ -1627,25 +1685,28 @@ class OpenGLPlotCanvas(PlotBackend):
         self._yAutoScale = flag
 
     def _resetZoom(self):
+        dataBounds = self._plotContent.getBounds(
+            self.isXAxisLogarithmic(), self.isYAxisLogarithmic())
+
         if self.isXAxisAutoScale() and self.isYAxisAutoScale():
-            self.setLimits(self.dataBounds.xAxis.min_,
-                           self.dataBounds.xAxis.max_,
-                           self.dataBounds.yAxis.min_,
-                           self.dataBounds.yAxis.max_,
-                           self.dataBounds.y2Axis.min_,
-                           self.dataBounds.y2Axis.max_)
+            self.setLimits(dataBounds.xAxis.min_,
+                           dataBounds.xAxis.max_,
+                           dataBounds.yAxis.min_,
+                           dataBounds.yAxis.max_,
+                           dataBounds.y2Axis.min_,
+                           dataBounds.y2Axis.max_)
 
         elif self.isXAxisAutoScale():
-            self.setGraphXLimits(self.dataBounds.xAxis.min_,
-                                 self.dataBounds.xAxis.max_)
+            self.setGraphXLimits(dataBounds.xAxis.min_,
+                                 dataBounds.xAxis.max_)
 
         elif self.isYAxisAutoScale():
             xMin, xMax = self.getGraphXLimits()
             self.setLimits(xMin, xMax,
-                           self.dataBounds.yAxis.min_,
-                           self.dataBounds.yAxis.max_,
-                           self.dataBounds.y2Axis.min_,
-                           self.dataBounds.y2Axis.max_)
+                           dataBounds.yAxis.min_,
+                           dataBounds.yAxis.max_,
+                           dataBounds.y2Axis.min_,
+                           dataBounds.y2Axis.max_)
 
     def resetZoom(self):
         self._resetZoom()
@@ -1679,9 +1740,11 @@ class OpenGLPlotCanvas(PlotBackend):
             return
 
         if keepDim is None:
-            if self.dataBounds.yAxis.range_ != 0.:
-                dataRatio = self.dataBounds.xAxis.range_
-                dataRatio /= float(self.dataBounds.yAxis.range_)
+            dataBounds = self._plotContent.getBounds(
+                self.isXAxisLogarithmic(), self.isYAxisLogarithmic())
+            if dataBounds.yAxis.range_ != 0.:
+                dataRatio = dataBounds.xAxis.range_
+                dataRatio /= float(dataBounds.yAxis.range_)
 
                 plotRatio = plotWidth / float(plotHeight)  # Test != 0 before
 
@@ -1821,7 +1884,6 @@ class OpenGLPlotCanvas(PlotBackend):
                               RuntimeWarning)
 
             self._plotFrame.xAxis.isLog = flag
-            self._dirtyDataBounds()
             self._dirtyPlotDataTransformedBounds()
 
             self._resetZoom()
@@ -1836,7 +1898,6 @@ class OpenGLPlotCanvas(PlotBackend):
             self._plotFrame.yAxis.isLog = flag
             self._plotFrame.y2Axis.isLog = flag
 
-            self._dirtyDataBounds()
             self._dirtyPlotDataTransformedBounds()
 
             self._resetZoom()
