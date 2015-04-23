@@ -42,6 +42,12 @@ import numpy as np
 import time
 import weakref
 
+try:
+    from ..PlotBackend import PlotBackend
+except ImportError:
+    from PyMca5.PyMcaGraph.PlotBackend import PlotBackend
+
+from .GLSupport import rgba
 from .Interaction import ClickOrDrag, LEFT_BTN, RIGHT_BTN,\
     State, StateMachine
 from .PlotEvents import prepareCurveSignal, prepareDrawingSignal,\
@@ -1104,3 +1110,104 @@ class ZoomAndSelect(FocusManager):
     @property
     def color(self):
         return self.eventHandlers[1].color
+
+
+# Interaction mode control ####################################################
+
+class PlotInteraction(object):
+    """Proxy to currently use state machine for interaction.
+
+    This allows to switch interactive mode.
+    """
+
+    _DRAW_MODES = {
+        'polygon': SelectPolygon,
+        'rectangle': SelectRectangle,
+        'line': SelectLine,
+        'vline': SelectVLine,
+        'hline': SelectHLine,
+    }
+
+    def __init__(self, backend):
+        self._backend = weakref.ref(backend)  # Avoid cyclic-ref
+
+        # Default event handler
+        self._eventHandler = ItemsInteraction(backend)
+
+    def getInteractiveMode(self):
+        """Returns the current interactive mode as a dict.
+
+        The returned dict contains at least the key 'mode'.
+        Mode can be: 'draw', 'pan', 'select', 'zoom'.
+        It can also contains extra keys (e.g., 'color') specific to a mode
+        as provided to :meth:`setInteractiveMode`.
+        """
+        if isinstance(self._eventHandler, ZoomAndSelect):
+            return {'mode': 'zoom', 'color': self.eventHandler.color}
+
+        elif isinstance(self._eventHandler, Select):
+            result = self._eventHandler.parameters.copy()
+            result['mode'] = 'draw'
+            return result
+
+        elif isinstance(self._eventHandler, Pan):
+            return {'mode': 'pan'}
+
+        else:
+            return {'mode': 'select'}
+
+    def setInteractiveMode(self, mode, color=None,
+                           shape='polygon', label=None):
+        """Switch the interactive mode.
+
+        :param str mode: The name of the interactive mode.
+                         In 'draw', 'pan', 'select', 'zoom'.
+        :param color: Only for 'draw' and 'zoom' modes.
+                      Color to use for drawing selection area. Default black.
+        :type color: Color description: The name as a str or
+                     a tuple of 4 floats.
+        :param str shape: Only for 'draw' mode. The kind of shape to draw.
+                          In 'polygon', 'rectangle', 'line', 'vline', 'hline'.
+                          Default is 'polygon'.
+        :param str label: Only for 'draw' mode.
+        """
+        assert mode in ('draw', 'pan', 'select', 'zoom')
+
+        if color is None:
+            color = 'black'
+
+        backend = self._backend()
+        assert backend is not None
+
+        if mode == 'draw':
+            assert shape in self._DRAW_MODES
+            eventHandlerClass = self._DRAW_MODES[shape]
+            parameters = {
+                'shape': shape,
+                'label': label,
+                'color': rgba(color, PlotBackend.COLORDICT)
+            }
+
+            self._eventHandler.cancel()
+            self._eventHandler = eventHandlerClass(backend, parameters)
+
+        elif mode == 'pan':
+            # Ignores color, shape and label
+            self._eventHandler.cancel()
+            self._eventHandler = Pan(backend)
+
+        elif mode == 'zoom':
+            # Ignores shape and label
+            if color != 'video inverted':
+                color = rgba(color, PlotBackend.COLORDICT)
+            self._eventHandler.cancel()
+            self._eventHandler = ZoomAndSelect(backend, color)
+
+        else:  # Default mode: interaction with plot objects
+            # Ignores color, shape and label
+            self._eventHandler.cancel()
+            self._eventHandler = ItemsInteraction(backend)
+
+    def handleEvent(self, *args, **kwargs):
+        """Forward event to current interactive mode state machine."""
+        self._eventHandler.handleEvent(*args, **kwargs)

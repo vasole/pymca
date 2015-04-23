@@ -52,7 +52,8 @@ from .GLSupport.gl import *  # noqa
 from .GLSupport.PlotEvents import prepareMouseSignal,\
     prepareLimitsChangedSignal
 from .GLSupport.PlotImageFile import saveImageToFile
-from .GLSupport.PlotInteraction import *  # noqa
+from .GLSupport.PlotInteraction import PlotInteraction, FLOAT32_SAFE_MIN,\
+                                       FLOAT32_SAFE_MINPOS, FLOAT32_SAFE_MAX
 
 
 # OrderedDict #################################################################
@@ -269,7 +270,8 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._plotDirtyFlag = True
 
-        self.eventHandler = ZoomAndSelect(self, (0., 0., 0., 1.))
+        self.eventHandler = PlotInteraction(self)
+        self.eventHandler.setInteractiveMode('zoom', color=(0., 0., 0., 1.))
 
         self._plotHasFocus = set()
 
@@ -1345,7 +1347,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 replace=False, replot=True,
                 shape="polygon", fill=True, color=None, **kw):
         # info is ignored
-        if shape not in self._drawModes:
+        if shape not in ('polygon', 'rectangle', 'line', 'vline', 'hline'):
             raise NotImplementedError("Unsupported shape {0}".format(shape))
         if kw:
             warnings.warn("addItem ignores additional parameters",
@@ -1575,78 +1577,27 @@ class OpenGLPlotCanvas(PlotBackend):
         self.postRedisplay()
 
     # Interaction modes #
-
-    _drawModes = {
-        'polygon': SelectPolygon,
-        'rectangle': SelectRectangle,
-        'line': SelectLine,
-        'vline': SelectVLine,
-        'hline': SelectHLine,
-    }
-
     def getInteractiveMode(self):
-        if isinstance(self.eventHandler, ZoomAndSelect):
-            return {'mode': 'zoom', 'color': self.eventHandler.color}
+        return self.eventHandler.getInteractiveMode()
 
-        elif isinstance(self.eventHandler, Select):
-            result = self.eventHandler.parameters.copy()
-            result['mode'] = 'draw'
-            return result
-
-        elif isinstance(self.eventHandler, Pan):
-            return {'mode': 'pan'}
-
-        else:
-            return {'mode': 'select'}
-
-    def setInteractiveMode(self, mode=None, color=None, shape=None,
-                           label=None, **kwargs):
-        assert mode in (None, 'draw', 'pan', 'select', 'zoom')
-
-        if kwargs:
-            warnings.warn('setInteractiveMode ignores additional parameters',
-                          RuntimeWarning)
-
-        if color is None:
-            color = 'black'
-
-        if mode == 'draw':
-            eventHandlerClass = self._drawModes[shape]
-            parameters = kwargs
-            parameters['shape'] = shape or 'polygon'  # The default
-            parameters['label'] = label
-            parameters['color'] = rgba(color, PlotBackend.COLORDICT)
-
-            self.eventHandler.cancel()
-            self.eventHandler = eventHandlerClass(self, parameters)
-
-        elif mode == 'pan':
-            # Ignores color, shape and label
-            self.eventHandler.cancel()
-            self.eventHandler = Pan(self)
-
-        elif mode == 'zoom':
-            # Ignores shape and label
-            if color != 'video inverted':
-                color = rgba(color, PlotBackend.COLORDICT)
-            self.eventHandler.cancel()
-            self.eventHandler = ZoomAndSelect(self, color)
-
-        else:  # Default mode: interaction with plot objects
-            # Ignores color, shape and label
-            self.eventHandler.cancel()
-            self.eventHandler = ItemsInteraction(self)
+    def setInteractiveMode(self, mode, color=None,
+                           shape='polygon', label=None):
+        self.eventHandler.setInteractiveMode(mode, color, shape, label)
 
     def isDrawModeEnabled(self):
         return self.getInteractiveMode()['mode'] == 'draw'
 
-    def setDrawModeEnabled(self, flag=True, shape=None, label=None,
+    def setDrawModeEnabled(self, flag=True, shape='polygon', label=None,
                            color=None, **kwargs):
+        if kwargs:
+            warnings.warn('setDrawModeEnabled ignores additional parameters',
+                          RuntimeWarning)
+
         if flag:
-            self.setInteractiveMode(mode='draw', shape=shape,
-                                    label=label, color=color, **kwargs)
+            self.setInteractiveMode('draw', shape=shape,
+                                    label=label, color=color)
         elif self.getInteractiveMode()['mode'] == 'draw':
-            self.setInteractiveMode(mode=None)
+            self.setInteractiveMode('select')
 
     def getDrawMode(self):
         mode = self.getInteractiveMode()
@@ -1657,9 +1608,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def setZoomModeEnabled(self, flag=True, color=None):
         if flag:
-            self.setInteractiveMode(mode='zoom', color=color)
+            self.setInteractiveMode('zoom', color=color)
         elif self.getInteractiveMode()['mode'] == 'zoom':
-            self.setInteractiveMode(mode=None)
+            self.setInteractiveMode('select')
 
     # Zoom #
 
