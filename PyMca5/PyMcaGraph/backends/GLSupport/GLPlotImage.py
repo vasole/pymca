@@ -40,7 +40,7 @@ This module provides a class to render 2D array as a colormap or RGB(A) image
 from .gl import *  # noqa
 
 import math
-from .GLSupport import mat4Translate, mat4Scale
+from .GLSupport import mat4Translate, mat4Scale, FLOAT32_MINPOS
 from .GLProgram import GLProgram
 from .GLTexture import Image
 
@@ -426,6 +426,11 @@ class GLPlotColormap(_GLPlotData2D):
                              self._DATA_TEX_UNIT)
 
     def _renderLog10(self, matrix, isXLog, isYLog):
+        if ((isXLog and self.xMin < FLOAT32_MINPOS) or
+                (isYLog and self.yMin < FLOAT32_MINPOS)):
+            # Do not render images that are partly or totally <= 0
+            return
+
         self.prepare()
 
         prog = self._logProgram

@@ -47,21 +47,12 @@ try:
 except ImportError:
     from PyMca5.PyMcaGraph.PlotBackend import PlotBackend
 
-from .GLSupport import rgba
+from .GLSupport import rgba, FLOAT32_MINPOS, FLOAT32_SAFE_MIN, FLOAT32_SAFE_MAX
 from .Interaction import ClickOrDrag, LEFT_BTN, RIGHT_BTN,\
     State, StateMachine
 from .PlotEvents import prepareCurveSignal, prepareDrawingSignal,\
     prepareHoverSignal, prepareImageSignal,\
     prepareMarkerSignal, prepareMouseSignal
-
-
-# Float 32 info ###############################################################
-# Using min/max value below limits of float32
-# so operation with such value (e.g., max - min) do not overflow
-
-FLOAT32_SAFE_MIN = -1e37
-FLOAT32_SAFE_MINPOS = np.finfo(np.float32).tiny
-FLOAT32_SAFE_MAX = 1e37
 
 
 # Zoom/Pan ####################################################################
@@ -115,9 +106,9 @@ class _ZoomOnWheel(ClickOrDrag):
             # Min and center can be < 0 when
             # autoscale is off and switch to log scale
             # max_ < 0 should not happen
-            min_ = np.log10(min_) if min_ > 0. else FLOAT32_SAFE_MINPOS
-            center = np.log10(center) if center > 0. else FLOAT32_SAFE_MINPOS
-            max_ = np.log10(max_) if max_ > 0. else FLOAT32_SAFE_MINPOS
+            min_ = np.log10(min_) if min_ > 0. else FLOAT32_MINPOS
+            center = np.log10(center) if center > 0. else FLOAT32_MINPOS
+            max_ = np.log10(max_) if max_ > 0. else FLOAT32_MINPOS
 
         if min_ == max_:
             return min_, max_
@@ -131,8 +122,8 @@ class _ZoomOnWheel(ClickOrDrag):
             # No overflow as exponent is log10 of a float32
             newMin = pow(10., newMin)
             newMax = pow(10., newMax)
-            newMin = np.clip(newMin, FLOAT32_SAFE_MINPOS, FLOAT32_SAFE_MAX)
-            newMax = np.clip(newMax, FLOAT32_SAFE_MINPOS, FLOAT32_SAFE_MAX)
+            newMin = np.clip(newMin, FLOAT32_MINPOS, FLOAT32_SAFE_MAX)
+            newMax = np.clip(newMax, FLOAT32_MINPOS, FLOAT32_SAFE_MAX)
         else:
             newMin = np.clip(newMin, FLOAT32_SAFE_MIN, FLOAT32_SAFE_MAX)
             newMax = np.clip(newMax, FLOAT32_SAFE_MIN, FLOAT32_SAFE_MAX)
@@ -197,7 +188,7 @@ class Pan(_ZoomOnWheel):
                 newXMin, newXMax = xMin, xMax
 
             # Makes sure both values stays in positive float32 range
-            if newXMin < FLOAT32_SAFE_MINPOS or newXMax > FLOAT32_SAFE_MAX:
+            if newXMin < FLOAT32_MINPOS or newXMax > FLOAT32_SAFE_MAX:
                 newXMin, newXMax = xMin, xMax
         else:
             dx = xData - lastX
@@ -221,10 +212,8 @@ class Pan(_ZoomOnWheel):
                 newY2Min, newY2Max = y2Min, y2Max
 
             # Makes sure y and y2 stays in positive float32 range
-            if (newYMin < FLOAT32_SAFE_MINPOS or
-                    newYMax > FLOAT32_SAFE_MAX or
-                    newY2Min < FLOAT32_SAFE_MINPOS or
-                    newY2Max > FLOAT32_SAFE_MAX):
+            if (newYMin < FLOAT32_MINPOS or newYMax > FLOAT32_SAFE_MAX or
+                    newY2Min < FLOAT32_MINPOS or newY2Max > FLOAT32_SAFE_MAX):
                 newYMin, newYMax = yMin, yMax
                 newY2Min, newY2Max = y2Min, y2Max
         else:

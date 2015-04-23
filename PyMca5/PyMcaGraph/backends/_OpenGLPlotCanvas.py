@@ -52,8 +52,7 @@ from .GLSupport.gl import *  # noqa
 from .GLSupport.PlotEvents import prepareMouseSignal,\
     prepareLimitsChangedSignal
 from .GLSupport.PlotImageFile import saveImageToFile
-from .GLSupport.PlotInteraction import PlotInteraction, FLOAT32_SAFE_MIN,\
-                                       FLOAT32_SAFE_MINPOS, FLOAT32_SAFE_MAX
+from .GLSupport.PlotInteraction import PlotInteraction
 
 
 # OrderedDict #################################################################
@@ -243,14 +242,14 @@ class PlotDataContent(object):
             # and bypass other data with negative min bounds
             if xPositive:
                 itemXMin = getattr(item, 'xMinPos', item.xMin)
-                if itemXMin is None or itemXMin <= 0.:
+                if itemXMin is None or itemXMin < FLOAT32_MINPOS:
                     continue
             else:
                 itemXMin = item.xMin
 
             if yPositive:
                 itemYMin = getattr(item, 'yMinPos', item.yMin)
-                if itemYMin is None or itemYMin <= 0.:
+                if itemYMin is None or itemYMin < FLOAT32_MINPOS:
                     continue
             else:
                 itemYMin = item.yMin
@@ -513,6 +512,8 @@ class OpenGLPlotCanvas(PlotBackend):
             test = lambda marker: True
         for marker in reversed(self._markers.values()):
             pixelPos = self.dataToPixel(marker['x'], marker['y'], check=False)
+            if pixelPos is None:  # negative coord on a log axis
+                continue
 
             if marker['x'] is not None:
                 xMarker = pixelPos[0]
@@ -744,11 +745,14 @@ class OpenGLPlotCanvas(PlotBackend):
         self._matrixY2PlotDataTransformedProj = None
 
     def dataToPixel(self, x=None, y=None, axis='left', check=True):
-        """
+        """Convert data coordinate to widget pixel coordinate.
+
         :param bool check: Toggle checking if data position is in displayed
                            area.
                            If False, this method never returns None.
-        :raises: ValueError if x or y < 0. with log axis.
+        :return: pixel position or None if coord <= 0 on a log axis or
+                 check failed.
+        :rtype: tuple of 2 ints or None.
         """
         assert axis in ('left', 'right')
 
@@ -758,8 +762,8 @@ class OpenGLPlotCanvas(PlotBackend):
             xDataTr = trBounds.xAxis.center
         else:
             if self._plotFrame.xAxis.isLog:
-                if x <= 0.:
-                    raise ValueError('Cannot convert x < 0 with log axis.')
+                if x < FLOAT32_MINPOS:
+                    return None
                 xDataTr = math.log10(x)
             else:
                 xDataTr = x
@@ -771,8 +775,8 @@ class OpenGLPlotCanvas(PlotBackend):
                 yDataTr = trBounds.y2Axis.center
         else:
             if self._plotFrame.yAxis.isLog:
-                if y <= 0.:
-                    raise ValueError('Cannot convert y < 0 with log axis.')
+                if y < FLOAT32_MINPOS:
+                    return None
                 yDataTr = math.log10(y)
             else:
                 yDataTr = y
@@ -784,7 +788,7 @@ class OpenGLPlotCanvas(PlotBackend):
                   yDataTr > trBounds.yAxis.max_)) or
                 (yDataTr < trBounds.y2Axis.min_ or
                  yDataTr > trBounds.y2Axis.max_)):
-                return None  # (xDataTr, yDataTr) is out of displaayed area
+                return None  # (xDataTr, yDataTr) is out of displayed area
 
         plotWidth, plotHeight = self.plotSizeInPixels()
 
@@ -970,6 +974,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
         plotWidth, plotHeight = self.plotSizeInPixels()
 
+        isXLog = self._plotFrame.xAxis.isLog
+        isYLog = self._plotFrame.yAxis.isLog
+
         # Render in plot area
         glScissor(self._margins['left'], self._margins['bottom'],
                   plotWidth, plotHeight)
@@ -981,8 +988,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._progBase.use()
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                            self.matrixPlotDataTransformedProj)
-        glUniform2i(self._progBase.uniforms['isLog'],
-                    self._plotFrame.xAxis.isLog, self._plotFrame.yAxis.isLog)
+        glUniform2i(self._progBase.uniforms['isLog'], isXLog, isYLog)
         glUniform1i(self._progBase.uniforms['hatchStep'], 0)
         glUniform1f(self._progBase.uniforms['tickLen'], 0.)
         posAttrib = self._progBase.attributes['position']
@@ -993,6 +999,13 @@ class OpenGLPlotCanvas(PlotBackend):
 
         for marker in self._markers.values():
             xCoord, yCoord = marker['x'], marker['y']
+
+            if ((isXLog and xCoord is not None and
+                    xCoord < FLOAT32_MINPOS) or
+                    (isYLog and yCoord is not None and
+                    yCoord < FLOAT32_MINPOS)):
+                # Do not render markers with negative coords on log axis
+                continue
 
             if marker['text'] is not None:
                 pixelPos = self.dataToPixel(xCoord, yCoord, check=False)
@@ -1147,6 +1160,9 @@ class OpenGLPlotCanvas(PlotBackend):
            trBounds.yAxis.min_ == trBounds.yAxis.max_:
             return
 
+        isXLog = self._plotFrame.xAxis.isLog
+        isYLog = self._plotFrame.yAxis.isLog
+
         glViewport(self._margins['left'], self._margins['bottom'],
                    plotWidth, plotHeight)
 
@@ -1155,12 +1171,10 @@ class OpenGLPlotCanvas(PlotBackend):
         for item in self._plotContent.zOrderedPrimitives():
             if item.info.get('yAxis') == 'right':
                 item.render(self.matrixY2PlotDataTransformedProj,
-                            self._plotFrame.xAxis.isLog,
-                            self._plotFrame.yAxis.isLog)
+                            isXLog, isYLog)
             else:
                 item.render(self.matrixPlotDataTransformedProj,
-                            self._plotFrame.xAxis.isLog,
-                            self._plotFrame.yAxis.isLog)
+                            isXLog, isYLog)
 
         # Render Items
         self._progBase.use()
@@ -1172,15 +1186,19 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniform1f(self._progBase.uniforms['tickLen'], 0.)
 
         for item in self._items.values():
-            try:
-                shape2D = item['_shape2D']
-            except KeyError:
+            shape2D = item.get('_shape2D')
+            if shape2D is None:
                 shape2D = Shape2D(tuple(zip(item['x'], item['y'])),
                                   fill=item['fill'],
                                   fillColor=item['color'],
                                   stroke=True,
                                   strokeColor=item['color'])
                 item['_shape2D'] = shape2D
+
+            if ((isXLog and shape2D.xMin < FLOAT32_MINPOS) or
+                    (isYLog and shape2D.yMin < FLOAT32_MINPOS)):
+                # Ignore items <= 0. on log axes
+                continue
 
             posAttrib = self._progBase.attributes['position']
             colorUnif = self._progBase.uniforms['color']
@@ -1721,7 +1739,7 @@ class OpenGLPlotCanvas(PlotBackend):
         Clamp to a range smaller than float32 range.
         If isLog is True, clamp to a stricly positive range.
         """
-        minLimit = FLOAT32_SAFE_MINPOS if isLog else FLOAT32_SAFE_MIN
+        minLimit = FLOAT32_MINPOS if isLog else FLOAT32_SAFE_MIN
         min_ = clamp(min_, minLimit, FLOAT32_SAFE_MAX)
         max_ = clamp(max_, minLimit, FLOAT32_SAFE_MAX)
         assert min_ < max_

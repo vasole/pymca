@@ -84,6 +84,15 @@ def rgba(color, colorDict={}):
     return r, g, b, a
 
 
+# Float 32 info ###############################################################
+# Using min/max value below limits of float32
+# so operation with such value (e.g., max - min) do not overflow
+
+FLOAT32_SAFE_MIN = -1e37
+FLOAT32_MINPOS = np.finfo(np.float32).tiny
+FLOAT32_SAFE_MAX = 1e37
+
+
 # shape2D #####################################################################
 
 def buildFillMaskIndices(nIndices):
@@ -119,12 +128,29 @@ class Shape2D(object):
         self.bboxVertices = np.array(((xMin, yMin), (xMin, yMax),
                                       (xMax, yMin), (xMax, yMax)),
                                      dtype=np.float32)
-        self._bounds = xMin, yMin, xMax - xMin, yMax - yMin
+        self._xMin, self._xMax = xMin, xMax
+        self._yMin, self._yMax = yMin, yMax
 
         self.fill = fill
         self.fillColor = fillColor
         self.stroke = stroke
         self.strokeColor = strokeColor
+
+    @property
+    def xMin(self):
+        return self._xMin
+
+    @property
+    def xMax(self):
+        return self._xMax
+
+    @property
+    def yMin(self):
+        return self._yMin
+
+    @property
+    def yMax(self):
+        return self._yMax
 
     def prepareFillMask(self, posAttrib):
         glEnableVertexAttribArray(posAttrib)
