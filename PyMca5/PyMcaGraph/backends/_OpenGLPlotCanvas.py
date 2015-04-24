@@ -1702,11 +1702,16 @@ class OpenGLPlotCanvas(PlotBackend):
     def setYAxisAutoScale(self, flag=True):
         self._yAutoScale = flag
 
-    def _resetZoom(self):
+    def _resetZoom(self, forceAutoscale=False):
         dataBounds = self._plotContent.getBounds(
             self.isXAxisLogarithmic(), self.isYAxisLogarithmic())
 
-        if self.isXAxisAutoScale() and self.isYAxisAutoScale():
+        if forceAutoscale:
+            isXAuto, isYAuto = True, True
+        else:
+            isXAuto, isYAuto = self.isXAxisAutoScale(), self.isYAxisAutoScale()
+
+        if isXAuto and isYAuto:
             self.setLimits(dataBounds.xAxis.min_,
                            dataBounds.xAxis.max_,
                            dataBounds.yAxis.min_,
@@ -1714,11 +1719,11 @@ class OpenGLPlotCanvas(PlotBackend):
                            dataBounds.y2Axis.min_,
                            dataBounds.y2Axis.max_)
 
-        elif self.isXAxisAutoScale():
+        elif isXAuto:
             self.setGraphXLimits(dataBounds.xAxis.min_,
                                  dataBounds.xAxis.max_)
 
-        elif self.isYAxisAutoScale():
+        elif isYAuto:
             xMin, xMax = self.getGraphXLimits()
             self.setLimits(xMin, xMax,
                            dataBounds.yAxis.min_,
@@ -1904,7 +1909,9 @@ class OpenGLPlotCanvas(PlotBackend):
             self._plotFrame.xAxis.isLog = flag
             self._dirtyPlotDataTransformedBounds()
 
-            self._resetZoom()
+            # With log axis on, force autoscale to avoid limits <= 0
+            if flag:
+                self._resetZoom(forceAutoscale=True)
 
     def setYAxisLogarithmic(self, flag=True):
         if (flag != self._plotFrame.yAxis.isLog or
@@ -1918,7 +1925,9 @@ class OpenGLPlotCanvas(PlotBackend):
 
             self._dirtyPlotDataTransformedBounds()
 
-            self._resetZoom()
+            # With log axis on, force autoscale to avoid limits <= 0
+            if flag:
+                self._resetZoom(forceAutoscale=True)
 
     def isXAxisLogarithmic(self):
         return self._plotFrame.xAxis.isLog
