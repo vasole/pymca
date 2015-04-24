@@ -1008,7 +1008,7 @@ class OpenGLPlotCanvas(PlotBackend):
                 continue
 
             pixelPos = self.dataToPixel(xCoord, yCoord, check=False)
-            if pixelPos in None:
+            if pixelPos is None:
                 continue
 
             if xCoord is None:

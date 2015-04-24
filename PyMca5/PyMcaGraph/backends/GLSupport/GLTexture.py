@@ -180,7 +180,7 @@ def _getMaxSquareTexture2DSize(internalFormat=GL_RGBA,
     :rtype: tuple
     """
     # Is this useful?
-    maxTexSize = glGetInteger(GL_MAX_TEXTURE_SIZE)
+    maxTexSize = glGetIntegerv(GL_MAX_TEXTURE_SIZE)
     while maxTexSize > MIN_TEXTURE_SIZE and \
         not _checkTexture2D(internalFormat, maxTexSize, maxTexSize,
                             format_, type_, border):
