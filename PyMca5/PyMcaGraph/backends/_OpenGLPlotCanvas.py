@@ -1007,58 +1007,63 @@ class OpenGLPlotCanvas(PlotBackend):
                 # Do not render markers with negative coords on log axis
                 continue
 
-            if marker['text'] is not None:
-                pixelPos = self.dataToPixel(xCoord, yCoord, check=False)
+            pixelPos = self.dataToPixel(xCoord, yCoord, check=False)
+            if pixelPos in None:
+                continue
 
-                xMin, xMax = self._plotFrame.xAxis.dataRange
-                yMin, yMax = self._plotFrame.yAxis.dataRange
-
-                if xCoord is None:
+            if xCoord is None:
+                if marker['text'] is not None:
                     x = self.winWidth - self._margins['right'] - pixelOffset
                     y = pixelPos[1] - pixelOffset
                     label = Text2D(marker['text'], x, y,
                                    color=marker['color'],
                                    bgColor=(1., 1., 1., 0.5),
                                    align=RIGHT, valign=BOTTOM)
+                    labels.append(label)
 
-                    vertices = np.array(((xMin, yCoord),
-                                         (xMax, yCoord)),
-                                        dtype=np.float32)
+                xMin, xMax = self._plotFrame.xAxis.dataRange
+                vertices = np.array(((xMin, yCoord),
+                                     (xMax, yCoord)),
+                                    dtype=np.float32)
 
-                elif yCoord is None:
+            elif yCoord is None:
+                if marker['text'] is not None:
                     x = pixelPos[0] + pixelOffset
                     y = self._margins['top'] + pixelOffset
                     label = Text2D(marker['text'], x, y,
                                    color=marker['color'],
                                    bgColor=(1., 1., 1., 0.5),
                                    align=LEFT, valign=TOP)
+                    labels.append(label)
 
-                    vertices = np.array(((xCoord, yMin),
-                                         (xCoord, yMax)),
-                                        dtype=np.float32)
+                yMin, yMax = self._plotFrame.yAxis.dataRange
+                vertices = np.array(((xCoord, yMin),
+                                     (xCoord, yMax)),
+                                    dtype=np.float32)
 
-                else:
-                    xPixel, yPixel = pixelPos
+            else:
+                xPixel, yPixel = pixelPos
 
+                if marker['text'] is not None:
                     x, y = xPixel + pixelOffset, yPixel + pixelOffset
                     label = Text2D(marker['text'], x, y,
                                    color=marker['color'],
                                    bgColor=(1., 1., 1., 0.5),
                                    align=LEFT, valign=TOP)
+                    labels.append(label)
 
-                    x0, y0 = self.pixelToData(xPixel - 2 * pixelOffset,
-                                              yPixel - 2 * pixelOffset,
-                                              check=False)
+                x0, y0 = self.pixelToData(xPixel - 2 * pixelOffset,
+                                          yPixel - 2 * pixelOffset,
+                                          check=False)
 
-                    x1, y1 = self.pixelToData(xPixel + 2 * pixelOffset + 1.,
-                                              yPixel + 2 * pixelOffset + 1.,
-                                              check=False)
+                x1, y1 = self.pixelToData(xPixel + 2 * pixelOffset + 1.,
+                                          yPixel + 2 * pixelOffset + 1.,
+                                          check=False)
 
-                    vertices = np.array(((x0, yCoord), (x1, yCoord),
-                                         (xCoord, y0), (xCoord, y1)),
-                                        dtype=np.float32)
+                vertices = np.array(((x0, yCoord), (x1, yCoord),
+                                     (xCoord, y0), (xCoord, y1)),
+                                    dtype=np.float32)
 
-                labels.append(label)
 
             glUniform4f(self._progBase.uniforms['color'], * marker['color'])
 
