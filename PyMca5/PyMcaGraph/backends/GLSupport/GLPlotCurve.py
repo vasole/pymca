@@ -436,7 +436,7 @@ class _Lines2D(object):
         glEnable(GL_LINE_SMOOTH)
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
-        x, y, viewWidth, viewHeight = glGetFloat(GL_VIEWPORT)
+        x, y, viewWidth, viewHeight = glGetFloatv(GL_VIEWPORT)
         glUniform2f(prog.uniforms['halfViewportSize'],
                     0.5 * viewWidth, 0.5 * viewHeight)
 

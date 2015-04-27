@@ -84,6 +84,15 @@ def rgba(color, colorDict={}):
     return r, g, b, a
 
 
+# Float 32 info ###############################################################
+# Using min/max value below limits of float32
+# so operation with such value (e.g., max - min) do not overflow
+
+FLOAT32_SAFE_MIN = -1e37
+FLOAT32_MINPOS = np.finfo(np.float32).tiny
+FLOAT32_SAFE_MAX = 1e37
+
+
 # shape2D #####################################################################
 
 def buildFillMaskIndices(nIndices):
@@ -106,8 +115,10 @@ class Shape2D(object):
     _HATCH_STEP = 20
 
     def __init__(self, points, fill='solid', stroke=True,
-                 fillColor=(0., 0., 0., 1.), strokeColor=(0., 0., 0., 1.)):
+                 fillColor=(0., 0., 0., 1.), strokeColor=(0., 0., 0., 1.),
+                 strokeClosed=True):
         self.vertices = np.array(points, dtype=np.float32, copy=False)
+        self.strokeClosed = strokeClosed
 
         self._indices = buildFillMaskIndices(len(self.vertices))
 
@@ -117,12 +128,29 @@ class Shape2D(object):
         self.bboxVertices = np.array(((xMin, yMin), (xMin, yMax),
                                       (xMax, yMin), (xMax, yMax)),
                                      dtype=np.float32)
-        self._bounds = xMin, yMin, xMax - xMin, yMax - yMin
+        self._xMin, self._xMax = xMin, xMax
+        self._yMin, self._yMax = yMin, yMax
 
         self.fill = fill
         self.fillColor = fillColor
         self.stroke = stroke
         self.strokeColor = strokeColor
+
+    @property
+    def xMin(self):
+        return self._xMin
+
+    @property
+    def xMax(self):
+        return self._xMax
+
+    @property
+    def yMin(self):
+        return self._yMin
+
+    @property
+    def yMax(self):
+        return self._yMax
 
     def prepareFillMask(self, posAttrib):
         glEnableVertexAttribArray(posAttrib)
@@ -167,7 +195,8 @@ class Shape2D(object):
                               GL_FALSE,
                               0, self.vertices)
         glLineWidth(1)
-        glDrawArrays(GL_LINE_LOOP, 0, len(self.vertices))
+        drawMode = GL_LINE_LOOP if self.strokeClosed else GL_LINE_STRIP
+        glDrawArrays(drawMode, 0, len(self.vertices))
 
     def render(self, posAttrib, colorUnif, hatchStepUnif):
         assert self.fill in ['hatch', 'solid', None]

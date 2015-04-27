@@ -153,13 +153,19 @@ I'm not aware of. Don't expect those to work either.
         if self._origExtent is None:
             self._origExtent = self.get_extent()
 
-    def get_extent(self):
-        # Override get_extent to return _orgiExtent when available
-        # as AxesImage extent is updated at each redraw
+    def get_image_extent(self):
+        """Returns the extent of the whole image.
+
+        get_extent returns the extent of the drawn area and not of the full
+        image.
+
+        :return: Bounds of the image (x0, x1, y0, y1).
+        :rtype: Tuple of 4 floats.
+        """
         if self._origExtent is not None:
             return self._origExtent
         else:
-            return super(ModestImage, self).get_extent()
+            return self.get_extent()
 
     def set_data(self, A):
         """
@@ -1236,6 +1242,34 @@ class MatplotlibGraph(FigureCanvas):
             self.draw()
         self._callback(ddict)
 
+    def emitLimitsChangedSignal(self):
+        # Send event about limits changed
+        left, right = self.ax.get_xlim()
+        xRange = (left, right) if left < right else (right, left)
+
+        bottom, top = self.ax.get_ylim()
+        yRange = (bottom, top) if bottom < top else (top, bottom)
+
+        if hasattr(self.ax2, "get_visible") and self.ax2.get_visible():
+            bottom2, top2 = self.ax2.get_ylim()
+            y2Range = (bottom2, top2) if bottom2 < top2 else (top2, bottom2)
+        else:
+            y2Range = None
+
+        if hasattr(self, "get_tk_widget"):
+            sourceObj = self.get_tk_widget()
+        else:
+            sourceObj = self
+
+        eventDict = {
+            'event': 'limitsChanged',
+            'source': id(sourceObj),
+            'xdata': xRange,
+            'ydata': yRange,
+            'y2data': y2Range,
+        }
+        self._callback(eventDict)
+
     def setLimits(self, xmin, xmax, ymin, ymax):
         self.ax.set_xlim(xmin, xmax)
         if ymax < ymin:
@@ -1246,12 +1280,8 @@ class MatplotlibGraph(FigureCanvas):
             self.ax.set_ylim(ymin, ymax)
         # Next line forces a square display region
         #self.ax.set_aspect((xmax-xmin)/float(ymax-ymin))
-        self.xmin = xmin
-        self.xmax = xmax
-        self.ymin = ymin
-        self.ymax = ymax
-        self.limitsSet = True
         #self.draw()
+        self.emitLimitsChangedSignal()
 
     def resetZoom(self):
         xmin, xmax, ymin, ymax = self.getDataLimits('left')
@@ -1356,7 +1386,10 @@ class MatplotlibGraph(FigureCanvas):
         for artist in axes.artists:
             label = artist.get_label()
             if label.startswith("__IMAGE__"):
-                x0, x1, y0, y1 = artist.get_extent()
+                if hasattr(artist, 'get_image_extent'):
+                    x0, x1, y0, y1 = artist.get_image_extent()
+                else:
+                    x0, x1, y0, y1 = artist.get_extent()
                 if (xmin is None):
                     xmin = x0
                     xmax = x1
@@ -2221,6 +2254,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def setGraphXLimits(self, xmin, xmax):
         self.ax.set_xlim(xmin, xmax)
+        self.graph.emitLimitsChangedSignal()
 
     def setGraphYLabel(self, label="Y"):
         self.ax.set_ylabel(label)
@@ -2230,6 +2264,16 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             self.ax.set_ylim(ymax, ymin)
         else:
             self.ax.set_ylim(ymin, ymax)
+        self.graph.emitLimitsChangedSignal()
+
+    def setLimits(self, xmin, xmax, ymin, ymax):
+        # Overrides PlotBackend to send a single limitsChanged event.
+        self.ax.set_xlim(xmin, xmax)
+        if self.ax.yaxis_inverted():
+            self.ax.set_ylim(ymax, ymin)
+        else:
+            self.ax.set_ylim(ymin, ymax)
+        self.graph.emitLimitsChangedSignal()
 
     def setXAxisAutoScale(self, flag=True):
         if flag:
@@ -2389,16 +2433,48 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if colormap is None:
                     colormap = self.getDefaultColormap()
                 cmap = self.__getColormap(colormap['name'])
-                if colormap['autoscale']:
-                    vmin = data.min()
-                    vmax = data.max()
-                else:
-                    vmin = colormap['vmin']
-                    vmax = colormap['vmax']
                 if colormap['normalization'].startswith('log'):
+                    vmin, vmax = None, None
+                    if not colormap['autoscale']:
+                        if colormap['vmin'] > 0.:
+                            vmin = colormap['vmin']
+                        if colormap['vmax'] > 0.:
+                            vmax = colormap['vmax']
+
+                        if vmin is None or vmax is None:
+                            print('Warning: ' +
+                                  'Log colormap with negative bounds, ' +
+                                  'changing bounds to positive ones.')
+                        elif vmin > vmax:
+                            print('Warning: Colormap bounds are inverted.')
+                            vmin, vmax = vmax, vmin
+
+                    # Set unset/negative bounds to positive bounds
+                    if vmin is None or vmax is None:
+                        posData = data[data > 0]
+                        if vmax is None:
+                            # 1. as an ultimate fallback
+                            vmax = posData.max() if posData.size > 0 else 1.
+                        if vmin is None:
+                            vmin = posData.min() if posData.size > 0 else vmax
+                        if vmin > vmax:
+                            vmin = vmax
+
                     norm = LogNorm(vmin, vmax)
-                else:
+
+                else:  # Linear normalization
+                    if colormap['autoscale']:
+                        vmin = data.min()
+                        vmax = data.max()
+                    else:
+                        vmin = colormap['vmin']
+                        vmax = colormap['vmax']
+                        if vmin > vmax:
+                            print('Warning: Colormap bounds are inverted.')
+                            vmin, vmax = vmax, vmin
+
                     norm = Normalize(vmin, vmax)
+
                 # try as data
                 if (xmin < 0) or (xmax < 0) or (ymin < 0) or (ymax < 0):
                     # for the time being not properly handled
@@ -2481,6 +2557,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 if axes.get_aspect() not in ['auto', None]:
                     axes.set_aspect('auto')
                     self.resetZoom()
+
+    def isKeepDataAspectRatio(self):
+        return self.ax.get_aspect() in (1.0, 'equal')
 
     def setDefaultColormap(self, colormap=None):
         if colormap is None:

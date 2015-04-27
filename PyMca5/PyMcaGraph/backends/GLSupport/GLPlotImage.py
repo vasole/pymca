@@ -40,7 +40,7 @@ This module provides a class to render 2D array as a colormap or RGB(A) image
 from .gl import *  # noqa
 
 import math
-from .GLSupport import mat4Translate, mat4Scale
+from .GLSupport import mat4Translate, mat4Scale, FLOAT32_MINPOS
 from .GLProgram import GLProgram
 from .GLTexture import Image
 
@@ -169,10 +169,9 @@ class GLPlotColormap(_GLPlotData2D):
     uniform sampler2D data;
     uniform struct {
         int id;
+        bool isLog;
         float min;
         float oneOverRange;
-        float logMin;
-        float oneOverLogRange;
     } cmap;
 
     varying vec2 coords;
@@ -214,12 +213,16 @@ class GLPlotColormap(_GLPlotData2D):
 
     void main(void) {
         float value = texture2D(data, textureCoords()).r;
-        if (cmap.oneOverRange != 0.) {
+        if (cmap.isLog) {
+            if (value > 0.) {
+                value = clamp(cmap.oneOverRange *
+                              (oneOverLog10 * log(value) - cmap.min),
+                              0., 1.);
+            } else {
+                value = 0.;
+            }
+        } else { /*Linear mapping*/
             value = clamp(cmap.oneOverRange * (value - cmap.min), 0., 1.);
-        } else {
-            value = clamp(cmap.oneOverLogRange *
-                          (oneOverLog10 * log(value) - cmap.logMin),
-                          0., 1.);
         }
 
         if (cmap.id == CMAP_GRAY) {
@@ -283,7 +286,9 @@ class GLPlotColormap(_GLPlotData2D):
         super(GLPlotColormap, self).__init__(data, xMin, xScale, yMin, yScale)
         self.colormap = colormap
         self.cmapIsLog = cmapIsLog
-        self.cmapRange = cmapRange  # Init _cmapRange and _cmapRangeIsAuto
+        self._cmapRange = None  # User-provided range info
+        self._cmapRangeCache = None  # Store extra data for range
+        self.cmapRange = cmapRange  # Update _cmapRange
 
         self._textureIsDirty = False
 
@@ -298,24 +303,56 @@ class GLPlotColormap(_GLPlotData2D):
 
     @property
     def cmapRange(self):
-        if self._cmapRange is None:  # Lazy computation
-            self._cmapRange = minMax(self.data)
-        return self._cmapRange
+        if self._cmapRange is None:  # Auto-scale mode
+            if self._cmapRangeCache is None:
+                # Build data , positive ranges
+                min_, minPos, max_ = minMax(self.data, minPositive=True)
+                maxPos = max_ if max_ > 0. else 1.
+                if minPos is None:
+                    minPos = maxPos
+                self._cmapRangeCache = {'range': (min_, max_),
+                                        'pos': (minPos, maxPos)}
+
+            return self._cmapRangeCache['pos' if self.cmapIsLog else 'range']
+
+        else:
+            if not self.cmapIsLog:
+                return self._cmapRange  # Return range as is
+            else:
+                if self._cmapRangeCache is None:
+                    # Build a strictly positive range from cmapRange
+                    min_, max_ = self._cmapRange
+                    if min_ > 0. and max_ > 0.:
+                        minPos, maxPos = min_, max_
+                    else:
+                        dataMin, minPos, dataMax = minMax(self.data,
+                                                          minPositive=True)
+                        if max_ > 0.:
+                            maxPos = max_
+                        elif dataMax > 0.:
+                            maxPos = dataMax
+                        else:
+                            maxPos = 1.  # Arbitrary fallback
+                        if minPos is None:
+                            minPos = maxPos
+                    self._cmapRangeCache = minPos, maxPos
+                return self._cmapRangeCache  # Strictly positive range
 
     @cmapRange.setter
     def cmapRange(self, cmapRange):
-        self._cmapRangeIsAuto = cmapRange is None
+        self._cmapRangeCache = None
         if cmapRange is None:
             self._cmapRange = None
         else:
+            assert len(cmapRange) == 2
+            assert cmapRange[0] <= cmapRange[1]
             self._cmapRange = tuple(cmapRange)
 
     def updateData(self, data):
         oldData = self.data
         self.data = data
 
-        if self._cmapRangeIsAuto:  # Reset cmapRange cache as data is updated
-            self._cmapRange = None
+        self._cmapRangeCache = None
 
         if hasattr(self, '_texture'):
             if (self.data.shape != oldData.shape or
@@ -348,10 +385,7 @@ class GLPlotColormap(_GLPlotData2D):
                                     data=self.data)
 
     def _setCMap(self, prog):
-        glUniform1i(prog.uniforms['cmap.id'],
-                    self._SHADER_CMAP_IDS[self.colormap])
-
-        dataMin, dataMax = self.cmapRange
+        dataMin, dataMax = self.cmapRange  # If log, it is stricly positive
 
         if self.data.dtype in (np.uint16, np.uint8):
             # Using unsigned int as normalized integer in OpenGL
@@ -360,15 +394,18 @@ class GLPlotColormap(_GLPlotData2D):
             dataMin, dataMax = dataMin / maxInt, dataMax / maxInt
 
         if self.cmapIsLog:
-            logVMin, logVMax = math.log10(dataMin), math.log10(dataMax)
-            glUniform1f(prog.uniforms['cmap.logMin'], logVMin)
-            glUniform1f(prog.uniforms['cmap.oneOverRange'], 0.)
-            glUniform1f(prog.uniforms['cmap.oneOverLogRange'],
-                        1./(logVMax - logVMin))
+            dataMin = math.log10(dataMin)
+            dataMax = math.log10(dataMax)
+
+        glUniform1i(prog.uniforms['cmap.id'],
+                    self._SHADER_CMAP_IDS[self.colormap])
+        glUniform1i(prog.uniforms['cmap.isLog'], self.cmapIsLog)
+        glUniform1f(prog.uniforms['cmap.min'], dataMin)
+        if dataMax > dataMin:
+            oneOverRange = 1. / (dataMax - dataMin)
         else:
-            glUniform1f(prog.uniforms['cmap.min'], dataMin)
-            glUniform1f(prog.uniforms['cmap.oneOverRange'],
-                        1./(dataMax - dataMin))
+            oneOverRange = 0.  # Fall-back
+        glUniform1f(prog.uniforms['cmap.oneOverRange'], oneOverRange)
 
     def _renderLinear(self, matrix):
         self.prepare()
@@ -389,6 +426,11 @@ class GLPlotColormap(_GLPlotData2D):
                              self._DATA_TEX_UNIT)
 
     def _renderLog10(self, matrix, isXLog, isYLog):
+        if ((isXLog and self.xMin < FLOAT32_MINPOS) or
+                (isYLog and self.yMin < FLOAT32_MINPOS)):
+            # Do not render images that are partly or totally <= 0
+            return
+
         self.prepare()
 
         prog = self._logProgram

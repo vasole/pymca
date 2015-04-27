@@ -53,7 +53,7 @@ from .gl import *  # noqa
 from .GLSupport import mat4Ortho
 from .GLProgram import GLProgram
 from .GLText import Text2D, CENTER, BOTTOM, TOP, LEFT, RIGHT, ROTATE_270
-from .LabelLayout import niceNumbers, niceNumbersForLog10
+from .LabelLayout import niceNumbersAdaptative, niceNumbersForLog10
 
 
 # PlotAxis ####################################################################
@@ -73,7 +73,7 @@ class PlotAxis(object):
         self._plot = weakref.ref(plot)
 
         self._isLog = False
-        self._dataRange = 1., 1.
+        self._dataRange = 1., 100.
         self._displayCoords = (0., 0.), (1., 0.)
         self._title = ''
 
@@ -270,7 +270,12 @@ class PlotAxis(object):
                 xScale = (x1 - x0) / (dataMax - dataMin)
                 yScale = (y1 - y0) / (dataMax - dataMin)
 
-                tickMin, tickMax, step, nbFrac = niceNumbers(dataMin, dataMax)
+                nbPixels = math.sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2))
+
+                # Density of 1.3 label per 92 pixels
+                # i.e., 1.3 label per inch on a 92 dpi screen
+                tickMin, tickMax, step, nbFrac = niceNumbersAdaptative(
+                    dataMin, dataMax, nbPixels, 1.3 / 92)
 
                 for dataPos in self._frange(tickMin, tickMax, step):
                     if dataPos >= dataMin and dataPos <= dataMax:
@@ -330,8 +335,7 @@ class GLPlotFrame(object):
                               titleAlign=CENTER, titleVAlign=TOP,
                               titleRotate=0,
                               titleOffset=(0, self._margins['bottom'] // 2))
-
-        self._x2AxisCoords = None
+        self._x2AxisCoords = ()
 
         self.yAxis = PlotAxis(self,
                               tickLength=(5., 0.),
@@ -346,7 +350,7 @@ class GLPlotFrame(object):
                                titleAlign=CENTER, titleVAlign=TOP,
                                titleRotate=ROTATE_270,
                                titleOffset=(3*self._margins['right'] // 4, 0))
-        self._y2AxisCoords = None
+        self._y2AxisCoords = ()
 
         self._grid = False
         self._isY2Axis = False
