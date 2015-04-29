@@ -1508,12 +1508,6 @@ class OpenGLPlotCanvas(PlotBackend):
                  xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, z=1, selectable=True,
                  fill=None, **kw):
-        if xerror is not None:
-            warnings.warn("Ignore xerror parameter of addCurve",
-                          RuntimeWarning)
-        if yerror is not None:
-            warnings.warn("Ignore yerror parameter of addCurve",
-                          RuntimeWarning)
         if kw:
             warnings.warn("addCurve ignores additional parameters",
                           RuntimeWarning)
@@ -1550,6 +1544,8 @@ class OpenGLPlotCanvas(PlotBackend):
             fill = info.get('plot_fill', False)
 
         curve = GLPlotCurve2D(x, y, colorArray,
+                              xError=xerror,
+                              yError=yerror,
                               lineStyle=linestyle,
                               lineColor=color,
                               lineWidth=1 if linewidth is None else linewidth,
