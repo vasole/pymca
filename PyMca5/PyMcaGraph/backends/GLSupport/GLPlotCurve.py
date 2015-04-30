@@ -37,10 +37,12 @@ This module provides classes to render 2D lines and scatter plots
 
 # import ######################################################################
 
-from .gl import *  # noqa
 import numpy as np
 import math
-from .GLSupport import buildFillMaskIndices
+import warnings
+
+from .gl import *  # noqa
+from .GLSupport import buildFillMaskIndices, FLOAT32_MINPOS
 from .GLProgram import GLProgram
 from .GLVertexBuffer import createVBOFromArrays, VBOAttrib
 
@@ -740,31 +742,42 @@ class _Points2D(object):
 
 # error bars ##################################################################
 
-# TODOs:
-#- make it works with log scale: test if some points are <=0
-#- make line width, end width and color settable
 class _ErrorBars(object):
-    def __init__(self, xData, yData, xError=None, yError=None):
-        """Display errors bars.
+    """Display errors bars.
 
-        This is using its own VBO as opposed to fill/points/lines.
-        There is no picking on error bars.
-        As is, there is no way to update data and errors.
+    This is using its own VBO as opposed to fill/points/lines.
+    There is no picking on error bars.
+    As is, there is no way to update data and errors, but it handles
+    log scales by removing data <= 0 and clipping error bars to positive
+    range.
+
+    It uses 2 vertices per error bars and uses :class:`_Lines2D` to
+    render error bars and :class:`_Points2D` to render the ends.
+    """
+
+    def __init__(self, xData, yData, xError, yError,
+                 xMin, yMin,
+                 color=(0., 0., 0., 1.)):
+        """Initialization.
 
         :param numpy.ndarray xData: X coordinates of the data.
         :param numpy.ndarray yData: Y coordinates of the data.
-        :param xError: The relative error on the X axis.
+        :param xError: The absolute error on the X axis.
         :type xError: A float, or a numpy.ndarray of float32.
                       If it is an array, it can either be a 1D array of
                       same length as the data or a 2D array with 2 rows
                       of same length as the data: row 0 for positive errors,
                       row 1 for negative errors.
-        :param yError: The relative error on the Y axis.
+        :param yError: The absolute error on the Y axis.
         :type yError: A float, or a numpy.ndarray of float32. See xError.
+        :param float xMin: The min X value already computed by GLPlotCurve2D.
+        :param float yMin: The min Y value already computed by GLPlotCurve2D.
+        :param color: The color to use for both lines and ending points.
+        :type color: tuple of 4 floats
         """
         self._attribs = None
-        self._lines = None
         self._isXLog, self._isYLog = False, False
+        self._xMin, self._yMin = xMin, yMin
 
         if xError is not None or yError is not None:
             assert len(xData) == len(yData)
@@ -772,24 +785,120 @@ class _ErrorBars(object):
                                    copy=False)
             self._yData = np.array(yData, order='C', dtype=np.float32,
                                    copy=False)
-            if hasattr(xError, ''):
-                self._xError = xError
-            else:
-                self._xError = np.array(xError, order='C', dtype=np.float32,
-                                        copy=False)
 
-            if hasattr(yError, ''):
-                self._yError = yError
-            else:
-                self._yError = np.array(yError, order='C', dtype=np.float32,
-                                        copy=False)
+            # This also works if xError, yError is a float/int
+            self._xError = np.array(xError, order='C', dtype=np.float32,
+                                    copy=False)
+            self._yError = np.array(yError, order='C', dtype=np.float32,
+                                    copy=False)
         else:
             self._xData, self._yData = None, None
             self._xError, self._yError = None, None
 
-        self._lines = _Lines2D(None, None, drawMode=GL_LINES)
-        self._xErrPoints = _Points2D(None, None, marker=V_LINE)
-        self._yErrPoints = _Points2D(None, None, marker=H_LINE)
+        self._lines = _Lines2D(None, None, color=color, drawMode=GL_LINES)
+        self._xErrPoints = _Points2D(None, None, color=color, marker=V_LINE)
+        self._yErrPoints = _Points2D(None, None, color=color, marker=H_LINE)
+
+    def _positiveValueFilter(self, onlyXPos, onlyYPos):
+        """Filter data (x, y) and errors (xError, yError) to remove
+        negative and null data values on required axis (onlyXPos, onlyYPos).
+
+        Returned arrays might be NOT contiguous.
+
+        :return: Filtered xData, yData, xError and yError arrays.
+        """
+        if ((not onlyXPos or self._xMin > 0.) and
+                (not onlyYPos or self._yMin > 0.)):
+            # No need to filter, all values are > 0 on log axes
+            return self._xData, self._yData, self._xError, self._yError
+
+        warnings.warn(
+            'Removing values <= 0 of curve with error bars on a log axis.',
+            RuntimeWarning)
+
+        x, y = self._xData, self._yData
+        xError, yError = self._xError, self._yError
+
+        # First remove negative data
+        if onlyXPos and onlyYPos:
+            mask = (x > 0.) & (y > 0.)
+        elif onlyXPos:
+            mask = x > 0.
+        else:  # onlyYPos
+            mask = y > 0.
+        x, y = x[mask], y[mask]
+
+        # Remove corresponding values from error arrays
+        if xError is not None and xError.size != 1:
+            if len(xError.shape) == 1:
+                xError = xError[mask]
+            else:  # 2 rows
+                xError = xError[:, mask]
+        if yError is not None and yError.size != 1:
+            if len(yError.shape) == 1:
+                yError = yError[mask]
+            else:  # 2 rows
+                yError = yError[:, mask]
+
+        return x, y, xError, yError
+
+    def _buildVertices(self, isXLog, isYLog):
+        """Generates error bars vertices according to log scales."""
+        xData, yData, xError, yError = self._positiveValueFilter(
+            isXLog, isYLog)
+
+        nbLinesPerDataPts = 1 if xError is not None else 0
+        nbLinesPerDataPts += 1 if yError is not None else 0
+
+        nbDataPts = len(xData)
+
+        # interleave coord+error, coord-error.
+        # xError vertices first if any, then yError vertices if any.
+        xCoords = np.empty(nbDataPts * nbLinesPerDataPts * 2,
+                           dtype=np.float32)
+        yCoords = np.empty(nbDataPts * nbLinesPerDataPts * 2,
+                           dtype=np.float32)
+
+        if xError is not None:  # errors on the X axis
+            if len(xError.shape) == 2:
+                xErrorPlus, xErrorMinus = xError[0], xError[1]
+            else:
+                # numpy arrays of len 1 or len(xData)
+                xErrorPlus, xErrorMinus = xError, xError
+
+            # Interleave vertices for xError
+            endXError = 2 * nbDataPts
+            xCoords[0:endXError-1:2] = xData + xErrorPlus
+
+            minValues = xData - xErrorMinus
+            if isXLog:
+                # Clip min bounds to positive value
+                minValues[minValues <= 0] = FLOAT32_MINPOS
+            xCoords[1:endXError:2] = minValues
+
+            yCoords[0:endXError-1:2] = yData
+            yCoords[1:endXError:2] = yData
+        else:
+            endXError = 0
+
+        if yError is not None:  # errors on the Y axis
+            if len(yError.shape) == 2:
+                yErrorPlus, yErrorMinus = yError[0], yError[1]
+            else:
+                # numpy arrays of len 1 or len(yData)
+                yErrorPlus, yErrorMinus = yError, yError
+
+            # Interleave vertices for yError
+            xCoords[endXError::2] = xData
+            xCoords[endXError+1::2] = xData
+            yCoords[endXError::2] = yData + yErrorPlus
+            minValues = yData - yErrorMinus
+            if isYLog:
+                # Clip min bounds to positive value
+                minValues[minValues <= 0] = FLOAT32_MINPOS
+            yCoords[endXError+1::2] = minValues
+
+        return xCoords, yCoords
 
     def prepare(self, isXLog, isYLog):
         if self._xData is None:
@@ -802,82 +911,28 @@ class _ErrorBars(object):
             self.discard() # discard existing VBOs
 
         if self._attribs is None:
-            nbLinesPerDataPts = 1 if self._xError is not None else 0
-            nbLinesPerDataPts += 1 if self._yError is not None else 0
-
-            nbDataPts = len(self._xData)
-
-            # interleave coord+error, coord-error.
-            # xError vertices first if any, then yError vertices if any.
-            xCoords = np.empty(nbDataPts * nbLinesPerDataPts * 2,
-                               dtype=np.float32)
-            yCoords = np.empty(nbDataPts * nbLinesPerDataPts * 2,
-                               dtype=np.float32)
-
-            if self._xError is not None:  # errors on the X axis
-                if (hasattr(self._xError, 'shape') and
-                        len(self._xError.shape) == 2):
-                    xErrorPlus, xErrorMinus = self._xError[0], self._xError[1]
-                else:
-                    # Either a numpy array or a float
-                    xErrorPlus, xErrorMinus = self._xError, self._xError
-
-                # Interleave vertices for xError
-                endXError = 2 * nbDataPts
-                xCoords[0:endXError-1:2] = self._xData + xErrorPlus
-                xCoords[1:endXError:2] = self._xData - xErrorMinus
-                yCoords[0:endXError-1:2] = self._yData
-                yCoords[1:endXError:2] = self._yData
-            else:
-                endXError = 0
-
-            if self._yError is not None:  # errors on the Y axis
-                if (hasattr(self._yError, 'shape') and
-                        len(self._yError.shape) == 2):
-                    yErrorPlus, yErrorMinus = self._yError[0], self._yError[1]
-                else:
-                    # Either a numpy array or a float
-                    yErrorPlus, yErrorMinus = self._yError, self._yError
-
-                # Interleave vertices for yError
-                xCoords[endXError::2] = self._xData
-                xCoords[endXError+1::2] = self._xData
-                yCoords[endXError::2] = self._yData + yErrorPlus
-                yCoords[endXError+1::2] = self._yData - yErrorMinus
+            xCoords, yCoords = self._buildVertices(isXLog, isYLog)
 
             xAttrib, yAttrib = createVBOFromArrays((xCoords, yCoords))
             self._attribs = xAttrib, yAttrib
+
             self._lines.xVboData, self._lines.yVboData = xAttrib, yAttrib
 
             # Set xError points using the same VBO as lines
-            self._xErrPoints.xVboData = VBOAttrib(xAttrib.vbo,
-                                                  xAttrib.type_,
-                                                  xAttrib.size / 2,
-                                                  xAttrib.dimension,
-                                                  xAttrib.offset,
-                                                  xAttrib.stride)
-            self._xErrPoints.yVboData = VBOAttrib(yAttrib.vbo,
-                                                  yAttrib.type_,
-                                                  yAttrib.size / 2,
-                                                  yAttrib.dimension,
-                                                  yAttrib.offset,
-                                                  yAttrib.stride)
+            self._xErrPoints.xVboData = xAttrib.copy()
+            self._xErrPoints.xVboData.size /= 2
+            self._xErrPoints.yVboData = yAttrib.copy()
+            self._xErrPoints.yVboData.size /= 2
 
             # Set yError points using the same VBO as lines
-            offset = xAttrib.offset + xAttrib.itemSize * xAttrib.size / 2
-            self._yErrPoints.xVboData = VBOAttrib(xAttrib.vbo,
-                                                  xAttrib.type_,
-                                                  xAttrib.size / 2,
-                                                  xAttrib.dimension,
-                                                  offset,
-                                                  xAttrib.stride)
-            offset = yAttrib.offset + yAttrib.itemSize * yAttrib.size / 2
-            self._yErrPoints.yVboData = VBOAttrib(yAttrib.vbo,
-                                                  yAttrib.type_,
-                                                  yAttrib.size / 2,
-                                                  yAttrib.dimension,
-                                                  offset,
-                                                  yAttrib.stride)
+            self._yErrPoints.xVboData = xAttrib.copy()
+            self._yErrPoints.xVboData.size /= 2
+            self._yErrPoints.xVboData.offset += (xAttrib.itemSize *
+                                                 xAttrib.size / 2)
+            self._yErrPoints.yVboData = yAttrib.copy()
+            self._yErrPoints.yVboData.size /= 2
+            self._yErrPoints.yVboData.offset += (yAttrib.itemSize *
+                                                 yAttrib.size / 2)
 
     def render(self, matrix, isXLog, isYLog):
         if self._attribs is not None:
@@ -929,15 +984,41 @@ class GLPlotCurve2D(object):
         self._isYLog = False
         self.xData, self.yData, self.colorData = xData, yData, colorData
 
-        self.xMin, self.xMinPos, self.xMax = minMax(xData, minPositive=True)
-        self.yMin, self.yMinPos, self.yMax = minMax(yData, minPositive=True)
-
         if fillColor is not None:
             self.fill = _Fill2D(color=fillColor)
         else:
             self.fill = None
 
-        self._errorBars = _ErrorBars(xData, yData, xError, yError)
+        # Compute x bounds
+        if xError is None:
+            self.xMin, self.xMinPos, self.xMax = minMax(xData,
+                                                        minPositive=True)
+        else:
+            # Takes the error into account
+            if hasattr(xError, 'shape') and len(xError.shape) == 2:
+                xErrorPlus, xErrorMinus = xError[0], xError[1]
+            else:
+                xErrorPlus, xErrorMinus = xError, xError
+            self.xMin, self.xMinPos, _ = minMax(xData - xErrorMinus,
+                                                minPositive=True)
+            self.xMax = (xData + xErrorPlus).max()
+
+        # Compute y bounds
+        if yError is None:
+            self.yMin, self.yMinPos, self.yMax = minMax(yData,
+                                                        minPositive=True)
+        else:
+            # Takes the error into account
+            if hasattr(yError, 'shape') and len(yError.shape) == 2:
+                yErrorPlus, yErrorMinus = yError[0], yError[1]
+            else:
+                yErrorPlus, yErrorMinus = yError, yError
+            self.yMin, self.yMinPos, _ = minMax(yData - yErrorMinus,
+                                                minPositive=True)
+            self.yMax = (yData + yErrorPlus).max()
+
+        self._errorBars = _ErrorBars(xData, yData, xError, yError,
+                                     self.xMin, self.yMin)
 
         kwargs = {'style': lineStyle}
         if lineColor is not None:
@@ -999,7 +1080,7 @@ class GLPlotCurve2D(object):
             x = np.take(x, idx)
             y = np.take(y, idx)
         if isinstance(color, np.ndarray):
-            colors = np.zeros((x.size, 4), color.dtype)
+            colors = numpy.zeros((x.size, 4), color.dtype)
             colors[:, 0] = color[idx, 0]
             colors[:, 1] = color[idx, 1]
             colors[:, 2] = color[idx, 2]
@@ -1047,14 +1128,14 @@ class GLPlotCurve2D(object):
                     prefix=(1, 1, 0))
 
             # Shrink VBO
-            self.xVboData = VBOAttrib(xAttrib.vbo, xAttrib.type_,
-                                      xAttrib.size - 2, xAttrib.dimension,
-                                      xAttrib.offset + xAttrib.itemSize,
-                                      xAttrib.stride)
-            self.yVboData = VBOAttrib(yAttrib.vbo, yAttrib.type_,
-                                      yAttrib.size - 2, yAttrib.dimension,
-                                      yAttrib.offset + yAttrib.itemSize,
-                                      yAttrib.stride)
+            self.xVboData = xAttrib.copy()
+            self.xVboData.size -= 2
+            self.xVboData.offset += xAttrib.itemSize
+
+            self.yVboData = yAttrib.copy()
+            self.yVboData.size -= 2
+            self.yVboData.offset += yAttrib.itemSize
+
             self.colorVboData = cAttrib
             self.distVboData = dAttrib
 

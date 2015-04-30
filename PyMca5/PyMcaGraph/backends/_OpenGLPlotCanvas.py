@@ -1517,6 +1517,12 @@ class OpenGLPlotCanvas(PlotBackend):
 
         x = np.array(x, dtype=np.float32, copy=False, order='C')
         y = np.array(y, dtype=np.float32, copy=False, order='C')
+        if xerror is not None:
+            xerror = np.array(xerror, dtype=np.float32, copy=False, order='C')
+            assert np.all(xerror >= 0.)
+        if yerror is not None:
+            yerror = np.array(yerror, dtype=np.float32, copy=False, order='C')
+            assert np.all(yerror >= 0.)
 
         behaviors = set()
         if selectable:
