@@ -21,12 +21,7 @@ import sys,os
 import glob
 import platform
 import time
-try:
-    from setuptools import setup
-except ImportError:
-    print("WARNING: cannot create wheel")
-    from distutils.core import setup
-from distutils.core import Extension, Command
+from distutils.core import Extension, setup, Command
 from distutils.command.install import install as dftinstall
 try:
     import numpy
