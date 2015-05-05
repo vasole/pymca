@@ -1132,7 +1132,7 @@ class PlotInteraction(object):
         as provided to :meth:`setInteractiveMode`.
         """
         if isinstance(self._eventHandler, ZoomAndSelect):
-            return {'mode': 'zoom', 'color': self.eventHandler.color}
+            return {'mode': 'zoom', 'color': self._eventHandler.color}
 
         elif isinstance(self._eventHandler, Select):
             result = self._eventHandler.parameters.copy()

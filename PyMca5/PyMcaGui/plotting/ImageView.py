@@ -41,7 +41,10 @@ import numpy as np
 import warnings
 import weakref
 
-from .. import PyMcaQt as qt
+try:
+    from .. import PyMcaQt as qt
+except ImportError:
+    from PyMca5.PyMcaGui import PyMcaQt as qt
 from .PyMca_Icons import IconDict
 from .ColormapDialog import ColormapDialog
 

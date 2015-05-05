@@ -165,6 +165,14 @@ class VBOAttrib(object):
                                   self.stride,
                                   c_void_p(self.offset))
 
+    def copy(self):
+        return VBOAttrib(self.vbo,
+                         self.type_,
+                         self.size,
+                         self.dimension,
+                         self.offset,
+                         self.stride)
+
 
 def createVBOFromArrays(arrays, prefix=None, suffix=None, usage=None):
     """

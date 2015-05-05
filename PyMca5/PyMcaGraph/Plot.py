@@ -404,8 +404,10 @@ class Plot(PlotBase.PlotBase):
         info['ylabel'] = str(ylabel)
         if xerror is None:
             xerror = info.get("sigmax", xerror)
+        info['sigmax'] = xerror
         if yerror is None:
             yerror = info.get("sigmay", yerror)
+        info['sigmay'] = yerror
 
         if replace:
             self._curveList = []
