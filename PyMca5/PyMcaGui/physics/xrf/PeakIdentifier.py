@@ -124,7 +124,7 @@ class PeakIdentifier(qt.QWidget):
 
         if self.__useviewer:
             self.__browsertext = qt.QTextEdit(self)
-        layout.addWidget(self.__browsertext)
+            layout.addWidget(self.__browsertext)
         self.setEnergy()
 
     def setEnergy(self, energy = None):
