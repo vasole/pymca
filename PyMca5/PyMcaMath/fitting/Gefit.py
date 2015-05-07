@@ -670,8 +670,8 @@ def fitpar2par(fitpar,constrains,free_index):
     return newparam
 
 def gauss(param0,t0):
-    param=numpy.numpy.array(param0)
-    t=numpy.numpy.array(t0)
+    param=numpy.array(param0)
+    t=numpy.array(t0)
     dummy=2.3548200450309493*(t-param[3])/param[4]
     return param[0] + param[1] * t + param[2] * myexp(-0.5 * dummy * dummy)
 
@@ -682,7 +682,7 @@ def myexp(x):
 
 
 def test(npoints):
-    xx = arange (npoints)
+    xx = numpy.arange(npoints)
     xx=numpy.resize(xx,(npoints,1))
     #yy = 1000.0 * exp (- 0.5 * (xx * xx) /15)+ 2.0 * xx + 10.5
     yy = gauss([10.5,2,1000.0,20.,15],xx)
