@@ -219,6 +219,9 @@ class RadarView(qt.QGraphicsView):
     and :meth:`setVisibleRect`.
     When the visible area has been dragged by the user, its new position
     is signaled by the *visibleRectDragged* signal.
+
+    It is possible to invert the direction of the axes by using the
+    :meth:`scale` method of QGraphicsView.
     """
 
     visibleRectDragged = qt.pyqtSignal(float, float, float, float)
@@ -396,6 +399,8 @@ class ImageView(qt.QWidget):
     """
 
     def __init__(self, parent=None, windowFlags=qt.Qt.Widget, backend=None):
+        self._origin = (0., 0.)  # Image origin
+        self._scale = (1., 1.)  # Image scale
         self._data = None  # Store current image
         self._cache = None  # Store currently visible data information
         self._cacheHisto = None  # cache histogram for colormap dialog
@@ -405,10 +410,11 @@ class ImageView(qt.QWidget):
         self.setStyleSheet('background-color: white;')
         self._initWidgets(_getBackendClass(backend))
 
+        self._initActions()
+
         # Sync PlotBackend and ImageView
         self.setColormap(self._imagePlot.getDefaultColormap())
-
-        self._initActions()
+        self._setYAxisInverted(self._imagePlot.isYAxisInverted())
 
     def _initWidgets(self, backendClass):
         """Set-up layout and plots."""
@@ -457,39 +463,83 @@ class ImageView(qt.QWidget):
 
         self.setLayout(layout)
 
+    def _getDataBounds(self):
+        """Returns the bounding box of the image in data coordinates.
+
+        :returns: xMin, xMax, yMin, yMax of the image
+        :rtype: tuple of 4 floats
+        :raises AssertionError: if no image is currently set
+        """
+        assert self._data is not None
+        height, width = self._data.shape
+        xMax, yMax = self._imageToPlotCoords(width, height)
+        xOrigin, yOrigin = self._origin
+        return (xOrigin, xMax, yOrigin, yMax)
+
+    def _imageToPlotCoords(self, x=None, y=None):
+        """Convert from image coords (i.e., pixels) to plot data coords."""
+        if x is not None:
+            x = self._origin[0] + x * self._scale[0]
+            if y is None:
+                return x
+        if y is not None:
+            y = self._origin[1] + y * self._scale[1]
+            if x is None:
+                return y
+        return x, y
+
+    def _plotToImageCoords(self, x=None, y=None):
+        """Convert from plot data coords to image coords (i.e., pixels)."""
+        if x is not None:
+            x = (x - self._origin[0]) / self._scale[0]
+            if y is None:
+                return x
+        if y is not None:
+            y = (y - self._origin[1]) / self._scale[1]
+            if x is None:
+                return y
+        return x, y
+
     def _updateHistograms(self):
         """Update histograms content."""
         if self._data is not None:
             xMin, xMax = self._imagePlot.getGraphXLimits()
             yMin, yMax = self._imagePlot.getGraphYLimits()
+            dataXMin, dataXMax, dataYMin, dataYMax = self._getDataBounds()
 
-            height, width = self._data.shape
-            if (xMin <= width and xMax >= 0 and
-                    yMin <= height and yMax >= 0):
+            if (xMin <= dataXMax and xMax >= dataXMin and
+                    yMin <= dataYMax and yMax >= dataYMin):
                 # The image is at least partly in the plot area
-                visibleXMin = 0 if xMin < 0 else int(xMin)
-                visibleXMax = width if xMax >= width else int(xMax + 1)
-                visibleYMin = 0 if yMin < 0 else int(yMin)
-                visibleYMax = height if yMax >= height else int(yMax + 1)
+                # Get its visible bounds in data coords
+                visibleXMin = dataXMin if xMin < dataXMin else xMin
+                visibleXMax = dataXMax if xMax >= dataXMax else xMax
+                visibleYMin = dataYMin if yMin < dataYMin else yMin
+                visibleYMax = dataYMax if yMax >= dataYMax else yMax
+
+                # Get the visible bounds in data coords
+                subsetXMin = int(self._plotToImageCoords(x=visibleXMin))
+                subsetXMax = int(self._plotToImageCoords(x=visibleXMax)) + 1
+                subsetYMin = int(self._plotToImageCoords(y=visibleYMin))
+                subsetYMax = int(self._plotToImageCoords(y=visibleYMax)) + 1
 
                 if (self._cache is None or
-                        visibleXMin != self._cache['visibleXMin'] or
-                        visibleXMax != self._cache['visibleXMax'] or
-                        visibleYMin != self._cache['visibleYMin'] or
-                        visibleYMax != self._cache['visibleYMax']):
+                        subsetXMin != self._cache['dataXMin'] or
+                        subsetXMax != self._cache['dataXMax'] or
+                        subsetYMin != self._cache['dataYMin'] or
+                        subsetYMax != self._cache['dataYMax']):
                     # The visible area of data has changed, update histograms
 
                     # Rebuild histograms for visible area
-                    visibleData = self._data[visibleYMin:visibleYMax,
-                                             visibleXMin:visibleXMax]
+                    visibleData = self._data[subsetYMin:subsetYMax,
+                                             subsetXMin:subsetXMax]
                     histoHVisibleData = np.sum(visibleData, axis=0)
                     histoVVisibleData = np.sum(visibleData, axis=1)
 
                     self._cache = {
-                        'visibleXMin': visibleXMin,
-                        'visibleXMax': visibleXMax,
-                        'visibleYMin': visibleYMin,
-                        'visibleYMax': visibleYMax,
+                        'dataXMin': subsetXMin,
+                        'dataXMax': subsetXMax,
+                        'dataYMin': subsetYMin,
+                        'dataYMax': subsetYMax,
 
                         'histoH': histoHVisibleData,
                         'histoHMin': np.min(histoHVisibleData),
@@ -501,8 +551,10 @@ class ImageView(qt.QWidget):
                     }
 
                     # Convert to histogram curve and update plots
+                    # Taking into account origin and scale
                     coords = np.arange(2 * histoHVisibleData.size)
-                    xCoords = (coords + 1) // 2 + visibleXMin
+                    xCoords = (coords + 1) // 2 + subsetXMin
+                    xCoords = self._imageToPlotCoords(x=xCoords)
                     xData = np.take(histoHVisibleData, coords // 2)
                     self._histoHPlot.addCurve(xCoords, xData,
                                               replace=False, replot=False,
@@ -518,7 +570,8 @@ class ImageView(qt.QWidget):
                                                      vMax + vOffset)
 
                     coords = np.arange(2 * histoVVisibleData.size)
-                    yCoords = (coords + 1) // 2 + visibleYMin
+                    yCoords = (coords + 1) // 2 + subsetYMin
+                    yCoords = self._imageToPlotCoords(y=yCoords)
                     yData = np.take(histoVVisibleData, coords // 2)
                     self._histoVPlot.addCurve(yData, yCoords,
                                               replace=False, replot=False,
@@ -545,14 +598,7 @@ class ImageView(qt.QWidget):
         """
         xMin, xMax = self._imagePlot.getGraphXLimits()
         yMin, yMax = self._imagePlot.getGraphYLimits()
-
-        if self.isYAxisInverted():
-            top = yMin
-        elif self._data is not None:
-            top = self._data.shape[0] - yMax
-        else:
-            top = 0
-        self._radarView.setVisibleRect(xMin, top, xMax - xMin, yMax - yMin)
+        self._radarView.setVisibleRect(xMin, yMin, xMax - xMin, yMax - yMin)
 
     # Plots event listeners
     def _imagePlotCB(self, eventDict):
@@ -592,7 +638,7 @@ class ImageView(qt.QWidget):
         """Callback for horizontal histogram plot events."""
         if eventDict['event'] == 'mouseMoved':
             if self._cache is not None:
-                minValue = self._cache['visibleXMin']
+                minValue = self._imageToPlotCoords(x=self._cache['dataXMin'])
                 data = self._cache['histoH']
                 width = data.shape[0]
                 x = int(eventDict['x'])
@@ -610,7 +656,7 @@ class ImageView(qt.QWidget):
         """Callback for vertical histogram plot events."""
         if eventDict['event'] == 'mouseMoved':
             if self._cache is not None:
-                minValue = self._cache['visibleYMin']
+                minValue = self._imageToPlotCoords(y=self._cache['dataYMin'])
                 data = self._cache['histoV']
                 height = data.shape[0]
                 y = int(eventDict['y'])
@@ -628,19 +674,21 @@ class ImageView(qt.QWidget):
         """Slot for radar view visible rectangle changes."""
         if not self._updatingLimits:
             # Takes care of Y axis conversion
-            if self.isYAxisInverted():
-                yMin = top
-                yMax = yMin + height
-            else:
-                yMax = self._data.shape[0] - top
-                yMin = yMax - height
-            self._imagePlot.setLimits(left, left + width, yMin, yMax)
+            self._imagePlot.setLimits(left, left + width, top, top + height)
             self._imagePlot.replot()
 
     # Actions
+
     def _setYAxisInverted(self, inverted):
         self._imagePlot.invertYAxis(inverted)
         self._histoVPlot.invertYAxis(inverted)
+
+        # Use scale to invert radarView
+        # RadarView default Y direction is from top to bottom
+        # As opposed to Plot. So invert RadarView when Plot is NOT inverted.
+        self._radarView.resetTransform()
+        if not inverted:
+            self._radarView.scale(1., -1.)
         self._updateRadarView()
 
         self._imagePlot.replot()
@@ -716,7 +764,8 @@ class ImageView(qt.QWidget):
         """Action controlling Y axis direction (Checkable)."""
         return self._actionInvertYAxis
 
-    # API
+    # Action command API
+
     def resetZoom(self):
         """Reset zoom to fit the full image in the plot."""
         # Triggers limitsChanges which update histograms
@@ -746,7 +795,43 @@ class ImageView(qt.QWidget):
         """
         self.actionInvertYAxis.setChecked(inverted)
 
+    # Labelling API
+
+    def getGraphTitle(self):
+        """Returns the main title of the image plot as a str."""
+        return self._imagePlot.getGraphTitle()
+
+    def setGraphTitle(self, title=''):
+        """Set image plot title.
+
+        :param str title: New title.
+        """
+        self._imagePlot.setGraphTitle(title)
+
+    def getGraphXLabel(self):
+        """Returns the X axis label of the image plot as a str."""
+        return self._imagePlot.getGraphXLabel()
+
+    def setGraphXLabel(self, label='X'):
+        """Set the label of the X axis of the image plot.
+
+        :param str label: New X axis label.
+        """
+        self._imagePlot.setGraphXLabel(label)
+
+    def getGraphYLabel(self):
+        """Returns the Y axis label of the image plot as a str."""
+        return self._imagePlot.getGraphYLabel()
+
+    def setGraphYLabel(self, label='Y'):
+        """Set the label of the Y axis of the image plot.
+
+        :param str label: New Y axis label.
+        """
+        self._imagePlot.setGraphYLabel(label)
+
     # Colormap API
+
     def getColormap(self):
         """Get the current colormap description.
 
@@ -788,29 +873,42 @@ class ImageView(qt.QWidget):
 
         if self._data is not None:  # Force refresh
             self._imagePlot.addImage(self._data, legend='image',
+                                     xScale=(self._origin[0], self._scale[0]),
+                                     yScale=(self._origin[1], self._scale[1]),
                                      replace=False, replot=False,
                                      colormap=self.getColormap())
             self._imagePlot.replot()
 
     # Image API
-    def setImage(self, image, origin=None, scale=None, copy=True, reset=True):
+
+    def setImage(self, image, origin=(0, 0), scale=(1., 1.),
+                 copy=True, reset=True):
         """Set the image to display.
 
         :param image: A 2D array representing the image or None to empty plot.
         :type image: numpy.ndarray-like with 2 dimensions or None.
         :param origin: The (x, y) position of the origin of the image.
+                       Default: (0, 0).
                        The origin is the lower left corner of the image when
                        the Y axis is not inverted.
         :type origin: Tuple of 2 floats: (origin x, origin y).
         :param scale: The scale factor to apply to the image on X and Y axes.
-                      It can be understand as the size of a pixel in the
-                      coordinates of the axes.
+                      Default: (1, 1).
+                      It is the size of a pixel in the coordinates of the axes.
         :type scale: Tuple of 2 floats: (scale x, scale y).
         :param bool copy: Whether to copy image data (default) or not.
         :param bool reset: Whether to reset zoom and ROI (default) or not.
         """
         self._cache = None
         self._cacheHisto = None
+
+        assert len(origin) == 2
+        self._origin = (float(origin[0]), float(origin[1]))
+
+        assert len(scale) == 2
+        assert scale[0] > 0
+        assert scale[1] > 0
+        self._scale = (float(scale[0]), float(scale[1]))
 
         if image is None:
             self._data = None
@@ -821,12 +919,19 @@ class ImageView(qt.QWidget):
         assert len(self._data.shape) == 2
         height, width = self._data.shape
 
-        self._imagePlot.addImage(self._data, legend='image',
-                                 replace=False, replot=False,
+        self._imagePlot.addImage(self._data,
+                                 legend='image',
+                                 xScale=(self._origin[0], self._scale[0]),
+                                 yScale=(self._origin[1], self._scale[1]),
+                                 replace=False,
+                                 replot=False,
                                  colormap=self.getColormap())
         self._updateHistograms()
 
-        self._radarView.setDataRect(0, 0, width, height)
+        self._radarView.setDataRect(self._origin[0],
+                                    self._origin[1],
+                                    width * self._scale[0],
+                                    height * self._scale[1])
 
         if reset:
             self.resetZoom()
@@ -866,6 +971,9 @@ class ImageViewMainWindow(qt.QMainWindow):
 
         # Create the ImageView widget and add it to the QMainWindow
         self.imageView = ImageView(backend=backend)
+        self.imageView.setGraphXLabel('X')
+        self.imageView.setGraphYLabel('Y')
+        self.imageView.setGraphTitle('Image')
         self.setCentralWidget(self.imageView)
 
         # Add a QToolBar with ImageView's QActions to the QMainWindow
@@ -952,7 +1060,8 @@ if __name__ == "__main__":
     mainWindow = ImageViewMainWindow(backend=args.backend)
     mainWindow.setImage(edfFile.GetData(0))
 
-    if nbFrames > 1:  # Add a toolbar for multi-frame EDF support
+    if nbFrames > 1:
+        # Add a toolbar for multi-frame EDF support
         multiFrameToolbar = qt.QToolBar('Multi-frame')
         multiFrameToolbar.addWidget(qt.QLabel(
             'Frame [0-%d]:' % (nbFrames - 1)))
