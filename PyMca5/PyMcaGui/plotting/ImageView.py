@@ -31,7 +31,17 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-ImageView: QWidget displaying a single 2D image with histograms on its sides.
+QWidget displaying a single 2D image with histograms on its sides.
+
+See :class:`ImageView` for the API of this widget.
+For an example of use, see the implementation of :class:`ImageViewMainWindow`.
+
+The ImageView module can also be used to open an EDF or TIFF file
+from the shell command line.
+To view an image file:
+``python -m PyMca5.PyMcaGui.plotting.ImageView <file to open>``
+To get help:
+``python -m PyMca5.PyMcaGui.plotting.ImageView -h``
 """
 
 
@@ -160,7 +170,7 @@ class _ColormapDialogHelper(qt.QObject):
             dialog.setDataMinMax(binEdges[0], binEdges[-1])
 
         # Set dialog colormap
-        colormap = imageView.colormap()
+        colormap = imageView.getColormap()
 
         index = self._COLORMAP_NAMES.index(colormap['name'])
         dialog.setColormap(index)
@@ -198,11 +208,17 @@ class _ColormapDialogHelper(qt.QObject):
 # RadarView ###################################################################
 
 class RadarView(qt.QGraphicsView):
-    """Present a synthetic view of a 2D image and the current visible area.
+    """Widget presenting a synthetic view of a 2D area and
+    the current visible area.
 
-    Used coordinates are as in QGraphicsView: x goes from left to right and
-    y goes from top to bottom.
-    This widget preserves the aspect ratio of the data.
+    Coordinates are as in QGraphicsView:
+    x goes from left to right and y goes from top to bottom.
+    This widget preserves the aspect ratio of the areas.
+
+    The 2D area and the visible area can be set with :meth:`setDataRect`
+    and :meth:`setVisibleRect`.
+    When the visible area has been dragged by the user, its new position
+    is signaled by the *visibleRectDragged* signal.
     """
 
     visibleRectDragged = qt.pyqtSignal(float, float, float, float)
@@ -318,15 +334,15 @@ class RadarView(qt.QGraphicsView):
         self.setToolTip(self._TOOLTIP)
 
     def sizeHint(self):
-        """Overridden to avoid sizeHint to depend on content size."""
+        # """Overridden to avoid sizeHint to depend on content size."""
         return self.minimumSizeHint()
 
     def wheelEvent(self, event):
-        """Overridden to disable vertical scrolling with wheel."""
+        # """Overridden to disable vertical scrolling with wheel."""
         event.ignore()
 
     def resizeEvent(self, event):
-        """Overridden to fit current content to new size."""
+        # """Overridden to fit current content to new size."""
         self.fitInView(self._scene.itemsBoundingRect(), qt.Qt.KeepAspectRatio)
         super(RadarView, self).resizeEvent(event)
 
@@ -354,15 +370,8 @@ class RadarView(qt.QGraphicsView):
 class ImageView(qt.QWidget):
     """Display a single image with horizontal and vertical histograms.
 
-    QAction available as attributes of the class:
-
-    - actionResetZoom: Displays the full image in the plot area (State-less).
-    - actionKeepDataAspectRatio: Controls image aspect ratio (Checkable).
-    - actionChangeColormap: Opens colormap chooser (State-less).
-    - actionInvertYAxis: Controls Y axis direction (Checkable).
-
-    The commands associated to those QActions are also available through
-    methods.
+    Use :meth:`setImage` to control the displayed image.
+    Control of the plot is available through the API and through QActions.
     """
 
     HISTOGRAMS_COLOR = 'blue'
@@ -645,15 +654,15 @@ class ImageView(qt.QWidget):
 
     def _initActions(self):
         # Reset zoom
-        self.actionResetZoom = qt.QAction(
+        self._actionResetZoom = qt.QAction(
             qt.QIcon(qt.QPixmap(IconDict['zoomreset'])),
             'Reset Zoom (Ctrl-0)',
             self,
             triggered=self.resetZoom)
-        self.actionResetZoom.setShortcut('Ctrl+0')
+        self._actionResetZoom.setShortcut('Ctrl+0')
 
         # keep data aspect ratio
-        self.actionKeepDataAspectRatio = qt.QAction(
+        self._actionKeepDataAspectRatio = qt.QAction(
             qt.QIcon(qt.QPixmap(IconDict['solidellipse'])),
             'Keep data aspect ratio',
             self,
@@ -661,67 +670,118 @@ class ImageView(qt.QWidget):
         # No need to ask for replot here
         # No need to sync histogram limits, this is automatic
         # Change icon
-        self.actionKeepDataAspectRatio.toggled.connect(
+        self._actionKeepDataAspectRatio.toggled.connect(
             self._setKeepDataAspectRatio)
-        self.actionKeepDataAspectRatio.setCheckable(True)
-        self.actionKeepDataAspectRatio.setChecked(
+        self._actionKeepDataAspectRatio.setCheckable(True)
+        self._actionKeepDataAspectRatio.setChecked(
             self._imagePlot.isKeepDataAspectRatio())
 
         # Change colormap
         cmapDialog = _ColormapDialogHelper(self)
         cmapDialog.colormapChanged.connect(self.setColormap)
 
-        self.actionChangeColormap = qt.QAction(
+        self._actionChangeColormap = qt.QAction(
             qt.QIcon(qt.QPixmap(IconDict['colormap'])),
             'Change colormap',
             self,
             triggered=cmapDialog.showDialog)
-        self.actionChangeColormap._cmapDialog = cmapDialog  # Store a ref
+        self._actionChangeColormap._cmapDialog = cmapDialog  # Store a ref
 
         # Invert Y axis
-        self.actionInvertYAxis = qt.QAction(
+        self._actionInvertYAxis = qt.QAction(
             qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"])),
             'Flip Horizontal',
             self,
             toggled=self._setYAxisInverted)
-        self.actionInvertYAxis.setCheckable(True)
-        self.actionInvertYAxis.setChecked(self._imagePlot.isYAxisInverted())
+        self._actionInvertYAxis.setCheckable(True)
+        self._actionInvertYAxis.setChecked(self._imagePlot.isYAxisInverted())
+
+    @property
+    def actionResetZoom(self):
+        """Action displaying the full image in the plot area (State-less)."""
+        return self._actionResetZoom
+
+    @property
+    def actionKeepDataAspectRatio(self):
+        """Action controlling image aspect ratio (Checkable)."""
+        return self._actionKeepDataAspectRatio
+
+    @property
+    def actionChangeColormap(self):
+        """Action opening colormap chooser (State-less)."""
+        return self._actionChangeColormap
+
+    @property
+    def actionInvertYAxis(self):
+        """Action controlling Y axis direction (Checkable)."""
+        return self._actionInvertYAxis
 
     # API
     def resetZoom(self):
+        """Reset zoom to fit the full image in the plot."""
         # Triggers limitsChanges which update histograms
         self._imagePlot.resetZoom()
 
     def isKeepDataAspectRatio(self):
+        """Returns whether the data aspect ratio is maintained or not."""
         return self.actionKeepDataAspectRatio.isChecked()
 
     def setKeepDataAspectRatio(self, keepRatio):
+        """Sets whether the image plot should keep data aspect ratio or not.
+
+        :param bool keepRatio: Whether to keep aspect ratio or not.
+        """
         self.actionKeepDataAspectRatio.setChecked(keepRatio)
 
     def isYAxisInverted(self):
+        """Returns Y axis orientation:
+        False, the default: axis goes up, True: axis goes down.
+        """
         return self.actionInvertYAxis.isChecked()
 
     def setYAxisInverted(self, inverted):
+        """Sets Y axis orientation.
+
+        :param bool inverted: True: axis going up, False: axis going down.
+        """
         self.actionInvertYAxis.setChecked(inverted)
 
     # Colormap API
-    def colormap(self):
+    def getColormap(self):
         """Get the current colormap description.
 
-        :return: A dict (See PlotBackend getDefaultColormap for details).
+        :return: A description of the current colormap.
+                 See :meth:`setColormap` for details.
+        :rtype: dict
         """
         return self._colormap.copy()
 
     def setColormap(self, colormap):
         """Set the current colormap.
 
-        :param dict colormap: colormap description
-                              (See PlotBackend.getDefaultColormap for details).
+        A colormap is a dictionnary with the following keys:
+
+        - *name*: string. The colormap to use:
+          'gray', 'reversed gray', 'temperature', 'red', 'green', 'blue'.
+        - *normalization*: string. The mapping to use for the colormap:
+          either 'linear' or 'log'.
+        - *autoscale*: bool. Whether to use autoscale (True)
+          or range provided by keys 'vmin' and 'vmax' (False).
+        - *vmin*: float. The minimum value of the range to use if 'autoscale'
+          is False.
+        - *vmax*: float. The maximum value of the range to use if 'autoscale'
+          is False.
+
+        :param dict colormap: The description of the colormap to use.
         """
         if colormap is None:
             colormap = self._imagePlot.getDefaultColormap()
+
         assert colormap['name'] in self._imagePlot.getSupportedColormaps()
+
         self._colormap = colormap.copy()
+        if 'colors' not in self._colormap:
+            self._colormap['colors'] = 256
 
         cursorColor = _cursorColorForColormap(colormap['name'])
         self._imagePlot.setZoomModeEnabled(True, color=cursorColor)
@@ -729,15 +789,23 @@ class ImageView(qt.QWidget):
         if self._data is not None:  # Force refresh
             self._imagePlot.addImage(self._data, legend='image',
                                      replace=False, replot=False,
-                                     colormap=self.colormap())
+                                     colormap=self.getColormap())
             self._imagePlot.replot()
 
     # Image API
-    def setImage(self, image, copy=True, reset=True):
+    def setImage(self, image, origin=None, scale=None, copy=True, reset=True):
         """Set the image to display.
 
         :param image: A 2D array representing the image or None to empty plot.
         :type image: numpy.ndarray-like with 2 dimensions or None.
+        :param origin: The (x, y) position of the origin of the image.
+                       The origin is the lower left corner of the image when
+                       the Y axis is not inverted.
+        :type origin: Tuple of 2 floats: (origin x, origin y).
+        :param scale: The scale factor to apply to the image on X and Y axes.
+                      It can be understand as the size of a pixel in the
+                      coordinates of the axes.
+        :type scale: Tuple of 2 floats: (scale x, scale y).
         :param bool copy: Whether to copy image data (default) or not.
         :param bool reset: Whether to reset zoom and ROI (default) or not.
         """
@@ -755,7 +823,7 @@ class ImageView(qt.QWidget):
 
         self._imagePlot.addImage(self._data, legend='image',
                                  replace=False, replot=False,
-                                 colormap=self.colormap())
+                                 colormap=self.getColormap())
         self._updateHistograms()
 
         self._radarView.setDataRect(0, 0, width, height)
@@ -796,9 +864,11 @@ class ImageViewMainWindow(qt.QMainWindow):
         self._dataInfo = None
         super(ImageViewMainWindow, self).__init__(parent, windowFlags)
 
+        # Create the ImageView widget and add it to the QMainWindow
         self.imageView = ImageView(backend=backend)
         self.setCentralWidget(self.imageView)
 
+        # Add a QToolBar with ImageView's QActions to the QMainWindow
         toolbar = qt.QToolBar('Image View')
         toolbar.addAction(self.imageView.actionResetZoom)
         toolbar.addAction(self.imageView.actionKeepDataAspectRatio)
@@ -807,6 +877,8 @@ class ImageViewMainWindow(qt.QMainWindow):
         self.addToolBar(toolbar)
 
         self.statusBar()
+
+        # Connect to ImageView's signal
         self.imageView.valueChanged.connect(self._statusBarSlot)
 
     def _statusBarSlot(self, row, column, value):
@@ -824,6 +896,10 @@ class ImageViewMainWindow(qt.QMainWindow):
         self.statusBar().showMessage(msg)
 
     def setImage(self, image, *args, **kwargs):
+        """Set the displayed image.
+
+        See :meth:`ImageView.setImage` for details.
+        """
         if hasattr(image, 'dtype') and hasattr(image, 'shape'):
             assert len(image.shape) == 2
             height, width = image.shape
@@ -833,6 +909,7 @@ class ImageViewMainWindow(qt.QMainWindow):
         else:
             self._dataInfo = None
 
+        # Set the new image in ImageView widget
         self.imageView.setImage(image, *args, **kwargs)
 
 
