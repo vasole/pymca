@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -34,7 +34,6 @@ import numpy
 import copy
 import time
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from . import McaWindow
 from PyMca5.PyMcaIO import EDFStack
 from PyMca5.PyMcaIO import SpecFileStack
 DEBUG = 0
