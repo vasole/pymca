@@ -217,11 +217,13 @@ class PCAParametersDialog(qt.QDialog):
                 self.graph.setEnabled(False)
         return
 
-    def setSpectrum(self, x, y, legend=None):
+    def setSpectrum(self, x, y, legend=None, info=None):
         if self.graph is None:
             self.__addRegionsWidget()
         if legend is None:
             legend = "Current Active Spectrum"
+        if info is None:
+            info = {}
         if not isinstance(x, numpy.ndarray):
             x = numpy.array(x)
             y = numpy.array(y)
@@ -230,7 +232,14 @@ class PCAParametersDialog(qt.QDialog):
         self._y = y
         self.regionsWidget.setLimits(x.min(), x.max())
         self._legend = legend
+        self._info = info
         self.updatePlot()
+
+    def getSpectrum(self, binned=False):
+        if binned:
+            return self._binnedX, self._binnedY, self._legend, self._info
+        else:
+            return self._x, self._y, self._legend, self._info
 
     # value unused, but received with the Qt signal
     def _updatePlotFromBinningCombo(self, value):
@@ -245,10 +254,10 @@ class PCAParametersDialog(qt.QDialog):
         x.shape = 1, -1
         y.shape = 1, -1
         r, c = x.shape
-        x.shape = r, c / binning, binning
-        y.shape = r, c / binning, binning
-        x = x.sum(axis=-1) / binning
-        y = y.sum(axis=-1)
+        x.shape = r, int(c / binning), binning
+        y.shape = r, int(c / binning), binning
+        x = x.sum(axis=-1, dtype=numpy.float32) / binning
+        y = y.sum(axis=-1, dtype=numpy.float32)
         x.shape = -1
         y.shape = -1
         self._binnedX = x

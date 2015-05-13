@@ -27,7 +27,8 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-from . import PCAWindow
+import numpy
+from PyMca5.PyMcaGui.math import PCAWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaMath.mva import NNMAModule
 
@@ -119,7 +120,8 @@ class NNMAParametersDialog(qt.QDialog):
         self.speedOptions.mainLayout.addWidget(self.binningLabel, 1, 0)
         self.speedOptions.mainLayout.addWidget(self.binningCombo, 1, 1)
         self.binningCombo.setEnabled(True)
-
+        self.binningCombo.activated[int].connect( \
+                     self._updatePlotFromBinningCombo)
 
         #the OK button
         hbox = qt.QWidget(self)
@@ -161,6 +163,53 @@ class NNMAParametersDialog(qt.QDialog):
         else:
             self.binningCombo.setEnabled(False)
         return
+
+    def setSpectrum(self, x, y, legend=None, info=None):
+        #if self.graph is None:
+        #    self.__addRegionsWidget()
+        if legend is None:
+            legend = "Current Active Spectrum"
+        if info is None:
+            info = {}
+        if not isinstance(x, numpy.ndarray):
+            x = numpy.array(x)
+            y = numpy.array(y)
+
+        self._x = x
+        self._y = y
+        #self.regionsWidget.setLimits(x.min(), x.max())
+        self._legend = legend
+        self._info = info
+        self.updatePlot()
+
+    def getSpectrum(self, binned=False):
+        if binned:
+            return self._binnedX, self._binnedY, self._legend, self._info
+        else:
+            return self._x, self._y, self._legend, self._info
+
+    # value unused, but received with the Qt signal
+    def _updatePlotFromBinningCombo(self, value):
+        #if self.graph is None:
+        #    return
+        self.updatePlot()
+
+    def updatePlot(self):
+        binning = int(self.binningCombo.currentText())
+        x = self._x * 1.0
+        y = self._y * 1.0
+        x.shape = 1, -1
+        y.shape = 1, -1
+        r, c = x.shape
+        x.shape = r, int(c / binning), binning
+        y.shape = r, int(c / binning), binning
+        x = x.sum(axis=-1, dtype=numpy.float32) / binning
+        y = y.sum(axis=-1, dtype=numpy.float32)
+        x.shape = -1
+        y.shape = -1
+        self._binnedX = x
+        self._binnedY = y
+        #self.graph.addCurve(x, y, legend=self._legend, replace=True)
 
     def setParameters(self, ddict):
         if 'options' in ddict:

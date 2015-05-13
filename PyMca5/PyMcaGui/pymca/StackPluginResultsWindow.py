@@ -37,7 +37,7 @@ else:
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaGui.plotting import MaskImageWidget
 from PyMca5.PyMcaGui.plotting import ScatterPlotCorrelatorWidget
-from . import ScanWindow
+from PyMca5.PyMcaGui.pymca import ScanWindow
 
 class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
@@ -195,7 +195,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
                 for i in range(nimages):
                     self.xValues.append(numpy.arange(len(self.spectrumList[0])))
             else:
-                self.xValues = xValues
+                self.xValues = xvalues
             self.spectrumGraphTitles = spectra_titles
             legend = self.spectrumNames[0]
             x = self.xValues[0]

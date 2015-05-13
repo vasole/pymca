@@ -44,9 +44,6 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         title = jcampDict.get('TITLE', "Unknown scan")
         xLabel = jcampDict.get('XUNITS', 'channel')
         yLabel = jcampDict.get('YUNITS', 'counts')
-        scanheader = ["#S 1 %s" % title,
-                      "#N 2",
-                      "#L %s  %s" % (xLabel, yLabel)]
         try:
             fileheader = instance._header
         except:
@@ -55,18 +52,36 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         data = numpy.zeros((x.size, 2), numpy.float32)
         data[:, 0] = x
         data[:, 1] = y
-        self.scanData = self.scandata = JCAMPFileScan(data, scantype="SCAN",
+        self.scandata = []
+        scanheader = ["#S 1 %s" % title]
+        scanheader.append("#N 2")
+        scanheader.append("#L %s  %s" % (xLabel, yLabel))
+        scanData = JCAMPFileScan(data,
+                                 scantype="SCAN",
+                                 scanheader=scanheader,
+                                 labels=[xLabel, yLabel],
+                                 fileheader=fileheader)
+        self.scandata.append(scanData)
+        scanheader = ["#S 2 %s" % title]
+        if jcampDict['XYDATA'].upper() ==  '(X++(Y..Y))':
+            # we can deal with the X axis via its calibration
+            scanheader.append("#@CHANN %d  %d  %d  1" % (len(x), 0, len(x) - 1))
+            scanheader.append("#@CALIB %f %f 0" % (x[0], x[1] - x[0]))
+            scantype = "MCA"
+        scanData = JCAMPFileScan(data, scantype="MCA",
                                                       scanheader=scanheader,
-                                                      labels=[xLabel, yLabel],
+                                                      #labels=[xLabel, yLabel],
                                                       fileheader=fileheader)
+        self.scandata.append(scanData)
 
     def __getitem__(self, item):
-        if item not in [-1, 0]:
-            raise IndexError("Only one scan in the file")
-        return self.scanData
+        return self.scandata[item]
+
+    def list(self):
+        return "1:%d" % len(self.scandata)
 
     def scanno(self):
-        return 1
+        return len(self.scandata)
 
 class JCAMPFileScan(SpecFileAbstractClass.SpecFileAbstractScan):
     def __init__(self, data, scantype="SCAN",
@@ -74,37 +89,22 @@ class JCAMPFileScan(SpecFileAbstractClass.SpecFileAbstractScan):
         SpecFileAbstractClass.SpecFileAbstractScan.__init__(self, data,
                             scantype=scantype, scanheader=scanheader,
                             labels=labels)
+        self._data = data
         self._fileHeader = fileheader
 
     def fileheader(self, key=''):
         return self._fileHeader
 
-    def header(self, key=''):
-        if   key == 'S':
-            return self.scanheader[0]
-        elif key == 'N':
-            return self.scanheader[-2]
-        elif key == 'L':
-            return self.scanheader[-1]
-        elif key == '@CALIB':
-            output = []
-            if self.scanheader is None: return output
-            for line in self.scanheader:
-                if line.startswith(key) or\
-                   line.startswith('#'+key):
-                    output.append(line)
-            return output
-        elif key == '@CTIME':
-            # expected to send Preset Time, Live Time, Real (Elapsed) Time
-            output = []
-            if self.scanheader is None: return output
-            for line in self.scanheader:
-                if line.startswith(key) or\
-                   line.startswith('#'+key):
-                    output.append(line)
-            return output
-        elif key == "" or key == " ":
-            return self.scanheader
+    def nbmca(self):
+        if self.scantype == 'SCAN':
+            return 0
+        else:
+            return 1
+
+    def mca(self, number):
+        if number not in [1]:
+            raise ValueError("Specfile mca numberig starts at 1")
+        return self._data[:, number]
 
 def isJcampFile(filename):
     return JcampReader.isJcampFile(filename)

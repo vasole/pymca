@@ -111,6 +111,7 @@ class MaskImageWidget(qt.QWidget):
 
         self._y1AxisInverted = False
         self.__selectionMask = None
+        self._selectionColors = None
         self.__imageData = None
         self.__pixmap0 = None
         self.__pixmap = None
@@ -313,6 +314,19 @@ class MaskImageWidget(qt.QWidget):
                                                     self._selectMin)
             self.graphWidget.graph.sigPlotSignal.connect(self._graphSignal)
 
+
+    def setSelectionColors(self, selectionColors):
+        """
+        selectionColors must be None or an array of shape (n, 4) of type numpy.uint8
+        """
+        if selectionColors is None:
+            self._selectionColors = None
+            return
+        if selectionColors.shape[1] != 4:
+            raise ValueError("Array of shape (maxNRois, 4) needed")
+        if selectionColors.dtype != numpy.uint8:
+            raise TypeError("Array of unsigned bytes needed")            
+        self._selectionColors = selectionColors
 
     def additionalSelectionMenu(self):
         return self._additionalSelectionMenu
@@ -1514,6 +1528,12 @@ class MaskImageWidget(qt.QWidget):
         #if not self.__selectionFlag:
         #    print("Return because of selection flag")
         #    return
+        if self._selectionColors is not None:
+            self.__pixmap = self.__pixmap0.copy()
+            for i in range(1, self._maxNRois + 1):
+                color = self._selectionColors[i - 1].copy()
+                self.__pixmap[self.__selectionMask == i] = color
+            return
         if self._maxNRois < 2:
             alteration = (1 - (0.2 * self.__selectionMask))
         else:
@@ -2190,6 +2210,20 @@ def test():
         container = MaskImageWidget(aspect=True,
                                     profileselection=True,
                                      maxNRois=2)
+        # show how to use user specified colors for the mask
+        # without using any blitting (for the time being)
+        # in the future it could be made using the alpha channel
+        if 0:
+            colors = numpy.zeros((2, 4), dtype=numpy.uint8)
+            colors[0,0] = 255
+            colors[0,1] = 0
+            colors[0,2] = 0
+            colors[0,3] = 255
+            colors[1,0] = 0
+            colors[1,1] = 0
+            colors[1,2] = 255
+            colors[1,3] = 255
+            container.setSelectionColors(colors)
         data = numpy.arange(400 * 400).astype(numpy.int32)
         data.shape = 200, 800
         #data = numpy.eye(200)
