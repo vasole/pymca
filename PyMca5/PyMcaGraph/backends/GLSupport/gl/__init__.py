@@ -105,6 +105,10 @@ _TYPE_CONVERTER = {
 }
 
 
+def isSupportedGLType(type_):
+    """Test if a numpy type or dtype can be converted to a GL type."""
+    return np.dtype(type_) in _TYPE_CONVERTER
+
 def numpyToGLType(type_):
-    """Returns the GL type corresponding the provided numpy type or dtype"""
+    """Returns the GL type corresponding the provided numpy type or dtype."""
     return _TYPE_CONVERTER[np.dtype(type_)]
