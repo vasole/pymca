@@ -291,6 +291,7 @@ class ImageView(qt.QWidget):
     """
 
     def __init__(self, parent=None, windowFlags=qt.Qt.Widget, backend=None):
+        self._imageLegend = '__ImageView__image' + str(id(self))
         self._cache = None  # Store currently visible data information
         self._updatingLimits = False
 
@@ -663,7 +664,7 @@ class ImageView(qt.QWidget):
         assert scale[1] > 0
 
         if image is None:
-            self._imagePlot.removeImage('__ImageView__image', replot=False)
+            self._imagePlot.removeImage(self._imageLegend, replot=False)
             return
 
         data = np.array(image, order='C', copy=copy)
@@ -672,12 +673,12 @@ class ImageView(qt.QWidget):
         height, width = data.shape
 
         self._imagePlot.addImage(data,
-                                 legend='__ImageView__image',
+                                 legend=self._imageLegend,
                                  xScale=(origin[0], scale[0]),
                                  yScale=(origin[1], scale[1]),
                                  replace=False,
                                  replot=False)
-        self._imagePlot.setActiveImage('__ImageView__image')
+        self._imagePlot.setActiveImage(self._imageLegend)
         self._updateHistograms()
 
         self._radarView.setDataRect(origin[0],
@@ -847,6 +848,16 @@ if __name__ == "__main__":
         OpenGL 2.1 (opengl, requires appropriate OpenGL drivers) or
         Off-screen Mesa OpenGL software pipeline (osmesa,
         requires appropriate OSMesa library).""")
+    parser.add_argument(
+        '-o', '--origin', nargs=2,
+        type=float, default=(0., 0.),
+        help="""Coordinates of the origin of the image: (x, y).
+        Default: 0., 0.""")
+    parser.add_argument(
+        '-s', '--scale', nargs=2,
+        type=float, default=(1., 1.),
+        help="""Scale factors applied to the image: (sx, sy).
+        Default: 1., 1.""")
     parser.add_argument('filename', help='EDF filename of the image to open')
     args = parser.parse_args()
 
@@ -864,7 +875,9 @@ if __name__ == "__main__":
     app = qt.QApplication([])
 
     mainWindow = ImageViewMainWindow(backend=args.backend)
-    mainWindow.setImage(edfFile.GetData(0))
+    mainWindow.setImage(edfFile.GetData(0),
+                        origin=args.origin,
+                        scale=args.scale)
 
     if nbFrames > 1:
         # Add a toolbar for multi-frame EDF support
@@ -876,7 +889,10 @@ if __name__ == "__main__":
         spinBox.setRange(0, nbFrames-1)
 
         def updateImage(index):
-            mainWindow.setImage(edfFile.GetData(index), reset=False)
+            mainWindow.setImage(edfFile.GetData(index),
+                                origin=args.origin,
+                                scale=args.scale,
+                                reset=False)
         spinBox.valueChanged[int].connect(updateImage)
         multiFrameToolbar.addWidget(spinBox)
 
