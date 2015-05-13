@@ -31,9 +31,22 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-QWidget displaying a single 2D image with histograms on its sides.
+QWidget displaying a 2D image with histograms on its sides.
 
-See :class:`ImageView` for the API of this widget.
+The :class:`ImageView` implements this widget, and
+:class:`ImageViewMainWindow` provides a main window with additional toolbar
+and status bar.
+
+Basic usage of :class:`ImageView` is through the following methods:
+
+- :meth:`ImageView.getColormap`, :meth:`ImageView.setColormap` to update the
+  default colormap to use and update the currently displayed image.
+- :meth:`ImageView.setImage` to update the displayed image.
+
+The :class:`ImageView` uses :class:`PlotWindow` and also
+exposes :class:`PyMca5.PyMcaGraph.Plot` API for further control
+(plot title, axes labels, adding other images, ...).
+
 For an example of use, see the implementation of :class:`ImageViewMainWindow`.
 
 The ImageView module can also be used to open an EDF or TIFF file
@@ -82,104 +95,6 @@ def _cursorColorForColormap(colormapName):
     :rtype: str
     """
     return _COLORMAP_CURSOR_COLORS.get(colormapName, 'black')
-
-
-# ColormapDialogHelper ########################################################
-
-class _ColormapDialogHelper(qt.QObject):
-    """Helper class wrapping ColormapDialog for use with ImageView."""
-
-    colormapChanged = qt.pyqtSignal(dict)
-    """Signal a change in colormap.
-
-    Provides a description of the colormap as a dict.
-    See PlotBackend.getDefaultColormap for details.
-    """
-
-    DIALOG_HISTO_NB_BINS = 50
-    """Number of bins of the histogram displayed in the colormap dialog."""
-
-    # Workaround: PlotBackend and ColormapDialog cmap names mismatch
-    # Names as used in PlotBackend in the order of colormapDialog
-    _COLORMAP_NAMES = ('gray', 'reversed gray', 'temperature',
-                       'red', 'green', 'blue', 'temperature')
-
-    def __init__(self, imageView):
-        super(_ColormapDialogHelper, self).__init__()
-        self._imageViewRef = weakref.ref(imageView)
-        self._cmapDialog = None
-
-    def _dialog(self):
-        if self._cmapDialog is None:  # Reuse same widget
-            imageView = self._imageViewRef()
-            self._cmapDialog = ColormapDialog(imageView)
-
-            # Colormap dialog is modal as we don't care about data/colormap
-            # update while the dialog is opened to simplify implementation.
-            self._cmapDialog.setModal(True)
-            self._cmapDialog.finished.connect(self._close)
-
-            # Disable gamma mapping
-            gammaBtn = self._cmapDialog.buttonGroup.button(2)
-            assert gammaBtn.text() == 'Gamma'
-            gammaBtn.setCheckable(False)
-            gammaBtn.setVisible(False)
-
-        return self._cmapDialog
-
-    def _close(self, result=0):
-        self._cmapDialog.sigColormapChanged.disconnect(self._colormapChanged)
-
-    def showDialog(self):
-        """Slot for Change colormap action."""
-        dialog = self._dialog()
-
-        imageView = self._imageViewRef()
-        assert imageView is not None
-
-        # Data dependent information
-        histogram = imageView.imageHistogram(self.DIALOG_HISTO_NB_BINS)
-        if histogram is not None:
-            counts, binEdges = histogram
-            # Bin edges to bins center (all bins have the same width)
-            bins = binEdges[:-1] + 0.5 * (binEdges[1] - binEdges[0])
-            dialog.plotHistogram((bins, counts))
-            dialog.setDataMinMax(binEdges[0], binEdges[-1])
-
-        # Set dialog colormap
-        colormap = imageView.getColormap()
-
-        index = self._COLORMAP_NAMES.index(colormap['name'])
-        dialog.setColormap(index)
-
-        dialog.setMinValue(colormap['vmin'])
-        dialog.setMaxValue(colormap['vmax'])
-        dialog.setAutoscale(colormap['autoscale'])
-        dialog.setColormapType(
-            1 if colormap['normalization'].startswith('log') else 0)
-
-        # Only connect colormapChanged now, to avoid being called while
-        # setting-up the colormap dialog.
-        self._cmapDialog.sigColormapChanged.connect(self._colormapChanged)
-
-        dialog.show()
-
-    def _colormapChanged(self, info):
-        cmapIndex, autoscale, vMin, vMax, dataMin, dataMax, normIndex = info
-
-        if normIndex not in (0, 1):
-            warnings.warn('Unsupported colormap, using linear', UserWarning)
-            normIndex = 0
-
-        colormap = {
-            'name': self._COLORMAP_NAMES[cmapIndex],
-            'autoscale': autoscale,
-            'vmin': vMin,
-            'vmax': vMax,
-            'normalization': 'log' if normIndex == 1 else 'linear',
-            'colors': 256
-        }
-        self.colormapChanged.emit(colormap)
 
 
 # RadarView ###################################################################
@@ -377,17 +292,14 @@ class ImageView(qt.QWidget):
 
     def __init__(self, parent=None, windowFlags=qt.Qt.Widget, backend=None):
         self._cache = None  # Store currently visible data information
-        self._cacheHisto = None  # cache histogram for colormap dialog
         self._updatingLimits = False
 
         super(ImageView, self).__init__(parent, windowFlags)
         self.setStyleSheet('background-color: white;')
         self._initWidgets(backend)
 
-        #self._initActions()
-
         # Sync PlotBackend and ImageView
-        self._setYAxisInverted(self._imagePlot.isYAxisInverted())
+        self._updateYAxisInverted()
 
     def _initWidgets(self, backend):
         """Set-up layout and plots."""
@@ -402,12 +314,17 @@ class ImageView(qt.QWidget):
         self._histoHPlot.getWidgetHandle().sizeHint = sizeHint
         self._histoHPlot.getWidgetHandle().minimumSizeHint = sizeHint
 
-        self._imagePlot = PlotWindow(backend=backend,
-                                     aspect=True, colormap=True,
-                                     normal=True, imageIcons=True,
-                                     polygon=True, flip=True) #TODO what do we want?
+        self._imagePlot = PlotWindow(backend=backend, plugins=False,
+                                     colormap=True, flip=True,
+                                     grid=False, togglePoints=False,
+                                     logx=False, logy=False,
+                                     aspect=True)
+        self._imagePlot.usePlotBackendColormap = True
+
         self._imagePlot.setZoomModeEnabled(True)  # Color is set in setColormap
         self._imagePlot.sigPlotSignal.connect(self._imagePlotCB)
+        self._imagePlot.hFlipToolButton.clicked.connect(
+            self._updateYAxisInverted)
 
         self._histoVPlot = Plot.Plot(backend=backend)
         self._histoVPlot.setZoomModeEnabled(True)
@@ -438,6 +355,9 @@ class ImageView(qt.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)
+
+    def _dirtyCache(self):
+        self._cache = None
 
     def _updateHistograms(self):
         """Update histograms content using current active image."""
@@ -530,8 +450,6 @@ class ImageView(qt.QWidget):
                     self._histoVPlot.setGraphXLimits(vMin - vOffset,
                                                      vMax + vOffset)
             else:
-                self._cache = None
-
                 self._histoHPlot.clearCurves()
                 self._histoVPlot.clearCurves()
 
@@ -545,6 +463,7 @@ class ImageView(qt.QWidget):
         self._radarView.setVisibleRect(xMin, yMin, xMax - xMin, yMax - yMin)
 
     # Plots event listeners
+
     def _imagePlotCB(self, eventDict):
         """Callback for imageView plot events."""
         if eventDict['event'] == 'mouseMoved':
@@ -631,42 +550,10 @@ class ImageView(qt.QWidget):
             self._imagePlot.setLimits(left, left + width, top, top + height)
             self._imagePlot.replot()
 
+    def _updateYAxisInverted(self):
+        """Sync image, vertical histogram and radar view axis orientation."""
+        inverted = self._imagePlot.isYAxisInverted()
 
-    # Access histogram
-
-    def imageHistogram(self, bins):
-        """Calls numpy.histogram on the current image.
-
-        Intended for ColormapDialog histogram.
-
-        :param bins: See numpy.histogram for more details.
-        :return: None if no image is set or the histogram of the image.
-        :rtype: None or 2 arrays: counts and binEdges.
-        """
-        activeImage = self._imagePlot.getActiveImage()
-        if activeImage is not None:
-            data = activeImage[0]
-            if self._cacheHisto is None or self._cacheHisto[0] != bins:
-                self._cacheHisto = bins, np.histogram(data, bins)
-            return self._cacheHisto[1]
-        else:
-            return None
-
-    # PlotWindow toolbar
-
-    def toolBar(self):
-        """Returns the tool bar associated with the image plot.
-
-        This is the toolBar provided by :class:`PlotWindow`.
-
-        :return: The toolBar associated to the image plot.
-        :rtype: QToolBar
-        """
-        return self._imagePlot.toolBar
-
-    # Actions
-
-    def _setYAxisInverted(self, inverted):
         self._imagePlot.invertYAxis(inverted)
         self._histoVPlot.invertYAxis(inverted)
 
@@ -682,105 +569,20 @@ class ImageView(qt.QWidget):
         self._histoVPlot.replot()
         self._radarView.update()
 
-    def _setKeepDataAspectRatio(self, keepRatio):
-        iconName = 'solidcircle' if keepRatio else 'solidellipse'
-        self.actionKeepDataAspectRatio.setIcon(
-            qt.QIcon(qt.QPixmap(IconDict[iconName])))
+    def updateActiveImageColormap(self, colormap, replot=True):
+        pass
 
-    def _initActions(self):
-        # Reset zoom
-        self._actionResetZoom = qt.QAction(
-            qt.QIcon(qt.QPixmap(IconDict['zoomreset'])),
-            'Reset Zoom (Ctrl-0)',
-            self,
-            triggered=self.resetZoom)
-        self._actionResetZoom.setShortcut('Ctrl+0')
+    # PlotWindow toolbar
 
-        # keep data aspect ratio
-        self._actionKeepDataAspectRatio = qt.QAction(
-            qt.QIcon(qt.QPixmap(IconDict['solidellipse'])),
-            'Keep data aspect ratio',
-            self,
-            toggled=self._imagePlot.keepDataAspectRatio)
-        # No need to ask for replot here
-        # No need to sync histogram limits, this is automatic
-        # Change icon
-        self._actionKeepDataAspectRatio.toggled.connect(
-            self._setKeepDataAspectRatio)
-        self._actionKeepDataAspectRatio.setCheckable(True)
-        self._actionKeepDataAspectRatio.setChecked(
-            self._imagePlot.isKeepDataAspectRatio())
+    def toolBar(self):
+        """Returns the tool bar associated with the image plot.
 
-        # Change colormap
-        cmapDialog = _ColormapDialogHelper(self)
-        cmapDialog.colormapChanged.connect(self.setColormap)
+        This is the toolBar provided by :class:`PlotWindow`.
 
-        self._actionChangeColormap = qt.QAction(
-            qt.QIcon(qt.QPixmap(IconDict['colormap'])),
-            'Change colormap',
-            self,
-            triggered=cmapDialog.showDialog)
-        self._actionChangeColormap._cmapDialog = cmapDialog  # Store a ref
-
-        # Invert Y axis
-        self._actionInvertYAxis = qt.QAction(
-            qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"])),
-            'Flip Horizontal',
-            self,
-            toggled=self._setYAxisInverted)
-        self._actionInvertYAxis.setCheckable(True)
-        self._actionInvertYAxis.setChecked(self._imagePlot.isYAxisInverted())
-
-    @property
-    def actionResetZoom(self):
-        """Action displaying the full image in the plot area (State-less)."""
-        return self._actionResetZoom
-
-    @property
-    def actionKeepDataAspectRatio(self):
-        """Action controlling image aspect ratio (Checkable)."""
-        return self._actionKeepDataAspectRatio
-
-    @property
-    def actionChangeColormap(self):
-        """Action opening colormap chooser (State-less)."""
-        return self._actionChangeColormap
-
-    @property
-    def actionInvertYAxis(self):
-        """Action controlling Y axis direction (Checkable)."""
-        return self._actionInvertYAxis
-
-    # Action command API
-
-    def resetZoom(self):
-        """Reset zoom to fit the full image in the plot."""
-        # Triggers limitsChanges which update histograms
-        self._imagePlot.resetZoom()
-
-    def isKeepDataAspectRatio(self):
-        """Returns whether the data aspect ratio is maintained or not."""
-        return self.actionKeepDataAspectRatio.isChecked()
-
-    def setKeepDataAspectRatio(self, keepRatio):
-        """Sets whether the image plot should keep data aspect ratio or not.
-
-        :param bool keepRatio: Whether to keep aspect ratio or not.
+        :return: The toolBar associated to the image plot.
+        :rtype: QToolBar
         """
-        self.actionKeepDataAspectRatio.setChecked(keepRatio)
-
-    def isYAxisInverted(self):
-        """Returns Y axis orientation:
-        False, the default: axis goes up, True: axis goes down.
-        """
-        return self.actionInvertYAxis.isChecked()
-
-    def setYAxisInverted(self, inverted):
-        """Sets Y axis orientation.
-
-        :param bool inverted: True: axis going up, False: axis going down.
-        """
-        self.actionInvertYAxis.setChecked(inverted)
+        return self._imagePlot.toolBar
 
     # High-level API
 
@@ -829,10 +631,8 @@ class ImageView(qt.QWidget):
         activeImage = self._imagePlot.getActiveImage()
         if activeImage is not None:  # Refresh image with new colormap
             data, legend, info, pixmap = activeImage
-            xScale, yScale = info['plot_xScale'], info['plot_yScale']
 
-            self._imagePlot.addImage(data, legend=legend,
-                                     xScale=xScale, yScale=yScale,
+            self._imagePlot.addImage(data, legend=legend, info=info,
                                      replace=False, replot=False)
             self._imagePlot.replot()
 
@@ -855,8 +655,7 @@ class ImageView(qt.QWidget):
         :param bool copy: Whether to copy image data (default) or not.
         :param bool reset: Whether to reset zoom and ROI (default) or not.
         """
-        self._cache = None
-        self._cacheHisto = None
+        self._dirtyCache()
 
         assert len(origin) == 2
         assert len(scale) == 2
@@ -879,6 +678,7 @@ class ImageView(qt.QWidget):
                                  replace=False,
                                  replot=False)
         self._imagePlot.setActiveImage('__ImageView__image')
+        self._updateHistograms()
 
         self._radarView.setDataRect(origin[0],
                                     origin[1],
@@ -896,68 +696,75 @@ class ImageView(qt.QWidget):
     # Plot API proxies #
     ####################
 
-    # Image API
+    # Rebuild side histograms if active image gets changed through the Plot API
 
     def addImage(self, data, legend=None, info=None,
                  replace=True, replot=True,
                  xScale=None, yScale=None, z=0,
                  selectable=False, draggable=False,
                  colormap=None, **kw):
-        # Image changes, resets side histogram cache
-        self._cache = None
-        self._cacheHisto = None
+        if legend == self._imagePlot.getActiveImage(just_legend=True):
+            # Updating active image, resets side histograms cache
+            self._dirtyCache()
 
-        self._imagePlot.addImage(data, legend, info, replace, replot,
-                                 xScale, yScale, z,
-                                 selectable, draggable,
-                                 colormap, **kw)
-
-    def setActiveImage(self, legend, replot=True):
-        # Active image changes, resets side histogram cache
-        self._cache = None
-        self._cacheHisto = None
-
-        self._imagePlot.setActiveImage(legend, replot)
-        self._updateHistograms()  # Rebuild side histograms
+        result = self._imagePlot.addImage(data, legend, info, replace, replot,
+                                          xScale, yScale, z,
+                                          selectable, draggable,
+                                          colormap, **kw)
+        self._updateHistograms()
 
         if replot:
             self._histoHPlot.replot()
             self._histoVPlot.replot()
 
-    # Labelling API
+        return result
 
-    def getGraphTitle(self):
-        """Returns the main title of the image plot as a str."""
-        return self._imagePlot.getGraphTitle()
+    def clear(self):
+        self._dirtyCache()
+        return self._imagePlot.clear()
 
-    def setGraphTitle(self, title=''):
-        """Set image plot title.
+    def clearImages(self):
+        self._dirtyCache()
+        return self._imagePlot.clearImages()
 
-        :param str title: New title.
-        """
-        self._imagePlot.setGraphTitle(title)
+    def removeImage(self, legend, replot=True):
+        if legend == self._imagePlot.getActiveImage(just_legend=True):
+            # Removing active image, resets side histograms cache
+            self._dirtyCache()
 
-    def getGraphXLabel(self):
-        """Returns the X axis label of the image plot as a str."""
-        return self._imagePlot.getGraphXLabel()
+        result = self._imageView.removeImage(legend, replot)
+        self._updateHistograms()
 
-    def setGraphXLabel(self, label='X'):
-        """Set the label of the X axis of the image plot.
+        if replot:
+            self._histoHPlot.replot()
+            self._histoVPlot.replot()
 
-        :param str label: New X axis label.
-        """
-        self._imagePlot.setGraphXLabel(label)
+        return result
 
-    def getGraphYLabel(self):
-        """Returns the Y axis label of the image plot as a str."""
-        return self._imagePlot.getGraphYLabel()
+    def setActiveImage(self, legend, replot=True):
+        # Active image changes, resets side histogram cache
+        self._dirtyCache()
 
-    def setGraphYLabel(self, label='Y'):
-        """Set the label of the Y axis of the image plot.
+        result = self._imagePlot.setActiveImage(legend, replot)
+        self._updateHistograms()
 
-        :param str label: New Y axis label.
-        """
-        self._imagePlot.setGraphYLabel(label)
+        if replot:
+            self._histoHPlot.replot()
+            self._histoVPlot.replot()
+        return result
+
+    # Invert axes
+
+    def invertYAxis(self, flag=True):
+        result = self._imagePlot.invertYAxis(flag)
+        self._updateYAxisInverted()  # To sync vert. histo and radar view
+        return result
+
+    # Ugly yet simple proxy for the Plot API
+
+    def __getattr__(self, name):
+        """Proxy to expose image plot API."""
+        return getattr(self._imagePlot, name)
 
 
 # ImageViewMainWindow #########################################################
@@ -978,14 +785,6 @@ class ImageViewMainWindow(qt.QMainWindow):
         self.imageView.setGraphYLabel('Y')
         self.imageView.setGraphTitle('Image')
         self.setCentralWidget(self.imageView)
-
-        # Add a QToolBar with ImageView's QActions to the QMainWindow
-        #toolbar = qt.QToolBar('Image View')
-        #toolbar.addAction(self.imageView.actionResetZoom)
-        #toolbar.addAction(self.imageView.actionKeepDataAspectRatio)
-        #toolbar.addAction(self.imageView.actionChangeColormap)
-        #toolbar.addAction(self.imageView.actionInvertYAxis)
-        #self.addToolBar(toolbar)
 
         # Using PlotWindow's toolbar
         self.addToolBar(self.imageView.toolBar())
