@@ -699,22 +699,22 @@ class Plot(PlotBase.PlotBase):
 
     def getActiveImage(self, just_legend=False):
         """
-        :param just_legend: Flag to specify the type of output required
-        :type just_legend: boolean
-        :return: legend of the active image or list [data, legend, info, xScale, yScale, z]
-        :rtype: string or list
-
         Function to access the plot currently active image.
         It returns None in case of not having an active image.
 
         Default output has the form:
-            data, legend, dict, xScale, yScale, z
+            data, legend, dict, pixmap
             where dict is a dictionnary containing image info.
             For the time being, only the plot labels associated to the
             image are warranted to be present under the keys xlabel, ylabel.
 
         If just_legend is True:
             The legend of the active imagee (or None) is returned.
+
+        :param just_legend: Flag to specify the type of output required
+        :type just_legend: boolean
+        :return: legend of the active image or list [data, legend, info, pixmap]
+        :rtype: string or list
         """
         if self._activeImage not in self._imageDict:
             self._activeImage = None
