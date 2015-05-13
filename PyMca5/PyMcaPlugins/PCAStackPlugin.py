@@ -170,7 +170,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                  'method': 0}
         self.configurationWidget.setParameters(ddict)
         y = spectrum
-        self.configurationWidget.setSpectrum(x, y)
+        self.configurationWidget.setSpectrum(x, y, legend=legend, info=info)
         ret = self.configurationWidget.exec_()
         if ret:
             self._executeFunctionAndParameters()
@@ -247,6 +247,11 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                     raise Exception(result[1], result[2])
                     return
         self._status.setText("Ready")
+        curve = self.configurationWidget.getSpectrum(binned=True)
+        if curve not in [None, []]:
+            xValues = curve[0]
+        else:
+            xValues = None
         self.configurationWidget.setEnabled(True)
         self.configurationWidget.close()
         images, eigenValues, eigenVectors = result
@@ -258,7 +263,7 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
         vectorNames = []
         itmp = nimages
         if " ICA " in methodlabel:
-            itmp = nimages / 2
+            itmp = int(nimages / 2)
             for i in range(itmp):
                 imageNames.append("ICAimage %02d" % i)
                 vectorNames.append("ICAvector %02d" % i)
@@ -272,9 +277,12 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
                                                   multiple=True)
         qt = StackPluginResultsWindow.qt
         self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
+        if xValues is not None:
+            xValues = [xValues] * nimages
         self.widget.setStackPluginResults(images,
                                           spectra=eigenVectors,
                                           image_names=imageNames,
+                                          xvalues=xValues,
                                           spectra_names=vectorNames)
         self._showWidget()
 

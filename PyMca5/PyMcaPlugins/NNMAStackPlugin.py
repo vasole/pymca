@@ -168,8 +168,8 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                  'binning': 1,
                  'method': 0}
         self.configurationWidget.setParameters(ddict)
-        #y = spectrum
-        #self.configurationWidget.setSpectrum(x, y)
+        y = spectrum
+        self.configurationWidget.setSpectrum(x, y)
         self.configurationWidget.show()
         self.configurationWidget.raise_()
         ret = self.configurationWidget.exec_()
@@ -240,6 +240,11 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                     raise Exception(result[1], result[2])
                     return
         self._status.setText("Ready")
+        curve = self.configurationWidget.getSpectrum(binned=True)
+        if curve not in [None, []]:
+            xValues = curve[0]
+        else:
+            xValues = None
         self.configurationWidget.setEnabled(True)
         self.configurationWidget.close()
 
@@ -265,9 +270,12 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
                                                   multiple=True)
         qt = StackPluginResultsWindow.qt
         self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
+        if xValues is not None:
+            xValues = [xValues] * nimages
         self.widget.setStackPluginResults(images,
                                           spectra=eigenVectors,
                                           image_names=imageNames,
+                                          xvalues=xValues,
                                           spectra_names=vectorNames,
                                           spectra_titles=vectorTitles)
         self._showWidget()
