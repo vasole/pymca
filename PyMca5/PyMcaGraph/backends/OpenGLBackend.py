@@ -37,19 +37,9 @@ OpenGL/Qt QGLWidget backend.
 
 # import ######################################################################
 
-try:
-    from PyMca5.PyMcaGui.PyMcaQt import pyqtSignal, QSize, Qt
-    from PyMca5.PyMcaGui.PyMcaQt import QGLWidget, QGLContext
-    from PyMca5.PyMcaGui.PyMcaQt import QCursor
-except ImportError:
-    try:
-        from PyQt4.QtCore import pyqtSignal, QSize, Qt
-        from PyQt4.QtOpenGL import QGLWidget, QGLContext
-        from PyQt4.Qt import QCursor
-    except ImportError:
-        from PyQt5.QtCore import pyqtSignal, QSize, Qt
-        from PyQt5.QtOpenGL import QGLWidget, QGLContext
-        from PyQt5.Qt import QCursor
+from PyMca5.PyMcaGui.PyMcaQt import pyqtSignal, QSize, Qt
+from PyMca5.PyMcaGui.PyMcaQt import QGLWidget, QGLContext
+from PyMca5.PyMcaGui.PyMcaQt import QCursor
 
 from ._OpenGLPlotCanvas import OpenGLPlotCanvas
 from ._OpenGLPlotCanvas import CURSOR_DEFAULT, CURSOR_POINTING, \

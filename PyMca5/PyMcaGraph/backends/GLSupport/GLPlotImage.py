@@ -281,7 +281,7 @@ class GLPlotColormap(_GLPlotData2D):
             TODO: check consistency with matplotlib
         :type cmapRange: (float, float) or None
         """
-        assert data.dtype in (np.float32, np.uint16, np.uint8)
+        assert isSupportedGLType(data.dtype)
 
         super(GLPlotColormap, self).__init__(data, xMin, xScale, yMin, yScale)
         self.colormap = colormap
@@ -349,6 +349,7 @@ class GLPlotColormap(_GLPlotData2D):
             self._cmapRange = tuple(cmapRange)
 
     def updateData(self, data):
+        assert isSupportedGLType(data.dtype)
         oldData = self.data
         self.data = data
 
@@ -589,6 +590,7 @@ class GLPlotRGBAImage(_GLPlotData2D):
         :param float yMin: Min Y coordinate of the data array
         :param float yScale: Y scale of the data array
         """
+        assert isSupportedGLType(data.dtype)
         super(GLPlotRGBAImage, self).__init__(data, xMin, xScale, yMin, yScale)
         self._textureIsDirty = False
 
@@ -602,6 +604,7 @@ class GLPlotRGBAImage(_GLPlotData2D):
         self._textureIsDirty = False
 
     def updateData(self, data):
+        assert isSupportedGLType(data.dtype)
         oldData = self.data
         self.data = data
 

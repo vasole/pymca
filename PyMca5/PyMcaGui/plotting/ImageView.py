@@ -31,7 +31,30 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-ImageView: QWidget displaying a single 2D image with histograms on its sides.
+QWidget displaying a 2D image with histograms on its sides.
+
+The :class:`ImageView` implements this widget, and
+:class:`ImageViewMainWindow` provides a main window with additional toolbar
+and status bar.
+
+Basic usage of :class:`ImageView` is through the following methods:
+
+- :meth:`ImageView.getColormap`, :meth:`ImageView.setColormap` to update the
+  default colormap to use and update the currently displayed image.
+- :meth:`ImageView.setImage` to update the displayed image.
+
+The :class:`ImageView` uses :class:`PlotWindow` and also
+exposes :class:`PyMca5.PyMcaGraph.Plot` API for further control
+(plot title, axes labels, adding other images, ...).
+
+For an example of use, see the implementation of :class:`ImageViewMainWindow`.
+
+The ImageView module can also be used to open an EDF or TIFF file
+from the shell command line.
+To view an image file:
+``python -m PyMca5.PyMcaGui.plotting.ImageView <file to open>``
+To get help:
+``python -m PyMca5.PyMcaGui.plotting.ImageView -h``
 """
 
 
@@ -45,38 +68,15 @@ try:
     from .. import PyMcaQt as qt
 except ImportError:
     from PyMca5.PyMcaGui import PyMcaQt as qt
+
 from .PyMca_Icons import IconDict
 from .ColormapDialog import ColormapDialog
+from .PlotWindow import PlotWindow
+
+from PyMca5.PyMcaGraph import Plot
 
 
 # utils #######################################################################
-
-def _getBackendClass(name=None):
-    """Return the class of backend corresponding to the name
-
-    :param str name: The name of the backend or None for default backend.
-    :return: The class of the backend
-    :rtype: Subclass of PlotBackend
-    :raises: RuntimeError if the name does not correspond to a backend.
-    """
-    if name is None:
-        name = 'mpl'
-
-    name = name.lower()
-    if name in ('mpl', 'matplotlib'):
-        from PyMca5.PyMcaGraph.backends.MatplotlibBackend import \
-            MatplotlibBackend
-        backend = MatplotlibBackend
-    elif name in ('osmesa', 'mesa'):
-        from PyMca5.PyMcaGraph.backends.OSMesaGLBackend import OSMesaGLBackend
-        backend = OSMesaGLBackend
-    elif name in ('gl', 'opengl'):
-        from PyMca5.PyMcaGraph.backends.OpenGLBackend import OpenGLBackend
-        backend = OpenGLBackend
-    else:
-        raise RuntimeError("Cannot find backend with name: %s" % name)
-
-    return backend
 
 _COLORMAP_CURSOR_COLORS = {
     'gray': 'pink',
@@ -97,112 +97,23 @@ def _cursorColorForColormap(colormapName):
     return _COLORMAP_CURSOR_COLORS.get(colormapName, 'black')
 
 
-# ColormapDialogHelper ########################################################
-
-class _ColormapDialogHelper(qt.QObject):
-    """Helper class wrapping ColormapDialog for use with ImageView."""
-
-    colormapChanged = qt.pyqtSignal(dict)
-    """Signal a change in colormap.
-
-    Provides a description of the colormap as a dict.
-    See PlotBackend.getDefaultColormap for details.
-    """
-
-    DIALOG_HISTO_NB_BINS = 50
-    """Number of bins of the histogram displayed in the colormap dialog."""
-
-    # Workaround: PlotBackend and ColormapDialog cmap names mismatch
-    # Names as used in PlotBackend in the order of colormapDialog
-    _COLORMAP_NAMES = ('gray', 'reversed gray', 'temperature',
-                       'red', 'green', 'blue', 'temperature')
-
-    def __init__(self, imageView):
-        super(_ColormapDialogHelper, self).__init__()
-        self._imageViewRef = weakref.ref(imageView)
-        self._cmapDialog = None
-
-    def _dialog(self):
-        if self._cmapDialog is None:  # Reuse same widget
-            imageView = self._imageViewRef()
-            self._cmapDialog = ColormapDialog(imageView)
-
-            # Colormap dialog is modal as we don't care about data/colormap
-            # update while the dialog is opened to simplify implementation.
-            self._cmapDialog.setModal(True)
-            self._cmapDialog.finished.connect(self._close)
-
-            # Disable gamma mapping
-            gammaBtn = self._cmapDialog.buttonGroup.button(2)
-            assert gammaBtn.text() == 'Gamma'
-            gammaBtn.setCheckable(False)
-            gammaBtn.setVisible(False)
-
-        return self._cmapDialog
-
-    def _close(self, result=0):
-        self._cmapDialog.sigColormapChanged.disconnect(self._colormapChanged)
-
-    def showDialog(self):
-        """Slot for Change colormap action."""
-        dialog = self._dialog()
-
-        imageView = self._imageViewRef()
-        assert imageView is not None
-
-        # Data dependent information
-        histogram = imageView.imageHistogram(self.DIALOG_HISTO_NB_BINS)
-        if histogram is not None:
-            counts, binEdges = histogram
-            # Bin edges to bins center (all bins have the same width)
-            bins = binEdges[:-1] + 0.5 * (binEdges[1] - binEdges[0])
-            dialog.plotHistogram((bins, counts))
-            dialog.setDataMinMax(binEdges[0], binEdges[-1])
-
-        # Set dialog colormap
-        colormap = imageView.colormap()
-
-        index = self._COLORMAP_NAMES.index(colormap['name'])
-        dialog.setColormap(index)
-
-        dialog.setMinValue(colormap['vmin'])
-        dialog.setMaxValue(colormap['vmax'])
-        dialog.setAutoscale(colormap['autoscale'])
-        dialog.setColormapType(
-            1 if colormap['normalization'].startswith('log') else 0)
-
-        # Only connect colormapChanged now, to avoid being called while
-        # setting-up the colormap dialog.
-        self._cmapDialog.sigColormapChanged.connect(self._colormapChanged)
-
-        dialog.show()
-
-    def _colormapChanged(self, info):
-        cmapIndex, autoscale, vMin, vMax, dataMin, dataMax, normIndex = info
-
-        if normIndex not in (0, 1):
-            warnings.warn('Unsupported colormap, using linear', UserWarning)
-            normIndex = 0
-
-        colormap = {
-            'name': self._COLORMAP_NAMES[cmapIndex],
-            'autoscale': autoscale,
-            'vmin': vMin,
-            'vmax': vMax,
-            'normalization': 'log' if normIndex == 1 else 'linear',
-            'colors': 256
-        }
-        self.colormapChanged.emit(colormap)
-
-
 # RadarView ###################################################################
 
 class RadarView(qt.QGraphicsView):
-    """Present a synthetic view of a 2D image and the current visible area.
+    """Widget presenting a synthetic view of a 2D area and
+    the current visible area.
 
-    Used coordinates are as in QGraphicsView: x goes from left to right and
-    y goes from top to bottom.
-    This widget preserves the aspect ratio of the data.
+    Coordinates are as in QGraphicsView:
+    x goes from left to right and y goes from top to bottom.
+    This widget preserves the aspect ratio of the areas.
+
+    The 2D area and the visible area can be set with :meth:`setDataRect`
+    and :meth:`setVisibleRect`.
+    When the visible area has been dragged by the user, its new position
+    is signaled by the *visibleRectDragged* signal.
+
+    It is possible to invert the direction of the axes by using the
+    :meth:`scale` method of QGraphicsView.
     """
 
     visibleRectDragged = qt.pyqtSignal(float, float, float, float)
@@ -318,15 +229,15 @@ class RadarView(qt.QGraphicsView):
         self.setToolTip(self._TOOLTIP)
 
     def sizeHint(self):
-        """Overridden to avoid sizeHint to depend on content size."""
+        # """Overridden to avoid sizeHint to depend on content size."""
         return self.minimumSizeHint()
 
     def wheelEvent(self, event):
-        """Overridden to disable vertical scrolling with wheel."""
+        # """Overridden to disable vertical scrolling with wheel."""
         event.ignore()
 
     def resizeEvent(self, event):
-        """Overridden to fit current content to new size."""
+        # """Overridden to fit current content to new size."""
         self.fitInView(self._scene.itemsBoundingRect(), qt.Qt.KeepAspectRatio)
         super(RadarView, self).resizeEvent(event)
 
@@ -354,15 +265,8 @@ class RadarView(qt.QGraphicsView):
 class ImageView(qt.QWidget):
     """Display a single image with horizontal and vertical histograms.
 
-    QAction available as attributes of the class:
-
-    - actionResetZoom: Displays the full image in the plot area (State-less).
-    - actionKeepDataAspectRatio: Controls image aspect ratio (Checkable).
-    - actionChangeColormap: Opens colormap chooser (State-less).
-    - actionInvertYAxis: Controls Y axis direction (Checkable).
-
-    The commands associated to those QActions are also available through
-    methods.
+    Use :meth:`setImage` to control the displayed image.
+    This class also provides the :class:`PyMca5.PyMcaGraph.Plot` API.
     """
 
     HISTOGRAMS_COLOR = 'blue'
@@ -387,38 +291,43 @@ class ImageView(qt.QWidget):
     """
 
     def __init__(self, parent=None, windowFlags=qt.Qt.Widget, backend=None):
-        self._data = None  # Store current image
+        self._imageLegend = '__ImageView__image' + str(id(self))
         self._cache = None  # Store currently visible data information
-        self._cacheHisto = None  # cache histogram for colormap dialog
         self._updatingLimits = False
 
         super(ImageView, self).__init__(parent, windowFlags)
         self.setStyleSheet('background-color: white;')
-        self._initWidgets(_getBackendClass(backend))
+        self._initWidgets(backend)
 
         # Sync PlotBackend and ImageView
-        self.setColormap(self._imagePlot.getDefaultColormap())
+        self._updateYAxisInverted()
 
-        self._initActions()
-
-    def _initWidgets(self, backendClass):
+    def _initWidgets(self, backend):
         """Set-up layout and plots."""
         # Monkey-patch for histogram size
         # alternative: create a layout that does not use widget size hints
         def sizeHint():
             return qt.QSize(self.HISTOGRAMS_HEIGHT, self.HISTOGRAMS_HEIGHT)
 
-        self._histoHPlot = backendClass()
+        self._histoHPlot = Plot.Plot(backend=backend)
         self._histoHPlot.setZoomModeEnabled(True)
         self._histoHPlot.setCallback(self._histoHPlotCB)
         self._histoHPlot.getWidgetHandle().sizeHint = sizeHint
         self._histoHPlot.getWidgetHandle().minimumSizeHint = sizeHint
 
-        self._imagePlot = backendClass()
-        self._imagePlot.setZoomModeEnabled(True)  # Color is set in setColormap
-        self._imagePlot.setCallback(self._imagePlotCB)
+        self._imagePlot = PlotWindow(backend=backend, plugins=False,
+                                     colormap=True, flip=True,
+                                     grid=False, togglePoints=False,
+                                     logx=False, logy=False,
+                                     aspect=True)
+        self._imagePlot.usePlotBackendColormap = True
 
-        self._histoVPlot = backendClass()
+        self._imagePlot.setZoomModeEnabled(True)  # Color is set in setColormap
+        self._imagePlot.sigPlotSignal.connect(self._imagePlotCB)
+        self._imagePlot.hFlipToolButton.clicked.connect(
+            self._updateYAxisInverted)
+
+        self._histoVPlot = Plot.Plot(backend=backend)
         self._histoVPlot.setZoomModeEnabled(True)
         self._histoVPlot.setCallback(self._histoVPlotCB)
         self._histoVPlot.getWidgetHandle().sizeHint = sizeHint
@@ -448,39 +357,54 @@ class ImageView(qt.QWidget):
 
         self.setLayout(layout)
 
+    def _dirtyCache(self):
+        self._cache = None
+
     def _updateHistograms(self):
-        """Update histograms content."""
-        if self._data is not None:
+        """Update histograms content using current active image."""
+        activeImage = self._imagePlot.getActiveImage()
+        if activeImage is not None:
+            data, legend, info, pixmap = activeImage
+            xScale, yScale = info['plot_xScale'], info['plot_yScale']
+            height, width = data.shape
+
             xMin, xMax = self._imagePlot.getGraphXLimits()
             yMin, yMax = self._imagePlot.getGraphYLimits()
 
-            height, width = self._data.shape
-            if (xMin <= width and xMax >= 0 and
-                    yMin <= height and yMax >= 0):
+            # Convert plot area limits to image coordinates
+            # and work in image coordinates (i.e., in pixels)
+            xMin = int((xMin - xScale[0]) / xScale[1])
+            xMax = int((xMax - xScale[0]) / xScale[1])
+            yMin = int((yMin - yScale[0]) / yScale[1])
+            yMax = int((yMax - yScale[0]) / yScale[1])
+
+            if (xMin < width and xMax >= 0 and
+                    yMin < height and yMax >= 0):
                 # The image is at least partly in the plot area
-                visibleXMin = 0 if xMin < 0 else int(xMin)
-                visibleXMax = width if xMax >= width else int(xMax + 1)
-                visibleYMin = 0 if yMin < 0 else int(yMin)
-                visibleYMax = height if yMax >= height else int(yMax + 1)
+                # Get the visible bounds in image coords (i.e., in pixels)
+                subsetXMin = 0 if xMin < 0 else xMin
+                subsetXMax = (width if xMax >= width else xMax) + 1
+                subsetYMin = 0 if yMin < 0 else yMin
+                subsetYMax = (height if yMax >= height else yMax) + 1
 
                 if (self._cache is None or
-                        visibleXMin != self._cache['visibleXMin'] or
-                        visibleXMax != self._cache['visibleXMax'] or
-                        visibleYMin != self._cache['visibleYMin'] or
-                        visibleYMax != self._cache['visibleYMax']):
+                        subsetXMin != self._cache['dataXMin'] or
+                        subsetXMax != self._cache['dataXMax'] or
+                        subsetYMin != self._cache['dataYMin'] or
+                        subsetYMax != self._cache['dataYMax']):
                     # The visible area of data has changed, update histograms
 
                     # Rebuild histograms for visible area
-                    visibleData = self._data[visibleYMin:visibleYMax,
-                                             visibleXMin:visibleXMax]
+                    visibleData = data[subsetYMin:subsetYMax,
+                                       subsetXMin:subsetXMax]
                     histoHVisibleData = np.sum(visibleData, axis=0)
                     histoVVisibleData = np.sum(visibleData, axis=1)
 
                     self._cache = {
-                        'visibleXMin': visibleXMin,
-                        'visibleXMax': visibleXMax,
-                        'visibleYMin': visibleYMin,
-                        'visibleYMax': visibleYMax,
+                        'dataXMin': subsetXMin,
+                        'dataXMax': subsetXMax,
+                        'dataYMin': subsetYMin,
+                        'dataYMax': subsetYMax,
 
                         'histoH': histoHVisibleData,
                         'histoHMin': np.min(histoHVisibleData),
@@ -492,8 +416,10 @@ class ImageView(qt.QWidget):
                     }
 
                     # Convert to histogram curve and update plots
+                    # Taking into account origin and scale
                     coords = np.arange(2 * histoHVisibleData.size)
-                    xCoords = (coords + 1) // 2 + visibleXMin
+                    xCoords = (coords + 1) // 2 + subsetXMin
+                    xCoords = xScale[0] + xScale[1] * xCoords
                     xData = np.take(histoHVisibleData, coords // 2)
                     self._histoHPlot.addCurve(xCoords, xData,
                                               replace=False, replot=False,
@@ -509,7 +435,8 @@ class ImageView(qt.QWidget):
                                                      vMax + vOffset)
 
                     coords = np.arange(2 * histoVVisibleData.size)
-                    yCoords = (coords + 1) // 2 + visibleYMin
+                    yCoords = (coords + 1) // 2 + subsetYMin
+                    yCoords = yScale[0] + yScale[1] * yCoords
                     yData = np.take(histoVVisibleData, coords // 2)
                     self._histoVPlot.addCurve(yData, yCoords,
                                               replace=False, replot=False,
@@ -524,8 +451,6 @@ class ImageView(qt.QWidget):
                     self._histoVPlot.setGraphXLimits(vMin - vOffset,
                                                      vMax + vOffset)
             else:
-                self._cache = None
-
                 self._histoHPlot.clearCurves()
                 self._histoVPlot.clearCurves()
 
@@ -536,25 +461,21 @@ class ImageView(qt.QWidget):
         """
         xMin, xMax = self._imagePlot.getGraphXLimits()
         yMin, yMax = self._imagePlot.getGraphYLimits()
-
-        if self.isYAxisInverted():
-            top = yMin
-        elif self._data is not None:
-            top = self._data.shape[0] - yMax
-        else:
-            top = 0
-        self._radarView.setVisibleRect(xMin, top, xMax - xMin, yMax - yMin)
+        self._radarView.setVisibleRect(xMin, yMin, xMax - xMin, yMax - yMin)
 
     # Plots event listeners
+
     def _imagePlotCB(self, eventDict):
         """Callback for imageView plot events."""
         if eventDict['event'] == 'mouseMoved':
-            if self._data is not None:
-                height, width = self._data.shape
+            activeImage = self._imagePlot.getActiveImage()
+            if activeImage is not None:
+                data = activeImage[0]
+                height, width = data.shape
                 x, y = int(eventDict['x']), int(eventDict['y'])
                 if x >= 0 and x < width and y >= 0 and y < height:
                     self.valueChanged.emit(float(x), float(y),
-                                           self._data[y][x])
+                                           data[y][x])
         elif eventDict['event'] == 'limitsChanged':
             # Do not handle histograms limitsChanged while
             # updating their limits from here.
@@ -583,13 +504,17 @@ class ImageView(qt.QWidget):
         """Callback for horizontal histogram plot events."""
         if eventDict['event'] == 'mouseMoved':
             if self._cache is not None:
-                minValue = self._cache['visibleXMin']
-                data = self._cache['histoH']
-                width = data.shape[0]
-                x = int(eventDict['x'])
-                if x >= minValue and x < minValue + width:
-                    self.valueChanged.emit(float('nan'), float(x),
-                                           data[x - minValue])
+                activeImage = self._imagePlot.getActiveImage()
+                if activeImage is not None:
+                    xOrigin, xScaleFactor = activeImage[2]['plot_xScale']
+
+                    minValue = xOrigin + xScaleFactor * self._cache['dataXMin']
+                    data = self._cache['histoH']
+                    width = data.shape[0]
+                    x = int(eventDict['x'])
+                    if x >= minValue and x < minValue + width:
+                        self.valueChanged.emit(float('nan'), float(x),
+                                               data[x - minValue])
         elif eventDict['event'] == 'limitsChanged':
             if (not self._updatingLimits and
                     eventDict['xdata'] != self._imagePlot.getGraphXLimits()):
@@ -601,13 +526,17 @@ class ImageView(qt.QWidget):
         """Callback for vertical histogram plot events."""
         if eventDict['event'] == 'mouseMoved':
             if self._cache is not None:
-                minValue = self._cache['visibleYMin']
-                data = self._cache['histoV']
-                height = data.shape[0]
-                y = int(eventDict['y'])
-                if y >= minValue and y < minValue + height:
-                    self.valueChanged.emit(float(y), float('nan'),
-                                           data[y - minValue])
+                activeImage = self._imagePlot.getActiveImage()
+                if activeImage is not None:
+                    yOrigin, yScaleFactor = activeImage[2]['plot_yScale']
+
+                    minValue = yOrigin + yScaleFactor * self._cache['dataYMin']
+                    data = self._cache['histoV']
+                    height = data.shape[0]
+                    y = int(eventDict['y'])
+                    if y >= minValue and y < minValue + height:
+                        self.valueChanged.emit(float(y), float('nan'),
+                                               data[y - minValue])
         elif eventDict['event'] == 'limitsChanged':
             if (not self._updatingLimits and
                     eventDict['ydata'] != self._imagePlot.getGraphYLimits()):
@@ -619,146 +548,143 @@ class ImageView(qt.QWidget):
         """Slot for radar view visible rectangle changes."""
         if not self._updatingLimits:
             # Takes care of Y axis conversion
-            if self.isYAxisInverted():
-                yMin = top
-                yMax = yMin + height
-            else:
-                yMax = self._data.shape[0] - top
-                yMin = yMax - height
-            self._imagePlot.setLimits(left, left + width, yMin, yMax)
+            self._imagePlot.setLimits(left, left + width, top, top + height)
             self._imagePlot.replot()
 
-    # Actions
-    def _setYAxisInverted(self, inverted):
+    def _updateYAxisInverted(self):
+        """Sync image, vertical histogram and radar view axis orientation."""
+        inverted = self._imagePlot.isYAxisInverted()
+
         self._imagePlot.invertYAxis(inverted)
         self._histoVPlot.invertYAxis(inverted)
+
+        # Use scale to invert radarView
+        # RadarView default Y direction is from top to bottom
+        # As opposed to Plot. So invert RadarView when Plot is NOT inverted.
+        self._radarView.resetTransform()
+        if not inverted:
+            self._radarView.scale(1., -1.)
         self._updateRadarView()
 
         self._imagePlot.replot()
         self._histoVPlot.replot()
         self._radarView.update()
 
-    def _setKeepDataAspectRatio(self, keepRatio):
-        iconName = 'solidcircle' if keepRatio else 'solidellipse'
-        self.actionKeepDataAspectRatio.setIcon(
-            qt.QIcon(qt.QPixmap(IconDict[iconName])))
+    def updateActiveImageColormap(self, colormap, replot=True):
+        pass
 
-    def _initActions(self):
-        # Reset zoom
-        self.actionResetZoom = qt.QAction(
-            qt.QIcon(qt.QPixmap(IconDict['zoomreset'])),
-            'Reset Zoom (Ctrl-0)',
-            self,
-            triggered=self.resetZoom)
-        self.actionResetZoom.setShortcut('Ctrl+0')
+    # PlotWindow toolbar
 
-        # keep data aspect ratio
-        self.actionKeepDataAspectRatio = qt.QAction(
-            qt.QIcon(qt.QPixmap(IconDict['solidellipse'])),
-            'Keep data aspect ratio',
-            self,
-            toggled=self._imagePlot.keepDataAspectRatio)
-        # No need to ask for replot here
-        # No need to sync histogram limits, this is automatic
-        # Change icon
-        self.actionKeepDataAspectRatio.toggled.connect(
-            self._setKeepDataAspectRatio)
-        self.actionKeepDataAspectRatio.setCheckable(True)
-        self.actionKeepDataAspectRatio.setChecked(
-            self._imagePlot.isKeepDataAspectRatio())
+    def toolBar(self):
+        """Returns the tool bar associated with the image plot.
 
-        # Change colormap
-        cmapDialog = _ColormapDialogHelper(self)
-        cmapDialog.colormapChanged.connect(self.setColormap)
+        This is the toolBar provided by :class:`PlotWindow`.
 
-        self.actionChangeColormap = qt.QAction(
-            qt.QIcon(qt.QPixmap(IconDict['colormap'])),
-            'Change colormap',
-            self,
-            triggered=cmapDialog.showDialog)
-        self.actionChangeColormap._cmapDialog = cmapDialog  # Store a ref
-
-        # Invert Y axis
-        self.actionInvertYAxis = qt.QAction(
-            qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"])),
-            'Flip Horizontal',
-            self,
-            toggled=self._setYAxisInverted)
-        self.actionInvertYAxis.setCheckable(True)
-        self.actionInvertYAxis.setChecked(self._imagePlot.isYAxisInverted())
-
-    # API
-    def resetZoom(self):
-        # Triggers limitsChanges which update histograms
-        self._imagePlot.resetZoom()
-
-    def isKeepDataAspectRatio(self):
-        return self.actionKeepDataAspectRatio.isChecked()
-
-    def setKeepDataAspectRatio(self, keepRatio):
-        self.actionKeepDataAspectRatio.setChecked(keepRatio)
-
-    def isYAxisInverted(self):
-        return self.actionInvertYAxis.isChecked()
-
-    def setYAxisInverted(self, inverted):
-        self.actionInvertYAxis.setChecked(inverted)
-
-    # Colormap API
-    def colormap(self):
-        """Get the current colormap description.
-
-        :return: A dict (See PlotBackend getDefaultColormap for details).
+        :return: The toolBar associated to the image plot.
+        :rtype: QToolBar
         """
-        return self._colormap.copy()
+        return self._imagePlot.toolBar
+
+    # High-level API
+
+    def getColormap(self):
+        """Get the default colormap description.
+
+        :return: A description of the current colormap.
+                 See :meth:`setColormap` for details.
+        :rtype: dict
+        """
+        return self._imagePlot.getDefaultColormap()
 
     def setColormap(self, colormap):
-        """Set the current colormap.
+        """Set the default colormap and update active image.
 
-        :param dict colormap: colormap description
-                              (See PlotBackend.getDefaultColormap for details).
+        A colormap is a dictionnary with the following keys:
+
+        - *name*: string. The colormap to use:
+          'gray', 'reversed gray', 'temperature', 'red', 'green', 'blue'.
+        - *normalization*: string. The mapping to use for the colormap:
+          either 'linear' or 'log'.
+        - *autoscale*: bool. Whether to use autoscale (True)
+          or range provided by keys 'vmin' and 'vmax' (False).
+        - *vmin*: float. The minimum value of the range to use if 'autoscale'
+          is False.
+        - *vmax*: float. The maximum value of the range to use if 'autoscale'
+          is False.
+
+        :param dict colormap: The description of the colormap to use.
         """
         if colormap is None:
             colormap = self._imagePlot.getDefaultColormap()
+        else:
+            colormap = colormap.copy()
+
         assert colormap['name'] in self._imagePlot.getSupportedColormaps()
-        self._colormap = colormap.copy()
+
+        if 'colors' not in colormap:
+            colormap['colors'] = 256
 
         cursorColor = _cursorColorForColormap(colormap['name'])
         self._imagePlot.setZoomModeEnabled(True, color=cursorColor)
 
-        if self._data is not None:  # Force refresh
-            self._imagePlot.addImage(self._data, legend='image',
-                                     replace=False, replot=False,
-                                     colormap=self.colormap())
+        self._imagePlot.setDefaultColormap(colormap)
+
+        activeImage = self._imagePlot.getActiveImage()
+        if activeImage is not None:  # Refresh image with new colormap
+            data, legend, info, pixmap = activeImage
+
+            self._imagePlot.addImage(data, legend=legend, info=info,
+                                     replace=False, replot=False)
             self._imagePlot.replot()
 
-    # Image API
-    def setImage(self, image, copy=True, reset=True):
+    def setImage(self, image, origin=(0, 0), scale=(1., 1.),
+                 copy=True, reset=True):
         """Set the image to display.
 
         :param image: A 2D array representing the image or None to empty plot.
         :type image: numpy.ndarray-like with 2 dimensions or None.
+        :param origin: The (x, y) position of the origin of the image.
+                       Default: (0, 0).
+                       The origin is the lower left corner of the image when
+                       the Y axis is not inverted.
+        :type origin: Tuple of 2 floats: (origin x, origin y).
+        :param scale: The scale factor to apply to the image on X and Y axes.
+                      Default: (1, 1).
+                      It is the size of a pixel in the coordinates of the axes.
+                      Scales must be positive numbers.
+        :type scale: Tuple of 2 floats: (scale x, scale y).
         :param bool copy: Whether to copy image data (default) or not.
         :param bool reset: Whether to reset zoom and ROI (default) or not.
         """
-        self._cache = None
-        self._cacheHisto = None
+        self._dirtyCache()
+
+        assert len(origin) == 2
+        assert len(scale) == 2
+        assert scale[0] > 0
+        assert scale[1] > 0
 
         if image is None:
-            self._data = None
+            self._imagePlot.removeImage(self._imageLegend, replot=False)
             return
 
-        self._data = np.array(image, order='C', copy=copy)
-        assert self._data.size != 0
-        assert len(self._data.shape) == 2
-        height, width = self._data.shape
+        data = np.array(image, order='C', copy=copy)
+        assert data.size != 0
+        assert len(data.shape) == 2
+        height, width = data.shape
 
-        self._imagePlot.addImage(self._data, legend='image',
-                                 replace=False, replot=False,
-                                 colormap=self.colormap())
+        self._imagePlot.addImage(data,
+                                 legend=self._imageLegend,
+                                 xScale=(origin[0], scale[0]),
+                                 yScale=(origin[1], scale[1]),
+                                 replace=False,
+                                 replot=False)
+        self._imagePlot.setActiveImage(self._imageLegend)
         self._updateHistograms()
 
-        self._radarView.setDataRect(0, 0, width, height)
+        self._radarView.setDataRect(origin[0],
+                                    origin[1],
+                                    width * scale[0],
+                                    height * scale[1])
 
         if reset:
             self.resetZoom()
@@ -767,21 +693,79 @@ class ImageView(qt.QWidget):
             self._histoVPlot.replot()
             self._imagePlot.replot()
 
-    def imageHistogram(self, bins):
-        """Calls numpy.histogram on the current image.
+    ####################
+    # Plot API proxies #
+    ####################
 
-        Intended for ColormapDialog histogram.
+    # Rebuild side histograms if active image gets changed through the Plot API
 
-        :param bins: See numpy.histogram for more details.
-        :return: None if no image is set or the histogram of the image.
-        :rtype: None or 2 arrays: counts and binEdges.
-        """
-        if self._data is not None:
-            if self._cacheHisto is None or self._cacheHisto[0] != bins:
-                self._cacheHisto = bins, np.histogram(self._data, bins)
-            return self._cacheHisto[1]
-        else:
-            return None
+    def addImage(self, data, legend=None, info=None,
+                 replace=True, replot=True,
+                 xScale=None, yScale=None, z=0,
+                 selectable=False, draggable=False,
+                 colormap=None, **kw):
+        if legend == self._imagePlot.getActiveImage(just_legend=True):
+            # Updating active image, resets side histograms cache
+            self._dirtyCache()
+
+        result = self._imagePlot.addImage(data, legend, info, replace, replot,
+                                          xScale, yScale, z,
+                                          selectable, draggable,
+                                          colormap, **kw)
+        self._updateHistograms()
+
+        if replot:
+            self._histoHPlot.replot()
+            self._histoVPlot.replot()
+
+        return result
+
+    def clear(self):
+        self._dirtyCache()
+        return self._imagePlot.clear()
+
+    def clearImages(self):
+        self._dirtyCache()
+        return self._imagePlot.clearImages()
+
+    def removeImage(self, legend, replot=True):
+        if legend == self._imagePlot.getActiveImage(just_legend=True):
+            # Removing active image, resets side histograms cache
+            self._dirtyCache()
+
+        result = self._imageView.removeImage(legend, replot)
+        self._updateHistograms()
+
+        if replot:
+            self._histoHPlot.replot()
+            self._histoVPlot.replot()
+
+        return result
+
+    def setActiveImage(self, legend, replot=True):
+        # Active image changes, resets side histogram cache
+        self._dirtyCache()
+
+        result = self._imagePlot.setActiveImage(legend, replot)
+        self._updateHistograms()
+
+        if replot:
+            self._histoHPlot.replot()
+            self._histoVPlot.replot()
+        return result
+
+    # Invert axes
+
+    def invertYAxis(self, flag=True):
+        result = self._imagePlot.invertYAxis(flag)
+        self._updateYAxisInverted()  # To sync vert. histo and radar view
+        return result
+
+    # Ugly yet simple proxy for the Plot API
+
+    def __getattr__(self, name):
+        """Proxy to expose image plot API."""
+        return getattr(self._imagePlot, name)
 
 
 # ImageViewMainWindow #########################################################
@@ -796,17 +780,19 @@ class ImageViewMainWindow(qt.QMainWindow):
         self._dataInfo = None
         super(ImageViewMainWindow, self).__init__(parent, windowFlags)
 
+        # Create the ImageView widget and add it to the QMainWindow
         self.imageView = ImageView(backend=backend)
+        self.imageView.setGraphXLabel('X')
+        self.imageView.setGraphYLabel('Y')
+        self.imageView.setGraphTitle('Image')
         self.setCentralWidget(self.imageView)
 
-        toolbar = qt.QToolBar('Image View')
-        toolbar.addAction(self.imageView.actionResetZoom)
-        toolbar.addAction(self.imageView.actionKeepDataAspectRatio)
-        toolbar.addAction(self.imageView.actionChangeColormap)
-        toolbar.addAction(self.imageView.actionInvertYAxis)
-        self.addToolBar(toolbar)
+        # Using PlotWindow's toolbar
+        self.addToolBar(self.imageView.toolBar())
 
         self.statusBar()
+
+        # Connect to ImageView's signal
         self.imageView.valueChanged.connect(self._statusBarSlot)
 
     def _statusBarSlot(self, row, column, value):
@@ -824,6 +810,10 @@ class ImageViewMainWindow(qt.QMainWindow):
         self.statusBar().showMessage(msg)
 
     def setImage(self, image, *args, **kwargs):
+        """Set the displayed image.
+
+        See :meth:`ImageView.setImage` for details.
+        """
         if hasattr(image, 'dtype') and hasattr(image, 'shape'):
             assert len(image.shape) == 2
             height, width = image.shape
@@ -833,7 +823,9 @@ class ImageViewMainWindow(qt.QMainWindow):
         else:
             self._dataInfo = None
 
+        # Set the new image in ImageView widget
         self.imageView.setImage(image, *args, **kwargs)
+        self.setStatusBar(None)
 
 
 # main ########################################################################
@@ -856,6 +848,16 @@ if __name__ == "__main__":
         OpenGL 2.1 (opengl, requires appropriate OpenGL drivers) or
         Off-screen Mesa OpenGL software pipeline (osmesa,
         requires appropriate OSMesa library).""")
+    parser.add_argument(
+        '-o', '--origin', nargs=2,
+        type=float, default=(0., 0.),
+        help="""Coordinates of the origin of the image: (x, y).
+        Default: 0., 0.""")
+    parser.add_argument(
+        '-s', '--scale', nargs=2,
+        type=float, default=(1., 1.),
+        help="""Scale factors applied to the image: (sx, sy).
+        Default: 1., 1.""")
     parser.add_argument('filename', help='EDF filename of the image to open')
     args = parser.parse_args()
 
@@ -873,9 +875,12 @@ if __name__ == "__main__":
     app = qt.QApplication([])
 
     mainWindow = ImageViewMainWindow(backend=args.backend)
-    mainWindow.setImage(edfFile.GetData(0))
+    mainWindow.setImage(edfFile.GetData(0),
+                        origin=args.origin,
+                        scale=args.scale)
 
-    if nbFrames > 1:  # Add a toolbar for multi-frame EDF support
+    if nbFrames > 1:
+        # Add a toolbar for multi-frame EDF support
         multiFrameToolbar = qt.QToolBar('Multi-frame')
         multiFrameToolbar.addWidget(qt.QLabel(
             'Frame [0-%d]:' % (nbFrames - 1)))
@@ -884,7 +889,10 @@ if __name__ == "__main__":
         spinBox.setRange(0, nbFrames-1)
 
         def updateImage(index):
-            mainWindow.setImage(edfFile.GetData(index), reset=False)
+            mainWindow.setImage(edfFile.GetData(index),
+                                origin=args.origin,
+                                scale=args.scale,
+                                reset=False)
         spinBox.valueChanged[int].connect(updateImage)
         multiFrameToolbar.addWidget(spinBox)
 

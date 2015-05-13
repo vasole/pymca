@@ -616,6 +616,7 @@ class PlotBackend(object):
         """
         Remove the curve associated to the supplied legend from the graph.
         The graph will be updated if replot is true.
+
         :param legend: The legend associated to the curve to be deleted
         :type legend: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
@@ -628,6 +629,7 @@ class PlotBackend(object):
         """
         Remove the image associated to the supplied legend from the graph.
         The graph will be updated if replot is true.
+
         :param legend: The legend associated to the image to be deleted
         :type legend: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
@@ -644,6 +646,7 @@ class PlotBackend(object):
         """
         Remove the marker associated to the supplied handle from the graph.
         The graph will be updated if replot is true.
+
         :param label: The handle/label associated to the curve to be deleted
         :type label: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
@@ -677,6 +680,7 @@ class PlotBackend(object):
     def setActiveCurve(self, legend, replot=True):
         """
         Make the curve identified by the supplied legend active curve.
+
         :param legend: The legend associated to the curve
         :type legend: string
         :param replot: Flag to indicate plot is to be immediately updated
@@ -691,6 +695,7 @@ class PlotBackend(object):
     def setActiveImage(self, legend, replot=True):
         """
         Make the image identified by the supplied legend active.
+
         :param legend: The legend associated to the image
         :type legend: string
         :param replot: Flag to indicate plot is to be immediately updated
