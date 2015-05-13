@@ -266,7 +266,7 @@ class ImageView(qt.QWidget):
     """Display a single image with horizontal and vertical histograms.
 
     Use :meth:`setImage` to control the displayed image.
-    Control of the plot is available through the API and through QActions.
+    This class also provides the :class:`PyMca5.PyMcaGraph.Plot` API.
     """
 
     HISTOGRAMS_COLOR = 'blue'
