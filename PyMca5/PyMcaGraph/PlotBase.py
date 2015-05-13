@@ -38,21 +38,22 @@ defined in this class.
 That way the plot will respect the Plot backend interface besides additional
 methods:
 The plugins will be compatible with any plot window that provides the methods:
-    getActiveCurve
-    getActiveImage
-    getAllCurves
-    getCurve
-    getImage
-    getMonotonicCurves
-    hideCurve
-    hideImage
-    isActiveCurveHandlingEnabled
-    isCurveHidden
-    isImageHidden
-    printGraph
-    setActiveCurve
-    showCurve
-    showImage
+
+- getActiveCurve
+- getActiveImage
+- getAllCurves
+- getCurve
+- getImage
+- getMonotonicCurves
+- hideCurve
+- hideImage
+- isActiveCurveHandlingEnabled
+- isCurveHidden
+- isImageHidden
+- printGraph
+- setActiveCurve
+- showCurve
+- showImage
 
 The simplest way to achieve that is to inherit from Plot
 """
@@ -170,6 +171,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         """
         Convenience method that calls getAllCurves and makes sure that all of
         the X values are strictly increasing.
+
         :return: It returns a list of the form:
                 [[xvalues0, yvalues0, legend0, dict0],
                  [xvalues1, yvalues1, legend1, dict1],
@@ -199,6 +201,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         Remove the curve associated to the legend form the graph.
         It is still kept in the list of curves.
         The graph will be updated if replot is true.
+
         :param legend: The legend associated to the curve to be hidden
         :type legend: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
@@ -212,6 +215,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         Remove the image associated to the supplied legend from the graph.
         I is still kept in the list of curves.
         The graph will be updated if replot is true.
+
         :param legend: The legend associated to the image to be hidden
         :type legend: string or handle
         :param replot: Flag to indicate plot is to be immediately updated
@@ -254,6 +258,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
         """
         Funtion to request the plot window to set the curve with the specified legend
         as the active curve.
+
         :param legend: The legend associated to the curve
         :type legend: string
         """
@@ -263,6 +268,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
     def showCurve(self, legend, replot=True):
         """
         Show the curve associated to the legend in the graph.
+
         :param legend: The legend associated to the curve
         :type legend: string
         :param replot: Flag to indicate plot is to be immediately updated
@@ -274,6 +280,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
     def showImage(self, legend, replot=True):
         """
         Show the image associated to the legend in the graph.
+
         :param legend: The legend associated to the image
         :type legend: string
         :param replot: Flag to indicate plot is to be immediately updated
