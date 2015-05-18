@@ -637,12 +637,21 @@ class PlotWindow(PlotWidget.PlotWidget):
         if image is None:
             return
         image, legend, info, pixmap = image[:4]
+        if (pixmap is None) and (info["plot_colormap"] is None):
+            print("No colormap to be handled")
+            return
+        elif info["plot_colormap"] is not None:
+            print("backend colormap handling not implemented yet")
+            #TODO: Configure (and eventually create) dialog to reflect the backend parameters
+            return
 
         # image contains the data and pixmap contains its representation
         if self.colormapDialog is None:
             self._initColormapDialog(image)
         self.colormapDialog.show()
 
+    #TODO: initColormapDialog needs two arguments imageData and colormap
+    #      with colormap default parameters set to None
     def _initColormapDialog(self, imageData):
         if not COLORMAP_DIALOG:
             raise ImportError("ColormapDialog could not be imported")
@@ -684,7 +693,8 @@ class PlotWindow(PlotWidget.PlotWidget):
     def updateActiveImageColormap(self, colormap, replot=True):
         if len(colormap) == 1:
             colormap = colormap[0]
-
+        # TODO: Once everything is ready to work with dict instead of
+        # list, we can remove this translation
         index, autoscale, vMin, vMax, dataMin, dataMax, cmapType = colormap
         # Warning, gamma cmapType is not supported in plot backend
         # Here it is silently replaced by linear as the default colormap
@@ -705,11 +715,14 @@ class PlotWindow(PlotWidget.PlotWidget):
                 self.colormapDialog.hide()
             return
         image, legend, info, pixmap = image[:4]
-
         if self.usePlotBackendColormap:
             self.addImage(image, legend=legend, info=info,
                           colormap=plotBackendColormap, replot=replot)
         else:
+            if pixmap is None:
+                if self.colormapDialog is not None:
+                     self.colormapDialog.hide()
+                return
             pixmap = MaskImageTools.getPixmapFromData(image, colormap)
             self.addImage(image, legend=legend, info=info,
                           pixmap=pixmap, replot=replot)
