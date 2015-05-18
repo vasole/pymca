@@ -51,7 +51,8 @@ from OpenGL.GL import *  # noqa
 
 # Extentions core in OpenGL 3
 from OpenGL.GL.ARB.framebuffer_object import *  # noqa
-from OpenGL.GL.ARB.texture_rg import GL_R32F, GL_R16, GL_R8  # noqa
+from OpenGL.GL.ARB.texture_rg import GL_R32F, GL_R16F
+from OpenGL.GL.ARB.texture_rg import GL_R16, GL_R8
 
 # PyOpenGL 3.0.1 does not define it
 try:
@@ -84,6 +85,8 @@ def testGL():
 
 _GL_TYPE_SIZES = {
     GL_FLOAT: 4,
+    GL_BYTE: 1,
+    GL_SHORT: 2,
     GL_INT: 4,
     GL_UNSIGNED_BYTE: 1,
     GL_UNSIGNED_SHORT: 2,
@@ -98,6 +101,8 @@ def sizeofGLType(type_):
 
 _TYPE_CONVERTER = {
     np.dtype(np.float32): GL_FLOAT,
+    np.dtype(np.int8): GL_BYTE,
+    np.dtype(np.int16): GL_SHORT,
     np.dtype(np.int32): GL_INT,
     np.dtype(np.uint8): GL_UNSIGNED_BYTE,
     np.dtype(np.uint16): GL_UNSIGNED_SHORT,

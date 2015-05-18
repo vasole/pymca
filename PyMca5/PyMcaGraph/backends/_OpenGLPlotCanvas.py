@@ -1334,15 +1334,19 @@ class OpenGLPlotCanvas(PlotBackend):
         if yScale is None:
             yScale = (0, 1)
 
-        if data.dtype == np.float64:
-            warnings.warn("addImage: Convert float64 data to float32",
-                          RuntimeWarning)
-            data = np.array(data, dtype=np.float32, order='C')
-        else:
-            # Ensure array is contiguous
-            data = np.array(data, copy=False, order='C')
-
         if len(data.shape) == 2:
+            # Ensure array is contiguous and eventually convert its type
+            if data.dtype in (np.float64, np.float128):
+                warnings.warn(
+                    'addImage: Convert %s data to float32' % str(data.dtype),
+                    RuntimeWarning)
+                data = np.array(data, dtype=np.float32, order='C')
+            elif data.dtype == np.float16:
+                data = np.array(data, dtype=np.float32, order='C')
+            else:
+                data = np.array(data, copy=False, order='C')
+            assert data.dtype in (np.float32, np.uint8, np.uint16)
+
             if colormap is None:
                 colormap = self.getDefaultColormap()
 
@@ -1388,6 +1392,7 @@ class OpenGLPlotCanvas(PlotBackend):
         elif len(data.shape) == 3:
             # For RGB, RGBA data
             assert data.shape[2] in (3, 4)
+            assert data.dtype in (np.float32, np.uint8)
 
             if oldImage is not None:
                 image = oldImage
