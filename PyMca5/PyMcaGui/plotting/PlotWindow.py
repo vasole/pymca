@@ -83,6 +83,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         self._keepDataAspectRatioFlag = False
         self.gridLevel = 0
         self.legendWidget = None
+        self.usePlotBackendColormap = False  # Toggle usage of backend colormap
         self.setCallback(self.graphCallback)
         if control or position:
             self._buildGraphBottomWidget(control, position)
@@ -641,9 +642,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             return
         elif info["plot_colormap"] is not None:
             print("backend colormap handling not implemented yet")
-            return
-        elif pixmap is None:
-            print("Cannot know if original data were data or pixmap")
+            #TODO: Configure (and eventually create) dialog to reflect the backend parameters
             return
 
         # image contains the data and pixmap contains its representation
@@ -651,6 +650,8 @@ class PlotWindow(PlotWidget.PlotWidget):
             self._initColormapDialog(image)
         self.colormapDialog.show()
 
+    #TODO: initColormapDialog needs two arguments imageData and colormap
+    #      with colormap default parameters set to None
     def _initColormapDialog(self, imageData):
         if not COLORMAP_DIALOG:
             raise ImportError("ColormapDialog could not be imported")
@@ -684,22 +685,47 @@ class PlotWindow(PlotWidget.PlotWidget):
                     self.updateActiveImageColormap)
         self.colormapDialog._update()
 
+    # Workaround: PlotBackend and ColormapDialog cmap names mismatch
+    # Dict of names as used in PlotBackend in the order of colormapDialog
+    _COLORMAP_NAMES = ('gray', 'reversed gray', 'temperature',
+                       'red', 'green', 'blue', 'temperature')
+
     def updateActiveImageColormap(self, colormap, replot=True):
         if len(colormap) == 1:
             colormap = colormap[0]
+        # TODO: Once everything is ready to work with dict instead of
+        # list, we can remove this translation
+        index, autoscale, vMin, vMax, dataMin, dataMax, cmapType = colormap
+        # Warning, gamma cmapType is not supported in plot backend
+        # Here it is silently replaced by linear as the default colormap
+        plotBackendColormap = {
+            'name': self._COLORMAP_NAMES[index],
+            'autoscale': autoscale,
+            'vmin': vMin,
+            'vmax': vMax,
+            'normalization': 'log' if cmapType == 1 else 'linear',
+            'colors': 256
+        }
+
+        self.setDefaultColormap(plotBackendColormap)
+
         image = self.getActiveImage()
         if image is None:
             if self.colormapDialog is not None:
                 self.colormapDialog.hide()
             return
         image, legend, info, pixmap = image[:4]
-        if pixmap is None:
-            if self.colormapDialog is not None:
-                self.colormapDialog.hide()
-            return    
-        pixmap = MaskImageTools.getPixmapFromData(image, colormap)
-        self.addImage(image, legend=legend, info=info,
-                      pixmap=pixmap, replot=replot)
+        if self.usePlotBackendColormap:
+            self.addImage(image, legend=legend, info=info,
+                          colormap=plotBackendColormap, replot=replot)
+        else:
+            if pixmap is None:
+                if self.colormapDialog is not None:
+                     self.colormapDialog.hide()
+                return
+            pixmap = MaskImageTools.getPixmapFromData(image, colormap)
+            self.addImage(image, legend=legend, info=info,
+                          pixmap=pixmap, replot=replot)
 
     def _normalIconSignal(self):
         if DEBUG:
