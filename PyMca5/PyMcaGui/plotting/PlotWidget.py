@@ -67,6 +67,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
 
     def __init__(self, parent=None, backend=None,
                          legends=False, callback=None, **kw):
+        self._panWithArrowKeys = False
         QtGui.QMainWindow.__init__(self, parent)
         Plot.Plot.__init__(self, parent, backend=backend)
         if parent is not None:
@@ -245,6 +246,58 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             finally:
                 painter.end()
 
+    # Panning with arrow keys
+
+    def isPanWithArrowKeys(self):
+        """Returns whether or not panning the graph with arrow keys is enable.
+
+        See :meth:`setPanWithArrowKeys`.
+        """
+        return self._panWithArrowKeys
+
+    def setPanWithArrowKeys(self, pan=False):
+        """Enable/Disable panning the graph with arrow keys.
+
+        This grabs the keyboard.
+
+        :param bool pan: True to enable panning, False to disable.
+        """
+        self._panWithArrowKeys = bool(pan)
+        if not self._panWithArrowKeys:
+            self.setFocusPolicy(QtCore.Qt.NoFocus)
+        else:
+            self.setFocusPolicy(QtCore.Qt.StrongFocus)
+            self.setFocus(QtCore.Qt.OtherFocusReason)
+
+    def focusInEvent(self, event):
+        if self._panWithArrowKeys:
+            self.grabKeyboard()
+
+    def focusOutEvent(self, event):
+        self.releaseKeyboard()
+
+    # Dict to convert Qt arrow key code to direction str.
+    _ARROWS_TO_PAN_DIRECTION = {
+        QtCore.Qt.Key_Left: 'left',
+        QtCore.Qt.Key_Right: 'right',
+        QtCore.Qt.Key_Up: 'up',
+        QtCore.Qt.Key_Down: 'down'
+    }
+
+    def keyPressEvent(self, event):
+        """Key event handler handling panning on arrow keys.
+
+        Overrides base class implementation.
+        """
+        key = event.key()
+        if self._panWithArrowKeys and key in self._ARROWS_TO_PAN_DIRECTION:
+            self.pan(self._ARROWS_TO_PAN_DIRECTION[key], factor=0.1)
+        else:
+            # Only call base class implementation when key is not handled.
+            # See QWidget.keyPressEvent for details.
+            super(PlotWidget, self).keyPressEvent(event)
+
+
 if __name__ == "__main__":
     import time
     backend = None
@@ -272,6 +325,7 @@ if __name__ == "__main__":
     y = x * x
     app = QtGui.QApplication([])
     plot = PlotWidget(None, backend=backend, legends=True)
+    plot.setPanWithArrowKeys(True)
     plot.show()
     if 1:
         plot.addCurve(x, y, "dummy")

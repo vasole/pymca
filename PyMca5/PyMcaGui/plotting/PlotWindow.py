@@ -1583,6 +1583,7 @@ if __name__ == "__main__":
         backend = "pyqtgraph"
     plot = PlotWindow(backend=backend, roi=True, control=True,
                           position=True, colormap=True)#uselegendmenu=True)
+    plot.setPanWithArrowKeys(True)
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)

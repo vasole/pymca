@@ -225,6 +225,7 @@ class RadarView(qt.QGraphicsView):
         super(RadarView, self).__init__(self._scene, parent)
         self.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
+        self.setFocusPolicy(qt.Qt.NoFocus)
         self.setStyleSheet('border: 0px')
         self.setToolTip(self._TOOLTIP)
 
@@ -302,6 +303,9 @@ class ImageView(qt.QWidget):
         # Sync PlotBackend and ImageView
         self._updateYAxisInverted()
 
+        # Set-up focus proxy to handle arrow key event
+        self.setFocusProxy(self._imagePlot)
+
     def _initWidgets(self, backend):
         """Set-up layout and plots."""
         # Monkey-patch for histogram size
@@ -321,6 +325,7 @@ class ImageView(qt.QWidget):
                                      logx=False, logy=False,
                                      aspect=True)
         self._imagePlot.usePlotBackendColormap = True
+        self._imagePlot.setPanWithArrowKeys(True)
 
         self._imagePlot.setZoomModeEnabled(True)  # Color is set in setColormap
         self._imagePlot.sigPlotSignal.connect(self._imagePlotCB)
@@ -337,7 +342,7 @@ class ImageView(qt.QWidget):
         self._radarView.visibleRectDragged.connect(self._radarViewCB)
 
         layout = qt.QGridLayout()
-        layout.addWidget(self._imagePlot.getWidgetHandle(), 0, 0)
+        layout.addWidget(self._imagePlot, 0, 0)
         layout.addWidget(self._histoVPlot.getWidgetHandle(), 0, 1)
         layout.addWidget(self._histoHPlot.getWidgetHandle(), 1, 0)
         layout.addWidget(self._radarView, 1, 1)
@@ -569,9 +574,6 @@ class ImageView(qt.QWidget):
         self._imagePlot.replot()
         self._histoVPlot.replot()
         self._radarView.update()
-
-    def updateActiveImageColormap(self, colormap, replot=True):
-        pass
 
     # PlotWindow toolbar
 
