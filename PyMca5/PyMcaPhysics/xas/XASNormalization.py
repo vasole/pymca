@@ -73,7 +73,7 @@ def modifiedVictoreenDerivative(parameter_list, parameter_index, x):
     else:
         return numpy.ones(x.shape, dtype=numpy.float)
 
-def estimateXANESEdge(spectrum, energy=None, full=False):
+def estimateXANESEdge(spectrum, energy=None, npoints=7, full=False):
     if energy is None:
         x = numpy.arange(len(spectrum)).astype(numpy.float)
     else:
@@ -97,9 +97,6 @@ def estimateXANESEdge(spectrum, energy=None, full=False):
         y = numpy.take(y, idx)
         delta = None
 
-    sortedX = x
-    sortedY = y
-
     # use a regularly spaced spectrum
     if dmax != dmin:
         # choose the number of points or deduce it from
@@ -113,8 +110,12 @@ def estimateXANESEdge(spectrum, energy=None, full=False):
         x.shape = -1
         y.shape = -1
 
+    # Sorted and regularly spaced values
+    sortedX = x
+    sortedY = y
+
     # take the first derivative
-    npoints = 7
+    # npoints = 7
     xPrime = x[npoints:-npoints]
     yPrime = SGModule.getSavitzkyGolay(y, npoints=npoints, degree=2, order=1)
 
