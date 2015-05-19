@@ -634,6 +634,7 @@ class ImageView(qt.QWidget):
             data, legend, info, pixmap = activeImage
 
             self._imagePlot.addImage(data, legend=legend, info=info,
+                                     colormap=self.getColormap(),
                                      replace=False, replot=False)
             self._imagePlot.replot()
 
@@ -676,6 +677,7 @@ class ImageView(qt.QWidget):
                                  legend=self._imageLegend,
                                  xScale=(origin[0], scale[0]),
                                  yScale=(origin[1], scale[1]),
+                                 colormap=self.getColormap(),
                                  replace=False,
                                  replot=False)
         self._imagePlot.setActiveImage(self._imageLegend)
