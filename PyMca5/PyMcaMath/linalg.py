@@ -392,7 +392,7 @@ def test1():
 def test2():
     import time
     try:
-        from PyMca5 import Gefit
+        from PyMca5.PyMca import Gefit
         GEFIT = True
         def f(p, x):
             return p[1] * x + p[0]
@@ -411,7 +411,7 @@ def test2():
     sigmay =  numpy.ones((data.shape[0], 1000), numpy.float) * data[:, 2:3]
     parameters, uncertainties = lstsq(A, y, #sigma_b=sigmay, #sigma_b=numpy.ones(sigmay.shape),
                                       uncertainties=True, weight=False)
-    print("Elapsed = %f" % (time.time() - t0))
+    print("Elapsed Module = %f" % (time.time() - t0))
     print("Parameters    = %f, %f" % (parameters[0,100], parameters[1, 100]))
     print("Uncertainties = %f, %f" % (uncertainties[0,100], uncertainties[1, 100]))
     if GEFIT:
@@ -423,7 +423,7 @@ def test2():
                                                 sigmadata=data[:,2],
                                                 weightflag=0,
                                                 linear=1)
-        print("Elapsed = %f" % (time.time() - t0))
+        print("Elapsed Gefit = %f" % (time.time() - t0))
         print("Gefit results:")
         print("Parameters    = %f, %f" % (parameters[0], parameters[1]))
         print("Uncertainties = %f, %f" % (uncertainties[0], uncertainties[1]))
@@ -437,16 +437,18 @@ def test2():
     #parameters, uncertainties = lstsq(A, data[:, 1], sigma_b=data[:,2],
     parameters, uncertainties = lstsq(A, y, sigma_b=numpy.outer(data[:,2], numpy.ones((1000, 1))),
                                       uncertainties=True, weight=True)
-    print("Elapsed = %f" % (time.time() - t0))
+    print("Elapsed Module = %f" % (time.time() - t0))
     print("Parameters    = %f, %f" % (parameters[0, 100], parameters[1, 100]))
     print("Uncertainties = %f, %f" % (uncertainties[0, 100], uncertainties[1, 100]))
     if GEFIT:
+        t0 = time.time()
         parameters, chisq, uncertainties = Gefit.LeastSquaresFit(f, [0.0, 0.0],
                                                 xdata=data[:,0],
                                                 ydata=data[:,1],
                                                 sigmadata=data[:,2],
                                                 weightflag=1,
                                                 linear=1)
+        print("Elapsed Gefit = %f" % (time.time() - t0))
         print("Gefit results:")
         print("Parameters    = %f, %f" % (parameters[0], parameters[1]))
         print("Uncertainties = %f, %f" % (uncertainties[0], uncertainties[1]))
