@@ -29,7 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
-
+import numpy
 from . import PlotWidget
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from .PyMca_Icons import IconDict
@@ -38,6 +38,30 @@ from PyMca5.PyMcaCore import PyMcaDirs
 
 QTVERSION = qt.qVersion()
 DEBUG = 0
+
+def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
+    if xScale is None:
+        c = x
+    else:
+        if x < xScale[0]:
+            x = xScale[0]
+        c = (x - xScale[0]) / xScale[1]
+    if yScale is None:
+        r = y
+    else:
+        if y < yScale[0]:
+            y = yScale[0]
+        r = ( y - yScale[0]) / yScale[1]
+
+    if safe:
+        c = min(int(c), shape[1] - 1)
+        c = max(c, 0)
+        r = min(int(r), shape[0] - 1)
+        r = max(r, 0)
+    else:
+        c = int(c)
+        r = int(r)
+    return r, c
 
 class RGBCorrelatorGraph(qt.QWidget):
     sigProfileSignal = qt.pyqtSignal(object)
@@ -601,11 +625,41 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def saveGraphImage(self, filename, original = False):
         format_ = filename[-3:].upper()
+        #This is the whole image, not the zoomed one ...
+        rgbData, legend, info, pixmap = self.graph.getActiveImage()
         if original:
-            #This is the whole image, not the zoomed one ...
-            pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+            # save whole image
+            bgrData = numpy.array(rgbData, copy=True)
+            bgrData[:,:,0] = rgbData[:, :, 2]
+            bgrData[:,:,2] = rgbData[:, :, 0]
         else:
-            pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
+            xScale = info.get("plot_xScale", None)
+            yScale = info.get("plot_yScale", None)
+            shape = rgbData.shape[:2]
+            xmin, xmax = self.graph.getGraphXLimits()
+            ymin, ymax = self.graph.getGraphYLimits()
+            # save zoomed image, for that we have to get the limits
+            r0, c0 = convertToRowAndColumn(xmin, ymin, shape, xScale=xScale, yScale=yScale, safe=True)
+            r1, c1 = convertToRowAndColumn(xmax, ymax, shape, xScale=xScale, yScale=yScale, safe=True)
+            row0 = int(min(r0, r1))
+            row1 = int(max(r0, r1))
+            col0 = int(min(c0, c1))
+            col1 = int(max(c0, c1))
+            if row1 < shape[0]:
+                row1 += 1
+            if col1 < shape[1]:
+                col1 += 1
+            tmpArray = rgbData[row0:row1, col0:col1, :]
+            bgrData = numpy.array(tmpArray, copy=True, dtype=rgbData.dtype)
+            bgrData[:,:,0] = tmpArray[:, :, 2]
+            bgrData[:,:,2] = tmpArray[:, :, 0]
+        if self.graph.isYAxisInverted():
+            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
+                                   qt.QImage.Format_RGB32)
+        else:
+            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
+                                   qt.QImage.Format_RGB32).mirrored(False, True)
+        pixmap = qt.QPixmap.fromImage(qImage)
         if pixmap.save(filename, format_):
             return
         else:
