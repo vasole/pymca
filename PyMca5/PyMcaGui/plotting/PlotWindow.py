@@ -908,9 +908,21 @@ class PlotWindow(PlotWidget.PlotWidget):
             methods = self.pluginInstanceDict[m].getMethods(plottype=self._plotType)
             if not len(methods):
                 continue
-            menu.addAction(text)
+            elif len(methods) == 1:
+                pixmap = self.pluginInstanceDict[m].getMethodPixmap(methods[0])
+                tip = QString(self.pluginInstanceDict[m].getMethodToolTip(methods[0]))
+                if pixmap is not None:
+                    action = qt.QAction(qt.QIcon(qt.QPixmap(pixmap)), text, self)
+                else:
+                    action = qt.QAction(text, self)
+                if tip is not None:
+                    action.setToolTip(tip)
+                menu.addAction(action)
+            else:
+                menu.addAction(text)
             actionList.append(text)
             callableKeys.append(m)
+        menu.hovered.connect(self._actionHovered)
         a = menu.exec_(qt.QCursor.pos())
         if a is None:
             return None
@@ -985,6 +997,12 @@ class PlotWindow(PlotWidget.PlotWidget):
         tip = action.toolTip()
         if str(tip) != str(action.text()):
             qt.QToolTip.showText(qt.QCursor.pos(), tip)
+        else:
+            # hideText was introduced in Qt 4.2
+            if hasattr(qt.QToolTip, "hideText"):
+                qt.QToolTip.hideText()
+            else:
+                qt.QToolTip.showText(qt.QCursor.pos(), "")
 
     ########### ROI HANDLING ###############
     def graphCallback(self, ddict=None):
