@@ -464,7 +464,9 @@ class Plot(PlotBase.PlotBase):
             linestyle = info.get("plot_linestyle", linestyle)
 
         if self._plotLines and (received_linestyle is None):
-            if linestyle in [None, " ", ""]:
+            if (color is None) and (linestyle is None):
+                color, linestyle = self._getColorAndStyle()
+            elif linestyle in [None, " ", ""]:
                 linestyle = '-'
         elif received_linestyle is None:
             linestyle = ' '
