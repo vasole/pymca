@@ -849,7 +849,7 @@ class MaskImageWidget(qt.QWidget):
                 print("Mode %s not supported yet" % ddict['mode'])
             return
 
-        self.__lastOverlayWidth = width
+        self.__lastOverlayWidth = ddict['pixelwidth']
         info = {}
         info['xlabel'] = xLabel
         info['ylabel'] = "Z"
