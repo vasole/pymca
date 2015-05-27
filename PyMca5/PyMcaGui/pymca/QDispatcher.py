@@ -98,90 +98,126 @@ class QDispatcher(qt.QWidget):
 
         if event is None:
             event = "addSelection"
+        i = 0
+        indices = []
+        index = []
+        affectedSources = []
         for sel in sel_list:
-            #The dispatcher should be a singleton to work properly
-            #implement a patch
-            targetwidgetid = sel.get('targetwidgetid', None)
-            if targetwidgetid not in [None, id(self)]:
-                continue
-            #find the source
-            sourcelist = sel['SourceName']
+            sourceName = sel['SourceName']
+            if not len(affectedSources):
+                index += [i]
+            elif sourceName == affectedSources[-1]:
+                index += [i]
+            else:
+                indices.append(index)
+                affectedSources.append(sourceName)
+                index = [i]
+            i += 1
+        indices.append(index)
+        affectedSources.append(sourceName)
+
+        affectedSourceIndex = -1
+        for affectedSource in affectedSources:
+            affectedSourceIndex += 1
+            selectionList = []
+            lastEvent = None
             for source in self.sourceList:
-                selectionList = []
-                if source.sourceName == sourcelist:
-                    ddict = {}
-                    ddict.update(sel)
-                    ddict["event"]  = event
-                    #we have found the source
-                    #this recovers the data and the info
-                    if True:
-                        #this creates a data object that is passed to everybody so
-                        #there is only one read out.
-                        #I should create a weakref to it in order to be informed
-                        #about its deletion.
-                        if source.sourceType != "SPS":
-                            if DEBUG:
-                                dataObject = source.getDataObject(sel['Key'],
-                                                      selection=sel['selection'])
-                            else:
-                                try:
+                if source.sourceName == affectedSource:
+                    for selIndex in indices[affectedSourceIndex]:
+                        sel = sel_list[selIndex]
+                        #The dispatcher should be a singleton to work properly
+                        #implement a patch to make sure it is the targeted widget
+                        targetwidgetid = sel.get('targetwidgetid', None)
+                        if targetwidgetid not in [None, id(self)]:
+                            continue
+                        ddict = {}
+                        ddict.update(sel)
+                        ddict["event"]  = event
+                        if lastEvent is None:
+                            lastEvent = event
+                        #we have found the source
+                        #this recovers the data and the info
+                        if True:
+                            #this creates a data object that is passed to everybody so
+                            #there is only one read out.
+                            #I should create a weakref to it in order to be informed
+                            #about its deletion.
+                            if source.sourceType != "SPS":
+                                if DEBUG:
                                     dataObject = source.getDataObject(sel['Key'],
                                                           selection=sel['selection'])
-                                except:
-                                    error = sys.exc_info()
-                                    text = "Failed to read data source.\n"
-                                    text += "Source: %s\n" % source.sourceName
-                                    text += "Key: %s\n"  % sel['Key']
-                                    text += "Error: %s" % error[1]
-                                    if QTVERSION < '4.0.0':
-                                        qt.QMessageBox.critical(self,
-                                                                "%s" % error[0],
-                                                                text)
-                                    else:
-                                        msg = qt.QMessageBox(self)
-                                        msg.setWindowTitle('Source Error')
-                                        msg.setIcon(qt.QMessageBox.Critical)
-                                        msg.setInformativeText(text)
-                                        msg.setDetailedText(\
-                                            traceback.format_exc())
-                                    continue
-                        else:
-                            dataObject = source.getDataObject(sel['Key'],
-                                                      selection=sel['selection'],
-                                                      poll=False)
-                            if dataObject is not None:
-                                dataObject.info['legend'] = sel['legend']
-                                dataObject.info['targetwidgetid'] = targetwidgetid
-                                source.addToPoller(dataObject)
+                                else:
+                                    try:
+                                        dataObject = source.getDataObject(sel['Key'],
+                                                              selection=sel['selection'])
+                                    except:
+                                        error = sys.exc_info()
+                                        text = "Failed to read data source.\n"
+                                        text += "Source: %s\n" % source.sourceName
+                                        text += "Key: %s\n"  % sel['Key']
+                                        text += "Error: %s" % error[1]
+                                        if QTVERSION < '4.0.0':
+                                            qt.QMessageBox.critical(self,
+                                                                    "%s" % error[0],
+                                                                    text)
+                                        else:
+                                            msg = qt.QMessageBox(self)
+                                            msg.setWindowTitle('Source Error')
+                                            msg.setIcon(qt.QMessageBox.Critical)
+                                            msg.setInformativeText(text)
+                                            msg.setDetailedText(\
+                                                traceback.format_exc())
+                                        continue
                             else:
-                                #this may happen on deletion??
-                                return
-                            if sel['Key'] == "SCAN_D":
-                                # I have to inform the widget about any possible
-                                # change in the associated environment
-                                #print source.sourceType
-                                #print source.sourceName
-                                #print sel['Key']
-                                #print self.selectorWidget[source.sourceType] 
-                                pass                               
-                             
-                        ddict['dataobject'] = dataObject
-                        selectionList.append(ddict)
-                    else:
-                        #this creates a weak reference to the source object
-                        #the clients will be able to retrieve the data
-                        #the problem is that 10 clients will requiere
-                        #10 read outs
-                        ddict["sourcereference"] = weakref.ref(source)
-                        selectionList.append(ddict)
-                    if event.lower() == "addselection":
-                        self.sigAddSelection.emit(selectionList)
-                    elif event.lower() == "replaceselection":
-                        self.sigReplaceSelection.emit(selectionList)
-                    elif event.lower() == "removeselection":
-                        self.sigRemoveSelection.emit(selectionList)
-                    else:
-                        print("Unhandled dispatcher event = ", event)
+                                dataObject = source.getDataObject(sel['Key'],
+                                                          selection=sel['selection'],
+                                                          poll=False)
+                                if dataObject is not None:
+                                    dataObject.info['legend'] = sel['legend']
+                                    dataObject.info['targetwidgetid'] = targetwidgetid
+                                    source.addToPoller(dataObject)
+                                else:
+                                    #this may happen on deletion??
+                                    return
+                                if sel['Key'] == "SCAN_D":
+                                    # I have to inform the widget about any possible
+                                    # change in the associated environment
+                                    #print source.sourceType
+                                    #print source.sourceName
+                                    #print sel['Key']
+                                    #print self.selectorWidget[source.sourceType]
+                                    pass
+
+                            ddict['dataobject'] = dataObject
+                            selectionList.append(ddict)
+                        else:
+                            #this creates a weak reference to the source object
+                            #the clients will be able to retrieve the data
+                            #the problem is that 10 clients will requiere
+                            #10 read outs
+                            ddict["sourcereference"] = weakref.ref(source)
+                            selectionList.append(ddict)
+                        if lastEvent != event:
+                            if event.lower() == "addselection":
+                                self.sigAddSelection.emit(selectionList)
+                                selectionList = []
+                            elif event.lower() == "replaceselection":
+                                self.sigReplaceSelection.emit(selectionList)
+                                selectionList = []
+                            elif event.lower() == "removeselection":
+                                self.sigRemoveSelection.emit(selectionList)
+                                selectionList = []
+                            else:
+                                print("Unhandled dispatcher event = ", event)
+                                del selectionList[-1]
+            if len(selectionList):
+                if event.lower() == "addselection":
+                    self.sigAddSelection.emit(selectionList)
+                elif event.lower() == "replaceselection":
+                    self.sigReplaceSelection.emit(selectionList)
+                elif event.lower() == "removeselection":
+                    self.sigRemoveSelection.emit(selectionList)
+            lastEvent = None
 
     def _removeSelectionSlot(self, sel_list):
         if DEBUG:

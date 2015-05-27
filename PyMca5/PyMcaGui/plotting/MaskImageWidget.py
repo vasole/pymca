@@ -37,6 +37,7 @@ from . import _ImageProfile
 qt = RGBCorrelatorGraph.qt
 
 IconDict = RGBCorrelatorGraph.IconDict
+convertToRowAndColumn = RGBCorrelatorGraph.convertToRowAndColumn
 QTVERSION = qt.qVersion()
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -63,32 +64,7 @@ DEFAULT_COLORMAP_INDEX = 2
 DEFAULT_COLORMAP_LOG_FLAG = False
 DEBUG = 0
 
-
 USE_PICKER = False
-
-def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
-    if xScale is None:
-        c = x
-    else:
-        if x < xScale[0]:
-            x = xScale[0]
-        c = (x - xScale[0]) / xScale[1]
-    if yScale is None:
-        r = y
-    else:
-        if y < yScale[0]:
-            y = yScale[0]
-        r = ( y - yScale[0]) / yScale[1]
-
-    if safe:
-        c = min(int(c), shape[1] - 1)
-        c = max(c, 0)
-        r = min(int(r), shape[0] - 1)
-        r = max(r, 0)
-    else:
-        c = int(c)
-        r = int(r)
-    return r, c
 
 class MaskImageWidget(qt.QWidget):
     sigMaskImageWidgetSignal = qt.pyqtSignal(object)
@@ -848,7 +824,7 @@ class MaskImageWidget(qt.QWidget):
                 print("Mode %s not supported yet" % ddict['mode'])
             return
 
-        self.__lastOverlayWidth = width
+        self.__lastOverlayWidth = ddict['pixelwidth']
         info = {}
         info['xlabel'] = xLabel
         info['ylabel'] = "Z"

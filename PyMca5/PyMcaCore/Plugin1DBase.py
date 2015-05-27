@@ -88,7 +88,7 @@ shifting the curves.
         def getMethodToolTip(self, methodName):
             if methodName != "Shift":
                 raise InvalidArgument("Method %s not valid" % methodName)
-            return "Subtract minimum and shift up by 100"
+            return "Subtract minimum, normalize to maximum, and shift up by 0.1"
 
         def applyMethod(self, methodName):
             if methodName != "Shift":
@@ -101,7 +101,7 @@ shifting the curves.
                 if delta < 1.0e-15:
                     delta = 1.0
                 y = (y - y.min())/delta + i * increment
-                if i == len(allCurves):
+                if i == (len(allCurves) - 1):
                     replot = True
                 else:
                     replot = False

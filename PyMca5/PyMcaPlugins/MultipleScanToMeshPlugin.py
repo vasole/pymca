@@ -189,10 +189,13 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
         # create the meshgrid
         xx, yy = numpy.meshgrid(grid0, grid1)
 
-        # get the interpolated values
-        zz = griddata(xData, yData, zData, xx, yy)
-
         if 0:
+            # get the interpolated values
+            try:
+                zz = griddata(xData, yData, zData, xx, yy)
+            except RuntimeError:
+                zz = griddata(xData, yData, zData, xx, yy, interp='linear')
+
             # show them
             if self._rixsWidget is None:
                 self._rixsWidget = MaskImageWidget.MaskImageWidget(\
@@ -211,21 +214,29 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
             xx, yy = numpy.meshgrid(grid0, grid3)
 
             # get the interpolated values
-            zz = griddata(xData, etData, zData, xx, yy)
+            try:
+                zz = griddata(xData, etData, zData, xx, yy)
+            except RuntimeError:
+                # Natural neighbor interpolation not always possible
+                zz = griddata(xData, etData, zData, xx, yy, interp='linear')
 
             if self._rixsWidget is None:
                 self._rixsWidget = MaskImageWidget.MaskImageWidget(\
                                             imageicons=False,
                                             selection=False,
+                                            aspect=True,
                                             profileselection=True,
                                             scanwindow=self)
                 self._rixsWidget.setLineProjectionMode('X')
             #actualMax = zData.max()
             #actualMin = zData.min()
             #zz = numpy.where(numpy.isfinite(zz), zz, actualMax)
+            shape = zz.shape
+            xScale = (xx.min(), (xx.max() - xx.min())/float(zz.shape[1]))
+            yScale = (yy.min(), (yy.max() - yy.min())/float(zz.shape[0]))
             self._rixsWidget.setImageData(zz,
-                                          xScale=(xx.min(), xx.max()),
-                                          yScale=(yy.min(), yy.max()))
+                                          xScale=xScale,
+                                          yScale=yScale)
             self._rixsWidget.setXLabel("Incident Energy (eV)")
             self._rixsWidget.setYLabel("Energy Transfer (eV)")
             self._rixsWidget.show()
