@@ -33,6 +33,7 @@ import numpy
 from PyMca5.PyMcaGraph.ctools import pnpoly
 from . import RGBCorrelatorGraph
 from . import ColormapDialog
+from . import _ImageProfile
 qt = RGBCorrelatorGraph.qt
 
 IconDict = RGBCorrelatorGraph.IconDict
@@ -568,7 +569,7 @@ class MaskImageWidget(qt.QWidget):
                                          replot=True)
             xdata  = numpy.arange(shape[0]).astype(numpy.float)
             if self._yScale is not None:
-                xdata = self._yScale[0] + xdata * (self._yScale[1] - self._yScale[0]) / float(shape[0])
+                xdata = self._yScale[0] + xdata * self._yScale[1]
         elif ddict['mode'].upper() in ["LINE"]:
             if len(ddict['column']) == 1:
                 #only one point given
@@ -2227,7 +2228,7 @@ def test():
         data = numpy.arange(400 * 400).astype(numpy.int32)
         data.shape = 200, 800
         #data = numpy.eye(200)
-        container.setImageData(data, xScale=(1000.0, 1.0), yScale=(0., 1.))
+        container.setImageData(data, xScale=(1000.0, 1.0), yScale=(1000., 1.))
         mask = (data*0).astype(numpy.uint8)
         n, m = data.shape
         mask[ n/4:n/4+n/8, m/4:m/4+m/8] = 1
