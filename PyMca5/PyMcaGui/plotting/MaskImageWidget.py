@@ -33,7 +33,6 @@ import numpy
 from PyMca5.PyMcaGraph.ctools import pnpoly
 from . import RGBCorrelatorGraph
 from . import ColormapDialog
-from . import _ImageProfile
 qt = RGBCorrelatorGraph.qt
 
 IconDict = RGBCorrelatorGraph.IconDict
