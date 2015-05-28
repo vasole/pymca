@@ -1300,7 +1300,7 @@ class McaWindow(ScanWindow.ScanWindow):
             return
 
         #get active curve
-        x, y, info = self.getDataAndInfoFromLegend(legend)
+        x, y, legend, info = self.getActiveCurve()
         if info is None:
             return
 
