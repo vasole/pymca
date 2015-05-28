@@ -579,7 +579,6 @@ class MaskImageWidget(qt.QWidget):
                 return
 
             if width < 0:  # width = pixelwidth - 1
-                # TODO check ordering of point 0 and 1
                 x = numpy.zeros((npoints, 2), numpy.float)
                 x[:, 0] = numpy.linspace(row0, row1, npoints)
                 x[:, 1] = numpy.linspace(col0, col1, npoints)
