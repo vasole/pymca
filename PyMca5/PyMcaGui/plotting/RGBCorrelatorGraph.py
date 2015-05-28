@@ -283,8 +283,9 @@ class RGBCorrelatorGraph(qt.QWidget):
                 self._pickerSelectionWidthLabel.setText("W:")
                 self.toolBar.layout().addWidget(self._pickerSelectionWidthLabel)
                 self._pickerSelectionWidthValue = qt.QSpinBox(self.toolBar)
-                self._pickerSelectionWidthValue.setMinimum(1)
+                self._pickerSelectionWidthValue.setMinimum(0)
                 self._pickerSelectionWidthValue.setMaximum(1000)
+                self._pickerSelectionWidthValue.setValue(1)
                 self.toolBar.layout().addWidget(self._pickerSelectionWidthValue)
                 #tb = self._addToolButton(None,
                 #                     self._lineProfileClicked,
