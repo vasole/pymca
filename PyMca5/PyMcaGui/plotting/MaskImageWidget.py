@@ -559,15 +559,19 @@ class MaskImageWidget(qt.QWidget):
             row0, row1 = [int(x) for x in ddict['row']]
             deltaCol = abs(col0 - col1)
             deltaRow = abs(row0 - row1)
-            if self.__lineProjectionMode == 'D':
-                if deltaCol >= deltaRow:
-                    npoints = deltaCol + 1
-                else:
-                    npoints = deltaRow + 1
-            elif self.__lineProjectionMode == 'X':
+
+            if self.__lineProjectionMode == 'X' or (
+                    self.__lineProjectionMode == 'D' and deltaCol >= deltaRow):
                 npoints = deltaCol + 1
-            else:
+                if col1 < col0:
+                    # Invert start and end points
+                    row0, col0, row1, col1 = row1, col1, row0, col0
+            else:  #  mode == 'Y' or (mode == 'D' and deltaCol < deltaRow)
                 npoints = deltaRow + 1
+                if row1 < row0:
+                    # Invert start and end points
+                    row0, col0, row1, col1 = row1, col1, row0, col0
+
             if npoints == 1:
                 #all points are the same
                 if DEBUG:
