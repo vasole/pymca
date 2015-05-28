@@ -58,7 +58,7 @@ def _clamp(value, min_, max_):
 def plotToImage(x, y, origin=(0, 0), scale=(1, 1), shape=None):
     """Convert a position from plot to image coordinates.
 
-    If shape is not None, the returned position is cliped to the image bounds.
+    If shape is not None, return the position clipped to the image bounds.
 
     :param float x: X coordinate in plot.
     :param float y: Y coordinate in plot.
@@ -78,6 +78,25 @@ def plotToImage(x, y, origin=(0, 0), scale=(1, 1), shape=None):
         col = max(min(col, shape[1] - 1), 0)
         row = max(min(row, shape[0] - 1), 0)
     return row, col
+
+
+def imageToPlot(row, col, origin=(0., 0.), scale=(1., 1.)):
+    """Convert a position from image to plot coordinates.
+
+    :param row: Row coordinate(s) in image.
+    :type row: int or numpy.ndarray
+    :param col: Column coordinate(s) in image.
+    :type col: int or numpy.ndarray
+    :param origin: Origin of the image in the plot.
+    :type origin: 2-tuple of float: (ox, oy).
+    :param scale: Scale of the image in the plot.
+    :type scale: 2-tuple of float: (sx, sy).
+    :return: Position in the image.
+    :rtype: 2-tuple of float or numpy.ndarray: (x, y).
+    """
+    x = origin[0] + col * scale[0]
+    y = origin[1] + row * scale[1]
+    return x, y
 
 
 # profiles ####################################################################
@@ -171,18 +190,32 @@ def getAlignedROIProfileCurve(image, roiCenter, roiWidth, roiRange, axis):
             'roiPolygonCols': roiPolygonCols}
 
 
-def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth, nPoints):
+def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
+                            lineProjectionMode):
     """Returns the profile values and the polygon in the given ROI.
 
     Works in image coordinates.
 
     See :func:`getAlignedROIProfileCurve`.
-
-    :param int nPoints: The number of evenly spaced points to get
-                        along the line.
     """
     row0, col0 = roiStart
     row1, col1 = roiEnd
+
+    deltaRow = abs(row1 - row0)
+    deltaCol = abs(col1 - col0)
+
+    if (lineProjectionMode == 'X' or
+            (lineProjectionMode == 'D' and deltaCol >= deltaRow)):
+        nPoints = deltaCol + 1
+        coordsRange = col0, col1
+    else:  # 'Y' or ('D' and deltaCol < deltaRow)
+        nPoints = deltaRow + 1
+        coordsRange = row0, row1
+
+    if nPoints == 1:  # all points are the same
+        if DEBUG:
+            print("START AND END POINT ARE THE SAME!!")
+        return None
 
     # the coordinates of the reference points
     x0 = numpy.arange(image.shape[0], dtype=numpy.float)
@@ -195,8 +228,8 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth, nPoints):
         # perform the interpolation
         ydata = SpecfitFuns.interpol((x0, y0), image, x)
 
-        roiPolygonCols = col0, col1
-        roiPolygonRows = row0, row1
+        roiPolygonCols = numpy.array((col0, col1), dtype=numpy.float)
+        roiPolygonRows = numpy.array((row0, row1), dtype=numpy.float)
 
     else:
         # find m and b in the line y = mx + b
@@ -306,7 +339,7 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth, nPoints):
         roiPolygonCols, roiPolygonRows = colLimits0, rowLimits0
 
     return {'profileValues': ydata,
-            'profileCoordsRange': (0, len(ydata) - 1),
+            'profileCoordsRange': coordsRange,
             'roiPolygonCols': roiPolygonCols,
             'roiPolygonRows': roiPolygonRows}
 
@@ -367,7 +400,6 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
                               effective ROI in plot coordinates.
     :rtype: dict
     """
-    # TODO: return ROI polygon
     assert lineProjectionMode in ('D', 'X', 'Y')
 
     if image is None:
@@ -387,8 +419,6 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
                                            roiRange=(row0, row1),
                                            roiWidth=roiWidth,
                                            axis=1)
-        values = result['profileValues']
-        coordsRange = result['profileCoordsRange']
 
     elif row0 == row1:  # Horizontal line
         if lineProjectionMode not in ('D', 'X'):
@@ -399,33 +429,16 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
                                            roiRange=(col0, col1),
                                            roiWidth=roiWidth,
                                            axis=0)
-        values = result['profileValues']
-        coordsRange = result['profileCoordsRange']
 
     else:
-        deltaRow = abs(row1 - row0)
-        deltaCol = abs(col1 - col0)
-
-        if (lineProjectionMode == 'X' or
-                (lineProjectionMode == 'D' and deltaCol >= deltaRow)):
-            nPoints = deltaCol + 1
-            coordsRange = col0, col1
-        else:  # 'Y' or ('D' and deltaCol < deltaRow)
-            nPoints = deltaRow + 1
-            coordsRange = row0, row1
-
-        if nPoints == 1:  # all points are the same
-            if DEBUG:
-                print("START AND END POINT ARE THE SAME!!")
-            return None
-
         result = _getROILineProfileCurve(image,
                                          (row0, col0), (row1, col1),
-                                         roiWidth, nPoints)
-        if result is None:
-            return None
+                                         roiWidth, lineProjectionMode)
 
-        values = result['profileValues']
+    if result is None:
+        return None
+
+    values = result['profileValues']
 
     # Generates profile coordinates
     if lineProjectionMode == 'D':
@@ -443,7 +456,7 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
         # Profile coordinates are returned in plot coords
 
         # Build coords in image frame
-        start, end = coordsRange
+        start, end = result['profileCoordsRange']
         step = 1 if start <= end else -1  # In case profile is inverted
         coords = numpy.arange(start, end + step, step, dtype=numpy.float)
 
@@ -456,4 +469,12 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
             if origin[1] != 0. or scale[1] != 1.:
                 coords = origin[1] + coords * scale[1]
 
-    return coords, values
+    roiPolygonX, roiPolygonY = imageToPlot(result['roiPolygonRows'],
+                                           result['roiPolygonCols'])
+
+    return {'profileValues': values,
+            'profileCoords': coords,
+            'roiPolygonCols': result['roiPolygonCols'],
+            'roiPolygonRows': result['roiPolygonRows'],
+            'roiPolygonX': roiPolygonX,
+            'roiPolygonY': roiPolygonY}
