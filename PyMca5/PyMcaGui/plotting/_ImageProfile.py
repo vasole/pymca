@@ -415,13 +415,11 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
         if col1 < col0:
             # Invert end points to have increasing coords on X axis
             row0, col0, row1, col1 = row1, col1, row0, col0
-        coordsRange = col0, col1
 
     else:  # i.e., 'Y' or ('D' and abs(col1 - col0) < abs(row1 - row0))
         if row1 < row0:
             # Invert end points to have increasing coords on Y axis
             row0, col0, row1, col1 = row1, col1, row0, col0
-        coordsRange = row0, row1
 
     if col0 == col1:  # Vertical line
         if lineProjectionMode not in ('D', 'Y'):
