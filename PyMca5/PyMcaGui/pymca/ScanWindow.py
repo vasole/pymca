@@ -101,6 +101,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                          position=position,
                                          **kw)
         #self._togglePointsSignal()
+        self.setPanWithArrowKeys(True)
         self.setWindowType("SCAN")
         # this two objects are the same
         self.dataObjectsList = self._curveList
@@ -134,6 +135,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                        self._toggleInfoWidget)
             controlMenu.addAction(QString("Toggle Crosshair"),
                                        self.toggleCrosshairCursor)
+            controlMenu.addAction(QString("Toggle Arrow Keys Panning"),
+                                       self.toggleArrowKeysPanning)
             self.setControlMenu(controlMenu)
         else:
             self.scanWindowInfoWidget = None
@@ -160,7 +163,6 @@ class ScanWindow(PlotWindow.PlotWindow):
                                    self._simpleFitSignal)
             self.fitButtonMenu.addAction(QString("Customized Fit") ,
                                    self._customFitSignal)
-
 
     def _toggleInfoWidget(self):
         if self.infoDockWidget.isHidden():

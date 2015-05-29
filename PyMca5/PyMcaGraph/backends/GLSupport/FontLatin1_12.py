@@ -46,7 +46,7 @@ from .GLTexture import Texture2D
 
 minChar = 0
 maxChar = 255
-cExtent, rExtent = 1 / 16., 1 / 12.
+cExtent, rExtent = 1.001 / 16., 1.001 / 12.
 cWidth, cHeight = 8, 15
 bearingY = 11
 

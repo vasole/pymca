@@ -255,6 +255,13 @@ class GLPlotColormap(_GLPlotData2D):
 
     _DATA_TEX_UNIT = 0
 
+    _INTERNAL_FORMATS = {
+        np.dtype(np.float32): GL_R32F,
+        # Use normalized integer for unsigned int formats
+        np.dtype(np.uint16): GL_R16,
+        np.dtype(np.uint8): GL_R8,
+    }
+
     _linearProgram = GLProgram(_SHADERS['linear']['vertex'],
                                _SHADERS['fragment'] %
                                _SHADERS['linear']['fragTransform'])
@@ -281,7 +288,7 @@ class GLPlotColormap(_GLPlotData2D):
             TODO: check consistency with matplotlib
         :type cmapRange: (float, float) or None
         """
-        assert isSupportedGLType(data.dtype)
+        assert data.dtype in self._INTERNAL_FORMATS
 
         super(GLPlotColormap, self).__init__(data, xMin, xScale, yMin, yScale)
         self.colormap = colormap
@@ -349,7 +356,7 @@ class GLPlotColormap(_GLPlotData2D):
             self._cmapRange = tuple(cmapRange)
 
     def updateData(self, data):
-        assert isSupportedGLType(data.dtype)
+        assert data.dtype in self._INTERNAL_FORMATS
         oldData = self.data
         self.data = data
 
@@ -361,13 +368,6 @@ class GLPlotColormap(_GLPlotData2D):
                 self.discard()
             else:
                 self._textureIsDirty = True
-
-    _INTERNAL_FORMATS = {
-        np.dtype(np.float32): GL_R32F,
-        # Use normalized integer for unsigned int formats
-        np.dtype(np.uint16): GL_R16,
-        np.dtype(np.uint8): GL_R8
-    }
 
     def prepare(self):
         if not hasattr(self, '_texture'):
@@ -574,6 +574,8 @@ class GLPlotRGBAImage(_GLPlotData2D):
 
     _DATA_TEX_UNIT = 0
 
+    _SUPPORTED_DTYPES = (np.dtype(np.float32), np.dtype(np.uint8))
+
     _linearProgram = GLProgram(_SHADERS['linear']['vertex'],
                                _SHADERS['linear']['fragment'])
 
@@ -584,13 +586,14 @@ class GLPlotRGBAImage(_GLPlotData2D):
         """Create a 2D RGB(A) image from data
 
         :param data: The 2D image data array to display
-        :type data: numpy.ndarray with 3 dimensions (dtype=numpy.float32)
+        :type data: numpy.ndarray with 3 dimensions
+                    (dtype=numpy.uint8 or numpy.float32)
         :param float xMin: Min X coordinate of the data array
         :param float xScale: X scale of the data array
         :param float yMin: Min Y coordinate of the data array
         :param float yScale: Y scale of the data array
         """
-        assert isSupportedGLType(data.dtype)
+        assert data.dtype in self._SUPPORTED_DTYPES
         super(GLPlotRGBAImage, self).__init__(data, xMin, xScale, yMin, yScale)
         self._textureIsDirty = False
 
@@ -604,7 +607,7 @@ class GLPlotRGBAImage(_GLPlotData2D):
         self._textureIsDirty = False
 
     def updateData(self, data):
-        assert isSupportedGLType(data.dtype)
+        assert data.dtype in self._SUPPORTED_DTYPES
         oldData = self.data
         self.data = data
 

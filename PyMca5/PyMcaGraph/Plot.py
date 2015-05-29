@@ -38,6 +38,7 @@ Functions to be implemented by an actual plotter can be found in the
 abstract class PlotBackend.
 
 """
+import math
 import sys
 import numpy
 from . import PlotBase
@@ -1382,6 +1383,76 @@ class Plot(PlotBase.PlotBase):
                  else a tuple (color, linewidth, linestyle).
         """
         return self._plot.getGraphCursor()
+
+    # Pan support
+
+    @staticmethod
+    def _applyPan(min_, max_, panFactor, isLog10):
+        """Returns a new range with applied panning.
+
+        Moves the range according to panFactor.
+        If isLog10 is True, converts to log10 before moving.
+
+        :param float min_: Min value of the data range to pan.
+        :param float max_: Max value of the data range to pan.
+                           Must be >= min_.
+        :param float panFactor: Signed proportion of the range to use for pan.
+        :param bool isLog10: True if log10 scale, False if linear scale.
+        :return: New min and max value with pan applied.
+        :rtype: 2-tuple of float.
+        """
+        if isLog10 and min_ > 0.:
+            # Negative range and log scale can happen with matplotlib
+            logMin, logMax = math.log10(min_), math.log10(max_)
+            logOffset = panFactor * (logMax - logMin)
+            newMin = pow(10., logMin + logOffset)
+            newMax = pow(10., logMax + logOffset)
+
+            # Takes care of out-of-range values
+            if newMin > 0. and newMax < float('inf'):
+                min_, max_ = newMin, newMax
+
+        else:
+            offset = panFactor * (max_ - min_)
+            newMin, newMax = min_ + offset, max_ + offset
+
+            # Takes care of out-of-range values
+            if newMin > - float('inf') and newMax < float('inf'):
+                min_, max_ = newMin, newMax
+        return min_, max_
+
+    def pan(self, direction, factor=0.1):
+        """Pan the graph in the given direction by the given factor.
+
+        Warning: Pan of right Y axis not implemented!
+
+        :param str direction: One of 'up', 'down', 'left', 'right'.
+        :param float factor: Proportion of the range used to pan the graph.
+                             Must be strictly positive.
+        """
+        assert direction in ('up', 'down', 'left', 'right')
+        assert factor > 0.
+
+        if direction in ('left', 'right'):
+            xFactor = factor if direction == 'right' else - factor
+            xMin, xMax = self.getGraphXLimits()
+
+            xMin, xMax = self._applyPan(xMin, xMax, xFactor,
+                                        self.isXAxisLogarithmic())
+            self.setGraphXLimits(xMin, xMax)
+
+        else:  # direction in ('up', 'down')
+            sign = -1. if self.isYAxisInverted() else 1.
+            yFactor  = sign * (factor if direction == 'up' else - factor)
+            yMin, yMax = self.getGraphYLimits()
+            yIsLog = self.isYAxisLogarithmic()
+
+            yMin, yMax = self._applyPan(yMin, yMax, yFactor, yIsLog)
+            self.setGraphYLimits(yMin, yMax)
+
+            # TODO handle second Y axis
+
+        self.replot()
 
 def main():
     x = numpy.arange(100.)

@@ -172,6 +172,8 @@ class PlotWindow(PlotWidget.PlotWidget):
                                        self.toggleLegendWidget)
             controlMenu.addAction(QString("Toggle Crosshair"),
                                        self.toggleCrosshairCursor)
+            controlMenu.addAction(QString("Toggle Arrow Keys Panning"),
+                                       self.toggleArrowKeysPanning)
             controlMenu.exec_(self.cursor().pos())
         else:
             self._controlMenu.exec_(self.cursor().pos())
@@ -637,22 +639,28 @@ class PlotWindow(PlotWidget.PlotWidget):
         if image is None:
             return
         image, legend, info, pixmap = image[:4]
-        if (pixmap is None) and (info["plot_colormap"] is None):
+
+        if pixmap is not None:
+            # image contains the data and pixmap contains its representation
+            if self.colormapDialog is None:
+                self._initColormapDialog(image)
+            self.colormapDialog.show()
+        elif image is not None and info["plot_colormap"] is not None:
+            if self.colormapDialog is None:
+                self._initColormapDialog(image, info['plot_colormap'])
+            self.colormapDialog.show()
+        else:
             print("No colormap to be handled")
             return
-        elif info["plot_colormap"] is not None:
-            print("backend colormap handling not implemented yet")
-            #TODO: Configure (and eventually create) dialog to reflect the backend parameters
-            return
 
-        # image contains the data and pixmap contains its representation
-        if self.colormapDialog is None:
-            self._initColormapDialog(image)
-        self.colormapDialog.show()
+    def _initColormapDialog(self, imageData, colormap=None):
+        """Set-up the colormap dialog default values.
 
-    #TODO: initColormapDialog needs two arguments imageData and colormap
-    #      with colormap default parameters set to None
-    def _initColormapDialog(self, imageData):
+        :param numpy.ndarray imageData: data used to init dialog.
+        :param dict colormap: Description of the colormap as a dict.
+                              See :class:`PlotBackend` for details.
+                              If None, use default values.
+        """
         if not COLORMAP_DIALOG:
             raise ImportError("ColormapDialog could not be imported")
         goodData = imageData[numpy.isfinite(imageData)]
@@ -663,50 +671,43 @@ class PlotWindow(PlotWidget.PlotWidget):
             qt.QMessageBox.critical(self, "No Data",
                 "Image data does not contain any real value")
             return
+
         self.colormapDialog = ColormapDialog.ColormapDialog(self)
-        colormapIndex = self.DEFAULT_COLORMAP_INDEX
-        if colormapIndex == 6:
-            colormapIndex = 1
-        self.colormapDialog.colormapIndex  = colormapIndex
-        self.colormapDialog.colormapString = self.colormapDialog.colormapList[colormapIndex]
-        self.colormapDialog.setDataMinMax(minData, maxData)
-        self.colormapDialog.setAutoscale(1)
-        self.colormapDialog.setColormap(self.colormapDialog.colormapIndex)
-        # linear or logarithmic
-        self.colormapDialog.setColormapType(self.DEFAULT_COLORMAP_LOG_FLAG,
-                                            update=False)
-        self.colormap = (self.colormapDialog.colormapIndex,
-                              self.colormapDialog.autoscale,
-                              self.colormapDialog.minValue,
-                              self.colormapDialog.maxValue,
-                              minData, maxData, self.DEFAULT_COLORMAP_LOG_FLAG)
+
+        if colormap is None:
+            colormapIndex = self.DEFAULT_COLORMAP_INDEX
+            if colormapIndex == 6:
+                colormapIndex = 1
+            self.colormapDialog.setColormap(colormapIndex)
+            self.colormapDialog.setDataMinMax(minData, maxData)
+            self.colormapDialog.setAutoscale(1)
+            self.colormapDialog.setColormap(self.colormapDialog.colormapIndex)
+            # linear or logarithmic
+            self.colormapDialog.setColormapType(self.DEFAULT_COLORMAP_LOG_FLAG,
+                                                update=False)
+        else:
+            # Set-up colormap dialog from provided colormap dict
+            cmapList = ColormapDialog.colormapDictToList(colormap)
+            index, autoscale, vMin, vMax, dataMin, dataMax, cmapType = cmapList
+            self.colormapDialog.setColormap(index)
+            self.colormapDialog.setAutoscale(autoscale)
+            self.colormapDialog.setMinValue(vMin)
+            self.colormapDialog.setMaxValue(vMax)
+            self.colormapDialog.setDataMinMax(minData, maxData)
+            self.colormapDialog.setColormapType(cmapType, update=False)
+
+        self.colormap = self.colormapDialog.getColormap()  # Is it used?
         self.colormapDialog.setWindowTitle("Colormap Dialog")
         self.colormapDialog.sigColormapChanged.connect(\
                     self.updateActiveImageColormap)
         self.colormapDialog._update()
-
-    # Workaround: PlotBackend and ColormapDialog cmap names mismatch
-    # Dict of names as used in PlotBackend in the order of colormapDialog
-    _COLORMAP_NAMES = ('gray', 'reversed gray', 'temperature',
-                       'red', 'green', 'blue', 'temperature')
 
     def updateActiveImageColormap(self, colormap, replot=True):
         if len(colormap) == 1:
             colormap = colormap[0]
         # TODO: Once everything is ready to work with dict instead of
         # list, we can remove this translation
-        index, autoscale, vMin, vMax, dataMin, dataMax, cmapType = colormap
-        # Warning, gamma cmapType is not supported in plot backend
-        # Here it is silently replaced by linear as the default colormap
-        plotBackendColormap = {
-            'name': self._COLORMAP_NAMES[index],
-            'autoscale': autoscale,
-            'vmin': vMin,
-            'vmax': vMax,
-            'normalization': 'log' if cmapType == 1 else 'linear',
-            'colors': 256
-        }
-
+        plotBackendColormap = ColormapDialog.colormapListToDict(colormap)
         self.setDefaultColormap(plotBackendColormap)
 
         image = self.getActiveImage()
@@ -1371,6 +1372,12 @@ class PlotWindow(PlotWidget.PlotWidget):
         else:
             self.setGraphCursor(True, color="red", linewidth=1, linestyle="-")
 
+    def toggleArrowKeysPanning(self):
+        if self.isPanWithArrowKeys():
+            self.setPanWithArrowKeys(False)
+        else:
+            self.setPanWithArrowKeys(True)
+
     def showLegends(self, flag=True):
         if self.legendWidget is None:
             self._buildLegendWidget()
@@ -1602,6 +1609,7 @@ if __name__ == "__main__":
         backend = "pyqtgraph"
     plot = PlotWindow(backend=backend, roi=True, control=True,
                           position=True, colormap=True)#uselegendmenu=True)
+    plot.setPanWithArrowKeys(True)
     plot.show()
     plot.addCurve(x, y, "dummy")
     plot.addCurve(x+100, x*x)

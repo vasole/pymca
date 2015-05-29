@@ -552,6 +552,54 @@ class ColormapDialog(qt.QDialog):
                            sys.exc_info()[1],
                            sys.exc_info()[2])
 
+
+# Conversion of colormap descriptions #########################################
+
+# Convert colormap between PlotBackend names and ColormapDialog index
+# Tuple of PlotBackend names in the order of colormapDialog
+_COLORMAP_NAMES = ('gray', 'reversed gray', 'temperature',
+                   'red', 'green', 'blue', 'temperature')
+
+def colormapListToDict(colormapList):
+    """Convert colormap from this dialog to :class:`PlotBackend`.
+
+    :param colormapList: Colormap as returned by :meth:`getColormap`.
+    :type colormapList: list or tuple
+    :return: Colormap as used in :class:`PlotBackend`.
+    :rtype: dict
+    """
+    index, autoscale, vMin, vMax, dataMin, dataMax, cmapType = colormapList
+    # Warning, gamma cmapType is not supported in plot backend
+    # Here it is silently replaced by linear as the default colormap
+    return {
+        'name': _COLORMAP_NAMES[index],
+        'autoscale': autoscale,
+        'vmin': vMin,
+        'vmax': vMax,
+        'normalization': 'log' if cmapType == 1 else 'linear',
+        'colors': 256
+    }
+
+def colormapDictToList(colormapDict):
+    """Convert colormap from :class:`PlotBackend` to this dialog.
+
+    :param dict colormapDict: Colormap as used in :class:`PlotBackend`.
+    :return: Colormap as returned by :meth:`getColormap`.
+    :rtype: list
+    """
+    cmapIndex = _COLORMAP_NAMES.index(colormapDict['name'])
+    cmapType = 1 if colormapDict['normalization'].startswith('log') else 0
+    return [cmapIndex,
+            colormapDict['autoscale'],
+            colormapDict['vmin'],
+            colormapDict['vmax'],
+            0,  # dataMin is not defined in PlotBackend colormap
+            0,  # dataMax is not defined in PlotBackend colormap
+            cmapType]
+
+
+###############################################################################
+
 def test():
     app = qt.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)

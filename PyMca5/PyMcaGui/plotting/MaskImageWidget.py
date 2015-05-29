@@ -481,21 +481,22 @@ class MaskImageWidget(qt.QWidget):
                                          replace=True,
                                          replot=True)
             else:
-                row0 = int(ddict['row'][0]) - 0.5 * width
+                row0 = int(int(ddict['row'][0]) - 0.5 * width)
                 if row0 < 0:
                     row0 = 0
                     row1 = row0 + width
                 else:
-                    row1 = int(ddict['row'][0]) + 0.5 * width
+                    row1 = int(int(ddict['row'][0]) + 0.5 * width)
                 if row1 >= shape[0]:
                     row1 = shape[0] - 1
                     row0 = max(0, row1 - width)
-                ydata = imageData[row0:int(row1+1), :].sum(axis=0)
+
+                ydata = imageData[row0:row1+1, :].sum(axis=0)
                 legend = "Row = %d to %d"  % (row0, row1)
                 if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
                     self.drawOverlayItem([0.0, 0.0, shape[1], shape[1]],
-                                         [row0, row1, row1, row0],
+                                         [row0, row1+1, row1+1, row0],
                                          legend=ddict['mode'],
                                          info=ddict,
                                          replace=True,
@@ -523,20 +524,21 @@ class MaskImageWidget(qt.QWidget):
                                          replace=True,
                                          replot=True)
             else:
-                col0 = int(ddict['column'][0]) - 0.5 * width
+                col0 = int(int(ddict['column'][0]) - 0.5 * width)
                 if col0 < 0:
                     col0 = 0
                     col1 = col0 + width
                 else:
-                    col1 = int(ddict['column'][0]) + 0.5 * width
+                    col1 = int(int(ddict['column'][0]) + 0.5 * width)
                 if col1 >= shape[1]:
                     col1 = shape[1] - 1
                     col0 = max(0, col1 - width)
-                ydata = imageData[:, col0:int(col1+1)].sum(axis=1)
+
+                ydata = imageData[:, col0:col1+1].sum(axis=1)
                 legend = "Col = %d to %d"  % (col0, col1)
                 if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
-                    self.drawOverlayItem([col0, col0, col1, col1],
+                    self.drawOverlayItem([col0, col0, col1+1, col1+1],
                                          [0, shape[0], shape[0], 0.],
                                          legend=ddict['mode'],
                                          info=ddict,
@@ -544,7 +546,7 @@ class MaskImageWidget(qt.QWidget):
                                          replot=True)
             xdata  = numpy.arange(shape[0]).astype(numpy.float)
             if self._yScale is not None:
-                xdata = self._yScale[0] + xdata * (self._yScale[1] - self._yScale[0]) / float(shape[0])
+                xdata = self._yScale[0] + xdata * self._yScale[1]
         elif ddict['mode'].upper() in ["LINE"]:
             if len(ddict['column']) == 1:
                 #only one point given
@@ -557,22 +559,26 @@ class MaskImageWidget(qt.QWidget):
             row0, row1 = [int(x) for x in ddict['row']]
             deltaCol = abs(col0 - col1)
             deltaRow = abs(row0 - row1)
-            if self.__lineProjectionMode == 'D':
-                if deltaCol >= deltaRow:
-                    npoints = deltaCol + 1
-                else:
-                    npoints = deltaRow + 1
-            elif self.__lineProjectionMode == 'X':
+
+            if self.__lineProjectionMode == 'X' or (
+                    self.__lineProjectionMode == 'D' and deltaCol >= deltaRow):
                 npoints = deltaCol + 1
-            else:
+                if col1 < col0:
+                    # Invert start and end points
+                    row0, col0, row1, col1 = row1, col1, row0, col0
+            else:  #  mode == 'Y' or (mode == 'D' and deltaCol < deltaRow)
                 npoints = deltaRow + 1
+                if row1 < row0:
+                    # Invert start and end points
+                    row0, col0, row1, col1 = row1, col1, row0, col0
+
             if npoints == 1:
                 #all points are the same
                 if DEBUG:
                     print("START AND END POINT ARE THE SAME!!")
                 return
 
-            if width < 1:
+            if width < 0:  # width = pixelwidth - 1
                 x = numpy.zeros((npoints, 2), numpy.float)
                 x[:, 0] = numpy.linspace(row0, row1, npoints)
                 x[:, 1] = numpy.linspace(col0, col1, npoints)
@@ -591,12 +597,12 @@ class MaskImageWidget(qt.QWidget):
                                          replot=True)
             elif deltaCol == 0:
                 #vertical line
-                col0 = int(ddict['column'][0]) - 0.5 * width
+                col0 = int(int(ddict['column'][0]) - 0.5 * width)
                 if col0 < 0:
                     col0 = 0
                     col1 = col0 + width
                 else:
-                    col1 = int(ddict['column'][0]) + 0.5 * width
+                    col1 = int(int(ddict['column'][0]) + 0.5 * width)
                 if col1 >= shape[1]:
                     col1 = shape[1] - 1
                     col0 = max(0, col1 - width)
@@ -610,26 +616,26 @@ class MaskImageWidget(qt.QWidget):
                     row0 = 0
                 if row1 >= shape[0]:
                     row1 = shape[0] - 1
-                ydata = imageData[row0:row1+1, col0:int(col1+1)].sum(axis=1)
+                ydata = imageData[row0:row1+1, col0:col1+1].sum(axis=1)
                 legend = "Col = %d to %d"  % (col0, col1)
                 npoints = max(ydata.shape)
                 xdata = numpy.arange(float(npoints))
                 if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
-                    self.drawOverlayItem([col0, col0, col1, col1],
-                                         [row0, row1, row1, row0],
+                    self.drawOverlayItem([col0, col0, col1+1, col1+1],
+                                         [row0, row1+1, row1+1, row0],
                                          legend=ddict['mode'],
                                          info=ddict,
                                          replace=True,
                                          replot=True)
             elif deltaRow == 0:
                 #horizontal line
-                row0 = int(ddict['row'][0]) - 0.5 * width
+                row0 = int(int(ddict['row'][0]) - 0.5 * width)
                 if row0 < 0:
                     row0 = 0
                     row1 = row0 + width
                 else:
-                    row1 = int(ddict['row'][0]) + 0.5 * width
+                    row1 = int(int(ddict['row'][0]) + 0.5 * width)
                 if row1 >= shape[0]:
                     row1 = shape[0] - 1
                     row0 = max(0, row1 - width)
@@ -643,14 +649,14 @@ class MaskImageWidget(qt.QWidget):
                     col0 = 0
                 if col1 >= shape[1]:
                     col1 = shape[1] - 1
-                ydata = imageData[row0:int(row1+1), col0:col1+1].sum(axis=0)
+                ydata = imageData[row0:row1+1, col0:col1+1].sum(axis=0)
                 legend = "Row = %d to %d"  % (row0, row1)
                 npoints = max(ydata.shape)
                 xdata = numpy.arange(float(npoints))
                 if overlay:
                     #self.drawOverlayItem(x, y, legend=name, info=info, replot, replace)
-                    self.drawOverlayItem([col0, col0, col1, col1],
-                                         [row0, row1, row1, row0],
+                    self.drawOverlayItem([col0, col0, col1+1, col1+1],
+                                         [row0, row1+1, row1+1, row0],
                                          legend=ddict['mode'],
                                          info=ddict,
                                          replace=True,
@@ -2203,7 +2209,7 @@ def test():
         data = numpy.arange(400 * 400).astype(numpy.int32)
         data.shape = 200, 800
         #data = numpy.eye(200)
-        container.setImageData(data, xScale=(1000.0, 1.0), yScale=(0., 1.))
+        container.setImageData(data, xScale=(1000.0, 1.0), yScale=(1000., 1.))
         mask = (data*0).astype(numpy.uint8)
         n, m = data.shape
         mask[ n/4:n/4+n/8, m/4:m/4+m/8] = 1
