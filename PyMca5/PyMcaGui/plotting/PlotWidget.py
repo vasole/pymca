@@ -269,13 +269,6 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
             self.setFocusPolicy(QtCore.Qt.StrongFocus)
             self.setFocus(QtCore.Qt.OtherFocusReason)
 
-    def focusInEvent(self, event):
-        if self._panWithArrowKeys:
-            self.grabKeyboard()
-
-    def focusOutEvent(self, event):
-        self.releaseKeyboard()
-
     # Dict to convert Qt arrow key code to direction str.
     _ARROWS_TO_PAN_DIRECTION = {
         QtCore.Qt.Key_Left: 'left',

@@ -166,17 +166,13 @@ def getAlignedROIProfileCurve(image, roiCenter, roiWidth, roiRange, axis):
 
     if roiWidth <= 1:
         profileValues = image[start, rangeSlice]
+        end = start + 1
     else:
         profileValues = image[start:end, rangeSlice].sum(axis=0)
 
-    # profileCoords = numpy.arange(startRange,
-    #                              endRange + stepRange,
-    #                              stepRange,
-    #                              dtype=numpy.float)
-
     # Get the ROI polygon
     roiPolygonCols = numpy.array(
-        (startRange, endRange, endRange, startRange),
+        (startRange, endRange + stepRange, endRange + stepRange, startRange),
         dtype=numpy.float)
     roiPolygonRows = numpy.array((start, start, end, end),
                                  dtype=numpy.float)
@@ -221,7 +217,7 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
     x0 = numpy.arange(image.shape[0], dtype=numpy.float)
     y0 = numpy.arange(image.shape[1], dtype=numpy.float)
 
-    if roiWidth <= 1:
+    if roiWidth < 1:
         x = numpy.zeros((nPoints, 2), numpy.float)
         x[:, 0] = numpy.linspace(row0, row1, nPoints)
         x[:, 1] = numpy.linspace(col0, col1, nPoints)
@@ -346,13 +342,15 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
 
 def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
                     origin=(0., 0.), scale=(1., 1.),
-                    lineProjectionMode=None):
+                    lineProjectionMode='D'):
     """Sums a region of interest (ROI) of an image along a given line.
 
     Returned values and all parameters except roiWidth are in plot coordinates.
     This function might change the ROI so it remains within the image.
     Thus, the polygon of the effective ROI is returned along with the
     profile.
+    The profile is always returned with increasing coordinates on the
+    projection axis, so roiStart and roiEnd are flipped if roiStart > roiEnd.
 
     :param image: 2D data.
     :type image: numpy.ndarray with 2 dimensions.
@@ -409,6 +407,19 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
                              origin, scale, image.shape)
     row1, col1 = plotToImage(roiEnd[0], roiEnd[1],
                              origin, scale, image.shape)
+
+    # Makes sure coords are increasing along the projection axis
+    if (lineProjectionMode == 'X' or
+            (lineProjectionMode == 'D' and
+                abs(col1 - col0) >= abs(row1 - row0))):
+        if col1 < col0:
+            # Invert end points to have increasing coords on X axis
+            row0, col0, row1, col1 = row1, col1, row0, col0
+
+    else:  # i.e., 'Y' or ('D' and abs(col1 - col0) < abs(row1 - row0))
+        if row1 < row0:
+            # Invert end points to have increasing coords on Y axis
+            row0, col0, row1, col1 = row1, col1, row0, col0
 
     if col0 == col1:  # Vertical line
         if lineProjectionMode not in ('D', 'Y'):
