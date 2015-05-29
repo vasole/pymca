@@ -1141,14 +1141,6 @@ class MatplotlibGraph(FigureCanvas):
                 xmin, xmax = self.ax.get_xlim()
                 ymin, ymax = self.ax.get_ylim()
                 self._zoomStack.append((xmin, xmax, ymin, ymax))
-                if hasattr(self.ax2, "get_visible") and self.ax2.get_visible():
-                    bottom2, top2 = self.ax2.get_ylim()
-                    i2Range = top2 - bottom2
-                    if i2Range > 0:
-                        bottom, top = self.ax1.get_ylim()
-                        y20 = (top2 - bottom2) * (y / (top - bottom))
-                        y21 = (top2 - bottom2) * ((y + h) / (top - bottom))
-                        self.setLimits(x, x+w, y20, y21, axis="right")
                 self.setLimits(x, x+w, y, y+h)
             self.draw()
 
@@ -1282,10 +1274,27 @@ class MatplotlibGraph(FigureCanvas):
         self.ax.set_xlim(xmin, xmax)
         if ymax < ymin:
             ymin, ymax = ymax, ymin
+        current = self.ax.get_ylim()
         if self.ax.yaxis_inverted():
             self.ax.set_ylim(ymax, ymin)
+            top, bottom = current
         else:
             self.ax.set_ylim(ymin, ymax)
+            bottom, top = current
+        # if second axis was not properly initialized, this does not work
+        if 0 and hasattr(self.ax2, "get_visible") and self.ax2.get_visible():
+            #print("BOTTOM, TOP = ", bottom, top)
+            bottom2, top2 = self.ax2.get_ylim()
+            #print("BOTTOM2, TO2 = ", bottom2, top2)
+            i2Range = top2 - bottom2
+            if i2Range > 0:
+                ymin2 = bottom2 + i2Range * (ymin - bottom)/(top - bottom)
+                ymax2 = bottom2 + i2Range * (ymax - bottom)/(top - bottom)
+                #print("OBTAINED = ", ymin2, ymax2)
+                if self.ax2.yaxis_inverted():
+                    self.ax2.set_ylim(ymax2, ymin2)
+                else:
+                    self.ax2.set_ylim(ymin2, ymax2)
         # Next line forces a square display region
         #self.ax.set_aspect((xmax-xmin)/float(ymax-ymin))
         #self.draw()
