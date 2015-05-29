@@ -1141,6 +1141,14 @@ class MatplotlibGraph(FigureCanvas):
                 xmin, xmax = self.ax.get_xlim()
                 ymin, ymax = self.ax.get_ylim()
                 self._zoomStack.append((xmin, xmax, ymin, ymax))
+                if hasattr(self.ax2, "get_visible") and self.ax2.get_visible():
+                    bottom2, top2 = self.ax2.get_ylim()
+                    i2Range = top2 - bottom2
+                    if i2Range > 0:
+                        bottom, top = self.ax1.get_ylim()
+                        y20 = (top2 - bottom2) * (y / (top - bottom))
+                        y21 = (top2 - bottom2) * ((y + h) / (top - bottom))
+                        self.setLimits(x, x+w, y20, y21, axis="right")
                 self.setLimits(x, x+w, y, y+h)
             self.draw()
 
