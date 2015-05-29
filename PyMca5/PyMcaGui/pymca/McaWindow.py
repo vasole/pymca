@@ -1300,7 +1300,7 @@ class McaWindow(ScanWindow.ScanWindow):
             return
 
         #get active curve
-        x, y, info = self.getDataAndInfoFromLegend(legend)
+        x, y, legend, info = self.getActiveCurve()
         if info is None:
             return
 
@@ -1344,9 +1344,14 @@ class McaWindow(ScanWindow.ScanWindow):
             outputFile += extension[1:]
         specFile = os.path.join(self.outputDir, outputFile)
         try:
-            os.remove(specFile)
+            if os.path.exists(specFile):
+                os.remove(specFile)
         except:
-            pass
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
+            msg.exec_()
+            return
         systemline = os.linesep
         os.linesep = '\n'
         if filterused[0].upper() == "WIDGET":
