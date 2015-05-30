@@ -46,6 +46,7 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         dataDir = DataDir.FISX_DATA_DIR
     try:
         from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR as pymcaDataDir
+        from PyMca5 import getUserDataFile
     except:
         print("Using fisx shell constants and ratios")
         pymcaDataDir = None
@@ -53,12 +54,14 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         if pymcaDataDir is None:
             bindingEnergies = os.path.join(dataDir, "BindingEnergies.dat")
         else:
-            bindingEnergies = os.path.join(pymcaDataDir, "BindingEnergies.dat")
+            bindingEnergies = getUserDataFile(\
+                            os.path.join(pymcaDataDir, "BindingEnergies.dat"))
     if xcomFile is None:
         if pymcaDataDir is None:
             xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
         else:
-            xcomFile = os.path.join(pymcaDataDir, "XCOM_CrossSections.dat")            
+            xcomFile = getUserDataFile(\
+                            os.path.join(pymcaDataDir, "XCOM_CrossSections.dat"))
     if DEBUG:
         t0 = time.time()
     instance = FisxElements(dataDir, bindingEnergies, xcomFile)
@@ -74,7 +77,8 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         if DEBUG:
             print("Before %s" % fname)
         if pymcaDataDir is not None:
-            fname = os.path.join(pymcaDataDir, key + "ShellConstants.dat")
+            fname = getUserDataFile(\
+                        os.path.join(pymcaDataDir, key + "ShellConstants.dat"))
         else:
             fname = os.path.join(os.path.dirname(fname),
                                  key + "ShellConstants.dat")
@@ -93,7 +97,8 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         if DEBUG:
             print("Before %s" % fname) 
         if pymcaDataDir is not None:
-            fname = os.path.join(pymcaDataDir, key + "ShellRates.dat")
+            fname = getUserDataFile(\
+                        os.path.join(pymcaDataDir, key + "ShellRates.dat"))
         else:
             fname = os.path.join(os.path.dirname(fname), key + "ShellRates.dat")
         instance.setShellRadiativeTransitionsFile(key, fname)

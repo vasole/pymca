@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -34,7 +34,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
 from PyMca5.PyMcaIO import specfile
-from PyMca5 import PyMcaDataDir
+from PyMca5 import PyMcaDataDir, getUserDataFile
 
 dirname   = PyMcaDataDir.PYMCA_DATA_DIR
 inputfile = os.path.join(dirname, "KShellRates.dat")
@@ -49,7 +49,7 @@ if not os.path.exists(inputfile):
         print("Cannot find inputfile ",inputfile)
         raise IOError("Cannot find KShellRates.dat file")
 
-sf=specfile.Specfile(os.path.join(dirname, "KShellRates.dat"))
+sf=specfile.Specfile(getUserDataFile(os.path.join(dirname, "KShellRates.dat")))
 ElementKShellTransitions = sf[0].alllabels()
 ElementKShellRates = numpy.transpose(sf[0].data()).tolist()
 
@@ -98,7 +98,7 @@ for i in range(len(ElementKBetaTransitions)):
 ElementKAlphaRates = ElementKAlphaRates.tolist()
 ElementKBetaRates  = ElementKBetaRates.tolist()
 
-sf=specfile.Specfile(os.path.join(dirname, "KShellConstants.dat"))
+sf=specfile.Specfile(getUserDataFile(os.path.join(dirname, "KShellConstants.dat")))
 ElementKShellConstants = sf[0].alllabels()
 ElementKShellValues = numpy.transpose(sf[0].data()).tolist()
 sf=None
