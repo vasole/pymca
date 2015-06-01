@@ -551,6 +551,7 @@ class ImageView(qt.QWidget):
         self._imagePlot.sigPlotSignal.connect(self._imagePlotCB)
         self._imagePlot.hFlipToolButton.clicked.connect(
             self._updateYAxisInverted)
+        self._imagePlot.sigColormapChangedSignal.connect(self.setColormap)
 
         self._histoVPlot = Plot.Plot(backend=backend)
         self._histoVPlot.setZoomModeEnabled(True)
