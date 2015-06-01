@@ -97,7 +97,6 @@ class McaWindow(ScanWindow.ScanWindow):
         self.calwidget   =  None
         self.currentROI = None
         self.peakmarker     = None
-        self.dataObjectsDict = {}
         if specfit is None:
             self.specfit = Specfit.Specfit()
         else:
@@ -196,6 +195,8 @@ class McaWindow(ScanWindow.ScanWindow):
                 msg.exec_()
 
     def getActiveCurve(self, just_legend=False):
+        if DEBUG:
+            print("Local MCA window getActiveCurve called!!!!")
         legend = super(McaWindow, self).getActiveCurve(just_legend)
         if just_legend:
             return legend
@@ -206,14 +207,19 @@ class McaWindow(ScanWindow.ScanWindow):
         y = activeCurve[1]
         legend = activeCurve[2]
         curveinfo = activeCurve[3]
-
+        xlabel = self.getGraphXLabel()
+        ylabel = self.getGraphYLabel()
+        
+        """
         if legend in self.dataObjectsDict.keys():
             info  = self.dataObjectsDict[legend].info
-            x = self.dataObjectsDict[legend].x[0]
-            y = self.dataObjectsDict[legend].y[0]
+            if str(xlabel.upper()) != "CHANNEL":
+                x = self.dataObjectsDict[legend].x[0]
+            else:
+                info = None
         else:
             info = None
-
+        
         if info is not None:
             if self.calibration == 'None':
                 calib = [0.0,1.0,0.0]
@@ -228,9 +234,11 @@ class McaWindow(ScanWindow.ScanWindow):
             else:
                 x = calib[0] + calib[1] * x + calib[2] * x * x
         else:
-            info = {}
-        info['xlabel'] = self.getGraphXLabel()
-        info['ylabel'] = self.getGraphYLabel()
+            info = curveinfo
+        """ 
+        info = curveinfo
+        info['xlabel'] = xlabel
+        info['ylabel'] = ylabel
         return x, y, legend, info
 
     def getDataAndInfoFromLegend(self, legend):
@@ -1220,6 +1228,7 @@ class McaWindow(ScanWindow.ScanWindow):
             self.addCurve(x=xplot, y=yplot, legend=newDataObject.info['legend'])
 
     def _saveIconSignal(self):
+        print(" MCA _saveIconSignal")
         legend = self.getActiveCurve(just_legend=True)
         if legend is None:
             msg = qt.QMessageBox(self)
@@ -1438,9 +1447,12 @@ class McaWindow(ScanWindow.ScanWindow):
         return
 
     def _simpleOperation(self, operation):
+        print(" _simpleOperationSave")
         if operation != "save":
+            print(" calling SUPER _saveIconSIgnal")
             return super(McaWindow, self)._simpleOperation(operation)
         else:
+            print(" calling _saveIconSIgnal")
             return self._saveIconSignal()
 
     def getCalibrations(self):
@@ -1479,7 +1491,7 @@ class McaWindow(ScanWindow.ScanWindow):
             if info is None:
                 info = {}
             oldStuff = self.getCurve(legend)
-            if len(oldStuff):
+            if oldStuff not in [[], None]:
                 oldX, oldY, oldLegend, oldInfo = oldStuff
             else:
                 oldInfo = {}
@@ -1557,6 +1569,7 @@ class McaWindow(ScanWindow.ScanWindow):
             self._addSelection(sel_list, replot=replot)
 
     def refresh(self):
+        print(" DANGEROUS REFRESH CALLED")
         activeCurve = self.getActiveCurve(just_legend=True)
         sellist = []
         for key in self.dataObjectsDict.keys():
