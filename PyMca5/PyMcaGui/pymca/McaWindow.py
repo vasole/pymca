@@ -1303,10 +1303,12 @@ class McaWindow(ScanWindow.ScanWindow):
         ndict[legend] = {'order':1,'A':0.0,'B':1.0,'C':0.0}
         if self.getGraphXLabel().upper() == "CHANNEL":
             if legend in self.caldict:
+                calibrationOrder = self.caldict[legend].get('McaCalibOrder',2)                
                 ndict[legend].update(self.caldict[legend])
                 if abs(ndict[legend]['C']) > 0.0:
                     ndict[legend]['order']  = 2
             elif 'McaCalib' in info:
+                calibrationOrder = info.get('McaCalibOrder',2)                
                 if type(info['McaCalib'][0]) == type([]):
                     calib = info['McaCalib'][0]
                 else:
@@ -1317,23 +1319,38 @@ class McaWindow(ScanWindow.ScanWindow):
                     if len(calib) >2:
                         ndict[legend]['order']  = 2
                         ndict[legend]['C']      = calib[2]
+            elif legend in self.dataObjectsDict:
+                calibrationOrder = self.dataObjectsDict[legend].info.get('McaCalibOrder',2)
+                if 'McaCalib' in self.dataObjectsDict[legend].info:
+                    calib = self.dataObjectsDict[legend].info['McaCalib']
+                    ndict[legend]['A'] = calib[0]
+                    ndict[legend]['B'] = calib[1]
+                    ndict[legend]['C'] = calib[2]
+            calib = [ndict[legend]['A'], ndict[legend]['B'], ndict[legend]['C']]
+            if calibrationOrder == 'TOF':
+                energy = calib[2] + calib[0] / pow(x - calib[1],2)
+            else:
+                energy = calib[0] + calib[1] * x + calib[2] * x * x
         else:
-            #I have to get current plot energy
+            #I have it in energy
             A = self.controlWidget.calinfo.caldict['']['A']
             B = self.controlWidget.calinfo.caldict['']['B']
             C = self.controlWidget.calinfo.caldict['']['C']
             order = self.controlWidget.calinfo.caldict['']['order']
             ndict[legend] = {'order':order,'A':A,'B':B,'C':C}
+            calib = [A, B, C]
+            energy = x * 1
+            if legend in self.dataObjectsDict.keys():
+                x0 = self.dataObjectsDict[legend].x[0]
+                if order == 'TOF':
+                    x0 = calib[2] + calib[0] / pow(x0 - calib[1], 2)
+                else:
+                    x0 = calib[0] + calib[1] * x0 + calib[2] * x0 * x0
+                if numpy.allclose(energy, x0):
+                    x = self.dataObjectsDict[legend].x[0]
+                else:
+                    ndict[legend] = {'order':1,'A': 0.0, 'B':1.0, 'C': 1.0}
 
-        #I should have x, y, caldict
-        """
-        caldialog = McaCalWidget.McaCalWidget(legend=legend,
-                                                 x=x,
-                                                 y=y,
-                                                 modal=1,
-                                                 caldict=ndict,
-                                                 fl=0)
-        """
         #always overwrite for the time being
         if not outputFile.endswith(extension[1:]):
             outputFile += extension[1:]
@@ -1395,14 +1412,10 @@ class McaWindow(ScanWindow.ScanWindow):
                 ffile.write("#D %s\n"%(time.ctime(time.time())))
                 ffile.write("#N 3\n")
                 ffile.write("#L channel  counts  energy\n")
-                energy = ndict[legend]['A'] + ndict[legend]['B'] * x + ndict[legend]['C'] * x * x
                 for i in range(len(y)):
                     ffile.write("%.7g  %.7g  %.7g\n" % (x[i], y[i], energy[i]))
                 ffile.write("\n")
             elif filetype == 'ASCII':
-                energy = ndict[legend]['A'] + \
-                         ndict[legend]['B'] * x + \
-                         ndict[legend]['C'] * x * x
                 for i in range(len(y)):
                    ffile.write("%.7g  %.7g  %.7g\n" % (x[i], y[i], energy[i]))
             elif filetype == 'CSV':
@@ -1414,9 +1427,6 @@ class McaWindow(ScanWindow.ScanWindow):
                     csv = ","
                 else:
                     csv = "\t"
-                energy = ndict[legend]['A'] + \
-                         ndict[legend]['B'] * x + \
-                         ndict[legend]['C'] * x * x
                 if "OMNIC" in filterused[0]:
                     for i in range(len(y)):
                         ffile.write("%.7E%s%.7E\n" % \
