@@ -2412,7 +2412,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 # extend = (xmin, xmax, ymax, ymin)
                 # instead of (xmin, xmax, ymin, ymax)
                 extent = (xmin, xmax, ymin, ymax)
-                if (xmin < 0) or (xmax < 0) or (ymin < 0) or (ymax < 0):
+                if tuple(xScale) != (0., 1.) or tuple(yScale) != (0., 1.):
                     # for the time being not properly handled
                     imageClass = AxesImage
                 elif (shape[0] * shape[1]) > 5.0e5:
@@ -2476,7 +2476,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     norm = Normalize(vmin, vmax)
 
                 # try as data
-                if (xmin < 0) or (xmax < 0) or (ymin < 0) or (ymax < 0):
+                if tuple(xScale) != (0., 1.) or tuple(yScale) != (0., 1.):
                     # for the time being not properly handled
                     imageClass = AxesImage
                 elif (shape[0] * shape[1]) > 5.0e5:
