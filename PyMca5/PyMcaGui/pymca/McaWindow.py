@@ -209,7 +209,7 @@ class McaWindow(ScanWindow.ScanWindow):
         curveinfo = activeCurve[3]
         xlabel = self.getGraphXLabel()
         ylabel = self.getGraphYLabel()
-        
+
         """
         if legend in self.dataObjectsDict.keys():
             info  = self.dataObjectsDict[legend].info
@@ -219,7 +219,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 info = None
         else:
             info = None
-        
+
         if info is not None:
             if self.calibration == 'None':
                 calib = [0.0,1.0,0.0]
@@ -235,7 +235,7 @@ class McaWindow(ScanWindow.ScanWindow):
                 x = calib[0] + calib[1] * x + calib[2] * x * x
         else:
             info = curveinfo
-        """ 
+        """
         info = curveinfo
         info['xlabel'] = xlabel
         info['ylabel'] = ylabel
@@ -1228,7 +1228,6 @@ class McaWindow(ScanWindow.ScanWindow):
             self.addCurve(x=xplot, y=yplot, legend=newDataObject.info['legend'])
 
     def _saveIconSignal(self):
-        print(" MCA _saveIconSignal")
         legend = self.getActiveCurve(just_legend=True)
         if legend is None:
             msg = qt.QMessageBox(self)
@@ -1447,12 +1446,9 @@ class McaWindow(ScanWindow.ScanWindow):
         return
 
     def _simpleOperation(self, operation):
-        print(" _simpleOperationSave")
         if operation != "save":
-            print(" calling SUPER _saveIconSIgnal")
             return super(McaWindow, self)._simpleOperation(operation)
         else:
-            print(" calling _saveIconSIgnal")
             return self._saveIconSignal()
 
     def getCalibrations(self):
@@ -1569,7 +1565,8 @@ class McaWindow(ScanWindow.ScanWindow):
             self._addSelection(sel_list, replot=replot)
 
     def refresh(self):
-        print(" DANGEROUS REFRESH CALLED")
+        if DEBUG:
+            print(" DANGEROUS REFRESH CALLED")
         activeCurve = self.getActiveCurve(just_legend=True)
         sellist = []
         for key in self.dataObjectsDict.keys():
