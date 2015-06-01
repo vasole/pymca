@@ -173,6 +173,8 @@ class PlotWindow(PlotWidget.PlotWidget):
                                        self.toggleLegendWidget)
             controlMenu.addAction(QString("Toggle Crosshair"),
                                        self.toggleCrosshairCursor)
+            controlMenu.addAction(QString("Toggle Arrow Keys Panning"),
+                                       self.toggleArrowKeysPanning)
             controlMenu.exec_(self.cursor().pos())
         else:
             self._controlMenu.exec_(self.cursor().pos())
@@ -1371,6 +1373,12 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.setGraphCursor(False)
         else:
             self.setGraphCursor(True, color="red", linewidth=1, linestyle="-")
+
+    def toggleArrowKeysPanning(self):
+        if self.isPanWithArrowKeys():
+            self.setPanWithArrowKeys(False)
+        else:
+            self.setPanWithArrowKeys(True)
 
     def showLegends(self, flag=True):
         if self.legendWidget is None:

@@ -31,6 +31,7 @@ __version__ = "5.0.4"
 
 import os
 import sys
+DEBUG = 0
 if sys.platform.startswith("win"):
     import ctypes
     from ctypes.wintypes import MAX_PATH
@@ -98,6 +99,37 @@ def getDefaultUserPluginsDirectory():
     except:
         print("WARNING: Cannot initialize plugis directory")
         return None
+
+def getUserDataFile(fileName, directory=""):
+    """
+    Look for an alternative to the given filename in the default user data directory
+    """
+    userDataDir = None
+    try:
+        settingsDir = os.path.dirname(getDefaultSettingsFile())
+        if os.path.exists(settingsDir):
+            userDataDir = os.path.join(settingsDir, "data")
+            if not os.path.exists(userDataDir):
+                os.mkdir(userDataDir)
+    except:
+        print("WARNING: cannot initialize user data directory")
+        
+    if userDataDir is None:
+        return fileName
+
+    baseName = os.path.basename(fileName)
+    if len(directory):
+        userDataFile = os.path.join(userDataDir, directory, baseName)
+    else:
+        userDataFile = os.path.join(userDataDir, baseName)
+    if os.path.exists(userDataFile):
+        if DEBUG:
+            print("Using user data file: %s" % userDataFile)
+        return userDataFile
+    else:
+        if DEBUG:
+            print("Using data file: %s" % fileName)
+        return fileName
 
 # workaround matplotlib MPLCONFIGDIR issues under windows
 if sys.platform.startswith("win"):

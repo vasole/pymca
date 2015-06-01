@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
 from PyMca5.PyMcaIO import specfile
-from PyMca5 import PyMcaDataDir
+from PyMca5 import PyMcaDataDir, getUserDataFile
 
 dirname   = PyMcaDataDir.PYMCA_DATA_DIR
 inputfile = os.path.join(dirname, "MShellRates.dat")
@@ -48,7 +48,7 @@ if not os.path.exists(inputfile):
         print("Cannot find inputfile ",inputfile)
         raise IOError("Cannot find MShellRates.dat file")
 
-sf=specfile.Specfile(os.path.join(dirname, "MShellRates.dat"))
+sf=specfile.Specfile(getUserDataFile(os.path.join(dirname, "MShellRates.dat")))
 ElementM1ShellTransitions = sf[0].alllabels()
 ElementM2ShellTransitions = sf[1].alllabels()
 ElementM3ShellTransitions = sf[2].alllabels()
@@ -60,7 +60,7 @@ ElementM3ShellRates = numpy.transpose(sf[2].data()).tolist()
 ElementM4ShellRates = numpy.transpose(sf[3].data()).tolist()
 ElementM5ShellRates = numpy.transpose(sf[4].data()).tolist()
 
-sf=specfile.Specfile(os.path.join(dirname, "MShellConstants.dat"))
+sf=specfile.Specfile(getUserDataFile(os.path.join(dirname, "MShellConstants.dat")))
 ElementM1ShellConstants = sf[0].alllabels()
 ElementM2ShellConstants = sf[1].alllabels()
 ElementM3ShellConstants = sf[2].alllabels()

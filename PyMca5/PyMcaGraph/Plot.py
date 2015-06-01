@@ -1419,7 +1419,6 @@ class Plot(PlotBase.PlotBase):
 
         self.replot()
 
-
 def _applyPan(min_, max_, panFactor, isLog10):
     """Returns a new range with applied panning.
 
@@ -1453,7 +1452,6 @@ def _applyPan(min_, max_, panFactor, isLog10):
         if newMin > - float('inf') and newMax < float('inf'):
             min_, max_ = newMin, newMax
     return min_, max_
-
 
 def main():
     x = numpy.arange(100.)

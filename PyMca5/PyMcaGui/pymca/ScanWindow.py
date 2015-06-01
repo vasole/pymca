@@ -101,6 +101,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                          position=position,
                                          **kw)
         #self._togglePointsSignal()
+        self.setPanWithArrowKeys(True)
         self.setWindowType("SCAN")
         # this two objects are the same
         self.dataObjectsList = self._curveList
@@ -134,6 +135,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                                        self._toggleInfoWidget)
             controlMenu.addAction(QString("Toggle Crosshair"),
                                        self.toggleCrosshairCursor)
+            controlMenu.addAction(QString("Toggle Arrow Keys Panning"),
+                                       self.toggleArrowKeysPanning)
             self.setControlMenu(controlMenu)
         else:
             self.scanWindowInfoWidget = None
@@ -160,7 +163,6 @@ class ScanWindow(PlotWindow.PlotWindow):
                                    self._simpleFitSignal)
             self.fitButtonMenu.addAction(QString("Customized Fit") ,
                                    self._customFitSignal)
-
 
     def _toggleInfoWidget(self):
         if self.infoDockWidget.isHidden():
@@ -608,27 +610,27 @@ class ScanWindow(PlotWindow.PlotWindow):
     def _simpleFitSignal(self):
         if DEBUG:
             print("_simpleFitSignal")
-        self.__QSimpleOperation("fit")
+        self._QSimpleOperation("fit")
 
     def _customFitSignal(self):
         if DEBUG:
             print("_customFitSignal")
-        self.__QSimpleOperation("custom_fit")
+        self._QSimpleOperation("custom_fit")
 
     def _saveIconSignal(self):
         if DEBUG:
             print("_saveIconSignal")
-        self.__QSimpleOperation("save")
+        self._QSimpleOperation("save")
 
     def _averageIconSignal(self):
         if DEBUG:
             print("_averageIconSignal")
-        self.__QSimpleOperation("average")
+        self._QSimpleOperation("average")
 
     def _smoothIconSignal(self):
         if DEBUG:
             print("_smoothIconSignal")
-        self.__QSimpleOperation("smooth")
+        self._QSimpleOperation("smooth")
 
     def _getOutputFileName(self):
         #get outputfile
@@ -692,9 +694,9 @@ class ScanWindow(PlotWindow.PlotWindow):
             outputFile = outputFile + extension[-4:]
         return os.path.join(self.outputDir, outputFile), filetype, filterused
 
-    def __QSimpleOperation(self, operation):
+    def _QSimpleOperation(self, operation):
         try:
-            self.__simpleOperation(operation)
+            self._simpleOperation(operation)
         except:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
@@ -829,7 +831,7 @@ class ScanWindow(PlotWindow.PlotWindow):
         return
 
 
-    def __simpleOperation(self, operation):
+    def _simpleOperation(self, operation):
         if operation == 'subtract':
             self._subtractOperation()
             return
@@ -1074,8 +1076,12 @@ class ScanWindow(PlotWindow.PlotWindow):
             alias = "%c" % (96+dataCounter)
             mtplt.addDataToPlot( xdata, ydata, legend=legend, alias=alias )
 
-        self.matplotlibDialog.setXLabel(self.getGraphXLabel())
-        self.matplotlibDialog.setYLabel(self.getGraphYLabel())
+        if sys.version < '3.0':
+            self.matplotlibDialog.setXLabel(qt.safe_str(self.getGraphXLabel()))
+            self.matplotlibDialog.setYLabel(qt.safe_str(self.getGraphYLabel()))
+        else:
+            self.matplotlibDialog.setXLabel(self.getGraphXLabel())
+            self.matplotlibDialog.setYLabel(self.getGraphYLabel())
 
         if legends:
             mtplt.plotLegends()
@@ -1090,22 +1096,22 @@ class ScanWindow(PlotWindow.PlotWindow):
     def _deriveIconSignal(self):
         if DEBUG:
             print("_deriveIconSignal")
-        self.__QSimpleOperation('derivate')
+        self._QSimpleOperation('derivate')
 
     def _swapSignIconSignal(self):
         if DEBUG:
             print("_swapSignIconSignal")
-        self.__QSimpleOperation('swapsign')
+        self._QSimpleOperation('swapsign')
 
     def _yMinToZeroIconSignal(self):
         if DEBUG:
             print("_yMinToZeroIconSignal")
-        self.__QSimpleOperation('forceymintozero')
+        self._QSimpleOperation('forceymintozero')
 
     def _subtractIconSignal(self):
         if DEBUG:
             print("_subtractIconSignal")
-        self.__QSimpleOperation('subtract')
+        self._QSimpleOperation('subtract')
 
     def _subtractOperation(self):
         #identical to twice the average with the negative active curve

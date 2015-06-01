@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, T. Coutinho, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, T. Coutinho, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -76,7 +76,11 @@ class TaurusPlugin1D(Plugin1DBase.Plugin1DBase, QObjectTaurusListener):
     def onSelectionChanged(self, models):
         if self._oldModels in [None, []]:
             for model in models:
-                attr = Attribute(model)
+                try:
+                    attr = Attribute(model)
+                except:
+                    # old PyTango versions do not handle unicode
+                    attr = Attribute(str(model))
                 #force a read -> attr.read()
                 attr.addListener(self)
             self._oldModels = models
