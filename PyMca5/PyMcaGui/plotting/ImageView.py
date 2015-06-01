@@ -300,23 +300,39 @@ class ProfileToolBar(qt.QToolBar):
         # Actions
         self.browseAction = qt.QAction(
             qt.QIcon(qt.QPixmap(IconDict["normal"])),
-            'Browse', None)
+            'Browsing Mode', None)
+        self.browseAction.setToolTip(
+            'Enables zooming interaction mode')
         self.browseAction.setCheckable(True)
 
         self.hLineAction = qt.QAction(
             qt.QIcon(qt.QPixmap(IconDict["horizontal"])),
-            'Horizontal Line Profile', None)
+            'Horizontal Profile Mode', None)
+        self.hLineAction.setToolTip(
+            'Enables horizontal profile selection mode')
         self.hLineAction.setCheckable(True)
 
         self.vLineAction = qt.QAction(
             qt.QIcon(qt.QPixmap(IconDict["vertical"])),
-            'Vertical Line Profile', None)
+            'Vertical Profile Mode', None)
+        self.vLineAction.setToolTip(
+            'Enables vertical profile selection mode')
         self.vLineAction.setCheckable(True)
 
         self.lineAction = qt.QAction(
             qt.QIcon(qt.QPixmap(IconDict["diagonal"])),
-            'Fee Line Profile', None)
+            'Fee Line Profile Mode', None)
+        self.lineAction.setToolTip(
+            'Enables line profile selection mode')
         self.lineAction.setCheckable(True)
+
+        self.clearAction = qt.QAction(
+            qt.QIcon(qt.QPixmap(IconDict["image"])),
+            'Clear Profile', None)
+        self.clearAction.setToolTip(
+            'Clear the profile Region of interest')
+        self.clearAction.setCheckable(False)
+        self.clearAction.triggered.connect(self.clearProfile)
 
         # ActionGroup
         self.actionGroup = qt.QActionGroup(self)
@@ -333,6 +349,7 @@ class ProfileToolBar(qt.QToolBar):
         self.addAction(self.hLineAction)
         self.addAction(self.vLineAction)
         self.addAction(self.lineAction)
+        self.addAction(self.clearAction)
 
         # Add width spin box to toolbar
         self.addWidget(qt.QLabel('W:'))
