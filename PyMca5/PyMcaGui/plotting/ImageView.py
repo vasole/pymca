@@ -423,30 +423,30 @@ class ProfileToolBar(qt.QToolBar):
             yMin = profile['roiPolygonY'].min()
             yMax = profile['roiPolygonY'].max() - 1
             if roiWidth <= 1:
-                profileName = 'Y = %d' % yMin
+                profileName = 'Y = %g' % yMin
             else:
-                profileName = 'Y = [%d, %d]' % (yMin, yMax)
+                profileName = 'Y = [%g, %g]' % (yMin, yMax)
             xLabel = 'Columns'
 
         elif lineProjectionMode == 'Y':
             xMin = profile['roiPolygonX'].min()
             xMax = profile['roiPolygonX'].max() - 1
             if roiWidth <= 1:
-                profileName = 'X = %d' % xMin
+                profileName = 'X = %g' % xMin
             else:
-                profileName = 'X = [%d, %d]' % (xMin, xMax)
+                profileName = 'X = [%g, %g]' % (xMin, xMax)
             xLabel = 'Rows'
 
         else:
             x0, y0 = profile['startPoint']
             x1, y1 = profile['endPoint']
             if roiWidth < 1 or x1 == x0 or y1 == y0:
-                profileName = 'From (%.3f, %.3f) to (%.3f, %.3f)' % (
+                profileName = 'From (%g, %g) to (%g, %g)' % (
                     x0, y0, x1, y1)
             else:
                 m = (y1 - y0) / float((x1 - x0))
                 b = y0 - m * x0
-                profileName = 'y = %f * x %+f ; width=%d' % (
+                profileName = 'y = %g * x %+g ; width=%d' % (
                     m, b, roiWidth)
             xLabel = 'Distance'
 
