@@ -607,6 +607,9 @@ class ImageView(qt.QWidget):
         """Update histograms content using current active image."""
         activeImage = self._imagePlot.getActiveImage()
         if activeImage is not None:
+            wasUpdatingLimits = self._updatingLimits
+            self._updatingLimits = True
+
             data, legend, info, pixmap = activeImage
             xScale, yScale = info['plot_xScale'], info['plot_yScale']
             height, width = data.shape
@@ -698,6 +701,8 @@ class ImageView(qt.QWidget):
             else:
                 self._histoHPlot.clearCurves()
                 self._histoVPlot.clearCurves()
+
+            self._updatingLimits = wasUpdatingLimits
 
     def _updateRadarView(self):
         """Update radar view visible area.
