@@ -291,6 +291,8 @@ class ProfileToolBar(qt.QToolBar):
         self.plotWindow = plotWindow
         self.plotWindow.sigPlotSignal.connect(self._plotWindowSlot)
 
+        self._overlayColor = None
+
         self._roiInfo = None
         if profileWindow is None:
             self.profileWindow = ProfileScanWidget(actions=False)
@@ -365,13 +367,16 @@ class ProfileToolBar(qt.QToolBar):
 
     def _actionGroupTriggeredSlot(self, action):
         if action == self.browseAction:
-            self.plotWindow.setZoomModeEnabled(True)
+            self.plotWindow.setZoomModeEnabled(True, color=self.overlayColor)
         elif action == self.hLineAction:
-            self.plotWindow.setDrawModeEnabled(True, shape='hline')
+            self.plotWindow.setDrawModeEnabled(True, shape='hline',
+                                               color=self.overlayColor)
         elif action == self.vLineAction:
-            self.plotWindow.setDrawModeEnabled(True, shape='vline')
+            self.plotWindow.setDrawModeEnabled(True, shape='vline',
+                                               color=self.overlayColor)
         elif action == self.lineAction:
-            self.plotWindow.setDrawModeEnabled(True, shape='line')
+            self.plotWindow.setDrawModeEnabled(True, shape='line',
+                                               color=self.overlayColor)
         else:
             logging.error(
                 'ProfileToolBar._actionGroupTriggered got unknown action')
@@ -397,6 +402,17 @@ class ProfileToolBar(qt.QToolBar):
             return
 
         self._roiInfo = roiStart, roiEnd, lineProjectionMode
+        self.updateProfile()
+
+    @property
+    def overlayColor(self):
+        """The color to use for the ROI.
+        """
+        return self._overlayColor
+
+    @overlayColor.setter
+    def overlayColor(self, color):
+        self._overlayColor = color
         self.updateProfile()
 
     def updateProfile(self):
@@ -432,6 +448,7 @@ class ProfileToolBar(qt.QToolBar):
         self.plotWindow.addItem(profile['roiPolygonX'],
                                 profile['roiPolygonY'],
                                 legend=self._POLYGON_LEGEND,
+                                color=self.overlayColor,
                                 shape='polygon', fill=True,
                                 replace=False, replot=True)
 
@@ -1012,6 +1029,8 @@ class ImageViewMainWindow(qt.QMainWindow):
         self.imageView.setGraphXLabel('X')
         self.imageView.setGraphYLabel('Y')
         self.imageView.setGraphTitle('Image')
+        self.imageView._imagePlot.sigColormapChangedSignal.connect(
+            self._colormapUpdated)
         self.setCentralWidget(self.imageView)
 
         # Using PlotWindow's toolbar
@@ -1023,6 +1042,11 @@ class ImageViewMainWindow(qt.QMainWindow):
 
         # Connect to ImageView's signal
         self.imageView.valueChanged.connect(self._statusBarSlot)
+
+    def _colormapUpdated(self, colormap):
+        """Sync ROI color with current colormap"""
+        self.profileToolBar.overlayColor = _cursorColorForColormap(
+            colormap['name'])
 
     def _statusBarSlot(self, row, column, value):
         """Update status bar with coordinates/value from plots."""
