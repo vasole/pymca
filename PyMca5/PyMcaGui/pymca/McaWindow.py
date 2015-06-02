@@ -242,20 +242,49 @@ class McaWindow(ScanWindow.ScanWindow):
         return x, y, legend, info
 
     def getDataAndInfoFromLegend(self, legend):
+        """
+        Tries to provide the requested curve in terms of the channels and not in the terms
+        as it is displayed.
+        """
         xdata    = None
         ydata    = None
         info = None
+
         if legend in self.dataObjectsDict.keys():
+            # The data as displayed
+            x, y, legend, curveinfo = self.getCurve(legend)
+            # the data as first entered
             info  = self.dataObjectsDict[legend].info
-            xdata = self.dataObjectsDict[legend].x[0]
-            ydata = self.dataObjectsDict[legend].y[0]
+            if self.calibration == 'None':
+                if 'McaCalibSource' in curveinfo:
+                    calib = curveinfo['McaCalibSource']
+                    return x, y, curveinfo
+                elif 'McaCalibSource' in info:
+                    return x, y, info
+            else:
+                if 'McaCalib' in curveinfo:
+                    calib = curveinfo['McaCalib']
+                    current = True
+                else:
+                    calib = info['McaCalib']
+                    current = False
+                x0 = self.dataObjectsDict[legend].x[0]
+                energy = calib[0] + calib[1] * x0 + calib[2] * x0 * x0
+                if numpy.allclose(x, energy):
+                    xdata = self.dataObjectsDict[legend].x[0]
+                    ydata = y
+                    if current:
+                        return xdata, ydata, curveinfo
+                    else:
+                        return xdata, ydata, info
+                else:
+                    # return current data
+                    return x, y, curveinfo
         else:
             info = None
             xdata    = None
             ydata    = None
         return xdata, ydata, info
-
-
 
     def mcaAdvancedFitSignal(self):
         legend = self.getActiveCurve(just_legend=True)
@@ -273,6 +302,8 @@ class McaWindow(ScanWindow.ScanWindow):
         if self.calibration == 'None':
             if 'McaCalibSource' in curveinfo:
                 calib = curveinfo['McaCalibSource']
+            elif 'McaCalibSource' in info:
+                calib = info['McaCalibSource']
             else:
                 calib = [0.0,1.0,0.0]
         else:
