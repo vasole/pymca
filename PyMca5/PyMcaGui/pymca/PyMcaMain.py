@@ -488,7 +488,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                     if DEBUG:
                         print("3D selection")
                     self.mainTabWidget.setCurrentWidget(self.glWindow)
-                    self.glWindow._addSelection(ddict)
+                    self.glWindow._addSelection(dictOrList)
             else:
                 if DEBUG:
                     print("1D selection")
