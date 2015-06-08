@@ -34,6 +34,7 @@ __doc__ = """
 Matplotlib Plot backend.
 """
 from matplotlib import cbook
+import matplotlib
 # blitting enabled by default
 # it provides faster response at the cost of missing minor updates
 # during movement (only the bounding box of the moving object is updated)
@@ -66,29 +67,24 @@ if TK and ("PyQt4" not in sys.modules) and ("PyQt5" not in sys.modules) and\
     else:
         import tkinter as Tk
 elif ('PySide' in sys.modules) or ('PySide' in sys.argv) :
-    import matplotlib
     matplotlib.rcParams['backend']='Qt4Agg'
     matplotlib.rcParams['backend.qt4']='PySide'
     from PySide import QtCore, QtGui
 elif ("PyQt4" in sys.modules) or ('PyQt4' in sys.argv):
     from PyQt4 import QtCore, QtGui
-    import matplotlib
     matplotlib.rcParams['backend']='Qt4Agg'
 elif ('PyQt5' in sys.modules):
-    import matplotlib
     matplotlib.rcParams['backend']='Qt5Agg'
     from PyQt5 import QtCore, QtGui, QtWidgets
     QtGui.QApplication = QtWidgets.QApplication
 else:
     try:
-        import matplotlib
         from PyQt4 import QtCore, QtGui
         matplotlib.rcParams['backend']='Qt4Agg'
     except ImportError:
         try:
             from PyQt5 import QtCore, QtGui, QtWidgets
             QtGui.QApplication = QtWidgets.QApplication
-            import matplotlib
             matplotlib.rcParams['backend']='Qt5Agg'
         except ImportError:
             from PySide import QtCore, QtGui
@@ -1006,8 +1002,13 @@ class MatplotlibGraph(FigureCanvas):
                 self._mouseData[-1,0] = self._x1
                 self._mouseData[-1,1] = self._y1
                 self._drawingPatch.set_xy(self._mouseData)
-                self._drawingPatch.set_hatch('/')
+                if matplotlib.__version__.startswith('1.1.1'):
+                    # Patch for Debian 7
+                    # Workaround matplotlib issue with closed path
+                    # Need to toggle closed path to rebuild points
+                    self._drawingPatch.set_closed(False)
                 self._drawingPatch.set_closed(True)
+                self._drawingPatch.set_hatch('/')
             if BLITTING:
                 if self._background is None:
                     artist = self._drawingPatch
@@ -2429,7 +2430,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                 # extend = (xmin, xmax, ymax, ymin)
                 # instead of (xmin, xmax, ymin, ymax)
                 extent = (xmin, xmax, ymin, ymax)
-                if (xmin < 0) or (xmax < 0) or (ymin < 0) or (ymax < 0):
+                if tuple(xScale) != (0., 1.) or tuple(yScale) != (0., 1.):
                     # for the time being not properly handled
                     imageClass = AxesImage
                 elif (shape[0] * shape[1]) > 5.0e5:
@@ -2493,7 +2494,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     norm = Normalize(vmin, vmax)
 
                 # try as data
-                if (xmin < 0) or (xmax < 0) or (ymin < 0) or (ymax < 0):
+                if tuple(xScale) != (0., 1.) or tuple(yScale) != (0., 1.):
                     # for the time being not properly handled
                     imageClass = AxesImage
                 elif (shape[0] * shape[1]) > 5.0e5:

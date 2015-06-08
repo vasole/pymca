@@ -67,6 +67,7 @@ DEBUG = 0
 class PlotWindow(PlotWidget.PlotWidget):
     sigROISignal = qt.pyqtSignal(object)
     sigIconSignal = qt.pyqtSignal(object)
+    sigColormapChangedSignal = qt.pyqtSignal(object)
     DEFAULT_COLORMAP_INDEX = MaskImageTools.DEFAULT_COLORMAP_INDEX
     DEFAULT_COLORMAP_LOG_FLAG = MaskImageTools.DEFAULT_COLORMAP_LOG_FLAG
 
@@ -709,6 +710,7 @@ class PlotWindow(PlotWidget.PlotWidget):
         # list, we can remove this translation
         plotBackendColormap = ColormapDialog.colormapListToDict(colormap)
         self.setDefaultColormap(plotBackendColormap)
+        self.sigColormapChangedSignal.emit(plotBackendColormap)
 
         image = self.getActiveImage()
         if image is None:

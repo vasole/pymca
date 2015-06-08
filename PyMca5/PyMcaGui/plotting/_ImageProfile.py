@@ -75,8 +75,8 @@ def plotToImage(x, y, origin=(0, 0), scale=(1, 1), shape=None):
     row = int((y - origin[1]) / float(scale[1]))
 
     if shape is not None:
-        col = max(min(col, shape[1] - 1), 0)
-        row = max(min(row, shape[0] - 1), 0)
+        col = _clamp(col, 0, shape[1] - 1)
+        row = _clamp(row, 0, shape[0] - 1)
     return row, col
 
 
@@ -131,10 +131,10 @@ def getAlignedROIProfileCurve(image, roiCenter, roiWidth, roiRange, axis):
              - 'profileCoordsRange': The range of profile coordinates
                                      along the selected axis (2-tuple of int).
              - 'profileValues': The sums of the ROI along the selected axis.
-             - 'roiPolygonCol': The column coordinates of the polygon of the
-                                effective ROI.
-             - 'roiPolygonRow': The row coordinates of the polygon of the
-                                effective ROI.
+             - 'roiPolygonCols': The column coordinates of the polygon of the
+                                 effective ROI.
+             - 'roiPolygonRows': The row coordinates of the polygon of the
+                                 effective ROI.
     :rtype: dict
     """
     assert axis in (0, 1)
@@ -392,6 +392,10 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
                                 or the distance in plot coordinates along
                                 the line if lineProjectionMode is 'D'.
              - 'profileValues': The sums of the ROI along the line.
+             - 'roiPolygonCols': The column coordinates of the polygon of the
+                                 effective ROI.
+             - 'roiPolygonRows': The row coordinates of the polygon of the
+                                 effective ROI.
              - 'roiPolygonX': The x coordinates of the polygon of the
                               effective ROI in plot coordinates.
              - 'roiPolygonY': The y coordinates of the polygon of the
@@ -481,10 +485,13 @@ def getProfileCurve(image, roiStart, roiEnd, roiWidth=1,
                 coords = origin[1] + coords * scale[1]
 
     roiPolygonX, roiPolygonY = imageToPlot(result['roiPolygonRows'],
-                                           result['roiPolygonCols'])
+                                           result['roiPolygonCols'],
+                                           origin, scale)
 
     return {'profileValues': values,
             'profileCoords': coords,
+            'startPoint': imageToPlot(row0, col0, origin, scale),
+            'endPoint': imageToPlot(row1, col1, origin, scale),
             'roiPolygonCols': result['roiPolygonCols'],
             'roiPolygonRows': result['roiPolygonRows'],
             'roiPolygonX': roiPolygonX,

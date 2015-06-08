@@ -54,7 +54,7 @@ def prepareDrawingSignal(event, type_, points, parameters=None):
     eventDict['points'] = points
     eventDict['xdata'] = points[:, 0]
     eventDict['ydata'] = points[:, 1]
-    if type_ in ('rectangle'):
+    if type_ in ('rectangle',):
         eventDict['x'] = eventDict['xdata'].min()
         eventDict['y'] = eventDict['ydata'].min()
         eventDict['width'] = eventDict['xdata'].max() - eventDict['x']

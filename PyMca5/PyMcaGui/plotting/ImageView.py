@@ -60,9 +60,8 @@ To get help:
 
 # import ######################################################################
 
+import logging
 import numpy as np
-import warnings
-import weakref
 
 try:
     from .. import PyMcaQt as qt
@@ -70,8 +69,9 @@ except ImportError:
     from PyMca5.PyMcaGui import PyMcaQt as qt
 
 from .PyMca_Icons import IconDict
-from .ColormapDialog import ColormapDialog
 from .PlotWindow import PlotWindow
+from .ProfileScanWidget import ProfileScanWidget
+from . import _ImageProfile
 
 from PyMca5.PyMcaGraph import Plot
 
@@ -261,6 +261,243 @@ class RadarView(qt.QGraphicsView):
         self.fitInView(self._scene.itemsBoundingRect(), qt.Qt.KeepAspectRatio)
 
 
+# ProfileToolBar ##############################################################
+
+class ProfileToolBar(qt.QToolBar):
+    """QToolBar providing profile tools operating on a :class:`PlotWindow`.
+
+    Attributes:
+
+    - plotWindow: Associated :class:`PlotWindow`.
+    - profileWindow: Associated :class:`ProfileScanWidget`.
+    - actionGroup: :class:`QActionGroup` of available actions.
+    """
+    # TODO when available, listen to active image change to refresh profile
+
+    _POLYGON_LEGEND = '__ProfileToolBar_ROI_Polygon'
+
+    def __init__(self, plotWindow, profileWindow=None,
+                 title='Profile Selection', parent=None):
+        """
+
+        :param plotWindow: :class:`PlotWindow` instance on which to operate.
+        :param profileWindow: :class:`ProfileScanWidget` instance where to
+                              display the profile curve or None to create one.
+        :param str title: See :class:`QToolBar`.
+        :param parent: See :class:`QToolBar`.
+        """
+        super(ProfileToolBar, self).__init__(title, parent)
+        assert plotWindow is not None
+        self.plotWindow = plotWindow
+        self.plotWindow.sigPlotSignal.connect(self._plotWindowSlot)
+
+        self._overlayColor = None
+
+        self._roiInfo = None
+        if profileWindow is None:
+            self.profileWindow = ProfileScanWidget(actions=False)
+        else:
+            self.profileWindow = profileWindow
+
+        # Actions
+        self.browseAction = qt.QAction(
+            qt.QIcon(qt.QPixmap(IconDict["normal"])),
+            'Browsing Mode', None)
+        self.browseAction.setToolTip(
+            'Enables zooming interaction mode')
+        self.browseAction.setCheckable(True)
+
+        self.hLineAction = qt.QAction(
+            qt.QIcon(qt.QPixmap(IconDict["horizontal"])),
+            'Horizontal Profile Mode', None)
+        self.hLineAction.setToolTip(
+            'Enables horizontal profile selection mode')
+        self.hLineAction.setCheckable(True)
+
+        self.vLineAction = qt.QAction(
+            qt.QIcon(qt.QPixmap(IconDict["vertical"])),
+            'Vertical Profile Mode', None)
+        self.vLineAction.setToolTip(
+            'Enables vertical profile selection mode')
+        self.vLineAction.setCheckable(True)
+
+        self.lineAction = qt.QAction(
+            qt.QIcon(qt.QPixmap(IconDict["diagonal"])),
+            'Fee Line Profile Mode', None)
+        self.lineAction.setToolTip(
+            'Enables line profile selection mode')
+        self.lineAction.setCheckable(True)
+
+        self.clearAction = qt.QAction(
+            qt.QIcon(qt.QPixmap(IconDict["image"])),
+            'Clear Profile', None)
+        self.clearAction.setToolTip(
+            'Clear the profile Region of interest')
+        self.clearAction.setCheckable(False)
+        self.clearAction.triggered.connect(self.clearProfile)
+
+        # ActionGroup
+        self.actionGroup = qt.QActionGroup(self)
+        self.actionGroup.addAction(self.browseAction)
+        self.actionGroup.addAction(self.hLineAction)
+        self.actionGroup.addAction(self.vLineAction)
+        self.actionGroup.addAction(self.lineAction)
+        self.actionGroup.triggered.connect(self._actionGroupTriggeredSlot)
+
+        self.browseAction.setChecked(True)
+
+        # Add actions to ToolBar
+        self.addAction(self.browseAction)
+        self.addAction(self.hLineAction)
+        self.addAction(self.vLineAction)
+        self.addAction(self.lineAction)
+        self.addAction(self.clearAction)
+
+        # Add width spin box to toolbar
+        self.addWidget(qt.QLabel('W:'))
+        self.lineWidthSpinBox = qt.QSpinBox(self)
+        self.lineWidthSpinBox.setRange(0, 1000)
+        self.lineWidthSpinBox.setValue(1)
+        self.lineWidthSpinBox.valueChanged[int].connect(
+            self._lineWidthSpinBoxValueChangedSlot)
+        self.addWidget(self.lineWidthSpinBox)
+
+    def _lineWidthSpinBoxValueChangedSlot(self, value):
+        self.updateProfile()
+
+    def _actionGroupTriggeredSlot(self, action):
+        if action == self.browseAction:
+            self.plotWindow.setZoomModeEnabled(True, color=self.overlayColor)
+        elif action == self.hLineAction:
+            self.plotWindow.setDrawModeEnabled(True, shape='hline',
+                                               color=self.overlayColor)
+        elif action == self.vLineAction:
+            self.plotWindow.setDrawModeEnabled(True, shape='vline',
+                                               color=self.overlayColor)
+        elif action == self.lineAction:
+            self.plotWindow.setDrawModeEnabled(True, shape='line',
+                                               color=self.overlayColor)
+        else:
+            logging.error(
+                'ProfileToolBar._actionGroupTriggered got unknown action')
+
+    def _plotWindowSlot(self, event):
+        if event['event'] not in ('drawingProgress', 'drawingFinished'):
+            return
+
+        roiStart, roiEnd = event['points'][0], event['points'][1]
+
+        checkedAction = self.actionGroup.checkedAction()
+        if checkedAction == self.hLineAction:
+            roiStart = - sys.maxsize, roiStart[1]
+            roiEnd = sys.maxsize, roiEnd[1]
+            lineProjectionMode = 'X'
+        elif checkedAction == self.vLineAction:
+            roiStart = roiStart[0], - sys.maxsize
+            roiEnd = roiEnd[0], sys.maxsize
+            lineProjectionMode = 'Y'
+        elif checkedAction == self.lineAction:
+            lineProjectionMode = 'D'
+        else:
+            return
+
+        self._roiInfo = roiStart, roiEnd, lineProjectionMode
+        self.updateProfile()
+
+    @property
+    def overlayColor(self):
+        """The color to use for the ROI.
+        """
+        return self._overlayColor
+
+    @overlayColor.setter
+    def overlayColor(self, color):
+        self._overlayColor = color
+        self.updateProfile()
+
+    def updateProfile(self):
+        """Update the displayed profile and profile ROI.
+        """
+        self.plotWindow.removeItem(self._POLYGON_LEGEND, replot=True)
+
+        if self._roiInfo is None:
+            return
+
+        imageData = self.plotWindow.getActiveImage()
+        if imageData is None:
+            return
+        data, legend, info, pixmap = imageData
+
+        origin = info['plot_xScale'][0], info['plot_yScale'][0]
+        scale = info['plot_xScale'][1], info['plot_yScale'][1]
+
+        roiWidth = self.lineWidthSpinBox.value()
+        roiStart, roiEnd, lineProjectionMode = self._roiInfo
+
+        profile = _ImageProfile.getProfileCurve(data,
+                                                roiStart,
+                                                roiEnd,
+                                                roiWidth,
+                                                origin,
+                                                scale,
+                                                lineProjectionMode)
+        if profile is None:
+            return
+
+        # Update ROI polygon
+        self.plotWindow.addItem(profile['roiPolygonX'],
+                                profile['roiPolygonY'],
+                                legend=self._POLYGON_LEGEND,
+                                color=self.overlayColor,
+                                shape='polygon', fill=True,
+                                replace=False, replot=True)
+
+        # Title
+        if lineProjectionMode == 'X':
+            yMin = profile['roiPolygonY'].min()
+            yMax = profile['roiPolygonY'].max() - 1
+            if roiWidth <= 1:
+                profileName = 'Y = %g' % yMin
+            else:
+                profileName = 'Y = [%g, %g]' % (yMin, yMax)
+            xLabel = 'Columns'
+
+        elif lineProjectionMode == 'Y':
+            xMin = profile['roiPolygonX'].min()
+            xMax = profile['roiPolygonX'].max() - 1
+            if roiWidth <= 1:
+                profileName = 'X = %g' % xMin
+            else:
+                profileName = 'X = [%g, %g]' % (xMin, xMax)
+            xLabel = 'Rows'
+
+        else:
+            x0, y0 = profile['startPoint']
+            x1, y1 = profile['endPoint']
+            if roiWidth < 1 or x1 == x0 or y1 == y0:
+                profileName = 'From (%g, %g) to (%g, %g)' % (
+                    x0, y0, x1, y1)
+            else:
+                m = (y1 - y0) / float((x1 - x0))
+                b = y0 - m * x0
+                profileName = 'y = %g * x %+g ; width=%d' % (
+                    m, b, roiWidth)
+            xLabel = 'Distance'
+
+        # Update profile curve
+        coords, values = profile['profileCoords'], profile['profileValues']
+        index = np.isfinite(values)
+        coords, values = coords[index], values[index]
+        self.profileWindow.addCurve(coords, values,
+                                    legend=profileName, xlabel=xLabel,
+                                    replace=True, replot=True)
+        self.profileWindow.show()
+
+    def clearProfile(self):
+        self._roiInfo = None
+        self.updateProfile()
+
+
 # ImageView ###################################################################
 
 class ImageView(qt.QWidget):
@@ -331,6 +568,7 @@ class ImageView(qt.QWidget):
         self._imagePlot.sigPlotSignal.connect(self._imagePlotCB)
         self._imagePlot.hFlipToolButton.clicked.connect(
             self._updateYAxisInverted)
+        self._imagePlot.sigColormapChangedSignal.connect(self.setColormap)
 
         self._histoVPlot = Plot.Plot(backend=backend)
         self._histoVPlot.setZoomModeEnabled(True)
@@ -369,6 +607,9 @@ class ImageView(qt.QWidget):
         """Update histograms content using current active image."""
         activeImage = self._imagePlot.getActiveImage()
         if activeImage is not None:
+            wasUpdatingLimits = self._updatingLimits
+            self._updatingLimits = True
+
             data, legend, info, pixmap = activeImage
             xScale, yScale = info['plot_xScale'], info['plot_yScale']
             height, width = data.shape
@@ -427,6 +668,7 @@ class ImageView(qt.QWidget):
                     xCoords = xScale[0] + xScale[1] * xCoords
                     xData = np.take(histoHVisibleData, coords // 2)
                     self._histoHPlot.addCurve(xCoords, xData,
+                                              xlabel='', ylabel='',
                                               replace=False, replot=False,
                                               color=self.HISTOGRAMS_COLOR,
                                               linestyle='-',
@@ -444,6 +686,7 @@ class ImageView(qt.QWidget):
                     yCoords = yScale[0] + yScale[1] * yCoords
                     yData = np.take(histoVVisibleData, coords // 2)
                     self._histoVPlot.addCurve(yData, yCoords,
+                                              xlabel='', ylabel='',
                                               replace=False, replot=False,
                                               color=self.HISTOGRAMS_COLOR,
                                               linestyle='-',
@@ -458,6 +701,8 @@ class ImageView(qt.QWidget):
             else:
                 self._histoHPlot.clearCurves()
                 self._histoVPlot.clearCurves()
+
+            self._updatingLimits = wasUpdatingLimits
 
     def _updateRadarView(self):
         """Update radar view visible area.
@@ -789,15 +1034,24 @@ class ImageViewMainWindow(qt.QMainWindow):
         self.imageView.setGraphXLabel('X')
         self.imageView.setGraphYLabel('Y')
         self.imageView.setGraphTitle('Image')
+        self.imageView._imagePlot.sigColormapChangedSignal.connect(
+            self._colormapUpdated)
         self.setCentralWidget(self.imageView)
 
         # Using PlotWindow's toolbar
         self.addToolBar(self.imageView.toolBar())
+        self.profileToolBar = ProfileToolBar(self.imageView._imagePlot)
+        self.addToolBar(self.profileToolBar)
 
         self.statusBar()
 
         # Connect to ImageView's signal
         self.imageView.valueChanged.connect(self._statusBarSlot)
+
+    def _colormapUpdated(self, colormap):
+        """Sync ROI color with current colormap"""
+        self.profileToolBar.overlayColor = _cursorColorForColormap(
+            colormap['name'])
 
     def _statusBarSlot(self, row, column, value):
         """Update status bar with coordinates/value from plots."""
@@ -829,6 +1083,7 @@ class ImageViewMainWindow(qt.QMainWindow):
 
         # Set the new image in ImageView widget
         self.imageView.setImage(image, *args, **kwargs)
+        self.profileToolBar.updateProfile()
         self.setStatusBar(None)
 
 
