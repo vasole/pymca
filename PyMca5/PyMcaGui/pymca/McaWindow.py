@@ -242,20 +242,51 @@ class McaWindow(ScanWindow.ScanWindow):
         return x, y, legend, info
 
     def getDataAndInfoFromLegend(self, legend):
+        """
+        Tries to provide the requested curve in terms of the channels and not in the terms
+        as it is displayed.
+        """
         xdata    = None
         ydata    = None
         info = None
+
         if legend in self.dataObjectsDict.keys():
+            # The data as displayed
+            x, y, legend, curveinfo = self.getCurve(legend)
+            # the data as first entered
             info  = self.dataObjectsDict[legend].info
-            xdata = self.dataObjectsDict[legend].x[0]
-            ydata = self.dataObjectsDict[legend].y[0]
+            if self.calibration == 'None':
+                if 'McaCalibSource' in curveinfo:
+                    calib = curveinfo['McaCalibSource']
+                    return x, y, curveinfo
+                elif 'McaCalibSource' in info:
+                    return x, y, info
+                else:
+                    return x, y, curveinfo
+            else:
+                if 'McaCalib' in curveinfo:
+                    calib = curveinfo['McaCalib']
+                    current = True
+                else:
+                    calib = info['McaCalib']
+                    current = False
+                x0 = self.dataObjectsDict[legend].x[0]
+                energy = calib[0] + calib[1] * x0 + calib[2] * x0 * x0
+                if numpy.allclose(x, energy):
+                    xdata = self.dataObjectsDict[legend].x[0]
+                    ydata = y
+                    if current:
+                        return xdata, ydata, curveinfo
+                    else:
+                        return xdata, ydata, info
+                else:
+                    # return current data
+                    return x, y, curveinfo
         else:
             info = None
-            xdata    = None
-            ydata    = None
+            xdata = None
+            ydata = None
         return xdata, ydata, info
-
-
 
     def mcaAdvancedFitSignal(self):
         legend = self.getActiveCurve(just_legend=True)
@@ -273,6 +304,8 @@ class McaWindow(ScanWindow.ScanWindow):
         if self.calibration == 'None':
             if 'McaCalibSource' in curveinfo:
                 calib = curveinfo['McaCalibSource']
+            elif 'McaCalibSource' in info:
+                calib = info['McaCalibSource']
             else:
                 calib = [0.0,1.0,0.0]
         else:
@@ -932,10 +965,10 @@ class McaWindow(ScanWindow.ScanWindow):
                                                         calib[1] * region[1] +\
                                                         calib[2] * region[1] * region[1]])
                                 self.addCurve(xdata, data, legend=legend,
-                                                info=curveinfo)
+                                                info=curveinfo, own=True)
                             else:
                                 self.addCurve(xdata, data, legend=legend,
-                                                info=curveinfo)
+                                                info=curveinfo, own=True)
                             self.setGraphXLabel('Energy')
                     elif self.calibration == self.calboxoptions[2]:
                         calibrationOrder = None
@@ -975,11 +1008,13 @@ class McaWindow(ScanWindow.ScanWindow):
                                                         calib[2] * region[1] * region[1]])
                                 self.addCurve(xdata, data,
                                                 legend=legend,
-                                                info=curveinfo)
+                                                info=curveinfo,
+                                                own=True)
                             else:
                                 self.addCurve(xdata, data,
                                                 legend=legend,
-                                                info=curveinfo)
+                                                info=curveinfo,
+                                                own=True)
                             if calibrationOrder == 'ID18':
                                 self.setGraphXLabel('Time')
                             else:
@@ -1016,13 +1051,15 @@ class McaWindow(ScanWindow.ScanWindow):
                                                         calib[2] * region[1] * region[1]])
                                 self.addCurve(xdata, data,
                                               legend=legend,
-                                              info=curveinfo)
+                                              info=curveinfo,
+                                              own=True)
                                                 #baseline = info['baseline'],
                                                 #regions = inforegions)
                             else:
                                 self.addCurve(xdata, data,
                                               legend=legend,
-                                              info=curveinfo)
+                                              info=curveinfo,
+                                              own=True)
                             if calibrationOrder == 'ID18':
                                 self.setGraphXLabel('Time')
                             else:
@@ -1031,13 +1068,15 @@ class McaWindow(ScanWindow.ScanWindow):
                         if simplefitplot:
                             self.addCurve(xhelp, data,
                                           legend=legend,
-                                          info=curveinfo)
+                                          info=curveinfo,
+                                          own=True)
                                           #baseline = info['baseline'],
                                           #regions = info['regions'])
                         else:
                             self.addCurve(xhelp, data,
                                           legend=legend,
-                                          info=curveinfo)
+                                          info=curveinfo,
+                                          own=True)
                         self.setGraphXLabel('Channel')
                 except:
                     del self.dataObjectsDict[legend]
@@ -1132,7 +1171,9 @@ class McaWindow(ScanWindow.ScanWindow):
                 self.addCurve(self.dataObjectsDict[newlegend].x[0],
                               self.dataObjectsDict[newlegend].y[0],
                               legend=newlegend,
-                              info=self.dataObjectsDict[newlegend].info['legend'])
+                              info=self.dataObjectsDict[newlegend].info['legend'],
+                              own=True,
+                              replot=False)
                 if legend in self.caldict:
                     self.caldict[newlegend] = copy.deepcopy(self.caldict[legend])
                 del self.dataObjectsDict[legend]
@@ -1208,7 +1249,8 @@ class McaWindow(ScanWindow.ScanWindow):
             self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
             self.addCurve(xplot,
                           yplot,
-                          legend=newDataObject.info['legend'])
+                          legend=newDataObject.info['legend'],
+                          own=True)
 
     def _scanFitSignalReceived(self, ddict):
         if DEBUG:
@@ -1225,7 +1267,8 @@ class McaWindow(ScanWindow.ScanWindow):
             newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]
 
             self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
-            self.addCurve(x=xplot, y=yplot, legend=newDataObject.info['legend'])
+            self.addCurve(x=xplot, y=yplot,
+                          legend=newDataObject.info['legend'], own=True)
 
     def _saveIconSignal(self):
         legend = self.getActiveCurve(just_legend=True)
@@ -1492,7 +1535,7 @@ class McaWindow(ScanWindow.ScanWindow):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, **kw):
+                 xerror=None, yerror=None, own=False, **kw):
         if legend in self._curveList:
             if info is None:
                 info = {}
@@ -1514,7 +1557,12 @@ class McaWindow(ScanWindow.ScanWindow):
                     linestyle = ' '
             if yaxis is None:
                 yaxis =  info.get("plot_yaxis",oldInfo.get("plot_yaxis", None))
-        if legend in self.dataObjectsDict:
+        if xlabel is None:
+            xlabel = self.getGraphXLabel()
+        if ylabel is None:
+            ylabel = self.getGraphYLabel()
+        if own and (legend in self.dataObjectsDict):
+            # The curve is already registered
             super(McaWindow, self).addCurve(x, y, legend=legend, info=info,
                                 replace=replace, replot=replot, color=color, symbol=symbol,
                                 linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
@@ -1534,10 +1582,6 @@ class McaWindow(ScanWindow.ScanWindow):
             info = {}
         if legend is None:
             legend = "Unnamed curve 1.1"
-        if xlabel is None:
-            xlabel = info.get("xlabel", "X")
-        if ylabel is None:
-            ylabel = info.get("ylabel", "Y")
         # this is awfull but I have no other way to pass the plot information ...
         if color is not None:
             info["plot_color"] = color
