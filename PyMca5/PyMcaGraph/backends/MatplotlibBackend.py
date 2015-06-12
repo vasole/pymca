@@ -43,7 +43,14 @@ import matplotlib
 BLITTING = True
 import numpy
 from numpy import vstack as numpyvstack
-from numpy import nanmax, nanmin
+# Problem on debian6 numpy version 1.4.1 unsigned longs give infinity
+#from numpy import nanmax, nanmin
+def nanmax(x):
+    return x[numpy.isfinite(x)].max()
+
+def nanmin(x):
+    return x[numpy.isfinite(x)].min()
+
 import sys
 import types
 try:
