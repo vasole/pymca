@@ -43,6 +43,44 @@ DEBUG = 0
 if DEBUG:
     from pylab import *
 
+
+def e2k(energy, e0=0.0, units="eV"):
+    r"""
+        e2k(energy, e0=0.0): converts from E (eV) to k (A^-1)
+        note: we use the convention that points with E<e0 will have negative k
+    """
+    energy = numpy.array(energy, copy=False, dtype=numpy.float)
+    if units.lower() != "ev":
+        energy *= 1000.
+        e0 *= 1000.
+    codata_ec = numpy.array(1.602176565e-19)
+    codata_me = numpy.array(9.10938291e-31)
+    codata_h = numpy.array(6.62606957e-34)
+    codata_hbar = codata_h/2.0/numpy.pi
+    #; converts a set in energy to a set in k
+    #; the negative energies (below edge) are treated as negative k
+    tmpx = energy - e0
+    ccte = numpy.sqrt(codata_ec*2*codata_me/codata_hbar/codata_hbar)*1e-10
+    tmpxx = ((tmpx > 0) * 2-1) * numpy.sqrt(numpy.abs(tmpx)) * ccte
+    return tmpxx
+
+def k2e(kValues):
+    r"""
+        k2e(x): converts from k (A^-1) to E (eV)
+        The negative energies (below edge) are treated as negative k
+    """
+    codata_ec = numpy.array(1.602176565e-19)
+    codata_me = numpy.array(9.10938291e-31)
+    codata_h = numpy.array(6.62606957e-34)
+    codata_hbar = codata_h/2.0/numpy.pi
+
+    #; converts a set in k to energy
+    #; the negative energies (below edge) are treated as negative k
+    ccte = numpy.power(codata_hbar,2) / 2 / codata_me / codata_ec * 1e20
+    tmpx = kValues
+    tmpx = ((tmpx > 0) * 2-1) * tmpx * tmpx * ccte
+    return tmpx
+
 def polynom(parameter_list, x):
     if hasattr(x, 'shape'):
         output = numpy.zeros(x.shape)
@@ -73,67 +111,89 @@ def modifiedVictoreenDerivative(parameter_list, parameter_index, x):
     else:
         return numpy.ones(x.shape, dtype=numpy.float)
 
-def estimateXANESEdge(spectrum, energy=None, npoints=7, full=False):
-    if energy is None:
-        x = numpy.arange(len(spectrum)).astype(numpy.float)
-    else:
-        x = numpy.array(energy, dtype=numpy.float, copy=True)
-    y = numpy.array(spectrum, dtype=numpy.float, copy=True)
-
-    # make sure data are sorted
-    idx = energy.argsort(kind='mergesort')
-    x = numpy.take(energy, idx)
-    y = numpy.take(spectrum, idx)
-
-    # make sure data are strictly increasing
-    delta = x[1:] - x[:-1]
-    dmin = delta.min()
-    dmax = delta.max()
-    if delta.min() <= 1.0e-10:
-        # force data are strictly increasing
-        # although we do not consider last point
-        idx = numpy.nonzero(delta>0)[0]
-        x = numpy.take(x, idx)
-        y = numpy.take(y, idx)
-        delta = None
-
-    # use a regularly spaced spectrum
-    if dmax != dmin:
-        # choose the number of points or deduce it from
-        # the input data length?
-        nchannels = 2 * len(spectrum)
-        xi = numpy.linspace(x[1], x[-2], nchannels).reshape(-1, 1)
-        x.shape = -1
-        y.shape = -1
-        y = SpecfitFuns.interpol([x], y, xi, y.min())
-        x = xi
-        x.shape = -1
-        y.shape = -1
-
-    # Sorted and regularly spaced values
-    sortedX = x
-    sortedY = y
-
+def getE0SavitzkyGolay(energy, mu, points=5, full=False):
+    # It does not check anything, data have to be prepared before!!!
     # take the first derivative
-    # npoints = 7
-    xPrime = x[npoints:-npoints]
-    yPrime = SGModule.getSavitzkyGolay(y, npoints=npoints, degree=2, order=1)
+    yPrime = SGModule.getSavitzkyGolay(mu, npoints=points, degree=2, order=1)
+    xPrime = energy[:]
 
     # get the index at maximum value
     iMax = numpy.argmax(yPrime)
 
     # get the center of mass
-    w = 2 * npoints
+    w = points
     selection = yPrime[iMax-w:iMax+w+1]
     edge = (selection * xPrime[iMax-w:iMax+w+1]).sum(dtype=numpy.float)/\
            selection.sum(dtype=numpy.float)
 
     if full:
         # return intermediate information
-        return edge, sortedX, sortedY, xPrime, yPrime
+        return {"edge":edge,
+                "iMax": iMax,
+                "xPrime": xPrime,
+                "yPrime": yPrime}
     else:
         # return the corresponding x value
         return edge
+
+
+def estimateXANESEdge(spectrum, energy=None, npoints=5, full=False,
+                      sanitize=True):
+    if sanitize:
+        if energy is None:
+            x = numpy.arange(len(spectrum)).astype(numpy.float)
+        else:
+            x = numpy.array(energy, dtype=numpy.float, copy=False)
+        y = numpy.array(spectrum, dtype=numpy.float, copy=False)
+        # make sure data are sorted
+        idx = energy.argsort(kind='mergesort')
+        x = numpy.take(energy, idx)
+        y = numpy.take(spectrum, idx)
+
+        # make sure data are strictly increasing
+        delta = x[1:] - x[:-1]
+        dmin = delta.min()
+        dmax = delta.max()
+        if delta.min() <= 1.0e-10:
+            # force data are strictly increasing
+            # although we do not consider last point
+            idx = numpy.nonzero(delta>0)[0]
+            x = numpy.take(x, idx)
+            y = numpy.take(y, idx)
+            delta = None
+
+        # use a regularly spaced spectrum
+        if dmax != dmin:
+            # choose the number of points or deduce it from
+            # the input data length?
+            nchannels = 10 * x.size
+            xi = numpy.linspace(x[1], x[-2], nchannels).reshape(-1, 1)
+            x.shape = -1
+            y.shape = -1
+            y = SpecfitFuns.interpol([x], y, xi, y.min())
+            x = xi
+    else:
+        # take views
+        x = energy[:]
+        y = spectrum[:]
+
+    x.shape = -1
+    y.shape = -1
+
+    # Sorted and regularly spaced values
+    sortedX = x
+    sortedY = y    
+
+    ddict = getE0SavitzkyGolay(sortedX,
+                               sortedY,
+                               points=npoints,
+                               full=full)
+    if full:
+        # return intermediate information
+        return ddict["edge"], sortedX, sortedY, ddict["xPrime"], ddict["yPrime"]
+    else:
+        # return the corresponding x value
+        return ddict
 
 def getRegionsData(x0, y0, regions, edge=0.0):
     """
@@ -142,7 +202,7 @@ def getRegionsData(x0, y0, regions, edge=0.0):
     regions - List of (xmin, xmax) values defining the regions.
     edge - Supplied edge energy
            The default is 0. That means regions are absolute energies.
-           The actual regions are defined as (xmin + edge, xmin + edge)
+           The actual regions are defined as (xmin + edge, xmax + edge)
     """
     # take a view of the data
     x = x0[:]
