@@ -422,6 +422,32 @@ def build_plotting_ctools(ext_modules):
     ext_modules.append(module)
 
 
+def build_xas_xas(ext_modules):
+    print("PASSED")
+    packages.append('PyMca5.PyMcaPhysics.xas._xas')
+    basedir = os.path.join(os.getcwd(), 'PyMca5', 'PyMcaPhysics','xas', '_xas')
+    c_files = glob.glob(os.path.join(basedir, 'src', 'polspl.c'))
+    if build_ext:
+        src = glob.glob(os.path.join(basedir, 'cython','_xas.pyx'))
+    else:
+        src = glob.glob(os.path.join(basedir, 'cython','*.c'))
+    src += c_files
+    if sys.platform == 'win32':
+        extra_compile_args = []
+        extra_link_args = []
+    else:
+        extra_compile_args = []
+        extra_link_args = []
+    module = Extension(name="PyMca5.PyMcaPhysics.xas._xas",
+                        sources=src,
+                        include_dirs=[numpy.get_include(),
+                                      os.path.join(basedir, "include")],
+                        extra_compile_args=extra_compile_args,
+                        extra_link_args=extra_link_args,
+                        language="c",
+                        )
+    ext_modules.append(module)
+
 ext_modules = []
 if sys.version < '3.0':
     build_FastEdf(ext_modules)
@@ -447,6 +473,7 @@ if (sys.version < '3.0') and LOCAL_OBJECT3D:
         print(sys.exc_info())
 build_PyMcaSciPy(ext_modules)
 build_plotting_ctools(ext_modules)
+build_xas_xas(ext_modules)
 
 from distutils.command.build_py import build_py
 class smart_build_py(build_py):
