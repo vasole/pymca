@@ -40,6 +40,11 @@ import numpy
 import time
 from PyMca5.PyMca import XASNormalization
 from PyMca5.PyMca import linalg
+try:
+    from PyMca5.PyMca import _xas
+    _XAS = True
+except ImportError:
+    _XAS = False
 DEBUG = 0
 
 def polynom(x, parameters):
@@ -486,12 +491,21 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None):
     xx[1:] = set22[:,0]
     yy[1:] = set22[:,1]
 
-    c = polspl(xx,yy,w,npts,xl,xh,nr,nc)
-    if DEBUG:
-        print("c:",c)
+    #t0 = time.time()
+    if _XAS:
+        c = _xas.polspl(xx,yy,w,npts,xl,xh,nr,nc)
+        if DEBUG:
+            t0 = time.time()
+            c2 = polspl(xx,yy,w,npts,xl,xh,nr,nc)
+            print("polspl elapsed = ", time.time() - t0)
+            print("OK?", numpy.allclose(c, c2))
+    else:
+        c = polspl(xx,yy,w,npts,xl,xh,nr,nc)
 
     #TODO: polspl_evaluate receives and returns arrays like IDL (2,npoints)
+    #t0 = time.time()
     fit0 = polspl_evaluate(set2.T,xl,xh,c,nc,nr)
+    #print("polspl_evaluate elapsed = ", time.time() - t0)
 
     return fit0.T
 
