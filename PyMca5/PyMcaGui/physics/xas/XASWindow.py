@@ -60,8 +60,8 @@ class XASMdiArea(qt.QMdiArea):
         self.setActivationOrder(qt.QMdiArea.StackingOrder)
         self.tileSubWindows()
         #self.cascadeSubWindows()
-        for window in self.subWindowList():
-            print(" window = ", window.windowTitle())
+        #for window in self.subWindowList():
+        #    print(" window = ", window.windowTitle())
 
     def setSpectrum(self, energy, mu):
         for key in self._windowDict:
@@ -118,31 +118,7 @@ if __name__ == "__main__":
     data = specfile.Specfile(fileName)[0].data()[-2:, :]
     energy = data[0, :]
     mu = data[1, :]
-    #exafs = XASClass.XASClass()
-    #exafs.setSpectrum(energy, mu)
-    #dict = exafs.processSpectrum()
     w = XASMdiArea()
-    """
-    w.addCurve(energy, mu, legend="original", replot=False)
-    w.addCurve(ddict["NormalizedEnergy"],
-               ddict["NormalizedMu"], legend="Mu", yaxis="right", replot=False)
-    w.addCurve(ddict["NormalizedEnergy"],
-               ddict["NormalizedSignal"], legend="Post", replot=False)
-    w.addCurve(ddict["NormalizedEnergy"],
-               ddict["NormalizedBackground"], legend="Pre",replot=False)
-    w.resetZoom()
-    w.show()
-    exafs = PlotWindow.PlotWindow()
-    idx = (ddict["EXAFSKValues"] >= ddict["KMin"]) & \
-          (ddict["EXAFSKValues"] <= ddict["KMax"])
-    exafs.addCurve(ddict["EXAFSKValues"][idx], ddict["EXAFSNormalized"][idx],
-                   legend="Normalized EXAFS")
-    exafs.show()
-    ft = PlotWindow.PlotWindow()
-    ft.addCurve(ddict["FT"]["FTRadius"], ddict["FT"]["FTAmplitude"])
-    ft.resetZoom()
-    ft.show()
-    """
     w.show()
     w.setSpectrum(energy, mu)
     w.update()
