@@ -423,7 +423,6 @@ def build_plotting_ctools(ext_modules):
 
 
 def build_xas_xas(ext_modules):
-    print("PASSED")
     packages.append('PyMca5.PyMcaPhysics.xas._xas')
     basedir = os.path.join(os.getcwd(), 'PyMca5', 'PyMcaPhysics','xas', '_xas')
     c_files = glob.glob(os.path.join(basedir, 'src', 'polspl.c'))
