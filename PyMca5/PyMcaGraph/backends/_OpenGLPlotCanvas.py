@@ -53,6 +53,7 @@ from .GLSupport.PlotEvents import prepareMouseSignal,\
     prepareLimitsChangedSignal
 from .GLSupport.PlotImageFile import saveImageToFile
 from .GLSupport.PlotInteraction import PlotInteraction
+from . import _utils
 
 
 # OrderedDict #################################################################
@@ -1003,7 +1004,7 @@ class OpenGLPlotCanvas(PlotBackend):
             if ((isXLog and xCoord is not None and
                     xCoord < FLOAT32_MINPOS) or
                     (isYLog and yCoord is not None and
-                    yCoord < FLOAT32_MINPOS)):
+                     yCoord < FLOAT32_MINPOS)):
                 # Do not render markers with negative coords on log axis
                 continue
 
@@ -1064,7 +1065,6 @@ class OpenGLPlotCanvas(PlotBackend):
                                      (xCoord, y0), (xCoord, y1)),
                                     dtype=np.float32)
 
-
             glUniform4f(self._progBase.uniforms['color'], * marker['color'])
 
             glVertexAttribPointer(posAttrib,
@@ -1110,7 +1110,6 @@ class OpenGLPlotCanvas(PlotBackend):
 
                 glUniformMatrix4fv(matrixUnif, 1, GL_TRUE,
                                    self.matrixPlotDataTransformedProj)
-
 
                 for shape in self._selectionAreas.values():
                     if shape.isVideoInverted:
@@ -1318,13 +1317,9 @@ class OpenGLPlotCanvas(PlotBackend):
             legend = self._UNNAMED_ITEM
 
         oldImage = self._plotContent.get('image', legend)
-        if oldImage is not None:
-            if oldImage.data.shape == data.shape:
-                oldXScale = oldImage.xMin, oldImage.xScale
-                oldYScale = oldImage.yMin, oldImage.yScale
-            else:
-                oldImage = None
-                self.removeImage(legend)
+        if oldImage is not None and oldImage.data.shape != data.shape:
+            oldImage = None
+            self.removeImage(legend)
 
         if replace:
             self.clearImages()
@@ -1721,7 +1716,6 @@ class OpenGLPlotCanvas(PlotBackend):
         self._yAutoScale = flag
 
     def _resetZoom(self, dataMargins=None, forceAutoscale=False):
-        # TODO handle margins
         dataBounds = self._plotContent.getBounds(
             self.isXAxisLogarithmic(), self.isYAxisLogarithmic())
 
@@ -1730,25 +1724,22 @@ class OpenGLPlotCanvas(PlotBackend):
         else:
             isXAuto, isYAuto = self.isXAxisAutoScale(), self.isYAxisAutoScale()
 
+        xMin, xMax, yMin, yMax, y2Min, y2Max = _utils.addMarginsToLimits(
+            dataMargins,
+            self.isXAxisLogarithmic(), self.isYAxisLogarithmic(),
+            dataBounds.xAxis.min_, dataBounds.xAxis.max_,
+            dataBounds.yAxis.min_, dataBounds.yAxis.max_,
+            dataBounds.y2Axis.min_, dataBounds.y2Axis.max_)
+
         if isXAuto and isYAuto:
-            self.setLimits(dataBounds.xAxis.min_,
-                           dataBounds.xAxis.max_,
-                           dataBounds.yAxis.min_,
-                           dataBounds.yAxis.max_,
-                           dataBounds.y2Axis.min_,
-                           dataBounds.y2Axis.max_)
+            self.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
         elif isXAuto:
-            self.setGraphXLimits(dataBounds.xAxis.min_,
-                                 dataBounds.xAxis.max_)
+            self.setGraphXLimits(xMin, xMax)
 
         elif isYAuto:
             xMin, xMax = self.getGraphXLimits()
-            self.setLimits(xMin, xMax,
-                           dataBounds.yAxis.min_,
-                           dataBounds.yAxis.max_,
-                           dataBounds.y2Axis.min_,
-                           dataBounds.y2Axis.max_)
+            self.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
     def resetZoom(self, dataMargins=None):
         self._resetZoom(dataMargins)

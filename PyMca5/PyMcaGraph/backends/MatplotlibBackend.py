@@ -112,6 +112,11 @@ from matplotlib.image import AxesImage, NonUniformImage
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 import time
 
+try:
+    from . import _utils
+except ImportError:
+    from PyMca5.PyMcaGraph.backends import _utils
+
 DEBUG = 0
 
 class ModestImage(AxesImage):
@@ -1317,31 +1322,10 @@ class MatplotlibGraph(FigureCanvas):
             xmax = max(xmax, xmax2)
 
         # Add margins around data inside the plot area
-        if dataMargins is not None:
-            xMinMargin, xMaxMargin, yMinMargin, yMaxMargin = dataMargins
-
-            if self.ax.get_xscale() == 'linear':
-                xRange = xmax - xmin
-                xmin -= xMinMargin * xRange
-                xmax += xMaxMargin * xRange
-
-            elif xmin > 0. and xmax > 0.:  # Log scale
-                # Do not apply margins if limits < 0
-                xMinLog, xMaxLog = numpy.log10(xmin), numpy.log10(xmax)
-                xRangeLog = xMaxLog - xMinLog
-                xmin = pow(10., xMinLog - xMinMargin * xRangeLog)
-                xmax = pow(10., xMaxLog + xMaxMargin * xRangeLog)
-
-            if self.ax.get_yscale() == 'linear':
-                yRange = ymax - ymin
-                ymin -= yMinMargin * yRange
-                ymax += yMaxMargin * yRange
-            elif ymin > 0. and ymax > 0.:  # Log scale
-                # Do not apply margins if limits < 0
-                yMinLog, yMaxLog = numpy.log10(ymin), numpy.log10(ymax)
-                yRangeLog = yMaxLog - yMinLog
-                ymin = pow(10., yMinLog - yMinMargin * yRangeLog)
-                ymax = pow(10., yMaxLog + yMaxMargin * yRangeLog)
+        xmin, xmax, ymin, ymax = _utils.addMarginsToLimits(
+            dataMargins,
+            self.ax.get_xscale() == 'log', self.ax.get_yscale() == 'log',
+            xmin, xmax, ymin, ymax)
 
         self.setLimits(xmin, xmax, ymin, ymax)
         #self.ax2.set_autoscaley_on(True)
