@@ -1720,7 +1720,8 @@ class OpenGLPlotCanvas(PlotBackend):
     def setYAxisAutoScale(self, flag=True):
         self._yAutoScale = flag
 
-    def _resetZoom(self, forceAutoscale=False):
+    def _resetZoom(self, dataMargins=None, forceAutoscale=False):
+        # TODO handle margins
         dataBounds = self._plotContent.getBounds(
             self.isXAxisLogarithmic(), self.isYAxisLogarithmic())
 
@@ -1749,8 +1750,8 @@ class OpenGLPlotCanvas(PlotBackend):
                            dataBounds.y2Axis.min_,
                            dataBounds.y2Axis.max_)
 
-    def resetZoom(self):
-        self._resetZoom()
+    def resetZoom(self, dataMargins=None):
+        self._resetZoom(dataMargins)
         self.replot()
 
     # Limits #
