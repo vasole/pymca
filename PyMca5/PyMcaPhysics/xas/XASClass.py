@@ -921,7 +921,7 @@ class XASClass(object):
         ddict["Knots"] = {}
         ddict["Knots"] ["Number"] = 5
         ddict["Knots"] ["Values"] = None
-        ddict["Knots"] ["Order"] = [3, 2, 2, 3] # one less than knots
+        ddict["Knots"] ["Orders"] = [3, 2, 2, 3] # one less than knots
 
         # FT
         """
@@ -1126,7 +1126,7 @@ class XASClass(object):
             kMax = k.max()
         else:
             kMax = min(k.max(), kMax)
-        fit0 = postEdge0(k, mu, kMin, kMax, config["Knots"]["Order"],knots=config["Knots"]["Values"])
+        fit0 = postEdge0(k, mu, kMin, kMax, config["Knots"]["Orders"],knots=config["Knots"]["Values"])
         ddict = {}
         ddict["PostEdgeK"] = fit0[:, 0]
         ddict["PostEdgeB"] = fit0[:, 1]
