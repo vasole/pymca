@@ -92,20 +92,42 @@ class XASMdiArea(qt.QMdiArea):
                ddict["NormalizedSignal"], legend="Post", replot=False)
         plot.addCurve(ddict["NormalizedEnergy"],
                ddict["NormalizedBackground"], legend="Pre",replot=False)
-        plot.resetZoom()
-        plot = self._windowDict["Post-edge"]
-        plot = self._windowDict["Signal"]
+        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        #idxK = ddict["EXAFSKValues"] >= 0
         idx = (ddict["EXAFSKValues"] >= ddict["KMin"]) & \
               (ddict["EXAFSKValues"] <= ddict["KMax"])
+        plot = self._windowDict["Post-edge"]
+        plot.addCurve(ddict["EXAFSKValues"][idx],
+                      ddict["EXAFSSignal"][idx],
+                      legend="EXAFSSignal",
+                      xlabel="K",
+                      ylabel="Normalized Units",
+                      replace=True,
+                      replot=False)
+        plot.addCurve(ddict["EXAFSKValues"][idx],
+                      ddict["PostEdgeB"][idx],
+                      legend="PostEdge",
+                      xlabel="K",
+                      ylabel="Normalized Units",
+                      replot=False)
+        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        plot = self._windowDict["Signal"]
         plot.addCurve(ddict["EXAFSKValues"][idx],
                       ddict["EXAFSNormalized"][idx],
-                      legend="Normalized EXAFS")
+                      legend="Normalized EXAFS",
+                      xlabel="K",
+                      replace=True,
+                      replot=False)
+        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
         plot = self._windowDict["FT"]
         plot.addCurve(ddict["FT"]["FTRadius"],
                       ddict["FT"]["FTAmplitude"],
                       legend="FT Module",
                       xlabel="R (Angstrom)",
-                      ylabel="Arbitraty Units")
+                      ylabel="Arbitraty Units",
+                      replace=True,
+                      replot=False)
+        plot.resetZoom([0.0, 0.0, 0.0, 0.025])
     
 if __name__ == "__main__":
     app = qt.QApplication([])

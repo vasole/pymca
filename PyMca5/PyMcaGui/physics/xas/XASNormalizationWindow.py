@@ -42,12 +42,21 @@ from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
 from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaPhysics import XASNormalization
 
+POLYNOM_OPTIONS = ['Modif. Victoreen',
+                   'Victoreen',
+                   'Constant',
+                   'Linear',
+                   'Parabolic',
+                   'Cubic']
+
 class PolynomSelector(qt.QComboBox):
     def __init__(self, parent=None, options=None):
         qt.QComboBox.__init__(self, parent)
         self.setEditable(0)
         if options is not None:
             self.setOptions(options)
+        else:
+            self.setOptions(POLYNOM_OPTIONS)
 
     def setOptions(self, options):
         for item in options:
@@ -63,12 +72,7 @@ class XASNormalizationParametersWidget(qt.QWidget):
 
         self.__parametersDict = self._getDefaultParameters()
         self.__defaultEdgeEnergy = None
-        self._polynomOptions = ['Modif. Victoreen',
-                                'Victoreen',
-                                'Constant',
-                                'Linear',
-                                'Parabolic',
-                                'Cubic']
+        self._polynomOptions = POLYNOM_OPTIONS
         i = 0
         edgeGroupBox = qt.QGroupBox(self)
         edgeGroupBoxLayout = qt.QGridLayout(edgeGroupBox)
