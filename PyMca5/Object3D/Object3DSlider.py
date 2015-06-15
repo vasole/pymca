@@ -105,7 +105,7 @@ def test():
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
 
-    w = DoubleSlider()
+    w = Object3DSlider()
     w.show()
     app.exec_()
 

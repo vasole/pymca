@@ -434,19 +434,12 @@ class SceneGLWidget(qt.QGLWidget):
         #prepare a pure virtual method for derived classes ???
         self.userPaintGL()
 
-        if self.doubleBuffer():
-            if not self.autoBufferSwap():
-                if not self.__selectingVertex:
-                    if GL.glGetIntegerv(GL.GL_RENDER_MODE) == GL.GL_RENDER:
-                        self.swapBuffers()
-            else:
-                print("WARNING: Expected to work with autoBufferSwap off")
-
         #keep a copy of the current image
         #self.__finalImage = GL.glReadPixelsub(0,0, self.width(),self.height(),
 
         if GL.glGetIntegerv(GL.GL_RENDER_MODE) != GL.GL_SELECT and\
            (not self.__selectingVertex):
+            GL.glReadBuffer(GL.GL_BACK)
             self.__finalImage = GL.glReadPixelsub(0,0,
                                 self.width(), self.height(),
                                 GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
@@ -459,6 +452,14 @@ class SceneGLWidget(qt.QGLWidget):
                                       self.width(), self.height())
             self.__usingCache = True
             #self.saveImage()
+
+        if self.doubleBuffer():
+            if not self.autoBufferSwap():
+                if not self.__selectingVertex:
+                    if GL.glGetIntegerv(GL.GL_RENDER_MODE) == GL.GL_RENDER:
+                        self.swapBuffers()
+            else:
+                print("WARNING: Expected to work with autoBufferSwap off")
 
         if 0:
             #keep a hardcopy of the image

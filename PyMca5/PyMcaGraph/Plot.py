@@ -1041,8 +1041,8 @@ class Plot(PlotBase.PlotBase):
         self.replot()
         return
 
-    def resetZoom(self):
-        self._plot.resetZoom()
+    def resetZoom(self, dataMargins=None):
+        self._plot.resetZoom(dataMargins)
 
     def setXAxisAutoScale(self, flag=True):
         self._plot.setXAxisAutoScale(flag)

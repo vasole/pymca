@@ -57,6 +57,77 @@ from .PlotEvents import prepareCurveSignal, prepareDrawingSignal,\
 
 # Zoom/Pan ####################################################################
 
+def _scale1DRange(min_, max_, center, scale, isLog):
+    """Scale a 1D range given a scale factor and an center point.
+
+    Keeps the values in a smaller range than float32.
+
+    :param float min_: The current min value of the range.
+    :param float max_: The current max value of the range.
+    :param float center: The center of the zoom (i.e., invariant point).
+    :param float scale: The scale to use for zoom
+    :param bool isLog: Whether using log scale or not.
+    :return: The zoomed range.
+    :rtype: tuple of 2 floats: (min, max)
+    """
+    if isLog:
+        # Min and center can be < 0 when
+        # autoscale is off and switch to log scale
+        # max_ < 0 should not happen
+        min_ = np.log10(min_) if min_ > 0. else FLOAT32_MINPOS
+        center = np.log10(center) if center > 0. else FLOAT32_MINPOS
+        max_ = np.log10(max_) if max_ > 0. else FLOAT32_MINPOS
+
+    if min_ == max_:
+        return min_, max_
+
+    offset = (center - min_) / (max_ - min_)
+    range_ = (max_ - min_) / scale
+    newMin = center - offset * range_
+    newMax = center + (1. - offset) * range_
+
+    if isLog:
+        # No overflow as exponent is log10 of a float32
+        newMin = pow(10., newMin)
+        newMax = pow(10., newMax)
+        newMin = np.clip(newMin, FLOAT32_MINPOS, FLOAT32_SAFE_MAX)
+        newMax = np.clip(newMax, FLOAT32_MINPOS, FLOAT32_SAFE_MAX)
+    else:
+        newMin = np.clip(newMin, FLOAT32_SAFE_MIN, FLOAT32_SAFE_MAX)
+        newMax = np.clip(newMax, FLOAT32_SAFE_MIN, FLOAT32_SAFE_MAX)
+    return newMin, newMax
+
+
+def _applyZoomToBackend(backend, cx, cy, scaleF):
+    """Zoom in/out backend given a scale and a center point.
+
+    :param PlotBackend backend: The backend on which to apply zoom.
+    :param float cx: X coord in data coordinates of the zoom center.
+    :param float cy: Y coord in data coordinates of the zoom center.
+    :param float scaleF: Scale factor of zoom.
+    """
+    dataCenterPos = backend.pixelToData(cx, cy)
+    assert dataCenterPos is not None
+
+    xMin, xMax = backend.getGraphXLimits()
+    xMin, xMax = _scale1DRange(xMin, xMax, dataCenterPos[0], scaleF,
+                               backend.isXAxisLogarithmic())
+
+    yMin, yMax = backend.getGraphYLimits()
+    yMin, yMax = _scale1DRange(yMin, yMax, dataCenterPos[1], scaleF,
+                               backend.isYAxisLogarithmic())
+
+    dataPos = backend.pixelToData(y=cy, axis="right")
+    assert dataPos is not None
+    y2Center = dataPos[1]
+    y2Min, y2Max = backend.getGraphYLimits(axis="right")
+    y2Min, y2Max = _scale1DRange(y2Min, y2Max, y2Center, scaleF,
+                                 backend.isYAxisLogarithmic())
+
+    backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
+    backend.replot()
+
+
 class _ZoomOnWheel(ClickOrDrag):
     """:class:`ClickOrDrag` state machine with zooming on mouse wheel.
 
@@ -65,7 +136,7 @@ class _ZoomOnWheel(ClickOrDrag):
     class ZoomIdle(ClickOrDrag.Idle):
         def onWheel(self, x, y, angle):
             scaleF = 1.1 if angle > 0 else 1./1.1
-            self.machine._zoom(x, y, scaleF)
+            _applyZoomToBackend(self.machine.backend, x, y, scaleF)
 
     def __init__(self, backend):
         """
@@ -87,75 +158,6 @@ class _ZoomOnWheel(ClickOrDrag):
         backend = self._backend()
         assert backend is not None
         return backend
-
-    @staticmethod
-    def _scale1DRange(min_, max_, center, scale, isLog):
-        """Scale a 1D range given a scale factor and an center point.
-
-        Keeps the values in a smaller range than float32.
-
-        :param float min_: The current min value of the range.
-        :param float max_: The current max value of the range.
-        :param float center: The center of the zoom (i.e., invariant point).
-        :param float scale: The scale to use for zoom
-        :param bool isLog: Whether using log scale or not.
-        :return: The zoomed range.
-        :rtype: tuple of 2 floats: (min, max)
-        """
-        if isLog:
-            # Min and center can be < 0 when
-            # autoscale is off and switch to log scale
-            # max_ < 0 should not happen
-            min_ = np.log10(min_) if min_ > 0. else FLOAT32_MINPOS
-            center = np.log10(center) if center > 0. else FLOAT32_MINPOS
-            max_ = np.log10(max_) if max_ > 0. else FLOAT32_MINPOS
-
-        if min_ == max_:
-            return min_, max_
-
-        offset = (center - min_) / (max_ - min_)
-        range_ = (max_ - min_) / scale
-        newMin = center - offset * range_
-        newMax = center + (1. - offset) * range_
-
-        if isLog:
-            # No overflow as exponent is log10 of a float32
-            newMin = pow(10., newMin)
-            newMax = pow(10., newMax)
-            newMin = np.clip(newMin, FLOAT32_MINPOS, FLOAT32_SAFE_MAX)
-            newMax = np.clip(newMax, FLOAT32_MINPOS, FLOAT32_SAFE_MAX)
-        else:
-            newMin = np.clip(newMin, FLOAT32_SAFE_MIN, FLOAT32_SAFE_MAX)
-            newMax = np.clip(newMax, FLOAT32_SAFE_MIN, FLOAT32_SAFE_MAX)
-        return newMin, newMax
-
-    def _zoom(self, cx, cy, scaleF):
-        """Zoom in/out backend given a scale and a center point.
-
-        :param float cx: X coord in data coordinates of the zoom center.
-        :param float cy: Y coord in data coordinates of the zoom center.
-        :param float scaleF: Scale factor of zoom.
-        """
-        dataCenterPos = self.backend.pixelToData(cx, cy)
-        assert dataCenterPos is not None
-
-        xMin, xMax = self.backend.getGraphXLimits()
-        xMin, xMax = self._scale1DRange(xMin, xMax, dataCenterPos[0], scaleF,
-                                        self.backend.isXAxisLogarithmic())
-
-        yMin, yMax = self.backend.getGraphYLimits()
-        yMin, yMax = self._scale1DRange(yMin, yMax, dataCenterPos[1], scaleF,
-                                        self.backend.isYAxisLogarithmic())
-
-        dataPos = self.backend.pixelToData(y=cy, axis="right")
-        assert dataPos is not None
-        y2Center = dataPos[1]
-        y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
-        y2Min, y2Max = self._scale1DRange(y2Min, y2Max, y2Center, scaleF,
-                                          self.backend.isYAxisLogarithmic())
-
-        self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
-        self.backend.replot()
 
 
 # Pan #########################################################################
@@ -455,6 +457,10 @@ class Select(StateMachine):
         self.parameters = parameters
         super(Select, self).__init__(states, state)
 
+    def onWheel(self, x, y, angle):
+        scaleF = 1.1 if angle > 0 else 1./1.1
+        _applyZoomToBackend(self.backend, x, y, scaleF)
+
     @property
     def backend(self):
         backend = self._backend()
@@ -698,6 +704,10 @@ class Select1Point(Select):
             if btn == LEFT_BTN:
                 self.machine.endSelect(x, y)
                 self.goto('idle')
+
+        def onWheel(self, x, y, angle):
+            self.machine.onWheel(x, y, angle)  # Call select default wheel
+            self.machine.select(x, y)
 
     def __init__(self, backend, parameters):
         states = {

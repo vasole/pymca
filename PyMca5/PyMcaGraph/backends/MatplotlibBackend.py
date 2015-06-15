@@ -119,6 +119,11 @@ from matplotlib.image import AxesImage, NonUniformImage
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 import time
 
+try:
+    from . import _utils
+except ImportError:
+    from PyMca5.PyMcaGraph.backends import _utils
+
 DEBUG = 0
 
 class ModestImage(AxesImage):
@@ -1308,7 +1313,7 @@ class MatplotlibGraph(FigureCanvas):
         #self.draw()
         self.emitLimitsChangedSignal()
 
-    def resetZoom(self):
+    def resetZoom(self, dataMargins=None):
         xmin, xmax, ymin, ymax = self.getDataLimits('left')
         if hasattr(self.ax2, "get_visible"):
             if self.ax2.get_visible():
@@ -1322,6 +1327,13 @@ class MatplotlibGraph(FigureCanvas):
         if (xmin2 is not None) and ((xmin2 != 0) or (xmax2 != 1)):
             xmin = min(xmin, xmin2)
             xmax = max(xmax, xmax2)
+
+        # Add margins around data inside the plot area
+        xmin, xmax, ymin, ymax = _utils.addMarginsToLimits(
+            dataMargins,
+            self.ax.get_xscale() == 'log', self.ax.get_yscale() == 'log',
+            xmin, xmax, ymin, ymax)
+
         self.setLimits(xmin, xmax, ymin, ymax)
         #self.ax2.set_autoscaley_on(True)
         self._zoomStack = []
@@ -2129,7 +2141,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             t.remove()
             del t
 
-    def resetZoom(self):
+    def resetZoom(self, dataMargins=None):
         """
         It should autoscale any axis that is in autoscale mode
         """
@@ -2138,12 +2150,12 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         xAuto = self.isXAxisAutoScale()
         yAuto = self.isYAxisAutoScale()
         if xAuto and yAuto:
-            self.graph.resetZoom()
+            self.graph.resetZoom(dataMargins)
         elif yAuto:
-            self.graph.resetZoom()
+            self.graph.resetZoom(dataMargins)
             self.setGraphXLimits(xmin, xmax)
         elif xAuto:
-            self.graph.resetZoom()
+            self.graph.resetZoom(dataMargins)
             self.setGraphYLimits(ymin, ymax)
         else:
             if DEBUG:

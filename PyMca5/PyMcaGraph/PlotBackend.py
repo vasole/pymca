@@ -654,10 +654,19 @@ class PlotBackend(object):
         """
         print("PlotBackend removeMarker not implemented")
 
-    def resetZoom(self):
+    def resetZoom(self, dataMargins=None):
         """
         Autoscale any axis that is in autoscale mode.
         Keep current limits on axes not in autoscale mode
+
+        Extra margins can be added around the data inside the plot area.
+        Margins are given as one ratio of the data range per limit of the
+        data (xMin, xMax, yMin and yMax limits).
+        For log scale, extra margins are applied in log10 of the data.
+
+        :param dataMargins: Ratios of margins to add around the data inside
+                            the plot area for each side (Default: no margins).
+        :type dataMargins: A 4-tuple of float as (xMin, xMax, yMin, yMax).
         """
         print("PlotBackend resetZoom not implemented")
 

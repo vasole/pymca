@@ -640,6 +640,12 @@ class Scene(object):
 
 if __name__ == "__main__":
     import Object3DBase
+    try:
+        from PyMca5 import Object3DQt as qt
+    except:
+        from . import Object3DQt as qt
+
+    app = qt.QApplication([])
     w = Scene()
     o0 = Object3DBase.Object3D("DummyObject0")
     o1 = Object3DBase.Object3D("DummyObject1")
