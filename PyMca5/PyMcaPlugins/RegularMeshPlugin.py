@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -136,11 +136,13 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
                                         selection=False,
                                         profileselection=True,
                                         scanwindow=self)
+        deltaX = self._motor0[1] - self._motor0[0]
+        deltaY = self._motor1[1] - self._motor1[0]
         self.imageWidget.setImageData(y,
                                       xScale=(self._motor0[0],
-                                              self._motor0[-1]),
+                                              deltaX),
                                       yScale=(self._motor1[0],
-                                              self._motor1[-1]))
+                                              deltaY))
         self.imageWidget.setXLabel(self._motor0Mne)
         self.imageWidget.setYLabel(self._motor1Mne)
         self.imageWidget.show()
