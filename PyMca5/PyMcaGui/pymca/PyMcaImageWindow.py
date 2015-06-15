@@ -139,16 +139,16 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                                         if nRows!= int(nRows):
                                             raise ValueError("2D Selection not understood")
                                         transpose = False
-                                        self._yScale = x0[0], x0[-1]
-                                        self._xScale = x1[0], x1[-1]
+                                        self._yScale = x0[0], x0[nColumns] - x0[0]
+                                        self._xScale = x1[0], x1[1] - x1[0]
                                     elif abs(x1[1] - x1[0]) < 1.0e-6:
                                         nRows = numpy.argmin(abs(x1-x1[0]) < 1.0e-6)
                                         nColumns = x0.size / nRows
                                         if nColumns != int(nColumns):
                                             raise ValueError("2D Selection not understood")
                                         transpose = True
-                                        self._xScale = x0[0], x0[-1]
-                                        self._yScale = x1[0], x1[-1]
+                                        self._xScale = x0[0], x0[1] - x0[0]
+                                        self._yScale = x1[0], x1[nRows] - x1[0]
                                     else:
                                         raise TypeError("2D Selection is not a regular mesh")
                                     dataObject.data = numpy.zeros((len(dataObject.y),
