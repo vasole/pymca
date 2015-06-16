@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,10 +30,15 @@ __author__ = "V. Armando Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import os
+import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 from PyMca5.PyMcaGui import XASNormalizationWindow
+from PyMca5.PyMca import XASNormalization
 IconDict = PyMca_Icons.IconDict
+
+DEBUG = 0
 
 class NormalizationParameters(qt.QGroupBox):
     sigNormalizationParametersSignal = qt.pyqtSignal(object)
@@ -43,6 +48,7 @@ class NormalizationParameters(qt.QGroupBox):
         self._dialog = None
         self._energy = None
         self._mu = None
+        self.__connected = True
         self.build()
 
     def build(self):
@@ -60,6 +66,8 @@ class NormalizationParameters(qt.QGroupBox):
         self.e0CheckBox.setText("Auto E0:")
         self.e0CheckBox.setChecked(True)
         self.e0SpinBox = qt.QDoubleSpinBox(self)
+        self.e0SpinBox.setMinimum(200.)
+        self.e0SpinBox.setMaximum(200000.)
         self.e0SpinBox.setDecimals(2)
         self.e0SpinBox.setSingleStep(0.2)
         self.e0SpinBox.setEnabled(False)
@@ -170,54 +178,201 @@ class NormalizationParameters(qt.QGroupBox):
             print("RECOVER PARAMETERS FROM DIALOG AND UPDATE")
 
     def setSpectrum(self, energy, mu):
-        self._energy = energy
+        # try to detect keV
+        if energy[0] < 200:
+            self._energy = energy * 1000.
+        else:
+            self._energy = energy * 1.0
         self._mu = mu
-        self._update()
+        try:
+            self.__connected = False
+            self._update()
+        finally:
+            self.__connected = True
+        self._emitSignal("SpectrumChanged")
 
+    def _calculateE0(self):
+        return XASNormalization.getE0SavitzkyGolay(self._energy, self._mu,
+                                                   points=5, full=False)
     def _e0Toggled(self, state):
-        print("CURRENT STATE = ", state)
-        print("STATE from call = ", self.e0CheckBox.isChecked())
         if state:
-            print("E0 to be calculated")
+            e0 = self._calculateE0()
             self.e0SpinBox.setEnabled(False)
+            self.e0SpinBox.setValue(e0)
         else:
             self.e0SpinBox.setEnabled(True)
 
     def _e0Changed(self, value):
-        pars = self._dialog.getParameters()
-        if self._dialog is None:
-            print
+        if DEBUG:
+            print("E0 CAHNGED", value)
+        if self.__connected:
+            try:
+                self.__connected = False
+                self._update()
+            finally:
+                self.__connected = True
+            self._emitSignal("E0Changed")
 
     def _preEdgeChanged(self, value):
-        print("Current pre-edge value = ", value)
+        if DEBUG:
+            print("Current pre-edge value = ", value)
+        self._emitSignal("PreEdgeChanged")
 
     def _preEdgeStartChanged(self, value):
-        print("pre start changed", value)
+        if DEBUG:
+            print("pre start changed", value)
+        if self.__connected:
+            try:
+                self.__connected = False
+                self._update()
+            finally:
+                self.__connected = True
+            self._emitSignal("PreEdgeChanged")
 
     def _preEdgeEndChanged(self, value):
-        print("pre end changed", value)
+        if DEBUG:
+            print("pre end changed", value)
+        if self.__connected:
+            try:
+                self.__connected = False
+                self._update()
+            finally:
+                self.__connected = True
+            self._emitSignal("PreEdgeChanged")
 
     def _postEdgeChanged(self, value):
-        print("Current post-edge value = ", value)
+        if DEBUG:
+            print("post-edge changed", value)
+        if self.__connected:
+            try:
+                self.__connected = False
+                self._update()
+            finally:
+                self.__connected = True
+        self._emitSignal("PostEdgeChanged")
 
     def _postEdgeStartChanged(self, value):
-        print("post start changed", value)
+        if DEBUG:
+            print("post-edge start changed", value)
+        if self.__connected:
+            try:
+                self.__connected = False
+                self._update()
+            finally:
+                self.__connected = True
+            self._emitSignal("PostEdgeChanged")
 
     def _postEdgeEndChanged(self, value):
-        print("post end changed", value)
+        if DEBUG:
+            print("post-edge changed", value)
+        if self.__connected:
+            try:
+                self.__connected = False
+                self._update()
+            finally:
+                self.__connected = True
+            self._emitSignal("PostEdgeChanged")
 
     def _update(self):
-        print("THIS IS TO UPDATE E0 IF AUTO")
-        print("UPDATE REGION LIMITS ON CHANGE")
+        if self._energy is None:
+            return
+        eMin = self._energy.min()
+        eMax = self._energy.max()
+        current = self.getParameters()
+
+        if current["E0Method"].lower().startswith("auto") or \
+           current["E0Value"] < self._energy.min()  or \
+           current["E0Value"] > self._energy.max():
+            energy = self._calculateE0()
+            current["E0Value"] = energy
+
+        # energy
+        e0 = current["E0Value"]
+        self.e0SpinBox.setValue(e0)
+
+        # pre-edge
+        start = e0 + current["PreEdge"]["Regions"][0]
+        end = e0 + current["PreEdge"]["Regions"][-1]
+
+        if start > end:
+            start, end = end, start
+        start = max(start, eMin)
+        if end <= start:
+            end = 0.5 * (start + energy)
+
+        self.preEdgeStartBox.setValue(start - e0)
+        self.preEdgeEndBox.setValue(end - e0)
+
+        # post-edge
+        print 'current["PostEdge"]["Regions"]', current["PostEdge"]["Regions"]
+        start = e0 + current["PostEdge"]["Regions"][0]
+        end = e0 + current["PostEdge"]["Regions"][-1]
+
+        if start > end:
+            start, end = end, start
+        end = min(end, eMax)
+        if end <= start:
+            start = 0.5 * (end + energy)
+
+        self.postEdgeStartBox.setValue(start - e0)
+        self.postEdgeEndBox.setValue(end - e0)
 
     def getParameters(self):
-        print("GET PARAMETERS")
+        ddict = {}
+        # default values not yet handled by the interface
+        ddict["E0MinValue"] = None
+        ddict["E0MaxValue"] = None
+
+        if self.e0CheckBox.isChecked():
+            ddict["E0Method"] = "Auto - 5pt SG"
+        else:
+            ddict["E0Method"] = "Manual"
+        ddict["E0Value"] = self.e0SpinBox.value()
+
+        # pre-edge
+        ddict["PreEdge"] = {}
+        ddict["PreEdge"] ["Method"] = "Polynomial"
+        ddict["PreEdge"] ["Polynomial"] = str(self.postEdgeSelector.currentText())
+        # Regions is a single list with 2 * n values delimiting n regions.
+        ddict["PreEdge"] ["Regions"] = [self.preEdgeStartBox.value(),
+                                        self.preEdgeEndBox.value()]
+        ddict["PostEdge"] = {}
+        ddict["PostEdge"] ["Method"] = "Polynomial"
+        ddict["PostEdge"] ["Polynomial"] = str(self.postEdgeSelector.currentText())
+        ddict["PostEdge"] ["Regions"] = [self.postEdgeStartBox.value(),
+                                         self.postEdgeEndBox.value()]
+        return ddict
 
     def setParameters(self, ddict):
+        if "Normalization" in ddict:
+            ddict = ddict["Normalization"]
         print("SET PARAMETERS")
-            
+
+    def _emitSignal(self, event):
+        ddict = self.getParameters()
+        ddict["event"] = event
+        self.jumpLine.setText("")
+        self.sigNormalizationParametersSignal.emit(ddict)
+
+    def setJump(self, value):
+        self.jumpLine.setText("%f" % value)
+        
 if __name__ == "__main__":
+    DEBUG = 1
     app = qt.QApplication([])
+    def mySlot(ddict):
+        print("Signal received: ", ddict)
     w = NormalizationParameters()
     w.show()
+    w.sigNormalizationParametersSignal.connect(mySlot)
+    from PyMca5.PyMcaIO import specfilewrapper as specfile
+    from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR
+    if len(sys.argv) > 1:
+        fileName = sys.argv[1]
+    else:
+        fileName = os.path.join(PYMCA_DATA_DIR, "EXAFS_Cu.dat")
+    data = specfile.Specfile(fileName)[0].data()[-2:, :]
+    energy = data[0, :]
+    mu = data[1, :]
+    w.setSpectrum(energy, mu)
     app.exec_()
