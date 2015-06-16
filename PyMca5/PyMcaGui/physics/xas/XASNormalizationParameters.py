@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -35,10 +35,14 @@ from PyMca5.PyMcaGui import PyMca_Icons
 from PyMca5.PyMcaGui import XASNormalizationWindow
 IconDict = PyMca_Icons.IconDict
 
-class Normalization(qt.QGroupBox):
+class NormalizationParameters(qt.QGroupBox):
+    sigNormalizationParametersSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None):
-        super(Normalization, self).__init__(parent)
+        super(NormalizationParameters, self).__init__(parent)
         self.setTitle("Normalization")
+        self._dialog = None
+        self._energy = None
+        self._mu = None
         self.build()
 
     def build(self):
@@ -67,14 +71,56 @@ class Normalization(qt.QGroupBox):
         self.jumpLine.setEnabled(False)
 
         # the pre-edge
-        preLabel = qt.QLabel(self)
-        preLabel.setText("Pre-Edge")
+        preEdgeLabel = qt.QLabel(self)
+        preEdgeLabel.setText("Pre-Edge")
         self.preEdgeSelector = XASNormalizationWindow.PolynomSelector(self)
 
+        # pre-edge regions
+        preEdgeStartLabel = qt.QLabel(self)
+        preEdgeStartLabel.setText("Begin:")
+        self.preEdgeStartBox = qt.QDoubleSpinBox(self)
+        self.preEdgeStartBox.setDecimals(2)
+        self.preEdgeStartBox.setMinimum(-2000.0)
+        self.preEdgeStartBox.setMaximum(-5.0)
+        self.preEdgeStartBox.setValue(-100)
+        self.preEdgeStartBox.setSingleStep(5.0)
+        self.preEdgeStartBox.setEnabled(True)
+
+        preEdgeEndLabel = qt.QLabel(self)
+        preEdgeEndLabel.setText("End:")
+        self.preEdgeEndBox = qt.QDoubleSpinBox(self)
+        self.preEdgeEndBox.setDecimals(2)
+        self.preEdgeEndBox.setMinimum(-200.0)
+        self.preEdgeEndBox.setMaximum(-1.0)
+        self.preEdgeEndBox.setValue(-40)
+        self.preEdgeEndBox.setSingleStep(5.0)
+        self.preEdgeEndBox.setEnabled(True)
+
         # the post-edge
-        postLabel = qt.QLabel(self)
-        postLabel.setText("Post-Edge")
+        postEdgeLabel = qt.QLabel(self)
+        postEdgeLabel.setText("Post-Edge")
         self.postEdgeSelector = XASNormalizationWindow.PolynomSelector(self)
+
+        # post-edge regions
+        postEdgeStartLabel = qt.QLabel(self)
+        postEdgeStartLabel.setText("Begin:")
+        self.postEdgeStartBox = qt.QDoubleSpinBox(self)
+        self.postEdgeStartBox.setDecimals(2)
+        self.postEdgeStartBox.setMinimum(1.0)
+        self.postEdgeStartBox.setMaximum(3000.0)
+        self.postEdgeStartBox.setValue(10)
+        self.postEdgeStartBox.setSingleStep(5.0)
+        self.postEdgeStartBox.setEnabled(True)
+
+        postEdgeEndLabel = qt.QLabel(self)
+        postEdgeEndLabel.setText("End:")
+        self.postEdgeEndBox = qt.QDoubleSpinBox(self)
+        self.postEdgeEndBox.setDecimals(2)
+        self.postEdgeEndBox.setMinimum(10.0)
+        self.postEdgeEndBox.setMaximum(2000.0)
+        self.postEdgeEndBox.setValue(300)
+        self.postEdgeEndBox.setSingleStep(5.0)
+        self.postEdgeEndBox.setEnabled(True)
 
         # arrange everything
         self.mainLayout.addWidget(self.setupButton, 0, 0, 1, 2)
@@ -82,20 +128,51 @@ class Normalization(qt.QGroupBox):
         self.mainLayout.addWidget(self.e0SpinBox, 1, 1)
         self.mainLayout.addWidget(jumpLabel, 2, 0)
         self.mainLayout.addWidget(self.jumpLine, 2, 1)
-        self.mainLayout.addWidget(preLabel, 3, 0)
+
+        self.mainLayout.addWidget(preEdgeLabel, 3, 0)
         self.mainLayout.addWidget(self.preEdgeSelector, 3, 1)
-        self.mainLayout.addWidget(postLabel, 4, 0)
-        self.mainLayout.addWidget(self.postEdgeSelector, 4, 1)
+        self.mainLayout.addWidget(preEdgeStartLabel, 4, 0)
+        self.mainLayout.addWidget(self.preEdgeStartBox, 4, 1)
+        self.mainLayout.addWidget(preEdgeEndLabel, 5, 0)
+        self.mainLayout.addWidget(self.preEdgeEndBox, 5, 1)
+
+        self.mainLayout.addWidget(postEdgeLabel, 6, 0)
+        self.mainLayout.addWidget(self.postEdgeSelector, 6, 1)
+        self.mainLayout.addWidget(postEdgeStartLabel, 7, 0)
+        self.mainLayout.addWidget(self.postEdgeStartBox, 7, 1)
+        self.mainLayout.addWidget(postEdgeEndLabel, 8, 0)
+        self.mainLayout.addWidget(self.postEdgeEndBox, 8, 1)
 
         # connect
         self.setupButton.clicked.connect(self._setupClicked)
         self.e0CheckBox.toggled.connect(self._e0Toggled)
         self.e0SpinBox.valueChanged[float].connect(self._e0Changed)
         self.preEdgeSelector.activated[int].connect(self._preEdgeChanged)
+        self.preEdgeStartBox.valueChanged[float].connect(self._preEdgeStartChanged)
+        self.preEdgeEndBox.valueChanged[float].connect(self._preEdgeEndChanged)
         self.postEdgeSelector.activated[int].connect(self._postEdgeChanged)
+        self.postEdgeStartBox.valueChanged[float].connect(self._postEdgeStartChanged)
+        self.postEdgeEndBox.valueChanged[float].connect(self._postEdgeEndChanged)
 
     def _setupClicked(self):
-        print("SETUP CLICKED")
+        if self._energy is None:
+            print("SETUP CLICKED BUT IGNORED")
+            return
+        if self._dialog is None:
+            self._dialog = XASNormalizationWindow.XASNormalizationDialog(self,
+                                                                         mu,
+                                                                         energy=energy)
+        else:
+            self._dialog.setSpectrum(energy, mu)
+        print("RECOVER CURRENT PARAMETERS AND UPDATE DIALOG")
+        ret = self._dialog.exec_()
+        if ret:
+            print("RECOVER PARAMETERS FROM DIALOG AND UPDATE")
+
+    def setSpectrum(self, energy, mu):
+        self._energy = energy
+        self._mu = mu
+        self._update()
 
     def _e0Toggled(self, state):
         print("CURRENT STATE = ", state)
@@ -107,16 +184,40 @@ class Normalization(qt.QGroupBox):
             self.e0SpinBox.setEnabled(True)
 
     def _e0Changed(self, value):
-        print("E0 VALUE", value)
+        pars = self._dialog.getParameters()
+        if self._dialog is None:
+            print
 
     def _preEdgeChanged(self, value):
         print("Current pre-edge value = ", value)
 
+    def _preEdgeStartChanged(self, value):
+        print("pre start changed", value)
+
+    def _preEdgeEndChanged(self, value):
+        print("pre end changed", value)
+
     def _postEdgeChanged(self, value):
         print("Current post-edge value = ", value)
 
+    def _postEdgeStartChanged(self, value):
+        print("post start changed", value)
+
+    def _postEdgeEndChanged(self, value):
+        print("post end changed", value)
+
+    def _update(self):
+        print("THIS IS TO UPDATE E0 IF AUTO")
+        print("UPDATE REGION LIMITS ON CHANGE")
+
+    def getParameters(self):
+        print("GET PARAMETERS")
+
+    def setParameters(self, ddict):
+        print("SET PARAMETERS")
+            
 if __name__ == "__main__":
     app = qt.QApplication([])
-    w = Normalization()
+    w = NormalizationParameters()
     w.show()
     app.exec_()
