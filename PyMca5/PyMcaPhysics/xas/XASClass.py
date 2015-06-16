@@ -442,7 +442,18 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None):
     if DEBUG:
         print("++++++++++++++++++",xrange1)
 
-    if (knots != None):
+    if knots is not None:
+        if len(knots) == len(degrees):
+            if knots[0] > kmin:
+                knots = [kmin] + list(knots)
+            elif knots[-1] < kmax:
+                knots = list(knots) + [kmax]
+        elif len(knots) == (len(degrees) - 1):
+            # probably just given the intermediate knots
+            if knots[0] > kmin:
+                knots = [kmin] + list(knots)
+            if knots[-1] < kmax:
+                knots = list(knots) + [kmax]
         if ( (len(polDegree)+1) != len(knots) ):
             print("Error: dimension of knots must be dimension of polDegree+1")
             print("       Forced automatic (equidistant) knot definition.")
@@ -919,9 +930,9 @@ class XASClass(object):
         ddict["ExtractionMethod"] = "Knots"
         # Implement "Knots", "Victoreen", "Modif. Victoreen"
         ddict["Knots"] = {}
-        ddict["Knots"] ["Number"] = 5
+        ddict["Knots"] ["Number"] = 3
         ddict["Knots"] ["Values"] = None
-        ddict["Knots"] ["Orders"] = [3, 2, 2, 3] # one less than knots
+        ddict["Knots"] ["Orders"] = [3, 2, 2, 3] # one more than knots
 
         # FT
         """
@@ -949,14 +960,14 @@ class XASClass(object):
         ddict["WindowAppodization"] = 0.02
         ddict["WindowRange"] = None
         ddict["KStep"] = 0.04
-        ddict["Points"] = 4096
+        ddict["Points"] = 2048
         ddict["Range"] = [0.0, 6.0]
 
         # Back-FT
         config["BFT"] = {}
         ddict = config["BFT"]
         ddict["KRange"] = [2.0, 12.0]
-        ddict["Points"] = 4096
+        ddict["Points"] = 2048
         ddict["Range"] = [0.0, 6.0]
         return configuration
 
