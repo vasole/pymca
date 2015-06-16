@@ -216,7 +216,8 @@ class NormalizationParameters(qt.QGroupBox):
     def _preEdgeChanged(self, value):
         if DEBUG:
             print("Current pre-edge value = ", value)
-        self._emitSignal("PreEdgeChanged")
+        if self.__connected:
+            self._emitSignal("PreEdgeChanged")
 
     def _preEdgeStartChanged(self, value):
         if DEBUG:
@@ -244,12 +245,7 @@ class NormalizationParameters(qt.QGroupBox):
         if DEBUG:
             print("post-edge changed", value)
         if self.__connected:
-            try:
-                self.__connected = False
-                self._update()
-            finally:
-                self.__connected = True
-        self._emitSignal("PostEdgeChanged")
+            self._emitSignal("PostEdgeChanged")
 
     def _postEdgeStartChanged(self, value):
         if DEBUG:
@@ -304,7 +300,6 @@ class NormalizationParameters(qt.QGroupBox):
         self.preEdgeEndBox.setValue(end - e0)
 
         # post-edge
-        print 'current["PostEdge"]["Regions"]', current["PostEdge"]["Regions"]
         start = e0 + current["PostEdge"]["Regions"][0]
         end = e0 + current["PostEdge"]["Regions"][-1]
 
@@ -343,10 +338,42 @@ class NormalizationParameters(qt.QGroupBox):
                                          self.postEdgeEndBox.value()]
         return ddict
 
-    def setParameters(self, ddict):
+    def setParameters(self, ddict, signal=True):
+        if DEBUG:
+            print("setParameters called", ddict, signal)
         if "Normalization" in ddict:
             ddict = ddict["Normalization"]
-        print("SET PARAMETERS")
+        try:
+            self.__connected = False
+            self.e0SpinBox.setValue(ddict["E0Value"])
+            if ddict["E0Method"].lower().startswith("manual"):
+                self.e0CheckBox.setChecked(False)
+            else:
+                self.e0CheckBox.setChecked(True)
+            selectorOptions = self.preEdgeSelector.getOptions()
+            i = 0
+            for option in selectorOptions:
+                if str(option) == str(ddict["PreEdge"] ["Polynomial"]):
+                    self.preEdgeSelector.setCurrentIndex(i)
+                    break
+                i += 1    
+            selectorOptions = self.postEdgeSelector.getOptions()
+            i = 0
+            for option in selectorOptions:
+                if str(option) == str(ddict["PostEdge"] ["Polynomial"]):
+                    self.postEdgeSelector.setCurrentIndex(i)
+                    break
+                i += 1    
+            self.preEdgeStartBox.setValue(ddict["PreEdge"]["Regions"][0])
+            self.preEdgeEndBox.setValue(ddict["PreEdge"]["Regions"][-1])
+            self.postEdgeStartBox.setValue(ddict["PostEdge"]["Regions"][0])
+            self.postEdgeEndBox.setValue(ddict["PostEdge"]["Regions"][-1])
+            self._update()
+        finally:
+            self.__connected = True
+        if signal:
+            # E0Changed or SpectrumUpdated
+            self._emitSignal("E0Changed")
 
     def _emitSignal(self, event):
         ddict = self.getParameters()
@@ -356,7 +383,7 @@ class NormalizationParameters(qt.QGroupBox):
 
     def setJump(self, value):
         self.jumpLine.setText("%f" % value)
-        
+
 if __name__ == "__main__":
     DEBUG = 1
     app = qt.QApplication([])

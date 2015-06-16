@@ -62,6 +62,9 @@ class PolynomSelector(qt.QComboBox):
         for item in options:
             self.addItem(item)
 
+    def getOptions(self):
+        return POLYNOM_OPTIONS * 1
+
 class XASNormalizationParametersWidget(qt.QWidget):
     sigXASNormalizationParametersSignal = qt.pyqtSignal(object)
     def __init__(self, parent = None):
@@ -514,6 +517,8 @@ class XASNormalizationDialog(qt.QDialog):
     def setParameters(self, ddict):
         return self.parametersWidget.setParameters(ddict)
 
+    def setSpectrum(self, energy, mu):
+        self.parametersWidget.setData(mu, energy=energy)
 
 if __name__ == "__main__":
     app = qt.QApplication([])
