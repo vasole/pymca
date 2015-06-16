@@ -80,24 +80,27 @@ class PostEdgeParameters(qt.QGroupBox):
 
         # table of knots
         positionLabel = qt.QLabel(self)
-        positionLabel.setText("Position")
+        positionLabel.setText("Region Start")
         degreeLabel = qt.QLabel(self)
         degreeLabel.setText("Degree")
         self._knotPositions = []
         self._knotDegrees = []
-        for i in range(self.knotsBox.maximum()):
+        for i in range(self.knotsBox.maximum()+1):
             position = qt.QLineEdit(self)
-            position._validator = qt.QDoubleValidator(position)
-            position.setValidator(position._validator)
+            if i != 0:
+                position._validator = qt.QDoubleValidator(position)
+                position.setValidator(position._validator)
             degree = qt.QSpinBox(self)
             degree.setMinimum(1)
             degree.setMaximum(3)
             degree.setValue(3)
             self._knotPositions.append(position)
             self._knotDegrees.append(degree)
-            if i >= self.knotsBox.value():
+            if i > self.knotsBox.value():
                 position.setEnabled(False)
                 degree.setEnabled(False)
+            if i == 0:
+                position.setEnabled(False)
 
         # arrange everything
         self.mainLayout.addWidget(kMinLabel, 0, 0)
@@ -110,29 +113,33 @@ class PostEdgeParameters(qt.QGroupBox):
         self.mainLayout.addWidget(degreeLabel, 3, 1)
 
         lastRow = 3
-        for i in range(self.knotsBox.maximum()):
+        for i in range(self.knotsBox.maximum()+1):
             lastRow += 1
             self.mainLayout.addWidget(self._knotPositions[i], lastRow, 0)
             self.mainLayout.addWidget(self._knotDegrees[i], lastRow, 1)
+
+        # initialize values
+        self._fillKnots()
 
         # connect
         self.kMinBox.valueChanged[float].connect(self._kMinChanged)
         self.kMaxBox.valueChanged[float].connect(self._kMaxChanged)
         self.knotsBox.valueChanged[int].connect(self._knotNumberChanged)
-        for i in range(self.knotsBox.maximum()):
+        for i in range(self.knotsBox.maximum() + 1):
             self._knotPositions[i].editingFinished.connect(self._knotEdited)
             self._knotDegrees[i].valueChanged[int].connect(self._degreeChanged)
 
     def _knotNumberChanged(self, value):
         if DEBUG:
             print("Current number of knots = ", value)
-        for i in range(self.knotsBox.maximum()):
-            if i < value:
+        for i in range(self.knotsBox.maximum()+1):
+            if i < value+1:
                 enabled = True
             else:
                 enabled = False
             self._knotPositions[i].setEnabled(enabled)
             self._knotDegrees[i].setEnabled(enabled)
+        self._knotPositions[0].setEnabled(False)
         self._fillKnots()
         self.emitSignal("KnotNumberChanged")
 
@@ -166,9 +173,13 @@ class PostEdgeParameters(qt.QGroupBox):
         ddict["Knots"]["Number"] = self.knotsBox.value()
         ddict["Knots"]["Values"] = []
         ddict["Knots"]["Orders"] = []
-        for i in range(ddict["Knots"]["Number"]):
+        for i in range(ddict["Knots"]["Number"]+1):
             txt = str(self._knotPositions[i].text())
-            ddict["Knots"]["Values"].append(float(txt))
+            if i == 0:
+                pass
+                #ddict["Knots"]["Values"].append(ddict["KMin"])
+            else:
+                ddict["Knots"]["Values"].append(float(txt))
             ddict["Knots"]["Orders"].append(self._knotDegrees[i].value())
         return ddict
 
@@ -185,16 +196,19 @@ class PostEdgeParameters(qt.QGroupBox):
         nKnots = self.knotsBox.value()
         positions, orders = self._getDefaultKnotValues(knots=nKnots)
         n = len(positions)
-        for i in range(self.knotsBox.maximum()):
+        for i in range(self.knotsBox.maximum()+1):
             if i < n:
                 enabled = True
             else:
                 enabled = False
             self._knotPositions[i].setEnabled(enabled)
             self._knotDegrees[i].setEnabled(enabled)
+        self._knotPositions[0].setEnabled(False)
         if "Knots" in ddict:
             positions = ddict["Knots"].get("Values", positions)
             orders = ddict["Knots"].get("Orders", orders)
+            if len(positions) ==  (len(orders) - 1):
+                positions = [self.kMinBox.value()] + list(positions)
         self._fillKnots(positions, orders)
 
     def _fillKnots(self, positions=None, orders=None):
@@ -204,7 +218,7 @@ class PostEdgeParameters(qt.QGroupBox):
         for i in range(n):
             self._knotPositions[i].setText("%.3f" % positions[i])
             self._knotDegrees[i].setValue(orders[i])
-        for i in range(n, self.knotsBox.maximum()):
+        for i in range(n, self.knotsBox.maximum()+1):
             self._knotPositions[i].setText("")
 
     def _getDefaultKnots(self, kMin=None, kMax=None, knots=None):
@@ -214,8 +228,8 @@ class PostEdgeParameters(qt.QGroupBox):
             kMax = self.kMaxBox.value()
         if knots is None:
             knots = self.knotsBox.value()
-        positions = []
-        degrees = []
+        positions = [kMin]
+        degrees = [3]
         delta = (kMax - kMin) / (knots + 1.0)
         for i in range(knots):
             positions.append(kMin + (i + 1) * delta)
