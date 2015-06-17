@@ -113,12 +113,14 @@ class XASMdiArea(qt.QMdiArea):
 
     def update(self):
         ddict = self.analyzer.processSpectrum()
+        idx = (ddict["NormalizedEnergy"] >= ddict["NormalizedPlotMin"]) & \
+                  (ddict["NormalizedEnergy"] <= ddict["NormalizedPlotMax"])
         plot = self._windowDict["Spectrum"]
         plot.addCurve(energy, mu, legend="Spectrum",
                       xlabel="Energy (eV)", ylabel="Absorption (a.u.)",
                       replot=False, replace=True)
-        plot.addCurve(ddict["NormalizedEnergy"],
-                      ddict["NormalizedMu"],
+        plot.addCurve(ddict["NormalizedEnergy"][idx],
+                      ddict["NormalizedMu"][idx],
                       legend="Normalized",
                       xlabel="Energy (eV)",
                       ylabel="Absorption (a.u.)",

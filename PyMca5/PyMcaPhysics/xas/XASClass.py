@@ -1281,6 +1281,7 @@ class XASClass(object):
                     regions = [20., 1000.]
             workingRegions = []
             if key == "PreEdge":
+                plotMin = eMax
                 for i in range(0, len(regions), 2):
                     vMin = e0 + regions[2 * i]
                     vMax = e0 + regions[2 * i + 1]
@@ -1288,8 +1289,11 @@ class XASClass(object):
                         vMin = eMin
                     if vMax < eMin:
                         vMax = 0.5 * (eMin + e0)
+                    if vMin < plotMin:
+                        plotMin = vMin
                     workingRegions.append([vMin, vMax])
             else:
+                plotMax = eMin
                 for i in range(0, len(regions), 2):
                     vMin = e0 + regions[2 * i]
                     vMax = e0 + regions[2 * i + 1]
@@ -1297,6 +1301,8 @@ class XASClass(object):
                         vMin = 0.5 * (e0 + eMax)
                     if vMax < eMin:
                         vMax = eMax
+                    if vMax > plotMax:
+                        plotMax = vMax
                     workingRegions.append([vMin, vMax])
             x, y = self._getRegionsData(energy, mu, workingRegions)
             if methodLower == "constant":
@@ -1325,15 +1331,20 @@ class XASClass(object):
             parameters[key] = linalg.lstsq(modelMatrix, y,
                                            uncertainties=False, weight=False)[0]
             fun = self._polynomDict[method]["function"]
+            if key == "PreEdge":
+                funPre = fun
             data[key] = fun(energy, parameters[key])
         normalizedSpectrum = (mu - data["PreEdge"])/data["PostEdge"]
-        jump = fun(e0, parameters["PostEdge"])
+        jump = fun(e0, parameters["PostEdge"]) - \
+               funPre(e0, parameters["PreEdge"])
+               
         return {"Jump": jump,
                 "NormalizedEnergy": energy,
                 "NormalizedMu":normalizedSpectrum,
                 "NormalizedBackground": data["PreEdge"],
-                "NormalizedSignal":data["PostEdge"]}
-
+                "NormalizedSignal":data["PostEdge"],
+                "NormalizedPlotMin": plotMin,
+                "NormalizedPlotMax":plotMax}
 
 if __name__ == "__main__":
     import os

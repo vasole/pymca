@@ -176,7 +176,30 @@ class XASPlugin(Plugin1DBase.Plugin1DBase):
         return results
 
     def getNormalization(self):
-        pass
+        xlabel="Energy (eV)"
+        ylabel="Absorption (a.u.)"
+        results = self.processAllCurves()
+        n = len(results)
+        i = 0
+        for result in results:
+            ddict, legend, info = result
+            idx = (ddict["NormalizedEnergy"] >= ddict["NormalizedPlotMin"]) & \
+                  (ddict["NormalizedEnergy"] <= ddict["NormalizedPlotMax"])
+            x = ddict["NormalizedEnergy"][idx]
+            y = ddict["NormalizedMu"][idx]
+            if i == 0:
+                replace = True
+            else:
+                replace = False
+            i += 1
+            if i == n:
+                replot = True
+            else:
+                replot = False
+            self.addCurve(x, y, legend, info,
+                          xlabel=xlabel,
+                          ylabel=ylabel,
+                          replot=replot, replace=replace)
 
     def getFT(self):
         xlabel="R (Angstrom)"
