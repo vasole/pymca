@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -40,10 +40,10 @@ IconDict = PyMca_Icons.IconDict
 
 DEBUG = 0
 
-class NormalizationParameters(qt.QGroupBox):
+class XASNormalizationParameters(qt.QGroupBox):
     sigNormalizationParametersSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None):
-        super(NormalizationParameters, self).__init__(parent)
+        super(XASNormalizationParameters, self).__init__(parent)
         self.setTitle("Normalization")
         self._dialog = None
         self._energy = None
@@ -166,6 +166,8 @@ class NormalizationParameters(qt.QGroupBox):
         if self._energy is None:
             print("SETUP CLICKED BUT IGNORED")
             return
+        self._emitSignal("SetupClicked")
+        return
         if self._dialog is None:
             self._dialog = XASNormalizationWindow.XASNormalizationDialog(self,
                                                                          mu,
@@ -196,9 +198,10 @@ class NormalizationParameters(qt.QGroupBox):
                                                    points=5, full=False)
     def _e0Toggled(self, state):
         if state:
-            e0 = self._calculateE0()
             self.e0SpinBox.setEnabled(False)
-            self.e0SpinBox.setValue(e0)
+            if self._mu is not None:
+                e0 = self._calculateE0()
+                self.e0SpinBox.setValue(e0)
         else:
             self.e0SpinBox.setEnabled(True)
 
@@ -327,7 +330,7 @@ class NormalizationParameters(qt.QGroupBox):
         # pre-edge
         ddict["PreEdge"] = {}
         ddict["PreEdge"] ["Method"] = "Polynomial"
-        ddict["PreEdge"] ["Polynomial"] = str(self.postEdgeSelector.currentText())
+        ddict["PreEdge"] ["Polynomial"] = str(self.preEdgeSelector.currentText())
         # Regions is a single list with 2 * n values delimiting n regions.
         ddict["PreEdge"] ["Regions"] = [self.preEdgeStartBox.value(),
                                         self.preEdgeEndBox.value()]
@@ -389,7 +392,7 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     def mySlot(ddict):
         print("Signal received: ", ddict)
-    w = NormalizationParameters()
+    w = XASNormalizationParameters()
     w.show()
     w.sigNormalizationParametersSignal.connect(mySlot)
     from PyMca5.PyMcaIO import specfilewrapper as specfile

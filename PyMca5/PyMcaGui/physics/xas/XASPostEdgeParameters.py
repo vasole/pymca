@@ -36,11 +36,11 @@ IconDict = PyMca_Icons.IconDict
 
 DEBUG = 0
 
-class PostEdgeParameters(qt.QGroupBox):
+class XASPostEdgeParameters(qt.QGroupBox):
     sigPostEdgeParametersSignal = qt.pyqtSignal(object)
 
     def __init__(self, parent=None):
-        super(PostEdgeParameters, self).__init__(parent)
+        super(XASPostEdgeParameters, self).__init__(parent)
         self.setTitle("EXAFS")
         self.build()
 
@@ -139,7 +139,7 @@ class PostEdgeParameters(qt.QGroupBox):
                 enabled = False
             self._knotPositions[i].setEnabled(enabled)
             self._knotDegrees[i].setEnabled(enabled)
-        self._knotPositions[0].setEnabled(False)
+        self._knotPositions[0].setEnabled(False)    
         self._fillKnots()
         self.emitSignal("KnotNumberChanged")
 
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     def testSlot(ddict):
         print("Emitted signal = ", ddict)
-    w = PostEdgeParameters()
+    w = XASPostEdgeParameters()
     w.sigPostEdgeParametersSignal.connect(testSlot)
     w.show()
     app.exec_()

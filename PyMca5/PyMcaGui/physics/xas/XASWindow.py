@@ -39,7 +39,41 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui import PlotWindow
+from PyMca5.PyMcaGui import XASParameters
 from PyMca5.PyMca import XASClass
+DEBUG = 0
+
+class XASWindow(qt.QMainWindow):
+    def __init__(self, parent=None, analyzer=None):
+        super(XASWindow, self).__init__(parent)
+        if analyzer is None:
+            analyzer = XASClass.XASClass()
+        self.mdiArea = XASMdiArea(self, analyzer=analyzer)
+        self.setCentralWidget(self.mdiArea)
+        self.parametersDockWidget = qt.QDockWidget(self)
+        self.parametersDockWidget.layout().setContentsMargins(0, 0, 0, 0)
+        self.parametersWidget = XASParameters.XASParameters()
+        self.parametersDockWidget.setWidget(self.parametersWidget)
+        self.addDockWidget(qt.Qt.RightDockWidgetArea, self.parametersDockWidget)
+
+        # connect
+        self.parametersWidget.sigXASParametersSignal.connect(self._parametersSlot)
+
+    def setSpectrum(self, energy, mu):
+        self.mdiArea.setSpectrum(energy, mu)
+        self.parametersWidget.setSpectrum(energy, mu)
+        self.mdiArea.update()
+
+    def _parametersSlot(self, ddict):
+        if DEBUG:
+            print("XASWindow.parametersSlot", ddict)
+        analyzer = self.mdiArea.analyzer
+        if "XASParameters" in ddict:
+            ddict = ddict["XASParameters"]
+        analyzer.setConfiguration(ddict)
+        print("ANALYZER CONFIGURATION FINAL")
+        print(analyzer.getConfiguration())
+        self.mdiArea.update()
 
 class XASMdiArea(qt.QMdiArea):
     def __init__(self, parent=None, analyzer=None):
@@ -130,6 +164,7 @@ class XASMdiArea(qt.QMdiArea):
         plot.resetZoom([0.0, 0.0, 0.0, 0.025])
     
 if __name__ == "__main__":
+    DEBUG = 1
     app = qt.QApplication([])
     from PyMca5.PyMcaIO import specfilewrapper as specfile
     from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR
@@ -140,7 +175,7 @@ if __name__ == "__main__":
     data = specfile.Specfile(fileName)[0].data()[-2:, :]
     energy = data[0, :]
     mu = data[1, :]
-    w = XASMdiArea()
+    w = XASWindow()
     w.show()
     w.setSpectrum(energy, mu)
     w.update()

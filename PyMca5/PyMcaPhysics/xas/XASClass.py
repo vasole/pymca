@@ -34,6 +34,7 @@ to use those packages if present."""
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import copy
 import os
 import sys
 import numpy
@@ -442,13 +443,13 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None):
     if DEBUG:
         print("++++++++++++++++++",xrange1)
 
-    if knots is not None:
-        if len(knots) == len(degrees):
+    if knots not in [None, []]:
+        if len(knots) == len(polDegree):
             if knots[0] > kmin:
                 knots = [kmin] + list(knots)
             elif knots[-1] < kmax:
                 knots = list(knots) + [kmax]
-        elif len(knots) == (len(degrees) - 1):
+        elif len(knots) == (len(polDegree) - 1):
             # probably just given the intermediate knots
             if knots[0] > kmin:
                 knots = [kmin] + list(knots)
@@ -892,7 +893,7 @@ class XASClass(object):
 
         # normalization
         # E0 and pre-edge will be used for EXAFS extraction
-        # Post-edge will only be used for the normalized spectrum
+        # PostEdge will only be used for the normalized spectrum
         # because EXAFS extraction follows its own methods
         # None parameters are to be derived from input spectrum
         config["Normalization"] = {}
@@ -902,15 +903,15 @@ class XASClass(object):
         ddict["E0MinValue"] = None
         ddict["E0MaxValue"] = None
         # limits to be used (relative to E0)
-        ddict["Pre-edge"] = {}
-        ddict["Pre-edge"] ["Method"] = "Polynomial"
-        ddict["Pre-edge"] ["Polynomial"] = "Linear"
+        ddict["PreEdge"] = {}
+        ddict["PreEdge"] ["Method"] = "Polynomial"
+        ddict["PreEdge"] ["Polynomial"] = "Linear"
         # Regions is a single list with 2 * n values delimiting n regions.
-        ddict["Pre-edge"] ["Regions"] = [-1000., -40.]
-        ddict["Post-edge"] = {}
-        ddict["Post-edge"] ["Method"] = "Polynomial"
-        ddict["Post-edge"] ["Polynomial"] = "Linear"
-        ddict["Post-edge"] ["Regions"] = [20., 500.]
+        ddict["PreEdge"] ["Regions"] = [-1000., -40.]
+        ddict["PostEdge"] = {}
+        ddict["PostEdge"] ["Method"] = "Polynomial"
+        ddict["PostEdge"] ["Polynomial"] = "Linear"
+        ddict["PostEdge"] ["Regions"] = [20., 500.]
 
         # EXAFS
         config["EXAFS"] = {}
@@ -982,7 +983,7 @@ class XASClass(object):
             backend = "DefaultBackend"
         currentConfig = self.getConfiguration(backend=backend)
         newConfiguration = \
-                self.mergeConfiguration(currentConfig, inputConfig)
+                self.mergeConfigurationDicts(currentConfig, inputConfig)
         self._configuration[backend] = newConfiguration
         self._processingPending = True
 
@@ -991,19 +992,19 @@ class XASClass(object):
         destinationDict = {}
         referenceKeys = list(referenceDict.keys())
         for referenceKey in referenceKeys:
-            ref = self.referenceDict[referenceKey]
+            ref = referenceDict[referenceKey]
             referenceLower = referenceKey.lower()
             treated = False
             for key in inputDict:
-                if key.lower() == reference.lower():
+                if key.lower() == referenceLower:
                     if hasattr(referenceDict[referenceKey], "keys"):
                         inp = inputDict[key]
                         destinationDict[referenceKey] = \
-                                self.mergeConfigurationDict(ref, inp)
+                                self.mergeConfigurationDicts(ref, inp)
                     else:
                         destinationDict[referenceKey] = inputDict[key]
-                else:
-                    print("Ignored input key %s" % key)
+                    treated = True
+                    break
             if not treated:
                 if hasattr(referenceDict[referenceKey], "keys"):
                     destinationDict[referenceKey] = copy.deepcopy(ref)
@@ -1075,8 +1076,8 @@ class XASClass(object):
         return {"Jump": jump,
                 "NormalizedEnergy": energy,
                 "NormalizedMu":normalizedSpectrum,
-                "NormalizedBackground": data["Pre-edge"],
-                "NormalizedSignal":data["Post-edge"]}
+                "NormalizedBackground": data["PreEdge"],
+                "NormalizedSignal":data["PostEdge"]}
         """
         cleanMu = self._mu - ddict["NormalizedBackground"]
         kValues = e2k(self._energy - e0)
@@ -1264,7 +1265,7 @@ class XASClass(object):
 
         parameters = {}
         data = {}
-        for key in ["Pre-edge", "Post-edge"]:
+        for key in ["PreEdge", "PostEdge"]:
             # pre-edge
             # Regions is a single list with 2 * n values delimiting n regions.
             regions = config [key] ["Regions"]
@@ -1274,12 +1275,12 @@ class XASClass(object):
             method = config[key]["Polynomial"]
             methodLower = method.lower()
             if regions is None:
-                if key == "Pre-edge":
+                if key == "PreEdge":
                     regions = [-1000., -40.]
                 else:
                     regions = [20., 1000.]
             workingRegions = []
-            if key == "Pre-edge":
+            if key == "PreEdge":
                 for i in range(0, len(regions), 2):
                     vMin = e0 + regions[2 * i]
                     vMax = e0 + regions[2 * i + 1]
@@ -1325,13 +1326,13 @@ class XASClass(object):
                                            uncertainties=False, weight=False)[0]
             fun = self._polynomDict[method]["function"]
             data[key] = fun(energy, parameters[key])
-        normalizedSpectrum = (mu - data["Pre-edge"])/data["Post-edge"]
-        jump = fun(e0, parameters["Post-edge"])
+        normalizedSpectrum = (mu - data["PreEdge"])/data["PostEdge"]
+        jump = fun(e0, parameters["PostEdge"])
         return {"Jump": jump,
                 "NormalizedEnergy": energy,
                 "NormalizedMu":normalizedSpectrum,
-                "NormalizedBackground": data["Pre-edge"],
-                "NormalizedSignal":data["Post-edge"]}
+                "NormalizedBackground": data["PreEdge"],
+                "NormalizedSignal":data["PostEdge"]}
 
 
 if __name__ == "__main__":
