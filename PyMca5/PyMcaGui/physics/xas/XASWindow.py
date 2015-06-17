@@ -157,8 +157,8 @@ class XASMdiArea(qt.QMdiArea):
         plot.resetZoom([0.0, 0.0, 0.025, 0.025])
         plot = self._windowDict["FT"]
         plot.addCurve(ddict["FT"]["FTRadius"],
-                      ddict["FT"]["FTAmplitude"],
-                      legend="FT Module",
+                      ddict["FT"]["FTIntensity"],
+                      legend="FT Intensity",
                       xlabel="R (Angstrom)",
                       ylabel="Arbitraty Units",
                       replace=True,

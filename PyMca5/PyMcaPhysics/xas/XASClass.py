@@ -723,7 +723,7 @@ def getFT(k, exafs, npoints=2048, rrange=(0.0, 7.0),
     ddict["InterpolatedSignal"] = interpolatedDataY
     ddict["KWeight"] = kweight
     ddict["FTRadius"] = f10
-    ddict["FTAmplitude"] = f11
+    ddict["FTIntensity"] = f11
     ddict["FTReal"] = f12
     ddict["FTImaginary"] = f13
     return ddict
@@ -1378,7 +1378,7 @@ if __name__ == "__main__":
                    legend="Normalized EXAFS")
     exafs.show()
     ft = PlotWindow.PlotWindow()
-    ft.addCurve(ddict["FT"]["FTRadius"], ddict["FT"]["FTAmplitude"])
+    ft.addCurve(ddict["FT"]["FTRadius"], ddict["FT"]["FTIntensity"])
     ft.resetZoom()
     ft.show()
     app.exec_()
