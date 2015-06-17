@@ -1085,8 +1085,8 @@ class MatplotlibGraph(FigureCanvas):
 
             self.__zooming = False
             if len(self._zoomStack):
-                xmin, xmax, ymin, ymax = self._zoomStack.pop()
-                self.setLimits(xmin, xmax, ymin, ymax)
+                xmin, xmax, ymin, ymax, y2min, y2max = self._zoomStack.pop()
+                self.setLimits(xmin, xmax, ymin, ymax, y2min, y2max)
                 self.draw()
 
         if self.__drawing and (self._drawingPatch is not None):
@@ -1153,8 +1153,30 @@ class MatplotlibGraph(FigureCanvas):
                 # don't do anything
                 xmin, xmax = self.ax.get_xlim()
                 ymin, ymax = self.ax.get_ylim()
-                self._zoomStack.append((xmin, xmax, ymin, ymax))
-                self.setLimits(x, x+w, y, y+h)
+                if ymax < ymin:
+                    ymin, ymax = ymax, ymin
+
+                if not self.ax2.get_yaxis().get_visible():
+                    y2min, y2max = None, None
+                    newY2Min, newY2Max = None, None
+                else:
+                    bottom, top = self.ax2.get_ylim()
+                    y2min, y2max = min(bottom, top), max(bottom, top)
+
+                    # Convert corners from ax data to window
+                    pt0 = self.ax.transData.transform_point((x, y))
+                    pt1 = self.ax.transData.transform_point((x + w, y + h))
+                    # Convert corners from window to ax2 data
+                    pt0 = self.ax2.transData.inverted().transform_point(pt0)
+                    pt1 = self.ax2.transData.inverted().transform_point(pt1)
+
+                    # Get min and max on right Y axis
+                    newY2Min, newY2Max = pt0[1], pt1[1]
+                    if newY2Max < newY2Min:
+                        newY2Min, newY2Max = newY2Max, newY2Min
+
+                self._zoomStack.append((xmin, xmax, ymin, ymax, y2min, y2max))
+                self.setLimits(x, x+w, y, y+h, newY2Min, newY2Max)
             self.draw()
 
     @staticmethod
@@ -1202,17 +1224,60 @@ class MatplotlibGraph(FigureCanvas):
 
         scaleF = 1.1 if event.step > 0 else 1 / 1.1
 
-        xMin, xMax = self.ax.get_xlim()
-        xMin, xMax = self._newZoomRange(xMin, xMax, event.xdata, scaleF,
-                                        self.ax.get_xscale() == 'log')
+        xLim = self.ax.get_xlim()
+        xMin, xMax = min(xLim), max(xLim)
+        isXLog = (self.ax.get_xscale() == 'log')
 
-        yMin, yMax = self.ax.get_ylim()
-        yMin, yMax = self._newZoomRange(yMin, yMax, event.ydata, scaleF,
-                                        self.ax.get_yscale() == 'log')
+        yLim = self.ax.get_ylim()
+        yMin, yMax = min(yLim), max(yLim)
+        isYLog = (self.ax.get_yscale() == 'log')
 
-        # Zoom on right Y axis is not done
+        # If negative limit and log scale,
+        # try to get a positive limit from the data limits
+        if (isXLog and xMin <= 0.) or (isYLog and yMin <= 0.):
+            bounds = self.getDataLimits()
+            if isXLog:
+                if xMin <= 0. and bounds[0] > 0.:
+                    xMin = bounds[0]
+                if xMax <= 0. and bounds[1] > 0.:
+                    xMax = bounds[1]
 
-        self.setLimits(xMin, xMax, yMin, yMax)
+            if isYLog:
+                if yMin <= 0. and bounds[2] > 0.:
+                    yMin = bounds[2]
+                if yMax <= 0. and bounds[3] > 0.:
+                    yMax = bounds[3]
+
+        xMin, xMax = self._newZoomRange(xMin, xMax,
+                                        event.xdata, scaleF, isXLog)
+
+        yMin, yMax = self._newZoomRange(yMin, yMax,
+                                        event.ydata, scaleF, isYLog)
+
+        if self.ax2.get_yaxis().get_visible():
+            # Get y position in right axis coords
+            x, y2Data = self.ax2.transData.inverted().transform_point(
+                (event.x, event.y))
+
+            y2Lim = self.ax2.get_ylim()
+            y2Min, y2Max = min(y2Lim), max(y2Lim)
+            isY2Log = (self.ax2.get_yscale() == 'log')
+
+            # If negative limit and log scale,
+            # try to get a positive limit from the data limits
+            if isY2Log and y2Min <= 0.:
+                bounds = self.getDataLimits('right')
+                if yMin <= 0. and bounds[2] > 0.:
+                    y2Min = bounds[2]
+                if yMax <= 0. and bounds[3] > 0.:
+                    y2Max = bounds[3]
+
+            y2Min, y2Max = self._newZoomRange(y2Min, y2Max,
+                                              y2Data, scaleF, isYLog)
+            self.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
+        else:
+            self.setLimits(xMin, xMax, yMin, yMax)
+
         self.draw()
 
     def _emitDrawingSignal(self, event="drawingFinished"):
@@ -1283,31 +1348,41 @@ class MatplotlibGraph(FigureCanvas):
         }
         self._callback(eventDict)
 
-    def setLimits(self, xmin, xmax, ymin, ymax):
+    def setLimits(self, xmin, xmax, ymin, ymax, y2min=None, y2max=None):
         self.ax.set_xlim(xmin, xmax)
         if ymax < ymin:
             ymin, ymax = ymax, ymin
         current = self.ax.get_ylim()
         if self.ax.yaxis_inverted():
             self.ax.set_ylim(ymax, ymin)
-            top, bottom = current
+            #top, bottom = current
         else:
             self.ax.set_ylim(ymin, ymax)
-            bottom, top = current
+            #bottom, top = current
+
+        if y2min is not None and y2max is not None:
+            if y2max < y2min:
+                y2min, y2max = y2max, y2min
+            if self.ax2.yaxis_inverted():
+                bottom, top = y2max, y2min
+            else:
+                bottom, top = y2min, y2max
+            self.ax2.set_ylim(bottom, top)
+
         # if second axis was not properly initialized, this does not work
-        if 0 and hasattr(self.ax2, "get_visible") and self.ax2.get_visible():
-            #print("BOTTOM, TOP = ", bottom, top)
-            bottom2, top2 = self.ax2.get_ylim()
-            #print("BOTTOM2, TO2 = ", bottom2, top2)
-            i2Range = top2 - bottom2
-            if i2Range > 0:
-                ymin2 = bottom2 + i2Range * (ymin - bottom)/(top - bottom)
-                ymax2 = bottom2 + i2Range * (ymax - bottom)/(top - bottom)
-                #print("OBTAINED = ", ymin2, ymax2)
-                if self.ax2.yaxis_inverted():
-                    self.ax2.set_ylim(ymax2, ymin2)
-                else:
-                    self.ax2.set_ylim(ymin2, ymax2)
+        #if 0 and hasattr(self.ax2, "get_visible") and self.ax2.get_visible():
+        #    #print("BOTTOM, TOP = ", bottom, top)
+        #    bottom2, top2 = self.ax2.get_ylim()
+        #    #print("BOTTOM2, TO2 = ", bottom2, top2)
+        #    i2Range = top2 - bottom2
+        #    if i2Range > 0:
+        #        ymin2 = bottom2 + i2Range * (ymin - bottom)/(top - bottom)
+        #        ymax2 = bottom2 + i2Range * (ymax - bottom)/(top - bottom)
+        #        #print("OBTAINED = ", ymin2, ymax2)
+        #        if self.ax2.yaxis_inverted():
+        #            self.ax2.set_ylim(ymax2, ymin2)
+        #        else:
+        #            self.ax2.set_ylim(ymin2, ymax2)
         # Next line forces a square display region
         #self.ax.set_aspect((xmax-xmin)/float(ymax-ymin))
         #self.draw()
@@ -1330,20 +1405,19 @@ class MatplotlibGraph(FigureCanvas):
 
         # Add margins around data inside the plot area
         if xmin2 is None:
-            xmin, xmax, ymin, ymax = _utils.addMarginsToLimits(
+            newLimits = _utils.addMarginsToLimits(
                 dataMargins,
                 self.ax.get_xscale() == 'log', self.ax.get_yscale() == 'log',
                 xmin, xmax, ymin, ymax)
 
-            self.setLimits(xmin, xmax, ymin, ymax)
+            self.setLimits(*newLimits)
         else:
-            xmin, xmax, ymin, ymax, ymin2, ymax2 = _utils.addMarginsToLimits(
+            newLimits = _utils.addMarginsToLimits(
                 dataMargins,
                 self.ax.get_xscale() == 'log', self.ax.get_yscale() == 'log',
                 xmin, xmax, ymin, ymax, ymin2, ymax2)
 
-            self.ax2.set_ylim(ymin2, ymax2)
-            self.setLimits(xmin, xmax, ymin, ymax)
+            self.setLimits(*newLimits)
 
         #self.ax2.set_autoscaley_on(True)
         self._zoomStack = []
