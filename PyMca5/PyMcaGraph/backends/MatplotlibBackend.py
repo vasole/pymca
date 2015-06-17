@@ -1329,12 +1329,22 @@ class MatplotlibGraph(FigureCanvas):
             xmax = max(xmax, xmax2)
 
         # Add margins around data inside the plot area
-        xmin, xmax, ymin, ymax = _utils.addMarginsToLimits(
-            dataMargins,
-            self.ax.get_xscale() == 'log', self.ax.get_yscale() == 'log',
-            xmin, xmax, ymin, ymax)
+        if xmin2 is None:
+            xmin, xmax, ymin, ymax = _utils.addMarginsToLimits(
+                dataMargins,
+                self.ax.get_xscale() == 'log', self.ax.get_yscale() == 'log',
+                xmin, xmax, ymin, ymax)
 
-        self.setLimits(xmin, xmax, ymin, ymax)
+            self.setLimits(xmin, xmax, ymin, ymax)
+        else:
+            xmin, xmax, ymin, ymax, ymin2, ymax2 = _utils.addMarginsToLimits(
+                dataMargins,
+                self.ax.get_xscale() == 'log', self.ax.get_yscale() == 'log',
+                xmin, xmax, ymin, ymax, ymin2, ymax2)
+
+            self.ax2.set_ylim(ymin2, ymax2)
+            self.setLimits(xmin, xmax, ymin, ymax)
+
         #self.ax2.set_autoscaley_on(True)
         self._zoomStack = []
 
