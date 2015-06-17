@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -411,10 +411,6 @@ class PyMcaMdi(qt.QMainWindow):
     def onPrint(self):
         qt.QMessageBox.about(self, "Print", "Not implemented")
 
-
-
-
-
 def main(args):
     app = qt.QApplication(args)
     #if sys.platform == 'win32':
@@ -440,8 +436,8 @@ def main(args):
         elif opt in ('--shm'):
             kw['shm']  = arg
     #demo = McaWindow.McaWidget(**kw)
-    demo = PyMca()
-    app.lastWindowClosed.connect(app.quit())
+    demo = PyMcaMdi()
+    app.lastWindowClosed.connect(app.quit)
     demo.show()
     app.exec_()
 
