@@ -44,11 +44,12 @@ from PyMca5.PyMca import XASClass
 DEBUG = 0
 
 class XASWindow(qt.QMainWindow):
-    def __init__(self, parent=None, analyzer=None):
+    def __init__(self, parent=None, analyzer=None, backend=None):
         super(XASWindow, self).__init__(parent)
+        self.setWindowTitle("XAS Window")
         if analyzer is None:
             analyzer = XASClass.XASClass()
-        self.mdiArea = XASMdiArea(self, analyzer=analyzer)
+        self.mdiArea = XASMdiArea(self, analyzer=analyzer, backend=backend)
         self.setCentralWidget(self.mdiArea)
         self.parametersDockWidget = qt.QDockWidget(self)
         self.parametersDockWidget.layout().setContentsMargins(0, 0, 0, 0)
@@ -77,7 +78,7 @@ class XASWindow(qt.QMainWindow):
         self.mdiArea.update()
 
 class XASMdiArea(qt.QMdiArea):
-    def __init__(self, parent=None, analyzer=None):
+    def __init__(self, parent=None, analyzer=None, backend=None):
         super(XASMdiArea, self).__init__(parent)
         if analyzer is None:
             analyzer = XASClass.XASClass()
@@ -87,7 +88,7 @@ class XASMdiArea(qt.QMdiArea):
         self._windowList = ["Spectrum", "Post-edge", "Signal", "FT"]
         self._windowList.reverse()
         for title in self._windowList:
-            plot = PlotWindow.PlotWindow(self)
+            plot = PlotWindow.PlotWindow(self, backend=backend)
             plot.setWindowTitle(title)
             self.addSubWindow(plot)
             self._windowDict[title] = plot

@@ -1198,7 +1198,7 @@ class XASClass(object):
 
         methodLower = method.lower()
         if methodLower.endswith("manual"):
-            return e0
+            return {"edge":e0}
         elif methodLower.endswith("no smooth"):
             idx = numpy.gradient(muWork).argmax()
             return eWork[idx]
