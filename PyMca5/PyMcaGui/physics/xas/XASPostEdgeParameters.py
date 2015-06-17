@@ -194,7 +194,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
         if "Knots" in ddict:
             self.knotsBox.setValue(ddict["Knots"].get("Number", nKnots))
         nKnots = self.knotsBox.value()
-        positions, orders = self._getDefaultKnotValues(knots=nKnots)
+        positions, orders = self._getDefaultKnots(knots=nKnots)
         n = len(positions)
         for i in range(self.knotsBox.maximum()+1):
             if i < n:

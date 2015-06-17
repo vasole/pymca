@@ -71,8 +71,9 @@ class XASWindow(qt.QMainWindow):
         if "XASParameters" in ddict:
             ddict = ddict["XASParameters"]
         analyzer.setConfiguration(ddict)
-        print("ANALYZER CONFIGURATION FINAL")
-        print(analyzer.getConfiguration())
+        if DEBUG:
+            print("ANALYZER CONFIGURATION FINAL")
+            print(analyzer.getConfiguration())
         self.mdiArea.update()
 
 class XASMdiArea(qt.QMdiArea):
