@@ -97,6 +97,31 @@ class XASStackBatchPlugin(StackPluginBase.StackPluginBase):
             self._widget.close()
         self._widget = None
 
+    def selectionMaskUpdated(self):
+        if self._widget is None:
+            return
+        if self._widget.isHidden():
+            return
+        mask = self.getStackSelectionMask()
+        self._widget.setSelectionMask(mask)
+
+    def mySlot(self, ddict):
+        if DEBUG:
+            print("mySlot ", ddict['event'], ddict.keys())
+        if ddict['event'] == "selectionMaskChanged":
+            self.setStackSelectionMask(ddict['current'])
+        elif ddict['event'] == "addImageClicked":
+            self.addImage(ddict['image'], ddict['title'])
+        elif ddict['event'] == "addAllClicked":
+            for i in range(len(ddict["images"])):
+                self.addImage(ddict['images'][i], ddict['titles'][i])            
+        elif ddict['event'] == "removeImageClicked":
+            self.removeImage(ddict['title'])
+        elif ddict['event'] == "replaceImageClicked":
+            self.replaceImage(ddict['image'], ddict['title'])
+        elif ddict['event'] == "resetSelection":
+            self.setStackSelectionMask(None)
+
     #Methods implemented by the plugin
     def getMethods(self):
         if self._widget is None:

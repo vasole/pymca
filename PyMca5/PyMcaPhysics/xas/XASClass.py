@@ -98,20 +98,20 @@ def polspl_evaluate(set2,xl,xh,c,nc,nr):
 
      PURPOSE:
     	evaluate the combined spline fitted from its coefficients.
-    
+
      INPUTS:
     	set2: the set with the original data
-    	xl,xh arrays contain nr adjacent ranges over which to fit individual polynomials.  
+    	xl,xh arrays contain nr adjacent ranges over which to fit individual polynomials.
            c array containing the polynomial coefficients resulting from the fit
-           nc array that specifies how many poly coeffs to use in each range 
+           nc array that specifies how many poly coeffs to use in each range
            nr the number of adjacent ranges
-    	
+
      OUTPUTS:
-    	a variable to receive a set with the same abscissas of the input one and 
+    	a variable to receive a set with the same abscissas of the input one and
         the coordinates evaluated from the fit parameters
-    
+
      MODIFICATION HISTORY:
-     	Written by:	Manuel Sanchez del Rio. ESRF,  February, 1993	
+     	Written by:	Manuel Sanchez del Rio. ESRF,  February, 1993
     	2009-05-13 srio@esrf.eu updated doc
         2014-12-04 srio@esrf.eu Translated to python
     """
@@ -142,17 +142,17 @@ def polspl_evaluate(set2,xl,xh,c,nc,nr):
                     cstart=numpy.sum(nc[0:j])
                     xval = set2[0,i]
                     yval = 0.0
-                    for k in range(1,int(nc[j]+1)): 
+                    for k in range(1,int(nc[j]+1)):
                         yval =  yval+ c[cstart+k] * numpy.power(xval,(k-1))
                     fit2[0,i] = xval
                     fit2[1,i] = yval
-                    
+
     for j in range(1,int(nr+1)): # loop over the # of intervals
         idx = (set2[0, :] > xl[j]) & (set2[0,:] <= xh[j])
         xval = set2[0, idx]
         cstart=numpy.sum(nc[0:j])
         yval = 0.0 * xval
-        for k in range(1,int(nc[j]+1)): 
+        for k in range(1,int(nc[j]+1)):
             yval += c[cstart+k] * numpy.power(xval,(k-1))
         fit[0, idx] = xval
         fit[1, idx] = yval
@@ -168,7 +168,7 @@ def polspl(x,y,w,npts,xl,xh,nr,nc):
     	polynomial spline least squares fit to data points Y(I).
     	only the function and it's first derivative are matched at the knots,
     	in order to give more degrees of freedom in the fit.
-    
+
      INPUTS:
     	x(i),i=1,npts           abscissas
     	y(i),i=1,npts           ordinates
@@ -178,15 +178,15 @@ def polspl(x,y,w,npts,xl,xh,nr,nc):
     	npts: points in x,y arrays.  xl,xh arrays contain NR adjacent ranges
     	over which to fit individual polynomials.  Array nc specifies
     	how many poly coeffs to use in each range.
-    
+
      OUTPUTS:
     	array with all coeffs, the first nc(1) of which belong to the first range,
     	the second nc(2) of which belong to the second range, and so forth.
-    
+
      SIDE EFFECTS:
     	Quite inefficient, because it uses a lot of loops inherited from
     	the Fortran code. However, for small set of data it is useful.
-    
+
      PROCEDURE:
     	(Translated from a Fortran Code)
     	The method here is to fit ordinary polynomials in X, not B-splines,
@@ -195,11 +195,11 @@ def polspl(x,y,w,npts,xl,xh,nr,nc):
     	degree of the polynomial.  The method of solution is Lagrange's
     	undetermined multipliers for the knot constraints and gaussian
     	elimination to solve the linear system.
-    
+
      MODIFICATION HISTORY:
-     	Written by:	Manuel Sanchez del Rio. ESRF February, 1993	
+     	Written by:	Manuel Sanchez del Rio. ESRF February, 1993
         2014-12-04 srio@esrf.eu Translated to python
-    
+
         this subroutine is a translation of the fortran subroutine
         poslpl.for (found in the Frascati's package of EXAFS data analysis)
         which header states:
@@ -229,31 +229,31 @@ def polspl(x,y,w,npts,xl,xh,nr,nc):
         C	UNDETERMINED MULTIPLIERS FOR THE KNOT CONSTRAINTS AND GAUSSIAN
         C	ELIMINATION TO SOLVE THE LINEAR SYSTEM.
         C
-    
+
     """
 
     # ;
     # ; few definitions
     # ;
-    df = numpy.zeros(26)  
-    a = numpy.zeros((36,37))  
+    df = numpy.zeros(26)
+    a = numpy.zeros((36,37))
     nbs = numpy.zeros(11,dtype=int)
-    xk = numpy.zeros(10)  
-    c = numpy.zeros(36)  
-    j=0 
-    i=0  
-    ne_idl=0 
-    n = 0 
-    k = 0 
+    xk = numpy.zeros(10)
+    c = numpy.zeros(36)
+    j=0
+    i=0
+    ne_idl=0
+    n = 0
+    k = 0
     ibl = 0
-    ns = 0  
+    ns = 0
     ns1 = 0
 
     nbs[1]=1
     for i in range(1,nr+1):
         n=n+int(nc[i])
         nbs[i+1]=n+1
-        if xl[i] < xh[i]: 
+        if xl[i] < xh[i]:
             pass
         else:
             t=xl[i]
@@ -272,7 +272,7 @@ def polspl(x,y,w,npts,xl,xh,nr,nc):
         ns=nbs[ibl]
         ne_idl=nbs[ibl+1]-1
         for i in range(1, npts+1):
-            if((x[i] < xl[ibl]) or (x[i] > xh[ibl])): 
+            if((x[i] < xl[ibl]) or (x[i] > xh[ibl])):
                 pass
             else:
                 df[ns]=1.0
@@ -280,14 +280,14 @@ def polspl(x,y,w,npts,xl,xh,nr,nc):
                 for j in range(ns1,ne_idl+1):
                     df[j]=df[j-1]*x[i]
                 for j in range(ns,ne_idl+1):
-                    for k in range(j,ne_idl+1): 
+                    for k in range(j,ne_idl+1):
                         a[j,k]=a[j,k]+df[j]*df[k]*w[i]
                     a[j,n1]=a[j,n1]+df[j]*y[i]*w[i]
     # ... has to be faster
     ncol=nbs[nr+1]-1
     nk=nr-1
 
-    if (nk == 0): 
+    if (nk == 0):
         pass
     else:
         for ik in range(1,nk+1):
@@ -301,7 +301,7 @@ def polspl(x,y,w,npts,xl,xh,nr,nc):
             ncol=ncol+1
             a[ns,ncol]=-1.
             ns=ns+1
-            if (ns > ne_idl): 
+            if (ns > ne_idl):
                 pass
             else:
                 for i in range(ns,ne_idl+1):
@@ -316,45 +316,45 @@ def polspl(x,y,w,npts,xl,xh,nr,nc):
             ncol=ncol+1
             a[ns,ncol]=1.0
             ns=ns+1
-            if (ns > ne_idl): 
+            if (ns > ne_idl):
                 pass
             else:
-                for i in range(ns,ne_idl+1): 
+                for i in range(ns,ne_idl+1):
                     a[i,ncol]=(i-ns+2)*numpy.power(xk[ik],(i-ns+1))
 
     for i in range(1,n+1):
         i1=i-1
-        for j in range(1,i1+1): 
+        for j in range(1,i1+1):
             a[i,j]=a[j,i]
     nm1=n-1
 
-    for i in range(1,nm1+1): 
+    for i in range(1,nm1+1):
         i1=i+1
         m=i
         t=numpy.abs(a[i,i])
-        for j in range(i1,n+1): 
+        for j in range(i1,n+1):
             if (t >= numpy.abs(a[j,i])):
                 pass
             else:
                 m=j
                 t=numpy.abs(a[j,i])
-        if (m == i): 
+        if (m == i):
             pass
         else:
-            for j in range(1,n1+1): 
+            for j in range(1,n1+1):
                 t=a[i,j]
                 a[i,j]=a[m,j]
                 a[m,j]=t
-        for j in range(i1,n+1): 
+        for j in range(i1,n+1):
             t=a[j,i]/a[i,i]
-            for k in range(i1,n1+1): 
+            for k in range(i1,n1+1):
                 a[j,k]=a[j,k]-t*a[i,k]
     c[n]=a[n,n1]/a[n,n]
-    for i in range(1,nm1+1): 
+    for i in range(1,nm1+1):
         ni=n-i
         t=a[ni,n1]
         ni1=ni+1
-        for j in range(ni1,n+1): 
+        for j in range(ni1,n+1):
             t=t-c[j]*a[ni,j]
         c[ni]=t/a[ni,ni]
     return c
@@ -365,14 +365,14 @@ def polspl_test():
     """
     set22 = numpy.loadtxt('set22.dat')
     set22 = set22.T
-    
+
     npts = len(set22[1,:])
     w = numpy.ones(npts+1)
     xx = numpy.zeros(npts+1)
     yy = numpy.zeros(npts+1)
     #w=w*0.0+1.0
 
-    xx[1:npts+1]=set22[0,:]  
+    xx[1:npts+1]=set22[0,:]
     yy[1:npts+1]=set22[1,:]
     xl = numpy.array( [ 0.0000000, 0.0000000, \
                         7.6354497, 15.270899, 0.0000000,\
@@ -396,23 +396,23 @@ def polspl_test():
 def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None):
     r"""
         postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None)
-    
+
      PURPOSE:
     	This procedure calculates the post edge fit of a xafs spectrum
-    
+
      INPUTS:
     	set2: input set of data
-    
+
      KEYWORD PARAMETERS:
         kmin the bottom limit for the fit (defaults kmin=0)
         kmax the upper limit for the fit (defaults max)
-    
+
      OUTPUTS:
     	a set with the fit
-    
+
      MODIFICATION HISTORY:
      	Written by:	Manuel Sanchez del Rio. ESRF
-    	February, 1993	
+    	February, 1993
         1996-08-13 MSR (srio@esrf.fr) changes wmenu->wmenu2 and
                    xtext->widget_message
     	1998-10-01 srio@esrf.fr adapts for delia.
@@ -426,7 +426,7 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None):
     xh = numpy.zeros(10)
     c = numpy.zeros(36)
     nc = numpy.zeros(10)
-    if len(polDegree) > 10: 
+    if len(polDegree) > 10:
         print("Error: Maximum number of intervals is 10")
         print("       Number of intervals forced to 10")
         polDegree = polDegree[0:9]
@@ -459,7 +459,7 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None):
             print("Error: dimension of knots must be dimension of polDegree+1")
             print("       Forced automatic (equidistant) knot definition.")
             knots = None
-        else: 
+        else:
             xrange1 = knots[0],knots[-1]
 
 
@@ -468,7 +468,7 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None):
     xh[nr] = xrange1[1]
 
     for i in range(1,nr+1):
-        nc[i] = polDegree[i-1] + 1  
+        nc[i] = polDegree[i-1] + 1
 
     if knots == None:
         step = (xh[nr]-xl[1])/float(nr)
@@ -1347,7 +1347,7 @@ class XASClass(object):
                funPre(e0, parameters["PreEdge"])
         #normalizedSpectrum = (mu - data["PreEdge"])/(data["PostEdge"]
         normalizedSpectrum = (mu - data["PreEdge"])/jump
-               
+
         return {"Jump": jump,
                 "Edge":e0,
                 "NormalizedEnergy": energy,

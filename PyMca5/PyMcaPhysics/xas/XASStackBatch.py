@@ -143,7 +143,7 @@ class XASStackBatch(object):
         if firstSpectrum is None:
             firstSpectrum = data[0, 0, :]
         # TODO: Check if only one X and it is well behaved in order to
-        # avoid unnecessary calculation on each spectrum        
+        # avoid unnecessary calculation on each spectrum
         self._analyzer.setSpectrum(x, firstSpectrum)
         # initialize the output arrays
         ddict = self._analyzer.processSpectrum()
@@ -174,7 +174,7 @@ class XASStackBatch(object):
             entry = posixpath.join(entry, "xas_analysis")
         if not fname.endswith(".h5"):
             fname = fname + ".h5"
-        out = h5py.File(fname, "w")    
+        out = h5py.File(fname, "w")
         e0Path = posixpath.join(entry, "edge")
         jumpPath = posixpath.join(entry, "jump")
         spectrumXPath = posixpath.join(entry, "spectrum", "energy")
@@ -288,7 +288,7 @@ class XASStackBatch(object):
                     j +=1
                 jStart = jEnd
         outputDict = {}
-        outputDict["names"] = ["Edge", "Jump"]
+        outputDict["names"] = ["Jump", "Edge"]
         output = numpy.zeros((2, e0.shape[0], e0.shape[1]), dtype = e0.dtype)
         output[0, :] = jump.value
         output[1, :] = e0.value
