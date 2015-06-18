@@ -102,7 +102,6 @@ class XASPlugin(Plugin1DBase.Plugin1DBase):
 
         self.analyzer = XASClass.XASClass()
         self.widget = None
-        self.parameters = None
 
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
@@ -144,24 +143,20 @@ class XASPlugin(Plugin1DBase.Plugin1DBase):
         x, y, legend0, info = activeCurve
         if self.widget is None:
             self._createWidget()
-        else:
-            oldParameters = self.widget.getParameters()
-            oldEnergy = self.widget.parametersWidget.energy
-            oldEMin = oldEnergy.min()
-            oldEMax = oldEnergy.max()
-            self.widget.setData(y, energy=x)
-            if abs(oldEMin - x.min()) < 1:
-                if abs(oldEMax - x.max()) < 1:
-                    self.widget.setParameters(oldParameters)
-
+        self.widget.setSpectrum(x, y)
+        oldConfiguration = self.analyzer.getConfiguration()
+        self.widget.setConfiguration(oldConfiguration)
         ret = self.widget.exec_()
         if ret:
-            self.parameters = self.widget.getParameters()
+            # it should be already configured
+            pass
+        else:
+            self.analyzer.setConfiguration(oldConfiguration)
 
     def _createWidget(self):
         parent = None
-        self.widget = XASWindow.XASWindow(parent)
-
+        self.widget = XASWindow.XASDialog(parent,
+                                          analyzer=self.analyzer)
 
     def processAllCurves(self):
         # for the time being we do not calculate just

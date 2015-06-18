@@ -874,6 +874,7 @@ class XASClass(object):
             "Victoreen":{"function":victoreen, "vars":None, "kw":None},
             "Constant":{"function":polynom, "vars":None, "kw":None},
             "Linear":{"function":polynom, "vars":None, "kw":None},
+            "Parabolic":{"function":polynom, "vars":None, "kw":None},
             "Cubic":{"function":polynom, "vars":None, "kw":None}}
 
         self._configuration = self.getDefaultConfiguration(backend)
@@ -1079,6 +1080,8 @@ class XASClass(object):
                 "NormalizedBackground": data["PreEdge"],
                 "NormalizedSignal":data["PostEdge"]}
         """
+        ddict["Energy"] = self._energy
+        ddict["Mu"] = self._mu
         cleanMu = self._mu - ddict["NormalizedBackground"]
         kValues = e2k(self._energy - e0)
         ddict.update(self.postEdge(kValues, cleanMu))
@@ -1312,11 +1315,17 @@ class XASClass(object):
                 modelMatrix = numpy.empty((x.size, 2), numpy.float)
                 modelMatrix[:, 0] = 1.0
                 modelMatrix[:, 1] = x
-            elif methodLower == "cubic":
+            elif methodLower == "parabolic":
                 modelMatrix = numpy.empty((x.size, 3), numpy.float)
                 modelMatrix[:, 0] = 1.0
                 modelMatrix[:, 1] = x
-                modelMatrix[:, 1] = pow(x, 2)
+                modelMatrix[:, 2] = pow(x, 2)
+            elif methodLower == "cubic":
+                modelMatrix = numpy.empty((x.size, 4), numpy.float)
+                modelMatrix[:, 0] = 1.0
+                modelMatrix[:, 1] = x
+                modelMatrix[:, 2] = pow(x, 2)
+                modelMatrix[:, 3] = pow(x, 3)
             elif methodLower == "victoreen":
                 modelMatrix = numpy.empty((x.size, 2), numpy.float)
                 modelMatrix[:,0] = pow(x, -3)
