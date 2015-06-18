@@ -1343,11 +1343,13 @@ class XASClass(object):
             if key == "PreEdge":
                 funPre = fun
             data[key] = fun(energy, parameters[key])
-        normalizedSpectrum = (mu - data["PreEdge"])/data["PostEdge"]
         jump = fun(e0, parameters["PostEdge"]) - \
                funPre(e0, parameters["PreEdge"])
+        #normalizedSpectrum = (mu - data["PreEdge"])/(data["PostEdge"]
+        normalizedSpectrum = (mu - data["PreEdge"])/jump
                
         return {"Jump": jump,
+                "Edge":e0,
                 "NormalizedEnergy": energy,
                 "NormalizedMu":normalizedSpectrum,
                 "NormalizedBackground": data["PreEdge"],
