@@ -160,7 +160,8 @@ class XASParameters(qt.QWidget):
     def loadParameters(self, fname=None):
         if fname is None:
             fname = PyMcaFileDialogs.getFileList(self,
-                                         filetypelist=["Configuration (*.cfg)",
+                                         filetypelist=["Configuration (*.ini)",
+                                                       "Configuration (*.cfg)",
                                                        "All files (*)"],
                                          message="Please set input file name",
                                          mode="OPEN",
@@ -180,7 +181,8 @@ class XASParameters(qt.QWidget):
     def saveParameters(self, fname=None):
         if fname is None:
             fname = PyMcaFileDialogs.getFileList(self,
-                                         filetypelist=["Configuration (*.cfg)"],
+                                         filetypelist=["Configuration (*.ini)",
+                                                       "Configuration (*.cfg)"],
                                          message="Please enter output file name",
                                          mode="SAVE",
                                          getfilter=False,
