@@ -43,10 +43,46 @@ from PyMca5.PyMcaGui import XASParameters
 from PyMca5.PyMca import XASClass
 DEBUG = 0
 
+class XASDialog(qt.QDialog):
+    def __init__(self, parent=None, analyzer=None, backend=None):
+        super(XASDialog, self).__init__(parent)
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.mainLayout.setSpacing(2)
+        # the main window
+        self.xasWindow = XASWindow(self, analyzer=analyzer, backend=backend)
+        self.setSpectrum = self.xasWindow.setSpectrum
+        self.setConfiguration = self.xasWindow.setConfiguration
+        self.getConfiguration = self.xasWindow.getConfiguration
+
+        # the actions
+        actionContainer = qt.QWidget(self)
+        actionContainer.mainLayout = qt.QHBoxLayout(actionContainer)
+        actionContainer.mainLayout.setContentsMargins(0, 0, 0, 0)
+        actionContainer.mainLayout.setSpacing(2)
+        self.acceptButton = qt.QPushButton(actionContainer)
+        self.acceptButton.setText("Accept Seen Configuration")
+        self.acceptButton.setAutoDefault(False)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton = qt.QPushButton(actionContainer)
+        self.cancelButton.setText("Reject Seen Configuration")
+        self.cancelButton.setAutoDefault(False)
+        self.cancelButton.clicked.connect(self.reject)
+        actionContainer.mainLayout.addWidget(self.acceptButton)
+        actionContainer.mainLayout.addWidget(self.cancelButton)
+
+        # arrange things
+        #self.actionContainer = actionContainer
+        self.mainLayout.addWidget(self.xasWindow)
+        self.mainLayout.addWidget(actionContainer)
+
 class XASWindow(qt.QMainWindow):
     def __init__(self, parent=None, analyzer=None, backend=None):
         super(XASWindow, self).__init__(parent)
         self.setWindowTitle("XAS Window")
+        if parent is not None:
+            # behave as a widget
+            self.setWindowFlags(qt.Qt.Widget)
         if analyzer is None:
             analyzer = XASClass.XASClass()
         self.mdiArea = XASMdiArea(self, analyzer=analyzer, backend=backend)
@@ -64,6 +100,20 @@ class XASWindow(qt.QMainWindow):
         self.mdiArea.setSpectrum(energy, mu)
         self.parametersWidget.setSpectrum(energy, mu)
         self.mdiArea.update()
+        print("TODO: adjust kMaxValue, setJump in postEdgeWidget")
+
+    def setConfiguration(self, ddict):
+        self.mdiArea.setConfiguration(ddict)
+        self.parametersWidget.setParameters(ddict)
+
+    def getConfiguration(self, ddict):
+        return self.mdiArea.getConfiguration()
+
+    def setParameters(self, ddict):
+        self.parametersWidget.setParameters(ddict)
+
+    def getParameters(self):
+        return self.parametersWidget.getParameters()
 
     def _parametersSlot(self, ddict):
         if DEBUG:
@@ -76,6 +126,7 @@ class XASWindow(qt.QMainWindow):
             print("ANALYZER CONFIGURATION FINAL")
             print(analyzer.getConfiguration())
         self.mdiArea.update()
+        print("TODO: adjust kMaxValue, setJump in postEdgeWidget")
 
 class XASMdiArea(qt.QMdiArea):
     def __init__(self, parent=None, analyzer=None, backend=None):
@@ -98,6 +149,13 @@ class XASMdiArea(qt.QMdiArea):
         #self.cascadeSubWindows()
         #for window in self.subWindowList():
         #    print(" window = ", window.windowTitle())
+
+    def getConfiguration(self):
+        return self.analyzer.getConfiguration()
+
+    def setConfiguration(self, ddict):
+        # TODO: try except message
+        return self.analyzer.setConfiguration(ddict)
 
     def setSpectrum(self, energy, mu):
         for key in self._windowDict:
@@ -179,8 +237,21 @@ if __name__ == "__main__":
     data = specfile.Specfile(fileName)[0].data()[-2:, :]
     energy = data[0, :]
     mu = data[1, :]
-    w = XASWindow()
-    w.show()
-    w.setSpectrum(energy, mu)
-    w.update()
-    app.exec_()
+    if 0:
+        w = XASWindow()
+        w.show()
+        w.setSpectrum(energy, mu)
+        w.update()
+        app.exec_()
+    else:
+        from PyMca5.PyMca import XASClass
+        ownAnalyzer = XASClass.XASClass()
+        configuration = ownAnalyzer.getConfiguration()
+        print("OLD PARAMETERS = ", configuration)
+        w = XASDialog()
+        w.setSpectrum(energy, mu)
+        w.setConfiguration(configuration)
+        if w.exec_():
+            print("PARAMETERS = ", w.getConfiguration())
+        else:
+            print("PARAMETERS = ", configuration)

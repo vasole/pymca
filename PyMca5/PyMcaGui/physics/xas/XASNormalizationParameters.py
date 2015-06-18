@@ -348,11 +348,14 @@ class XASNormalizationParameters(qt.QGroupBox):
             ddict = ddict["Normalization"]
         try:
             self.__connected = False
-            self.e0SpinBox.setValue(ddict["E0Value"])
-            if ddict["E0Method"].lower().startswith("manual"):
-                self.e0CheckBox.setChecked(False)
-            else:
+            if ddict["E0Value"] is None:
                 self.e0CheckBox.setChecked(True)
+            else:
+                self.e0SpinBox.setValue(ddict["E0Value"])
+                if ddict["E0Method"].lower().startswith("manual"):
+                    self.e0CheckBox.setChecked(False)
+                else:
+                    self.e0CheckBox.setChecked(True)
             selectorOptions = self.preEdgeSelector.getOptions()
             i = 0
             for option in selectorOptions:

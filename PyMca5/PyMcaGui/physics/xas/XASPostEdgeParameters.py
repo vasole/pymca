@@ -188,8 +188,12 @@ class XASPostEdgeParameters(qt.QGroupBox):
             ddict = ddict["EXAFS"]
         elif "PostEdge" in ddict:
             ddict = ddict["PostEdge"]
-        self.kMinBox.setValue(ddict.get("KMin", self.kMinBox.value()))
-        self.kMaxBox.setValue(ddict.get("KMax", self.kMaxBox.value()))
+        kMin = ddict.get("KMin", self.kMinBox.value())
+        if kMin is not None:
+            self.kMinBox.setValue(kMin)
+        kMax = ddict.get("KMax", self.kMaxBox.value())
+        if kMax is not None:
+            self.kMaxBox.setValue(kMax)
         nKnots = self.knotsBox.value()
         if "Knots" in ddict:
             self.knotsBox.setValue(ddict["Knots"].get("Number", nKnots))
@@ -205,8 +209,12 @@ class XASPostEdgeParameters(qt.QGroupBox):
             self._knotDegrees[i].setEnabled(enabled)
         self._knotPositions[0].setEnabled(False)
         if "Knots" in ddict:
-            positions = ddict["Knots"].get("Values", positions)
+            newPositions = ddict["Knots"].get("Values", positions)
+            if newPositions is not None:
+                positions = newPositions
             orders = ddict["Knots"].get("Orders", orders)
+            print positions
+            print "orders = ", orders
             if len(positions) ==  (len(orders) - 1):
                 positions = [self.kMinBox.value()] + list(positions)
         self._fillKnots(positions, orders)
