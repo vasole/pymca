@@ -33,6 +33,7 @@ include PyMca5/PyMcaMath/mva/py_nnma/README
 include PyMca5/PyMcaMath/PyMcaSciPy/signal/LICENSE.txt
 recursive-include PyMca5/PyMcaMisc *.py
 recursive-include PyMca5/PyMcaPhysics *.py
+recursive-include PyMca5/PyMcaPhysics/xas *.pyx *.pxd *.c *.h
 recursive-include PyMca5/PyMcaPlugins *.py
 recursive-include PyMca5/scripts *
 recursive-include PyMca5/tests *.py
