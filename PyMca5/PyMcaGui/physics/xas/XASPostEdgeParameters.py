@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -213,8 +213,6 @@ class XASPostEdgeParameters(qt.QGroupBox):
             if newPositions is not None:
                 positions = newPositions
             orders = ddict["Knots"].get("Orders", orders)
-            print positions
-            print "orders = ", orders
             if len(positions) ==  (len(orders) - 1):
                 positions = [self.kMinBox.value()] + list(positions)
         self._fillKnots(positions, orders)
