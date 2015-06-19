@@ -376,12 +376,10 @@ class XASNormalizationParameters(qt.QGroupBox):
                     selectorOptions = []
                     for i in range(self.normalizationSelector.count()):
                         selectorOptions.append(str(self.normalizationSelector.itemText(i)))
-                    i = 0
-                    for option in selectorOptions:
+                    for i in range(len(selectorOptions)):
                         if selectorOptions[i].lower().startswith(str(option).lower()):
                             self.normalizationSelector.setCurrentIndex(i)
                             break
-                        i += 1
             if ddict["E0Value"] is None:
                 self.e0CheckBox.setChecked(True)
             else:
