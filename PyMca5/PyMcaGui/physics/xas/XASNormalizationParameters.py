@@ -57,9 +57,17 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.mainLayout.setSpacing(2)
 
         # the setup button
-        self.setupButton = qt.QPushButton(self)
-        self.setupButton.setText("SETUP")
-        self.setupButton.setAutoDefault(False)
+        #self.setupButton = qt.QPushButton(self)
+        #self.setupButton.setText("SETUP")
+        #self.setupButton.setAutoDefault(False)
+        # the normalization method
+        normalizationLabel = qt.QLabel(self)
+        normalizationLabel.setText("Method:")
+        self.normalizationOptions = ["Constant", "Flattened"]
+        self.normalizationSelector = qt.QComboBox(self)
+        for option in self.normalizationOptions:
+            self.normalizationSelector.addItem(option)
+        self.normalizationSelector.setCurrentIndex(1)
 
         # the E0 value
         self.e0CheckBox = qt.QCheckBox(self)
@@ -131,7 +139,9 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.postEdgeEndBox.setEnabled(True)
 
         # arrange everything
-        self.mainLayout.addWidget(self.setupButton, 0, 0, 1, 2)
+        #self.mainLayout.addWidget(self.setupButton, 0, 0, 1, 2)
+        self.mainLayout.addWidget(normalizationLabel, 0, 0)
+        self.mainLayout.addWidget(self.normalizationSelector, 0, 1)
         self.mainLayout.addWidget(self.e0CheckBox, 1, 0)
         self.mainLayout.addWidget(self.e0SpinBox, 1, 1)
         self.mainLayout.addWidget(jumpLabel, 2, 0)
@@ -152,7 +162,8 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.mainLayout.addWidget(self.postEdgeEndBox, 8, 1)
 
         # connect
-        self.setupButton.clicked.connect(self._setupClicked)
+        #self.setupButton.clicked.connect(self._setupClicked)
+        self.normalizationSelector.activated[int].connect(self._normalizationChanged)
         self.e0CheckBox.toggled.connect(self._e0Toggled)
         self.e0SpinBox.valueChanged[float].connect(self._e0Changed)
         self.preEdgeSelector.activated[int].connect(self._preEdgeChanged)
@@ -161,6 +172,12 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.postEdgeSelector.activated[int].connect(self._postEdgeChanged)
         self.postEdgeStartBox.valueChanged[float].connect(self._postEdgeStartChanged)
         self.postEdgeEndBox.valueChanged[float].connect(self._postEdgeEndChanged)
+
+    def _normalizationChanged(self, value):
+        if DEBUG:
+            print("_normalizationChanged ", value)
+        if self.__connected:
+            self._emitSignal("JumpNormalizationChanged")
 
     def _setupClicked(self):
         if self._energy is None:
@@ -317,6 +334,10 @@ class XASNormalizationParameters(qt.QGroupBox):
 
     def getParameters(self):
         ddict = {}
+        # normalization method
+        ddict["JumpNormalizationMethod"] = self.normalizationOptions[ \
+                                                self.normalizationSelector.currentIndex()]
+
         # default values not yet handled by the interface
         ddict["E0MinValue"] = None
         ddict["E0MaxValue"] = None
@@ -362,14 +383,14 @@ class XASNormalizationParameters(qt.QGroupBox):
                 if str(option) == str(ddict["PreEdge"] ["Polynomial"]):
                     self.preEdgeSelector.setCurrentIndex(i)
                     break
-                i += 1    
+                i += 1
             selectorOptions = self.postEdgeSelector.getOptions()
             i = 0
             for option in selectorOptions:
                 if str(option) == str(ddict["PostEdge"] ["Polynomial"]):
                     self.postEdgeSelector.setCurrentIndex(i)
                     break
-                i += 1    
+                i += 1
             self.preEdgeStartBox.setValue(ddict["PreEdge"]["Regions"][0])
             self.preEdgeEndBox.setValue(ddict["PreEdge"]["Regions"][-1])
             self.postEdgeStartBox.setValue(ddict["PostEdge"]["Regions"][0])

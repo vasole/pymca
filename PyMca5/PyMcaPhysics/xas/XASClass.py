@@ -26,7 +26,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Software Group"
+__author__ = "M. Sanchez del Rio & V.A. Sole - ESRF"
 __doc__ = """Processing of XAS data. For the time being, processing is very
 basic. For state-of-the-art XAS you should take a look at dedicated packages
 like IFEFFIT or Viper/XANES dactyloscope. Hopefully this module can be enhanced
@@ -903,6 +903,8 @@ class XASClass(object):
         ddict["E0Value"] = None
         ddict["E0MinValue"] = None
         ddict["E0MaxValue"] = None
+        ddict["JumpNormalizationMethod"] = "Constant"
+        ddict["JumpNormalizationMethodList"] = ["Constant", "Flattened"]
         # limits to be used (relative to E0)
         ddict["PreEdge"] = {}
         ddict["PreEdge"] ["Method"] = "Polynomial"
@@ -1346,9 +1348,25 @@ class XASClass(object):
         jump = fun(e0, parameters["PostEdge"]) - \
                funPre(e0, parameters["PreEdge"])
         #normalizedSpectrum = (mu - data["PreEdge"])/(data["PostEdge"]
+        jumpMethod = config.get("JumpNormalizationMethod", "Flattened")
         normalizedSpectrum = (mu - data["PreEdge"])/jump
+        if jumpMethod in [0, "Constant", "constant"]:
+            jumpMethod = "Constant"
+            pass    
+        elif jumpMethod in [1, "Flattened", "flattened", "Flatten", "flatten"]:
+            jumpMethod = "Flattened"
+            i = numpy.argmin(energy < e0)
+            normalizedSpectrum[i:] *= (jump / \
+                                      (data["PostEdge"] - data["PreEdge"])[i:])
+        else:
+            print("WARNING: Undefined jump normalization method. Assume Flattened")
+            jumpMethod = "Flattened"
+            i = numpy.argmin(energy < e0)
+            normalizedSpectrum[i:] *= (jump / \
+                                      (data["PostEdge"] - data["PreEdge"])[i:])
 
         return {"Jump": jump,
+                "JumpNormalizationMethod":jumpMethod,
                 "Edge":e0,
                 "NormalizedEnergy": energy,
                 "NormalizedMu":normalizedSpectrum,
