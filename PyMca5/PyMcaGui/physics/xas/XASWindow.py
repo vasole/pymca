@@ -226,6 +226,7 @@ class XASMdiArea(qt.QMdiArea):
                       ddict["EXAFSNormalized"][idx],
                       legend="Normalized EXAFS",
                       xlabel="K",
+                      ylabel="EXAFS Signal",
                       replace=True,
                       replot=False)
         plot.resetZoom([0.0, 0.0, 0.025, 0.025])
@@ -234,7 +235,7 @@ class XASMdiArea(qt.QMdiArea):
                       ddict["FT"]["FTIntensity"],
                       legend="FT Intensity",
                       xlabel="R (Angstrom)",
-                      ylabel="Arbitraty Units",
+                      ylabel="Arbitrary Units",
                       replace=True,
                       replot=False)
         plot.resetZoom([0.0, 0.0, 0.0, 0.025])
