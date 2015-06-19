@@ -335,8 +335,7 @@ class XASNormalizationParameters(qt.QGroupBox):
     def getParameters(self):
         ddict = {}
         # normalization method
-        ddict["JumpNormalizationMethod"] = self.normalizationOptions[ \
-                                                self.normalizationSelector.currentIndex()]
+        ddict["JumpNormalizationMethod"] = str(self.normalizationSelector.currentText())
 
         # default values not yet handled by the interface
         ddict["E0MinValue"] = None
@@ -369,6 +368,20 @@ class XASNormalizationParameters(qt.QGroupBox):
             ddict = ddict["Normalization"]
         try:
             self.__connected = False
+            if "JumpNormalizationMethod" in ddict:
+                option = ddict["JumpNormalizationMethod"]
+                if type(ddict["JumpNormalizationMethod"]) == type(1):
+                    self.normalizationSelector.setCurrentIndex(option)
+                else:
+                    selectorOptions = []
+                    for i in range(self.normalizationSelector.count()):
+                        selectorOptions.append(str(self.normalizationSelector.itemText(i)))
+                    i = 0
+                    for option in selectorOptions:
+                        if selectorOptions[i].lower().startswith(str(option).lower()):
+                            self.normalizationSelector.setCurrentIndex(i)
+                            break
+                        i += 1
             if ddict["E0Value"] is None:
                 self.e0CheckBox.setChecked(True)
             else:
