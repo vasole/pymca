@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -95,12 +95,11 @@ class XASWindow(qt.QMainWindow):
 
         # connect
         self.parametersWidget.sigXASParametersSignal.connect(self._parametersSlot)
+        self.mdiArea.sigXASMdiAreaSignal.connect(self._update)
 
     def setSpectrum(self, energy, mu):
         self.mdiArea.setSpectrum(energy, mu)
         self.parametersWidget.setSpectrum(energy, mu)
-        self.mdiArea.update()
-        print("TODO: adjust kMaxValue, setJump in postEdgeWidget")
 
     def setConfiguration(self, ddict):
         self.mdiArea.setConfiguration(ddict)
@@ -125,10 +124,24 @@ class XASWindow(qt.QMainWindow):
         if DEBUG:
             print("ANALYZER CONFIGURATION FINAL")
             print(analyzer.getConfiguration())
-        self.mdiArea.update()
-        print("TODO: adjust kMaxValue, setJump in postEdgeWidget")
+        self.update()
+
+    def update(self, ddict=None):
+        if ddict is None:
+            # The emitted signal will reach self._update
+            ddict = self.mdiArea.update()
+        else:
+            self._update(ddict)
+
+    def _update(self, ddict):
+        jump = ddict["Jump"]
+        e0 = ddict["Edge"]
+        maximumKRange = XASClass.e2k(ddict["NormalizedEnergy"][-1] - e0)
+        self.parametersWidget.setJump(jump)
+        self.parametersWidget.setMaximumK(maximumKRange)
 
 class XASMdiArea(qt.QMdiArea):
+    sigXASMdiAreaSignal = qt.pyqtSignal(object)
     def __init__(self, parent=None, analyzer=None, backend=None):
         super(XASMdiArea, self).__init__(parent)
         if analyzer is None:
@@ -169,8 +182,9 @@ class XASMdiArea(qt.QMdiArea):
                                               ylabel="Absorption (a.u.)")
         return self.analyzer.setSpectrum(energy, mu)
 
-    def update(self):
-        ddict = self.analyzer.processSpectrum()
+    def update(self, ddict=None):
+        if ddict is None:
+            ddict = self.analyzer.processSpectrum()
         idx = (ddict["NormalizedEnergy"] >= ddict["NormalizedPlotMin"]) & \
                   (ddict["NormalizedEnergy"] <= ddict["NormalizedPlotMax"])
         plot = self._windowDict["Spectrum"]
@@ -224,7 +238,8 @@ class XASMdiArea(qt.QMdiArea):
                       replace=True,
                       replot=False)
         plot.resetZoom([0.0, 0.0, 0.0, 0.025])
-    
+        self.sigXASMdiAreaSignal.emit(ddict)
+
 if __name__ == "__main__":
     DEBUG = 1
     app = qt.QApplication([])
@@ -247,10 +262,10 @@ if __name__ == "__main__":
         from PyMca5.PyMca import XASClass
         ownAnalyzer = XASClass.XASClass()
         configuration = ownAnalyzer.getConfiguration()
-        print("OLD PARAMETERS = ", configuration)
         w = XASDialog()
         w.setSpectrum(energy, mu)
         w.setConfiguration(configuration)
+        print("SENT CONFIGURATION", configuration["Normalization"])
         if w.exec_():
             print("PARAMETERS = ", w.getConfiguration())
         else:

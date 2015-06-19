@@ -75,6 +75,10 @@ class XASParameters(qt.QWidget):
         container.mainLayout.addWidget(self.saveButton)
         self.mainLayout.addWidget(container)
 
+        # add function
+        self.setJump = self.normalizationWidget.setJump
+        self.setMaximumK = self.postEdgeWidget.setMaximumK
+
         # connect
         self.normalizationWidget.sigNormalizationParametersSignal.connect( \
             self._normalizationSlot)

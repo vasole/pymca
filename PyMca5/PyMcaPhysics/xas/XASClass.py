@@ -903,7 +903,7 @@ class XASClass(object):
         ddict["E0Value"] = None
         ddict["E0MinValue"] = None
         ddict["E0MaxValue"] = None
-        ddict["JumpNormalizationMethod"] = "Constant"
+        ddict["JumpNormalizationMethod"] = "Flattened"
         ddict["JumpNormalizationMethodList"] = ["Constant", "Flattened"]
         # limits to be used (relative to E0)
         ddict["PreEdge"] = {}
@@ -930,7 +930,7 @@ class XASClass(object):
         # extraction
         ddict["Normalization"] = "Fit"
         #ddict["Normalization"] = "Jump"
-        # Normalization possibilities: [Fit, Jump, Extrapolation"
+        # Normalization possibilities: Fit, Jump, Extrapolation"
         ddict["ExtractionMethod"] = "Knots"
         # Implement "Knots", "Victoreen", "Modif. Victoreen"
         ddict["Knots"] = {}

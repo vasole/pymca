@@ -248,6 +248,12 @@ class XASPostEdgeParameters(qt.QGroupBox):
         ddict["event"] = event
         self.sigPostEdgeParametersSignal.emit(ddict)
 
+    def setMaximumK(self, value):
+        self.kMaxBox.setMaximum(value)
+        current = self.kMaxBox.value()
+        if current > (value+0.01):
+            self.kMaxBox.setValue(value)
+
 if __name__ == "__main__":
     DEBUG = 1
     app = qt.QApplication([])
