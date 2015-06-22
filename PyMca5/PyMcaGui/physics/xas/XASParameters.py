@@ -35,6 +35,7 @@ from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaGui import XASNormalizationParameters
 from PyMca5.PyMcaGui import XASPostEdgeParameters
+from PyMca5.PyMcaGui import XASFourierTransformParameters
 from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaIO import ConfigDict
 
@@ -57,8 +58,11 @@ class XASParameters(qt.QWidget):
                 XASNormalizationParameters.XASNormalizationParameters(self)
         self.postEdgeWidget = \
                 XASPostEdgeParameters.XASPostEdgeParameters(self)
+        self.fourierTransformWidget = \
+                XASFourierTransformParameters.XASFourierTransformParameters(self)
         self.mainLayout.addWidget(self.normalizationWidget)
         self.mainLayout.addWidget(self.postEdgeWidget)
+        self.mainLayout.addWidget(self.fourierTransformWidget)
         self.mainLayout.addWidget(qt.VerticalSpacer(self))
 
         container = qt.QWidget(self)
@@ -84,6 +88,8 @@ class XASParameters(qt.QWidget):
             self._normalizationSlot)
         self.postEdgeWidget.sigPostEdgeParametersSignal.connect( \
             self._postEdgeParameterSlot)
+        self.fourierTransformWidget.sigFTParametersSignal.connect( \
+            self._fourierTransformParameterSlot)
         self.loadButton.clicked.connect(self._loadClicked)
         self.saveButton.clicked.connect(self._saveClicked)
 
@@ -107,19 +113,8 @@ class XASParameters(qt.QWidget):
         return self.postEdgeWidget.getParameters()
 
     def getFTParameters(self):
-        if hasattr(self, "_FTParameters"):
-            return self._FTParameters
-        ddict = {}
-        ddict["Window"] = "Gaussian"
-        ddict["WindowList"] = ["Gaussian", "Hanning", "Box", "Parzen",
-                               "Welch", "Hamming", "Tukey", "Papul"]
-        ddict["WindowAppodization"] = 0.02
-        ddict["WindowRange"] = None
-        ddict["KStep"] = 0.04
-        ddict["Points"] = 2048
-        ddict["Range"] = [0.0, 6.0]
-        return ddict
-        
+        return self.fourierTransformWidget.getParameters()
+
     def setParameters(self, ddict):
         if "Normalization" in ddict:
             self.setNormalizationParameters(ddict["Normalization"])
@@ -135,7 +130,8 @@ class XASParameters(qt.QWidget):
         self.postEdgeWidget.setParameters(ddict)
 
     def setFTParameters(self, ddict):
-        self._FTParameters = ddict
+        self.fourierTransformWidget.setParameters(ddict)
+        #self._FTParameters = ddict
 
     def _normalizationSlot(self, ddict):
         # Should I change the event to "NormalizationChanged"?
@@ -145,6 +141,10 @@ class XASParameters(qt.QWidget):
         if DEBUG:
             print("_postEdgeParameterSlot ", ddict)
         # Should I change the event to "EXAFSChanged"?
+        self._emitSignal(ddict["event"])
+
+    def _fourierTransformParameterSlot(self, ddict):
+        # Should I change the event to "FTChanged"?
         self._emitSignal(ddict["event"])
 
     def _emitSignal(self, event):

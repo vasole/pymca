@@ -557,7 +557,7 @@ def getFTWindowWeights(tk, window="Gaussian", windpar=0.2, wrange=None):
      		6 Tukey
      		7 Papul
      	windpar Parameter for windowing
-     		If WINDOW=(2,3,4,5,6) this sets the width of the appodization (default=0.2)
+     		If WINDOW=(2,3,4,5,6) this sets the width of the apodization (default=0.2)
      	wrange = [xmin,xmax] the limits of the window. If wrange
      		is not set, the take the minimum and maximum values
      		of the abscisas. The window has value zero outside
@@ -657,14 +657,15 @@ def getFTWindowWeights(tk, window="Gaussian", windpar=0.2, wrange=None):
     return wind
 
 def getFT(k, exafs, npoints=2048, rrange=(0.0, 7.0),
-           krange=None, kstep=0.02, kweight=0, wweights=None):
+           krange=None, kstep=0.02, kweight=0,
+           window="gaussian", apodization=0.2, wweights=None):
     if krange is not None:
         idx = (k >= krange[0]) & (k <= krange[1])
         k = k[idx]
     if wweights is None:
         wweights = getFTWindowWeights(k,
-                                      window="gaussian",
-                                      windpar=0.2,
+                                      window=window,
+                                      windpar=apodization,
                                       wrange=krange)
     if 0:
         set3 = numpy.zeros((k.size, 2), dtype=numpy.float)
@@ -950,7 +951,7 @@ class XASClass(object):
      		7 Tukey
      		8 Papul
      	windpar Parameter for windowing
-     		If WINDOW=(2,3,4,5,6) this sets the width of the appodization (default=0.2)
+     		If WINDOW=(2,3,4,5,6) this sets the width of the apodization (default=0.2)
      	wrange = [xmin,xmax] the limits of the window. If wrange
      		is not set, the take the minimum and maximum values
      		of the abscisas. The window has value zero outside
@@ -961,11 +962,11 @@ class XASClass(object):
         ddict["Window"] = "Gaussian"
         ddict["WindowList"] = ["Gaussian", "Hanning", "Box", "Parzen",
                                "Welch", "Hamming", "Tukey", "Papul"]
-        ddict["WindowAppodization"] = 0.02
+        ddict["WindowApodization"] = 0.02
         ddict["WindowRange"] = None
         ddict["KStep"] = 0.04
         ddict["Points"] = 2048
-        ddict["Range"] = [0.0, 6.0]
+        ddict["Range"] = [0.0, 7.0]
 
         # Back-FT
         config["BFT"] = {}
@@ -1115,9 +1116,10 @@ class XASClass(object):
             set2 = exex.window_ftr(set2,window=8,windpar=3)
             setFT = exex.fastftr(set2,npoint=4096,rrange=[0.,7.],kstep=0.02)
         else:
-            setFT = getFT(set2[:,0], set2[:, 1], npoints=2048,
-                                krange=(ddict["KMin"], ddict["KMax"]),\
-                                rrange=[0.,7.],kstep=0.02)
+            #setFT = getFT(set2[:,0], set2[:, 1], npoints=2048,
+            #                    krange=(ddict["KMin"], ddict["KMax"]),\
+            #                    rrange=[0.,7.],kstep=0.02)
+            setFT = self.fourierTransform(set2[:,0], set2[:, 1], kMin=ddict["KMin"], kMax=ddict["KMax"])
         ddict["FT"] = setFT
 
         if 0:
@@ -1126,6 +1128,29 @@ class XASClass(object):
             ddict["BFT"] = setBFT
         return ddict
 
+
+    def fourierTransform(self, k, mu, kMin=None, kMax=None, backend=None):
+        if backend not in [None, "Default", "DefaultBackend"]:
+            raise ValueError("Only default backend implemented")
+        else:
+            backend = "DefaultBackend"
+        config = self._configuration[backend]["FT"]
+        if (kMin is None) and (kMax is None):
+            kRange = config["WindowRange"]
+        elif config["WindowRange"] is None:
+            if kMin is None:
+                kMin = k.min()
+            if kMax is None:
+                kMax = k.max()
+            kRange = [kMin, kMax]
+        else:
+            kRange = config["WindowRange"]
+        return getFT(k, mu, npoints=config["Points"],
+                     krange=kRange,\
+                     window=config.get("Window", "Gaussian"),
+                     apodization=config.get("WindowApodization", 0.02),
+                     rrange=config["Range"],
+                     kstep=config["KStep"])
 
     def postEdge(self, k, mu, backend=None):
         if backend not in [None, "Default", "DefaultBackend"]:
