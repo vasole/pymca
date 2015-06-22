@@ -224,7 +224,7 @@ class XASNormalizationParameters(qt.QGroupBox):
 
     def _e0Changed(self, value):
         if DEBUG:
-            print("E0 CAHNGED", value)
+            print("E0 CHANGED", value)
         if self.__connected:
             try:
                 self.__connected = False

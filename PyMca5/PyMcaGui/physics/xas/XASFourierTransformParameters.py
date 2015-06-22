@@ -229,7 +229,7 @@ class XASFourierTransformParameters(qt.QGroupBox):
             print("setParameters called", ddict, signal)
         if "FT" in ddict:
             ddict = ddict["FT"]
-        if 1:#try:
+        try:
             self.__connected = False
             if "Window" in ddict:
                 option = ddict["Window"]
@@ -257,8 +257,8 @@ class XASFourierTransformParameters(qt.QGroupBox):
                 else:
                     break
             self.pointsSelector.setCurrentIndex(v)
-        #finally:
-        self.__connected = True
+        finally:
+            self.__connected = True
         if signal:
             self.emitSignal("FTWindowChanged")
 
