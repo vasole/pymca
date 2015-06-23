@@ -222,7 +222,27 @@ class XASMdiArea(qt.QMdiArea):
                       legend="PostEdge",
                       xlabel="K",
                       ylabel="Normalized Units",
+                      color="blue",
                       replot=False)
+        if 0:
+            plot.clearMarkers()
+            for i in range(len(ddict["KnotsX"])):
+                plot.insertMarker(ddict["KnotsX"][i],
+                                  ddict["KnotsY"][i],
+                          legend="Knot %d" % (i+1),
+                          text="Knot %d" % (i+1),
+                          replot=False,
+                          draggable=False,
+                          selectable=False,
+                          color="orange")
+        else:
+            plot.addCurve(ddict["KnotsX"],
+                          ddict["KnotsY"],
+                          legend="Knots",
+                          replot=False,
+                          linestyle="",
+                          symbol="o",
+                          color="orange")
         plot.resetZoom([0.0, 0.0, 0.025, 0.025])
         plot = self._windowDict["Signal"]
         plot.addCurve(ddict["EXAFSKValues"][idx],

@@ -393,7 +393,7 @@ def polspl_test():
     return
 
 
-def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None):
+def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None, full=False):
     r"""
         postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None)
 
@@ -519,14 +519,26 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None):
     fit0 = polspl_evaluate(set2.T,xl,xh,c,nc,nr)
     #print("polspl_evaluate elapsed = ", time.time() - t0)
 
-    return fit0.T
+    if full:
+        xNodes = numpy.zeros((nr-1,), dtype=numpy.float32)
+        yNodes = numpy.zeros((nr-1,), dtype=numpy.float32)
+        for j in range(1,int(nr)): # loop over the # of intervals
+            xval = xh[j]
+            cstart=numpy.sum(nc[0:j])
+            yval = 0.0
+            for k in range(1,int(nc[j]+1)):
+                yval += c[cstart+k] * numpy.power(xval,(k-1))
+            xNodes[j-1] = xval
+            yNodes[j-1] = yval
+        return fit0.T, xNodes, yNodes
+    else:
+        return fit0.T
 
-def postEdge0(k, mu, kmin=None, kmax=None, degrees=(3, 3, 3), knots=None):
+def postEdge0(k, mu, kmin=None, kmax=None, degrees=(3, 3, 3), knots=None, full=False):
     set0 = numpy.zeros((k.size, 2), dtype=k.dtype)
     set0[:, 0] = k
     set0[:, 1] = mu
-    fit0 = postEdge(set0, kmin, kmax, degrees, knots=knots)
-    return fit0
+    return postEdge(set0, kmin, kmax, degrees, knots=knots, full=full)
 
 def getFTWindowWeights(tk, window="Gaussian", windpar=0.2, wrange=None):
 
@@ -1170,13 +1182,17 @@ class XASClass(object):
             kMax = k.max()
         else:
             kMax = min(k.max(), kMax)
-        fit0 = postEdge0(k, mu, kMin, kMax, config["Knots"]["Orders"],knots=config["Knots"]["Values"])
+        fit0, xNodes, yNodes = postEdge0(k, mu, kMin, kMax,
+                         config["Knots"]["Orders"],
+                         knots=config["Knots"]["Values"], full=True)
         ddict = {}
         ddict["PostEdgeK"] = fit0[:, 0]
         ddict["PostEdgeB"] = fit0[:, 1]
+        ddict["KnotsX"] = xNodes
+        ddict["KnotsY"] = yNodes
         ddict["KMin"] = kMin
         ddict["KMax"] = kMax
-        # TODO: add used knots and polynomials
+        # TODO: add polynomials?
         return ddict
 
     def calculateE0(self, energy=None, mu=None, backend=None):
