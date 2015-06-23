@@ -30,6 +30,7 @@ __author__ = "V. Armando Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
@@ -44,10 +45,12 @@ DEBUG = 0
 class XASParameters(qt.QWidget):
     sigXASParametersSignal = qt.pyqtSignal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, color=None):
         super(XASParameters, self).__init__(parent)
         self.setWindowTitle("XAS Parameters")
         self.build()
+        if color is not None:
+            self.setTitleColor(color)
 
     def build(self):
         # perhaps the layout will change to a QGridLayout 
@@ -199,6 +202,14 @@ class XASParameters(qt.QWidget):
         ddict["XASParameters"] = self.getParameters()
         ddict.write(fname)
 
+    def setTitleColor(self, color):
+        try:
+            self.normalizationWidget.setTitleColor(color)
+            self.postEdgeWidget.setTitleColor(color)
+            self.fourierTransformWidget.setTitleColor(color)
+        except:
+            print("Error setting title color", sys.exc_info())
+
 if __name__ == "__main__":
     DEBUG = 1
     app = qt.QApplication([])
@@ -209,7 +220,6 @@ if __name__ == "__main__":
     w.show()
     try:
         import os
-        import sys
         from PyMca5.PyMcaIO import specfilewrapper as specfile
         from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR
         if len(sys.argv) > 1:

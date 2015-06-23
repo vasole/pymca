@@ -39,10 +39,12 @@ DEBUG = 0
 class XASPostEdgeParameters(qt.QGroupBox):
     sigPostEdgeParametersSignal = qt.pyqtSignal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, color=None):
         super(XASPostEdgeParameters, self).__init__(parent)
         self.setTitle("EXAFS")
         self.build()
+        if color is not None:
+            self.setTitleColor(color)
 
     def build(self):
         self.mainLayout = qt.QGridLayout(self)
@@ -253,6 +255,10 @@ class XASPostEdgeParameters(qt.QGroupBox):
         current = self.kMaxBox.value()
         if current > (value+0.01):
             self.kMaxBox.setValue(value)
+
+    def setTitleColor(self, color):
+        #self.setStyleSheet("QGroupBox {font-weight: bold; color: red;}")
+        self.setStyleSheet("QGroupBox {color: %s;}" % color)
 
 if __name__ == "__main__":
     DEBUG = 1

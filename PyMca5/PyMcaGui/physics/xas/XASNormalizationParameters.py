@@ -42,7 +42,7 @@ DEBUG = 0
 
 class XASNormalizationParameters(qt.QGroupBox):
     sigNormalizationParametersSignal = qt.pyqtSignal(object)
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, color=None):
         super(XASNormalizationParameters, self).__init__(parent)
         self.setTitle("Normalization")
         self._dialog = None
@@ -50,6 +50,8 @@ class XASNormalizationParameters(qt.QGroupBox):
         self._mu = None
         self.__connected = True
         self.build()
+        if color is not None:
+            self.setTitleColor(color)
 
     def build(self):
         self.mainLayout = qt.QGridLayout(self)
@@ -422,6 +424,10 @@ class XASNormalizationParameters(qt.QGroupBox):
     def setJump(self, value):
         self.jumpLine.setText("%f" % value)
 
+    def setTitleColor(self, color):
+        #self.setStyleSheet("QGroupBox {font-weight: bold; color: red;}")
+        self.setStyleSheet("QGroupBox {color: %s;}" % color)
+
 if __name__ == "__main__":
     DEBUG = 1
     app = qt.QApplication([])
@@ -440,4 +446,5 @@ if __name__ == "__main__":
     energy = data[0, :]
     mu = data[1, :]
     w.setSpectrum(energy, mu)
+    w.setTitleColor("blue")
     app.exec_()

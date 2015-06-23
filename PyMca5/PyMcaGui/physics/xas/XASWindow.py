@@ -77,7 +77,7 @@ class XASDialog(qt.QDialog):
         self.mainLayout.addWidget(actionContainer)
 
 class XASWindow(qt.QMainWindow):
-    def __init__(self, parent=None, analyzer=None, backend=None):
+    def __init__(self, parent=None, analyzer=None, color="blue", backend=None):
         super(XASWindow, self).__init__(parent)
         self.setWindowTitle("XAS Window")
         if parent is not None:
@@ -89,7 +89,7 @@ class XASWindow(qt.QMainWindow):
         self.setCentralWidget(self.mdiArea)
         self.parametersDockWidget = qt.QDockWidget(self)
         self.parametersDockWidget.layout().setContentsMargins(0, 0, 0, 0)
-        self.parametersWidget = XASParameters.XASParameters()
+        self.parametersWidget = XASParameters.XASParameters(color=color)
         self.parametersDockWidget.setWidget(self.parametersWidget)
         self.addDockWidget(qt.Qt.RightDockWidgetArea, self.parametersDockWidget)
 
@@ -139,6 +139,9 @@ class XASWindow(qt.QMainWindow):
         maximumKRange = XASClass.e2k(ddict["NormalizedEnergy"][-1] - e0)
         self.parametersWidget.setJump(jump)
         self.parametersWidget.setMaximumK(maximumKRange)
+
+    def setTitleColor(self, color):
+        self.parametersWidget.setTitleColor(color)
 
 class XASMdiArea(qt.QMdiArea):
     sigXASMdiAreaSignal = qt.pyqtSignal(object)
@@ -228,6 +231,15 @@ class XASMdiArea(qt.QMdiArea):
                       xlabel="K",
                       ylabel="EXAFS Signal",
                       replace=True,
+                      replot=False)
+        plot.addCurve(ddict["FT"]["K"],
+                      ddict["FT"]["WindowWeight"],
+                      legend="FT Window",
+                      xlabel="K",
+                      ylabel="Weight",
+                      yaxis="right",
+                      color="red",
+                      replace=False,
                       replot=False)
         plot.resetZoom([0.0, 0.0, 0.025, 0.025])
         plot = self._windowDict["FT"]

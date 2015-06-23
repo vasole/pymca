@@ -273,6 +273,10 @@ class XASFourierTransformParameters(qt.QGroupBox):
         if current > (value+0.01):
             self.kMaxBox.setValue(value)
 
+    def setTitleColor(self, color):
+        #self.setStyleSheet("QGroupBox {font-weight: bold; color: red;}")
+        self.setStyleSheet("QGroupBox {color: %s;}" % color)
+
 if __name__ == "__main__":
     DEBUG = 1
     app = qt.QApplication([])

@@ -723,6 +723,8 @@ def getFT(k, exafs, npoints=2048, rrange=(0.0, 7.0),
     ddict["InterpolatedK"] = interpolatedDataX
     ddict["InterpolatedSignal"] = interpolatedDataY
     ddict["KWeight"] = kweight
+    ddict["K"] = k
+    ddict["WindowWeight"] = wweights
     ddict["FTRadius"] = f10
     ddict["FTIntensity"] = f11
     ddict["FTReal"] = f12
