@@ -220,7 +220,7 @@ class XASStackBatch(object):
                                    compression=None)
         shape = list(data.shape[:-1]) + [exafsSpectrumX.size]
         exafsX = out.require_dataset(exafsXPath,
-                                     shape=shape,
+                                     shape=[exafsSpectrumX.size],
                                      dtype=numpy.float32,
                                      chunks=None,
                                      compression=None)
@@ -231,7 +231,7 @@ class XASStackBatch(object):
                                      compression=None)
         shape = list(data.shape[:-1]) + [xFT.size]
         ftX = out.require_dataset(ftXPath,
-                                     shape=shape,
+                                     shape=[xFT.size],
                                      dtype=numpy.float32,
                                      chunks=None,
                                      compression=None)
@@ -240,6 +240,8 @@ class XASStackBatch(object):
                                      dtype=numpy.float32,
                                      chunks=None,
                                      compression=None)
+        exafsX[:] = ddict["EXAFSKValues"][exafsIdx]
+        ftX[:] = ddict["FT"]["FTRadius"]
         iXMin = 0
         iXMax = data.shape[-1] - 1
 
@@ -281,9 +283,9 @@ class XASStackBatch(object):
                     jump[i, j] = ddict["Jump"]
                     normalizedX[i, j] = ddict["NormalizedEnergy"][normalizedIdx]
                     normalizedX[i, j] = ddict["NormalizedMu"][normalizedIdx]
-                    exafsX[i, j] = ddict["EXAFSKValues"][exafsIdx]
+                    #exafsX[i, j] = ddict["EXAFSKValues"][exafsIdx]
                     exafsY[i, j] = ddict["EXAFSNormalized"][exafsIdx]
-                    ftX[i, j] = ddict["FT"]["FTRadius"]
+                    #ftX[i, j] = ddict["FT"]["FTRadius"]
                     ftY[i, j] = ddict["FT"]["FTIntensity"]
                     j +=1
                 jStart = jEnd
