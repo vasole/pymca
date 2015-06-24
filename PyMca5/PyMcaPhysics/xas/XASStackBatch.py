@@ -186,6 +186,8 @@ class XASStackBatch(object):
         ftXPath = posixpath.join(entry, "FT", "Radius")
         ftYPath = posixpath.join(entry, "FT", "Intensity")
 
+        iXMin = 0
+        iXMax = data.shape[-1] - 1
         e0 = out.require_dataset(e0Path,
                                  shape=data.shape[:-1],
                                  dtype=numpy.float32,
@@ -198,7 +200,7 @@ class XASStackBatch(object):
                                    compression=None)
         shape = list(data.shape[:-1]) + [usedEnergy.size]
         spectrumX = out.require_dataset(spectrumXPath,
-                                   shape=shape,
+                                   shape=[usedEnergy.size],
                                    dtype=numpy.float32,
                                    chunks=None,
                                    compression=None)
@@ -240,11 +242,10 @@ class XASStackBatch(object):
                                      dtype=numpy.float32,
                                      chunks=None,
                                      compression=None)
+        spectrumX[:] = ddict["Energy"]
         normalizedX[:] = ddict["NormalizedEnergy"][normalizedIdx]
         exafsX[:] = ddict["EXAFSKValues"][exafsIdx]
         ftX[:] = ddict["FT"]["FTRadius"]
-        iXMin = 0
-        iXMax = data.shape[-1] - 1
 
         t0 = time.time()
         totalSpectra = data.shape[0] * data.shape[1]
@@ -280,6 +281,7 @@ class XASStackBatch(object):
                             continue
                     self._analyzer.setSpectrum(x, spectra[spectrumNumber])
                     ddict = self._analyzer.processSpectrum()
+                    spectrumY[i, j] = ddict["Mu"]
                     e0[i, j] = ddict["Edge"]
                     jump[i, j] = ddict["Jump"]
                     #normalizedX[i, j] = ddict["NormalizedEnergy"][normalizedIdx]
