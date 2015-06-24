@@ -166,7 +166,7 @@ class XASStackBatch(object):
         if directory is None:
             directory = os.getcwd()
         if name is None:
-            name = "XAS"
+            name = "XAS_Result"
         fname = os.path.join(directory, name)
         if entry is None:
             entry = posixpath.join("xas_analysis")
@@ -209,7 +209,7 @@ class XASStackBatch(object):
                                    compression=None)
         shape = list(data.shape[:-1]) + [normalizedSpectrumX.size]
         normalizedX = out.require_dataset(normalizedXPath,
-                                   shape=shape,
+                                   shape=[normalizedSpectrumX.size],
                                    dtype=numpy.float32,
                                    chunks=None,
                                    compression=None)
@@ -240,6 +240,7 @@ class XASStackBatch(object):
                                      dtype=numpy.float32,
                                      chunks=None,
                                      compression=None)
+        normalizedX[:] = ddict["NormalizedEnergy"][normalizedIdx]
         exafsX[:] = ddict["EXAFSKValues"][exafsIdx]
         ftX[:] = ddict["FT"]["FTRadius"]
         iXMin = 0
@@ -281,8 +282,8 @@ class XASStackBatch(object):
                     ddict = self._analyzer.processSpectrum()
                     e0[i, j] = ddict["Edge"]
                     jump[i, j] = ddict["Jump"]
-                    normalizedX[i, j] = ddict["NormalizedEnergy"][normalizedIdx]
-                    normalizedX[i, j] = ddict["NormalizedMu"][normalizedIdx]
+                    #normalizedX[i, j] = ddict["NormalizedEnergy"][normalizedIdx]
+                    normalizedY[i, j] = ddict["NormalizedMu"][normalizedIdx]
                     #exafsX[i, j] = ddict["EXAFSKValues"][exafsIdx]
                     exafsY[i, j] = ddict["EXAFSNormalized"][exafsIdx]
                     #ftX[i, j] = ddict["FT"]["FTRadius"]
@@ -308,7 +309,7 @@ if __name__ == "__main__":
     DEBUG = 1
     analyzer = XASClass.XASClass()
     instance = XASStackBatch(analyzer=analyzer)
-    configurationFile = "test.cfg"
+    configurationFile = "test.ini"
     dataFile = h5py.File("testdata.h5", "r")
     for entry in dataFile:
         data = dataFile[entry]["data"]
