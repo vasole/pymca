@@ -37,6 +37,7 @@ import numpy
 from numpy.linalg import solve
 
 ODD_SIGN = 1.0
+__LAST_COEFF = None
 
 def calc_coeff(num_points, pol_degree, diff_order=0):
 
@@ -55,6 +56,20 @@ def calc_coeff(num_points, pol_degree, diff_order=0):
                      and so on ...
 
     """
+    global __LAST_COEFF
+    global __LAST_NUM_POINTS
+    global __LAST_POL_DEGREE
+    global __LAST_DIFF_ORDER
+    if __LAST_COEFF is not None:
+        if num_points == __LAST_NUM_POINTS:
+            if pol_degree == __LAST_POL_DEGREE:
+                if diff_order == __LAST_DIFF_ORDER:
+                    return __LAST_COEFF
+    else:
+        __LAST_NUM_POINTS = num_points
+        __LAST_POL_DEGREE = pol_degree
+        __LAST_DIFF_ORDER = diff_order
+
 
     # setup interpolation matrix
     # ... you might use other interpolation points
@@ -79,6 +94,7 @@ def calc_coeff(num_points, pol_degree, diff_order=0):
     if (ODD_SIGN < 0) and (diff_order %2):
         coeff *= ODD_SIGN
 
+    __LAST_COEFF = coeff
     return coeff
 
 def smooth(signal, coeff):
@@ -136,6 +152,7 @@ def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
 
 if getSavitzkyGolay(10*numpy.arange(10.), npoints=3, degree=1,order=1)[5] < 0:
     ODD_SIGN = -1
+    __LAST_COEFF= None
 
 if __name__ == "__main__":
     x=numpy.arange(100.)
