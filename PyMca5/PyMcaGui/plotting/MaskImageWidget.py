@@ -288,7 +288,7 @@ class MaskImageWidget(qt.QWidget):
                                                     self._selectMiddle)
             self._additionalSelectionMenu.addAction(QString("I <= Colormap Min"),
                                                     self._selectMin)
-            self.graphWidget.graph.sigPlotSignal.connect(self._graphSignal)
+        self.graphWidget.graph.sigPlotSignal.connect(self._graphSignal)
 
 
     def setSelectionColors(self, selectionColors):
@@ -301,7 +301,7 @@ class MaskImageWidget(qt.QWidget):
         if selectionColors.shape[1] != 4:
             raise ValueError("Array of shape (maxNRois, 4) needed")
         if selectionColors.dtype != numpy.uint8:
-            raise TypeError("Array of unsigned bytes needed")            
+            raise TypeError("Array of unsigned bytes needed")
         self._selectionColors = selectionColors
 
     def additionalSelectionMenu(self):
