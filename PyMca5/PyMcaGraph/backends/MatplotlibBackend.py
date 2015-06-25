@@ -698,6 +698,10 @@ class MatplotlibGraph(FigureCanvas):
         self._xmin, self._xmax  = self.ax.get_xlim()
         self._ymin, self._ymax  = self.ax.get_ylim()
         # deal with inverted axis
+        if self._xmin > self._xmax:
+            tmpValue = self._xmin
+            self._xmin = self._xmax
+            self._xmax = tmpValue
         if self._ymin > self._ymax:
             tmpValue = self._ymin
             self._ymin = self._ymax
