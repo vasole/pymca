@@ -1209,13 +1209,16 @@ class Plot(PlotBase.PlotBase):
 
         if constraint is not None and not callable(constraint):
             # Then it must be a string
-            if constraint.lower().startswith('h'):
-                constraint = lambda xData, yData: (xData, y)
-            elif constraint.lower().startswith('v'):
-                constraint = lambda xData, yData: (x, yData)
+            if hasattr(constraint, 'lower'):
+                if constraint.lower().startswith('h'):
+                    constraint = lambda xData, yData: (xData, y)
+                elif constraint.lower().startswith('v'):
+                    constraint = lambda xData, yData: (x, yData)
+                else:
+                    raise ValueError(
+                        "Unsupported constraint name: %s" % constraint)
             else:
-                raise ValueError(
-                    "Unsupported constraint name: %s" % constraint)
+                raise ValueError("Unsupported constraint")
 
         if legend in self._markerList:
             self.removeMarker(legend)
