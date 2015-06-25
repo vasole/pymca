@@ -467,6 +467,7 @@ class PlotBackend(object):
 
     def insertMarker(self, x, y, legend=None, text=None, color='k',
                       selectable=False, draggable=False, replot=True,
+                      symbol=None, constraint=None,
                       **kw):
         """
         :param x: Horizontal position of the marker in graph coordenates
@@ -485,6 +486,24 @@ class PlotBackend(object):
         :type draggable: boolean, default False
         :param replot: Flag to indicate if the plot is to be updated
         :type replot: boolean, default True
+        :param str symbol: Symbol representing the marker in:
+
+            - 'o' circle
+            - '.' point
+            - ',' pixel
+            - '+' cross
+            - 'x' x-cross
+            - 'd' diamond
+            - 's' square
+
+        :param constraint: A function filtering marker displacement by
+                           dragging operations or None for no filter.
+                           This function is called each time a marker is
+                           moved.
+                           This parameter is only used if draggable is True.
+        :type constraint: None or a callable that takes the coordinates of
+                          the current cursor position in the plot as input
+                          and that returns the filtered coordinates.
         :return: Handle used by the backend to univocally access the marker
         """
         print("PlotBackend insertMarker not implemented")
