@@ -159,6 +159,7 @@ if __name__ == "__main__":
         qApp = qt.QApplication.instance()
         qApp.processEvents()
 
+from PyMca5.PyMcaGraph.Plot import Plot
 from PyMca5.PyMcaGui.pymca import ScanWindow
 from PyMca5.PyMcaGui.pymca import McaWindow
 
@@ -250,6 +251,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mdi.addWindow(self.mcaWindow)
                 self.mdi.addWindow(self.scanWindow)
             else:
+                if backend is not None:
+                    Plot.defaultBackend = backend
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcaWindow = McaWindow.McaWindow(backend=backend)
