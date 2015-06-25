@@ -35,6 +35,7 @@ from PyMca5 import spslut
 from PyMca5.PyMcaGui import QPyMcaMatplotlibSave
 MATPLOTLIB = True
 
+convertToRowAndColumn = MaskImageWidget.convertToRowAndColumn
 qt = MaskImageWidget.qt
 IconDict = MaskImageWidget.IconDict
 QTVERSION   = qt.qVersion()
@@ -268,16 +269,15 @@ class RGBImageCalculator(qt.QWidget):
             if self._imageData is None:
                 self.graphWidget.setInfoText("    X = ???? Y = ???? Z =????")
                 return
-            x = int(ddict['y'])
-            if x < 0: x = 0
-            y = int(ddict['x'])
-            if y < 0: y = 0
-            limits = self._imageData.shape
-            x = min(int(x), limits[0]-1)
-            y = min(int(y), limits[1]-1)
-            z = self._imageData[x, y]
-            self.graphWidget.graphWidget.setInfoText("    X = %d Y = %d Z = %.7g" %\
-                                               (y, x, z))
+            r, c = convertToRowAndColumn(ddict['x'], ddict['y'],
+                                                        self._imageData.shape,
+                                                        xScale=self._xScale,
+                                                        yScale=self._yScale,
+                                                        safe=True)
+            z = self._imageData[r, c]
+            self.graphWidget.graphWidget.setInfoText("    X = %.2f Y = %.2f Z = %.7g" %\
+                                               (ddict['y'], ddict['x'], z))
+
     def closeEvent(self, event):
         if self.__imageColormapDialog is not None:
             self.__imageColormapDialog.close()

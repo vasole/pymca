@@ -242,7 +242,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 tb = self._addToolButton(self.polygonIcon,
                                      None,
                         'Polygon selection\nRight click to finish')
-                self.polygonSelectionToolButton = tb                
+                self.polygonSelectionToolButton = tb
             self.imageToolButton = None
         #picker selection
         self._pickerSelectionButtons = []
