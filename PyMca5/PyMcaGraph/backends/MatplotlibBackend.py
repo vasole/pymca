@@ -870,11 +870,11 @@ class MatplotlibGraph(FigureCanvas):
                     artist.set_xdata(xData)
                     artist.set_ydata(yData)
                     if infoText is not None:
-                        xtmp, ytmp = self.ax.transData.transform((xData, yData))
+                        xtmp, ytmp = self.ax.transData.transform_point((xData,
+                                                                        yData))
                         inv = self.ax.transData.inverted()
-                        xtmp, ytmp = inv.transform((xtmp, ytmp + 15))
-                        infoText.set_position((xData,
-                                               ytmp))
+                        xtmp, ytmp = inv.transform_point((xtmp, ytmp + 15))
+                        infoText.set_position((xData, ytmp))
                 if BLITTING and (self._background is not None):
                     canvas = artist.figure.canvas
                     axes = artist.axes
