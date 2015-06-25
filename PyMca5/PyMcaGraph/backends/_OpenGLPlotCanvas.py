@@ -1362,18 +1362,16 @@ class OpenGLPlotCanvas(PlotBackend):
 
             if oldImage is not None:  # TODO check if benefit
                 image = oldImage
-                image.xMin = xScale[0]
-                image.xScale = xScale[1]
-                image.yMin = yScale[0]
-                image.yScale = yScale[1]
+                image.origin = xScale[0], yScale[0]
+                image.scale = xScale[1], yScale[1]
                 image.colormap = colormap['name'][:]
                 image.cmapIsLog = colormapIsLog
                 image.cmapRange = cmapRange
                 image.updateData(data)
             else:
                 image = GLPlotColormap(data,
-                                       xScale[0], xScale[1],
-                                       yScale[0], yScale[1],
+                                       (xScale[0], yScale[0]),  # origin
+                                       (xScale[1], yScale[1]),  # scale
                                        colormap['name'][:],
                                        colormapIsLog,
                                        cmapRange)
@@ -1391,15 +1389,13 @@ class OpenGLPlotCanvas(PlotBackend):
 
             if oldImage is not None:
                 image = oldImage
-                image.xMin = xScale[0]
-                image.xScale = xScale[1]
-                image.yMin = yScale[0]
-                image.yScale = yScale[1]
+                image.origin = xScale[0], yScale[0]
+                image.scale = xScale[1], yScale[1]
                 image.updateData(data)
             else:
                 image = GLPlotRGBAImage(data,
-                                        xScale[0], xScale[1],
-                                        yScale[0], yScale[1])
+                                        origin=(xScale[0], yScale[0]),
+                                        scale=(xScale[1], yScale[1]))
 
             image.info = {
                 'legend': legend,
