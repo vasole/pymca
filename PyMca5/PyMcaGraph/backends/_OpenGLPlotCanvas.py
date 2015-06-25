@@ -1233,9 +1233,6 @@ class OpenGLPlotCanvas(PlotBackend):
         if symbol is not None:
             warnings.warn("insertMarker ignores the symbol parameter",
                           RuntimeWarning)
-        if constraint is not None:
-            warnings.warn("insertMarker ignores the constraint parameter",
-                          RuntimeWarning)
         if kw:
             warnings.warn("insertMarker ignores additional parameters",
                           RuntimeWarning)
@@ -1247,6 +1244,12 @@ class OpenGLPlotCanvas(PlotBackend):
             behaviors.add('selectable')
         if draggable:
             behaviors.add('draggable')
+
+        # Apply constraint to provided position
+        isConstraint = (draggable and constraint is not None and
+                        x is not None and y is not None)
+        if isConstraint:
+            x, y = constraint(x, y)
 
         if x is not None and self._plotFrame.xAxis.isLog and x <= 0.:
             raise RuntimeError(
@@ -1262,6 +1265,7 @@ class OpenGLPlotCanvas(PlotBackend):
             'text': text,
             'color': rgba(color, PlotBackend.COLORDICT),
             'behaviors': behaviors,
+            'constraint': constraint if isConstraint else None,
         }
 
         self._plotDirtyFlag = True
