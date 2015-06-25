@@ -1228,11 +1228,17 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def insertMarker(self, x, y, legend=None, text=None, color='k',
                      selectable=False, draggable=False,
+                     symbol=None, constraint=None,
                      **kw):
+        if symbol is not None:
+            warnings.warn("insertMarker ignores the symbol parameter",
+                          RuntimeWarning)
+        if constraint is not None:
+            warnings.warn("insertMarker ignores the constraint parameter",
+                          RuntimeWarning)
         if kw:
             warnings.warn("insertMarker ignores additional parameters",
                           RuntimeWarning)
-
         if legend is None:
             legend = self._UNNAMED_ITEM
 
