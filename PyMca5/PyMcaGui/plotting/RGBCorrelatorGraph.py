@@ -43,14 +43,10 @@ def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
     if xScale is None:
         c = x
     else:
-        if x < xScale[0]:
-            x = xScale[0]
         c = (x - xScale[0]) / xScale[1]
     if yScale is None:
         r = y
     else:
-        if y < yScale[0]:
-            y = yScale[0]
         r = ( y - yScale[0]) / yScale[1]
 
     if safe:
