@@ -623,6 +623,12 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
         import time
         t0 = time.time()
     evalues, evectors = numpy.linalg.eigh(cov)
+    # The total variance should also be the sum of all the eigenvalues
+    calculatedTotalVariance = evalues.sum()
+    if abs(totalVariance.sum() - evalues.sum()) > 0.0001:
+        print("WARNING: Discrepancy on total variance")
+        print("Variance from covariance matrix = ", totalVariance.sum())
+        print("Variance from sum of eigenvalues = ", calculatedTotalVariance)
     if DEBUG:
         print("Eig elapsed = ", time.time() - t0)
     cov = None
@@ -640,7 +646,8 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
         for i0 in range(ncomponents):
             i = a[i0][1]
             eigenvalues[i0] = evalues[i]
-            partialExplainedVariance = 100. * evalues[i] / totalVariance.sum()
+            partialExplainedVariance = 100. * evalues[i] / \
+                                       calculatedTotalVariance
             print("PC%02d  Explained variance %.5f %% " %\
                                         (i0 + 1, partialExplainedVariance))
             totalExplainedVariance += partialExplainedVariance
