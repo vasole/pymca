@@ -1351,12 +1351,10 @@ class OpenGLPlotCanvas(PlotBackend):
 
         if len(data.shape) == 2:
             # Ensure array is contiguous and eventually convert its type
-            if data.dtype in (np.float64, np.float128):
+            if np.dtype(data.dtype).kind == 'f' and data.dtype != np.float32:
                 warnings.warn(
                     'addImage: Convert %s data to float32' % str(data.dtype),
                     RuntimeWarning)
-                data = np.array(data, dtype=np.float32, order='C')
-            elif data.dtype == np.float16:
                 data = np.array(data, dtype=np.float32, order='C')
             else:
                 data = np.array(data, copy=False, order='C')
