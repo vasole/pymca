@@ -51,7 +51,10 @@ class XASStackBatch(object):
         self._analyzer = analyzer
 
     def setConfiguration(self, configuration):
-        self._analyzer.setConfiguration(configuration)
+        if "XASParameters" in configuration:
+            self._analyzer.setConfiguration(configuration["XASParameters"])
+        else:
+            self._analyzer.setConfiguration(configuration)
 
     def setConfigurationFile(self, ffile):
         if not os.path.exists(ffile):
@@ -261,6 +264,7 @@ class XASStackBatch(object):
             SVD = True
             sigma_b = None
         last_svd = None
+        #for i in range(10):
         for i in range(0, data.shape[0]):
             #print(i)
             #chunks of nColumns spectra
