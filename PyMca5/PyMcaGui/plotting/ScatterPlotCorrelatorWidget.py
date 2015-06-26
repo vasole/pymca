@@ -121,8 +121,14 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         legendKey = qt.safe_str(self.table.horizontalHeaderItem(0).text()).lower()
         xKey = qt.safe_str(self.table.horizontalHeaderItem(1).text()).lower()
         yKey = qt.safe_str(self.table.horizontalHeaderItem(2).text()).lower()
-        x0 = self._itemList[ddict[xKey][0]]
-        y0 = self._itemList[ddict[yKey][0]]
+        if len(ddict[xKey]):
+            x0 = self._itemList[ddict[xKey][0]]
+        else:
+            return
+        if len(ddict[yKey]):
+            y0 = self._itemList[ddict[yKey][0]]
+        else:
+            return
         x = x0[:]
         x.shape = -1
         y = y0[:]
