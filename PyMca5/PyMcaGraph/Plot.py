@@ -1189,6 +1189,8 @@ class Plot(PlotBase.PlotBase):
                      color=None,
                      selectable=False,
                      draggable=False,
+                     symbol=None,
+                     constraint=None,
                      **kw):
         if text is None:
             text = kw.get("label", None)
@@ -1205,6 +1207,19 @@ class Plot(PlotBase.PlotBase):
                 i += 1
                 legend = "Unnamed Marker %d" % i
 
+        if constraint is not None and not callable(constraint):
+            # Then it must be a string
+            if hasattr(constraint, 'lower'):
+                if constraint.lower().startswith('h'):
+                    constraint = lambda xData, yData: (xData, y)
+                elif constraint.lower().startswith('v'):
+                    constraint = lambda xData, yData: (x, yData)
+                else:
+                    raise ValueError(
+                        "Unsupported constraint name: %s" % constraint)
+            else:
+                raise ValueError("Unsupported constraint")
+
         if legend in self._markerList:
             self.removeMarker(legend)
         marker = self._plot.insertMarker(x, y, legend=legend,
@@ -1212,6 +1227,8 @@ class Plot(PlotBase.PlotBase):
                                           color=color,
                                           selectable=selectable,
                                           draggable=draggable,
+                                          symbol=symbol,
+                                          constraint=constraint,
                                           **kw)
         self._markerList.append(legend)
         self._markerDict[legend] = kw

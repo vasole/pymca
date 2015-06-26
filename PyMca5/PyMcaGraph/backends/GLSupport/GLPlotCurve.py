@@ -480,14 +480,14 @@ def _distancesFromArrays(xData, yData):
 
 # points ######################################################################
 
-DIAMOND, CIRCLE, SQUARE, PLUS, X_MARKER, POINT, PIXEL = \
-    'd', 'o', 's', '+', 'x', '.', ','
+DIAMOND, CIRCLE, SQUARE, PLUS, X_MARKER, POINT, PIXEL, ASTERISK = \
+    'd', 'o', 's', '+', 'x', '.', ',', '*'
 
 H_LINE, V_LINE = '_', '|'
 
 
 class _Points2D(object):
-    MARKERS = (DIAMOND, CIRCLE, SQUARE, PLUS, X_MARKER, POINT, PIXEL,
+    MARKERS = (DIAMOND, CIRCLE, SQUARE, PLUS, X_MARKER, POINT, PIXEL, ASTERISK,
                H_LINE, V_LINE)
 
     _LINEAR, _LOG10_X, _LOG10_Y, _LOG10_X_Y = 0, 1, 2, 3
@@ -549,39 +549,55 @@ class _Points2D(object):
         float alphaSymbol(vec2 coord, float size) {
             vec2 centerCoord = abs(coord - vec2(0.5, 0.5));
             float f = centerCoord.x + centerCoord.y;
-            return clamp(size * (0.5 - f), 0., 1.);
+            return clamp(size * (0.5 - f), 0.0, 1.0);
         }
         """,
             CIRCLE: """
         float alphaSymbol(vec2 coord, float size) {
             float radius = 0.5;
             float r = distance(coord, vec2(0.5, 0.5));
-            return clamp(size * (radius - r), 0., 1.);
+            return clamp(size * (radius - r), 0.0, 1.0);
         }
         """,
             SQUARE: """
         float alphaSymbol(vec2 coord, float size) {
-            return 1.;
+            return 1.0;
         }
         """,
             PLUS: """
         float alphaSymbol(vec2 coord, float size) {
             vec2 d = abs(size * (coord - vec2(0.5, 0.5)));
             if (min(d.x, d.y) < 0.5) {
-                return 1.;
+                return 1.0;
             } else {
-                return 0.;
+                return 0.0;
             }
         }
         """,
             X_MARKER: """
         float alphaSymbol(vec2 coord, float size) {
-            float d1 = abs(coord.x - coord.y);
-            float d2 = abs(coord.x + coord.y - 1.);
-            if (min(d1, d2) < 0.5/size) {
-                return 1.;
+            vec2 pos = floor(size * coord) + 0.5;
+            vec2 d_x = abs(pos.x + vec2(- pos.y, pos.y - size));
+            if (min(d_x.x, d_x.y) <= 0.5) {
+                return 1.0;
             } else {
-                return 0.;
+                return 0.0;
+            }
+        }
+        """,
+            ASTERISK: """
+        float alphaSymbol(vec2 coord, float size) {
+            /* Combining +, x and cirle */
+            vec2 d_plus = abs(size * (coord - vec2(0.5, 0.5)));
+            vec2 pos = floor(size * coord) + 0.5;
+            vec2 d_x = abs(pos.x + vec2(- pos.y, pos.y - size));
+            if (min(d_plus.x, d_plus.y) < 0.5) {
+                return 1.0;
+            } else if (min(d_x.x, d_x.y) <= 0.5) {
+                float r = distance(coord, vec2(0.5, 0.5));
+                return clamp(size * (0.5 - r), 0.0, 1.0);
+            } else {
+                return 0.0;
             }
         }
         """,
@@ -589,9 +605,9 @@ class _Points2D(object):
         float alphaSymbol(vec2 coord, float size) {
             float dy = abs(size * (coord.y - 0.5));
             if (dy < 0.5) {
-                return 1.;
+                return 1.0;
             } else {
-                return 0.;
+                return 0.0;
             }
         }
         """,
@@ -599,9 +615,9 @@ class _Points2D(object):
         float alphaSymbol(vec2 coord, float size) {
             float dx = abs(size * (coord.x - 0.5));
             if (dx < 0.5) {
-                return 1.;
+                return 1.0;
             } else {
-                return 0.;
+                return 0.0;
             }
         }
         """
@@ -618,10 +634,10 @@ class _Points2D(object):
 
     void main(void) {
         float alpha = alphaSymbol(gl_PointCoord, size);
-        if (alpha <= 0.) {
+        if (alpha <= 0.0) {
             discard;
         } else {
-            gl_FragColor = vec4(vColor.rgb, alpha * clamp(vColor.a, 0., 1.));
+            gl_FragColor = vec4(vColor.rgb, alpha * clamp(vColor.a, 0.0, 1.0));
         }
     }
     """

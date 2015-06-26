@@ -988,6 +988,9 @@ class ItemsInteraction(ClickOrDrag):
         xData, yData = dataPos
 
         if self.marker is not None:
+            if self.marker['constraint'] is not None:
+                xData, yData = self.marker['constraint'](xData, yData)
+
             if self.marker['x'] is not None:
                 self.marker['x'] = xData
             if self.marker['y'] is not None:

@@ -53,29 +53,43 @@ except ImportError:
 # colormap ####################################################################
 
 class _GLPlotData2D(object):
-    def __init__(self, data, xMin, xScale, yMin, yScale):
+    def __init__(self, data, origin, scale):
         self.data = data
-        self.xMin = xMin
-        self.xScale = xScale
-        self.yMin = yMin
-        self.yScale = yScale
+        assert len(origin) == 2
+        self.origin = tuple(origin)
+        assert len(scale) == 2
+        self.scale = tuple(scale)
 
     def pick(self, x, y):
-        if self.xMin <= x and x <= self.xMax and \
-           self.yMin <= y and y <= self.yMax:
-            col = int((x - self.xMin) / self.xScale)
-            row = int((y - self.yMin) / self.yScale)
+        if (self.xMin <= x and x <= self.xMax and
+                self.yMin <= y and y <= self.yMax):
+            ox, oy = self.origin
+            sx, sy = self.scale
+            col = int((x - ox) / sx)
+            row = int((y - oy) / sy)
             return col, row
         else:
             return None
 
     @property
+    def xMin(self):
+        ox, sx = self.origin[0], self.scale[0]
+        return ox if sx >= 0. else ox + sx * self.data.shape[1]
+
+    @property
+    def yMin(self):
+        oy, sy = self.origin[1], self.scale[1]
+        return oy if sy >= 0. else oy + sy * self.data.shape[0]
+
+    @property
     def xMax(self):
-        return self.xMin + self.xScale * self.data.shape[1]
+        ox, sx = self.origin[0], self.scale[0]
+        return ox + sx * self.data.shape[1] if sx >= 0. else ox
 
     @property
     def yMax(self):
-        return self.yMin + self.yScale * self.data.shape[0]
+        oy, sy = self.origin[1], self.scale[1]
+        return oy + sy * self.data.shape[0] if sy >= 0. else oy
 
     def discard(self):
         pass
@@ -140,7 +154,7 @@ class GLPlotColormap(_GLPlotData2D):
     uniform bvec2 isLog;
     uniform struct {
         vec2 oneOverRange;
-        vec2 minOverRange;
+        vec2 originOverRange;
     } bounds;
 
     vec2 textureCoords(void) {
@@ -151,7 +165,7 @@ class GLPlotColormap(_GLPlotData2D):
         if (isLog.y) {
             pos.y = pow(10., coords.y);
         }
-        return pos * bounds.oneOverRange - bounds.minOverRange;
+        return pos * bounds.oneOverRange - bounds.originOverRange;
         // TODO texture coords in range different from [0, 1]
     }
     """},
@@ -270,16 +284,17 @@ class GLPlotColormap(_GLPlotData2D):
                             _SHADERS['fragment'] %
                             _SHADERS['log']['fragTransform'])
 
-    def __init__(self, data, xMin, xScale, yMin, yScale,
+    def __init__(self, data, origin, scale,
                  colormap, cmapIsLog=False, cmapRange=None):
         """Create a 2D colormap
 
         :param data: The 2D scalar data array to display
         :type data: numpy.ndarray with 2 dimensions (dtype=numpy.float32)
-        :param float xMin: Min X coordinate of the data array
-        :param float xScale: X scale of the data array
-        :param float yMin: Min Y coordinate of the data array
-        :param float yScale: Y scale of the data array
+        :param origin: (x, y) coordinates of the origin of the data array
+        :type origin: 2-tuple of floats.
+        :param scale: (sx, sy) scale factors of the data array.
+                      This is the size of a data pixel in plot data space.
+        :type scale: 2-tuple of floats.
         :param str colormap: Name of the colormap to use
             TODO: Accept a 1D scalar array as the colormap
         :param bool cmapIsLog: If True, uses log10 of the data value
@@ -290,7 +305,7 @@ class GLPlotColormap(_GLPlotData2D):
         """
         assert data.dtype in self._INTERNAL_FORMATS
 
-        super(GLPlotColormap, self).__init__(data, xMin, xScale, yMin, yScale)
+        super(GLPlotColormap, self).__init__(data, origin, scale)
         self.colormap = colormap
         self.cmapIsLog = cmapIsLog
         self._cmapRange = None  # User-provided range info
@@ -416,8 +431,7 @@ class GLPlotColormap(_GLPlotData2D):
 
         glUniform1i(prog.uniforms['data'], self._DATA_TEX_UNIT)
 
-        mat = matrix * mat4Translate(self.xMin, self.yMin) * \
-            mat4Scale(self.xScale, self.yScale)
+        mat = matrix * mat4Translate(*self.origin) * mat4Scale(*self.scale)
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, mat)
 
         self._setCMap(prog)
@@ -427,8 +441,9 @@ class GLPlotColormap(_GLPlotData2D):
                              self._DATA_TEX_UNIT)
 
     def _renderLog10(self, matrix, isXLog, isYLog):
-        if ((isXLog and self.xMin < FLOAT32_MINPOS) or
-                (isYLog and self.yMin < FLOAT32_MINPOS)):
+        xMin, yMin = self.xMin, self.yMin
+        if ((isXLog and xMin < FLOAT32_MINPOS) or
+                (isYLog and yMin < FLOAT32_MINPOS)):
             # Do not render images that are partly or totally <= 0
             return
 
@@ -437,19 +452,23 @@ class GLPlotColormap(_GLPlotData2D):
         prog = self._logProgram
         prog.use()
 
+        ox, oy = self.origin
+
         glUniform1i(prog.uniforms['data'], self._DATA_TEX_UNIT)
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
-        mat = mat4Translate(self.xMin, self.yMin) * \
-            mat4Scale(self.xScale, self.yScale)
+        mat = mat4Translate(ox, oy) * mat4Scale(*self.scale)
         glUniformMatrix4fv(prog.uniforms['matOffset'], 1, GL_TRUE, mat)
 
         glUniform2i(prog.uniforms['isLog'], isXLog, isYLog)
 
-        xOneOverRange = 1. / (self.xMax - self.xMin)
-        yOneOverRange = 1. / (self.yMax - self.yMin)
-        glUniform2f(prog.uniforms['bounds.minOverRange'],
-                    self.xMin * xOneOverRange, self.yMin * yOneOverRange)
+        ex = ox + self.scale[0] * self.data.shape[1]
+        ey = oy + self.scale[1] * self.data.shape[0]
+
+        xOneOverRange = 1. / (ex - ox)
+        yOneOverRange = 1. / (ey - oy)
+        glUniform2f(prog.uniforms['bounds.originOverRange'],
+                    ox * xOneOverRange, oy * yOneOverRange)
         glUniform2f(prog.uniforms['bounds.oneOverRange'],
                     xOneOverRange, yOneOverRange)
 
@@ -549,7 +568,7 @@ class GLPlotRGBAImage(_GLPlotData2D):
     uniform bvec2 isLog;
     uniform struct {
         vec2 oneOverRange;
-        vec2 minOverRange;
+        vec2 originOverRange;
     } bounds;
 
     varying vec2 coords;
@@ -562,7 +581,7 @@ class GLPlotRGBAImage(_GLPlotData2D):
         if (isLog.y) {
             pos.y = pow(10., coords.y);
         }
-        return pos * bounds.oneOverRange - bounds.minOverRange;
+        return pos * bounds.oneOverRange - bounds.originOverRange;
         // TODO texture coords in range different from [0, 1]
     }
 
@@ -582,19 +601,20 @@ class GLPlotRGBAImage(_GLPlotData2D):
     _logProgram = GLProgram(_SHADERS['log']['vertex'],
                             _SHADERS['log']['fragment'])
 
-    def __init__(self, data, xMin, xScale, yMin, yScale):
+    def __init__(self, data, origin, scale):
         """Create a 2D RGB(A) image from data
 
         :param data: The 2D image data array to display
         :type data: numpy.ndarray with 3 dimensions
                     (dtype=numpy.uint8 or numpy.float32)
-        :param float xMin: Min X coordinate of the data array
-        :param float xScale: X scale of the data array
-        :param float yMin: Min Y coordinate of the data array
-        :param float yScale: Y scale of the data array
+        :param origin: (x, y) coordinates of the origin of the data array
+        :type origin: 2-tuple of floats.
+        :param scale: (sx, sy) scale factors of the data array.
+                      This is the size of a data pixel in plot data space.
+        :type scale: 2-tuple of floats.
         """
         assert data.dtype in self._SUPPORTED_DTYPES
-        super(GLPlotRGBAImage, self).__init__(data, xMin, xScale, yMin, yScale)
+        super(GLPlotRGBAImage, self).__init__(data, origin, scale)
         self._textureIsDirty = False
 
     def __del__(self):
@@ -644,8 +664,7 @@ class GLPlotRGBAImage(_GLPlotData2D):
 
         glUniform1i(prog.uniforms['tex'], self._DATA_TEX_UNIT)
 
-        mat = matrix * mat4Translate(self.xMin, self.yMin)
-        mat *= mat4Scale(self.xScale, self.yScale)
+        mat = matrix * mat4Translate(*self.origin) * mat4Scale(*self.scale)
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, mat)
 
         self._texture.render(prog.attributes['position'],
@@ -658,19 +677,23 @@ class GLPlotRGBAImage(_GLPlotData2D):
         prog = self._logProgram
         prog.use()
 
+        ox, oy = self.origin
+
         glUniform1i(prog.uniforms['tex'], self._DATA_TEX_UNIT)
 
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matrix)
-        mat = mat4Translate(self.xMin, self.yMin) * \
-            mat4Scale(self.xScale, self.yScale)
+        mat = mat4Translate(ox, oy) * mat4Scale(*self.scale)
         glUniformMatrix4fv(prog.uniforms['matOffset'], 1, GL_TRUE, mat)
 
         glUniform2i(prog.uniforms['isLog'], isXLog, isYLog)
 
-        xOneOverRange = 1. / (self.xMax - self.xMin)
-        yOneOverRange = 1. / (self.yMax - self.yMin)
-        glUniform2f(prog.uniforms['bounds.minOverRange'],
-                    self.xMin * xOneOverRange, self.yMin * yOneOverRange)
+        ex = ox + self.scale[0] * self.data.shape[1]
+        ey = oy + self.scale[1] * self.data.shape[0]
+
+        xOneOverRange = 1. / (ex - ox)
+        yOneOverRange = 1. / (ey - oy)
+        glUniform2f(prog.uniforms['bounds.originOverRange'],
+                    ox * xOneOverRange, oy * yOneOverRange)
         glUniform2f(prog.uniforms['bounds.oneOverRange'],
                     xOneOverRange, yOneOverRange)
 

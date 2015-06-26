@@ -600,8 +600,12 @@ class MatplotlibGraph(FigureCanvas):
                         elif 'ymarker' in artist._plot_options:
                             artist.set_ydata(event.ydata)
                         else:
-                            artist.set_xdata(event.xdata)
-                            artist.set_ydata(event.ydata)
+                            xData, yData = event.xdata, event.ydata
+                            if artist._constraint is not None:
+                                # Apply marker constraint
+                                xData, yData = artist._constraint(xData, yData)
+                            artist.set_xdata(xData)
+                            artist.set_ydata(yData)
                     if BLITTING:
                         canvas = artist.figure.canvas
                         axes = artist.axes
@@ -859,14 +863,18 @@ class MatplotlibGraph(FigureCanvas):
                     if infoText is not None:
                         infoText.set_position((event.xdata, event.ydata))
                 else:
-                    artist.set_xdata(event.xdata)
-                    artist.set_ydata(event.ydata)
+                    xData, yData = event.xdata, event.ydata
+                    if artist._constraint is not None:
+                        # Apply marker constraint
+                        xData, yData = artist._constraint(xData, yData)
+                    artist.set_xdata(xData)
+                    artist.set_ydata(yData)
                     if infoText is not None:
-                        xtmp, ytmp = self.ax.transData.transform((event.xdata, event.ydata))
+                        xtmp, ytmp = self.ax.transData.transform_point((xData,
+                                                                        yData))
                         inv = self.ax.transData.inverted()
-                        xtmp, ytmp = inv.transform((xtmp, ytmp + 15))
-                        infoText.set_position((event.xdata,
-                                               ytmp))
+                        xtmp, ytmp = inv.transform_point((xtmp, ytmp + 15))
+                        infoText.set_position((xData, ytmp))
                 if BLITTING and (self._background is not None):
                     canvas = artist.figure.canvas
                     axes = artist.axes
@@ -1964,6 +1972,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
 
     def insertMarker(self, x, y, legend=None, text=None, color='k',
                       selectable=False, draggable=False, replot=True,
+                      symbol=None, constraint=None,
                       **kw):
         """
         :param x: Horizontal position of the marker in graph coordenates
@@ -1980,6 +1989,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         :type draggable: boolean, default False
         :param replot: Flag to indicate if the plot is to be updated
         :type replot: boolean, default True
+        :param str symbol: Symbol representing the marker
+        :param constraint: None or a function filtering marker displacements.
         :return: Handle used by the backend to univocally access the marker
         """
         #line = self.ax.axvline(x, picker=True)
@@ -1989,6 +2000,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             x = 0.5 * (xmax + xmin)
         if y is None:
             y = 0.5 * (ymax + ymin)
+
+        # Apply constraint to provided position
+        if draggable and constraint is not None:
+            x, y = constraint(x, y)
+
         if legend is None:
             legend = "Unnamed marker"
         if text is None:
@@ -1998,20 +2014,21 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self.removeMarker(legend, replot=False)
 
         legend = "__MARKER__" + legend
-        marker = "+"
-        markersize=20.
+        if symbol is None:
+            symbol = "+"
+        markersize=10.
         if selectable or draggable:
             line = self.ax.plot(x, y, label=legend,
                                       linestyle=" ",
                                       color=color,
                                       picker=5,
-                                      marker=marker,
+                                      marker=symbol,
                                       markersize=markersize)[-1]
         else:
             line = self.ax.plot(x, y, label=legend,
                                       linestyle=" ",
                                       color=color,
-                                      marker=marker,
+                                      marker=symbol,
                                       markersize=markersize)[-1]
         if text is not None:
             xtmp, ytmp = self.ax.transData.transform((x, y))
@@ -2022,6 +2039,9 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                           color=color,
                                           horizontalalignment='left',
                                           verticalalignment='top')
+
+        line._constraint = constraint if draggable else None
+
         #line.set_ydata(numpy.array([1.0, 10.], dtype=numpy.float32))
         line._plot_options = ["marker"]
         if selectable:
