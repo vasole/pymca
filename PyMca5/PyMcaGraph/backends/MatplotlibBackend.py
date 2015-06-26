@@ -820,7 +820,7 @@ class MatplotlibGraph(FigureCanvas):
                     if QT:
                         if 'ymarker' in artist._plot_options:
                             self.setCursor(QtGui.QCursor(QtCore.Qt.SizeVerCursor))
-                        if 'xmarker' in artist._plot_options:
+                        elif 'xmarker' in artist._plot_options:
                             self.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
                         else:
                             self.setCursor(QtGui.QCursor(QtCore.Qt.SizeAllCursor))
