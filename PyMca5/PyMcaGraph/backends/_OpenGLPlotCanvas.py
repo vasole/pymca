@@ -986,6 +986,7 @@ class OpenGLPlotCanvas(PlotBackend):
         glViewport(self._margins['left'], self._margins['bottom'],
                    plotWidth, plotHeight)
 
+        # Prepare vertical and horizontal markers rendering
         self._progBase.use()
         glUniformMatrix4fv(self._progBase.uniforms['matrix'], 1, GL_TRUE,
                            self.matrixPlotDataTransformedProj)
@@ -993,10 +994,9 @@ class OpenGLPlotCanvas(PlotBackend):
         glUniform1i(self._progBase.uniforms['hatchStep'], 0)
         glUniform1f(self._progBase.uniforms['tickLen'], 0.)
         posAttrib = self._progBase.attributes['position']
-        glEnableVertexAttribArray(posAttrib)
 
         labels = []
-        pixelOffset = 2
+        pixelOffset = 3
 
         for marker in self._markers.values():
             xCoord, yCoord = marker['x'], marker['y']
@@ -1010,70 +1010,76 @@ class OpenGLPlotCanvas(PlotBackend):
 
             pixelPos = self.dataToPixel(xCoord, yCoord, check=False)
             if pixelPos is None:
+                # Do not render markers outside visible plot area
                 continue
 
-            if xCoord is None:
-                if marker['text'] is not None:
-                    x = self.winWidth - self._margins['right'] - pixelOffset
-                    y = pixelPos[1] - pixelOffset
-                    label = Text2D(marker['text'], x, y,
-                                   color=marker['color'],
-                                   bgColor=(1., 1., 1., 0.5),
-                                   align=RIGHT, valign=BOTTOM)
-                    labels.append(label)
+            if xCoord is None or yCoord is None:
+                self._progBase.use()
 
-                xMin, xMax = self._plotFrame.xAxis.dataRange
-                vertices = np.array(((xMin, yCoord),
-                                     (xMax, yCoord)),
-                                    dtype=np.float32)
+                if xCoord is None:
+                    if marker['text'] is not None:
+                        x = self.winWidth - self._margins['right'] - \
+                            pixelOffset
+                        y = pixelPos[1] - pixelOffset
+                        label = Text2D(marker['text'], x, y,
+                                       color=marker['color'],
+                                       bgColor=(1., 1., 1., 0.5),
+                                       align=RIGHT, valign=BOTTOM)
+                        labels.append(label)
 
-            elif yCoord is None:
-                if marker['text'] is not None:
-                    x = pixelPos[0] + pixelOffset
-                    y = self._margins['top'] + pixelOffset
-                    label = Text2D(marker['text'], x, y,
-                                   color=marker['color'],
-                                   bgColor=(1., 1., 1., 0.5),
-                                   align=LEFT, valign=TOP)
-                    labels.append(label)
+                    xMin, xMax = self._plotFrame.xAxis.dataRange
+                    vertices = np.array(((xMin, yCoord),
+                                         (xMax, yCoord)),
+                                        dtype=np.float32)
 
-                yMin, yMax = self._plotFrame.yAxis.dataRange
-                vertices = np.array(((xCoord, yMin),
-                                     (xCoord, yMax)),
-                                    dtype=np.float32)
+                else:  # yCoord is None
+                    if marker['text'] is not None:
+                        x = pixelPos[0] + pixelOffset
+                        y = self._margins['top'] + pixelOffset
+                        label = Text2D(marker['text'], x, y,
+                                       color=marker['color'],
+                                       bgColor=(1., 1., 1., 0.5),
+                                       align=LEFT, valign=TOP)
+                        labels.append(label)
+
+                    yMin, yMax = self._plotFrame.yAxis.dataRange
+                    vertices = np.array(((xCoord, yMin),
+                                         (xCoord, yMax)),
+                                        dtype=np.float32)
+
+                glUniform4f(self._progBase.uniforms['color'], *marker['color'])
+
+                glEnableVertexAttribArray(posAttrib)
+                glVertexAttribPointer(posAttrib,
+                                      2,
+                                      GL_FLOAT,
+                                      GL_FALSE,
+                                      0, vertices)
+                glLineWidth(1)
+                glDrawArrays(GL_LINES, 0, len(vertices))
 
             else:
                 xPixel, yPixel = pixelPos
 
                 if marker['text'] is not None:
-                    x, y = xPixel + pixelOffset, yPixel + pixelOffset
+                    x = pixelPos[0] + pixelOffset
+                    y = pixelPos[1] + pixelOffset
                     label = Text2D(marker['text'], x, y,
                                    color=marker['color'],
                                    bgColor=(1., 1., 1., 0.5),
                                    align=LEFT, valign=TOP)
                     labels.append(label)
 
-                x0, y0 = self.pixelToData(xPixel - 2 * pixelOffset,
-                                          yPixel - 2 * pixelOffset,
-                                          check=False)
-
-                x1, y1 = self.pixelToData(xPixel + 2 * pixelOffset + 1.,
-                                          yPixel + 2 * pixelOffset + 1.,
-                                          check=False)
-
-                vertices = np.array(((x0, yCoord), (x1, yCoord),
-                                     (xCoord, y0), (xCoord, y1)),
-                                    dtype=np.float32)
-
-            glUniform4f(self._progBase.uniforms['color'], * marker['color'])
-
-            glVertexAttribPointer(posAttrib,
-                                  2,
-                                  GL_FLOAT,
-                                  GL_FALSE,
-                                  0, vertices)
-            glLineWidth(1)
-            glDrawArrays(GL_LINES, 0, len(vertices))
+                # For now simple implementation: using a curve for each marker
+                # Should pack all markers to a single set of points
+                markerCurve = GLPlotCurve2D(
+                    np.array((xCoord,), dtype=np.float32),
+                    np.array((yCoord,), dtype=np.float32),
+                    marker=marker['symbol'],
+                    markerColor=marker['color'],
+                    markerSize=11)
+                markerCurve.render(self.matrixPlotDataTransformedProj,
+                                   isXLog, isYLog)
 
         glViewport(0, 0, self.winWidth, self.winHeight)
 
@@ -1230,14 +1236,14 @@ class OpenGLPlotCanvas(PlotBackend):
                      selectable=False, draggable=False,
                      symbol=None, constraint=None,
                      **kw):
-        if symbol is not None:
-            warnings.warn("insertMarker ignores the symbol parameter",
-                          RuntimeWarning)
         if kw:
             warnings.warn("insertMarker ignores additional parameters",
                           RuntimeWarning)
         if legend is None:
             legend = self._UNNAMED_ITEM
+
+        if symbol is None:
+            symbol = '+'
 
         behaviors = set()
         if selectable:
@@ -1266,6 +1272,7 @@ class OpenGLPlotCanvas(PlotBackend):
             'color': rgba(color, PlotBackend.COLORDICT),
             'behaviors': behaviors,
             'constraint': constraint if isConstraint else None,
+            'symbol': symbol,
         }
 
         self._plotDirtyFlag = True
