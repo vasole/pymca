@@ -1236,6 +1236,9 @@ class OpenGLPlotCanvas(PlotBackend):
                      selectable=False, draggable=False,
                      symbol=None, constraint=None,
                      **kw):
+        if symbol is not None:
+            warnings.warn("insertMarker ignores the symbol parameter",
+                          RuntimeWarning)
         if kw:
             warnings.warn("insertMarker ignores additional parameters",
                           RuntimeWarning)
