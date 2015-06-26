@@ -165,7 +165,7 @@ class GLProgram(object):
         return self._getProgramInfo()[0]
 
     def discard(self):
-        warnings.warn("Program discard is not implemented", RuntimeWarning)
+        pass  # Not implemented yet
 
     def __del__(self):
         self.discard()
