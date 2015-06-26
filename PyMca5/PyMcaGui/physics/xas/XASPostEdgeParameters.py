@@ -213,7 +213,10 @@ class XASPostEdgeParameters(qt.QGroupBox):
         if "Knots" in ddict:
             newPositions = ddict["Knots"].get("Values", positions)
             if newPositions is not None:
-                positions = newPositions
+                if hasattr(newPositions, "__len__"):
+                    positions = newPositions
+                else:
+                    positions = [newPositions]
             orders = ddict["Knots"].get("Orders", orders)
             if len(positions) ==  (len(orders) - 1):
                 positions = [self.kMinBox.value()] + list(positions)

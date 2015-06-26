@@ -442,7 +442,6 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None, full=False):
     xrange1 = [x1,x2]
     if DEBUG:
         print("++++++++++++++++++",xrange1)
-
     if knots not in [None, []]:
         if len(knots) == len(polDegree):
             if knots[0] > kmin:
@@ -1149,16 +1148,15 @@ class XASClass(object):
         else:
             backend = "DefaultBackend"
         config = self._configuration[backend]["FT"]
-        if (kMin is None) and (kMax is None):
-            kRange = config["WindowRange"]
-        elif config["WindowRange"] is None:
-            if kMin is None:
-                kMin = k.min()
-            if kMax is None:
-                kMax = k.max()
+        if kMin is None:
+            kMin = k.min()
+        if kMax is None:
+            kMax = k.max()
+        kRange = config["WindowRange"]
+        if config["WindowRange"] in [None, "None"]:
             kRange = [kMin, kMax]
         else:
-            kRange = config["WindowRange"]
+            kRange = [max(kRange[0], kMin), min(kRange[1], kMax)]
         return getFT(k, mu, npoints=config["Points"],
                      krange=kRange,\
                      window=config.get("Window", "Gaussian"),
@@ -1182,9 +1180,18 @@ class XASClass(object):
             kMax = k.max()
         else:
             kMax = min(k.max(), kMax)
+        number = config["Knots"].get("Number", 0)
+        if number == 0:
+            knots = None
+            if not hasattr(config["Knots"]["Orders"], "__len__"):
+                config["Knots"]["Orders"] = [config["Knots"]["Orders"]]
+        else:
+            knots = config["Knots"]["Values"]
+            if not hasattr(knots, "__len__"):
+                knots = [knots]
         fit0, xNodes, yNodes = postEdge0(k, mu, kMin, kMax,
                          config["Knots"]["Orders"],
-                         knots=config["Knots"]["Values"], full=True)
+                         knots=knots, full=True)
         ddict = {}
         ddict["PostEdgeK"] = fit0[:, 0]
         ddict["PostEdgeB"] = fit0[:, 1]
@@ -1395,7 +1402,7 @@ class XASClass(object):
         normalizedSpectrum = (mu - data["PreEdge"])/jump
         if jumpMethod in [0, "Constant", "constant"]:
             jumpMethod = "Constant"
-            pass    
+            pass
         elif jumpMethod in [1, "Flattened", "flattened", "Flatten", "flatten"]:
             jumpMethod = "Flattened"
             i = numpy.argmin(energy < e0)
@@ -1427,10 +1434,44 @@ if __name__ == "__main__":
         fileName = sys.argv[1]
     else:
         fileName = os.path.join(PYMCA_DATA_DIR, "EXAFS_Ge.dat")
-    data = specfile.Specfile(fileName)[0].data()[-2:, :]
-    energy = data[0, :]
-    mu = data[1, :]
+    if len(sys.argv) > 2:
+        cfg = sys.argv[2]
+    else:
+        cfg = None
+    scan = specfile.Specfile(fileName)[0]
+    data = scan.data()
+    if data.shape[0] == 2:
+        energy = data[0, :]
+        mu = data[1, :]
+    else:
+        energy = None
+        mu = None
+        labels = scan.alllabels()
+        i = 0
+        for label in labels:
+            if label.lower() == "energy":
+                energy = data[i, :]
+            elif label.lower() in ["counts", "mu", "absorption"]:
+                mu = data[i, :]
+            i = i + 1
+        if (energy is None) or (mu is None):
+            if len(labels) == 3:
+                if labels[0].lower() == "point":
+                    energy = data[1, :]
+                    mu = data[2, :]
+                else:
+                    energy = data[0, :]
+                    mu = data[1, :]
+            else:
+                energy = data[0, :]
+                mu = data[1, :]
+
     exafs = XASClass()
+    if cfg is not None:
+        from PyMca5.PyMca import ConfigDict
+        config = ConfigDict.ConfigDict()
+        config.read(cfg)
+        exafs.setConfiguration(config['XASParameters'])
     exafs.setSpectrum(energy, mu)
     if 0:
         print("exafs.calculateE0 = ", exafs.calculateE0())
@@ -1460,8 +1501,10 @@ if __name__ == "__main__":
     exafs.addCurve(ddict["EXAFSKValues"][idx], ddict["EXAFSNormalized"][idx],
                    legend="Normalized EXAFS")
     exafs.show()
+    #"""
     ft = PlotWindow.PlotWindow()
     ft.addCurve(ddict["FT"]["FTRadius"], ddict["FT"]["FTIntensity"])
     ft.resetZoom()
     ft.show()
+    #"""
     app.exec_()
