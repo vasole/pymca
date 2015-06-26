@@ -1037,7 +1037,8 @@ class RGBCorrelatorWidget(qt.QWidget):
                 ScatterPlotCorrelatorWidget.ScatterPlotCorrelatorWidget(\
                                     labels=("Legend", "X", "Y"),
                                     types=("Text","RadioButton", "RadioButton"))
-            self.scatterPlotWidget.show()
+        self.scatterPlotWidget.show()
+        self.scatterPlotWidget.raise_()
         # I should check if the list is to be updated instead of systematically
         # send it
         initialize = True
