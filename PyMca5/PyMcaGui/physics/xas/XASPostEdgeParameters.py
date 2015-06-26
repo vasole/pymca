@@ -89,7 +89,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
         self._knotDegrees = []
         for i in range(self.knotsBox.maximum()+1):
             position = qt.QDoubleSpinBox(self)
-            position.setSingleStep(0.02)
+            position.setSingleStep(0.1)
             degree = qt.QSpinBox(self)
             degree.setMinimum(1)
             degree.setMaximum(3)
@@ -128,56 +128,83 @@ class XASPostEdgeParameters(qt.QGroupBox):
         for i in range(self.knotsBox.maximum() + 1):
             self._knotPositions[i].valueChanged[float].connect(self._knotChanged)
             self._knotDegrees[i].valueChanged[int].connect(self._degreeChanged)
+        self.__connected = True
 
     def _knotNumberChanged(self, value):
         if DEBUG:
             print("Current number of knots = ", value)
-        for i in range(self.knotsBox.maximum()+1):
-            if i < value+1:
-                enabled = True
-            else:
-                enabled = False
-            self._knotPositions[i].setEnabled(enabled)
-            self._knotDegrees[i].setEnabled(enabled)
-        self._knotPositions[0].setEnabled(False)
-        self._fillKnots()
-        self.emitSignal("KnotNumberChanged")
+        oldValue = self.__connected
+        self.__connected = False
+        try:
+            for i in range(self.knotsBox.maximum()+1):
+                if i < value+1:
+                    enabled = True
+                else:
+                    enabled = False
+                self._knotPositions[i].setEnabled(enabled)
+                self._knotDegrees[i].setEnabled(enabled)
+            self._knotPositions[0].setEnabled(False)
+            self._fillKnots()
+        finally:
+            self.__connected = oldValue
+        if self.__connected:
+            self.emitSignal("KnotNumberChanged")
 
     def _kMinChanged(self, value):
         if DEBUG:
             print("Current kMin Value =", value)
-        self._fillKnots()
-        self.emitSignal("KMinChanged")
+        oldValue = self.__connected
+        self.__connected = False
+        try:
+            self._fillKnots()
+        finally:
+            self.__connected = oldValue
+        if self.__connected:
+            self.emitSignal("KMinChanged")
 
     def _kMaxChanged(self, value):
         if DEBUG:
             print("Current kMax Value =", value)
-        self._fillKnots()
-        self.emitSignal("KMaxChanged")
+        oldValue = self.__connected
+        self.__connected = False
+        try:
+            self._fillKnots()
+        finally:
+            self.__connected = oldValue
+        if self.__connected:
+            self.emitSignal("KMaxChanged")
 
     def _knotChanged(self, value):
         if DEBUG:
             print("One knot has been changed = ", value)
         # adjust limits
-        kMax = self.kMaxBox.value()
-        for i in range(self.knotsBox.maximum()+1):
-            if self._knotPositions[i].isEnabled():
-                # the first one is never enabled
-                minimum = self._knotPositions[i-1].value() + 0.01
-                self._knotPositions[i].setMinimum(minimum)
-                if i < self.knotsBox.maximum():
-                    maximum = self._knotPositions[i+1].value() - 0.01
+        oldValue = self.__connected
+        self.__connected = False
+        try:
+            kMax = self.kMaxBox.value()
+            for i in range(self.knotsBox.maximum()+1):
+                if self._knotPositions[i].isEnabled():
+                    # the first one is never enabled
+                    singleStep = self._knotPositions[i].singleStep()
+                    minimum = self._knotPositions[i-1].value() + singleStep
+                    self._knotPositions[i].setMinimum(minimum)
+                    if i < self.knotsBox.maximum():
+                        maximum = self._knotPositions[i+1].value() - singleStep
+                    else:
+                        maximum = kMax
+                    self._knotPositions[i].setMaximum(maximum)
                 else:
-                    maximum = kMax
-                self._knotPositions[i].setMaximum(maximum)
-            else:
-                self._knotPositions[i].setMaximum(kMax)
-        self.emitSignal("KnotPositionChanged")
+                    self._knotPositions[i].setMaximum(kMax)
+        finally:
+            self.__connected = oldValue
+        if self.__connected:
+            self.emitSignal("KnotPositionChanged")
 
     def _degreeChanged(self, value):
         if DEBUG:
             print("One knot polynomial degree changed", value)
-        self.emitSignal("KnotOrderChanged")
+        if self.__connected:
+            self.emitSignal("KnotOrderChanged")
 
     def getParameters(self):
         ddict = {}
@@ -197,42 +224,51 @@ class XASPostEdgeParameters(qt.QGroupBox):
             ddict["Knots"]["Orders"].append(self._knotDegrees[i].value())
         return ddict
 
-    def setParameters(self, ddict):
+    def setParameters(self, ddict, signal=True):
+        if DEBUG:
+            print("setParameters called", ddict, signal)
         if "EXAFS" in ddict:
             ddict = ddict["EXAFS"]
         elif "PostEdge" in ddict:
             ddict = ddict["PostEdge"]
-        kMin = ddict.get("KMin", self.kMinBox.value())
-        if kMin is not None:
-            self.kMinBox.setValue(kMin)
-        kMax = ddict.get("KMax", self.kMaxBox.value())
-        if kMax is not None:
-            self.kMaxBox.setValue(kMax)
-        nKnots = self.knotsBox.value()
-        if "Knots" in ddict:
-            self.knotsBox.setValue(ddict["Knots"].get("Number", nKnots))
-        nKnots = self.knotsBox.value()
-        positions, orders = self._getDefaultKnots(knots=nKnots)
-        n = len(positions)
-        for i in range(self.knotsBox.maximum()+1):
-            if i < n:
-                enabled = True
-            else:
-                enabled = False
-            self._knotPositions[i].setEnabled(enabled)
-            self._knotDegrees[i].setEnabled(enabled)
-        self._knotPositions[0].setEnabled(False)
-        if "Knots" in ddict:
-            newPositions = ddict["Knots"].get("Values", positions)
-            if newPositions is not None:
-                if hasattr(newPositions, "__len__"):
-                    positions = newPositions
+        try:
+            self.__connected = False
+            kMin = ddict.get("KMin", self.kMinBox.value())
+            if kMin is not None:
+                self.kMinBox.setValue(kMin)
+            kMax = ddict.get("KMax", self.kMaxBox.value())
+            if kMax is not None:
+                self.kMaxBox.setValue(kMax)
+            nKnots = self.knotsBox.value()
+            if "Knots" in ddict:
+                self.knotsBox.setValue(ddict["Knots"].get("Number", nKnots))
+            nKnots = self.knotsBox.value()
+            positions, orders = self._getDefaultKnots(knots=nKnots)
+            n = len(positions)
+            for i in range(self.knotsBox.maximum()+1):
+                if i < n:
+                    enabled = True
                 else:
-                    positions = [newPositions]
-            orders = ddict["Knots"].get("Orders", orders)
-            if len(positions) ==  (len(orders) - 1):
-                positions = [self.kMinBox.value()] + list(positions)
-        self._fillKnots(positions, orders)
+                    enabled = False
+                self._knotPositions[i].setEnabled(enabled)
+                self._knotDegrees[i].setEnabled(enabled)
+            self._knotPositions[0].setEnabled(False)
+            if "Knots" in ddict:
+                newPositions = ddict["Knots"].get("Values", positions)
+                if newPositions is not None:
+                    if hasattr(newPositions, "__len__"):
+                        positions = newPositions
+                    else:
+                        positions = [newPositions]
+                orders = ddict["Knots"].get("Orders", orders)
+                if len(positions) ==  (len(orders) - 1):
+                    positions = [self.kMinBox.value()] + list(positions)
+            self._fillKnots(positions, orders)
+        finally:
+            self.__connected = True
+        if signal:
+            # any signal do the job
+            self.emitSignal("KMaxChanged")
 
     def _fillKnots(self, positions=None, orders=None):
         if (positions is None) and (orders is None):
