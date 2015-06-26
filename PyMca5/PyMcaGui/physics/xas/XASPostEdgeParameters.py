@@ -88,10 +88,8 @@ class XASPostEdgeParameters(qt.QGroupBox):
         self._knotPositions = []
         self._knotDegrees = []
         for i in range(self.knotsBox.maximum()+1):
-            position = qt.QLineEdit(self)
-            if i != 0:
-                position._validator = qt.QDoubleValidator(position)
-                position.setValidator(position._validator)
+            position = qt.QDoubleSpinBox(self)
+            position.setSingleStep(0.02)
             degree = qt.QSpinBox(self)
             degree.setMinimum(1)
             degree.setMaximum(3)
@@ -128,7 +126,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
         self.kMaxBox.valueChanged[float].connect(self._kMaxChanged)
         self.knotsBox.valueChanged[int].connect(self._knotNumberChanged)
         for i in range(self.knotsBox.maximum() + 1):
-            self._knotPositions[i].editingFinished.connect(self._knotEdited)
+            self._knotPositions[i].valueChanged[float].connect(self._knotChanged)
             self._knotDegrees[i].valueChanged[int].connect(self._degreeChanged)
 
     def _knotNumberChanged(self, value):
@@ -141,7 +139,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
                 enabled = False
             self._knotPositions[i].setEnabled(enabled)
             self._knotDegrees[i].setEnabled(enabled)
-        self._knotPositions[0].setEnabled(False)    
+        self._knotPositions[0].setEnabled(False)
         self._fillKnots()
         self.emitSignal("KnotNumberChanged")
 
@@ -157,9 +155,23 @@ class XASPostEdgeParameters(qt.QGroupBox):
         self._fillKnots()
         self.emitSignal("KMaxChanged")
 
-    def _knotEdited(self):
+    def _knotChanged(self, value):
         if DEBUG:
-            print("One knot has been edited")
+            print("One knot has been changed = ", value)
+        # adjust limits
+        kMax = self.kMaxBox.value()
+        for i in range(self.knotsBox.maximum()+1):
+            if self._knotPositions[i].isEnabled():
+                # the first one is never enabled
+                minimum = self._knotPositions[i-1].value() + 0.01
+                self._knotPositions[i].setMinimum(minimum)
+                if i < self.knotsBox.maximum():
+                    maximum = self._knotPositions[i+1].value() - 0.01
+                else:
+                    maximum = kMax
+                self._knotPositions[i].setMaximum(maximum)
+            else:
+                self._knotPositions[i].setMaximum(kMax)
         self.emitSignal("KnotPositionChanged")
 
     def _degreeChanged(self, value):
@@ -225,12 +237,17 @@ class XASPostEdgeParameters(qt.QGroupBox):
     def _fillKnots(self, positions=None, orders=None):
         if (positions is None) and (orders is None):
             positions, orders = self._getDefaultKnots()
+        kMin = self.kMinBox.value()
+        kMax = self.kMaxBox.value()
+        for i in range(self.knotsBox.maximum() + 1):
+            self._knotPositions[i].setMinimum(kMin)
+            self._knotPositions[i].setMaximum(kMax)
         n = len(positions)
         for i in range(n):
-            self._knotPositions[i].setText("%.3f" % positions[i])
+            self._knotPositions[i].setValue(positions[i])
             self._knotDegrees[i].setValue(orders[i])
         for i in range(n, self.knotsBox.maximum()+1):
-            self._knotPositions[i].setText("")
+            self._knotPositions[i].setValue(kMax)
 
     def _getDefaultKnots(self, kMin=None, kMax=None, knots=None):
         if kMin is None:
