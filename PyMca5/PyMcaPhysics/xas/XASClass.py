@@ -1069,7 +1069,7 @@ class XASClass(object):
             equidistant = False
 
         if units is None:
-            if energy[0] < 200:
+            if (energy[-1] - energy[0]) < 50:
                 units = "keV"
             else:
                 units = "eV"

@@ -92,6 +92,7 @@ class XASNormalizationParameters(qt.QGroupBox):
         preEdgeLabel = qt.QLabel(self)
         preEdgeLabel.setText("Pre-Edge")
         self.preEdgeSelector = XASNormalizationWindow.PolynomSelector(self)
+        self.preEdgeSelector.setCurrentIndex(3)
 
         # pre-edge regions
         preEdgeStartLabel = qt.QLabel(self)
@@ -118,6 +119,7 @@ class XASNormalizationParameters(qt.QGroupBox):
         postEdgeLabel = qt.QLabel(self)
         postEdgeLabel.setText("Post-Edge")
         self.postEdgeSelector = XASNormalizationWindow.PolynomSelector(self)
+        self.postEdgeSelector.setCurrentIndex(3)
 
         # post-edge regions
         postEdgeStartLabel = qt.QLabel(self)
