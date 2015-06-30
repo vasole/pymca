@@ -78,7 +78,7 @@ def use_cython():
     Check if cython is disabled from the command line or the environment.
     """
     if "WITH_CYTHON" in os.environ:
-        if os.environ["WITH_CYTHON"] == "False":
+        if os.environ["WITH_CYTHON"] in ["False", "0", 0]:
             print("No Cython requested by environment")
             return False
 
@@ -101,7 +101,7 @@ def use_fisx():
     Check if fisx is requested from the command line or the environment.
     """
     if "WITH_FISX" in os.environ:
-        if os.environ["WITH_FISX"] == "True":
+        if os.environ["WITH_FISX"] in ["True", "1", 1]:
             print("Use of fisx library requested by environment")
             return True
 
