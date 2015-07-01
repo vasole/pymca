@@ -57,7 +57,8 @@ class QDispatcher(qt.QWidget):
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
                         "TIFF Files (*.tif *.tiff *.TIF *.TIFF)",
-                        "CSV Files (*csv)"]
+                        "CSV Files (*csv)",
+                        "JCAMP-DX Files (*.jdx *.JDX)"]
         if QDataSource.NEXUS:
             fileTypeList.append("HDF5 Files (*.nxs *.hdf *.h5 *.hdf5)")
         fileTypeList.append("All Files (*)")

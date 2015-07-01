@@ -356,6 +356,7 @@ class StackSelector(object):
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
                         "OPUS-DPT Files (*.DPT *.dpt)",
+                        "JCAMP-DX Files (*.JDX *.jdx)",
                         "RTX Files (*.rtx *.RTX)",
                         "Lispix-RPL Files (*.rpl)",
                         "Renishaw-ASCII Files (*.txt *.TXT)",
