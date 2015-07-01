@@ -100,6 +100,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                                          control=control,
                                          position=position,
                                          **kw)
+        self.setDataMargins(0, 0, 0.025, 0.025)
         #self._togglePointsSignal()
         self.setPanWithArrowKeys(True)
         self.setWindowType("SCAN")
