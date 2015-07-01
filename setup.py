@@ -135,13 +135,13 @@ for line in ffile:
         break
 
 # Make sure we work with a clean MANIFEST file
+DEBIAN_SRC = False
 if "sdist" in sys.argv:
     manifestFile  = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  "MANIFEST")
     if os.path.exists(manifestFile):
         os.remove(manifestFile)
 
-    DEBIAN_SRC = False
     if "DEBIAN_SRC" in os.environ:
         if os.environ["DEBIAN_SRC"] in ["True", "1", 1]:
             print("Generating Debian specific source distribution without cython generated files")
