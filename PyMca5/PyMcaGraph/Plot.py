@@ -195,6 +195,8 @@ class Plot(PlotBase.PlotBase):
         self.enableZoom = self.setZoomModeEnabled
         self.setZoomModeEnabled(True)
 
+        self._defaultDataMargins = (0., 0., 0., 0.)
+
     def enableActiveCurveHandling(self, flag=True):
         activeCurve = None
         if not flag:
@@ -1041,7 +1043,27 @@ class Plot(PlotBase.PlotBase):
         self.replot()
         return
 
+    def getDataMargins(self):
+        """Get the default data margin ratios, see :meth:`setDataMargins`.
+
+        :return: The margin ratios for each side (xMin, xMax, yMin, yMax).
+        :rtype: A 4-tuple of floats.
+        """
+        return self._defaultDataMargins
+
+    def setDataMargins(self, xMinMargin=0., xMaxMargin=0.,
+                       yMinMargin=0., yMaxMargin=0.):
+        """Set the default data margins to use in :meth:`resetZoom`.
+
+        Set the default ratios of margins (as floats) to add around the data
+        inside the plot area for each side.
+        """
+        self._defaultDataMargins = (xMinMargin, xMaxMargin,
+                                    yMinMargin, yMaxMargin)
+
     def resetZoom(self, dataMargins=None):
+        if dataMargins is None:
+            dataMargins = self._defaultDataMargins
         self._plot.resetZoom(dataMargins)
 
     def setXAxisAutoScale(self, flag=True):
