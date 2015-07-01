@@ -141,6 +141,13 @@ if "sdist" in sys.argv:
     if os.path.exists(manifestFile):
         os.remove(manifestFile)
 
+    DEBIAN_SRC = False
+    if "DEBIAN_SRC" in os.environ:
+        if os.environ["DEBIAN_SRC"] in ["True", "1", 1]:
+            print("Generating Debian specific source distribution without cython generated files")
+            print("If you cython version is incompatible, it will be your problem")
+            DEBIAN_SRC = True
+
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # The following is not supported by python-2.3:
@@ -754,6 +761,25 @@ if USE_SMART_INSTALL_SCRIPTS:
 if os.name == "posix":
     cmdclass['install'] = install
     cmdclass['install_man'] = install_man
+
+if DEBIAN_SRC:
+    from distutils.command.sdist import sdist
+    class sdist_debian(sdist):
+        def prune_file_list(self):
+            sdist.prune_file_list(self)
+            directories = ["third-party/fisx/python/cython",
+                           "PyMca5/PyMcaGraph/ctools/_ctools/cython",
+                           "PyMca5/PyMcaPhysics/xas/_xas/cython"]
+            print("Removing files for debian source distribution")
+            for directory in directories:
+                for pyxfile in glob.glob(os.path.join(directory, "*.pyx")):
+                    for extension in [".c", ".cpp"]:
+                        cf = os.path.splitext(pyxfile)[0] + extension
+                        if os.path.isfile(cf):
+                            print("Excluding file %s" % cf)
+                            self.filelist.exclude_pattern(pattern=cf)
+
+    cmdclass['sdist'] = sdist_debian
 
 description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
