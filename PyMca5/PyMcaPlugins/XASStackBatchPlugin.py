@@ -191,7 +191,7 @@ class XASStackBatchPlugin(StackPluginBase.StackPluginBase):
             os.mkdir(outputDir)
         result = self.workerInstance.processMultipleSpectra(x=x,
                                                             y=stack,
-                                                            weight=0,
+                                                            weight=None,
                                                             ysum=spectrum,
                                                             mask=mask,
                                                             directory=outputDir,

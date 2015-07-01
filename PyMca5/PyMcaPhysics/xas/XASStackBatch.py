@@ -188,6 +188,7 @@ class XASStackBatch(object):
         exafsYPath = posixpath.join(entry, "exafs", "signal")
         ftXPath = posixpath.join(entry, "FT", "Radius")
         ftYPath = posixpath.join(entry, "FT", "Intensity")
+        ftImaginaryPath = posixpath.join(entry, "FT", "Imaginary")
 
         iXMin = 0
         iXMax = data.shape[-1] - 1
@@ -245,6 +246,11 @@ class XASStackBatch(object):
                                      dtype=numpy.float32,
                                      chunks=None,
                                      compression=None)
+        ftImaginary = out.require_dataset(ftImaginaryPath,
+                                     shape=shape,
+                                     dtype=numpy.float32,
+                                     chunks=None,
+                                     compression=None)
         spectrumX[:] = ddict["Energy"]
         normalizedX[:] = ddict["NormalizedEnergy"][normalizedIdx]
         exafsX[:] = ddict["EXAFSKValues"][exafsIdx]
@@ -294,6 +300,7 @@ class XASStackBatch(object):
                     exafsY[i, j] = ddict["EXAFSNormalized"][exafsIdx]
                     #ftX[i, j] = ddict["FT"]["FTRadius"]
                     ftY[i, j] = ddict["FT"]["FTIntensity"]
+                    ftImaginary[i, j] = ddict["FT"]["FTImaginary"]
                     j +=1
                 jStart = jEnd
         outputDict = {}
