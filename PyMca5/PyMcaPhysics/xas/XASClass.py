@@ -938,6 +938,7 @@ class XASClass(object):
         ddict["Grid"] = {}
         ddict["KMin"] = None
         ddict["KMax"] = None
+        ddict["KWeight"] = 0
         ddict["Delta"] = None
         ddict["Nodes"] = None
 
@@ -1111,6 +1112,8 @@ class XASClass(object):
         ddict["EXAFSEnergy"] = k2e(kValues)
         ddict["EXAFSKValues"] = kValues
         ddict["EXAFSSignal"] = cleanMu
+        if ddict["KWeight"]:
+            exafs *= pow(kValues, ddict["KWeight"])
         ddict["EXAFSNormalized"] = exafs
 
         set2 = dataSet * 1
@@ -1174,6 +1177,7 @@ class XASClass(object):
         # Grid
         kMin = config["KMin"]
         kMax = config["KMax"]
+        kWeight = config["KWeight"]
         if kMin is None:
             kMin = 2
         if kMax is None:
@@ -1199,6 +1203,7 @@ class XASClass(object):
         ddict["KnotsY"] = yNodes
         ddict["KMin"] = kMin
         ddict["KMax"] = kMax
+        ddict["KWeight"] = kWeight
         # TODO: add polynomials?
         return ddict
 

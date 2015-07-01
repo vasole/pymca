@@ -71,6 +71,16 @@ class XASPostEdgeParameters(qt.QGroupBox):
         self.kMaxBox.setSingleStep(0.1)
         self.kMaxBox.setEnabled(True)
 
+        # k Weight
+        kWeightLabel = qt.QLabel(self)
+        kWeightLabel.setText("K Weight:")
+        self.kWeightBox = qt.QSpinBox(self)
+        self.kWeightBox.setMinimum(0)
+        self.kWeightBox.setMaximum(3)
+        self.kWeightBox.setValue(0)
+        self.kWeightBox.setSingleStep(1)
+        self.kWeightBox.setEnabled(True)
+
         # knots
         knotsLabel = qt.QLabel(self)
         knotsLabel.setText("Knots:")
@@ -107,12 +117,14 @@ class XASPostEdgeParameters(qt.QGroupBox):
         self.mainLayout.addWidget(self.kMinBox, 0, 1)
         self.mainLayout.addWidget(kMaxLabel, 1, 0)
         self.mainLayout.addWidget(self.kMaxBox, 1, 1)
-        self.mainLayout.addWidget(knotsLabel, 2, 0)
-        self.mainLayout.addWidget(self.knotsBox, 2, 1)
-        self.mainLayout.addWidget(positionLabel, 3, 0)
-        self.mainLayout.addWidget(degreeLabel, 3, 1)
+        self.mainLayout.addWidget(kWeightLabel, 2, 0)
+        self.mainLayout.addWidget(self.kWeightBox, 2, 1)
+        self.mainLayout.addWidget(knotsLabel, 3, 0)
+        self.mainLayout.addWidget(self.knotsBox, 3, 1)
+        self.mainLayout.addWidget(positionLabel, 4, 0)
+        self.mainLayout.addWidget(degreeLabel, 4, 1)
 
-        lastRow = 3
+        lastRow = 4
         for i in range(self.knotsBox.maximum()+1):
             lastRow += 1
             self.mainLayout.addWidget(self._knotPositions[i], lastRow, 0)
@@ -124,6 +136,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
         # connect
         self.kMinBox.valueChanged[float].connect(self._kMinChanged)
         self.kMaxBox.valueChanged[float].connect(self._kMaxChanged)
+        self.kWeightBox.valueChanged[int].connect(self._kWeightChanged)
         self.knotsBox.valueChanged[int].connect(self._knotNumberChanged)
         for i in range(self.knotsBox.maximum() + 1):
             self._knotPositions[i].valueChanged[float].connect(self._knotChanged)
@@ -174,6 +187,12 @@ class XASPostEdgeParameters(qt.QGroupBox):
         if self.__connected:
             self.emitSignal("KMaxChanged")
 
+    def _kWeightChanged(self, value):
+        if DEBUG:
+            print("Current kWeight Value =", value)
+        if self.__connected:
+            self.emitSignal("KWeightChanged")
+
     def _knotChanged(self, value):
         if DEBUG:
             print("One knot has been changed = ", value)
@@ -210,6 +229,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
         ddict = {}
         ddict["KMin"] = self.kMinBox.value()
         ddict["KMax"] = self.kMaxBox.value()
+        ddict["KWeight"] = self.kWeightBox.value()
         ddict["Knots"] = {}
         ddict["Knots"]["Number"] = self.knotsBox.value()
         ddict["Knots"]["Values"] = []
@@ -239,6 +259,9 @@ class XASPostEdgeParameters(qt.QGroupBox):
             kMax = ddict.get("KMax", self.kMaxBox.value())
             if kMax is not None:
                 self.kMaxBox.setValue(kMax)
+            kWeight = ddict.get("KWeight", self.kWeightBox.value())
+            if kWeight is not None:
+                self.kWeightBox.setValue(kWeight)
             nKnots = self.knotsBox.value()
             if "Knots" in ddict:
                 self.knotsBox.setValue(ddict["Knots"].get("Number", nKnots))
