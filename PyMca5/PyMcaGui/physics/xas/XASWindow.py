@@ -159,6 +159,7 @@ class XASMdiArea(qt.QMdiArea):
             plot.setWindowTitle(title)
             self.addSubWindow(plot)
             self._windowDict[title] = plot
+            plot.setDataMargins(0, 0, 0.025, 0.025)
         self._windowList.reverse()
         self.setActivationOrder(qt.QMdiArea.StackingOrder)
         self.tileSubWindows()
@@ -205,7 +206,7 @@ class XASMdiArea(qt.QMdiArea):
                ddict["NormalizedSignal"], legend="Post", replot=False)
         plot.addCurve(ddict["NormalizedEnergy"],
                ddict["NormalizedBackground"], legend="Pre",replot=False)
-        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        plot.resetZoom()
         #idxK = ddict["EXAFSKValues"] >= 0
         idx = (ddict["EXAFSKValues"] >= ddict["KMin"]) & \
               (ddict["EXAFSKValues"] <= ddict["KMax"])
@@ -243,7 +244,7 @@ class XASMdiArea(qt.QMdiArea):
                           linestyle="",
                           symbol="o",
                           color="orange")
-        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        plot.resetZoom()
         plot = self._windowDict["Signal"]
         if ddict["KWeight"]:
             if ddict["KWeight"] == 1:
@@ -268,7 +269,7 @@ class XASMdiArea(qt.QMdiArea):
                       color="red",
                       replace=False,
                       replot=False)
-        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        plot.resetZoom()
         plot = self._windowDict["FT"]
         plot.addCurve(ddict["FT"]["FTRadius"],
                       ddict["FT"]["FTIntensity"],
@@ -295,7 +296,7 @@ class XASMdiArea(qt.QMdiArea):
                       color="red",
                       replace=False,
                       replot=False)
-        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        plot.resetZoom()
         self.sigXASMdiAreaSignal.emit(ddict)
 
 if __name__ == "__main__":
