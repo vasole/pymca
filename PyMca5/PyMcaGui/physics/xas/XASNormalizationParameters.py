@@ -58,10 +58,6 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
 
-        # the setup button
-        #self.setupButton = qt.QPushButton(self)
-        #self.setupButton.setText("SETUP")
-        #self.setupButton.setAutoDefault(False)
         # the normalization method
         normalizationLabel = qt.QLabel(self)
         normalizationLabel.setText("Method:")
@@ -143,7 +139,6 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.postEdgeEndBox.setEnabled(True)
 
         # arrange everything
-        #self.mainLayout.addWidget(self.setupButton, 0, 0, 1, 2)
         self.mainLayout.addWidget(normalizationLabel, 0, 0)
         self.mainLayout.addWidget(self.normalizationSelector, 0, 1)
         self.mainLayout.addWidget(self.e0CheckBox, 1, 0)
@@ -166,7 +161,6 @@ class XASNormalizationParameters(qt.QGroupBox):
         self.mainLayout.addWidget(self.postEdgeEndBox, 8, 1)
 
         # connect
-        #self.setupButton.clicked.connect(self._setupClicked)
         self.normalizationSelector.activated[int].connect(self._normalizationChanged)
         self.e0CheckBox.toggled.connect(self._e0Toggled)
         self.e0SpinBox.valueChanged[float].connect(self._e0Changed)
@@ -183,26 +177,9 @@ class XASNormalizationParameters(qt.QGroupBox):
         if self.__connected:
             self._emitSignal("JumpNormalizationChanged")
 
-    def _setupClicked(self):
-        if self._energy is None:
-            print("SETUP CLICKED BUT IGNORED")
-            return
-        self._emitSignal("SetupClicked")
-        return
-        if self._dialog is None:
-            self._dialog = XASNormalizationWindow.XASNormalizationDialog(self,
-                                                                         mu,
-                                                                         energy=energy)
-        else:
-            self._dialog.setSpectrum(energy, mu)
-        print("RECOVER CURRENT PARAMETERS AND UPDATE DIALOG")
-        ret = self._dialog.exec_()
-        if ret:
-            print("RECOVER PARAMETERS FROM DIALOG AND UPDATE")
-
     def setSpectrum(self, energy, mu):
         # try to detect keV
-        if energy[0] < 200:
+        if abs(energy[-1]-energy[0]) < 50:
             self._energy = energy * 1000.
         else:
             self._energy = energy * 1.0

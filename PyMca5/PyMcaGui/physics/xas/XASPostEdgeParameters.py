@@ -178,6 +178,11 @@ class XASPostEdgeParameters(qt.QGroupBox):
     def _kMaxChanged(self, value):
         if DEBUG:
             print("Current kMax Value =", value)
+        if value <= self.kMinBox.value():
+            # I should check if we have the focus prior to
+            # raise any error.
+            # This situation happens during manual editing
+            return
         oldValue = self.__connected
         self.__connected = False
         try:
