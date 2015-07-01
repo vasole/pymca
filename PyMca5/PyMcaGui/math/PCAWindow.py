@@ -661,6 +661,8 @@ class PCAWindow(MaskImageWidget.MaskImageWidget):
             # it needs update
             self._updateScatterPlotWidget()
         self.scatterPlotWidget.show()
+        # make sure it is visible
+        self.scatterPlotWidget.raise_()
 
 def test2():
     app = qt.QApplication([])

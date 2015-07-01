@@ -270,7 +270,25 @@ class XASMdiArea(qt.QMdiArea):
                       ylabel="Arbitrary Units",
                       replace=True,
                       replot=False)
-        plot.resetZoom([0.0, 0.0, 0.0, 0.025])
+        """
+        plot.addCurve(ddict["FT"]["FTRadius"],
+                      ddict["FT"]["FTReal"],
+                      legend="FT Real",
+                      xlabel="R (Angstrom)",
+                      ylabel="Arbitrary Units",
+                      color="green",
+                      replace=False,
+                      replot=False)
+        """
+        plot.addCurve(ddict["FT"]["FTRadius"],
+                      ddict["FT"]["FTImaginary"],
+                      legend="FT Imaginary",
+                      xlabel="R (Angstrom)",
+                      ylabel="Arbitrary Units",
+                      color="red",
+                      replace=False,
+                      replot=False)
+        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
         self.sigXASMdiAreaSignal.emit(ddict)
 
 if __name__ == "__main__":

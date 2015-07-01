@@ -141,6 +141,10 @@ class XASPlugin(Plugin1DBase.Plugin1DBase):
             raise ValueError("Please select an active curve")
             return
         x, y, legend0, info = activeCurve
+        xmin, xmax = self.getGraphXLimits()
+        idx = (x >= xmin) & (x <= xmax)
+        x = x[idx]
+        y = y[idx]
         if self.widget is None:
             self._createWidget()
         self.widget.setSpectrum(x, y)

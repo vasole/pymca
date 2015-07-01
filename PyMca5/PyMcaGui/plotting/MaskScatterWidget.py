@@ -55,8 +55,8 @@ IconDict = PlotWindow.IconDict
 
 class MaskScatterWidget(PlotWindow.PlotWindow):
     sigMaskScatterWidgetSignal = qt.pyqtSignal(object)
-    DEFAULT_COLORMAP_INDEX = 1
-    DEFAULT_COLORMAP_LOG_FLAG = False
+    DEFAULT_COLORMAP_INDEX = 2
+    DEFAULT_COLORMAP_LOG_FLAG = True
 
     def __init__(self, parent=None, backend=None, plugins=False, newplot=False,
                  control=False, position=False, maxNRois=1, grid=False,

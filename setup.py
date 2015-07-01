@@ -78,7 +78,7 @@ def use_cython():
     Check if cython is disabled from the command line or the environment.
     """
     if "WITH_CYTHON" in os.environ:
-        if os.environ["WITH_CYTHON"] == "False":
+        if os.environ["WITH_CYTHON"] in ["False", "0", 0]:
             print("No Cython requested by environment")
             return False
 
@@ -101,7 +101,7 @@ def use_fisx():
     Check if fisx is requested from the command line or the environment.
     """
     if "WITH_FISX" in os.environ:
-        if os.environ["WITH_FISX"] == "True":
+        if os.environ["WITH_FISX"] in ["True", "1", 1]:
             print("Use of fisx library requested by environment")
             return True
 
@@ -135,11 +135,18 @@ for line in ffile:
         break
 
 # Make sure we work with a clean MANIFEST file
+DEBIAN_SRC = False
 if "sdist" in sys.argv:
     manifestFile  = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  "MANIFEST")
     if os.path.exists(manifestFile):
         os.remove(manifestFile)
+
+    if "DEBIAN_SRC" in os.environ:
+        if os.environ["DEBIAN_SRC"] in ["True", "1", 1]:
+            print("Generating Debian specific source distribution without cython generated files")
+            print("If you cython version is incompatible, it will be your problem")
+            DEBIAN_SRC = True
 
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
@@ -754,6 +761,25 @@ if USE_SMART_INSTALL_SCRIPTS:
 if os.name == "posix":
     cmdclass['install'] = install
     cmdclass['install_man'] = install_man
+
+if DEBIAN_SRC:
+    from distutils.command.sdist import sdist
+    class sdist_debian(sdist):
+        def prune_file_list(self):
+            sdist.prune_file_list(self)
+            directories = ["third-party/fisx/python/cython",
+                           "PyMca5/PyMcaGraph/ctools/_ctools/cython",
+                           "PyMca5/PyMcaPhysics/xas/_xas/cython"]
+            print("Removing files for debian source distribution")
+            for directory in directories:
+                for pyxfile in glob.glob(os.path.join(directory, "*.pyx")):
+                    for extension in [".c", ".cpp"]:
+                        cf = os.path.splitext(pyxfile)[0] + extension
+                        if os.path.isfile(cf):
+                            print("Excluding file %s" % cf)
+                            self.filelist.exclude_pattern(pattern=cf)
+
+    cmdclass['sdist'] = sdist_debian
 
 description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
