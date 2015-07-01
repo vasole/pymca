@@ -673,6 +673,7 @@ def getFT(k, exafs, npoints=2048, rrange=(0.0, 7.0),
     if krange is not None:
         idx = (k >= krange[0]) & (k <= krange[1])
         k = k[idx]
+        exafs = exafs[idx]
     if wweights is None:
         wweights = getFTWindowWeights(k,
                                       window=window,

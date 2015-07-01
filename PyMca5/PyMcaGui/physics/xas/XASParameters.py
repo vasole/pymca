@@ -96,6 +96,10 @@ class XASParameters(qt.QWidget):
         self.loadButton.clicked.connect(self._loadClicked)
         self.saveButton.clicked.connect(self._saveClicked)
 
+    def setMaximumK(self, value):
+        self.postEdgeWidget.setMaximumK(value)
+        self.fourierTransformWidget.setMaximumK(value)
+
     def emitSignal(self, event):
         ddict = self.getParameters()
         ddict["event"] = event
@@ -144,6 +148,7 @@ class XASParameters(qt.QWidget):
         if DEBUG:
             print("_postEdgeParameterSlot ", ddict)
         # Should I change the event to "EXAFSChanged"?
+        self.fourierTransformWidget.setKRange([ddict["KMin"], ddict["KMax"]])
         self._emitSignal(ddict["event"])
 
     def _fourierTransformParameterSlot(self, ddict):

@@ -176,7 +176,7 @@ class XASMdiArea(qt.QMdiArea):
     def setSpectrum(self, energy, mu):
         for key in self._windowDict:
             self._windowDict[key].clearCurves()
-        if energy[0] < 200:
+        if abs(energy[-1] - energy[0]) < 50:
             energy = energy * 1000.
         self._windowDict["Spectrum"].addCurve(energy,
                                               mu,
@@ -245,11 +245,18 @@ class XASMdiArea(qt.QMdiArea):
                           color="orange")
         plot.resetZoom([0.0, 0.0, 0.025, 0.025])
         plot = self._windowDict["Signal"]
+        if ddict["KWeight"]:
+            if ddict["KWeight"] == 1:
+                ylabel = "EXAFS Signal * k"
+            else:
+                ylabel = "EXAFS Signal * k^%d" % ddict["KWeight"]
+        else:
+            ylabel = "EXAFS Signal"
         plot.addCurve(ddict["EXAFSKValues"][idx],
                       ddict["EXAFSNormalized"][idx],
                       legend="Normalized EXAFS",
                       xlabel="K",
-                      ylabel="EXAFS Signal",
+                      ylabel=ylabel,
                       replace=True,
                       replot=False)
         plot.addCurve(ddict["FT"]["K"],
