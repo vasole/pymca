@@ -16,6 +16,8 @@ Correct bug on customized fit when using anchors.
 
 Correct bug saving MCA spectra when using the Taurus plugin.
 
+Correct swap of red and blue components when saving via matplotlib.
+
 Correct regular mesh plotting.
 
 VERSION 5.0.3
