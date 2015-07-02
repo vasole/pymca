@@ -36,6 +36,23 @@ IconDict = PyMca_Icons.IconDict
 
 DEBUG = 0
 
+def myFloat(x):
+    try:
+        return float(x)
+    except ValueError:
+        if ',' in x:
+            try:
+                return float(x.replace(',','.'))
+            except:
+                return float(x)
+        elif '.' in x:
+            try:
+                return float(x.replace('.',','))
+            except:
+                return float(x)
+        else:
+            raise
+
 class XASPostEdgeParameters(qt.QGroupBox):
     sigPostEdgeParametersSignal = qt.pyqtSignal(object)
 
@@ -245,7 +262,7 @@ class XASPostEdgeParameters(qt.QGroupBox):
                 pass
                 #ddict["Knots"]["Values"].append(ddict["KMin"])
             else:
-                ddict["Knots"]["Values"].append(float(txt))
+                ddict["Knots"]["Values"].append(myFloat(txt))
             ddict["Knots"]["Orders"].append(self._knotDegrees[i].value())
         return ddict
 
