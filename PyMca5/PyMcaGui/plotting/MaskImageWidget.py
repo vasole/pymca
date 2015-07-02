@@ -1874,6 +1874,11 @@ class MaskImageWidget(qt.QWidget):
         elif ddict['event'] in ["mouseMoved", "MouseAt", "mouseClicked"]:
             if ownsignal:
                 pass
+            if None in [ddict['x'], ddict['y']]:
+                if DEBUG:
+                    print("Signal from outside region", ddict)
+                return
+
             if self.graphWidget.infoWidget.isHidden() or self.__brushMode:
                 row, column = convertToRowAndColumn(ddict['x'], ddict['y'], self.__imageData.shape,
                                                       xScale=self._xScale,
