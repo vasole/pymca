@@ -46,6 +46,7 @@ DEBUG = 0
 class XASDialog(qt.QDialog):
     def __init__(self, parent=None, analyzer=None, backend=None):
         super(XASDialog, self).__init__(parent)
+        self.setWindowTitle("XAS Window")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
