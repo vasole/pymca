@@ -44,6 +44,7 @@ class StackPluginResultsWindow(MaskImageWidget.MaskImageWidget):
         ddict = {}
         ddict['usetab'] = kw.get("usetab",True)
         ddict['aspect'] = kw.get("aspect",True)
+        ddict['profileselection'] = kw.get("profileselection",True)
         ddict.update(kw)
         ddict['standalonesave'] = False
         MaskImageWidget.MaskImageWidget.__init__(self, *var, **ddict)
