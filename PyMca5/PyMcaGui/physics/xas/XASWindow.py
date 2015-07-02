@@ -156,7 +156,10 @@ class XASMdiArea(qt.QMdiArea):
         self._windowList = ["Spectrum", "Post-edge", "Signal", "FT"]
         self._windowList.reverse()
         for title in self._windowList:
-            plot = PlotWindow.PlotWindow(self, backend=backend)
+            plot = PlotWindow.PlotWindow(self,
+                                         #control=True,
+                                         position=True,
+                                         backend=backend)
             plot.setWindowTitle(title)
             self.addSubWindow(plot)
             self._windowDict[title] = plot
@@ -193,19 +196,20 @@ class XASMdiArea(qt.QMdiArea):
         idx = (ddict["NormalizedEnergy"] >= ddict["NormalizedPlotMin"]) & \
                   (ddict["NormalizedEnergy"] <= ddict["NormalizedPlotMax"])
         plot = self._windowDict["Spectrum"]
-        plot.addCurve(ddict["Energy"], ddict["Mu"], legend="Spectrum",
+        e0 = ddict["Edge"]
+        plot.addCurve(ddict["Energy"] - e0, ddict["Mu"], legend="Spectrum",
                       xlabel="Energy (eV)", ylabel="Absorption (a.u.)",
                       replot=False, replace=True)
-        plot.addCurve(ddict["NormalizedEnergy"][idx],
+        plot.addCurve(ddict["NormalizedEnergy"][idx]  - e0,
                       ddict["NormalizedMu"][idx],
                       legend="Normalized",
                       xlabel="Energy (eV)",
                       ylabel="Absorption (a.u.)",
                       yaxis="right",
                       replot=False)
-        plot.addCurve(ddict["NormalizedEnergy"],
+        plot.addCurve(ddict["NormalizedEnergy"] - e0,
                ddict["NormalizedSignal"], legend="Post", replot=False)
-        plot.addCurve(ddict["NormalizedEnergy"],
+        plot.addCurve(ddict["NormalizedEnergy"] - e0,
                ddict["NormalizedBackground"], legend="Pre",replot=False)
         plot.resetZoom()
         #idxK = ddict["EXAFSKValues"] >= 0
