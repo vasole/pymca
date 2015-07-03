@@ -777,7 +777,30 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 
         if self.config['colorbar'] is not None:
             barorientation = self.config['colorbar']
-            self._colorbar = self.figure.colorbar(self._image,
+            if barorientation == "vertical":
+                xlim = self.axes.get_xlim()
+                deltaX = abs(xlim[1] - xlim[0])
+                deltaY = abs(ylim[1] - ylim[0])
+                ratio = deltaY/ float(deltaX)
+                shrink = ratio
+                self._colorbar = self.figure.colorbar(self._image,
+                                        fraction=0.046, pad=0.04,
+                                        #shrink=shrink,
+                                        aspect=20 * shrink,
+                                        orientation=barorientation)
+                if ratio < 0.51:
+                    nTicks = 5
+                    if ratio < 0.2:
+                        nTicks = 3
+                    try:
+                        tick_locator = MaxNLocator(nTicks)
+                        self._colorbar.locator = tick_locator
+                        self._colorbar.update_ticks()
+                    except:
+                        print("Colorbar error", sys.exc_info())
+                        pass
+            else:
+                self._colorbar = self.figure.colorbar(self._image,
                                         orientation=barorientation)
 
         #contour plot
@@ -951,9 +974,11 @@ class QPyMcaMatplotlibImage(FigureCanvas):
 def test():
     app = qt.QApplication([])
     a=numpy.arange(256.)
-    a.shape = 16, 16
+    a.shape = 8, 32
     w = SaveImageSetup(None, a)
-    w.setParameters(w.getParameters())
+    ddict = w.getParameters()
+    ddict["colorbar"] = "vertical"
+    w.setParameters(ddict)
     w.show()
     app.exec_()
 
