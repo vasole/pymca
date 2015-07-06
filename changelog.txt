@@ -1,6 +1,10 @@
 VERSION 5.1.0
 
-Add plugin to calculate multiple ROIs in one go.
+Automatic download of user plugins.
+
+Allow the use of user specified physical constants across different installed versions.
+
+Add stack plugin to calculate multiple ROIs in one go.
 
 Add basic JCAMP-DX reading support.
 
