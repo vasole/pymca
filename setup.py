@@ -963,6 +963,9 @@ if build_ext:
             print("WARNING: Could not delete file. Assuming up-to-date.")
     if not os.path.exists(multiple_pyx):
         pyx = glob.glob(os.path.join(cython_dir, "*pyx"))
+        # We have to put the name PyEPDL prior to PyElement
+        # irrespectively of the platform
+        pyx = sorted(pyx, key=str.lower)
         f = open(multiple_pyx, 'wb')
         for fname in pyx:
             inFile = open(fname, 'rb')
