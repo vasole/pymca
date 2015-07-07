@@ -656,7 +656,9 @@ class FitParamWidget(FitParamForm):
                     attpar= [0, '-', 0., 0., 1.0]
                 else:
                     attpar= [0, '-', 0., 0., 45.0, 45.0, 0, 90.0]
-                self.__parError("ATTENUATORS", "Attenuators parameters error on:\n%s\nReset it to zero."%self.attenuators[idx][0])
+                self.__parError("ATTENUATORS",
+                                "Attenuators parameters error on:\n%s\nI reset it to zero." % \
+                                self.attenuators[idx])
             pars[att]= attpar
         return pars
 
@@ -703,7 +705,8 @@ class FitParamWidget(FitParamForm):
             #else:
             except:
                 attpar= [0, '-', 0., 0.]
-                self.__parError("ATTENUATORS", "Multilayer parameters error on:\n%s\nReset it to zero."%att)
+                self.__parError("ATTENUATORS",
+                                "Multilayer parameters error on:\n%s\nReset it to zero." % att)
             pars[att]= attpar
         return pars
 
@@ -790,7 +793,8 @@ class FitParamWidget(FitParamForm):
             pars["fixedeta_factor"]= int(self.etaCheck.isChecked())
             return pars
         except:
-            self.__parError("PEAK SHAPE", "Peak Shape Parameter error on:\n%s"%err)
+            self.__parError("PEAK SHAPE",
+                            "Peak Shape Parameter error on:\n%s" % err)
             return None
 
     def __setFitPar(self):
@@ -917,7 +921,8 @@ class FitParamWidget(FitParamForm):
             return pars
         #else:
         except:
-            self.__parError("FIT", "Fit parameter error on:\n%s"%err)
+            self.__parError("FIT",
+                            "Fit parameter error on:\n%s" % err)
             return None
 
     def __setPeaksPar(self):
