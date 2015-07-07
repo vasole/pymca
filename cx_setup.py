@@ -176,7 +176,9 @@ try:
     import fisx
     FISX = True
 except ImportError:
+    print("Please install fisx module prior to freeze PyMca")
     FISX = False
+    raise
 
 #some standard encodings
 includes.append('encodings.ascii')
