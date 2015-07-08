@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -396,7 +396,7 @@ class SimpleFitGui(qt.QWidget):
 def test():
     import numpy
     #import DefaultFitFunctions as SpecfitFunctions
-    from PyMca import SpecfitFunctions
+    from PyMca5.PyMca import SpecfitFunctions
     a=SpecfitFunctions.SpecfitFunctions()
     x = numpy.arange(1000).astype(numpy.float)
     p1 = numpy.array([1500,100.,50.0])
@@ -417,7 +417,7 @@ def test():
         w = SimpleFitGui(fit=fit)
         w.setData(x, y, xmin=x[0], xmax=x[-1])
         w.show()
-        import SimpleFitUserEstimatedFunctions
+        from PyMca5.PyMca import SimpleFitUserEstimatedFunctions
         fname = SimpleFitUserEstimatedFunctions.__file__
         w.importFunctions(fname)
         w.setFitFunction('User Estimated Gaussians')
