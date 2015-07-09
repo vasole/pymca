@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -32,6 +32,7 @@ import os
 from PyMca5.PyMcaCore import EventHandler
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 
 QTVERSION = qt.qVersion()
 from . import FitConfigGui
@@ -415,17 +416,18 @@ class SpecfitGui(qt.QWidget):
         if item in self.specfit.theorylist:
             self.specfit.settheory(item)
         else:
-            # TODO why this strange condition
-            if 1:
-                fn = qt.QFileDialog.getOpenFileName()
-            else:
-                dlg=qt.QFileDialog(qt.QString.null,qt.QString.null,self,None,1)
-                dlg.show()
-                fn=dlg.selectedFile()
-            if fn.isEmpty():
+            filelist = PyMcaFileDialogs.getFileList(self,
+                         message="Select python module with your function(s)",
+                         filetypelist=["Python Files (*.py)",
+                                       "All Files (*)"],
+                         mode="OPEN",
+                         single=True,
+                         getfilter=False)
+                                
+            if not len(filelist):           
                 functionsfile = ""
             else:
-                functionsfile="%s" % fn
+                functionsfile = filelist[0]
             if len(functionsfile):
                 try:
                     if self.specfit.importfun(functionsfile):
