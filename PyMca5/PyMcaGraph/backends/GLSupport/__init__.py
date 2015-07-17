@@ -40,7 +40,7 @@ This module provides convenient classes for the OpenGL rendering backend.
 from .GLContext import *  # noqa
 from .GLFramebuffer import *  # noqa
 from .GLPlotCurve import *  # noqa
-from .GLPlotFrame import GLPlotFrame, PlotAxis  # noqa
+from .GLPlotFrame import *  # noqa
 from .GLPlotImage import *  # noqa
 from .GLProgram import GLProgram  # noqa
 from .GLSupport import *  # noqa

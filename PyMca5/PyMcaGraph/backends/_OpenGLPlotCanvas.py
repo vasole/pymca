@@ -414,7 +414,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
         self._plotHasFocus = set()
 
-        self._plotFrame = GLPlotFrame(self._margins)
+        self._plotFrame = GLPlotFrame2D(self._margins)
 
         PlotBackend.__init__(self, parent, **kw)
 
