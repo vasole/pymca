@@ -132,10 +132,11 @@ class HDF5Stack1D(DataObject.DataObject):
         # to a selected top level dataset
         if len(entryNames) == 0:
             if scanlist is not None:
-                if len(scanlist) == 1:
-                    if scanlist[0] == ySelection:
-                        scanlist = None
-                        USE_JUST_KEYS = True
+                if (ySelection in scanlist) or \
+                   (xSelection in scanlist) or \
+                   (mSelection in scanlist):
+                    scanlist = None
+                    USE_JUST_KEYS = True
         elif len(entryNames) == 1:
             # deal with the SOLEIL case of one entry but with different name
             # in different files

@@ -1,3 +1,29 @@
+VERSION 5.1.0
+
+Automatic download of user plugins.
+
+Allow the use of user specified physical constants across different installed versions.
+
+Add stack plugin to calculate multiple ROIs in one go.
+
+Add basic JCAMP-DX reading support.
+
+Add crosshair cursor option to the plot options menu.
+
+Add EXAFS extraction capabilities to the Main Window and the ROI Imaging Tool.
+
+Improved right axis autoscaling.
+
+Panning with the keyboard arrow keys implemented in most 1D plots.
+
+Correct bug on customized fit when using anchors.
+
+Correct bug saving MCA spectra when using the Taurus plugin.
+
+Correct swap of red and blue components when saving via matplotlib.
+
+Correct regular mesh plotting.
+
 VERSION 5.0.3
 
 Recover Advanced fit graphics saving in logarithmic mode.

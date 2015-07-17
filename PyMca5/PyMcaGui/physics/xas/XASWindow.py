@@ -46,6 +46,7 @@ DEBUG = 0
 class XASDialog(qt.QDialog):
     def __init__(self, parent=None, analyzer=None, backend=None):
         super(XASDialog, self).__init__(parent)
+        self.setWindowTitle("XAS Window")
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
@@ -155,10 +156,14 @@ class XASMdiArea(qt.QMdiArea):
         self._windowList = ["Spectrum", "Post-edge", "Signal", "FT"]
         self._windowList.reverse()
         for title in self._windowList:
-            plot = PlotWindow.PlotWindow(self, backend=backend)
+            plot = PlotWindow.PlotWindow(self,
+                                         #control=True,
+                                         position=True,
+                                         backend=backend)
             plot.setWindowTitle(title)
             self.addSubWindow(plot)
             self._windowDict[title] = plot
+            plot.setDataMargins(0, 0, 0.025, 0.025)
         self._windowList.reverse()
         self.setActivationOrder(qt.QMdiArea.StackingOrder)
         self.tileSubWindows()
@@ -176,7 +181,7 @@ class XASMdiArea(qt.QMdiArea):
     def setSpectrum(self, energy, mu):
         for key in self._windowDict:
             self._windowDict[key].clearCurves()
-        if energy[0] < 200:
+        if abs(energy[-1] - energy[0]) < 50:
             energy = energy * 1000.
         self._windowDict["Spectrum"].addCurve(energy,
                                               mu,
@@ -191,21 +196,22 @@ class XASMdiArea(qt.QMdiArea):
         idx = (ddict["NormalizedEnergy"] >= ddict["NormalizedPlotMin"]) & \
                   (ddict["NormalizedEnergy"] <= ddict["NormalizedPlotMax"])
         plot = self._windowDict["Spectrum"]
-        plot.addCurve(ddict["Energy"], ddict["Mu"], legend="Spectrum",
+        e0 = ddict["Edge"]
+        plot.addCurve(ddict["Energy"] - e0, ddict["Mu"], legend="Spectrum",
                       xlabel="Energy (eV)", ylabel="Absorption (a.u.)",
                       replot=False, replace=True)
-        plot.addCurve(ddict["NormalizedEnergy"][idx],
+        plot.addCurve(ddict["NormalizedEnergy"][idx]  - e0,
                       ddict["NormalizedMu"][idx],
                       legend="Normalized",
                       xlabel="Energy (eV)",
                       ylabel="Absorption (a.u.)",
                       yaxis="right",
                       replot=False)
-        plot.addCurve(ddict["NormalizedEnergy"],
+        plot.addCurve(ddict["NormalizedEnergy"] - e0,
                ddict["NormalizedSignal"], legend="Post", replot=False)
-        plot.addCurve(ddict["NormalizedEnergy"],
+        plot.addCurve(ddict["NormalizedEnergy"] - e0,
                ddict["NormalizedBackground"], legend="Pre",replot=False)
-        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        plot.resetZoom()
         #idxK = ddict["EXAFSKValues"] >= 0
         idx = (ddict["EXAFSKValues"] >= ddict["KMin"]) & \
               (ddict["EXAFSKValues"] <= ddict["KMax"])
@@ -243,13 +249,20 @@ class XASMdiArea(qt.QMdiArea):
                           linestyle="",
                           symbol="o",
                           color="orange")
-        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        plot.resetZoom()
         plot = self._windowDict["Signal"]
+        if ddict["KWeight"]:
+            if ddict["KWeight"] == 1:
+                ylabel = "EXAFS Signal * k"
+            else:
+                ylabel = "EXAFS Signal * k^%d" % ddict["KWeight"]
+        else:
+            ylabel = "EXAFS Signal"
         plot.addCurve(ddict["EXAFSKValues"][idx],
                       ddict["EXAFSNormalized"][idx],
                       legend="Normalized EXAFS",
                       xlabel="K",
-                      ylabel="EXAFS Signal",
+                      ylabel=ylabel,
                       replace=True,
                       replot=False)
         plot.addCurve(ddict["FT"]["K"],
@@ -261,7 +274,7 @@ class XASMdiArea(qt.QMdiArea):
                       color="red",
                       replace=False,
                       replot=False)
-        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        plot.resetZoom()
         plot = self._windowDict["FT"]
         plot.addCurve(ddict["FT"]["FTRadius"],
                       ddict["FT"]["FTIntensity"],
@@ -288,7 +301,7 @@ class XASMdiArea(qt.QMdiArea):
                       color="red",
                       replace=False,
                       replot=False)
-        plot.resetZoom([0.0, 0.0, 0.025, 0.025])
+        plot.resetZoom()
         self.sigXASMdiAreaSignal.emit(ddict)
 
 if __name__ == "__main__":

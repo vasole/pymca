@@ -2823,6 +2823,8 @@ class McaGraphWindow(PlotWindow.PlotWindow):
                                        position=position,
                                        control=control,
                                        **kw)
+        self.setDataMargins(0, 0, 0.025, 0.025)
+        self.setPanWithArrowKeys(True)
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
         self.setGraphYLabel("Counts")
         if self.energyButton.isChecked():

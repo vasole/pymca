@@ -241,7 +241,10 @@ class XASPlugin(Plugin1DBase.Plugin1DBase):
             idx = (ddict["EXAFSKValues"] >= ddict["KMin"]) & \
                   (ddict["EXAFSKValues"] <= ddict["KMax"])
             x = ddict["EXAFSKValues"][idx]
-            y = ddict["EXAFSNormalized"][idx] * pow(x, weight)
+            if ddict["KWeight"] != weight:
+                y =  ddict["EXAFSNormalized"][idx] * (pow(x, weight-ddict["KWeight"]))
+            else:
+                y = ddict["EXAFSNormalized"][idx]
             if i == 0:
                 replace = True
             else:

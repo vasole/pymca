@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -92,7 +92,7 @@ shifting the curves.
 
         def applyMethod(self, methodName):
             if methodName != "Shift":
-                raise InvalidArgument("Method %s not valid" % methodName)
+                raise ValueError("Method %s not valid" % methodName)
             allCurves = self.getAllCurves()
             increment = 0.1
             for i in range(len(allCurves)):

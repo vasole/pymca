@@ -190,7 +190,13 @@ class XASFourierTransformParameters(qt.QGroupBox):
         if DEBUG:
             print("Current kMax Value =", value)
         if self.__connected:
-            self.emitSignal("FTKMaxChanged")
+            if value > self.kMinBox.value():
+                self.emitSignal("FTKMaxChanged")
+            else:
+                # I should check if we have the focus prior to
+                # raise any error.
+                # This situation happens during manual editing
+                pass
 
     def _kStepChanged(self, value):
         if DEBUG:
@@ -218,7 +224,8 @@ class XASFourierTransformParameters(qt.QGroupBox):
         for i in range(self.windowSelector.count()):
             ddict["WindowList"].append(str(self.windowSelector.itemText(i)))
         ddict["WindowApodization"] = self.apodizationBox.value()
-        ddict["WindowRange"] = None
+        ddict["WindowRange"] = [self.kMinBox.value(),
+                                self.kMaxBox.value()]
         ddict["KStep"] = self.kStepBox.value()
         ddict["Points"] = int(str(self.pointsSelector.currentText()))
         ddict["Range"] = [0.0, self.rMaxBox.value()]
@@ -246,8 +253,6 @@ class XASFourierTransformParameters(qt.QGroupBox):
             if ddict["WindowRange"] not in [None, "None", "none"]:
                 self.kMinBox.setValue(ddict["WindowRange"][0])
                 self.kMaxBox.setValue(ddict["WindowRange"][-1])
-            else:
-                print("LIMITS TO BE UPDATED")
             self.kStepBox.setValue(ddict["KStep"])
             self.rMaxBox.setValue(ddict["Range"][-1])
             v = 0
@@ -267,11 +272,21 @@ class XASFourierTransformParameters(qt.QGroupBox):
         ddict["event"] = event
         self.sigFTParametersSignal.emit(ddict)
 
-    def setKRange(self, value):
-        self.kMaxBox.setMaximum(value)
-        current = self.kMaxBox.value()
-        if current > (value+0.01):
-            self.kMaxBox.setValue(value)
+    def setKRange(self, kRange):
+        if kRange[0] > kRange[1]:
+            # do nothing (it happens on editing)
+            return
+        if self.kMinBox.minimum() > kRange[0]: 
+            self.kMinBox.setMinimum(kRange[0])
+        if self.kMaxBox.maximum() < kRange[1]:
+            self.kMaxBox.setMaximum(kRange[1])
+        #kMin = self.kMinBox.value()
+        #kMax = self.kMaxBox.value()
+        #if kRange[1] > kMin:
+        #    self.kMaxBox.setMaximum(kRange[1])
+        #current = self.kMaxBox.value()
+        #if current > (kRange[1]+0.01):
+        #    self.kMaxBox.setValue(value)
 
     def setTitleColor(self, color):
         #self.setStyleSheet("QGroupBox {font-weight: bold; color: red;}")

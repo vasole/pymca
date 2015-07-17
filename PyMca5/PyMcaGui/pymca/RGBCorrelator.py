@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -136,10 +136,10 @@ class RGBCorrelator(qt.QWidget):
             self._matplotlibSaveImage.setWindowTitle("Matplotlib RGBCorrelator")
 
         #Qt is BGR while the others are RGB ...
-        self._matplotlibSaveImage.setPixmapImage(self._imageBuffer, bgr=True)
+        # This is not any longer a problem because we do not use PyQwt
+        self._matplotlibSaveImage.setPixmapImage(self._imageBuffer, bgr=False)
         self._matplotlibSaveImage.show()
         self._matplotlibSaveImage.raise_()
-
 
     def closeEvent(self, event):
         ddict = {}
