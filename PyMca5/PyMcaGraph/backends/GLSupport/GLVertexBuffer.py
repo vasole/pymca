@@ -44,17 +44,28 @@ import numpy as np
 # VBO #########################################################################
 
 class VertexBuffer(object):
+    # OpenGL|ES 2.0 subset:
+    _USAGES = GL_STREAM_DRAW, GL_STATIC_DRAW, GL_DYNAMIC_DRAW
+    _TARGETS = GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER
+
     def __init__(self, data=None, sizeInBytes=None,
-                 usage=None):
+                 usage=None, target=None):
         if usage is None:
             usage = GL_STATIC_DRAW
+        assert usage in self._USAGES
+
+        if target is None:
+            target = GL_ARRAY_BUFFER
+        assert target in self._TARGETS
+
+        self._target = target
 
         self._vboId = glGenBuffers(1)
         self.bind()
         if data is None:
             assert sizeInBytes is not None
             self._size = sizeInBytes
-            glBufferData(GL_ARRAY_BUFFER,
+            glBufferData(self._target,
                          self._size,
                          c_void_p(0),
                          usage)
@@ -64,12 +75,12 @@ class VertexBuffer(object):
                 assert sizeInBytes <= data.nbytes
 
             self._size = sizeInBytes or data.nbytes
-            glBufferData(GL_ARRAY_BUFFER,
+            glBufferData(self._target,
                          self._size,
                          data,
                          usage)
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glBindBuffer(self._target, 0)
 
     @property
     def vboId(self):
@@ -94,7 +105,7 @@ class VertexBuffer(object):
                                discard has already been called")
 
     def bind(self):
-        glBindBuffer(GL_ARRAY_BUFFER, self.vboId)
+        glBindBuffer(self._target, self.vboId)
 
     def update(self, data, offsetInBytes=0, sizeInBytes=None):
         assert isinstance(data, np.ndarray) and data.flags['C_CONTIGUOUS']
@@ -102,7 +113,7 @@ class VertexBuffer(object):
             sizeInBytes = data.nbytes
         assert offsetInBytes + sizeInBytes <= self.size
         with self:
-            glBufferSubData(GL_ARRAY_BUFFER, offsetInBytes, sizeInBytes, data)
+            glBufferSubData(self._target, offsetInBytes, sizeInBytes, data)
 
     def discard(self):
         if hasattr(self, '_vboId'):
@@ -120,7 +131,7 @@ class VertexBuffer(object):
         self.bind()
 
     def __exit__(self, excType, excValue, traceback):
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glBindBuffer(self._target, 0)
 
 
 # VBOAttrib ###################################################################
