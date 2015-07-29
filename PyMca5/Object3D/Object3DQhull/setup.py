@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-#/*##########################################################################
+# /*##########################################################################
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,67 +26,114 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-#############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
+# ###########################################################################*/
+__author__ = "V.A. Sole, T. Vincent - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 """Setup script for the Object3DQhull module distribution."""
 
-import os, sys, glob
-try:
-    import numpy
-except ImportError:
-    text  = "You must have numpy installed.\n"
-    text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
-    raise ImportError, text
+import glob
+import os
+import numpy
 
-from distutils.core import setup
 from distutils.extension import Extension
+from distutils.core import setup
 
-sources = glob.glob('./src/*.c')
 
-#Work with doubles
-define_macros = []
-setup (
-        name         = "Object3DQhull",
-        version      = "1.0",
-        description  = "Interface to Qhull library.",
-        author       = "V.A. Sole - Software Group",
-        author_email = "sole@esrf.fr",
-        url          = "http://www.esrf.fr",
+# TODO For '../../../third-party/qhull/src/*.c'
+# *.o are stored outside build/ when building locally
 
-        # Description of the modules and packages in the distribution
-        ext_modules  = [
-                       Extension(
-                            name          = 'Object3DQhull',
-                            sources       = sources,
-                            define_macros = define_macros,
-                            libraries  = [],
-                            include_dirs  = [numpy.get_include()]
-                       ),
-       ],
-)
+def qhull_ext_modules(parent_name=None, package_path=None, use_cython=True):
+    """Build list of Qhull wrapper Extensions.
 
-#Work with floats
-define_macros = [('Object3DFloat', None)]
-setup (
-        name         = "Object3DQhullf",
-        version      = "1.0",
-        description  = "Interface to Qhull library using floats.",
-        author       = "V.A. Sole - BLISS Group",
-        author_email = "sole@esrf.fr",
-        url          = "http://www.esrf.fr/computing/bliss/",
+    :param str parent_name: Name of parent module (or None).
+    :param str package_path: Directory where the source of the module are.
+    :param bool use_cython: Whether to use Cython or C source files.
+    :return: List of py_modules and List of Extensions to build as a tuple.
+    """
+    # Only try to import from Cython when used
+    if use_cython:
+        from Cython.Build import cythonize
 
-        # Description of the modules and packages in the distribution
-        ext_modules  = [
-                       Extension(
-                            name          = 'Object3DQhullf',
-                            sources       = sources,
-                            define_macros = define_macros,
-                            libraries  = [],
-                            include_dirs  = [numpy.get_include()]
-                       ),
-       ],
-)
+    name_prefix = '' if parent_name is None else (parent_name + '.')
+    if package_path is None:
+        path_prefix = ''
+    else:
+        path_prefix = package_path.strip('/') + '/'
+
+    sources = []
+    include_dirs = [path_prefix + '_qhull', numpy.get_include()]
+    extra_compile_args = []
+    extra_link_args = []
+
+    ext_modules = []
+
+    QHULL_CFLAGS = os.getenv("QHULL_CFLAGS")
+    QHULL_LIBS = os.getenv("QHULL_LIBS")
+    use_system_qhull = QHULL_CFLAGS and QHULL_LIBS
+    if use_system_qhull:
+        # Use user provided system qhull library
+        extra_compile_args += [QHULL_CFLAGS]
+        extra_link_args += [QHULL_LIBS]
+
+        # WARNING: MUST be sync with qhull/user.h
+        qhull64_macros = {'REALfloat': 0, 'qh_QHpointer': 1}  # As in debian 7
+        qhull32_macros = None
+    else:
+        # Compile qhull
+        sources += glob.glob(path_prefix +
+                             '../../../third-party/qhull/src/*.c')
+        include_dirs += [path_prefix + '../../../third-party/qhull/src']
+
+        qhull64_macros = {'REALfloat': 0, 'qh_QHpointer': 0}
+        qhull32_macros = {'REALfloat': 1, 'qh_QHpointer': 0}
+
+    if qhull32_macros is not None:
+        # qhull for float32
+        qhull32_sources = sources + [
+            path_prefix + '_qhull/_qhull32' + ('.pyx' if use_cython else '.c')]
+        qhull32_ext = Extension(name=name_prefix + '_qhull32',
+                                sources=qhull32_sources,
+                                define_macros=list(qhull32_macros.items()),
+                                include_dirs=include_dirs,
+                                extra_compile_args=extra_compile_args,
+                                extra_link_args=extra_link_args,
+                                language='c')
+        if use_cython:
+            qhull32_ext = cythonize([qhull32_ext],
+                                    compile_time_env=qhull32_macros)[0]
+        ext_modules.append(qhull32_ext)
+
+    if qhull64_macros is not None:
+        # qhull for float64
+        qhull64_sources = sources + [
+            path_prefix + '_qhull/_qhull64' + ('.pyx' if use_cython else '.c')]
+        qhull64_ext = Extension(name=name_prefix + '_qhull64',
+                                sources=qhull64_sources,
+                                define_macros=list(qhull64_macros.items()),
+                                include_dirs=include_dirs,
+                                extra_compile_args=extra_compile_args,
+                                extra_link_args=extra_link_args,
+                                language='c')
+        if use_cython:
+            qhull64_ext = cythonize([qhull64_ext],
+                                    compile_time_env=qhull64_macros)[0]
+        ext_modules.append(qhull64_ext)
+
+    # py_modules
+    py_modules = [name_prefix + '__init__']
+
+    return py_modules, ext_modules
+
+
+# Only build C extensions
+setup(name="Object3DQhull",
+      version="1.0",
+      description="Interface to Qhull library.",
+      author="V.A. Sole - Software Group",
+      author_email="sole@esrf.fr",
+      url="http://www.esrf.fr",
+      ext_modules=qhull_ext_modules()[1],
+      )
