@@ -1075,6 +1075,8 @@ void qh_createsimplex(setT *vertices) {
 void qh_delridge(ridgeT *ridge) {
   void **freelistp; /* used !qh_NOmem */
 
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
+
   qh_setdel(ridge->top->ridges, ridge);
   qh_setdel(ridge->bottom->ridges, ridge);
   qh_setfree(&(ridge->vertices));

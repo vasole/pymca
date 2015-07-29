@@ -896,6 +896,8 @@ pointT *qh_projectpoint(pointT *point, facetT *facet, realT dist) {
   int k;
   void **freelistp; /* used !qh_NOmem */
 
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
+
   qh_memalloc_(normsize, freelistp, newpoint, pointT);
   np= newpoint;
   normal= facet->normal;
@@ -936,6 +938,8 @@ void qh_setfacetplane(facetT *facet) {
   coordT *coord, *gmcoord;
   pointT *point0= SETfirstt_(facet->vertices, vertexT)->point;
   boolT nearzero= False;
+
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
 
   zzinc_(Zsetplane);
   if (!facet->normal)

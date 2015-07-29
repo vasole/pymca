@@ -221,6 +221,8 @@ void qh_all_merges(boolT othermerge, boolT vneighbors) {
   mergeType mergetype;
   int numcoplanar=0, numconcave=0, numdegenredun= 0, numnewmerges= 0;
 
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
+
   trace2((qh ferr, 2010, "qh_all_merges: starting to merge facets beginning from f%d\n",
             getid_(qh newfacet_list)));
   while (True) {
@@ -320,6 +322,8 @@ void qh_all_merges(boolT othermerge, boolT vneighbors) {
 void qh_appendmergeset(facetT *facet, facetT *neighbor, mergeType mergetype, realT *angle) {
   mergeT *merge, *lastmerge;
   void **freelistp; /* used !qh_NOmem */
+
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
 
   if (facet->redundant)
     return;
@@ -2084,6 +2088,8 @@ void qh_mergecycle_ridges(facetT *samecycle, facetT *newfacet) {
   ridgeT *ridge, **ridgep;
   boolT toporient;
   void **freelistp; /* used !qh_NOmem */
+
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
 
   trace4((qh ferr, 4033, "qh_mergecycle_ridges: delete shared ridges from newfacet\n"));
   samevisitid= qh visit_id -1;

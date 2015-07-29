@@ -716,6 +716,8 @@ void qh_setfree(setT **setp) {
   int size;
   void **freelistp;  /* used !qh_NOmem */
 
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
+
   if (*setp) {
     size= sizeof(setT) + ((*setp)->maxsize)*SETelemsize;
     if (size <= qhmem.LASTsize) {
@@ -925,6 +927,8 @@ setT *qh_setnew(int setsize) {
   int sizereceived; /* used !qh_NOmem */
   int size;
   void **freelistp; /* used !qh_NOmem */
+
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
 
   if (!setsize)
     setsize++;

@@ -247,6 +247,8 @@ boolT qh_checkflipped(facetT *facet, realT *distp, boolT allerror) {
 void qh_delfacet(facetT *facet) {
   void **freelistp; /* used !qh_NOmem */
 
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
+
   trace4((qh ferr, 4046, "qh_delfacet: delete f%d\n", facet->id));
   if (facet == qh tracefacet)
     qh tracefacet= NULL;
@@ -567,6 +569,8 @@ facetT *qh_makenew_nonsimplicial(facetT *visible, vertexT *apex, int *numnew) {
   setT *vertices;
   boolT toporient;
   int ridgeid;
+
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
 
   FOREACHridge_(visible->ridges) {
     ridgeid= ridge->id;
@@ -980,6 +984,8 @@ facetT *qh_newfacet(void) {
   facetT *facet;
   void **freelistp; /* used !qh_NOmem */
 
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
+
   qh_memalloc_((int)sizeof(facetT), freelistp, facet, facetT);
   memset((char *)facet, (size_t)0, sizeof(facetT));
   if (qh facet_id == qh tracefacet_id)
@@ -1012,6 +1018,8 @@ facetT *qh_newfacet(void) {
 ridgeT *qh_newridge(void) {
   ridgeT *ridge;
   void **freelistp;   /* used !qh_NOmem */
+
+  (void)freelistp; /* Avoid warning -Wunused-but-set-variable */
 
   qh_memalloc_((int)sizeof(ridgeT), freelistp, ridge, ridgeT);
   memset((char *)ridge, (size_t)0, sizeof(ridgeT));

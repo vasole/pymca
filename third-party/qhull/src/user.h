@@ -128,7 +128,9 @@ Code flags --
    REALfloat =   1      all numbers are 'float' type
              =   0      all numbers are 'double' type
 */
+#ifndef REALfloat  /* Avoid warning when redefined from build command */
 #define REALfloat 0
+#endif
 
 #if (REALfloat == 1)
 #define realT float
