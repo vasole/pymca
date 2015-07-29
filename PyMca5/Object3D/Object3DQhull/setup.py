@@ -81,6 +81,10 @@ def qhull_ext_modules(parent_name=None, package_path=None, use_cython=True):
         # WARNING: MUST be sync with qhull/user.h
         qhull64_macros = {'REALfloat': 0, 'qh_QHpointer': 1}  # As in debian 7
         qhull32_macros = None
+
+        # cython .c files need to be regenerated during build
+        cythonize_force = True
+        assert use_cython
     else:
         # Compile qhull
         sources += glob.glob(path_prefix +
@@ -89,6 +93,8 @@ def qhull_ext_modules(parent_name=None, package_path=None, use_cython=True):
 
         qhull64_macros = {'REALfloat': 0, 'qh_QHpointer': 0}
         qhull32_macros = {'REALfloat': 1, 'qh_QHpointer': 0}
+
+        cythonize_force = False
 
     if qhull32_macros is not None:
         # qhull for float32
@@ -103,6 +109,7 @@ def qhull_ext_modules(parent_name=None, package_path=None, use_cython=True):
                                 language='c')
         if use_cython:
             qhull32_ext = cythonize([qhull32_ext],
+                                    force=cythonize_force,
                                     compile_time_env=qhull32_macros)[0]
         ext_modules.append(qhull32_ext)
 
@@ -119,6 +126,7 @@ def qhull_ext_modules(parent_name=None, package_path=None, use_cython=True):
                                 language='c')
         if use_cython:
             qhull64_ext = cythonize([qhull64_ext],
+                                    force=cythonize_force,
                                     compile_time_env=qhull64_macros)[0]
         ext_modules.append(qhull64_ext)
 
