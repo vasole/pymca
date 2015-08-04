@@ -28,6 +28,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import os
 from os.path import isdir as osPathIsDir
 from os.path import basename as osPathBasename
 from os.path import join as osPathJoin
@@ -940,10 +941,12 @@ class SumRulesWindow(qt.QMainWindow):
         """
         Opens a web browser and displays the help file
         """
-        helpFileName = qt.QDir(osPathJoin(PyMcaDataDir.PYMCA_DOC_DIR,
+        fileName = osPathJoin(PyMcaDataDir.PYMCA_DOC_DIR,
                                           "HTML",
-                                          "SumRulesToolInfotext.html"))
-        qt.QDesktopServices.openUrl(qt.QUrl(helpFileName.absolutePath()))
+                                          "SumRulesToolInfotext.html")
+        helpFileName = qt.QDir(fileName)
+        if not qt.QDesktopServices.openUrl(qt.QUrl(helpFileName.absolutePath())):
+            os.system('"%s"' % fileName)
 
     def triggerDetrend(self, state):
         if (state == qt.Qt.Unchecked) or\
