@@ -107,7 +107,7 @@ class PeakIdentifier(qt.QWidget):
         self.m = qt.QCheckBox(hbox2)
         self.m.setText('M')
         self.m.setChecked(1)
-        self.threshold.valueChanged[int].connect(self.mySlot)
+        self.threshold.valueChanged[int].connect(self._thresholdSlot)
         self.k.clicked.connect(self.mySlot)
         self.l1.clicked.connect(self.mySlot)
         self.l2.clicked.connect(self.mySlot)
@@ -125,20 +125,22 @@ class PeakIdentifier(qt.QWidget):
         if self.__useviewer:
             self.__browsertext = qt.QTextEdit(self)
             layout.addWidget(self.__browsertext)
-        self.setEnergy()
+        self.setEnergy(energy)
 
     def setEnergy(self, energy = None):
-        if energy is None: energy = 5.9
+        if energy is None:
+            energy = 5.9
         if type(energy) == type(""):
             self.energy.setText("%s" % energy)
+            self._energySlot()
         else:
             self.energy.setText("%.3f" % energy)
-        self._energySlot()
+            self.mySlot(energy=energy)
 
     def _energySlot(self):
         qstring = self.energy.text()
         try:
-            value = float(str(qstring))
+            value = float(qt.safe_str(qstring))
             self.energyvalue = value
             self.mySlot()
             self.energy.setPaletteBackgroundColor(qt.Qt.white)
@@ -159,19 +161,23 @@ class PeakIdentifier(qt.QWidget):
         print("PeakIdentifier.py myslot deprecated, use mySlot")
         return mySlot()
 
-    def mySlot(self):
-        try:
-            energy    = float(str(self.energy.text()))
-        except ValueError:
-            msg=qt.QMessageBox(self.energy)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setText("Invalid Energy Value")
-            msg.setWindowTitle("Invalid energy")
-            msg.exec_()
-            self.energy.setFocus()
-            return
+    def _thresholdSlot(self, value):
+        self.mySlot()
 
-        threshold = float(str(self.threshold.text()))/1000.
+    def mySlot(self, energy=None):
+        if energy is None:
+            try:
+                energy  = float(qt.safe_str(self.energy.text()))
+            except ValueError:
+                msg=qt.QMessageBox(self.energy)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Invalid Energy Value")
+                msg.setWindowTitle("Invalid energy")
+                msg.exec_()
+                self.energy.setFocus()
+                return
+
+        threshold = float(self.threshold.value())/1000.
         lines=[]
         if self.k.isChecked():
              lines.append('K')
