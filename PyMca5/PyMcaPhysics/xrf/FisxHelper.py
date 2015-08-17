@@ -464,8 +464,9 @@ def _getFisxDetector(fitConfiguration, attenuatorsDetector=None):
     else:
         # make sure information is consistent
         if attenuatorsDetector[0] not in [detectorMaterial, detectorMaterial+"1"]:
-            print("%s not equal to %s" % (detector[0], detectorMaterial))
+            print("%s not equal to %s" % (attenuatorsDetector[0], detectorMaterial))
             msg = "Inconsistent detector material between DETECTOR and ATTENUATORS tab"
+            msg += "\n%s not equal to %s" % (attenuatorsDetector[0], detectorMaterial)
             raise ValueError(msg)
         if len(attenuatorsDetector) == 3:
             fisxDetector = Detector(detectorMaterial,
