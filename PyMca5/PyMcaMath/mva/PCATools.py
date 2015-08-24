@@ -660,9 +660,19 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
         eigenvectors[:, :] = evectors[:, idx].T
 
     #calculate the projections
+    # Subtracting the average and normalizing to standard deviation gives worse results.
+    # Verions 5.0.0 to 5.1.0 implemented that behavior as default.
+    # When dealing with the CH1777 test dataset the Sb signal was less contrasted against
+    # the Ca signal.
+    # Clearly the user should have control about subtracting the average or not and
+    # normalizing to the standard deviation or not.
+    subtractAndNormalize = False
     if actualIndex in [0]:
         for i in range(oldShape[actualIndex]):
-            tmpData = (data[i].reshape(1, -1) - avgSpectrum[i]) / standardDeviation[i]
+            if subtractAndNormalize:
+                tmpData = (data[i].reshape(1, -1) - avgSpectrum[i]) / standardDeviation[i]
+            else:
+                tmpData = data[i].reshape(1, -1)
             for j in range(ncomponents):
                 images[j:j + 1, :] += tmpData * eigenvectors[j, i]
         if len(oldShape) == 3:
@@ -675,7 +685,10 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                 #print i
                 tmpData = data[i, :]
                 tmpData.shape = 1, nChannels
-                tmpData = (tmpData[:, ::binning] - avgSpectrum) / standardDeviation
+                if subtractAndNormalize:
+                    tmpData = (tmpData[:, ::binning] - avgSpectrum) / standardDeviation
+                else:
+                    tmpData = tmpData[:, ::binning]
                 for j in range(ncomponents):
                     images[j, i] = numpy.dot(tmpData, eigenvectors[j])
             #reshape the images
@@ -687,7 +700,10 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                     #print i
                     tmpData = data[r, c, :]
                     tmpData.shape = 1, nChannels
-                    tmpData = (tmpData[:, ::binning] - avgSpectrum) / standardDeviation
+                    if subtractAndNormalize:
+                        tmpData = (tmpData[:, ::binning] - avgSpectrum) / standardDeviation
+                    else:
+                        tmpData = tmpData[:, ::binning]
                     for j in range(ncomponents):
                         images[j, i] = numpy.dot(tmpData, eigenvectors[j])
                     i += 1
