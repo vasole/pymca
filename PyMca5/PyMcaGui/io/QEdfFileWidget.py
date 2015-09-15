@@ -547,10 +547,39 @@ class QEdfFileWidget(qt.QWidget):
 
     def saveGraphImage(self, filename,original=True):
         fformat = filename[-3:].upper()
+        #This is the whole image, not the zoomed one ...
+        rgbData, legend, info, pixmap = self.graph.getActiveImage()
         if original:
-            pixmap = qt.QPixmap.fromImage(self.graph.plotImage.image)
+            # save whole image
+            bgrData = numpy.array(rgbData, copy=True)
+            bgrData[:,:,0] = rgbData[:, :, 2]
+            bgrData[:,:,2] = rgbData[:, :, 0]
         else:
-            pixmap = qt.QPixmap.grabWidget(self.graph.canvas())
+            shape = rgbData.shape[:2]
+            xmin, xmax = self.graph.getGraphXLimits()
+            ymin, ymax = self.graph.getGraphYLimits()
+            # save zoomed image, for that we have to get the limits
+            r0, c0 = ymin, xmin
+            r1, c1 = ymax, xmax
+            row0 = int(min(r0, r1))
+            row1 = int(max(r0, r1))
+            col0 = int(min(c0, c1))
+            col1 = int(max(c0, c1))
+            if row1 < shape[0]:
+                row1 += 1
+            if col1 < shape[1]:
+                col1 += 1
+            tmpArray = rgbData[row0:row1, col0:col1, :]
+            bgrData = numpy.array(tmpArray, copy=True, dtype=rgbData.dtype)
+            bgrData[:,:,0] = tmpArray[:, :, 2]
+            bgrData[:,:,2] = tmpArray[:, :, 0]
+        if self.graph.isYAxisInverted():
+            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
+                                   qt.QImage.Format_RGB32)
+        else:
+            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
+                                   qt.QImage.Format_RGB32).mirrored(False, True)
+        pixmap = qt.QPixmap.fromImage(qImage)
         if pixmap.save(filename, fformat):
             return
         else:
