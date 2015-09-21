@@ -396,6 +396,9 @@ class MaskImageWidget(qt.QWidget):
             title = ""
         return title
 
+    def setGraphTitle(self, title=""):
+        self.graphWidget.graph.setGraphTitle(title)
+
     def setLineProjectionMode(self, mode):
         """
         Set the line projection mode.
