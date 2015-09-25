@@ -144,6 +144,10 @@ class SimpleMath(object):
                     print('No overlap between spectra!')
                 return numpy.array([]), numpy.array([])
 
+        # make sure x0 is sorted
+        mask = numpy.argsort(x0)
+        x0 = numpy.take(x0, mask)
+
         # Clip xRange to maximal overlap in spectra
         mask = numpy.nonzero((x0 >= xmin0) &
                              (x0 <= xmax0))[0]
