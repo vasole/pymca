@@ -1022,12 +1022,15 @@ class PlotWindow(PlotWidget.PlotWidget):
             legend = ddict["label"]
             self.setActiveCurve(legend)
         if ddict['event'] in ['mouseMoved']:
-            if hasattr(self, "_xPos"):
-                self._xPos.setText('%.7g' % ddict['x'])
-                self._yPos.setText('%.7g' % ddict['y'])
+            self._handleMouseMovedEvent(ddict)
         #make sure the signal is forwarded
         #super(PlotWindow, self).graphCallback(ddict)
         self.sigPlotSignal.emit(ddict)
+
+    def _handleMouseMovedEvent(self, ddict):
+        if hasattr(self, "_xPos"):
+            self._xPos.setText('%.7g' % ddict['x'])
+            self._yPos.setText('%.7g' % ddict['y'])
 
     def setActiveCurve(self, legend, replot=True):
         PlotWidget.PlotWidget.setActiveCurve(self, legend, replot=replot)

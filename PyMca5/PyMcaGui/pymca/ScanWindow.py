@@ -497,20 +497,45 @@ class ScanWindow(PlotWindow.PlotWindow):
         if ddict['event'] in ['markerMoved', 'markerSelected']:
             self._handleMarkerEvent(ddict)
         elif ddict['event'] in ["mouseMoved", "MouseAt"]:
-            if 0: #ddict['xcurve'] is not None:
-                if self.__toggleCounter == 0:
-                    self._xPos.setText('%.7g' % ddict['x'])
-                    self._yPos.setText('%.7g' % ddict['y'])
-                elif ddict['distance'] < 20:
-                    #print ddict['point'], ddict['distance']
-                    self._xPos.setText('%.7g' % ddict['xcurve'])
-                    self._yPos.setText('%.7g' % ddict['ycurve'])
+            if self._toggleCounter > 0:
+                activeCurve = self.getActiveCurve()
+                if activeCurve in [None, []]:
+                    self._handleMouseMovedEvent(ddict)
                 else:
-                    self._xPos.setText('----')
-                    self._yPos.setText('----')
+                    x, y, legend, info = activeCurve[0:4]
+                    closestIndex = (pow(x - ddict['x'], 2) + \
+                                    pow(y - ddict['y'], 2)).argmin()
+                    # calculate the maximum distance
+                    xMin, xMax = self.getGraphXLimits()
+                    maxXDistance = abs(xMax - xMin)
+                    xCurve = x[closestIndex]
+                    xText = '----'
+                    yText = '----'
+                    if abs(xCurve - ddict['x']) < (0.05 * maxXDistance):
+                        yMin, yMax = self.getGraphYLimits()
+                        maxYDistance = abs(yMax - yMin)
+                        yCurve = y[closestIndex]
+                        if abs(yCurve - ddict['y']) < (0.05 * maxYDistance):
+                            xText = '%.7g' % xCurve
+                            yText = '%.7g' % yCurve
+                    if xText == '----':
+                        if self.getGraphCursor():
+                            self._xPos.setStyleSheet("color: rgb(255, 0, 0);")
+                            self._yPos.setStyleSheet("color: rgb(255, 0, 0);")
+                            xText = '%.7g' % ddict['x']
+                            yText = '%.7g' % ddict['y']
+                        else:
+                            self._xPos.setStyleSheet("color: rgb(0, 0, 0);")
+                            self._yPos.setStyleSheet("color: rgb(0, 0, 0);")
+                    else:
+                        self._xPos.setStyleSheet("color: rgb(0, 0, 0);")
+                        self._yPos.setStyleSheet("color: rgb(0, 0, 0);")
+                    self._xPos.setText(xText)
+                    self._yPos.setText(yText)
             else:
-                self._xPos.setText('%.7g' % ddict['x'])
-                self._yPos.setText('%.7g' % ddict['y'])
+                self._xPos.setStyleSheet("color: rgb(0, 0, 0);")
+                self._yPos.setStyleSheet("color: rgb(0, 0, 0);")
+                self._handleMouseMovedEvent(ddict)
         elif ddict['event'] in ["curveClicked", "legendClicked"]:
             legend = ddict["label"]
             if legend is None:
