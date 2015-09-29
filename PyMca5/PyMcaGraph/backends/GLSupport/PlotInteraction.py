@@ -809,6 +809,10 @@ class ItemsInteraction(ClickOrDrag):
             super(ItemsInteraction.Idle, self).__init__(*args, **kw)
             self._hoverMarker = None
 
+        def onWheel(self, x, y, angle):
+            scaleF = 1.1 if angle > 0 else 1./1.1
+            _applyZoomToBackend(self.machine.backend, x, y, scaleF)
+
         def onPress(self, x, y, btn):
             if btn == LEFT_BTN:
                 testBehaviors = set(('selectable', 'draggable'))
@@ -829,6 +833,7 @@ class ItemsInteraction(ClickOrDrag):
                         self.goto('clickOrDrag', x, y)
                         return True
 
+            self.goto('clickOrDrag', x, y)
             return False
 
         def onMove(self, x, y):
@@ -879,6 +884,14 @@ class ItemsInteraction(ClickOrDrag):
         return backend
 
     def click(self, x, y, btn):
+        # Signal mouse clicked event
+        dataPos = self.backend.pixelToData(x, y)
+        assert dataPos is not None
+        eventDict = prepareMouseSignal('mouseClicked', btn,
+                                       dataPos[0], dataPos[1],
+                                       x, y)
+        self.backend.sendEvent(eventDict)
+
         if btn == LEFT_BTN:
             marker = self.backend.pickMarker(
                 x, y, lambda marker: 'selectable' in marker['behaviors'])
