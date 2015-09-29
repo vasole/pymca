@@ -412,7 +412,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self.eventHandler = PlotInteraction(self)
         self.eventHandler.setInteractiveMode('zoom', color=(0., 0., 0., 1.))
 
-        self._plotHasFocus = set()
+        self._pressedButtons = []  # Currently pressed mouse buttons
 
         self._plotFrame = GLPlotFrame2D(self._margins)
 
@@ -465,7 +465,7 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def onMousePress(self, xPixel, yPixel, btn):
         if self._mouseInPlotArea(xPixel, yPixel) == (xPixel, yPixel):
-            self._plotHasFocus.add(btn)
+            self._pressedButtons.append(btn)
             self.eventHandler.handleEvent('press', xPixel, yPixel, btn)
 
     def onMouseMove(self, xPixel, yPixel):
@@ -483,19 +483,20 @@ class OpenGLPlotCanvas(PlotBackend):
             # Signal mouse move event
             dataPos = self.pixelToData(inXPixel, inYPixel)
             assert dataPos is not None
-            eventDict = prepareMouseSignal('mouseMoved', None,
-                                           dataPos[0], dataPos[1],
-                                           xPixel, yPixel)
+
+            btn = self._pressedButtons[-1] if self._pressedButtons else None
+            eventDict = prepareMouseSignal(
+                'mouseMoved', btn, dataPos[0], dataPos[1], xPixel, yPixel)
             self.sendEvent(eventDict)
 
         # Either button was pressed in the plot or cursor is in the plot
-        if isCursorInPlot or self._plotHasFocus:
+        if isCursorInPlot or self._pressedButtons:
             self.eventHandler.handleEvent('move', inXPixel, inYPixel)
 
     def onMouseRelease(self, xPixel, yPixel, btn):
         try:
-            self._plotHasFocus.remove(btn)
-        except KeyError:
+            self._pressedButtons.remove(btn)
+        except ValueError:
             pass
         else:
             xPixel, yPixel = self._mouseInPlotArea(xPixel, yPixel)
