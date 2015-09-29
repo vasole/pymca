@@ -1205,6 +1205,7 @@ class MaskImageWidget(qt.QWidget):
             self.__imageData = data
             self.__selectionMask = None
             self.plotImage(update = True)
+            self.graphWidget._zoomReset(replot=True)
             return
         else:
             self.__imageData = data
@@ -1220,6 +1221,7 @@ class MaskImageWidget(qt.QWidget):
             self.colormapDialog.setDataMinMax(minData, maxData, update=True)
         else:
             self.plotImage(update = True)
+            self.graphWidget._zoomReset(replot=True)
 
     def getImageData(self):
         return self.__imageData
@@ -1273,6 +1275,7 @@ class MaskImageWidget(qt.QWidget):
         if clearmask:
             self.__selectionMask = None
         self.plotImage(update = True)
+        self.graphWidget._zoomReset(replot=True)
 
     def plotImage(self, update=True):
         if self.__imageData is None:
@@ -1284,10 +1287,12 @@ class MaskImageWidget(qt.QWidget):
             self.__pixmap0 = self.__pixmap.copy()
         self.__applyMaskToImage()
 
+        # replot=False as it triggers a zoom reset in Plot.py
         self.graphWidget.graph.addImage(self.__pixmap,
                                         "image",
-                                        xScale = self._xScale,
-                                        yScale = self._yScale)
+                                        xScale=self._xScale,
+                                        yScale=self._yScale,
+                                        replot=False)
         self.graphWidget.graph.replot()
         self.updateProfileSelectionWindow()
 
@@ -2180,11 +2185,7 @@ def test(filename=None, backend=None):
             edf = EdfFile.EdfFile(sys.argv[1])
             data = edf.GetData(0)
             container.setImageData(data)
-            mask=data*0
-            n,m=data.shape
-            mask[ n/4:n/4+n/8, m/4:m/4+m/8] = 1
-            mask[ 3*n/4:3*n/4+n/8, m/4:m/4+m/8] = 2
-            container.setSelectionMask( mask, plot=True)
+
         else:
 
             image = qt.QImage(filename)
