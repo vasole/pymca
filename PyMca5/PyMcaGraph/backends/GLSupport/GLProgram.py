@@ -40,6 +40,8 @@ This module provides a class to handle shader program compilation.
 from ctypes import c_float
 import warnings
 
+import numpy
+
 from .gl import *  # noqa
 from .GLContext import getGLContext
 
@@ -178,6 +180,41 @@ class GLProgram(object):
                 self._vertexShaderSrc, self._fragmentShaderSrc)
 
         glUseProgram(self.program)
+
+    def setUniformMatrix(self, name, value, transpose=True, safe=False):
+        """Wrap glUniformMatrix[2|3|4]fv
+
+        :param str name: The name of the uniform.
+        :param value: The 2D matrix (or the array of matrices, 3D).
+                      Matrices are 2x2, 3x3 or 4x4.
+        :type value: numpy.ndarray with 2 or 3 dimensions of float32
+        :param bool transpose: Whether to transpose (True, default) or not.
+        :param bool safe: False: raise an error if no uniform with this name;
+                          True: silently ignores it.
+
+        :raises KeyError: if no uniform corresponds to name.
+        """
+        assert value.dtype == numpy.float32
+
+        shape = value.shape
+        assert len(shape) in (2, 3)
+        assert shape[-1] in (2, 3, 4)
+        assert shape[-1] == shape[-2]  # As in OpenGL|ES 2.0
+
+        location = self.uniforms.get(name)
+        if location is not None:
+            count = 1 if len(shape) == 2 else shape[0]
+            transpose = GL_TRUE if transpose else GL_FALSE
+
+            if shape[-1] == 2:
+                glUniformMatrix2fv(location, count, transpose, value)
+            elif shape[-1] == 3:
+                glUniformMatrix3fv(location, count, transpose, value)
+            elif shape[-1] == 4:
+                glUniformMatrix4fv(location, count, transpose, value)
+
+        elif not safe:
+            raise KeyError('No uniform: %s' % name)
 
 
 # main ########################################################################

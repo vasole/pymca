@@ -1208,6 +1208,7 @@ class MaskImageWidget(qt.QWidget):
             self.__imageData = data
             self.__selectionMask = None
             self.plotImage(update = True)
+            self.graphWidget._zoomReset(replot=True)
             return
         else:
             self.__imageData = data
@@ -1223,6 +1224,7 @@ class MaskImageWidget(qt.QWidget):
             self.colormapDialog.setDataMinMax(minData, maxData, update=True)
         else:
             self.plotImage(update = True)
+            self.graphWidget._zoomReset(replot=True)
 
     def getImageData(self):
         return self.__imageData
@@ -1276,6 +1278,7 @@ class MaskImageWidget(qt.QWidget):
         if clearmask:
             self.__selectionMask = None
         self.plotImage(update = True)
+        self.graphWidget._zoomReset(replot=True)
 
     def plotImage(self, update=True):
         if self.__imageData is None:
@@ -1287,10 +1290,12 @@ class MaskImageWidget(qt.QWidget):
             self.__pixmap0 = self.__pixmap.copy()
         self.__applyMaskToImage()
 
+        # replot=False as it triggers a zoom reset in Plot.py
         self.graphWidget.graph.addImage(self.__pixmap,
                                         "image",
-                                        xScale = self._xScale,
-                                        yScale = self._yScale)
+                                        xScale=self._xScale,
+                                        yScale=self._yScale,
+                                        replot=False)
         self.graphWidget.graph.replot()
         self.updateProfileSelectionWindow()
 
@@ -2162,44 +2167,39 @@ def getImageMask(image, mask=None):
     del(w)
     return mask
 
-def test():
+def test(filename=None, backend=None):
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
-    if len(sys.argv) > 1:
-        if sys.argv[1].endswith('edf') or\
-           sys.argv[1].endswith('cbf') or\
-           sys.argv[1].endswith('ccd') or\
-           sys.argv[1].endswith('spe') or\
-           sys.argv[1].endswith('tif') or\
-           sys.argv[1].endswith('tiff'):
-            container = MaskImageWidget(selection=True,
-                                        profileselection=True,
-                                        aspect=True,
-                                        imageicons=True,
-                                        maxNRois=2)
+    if filename:
+        container = MaskImageWidget(backend=backend,
+                                    selection=True,
+                                    aspect=True,
+                                    imageicons=True,
+                                    profileselection=True,
+                                    maxNRois=2)
+
+        if filename.endswith('edf') or\
+           filename.endswith('cbf') or\
+           filename.endswith('ccd') or\
+           filename.endswith('spe') or\
+           filename.endswith('tif') or\
+           filename.endswith('tiff'):
             from PyMca5.PyMcaIO import EdfFile
             edf = EdfFile.EdfFile(sys.argv[1])
             data = edf.GetData(0)
             container.setImageData(data)
-            mask=data*0
-            n,m=data.shape
-            mask[ n/4:n/4+n/8, m/4:m/4+m/8] = 1
-            mask[ 3*n/4:3*n/4+n/8, m/4:m/4+m/8] = 2
-            container.setSelectionMask( mask, plot=True)
+
         else:
-            container = MaskImageWidget(selection=True,
-                                        aspect=True,
-                                        imageicons=True,
-                                        profileselection=True,
-                                        maxNRois=2)
-            image = qt.QImage(sys.argv[1])
+
+            image = qt.QImage(filename)
             #container.setQImage(image, image.width(),image.height())
             container.setQImage(image, 200, 200)
 
     else:
-        container = MaskImageWidget(aspect=True,
+        container = MaskImageWidget(backend=backend,
+                                    aspect=True,
                                     profileselection=True,
-                                     maxNRois=2)
+                                    maxNRois=2)
         # show how to use user specified colors for the mask
         # without using any blitting (for the time being)
         # in the future it could be made using the alpha channel
@@ -2235,5 +2235,16 @@ def test():
     print(container.getSelectionMask())
 
 if __name__ == "__main__":
-    test()
+    import argparse
 
+    parser = argparse.ArgumentParser(
+        description='PyMca image mask authoring tool.')
+    parser.add_argument(
+        '-b', '--backend',
+        choices=('mpl', 'opengl'),
+        help="""The plot backend to use: Matplotlib (mpl, the default),
+        OpenGL 2.1 (opengl, requires appropriate OpenGL drivers).""")
+    parser.add_argument('filename', default='', nargs='?',
+                        help='Image filename to open')
+    args = parser.parse_args()
+    test(args.filename, args.backend)

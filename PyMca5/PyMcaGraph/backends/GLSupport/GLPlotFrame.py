@@ -292,6 +292,7 @@ class PlotAxis(object):
 # GLPlotFrame #################################################################
 
 class GLPlotFrame(object):
+    """Base class for rendering a 2D frame surrounded by axes."""
 
     _TICK_LENGTH_IN_PIXELS = 5
     _LINE_WIDTH = 1
@@ -329,32 +330,9 @@ class GLPlotFrame(object):
 
         self._margins = dict(margins)
 
-        self.xAxis = PlotAxis(self,
-                              tickLength=(0., -5.),
-                              labelAlign=CENTER, labelVAlign=TOP,
-                              titleAlign=CENTER, titleVAlign=TOP,
-                              titleRotate=0,
-                              titleOffset=(0, self._margins['bottom'] // 2))
-        self._x2AxisCoords = ()
-
-        self.yAxis = PlotAxis(self,
-                              tickLength=(5., 0.),
-                              labelAlign=RIGHT, labelVAlign=CENTER,
-                              titleAlign=CENTER, titleVAlign=BOTTOM,
-                              titleRotate=ROTATE_270,
-                              titleOffset=(-3 * self._margins['left'] // 4, 0))
-
-        self.y2Axis = PlotAxis(self,
-                               tickLength=(-5., 0.),
-                               labelAlign=LEFT, labelVAlign=CENTER,
-                               titleAlign=CENTER, titleVAlign=TOP,
-                               titleRotate=ROTATE_270,
-                               titleOffset=(3*self._margins['right'] // 4, 0))
-        self._y2AxisCoords = ()
+        self.axes = []  # List of PlotAxis to be updated by subclasses
 
         self._grid = False
-        self._isY2Axis = False
-        self._isYAxisInverted = False
         self._size = 0., 0.
         self._title = ''
 
@@ -383,30 +361,6 @@ class GLPlotFrame(object):
                         self.GRID_SUB_TICKS, self.GRID_ALL_TICKS)
         if grid != self._grid:
             self._grid = grid
-            self._dirty()
-
-    @property
-    def isY2Axis(self):
-        """Whether to display the left Y axis or not."""
-        return self._isY2Axis
-
-    @isY2Axis.setter
-    def isY2Axis(self, isY2Axis):
-        isY2Axis = bool(isY2Axis)
-        if isY2Axis != self._isY2Axis:
-            self._isY2Axis = isY2Axis
-            self._dirty()
-
-    @property
-    def isYAxisInverted(self):
-        """Whether Y axes are inverted or not as a bool."""
-        return self._isYAxisInverted
-
-    @isYAxisInverted.setter
-    def isYAxisInverted(self, value):
-        value = bool(value)
-        if value != self._isYAxisInverted:
-            self._isYAxisInverted = value
             self._dirty()
 
     @property
@@ -441,30 +395,9 @@ class GLPlotFrame(object):
         # When Text2D require discard we need to handle it
         self._renderResources = None
 
-    def _updateAxis(self):
-        width, height = self.size
-
-        xCoords = (self._margins['left'] - 0.5,
-                   width - self._margins['right'] + 0.5)
-        yCoords = (height - self._margins['bottom'] + 0.5,
-                   self._margins['top'] - 0.5)
-
-        self.xAxis.displayCoords = ((xCoords[0], yCoords[0]),
-                                    (xCoords[1], yCoords[0]))
-
-        self._x2AxisCoords = ((xCoords[0], yCoords[1]),
-                              (xCoords[1], yCoords[1]))
-
-        if self.isYAxisInverted:
-            # Y axes are inverted, axes coordinates are inverted
-            yCoords = yCoords[1], yCoords[0]
-
-        self.yAxis.displayCoords = ((xCoords[0], yCoords[0]),
-                                    (xCoords[0], yCoords[1]))
-
-        self._y2AxisCoords = ((xCoords[1], yCoords[0]),
-                              (xCoords[1], yCoords[1]))
-        self.y2Axis.displayCoords = self._y2AxisCoords
+    def _updateAxes(self):
+        """Override in subclass to update PlotAxis in axes."""
+        pass
 
     def _buildGridVertices(self):
         if self._grid == self.GRID_NONE:
@@ -480,51 +413,23 @@ class GLPlotFrame(object):
             logging.warning('Wrong grid mode: %d' % self._grid)
             return []
 
-        vertices = []
+        return self._buildGridVerticesWithTest(test)
 
-        for (xPixel, yPixel), xData, text in self.xAxis.ticks:
-            if test(text):
-                vertices.append((xPixel, yPixel))
-                vertices.append((xPixel, self._margins['top']))
-
-        for (xPixel, yPixel), xData, text in self.yAxis.ticks:
-            if test(text):
-                vertices.append((xPixel, yPixel))
-                vertices.append((self.size[0] - self._margins['right'],
-                                 yPixel))
-
-        if self.isY2Axis:
-            for (xPixel, yPixel), xData, text in self.y2Axis.ticks:
-                if test(text):
-                    vertices.append((xPixel, yPixel))
-                    vertices.append((self._margins['left'], yPixel))
-
-        return vertices
+    def _buildGridVerticesWithTest(self, test):
+        """Override in subclass to generate grid vertices"""
+        return []
 
     def _buildVerticesAndLabels(self):
-        self._updateAxis()
+        self._updateAxes()
 
         # To fill with copy of axes lists
         vertices = []
         labels = []
 
-        xVertices, xLabels = self.xAxis.getVerticesAndLabels()
-        vertices += xVertices
-        labels += xLabels
-
-        vertices += self._x2AxisCoords
-
-        yVertices, yLabels = self.yAxis.getVerticesAndLabels()
-        vertices += yVertices
-        labels += yLabels
-
-        if self.isY2Axis:
-            y2Vertices, y2Labels = self.y2Axis.getVerticesAndLabels()
-
-            vertices += y2Vertices
-            labels += y2Labels
-        else:
-            vertices += self._y2AxisCoords
+        for axis in self.axes:
+            axisVertices, axisLabels = axis.getVerticesAndLabels()
+            vertices += axisVertices
+            labels += axisLabels
 
         vertices = np.array(vertices, dtype=np.float32)
 
@@ -604,3 +509,137 @@ class GLPlotFrame(object):
                               0, gridVertices)
 
         glDrawArrays(GL_LINES, 0, len(gridVertices))
+
+
+# GLPlotFrame2D ###############################################################
+
+class GLPlotFrame2D(GLPlotFrame):
+    def __init__(self, margins):
+        """
+        :param margins: The margins around plot area for axis and labels.
+        :type margins: dict with 'left', 'right', 'top', 'bottom' keys and
+                       values as ints.
+        """
+        super(GLPlotFrame2D, self).__init__(margins)
+        self.axes.append(PlotAxis(self,
+                                  tickLength=(0., -5.),
+                                  labelAlign=CENTER, labelVAlign=TOP,
+                                  titleAlign=CENTER, titleVAlign=TOP,
+                                  titleRotate=0,
+                                  titleOffset=(0,
+                                               self._margins['bottom'] // 2)))
+
+        self._x2AxisCoords = ()
+
+        self.axes.append(PlotAxis(self,
+                                  tickLength=(5., 0.),
+                                  labelAlign=RIGHT, labelVAlign=CENTER,
+                                  titleAlign=CENTER, titleVAlign=BOTTOM,
+                                  titleRotate=ROTATE_270,
+                                  titleOffset=(-3 * self._margins['left'] // 4,
+                                               0)))
+
+        self._y2Axis = PlotAxis(self,
+                                tickLength=(-5., 0.),
+                                labelAlign=LEFT, labelVAlign=CENTER,
+                                titleAlign=CENTER, titleVAlign=TOP,
+                                titleRotate=ROTATE_270,
+                                titleOffset=(3*self._margins['right'] // 4,
+                                             0))
+
+        self._isYAxisInverted = False
+
+    @property
+    def xAxis(self):
+        return self.axes[0]
+
+    @property
+    def yAxis(self):
+        return self.axes[1]
+
+    @property
+    def y2Axis(self):
+        return self._y2Axis
+
+    @property
+    def isY2Axis(self):
+        """Whether to display the left Y axis or not."""
+        return len(self.axes) == 3
+
+    @isY2Axis.setter
+    def isY2Axis(self, isY2Axis):
+        if isY2Axis != self.isY2Axis:
+            if isY2Axis:
+                self.axes.append(self._y2Axis)
+            else:
+                self.axes = self.axes[:2]
+
+            self._dirty()
+
+    @property
+    def isYAxisInverted(self):
+        """Whether Y axes are inverted or not as a bool."""
+        return self._isYAxisInverted
+
+    @isYAxisInverted.setter
+    def isYAxisInverted(self, value):
+        value = bool(value)
+        if value != self._isYAxisInverted:
+            self._isYAxisInverted = value
+            self._dirty()
+
+    def _updateAxes(self):
+        width, height = self.size
+
+        xCoords = (self._margins['left'] - 0.5,
+                   width - self._margins['right'] + 0.5)
+        yCoords = (height - self._margins['bottom'] + 0.5,
+                   self._margins['top'] - 0.5)
+
+        self.axes[0].displayCoords = ((xCoords[0], yCoords[0]),
+                                      (xCoords[1], yCoords[0]))
+
+        self._x2AxisCoords = ((xCoords[0], yCoords[1]),
+                              (xCoords[1], yCoords[1]))
+
+        if self.isYAxisInverted:
+            # Y axes are inverted, axes coordinates are inverted
+            yCoords = yCoords[1], yCoords[0]
+
+        self.axes[1].displayCoords = ((xCoords[0], yCoords[0]),
+                                      (xCoords[0], yCoords[1]))
+
+        self._y2Axis.displayCoords = ((xCoords[1], yCoords[0]),
+                                      (xCoords[1], yCoords[1]))
+
+    def _buildGridVerticesWithTest(self, test):
+        vertices = []
+
+        for axis in self.axes:
+            for (xPixel, yPixel), xData, text in axis.ticks:
+                if test(text):
+                    vertices.append((xPixel, yPixel))
+                    if axis == self.xAxis:
+                        vertices.append((xPixel, self._margins['top']))
+                    elif axis == self.yAxis:
+                        vertices.append((self.size[0] - self._margins['right'],
+                                         yPixel))
+                    else:  # axis == self.y2Axis
+                        vertices.append((self._margins['left'], yPixel))
+
+        return vertices
+
+    def _buildVerticesAndLabels(self):
+        super(GLPlotFrame2D, self)._buildVerticesAndLabels()
+        vertices, gridVertices, labels = self._renderResources
+
+        # Adds vertices for borders without axis
+        extraVertices = []
+        extraVertices += self._x2AxisCoords
+        if not self.isY2Axis:
+            extraVertices += self._y2Axis.displayCoords
+
+        extraVertices = np.array(extraVertices, copy=False, dtype=np.float32)
+        vertices = np.append(vertices, extraVertices, axis=0)
+
+        self._renderResources = (vertices, gridVertices, labels)

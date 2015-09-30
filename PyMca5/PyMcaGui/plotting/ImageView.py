@@ -61,6 +61,7 @@ To get help:
 # import ######################################################################
 
 import logging
+import math
 import numpy as np
 
 try:
@@ -1091,7 +1092,6 @@ class ImageViewMainWindow(qt.QMainWindow):
 
 if __name__ == "__main__":
     import argparse
-    import math
     import os.path
     import sys
 

@@ -1,8 +1,8 @@
-# /*#########################################################################
+# /*##########################################################################
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -26,26 +26,51 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
+from __future__ import absolute_import, division, print_function, \
+    unicode_literals
+
 __author__ = "T. Vincent - ESRF Data Analysis"
-__contact__ = "thomas.vincent@esrf.fr"
+__contact__ = "tvincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__doc__ = """
-This module provides convenient classes for the OpenGL rendering backend.
-"""
+__doc__ = """Tests for Qhull wrapper."""
 
 
-# import ######################################################################
+import numpy
+import threading
+import unittest
 
-from .GLContext import *  # noqa
-from .GLFramebuffer import *  # noqa
-from .GLPlotCurve import *  # noqa
-from .GLPlotFrame import *  # noqa
-from .GLPlotImage import *  # noqa
-from .GLProgram import GLProgram  # noqa
-from .GLSupport import *  # noqa
-from .GLText import *  # noqa
-from .GLTexture import *  # noqa
-from .GLVertexBuffer import *  # noqa
-from .Interaction import *  # noqa
-from .LabelLayout import *  # noqa
+import PyMca5.Object3D.Object3DQhull as qhull
+
+
+class TestDelaunay(unittest.TestCase):
+
+    def testVersion(self):
+        self.assertTrue(qhull.__version__)
+
+    def _test(self, dtype):
+        # Set of points for test
+        tests = (
+            # 2D square
+            ((0, 0), (0, 1), (1, 1), (2, 0)),
+            # 3D
+            ((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 2, 0), (0, 0, 3)),
+        )
+
+        for points in tests:
+            points = numpy.array(points, dtype=dtype)
+            indices = qhull.delaunay(points, dtype=dtype)
+            self.assertEqual(len(indices), 2)
+            for simplex in indices:
+                self.assertEqual(len(simplex), len(points[0]) + 1)
+
+    def testFloat32(self):
+        self._test(numpy.float32)
+
+    def testFloat64(self):
+        self._test(numpy.float64)
+
+
+if __name__ == '__main__':
+    import sys
+    unittest.main(argv=sys.argv)
