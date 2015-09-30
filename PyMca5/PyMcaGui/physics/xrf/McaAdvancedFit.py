@@ -2195,7 +2195,17 @@ class McaAdvancedFit(qt.QWidget):
         # parFit    = fitresult['result']['fittedpar']
         # parSigma  = fitresult['result']['sigmapar']
 
-        #still to add the matrix spectrum
+        #still to add the MC matrix spectrum
+        # The Monte Carlo generated spectra
+        # I assume the calibration is the same
+        MCLabels, MCSpectra = self._getXRFMCLabelsAndSpectra(limits=\
+                                                    (fitresult['result']['xdata'][0],
+                                                     fitresult['result']['xdata'][-1]))
+        if MCLabels is not None:
+            if MCSpectra[2].size != fitresult['result']['xdata'].size:
+                print("Monte Carlo Spectra not saved: Wrong spectrum length.")
+                MCLabels = None
+                MCSpectra = None
 
         #get outputfile
         outfile = qt.QFileDialog(self)
@@ -2386,10 +2396,7 @@ class McaAdvancedFit(qt.QWidget):
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
-            if QTVERSION < '4.0.0':
-                msg.exec_loop()
-            else:
-                msg.exec_()
+            msg.exec_()
             return
         try:
             if filetype == 'ASCII':
@@ -2403,6 +2410,11 @@ class McaAdvancedFit(qt.QWidget):
                                        fitresult['result']['pileup'][i]))
                     if 'ymatrix' in fitresult['result'].keys():
                         file.write("  %.7g" %  fitresult['result']['ymatrix'][i])
+
+                    if MCLabels is not None:
+                        for nInteractions in range(2, len(MCLabels)):
+                            file.write("  %.7g" %  MCSpectra[nInteractions][i])
+
                     for group in fitresult['result']['groups']:
                         label = 'y'+group
                         if label in keys:
@@ -2422,6 +2434,10 @@ class McaAdvancedFit(qt.QWidget):
                 headerLine = '"channel"%s"Energy"%s"counts"%s"fit"%s"continuum"%s"pileup"' % (csv, csv, csv, csv, csv)
                 if 'ymatrix' in keys:
                     headerLine += '%s"ymatrix"' % csv
+
+                if MCLabels is not None:
+                    for nLabel in range(2, len(MCLabels)):
+                        headerLine += csv+ ('"%s"' % MCLabels[nLabel])
 
                 for group in fitresult['result']['groups']:
                     label = 'y'+group
@@ -2443,6 +2459,11 @@ class McaAdvancedFit(qt.QWidget):
                                        fitresult['result']['pileup'][i]))
                     if 'ymatrix' in fitresult['result'].keys():
                         file.write("%s%.7g" %  (csv,fitresult['result']['ymatrix'][i]))
+
+                    if MCLabels is not None:
+                        for nInteractions in range(2, len(MCLabels)):
+                            file.write("%s%.7g" %  (csv,MCSpectra[nInteractions][i]))
+
                     for group in fitresult['result']['groups']:
                         label = 'y'+group
                         if label in keys:
@@ -2473,6 +2494,11 @@ class McaAdvancedFit(qt.QWidget):
                 else:
                     nlabels = 6
 
+                if MCLabels is not None:
+                    for nLabel in range(2, len(MCLabels)):
+                        nlabels += 1
+                        labelline += '  '+ MCLabels[nLabel]
+
                 for group in fitresult['result']['groups']:
                     label = 'y'+group
                     if label in keys:
@@ -2490,6 +2516,9 @@ class McaAdvancedFit(qt.QWidget):
                                        fitresult['result']['pileup'][i]))
                     if 'ymatrix' in keys:
                         file.write("  %.7g" % fitresult['result']['ymatrix'][i])
+                    if MCLabels is not None:
+                        for nInteractions in range(2, len(MCLabels)):
+                            file.write("  %.7g" %  MCSpectra[nInteractions][i])        
                     for group in fitresult['result']['groups']:
                         label = 'y'+group
                         if label in keys:
@@ -2511,6 +2540,11 @@ class McaAdvancedFit(qt.QWidget):
                 keys = fitresult['result'].keys()
                 if 'ymatrix' in keys:
                     file.write(self.array2SpecMca(fitresult['result']['ymatrix']))
+                # The Monte Carlo generated spectra
+                # I assume the calibration is the same
+                if MCLabels is not None:
+                    for i in range(2, len(MCLabels)):
+                        file.write(self.array2SpecMca(MCSpectra[i]))
                 for group in fitresult['result']['groups']:
                     label = 'y'+group
                     if label in keys:
@@ -2521,6 +2555,33 @@ class McaAdvancedFit(qt.QWidget):
             os.linesep = systemline
             raise
         return
+
+    def _getXRFMCLabelsAndSpectra(self, limits=None):
+        labels = None
+        spectra = None
+        if self._xrfmcMatrixSpectra is not None:
+            if len(self._xrfmcMatrixSpectra):
+                labels = []
+                spectra = []
+                labels.append("channels")
+                data = self._xrfmcMatrixSpectra[0]
+                if limits:
+                    idx = numpy.nonzero((data >= limits[0]) & \
+                                        (data <= limits[1]))[0]
+                    data = data[idx]
+                spectra.append(data)
+                labels.append("energy")
+                data = self._xrfmcMatrixSpectra[1]
+                if limits:
+                    data = data[idx]
+                spectra.append(data)
+                for i in range(2, len(self._xrfmcMatrixSpectra)):
+                    labels.append("MC Matrix %d" % (i - 1))                        
+                    data = self._xrfmcMatrixSpectra[i]
+                    if limits:
+                        data = data[idx]
+                    spectra.append(data)
+        return labels, spectra
 
     def array2SpecMca(self, data):
         """ Write a python array into a Spec array.

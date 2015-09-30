@@ -1568,6 +1568,21 @@ class McaWindow(ScanWindow.ScanWindow):
                                 linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
                                 xerror=xerror, yerror=yerror, **kw)
         else:
+            # the following "if block" does not work perfectly:
+            # a spectrum calibrated cannot come back to "from source calibration" unless
+            # it is added again to the plot.
+            # It is however better than to re-apply the calibration on calibrated data!!!!
+            if legend in self.dataObjectsDict:
+                xChannels, yOrig, infoOrig = self.getDataAndInfoFromLegend(legend)
+                calib = info.get('McaCalib', [0.0, 1.0, 0.0])
+                calibrationOrder = info.get('McaCalibOrder',2)
+                if calibrationOrder == 'TOF':
+                    xFromChannels = calib[2] + calib[0] / pow(xChannels-calib[1], 2)
+                else:
+                    xFromChannels = calib[0] + \
+                                    calib[1] * xChannels + calib[2] * xChannels * xChannels
+                if numpy.allclose(xFromChannels, x):
+                    x = xChannels
             # create the data object (Is this necessary????)
             self.newCurve(x, y, legend=legend, info=info,
                                 replace=replace, replot=replot, color=color, symbol=symbol,

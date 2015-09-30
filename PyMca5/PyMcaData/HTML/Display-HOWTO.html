@@ -6,15 +6,16 @@ marginwidth=10 marginheight=10  topmargin=10 leftmargin=10>
 <br><a HREF=#Specfile>HOWTO - Display data from Specfile format files</a>
 <br><a HREF=#EDF>HOWTO - Display data from EDF files</a>
 <br><a HREF=#ASCII>HOWTO - Display data from raw ASCII files</a>
+<br><a HREF=#HDF5>HOWTO - Display data from HFD5 files</a>
 
-<H3><p><a NAME=#SPEC>Display SPEC data</a></H3>
+<H3><p><a NAME=SPEC>Display SPEC data</a></H3>
 <p>PyMCA can display SPEC shared memory arrays.
 <br>Just select File-Open-SPS and select the name of the SPEC session you're
 interested on. Then select the array to display and the columns or rows
 to be displayed. You can also do that selecting the SPS tab of the source
 selection widget.
 <br>&nbsp;
-<H3><p><a NAME=#Specfile>Display Specfile format data</a></H3>
+<H3><p><a NAME=Specfile>Display Specfile format data</a></H3>
 <p>Select File-Open-Specfile (or select the Specfile tab of the source
 selection widget) and browse your directories for the desired file. A list
 of scans will be presented showing the number of points and the number
@@ -27,7 +28,7 @@ on the desired operation. Specfile SCAN data can be shown on the SCAN window.
 To do so, select the SCAN tab, select the x counter, the y(s) counters
 and click ADD.
 <br>&nbsp;
-<H3><p><a NAME=#EDF>Display ESRF Data Format (EDF) Files</a></H3>
+<H3><p><a NAME=EDF>Display ESRF Data Format (EDF) Files</a></H3>
 <p>Select File-Open-Edffile (or select the Edffile tab of the source selection
 widget) and browse your directories for the desired file. The first image
 of the file will be presented. Horizontal or Vertical selections can be
@@ -36,8 +37,14 @@ or column on the bottom combo selection boxes and clicking the ADD, REMOVE,
 REPLACE buttons.
 <p>Multiple image EDF files are supported. Just select the appropriate
 image in the combo box.
-<H3><p><a NAME=#ASCII>Display Raw ASCII data</a></H3>
+<H3><p><a NAME=ASCII>Display Raw ASCII data</a></H3>
 <p>Single MCA raw ASCII data are handled in the
 same way as Specfile format files. Please refer to the <a HREF=#Specfile>Display Specfile</a> information.
+<H3><p><a NAME=HDF5>Display HDF5 file data</a></H3>
+<p>A simple analogy of an HDF5 file is that of the file system on a hard disk.  A hard disk can contain files that can be into folders that in turn may contain other folders. An HDF5 file contains datasets (your data) that can be arranged into groups that in turn may contain other groups. The analogy goes till the point that you can create links between datasets or groups and that to access a dataset or a group you have to provide the path to it.
+<p>Obviously, from a graphical user interface point of view, the logical access to an HDF5 should be provided by something similar to a file browser.  The HDF5 file browser used in PyMca is based on a contribution by Darren Dale.
+<p>The data in an HDF5 file provide information about their size and type but they do not provide information about what they represent. Therefore, the approach followed by PyMca to properly visualize the data is cumbersome (at least when used for first time) but simple. The approach is based on creating a selection table with the datasets of interest.  This can be achieved by double clicking the relevant datasets or via a right-button mouse click. The nice feature is that the table provides a context menu (right-button mouse click) allowing the user to save or load selection tables therefore reducing the need to repetitively browse the file. In addition, the selection table is saved among the PyMca settings (File Menu -> Save ->PyMca Configuration or File Menu -> Save Default Settings).
+<p>Once the datasets of user interest are in the table, he can select what datasets are to be used as axes (first table column containing checkboxes), as signals (second column containing checkboxes) and eventually as monitor (third column with checkboxes). The only selection that is mandatory to generate a plot is the one corresponding to the signal. In case of selection of several axes, the order in which the check boxes were selected determines the dataset to be used as first, second or third axis. For a simple 1D plot, one would select the dataset to be used as abscissas under "Axes" and the dataset to be used as ordinates as "Signal". 
+<p>
 </body>
 </html>
