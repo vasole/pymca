@@ -1,6 +1,27 @@
+VERSION 5.1.1
+
+Update to fisx 1.0.4 to workaround issue calculating secondary excitation
+corrections when the incident beam is normal to the sample surface.
+
+Restore pre-5.0.0 behavior in the scan window when displaying mouse
+coordinates without the crosshair cursor.
+
+Correct multiple curve averaging when input arrays are reversed.
+
+Add the possibility to save the Monte Carlo generated matrix spectra in the
+fit window.
+
+Correct problem of reapplying the calibration when toggling log and linear
+axes while already using a calibration.
+
+Restore saving of images in png and jpg in the main window.
+
+Restore data projection on PCA eigenvectors calculated using the covariance
+method to the same way as when using the other methods.
+
 VERSION 5.1.0
 
-Automatic download of user plugins.
+Automatic loading of user plugins.
 
 Allow the use of user specified physical constants across different installed versions.
 
