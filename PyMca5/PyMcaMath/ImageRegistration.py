@@ -3,7 +3,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,7 +31,7 @@ __author__ = "Jérôme Kieffer and V.Armando Solé"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__date__ = "20131028"
+__date__ = "20151002"
 __doc__ = "This is a python module to measure image offsets"
 
 import os, time
@@ -40,7 +40,7 @@ from numpy.fft import fft2, ifft2, fftshift, ifftshift
 PYMCA = False
 SCIPY = False
 try:
-    from PyMca5 import SpecfitFuns
+    from PyMca5.PyMca import SpecfitFuns
     PYMCA = True
 except ImportError:
     try:
@@ -180,6 +180,10 @@ def measure_offset_from_ffts(img0_fft2, img1_fft2, withLog=False):
     a01 = int(min(a0+w+1, shape[0]))
     a10 = int(max(a1-w, 0))
     a11 = int(min(a1+w+1, shape[1]))
+    if a00 == a01:
+        a01 = a00 + 1
+    if a10 == a11:
+        a11 = a10 + 1
     for i in range(a00, a01):
         for j in range(a10, a11):
             if res[i, j] > 0.1 * resmax:
