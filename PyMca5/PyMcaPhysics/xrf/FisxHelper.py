@@ -319,6 +319,18 @@ def _getFisxMaterials(fitConfiguration):
                 thickness = inputMaterialDict[materialName].get("Thickness", 1.0)
                 density = inputMaterialDict[materialName].get("Density", 1.0)
                 comment = inputMaterialDict[materialName].get("Comment", "")
+                if type(comment) in [type([])]:
+                    # the user may have put a comma in the comment leading to
+                    # misinterpretation of the string as a list
+                    if len(comment) == 0:
+                        comment = ""
+                    elif len(comment) == 1:
+                        comment = comment[0]
+                    else:
+                        actualComment = comment[0]
+                        for commentPiece in comment[1:]:
+                            actualComment = actualComment + "," + commentPiece
+                        comment = actualComment
                 if not len(comment):
                     comment = ""
                 compoundList = inputMaterialDict[materialName]["CompoundList"]
