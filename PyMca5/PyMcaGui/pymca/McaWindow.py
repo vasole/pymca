@@ -1652,6 +1652,28 @@ class McaWindow(ScanWindow.ScanWindow):
             self.setActiveCurve(activeCurve)
         self.replot()
 
+    def renameCurve(self, oldLegend, newLegend, replot=True):
+        xChannels, yOrig, infoOrig = self.getDataAndInfoFromLegend(oldLegend)
+        x, y, legend, info = self.getCurve(oldLegend)[:4]
+        calib = info.get('McaCalib', [0.0, 1.0, 0.0])
+        calibrationOrder = info.get('McaCalibOrder',2)
+        if calibrationOrder == 'TOF':
+            xFromChannels = calib[2] + calib[0] / pow(xChannels-calib[1], 2)
+        else:
+            xFromChannels = calib[0] + \
+                            calib[1] * xChannels + calib[2] * xChannels * xChannels
+        if numpy.allclose(xFromChannels, x):
+            x = xChannels
+        newInfo = copy.deepcopy(info)
+        newInfo['legend'] = newLegend
+        newInfo['SourceName'] = newLegend
+        newInfo['Key'] = ""
+        newInfo['selectiontype'] = "1D"                    
+        # create the data object (Is this necessary????)
+        self.removeCurve(oldLegend, replot=False)
+        self.addCurve(x, y, legend=newLegend, info=newInfo, replot=replot)
+        self.updateLegends()
+
 def test():
     w = McaWindow()
     x = numpy.arange(1000.)
