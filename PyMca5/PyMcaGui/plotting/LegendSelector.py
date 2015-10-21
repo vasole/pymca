@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2015-2014 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -814,7 +814,8 @@ class LegendListContextMenu(BaseContextMenu):
                       ('Map to right', self.mapToRightAction),
                       ('Toggle points', self.togglePointsAction),
                       ('Toggle lines', self.toggleLinesAction),
-                      ('Remove curve', self.removeItemAction)]
+                      ('Remove curve', self.removeItemAction),
+                      ('Rename curve', self.renameItemAction)]
         for name, action in actionList:
             self.addAction(name, action)
 
@@ -860,6 +861,20 @@ class LegendListContextMenu(BaseContextMenu):
         }
         self.sigContextMenu.emit(ddict)
         self.model.removeRow(modelIndex.row())
+
+    def renameItemAction(self):
+        if DEBUG == 1:
+            print('LegendListContextMenu.renameCurveAction called')
+        modelIndex = self.currentIdx()
+        legend = qt.safe_str(convertToPyObject(modelIndex.data(qt.Qt.DisplayRole)))
+        ddict = {
+            'legend'   : legend,
+            'label'    : legend,
+            'selected' : convertToPyObject(modelIndex.data(qt.Qt.CheckStateRole)),
+            'type'     : qt.safe_str(convertToPyObject(modelIndex.data())),
+            'event': "renameCurve"
+        }
+        self.sigContextMenu.emit(ddict)
 
     def toggleLinesAction(self):
         modelIndex = self.currentIdx()
