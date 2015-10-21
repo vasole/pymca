@@ -1626,7 +1626,7 @@ if __name__ == "__main__":
     y = x * x
     app = qt.QApplication([])
     backend = None
-    if "opengl" in sys.argv:
+    if ("opengl" in sys.argv) or ("gl" in sys.argv) or ("OpenGL" in sys.argv):
         backend = "opengl"
     elif "pyqtgraph" in sys.argv:
         backend = "pyqtgraph"
