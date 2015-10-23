@@ -61,7 +61,6 @@ To get help:
 # import ######################################################################
 
 import logging
-import math
 import numpy as np
 
 try:
@@ -1056,9 +1055,9 @@ class ImageViewMainWindow(qt.QMainWindow):
 
     def _statusBarSlot(self, row, column, value):
         """Update status bar with coordinates/value from plots."""
-        if math.isnan(row):
+        if np.isnan(row):
             msg = 'Column: %d, Sum: %g' % (int(column), value)
-        elif math.isnan(column):
+        elif np.isnan(column):
             msg = 'Row: %d, Sum: %g' % (int(row), value)
         else:
             msg = 'Position: (%d, %d), Value: %g' % (int(row), int(column),
