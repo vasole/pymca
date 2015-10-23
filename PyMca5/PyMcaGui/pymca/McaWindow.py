@@ -250,7 +250,7 @@ class McaWindow(ScanWindow.ScanWindow):
         ydata    = None
         info = None
 
-        if legend in self.dataObjectsDict.keys():
+        if legend in self.dataObjectsDict:
             # The data as displayed
             x, y, legend, curveinfo = self.getCurve(legend)
             # the data as first entered
@@ -942,9 +942,14 @@ class McaWindow(ScanWindow.ScanWindow):
                             calib0 = info['McaCalib'][info['McaDet']-1]
                         else:
                             calib0 = info['McaCalib']
-                        curveinfo['McaCalibSource'] = calib0
+                        if 'McaCalibSource' in info:
+                            curveinfo['McaCalibSource'] = info['McaCalibSource']
+                        else:
+                            curveinfo['McaCalibSource'] = calib0
                     if self.calibration == self.calboxoptions[1]:
-                        if 'McaCalib' in info:
+                        if 'McaCalibSource' in curveinfo:
+                            calib = curveinfo['McaCalibSource']  
+                        elif 'McaCalib' in info:
                             if type(info['McaCalib'][0]) == type([]):
                                 calib = info['McaCalib'][info['McaDet']-1]
                             else:
@@ -1568,10 +1573,6 @@ class McaWindow(ScanWindow.ScanWindow):
                                 linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
                                 xerror=xerror, yerror=yerror, **kw)
         else:
-            # the following "if block" does not work perfectly:
-            # a spectrum calibrated cannot come back to "from source calibration" unless
-            # it is added again to the plot.
-            # It is however better than to re-apply the calibration on calibrated data!!!!
             if legend in self.dataObjectsDict:
                 xChannels, yOrig, infoOrig = self.getDataAndInfoFromLegend(legend)
                 calib = info.get('McaCalib', [0.0, 1.0, 0.0])
@@ -1650,6 +1651,28 @@ class McaWindow(ScanWindow.ScanWindow):
         if activeCurve is not None:
             self.setActiveCurve(activeCurve)
         self.replot()
+
+    def renameCurve(self, oldLegend, newLegend, replot=True):
+        xChannels, yOrig, infoOrig = self.getDataAndInfoFromLegend(oldLegend)
+        x, y, legend, info = self.getCurve(oldLegend)[:4]
+        calib = info.get('McaCalib', [0.0, 1.0, 0.0])
+        calibrationOrder = info.get('McaCalibOrder',2)
+        if calibrationOrder == 'TOF':
+            xFromChannels = calib[2] + calib[0] / pow(xChannels-calib[1], 2)
+        else:
+            xFromChannels = calib[0] + \
+                            calib[1] * xChannels + calib[2] * xChannels * xChannels
+        if numpy.allclose(xFromChannels, x):
+            x = xChannels
+        newInfo = copy.deepcopy(info)
+        newInfo['legend'] = newLegend
+        newInfo['SourceName'] = newLegend
+        newInfo['Key'] = ""
+        newInfo['selectiontype'] = "1D"                    
+        # create the data object (Is this necessary????)
+        self.removeCurve(oldLegend, replot=False)
+        self.addCurve(x, y, legend=newLegend, info=newInfo, replot=replot)
+        self.updateLegends()
 
 def test():
     w = McaWindow()

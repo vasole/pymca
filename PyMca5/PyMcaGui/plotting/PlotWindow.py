@@ -45,6 +45,7 @@ from .ObjectPrintConfigurationDialog import ObjectPrintConfigurationDialog
 from . import McaROIWidget
 from . import PlotWidget
 from . import MaskImageTools
+from . import RenameCurveDialog
 
 try:
     from . import ColormapDialog
@@ -1324,6 +1325,17 @@ class PlotWindow(PlotWidget.PlotWidget):
         elif ddict['event'] == "removeCurve":
             ddict['label'] = ddict['legend']
             self.removeCurve(ddict['legend'], replot=True)
+        elif ddict['event'] == "renameCurve":
+            ddict['label'] = ddict['legend']
+            curveList = self.getAllCurves(just_legend=True)
+            oldLegend = ddict['legend']
+            dialog = RenameCurveDialog.RenameCurveDialog(self,
+                                                         oldLegend,
+                                                         curveList)
+            ret = dialog.exec_()
+            if ret:
+                newLegend = dialog.getText()
+                self.renameCurve(oldLegend, newLegend, replot=True)
         elif ddict['event'] == "setActiveCurve":
             ddict['event'] = 'legendClicked'
             ddict['label'] = ddict['legend']
@@ -1362,6 +1374,12 @@ class PlotWindow(PlotWidget.PlotWidget):
             self.updateLegends()
         elif DEBUG:
             print("unhandled event", ddict['event'])
+
+    def renameCurve(self, oldLegend, newLegend, replot=True):
+        x, y,legend, info = self._curveDict[oldLegend][0:4]
+        self.removeCurve(oldLegend, replot=False)
+        self.addCurve(x, y, legend=newLegend, info=info, replot=True)
+        self.updateLegends()
 
     def toggleLegendWidget(self):
         if self.legendWidget is None:
@@ -1608,7 +1626,7 @@ if __name__ == "__main__":
     y = x * x
     app = qt.QApplication([])
     backend = None
-    if "opengl" in sys.argv:
+    if ("opengl" in sys.argv) or ("gl" in sys.argv) or ("OpenGL" in sys.argv):
         backend = "opengl"
     elif "pyqtgraph" in sys.argv:
         backend = "pyqtgraph"
