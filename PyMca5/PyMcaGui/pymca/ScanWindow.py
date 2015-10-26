@@ -41,6 +41,7 @@ else:
 if __name__ == "__main__":
     app = qt.QApplication([])
 
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui.plotting import PlotWindow
 from . import ScanFit
 from PyMca5.PyMcaMath import SimpleMath
@@ -670,9 +671,6 @@ class ScanWindow(PlotWindow.PlotWindow):
             self.outputDir = os.getcwd()
             wdir = self.outputDir
 
-        outfile = qt.QFileDialog(self)
-        outfile.setWindowTitle("Output File Selection")
-        outfile.setModal(1)
         filterlist = ['Specfile MCA  *.mca',
                       'Specfile Scan *.dat',
                       'Specfile MultiScan *.dat',
@@ -686,22 +684,20 @@ class ScanWindow(PlotWindow.PlotWindow):
                       'Graphics PNG *.png',
                       'Graphics EPS *.eps',
                       'Graphics SVG *.svg']
-
-        if self.outputFilter is None:
-            self.outputFilter = filterlist[0]
-        outfile.setFilters(filterlist)
-        outfile.selectFilter(self.outputFilter)
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(outfile.AcceptSave)
-        outfile.setDirectory(wdir)
-        ret = outfile.exec_()
-        if not ret:
-            return None
-        self.outputFilter = qt.safe_str(outfile.selectedFilter())
-        filterused = self.outputFilter.split()
-        filetype  = filterused[1]
+        fileList, fileFilter = PyMcaFileDialogs.getFileList(self,
+                                     filetypelist=filterlist,
+                                     message="Output File Selection",
+                                     currentdir=wdir,
+                                     single=True,
+                                     mode="SAVE",
+                                     getfilter=True,
+                                     currentfilter=self.outputFilter)
+        if not len(fileList):
+            return
+        filterused = fileFilter.split()
+        filetype = filterused[1]
         extension = filterused[2]
-        outdir = qt.safe_str(outfile.selectedFiles()[0])
+        outdir = qt.safe_str(fileList[0])
         try:
             self.outputDir  = os.path.dirname(outdir)
             PyMcaDirs.outputDir = os.path.dirname(outdir)
@@ -712,8 +708,6 @@ class ScanWindow(PlotWindow.PlotWindow):
             outputFile = os.path.basename(outdir)
         except:
             outputFile = outdir
-        outfile.close()
-        del outfile
         if len(outputFile) < 5:
             outputFile = outputFile + extension[-4:]
         elif outputFile[-4:] != extension[-4:]:
@@ -756,12 +750,11 @@ class ScanWindow(PlotWindow.PlotWindow):
             return
         systemline = os.linesep
         os.linesep = '\n'
-        if sys.version < "3.0":
-            accessMode = "wb"
-        else:
-            accessMode = "w"
         try:
-            ffile=open(filename, accessMode)
+            if sys.version < "3.0":
+                ffile=open(filename, "wb")
+            else:
+                ffile=open(filename, "w", newline='')
         except IOError:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
