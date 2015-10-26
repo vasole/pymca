@@ -756,8 +756,12 @@ class ScanWindow(PlotWindow.PlotWindow):
             return
         systemline = os.linesep
         os.linesep = '\n'
+        if sys.version < "3.0":
+            accessMode = "wb"
+        else:
+            accessMode = "w"
         try:
-            ffile=open(filename,'wb')
+            ffile=open(filename, accessMode)
         except IOError:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
