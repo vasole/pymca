@@ -1220,7 +1220,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 strlist = []
             for filetype in fileTypeList:
                 strlist.append(filetype.replace("(","").replace(")",""))
-            fdialog.setFilters(strlist)
+            if hasattr(fdialog, "setFilters"):
+                fdialog.setFilters(strlist)
+            else:
+                fdialog.setNameFilters(strlist)
             fdialog.setFileMode(fdialog.ExistingFiles)
             fdialog.setDirectory(wdir)
             if QTVERSION > '4.3.0':
@@ -1459,7 +1462,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             outfile.setWindowTitle("Select PyMca Configuration File")
             if os.path.exists(self.configDir):
                 outfile.setDirectory(self.configDir)
-            outfile.setFilters(['PyMca  *.ini'])
+            if hasattr(outfile, "setFilters"):
+                outfile.setFilters(['PyMca  *.ini'])
+            else:
+                outfile.setNameFilters(['PyMca  *.ini'])
             outfile.setFileMode(outfile.ExistingFile)
             ret = outfile.exec_()
             if ret:
