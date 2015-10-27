@@ -178,7 +178,10 @@ class McaROIWidget(qt.QWidget):
         elif not os.path.isdir(self.roiDir):
             self.roiDir = PyMcaDirs.inputDir
         outfile = qt.QFileDialog(self)
-        outfile.setFilter('PyMca  *.ini')
+        if hasattr(outfile, "setFilters"):
+            outfile.setFilter('PyMca  *.ini')
+        else:
+            outfile.setNameFilters(['PyMca  *.ini', 'All *'])
         outfile.setFileMode(outfile.ExistingFile)
         outfile.setDirectory(self.roiDir)
         ret = outfile.exec_()
@@ -219,7 +222,10 @@ class McaROIWidget(qt.QWidget):
         elif not os.path.isdir(self.roiDir):
             self.roiDir = PyMcaDirs.outputDir
         outfile = qt.QFileDialog(self)
-        outfile.setFilter('PyMca  *.ini')
+        if hasattr(outfile, "setFilters"):
+            outfile.setFilter('PyMca  *.ini')
+        else:
+            outfile.setNameFilters(['PyMca  *.ini', 'All *'])
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
         outfile.setDirectory(self.roiDir)
