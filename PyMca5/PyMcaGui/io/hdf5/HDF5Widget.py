@@ -48,6 +48,7 @@ phynx = h5py
 import weakref
 
 DEBUG = 0
+QVERSION = qt.qVersion()
 
 #sorting method
 def h5py_sorting(object_list):
@@ -586,9 +587,10 @@ class HDF5Widget(FileView):
         qt.QTreeView.mousePressEvent(self, e)
         if self._lastMouse != "left":
             # Qt5 only sends itenClicked on left button mouse click
-            if qt.qVersion() > "5":
+            if QVERSION > "5":
                 event = "itemClicked"
-                self.emitSignal(event, self.indexAt(e.pos()))
+                modelIndex = self.indexAt(e.pos())
+                self.emitSignal(event, modelIndex)
 
     def itemActivated(self, modelIndex):
         event ="itemActivated"
@@ -605,8 +607,13 @@ class HDF5Widget(FileView):
     def emitSignal(self, event, modelIndex):
         if self.model() is None:
             return
-        ddict = {}
         item  = self.model().getProxyFromIndex(modelIndex)
+        if QVERSION > "5":
+            # prevent crash clicking on empty space
+            if not hasattr(item, "file"):
+                # RootItem
+                return
+        ddict = {}
         ddict['event'] = event
         ddict['file']  = item.file.filename
         ddict['name']  = item.name
