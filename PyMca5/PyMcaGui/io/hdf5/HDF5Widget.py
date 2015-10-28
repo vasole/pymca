@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, ESRF - D. Dale CHESS
+# Copyright (C) 2004-2015 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -584,6 +584,11 @@ class HDF5Widget(FileView):
             #Should I set it to no button?
             self._lastMouse = "left"
         qt.QTreeView.mousePressEvent(self, e)
+        if self._lastMouse != "left":
+            # Qt5 only sends itenClicked on left button mouse click
+            if qt.qVersion() > "5":
+                event = "itemClicked"
+                self.emitSignal(event, self.indexAt(e.pos()))
 
     def itemActivated(self, modelIndex):
         event ="itemActivated"
