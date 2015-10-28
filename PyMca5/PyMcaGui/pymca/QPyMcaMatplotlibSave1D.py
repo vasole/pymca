@@ -41,7 +41,12 @@ from PyMca5.PyMcaCore import PyMcaDirs
 from matplotlib import cm
 from matplotlib import __version__ as matplotlib_version
 from matplotlib.font_manager import FontProperties
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+if "PyQt5" in sys.modules:
+    import matplotlib
+    matplotlib.rcParams['backend']='Qt5Agg'
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+else:
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas    
 from matplotlib.figure import Figure
 
 DEBUG = 0
