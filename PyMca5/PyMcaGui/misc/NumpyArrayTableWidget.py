@@ -50,7 +50,7 @@ class NumpyArrayTableWidget(qt.QWidget):
             browser = FrameBrowser.HorizontalSliderWithBrowser(self.browserContainer)
             self.browserContainer.mainLayout.addWidget(browser)
             self._widgetList.append(browser)
-            browser.sigIndexChanged.connect(self.browserSlot)
+            browser.valueChanged.connect(self.browserSlot)
             if i == 0:
                 browser.setEnabled(False)
                 browser.hide()
@@ -72,7 +72,7 @@ class NumpyArrayTableWidget(qt.QWidget):
                 browser = FrameBrowser.HorizontalSliderWithBrowser(self.browserContainer)
                 self.browserContainer.mainLayout.addWidget(browser)
                 self._widgetList.append(browser)
-                browser.sigIndexChanged.connect(self.browserSlot)
+                browser.valueChanged.connect(self.browserSlot)
                 browser.setEnabled(False)
                 browser.hide()
         for i in range(nWidgets):
@@ -87,18 +87,18 @@ class NumpyArrayTableWidget(qt.QWidget):
                 browser.hide()
         self.view.setArrayData(self._array)
 
-    def browserSlot(self, ddict):
-        if ddict['event'] == "indexChanged":
-            if len(self._array.shape) == 3:
-                self.view.setCurrentArrayIndex(ddict['new']-1)
-                self.view.reset()
-            else:
-                index = []
-                for browser in self._widgetList:
-                    if browser.isEnabled():
-                        index.append(browser.value() - 1)
-                self.view.setCurrentArrayIndex(index)
-                self.view.reset()
+    def browserSlot(self, value):
+        if len(self._array.shape) == 3:
+            self.view.setCurrentArrayIndex(value - 1)
+            self.view.reset()
+        else:
+            index = []
+            for browser in self._widgetList:
+                if browser.isEnabled():
+                    index.append(browser.value() - 1)
+            self.view.setCurrentArrayIndex(index)
+            self.view.reset()
+
 if __name__ == "__main__":
     import numpy
     import sys

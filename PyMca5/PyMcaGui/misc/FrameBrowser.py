@@ -276,11 +276,7 @@ class HorizontalSliderWithBrowser(qt.QAbstractSlider):
 
     def _sliderSlot(self, value):
         self._browser.setValue(value)
-        ddict = {}
-        ddict["event"] = "indexChanged"
-        ddict["new"]   = value
-        ddict["id"]    = id(self)
-        self.sigIndexChanged.emit(ddict)
+        self.valueChanged.emit(value)
 
     def _browserSlot(self, ddict):
         self._slider.setValue(ddict['new'])
