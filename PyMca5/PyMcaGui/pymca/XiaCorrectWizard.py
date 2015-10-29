@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 E. Papillon, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 E. Papillon, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -431,7 +431,7 @@ class XiaRunWidget(qt.QWidget):
         layout.addWidget(self.logText)
         layout.addWidget(progressWidget)
 
-        self.startButton.clicked[()].connect(self.start)
+        self.startButton.clicked.connect(self.start)
 
         self.parameters= {}
 

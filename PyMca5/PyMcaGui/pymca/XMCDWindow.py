@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 T. Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -160,11 +160,11 @@ class XMCDOptions(qt.QDialog):
         if full:
             buttonOK.clicked.connect(self.accept)
         else:
-            buttonOK.clicked[()].connect(self.saveOptionsAndClose)
+            buttonOK.clicked.connect(self._saveOptionsAndCloseSlot)
         buttonCancel.clicked.connect(self.close)
         if full:
-            buttonSave.clicked[()].connect(self.saveOptions)
-        buttonLoad.clicked[()].connect(self.loadOptions)
+            buttonSave.clicked.connect(self._saveOptionsSlot)
+        buttonLoad.clicked.connect(self._loadOptionsSlot)
         # Keep normalization method selector disabled
         # when 'no normalization' selected
         normBG.button(0).toggled.connect(normMeth.setDisabled)
@@ -231,11 +231,17 @@ class XMCDOptions(qt.QDialog):
                 return name
         raise ValueError("'%s' not found.")
 
+    def _saveOptionsAndCloseSlot(self):
+        return self.saveOptionsAndClose()
+
     def saveOptionsAndClose(self):
         if not self.saved:
             if not self.saveOptions():
                 return
         self.accept()
+
+    def _saveOptionsSlot(self):
+        return self.saveOptions()
 
     def saveOptions(self, filename=None):
         saveDir = PyMcaDirs.outputDir
@@ -274,14 +280,17 @@ class XMCDOptions(qt.QDialog):
         self.saved = True
         return True
 
+    def _loadOptionsSlot(self):
+        return self.loadOptions()
+
     def loadOptions(self):
         openDir = PyMcaDirs.outputDir
-        filter = 'PyMca (*.cfg)'
+        ffilter = 'PyMca (*.cfg)'
         filename = qt.QFileDialog.\
                     getOpenFileName(self,
                                     'Load XLD/XMCD Analysis Configuration',
                                     openDir,
-                                    filter)
+                                    ffilter)
         confDict = ConfigDict.ConfigDict()
         try:
             confDict.read(filename)

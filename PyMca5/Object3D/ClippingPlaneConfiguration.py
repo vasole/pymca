@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -61,7 +61,7 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
             use = qt.QCheckBox(self)
             use.setText(item)
             vector = [use]
-            use.clicked[()].connect(self._signal)
+            use.clicked.connect(self._signalClickedSlot)
             for k in [0, 1, 2, 3]:
                 line = qt.QLineEdit(self)
                 line.setFixedWidth(line.fontMetrics().width('########'))
@@ -156,6 +156,9 @@ class ClippingPlaneConfiguration(qt.QGroupBox):
                     self.planeList[i][j].setText("%f"% plane[j])
                 i += 1
             self.__disconnected = False
+
+    def _signalClickedSlot(self):
+        self._signal()
 
     def _signal(self, event = None):
         if event is None:

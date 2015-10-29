@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -68,7 +68,7 @@ class OutputParameters(qt.QWidget):
         self.mainLayout.addWidget(self.outputDirButton, 0, 2)
         self.mainLayout.addWidget(self.outputFileLabel,  1, 0)
         self.mainLayout.addWidget(self.outputFileLine,   1, 1)
-        self.outputDirButton.clicked[()].connect(self.browseDirectory)
+        self.outputDirButton.clicked.connect(self.browseDirectory)
 
     def getOutputDirectory(self):
         return safe_str(self.outputDirLine.text())
@@ -121,7 +121,7 @@ class StackSimpleFitWindow(qt.QWidget):
         self.startButton = qt.QPushButton(self)
         self.startButton.setText("FitStack")
         self.mainLayout.addWidget(self.startButton)
-        self.startButton.clicked[()].connect(self.startStackFit)
+        self.startButton.clicked.connect(self.startStackFit)
 
         #progress handling
         self._total = 100

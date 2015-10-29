@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -772,7 +772,7 @@ def testSimple():
     l.addWidget(view)
     w.resize(300, 600)
     w.show()
-    button.clicked[()].connect(printFile)
+    button.clicked.connect(printFile)
 
     a.exec_()
 

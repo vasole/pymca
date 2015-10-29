@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -97,13 +97,13 @@ class GLToolBar(qt.QWidget):
         self.mainLayout.addWidget(self.cubeLeft)
         self.mainLayout.addWidget(self.cube45)
 
-        self.cubeFront.clicked[()].connect(self.cubeFrontSlot)
-        self.cubeBack.clicked[()].connect(self.cubeBackSlot)
-        self.cubeTop.clicked[()].connect(self.cubeTopSlot)
-        self.cubeBottom.clicked[()].connect(self.cubeBottomSlot)
-        self.cubeRight.clicked[()].connect(self.cubeRightSlot)
-        self.cubeLeft.clicked[()].connect(self.cubeLeftSlot)
-        self.cube45.clicked[()].connect(self.cube45Slot)
+        self.cubeFront.clicked.connect(self.cubeFrontSlot)
+        self.cubeBack.clicked.connect(self.cubeBackSlot)
+        self.cubeTop.clicked.connect(self.cubeTopSlot)
+        self.cubeBottom.clicked.connect(self.cubeBottomSlot)
+        self.cubeRight.clicked.connect(self.cubeRightSlot)
+        self.cubeLeft.clicked.connect(self.cubeLeftSlot)
+        self.cube45.clicked.connect(self.cube45Slot)
 
     def cubeFrontSlot(self):
         self.applyCube('front')

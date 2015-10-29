@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -84,7 +84,7 @@ class Object3DMeshConfig(Object3DPrivateConfig.Object3DPrivateConfig):
 
         #connect
         self.colorFilter.sigColorFilterSignal.connect(self.updateCallBack)
-        self.updateButton.clicked[()].connect(self.updateCallBack)
+        self.updateButton.clicked.connect(self.updateCallBack)
 
     def setParameters(self, ddict):
         #if ddict.has_key('widget'):

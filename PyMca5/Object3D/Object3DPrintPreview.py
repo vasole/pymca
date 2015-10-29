@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -156,31 +156,31 @@ class Object3DPrintPreview(qt.QDialog):
 
         hideBut   = qt.QPushButton("Hide", toolBar)
         #hideBut.setFixedWidth(buttonSize-10)
-        hideBut.clicked[()].connect(self.hide)
+        hideBut.clicked.connect(self.hide)
 
         cancelBut = qt.QPushButton("Clear All", toolBar)
         #cancelBut.setFixedWidth(buttonSize+10)
-        cancelBut.clicked[()].connect(self.__clearAll)
+        cancelBut.clicked.connect(self.__clearAll)
 
         removeBut = qt.QPushButton("Remove", toolBar)
         #removeBut.setFixedWidth(buttonSize)
-        removeBut.clicked[()].connect(self.__remove)
+        removeBut.clicked.connect(self.__remove)
 
         setupBut  = qt.QPushButton("Setup", toolBar)
         #setupBut.setFixedWidth(buttonSize-5)
-        setupBut.clicked[()].connect(self.__setup)
+        setupBut.clicked.connect(self.__setup)
 
         printBut  = qt.QPushButton("Print", toolBar)
         #printBut.setFixedWidth(buttonSize-5)
-        printBut.clicked[()].connect(self.__print)
+        printBut.clicked.connect(self.__print)
 
         zoomPlusBut  = qt.QPushButton("Zoom +", toolBar)
         #zoomPlusBut.setFixedWidth(buttonSize-5)
-        zoomPlusBut.clicked[()].connect(self.__zoomPlus)
+        zoomPlusBut.clicked.connect(self.__zoomPlus)
 
         zoomMinusBut  = qt.QPushButton("Zoom -", toolBar)
         #zoomMinusBut.setFixedWidth(buttonSize-5)
-        zoomMinusBut.clicked[()].connect(self.__zoomMinus)
+        zoomMinusBut.clicked.connect(self.__zoomMinus)
 
         # now we put widgets in the toolLayout
         toolsLayout.addWidget(hideBut)
@@ -564,7 +564,7 @@ def testSimple():
     l.addWidget(view)
     w.resize(300, 600)
     w.show()
-    button.clicked[()].connect(printFile)
+    button.clicked.connect(printFile)
 
     a.exec_()
 

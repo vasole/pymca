@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -141,8 +141,8 @@ class SceneAxesVectorsWidget(qt.QGroupBox):
                                                      qt.Qt.AlignCenter)
 
 
-        self._useCheckBox.clicked[()].connect(self._emitSignal)
-        self._updateButton.clicked[()].connect(self._emitSignal)
+        self._useCheckBox.clicked.connect(self._emitSignal)
+        self._updateButton.clicked.connect(self._emitSignal)
 
     def _emitSignal(self):
         ddict = self.getParameters()
@@ -264,7 +264,7 @@ class SceneLimitsWidget(qt.QGroupBox):
         self.mainLayout.addWidget(self._autoCheckBox, i, 0,
                                                       1, 4,
                                                       qt.Qt.AlignCenter)
-        self._autoCheckBox.clicked[()].connect(self._autoCheckBoxClicked)
+        self._autoCheckBox.clicked.connect(self._autoCheckBoxClicked)
         return
         self._applyButton = qt.QPushButton(self)
         self._applyButton.setText('Apply')
@@ -333,7 +333,6 @@ class SceneLimitsWidget(qt.QGroupBox):
                 e.setDisabled(False)
             for e in self._deltaList:
                 e.setDisabled(False)
-
 
     def _emitSignal(self):
         ddict = self.getParameters()
@@ -489,7 +488,7 @@ class ObserverPositionWidget(qt.QGroupBox):
         self.mainLayout.addWidget(self._autoCheckBox, i, 0,
                                                       1, 2,
                                                       qt.Qt.AlignCenter)
-        self._autoCheckBox.clicked[()].connect(self._emitSignal)
+        self._autoCheckBox.clicked.connect(self._emitSignal)
 
 
     def getParameters(self):

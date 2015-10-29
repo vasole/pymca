@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -175,9 +175,12 @@ class AlignmentWidget(qt.QDialog):
         buttonLoad.clicked.connect(self.loadDict)
 
         # ..to Plugin instance
-        buttonCalc.clicked[()].connect(self.triggerCalculateShift)
+        buttonCalc.clicked.connect(self._triggerCalculateShiftClickedSlot)
         self.alignmentMethodComboBox.activated['QString'].\
                             connect(self.triggerCalculateShift)
+
+    def _triggerCalculateShiftClickedSlot(self):
+        return self.triggerCalculateShift()
 
     def triggerCalculateShift(self, methodName=None):
         # Need to call the plugin instance to perform calculations
@@ -206,6 +209,9 @@ class AlignmentWidget(qt.QDialog):
                                     'Load Shifts obtained from FFTAlignment',
                                     openDir,
                                     filters)
+        # PyQt5 gives back a tuple
+        if type(filename) in [type([]), type(())]:
+            filename = filename[0]
         if len(filename) == 0:
             return
         inDict = ConfigDict.ConfigDict()
@@ -236,12 +242,12 @@ class AlignmentWidget(qt.QDialog):
 
     def saveDict(self):
         saveDir = PyMcaDirs.outputDir
-        filter = ['PyMca (*.shift)']
+        ffilter = ['PyMca (*.shift)']
         try:
             filename = PyMcaFileDialogs.\
                         getFileList(parent=self,
-                            filetypelist=filter,
-                            message='Safe FFT Alignment shifts',
+                            filetypelist=ffilter,
+                            message='Save FFT Alignment shifts',
                             mode='SAVE',
                             single=True)[0]
         except IndexError:

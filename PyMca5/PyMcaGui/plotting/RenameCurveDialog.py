@@ -49,8 +49,8 @@ class RenameCurveDialog(qt.QDialog):
         self.hboxLayout.addWidget(qt.HorizontalSpacer(self.hbox))
         layout.addWidget(self.lineEdit)
         layout.addWidget(self.hbox)
-        self.okButton.clicked[()].connect(self.preAccept)
-        self.cancelButton.clicked[()].connect(self.reject)
+        self.okButton.clicked.connect(self.preAccept)
+        self.cancelButton.clicked.connect(self.reject)
 
     def preAccept(self):
         text = str(self.lineEdit.text())

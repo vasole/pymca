@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -404,7 +404,9 @@ class SceneGLWindow(qt.QWidget):
         else:
             self.toolBar.mainLayout.addWidget(tb)
         if action is not None:
-            tb.clicked[()].connect(action)
+            # The action should not accept any parameter because
+            # the [()] trick does not any longer work
+            tb.clicked.connect(action)
         return tb
 
     def sceneManagerSlot(self, ddict):
