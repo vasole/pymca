@@ -919,8 +919,11 @@ class Plot(PlotBase.PlotBase):
                 if DEBUG:
                     print("y axis was in linear mode")
                 self._plot.clearCurves()
-                self._plot.setYAxisLogarithmic(self._logY)
+                # TODO: matplotlib 1.5 crashes if the call is made before
+                # the call to self._update()
+                #self._plot.setYAxisLogarithmic(self._logY)
                 self._update()
+                self._plot.setYAxisLogarithmic(self._logY)
         else:
             if self._logY:
                 if DEBUG:
@@ -944,8 +947,11 @@ class Plot(PlotBase.PlotBase):
                 if DEBUG:
                     print("x axis was in linear mode")
                 self._plot.clearCurves()
-                self._plot.setXAxisLogarithmic(self._logX)
+                # TODO: matplotlib 1.5 crashes if the call is made before
+                # the call to self._update()
+                #self._plot.setXAxisLogarithmic(self._logX)
                 self._update()
+                self._plot.setXAxisLogarithmic(self._logX)
         else:
             if self._logX:
                 if DEBUG:
