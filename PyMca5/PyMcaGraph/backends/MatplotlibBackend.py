@@ -1772,7 +1772,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                     curveList[-1].set_color(self._activeCurveColor)
             elif self._oldActiveCurveLegend == legend:
                 curveList[-1].set_color(self._activeCurveColor)
-        curveList[-1].set_axes(axes)
+        curveList[-1].axes = axes # set_axes(axes) deprecated in version 1.5
         curveList[-1].set_zorder(z)
         if replot:
             self.replot()
