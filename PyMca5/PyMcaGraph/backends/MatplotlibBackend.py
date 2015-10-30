@@ -1787,6 +1787,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         else:
             # make sure we do not cummulate images with same name
             self.removeItem(legend, replot=False)
+        item = None
         shape = kw.get('shape', "polygon")
         if shape not in ['line', 'hline', 'vline', 'rectangle', 'polygon']:
             raise NotImplemented("Unsupported item shape %s" % shape)
@@ -1796,8 +1797,19 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         xView = numpy.array(x, copy=False)
         yView = numpy.array(y, copy=False)
         label = "__ITEM__" + label
-        if shape in ["line"]:
+        if shape in ["line", "hline", "vline"]:
+            print("Not implemented")
             return legend
+        elif shape in ["hline"]:
+            if hasattr(y, "__len__"):
+                y = y[-1]
+            line = self.ax.axhline(y, label=label, color=color)
+            return line
+        elif shape in ["vline"]:
+            if hasattr(x, "__len__"):
+                x = x[-1]
+            line = self.ax.axvline(x, label=label, color=color)
+            return line
         elif shape in ['rectangle']:
             xMin = nanmin(xView)
             xMax = nanmax(xView)
@@ -1823,6 +1835,11 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             if fill:
                 #item.set_hatch('+')
                 item.set_hatch('/')
+        if item is None:
+            print("Undefined item")
+            print("shape = ", shape)
+            print("legend = ", legend)
+            return
         self.ax.add_patch(item)
         if replot:
             self.ax.figure.canvas.draw()
