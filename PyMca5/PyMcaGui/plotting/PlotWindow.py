@@ -610,6 +610,8 @@ class PlotWindow(PlotWidget.PlotWidget):
         super(PlotWindow, self).setYAxisLogarithmic(flag)
         self.yLogButton.setChecked(flag)
         self.yLogButton.setDown(flag)
+        # TODO: setYAxisLogarithmic already calls replot
+        # in addition resetZoom also does it
         self.replot()
         self.resetZoom()
 
