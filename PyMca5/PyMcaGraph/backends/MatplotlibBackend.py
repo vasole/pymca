@@ -1614,6 +1614,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         self._rightAxisEnabled = False
         self.enableAxis('right', False)
         self._graphCursor = None
+        self.matplotlibVersion = matplotlib.__version__
 
     def setGraphCursor(self, flag=True, color=None, linewidth=None, linestyle=None):
         if color is None:

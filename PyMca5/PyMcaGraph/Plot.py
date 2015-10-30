@@ -919,11 +919,19 @@ class Plot(PlotBase.PlotBase):
                 if DEBUG:
                     print("y axis was in linear mode")
                 self._plot.clearCurves()
-                # TODO: matplotlib 1.5 crashes if the call is made before
+                # matplotlib 1.5 crashes if the log set is made before
                 # the call to self._update()
-                #self._plot.setYAxisLogarithmic(self._logY)
-                self._update()
-                self._plot.setYAxisLogarithmic(self._logY)
+                # TODO: Decide what is better for other backends
+                if hasattr(self._plot, "matplotlibVersion"):
+                    if self._plot.matplotlibVersion < "1.5":
+                        self._plot.setYAxisLogarithmic(self._logY)
+                        self._update()
+                    else:
+                        self._update()
+                        self._plot.setYAxisLogarithmic(self._logY)
+                else:
+                    self._plot.setYAxisLogarithmic(self._logY)
+                    self._update()
         else:
             if self._logY:
                 if DEBUG:
@@ -947,11 +955,20 @@ class Plot(PlotBase.PlotBase):
                 if DEBUG:
                     print("x axis was in linear mode")
                 self._plot.clearCurves()
-                # TODO: matplotlib 1.5 crashes if the call is made before
+                # matplotlib 1.5 crashes if the log set is made before
                 # the call to self._update()
-                #self._plot.setXAxisLogarithmic(self._logX)
-                self._update()
-                self._plot.setXAxisLogarithmic(self._logX)
+                # TODO: Decide what is better for other backends
+                if hasattr(self._plot, "matplotlibVersion"):
+                    print(self._plot.matplotlibVersion)
+                    if self._plot.matplotlibVersion < "1.5":
+                        self._plot.setXAxisLogarithmic(self._logX)
+                        self._update()
+                    else:
+                        self._update()
+                        self._plot.setXAxisLogarithmic(self._logX)
+                else:
+                    self._plot.setXAxisLogarithmic(self._logX)
+                    self._update()
         else:
             if self._logX:
                 if DEBUG:
