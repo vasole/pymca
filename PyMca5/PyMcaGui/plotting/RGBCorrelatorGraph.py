@@ -666,7 +666,12 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def saveGraphWidget(self, filename):
         format_ = filename[-3:].upper()
-        pixmap = qt.QPixmap.grabWidget(self.graph)
+        if hasattr(qt.QPixmap, "graphWidget"):
+            # Qt4
+            pixmap = qt.QPixmap.grabWidget(self.graph.getWidgetHandle())
+        else:
+            # Qt5
+            pixmap = self.graph.getWidgetHandle().grab()
         if pixmap.save(filename, format_):
             return
         else:
