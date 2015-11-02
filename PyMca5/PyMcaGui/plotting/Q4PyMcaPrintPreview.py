@@ -103,6 +103,7 @@ class PyMcaPrintPreview(qt.QDialog):
         self.scene = None
         self.page = None
         self.view = None
+        self.badNews = None
 
     def exec_(self):
         if self._toBeCleared:
@@ -297,7 +298,10 @@ class PyMcaPrintPreview(qt.QDialog):
             commentPosition = "CENTER"
         if self.badNews:
             return
-        rectItem = qt.QGraphicsRectItem(self.page, self.scene)
+        if QTVERSION < "5.0":
+            rectItem = qt.QGraphicsRectItem(self.page, self.scene)
+        else:
+            rectItem = qt.QGraphicsRectItem(self.page)
         scale = 1.0 # float(0.5 * self.scene.width()/pixmap.width())
         rectItem.setRect(qt.QRectF(1, 1,
                         pixmap.width(), pixmap.height()))
@@ -317,20 +321,29 @@ class PyMcaPrintPreview(qt.QDialog):
         rectItemResizeRect.setZValue(2)
 
         #I add a pixmap item
-        pixmapItem = qt.QGraphicsPixmapItem(rectItem, self.scene)
+        if QTVERSION < "5.0":
+            pixmapItem = qt.QGraphicsPixmapItem(rectItem, self.scene)
+        else:
+            pixmapItem = qt.QGraphicsPixmapItem(rectItem)
         pixmapItem.setPixmap(pixmap)
         #pixmapItem.moveBy(0, 0)
         pixmapItem.setZValue(0)
 
         #I add the title
-        textItem = qt.QGraphicsTextItem(title, rectItem, self.scene)
+        if QTVERSION < "5.0":
+            textItem = qt.QGraphicsTextItem(title, rectItem, self.scene)
+        else:
+            textItem = qt.QGraphicsTextItem(title, rectItem)
         textItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
         offset = 0.5 * textItem.boundingRect().width()
         textItem.moveBy(0.5 * pixmap.width() - offset, -20)
         textItem.setZValue(2)
 
         #I add the comment
-        commentItem = qt.QGraphicsTextItem(comment, rectItem, self.scene)
+        if QTVERSION < "5.0":
+            commentItem = qt.QGraphicsTextItem(comment, rectItem, self.scene)
+        else:
+            commentItem = qt.QGraphicsTextItem(comment, rectItem)
         commentItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
         offset = 0.5 * commentItem.boundingRect().width()
         if commentPosition.upper() == "LEFT":
@@ -343,7 +356,10 @@ class PyMcaPrintPreview(qt.QDialog):
         #I should adjust text size here
         #textItem.scale(2,2)
         #commentItem.scale(2,2)
-        rectItem.scale(scale, scale)
+        if QTVERSION < "5.0":
+            rectItem.scale(scale, scale)
+        else:
+            rectItem.setScale(scale)
         rectItem.moveBy(20 , 40)
 
     def isReady(self):
@@ -399,7 +415,10 @@ class PyMcaPrintPreview(qt.QDialog):
         self._svgItems.append(item)
 
         #I add the title
-        textItem = qt.QGraphicsTextItem(title, svgItem, self.scene)
+        if QTVERSION < '5.0':
+            textItem = qt.QGraphicsTextItem(title, svgItem, self.scene)
+        else:
+            textItem = qt.QGraphicsTextItem(title, svgItem)
         textItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
         offset = 0.5 * textItem.boundingRect().width()
         textItem.setZValue(1)
@@ -407,7 +426,10 @@ class PyMcaPrintPreview(qt.QDialog):
 
         #I add the comment
         dummyComment = 80 * "1"
-        commentItem = qt.QGraphicsTextItem(dummyComment, svgItem, self.scene)
+        if QTVERSION < '5.0':
+            commentItem = qt.QGraphicsTextItem(dummyComment, svgItem, self.scene)
+        else:
+            commentItem = qt.QGraphicsTextItem(dummyComment, svgItem)
         commentItem.setTextInteractionFlags(qt.Qt.TextEditorInteraction)
         scaleCalculationRect = qt.QRectF(commentItem.boundingRect())
         commentItem.setPlainText(comment)
@@ -417,11 +439,17 @@ class PyMcaPrintPreview(qt.QDialog):
         commentItem.setZValue(1)
         scale = svgItem.boundingRect().width() / scaleCalculationRect.width()
         commentItem.setFlag(qt.QGraphicsItem.ItemIsMovable, True)
-        commentItem.scale(scale, scale)
+        if QTVERSION < "5.0":
+            commentItem.scale(scale, scale)
+        else:
+            commentItem.setScale(scale)
         textItem.moveBy(svgItem.boundingRect().x()+\
                         0.5 * svgItem.boundingRect().width() - offset * scale,
                         svgItem.boundingRect().y())
-        textItem.scale(scale, scale)
+        if QTVERSION < "5.0":
+            textItem.scale(scale, scale)
+        else:
+            textItem.setScale(scale)
 
     def setup(self):
         """
@@ -547,7 +575,10 @@ if hasattr(qt, 'QGraphicsSvgItem'):
 
 class GraphicsResizeRectItem(qt.QGraphicsRectItem):
     def __init__(self, parent = None, scene = None, keepratio = True):
-        qt.QGraphicsRectItem.__init__(self, parent, scene)
+        if QTVERSION < '5.0':
+            qt.QGraphicsRectItem.__init__(self, parent, scene)
+        else:
+            qt.QGraphicsRectItem.__init__(self, parent)
         #rect = parent.sceneBoundingRect()
         rect = parent.boundingRect()
         x = rect.x()
@@ -610,7 +641,10 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
         self._w = rect.width()
         self._h = rect.height()
         self._ratio = self._w /self._h
-        self._newRect = qt.QGraphicsRectItem(parent, scene)
+        if QTVERSION < "5.0":
+            self._newRect = qt.QGraphicsRectItem(parent, scene)
+        else:
+            self._newRect = qt.QGraphicsRectItem(parent)
         self._newRect.setRect(qt.QRectF(self._x,
                                         self._y,
                                         self._w,
@@ -665,13 +699,16 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
                 parent.scale(scalex, scaley)
         else:
             #deduce it from the rect because it always work
-            if self.keepRatio:
+            if (QTVERSION < "5.0") or self.keepRatio:
                 scalex = self._newRect.rect().width()/ self._w
                 scaley = scalex
             else:
                 scalex = self._newRect.rect().width()/ self._w
                 scaley = self._newRect.rect().height()/self._h
-            parent.scale(scalex, scaley)
+            if QTVERSION < "5.0":
+                parent.scale(scalex, scaley)
+            else:
+                parent.setScale(scalex)
         self.scene().removeItem(self._newRect)
         self._newRect = None
         qt.QGraphicsRectItem.mouseReleaseEvent(self, event)
