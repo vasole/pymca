@@ -579,26 +579,26 @@ class ImageView(qt.QWidget):
         self._radarView = RadarView()
         self._radarView.visibleRectDragged.connect(self._radarViewCB)
 
-        layout = qt.QGridLayout()
-        layout.addWidget(self._imagePlot, 0, 0)
-        layout.addWidget(self._histoVPlot.getWidgetHandle(), 0, 1)
-        layout.addWidget(self._histoHPlot.getWidgetHandle(), 1, 0)
-        layout.addWidget(self._radarView, 1, 1)
+        self._layout = qt.QGridLayout()
+        self._layout.addWidget(self._imagePlot, 0, 0)
+        self._layout.addWidget(self._histoVPlot.getWidgetHandle(), 0, 1)
+        self._layout.addWidget(self._histoHPlot.getWidgetHandle(), 1, 0)
+        self._layout.addWidget(self._radarView, 1, 1)
 
-        layout.setColumnMinimumWidth(0, self.IMAGE_MIN_SIZE)
-        layout.setColumnStretch(0, 1)
-        layout.setColumnMinimumWidth(1, self.HISTOGRAMS_HEIGHT)
-        layout.setColumnStretch(1, 0)
+        self._layout.setColumnMinimumWidth(0, self.IMAGE_MIN_SIZE)
+        self._layout.setColumnStretch(0, 1)
+        self._layout.setColumnMinimumWidth(1, self.HISTOGRAMS_HEIGHT)
+        self._layout.setColumnStretch(1, 0)
 
-        layout.setRowMinimumHeight(0, self.IMAGE_MIN_SIZE)
-        layout.setRowStretch(0, 1)
-        layout.setRowMinimumHeight(1, self.HISTOGRAMS_HEIGHT)
-        layout.setRowStretch(1, 0)
+        self._layout.setRowMinimumHeight(0, self.IMAGE_MIN_SIZE)
+        self._layout.setRowStretch(0, 1)
+        self._layout.setRowMinimumHeight(1, self.HISTOGRAMS_HEIGHT)
+        self._layout.setRowStretch(1, 0)
 
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(0)
+        self._layout.setContentsMargins(0, 0, 0, 0)
 
-        self.setLayout(layout)
+        self.setLayout(self._layout)
 
     def _dirtyCache(self):
         self._cache = None
@@ -699,6 +699,7 @@ class ImageView(qt.QWidget):
                     self._histoVPlot.setGraphXLimits(vMin - vOffset,
                                                      vMax + vOffset)
             else:
+                self._dirtyCache()
                 self._histoHPlot.clearCurves()
                 self._histoVPlot.clearCurves()
 
@@ -749,6 +750,11 @@ class ImageView(qt.QWidget):
             self._updateRadarView()
 
             self._updatingLimits = False
+
+            # Replot in case limitsChanged due to set*Limits
+            # called from console.
+            # This results in an extra replot call in other cases.
+            self._imagePlot.replot()
 
     def _histoHPlotCB(self, eventDict):
         """Callback for horizontal histogram plot events."""
@@ -820,6 +826,49 @@ class ImageView(qt.QWidget):
         self._histoVPlot.replot()
         self._radarView.update()
 
+    def getHistogram(self, axis):
+        """Return the histogram and corresponding row or column extent.
+
+        The returned value when an histogram is available is a dict with keys:
+
+        - 'data': numpy array of the histogram values.
+        - 'extent': (start, end) row or column index.
+          end index is not included in the histogram.
+
+        :param str axis: 'x' for horizontal, 'y' for vertical
+        :return: The histogram and its extent as a dict or None.
+        :rtype: dict
+        """
+        assert axis in ('x', 'y')
+        if self._cache is None:
+            return None
+        else:
+            if axis == 'x':
+                return dict(
+                    data=np.array(self._cache['histoH'], copy=True),
+                    extent=(self._cache['dataXMin'], self._cache['dataXMax']))
+            else:
+                return dict(
+                    data=np.array(self._cache['histoV'], copy=True),
+                    extent=(self._cache['dataYMin'], self._cache['dataYMax']))
+
+    def radarView(self):
+        """Get the lower right radarView widget."""
+        return self._radarView
+
+    def setRadarView(self, radarView):
+        """Change the lower right radarView widget.
+
+        :param RadarView radarView: Widget subclassing RadarView to replace
+                                    the lower right corner widget.
+        """
+        self._radarView.visibleRectDragged.disconnect(self._radarViewCB)
+        self._radarView = radarView
+        self._radarView.visibleRectDragged.connect(self._radarViewCB)
+        self._layout.addWidget(self._radarView, 1, 1)
+
+        self._updateYAxisInverted()
+
     # PlotWindow toolbar
 
     def toolBar(self):
@@ -843,10 +892,13 @@ class ImageView(qt.QWidget):
         """
         return self._imagePlot.getDefaultColormap()
 
-    def setColormap(self, colormap):
+    def setColormap(self, colormap=None, normalization=None,
+                    autoscale=None, vmin=None, vmax=None, colors=256):
         """Set the default colormap and update active image.
 
-        A colormap is a dictionnary with the following keys:
+        Parameters that are not provided are taken from the current colormap.
+
+        The colormap parameter can also be a dict with the following keys:
 
         - *name*: string. The colormap to use:
           'gray', 'reversed gray', 'temperature', 'red', 'green', 'blue'.
@@ -859,17 +911,44 @@ class ImageView(qt.QWidget):
         - *vmax*: float. The maximum value of the range to use if 'autoscale'
           is False.
 
-        :param dict colormap: The description of the colormap to use.
+        :param colormap: Name of the colormap in
+            'gray', 'reversed gray', 'temperature', 'red', 'green', 'blue'.
+            Or the description of the colormap as a dict.
+        :type colormap: dict or str.
+        :param str normalization: Colormap mapping: 'linear' or 'log'.
+        :param bool autoscale: Whether to use autoscale (True)
+                               or [vmin, vmax] range (False).
+        :param float vmin: The minimum value of the range to use if
+                           'autoscale' is False.
+        :param float vmax: The maximum value of the range to use if
+                           'autoscale' is False.
         """
-        if colormap is None:
-            colormap = self._imagePlot.getDefaultColormap()
-        else:
-            colormap = colormap.copy()
+        cmapDict = self._imagePlot.getDefaultColormap()
 
-        assert colormap['name'] in self._imagePlot.getSupportedColormaps()
+        if isinstance(colormap, dict):
+            # Support colormap parameter as a dict
+            assert normalization is None
+            assert autoscale is None
+            assert vmin is None
+            assert vmax is None
+            assert colors == 256
+            for key, value in colormap.items():
+                cmapDict[key] = value
+
+        else:
+            if colormap is not None:
+                cmapDict['name'] = colormap
+            if normalization is not None:
+                cmapDict['normalization'] = normalization
+            if autoscale is not None:
+                cmapDict['autoscale'] = autoscale
+            if vmin is not None:
+                cmapDict['vmin'] = vmin
+            if vmax is not None:
+                cmapDict['vmax'] = vmax
 
         if 'colors' not in colormap:
-            colormap['colors'] = 256
+            cmapDict['colors'] = 256
 
         cursorColor = _cursorColorForColormap(colormap['name'])
         self._imagePlot.setZoomModeEnabled(True, color=cursorColor)
