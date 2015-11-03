@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -82,6 +82,20 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
                 return MyQVariant(self._format % self._array[row, col])
         return MyQVariant()
 
+    def _rowCountND(self, parent=None):
+        return self._array.shape[-2]
+
+    def _columnCountND(self, parent=None):
+        return self._array.shape[-1]
+
+    def _dataND(self, index, role=qt.Qt.DisplayRole):
+        if index.isValid():
+            if role == qt.Qt.DisplayRole:
+                row = index.row()
+                col = index.column()
+                actualSelection = tuple(self._index + [row, col])
+                return MyQVariant(self._format % self._array[actualSelection])
+        return MyQVariant()
 
     def _rowCount3DIndex0(self, parent=None):
         return self._array.shape[1]
@@ -137,10 +151,18 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
         data is a 3D array
         dimension is the array dimension acting as index of images
         """
-        self.reset()
+        if qt.qVersion() > "4.6":
+            self.beginResetModel()
+        else:
+            self.reset()
         self._array = data
         self.assignDataFunction(perspective)
-        self._index = 0
+        if len(data.shape) > 3:
+            self._index = []
+            for i in range(len(data.shape) - 2):
+                self._index.append(0)
+        if qt.qVersion() > "4.6":
+            self.endResetModel()
 
     def assignDataFunction(self, dimension):
         shape = self._array.shape
@@ -152,6 +174,11 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
             self._rowCount = self._rowCount1D
             self._columnCount = self._columnCount1D
             self._data = self._data1D
+        elif len(shape) > 3:
+            # only C order array of images supported
+            self._rowCount = self._rowCountND
+            self._columnCount = self._columnCountND
+            self._data = self._dataND
         else:
             if dimension == 1:
                 self._rowCount = self._rowCount3DIndex1
@@ -173,12 +200,24 @@ class NumpyArrayTableModel(qt.QAbstractTableModel):
         not a 3-dimensional array.
         """
         shape = self._array.shape
-        if len(shape) != 3:
+        if len(shape) < 3:
+            # index is ignored
             return
-        shape = self._array.shape[self._dimension]
-        if (index < 0) or (index >= shape):
-            raise ValueError("Index must be an integer lower than %d" % shape)
-        self._index = index
+        if len(shape) == 3:
+            shape = self._array.shape[self._dimension]
+            if hasattr(index, "__len__"):
+                index = index[0]
+            if (index < 0) or (index >= shape):
+                raise ValueError("Index must be an integer lower than %d" % shape)
+            self._index = index
+        else:
+            # Only N-dimensional arrays of images supported
+            for i in range(len(index)):
+                idx = index[i]
+                if (idx < 0) or (idx >= shape[i]):
+                    raise ValueError("Index %d must be positive integer lower than %d" % \
+                                     (idx, shape[i]))
+            self._index = index
 
     def setFormat(self, fmt):
         self._format = fmt

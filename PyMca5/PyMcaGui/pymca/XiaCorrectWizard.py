@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 E. Papillon, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 E. Papillon, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -168,9 +168,14 @@ class XiaCorrectionWidget(qt.QWizardPage):
 
     def __valueChanged(self, row, col):
         if col==0:
-            text= qt.safe_str(self.sumTable.text(row, col))
+            item = self.sumTable.item(row, col)
+            if item is None:
+                item = qt.QTableWidgetItem("",
+                                           qt.QTableWidgetItem.Type)
+                self.sumTable.setItem(row, col, item)
+            text= qt.safe_str(item.text())
             if text.find("All")!=-1 or text.find("all")!=-1 or text.find("-1")!=-1:
-                self.sumTable.setText(row, col, "All")
+                item.setText("All")
             else:
                 detsplit= text.replace(",", " ")
                 detsplit= detsplit.replace(";", " ")
@@ -186,9 +191,9 @@ class XiaCorrectionWidget(qt.QWizardPage):
                         dets.append(det)
 
                 if len(dets):
-                    self.sumTable.setText(row, col, ' '.join(dets))
+                    item.setText(' '.join(dets))
                 else:
-                    self.sumTable.setText(row, col, "All")
+                    item.setText("All")
 
     def __sumCheckChanged(self, state):
         if state:
@@ -431,7 +436,7 @@ class XiaRunWidget(qt.QWidget):
         layout.addWidget(self.logText)
         layout.addWidget(progressWidget)
 
-        self.startButton.clicked[()].connect(self.start)
+        self.startButton.clicked.connect(self.start)
 
         self.parameters= {}
 

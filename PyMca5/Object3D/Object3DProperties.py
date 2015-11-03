@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -465,7 +465,7 @@ class Object3DProperties(qt.QWidget):
         self.aspectWidget.sigObject3DAspectSignal.connect(\
                        self._slot)
 
-        self.privateInterfaceWidget.button.clicked[()].connect(\
+        self.privateInterfaceWidget.button.clicked.connect(\
                             self.showPrivateInterface)
 
 

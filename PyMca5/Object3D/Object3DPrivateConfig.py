@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -57,7 +57,7 @@ class Object3DPrivateConfig(qt.QWidget):
         self.mainLayout.addWidget(self.button, 1, 1)
         self.mainLayout.addWidget(HorizontalSpacer(self), 1, 2)
         self.mainLayout.addWidget(VerticalSpacer(self), 2, 0, 1, 3)
-        self.button.clicked[()].connect(self.updateCallBack)
+        self.button.clicked.connect(self.updateCallBack)
 
     def setParameters(self, ddict):
         for key in ddict.keys():

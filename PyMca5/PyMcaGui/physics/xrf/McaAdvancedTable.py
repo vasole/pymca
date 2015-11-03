@@ -108,7 +108,10 @@ class McaTable(QTable):
                         self.setItem(line, col, item)
                     else:
                         item.setText(text)
-                        item.setBackgroundColor(color)
+                        if hasattr(item, "setBackground"):
+                            item.setBackground(color)
+                        else:
+                            item.setBackgroundColor(color)
                         item.setFlags(qt.Qt.ItemIsSelectable|
                                       qt.Qt.ItemIsEnabled)
                 else:
@@ -141,7 +144,10 @@ class McaTable(QTable):
                         self.setItem(line, col, item)
                     else:
                         item.setText(text)
-                    item.setBackgroundColor(color)
+                    if hasattr(item, "setBackground"):
+                        item.setBackground(color)
+                    else:
+                        item.setBackgroundColor(color)
                     item.setFlags(qt.Qt.ItemIsSelectable|
                                   qt.Qt.ItemIsEnabled)
                     col=col+1
@@ -167,7 +173,10 @@ class McaTable(QTable):
                             self.setItem(line, col, item)
                         else:
                             item.setText(field)
-                        item.setBackgroundColor(color)
+                        if hasattr(item, "setBackground"):
+                            item.setBackground(color)
+                        else:
+                            item.setBackgroundColor(color)
                         item.setFlags(qt.Qt.ItemIsSelectable|
                                       qt.Qt.ItemIsEnabled)
                         col=col+1

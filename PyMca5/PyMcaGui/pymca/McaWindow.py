@@ -43,6 +43,7 @@ if __name__ == "__main__":
 
 import copy
 
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui import IconDict
 from . import ScanWindow
 from . import McaCalibrationControlGUI
@@ -1295,9 +1296,6 @@ class McaWindow(ScanWindow.ScanWindow):
             self.outputDir = os.getcwd()
             wdir = self.outputDir
 
-        outfile = qt.QFileDialog(self)
-        outfile.setWindowTitle("Output File Selection")
-        outfile.setModal(1)
         format_list = ['Specfile MCA  *.mca',
                        'Specfile Scan *.dat',
                        'Raw ASCII  *.txt',
@@ -1310,37 +1308,33 @@ class McaWindow(ScanWindow.ScanWindow):
                        'Graphics PNG *.png',
                        'Graphics EPS *.eps',
                        'Graphics SVG *.svg']
+
         if self.outputFilter is None:
             self.outputFilter = format_list[0]
-
-        outfile.setFilters(format_list)
-        outfile.selectFilter(self.outputFilter)
-        outfile.setFileMode(outfile.AnyFile)
-        outfile.setAcceptMode(outfile.AcceptSave)
-        outfile.setDirectory(wdir)
-        ret = outfile.exec_()
-        if ret:
-            self.outputFilter = qt.safe_str(outfile.selectedFilter())
-            filterused = self.outputFilter.split()
-            filetype  = filterused[1]
-            extension = filterused[2]
-            outdir=qt.safe_str(outfile.selectedFiles()[0])
-            try:
-                self.outputDir  = os.path.dirname(outdir)
-                PyMcaDirs.outputDir = os.path.dirname(outdir)
-            except:
-                self.outputDir  = "."
-            try:
-                outputFile = os.path.basename(outdir)
-            except:
-                outputFile  = outdir
-            outfile.close()
-            del outfile
-        else:
-            # pyflakes bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666494
-            outfile.close()
-            del outfile
+        fileList, fileFilter = PyMcaFileDialogs.getFileList(self,
+                                     filetypelist=format_list,
+                                     message="Output File Selection",
+                                     currentdir=wdir,
+                                     single=True,
+                                     mode="SAVE",
+                                     getfilter=True,
+                                     currentfilter=self.outputFilter)
+        if not len(fileList):
             return
+        self.outputFilter = fileFilter
+        filterused = self.outputFilter.split()
+        filetype  = filterused[1]
+        extension = filterused[2]
+        outdir=qt.safe_str(fileList[0])
+        try:
+            self.outputDir  = os.path.dirname(outdir)
+            PyMcaDirs.outputDir = os.path.dirname(outdir)
+        except:
+            self.outputDir  = "."
+        try:
+            outputFile = os.path.basename(outdir)
+        except:
+            outputFile  = outdir
 
         #get active curve
         x, y, legend, info = self.getActiveCurve()
@@ -1439,7 +1433,10 @@ class McaWindow(ScanWindow.ScanWindow):
                 return
 
         try:
-            ffile = open(specFile,'wb')
+            if sys.version < "3.0":
+                ffile = open(specFile, 'wb')
+            else:
+                ffile = open(specFile, 'w', newline='')
         except IOError:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)

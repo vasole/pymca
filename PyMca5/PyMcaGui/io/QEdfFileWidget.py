@@ -588,7 +588,12 @@ class QEdfFileWidget(qt.QWidget):
 
     def saveGraphWidget(self, filename):
         fformat = filename[-3:].upper()
-        pixmap = qt.QPixmap.grabWidget(self.graph)
+        if hasattr(qt.QPixmap, "graphWidget"):
+            # Qt4
+            pixmap = qt.QPixmap.grabWidget(self.graph)
+        else:
+            #Qt5
+            pixmap = self.graph.grab()
         if pixmap.save(filename, fformat):
             return
         else:
@@ -603,7 +608,12 @@ class QEdfFileWidget(qt.QWidget):
             return False
 
     def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self.graph)
+        if hasattr(qt.QPixmap, "graphWidget"):
+            # Qt4
+            pixmap = qt.QPixmap.grabWidget(self.graph)
+        else:
+            #Qt5
+            pixmap = self.graph.grab()
         self.printPreview.addPixmap(pixmap)
         if self.printPreview.isHidden():
             self.printPreview.show()

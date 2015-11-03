@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -205,6 +205,7 @@ class FrameBrowser(qt.QWidget):
         ddict["old"]   = self._oldIndex + 1
         self._oldIndex = newValue
         ddict["new"]   = self._oldIndex + 1
+        ddict["id"]    = id(self)
         self.sigIndexChanged.emit(ddict)
 
     def setRange(self, first, last):
@@ -237,6 +238,7 @@ class FrameBrowser(qt.QWidget):
         self._textChangedSlot()
 
 class HorizontalSliderWithBrowser(qt.QAbstractSlider):
+    sigIndexChanged = qt.pyqtSignal(object)
     def __init__(self, *var):
         qt.QAbstractSlider.__init__(self, *var)
         self.setOrientation(qt.Qt.Horizontal)

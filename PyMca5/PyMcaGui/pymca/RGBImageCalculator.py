@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -98,7 +98,7 @@ class RGBImageCalculator(qt.QWidget):
         self.mathBox.mainLayout.addWidget(self.mathExpression)
         self.mathBox.mainLayout.addWidget(self.mathAction)
         self.mainLayout.addWidget(self.mathBox)
-        self.mathAction.clicked[()].connect(self._calculateClicked)
+        self.mathAction.clicked.connect(self._calculateClicked)
 
     def _build(self, math = True, replace = False, scanwindow=False):
         if math:
@@ -151,10 +151,10 @@ class RGBImageCalculator(qt.QWidget):
         #self.mainLayout.addWidget(self.nameBox)
         self.mainLayout.addWidget(self.graphWidget)
         self.mainLayout.addWidget(buttonBox)
-        self.addImageButton.clicked[()].connect(self._addImageClicked)
-        self.removeImageButton.clicked[()].connect(self._removeImageClicked)
+        self.addImageButton.clicked.connect(self._addImageClicked)
+        self.removeImageButton.clicked.connect(self._removeImageClicked)
         if replace:
-            self.replaceImageButton.clicked[()].connect( \
+            self.replaceImageButton.clicked.connect( \
                 self._replaceImageClicked)
 
         #it consumes too much CPU, therefore only on click
