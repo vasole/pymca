@@ -947,13 +947,13 @@ class ImageView(qt.QWidget):
             if vmax is not None:
                 cmapDict['vmax'] = vmax
 
-        if 'colors' not in colormap:
+        if 'colors' not in cmapDict:
             cmapDict['colors'] = 256
 
-        cursorColor = _cursorColorForColormap(colormap['name'])
+        cursorColor = _cursorColorForColormap(cmapDict['name'])
         self._imagePlot.setZoomModeEnabled(True, color=cursorColor)
 
-        self._imagePlot.setDefaultColormap(colormap)
+        self._imagePlot.setDefaultColormap(cmapDict)
 
         activeImage = self._imagePlot.getActiveImage()
         if activeImage is not None:  # Refresh image with new colormap
