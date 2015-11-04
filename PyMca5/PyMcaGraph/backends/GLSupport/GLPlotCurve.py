@@ -938,19 +938,19 @@ class _ErrorBars(object):
 
             # Set xError points using the same VBO as lines
             self._xErrPoints.xVboData = xAttrib.copy()
-            self._xErrPoints.xVboData.size /= 2
+            self._xErrPoints.xVboData.size //= 2
             self._xErrPoints.yVboData = yAttrib.copy()
-            self._xErrPoints.yVboData.size /= 2
+            self._xErrPoints.yVboData.size //= 2
 
             # Set yError points using the same VBO as lines
             self._yErrPoints.xVboData = xAttrib.copy()
-            self._yErrPoints.xVboData.size /= 2
+            self._yErrPoints.xVboData.size //= 2
             self._yErrPoints.xVboData.offset += (xAttrib.itemSize *
-                                                 xAttrib.size / 2)
+                                                 xAttrib.size // 2)
             self._yErrPoints.yVboData = yAttrib.copy()
-            self._yErrPoints.yVboData.size /= 2
+            self._yErrPoints.yVboData.size //= 2
             self._yErrPoints.yVboData.offset += (yAttrib.itemSize *
-                                                 yAttrib.size / 2)
+                                                 yAttrib.size // 2)
 
     def render(self, matrix, isXLog, isYLog):
         if self._attribs is not None:
