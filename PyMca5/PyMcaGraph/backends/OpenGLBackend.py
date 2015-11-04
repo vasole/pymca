@@ -94,7 +94,11 @@ class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
 
     def wheelEvent(self, event):
         xPixel, yPixel = event.x(), event.y()
-        angleInDegrees = event.delta() / 8.
+        if hasattr(event, 'angleDelta'):  # Qt 5
+            delta = event.angleDelta().y()
+        else:  # Qt 4 support
+            delta = event.delta()
+        angleInDegrees = delta / 8.
         self.onMouseWheel(xPixel, yPixel, angleInDegrees)
         event.accept()
 
