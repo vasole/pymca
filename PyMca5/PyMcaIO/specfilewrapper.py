@@ -119,7 +119,9 @@ def Specfile(filename):
         if len(line0) > 7:
             if line0.startswith('$SPEC_ID') or\
                line0.startswith('$DATE_MEA') or\
-               line0.startswith('$MEAS_TIM'):
+               line0.startswith('$MEAS_TIM') or\
+               line0.startswith('$Core_ID') or\
+               line0.startswith('$Section_ID'):
                 qxas = True
         if (not qxas) and line0.startswith('<<'):
                 amptek = True
