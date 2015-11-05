@@ -328,6 +328,8 @@ def build_Object3DCTools(ext_modules):
     includes = [numpy.get_include()]
     if sys.platform == "win32":
         libraries = ['opengl32', 'glu32']
+        # include headers missing in microsoft implementation of OpenGL
+        includes.append('third-party/khronos_headers')
     elif sys.platform == "darwin":
         libraries = []
     else:
