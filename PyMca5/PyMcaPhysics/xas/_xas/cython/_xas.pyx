@@ -30,6 +30,22 @@ cimport cython
 import numpy
 cimport numpy
 from polspl cimport polspl as _polspl
+from bessel0 cimport j0Single, j0Multiple
+
+def j0(x):
+    if hasattr(x, "__len__"):
+        return _besselMultiple(x)
+    else:
+        return _besselSingle(x)
+
+def _besselMultiple(x):
+    cdef double[:] c_x = numpy.array(x, copy=True, dtype=numpy.float64)
+    cdef int c_npts = c_x.size
+    j0Multiple(&c_x[0], c_npts)
+    return c_x
+
+def _besselSingle(double x):
+    return j0Single(x)
 
 def polspl(x, y, w, npts, xl, xh, nr, nc):
     c = numpy.zeros((36,), dtype=numpy.float64)

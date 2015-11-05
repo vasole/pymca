@@ -45,9 +45,10 @@ try:
 except:
     build_ext = None
 
-c_files = glob.glob(os.path.join('src', 'polspl.c'))
+c_files = [os.path.join('src', 'polspl.c'),
+           os.path.join('src', 'bessel0.c')]
 if build_ext:
-    src = glob.glob(os.path.join('cython', '_xas.pyx'))
+    src = [os.path.join('cython', '_xas.pyx')]
 else:
     src = glob.glob(os.path.join('cython', '*.c'))
 

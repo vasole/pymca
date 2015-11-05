@@ -433,9 +433,10 @@ def build_plotting_ctools(ext_modules):
 
 def build_xas_xas(ext_modules):
     basedir = os.path.join(os.getcwd(), 'PyMca5', 'PyMcaPhysics','xas', '_xas')
-    c_files = glob.glob(os.path.join(basedir, 'src', 'polspl.c'))
+    c_files = [os.path.join(basedir, 'src', 'polspl.c'),
+               os.path.join(basedir, 'src', 'bessel0.c')]
     if build_ext:
-        src = glob.glob(os.path.join(basedir, 'cython','_xas.pyx'))
+        src = [os.path.join(basedir, 'cython','_xas.pyx')]
     else:
         src = glob.glob(os.path.join(basedir, 'cython','*.c'))
     src += c_files
