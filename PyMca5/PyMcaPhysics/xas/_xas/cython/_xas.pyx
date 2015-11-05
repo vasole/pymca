@@ -39,10 +39,11 @@ def j0(x):
         return _besselSingle(x)
 
 def _besselMultiple(x):
-    cdef double[:] c_x = numpy.array(x, copy=True, dtype=numpy.float64)
+    result = numpy.array(x, copy=True, dtype=numpy.float64)
+    cdef double[:] c_x = result
     cdef int c_npts = c_x.size
     j0Multiple(&c_x[0], c_npts)
-    return c_x
+    return result
 
 def _besselSingle(double x):
     return j0Single(x)
