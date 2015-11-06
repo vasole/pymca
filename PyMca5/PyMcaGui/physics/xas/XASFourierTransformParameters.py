@@ -50,7 +50,7 @@ class XASFourierTransformParameters(qt.QGroupBox):
         ddict = config["FT"]
         ddict["Window"] = "Gaussian"
         ddict["WindowList"] = ["Gaussian", "Hanning", "Box", "Parzen",
-                               "Welch", "Hamming", "Tukey", "Papul"]
+                               "Welch", "Hamming", "Tukey", "Papul", "Kaiser"]
         ddict["WindowApodization"] = 0.02
         ddict["WindowRange"] = None
         ddict["KStep"] = 0.04
@@ -67,7 +67,7 @@ class XASFourierTransformParameters(qt.QGroupBox):
         windowLabel = qt.QLabel(self)
         windowLabel.setText("Window:")
         windowOptions = ["Gaussian", "Hanning", "Box", "Parzen",
-                         "Welch", "Hamming", "Tukey", "Papul"]
+                         "Welch", "Hamming", "Tukey", "Papul", "Kaiser"]
         self.windowSelector = qt.QComboBox(self)
         for option in windowOptions:
             self.windowSelector.addItem(option)
@@ -77,9 +77,9 @@ class XASFourierTransformParameters(qt.QGroupBox):
         apodizationLabel = qt.QLabel(self)
         apodizationLabel.setText("Apodization:")
         self.apodizationBox = qt.QDoubleSpinBox(self)
-        self.apodizationBox.setMinimum(0.01)
-        self.apodizationBox.setMaximum(1.)
-        self.apodizationBox.setDecimals(2)
+        self.apodizationBox.setMinimum(0.001)
+        self.apodizationBox.setMaximum(4.)
+        self.apodizationBox.setDecimals(3)
         self.apodizationBox.setSingleStep(0.01)
         self.apodizationBox.setValue(0.02)
         self.apodizationBox.setEnabled(False)
@@ -167,8 +167,10 @@ class XASFourierTransformParameters(qt.QGroupBox):
         if DEBUG:
             print("_windowChanged ", value)
         current = str(self.windowSelector.currentText())
-        if current.lower() in ["gaussian", "gauss", "tukey", "papul", "kaiser"]:
+        if current.lower() in ["gaussian", "gauss", "tukey", "papul"]:
             self.apodizationBox.setEnabled(False)
+        if current.lower() in ["kaiser"]:
+            self.apodizationBox.setEnabled(True)
         else:
             self.apodizationBox.setEnabled(True)
         if self.__connected:
