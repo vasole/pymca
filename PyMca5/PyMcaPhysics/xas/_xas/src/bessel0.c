@@ -21,6 +21,7 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+#include <math.h>
 #include "bessel0.h"
 void j0Multiple(double *x, int n)
 {
