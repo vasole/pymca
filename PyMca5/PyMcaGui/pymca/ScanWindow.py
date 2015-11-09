@@ -451,7 +451,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 self.removeCurve(legend, replot=replot)
             else:
                 self.removeCurve(legend, replot=False)
-            if legend in self.dataObjectsDict.keys():
+            if legend in self.dataObjectsDict:
                 del self.dataObjectsDict[legend]
         self.dataObjectsList = self._curveList
 
@@ -904,7 +904,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             for key in self._curveList:
                 if DEBUG:
                     print("key -> ", key)
-                if key in self.dataObjectsDict.keys():
+                if key in self.dataObjectsDict:
                     x.append(self.dataObjectsDict[key].x[0]) #only the first X
                     if len(self.dataObjectsDict[key].y) == 1:
                         y.append(self.dataObjectsDict[key].y[0])
@@ -1183,7 +1183,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             y = [-yActive]
             if DEBUG:
                 print("key -> ", key)
-            if key in self.dataObjectsDict.keys():
+            if key in self.dataObjectsDict:
                 x.append(self.dataObjectsDict[key].x[0]) #only the first X
                 if len(self.dataObjectsDict[key].y) == 1:
                     y.append(self.dataObjectsDict[key].y[0])
@@ -1237,7 +1237,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             #but if works if I add the list
             self._replaceSelection(sel_list)
         else:
-            oldlist = list(self.dataObjectsDict.keys())
+            oldlist = list(self.dataObjectsDict)
             self._addSelection(sel_list)
             self.removeCurves(oldlist)
 

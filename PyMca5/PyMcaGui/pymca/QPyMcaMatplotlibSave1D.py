@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -150,7 +150,7 @@ class MatplotlibCurveTable(qt.QTableWidget):
         j = 2
         widget = self.cellWidget(i, j)
         if widget is None:
-            options = colordict.keys()
+            options = list(colordict.keys())
             options.sort()
             widget = ComboBoxItem(self, i, j, options=options)
             self.setCellWidget(i, j, widget)
