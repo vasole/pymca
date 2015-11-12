@@ -727,7 +727,7 @@ static PyObject *draw2DGridPoints(PyObject *self, PyObject *args)
 	npy_intp	    i, j;
 	float			*px, *py, *pz, *pv;
 	GLubyte			*pc=NULL;
-    struct module_state *st = GETSTATE(self);
+    /*struct module_state *st = GETSTATE(self);*/
 
 	j = check2DGridVertexAndColor(self, args, &xArray, &yArray, &zArray, &colorArray,\
 							&valuesArray, &cFilter, &vFilter, &vMin, &vMax, &xSize, &ySize, &zSize, &cSize, &vSize);
@@ -855,7 +855,7 @@ static PyObject *draw2DGridLines(PyObject *self, PyObject *args)
 	npy_intp	    i, j, k, cidx;
 	float			*px, *py, *pz, *pv;
 	GLubyte			*pc=NULL;
-    struct module_state *st = GETSTATE(self);
+    /*struct module_state *st = GETSTATE(self);*/
 
 	/* statements */
 	j = check2DGridVertexAndColor(self, args, &xArray, &yArray, &zArray, &colorArray,\
@@ -1108,7 +1108,7 @@ static PyObject *draw2DGridQuads(PyObject *self, PyObject *args)
 	npy_intp		cidx, coffset;
 	float			*px, *py, *pz, *pv;
 	GLubyte			*pc=NULL;
-    struct module_state *st = GETSTATE(self);
+    /*struct module_state *st = GETSTATE(self);*/
 
 	/* statements */
 	j = check2DGridVertexAndColor(self, args, &xArray, &yArray, &zArray, &colorArray,\
@@ -2409,7 +2409,7 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 	float			*pxyz, *pv;
 	GLubyte			*pc=NULL;
 	unsigned int	*pf=NULL;
-	GLsizei			nVertices, nFacets, facetDepth;
+	GLsizei			facetDepth;
 
 	/* statements */
 	j = checkXYZVertexAndColor(self, args, &xyzArray, &colorArray, &valuesArray, &facetsArray,
@@ -2431,7 +2431,6 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 		return(Py_None);
 	}
 
-	nVertices = xyzSize;
 	pxyz = (float *) xyzArray->data;
 	if (cSize > 0){
 		pc = (GLubyte *) colorArray->data;
@@ -2460,7 +2459,6 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 		}else{
 			glVertexPointer(3, GL_FLOAT, 0, pxyz);
 			glEnableClientState(GL_VERTEX_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			for (i=0; i < fSize; i++){
 	            glDrawElements(GL_LINE_LOOP,
@@ -2527,13 +2525,11 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 			}
 		}else if (0){
 			/* We have to loop */
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			glVertexPointer(3, GL_FLOAT, 0, pxyz);
 			glColorPointer(4, GL_UNSIGNED_BYTE, 0, pc);
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_COLOR_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			for (i=0; i < fSize; i++){
 				glBegin(GL_LINE_LOOP);
@@ -2550,7 +2546,6 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 			glColorPointer(4, GL_UNSIGNED_BYTE, 0, pc);
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_COLOR_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			for (i=0; i < fSize; i++){
 	            glDrawElements(GL_LINE_LOOP,
@@ -2590,8 +2585,8 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 	float			*pxyz, *pv;
 	GLubyte			*pc=NULL;
 	unsigned int	*pf=NULL;
-	GLsizei			nVertices, nFacets, facetDepth;
-    struct module_state *st = GETSTATE(self);
+	GLsizei			facetDepth;
+    /*struct module_state *st = GETSTATE(self);*/
 
 	/* statements */
 	j = checkXYZVertexAndColor(self, args, &xyzArray, &colorArray, &valuesArray, &facetsArray,
@@ -2613,7 +2608,6 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 		return(Py_None);
 	}
 
-	nVertices = xyzSize;
 	pxyz = (float *) xyzArray->data;
 	if (cSize > 0){
 		pc = (GLubyte *) colorArray->data;
@@ -2644,7 +2638,6 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 		}else{
 			glVertexPointer(3, GL_FLOAT, 0, pxyz);
 			glEnableClientState(GL_VERTEX_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
             glDrawElements(GL_TRIANGLES,
                            facetDepth * fSize,
@@ -2708,13 +2701,11 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 			}
 		}else if (0){
 			/* We have to loop */
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			glVertexPointer(3, GL_FLOAT, 0, pxyz);
 			glColorPointer(4, GL_UNSIGNED_BYTE, 0, pc);
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_COLOR_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			for (i=0; i < fSize; i++){
 				glBegin(GL_TRIANGLES);
@@ -2731,7 +2722,6 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 			glColorPointer(4, GL_UNSIGNED_BYTE, 0, pc);
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_COLOR_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
             glDrawElements(GL_TRIANGLES,
                                facetDepth * fSize,

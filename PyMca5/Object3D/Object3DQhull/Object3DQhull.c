@@ -370,12 +370,11 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
 
     /* local variables */
     PyArrayObject    *pointArray, *inner_pointArray=NULL;
-    PyArrayObject    *result, *inner_result=NULL ;
+    PyArrayObject    *result;
 
     coordT    *points;    /* Qhull */
     int        dimension;    /* Qhull */
     int        nPoints;    /* Qhull */
-    int        inner_nPoints = 0;    /* Qhull */
 
     int        qhullResult;        /* Qhull exit code, 0 means no error */
     boolT ismalloc = False;        /* True if Qhull should free points in
@@ -391,8 +390,6 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
     npy_intp    outDimensions[2];
     facetT *facet;        /* needed by FORALLfacets */
     pointT *center;
-
-  int format=0, numvertices= 0, vid=1;
 
     int j, i;
 #if (REALfloat == 1)
@@ -495,7 +492,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
     outDimensions[0] = nFacets;
     outDimensions[1] = dimension;
     //outDimensions[2] = dimension;
-    printf("output dimensions = %d, %d\n",outDimensions[0], outDimensions[1]);
+    printf("output dimensions = %ld, %ld\n", outDimensions[0], outDimensions[1]);
     result = (PyArrayObject *)
       PyArray_SimpleNew(2, outDimensions, PyArray_DOUBLE);
     if (result == NULL)
