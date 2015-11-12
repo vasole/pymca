@@ -105,7 +105,7 @@ class Object3DPixmap(Object3DBase.Object3D):
             return
         if self._imageData is None:
             return
-        if ddict['common'].has_key('event'):
+        if 'event' in ddict['common']:
             if ddict['common']['event'] == 'ColormapChanged':
                 self._forceTextureCalculation = True
         if not self._forceTextureCalculation:

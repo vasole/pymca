@@ -87,7 +87,7 @@ class Object3DMeshConfig(Object3DPrivateConfig.Object3DPrivateConfig):
         self.updateButton.clicked.connect(self.updateCallBack)
 
     def setParameters(self, ddict):
-        #if ddict.has_key('widget'):
+        #if 'widget' in ddict:
         #    del ddict['widget']
         self._configuration.update(ddict)
         self._updateWidget()
