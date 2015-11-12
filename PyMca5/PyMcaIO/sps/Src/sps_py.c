@@ -34,7 +34,20 @@
 */
 #include <numpy/arrayobject.h>
 
-static PyObject *SPSError;
+struct module_state {
+    PyObject *SPSError;
+};
+
+#if PY_MAJOR_VERSION >= 3
+    #define PyInt_FromLong PyLong_FromLong
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
 
 void        initsps(void);
 static void sps_cleanup(void);
@@ -104,7 +117,11 @@ static PyObject * sps_getkeylist(PyObject *self, PyObject *args)
 
   list = PyList_New(0);
   for (i=0; (key = SPS_GetNextEnvKey (spec_version,array_name, i)) ; i++) {
+#if PY_MAJOR_VERSION >= 3
+    string = PyUnicode_FromString(key);
+#else
     string = PyString_FromString(key);
+#endif
     PyList_Append (list, string);
     Py_DECREF(string);
   }
@@ -125,7 +142,11 @@ static PyObject * sps_getarraylist(PyObject *self, PyObject *args)
 
   list = PyList_New(0);
   for (i=0; (array = SPS_GetNextArray (spec_version,i)) ; i++) {
+#if PY_MAJOR_VERSION >= 3
+    string = PyUnicode_FromString(array);
+#else
     string = PyString_FromString(array);
+#endif
     PyList_Append (list, string);
     Py_DECREF(string);
   }
@@ -145,7 +166,11 @@ static PyObject * sps_getspeclist(PyObject *self, PyObject *args)
 
   list = PyList_New(0);
   for (i=0; (spec_version = SPS_GetNextSpec (i)) ; i++) {
+#if PY_MAJOR_VERSION >= 3
+    string = PyUnicode_FromString(spec_version);
+#else
     string = PyString_FromString(spec_version);
+#endif
     PyList_Append (list, string);
     Py_DECREF(string);
   }
@@ -196,9 +221,14 @@ static PyObject *sps_getinfo(PyObject *self, PyObject *args)
   ret = SPS_GetInfoString(spec_version, array_name);
 
   if (ret) { 
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_FromString(ret);
+#else
   	return PyString_FromString(ret);
+#endif
   } else {
-        PyErr_SetString(SPSError, "Array Info cannot be read");
+  	    struct module_state *st = GETSTATE(self);
+        PyErr_SetString(st->SPSError, "Array Info cannot be read");
   	return NULL;
   }
 }    
@@ -215,9 +245,15 @@ static PyObject *sps_getmetadata(PyObject *self, PyObject *args)
   ret = SPS_GetMetaData(spec_version, array_name, &length);
 
   if (ret) { 
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_FromString(ret);
+#else
   	return PyString_FromString(ret);
+#endif
   } else {
-        PyErr_SetString(SPSError, "Array metadata cannot be read");
+
+  	    struct module_state *st = GETSTATE(self);
+        PyErr_SetString(st->SPSError, "Array metadata cannot be read");
   	return NULL;
   }
 }
@@ -233,9 +269,14 @@ static PyObject *sps_getenvstr(PyObject *self, PyObject *args)
   ret = SPS_GetEnvStr(spec_version, array_name, key);
 
   if (ret) {
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_FromString(ret);
+#else
     return PyString_FromString(ret);
+#endif
   } else {
-    PyErr_SetString(SPSError, "Key not found");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Key not found");
     return NULL;
   }
 }
@@ -249,7 +290,8 @@ static PyObject *sps_putenvstr(PyObject *self, PyObject *args)
   }
 
   if (SPS_PutEnvStr(spec_version, array_name, key, v)) {
-    PyErr_SetString(SPSError, "Error setting the environment string");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error setting the environment string");
     return NULL;
   } else {
     Py_INCREF(Py_None);
@@ -268,7 +310,9 @@ static PyObject *sps_getarrayinfo(PyObject *self, PyObject *args)
   }
 
   if (SPS_GetArrayInfo(spec_version, array_name, &rows, &cols, &type, &flag)) {
-    PyErr_SetString(SPSError, "Error getting array info");
+    
+  	struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error getting array info");
     return NULL;
   }
 
@@ -289,12 +333,14 @@ static PyObject *sps_attach(PyObject *self, PyObject *args)
   }
 
   if (SPS_GetArrayInfo(spec_version, array_name, &rows, &cols, &type, &flag)) {
-    PyErr_SetString(SPSError, "Error getting array info");
+  	struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error getting array info");
     return NULL;
   }
 
   if ((data = SPS_GetDataPointer(spec_version, array_name, 1)) == NULL) {
-    PyErr_SetString(SPSError, "Error getting data pointer");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error getting data pointer");
     return NULL;
   }
 
@@ -305,14 +351,16 @@ static PyObject *sps_attach(PyObject *self, PyObject *args)
 
   if (type != stype) {
     SPS_ReturnDataPointer(data);
-    PyErr_SetString(SPSError, "Type of data in shared memory not supported");
+  	struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Type of data in shared memory not supported");
     return NULL;
   }
 
   if ((arrobj = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, ptype, data))
       == NULL) {
     SPS_ReturnDataPointer(data);
-    PyErr_SetString(SPSError, "Could not create mathematical array");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Could not create mathematical array");
     return NULL;
   }
 
@@ -329,14 +377,16 @@ static PyObject *sps_detach(PyObject *self, PyObject *args)
   }
 
   if (!PyArray_Check(in_arr)) {
-    PyErr_SetString(SPSError, "Input must be the array returned by attach");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Input must be the array returned by attach");
     return NULL;
   }
 
   data = ((PyArrayObject*) in_arr)->data;
 
   if (SPS_ReturnDataPointer(data)) {
-    PyErr_SetString(SPSError, "Error detaching");
+  	struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error detaching");
     return NULL;
   } else {
     Py_INCREF(Py_None);
@@ -359,12 +409,15 @@ static PyObject *sps_create(PyObject *self, PyObject *args)
   }
 
   if (SPS_CreateArray(spec_version, array_name, rows, cols, type, flag)) {
-    PyErr_SetString(SPSError, "Error getting array info");
+  	struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error getting array info");
     return NULL;
   }
 
   if ((data = SPS_GetDataPointer(spec_version, array_name, 1)) == NULL) {
-    PyErr_SetString(SPSError, "Error getting data pointer");
+    
+  	struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error getting data pointer");
     return NULL;
   }
 
@@ -374,14 +427,16 @@ static PyObject *sps_create(PyObject *self, PyObject *args)
   stype = sps_py2type(ptype);
 
   if (type != stype) {
-    PyErr_SetString(SPSError, "Type of data in shared memory not supported");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Type of data in shared memory not supported");
     return NULL;
   }
 
   if ((arrobj = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, ptype, data))
       == NULL) {
     /* Should delete the array  - don't have a lib function !!! FIXTHIS */
-    PyErr_SetString(SPSError, "Could not create mathematical array");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Could not create mathematical array");
     return NULL;
   }
 
@@ -397,7 +452,8 @@ static PyObject *sps_getshmid(PyObject *self, PyObject *args)
      return NULL;
    }
   if (SPS_GetArrayInfo(spec_version, array_name, &rows, &cols, &type, &flag)) {
-    PyErr_SetString(SPSError, "Error getting array info");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error getting array info");
     return NULL;
   }
   shmid = SPS_GetShmId(spec_version, array_name);
@@ -418,7 +474,8 @@ static PyObject *sps_getdata(PyObject *self, PyObject *args)
   }
 
   if (SPS_GetArrayInfo(spec_version, array_name, &rows, &cols, &type, &flag)) {
-    PyErr_SetString(SPSError, "Error getting array info");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error getting array info");
     return NULL;
   }
 
@@ -427,14 +484,16 @@ static PyObject *sps_getdata(PyObject *self, PyObject *args)
   ptype = sps_type2py(type);
   if ((arrobj_nc = (PyArrayObject*) PyArray_SimpleNew(2, dims, ptype))
       == NULL) {
-    PyErr_SetString(SPSError, "Could not create mathematical array");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Could not create mathematical array");
     return NULL;
   }
 
   if ((arrobj = (PyArrayObject*) PyArray_ContiguousFromObject(
            (PyObject*) arrobj_nc, ptype, 2, 2)) == NULL) {
     Py_DECREF(arrobj_nc);
-    PyErr_SetString(SPSError, "Could not make our array contiguous");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Could not make our array contiguous");
     return NULL;
   } else
     Py_DECREF(arrobj_nc);
@@ -460,7 +519,8 @@ static PyObject *sps_getdatarow(PyObject *self, PyObject *args)
   }
 
   if (SPS_GetArrayInfo(spec_version, array_name, &rows, &cols, &type, &flag)) {
-    PyErr_SetString(SPSError, "Error getting array info");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error getting array info");
     return NULL;
   }
 
@@ -469,14 +529,16 @@ static PyObject *sps_getdatarow(PyObject *self, PyObject *args)
   ptype = sps_type2py(type);
   if ((arrobj_nc = (PyArrayObject*) PyArray_SimpleNew(1, dims, ptype))
       == NULL) {
-    PyErr_SetString(SPSError, "Could not create mathematical array");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Could not create mathematical array");
     return NULL;
   }
 
   if ((arrobj = (PyArrayObject*) PyArray_ContiguousFromObject(
             (PyObject*) arrobj_nc, ptype, 1, 1)) == NULL) {
     Py_DECREF(arrobj_nc);
-    PyErr_SetString(SPSError, "Could not make our array contiguous");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Could not make our array contiguous");
     return NULL;
   } else
     Py_DECREF(arrobj_nc);
@@ -502,7 +564,8 @@ static PyObject *sps_getdatacol(PyObject *self, PyObject *args)
   }
 
   if (SPS_GetArrayInfo(spec_version, array_name, &rows, &cols, &type, &flag)) {
-    PyErr_SetString(SPSError, "Error getting array info");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error getting array info");
     return NULL;
   }
 
@@ -511,14 +574,16 @@ static PyObject *sps_getdatacol(PyObject *self, PyObject *args)
   ptype = sps_type2py(type);
   if ((arrobj_nc = (PyArrayObject*) PyArray_SimpleNew(1, dims, ptype))
       == NULL) {
-    PyErr_SetString(SPSError, "Could not create mathematical array");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Could not create mathematical array");
     return NULL;
   }
 
   if ((arrobj = (PyArrayObject*) PyArray_ContiguousFromObject(
                (PyObject*) arrobj_nc, ptype, 1, 1)) == NULL) {
     Py_DECREF(arrobj_nc);
-    PyErr_SetString(SPSError, "Could not make our array contiguous");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Could not make our array contiguous");
     return NULL;
   } else
     Py_DECREF(arrobj_nc);
@@ -543,7 +608,8 @@ static PyObject *sps_putdata(PyObject *self, PyObject *args)
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
                 PyArray_NOTYPE, 2, 2))) {
-    PyErr_SetString(SPSError, "Input Array is not a 2 dim array");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Input Array is not a 2 dim array");
     return NULL;
   }
 
@@ -551,7 +617,8 @@ static PyObject *sps_putdata(PyObject *self, PyObject *args)
   stype = sps_py2type(ptype);
 
   if (ptype != sps_type2py(stype)) {
-    PyErr_SetString(SPSError, "Type of data in shared memory not supported");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Type of data in shared memory not supported");
     Py_DECREF(src);
     return NULL;
   }
@@ -560,7 +627,8 @@ static PyObject *sps_putdata(PyObject *self, PyObject *args)
 
   if (SPS_CopyToShared(spec_version, array_name, src->data, stype, no_items)
       == -1) {
-    PyErr_SetString(SPSError, "Error copying data to shared memory");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error copying data to shared memory");
     Py_DECREF(src);
     return NULL;
   }else
@@ -587,7 +655,8 @@ static PyObject *sps_putdatarow(PyObject *self, PyObject *args)
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
                 PyArray_NOTYPE, 1, 1))) {
-    PyErr_SetString(SPSError, "Input Array is not a 1 dim array");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Input Array is not a 1 dim array");
     return NULL;
   }
 
@@ -595,7 +664,8 @@ static PyObject *sps_putdatarow(PyObject *self, PyObject *args)
   stype = sps_py2type(ptype);
 
   if (ptype == -1) {
-    PyErr_SetString(SPSError, "Type of data in shared memory not supported");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Type of data in shared memory not supported");
     Py_DECREF(src);
     return NULL;
   }
@@ -605,7 +675,8 @@ static PyObject *sps_putdatarow(PyObject *self, PyObject *args)
   if (SPS_CopyRowToShared(spec_version, array_name, src->data, stype,
               in_row, no_items, NULL)
       == -1) {
-    PyErr_SetString(SPSError, "Error copying data to shared memory");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error copying data to shared memory");
     Py_DECREF(src);
     return NULL;
   }else
@@ -632,7 +703,8 @@ static PyObject *sps_putdatacol(PyObject *self, PyObject *args)
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
                 PyArray_NOTYPE, 1, 1))) {
-    PyErr_SetString(SPSError, "Input Array is not a 1 dim array");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Input Array is not a 1 dim array");
     return NULL;
   }
 
@@ -644,7 +716,8 @@ static PyObject *sps_putdatacol(PyObject *self, PyObject *args)
   if (SPS_CopyColToShared(spec_version, array_name, src->data, stype,
               in_col, no_items, NULL)
       == -1) {
-    PyErr_SetString(SPSError, "Error copying data to shared memory");
+    struct module_state *st = GETSTATE(self);
+    PyErr_SetString(st->SPSError, "Error copying data to shared memory");
     Py_DECREF(src);
     return NULL;
   }else
@@ -684,42 +757,86 @@ static PyMethodDef SPSMethods[] = {
   { NULL, NULL}
 };
 
-void initsps()
-{
-  PyObject *d, *m;
-  m = Py_InitModule ("sps", SPSMethods);
+#if PY_MAJOR_VERSION >= 3
 
+static int SPS_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->SPSError);
+    return 0;
+}
+
+static int SPS_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->SPSError);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "sps",                          /* m_name */
+        "Shared memory handling",       /* m_doc  */
+        sizeof(struct module_state),    /* m_size */
+        SPSMethods,                     /* m_methods */
+        NULL,                           /* m_reload */
+        SPS_traverse,                   /* m_travers */
+        SPS_clear,                      /* m_clear */
+        NULL                            /* m_free */
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit_SPS(void)
+
+#else
+#define INITERROR return
+void initsps()
+#endif
+{
+  struct module_state *st;
+  PyObject *d;
   //printf("Initializing sps\n");
   /* Add some symbolic constants to the module */
-  d = PyModule_GetDict(m);
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("sps", SPSMethods);
+#endif
+  d = PyModule_GetDict(module);
+  if (module == NULL)
+     INITERROR;
+  st = GETSTATE(module);  
+  PyDict_SetItemString(d, "DOUBLE",   (PyObject *) PyInt_FromLong(SPS_DOUBLE));
+  PyDict_SetItemString(d, "FLOAT",    (PyObject *) PyInt_FromLong(SPS_FLOAT));
+  PyDict_SetItemString(d, "INT",      (PyObject *) PyInt_FromLong(SPS_INT));
+  PyDict_SetItemString(d, "UINT",     (PyObject *) PyInt_FromLong(SPS_UINT));
+  PyDict_SetItemString(d, "SHORT",    (PyObject *) PyInt_FromLong(SPS_SHORT));
+  PyDict_SetItemString(d, "USHORT",   (PyObject *) PyInt_FromLong(SPS_USHORT));
+  PyDict_SetItemString(d, "CHAR",     (PyObject *) PyInt_FromLong(SPS_CHAR));
+  PyDict_SetItemString(d, "UCHAR",    (PyObject *) PyInt_FromLong(SPS_UCHAR));
+  PyDict_SetItemString(d, "STRING",   (PyObject *) PyInt_FromLong(SPS_STRING));
 
-  PyDict_SetItemString(d, "DOUBLE",   PyInt_FromLong(SPS_DOUBLE));
-  PyDict_SetItemString(d, "FLOAT",    PyInt_FromLong(SPS_FLOAT));
-  PyDict_SetItemString(d, "INT",      PyInt_FromLong(SPS_INT));
-  PyDict_SetItemString(d, "UINT",     PyInt_FromLong(SPS_UINT));
-  PyDict_SetItemString(d, "SHORT",    PyInt_FromLong(SPS_SHORT));
-  PyDict_SetItemString(d, "USHORT",   PyInt_FromLong(SPS_USHORT));
-  PyDict_SetItemString(d, "CHAR",     PyInt_FromLong(SPS_CHAR));
-  PyDict_SetItemString(d, "UCHAR",    PyInt_FromLong(SPS_UCHAR));
-  PyDict_SetItemString(d, "STRING",   PyInt_FromLong(SPS_STRING));
+  PyDict_SetItemString(d, "IS_ARRAY", (PyObject *) PyInt_FromLong(SPS_IS_ARRAY));
+  PyDict_SetItemString(d, "IS_MCA",   (PyObject *) PyInt_FromLong(SPS_IS_MCA));
+  PyDict_SetItemString(d, "IS_IMAGE", (PyObject *) PyInt_FromLong(SPS_IS_IMAGE));
 
-  PyDict_SetItemString(d, "IS_ARRAY", PyInt_FromLong(SPS_IS_ARRAY));
-  PyDict_SetItemString(d, "IS_MCA",   PyInt_FromLong(SPS_IS_MCA));
-  PyDict_SetItemString(d, "IS_IMAGE", PyInt_FromLong(SPS_IS_IMAGE));
+  PyDict_SetItemString(d, "TAG_STATUS", (PyObject *) PyInt_FromLong(SPS_TAG_STATUS));
+  PyDict_SetItemString(d, "TAG_ARRAY", (PyObject *) PyInt_FromLong(SPS_TAG_ARRAY));
+  PyDict_SetItemString(d, "TAG_MASK", (PyObject *) PyInt_FromLong(SPS_TAG_MASK));
+  PyDict_SetItemString(d, "TAG_MCA", (PyObject *) PyInt_FromLong(SPS_TAG_MCA));
+  PyDict_SetItemString(d, "TAG_IMAGE", (PyObject *) PyInt_FromLong(SPS_TAG_IMAGE));
+  PyDict_SetItemString(d, "TAG_SCAN", (PyObject *) PyInt_FromLong(SPS_TAG_SCAN));
+  PyDict_SetItemString(d, "TAG_INFO", (PyObject *) PyInt_FromLong(SPS_TAG_INFO));
+  PyDict_SetItemString(d, "TAG_FRAMES", (PyObject *) PyInt_FromLong(SPS_TAG_FRAMES));
 
-  PyDict_SetItemString(d, "TAG_STATUS", PyInt_FromLong(SPS_TAG_STATUS));
-  PyDict_SetItemString(d, "TAG_ARRAY", PyInt_FromLong(SPS_TAG_ARRAY));
-  PyDict_SetItemString(d, "TAG_MASK", PyInt_FromLong(SPS_TAG_MASK));
-  PyDict_SetItemString(d, "TAG_MCA", PyInt_FromLong(SPS_TAG_MCA));
-  PyDict_SetItemString(d, "TAG_IMAGE", PyInt_FromLong(SPS_TAG_IMAGE));
-  PyDict_SetItemString(d, "TAG_SCAN", PyInt_FromLong(SPS_TAG_SCAN));
-  PyDict_SetItemString(d, "TAG_INFO", PyInt_FromLong(SPS_TAG_INFO));
-  PyDict_SetItemString(d, "TAG_FRAMES", PyInt_FromLong(SPS_TAG_FRAMES));
-
-
-  SPSError = PyErr_NewException("sps.error", NULL, NULL);
-  PyDict_SetItemString(d, "error", SPSError);
+  st->SPSError = PyErr_NewException("sps.error", NULL, NULL);
+  if (st->SPSError == NULL) {
+     Py_DECREF(module);
+     INITERROR;
+  }
 
   Py_AtExit(sps_cleanup);
   import_array();
+#if PY_MAJOR_VERSION >= 3
+  return module;
+#endif
 }

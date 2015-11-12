@@ -65,8 +65,7 @@ if sys.platform == "win32":
     define_macros = [('WIN32',None)]
 else:
     define_macros = []
-    if sys.version < '3.0':
-        ext_modules.append( Extension(
+    ext_modules.append( Extension(
                             name = 'sps',
                             sources=['Src/sps.c',
                                      'Src/sps_py.c'],
