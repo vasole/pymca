@@ -103,6 +103,7 @@ class PyMcaPrintPreview(qt.QDialog):
         self.scene = None
         self.page = None
         self.view = None
+        self._viewScale = 1.0
         self.badNews = None
 
     def exec_(self):
@@ -359,6 +360,8 @@ class PyMcaPrintPreview(qt.QDialog):
         if QTVERSION < "5.0":
             rectItem.scale(scale, scale)
         else:
+            # the correct equivalent would be:
+            # rectItem.setTransform(qt.QTransform.fromScale(scalex, scaley))
             rectItem.setScale(scale)
         rectItem.moveBy(20 , 40)
 
@@ -442,6 +445,8 @@ class PyMcaPrintPreview(qt.QDialog):
         if QTVERSION < "5.0":
             commentItem.scale(scale, scale)
         else:
+            # the correct equivalent would be:
+            # rectItem.setTransform(qt.QTransform.fromScale(scalex, scaley))
             commentItem.setScale(scale)
         textItem.moveBy(svgItem.boundingRect().x()+\
                         0.5 * svgItem.boundingRect().width() - offset * scale,
@@ -449,6 +454,8 @@ class PyMcaPrintPreview(qt.QDialog):
         if QTVERSION < "5.0":
             textItem.scale(scale, scale)
         else:
+            # the correct equivalent would be:
+            # rectItem.setTransform(qt.QTransform.fromScale(scalex, scaley))
             textItem.setScale(scale)
 
     def setup(self):
@@ -708,6 +715,8 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
             if QTVERSION < "5.0":
                 parent.scale(scalex, scaley)
             else:
+                # the correct equivalent would be:
+                # rectItem.setTransform(qt.QTransform.fromScale(scalex, scaley))
                 parent.setScale(scalex)
         self.scene().removeItem(self._newRect)
         self._newRect = None
@@ -732,8 +741,6 @@ def testPreview():
         sys.exit(1)
 
     filename = sys.argv[1]
-
-    a = qt.QApplication(sys.argv)
     if filename[-3:] == "svg":
         if 0:
             item = qt.QSvgWidget()
@@ -748,13 +755,9 @@ def testPreview():
             item.setCacheMode(qt.QGraphicsItem.NoCache)
         sys.exit(w.exec_())
 
-
-    p = qt.QPrinter()
-    p.setOutputFileName(os.path.splitext(filename)[0]+".ps")
-    p.setColorMode(qt.QPrinter.Color)
-
-    w = PyMcaPrintPreview( parent = None, printer = p, name = 'Print Prev',
-                      modal = 0, fl = 0)
+    w = PyMcaPrintPreview( parent = None, modal=0)
+    # we need to initialize a printer to get a proper page
+    w.setup()
     w.resize(400,500)
     comment = ""
     for i in range(20):
@@ -772,7 +775,6 @@ def testSimple():
     import os
     filename = sys.argv[1]
 
-    a = qt.QApplication(sys.argv)
     w = qt.QWidget()
     l = qt.QVBoxLayout(w)
 
@@ -811,10 +813,8 @@ def testSimple():
     w.show()
     button.clicked.connect(printFile)
 
-    a.exec_()
-
-
 ##  MAIN
 if  __name__ == '__main__':
+    a = qt.QApplication(sys.argv)
     testPreview()
-    #testSimple()
+    # a.exec_()

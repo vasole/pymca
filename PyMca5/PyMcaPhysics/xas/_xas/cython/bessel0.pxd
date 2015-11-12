@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #/*##########################################################################
 #
 # The PyMca X-Ray Fluorescence Toolkit
@@ -27,53 +26,8 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-__author__ = "V.A. Sole - ESRF Data Analysis"
-__contact__ = "sole@esrf.fr"
-__license__ = "MIT"
-__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import glob
-import os
-import sys
-import numpy
-from distutils.core import setup, Extension
-try:
-    html = False
-    if html:
-        import Cython.Compiler.Options
-        Cython.Compiler.Options.annotate = True    
-    from Cython.Distutils import build_ext
-except:
-    build_ext = None
+cimport cython
 
-c_files = [os.path.join('src', 'polspl.c'),
-           os.path.join('src', 'bessel0.c')]
-if build_ext:
-    src = [os.path.join('cython', '_xas.pyx')]
-else:
-    src = glob.glob(os.path.join('cython', '*.c'))
-
-src += c_files
-
-if sys.platform == 'win32':
-    extra_compile_args = []
-    extra_link_args = []
-else:
-    # OpenMP and auto-vectorization flags for Colormap and MinMax
-    # extra_compile_args = ['-fopenmp', '-ftree-vectorize']
-    # extra_link_args = ['-fopenmp']
-    extra_compile_args = []
-    extra_link_args = []
-
-setup(
-    name='_xas',
-    ext_modules=[Extension(
-        name="_xas",
-        sources=src,
-        include_dirs=[numpy.get_include(),
-                      os.path.join(os.getcwd(), "include")],
-        extra_compile_args=extra_compile_args,
-        extra_link_args=extra_link_args,
-        language="c",
-    )],
-    cmdclass={'build_ext': build_ext},
-)
+cdef extern from "bessel0.h":
+    double j0Single(double)
+    void j0Multiple(double *, int)

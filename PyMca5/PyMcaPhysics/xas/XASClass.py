@@ -656,13 +656,8 @@ def getFTWindowWeights(tk, window="Gaussian", windpar=0.2, wrange=None):
                 a=(1./numpy.pi)*numpy.sin(numpy.pi*(tk[i]-apo2)/windpar) + \
                   (1.-(tk[i]-apo2)/windpar)*numpy.cos(numpy.pi*(tk[i]-apo2)/windpar)
                 wind[i] = a
-    elif window == "Kasel":
-        # not implemented as require special functions and dependency on scipy
-        #   9: begin                    ; kasel
-        #        wind=beseli( windpar*sqrt(1.-((tk-xp)/xm*2.)^2),0 )/  $
-        #        beseli(windpar,0)
-        #      end
-        raise ValueError("Window <%s> not implemented" % window)
+    elif _XAS and window in ["Kaiser", "Kasel"]:
+        wind= (_xas.j0(windpar * numpy.sqrt(1. - 4.0 * pow((tk-xp)/xm, 2))) - 1.0)/ (_xas.j0(windpar) - 1.0)
     else:
         raise ValueError("Window <%s> not implemented" % window)
     return wind

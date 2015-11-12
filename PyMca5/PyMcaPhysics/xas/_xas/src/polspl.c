@@ -23,6 +23,7 @@
 #############################################################################*/
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "polspl.h"
 #define POLABS(x) (x>0) ? x : -x
 
