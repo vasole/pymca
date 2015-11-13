@@ -39,6 +39,19 @@
 #include <GL/glext.h> /*GL_MAX_ELEMENTS_VERTICES is there*/
 #endif
 
+
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+
 /* Function declarations */
 static PyObject *getGridFacetsFromVertices(PyObject *dummy, PyObject *args);
 static PyObject *testOpenGL(PyObject *dummy, PyObject *args);
@@ -57,20 +70,19 @@ static PyObject *drawXYZLines(PyObject *dummy, PyObject *args);
 static PyObject *drawXYZTriangles(PyObject *dummy, PyObject *args);
 static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args);
 static PyObject *draw3DGridTexture(PyObject *dummy, PyObject *args);
-static PyObject *OBJECT3DError;
-static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
+static int check2DGridVertexAndColor(PyObject *self, PyObject *args, PyArrayObject **xArray,\
 						 PyArrayObject **yArray, PyArrayObject **zArray, PyArrayObject **colorArray,\
 						 PyArrayObject **valuesArray,\
 						 int *colorFilterFlag, int *valueFilterFlag, float *vMin, float *vMax,\
 						 npy_intp *xSize, npy_intp *ySize, npy_intp *zSize, npy_intp *cSize, npy_intp *vSize);
 
-static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
+static int check3DGridVertexAndColor(PyObject *self, PyObject *args, PyArrayObject **xArray,\
 						 PyArrayObject **yArray, PyArrayObject **zArray, PyArrayObject **colorArray,\
 						 PyArrayObject **valuesArray,\
 						 int *colorFilterFlag, int *valueFilterFlag, float *vMin, float *vMax,\
 						 npy_intp *xSize, npy_intp *ySize, npy_intp *zSize, npy_intp *cSize, npy_intp *vSize);
 
-static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
+static int checkXYZVertexAndColor(PyObject *self, PyObject *args, PyArrayObject **xyzArray,\
 						 PyArrayObject **colorArray,\
 						 PyArrayObject **valuesArray,\
 						 PyArrayObject **facetsArray,\
@@ -100,10 +112,11 @@ static PyObject *get2DGridFromXY(PyObject *self, PyObject *args)
 	npy_intp	    i, j;
 	npy_intp		dim[2];
 	float			*px, *py, *pr;
+    struct module_state *st = GETSTATE(self);
 
 	if (!PyArg_ParseTuple(args, "OO", &xinput, &yinput))
 	{
-	    PyErr_SetString(OBJECT3DError, "Unable to parse arguments. Two float arrays required");
+		PyErr_SetString(st->error, "Unable to parse arguments. Two float arrays required");
         return NULL;
 	}
 
@@ -112,7 +125,7 @@ static PyObject *get2DGridFromXY(PyObject *self, PyObject *args)
     				PyArray_FROMANY(xinput, NPY_FLOAT, 1, 0, NPY_C_CONTIGUOUS|NPY_FORCECAST);
     if (xArray == NULL)
 	{
-	    PyErr_SetString(OBJECT3DError, "First argument cannot be converted to a float array.");
+		PyErr_SetString(st->error, "First argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -121,7 +134,7 @@ static PyObject *get2DGridFromXY(PyObject *self, PyObject *args)
     if (yArray == NULL)
 	{
 		Py_DECREF(xArray);
-		PyErr_SetString(OBJECT3DError, "Second argument cannot be converted to a float array.");
+		PyErr_SetString(st->error, "Second argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -144,7 +157,7 @@ static PyObject *get2DGridFromXY(PyObject *self, PyObject *args)
     if (ret == NULL){
         Py_DECREF(xArray);
         Py_DECREF(yArray);
-	    PyErr_SetString(OBJECT3DError, "Error creating output array");
+	    PyErr_SetString(st->error, "Error creating output array");
 		return NULL;
     }
 
@@ -178,10 +191,11 @@ static PyObject *get3DGridFromXYZ(PyObject *self, PyObject *args)
 	npy_intp	    i, j, k;
 	npy_intp		dim[2];
 	float			*px, *py, *pz, *pr;
+    struct module_state *st = GETSTATE(self);
 
 	if (!PyArg_ParseTuple(args, "OOO", &xinput, &yinput, &zinput))
 	{
-	    PyErr_SetString(OBJECT3DError, "Unable to parse arguments. Three float arrays required");
+	    PyErr_SetString(st->error, "Unable to parse arguments. Three float arrays required");
         return NULL;
 	}
 
@@ -190,7 +204,7 @@ static PyObject *get3DGridFromXYZ(PyObject *self, PyObject *args)
     				PyArray_FROMANY(xinput, NPY_FLOAT, 1, 0, NPY_C_CONTIGUOUS|NPY_FORCECAST);
     if (xArray == NULL)
 	{
-	    PyErr_SetString(OBJECT3DError, "First argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "First argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -199,7 +213,7 @@ static PyObject *get3DGridFromXYZ(PyObject *self, PyObject *args)
     if (yArray == NULL)
 	{
 		Py_DECREF(xArray);
-		PyErr_SetString(OBJECT3DError, "Second argument cannot be converted to a float array.");
+		PyErr_SetString(st->error, "Second argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -209,7 +223,7 @@ static PyObject *get3DGridFromXYZ(PyObject *self, PyObject *args)
 	{
 		Py_DECREF(xArray);
 		Py_DECREF(yArray);
-	    PyErr_SetString(OBJECT3DError, "Third argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "Third argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -237,7 +251,7 @@ static PyObject *get3DGridFromXYZ(PyObject *self, PyObject *args)
         Py_DECREF(xArray);
         Py_DECREF(yArray);
         Py_DECREF(zArray);
-	    PyErr_SetString(OBJECT3DError, "Error creating output array");
+	    PyErr_SetString(st->error, "Error creating output array");
 		return NULL;
     }
 
@@ -268,7 +282,7 @@ static PyObject *get3DGridFromXYZ(PyObject *self, PyObject *args)
     return PyArray_Return(ret);
 }
 
-static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
+static int check2DGridVertexAndColor(PyObject *self, PyObject *args, PyArrayObject **xArray,\
 						 PyArrayObject **yArray, PyArrayObject **zArray, PyArrayObject **colorArray,\
 						 PyArrayObject **valuesArray,\
 						 int *colorFilterFlag, int *valueFilterFlag, float *vMin, float *vMax,\
@@ -281,11 +295,12 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 
 	/* local variables */
 	npy_intp	    i;
+	struct module_state *st = GETSTATE(self);
 
 	/* statements */
 	if (!PyArg_ParseTuple(args, "OOO|OOi(iff)", &xinput, &yinput, &zinput, &cinput, &vinput, &cfilter, &vfilter, &vmin, &vmax))
 	{
-	    PyErr_SetString(OBJECT3DError, "Unable to parse arguments. At least three float arrays required");
+	    PyErr_SetString(st->error, "Unable to parse arguments. At least three float arrays required");
         return 0;
 	}
 
@@ -294,7 +309,7 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
     				PyArray_FROMANY(xinput, NPY_FLOAT, 1, 0, NPY_C_CONTIGUOUS|NPY_FORCECAST);
     if (*xArray == NULL)
 	{
-	    PyErr_SetString(OBJECT3DError, "First argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "First argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -304,7 +319,7 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
     if (*yArray == NULL)
 	{
 		Py_DECREF(*xArray);
-	    PyErr_SetString(OBJECT3DError, "Second argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "Second argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -316,7 +331,7 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 	{
 		Py_DECREF(*xArray);
 		Py_DECREF(*yArray);
-	    PyErr_SetString(OBJECT3DError, "Third argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "Third argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -329,7 +344,7 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 			Py_DECREF(*xArray);
 			Py_DECREF(*yArray);
 			Py_DECREF(*zArray);
-			PyErr_SetString(OBJECT3DError, "Fourth argument cannot be converted to an unsigned byte array.");
+			PyErr_SetString(st->error, "Fourth argument cannot be converted to an unsigned byte array.");
 			return 0;
 		}
 	}
@@ -351,7 +366,7 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 	}
 
 	if (*zSize != (*xSize) * (*ySize)){
-		PyErr_SetString(OBJECT3DError, "Number of Z values does not match number of vertices.");
+		PyErr_SetString(st->error, "Number of Z values does not match number of vertices.");
 		return 0;
 	}
 
@@ -366,7 +381,7 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 				Py_DECREF(*yArray);
 				Py_DECREF(*zArray);
 				Py_DECREF(*colorArray);
-				PyErr_SetString(OBJECT3DError, "Number of colors does not match number of vertices.");
+				PyErr_SetString(st->error, "Number of colors does not match number of vertices.");
 				return 0;
 		}
 	}
@@ -384,7 +399,7 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 			{
 				Py_DECREF(*colorArray);
 			}
-			PyErr_SetString(OBJECT3DError, "Values array cannot be converted to a float array.");
+			PyErr_SetString(st->error, "Values array cannot be converted to a float array.");
 			return 0;
 		}
 		/* check the values array size */
@@ -402,7 +417,7 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 				Py_DECREF(*colorArray);
 			}
 			Py_DECREF(*valuesArray);
-			PyErr_SetString(OBJECT3DError, "Number of values does not match number of vertices.");
+			PyErr_SetString(st->error, "Number of values does not match number of vertices.");
 			return 0;
 		}
 	}
@@ -415,7 +430,7 @@ static int check2DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 }
 
 
-static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
+static int check3DGridVertexAndColor(PyObject *self, PyObject *args, PyArrayObject **xArray,\
 						 PyArrayObject **yArray, PyArrayObject **zArray, PyArrayObject **colorArray,\
 						 PyArrayObject **valuesArray,\
 						 int *colorFilterFlag, int *valueFilterFlag, float *vMin, float *vMax,\
@@ -428,11 +443,12 @@ static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 
 	/* local variables */
 	npy_intp	    i;
+	struct module_state *st = GETSTATE(self);
 
 	/* statements */
 	if (!PyArg_ParseTuple(args, "OOO|OOi(iff)", &xinput, &yinput, &zinput, &cinput, &vinput, &cfilter, &vfilter, &vmin, &vmax))
 	{
-	    PyErr_SetString(OBJECT3DError, "Unable to parse arguments. At least three float arrays required");
+	    PyErr_SetString(st->error, "Unable to parse arguments. At least three float arrays required");
         return 0;
 	}
 
@@ -441,7 +457,7 @@ static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
     				PyArray_FROMANY(xinput, NPY_FLOAT, 1, 0, NPY_C_CONTIGUOUS|NPY_FORCECAST);
     if (*xArray == NULL)
 	{
-	    PyErr_SetString(OBJECT3DError, "First argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "First argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -451,7 +467,7 @@ static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
     if (*yArray == NULL)
 	{
 		Py_DECREF(*xArray);
-	    PyErr_SetString(OBJECT3DError, "Second argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "Second argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -463,7 +479,7 @@ static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 	{
 		Py_DECREF(*xArray);
 		Py_DECREF(*yArray);
-	    PyErr_SetString(OBJECT3DError, "Third argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "Third argument cannot be converted to a float array.");
         return 0;
 	}
 
@@ -476,7 +492,7 @@ static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 			Py_DECREF(*xArray);
 			Py_DECREF(*yArray);
 			Py_DECREF(*zArray);
-			PyErr_SetString(OBJECT3DError, "Fourth argument cannot be converted to an unsigned byte array.");
+			PyErr_SetString(st->error, "Fourth argument cannot be converted to an unsigned byte array.");
 			return 0;
 		}
 	}
@@ -508,7 +524,7 @@ static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 				Py_DECREF(*yArray);
 				Py_DECREF(*zArray);
 				Py_DECREF(*colorArray);
-				PyErr_SetString(OBJECT3DError, "Number of colors does not match number of vertices.");
+				PyErr_SetString(st->error, "Number of colors does not match number of vertices.");
 				return 0;
 		}
 	}
@@ -526,7 +542,7 @@ static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 			{
 				Py_DECREF(*colorArray);
 			}
-			PyErr_SetString(OBJECT3DError, "Values array cannot be converted to a float array.");
+			PyErr_SetString(st->error, "Values array cannot be converted to a float array.");
 			return 0;
 		}
 		/* check the values array size */
@@ -544,7 +560,7 @@ static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 				Py_DECREF(*colorArray);
 			}
 			Py_DECREF(*valuesArray);
-			PyErr_SetString(OBJECT3DError, "Number of values does not match number of vertices.");
+			PyErr_SetString(st->error, "Number of values does not match number of vertices.");
 			return 0;
 		}
 	}
@@ -558,7 +574,7 @@ static int check3DGridVertexAndColor(PyObject *args, PyArrayObject **xArray,\
 }
 
 
-static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
+static int checkXYZVertexAndColor(PyObject *self, PyObject *args, PyArrayObject **xyzArray,\
 						 PyArrayObject **colorArray,\
 						 PyArrayObject **valuesArray,\
 						 PyArrayObject **facetsArray,\
@@ -573,11 +589,12 @@ static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
 
 	/* local variables */
 	npy_intp	    i;
+	struct module_state *st = GETSTATE(self);
 
 	/* statements */
 	if (!PyArg_ParseTuple(args, "O|OOOi(iff)", &xyzinput, &cinput, &vinput, &finput, &cfilter, &vfilter, &vmin, &vmax))
 	{
-	    PyErr_SetString(OBJECT3DError, "Unable to parse arguments. At least three float arrays required");
+	    PyErr_SetString(st->error, "Unable to parse arguments. At least three float arrays required");
         return 0;
 	}
 
@@ -586,14 +603,14 @@ static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
     				PyArray_FROMANY(xyzinput, NPY_FLOAT, 2, 2, NPY_C_CONTIGUOUS|NPY_FORCECAST);
     if (*xyzArray == NULL)
 	{
-	    PyErr_SetString(OBJECT3DError, "First argument cannot be converted to a three-columns float array.");
+	    PyErr_SetString(st->error, "First argument cannot be converted to a three-columns float array.");
         return 0;
 	}
 
 	/* check the size of the vertex array */
 	*xyzSize = (*xyzArray)->dimensions[0];
 	if ((*xyzArray)->dimensions[1] != 3){
-	    PyErr_SetString(OBJECT3DError, "First argument cannot be converted to a three-columns float array.");
+	    PyErr_SetString(st->error, "First argument cannot be converted to a three-columns float array.");
 		Py_DECREF(*xyzArray);
         return 0;
 	}
@@ -606,7 +623,7 @@ static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
 		if (*colorArray == NULL)
 		{
 			Py_DECREF(*xyzArray);
-			PyErr_SetString(OBJECT3DError, "Second argument cannot be converted to an unsigned byte array.");
+			PyErr_SetString(st->error, "Second argument cannot be converted to an unsigned byte array.");
 			return 0;
 		}
 	}
@@ -620,7 +637,7 @@ static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
 		if (*cSize != (4 * (*xyzSize))){
 				Py_DECREF(*xyzArray);
 				Py_DECREF(*colorArray);
-				PyErr_SetString(OBJECT3DError, "Number of colors does not match number of vertices.");
+				PyErr_SetString(st->error, "Number of colors does not match number of vertices.");
 				return 0;
 		}
 	}
@@ -636,7 +653,7 @@ static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
 			{
 				Py_DECREF(*colorArray);
 			}
-			PyErr_SetString(OBJECT3DError, "Values array cannot be converted to a float array.");
+			PyErr_SetString(st->error, "Values array cannot be converted to a float array.");
 			return 0;
 		}
 		/* check the values array size */
@@ -652,7 +669,7 @@ static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
 				Py_DECREF(*colorArray);
 			}
 			Py_DECREF(*valuesArray);
-			PyErr_SetString(OBJECT3DError, "Number of values does not match number of vertices.");
+			PyErr_SetString(st->error, "Number of values does not match number of vertices.");
 			return 0;
 		}
 	}
@@ -669,13 +686,13 @@ static int checkXYZVertexAndColor(PyObject *args, PyArrayObject **xyzArray,\
 				Py_DECREF(*colorArray);
 			}
 			Py_DECREF(*valuesArray);
-			PyErr_SetString(OBJECT3DError, "Facets cannot be converted to an int32 array.");
+			PyErr_SetString(st->error, "Facets cannot be converted to an int32 array.");
 			return 0;
 		}
 		/* check the facets array size */
 		*fSize = (*facetsArray)->dimensions[0];
 		if ((*facetsArray)->dimensions[1] != 3){
-			PyErr_SetString(OBJECT3DError, "Fourth argument cannot be converted to a three-columns float array.");
+			PyErr_SetString(st->error, "Fourth argument cannot be converted to a three-columns float array.");
 			Py_DECREF(*xyzArray);
 			if ((cinput != NULL) && (cinput != Py_None))
 			{
@@ -710,8 +727,9 @@ static PyObject *draw2DGridPoints(PyObject *self, PyObject *args)
 	npy_intp	    i, j;
 	float			*px, *py, *pz, *pv;
 	GLubyte			*pc=NULL;
+    /*struct module_state *st = GETSTATE(self);*/
 
-	j = check2DGridVertexAndColor(args, &xArray, &yArray, &zArray, &colorArray,\
+	j = check2DGridVertexAndColor(self, args, &xArray, &yArray, &zArray, &colorArray,\
 							&valuesArray, &cFilter, &vFilter, &vMin, &vMax, &xSize, &ySize, &zSize, &cSize, &vSize);
 	if (!j)
 		return NULL;
@@ -837,9 +855,10 @@ static PyObject *draw2DGridLines(PyObject *self, PyObject *args)
 	npy_intp	    i, j, k, cidx;
 	float			*px, *py, *pz, *pv;
 	GLubyte			*pc=NULL;
+    /*struct module_state *st = GETSTATE(self);*/
 
 	/* statements */
-	j = check2DGridVertexAndColor(args, &xArray, &yArray, &zArray, &colorArray,\
+	j = check2DGridVertexAndColor(self, args, &xArray, &yArray, &zArray, &colorArray,\
 							&valuesArray, &cFilter, &vFilter, &vMin, &vMax, &xSize, &ySize, &zSize, &cSize, &vSize);
 	if (!j)
 		return NULL;
@@ -1089,9 +1108,10 @@ static PyObject *draw2DGridQuads(PyObject *self, PyObject *args)
 	npy_intp		cidx, coffset;
 	float			*px, *py, *pz, *pv;
 	GLubyte			*pc=NULL;
+    /*struct module_state *st = GETSTATE(self);*/
 
 	/* statements */
-	j = check2DGridVertexAndColor(args, &xArray, &yArray, &zArray, &colorArray,\
+	j = check2DGridVertexAndColor(self, args, &xArray, &yArray, &zArray, &colorArray,\
 							&valuesArray, &cFilter, &vFilter, &vMin, &vMax, &xSize, &ySize, &zSize, &cSize, &vSize);
 	if (!j)
 		return NULL;
@@ -1393,7 +1413,7 @@ static PyObject *draw3DGridPoints(PyObject *self, PyObject *args)
 	GLint			maxElementsIndices=4096;  /* 65535 in my card */
 	GLint			maxElements=4096;
 
-	j = check3DGridVertexAndColor(args, &xArray, &yArray, &zArray, &colorArray,\
+	j = check3DGridVertexAndColor(self, args, &xArray, &yArray, &zArray, &colorArray,\
 							&valuesArray, &cFilter, &vFilter, &vMin, &vMax, &xSize, &ySize, &zSize, &cSize, &vSize);
 	if (!j)
 		return NULL;
@@ -1713,7 +1733,7 @@ static PyObject *draw3DGridLines(PyObject *self, PyObject *args)
 	GLubyte			*pc=NULL;
 
 	/* statements */
-	j = check3DGridVertexAndColor(args, &xArray, &yArray, &zArray, &colorArray,\
+	j = check3DGridVertexAndColor(self, args, &xArray, &yArray, &zArray, &colorArray,\
 							&valuesArray, &cFilter, &vFilter, &vMin, &vMax, &xSize, &ySize, &zSize, &cSize, &vSize);
 	if (!j)
 		return NULL;
@@ -1980,7 +2000,7 @@ static PyObject *draw3DGridQuads(PyObject *self, PyObject *args)
 	GLubyte			*pc=NULL;
 
 	/* statements */
-	j = check3DGridVertexAndColor(args, &xArray, &yArray, &zArray, &colorArray,\
+	j = check3DGridVertexAndColor(self, args, &xArray, &yArray, &zArray, &colorArray,\
 							&valuesArray, &cFilter, &vFilter, &vMin, &vMax, &xSize, &ySize, &zSize, &cSize, &vSize);
 	if (!j)
 		return NULL;
@@ -2277,7 +2297,7 @@ static PyObject *drawXYZPoints(PyObject *self, PyObject *args)
 	GLsizei			nVertices;
 
 	/* statements */
-	j = checkXYZVertexAndColor(args, &xyzArray, &colorArray, &valuesArray, &facetsArray,
+	j = checkXYZVertexAndColor(self, args, &xyzArray, &colorArray, &valuesArray, &facetsArray,
 					&cFilter, &vFilter, &vMin, &vMax, &xyzSize, &cSize, &vSize, &fSize);
 	if (!j)
 		return NULL;
@@ -2389,10 +2409,10 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 	float			*pxyz, *pv;
 	GLubyte			*pc=NULL;
 	unsigned int	*pf=NULL;
-	GLsizei			nVertices, nFacets, facetDepth;
+	GLsizei			facetDepth;
 
 	/* statements */
-	j = checkXYZVertexAndColor(args, &xyzArray, &colorArray, &valuesArray, &facetsArray,
+	j = checkXYZVertexAndColor(self, args, &xyzArray, &colorArray, &valuesArray, &facetsArray,
 					&cFilter, &vFilter, &vMin, &vMax, &xyzSize, &cSize, &vSize, &fSize);
 	if (!j)
 		return NULL;
@@ -2411,7 +2431,6 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 		return(Py_None);
 	}
 
-	nVertices = xyzSize;
 	pxyz = (float *) xyzArray->data;
 	if (cSize > 0){
 		pc = (GLubyte *) colorArray->data;
@@ -2440,7 +2459,6 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 		}else{
 			glVertexPointer(3, GL_FLOAT, 0, pxyz);
 			glEnableClientState(GL_VERTEX_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			for (i=0; i < fSize; i++){
 	            glDrawElements(GL_LINE_LOOP,
@@ -2507,13 +2525,11 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 			}
 		}else if (0){
 			/* We have to loop */
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			glVertexPointer(3, GL_FLOAT, 0, pxyz);
 			glColorPointer(4, GL_UNSIGNED_BYTE, 0, pc);
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_COLOR_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			for (i=0; i < fSize; i++){
 				glBegin(GL_LINE_LOOP);
@@ -2530,7 +2546,6 @@ static PyObject *drawXYZLines(PyObject *self, PyObject *args)
 			glColorPointer(4, GL_UNSIGNED_BYTE, 0, pc);
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_COLOR_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			for (i=0; i < fSize; i++){
 	            glDrawElements(GL_LINE_LOOP,
@@ -2570,10 +2585,11 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 	float			*pxyz, *pv;
 	GLubyte			*pc=NULL;
 	unsigned int	*pf=NULL;
-	GLsizei			nVertices, nFacets, facetDepth;
+	GLsizei			facetDepth;
+    /*struct module_state *st = GETSTATE(self);*/
 
 	/* statements */
-	j = checkXYZVertexAndColor(args, &xyzArray, &colorArray, &valuesArray, &facetsArray,
+	j = checkXYZVertexAndColor(self, args, &xyzArray, &colorArray, &valuesArray, &facetsArray,
 					&cFilter, &vFilter, &vMin, &vMax, &xyzSize, &cSize, &vSize, &fSize);
 	if (!j)
 		return NULL;
@@ -2592,7 +2608,6 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 		return(Py_None);
 	}
 
-	nVertices = xyzSize;
 	pxyz = (float *) xyzArray->data;
 	if (cSize > 0){
 		pc = (GLubyte *) colorArray->data;
@@ -2623,7 +2638,6 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 		}else{
 			glVertexPointer(3, GL_FLOAT, 0, pxyz);
 			glEnableClientState(GL_VERTEX_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
             glDrawElements(GL_TRIANGLES,
                            facetDepth * fSize,
@@ -2687,13 +2701,11 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 			}
 		}else if (0){
 			/* We have to loop */
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			glVertexPointer(3, GL_FLOAT, 0, pxyz);
 			glColorPointer(4, GL_UNSIGNED_BYTE, 0, pc);
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_COLOR_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
 			for (i=0; i < fSize; i++){
 				glBegin(GL_TRIANGLES);
@@ -2710,7 +2722,6 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 			glColorPointer(4, GL_UNSIGNED_BYTE, 0, pc);
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_COLOR_ARRAY);
-			nFacets = fSize;
 			facetDepth = (facetsArray)->dimensions[1];
             glDrawElements(GL_TRIANGLES,
                                facetDepth * fSize,
@@ -2737,7 +2748,7 @@ static PyObject *drawXYZTriangles(PyObject *self, PyObject *args)
 	return(Py_None);
 }
 
-static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args)
+static PyObject *getVertexArrayMeshAxes(PyObject *self, PyObject *args)
 {
 	PyObject		*inputArray;
 	PyArrayObject	*vertexArray, *xArray, *yArray;
@@ -2746,11 +2757,12 @@ static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args)
 	float			*pv, delta=1.0E-8f;
 	float			*xBuffer=NULL, *yBuffer=NULL;
 	short			notAMesh=0, xRepeatedFirst=1;
+    struct module_state *st = GETSTATE(self);
 	/* statements */
 
 	if (!PyArg_ParseTuple(args, "O|f", &inputArray, &delta))
 	{
-	    PyErr_SetString(OBJECT3DError, "Unable to parse arguments. One float array required");
+	    PyErr_SetString(st->error, "Unable to parse arguments. One float array required");
         return NULL;
 	}
 
@@ -2759,13 +2771,13 @@ static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args)
     				PyArray_FROMANY(inputArray, NPY_FLOAT, 2, 2, NPY_C_CONTIGUOUS|NPY_FORCECAST);
     if (vertexArray == NULL)
 	{
-	    PyErr_SetString(OBJECT3DError, "Argument cannot be converted to an r x 3 float array.");
+	    PyErr_SetString(st->error, "Argument cannot be converted to an r x 3 float array.");
         return NULL;
 	}
 
 	if (vertexArray->nd != 2)
 	{
-	    PyErr_SetString(OBJECT3DError, "Input array cannot be converted to an r x 3 float array.");
+	    PyErr_SetString(st->error, "Input array cannot be converted to an r x 3 float array.");
         return NULL;
 	}
 
@@ -2842,7 +2854,7 @@ static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args)
     xArray = (PyArrayObject *) PyArray_SimpleNew(1, dim, NPY_FLOAT);
     if (xArray == NULL){
         Py_DECREF(vertexArray);
-	    PyErr_SetString(OBJECT3DError, "Error creating x output array");
+	    PyErr_SetString(st->error, "Error creating x output array");
 		return NULL;
     }
 
@@ -2851,7 +2863,7 @@ static PyObject *getVertexArrayMeshAxes(PyObject *dummy, PyObject *args)
     if (yArray == NULL){
         Py_DECREF(vertexArray);
         Py_DECREF(xArray);
-	    PyErr_SetString(OBJECT3DError, "Error creating y output array");
+	    PyErr_SetString(st->error, "Error creating y output array");
 		return NULL;
     }
 
@@ -3042,18 +3054,20 @@ static PyObject *gridMarchingCubes(PyObject *self, PyObject *args)
 	int			xSize, ySize, zSize, vSize;
 	unsigned char *pc;
 	npy_intp	i;
+    struct module_state *st = GETSTATE(self);
+
 
 	/* statements */
 	if (!PyArg_ParseTuple(args, "OOOOf|O(iii)i", &xinput, &yinput, &zinput, &vinput, &isoValue,\
 												&cinput, &steps[0], &steps[1], &steps[2], &debugFlag))
 	{
-	    PyErr_SetString(OBJECT3DError, "Unable to parse arguments. At least four float arrays and one float.");
+	    PyErr_SetString(st->error, "Unable to parse arguments. At least four float arrays and one float.");
         return NULL;
 	}
 	/* check we are not going to fall in an endless loop */
 	if ((steps[0] <= 0) || (steps[1] <= 0)|| (steps[2] <= 0))
 	{
-		PyErr_SetString(OBJECT3DError, "0 Step increment");
+		PyErr_SetString(st->error, "0 Step increment");
 		return NULL;
 	}
 	/* convert to a contiguous array of at least 1 dimension */
@@ -3061,7 +3075,7 @@ static PyObject *gridMarchingCubes(PyObject *self, PyObject *args)
     				PyArray_FROMANY(xinput, NPY_FLOAT, 1, 0, NPY_C_CONTIGUOUS|NPY_FORCECAST);
     if (xArray == NULL)
 	{
-	    PyErr_SetString(OBJECT3DError, "First argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "First argument cannot be converted to a float array.");
         return NULL;
 	}
 
@@ -3071,7 +3085,7 @@ static PyObject *gridMarchingCubes(PyObject *self, PyObject *args)
     if (yArray == NULL)
 	{
 		Py_DECREF(xArray);
-	    PyErr_SetString(OBJECT3DError, "Second argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "Second argument cannot be converted to a float array.");
         return NULL;
 	}
 
@@ -3083,7 +3097,7 @@ static PyObject *gridMarchingCubes(PyObject *self, PyObject *args)
 	{
 		Py_DECREF(xArray);
 		Py_DECREF(yArray);
-	    PyErr_SetString(OBJECT3DError, "Third argument cannot be converted to a float array.");
+	    PyErr_SetString(st->error, "Third argument cannot be converted to a float array.");
         return NULL;
 	}
 
@@ -3111,7 +3125,7 @@ static PyObject *gridMarchingCubes(PyObject *self, PyObject *args)
 		Py_DECREF(xArray);
 		Py_DECREF(yArray);
 		Py_DECREF(zArray);
-		PyErr_SetString(OBJECT3DError, "Fourth argument cannot be converted to a float array.");
+		PyErr_SetString(st->error, "Fourth argument cannot be converted to a float array.");
 		return NULL;
 	}
 	/* check the values array size */
@@ -3126,7 +3140,7 @@ static PyObject *gridMarchingCubes(PyObject *self, PyObject *args)
 		Py_DECREF(yArray);
 		Py_DECREF(zArray);
 		Py_DECREF(valuesArray);
-		PyErr_SetString(OBJECT3DError, "Number of values does not match number of vertices.");
+		PyErr_SetString(st->error, "Number of values does not match number of vertices.");
 		return NULL;
 	}
 
@@ -3142,7 +3156,7 @@ static PyObject *gridMarchingCubes(PyObject *self, PyObject *args)
 			Py_DECREF(yArray);
 			Py_DECREF(zArray);
 			Py_DECREF(valuesArray);
-			PyErr_SetString(OBJECT3DError, "Fourth argument cannot be converted to an unsigned byte array.");
+			PyErr_SetString(st->error, "Fourth argument cannot be converted to an unsigned byte array.");
 			return NULL;
 		}
 		pc = (unsigned char *) colorArray->data;
@@ -3208,6 +3222,7 @@ static PyObject *marchingCubesXYZ(PyObject *self, PyObject *args)
 	int			steps[3] = {1, 1, 1};
 	float		color[4] = {-1.0, -1.0, -1.0, 1.0};
 	float		*p;
+    struct module_state *st = GETSTATE(self);
 
 	/* called functions */
 	extern void vSetVerticesPointer(float *);
@@ -3222,7 +3237,7 @@ static PyObject *marchingCubesXYZ(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "OOiiif|O(iii)i", &input1, &input2, &xSize, &ySize, &zSize, &isoValue, \
 										  &inputColor, \
 										  &steps[0], &steps[1], &steps[2], &debugFlag)){
-	    PyErr_SetString(OBJECT3DError, "Unable to parse arguments");
+	    PyErr_SetString(st->error, "Unable to parse arguments");
         return NULL;
 	}
 
@@ -3230,13 +3245,13 @@ static PyObject *marchingCubesXYZ(PyObject *self, PyObject *args)
 	verticesArray = (PyArrayObject *)
     				PyArray_ContiguousFromObject(input1, PyArray_FLOAT,2,2);
     if (verticesArray == NULL){
-	    PyErr_SetString(OBJECT3DError, "First argument is not a nrows x 3 array");
+	    PyErr_SetString(st->error, "First argument is not a nrows x 3 array");
         return NULL;
 	}else{
 		if(verticesArray->dimensions[1] != 3)
 		{
 			Py_DECREF(verticesArray);
-		    PyErr_SetString(OBJECT3DError, "First argument is not a nrows x 3 array");
+		    PyErr_SetString(st->error, "First argument is not a nrows x 3 array");
 		    return NULL;
 		}
 	}
@@ -3246,7 +3261,7 @@ static PyObject *marchingCubesXYZ(PyObject *self, PyObject *args)
     				PyArray_ContiguousFromObject(input2, PyArray_FLOAT,0,0);
     if (valuesArray == NULL){
 		Py_DECREF(verticesArray);
-	    PyErr_SetString(OBJECT3DError, "Second argument is not a nrows x 1 array");
+	    PyErr_SetString(st->error, "Second argument is not a nrows x 1 array");
         return NULL;
 	}
 
@@ -3257,7 +3272,7 @@ static PyObject *marchingCubesXYZ(PyObject *self, PyObject *args)
 		if (!colorArray){
 			Py_DECREF(verticesArray);
 			Py_DECREF(valuesArray);
-			PyErr_SetString(OBJECT3DError, "Input color is not a vector");
+			PyErr_SetString(st->error, "Input color is not a vector");
 		    return NULL;
 		}
 		if(colorArray->dimensions[0] >= 3){
@@ -3299,7 +3314,7 @@ static PyObject *marchingCubesXYZ(PyObject *self, PyObject *args)
 		{
 			Py_DECREF(colorArray);
 		}
-		PyErr_SetString(OBJECT3DError, "0 Step increment");
+		PyErr_SetString(st->error, "0 Step increment");
 		return NULL;
 	}
 	vSetStepIncrements(steps[0], steps[1], steps[2]);
@@ -3328,6 +3343,7 @@ static PyObject *getGridFacetsFromVertices(PyObject *self, PyObject *args)
 	int outputArrayDimensions[2];
 	int i, j, index;
 	float  *resultP;
+    struct module_state *st = GETSTATE(self);
 
     /* ------------- statements ---------------*/
     if (!PyArg_ParseTuple(args, "Oii", &input1, &xsize, &ysize))
@@ -3343,7 +3359,7 @@ static PyObject *getGridFacetsFromVertices(PyObject *self, PyObject *args)
 	}
 	if (inputArray->nd != 2)
 	{
-		PyErr_SetString(PyExc_StandardError,
+		PyErr_SetString(st->error,
 				"Expected a nrows x three columns array as input");
 		Py_DECREF(inputArray);
 	}
@@ -3353,7 +3369,7 @@ static PyObject *getGridFacetsFromVertices(PyObject *self, PyObject *args)
 
 	if ((inputArrayDimensions[0] <= 1) || (inputArrayDimensions[1] != 3))
 	{
-		PyErr_SetString(PyExc_StandardError,
+		PyErr_SetString(st->error,
 				"Expected a nrows (>1) x three columns array as input");
 		Py_DECREF(inputArray);
 	}
@@ -3461,19 +3477,62 @@ static PyMethodDef Object3DCToolsMethods[] = {
 };
 
 
-/* Initialise the module. */
-PyMODINIT_FUNC
+#if PY_MAJOR_VERSION >= 3
+
+static int Object3DCTools_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int Object3DCTools_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "Object3DCTools",     /* m_name */
+    "This is a module",   /* m_doc */
+    sizeof(struct module_state), /* m_size */
+    Object3DCToolsMethods,   /* m_methods */
+    NULL,                    /* m_reload */
+    Object3DCTools_traverse, /* m_traverse */
+    Object3DCTools_clear,    /* m_clear */
+    NULL,                    /* m_free */
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit_Object3DCTools(void)
+
+#else
+#define INITERROR return
+
+void
 initObject3DCTools(void)
+#endif
 {
-	PyObject	*m, *d;
-	/* Create the module and add the functions */
-	/*(void) Py_InitModule("Object3DCTools", Object3DCToolsMethods);*/
-	m = Py_InitModule("Object3DCTools", Object3DCToolsMethods);
+    struct module_state *st;
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("Object3DCTools", Object3DCToolsMethods);
+#endif
 
-	/* Add some symbolic constants to the module */
-	d = PyModule_GetDict(m);
+    if (module == NULL)
+        INITERROR;
+    st = GETSTATE(module);
 
-	import_array()
-	OBJECT3DError = PyErr_NewException("Object3DCTools.error", NULL, NULL);
-	PyDict_SetItemString(d, "error", OBJECT3DError);
+    st->error = PyErr_NewException("Object3DCTools.error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+
+    import_array()
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
 }

@@ -33,6 +33,19 @@
 #include "poly.h"        /* for qh_vertexneighbors() */
 #include "geom.h"       /* for qh_facetcenter() */
 
+
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+
 /* Doc strings */
 #if (REALfloat == 1)
 PyDoc_STRVAR(Object3DQhull__doc__,
@@ -69,13 +82,10 @@ PyDoc_STRVAR(Object3DQhull_delaunay__doc__,
 #endif
 
 
-/* static variables */
-static PyObject *Object3DQhullError;
-
 /* Function declarations */
 static PyObject *object3DDelaunay(PyObject *dummy, PyObject *args);
 static PyObject *object3DVoronoi(PyObject *dummy, PyObject *args);
-static void qhullResultFailure(int);
+static void qhullResultFailure(PyObject * self, int qhull_exitcode);
 static PyObject *getQhullVersion(PyObject *dummy, PyObject *args);
 
 
@@ -121,14 +131,14 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 #endif
     unsigned int *uintP;
     boolT isoutside;
-
+    struct module_state *st = GETSTATE(self);
 
 
 
     /* ------------- statements ---------------*/
     if (!PyArg_ParseTuple(args, "O|zO", &input1, &input2, &input3 ))
     {
-        PyErr_SetString(Object3DQhullError, "Unable to parse arguments");
+        PyErr_SetString(st->error, "Unable to parse arguments");
         return NULL;
     }
 
@@ -142,7 +152,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
         inner_pointArray = (PyArrayObject *)
             PyArray_ContiguousFromAny(input3, PyArray_FLOAT,2,2);
       if(!inner_pointArray) {
-        PyErr_SetString(Object3DQhullError, "third argument if given must be  a nrows x X array");
+        PyErr_SetString(st->error, "third argument if given must be  a nrows x X array");
         return NULL;
       }
     }
@@ -155,7 +165,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
       inner_pointArray = (PyArrayObject *)
         PyArray_ContiguousFromAny(input3, PyArray_DOUBLE,2,2);
       if(!inner_pointArray) {
-        PyErr_SetString(Object3DQhullError, "third argument if given must be  a nrows x X array");
+        PyErr_SetString(st->error, "third argument if given must be  a nrows x X array");
         return NULL;
       }
     }
@@ -164,7 +174,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
 
     if (pointArray == NULL)
     {
-        PyErr_SetString(Object3DQhullError, "First argument is not a nrows x X array");
+        PyErr_SetString(st->error, "First argument is not a nrows x X array");
         return NULL;
     }
     if (input2 == NULL)
@@ -198,7 +208,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
         if(input3) {
             Py_DECREF (inner_pointArray);
         }
-        qhullResultFailure(qhullResult);
+        qhullResultFailure(self, qhullResult);
         return NULL;
     }
 
@@ -227,7 +237,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
             if(input3) {
                 Py_DECREF (inner_pointArray);
             }
-            PyErr_SetString(Object3DQhullError, "Error allocating output memory");
+            PyErr_SetString(st->error, "Error allocating output memory");
             return NULL;
         }
 #if (REALfloat == 1)
@@ -267,7 +277,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
                 qh_freeqhull(qh_ALL);
                 Py_DECREF (pointArray);
                 Py_DECREF (inner_pointArray);
-                PyErr_SetString(Object3DQhullError, "Error allocating output memory for inner points facets");
+                PyErr_SetString(st->error, "Error allocating output memory for inner points facets");
                 return NULL;
             }
         }
@@ -282,7 +292,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
                     Py_DECREF (inner_pointArray) ;
                 }
             }
-            PyErr_SetString(Object3DQhullError, "Error allocating output memory");
+            PyErr_SetString(st->error, "Error allocating output memory");
             return NULL;
         }
 
@@ -329,7 +339,7 @@ static PyObject *object3DDelaunay(PyObject *self, PyObject *args)
                     {
                         Py_DECREF (inner_pointArray);
                     }
-                    PyErr_SetString(Object3DQhullError, "Error allocating output memory");
+                    PyErr_SetString(st->error, "Error allocating output memory");
                     return NULL;
                 }
             }
@@ -360,12 +370,11 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
 
     /* local variables */
     PyArrayObject    *pointArray, *inner_pointArray=NULL;
-    PyArrayObject    *result, *inner_result=NULL ;
+    PyArrayObject    *result;
 
     coordT    *points;    /* Qhull */
     int        dimension;    /* Qhull */
     int        nPoints;    /* Qhull */
-    int        inner_nPoints = 0;    /* Qhull */
 
     int        qhullResult;        /* Qhull exit code, 0 means no error */
     boolT ismalloc = False;        /* True if Qhull should free points in
@@ -382,19 +391,18 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
     facetT *facet;        /* needed by FORALLfacets */
     pointT *center;
 
-  int format=0, numvertices= 0, vid=1;
-
     int j, i;
 #if (REALfloat == 1)
     float *p;
 #else
     double *p;
 #endif
+    struct module_state *st = GETSTATE(self);
 
     /* ------------- statements ---------------*/
     if (!PyArg_ParseTuple(args, "O|zO", &input1, &input2, &input3 ))
     {
-        PyErr_SetString(Object3DQhullError, "Unable to parse arguments");
+        PyErr_SetString(st->error, "Unable to parse arguments");
         return NULL;
     }
 
@@ -408,7 +416,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
         inner_pointArray = (PyArrayObject *)
             PyArray_ContiguousFromAny(input3, PyArray_FLOAT,2,2);
       if(!inner_pointArray) {
-        PyErr_SetString(Object3DQhullError, "third argument if given must be  a nrows x X array");
+        PyErr_SetString(st->error, "third argument if given must be  a nrows x X array");
         return NULL;
       }
     }
@@ -421,7 +429,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
       inner_pointArray = (PyArrayObject *)
         PyArray_ContiguousFromAny(input3, PyArray_DOUBLE,2,2);
       if(!inner_pointArray) {
-        PyErr_SetString(Object3DQhullError, "third argument if given must be  a nrows x X array");
+        PyErr_SetString(st->error, "third argument if given must be  a nrows x X array");
         return NULL;
       }
     }
@@ -430,7 +438,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
 
     if (pointArray == NULL)
     {
-        PyErr_SetString(Object3DQhullError, "First argument is not a nrows x X array");
+        PyErr_SetString(st->error, "First argument is not a nrows x X array");
         return NULL;
     }
     if (input2 == NULL)
@@ -464,7 +472,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
         if(input3) {
             Py_DECREF (inner_pointArray);
         }
-        qhullResultFailure(qhullResult);
+        qhullResultFailure(self, qhullResult);
         return NULL;
       }
     /* Get the number of facets */
@@ -484,7 +492,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
     outDimensions[0] = nFacets;
     outDimensions[1] = dimension;
     //outDimensions[2] = dimension;
-    printf("output dimensions = %d, %d\n",outDimensions[0], outDimensions[1]);
+    printf("output dimensions = %ld, %ld\n", outDimensions[0], outDimensions[1]);
     result = (PyArrayObject *)
       PyArray_SimpleNew(2, outDimensions, PyArray_DOUBLE);
     if (result == NULL)
@@ -494,7 +502,7 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
         if(input3) {
             Py_DECREF (inner_pointArray);
         }
-        PyErr_SetString(Object3DQhullError, "Error allocating output memory");
+        PyErr_SetString(st->error, "Error allocating output memory");
         return NULL;
       }
 #if (REALfloat == 1)
@@ -539,8 +547,10 @@ static PyObject *object3DVoronoi(PyObject *self, PyObject *args)
 
 
 static void
-qhullResultFailure(int qhull_exitcode)
+qhullResultFailure(PyObject * self, int qhull_exitcode)
 {
+    struct module_state *st = GETSTATE(self);
+
     switch (qhull_exitcode) {
     case qh_ERRinput:
         PyErr_BadInternalCall ();
@@ -557,7 +567,7 @@ qhullResultFailure(int qhull_exitcode)
         PyErr_NoMemory();
         break;
     case qh_ERRqhull:
-        PyErr_SetString(PyExc_StandardError,
+        PyErr_SetString(st->error,
                 "qhull internal error");
         break;
     }
@@ -565,7 +575,11 @@ qhullResultFailure(int qhull_exitcode)
 
 static PyObject *getQhullVersion(PyObject *self, PyObject *args)
 {
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_DecodeASCII(qh_version, strlen(qh_version), NULL);
+#else
     return PyString_FromString(qh_version);
+#endif
 }
 
 /* Module methods */
@@ -576,34 +590,78 @@ static PyMethodDef Object3DQhullMethods[] = {
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 
-
-/* Initialise the module. */
 #if (REALfloat == 1)
-PyMODINIT_FUNC
-initObject3DQhullf(void)
-{
-    PyObject    *m, *d;
-    /* Create the module and add the functions */
-    m = Py_InitModule3("Object3DQhullf", Object3DQhullMethods, Object3DQhull__doc__);
-    /* Add some symbolic constants to the module */
-    d = PyModule_GetDict(m);
-
-    import_array()
-    Object3DQhullError = PyErr_NewException("Object3DQhullf.error", NULL, NULL);
-    PyDict_SetItemString(d, "error", Object3DQhullError);
-}
+#define MOD_NAME "Object3DQhullf"
 #else
-PyMODINIT_FUNC
+#define MOD_NAME "Object3DQhull"
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+
+static int Object3DQhull_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int Object3DQhull_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        MOD_NAME,
+        Object3DQhull__doc__,
+        sizeof(struct module_state),
+        Object3DQhullMethods,
+        NULL,
+        Object3DQhull_traverse,
+        Object3DQhull_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+#if (REALfloat == 1)
+PyObject *
+PyInit_Object3DQhullf(void)
+#else
+PyObject *
+PyInit_Object3DQhull(void)
+#endif
+
+#else
+#define INITERROR return
+
+#if (REALfloat == 1)
+void
+initObject3DQhullf(void)
+#else
+void
 initObject3DQhull(void)
+#endif
+#endif
 {
-    PyObject    *m, *d;
-    /* Create the module and add the functions */
-    m = Py_InitModule3("Object3DQhull", Object3DQhullMethods, Object3DQhull__doc__);
-    /* Add some symbolic constants to the module */
-    d = PyModule_GetDict(m);
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule3(MOD_NAME, Object3DQhullMethods, Object3DQhull__doc__);
+#endif
+
+    if (module == NULL)
+        INITERROR;
+    struct module_state *st = GETSTATE(module);
+
+    st->error = PyErr_NewException("Object3DQhull.error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
 
     import_array()
-    Object3DQhullError = PyErr_NewException("Object3DQhull.error", NULL, NULL);
-    PyDict_SetItemString(d, "error", Object3DQhullError);
-}
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
 #endif
+}

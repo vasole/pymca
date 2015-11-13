@@ -164,7 +164,7 @@ def getFileList(parent=None, filetypelist=None, message=None, mode=None, getfilt
                     filelist[0] = txt
             fdialog.close()
             del fdialog
-    filelist = map(str, filelist)
+    filelist = list(map(str, filelist))
     if not(len(filelist)): return []
     if mode == "OPEN":
         Object3DDirs.inputDir = os.path.dirname(filelist[0])

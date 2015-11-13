@@ -463,7 +463,7 @@ build_specfile(ext_modules)
 build_specfit(ext_modules)
 build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
-if (sys.version < '3.0') and LOCAL_OBJECT3D:
+if LOCAL_OBJECT3D:
     try:
         build_Object3DCTools(ext_modules)
         build_Object3DQhull(ext_modules)
