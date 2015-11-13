@@ -643,6 +643,7 @@ initObject3DQhull(void)
 #endif
 #endif
 {
+    struct module_state *st;
 #if PY_MAJOR_VERSION >= 3
     PyObject *module = PyModule_Create(&moduledef);
 #else
@@ -651,7 +652,7 @@ initObject3DQhull(void)
 
     if (module == NULL)
         INITERROR;
-    struct module_state *st = GETSTATE(module);
+    st = GETSTATE(module);
 
     st->error = PyErr_NewException("Object3DQhull.error", NULL, NULL);
     if (st->error == NULL) {
