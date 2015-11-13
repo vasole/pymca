@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -52,7 +52,15 @@ except ImportError:
     except:
         import Object3DCTools
 
-import Object3DMeshConfig
+try:
+    from PyMca5.Object3D.Object3DPlugins import Object3DMeshConfig
+except ImportError:
+    try:
+        from Object3D.Object3DPlugins import Object3DMeshConfig
+    except:
+        import Object3DMeshConfig
+
+
 qt = Object3DMeshConfig.qt
 import weakref
 #import buffers
@@ -141,7 +149,7 @@ class Object3DStack(Object3DBase.Object3D):
 
         self.drawMode = DRAW_MODES[self._configuration['common']['mode']]
 
-        if ddict['common'].has_key('event'):
+        if 'event' in ddict['common']:
             if ddict['common']['event'] == 'ColormapChanged':
                 self.getColors()
 
@@ -182,9 +190,9 @@ class Object3DStack(Object3DBase.Object3D):
             self._y = numpy.arange(ysize).astype(numpy.float32)
             self._z = numpy.arange(zsize).astype(numpy.float32)
             if self._actualStack:
-                xCal = map(float, eval(data.info.get('CAxis0CalibrationParameters', '[0., 1.0, 0.0]')))
-                yCal = map(float, eval(data.info.get('CAxis1CalibrationParameters', '[0., 1.0, 0.0]')))
-                zCal = map(float, eval(data.info.get('CAxis2CalibrationParameters', '[0., 1.0, 0.0]')))
+                xCal = list(map(float, eval(data.info.get('CAxis0CalibrationParameters', '[0., 1.0, 0.0]'))))
+                yCal = list(map(float, eval(data.info.get('CAxis1CalibrationParameters', '[0., 1.0, 0.0]'))))
+                zCal = list(map(float, eval(data.info.get('CAxis2CalibrationParameters', '[0., 1.0, 0.0]'))))
                 self._x[:] = xCal[0] + self._x * (xCal[1] + xCal[2] * self._x)
                 self._y[:] = yCal[0] + self._y * (yCal[1] + yCal[2] * self._y)
                 self._z[:] = zCal[0] + self._z * (zCal[1] + zCal[2] * self._z)
@@ -549,7 +557,10 @@ def getObject3DInstance(config=None):
 
 if __name__ == "__main__":
     import sys
-    from Object3D import SceneGLWindow
+    try:
+        from PyMca5.Object3D import SceneGLWindow
+    except ImportError:
+        from Object3D import SceneGLWindow
     import os
     try:
         from PyMca5.PyMcaIO import EDFStack

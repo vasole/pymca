@@ -55,7 +55,15 @@ except ImportError:
     except ImportError:
         import Object3DCTools
         import Object3DQhull
-import Object3DMeshConfig
+
+try:
+    from PyMca5.Object3D.Object3DPlugins import Object3DMeshConfig
+except ImportError:
+    try:
+        from Object3D.Object3DPlugins import Object3DMeshConfig
+    except:
+        import Object3DMeshConfig
+
 qt = Object3DMeshConfig.qt
 import weakref
 
