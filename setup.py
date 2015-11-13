@@ -306,7 +306,7 @@ def build_sps(ext_modules):
                          include_dirs = ['PyMca5/PyMcaIO/sps/Include',
                                           numpy.get_include()])
     ext_modules.append(module)
-    if (sys.platform != "win32") and (sys.version < '3.0'):
+    if sys.platform != "win32":
         module = (Extension(name = 'PyMca5.PyMcaIO.sps',
                                             sources = ['PyMca5/PyMcaIO/sps/Src/sps.c',
                                                        'PyMca5/PyMcaIO/sps/Src/sps_py.c'],
