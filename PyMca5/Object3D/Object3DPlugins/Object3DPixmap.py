@@ -42,10 +42,8 @@ except ImportError:
     import EdfFile
 
 try:
-    from PyMca5.Object3D import Object3DFileDialogs
     from PyMca5.Object3D import Object3DBase
 except ImportError:
-    from Object3D import Object3DFileDialogs
     from Object3D import Object3DBase
 
 try:
@@ -56,7 +54,8 @@ except ImportError:
     except:
         import Object3DCTools
 
-qt=Object3DFileDialogs.qt
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 import weakref
 
@@ -615,11 +614,12 @@ def getObject3DInstance(config=None):
                     'EDF Files (*ccd)',
                     'ADSC Files (*img)',
                     'EDF Files (*)']
-    fileList, filterUsed = Object3DFileDialogs.getFileList(None,
-                                    filetypelist=fileTypeList,
-                                    message="Please select one object data file",
-                                    mode="OPEN",
-                                    getfilter=True)
+    fileList, filterUsed = PyMcaFileDialogs.getFileList(
+        parent=None,
+        filetypelist=fileTypeList,
+        message="Please select one object data file",
+        mode="OPEN",
+        getfilter=True)
     if not len(fileList):
         return
     fname = fileList[0]
@@ -657,7 +657,7 @@ if __name__ == "__main__":
     import sys
     import os
     from PyMca5.Object3D import SceneGLWindow
-    from PyMca5.Object3D import Object3DFileDialogs
+
     app = qt.QApplication(sys.argv)
     window = SceneGLWindow.SceneGLWindow()
     window.show()

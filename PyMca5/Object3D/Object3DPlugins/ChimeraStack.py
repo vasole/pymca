@@ -29,11 +29,10 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import h5py
 import Object3DStack
-try:
-    from PyMca5.Object3D import Object3DFileDialogs
-except ImportError:
-    from Object3D import Object3DFileDialogs
-qt = Object3DFileDialogs.qt
+
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaQt as qt
+
 
 class ChimeraStack(Object3DStack.Object3DStack):
     pass
@@ -53,13 +52,15 @@ def getObject3DInstance(config=None):
 
     fileTypeList = ['Chimera Stack (*cmp)',
                     'Chimera Stack (*)']
-    old = Object3DFileDialogs.Object3DDirs.nativeFileDialogs * 1
-    #Object3DFileDialogs.Object3DDirs.nativeFileDialogs = False
-    fileList, filterUsed = Object3DFileDialogs.getFileList(None, fileTypeList,
-                                               "Please select the object file(s)",
-                                               "OPEN",
-                                               True)
-    Object3DFileDialogs.Object3DDirs.nativeFileDialogs = old
+    old = PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs * 1
+    #PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = False
+    fileList, filterUsed = PyMcaFileDialogs.getFileList(
+        parent=None,
+        filetypelist=fileTypeList,
+        message="Please select the object file(s)",
+        mode="OPEN",
+        getfilter=True)
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = old
     if not len(fileList):
         return None
     if filterUsed == fileTypeList[0]:

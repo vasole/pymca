@@ -57,7 +57,6 @@ from . import Object3DConfig
 from . import SceneGLWidget
 qt=SceneGLWidget.qt
 from . import Object3DIcons
-from . import Object3DFileDialogs
 #import Object3D
 from . import Object3DSlider
 from . import SceneControl
@@ -66,6 +65,8 @@ from .VerticalSpacer import VerticalSpacer
 from . import SceneManager
 from . import GLToolBar
 from . import Object3DPrintPreview
+
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 if hasattr(qt, "QString"):
     qtQString = qt.QString
@@ -371,10 +372,12 @@ class SceneGLWindow(qt.QWidget):
         self.infoLine.setText("Scene is in panning mode.")
 
     def saveImage(self):
-        filelist = Object3DFileDialogs.getFileList(self, ["Image files (*.png)"],
-                                                           "Please give output file name",
-                                                           "SAVE",
-                                                           False)
+        filelist = PyMcaFileDialogs.getFileList(
+            parent=self,
+            filetypelist=["Image files (*.png)"],
+            message="Please give output file name",
+            mode="SAVE",
+            getfilter=False)
         if len(filelist):
             self.glWidget.saveImage(filelist[0])
 

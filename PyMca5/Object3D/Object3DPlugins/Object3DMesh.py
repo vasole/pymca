@@ -39,10 +39,8 @@ try:
 except:
     import spslut
 try:
-    from PyMca5.Object3D import Object3DFileDialogs
     from PyMca5.Object3D import Object3DBase
 except ImportError:
-    from Object3D import Object3DFileDialogs
     from Object3D import Object3DBase
 
 try:
@@ -55,6 +53,8 @@ except ImportError:
     except ImportError:
         import Object3DCTools
         import Object3DQhull
+
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 try:
     from PyMca5.Object3D.Object3DPlugins import Object3DMeshConfig
@@ -574,15 +574,16 @@ def getObject3DInstance(config=None):
     fileTypeList = ['EDF Files (*edf)',
                     'EDF Files (*ccd)',
                     'ADSC Files (*img)',
-                    'EDF Files (*)']
-    old = Object3DFileDialogs.Object3DDirs.nativeFileDialogs * 1
-    Object3DFileDialogs.Object3DDirs.nativeFileDialogs = False
-    fileList, filterUsed = Object3DFileDialogs.getFileList(None,
-                                    filetypelist=fileTypeList,
-                                    message="Please select one object data file",
-                                    mode="OPEN",
-                                    getfilter=True)
-    Object3DFileDialogs.Object3DDirs.nativeFileDialogs = old
+                    'All Files (*)']
+    old = PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs * 1
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = False
+    fileList, filterUsed = PyMcaFileDialogs.getFileList(
+        parent=None,
+        filetypelist=fileTypeList,
+        message="Please select one object data file",
+        mode="OPEN",
+        getfilter=True)
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = old
     if not len(fileList):
         return None
     if filterUsed == fileTypeList[0]:
