@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -52,7 +52,14 @@ except ImportError:
     except:
         import Object3DCTools
 
-from PyMca5.Object3D.Object3DPlugins import Object3DMeshConfig
+try:
+    from PyMca5.Object3D.Object3DPlugins import Object3DMeshConfig
+except ImportError:
+    try:
+        from Object3D.Object3DPlugins import Object3DMeshConfig
+    except:
+        import Object3DMeshConfig
+
 
 qt = Object3DMeshConfig.qt
 import weakref
@@ -550,7 +557,10 @@ def getObject3DInstance(config=None):
 
 if __name__ == "__main__":
     import sys
-    from PyMca5.Object3D import SceneGLWindow
+    try:
+        from PyMca5.Object3D import SceneGLWindow
+    except ImportError:
+        from Object3D import SceneGLWindow
     import os
     try:
         from PyMca5.PyMcaIO import EDFStack

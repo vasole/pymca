@@ -172,7 +172,9 @@ try:
     #import Object3D.SceneGLWindow as SceneGLWindow
     import PyMca5.PyMcaGui.pymca.PyMcaGLWindow as SceneGLWindow
     OBJECT3D = False
-    if ("PyQt4.QtOpenGL" in sys.modules) or ("PySide.QtOpenGL") in sys.modules or "PyQt5.QtOpenGL" in sys.modules:
+    if ("PyQt4.QtOpenGL" in sys.modules) or \
+       ("PySide.QtOpenGL") in sys.modules or \
+       ("PyQt5.QtOpenGL") in sys.modules:
         OBJECT3D = True
 except:
     OBJECT3D = False
