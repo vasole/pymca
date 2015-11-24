@@ -75,12 +75,18 @@ elif "PyQt5" in sys.modules:
         pass
 else:
     if sys.version < "3.0.0":
-        import sip
+        # sip might not be installed if PySide is used
         try:
-            sip.setapi("QString", 2)
-            sip.setapi("QVariant", 2)
-        except:
-            print("API 1 -> Console widget not available")
+            import sip
+        except ImportError:
+            pass
+        else:
+            try:
+                sip.setapi("QString", 2)
+                sip.setapi("QVariant", 2)
+            except:
+                print("API 1 -> Console widget not available")
+
     try:
         from PyQt4.QtCore import *
         from PyQt4.QtGui import *
