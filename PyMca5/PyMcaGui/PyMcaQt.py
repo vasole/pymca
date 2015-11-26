@@ -34,7 +34,9 @@ This module simplifies writing code that has to deal with with PySide and PyQt4.
 """
 # force cx_freeze to consider sip among the modules to add
 # to the binary packages
-if ('PySide' in sys.modules) or ('PySide' in sys.argv):
+if (('PySide' in sys.modules) or
+        (hasattr(sys, 'argv') and 'PySide' in sys.argv)):
+        # argv might not be defined for embedded python (e.g., in Qt designer)
     from PySide.QtCore import *
     from PySide.QtGui import *
     try:
