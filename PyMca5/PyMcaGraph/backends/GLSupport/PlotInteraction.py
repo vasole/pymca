@@ -833,7 +833,6 @@ class ItemsInteraction(ClickOrDrag):
                         self.goto('clickOrDrag', x, y)
                         return True
 
-            self.goto('clickOrDrag', x, y)
             return False
 
         def onMove(self, x, y):
@@ -1041,6 +1040,8 @@ class ItemsInteraction(ClickOrDrag):
                 'selectable' in self.marker['behaviors'],
                 posData)
             self.backend.sendEvent(eventDict)
+
+        self.backend.setCursor()
 
         del self.marker
         del self.image
