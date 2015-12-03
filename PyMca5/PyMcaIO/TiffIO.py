@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -645,6 +645,11 @@ class TiffIO(object):
         rowStart = 0
         if len(stripOffsets) == 1:
             bytesPerRow = int(stripByteCounts[0]/rowsPerStrip)
+            if nRows == rowsPerStrip:
+                actualBytesPerRow = int(image.nbytes/nRows)
+                if actualBytesPerRow != bytesPerRow:
+                    print("Warning: Bogus StripByteCounts information")
+                    bytesPerRow = actualBytesPerRow 
             fd.seek(stripOffsets[0] + rowMin * bytesPerRow)
             nBytes = (rowMax-rowMin+1) * bytesPerRow
             if self._swap:
