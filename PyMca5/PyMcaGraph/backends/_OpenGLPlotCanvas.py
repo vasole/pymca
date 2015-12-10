@@ -376,6 +376,8 @@ class OpenGLPlotCanvas(PlotBackend):
                          'autoscale': True, 'vmin': 0.0, 'vmax': 1.0,
                          'colors': 256}
 
+    _DEFAULT_BASE_VECTORS = (1., 0.), (0., 1.)
+
     def __init__(self, parent=None, glContextGetter=None, **kw):
         self._eventCallback = self._noopCallback
         self._defaultColormap = self._DEFAULT_COLORMAP
@@ -415,6 +417,8 @@ class OpenGLPlotCanvas(PlotBackend):
         self._pressedButtons = []  # Currently pressed mouse buttons
 
         self._plotFrame = GLPlotFrame2D(self._margins)
+
+        self._baseVectors = self._DEFAULT_BASE_VECTORS
 
         PlotBackend.__init__(self, parent, **kw)
 
@@ -648,7 +652,7 @@ class OpenGLPlotCanvas(PlotBackend):
     @property
     def plotDataTransformedBounds(self):
         """Bounds of the displayed area in transformed data coordinates
-        (i.e., log scale applied if any)
+        (i.e., log scale applied if any as well as skew)
 
         :type: Bounds
         """
@@ -692,6 +696,23 @@ class OpenGLPlotCanvas(PlotBackend):
                     print('yMax: warning log10({0})'.format(y2Max))
                     y2Max = 0.
 
+            # Non-orthogonal axes
+            if not self.isDefaultBaseVectors():
+                (xx, xy), (yx, yy) = self.getBaseVectors()
+                skew_mat = np.array(((xx, yx), (xy, yy)))
+
+                corners = [(xMin, yMin), (xMin, yMax),
+                           (xMax, yMin), (xMax, yMax),
+                           (xMin, y2Min), (xMin, y2Max),
+                           (xMax, y2Min), (xMax, y2Max)]
+
+                corners = np.array(
+                    [np.dot(skew_mat, corner) for corner in corners],
+                    dtype=np.float32)
+                xMin, xMax = corners[:, 0].min(),  corners[:, 0].max()
+                yMin, yMax = corners[0:4, 1].min(), corners[0:4, 1].max()
+                y2Min, y2Max = corners[4:, 1].min(), corners[4:, 1].max()
+
             self._plotDataTransformedBounds = \
                 Bounds(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
@@ -712,13 +733,21 @@ class OpenGLPlotCanvas(PlotBackend):
             yMin, yMax = self.plotDataTransformedBounds.yAxis
 
             if self._plotFrame.isYAxisInverted:
-                self._matrixPlotDataTransformedProj = mat4Ortho(xMin, xMax,
-                                                                yMax, yMin,
-                                                                1, -1)
+                mat = mat4Ortho(xMin, xMax, yMax, yMin, 1, -1)
             else:
-                self._matrixPlotDataTransformedProj = mat4Ortho(xMin, xMax,
-                                                                yMin, yMax,
-                                                                1, -1)
+                mat = mat4Ortho(xMin, xMax, yMin, yMax, 1, -1)
+
+            # Non-orthogonal axes
+            if not self.isDefaultBaseVectors():
+                (xx, xy), (yx, yy) = self.getBaseVectors()
+                mat = mat * np.matrix((
+                    (xx, yx, 0., 0.),
+                    (xy, yy, 0., 0.),
+                    (0., 0., 1., 0.),
+                    (0., 0., 0., 1.)), dtype=np.float32)
+
+            self._matrixPlotDataTransformedProj = mat
+
         return self._matrixPlotDataTransformedProj
 
     @property
@@ -783,6 +812,14 @@ class OpenGLPlotCanvas(PlotBackend):
             else:
                 yDataTr = y
 
+        # Non-orthogonal axes
+        if not self.isDefaultBaseVectors():
+            (xx, xy), (yx, yy) = self.getBaseVectors()
+            skew_mat = np.array(((xx, yx), (xy, yy)))
+
+            coords = np.dot(skew_mat, np.array((xDataTr, yDataTr)))
+            xDataTr, yDataTr = coords
+
         if check and (xDataTr < trBounds.xAxis.min_ or
                       xDataTr > trBounds.xAxis.max_):
             if ((axis == 'left' and
@@ -834,26 +871,39 @@ class OpenGLPlotCanvas(PlotBackend):
         xData = (x - self._margins['left']) + 0.5
         xData /= float(plotWidth)
         xData = trBounds.xAxis.min_ + xData * trBounds.xAxis.range_
-        if self._plotFrame.xAxis.isLog:
-            xData = pow(10, xData)
 
         usedAxis = trBounds.yAxis if axis == "left" else trBounds.y2Axis
         if self._plotFrame.isYAxisInverted:
             yData = y - self._margins['top'] + 0.5
             yData /= float(plotHeight)
             yData = usedAxis.min_ + yData * usedAxis.range_
-            if self._plotFrame.yAxis.isLog:
-                yData = pow(10, yData)
         else:
             yData = self.winHeight - self._margins['bottom'] - y - 0.5
             yData /= float(plotHeight)
             yData = usedAxis.min_ + yData * usedAxis.range_
-            if self._plotFrame.yAxis.isLog:
-                yData = pow(10, yData)
+
+        # non-orthogonal axis
+        if not self.isDefaultBaseVectors():
+            (xx, xy), (yx, yy) = self.getBaseVectors()
+            skew_mat = np.array(((xx, yx), (xy, yy)))
+            skew_mat = np.linalg.inv(skew_mat)
+
+            coords = np.dot(skew_mat, np.array((xData, yData)))
+            xData, yData = coords
+
+        if self._plotFrame.xAxis.isLog:
+            xData = pow(10, xData)
+        if self._plotFrame.yAxis.isLog:
+            yData = pow(10, yData)
 
         return xData, yData
 
+    def plotOriginInPixels(self):
+        """Plot area origin (left, top) in widget coordinates in pixels."""
+        return self._margins['left'], self._margins['top']
+
     def plotSizeInPixels(self):
+        """Plot area size (width, height) in pixels."""
         w = self.winWidth - self._margins['left'] - self._margins['right']
         h = self.winHeight - self._margins['top'] - self._margins['bottom']
         return w, h
@@ -1009,16 +1059,28 @@ class OpenGLPlotCanvas(PlotBackend):
                 # Do not render markers with negative coords on log axis
                 continue
 
-            pixelPos = self.dataToPixel(xCoord, yCoord, check=False)
-            if pixelPos is None:
-                # Do not render markers outside visible plot area
-                continue
-
             if xCoord is None or yCoord is None:
                 self._progBase.use()
 
+                if not self.isDefaultBaseVectors():
+                    # Get plot corners in data coords
+                    plotLeft, plotTop = self.plotOriginInPixels()
+                    corners = [(plotLeft, plotTop),
+                               (plotLeft, plotTop + plotHeight),
+                               (plotLeft + plotWidth, plotTop + plotHeight),
+                               (plotLeft + plotWidth, plotTop)]
+                    corners = np.array([self.pixelToData(x, y, check=False)
+                        for (x, y) in corners])
+                else:
+                    corners = None
+
                 if xCoord is None:
                     if marker['text'] is not None:
+                        # TODO get right coords for text
+                        # Idea: project line to screen and
+                        # find intersection with borders
+                        pixelPos = self.dataToPixel(None, yCoord, check=False)
+
                         x = self.winWidth - self._margins['right'] - \
                             pixelOffset
                         y = pixelPos[1] - pixelOffset
@@ -1028,13 +1090,22 @@ class OpenGLPlotCanvas(PlotBackend):
                                        align=RIGHT, valign=BOTTOM)
                         labels.append(label)
 
-                    xMin, xMax = self._plotFrame.xAxis.dataRange
+                    if self.isDefaultBaseVectors():
+                        xMin, xMax = self.plotDataTransformedBounds.xAxis
+                    else:  # Non-orthogonal axes
+                        xMin, xMax = corners[:, 0].min(),  corners[:, 0].max()
+
                     vertices = np.array(((xMin, yCoord),
                                          (xMax, yCoord)),
                                         dtype=np.float32)
 
                 else:  # yCoord is None
                     if marker['text'] is not None:
+                        # TODO get right coords for text
+                        # Idea: project line to screen and
+                        # find intersection with borders
+                        pixelPos = self.dataToPixel(xCoord, None, check=False)
+
                         x = pixelPos[0] + pixelOffset
                         y = self._margins['top'] + pixelOffset
                         label = Text2D(marker['text'], x, y,
@@ -1043,7 +1114,12 @@ class OpenGLPlotCanvas(PlotBackend):
                                        align=LEFT, valign=TOP)
                         labels.append(label)
 
-                    yMin, yMax = self._plotFrame.yAxis.dataRange
+                    if self.isDefaultBaseVectors():
+                        yMin, yMax = self.plotDataTransformedBounds.yAxis
+
+                    else:  # Non-orthogonal axes
+                        yMin, yMax = corners[:, 1].min(),  corners[:, 1].max()
+
                     vertices = np.array(((xCoord, yMin),
                                          (xCoord, yMax)),
                                         dtype=np.float32)
@@ -1060,7 +1136,10 @@ class OpenGLPlotCanvas(PlotBackend):
                 glDrawArrays(GL_LINES, 0, len(vertices))
 
             else:
-                xPixel, yPixel = pixelPos
+                pixelPos = self.dataToPixel(xCoord, yCoord, check=True)
+                if pixelPos is None:
+                    # Do not render markers outside visible plot area
+                    continue
 
                 if marker['text'] is not None:
                     x = pixelPos[0] + pixelOffset
@@ -1959,6 +2038,24 @@ class OpenGLPlotCanvas(PlotBackend):
 
     def isYAxisLogarithmic(self):
         return self._plotFrame.yAxis.isLog
+
+    # Non orthogonal axes
+    def setBaseVectors(self, x=(1., 0.), y=(0., 1.)):
+        """Set base vectors.
+
+        Useful for non-orthogonal axes.
+        If an axis is in log scale, skew is applied to log transformed values.
+        """
+        assert len(x) == 2 and len(y) == 2
+        self._baseVectors = tuple(x), tuple(y)
+        self._dirtyPlotDataTransformedBounds()
+        self.updateAxis()
+
+    def getBaseVectors(self):
+        return self._baseVectors
+
+    def isDefaultBaseVectors(self):
+        return self._baseVectors == self._DEFAULT_BASE_VECTORS
 
     # Title, Labels
     def setGraphTitle(self, title=""):
