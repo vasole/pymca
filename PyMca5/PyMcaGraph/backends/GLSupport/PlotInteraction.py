@@ -427,44 +427,6 @@ class Zoom(_ZoomOnWheel):
         self.backend.resetSelectionArea()
         self.backend.replot()
 
-
-        return
-
-        x0, y0 = startPos
-        x1, y1 = endPos
-        xMin, xMax = min(x0, x1), max(x0, x1)
-        yMin, yMax = min(y0, y1), max(y0, y1)
-        #y2Min, y2Max = min(y2_0, y2_1), max(y2_0, y2_1)
-
-        if xMin != xMax and yMin != yMax: # and y2Min != y2Max:
-            # Avoid null zoom area
-            if self.backend.isKeepDataAspectRatio():
-                area = self._areaWithAspectRatio(xMin, yMin, xMax, yMax)
-                xMin, yMin, xMax, yMax = area
-
-            if self.backend.isDefaultBaseVectors():
-                limits = xMin, xMax, yMin, yMax
-
-            else:  # Non-orthogonal axes
-                # Take the data bounds that fit entirely in the bbox
-                corners = [(xMin, yMin), (xMin, yMax),
-                           (xMax, yMin), (xMax, yMax),
-                           (xMin, y2Min), (xMin, y2Max),
-                           (xMax, y2Min), (xMax, y2Max)]
-
-                corners = np.array([self.pixelToData(x, y, check=False)
-                    for (x, y) in corners])
-                # Drop the 2 extermes and use the other 2 as range
-                xMin, xMax = np.sort(corners[0:4, 0])[1:2]
-                # TODO x for y2 ?
-                yMin, yMax = np.sort(corners[0:4, 1])[1:2]
-                y2Min, y2Max = np.sort(corners[4:, 1])[1:2]
-
-            self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
-
-        self.backend.resetSelectionArea()
-        self.backend.replot()
-
     def cancel(self):
         if isinstance(self.state, self.states['drag']):
             self.backend.resetSelectionArea()
@@ -765,11 +727,17 @@ class Select1Point(Select):
 class SelectHLine(Select1Point):
     """Drawing a horizontal line selection area state machine."""
     def _hLine(self, y):
-        dataPos = self.backend.pixelToData(y=y)
-        assert dataPos is not None
+        """Return points in data coords of the segment visible in the plot.
 
-        xMin, xMax = self.backend.getGraphXLimits()
-        return (xMin, dataPos[1]), (xMax, dataPos[1])
+        Supports non-orthogonal axes.
+        """
+        plotWidth, plotHeight = self.backend.plotSizeInPixels()
+        plotLeft, plotTop = self.backend.plotOriginInPixels()
+
+        dataPos1 = self.backend.pixelToData(plotLeft, y, check=False)
+        dataPos2 = self.backend.pixelToData(
+            plotLeft + plotWidth, y, check=False)
+        return dataPos1, dataPos2
 
     def select(self, x, y):
         points = self._hLine(y)
@@ -800,11 +768,17 @@ class SelectHLine(Select1Point):
 class SelectVLine(Select1Point):
     """Drawing a vertical line selection area state machine."""
     def _vLine(self, x):
-        dataPos = self.backend.pixelToData(x=x)
-        assert dataPos is not None
+        """Return points in data coords of the segment visible in the plot.
 
-        yMin, yMax = self.backend.getGraphYLimits()
-        return (dataPos[0], yMin), (dataPos[0], yMax)
+        Supports non-orthogonal axes.
+        """
+        plotWidth, plotHeight = self.backend.plotSizeInPixels()
+        plotLeft, plotTop = self.backend.plotOriginInPixels()
+
+        dataPos1 = self.backend.pixelToData(x, plotTop, check=False)
+        dataPos2 = self.backend.pixelToData(
+            x, plotTop + plotHeight, check=False)
+        return dataPos1, dataPos2
 
     def select(self, x, y):
         points = self._vLine(x)
