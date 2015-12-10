@@ -263,39 +263,16 @@ class Zoom(_ZoomOnWheel):
 
         super(Zoom, self).__init__(backend)
 
-    # Selection area constrained by aspect ratio
-    # def _ensureAspectRatio(self, x0, y0, x1, y1):
-    #    plotW, plotH = self.backend.plotSizeInPixels()
-    #    try:
-    #        plotRatio = plotW / float(plotH)
-    #    except ZeroDivisionError:
-    #        pass
-    #    else:
-    #        width, height = math.fabs(x1 - x0), math.fabs(y1 - y0)
-    #
-    #        try:
-    #            selectRatio = width / height
-    #        except ZeroDivisionError:
-    #            width, height = 1., 1.
-    #        else:
-    #            if selectRatio < plotRatio:
-    #                height = width / plotRatio
-    #            else:
-    #                width = height * plotRatio
-    #        x1 = x0 + np.sign(x1 - x0) * width
-    #        y1 = y0 + np.sign(y1 - y0) * height
-    #    return x1, y1
-
     def _areaWithAspectRatio(self, x0, y0, x1, y1):
         plotW, plotH = self.backend.plotSizeInPixels()
+
+        areaX0, areaY0, areaX1, areaY1 = x0, y0, x1, y1
 
         if plotH != 0.:
             plotRatio = plotW / float(plotH)
             width, height = math.fabs(x1 - x0), math.fabs(y1 - y0)
 
-            if height == 0. or width == 0.:
-                areaX0, areaY0, areaX1, areaY1 = x0, y0, x1, y1
-            else:
+            if height != 0. and width != 0.:
                 if width / height > plotRatio:
                     areaHeight = width / plotRatio
                     areaX0, areaX1 = x0, x1
@@ -358,16 +335,11 @@ class Zoom(_ZoomOnWheel):
     def beginDrag(self, x, y):
         dataPos = self.backend.pixelToData(x, y)
         assert dataPos is not None
-        self.x0, self.y0 = dataPos
+        self.x0, self.y0 = x, y
 
     def drag(self, x1, y1):
         dataPos = self.backend.pixelToData(x1, y1)
         assert dataPos is not None
-        x1, y1 = dataPos
-
-        # Selection area constrained by aspect ratio
-        # if self.backend.isKeepDataAspectRatio():
-        #    x1, y1 = self._ensureAspectRatio(self.x0, self.y0, x1, y1)
 
         if self.backend.isKeepDataAspectRatio():
             area = self._areaWithAspectRatio(self.x0, self.y0, x1, y1)
@@ -376,58 +348,117 @@ class Zoom(_ZoomOnWheel):
                           (areaX1, areaY0),
                           (areaX1, areaY1),
                           (areaX0, areaY1))
+            areaPoints = np.array([self.backend.pixelToData(x, y, check=False)
+                for (x, y) in areaPoints])
+
             if self.color != 'video inverted':
                 areaColor = list(self.color)
                 areaColor[3] *= 0.25
-                self.backend.setSelectionArea(areaPoints,
-                                              fill=None,
-                                              color=areaColor,
-                                              name="zoomedArea")
+            else:
+                areaColor = [1., 1., 1., 1.]
 
-        points = ((self.x0, self.y0),
+            self.backend.setSelectionArea(areaPoints,
+                                          fill=None,
+                                          color=areaColor,
+                                          name="zoomedArea")
+
+        corners = ((self.x0, self.y0),
                   (self.x0, y1),
                   (x1, y1),
                   (x1, self.y0))
-        self.backend.setSelectionArea(points,
+        corners = np.array([self.backend.pixelToData(x, y, check=False)
+            for (x, y) in corners])
+
+        self.backend.setSelectionArea(corners,
                                       fill=None,
                                       color=self.color)
         self.backend.replot()
 
     def endDrag(self, startPos, endPos):
-        xMin, xMax = self.backend.getGraphXLimits()
-        yMin, yMax = self.backend.getGraphYLimits()
-        y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
-        self.zoomStack.append((xMin, xMax, yMin, yMax, y2Min, y2Max))
+        x0, y0 = startPos
+        x1, y1 = endPos
 
-        dataPos = self.backend.pixelToData(*startPos)
-        assert dataPos is not None
-        x0, y0 = dataPos
+        if x0 != x1 or y0 != y1:  # Avoid empty zoom area
+            # Store current zoom state in stack
+            xMin, xMax = self.backend.getGraphXLimits()
+            yMin, yMax = self.backend.getGraphYLimits()
+            y2Min, y2Max = self.backend.getGraphYLimits(axis="right")
+            self.zoomStack.append((xMin, xMax, yMin, yMax, y2Min, y2Max))
 
-        dataPos = self.backend.pixelToData(y=startPos[1], axis="right")
-        assert dataPos is not None
-        y2_0 = dataPos[1]
+            if self.backend.isKeepDataAspectRatio():
+                x0, y0, x1, y1 = self._areaWithAspectRatio(x0, y0, x1, y1)
 
-        dataPos = self.backend.pixelToData(*endPos)
-        assert dataPos is not None
-        x1, y1 = dataPos
+            if self.backend.isDefaultBaseVectors():
+                # Convert to data space and set limits
+                x0, y0 = self.backend.pixelToData(x0, y0, check=False)
 
-        dataPos = self.backend.pixelToData(y=endPos[1], axis="right")
-        assert dataPos is not None
-        y2_1 = dataPos[1]
+                dataPos = self.backend.pixelToData(
+                    y=startPos[1], axis="right", check=False)
+                y2_0 = dataPos[1]
 
-        # Selection area constrained by aspect ratio
-        # if self.backend.isKeepDataAspectRatio():
-        #     x1, y1 = self._ensureAspectRatio(x0, y0, x1, y1)
+                x1, y1 = self.backend.pixelToData(x1, y1, check=False)
 
+                dataPos = self.backend.pixelToData(
+                    y=endPos[1], axis="right", check=False)
+                y2_1 = dataPos[1]
+
+                xMin, xMax = min(x0, x1), max(x0, x1)
+                yMin, yMax = min(y0, y1), max(y0, y1)
+                y2Min, y2Max = min(y2_0, y2_1), max(y2_0, y2_1)
+
+                self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
+
+            else:  # Non-orthogonal axes
+                # Get zoom bbox in pixels
+                xPixelMin, xPixelMax = min(x0, x1), max(x0, x1)
+                yPixelMin, yPixelMax = min(y0, y1), max(y0, y1)
+
+                # Take the data bounds that fit entirely in the bbox
+                corners = [(x0, y0), (x0, y1), (x1, y0), (x1, y1)]
+                corners = np.array([self.backend.pixelToData(x, y, check=False)
+                    for (x, y) in corners], dtype=np.float32)
+
+                # Drop the 2 extermes and use the other 2 as the range
+                xMin, xMax = np.sort(corners[:, 0])[1:3]
+                yMin, yMax = np.sort(corners[:, 1])[1:3]
+                # TODO y2 axis
+                self.backend.setLimits(xMin, xMax, yMin, yMax)
+
+        self.backend.resetSelectionArea()
+        self.backend.replot()
+
+
+        return
+
+        x0, y0 = startPos
+        x1, y1 = endPos
         xMin, xMax = min(x0, x1), max(x0, x1)
         yMin, yMax = min(y0, y1), max(y0, y1)
-        y2Min, y2Max = min(y2_0, y2_1), max(y2_0, y2_1)
+        #y2Min, y2Max = min(y2_0, y2_1), max(y2_0, y2_1)
 
-        if xMin != xMax and yMin != yMax and y2Min != y2Max:
+        if xMin != xMax and yMin != yMax: # and y2Min != y2Max:
             # Avoid null zoom area
             if self.backend.isKeepDataAspectRatio():
                 area = self._areaWithAspectRatio(xMin, yMin, xMax, yMax)
                 xMin, yMin, xMax, yMax = area
+
+            if self.backend.isDefaultBaseVectors():
+                limits = xMin, xMax, yMin, yMax
+
+            else:  # Non-orthogonal axes
+                # Take the data bounds that fit entirely in the bbox
+                corners = [(xMin, yMin), (xMin, yMax),
+                           (xMax, yMin), (xMax, yMax),
+                           (xMin, y2Min), (xMin, y2Max),
+                           (xMax, y2Min), (xMax, y2Max)]
+
+                corners = np.array([self.pixelToData(x, y, check=False)
+                    for (x, y) in corners])
+                # Drop the 2 extermes and use the other 2 as range
+                xMin, xMax = np.sort(corners[0:4, 0])[1:2]
+                # TODO x for y2 ?
+                yMin, yMax = np.sort(corners[0:4, 1])[1:2]
+                y2Min, y2Max = np.sort(corners[4:, 1])[1:2]
 
             self.backend.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
