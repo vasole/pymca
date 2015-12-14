@@ -516,26 +516,34 @@ class OpenGLPlotCanvas(PlotBackend):
     def pickMarker(self, x, y, test=None):
         if test is None:
             test = lambda marker: True
+
         for marker in reversed(self._markers.values()):
             pixelPos = self.dataToPixel(marker['x'], marker['y'], check=False)
             if pixelPos is None:  # negative coord on a log axis
                 continue
 
-            if marker['x'] is not None:
-                xMarker = pixelPos[0]
-                xDist = math.fabs(x - xMarker)
-            else:
-                xDist = 0
+            if marker['x'] is None:  # Horizontal line
+                pt1 = self.pixelToData(x, y - self._PICK_OFFSET, check=False)
+                pt2 = self.pixelToData(x, y + self._PICK_OFFSET, check=False)
+                isPicked = (marker['y'] >= min(pt1[1], pt2[1]) and
+                    marker['y'] <= max(pt1[1], pt2[1]))
 
-            if marker['y'] is not None:
-                yMarker = pixelPos[1]
-                yDist = math.fabs(y - yMarker)
-            else:
-                yDist = 0
+            elif marker['y'] is None:  # Vertical line
+                pt1 = self.pixelToData(x - self._PICK_OFFSET, y, check=False)
+                pt2 = self.pixelToData(x + self._PICK_OFFSET, y, check=False)
+                isPicked = (marker['x'] >= min(pt1[0], pt2[0]) and
+                    marker['x'] <= max(pt1[0], pt2[0]))
 
-            if xDist <= self._PICK_OFFSET and yDist <= self._PICK_OFFSET:
+            else:
+                isPicked = (
+                    math.fabs(x - pixelPos[0]) <= self._PICK_OFFSET and \
+                    math.fabs(y - pixelPos[1]) <= self._PICK_OFFSET
+                )
+
+            if isPicked:
                 if test(marker):
                     return marker
+
         return None
 
     def pickImageOrCurve(self, x, y, test=None):
