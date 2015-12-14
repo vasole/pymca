@@ -1020,6 +1020,102 @@ class OpenGLPlotCanvas(PlotBackend):
         # self._paintDirectGL()
         self._paintFBOGL()
 
+    def _nonOrthoAxesLineMarkerPrimitives(self, marker, pixelOffset):
+        """Generates the vertices and label for a line marker.
+
+        :param dict marker: Description of a line marker
+        :param int pixelOffset: Offset of text from borders in pixels
+        :return: Line vertices and Text label or None
+        :rtype: 2-tuple (2x2 numpy.array of float, Text2D)
+        """
+        label, vertices = None, None
+
+        xCoord, yCoord = marker['x'], marker['y']
+        assert xCoord is None or yCoord is None  # Specific to line markers
+
+        # Get plot corners in data coords
+        plotLeft, plotTop = self.plotOriginInPixels()
+        plotWidth, plotHeight = self.plotSizeInPixels()
+
+        corners = [(plotLeft, plotTop),
+                   (plotLeft, plotTop + plotHeight),
+                   (plotLeft + plotWidth, plotTop + plotHeight),
+                   (plotLeft + plotWidth, plotTop)]
+        corners = np.array([self.pixelToData(x, y, check=False)
+            for (x, y) in corners])
+
+        borders = {
+            'right': (corners[3], corners[2]),
+            'top': (corners[0], corners[3]),
+            'bottom': (corners[2], corners[1]),
+            'left': (corners[1], corners[0])
+        }
+
+        textLayouts = {  # align, valign, offsets
+            'right': (RIGHT, BOTTOM, (-1., -1.)),
+            'top': (LEFT, TOP, (1., 1.)),
+            'bottom': (LEFT, BOTTOM, (1., -1.)),
+            'left': (LEFT, BOTTOM, (1., -1.))
+        }
+
+        if xCoord is None:  # Horizontal line in data space
+            if marker['text'] is not None:
+                # Find intersection of hline with borders in data
+                # Order is important as it stops at first intersection
+                for border_name in ('right', 'top', 'bottom', 'left'):
+                    (x0, y0), (x1, y1) = borders[border_name]
+
+                    if yCoord >= min(y0, y1) and yCoord < max(y0, y1):
+                        xIntersect = (yCoord - y0) * (x1 - x0) / (y1 - y0) + x0
+
+                        # Add text label
+                        pixelPos = self.dataToPixel(
+                            xIntersect, yCoord, check=False)
+
+                        align, valign, offsets = textLayouts[border_name]
+
+                        x = pixelPos[0] + offsets[0] * pixelOffset
+                        y = pixelPos[1] + offsets[1] * pixelOffset
+                        label = Text2D(marker['text'], x, y,
+                                       color=marker['color'],
+                                       bgColor=(1., 1., 1., 0.5),
+                                       align=align, valign=valign)
+                        break  # Stop at first intersection
+
+            xMin, xMax = corners[:, 0].min(), corners[:, 0].max()
+            vertices = np.array(
+                ((xMin, yCoord), (xMax, yCoord)), dtype=np.float32)
+
+        else:  # yCoord is None: vertical line in data space
+            if marker['text'] is not None:
+                # Find intersection of hline with borders in data
+                # Order is important as it stops at first intersection
+                yIntersect = None
+                for border_name in ('top', 'bottom', 'right', 'left'):
+                    (x0, y0), (x1, y1) = borders[border_name]
+                    if xCoord >= min(x0, x1) and xCoord < max(x0, x1):
+                        yIntersect = (xCoord - x0) * (y1 - y0) / (x1 - x0) + y0
+
+                        # Add text label
+                        pixelPos = self.dataToPixel(
+                            xCoord, yIntersect, check=False)
+
+                        align, valign, offsets = textLayouts[border_name]
+
+                        x = pixelPos[0] + offsets[0] * pixelOffset
+                        y = pixelPos[1] + offsets[1] * pixelOffset
+                        label = Text2D(marker['text'], x, y,
+                                       color=marker['color'],
+                                       bgColor=(1., 1., 1., 0.5),
+                                       align=align, valign=valign)
+                        break  # Stop at first intersection
+
+            yMin, yMax = corners[:, 1].min(), corners[:, 1].max()
+            vertices = np.array(
+                ((xCoord, yMin), (xCoord, yMax)), dtype=np.float32)
+
+        return vertices, label
+
     def _renderMarkersGL(self):
         if len(self._markers) == 0:
             return
@@ -1060,69 +1156,47 @@ class OpenGLPlotCanvas(PlotBackend):
                 continue
 
             if xCoord is None or yCoord is None:
-                self._progBase.use()
-
-                if not self.isDefaultBaseVectors():
-                    # Get plot corners in data coords
-                    plotLeft, plotTop = self.plotOriginInPixels()
-                    corners = [(plotLeft, plotTop),
-                               (plotLeft, plotTop + plotHeight),
-                               (plotLeft + plotWidth, plotTop + plotHeight),
-                               (plotLeft + plotWidth, plotTop)]
-                    corners = np.array([self.pixelToData(x, y, check=False)
-                        for (x, y) in corners])
-                else:
-                    corners = None
-
-                if xCoord is None:
-                    if marker['text'] is not None:
-                        # TODO get right coords for text
-                        # Idea: project line to screen and
-                        # find intersection with borders
-                        pixelPos = self.dataToPixel(None, yCoord, check=False)
-
-                        x = self.winWidth - self._margins['right'] - \
-                            pixelOffset
-                        y = pixelPos[1] - pixelOffset
-                        label = Text2D(marker['text'], x, y,
-                                       color=marker['color'],
-                                       bgColor=(1., 1., 1., 0.5),
-                                       align=RIGHT, valign=BOTTOM)
+                if not self.isDefaultBaseVectors():  # Non-orthogonal axes
+                    vertices, label = self._nonOrthoAxesLineMarkerPrimitives(
+                        marker, pixelOffset)
+                    if label is not None:
                         labels.append(label)
 
-                    if self.isDefaultBaseVectors():
+                else:  # Orthogonal axes
+                    pixelPos = self.dataToPixel(xCoord, yCoord, check=False)
+
+                    if xCoord is None:  # Horizontal line in data space
+                        if marker['text'] is not None:
+                            x = self.winWidth - self._margins['right'] - \
+                                pixelOffset
+                            y = pixelPos[1] - pixelOffset
+                            label = Text2D(marker['text'], x, y,
+                                           color=marker['color'],
+                                           bgColor=(1., 1., 1., 0.5),
+                                           align=RIGHT, valign=BOTTOM)
+                            labels.append(label)
+
                         xMin, xMax = self.plotDataTransformedBounds.xAxis
-                    else:  # Non-orthogonal axes
-                        xMin, xMax = corners[:, 0].min(),  corners[:, 0].max()
+                        vertices = np.array(((xMin, yCoord),
+                                             (xMax, yCoord)),
+                                            dtype=np.float32)
 
-                    vertices = np.array(((xMin, yCoord),
-                                         (xMax, yCoord)),
-                                        dtype=np.float32)
+                    else:  # yCoord is None: vertical line in data space
+                        if marker['text'] is not None:
+                            x = pixelPos[0] + pixelOffset
+                            y = self._margins['top'] + pixelOffset
+                            label = Text2D(marker['text'], x, y,
+                                           color=marker['color'],
+                                           bgColor=(1., 1., 1., 0.5),
+                                           align=LEFT, valign=TOP)
+                            labels.append(label)
 
-                else:  # yCoord is None
-                    if marker['text'] is not None:
-                        # TODO get right coords for text
-                        # Idea: project line to screen and
-                        # find intersection with borders
-                        pixelPos = self.dataToPixel(xCoord, None, check=False)
-
-                        x = pixelPos[0] + pixelOffset
-                        y = self._margins['top'] + pixelOffset
-                        label = Text2D(marker['text'], x, y,
-                                       color=marker['color'],
-                                       bgColor=(1., 1., 1., 0.5),
-                                       align=LEFT, valign=TOP)
-                        labels.append(label)
-
-                    if self.isDefaultBaseVectors():
                         yMin, yMax = self.plotDataTransformedBounds.yAxis
+                        vertices = np.array(((xCoord, yMin),
+                                             (xCoord, yMax)),
+                                            dtype=np.float32)
 
-                    else:  # Non-orthogonal axes
-                        yMin, yMax = corners[:, 1].min(),  corners[:, 1].max()
-
-                    vertices = np.array(((xCoord, yMin),
-                                         (xCoord, yMax)),
-                                        dtype=np.float32)
+                self._progBase.use()
 
                 glUniform4f(self._progBase.uniforms['color'], *marker['color'])
 
