@@ -1931,7 +1931,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self._dirtyPlotDataTransformedBounds()
 
         if not self.isDefaultBaseVectors():
-            # Get axes bounds in data coords
+            # Update axes range with axes bounds in data coords
             plotLeft, plotTop = self.plotOriginInPixels()
             plotWidth, plotHeight = self.plotSizeInPixels()
 
@@ -2031,6 +2031,10 @@ class OpenGLPlotCanvas(PlotBackend):
                      self._plotFrame.yAxis.isLog):
             warnings.warn("KeepDataAspectRatio is ignored with log axes",
                           RuntimeWarning)
+        if flag and not self.isDefaultBaseVectors():
+            warnings.warn(
+                "keepDataAspectRatio ignored because baseVectors are set",
+                RuntimeWarning)
 
         self._keepDataAspectRatio = flag
 
@@ -2087,6 +2091,12 @@ class OpenGLPlotCanvas(PlotBackend):
                 warnings.warn("KeepDataAspectRatio is ignored with log axes",
                               RuntimeWarning)
 
+            if flag and not self.isDefaultBaseVectors():
+                warnings.warn(
+                    "setXAxisLogarithmic ignored because baseVectors are set",
+                    RuntimeWarning)
+                return
+
             self._plotFrame.xAxis.isLog = flag
             self._dirtyPlotDataTransformedBounds()
 
@@ -2100,6 +2110,12 @@ class OpenGLPlotCanvas(PlotBackend):
             if flag and self._keepDataAspectRatio:
                 warnings.warn("KeepDataAspectRatio is ignored with log axes",
                               RuntimeWarning)
+
+            if flag and not self.isDefaultBaseVectors():
+                warnings.warn(
+                    "setYAxisLogarithmic ignored because baseVectors are set",
+                    RuntimeWarning)
+                return
 
             self._plotFrame.yAxis.isLog = flag
             self._plotFrame.y2Axis.isLog = flag
@@ -2123,7 +2139,24 @@ class OpenGLPlotCanvas(PlotBackend):
 
         Useful for non-orthogonal axes.
         If an axis is in log scale, skew is applied to log transformed values.
+
+        Base vector does not work well with log axes, to investi
         """
+        if x != (1., 0.) and y != (0., 1.):
+            if self.isXAxisLogarithmic():
+                warnings.warn("setBaseVectors disables X axis logarithmic.",
+                              RuntimeWarning)
+                self.setXAxisLogarithmic(False)
+            if self.isYAxisLogarithmic():
+                warnings.warn("setBaseVectors disables Y axis logarithmic.",
+                              RuntimeWarning)
+                self.setYAxisLogarithmic(False)
+
+            if self.isKeepDataAspectRatio():
+                warnings.warn("setBaseVectors disables keepDataAspectRatio.",
+                              RuntimeWarning)
+                self.keepDataAspectRatio(False)
+
         self._plotFrame.baseVectors = x, y
         self._dirtyPlotDataTransformedBounds()
         self.updateAxis()
