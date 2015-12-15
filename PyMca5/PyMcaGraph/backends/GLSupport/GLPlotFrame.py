@@ -49,8 +49,11 @@ import math
 import weakref
 import warnings
 
+from collections import namedtuple
+
 from .gl import *  # noqa
-from .GLSupport import mat4Ortho
+from .GLSupport import mat4Ortho, clamp, \
+    FLOAT32_SAFE_MIN, FLOAT32_MINPOS, FLOAT32_SAFE_MAX
 from .GLProgram import GLProgram
 from .GLText import Text2D, CENTER, BOTTOM, TOP, LEFT, RIGHT, ROTATE_270
 from .LabelLayout import niceNumbersAdaptative, niceNumbersForLog10
@@ -95,7 +98,7 @@ class PlotAxis(object):
     def dataRange(self, dataRange):
         assert len(dataRange) == 2
         assert dataRange[0] <= dataRange[1]
-        dataRange = tuple(dataRange)
+        dataRange = float(dataRange[0]), float(dataRange[1])
 
         if dataRange != self._dataRange:
             self._dataRange = dataRange
@@ -335,6 +338,7 @@ class GLPlotFrame(object):
         self._grid = False
         self._size = 0., 0.
         self._title = ''
+        self._baseVectors = (1., 0.), (0., 1.)
 
     @property
     def isDirty(self):
@@ -464,6 +468,7 @@ class GLPlotFrame(object):
         prog.use()
 
         glLineWidth(self._LINE_WIDTH)
+
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matProj)
         glUniform4f(prog.uniforms['color'], 0., 0., 0., 1.)
         glUniform1f(prog.uniforms['tickFactor'], 0.)
@@ -549,6 +554,9 @@ class GLPlotFrame2D(GLPlotFrame):
 
         self._isYAxisInverted = False
 
+        self._dataRanges = {
+            'x': (1., 100.), 'y': (1., 100.), 'y2': (1., 100.)}
+
     @property
     def xAxis(self):
         return self.axes[0]
@@ -587,6 +595,81 @@ class GLPlotFrame2D(GLPlotFrame):
         if value != self._isYAxisInverted:
             self._isYAxisInverted = value
             self._dirty()
+
+    DEFAULT_BASE_VECTORS = (1., 0.), (0., 1.)
+    """Values of baseVectors for orthogonal axes."""
+
+    @property
+    def baseVectors(self):
+        """Coordinates of the X and Y axes in the orthogonal plot coords.
+
+        Raises ValueError if corresponding matrix is singular.
+
+        2 tuples of 2 floats: (xx, xy), (yx, yy)
+        """
+        return self._baseVectors
+
+    @baseVectors.setter
+    def baseVectors(self, baseVectors):
+        (xx, xy), (yx, yy) = baseVectors
+        vectors = (float(xx), float(xy)), (float(yx), float(yy))
+
+        det = (vectors[0][0] * vectors[1][1] - vectors[1][0] * vectors[0][1])
+        if det == 0.:
+            raise ValueError("Singular matrix for base vectors: " +
+                             str(vectors))
+
+        if vectors != self._baseVectors:
+            self._baseVectors = vectors
+            self._dirty()
+
+    @property
+    def dataRanges(self):
+        """Ranges of data visible in the plot on x, y and y2 axes.
+
+        This is different to the axes range when axes are not orthogonal.
+
+        Type: ((xMin, xMax), (yMin, yMax), (y2Min, y2Max))
+        """
+        return namedtuple('dataRanges', ('x', 'y', 'y2'))(
+            self._dataRanges['x'],
+            self._dataRanges['y'],
+            self._dataRanges['y2'])
+
+    @staticmethod
+    def _clipToSafeRange(min_, max_, isLog):
+        # Clip range if needed
+        minLimit = FLOAT32_MINPOS if isLog else FLOAT32_SAFE_MIN
+        min_ = clamp(min_, minLimit, FLOAT32_SAFE_MAX)
+        max_ = clamp(max_, minLimit, FLOAT32_SAFE_MAX)
+        assert min_ < max_
+        return min_, max_
+
+    def setDataRanges(self, x=None, y=None, y2=None):
+        """Set data range over each axes.
+
+        The provided ranges are clipped to possible values
+        (i.e., 32 float range + positive range for log scale).
+
+        :param x: (min, max) data range over X axis
+        :param y: (min, max) data range over Y axis
+        :param y2: (min, max) data range over Y2 axis
+        """
+        if x is not None:
+            self._dataRanges['x'] = \
+                self._clipToSafeRange(x[0], x[1], self.xAxis.isLog)
+
+        if y is not None:
+            self._dataRanges['y'] = \
+                self._clipToSafeRange(y[0], y[1], self.yAxis.isLog)
+
+        if y2 is not None:
+            self._dataRanges['y2'] = \
+                self._clipToSafeRange(y2[0], y2[1], self.y2Axis.isLog)
+
+        self.xAxis.dataRange = self._dataRanges['x']
+        self.yAxis.dataRange = self._dataRanges['y']
+        self.y2Axis.dataRange = self._dataRanges['y2']
 
     def _updateAxes(self):
         width, height = self.size

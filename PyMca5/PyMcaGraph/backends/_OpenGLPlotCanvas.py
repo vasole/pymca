@@ -376,8 +376,6 @@ class OpenGLPlotCanvas(PlotBackend):
                          'autoscale': True, 'vmin': 0.0, 'vmax': 1.0,
                          'colors': 256}
 
-    _DEFAULT_BASE_VECTORS = (1., 0.), (0., 1.)
-
     def __init__(self, parent=None, glContextGetter=None, **kw):
         self._eventCallback = self._noopCallback
         self._defaultColormap = self._DEFAULT_COLORMAP
@@ -417,8 +415,6 @@ class OpenGLPlotCanvas(PlotBackend):
         self._pressedButtons = []  # Currently pressed mouse buttons
 
         self._plotFrame = GLPlotFrame2D(self._margins)
-
-        self._baseVectors = self._DEFAULT_BASE_VECTORS
 
         PlotBackend.__init__(self, parent, **kw)
 
@@ -665,9 +661,8 @@ class OpenGLPlotCanvas(PlotBackend):
         :type: Bounds
         """
         if self._plotDataTransformedBounds is None:
-            xMin, xMax = self._plotFrame.xAxis.dataRange
-            yMin, yMax = self._plotFrame.yAxis.dataRange
-            y2Min, y2Max = self._plotFrame.y2Axis.dataRange
+            (xMin, xMax), (yMin, yMax), (y2Min, y2Max) = \
+                self._plotFrame.dataRanges
 
             if self._plotFrame.xAxis.isLog:
                 try:
@@ -1387,9 +1382,8 @@ class OpenGLPlotCanvas(PlotBackend):
                                        self.winHeight, 0,
                                        1, -1)
 
-        xMin, xMax = self._plotFrame.xAxis.dataRange
-        yMin, yMax = self._plotFrame.yAxis.dataRange
-        y2Min, y2Max = self._plotFrame.y2Axis.dataRange
+        (xMin, xMax), (yMin, yMax), (y2Min, y2Max) = \
+            self._plotFrame.dataRanges
         self.setLimits(xMin, xMax, yMin, yMax, y2Min, y2Max)
 
     # PlotBackend API #
@@ -1923,18 +1917,39 @@ class OpenGLPlotCanvas(PlotBackend):
 
     # Limits #
 
-    @staticmethod
-    def _clampAxisRange(min_, max_, isLog):
-        """Clamp axis data range to a 'safe' float32 range.
+    def _setDataRanges(self, x=None, y=None, y2=None):
+        """Set the visible range of data in the plot frame.
 
-        Clamp to a range smaller than float32 range.
-        If isLog is True, clamp to a stricly positive range.
+        This clips the ranges to possible values (takes care of float32
+        range + positive range for log).
+        This also takes care of non-orthogonal axes.
+
+        This should be moved to PlotFrame.
         """
-        minLimit = FLOAT32_MINPOS if isLog else FLOAT32_SAFE_MIN
-        min_ = clamp(min_, minLimit, FLOAT32_SAFE_MAX)
-        max_ = clamp(max_, minLimit, FLOAT32_SAFE_MAX)
-        assert min_ < max_
-        return min_, max_
+        # Update axes range with a clipped range if too wide
+        self._plotFrame.setDataRanges(x, y, y2)
+        self._dirtyPlotDataTransformedBounds()
+
+        if not self.isDefaultBaseVectors():
+            # Get axes bounds in data coords
+            plotLeft, plotTop = self.plotOriginInPixels()
+            plotWidth, plotHeight = self.plotSizeInPixels()
+
+            self._plotFrame.xAxis.dataRange = sorted([
+                self.pixelToData(x, y, check=False)[0] for (x, y) in
+                ((plotLeft, plotTop + plotHeight),
+                 (plotLeft + plotWidth, plotTop + plotHeight))])
+
+            self._plotFrame.yAxis.dataRange = sorted([
+                self.pixelToData(x, y, check=False)[1] for (x, y) in
+                ((plotLeft, plotTop + plotHeight),
+                 (plotLeft, plotTop))])
+
+            self._plotFrame.y2Axis.dataRange = sorted([
+                self.pixelToData(x, y, axis='right', check=False)[1]
+                for (x, y) in
+                ((plotLeft + plotWidth, plotTop + plotHeight),
+                 (plotLeft + plotWidth, plotTop))])
 
     def _ensureAspectRatio(self, keepDim=None):
         """Update plot bounds in order to keep aspect ratio.
@@ -1961,17 +1976,14 @@ class OpenGLPlotCanvas(PlotBackend):
             else:  # Limit case
                 keepDim = 'x'
 
-        xMax, xMin = self._plotFrame.xAxis.dataRange
-        yMin, yMax = self._plotFrame.yAxis.dataRange
-        y2Min, y2Max = self._plotFrame.y2Axis.dataRange
+        (xMin, xMax), (yMin, yMax), (y2Min, y2Max) = \
+            self._plotFrame.dataRanges
         if keepDim == 'y':
             dataW = (yMax - yMin) * plotWidth / float(plotHeight)
             xCenter = 0.5 * (xMin + xMax)
             xMin = xCenter - 0.5 * dataW
             xMax = xCenter + 0.5 * dataW
         elif keepDim == 'x':
-            xMin, xMax = self._plotFrame.xAxis.dataRange
-
             dataH = (xMax - xMin) * plotHeight / float(plotWidth)
             yCenter = 0.5 * (yMin + yMax)
             yMin = yCenter - 0.5 * dataH
@@ -1983,27 +1995,12 @@ class OpenGLPlotCanvas(PlotBackend):
             raise RuntimeError('Unsupported dimension to keep: %s' % keepDim)
 
         # Update plot frame bounds
-        self._plotFrame.xAxis.dataRange = self._clampAxisRange(
-            xMin, xMax, self.isXAxisLogarithmic())
-        self._plotFrame.yAxis.dataRange = self._clampAxisRange(
-            yMin, yMax, self.isYAxisLogarithmic())
-        self._plotFrame.y2Axis.dataRange = self._clampAxisRange(
-            y2Min, y2Max, self.isYAxisLogarithmic())
+        self._setDataRanges(x=(xMin, xMax), y=(yMin, yMax), y2=(y2Min, y2Max))
 
     def _setPlotBounds(self, xRange=None, yRange=None, y2Range=None,
                        keepDim=None):
         # Update axes range with a clipped range if too wide
-        if xRange is not None:
-            self._plotFrame.xAxis.dataRange = self._clampAxisRange(
-                xRange[0], xRange[1], self.isXAxisLogarithmic())
-
-        if yRange is not None:
-            self._plotFrame.yAxis.dataRange = self._clampAxisRange(
-                yRange[0], yRange[1], self.isYAxisLogarithmic())
-
-        if y2Range is not None:
-            self._plotFrame.y2Axis.dataRange = self._clampAxisRange(
-                y2Range[0], y2Range[1], self.isYAxisLogarithmic())
+        self._setDataRanges(x=xRange, y=yRange, y2=y2Range)
 
         # Keep data aspect ratio
         if self.isKeepDataAspectRatio():
@@ -2014,15 +2011,13 @@ class OpenGLPlotCanvas(PlotBackend):
         self.updateAxis()
 
         # Send limits changed to callback
-        if self._plotFrame.isY2Axis:
-            y2Range = self._plotFrame.y2Axis.dataRange
-        else:
-            y2Range = None
+        dataRanges = self._plotFrame.dataRanges
+
         eventDict = prepareLimitsChangedSignal(
             self.getWidgetHandle(),
-            self._plotFrame.xAxis.dataRange,
-            self._plotFrame.yAxis.dataRange,
-            y2Range)
+            dataRanges.x,
+            dataRanges.y,
+            dataRanges.y2 if self._plotFrame.isY2Axis else None)
         self.sendEvent(eventDict)
 
     def isKeepDataAspectRatio(self):
@@ -2042,7 +2037,7 @@ class OpenGLPlotCanvas(PlotBackend):
         self.resetZoom()
 
     def getGraphXLimits(self):
-        return self._plotFrame.xAxis.dataRange
+        return self._plotFrame.dataRanges.x
 
     def setGraphXLimits(self, xMin, xMax):
         assert xMin < xMax
@@ -2051,9 +2046,9 @@ class OpenGLPlotCanvas(PlotBackend):
     def getGraphYLimits(self, axis="left"):
         assert axis in ("left", "right")
         if axis == "left":
-            return self._plotFrame.yAxis.dataRange
+            return self._plotFrame.dataRanges.y
         else:
-            return self._plotFrame.y2Axis.dataRange
+            return self._plotFrame.dataRanges.y2
 
     def setGraphYLimits(self, yMin, yMax, axis="left"):
         assert yMin < yMax
@@ -2122,24 +2117,27 @@ class OpenGLPlotCanvas(PlotBackend):
         return self._plotFrame.yAxis.isLog
 
     # Non orthogonal axes
+
     def setBaseVectors(self, x=(1., 0.), y=(0., 1.)):
         """Set base vectors.
 
         Useful for non-orthogonal axes.
         If an axis is in log scale, skew is applied to log transformed values.
         """
-        assert len(x) == 2 and len(y) == 2
-        self._baseVectors = tuple(x), tuple(y)
+        self._plotFrame.baseVectors = x, y
         self._dirtyPlotDataTransformedBounds()
         self.updateAxis()
+        self.resetZoom()
 
     def getBaseVectors(self):
-        return self._baseVectors
+        return self._plotFrame.baseVectors
 
     def isDefaultBaseVectors(self):
-        return self._baseVectors == self._DEFAULT_BASE_VECTORS
+        return self._plotFrame.baseVectors == \
+            self._plotFrame.DEFAULT_BASE_VECTORS
 
     # Title, Labels
+
     def setGraphTitle(self, title=""):
         self._plotFrame.title = title
 
