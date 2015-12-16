@@ -323,6 +323,8 @@ class GLPlotFrame(object):
     """
     }
 
+    _Margins = namedtuple('Margins', ('left', 'right', 'top', 'bottom'))
+
     def __init__(self, margins):
         """
         :param margins: The margins around plot area for axis and labels.
@@ -331,7 +333,7 @@ class GLPlotFrame(object):
         """
         self._renderResources = None
 
-        self._margins = dict(margins)
+        self._margins = self._Margins(**margins)
 
         self.axes = []  # List of PlotAxis to be updated by subclasses
 
@@ -339,16 +341,27 @@ class GLPlotFrame(object):
         self._size = 0., 0.
         self._title = ''
         self._baseVectors = (1., 0.), (0., 1.)
+        self._transformedDataRanges = None
+        self._transformedDataProjMat = None
+        self._transformedDataY2ProjMat = None
 
     @property
     def isDirty(self):
         """True if it need to refresh graphic rendering, False otherwise."""
-        return self._renderResources is None
+        return (self._renderResources is None or
+                self._transformedDataRanges is None or
+                self._transformedDataProjMat is None or
+                self._transformedDataY2ProjMat is None)
 
     GRID_NONE = 0
     GRID_MAIN_TICKS = 1
     GRID_SUB_TICKS = 2
     GRID_ALL_TICKS = (GRID_MAIN_TICKS + GRID_SUB_TICKS)
+
+    @property
+    def margins(self):
+        """Margins in pixels around the plot."""
+        return self._margins
 
     @property
     def grid(self):
@@ -381,6 +394,233 @@ class GLPlotFrame(object):
             self._dirty()
 
     @property
+    def plotOrigin(self):
+        """Plot area origin (left, top) in widget coordinates in pixels."""
+        return self.margins.left, self.margins.top
+
+    @property
+    def plotSize(self):
+        """Plot area size (width, height) in pixels."""
+        w, h = self.size
+        w -= self.margins.left + self.margins.right
+        h -= self.margins.top + self.margins.bottom
+        return w, h
+
+    _DataRanges = namedtuple('dataRanges', ('x', 'y', 'y2'))
+
+    @property
+    def transformedDataRanges(self):
+        """Bounds of the displayed area in transformed data coordinates
+        (i.e., log scale applied if any as well as skew)
+
+        3-tuple of 2-tuple (min, max) for each axis: x, y, y2.
+        """
+        if self._transformedDataRanges is None:
+            (xMin, xMax), (yMin, yMax), (y2Min, y2Max) = self.dataRanges
+
+            if self.xAxis.isLog:
+                try:
+                    xMin = math.log10(xMin)
+                except ValueError:
+                    print('xMin: warning log10({0})'.format(xMin))
+                    xMin = 0.
+                try:
+                    xMax = math.log10(xMax)
+                except ValueError:
+                    print('xMax: warning log10({0})'.format(xMax))
+                    xMax = 0.
+
+            if self.yAxis.isLog:
+                try:
+                    yMin = math.log10(yMin)
+                except ValueError:
+                    print('yMin: warning log10({0})'.format(yMin))
+                    yMin = 0.
+                try:
+                    yMax = math.log10(yMax)
+                except ValueError:
+                    print('yMax: warning log10({0})'.format(yMax))
+                    yMax = 0.
+
+                try:
+                    y2Min = math.log10(y2Min)
+                except ValueError:
+                    print('yMin: warning log10({0})'.format(y2Min))
+                    y2Min = 0.
+                try:
+                    y2Max = math.log10(y2Max)
+                except ValueError:
+                    print('yMax: warning log10({0})'.format(y2Max))
+                    y2Max = 0.
+
+            # Non-orthogonal axes
+            if self.baseVectors != self.DEFAULT_BASE_VECTORS:
+                (xx, xy), (yx, yy) = self.baseVectors
+                skew_mat = np.array(((xx, yx), (xy, yy)))
+
+                corners = [(xMin, yMin), (xMin, yMax),
+                           (xMax, yMin), (xMax, yMax),
+                           (xMin, y2Min), (xMin, y2Max),
+                           (xMax, y2Min), (xMax, y2Max)]
+
+                corners = np.array(
+                    [np.dot(skew_mat, corner) for corner in corners],
+                    dtype=np.float32)
+                xMin, xMax = corners[:, 0].min(),  corners[:, 0].max()
+                yMin, yMax = corners[0:4, 1].min(), corners[0:4, 1].max()
+                y2Min, y2Max = corners[4:, 1].min(), corners[4:, 1].max()
+
+            self._transformedDataRanges = self._DataRanges(
+                (xMin, xMax), (yMin, yMax), (y2Min, y2Max))
+
+        return self._transformedDataRanges
+
+    @property
+    def transformedDataProjMat(self):
+        """Orthographic projection matrix for rendering transformed data
+
+        :type: numpy.matrix
+        """
+        if self._transformedDataProjMat is None:
+            xMin, xMax = self.transformedDataRanges.x
+            yMin, yMax = self.transformedDataRanges.y
+
+            if self.isYAxisInverted:
+                mat = mat4Ortho(xMin, xMax, yMax, yMin, 1, -1)
+            else:
+                mat = mat4Ortho(xMin, xMax, yMin, yMax, 1, -1)
+
+            # Non-orthogonal axes
+            if self.baseVectors != self.DEFAULT_BASE_VECTORS:
+                (xx, xy), (yx, yy) = self.baseVectors
+                mat = mat * np.matrix((
+                    (xx, yx, 0., 0.),
+                    (xy, yy, 0., 0.),
+                    (0., 0., 1., 0.),
+                    (0., 0., 0., 1.)), dtype=np.float32)
+
+            self._transformedDataProjMat = mat
+
+        return self._transformedDataProjMat
+
+    @property
+    def transformedDataY2ProjMat(self):
+        """Orthographic projection matrix for rendering transformed data
+        for the 2nd Y axis
+
+        :type: numpy.matrix
+        """
+        if self._transformedDataY2ProjMat is None:
+            xMin, xMax = self.transformedDataRanges.x
+            y2Min, y2Max = self.transformedDataRanges.y2
+
+            if self.isYAxisInverted:
+                mat = mat4Ortho(xMin, xMax, y2Max, y2Min, 1, -1)
+            else:
+                mat = mat4Ortho(xMin, xMax, y2Min, y2Max, 1, -1)
+
+            # Non-orthogonal axes
+            if self.baseVectors != self.DEFAULT_BASE_VECTORS:
+                (xx, xy), (yx, yy) = self.baseVectors
+                mat = mat * np.matrix((
+                    (xx, yx, 0., 0.),
+                    (xy, yy, 0., 0.),
+                    (0., 0., 1., 0.),
+                    (0., 0., 0., 1.)), dtype=np.float32)
+
+            self._transformedDataY2ProjMat = mat
+
+        return self._transformedDataY2ProjMat
+
+    def dataToPixel(self, x, y, axis='left'):
+        """Convert data coordinate to widget pixel coordinate.
+        """
+        assert axis in ('left', 'right')
+
+        trBounds = self.transformedDataRanges
+
+        if self.xAxis.isLog:
+            if x < FLOAT32_MINPOS:
+                return None
+            xDataTr = math.log10(x)
+        else:
+            xDataTr = x
+
+        if self.yAxis.isLog:
+            if y < FLOAT32_MINPOS:
+                return None
+            yDataTr = math.log10(y)
+        else:
+            yDataTr = y
+
+        # Non-orthogonal axes
+        if self.baseVectors != self.DEFAULT_BASE_VECTORS:
+            (xx, xy), (yx, yy) = self.baseVectors
+            skew_mat = np.array(((xx, yx), (xy, yy)))
+
+            coords = np.dot(skew_mat, np.array((xDataTr, yDataTr)))
+            xDataTr, yDataTr = coords
+
+        plotWidth, plotHeight = self.plotSize
+
+        xPixel = int(self.margins.left +
+                     plotWidth * (xDataTr - trBounds.x[0]) /
+                     (trBounds.x[1] - trBounds.x[0]))
+
+        usedAxis = trBounds.y if axis == "left" else trBounds.y2
+        yOffset = (plotHeight * (yDataTr - usedAxis[0]) /
+                (usedAxis[1] - usedAxis[0]))
+
+        if self.isYAxisInverted:
+            yPixel = int(self.margins.top + yOffset)
+        else:
+            yPixel = int(self.size[1] - self.margins.bottom - yOffset)
+
+        return xPixel, yPixel
+
+    def pixelToData(self, x, y, axis="left"):
+        """Convert pixel position to data coordinates.
+
+        :param float x: X coord
+        :param float y: Y coord
+        :param str axis: Y axis to use in ('left', 'right')
+        :return: (x, y) position in data coords
+        """
+        assert axis in ("left", "right")
+
+        plotWidth, plotHeight = self.plotSize
+
+        trBounds = self.transformedDataRanges
+
+        xData = (x - self.margins.left + 0.5) / float(plotWidth)
+        xData = trBounds.x[0] + xData * (trBounds.x[1] - trBounds.x[0])
+
+        usedAxis = trBounds.y if axis == "left" else trBounds.y2
+        if self.isYAxisInverted:
+            yData = (y - self.margins.top + 0.5) / float(plotHeight)
+            yData = usedAxis[0] + yData * (usedAxis[1] - usedAxis[0])
+        else:
+            yData = self.size[1] - self.margins.bottom - y - 0.5
+            yData /= float(plotHeight)
+            yData = usedAxis[0] + yData * (usedAxis[1] - usedAxis[0])
+
+        # non-orthogonal axis
+        if self.baseVectors != self.DEFAULT_BASE_VECTORS:
+            (xx, xy), (yx, yy) = self.baseVectors
+            skew_mat = np.array(((xx, yx), (xy, yy)))
+            skew_mat = np.linalg.inv(skew_mat)
+
+            coords = np.dot(skew_mat, np.array((xData, yData)))
+            xData, yData = coords
+
+        if self.xAxis.isLog:
+            xData = pow(10, xData)
+        if self.yAxis.isLog:
+            yData = pow(10, yData)
+
+        return xData, yData
+
+    @property
     def title(self):
         """Main title as a str in latin-1."""
         return self._title
@@ -398,6 +638,9 @@ class GLPlotFrame(object):
     def _dirty(self):
         # When Text2D require discard we need to handle it
         self._renderResources = None
+        self._transformedDataRanges = None
+        self._transformedDataProjMat = None
+        self._transformedDataY2ProjMat = None
 
     def _updateAxes(self):
         """Override in subclass to update PlotAxis in axes."""
@@ -438,9 +681,9 @@ class GLPlotFrame(object):
         vertices = np.array(vertices, dtype=np.float32)
 
         # Add main title
-        xTitle = (self.size[0] + self._margins['left'] -
-                  self._margins['right']) // 2
-        yTitle = self._margins['top'] - self._TICK_LENGTH_IN_PIXELS
+        xTitle = (self.size[0] + self.margins.left -
+                  self.margins.right) // 2
+        yTitle = self.margins.top - self._TICK_LENGTH_IN_PIXELS
         labels.append(Text2D(text=self.title,
                              x=xTitle,
                              y=yTitle,
@@ -503,8 +746,8 @@ class GLPlotFrame(object):
 
         glLineWidth(self._LINE_WIDTH)
         glUniformMatrix4fv(prog.uniforms['matrix'], 1, GL_TRUE, matProj)
-        glUniform4f(prog.uniforms['color'], 0.5, 0.5, 0.5, 1.)
-        glUniform1f(prog.uniforms['tickFactor'], 1/2.)  # 1/tickLen
+        glUniform4f(prog.uniforms['color'], 0.7, 0.7, 0.7, 1.)
+        glUniform1f(prog.uniforms['tickFactor'], 0.) #1/2.)  # 1/tickLen
 
         glEnableVertexAttribArray(prog.attributes['position'])
         glVertexAttribPointer(prog.attributes['position'],
@@ -531,8 +774,7 @@ class GLPlotFrame2D(GLPlotFrame):
                                   labelAlign=CENTER, labelVAlign=TOP,
                                   titleAlign=CENTER, titleVAlign=TOP,
                                   titleRotate=0,
-                                  titleOffset=(0,
-                                               self._margins['bottom'] // 2)))
+                                  titleOffset=(0, self.margins.bottom // 2)))
 
         self._x2AxisCoords = ()
 
@@ -541,7 +783,7 @@ class GLPlotFrame2D(GLPlotFrame):
                                   labelAlign=RIGHT, labelVAlign=CENTER,
                                   titleAlign=CENTER, titleVAlign=BOTTOM,
                                   titleRotate=ROTATE_270,
-                                  titleOffset=(-3 * self._margins['left'] // 4,
+                                  titleOffset=(-3 * self.margins.left // 4,
                                                0)))
 
         self._y2Axis = PlotAxis(self,
@@ -549,7 +791,7 @@ class GLPlotFrame2D(GLPlotFrame):
                                 labelAlign=LEFT, labelVAlign=CENTER,
                                 titleAlign=CENTER, titleVAlign=TOP,
                                 titleRotate=ROTATE_270,
-                                titleOffset=(3*self._margins['right'] // 4,
+                                titleOffset=(3 * self.margins.right // 4,
                                              0))
 
         self._isYAxisInverted = False
@@ -611,6 +853,8 @@ class GLPlotFrame2D(GLPlotFrame):
 
     @baseVectors.setter
     def baseVectors(self, baseVectors):
+        self._dirty()
+
         (xx, xy), (yx, yy) = baseVectors
         vectors = (float(xx), float(xy)), (float(yx), float(yy))
 
@@ -631,10 +875,9 @@ class GLPlotFrame2D(GLPlotFrame):
 
         Type: ((xMin, xMax), (yMin, yMax), (y2Min, y2Max))
         """
-        return namedtuple('dataRanges', ('x', 'y', 'y2'))(
-            self._dataRanges['x'],
-            self._dataRanges['y'],
-            self._dataRanges['y2'])
+        return self._DataRanges(self._dataRanges['x'],
+                                self._dataRanges['y'],
+                                self._dataRanges['y2'])
 
     @staticmethod
     def _clipToSafeRange(min_, max_, isLog):
@@ -674,10 +917,10 @@ class GLPlotFrame2D(GLPlotFrame):
     def _updateAxes(self):
         width, height = self.size
 
-        xCoords = (self._margins['left'] - 0.5,
-                   width - self._margins['right'] + 0.5)
-        yCoords = (height - self._margins['bottom'] + 0.5,
-                   self._margins['top'] - 0.5)
+        xCoords = (self.margins.left - 0.5,
+                   width - self.margins.right + 0.5)
+        yCoords = (height - self.margins.bottom + 0.5,
+                   self.margins.top - 0.5)
 
         self.axes[0].displayCoords = ((xCoords[0], yCoords[0]),
                                       (xCoords[1], yCoords[0]))
@@ -699,16 +942,16 @@ class GLPlotFrame2D(GLPlotFrame):
         vertices = []
 
         for axis in self.axes:
-            for (xPixel, yPixel), xData, text in axis.ticks:
+            for (xPixel, yPixel), data, text in axis.ticks:
                 if test(text):
                     vertices.append((xPixel, yPixel))
                     if axis == self.xAxis:
-                        vertices.append((xPixel, self._margins['top']))
+                        vertices.append((xPixel, self.margins.top))
                     elif axis == self.yAxis:
-                        vertices.append((self.size[0] - self._margins['right'],
+                        vertices.append((self.size[0] - self.margins.right,
                                          yPixel))
                     else:  # axis == self.y2Axis
-                        vertices.append((self._margins['left'], yPixel))
+                        vertices.append((self.margins.left, yPixel))
 
         return vertices
 
