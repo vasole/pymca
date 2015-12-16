@@ -941,17 +941,83 @@ class GLPlotFrame2D(GLPlotFrame):
     def _buildGridVerticesWithTest(self, test):
         vertices = []
 
-        for axis in self.axes:
-            for (xPixel, yPixel), data, text in axis.ticks:
-                if test(text):
-                    vertices.append((xPixel, yPixel))
-                    if axis == self.xAxis:
-                        vertices.append((xPixel, self.margins.top))
-                    elif axis == self.yAxis:
-                        vertices.append((self.size[0] - self.margins.right,
-                                         yPixel))
+        if self.baseVectors == self.DEFAULT_BASE_VECTORS:
+            for axis in self.axes:
+                for (xPixel, yPixel), data, text in axis.ticks:
+                    if test(text):
+                        vertices.append((xPixel, yPixel))
+                        if axis == self.xAxis:
+                            vertices.append((xPixel, self.margins.top))
+                        elif axis == self.yAxis:
+                            vertices.append((self.size[0] - self.margins.right,
+                                             yPixel))
+                        else:  # axis == self.y2Axis
+                            vertices.append((self.margins.left, yPixel))
+
+        else:
+            # Get plot corners in data coords
+            plotLeft, plotTop = self.plotOrigin
+            plotWidth, plotHeight = self.plotSize
+
+            corners = [(plotLeft, plotTop),
+                       (plotLeft, plotTop + plotHeight),
+                       (plotLeft + plotWidth, plotTop + plotHeight),
+                       (plotLeft + plotWidth, plotTop)]
+
+            for axis in self.axes:
+                if axis == self.xAxis:
+                    cornersInData = np.array([
+                        self.pixelToData(x, y) for (x, y) in corners])
+                    borders = ((cornersInData[0], cornersInData[3]),  # top
+                               (cornersInData[1], cornersInData[0]),  # left
+                               (cornersInData[3], cornersInData[2]))  # right
+
+                    for (xPixel, yPixel), data, text in axis.ticks:
+                        if test(text):
+                            for (x0, y0), (x1, y1) in borders:
+                                if data >= min(x0, x1) and data < max(x0, x1):
+                                    yIntersect = (data - x0) * \
+                                        (y1 - y0) / (x1 - x0) + y0
+
+                                    pixelPos = self.dataToPixel(
+                                        data, yIntersect)
+                                    if pixelPos is not None:
+                                        vertices.append((xPixel, yPixel))
+                                        vertices.append(pixelPos)
+                                    break  # Stop at first intersection
+
+                else: # y or y2 axes
+                    if axis == self.yAxis:
+                        axis_name = 'left'
+                        cornersInData = np.array([
+                            self.pixelToData(x, y) for (x, y) in corners])
+                        borders = (
+                            (cornersInData[3], cornersInData[2]),  # right
+                            (cornersInData[0], cornersInData[3]),  # top
+                            (cornersInData[2], cornersInData[1]))  # bottom
+
                     else:  # axis == self.y2Axis
-                        vertices.append((self.margins.left, yPixel))
+                        axis_name = 'right'
+                        corners = np.array([self.pixelToData(
+                            x, y, axis='right') for (x, y) in corners])
+                        borders = (
+                            (cornersInData[1], cornersInData[0]),  # left
+                            (cornersInData[0], cornersInData[3]),  # top
+                            (cornersInData[2], cornersInData[1]))  # bottom
+
+                    for (xPixel, yPixel), data, text in axis.ticks:
+                        if test(text):
+                            for (x0, y0), (x1, y1) in borders:
+                                if data >= min(y0, y1) and data < max(y0, y1):
+                                    xIntersect = (data - y0) * \
+                                        (x1 - x0) / (y1 - y0) + x0
+
+                                    pixelPos = self.dataToPixel(
+                                        xIntersect, data, axis=axis_name)
+                                    if pixelPos is not None:
+                                        vertices.append((xPixel, yPixel))
+                                        vertices.append(pixelPos)
+                                    break  # Stop at first intersection
 
         return vertices
 

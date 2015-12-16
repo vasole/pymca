@@ -897,7 +897,6 @@ class OpenGLPlotCanvas(PlotBackend):
             if marker['text'] is not None:
                 # Find intersection of hline with borders in data
                 # Order is important as it stops at first intersection
-                yIntersect = None
                 for border_name in ('top', 'bottom', 'right', 'left'):
                     (x0, y0), (x1, y1) = borders[border_name]
                     if xCoord >= min(x0, x1) and xCoord < max(x0, x1):
