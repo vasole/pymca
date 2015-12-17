@@ -114,6 +114,7 @@ class McaWindow(ScanWindow.ScanWindow):
         self._buildCalibrationControlWidget()
         self._toggleCounter = 2
         self._togglePointsSignal()
+        self._ownSignal = None
         self.changeGridLevel()
         self.connections()
         self.setGraphYLabel('Counts')
@@ -1528,6 +1529,24 @@ class McaWindow(ScanWindow.ScanWindow):
         self.refresh()
 
     #The plugins interface
+    def _toggleLogY(self):
+        if DEBUG:
+            print("McaWindow _toggleLogY")
+        self._ownSignal = True
+        try:
+            super(McaWindow, self)._toggleLogY()
+        finally:
+            self._ownSignal = None
+
+    def _toggleLogX(self):
+        if DEBUG:
+            print("McaWindow _toggleLogX")
+        self._ownSignal = True
+        try:
+            super(McaWindow, self)._toggleLogX()
+        finally:
+            self._ownSignal = None
+
     def getGraphYLimits(self):
         #if the active curve is mapped to second axis
         #I should give the second axis limits
@@ -1537,7 +1556,7 @@ class McaWindow(ScanWindow.ScanWindow):
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
-                 xerror=None, yerror=None, own=False, **kw):
+                 xerror=None, yerror=None, own=None, **kw):
         if legend in self._curveList:
             if info is None:
                 info = {}
@@ -1563,6 +1582,8 @@ class McaWindow(ScanWindow.ScanWindow):
             xlabel = self.getGraphXLabel()
         if ylabel is None:
             ylabel = self.getGraphYLabel()
+        if own is None:
+           own = self._ownSignal
         if own and (legend in self.dataObjectsDict):
             # The curve is already registered
             super(McaWindow, self).addCurve(x, y, legend=legend, info=info,
