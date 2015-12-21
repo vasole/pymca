@@ -75,7 +75,8 @@ class DefaultParametersWidget(qt.QWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
-        self.parametersWidget = Parameters.Parameters(self)
+        self.parametersWidget = Parameters.Parameters(self,
+                                                      allowBackgroundAdd=True)
         self.mainLayout.addWidget(self.parametersWidget)
         self.simpleFitInstance = fit
         self.background = background
