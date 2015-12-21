@@ -70,8 +70,9 @@ DEBUG = 0
 
 
 class Parameters(QTable):
-    def __init__(self, *args, **kw):
-        QTable.__init__(self, *args)
+    def __init__(self, parent=None, allowBackgroundAdd=False, **kw):
+        QTable.__init__(self, parent)
+        self._allowBackgroundAdd = allowBackgroundAdd
         self.setRowCount(1)
         self.setColumnCount(1)
         self.labels = ['Parameter', 'Estimation', 'Fit Value', 'Sigma',
@@ -447,12 +448,15 @@ class Parameters(QTable):
         elif str(newvalue) == 'ADD':
             group = int(float(str(self.parameters[workparam]['group'])))
             if group == 0:
-                #One cannot add a background group
-                return 0
+                if not self._allowBackgroundAdd:
+                    #One cannot add a background group
+                    return 0
             i = 0
             for param in self.paramlist:
                 if i <= int(float(str(self.parameters[param]['group']))):
                     i += 1
+            if (group == 0) and (i == 1):
+                i += 1
             self.addgroup(i, group)
             return 0
         elif str(newvalue) == 'SHOW':
@@ -462,6 +466,9 @@ class Parameters(QTable):
             print("None of the others!")
 
     def addgroup(self, newg, gtype):
+        if DEBUG:
+            print("addgroup called")
+            print("newg = ", newg, "gtype = ", gtype)
         line = 0
         newparam = []
         oldparamlist = list(self.paramlist)
