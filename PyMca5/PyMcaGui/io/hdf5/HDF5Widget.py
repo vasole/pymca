@@ -694,11 +694,11 @@ def getDatasetDialog(filename=None, value=False, message=None):
     return data
 
 if __name__ == "__main__":
-    app = qt.QApplication(sys.argv)
     if len(sys.argv) < 2:
         print("Usage:")
         print("python HDF5Widget.py path_to_hdf5_file_name")
         sys.exit(0)
+    app = qt.QApplication(sys.argv)
     fileModel = FileModel()
     fileView = HDF5Widget(fileModel)
     phynxFile = fileModel.openFile(sys.argv[1])
