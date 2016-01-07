@@ -38,10 +38,8 @@ try:
 except:
     import spslut
 try:
-    from PyMca5.Object3D import Object3DFileDialogs
     from PyMca5.Object3D import Object3DBase
 except ImportError:
-    from Object3D import Object3DFileDialogs
     from Object3D import Object3DBase
 
 try:
@@ -60,6 +58,7 @@ except ImportError:
     except:
         import Object3DMeshConfig
 
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 
 qt = Object3DMeshConfig.qt
 import weakref
@@ -523,13 +522,15 @@ def getObject3DInstance(config=None):
     fileTypeList = ['EDF Z Stack (*edf *ccd)',
                     'EDF X Stack (*edf *ccd)',
                     'TIFF Stack (*tif *tiff)']
-    old = Object3DFileDialogs.Object3DDirs.nativeFileDialogs * 1
-    Object3DFileDialogs.Object3DDirs.nativeFileDialogs = False
-    fileList, filterUsed = Object3DFileDialogs.getFileList(None, fileTypeList,
-                                               "Please select the object file(s)",
-                                               "OPEN",
-                                               True)
-    Object3DFileDialogs.Object3DDirs.nativeFileDialogs = old
+    old = PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs * 1
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = False
+    fileList, filterUsed = PyMcaFileDialogs.getFileList(
+        parent=None,
+        filetypelist=fileTypeList,
+        message="Please select the object file(s)",
+        mode="OPEN",
+        getfilter=True)
+    PyMcaFileDialogs.PyMcaDirs.nativeFileDialogs = old
     if not len(fileList):
         return None
     if filterUsed == fileTypeList[0]:
