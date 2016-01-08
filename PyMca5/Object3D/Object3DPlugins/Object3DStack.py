@@ -58,7 +58,7 @@ except ImportError:
     except:
         import Object3DMeshConfig
 
-from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 
 qt = Object3DMeshConfig.qt
 import weakref

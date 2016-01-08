@@ -66,7 +66,7 @@ from . import SceneManager
 from . import GLToolBar
 from . import Object3DPrintPreview
 
-from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 
 if hasattr(qt, "QString"):
     qtQString = qt.QString

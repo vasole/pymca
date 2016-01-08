@@ -54,8 +54,8 @@ except ImportError:
     except:
         import Object3DCTools
 
-from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 
 import weakref
 

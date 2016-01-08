@@ -69,7 +69,11 @@ class SimpleFitDefaultFunctions(object):
         return 0.5*SpecfitFuns.slit(pars,x)
 
     def atan(self, pars, x):
-        return pars[0] * (0.5 + (arctan((1.0*x-pars[1])/pars[2])/pi))
+        result = 0.0
+        for i in range(len(pars) // 3):
+            result += pars[3 * i + 0] * \
+                    (0.5 + (arctan((1.0*x-pars[3 * i + 1])/pars[3 * i + 2])/pi))
+        return result
 
     def polynomial(self, pars, x):
         result = numpy.zeros(x.shape, numpy.float) + pars[0]

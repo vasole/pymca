@@ -30,9 +30,8 @@ import os
 import h5py
 import Object3DStack
 
-from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaGui import PyMcaQt as qt
-
 
 class ChimeraStack(Object3DStack.Object3DStack):
     pass

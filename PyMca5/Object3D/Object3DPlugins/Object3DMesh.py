@@ -54,7 +54,7 @@ except ImportError:
         import Object3DCTools
         import Object3DQhull
 
-from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 
 try:
     from PyMca5.Object3D.Object3DPlugins import Object3DMeshConfig
