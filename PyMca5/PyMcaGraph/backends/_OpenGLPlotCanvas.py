@@ -983,7 +983,7 @@ class OpenGLPlotCanvas(PlotBackend):
                                            align=RIGHT, valign=BOTTOM)
                             labels.append(label)
 
-                        xMin, xMax = self._plotFrame.transformedDataRanges.x
+                        xMin, xMax = self._plotFrame.dataRanges.x
                         vertices = np.array(((xMin, yCoord),
                                              (xMax, yCoord)),
                                             dtype=np.float32)
@@ -998,7 +998,7 @@ class OpenGLPlotCanvas(PlotBackend):
                                            align=LEFT, valign=TOP)
                             labels.append(label)
 
-                        yMin, yMax = self._plotFrame.transformedDataRanges.y
+                        yMin, yMax = self._plotFrame.dataRanges.y
                         vertices = np.array(((xCoord, yMin),
                                              (xCoord, yMax)),
                                             dtype=np.float32)
