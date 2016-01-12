@@ -21,7 +21,11 @@ import sys,os
 import glob
 import platform
 import time
-from distutils.core import Extension, setup, Command
+if 'bdist_wheel' in sys.argv:
+    from setuptools import setup
+else:
+    from distutils.core import setup
+from distutils.core import Extension, Command
 from distutils.command.install import install as dftinstall
 try:
     import numpy
