@@ -754,8 +754,9 @@ class install(dftinstall):
 
 # end of man pages handling
 cmdclass = {'install_data':smart_install_data,
-            'build_py':smart_build_py,
-            'build_ext': build_ext}
+            'build_py':smart_build_py}
+if build_ext is not None:
+    cmdclass['build_ext'] = build_ext
 
 if USE_SMART_INSTALL_SCRIPTS:
     # typical use of user without superuser privileges
