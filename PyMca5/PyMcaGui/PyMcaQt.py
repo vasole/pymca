@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -75,12 +75,12 @@ elif "PyQt5" in sys.modules:
         pass
 else:
     if sys.version < "3.0.0":
-        import sip
         try:
+            import sip
             sip.setapi("QString", 2)
             sip.setapi("QVariant", 2)
         except:
-            print("API 1 -> Console widget not available")
+            print("Cannot set sip API") # Console widget not available
     try:
         from PyQt4.QtCore import *
         from PyQt4.QtGui import *
