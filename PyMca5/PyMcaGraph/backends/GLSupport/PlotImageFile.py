@@ -133,8 +133,10 @@ def saveImageToFile(data, fileNameOrObj, fileFormat):
         fileObj.write('</svg>')
 
     elif fileFormat == 'ppm':
+        height, width = data.shape[:2]
+
         fileObj.write('P6\n')
-        fileObj.write('%d %d\n' % (self.winWidth, self.winHeight))
+        fileObj.write('%d %d\n' % (width, height))
         fileObj.write('255\n')
         fileObj.write(data.tostring())
 

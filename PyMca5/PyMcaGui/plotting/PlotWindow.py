@@ -1482,7 +1482,10 @@ class PlotWindow(PlotWidget.PlotWidget):
                 msg.exec_()
             return
         try:
-            ffile=open(filename,'wb')
+            if sys.version_info.major >= 3:
+                ffile = open(filename, 'w', newline='\n')
+            else:
+                ffile = open(filename,'wb')
         except IOError:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)

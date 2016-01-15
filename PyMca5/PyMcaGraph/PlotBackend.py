@@ -362,6 +362,15 @@ class PlotBackend(object):
         else:
             self._activeCurveHandling = False
 
+    def getBaseVectors(self):
+        """Returns the coordinate in the orthogonal plot of the X and Y unit
+        vectors of the data.
+
+        :return: X and Y data unit vectors in orthogonal plot coordinates
+        :rtype: 2-tuple of 2-tuple of float: (xx, xy), (yx, yy)
+        """
+        print("PlotBackend getBaseVectors not implemented")
+
     def getGraphCursor(self):
         """
         Returns the current state of the crosshair cursor.
@@ -562,6 +571,13 @@ class PlotBackend(object):
         """
         print("PlotBackend invertYAxis not implemented")
 
+    def isDefaultBaseVectors(self):
+        """Returns True if axes have the default basis, False otherwise.
+
+        The default basis is x horizontal, y vertical.
+        """
+        return True
+
     def isDrawModeEnabled(self):
         """
         :return: True if user can draw
@@ -732,6 +748,18 @@ class PlotBackend(object):
         if DEBUG:
             print("PlotBackend setActiveImage not implemented")
         return
+
+    def setBaseVectors(self, x=(1., 0.), y=(0., 1.)):
+        """Set the data coordinates relative to the orthogonal plot area.
+
+        Useful for non-orthogonal axes.
+
+        :param x: (x, y) coords on the X data base vector in orthogonal coords.
+        :type x: 2-tuple of float
+        :param y: (x, y) coords of the Y data base vector in orthogonal coords.
+        :type y: 2-tuple of float
+        """
+        print("PlotBackend setBaseVectors not implemented")
 
     def setCallback(self, callback_function):
         """

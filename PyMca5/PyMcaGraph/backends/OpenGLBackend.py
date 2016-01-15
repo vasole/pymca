@@ -120,6 +120,18 @@ class OpenGLBackend(QGLWidget, OpenGLPlotCanvas):
         return self
 
 
+    # PySide seems to need proxy methods
+
+    def initializeGL(self):
+        return OpenGLPlotCanvas.initializeGL(self)
+
+    def paintGL(self):
+        return OpenGLPlotCanvas.paintGL(self)
+
+    def resizeGL(self, width, height):
+        return OpenGLPlotCanvas.resizeGL(self, width, height)
+
+
 # demo ########################################################################
 
 if __name__ == "__main__":
@@ -130,7 +142,10 @@ if __name__ == "__main__":
     try:
         from PyQt4.QtGui import QApplication
     except ImportError:
-        from PyQt5.QtWidgets import QApplication
+        try:
+            from PyQt5.QtWidgets import QApplication
+        except ImportError:
+            from PySide.QtGui import QApplication
 
     app = QApplication([])
     w = Plot(None, backend=OpenGLBackend)
