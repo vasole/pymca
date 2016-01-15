@@ -185,6 +185,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 import numpy
 try:
+    import os
+    os.environ["MDP_DISABLE_SKLEARN"] = "yes"
     import mdp
     if mdp.__version__ >= '2.6':
         MDP = True
