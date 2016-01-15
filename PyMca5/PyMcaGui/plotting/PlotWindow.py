@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1589,13 +1589,19 @@ class PlotWindow(PlotWidget.PlotWidget):
                       'OMNIC CSV *.csv',
                       'Widget PNG *.png',
                       'Widget JPG *.jpg']
-        outfile.setFilters(filterlist)
+        if hasattr(outfile, "setFilters"):
+            outfile.setFilters(filterlist)
+        else:
+            outfile.setNameFilters(filterlist)
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(outfile.AcceptSave)
         ret = outfile.exec_()
         if not ret:
             return None
-        outputFilter = qt.safe_str(outfile.selectedFilter())
+        if hasattr(outfile, "selectredFilter"):
+            outputFilter = qt.safe_str(outfile.selectedFilter())
+        else:
+            outputFilter = qt.safe_str(outfile.selectedNameFilter())
         filterused = outputFilter.split()
         filetype  = filterused[1]
         extension = filterused[2]
