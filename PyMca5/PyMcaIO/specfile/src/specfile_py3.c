@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (C) 2004-2015 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1318,7 +1318,7 @@ compList(long *nolist,long howmany)
 {
      long this,colon;
      char buf[30];
-     static char str[10000];
+     static char str[50000];
      char *retstr;
 
      if (howmany < 1) { return((char *)NULL);}

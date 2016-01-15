@@ -21,7 +21,11 @@ import sys,os
 import glob
 import platform
 import time
-from distutils.core import Extension, setup, Command
+if 'bdist_wheel' in sys.argv:
+    from setuptools import setup
+else:
+    from distutils.core import setup
+from distutils.core import Extension, Command
 from distutils.command.install import install as dftinstall
 try:
     import numpy
@@ -754,8 +758,9 @@ class install(dftinstall):
 
 # end of man pages handling
 cmdclass = {'install_data':smart_install_data,
-            'build_py':smart_build_py,
-            'build_ext': build_ext}
+            'build_py':smart_build_py}
+if build_ext is not None:
+    cmdclass['build_ext'] = build_ext
 
 if USE_SMART_INSTALL_SCRIPTS:
     # typical use of user without superuser privileges
