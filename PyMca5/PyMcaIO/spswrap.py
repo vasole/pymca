@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -280,14 +280,14 @@ def getmetadata(spec, shm):
             return
     else:
         return None
-    motors = []
+    motors = {}
     metadata = {}
     if type(uncoded_data) in [type([]), type((1,))]:
-        if len(uncoded_data) == 2:
+        if len(uncoded_data) >= 2:
             motors = uncoded_data[0]
             metadata = uncoded_data[1]
         else:
-            print("Unexpected metdata length %d instead of 2"  % len(uncoded_data))
+            print("Unexpected metadata length %d instead of 2"  % len(uncoded_data))
     elif type(uncoded_data) == type({}):
         metadata = uncoded_data
     else:
