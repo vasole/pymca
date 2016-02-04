@@ -236,7 +236,13 @@ def getXRFMCCorrectionFactors(fitConfiguration, xmimsim_pymca=None, verbose=Fals
         ydata = 0.0 + 0.1 * xdata
         mcaFit = ClassMcaTheory.McaTheory()
         mcaFit.configure(fitConfiguration)
-        mcaFit.setData(x=xdata, y=ydata, xmin=xmin, xmax=xmax)
+        #a dummy time
+        dummyTime = 1.0
+        if "concentrations" in fitConfiguration:
+            dummyTime = fitConfiguration["concentrations"].get("time",
+                                                          dummyTime)
+        mcaFit.setData(x=xdata, y=ydata,
+                       xmin=xmin, xmax=xmax, time=dummyTime)
         mcaFit.estimate()
         fitresult, result = mcaFit.startfit(digest=1)
         ddict=ConfigDict.ConfigDict()
