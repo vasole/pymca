@@ -605,7 +605,7 @@ class QtMcaAdvancedFitReport:
             if matplotlib_version < '0.99.0':
                 legend = ax.legend(legendlist,0,
                                    prop = fontproperties, labelsep=0.02)
-            elif matplotlib_version < '1.5'::
+            elif matplotlib_version < '1.5':
                 legend = ax.legend(legendlist,0,
                                    prop = fontproperties, labelspacing=0.02)
             else:
@@ -628,7 +628,7 @@ class QtMcaAdvancedFitReport:
             if matplotlib_version < '0.99.0':
                 legend = ax.legend(legendlist,0,
                                prop = fontproperties, labelsep=0.02)
-            elif matplotlib_version < '1.5'::
+            elif matplotlib_version < '1.5':
                 legend = ax.legend(legendlist,0,
                                prop = fontproperties, labelspacing=0.02)
             else:
