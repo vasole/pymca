@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -605,8 +605,11 @@ class QtMcaAdvancedFitReport:
             if matplotlib_version < '0.99.0':
                 legend = ax.legend(legendlist,0,
                                    prop = fontproperties, labelsep=0.02)
-            else:
+            elif matplotlib_version < '1.5'::
                 legend = ax.legend(legendlist,0,
+                                   prop = fontproperties, labelspacing=0.02)
+            else:
+                legend = ax.legend(legendlist, loc=0,
                                    prop = fontproperties, labelspacing=0.02)
         except ValueError:
             fig = Figure(figsize=(6,3)) # in inches
@@ -625,8 +628,11 @@ class QtMcaAdvancedFitReport:
             if matplotlib_version < '0.99.0':
                 legend = ax.legend(legendlist,0,
                                prop = fontproperties, labelsep=0.02)
-            else:
+            elif matplotlib_version < '1.5'::
                 legend = ax.legend(legendlist,0,
+                               prop = fontproperties, labelspacing=0.02)
+            else:
+                legend = ax.legend(legendlist, loc=0,
                                prop = fontproperties, labelspacing=0.02)
 
         ax.set_xlabel('Energy')
