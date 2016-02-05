@@ -362,8 +362,9 @@ def _getFisxMaterials(fitConfiguration):
                         fisxMaterial.setComposition(composition)
                         fisxMaterials.append(fisxMaterial)
                     except:
-                        raise TypeError("Error defining material %s" % \
-                                        materialName)
+                        if len(materialName):
+                            raise TypeError("Error defining material <%s>" % \
+                                            materialName)
                     processedMaterialList.append(materialName)                        
     return fisxMaterials
 
