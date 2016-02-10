@@ -193,6 +193,10 @@ excludes = ["Tkinter",
             'tcl','_tkagg', 'Tkconstants',
             "scipy", "Numeric", "numarray"]
 
+if sys.version < '3.0':
+    #https://bitbucket.org/anthony_tuininga/cx_freeze/issues/127/collectionssys-error
+    excludes.append("collections.abc")
+
 if H5PY_SPECIAL:
     special_modules.append(os.path.dirname(h5py.__file__))
 if OPENCL:
