@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -676,8 +676,12 @@ class RGBCorrelatorWidget(qt.QWidget):
                 strlist.append(f)
         if self._saveFilter is None:
             self._saveFilter =formatlist[0]
-        filedialog.setFilters(strlist)
-        filedialog.selectFilter(self._saveFilter)
+        if hasattr(filedialog, "setFilters"):
+            filedialog.setFilters(strlist)
+            filedialog.selectFilter(self._saveFilter)
+        else:
+            filedialog.setNameFilters(strlist)
+            filedialog.selectNameFilter(self._saveFilter)
         filedialog.setDirectory(initdir)
         ret = filedialog.exec_()
         if not ret: return ""
@@ -685,7 +689,10 @@ class RGBCorrelatorWidget(qt.QWidget):
         if len(filename):
             filename = "%s" % filename
             self.outputDir = os.path.dirname(filename)
-            self._saveFilter = "%s" % filedialog.selectedFilter()
+            if hasattr(filedialog, "selectedFilter"):
+                self._saveFilter = "%s" % filedialog.selectedFilter()
+            else:
+                self._saveFilter = "%s" % filedialog.selectedNameFilter()
             filterused = "."+self._saveFilter[-3:]
             PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:
@@ -716,7 +723,10 @@ class RGBCorrelatorWidget(qt.QWidget):
         strlist = QStringList()
         for f in formatlist:
                 strlist.append(f)
-        filedialog.setFilters(strlist)
+        if hasattr(filedialog, "setFilters"):
+            filedialog.setFilters(strlist)
+        else:
+            filedialog.setNameFilters(strlist)
         filedialog.setDirectory(initdir)
         ret = filedialog.exec_()
         if not ret:
@@ -731,7 +741,10 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.outputDir = os.path.dirname(filename[0])
             PyMcaDirs.inputDir = os.path.dirname(filename[0])
             if getfilter:
-                filterused = "%s" % filedialog.selectedFilter()
+                if hasattr(filedialog, "selectedFilter"):
+                    filterused = "%s" % filedialog.selectedFilter()
+                else:
+                    filterused = "%s" % filedialog.selectedNameFilter()
         else:
             filename = [""]
         if getfilter:

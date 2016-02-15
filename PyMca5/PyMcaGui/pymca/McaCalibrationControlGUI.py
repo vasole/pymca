@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -135,7 +135,10 @@ class McaCalibrationControlGUI(qt.QWidget):
             tmp = [self.lastInputFilter.replace("\n","")]
             for filetype in tmp:
                 strlist.append(filetype.replace("(","").replace(")",""))
-            filename.setFilters(strlist)
+            if hasattr(filename, "setFilters"):
+                filename.setFilters(strlist)
+            else:
+                filename.setNameFilters(strlist)
             filename.setFileMode(qt.QFileDialog.ExistingFile)
             filename.setDirectory(windir)
             ret = filename.exec_()
@@ -187,7 +190,10 @@ class McaCalibrationControlGUI(qt.QWidget):
             tmp = [self.lastInputFilter.replace("\n","")]
             for filetype in tmp:
                 strlist.append(filetype.replace("(","").replace(")",""))
-            filename.setFilters(strlist)
+            if hasattr(filename, "setFilters"):
+                filename.setFilters(strlist)
+            else:
+                filename.setNameFilters(strlist)
             filename.setFileMode(qt.QFileDialog.AnyFile)
             filename.setDirectory(windir)
             ret = filename.exec_()

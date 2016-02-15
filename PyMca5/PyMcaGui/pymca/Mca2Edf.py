@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -205,9 +205,14 @@ class Mca2EdfGUI(qt.QWidget):
             filedialog = qt.QFileDialog(self)
             filedialog.setWindowTitle("Open a set of files")
             filedialog.setDirectory(wdir)
-            filedialog.setFilters(["Mca Files (*.mca)",
-                                   "Spec Files (*.dat)",
-                                   "All Files (*)"])
+            if hasattr(filedialog, "setFilters"):
+                filedialog.setFilters(["Mca Files (*.mca)",
+                                       "Spec Files (*.dat)",
+                                       "All Files (*)"])
+            else:
+                filedialog.setNameFilters(["Mca Files (*.mca)",
+                                       "Spec Files (*.dat)",
+                                       "All Files (*)"])
             filedialog.setModal(1)
             filedialog.setFileMode(filedialog.ExistingFiles)
             ret = filedialog.exec_()
@@ -230,7 +235,10 @@ class Mca2EdfGUI(qt.QWidget):
     def browseConfig(self):
         filename = qt.QFileDialog(self,"Open a new fit config file",1)
         filename.setMode(filename.ExistingFiles)
-        filename.setFilters("Config Files (*.cfg)\nAll files (*)")
+        if hasattr(filename, "setFilters"):
+            filename.setFilters("Config Files (*.cfg)\nAll files (*)")
+        else:
+            filename.setNameFilters("Config Files (*.cfg)\nAll files (*)")
         if filename.exec_loop() == qt.QDialog.Accepted:
             filename = filename.selectedFile()
         else:

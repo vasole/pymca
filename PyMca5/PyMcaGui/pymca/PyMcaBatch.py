@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -658,7 +658,10 @@ class McaBatchGUI(qt.QWidget):
                             filetypes,
                             None)    #This should be the last file filter used
         else:
-            filedialog.setFilters(filetypes.split("\n"))
+            if hasattr(filedialog, "setFilters"):
+                filedialog.setFilters(filetypes.split("\n"))
+            else:
+                filedialog.setNameFilters(filetypes.split("\n"))
             ret = filedialog.exec_()
             if  ret == qt.QDialog.Accepted:
                 filelist=filedialog.selectedFiles()
@@ -703,7 +706,12 @@ class McaBatchGUI(qt.QWidget):
                                 filetypes,
                                 None)    #This should be the filter used
         else:
-            filename.setFilters(["Config Files (*.cfg)", "All files (*)"])
+            if hasattr(filename, "setFilters"):
+                filename.setFilters(["Config Files (*.cfg)",
+                                     "All files (*)"])
+            else:
+                filename.setNameFilters(["Config Files (*.cfg)",
+                                         "All files (*)"])
             ret = filename.exec_()
 
             if  ret == qt.QDialog.Accepted:

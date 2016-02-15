@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1346,7 +1346,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def _onSaveAs(self):
         cwd = os.getcwd()
         outfile = qt.QFileDialog(self)
-        outfile.setFilter('PyMca  *.ini')
+        if hasattr(outfile, "setFilters"):
+            outfile.setFilters(['PyMca  *.ini'])
+        else:
+            outfile.setNameFilters(['PyMca  *.ini'])
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
 
@@ -1355,7 +1358,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         outfile.setDirectory(cwd)
         ret = outfile.exec_()
         if ret:
-            filterused = qt.safe_str(outfile.selectedFilter()).split()
+            if hasattr(outfile, "selectedFilter"):
+                filterused = qt.safe_str(outfile.selectedFilter()).split()
+            else:
+                filterused = qt.safe_str(outfile.selectedNameFilter()).split()
             extension = ".ini"
             outdir=qt.safe_str(outfile.selectedFiles()[0])
             try:

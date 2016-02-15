@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -137,7 +137,10 @@ class Fit2SpecGUI(qt.QWidget):
     def browseList(self):
         filedialog = qt.QFileDialog(self,"Open a set of files",1)
         filedialog.setMode(filedialog.ExistingFiles)
-        filedialog.setFilters("Fit Files (*.fit)\n")
+        if hasattr(filedialog, "setFilters"):
+            filedialog.setFilters("Fit Files (*.fit)\n")
+        else:
+            filedialog.setNameFilters("Fit Files (*.fit)\n")
         if filedialog.exec_loop() == qt.QDialog.Accepted:
             filelist0= filedialog.selectedFiles()
         else:
