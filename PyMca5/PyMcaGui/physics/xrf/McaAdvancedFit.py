@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -2232,7 +2232,10 @@ class McaAdvancedFit(qt.QWidget):
             format_list.append('B/WGraphics SVG *.svg')
         for f in format_list:
             strlist.append(f)
-        outfile.setFilters(strlist)
+        if hasattr(outfile, "setFilters"):
+            outfile.setFilters(strlist)
+        else:
+            outfile.setNameFilters(strlist)
 
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
@@ -2240,7 +2243,10 @@ class McaAdvancedFit(qt.QWidget):
         ret = outfile.exec_()
 
         if ret:
-            filterused = qt.safe_str(outfile.selectedFilter()).split()
+            if hasattr(outfile, "selectedFilter"):
+                filterused = qt.safe_str(outfile.selectedFilter()).split()
+            else:
+                filterused = qt.safe_str(outfile.selectedNameFilter()).split()
             filedescription = filterused[0]
             filetype  = filterused[1]
             extension = filterused[2]
@@ -2391,7 +2397,10 @@ class McaAdvancedFit(qt.QWidget):
             msg.exec_()
             return
         try:
-            file=open(specFile,'wb')
+            if sys.version < "3.0":
+                file = open(specFile, 'wb')
+            else:
+                file = open(specFile, 'w', newline='')
         except IOError:
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Critical)
