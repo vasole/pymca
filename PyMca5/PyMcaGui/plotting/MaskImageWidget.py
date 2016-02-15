@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -2004,8 +2004,12 @@ class MaskImageWidget(qt.QWidget):
                 strlist.append(f)
         if self._saveFilter is None:
             self._saveFilter =formatlist[0]
-        filedialog.setFilters(strlist)
-        filedialog.selectFilter(self._saveFilter)
+        if hasattr(filedialog, "setFilters"):
+            filedialog.setFilters(strlist)
+            filedialog.selectFilter(self._saveFilter)
+        else:
+            filedialog.setNameFilters(strlist)
+            filedialog.selectNameFilter(self._saveFilter)
         filedialog.setDirectory(initdir)
         ret = filedialog.exec_()
         if not ret:
@@ -2014,7 +2018,10 @@ class MaskImageWidget(qt.QWidget):
         if len(filename):
             filename = qt.safe_str(filename)
             self.outputDir = os.path.dirname(filename)
-            self._saveFilter = qt.safe_str(filedialog.selectedFilter())
+            if hasattr(filedialog, "selectedFilter"):
+                self._saveFilter = qt.safe_str(filedialog.selectedFilter())
+            else:
+                self._saveFilter = qt.safe_str(filedialog.selectedNameFilter())
             filterused = "."+self._saveFilter[-3:]
             PyMcaDirs.outputDir = os.path.dirname(filename)
             if len(filename) < 4:

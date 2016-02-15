@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -473,14 +473,21 @@ class QEdfFileWidget(qt.QWidget):
         strlist = QStringList()
         for f in fileTypeList:
             strlist.append(f)
-        outfile.setFilters(strlist)
+        if hasattr(outfile, "setFilters"):
+            outfile.setFilters(strlist)
+        else:
+            outfile.setNameFilters(strlist)
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(outfile.AcceptSave)
         outfile.setDirectory(self.lastInputDir)
         ret = outfile.exec_()
 
-        if not ret: return
-        filterused = qt.safe_str(outfile.selectedFilter()).split()
+        if not ret:
+            return
+        if hasattr(outfile, "selectedFilter"):
+            filterused = qt.safe_str(outfile.selectedFilter()).split()
+        else:
+            filterused = qt.safe_str(outfile.selectedNameFilter()).split()
         filetype = filterused[0]
         extension = filterused[1]
         outstr = qt.safe_str(outfile.selectedFiles()[0])
@@ -794,31 +801,6 @@ class QEdfFileWidget(qt.QWidget):
                 if DEBUG:
                     print("self.currentArray = ",self.currentArray)
 
-
-    def openFileOLD(self, filename=None):
-        if DEBUG:
-            print("openfile = ",filename)
-        if filename is None:
-            filename= qt.QFileDialog(self,"Open a new EdfFile", 1)
-            filename.setFilters("EdfFiles (*.edf)\nEdfFiles (*.mca)\nEdfFiles (*ccd)\nAll files (*)")
-            if filename.exec_loop() == qt.QDialog.Accepted:
-                filename= qt.safe_str(filename.selectedFile())
-            else:
-                return
-            if not len(filename):    return
-
-        if filename in self.mapComboName.keys():
-            self.selectFile(filename)
-        else:
-            if not self.data.SetSource(filename):
-                qt.QMessageBox.critical(self, "ERROR opening EdfFile",
-                        "Cannot open following EdfFile:\n%s"%(filename))
-            else:
-                filename= self.data.SourceName
-                self.mapComboName[filename]= os.path.basename(filename)
-                self.fileCombo.insertItem(self.mapComboName[filename])
-                self.selectFile(filename)
-
     def openFile(self, filename=None,justloaded=None):
         if DEBUG:
             print("openfile = %s" % filename)
@@ -852,7 +834,8 @@ class QEdfFileWidget(qt.QWidget):
                             self,"openFile", "Open a new EdfFile")
             else:
                 filedialog = qt.QFileDialog(self,"Open new EdfFile(s)",1)
-                if self.lastInputDir is not None:filedialog.setDir(self.lastInputDir)
+                if self.lastInputDir is not None:
+                    filedialog.setDir(self.lastInputDir)
                 filedialog.setMode(filedialog.ExistingFiles)
                 filedialog.setFilters("EdfFiles (*.edf)\nEdfFiles (*.mca)\nEdfFiles (*ccd)\nAll files (*)")
                 if filedialog.exec_loop() == qt.QDialog.Accepted:

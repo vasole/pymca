@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -577,7 +577,10 @@ class RGBCorrelatorGraph(qt.QWidget):
             strlist = []
         for f in fileTypeList:
             strlist.append(f)
-        outfile.setFilters(strlist)
+        if hasattr(outfile, "setFilters"):
+            outfile.setFilters(strlist)
+        else:
+            outfile.setNameFilters(strlist)
         outfile.setFileMode(outfile.AnyFile)
         outfile.setAcceptMode(qt.QFileDialog.AcceptSave)
         outfile.setDirectory(self.saveDirectory)
@@ -585,7 +588,10 @@ class RGBCorrelatorGraph(qt.QWidget):
 
         if not ret:
             return
-        filterused = qt.safe_str(outfile.selectedFilter()).split()
+        if hasattr(outfile, "selectedFilter"):
+            filterused = qt.safe_str(outfile.selectedFilter()).split()
+        else:
+            filterused = qt.safe_str(outfile.selectedNameFilter()).split()
         filetype = filterused[0]
         extension = filterused[1]
 
