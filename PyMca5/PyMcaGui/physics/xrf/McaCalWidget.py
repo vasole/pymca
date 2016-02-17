@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -140,6 +140,7 @@ class McaCalWidget(qt.QDialog):
                                           backend=None)
         self.graph.setGraphXLabel('Channel')
         self.graph.setGraphYLabel('Counts')
+        self.graph.setDataMargins(0.0, 0.0, 0.0, 0.0)
 
         #The calibration Widget
         self.bottomPanel = qt.QWidget(self.container)
@@ -190,17 +191,22 @@ class McaCalWidget(qt.QDialog):
         self.fitIcon	= qt.QIcon(qt.QPixmap(IconDict["fit"]))
         self.searchIcon	= qt.QIcon(qt.QPixmap(IconDict["peaksearch"]))
 
+    def _resetZoom(self, dummyValue=None):
+        return self.graph.resetZoom()
+
     def initToolBar(self):
         toolbar = self.toolbar
         #Zoom Reset
         self._addToolButton(self.zoomResetIcon,
-                            self.graph.resetZoom,
+                            self._resetZoom,
                             'Auto-Scale the Graph')
         # Logarithmic
-        self._addToolButton(self.logyIcon,
-                            self._toggleLogY,
-                            'Toggle Logarithmic Y Axis (On/Off)',
-                            toggle=True)
+        self.yLogButton = self._addToolButton(self.logyIcon,
+                                    self._toggleLogY,
+                                    'Toggle Logarithmic Y Axis (On/Off)',
+                                    toggle=True)
+        self.yLogButton.setChecked(False)
+        self.yLogButton.setDown(False)
         # Search
         self._addToolButton(self.searchIcon,
                             self.peakSearch,
@@ -271,24 +277,30 @@ class McaCalWidget(qt.QDialog):
 
 
     def _addToolButton(self, icon, action, tip, toggle=None):
-            toolbar = self.toolbar
-            tb      = qt.QToolButton(toolbar)
-            tb.setIcon(icon)
-            tb.setToolTip(tip)
-            if toggle is not None:
-                if toggle:
-                    tb.setCheckable(1)
-            self.toolbar.layout.addWidget(tb)
-            tb.clicked.connect(action)
-            return tb
+        toolbar = self.toolbar
+        tb      = qt.QToolButton(toolbar)
+        tb.setIcon(icon)
+        tb.setToolTip(tip)
+        if toggle is not None:
+            if toggle:
+                tb.setCheckable(1)
+        self.toolbar.layout.addWidget(tb)
+        tb.clicked.connect(action)
+        return tb
 
     def _toggleLogY(self):
         if DEBUG:
             print("_toggleLogY")
         if self.graph.isYAxisLogarithmic():
-            self.graph.setYAxisLogarithmic(False)
+            self.setYAxisLogarithmic(False)
         else:
-            self.graph.setYAxisLogarithmic(True)
+            self.setYAxisLogarithmic(True)
+
+    def setYAxisLogarithmic(self, flag=True):
+        self.graph.setYAxisLogarithmic(flag)
+        self.yLogButton.setChecked(flag)
+        self.yLogButton.setDown(flag)
+        self._resetZoom()
 
     def connections(self):
         self.peakParameters.searchButton.clicked.connect(self.peakSearch)
@@ -301,13 +313,13 @@ class McaCalWidget(qt.QDialog):
 
     def plot(self,x,y,legend):
         #clear graph
-        self.graph.clearCurves()
-        self.graph.addCurve(x, y , legend=legend)
+        self.graph.clear()
+        self.graph.addCurve(x, y , legend=legend, replot=True)
         self.dict['x']      = x
         self.dict['y']      = y
         self.dict['legend'] = legend
         #reset the zoom
-        self.graph.resetZoom()
+        self._resetZoom()
 
     def peakSearch(self):
         if DEBUG:
@@ -1650,8 +1662,9 @@ def test(x,y,legend):
     #app.exec_loop()
 
 if __name__ == '__main__':
+    import os
     import getopt
-    from PyMca5 import specfile
+    from PyMca5 import specfilewrapper as specfile
     options     = 'f:s:o'
     longoptions = ['file=','scan=','pkm=',
                     'output=','linear=','strip=',
@@ -1687,15 +1700,16 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         inputfile = sys.argv[1]
     if inputfile is None:
-        inputfile = '03novs060sum.mca'
+        from PyMca5 import PyMcaDataDir
+        inputfile = os.path.join(PyMcaDataDir.PYMCA_DATA_DIR,
+                                 'XRFSpectrum.mca')
     sf=specfile.Specfile(inputfile)
     if scankey is None:
-        scan=sf[0]
+        scan=sf[len(sf) - 1]
     else:
         scan=sf.select(scankey)
     nbmca=scan.nbmca()
-    mcadata=scan.mca(1)
+    mcadata=scan.mca(nbmca)
     y=numpy.array(mcadata).astype(numpy.float)
     x=numpy.arange(len(y)).astype(numpy.float)
     test(x,y,inputfile)
-
