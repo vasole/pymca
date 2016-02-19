@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1265,14 +1265,20 @@ class ScanWindow(PlotWindow.PlotWindow):
             if symbol is None:
                 symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
             if linestyle is None:
-                if self._plotLines:
-                    linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
-                    if linestyle in [' ', None, '']:
-                        linestyle = '-'
-                else:
-                    linestyle = ' '
+                linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
             if yaxis is None:
                 yaxis =  info.get("plot_yaxis",oldInfo.get("plot_yaxis", None))
+        else:
+            if info is None:
+                info = {}
+            if color is None:
+                color = info.get("plot_color", None)
+            if symbol is None:
+                symbol =  info.get("plot_symbol", None)
+            if linestyle is None:
+                linestyle =  info.get("plot_linestyle", None)
+            if yaxis is None:
+                yaxis =  info.get("plot_yaxis", None)
         if legend in self.dataObjectsDict:
             # the info is changing
             super(ScanWindow, self).addCurve(x, y, legend=legend, info=info,
