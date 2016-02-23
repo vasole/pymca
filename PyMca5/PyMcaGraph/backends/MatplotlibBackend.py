@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1657,8 +1657,8 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
         if color is None:
             color = self._activeCurveColor
         if len(color) == 4:
-                if type(color[3]) in [type(1), numpy.uint8, numpy.int8]:
-                    color = numpy.array(color, dtype=numpy.float)/255.
+            if type(color[3]) in [type(1), numpy.uint8, numpy.int8]:
+                color = numpy.array(color, dtype=numpy.float)/255.
 
         brush = color
         style = linestyle
