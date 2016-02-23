@@ -396,14 +396,16 @@ def build_PyMcaSciPy(ext_modules):
 def build_plotting_ctools(ext_modules):
     packages.append('PyMca5.PyMcaGraph.ctools')
     basedir = os.path.join('PyMca5', 'PyMcaGraph','ctools', '_ctools')
-    c_files = glob.glob(os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'))
-    c_files += glob.glob(os.path.join(basedir, 'src', 'MinMaxImpl.c'))
-    c_files += glob.glob(os.path.join(basedir, 'src', 'Colormap.c'))
+    c_files = [os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'),
+               os.path.join(basedir, 'src', 'MinMaxImpl.c'),
+               os.path.join(basedir, 'src', 'Colormap.c')]
 
     if build_ext:
-        src = glob.glob(os.path.join(basedir, 'cython','_ctools.pyx'))
+        src = [os.path.join(basedir, 'cython','_ctools.pyx')]
     else:
-        src = glob.glob(os.path.join(basedir, 'cython','*.c'))
+        src = []
+        for fname in glob.glob(os.path.join(basedir, 'cython','*.c')): 
+            src.append(os.path.join(basedir, 'cython', os.path.basename(fname))) 
     src += c_files
 
     if sys.platform == 'win32':
@@ -445,7 +447,9 @@ def build_xas_xas(ext_modules):
     if build_ext:
         src = [os.path.join(basedir, 'cython','_xas.pyx')]
     else:
-        src = glob.glob(os.path.join(basedir, 'cython','*.c'))
+        src = []
+        for fname in glob.glob(os.path.join(basedir, 'cython','*.c')): 
+            src.append(os.path.join(basedir, 'cython', os.path.basename(fname))) 
     src += c_files
     if sys.platform == 'win32':
         extra_compile_args = []
