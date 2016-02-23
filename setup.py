@@ -827,13 +827,34 @@ if sphinx:
             sys.path.pop(0)
     cmdclass['build_doc'] = build_doc
 
+classifiers = ["Development Status :: 5 - Production/Stable",
+               "Programming Language :: Python :: 2",
+               "Programming Language :: Python :: 3",
+               "Intended Audience :: Developers",
+               "Intended Audience :: End Users/Desktop",
+               "Intended Audience :: Science/Research",
+               "License :: OSI Approved :: MIT License",
+               "Topic :: Software Development :: Libraries :: Python Modules",
+               "Operating System :: Microsoft :: Windows",
+               "Operating System :: Unix",
+               "Operating System :: MacOS :: MacOS X",
+               "Operating System :: POSIX",
+               "Topic :: Scientific/Engineering :: Chemistry",
+               "Topic :: Scientific/Engineering :: Physics",
+               "Topic :: Scientific/Engineering :: Visualization",
+               ]
+
+install_requires = ["numpy", "matplotlib", "fisx"]
+setup_requires = ["numpy"]
+
 distrib = setup(name="PyMca5",
                 version= __version__,
                 description = description,
                 author = "V. Armando Sole",
                 author_email="sole@esrf.fr",
-                license= "MIT - Please read LICENSE for details",
+                license= "MIT",
                 url = "http://pymca.sourceforge.net",
+                download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,  		
                 long_description = long_description,
                 packages = packages,
                 platforms='any',
@@ -844,6 +865,9 @@ distrib = setup(name="PyMca5",
                 cmdclass = cmdclass,
                 scripts=script_files,
                 py_modules=py_modules,
+                classifiers=classifiers,
+                install_requires=install_requires,
+                setup_requires=setup_requires,
                 )
 
 try:
