@@ -56,13 +56,11 @@ if (('PySide' in sys.modules) or
     except:
         pass
 elif "PyQt5" in sys.modules:
-    print("WARNING: PyQt5 is for testing purposes")
-    import sip
     try:
-        sip.setapi("QString", 2)
-        sip.setapi("QVariant", 2)
+        import sip
     except:
-        print("API 1 -> Console widget not available")
+        # PyQt5 always uses API 2
+        pass
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
