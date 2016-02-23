@@ -38,6 +38,7 @@ recursive-include PyMca5/PyMcaPlugins *.py
 recursive-include PyMca5/scripts *
 recursive-include PyMca5/tests *.py
 recursive-include third-party/qhull *.c *.h *.txt
+recursive-include third-party/khronos_headers *.h
 include third-party/fisx/MANIFEST.in
 include third-party/fisx/LICENSE
 include third-party/fisx/changelog.txt
