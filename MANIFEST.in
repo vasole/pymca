@@ -12,12 +12,12 @@ recursive-include doc/man *.1
 recursive-include icons *.icns *.ico *_256x256.png
 recursive-include PyMca5/EPDL97 *.DAT
 include PyMca5/EPDL97/LICENSE
-include PyMca5/Object3D/qtconffile
 recursive-include PyMca5/Object3D/doc *.py
-recursive-include PyMca5/Object3D/Object3DQhull *.py *.c *.h *.txt
+recursive-include PyMca5/Object3D/Object3DQhull *.py *.c *.pyx *.pxd *.pxi
 recursive-include PyMca5/Object3D/Object3DCTools *.py *.c *.cpp
 recursive-include PyMca5/Object3D/scripts *.py
-include PyMca5/Object3D/LICENSE.GPL
+include PyMca5/Object3D/LICENSE.LGPL
+include PyMca5/Object3D/qtconffile
 include PyMca5/Object3D/README.txt
 include PyMca5/Object3D/scripts/ob_scene
 recursive-include PyMca5/PyMca *.py
@@ -27,7 +27,7 @@ recursive-include PyMca5/PyMcaGraph *.py *.pyx *.pxd *.c *.h
 recursive-include PyMca5/PyMcaGui *.py
 recursive-include PyMca5/PyMcaIO *.py *.c *.h *.in
 include PyMca5/PyMcaIO/sps/LICENSE
-recursive-include PyMca5/PyMcaMath *.py *.c *.h *.cl
+recursive-include PyMca5/PyMcaMath *.py *.c *.cl
 include PyMca5/PyMcaMath/mva/py_nnma/LICENSE
 include PyMca5/PyMcaMath/mva/py_nnma/README
 include PyMca5/PyMcaMath/PyMcaSciPy/signal/LICENSE.txt
