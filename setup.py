@@ -395,7 +395,7 @@ def build_PyMcaSciPy(ext_modules):
 
 def build_plotting_ctools(ext_modules):
     packages.append('PyMca5.PyMcaGraph.ctools')
-    basedir = os.path.join(os.getcwd(),'PyMca5', 'PyMcaGraph','ctools', '_ctools')
+    basedir = os.path.join('PyMca5', 'PyMcaGraph','ctools', '_ctools')
     c_files = glob.glob(os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'))
     c_files += glob.glob(os.path.join(basedir, 'src', 'MinMaxImpl.c'))
     c_files += glob.glob(os.path.join(basedir, 'src', 'Colormap.c'))
@@ -439,7 +439,7 @@ def build_plotting_ctools(ext_modules):
 
 
 def build_xas_xas(ext_modules):
-    basedir = os.path.join(os.getcwd(), 'PyMca5', 'PyMcaPhysics','xas', '_xas')
+    basedir = os.path.join('PyMca5', 'PyMcaPhysics','xas', '_xas')
     c_files = [os.path.join(basedir, 'src', 'polspl.c'),
                os.path.join(basedir, 'src', 'bessel0.c')]
     if build_ext:
