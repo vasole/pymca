@@ -379,10 +379,11 @@ class SimpleFitGui(qt.QWidget):
                                                 replot=False)
         contributions = ddict['contributions']
         if len(contributions) > 1:
+            background = ddict['background']
             i = 0
             for contribution in contributions:
                 i += 1
-                self.graph.addCurve(ddict['x'], contribution,
+                self.graph.addCurve(ddict['x'], background + contribution,
                                     legend='Contribution %d' % i,
                                     replot=False)
         self.graph.replot()
@@ -396,6 +397,7 @@ class SimpleFitGui(qt.QWidget):
 
     def evaluateContributions(self, x=None):
         return self.fitModule.evaluateContributions(x)
+
 
 def test():
     import numpy
