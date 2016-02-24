@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -313,12 +313,8 @@ class SimpleFitGui(qt.QWidget):
         try:
             x = self.fitModule._x
             y = self.fitModule._y
-            if hasattr(self.graph, "addCurve"):
-                self.graph.addCurve(x, y, 'Data')
-            elif hasattr(self.graph, "newCurve"):
-                self.graph.newCurve('Data', x, y)
-            self.graph.removeCurve("Fit")
-            self.graph.removeCurve("Background", replot=True)
+            self.graph.clear()
+            self.graph.addCurve(x, y, 'Data')
             self.fitModule.estimate()
             self.setStatus()
             self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
@@ -370,20 +366,25 @@ class SimpleFitGui(qt.QWidget):
         #this is to be overwritten and for test purposes
         if self.graph is None:
             return
-        ddict = {}
+        ddict = self.fitModule.evaluateContributions()
         ddict['event'] = "FitFinished"
         ddict['x']    = self.fitModule._x
         ddict['y']    = self.fitModule._y
-        ddict['yfit'] = self.evaluateDefinedFunction()
-        ddict['background'] = self.fitModule._evaluateBackground()
-        if hasattr(self.graph, "addCurve"):
-            self.graph.addCurve(ddict['x'], ddict['y'], 'Data')
-            self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit')
-            self.graph.addCurve(ddict['x'], ddict['background'], 'Background')
-        elif hasattr(self.graph, "newCurve"):
-            self.graph.newCurve('Data', ddict['x'], ddict['y'])
-            self.graph.newCurve('Fit', ddict['x'], ddict['yfit'])
-            self.graph.newCurve('Background', ddict['x'], ddict['background'])
+        #ddict['yfit'] = self.evaluateDefinedFunction()
+        #ddict['background'] = self.fitModule._evaluateBackground()
+        self.graph.clear()
+        self.graph.addCurve(ddict['x'], ddict['y'], 'Data', replot=False)
+        self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit', replot=False)
+        self.graph.addCurve(ddict['x'], ddict['background'], 'Background',
+                                                replot=False)
+        contributions = ddict['contributions']
+        if len(contributions) > 1:
+            i = 0
+            for contribution in contributions:
+                i += 1
+                self.graph.addCurve(ddict['x'], contribution,
+                                    legend='Contribution %d' % i,
+                                    replot=False)
         self.graph.replot()
         self.graph.show()
 
@@ -391,7 +392,10 @@ class SimpleFitGui(qt.QWidget):
         self.close()
 
     def evaluateDefinedFunction(self, x=None):
-        return self.fitModule.evaluateDefinedFunction()
+        return self.fitModule.evaluateDefinedFunction(x)
+
+    def evaluateContributions(self, x=None):
+        return self.fitModule.evaluateContributions(x)
 
 def test():
     import numpy

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -765,6 +765,38 @@ class SimpleFit(object):
         y = self._evaluateBackground(x)
         y += self._evaluateFunction(x)
         return y
+
+    def evaluateContributions(self, x=None):
+        if x is None:
+            x = self._x
+        ddict = {}
+        ddict["background"] = self._evaluateBackground(x)        
+        functionParameters, functionConstraints = [], [[],[],[]]
+        fitFunction = self._fitConfiguration['fit']['fit_function']
+        if self._fitConfiguration['fit']['function_flag']:
+            if fitFunction not in [None, "None", "NONE"]:
+                fitFunctionDict = self._fitConfiguration['functions']\
+                                      [fitFunction]
+
+        pars = self._fitResult['fittedvalues']
+        nb = self.__nBackgroundParameters
+        ddict["contributions"] = []
+        ddict["function"] = numpy.zeros(x.shape, numpy.float)
+        nTotal = len(self.paramlist) 
+        if  nTotal > nb:
+            nParametersPerFunction = len(fitFunctionDict['parameters'])
+            nContributions = (nTotal - nb) // nParametersPerFunction
+            ddict["contributions"] = [None] * nContributions
+            function = self._fitConfiguration['functions'] \
+                               [self.getFitFunction()] ['function']
+            for i in range(nContributions):
+                start = nb + i * nParametersPerFunction
+                stop = start + nParametersPerFunction
+                tmp = function(pars[start:stop], x)
+                ddict["contributions"][i] = tmp
+                ddict["function"] += tmp 
+        ddict["yfit"] = ddict["background"] + ddict["function"]
+        return ddict
 
 def test():
     from PyMca5.PyMca import SpecfitFunctions
