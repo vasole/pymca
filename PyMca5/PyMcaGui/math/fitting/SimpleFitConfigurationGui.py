@@ -28,12 +28,14 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import traceback
 import os.path
 import numpy
 from . import SimpleFitControlWidget
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import ConfigDict
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui import PyMca_Icons as Icons
 from PyMca5 import PyMcaDirs
 
@@ -423,87 +425,45 @@ class SimpleFitConfigurationGui(qt.QDialog):
             return self.fitControlWidget.getConfiguration()
 
     def load(self):
-        if PyMcaDirs.nativeFileDialogs:
-            filedialog = qt.QFileDialog(self)
-            filedialog.setFileMode(filedialog.ExistingFiles)
-            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-            initdir = os.path.curdir
-            if self.initDir is not None:
-                if os.path.isdir(self.initDir):
-                    initdir = self.initDir
-            filename = filedialog.getOpenFileName(
-                        self,
-                        "Choose fit configuration file",
-                        initdir,
-                        "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = qt.safe_str(filename)
-            if len(filename):
-                self.loadConfiguration(filename)
-                self.initDir = os.path.dirname(filename)
-        else:
-            filedialog = qt.QFileDialog(self)
-            filedialog.setFileMode(filedialog.ExistingFiles)
-            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-            initdir = os.path.curdir
-            if self.initDir is not None:
-                if os.path.isdir(self.initDir):
-                    initdir = self.initDir
-            filename = filedialog.getOpenFileName(
-                        self,
-                        "Choose fit configuration file",
-                        initdir,
-                        "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = qt.safe_str(filename)
-            if len(filename):
-                self.loadConfiguration(filename)
-                self.initDir = os.path.dirname(filename)
+        filetypelist = ["Fit configuration files (*.cfg)"]
+        message = "Choose fit configuration file"
+        initdir = os.path.curdir
+        if self.initDir is not None:
+            if os.path.isdir(self.initDir):
+                initdir = self.initDir
+        fileList = PyMcaFileDialogs.getFileList(parent=self,
+                        filetypelist=filetypelist, message=message,
+                        currentdir=initdir,
+                        mode="OPEN",
+                        getfilter=False,
+                        single=True,
+                        currentfilter=None,
+                        native=None)
+        if len(fileList):
+            filename = fileList[0]
+            self.loadConfiguration(filename)
+            self.initDir = os.path.dirname(filename)
+        return
 
     def save(self):
         if self.initDir is None:
             self.initDir = PyMcaDirs.outputDir
-        if PyMcaDirs.nativeFileDialogs:
-            filedialog = qt.QFileDialog(self)
-            filedialog.setFileMode(filedialog.AnyFile)
-            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-            initdir = os.path.curdir
-            if self.initDir is not None:
-                if os.path.isdir(self.initDir):
-                    initdir = self.initDir
-            filename = filedialog.getSaveFileName(
-                        self,
-                        "Enter output fit configuration file",
-                        initdir,
-                        "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = qt.safe_str(filename)
-            if len(filename):
-                if len(filename) < 4:
-                    filename = filename+".cfg"
-                elif filename[-4:] != ".cfg":
-                    filename = filename+".cfg"
-                self.saveConfiguration(filename)
-                self.initDir = os.path.dirname(filename)
-        else:
-            filedialog = qt.QFileDialog(self)
-            filedialog.setFileMode(filedialog.AnyFile)
-            filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(Icons.IconDict["gioconda16"])))
-            initdir = os.path.curdir
-            if self.initDir is not None:
-                if os.path.isdir(self.initDir):
-                    initdir = self.initDir
-            filename = filedialog.getSaveFileName(
-                        self,
-                        "Enter output fit configuration file",
-                        initdir,
-                        "Fit configuration files (*.cfg)\nAll Files (*)")
-            filename = qt.safe_str(filename)
-            if len(filename):
-                if len(filename) < 4:
-                    filename = filename+".cfg"
-                elif filename[-4:] != ".cfg":
-                    filename = filename+".cfg"
-                self.saveConfiguration(filename)
-                self.initDir = os.path.dirname(filename)
-                PyMcaDirs.outputDir = os.path.dirname(filename)
+        filetypelist = ["Fit configuration files (*.cfg)"]
+        message = "Enter ouput fit configuration file"
+        initdir = self.initDir
+        fileList = PyMcaFileDialogs.getFileList(parent=self,
+                        filetypelist=filetypelist, message=message,
+                        currentdir=initdir,
+                        mode="SAVE",
+                        getfilter=False,
+                        single=True,
+                        currentfilter=None,
+                        native=None)
+        if len(fileList):
+            filename = fileList[0]
+            self.saveConfiguration(filename)
+            self.initDir = os.path.dirname(filename)
+        return
 
     def loadConfiguration(self, filename):
         cfg= ConfigDict.ConfigDict()
@@ -514,11 +474,12 @@ class SimpleFitConfigurationGui(qt.QDialog):
         except:
             if DEBUG:
                 raise
-            qt.QMessageBox.critical(self, "Load Parameters",
-                "ERROR while loading parameters from\n%s"%filename,
-                qt.QMessageBox.Ok,
-                qt.QMessageBox.NoButton,
-                qt.QMessageBox.NoButton)
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            txt = "ERROR while loading parameters from\n%s\n" % filename
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
 
     def saveConfiguration(self, filename):
         cfg = ConfigDict.ConfigDict(self.getConfiguration())
