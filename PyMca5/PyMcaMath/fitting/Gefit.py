@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -508,7 +508,7 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
             elif (pmax-pmin) > 0:
                 print("WARNING: Quoted parameter outside boundaries")
                 print("Initial value = %f" % parameters[i])
-                print("Limits are %f and %f" % (pmax, pmin))
+                print("Limits are %f and %f" % (pmin, pmax))
                 print("Parameter will be kept at its starting value")
     fitparam = numpy.array(fitparam, numpy.float)
     alpha = numpy.zeros((n_free, n_free),numpy.float)
