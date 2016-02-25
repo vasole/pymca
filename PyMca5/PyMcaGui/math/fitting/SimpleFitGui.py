@@ -142,7 +142,9 @@ class SimpleFitGui(qt.QWidget):
             self.__useTab = True
             self.graph = PlotWindow.PlotWindow(newplot=False,
                                                plugins=False,
-                                               fit=False)
+                                               fit=False,
+                                               control=True,
+                                               position=True)
         else:
             self.__useTab = False
             self.graph = graph
