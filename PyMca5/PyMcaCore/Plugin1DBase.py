@@ -137,6 +137,14 @@ class Plugin1DBase(object):
         self._plotWindow = weakref.proxy(plotWindow)
 
     #Window related functions
+    def windowTitle(self):
+        name = self._plotWindow.windowTitle()
+        try:
+            name = self._plotWindow.windowTitle()
+        except:
+            name = ""
+        return name
+
     def addCurve(self, x, y, legend=None, info=None,
                  replace=False, replot=True, **kw):
         """
