@@ -14,6 +14,8 @@ Implement Kaiser window option for XAS Fourier transform.
 
 Reimplement curve renaming.
 
+Recover interactive console functionality.
+
 Correct the density of H and He.
 
 Add more keywords for QXAS format support.
