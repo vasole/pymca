@@ -32,35 +32,68 @@ __author__ = "Tim Rae, V.A. Sole"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-# Set the QT API to PyQt4
+# Set the QT API
 import os
 import sys
 if "PySide" in sys.modules:
     PYSIDE = True
 else:
     PYSIDE = False
+
 if PYSIDE:
     os.environ['QT_API'] = 'pyside'
-    from PySide.QtGui import *
+    from PySide.QtGui import QApplication, QWidget, QPushButton, QVBoxLayout
 else:
     os.environ['QT_API'] = 'pyqt'
-    if 1:
-        #is this really needed?
-        #If I get rid of it IPython complains
+    try:
         import sip
         sip.setapi("QString", 2)
         sip.setapi("QVariant", 2)
-    from PyQt4.QtGui  import *
-# Import the console machinery from ipython
-from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
-from IPython.qt.inprocess import QtInProcessKernelManager
+    except:
+        pass
+    if "PyQt4" in sys.modules:
+        from PyQt4.QtGui import QApplication, QWidget, \
+                                        QPushButton, QVBoxLayout
+    elif "PyQt5" in sys.modules:
+        from PyQt5.QtWidgets import QApplication, QWidget, \
+                                        QPushButton, QVBoxLayout
+    else:
+        try:
+            from PyQt4.QtGui import QApplication, QWidget, \
+                                        QPushButton, QVBoxLayout
+        except:
+            try:
+                from PyQt5.QtWidgets import QApplication, QWidget, \
+                                           QPushButton, QVBoxLayout
+            except:
+                from PySide.QtGui import QApplication, QWidget, \
+                                        QPushButton, QVBoxLayout
+                os.environ['QT_API'] = 'pyside'
+try:
+    import qtconsole
+    QTCONSOLE = True
+except ImportError:
+    QTCONSOLE = False
+
+if QTCONSOLE:
+    try:
+        from qtconsole.rich_ipython_widget import RichJupyterWidget as RichIPythonWidget
+    except:
+        from qtconsole.rich_ipython_widget import RichIPythonWidget
+    from qtconsole.inprocess import QtInProcessKernelManager
+else:
+    # Import the console machinery from ipython
+    from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
+    from IPython.qt.inprocess import QtInProcessKernelManager
 from IPython.lib import guisupport
 
 class QIPythonWidget(RichIPythonWidget):
     """ Convenience class for a live IPython console widget. We can replace the standard banner using the customBanner argument"""
     def __init__(self,customBanner=None,*args,**kwargs):
-        if customBanner!=None: self.banner=customBanner
         super(QIPythonWidget, self).__init__(*args,**kwargs)
+        if customBanner != None:
+            self.banner = customBanner
+        self.setWindowTitle(self.banner)
         self.kernel_manager = kernel_manager = QtInProcessKernelManager()
         kernel_manager.start_kernel()
         kernel_manager.kernel.gui = 'qt4'
