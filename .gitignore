@@ -51,6 +51,9 @@ coverage.xml
 *.log
 *.pot
 
+# IPython stuff
+.ipython
+
 # Sphinx documentation
 docs/_build/
 
