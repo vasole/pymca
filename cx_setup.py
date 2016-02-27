@@ -189,7 +189,7 @@ import PyMca5
 special_modules = [os.path.dirname(PyMca5.__file__),
                   os.path.dirname(ctypes.__file__)]
 
-excludes = ["Tkinter",
+excludes = ["Tkinter", "tkinter",
             'tcl','_tkagg', 'Tkconstants',
             "scipy", "Numeric", "numarray"]
 
