@@ -74,12 +74,12 @@ else:
 if sys.platform == 'win32':
     if MINGW:
         # MinGW compiler needs two steps
-        cmd = "python setup.py build -c mingw32"
+        cmd = "python setup.py build -c mingw32 --distutils"
         if os.system(cmd):
             print("Error building PyMca")
             sys.exit(1)
 
-cmd = "python setup.py install --install-lib %s" % PyMcaInstallationDir
+cmd = "python setup.py install --install-lib %s --distutils" % PyMcaInstallationDir
 if os.system(cmd):
     print("Error building PyMca")
     sys.exit(1)
@@ -192,6 +192,26 @@ special_modules = [os.path.dirname(PyMca5.__file__),
 excludes = ["Tkinter",
             'tcl','_tkagg', 'Tkconstants',
             "scipy", "Numeric", "numarray"]
+
+try:
+    import IPython
+    if IPython.__version__.startswith('2'):
+        special_modules.append(os.path.dirname(IPython.__file__))
+        includes.append("colorsys")
+        import pygments
+        special_modules.append(os.path.dirname(pygments.__file__))
+        import zmq
+        special_modules.append(os.path.dirname(zmq.__file__))
+        import pygments
+        #includes.append("IPython")
+        #includes.append("IPython.qt")
+        #includes.append("IPython.qt.console")
+        #includes.append("IPython.qt.console.rich_ipython_widget")
+        #includes.append("IPython.qt.inprocess")
+        #includes.append("IPython.lib")
+except ImportError:
+    print("Console plugin not available")
+    pass
 
 if sys.version < '3.0':
     #https://bitbucket.org/anthony_tuininga/cx_freeze/issues/127/collectionssys-error
@@ -384,7 +404,7 @@ if not sys.platform.startswith('win'):
 
 
 #cleanup
-for f in glob.glob(os.path.join(os.path.dirname(__file__),"PyMca", "*.pyc")):
+for f in glob.glob(os.path.join(os.path.dirname(__file__),"PyMca5", "*.pyc")):
     os.remove(f)
 
 if not sys.platform.startswith('win'):

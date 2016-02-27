@@ -69,11 +69,16 @@ else:
                 from PySide.QtGui import QApplication, QWidget, \
                                         QPushButton, QVBoxLayout
                 os.environ['QT_API'] = 'pyside'
-try:
-    import qtconsole
-    QTCONSOLE = True
-except ImportError:
+
+import IPython
+if IPython.__version__.startswith("2"):
     QTCONSOLE = False
+else:
+    try:
+        import qtconsole
+        QTCONSOLE = True
+    except ImportError:
+        QTCONSOLE = False
 
 if QTCONSOLE:
     try:
@@ -83,6 +88,14 @@ if QTCONSOLE:
     from qtconsole.inprocess import QtInProcessKernelManager
 else:
     # Import the console machinery from ipython
+    # Check if we using a frozen version because
+    # the test of IPython does not find the Qt bindings
+    executables = ["PyMcaMain.exe", "QStackWidget.exe", "PyMcaPostBatch.exe"]
+    if os.path.basename(sys.executable) in executables:
+        import IPython.external.qt_loaders
+        def has_binding(*var, **kw):
+            return True
+        IPython.external.qt_loaders.has_binding = has_binding 
     from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
     from IPython.qt.inprocess import QtInProcessKernelManager
 from IPython.lib import guisupport

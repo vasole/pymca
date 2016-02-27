@@ -22,7 +22,12 @@ import glob
 import platform
 import time
 if 'bdist_wheel' in sys.argv:
+    # wheels require setuptools
     from setuptools import setup
+elif '--distutils' in sys.argv:
+    # The cx_setup.py machinery works with distutils
+    sys.argv.remove("--distutils")
+    from distutils.core import setup
 else:
     try:
         from setuptools import setup
