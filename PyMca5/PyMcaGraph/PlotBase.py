@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -193,7 +193,7 @@ class PlotBase(PlotBackend.PlotBackend, PluginLoader.PluginLoader):
             idx = nonzero((xproc[1:] > xproc[:-1]))[0]
             xproc = take(xproc, idx)
             yproc = take(yproc, idx)
-            allCurves[i][0:2] = x, y
+            allCurves[i][0:2] = xproc, yproc
         return allCurves
 
     def hideCurve(self, legend, replot=True):
