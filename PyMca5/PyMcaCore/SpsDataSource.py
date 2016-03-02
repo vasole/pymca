@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,7 +31,6 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import copy
-import types
 from . import DataObject
 from PyMca5.PyMcaIO import spswrap as sps
 
@@ -41,7 +40,7 @@ SOURCE_TYPE = 'SPS'
 
 class SpsDataSource(object):
     def __init__(self, name):
-        if type(name) not in types.StringTypes:
+        if not isinstance(name, str):
             raise TypeError("Constructor needs string as first argument")
         self.name = name
         self.sourceName = name
@@ -67,7 +66,7 @@ class SpsDataSource(object):
             return {}
 
     def getDataObject(self, key_list, selection=None):
-        if type(key_list) != types.ListType:
+        if type(key_list) not in [type([])]:
             nolist = True
             key_list = [key_list]
         else:
