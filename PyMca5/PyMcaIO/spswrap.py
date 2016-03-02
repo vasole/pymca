@@ -106,6 +106,7 @@ def getarraylist( spec ):
            result = sps.getarraylist( spec )
            spsdefaultarraylist[spec]=result
         except:
+           print("Error reading memory", sys.exc_info())
            pass
         spslock.release()
     else:
