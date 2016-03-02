@@ -382,7 +382,7 @@ static PyObject *sps_detach(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  data = ((PyArrayObject*) in_arr)->data;
+  data = PyArray_DATA((PyArrayObject*) in_arr);
 
   if (SPS_ReturnDataPointer(data)) {
   	struct module_state *st = GETSTATE(self);
@@ -499,7 +499,7 @@ static PyObject *sps_getdata(PyObject *self, PyObject *args)
     Py_DECREF(arrobj_nc);
 
   stype = sps_py2type(ptype);
-  SPS_CopyFromShared(spec_version, array_name, arrobj->data, stype ,
+  SPS_CopyFromShared(spec_version, array_name, PyArray_DATA(arrobj), stype ,
              rows * cols);
 
   return (PyObject*) arrobj;
@@ -544,7 +544,7 @@ static PyObject *sps_getdatarow(PyObject *self, PyObject *args)
     Py_DECREF(arrobj_nc);
 
   stype = sps_py2type(ptype);
-  SPS_CopyRowFromShared(spec_version, array_name, arrobj->data, stype ,
+  SPS_CopyRowFromShared(spec_version, array_name, PyArray_DATA(arrobj), stype ,
              in_row, in_col, NULL);
 
   return (PyObject*) arrobj;
@@ -589,7 +589,7 @@ static PyObject *sps_getdatacol(PyObject *self, PyObject *args)
     Py_DECREF(arrobj_nc);
 
   stype = sps_py2type(ptype);
-  SPS_CopyColFromShared(spec_version, array_name, arrobj->data, stype ,
+  SPS_CopyColFromShared(spec_version, array_name, PyArray_DATA(arrobj), stype ,
              in_col, in_row, NULL);
   return (PyObject*) arrobj;
 }
@@ -607,13 +607,13 @@ static PyObject *sps_putdata(PyObject *self, PyObject *args)
   }
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
-                PyArray_NOTYPE, 2, 2))) {
+                NPY_NOTYPE, 2, 2))) {
     struct module_state *st = GETSTATE(self);
     PyErr_SetString(st->SPSError, "Input Array is not a 2 dim array");
     return NULL;
   }
 
-  ptype = src->descr->type_num;
+  ptype = PyArray_DESCR(src)->type_num;
   stype = sps_py2type(ptype);
 
   if (ptype != sps_type2py(stype)) {
@@ -623,9 +623,9 @@ static PyObject *sps_putdata(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  no_items = (int) (src->dimensions[0] * src->dimensions[1]);
+  no_items = (int) (PyArray_DIMS(src)[0] * PyArray_DIMS(src)[1]);
 
-  if (SPS_CopyToShared(spec_version, array_name, src->data, stype, no_items)
+  if (SPS_CopyToShared(spec_version, array_name, PyArray_DATA(src), stype, no_items)
       == -1) {
     struct module_state *st = GETSTATE(self);
     PyErr_SetString(st->SPSError, "Error copying data to shared memory");
@@ -654,13 +654,13 @@ static PyObject *sps_putdatarow(PyObject *self, PyObject *args)
   }
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
-                PyArray_NOTYPE, 1, 1))) {
+                NPY_NOTYPE, 1, 1))) {
     struct module_state *st = GETSTATE(self);
     PyErr_SetString(st->SPSError, "Input Array is not a 1 dim array");
     return NULL;
   }
 
-  ptype = src->descr->type_num;
+  ptype = PyArray_DESCR(src)->type_num;
   stype = sps_py2type(ptype);
 
   if (ptype == -1) {
@@ -670,9 +670,9 @@ static PyObject *sps_putdatarow(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  no_items = (int) (src->dimensions[0]);
+  no_items = (int) (PyArray_DIMS(src)[0]);
 
-  if (SPS_CopyRowToShared(spec_version, array_name, src->data, stype,
+  if (SPS_CopyRowToShared(spec_version, array_name, PyArray_DATA(src), stype,
               in_row, no_items, NULL)
       == -1) {
     struct module_state *st = GETSTATE(self);
@@ -702,18 +702,18 @@ static PyObject *sps_putdatacol(PyObject *self, PyObject *args)
   }
 
   if (!(src = (PyArrayObject*) PyArray_ContiguousFromObject(in_src,
-                PyArray_NOTYPE, 1, 1))) {
+                NPY_NOTYPE, 1, 1))) {
     struct module_state *st = GETSTATE(self);
     PyErr_SetString(st->SPSError, "Input Array is not a 1 dim array");
     return NULL;
   }
 
-  ptype = src->descr->type_num;
+  ptype = PyArray_DESCR(src)->type_num;
   stype = sps_py2type(ptype);
 
-  no_items = (int) (src->dimensions[0]);
+  no_items = (int) PyArray_DIMS(src)[0];
 
-  if (SPS_CopyColToShared(spec_version, array_name, src->data, stype,
+  if (SPS_CopyColToShared(spec_version, array_name, PyArray_DATA(src), stype,
               in_col, no_items, NULL)
       == -1) {
     struct module_state *st = GETSTATE(self);
