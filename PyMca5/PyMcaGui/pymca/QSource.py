@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -167,7 +167,7 @@ class QSource(qt.QObject):
             for key in eventsToPost:
                 for event in eventsToPost[key]:
                     qt.QApplication.postEvent(self, event)
-            qt.qApp.processEvents()
+            qt.QApplication.instance().processEvents()
             time.sleep(self._pollTime)
             if DEBUG:
                 print("woke up")
