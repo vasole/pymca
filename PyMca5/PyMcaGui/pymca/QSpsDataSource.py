@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -87,7 +87,7 @@ class QSpsDataSource(QSource.QSource):
         if key in self.selections.keys():
             n = len(self.selections[key])
             if n:
-                a = range(n)
+                a = list(range(n))
                 a.reverse()
                 legendlist = []
                 for i in a:
