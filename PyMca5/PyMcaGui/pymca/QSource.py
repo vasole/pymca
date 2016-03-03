@@ -87,7 +87,7 @@ class QSource(qt.QObject):
 
             n = len(self.surveyDict[dataObjectKey])
             if n > 0:
-                n = range(n)
+                n = list(range(n))
                 n.reverse()
                 for i in n:
                     if not len(dir(self.surveyDict[dataObjectKey][i])):
