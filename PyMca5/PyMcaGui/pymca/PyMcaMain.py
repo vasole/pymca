@@ -750,7 +750,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.show()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
-            qt.qApp.postEvent(self, qt.QResizeEvent(qt.QSize(ddict['Geometry']['MainWindow'][2]+1,
+            qApp.postEvent(self, qt.QResizeEvent(qt.QSize(ddict['Geometry']['MainWindow'][2]+1,
                                                           ddict['Geometry']['MainWindow'][3]+1),
                                                  qt.QSize(ddict['Geometry']['MainWindow'][2],
                                                           ddict['Geometry']['MainWindow'][3])))
@@ -1088,7 +1088,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
         if fontd[1]:
-            qt.qApp.setFont(fontd[0],1)
+            qApp = qt.QApplication.instance()
+            qApp.setFont(fontd[0],1)
 
 
     def toggleSource(self,**kw):
@@ -1307,7 +1308,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         del self._widgetDict[ddict['id']]
 
     def __xiaCorrect(self):
-        XiaCorrect.mainGUI(qt.qApp)
+        qApp = qt.QApplication.instance()
+        XiaCorrect.mainGUI(qApp)
 
     def _xrfmcPyMca(self):
         if self._xrfmcTool is None:
