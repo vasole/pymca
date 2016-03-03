@@ -81,8 +81,10 @@ class QSpsDataSource(QSource.QSource):
 
         idtolook = []
         ddict['selectionlist'] = []
-        for object in self.surveyDict[key]:
-            idtolook.append(id(object))
+        
+        if key in self.surveyDict:
+            for object_ in self.surveyDict[key]:
+                idtolook.append(id(object_))
 
         if key in self.selections.keys():
             n = len(self.selections[key])
