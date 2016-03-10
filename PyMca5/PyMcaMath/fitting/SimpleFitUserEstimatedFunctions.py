@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,6 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
 from PyMca5 import SpecfitFuns
 arctan = numpy.arctan
+exp = numpy.exp
 pi = numpy.pi
 
 class SimpleFitDefaultFunctions(object):
@@ -85,6 +86,12 @@ class SimpleFitDefaultFunctions(object):
             d *= d
         return result
 
+    def exponential(self, pars, x):
+        result = 0.0
+        for i in range(len(pars) // 2):
+            result += pars[2 * i + 0] * exp(float(pars[2 * i + 1]) * x)
+        return result
+
 fitfuns=SimpleFitDefaultFunctions()
 
 FUNCTION=[fitfuns.gaussian,
@@ -103,7 +110,8 @@ FUNCTION=[fitfuns.gaussian,
           fitfuns.polynomial,
           fitfuns.polynomial,
           fitfuns.polynomial,
-          fitfuns.polynomial]
+          fitfuns.polynomial,
+          fitfuns.exponential]
 
 PARAMETERS=[['Height','Position','Fwhm'],
             ['Height','Position','Fwhm'],
@@ -119,10 +127,12 @@ PARAMETERS=[['Height','Position','Fwhm'],
              'ST_Area','ST_Slope','LT_Area','LT_Slope','Step_H'],
             ['Constant'],
             ['Constant', 'Slope'],
-            ['a(0)', ' a(1)', 'a(2)'],
-            ['a(0)', ' a(1)', 'a(2)', 'a(3)'],
-            ['a(0)', ' a(1)', 'a(2)', 'a(3)','a(4)'],
-            ['a(0)', ' a(1)', 'a(2)', 'a(3)','a(4)', 'a(5)']]
+            ['a(0)', 'a(1)', 'a(2)'],
+            ['a(0)', 'a(1)', 'a(2)', 'a(3)'],
+            ['a(0)', 'a(1)', 'a(2)', 'a(3)','a(4)'],
+            ['a(0)', 'a(1)', 'a(2)', 'a(3)','a(4)', 'a(5)'],
+            ['Factor', 'Slope'],
+            ]
 
 
 THEORY=['User Estimated Gaussians',
@@ -141,7 +151,9 @@ THEORY=['User Estimated Gaussians',
         'User Estimated Second Order Polynomial',
         'User Estimated Third Order Polynomial',
         'User Estimated Fourth Order Polynomial',
-        'User Estimated Fifth Order Polynomial']
+        'User Estimated Fifth Order Polynomial',
+        'User Estimated Exponential',
+        ]
 
 ESTIMATE = []
 CONFIGURE = []
