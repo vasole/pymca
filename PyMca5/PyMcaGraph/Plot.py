@@ -959,7 +959,6 @@ class Plot(PlotBase.PlotBase):
                 # the call to self._update()
                 # TODO: Decide what is better for other backends
                 if hasattr(self._plot, "matplotlibVersion"):
-                    print(self._plot.matplotlibVersion)
                     if self._plot.matplotlibVersion < "1.5":
                         self._plot.setXAxisLogarithmic(self._logX)
                         self._update()
