@@ -1351,12 +1351,19 @@ class ScanWindow(PlotWindow.PlotWindow):
             # printer was not selected
             return
         #self._printer = None
-        if PlotWindow.PlotWidget.SVG:
+        if PlotWindow.PlotWidget.SVG and (qt.qVersion() > "5.0.0"):
             svg = True
             self._svgRenderer = self.getSvgRenderer()
         else:
             svg = False
-            pixmap = qt.QPixmap.grabWidget(self.centralWidget())
+            if hasattr(self, "getWidgetHandle"):
+                widget = self.getWidgetHandle()
+            else:
+                widget = self.centralWidget()
+            if hasattr(widget, "grab"):
+                pixmap = widget.grab()
+            else:
+                pixmap = qt.QPixmap.grabWidget(widget)
 
         title = None
         comment = None
