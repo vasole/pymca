@@ -1428,8 +1428,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                 import cStringIO as StringIO
                 imgData = StringIO.StringIO()
             else:
-                from io import BytesIO
-                imgData = BytesIO()
+                from io import StringIO
+                imgData = StringIO
             self.saveGraph(imgData, fileFormat='svg')
             imgData.flush()
             imgData.seek(0)
@@ -1447,8 +1447,8 @@ class ScanWindow(PlotWindow.PlotWindow):
             import cStringIO as StringIO
             imgData = StringIO.StringIO()
         else:
-            from io import BytesIO
-            imgData = BytesIO()
+            from io import StringIO
+            imgData = StringIO()
         self.saveGraph(imgData, fileFormat='svg')
         imgData.flush()
         imgData.seek(0)
