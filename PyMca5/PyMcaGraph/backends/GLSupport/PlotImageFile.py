@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -104,7 +104,10 @@ def saveImageToFile(data, fileNameOrObj, fileFormat):
     assert fileFormat in ('png', 'ppm', 'svg', 'tiff')
 
     if not hasattr(fileNameOrObj, 'write'):
-        fileObj = open(fileNameOrObj, 'wb')
+        if sys.version < "3.0":
+            fileObj=open(fileNameOrObj, "wb")
+        else:
+            fileObj=open(fileNameOrObj, "w", newline='')
     else:  # Use as a file-like object
         fileObj = fileNameOrObj
 
