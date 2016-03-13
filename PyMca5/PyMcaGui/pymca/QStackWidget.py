@@ -539,7 +539,6 @@ class QStackWidget(StackBase.StackBase,
         else:
             stackList.append(self._masterStack.getStackDataObject())
             stackList.append(self.getStackDataObject())
-        print(len(stackList))
         return stackList
 
     def _pluginClicked(self):
