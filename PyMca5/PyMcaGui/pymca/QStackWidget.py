@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -529,6 +529,18 @@ class QStackWidget(StackBase.StackBase,
         if master is None:
             master = self
         self._masterStack = weakref.proxy(master)
+
+    def getStackDataObjectList(self):
+        stackList = []
+        if self.master:
+            stackList.append(self.getStackDataObject())
+            if self._slave is not None:
+                stackList.append(self._slave.getStackDataObject())
+        else:
+            stackList.append(self._masterStack.getStackDataObject())
+            stackList.append(self.getStackDataObject())
+        print(len(stackList))
+        return stackList
 
     def _pluginClicked(self):
         actionList = []
