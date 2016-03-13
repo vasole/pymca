@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -785,24 +785,26 @@ class StackBase(object):
                     leftImage = roiImage * 1
                     middleImage = roiImage * 1
                     rightImage = roiImage * 1
-                    maxImage = roiImage * 1
-                    minImage = roiImage * 1
+                    maxImage = numpy.zeros(self._stackImageData.shape,
+                                           numpy.uint)
+                    minImage = numpy.zeros(self._stackImageData.shape,
+                                           numpy.uint)
                     step = 1
                     for i in range(shape[0]):
                         tmpData = self._stack.data[i:i+step,:, i1:i2] * 1
                         numpy.add(roiImage[i:i+step,:],
                               numpy.sum(tmpData, axis=2,dtype=numpy.float),
                               roiImage[i:i+step,:])
-                        numpy.add(minImage[i:i+step,:],
-                                  numpy.min(tmpData, axis=2),
-                                  minImage[i:i + step, :])
-                        numpy.add(maxImage[i:i + step, :],
-                                  numpy.max(tmpData, axis=2),
-                                  maxImage[i:i + step, :])
+                        
+                        minImage[i:i + step,:] = i1 + numpy.argmin(tmpData, axis=2)
+                        maxImage[i:i + step, :] =  i1 + numpy.argmax(tmpData, axis=2)
                         leftImage[i:i + step, :] += tmpData[:, :, 0]
                         middleImage[i:i + step, :] += tmpData[:, :, imiddle - i1]
                         rightImage[i:i + step, :] += tmpData[:, :, -1]
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
+                    isUsingSuppliedEnergyAxis = True
+                    minImage = energy[minImage]
+                    maxImage = energy[maxImage]
                     if DEBUG:
                         print("2 Dynamic ROI image calculation elapsed = %f " %\
                               (time.time() - t0))
