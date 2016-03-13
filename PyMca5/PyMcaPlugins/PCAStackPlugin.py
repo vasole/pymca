@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -221,18 +221,28 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             # spatial_mask = numpy.isfinite(image_data)
             spatial_mask = numpy.isfinite(self.getStackOriginalImage())
             pcaParameters['mask'] = spatial_mask
-        stack = self.getStackDataObject()
-        if isinstance(stack, numpy.ndarray):
-            if stack.data.dtype not in [numpy.float, numpy.float32]:
-                print("WARNING: Non floating point data")
-                text = "Calculation going on."
-                text += " WARNING: Non floating point data."
-                self._status.setText(text)
-
-        oldShape = stack.data.shape
-        result = function(stack, **pcaParameters)
-        if stack.data.shape != oldShape:
-            stack.data.shape = oldShape
+        pcaParameters["legacy"] = False
+        if "Multiple" in self.__methodlabel:
+            stackList = self.getStackDataObjectList()
+            oldShapes = []
+            for stack in stackList:
+                oldShapes.append(stack.data.shape)
+            result = function(stackList, **pcaParameters)
+            for i in range(len(stackList)):
+                stackList[i].data.shape = oldShapes[i]
+            return result
+        else:
+            stack = self.getStackDataObject()
+            if isinstance(stack, numpy.ndarray):
+                if stack.data.dtype not in [numpy.float, numpy.float32]:
+                    print("WARNING: Non floating point data")
+                    text = "Calculation going on."
+                    text += " WARNING: Non floating point data."
+                    self._status.setText(text)
+            oldShape = stack.data.shape
+            result = function(stack, **pcaParameters)
+            if stack.data.shape != oldShape:
+                stack.data.shape = oldShape
         return result
 
     def threadFinished(self):
@@ -254,7 +264,19 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             xValues = None
         self.configurationWidget.setEnabled(True)
         self.configurationWidget.close()
-        images, eigenValues, eigenVectors = result
+        if hasattr(result, "keys"):
+            # new way
+            images = result["scores"]
+            eigenValues = result["eigenvalues"]
+            eigenVectors = result["eigenvectors"]
+            variance = result.get("variance", None)
+            if variance is not None:
+                explainedVariance = []
+                for value in eigenValues:
+                    explainedVariance.append(100 * (value/variance))
+        else:
+            variance = None
+            images, eigenValues, eigenVectors = result
         methodlabel = self.__methodlabel
         imageNames = None
         vectorNames = None
@@ -267,9 +289,14 @@ class PCAStackPlugin(StackPluginBase.StackPluginBase):
             for i in range(itmp):
                 imageNames.append("ICAimage %02d" % i)
                 vectorNames.append("ICAvector %02d" % i)
+        if "Multiple" in methodlabel:
+            xValues = None
         for i in range(itmp):
             imageNames.append("Eigenimage %02d" % i)
             vectorNames.append("Eigenvector %02d" % i)
+            if variance is not None:
+                vectorNames[-1] = "EV%02d Explained variance %.4f %%" % \
+                                  (i, explainedVariance[i])
 
         self.widget = StackPluginResultsWindow.StackPluginResultsWindow(\
                                         usetab=True)
