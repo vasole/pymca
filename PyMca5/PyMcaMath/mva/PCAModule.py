@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -54,7 +54,7 @@ DEBUG = 0
 
 # Make these functions accept arguments not relevant to
 # them in order to simplify having a common graphical interface
-def lanczosPCA(stack, ncomponents=10, binning=None, **kw):
+def lanczosPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
     if DEBUG:
         print("lanczosPCA")
     if binning is None:
@@ -124,10 +124,19 @@ def lanczosPCA(stack, ncomponents=10, binning=None, **kw):
                                    (eigenvectors[i].vr).astype(data.dtype))
     data = None
     images.shape = ncomponents, r, c
-    return images, eigenvalues, vectors
+    if legacy:
+        return images, eigenvalues, vectors
+    else:
+        return {"scores": images,
+                "eigenvalues": eigenvalues,
+                "eigenvectors": vectors,
+                "average": avg,
+                "pixels": npixels,
+                #"variance": ???????,
+                }
 
 
-def lanczosPCA2(stack, ncomponents=10, binning=None, **kw):
+def lanczosPCA2(stack, ncomponents=10, binning=None, legacy=True, **kw):
     """
     This is a fast method, but it may loose information
     """
@@ -179,7 +188,8 @@ def lanczosPCA2(stack, ncomponents=10, binning=None, **kw):
     rappmatrix = "singola"
 
     # calcola la media
-    mediadata = numpy.sum(data, axis=0) / numpy.array([len(data)], data.dtype)
+    ndata = len(data)
+    mediadata = numpy.sum(data, axis=0) / numpy.array([ndata], data.dtype)
 
     numpy.subtract(data, mediadata, data)
 
@@ -221,13 +231,33 @@ def lanczosPCA2(stack, ncomponents=10, binning=None, **kw):
                                    evects[-1 - i].astype(dataorig.dtype))
     images.shape = ncomponents, r, c
     return images, evals, vectors
+    if legacy:
+        return images, eigenvalues, vectors
+    else:
+        return {"scores": images,
+                "eigenvalues": eigenvalues,
+                "eigenvectors": vectors,
+                "average": mediadata,
+                "pixels": ndata,
+                #"variance": ???????,
+                }
 
-def multipleArrayPCA(stackList, ncomponents=10, binning=None, **kw):
+def multipleArrayPCA(stackList0, ncomponents=10, binning=None, legacy=True, **kw):
     """
     Given a list of arrays, calculate the requested principal components from
     the matrix resulting from their column concatenation. Therefore, all the
     input arrays must have the same number of rows.
     """
+    stackList = [None] * len(stackList0)
+    i = 0
+    for stack in stackList0:
+        if hasattr(stack, "info") and hasattr(stack, "data"):
+            data = stack.data
+        else:
+            data = stack
+        stackList[i] = data
+        i += 1
+
     stack = stackList[0]
     if hasattr(stack, "info") and hasattr(stack, "data"):
         data = stack.data
@@ -289,18 +319,32 @@ def multipleArrayPCA(stackList, ncomponents=10, binning=None, **kw):
     indexDict = None
 
     #I have the covariance matrix, calculate the eigenvectors and eigenvalues
-    covMatrix = [covMatrix]
-    covMatrix = Lanczos.LanczosNumericMatrix(covMatrix)
-    eigenvalues, evectors = Lanczos.solveEigenSystem(covMatrix,
-                                                     ncomponents,
-                                                     shift=0.0,
-                                                     tol=1.0e-15)
+    totalVariance = numpy.diag(covMatrix).sum()
+    evalues, evectors = numpy.linalg.eigh(covMatrix)
     covMatrix = None
+    print("Total Variance = ", totalVariance.sum())
 
     images = numpy.zeros((ncomponents, npixels), numpy.float32)
     eigenvectors = numpy.zeros((ncomponents, eigenvectorLength), numpy.float32)
+    eigenvalues = numpy.zeros((ncomponents,), numpy.float32)
+
+    a = [(evalues[i], i) for i in range(len(evalues))]
+    a.sort()
+    a.reverse()
+    totalExplainedVariance = 0.0
+    for i0 in range(ncomponents):
+        i = a[i0][1]
+        eigenvalues[i0] = evalues[i]
+        partialExplainedVariance = 100. * evalues[i] / \
+                                   totalVariance
+        print("PC%02d  Explained variance %.5f %% " %\
+                                    (i0 + 1, partialExplainedVariance))
+        totalExplainedVariance += partialExplainedVariance
+        eigenvectors[i0, :] = evectors[:, i]
+        #print("NORMA = ", numpy.dot(evectors[:, i].T, evectors[:, i]))
+    print("Total explained variance = %.2f %% " % totalExplainedVariance)
+
     for i in range(ncomponents):
-        eigenvectors[i, :] = evectors[i].vr
         colOffset = 0
         for j in range(len(stackList)):
             jVectorLength = shapeList[j][-1]
@@ -319,9 +363,17 @@ def multipleArrayPCA(stackList, ncomponents=10, binning=None, **kw):
     else:
         images.shape = ncomponents, r, c
 
-    return images, eigenvalues, eigenvectors
+    if legacy:
+        return images, eigenvalues, eigenvectors
+    else:
+        return {"scores": images,
+                "eigenvalues": eigenvalues,
+                "eigenvectors": eigenvectors,
+                "average": avgList,
+                "pixels": npixels,
+                "variance": totalVariance}
 
-def expectationMaximizationPCA(stack, ncomponents=10, binning=None, **kw):
+def expectationMaximizationPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
     """
     This is a fast method when the number of components is small
     """
@@ -397,10 +449,20 @@ def expectationMaximizationPCA(stack, ncomponents=10, binning=None, **kw):
 
     #reshape the images
     images.shape = ncomponents, r, c
-    return images, eigenvalues, eigenvectors
+    if legacy:
+        return images, eigenvalues, eigenvectors
+    else:
+        return {"scores": images,
+                "eigenvalues": eigenvalues,
+                "eigenvectors": eigenvectors,
+                "average": avg,
+                "pixels": r * c,
+                # This method does not calculate the covariance matrix
+                #"variance": calculatedTotalVariance,
+                }
 
 
-def numpyPCA(stack, ncomponents=10, binning=None, **kw):
+def numpyPCA(stack, ncomponents=10, binning=None, legacy=True, **kw):
     """
     This is a covariance method using numpy
     """
@@ -417,34 +479,35 @@ def numpyPCA(stack, ncomponents=10, binning=None, **kw):
                              index=index,
                              ncomponents=ncomponents,
                              binning=binning,
+                             legacy=legacy,
                              **kw)
 
 def mdpPCASVDFloat32(stack, ncomponents=10, binning=None,
-                     mask=None, spectral_mask=None, **kw):
+                     mask=None, spectral_mask=None, legacy=True, **kw):
     return mdpPCA(stack, ncomponents, binning=binning, dtype='float32',
-                  svd='True', mask=mask, spectral_mask=spectral_mask, **kw)
+                  svd='True', mask=mask, spectral_mask=spectral_mask, legacy=legacy, **kw)
 
 
 def mdpPCASVDFloat64(stack, ncomponents=10, binning=None,
-                    mask=None, spectral_mask=None, **kw):
+                     mask=None, spectral_mask=None, legacy=True, **kw):
     return mdpPCA(stack, ncomponents, binning=binning, dtype='float64',
-                  svd='True', mask=mask, spectral_mask=spectral_mask, **kw)
+                  svd='True', mask=mask, spectral_mask=spectral_mask, legacy=legacy, **kw)
 
 
 def mdpICAFloat32(stack, ncomponents=10, binning=None,
-                  mask=None, spectral_mask=None, **kw):
+                  mask=None, spectral_mask=None, legacy=True, **kw):
     return mdpICA(stack, ncomponents, binning=binning, dtype='float32',
-                  svd='True', mask=mask, spectral_mask=spectral_mask, **kw)
+                  svd='True', mask=mask, spectral_mask=spectral_mask, legacy=legacy, **kw)
 
 
 def mdpICAFloat64(stack, ncomponents=10, binning=None,
-                  mask=None, spectral_mask=None, **kw):
+                  mask=None, spectral_mask=None, legacy=True, **kw):
     return mdpICA(stack, ncomponents, binning=binning, dtype='float64',
-                  svd='True', mask=mask, spectral_mask=spectral_mask, **kw)
+                  svd='True', mask=mask, spectral_mask=spectral_mask, legacy=legacy, **kw)
 
 
 def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
-           mask=None, spectral_mask=None, **kw):
+           mask=None, spectral_mask=None, legacy=True, **kw):
     if DEBUG:
         print("MDP Method")
         print("binning =", binning)
@@ -616,7 +679,16 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
 
     #reshape the images
     images.shape = ncomponents, r, c
-    return images, eigenvalues, eigenvectors
+    if legacy:
+        return images, eigenvalues, eigenvectors
+    else:
+        return {"scores": images,
+                "eigenvalues": eigenvalues,
+                "eigenvectors": eigenvectors,
+                #"average": avgSpectrum,
+                #"pixels": calculatedPixels,
+                #"variance": calculatedTotalVariance,
+                }
 
 
 def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
@@ -849,7 +921,16 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
     if binning == 1:
         if data.shape != oldShape:
             data.shape = oldShape
-    return images, eigenvalues, vectors
+    if legacy:
+        return images, eigenvalues, vectors
+    else:
+        return {"scores": images,
+                "eigenvalues": eigenvalues,
+                "eigenvectors": vectors,
+                #"average": avgSpectrum,
+                #"pixels": calculatedPixels,
+                #"variance": calculatedTotalVariance,
+                }
 
 
 def main():

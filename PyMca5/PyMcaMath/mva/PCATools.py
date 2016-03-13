@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -536,7 +536,7 @@ def getCovarianceMatrix(stack,
 
 
 def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
-                center=True, scale=True, mask=None, spectral_mask=None, **kw):
+                center=True, scale=True, mask=None, spectral_mask=None, legacy=True, **kw):
     if DEBUG:
         print("PCATools.numpyPCA")
         print("index = %d" % index)
@@ -662,7 +662,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
 
     #calculate the projections
     # Subtracting the average and normalizing to standard deviation gives worse results.
-    # Verions 5.0.0 to 5.1.0 implemented that behavior as default.
+    # Versions 5.0.0 to 5.1.0 implemented that behavior as default.
     # When dealing with the CH1777 test dataset the Sb signal was less contrasted against
     # the Ca signal.
     # Clearly the user should have control about subtracting the average or not and
@@ -710,8 +710,15 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                     i += 1
             #reshape the images
             images.shape = ncomponents, oldShape[0], oldShape[1]
-
-    return images, eigenvalues, eigenvectors
+    if legacy:
+        return images, eigenvalues, eigenvectors
+    else:
+        return {"scores": images,
+                "eigenvalues": eigenvalues,
+                "eigenvectors": eigenvectors,
+                "average": avgSpectrum,
+                "pixels": calculatedPixels,
+                "variance": calculatedTotalVariance}
 
 
 def test():
