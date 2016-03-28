@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -29,6 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import traceback
 from PyMca5.PyMcaCore import EventHandler
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -253,7 +254,9 @@ class SpecfitGui(qt.QWidget):
             except:
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error on mcafit")
+                msg.setWindowTitle("Error on mcafit")
+                msg.setInformativeText(str(sys.exc_info()[1]))
+                msg.setDetailedText(traceback.format_exc())
                 msg.exec_()
                 ddict={}
                 ddict['event'] = 'FitError'
