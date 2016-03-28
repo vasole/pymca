@@ -101,13 +101,13 @@ def smooth(signal, coeff):
 
     """ applies coefficients calculated by calc_coeff()
         to signal """
-    N = numpy.size(coeff-1)/2
+    N = numpy.size(coeff - 1) // 2
     res = numpy.convolve(signal, coeff)
     return res[N:-N]
 
 def getSavitzkyGolay(spectrum, npoints=3, degree=1, order=0):
     coeff = calc_coeff(npoints, degree, order)
-    N = numpy.size(coeff-1)/2
+    N = numpy.size(coeff - 1) // 2
     if order < 1:
         result = 1.0 * spectrum
     else:
@@ -117,7 +117,7 @@ def getSavitzkyGolay(spectrum, npoints=3, degree=1, order=0):
 
 def replaceStackWithSavitzkyGolay(stack, npoints=3, degree=1, order=0):
     coeff = calc_coeff(npoints, degree, order)
-    N = numpy.size(coeff-1)/2
+    N = numpy.size(coeff-1) // 2
     convolve = numpy.convolve
     mcaIndex = -1
     if hasattr(stack, "info") and hasattr(stack, "data"):
