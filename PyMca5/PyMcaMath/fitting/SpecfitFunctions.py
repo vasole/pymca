@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -443,7 +443,7 @@ class SpecfitFunctions(object):
                     largest = param
                 else:
                     param2 = numpy.array([yy[int(i)] - zz [int(i)], xx[int(i)] ,sig])
-                    param = numpy.concatenate((param,param2),1)
+                    param = numpy.concatenate((param,param2))
                     if (param2[0] > largest[0]):
                         largest = param2
                         largest_index = j
