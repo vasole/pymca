@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -948,6 +948,7 @@ class Specfit(object):
             #make sure data are current
             if self.dataupdate is not None:
                 self.dataupdate()
+            y = self.ydata0
 
         if 'debug' in kw:
             mcadebug = 1
