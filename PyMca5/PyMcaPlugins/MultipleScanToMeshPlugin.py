@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 M. Rovezzi, V.A. Sole European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 M. Rovezzi, V.A. Sole European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -96,14 +96,24 @@ class MultipleScanToMeshPlugin(Plugin1DBase.Plugin1DBase):
         self._xLabel = self.getGraphXLabel()
         self._yLabel = self.getGraphYLabel()
 
-        if self._xLabel not in ["Spec.Energy", "arr_hdh_ene", "Mono.Energy"]:
-            msg = "X axis does not correspond to an ID26 RIXS scan"
+        if self._xLabel not in ["energy", "Spec.Energy", "arr_hdh_ene", "Mono.Energy"]:
+            msg = "X axis does not correspond to a BM20 or ID26 RIXS scan"
             raise ValueError(msg)
 
+        motorNames = allCurves[0][3]["MotorNames"]
         if self._xLabel == "Spec.Energy":
+            # ID26
             fixedMotorMne = "Mono.Energy"
-        else:
+        elif (self._xLabel == "energy") and ("xes_en" in motorNames):
+            # BM20 case
+            fixedMotorMne = "xes_en"
+        elif "Spec.Energy" in motorNames:
+            # ID26
             fixedMotorMne = "Spec.Energy"
+        else:
+            # TODO: Show a combobox to allow the selection of the "motor"
+            msg = "Cannot automatically recognize motor mnemomnic to be used"
+            raise ValueError(msg)
         fixedMotorIndex = allCurves[0][3]["MotorNames"].index(fixedMotorMne)
 
 
