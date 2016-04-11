@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -181,8 +181,10 @@ class XASMdiArea(qt.QMdiArea):
     def setSpectrum(self, energy, mu):
         for key in self._windowDict:
             self._windowDict[key].clearCurves()
-        if abs(energy[-1] - energy[0]) < 50:
-            energy = energy * 1000.
+        # try to detect if we are working in eV or in keV
+        if energy [0] < 200:
+            if abs(energy[-1] - energy[0]) < 10:
+                energy = energy * 1000.
         self._windowDict["Spectrum"].addCurve(energy,
                                               mu,
                                               legend="Spectrum",
