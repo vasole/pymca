@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -179,7 +179,7 @@ class XASNormalizationParameters(qt.QGroupBox):
 
     def setSpectrum(self, energy, mu):
         # try to detect keV
-        if abs(energy[-1]-energy[0]) < 50:
+        if abs(energy[-1]-energy[0]) < 10:
             self._energy = energy * 1000.
         else:
             self._energy = energy * 1.0

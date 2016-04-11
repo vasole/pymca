@@ -382,7 +382,8 @@ def polspl_test():
                          0.0000000, 0.0000000, 0.0000000, 0.0000000 ] )
     nc = numpy.array( [ 0.0000000, 4.0000000,\
                         4.0000000, 4.0000000, 0.0000000, 0.0000000,\
-                        0.0000000, 0.0000000, 0.0000000, 0.0000000 ] )
+                        0.0000000, 0.0000000, 0.0000000, 0.0000000 ],
+                        dtype=numpy.int32)
     nr =       3
     c = polspl(xx,yy,w,npts,xl,xh,nr,nc)
     #print("set22.shape",set22.shape)
@@ -425,7 +426,7 @@ def postEdge(set2,kmin=None,kmax=None,polDegree=[3,3,3],knots=None, full=False):
     xl = numpy.zeros(10)
     xh = numpy.zeros(10)
     c = numpy.zeros(36)
-    nc = numpy.zeros(10)
+    nc = numpy.zeros(10, numpy.int32)
     if len(polDegree) > 10:
         print("Error: Maximum number of intervals is 10")
         print("       Number of intervals forced to 10")
@@ -1066,7 +1067,7 @@ class XASClass(object):
             equidistant = False
 
         if units is None:
-            if (energy[-1] - energy[0]) < 50:
+            if (energy[-1] - energy[0]) < 10:
                 units = "keV"
             else:
                 units = "eV"
@@ -1074,6 +1075,7 @@ class XASClass(object):
             raise ValueError("Unhandled units %s" % units)
         elif units.lower() == "kev":
             energy *= 1000.
+            energy0 *= 1000.
 
         # everything went well, update internal variables
         self._energy0 = energy0
