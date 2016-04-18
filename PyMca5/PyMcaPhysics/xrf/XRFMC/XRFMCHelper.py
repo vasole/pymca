@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -136,7 +136,10 @@ def getScriptFile(pathToExecutable=None, args=None, name=None):
             fullPath = name
             if not fullPath.endswith(".bat"):
                 fullPath = name + ".bat"
-            f = open(fullPath, "wb")
+            if sys.version < '3.0':
+                f = open(fullPath, "wb")
+            else:
+                f = open(fullPath, "w", newline='')
             f.write(txt)
             f.close()
     elif sys.platform == "darwin":
