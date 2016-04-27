@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -308,8 +308,9 @@ def _getFisxMaterials(fitConfiguration):
     nMaterials = len(inputMaterialList)
     fisxMaterials = []
     processedMaterialList = []
-
-    while (len(processedMaterialList) != nMaterials):
+    nIter = 10000
+    while (len(processedMaterialList) != nMaterials) and (nIter > 0):
+        nIter -= 1
         for i in range(nMaterials):
             materialName = inputMaterialList[i]
             if materialName in processedMaterialList:
@@ -365,7 +366,23 @@ def _getFisxMaterials(fitConfiguration):
                         if len(materialName):
                             raise TypeError("Error defining material <%s>" % \
                                             materialName)
-                    processedMaterialList.append(materialName)                        
+                    processedMaterialList.append(materialName)
+    if len(processedMaterialList) < nMaterials:
+        txt = "Undefined materials. "
+        for material in inputMaterialList:
+            if material not in processedMaterialList:
+                txt += "\nCannot define material <%s>\nComposition " % material
+                compoundList = inputMaterialDict[material]["CompoundList"]
+                fractionList = inputMaterialDict[material]["CompoundFraction"]
+                for compound in compoundList:
+                    if not len(xcom.getComposition(compound)):
+                        if compound not in processedMaterialList:
+                            if compound + " " in processedMaterialList:
+                                txt += "contains <%s> (defined as <%s>), " % (compound, compound + " ")
+                            else:
+                                txt += "contains <%s> (undefined)," % compound
+        print(txt)
+        raise KeyError(txt)
     return fisxMaterials
 
 def _getBeam(fitConfiguration):
