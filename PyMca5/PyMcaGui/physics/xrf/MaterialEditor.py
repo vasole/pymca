@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -39,6 +39,11 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics import Elements
 from PyMca5.PyMcaGui import PlotWindow
 ScanWindow = PlotWindow.PlotWindow
+
+if hasattr(qt, "QString"):
+    QString = qt.QString
+else:
+    QString = str
 
 DEBUG = 0
 
@@ -375,7 +380,7 @@ class MaterialValidator(qt.QValidator):
         text = str(qstring)
         key  = Elements.getMaterialKey(text)
         if key is not None:
-            return qt.QString(key)
+            return QString(key)
         else:
             return qstring
 
