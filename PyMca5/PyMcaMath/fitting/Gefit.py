@@ -542,7 +542,6 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
             #removed I resize outside the loop:
             #help0 = numpy.resize(help0,(1,nr))
         else:
-            newpar = getparameters(pwork.tolist(),constrains)
             help0=model_deriv(pwork,free_index[i],x)
             help0 = help0 * derivfactor[i]
 
@@ -555,6 +554,8 @@ def ChisqAlphaBeta(model0, parameters, x,y,weight, constrains,model_deriv=None,l
     if linear:
         pseudobetahelp = weight * y
     else:
+        newpar = getparameters(pwork.tolist(),constrains)
+        newpar = numpy.take(newpar,noigno)
         yfit = model(newpar, x)
         deltay = y - yfit
         help0 = weight * deltay
