@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -139,6 +139,7 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
         return filelist
 
 def test():
+    sys.excepthook = qt.exceptionHandler
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
 

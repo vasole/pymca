@@ -28,6 +28,8 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import traceback
+
 """
 This module simplifies writing code that has to deal with with PySide and PyQt4.
 
@@ -127,6 +129,15 @@ else:
             except:
                 pass
 
+# provide a exception handler but not implement it by default
+def exceptionHandler(type_, value, trace):
+    print("%s %s %s" % (type_, value, ''.join(traceback.format_tb(trace))))
+    msg = QMessageBox()
+    msg.setWindowTitle("Unhandled exception")
+    msg.setIcon(QMessageBox.Critical)
+    msg.setInformativeText("%s %s\nPlease report details" % (type_, value))
+    msg.setDetailedText(("%s " % value) + ''.join(traceback.format_tb(trace)))
+    msg.exec_()
 
 # Overwrite the QFileDialog to make sure that by default it 
 # returns non-native dialogs as it was the traditional behavior of Qt

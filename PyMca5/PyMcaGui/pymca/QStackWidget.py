@@ -1060,6 +1060,7 @@ def test():
     return w
 
 if __name__ == "__main__":
+    sys.excepthook = qt.exceptionHandler
     import getopt
     options = ''
     longoptions = ["fileindex=","old",

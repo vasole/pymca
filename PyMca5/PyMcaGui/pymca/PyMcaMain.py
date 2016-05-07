@@ -110,15 +110,7 @@ import os
 __version__ = PyMca5.version()
 
 if __name__ == "__main__":
-    def exceptionHandler(type_, value, trace):
-        print("%s %s %s" % (type_, value, ''.join(traceback.format_tb(trace))))
-        msg = qt.QMessageBox()
-        msg.setWindowTitle("Unhandled exception")
-        msg.setIcon(qt.QMessageBox.Critical)
-        msg.setInformativeText("%s %s\nPlease report details" % (type_, value))
-        msg.setDetailedText(("%s " % value) + ''.join(traceback.format_tb(trace)))
-        msg.exec_()
-    sys.excepthook = exceptionHandler
+    sys.excepthook = qt.exceptionHandler
 
     app = qt.QApplication(sys.argv)
     strlist = qt.QStyleFactory.keys()

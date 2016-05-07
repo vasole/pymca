@@ -1722,6 +1722,7 @@ class McaBatchWindow(qt.QWidget):
             os.system(cmd)
 
 def main():
+    sys.excepthook = qt.exceptionHandler
     import getopt
     options     = 'f'
     longoptions = ['cfg=','outdir=','roifit=','roi=','roiwidth=',
