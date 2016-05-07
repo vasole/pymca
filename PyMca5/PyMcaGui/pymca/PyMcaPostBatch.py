@@ -31,6 +31,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaGui import RGBCorrelator
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
@@ -102,40 +103,16 @@ class PyMcaPostBatch(RGBCorrelator.RGBCorrelator):
                         "Image Files (* jpg *jpeg *tif *tiff *png)",
                         "All Files (*)"]
         message = "Open ONE Batch result file or SEVERAL EDF files"
-        #if (QTVERSION < '4.3.0') and (sys.platform != 'darwin'):
-        if PyMcaDirs.nativeFileDialogs:
-            filetypes = ""
-            for filetype in fileTypeList:
-                filetypes += filetype+"\n"
-            filelist = qt.QFileDialog.getOpenFileNames(self,
-                        message,
-                        wdir,
-                        filetypes)
-            if not len(filelist):return []
-        else:
-            fdialog = qt.QFileDialog(self)
-            fdialog.setModal(True)
-            fdialog.setWindowTitle(message)
-            strlist = QStringList()
-            for filetype in fileTypeList:
-                strlist.append(filetype.replace("(","").replace(")",""))
-            fdialog.setFilters(strlist)
-            fdialog.setFileMode(fdialog.ExistingFiles)
-            fdialog.setDirectory(wdir)
-            ret = fdialog.exec_()
-            if ret == qt.QDialog.Accepted:
-                filelist = fdialog.selectedFiles()
-                fdialog.close()
-                del fdialog
-            else:
-                fdialog.close()
-                del fdialog
-                return []
-        filelist = [qt.safe_str(x) for x in filelist]
+
+        filelist = PyMcaFileDialogs.getFileList(parent=self,
+                                filetypelist=fileTypeList,
+                                message=message,
+                                currentdir=wdir,
+                                mode="OPEN",
+                                single=False)
         if not len(filelist):
             return []
         PyMcaDirs.inputDir = os.path.dirname(filelist[0])
-        filelist.sort()
         return filelist
 
 def test():
