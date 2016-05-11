@@ -1,7 +1,7 @@
 /****************************************************************************
 *
-*   Copyright (c) 1998-2011 European Synchrotron Radiation Facility (ESRF)
-*   Copyright (c) 1998-2013 Certified Scientific Software (CSS)
+*   Copyright (c) 1998-2016 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2016 Certified Scientific Software (CSS)
 *
 *   The software contained in this file "sps.c" is designed to interface
 *   the shared-data structures used and defined by the CSS "spec" package
@@ -2314,6 +2314,7 @@ int SPS_IsUpdated(char *fullname, char *array) {
   u32_t utime;
   int updated;
   int was_attached;
+  u32_t id;
   SPS_ARRAY private_shm;
 
   if ((private_shm = convert_to_handle(fullname, array)) == NULL)
@@ -2321,13 +2322,15 @@ int SPS_IsUpdated(char *fullname, char *array) {
 
   utime = private_shm->utime;
   was_attached = private_shm->attached;
+  id = private_shm->id;
 
   if (ReconnectToArray(private_shm, 0))
     return -1;
 
   private_shm->utime = private_shm->shm->head.head.utime;
-
-  updated = (private_shm->shm->head.head.utime == utime)? 0:1;
+  updated = (private_shm->id == id) ? 0:1;
+  if (!updated)
+    updated = (private_shm->shm->head.head.utime == utime)? 0:1;
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
 
