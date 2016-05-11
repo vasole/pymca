@@ -25,8 +25,9 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 *
+****************************************************************************/
 /****************************************************************************
-*   @(#)sps.c	6.8  10/13/14 CSS
+*   @(#)sps.c	6.9  05/11/16 CSS
 *
 *   "spec" Release 6
 *
