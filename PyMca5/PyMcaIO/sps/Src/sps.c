@@ -42,7 +42,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <sys/ipc.h> 
+#include <sys/ipc.h>
 #include <sys/shm.h>
 #include <signal.h>
 
@@ -59,8 +59,8 @@
 
 typedef struct shm_header SHM;
 
-/* 
-   id_buffer hold all the SPEC shared memory ids in the system 
+/*
+   id_buffer hold all the SPEC shared memory ids in the system
    The routine init_ShmIDs is used to fill this buffer (slow!)
 */
 
@@ -84,14 +84,14 @@ struct specid {
 	u32_t   ids_utime;
 	struct  arrayid *array_names;
 	s32_t   arrayno;
-}; 
+};
 
 static struct   specid SpecIDTab[SHM_MAX_ENTRIES];
 static int      SpecIDNo = 0;
 
-/* 
+/*
    The structure sps_array is used as a handle to one array in a spec
-   version. It holds the current state of this connection. Either 
+   version. It holds the current state of this connection. Either
    not found yet, not attached yet, or attached
 */
 
@@ -112,8 +112,8 @@ typedef struct sps_array {
 	void    *private_info_copy;
 } *SPS_ARRAY;
 
-/* 
-   Linked list of shared memories I created or I created handles for 
+/*
+   Linked list of shared memories I created or I created handles for
    Information is redundant and should be reduced as soon the interface to
    the outside world is stable
 */
@@ -209,7 +209,7 @@ static  int     SPS_AttachToArray(char *fullname, char *array, int write_flag);
 static  int     SPS_DetachFromArray(char *fullname, char*array);
 #endif
 
-/* 
+/*
    Our private attach and dettach to stay connected with the shared memory
    we created ourselves
 */
@@ -227,12 +227,12 @@ static void c_shmdt(void *ptr) {
 		shmdt(ptr);
 }
 
-/* 
+/*
    Used internally. Finds the index in the SpecIDTab array with given
    spec_version and pid. For the moment the pid is only used to decide
-   between two different versions of spec with the same name. 
+   between two different versions of spec with the same name.
    Input: spec_version the name of the version to look for
-          pid: the pid of the specversion or 0 if every pid. 
+          pid: the pid of the specversion or 0 if every pid.
    Returns: -1 if not found, idx otherwise
 */
 
@@ -286,9 +286,9 @@ static int find_ArrayIDX(int tab_idx, char *array_name) {
 	return(-1);
 }
 
-/* 
-   Used internally to combine the version and the pid to a string 
-   Input: version: spec version name 
+/*
+   Used internally to combine the version and the pid to a string
+   Input: version: spec version name
 	  pid: u32_t
    returns: NULL if error
             combined string of both version and pid i.e. fourc(12345)
@@ -305,11 +305,11 @@ static char *composeVersion(char *version, u32_t pid) {
 	return(comb);
 }
 
-/* 
-   Used internally to extract the version and the pid from a string 
+/*
+   Used internally to extract the version and the pid from a string
    Input: fullname: i.e. fourc(12345) or just pslits
           version: pointer to char array which has enough space
-                   memory for string will have to be freed  
+                   memory for string will have to be freed
 	  pid: pointer to s32_t will contain pid
    returns: 1 if fullname contained a pid
             0 if not
@@ -342,7 +342,7 @@ static void delete_SpecIDTab(void)
   int i,j;
   for (i = 0; i < SpecIDNo; i++) {
     for (j = 0; j < SpecIDTab[i].arrayno; j++)
-      if (SpecIDTab[i].array_names[j].name) { 
+      if (SpecIDTab[i].array_names[j].name) {
 	free(SpecIDTab[i].array_names[j].name);
 	SpecIDTab[i].array_names[j].name = NULL;
       }
@@ -351,17 +351,17 @@ static void delete_SpecIDTab(void)
   }
   SpecIDNo = 0;
 }
-  
-/* 
+
+/*
    Create a list of all SpecVersions and their IDs. The result is stored
-   in some internal array. This function uses ipcs to get the actual 
+   in some internal array. This function uses ipcs to get the actual
    running version and produces the internal table.
    Fills in the array SpecIDTab[] with all the Specversions but every
    Specversion does not contain a list of all its arrays yet. To fill
    this in a call to the function SearchSpecArrays(xxx) has to be called
    for every Specversion
 */
- 
+
 static int SearchSpecVersions(void)
 {
   u32_t *id_ptr;
@@ -380,7 +380,7 @@ static int SearchSpecVersions(void)
       continue;
 
     /* Find if the name of the spec_version is already used */
-    for (found = 0, j = 0; j < n; j++) 
+    for (found = 0, j = 0; j < n; j++)
       if (strcmp(shm->head.head.spec_version,SpecIDTab[j].spec_version)== 0)
 	found++;
 
@@ -403,11 +403,11 @@ static int SearchSpecVersions(void)
 }
 
 
-/* 
+/*
    Fill in the internal memory structure struct specid SpecIDTab[] for the
    specversion fullname. The routine relys on the fact that every SPEC version
    has the status array with a list of shared memory ids which belong to
-   this Specversion. 
+   this Specversion.
    Input: fullname : Name of the Version with possible pid (fourc, spec(123)
 */
 
@@ -421,30 +421,30 @@ static void SearchSpecArrays(char *fullname) {
 
  redo:
   found = ((si = find_TabIDX_composed(fullname)) == -1)? 0:1;
-  
+
   if (found) {
     shm = (SHM *) c_shmat(SpecIDTab[si].id, NULL, SHM_RDONLY);
   }
   if (!found || !checkSHM(shm, SpecIDTab[si].spec_version, NULL, SHM_IS_STATUS)) {
     if (found && shm && shm != (SHM *) -1)
       c_shmdt((void *) shm);
-    
+
     if (!redone) {
       redone = 1;
       SearchSpecVersions();
       goto redo;
-    } else 
+    } else
       return;
   }
-  
+
   if (shm->head.head.version < 4)
     st = (struct shm_status *) &(((struct shm_oheader *)shm)->data);
   else
     st = (struct shm_status *) &(shm->data);
-  
-  /* Check if there was already an entry for all the arrays and if still 
+
+  /* Check if there was already an entry for all the arrays and if still
      uptodate */
-  
+
   if (SpecIDTab[si].arrayno) {
     if (SpecIDTab[si].ids_utime == st->utime) {
       c_shmdt((void *) shm);
@@ -458,25 +458,25 @@ static void SearchSpecArrays(char *fullname) {
       SpecIDTab[si].array_names = NULL;
     }
   }
-  
+
   SpecIDTab[si].ids_utime = st->utime;
-  
+
   for (no = 0, i = 0; i < SHM_MAX_IDS; i++) {
-    if (st->ids[i] == -1) 
+    if (st->ids[i] == -1)
       continue;
     no++;
   }
 
   SpecIDTab[si].arrayno = no;
-  if (no) 
+  if (no)
     SpecIDTab[si].array_names = (struct arrayid *) malloc(sizeof(struct arrayid) * no);
-  
+
   /* Make a table of all arraynames with their shm ids */
   for (idx = 0, i = 0; idx < SHM_MAX_IDS; idx++) {
     SHM *shm_array;
 
-    id = st->ids[idx]; /* the shared memory can change while we go through */ 
-    if (id == -1 || i >= no) /* therefore save id and check again i */ 
+    id = st->ids[idx]; /* the shared memory can change while we go through */
+    if (id == -1 || i >= no) /* therefore save id and check again i */
       continue;
     shm_array = (SHM *) c_shmat(id, NULL, SHM_RDONLY);
     if (!checkSHM(shm_array, SpecIDTab[si].spec_version, NULL, 0)) {
@@ -487,7 +487,7 @@ static void SearchSpecArrays(char *fullname) {
       i++;
       continue;
     }
-    SpecIDTab[si].array_names[i].name = 
+    SpecIDTab[si].array_names[i].name =
       (char *) strdup(shm_array->head.head.name);
     SpecIDTab[si].array_names[i].id = id;
     c_shmdt((void *) shm_array);
@@ -495,8 +495,8 @@ static void SearchSpecArrays(char *fullname) {
   }
 
   c_shmdt((void *) shm);
-}  
-  
+}
+
 static s32_t SearchArrayOnly(char *arrayname) {
   u32_t *id_ptr;
   int no;
@@ -510,9 +510,9 @@ static s32_t SearchArrayOnly(char *arrayname) {
   return *id_ptr; /* Return the first array of the list of arrays */
 }
 
-/* 
+/*
    Get a list of all SPEC shared memory ids. This operation uses the external
-   program ipcs and is therefore very slow. 
+   program ipcs and is therefore very slow.
    Input: None
    Returns: 1 if error, 0 if OK
 
@@ -597,7 +597,7 @@ static int init_ShmIDs(void) {
 		      c_shmdt((void *) shm);
 		      continue;
 		}
-    
+
 #if SHM_CLEANUP
 		if (!id_is_our_creation(id)) {
 			shmctl(id, IPC_STAT, &info);
@@ -618,15 +618,15 @@ static int init_ShmIDs(void) {
 		pclose(pd);
 
 	return 0;
-} 
+}
 
 
 /*
-  Get all shared memory IDs which belong to a certain class. The shared 
+  Get all shared memory IDs which belong to a certain class. The shared
   memory ids on the system must be filled in first with init_ShmIDs()
   Input: **id_ptr : Will be filled out to a static temporary buffer with
                     all the ids filled in. Do not free this buffer. Do not
-		    keep this pointer around for concecutive calls to this 
+		    keep this pointer around for concecutive calls to this
 		    routine.
 	 spec_version : NULL or a specversion you are interested in
 	 name : NULL or an array name you are interested in
@@ -642,7 +642,7 @@ static int getShmIDs(u32_t **id_ptr, char *spec_version,
 
   for (ids_no = 0, i = 0; i < id_no; i++) {
     id = id_buffer[i];
-    
+
     if ((shm = (SHM *) c_shmat(id, NULL, SHM_RDONLY)) == (SHM *) -1)
       continue;
 
@@ -655,12 +655,12 @@ static int getShmIDs(u32_t **id_ptr, char *spec_version,
 
     if (ids_no < SHM_MAX_ENTRIES) {
       ids[ids_no++] = id;
-    } 
+    }
   }
-    
+
   *id_ptr = ids;
   return ids_no;
-} 
+}
 
 /* Delete a list ids from our */
 static void delete_id_from_list(u32_t id) {
@@ -673,7 +673,7 @@ static void delete_id_from_list(u32_t id) {
       return;
     }
     for (j = 0; j < SpecIDTab[i].arrayno; j++)
-      if (SpecIDTab[i].array_names[j].id == id) { 
+      if (SpecIDTab[i].array_names[j].id == id) {
 	/* Delete one id of the array shared memory */
 	old_arrays = SpecIDTab[i].array_names;
     if (SpecIDTab[i].array_names[j].name)
@@ -682,18 +682,18 @@ static void delete_id_from_list(u32_t id) {
 	if (no) {
 	  new_arrays = (struct arrayid *) malloc(no * sizeof(struct arrayid));
 	  if (new_arrays == NULL) {
-	    SpecIDTab[i].array_names[j].id = 0; 
+	    SpecIDTab[i].array_names[j].id = 0;
 	    SpecIDTab[i].array_names[j].name = NULL;
 	    return;
 	  }
 	  for (k = 0, l = 0; k < SpecIDTab[i].arrayno; k++) {
-	    if (k != j) { 
+	    if (k != j) {
 	      new_arrays[l].name = old_arrays[k].name;
 	      new_arrays[l].id = old_arrays[k].id;
 	      l++;
 	    }
 	  }
-	} else 
+	} else
 	  new_arrays = NULL;
 	SpecIDTab[i].arrayno = no;
 	SpecIDTab[i].array_names = new_arrays;
@@ -703,9 +703,9 @@ static void delete_id_from_list(u32_t id) {
   }
 }
 
-/* 
-   Checks if a certain shm pointer belongs to the class of shared memory 
-   specified 
+/*
+   Checks if a certain shm pointer belongs to the class of shared memory
+   specified
    Input: shm: shared memory pointer to test
           spec_version: The name of the spec version or NULL for all
 	  name: The name of the array or NULL for all
@@ -765,7 +765,7 @@ static int checkSHM(SHM *shm, char *spec_version, char *name, u32_t type) {
 }
 
 
-/* 
+/*
    Attaches to shared memory with given Spec version and array name.
    Input: spec_version: Name of the spec version
 	  array: Name of the array inside SPEC
@@ -786,43 +786,43 @@ static SHM *attachArray(char *fullname, char *array, int read_only) {
 	if ((idx = find_TabIDX_composed(fullname)) == -1)
 	  return NULL;
       }
-      
+
       arr_idx = find_ArrayIDX(idx, array);
       if (arr_idx == -1) {
 	SearchSpecArrays(fullname);
 	if ((arr_idx = find_ArrayIDX(idx, array)) == -1)
 	  return NULL;
       }
-      
+
       shm = (SHM *) c_shmat(SpecIDTab[idx].array_names[arr_idx].id, NULL, read_only? SHM_RDONLY:0);
-      
+
       /* We might not be attached because the id is not longer valid */
       if (shm != (SHM *) -1)
 	break;
-    
+
       SearchSpecVersions(); /* and retry */
     }
   } else { /* Use another method of finding the shared mem */
     if ((id = SearchArrayOnly(array)) != -1)
       shm = (SHM *) c_shmat(id, NULL, read_only? SHM_RDONLY:0);
-    
+
     /* We might not be attached */
     if (shm == (SHM *) -1)
       return NULL;
-    else 
+    else
       return shm;
   }
-  
+
   if (!checkSHM(shm, fullname, array, 0)) {
     if (shm && shm != (SHM *) -1)
       c_shmdt((void *) shm);
     return NULL;
   }
-  
+
   return shm;
 }
 
-/* 
+/*
    Attaches to shared memory of a given Spec version
    Input: spec_version: Name of the spec version
    Returns: NULL if error
@@ -842,19 +842,19 @@ static SHM *attachSpec(char *fullname) {
     if ((idx = find_TabIDX_composed(fullname)) == -1)
       return NULL;
   }
-  
+
   /* Maybe we find a pointer in our table */
 
   /* Attach to the shared memory in read-only mode */
   shm = (SHM *) c_shmat(SpecIDTab[idx].id, NULL, SHM_RDONLY);
-  
+
   /* Check that the shared memory is still valid */
   if (!checkSHM(shm, fullname, NULL, 0)) {
     if (shm && shm != (SHM *) -1)
       c_shmdt((void *) shm);
     return NULL;
   }
-  
+
   return shm;
 }
 
@@ -1087,11 +1087,11 @@ static int typedcp(void *t, int tt, void *f, int ft, int np, int rev, int offset
 /*
   char *SPS_GetNextSpec(int flag)
   Input: Flag to know if this is the first call to SPS_GetNextSpec
-         1: Get first in list, 0: Get next 
+         1: Get first in list, 0: Get next
   Returns: Name of the SPEC version or NULL if no more in the list
 */
 char *SPS_GetNextSpec(int flag) {
-  static int loop_count = 0; 
+  static int loop_count = 0;
   if (flag == 0) {
     SearchSpecVersions();
     loop_count = 0;
@@ -1108,9 +1108,9 @@ char *SPS_GetNextSpec(int flag) {
 
 /*
   char *SPS_GetNextArray(char *version, int flag)
-  Input: version : name of SPEC version, or NULL for all. 
+  Input: version : name of SPEC version, or NULL for all.
          Flag to know if this is the first call to SPS_GetNextArray
-         1: Get first in list, 0: Get next 
+         1: Get first in list, 0: Get next
   Returns: Name of the SPEC array name or NULL if no more in the list
 */
 
@@ -1120,20 +1120,20 @@ char *SPS_GetNextArray(char *fullname, int flag) {
 
   if (fullname == NULL)
     return GetNextAll(flag);
-  
+
   if (flag == 0) {
     SearchSpecArrays(fullname);
     loop_count = 0;
   } else
     loop_count++;
-  
+
   idx = find_TabIDX_composed(fullname);
 
-  if (idx == -1 || loop_count >= SpecIDTab[idx].arrayno || 
+  if (idx == -1 || loop_count >= SpecIDTab[idx].arrayno ||
       SpecIDTab[idx].array_names[loop_count].name == NULL) {
     loop_count = 0;
     return NULL;
-  } else 
+  } else
     return SpecIDTab[idx].array_names[loop_count].name;
 }
 
@@ -1141,7 +1141,7 @@ static char *GetNextAll(int flag) {
   static int loop_count = 0;
   static char *spec_version = NULL;
   int idx = -1;
-  
+
   for (;;) {
     if (flag == 0 || spec_version == NULL) {
       loop_count = 0;
@@ -1151,20 +1151,20 @@ static char *GetNextAll(int flag) {
       SearchSpecArrays(spec_version);
     } else
       loop_count++;
-    
+
     idx = find_TabIDX_composed(spec_version);
-    
-    if (idx == -1 || loop_count >= SpecIDTab[idx].arrayno || 
+
+    if (idx == -1 || loop_count >= SpecIDTab[idx].arrayno ||
 	SpecIDTab[idx].array_names[loop_count].name == NULL) {
       spec_version = NULL;
       flag = 1;
       continue;
-    } else 
+    } else
       return SpecIDTab[idx].array_names[loop_count].name;
   }
 }
 
-/* 
+/*
    Read the state the particular SPEC version is in for the moment
    Input: version : specversion with PID if necessary (spec(1234) or fourc)
    Returns: State
@@ -1175,16 +1175,16 @@ s32_t SPS_GetSpecState(char *version) {
   struct shm_status *st;
   SPS_ARRAY private_shm;
   int was_attached;
-  
+
   if ((private_shm = convert_to_handle(version, NULL)) == NULL)
     return -1;
-  
+
   /* private_shm->stay_attached = 1; Always stay attached to the status */
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 0))
     return -1;
-  
+
   spec_shm = private_shm->shm;
 
   if (spec_shm) {
@@ -1193,11 +1193,11 @@ s32_t SPS_GetSpecState(char *version) {
     else
       st = (struct shm_status *) &(spec_shm->data);
     state = st->spec_state;
-  } 
-  
+  }
+
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   return state;
 }
 
@@ -1222,7 +1222,7 @@ static SPS_ARRAY add_private_shm(SHM *shm, char *fullname, char *array, int writ
 
   private_shm->spec       = fullname ? (char *) strdup(fullname) : NULL;
   private_shm->array      = array ? (char *) strdup(array) : NULL;
-  
+
   private_shm->private_data_copy = NULL;
   private_shm->buffer_len = 0;
   private_shm->private_info_copy = NULL;
@@ -1239,12 +1239,12 @@ convert_to_handle(char *spec_version, char *array_name) {
 
   if (spec_version == NULL && array_name == NULL)
     return NULL; /* Why would somebody want to do that */
-  
+
   shm_list = ll_find_array(spec_version, array_name, array_name? 0:1);
-  
+
   /* If not in list then put it into the list if it is not the generic
      spec_version (NULL) */
- 
+
  if (shm_list == 0) {
     private_shm = add_private_shm(NULL, spec_version, array_name, 0);
     shm_list = ll_addnew_array(spec_version, array_name,
@@ -1257,11 +1257,11 @@ convert_to_handle(char *spec_version, char *array_name) {
   }
   return private_shm;
 }
-    
+
 #if SPS_DEBUG
-/* 
+/*
    Attaches to a SPEC array. Returns a private opaque structure which user
-   should not modify. To get the real data call 
+   should not modify. To get the real data call
    Input: fullname specversion with PID if necessary (spec(1234) or fourc)
           array_name: The name of the SPEC array (i.e. MCA_DATA)
 	  write_flag: One if you intend to modify the shared memory
@@ -1271,17 +1271,17 @@ convert_to_handle(char *spec_version, char *array_name) {
 
 static int SPS_AttachToArray(char *fullname, char *array, int write_flag) {
   SPS_ARRAY private_shm;
-  
+
   if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return 1;
   private_shm->write_flag = write_flag;
   private_shm->stay_attached = 1;
-  if (private_shm) 
+  if (private_shm)
     ReconnectToArray(private_shm, 0);
   return 0;
 }
 
-/* 
+/*
    Detaches from a SPEC array. The opaque pointer private_shm stays valid.
    If it is used in further calls the functions automatically try to reattach
    to the SPEC array.
@@ -1293,7 +1293,7 @@ static int SPS_AttachToArray(char *fullname, char *array, int write_flag) {
 
 static int SPS_DetachFromArray(char *fullname, char*array) {
   SPS_ARRAY private_shm;
-  
+
   if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return 1;
   private_shm->stay_attached = 0;
@@ -1311,9 +1311,9 @@ static int DeconnectArray(SPS_ARRAY private_shm) {
   return 0;
 }
 
-/* 
+/*
    Reconnects to a shared memory SPEC array. The process is attached to this
-   shared memory again. 
+   shared memory again.
    Input: Opac pointer from ConnectToArray
    returns: 1 error
             0 success
@@ -1321,7 +1321,7 @@ static int DeconnectArray(SPS_ARRAY private_shm) {
 
 static int ReconnectToArray(SPS_ARRAY private_shm, int write_flag) {
   SHM *shm;
-  
+
   if (write_flag && !private_shm->write_flag) { /*Reattach with write flag */
     private_shm->write_flag = 1;
     shm = private_shm->shm;
@@ -1337,9 +1337,9 @@ static int ReconnectToArray(SPS_ARRAY private_shm, int write_flag) {
       shm = c_shmat(private_shm->id, NULL, private_shm->write_flag? 0:SHM_RDONLY);
     } else
       shm = NULL;
-  } else  
+  } else
     shm = private_shm->shm;
-    
+
   /*  Check shm and try to get a new one if old one not longer valid */
   if (!checkSHM(shm, private_shm->spec, private_shm->array, 0)) {
     if (shm && shm != (SHM *) -1) {
@@ -1347,7 +1347,7 @@ static int ReconnectToArray(SPS_ARRAY private_shm, int write_flag) {
       private_shm->attached = 0;
       private_shm->shm = NULL;
     }
-    
+
     if (private_shm->array) {
       if ((shm = attachArray(private_shm->spec, private_shm->array,
 			      private_shm->write_flag? 0:1)) == NULL)
@@ -1364,24 +1364,24 @@ static int ReconnectToArray(SPS_ARRAY private_shm, int write_flag) {
   /* If we are attached and the SPEC version is still unknown - update now */
   if (shm && private_shm->spec == NULL)
     private_shm->spec = (char *) strdup(shm->head.head.spec_version);
-  
+
   return 0;
 }
 
-/* 
+/*
    Gives you the pointer to the data area of the SPEC array. If the process
    is not currently attached it will be attached after the call.
    Input: fullname : Spec version
           array : Name of the array
    Returns: NULL error
-            void * to the data area. Do not remember this pointer as most of 
-	    the SPS_ functions can change this pointer (In case the other 
-	    party quit and recreated the shared memory) 
-	    
+            void * to the data area. Do not remember this pointer as most of
+	    the SPS_ functions can change this pointer (In case the other
+	    party quit and recreated the shared memory)
+
 */
 void *SPS_GetDataPointer(char *fullname, char *array, int write_flag) {
   SPS_ARRAY private_shm;
-  
+
   if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return NULL;
   if (ReconnectToArray(private_shm, write_flag))
@@ -1393,9 +1393,9 @@ void *SPS_GetDataPointer(char *fullname, char *array, int write_flag) {
   return &(private_shm->shm->data);
 }
 
-/* 
+/*
    You should return the pointer to the library if you do not use it anymore.
-   If you returned the pointer as many times as you got it you will be 
+   If you returned the pointer as many times as you got it you will be
    detached from the shared memory and the pointer is not valid anymore.
    Input: fullname : Spec version
           array : Name of the array
@@ -1408,7 +1408,7 @@ int SPS_ReturnDataPointer(void *data) {
   struct shm_created *created;
   struct shm_head *sh;
   SHM *shm;
-  
+
   /* Try old header size first, since it is smaller */
   sh = (struct shm_head *) (((char *) data) - SHM_OHEAD_SIZE);
   if (sh->magic != SHM_MAGIC)
@@ -1420,7 +1420,7 @@ int SPS_ReturnDataPointer(void *data) {
 
   if ((created = ll_find_pointer(shm)) == NULL)
     return 1;
-  
+
   if ((private_shm = created->handle) == NULL)
     return 1;
 
@@ -1433,19 +1433,19 @@ int SPS_ReturnDataPointer(void *data) {
   return 0;
 }
 
-/* 
+/*
    Copies the data from the shared memory SPEC array to the user's buffer.
    The type of the data in the shared array and the type the user wants
    in his buffer is taken into account. The routine should work efficient
-   even if both types are equal. The user has to provide the number of 
+   even if both types are equal. The user has to provide the number of
    items in the buffer. This number is used to check for buffer overflow.
    If a possible buffer overflow is detected only the items_in_buffer
-   are copied. 
+   are copied.
    Input: fullname : name of the specversion
           array: name of the array in SPEC
           buffer: pointer to our buffer
 	  my_type: In which format do we want the results
-	  items_in_buffer: buffersize in number of items of type my_type 
+	  items_in_buffer: buffersize in number of items of type my_type
 	                   in buffer
    Returns: 0 success
 	    1 overflow, but copy done
@@ -1457,19 +1457,19 @@ int SPS_CopyFromShared(char *fullname, char *array, void *buffer, int my_type,
   return TypedCopy(fullname, array, buffer, my_type, items_in_buffer, 0);
 }
 
-/* 
+/*
    Copies the data to the shared memory SPEC array from the user's buffer.
    The type of the data in the shared array and the type the user wants
    in his buffer is taken into account. The routine should work efficient
-   even if both types are equal. The user has to provide the number of 
+   even if both types are equal. The user has to provide the number of
    items in the buffer. This number is used to check for buffer overflow.
    If a possible buffer overflow is detected only the items_in_buffer
-   are copied. 
+   are copied.
    Input: fullname : name of the specversion
           array: name of the array in SPEC
           buffer: pointer to our buffer
 	  my_type: In which format do we want the results
-	  items_in_buffer: buffersize in number of items of type my_type 
+	  items_in_buffer: buffersize in number of items of type my_type
 	                   in buffer
    Returns: 0 success
 	    1 overflow, but copy done
@@ -1481,19 +1481,19 @@ int SPS_CopyToShared(char *fullname, char *array, void *buffer, int my_type,
   return TypedCopy(fullname, array, buffer, my_type, items_in_buffer, 1);
 }
 
-/* 
+/*
    Copies the data from the shared memory SPEC array to the user's buffer.
    The type of the data in the shared array and the type the user wants
    in his buffer is taken into account. The routine should work efficient
-   even if both types are equal. The user has to provide the number of 
+   even if both types are equal. The user has to provide the number of
    items in the buffer. This number is used to check for buffer overflow.
    If a possible buffer overflow is detected only the items_in_buffer
-   are copied. 
+   are copied.
    Input: fullname : name of the specversion
           array: name of the array in SPEC
           buffer: pointer to our buffer
 	  my_type: In which format do we want the results
-	  items_in_buffer: buffersize in number of items of type my_type 
+	  items_in_buffer: buffersize in number of items of type my_type
 	                   in buffer
    Returns: 0 success
 	    1 overflow, but copy done
@@ -1504,20 +1504,20 @@ static int TypedCopy(char *fullname, char *array, void *buffer, int my_type,
 		      int items_in_buffer, int direction) {
   SPS_ARRAY private_shm;
   int was_attached, overflow;
-  
+
   if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return -1;
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, direction))
     return -1;
-  
+
   overflow = typedcp_private(private_shm, buffer, my_type, items_in_buffer,
-		     direction); 
-  
+		     direction);
+
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   return overflow;
 }
 
@@ -1525,7 +1525,7 @@ static int typedcp_private(SPS_ARRAY private_shm, void *buffer, int my_type,
 			int items_in_buffer, int direction) {
   void *data_ptr;
   int rows, cols, type, n_to_copy, overflow;
-  
+
   /* Do the data copy taking type and my_type into account */
   rows = private_shm->shm->head.head.rows;
   cols = private_shm->shm->head.head.cols;
@@ -1541,7 +1541,7 @@ static int typedcp_private(SPS_ARRAY private_shm, void *buffer, int my_type,
     overflow = 0;
     n_to_copy = rows*cols;
   }
-  
+
   if (direction) {
     typedcp(data_ptr, type, buffer, my_type, n_to_copy, 0, 0);
     private_shm->shm->head.head.utime++; /* Updated */
@@ -1551,15 +1551,15 @@ static int typedcp_private(SPS_ARRAY private_shm, void *buffer, int my_type,
   return overflow;
 }
 
-/* Can be used to copy rows and columns from an to shared memory. 
-   The first parameter are standard see SPS_GetDataRow. 
+/* Can be used to copy rows and columns from an to shared memory.
+   The first parameter are standard see SPS_GetDataRow.
    use_row is 1 if it should copy rows. (One block of memory)
    direction is 1 if it should write to shared memory and 0 to read from shm
-   my_buffer is NULL if it should copy to the internal buffer otherwise the 
+   my_buffer is NULL if it should copy to the internal buffer otherwise the
              buffer to copy from or to
 */
 static void *CopyDataRC(char *fullname, char *array, int my_type,
-			 int row, int col, int *act_copied, 
+			 int row, int col, int *act_copied,
 			 int use_row, int direction, void *my_buffer) {
   int rows, cols, type;
   void *buffer = NULL;
@@ -1569,27 +1569,27 @@ static void *CopyDataRC(char *fullname, char *array, int my_type,
   void *data_ptr;
   int n_to_copy = 0;
 
-  if (act_copied) 
+  if (act_copied)
     *act_copied = 0;
 
   if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return NULL;
 
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, direction))
     return NULL;
-  
+
   rows = private_shm->shm->head.head.rows;
   cols = private_shm->shm->head.head.cols;
   type = private_shm->shm->head.head.type;
 
-  if ((use_row && (row < 0 || row >= rows)) || 
+  if ((use_row && (row < 0 || row >= rows)) ||
       (!use_row && (col < 0 || col >= cols)))
     return NULL;
 
   size  = (use_row? cols:rows) * (int) typedsize(my_type); /* full row/column */
-  
+
   if (my_buffer == NULL) {
     if (private_shm->private_data_copy == NULL ||
 	 size > private_shm->buffer_len) {
@@ -1598,7 +1598,7 @@ static void *CopyDataRC(char *fullname, char *array, int my_type,
 	private_shm->private_data_copy = NULL;
 	private_shm->buffer_len = 0;
       }
-      
+
       if ((buffer = (void *) malloc(size)) == NULL)
 	goto error;
       private_shm->private_data_copy = buffer;
@@ -1621,56 +1621,56 @@ static void *CopyDataRC(char *fullname, char *array, int my_type,
       n_to_copy = cols;
     else
       n_to_copy = col;
-    
+
     if (direction) {
       typedcp(data_ptr, type, buffer, my_type, n_to_copy, 0, 0);
       private_shm->shm->head.head.utime++; /* Updated */
     } else {
       typedcp(buffer, my_type, data_ptr, type, n_to_copy, 0, 0);
     }
-    
+
   } else {
     data_ptr = (void *) ((char*) data_ptr + col * typedsize(my_type));
     if (row == 0 || row > rows)
       n_to_copy = rows;
     else
       n_to_copy = row;
-    
+
     if (direction) {
       typedcp(data_ptr, type, buffer, my_type, n_to_copy, 2, cols);
       private_shm->shm->head.head.utime++; /* Updated */
     } else {
       typedcp(buffer, my_type, data_ptr, type, n_to_copy, 1, cols);
     }
-    
+
   }
 
  error:
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
-  if (act_copied) 
+
+  if (act_copied)
     *act_copied = n_to_copy;
-  
+
   return buffer;
 }
 
 /*
-  Copy a row of data from the shared memory array to a private buffer. Only 
-  one private buffer per shared memory array is allowed. You can call 
+  Copy a row of data from the shared memory array to a private buffer. Only
+  one private buffer per shared memory array is allowed. You can call
   SPS_FreeDataCopy to free the memory by the buffer but it is not necessary.
   If the buffer is not freed it is reused the next time you call the
-  function SPS_GetDataRow for fullname-array. 
+  function SPS_GetDataRow for fullname-array.
   Input:
          name : The name of the specversion
 	 array : The name of the array in this SPEC version
 	 my_type : The data type how you would like to have the buffer. This
 	           data type does not have to be the same as the data type
-		   of the shared memory array. In this case it will be 
+		   of the shared memory array. In this case it will be
 		   transformed in the data type you asked for (fast)
 	 row : integer. Which row do you want.
 	 col : integer. How many columns to you want. If this is 0 then all
-	       the columns are copied. 
+	       the columns are copied.
 	 act_cols : pointer to int. If not NULL then this is filled with the
                number of columns actually copied.
   Returns: Pointer to the data array (DO NOT USE free() to free this buffer)
@@ -1679,24 +1679,24 @@ static void *CopyDataRC(char *fullname, char *array, int my_type,
 void *SPS_GetDataRow(char *name, char *array, int my_type,
 			int row, int col, int *act_cols) {
   return CopyDataRC(name, array, my_type, row, col, act_cols, 1, 0, NULL);
-} 
+}
 
 /*
-  Copy a column of data from the shared memory array to a private buffer. 
-  Only one private buffer per shared memory array is allowed. You can call 
+  Copy a column of data from the shared memory array to a private buffer.
+  Only one private buffer per shared memory array is allowed. You can call
   SPS_FreeDataCopy to free the memory by the buffer but it is not necessary.
   If the buffer is not freed it is reused the next time you call the
-  function SPS_GetDataCol, SPS_GetDataRow or SPS_GetData for fullname-array. 
+  function SPS_GetDataCol, SPS_GetDataRow or SPS_GetData for fullname-array.
   Input:
          name : The name of the specversion
 	 array : The name of the array in this SPEC version
 	 my_type : The data type how you would like to have the buffer. This
 	           data type does not have to be the same as the data type
-		   of the shared memory array. In this case it will be 
+		   of the shared memory array. In this case it will be
 		   transformed in the data type you asked for (fast)
 	 col : integer. Which column do you want.
 	 row : integer. How many rows you want. If this is 0 then all
-	       the rows are copied. 
+	       the rows are copied.
 	 act_rows : pointer to int. If not NULL then this is filled with the
                number of rows actually copied.
   Returns: Pointer to the data array (DO NOT USE free() to free this buffer)
@@ -1705,21 +1705,21 @@ void *SPS_GetDataRow(char *name, char *array, int my_type,
 void *SPS_GetDataCol(char *name, char *array, int my_type,
 			int col, int row, int *act_rows) {
   return CopyDataRC(name, array, my_type, row, col, act_rows, 0, 0, NULL);
-} 
+}
 
 /*
-  Copy a row of data from the shared memory array to a buffer. 
+  Copy a row of data from the shared memory array to a buffer.
   Input:
          name : The name of the specversion
 	 array : The name of the array in this SPEC version
 	 buf : A pointer to the buffer.
          my_type : The data type how you would like to have the buffer. This
 	           data type does not have to be the same as the data type
-		   of the shared memory array. In this case it will be 
+		   of the shared memory array. In this case it will be
 		   transformed in the data type you asked for (fast)
 	 row : integer. Which row do you want.
-	 col : integer. How many columns you want to copy. If this is 0 then 
-	       all the columns are copied. 
+	 col : integer. How many columns you want to copy. If this is 0 then
+	       all the columns are copied.
 	 act_cols : pointer to int. If not NULL then this is filled with the
                number of columns actually copied.
   Returns: 0 success
@@ -1728,23 +1728,23 @@ void *SPS_GetDataCol(char *name, char *array, int my_type,
 
 int SPS_CopyRowFromShared(char *name, char *array, void *buf,
      int my_type, int row, int col, int *act_cols) {
-  return 
+  return
    (CopyDataRC(name, array, my_type, row, col, act_cols, 1, 0, buf)? 0:1);
-} 
+}
 
 /*
-  Copy a column of data from the shared memory array to a buffer. 
+  Copy a column of data from the shared memory array to a buffer.
   Input:
          name : The name of the specversion
 	 array : The name of the array in this SPEC version
 	 buf : A pointer to the buffer.
          my_type : The data type how you would like to have the buffer. This
 	           data type does not have to be the same as the data type
-		   of the shared memory array. In this case it will be 
+		   of the shared memory array. In this case it will be
 		   transformed in the data type you asked for (fast)
 	 col : integer. Which column do you want.
-	 row : integer. How many rows you want to copy. If this is 0 then 
-	       all the columns are copied. 
+	 row : integer. How many rows you want to copy. If this is 0 then
+	       all the columns are copied.
 	 act_rows : pointer to int. If not NULL then this is filled with the
                number of rows actually copied.
   Returns: 0 success
@@ -1753,23 +1753,23 @@ int SPS_CopyRowFromShared(char *name, char *array, void *buf,
 
 int SPS_CopyColFromShared(char *name, char *array, void *buf,
      int my_type, int col, int row, int *act_rows) {
-  return 
+  return
    (CopyDataRC(name, array, my_type, row, col, act_rows, 0, 0, buf)? 0:1);
-} 
+}
 
 /*
-  Copy a row of data to the shared memory array from a buffer. 
+  Copy a row of data to the shared memory array from a buffer.
   Input:
          name : The name of the specversion
 	 array : The name of the array in this SPEC version
 	 buf : A pointer to the buffer.
          my_type : The data type how you would like to have the buffer. This
 	           data type does not have to be the same as the data type
-		   of the shared memory array. In this case it will be 
+		   of the shared memory array. In this case it will be
 		   transformed in the data type you asked for (fast)
 	 row : integer. Which row do you want.
-	 col : integer. How many columns you want to copy. If this is 0 then 
-	       all the columns are copied. 
+	 col : integer. How many columns you want to copy. If this is 0 then
+	       all the columns are copied.
 	 act_cols : pointer to int. If not NULL then this is filled with the
                number of columns actually copied.
   Returns: 0 success
@@ -1778,23 +1778,23 @@ int SPS_CopyColFromShared(char *name, char *array, void *buf,
 
 int SPS_CopyRowToShared(char *name, char *array, void *buf,
      int my_type, int row, int col, int *act_cols) {
-  return 
+  return
    (CopyDataRC(name, array, my_type, row, col, act_cols, 1, 1, buf)? 0:1);
-} 
+}
 
 /*
-  Copy a column of data to the shared memory array from a buffer. 
+  Copy a column of data to the shared memory array from a buffer.
   Input:
          name : The name of the specversion
 	 array : The name of the array in this SPEC version
 	 buf : A pointer to the buffer.
          my_type : The data type how you would like to have the buffer. This
 	           data type does not have to be the same as the data type
-		   of the shared memory array. In this case it will be 
+		   of the shared memory array. In this case it will be
 		   transformed in the data type you asked for (fast)
 	 col : integer. Which column do you want.
-	 row : integer. How many rows you want to copy. If this is 0 then 
-	       all the columns are copied.  
+	 row : integer. How many rows you want to copy. If this is 0 then
+	       all the columns are copied.
 	 act_rows : pointer to int. If not NULL then this is filled with the
                number of rows actually copied.
   Returns: 0 success
@@ -1803,26 +1803,26 @@ int SPS_CopyRowToShared(char *name, char *array, void *buf,
 
 int SPS_CopyColToShared(char *name, char *array, void *buf,
      int my_type, int col, int row, int *act_rows) {
-  return 
+  return
    (CopyDataRC(name, array, my_type, row, col, act_rows, 0, 1, buf)? 0:1);
-} 
+}
 
 /*
   Copy the data in the shared memory array to a private buffer. Only one
-  private buffer per shared memory array is allowed. You can call 
+  private buffer per shared memory array is allowed. You can call
   SPS_FreeDataCopy to free the memory by the buffer but it is not necessary.
   If the buffer is not freed it is reused the next time you call the
-  function SPS_GetDataCopy for fullname-array. 
+  function SPS_GetDataCopy for fullname-array.
   Input:
          fullname : The name of the specversion
 	 array : The name of the array in this SPEC version
 	 my_type : The data type how you would like to have the buffer. This
 	           data type does not have to be the same as the data type
-		   of the shared memory array. In this case it will be 
+		   of the shared memory array. In this case it will be
 		   transformed in the data type you asked for (fast)
-	 rows : pointer to integer. Will be filled with number of rows 
+	 rows : pointer to integer. Will be filled with number of rows
 	        if not NULL
-	 cols : pointer to integer. Will be filled with number of cols 
+	 cols : pointer to integer. Will be filled with number of cols
 	        if not NULL
   Returns: Pointer to the data array (DO NOT USE free() to free this buffer)
 */
@@ -1840,20 +1840,20 @@ void *SPS_GetDataCopy(char *fullname, char *array, int my_type,
     return NULL;
 
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 0))
     return NULL;
-  
+
   rows = private_shm->shm->head.head.rows;
   cols = private_shm->shm->head.head.cols;
 
-  if (rows_ptr) 
+  if (rows_ptr)
     *rows_ptr = rows;
-  if (cols_ptr) 
+  if (cols_ptr)
     *cols_ptr = cols;
-  
+
   size  = rows * cols * typedsize(my_type);
-  
+
   if (private_shm->private_data_copy == NULL ||
        size > private_shm->buffer_len) {
     if (size > private_shm->buffer_len) {
@@ -1875,13 +1875,13 @@ void *SPS_GetDataCopy(char *fullname, char *array, int my_type,
       free(buffer);
       buffer = NULL;
     }
-  } else 
+  } else
     buffer = private_shm->private_data_copy;
-  
+
  error:
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   return buffer;
 }
 
@@ -1890,7 +1890,7 @@ int SPS_FreeDataCopy(char *fullname, char *array) {
 
   if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return 1;
-  
+
   if (private_shm && private_shm->private_data_copy != NULL) {
     free(private_shm->private_data_copy);
     private_shm->private_data_copy = NULL;
@@ -1911,10 +1911,10 @@ int SPS_PutMetaData(char *fullname, char *array, char *meta, u32_t length) {
     return(-1);
 
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 1))
     return(-1);
-  
+
   sh = &(private_shm->shm->head.head);
 
   if (sh->version < 6) {
@@ -1931,7 +1931,7 @@ int SPS_PutMetaData(char *fullname, char *array, char *meta, u32_t length) {
 error:
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   return(ret);
 }
 
@@ -1946,17 +1946,17 @@ char *SPS_GetMetaData(char *fullname, char *array, u32_t *length) {
     return NULL;
 
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 0))
     return NULL;
-  
+
   sh = &(private_shm->shm->head.head);
 
   if (sh->version < 6)
     goto error;
 
   size = sh->meta_length;
-  
+
   if (private_shm->private_meta_copy == NULL || size > private_shm->meta_len) {
     if (size > private_shm->meta_len) {
       if (private_shm->private_meta_copy)
@@ -1974,11 +1974,11 @@ char *SPS_GetMetaData(char *fullname, char *array, u32_t *length) {
 
   memcpy(buffer, (char *) (private_shm->shm) + sh->meta_start, size);
   *length = size;
-  
+
  error:
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   return buffer;
 }
 
@@ -1994,10 +1994,10 @@ int SPS_PutInfoString(char *fullname, char *array, char *info) {
     return(-1);
 
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 1))
     return(-1);
-  
+
   sh = &(private_shm->shm->head.head);
 
   if (sh->version < 6) {
@@ -2005,11 +2005,11 @@ int SPS_PutInfoString(char *fullname, char *array, char *info) {
     goto error;
   }
   strncpy(sh->info, info, sizeof(sh->info));
-  
+
  error:
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   return(ret);
 }
 
@@ -2023,10 +2023,10 @@ char *SPS_GetInfoString(char *fullname, char *array) {
     return NULL;
 
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 0))
     return NULL;
-  
+
   sh = &(private_shm->shm->head.head);
 
   if (sh->version < 6)
@@ -2040,11 +2040,11 @@ char *SPS_GetInfoString(char *fullname, char *array) {
 
   memcpy(private_shm->private_info_copy, sh->info, sizeof(sh->info));
   buffer = private_shm->private_info_copy;
-  
+
  error:
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   return buffer;
 }
 
@@ -2062,7 +2062,7 @@ char *SPS_GetInfoString(char *fullname, char *array) {
                     space is reused at every call to this function.
 */
 
-char * 
+char *
 SPS_GetEnvStr(char *spec_version, char *array_name, char *identifier) {
   int rows, cols;
   char *data;
@@ -2075,15 +2075,15 @@ SPS_GetEnvStr(char *spec_version, char *array_name, char *identifier) {
 
   if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
     return NULL;
-  
+
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 0))
     return NULL; /* Can not attach */
-  
-  if (private_shm->shm->head.head.type != SHM_STRING) 
+
+  if (private_shm->shm->head.head.type != SHM_STRING)
     goto back; /* Must be string type */
-  
+
   if (private_shm->shm->head.head.version < 4)
     data = (char *) &(((struct shm_oheader *)(private_shm->shm))->data);
   else
@@ -2093,7 +2093,7 @@ SPS_GetEnvStr(char *spec_version, char *array_name, char *identifier) {
 
   if (cols > SHM_MAX_STR_LEN)
     goto back; /* We better give up, our buffer might be too small */
-  
+
   for (i =0; i < rows; i++) {
     strcpy(strange, data + cols *i); /* sscanf core-dumps if in shared mem*/
     if (sscanf(strange,"%[^=]=%[^\n]", id, value) == 2) {
@@ -2109,7 +2109,7 @@ SPS_GetEnvStr(char *spec_version, char *array_name, char *identifier) {
     DeconnectArray(private_shm);
 
   return res;
-} 
+}
 
 /*
   Used to read all the keys from the enviroment string
@@ -2132,7 +2132,7 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
   char *res = NULL;
   int was_attached, i, parsed;
   char strange[SHM_MAX_STR_LEN + 1];
-  static int loop_count = 0; 
+  static int loop_count = 0;
   static int keyNO = 0;
   static char **keys=NULL;
 
@@ -2140,7 +2140,7 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
     if (loop_count >= keyNO) {
       loop_count = 0;
       if (keys != NULL) {
-	for (i = 0; i < keyNO; i++) 
+	for (i = 0; i < keyNO; i++)
 	  free(keys[i]);
 	free(keys);
 	keys = NULL;
@@ -2154,26 +2154,26 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
   }
 
   if (keys != NULL) {
-    for (i = 0; i < keyNO; i++) 
+    for (i = 0; i < keyNO; i++)
       free(keys[i]);
     free(keys);
     keys = NULL;
   }
-  
+
   loop_count = 0;
   keyNO = 0;
 
   if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
     return NULL;
-  
+
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 0))
     return NULL; /* Can not attach */
-  
-  if (private_shm->shm->head.head.type != SHM_STRING) 
+
+  if (private_shm->shm->head.head.type != SHM_STRING)
     goto back; /* Must be string type */
-  
+
   if (private_shm->shm->head.head.version < 4)
     data = (char *) &(((struct shm_oheader *)(private_shm->shm))->data);
   else
@@ -2183,7 +2183,7 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
 
   if (cols > SHM_MAX_STR_LEN)
     goto back; /* We better give up, our buffer might be too small */
-  
+
   keys = malloc(sizeof(char *) * rows);
   for (i = 0; i < rows; i++) {
     char dummy[2];
@@ -2200,7 +2200,7 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
  back:
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   if (keyNO) {
     loop_count = 1;
     return keys[0];
@@ -2209,7 +2209,7 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
     keys = NULL;
     return NULL;
   }
-} 
+}
 
 /*
   Used to write a shared string array in where every line is in the
@@ -2218,7 +2218,7 @@ SPS_GetNextEnvKey(char *spec_version, char *array_name, int flag) {
            array_name : the shared memory string array which holds the
                         lines id=value
 	   identifier : the identifier
-	   set_value : The value you would like to put in the identifier 
+	   set_value : The value you would like to put in the identifier
     Result: 1 error
             0 success
 
@@ -2237,18 +2237,18 @@ SPS_PutEnvStr(char *spec_version, char *array_name,
 
   if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
     return 1;
-  
+
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 1))
     return 1;
-  
-  if (private_shm->shm->head.head.type != SHM_STRING) 
+
+  if (private_shm->shm->head.head.type != SHM_STRING)
     goto back; /* Must be string type */
 
-  if (!private_shm->write_flag) 
+  if (!private_shm->write_flag)
     goto back; /* We can not write to this array */
-  
+
   if (private_shm->shm->head.head.version < 4)
     data = (char *) &(((struct shm_oheader *)(private_shm->shm))->data);
   else
@@ -2270,7 +2270,7 @@ SPS_PutEnvStr(char *spec_version, char *array_name,
       }
     } else {
       use_row = i; /* Delete the entry which doesn't have the correct format */
-      break; 
+      break;
     }
   }
 
@@ -2289,11 +2289,11 @@ SPS_PutEnvStr(char *spec_version, char *array_name,
     DeconnectArray(private_shm);
 
   return res;
-} 
-	
-/* 
-   Tells you if the data in the shared memory array changed since you last 
-   called this function with these parameters or 
+}
+
+/*
+   Tells you if the data in the shared memory array changed since you last
+   called this function with these parameters or
    if this is your first call to this function.
    If you are not currently attached to the memory the function will
    attach, read and detach after.
@@ -2316,10 +2316,10 @@ int SPS_IsUpdated(char *fullname, char *array) {
   id = private_shm->id;
   utime = private_shm->utime;
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 0))
     return -1;
-  
+
   private_shm->utime = private_shm->shm->head.head.utime;
 
   updated = (private_shm->id == id)? 0:1;
@@ -2330,7 +2330,7 @@ int SPS_IsUpdated(char *fullname, char *array) {
 
   return updated;
 }
-  
+
 int SPS_LatestFrame(char *fullname, char *array) {
 #if SHM_VERSION >= 5
 	int     frame;
@@ -2355,9 +2355,9 @@ int SPS_LatestFrame(char *fullname, char *array) {
 	return(0);
 #endif
 }
-  
-/* 
-   Returns the current update counter for this array or -1 
+
+/*
+   Returns the current update counter for this array or -1
    if not longer updated. This function is used in some cases where the
    simpler function SPS_IsUpdated is not sufficient (For example if you
    have multiple subroutines in your program which access the shared memory
@@ -2379,10 +2379,10 @@ int SPS_UpdateCounter(char *fullname, char *array) {
     return -1;
 
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 0))
     return -1;
-  
+
   private_shm->utime = private_shm->shm->head.head.utime;
 
   updated = private_shm->utime;
@@ -2392,8 +2392,8 @@ int SPS_UpdateCounter(char *fullname, char *array) {
 
   return updated;
 }
-  
-/* 
+
+/*
    Tells all the readers of the SPEC array that you updated its contents
    If you are not currently attached to the memory the function will
    attach, write and detach after.
@@ -2405,11 +2405,11 @@ int SPS_UpdateCounter(char *fullname, char *array) {
 int SPS_UpdateDone(char *fullname, char *array) {
   int was_attached;
   SPS_ARRAY private_shm;
-  
+
   if ((private_shm = convert_to_handle(fullname, array)) == NULL)
     return 1;
   was_attached = private_shm->attached;
-  
+
   if (ReconnectToArray(private_shm, 1))
     return 1;
 
@@ -2417,34 +2417,34 @@ int SPS_UpdateDone(char *fullname, char *array) {
     return 1;
 
   private_shm->utime = ++(private_shm->shm->head.head.utime);
-  
+
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   return 0;
 }
 
 /*
-  Input: version : name of SPEC version. 
+  Input: version : name of SPEC version.
          array_name : Name of this spec array
-         rows : Pointer to integer to return number of rows in this array 
-         cols : Pointer to integer to return number of columns in this array 
-         type : Pointer - Which data type does the data in this array have. 
+         rows : Pointer to integer to return number of rows in this array
+         cols : Pointer to integer to return number of columns in this array
+         type : Pointer - Which data type does the data in this array have.
 	        Possible values are:
-         flag : Pointer More information about the contents of this array 
+         flag : Pointer More information about the contents of this array
 	      (does it contain data for MCA, CCD cameras other info ..)
 	      Returns: Error code : 0 == no error
 */
 
-int 
+int
 SPS_GetArrayInfo(char *spec_version, char *array_name, int *rows,
 		  int *cols, int *type, int *flag) {
   int was_attached;
   SPS_ARRAY private_shm;
-  
+
   if ((private_shm = convert_to_handle(spec_version, array_name)) == NULL)
     return 1;
-  
+
   was_attached = private_shm->attached;
 
   if (ReconnectToArray(private_shm, 0)) {
@@ -2453,16 +2453,16 @@ SPS_GetArrayInfo(char *spec_version, char *array_name, int *rows,
     if (type) *type = 0;
     if (flag) *flag = 0;
     return 1;
-  } 
+  }
 
   if (rows) *rows = private_shm->shm->head.head.rows;
   if (cols) *cols = private_shm->shm->head.head.cols;
   if (type) *type = private_shm->shm->head.head.type;
   if (flag) *flag = private_shm->shm->head.head.flags;
-  
+
   if (was_attached == 0 && private_shm->stay_attached == 0)
     DeconnectArray(private_shm);
-  
+
   return 0;
 }
 
@@ -2491,7 +2491,7 @@ SPS_GetShmId(char *spec_version, char *array_name) {
   return shmid;
 }
 
-int 
+int
 SPS_GetFrameSize(char *spec_version, char *array_name) {
 #if SHM_VERSION >= 5
 	int     frame_size;
@@ -2526,7 +2526,7 @@ ll_addnew_array(char *specversion, char *arrayname, int isstatus,
   for (created = SHM_CREATED_HEAD, new_created = & SHM_CREATED_HEAD;
        created; new_created = &(created->next), created = created->next) {
   }
-  
+
   new_array = (struct shm_created *) malloc(sizeof(struct shm_created));
   if (new_array == NULL)
     return NULL;
@@ -2539,13 +2539,13 @@ ll_addnew_array(char *specversion, char *arrayname, int isstatus,
   new_array->my_creation = my_creation;
   new_array->handle = NULL;
   new_array->shm = shm;
-  
+
   if (specversion) {
     if ((new_array->spec_version = (char *) strdup(specversion)) == NULL) {
       free(new_array);
       return NULL;
     }
-  } else 
+  } else
     new_array->spec_version = NULL;
 
   if (arrayname) {
@@ -2555,7 +2555,7 @@ ll_addnew_array(char *specversion, char *arrayname, int isstatus,
       free(new_array);
       return NULL;
     }
-  } else 
+  } else
     new_array->array_name = NULL;
 
   *new_created = new_array;
@@ -2564,7 +2564,7 @@ ll_addnew_array(char *specversion, char *arrayname, int isstatus,
 
 static struct shm_created *ll_find_pointer(SHM *shm) {
   struct shm_created *created;
-  
+
   for (created = SHM_CREATED_HEAD; created; created = created->next) {
     if (created->handle && created->handle->shm == shm)
       return created;
@@ -2575,7 +2575,7 @@ static struct shm_created *ll_find_pointer(SHM *shm) {
 static struct shm_created *
 ll_find_array(char *specversion, char *arrayname, int isstatus) {
   struct shm_created *created;
-  
+
   for (created = SHM_CREATED_HEAD; created; created = created->next) {
     if ((specversion == NULL || created->spec_version == NULL ||
 	   strcmp(created->spec_version, specversion) == 0) &&
@@ -2588,32 +2588,32 @@ ll_find_array(char *specversion, char *arrayname, int isstatus) {
   return NULL;
 }
 
-static void * 
+static void *
 id_is_our_creation(u32_t id) {
   struct shm_created *created;
-  
+
   for (created = SHM_CREATED_HEAD; created; created = created->next)
     if (created->id == (int) id)
       return (created->my_creation)? created->shm:NULL;
-  
+
   return NULL;
 }
 
-static void * 
+static void *
 shm_is_our_creation(void *shm) {
   struct shm_created *created;
-  
+
   for (created = SHM_CREATED_HEAD; created; created = created->next)
     if ((void *) created->shm == shm)
       return (created->my_creation)? created->shm:NULL;
-  
+
   return NULL;
 }
 
 static void
 ll_delete_array(struct shm_created *todel) {
   struct shm_created *created, **new_created;
-  
+
   for (created = SHM_CREATED_HEAD, new_created = & SHM_CREATED_HEAD;
        created; new_created = &(created->next), created = created->next) {
     if (created == todel) {
@@ -2635,9 +2635,9 @@ create_shm(char *specversion, char *array, int rows, int cols, int type, int fla
   size_t size;
   SHM *shm;
 
-  if (key == -1) 
+  if (key == -1)
     key = IPC_PRIVATE;
-  else 
+  else
     sflag |= IPC_CREAT;
 
   size = rows * cols * typedsize(type) + sizeof(SHM);
@@ -2668,9 +2668,9 @@ create_shm(char *specversion, char *array, int rows, int cols, int type, int fla
   shm->head.head.pid = getpid();
   strcpy(shm->head.head.name, array);
   strcpy(shm->head.head.spec_version, specversion);
- 
+
   return shm;
-}  
+}
 
 static SHM *
 create_master_shm(char *name) {
@@ -2679,10 +2679,10 @@ create_master_shm(char *name) {
   int size, i;
   SHM *shm;
   struct shm_status *st;
-  
-  if (key == -1) 
+
+  if (key == -1)
     key = IPC_PRIVATE;
-  else 
+  else
     sflag |= IPC_CREAT;
 
   size = sizeof(struct shm_status) + sizeof(SHM);
@@ -2691,7 +2691,7 @@ create_master_shm(char *name) {
   if ((shm = (SHM *) shmat(id, NULL, 0)) == (SHM *) -1) {
     return NULL;
   }
-  
+
 #if defined(__linux__)
   /* Will be removed after last detach */
   shmctl(id, IPC_RMID, NULL);
@@ -2709,7 +2709,7 @@ create_master_shm(char *name) {
   shm->head.head.pid = getpid();
   *(shm->head.head.name) = '\0';
   strcpy(shm->head.head.spec_version, name);
-  
+
   if (shm->head.head.version < 4)
     st = (struct shm_status *) &(((struct shm_oheader *)shm)->data);
   else
@@ -2718,9 +2718,9 @@ create_master_shm(char *name) {
   st->utime = 0;                 /* updated when ids[] changes */
   for (i = 0; i < SHM_MAX_IDS; i++)
     st->ids[i] = -1;                 /* shm ids for shared arrays */
-  
+
   return shm;
-}  
+}
 
 static void delete_shm(s32_t id) {
   shmctl(id, IPC_RMID, NULL);
@@ -2742,7 +2742,7 @@ static void delete_id_from_status(SHM *status, s32_t id) {
   st->utime++;
 }
 
-/* 
+/*
    Creates a shared memory array and the shared memory structure for
    the spec version. You can only create new arrays for specversions
    which either do not exist or have been created by this process.
@@ -2752,15 +2752,15 @@ static void delete_id_from_status(SHM *status, s32_t id) {
    always stay attached to the shared memory
    Input: spec_version: The specversion you will create the new array in
           arrayname: The name of the array
-	  rows: number of rows 
+	  rows: number of rows
 	  cols: number of columns
 	  type : The data type of the data stored in this array.
-	  flag: A flag to indicate the type of the array MCA data or 
+	  flag: A flag to indicate the type of the array MCA data or
 	        CCD camera. It is not necessary to specify SPS_IS_ARRAY here.
 		This flag is always true for the arrays we can create with
 		this function.
    Returns: 0 OK
-            1 Error 
+            1 Error
 */
 
 int
@@ -2777,12 +2777,12 @@ SPS_CreateArray(char *spec_version, char *arrayname, int rows, int cols, int typ
     return 1;
 
   if ((shm_status = ll_find_array(spec_version, NULL, 1)) == NULL) {
-    
+
     /* SearchSpecArrays (spec_version); */
     /* Check if there is already a spec_version which exists */
     if ((idx = find_TabIDX(spec_version, 0)) != -1)
       return 1; /* We can not add to a spec_version we not created*/
-    
+
     /* Create a spec_version */
     if ((shm = create_master_shm(spec_version)) == NULL)
       return 1;
@@ -2793,8 +2793,8 @@ SPS_CreateArray(char *spec_version, char *arrayname, int rows, int cols, int typ
     }
     private_shm = add_private_shm(shm, spec_version, NULL, 1);
     shm_status->handle = private_shm;
-    
-    
+
+
   } else {
     if (shm_status->shm == NULL) {
       if ((shm = (SHM *) shmat(shm_status->id, NULL, 0)) == (SHM *) -1) {
@@ -2804,7 +2804,7 @@ SPS_CreateArray(char *spec_version, char *arrayname, int rows, int cols, int typ
     } else
       shm = shm_status->shm;
   }
-    
+
   /* There is already an array with this name - delete it */
   if ((shm_array = ll_find_array(spec_version, arrayname, 0)) != NULL) {
     if (shm_array->shm != NULL)
@@ -2814,9 +2814,9 @@ SPS_CreateArray(char *spec_version, char *arrayname, int rows, int cols, int typ
     ll_delete_array(shm_array);
   }
 
-  /* Create the new array */    
+  /* Create the new array */
   ashm = create_shm(spec_version, arrayname, rows, cols, type, flags);
-  if (ashm == NULL) 
+  if (ashm == NULL)
     return 1;
   if ((shm_array = ll_addnew_array(spec_version, arrayname, 0, shm_status,
 		 ashm->head.head.shmid, 1, ashm)) == NULL) {
@@ -2826,16 +2826,16 @@ SPS_CreateArray(char *spec_version, char *arrayname, int rows, int cols, int typ
 
   /* Add reference to this array to the STATUS array */
   st = (struct shm_status *) &(shm->data);
-  
-  for (i = 0; i < SHM_MAX_IDS; i++) 
+
+  for (i = 0; i < SHM_MAX_IDS; i++)
     if (st->ids[i] == -1)
       break;
   st->ids[i] = ashm->head.head.shmid;
   st->utime++;
-  
+
   private_shm = add_private_shm(ashm, spec_version, arrayname, 1);
   shm_array->handle = private_shm;
-  
+
 
   return 0;
 }
@@ -2864,28 +2864,28 @@ void SPS_CleanUpAll(void)
 {
   struct shm_created *created, *created_next;
   for (created = SHM_CREATED_HEAD; created;) {
-    if (created->handle && created->handle->attached && created->handle->shm) 
+    if (created->handle && created->handle->attached && created->handle->shm)
       shmdt ((void *)created->handle->shm);
-    
+
     if (created->my_creation) {
       delete_shm(created->id);
     }
-    
+
     if (created->handle)
       delete_handle (created->handle);
 
     if (created->array_name)
       free(created->array_name);
-  
+
     if (created->spec_version)
       free(created->spec_version);
-    
+
     created_next = created->next;
     free(created);
-    
+
     created = created_next;
   }
-  
+
   SHM_CREATED_HEAD = NULL;
   id_no = 0;
 
@@ -2898,7 +2898,7 @@ void SPS_CleanUpAll(void)
 #include <sys/time.h>
 
 static void bench_mark();
- 
+
 static void PrintIDDir()
 {
   int i, j;
@@ -2907,7 +2907,7 @@ static void PrintIDDir()
   int state;
   double *double_buf=NULL;
   int k_row, k_col;
-  
+
   for (i=0; (spec_version = SPS_GetNextSpec(i)); i++) {
     state = SPS_GetSpecState(spec_version);
     printf("%s state = 0x%x\n",spec_version, state);
@@ -2918,7 +2918,7 @@ static void PrintIDDir()
       /* Reading data */
       double_buf = SPS_GetDataCopy(spec_version, array, SHM_DOUBLE,
 				    &rows, &cols);
-      
+
       for (k_row = 0; k_row < rows && k_row < 10; k_row++) {
 	for (k_col = 0; k_col < cols && k_col < 7; k_col++)
 	  printf("%10.10g ",*(double_buf + k_row * cols + k_col));
@@ -2927,7 +2927,7 @@ static void PrintIDDir()
       SPS_FreeDataCopy(spec_version,array);
     }
   }
-}   
+}
 
 int
 main()
@@ -2947,19 +2947,19 @@ main()
 
   while (scanf("%s",buf) == 1) {
     switch (buf[0]) {
-    case 'c': 
+    case 'c':
       printf("spec_version array_name rows cols type flags\n");
       scanf("%s %s %d %d %d %d",buf1,buf2,&rows,&cols, &type, &flag);
       SPS_CreateArray(buf1,buf2, rows, cols, type, flag);
       SPS_GetArrayInfo(buf1, buf2, &rows, &cols, &type, &flag);
       ptr = SPS_GetDataPointer(buf1, buf2, 1);
       if (type == SHM_LONG) {
-	for (i = 0; i < rows; i++) 
-	  for (j = 0; j < cols; j++) 
+	for (i = 0; i < rows; i++)
+	  for (j = 0; j < cols; j++)
 	    *(ptr + i * cols + j) = i * 100 + j;
       }
       break;
-    case 'd': 
+    case 'd':
       PrintIDDir();
       break;
     case '*':
@@ -2970,7 +2970,7 @@ main()
 	/* Reading data */
 	double_buf = SPS_GetDataCopy(NULL, array, SHM_DOUBLE,
 				      &rows, &cols);
-	
+
 	for (k_row = 0; k_row < rows && k_row < 10; k_row++) {
 	  for (k_col = 0; k_col < cols && k_col < 7; k_col++)
 	    printf ("%10.10g ",*(double_buf + k_row * cols + k_col));
@@ -2979,9 +2979,9 @@ main()
 	SPS_FreeDataCopy(NULL, array);
       }
       break;
-    case 'q': 
+    case 'q':
       exit(0);
-    case 'b': 
+    case 'b':
       bench_mark();
       break;
     case 'r':
@@ -3006,7 +3006,7 @@ main()
 	spec_version = buf1;
       printf("Result %d\n",SPS_PutEnvStr(spec_version, buf2, buf3, buf4));
       break;
-    case 'p': 
+    case 'p':
       printf("Waiting for specversion hop array test\n");
       printf("spec_version array_name\n");
       scanf("%s %s",buf1,buf2);
@@ -3015,7 +3015,7 @@ main()
       else
 	spec_version = buf1;
       SPS_AttachToArray(spec_version, buf2, 0); /* What I want to say here is
-					    that I would like to stay 
+					    that I would like to stay
 					    attached */
       printf("Waiting for %s:%s\n",(spec_version == NULL)?"NULL":spec_version,
 	     buf2);
@@ -3034,7 +3034,7 @@ main()
       }
       break;
     }
-    
+
   }
 }
 
@@ -3048,8 +3048,8 @@ static struct timeval start, stop;
   }
   else {
     gettimeofday(&stop, &tzp);
-    printf("Time in %s : %10.3f\n", str, 
-	   (double)(stop.tv_sec-start.tv_sec) + 
+    printf("Time in %s : %10.3f\n", str,
+	   (double)(stop.tv_sec-start.tv_sec) +
 	   (double)(stop.tv_usec-start.tv_usec) * (double)0.000001);
     start.tv_sec = stop.tv_sec;
     start.tv_usec = stop.tv_usec;
@@ -3088,13 +3088,13 @@ static void bench_mark()
   bench("SPS_GetDataCopy version spec, array longtest as double");
 
   printf("\n");
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_IsUpdated("spec","doubletest");
   bench("SPS_IsUpdated version spec, array doubletest, 1000 times");
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_GetSpecState("spec");
   bench("SPS_GetSpecState version spec, 1000 times");
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_GetEnvStr("spec","text","id");
   bench("SPS_GetEnvStr version spec, array text, id, 1000 times");
 
@@ -3104,13 +3104,13 @@ static void bench_mark()
   SPS_AttachToArray("spec","text",0);
   bench("Attached and Staying attached now");
 
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_IsUpdated("spec","doubletest");
   bench("SPS_IsUpdated version spec, array doubletest, 1000 times");
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_GetSpecState("spec");
   bench("SPS_GetSpecState version spec, 1000 times");
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_GetEnvStr("spec","text","id");
   bench("SPS_GetEnvStr version spec, array text, id, 1000 times");
 
@@ -3120,26 +3120,26 @@ static void bench_mark()
   SPS_DetachFromArray("spec","text");
   bench("Detach and Staying detached now");
 
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_IsUpdated("spec","doubletest");
   bench("SPS_IsUpdated version spec, array doubletest, 1000 times");
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_GetSpecState("spec");
   bench("SPS_GetSpecState version spec, 1000 times");
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_GetEnvStr("spec","text","id");
   bench("SPS_GetEnvStr version spec, array text, id, 1000 times");
 
   printf("\nNow testing the NULL version tests\n");
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_GetEnvStr(NULL, "text","id");
   bench("SPS_GetEnvStr NULL, array text, id, 1000 times");
-  for (i=0;i<1000;i++) 
+  for (i=0;i<1000;i++)
     SPS_IsUpdated(NULL, "doubletest");
   bench("SPS_IsUpdated NULL, array doubletest, 1000 times");
-  
+
   printf("\nNow mix it\n");
-  for (i=0;i<1000;i++) { 
+  for (i=0;i<1000;i++) {
     SPS_IsUpdated(NULL, "doubletest");
     SPS_IsUpdated("spec", "doubletest");
   }
