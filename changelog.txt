@@ -1,5 +1,9 @@
 VERSION 5.1.2
 
+Correct the generation of the efficiency plot in the ATTENUATORS tab when
+BeamFilter0 was selected. That problem only affected the plot, not anything
+else.
+
 Adapt to latest SPEC version
 
 Correct compatibility issues with matplotlib 1.5
