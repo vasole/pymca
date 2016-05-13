@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -257,7 +257,7 @@ class FitParamWidget(FitParamForm):
         for key in pars.keys():
             if pars[key][0]:
                 l = key.lower()
-                if l in ['matrix', 'beamfilter1', 'beamfilter2']:
+                if l.startswith('matrix') or l.startswith('beamfilter'):
                     continue
                 if l.startswith('detector'):
                     detector.append(pars[key][1:])
