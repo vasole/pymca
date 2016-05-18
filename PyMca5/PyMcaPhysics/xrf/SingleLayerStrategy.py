@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -69,6 +69,7 @@ class SingleLayerStrategy(object):
                                 addinfo=True)
 
         # find the layer to be updated the matrix
+        matrixKey = None
         for attenuator in list(newConfiguration['attenuators'].keys()):
             if not newConfiguration['attenuators'][attenuator][0]:
                 continue
@@ -78,6 +79,8 @@ class SingleLayerStrategy(object):
                     matrixKey = attenuator
                 else:
                     matrixKey = "MULTILAYER"
+            if matrixKey:
+                break
         if matrixKey != "MULTILAYER":
             parentKey = 'attenuators'
             daughterKey = matrixKey
