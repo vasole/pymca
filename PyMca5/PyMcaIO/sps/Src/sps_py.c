@@ -833,10 +833,9 @@ void initsps()
      Py_DECREF(module);
      INITERROR;
   }
-#if PY_MAJOR_VERSION >= 3
+
   Py_INCREF(st->SPSError);
   PyModule_AddObject(module, "error", st->SPSError);
-#endif
 
   Py_AtExit(sps_cleanup);
   import_array();
