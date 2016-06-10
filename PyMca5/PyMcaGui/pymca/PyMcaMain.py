@@ -1042,9 +1042,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 ddict["legend"] = ddict['SourceName'] + ' %s.c.1' %selection
                 ddict["SourceType"] =  'SPS'
                 self.sourceWidget._addSelectionSlot([ddict])
-                self.mcaWindow.control.calbox.setCurrentIndex(2)
+                self.mcaWindow.controlWidget.calbox.setCurrentIndex(2)
                 self.mcaWindow.calibration = self.mcaWindow.calboxoptions[2]
-                self.mcaWindow.control._calboxactivated("Internal")
+                self.mcaWindow.controlWidget._calboxactivated("Internal")
         else:
             return
         """
