@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -253,6 +253,13 @@ class FastXRFLinearFit(object):
         else:
             iXMin = numpy.nonzero(x <= xdata[0])[0][-1]
             iXMax = numpy.nonzero(x >= xdata[-1])[0][0]
+        # numpy 1.11.0 returns an array on previous expression
+        # and then complains about a future deprecation warning
+        # because of using an arry and not an scalar in the selection
+        if hasattr(iXMin, "shape"):
+            iXMin = iXMin[0]
+        if hasattr(iXMax, "shape"):
+            iXMax = iXMax[0]
 
         dummySpectrum = firstSpectrum[iXMin:iXMax+1].reshape(-1, 1)
         # print("dummy = ", dummySpectrum.shape)
