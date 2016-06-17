@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -65,9 +65,7 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
               b has dimension (M, K), the uncertainty will be the same for all spectra.
 
     weight: 0 - No data weighting.
-                If required, uncertainties will be calculated using either the
-                supplied experimental uncertainties or an experimental
-                uncertainty of 1 for each data point.
+                Uncertainty of 1 for each data point.
             1 - Statistical weight.
                 Weighted fit using the supplied experimental uncertainties or the
                 square root of the b values.
@@ -168,6 +166,8 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         # assume all the uncertainties equal to 1
         fastest = True
         w = numpy.ones(b.shape, numpy.float)
+    if len(w.shape) == 1:
+        w.shape = -1, 1
     if covariances:
         covarianceMatrix = numpy.zeros((b_shape[1], n, n), numpy.float)
 
@@ -230,8 +230,8 @@ def lstsq(a, b, rcond=None, sigma_b=None, weight=False,
         # it could be made by the calling routine, because it is equivalent to supplying a
         # different model and different independent values ...
         # That way one could avoid calculating U, s, V each time
-        A = a / weight
-        b = b / weight
+        A = a / w
+        b = b / w
         # get the SVD decomposition of the A matrix
         if last_svd is not None:
             U, s, V = last_svd
