@@ -32,10 +32,112 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
 __doc__ = """
+
+lstsq
+
 Similar function to the numpy lstsq function with a more rigorous uncertainty
 treatement besides other optimizations in view of simultaneously solving several
 equations of the form `a x = b`.
+
+linregress
+
+Similar function to the scipy.stats linregress function handling uncertainties on
+the input values.
+
 """
+
+# fit to a straight line
+
+def linregress(x, y, sigmay=None, full_output=False):
+    """
+    Linear fit to a straight line following P.R. Bevington:
+    
+    "Data Reduction and Error Analysis for the Physical Sciences"
+
+    Parameters
+    ----------
+    x, y : array_like
+        two sets of measurements.  Both arrays should have the same length.
+
+    sigmay : The uncertainty on the y values
+        
+    Returns
+    -------
+    slope : float
+        slope of the regression line
+    intercept : float
+        intercept of the regression line
+    r_value : float
+        correlation coefficient
+
+    if full_output is true, an additional dictionary is returned with the keys
+
+    slope : float
+        slope of the regression line
+
+    intercept : float
+        intercept of the regression line
+
+    r_value : float
+        correlation coefficient
+
+    sigma_slope: uncertainty on the slope
+
+    sigma_intercept: uncertainty on the intercept
+
+    stderr: float
+        square root of the variance
+    
+    """
+    x = numpy.asarray(x, dtype=numpy.float).flatten()
+    y = numpy.asarray(y, dtype=numpy.float).flatten()
+    N = y.size
+    if sigmay is None:
+        sigmay = numpy.ones((N,), dtype=y.dtype)
+    else:
+        sigmay = numpy.asarray(sigmay, dtype=numpy.float).flatten()
+    w = 1.0 / (sigmay * sigmay + (sigmay == 0))
+
+    n = S = w.sum()
+    Sx = (w * x).sum()
+    Sy = (w * y).sum()    
+    Sxx = (w * x * x).sum()
+    Sxy = ((w * x * y)).sum()
+    Syy = ((w * y * y)).sum()
+    # SSxx is identical to delta in Bevington book
+    delta = SSxx = (S * Sxx - Sx * Sx)
+
+    tmpValue = Sxx * Sy - Sx * Sxy
+    intercept = tmpValue / delta
+    SSxy = (S * Sxy - Sx * Sy)
+    slope = SSxy / delta
+    sigma_slope = numpy.sqrt(S /delta)
+    sigma_intercept = numpy.sqrt(Sxx / delta)
+
+    SSyy = (n * Syy - Sy * Sy)
+    r_value = SSxy / numpy.sqrt(SSxx * SSyy)
+    if r_value > 1.0:
+        r_value = 1.0
+    if r_value < -1.0:
+        r_value = -1.0
+
+    if not full_output:
+        return slope, intercept, r_value
+
+    ddict = {}
+    # calculate the variance
+    if N < 3:
+        variance = 0.0
+    else:
+        variance = ((y - intercept - slope * x) ** 2).sum() / (N - 2)
+    ddict["variance"] = variance
+    ddict["stderr"] = numpy.sqrt(variance)
+    ddict["slope"] = slope
+    ddict["intercept"] = intercept
+    ddict["r_value"] = r_value
+    ddict["sigma_intercept"] = numpy.sqrt(Sxx / SSxx)
+    ddict["sigma_slope"] = numpy.sqrt(S / SSxx)
+    return slope, intercept, r_value, ddict
 
 # Linear Least Squares
 
