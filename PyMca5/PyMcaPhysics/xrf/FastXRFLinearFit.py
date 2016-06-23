@@ -257,9 +257,11 @@ class FastXRFLinearFit(object):
         # and then complains about a future deprecation warning
         # because of using an arry and not an scalar in the selection
         if hasattr(iXMin, "shape"):
-            iXMin = iXMin[0]
+            if len(iXMin.shape):
+                iXMin = iXMin[0]
         if hasattr(iXMax, "shape"):
-            iXMax = iXMax[0]
+            if len(iXMax.shape):
+                iXMax = iXMax[0]
 
         dummySpectrum = firstSpectrum[iXMin:iXMax+1].reshape(-1, 1)
         # print("dummy = ", dummySpectrum.shape)
@@ -401,16 +403,30 @@ class FastXRFLinearFit(object):
                 nFits += 1
                 A = derivatives[:, [i for i in range(nFree) if i not in badParameters]]
                 #assume we'll not have too many spectra
+                if data.dtype not in [numpy.float32, numpy.float64]:
+                    data
+                if data.dtype not in [numpy.float32, numpy.float64]:
+                    if data.itemsize < 5:
+                        data_dtype = numpy.float32
+                    else:
+                        data_dtype = numpy.floa64
+                else:
+                    data_dtype = data.dtype
                 try:
-                    spectra = data[badMask, iXMin:iXMax+1]
+                    if data.dtype != data_dtype:
+                        spectra = numpy.zeros((int(badMask.sum()), 1 + iXMax - iXMin),
+                                          data_dtype)
+                        spectra[:] = data[badMask, iXMin:iXMax+1]
+                    else:
+                        spectra = data[badMask, iXMin:iXMax+1]
                     spectra.shape = badMask.sum(), -1
                 except TypeError:
                     # in case of dynamic arrays, two dimensional indices are not
                     # supported by h5py
                     spectra = numpy.zeros((int(badMask.sum()), 1 + iXMax - iXMin),
-                                          data.dtype)
+                                          data_dtype)
                     selectedIndices = numpy.nonzero(badMask > 0)
-                    tmpData = numpy.zeros((1, 1 + iXMax - iXMin), data.dtype)
+                    tmpData = numpy.zeros((1, 1 + iXMax - iXMin), data_dtype)
                     oldDataRow = -1
                     j = 0
                     for i in range(len(selectedIndices[0])):
