@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -77,7 +77,7 @@ class __ModuleWrapper:
             if not len("%s" % value):
                 self.__wrapped.__dict__[name] = os.getcwd()
             else:
-                raise ValueError("Non existing directory %s" % value)
+                raise ValueError("Non-existing directory <%s>" % value)
     elif name == "outputDir":
         if os.path.isdir(value):
             self.__wrapped.__dict__[name]=value
@@ -85,7 +85,7 @@ class __ModuleWrapper:
             if not len("%s" % value):
                 self.__wrapped.__dict__[name] = os.getcwd()
             else:
-                raise ValueError("Non existing directory %s" % value)
+                raise ValueError("Non-existing directory <%s>" % value)
     elif name == "nativeFileDialogs":
         self.__wrapped.__dict__[name]=value
     elif name.startswith("__"):

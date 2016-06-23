@@ -164,10 +164,17 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
         else:
             if mode == "OPEN":
                 if single:
-                    filelist = [qt.QFileDialog.getOpenFileName(parent,
-                            message,
-                            wdir,
-                            filetypes)]
+                    if QTVERSION < '5.0.0': 
+                        filelist = [qt.QFileDialog.getOpenFileName(parent,
+                                message,
+                                wdir,
+                                filetypes)]
+                    else:
+                        filelist, filterused = qt.QFileDialog.getOpenFileName(parent,
+                                    message,
+                                    wdir,
+                                    filetypes)
+                        filelist = [filelist]
                 else:
                     filelist = qt.QFileDialog.getOpenFileNames(parent,
                             message,
