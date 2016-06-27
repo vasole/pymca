@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -181,10 +181,16 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
                             wdir,
                             filetypes)
             else:
-                filelist = qt.QFileDialog.getSaveFileName(parent,
-                        message,
-                        wdir,
-                        filetypes)
+                if QTVERSION < '5.0.0':
+                    filelist = qt.QFileDialog.getSaveFileName(parent,
+                            message,
+                            wdir,
+                            filetypes)
+                else:
+                    filelist, filterused = qt.QFileDialog.getSaveFileName(parent,
+                                message,
+                                wdir,
+                                filetypes)
                 filelist = qt.safe_str(filelist)
                 if len(filelist):
                     filelist = [filelist]

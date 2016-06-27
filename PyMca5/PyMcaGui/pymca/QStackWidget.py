@@ -39,6 +39,8 @@ if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = qt.safe_str
+
+from PyMca5.PyMca import PyMcaFileDialogs
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaGui.pymca import McaWindow
 from PyMca5.PyMcaCore import StackBase
@@ -274,8 +276,16 @@ class QStackWidget(StackBase.StackBase,
         fileTypes = "HDF5 Files (*.h5)\nHDF5 Files (*.hdf)"
         message = "Enter output filename"
         wdir = PyMcaDirs.outputDir
-        filename = qt.QFileDialog.getSaveFileName(self, message, wdir,
-                                                  fileTypes)
+        filename = PyMcaFileDialogs.getFileList(self,
+                                        message=message,
+                                        mode="SAVE",
+                                        currentdir=wdir,
+                                        filetypelist=[fileTypes],
+                                        getfilter=False,
+                                        single=True)
+
+        if len(filename):
+            filename = filename[0]
         if len(filename):
             try:
                 fname = qt.safe_str(filename)
@@ -296,8 +306,15 @@ class QStackWidget(StackBase.StackBase,
         fileTypes = "TIFF Files (*.tif *.tiff *.TIF *.TIFF)"
         message = "Enter output filename"
         wdir = PyMcaDirs.outputDir
-        filename = qt.QFileDialog.getSaveFileName(self, message, wdir,
-                                                  fileTypes)
+        filename = PyMcaFileDialogs.getFileList(self,
+                                        message=message,
+                                        mode="SAVE",
+                                        currentdir=wdir,
+                                        filetypelist=[fileTypes],
+                                        getfilter=False,
+                                        single=True)
+        if len(filename):
+            filename = filename[0]
         if len(filename):
             try:
                 fname = qt.safe_str(filename)
