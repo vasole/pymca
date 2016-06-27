@@ -1,7 +1,7 @@
 #/*##########################################################################
 #
 #
-# Copyright (c) 2002 European Synchrotron Radiation Facility
+# Copyright (c) 2002-2016 European Synchrotron Radiation Facility
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -558,7 +558,7 @@ class Lanczos:
             for i in range(m-j):
                 if abs(self.eval[i]) < abs(self.eval[i+1]):
                     self.eval[i],self.eval[i+1]=self.eval[i+1],self.eval[i]
-                    self.evect[i:i+2]=self.evect[i+1],self.evect[i]
+                    self.evect[i:i+2]= numpy.array(self.evect[i+1],self.evect[i])
 
 
         # print "eval", self.eval[0:m]
