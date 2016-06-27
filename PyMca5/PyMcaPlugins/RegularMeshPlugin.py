@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -87,8 +87,8 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
 
     def _convert(self):
         x, y, legend, info = self.getActiveCurve()
-        self._x = x
-        self._y = y
+        self._x = x[:]
+        self._y = y[:]
         if 'Header' not in info:
             raise ValueError("Active curve does not seem to be a mesh scan")
 
@@ -109,6 +109,12 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
         #Assume an EXACTLY regular mesh for both motors
         self._motor0 = numpy.linspace(float(item[4]), float(item[5]), int(item[6])+1)
         self._motor1 = numpy.linspace(float(item[8]), float(item[9]), int(item[10])+1)
+
+        #Didier's contribution: Try to do something if scan has been interrupted
+        if y.size < (int(item[6])+1) * (int(item[10])+1):
+            print("WARNING: Incomplete mesh scan")
+            self._motor1 = numpy.resize(self._motor1,(y.size/(int(item[6])+1),1))
+            y = numpy.resize(y,((y.size/(int(item[6])+1)*(int(item[6])+1)),1))
 
         try:
             if xLabel.upper() == motor0Mne.upper():
