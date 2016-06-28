@@ -27,6 +27,10 @@ Add more keywords for QXAS format support.
 Allow ADD functionality on customized fit background (allowing multiple atan
 functions)
 
+Allow the use of the regular mesh plugin on incomplete mesh scans.
+
+Add kinetics related plugins (Rate Laws and Arrhenius-like plots).
+
 VERSION 5.1.1
 
 Update to fisx 1.0.4 to workaround issue calculating secondary excitation
