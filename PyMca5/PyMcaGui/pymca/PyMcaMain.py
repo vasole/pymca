@@ -121,6 +121,11 @@ if __name__ == "__main__":
                 style = qt.QStyleFactory.create(item)
                 app.setStyle(style)
                 break
+
+    if sys.platform not in ["win32", "darwin"]:
+        # some themes of Ubuntu 16.04 give black tool tips on black background
+        app.setStyleSheet("QToolTip { color: #000000; background-color: #fff0cd; border: 1px solid black; }")
+
     # TODO why this strange test
     if 1 or QTVERSION < '4.0.0':
         winpalette = qt.QPalette(qt.QColor(230,240,249),qt.QColor(238,234,238))

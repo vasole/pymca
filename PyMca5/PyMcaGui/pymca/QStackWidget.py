@@ -1137,6 +1137,9 @@ if __name__ == "__main__":
         if (begin is None) or (end is None):
             raise ValueError("A file pattern needs at least a set of begin and end indices")
     app = qt.QApplication([])
+    if sys.platform not in ["win32", "darwin"]:
+        # some themes of Ubuntu 16.04 give black tool tips on black background
+        app.setStyleSheet("QToolTip { color: #000000; background-color: #fff0cd; border: 1px solid black; }")
     if backend is not None:
         # set the default backend
         try:
