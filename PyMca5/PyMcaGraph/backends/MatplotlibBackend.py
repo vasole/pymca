@@ -881,7 +881,8 @@ class MatplotlibGraph(FigureCanvas):
                         inv = self.ax.transData.inverted()
                         xtmp, ytmp = inv.transform_point((xtmp, ytmp + 15))
                         infoText.set_position((xData, ytmp))
-                if BLITTING and (self._background is not None):
+                if BLITTING and (self._background is not None) and\
+                       hasattr(artist.figure, "canvas"):
                     canvas = artist.figure.canvas
                     axes = artist.axes
                     artist.set_animated(True)
@@ -1067,7 +1068,7 @@ class MatplotlibGraph(FigureCanvas):
             if self.__markerMoving:
                 self.__markerMoving = False
                 artist = self._pickingInfo['artist']
-                if BLITTING:
+                if BLITTING and hasattr(artist.figure, "canvas"):
                     artist.set_animated(False)
                     self._background = None
                     artist.figure.canvas.draw()
