@@ -33,6 +33,12 @@ import os
 import sys
 DEBUG = 0
 if sys.platform.startswith("win"):
+    try:
+        # make sure hdf5plugins are imported when using PyMca
+        import hdf5plugin
+    except:
+        # but at the same time do not disturb other people
+        pass
     import ctypes
     from ctypes.wintypes import MAX_PATH
 
