@@ -168,7 +168,10 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                                    offsets=offsets,
                                                    widths=widths,
                                                    crop=crop)
-                if result[0] == 'Exception':
+                # result[0] contains the string "Exception" in case
+                # of error. However, direct comparison will raise an
+                # error
+                if type(result[0]) == type('Exception'):
                     # exception occurred
                     raise Exception(result[1], result[2], result[3])
                 else:
