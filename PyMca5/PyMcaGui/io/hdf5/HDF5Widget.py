@@ -63,7 +63,11 @@ def h5py_sorting(object_list):
     # external data have the same posixName. Without this sorting
     # they arrive "unsorted"
     object_list.sort()
-    posixNames = [item[1].name for item in object_list]
+    try:
+        posixNames = [item[1].name for item in object_list]
+    except AttributeError:
+        # Typical of broken external links
+        return object_list
 
     # This implementation only sorts entries
     if posixpath.dirname(posixNames[0]) != "/":
@@ -104,6 +108,9 @@ def _get_number_list(txt):
     rexpr = '[/a-zA-Z:-]'
     nbs= [float(w) for w in re.split(rexpr, txt) if w not in ['',' ']]
     return nbs
+
+class BrokenLink(object):
+    pass
 
 class QRLock(qt.QMutex):
 
@@ -189,7 +196,13 @@ class H5NodeProxy(object):
                     # better handling of external links
                     finalList = h5py_sorting(items)
                     for i in range(len(finalList)):
-                        finalList[i][1]._posixPath = posixpath.join(self.name,
+                        if finalList[i][1] is not None:
+                            finalList[i][1]._posixPath = posixpath.join(self.name,
+                                                               finalList[i][0])
+                        else:
+                            finalList[i] = [x for x in finalList[i]]
+                            finalList[i][1] = BrokenLink()
+                            finalList[i][1]._posixPath = posixpath.join(self.name,
                                                                finalList[i][0])
                     self._children = [H5NodeProxy(self.file, i[1], self)
                                       for i in finalList]
