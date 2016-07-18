@@ -58,6 +58,11 @@ def h5py_sorting(object_list):
         return object_list
 
     # we have received items, not values
+    # perform a first sort based on received names
+    # this solves a problem with Eiger data where all the
+    # external data have the same posixName. Without this sorting
+    # they arrive "unsorted"
+    object_list.sort()
     posixNames = [item[1].name for item in object_list]
 
     # This implementation only sorts entries
