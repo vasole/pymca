@@ -36,20 +36,30 @@ except ImportError:
 try:
     from PyMca5.PyMcaGui.math.fitting import RateLawWindow
 except ImportError:
-    print("RateLawPlugin problem")
+    print("KineticsPlugin problem")
 
-class RateLawPlugin(Plugin1DBase.Plugin1DBase):
+class KineticsPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
         self.methodDict = {}
 
         text = "Graphical calculation of Rate Laws"
-        function = self.calculate
+        function = self.rateLaw
         info = text
         icon = None
-        self.methodDict["Calculate"] =[function,
+        self.methodDict["Rate Law Plots"] =[function,
                                        info,
                                        icon]
+
+        text = "Replace current (x, y) plot by (1/x, log(y)) plot"
+        info = text
+        icon = None
+        function = self.arrhenius
+        method = "Arrhenius Plot"
+        self.methodDict[method] = [function,
+                                   info,
+                                   icon]
+
         self.widget = None
 
     #Methods to be implemented by the plugin
@@ -83,7 +93,7 @@ class RateLawPlugin(Plugin1DBase.Plugin1DBase):
         self.methodDict[name][0]()
         return
 
-    def calculate(self):
+    def rateLaw(self):
         #get active curve
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
@@ -104,9 +114,65 @@ class RateLawPlugin(Plugin1DBase.Plugin1DBase):
         self.widget.show()
         self.widget.raise_()
 
-MENU_TEXT = "Rate Law"
+    def arrhenius(self):
+        curves = self.getMonotonicCurves()
+        nCurves = len(curves)
+        if nCurves < 1:
+            raise ValueError("At least one curve needed")
+            return
+
+        # get legend of active curve
+        try:
+            activeCurveLegend = self.getActiveCurve()[2]
+            if activeCurveLegend is None:
+                activeCurveLegend = curves[0][2]
+            for curve in curves:
+                if curve[2] == activeCurveLegend:
+                    activeCurve = curve
+                    break
+        except:
+            activeCurve = curves[0]
+            activeCurveLegend = curves[0][2]
+
+        # apply between graph limits
+        xmin, xmax =self.getGraphXLimits()
+        toPlot = []
+        for curve in curves:
+            x0, y0, legend, info = curve[:4]
+            idx = numpy.nonzero((x0 >= xmin) & (x0 <= xmax) & (x0 != 0))[0]
+            x = numpy.take(x0, idx)
+            y = numpy.take(y0, idx)
+            idx = numpy.nonzero(y > 0)[0]
+            x = numpy.take(x, idx)
+            y = numpy.take(y, idx)
+            if not x.size:
+                continue
+            x = 1.0 / x
+            y = numpy.log(y)
+            toPlot.append((x, y, legend, info))
+
+        for i in range(len(toPlot)):
+            if i == 0:
+                replace=True
+            else:
+                replace=False
+            if i == (len(toPlot) - 1):
+                replot = True
+            else:
+                replot=False
+            x, y, legend, info = toPlot[i]            
+            self.addCurve(x, y,
+                         legend=legend,
+                         info=info,
+                         ylabel="log(%s)" % info["ylabel"],
+                         xlabel="1/%s" % info["xlabel"],
+                         replot=replot,
+                         replace=replace)
+        self.setActiveCurve(activeCurveLegend)
+
+MENU_TEXT = "Kinetics Tools"
 def getPlugin1DInstance(plotWindow, **kw):
-    ob = RateLawPlugin(plotWindow)
+    ob = KineticsPlugin(plotWindow)
     return ob
 
 if __name__ == "__main__":
