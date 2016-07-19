@@ -31,7 +31,14 @@ __version__ = "5.1.2"
 
 import os
 import sys
+from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR
+try:
+    from fisx.DataDir import FISX_DATA_DIR
+except ImportError:
+    FISX_DATA_DIR = None
+
 DEBUG = 0
+
 if sys.platform.startswith("win"):
     try:
         # make sure hdf5plugins are imported when using PyMca
@@ -136,6 +143,61 @@ def getUserDataFile(fileName, directory=""):
         if DEBUG:
             print("Using data file: %s" % fileName)
         return fileName
+
+def getDataFile(fileName, directory=None):
+    """
+    Look for the provided file name in directories following the priority:
+
+    0 - The provided file
+    1 - User data directory (~/PyMca/PyMcaData)
+    2 - PyMca data directory (PyMcaDataDir.PYMCA_DATA_DIR)
+    3 - fisx data directory (fisx.DataDir.FISX_DATA_DIR)
+    """
+
+    # return the input file name if exists
+    if os.path.exists(fileName):
+        if DEBUG:
+            print("Filename as supplied <%s>" % newFileName)
+        return fileName
+
+    # the list of sub-directories where to look for the file
+    if directory is None:
+        directoryList = [""]
+    else:
+        directoryList = [directory, ""]
+
+    # user
+    for subdirectory in directoryList:
+        newFileName = getUserDataFile(fileName, directory=subdirectory)
+        if os.path.exists(newFileName):
+            if DEBUG:
+                print("Filename from user <%s>" % newFileName)
+            return newFileName
+
+    # PyMca
+    for subdirectory in directoryList:
+        newFileName = os.path.join(PYMCA_DATA_DIR,
+                                   subdirectory,
+                                   os.path.basename(fileName))
+        if os.path.exists(newFileName):
+            if DEBUG:
+                print("Filename from PyMca Data Directory <%s>" % newFileName)
+            return newFileName
+
+    # fisx
+    if FISX_DATA_DIR is not None:
+        for subdirectory in directoryList:
+            newFileName = os.path.join(FISX_DATA_DIR,
+                                       subdirectory,
+                                       os.path.basename(fileName))
+            if os.path.exists(newFileName):
+                if DEBUG:
+                    print("Filename from fisx Data Directory <%s>" % \
+                                                  newFileName)
+                return newFileName
+
+    # file not found
+    raise IOError("File not found:  <%s>" % fileName)
 
 # workaround matplotlib MPLCONFIGDIR issues under windows
 if sys.platform.startswith("win"):
