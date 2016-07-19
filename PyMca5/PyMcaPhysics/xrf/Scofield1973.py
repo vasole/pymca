@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,21 +33,10 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5 import PyMcaDataDir
+from PyMca5 import getDataFile
 
-dict = ConfigDict.ConfigDict()
-dirmod = PyMcaDataDir.PYMCA_DATA_DIR
-dictfile = os.path.join(dirmod, "Scofield1973.dict")
-if not os.path.exists(dictfile):
-    dirmod = os.path.dirname(dirmod)
-    dictfile = os.path.join(dirmod,"Scofield1973.dict")
-    if not os.path.exists(dictfile):
-        if dirmod.lower().endswith(".zip"):
-            dirmod = os.path.dirname(dirmod)
-    dictfile = os.path.join(dirmod,"Scofield1973.dict")
-if not os.path.exists(dictfile):
-    print("Cannot find file ", dictfile)
-    raise IOError("Cannot find file %s " % dictfile)
-dict.read(dictfile)
+ddict = ConfigDict.ConfigDict()
+dictfile = getDataFile("Scofield1973.dict")
+ddict.read(dictfile)
 
 
