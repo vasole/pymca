@@ -120,8 +120,9 @@ class testElements(unittest.TestCase):
         if DEBUG:
             print()
             print("Test XCOM Cross Sections Readout")
+        from PyMca5 import getDataFile
         from PyMca5.PyMcaIO import specfile
-        xcomFile = os.path.join(self.dataDir, 'XCOM_CrossSections.dat')
+        xcomFile = getDataFile('XCOM_CrossSections.dat')
         sf = specfile.Specfile(xcomFile)
         for ele in ['Si', 'Fe', 'Pb', 'U']:
             if DEBUG:

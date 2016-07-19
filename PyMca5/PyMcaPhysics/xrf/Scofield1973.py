@@ -35,8 +35,6 @@ import os
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5 import getDataFile
 
-ddict = ConfigDict.ConfigDict()
+dict = ConfigDict.ConfigDict()
 dictfile = getDataFile("Scofield1973.dict")
-ddict.read(dictfile)
-
-
+dict.read(dictfile)

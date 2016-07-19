@@ -54,6 +54,7 @@ ElementList = ['H', 'He',
             'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
+EPDL97_FILE = getDataFile("EPDL97_CrossSections.dat")
 EADL97_FILE = getDataFile("EADL97_BindingEnergies.dat")
 
 EPDL97_DICT = {}

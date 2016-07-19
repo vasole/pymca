@@ -79,9 +79,19 @@ class testData(unittest.TestCase):
         self.assertTrue(os.path.isdir(self.dataDir),
                         '"%s" expected to be a directory' % self.dataDir)
 
-    def testDataFilePresence(self):
-        # Testing file presence
-        self.testDataDirectoryPresence()
+
+    def testFisxDataDirectoryPresence(self):
+        try:
+            from fisx import DataDir
+            dataDir = DataDir.FISX_DATA_DIR
+        except:
+            dataDir = None
+        self.assertTrue(dataDir is not None,
+                        'fisx module not properly installed')
+        self.assertTrue(os.path.exists(dataDir),
+                        'fisx directory "%s" does not exist' % dataDir)
+        self.assertTrue(os.path.isdir(dataDir),
+                        '"%s" expected to be a directory' % dataDir)
         for fname in ['BindingEnergies.dat',
                       'EADL97_BindingEnergies.dat',
                       'EADL97_KShellConstants.dat',
@@ -90,16 +100,24 @@ class testData(unittest.TestCase):
                       'EPDL97_CrossSections.dat',
                       'KShellConstants.dat',
                       'KShellRates.dat',
-                      'KShellRatesScofieldHS.dat',
                       'LShellConstants.dat',
                       'LShellRates.dat',
-                      'LShellRatesCampbell.dat',
-                      'LShellRatesScofieldHS.dat',
-                      'McaTheory.cfg',
                       'MShellConstants.dat',
                       'MShellRates.dat',
+                      'XCOM_CrossSections.dat']:
+            actualName = os.path.join(dataDir, fname)
+            self.assertTrue(os.path.exists(actualName),
+                            'File "%s" does not exist.' % actualName)
+            self.assertTrue(os.path.isfile(actualName),
+                            'File "%s" is not an actual file.' % actualName)
+
+    def testDataFilePresence(self):
+        # Testing file presence
+        self.testDataDirectoryPresence()
+        for fname in ['LShellRatesCampbell.dat',
+                      'LShellRatesScofieldHS.dat',
+                      'McaTheory.cfg',
                       'Scofield1973.dict',
-                      'XCOM_CrossSections.dat',
                       'XRFSpectrum.mca']:
             actualName = os.path.join(self.dataDir, fname)
             self.assertTrue(os.path.exists(actualName),
@@ -135,6 +153,7 @@ def getSuite(auto=True):
         testSuite.addTest(unittest.TestLoader().loadTestsFromTestCase(testData))
     else:
         # use a predefined order
+        testSuite.addTest(testData("testFisxDataDirectoryPresence"))
         testSuite.addTest(testData("testDataDirectoryPresence"))
         testSuite.addTest(testData("testDataFilePresence"))
         testSuite.addTest(testData("testDocDirectoryPresence"))
