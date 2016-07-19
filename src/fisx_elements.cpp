@@ -2,7 +2,7 @@
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014-2015 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -32,6 +32,7 @@
 #include <cmath>
 #include <sstream>
 #include <algorithm>
+#include <cstdlib>
 #include "fisx_elements.h"
 
 namespace fisx
@@ -40,7 +41,17 @@ namespace fisx
 
 const std::string Elements::defaultDataDir()
 {
-    return FISX_DATA_DIR;
+    char *path;
+
+    path = std::getenv("FISX_DATA_DIR");
+    if (path != NULL)
+    {
+        return std::string(path);
+    }
+    else
+    {
+        return FISX_DATA_DIR;
+    }
 }
 
 Elements::Elements(std::string epdl97Directory, std::string bindingEnergiesFileName, std::string crossSectionsFile)
@@ -59,7 +70,14 @@ Elements::Elements(std::string epdl97Directory, std::string bindingEnergiesFileN
 Elements::Elements(std::string epdl97Directory)
 {
     // pure EPDL97 initialization
-    this->initialize(epdl97Directory, "");
+    if (epdl97Directory.size() < 1)
+    {
+        this->initialize(Elements::defaultDataDir(), "");
+    }
+    else
+    {
+        this->initialize(epdl97Directory, "");
+    }
 }
 
 Elements::Elements(std::string directoryName, short pymca)
@@ -1170,6 +1188,20 @@ const Material & Elements::getMaterial(const std::string & materialName)
     return this->materialList[i];
 }
 
+std::vector<std::string> Elements::getMaterialNames()
+{
+    std::vector<Material>::size_type i;
+    std::vector<std::string> result;
+
+    result.resize(this->materialList.size());
+    for (i = 0; i < this->materialList.size(); i++)
+    {
+        result[i] = this->materialList[i].getName();
+    }
+
+    return result;
+}
+
 Material Elements::getMaterialCopy(const std::string & materialName)
 {
     std::string msg;
@@ -1864,7 +1896,7 @@ std::map<std::string,std::map<std::string, double> > Elements::getEscape( \
                     // and not per incident photon.
                     // It is not a correct approximation, but this avoids the calculation
                     // of exponential integral functions.
-                    rate /= (1.0 - std::exp(-muIncident * thickness / sinAlphaIn));
+                    rate /= intrinsicEfficiency;
                 }
                 result[tmpString] ["rate"] = rate;
                 result[tmpString] ["energy"] = energy - fluorescentEnergy;

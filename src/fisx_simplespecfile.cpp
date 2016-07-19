@@ -2,7 +2,7 @@
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -161,11 +161,19 @@ std::vector<std::string> SimpleSpecfile::getScanLabels(int scanIndex)
         }
         i++;
     }
+    if (line.size() < 2)
+    {
+        throw std::runtime_error("Label line not found");
+    }
 
     if (line.substr(0, 2) != "#L")
     {
         throw std::runtime_error("Label line not found");
     }
+
+    // trim trailing CR if present    
+    if (line[line.size() - 1] == '\r')
+            line.erase(line.size() - 1);
 
     // trim leading and trailing spaces
     iStart = line.find_first_of(" ") + 1;
@@ -235,7 +243,11 @@ std::vector<std::vector<double> > SimpleSpecfile::getScanData(int scanIndex)
     for ( ; i < this->scanFilePositions[scanIndex].second; i++)
     {
         std::getline(fileInstance, line);
-
+        if (!line.empty())
+        {
+            if(line[line.size() - 1] == '\r')
+                line.erase(line.size() - 1);
+        }
         // std::cout << line << std::endl;
         if ((i < this->scanFilePositions[scanIndex].first) ||\
             (line[0] == '#'))

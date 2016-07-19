@@ -2,7 +2,7 @@
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -38,25 +38,13 @@ from Material cimport *
 
 __doc__ = """
 
-Initialization with XCOM parameters from fisx:
+Initialization with XCOM mass attenuation cross sections:
 
 import os
 from fisx import DataDir
 dataDir = DataDir.FISX_DATA_DIR
 bindingEnergies = os.path.join(dataDir, "BindingEnergies.dat")
 xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
-xcom = Elements(dataDir, bindingEnergies, xcomFile)
-
-Initialization with XCOM parameters and binding energies from PyMca:
-
-import os
-from PyMca5 import PyMcaDataDir
-dataDir = PyMcaDataDir.PYMCA_DATA_DIR
-bindingEnergies = os.path.join(dataDir, "BindingEnergies.dat")
-xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
-# This is needed because PyMca does not have the non-radiative rates
-from fisx import DataDir
-dataDir = DataDir.FISX_DATA_DIR
 xcom = Elements(dataDir, bindingEnergies, xcomFile)
 
 """
@@ -90,6 +78,31 @@ cdef class PyElements:
         """
         import os
         try:
+            from PyMca5 import getDataFile
+        except ImportError:
+            # old fashion way with duplicated data in PyMca and in fisx
+            return self.__initializeAsPyMcaOld()
+
+        from fisx import DataDir
+        directoryName = DataDir.FISX_DATA_DIR
+        bindingEnergies = getDataFile("BindingEnergies.dat")
+        xcomFile = getDataFile("XCOM_CrossSections.dat")
+        del self.thisptr
+        self.thisptr = new Elements(toBytes(directoryName), toBytes(bindingEnergies), toBytes(xcomFile))
+        for shell in ["K", "L", "M"]:
+            shellConstantsFile = getDataFile(shell+"ShellConstants.dat")
+            self.thisptr.setShellConstantsFile(toBytes(shell),
+                                               toBytes(shellConstantsFile))
+        for shell in ["K", "L", "M"]:
+            radiativeRatesFile = getDataFile(shell+"ShellRates.dat")
+            self.thisptr.setShellRadiativeTransitionsFile(toBytes(shell), toBytes(radiativeRatesFile))
+
+    def __initializeAsPyMcaOLD(self):
+        """
+        Configure the instance to use the same set of data as PyMca.
+        """
+        import os
+        try:
             from fisx import DataDir
             directoryName = DataDir.FISX_DATA_DIR
             from PyMca5 import PyMcaDataDir
@@ -111,7 +124,10 @@ cdef class PyElements:
             self.thisptr.setShellRadiativeTransitionsFile(toBytes(shell), toBytes(radiativeRatesFile))
 
     def getElementNames(self):
-        return self.thisptr.getElementNames()
+        return toStringList(self.thisptr.getElementNames())
+
+    def getMaterialNames(self):
+        return toStringList(self.thisptr.getMaterialNames())
 
     def getComposition(self, materialOrFormula):
         if sys.version < "3.0":

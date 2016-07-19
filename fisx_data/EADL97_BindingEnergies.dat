@@ -1,14 +1,28 @@
 #F EADL97_BindingEnergies.dat
-#U00 This file is a conversion to specfile format of 
-#U01 directly extracted EADL97 Binding energies.
-#U02 EADL itself can be found at:
-#U03           http://www-nds.iaea.org/epdl97/libsall.htm
-#U04 The code used to generate this file has been:
-#U05 GenerateEADLBindingEnergies.py
+#U00 This file is a conversion to specfile format of
+#U01 directly extracted EADL97 binding energiess
+#U02 to simplify its use with the fisx and PyMca software packages.
+#U03
+#U04 Neither those packages or their author(s) claim any ownership of
+#U05 the data and they do not warrant the integrity of the data following 
+#U07 the conversion process.
 #U06
+#U07 EADL itself can be found at:
+#U08           http://www-nds.iaea.org/epdl97/libsall.htm
+#U09 The code used to generate this file has been:
+#U10 GenerateEADLBindingEnergies.py
+#U11
+#U12 The proper way to quote these data is:
+#U13 D.E. Cullen, et al., "Tables and Graphs of Atomic Subshell and 
+#U14 Relaxation Data Derived from the LLNL Evaluated Atomic Data Library
+#U15 (EADL), Z = 1 - 100," Lawrence Livermore National Laboratory, UCRL-50400,
+#U16  Vol. 30, October 1991
+#U17 The author of these data, D.E. Cullen, has stated that redistribution of the
+#U18 data is permitted provided the previous credits are maintained.
+#U19 
 
 #S 1 Binding energies in keV
-#N 39
+#N 40
 #L Z  K(1s1/2)  L1(2s1/2)  L2(2p1/2)  L3(2p3/2)  M1(3s1/2)  M2(3p1/2)  M3(3p3/2)  M4(3d3/2)  M5(3d5/2)  N1(4s1/2)  N2(4p1/2)  N3(4p3/2)  N4(4d3/2)  N5(4d5/2)  N6(4f5/2)  N7(4f7/2)  O1(5s1/2)  O2(5p1/2)  O3(5p3/2)  O4(5d3/2)  O5(5d5/2)  O6(5f5/2)  O7(5f7/2)  O8(5g7/2)  O9(5g9/2)  P1(6s1/2)  P2(6p1/2)  P3(6p3/2)  P4(6d3/2)  P5(6d5/2)  P6(6f5/2)  P7(6f7/2)  P8(6g7/2)  P9(6g9/2)  P10(6h9/2)  P11(6h11/2)  Q1(7s1/2)  Q2(7p1/2)  Q3(7p3/2)
 1  1.3610000E-02  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00
 2  2.3420000E-02  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00  0.0000000E+00

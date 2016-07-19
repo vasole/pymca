@@ -2,7 +2,7 @@
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -70,7 +70,7 @@ public:
     /*!
     Initialize the library from the EADL and EPDL97 data files found in the provided directory.
     */
-    Elements(std::string dataDirectory = FISX_DATA_DIR);
+    Elements(std::string dataDirectory="");
 
     /*!
     Initialize the library from the data files found in the provided directory.
@@ -269,6 +269,11 @@ public:
     Retrieve a reference to instance of the material identified by materialName
     */
     const Material & getMaterial(const std::string & materialName);
+
+    /*!
+    Retrieve the names of the materials already defined in the library.
+    */
+    std::vector<std::string> getMaterialNames();
 
     /*!
     Retrieve a copy of the instance of the material identified by materialName
