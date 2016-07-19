@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -35,50 +35,60 @@ import os
 PYMCA_DATA_DIR = 'DATA_DIR_FROM_SETUP'
 # This is to be filled by the setup
 PYMCA_DOC_DIR = 'DOC_DIR_FROM_SETUP'
-# what follows is only used in frozen versions
-if not os.path.exists(PYMCA_DATA_DIR):
-    tmp_dir = os.path.dirname(__file__)
-    basename = os.path.basename(PYMCA_DATA_DIR)
-    PYMCA_DATA_DIR = os.path.join(tmp_dir,basename)
-    while len(PYMCA_DATA_DIR) > 14:
-        if os.path.exists(PYMCA_DATA_DIR):
-            break
-        tmp_dir = os.path.dirname(tmp_dir)
-        PYMCA_DATA_DIR = os.path.join(tmp_dir, basename)
 
 # this is used in build directory
 if not os.path.exists(PYMCA_DATA_DIR):
-    tmp_dir = os.path.abspath(os.path.dirname(__file__))
-    basename = os.path.basename(PYMCA_DATA_DIR)
+    tmp_dir = os.path.dirname(os.path.abspath(__file__))
+    old_tmp_dir = tmp_dir + "dummy"
+    basename = "PyMcaData"
     PYMCA_DATA_DIR = os.path.join(tmp_dir, "PyMca5", basename)
-    while len(PYMCA_DATA_DIR) > 20:
+    while (len(PYMCA_DATA_DIR) > 20) and (tmp_dir != old_tmp_dir):
         if os.path.exists(PYMCA_DATA_DIR):
             break
-        tmp_dir = os.path.abspath(os.path.dirname(tmp_dir))
+        old_tmp_dir = tmp_dir
+        tmp_dir = os.path.dirname(tmp_dir)
         PYMCA_DATA_DIR = os.path.join(tmp_dir, "PyMca5", basename)
 
 if not os.path.exists(PYMCA_DATA_DIR):
-    raise IOError('%s data directory not found' % basename)
+    PYMCA_DATA_DIR = os.getenv("PYMCA_DATA_DIR")
+    if PYMCA_DATA_DIR is not None:
+        if not os.path.exists(PYMCA_DATA_DIR):
+            raise IOError('%s directory set from environent not found' % \
+                          PYMCA_DATA_DIR)
+        else:
+            txt = "WARNING: Taking PYMCA_DATA_DIR from environement.\n"
+            txt += "Use it at your own risk."
+            print(txt)
+    else:
+        raise IOError('%s directory not found' % basename)
 
 # do the same for the directory containing HTML files
 if not os.path.exists(PYMCA_DOC_DIR):
-    tmp_dir = os.path.abspath(os.path.dirname(__file__))
-    basename = os.path.basename(PYMCA_DOC_DIR)
+    tmp_dir = os.path.dirname(os.path.abspath(__file__))
+    old_tmp_dir = tmp_dir + "dummy"
+    basename = "PyMcaData"
     PYMCA_DOC_DIR = os.path.join(tmp_dir,basename)
-    while len(PYMCA_DOC_DIR) > 14:
+    while (len(PYMCA_DOC_DIR) > 20) and (tmp_dir != old_tmp_dir):
         if os.path.exists(PYMCA_DOC_DIR):
             break
-        tmp_dir = os.path.abspath(os.path.dirname(tmp_dir))
-        PYMCA_DOC_DIR = os.path.join(tmp_dir, basename)
+        old_tmp_dir = tmp_dir
+        tmp_dir = os.path.dirname(tmp_dir)
+        PYMCA_DOC_DIR = os.path.join(tmp_dir, "PyMca5", basename)
 
 if not os.path.exists(PYMCA_DOC_DIR):
-    tmp_dir = os.path.abspath(os.path.dirname(__file__))
-    basename = os.path.basename(PYMCA_DOC_DIR)
-    PYMCA_DOC_DIR = os.path.join(tmp_dir, "PyMca5", basename)
-    while len(PYMCA_DOC_DIR) > 20:
-        if os.path.exists(PYMCA_DOC_DIR):
-            break
-        tmp_dir = os.path.abspath(os.path.dirname(tmp_dir))
-        PYMCA_DOC_DIR = os.path.join(tmp_dir, "PyMca5", basename)
+    PYMCA_DOC_DIR = os.getenv("PYMCA_DOC_DIR")
+    if PYMCA_DOC_DIR is not None:
+        if not os.path.exists(PYMCA_DOC_DIR):
+            raise IOError('%s directory set from environent not found' % \
+                          PYMCA_DATA_DIR)
+        else:
+            txt = "WARNING: Taking PYMCA_DOC_DIR from environement.\n"
+            txt += "Use it at your own risk."
+            print(txt)
+    else:
+        # use the data dir as doc dir
+        print("Setting PYMCA_DOC_DIR equal to PYMCA_DATA_DIR")
+        PYMCA_DOC_DIR = PYMCA_DATA_DIR
+
 if not os.path.exists(PYMCA_DOC_DIR):
     raise IOError('%s documentation directory not found' % basename)
