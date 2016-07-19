@@ -10,7 +10,7 @@ Correct compatibility issues with matplotlib 1.5
 
 Improved compatibility with Qt 5
 
-Update to fisx 1.0.6 for windows compatibility under Python 3.5
+Update to fisx 1.0.9 for windows compatibility under Python 3.5
 
 Enable OpenGL window under Python 3
 
