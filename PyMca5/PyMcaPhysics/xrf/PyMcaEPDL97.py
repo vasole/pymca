@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,13 +33,8 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__= "Interface to the PyMca EPDL97 description"
 import os
 import sys
-try:
-    from PyMca5.PyMcaIO import specfile
-except ImportError:
-    #this is needed for frozen versions
-    print("PyMcaEPDL97.py is importing specfile from local directory")
-    import specfile
-from PyMca5 import PyMcaDataDir
+from PyMca5.PyMcaIO import specfile
+from PyMca5 import getDataFile
 import numpy
 log = numpy.log
 exp = numpy.exp
@@ -59,29 +54,7 @@ ElementList = ['H', 'He',
             'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
             'Bh', 'Hs', 'Mt']
 
-dirmod = PyMcaDataDir.PYMCA_DATA_DIR
-EPDL97_FILE = os.path.join(dirmod,"EPDL97_CrossSections.dat")
-if not os.path.exists(EPDL97_FILE):
-    #freeze does bad things with the path ...
-    dirmod = os.path.dirname(dirmod)
-    EPDL97_FILE = os.path.join(dirmod,
-                               os.path.basename(EPDL97_FILE))
-    if not os.path.exists(EPDL97_FILE):
-        if dirmod.lower().endswith(".zip"):
-            dirmod = os.path.dirname(dirmod)
-            EPDL97_FILE = os.path.join(dirmod,
-                               os.path.basename(EPDL97_FILE))
-    if not os.path.exists(EPDL97_FILE):
-        raise IOError("Cannot find the EPDL97 specfile")
-
-EADL97_FILE = os.path.join(dirmod,"EADL97_BindingEnergies.dat")
-if not os.path.exists(EADL97_FILE):
-    #freeze does bad things with the path ...
-    EADL97_FILE = os.path.join(os.path.dirname(dirmod),
-                               os.path.basename(EADL97_FILE))
-    if not os.path.exists(EADL97_FILE):
-        raise IOError("Cannot find the EADL97 specfile")
-
+EADL97_FILE = getDataFile("EADL97_BindingEnergies.dat")
 
 EPDL97_DICT = {}
 for element in ElementList:

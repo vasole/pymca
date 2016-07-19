@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -33,22 +33,9 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
 from PyMca5.PyMcaIO import specfile
-from PyMca5 import PyMcaDataDir, getUserDataFile
+from PyMca5 import getDataFile
 
-dirname   = PyMcaDataDir.PYMCA_DATA_DIR
-inputfile = os.path.join(dirname, "MShellRates.dat")
-if not os.path.exists(inputfile):
-    dirname = os.path.dirname(dirname)
-    inputfile = os.path.join(dirname, "MShellRates.dat")
-    if not os.path.exists(inputfile):
-        if dirname.lower().endswith(".zip"):
-            dirname = os.path.dirname(dirname)
-            inputfile = os.path.join(dirname, "MShellRates.dat")
-    if not os.path.exists(inputfile):
-        print("Cannot find inputfile ",inputfile)
-        raise IOError("Cannot find MShellRates.dat file")
-
-sf=specfile.Specfile(getUserDataFile(os.path.join(dirname, "MShellRates.dat")))
+sf=specfile.Specfile(getDataFile("MShellRates.dat"))
 ElementM1ShellTransitions = sf[0].alllabels()
 ElementM2ShellTransitions = sf[1].alllabels()
 ElementM3ShellTransitions = sf[2].alllabels()
@@ -60,7 +47,7 @@ ElementM3ShellRates = numpy.transpose(sf[2].data()).tolist()
 ElementM4ShellRates = numpy.transpose(sf[3].data()).tolist()
 ElementM5ShellRates = numpy.transpose(sf[4].data()).tolist()
 
-sf=specfile.Specfile(getUserDataFile(os.path.join(dirname, "MShellConstants.dat")))
+sf=specfile.Specfile(getDataFile("MShellConstants.dat"))
 ElementM1ShellConstants = sf[0].alllabels()
 ElementM2ShellConstants = sf[1].alllabels()
 ElementM3ShellConstants = sf[2].alllabels()
@@ -73,22 +60,20 @@ ElementM4ShellValues = numpy.transpose(sf[3].data()).tolist()
 ElementM5ShellValues = numpy.transpose(sf[4].data()).tolist()
 sf=None
 
-EADL97 = False
-fname = os.path.join(dirname, "EADL97_MShellConstants.dat")
-if os.path.exists(fname):
-    sf = specfile.Specfile(fname)
-    EADL97_ElementM1ShellConstants = sf[0].alllabels()
-    EADL97_ElementM2ShellConstants = sf[1].alllabels()
-    EADL97_ElementM3ShellConstants = sf[2].alllabels()
-    EADL97_ElementM4ShellConstants = sf[3].alllabels()
-    EADL97_ElementM5ShellConstants = sf[4].alllabels()
-    EADL97_ElementM1ShellValues = numpy.transpose(sf[0].data()).tolist()
-    EADL97_ElementM2ShellValues = numpy.transpose(sf[1].data()).tolist()
-    EADL97_ElementM3ShellValues = numpy.transpose(sf[2].data()).tolist()
-    EADL97_ElementM4ShellValues = numpy.transpose(sf[3].data()).tolist()
-    EADL97_ElementM5ShellValues = numpy.transpose(sf[4].data()).tolist()
-    EADL97 = True
-    sf = None
+fname = getDataFile("EADL97_MShellConstants.dat")
+sf = specfile.Specfile(fname)
+EADL97_ElementM1ShellConstants = sf[0].alllabels()
+EADL97_ElementM2ShellConstants = sf[1].alllabels()
+EADL97_ElementM3ShellConstants = sf[2].alllabels()
+EADL97_ElementM4ShellConstants = sf[3].alllabels()
+EADL97_ElementM5ShellConstants = sf[4].alllabels()
+EADL97_ElementM1ShellValues = numpy.transpose(sf[0].data()).tolist()
+EADL97_ElementM2ShellValues = numpy.transpose(sf[1].data()).tolist()
+EADL97_ElementM3ShellValues = numpy.transpose(sf[2].data()).tolist()
+EADL97_ElementM4ShellValues = numpy.transpose(sf[3].data()).tolist()
+EADL97_ElementM5ShellValues = numpy.transpose(sf[4].data()).tolist()
+EADL97 = True
+sf = None
 
 
 Elements = ['H', 'He',

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -32,26 +32,11 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
+from PyMca5 import getDataFile
 from PyMca5.PyMcaIO import specfile
 
-# PyMcaDataDir is created at installation time in setup.py
-from PyMca5 import PyMcaDataDir, getUserDataFile
-
-filename = "BindingEnergies.dat"
-dirname = PyMcaDataDir.PYMCA_DATA_DIR
-inputfile = os.path.join(dirname, filename)
-if not os.path.exists(inputfile):
-    dirname = os.path.dirname(dirname)
-    inputfile = os.path.join(dirname, filename)
-    if not os.path.exists(inputfile):
-        if dirname.lower().endswith(".zip"):
-            dirname = os.path.dirname(dirname)
-            inputfile = os.path.join(dirname, filename)
-    if not os.path.exists(inputfile):
-        print("Cannot find inputfile ", inputfile)
-        raise IOError("Cannot find BindingEnergies.dat file")
-
-sf = specfile.Specfile(getUserDataFile(os.path.join(dirname, filename)))
+filename = getDataFile("BindingEnergies.dat")
+sf = specfile.Specfile(filename)
 ElementShells = sf[0].alllabels()
 ElementBinding = numpy.transpose(sf[0].data()).tolist()
 sf = None
