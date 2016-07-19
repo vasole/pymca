@@ -2,7 +2,7 @@
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -68,13 +68,3 @@ cdef class PyMath:
         Calculate the complementary error function erfc(x)
         """
         return self.thisptr.erfc(x)
-
-    def hypermet(self, x, gaussArea, position, fwhm,
-                 shortTailArea=0.0, shortTailSlope=0.03,
-                 longTailArea=0.0, longTailSlope=1.0,
-                 stepHeight=0.0):
-        """
-        Calculate the HYPERMET function of x.
-        """
-        return self.thisptr.hypermet(x, gaussArea, position, fwhm,
-                                     shortTailArea, shortTailSlope, longTailArea, longTailSlope, stepHeight)

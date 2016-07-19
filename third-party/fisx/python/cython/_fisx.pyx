@@ -2,7 +2,7 @@
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -36,7 +36,7 @@ from libcpp.map cimport map as std_map
 
 from Elements cimport *
 from Detector cimport *
-from FisxCythonTools import toBytes, toBytesKeys, toBytesKeysAndValues, toString,  toStringKeys, toStringKeysAndValues
+from FisxCythonTools import toBytes, toBytesKeys, toBytesKeysAndValues, toString,  toStringKeys, toStringKeysAndValues, toStringList
 
 cdef class PyDetector:
     cdef Detector *thisptr
@@ -88,7 +88,7 @@ cdef class PyDetector:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -207,7 +207,7 @@ cdef class PyElement:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -316,7 +316,10 @@ cdef class PyElements:
             self.thisptr.setShellRadiativeTransitionsFile(toBytes(shell), toBytes(radiativeRatesFile))
 
     def getElementNames(self):
-        return self.thisptr.getElementNames()
+        return toStringList(self.thisptr.getElementNames())
+
+    def getMaterialNames(self):
+        return toStringList(self.thisptr.getMaterialNames())
 
     def getComposition(self, materialOrFormula):
         if sys.version < "3.0":
@@ -525,7 +528,7 @@ cdef class PyElements:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -608,7 +611,7 @@ cdef class PyEPDL97:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -671,7 +674,7 @@ cdef class PyLayer:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -735,7 +738,7 @@ cdef class PyMaterial:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -801,21 +804,11 @@ cdef class PyMath:
         Calculate the complementary error function erfc(x)
         """
         return self.thisptr.erfc(x)
-
-    def hypermet(self, x, gaussArea, position, fwhm,
-                 shortTailArea=0.0, shortTailSlope=0.03,
-                 longTailArea=0.0, longTailSlope=1.0,
-                 stepHeight=0.0):
-        """
-        Calculate the HYPERMET function of x.
-        """
-        return self.thisptr.hypermet(x, gaussArea, position, fwhm,
-                                     shortTailArea, shortTailSlope, longTailArea, longTailSlope, stepHeight)
 #/*##########################################################################
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -896,7 +889,7 @@ cdef class PyShell:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -949,7 +942,7 @@ cdef class PySimpleIni:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -1011,7 +1004,7 @@ cdef class PySimpleSpecfile:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -1046,7 +1039,7 @@ def fisxVersion():
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014 V. Armando Sole
+# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
