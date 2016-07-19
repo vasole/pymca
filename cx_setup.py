@@ -180,6 +180,12 @@ except ImportError:
     FISX = False
     raise
 
+try:
+    import hdf5plugin
+except ImportError:
+    pass
+
+
 #some standard encodings
 includes.append('encodings.ascii')
 includes.append('encodings.utf_8')
@@ -188,6 +194,15 @@ import PyMca5
 
 special_modules = [os.path.dirname(PyMca5.__file__),
                   os.path.dirname(ctypes.__file__)]
+
+if sys.platform == "win32":
+    try:
+        import hdf5plugin
+        special_modules.append(os.path.dirname(hdf5plugin.__file__))
+    except ImportError:
+        print("Please install hdf5plugin prior to freeze PyMca")
+        raise
+
 
 excludes = ["Tkinter", "tkinter",
             'tcl','_tkagg', 'Tkconstants',
