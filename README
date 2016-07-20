@@ -1,51 +1,60 @@
 This is the MIT version of the PyMca XRF Toolkit.
-Please read the LICENSE file to know what that means.
+Please read the LICENSE file for details.
 
 INSTALLATION
 
-I remind you that ready-to-use packages are available for the most
-common platforms. Please keep going if you want to build the code from
-source.
+Ready-to-use packages are available for the most common platforms.
 
-If you want to build from a github checkout, you will need cython installed
-on your system. If you use a source distribution, the generated code should
-be already there.
+PyMca frozen binaries for MacOS and windows can be obtained from sourceforge:
 
-Examples of use:
+https://sourceforge.net/projects/pymca/files/pymca/
 
-1 - Install everything in default directories (typical for windows users or system
-administrators):
+Unofficial debian packages are also available, but you should check if official pacakges are available for your distribution.
+
+Please keep going if you want to use PyMca with your existing Python installation.
+
+The simplest solution is to use pip:
+
+pip install PyMca5
+
+You can add the usual --user qulifier to install only for you:
+
+pip install PyMca5 --user
+
+If you want to build from source distribution or from a github checkout, you may want to have
+cython installed on your system.
+
+Examples of installation from the sources.
+
+1 - In your default python installation:
 
 python setup.py install
 
-2 - Install to specific destinations (typical for posix systems):
+or (better)
 
-python setup.py install --install-scripts SCRIPTS_DIRECTORY
-python setup.py install --install-lib DESTINATION_DIRECTORY
-python setup.py install --install-lib DESTINATION_DIRECTORY --install-scripts SCRIPTS_DIRECTORY
+pip install .
 
-The directories have to be specified with their full path without the last "/".
+2 - In your user account:
 
-In any case you need write privileges to the final directories.
+python setup.py install --user
 
-3 - Creation of an easy to install windows binary using Visual Studio
+or
 
-python setup.py bdist_wininst --install-script pymca_win_post_install.py
-
-4 - Creation of an easy to install windows binary using the  MinGW compiler
-python setup.py build -c mingw32
-python setup.py bdist_wininst --skip-build --install-script pymca_win_post_install.py
+pip install
 
 You will need:
 
-- Python (> 2.6 recommended)
+- Python (one of 2.7 or 3.5 recommended)
 
 - Numpy
 
+- fisx
+
 If you want to use the graphical interfaces provided, you will need a running
-python installation with:
+python installation with one of:
 
 - PyQt4 + matplotlib (PyMca license will be GPL unless you have a commercial PyQt4 license)
+- PyQt5 + matplotlib (PyMca license will be GPL unless you have a commercial PyQt5 license)
 - PySide + matplotlib (PyMca license will be MIT because PySide is LGPL)
 
 If you want to embed PyMca in your own graphical applications, I recommend you to use
@@ -53,9 +62,7 @@ the McaAdvancedFit.py module. It is very easy to embed.
 
 DEVELOPMENT PLANS
 
-- Port all Physics to C++
-
-- Include analytical secondary excitation corrections in multilayers.
+- Use the fisx library for all Physics calculations and not just for corrections.
 
 - Compound fitting.
 
@@ -65,4 +72,3 @@ contact me.
 Enjoy,
 
 V. Armando Sole
-sole@esrf.fr
