@@ -191,7 +191,10 @@ packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests',
 py_modules = []
 
 # Specify all the required PyMca data
-data_files = [(PYMCA_DATA_DIR, ['LICENSE.GPL',
+data_files = [(PYMCA_DATA_DIR, ['LICENSE',
+                         'LICENSE.GPL',
+                         'LICENSE.LGPL',
+                         'LICENSE.MIT',                         
                          'PyMca5/PyMcaData/Scofield1973.dict',
                          'changelog.txt',
                          'PyMca5/PyMcaData/McaTheory.cfg',
@@ -837,7 +840,7 @@ classifiers = ["Development Status :: 5 - Production/Stable",
                "Topic :: Scientific/Engineering :: Visualization",
                ]
 
-install_requires = ["numpy", "matplotlib", "fisx"]
+install_requires = ["numpy", "matplotlib", "fisx>=1.0.8"]
 if sys.platform == "win32":
     install_requires.append("hdf5plugin")
 setup_requires = ["numpy"]
