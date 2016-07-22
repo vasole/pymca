@@ -40,7 +40,7 @@ if hasattr(qt, "QString"):
 else:
     QString = qt.safe_str
 
-from PyMca5.PyMca import PyMcaFileDialogs
+from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaGui.pymca import McaWindow
 from PyMca5.PyMcaCore import StackBase
