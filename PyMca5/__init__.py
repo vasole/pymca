@@ -48,6 +48,13 @@ if sys.platform.startswith("win"):
         pass
     import ctypes
     from ctypes.wintypes import MAX_PATH
+elif sys.platform.startswith("darwin"):
+    try:
+        # make sure hdf5plugins are imported when using PyMca
+        import hdf5plugin
+    except:
+        # but at the same time do not disturb other people
+        pass
 
 if os.path.exists(os.path.join(\
     os.path.dirname(os.path.dirname(__file__)), 'py2app_setup.py')):
