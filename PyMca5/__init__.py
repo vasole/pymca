@@ -204,7 +204,10 @@ def getDataFile(fileName, directory=None):
                 return newFileName
 
     # file not found
-    raise IOError("File not found:  <%s>" % fileName)
+    txt = "File not found:  <%s>" % fileName
+    if FISX_DATA_DIR is None:
+        txt += " Please install fisx module (command 'pip install fisx [--user]')."
+    raise IOError(txt)
 
 # workaround matplotlib MPLCONFIGDIR issues under windows
 if sys.platform.startswith("win"):
