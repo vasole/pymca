@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1265,7 +1265,7 @@ def getMultilayerFluorescence(multilayer0,
         eleDict = getMaterialMassFractions([pseudomatrix[0]], [1.0])
         if eleDict == {}:
             raise ValueError("Invalid layer material %s" % pseudomatrix[0])
-        keys = eleDict.keys()
+        keys = list(eleDict.keys())
         if elementsList is None:
             newelementsList = keys
             for key in keys:
