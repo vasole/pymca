@@ -859,8 +859,10 @@ class McaAdvancedFitBatch(object):
             #specfile.write('#N %d\n' % (len(self.__peaks)+2))
             specfile.write('%s\n' % speclabel)
             specline=""
-            for row in range(self.__nrows):
-                for col in range(self.__ncols):
+            #for row in range(self.__nrows):
+            #    for col in range(self.__ncols):
+            for row in range(self.__images[peak].shape[0]):
+                for col in range(self.__images[peak].shape[1]):
                     specline += "%d" % row
                     specline += "  %d" % col
                     for peak in self.__peaks:
