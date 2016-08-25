@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -387,6 +387,7 @@ class McaAdvancedFitBatch(object):
                         numberofmca = info['NbMca'] * 1
                         self.__ncols = len(range(0+self.mcaOffset,
                                              numberofmca,self.mcaStep))
+                        numberOfMcaToTakeFromScan = self.__ncols * 1
                         self.__col   = -1
                         scan_key = "%s.%s" % (scan,order)
                         scan_obj= ffile.Source.select(scan_key)
@@ -401,12 +402,20 @@ class McaAdvancedFitBatch(object):
                             if len(chan0list):
                                 for i in range(info['NbMcaDet']):
                                     self.__chann0List[i] = int(chan0list[i].split()[2])
+                            # The calculation of self.__ncols is wrong if there are
+                            # several scans containing MCAs. One needs to multiply by
+                            # the number of scans assuming all of them contain MCAs.
+                            # We have to assume the same structure in all files.
+                            self.__ncols *= len(fileinfo['KeyList'])
+
                         #import time
-                        for mca_index in range(self.__ncols):
+                        for mca_index in range(numberOfMcaToTakeFromScan):
                             i = 0 + self.mcaOffset + mca_index * self.mcaStep
                             #e0 = time.time()
                             if self.pleaseBreak: break
-                            self.__col += 1
+                            self.__col = i + \
+                                  fileinfo['KeyList'].index(scan_key) * \
+                                  numberofmca
                             point = int(i/info['NbMcaDet']) + 1
                             mca   = (i % info['NbMcaDet'])  + 1
                             key = "%s.%s.%05d.%d" % (scan,order,point,mca)
@@ -678,7 +687,7 @@ class McaAdvancedFitBatch(object):
                         self.__images = {}
                         self.__sigmas = {}
                         if not self.__stack:
-                            self.__nrows   = len(range(0,len(self._filelist),self.fileStep))
+                            self.__nrows   = len(range(0, len(self._filelist), self.fileStep))
                         for group in result['groups']:
                             self.__peaks.append(group)
                             self.__images[group]= numpy.zeros((self.__nrows,
