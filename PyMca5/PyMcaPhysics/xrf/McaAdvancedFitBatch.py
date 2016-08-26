@@ -410,17 +410,18 @@ class McaAdvancedFitBatch(object):
                             # the second scan contains MCAs we do not multiply.
                             if (len(fileinfo['KeyList']) == 2) and (fileinfo['KeyList'].index(scan_key) == 1):
                                 # leave self.__ncols untouched
-                                pass
+                                self.__ncolsModified = False
                             else:
                                 # multiply by the number of scans
                                 self.__ncols *= len(fileinfo['KeyList'])
+                                self.__ncolsModified = True
 
                         #import time
                         for mca_index in range(numberOfMcaToTakeFromScan):
                             i = 0 + self.mcaOffset + mca_index * self.mcaStep
                             #e0 = time.time()
                             if self.pleaseBreak: break
-                            if numberOfMcaToTakeFromScan != self.__ncols:
+                            if self.__ncolsModified:
                                 self.__col = i + \
                                       fileinfo['KeyList'].index(scan_key) * \
                                       numberofmca
