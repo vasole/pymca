@@ -1249,15 +1249,15 @@ class McaBatchGUI(qt.QWidget):
         else:
             work.buildOutput(delete=True)
 
-
-class McaBatch(qt.QThread,McaAdvancedFitBatch.McaAdvancedFitBatch):
+class McaBatch(McaAdvancedFitBatch.McaAdvancedFitBatch, qt.QThread):
     def __init__(self, parent, configfile, filelist=None, outputdir = None,
                      roifit = None, roiwidth=None, overwrite=1,
                      filestep=1, mcastep=1, concentrations=0,
                      fitfiles=0, filebeginoffset=0, fileendoffset=0,
                      mcaoffset=0, chunk=None,
                      selection=None, lock=None):
-        McaAdvancedFitBatch.McaAdvancedFitBatch.__init__(self, configfile, filelist, outputdir,
+        McaAdvancedFitBatch.McaAdvancedFitBatch.__init__(self, configfile,
+                                                         filelist=filelist, outputdir=outputdir,
                                                          roifit=roifit, roiwidth=roiwidth,
                                                          overwrite=overwrite, filestep=filestep,
                                                          mcastep=mcastep,
