@@ -406,16 +406,26 @@ class McaAdvancedFitBatch(object):
                             # several scans containing MCAs. One needs to multiply by
                             # the number of scans assuming all of them contain MCAs.
                             # We have to assume the same structure in all files.
-                            self.__ncols *= len(fileinfo['KeyList'])
+                            # Only in the case of "pseudo" two scan files where only
+                            # the second scan contains MCAs we do not multiply.
+                            if (len(fileinfo['KeyList']) == 2) and (fileinfo['KeyList'].index(scan_key) == 1):
+                                # leave self.__ncols untouched
+                                pass
+                            else:
+                                # multiply by the number of scans
+                                self.__ncols *= len(fileinfo['KeyList'])
 
                         #import time
                         for mca_index in range(numberOfMcaToTakeFromScan):
                             i = 0 + self.mcaOffset + mca_index * self.mcaStep
                             #e0 = time.time()
                             if self.pleaseBreak: break
-                            self.__col = i + \
-                                  fileinfo['KeyList'].index(scan_key) * \
-                                  numberofmca
+                            if numberOfMcaToTakeFromScan != self.__ncols:
+                                self.__col = i + \
+                                      fileinfo['KeyList'].index(scan_key) * \
+                                      numberofmca
+                            else:
+                                self.__col += 1
                             point = int(i/info['NbMcaDet']) + 1
                             mca   = (i % info['NbMcaDet'])  + 1
                             key = "%s.%s.%05d.%d" % (scan,order,point,mca)
@@ -859,10 +869,10 @@ class McaAdvancedFitBatch(object):
             #specfile.write('#N %d\n' % (len(self.__peaks)+2))
             specfile.write('%s\n' % speclabel)
             specline=""
-            #for row in range(self.__nrows):
-            #    for col in range(self.__ncols):
-            for row in range(self.__images[peak].shape[0]):
-                for col in range(self.__images[peak].shape[1]):
+            imageRows = self.__images['chisq'].shape[0]
+            imageColumns = self.__images['chisq'].shape[1]
+            for row in range(imageRows):
+                for col in range(imageColumns):
                     specline += "%d" % row
                     specline += "  %d" % col
                     for peak in self.__peaks:
