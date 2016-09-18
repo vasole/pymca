@@ -33,7 +33,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5.PyMcaPhysics import Elements
 from PyMca5.PyMcaPhysics import XRayTubeEbel
 import numpy
-from PyMca5.PyMcaGui import PlotWidget
+from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 
@@ -86,7 +86,7 @@ class QXTube(qt.QWidget):
         self.l.addWidget(label)
 
         self.l.addWidget(hbox)
-        self.graph = PlotWidget.PlotWidget(self,
+        self.graph = PlotWindow.PlotWindow(self,
                                                backend=None)
         self.l.addWidget(self.graph)
         self.graph.setGraphXLabel("Energy (keV)")
