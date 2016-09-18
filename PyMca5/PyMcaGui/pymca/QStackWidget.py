@@ -341,13 +341,14 @@ class QStackWidget(StackBase.StackBase,
         elif dtype in [numpy.int32, numpy.int64]:
             dtype = numpy.float32
 
-        mcaIndex = self._stack.info.get('McaIndex', -1)
-
         filename = self._getOutputTiffFilename()
         if not len(filename):
             return
 
-        ArraySave.save3DArrayAsMonochromaticTiff(self._stack.data,
+        mcaIndex = self._stack.info.get('McaIndex', -1)
+        dataView = self._getCroppedView()
+
+        ArraySave.save3DArrayAsMonochromaticTiff(dataView,
                                     filename,
                                     labels = None,
                                     dtype=dtype,
@@ -355,6 +356,33 @@ class QStackWidget(StackBase.StackBase,
 
     def saveStackAsFloat32TiffImages(self):
         return self.saveStackAsMonochromaticTiffImages(dtype=numpy.float32)
+
+    def _getCroppedView(self):
+        mcaIndex = self._stack.info.get('McaIndex', -1)
+        #get limits
+        row0, row1 = self.stackWidget.graph.getGraphYLimits()
+        col0, col1 = self.stackWidget.graph.getGraphXLimits()
+        #this should go to array save ...
+        shape = self._stack.data.shape
+        if mcaIndex in [0]:
+            row0 = int(max([row0+0.5, 0]))
+            row1 = int(min([row1+0.5, self._stack.data.shape[1]]))
+            col0 = int(max([col0+0.5, 0]))
+            col1 = int(min([col1+0.5, self._stack.data.shape[2]]))
+            view = self._stack.data[:, row0:row1+1, col0:col1+1]
+        elif mcaIndex in [1]:
+            row0 = int(max([row0+0.5, 0]))
+            row1 = int(min([row1+0.5, self._stack.data.shape[0]]))
+            col0 = int(max([col0+0.5, 0]))
+            col1 = int(min([col1+0.5, self._stack.data.shape[2]]))
+            view = self._stack.data[row0:row1+1, : , col0:col1+1]
+        else:
+            row0 = int(max([row0+0.5, 0]))
+            row1 = int(min([row1+0.5, self._stack.data.shape[0]]))
+            col0 = int(max([col0+0.5, 0]))
+            col1 = int(min([col1+0.5, self._stack.data.shape[1]]))
+            view = self._stack.data[row0:row1+1, col0:col1+1,:]
+        return view
 
     def saveStackAsNeXus(self, dtype=None, interpretation=None, compression=False):
         mcaIndex = self._stack.info.get('McaIndex', -1)
@@ -368,23 +396,10 @@ class QStackWidget(StackBase.StackBase,
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        #get limits
-        row0, row1 = self.stackWidget.graph.getGraphYLimits()
-        col0, col1 = self.stackWidget.graph.getGraphXLimits()
-        #this should go to array save ...
-        shape = self._stack.data.shape
-        if mcaIndex in [0]:
-            row0 = int(max([row0+0.5, 0]))
-            row1 = int(min([row1+0.5, self._stack.data.shape[1]]))
-            col0 = int(max([col0+0.5, 0]))
-            col1 = int(min([col1+0.5, self._stack.data.shape[2]]))
-            view = self._stack.data[:, row0:row1+1, col0:col1+1]
-        else:
-            row0 = int(max([row0+0.5, 0]))
-            row1 = int(min([row1+0.5, self._stack.data.shape[0]]))
-            col0 = int(max([col0+0.5, 0]))
-            col1 = int(min([col1+0.5, self._stack.data.shape[1]]))
-            view = self._stack.data[row0:row1+1, col0:col1+1,:]
+
+        # get only the seen stack portion
+        view = self.getCroppedView()
+
         # the current graph axis is saved
         axes = [None] * len(self._stack.data.shape)
         labels = [None] * len(self._stack.data.shape)
@@ -465,7 +480,8 @@ class QStackWidget(StackBase.StackBase,
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
-        ArraySave.save3DArrayAsHDF5(self._stack.data, filename,
+        view = self._getCroppedView()
+        ArraySave.save3DArrayAsHDF5(view, filename,
                                     labels = None, dtype=None, mode='simplest')
 
     def loadStack(self):
