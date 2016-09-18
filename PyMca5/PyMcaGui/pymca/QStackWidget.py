@@ -398,7 +398,7 @@ class QStackWidget(StackBase.StackBase,
             return
 
         # get only the seen stack portion
-        view = self.getCroppedView()
+        view = self._getCroppedView()
 
         # the current graph axis is saved
         axes = [None] * len(self._stack.data.shape)
