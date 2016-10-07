@@ -181,7 +181,7 @@ class McaAdvancedFitBatch(object):
                 if hasattr(self.file, "info"):
                     if "SourceType" in self.file.info:
                         if self.file.info["SourceType"] in\
-                           ["EdfFileStack", "HDF5Stack1D","NumpyStack"]:
+                           ["EdfFileStack", "HDF5Stack1D"]:
                             self.__stack = True
             if self.__stack:
                 self.__processStack()
