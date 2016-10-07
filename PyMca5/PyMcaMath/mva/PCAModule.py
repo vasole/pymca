@@ -692,7 +692,7 @@ def mdpPCA(stack, ncomponents=10, binning=None, dtype='float64', svd='True',
 
 
 def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
-           svd='True', mask=None, spectral_mask=None, **kw):
+           svd='True', mask=None, spectral_mask=None, legacy=True, **kw):
     for key in kw:
         print("mdpICA Key ignored: %s" % key)
     #This part is common to all ...
@@ -728,7 +728,7 @@ def mdpICA(stack, ncomponents=10, binning=None, dtype='float64',
         raise ValueError("Number of components too high.")
 
     if 1:
-        if (mdp.__version__ >= 2.5):
+        if (mdp.__version__ >= "2.5"):
             if DEBUG:
                 print("TDSEPNone")
             ica = mdp.nodes.TDSEPNode(white_comp=ncomponents,
