@@ -106,7 +106,7 @@ class McaAdvancedFitBatch(object):
         self._rootname = ""
         if filelist is None:
             filelist = []
-        if type(filelist) not in [type([]), type((,))]:
+        if type(filelist) not in [type([]), type((2,))]:
             filelist = [filelist]
         self._filelist=filelist
         if len(filelist):
