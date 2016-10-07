@@ -41,6 +41,7 @@ from PyMca5.PyMcaIO import LuciaMap
 from PyMca5.PyMcaIO import AifiraMap
 from PyMca5.PyMcaIO import EDFStack
 from PyMca5.PyMcaIO import LispixMap
+from PyMca5.PyMcaIO import NumpyStack
 try:
     import h5py
     from PyMca5.PyMcaIO import HDF5Stack1D
@@ -103,10 +104,14 @@ class McaAdvancedFitBatch(object):
 
     def setFileList(self,filelist=None):
         self._rootname = ""
-        if filelist is None:filelist = []
-        if type(filelist) == type(" "):filelist = [filelist]
-        self._filelist = filelist
-        self._rootname = self.getRootName(filelist)
+        if filelist is None:
+            filelist = []
+        if type(filelist) not in [type([]), type((,))]:
+            filelist = [filelist]
+        self._filelist=filelist
+        if len(filelist):
+            if type(filelist[0]) is not numpy.ndarray:
+                self._rootname = self.getRootName(filelist)
 
     def getRootName(self,filelist=None):
         if filelist is None:filelist = self._filelist
@@ -165,6 +170,7 @@ class McaAdvancedFitBatch(object):
                         self.mcafit = ClassMcaTheory.McaTheory(self.__configList[i])
                         self.__currentConfig = i
             self.mcafit.enableOptimizedLinearFit()
+            
             inputfile   = self._filelist[i]
             self.__row += 1 #should be plus fileStep?
             self.onNewFile(inputfile, self._filelist)
@@ -175,7 +181,7 @@ class McaAdvancedFitBatch(object):
                 if hasattr(self.file, "info"):
                     if "SourceType" in self.file.info:
                         if self.file.info["SourceType"] in\
-                           ["EdfFileStack", "HDF5Stack1D"]:
+                           ["EdfFileStack", "HDF5Stack1D","NumpyStack"]:
                             self.__stack = True
             if self.__stack:
                 self.__processStack()
@@ -194,8 +200,17 @@ class McaAdvancedFitBatch(object):
         self.onEnd()
 
     def getFileHandle(self,inputfile):
+        
         try:
             self._HDF5 = False
+            if type(inputfile) == numpy.ndarray:
+                try:
+                    a = NumpyStack.NumpyStack(inputfile)
+                    return a
+                except Exception as e:
+#                     print e
+                    raise
+        
             if HDF5SUPPORT:
                 if h5py.is_hdf5(inputfile):
                     self._HDF5 = True
@@ -204,6 +219,7 @@ class McaAdvancedFitBatch(object):
                                                       self.selection)
                     except:
                         raise
+            
             ffile = self.__tryEdf(inputfile)
             if ffile is None:
                 ffile = self.__tryLucia(inputfile)
