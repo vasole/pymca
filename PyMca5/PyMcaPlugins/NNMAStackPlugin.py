@@ -156,7 +156,7 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
             raise ValueError("Please select an active curve")
             return
         x, spectrum, legend, info = activeCurve
-        spectrumLength = max(spectrum.shape)
+        spectrumLength = int(max(spectrum.shape))
         oldValue = self.configurationWidget.nPC.value()
         self.configurationWidget.nPC.setMaximum(spectrumLength)
         self.configurationWidget.nPC.setValue(min(oldValue, spectrumLength))
@@ -234,11 +234,12 @@ class NNMAStackPlugin(StackPluginBase.StackPluginBase):
         if type(result) == type((1,)):
             #if we receive a tuple there was an error
             if len(result):
-                if result[0] == "Exception":
-                    self._status.setText("Ready after calculation error")
-                    self.configurationWidget.setEnabled(True)
-                    raise Exception(result[1], result[2])
-                    return
+                if type(result[0]) == type("Exception"):
+                    if result[0] == "Exception":
+                        self._status.setText("Ready after calculation error")
+                        self.configurationWidget.setEnabled(True)
+                        raise Exception(result[1], result[2])
+                        return
         self._status.setText("Ready")
         curve = self.configurationWidget.getSpectrum(binned=True)
         if curve not in [None, []]:
