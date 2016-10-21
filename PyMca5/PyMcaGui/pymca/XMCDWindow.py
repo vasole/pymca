@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 T. Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1435,7 +1435,7 @@ class XMCDWidget(qt.QWidget):
             <Group> <Legend> <ScanNo> <Counter> <Motor 1> ... <Motor5>
         """
         qt.QWidget.__init__(self, parent)
-        self.setWindowIcon(qt.QIcon(IconDict['peak']))
+        self.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict['peak'])))
         self.plotWindow = plotWindow
         self.legendList = []
         self.motorsList = []
