@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -70,6 +70,18 @@ class PyMcaMdi(qt.QMainWindow):
         else:
             self.mdi = qt.QWorkspace(self.splitter)
             self.mdi.setScrollBarsEnabled(1)
+        if not hasattr(self.mdi, "windowList"):
+            # Qt5
+            self.mdi.windowList = self.mdi.subWindowList
+            self.mdi.activeWindow = self.mdi.activeSubWindow
+            self.mdi.tile = self.mdi.tileSubWindows
+            self.mdi.cascade = self.mdi.cascadeSubWindows
+        else:
+            # Qt4
+            self.mdi.subWindowList = self.mdi.windowList
+            self.mdi.activeSubWindow = self.mdi.activeWindow
+            self.mdi.tileSubWindows = self.mdi.tile
+            self.mdi.cascadeSubWindows = self.mdi.cascade
         #if QTVERSION > '4.0.0':self.mdi.setBackground(qt.QBrush(qt.QColor(238,234,238)))
         #self.setCentralWidget(self.mdi)
         #self.splitterLayout.addWidget(self.mdi)
@@ -180,11 +192,13 @@ class PyMcaMdi(qt.QMainWindow):
     # Mdi windows geometry
     #
     def windowCascade(self):
-        if self.followActiveWindow: self.__disconnectFollow()
+        if self.followActiveWindow:
+            self.__disconnectFollow()
         self.mdi.cascade()
         for window in self.mdi.windowList():
-                window.resize(0.7*self.mdi.width(),0.7*self.mdi.height())
-        if self.followActiveWindow: self.__connectFollow()
+            window.resize(0.7*self.mdi.width(),0.7*self.mdi.height())
+        if self.followActiveWindow:
+            self.__connectFollow()
 
     def windowTile(self):
         if self.followActiveWindow: self.__disconnectFollow()
