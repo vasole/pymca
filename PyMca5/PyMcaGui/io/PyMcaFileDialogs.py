@@ -77,6 +77,8 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
         fileTypeList = ['All Files (*)']
     else:
         fileTypeList = filetypelist
+    if currentfilter not in filetypelist:
+        currentfilter = None
     if currentfilter is None:
         currentfilter = filetypelist[0]
     if message is None:
@@ -110,10 +112,10 @@ def getFileList(parent=None, filetypelist=None, message=None, currentdir=None,
         native_possible = True
     filterused = None
     if native_possible and nativeFileDialogs:
-        filetypes = currentfilter+"\n"
+        filetypes = currentfilter
         for filetype in fileTypeList:
             if filetype != currentfilter:
-                filetypes += filetype+"\n"
+                filetypes += ";;" + filetype
         if getfilter:
             if mode == "OPEN":
                 if single and hasattr(qt.QFileDialog, "getOpenFileNameAndFilter"):
