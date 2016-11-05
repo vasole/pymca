@@ -673,7 +673,6 @@ class FundamentalWidget(qt.QWidget):
 class ConcentrationsTable(QTable):
     def __init__(self, parent=None, **kw):
         QTable.__init__(self, parent)
-
         if 'labels' in kw:
             self.labels = []
             for label in kw['labels']:
@@ -825,6 +824,41 @@ class ConcentrationsTable(QTable):
         text += ("</table>")
         text += ("</nobr>")
         return text
+
+    def _copySelection(self):
+        selected_idx = self.selectedIndexes()
+        selected_idx_tuples = [(idx.row(), idx.column()) for idx in selected_idx]
+
+        selected_rows = [idx[0] for idx in selected_idx_tuples]
+        selected_columns = [idx[1] for idx in selected_idx_tuples]
+
+        if sys.platform.startswith("win"):
+            newline = "\r\n"
+        else:
+            newline = "\n"
+        copied_text = ""
+        for row in range(min(selected_rows), max(selected_rows) + 1):
+            for col in range(min(selected_columns), max(selected_columns) + 1):
+                item_text = self.item(row, col).text()
+                if (row, col) in  selected_idx_tuples:
+                    copied_text += item_text
+                copied_text += "\t"
+            # remove the right-most tabulation
+            copied_text.rstrip("\t")
+            # add a newline
+            copied_text += newline
+        # remove final newline
+        copied_text.rstrip(newline)
+
+        # put this text into clipboard
+        qapp = qt.QApplication.instance()
+        qapp.clipboard().setText(copied_text)
+
+    def keyPressEvent(self, keyEvent):
+        #if there is a control-C event copy data to the clipboard
+        if (keyEvent.key() == qt.Qt.Key_C) and \
+           (keyEvent.modifiers() & qt.Qt.ControlModifier):
+               self._copySelection()
 
 class MyQLineEdit(qt.QLineEdit):
     sigMyQLineEditSignal = qt.pyqtSignal(object)
