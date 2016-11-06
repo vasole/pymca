@@ -12,6 +12,8 @@ Allow exporting the x-ray tube emission continuum from the plot.
 Implement a "copy-selection-to-clipboard" of the concentrations table via
 CTRL-C.
 
+Fix error message when moving mouse on SCAN window after having used the regular mesh plugin
+
 VERSION 5.1.2
 
 Correct the generation of the efficiency plot in the ATTENUATORS tab when
