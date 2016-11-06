@@ -135,7 +135,8 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
 
         self._legend = legend
         self._info = info
-        y.shape = len(self._motor1), len(self._motor0)
+        yView = y[:]
+        yView.shape = len(self._motor1), len(self._motor0)
         if self.imageWidget is None:
             self.imageWidget = MaskImageWidget.MaskImageWidget(\
                                         imageicons=False,
@@ -144,7 +145,7 @@ class RegularMeshPlugins(Plugin1DBase.Plugin1DBase):
                                         scanwindow=self)
         deltaX = self._motor0[1] - self._motor0[0]
         deltaY = self._motor1[1] - self._motor1[0]
-        self.imageWidget.setImageData(y,
+        self.imageWidget.setImageData(yView,
                                       xScale=(self._motor0[0],
                                               deltaX),
                                       yScale=(self._motor1[0],
