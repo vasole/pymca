@@ -1,3 +1,17 @@
+VERSION 5.1.3
+
+Correct minor Qt5 related bugs.
+
+Simplify embedding batch fitting in custom workflows.
+
+ROI Imaging: Exporting the stack in TIFF format did not respect zoomed region
+limits
+
+Allow exporting the x-ray tube emission continuum from the plot.
+
+Implement a "copy-selection-to-clipboard" of the concentrations table via
+CTRL-C.
+
 VERSION 5.1.2
 
 Correct the generation of the efficiency plot in the ATTENUATORS tab when
