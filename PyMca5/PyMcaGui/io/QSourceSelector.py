@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -154,9 +154,9 @@ class QSourceSelector(qt.QWidget):
                 if wdir is None:
                     wdir = os.getcwd()
                 if (sys.version < '3.0') and PyMcaDirs.nativeFileDialogs:
-                    filetypes = ""
-                    for filetype in self.fileTypeList:
-                        filetypes += filetype+"\n"
+                    filetypes = self.fileTypeList[0]
+                    for filetype in self.fileTypeList[1:]:
+                        filetypes += ";;" + filetype
                     try:
                         # API 1
                         filelist = qt.QFileDialog.getOpenFileNames(self,
