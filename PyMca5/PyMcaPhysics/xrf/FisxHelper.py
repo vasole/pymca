@@ -54,14 +54,12 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         if pymcaDataDir is None:
             bindingEnergies = os.path.join(dataDir, "BindingEnergies.dat")
         else:
-            bindingEnergies = getDataFile(\
-                            os.path.join(pymcaDataDir, "BindingEnergies.dat"))
+            bindingEnergies = getDataFile("BindingEnergies.dat")
     if xcomFile is None:
         if pymcaDataDir is None:
             xcomFile = os.path.join(dataDir, "XCOM_CrossSections.dat")
         else:
-            xcomFile = getDataFile(\
-                            os.path.join(pymcaDataDir, "XCOM_CrossSections.dat"))
+            xcomFile = getDataFile("XCOM_CrossSections.dat")
     if DEBUG:
         t0 = time.time()
     instance = FisxElements(dataDir, bindingEnergies, xcomFile)
@@ -77,8 +75,7 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         if DEBUG:
             print("Before %s" % fname)
         if pymcaDataDir is not None:
-            fname = getDataFile(\
-                        os.path.join(pymcaDataDir, key + "ShellConstants.dat"))
+            fname = getDataFile(key + "ShellConstants.dat")
         else:
             fname = os.path.join(os.path.dirname(fname),
                                  key + "ShellConstants.dat")
@@ -97,8 +94,7 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
         if DEBUG:
             print("Before %s" % fname) 
         if pymcaDataDir is not None:
-            fname = getDataFile(\
-                        os.path.join(pymcaDataDir, key + "ShellRates.dat"))
+            fname = getDataFile(key + "ShellRates.dat")
         else:
             fname = os.path.join(os.path.dirname(fname), key + "ShellRates.dat")
         instance.setShellRadiativeTransitionsFile(key, fname)
