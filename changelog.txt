@@ -14,6 +14,8 @@ CTRL-C.
 
 Fix error message when moving mouse on SCAN window after having used the regular mesh plugin
 
+Correct coordinate display on image window.
+
 VERSION 5.1.2
 
 Correct the generation of the efficiency plot in the ATTENUATORS tab when
