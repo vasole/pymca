@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -276,7 +276,7 @@ class RGBImageCalculator(qt.QWidget):
                                                         safe=True)
             z = self._imageData[r, c]
             self.graphWidget.graphWidget.setInfoText("    X = %.2f Y = %.2f Z = %.7g" %\
-                                               (ddict['y'], ddict['x'], z))
+                                               (ddict['x'], ddict['y'], z))
 
     def closeEvent(self, event):
         if self.__imageColormapDialog is not None:
