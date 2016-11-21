@@ -78,11 +78,14 @@ class GLWidgetCachePixmap(object):
         if (self.__tWidth != self.__width) or (self.__tHeight != self.__height):
             #I have to zero padd the texture to make sure it works on all cards ...
             self.__pixmap = numpy.zeros((self.__tWidth*self.__tHeight, 4), numpy.uint8)
-            pixmap.shape = [width*height, 4]
+            if pixmap.size == width * height * 4:  # GB pixmap
+                pixmap.shape = [width*height, 4]
+            else:  # RGB pixmap
+                pixmap.shape = [width*height, 3]
             tjump = self.__tWidth
             pjump = self.__width
             for i in range(height):
-                self.__pixmap[i*tjump:(i*tjump+pjump), :] = pixmap[(i*pjump):(i+1)*pjump,:]
+                self.__pixmap[i*tjump:(i*tjump+pjump), :pixmap.shape[-1]] = pixmap[(i*pjump):(i+1)*pjump, :]
         else:
             self.__pixmap = pixmap
             self.__pixmap.shape = [width*height, 4]

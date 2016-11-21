@@ -188,6 +188,13 @@ class SceneGLWidget(qt.QGLWidget):
                     print(" object %d not selected" % i)
                 i += 1
 
+    def getReadFormat(self):
+        """Returns the format to use for glReadPixel"""
+        if self.format().alpha():
+            return GL.GL_RGBA
+        else:
+            return GL.GL_RGB
+
     def initializeGL(self):
         if DEBUG:
             print("OpenGL version = ", GL.glGetString(GL.GL_VERSION))
@@ -442,7 +449,7 @@ class SceneGLWidget(qt.QGLWidget):
             GL.glReadBuffer(GL.GL_BACK)
             self.__finalImage = GL.glReadPixelsub(0,0,
                                 self.width(), self.height(),
-                                GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+                                self.getReadFormat(), GL.GL_UNSIGNED_BYTE)
             if not hasattr(self.__finalImage, "dtype"):
                 # we did not receive an array (python 3) ...
                 self.__finalImage = numpy.fromstring(self.__finalImage,
@@ -472,20 +479,32 @@ class SceneGLWidget(qt.QGLWidget):
         return
 
     def getQImage(self):
-        qimage = qt.QImage(self.__finalImage,
-                           self.width(),
-                           self.height(),
-                           qt.QImage.Format_ARGB32).mirrored(0, 1)
+        if self.__finalImage.shape[-1] == 4:
+            qimage = qt.QImage(self.__finalImage,
+                               self.width(),
+                               self.height(),
+                               qt.QImage.Format_ARGB32).mirrored(0, 1)
+        else:  # RGB
+            qimage = qt.QImage(self.__finalImage,
+                               self.width(),
+                               self.height(),
+                               qt.QImage.Format_RGB888)
         a=qimage.rgbSwapped()
         return a
 
     def saveImage(self, filename=None):
         if filename is None:
             filename = 'Object3DGLWidget.png'
-        qimage = qt.QImage(self.__finalImage,
-                           self.width(),
-                           self.height(),
-                           qt.QImage.Format_ARGB32).mirrored(0, 1)
+        if self.__finalImage.shape[-1] == 4:
+            qimage = qt.QImage(self.__finalImage,
+                               self.width(),
+                               self.height(),
+                               qt.QImage.Format_ARGB32).mirrored(0, 1)
+        else:  # RGB
+            qimage = qt.QImage(self.__finalImage,
+                               self.width(),
+                               self.height(),
+                               qt.QImage.Format_RGB888)
         a=qimage.rgbSwapped()
         return a.save(filename)
 
@@ -1134,7 +1153,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
             backgroundIndex = 16777215
 
             # returns to usual mode and get the select buffer
-            color = GL.glReadPixelsub(x, y, 1, 1, GL.GL_RGBA)
+            color = GL.glReadPixelsub(x, y, 1, 1, self.getReadFormat())
             #workaround a couple of PyOpenGL bugs
             # sometimes I get an int8 and sometimes a string
             if hasattr(color, "dtype"):
@@ -1150,6 +1169,11 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                 color[0][0][1] = ord(color0[1])
                 color[0][0][2] = ord(color0[2])
                 color[0][0][3] = ord(color0[3])
+
+            if len(color) == 3:  # Add Alpha channel
+                color = numpy.array(
+                    (((color[0], color[1], color[2], 255),),),
+                    dtype=numpy.uint8)
 
             index =  color[0][0][0] + \
                     (color[0][0][1] << 8) +\
@@ -1173,7 +1197,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                                     j = -j
                                 if (y+j) >= height:continue
                                 if (y+j) < 0:    continue
-                                color = GL.glReadPixelsub(x+i, y+j, 1, 1, GL.GL_RGBA)
+                                color = GL.glReadPixelsub(x+i, y+j, 1, 1, self.getReadFormat())
                                 #workaround a couple of PyOpenGL bugs
                                 # sometimes I get an int8 and sometimes a string
                                 if hasattr(color, "dtype"):
@@ -1184,11 +1208,18 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                                 else:
                                     #assume to have received a string
                                     color0 = color
-                                    color = numpy.zeros((1,1,4), dtype=numpy.uint8)
+                                    color = numpy.zeros((1,1,len(color0)), dtype=numpy.uint8)
                                     color[0][0][0] = ord(color0[0])
                                     color[0][0][1] = ord(color0[1])
                                     color[0][0][2] = ord(color0[2])
-                                    color[0][0][3] = ord(color0[3])
+                                    if len(color0) == 4:
+                                        color[0][0][3] = ord(color0[3])
+
+                                if len(color) == 3:  # Add Alpha channel
+                                    color = numpy.array(
+                                        (((color[0], color[1], color[2], 255),),),
+                                        dtype=numpy.uint8)
+
                                 index = color[0][0][0] + \
                                         (color[0][0][1] << 8) + \
                                         (color[0][0][2] << 16)
