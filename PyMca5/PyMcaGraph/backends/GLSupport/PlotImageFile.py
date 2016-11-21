@@ -39,6 +39,7 @@ Function to save an image to a file.
 
 import base64
 import struct
+import sys
 import zlib
 
 
