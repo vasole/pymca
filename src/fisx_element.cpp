@@ -742,20 +742,29 @@ std::map<std::string, double> \
                         i1w += 1;
                     }
                     i2w = i1w + 1;
+                    x0w = c_it->second[i1w];
+                    x1w = c_it->second[i2w];
+                    // check for duplicates
+                    if ((x1w - x0w) < 1.0E-10)
+                    {
+                        i1w += 1;
+                        i2w += 1;
+                        x0w = c_it->second[i1w];
+                        x1w = c_it->second[i2w];
+                    }
                     y0 = y_it->second[i1w];
                     y1 = y_it->second[i2w];
                     x0w = c_it->second[i1w];
                     x1w = c_it->second[i2w];
-                    B = 1.0 / log( x1w / x0w);
-                    A = log(x1w/energy) * B;
-                    B *= log( energy / x0w);
-                    result[shell] = exp(A * log(y0) + B * log(y1));
+                    result[shell] = exp(log(y0) + (log(y1 / y0) / log(x1w / x0w)) * log(energy/x0w));
                 }
             }
         }
         if (!Math::isFiniteNumber(result[shell]))
         {
+            std::cout << "Element " << this->name << std::endl;
             std::cout << "energy " << energy << std::endl;
+            std::cout << "shell " << shell << std::endl;
             std::cout << "i1 " << i1 << " i2 " << i2 << std::endl;
             std::cout << "A " << A << " B " << B << std::endl;
             std::cout << "x0 " << x0 << " x1 " << x1 << std::endl;
