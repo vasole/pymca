@@ -1,3 +1,18 @@
+VERSION 1.1.2
+
+Correct inconsistency on M-shell data
+
+Correct problem calculating partial photoelectric cross-sections close to the
+Mo edge.
+
+VERSION 1.1.1
+
+Correct error on internal method name (issue #18)
+
+VERSION 1.1.0
+
+Forced release to comply with PyPI.
+
 VERSION 1.0.9
 
 Allow to set a data directory from the environemnt.
