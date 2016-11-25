@@ -16,6 +16,8 @@ Fix error message when moving mouse on SCAN window after having used the regular
 
 Correct coordinate display on image window.
 
+Solve issue calculating shell photoelectric cross-sections close to edges.
+
 VERSION 5.1.2
 
 Correct the generation of the efficiency plot in the ATTENUATORS tab when
