@@ -840,7 +840,7 @@ classifiers = ["Development Status :: 5 - Production/Stable",
                "Topic :: Scientific/Engineering :: Visualization",
                ]
 
-install_requires = ["numpy", "matplotlib", "fisx>=1.0.8"]
+install_requires = ["numpy", "matplotlib", "fisx>=1.1.2"]
 if sys.platform == "win32":
     install_requires.append("hdf5plugin")
 setup_requires = ["numpy"]
