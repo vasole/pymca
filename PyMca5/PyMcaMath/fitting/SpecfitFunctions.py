@@ -181,13 +181,13 @@ class SpecfitFunctions(object):
         """
         A fit function.
         """
-        return 0.5*SpecfitFuns.downstep(pars,x)
+        return SpecfitFuns.downstep(pars,x)
 
     def stepup(self,pars,x):
         """
         A fit function.
         """
-        return 0.5*SpecfitFuns.upstep(pars,x)
+        return SpecfitFuns.upstep(pars,x)
 
     def slit(self,pars,x):
         """
