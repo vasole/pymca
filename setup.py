@@ -841,8 +841,6 @@ classifiers = ["Development Status :: 5 - Production/Stable",
                ]
 
 install_requires = ["numpy", "matplotlib", "fisx>=1.1.2"]
-if sys.platform in ["win32", "darwin"]:
-    install_requires.append("hdf5plugin")
 setup_requires = ["numpy"]
 
 distrib = setup(name="PyMca5",
