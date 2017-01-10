@@ -9,10 +9,10 @@ hdf5 Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`HDF5DatasetTable` Module
+:mod:`HDF5DatasetView` Module
 ------------------------------
 
-.. automodule:: PyMca5.PyMcaGui.io.hdf5.HDF5DatasetTable
+.. automodule:: PyMca5.PyMcaGui.io.hdf5.HDF5DatasetView
     :members:
     :undoc-members:
     :show-inheritance:

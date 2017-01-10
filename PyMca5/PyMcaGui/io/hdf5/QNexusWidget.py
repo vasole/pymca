@@ -45,7 +45,7 @@ else:
 from . import HDF5Widget
 from . import HDF5Info
 from . import HDF5CounterTable
-from . import HDF5DatasetTable
+from . import HDF5DatasetView
 from PyMca5.PyMcaIO import ConfigDict
 if "PyMcaDirs" in sys.modules:
     from PyMca5 import PyMcaDirs
@@ -414,12 +414,12 @@ class QNexusWidget(qt.QWidget):
             if isinstance(dataset, h5py.Dataset):
                 if len(dataset.shape):
                     #0 length datasets do not need a table
-                    widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
+                    widget.w = HDF5DatasetView.HDF5DatasetView(widget)
                     try:
                         widget.w.setDataset(dataset)
                     except:
                         print("Error filling table")
-                    widget.addTab(widget.w, 'TableView')
+                    widget.addTab(widget.w, 'DataView')
         widget.show()
         return widget
 
@@ -480,7 +480,7 @@ class QNexusWidget(qt.QWidget):
         fileIndex = self.data.sourceName.index(filename)
         phynxFile  = self.data._sourceObjectList[fileIndex]
         dataset = phynxFile[name]
-        widget = HDF5DatasetTable.HDF5DatasetTable()
+        widget = HDF5DatasetView.HDF5DatasetView()
         title = os.path.basename(filename)
         title += " %s" % name
         widget.setWindowTitle(title)

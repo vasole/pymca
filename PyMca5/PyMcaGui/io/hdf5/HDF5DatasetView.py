@@ -29,18 +29,33 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import CloseEventNotifyingWidget
-from PyMca5.PyMcaGui import NumpyArrayTableWidget
 
-class HDF5DatasetTable(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
+
+try:
+    from silx.gui.widgets import DataViewerFrame
+except ImportError:
+    DataViewerFrame = None
+    from PyMca5.PyMcaGui import NumpyArrayTableWidget
+
+
+class HDF5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def __init__(self, parent=None):
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.__init__(self,
                                                                      parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
-        self.arrayTableWidget =  NumpyArrayTableWidget.NumpyArrayTableWidget(self)
-        self.mainLayout.addWidget(self.arrayTableWidget)
+        if DataViewerFrame is None:
+            self.viewWidget = NumpyArrayTableWidget.NumpyArrayTableWidget(self)
+        else:
+            self.viewWidget = DataViewerFrame.DataViewerFrame(self)
+        self.mainLayout.addWidget(self.viewWidget)
 
     def setDataset(self, dataset):
-        self.arrayTableWidget.setArrayData(dataset)
+        if DataViewerFrame is None:
+            self.viewWidget.setArrayData(dataset)
+        else:
+            self.viewWidget.setData(dataset)
+
+
 
