@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -32,13 +32,18 @@ from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 
 
 try:
-    from silx.gui.widgets import DataViewerFrame
+    from silx.gui.data import DataViewerFrame
 except ImportError:
     DataViewerFrame = None
     from PyMca5.PyMcaGui import NumpyArrayTableWidget
 
 
 class HDF5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
+    """QWidget displaying data as raw values in a table widget, or as a
+    curve, image or stack in a plot widget.
+
+    The plot features depend on *silx*'s availability.
+    """
     def __init__(self, parent=None):
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.__init__(self,
                                                                      parent)
