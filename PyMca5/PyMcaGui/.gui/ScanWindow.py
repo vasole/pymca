@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,19 +23,21 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This module defines a :class:`ScanWindow` inheriting a *silx*
+:class:`PlotWindow` with additional tools and actions.
+The main addition is a :class:`PluginsToolButton` button added to the toolbar,
+to open a menu with plugins."""
+
+# TODO: more ScanWindow tools
 
 import numpy
 import os
-import sys
-import traceback
 
 import PyMca5
 from PluginsToolButton import PluginsToolButton
 
 from silx.gui import qt
 from silx.gui.plot import PlotWindow
-
-DEBUG = 0    # fixme: replace with logging
 
 PLUGINS_DIR = None
 
@@ -85,7 +87,7 @@ class ScanWindow(PlotWindow):
 
         if plugins:
             self.pluginsToolButton = PluginsToolButton(plot=self, parent=self)
-            self.pluginsToolButton.clicked.connect(self._pluginClicked)
+            #self.pluginsToolButton.clicked.connect(self._pluginClicked)
 
             self.toolBar().addWidget(self.pluginsToolButton)
 
@@ -103,136 +105,6 @@ class ScanWindow(PlotWindow):
                     # for mname in self.pluginsToolButton.pluginInstanceDict[pname].methodDict:
                     #     print("\t", mname, ":")
                     #     print("\t\t",  self.pluginsToolButton.pluginInstanceDict[pname].methodDict[mname])
-
-    def _pluginClicked(self):
-        # actionNames = [] # actionNames = [a.text for a in menu.actions()]
-        actionNames = []
-        menu = qt.QMenu(self)
-        menu.addAction("Reload Plugins")
-        actionNames.append("Reload Plugins")
-        menu.addAction("Set User Plugin Directory")
-        actionNames.append("Set User Plugin Directory")
-        global DEBUG
-        if DEBUG:
-            text = "Toggle DEBUG mode OFF"
-        else:
-            text = "Toggle DEBUG mode ON"
-        menu.addAction(text)
-        menu.addSeparator()
-        actionNames.append(text)
-        callableKeys = ["Dummy0", "Dummy1", "Dummy2"]
-        pluginInstances = self.pluginsToolButton.pluginInstanceDict
-        for pluginName in self.pluginsToolButton.pluginList:
-            if pluginName in ["PyMcaPlugins.Plugin1DBase", "Plugin1DBase"]:
-                continue
-            module = sys.modules[pluginName]
-            if hasattr(module, 'MENU_TEXT'):
-                text = module.MENU_TEXT
-            else:
-                text = os.path.basename(module.__file__)
-                if text.endswith('.pyc'):
-                    text = text[:-4]
-                elif text.endswith('.py'):
-                    text = text[:-3]
-
-            methods = pluginInstances[pluginName].getMethods(plottype=self._plotType)
-            if not len(methods):
-                continue
-            elif len(methods) == 1:
-                pixmap = pluginInstances[pluginName].getMethodPixmap(methods[0])
-                tip = pluginInstances[pluginName].getMethodToolTip(methods[0])
-                if pixmap is not None:
-                    action = qt.QAction(qt.QIcon(qt.QPixmap(pixmap)), text, self)
-                else:
-                    action = qt.QAction(text, self)
-                if tip is not None:
-                    action.setToolTip(tip)
-                menu.addAction(action)
-            else:
-                menu.addAction(text)
-            actionNames.append(text)
-            callableKeys.append(pluginName)
-        menu.hovered.connect(self._actionHovered)
-        a = menu.exec_(qt.QCursor.pos())
-        if a is None:
-            return None
-
-        idx = actionNames.index(a.text())
-        if a.text() == "Reload Plugins":
-            n, message = self.pluginsToolButton.getPlugins(exceptions=True)
-            if n < 1:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Information)
-                msg.setWindowTitle("No plugins")
-                msg.setInformativeText(" Problem loading plugins ")
-                msg.setDetailedText(message)
-                msg.exec_()
-            return
-        if a.text() == "Set User Plugin Directory":
-            dirName = qt.QFileDialog.getExistingDirectory(
-                    self,
-                    "Enter user plugins directory",
-                    os.getcwd())
-            if len(dirName):
-                pluginsDir = self.pluginsToolButton.getPluginDirectoryList()
-                pluginsDirList = [pluginsDir[0], dirName]
-                self.pluginsToolButton.setPluginDirectoryList(pluginsDirList)
-            return
-        if "Toggle DEBUG mode" in a.text():
-            if DEBUG:
-                DEBUG = 0
-            else:
-                DEBUG = 1
-            return
-        key = callableKeys[idx]
-
-        methods = pluginInstances[key].getMethods(plottype=self._plotType)
-        if len(methods) == 1:
-            idx = 0
-        else:
-            actionNames = []
-            # allow the plugin designer to specify the order
-            #methods.sort()
-            menu = qt.QMenu(self)
-            for method in methods:
-                text = method
-                pixmap = pluginInstances[key].getMethodPixmap(method)
-                tip = pluginInstances[key].getMethodToolTip(method)
-                if pixmap is not None:
-                    action = qt.QAction(qt.QIcon(qt.QPixmap(pixmap)), text, self)
-                else:
-                    action = qt.QAction(text, self)
-                if tip is not None:
-                    action.setToolTip(tip)
-                menu.addAction(action)
-                actionNames.append((text, pixmap, tip, action))
-            #qt.QObject.connect(menu, qt.SIGNAL("hovered(QAction *)"), self._actionHovered)
-            menu.hovered.connect(self._actionHovered)
-            a = menu.exec_(qt.QCursor.pos())
-            if a is None:
-                return None
-            idx = -1
-            for action in actionNames:
-                if a.text() == action[0]:
-                    idx = actionNames.index(action)
-        try:
-            pluginInstances[key].applyMethod(methods[idx])
-        except:
-            msg = qt.QMessageBox(self)
-            msg.setIcon(qt.QMessageBox.Critical)
-            msg.setWindowTitle("Plugin error")
-            msg.setText("An error has occured while executing the plugin:")
-            msg.setInformativeText(str(sys.exc_info()[1]))
-            msg.setDetailedText(traceback.format_exc())
-            msg.exec_()
-
-    def _actionHovered(self, action):
-        # from PyMca5 PlotWindow
-        tip = action.toolTip()
-        if str(tip) != str(action.text()):
-            qt.QToolTip.showText(qt.QCursor.pos(), tip)
-        else:
-            qt.QToolTip.hideText()
 
 
 def test():
