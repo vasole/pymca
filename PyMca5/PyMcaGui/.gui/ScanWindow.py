@@ -32,12 +32,22 @@ to open a menu with plugins."""
 
 import numpy
 import os
+import sys
+import traceback
+
+from silx.gui.plot import PlotWindow
 
 import PyMca5
-from PluginsToolButton import PluginsToolButton
+from PyMca5.PyMcaGui import PyMcaQt as qt
+from PluginsToolButton import PluginsToolButton   # TODO: relative import
+from ScanFitToolButton import ScanFitToolButton   # TODO: relative import
+from PyMca5.PyMcaGui.pymca import ScanFit
 
-from silx.gui import qt
-from silx.gui.plot import PlotWindow
+
+if hasattr(qt, 'QString'):
+    QString = qt.QString
+else:
+    QString = qt.safe_str
 
 PLUGINS_DIR = None
 
@@ -63,13 +73,12 @@ if userPluginsDirectory is not None:
 
 class ScanWindow(PlotWindow):
     def __init__(self, parent=None, name="Scan Window", fit=True, backend=None,
-                 plugins=True, newplot=True, roi=True,
-                 control=True, position=True, info=False, **kw):
+                 plugins=True, control=True, position=True, roi=True,
+                 specfit=None, newplot=True, info=False, **kw):
 
         super(ScanWindow, self).__init__(parent,
                                          backend=backend,
                                          roi=roi,
-                                         fit=fit,
                                          control=control,
                                          position=position,
                                          )  # **kw)
@@ -85,26 +94,27 @@ class ScanWindow(PlotWindow):
         self.setWindowTitle(name)
         self.matplotlibDialog = None
 
+        _simpleOpsToolbar = qt.QToolBar("Simple operations")
+        self.addToolBar(_simpleOpsToolbar)
+
         if plugins:
             self.pluginsToolButton = PluginsToolButton(plot=self, parent=self)
-            #self.pluginsToolButton.clicked.connect(self._pluginClicked)
-
-            self.toolBar().addWidget(self.pluginsToolButton)
+            _simpleOpsToolbar.addWidget(self.pluginsToolButton)
 
             if PLUGINS_DIR is not None:
                 if isinstance(PLUGINS_DIR, list):
                     pluginDir = PLUGINS_DIR
                 else:
                     pluginDir = [PLUGINS_DIR]
-                self.pluginsToolButton.getPlugins(method="getPlugin1DInstance",
-                               directoryList=pluginDir)
-                # plugin name
-                for pname in self.pluginsToolButton.pluginList:
-                    print(pname, ":")
-                    # method name
-                    # for mname in self.pluginsToolButton.pluginInstanceDict[pname].methodDict:
-                    #     print("\t", mname, ":")
-                    #     print("\t\t",  self.pluginsToolButton.pluginInstanceDict[pname].methodDict[mname])
+                self.pluginsToolButton.getPlugins(
+                        method="getPlugin1DInstance",
+                        directoryList=pluginDir)
+
+        if fit:
+            self.scanFit = ScanFit.ScanFit(specfit=specfit)
+            scanFitToolButton = ScanFitToolButton(self)
+
+            _simpleOpsToolbar.addWidget(scanFitToolButton)
 
 
 def test():

@@ -76,11 +76,10 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
         # fill attr pluginList and pluginInstanceDict with existing plugins
         PluginLoader.__init__(self, parent)
 
+        # plugins expect a legacy API, not the silx Plot API
         if isinstance(plot, silxPlot):
-            # plot has silx plot API
             self.plot = PlotProxySilx(plot)
         else:
-            # assume plot already has PyMca API
             self.plot = plot
 
         self.clicked.connect(self._pluginClicked)
