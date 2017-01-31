@@ -97,6 +97,7 @@ class ScanWindow(PlotWindow):
         self.derivativeAction = SimpleActions.DerivativeAction(plot=self)
         self.smoothAction = SimpleActions.SmoothAction(plot=self)
         self.swapSignAction = SimpleActions.SwapSignAction(plot=self)
+        self.yMinToZero = SimpleActions.YMinToZeroAction(plot=self)
 
         self._toolbar = qt.QToolBar(self)
         self.addToolBar(self._toolbar)
@@ -105,6 +106,8 @@ class ScanWindow(PlotWindow):
         self._toolbar.addAction(self.derivativeAction)
         self._toolbar.addAction(self.smoothAction)
         self._toolbar.addAction(self.swapSignAction)
+        self._toolbar.addAction(self.yMinToZero)
+
 
         if plugins:
             pluginsToolButton = PluginsToolButton(plot=self)

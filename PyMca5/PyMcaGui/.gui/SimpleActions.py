@@ -157,8 +157,8 @@ class DerivativeAction(PlotAction):
         PlotAction.__init__(self,
                             plot,
                             icon=self.icon,
+                            tooltip='Plot Derivative of Active Curve',
                             text='Derivate Active Curve',
-                            tooltip='Derivate Active Curve',
                             triggered=self._derivateActiveCurve,
                             parent=parent)
 
@@ -201,20 +201,33 @@ class SwapSignAction(PlotAction):
         self.plot.addCurve(x1, y1, legend1)
 
 
+class YMinToZeroAction(PlotAction):
+    """
+
+    """
+    def __init__(self, plot, parent=None):
+        self.icon = qt.QIcon(qt.QPixmap(IconDict["ymintozero"]))
+        PlotAction.__init__(self,
+                            plot,
+                            icon=self.icon,
+                            text='Y Min to Zero',
+                            tooltip='Shift curve vertically to put min value at 0',
+                            triggered=self._yMinToZeroCurve,
+                            parent=parent)
+
+    def _yMinToZeroCurve(self):
+        curve = _getOneCurve(self.plot)
+        if curve is None:
+            return
+        x0, y0, legend0, _info, _params = curve
+
+        x1 = x0 * 1
+        y1 = y0 - min(y0)
+        legend1 = "(%s) - ymin" % legend0
+
+        self.plot.addCurve(x1, y1, legend1)
 
 
-
-            # tb = self._addToolButton(self.deriveIcon,
-            #                     self._deriveIconSignal,
-            #                      'Take Derivative of Active Curve')
-            #
-            # tb = self._addToolButton(self.smoothIcon,
-            #                      self._smoothIconSignal,
-            #                      'Smooth Active Curve')
-            #
-            # tb = self._addToolButton(self.swapSignIcon,
-            #                     self._swapSignIconSignal,
-            #                     'Multiply Active Curve by -1')
             #
             # tb = self._addToolButton(self.yMinToZeroIcon,
             #                     self._yMinToZeroIconSignal,
@@ -224,8 +237,5 @@ class SwapSignAction(PlotAction):
             #                     self._subtractIconSignal,
             #                     'Subtract Active Curve')
 
-        # self.deriveIcon	= qt.QIcon(qt.QPixmap(IconDict["derive"]))
-        # self.smoothIcon     = qt.QIcon(qt.QPixmap(IconDict["smooth"]))
-        # self.swapSignIcon	= qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
         # self.yMinToZeroIcon	= qt.QIcon(qt.QPixmap(IconDict["ymintozero"]))
         # self.subtractIcon	= qt.QIcon(qt.QPixmap(IconDict["subtract"]))
