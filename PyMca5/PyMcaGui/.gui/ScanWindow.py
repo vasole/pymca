@@ -30,10 +30,9 @@ to open a menu with plugins."""
 
 # TODO: more ScanWindow tools
 
-import numpy
 import os
-import sys
-import traceback
+# import sys
+# import traceback
 
 from silx.gui.plot import PlotWindow
 
@@ -41,6 +40,7 @@ import PyMca5
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PluginsToolButton import PluginsToolButton   # TODO: relative import
 from ScanFitToolButton import ScanFitToolButton   # TODO: relative import
+import SimpleActions   # TODO: absolute import
 from PyMca5.PyMcaGui.pymca import ScanFit
 
 
@@ -75,49 +75,59 @@ class ScanWindow(PlotWindow):
     def __init__(self, parent=None, name="Scan Window", fit=True, backend=None,
                  plugins=True, control=True, position=True, roi=True,
                  specfit=None, newplot=True, info=False, **kw):
-
         super(ScanWindow, self).__init__(parent,
                                          backend=backend,
                                          roi=roi,
                                          control=control,
                                          position=position,
                                          )  # **kw)
-        # fixme: newplot,?
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setPanWithArrowKeys(True)
-        self._plotType = "SCAN"
+        self._plotType = "SCAN"     # needed by legacy plugins
+
         # these two objects are the same
-        self.dataObjectsList = list(self._curves.keys())
-        # but this is tricky
-        self.dataObjectsDict = {}
+        # self.dataObjectsList = list(self._curves.keys())
+        # # but this is tricky
+        # self.dataObjectsDict = {}
 
         self.setWindowTitle(name)
-        self.matplotlibDialog = None
+        # self.matplotlibDialog = None
 
-        _simpleOpsToolbar = qt.QToolBar("Simple operations")
-        self.addToolBar(_simpleOpsToolbar)
+        self.avgAction = self.group.addAction(SimpleActions.AverageAction(plot=self))
+        self.smoothAction = self.group.addAction(SimpleActions.SmoothAction(plot=self))
+        self.derivativeAction = self.group.addAction(SimpleActions.DerivativeAction(plot=self))
+
+        self._toolbar = qt.QToolBar(self)
+        self.addToolBar(self._toolbar)
+
+        self._toolbar.addAction(self.avgAction)
+        self._toolbar.addAction(self.smoothAction)
+        self._toolbar.addAction(self.derivativeAction)
 
         if plugins:
-            self.pluginsToolButton = PluginsToolButton(plot=self, parent=self)
-            _simpleOpsToolbar.addWidget(self.pluginsToolButton)
+            pluginsToolButton = PluginsToolButton(plot=self)
 
             if PLUGINS_DIR is not None:
                 if isinstance(PLUGINS_DIR, list):
                     pluginDir = PLUGINS_DIR
                 else:
                     pluginDir = [PLUGINS_DIR]
-                self.pluginsToolButton.getPlugins(
+                pluginsToolButton.getPlugins(
                         method="getPlugin1DInstance",
                         directoryList=pluginDir)
+            self._toolbar.addWidget(pluginsToolButton)
 
         if fit:
-            self.scanFit = ScanFit.ScanFit(specfit=specfit)
-            scanFitToolButton = ScanFitToolButton(self)
+            self.scanFit = ScanFit.ScanFit(specfit=specfit)  # attr needed by scanFitToolButton
 
-            _simpleOpsToolbar.addWidget(scanFitToolButton)
+            scanFitToolButton = ScanFitToolButton(self)
+            self._toolbar.addWidget(scanFitToolButton)
+
+
 
 
 def test():
+    import numpy
     app = qt.QApplication([])
     w = ScanWindow()
     x = numpy.arange(1000.)
