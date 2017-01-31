@@ -254,7 +254,7 @@ class SubtractAction(PlotAction):
             # (y1 - y0) is equivalent to 2 * average(-y0, y1)
             XX = [x0, x]
             YY = [-y0, y]
-            xplot, yplot = self.simpleMath.average(XX, YY)
+            xplot, yplot = _simpleMath.average(XX, YY)
             yplot *= 2
             legend1 = "(%s - %s)" % (legend, legend0)
 
