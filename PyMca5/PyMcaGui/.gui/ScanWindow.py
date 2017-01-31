@@ -93,16 +93,18 @@ class ScanWindow(PlotWindow):
         self.setWindowTitle(name)
         # self.matplotlibDialog = None
 
-        self.avgAction = self.group.addAction(SimpleActions.AverageAction(plot=self))
-        self.smoothAction = self.group.addAction(SimpleActions.SmoothAction(plot=self))
-        self.derivativeAction = self.group.addAction(SimpleActions.DerivativeAction(plot=self))
+        self.avgAction = SimpleActions.AverageAction(plot=self)
+        self.derivativeAction = SimpleActions.DerivativeAction(plot=self)
+        self.smoothAction = SimpleActions.SmoothAction(plot=self)
+        self.swapSignAction = SimpleActions.SwapSignAction(plot=self)
 
         self._toolbar = qt.QToolBar(self)
         self.addToolBar(self._toolbar)
 
         self._toolbar.addAction(self.avgAction)
-        self._toolbar.addAction(self.smoothAction)
         self._toolbar.addAction(self.derivativeAction)
+        self._toolbar.addAction(self.smoothAction)
+        self._toolbar.addAction(self.swapSignAction)
 
         if plugins:
             pluginsToolButton = PluginsToolButton(plot=self)

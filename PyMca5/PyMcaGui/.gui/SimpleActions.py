@@ -121,7 +121,7 @@ class AverageAction(PlotAction):
 
 
 class SmoothAction(PlotAction):
-    """Smooth active curve if any, else smooth first curve.
+    """Plot smooth of the active curve if any, else the only existing curve.
 
     """
     def __init__(self, plot, parent=None):
@@ -130,7 +130,7 @@ class SmoothAction(PlotAction):
                             plot,
                             icon=self.icon,
                             text='Smooth Active Curve',
-                            tooltip='',
+                            tooltip='Smooth Active Curve',
                             triggered=self._smoothActiveCurve,
                             parent=parent)
 
@@ -148,7 +148,8 @@ class SmoothAction(PlotAction):
 
 
 class DerivativeAction(PlotAction):
-    """
+    """Plot derivative of the active curve if any,
+    else the derivative of the only existing curve.
 
     """
     def __init__(self, plot, parent=None):
@@ -157,7 +158,7 @@ class DerivativeAction(PlotAction):
                             plot,
                             icon=self.icon,
                             text='Derivate Active Curve',
-                            tooltip='',
+                            tooltip='Derivate Active Curve',
                             triggered=self._derivateActiveCurve,
                             parent=parent)
 
@@ -171,6 +172,33 @@ class DerivativeAction(PlotAction):
         legend1 = legend0 + "'"
 
         self.plot.addCurve(x1, y1, legend1, yaxis="right")
+
+
+class SwapSignAction(PlotAction):
+    """
+
+    """
+    def __init__(self, plot, parent=None):
+        self.icon = qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
+        PlotAction.__init__(self,
+                            plot,
+                            icon=self.icon,
+                            text='Multiply Active Curve by -1',
+                            tooltip='Multiply Active Curve by -1',
+                            triggered=self._swapSignCurve,
+                            parent=parent)
+
+    def _swapSignCurve(self):
+        curve = _getOneCurve(self.plot)
+        if curve is None:
+            return
+        x0, y0, legend0, _info, _params = curve
+
+        x1 = 1 * x0
+        y1 = -y0
+        legend1 = "-(%s)" % legend0
+
+        self.plot.addCurve(x1, y1, legend1)
 
 
 
