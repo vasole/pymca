@@ -121,8 +121,8 @@ class AverageAction(PlotAction):
 
 
 class SmoothAction(PlotAction):
-    """Plot smooth of the active curve if any, else the only existing curve.
-
+    """Plot smooth of the active curve if any,
+    else plot smooth of the only existing curve if any.
     """
     def __init__(self, plot, parent=None):
         self.icon = qt.QIcon(qt.QPixmap(IconDict["smooth"]))
@@ -150,7 +150,6 @@ class SmoothAction(PlotAction):
 class DerivativeAction(PlotAction):
     """Plot derivative of the active curve if any,
     else the derivative of the only existing curve.
-
     """
     def __init__(self, plot, parent=None):
         self.icon = qt.QIcon(qt.QPixmap(IconDict["derive"]))
@@ -175,8 +174,7 @@ class DerivativeAction(PlotAction):
 
 
 class SwapSignAction(PlotAction):
-    """
-
+    """Plot the active curve multiplied by -1
     """
     def __init__(self, plot, parent=None):
         self.icon = qt.QIcon(qt.QPixmap(IconDict["swapsign"]))
@@ -228,14 +226,37 @@ class YMinToZeroAction(PlotAction):
         self.plot.addCurve(x1, y1, legend1)
 
 
-            #
-            # tb = self._addToolButton(self.yMinToZeroIcon,
-            #                     self._yMinToZeroIconSignal,
-            #                     'Force Y Minimum to be Zero')
-            #
-            # tb = self._addToolButton(self.subtractIcon,
-            #                     self._subtractIconSignal,
-            #                     'Subtract Active Curve')
+class SubtractAction(PlotAction):
+    """Subtract active curve from all curves.
 
-        # self.yMinToZeroIcon	= qt.QIcon(qt.QPixmap(IconDict["ymintozero"]))
-        # self.subtractIcon	= qt.QIcon(qt.QPixmap(IconDict["subtract"]))
+    """
+    def __init__(self, plot, parent=None):
+        self.icon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
+        PlotAction.__init__(self,
+                            plot,
+                            icon=self.icon,
+                            text='Subtract Active Curve',
+                            tooltip='Subtract active curve from all curves',
+                            triggered=self._subtractCurve,
+                            parent=parent)
+
+    def _subtractCurve(self):
+        active_curve = _getOneCurve(self.plot)
+        all_curves = self.plot.getAllCurves()
+
+        #############################################################
+        if active_curve is None:
+            return
+
+        x0, y0, legend0, _info, _params = active_curve
+
+        for x, y, legend, _info, _params in all_curves:
+            # (y1 - y0) is equivalent to 2 * average(-y0, y1)
+            XX = [x0, x]
+            YY = [-y0, y]
+            xplot, yplot = self.simpleMath.average(XX, YY)
+            yplot *= 2
+            legend1 = "(%s - %s)" % (legend, legend0)
+
+            self.plot.removeCurve(legend)
+            self.plot.addCurve(xplot, yplot, legend1)

@@ -80,7 +80,8 @@ class ScanWindow(PlotWindow):
                                          roi=roi,
                                          control=control,
                                          position=position,
-                                         )  # **kw)
+                                         mask=False,
+                                         colormap=False)  # **kw)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setPanWithArrowKeys(True)
         self._plotType = "SCAN"     # needed by legacy plugins
@@ -93,21 +94,33 @@ class ScanWindow(PlotWindow):
         self.setWindowTitle(name)
         # self.matplotlibDialog = None
 
+
+        # Toolbar
+        # self.toolBar().setIconSize(qt.QSize(15, 18))
+
+        self._toolbar = qt.QToolBar(self)
+        # self._toolbar.setIconSize(qt.QSize(15, 18))
+
+        self.addToolBar(self._toolbar)
+
+        if fit:
+            self.scanFit = ScanFit.ScanFit(specfit=specfit)  # attr needed by scanFitToolButton
+            scanFitToolButton = ScanFitToolButton(self)
+            self._toolbar.addWidget(scanFitToolButton)
+
         self.avgAction = SimpleActions.AverageAction(plot=self)
         self.derivativeAction = SimpleActions.DerivativeAction(plot=self)
         self.smoothAction = SimpleActions.SmoothAction(plot=self)
         self.swapSignAction = SimpleActions.SwapSignAction(plot=self)
         self.yMinToZero = SimpleActions.YMinToZeroAction(plot=self)
-
-        self._toolbar = qt.QToolBar(self)
-        self.addToolBar(self._toolbar)
+        self.subtractAction = SimpleActions.SubtractAction(plot=self)
 
         self._toolbar.addAction(self.avgAction)
         self._toolbar.addAction(self.derivativeAction)
         self._toolbar.addAction(self.smoothAction)
         self._toolbar.addAction(self.swapSignAction)
         self._toolbar.addAction(self.yMinToZero)
-
+        self._toolbar.addAction(self.subtractAction)
 
         if plugins:
             pluginsToolButton = PluginsToolButton(plot=self)
@@ -121,14 +134,6 @@ class ScanWindow(PlotWindow):
                         method="getPlugin1DInstance",
                         directoryList=pluginDir)
             self._toolbar.addWidget(pluginsToolButton)
-
-        if fit:
-            self.scanFit = ScanFit.ScanFit(specfit=specfit)  # attr needed by scanFitToolButton
-
-            scanFitToolButton = ScanFitToolButton(self)
-            self._toolbar.addWidget(scanFitToolButton)
-
-
 
 
 def test():
