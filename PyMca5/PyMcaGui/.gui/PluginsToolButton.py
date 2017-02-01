@@ -86,13 +86,12 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
 
     def __getattr__(self, attr):
         """Plot API for plugins"""
-        # TODO: add all methods needed by plugins
-        plot_methods = ["addCurve", "getActiveCurve", "getAllCurves",
-                        "getGraphXLimits", "removeCurve", "setActiveCurve"]
-        if attr not in plot_methods:
+        try:
+            return getattr(self.plot, attr)
+        except AttributeError:
+            # blame plot class for missing attribute, not PluginsToolButton
             raise AttributeError(
-                    self.__class__.__name__ + " has no attribute " + attr)
-        return getattr(self.plot, attr)
+                    self.plot.__class__.__name__ + " has no attribute " + attr)
 
     def _pluginClicked(self):
         actionNames = []

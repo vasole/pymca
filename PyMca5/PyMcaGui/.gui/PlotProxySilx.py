@@ -84,6 +84,14 @@ def merge_dicts(dict1, dict2):
     dict2."""
     dict3 = dict1.copy()
     dict3.update(dict2)
+
+    # xlabel and xlabel (not None) seem required by plugin
+    # Simple Math > Derivate
+    if dict3.get("xlabel", None) is None:
+        dict3["xlabel"] = "X"
+    if dict3.get("ylabel", None) is None:
+        dict3["ylabel"] = "Y"
+
     return dict3
 
 
@@ -95,14 +103,27 @@ class PlotProxySilx(object):
         :param silx_plot_instance: *silx* PlotWidget
         """
         self.silx_plot = silx_plot
+        self._plotType = None if not hasattr(silx_plot, "_plotType") else silx_plot._plotType
 
     def __getattr__(self, attr):
-        # method called for attributes/methods not explicitly overloaded
+        # fixme: not sure if it's better to filter unexpected methods or
+        #        just try to them and hope they have the proper signature
         methods_not_overloaded = [
             "isCurveHidden",
-            "replot"
+            "replot",
+            # not defined in PlotBase
+            "getGraphTitle",
+            "getGraphXLabel",
+            "getGraphYLabel",
+            "getGraphXLimits",
+            "getGraphYLimits",
+            "setGraphTitle",
+            "setGraphXLabel",
+            "setGraphYLabel",
+            "setGraphXLimits",
+            "setGraphYLimits",
         ]
-        assert attr in methods_not_overloaded
+        assert attr in methods_not_overloaded, attr + " missing in plot!"
         return getattr(self.silx_plot, attr)
 
     # methods with different number of return values
