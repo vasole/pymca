@@ -28,11 +28,8 @@
 The main addition is a :class:`PluginsToolButton` button added to the toolbar,
 to open a menu with plugins."""
 
-# TODO: more ScanWindow tools
 
 import os
-# import sys
-# import traceback
 
 from silx.gui.plot import PlotWindow
 
@@ -40,7 +37,7 @@ import PyMca5
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PluginsToolButton import PluginsToolButton   # TODO: relative import
 from ScanFitToolButton import ScanFitToolButton   # TODO: relative import
-import SimpleActions   # TODO: absolute import
+import SimpleActions   # TODO: fix relative import
 from PyMca5.PyMcaGui.pymca import ScanFit
 
 
@@ -86,18 +83,10 @@ class ScanWindow(PlotWindow):
         self.setPanWithArrowKeys(True)
         self._plotType = "SCAN"     # needed by legacy plugins
 
-        # these two objects are the same
-        # self.dataObjectsList = list(self._curves.keys())
-        # # but this is tricky
-        # self.dataObjectsDict = {}
-
         self.setWindowTitle(name)
-        # self.matplotlibDialog = None
-
 
         # Toolbar
         # self.toolBar().setIconSize(qt.QSize(15, 18))
-
         self._toolbar = qt.QToolBar(self)
         # self._toolbar.setIconSize(qt.QSize(15, 18))
 
