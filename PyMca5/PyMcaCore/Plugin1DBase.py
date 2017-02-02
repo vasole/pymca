@@ -124,6 +124,35 @@ try:
     from numpy import argsort, nonzero, take
 except ImportError:
     print("WARNING: numpy not present")
+try:
+    from silx.gui.plot.Plot import Plot as silxPlot
+except ImportError:
+    silxPlot = None
+
+
+def merge_info_params(info, params):
+    """Return a copy of dictionary`info` updated with the content
+    of dictionary `params`.
+
+    If keys don't overlap, this will effectively concatenate info and
+    params.
+
+    :param dict info: Dictionary of custom curve metadata
+    :param dict params: Dictionary of standard curve metadata (*xlabel,
+        ylabel, linestyle...*)"""
+    # TODO. much more keys and values to fix (see McaWindow)
+    info_params = info.copy()
+    info_params.update(params)
+
+    # xlabel and ylabel default to None in *silx*,
+    # PyMca plugins expect a string
+    if info_params.get("xlabel", None) is None:
+        info_params["xlabel"] = "X"
+    if info_params.get("ylabel", None) is None:
+        info_params["ylabel"] = "Y"
+
+    return info_params
+
 
 class Plugin1DBase(object):
     def __init__(self, plotWindow, **kw):
@@ -133,18 +162,31 @@ class Plugin1DBase(object):
         Unless one knows what (s)he is doing, only a proxy should be used.
 
         I pass the actual instance to keep all doors open.
+
+        The plot window can be a legacy PyMca plot, in which case
+        :attr:`_legacy` is set to *True*, or a :class:`PluginsToolButton`
+        acting as proxy for a *silx* PlotWindow.
         """
         self._plotWindow = weakref.proxy(plotWindow)
+
+        self._legacy = True
+        """The plot window can be a legacy PyMca plot, in which case
+        :attr:`_legacy` is set to *True*, or a :class:`PluginsToolButton`
+        acting as proxy for a *silx* PlotWindow (*legacy=False*).
+        """
+        if silxPlot is not None and isinstance(plotWindow, silxPlot):
+            self._legacy = False
 
     #Window related functions
     def windowTitle(self):
         name = self._plotWindow.windowTitle()
-        try:
-            name = self._plotWindow.windowTitle()
-        except:
-            name = ""
+        # try:
+        #     name = self._plotWindow.windowTitle()
+        # except:
+        #     name = ""
         return name
 
+    # fixme: should we support **kw?
     def addCurve(self, x, y, legend=None, info=None,
                  replace=False, replot=True, **kw):
         """
@@ -162,10 +204,21 @@ class Plugin1DBase(object):
         :type replace: boolean default False
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
-        :param **kw: Additional keywords recognized by the plot window
+        :param **kw: Additional keywords recognized by the plot window.
+            Beware that the keywords recognized by *silx* and *PyMca*
+            plot windows may differ.
         """
-        return self._plotWindow.addCurve(x, y, legend=legend, info=info,
-                                    replace=replace, replot=replot, **kw)
+        if self._legacy:
+            return self._plotWindow.addCurve(x, y, legend=legend, info=info,
+                                        replace=replace, replot=replot, **kw)
+        else:
+            # fill = info.get("plot_fill", False) if info is not None else False
+            # fill = kw.get("fill", fill)
+            # linewidth = kw.get("linewidth", None)
+            return self._plotWindow.addCurve(x, y, legend=legend, info=info,
+                                             replace=replace, resetzoom=replot,
+                                             # fill=fill, linewidth=linewidth,  # Fixme: are these needed?
+                                             **kw)
 
     def getActiveCurve(self, just_legend=False):
         """
@@ -179,14 +232,22 @@ class Plugin1DBase(object):
 
         Default output has the form:
             xvalues, yvalues, legend, dict
-            where dict is a dictionnary containing curve info.
+            where dict is a dictionary containing curve info.
             For the time being, only the plot labels associated to the
             curve are warranted to be present under the keys xlabel, ylabel.
 
         If just_legend is True:
             The legend of the active curve (or None) is returned.
         """
-        return self._plotWindow.getActiveCurve(just_legend=just_legend)
+        curve = self._plotWindow.getActiveCurve(just_legend=just_legend)
+        if self._legacy or just_legend:
+            if not just_legend:    # DEBUGGING
+                assert len(curve) == 4
+            return curve
+
+        # silx PlotWindow
+        x, y, legend, info, params = curve
+        return x, y, legend, merge_info_params(info, params)
 
     def getAllCurves(self, just_legend=False):
         """
@@ -208,7 +269,13 @@ class Plugin1DBase(object):
                 [legend0, legend1, ..., legendn]
             or just an empty list.
         """
-        return self._plotWindow.getAllCurves(just_legend=just_legend)
+        all_curves = []
+        for curve in self._plotWindow.getAllCurves(just_legend=just_legend):
+            if just_legend or self._legacy:
+                all_curves.append(curve)
+            else:
+                x, y, legend, info, params = curve
+                all_curves.append([x, y, legend, merge_info_params(info, params)])
 
     def getMonotonicCurves(self):
         """
@@ -301,8 +368,11 @@ class Plugin1DBase(object):
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default False
         """
-        return self._plotWindow.setGraphXLimits(xmin, xmax, replot=replot)
+        if self._legacy:
+            return self._plotWindow.setGraphXLimits(xmin, xmax, replot=replot)
+        return self._plotWindow.setGraphXLimits(xmin, xmax)
 
+    # TODO: support param axis='right'?
     def setGraphYLimits(self, ymin, ymax, replot=False):
         """
         Set the graph Y (left) limits.
@@ -314,7 +384,9 @@ class Plugin1DBase(object):
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default False
         """
-        return self._plotWindow.setGraphYLimits(ymin, ymax, replot=replot)
+        if self._legacy:
+            return self._plotWindow.setGraphYLimits(ymin, ymax, replot=replot)
+        return self._plotWindow.setGraphYLimits(ymin, ymax)
 
     def removeCurve(self, legend, replot=True):
         """
@@ -326,7 +398,9 @@ class Plugin1DBase(object):
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
         """
-        return self._plotWindow.removeCurve(legend, replot=replot)
+        if self._legacy:
+            self._plotWindow.removeCurve(legend, replot=replot)
+        return self._plotWindow.removeCurve(legend)
 
     def setActiveCurve(self, legend):
         """
@@ -350,14 +424,18 @@ class Plugin1DBase(object):
         :param title: The title to be associated to the X axis
         :type title: string
         """
-        return self._plotWindow.setGraphXTitle(title)
+        if self._legacy:
+            return self._plotWindow.setGraphXTitle(title)
+        return self._plotWindow.setGraphXLabel(title)
 
     def setGraphYTitle(self, title):
         """
         :param title: The title to be associated to the X axis
         :type title: string
         """
-        return self._plotWindow.setGraphYTitle(title)
+        if self._legacy:
+            return self._plotWindow.setGraphYTitle(title)
+        return self._plotWindow.setGraphYLabel(title)
 
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
