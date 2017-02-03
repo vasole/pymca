@@ -2043,8 +2043,17 @@ class XMCDWidget(qt.QWidget):
                 print('_setLists -- Set self.plotWindow before calling self._setLists')
             return
         # nCurves = len(curves)
-        self.legendList = [leg for (xvals, yvals,  leg,  info) in curves]
-        self.infoList   = [info for (xvals, yvals,  leg,  info) in curves]
+        self.legendList = []
+        self.infoList   = []
+        for curve in curves:
+            self.legendList.append(curve[2])
+            if len(curve) == 4:  # PyMca
+                self.infoList.append(curve[-1])
+            elif len(curve) == 5:  # silx API
+                info = curve[-1].copy()
+                info.update(curve[-2])
+                self.infoList.append(info)
+
         # Try to recover the scan number from the legend, if not set
         # Requires additional import:
         #from re import search as regexpSearch
