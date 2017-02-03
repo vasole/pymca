@@ -64,6 +64,8 @@ class XASSelfattenuationPlugin(Plugin1DBase.Plugin1DBase):
         self.instance = XASSelfattenuationCorrection.XASSelfattenuationCorrection()
         self.parameters = None
 
+        self.configuration = None
+
     #Methods to be implemented by the plugin
     def getMethods(self, plottype=None):
         """
