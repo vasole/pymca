@@ -183,10 +183,6 @@ class Plugin1DBase(object):
     #Window related functions
     def windowTitle(self):
         name = self._plotWindow.windowTitle()
-        # try:
-        #     name = self._plotWindow.windowTitle()
-        # except:
-        #     name = ""
         return name
 
     # fixme: should we support **kw?
@@ -243,10 +239,7 @@ class Plugin1DBase(object):
             The legend of the active curve (or None) is returned.
         """
         curve = self._plotWindow.getActiveCurve(just_legend=just_legend)
-        if self._legacy or just_legend:
-            if not just_legend:    # DEBUGGING
-                print(curve)
-                assert len(curve) == 4
+        if self._legacy or just_legend or curve is None:
             return curve
 
         # silx PlotWindow
@@ -281,6 +274,15 @@ class Plugin1DBase(object):
                 x, y, legend, info, params = curve
                 all_curves.append([x, y, legend, merge_info_params(info, params)])
         return all_curves
+
+    def getCurve(self, legend):
+        curve = self._plotWindow.getCurve(legend)
+        if self._legacy or curve is None:
+            return curve
+
+        # silx PlotWindow
+        x, y, legend, info, params = curve
+        return x, y, legend, merge_info_params(info, params)
 
     def getMonotonicCurves(self):
         """

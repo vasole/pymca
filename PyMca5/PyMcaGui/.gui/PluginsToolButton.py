@@ -54,15 +54,15 @@ from PyMca5.PyMcaGraph.PluginLoader import PluginLoader
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 
 
-_logger = logging.getLogger(__name__)
-
-def _toggleLogger():
-    """Toggle logger level for logging.DEBUG to logging.WARNING
-    and vice-versa."""
-    if _logger.getEffectiveLevel() == logging.DEBUG:
-        _logger.setLevel(logging.WARNING)
-    else:
-        _logger.setLevel(logging.DEBUG)
+# _logger = logging.getLogger(__name__)
+#
+# def _toggleLogger():
+#     """Toggle logger level for logging.DEBUG to logging.WARNING
+#     and vice-versa."""
+#     if _logger.getEffectiveLevel() == logging.DEBUG:
+#         _logger.setLevel(logging.WARNING)
+#     else:
+#         _logger.setLevel(logging.DEBUG)
 
 
 class PluginsToolButton(qt.QToolButton, PluginLoader):
@@ -109,15 +109,15 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
         menu.addAction("Set User Plugin Directory")
         actionNames.append("Set User Plugin Directory")
 
-        if _logger.getEffectiveLevel() == logging.DEBUG:
-            text = "Toggle DEBUG mode OFF"
-        else:
-            text = "Toggle DEBUG mode ON"
-
-        menu.addAction(text)
+        # if _logger.getEffectiveLevel() == logging.DEBUG:
+        #     text = "Toggle DEBUG mode OFF"
+        # else:
+        #     text = "Toggle DEBUG mode ON"
+        #
+        # menu.addAction(text)
         menu.addSeparator()
-        actionNames.append(text)
-        callableKeys = ["Dummy0", "Dummy1", "Dummy2"]
+        # actionNames.append(text)
+        callableKeys = ["Dummy0", "Dummy1", ]  #"Dummy2"]
         pluginInstances = self.pluginInstanceDict
         for pluginName in self.pluginList:
             if pluginName in ["PyMcaPlugins.Plugin1DBase", "Plugin1DBase"]:
@@ -176,8 +176,8 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
                 pluginsDirList = [pluginsDir[0], dirName]
                 self.pluginsToolButton.setPluginDirectoryList(pluginsDirList)
             return
-        if "Toggle DEBUG mode" in a.text():
-            _toggleLogger()
+        # if "Toggle DEBUG mode" in a.text():
+        #     _toggleLogger()
         key = callableKeys[idx]
 
         methods = pluginInstances[key].getMethods(
