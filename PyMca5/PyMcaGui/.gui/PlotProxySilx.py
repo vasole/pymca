@@ -154,10 +154,11 @@ class PlotProxySilx(object):
         ``[[x1, y1, legend1, info1, parameters1], ...]`` into
         ``[[x1, y1, legend1, info1], ...]``"""
         all_curves = []
-        for x, y, legend, info, params in self.silx_plot.getAllCurves(just_legend):
+        for curve in self.silx_plot.getAllCurves(just_legend):
             if just_legend:
-                all_curves.append(legend)
+                all_curves.append(curve)
             else:
+                x, y, legend, info, params = curve
                 all_curves.append([x, y, legend, merge_dicts(info, params)])
         return all_curves
 
