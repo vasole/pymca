@@ -547,9 +547,9 @@ class XMCDScanWindow(sw.ScanWindow):
             x-range between xmin and xmax containing n points
         """
         if not xRangeList:
-            # Default xRangeList: curvesDict sorted for legends
-            keys = sorted(self.curvesDict.keys())
-            xRangeList = [self.curvesDict[k].x[0] for k in keys]
+            xRangeList = []
+            for curve in self.getAllCurves():
+                xRangeList.append(curve[0])
         if not len(xRangeList):
             if DEBUG:
                 print('interpXRange -- Nothing to do')
@@ -640,11 +640,11 @@ class XMCDScanWindow(sw.ScanWindow):
             activeLegend = self.plotWindow.graph.getActiveCurve(justlegend=True)
         else:
             activeLegend = self.plotWindow.getActiveCurve(just_legend=True)
-        if (not activeLegend) or (activeLegend not in self.curvesDict.keys()):
+        if (not activeLegend) or (activeLegend not in self.curvesDict):
             # Use first curve in the series as xrange
             activeLegend = sorted(self.curvesDict.keys())[0]
         active = self.curvesDict[activeLegend]
-        xlabel, ylabel = self.extractLabels(active.info)
+        xlabel, ylabel = self.extractLabels(active[-1])    # works if x/ylabel is in last dict returned by getCurve
 
         # Calculate averages and add them to the plot
         normalization = self.optsDict['normalizationMethod']
@@ -659,11 +659,11 @@ class XMCDScanWindow(sw.ScanWindow):
             for legend in sel:
                 tmp = self.curvesDict[legend]
                 if normBefore:
-                    xVals = tmp.x[0]
-                    yVals = normalization(xVals, tmp.y[0])
+                    xVals = tmp[0]
+                    yVals = normalization(xVals, tmp[1])
                 else:
-                    xVals = tmp.x[0]
-                    yVals = tmp.y[0]
+                    xVals = tmp[0]
+                    yVals = tmp[1]
                 xvalList.append(xVals)
                 yvalList.append(yVals)
             avg_x, avg_y = self.specAverage(xvalList,
@@ -687,9 +687,9 @@ class XMCDScanWindow(sw.ScanWindow):
                           ylabel=ylabel,
                           color=color)
             if idx == 'A':
-                self.avgA = self.dataObjectsList[-1]
+                self.avgA = self.getAllCurves(just_legend=True)[-1]
             if idx == 'B':
-                self.avgB = self.dataObjectsList[-1]
+                self.avgB = self.getAllCurves(just_legend=True)[-1]
 
         if (self.avgA and self.avgB):
             self.performXMCD()
@@ -717,27 +717,20 @@ class XMCDScanWindow(sw.ScanWindow):
             return {}
         out = {}
         for legend in selection:
-            tmp = self.plotWindow.dataObjectsDict.get(legend, None)
-            if tmp:
+            tmp = self.plotWindow.getCurve(legend)
+            if tmp is not None:
                 tmp = copy.deepcopy(tmp)
-                xarr, yarr = tmp.x, tmp.y
-                #if len(tmp.x) == len(tmp.y):
-                xprocArr, yprocArr = [], []
-                for (x,y) in zip(xarr,yarr):
-                    # Sort
-                    idx = numpy.argsort(x, kind='mergesort')
-                    xproc = numpy.take(x, idx)
-                    yproc = numpy.take(y, idx)
-                    # Ravel, Increase
-                    xproc = xproc.ravel()
-                    idx = numpy.nonzero((xproc[1:] > xproc[:-1]))[0]
-                    xproc = numpy.take(xproc, idx)
-                    yproc = numpy.take(yproc, idx)
-                    xprocArr += [xproc]
-                    yprocArr += [yproc]
-                tmp.x = xprocArr
-                tmp.y = yprocArr
-                out[legend] = tmp
+                x, y = tmp[0], tmp[1]
+                # Sort
+                idx = numpy.argsort(x, kind='mergesort')
+                xproc = numpy.take(x, idx)
+                yproc = numpy.take(y, idx)
+                # Ravel, Increase
+                xproc = xproc.ravel()
+                idx = numpy.nonzero((xproc[1:] > xproc[:-1]))[0]
+                xproc = numpy.take(xproc, idx)
+                yproc = numpy.take(yproc, idx)
+                out[legend] = (xproc, yproc, ) + tuple(tmp[2:])
             else:
                 # TODO: Errorhandling, curve not found
                 if DEBUG:
@@ -844,10 +837,17 @@ class XMCDScanWindow(sw.ScanWindow):
         return xnew, ynew
 
     def extractLabels(self, info):
-        xlabel = 'X'
-        ylabel = 'Y'
+        # silx API
+        xlabel = info.get("xlabel", None)
+        ylabel = info.get("ylabel", None)
+        if xlabel is not None and ylabel is not None:
+            return xlabel, ylabel
+
+        # PyMca API
+        xlabel = "X"
+        ylabel = "Y"
         sel = info.get('selection', None)
-        labelNames = info.get('LabelNames',[])
+        labelNames = info.get('LabelNames', [])
         if not len(labelNames):
             pass
         elif len(labelNames) == 2:
@@ -864,62 +864,71 @@ class XMCDScanWindow(sw.ScanWindow):
         return xlabel, ylabel
 
     def performXAS(self):
-        keys = self.dataObjectsDict.keys()
+        keys = self.getAllCurves(just_legend=True)
         if (self.avgA in keys) and (self.avgB in keys):
-            a = self.dataObjectsDict[self.avgA]
-            b = self.dataObjectsDict[self.avgB]
+            a = self.getCurve(self.avgA)
+            xA, yA = a[0:2]
+            b = self.getCurve(self.avgB)
+            xB, yB = b[0:2]
         else:
             if DEBUG:
                 print('performXAS -- Data not found: ')
                 print('\tavg_m = %f' % self.avgA)
                 print('\tavg_p = %f' % self.avgB)
             return
-        if numpy.all( a.x[0] == b.x[0] ):
-            avg = .5*(b.y[0] + a.y[0])
+        if numpy.all( xA == xB ):
+            avg = .5*(yB + yA)
         else:
             if DEBUG:
                 print('performXAS -- x ranges are not the same! ')
                 print('Force interpolation')
-            avg = self.performAverage([a.x[0], b.x[0]],
-                                      [a.y[0], b.y[0]],
-                                       b.x[0])
+            avg = self.performAverage([xA, xB],
+                                      [yA, yB],
+                                       xB)
         xmcdLegend = 'XAS'
-        xlabel, ylabel = self.extractLabels(a.info)
+        infoA = a[-1]
+        if len(a) == 5:   # silx
+            infoA.update(a[-2])     # info + params
+        xlabel, ylabel = self.extractLabels(infoA)
         #info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_color': 'pink'}
         info = {}
-        self.addCurve(a.x[0], avg,
+        self.addCurve(xA, avg,
                       legend=xmcdLegend,
                       info=info,
                       xlabel=xlabel,
                       ylabel=ylabel,
                       color="pink")
-        self.xas = self.dataObjectsList[-1]
+        self.xas = self.getAllCurves(just_legend=True)[-1]
 
     def performXMCD(self):
-        keys = self.dataObjectsDict.keys()
+        keys = self.getAllCurves(just_legend=True)
         if (self.avgA in keys) and (self.avgB in keys):
-            a = self.dataObjectsDict[self.avgA]
-            b = self.dataObjectsDict[self.avgB]
+            curveA = self.getCurve(self.avgA)
+            xA, yA = curveA[0:2]
+            curveB = self.getCurve(self.avgA)
+            xB, yB = curveB[0:2]
         else:
             if DEBUG:
                 print('performXMCD -- Data not found:')
             return
-        if numpy.all( a.x[0] == b.x[0] ):
-            diff = b.y[0] - a.y[0]
+        if numpy.all(xA == xB):
+            diff = yB - yA
         else:
             if DEBUG:
                 print('performXMCD -- x ranges are not the same! ')
                 print('Force interpolation using p Average xrange')
             # Use performAverage d = 2 * avg(y1, -y2)
             # and force interpolation on p-xrange
-            diff = 2. * self.performAverage([a.x[0], b.x[0]],
-                                            [-a.y[0], b.y[0]],
-                                            b.x[0])
+            diff = 2. * self.performAverage([xA, xB],
+                                            [-yA, yB],
+                                            xB)
         xmcdLegend = 'XMCD'
-        xlabel, ylabel = self.extractLabels(a.info)
+        # this works assuming xlabel and ylabel are in curveA[-1] (params) for a silx plot
+        infoA = curveA[-1]
+        xlabel, ylabel = self.extractLabels(infoA)
         #info = {'xlabel': xlabel, 'ylabel': ylabel, 'plot_yaxis': 'right', 'plot_color': 'green'}
-        info={}
-        self.addCurve(b.x[0], diff,
+        info = {}
+        self.addCurve(xB, diff,
                       legend=xmcdLegend,
                       info=info,
                       color="green",
@@ -927,8 +936,8 @@ class XMCDScanWindow(sw.ScanWindow):
                       ylabel=ylabel,
                       yaxis="right")
         # DELETE ME self.graph.mapToY2(' '.join([xmcdLegend, ylabel]))
-        self._zoomReset()
-        self.xmcd = self.dataObjectsList[-1]
+        self.resetZoom()
+        self.xmcd = self.getAllCurves(just_legend=True)[-1]
 
     def selectionInfo(self, idx, key):
         """
@@ -940,8 +949,14 @@ class XMCDScanWindow(sw.ScanWindow):
         ret = '%s: '%idx
         for legend in sel:
             curr = self.curvesDict[legend]
-            value = curr.info.get(key, None)
-            if value:
+            if len(curr) == 4:   # legacy PyMca
+                info = curr[3]
+            elif len(curr) == 5:   # silx
+                info = curr[4].copy()
+                info.update(curr[3])
+            value = info.get(key, None)
+
+            if value is not None:
                 ret = ' '.join([ret, value])
         return ret
 
@@ -1012,15 +1027,18 @@ class XMCDScanWindow(sw.ScanWindow):
             return
 
         title = ''
-        legends = self.dataObjectsList
+        legends = self.getAllCurves(just_legend=True)
         tmpLegs = sorted(self.curvesDict.keys())
         if len(tmpLegs) > 0:
-            title += self.curvesDict[tmpLegs[0]].info.get('selectionlegend','')
+            info = self.curvesDict[tmpLegs[0]][-1].copy()
+            if len(self.curvesDict[tmpLegs[0]]) == 5:     # silx
+                info.update(self.curvesDict[tmpLegs[0]][3])
+            title += info.get('selectionlegend','')
             # Keep plots in the order they were added!
-            curves = [self.dataObjectsDict[leg] for leg in legends]
-            yVals = [curve.y[0] for curve in curves]
+            curves = self.getAllCurves()
+            yVals = [curve[1] for curve in curves]
             # xrange is the same for every curve
-            xVals = [curves[0].x[0]]
+            xVals = [curves[0][0]]
         else:
             yVals = []
             xVals = []
@@ -1080,12 +1098,12 @@ class XMCDScanWindow(sw.ScanWindow):
             self.saveOptionsSignal.emit(splitext(sepFileName)[0])
 
     def add(self):
-        if len(self.dataObjectsList) == 0:
+        if len(self.getAllCurves(just_legend=True)) == 0:
             return
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        (xVal,  yVal,  legend,  info) = activeCurve
+        (xVal,  yVal,  legend,  info) = activeCurve[0:4]
         #if 'selectionlegend' in info:
         #    newLegend = info['selectionlegend']
         #elif 'operation' in info:
@@ -1100,7 +1118,10 @@ class XMCDScanWindow(sw.ScanWindow):
         self.plotModifiedSignal.emit()
 
     def addAll(self):
-        for (xVal,  yVal,  legend,  info) in self.getAllCurves():
+        for curve in self.getAllCurves():
+            (xVal,  yVal,  legend,  info) = curve[0:4]
+            if len(curve) > 4:
+                info.update(curve[4])
             #if 'selectionlegend' in info:
             #    newLegend = info['selectionlegend']
             #elif 'operation' in info:
@@ -1115,12 +1136,15 @@ class XMCDScanWindow(sw.ScanWindow):
         self.plotModifiedSignal.emit()
 
     def replace(self):
-        if len(self.dataObjectsList) == 0:
+        if len(self.getAllCurves(just_legend=True)) == 0:
             return
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        (xVal,  yVal,  legend,  info) = activeCurve
+        (xVal,  yVal,  legend,  info) = activeCurve[0:4]
+        if len(activeCurve) > 4:
+            info.update(activeCurve[4])
+
         if 'selectionlegend' in info:
             newLegend = info['selectionlegend']
         elif 'operation' in info:
@@ -1136,7 +1160,11 @@ class XMCDScanWindow(sw.ScanWindow):
 
     def replaceAll(self):
         allCurves = self.getAllCurves()
-        for (idx, (xVal,  yVal,  legend,  info)) in enumerate(allCurves):
+        for (idx, curve) in enumerate(allCurves):
+            (xVal,  yVal,  legend,  info) = curve[0:4]
+            if len(curve) > 4:
+                info.update(curve[4])
+
             if 'selectionlegend' in info:
                 newLegend = info['selectionlegend']
             elif 'operation' in info:
@@ -2083,9 +2111,9 @@ def main():
     info2 = {'MotorNames': 'PhaseD oxPS PhaseA Phase BRUKER CRYO OXFORD',
              'MotorValues': '-9.45353059 -25.37448851 24.37665651 18.88048044 -0.26018745 2 0.901968648111 '}
     x = numpy.arange(100.,1100.)
-    y0 =  10*x + 10000.*numpy.exp(-0.5*(x-500)**2/400) + 1500*numpy.random.random(1000.)
-    y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000.)
-    y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000.)
+    y0 =  10*x + 10000.*numpy.exp(-0.5*(x-500)**2/400) + 1500*numpy.random.random(1000)
+    y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000)
+    y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000)
 
     swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replot=False, replace=False)
     swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replot=False, replace=False)

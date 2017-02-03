@@ -79,7 +79,7 @@ class XMCDAnalysis(Plugin1DBase.Plugin1DBase):
             print('_createWidget -- beamline = "%s"' % beamline)
         parent = None
         self.widget = XMCDWindow.XMCDWidget(parent,
-                                              self._plotWindow,
+                                            self,  #self._plotWindow,
                                               beamline,
                                               nSelectors = 5)
 
