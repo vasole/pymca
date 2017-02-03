@@ -42,26 +42,32 @@ which looks for needed methods in :attr:`PluginsToolButton.plot`.
 # TODO: we should probably support future plugins using the new silx plot API
 # (e.g. expecting 5 return values from getActiveCurve() ...)
 
-
+import logging
 import os
 import sys
 import traceback
+import weakref
 
 from silx.gui import qt
-from silx.gui.plot.Plot import Plot as silxPlot
 
 from PyMca5.PyMcaGraph.PluginLoader import PluginLoader
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 
-# from .PlotProxySilx import PlotProxySilx
-from PlotProxySilx import PlotProxySilx  # fixme: use relative import
 
+_logger = logging.getLogger(__name__)
 
-DEBUG = 0    # fixme: replace with "import logging..."
+def _toggleLogger():
+    """Toggle logger level for logging.DEBUG to logging.WARNING
+    and vice-versa."""
+    if _logger.getEffectiveLevel() == logging.DEBUG:
+        _logger.setLevel(logging.WARNING)
+    else:
+        _logger.setLevel(logging.DEBUG)
 
 
 class PluginsToolButton(qt.QToolButton, PluginLoader):
-    """PlotAction providing a context menu loaded with PyMca plugins
+    """Toolbutton providing a context menu loaded with PyMca plugins.
+    It behaves as a proxy for accessing the plot methods from the plugins.
 
     :param plot: reference to related plot widget
     :param parent: Parent QWidget widget
@@ -77,15 +83,17 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
         PluginLoader.__init__(self, parent)
 
         # plugins expect a legacy API, not the silx Plot API
-        if isinstance(plot, silxPlot):
-            self.plot = PlotProxySilx(plot)
-        else:
-            self.plot = plot
+        self.plot = weakref.proxy(plot, self._ooPlotDestroyed)
 
         self.clicked.connect(self._pluginClicked)
 
+    def _ooPlotDestroyed(self):
+        self.setEnabled(False)
+        # self.hide()   # alternative
+
     def __getattr__(self, attr):
-        """Plot API for plugins"""
+        """Plot API for plugins: forward calls for unknown
+        methods to :attr:`plot`."""
         try:
             return getattr(self.plot, attr)
         except AttributeError:
@@ -100,11 +108,12 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
         actionNames.append("Reload Plugins")
         menu.addAction("Set User Plugin Directory")
         actionNames.append("Set User Plugin Directory")
-        global DEBUG
-        if DEBUG:
+
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             text = "Toggle DEBUG mode OFF"
         else:
             text = "Toggle DEBUG mode ON"
+
         menu.addAction(text)
         menu.addSeparator()
         actionNames.append(text)
@@ -168,11 +177,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
                 self.pluginsToolButton.setPluginDirectoryList(pluginsDirList)
             return
         if "Toggle DEBUG mode" in a.text():
-            if DEBUG:
-                DEBUG = 0
-            else:
-                DEBUG = 1
-            return
+            _toggleLogger()
         key = callableKeys[idx]
 
         methods = pluginInstances[key].getMethods(

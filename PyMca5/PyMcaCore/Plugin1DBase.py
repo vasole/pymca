@@ -174,8 +174,11 @@ class Plugin1DBase(object):
         :attr:`_legacy` is set to *True*, or a :class:`PluginsToolButton`
         acting as proxy for a *silx* PlotWindow (*legacy=False*).
         """
-        if silxPlot is not None and isinstance(plotWindow, silxPlot):
-            self._legacy = False
+        if silxPlot is not None:
+            # FIXME: uncomment this when PluginsToolButton is in PyMca
+            # if isinstance(plotWindow, (silxPlot, PluginsToolButton)):
+            if hasattr(plotWindow, "plot"):  # PluginsToolButton.plot -> silx plot
+                self._legacy = False
 
     #Window related functions
     def windowTitle(self):
@@ -242,6 +245,7 @@ class Plugin1DBase(object):
         curve = self._plotWindow.getActiveCurve(just_legend=just_legend)
         if self._legacy or just_legend:
             if not just_legend:    # DEBUGGING
+                print(curve)
                 assert len(curve) == 4
             return curve
 
@@ -276,6 +280,7 @@ class Plugin1DBase(object):
             else:
                 x, y, legend, info, params = curve
                 all_curves.append([x, y, legend, merge_info_params(info, params)])
+        return all_curves
 
     def getMonotonicCurves(self):
         """
