@@ -1966,10 +1966,11 @@ char *SPS_GetMetaData(char *fullname, char *array, u32_t *length) {
       private_shm->meta_len = 0;
     }
 
-    if ((buffer = (void *) malloc(size)) == NULL)
+    if ((buffer = (void *) malloc(size ? size : 1)) == NULL)
       goto error;
     private_shm->private_meta_copy = buffer;
     private_shm->meta_len = size;
+    ((char*)buffer)[0] = '\0';
   } else
      buffer = private_shm->private_meta_copy;
 
