@@ -2642,7 +2642,7 @@ create_shm(char *specversion, char *array, int rows, int cols, int type, int fla
   else
     sflag |= IPC_CREAT;
 
-  size = rows * cols * typedsize(type) + sizeof(SHM);
+  size = rows * cols * typedsize(type) + sizeof(SHM) + SHM_META_SIZE;
   id = shmget((key_t) key, size, sflag);
   /*
    * now put the structure into the shared memory
@@ -2670,7 +2670,8 @@ create_shm(char *specversion, char *array, int rows, int cols, int type, int fla
   shm->head.head.pid = getpid();
   strcpy(shm->head.head.name, array);
   strcpy(shm->head.head.spec_version, specversion);
-
+  shm->head.head.meta_start = size - SHM_META_SIZE;
+  shm->head.head.meta_length = SHM_META_SIZE;
   return shm;
 }
 
