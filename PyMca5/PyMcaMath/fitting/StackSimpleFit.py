@@ -88,7 +88,7 @@ class StackSimpleFit(object):
         self.xMax = xmax
 
     def setDataIndex(self, data_index=None):
-        self.data_index = data_index
+        self.dataIndex = data_index
 
     def setConfigurationFile(self, fname):
         if not os.path.exists(fname):
