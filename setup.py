@@ -24,17 +24,20 @@ import time
 if 'bdist_wheel' in sys.argv:
     # wheels require setuptools
     from setuptools import setup
+    from setuptools.command.install import install as dftinstall
 elif '--distutils' in sys.argv:
     # The cx_setup.py machinery works with distutils
     sys.argv.remove("--distutils")
     from distutils.core import setup
+    from distutils.command.install import install as dftinstall
 else:
     try:
         from setuptools import setup
+        from setuptools.command.install import install as dftinstall
     except ImportError:
         from distutils.core import setup
+        from distutils.command.install import install as dftinstall
 from distutils.core import Extension, Command
-from distutils.command.install import install as dftinstall
 try:
     import numpy
 except ImportError:
