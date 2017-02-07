@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-*   Copyright (c) 1998-2016 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2017 European Synchrotron Radiation Facility (ESRF)
 *
 *   The software contained in this file "sps_py.c" is designed to interface
 *   the shared-data structures used and defined by the CSS "spec" package
