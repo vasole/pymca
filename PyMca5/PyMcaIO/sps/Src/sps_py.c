@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-*   Copyright (c) 1998-2016 European Synchrotron Radiation Facility (ESRF)
+*   Copyright (c) 1998-2017 European Synchrotron Radiation Facility (ESRF)
 *
 *   The software contained in this file "sps_py.c" is designed to interface
 *   the shared-data structures used and defined by the CSS "spec" package
@@ -233,6 +233,20 @@ static PyObject *sps_getinfo(PyObject *self, PyObject *args)
   }
 }    
 
+static PyObject* sps_putinfo(PyObject *self, PyObject *args)
+{
+  char *spec_version, *array_name, *info;
+  Py_ssize_t info_len;
+
+  if(!PyArg_ParseTuple(args, "sss#", &spec_version,&array_name,
+		       &info,&info_len))
+    return NULL;
+
+  int ret = SPS_PutInfoString(spec_version,array_name,info);
+  
+  return PyInt_FromLong(ret);
+}
+
 static PyObject *sps_getmetadata(PyObject *self, PyObject *args)
 {
   char *spec_version, *array_name,  *ret;
@@ -256,6 +270,20 @@ static PyObject *sps_getmetadata(PyObject *self, PyObject *args)
         PyErr_SetString(st->SPSError, "Array metadata cannot be read");
   	return NULL;
   }
+}
+
+static PyObject* sps_putmetadata(PyObject *self, PyObject *args)
+{
+  char *spec_version, *array_name, *data;
+  Py_ssize_t data_len;
+
+  if(!PyArg_ParseTuple(args, "sss#", &spec_version,&array_name,
+		       &data,&data_len))
+    return NULL;
+  
+  int ret = SPS_PutMetaData(spec_version,array_name,data,(u32_t)data_len);
+  
+  return PyInt_FromLong(ret);
 }
 
 static PyObject *sps_getenvstr(PyObject *self, PyObject *args)
@@ -753,7 +781,9 @@ static PyMethodDef SPSMethods[] = {
   { "putdatarow",    sps_putdatarow, METH_VARARGS},
   { "putdatacol",    sps_putdatacol, METH_VARARGS},
   { "getinfo",       sps_getinfo,    METH_VARARGS},
+  { "putinfo",       sps_putinfo,    METH_VARARGS},
   { "getmetadata",   sps_getmetadata, METH_VARARGS},
+  { "putmetadata",   sps_putmetadata, METH_VARARGS},
   { NULL, NULL}
 };
 
