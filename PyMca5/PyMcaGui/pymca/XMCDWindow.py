@@ -547,9 +547,9 @@ class XMCDScanWindow(sw.ScanWindow):
             x-range between xmin and xmax containing n points
         """
         if not xRangeList:
-            xRangeList = []
-            for curve in self.getAllCurves():
-                xRangeList.append(curve[0])
+            # xRangeList sorted for legends
+            keys = sorted(self.getAllCurves(just_legend=True))
+            xRangeList = [self.getCurve(legend)[0] for legend in keys]
         if not len(xRangeList):
             if DEBUG:
                 print('interpXRange -- Nothing to do')
@@ -2045,7 +2045,7 @@ class XMCDWidget(qt.QWidget):
         # nCurves = len(curves)
         self.legendList = [x[2] for x in curves]
         self.infoList   = [x[3] for x in curves]
-        if len(infoList):
+        if len(self.infoList):
             if len(curves[0]) == 5: # silx API
                 for idx, curve in enumerate(curves):
                     self.infoList[i].update(curve[-1])
@@ -2110,21 +2110,25 @@ def main():
     info0 = {'xlabel': 'foo',
              'ylabel': 'arb',
              'MotorNames': 'oxPS PhaseA Phase BRUKER CRYO OXFORD',
-             'MotorValues': '1 -6.27247094 -3.11222732 6.34150808 -34.75892563 21.99607165'}
+             'MotorValues': '1 -6.27247094 -3.11222732 6.34150808 -34.75892563 21.99607165',
+             'Key': '34.1'}
     info1 = {'MotorNames': 'PhaseD oxPS PhaseA Phase BRUKER CRYO OXFORD',
-             'MotorValues': '0.470746882688 0.25876374531 -0.18515967 -28.31216591 18.54513221 -28.09735532 -26.78833172'}
+             'MotorValues': '0.470746882688 0.25876374531 -0.18515967 -28.31216591 18.54513221 -28.09735532 -26.78833172',
+             'Key': '123.1'}
     info2 = {'MotorNames': 'PhaseD oxPS PhaseA Phase BRUKER CRYO OXFORD',
-             'MotorValues': '-9.45353059 -25.37448851 24.37665651 18.88048044 -0.26018745 2 0.901968648111 '}
+             'MotorValues': '-9.45353059 -25.37448851 24.37665651 18.88048044 -0.26018745 2 0.901968648111 ',
+             'Key': '1.1'}
     x = numpy.arange(100.,1100.)
     y0 =  10*x + 10000.*numpy.exp(-0.5*(x-500)**2/400) + 1500*numpy.random.random(1000)
     y1 =  10*x + 10000.*numpy.exp(-0.5*(x-600)**2/400) + 1500*numpy.random.random(1000)
     y2 =  10*x + 10000.*numpy.exp(-0.5*(x-400)**2/400) + 1500*numpy.random.random(1000)
 
-    swin.newCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replot=False, replace=False)
-    swin.newCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replot=False, replace=False)
-    swin.newCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='Ihor', info=info1, replot=False, replace=False)
+    swin.addCurve(x, y2, legend="Curve2", xlabel='ene_st2', ylabel='Ihor', info=info2, replot=False, replace=False)
+    swin.addCurve(x, y0, legend="Curve0", xlabel='ene_st0', ylabel='Iver', info=info0, replot=False, replace=False)
+    swin.addCurve(x, y1, legend="Curve1", xlabel='ene_st1', ylabel='Ihor', info=info1, replot=False, replace=False)
 
     # info['Key'] is overwritten when using newCurve
+    # Fixme: this will not work after new ScanWindow is introduced
     swin.dataObjectsDict['Curve2 Ihor'].info['Key'] = '1.1'
     swin.dataObjectsDict['Curve0 Iver'].info['Key'] = '34.1'
     swin.dataObjectsDict['Curve1 Ihor'].info['Key'] = '123.1'
