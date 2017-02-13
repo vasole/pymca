@@ -68,7 +68,8 @@ class SpecArithmetic(object):
         idx = self.__give_index(ymax, ydata)
         return xdata[idx], ymax, idx
 
-    def search_com(self, xdata, ydata):
+    @staticmethod
+    def search_com(xdata, ydata):
         """
         Return the center of mass in arrays xdata and ydata
         """
@@ -114,7 +115,7 @@ class SpecArithmetic(object):
         idx = index_peak
         try:
             while ydata[idx] >= hm:
-                idx = idx + 1
+                idx += 1
 
             x0 = float(xdata[idx - 1])
             x1 = float(xdata[idx])
@@ -127,9 +128,9 @@ class SpecArithmetic(object):
         except IndexError:
             uhmx = xdata[-1]
 
-        FWHM = uhmx - lhmx
-        CFWHM = (uhmx + lhmx) / 2
-        return FWHM, CFWHM
+        fwhm = uhmx - lhmx
+        cfwhm = (uhmx + lhmx) / 2
+        return fwhm, cfwhm
 
     @staticmethod
     def __give_index(elem, array):
@@ -178,15 +179,15 @@ class HKL(qt.QWidget):
 
     def setHKL(self, h="", k="", l=""):
         dformat = "%.4f"
-        if type(h) == type(""):
+        if isinstance(h, str):
             self.h.setText(h)
         else:
             self.h.setText(dformat % h)
-        if type(k) == type(""):
+        if isinstance(k, str):
             self.k.setText(k)
         else:
             self.k.setText(dformat % k)
-        if type(l) == type(""):
+        if isinstance(l, str):
             self.l.setText(l)
         else:
             self.l.setText(dformat % l)
@@ -323,7 +324,7 @@ class GraphInfoWidget(qt.QWidget):
             fformat = "%.7g"
             peakpos = fformat % peakpos
             peak = fformat % peak
-            myidx = "%d" % myidx
+            # myidx = "%d" % myidx
             com = fformat % com
             fwhm = fformat % fwhm
             cfwhm = fformat % cfwhm
@@ -335,7 +336,7 @@ class GraphInfoWidget(qt.QWidget):
         else:
             peakpos = "----"
             peak = "----"
-            myidx = "----"
+            # myidx = "----"
             com = "----"
             fwhm = "----"
             cfwhm = "----"
@@ -356,18 +357,18 @@ class GraphInfoWidget(qt.QWidget):
         self.delta.setText(delta)
 
     def getInfo(self):
-        ddict = {}
-        ddict['peak'] = self.peak.text()
-        ddict['peakat'] = self.peakAt.text()
-        ddict['fwhm'] = self.fwhm.text()
-        ddict['fwhmat'] = self.fwhmAt.text()
-        ddict['com'] = self.com.text()
-        ddict['mean'] = self.mean.text()
-        ddict['std'] = self.std.text()
-        ddict['min'] = self.minimum.text()
-        ddict['max'] = self.maximum.text()
-        ddict['delta'] = self.delta.text()
-        return ddict
+        return {
+            'peak': self.peak.text(),
+            'peakat': self.peakAt.text(),
+            'fwhm': self.fwhm.text(),
+            'fwhmat': self.fwhmAt.text(),
+            'com': self.com.text(),
+            'mean': self.mean.text(),
+            'std': self.std.text(),
+            'min': self.minimum.text(),
+            'max': self.maximum.text(),
+            'delta': self.delta.text(),
+        }
 
 
 class ScanInfoWidget(qt.QWidget):
@@ -403,12 +404,14 @@ class ScanInfoWidget(qt.QWidget):
         layout.addWidget(self.hkl,         1, 4, 1, 3)
 
     def updateFromDataObject(self, dataObject):
-        info = dataObject.info
+        self.updateFromInfoDict(dataObject.info)
+
+    def updateFromInfoDict(self, info):
         source = info.get('SourceName', None)
         if source is None:
             self.sourceLabel.setText("")
         else:
-            if type(source) == type(""):
+            if isinstance(source, str):
                 self.sourceLabel.setText(source)
             else:
                 self.sourceLabel.setText(source[0])
@@ -427,13 +430,13 @@ class ScanInfoWidget(qt.QWidget):
             self.hkl.setHKL(*hkl)
 
     def getInfo(self):
-        ddict = {}
-        ddict['source'] = self.sourceLabel.text()
-        ddict['scan'] = self.scanLabel.text()
-        ddict['hkl'] = ["%s" % self.hkl.h.text(),
-                        "%s" % self.hkl.k.text(),
-                        "%s" % self.hkl.l.text()]
-        return ddict
+        return {
+            'source': self.sourceLabel.text(),
+            'scan': self.scanLabel.text(),
+            'hkl': ["%s" % self.hkl.h.text(),
+                    "%s" % self.hkl.k.text(),
+                    "%s" % self.hkl.l.text()]
+        }
 
 
 class ScanWindowInfoWidget(qt.QWidget):
@@ -449,34 +452,22 @@ class ScanWindowInfoWidget(qt.QWidget):
 
         layout.addWidget(self.scanInfo)
         layout.addWidget(self.graphInfo)
-        # print "hiding graph info"
-        # self.graphInfo.hide()
 
     def updateFromDataObject(self, dataObject):
         self.scanInfo.updateFromDataObject(dataObject)
         self.graphInfo.updateFromDataObject(dataObject)
 
     def getInfo(self):
-        ddict = {}
-        ddict['scan'] = self.scanInfo.getInfo()
-        ddict['graph'] = self.graphInfo.getInfo()
-        return ddict
+        return {
+            'scan': self.scanInfo.getInfo(),
+            'graph': self.graphInfo.getInfo()
+        }
 
 
 def test():
     app = qt.QApplication([])
     w = ScanWindowInfoWidget()
     app.lastWindowClosed.connect(app.quit)
-    """
-        winfo.grid(sticky='wesn')
-        if STATISTICS:
-          winfo.configure(h=65,k=45621,l=32132,peak=6666876,
-                            fwhm=0.2154,com=544,
-                            ymax=10.,ymin=4,ystd=1,ymean=5)
-        else:
-          winfo.configure(h=65,k=45621,l=32132,peak=6666876,
-                        fwhm=0.2154,com=544)
-        """
     w.show()
     app.exec_()
 

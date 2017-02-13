@@ -38,6 +38,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PluginsToolButton import PluginsToolButton   # TODO: relative import
 from ScanFitToolButton import ScanFitToolButton   # TODO: relative import
 import SimpleActions   # TODO: fix relative import
+import ScanWindowInfoWidget  # TODO: fix relative import
 from PyMca5.PyMcaGui.pymca import ScanFit
 
 
@@ -124,11 +125,22 @@ class ScanWindow(PlotWindow):
                         directoryList=pluginDir)
             self._toolbar.addWidget(pluginsToolButton)
 
+        self.scanWindowInfoWidget = None
+        if info:
+            self.scanWindowInfoWidget = ScanWindowInfoWidget.\
+                                            ScanWindowInfoWidget()
+            self.infoDockWidget = qt.QDockWidget(self)
+            self.infoDockWidget.layout().setContentsMargins(0, 0, 0, 0)
+            self.infoDockWidget.setWidget(self.scanWindowInfoWidget)
+            self.infoDockWidget.setWindowTitle(self.windowTitle() + " Info")
+            self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+                               self.infoDockWidget)
+
 
 def test():
     import numpy
     app = qt.QApplication([])
-    w = ScanWindow()
+    w = ScanWindow(info=True)
     x = numpy.arange(1000.)
     y1 = 10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400)
     y2 = y1 + 5000. * numpy.exp(-0.5*(x-700)*(x-700)/200)
