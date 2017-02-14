@@ -23,9 +23,15 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-"""This module defines a set of simple plot actions
+"""This module defines a set of simple plot actions processing one or all
+plotted curves:
 
     - :class:`AverageAction`
+    - :class:`DerivativeAction`
+    - :class:`SmoothAction`
+    - :class:`SwapSignAction`
+    - :class:`SubtractAction`
+    - :class:`YMinToZeroAction`
 
 """
 import copy
@@ -197,8 +203,12 @@ class DerivativeAction(PlotAction):
         info1 = _updated_info(info0, legend0, "derivate")
         info1['plot_yaxis'] = "right"
 
+        ylabel1 = params0.get("ylabel")
+        if ylabel1 is None:
+            ylabel1 = "Y"
+
         self.plot.addCurve(x1, y1, legend1,
-                           ylabel=params0.get("ylabel", "Y") + "'",
+                           ylabel=ylabel1 + "'",
                            info=info1,
                            yaxis="right")
 
@@ -286,6 +296,10 @@ class SubtractAction(PlotAction):
 
         x0, y0, legend0, info0, params0 = active_curve
 
+        ylabel0 = params0.get("ylabel", "Y0")
+        if ylabel0 is None:
+            ylabel0 = "Y0"
+
         for x, y, legend, info, params in all_curves:
             # (y1 - y0) is equivalent to 2 * average(-y0, y1)
             XX = [x0, x]
@@ -293,9 +307,12 @@ class SubtractAction(PlotAction):
             xplot, yplot = _simpleMath.average(XX, YY)
             yplot *= 2
             legend1 = "(%s - %s)" % (legend, legend0)
-            ylabel1 = "(%s - %s)" % (
-                params.get("ylabel", "Y"),
-                params0.get("ylabel", "Y0"))
+
+            ylabel = params0.get("ylabel", "Y")
+            if ylabel is None:
+                ylabel = "Y"
+
+            ylabel1 = "(%s - %s)" % (ylabel, ylabel0)
 
             info1 = _updated_info(info, legend, "subtract")
             info1['LabelNames'] = [legend1]
