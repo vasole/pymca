@@ -28,8 +28,7 @@
     - :class:`AverageAction`
 
 """
-import weakref
-from PyMca5.PyMcaMath import SimpleMath
+import copy
 
 from silx.gui.plot.PlotActions import PlotAction
 
@@ -89,6 +88,17 @@ def _QWarning(msg, parent=None):
 #     return legend == active_legend
 
 
+def _updated_info(info0, sourcename, operation):
+    info1 = copy.deepcopy(info0)
+    if not 'operations' in info1:
+        info1['operations'] = []
+    info1['operations'].append(operation)
+    info1['SourceName'] = sourcename
+    if 'selectionlegend' in info1:
+        del info1['selectionlegend']
+    return info1
+
+
 class AverageAction(PlotAction):
     """Average all curves, clear plot, add average curve
     """
@@ -106,18 +116,23 @@ class AverageAction(PlotAction):
         curves = self.plot.getAllCurves()
         if not curves:
             return
-        x0, y0, legend0, _info0, _params0 = curves[0]
+        x0, y0, legend0, info0, _params0 = curves[0]
         avg_legend = legend0
         all_x = [x0]
         all_y = [y0]
         for x, y, legend, info, params in curves[1:]:
             avg_legend += " + " + legend
+            all_x.append(x)
+            all_y.append(y)
+
+        avg_info = _updated_info(info0, avg_legend, "average")
 
         xavg, yavg = _simpleMath.average(all_x, all_y)
         avg_legend = "(%s)/%d" % (avg_legend, len(curves))
 
         self.plot.clearCurves()
-        self.plot.addCurve(xavg, yavg, avg_legend)
+        self.plot.addCurve(xavg, yavg, avg_legend,
+                           info=avg_info)
 
 
 class SmoothAction(PlotAction):
@@ -138,13 +153,22 @@ class SmoothAction(PlotAction):
         curve = _getOneCurve(self.plot)
         if curve is None:
             return
-        x0, y0, legend0, _info, _params = curve
+        x0, y0, legend0, info0, _params = curve
 
         x1 = x0 * 1
         y1 = _simpleMath.smooth(y0)
-        legend1 = "%s Smooth" % legend0
 
-        self.plot.addCurve(x1, y1, legend1)
+        if info0.get("operations") is None or \
+                info0["operations"][-1] != "smooth":
+            legend1 = "%s Smooth" % legend0
+        else:
+            # don't repeat "smooth"
+            legend1 = legend0
+
+        info1 = _updated_info(info0, legend0, "smooth")
+
+        self.plot.addCurve(x1, y1, legend1,
+                           info=info1)
 
 
 class DerivativeAction(PlotAction):
@@ -165,12 +189,18 @@ class DerivativeAction(PlotAction):
         curve = _getOneCurve(self.plot)
         if curve is None:
             return
-        x0, y0, legend0, _info, _params = curve
+        x0, y0, legend0, info0, params0 = curve
 
         x1, y1 = _simpleMath.derivate(x0, y0)
         legend1 = legend0 + "'"
 
-        self.plot.addCurve(x1, y1, legend1, yaxis="right")
+        info1 = _updated_info(info0, legend0, "derivate")
+        info1['plot_yaxis'] = "right"
+
+        self.plot.addCurve(x1, y1, legend1,
+                           ylabel=params0.get("ylabel", "Y") + "'",
+                           info=info1,
+                           yaxis="right")
 
 
 class SwapSignAction(PlotAction):
@@ -190,13 +220,16 @@ class SwapSignAction(PlotAction):
         curve = _getOneCurve(self.plot)
         if curve is None:
             return
-        x0, y0, legend0, _info, _params = curve
+        x0, y0, legend0, info0, _params = curve
 
         x1 = 1 * x0
         y1 = -y0
         legend1 = "-(%s)" % legend0
 
-        self.plot.addCurve(x1, y1, legend1)
+        info1 = _updated_info(info0, legend0, "swapsign")
+
+        self.plot.addCurve(x1, y1, legend1,
+                           info=info1)
 
 
 class YMinToZeroAction(PlotAction):
@@ -217,13 +250,16 @@ class YMinToZeroAction(PlotAction):
         curve = _getOneCurve(self.plot)
         if curve is None:
             return
-        x0, y0, legend0, _info, _params = curve
+        x0, y0, legend0, info0, _params = curve
 
         x1 = x0 * 1
         y1 = y0 - min(y0)
         legend1 = "(%s) - ymin" % legend0
 
-        self.plot.addCurve(x1, y1, legend1)
+        info1 = _updated_info(info0, legend0, "forceymintozero")
+
+        self.plot.addCurve(x1, y1, legend1,
+                           info=info1)
 
 
 class SubtractAction(PlotAction):
@@ -248,15 +284,22 @@ class SubtractAction(PlotAction):
         if active_curve is None:
             return
 
-        x0, y0, legend0, _info, _params = active_curve
+        x0, y0, legend0, info0, params0 = active_curve
 
-        for x, y, legend, _info, _params in all_curves:
+        for x, y, legend, info, params in all_curves:
             # (y1 - y0) is equivalent to 2 * average(-y0, y1)
             XX = [x0, x]
             YY = [-y0, y]
             xplot, yplot = _simpleMath.average(XX, YY)
             yplot *= 2
             legend1 = "(%s - %s)" % (legend, legend0)
+            ylabel1 = "(%s - %s)" % (
+                params.get("ylabel", "Y"),
+                params0.get("ylabel", "Y0"))
+
+            info1 = _updated_info(info, legend, "subtract")
+            info1['LabelNames'] = [legend1]
 
             self.plot.removeCurve(legend)
-            self.plot.addCurve(xplot, yplot, legend1)
+            self.plot.addCurve(xplot, yplot, legend1,
+                               info=info1, ylabel=ylabel1)
