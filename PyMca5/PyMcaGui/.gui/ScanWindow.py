@@ -28,6 +28,8 @@
 The main addition is a :class:`PluginsToolButton` button added to the toolbar,
 to open a menu with plugins."""
 
+# TODO: addCurve must take monitor (m=info["selection"]["m"]) into account
+# y = y / m if len(m) == len(y) else y / m[0] if len(m) == 1
 
 import os
 
