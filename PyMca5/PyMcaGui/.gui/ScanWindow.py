@@ -136,6 +136,12 @@ class ScanWindow(PlotWindow):
             self.addDockWidget(qt.Qt.BottomDockWidgetArea,
                                self.infoDockWidget)
 
+            self.sigActiveCurveChanged.connect(self.__updateInfoWidget)
+
+    def __updateInfoWidget(self, previous_legend, legend):
+        x, y, legend, info, params = self.getCurve(legend)
+        self.scanWindowInfoWidget.updateFromXYInfo(x, y, info)
+
 
 def test():
     import numpy
@@ -145,9 +151,18 @@ def test():
     y1 = 10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400)
     y2 = y1 + 5000. * numpy.exp(-0.5*(x-700)*(x-700)/200)
     y3 = y1 + 7000. * numpy.exp(-0.5*(x-200)*(x-200)/1000)
-    w.addCurve(x, y1, legend="dummy1")
-    w.addCurve(x, y2, legend="dummy2")
-    w.addCurve(x, y3, legend="dummy3")
+    w.addCurve(x, y1, legend="dummy1",
+               info={"SourceName": "Synthetic data 1 (linear+gaussian)",
+                     "hkl": [1.1, 1.2, 1.3],
+                     "Header": ["#S 1 toto"]})
+    w.addCurve(x, y2, legend="dummy2",
+               info={"SourceName": "Synthetic data 2",
+                     "hkl": [2.1, 2.2, 2.3],
+                     "Header": ["#S 2"]})
+    w.addCurve(x, y3, legend="dummy3",
+               info={"SourceName": "Synthetic data 3",
+                     "hkl": ["3.1", 3.2, 3.3],
+                     "Header": ["#S 3"]})
     w.resetZoom()
     app.lastWindowClosed.connect(app.quit)
     w.show()

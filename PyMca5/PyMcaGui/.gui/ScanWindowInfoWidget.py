@@ -194,7 +194,12 @@ class HKL(qt.QWidget):
 
 
 class GraphInfoWidget(qt.QWidget):
+    """Widget displaying statistics about curve data:
+    peak info (x position, y value, fwhm, center of fwhm), max y value,
+    min y value, delta y, mean y, center of mass of y values, standard
+    deviation of y.
 
+    This information is extracted directly from the curve data."""
     def __init__(self, parent):
         qt.QWidget.__init__(self, parent)
         layout = qt.QGridLayout(self)
@@ -291,20 +296,6 @@ class GraphInfoWidget(qt.QWidget):
         layout.addWidget(self.delta,    1, 8)
         self.specArithmetic = SpecArithmetic()
 
-    def updateFromDataObject(self, dataObject):
-        ydata = numpy.ravel(dataObject.y[0])
-        ylen = len(ydata)
-        if ylen:
-            if dataObject.x is None:
-                xdata = numpy.arange(ylen).astype(numpy.float)
-            elif not len(dataObject.x):
-                xdata = numpy.arange(ylen).astype(numpy.float)
-            else:
-                xdata = numpy.ravel(dataObject.x[0])
-        else:
-            xdata = None
-        self.updateFromXY(xdata, ydata)
-
     def updateFromXY(self, xdata, ydata):
         if len(ydata):
             peakpos, peak, myidx = self.specArithmetic.search_peak(
@@ -372,7 +363,10 @@ class GraphInfoWidget(qt.QWidget):
 
 
 class ScanInfoWidget(qt.QWidget):
+    """Widget displaying curve metadata:
+    data source, first scan header line, H, K, L
 
+    This information is extracted from the curve info dict."""
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
         layout = qt.QGridLayout(self)
@@ -402,9 +396,6 @@ class ScanInfoWidget(qt.QWidget):
         layout.addWidget(scanLabel,        1, 0)
         layout.addWidget(self.scanLabel,   1, 1)
         layout.addWidget(self.hkl,         1, 4, 1, 3)
-
-    def updateFromDataObject(self, dataObject):
-        self.updateFromInfoDict(dataObject.info)
 
     def updateFromInfoDict(self, info):
         source = info.get('SourceName', None)
@@ -453,9 +444,9 @@ class ScanWindowInfoWidget(qt.QWidget):
         layout.addWidget(self.scanInfo)
         layout.addWidget(self.graphInfo)
 
-    def updateFromDataObject(self, dataObject):
-        self.scanInfo.updateFromDataObject(dataObject)
-        self.graphInfo.updateFromDataObject(dataObject)
+    def updateFromXYInfo(self, xdata, ydata, info):
+        self.scanInfo.updateFromInfoDict(info)
+        self.graphInfo.updateFromXY(xdata, ydata)
 
     def getInfo(self):
         return {
