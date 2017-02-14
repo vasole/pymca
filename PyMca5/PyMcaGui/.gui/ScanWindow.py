@@ -70,16 +70,19 @@ if userPluginsDirectory is not None:
 
 
 class ScanWindow(PlotWindow):
+    """:class:`PlotWindow` augmented with plugins, fitting actions,
+    a widget for displaying scan metadata and simple curve processing actions.
+    """
     def __init__(self, parent=None, name="Scan Window", fit=True, backend=None,
                  plugins=True, control=True, position=True, roi=True,
-                 specfit=None, newplot=True, info=False, **kw):
+                 specfit=None, info=False):
         super(ScanWindow, self).__init__(parent,
                                          backend=backend,
                                          roi=roi,
                                          control=control,
                                          position=position,
                                          mask=False,
-                                         colormap=False)  # **kw)
+                                         colormap=False)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setPanWithArrowKeys(True)
         self._plotType = "SCAN"     # needed by legacy plugins
@@ -94,7 +97,8 @@ class ScanWindow(PlotWindow):
         self.addToolBar(self._toolbar)
 
         if fit:
-            self.scanFit = ScanFit.ScanFit(specfit=specfit)  # attr needed by scanFitToolButton
+            # attr needed by scanFitToolButton
+            self.scanFit = ScanFit.ScanFit(specfit=specfit)
             scanFitToolButton = ScanFitToolButton(self)
             self._toolbar.addWidget(scanFitToolButton)
 
@@ -126,6 +130,7 @@ class ScanWindow(PlotWindow):
             self._toolbar.addWidget(pluginsToolButton)
 
         self.scanWindowInfoWidget = None
+        self.infoDockWidget = None
         if info:
             self.scanWindowInfoWidget = ScanWindowInfoWidget.\
                                             ScanWindowInfoWidget()
