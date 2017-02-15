@@ -1351,7 +1351,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             # printer was not selected
             return
         #self._printer = None
-        if PlotWindow.PlotWidget.SVG and (qt.qVersion() > "5.0.0"):
+        if PlotWindow.PlotWidget.SVG:
             svg = True
             self._svgRenderer = self.getSvgRenderer()
         else:
