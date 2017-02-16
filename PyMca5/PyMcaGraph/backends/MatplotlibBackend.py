@@ -295,7 +295,6 @@ class MatplotlibGraph(FigureCanvas):
                 color = "#" + color[3:]
             #self.fig.set_facecolor(color)
             self.fig.set_facecolor("w")
-            self.fig.set_edgecolor("w")
             # that's it
         if 1:
             #this almost works
@@ -624,9 +623,9 @@ class MatplotlibGraph(FigureCanvas):
                         axes = artist.axes
                         artist.set_animated(True)
                         canvas.draw()
-                        self._background = canvas.copy_from_bbox(axes.bbox)
+                        self._background = canvas.copy_from_bbox(self.fig.bbox)
                         axes.draw_artist(artist)
-                        canvas.blit(axes.bbox)
+                        canvas.blit(self.fig.bbox)
                     else:
                         self.fig.canvas.draw()
                     ddict = {}
@@ -895,7 +894,7 @@ class MatplotlibGraph(FigureCanvas):
                     artist.set_animated(True)
                     canvas.restore_region(self._background)
                     axes.draw_artist(artist)
-                    canvas.blit(axes.bbox)
+                    canvas.blit(self.fig.bbox)
                 else:
                     self.fig.canvas.draw()
                 ddict = {}
@@ -976,10 +975,10 @@ class MatplotlibGraph(FigureCanvas):
                     axes = artist.axes
                     artist.set_animated(True)
                     if self._background is None:
-                        self._background = canvas.copy_from_bbox(axes.bbox)
+                        self._background = canvas.copy_from_bbox(self.fig.bbox)
                     canvas.restore_region(self._background)
                     axes.draw_artist(artist)
-                    canvas.blit(axes.bbox)
+                    canvas.blit(self.fig.bbox)
                 else:
                     self.fig.canvas.draw()
                 return
@@ -1052,14 +1051,14 @@ class MatplotlibGraph(FigureCanvas):
                     artist = self._drawingPatch
                     canvas = artist.figure.canvas
                     axes = artist.axes
-                    self._background = canvas.copy_from_bbox(axes.bbox)
+                    self._background = canvas.copy_from_bbox(self.fig.bbox)
                 artist = self._drawingPatch
                 canvas = artist.figure.canvas
                 axes = artist.axes
                 artist.set_animated(True)
                 canvas.restore_region(self._background)
                 axes.draw_artist(artist)
-                canvas.blit(axes.bbox)
+                canvas.blit(self.fig.bbox)
             else:
                 self.fig.canvas.draw()
             self._emitDrawingSignal(event='drawingProgress')
