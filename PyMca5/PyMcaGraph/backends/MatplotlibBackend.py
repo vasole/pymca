@@ -295,6 +295,7 @@ class MatplotlibGraph(FigureCanvas):
                 color = "#" + color[3:]
             #self.fig.set_facecolor(color)
             self.fig.set_facecolor("w")
+            self.fig.set_edgecolor("w")
             # that's it
         if 1:
             #this almost works
