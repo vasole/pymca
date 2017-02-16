@@ -146,6 +146,8 @@ class ScanWindow(PlotWindow):
         x, y, legend, info, params = self.getCurve(legend)
         self.scanWindowInfoWidget.updateFromXYInfo(x, y, info)
 
+    # TODO: toggleInfoWidget (method and control menu entry)
+
 
 def test():
     import numpy
