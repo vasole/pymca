@@ -76,7 +76,7 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
                     'deprecated replot argument, use resetzoom instead')
             resetzoom = replot and resetzoom
 
-        sellist = selectionlist if isinstance(selectionlist, list) else\
+        sellist = selectionlist if isinstance(selectionlist, list) else \
             [selectionlist]
 
         if len(self.getAllCurves(just_legend=True)):
@@ -255,17 +255,15 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
         _logger.debug("_removeSelection(self, selectionlist) " +
                       str(selectionlist))
 
-        sellist = selectionlist if isinstance(selectionlist, list) else\
+        sellist = selectionlist if isinstance(selectionlist, list) else \
             [selectionlist]
 
         removelist = []
         for sel in sellist:
             key = sel['Key']
-            if "scanselection" not in sel:
+            if "scanselection" not in sel or not sel["scanselection"]:
                 continue
             if sel['scanselection'] == "MCA":
-                continue
-            if not sel["scanselection"]:
                 continue
             if len(key.split(".")) > 2:
                 continue
@@ -282,8 +280,30 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
             self.removeCurves(removelist)
 
     def _replaceSelection(self, selectionlist):
-        # TODO
-        pass
+        _logger.debug("_replaceSelection(self, selectionlist) " +
+                      selectionlist)
+
+        sellist = selectionlist if isinstance(selectionlist, list) else \
+            [selectionlist]
+
+        doit = False
+        for sel in sellist:
+            if "scanselection" not in sel or not sel["scanselection"]:
+                continue
+            if sel['scanselection'] == "MCA":
+                continue
+            if len(sel["Key"].split(".")) > 2:
+                continue
+            dataObject = sel['dataobject']
+            if dataObject.info["selectiontype"] == "1D":
+                if hasattr(dataObject, 'y'):
+                    doit = True
+                    break
+        if not doit:
+            return
+        self.clearCurves()
+        self.dataObjectsDict = {}
+        self._addSelection(selectionlist, resetzoom=True)
 
     def removeCurves(self, removeList):
         for legend in removeList:
