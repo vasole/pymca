@@ -135,17 +135,16 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
                         # A priori the graph only knows about plots
                         ydata = ydata / mdata
                     ylegend = 'y%d' % ycounter
-                    if dataObject.info['selection'] is not None:
-                        if isinstance(dataObject.info['selection'], dict):
-                            if 'x' in dataObject.info['selection']:
-                                # proper scan selection
-                                ilabel = dataObject.info['selection']['y'][ycounter]
-                                ylegend = dataObject.info['LabelNames'][ilabel]
-                                ylabel = ylegend
-                                if sel['selection']['x'] is not None:
-                                    if len(dataObject.info['selection']['x']):
-                                        xlabel = dataObject.info['LabelNames'] \
-                                            [dataObject.info['selection']['x'][0]]
+                    if isinstance(dataObject.info['selection'], dict):
+                        if 'x' in dataObject.info['selection']:
+                            # proper scan selection
+                            ilabel = dataObject.info['selection']['y'][ycounter]
+                            ylegend = dataObject.info['LabelNames'][ilabel]
+                            ylabel = ylegend
+                            if sel['selection']['x'] is not None:
+                                if len(dataObject.info['selection']['x']):
+                                    xlabel = dataObject.info['LabelNames'] \
+                                        [dataObject.info['selection']['x'][0]]
                     dataObject.info["xlabel"] = xlabel
                     dataObject.info["ylabel"] = ylabel
                     newLegend = legend + " " + ylegend
