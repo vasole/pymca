@@ -64,10 +64,7 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
         w.sigReplaceSelection.connect(self._replaceSelection)
 
     def _addSelection(self, selectionlist, resetzoom=True, replot=None):
-        """
-
-        :param selectionlist: List of selection dictionary
-        :return:
+        """Add curves to plot and data objects to :attr:`dataObjectsDict`
         """
         _logger.debug("_addSelection(self, selectionlist) " +
                       str(selectionlist))
@@ -280,6 +277,8 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
             self.removeCurves(removelist)
 
     def _replaceSelection(self, selectionlist):
+        """Delete existing curves and data objects, then add new selection.
+        """
         _logger.debug("_replaceSelection(self, selectionlist) " +
                       selectionlist)
 
@@ -311,16 +310,108 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
             if legend in self.dataObjectsDict:
                 del self.dataObjectsDict[legend]
 
-    def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
-                 color=None, symbol=None, linestyle=None,
-                 xlabel=None, ylabel=None, yaxis=None,
+    def addCurve(self, x, y, legend=None, info=None, replace=False,
+                 resetzoom=False, replot=True, color=None, symbol=None,
+                 linestyle=None, xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
-        # TODO?? (original ScanWindow keeps old info when replacing a curve)
-        pass
+        """Add a curve. If a curve with the same legend already exists,
+        the unspecified parameters (color, symbol, linestyle, yaxis) are
+        assumed to be identical to the parameters of the existing curve."""
+        if legend in self._curveList:
+            if info is None:
+                info = {}
+            oldStuff = self.getCurve(legend)
+            if oldStuff is not None and len(oldStuff):
+                oldX, oldY, oldLegend, oldInfo, oldParams = oldStuff
+            else:
+                oldInfo = {}
+            if color is None:
+                color = info.get("plot_color",
+                                 oldInfo.get("plot_color", None))
+            if symbol is None:
+                symbol = info.get("plot_symbol",
+                                  oldInfo.get("plot_symbol", None))
+            if linestyle is None:
+                linestyle = info.get("plot_linestyle",
+                                     oldInfo.get("plot_linestyle", None))
+            if yaxis is None:
+                yaxis = info.get("plot_yaxis",
+                                 oldInfo.get("plot_yaxis", None))
+        else:
+            if info is None:
+                info = {}
+            if color is None:
+                color = info.get("plot_color", None)
+            if symbol is None:
+                symbol = info.get("plot_symbol", None)
+            if linestyle is None:
+                linestyle = info.get("plot_linestyle", None)
+            if yaxis is None:
+                yaxis = info.get("plot_yaxis", None)
+        if legend in self.dataObjectsDict:
+            # the info is changing
+            super(PyMcaScanWindow, self).addCurve(
+                    x, y, legend=legend, info=info, replot=replot,
+                    replace=replace, color=color, symbol=symbol,
+                    linestyle=linestyle, xlabel=xlabel, ylabel=ylabel,
+                    yaxis=yaxis, xerror=xerror, yerror=yerror,
+                    resetzoom=resetzoom, **kw)
+        else:
+            # create the data object
+            self.newCurve(
+                    x, y, legend=legend, info=info, replot=replot,
+                    replace=replace, color=color, symbol=symbol,
+                    linestyle=linestyle, xlabel=xlabel, ylabel=ylabel,
+                    yaxis=yaxis, xerror=xerror, yerror=yerror,
+                    resetzoom=resetzoom, **kw)
 
-    def newCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
-                 color=None, symbol=None, linestyle=None,
-                 xlabel=None, ylabel=None, yaxis=None,
+    def newCurve(self, x, y, legend=None, info=None, replace=False,
+                 resetzoom=False, replot=True, color=None, symbol=None,
+                 linestyle=None, xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
-        # TODO?? (maybe merge with addCurve to have a single method to add a curve)
-        pass
+        """
+        Create and add a data object to :attr:`dataObjectsDict`
+        """
+        if legend is None:
+            legend = "Unnamed curve 1.1"
+        if xlabel is None:
+            xlabel = "X"
+        if ylabel is None:
+            ylabel = "Y"
+        if info is None:
+            info = {}
+        if color is not None:
+            info["plot_color"] = color
+        if symbol is not None:
+            info["plot_symbol"] = symbol
+        if linestyle is not None:
+            info["plot_linestyle"] = linestyle
+        if yaxis is not None:
+            info["plot_yaxis"] = yaxis
+
+        newDataObject = DataObject.DataObject()
+        newDataObject.x = [x]
+        newDataObject.y = [y]
+        newDataObject.m = None
+        newDataObject.info = copy.deepcopy(info)
+        newDataObject.info['legend'] = legend
+        newDataObject.info['SourceName'] = legend
+        newDataObject.info['Key'] = ""
+        newDataObject.info['selectiontype'] = "1D"
+        newDataObject.info['LabelNames'] = [xlabel, ylabel]
+        newDataObject.info['selection'] = {'x': [0], 'y': [1]}
+
+        sel = {'SourceType': "Operation",
+               'SourceName': legend,
+               'Key': "",
+               'legend': legend,
+               'dataobject': newDataObject,
+               'scanselection': True,
+               'selection': {'x': [0], 'y': [1], 'm': [],
+                             'cntlist': [xlabel, ylabel]},
+               'selectiontype': "1D"}
+        sel_list = [sel]
+        if replace:
+            self._replaceSelection(sel_list)
+        else:
+            self._addSelection(sel_list, resetzoom=replot)
