@@ -69,15 +69,15 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
         :param selectionlist: List of selection dictionary
         :return:
         """
+        _logger.debug("_addSelection(self, selectionlist) " +
+                      str(selectionlist))
         if replot is not None:
             _logger.warning(
-                'deprecated replot argument, use resetzoom instead')
+                    'deprecated replot argument, use resetzoom instead')
             resetzoom = replot and resetzoom
 
-        if type(selectionlist) == type([]):
-            sellist = selectionlist
-        else:
-            sellist = [selectionlist]
+        sellist = selectionlist if isinstance(selectionlist, list) else\
+            [selectionlist]
 
         if len(self.getAllCurves(just_legend=True)):
             activeCurve = self.getActiveCurve(just_legend=True)
@@ -86,7 +86,6 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
         nSelection = len(sellist)
         for selectionIndex in range(nSelection):
             sel = sellist[selectionIndex]
-            # source = sel['SourceName']
             key = sel['Key']
             legend = sel['legend']  # expected form sourcename + scan key
             if "scanselection" not in sel or not sel["scanselection"] or \
@@ -253,8 +252,34 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
                 self.resetZoom()
 
     def _removeSelection(self, selectionlist):
-        # TODO
-        pass
+        _logger.debug("_removeSelection(self, selectionlist) " +
+                      str(selectionlist))
+
+        sellist = selectionlist if isinstance(selectionlist, list) else\
+            [selectionlist]
+
+        removelist = []
+        for sel in sellist:
+            key = sel['Key']
+            if "scanselection" not in sel:
+                continue
+            if sel['scanselection'] == "MCA":
+                continue
+            if not sel["scanselection"]:
+                continue
+            if len(key.split(".")) > 2:
+                continue
+
+            legend = sel['legend']  # expected form sourcename + scan key
+            if isinstance(sel['selection'], dict) and 'y' in sel['selection']:
+                for lName in ['cntlist', 'LabelNames']:
+                    if lName in sel['selection']:
+                        for index in sel['selection']['y']:
+                            removelist.append(legend + " " +
+                                              sel['selection'][lName][index])
+
+        if len(removelist):
+            self.removeCurves(removelist)
 
     def _replaceSelection(self, selectionlist):
         # TODO
