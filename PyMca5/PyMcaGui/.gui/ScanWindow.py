@@ -145,8 +145,12 @@ class ScanWindow(PlotWindow):
     def __updateInfoWidget(self, previous_legend, legend):
         x, y, legend, info, params = self.getCurve(legend)
         self.scanWindowInfoWidget.updateFromXYInfo(x, y, info)
-
     # TODO: toggleInfoWidget (method and control menu entry)
+
+    def setWindowType(self, wtype=None):
+        if wtype not in [None, "SCAN", "MCA"]:
+            raise AttributeError("Unsupported window type %s." % wtype)
+        self._plotType = wtype
 
 
 def test():

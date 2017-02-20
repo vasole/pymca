@@ -238,12 +238,7 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
                                   ylabel=ylabel)
         try:
             if activeCurve is None:
-                if len(self._curveList) > 0:
-                    activeCurve = self._curveList[0]
-                ddict = {
-                    'event': "curveClicked",
-                    'label': activeCurve}
-                self.graphCallback(ddict)
+                self.setActiveCurve(self._curveList[0])
         finally:
             if resetzoom:
                 self.resetZoom()
@@ -280,7 +275,7 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
         """Delete existing curves and data objects, then add new selection.
         """
         _logger.debug("_replaceSelection(self, selectionlist) " +
-                      selectionlist)
+                      str(selectionlist))
 
         sellist = selectionlist if isinstance(selectionlist, list) else \
             [selectionlist]
@@ -415,3 +410,20 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
             self._replaceSelection(sel_list)
         else:
             self._addSelection(sel_list, resetzoom=replot)
+
+
+def main():
+    from PyMca5.PyMcaGui import PyMcaQt as qt
+    app = qt.QApplication([])
+    w = PyMcaScanWindow(info=True)
+    x = numpy.arange(1000.)
+    y = 10 * x + 10000. * numpy.exp(-0.5 * (x - 500) * (x - 500) / 400)
+    w.addCurve(x, y, legend="dummy", replot=True, replace=True)
+    w.resetZoom()
+    app.lastWindowClosed.connect(app.quit)
+    w.show()
+    app.exec_()
+
+
+if __name__ == "__main__":
+    main()
