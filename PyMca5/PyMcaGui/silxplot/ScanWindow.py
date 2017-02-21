@@ -136,16 +136,33 @@ class ScanWindow(PlotWindow):
             self.infoDockWidget = qt.QDockWidget(self)
             self.infoDockWidget.layout().setContentsMargins(0, 0, 0, 0)
             self.infoDockWidget.setWidget(self.scanWindowInfoWidget)
-            self.infoDockWidget.setWindowTitle(self.windowTitle() + " Info")
+            self.infoDockWidget.setWindowTitle("Scan Info")
             self.addDockWidget(qt.Qt.BottomDockWidgetArea,
                                self.infoDockWidget)
 
             self.sigActiveCurveChanged.connect(self.__updateInfoWidget)
 
+    def _customControlButtonMenu(self):
+        """Display Options button sub-menu. Overloaded to add
+        _toggleInfoAction"""
+        # overloaded from PlotWindow to add "Show/Hide Info"
+        controlMenu = self.controlButton.menu()
+        controlMenu.clear()
+        controlMenu.addAction(self.getLegendsDockWidget().toggleViewAction())
+
+        if self.infoDockWidget is not None:
+            controlMenu.addAction(self.infoDockWidget.toggleViewAction())
+        controlMenu.addAction(self.getRoiAction())
+        controlMenu.addAction(self.getMaskAction())
+        controlMenu.addAction(self.getConsoleAction())
+
+        controlMenu.addSeparator()
+        controlMenu.addAction(self.getCrosshairAction())
+        controlMenu.addAction(self.getPanWithArrowKeysAction())
+
     def __updateInfoWidget(self, previous_legend, legend):
         x, y, legend, info, params = self.getCurve(legend)
         self.scanWindowInfoWidget.updateFromXYInfo(x, y, info)
-    # TODO: toggleInfoWidget (method and control menu entry)
 
     def setWindowType(self, wtype=None):
         if wtype not in [None, "SCAN", "MCA"]:
