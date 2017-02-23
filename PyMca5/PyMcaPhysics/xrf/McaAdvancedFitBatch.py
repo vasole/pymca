@@ -64,7 +64,7 @@ class McaAdvancedFitBatch(object):
         #that is not necessary, but it will be correctly implemented in
         #future releases
         self._lock = lock
-        self.nosave=nosave
+        self._nosave=nosave
         self.fitFiles = fitfiles
         self._concentrations = concentrations
         if type(initdict) == type([]):
@@ -101,7 +101,7 @@ class McaAdvancedFitBatch(object):
         self.mcaOffset = mcaoffset
         self.chunk     = chunk
         self.selection = selection
-        print "ncols is :", self.__ncols
+
 
 
     def setFileList(self,filelist=None):
@@ -197,7 +197,7 @@ class McaAdvancedFitBatch(object):
                 if self.fitFiles:
                     self.listfile.write(']\n')
                     self.listfile.close()
-            if self.__ncols is not None and not self.nosave:
+            if self.__ncols is not None and not self._nosave:
                 if self.__ncols:self.saveImage()
         self.onEnd()
 
@@ -701,7 +701,7 @@ class McaAdvancedFitBatch(object):
                 #this only works with EDF
                 if self.__ncols is not None:
                     if not self.counter:
-                        if not self.nosave:
+                        if not self._nosave:
                             imgdir = self.os_path_join(self._outputdir,"IMAGES")
                             
                             if not os.path.exists(imgdir):
@@ -782,7 +782,7 @@ class McaAdvancedFitBatch(object):
                 if self.__ncols is not None:
                     self.imgDir=None
                     if not self.counter:
-                        if self.nosave is not None:
+                        if self._nosave is not None:
                             imgdir = self.os_path_join(self._outputdir,"IMAGES")
                             if not os.path.exists(imgdir):
                                 try:
