@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -64,7 +64,10 @@ class McaAdvancedFitBatch(object):
         #that is not necessary, but it will be correctly implemented in
         #future releases
         self._lock = lock
-        self._nosave=nosave
+        if nosave:
+            self._nosave = True
+        else:
+            self._nosave = False
         self.fitFiles = fitfiles
         self._concentrations = concentrations
         if type(initdict) == type([]):
@@ -192,12 +195,13 @@ class McaAdvancedFitBatch(object):
                     break
             else:
                 self.__processOneFile()
+
         if self.counter:
             if not self.roiFit:
                 if self.fitFiles:
                     self.listfile.write(']\n')
                     self.listfile.close()
-            if self.__ncols is not None and not self._nosave:
+            if (self.__ncols is not None) and (not self._nosave):
                 if self.__ncols:self.saveImage()
         self.onEnd()
 
@@ -697,13 +701,11 @@ class McaAdvancedFitBatch(object):
 
             #IMAGES
             if self.fitImages:
-                self.imgDir = None
                 #this only works with EDF
                 if self.__ncols is not None:
                     if not self.counter:
                         if not self._nosave:
                             imgdir = self.os_path_join(self._outputdir,"IMAGES")
-                            
                             if not os.path.exists(imgdir):
                                 try:
                                     os.mkdir(imgdir)
@@ -782,7 +784,7 @@ class McaAdvancedFitBatch(object):
                 if self.__ncols is not None:
                     self.imgDir=None
                     if not self.counter:
-                        if self._nosave is not None:
+                        if not self._nosave:
                             imgdir = self.os_path_join(self._outputdir,"IMAGES")
                             if not os.path.exists(imgdir):
                                 try:
