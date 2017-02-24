@@ -24,7 +24,11 @@ For a distributable application Platypus is needed
 Usage:
     python py2app_setup.py py2app
 """
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+
 import py2app
 import os
 import sys
@@ -49,9 +53,10 @@ for line in ffile:
 PyMcaInstallationDir = os.path.abspath("build")
 PyMcaDir = os.path.join(PyMcaInstallationDir, "PyMca5")
 #make sure PyMca is freshly built
-cmd = "python setup.py install --install-lib %s --install-scripts /tmp" % PyMcaInstallationDir
+cmd = "setup.py install --distutils --install-lib %s --install-scripts /tmp" % PyMcaInstallationDir
+cmd = sys.executable + " " + cmd
 if os.system(cmd):
-    print "Error building PyMca"
+    print("Error building PyMca")
     sys.exit(1)
 
 # awful workaround because py2app picks PyMca form the source directory
@@ -63,7 +68,13 @@ application=os.path.join(pymcapath, 'PyMcaGui','pymca', "PyMcaMain.py")
 #The options below are equivalent to running from the command line
 #python py2app_setup.py py2app --packages=matplotlib,ctypes,h5py,Object3D
 #probably matplotlib and PyOpenGL are properly detected by py2app
-PACKAGES = ['fisx', 'h5py','OpenGL','ctypes','matplotlib','hdf5plugin','logging', 'PyMca5']
+PACKAGES = ['fisx', 'OpenGL','ctypes','matplotlib', 'h5py','hdf5plugin','logging', 'PyMca5']
+try:
+    import PyQt4.Qt
+except ImportError:
+    print("Using PyQt5")
+    PACKAGES.append("PyQt5")
+
 try:
     import mdp
     PACKAGES.append('mdp')
@@ -75,11 +86,19 @@ try:
 except:
     pass
 PY2APP_OPTIONS = {'packages':PACKAGES}
+if "PyQt5" in PACKAGES:
+    PY2APP_OPTIONS['qt_plugins'] = ["cocoa"]
 
 if os.path.exists(BUNDLE_ICON):
     PY2APP_OPTIONS['iconfile'] = BUNDLE_ICON
 else:
     BUNDLE_ICON = None
+PY2APP_OPTIONS["excludes"] = ["scipy"]
+
+if sys.version.startswith("2"):
+    PY2APP_OPTIONS["excludes"].append("PyQt4.uic.port_v3")
+    PY2APP_OPTIONS["excludes"].append("PyQt5.uic.port_v3")
+
 setup(
     app=[application],
     options={'py2app':PY2APP_OPTIONS}
@@ -113,3 +132,7 @@ if os.path.exists(platypusFile):
         args.append(BUNDLE_ICON)
     args.append(os.path.join(os.getcwd(), 'PlatypusScript'))
     process = subprocess.call(args)
+    py2app_bundle = os.path.join(os.getcwd(), 'PyMca%s.app' % __version__, "Contents", "Resources", "PyMcaMain.app")
+    if not os.path.exists(py2app_bundle):
+        print("Forcing copy")
+        os.system("cp -R ./dist/PyMcaMain.app "+ os.path.dirname(py2app_bundle)) 
