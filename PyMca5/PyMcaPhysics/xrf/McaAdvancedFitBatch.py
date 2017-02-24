@@ -186,14 +186,11 @@ class McaAdvancedFitBatch(object):
                            ["EdfFileStack", "HDF5Stack1D"]:
                             self.__stack = True
             if self.__stack:
-                print "processing stack"
                 self.__processStack()
-                print "self.imgDir after stack",self.imgDir
                 if self._HDF5:
                     # The complete stack has been analyzed
                     break
             else:
-                print "processing onefile", self.imgDir
                 self.__processOneFile()
 
         if self.counter:
@@ -506,7 +503,6 @@ class McaAdvancedFitBatch(object):
         return outfile
 
     def __processOneMca(self,x,y,filename,key,info=None):
-        print "processing one mca"
         self._concentrationsAsAscii = ""
         if not self.roiFit:
             result = None
@@ -708,7 +704,6 @@ class McaAdvancedFitBatch(object):
                         if self._nosave is None:
                             
                             imgdir = self.os_path_join(self._outputdir,"IMAGES")
-                            print "setting imdir in iff", imgdir
                             if not os.path.exists(imgdir):
                                 try:
                                     os.mkdir(imgdir)
@@ -721,7 +716,6 @@ class McaAdvancedFitBatch(object):
                                       imgdir)
                             self.imgDir = imgdir
                             
-                            print "self.imgDir",self.imgDir
 
                         self.__peaks  = []
                         self.__images = {}
@@ -791,7 +785,6 @@ class McaAdvancedFitBatch(object):
                     if not self.counter:
                         if self._nosave is None:
                             imgdir = self.os_path_join(self._outputdir,"IMAGES")
-                            print "setting imgdir in else:",imgdir
                             if not os.path.exists(imgdir):
                                 try:
                                     os.mkdir(imgdir)
@@ -835,7 +828,6 @@ class McaAdvancedFitBatch(object):
         self.savedImages=[]
         if ffile is None:
             ffile = os.path.splitext(self._rootname)[0]
-            print "here", self.imgDir, ffile
             ffile = self.os_path_join(self.imgDir,ffile)
         if not self.roiFit:
             if (self.fileStep > 1) or (self.mcaStep > 1):
