@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -27,7 +27,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__version__ = "5.1.3"
+__version__ = "5.1.4"
 
 import os
 import sys
@@ -40,21 +40,15 @@ except ImportError:
 DEBUG = 0
 
 if sys.platform.startswith("win"):
-    try:
-        # make sure hdf5plugins are imported when using PyMca
-        import hdf5plugin
-    except:
-        # but at the same time do not disturb other people
-        pass
     import ctypes
     from ctypes.wintypes import MAX_PATH
-elif sys.platform.startswith("darwin"):
-    try:
-        # make sure hdf5plugins are imported when using PyMca
-        import hdf5plugin
-    except:
-        # but at the same time do not disturb other people
-        pass
+
+try:
+    # make sure hdf5plugins are imported when using PyMca
+    import hdf5plugin
+except:
+    # but at the same time do not disturb other people
+    pass
 
 if os.path.exists(os.path.join(\
     os.path.dirname(os.path.dirname(__file__)), 'py2app_setup.py')):
