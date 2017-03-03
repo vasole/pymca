@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -49,6 +49,9 @@ class PyMcaMdi(qt.QMainWindow):
         self.setWindowTitle(name)
         if fl is None:
             fl = qt.Qt.WA_DeleteOnClose
+
+        if sys.platform.startswith("darwin"):
+            self.menuBar().setNativeMenuBar(False)
 
         self.options= {}
         self.options["FileToolBar"]= options.get("FileToolBar", 1)
