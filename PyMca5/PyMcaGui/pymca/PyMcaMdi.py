@@ -50,8 +50,9 @@ class PyMcaMdi(qt.QMainWindow):
         if fl is None:
             fl = qt.Qt.WA_DeleteOnClose
 
-        if sys.platform.startswith("darwin"):
-            self.menuBar().setNativeMenuBar(False)
+        if QTVERSION > '5.0.0':
+            if sys.platform.startswith("darwin"):
+                self.menuBar().setNativeMenuBar(False)
 
         self.options= {}
         self.options["FileToolBar"]= options.get("FileToolBar", 1)
