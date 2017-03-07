@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -98,7 +98,11 @@ elif sys.platform == 'darwin':
         libc = loadCLibrary("libc.dylib")
         memsize = ctypes.c_uint64(0)
         length = ctypes.c_size_t(ctypes.sizeof(memsize))
-        libc.sysctlbyname("hw.memsize", ctypes.byref(memsize), ctypes.byref(length), None, 0)
+        name = "hw.memsize"
+        if hasattr(name, "encode"):
+            # Passing a string was returning 0 memory size under Python 3.5
+            name = name.encode()
+        libc.sysctlbyname(name, ctypes.byref(memsize), ctypes.byref(length), None, 0)
         return memsize.value
 else:
     def getPhysicalMemory():
@@ -106,7 +110,15 @@ else:
 
 def getPhysicalMemoryOrNone():
     try:
-        return getPhysicalMemory()
+        value = getPhysicalMemory()
+        if value <= 0:
+            # Value makes no sense.
+            # return None as requested in case of failure
+            print("WARNING: Returned physical memory does not make sense %d" % \
+                          value)
+            return None
+        else:
+            return value
     except:
         return None
 

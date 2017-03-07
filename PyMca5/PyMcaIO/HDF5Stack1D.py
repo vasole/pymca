@@ -157,7 +157,8 @@ class HDF5Stack1D(DataObject.DataObject):
                     dirname = posixpath.dirname(path)
                     base = posixpath.basename(path)
                     try:
-                        if base in tmpHdf[dirname].keys():
+                        file_entry = tmpHdf[dirname]
+                        if base in file_entry.keys():
                             scanlist.append(entry)
                     except:
                         pass
@@ -171,16 +172,20 @@ class HDF5Stack1D(DataObject.DataObject):
                         path = "/"+entry + ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
-                        if hasattr(tmpHdf[dirname], "keys"):
-                            i += 1
-                            if base in tmpHdf[dirname].keys():
-                                scanlist.append("1.%d" % i)
+                        try:
+                            file_entry = tmpHdf[dirname]
+                            if hasattr(file_entry, "keys"):
+                                i += 1
+                                if base in file_entry.keys():
+                                    scanlist.append("1.%d" % i)
+                        except KeyError:
+                            print("%s not in file, ignoring." % dirname)
                     if not len(scanlist):
                         path = "/" + ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
                         try:
-                            if base in tmpHdf[dirname].keys():
+                            if base in file_entry.keys():
                                 JUST_KEYS = False
                                 scanlist.append("")
                         except:

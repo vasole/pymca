@@ -17,7 +17,7 @@ The simplest solution is to use pip:
 
 pip install PyMca5
 
-You can add the usual --user qulifier to install only for you:
+You can add the usual --user qualifier to install only for you:
 
 pip install PyMca5 --user
 
@@ -44,7 +44,7 @@ pip install
 
 You will need:
 
-- Python (one of 2.7 or 3.5 recommended)
+- Python (one of 2.7, 3.5 or higher recommended)
 
 - Numpy
 

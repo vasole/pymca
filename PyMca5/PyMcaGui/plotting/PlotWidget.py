@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -45,6 +45,12 @@ elif ("PyQt5" in sys.modules) or ("PyQt5" in sys.argv):
     QtGui.QWidget = QtWidgets.QWidget
     QtGui.QVBoxLayout = QtWidgets.QVBoxLayout
     QtGui.qApp = QtWidgets.qApp
+    try:
+        from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+        QtGui.QPrinter = QPrinter
+        QtGui.QPrintDialog = QPrintDialog
+    except ImportError:
+        print("PyQt5 No print support available")
     try:
         from PyQt5 import QtSvg
     except ImportError:

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 T. Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -768,7 +768,7 @@ class XMCDScanWindow(sw.ScanWindow):
             return None, None
 
         same = True
-        if xRange == None:
+        if xRange is None:
             x0 = xarr[0]
         else:
             x0 = xRange
@@ -796,13 +796,13 @@ class XMCDScanWindow(sw.ScanWindow):
                 xsort.append(x.take(mask))
                 ysort.append(y.take(mask))
 
-        if xRange != None:
+        if xRange is not None:
             xmin0 = xRange.min()
             xmax0 = xRange.max()
         else:
             xmin0 = xsort[0][0]
             xmax0 = xsort[0][-1]
-        if (not same) or (xRange == None):
+        if (not same) or (xRange is None):
             # Determine global xmin0 & xmax0
             for x in xsort:
                 xmin = x.min()
@@ -1209,7 +1209,7 @@ class XMCDMenu(qt.QMenu):
             act = qt.QAction(fName,  self)
             # Force triggered() instead of triggered(bool)
             # to ensure proper interaction with default parameters
-            act.triggered[()].connect(function)
+            act.triggered.connect(function)
             self.addAction(act)
 
 class XMCDTreeWidget(qt.QTreeWidget):
@@ -1349,6 +1349,13 @@ class XMCDTreeWidget(qt.QTreeWidget):
                     item.setBackground(i, self.colorDict[idx])
         self.selectionModifiedSignal.emit()
 
+    def _setSelectionToSequenceSlot(self):
+        """
+        Internal Slot to make sure there is no confusion with default
+        arguments.
+        """
+        return self.setSelectionToSequence()
+
     def setSelectionToSequence(self, seq=None, selectedOnly=False):
         """
         Sets the group column (col 0) to seq.
@@ -1396,6 +1403,12 @@ class XMCDTreeWidget(qt.QTreeWidget):
                 for i in range(self.columnCount()):
                     item.setBackground(i, self.colorDict[idx])
         self.selectionModifiedSignal.emit()
+
+    def _clearSelectionSlot(self):
+        """
+        Internal slot method.
+        """
+        return self.clearSelection()
 
     def clearSelection(self, selectedOnly=True):
         """
@@ -1537,8 +1550,8 @@ class XMCDWidget(qt.QWidget):
                ('$SEPARATOR', None),
                ('Set as A', self.setAsA),
                ('Set as B', self.setAsB),
-               ('Enter sequence', self.list.setSelectionToSequence),
-               ('Remove selection', self.list.clearSelection),
+               ('Enter sequence', self.list._setSelectionToSequenceSlot),
+               ('Remove selection', self.list._clearSelectionSlot),
                ('$SEPARATOR', None),
                ('Invert selection', self.list.invertSelection),
                ('Remove curve(s)', self.removeCurve_)])
@@ -1689,7 +1702,7 @@ class XMCDWidget(qt.QWidget):
         self.list.selectionModifiedSignal.connect(self.updateSelectionDict)
         self.setSelectionSignal.connect(self.analysisWindow.processSelection)
         self.analysisWindow.saveOptionsSignal.connect(self.optsWindow.saveOptions)
-        self.optsWindow.accepted[()].connect(self.updateTree)
+        self.optsWindow.accepted.connect(self.updateTree)
         buttonUpdate.clicked.connect(self.updatePlots)
         buttonOptions.clicked.connect(self.showOptionsWindow)
         buttonInfo.clicked.connect(self.showInfoWindow)

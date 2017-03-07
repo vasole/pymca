@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -49,6 +49,10 @@ class PyMcaMdi(qt.QMainWindow):
         self.setWindowTitle(name)
         if fl is None:
             fl = qt.Qt.WA_DeleteOnClose
+
+        if QTVERSION > '5.0.0':
+            if sys.platform.startswith("darwin"):
+                self.menuBar().setNativeMenuBar(False)
 
         self.options= {}
         self.options["FileToolBar"]= options.get("FileToolBar", 1)
@@ -114,40 +118,40 @@ class PyMcaMdi(qt.QMainWindow):
         #self.resize(600,400)
 
     def createActions(self):
-            #fileopen
-            self.actionOpen = qt.QAction(self)
-            self.actionOpen.setText(QString("&Open"))
-            self.actionOpen.setIcon(self.Icons["fileopen"])
-            self.actionOpen.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
-            self.actionOpen.triggered[bool].connect(self.onOpen)
-            #filesaveas
-            self.actionSaveAs = qt.QAction(self)
-            self.actionSaveAs.setText(QString("&Save"))
-            self.actionSaveAs.setIcon(self.Icons["filesave"])
-            self.actionSaveAs.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
-            self.actionSaveAs.triggered[bool].connect(self.onSaveAs)
+        #fileopen
+        self.actionOpen = qt.QAction(self)
+        self.actionOpen.setText(QString("&Open"))
+        self.actionOpen.setIcon(self.Icons["fileopen"])
+        self.actionOpen.setShortcut(qt.Qt.CTRL+qt.Qt.Key_O)
+        self.actionOpen.triggered[bool].connect(self.onOpen)
+        #filesaveas
+        self.actionSaveAs = qt.QAction(self)
+        self.actionSaveAs.setText(QString("&Save"))
+        self.actionSaveAs.setIcon(self.Icons["filesave"])
+        self.actionSaveAs.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
+        self.actionSaveAs.triggered[bool].connect(self.onSaveAs)
 
-            #filesave
-            self.actionSave = qt.QAction(self)
-            self.actionSave.setText(QString("Save &Defaults"))
-            #self.actionSave.setIcon(self.Icons["filesave"])
-            #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
-            self.actionSave.triggered[bool].connect(self.onSave)
+        #filesave
+        self.actionSave = qt.QAction(self)
+        self.actionSave.setText(QString("Save &Defaults"))
+        #self.actionSave.setIcon(self.Icons["filesave"])
+        #self.actionSave.setShortcut(qt.Qt.CTRL+qt.Qt.Key_S)
+        self.actionSave.triggered[bool].connect(self.onSave)
 
-            #fileprint
-            self.actionPrint = qt.QAction(self)
-            self.actionPrint.setText(QString("&Print"))
-            self.actionPrint.setIcon(self.Icons["fileprint"])
-            self.actionPrint.setShortcut(qt.Qt.CTRL+qt.Qt.Key_P)
-            self.actionPrint.triggered[bool].connect(self.onPrint)
+        #fileprint
+        self.actionPrint = qt.QAction(self)
+        self.actionPrint.setText(QString("&Print"))
+        self.actionPrint.setIcon(self.Icons["fileprint"])
+        self.actionPrint.setShortcut(qt.Qt.CTRL+qt.Qt.Key_P)
+        self.actionPrint.triggered[bool].connect(self.onPrint)
 
-            #filequit
-            self.actionQuit = qt.QAction(self)
-            self.actionQuit.setText(QString("&Quit"))
-            #self.actionQuit.setIcon(self.Icons["fileprint"])
-            self.actionQuit.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Q)
-            qApp = qt.QApplication.instance()
-            self.actionQuit.triggered[bool].connect(qApp.closeAllWindows)
+        #filequit
+        self.actionQuit = qt.QAction(self)
+        self.actionQuit.setText(QString("&Quit"))
+        #self.actionQuit.setIcon(self.Icons["fileprint"])
+        self.actionQuit.setShortcut(qt.Qt.CTRL+qt.Qt.Key_Q)
+        qApp = qt.QApplication.instance()
+        self.actionQuit.triggered[bool].connect(qApp.closeAllWindows)
 
     def initIcons(self):
         self.Icons= {}
@@ -229,22 +233,19 @@ class PyMcaMdi(qt.QMainWindow):
         windowwidth=float(self.mdi.width())/len(self.mdi.windowList())
         i=0
         for window in self.mdi.windowList():
-                window.parentWidget().showNormal()
-                window.parentWidget().setGeometry(int(windowwidth*i),0,
-                                        int(windowwidth),self.mdi.height())
+            window.parentWidget().showNormal()
+            window.parentWidget().setGeometry(int(windowwidth*i),0,
+                                    int(windowwidth),self.mdi.height())
 
-                if QTVERSION < '4.0.0':
-                    window.parentWidget().raiseW()
-                else:
-                    window.parentWidget().raise_()
-                i+=1
+            window.parentWidget().raise_()
+            i+=1
         self.mdi.update()
         self.update()
         #if self.followActiveWindow: self.__connectFollow()
 
     def windowFullScreen(self):
         if len(self.mdi.windowList()):
-                self.mdi.activeWindow().showMaximized()
+            self.mdi.activeWindow().showMaximized()
 
 
     def initMenuBar(self):
@@ -304,8 +305,11 @@ class PyMcaMdi(qt.QMainWindow):
             action = self.menuWindow.addAction(text)
             action.setCheckable(True)
             action.setChecked(window == self.mdi.activeWindow())
-            action.triggered[()].connect(self.windowMapper.map)
+            action.triggered.connect(self.windowMapper.map)
             self.windowMapper.setMapping(action, window)
+
+    def _windowMapperMapSlot(self):
+        return self.windowMapper.map()
 
     def menuWindowActivated(self, idx = None):
         if DEBUG:
