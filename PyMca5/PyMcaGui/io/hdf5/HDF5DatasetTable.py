@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -23,35 +23,24 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-"""The :class:`HDF5DatasetView` widget in this module aims to be used
-instead of :class:`HDF5DatasetTable` in :class:`QNexusWidget` for
-visualization of HDF5 datasets."""
-__author__ = "P. Knobel - ESRF Data Analysis"
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import CloseEventNotifyingWidget
+from PyMca5.PyMcaGui import NumpyArrayTableWidget
 
-from silx.gui.data import DataViewerFrame
-
-
-class HDF5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
-    """QWidget displaying data as raw values in a table widget, or as a
-    curve, image or stack in a plot widget.
-
-    The plot features depend on *silx*'s availability.
-    """
+class HDF5DatasetTable(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def __init__(self, parent=None):
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.__init__(self,
                                                                      parent)
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
-        self.viewWidget = DataViewerFrame.DataViewerFrame(self)
-        self.mainLayout.addWidget(self.viewWidget)
+        self.arrayTableWidget =  NumpyArrayTableWidget.NumpyArrayTableWidget(self)
+        self.mainLayout.addWidget(self.arrayTableWidget)
 
     def setDataset(self, dataset):
-        self.viewWidget.setData(dataset)
-
-
+        self.arrayTableWidget.setArrayData(dataset)
 
