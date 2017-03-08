@@ -493,13 +493,16 @@ class QStackWidget(StackBase.StackBase,
         if self.stackSelector  is None:
             self.stackSelector = StackSelector.StackSelector(self)
         stack = self.stackSelector.getStack()
-        if type(stack) == type([]):
+        if (type(stack) == type([])) or isinstance(stack, list):
             #aifira like, two stacks
             self.setStack(stack[0])
             self._slave = None
-            slave = QStackWidget(master=False, rgbwidget=self.rgbWidget)
-            slave.setStack(stack[1])
-            self.setSlave(slave)
+            if len(stack) > 1:
+                if stack[1] is not None:
+                    slave = QStackWidget(master=False, rgbwidget=self.rgbWidget)
+                    slave.setStack(stack[1])
+                    if slave is not None:
+                        self.setSlave(slave)
         else:
             self.setStack(stack)
 
@@ -1171,12 +1174,14 @@ if __name__ == "__main__":
                                       imagestack=imagestack)
     else:
         stack = w.getStack(args, imagestack=imagestack)
-    if type(stack) == type([]):
+    if (type(stack) == type([])) or (isinstance(stack, list)):
         #aifira like, two stacks
         widget.setStack(stack[0])
-        slave = QStackWidget(master=False, rgbwidget=widget.rgbWidget)
-        slave.setStack(stack[1])
-        widget.setSlave(slave)
+        if len(stack) > 1:
+            if stack[1] is not None:
+                slave = QStackWidget(master=False, rgbwidget=widget.rgbWidget)
+                slave.setStack(stack[1])
+                widget.setSlave(slave)
         stack = None
     else:
         widget.setStack(stack)

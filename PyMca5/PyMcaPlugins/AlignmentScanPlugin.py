@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -32,7 +32,7 @@ import numpy
 try:
     from PyMca5.PyMcaCore import Plugin1DBase    
 except ImportError:
-    print("WARNING:MedianFilterScanPlugin import from somewhere else")
+    print("AlignmentScanPlugin import from somewhere else")
     from . import Plugin1DBase
 
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
@@ -40,7 +40,6 @@ from PyMca5.PyMcaMath.fitting import SpecfitFuns
 class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self, plotWindow, **kw):
         Plugin1DBase.Plugin1DBase.__init__(self, plotWindow, **kw)
-        self.__randomization = True
         self.__methodKeys = []
         self.methodDict = {}
         text = "FFT based alignment\n"
@@ -61,10 +60,7 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
 
         Plot type can be "SCAN", "MCA", None, ...
         """
-        if self.__randomization:
-            return self.__methodKeys[0:1] +  self.__methodKeys[2:]
-        else:
-            return self.__methodKeys[1:]
+        return self.__methodKeys
 
     def getMethodToolTip(self, name):
         """
@@ -102,6 +98,7 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
                     break
         except:
             activeCurve = curves[0]
+            activeCurveLegend = activeCurve[2]
 
         # apply between graph limits
         x0, y0 = activeCurve[0:2]
@@ -131,10 +128,13 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         shiftList = []
         curveList = []
         i = 0
+        activeCurveIndex = 0
         for idx in range(nCurves):
             x, y, legend, info = curves[idx][0:4]
-
-            if x.size != x0.size:
+            if legend == activeCurveLegend:
+                needInterpolation = False
+                activeCurveIndex = idx
+            elif x.size != x0.size:
                 needInterpolation = True
             elif numpy.allclose(x, x0):
                 # no need for interpolation
@@ -182,9 +182,11 @@ class AlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
             curveList.append([x, y, legend + "SHIFT", False, False])
         curveList[-1][-2] = True
         curveList[-1][-1] = False
-        x, y, legend, replot, replace = curveList[0]
+        x, y, legend, replot, replace = curveList[activeCurveIndex]
         self.addCurve(x, y, legend=legend, replot=True, replace=True)
-        for i in range(1, len(curveList)):
+        for i in range(len(curveList)):
+            if i == activeCurveIndex:
+                continue
             x, y, legend, replot, replace = curveList[i]
             self.addCurve(x,
                           y,

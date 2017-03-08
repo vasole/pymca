@@ -21,20 +21,45 @@ import sys,os
 import glob
 import platform
 import time
+USING_SETUPTOOLS = True
 if 'bdist_wheel' in sys.argv:
     # wheels require setuptools
     from setuptools import setup
+    from setuptools.command.install import install as dftinstall
+    from setuptools import Command
+    from setuptools.extension import Extension
+    from setuptools.command.build_py import build_py
+    from distutils.command.install_data import install_data
+    from setuptools.command.install_scripts import install_scripts
 elif '--distutils' in sys.argv:
     # The cx_setup.py machinery works with distutils
     sys.argv.remove("--distutils")
     from distutils.core import setup
+    from distutils.command.install import install as dftinstall
+    from distutils.core import Command
+    from distutils.core import Extension
+    from distutils.command.build_py import build_py
+    from distutils.command.install_data import install_data
+    from distutils.command.install_scripts import install_scripts
+    USING_SETUPTOOLS = False
 else:
     try:
         from setuptools import setup
+        from setuptools.command.install import install as dftinstall
+        from setuptools import Command
+        from setuptools.extension import Extension
+        from setuptools.command.build_py import build_py
+        from distutils.command.install_data import install_data
+        from setuptools.command.install_scripts import install_scripts
     except ImportError:
         from distutils.core import setup
-from distutils.core import Extension, Command
-from distutils.command.install import install as dftinstall
+        from distutils.command.install import install as dftinstall
+        from distutils.core import Command
+        from distutils.core import Extension
+        from distutils.command.build_py import build_py
+        from distutils.command.install_data import install_data
+        from distutils.command.install_scripts import install_scripts
+        USING_SETUPTOOLS = False
 try:
     import numpy
 except ImportError:
@@ -483,7 +508,7 @@ build_PyMcaSciPy(ext_modules)
 build_plotting_ctools(ext_modules)
 build_xas_xas(ext_modules)
 
-from distutils.command.build_py import build_py
+
 class smart_build_py(build_py):
     def run (self):
         toReturn = build_py.run(self)
@@ -524,8 +549,18 @@ class smart_build_py(build_py):
         return toReturn
 
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
-from distutils.command.install_data import install_data
 class smart_install_data(install_data):
+    if USING_SETUPTOOLS:
+        def initialize_options (self):
+            self.outfiles = []
+            self.data_files = data_files
+
+        def finalize_options(self):
+            pass
+
+        def get_outputs(self):
+            return self.outfiles
+
     def run(self):
         global PYMCA_INSTALL_DIR
         global PYMCA_DATA_DIR
@@ -560,8 +595,17 @@ class smart_install_data(install_data):
 
 # smart_install_scripts
 if USE_SMART_INSTALL_SCRIPTS:
-    from distutils.command.install_scripts import install_scripts
     class smart_install_scripts(install_scripts):
+        if USING_SETUPTOOLS:
+            def initialize_options (self):
+                self.outfiles = []
+
+            def finalize_options(self):
+                pass
+
+            def get_outputs(self):
+                return self.outfiles
+
         def run (self):
             global PYMCA_SCRIPTS_DIR
             #I prefer not to translate the python used during the build
@@ -579,13 +623,13 @@ if USE_SMART_INSTALL_SCRIPTS:
             else:
                 self.install_dir = getattr(install_cmd, 'install_scripts')
             self.install_data = getattr(install_cmd, 'install_data')
+            if "." in self.install_dir:
+                self.install_dir = os.path.abspath(self.install_dir)
             if "." in self.install_data:
                 self.install_data = os.path.abspath(self.install_data)
             global PYMCA_INSTALL_DIR
             if "." in PYMCA_INSTALL_DIR:
                 PYMCA_INSTALL_DIR = os.path.abspath(PYMCA_INSTALL_DIR)
-            if "." in self.install_dir:
-                self.install_dir = os.path.abspath(self.install_dir)
             PYMCA_SCRIPTS_DIR = self.install_dir
             PYMCA_DATA_DIR = self.install_data
             if sys.platform != "win32":
@@ -664,10 +708,16 @@ class install_man(Command):
 
     def initialize_options(self):
         self.install_dir = None
+        if USING_SETUPTOOLS:
+            self.outfiles = []
 
     def finalize_options(self):
         self.set_undefined_options('install',
                                    ('install_man', 'install_dir'))
+
+    if USING_SETUPTOOLS:
+        def get_outputs(self):
+            return self.outfiles
 
     def run(self):
         if self.install_dir is None:
@@ -947,7 +997,6 @@ class smart_build_fisx_py(build_py):
         fid.close()
         return toReturn
 
-from distutils.command.install_data import install_data
 class smart_install_fisx_data(install_data):
     def run(self):
         global INSTALL_DIR

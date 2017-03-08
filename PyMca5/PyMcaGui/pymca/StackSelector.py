@@ -46,6 +46,7 @@ from PyMca5.PyMcaIO import TiffStack
 from PyMca5.PyMcaIO import RTXMap
 from PyMca5.PyMcaIO import LispixMap
 from PyMca5.PyMcaIO import RenishawMap
+from PyMca5.PyMcaIO import OmdaqLmf
 from .QStack import QStack, QSpecFileStack
 try:
     from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
@@ -182,6 +183,9 @@ class StackSelector(object):
                 # by other hand, I do not know how to handle
                 # that case as a stack.
                 stack = RenishawMap.RenishawMap(filelist[0])
+                omnicfile = True
+            elif OmdaqLmf.isOmdaqLmf(filelist[0]):
+                stack = OmdaqLmf.OmdaqLmf(filelist[0])
                 omnicfile = True
             else:
                 stack = QSpecFileStack()

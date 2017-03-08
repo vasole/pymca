@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1142,6 +1142,14 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                     if DEBUG:
                         print('######### workaround pyopengl bug #########')
                     color = color.astype(numpy.uint8)
+            elif hasattr(color, "decode") and (not hasattr(color, "encode")):
+                # received a bytes string
+                color0 = color
+                color = numpy.zeros((1,1,4), dtype=numpy.uint8)
+                color[0][0][0] = color0[0]
+                color[0][0][1] = color0[1]
+                color[0][0][2] = color0[2]
+                color[0][0][3] = color0[3]
             else:
                 #assume to have received a string
                 color0 = color
@@ -1181,6 +1189,14 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
                                         if DEBUG:
                                             print('######### workaround pyopengl bug #########')
                                         color = color.astype(numpy.uint8)
+                                elif hasattr(color, "decode") and (not hasattr(color, "encode")):
+                                    # received a bytes string
+                                    color0 = color
+                                    color = numpy.zeros((1,1,4), dtype=numpy.uint8)
+                                    color[0][0][0] = color0[0]
+                                    color[0][0][1] = color0[1]
+                                    color[0][0][2] = color0[2]
+                                    color[0][0][3] = color0[3]
                                 else:
                                     #assume to have received a string
                                     color0 = color

@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 T. Rueter, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 T. Rueter, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -78,7 +78,12 @@ class MotorInfoHeader(qt.QHeaderView):
         qt.QHeaderView.__init__(self, qt.Qt.Horizontal, parent)
         self.boxes = []
         self.sectionResized.connect( self.handleSectionResized )
-        self.setClickable(True)
+        if hasattr(self, "setClickable"):
+            # Qt 4
+            self.setClickable(True)
+        else:
+            # Qt 5
+            self.setSectionsClickable(True)
         self.setDefaultSectionSize(120)
         self.setMinimumSectionSize(120)
 

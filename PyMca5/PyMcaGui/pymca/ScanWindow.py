@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1351,7 +1351,7 @@ class ScanWindow(PlotWindow.PlotWindow):
             # printer was not selected
             return
         #self._printer = None
-        if PlotWindow.PlotWidget.SVG and (qt.qVersion() > "5.0.0"):
+        if PlotWindow.PlotWidget.SVG:
             svg = True
             self._svgRenderer = self.getSvgRenderer()
         else:
