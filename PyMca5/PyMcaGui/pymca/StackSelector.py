@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -360,7 +360,7 @@ class StackSelector(object):
                         "Specfile Files (*dat)",
                         "OMNIC Files (*map)",
                         "OPUS-DPT Files (*.DPT *.dpt)",
-                        "JCAMP-DX Files (*.JDX *.jdx)",
+                        "JCAMP-DX Files (*.JDX *.jdx *.DX *.dx)",
                         "RTX Files (*.rtx *.RTX)",
                         "Lispix-RPL Files (*.rpl)",
                         "Renishaw-ASCII Files (*.txt *.TXT)",

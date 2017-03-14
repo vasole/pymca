@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -58,7 +58,7 @@ class QDispatcher(qt.QWidget):
                         "EDF Files (*ccd)",
                         "TIFF Files (*.tif *.tiff *.TIF *.TIFF)",
                         "CSV Files (*csv)",
-                        "JCAMP-DX Files (*.jdx *.JDX)"]
+                        "JCAMP-DX Files (*.jdx *.JDX *.dx *.DX)"]
         if QDataSource.NEXUS:
             fileTypeList.append("HDF5 Files (*.nxs *.hdf *.h5 *.hdf5)")
         fileTypeList.append("All Files (*)")
