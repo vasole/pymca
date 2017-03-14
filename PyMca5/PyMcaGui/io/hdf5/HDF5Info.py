@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -485,7 +485,7 @@ if __name__ == "__main__":
         print("python HDF5Info.py hdf5File node")
         sys.exit(0)
     import h5py
-    h=h5py.File(sys.argv[1])
+    h=h5py.File(sys.argv[1], "r")
     node = sys.argv[2]
     info = getInfo(h, node)
     app = qt.QApplication([])
