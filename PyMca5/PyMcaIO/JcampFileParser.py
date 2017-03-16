@@ -43,7 +43,6 @@ else:
 class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
     def __init__(self, filename, single=False):
         # get the number of entries in the file
-        print("RECEIVED = ", single)
         self.__lastEntryData = -1
         self._scanLimits = []
         f = open(filename, "r")
@@ -68,8 +67,6 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
             line = f.readline()
         f.close()
         self._filename = os.path.abspath(filename)
-        print("N entries = ", len(self._scanLimits))
-        print("0 ENTRY = ", self._scanLimits[0])
         self._parseEntryData(0)
 
     def _parseEntryData(self, idx):
