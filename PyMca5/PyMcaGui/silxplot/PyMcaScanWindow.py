@@ -28,7 +28,7 @@ import copy
 import logging
 import numpy
 
-import ScanWindow
+from . import ScanWindow
 from PyMca5.PyMcaCore import DataObject
 
 _logger = logging.getLogger(__name__)
@@ -316,7 +316,7 @@ class PyMcaScanWindow(ScanWindow.ScanWindow):
             if info is None:
                 info = {}
             oldStuff = self.getCurve(legend)
-            if oldStuff is not None and len(oldStuff):
+            if oldStuff is not None:
                 oldX, oldY, oldLegend, oldInfo, oldParams = oldStuff
             else:
                 oldInfo = {}

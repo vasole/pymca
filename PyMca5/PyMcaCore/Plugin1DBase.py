@@ -209,7 +209,7 @@ class Plugin1DBase(object):
         """
         if self._legacy:
             return self._plotWindow.addCurve(x, y, legend=legend, info=info,
-                                        replace=replace, replot=replot, **kw)
+                                             replace=replace, replot=replot, **kw)
         else:
             # fill = info.get("plot_fill", False) if info is not None else False
             # fill = kw.get("fill", fill)
@@ -295,9 +295,8 @@ class Plugin1DBase(object):
                  [...],
                  [xvaluesn, yvaluesn, legendn, dictn]]
         """
-        allCurves = self.getAllCurves() * 1
-        for i in range(len(allCurves)):
-            curve = allCurves[i]
+        allCurves = []
+        for curve in self.getAllCurves():
             x, y, legend, info = curve[0:4]
             # Sort
             idx = argsort(x, kind='mergesort')
@@ -308,7 +307,7 @@ class Plugin1DBase(object):
             idx = nonzero((xproc[1:] > xproc[:-1]))[0]
             xproc = take(xproc, idx)
             yproc = take(yproc, idx)
-            allCurves[i][0:2] = xproc, yproc
+            allCurves.append([xproc, yproc, legend, info])
         return allCurves
 
     def getGraphXLimits(self):
@@ -479,7 +478,10 @@ class Plugin1DBase(object):
         print("applyMethod not implemented")
         return
 
+
 MENU_TEXT = "Plugin1D Base"
+
+
 def getPlugin1DInstance(plotWindow, **kw):
     """
     This function will be called by the plot window instantiating and calling
