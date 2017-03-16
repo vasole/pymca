@@ -47,6 +47,7 @@ from PyMca5.PyMcaIO import RTXMap
 from PyMca5.PyMcaIO import LispixMap
 from PyMca5.PyMcaIO import RenishawMap
 from PyMca5.PyMcaIO import OmdaqLmf
+from PyMca5.PyMcaIO import JcampOpusStack
 from .QStack import QStack, QSpecFileStack
 try:
     from PyMca5.PyMcaGui.pymca import QHDF5Stack1D
@@ -186,6 +187,9 @@ class StackSelector(object):
                 omnicfile = True
             elif OmdaqLmf.isOmdaqLmf(filelist[0]):
                 stack = OmdaqLmf.OmdaqLmf(filelist[0])
+                omnicfile = True
+            elif JcampOpusStack.isJcampOpusStackFile(filelist[0]):
+                stack = JcampOpusStack.JcampOpusStack(filelist[0])
                 omnicfile = True
             else:
                 stack = QSpecFileStack()
