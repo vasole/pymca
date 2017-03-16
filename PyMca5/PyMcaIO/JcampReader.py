@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -74,9 +74,14 @@ if DEBUG:
 
 class BufferedFile(object):
     def __init__(self, filename):
-        f = open(filename, 'r')
-        self.__buffer = f.read()
-        f.close()
+        if hasattr(filename, "read"):
+            self.__buffer = filename.read()
+        elif os.path.exists(filename):
+            f = open(filename, 'r')
+            self.__buffer = f.read()
+            f.close()
+        else:
+            raise IOError("File %s does not exists" % filename)
         self.__buffer = self.__buffer.replace("\r", "\n")
         self.__buffer = self.__buffer.replace("\n\n", "\n")
         self.__buffer = self.__buffer.split("\n")
@@ -96,9 +101,6 @@ class BufferedFile(object):
 
 class JcampReader(object):
     def __init__(self, filename):
-        if not os.path.exists(filename):
-            raise IOError("File %s does not exists")
-
         _fileObject = BufferedFile(filename)
         # only one measurement per file
         ddict = {}
@@ -210,9 +212,18 @@ def isJcampFile(filename):
     try:
         testKeys = ["TITLE", "JCAMP-DX", "DATA TYPE"]
         # if read mode is 'rb' python 3 does not work
-        fid = open(filename, mode='r')
+        lines = []
+        if not hasattr(filename, "readline"):
+            fid = open(filename, mode='r')
+            owner = True
+        else:
+            fid =filename
+        for i in range(len(testKeys)):
+            lines.append(fid.readline())
+        if owner:
+            fid.close()
         for i, key in enumerate(testKeys):
-            line = fid.readline()
+            line = lines[i]
             info = re.findall(patternKey, line)
             if len(info):
                 actualKey = key.replace(" ","")
