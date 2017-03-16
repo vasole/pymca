@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -259,15 +259,21 @@ class QStackWidget(StackBase.StackBase,
     def _roiSubtractBackgroundClicked(self):
         if not len(self._ROIImageList):
             return
+        xScale = self._stack.info.get("xScale", None)
+        yScale = self._stack.info.get("yScale", None)
         if self.roiBackgroundButton.isChecked():
             self.roiWidget.graphWidget.graph.setGraphTitle(\
                                 self._ROIImageNames[0]+" Net")
             self.roiWidget.setImageData(self._ROIImageList[0]-\
-                                        self._ROIImageList[-1])
+                                        self._ROIImageList[-1],
+                                        xScale=xScale,
+                                        yScale=yScale)
         else:
             self.roiWidget.graphWidget.graph.setGraphTitle(\
                                 self._ROIImageNames[0])
-            self.roiWidget.setImageData(self._ROIImageList[0])
+            self.roiWidget.setImageData(self._ROIImageList[0],
+                                        xScale=xScale,
+                                        yScale=yScale)
 
     def _stackSaveToolButtonSignal(self):
         self._stackSaveMenu.exec_(self.cursor().pos())
@@ -781,7 +787,11 @@ class QStackWidget(StackBase.StackBase,
         if self._stackImageData is None:
             self.stackGraphWidget.graph.clear()
             return
-        self.stackWidget.setImageData(self._stackImageData)
+        xScale = self._stack.info.get("xScale", None)
+        yScale = self._stack.info.get("yScale", None)
+        self.stackWidget.setImageData(self._stackImageData,
+                                        xScale=xScale,
+                                        yScale=yScale)
 
     def showOriginalMca(self):
         goodData = numpy.isfinite(self._mcaData0.y[0].sum())
@@ -819,13 +829,19 @@ class QStackWidget(StackBase.StackBase,
                                                       energy=x)
 
     def showROIImageList(self, imageList, image_names=None):
+        xScale = self._stack.info.get("xScale", None)
+        yScale = self._stack.info.get("yScale", None)
         if self.roiBackgroundButton.isChecked():
             self.roiWidget.graphWidget.graph.setGraphTitle(image_names[0]+\
                                                       " Net")
-            self.roiWidget.setImageData(imageList[0]-imageList[-1])
+            self.roiWidget.setImageData(imageList[0]-imageList[-1],
+                                        xScale=xScale,
+                                        yScale=yScale)
         else:
             self.roiWidget.graphWidget.graph.setGraphTitle(image_names[0])
-            self.roiWidget.setImageData(imageList[0])
+            self.roiWidget.setImageData(imageList[0],
+                                        xScale=xScale,
+                                        yScale=yScale)
         self._ROIImageList = imageList
         self._ROIImageNames = image_names
         self._stackROIImageListUpdated()
