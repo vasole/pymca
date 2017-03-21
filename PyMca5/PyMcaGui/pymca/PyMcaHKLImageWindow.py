@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -50,10 +50,18 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
             return
 
         #pixel coordinates
-        x = round(ddict['y'])
-        if x < 0: x = 0
-        y = round(ddict['x'])
-        if y < 0: y = 0
+        if ddict['y'] < 0:
+            x = int(ddict['y'] - 0.5)
+        else:
+            x = int(ddict['y'] + 0.5)
+        if x < 0:
+            x = 0
+        if ddict['x'] < 0:
+            y = int(ddict['x'] - 0.5)
+        else:
+            y = int(ddict['x'] + 0.5)
+        if y < 0:
+            y = 0
         limits = self._imageData.shape
         x = min(int(x), limits[0]-1)
         y = min(int(y), limits[1]-1)
