@@ -36,7 +36,7 @@ import numpy
 from PyMca5.PyMcaIO import JcampReader
 from PyMca5.PyMcaIO import SpecFileAbstractClass
 if sys.version < "3":
-    import StringIO.StringIO as StringIO
+    from StringIO import StringIO
 else:
     from io import StringIO
 
