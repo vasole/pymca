@@ -192,20 +192,58 @@ class BackgroundStackPlugin(StackPluginBase.StackPluginBase):
         curve = self.getActiveCurve()
         if curve is None:
             raise ValueError("No active curve")
-        x, y = curve[0:2]
+        x, y, legend, info = curve[:4]
         stack = self.getStackDataObject()
         if not isinstance(stack.data, numpy.ndarray):
             text = "This method does not work with dynamically loaded stacks"
             raise TypeError(text)
-        mcaIndex = stack.info.get('McaIndex', -1)
-        if mcaIndex in [-1, 2]:
-            for i in range(stack.data.shape[-1]):
-                stack.data[:, :, i] -= y[i]
-        elif mcaIndex == 0:
-            for i in range(stack.data.shape[0]):
-                stack.data[i] -= y[i]
+        x0, y0, legend0, info0 = self.getStackOriginalCurve()[:4]
+        if self.getGraphXLabel().upper() not in ["CHANNEL", "POINTS"]:
+            # get the used calibration
+            a, b, c = info.get("McaCalib", [0.0, 1,0, 0.0])
+            x0 = a + b * x0 + c * x0 * x0 
+        interpolate = True
+        if x0.size == x.size:
+            if numpy.allclose(x, x0):
+                interpolate = False
+        if interpolate:
+            xmin = max(x.min(), x0.min())
+            xmax = min(x.max(), x0.max())
+            selection = (x0 >= xmin) & (x0 <= xmax)
+            idx = numpy.nonzero(selection)[0]
+            if not idx.size:
+                raise ValueError("Curves do not overlap")
+            xwork = x0[idx]
+            # we have got the final x values, interpolate into the
+            # curve to be subtracted
+            ywork = numpy.interp(xwork, x, y)
+            #proceed to subtract the data
+            notIdx = numpy.nonzero(selection == False)[0]
+            mcaIndex = stack.info.get('McaIndex', -1)
+            if mcaIndex in [-1, 2]:
+                #for i in range(stack.data.shape[-1]):
+                stack.data[:, :, idx] = stack.data[:, :, idx] - ywork
+                stack.data[:, :, notIdx] = 0.0
+            elif mcaIndex == 0:
+                counter = 0
+                for i in range(stack.data.shape[0]):
+                    if i in idx:
+                        stack.data[i] -= ywork[counter]
+                        counter += 1
+                    else:
+                        stack.data[i] = 0.0
+            else:
+                raise ValueError("Invalid 1D index %d" % mcaIndex)
         else:
-            raise ValueError("Invalid 1D index %d" % mcaIndex)
+            mcaIndex = stack.info.get('McaIndex', -1)
+            if mcaIndex in [-1, 2]:
+                for i in range(stack.data.shape[-1]):
+                    stack.data[:, :, i] -= y[i]
+            elif mcaIndex == 0:
+                for i in range(stack.data.shape[0]):
+                    stack.data[i] -= y[i]
+            else:
+                raise ValueError("Invalid 1D index %d" % mcaIndex)
         self.setStack(stack)
 
 MENU_TEXT = "Stack Filtering Options"

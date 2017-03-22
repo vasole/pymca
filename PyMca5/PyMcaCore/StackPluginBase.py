@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -54,6 +54,8 @@ These plugins will be compatible with any stack window that provides the functio
     - setStack
     - getStackROIImagesAndNames
     - isStackFinite
+    - getStackOriginalCurve
+    - getStackOriginalImage
 
     #mask related
 
@@ -110,6 +112,9 @@ class StackPluginBase(object):
 
     def getStackData(self):
         return self._stackWindow.getStackData()
+
+    def getStackOriginalCurve(self):
+        return self._stackWindow.getStackOriginalCurve()
 
     def getStackOriginalImage(self):
         return self._stackWindow.getStackOriginalImage()

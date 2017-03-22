@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -352,6 +352,14 @@ class StackBase(object):
         self.updateROIImages()
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].stackUpdated()
+
+    def getStackOriginalCurve(self):
+        # TODO: Make sure copies are returned
+        x = self._mcaData0.x[0]
+        y = self._mcaData0.y[0]
+        legend = "Stack SUM"
+        info = self._mcaData0.info
+        return [x, y, legend, info]
 
     def isStackFinite(self):
         """
