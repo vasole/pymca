@@ -2308,6 +2308,7 @@ class McaTheory(object):
                 contrib = SpecfitFuns.fastahypermet(p, energyw,self.__HYPERMET)
             else:
                 contrib = SpecfitFuns.apvoigt(p, energyw)
+            result["y" + group] = contrib
             index = []
             for peak in result[group]['peaks']:
                 result[group][peak] = {}
