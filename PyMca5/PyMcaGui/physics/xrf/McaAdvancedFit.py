@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1528,9 +1528,11 @@ class McaAdvancedFit(qt.QWidget):
             msg.exec_()
 
     def __htmlReport(self,outfile=None):
-        report = QtMcaAdvancedFitReport.QtMcaAdvancedFitReport(None,
-                    outfile,self.outdir,self.info['sourcename'],
-                    self.info['legend'],self.dict,
+        report = QtMcaAdvancedFitReport.QtMcaAdvancedFitReport(fitfile=None,
+                    outfile=outfile, outdir=self.outdir,
+                    sourcename=self.info['sourcename'],
+                    selection=self.info['legend'],
+                    fitresult=self.dict,
                     concentrations=self._concentrationsDict,
                     plotdict={'logy':self.graph.isYAxisLogarithmic()})
         if 0:
