@@ -112,7 +112,7 @@ class HDF5Stack1D(DataObject.DataObject):
         # only one y is taken
         ySelection = selection['y']
         if type(ySelection) == type([]):
-            ySelectionList = ySelection.copy()
+            ySelectionList = list(ySelection)
             ySelection = ySelection[0]
         else:
             ySelectionList = [ySelection]
