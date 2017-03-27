@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -112,7 +112,10 @@ class HDF5Stack1D(DataObject.DataObject):
         # only one y is taken
         ySelection = selection['y']
         if type(ySelection) == type([]):
+            ySelectionList = ySelection.copy()
             ySelection = ySelection[0]
+        else:
+            ySelectionList = [ySelection]
 
         # monitor selection
         mSelection = selection['m']
@@ -325,6 +328,14 @@ class HDF5Stack1D(DataObject.DataObject):
                     if hasattr(hdf[tmpPath], "keys"):
                         goodEntryNames.append(entry)
                 for scan in scanlist:
+                  IN_MEMORY = None
+                  nStart = n
+                  for ySelection in ySelectionList:
+                    n = nStart
+                    if IN_MEMORY == False:
+                        # We can only deal with one dynamic dataset
+                        print("Selection %s ignored" % ySelection)
+                        continue
                     if JUST_KEYS:
                         entryName = goodEntryNames[int(scan.split(".")[-1])-1]
                         path = entryName + ySelection
@@ -391,13 +402,13 @@ class HDF5Stack1D(DataObject.DataObject):
                                     if case == 0:
                                         mData = numpy.outer(mDataset[mca:(mca+dim1)],
                                                             numpy.ones((mcaDim)))
-                                        self.data[i, :, :] = yData/mData
+                                        self.data[i, :, :] += yData/mData
                                     elif case == 1:
                                         mData = mDataset[mca:(mca+dim1), :]
                                         mData.shape = -1, mcaDim
-                                        self.data[i, :, :]  = yData/mData
+                                        self.data[i, :, :]  += yData/mData
                                 else:
-                                    self.data[i:(i+deltaI), :] = yData
+                                    self.data[i:(i+deltaI), :] += yData
                                 n += yDataset.shape[1]
                                 mca += dim1
                         else:
@@ -414,11 +425,11 @@ class HDF5Stack1D(DataObject.DataObject):
                                     yData = yDataset
                                 if mSelection is not None:
                                     if case == 0:
-                                        self.data[i, j, :] = yData/mDataset[mca]
+                                        self.data[i, j, :] += yData/mDataset[mca]
                                     elif case == 1:
-                                        self.data[i, j, :]  = yData/mDataset[mca, :]
+                                        self.data[i, j, :]  += yData/mDataset[mca, :]
                                 else:
-                                    self.data[i, j, :] = yData
+                                    self.data[i, j, :] += yData
                                 n += 1
                     else:
                         if mSelection is not None:
@@ -454,13 +465,13 @@ class HDF5Stack1D(DataObject.DataObject):
                                     yData = yDataset[:]
                                 if mSelection is not None:
                                     if case == 0:
-                                        self.data[i, j, :] = yData/mDataset[mca]
+                                        self.data[i, j, :] += yData/mDataset[mca]
                                     elif case == 1:
-                                        self.data[i, j, :]  = yData/mDataset[:, mca]
+                                        self.data[i, j, :]  += yData/mDataset[:, mca]
                                     elif case == 3:
-                                        self.data[i, j, :]  = yData/mDataset
+                                        self.data[i, j, :]  += yData/mDataset
                                 else:
-                                    self.data[i, j, :] = yData
+                                    self.data[i, j, :] += yData
                                 n += 1
                         else:
                             #stack of images to be read as MCA
@@ -473,19 +484,19 @@ class HDF5Stack1D(DataObject.DataObject):
                                         #this loop is extremely SLOW!!!(and useless)
                                         for ii in range(tmp.shape[1]):
                                             for jj in range(tmp.shape[2]):
-                                                self.data[i+ii, j+jj, nImage] = tmp[0, ii, jj]
+                                                self.data[i+ii, j+jj, nImage] += tmp[0, ii, jj]
                                     else:
                                         self.data[i:i+tmp.shape[1],
-                                                  j:j+tmp.shape[2], nImage] = tmp[0]
+                                                  j:j+tmp.shape[2], nImage] += tmp[0]
                             if mSelection is not None:
                                 for mca in range(yDataset.shape[0]):
                                     i = int(n/dim1)
                                     j = n % dim1
                                     yData = self.data[i, j, :]
                                     if case == 0:
-                                        self.data[i, j, :] = yData/mDataset[mca]
+                                        self.data[i, j, :] += yData/mDataset[mca]
                                     elif case == 1:
-                                        self.data[i, j, :]  = yData/mDataset[:, mca]
+                                        self.data[i, j, :]  += yData/mDataset[:, mca]
                                     n += 1
                             else:
                                 n += tmp.shape[1] * tmp.shape[2]
@@ -500,6 +511,7 @@ class HDF5Stack1D(DataObject.DataObject):
             for hdf in hdfStack._sourceObjectList:
                 entryNames = list(hdf["/"].keys())
                 for scan in scanlist:
+                  for ySelection in ySelectionList:
                     if JUST_KEYS:
                         entryName = entryNames[int(scan.split(".")[-1])-1]
                         path = entryName + ySelection
@@ -534,13 +546,13 @@ class HDF5Stack1D(DataObject.DataObject):
                                 "I do not know how to handle this monitor data")
                         if case == 0:
                             for i in range(yDatasetShape[0]):
-                                self.data[i] = yDataset[i].value / mDataset[i]
+                                self.data[i] += yDataset[i].value / mDataset[i]
                         elif case == 1:
                             for i in range(yDataset.shape[0]):
-                                self.data[i] = yDataset[i] / mDataset
+                                self.data[i] += yDataset[i] / mDataset
                     else:
                         for i in range(yDataset.shape[0]):
-                            self.data[i:i+1] = yDataset[i:i+1]
+                            self.data[i:i+1] += yDataset[i:i+1]
         else:
             self.info["McaIndex"] = mcaIndex
 
