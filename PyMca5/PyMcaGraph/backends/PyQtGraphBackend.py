@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -603,10 +603,12 @@ class PyQtGraphBackend(PlotBackend.PlotBackend, pg.PlotWidget):
         """
         pg.PlotWidget.clearPlots()
 
-    def resetZoom(self):
+    def resetZoom(self, dataMargins=None):
         """
         It should autoscale any axis that is in autoscale mode
         """
+        if dataMargins is not None:
+            print("dataMargins not implemented")
         xmin, xmax = self.getGraphXLimits()
         xAuto = self.isXAxisAutoScale()
         yAuto = self.isYAxisAutoScale()
