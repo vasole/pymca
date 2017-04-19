@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -203,7 +203,7 @@ class SpecfitFunctions(object):
         Fit function periodic_gauss(pars, x)
         pars = [npeaks, delta, height, position, fwhm]
         """
-        newpars = numpy.zeros((pars[0], 3), numpy.float)
+        newpars = numpy.zeros((int(pars[0]), 3), numpy.float)
         for i in range(int(pars[0])):
             newpars[i, 0] = pars[2]
             newpars[i, 1] = pars[3] + i * pars[1]
