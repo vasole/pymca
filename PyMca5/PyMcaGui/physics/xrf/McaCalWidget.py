@@ -444,9 +444,11 @@ class McaCalWidget(qt.QDialog):
                     channel = peak0 + i * delta
                     calenergy = deltat * (i + 1)
                     self.foundPeaks.append(channel)
-                    marker = self.graph.insertX1Marker(channel,1.1)
-                    self.graph.setmarkercolor(marker,'red')
-                    name   = "%d" % i
+                    name = "%d" % i
+                    marker = self.graph.insertXMarker(channel,
+                                                      legend=name,
+                                                      color="red",
+                                                      replot=False)
                     if name in self.peakTable.peaks.keys():
                         self.peakTable.configure(number=name,
                                              channel=channel,
