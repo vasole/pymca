@@ -67,9 +67,12 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         mask = self.getStackSelectionMask()
         self.widget.setSelectionMask(mask)
 
-    def mySlot(self, ddict):
+    def onWidgetSignal(self, ddict):
+        """triggered by self.widget.sigExternalImagesWindowSignal"""
         if ddict['event'] == "selectionMaskChanged":
-            self.setStackSelectionMask(ddict['current'])
+            self.setStackSelectionMask(
+                self.widget.getSelectionMask()
+            )
         elif ddict['event'] == "addImageClicked":
             self.addImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "removeImageClicked":
@@ -125,7 +128,8 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             shape = mask.shape
 
         self.widget = SilxExternalImagesWindow.SilxExternalImagesWindow()
-        self.widget.sigImageChanged.connect(self.mySlot)
+        self.widget.sigExternalImagesWindowSignal.connect(
+                self.onWidgetSignal)
 
         if filefilter.startswith("EDF"):
             for filename in filenamelist:

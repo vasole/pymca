@@ -53,9 +53,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
     All images must have the same shape. The operations are applied to
     all images, not only the one currently displayed.
     """
-    # TODO: rotation
-    sigMaskChanged = qt.pyqtSignal()
-    sigImageModified = qt.pyqtSignal(object)
+    sigExternalImagesWindowSignal = qt.pyqtSignal(object)
 
     def __init__(self, parent=None):
         qt.QMainWindow.__init__(self, parent=parent)
@@ -64,11 +62,54 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         layout = qt.QVBoxLayout(centralWidget)
         centralWidget.setLayout(layout)
 
+        # Plot
         self.plot = PlotWidget(parent=centralWidget)
         self.plot.setWindowFlags(qt.Qt.Widget)
         layout.addWidget(self.plot)
 
+        # Mask Widget
         self._maskToolsDockWidget = None
+
+        # Image selection slider
+        self.slider = qt.QSlider(centralWidget)
+        self.slider.setOrientation(qt.Qt.Horizontal)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(0)
+
+        layout.addWidget(self.slider)
+        self.slider.valueChanged[int].connect(self.showImage)
+
+        # ADD/REMOVE/REPLACE IMAGE buttons
+        buttonBox = qt.QWidget(self)
+        buttonBoxLayout = qt.QHBoxLayout(buttonBox)
+        buttonBoxLayout.setContentsMargins(0, 0, 0, 0)
+        buttonBoxLayout.setSpacing(0)
+        self.addImageButton = qt.QPushButton(buttonBox)
+        icon = qt.QIcon(qt.QPixmap(IconDict["rgb16"]))
+        self.addImageButton.setIcon(icon)
+        self.addImageButton.setText("ADD IMAGE")
+        self.addImageButton.setToolTip("Add image to RGB correlator")
+        self.addImageButton.clicked.connect(self._addImageClicked)
+        buttonBoxLayout.addWidget(self.addImageButton)
+
+        self.removeImageButton = qt.QPushButton(buttonBox)
+        self.removeImageButton.setIcon(icon)
+        self.removeImageButton.setText("REMOVE IMAGE")
+        self.removeImageButton.setToolTip("Remove image from RGB correlator")
+        self.removeImageButton.clicked.connect(self._removeImageClicked)
+        buttonBoxLayout.addWidget(self.removeImageButton)
+
+        self.replaceImageButton = qt.QPushButton(buttonBox)
+        self.replaceImageButton.setIcon(icon)
+        self.replaceImageButton.setText("REPLACE IMAGE")
+        self.replaceImageButton.setToolTip(
+                "Replace all images in RGB correlator with this one")
+        buttonBoxLayout.addWidget(self.replaceImageButton)
+        self.replaceImageButton.clicked.connect(self._replaceImageClicked)
+
+        layout.addWidget(buttonBox)
+
+        self.setCentralWidget(centralWidget)
 
         # Init actions
         self.group = qt.QActionGroup(self)
@@ -150,19 +191,10 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
 
-        self.slider = qt.QSlider(centralWidget)
-        self.slider.setOrientation(qt.Qt.Horizontal)
-        self.slider.setMinimum(0)
-        self.slider.setMaximum(0)
-
-        layout.addWidget(self.slider)
-        self.slider.valueChanged[int].connect(self.showImage)
-
-        self.setCentralWidget(centralWidget)
-
         self._images = []
         """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
         """
+
         self._labels = []
         """List of image labels.
         """
@@ -242,6 +274,8 @@ class SilxExternalImagesWindow(qt.QMainWindow):
                  The mask can be cropped or padded to fit active image,
                  the returned shape is that of the active image.
         """
+        self.sigExternalImagesWindowSignal.emit({
+            "event": "selectionMaskChanged"})
         return self.getMaskToolsDockWidget().setSelectionMask(mask,
                                                               copy=copy)
 
@@ -255,6 +289,30 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         :rtype: 2D numpy.ndarray of uint8
         """
         return self.getMaskToolsDockWidget().getSelectionMask(copy=copy)
+
+    def _addImageClicked(self):
+        ddict = {
+            'event': "addImageClicked",
+            'image': self._images[self.slider.value()],
+            'title': self.plot.getGraphTitle(),
+            'id': id(self)}
+        self.sigExternalImagesWindowSignal.emit(ddict)
+
+    def _replaceImageClicked(self):
+        ddict = {
+            'event': "replaceImageClicked",
+            'image': self._images[self.slider.value()],
+            'title': self.plot.getGraphTitle(),
+            'id': id(self)}
+        self.sigExternalImagesWindowSignal.emit(ddict)
+
+    def _removeImageClicked(self):
+        ddict = {
+            'event': "removeImageClicked",
+            'image': self._images[self.slider.value()],
+            'title': self.plot.getGraphTitle(),
+            'id': id(self)}
+        self.sigExternalImagesWindowSignal.emit(ddict)
 
     def _getCurrentHeightWidth(self):
         image = self._images[self.slider.value()]
@@ -291,7 +349,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.setImages(croppedImages, self._labels,
                        width=width, height=height)
 
-        self.sigImageModified.emit(
+        self.sigExternalImagesWindowSignal.emit(
                 {'event': "cropSignal"})
 
     def _hFlipIconSignal(self):
@@ -300,7 +358,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.plot.setYAxisInverted(not isYAxisInverted)
 
         # inform the other widgets
-        self.sigImageModified.emit(
+        self.sigExternalImagesWindowSignal.emit(
             {'event': "hFlipSignal",
              'current': self.plot.isYAxisInverted(),
              'id': id(self)})
@@ -311,7 +369,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             flippedImages.append(numpy.flipud(img))
         self._images = flippedImages
 
-        self.sigImageModified.emit(
+        self.sigExternalImagesWindowSignal.emit(
                 {'event': "flipUpDownSignal"})
 
         self.showImage(self.slider.value())
@@ -322,7 +380,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             flippedImages.append(numpy.fliplr(img))
         self._images = flippedImages
 
-        self.sigImageModified.emit(
+        self.sigExternalImagesWindowSignal.emit(
                 {'event': "flipLeftRightSignal"})
 
         self.showImage(self.slider.value())
@@ -342,7 +400,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             for img in self._images:
                 rotatedImages.append(numpy.rot90(img, 3))
 
-        self.sigImageModified.emit(
+        self.sigExternalImagesWindowSignal.emit(
                 {'event': "rotateRight"})
 
         self.setImages(rotatedImages, self._labels,
@@ -363,7 +421,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             for img in self._images:
                 rotatedImages.append(numpy.rot90(img, 1))
 
-        self.sigImageModified.emit(
+        self.sigExternalImagesWindowSignal.emit(
                 {'event': "rotateLeft"})
 
         self.setImages(rotatedImages, self._labels,
@@ -492,7 +550,7 @@ def test():
     def theSlot(ddict):
         print(ddict)
 
-    container.sigImageModified.connect(theSlot)
+    container.sigExternalImagesWindowSignal.connect(theSlot)
 
     app.exec_()
 
