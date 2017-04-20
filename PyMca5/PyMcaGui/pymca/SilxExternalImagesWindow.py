@@ -27,12 +27,8 @@ __authors__ = ["V.A. Sole", "P. Knobel"]
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 
-from collections import OrderedDict
 
-import sys
-import os
 import numpy
-
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
@@ -119,7 +115,6 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.hFlipToolButton = qt.QToolButton(self)
         self.hFlipToolButton.setIcon(self.hFlipIcon)
         self.hFlipToolButton.setToolTip("Flip image and data, not the scale.")
-
         self._flipMenu = qt.QMenu()
         self._flipMenu.addAction(QString("Invert Y axis direction"),
                                  self._hFlipIconSignal)
@@ -131,7 +126,25 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.hFlipToolButton.setMenu(self._flipMenu)
         self.hFlipToolButton.setPopupMode(qt.QToolButton.InstantPopup)
 
-        # TODO: rotate...
+        self.rotateLeftIcon = qt.QIcon(qt.QPixmap(IconDict["rotate_left"]))
+        self.rotateRightIcon = qt.QIcon(qt.QPixmap(IconDict["rotate_right"]))
+        self.rotateButton = qt.QToolButton(self)
+        self.rotateButton.setIcon(self.rotateLeftIcon)
+        self.cropButton.setToolTip("Rotate image by 90 degrees")
+        self._rotateMenu = qt.QMenu()
+        self.rotateLeftAction = qt.QAction(self.rotateLeftIcon,
+                                           QString("Rotate left"),
+                                           self)
+        self.rotateLeftAction.triggered.connect(self._rotateLeft)
+        self._rotateMenu.addAction(self.rotateLeftAction)
+        self.rotateRightAction = qt.QAction(self.rotateRightIcon,
+                                            QString("Rotate right"),
+                                            self)
+        self.rotateRightAction.triggered.connect(self._rotateRight)
+        self._rotateMenu.addAction(self.rotateRightAction)
+
+        self.rotateButton.setMenu(self._rotateMenu)
+        self.rotateButton.setPopupMode(qt.QToolButton.InstantPopup)
 
         # Creating the toolbar also create actions for toolbuttons
         self._toolbar = self._createToolBar(title='Plot', parent=None)
@@ -195,6 +208,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         # custom widgets added to the end
         toolbar.addWidget(self.cropButton)
         toolbar.addWidget(self.hFlipToolButton)
+        toolbar.addWidget(self.rotateButton)
 
         return toolbar
 
@@ -242,15 +256,18 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         """
         return self.getMaskToolsDockWidget().getSelectionMask(copy=copy)
 
-    def _cropIconChecked(self):  # fixme: why does this require qImages?
-        """Crop all images in :attr:`qImages` to the X and Y ranges
-        currently displayed (crop to zoomed area)."""
-        # current image
+    def _getCurrentHeightWidth(self):
         image = self._images[self.slider.value()]
         ncols = image.shape[1]
         nrows = image.shape[0]
         width = ncols * self._scale[0]   # X
         height = nrows * self._scale[1]  # Y
+        return height, width
+
+    def _cropIconChecked(self):  # fixme: why does this require qImages?
+        """Crop all images in :attr:`qImages` to the X and Y ranges
+        currently displayed (crop to zoomed area)."""
+        height, width = self._getCurrentHeightWidth()
 
         xmin, xmax = map(int, self.plot.getGraphXLimits())
         ymin, ymax = map(int, self.plot.getGraphYLimits())
@@ -270,33 +287,12 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             image = img[rows_min:rows_max, cols_min:cols_max]
             croppedImages.append(image)
 
-        # newXscale = self._scale[0] * width / (xmax - xmin)
-        # newYscale = self._scale[1] * height / (ymax - ymin)
-
-        # # change the scale to keep the same height and width (now done in setImages
-        # self._scale = newXscale, newYscale
-
-        # replace current image by the new one
+        # replace current image data by the new one, keep (width, height)
         self.setImages(croppedImages, self._labels,
                        width=width, height=height)
 
-        self.showImage(self.slider.value())
-
-    # def _flipIconChecked(self):
-    #     if not self.plot.isYAxisAutoScale():
-    #         qt.QMessageBox.information(
-    #                 self, "Open",
-    #                 "Please set Y Axis to AutoScale first")
-    #         return
-    #     if not self.plot.isXAxisAutoScale():
-    #         qt.QMessageBox.information(
-    #                 self, "Open",
-    #                 "Please set X Axis to AutoScale first")
-    #         return
-    #     if not self.qImages:
-    #         assert not self.numpyImages, "numpy images and qimages not in sync"
-    #         return
-    #     self._flipMenu.exec_(self.cursor().pos())
+        self.sigImageModified.emit(
+                {'event': "cropSignal"})
 
     def _hFlipIconSignal(self):
         isYAxisInverted = self.plot.isYAxisInverted()
@@ -307,8 +303,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.sigImageModified.emit(
             {'event': "hFlipSignal",
              'current': self.plot.isYAxisInverted(),
-             'id': id(self)}
-        )
+             'id': id(self)})
 
     def _flipUpDown(self):
         flippedImages = []
@@ -317,8 +312,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self._images = flippedImages
 
         self.sigImageModified.emit(
-                {'event': "flipUpDownSignal"}
-        )
+                {'event': "flipUpDownSignal"})
 
         self.showImage(self.slider.value())
 
@@ -329,10 +323,51 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self._images = flippedImages
 
         self.sigImageModified.emit(
-                {'event': "flipLeftRightSignal"}
-        )
+                {'event': "flipLeftRightSignal"})
 
         self.showImage(self.slider.value())
+
+    def _rotateRight(self):
+        """Rotate the image 90 degrees clockwise.
+
+        Depending on the Y axis orientation, the array must be
+        rotated by 90 or 270 degrees."""
+        height, width = self._getCurrentHeightWidth()
+
+        rotatedImages = []
+        if not self.plot.isYAxisInverted():
+            for img in self._images:
+                rotatedImages.append(numpy.rot90(img, 1))
+        else:
+            for img in self._images:
+                rotatedImages.append(numpy.rot90(img, 3))
+
+        self.sigImageModified.emit(
+                {'event': "rotateRight"})
+
+        self.setImages(rotatedImages, self._labels,
+                       width=width, height=height)
+
+    def _rotateLeft(self):
+        """Rotate the image 90 degrees counterclockwise.
+
+        Depending on the Y axis orientation, the array must be
+        rotated by 90 or 270 degrees."""
+        height, width = self._getCurrentHeightWidth()
+
+        rotatedImages = []
+        if not self.plot.isYAxisInverted():
+            for img in self._images:
+                rotatedImages.append(numpy.rot90(img, 3))
+        else:
+            for img in self._images:
+                rotatedImages.append(numpy.rot90(img, 1))
+
+        self.sigImageModified.emit(
+                {'event': "rotateLeft"})
+
+        self.setImages(rotatedImages, self._labels,
+                       width=width, height=height)
 
     def showImage(self, index=0):
         """Show image corresponding to index. Update slider to index."""
@@ -357,9 +392,9 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         :type images: List of ndarrays
         :param labels: list of image names
         :param height: Image height in Y axis units. If None, use the
-            image shape.
+            image height in number of pixels.
         :param width: Image width in X axis units. If None, use the
-            image shape.
+            image width in number of pixels.
         """
         self._images = images
         if labels is None:
@@ -443,11 +478,14 @@ def test():
     app = qt.QApplication([])
     app.lastWindowClosed.connect(app.quit)
 
-    container = SilxExternalImagesWindow()
     data = numpy.arange(10000)
     data.shape = 50, 200
-    data[25, :] = 0
-    data[:, 130] = 10000
+    data[8:12, 48:52] = 10000
+    data[6:14, 146:154] = 10000
+    data[34:46, 44:56] = 0
+    data[32:48, 142:158] = 0
+
+    container = SilxExternalImagesWindow()
     container.setImages([data])
     container.show()
 
