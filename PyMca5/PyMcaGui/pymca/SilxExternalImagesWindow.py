@@ -253,7 +253,14 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             self.addDockWidget(qt.Qt.BottomDockWidgetArea,
                                self._maskToolsDockWidget)
             self._maskToolsDockWidget.setFloating(True)
+            self._maskToolsDockWidget.sigMaskChanged.connect(
+                    self._emitExternalImagesWindowSignal)
         return self._maskToolsDockWidget
+
+    def _emitExternalImagesWindowSignal(self):
+        self.sigExternalImagesWindowSignal.emit(
+            {"event": "selectionMaskChanged",
+             "id": id(self)})
 
     def getMaskAction(self):
         """QAction toggling image mask dock widget
@@ -275,7 +282,8 @@ class SilxExternalImagesWindow(qt.QMainWindow):
                  the returned shape is that of the active image.
         """
         self.sigExternalImagesWindowSignal.emit({
-            "event": "selectionMaskChanged"})
+            "event": "selectionMaskChanged",
+            "id": id(self)})
         return self.getMaskToolsDockWidget().setSelectionMask(mask,
                                                               copy=copy)
 
