@@ -188,11 +188,23 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                 imagelist[i] = self.qImageToRgba(image)
 
         info = self.getStackInfo()
-        h, w = info["Dim_1"], info["Dim_2"]
+        image_shape = list(self.getStackData().shape)
+
+        # remove dimension associated with frame index
+        image_shape.pop(info.get("McaIndex", 0))
+
+        xscale = info.get("yScale", [0.0, 1.0])
+        yscale = info.get("xScale", [0.0, 1.0])
+
+        h = xscale[1] * image_shape[1]
+        w = yscale[1] * image_shape[0]
+
+        origin = xscale[0], yscale[0]
+
         self.widget.setImages(imagelist,
                               labels=imagenames,
+                              origin=origin,
                               width=w, height=h)
-        # TODO: origin parameter in setImages?
         self._showWidget()
 
     def _showWidget(self):

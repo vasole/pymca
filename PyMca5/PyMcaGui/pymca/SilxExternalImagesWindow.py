@@ -476,6 +476,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.slider.setValue(index)
 
     def setImages(self, images, labels=None,
+                  origin=None,                # TODO
                   height=None, width=None):
         """Set the list of images.
 
