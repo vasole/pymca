@@ -65,15 +65,15 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         if self.widget.isHidden():
             return
         mask = self.getStackSelectionMask()
-        self.widget.setSelectionMask(mask)
+        if mask is not None:
+            self.widget.setSelectionMask(mask)
 
     def onWidgetSignal(self, ddict):
         """triggered by self.widget.sigExternalImagesWindowSignal"""
         if ddict['event'] == "selectionMaskChanged":
-            self.setStackSelectionMask(
-                self.widget.getSelectionMask()
-            )
-        elif ddict['event'] == "addImageClicked":
+            mask = self.widget.getSelectionMask()
+            self.setStackSelectionMask(mask, instance_id=ddict["id"])
+        if ddict['event'] == "addImageClicked":
             self.addImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "removeImageClicked":
             self.removeImage(ddict['title'])
@@ -189,7 +189,9 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
         self.widget.setImages(imagelist,
                               labels=imagenames,
-                              width=shape[1], height=shape[0])   # fixme: should be width and height of stack image
+                              # width=80, height=71)
+                              width=shape[1], height=shape[0])
+        # fixme: should be width and height of stack image
         self._showWidget()
 
     def _showWidget(self):
@@ -229,7 +231,7 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         return pixmap
 
 
-MENU_TEXT = "External Images Tool"
+MENU_TEXT = "Silx External Images Tool"
 
 
 def getStackPluginInstance(stackWindow, **kw):

@@ -281,11 +281,16 @@ class SilxExternalImagesWindow(qt.QMainWindow):
                  The mask can be cropped or padded to fit active image,
                  the returned shape is that of the active image.
         """
-        self.sigExternalImagesWindowSignal.emit({
-            "event": "selectionMaskChanged",
-            "id": id(self)})
-        return self.getMaskToolsDockWidget().setSelectionMask(mask,
+        # don't emit signal for programmatic mask change,
+        # only for interactive mask drawing
+        # (avoid infinite loop)
+        self.getMaskToolsDockWidget().sigMaskChanged.disconnect(
+                    self._emitExternalImagesWindowSignal)
+        ret = self.getMaskToolsDockWidget().setSelectionMask(mask,
                                                               copy=copy)
+        self.getMaskToolsDockWidget().sigMaskChanged.connect(
+                    self._emitExternalImagesWindowSignal)
+        return ret
 
     def getSelectionMask(self, copy=True):
         """Get the current mask as a 2D array.
@@ -298,26 +303,47 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         """
         return self.getMaskToolsDockWidget().getSelectionMask(copy=copy)
 
+    @staticmethod
+    def _getImageData(image):
+        """Convert RGBA image to 2D array of grayscale values
+        (Luma coding)
+
+        :param image: RGBA image, as a numpy array of shapes
+             (nrows, ncols, 3/4)
+        :return:
+        """
+        if len(image.shape) == 2:
+            return image
+        assert len(image.shape) == 3
+
+        imageData = image[:, :, 0] * 0.299 +\
+                    image[:, :, 1] * 0.587 +\
+                    image[:, :, 2] * 0.114
+        return imageData
+
     def _addImageClicked(self):
+        imageData = self._getImageData(self._images[self.slider.value()])
         ddict = {
             'event': "addImageClicked",
-            'image': self._images[self.slider.value()],
+            'image': imageData,
             'title': self.plot.getGraphTitle(),
             'id': id(self)}
         self.sigExternalImagesWindowSignal.emit(ddict)
 
     def _replaceImageClicked(self):
+        imageData = self._getImageData(self._images[self.slider.value()])
         ddict = {
             'event': "replaceImageClicked",
-            'image': self._images[self.slider.value()],
+            'image': imageData,
             'title': self.plot.getGraphTitle(),
             'id': id(self)}
         self.sigExternalImagesWindowSignal.emit(ddict)
 
     def _removeImageClicked(self):
+        imageData = self._getImageData(self._images[self.slider.value()])
         ddict = {
             'event': "removeImageClicked",
-            'image': self._images[self.slider.value()],
+            'image': imageData,
             'title': self.plot.getGraphTitle(),
             'id': id(self)}
         self.sigExternalImagesWindowSignal.emit(ddict)
