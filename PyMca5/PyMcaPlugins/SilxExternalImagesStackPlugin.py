@@ -187,11 +187,12 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             for i, image in enumerate(imagelist):
                 imagelist[i] = self.qImageToRgba(image)
 
+        info = self.getStackInfo()
+        h, w = info["Dim_1"], info["Dim_2"]
         self.widget.setImages(imagelist,
                               labels=imagenames,
-                              # width=80, height=71)
-                              width=shape[1], height=shape[0])
-        # fixme: should be width and height of stack image
+                              width=w, height=h)
+        # TODO: origin parameter in setImages?
         self._showWidget()
 
     def _showWidget(self):
@@ -223,7 +224,7 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             pixmap = numpy.fromstring(qimage.bits().asstring(width * height * 4),
                                       dtype=numpy.uint8)
             pixmap.shape = height, width, -1
-            # Qt uses BGRA, convert to RGBA   # TODO: check this claim (qt doc says 0xAARRGGBB)
+            # Qt uses BGRA, convert to RGBA   # TODO: check this (qt doc says 0xAARRGGBB)
             tmpBuffer = numpy.array(pixmap[:, :, 0], copy=True, dtype=pixmap.dtype)
             pixmap[:, :, 0] = pixmap[:, :, 2]
             pixmap[:, :, 2] = tmpBuffer
