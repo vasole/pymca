@@ -204,6 +204,10 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         The scale is adjusted to keep constant width and height for the image
         when a crop operation is applied."""
 
+        self._origin = (0., 0.)
+        """Current image origin: coordinate (x, y) of sample located at
+        (row, column) = (0, 0)"""
+
         self._maskIsSet = False
 
     def sizeHint(self):
@@ -381,6 +385,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
 
         # replace current image data by the new one, keep (width, height)
         self.setImages(croppedImages, self._labels,
+                       origin=self._origin,
                        width=width, height=height)
 
         self.sigExternalImagesWindowSignal.emit(
@@ -424,8 +429,6 @@ class SilxExternalImagesWindow(qt.QMainWindow):
 
         Depending on the Y axis orientation, the array must be
         rotated by 90 or 270 degrees."""
-        height, width = self._getCurrentHeightWidth()
-
         rotatedImages = []
         if not self.plot.isYAxisInverted():
             for img in self._images:
@@ -437,7 +440,10 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.sigExternalImagesWindowSignal.emit(
                 {'event': "rotateRight"})
 
+        height, width = self._getCurrentHeightWidth()
+
         self.setImages(rotatedImages, self._labels,
+                       origin=self._origin,
                        width=width, height=height)
 
     def _rotateLeft(self):
@@ -459,6 +465,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
                 {'event': "rotateLeft"})
 
         self.setImages(rotatedImages, self._labels,
+                       origin=self._origin,
                        width=width, height=height)
 
     def showImage(self, index=0):
@@ -470,20 +477,22 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.plot.remove(legend="current")
         self.plot.addImage(self._images[index],
                            legend="current",
+                           origin=self._origin,
                            scale=self._scale,
                            replace=False)
         self.plot.setGraphTitle(self._labels[index])
         self.slider.setValue(index)
 
     def setImages(self, images, labels=None,
-                  origin=None,                # TODO
-                  height=None, width=None):
+                  origin=None, height=None, width=None):
         """Set the list of images.
 
         :param images: List of 2D or 3D (for RGBA data) numpy arrays
             of image data. All images must have the same shape.
         :type images: List of ndarrays
         :param labels: list of image names
+        :param origin: Image origin: coordinate (x, y) of sample located at
+            (row, column) = (0, 0). If None, use (0., 0.)
         :param height: Image height in Y axis units. If None, use the
             image height in number of pixels.
         :param width: Image width in X axis units. If None, use the
@@ -495,17 +504,18 @@ class SilxExternalImagesWindow(qt.QMainWindow):
 
         self._labels = labels
 
-        pixel_height, pixel_width = images[0].shape[0:2]
-        if height is None:
-            height = pixel_height
-        if width is None:
-            width = pixel_width
+        height_pixels, width_pixels = images[0].shape[0:2]
+        height = height or height_pixels
+        width = width or width_pixels
 
-        if not self._maskIsSet:
-            self.resetMask(width, height)
+        self._scale = (float(width) / width_pixels,
+                       float(height) / height_pixels)
 
-        self._scale = (float(width) / pixel_width,
-                       float(height) / pixel_height)
+        self._origin = origin or (0., 0.)
+
+        # we need an image with the same size as the stack images
+        # to synchronize the masks
+        self.resetMask(width, height)
 
         current = self.slider.value()
         self.slider.setMaximum(len(self._images) - 1)
@@ -513,55 +523,31 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             self.showImage(current)
         else:
             self.showImage(0)
+        self.plot.setGraphXLimits(self._origin[0],
+                                  self._origin[0] + width)
+        self.plot.setGraphYLimits(self._origin[1],
+                                  self._origin[1] + height)
 
     def resetMask(self, width, height):
         """Initialize a mask with a given width and height.
 
+        The mask may be synchronized with another widget.
+        The mask size must therefore match the master widget's image
+        size.
+
         :param width:
         :param height:
-        :return:
         """
-        transparent_active_image = numpy.zeros((height, width, 4))
+        transparent_active_image = numpy.zeros((int(height), int(width), 4))
         # set alpha for total transparecy
         transparent_active_image[:, :, -1] = 0
-        self.plot.addImage(transparent_active_image, legend="mask support")
+        self.plot.addImage(transparent_active_image,
+                           origin=self._origin,
+                           legend="mask support")
         self.plot.setActiveImage("mask support")
 
-        self.setSelectionMask(numpy.zeros((height, width)))
+        self.setSelectionMask(numpy.zeros((int(height), int(width))))
         self._maskIsSet = True
-
-
-    # def _updateProfileCurve(self, ddict):
-    #     if not self._depthSelection:
-    #         return MaskImageWidget.MaskImageWidget._updateProfileCurve(self,
-    #                                                                    ddict)
-    #     nImages = len(self.imageNames)
-    #     for i in range(nImages):
-    #         image=self.imageList[i]
-    #         overlay = False
-    #         if i == 0:
-    #             overlay = MaskImageWidget.OVERLAY_DRAW
-    #             replace = True
-    #             if len(self.imageNames) == 1:
-    #                 replot = True
-    #             else:
-    #                 replot = False
-    #         elif i == (nImages -1):
-    #             replot = True
-    #             replace=False
-    #         else:
-    #             replot = False
-    #             replace= False
-    #         curve = self._getProfileCurve(ddict, image=image, overlay=overlay)
-    #         if curve is None:
-    #             return
-    #         xdata, ydata, legend, info = curve
-    #         newLegend = self.imageNames[i]+ " " + legend
-    #         self._profileSelectionWindow.addCurve(xdata, ydata,
-    #                                               legend=newLegend,
-    #                                               info=info,
-    #                                               replot=replot,
-    #                                               replace=replace)
 
     def getCurrentIndex(self):
         return self.slider.value()
