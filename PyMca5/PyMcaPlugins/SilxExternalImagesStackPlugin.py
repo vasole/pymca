@@ -196,8 +196,8 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         xscale = info.get("xScale", [0.0, 1.0])
         yscale = info.get("yScale", [0.0, 1.0])
 
-        h = yscale[1] * image_shape[1]
-        w = xscale[1] * image_shape[0]
+        h = yscale[1] * image_shape[0]
+        w = xscale[1] * image_shape[1]
 
         origin = xscale[0], yscale[0]
         scale = xscale[1], yscale[1]
