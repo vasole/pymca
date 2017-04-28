@@ -193,8 +193,8 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         # remove dimension associated with frame index
         image_shape.pop(info.get("McaIndex", 0))
 
-        xscale = info.get("yScale", [0.0, 1.0])
-        yscale = info.get("xScale", [0.0, 1.0])
+        xscale = info.get("xScale", [0.0, 1.0])
+        yscale = info.get("yScale", [0.0, 1.0])
 
         h = xscale[1] * image_shape[1]
         w = yscale[1] * image_shape[0]
