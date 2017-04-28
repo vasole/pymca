@@ -39,8 +39,8 @@ import numpy
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import EDFStack
-from PyMca5.PyMcaGui import PyMcaFileDialogs
-from PyMca5.PyMcaGui import SilxExternalImagesWindow
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+from PyMca5.PyMcaGui.pymca import SilxExternalImagesWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 
@@ -71,8 +71,7 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
     def onWidgetSignal(self, ddict):
         """triggered by self.widget.sigExternalImagesWindowSignal"""
         if ddict['event'] == "selectionMaskChanged":
-            mask = self.widget.getSelectionMask()
-            self.setStackSelectionMask(mask, instance_id=ddict["id"])
+            self.setStackSelectionMask(ddict["current"])
         if ddict['event'] == "addImageClicked":
             self.addImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "removeImageClicked":

@@ -264,6 +264,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
     def _emitExternalImagesWindowSignal(self):
         self.sigExternalImagesWindowSignal.emit(
             {"event": "selectionMaskChanged",
+             "current": self.getSelectionMask(),
              "id": id(self)})
 
     def getMaskAction(self):
