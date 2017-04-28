@@ -119,7 +119,6 @@ class JcampReader(object):
                 raise IOError("This does not look as a JCAMP-DX file")
         line = _fileObject.readline()
         while not line.startswith("##XYDATA"):
-
             header.append(line)
             line = _fileObject.readline()
         key, value = re.findall(patternKey, line)[0]
@@ -128,7 +127,7 @@ class JcampReader(object):
         # we are at the data block
         data = []
         line = _fileObject.readline()
-        while not line.startswith("#"):
+        while not line.startswith("##END"):
             data.append(line)
             line = _fileObject.readline()
         _fileObject.close()

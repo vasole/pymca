@@ -191,20 +191,24 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         image_shape = list(self.getStackData().shape)
 
         # remove dimension associated with frame index
-        image_shape.pop(info.get("McaIndex", 0))
+        del image_shape[info.get("McaIndex", -1)]
 
         xscale = info.get("xScale", [0.0, 1.0])
         yscale = info.get("yScale", [0.0, 1.0])
 
-        h = xscale[1] * image_shape[1]
-        w = yscale[1] * image_shape[0]
+        h = yscale[1] * image_shape[1]
+        w = xscale[1] * image_shape[0]
 
         origin = xscale[0], yscale[0]
+        scale = xscale[1], yscale[1]
 
         self.widget.setImages(imagelist,
                               labels=imagenames,
                               origin=origin,
                               width=w, height=h)
+        self.widget.resetMask(image_shape[0], image_shape[1],
+                              origin=origin,
+                              scale=scale)
         self._showWidget()
 
     def _showWidget(self):

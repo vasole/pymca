@@ -513,37 +513,39 @@ class SilxExternalImagesWindow(qt.QMainWindow):
 
         self._origin = origin or (0., 0.)
 
-        # we need an image with the same size as the stack images
-        # to synchronize the masks
-        self.resetMask(width, height)
-
         current = self.slider.value()
         self.slider.setMaximum(len(self._images) - 1)
         if current < len(self._images):
             self.showImage(current)
         else:
             self.showImage(0)
-        self.plot.setGraphXLimits(self._origin[0],
-                                  self._origin[0] + width)
-        self.plot.setGraphYLimits(self._origin[1],
-                                  self._origin[1] + height)
 
-    def resetMask(self, width, height):
+    def resetMask(self, width, height,
+                  origin=None, scale=None):
         """Initialize a mask with a given width and height.
 
         The mask may be synchronized with another widget.
         The mask size must therefore match the master widget's image
-        size.
+        size (in pixels).
 
-        :param width:
-        :param height:
+        :param width: Mask width
+        :param height: Mask height
+        :param origin: Tuple of (X, Y) coordinates of the sample (0, 0)
+        :param scale: Tuple of (xscale, yscale) scaling factors, in axis units
+            per pixel.
         """
         transparent_active_image = numpy.zeros((int(height), int(width), 4))
-        # set alpha for total transparecy
+        # set alpha for total transparency
         transparent_active_image[:, :, -1] = 0
+
+        origin = origin or (0., 0.)
+        scale = scale or (1., 1.)
+
         self.plot.addImage(transparent_active_image,
-                           origin=self._origin,
-                           legend="mask support")
+                           origin=origin,
+                           scale=scale,
+                           legend="mask support",
+                           replace=False)
         self.plot.setActiveImage("mask support")
 
         self.setSelectionMask(numpy.zeros((int(height), int(width))))
