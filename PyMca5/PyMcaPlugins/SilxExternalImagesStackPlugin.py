@@ -206,7 +206,7 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                               labels=imagenames,
                               origin=origin,
                               width=w, height=h)
-        self.widget.resetMask(image_shape[0], image_shape[1],
+        self.widget.resetMask(width=image_shape[1], height=image_shape[0],
                               origin=origin,
                               scale=scale)
         self._showWidget()
