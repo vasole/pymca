@@ -102,11 +102,12 @@ class OmdaqLmf(list):
             for idx in range(n_events):
                 adc, row, col, energy = events[idx]
                 #print(adc, energy, row, col)
-                if adc > 0:
+                nChannels = int(adc_list[adc]["Calibration"][-1])
+                if nChannels < 1:
                     continue
                 if self[adc] is None:
                     self[adc] = DataObject.DataObject()
-                    self[adc].data = numpy.zeros((256, 256, 2048),
+                    self[adc].data = numpy.zeros((256, 256, nChannels),
                                                       dtype=numpy.uint32)
                     self[adc].info = {}
                     self[adc].info["SourceType"] = SOURCE_TYPE
@@ -122,7 +123,7 @@ class OmdaqLmf(list):
                     self[adc].info["Size"] = nFiles
                     self[adc].info["NumberOfFiles"] = nFiles
                     self[adc].info["FileIndex"] = 0
-                if energy > 2047:
+                if energy >= nChannels:
                     continue
                 self[adc].data[row, col, energy] += 1
 
@@ -241,9 +242,12 @@ def isOmdaqLmf(fname):
         return True
 
 if __name__ == "__main__":
-    fname = "-42181.LMF"
-    print("Is OMDAQ LMF File = ", isOMDAQLmf(fname))
-    omdaq = OMDAQLmf([fname])
+    if len(sys.argv) > 1:
+        fname = sys.argv[1]
+    else:
+        fname = "-42181.LMF"
+    print("Is OMDAQ LMF File = ", isOmdaqLmf(fname))
+    omdaq = OmdaqLmf([fname])
     print("omdaq = ", omdaq.adc)
     for i in range(len(omdaq.adc)):
         adc = omdaq.adc[i]
