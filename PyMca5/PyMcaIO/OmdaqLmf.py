@@ -122,7 +122,7 @@ class OmdaqLmf(list):
                     self[adc].info["Size"] = nFiles
                     self[adc].info["NumberOfFiles"] = nFiles
                     self[adc].info["FileIndex"] = 0
-                if energy > 2048:
+                if energy > 2047:
                     continue
                 self[adc].data[row, col, energy] += 1
 
