@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -41,6 +41,7 @@ from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaCore import EdfFileDataSource
 from PyMca5.PyMcaGui.pymca import ExternalImagesWindow
 from PyMca5.PyMcaIO import TiffIO
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui import ScatterPlotCorrelatorWidget
 
 DataReader = EdfFileDataSource.EdfFileDataSource
@@ -654,6 +655,39 @@ class RGBCorrelatorWidget(qt.QWidget):
     def update(self):
         self.__recolor()
 
+    def getOutputFileNameAndFilter(self):
+        initdir = PyMcaDirs.outputDir
+        if self.outputDir is not None:
+            if os.path.exists(self.outputDir):
+                initdir = self.outputDir
+        formatlist = ["ASCII Files *.dat",
+                      "EDF Files *.edf",
+                      "EDF(Float32) Files *.edf",
+                      "Single TIFF(Float32 Mono) Files *.tif",
+                      "Single TIFF(Mono) Files *.tif",
+                      "Several TIFF(Float32 Mono) Files *.tif",
+                      "Several TIFF(Mono) Files *.tif",
+                      'CSV(, separated) Files *.csv',
+                      'CSV(; separated) Files *.csv',
+                      'CSV(tab separated) Files *.csv']
+        if self._saveFilter is None:
+            self._saveFilter =formatlist[0]
+        filelist, filterused = PyMcaFileDialogs.getFileList(parent=self,
+                                                filetypelist=formatlist,
+                                                message="Get output filename",
+                                                currentdir=initdir,
+                                                mode="SAVE",
+                                                getfilter=True,
+                                                single=True,
+                                                currentfilter=self._saveFilter,
+                                                native=False)
+        self._saveFilter = "%s" % filterused
+        if len(filelist):
+            return filelist[0], filterused
+        else:
+            return "", filterused
+        return filelist
+
     def getOutputFileName(self):
         initdir = PyMcaDirs.outputDir
         if self.outputDir is not None:
@@ -988,8 +1022,11 @@ class RGBCorrelatorWidget(qt.QWidget):
                             "Image list is empty.\nNothing to be saved")
             return
         if filename is None:
-            filename = self.getOutputFileName()
-            if not len(filename):return
+            filename, filterused = self.getOutputFileNameAndFilter()
+            if not len(filename):
+                return
+        else:
+            filterused = None
 
         datalist = []
         labels = []
@@ -997,6 +1034,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             datalist.append(self._imageDict[label]['image'])
             labels.append(label.replace(" ","_"))
 
+        fileRoot = os.path.splitext(filename)[0]
         fileExtension = os.path.splitext(filename)[-1].lower()
         if fileExtension in [".edf"]:
             if 'Float32'in self._saveFilter:
@@ -1011,7 +1049,23 @@ class RGBCorrelatorWidget(qt.QWidget):
                 dtype = numpy.float32
             else:
                 dtype = None
-            ArraySave.save2DArrayListAsMonochromaticTiff(datalist,
+            severalFiles = False
+            if len(datalist) > 1:
+                if filterused is not None:
+                    if filterused.lower().startswith("several"):
+                        severalFiles = True
+                elif self._saveFilter.lower().startswith("several"):
+                    severalFiles = True
+            if severalFiles:
+                for idx in range(len(labels)):
+                    fname = fileRoot + labels[idx] + fileExtension
+                    ArraySave.save2DArrayListAsMonochromaticTiff(\
+                                                    [datalist[idx]],
+                                                    fname,
+                                                    labels=[labels[idx]],
+                                                    dtype=dtype)
+            else:
+                ArraySave.save2DArrayListAsMonochromaticTiff(datalist,
                                                          filename,
                                                          labels=labels,
                                                          dtype=dtype)
