@@ -243,26 +243,15 @@ class SingleLayerStrategyWidget(qt.QWidget):
                 layerPeaks[layer] = []
             for peak in _peakList:
                 element = peak.split()[0]
-                alreadyInSomeLayer = False
-                presentInLayer = ""
-                toDeleteFromAllLayers = False
+                layersPresent = []
                 for layer in layerList:
                     material = matrixDescription[layer][0]
-                    if element in Elements.getMaterialMassFractions([material],
-                                                                    [1.0]):
-                        if alreadyInSomeLayer:
-                            toDeleteFromAllLayers = True
-                        else:
-                            alreadyInSomeLayer = True
-                            presentInLayer = layer
-                if toDeleteFromAllLayers:
-                    continue
-                if not alreadyInSomeLayer:
-                    for layer in layerList:
-                        layerPeaks[layer].append(peak)
-                else:
-                    layerPeaks[presentInLayer].append(peak)
-
+                    if element in Elements.getMaterialMassFractions(\
+                                                                [material],
+                                                                [1.0]).keys():
+                        layersPresent.append(layer)
+                if len(layersPresent) == 1:
+                    layerPeaks[layersPresent[0]].append(peak)
         oldOption  = qt.safe_str(self._layerOptions.currentText())
         self._layerOptions.clear()
         for item in layerList:
