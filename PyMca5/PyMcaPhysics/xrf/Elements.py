@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -2431,8 +2431,8 @@ def getMaterialMassAttenuationCoefficients(compoundList0, fractionList0, energy0
 
         #the proportion of the element in that compound times the compound fraction
         fraction = [Element[elt]['mass'] *nb for (elt, nb) in zip(elts, nbs) ]
-        div      = sum(fraction)/compoundFractionList[compoundList.index(compound)]
-        fraction = [x/div for x in fraction]
+        div      = compoundFractionList[compoundList.index(compound)]/sum(fraction)
+        fraction = [x * div for x in fraction]
         if energy is None:
             #get energy list
             energy = []

@@ -337,7 +337,10 @@ def _getFisxMaterials(fitConfiguration):
                     fractionList = [fractionList]
                 composition = {}
                 for n in range(len(compoundList)):
-                    composition[compoundList[n]] = fractionList[n]
+                    if fractionList[n] > 0.0:
+                        composition[compoundList[n]] = fractionList[n]
+                    else:
+                        print("FisxHelper ignoring ", compoundList[n], "fraction = ", fractionList[n])
                 # check the composition is expressed in terms of elements
                 # and not in terms of other undefined materials
                 totallyDefined = True
