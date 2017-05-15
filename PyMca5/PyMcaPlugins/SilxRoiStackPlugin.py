@@ -35,8 +35,7 @@ __license__ = "MIT"
 
 
 from PyMca5 import StackPluginBase
-# from PyMca5.PyMcaGui.pymca import StackROIWindow   # fixme
-from PyMca5.PyMcaGui.pymca import SilxExternalImagesWindow   # TODO: create SilxStackROIWindow
+from PyMca5.PyMcaGui.pymca import SilxStackROIWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 
@@ -99,7 +98,7 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
 
     def _showWidget(self):
         if self.widget is None:
-            self.widget = SilxExternalImagesWindow.SilxExternalImagesWindow()
+            self.widget = SilxStackROIWindow.SilxStackROIWindow()
             self.widget.sigExternalImagesWindowSignal.connect(self.mySlot)
 
         # Show
