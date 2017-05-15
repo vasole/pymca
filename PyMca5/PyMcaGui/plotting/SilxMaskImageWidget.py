@@ -28,6 +28,9 @@
 __authors__ = ["P. Knobel"]
 __license__ = "MIT"
 
+
+import numpy
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -62,6 +65,14 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         # Mask Widget
         self._maskToolsDockWidget = None
+
+        # Image selection slider
+        self.slider = qt.QSlider(self.centralWidget())
+        self.slider.setOrientation(qt.Qt.Horizontal)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(0)
+        layout.addWidget(self.slider)
+        self.slider.valueChanged[int].connect(self.showImage)
 
         # ADD/REMOVE/REPLACE IMAGE buttons
         buttonBox = qt.QWidget(self)
@@ -134,6 +145,25 @@ class SilxMaskImageWidget(qt.QMainWindow):
         # Creating the toolbar also create actions for toolbuttons
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
+
+        self._images = []
+        """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
+        """
+
+        self._labels = []
+        """List of image labels.
+        """
+
+        self._scale = (1.0, 1.0)
+        """Current image scale (Xscale, Yscale) (in axis units per image pixel).
+        The scale is adjusted to keep constant width and height for the image
+        when a crop operation is applied."""
+
+        self._origin = (0., 0.)
+        """Current image origin: coordinate (x, y) of sample located at
+        (row, column) = (0, 0)"""
+
+        self._maskIsSet = False
 
     def sizeHint(self):
         return qt.QSize(400, 400)
@@ -228,7 +258,24 @@ class SilxMaskImageWidget(qt.QMainWindow):
         return self.getMaskToolsDockWidget().getSelectionMask(copy=copy)
 
     def _getImageData(self):
-        raise NotImplementedError("To be implemented in subclass")
+        """Return image data to be sent to RGB correlator
+
+        Convert RGBA image to 2D array of grayscale values
+        (Luma coding)
+
+        :param image: RGBA image, as a numpy array of shapes
+             (nrows, ncols, 3/4)
+        :return:
+        """
+        image = self._images[self.slider.value()]
+        if len(image.shape) == 2:
+            return image
+        assert len(image.shape) == 3
+
+        imageData = image[:, :, 0] * 0.299 +\
+                    image[:, :, 1] * 0.587 +\
+                    image[:, :, 2] * 0.114
+        return imageData
 
     def _addImageClicked(self):
         imageData = self._getImageData()
@@ -256,6 +303,100 @@ class SilxMaskImageWidget(qt.QMainWindow):
             'title': self.plot.getGraphTitle(),
             'id': id(self)}
         self.sigMaskImageWidget.emit(ddict)
+
+    def _getCurrentHeightWidth(self):
+        image = self._images[self.slider.value()]
+        ncols = image.shape[1]
+        nrows = image.shape[0]
+        width = ncols * self._scale[0]   # X
+        height = nrows * self._scale[1]  # Y
+        return height, width
+
+    def showImage(self, index=0):
+        """Show image corresponding to index. Update slider to index."""
+        if not self._images:
+            return
+        assert index < len(self._images)
+
+        self.plot.remove(legend="current")
+        self.plot.addImage(self._images[index],
+                           legend="current",
+                           origin=self._origin,
+                           scale=self._scale,
+                           replace=False)
+        self.plot.setGraphTitle(self._labels[index])
+        self.slider.setValue(index)
+
+    def setImages(self, images, labels=None,
+                  origin=None, height=None, width=None):
+        """Set the list of images.
+
+        :param images: List of 2D or 3D (for RGBA data) numpy arrays
+            of image data. All images must have the same shape.
+        :type images: List of ndarrays
+        :param labels: list of image names
+        :param origin: Image origin: coordinate (x, y) of sample located at
+            (row, column) = (0, 0). If None, use (0., 0.)
+        :param height: Image height in Y axis units. If None, use the
+            image height in number of pixels.
+        :param width: Image width in X axis units. If None, use the
+            image width in number of pixels.
+        """
+        self._images = images
+        if labels is None:
+            labels = ["Image %d" % (i + 1) for i in range(len(images))]
+
+        self._labels = labels
+
+        height_pixels, width_pixels = images[0].shape[0:2]
+        height = height or height_pixels
+        width = width or width_pixels
+
+        self._scale = (float(width) / width_pixels,
+                       float(height) / height_pixels)
+
+        self._origin = origin or (0., 0.)
+
+        current = self.slider.value()
+        self.slider.setMaximum(len(self._images) - 1)
+        if current < len(self._images):
+            self.showImage(current)
+        else:
+            self.showImage(0)
+
+    def resetMask(self, width, height,
+                  origin=None, scale=None):
+        """Initialize a mask with a given width and height.
+
+        The mask may be synchronized with another widget.
+        The mask size must therefore match the master widget's image
+        size (in pixels).
+
+        :param width: Mask width
+        :param height: Mask height
+        :param origin: Tuple of (X, Y) coordinates of the sample (0, 0)
+        :param scale: Tuple of (xscale, yscale) scaling factors, in axis units
+            per pixel.
+        """
+        transparent_active_image = numpy.zeros((int(height), int(width), 4))
+        # set alpha for total transparency
+        transparent_active_image[:, :, -1] = 0
+
+        origin = origin or (0., 0.)
+        scale = scale or (1., 1.)
+
+        self.plot.addImage(transparent_active_image,
+                           origin=origin,
+                           scale=scale,
+                           legend="mask support",
+                           replace=False)
+        self.plot.setActiveImage("mask support")
+
+        self.setSelectionMask(numpy.zeros((int(height), int(width))))
+        self._maskIsSet = True
+
+    def getCurrentIndex(self):
+        return self.slider.value()
 
 
 if __name__ == "__main__":

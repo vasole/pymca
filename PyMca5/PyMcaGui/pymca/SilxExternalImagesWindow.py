@@ -52,16 +52,6 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
     def __init__(self, parent=None):
         SilxMaskImageWidget.SilxMaskImageWidget.__init__(self, parent=parent)
 
-        # Image selection slider
-        self.slider = qt.QSlider(self.centralWidget())
-        self.slider.setOrientation(qt.Qt.Horizontal)
-        self.slider.setMinimum(0)
-        self.slider.setMaximum(0)
-
-        self.centralWidget().layout().insertWidget(1, self.slider)
-        self.slider.valueChanged[int].connect(self.showImage)
-
-
         # Additional actions added to action group
         self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
         self.cropButton = qt.QToolButton(self)
@@ -102,73 +92,14 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         self.rotateButton.setMenu(self._rotateMenu)
         self.rotateButton.setPopupMode(qt.QToolButton.InstantPopup)
 
-        # Creating the toolbar also create actions for toolbuttons
-        self._imageEditingToolbar = self._createImageEditingToolBar(title='Plot', parent=None)
-        self.addToolBar(self._imageEditingToolbar)
-
-        self._images = []
-        """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
-        """
-
-        self._labels = []
-        """List of image labels.
-        """
-
-        self._scale = (1.0, 1.0)
-        """Current image scale (Xscale, Yscale) (in axis units per image pixel).
-        The scale is adjusted to keep constant width and height for the image
-        when a crop operation is applied."""
-
-        self._origin = (0., 0.)
-        """Current image origin: coordinate (x, y) of sample located at
-        (row, column) = (0, 0)"""
-
-        self._maskIsSet = False
-
-    def _createImageEditingToolBar(self, title, parent):
-        """Create a QToolBar with crop, rotate and flip operations
-
-        :param str title: The title of the QMenu
-        :param qt.QWidget parent: See :class:`QToolBar`
-        """
-        toolbar = qt.QToolBar(title, parent)
-
+        toolbar = qt.QToolBar("Image edition", parent=None)
         # custom widgets added to the end
         toolbar.addWidget(self.cropButton)
         toolbar.addWidget(self.hFlipToolButton)
         toolbar.addWidget(self.rotateButton)
+        self.addToolBar(toolbar)
 
-        return toolbar
-
-    def _getImageData(self):
-        """Return image data to be sent to RGB correlator
-
-        Convert RGBA image to 2D array of grayscale values
-        (Luma coding)
-
-        :param image: RGBA image, as a numpy array of shapes
-             (nrows, ncols, 3/4)
-        :return:
-        """
-        image = self._images[self.slider.value()]
-        if len(image.shape) == 2:
-            return image
-        assert len(image.shape) == 3
-
-        imageData = image[:, :, 0] * 0.299 +\
-                    image[:, :, 1] * 0.587 +\
-                    image[:, :, 2] * 0.114
-        return imageData
-
-    def _getCurrentHeightWidth(self):
-        image = self._images[self.slider.value()]
-        ncols = image.shape[1]
-        nrows = image.shape[0]
-        width = ncols * self._scale[0]   # X
-        height = nrows * self._scale[1]  # Y
-        return height, width
-
-    def _cropIconChecked(self):  # fixme: why does this require qImages?
+    def _cropIconChecked(self):
         """Crop all images in :attr:`qImages` to the X and Y ranges
         currently displayed (crop to zoomed area)."""
         height, width = self._getCurrentHeightWidth()
@@ -264,92 +195,6 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         self.setImages(rotatedImages, self._labels,
                        origin=self._origin,
                        width=width, height=height)
-
-    def showImage(self, index=0):
-        """Show image corresponding to index. Update slider to index."""
-        if not self._images:
-            return
-        assert index < len(self._images)
-
-        self.plot.remove(legend="current")
-        self.plot.addImage(self._images[index],
-                           legend="current",
-                           origin=self._origin,
-                           scale=self._scale,
-                           replace=False)
-        self.plot.setGraphTitle(self._labels[index])
-        self.slider.setValue(index)
-
-    def setImages(self, images, labels=None,
-                  origin=None, height=None, width=None):
-        """Set the list of images.
-
-        :param images: List of 2D or 3D (for RGBA data) numpy arrays
-            of image data. All images must have the same shape.
-        :type images: List of ndarrays
-        :param labels: list of image names
-        :param origin: Image origin: coordinate (x, y) of sample located at
-            (row, column) = (0, 0). If None, use (0., 0.)
-        :param height: Image height in Y axis units. If None, use the
-            image height in number of pixels.
-        :param width: Image width in X axis units. If None, use the
-            image width in number of pixels.
-        """
-        self._images = images
-        if labels is None:
-            labels = ["Image %d" % (i + 1) for i in range(len(images))]
-
-        self._labels = labels
-
-        height_pixels, width_pixels = images[0].shape[0:2]
-        height = height or height_pixels
-        width = width or width_pixels
-
-        self._scale = (float(width) / width_pixels,
-                       float(height) / height_pixels)
-
-        self._origin = origin or (0., 0.)
-
-        current = self.slider.value()
-        self.slider.setMaximum(len(self._images) - 1)
-        if current < len(self._images):
-            self.showImage(current)
-        else:
-            self.showImage(0)
-
-    def resetMask(self, width, height,
-                  origin=None, scale=None):
-        """Initialize a mask with a given width and height.
-
-        The mask may be synchronized with another widget.
-        The mask size must therefore match the master widget's image
-        size (in pixels).
-
-        :param width: Mask width
-        :param height: Mask height
-        :param origin: Tuple of (X, Y) coordinates of the sample (0, 0)
-        :param scale: Tuple of (xscale, yscale) scaling factors, in axis units
-            per pixel.
-        """
-        transparent_active_image = numpy.zeros((int(height), int(width), 4))
-        # set alpha for total transparency
-        transparent_active_image[:, :, -1] = 0
-
-        origin = origin or (0., 0.)
-        scale = scale or (1., 1.)
-
-        self.plot.addImage(transparent_active_image,
-                           origin=origin,
-                           scale=scale,
-                           legend="mask support",
-                           replace=False)
-        self.plot.setActiveImage("mask support")
-
-        self.setSelectionMask(numpy.zeros((int(height), int(width))))
-        self._maskIsSet = True
-
-    def getCurrentIndex(self):
-        return self.slider.value()
 
 
 def test():
