@@ -40,7 +40,7 @@ from PyMca5.PyMcaGui.pymca import SilxExternalImagesWindow   # TODO: create Silx
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 
-class ROIStackPlugin(StackPluginBase.StackPluginBase):
+class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow):
         StackPluginBase.StackPluginBase.__init__(self, stackWindow)
         self.methodDict = {'Show': [self._showWidget,
@@ -113,5 +113,5 @@ MENU_TEXT = "Silx Alternative ROI Options"
 
 
 def getStackPluginInstance(stackWindow):
-    ob = ROIStackPlugin(stackWindow)
+    ob = SilxRoiStackPlugin(stackWindow)
     return ob
