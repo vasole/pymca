@@ -149,7 +149,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
         self.cropButton = qt.QToolButton(self)
         self.cropButton.setIcon(self.cropIcon)
-        self.cropButton.setToolTip("Crop image to the currently zoomed window")
+        self.cropButton.setToolTip("Crop image to current zoomed area")
         self.cropButton.clicked.connect(self._cropIconChecked)
 
         self.hFlipIcon = qt.QIcon(qt.QPixmap(IconDict["gioconda16mirror"]))
@@ -171,7 +171,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.rotateRightIcon = qt.QIcon(qt.QPixmap(IconDict["rotate_right"]))
         self.rotateButton = qt.QToolButton(self)
         self.rotateButton.setIcon(self.rotateLeftIcon)
-        self.cropButton.setToolTip("Rotate image by 90 degrees")
+        self.rotateButton.setToolTip("Rotate image by 90 degrees")
         self._rotateMenu = qt.QMenu()
         self.rotateLeftAction = qt.QAction(self.rotateLeftIcon,
                                            QString("Rotate left"),
