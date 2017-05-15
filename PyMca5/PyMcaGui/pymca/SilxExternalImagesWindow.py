@@ -36,14 +36,14 @@ if hasattr(qt, "QString"):
 else:
     QString = str
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
 
 from silx.gui.plot import PlotWidget
 from silx.gui.plot import PlotActions
 from silx.gui.plot import PlotToolButtons
-from silx.gui.plot import MaskToolsWidget
 
 
-class SilxExternalImagesWindow(qt.QMainWindow):
+class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
     """Widget displaying a stack of images and allowing to apply simple
     editing on the images: cropping to current zoom, 90 degrees rotations,
     horizontal or vertical flipping.
@@ -53,100 +53,24 @@ class SilxExternalImagesWindow(qt.QMainWindow):
     All images must have the same shape. The operations are applied to
     all images, not only the one currently displayed.
     """
-    sigExternalImagesWindowSignal = qt.pyqtSignal(object)
-
     def __init__(self, parent=None):
-        qt.QMainWindow.__init__(self, parent=parent)
-        self.setWindowTitle("PyMca - Image Selection Tool")
+        SilxMaskImageWidget.SilxMaskImageWidget.__init__(self, parent=parent)
 
-        centralWidget = qt.QWidget(self)
-        layout = qt.QVBoxLayout(centralWidget)
-        centralWidget.setLayout(layout)
-
-        # Plot
-        self.plot = PlotWidget(parent=centralWidget)
-        self.plot.setWindowFlags(qt.Qt.Widget)
-        layout.addWidget(self.plot)
-
-        # Mask Widget
-        self._maskToolsDockWidget = None
+        self.addImageButton.clicked.connect(self._addImageClicked)
+        self.removeImageButton.clicked.connect(self._removeImageClicked)
+        self.replaceImageButton.clicked.connect(self._replaceImageClicked)
 
         # Image selection slider
-        self.slider = qt.QSlider(centralWidget)
+        self.slider = qt.QSlider(self.centralWidget())
         self.slider.setOrientation(qt.Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(0)
 
-        layout.addWidget(self.slider)
+        self.centralWidget().layout().insertWidget(1, self.slider)
         self.slider.valueChanged[int].connect(self.showImage)
 
-        # ADD/REMOVE/REPLACE IMAGE buttons
-        buttonBox = qt.QWidget(self)
-        buttonBoxLayout = qt.QHBoxLayout(buttonBox)
-        buttonBoxLayout.setContentsMargins(0, 0, 0, 0)
-        buttonBoxLayout.setSpacing(0)
-        self.addImageButton = qt.QPushButton(buttonBox)
-        icon = qt.QIcon(qt.QPixmap(IconDict["rgb16"]))
-        self.addImageButton.setIcon(icon)
-        self.addImageButton.setText("ADD IMAGE")
-        self.addImageButton.setToolTip("Add image to RGB correlator")
-        self.addImageButton.clicked.connect(self._addImageClicked)
-        buttonBoxLayout.addWidget(self.addImageButton)
 
-        self.removeImageButton = qt.QPushButton(buttonBox)
-        self.removeImageButton.setIcon(icon)
-        self.removeImageButton.setText("REMOVE IMAGE")
-        self.removeImageButton.setToolTip("Remove image from RGB correlator")
-        self.removeImageButton.clicked.connect(self._removeImageClicked)
-        buttonBoxLayout.addWidget(self.removeImageButton)
-
-        self.replaceImageButton = qt.QPushButton(buttonBox)
-        self.replaceImageButton.setIcon(icon)
-        self.replaceImageButton.setText("REPLACE IMAGE")
-        self.replaceImageButton.setToolTip(
-                "Replace all images in RGB correlator with this one")
-        buttonBoxLayout.addWidget(self.replaceImageButton)
-        self.replaceImageButton.clicked.connect(self._replaceImageClicked)
-
-        layout.addWidget(buttonBox)
-
-        self.setCentralWidget(centralWidget)
-
-        # Init actions
-        self.group = qt.QActionGroup(self)
-        self.group.setExclusive(False)
-
-        self.resetZoomAction = self.group.addAction(
-                PlotActions.ResetZoomAction(plot=self.plot, parent=self))
-        self.addAction(self.resetZoomAction)
-
-        self.zoomInAction = PlotActions.ZoomInAction(plot=self.plot, parent=self)
-        self.addAction(self.zoomInAction)
-
-        self.zoomOutAction = PlotActions.ZoomOutAction(plot=self.plot, parent=self)
-        self.addAction(self.zoomOutAction)
-
-        self.xAxisAutoScaleAction = self.group.addAction(
-            PlotActions.XAxisAutoScaleAction(plot=self.plot, parent=self))
-        self.addAction(self.xAxisAutoScaleAction)
-
-        self.yAxisAutoScaleAction = self.group.addAction(
-            PlotActions.YAxisAutoScaleAction(plot=self.plot, parent=self))
-        self.addAction(self.yAxisAutoScaleAction)
-
-        self.colormapAction = self.group.addAction(
-                PlotActions.ColormapAction(plot=self.plot, parent=self))
-        self.addAction(self.colormapAction)
-
-        self.keepDataAspectRatioButton = PlotToolButtons.AspectToolButton(
-            parent=self, plot=self.plot)
-
-        self.group.addAction(self.getMaskAction())
-
-        self._separator = qt.QAction('separator', self)
-        self._separator.setSeparator(True)
-        self.group.addAction(self._separator)
-
+        # Additional actions added to action group
         self.cropIcon = qt.QIcon(qt.QPixmap(IconDict["crop"]))
         self.cropButton = qt.QToolButton(self)
         self.cropButton.setIcon(self.cropIcon)
@@ -158,8 +82,6 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.hFlipToolButton.setIcon(self.hFlipIcon)
         self.hFlipToolButton.setToolTip("Flip image and data, not the scale.")
         self._flipMenu = qt.QMenu()
-        self._flipMenu.addAction(QString("Invert Y axis direction"),
-                                 self._hFlipIconSignal)
         self._flipMenu.addAction(QString("Flip Image Left-Right"),
                                  self._flipLeftRight)
         self._flipMenu.addAction(QString("Flip Image Up-Down"),
@@ -189,8 +111,8 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         self.rotateButton.setPopupMode(qt.QToolButton.InstantPopup)
 
         # Creating the toolbar also create actions for toolbuttons
-        self._toolbar = self._createToolBar(title='Plot', parent=None)
-        self.addToolBar(self._toolbar)
+        self._imageEditingToolbar = self._createImageEditingToolBar(title='Plot', parent=None)
+        self.addToolBar(self._imageEditingToolbar)
 
         self._images = []
         """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
@@ -211,36 +133,13 @@ class SilxExternalImagesWindow(qt.QMainWindow):
 
         self._maskIsSet = False
 
-    def sizeHint(self):
-        return qt.QSize(400, 400)
-
-    def _createToolBar(self, title, parent):
-        """Create a QToolBar from the QAction of the PlotWindow.
+    def _createImageEditingToolBar(self, title, parent):
+        """Create a QToolBar with crop, rotate and flip operations
 
         :param str title: The title of the QMenu
         :param qt.QWidget parent: See :class:`QToolBar`
         """
         toolbar = qt.QToolBar(title, parent)
-
-        # Order widgets with actions
-        objects = self.group.actions()
-
-        # Add standard push buttons to list
-        index = objects.index(self.colormapAction)
-        objects.insert(index + 1, self.keepDataAspectRatioButton)
-        # objects.insert(index + 2, self.yAxisInvertedButton)
-
-        for obj in objects:
-            if isinstance(obj, qt.QAction):
-                toolbar.addAction(obj)
-            else:
-                # keep reference to toolbutton's action for changing visibility
-                if obj is self.keepDataAspectRatioButton:
-                    self.keepDataAspectRatioAction = toolbar.addWidget(obj)
-                elif obj is self.yAxisInvertedButton:
-                    self.yAxisInvertedAction = toolbar.addWidget(obj)
-                else:
-                    raise RuntimeError()
 
         # custom widgets added to the end
         toolbar.addWidget(self.cropButton)
@@ -248,66 +147,6 @@ class SilxExternalImagesWindow(qt.QMainWindow):
         toolbar.addWidget(self.rotateButton)
 
         return toolbar
-
-    def getMaskToolsDockWidget(self):
-        """DockWidget with image mask panel (lazy-loaded)."""
-        if self._maskToolsDockWidget is None:
-            self._maskToolsDockWidget = MaskToolsWidget.MaskToolsDockWidget(
-                plot=self.plot, name='Mask')
-            self._maskToolsDockWidget.hide()
-            self.addDockWidget(qt.Qt.BottomDockWidgetArea,
-                               self._maskToolsDockWidget)
-            self._maskToolsDockWidget.setFloating(True)
-            self._maskToolsDockWidget.sigMaskChanged.connect(
-                    self._emitExternalImagesWindowSignal)
-        return self._maskToolsDockWidget
-
-    def _emitExternalImagesWindowSignal(self):
-        self.sigExternalImagesWindowSignal.emit(
-            {"event": "selectionMaskChanged",
-             "current": self.getSelectionMask(),
-             "id": id(self)})
-
-    def getMaskAction(self):
-        """QAction toggling image mask dock widget
-
-        :rtype: QAction
-        """
-        return self.getMaskToolsDockWidget().toggleViewAction()
-
-    def setSelectionMask(self, mask, copy=True):
-        """Set the mask to a new array.
-
-        :param numpy.ndarray mask: The array to use for the mask.
-                    Mask type: array of uint8 of dimension 2,
-                    Array of other types are converted.
-        :param bool copy: True (the default) to copy the array,
-                          False to use it as is if possible.
-        :return: None if failed, shape of mask as 2-tuple if successful.
-                 The mask can be cropped or padded to fit active image,
-                 the returned shape is that of the active image.
-        """
-        # don't emit signal for programmatic mask change,
-        # only for interactive mask drawing
-        # (avoid infinite loop)
-        self.getMaskToolsDockWidget().sigMaskChanged.disconnect(
-                    self._emitExternalImagesWindowSignal)
-        ret = self.getMaskToolsDockWidget().setSelectionMask(mask,
-                                                              copy=copy)
-        self.getMaskToolsDockWidget().sigMaskChanged.connect(
-                    self._emitExternalImagesWindowSignal)
-        return ret
-
-    def getSelectionMask(self, copy=True):
-        """Get the current mask as a 2D array.
-
-        :param bool copy: True (default) to get a copy of the mask.
-                          If False, the returned array MUST not be modified.
-        :return: The array of the mask with dimension of the 'active' image.
-                 If there is no active image, an empty array is returned.
-        :rtype: 2D numpy.ndarray of uint8
-        """
-        return self.getMaskToolsDockWidget().getSelectionMask(copy=copy)
 
     @staticmethod
     def _getImageData(image):
@@ -334,7 +173,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             'image': imageData,
             'title': self.plot.getGraphTitle(),
             'id': id(self)}
-        self.sigExternalImagesWindowSignal.emit(ddict)
+        self.sigMaskImageWidget.emit(ddict)
 
     def _replaceImageClicked(self):
         imageData = self._getImageData(self._images[self.slider.value()])
@@ -343,7 +182,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             'image': imageData,
             'title': self.plot.getGraphTitle(),
             'id': id(self)}
-        self.sigExternalImagesWindowSignal.emit(ddict)
+        self.sigMaskImageWidget.emit(ddict)
 
     def _removeImageClicked(self):
         imageData = self._getImageData(self._images[self.slider.value()])
@@ -352,7 +191,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             'image': imageData,
             'title': self.plot.getGraphTitle(),
             'id': id(self)}
-        self.sigExternalImagesWindowSignal.emit(ddict)
+        self.sigMaskImageWidget.emit(ddict)
 
     def _getCurrentHeightWidth(self):
         image = self._images[self.slider.value()]
@@ -390,19 +229,8 @@ class SilxExternalImagesWindow(qt.QMainWindow):
                        origin=self._origin,
                        width=width, height=height)
 
-        self.sigExternalImagesWindowSignal.emit(
+        self.sigMaskImageWidget.emit(
                 {'event': "cropSignal"})
-
-    def _hFlipIconSignal(self):
-        isYAxisInverted = self.plot.isYAxisInverted()
-        # self.plot.resetzoom()
-        self.plot.setYAxisInverted(not isYAxisInverted)
-
-        # inform the other widgets
-        self.sigExternalImagesWindowSignal.emit(
-            {'event': "hFlipSignal",
-             'current': self.plot.isYAxisInverted(),
-             'id': id(self)})
 
     def _flipUpDown(self):
         flippedImages = []
@@ -410,7 +238,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             flippedImages.append(numpy.flipud(img))
         self._images = flippedImages
 
-        self.sigExternalImagesWindowSignal.emit(
+        self.sigMaskImageWidget.emit(
                 {'event': "flipUpDownSignal"})
 
         self.showImage(self.slider.value())
@@ -421,7 +249,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             flippedImages.append(numpy.fliplr(img))
         self._images = flippedImages
 
-        self.sigExternalImagesWindowSignal.emit(
+        self.sigMaskImageWidget.emit(
                 {'event': "flipLeftRightSignal"})
 
         self.showImage(self.slider.value())
@@ -439,7 +267,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             for img in self._images:
                 rotatedImages.append(numpy.rot90(img, 3))
 
-        self.sigExternalImagesWindowSignal.emit(
+        self.sigMaskImageWidget.emit(
                 {'event': "rotateRight"})
 
         height, width = self._getCurrentHeightWidth()
@@ -463,7 +291,7 @@ class SilxExternalImagesWindow(qt.QMainWindow):
             for img in self._images:
                 rotatedImages.append(numpy.rot90(img, 1))
 
-        self.sigExternalImagesWindowSignal.emit(
+        self.sigMaskImageWidget.emit(
                 {'event': "rotateLeft"})
 
         self.setImages(rotatedImages, self._labels,
@@ -575,7 +403,7 @@ def test():
     def theSlot(ddict):
         print(ddict)
 
-    container.sigExternalImagesWindowSignal.connect(theSlot)
+    container.sigMaskImageWidget.connect(theSlot)
 
     app.exec_()
 
