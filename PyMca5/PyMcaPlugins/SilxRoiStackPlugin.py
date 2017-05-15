@@ -27,7 +27,6 @@
 
 The mask of the plot widget is synchronized with the master stack widget.
 """
-# TODO: docstring
 
 __authors__ = ["V.A. Sole", "P. Knobel"]
 __contact__ = "sole@esrf.fr"
@@ -35,7 +34,7 @@ __license__ = "MIT"
 
 
 from PyMca5 import StackPluginBase
-from PyMca5.PyMcaGui.pymca import SilxStackROIWindow
+from PyMca5.PyMcaGui.pymca import SilxStackRoiWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 
@@ -98,7 +97,7 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
 
     def _showWidget(self):
         if self.widget is None:
-            self.widget = SilxStackROIWindow.SilxStackROIWindow()
+            self.widget = SilxStackRoiWindow.SilxStackRoiWindow()
             self.widget.sigExternalImagesWindowSignal.connect(self.mySlot)
 
         # Show

@@ -30,7 +30,7 @@ __license__ = "MIT"
 from PyMca5.PyMcaGui.pymca.SilxExternalImagesWindow import SilxExternalImagesWindow
 
 
-class SilxStackROIWindow(SilxExternalImagesWindow):
+class SilxStackRoiWindow(SilxExternalImagesWindow):
     """
 
     """
