@@ -23,8 +23,9 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
-"""
+"""Plugin to apply a median filter on the ROI stack.
 
+The mask of the plot widget is synchronized with the master stack widget.
 """
 # TODO: docstring
 
@@ -69,7 +70,11 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
 
     def mySlot(self, ddict):
         if ddict['event'] == "selectionMaskChanged":
-            self.setStackSelectionMask(ddict['current'])
+            mask = ddict["current"]
+            # The mask is temporarily reset when image is changed,
+            # on ROI selection. Ignore this.
+            if hasattr(mask, "shape") and sum(mask.shape) > 0:
+                self.setStackSelectionMask(mask)
         elif ddict['event'] == "addImageClicked":
             self.addImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "removeImageClicked":
