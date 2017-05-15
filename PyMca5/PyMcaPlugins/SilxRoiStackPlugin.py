@@ -98,7 +98,7 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
     def _showWidget(self):
         if self.widget is None:
             self.widget = SilxStackRoiWindow.SilxStackRoiWindow()
-            self.widget.sigExternalImagesWindowSignal.connect(self.mySlot)
+            self.widget.sigMaskImageWidget.connect(self.mySlot)
 
         # Show
         self.widget.show()
