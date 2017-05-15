@@ -38,10 +38,6 @@ else:
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
 
-from silx.gui.plot import PlotWidget
-from silx.gui.plot import PlotActions
-from silx.gui.plot import PlotToolButtons
-
 
 class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
     """Widget displaying a stack of images and allowing to apply simple
@@ -55,10 +51,6 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
     """
     def __init__(self, parent=None):
         SilxMaskImageWidget.SilxMaskImageWidget.__init__(self, parent=parent)
-
-        self.addImageButton.clicked.connect(self._addImageClicked)
-        self.removeImageButton.clicked.connect(self._removeImageClicked)
-        self.replaceImageButton.clicked.connect(self._replaceImageClicked)
 
         # Image selection slider
         self.slider = qt.QSlider(self.centralWidget())
@@ -148,15 +140,17 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
 
         return toolbar
 
-    @staticmethod
-    def _getImageData(image):
-        """Convert RGBA image to 2D array of grayscale values
+    def _getImageData(self):
+        """Return image data to be sent to RGB correlator
+
+        Convert RGBA image to 2D array of grayscale values
         (Luma coding)
 
         :param image: RGBA image, as a numpy array of shapes
              (nrows, ncols, 3/4)
         :return:
         """
+        image = self._images[self.slider.value()]
         if len(image.shape) == 2:
             return image
         assert len(image.shape) == 3
@@ -165,33 +159,6 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
                     image[:, :, 1] * 0.587 +\
                     image[:, :, 2] * 0.114
         return imageData
-
-    def _addImageClicked(self):
-        imageData = self._getImageData(self._images[self.slider.value()])
-        ddict = {
-            'event': "addImageClicked",
-            'image': imageData,
-            'title': self.plot.getGraphTitle(),
-            'id': id(self)}
-        self.sigMaskImageWidget.emit(ddict)
-
-    def _replaceImageClicked(self):
-        imageData = self._getImageData(self._images[self.slider.value()])
-        ddict = {
-            'event': "replaceImageClicked",
-            'image': imageData,
-            'title': self.plot.getGraphTitle(),
-            'id': id(self)}
-        self.sigMaskImageWidget.emit(ddict)
-
-    def _removeImageClicked(self):
-        imageData = self._getImageData(self._images[self.slider.value()])
-        ddict = {
-            'event': "removeImageClicked",
-            'image': imageData,
-            'title': self.plot.getGraphTitle(),
-            'id': id(self)}
-        self.sigMaskImageWidget.emit(ddict)
 
     def _getCurrentHeightWidth(self):
         image = self._images[self.slider.value()]

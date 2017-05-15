@@ -64,7 +64,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._maskToolsDockWidget = None
 
         # ADD/REMOVE/REPLACE IMAGE buttons
-        # (methods and button connection to be implemented in subclass)
         buttonBox = qt.QWidget(self)
         buttonBoxLayout = qt.QHBoxLayout(buttonBox)
         buttonBoxLayout.setContentsMargins(0, 0, 0, 0)
@@ -88,6 +87,10 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.replaceImageButton.setToolTip(
                 "Replace all images in RGB correlator with this one")
         buttonBoxLayout.addWidget(self.replaceImageButton)
+
+        self.addImageButton.clicked.connect(self._addImageClicked)
+        self.removeImageButton.clicked.connect(self._removeImageClicked)
+        self.replaceImageButton.clicked.connect(self._replaceImageClicked)
 
         layout.addWidget(buttonBox)
 
@@ -223,13 +226,36 @@ class SilxMaskImageWidget(qt.QMainWindow):
         :rtype: 2D numpy.ndarray of uint8
         """
         return self.getMaskToolsDockWidget().getSelectionMask(copy=copy)
-    #
-    # def _hFlipIconSignal(self):
-    #     # inform the other widgets
-    #     self.sigMaskImageWidget.emit(
-    #         {'event': "hFlipSignal",
-    #          'current': self.plot.isYAxisInverted(),
-    #          'id': id(self)})
+
+    def _getImageData(self):
+        raise NotImplementedError("To be implemented in subclass")
+
+    def _addImageClicked(self):
+        imageData = self._getImageData()
+        ddict = {
+            'event': "addImageClicked",
+            'image': imageData,
+            'title': self.plot.getGraphTitle(),
+            'id': id(self)}
+        self.sigMaskImageWidget.emit(ddict)
+
+    def _replaceImageClicked(self):
+        imageData = self._getImageData()
+        ddict = {
+            'event': "replaceImageClicked",
+            'image': imageData,
+            'title': self.plot.getGraphTitle(),
+            'id': id(self)}
+        self.sigMaskImageWidget.emit(ddict)
+
+    def _removeImageClicked(self):
+        imageData = self._getImageData()
+        ddict = {
+            'event': "removeImageClicked",
+            'image': imageData,
+            'title': self.plot.getGraphTitle(),
+            'id': id(self)}
+        self.sigMaskImageWidget.emit(ddict)
 
 
 if __name__ == "__main__":
