@@ -263,13 +263,15 @@ def getMultilayerFluorescence(multilayerSample,
         composition = xcom.getComposition(layer[0])
         for element in composition.keys():
             xcom.setElementCascadeCacheEnabled(element, 1)
-            if element not in treatedElements:
-                lines = xcom.getEmittedXRayLines(element)
-                sampleEnergies = [lines[key] for key in lines]
-                for e in sampleEnergies:
-                    if e not in emittedLines:
-                        emittedLines.append(e)
-                treatedElements.append(element)
+            if hasattr(xcom, "updateCache"):
+                if element not in treatedElements:
+                    lines = xcom.getEmittedXRayLines(element)
+                    sampleEnergies = [lines[key] for key in lines]
+                    for e in sampleEnergies:
+                        if e not in emittedLines:
+                            emittedLines.append(e)
+                    treatedElements.append(element)
+
     if hasattr(xcom, "updateCache"):
         if DEBUG:
             print("Filling atenuation cache")
