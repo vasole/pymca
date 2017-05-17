@@ -41,7 +41,8 @@ from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from silx.gui.plot import PlotWidget
 from silx.gui.plot import PlotActions
 from silx.gui.plot import PlotToolButtons
-from silx.gui.plot import MaskToolsWidget
+from silx.gui.plot.MaskToolsWidget import MaskToolsDockWidget
+from silx.gui.plot.Profile import ProfileToolBar
 
 
 class SilxMaskImageWidget(qt.QMainWindow):
@@ -146,6 +147,9 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
 
+        self.profile = ProfileToolBar(plot=self.plot)
+        self.addToolBar(self.profile)
+
         self._images = []
         """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
         """
@@ -200,7 +204,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
     def getMaskToolsDockWidget(self):
         """DockWidget with image mask panel (lazy-loaded)."""
         if self._maskToolsDockWidget is None:
-            self._maskToolsDockWidget = MaskToolsWidget.MaskToolsDockWidget(
+            self._maskToolsDockWidget = MaskToolsDockWidget(
                 plot=self.plot, name='Mask')
             self._maskToolsDockWidget.hide()
             self.addDockWidget(qt.Qt.BottomDockWidgetArea,
