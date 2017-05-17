@@ -282,7 +282,7 @@ def getMultilayerFluorescence(multilayerSample,
 
         for element in treatedElements:
             # this limit seems overestimated but still reasonable
-            if xcom.getCacheSize() > 5000:
+            if xcom.getCacheSize(element) > 5000:
                 xcom.clearCache(element)
             xcom.updateCache(element, energyList)
             xcom.updateCache(element, emittedLines)
