@@ -65,6 +65,7 @@ def getElementsInstance(dataDir=None, bindingEnergies=None, xcomFile=None):
     instance = FisxElements(dataDir, bindingEnergies, xcomFile)
     if DEBUG:
         print("Shell constants")
+
     # the files should be taken from PyMca to make sure the same data are used
     for key in ["K", "L", "M"]:
         fname = instance.getShellConstantsFile(key)
@@ -251,16 +252,48 @@ def getMultilayerFluorescence(multilayerSample,
         else:
             actualElementList = elementsList
 
-    # enabling the cache gets a (miserable) 15 % speed up
+    # enabling the cascade cache gets a (miserable) 15 % speed up
     if DEBUG:
         print("Using cascade cache")
+        t0 = time.time()
+
+    treatedElements = []
+    emittedLines = []
     for layer in multilayerSample:
         composition = xcom.getComposition(layer[0])
         for element in composition.keys():
             xcom.setElementCascadeCacheEnabled(element, 1)
-    for element in actualElementList:
-        xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
+            if element not in treatedElements:
+                lines = xcom.getEmittedXRayLines(element)
+                sampleEnergies = [lines[key] for key in lines]
+                for e in sampleEnergies:
+                    if e not in emittedLines:
+                        emittedLines.append(e)
+                treatedElements.append(element)
+    if hasattr(xcom, "updateCache"):
+        if DEBUG:
+            print("Filling atenuation cache")
 
+        for element in actualElementList:
+            if element.split()[0] not in treatedElements:
+                treatedElements.append(element.split()[0])
+
+        for element in treatedElements:
+            # this limit seems overestimated but still reasonable
+            if xcom.getCacheSize() > 5000:
+                xcom.clearCache(element)
+            xcom.updateCache(element, energyList)
+            xcom.updateCache(element, emittedLines)
+            xcom.setCacheEnabled(element, 1)
+            if DEBUG:
+                print("Element %s cache size = %d" % (element, xcom.getCacheSize(element)))
+
+        for element in actualElementList:
+            xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
+
+    if DEBUG:
+        print("C++ elapsed filling cache = ", time.time() - t0)
+        
     if DEBUG:
         print("Calling getMultilayerFluorescence")
         t0 = time.time()
@@ -340,7 +373,7 @@ def _getFisxMaterials(fitConfiguration):
                     if fractionList[n] > 0.0:
                         composition[compoundList[n]] = fractionList[n]
                     else:
-                        print("FisxHelper ignoring ", compoundList[n], "fraction = ", fractionList[n])
+                        print("ignoring ", compoundList[n], "fraction = ", fractionList[n])
                 # check the composition is expressed in terms of elements
                 # and not in terms of other undefined materials
                 totallyDefined = True
