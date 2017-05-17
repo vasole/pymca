@@ -28,8 +28,10 @@
 __authors__ = ["P. Knobel"]
 __license__ = "MIT"
 
+# TODO: in save actions, colormap access needs to be updated for silx plot
 
 import numpy
+import os
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
@@ -37,12 +39,224 @@ if hasattr(qt, "QString"):
 else:
     QString = str
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
+from PyMca5.PyMcaIO import ArraySave
+from PyMca5.PyMcaCore import PyMcaDirs
+from PyMca5 import spslut
+
+try:
+    from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave
+except ImportError:
+    QPyMcaMatplotlibSave = None
 
 from silx.gui.plot import PlotWidget
 from silx.gui.plot import PlotActions
 from silx.gui.plot import PlotToolButtons
 from silx.gui.plot.MaskToolsWidget import MaskToolsDockWidget
-from silx.gui.plot.Profile import ProfileToolBar
+from silx.gui import icons
+
+
+class SaveImageListAction(qt.QAction):
+    """Save current image  and mask (if any) in a :class:`MaskImageWidget`
+    to EDF or CSV"""
+    def __init__(self, title, maskImageWidget,
+                 clipped=False, subtract=False):
+        super(SaveImageListAction, self).__init__(QString(title),
+                                                  maskImageWidget)
+        self.maskImageWidget = maskImageWidget
+        self.triggered[bool].connect(self.onTrigger)
+
+        self.outputDir = PyMcaDirs.outputDir
+        """Default output dir. After each save operation, this is updated
+        to re-use the same folder for next save."""
+        self.clipped = clipped
+        """If True, clip data range to colormap min and max."""
+        self.subtract = subtract
+        """If True, subtract data min value."""
+
+    def onTrigger(self):
+        filename, saveFilter = self.getOutputFileNameFilter()
+        if not filename:
+            return
+
+        if filename.lower().endswith(".csv"):
+            csvseparator = "," if "," in saveFilter else\
+                ";" if ";" in saveFilter else\
+                "\t"
+        else:
+            csvseparator = None
+        images, labels = self.getImagesLabels()
+
+        self.saveImageList(filename, images, labels, csvseparator)
+
+    def saveImageList(self, filename, imageList, labels,
+                      csvseparator=None):
+        if not imageList:
+            qt.QMessageBox.information(
+                    self,
+                    "No Data",
+                    "Image list is empty.\nNothing to be saved")
+            return
+
+        if filename.lower().endswith(".edf"):
+            ArraySave.save2DArrayListAsEDF(imageList, filename, labels)
+        elif filename.lower().endswith(".csv"):
+            assert csvseparator is not None
+            ArraySave.save2DArrayListAsASCII(imageList, filename, labels,
+                                             csv=True,
+                                             csvseparator=csvseparator)
+        else:
+            ArraySave.save2DArrayListAsASCII(imageList, filename, labels,
+                                             csv=False)
+
+    def getImagesLabels(self):
+        """Return images to be saved and corresponding labels.
+
+        Images are:
+             - image currently displayed clipped to visible colormap range
+             - mask
+
+        If :attr:`subtract` is True, subtract the minimum image sample value
+        to all samples."""
+        imageList = []
+        labels = []
+        imageData = self.maskImageWidget.getImageData()
+        label = self.maskImageWidget.plot.getGraphTitle()
+        if not label:
+            label = "Image01"
+        label.replace(' ', '_')
+        if self.clipped and self.colormap is not None:                           # fixme --------------------------------------------------
+            colormapIndex, autoscale, vmin, vmax = self.colormap[0:4]
+            if not autoscale:
+                imageData = imageData.clip(vmin, vmax)
+                label += ".clip(%f,%f)" % (vmin, vmax)
+        if self.subtract:
+            vmin = imageData.min()
+            imageData = imageData - vmin
+            label += "-%f" % vmin
+        imageList.append(imageData)
+        labels.append(label)
+
+        mask = self.maskImageWidget.getSelectionMask()
+        if mask is not None and mask.max() > 0:
+            imageList.append(mask)
+            labels.append(label + "_Mask")
+
+        return imageList, labels
+
+    def getOutputFileNameFilter(self):
+        """Open a file dialog to get the output file name, and return the
+        file name and the selected format filter.
+
+        Remember output directory in attribute :attr:`outputDir`"""
+        if os.path.exists(self.outputDir):
+            initdir = self.outputDir
+        else:
+            # folder deleted, reset
+            initdir = PyMcaDirs.outputDir
+        filedialog = qt.QFileDialog(self.maskImageWidget)
+        filedialog.setFileMode(filedialog.AnyFile)
+        filedialog.setAcceptMode(qt.QFileDialog.AcceptSave)
+        filedialog.setWindowIcon(qt.QIcon(qt.QPixmap(IconDict["gioconda16"])))
+        formatlist = ["ASCII Files *.dat",
+                      "EDF Files *.edf",
+                      'CSV(, separated) Files *.csv',
+                      'CSV(; separated) Files *.csv',
+                      'CSV(tab separated) Files *.csv']
+        if hasattr(qt, "QStringList"):
+            strlist = qt.QStringList()
+        else:
+            strlist = []
+        for f in formatlist:
+            strlist.append(f)
+        saveFilter = formatlist[0]
+        if hasattr(filedialog, "setFilters"):
+            filedialog.setFilters(strlist)
+            filedialog.selectFilter(saveFilter)
+        else:
+            filedialog.setNameFilters(strlist)
+            filedialog.selectNameFilter(saveFilter)
+        filedialog.setDirectory(initdir)
+        ret = filedialog.exec_()
+        if not ret:
+            return "", ""
+        filename = filedialog.selectedFiles()[0]
+        if filename:
+            filename = qt.safe_str(filename)
+            self.outputDir = os.path.dirname(filename)
+            if hasattr(filedialog, "selectedFilter"):
+                saveFilter = qt.safe_str(filedialog.selectedFilter())
+            else:
+                saveFilter = qt.safe_str(filedialog.selectedNameFilter())
+            filterused = "." + saveFilter[-3:]
+            PyMcaDirs.outputDir = os.path.dirname(filename)
+            if len(filename) < 4 or filename[-4:] != filterused:
+                filename += filterused
+        else:
+            filename = ""
+        return filename, saveFilter
+
+
+class SaveMatplotlib(qt.QAction):
+    """Save current image  and mask (if any) in a :class:`MaskImageWidget`
+    to EDF or CSV"""
+    def __init__(self, title, maskImageWidget):
+        super(SaveMatplotlib, self).__init__(QString(title),
+                                             maskImageWidget)
+        self.maskImageWidget = maskImageWidget
+        self.triggered[bool].connect(self.onTrigger)
+
+        self._matplotlibSaveImage = None
+
+    def onTrigger(self):
+        imageData = self.maskImageWidget.getImageData()
+        if self._matplotlibSaveImage is None:
+            self._matplotlibSaveImage = QPyMcaMatplotlibSave.SaveImageSetup(
+                    None, image=None)
+        title = "Matplotlib " + self.maskImageWidget.plot.getGraphTitle()
+        self._matplotlibSaveImage.setWindowTitle(title)
+        ddict = self._matplotlibSaveImage.getParameters()
+
+        if self.colormap is not None:     # Fixme !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            colormapType = ddict['linlogcolormap']
+            try:
+                colormapIndex, autoscale, vmin, vmax,\
+                        dataMin, dataMax, colormapType = self.colormap
+                if colormapType == spslut.LOG:
+                    colormapType = 'logarithmic'
+                else:
+                    colormapType = 'linear'
+            except:
+                colormapIndex, autoscale, vmin, vmax = self.colormap[0:4]
+            ddict['linlogcolormap'] = colormapType
+            if not autoscale:
+                ddict['valuemin'] = vmin
+                ddict['valuemax'] = vmax
+            else:
+                ddict['valuemin'] = 0
+                ddict['valuemax'] = 0
+
+        # this sets the actual dimensions
+        origin = self.maskImageWidget._origin
+        scale = self.maskImageWidget._scale
+
+        ddict['xpixelsize'] = scale[0]
+        ddict['xorigin'] = origin[0]
+        ddict['ypixelsize'] = scale[1]
+        ddict['yorigin'] = origin[1]
+
+        ddict['xlabel'] = self.maskImageWidget.plot.getXLabel()
+        ddict['ylabel'] = self.maskImageWidget.plot.getYLabel()
+        limits = self.maskImageWidget.plot.getGraphXLimits()
+        ddict['zoomxmin'] = limits[0]
+        ddict['zoomxmax'] = limits[1]
+        limits = self.maskImageWidget.plot.getGraphYLimits()
+        ddict['zoomymin'] = limits[0]
+        ddict['zoomymax'] = limits[1]
+
+        self._matplotlibSaveImage.setParameters(ddict)
+        self._matplotlibSaveImage.setImageData(imageData)
+        self._matplotlibSaveImage.show()
+        self._matplotlibSaveImage.raise_()
 
 
 class SilxMaskImageWidget(qt.QMainWindow):
@@ -147,6 +361,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
 
+        self._buildStandaloneSaveMenu()
+
         self._images = []
         """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
         """
@@ -198,7 +414,37 @@ class SilxMaskImageWidget(qt.QMainWindow):
                     raise RuntimeError()
         return toolbar
 
-    def getMaskToolsDockWidget(self):
+    def _buildStandaloneSaveMenu(self):
+        toolbar = qt.QToolBar("save", self)
+
+        self.saveToolbutton = qt.QToolButton(toolbar)
+        self.saveToolbutton.setIcon(icons.getQIcon("document-save"))
+        self.saveToolbutton.clicked.connect(self._saveToolButtonSignal)
+        self.saveToolbutton.setToolTip('Save Graph')
+
+        toolbar.addWidget(self.saveToolbutton)
+
+        self.addToolBar(toolbar)
+
+        self._saveMenu = qt.QMenu()
+        self._saveMenu.addAction(
+                SaveImageListAction("Image Data", self))
+        self._saveMenu.addAction(
+                SaveImageListAction("Colormap Clipped Seen Image Data",
+                                    self, clipped=True))
+        self._saveMenu.addAction(
+                SaveImageListAction("Clipped and Subtracted Seen Image Data",
+                                    self, clipped=True, subtract=True))
+        # standard silx save action
+        self._saveMenu.addAction(PlotActions.SaveAction(plot=self.plot, parent=self))
+
+        if QPyMcaMatplotlibSave is not None:
+            self._saveMenu.addAction(SaveMatplotlib("Matplotlib", self))
+
+    def _saveToolButtonSignal(self):
+        self._saveMenu.exec_(self.cursor().pos())
+
+    def _getMaskToolsDockWidget(self):
         """DockWidget with image mask panel (lazy-loaded)."""
         if self._maskToolsDockWidget is None:
             self._maskToolsDockWidget = MaskToolsDockWidget(
@@ -216,7 +462,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         :rtype: QAction
         """
-        return self.getMaskToolsDockWidget().toggleViewAction()
+        return self._getMaskToolsDockWidget().toggleViewAction()
 
     def _emitMaskImageWidgetSignal(self):
         self.sigMaskImageWidget.emit(
@@ -239,11 +485,11 @@ class SilxMaskImageWidget(qt.QMainWindow):
         # don't emit signal for programmatic mask change,
         # only for interactive mask drawing
         # (avoid infinite loop)
-        self.getMaskToolsDockWidget().sigMaskChanged.disconnect(
+        self._getMaskToolsDockWidget().sigMaskChanged.disconnect(
                     self._emitMaskImageWidgetSignal)
-        ret = self.getMaskToolsDockWidget().setSelectionMask(mask,
-                                                             copy=copy)
-        self.getMaskToolsDockWidget().sigMaskChanged.connect(
+        ret = self._getMaskToolsDockWidget().setSelectionMask(mask,
+                                                              copy=copy)
+        self._getMaskToolsDockWidget().sigMaskChanged.connect(
                     self._emitMaskImageWidgetSignal)
         return ret
 
@@ -256,9 +502,9 @@ class SilxMaskImageWidget(qt.QMainWindow):
                  If there is no active image, an empty array is returned.
         :rtype: 2D numpy.ndarray of uint8
         """
-        return self.getMaskToolsDockWidget().getSelectionMask(copy=copy)
+        return self._getMaskToolsDockWidget().getSelectionMask(copy=copy)
 
-    def _getImageData(self):
+    def getImageData(self):
         """Return image data to be sent to RGB correlator
 
         Convert RGBA image to 2D array of grayscale values
@@ -268,7 +514,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
              (nrows, ncols, 3/4)
         :return:
         """
-        image = self._images[self.slider.value()]
+        index = self.slider.value()
+        image = self._images[index]
         if len(image.shape) == 2:
             return image
         assert len(image.shape) == 3
@@ -279,7 +526,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         return imageData
 
     def _addImageClicked(self):
-        imageData = self._getImageData()
+        imageData = self.getImageData()
         ddict = {
             'event': "addImageClicked",
             'image': imageData,
@@ -288,7 +535,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.sigMaskImageWidget.emit(ddict)
 
     def _replaceImageClicked(self):
-        imageData = self._getImageData()
+        imageData = self.getImageData()
         ddict = {
             'event': "replaceImageClicked",
             'image': imageData,
@@ -297,7 +544,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.sigMaskImageWidget.emit(ddict)
 
     def _removeImageClicked(self):
-        imageData = self._getImageData()
+        imageData = self.getImageData()
         ddict = {
             'event': "removeImageClicked",
             'image': imageData,
