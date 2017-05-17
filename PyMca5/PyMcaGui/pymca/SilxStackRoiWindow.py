@@ -34,6 +34,8 @@ from PyMca5.PyMcaGui import IconDict
 
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
 
+from silx.gui.plot.Profile import ProfileToolBar
+
 import numpy
 import copy
 
@@ -61,6 +63,9 @@ class SilxStackRoiWindow(SilxMaskImageWidget.SilxMaskImageWidget):
     """
     def __init__(self, parent=None):
         SilxMaskImageWidget.SilxMaskImageWidget.__init__(self, parent=parent)
+
+        self.profile = ProfileToolBar(plot=self.plot)
+        self.addToolBar(self.profile)
 
         self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         self.backgroundButton = qt.QToolButton(self)

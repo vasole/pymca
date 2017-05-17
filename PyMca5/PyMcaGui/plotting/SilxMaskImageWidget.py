@@ -147,9 +147,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
 
-        self.profile = ProfileToolBar(plot=self.plot)
-        self.addToolBar(self.profile)
-
         self._images = []
         """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
         """
@@ -170,7 +167,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._maskIsSet = False
 
     def sizeHint(self):
-        return qt.QSize(400, 400)
+        return qt.QSize(500, 400)
 
     def _createToolBar(self, title, parent):
         """Create a QToolBar with crop, rotate and flip operations
