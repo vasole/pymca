@@ -122,7 +122,11 @@ def getMultilayerFluorescence(multilayerSample,
                               elementsFromMatrix=False,
                               secondary=None,
                               materials=None,
-                              secondaryCalculationLimit=0.0):
+                              secondaryCalculationLimit=None):
+
+    if secondaryCalculationLimit is None:
+        secondaryCalculationLimit=0.0
+
     if DEBUG:
         print("Library actually using secondary = ", secondary)
     global xcom
@@ -550,7 +554,7 @@ def _getFisxDetector(fitConfiguration, attenuatorsDetector=None):
 
 def getMultilayerFluorescenceFromFitConfiguration(fitConfiguration,
                                                   elementsFromMatrix=False,
-                                                  secondaryCalculationLimit=0.0):
+                                                  secondaryCalculationLimit=None):
     return _fisxFromFitConfigurationAction(fitConfiguration,
                                         action="fluorescence",
                                         elementsFromMatrix=elementsFromMatrix,
@@ -559,7 +563,7 @@ def getMultilayerFluorescenceFromFitConfiguration(fitConfiguration,
 
 def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration,
                                                  elementsFromMatrix=False,
-                                                 secondaryCalculationLimit=0.0):
+                                                 secondaryCalculationLimit=None):
     return _fisxFromFitConfigurationAction(fitConfiguration,
                                         action="correction",
                                         elementsFromMatrix=elementsFromMatrix,
@@ -722,7 +726,7 @@ def getFisxCorrectionFactors(*var, **kw):
 
 def getFisxCorrectionFactorsFromFitConfigurationFile(fileName,
                                                      elementsFromMatrix=False,
-                                                secondaryCalculationLimit=0.0):
+                                                secondaryCalculationLimit=None):
     from PyMca5.PyMca import ConfigDict
     d = ConfigDict.ConfigDict()
     d.read(fileName)
