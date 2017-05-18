@@ -55,6 +55,19 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
         images, names = self.getStackROIImagesAndNames()
         self.widget.setImages(images, labels=names)
 
+        # init mask
+        image_shape = list(self.getStackData().shape)
+        info = self.getStackInfo()
+        xscale = info.get("xScale", [0.0, 1.0])
+        yscale = info.get("yScale", [0.0, 1.0])
+        origin = xscale[0], yscale[0]
+        scale = xscale[1], yscale[1]
+
+        self.widget.resetMask(width=image_shape[1], height=image_shape[0],
+                              origin=origin,
+                              scale=scale)
+        self.widget.setSelectionMask(self.getStackSelectionMask())
+
     def selectionMaskUpdated(self):
         if self.widget is None:
             return
@@ -69,10 +82,7 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
     def mySlot(self, ddict):
         if ddict['event'] == "selectionMaskChanged":
             mask = ddict["current"]
-            # The mask is temporarily reset when image is changed,
-            # on ROI selection. Ignore this.
-            if hasattr(mask, "shape") and sum(mask.shape) > 0:
-                self.setStackSelectionMask(mask)
+            self.setStackSelectionMask(mask)
         elif ddict['event'] == "addImageClicked":
             self.addImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "removeImageClicked":
