@@ -43,6 +43,28 @@ from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui.pymca import SilxExternalImagesWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
+from silx.image.bilinear import BilinearImage
+
+
+def resize_image(original_image, new_shape):
+    """Return resized image
+
+    :param original_image:
+    :param tuple(int) new_shape: New image shape (rows, columns)
+    :return: New resized image, as a 2D numpy array
+    """
+    bilinimg = BilinearImage(original_image)
+
+    row_array, column_array = numpy.meshgrid(
+            numpy.linspace(0, original_image.shape[0], new_shape[0]),
+            numpy.linspace(0, original_image.shape[1], new_shape[1]),
+            indexing="ij")
+
+    interpolated_values = bilinimg.map_coordinates((row_array, column_array))
+
+    interpolated_values.shape = new_shape
+    return interpolated_values
+
 
 class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow):
@@ -72,14 +94,19 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         """triggered by self.widget.sigMaskImageWidget"""
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict["current"])
-        if ddict['event'] == "addImageClicked":
-            self.addImage(ddict['image'], ddict['title'])
-        elif ddict['event'] == "removeImageClicked":
-            self.removeImage(ddict['title'])
-        elif ddict['event'] == "replaceImageClicked":
-            self.replaceImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "resetSelection":
             self.setStackSelectionMask(None)
+        elif ddict['event'] == "removeImageClicked":
+            self.removeImage(ddict['title'])
+        elif ddict['event'] in ["addImageClicked", "replaceImageClicked"]:
+            stack_image_shape = self._getStackImageShape()
+            external_image = ddict['image']
+            resized_image = resize_image(external_image, stack_image_shape)
+
+            if ddict['event'] == "addImageClicked":
+                self.addImage(resized_image, ddict['title'])
+            elif ddict['event'] == "replaceImageClicked":
+                self.replaceImage(resized_image, ddict['title'])
 
     #Methods implemented by the plugin
     def getMethods(self):
@@ -186,20 +213,11 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             for i, image in enumerate(imagelist):
                 imagelist[i] = self.qImageToRgba(image)
 
-        info = self.getStackInfo()
-        image_shape = list(self.getStackData().shape)
+        image_shape = self._getStackImageShape()
+        origin, scale = self._getStackOriginScale()
 
-        # remove dimension associated with frame index
-        del image_shape[info.get("McaIndex", -1)]
-
-        xscale = info.get("xScale", [0.0, 1.0])
-        yscale = info.get("yScale", [0.0, 1.0])
-
-        h = yscale[1] * image_shape[0]
-        w = xscale[1] * image_shape[1]
-
-        origin = xscale[0], yscale[0]
-        scale = xscale[1], yscale[1]
+        h = scale[1] * image_shape[0]
+        w = scale[0] * image_shape[1]
 
         self.widget.setImages(imagelist,
                               labels=imagenames,
@@ -209,6 +227,26 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                               origin=origin,
                               scale=scale)
         self._showWidget()
+
+    def _getStackOriginScale(self):
+        info = self.getStackInfo()
+
+        xscale = info.get("xScale", [0.0, 1.0])
+        yscale = info.get("yScale", [0.0, 1.0])
+
+        # from here on, scale and origin are defined in the silx sense
+        origin = xscale[0], yscale[0]
+        scale = xscale[1], yscale[1]
+
+        return origin, scale
+
+    def _getStackImageShape(self):
+        """Return 2D image shape deducted from 3D stack shape"""
+        info = self.getStackInfo()
+        image_shape = list(self.getStackData().shape)
+        # remove dimension associated with frame index
+        del image_shape[info.get("McaIndex", -1)]
+        return image_shape
 
     def _showWidget(self):
         if self.widget is None:

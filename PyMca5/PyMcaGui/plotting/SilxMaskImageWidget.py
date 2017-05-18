@@ -23,12 +23,13 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
-"""Base class for SilxStackRoiWindow and SilxExternalImagesWindow"""
+"""Base class for SilxStackRoiWindow and SilxExternalImagesWindow.
+
+"""
 
 __authors__ = ["P. Knobel"]
 __license__ = "MIT"
 
-# TODO: in save actions, colormap access needs to be updated for silx plot
 
 import numpy
 import os
@@ -41,7 +42,6 @@ else:
 from PyMca5.PyMcaGui.plotting.PyMca_Icons import IconDict
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5.PyMcaCore import PyMcaDirs
-from PyMca5 import spslut
 
 try:
     from PyMca5.PyMcaGui.pymca import QPyMcaMatplotlibSave
@@ -295,8 +295,18 @@ class SaveToolButton(qt.QToolButton):
 
 
 class SilxMaskImageWidget(qt.QMainWindow):
-    """
+    """Main window with a plot widget, a toolbar and a slider.
 
+    A list of images can be set with :meth:`setImages`.
+    The mask can be accessed through getter and setter methods:
+    :meth:`setSelectionMask` and :meth:`getSelectionMask`.
+
+    The plot widget can be accessed as :attr:`plot`. It is a silx
+    plot widget.
+
+    The toolbar offers some basic interaction tools:
+    zoom control, colormap, aspect ratio, y axis orientation,
+    "save image" menu and a mask widget.
     """
     sigMaskImageWidget = qt.pyqtSignal(object)
 
@@ -495,6 +505,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         # don't emit signal for programmatic mask change,
         # only for interactive mask drawing
         # (avoid infinite loop)
+        if mask is None:
+            return
         self._getMaskToolsDockWidget().sigMaskChanged.disconnect(
                     self._emitMaskImageWidgetSignal)
         ret = self._getMaskToolsDockWidget().setSelectionMask(mask,
