@@ -120,13 +120,16 @@ class SaveImageListAction(qt.QAction):
         imageList = []
         labels = []
         imageData = self.maskImageWidget.getImageData()
+        colormapDict = self.maskImageWidget.getCurrentColormap()
         label = self.maskImageWidget.plot.getGraphTitle()
         if not label:
             label = "Image01"
         label.replace(' ', '_')
-        if self.clipped and self.colormap is not None:                           # fixme --------------------------------------------------
-            colormapIndex, autoscale, vmin, vmax = self.colormap[0:4]
+        if self.clipped and colormapDict is not None:
+            autoscale = colormapDict['autoscale']
             if not autoscale:
+                vmin = colormapDict['vmin']
+                vmax = colormapDict['vmax']
                 imageData = imageData.clip(vmin, vmax)
                 label += ".clip(%f,%f)" % (vmin, vmax)
         if self.subtract:
@@ -216,17 +219,16 @@ class SaveMatplotlib(qt.QAction):
         self._matplotlibSaveImage.setWindowTitle(title)
         ddict = self._matplotlibSaveImage.getParameters()
 
-        if self.colormap is not None:     # Fixme !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            colormapType = ddict['linlogcolormap']
-            try:
-                colormapIndex, autoscale, vmin, vmax,\
-                        dataMin, dataMax, colormapType = self.colormap
-                if colormapType == spslut.LOG:
-                    colormapType = 'logarithmic'
-                else:
-                    colormapType = 'linear'
-            except:
-                colormapIndex, autoscale, vmin, vmax = self.colormap[0:4]
+        colormapDict = self.maskImageWidget.getCurrentColormap()
+
+        if colormapDict is not None:
+            autoscale = colormapDict['autoscale']
+            vmin = colormapDict['vmin']
+            vmax = colormapDict['vmax']
+            colormapType = colormapDict['normalization']  # 'log' or 'linear'
+            if colormapType == 'log':
+                colormapType = 'logarithmic'
+
             ddict['linlogcolormap'] = colormapType
             if not autoscale:
                 ddict['valuemin'] = vmin
@@ -244,8 +246,8 @@ class SaveMatplotlib(qt.QAction):
         ddict['ypixelsize'] = scale[1]
         ddict['yorigin'] = origin[1]
 
-        ddict['xlabel'] = self.maskImageWidget.plot.getXLabel()
-        ddict['ylabel'] = self.maskImageWidget.plot.getYLabel()
+        ddict['xlabel'] = self.maskImageWidget.plot.getGraphXLabel()
+        ddict['ylabel'] = self.maskImageWidget.plot.getGraphYLabel()
         limits = self.maskImageWidget.plot.getGraphXLimits()
         ddict['zoomxmin'] = limits[0]
         ddict['zoomxmax'] = limits[1]
@@ -652,7 +654,22 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._maskIsSet = True
 
     def getCurrentIndex(self):
+        """
+        :return: Index of slider widget used for image selection.
+        """
         return self.slider.value()
+
+    def getCurrentColormap(self):
+        """Return colormap dict associated with the current image.
+        If the current image is a RGBA Image, return None.
+
+        See doc of silx.gui.plot.Plot for an explanation about the colormap
+        dictionary.
+        """
+        image = self.plot.getImage(legend="current")
+        if not hasattr(image, "getColormap"):    # isinstance(image, silx.gui.plot.items.ImageRgba):
+            return None
+        return self.plot.getImage(legend="current").getColormap()
 
 
 if __name__ == "__main__":
