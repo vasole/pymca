@@ -53,6 +53,27 @@ from silx.gui.plot import PlotActions
 from silx.gui.plot import PlotToolButtons
 from silx.gui.plot.MaskToolsWidget import MaskToolsDockWidget
 from silx.gui import icons
+from silx.image.bilinear import BilinearImage
+
+
+def resize_image(original_image, new_shape):
+    """Return resized image
+
+    :param original_image:
+    :param tuple(int) new_shape: New image shape (rows, columns)
+    :return: New resized image, as a 2D numpy array
+    """
+    bilinimg = BilinearImage(original_image)
+
+    row_array, column_array = numpy.meshgrid(
+            numpy.linspace(0, original_image.shape[0], new_shape[0]),
+            numpy.linspace(0, original_image.shape[1], new_shape[1]),
+            indexing="ij")
+
+    interpolated_values = bilinimg.map_coordinates((row_array, column_array))
+
+    interpolated_values.shape = new_shape
+    return interpolated_values
 
 
 class SaveImageListAction(qt.QAction):
@@ -428,6 +449,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         self._maskIsSet = False
 
+        self._maskParamsCache = None
+
     def sizeHint(self):
         return qt.QSize(500, 400)
 
@@ -634,6 +657,11 @@ class SilxMaskImageWidget(qt.QMainWindow):
         else:
             self.showImage(0)
 
+        _maskParamsCache = width, height, self._origin, self._scale
+        if _maskParamsCache != self._maskParamsCache:
+            self._maskParamsCache = _maskParamsCache
+            self.resetMask(width, height, self._origin, self._scale)
+
     def resetMask(self, width, height,
                   origin=None, scale=None):
         """Initialize a mask with a given width and height.
@@ -648,18 +676,24 @@ class SilxMaskImageWidget(qt.QMainWindow):
         :param scale: Tuple of (xscale, yscale) scaling factors, in axis units
             per pixel.
         """
-        transparent_active_image = numpy.zeros((int(height), int(width), 4))
-        # set alpha for total transparency
-        transparent_active_image[:, :, -1] = 0
-
         origin = origin or (0., 0.)
         scale = scale or (1., 1.)
 
-        self.plot.addImage(transparent_active_image,
+        # use actual image data to have at least partial
+        # functionality for masking based on threshold
+        resized_image_data = resize_image(self.getImageData(),
+                                          (int(height), int(width)))
+
+        # transparent_active_image = numpy.zeros((int(height), int(width), 4))
+        # # set alpha for total transparency
+        # transparent_active_image[:, :, -1] = 0
+
+        self.plot.addImage(resized_image_data,    # transparent_active_image
                            origin=origin,
                            scale=scale,
                            legend="mask support",
                            replace=False)
+        self.plot.getImage(legend="mask support").setAlpha(0)
         self.plot.setActiveImage("mask support")
 
         self.setSelectionMask(numpy.zeros((int(height), int(width))))

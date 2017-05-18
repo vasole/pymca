@@ -46,6 +46,8 @@ from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 from silx.image.bilinear import BilinearImage
 
 
+# TODO: in the future maybe we want to change the RGB correlator to accept different image
+# sizes and we won't need resizing anymore
 def resize_image(original_image, new_shape):
     """Return resized image
 
