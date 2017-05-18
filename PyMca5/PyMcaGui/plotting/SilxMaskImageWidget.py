@@ -438,7 +438,16 @@ class SilxMaskImageWidget(qt.QMainWindow):
         """List of image labels.
         """
 
-        self._scale = (1.0, 1.0)
+        self._bg_images = []
+        """List of background images, as 2D numpy arrays or 3D numpy arrays
+        (RGB(A)).
+        These images are not active, their colormap cannot be changed and
+        they cannot be the base image used for drawing a mask.
+        """
+
+        self._bg_labels = []
+
+        self._scale = (1.0, 1.0)             # TODO: allow different scale and origin for each image
         """Current image scale (Xscale, Yscale) (in axis units per image pixel).
         The scale is adjusted to keep constant width and height for the image
         when a crop operation is applied."""
@@ -447,9 +456,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         """Current image origin: coordinate (x, y) of sample located at
         (row, column) = (0, 0)"""
 
-        self._maskIsSet = False
-
-        self._maskParamsCache = None
+        #
+        # self._maskIsSet = False
 
     def sizeHint(self):
         return qt.QSize(500, 400)
@@ -570,6 +578,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
                     image[:, :, 2] * 0.114
         return imageData
 
+    # TODO: add/replace bg images
     def _addImageClicked(self):
         imageData = self.getImageData()
         ddict = {
@@ -597,16 +606,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
             'id': id(self)}
         self.sigMaskImageWidget.emit(ddict)
 
-    def _getCurrentHeightWidth(self):
-        image = self._images[self.slider.value()]
-        ncols = image.shape[1]
-        nrows = image.shape[0]
-        width = ncols * self._scale[0]   # X
-        height = nrows * self._scale[1]  # Y
-        return height, width
-
     def showImage(self, index=0):
-        """Show image corresponding to index. Update slider to index."""
+        """Show data image corresponding to index. Update slider to index."""
         if not self._images:
             return
         assert index < len(self._images)
@@ -616,13 +617,17 @@ class SilxMaskImageWidget(qt.QMainWindow):
                            legend="current",
                            origin=self._origin,
                            scale=self._scale,
-                           replace=False)
+                           replace=False,
+                           z=1)
         self.plot.setGraphTitle(self._labels[index])
+        self.plot.setActiveImage("current")
         self.slider.setValue(index)
 
     def setImages(self, images, labels=None,
                   origin=None, height=None, width=None):
-        """Set the list of images.
+        """Set the list of data images.
+
+        All images share the same origin, width and height.
 
         :param images: List of 2D or 3D (for RGBA data) numpy arrays
             of image data. All images must have the same shape.
@@ -657,47 +662,104 @@ class SilxMaskImageWidget(qt.QMainWindow):
         else:
             self.showImage(0)
 
-        _maskParamsCache = width, height, self._origin, self._scale
-        if _maskParamsCache != self._maskParamsCache:
-            self._maskParamsCache = _maskParamsCache
-            self.resetMask(width, height, self._origin, self._scale)
+        # _maskParamsCache = width, height, self._origin, self._scale
+        # if _maskParamsCache != self._maskParamsCache:
+        #     self._maskParamsCache = _maskParamsCache
+        #     self.resetMask(width, height, self._origin, self._scale)
 
-    def resetMask(self, width, height,
-                  origin=None, scale=None):
-        """Initialize a mask with a given width and height.
+    def setBackgroundImages(self, images, labels=None,
+                            origins=None, heights=None, widths=None):
+        """Set the list of background images.
 
-        The mask may be synchronized with another widget.
-        The mask size must therefore match the master widget's image
-        size (in pixels).
+        Each image should be a tile and have an origin (x, y) tuple,
+        a height and a width defined, so that all images can be plotted
+        on the same background layer.
 
-        :param width: Mask width
-        :param height: Mask height
-        :param origin: Tuple of (X, Y) coordinates of the sample (0, 0)
-        :param scale: Tuple of (xscale, yscale) scaling factors, in axis units
-            per pixel.
+        :param images: List of 2D or 3D (for RGBA data) numpy arrays
+            of image data. All images must have the same shape.
+        :type images: List of ndarrays
+        :param labels: list of image names
+        :param origins: Images origins: list of coordinate tuples (x, y)
+            of sample located at (row, column) = (0, 0).
+            If None, use (0., 0.) for all images.
+        :param height: Image height in Y axis units. If None, use the
+            image height in number of pixels.
+        :param width: Image width in X axis units. If None, use the
+            image width in number of pixels.
         """
-        origin = origin or (0., 0.)
-        scale = scale or (1., 1.)
+        self._bg_images = images
+        if labels is None:
+            labels = ["Background image %d" % (i + 1) for i in range(len(images))]
 
-        # use actual image data to have at least partial
-        # functionality for masking based on threshold
-        resized_image_data = resize_image(self.getImageData(),
-                                          (int(height), int(width)))
+        self._bg_labels = labels
 
-        # transparent_active_image = numpy.zeros((int(height), int(width), 4))
-        # # set alpha for total transparency
-        # transparent_active_image[:, :, -1] = 0
+        if heights is None:
+            heights = [image.shape[0] for image in images]
+        else:
+            assert len(heights) == len(images)
+        if widths is None:
+            widths = [image.shape[1] for image in images]
+        else:
+            assert len(widths) == len(images)
 
-        self.plot.addImage(resized_image_data,    # transparent_active_image
-                           origin=origin,
-                           scale=scale,
-                           legend="mask support",
-                           replace=False)
-        self.plot.getImage(legend="mask support").setAlpha(0)
-        self.plot.setActiveImage("mask support")
+        if origins is None:
+            origins = [(0, 0) for _img in images]
+        else:
+            assert len(origins) == len(images)
 
-        self.setSelectionMask(numpy.zeros((int(height), int(width))))
-        self._maskIsSet = True
+        for w, h, bg_orig, label, img in zip(widths,
+                                             heights,
+                                             origins,
+                                             labels,
+                                             images):
+            width_pixels = img.shape[1]
+            height_pixels = img.shape[0]
+            bg_scale = (float(w) / width_pixels,
+                        float(h) / height_pixels)
+
+            self.plot.addImage(img,
+                               origin=bg_orig,
+                               scale=bg_scale,
+                               legend=label,
+                               replace=False,
+                               z=0)
+
+    # def resetMask(self, width, height,
+    #               origin=None, scale=None):
+    #     """Initialize a mask with a given width and height.
+    #
+    #     The mask may be synchronized with another widget.
+    #     The mask size must therefore match the master widget's image
+    #     size (in pixels).
+    #
+    #     :param width: Mask width
+    #     :param height: Mask height
+    #     :param origin: Tuple of (X, Y) coordinates of the sample (0, 0)
+    #     :param scale: Tuple of (xscale, yscale) scaling factors, in axis units
+    #         per pixel.
+    #     """
+    #     origin = origin or (0., 0.)
+    #     scale = scale or (1., 1.)
+    #
+    #     # use actual image data to have at least partial
+    #     # functionality for masking based on threshold
+    #     resized_image_data = resize_image(self.getImageData(),
+    #                                       (int(height), int(width)))
+    #
+    #     # transparent_active_image = numpy.zeros((int(height), int(width), 4))
+    #     # # set alpha for total transparency
+    #     # transparent_active_image[:, :, -1] = 0
+    #
+    #     self.plot.addImage(resized_image_data,    # transparent_active_image
+    #                        origin=origin,
+    #                        scale=scale,
+    #                        legend="mask support",
+    #                        replace=False)
+    #     self.plot.getImage(legend="mask support").setAlpha(0)
+    #     self.plot.setActiveImage("mask support")
+    #
+    #     self.setSelectionMask(numpy.zeros((int(height), int(width))))
+    #     self._maskIsSet = True
 
     def getCurrentIndex(self):
         """

@@ -99,6 +99,14 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         toolbar.addWidget(self.rotateButton)
         self.addToolBar(toolbar)
 
+    def _getCurrentHeightWidth(self):
+        image = self._bg_images[0]
+        ncols = image.shape[1]
+        nrows = image.shape[0]
+        width = ncols * self._scale[0]   # X
+        height = nrows * self._scale[1]  # Y
+        return height, width
+
     def _cropIconChecked(self):
         """Crop all images in :attr:`qImages` to the X and Y ranges
         currently displayed (crop to zoomed area)."""

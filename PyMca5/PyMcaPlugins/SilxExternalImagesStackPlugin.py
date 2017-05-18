@@ -215,19 +215,24 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             for i, image in enumerate(imagelist):
                 imagelist[i] = self.qImageToRgba(image)
 
+        nimages = len(imagelist)
         image_shape = self._getStackImageShape()
         origin, scale = self._getStackOriginScale()
 
         h = scale[1] * image_shape[0]
         w = scale[0] * image_shape[1]
 
-        self.widget.setImages(imagelist,
-                              labels=imagenames,
-                              origin=origin,
-                              width=w, height=h)
-        self.widget.resetMask(width=image_shape[1], height=image_shape[0],
-                              origin=origin,
-                              scale=scale)
+        self.widget.setBackgroundImages(imagelist,
+                                        labels=imagenames,
+                                        origins=[origin] * nimages,
+                                        widths=[w] * nimages,
+                                        heights=[h] * nimages)
+
+        # add the stack image for mask operation
+        self.widget.setImages([self.getStackOriginalImage()],
+                              labels=["stack data"],
+                              origin=origin, width=w, height=h)
+        self.widget.plot.getImage("current").setAlpha(0)
         self._showWidget()
 
     def _getStackOriginScale(self):
@@ -244,10 +249,11 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
     def _getStackImageShape(self):
         """Return 2D image shape deducted from 3D stack shape"""
-        info = self.getStackInfo()
-        image_shape = list(self.getStackData().shape)
-        # remove dimension associated with frame index
-        del image_shape[info.get("McaIndex", -1)]
+        # info = self.getStackInfo()
+        # image_shape = list(self.getStackData().shape)
+        # # remove dimension associated with frame index
+        # del image_shape[info.get("McaIndex", -1)]
+        image_shape = list(self.getStackOriginalImage().shape)
         return image_shape
 
     def _showWidget(self):

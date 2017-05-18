@@ -55,17 +55,17 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
         images, names = self.getStackROIImagesAndNames()
         self.widget.setImages(images, labels=names)
 
-        # init mask
-        image_shape = list(self.getStackData().shape)
-        info = self.getStackInfo()
-        xscale = info.get("xScale", [0.0, 1.0])
-        yscale = info.get("yScale", [0.0, 1.0])
-        origin = xscale[0], yscale[0]
-        scale = xscale[1], yscale[1]
-
-        self.widget.resetMask(width=image_shape[1], height=image_shape[0],
-                              origin=origin,
-                              scale=scale)
+        # # init mask
+        # image_shape = list(self.getStackData().shape)
+        # info = self.getStackInfo()
+        # xscale = info.get("xScale", [0.0, 1.0])
+        # yscale = info.get("yScale", [0.0, 1.0])
+        # origin = xscale[0], yscale[0]
+        # scale = xscale[1], yscale[1]
+        #
+        # self.widget.resetMask(width=image_shape[1], height=image_shape[0],
+        #                       origin=origin,
+        #                       scale=scale)
         self.widget.setSelectionMask(self.getStackSelectionMask())
 
     def selectionMaskUpdated(self):
