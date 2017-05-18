@@ -259,6 +259,39 @@ class SaveMatplotlib(qt.QAction):
         self._matplotlibSaveImage.raise_()
 
 
+class SaveToolButton(qt.QToolButton):
+    def __init__(self, parent=None, maskImageWidget=None):
+        """
+
+        :param maskImageWidget: Parent SilxMaskImageWidget
+        """
+        qt.QToolButton.__init__(self, parent)
+        self.maskImageWidget = maskImageWidget
+        self.setIcon(icons.getQIcon("document-save"))
+        self.clicked.connect(self._saveToolButtonSignal)
+        self.setToolTip('Save Graph')
+
+        self._saveMenu = qt.QMenu()
+        self._saveMenu.addAction(
+                SaveImageListAction("Image Data", self.maskImageWidget))
+        self._saveMenu.addAction(
+                SaveImageListAction("Colormap Clipped Seen Image Data",
+                                    self.maskImageWidget, clipped=True))
+        self._saveMenu.addAction(
+                SaveImageListAction("Clipped and Subtracted Seen Image Data",
+                                    self.maskImageWidget, clipped=True, subtract=True))
+        # standard silx save action
+        self._saveMenu.addAction(PlotActions.SaveAction(
+                plot=self.maskImageWidget.plot, parent=self))
+
+        if QPyMcaMatplotlibSave is not None:
+            self._saveMenu.addAction(SaveMatplotlib("Matplotlib",
+                                                    self.maskImageWidget))
+
+    def _saveToolButtonSignal(self):
+        self._saveMenu.exec_(self.parent().cursor().pos())
+
+
 class SilxMaskImageWidget(qt.QMainWindow):
     """
 
@@ -336,10 +369,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.zoomOutAction = PlotActions.ZoomOutAction(plot=self.plot, parent=self)
         self.addAction(self.zoomOutAction)
 
-        self.yAxisInvertedButton = PlotToolButtons.YAxisOriginToolButton(
-            parent=self, plot=self.plot)
-        # self.yAxisInvertedButton.clicked.connect(self._hFlipIconSignal)
-
         self.xAxisAutoScaleAction = self.group.addAction(
             PlotActions.XAxisAutoScaleAction(plot=self.plot, parent=self))
         self.addAction(self.xAxisAutoScaleAction)
@@ -352,16 +381,21 @@ class SilxMaskImageWidget(qt.QMainWindow):
                 PlotActions.ColormapAction(plot=self.plot, parent=self))
         self.addAction(self.colormapAction)
 
-        self.keepDataAspectRatioButton = PlotToolButtons.AspectToolButton(
+        self.group.addAction(self.getMaskAction())
+
+        # Init toolbuttons
+        self.saveToolbutton = SaveToolButton(parent=self,
+                                             maskImageWidget=self)
+
+        self.yAxisInvertedButton = PlotToolButtons.YAxisOriginToolButton(
             parent=self, plot=self.plot)
 
-        self.group.addAction(self.getMaskAction())
+        self.keepDataAspectRatioButton = PlotToolButtons.AspectToolButton(
+            parent=self, plot=self.plot)
 
         # Creating the toolbar also create actions for toolbuttons
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
-
-        self._buildStandaloneSaveMenu()
 
         self._images = []
         """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
@@ -400,6 +434,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         index = objects.index(self.colormapAction)
         objects.insert(index + 1, self.keepDataAspectRatioButton)
         objects.insert(index + 2, self.yAxisInvertedButton)
+        objects.insert(index + 3, self.saveToolbutton)
 
         for obj in objects:
             if isinstance(obj, qt.QAction):
@@ -410,39 +445,12 @@ class SilxMaskImageWidget(qt.QMainWindow):
                     self.keepDataAspectRatioAction = toolbar.addWidget(obj)
                 elif obj is self.yAxisInvertedButton:
                     self.yAxisInvertedAction = toolbar.addWidget(obj)
+                elif obj is self.saveToolbutton:
+                    self.saveAction = toolbar.addWidget(obj)
                 else:
                     raise RuntimeError()
+
         return toolbar
-
-    def _buildStandaloneSaveMenu(self):
-        toolbar = qt.QToolBar("save", self)
-
-        self.saveToolbutton = qt.QToolButton(toolbar)
-        self.saveToolbutton.setIcon(icons.getQIcon("document-save"))
-        self.saveToolbutton.clicked.connect(self._saveToolButtonSignal)
-        self.saveToolbutton.setToolTip('Save Graph')
-
-        toolbar.addWidget(self.saveToolbutton)
-
-        self.addToolBar(toolbar)
-
-        self._saveMenu = qt.QMenu()
-        self._saveMenu.addAction(
-                SaveImageListAction("Image Data", self))
-        self._saveMenu.addAction(
-                SaveImageListAction("Colormap Clipped Seen Image Data",
-                                    self, clipped=True))
-        self._saveMenu.addAction(
-                SaveImageListAction("Clipped and Subtracted Seen Image Data",
-                                    self, clipped=True, subtract=True))
-        # standard silx save action
-        self._saveMenu.addAction(PlotActions.SaveAction(plot=self.plot, parent=self))
-
-        if QPyMcaMatplotlibSave is not None:
-            self._saveMenu.addAction(SaveMatplotlib("Matplotlib", self))
-
-    def _saveToolButtonSignal(self):
-        self._saveMenu.exec_(self.cursor().pos())
 
     def _getMaskToolsDockWidget(self):
         """DockWidget with image mask panel (lazy-loaded)."""
