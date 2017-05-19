@@ -89,18 +89,16 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         if self.widget.isHidden():
             return
         mask = self.getStackSelectionMask()
-        if mask is not None:
-            self.widget.setSelectionMask(mask)
+        self.widget.setSelectionMask(mask)
 
     def onWidgetSignal(self, ddict):
         """triggered by self.widget.sigMaskImageWidget"""
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict["current"])
-        elif ddict['event'] == "resetSelection":
-            self.setStackSelectionMask(None)
         elif ddict['event'] == "removeImageClicked":
             self.removeImage(ddict['title'])
         elif ddict['event'] in ["addImageClicked", "replaceImageClicked"]:
+            # resize external image to the stack shape
             stack_image_shape = self._getStackImageShape()
             external_image = ddict['image']
             resized_image = resize_image(external_image, stack_image_shape)
@@ -109,6 +107,8 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                 self.addImage(resized_image, ddict['title'])
             elif ddict['event'] == "replaceImageClicked":
                 self.replaceImage(resized_image, ddict['title'])
+        elif ddict['event'] == "resetSelection":
+            self.setStackSelectionMask(None)
 
     #Methods implemented by the plugin
     def getMethods(self):
