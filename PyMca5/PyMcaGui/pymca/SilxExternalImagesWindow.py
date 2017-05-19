@@ -185,6 +185,7 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
 
         Depending on the Y axis orientation, the array must be
         rotated by 90 or 270 degrees."""
+        heights, widths = self._getAllBgHeightsWidths()
         if not self.plot.isYAxisInverted():
             self._bg_images[0] = numpy.rot90(self._bg_images[0], 1)
         else:
@@ -193,6 +194,7 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         self.sigMaskImageWidget.emit(
                 {'event': "rotateRight"})
 
+        self._updateBgScales(heights, widths)
         self._updateBgImages()
 
     def _rotateLeft(self):
@@ -200,6 +202,7 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
 
         Depending on the Y axis orientation, the array must be
         rotated by 90 or 270 degrees."""
+        heights, widths = self._getAllBgHeightsWidths()
         if not self.plot.isYAxisInverted():
             self._bg_images[0] = numpy.rot90(self._bg_images[0], 3)
         else:
@@ -208,6 +211,7 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         self.sigMaskImageWidget.emit(
                 {'event': "rotateLeft"})
 
+        self._updateBgScales(heights, widths)
         self._updateBgImages()
 
     # overload methods to send the bg image in the signal
