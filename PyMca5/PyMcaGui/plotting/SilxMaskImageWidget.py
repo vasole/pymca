@@ -52,6 +52,8 @@ from silx.gui.plot import PlotWidget
 from silx.gui.plot import PlotActions
 from silx.gui.plot import PlotToolButtons
 from silx.gui.plot.MaskToolsWidget import MaskToolsDockWidget
+from silx.gui.plot.AlphaSlider import NamedImageAlphaSlider
+
 from silx.gui import icons
 from silx.image.bilinear import BilinearImage
 
@@ -430,6 +432,17 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
 
+        # add a transparency slider for the stack data
+        self._alphaSliderToolbar = qt.QToolBar("Alpha slider", parent=self)
+        self._alphaSlider = NamedImageAlphaSlider(parent=self._alphaSliderToolbar,
+                                                  plot=self.plot,
+                                                  legend="current")
+        self._alphaSlider.setOrientation(qt.Qt.Vertical)
+        self._alphaSlider.setToolTip("Adjust opacity of stack image overlay")
+        self._alphaSliderToolbar.addWidget(self._alphaSlider)
+        self.addToolBar(qt.Qt.RightToolBarArea, self._alphaSliderToolbar)
+        self.setAlphaSliderVisible(False)
+
         self._images = []
         """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
         """
@@ -508,6 +521,24 @@ class SilxMaskImageWidget(qt.QMainWindow):
             self._maskToolsDockWidget.sigMaskChanged.connect(
                     self._emitMaskImageWidgetSignal)
         return self._maskToolsDockWidget
+
+    def setAlphaSliderVisible(self, visible):
+        """Set visibility of the transparency slider widget in the right
+        toolbar area.
+
+        :param visible: True to show widget, False to hide it.
+        """
+        self._alphaSliderToolbar.setVisible(visible)
+
+    def setImagesAlpha(self, alpha):
+        """Set the opacity of the images layer.
+
+        Full opacity means that the background images layer will not
+        be visible.
+
+        :param float alpha: Opacity of images layer, in [0., 1.]
+        """
+        self._alphaSlider.setValue(round(alpha * 255))
 
     def getMaskAction(self):
         """QAction toggling image mask dock widget

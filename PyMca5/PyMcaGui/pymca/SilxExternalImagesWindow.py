@@ -94,7 +94,7 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         self.rotateButton.setMenu(self._rotateMenu)
         self.rotateButton.setPopupMode(qt.QToolButton.InstantPopup)
 
-        toolbar = qt.QToolBar("Image edition", parent=None)
+        toolbar = qt.QToolBar("Image edition", parent=self)
 
         # custom widgets added to the end
         toolbar.addWidget(self.cropButton)
@@ -102,8 +102,10 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         toolbar.addWidget(self.rotateButton)
         self.addToolBar(toolbar)
 
-        # hide slider
+        # hide stack image slider, show transparency slider
         self.slider.hide()
+        self.setAlphaSliderVisible(True)
+        self.setImagesAlpha(0.)
 
     def _getCurrentBgHeightWidth(self):
         """Return height and width for the main bg image"""
