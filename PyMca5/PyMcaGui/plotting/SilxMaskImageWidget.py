@@ -796,6 +796,10 @@ class SilxMaskImageWidget(qt.QMainWindow):
             return None
         return self.plot.getImage(legend="current").getColormap()
 
+    def showAndRaise(self):
+        self.show()
+        self.raise_()
+
 
 if __name__ == "__main__":
     app = qt.QApplication([])
