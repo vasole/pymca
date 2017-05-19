@@ -456,6 +456,9 @@ class SilxMaskImageWidget(qt.QMainWindow):
         """Current image origin: coordinate (x, y) of sample located at
         (row, column) = (0, 0)"""
 
+        # scales and origins for background images
+        self._bg_scales = []
+        self._bg_origins = []
         #
         # self._maskIsSet = False
 
@@ -557,18 +560,15 @@ class SilxMaskImageWidget(qt.QMainWindow):
         """
         return self._getMaskToolsDockWidget().getSelectionMask(copy=copy)
 
-    def getImageData(self):
-        """Return image data to be sent to RGB correlator
-
-        Convert RGBA image to 2D array of grayscale values
+    @staticmethod
+    def _RgbaToGrayscale(image):
+        """Convert RGBA image to 2D array of grayscale values
         (Luma coding)
 
         :param image: RGBA image, as a numpy array of shapes
              (nrows, ncols, 3/4)
-        :return:
+        :return: Image as a 2D array
         """
-        index = self.slider.value()
-        image = self._images[index]
         if len(image.shape) == 2:
             return image
         assert len(image.shape) == 3
@@ -578,7 +578,22 @@ class SilxMaskImageWidget(qt.QMainWindow):
                     image[:, :, 2] * 0.114
         return imageData
 
-    # TODO: add/replace bg images
+    def getImageData(self):
+        """Return current image data to be sent to RGB correlator
+
+        :return: Image as a 2D array
+        """
+        index = self.slider.value()
+        image = self._images[index]
+        return self._RgbaToGrayscale(image)
+
+    def getFirstBgImageData(self):
+        """Return first bg image data to be sent to RGB correlator
+        :return: Image as a 2D array
+        """
+        image = self._bg_images[0]
+        return self._RgbaToGrayscale(image)
+
     def _addImageClicked(self):
         imageData = self.getImageData()
         ddict = {
@@ -667,6 +682,17 @@ class SilxMaskImageWidget(qt.QMainWindow):
         #     self._maskParamsCache = _maskParamsCache
         #     self.resetMask(width, height, self._origin, self._scale)
 
+    def _updateBgScales(self, heights, widths):
+        """Recalculate BG scales
+        (e.g after a crop operation on :attr:`_bg_images`)"""
+        self._bg_scales = []
+        for w, h, img in zip(widths,
+                             heights,
+                             self._bg_images):
+            self._bg_scales.append(
+                (float(w) / img.shape[1], float(h) / img.shape[0])
+            )
+
     def setBackgroundImages(self, images, labels=None,
                             origins=None, heights=None, widths=None):
         """Set the list of background images.
@@ -691,6 +717,10 @@ class SilxMaskImageWidget(qt.QMainWindow):
         if labels is None:
             labels = ["Background image %d" % (i + 1) for i in range(len(images))]
 
+        # delete existing images
+        for label in self._bg_labels:
+            self.plot.removeImage(label)
+
         self._bg_labels = labels
 
         if heights is None:
@@ -707,16 +737,13 @@ class SilxMaskImageWidget(qt.QMainWindow):
         else:
             assert len(origins) == len(images)
 
-        for w, h, bg_orig, label, img in zip(widths,
-                                             heights,
-                                             origins,
-                                             labels,
-                                             images):
-            width_pixels = img.shape[1]
-            height_pixels = img.shape[0]
-            bg_scale = (float(w) / width_pixels,
-                        float(h) / height_pixels)
+        self._bg_origins = origins
+        self._updateBgScales(heights, widths)
 
+        for bg_scale, bg_orig, label, img in zip(self._bg_scales,
+                                                 self._bg_origins,
+                                                 labels,
+                                                 images):
             self.plot.addImage(img,
                                origin=bg_orig,
                                scale=bg_scale,

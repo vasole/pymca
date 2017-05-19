@@ -222,17 +222,20 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         h = scale[1] * image_shape[0]
         w = scale[0] * image_shape[1]
 
-        self.widget.setBackgroundImages(imagelist,
-                                        labels=imagenames,
-                                        origins=[origin] * nimages,
-                                        widths=[w] * nimages,
-                                        heights=[h] * nimages)
-
         # add the stack image for mask operation
         self.widget.setImages([self.getStackOriginalImage()],
                               labels=["stack data"],
                               origin=origin, width=w, height=h)
         self.widget.plot.getImage("current").setAlpha(0)
+
+        # add the external image
+        self.widget.setBackgroundImages(imagelist,
+                                        labels=imagenames,
+                                        origins=[origin] * nimages,
+                                        widths=[w] * nimages,
+                                        heights=[h] * nimages)
+        self.widget.plot.setGraphTitle(imagenames[0])
+
         self._showWidget()
 
     def _getStackOriginScale(self):

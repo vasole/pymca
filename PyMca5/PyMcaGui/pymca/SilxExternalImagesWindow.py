@@ -40,14 +40,16 @@ from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
 
 
 class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
-    """Widget displaying a stack of images and allowing to apply simple
-    editing on the images: cropping to current zoom, 90 degrees rotations,
-    horizontal or vertical flipping.
+    """Widget displaying a single external image meant to be used as a
+    background image underneath the stack data (e.g. sample photo).
 
-    A slider enables browsing through the images.
+    Crop and rotate operations can be applied to the image to align it
+    with the data.
 
-    All images must have the same shape. The operations are applied to
-    all images, not only the one currently displayed.
+    It is technically possible to add multiple background image with
+    different origins and sizes. They will all be plotted on the same
+    background layer. But he crop and rotation operations will only be
+    applied to the first image.
     """
     def __init__(self, parent=None):
         SilxMaskImageWidget.SilxMaskImageWidget.__init__(self, parent=parent)
@@ -93,116 +95,146 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         self.rotateButton.setPopupMode(qt.QToolButton.InstantPopup)
 
         toolbar = qt.QToolBar("Image edition", parent=None)
+
         # custom widgets added to the end
         toolbar.addWidget(self.cropButton)
         toolbar.addWidget(self.hFlipToolButton)
         toolbar.addWidget(self.rotateButton)
         self.addToolBar(toolbar)
 
-    def _getCurrentHeightWidth(self):
+        # hide slider
+        self.slider.hide()
+
+    def _getCurrentBgHeightWidth(self):
+        """Return height and width for the main bg image"""
         image = self._bg_images[0]
         ncols = image.shape[1]
         nrows = image.shape[0]
-        width = ncols * self._scale[0]   # X
-        height = nrows * self._scale[1]  # Y
+        width = ncols * self._bg_scales[0][0]   # X
+        height = nrows * self._bg_scales[0][1]  # Y
         return height, width
 
+    def _getAllBgHeightsWidths(self):
+        widths = []
+        heights = []
+        for i, img in enumerate(self._bg_images):
+            ncols = img.shape[1]
+            nrows = img.shape[0]
+            widths.append(ncols * self._bg_scales[i][0])
+            heights.append(nrows * self._bg_scales[i][1])
+        return heights, widths
+
+    def _updateBgImages(self):
+        """Reset background images after they changed"""
+        heights, widths = self._getAllBgHeightsWidths()
+
+        self.setBackgroundImages(self._bg_images,
+                                 self._bg_labels,
+                                 origins=self._bg_origins,
+                                 widths=widths,
+                                 heights=heights)
+
     def _cropIconChecked(self):
-        """Crop all images in :attr:`qImages` to the X and Y ranges
-        currently displayed (crop to zoomed area)."""
-        height, width = self._getCurrentHeightWidth()
+        """Crop first background image to the X and Y ranges
+        currently displayed (crop to zoomed area)"""
+        heights, widths = self._getAllBgHeightsWidths()
 
         xmin, xmax = map(int, self.plot.getGraphXLimits())
         ymin, ymax = map(int, self.plot.getGraphYLimits())
 
         xmin = max(min(xmax, xmin), 0)
-        xmax = min(max(xmax, xmin), width)
+        xmax = min(max(xmax, xmin), widths[0])
         ymin = max(min(ymax, ymin), 0)
-        ymax = min(max(ymax, ymin), height)
+        ymax = min(max(ymax, ymin), heights[0])
 
-        cols_min = int(xmin / self._scale[0])
-        cols_max = int(xmax / self._scale[0])
-        rows_min = int(ymin / self._scale[1])
-        rows_max = int(ymax / self._scale[1])
+        cols_min = int(xmin / self._bg_scales[0][0])
+        cols_max = int(xmax / self._bg_scales[0][0])
+        rows_min = int(ymin / self._bg_scales[0][1])
+        rows_max = int(ymax / self._bg_scales[0][1])
 
-        croppedImages = []
-        for img in self._images:
-            image = img[rows_min:rows_max, cols_min:cols_max]
-            croppedImages.append(image)
+        self._bg_images[0] = self._bg_images[0][rows_min:rows_max, cols_min:cols_max]
+        # after a crop, we need to recalculate :attr:`_bg_scales`
+        self._updateBgScales(heights, widths)
 
-        # replace current image data by the new one, keep (width, height)
-        self.setImages(croppedImages, self._labels,
-                       origin=self._origin,
-                       width=width, height=height)
+        self._updateBgImages()
 
         self.sigMaskImageWidget.emit(
                 {'event': "cropSignal"})
 
     def _flipUpDown(self):
-        flippedImages = []
-        for img in self._images:
-            flippedImages.append(numpy.flipud(img))
-        self._images = flippedImages
+        """Flip 1st bg image upside down"""
+        self._bg_images[0] = numpy.flipud(self._bg_images[0])
 
         self.sigMaskImageWidget.emit(
                 {'event': "flipUpDownSignal"})
 
-        self.showImage(self.slider.value())
+        self._updateBgImages()
 
     def _flipLeftRight(self):
-        flippedImages = []
-        for img in self._images:
-            flippedImages.append(numpy.fliplr(img))
-        self._images = flippedImages
+        self._bg_images[0] = numpy.fliplr(self._bg_images[0])
 
         self.sigMaskImageWidget.emit(
                 {'event': "flipLeftRightSignal"})
 
-        self.showImage(self.slider.value())
+        self._updateBgImages()
 
     def _rotateRight(self):
         """Rotate the image 90 degrees clockwise.
 
         Depending on the Y axis orientation, the array must be
         rotated by 90 or 270 degrees."""
-        rotatedImages = []
         if not self.plot.isYAxisInverted():
-            for img in self._images:
-                rotatedImages.append(numpy.rot90(img, 1))
+            self._bg_images[0] = numpy.rot90(self._bg_images[0], 1)
         else:
-            for img in self._images:
-                rotatedImages.append(numpy.rot90(img, 3))
+            self._bg_images[0] = numpy.rot90(self._bg_images[0], 3)
 
         self.sigMaskImageWidget.emit(
                 {'event': "rotateRight"})
 
-        height, width = self._getCurrentHeightWidth()
-
-        self.setImages(rotatedImages, self._labels,
-                       origin=self._origin,
-                       width=width, height=height)
+        self._updateBgImages()
 
     def _rotateLeft(self):
         """Rotate the image 90 degrees counterclockwise.
 
         Depending on the Y axis orientation, the array must be
         rotated by 90 or 270 degrees."""
-        height, width = self._getCurrentHeightWidth()
-
-        rotatedImages = []
         if not self.plot.isYAxisInverted():
-            for img in self._images:
-                rotatedImages.append(numpy.rot90(img, 3))
+            self._bg_images[0] = numpy.rot90(self._bg_images[0], 3)
         else:
-            for img in self._images:
-                rotatedImages.append(numpy.rot90(img, 1))
+            self._bg_images[0] = numpy.rot90(self._bg_images[0], 1)
 
         self.sigMaskImageWidget.emit(
                 {'event': "rotateLeft"})
 
-        self.setImages(rotatedImages, self._labels,
-                       origin=self._origin,
-                       width=width, height=height)
+        self._updateBgImages()
+
+    # overload methods to send the bg image in the signal
+    def _addImageClicked(self):
+        imageData = self.getFirstBgImageData()
+        ddict = {
+            'event': "addImageClicked",
+            'image': imageData,
+            'title': self.plot.getGraphTitle(),
+            'id': id(self)}
+        self.sigMaskImageWidget.emit(ddict)
+
+    def _replaceImageClicked(self):
+        imageData = self.getFirstBgImageData()
+        ddict = {
+            'event': "replaceImageClicked",
+            'image': imageData,
+            'title': self.plot.getGraphTitle(),
+            'id': id(self)}
+        self.sigMaskImageWidget.emit(ddict)
+
+    def _removeImageClicked(self):
+        imageData = self.getFirstBgImageData()
+        ddict = {
+            'event': "removeImageClicked",
+            'image': imageData,
+            'title': self.plot.getGraphTitle(),
+            'id': id(self)}
+        self.sigMaskImageWidget.emit(ddict)
 
 
 def test():
@@ -217,7 +249,7 @@ def test():
     data[32:48, 142:158] = 0
 
     container = SilxExternalImagesWindow()
-    container.setImages([data])
+    container.setBackgroundImages([data])
     container.show()
 
     def theSlot(ddict):
