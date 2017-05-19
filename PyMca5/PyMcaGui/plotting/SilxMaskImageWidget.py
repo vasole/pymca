@@ -459,8 +459,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
         # scales and origins for background images
         self._bg_scales = []
         self._bg_origins = []
-        #
-        # self._maskIsSet = False
 
     def sizeHint(self):
         return qt.QSize(500, 400)
@@ -536,11 +534,9 @@ class SilxMaskImageWidget(qt.QMainWindow):
                  The mask can be cropped or padded to fit active image,
                  the returned shape is that of the active image.
         """
-        # don't emit signal for programmatic mask change,
-        # only for interactive mask drawing
-        # (avoid infinite loop)
         if mask is None:
-            return
+            mask = numpy.zeros_like(self._getMaskToolsDockWidget().getSelectionMask())
+        # disconnect temporarily to avoid infinite loop
         self._getMaskToolsDockWidget().sigMaskChanged.disconnect(
                     self._emitMaskImageWidgetSignal)
         ret = self._getMaskToolsDockWidget().setSelectionMask(mask,
@@ -750,43 +746,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
                                legend=label,
                                replace=False,
                                z=0)
-
-    # def resetMask(self, width, height,
-    #               origin=None, scale=None):
-    #     """Initialize a mask with a given width and height.
-    #
-    #     The mask may be synchronized with another widget.
-    #     The mask size must therefore match the master widget's image
-    #     size (in pixels).
-    #
-    #     :param width: Mask width
-    #     :param height: Mask height
-    #     :param origin: Tuple of (X, Y) coordinates of the sample (0, 0)
-    #     :param scale: Tuple of (xscale, yscale) scaling factors, in axis units
-    #         per pixel.
-    #     """
-    #     origin = origin or (0., 0.)
-    #     scale = scale or (1., 1.)
-    #
-    #     # use actual image data to have at least partial
-    #     # functionality for masking based on threshold
-    #     resized_image_data = resize_image(self.getImageData(),
-    #                                       (int(height), int(width)))
-    #
-    #     # transparent_active_image = numpy.zeros((int(height), int(width), 4))
-    #     # # set alpha for total transparency
-    #     # transparent_active_image[:, :, -1] = 0
-    #
-    #     self.plot.addImage(resized_image_data,    # transparent_active_image
-    #                        origin=origin,
-    #                        scale=scale,
-    #                        legend="mask support",
-    #                        replace=False)
-    #     self.plot.getImage(legend="mask support").setAlpha(0)
-    #     self.plot.setActiveImage("mask support")
-    #
-    #     self.setSelectionMask(numpy.zeros((int(height), int(width))))
-    #     self._maskIsSet = True
 
     def getCurrentIndex(self):
         """
