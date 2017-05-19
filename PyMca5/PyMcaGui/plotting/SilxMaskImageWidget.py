@@ -344,6 +344,11 @@ class SilxMaskImageWidget(qt.QMainWindow):
         # Plot
         self.plot = PlotWidget(parent=centralWidget)
         self.plot.setWindowFlags(qt.Qt.Widget)
+        self.plot.setDefaultColormap({'name': 'temperature',
+                                      'normalization': 'linear',
+                                      'autoscale': True,
+                                      'vmin': 0.,
+                                      'vmax': 1.})
         layout.addWidget(self.plot)
 
         # Mask Widget
