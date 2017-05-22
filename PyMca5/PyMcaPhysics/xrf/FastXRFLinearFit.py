@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -720,33 +720,7 @@ if __name__ == "__main__":
     if refit is None:
         refit = 0
         print("WARNING: --refit=%d taken as default" % refit)
-    if 0:
-        #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
-        #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-NOWEIGHT-NO_Constant-batch.cfg"
-        configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-SINGLELAYER-batch.cfg"
-        configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-SINGLELAYER-Auto-batch.cfg"
-        #configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-MULTILAYER-batch.cfg"
-        configurationFile = "E:\DATA\COTTE\CH1777\G4-4720eV-MULTILAYER-Pb-batch.cfg"
-        fileList = glob.glob("E:\DATA\COTTE\CH1777\G4_mca_0012_0000_*.edf")
-        concentrations = True
-        dataStack = EDFStack.EDFStack(filelist=fileList)
-        outputDir = "E:\\CHTEST\\"
-    elif 0:
-        configurationFile = "E:\DATA\COTTE\CH09\WithLeadBatch.cfg"
-        fileList = glob.glob("E:\DATA\COTTE\CH09\ch09__mca_0005_0000_*.edf")
-        concentrations = False
-        dataStack = EDFStack.EDFStack(filelist=fileList)
-    elif 0:
-        configurationFile = "D:\RIVARD\config_3-6kev_OceanIsland_batch_NO_BACKGROUND.cfg"
-        fileList = glob.glob("D:\RIVARD\m*.edf")
-        concentrations = False
-        dataStack = EDFStack.EDFStack(filelist=fileList)
-    elif 0:
-        configurationFile = "E2_line.cfg"
-        fileList = glob.glob("E:\DATA\PyMca-Training\FDM55\AS_EDF\E2_line*.edf")
-        concentrations = False
-        dataStack = EDFStack.EDFStack(filelist=fileList)
-    elif len(fileList):
+    if len(fileList):
         dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
     else:
         print("OPTIONS:", longoptions)
