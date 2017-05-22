@@ -39,10 +39,11 @@ DEBUG = 0
 class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
     def __init__(self, *var, **kw):
         PyMcaImageWindow.PyMcaImageWindow.__init__(self, *var, **kw)
-        self._HKLOn = False
+        self._HKLOn = True
 
     def _graphSignal(self, ddict):
-        if (ddict['event'] != "MouseAt") or (not self._HKLOn):
+        if (ddict['event'] not in ["MouseAt", "mouseClicked"]) or \
+           (not self._HKLOn):
             return PyMcaImageWindow.PyMcaImageWindow._graphSignal(self, ddict)
 
         if self._imageData is None:
