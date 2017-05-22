@@ -721,7 +721,18 @@ if __name__ == "__main__":
         refit = 0
         print("WARNING: --refit=%d taken as default" % refit)
     if len(fileList):
-        dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
+        if (not os.path.exists(fileList[0])) and \
+           os.path.exists(fileList[0].split("::")[0]):
+            # odo convention to get a dataset form an HDF5
+            import h5py
+            fname, dataPath = fileList[0].split("::")
+            h5 = h5py.File(fname, "r")
+            # compared to the ROI imaging tool, this way of reading puts data into memory
+            # while with the ROI imaging tool, there is a check.
+            dataStack = h5[dataPath][:]
+            h5.close()
+        else:
+            dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
     else:
         print("OPTIONS:", longoptions)
         sys.exit(0)
