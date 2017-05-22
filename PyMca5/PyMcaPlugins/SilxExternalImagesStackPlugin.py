@@ -76,25 +76,27 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                                     PyMca_Icons.fileopen],
                            'Show': [self._showMenu,
                                     "Select an image to show it",
-                                    PyMca_Icons.brushselect]}
-        self.__methodKeys = ['Load', 'Show']
-        self.widgets = {}
+                                    PyMca_Icons.brushselect],
+                           'Clear images': [self._clearAllWidgets,
+                                            "Clear open images"]}
+        self.__methodKeys = ['Load', 'Show', 'Clear images']
+        self.windows = {}
         """Dictionary of SilxExternalImagesWindow widgets indexed
         by their background image label."""
 
     def stackUpdated(self):
-        self.widgets = {}
+        self.windows = {}
 
     def selectionMaskUpdated(self):
-        if not self.widgets:
+        if not self.windows:
             return
         mask = self.getStackSelectionMask()
-        for w in self.widgets.values():
+        for w in self.windows.values():
             if not w.isHidden():
                 w.setSelectionMask(mask)
 
     def onWidgetSignal(self, ddict):
-        """triggered by self.widgets["foo"].sigMaskImageWidget"""
+        """triggered by self.windows["foo"].sigMaskImageWidget"""
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict["current"])
         elif ddict['event'] == "removeImageClicked":
@@ -114,7 +116,7 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
     #Methods implemented by the plugin
     def getMethods(self):
-        if not self.widgets:
+        if not self.windows:
             return [self.__methodKeys[0]]  # only Load
         else:
             return self.__methodKeys  # Load and show
@@ -123,6 +125,8 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         return self.methodDict[name][1]
 
     def getMethodPixmap(self, name):
+        if len(self.methodDict[name]) < 3:
+            return None
         return self.methodDict[name][2]
 
     def applyMethod(self, name):
@@ -220,25 +224,25 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         w = scale[0] * image_shape[1]
 
         for bgimg, bglabel in zip(imagelist, imagenames):
-            if bglabel not in self.widgets:
-                self.widgets[bglabel] = SilxExternalImagesWindow.SilxExternalImagesWindow()
-                self.widgets[bglabel].sigMaskImageWidget.connect(
+            if bglabel not in self.windows:
+                self.windows[bglabel] = SilxExternalImagesWindow.SilxExternalImagesWindow()
+                self.windows[bglabel].sigMaskImageWidget.connect(
                         self.onWidgetSignal)
 
-            self.widgets[bglabel].show()
+            self.windows[bglabel].show()
             # add the stack image for mask operation
-            self.widgets[bglabel].setImages([self.getStackOriginalImage()],
+            self.windows[bglabel].setImages([self.getStackOriginalImage()],
                                             labels=["stack data"],
                                             origin=origin, width=w, height=h)
-            self.widgets[bglabel].plot.getImage("current").setAlpha(0)
+            self.windows[bglabel].plot.getImage("current").setAlpha(0)
 
             # add the external image
-            self.widgets[bglabel].setBackgroundImages([bgimg],
+            self.windows[bglabel].setBackgroundImages([bgimg],
                                                       labels=[bglabel],
                                                       origins=[origin],
                                                       widths=[w],
                                                       heights=[h])
-            self.widgets[bglabel].plot.setGraphTitle(bglabel)
+            self.windows[bglabel].plot.setGraphTitle(bglabel)
 
             self._showWidget(bglabel)
 
@@ -264,12 +268,12 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         return image_shape
 
     def _showWidget(self, label):
-        if label not in self.widgets:
+        if label not in self.windows:
             return
 
         #Show
-        self.widgets[label].show()
-        self.widgets[label].raise_()
+        self.windows[label].show()
+        self.windows[label].raise_()
 
         #update
         self.selectionMaskUpdated()
@@ -277,15 +281,25 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
     def _showMenu(self):
         """Create a show menu allowing to show any of the existing external
         image windows"""
+        if len(self.windows) == 1:
+            label = self.windows.keys()[0]
+            self.windows[label].showAndRaise()
+            return
         showMenu = qt.QMenu()
-        for label in self.widgets:
+        for label in self.windows:
             action = qt.QAction(label, showMenu)
-            action.setText(label)
             action.setToolTip('Show window displaying image "%s"' % label)
-            action.triggered.connect(self.widgets[label].showAndRaise)
+            action.triggered.connect(self.windows[label].showAndRaise)
             showMenu.addAction(action)
 
         showMenu.exec_(qt.QCursor.pos())
+
+    def _clearAllWidgets(self):
+        # delete widgets
+        for label in self.windows:
+            self.windows[label].deleteLater()
+        # clear dict
+        self.windows.clear()
 
     @staticmethod
     def qImageToRgba(qimage):

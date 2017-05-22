@@ -572,6 +572,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         """
         if mask is None:
             mask = numpy.zeros_like(self._getMaskToolsDockWidget().getSelectionMask())
+        if not len(mask):
+            return
         # disconnect temporarily to avoid infinite loop
         self._getMaskToolsDockWidget().sigMaskChanged.disconnect(
                     self._emitMaskImageWidgetSignal)
