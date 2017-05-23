@@ -421,6 +421,10 @@ class SilxMaskImageWidget(qt.QMainWindow):
                 PlotActions.ColormapAction(plot=self.plot, parent=self))
         self.addAction(self.colormapAction)
 
+        self.copyAction = self.group.addAction(
+                PlotActions.CopyAction(plot=self.plot, parent=self))
+        self.addAction(self.copyAction)
+
         self.group.addAction(self.getMaskAction())
 
         # Init toolbuttons
