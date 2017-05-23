@@ -141,13 +141,14 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         currently displayed (crop to zoomed area)"""
         heights, widths = self._getAllBgHeightsWidths()
 
-        xmin, xmax = map(int, self.plot.getGraphXLimits())
-        ymin, ymax = map(int, self.plot.getGraphYLimits())
+        xmin, xmax = self.plot.getGraphXLimits()
+        ymin, ymax = self.plot.getGraphYLimits()
 
-        xmin = max(min(xmax, xmin), 0)
-        xmax = min(max(xmax, xmin), widths[0])
-        ymin = max(min(ymax, ymin), 0)
-        ymax = min(max(ymax, ymin), heights[0])
+        # crop must select an area within the original image's bounds
+        xmin = max(xmin, self._bg_origins[0][0])
+        xmax = min(xmax, self._bg_origins[0][0] + widths[0])
+        ymin = max(ymin, self._bg_origins[0][1])
+        ymax = min(ymax, self._bg_origins[0][1] + heights[0])
 
         cols_min = int(xmin / self._bg_scales[0][0])
         cols_max = int(xmax / self._bg_scales[0][0])
