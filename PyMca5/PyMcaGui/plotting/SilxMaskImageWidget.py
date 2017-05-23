@@ -665,7 +665,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
             return
         assert index < len(self._images)
 
-        self.plot.remove(legend="current")
         self.plot.addImage(self._images[index],
                            legend="current",
                            origin=self._origin,

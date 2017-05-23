@@ -129,12 +129,13 @@ class SilxStackRoiWindow(SilxMaskImageWidget.SilxMaskImageWidget):
             self.plot.setGraphTitle(mf_text + self._labels[index] + " Net")
             imdata -= self._images[bg_index]
 
-        self.plot.remove(legend="current")
         self.plot.addImage(imdata,
                            legend="current",
                            origin=self._origin,
                            scale=self._scale,
-                           replace=False)
+                           replace=False,
+                           z=1)
+        self.plot.setActiveImage("current")
         self.slider.setValue(index)
 
     def _getMedianData(self, data):
