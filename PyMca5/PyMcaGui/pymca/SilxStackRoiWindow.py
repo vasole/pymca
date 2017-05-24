@@ -129,12 +129,13 @@ class SilxStackRoiWindow(SilxMaskImageWidget.SilxMaskImageWidget):
             self.plot.setGraphTitle(mf_text + self._labels[index] + " Net")
             imdata -= self._images[bg_index]
 
+        # FIXME: we use z=0 because the silx mask is always on z=1
         self.plot.addImage(imdata,
                            legend="current",
                            origin=self._origin,
                            scale=self._scale,
                            replace=False,
-                           z=1)
+                           z=0)      # TODO: z=1
         self.plot.setActiveImage("current")
         self.slider.setValue(index)
 

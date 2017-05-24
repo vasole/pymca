@@ -524,9 +524,9 @@ class SilxMaskImageWidget(qt.QMainWindow):
             self._maskToolsDockWidget = MaskToolsDockWidget(
                 plot=self.plot, name='Mask')
             self._maskToolsDockWidget.hide()
-            self.addDockWidget(qt.Qt.BottomDockWidgetArea,
+            self.addDockWidget(qt.Qt.RightDockWidgetArea,
                                self._maskToolsDockWidget)
-            self._maskToolsDockWidget.setFloating(True)
+            # self._maskToolsDockWidget.setFloating(True)
             self._maskToolsDockWidget.sigMaskChanged.connect(
                     self._emitMaskImageWidgetSignal)
         return self._maskToolsDockWidget
@@ -557,6 +557,11 @@ class SilxMaskImageWidget(qt.QMainWindow):
         return self._getMaskToolsDockWidget().toggleViewAction()
 
     def _emitMaskImageWidgetSignal(self):
+        mask = self.getSelectionMask()
+        if not mask.size:
+            # workaround to ignore the empty mask emitted when the mask widget
+            # is initialized
+            return
         self.sigMaskImageWidget.emit(
             {"event": "selectionMaskChanged",
              "current": self.getSelectionMask(),
@@ -661,16 +666,19 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
     def showImage(self, index=0):
         """Show data image corresponding to index. Update slider to index."""
+        # warning: this method is 100% overloaded in StackRoiWindow,
+        # any change here will not affect StackRoiWindow
         if not self._images:
             return
         assert index < len(self._images)
 
+        # FIXME: we use z=0 because the silx mask is always on z=1
         self.plot.addImage(self._images[index],
                            legend="current",
                            origin=self._origin,
                            scale=self._scale,
                            replace=False,
-                           z=1)
+                           z=0)     # TODO: z=1
         self.plot.setGraphTitle(self._labels[index])
         self.plot.setActiveImage("current")
         self.slider.setValue(index)
@@ -781,12 +789,15 @@ class SilxMaskImageWidget(qt.QMainWindow):
                                                  self._bg_origins,
                                                  labels,
                                                  images):
+            # FIXME: we use z=-1 because the mask is always on z=1,
+            # so the data must be on z=0. To be fixed after the silx mask
+            # is improved
             self.plot.addImage(img,
                                origin=bg_orig,
                                scale=bg_scale,
                                legend=label,
                                replace=False,
-                               z=0)
+                               z=-1)  # TODO: z=0
 
     def getCurrentIndex(self):
         """
