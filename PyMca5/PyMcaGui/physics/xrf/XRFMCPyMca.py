@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -102,8 +102,7 @@ class GetFileList(qt.QGroupBox):
             filelist = qt.QFileDialog.getOpenFileName(self,
                         "Open a file",
                         wdir,
-                        filetypes,
-                        None)
+                        filetypes)
             if QTVERSION > "5.0.0":
                 # in PyQt5 the call corresponds to getOpenFileNameAndFilter
                 filelist = filelist[0]
@@ -113,8 +112,7 @@ class GetFileList(qt.QGroupBox):
             filelist = qt.QFileDialog.getOpenFileNames(self,
                         "Open a set of files",
                         wdir,
-                        filetypes,
-                        None)
+                        filetypes)
             if QTVERSION > "5.0.0":
                 # in PyQt5 the call corresponds to getOpenFileNameAndFilter
                 filelist = filelist[0]
@@ -195,8 +193,7 @@ class XRFMCProgramFile(GetFileList):
             filelist = qt.QFileDialog.getOpenFileName(self,
                         "Selec xmimsim-pymca executable",
                         wdir,
-                        filetypes,
-                        None)
+                        filetypes)
             if QTVERSION > "5.0.0":
                 # in PyQt5 the call corresponds to getOpenFileNameAndFilter
                 filelist = filelist[0]
