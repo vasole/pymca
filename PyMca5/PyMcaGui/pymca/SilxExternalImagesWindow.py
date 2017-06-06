@@ -150,10 +150,10 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         ymin = max(ymin, self._bg_origins[0][1])
         ymax = min(ymax, self._bg_origins[0][1] + heights[0])
 
-        cols_min = int(xmin / self._bg_scales[0][0])
-        cols_max = int(xmax / self._bg_scales[0][0])
-        rows_min = int(ymin / self._bg_scales[0][1])
-        rows_max = int(ymax / self._bg_scales[0][1])
+        cols_min = int((xmin - self._bg_origins[0][0]) / self._bg_scales[0][0])
+        cols_max = int((xmax - self._bg_origins[0][0]) / self._bg_scales[0][0])
+        rows_min = int((ymin - self._bg_origins[0][1]) / self._bg_scales[0][1])
+        rows_max = int((ymax - self._bg_origins[0][1]) / self._bg_scales[0][1])
 
         self._bg_images[0] = self._bg_images[0][rows_min:rows_max, cols_min:cols_max]
         # after a crop, we need to recalculate :attr:`_bg_scales`
