@@ -54,16 +54,76 @@ import logging
 logging.basicConfig()
 logging.disable(logging.ERROR)
 
-
+import silx
 from silx.gui.plot import PlotWidget
 from silx.gui.plot import PlotActions
 from silx.gui.plot import PlotToolButtons
-from silx.gui.plot.MaskToolsWidget import MaskToolsDockWidget
+from silx.gui.plot.MaskToolsWidget import MaskToolsWidget
+from silx.gui.plot._BaseMaskToolsWidget import BaseMaskToolsDockWidget
 from silx.gui.plot.AlphaSlider import NamedImageAlphaSlider
 
 from silx.gui import icons
 
 logging.disable(logging.NOTSET)   # restore default logging behavior
+
+
+class MyMaskToolsWidget(MaskToolsWidget):
+    """Backport of the setSelectionMask behavior implemented in silx 0.6.0,
+    to synchronize mask parameters with the active image."""
+    def setSelectionMask(self, mask, copy=True):
+        """Set the mask to a new array.
+        :param numpy.ndarray mask: The array to use for the mask.
+        :type mask: numpy.ndarray of uint8 of dimension 2, C-contiguous.
+                    Array of other types are converted.
+        :param bool copy: True (the default) to copy the array,
+                          False to use it as is if possible.
+        :return: None if failed, shape of mask as 2-tuple if successful.
+                 The mask can be cropped or padded to fit active image,
+                 the returned shape is that of the active image.
+        """
+        mask = numpy.array(mask, copy=False, dtype=numpy.uint8)
+        if len(mask.shape) != 2:
+            # _logger.error('Not an image, shape: %d', len(mask.shape))
+            return None
+
+        # ensure all mask attributes are synchronized with the active image
+        activeImage = self.plot.getActiveImage()
+        if activeImage is not None and activeImage.getLegend() != self._maskName:
+            self._origin = activeImage.getOrigin()
+            self._scale = activeImage.getScale()
+            self._z = activeImage.getZValue() + 1
+            self._data = activeImage.getData(copy=False)
+            self._mask.setDataItem(activeImage)
+
+        if self._data.shape[0:2] == (0, 0) or mask.shape == self._data.shape[0:2]:
+            self._mask.setMask(mask, copy=copy)
+            self._mask.commit()
+            return mask.shape
+        else:
+            # _logger.warning('Mask has not the same size as current image.'
+            #                 ' Mask will be cropped or padded to fit image'
+            #                 ' dimensions. %s != %s',
+            #                 str(mask.shape), str(self._data.shape))
+            resizedMask = numpy.zeros(self._data.shape[0:2],
+                                      dtype=numpy.uint8)
+            height = min(self._data.shape[0], mask.shape[0])
+            width = min(self._data.shape[1], mask.shape[1])
+            resizedMask[:height, :width] = mask[:height, :width]
+            self._mask.setMask(resizedMask, copy=False)
+            self._mask.commit()
+            return resizedMask.shape
+
+
+class MyMaskToolsDockWidget(BaseMaskToolsDockWidget):
+    def __init__(self, parent=None, plot=None, name='Mask'):
+        super(MyMaskToolsDockWidget, self).__init__(parent, name)
+        if silx.version > "0.6.0-dev0":
+            # TODO: replace version with "0.5.0" when silx PR #863 is merged
+            self.setWidget(MaskToolsWidget(plot=plot))
+        else:
+            self.setWidget(MyMaskToolsWidget(plot=plot))
+
+        self.widget().sigMaskChanged.connect(self._emitSigMaskChanged)
 
 
 class SaveImageListAction(qt.QAction):
@@ -509,7 +569,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
     def _getMaskToolsDockWidget(self):
         """DockWidget with image mask panel (lazy-loaded)."""
         if self._maskToolsDockWidget is None:
-            self._maskToolsDockWidget = MaskToolsDockWidget(
+            self._maskToolsDockWidget = MyMaskToolsDockWidget(
                 plot=self.plot, name='Mask')
             self._maskToolsDockWidget.hide()
             self.addDockWidget(qt.Qt.RightDockWidgetArea,
