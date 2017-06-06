@@ -254,23 +254,20 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             self._showWidget(bglabel)
 
     def _getStackOriginScale(self):
+        """Return origin and scale, as defined in silx plot addImage method
+        """
         info = self.getStackInfo()
 
         xscale = info.get("xScale", [0.0, 1.0])
         yscale = info.get("yScale", [0.0, 1.0])
 
-        # from here on, scale and origin are defined in the silx sense
         origin = xscale[0], yscale[0]
         scale = xscale[1], yscale[1]
 
         return origin, scale
 
     def _getStackImageShape(self):
-        """Return 2D image shape deducted from 3D stack shape"""
-        # info = self.getStackInfo()
-        # image_shape = list(self.getStackData().shape)
-        # # remove dimension associated with frame index
-        # del image_shape[info.get("McaIndex", -1)]
+        """Return 2D stack image shape"""
         image_shape = list(self.getStackOriginalImage().shape)
         return image_shape
 
