@@ -48,6 +48,13 @@ try:
 except ImportError:
     QPyMcaMatplotlibSave = None
 
+
+# temporarily disable logging when importing silx and fabio
+import logging
+logging.basicConfig()
+logging.disable(logging.ERROR)
+
+
 from silx.gui.plot import PlotWidget
 from silx.gui.plot import PlotActions
 from silx.gui.plot import PlotToolButtons
@@ -55,27 +62,8 @@ from silx.gui.plot.MaskToolsWidget import MaskToolsDockWidget
 from silx.gui.plot.AlphaSlider import NamedImageAlphaSlider
 
 from silx.gui import icons
-from silx.image.bilinear import BilinearImage
 
-
-def resize_image(original_image, new_shape):
-    """Return resized image
-
-    :param original_image:
-    :param tuple(int) new_shape: New image shape (rows, columns)
-    :return: New resized image, as a 2D numpy array
-    """
-    bilinimg = BilinearImage(original_image)
-
-    row_array, column_array = numpy.meshgrid(
-            numpy.linspace(0, original_image.shape[0], new_shape[0]),
-            numpy.linspace(0, original_image.shape[1], new_shape[1]),
-            indexing="ij")
-
-    interpolated_values = bilinimg.map_coordinates((row_array, column_array))
-
-    interpolated_values.shape = new_shape
-    return interpolated_values
+logging.disable(logging.NOTSET)   # restore default logging behavior
 
 
 class SaveImageListAction(qt.QAction):

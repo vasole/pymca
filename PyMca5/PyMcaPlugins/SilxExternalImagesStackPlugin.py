@@ -43,7 +43,14 @@ from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui.pymca import SilxExternalImagesWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
+# temporarily disable logging when importing silx and fabio
+import logging
+logging.basicConfig()
+logging.disable(logging.ERROR)
+
 from silx.image.bilinear import BilinearImage
+
+logging.disable(logging.NOTSET)
 
 
 # TODO: in the future maybe we want to change the RGB correlator to accept different image

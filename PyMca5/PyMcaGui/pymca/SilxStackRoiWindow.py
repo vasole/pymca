@@ -34,7 +34,14 @@ from PyMca5.PyMcaGui import IconDict
 
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
 
+# temporarily disable logging when importing silx and fabio
+import logging
+logging.basicConfig()
+logging.disable(logging.ERROR)
+
 from silx.gui.plot.Profile import ProfileToolBar
+
+logging.disable(logging.NOTSET)   # restore default logging behavior
 
 import numpy
 import copy
