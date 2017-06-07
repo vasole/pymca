@@ -34,7 +34,7 @@ __license__ = "MIT"
 
 
 from PyMca5 import StackPluginBase
-from PyMca5.PyMcaGui.pymca import SilxStackRoiWindow
+from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 
@@ -122,7 +122,10 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
 
     def _showWidget(self):
         if self.widget is None:
-            self.widget = SilxStackRoiWindow.SilxStackRoiWindow()
+            self.widget = SilxMaskImageWidget.SilxMaskImageWidget()
+            self.widget.setMedianFilterWidgetVisible(True)
+            self.widget.setBackgroundToolButtonVisible(True)
+            self.widget.setProfileVisible(True)
             self.widget.sigMaskImageWidget.connect(self.mySlot)
 
         # Show

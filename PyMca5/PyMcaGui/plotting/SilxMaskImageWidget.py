@@ -31,8 +31,11 @@ __authors__ = ["P. Knobel"]
 __license__ = "MIT"
 
 
+import copy
 import numpy
 import os
+
+from PyMca5.PyMcaMath.PyMcaSciPy.signal.median import medfilt2d
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
@@ -61,6 +64,7 @@ from silx.gui.plot import PlotToolButtons
 from silx.gui.plot.MaskToolsWidget import MaskToolsWidget
 from silx.gui.plot._BaseMaskToolsWidget import BaseMaskToolsDockWidget
 from silx.gui.plot.AlphaSlider import NamedImageAlphaSlider
+from silx.gui.plot.Profile import ProfileToolBar
 
 from silx.gui import icons
 
@@ -365,6 +369,23 @@ class SaveToolButton(qt.QToolButton):
         self._saveMenu.exec_(self.parent().cursor().pos())
 
 
+class MedianParameters(qt.QWidget):
+    def __init__(self, parent=None):
+        qt.QWidget.__init__(self, parent)
+        self.mainLayout = qt.QHBoxLayout(self)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.mainLayout.setSpacing(2)
+        self.label = qt.QLabel(self)
+        self.label.setText("Median filter width: ")
+        self.widthSpin = qt.QSpinBox(self)
+        self.widthSpin.setMinimum(1)
+        self.widthSpin.setMaximum(99)
+        self.widthSpin.setValue(1)
+        self.widthSpin.setSingleStep(2)
+        self.mainLayout.addWidget(self.label)
+        self.mainLayout.addWidget(self.widthSpin)
+
+
 class SilxMaskImageWidget(qt.QMainWindow):
     """Main window with a plot widget, a toolbar and a slider.
 
@@ -444,6 +465,16 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         layout.addWidget(buttonBox)
 
+        # median filter widget
+        self._medianParameters = {'row_width': 1,
+                                  'column_width': 1}
+        self._medianParametersWidget = MedianParameters(self)
+        self._medianParametersWidget.widthSpin.setValue(1)
+        self._medianParametersWidget.widthSpin.valueChanged[int].connect(
+                     self._setMedianKernelWidth)
+        layout.addWidget(self._medianParametersWidget)
+        self.setMedianFilterWidgetVisible(False)
+
         self.setCentralWidget(centralWidget)
 
         # Init actions
@@ -488,9 +519,23 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.keepDataAspectRatioButton = PlotToolButtons.AspectToolButton(
             parent=self, plot=self.plot)
 
+        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
+        self.backgroundButton = qt.QToolButton(self)
+        self.backgroundButton.setCheckable(True)
+        self.backgroundButton.setIcon(self.backgroundIcon)
+        self.backgroundButton.setToolTip(
+            'Toggle background image subtraction from current image\n' +
+            'No action if no background image available.')
+        self.backgroundButton.clicked.connect(self._subtractBackground)
+        self.setBackgroundToolButtonVisible(True)
+
         # Creating the toolbar also create actions for toolbuttons
         self._toolbar = self._createToolBar(title='Plot', parent=None)
         self.addToolBar(self._toolbar)
+
+        self._profile = ProfileToolBar(plot=self.plot)
+        self.addToolBar(self._profile)
+        self.setProfileVisible(False)
 
         # add a transparency slider for the stack data
         self._alphaSliderToolbar = qt.QToolBar("Alpha slider", parent=self)
@@ -552,7 +597,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         objects.insert(index + 1, self.keepDataAspectRatioButton)
         objects.insert(index + 2, self.yAxisInvertedButton)
         objects.insert(index + 3, self.saveToolbutton)
-
+        objects.insert(index + 4, self.backgroundButton)
         for obj in objects:
             if isinstance(obj, qt.QAction):
                 toolbar.addAction(obj)
@@ -564,6 +609,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
                     self.yAxisInvertedAction = toolbar.addWidget(obj)
                 elif obj is self.saveToolbutton:
                     self.saveAction = toolbar.addWidget(obj)
+                elif obj is self.backgroundButton:
+                    self.bgAction = toolbar.addWidget(obj)
                 else:
                     raise RuntimeError()
 
@@ -581,6 +628,47 @@ class SilxMaskImageWidget(qt.QMainWindow):
             self._maskToolsDockWidget.sigMaskChanged.connect(
                     self._emitMaskImageWidgetSignal)
         return self._maskToolsDockWidget
+
+    def _setMedianKernelWidth(self, value):
+        kernelSize = numpy.asarray(value)
+        if len(kernelSize.shape) == 0:
+            kernelSize = [kernelSize.item()] * 2
+        self._medianParameters['row_width'] = kernelSize[0]
+        self._medianParameters['column_width'] = kernelSize[1]
+        self._medianParametersWidget.widthSpin.setValue(int(kernelSize[0]))
+        current = self.slider.value()
+        self.showImage(current)
+
+    def _subtractBackground(self):
+        """When background button is clicked, this causes showImage to
+        display the data after subtracting the stack background image.
+
+        This background image is unrelated to the background images set
+        with :meth:`setBackgroundImages`, it is simply the first data image
+        whose label ends with 'background'."""
+        current = self.getCurrentIndex()
+        self.showImage(current)
+
+    def setBackgroundToolButtonVisible(self, visible):
+        """Set visibility of the background toolbar button.
+
+        :param visible: True to show tool button, False to hide it.
+        """
+        self.backgroundButton.setVisible(visible)
+
+    def setProfileVisible(self, visible):
+        """Set visibility of the profile toolbar
+
+        :param visible: True to show toolbar, False to hide it.
+        """
+        self._profile.setVisible(visible)
+
+    def setMedianFilterWidgetVisible(self, visible):
+        """Set visibility of the median filter parametrs widget.
+
+        :param visible: True to show widget, False to hide it.
+        """
+        self._medianParametersWidget.setVisible(visible)
 
     def setAlphaSliderVisible(self, visible):
         """Set visibility of the transparency slider widget in the right
@@ -716,23 +804,48 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.sigMaskImageWidget.emit(ddict)
 
     def showImage(self, index=0):
-        """Show data image corresponding to index. Update slider to index."""
-        # warning: this method is 100% overloaded in StackRoiWindow,
-        # any change here will not affect StackRoiWindow
+        """Show data image corresponding to index. Update slider to index.
+        """
         if not self._images:
             return
         assert index < len(self._images)
 
-        # FIXME: we use z=0 because the silx mask is always on z=1
-        self.plot.addImage(self._images[index],
+        bg_index = None
+        if self.backgroundButton.isChecked():
+            for i, imageName in enumerate(self._labels):
+                if imageName.lower().endswith('background'):
+                    bg_index = i
+                    break
+
+        mf_text = ""
+        a = self._medianParameters['row_width']
+        b = self._medianParameters['column_width']
+        if max(a, b) > 1:
+            mf_text = "MF(%d,%d) " % (a, b)
+
+        imdata = self._getMedianData(self._images[index])
+        if bg_index is None:
+            self.plot.setGraphTitle(mf_text + self._labels[index])
+        else:
+            self.plot.setGraphTitle(mf_text + self._labels[index] + " Net")
+            imdata -= self._images[bg_index]
+
+        self.plot.addImage(imdata,
                            legend="current",
                            origin=self._origin,
                            scale=self._scale,
                            replace=False,
-                           z=0)     # TODO: z=1
-        self.plot.setGraphTitle(self._labels[index])
+                           z=0)
         self.plot.setActiveImage("current")
         self.slider.setValue(index)
+
+    def _getMedianData(self, data):
+        data = copy.copy(data)
+        if max(self._medianParameters['row_width'],
+               self._medianParameters['column_width']) > 1:
+            data = medfilt2d(data, [self._medianParameters['row_width'],
+                                    self._medianParameters['column_width']])
+        return data
 
     def setImages(self, images, labels=None,
                   origin=None, height=None, width=None):
@@ -871,6 +984,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
     def showAndRaise(self):
         self.show()
         self.raise_()
+
 
 
 if __name__ == "__main__":

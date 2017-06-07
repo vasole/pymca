@@ -243,6 +243,13 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
             'id': id(self)}
         self.sigMaskImageWidget.emit(ddict)
 
+    # overload show image to ensure the stack data
+    # does not change the background title
+    def showImage(self, index=0):
+        SilxMaskImageWidget.SilxMaskImageWidget.showImage(self, index)
+        if self._bg_labels:
+            self.plot.setGraphTitle(self._bg_labels[0])
+
 
 def test():
     app = qt.QApplication([])
