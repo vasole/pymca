@@ -127,7 +127,7 @@ class JcampReader(object):
         # we are at the data block
         data = []
         line = _fileObject.readline()
-        while not line.startswith("##END"):
+        while not line.startswith("#"):
             data.append(line)
             line = _fileObject.readline()
         _fileObject.close()

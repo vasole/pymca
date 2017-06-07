@@ -388,6 +388,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         centralWidget = qt.QWidget(self)
         layout = qt.QVBoxLayout(centralWidget)
         centralWidget.setLayout(layout)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         # Plot
         self.plot = PlotWidget(parent=centralWidget)
@@ -397,6 +399,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
                                       'autoscale': True,
                                       'vmin': 0.,
                                       'vmax': 1.})
+
         layout.addWidget(self.plot)
 
         # Mask Widget
