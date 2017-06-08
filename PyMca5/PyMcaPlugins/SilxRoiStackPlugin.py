@@ -124,8 +124,8 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
         if self.widget is None:
             self.widget = SilxMaskImageWidget.SilxMaskImageWidget()
             self.widget.setMedianFilterWidgetVisible(True)
-            self.widget.setBackgroundToolButtonVisible(True)
-            self.widget.setProfileVisible(True)
+            self.widget.setBackgroundActionVisible(True)
+            self.widget.setProfileToolbarVisible(True)
             self.widget.sigMaskImageWidget.connect(self.mySlot)
 
         # Show

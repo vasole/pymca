@@ -93,11 +93,8 @@ class MyMaskToolsWidget(MaskToolsWidget):
         # ensure all mask attributes are synchronized with the active image
         activeImage = self.plot.getActiveImage()
         if activeImage is not None and activeImage.getLegend() != self._maskName:
-            self._origin = activeImage.getOrigin()
-            self._scale = activeImage.getScale()
-            self._z = activeImage.getZValue() + 1
-            self._data = activeImage.getData(copy=False)
-            self._mask.setDataItem(activeImage)
+            self._activeImageChanged()
+            self.plot.sigActiveImageChanged.connect(self._activeImageChanged)
 
         if self._data.shape[0:2] == (0, 0) or mask.shape == self._data.shape[0:2]:
             self._mask.setMask(mask, copy=copy)
@@ -473,7 +470,6 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._medianParametersWidget.widthSpin.valueChanged[int].connect(
                      self._setMedianKernelWidth)
         layout.addWidget(self._medianParametersWidget)
-        self.setMedianFilterWidgetVisible(False)
 
         self.setCentralWidget(centralWidget)
 
@@ -519,15 +515,13 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.keepDataAspectRatioButton = PlotToolButtons.AspectToolButton(
             parent=self, plot=self.plot)
 
-        self.backgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
         self.backgroundButton = qt.QToolButton(self)
         self.backgroundButton.setCheckable(True)
-        self.backgroundButton.setIcon(self.backgroundIcon)
+        self.backgroundButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["subtract"])))
         self.backgroundButton.setToolTip(
             'Toggle background image subtraction from current image\n' +
             'No action if no background image available.')
         self.backgroundButton.clicked.connect(self._subtractBackground)
-        self.setBackgroundToolButtonVisible(True)
 
         # Creating the toolbar also create actions for toolbuttons
         self._toolbar = self._createToolBar(title='Plot', parent=None)
@@ -535,7 +529,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         self._profile = ProfileToolBar(plot=self.plot)
         self.addToolBar(self._profile)
-        self.setProfileVisible(False)
+        self.setProfileToolbarVisible(False)
 
         # add a transparency slider for the stack data
         self._alphaSliderToolbar = qt.QToolBar("Alpha slider", parent=self)
@@ -546,7 +540,12 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._alphaSlider.setToolTip("Adjust opacity of stack image overlay")
         self._alphaSliderToolbar.addWidget(self._alphaSlider)
         self.addToolBar(qt.Qt.RightToolBarArea, self._alphaSliderToolbar)
+
+        # hide optional tools and actions
         self.setAlphaSliderVisible(False)
+        self.setBackgroundActionVisible(False)
+        self.setMedianFilterWidgetVisible(False)
+        self.setProfileToolbarVisible(False)
 
         self._images = []
         """List of images, as 2D numpy arrays or 3D numpy arrays (RGB(A)).
@@ -649,14 +648,14 @@ class SilxMaskImageWidget(qt.QMainWindow):
         current = self.getCurrentIndex()
         self.showImage(current)
 
-    def setBackgroundToolButtonVisible(self, visible):
+    def setBackgroundActionVisible(self, visible):
         """Set visibility of the background toolbar button.
 
         :param visible: True to show tool button, False to hide it.
         """
-        self.backgroundButton.setVisible(visible)
+        self.bgAction.setVisible(visible)
 
-    def setProfileVisible(self, visible):
+    def setProfileToolbarVisible(self, visible):
         """Set visibility of the profile toolbar
 
         :param visible: True to show toolbar, False to hide it.
