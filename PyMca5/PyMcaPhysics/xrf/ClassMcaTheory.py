@@ -342,41 +342,23 @@ class McaTheory(object):
                   text += "If you used the graphical interface,\n"
                   text += "Please check the MATRIX tab"
                   raise ValueError(text)
-          if 0:
-              dict=Elements.getMultilayerFluorescence(multilayer,
-                                     energylist,
-                                     layerList = None,
-                                     weightList = energyweight,
-                                     flagList = energyflag,
-                                     fulloutput=0,
-                                     attenuators=attenuatorlist,
-                                     alphain = alphain,
-                                     alphaout = alphaout,
-                                     #elementsList = elementsList,
-                                     elementsList = data,
-                                     cascade = True,
-                                     detector=detector,
-                                     beamfilters=filterlist,
-                                     funnyfilters=funnyfilters,
-                                     forcepresent = 1)
-          else:
-              self._fluoRates=Elements.getMultilayerFluorescence(multilayer,
-                                     energylist,
-                                     layerList = None,
-                                     weightList = energyweight,
-                                     flagList = energyflag,
-                                     fulloutput=1,
-                                     attenuators=attenuatorlist,
-                                     alphain = alphain,
-                                     alphaout = alphaout,
-                                     #elementsList = elementsList,
-                                     elementsList = data,
-                                     cascade = True,
-                                     detector=detector,
-                                     funnyfilters=funnyfilters,
-                                     beamfilters=filterlist,
-                                     forcepresent = 1)
-              dict = self._fluoRates[0]
+          self._fluoRates=Elements.getMultilayerFluorescence(multilayer,
+                                 energylist,
+                                 layerList = None,
+                                 weightList = energyweight,
+                                 flagList = energyflag,
+                                 fulloutput=1,
+                                 attenuators=attenuatorlist,
+                                 alphain = alphain,
+                                 alphaout = alphaout,
+                                 #elementsList = elementsList,
+                                 elementsList = data,
+                                 cascade = True,
+                                 detector=detector,
+                                 funnyfilters=funnyfilters,
+                                 beamfilters=filterlist,
+                                 forcepresent = 1)
+          dict = self._fluoRates[0]
 
           # this will not be needed once fisx replaces the Elements module
           if 'fisx' in self.config:
@@ -2794,84 +2776,41 @@ def test(inputfile=None,scankey=None,pkm=None,
                 continuum=0,stripflag=1,maxiter=10,sumflag=1,
                 hypermetflag=1,plotflag=0,escapeflag=1,attenuatorsflag=1,outfile=None):
     import sys
-    import specfile
-    import EdfFileLayer
-    mcafit = McaTheory(initdict=pkm,maxiter=maxiter,sumflag=sumflag,
+    from PyMca5.PyMca import specfilewrapper as specfile
+    mcafit = McaTheory(initdict=None,maxiter=maxiter,sumflag=sumflag,
                     continuum=continuum,escapeflag=escapeflag,stripflag=stripflag,hypermetflag=hypermetflag,
                     attenuatorsflag=attenuatorsflag)
-    config = mcafit.configure()
-    #print config
+    initdict=ConfigDict.ConfigDict()
+    initdict.read(pkm)
+    t0=time.time()
+    config = mcafit.configure(initdict)
+    print("configuration time ",time.time()-t0)
     xmin = config['fit']['xmin']
     xmax = config['fit']['xmax']
 
     if inputfile is None:
-        sf=specfile.Specfile('03novs060sum.mca')
-        if scankey is None:
-            scan=sf[0]
-        else:
-            scan=sf.select(scankey)
-        mcadata=scan.mca(1)
-        y0= numpy.array(mcadata)
-        x = numpy.arange(len(y0))*1.0
+        print("USAGE")
+        print("python -m PyMca5.PyMcaPhysics.xrf.ClassMcaTheory.py -s1.1 --file=filename --cfg=cfgfile [--plotflag=1]")
+        #python ClassMcaTheory.py -s2.1 --file=ch09__mca_0005.mca --pkm=TEST.cfg --continuum=0 --stripflag=1 --sumflag=1 --maxiter=4
+        sys.exit(0)
+    print("assuming is a specfile ...")
+    sf=specfile.Specfile(inputfile)
+    if scankey is None:
+        scan=sf[0]
     else:
-        try:
-            edf   = EdfFileLayer.EdfFileLayer(inputfile)
-            edf.SetSource(inputfile)
-            if scankey is None:
-                image = 0
-                rc    = 0
-            else:
-                image,rc   = scankey.split(".")
-                info,data  = edf.LoadSource({'Key':int(image)-1})
-                if int(info['Dim_1']) > int(info['Dim_2']):
-                    mcadata = data[int(rc)-1,:]
-                else:
-                    mcadata = data[:,int(rc)-1]
-                #scan=sf.select(scankey)
-                xmin = float(info['MCA start ch'])
-                xmax = float(info['MCA end ch'])
-                y0  = numpy.array(mcadata.tolist())
-                x = numpy.arange(len(y0))*1.0 + xmin
-        except:
-            print("assuming is a specfile ...")
-            sf=specfile.Specfile(inputfile)
-            if scankey is None:
-                scan=sf[0]
-            else:
-                scan=sf.select(scankey)
-            mcadata=scan.mca(1)
-            y0= numpy.array(mcadata)
-            x = numpy.arange(len(y0))*1.0
+        scan=sf.select(scankey)
+    mcadata=scan.mca(1)
+    y0= numpy.array(mcadata)
+    x = numpy.arange(len(y0))*1.0
     t0=time.time()
     mcafit.setData(x,y0,xmin=xmin,xmax=xmax)
     print("set data time",time.time()-t0)
     mcafit.estimate()
     print("estimation time ",time.time()-t0)
-    #try:
-    if 1:
-        #fitresult, mcafitresult=mcafit.startfit(digest=1)
-        fitresult    = mcafit.startfit(digest=0)
-        mcafitresult = mcafit.digestresult(outfile)
-        print("fit took ",time.time()-t0)
-    #except:
-    else:
-        if plotflag:
-            from PyMca5.PyMcaGui import PyMcaQt as qt
-            from PyMca5.PyMcaGui import ScanWindow
-            app = qt.QApplication(sys.argv)
-            graph = ScanWindow.ScanWindow()
-            xw = numpy.ravel(mcafit.xdata)
-            yfit0 = mcafit.mcatheory(mcafit.parameters,xw)
-            #+numpy.ravel(mcafit.zz)
-            xw = xw*mcafit.parameters[1]+mcafit.parameters[0]
-            graph.addCurve(xw,numpy.ravel(mcafit.ydata), "Input  Data")
-            graph.addCurve(xw,yfit0, "Estimated Data")
-            graph.addCurve(xw,numpy.ravel(mcafit.zz),"Background Data")
-            app.setMainWidget(graph)
-            container.show()
-            app.exec_()
-        print("error ",sys.exc_info()[1])
-        sys.exit(1)
+    #fitresult, mcafitresult=mcafit.startfit(digest=1)
+    fitresult    = mcafit.startfit(digest=0)
+    mcafitresult = mcafit.digestresult(outfile)
+    print("fit took ",time.time()-t0)
     fittedpar=fitresult[0]
     chisq    =fitresult[1]
     sigmapar =fitresult[2]
@@ -2891,8 +2830,8 @@ def test(inputfile=None,scankey=None,pkm=None,
         print(group,mcafitresult[group]['fitarea'],' +/- ', \
             mcafitresult[group]['sigmaarea'],mcafitresult[group]['mcaarea'])
 
-    print("##################### ROI fitting ######################")
-    print(mcafit.roifit(mcafit.xdata,mcafit.ydata))
+    #print("##################### ROI fitting ######################")
+    #print(mcafit.roifit(mcafit.xdata,mcafit.ydata))
 
     if plotflag:
         from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -2908,7 +2847,7 @@ def test(inputfile=None,scankey=None,pkm=None,
                                     mcafitresult['continuum']+mcafitresult['pileup'],
                                     "Summing")
         graph.addCurve(mcafitresult['energy'],mcafitresult['continuum'],"Continuum")
-        app.setMainWidget(graph)
+        graph.show()
         app.exec_()
 
 PROFILING = 0
@@ -2978,9 +2917,3 @@ if __name__ == "__main__":
                 hypermetflag=hypermetflag,escapeflag=escapeflag,plotflag=plotflag,
                 attenuatorsflag=attenuatorsflag,outfile=outfile)
             print("TIME = ",time.time()-t0)
-        #except:
-        #    print "Usage"
-        #    print  "python ClassMcaTheory.py -s1.1 --file=03novs060sum.mca --pkm=McaTheory0.cfg --continuum=0 --stripflag=1 --sumflag=1 --maxiter=4"
-        #    python ClassMcaTheory.py -s2.1 --file=ch09__mca_0005.mca --pkm=TEST.cfg --continuum=0 --stripflag=1 --sumflag=1 --maxiter=4
-        #    python ClassMcaTheory.py -s15.1 --file=/bliss/users/sole/dataarmando.dat --pkm=/bliss/users/sole/dataarmandoMATRIX.cfg
-        #    sys.exit()
