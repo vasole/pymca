@@ -54,7 +54,7 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
             if entryStarted:
                 if line.startswith("##END="):
                     lineEnd = nLines
-                    self._scanLimits.append((start, current, lineStart, lineEnd))
+                    self._scanLimits.append((start, f.tell(), lineStart, lineEnd))
                     entryStarted = False
                     if single:
                         break

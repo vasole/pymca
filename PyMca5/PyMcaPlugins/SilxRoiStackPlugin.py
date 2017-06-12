@@ -34,7 +34,7 @@ __license__ = "MIT"
 
 
 from PyMca5 import StackPluginBase
-from PyMca5.PyMcaGui.pymca import SilxStackRoiWindow
+from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
 
@@ -47,13 +47,39 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
         self.__methodKeys = ['Show']
         self.widget = None
 
+    def _getStackOriginScale(self):
+        """Return origin and scale, as defined in silx plot addImage method
+        """
+        info = self.getStackInfo()
+
+        xscale = info.get("xScale", [0.0, 1.0])
+        yscale = info.get("yScale", [0.0, 1.0])
+
+        origin = xscale[0], yscale[0]
+        scale = xscale[1], yscale[1]
+
+        return origin, scale
+
+    def _getStackImageShape(self):
+        """Return 2D stack image shape"""
+        image_shape = list(self.getStackOriginalImage().shape)
+        return image_shape
+
     def stackUpdated(self):
         if self.widget is None:
             return
         if self.widget.isHidden():
             return
         images, names = self.getStackROIImagesAndNames()
-        self.widget.setImages(images, labels=names)
+
+        image_shape = self._getStackImageShape()
+        origin, scale = self._getStackOriginScale()
+
+        h = scale[1] * image_shape[0]
+        w = scale[0] * image_shape[1]
+
+        self.widget.setImages(images, labels=names,
+                              origin=origin, width=w, height=h)
 
         self.widget.setSelectionMask(self.getStackSelectionMask())
 
@@ -96,7 +122,10 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
 
     def _showWidget(self):
         if self.widget is None:
-            self.widget = SilxStackRoiWindow.SilxStackRoiWindow()
+            self.widget = SilxMaskImageWidget.SilxMaskImageWidget()
+            self.widget.setMedianFilterWidgetVisible(True)
+            self.widget.setBackgroundActionVisible(True)
+            self.widget.setProfileToolbarVisible(True)
             self.widget.sigMaskImageWidget.connect(self.mySlot)
 
         # Show

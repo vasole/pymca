@@ -150,10 +150,10 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         ymin = max(ymin, self._bg_origins[0][1])
         ymax = min(ymax, self._bg_origins[0][1] + heights[0])
 
-        cols_min = int(xmin / self._bg_scales[0][0])
-        cols_max = int(xmax / self._bg_scales[0][0])
-        rows_min = int(ymin / self._bg_scales[0][1])
-        rows_max = int(ymax / self._bg_scales[0][1])
+        cols_min = int((xmin - self._bg_origins[0][0]) / self._bg_scales[0][0])
+        cols_max = int((xmax - self._bg_origins[0][0]) / self._bg_scales[0][0])
+        rows_min = int((ymin - self._bg_origins[0][1]) / self._bg_scales[0][1])
+        rows_max = int((ymax - self._bg_origins[0][1]) / self._bg_scales[0][1])
 
         self._bg_images[0] = self._bg_images[0][rows_min:rows_max, cols_min:cols_max]
         # after a crop, we need to recalculate :attr:`_bg_scales`
@@ -242,6 +242,13 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
             'title': self.plot.getGraphTitle(),
             'id': id(self)}
         self.sigMaskImageWidget.emit(ddict)
+
+    # overload show image to ensure the stack data
+    # does not change the background title
+    def showImage(self, index=0):
+        SilxMaskImageWidget.SilxMaskImageWidget.showImage(self, index)
+        if self._bg_labels:
+            self.plot.setGraphTitle(self._bg_labels[0])
 
 
 def test():
