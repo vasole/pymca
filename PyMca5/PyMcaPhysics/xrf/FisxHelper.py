@@ -120,7 +120,7 @@ def getMultilayerFluorescence(multilayerSample,
                               cascade = None,
                               detector= None,
                               elementsFromMatrix=False,
-                              secondary=None,
+                              secondary=0,
                               materials=None,
                               secondaryCalculationLimit=None):
 
