@@ -203,6 +203,12 @@ if sys.platform == "win32":
         print("Please install hdf5plugin prior to freeze PyMca")
         raise
 
+try:
+    import silx
+    special_modules.append(os.path.dirname(silx.__file__))
+    SILX = True
+except:
+    SILX = False
 
 excludes = ["Tkinter", "tkinter",
             'tcl','_tkagg', 'Tkconstants',
@@ -258,7 +264,7 @@ if FISX:
     special_modules.append(os.path.dirname(fisx.__file__))
 
 for f in special_modules:
-        include_files.append((f,os.path.basename(f)))
+    include_files.append((f, os.path.basename(f)))
 
 for f in ['qt', 'qttable', 'qtcanvas', 'Qwt5']:
     excludes.append(f)
@@ -351,6 +357,21 @@ setup(
                        ),
         executables = executables)
 
+if SILX:
+    # silx gui._qt module needs to be patched to get rid of uic
+    initFile = os.path.join(install_dir, "silx", "gui", "qt", "_qt.py")
+    print("###################################################################")
+    print(initFile)
+    print("###################################################################")
+    f = open(initFile, "r")
+    content = f.readlines()
+    f.close()
+    f = open(initFile, "w")
+    for line in content:
+        if ("PyQt4.uic" in line) or ("PyQt5.uic" in line):
+            continue
+        f.write(line)
+    f.close()
 
 if OPENCL:
     # pyopencl __init__.py needs to be patched
