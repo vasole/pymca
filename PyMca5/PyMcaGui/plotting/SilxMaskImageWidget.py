@@ -28,6 +28,7 @@ while offering the same tools as the :class:`StackRoiWindow` (median filter,
 background subtraction, ...). In addition to reimplementing existing tools,
 it also provides methods to plot a background image underneath the stack
 images.
+
 """
 
 __authors__ = ["P. Knobel"]
@@ -345,11 +346,11 @@ class SaveMatplotlib(qt.QAction):
 
         # this sets the actual dimensions
         origin = self.maskImageWidget._origin
-        scale = self.maskImageWidget._scale
+        delta = self.maskImageWidget._deltaXY
 
-        ddict['xpixelsize'] = scale[0]
+        ddict['xpixelsize'] = delta[0]
         ddict['xorigin'] = origin[0]
-        ddict['ypixelsize'] = scale[1]
+        ddict['ypixelsize'] = delta[1]
         ddict['yorigin'] = origin[1]
 
         ddict['xlabel'] = self.maskImageWidget.plot.getGraphXLabel()
@@ -982,7 +983,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._bg_origins = origins
         self._updateBgScales(heights, widths)
 
-        for bg_scale, bg_orig, label, img in zip(self._bg_deltaXY,
+        for bg_deltaXY, bg_orig, label, img in zip(self._bg_deltaXY,
                                                  self._bg_origins,
                                                  labels,
                                                  images):
@@ -991,7 +992,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
             # is improved
             self.plot.addImage(img,
                                origin=bg_orig,
-                               scale=bg_scale,
+                               scale=bg_deltaXY,
                                legend=label,
                                replace=False,
                                z=-1)  # TODO: z=0
@@ -1025,5 +1026,3 @@ if __name__ == "__main__":
     w.show()
     w.plot.addImage([[0, 1, 2], [2, 1, -1]])
     app.exec_()
-
-

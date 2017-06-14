@@ -112,8 +112,8 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         image = self._bg_images[0]
         ncols = image.shape[1]
         nrows = image.shape[0]
-        width = ncols * self._bg_scales[0][0]   # X
-        height = nrows * self._bg_scales[0][1]  # Y
+        width = ncols * self._bg_deltaXY[0][0]   # X
+        height = nrows * self._bg_deltaXY[0][1]  # Y
         return height, width
 
     def _getAllBgHeightsWidths(self):
@@ -122,8 +122,8 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         for i, img in enumerate(self._bg_images):
             ncols = img.shape[1]
             nrows = img.shape[0]
-            widths.append(ncols * self._bg_scales[i][0])
-            heights.append(nrows * self._bg_scales[i][1])
+            widths.append(ncols * self._bg_deltaXY[i][0])
+            heights.append(nrows * self._bg_deltaXY[i][1])
         return heights, widths
 
     def _updateBgImages(self):
@@ -150,13 +150,13 @@ class SilxExternalImagesWindow(SilxMaskImageWidget.SilxMaskImageWidget):
         ymin = max(ymin, self._bg_origins[0][1])
         ymax = min(ymax, self._bg_origins[0][1] + heights[0])
 
-        cols_min = int((xmin - self._bg_origins[0][0]) / self._bg_scales[0][0])
-        cols_max = int((xmax - self._bg_origins[0][0]) / self._bg_scales[0][0])
-        rows_min = int((ymin - self._bg_origins[0][1]) / self._bg_scales[0][1])
-        rows_max = int((ymax - self._bg_origins[0][1]) / self._bg_scales[0][1])
+        cols_min = int((xmin - self._bg_origins[0][0]) / self._bg_deltaXY[0][0])
+        cols_max = int((xmax - self._bg_origins[0][0]) / self._bg_deltaXY[0][0])
+        rows_min = int((ymin - self._bg_origins[0][1]) / self._bg_deltaXY[0][1])
+        rows_max = int((ymax - self._bg_origins[0][1]) / self._bg_deltaXY[0][1])
 
         self._bg_images[0] = self._bg_images[0][rows_min:rows_max, cols_min:cols_max]
-        # after a crop, we need to recalculate :attr:`_bg_scales`
+        # after a crop, we need to recalculate :attr:`_bg_deltaXY`
         self._updateBgScales(heights, widths)
 
         self._updateBgImages()

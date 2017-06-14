@@ -255,10 +255,10 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                 imagelist[i] = self.qImageToRgba(image)
 
         image_shape = self._getStackImageShape()
-        origin, scale = self._getStackOriginScale()
+        origin, delta = self._getStackOriginDelta()
 
-        h = scale[1] * image_shape[0]
-        w = scale[0] * image_shape[1]
+        h = delta[1] * image_shape[0]
+        w = delta[0] * image_shape[1]
 
         for bgimg, bglabel in zip(imagelist, imagenames):
             if bglabel not in self.windows:
@@ -283,18 +283,16 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
 
             self._showWidget(bglabel)
 
-    def _getStackOriginScale(self):
-        """Return origin and scale, as defined in silx plot addImage method
-        """
+    def _getStackOriginDelta(self):
         info = self.getStackInfo()
 
         xscale = info.get("xScale", [0.0, 1.0])
         yscale = info.get("yScale", [0.0, 1.0])
 
         origin = xscale[0], yscale[0]
-        scale = xscale[1], yscale[1]
+        delta = xscale[1], yscale[1]
 
-        return origin, scale
+        return origin, delta
 
     def _getStackImageShape(self):
         """Return 2D stack image shape"""
