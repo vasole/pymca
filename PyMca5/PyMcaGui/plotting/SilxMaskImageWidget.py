@@ -23,8 +23,11 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
-"""Base class for SilxStackRoiWindow and SilxExternalImagesWindow.
-
+""":class:`SilxMaskImageWidget` uses a silx PlotWidget to display a stack,
+while offering the same tools as the :class:`StackRoiWindow` (median filter,
+background subtraction, ...). In addition to reimplementing existing tools,
+it also provides methods to plot a background image underneath the stack
+images.
 """
 
 __authors__ = ["P. Knobel"]
@@ -68,6 +71,42 @@ from silx.gui.plot.Profile import ProfileToolBar
 from silx.gui import icons
 
 logging.disable(logging.NOTSET)   # restore default logging behavior
+
+
+def convertToRowAndColumn(x, y, shape,
+                          xScale=None, yScale=None,
+                          safe=True):
+    """Return (row, column) of a pixel defined by (x, y) in an image.
+
+    :param float x: Abscissa of point
+    :param float x: Ordinate of point
+    :param shape: Shape of image (nRows, nColumns)
+    :param xScale: Tuple of linear scaling parameters (a, b),
+        x = a + b * column
+    :param yScale: Tuple of linear scaling parameters (a, b),
+        y = a + b * row
+    :param bool safe: If True, always return coordinates within the image's
+        bounds.
+    :return: 2-tuple (r, c)
+    """
+    if xScale is None:
+        c = x
+    else:
+        c = (x - xScale[0]) / xScale[1]
+    if yScale is None:
+        r = y
+    else:
+        r = (y - yScale[0]) / yScale[1]
+
+    if safe:
+        c = min(int(c), shape[1] - 1)
+        c = max(c, 0)
+        r = min(int(r), shape[0] - 1)
+        r = max(r, 0)
+    else:
+        c = int(c)
+        r = int(r)
+    return r, c
 
 
 class MyMaskToolsWidget(MaskToolsWidget):
@@ -559,7 +598,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
         self._bg_labels = []
 
-        self._scale = (1.0, 1.0)             # TODO: allow different scale and origin for each image
+        self._deltaXY = (1.0, 1.0)             # TODO: allow different scale and origin for each image
         """Current image scale (Xscale, Yscale) (in axis units per image pixel).
         The scale is adjusted to keep constant width and height for the image
         when a crop operation is applied."""
@@ -569,7 +608,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         (row, column) = (0, 0)"""
 
         # scales and origins for background images
-        self._bg_scales = []
+        self._bg_deltaXY = []
         self._bg_origins = []
 
     def sizeHint(self):
@@ -827,7 +866,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.plot.addImage(imdata,
                            legend="current",
                            origin=self._origin,
-                           scale=self._scale,
+                           scale=self._deltaXY,
                            replace=False,
                            z=0)
         self.plot.setActiveImage("current")
@@ -868,8 +907,8 @@ class SilxMaskImageWidget(qt.QMainWindow):
         height = height or height_pixels
         width = width or width_pixels
 
-        self._scale = (float(width) / width_pixels,
-                       float(height) / height_pixels)
+        self._deltaXY = (float(width) / width_pixels,
+                         float(height) / height_pixels)
 
         self._origin = origin or (0., 0.)
 
@@ -880,19 +919,19 @@ class SilxMaskImageWidget(qt.QMainWindow):
         else:
             self.showImage(0)
 
-        # _maskParamsCache = width, height, self._origin, self._scale
+        # _maskParamsCache = width, height, self._origin, self._deltaXY
         # if _maskParamsCache != self._maskParamsCache:
         #     self._maskParamsCache = _maskParamsCache
-        #     self.resetMask(width, height, self._origin, self._scale)
+        #     self.resetMask(width, height, self._origin, self._deltaXY)
 
     def _updateBgScales(self, heights, widths):
         """Recalculate BG scales
         (e.g after a crop operation on :attr:`_bg_images`)"""
-        self._bg_scales = []
+        self._bg_deltaXY = []
         for w, h, img in zip(widths,
                              heights,
                              self._bg_images):
-            self._bg_scales.append(
+            self._bg_deltaXY.append(
                 (float(w) / img.shape[1], float(h) / img.shape[0])
             )
 
@@ -943,7 +982,7 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self._bg_origins = origins
         self._updateBgScales(heights, widths)
 
-        for bg_scale, bg_orig, label, img in zip(self._bg_scales,
+        for bg_scale, bg_orig, label, img in zip(self._bg_deltaXY,
                                                  self._bg_origins,
                                                  labels,
                                                  images):
@@ -980,10 +1019,11 @@ class SilxMaskImageWidget(qt.QMainWindow):
         self.raise_()
 
 
-
 if __name__ == "__main__":
     app = qt.QApplication([])
     w = SilxMaskImageWidget()
     w.show()
     w.plot.addImage([[0, 1, 2], [2, 1, -1]])
     app.exec_()
+
+
