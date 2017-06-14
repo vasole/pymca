@@ -131,10 +131,10 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
                                                          xScale=self.getStackInfo().get("xScale"),
                                                          yScale=self.getStackInfo().get("yScale"),
                                                          safe=True)
-        motorIndex = r * nCols + c
+        motorIndex = r * nCols + c     # Fixme: not sure if this is always true (right-left scanning patterns?)
         nPixels = nRows * nCols
 
-        allMotorsPositions = self.getStackInfo().get("Positioners", {})
+        allMotorsPositions = self.getStackInfo().get("positioners", {})
         motorsValues = {}
         for motorName, motorValuesList in allMotorsPositions.items():
             if len(motorValuesList) == 1:
