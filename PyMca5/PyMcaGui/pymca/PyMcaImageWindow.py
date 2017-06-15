@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -121,6 +121,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
             if dataObject.info.get("selectiontype", "1D") != "2D":
                 continue
             if dataObject.data is None:
+                # This is the SCAN regular mesh case
                 if hasattr(dataObject, "y"):
                     if dataObject.y is not None:
                         dataObject.data = dataObject.y[0]
@@ -164,6 +165,38 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                                         dataObject.data[yIndex] = tmpData
                     else:
                         print("Nothing to plot")
+            elif hasattr(dataObject, "x") and (dataObject.x is not None):
+                shape = dataObject.data.shape
+                if len(dataObject.x) == 2:
+                    x0 = dataObject.x[0][:]
+                    x0.shape = -1
+                    x1 = dataObject.x[1][:]
+                    x1.shape = -1
+                    if abs(x0[1] - x0[0]) < 1.0e-6:
+                        nColumns = numpy.argmin(abs(x0-x0[0]) < 1.0e-6)
+                        nRows = x1.size / nColumns
+                        if nRows!= int(nRows):
+                            raise ValueError("2D Selection not understood")
+                        transpose = False
+                        self._yScale = x0[0], x0[nColumns] - x0[0]
+                        self._xScale = x1[0], x1[1] - x1[0]
+                    elif abs(x1[1] - x1[0]) < 1.0e-6:
+                        nRows = numpy.argmin(abs(x1-x1[0]) < 1.0e-6)
+                        nColumns = x0.size / nRows
+                        if nColumns != int(nColumns):
+                            raise ValueError("2D Selection not understood")
+                        transpose = True
+                        self._xScale = x0[0], x0[1] - x0[0]
+                        self._yScale = x1[0], x1[nRows] - x1[0]
+                    elif (len(x0) == shape[-2]) and (len(x1) == shape[-1]):
+                        self._xScale = x1[0], x1[1] - x1[0]
+                        self._yScale = x0[0], x0[1] - x0[0]
+                    elif (len(x0) == shape[-1]) and (len(x1) == shape[-2]):
+                        self._yScale = x1[0], x1[1] - x1[0]
+                        self._xScale = x0[0], x0[1] - x0[0]
+                    else:
+                        raise TypeError("2D Selection is not a regular mesh")
+
             self.dataObjectsList = [legend]
             self.dataObjectsDict = {legend:dataObject}
             shape = dataObject.data.shape
