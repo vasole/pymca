@@ -40,20 +40,22 @@ from PyMca5.PyMcaCore import SpecFileDataSource
 HDF5 = False
 try:
     import h5py
+
     HDF5 = True
 except:
     pass
 SOURCE_TYPE = "SpecFileStack"
 DEBUG = 0
 
-X_AXIS=0
-Y_AXIS=1
-Z_AXIS=2
+X_AXIS = 0
+Y_AXIS = 1
+Z_AXIS = 2
+
 
 class SpecFileStack(DataObject.DataObject):
-    def __init__(self, filelist = None):
+    def __init__(self, filelist=None):
         DataObject.DataObject.__init__(self)
-        self.incrProgressBar=0
+        self.incrProgressBar = 0
         self.__keyList = []
         if filelist is not None:
             if type(filelist) != type([]):
@@ -71,55 +73,55 @@ class SpecFileStack(DataObject.DataObject):
         self.__indexedStack = True
         self.sourceType = SOURCE_TYPE
         self.info = {}
-        self.nbFiles=len(filelist)
+        self.nbFiles = len(filelist)
 
-        #read first file
-        #get information
-        tempInstance=SpecFileDataSource.SpecFileDataSource(filelist[0])
+        # read first file
+        # get information
+        tempInstance = SpecFileDataSource.SpecFileDataSource(filelist[0])
         keylist = tempInstance.getSourceInfo()['KeyList']
-        nscans = len(keylist)        #that is the number of scans
+        nscans = len(keylist)        # that is the number of scans
         nmca = 0
         numberofdetectors = 0
         for key in keylist:
             info = tempInstance.getKeyInfo(key)
-            numberofmca       = info['NbMca']
+            numberofmca = info['NbMca']
             if numberofmca > 0:
                 numberofdetectors = info['NbMcaDet']
-            scantype          = info["ScanType"]
+            scantype = info["ScanType"]
             if numberofmca:
                 nmca += numberofmca
         if numberofdetectors == 0:
             raise ValueError("No MCA found in file %s" % filelist[0])
 
-        if (nscans > 1) and ((nmca/numberofdetectors) == nscans):
+        if (nscans > 1) and ((nmca / numberofdetectors) == nscans):
             SLOW_METHOD = True
         else:
             SLOW_METHOD = False
-        #get last mca of first point
+        # get last mca of first point
         key = "%s.1.%s" % (keylist[-1], numberofmca)
         dataObject = tempInstance._getMcaData(key)
         self.info.update(dataObject.info)
         arrRet = dataObject.data
-        self.onBegin(self.nbFiles*nmca/numberofdetectors)
+        self.onBegin(self.nbFiles * nmca / numberofdetectors)
 
-        self.incrProgressBar= 0
+        self.incrProgressBar = 0
         if info['NbMcaDet'] > 1:
-            #Should I generate a map for each mca and not just for the last one as I am doing?
-            iterlist = range(info['NbMcaDet'],info['NbMca']+1,info['NbMcaDet'])
+            # Should I generate a map for each mca and not just for the last one as I am doing?
+            iterlist = range(info['NbMcaDet'], info['NbMca'] + 1, info['NbMcaDet'])
         else:
             iterlist = [1]
         if SLOW_METHOD and shape is None:
             self.data = numpy.zeros((self.nbFiles,
-                                   nmca/numberofdetectors,
-                                   arrRet.shape[0]),
-                                   arrRet.dtype.char)
-            filecounter         = 0
+                                     nmca / numberofdetectors,
+                                     arrRet.shape[0]),
+                                    arrRet.dtype.char)
+            filecounter = 0
             for tempFileName in filelist:
-                tempInstance=SpecFileDataSource.SpecFileDataSource(tempFileName)
+                tempInstance = SpecFileDataSource.SpecFileDataSource(tempFileName)
                 mca_number = -1
                 for keyindex in keylist:
                     info = tempInstance.getKeyInfo(keyindex)
-                    numberofmca       = info['NbMca']
+                    numberofmca = info['NbMca']
                     if numberofmca <= 0:
                         continue
                     key = "%s.1.%s" % (keyindex, numberofmca)
@@ -127,7 +129,7 @@ class SpecFileStack(DataObject.DataObject):
                     arrRet = dataObject.data
                     mca_number += 1
                     for i in iterlist:
-                        #mcadata = scan_obj.mca(i)
+                        # mcadata = scan_obj.mca(i)
                         self.data[filecounter,
                                   mca_number,
                                   :] = arrRet[:]
@@ -135,44 +137,44 @@ class SpecFileStack(DataObject.DataObject):
                         self.onProgress(self.incrProgressBar)
                 filecounter += 1
         elif shape is None and (self.nbFiles == 1) and (iterlist == [1]):
-            #it can only be here if there is one file
-            #it can only be here if there is only one scan
-            #it can only be here if there is only one detector
+            # it can only be here if there is one file
+            # it can only be here if there is only one scan
+            # it can only be here if there is only one detector
             self.data = numpy.zeros((1,
-                               numberofmca,
-                               arrRet.shape[0]),
-                               arrRet.dtype.char)
+                                     numberofmca,
+                                     arrRet.shape[0]),
+                                    arrRet.dtype.char)
             for tempFileName in filelist:
-                tempInstance=specfile.Specfile(tempFileName)
-                #it can only be here if there is one scan per file
-                #prevent problems if the scan number is different
-                #scan = tempInstance.select(keylist[-1])
+                tempInstance = specfile.Specfile(tempFileName)
+                # it can only be here if there is one scan per file
+                # prevent problems if the scan number is different
+                # scan = tempInstance.select(keylist[-1])
                 scan = tempInstance[-1]
                 iterationList = range(scan.nbmca())
                 for i in iterationList:
-                    #mcadata = scan_obj.mca(i)
+                    # mcadata = scan_obj.mca(i)
                     self.data[0,
                               i,
-                              :] = scan.mca(i+1)[:]
+                              :] = scan.mca(i + 1)[:]
                     self.incrProgressBar += 1
                     self.onProgress(self.incrProgressBar)
                 filecounter = 1
         elif shape is None:
-            #it can only be here if there is one scan per file
+            # it can only be here if there is one scan per file
             try:
                 self.data = numpy.zeros((self.nbFiles,
-                                   numberofmca/numberofdetectors,
-                                   arrRet.shape[0]),
-                                   arrRet.dtype.char)
-                filecounter         = 0
+                                         numberofmca / numberofdetectors,
+                                         arrRet.shape[0]),
+                                        arrRet.dtype.char)
+                filecounter = 0
                 for tempFileName in filelist:
-                    tempInstance=specfile.Specfile(tempFileName)
-                    #it can only be here if there is one scan per file
-                    #prevent problems if the scan number is different
-                    #scan = tempInstance.select(keylist[-1])
+                    tempInstance = specfile.Specfile(tempFileName)
+                    # it can only be here if there is one scan per file
+                    # prevent problems if the scan number is different
+                    # scan = tempInstance.select(keylist[-1])
                     scan = tempInstance[-1]
                     for i in iterlist:
-                        #mcadata = scan_obj.mca(i)
+                        # mcadata = scan_obj.mca(i)
                         self.data[filecounter,
                                   0,
                                   :] = scan.mca(i)[:]
@@ -181,41 +183,44 @@ class SpecFileStack(DataObject.DataObject):
                     filecounter += 1
             except MemoryError:
                 qtflag = False
-                if ('PyQt4.QtCore' in sys.modules) or\
-                   ('PySide' in sys.modules) or\
+                if ('PyQt4.QtCore' in sys.modules) or \
+                   ('PySide' in sys.modules) or \
                    ('PyMca5.PyMcaGui.PyMcaQt' in sys.modules):
                     qtflag = True
                 hdf5done = False
                 if HDF5 and qtflag:
                     from PyMca5.PyMcaGui import PyMcaQt as qt
                     from PyMca5.PyMcaIO import ArraySave
-                    msg=qt.QMessageBox.information( None,
-                      "Memory error\n",
-                      "Do you want to convert your data to HDF5?\n",
-                      qt.QMessageBox.Yes,qt.QMessageBox.No)
+                    msg = qt.QMessageBox.information(
+                            None,
+                            "Memory error\n",
+                            "Do you want to convert your data to HDF5?\n",
+                            qt.QMessageBox.Yes, qt.QMessageBox.No)
                     if msg != qt.QMessageBox.No:
-                        hdf5file = qt.QFileDialog.getSaveFileName(None,
-                                    "Please select output file name",
-                                    os.path.dirname(filelist[0]),
-                                    "HDF5 files *.h5")
+                        hdf5file = qt.QFileDialog.getSaveFileName(
+                                None,
+                                "Please select output file name",
+                                os.path.dirname(filelist[0]),
+                                "HDF5 files *.h5")
                         if not len(hdf5file):
                             raise IOError("Invalid output file")
                         hdf5file = qt.safe_str(hdf5file)
                         if not hdf5file.endswith(".h5"):
                             hdf5file += ".h5"
 
-                        #get the final shape
+                        # get the final shape
                         from PyMca5.RGBCorrelatorWidget import ImageShapeDialog
                         stackImageShape = self.nbFiles,\
                                      int(numberofmca/numberofdetectors)
-                        dialog = ImageShapeDialog(None, shape =stackImageShape)
+                        dialog = ImageShapeDialog(None, shape=stackImageShape)
                         dialog.setModal(True)
                         ret = dialog.exec_()
                         if ret:
-                            stackImageShape= dialog.getImageShape()
+                            stackImageShape = dialog.getImageShape()
                             dialog.close()
                             del dialog
-                        hdf, self.data =  ArraySave.getHDF5FileInstanceAndBuffer(hdf5file,
+                        hdf, self.data = ArraySave.getHDF5FileInstanceAndBuffer(
+                                       hdf5file,
                                        (stackImageShape[0],
                                         stackImageShape[1],
                                         arrRet.shape[0]),
@@ -224,15 +229,15 @@ class SpecFileStack(DataObject.DataObject):
                         nRow = 0
                         nCol = 0
                         for tempFileName in filelist:
-                            tempInstance=specfile.Specfile(tempFileName)
-                            #it can only be here if there is one scan per file
-                            #prevent problems if the scan number is different
-                            #scan = tempInstance.select(keylist[-1])
+                            tempInstance = specfile.Specfile(tempFileName)
+                            # it can only be here if there is one scan per file
+                            # prevent problems if the scan number is different
+                            # scan = tempInstance.select(keylist[-1])
                             scan = tempInstance[-1]
-                            nRow = int(self.incrProgressBar/stackImageShape[1])
-                            nCol = self.incrProgressBar%stackImageShape[1]
+                            nRow = int(self.incrProgressBar / stackImageShape[1])
+                            nCol = self.incrProgressBar % stackImageShape[1]
                             for i in iterlist:
-                                #mcadata = scan_obj.mca(i)
+                                # mcadata = scan_obj.mca(i)
                                 self.data[nRow,
                                           nCol,
                                           :] = scan.mca(i)[:]
@@ -246,7 +251,7 @@ class SpecFileStack(DataObject.DataObject):
                     self.info["FileIndex"] = 0
                     self.info["SourceName"] = [hdf5file]
                     self.info["NumberOfFiles"] = 1
-                    self.info["Size"]       = 1
+                    self.info["Size"] = 1
                     return
                 else:
                     raise
@@ -257,15 +262,15 @@ class SpecFileStack(DataObject.DataObject):
             MEMORY_ERROR = False
             try:
                 self.data = numpy.zeros((shape[0],
-                                   shape[1],
-                                   arrRet.shape[0]),
-                                   arrRet.dtype.char)
+                                         shape[1],
+                                         arrRet.shape[0]),
+                                        arrRet.dtype.char)
             except MemoryError:
                 try:
                     self.data = numpy.zeros((shape[0],
-                                   shape[1],
-                                   arrRet.shape[0]),
-                                   numpy.float32)
+                                             shape[1],
+                                             arrRet.shape[0]),
+                                            numpy.float32)
                 except MemoryError:
                     MEMORY_ERROR = True
             while MEMORY_ERROR:
@@ -274,35 +279,34 @@ class SpecFileStack(DataObject.DataObject):
                         print("\7")
                     sampling_order += 1
                     print("**************************************************")
-                    print(" Memory error!, attempting %dx%d sub-sampling " %\
+                    print(" Memory error!, attempting %dx%d sub-sampling " %
                           (sampling_order, sampling_order))
                     print("**************************************************")
-                    s0 = int(shape[0]/sampling_order)
-                    s1 = int(shape[1]/sampling_order)
-                    #if shape[0] % sampling_order:
+                    s0 = int(shape[0] / sampling_order)
+                    s1 = int(shape[1] / sampling_order)
+                    # if shape[0] % sampling_order:
                     #    s0 = s0 + 1
-                    #if shape[1] % sampling_order:
+                    # if shape[1] % sampling_order:
                     #    s1 = s1 + 1
-                    self.data = numpy.zeros((s0, s1,
-                                             arrRet.shape[0]),
-                                             numpy.float32)
+                    self.data = numpy.zeros((s0, s1, arrRet.shape[0]),
+                                            numpy.float32)
                     MEMORY_ERROR = False
                 except MemoryError:
                     pass
-            filecounter         = 0
+            filecounter = 0
             for j in range(s0):
                 filecounter = (j * sampling_order) * shape[1]
                 for k in range(s1):
                     tempFileName = filelist[filecounter]
-                    tempInstance=specfile.Specfile(tempFileName)
+                    tempInstance = specfile.Specfile(tempFileName)
                     if tempInstance is None:
                         if not os.path.exists(tempFileName):
-                            print("File %s does not exists"  % tempFileName)
-                            raise IOError(\
-                                "File %s does not exists"  % tempFileName)
+                            print("File %s does not exists" % tempFileName)
+                            raise IOError(
+                                "File %s does not exists" % tempFileName)
                     scan = tempInstance.select(keylist[-1])
                     for i in iterlist:
-                        #sum the present mcas
+                        # sum the present mcas
                         self.data[j,
                                   k,
                                   :] += scan.mca(i)[:]
@@ -366,15 +370,15 @@ class SpecFileStack(DataObject.DataObject):
 
         """
 
-        self.__nFiles         = self.nbFiles
+        self.__nFiles = self.nbFiles
         self.__nImagesPerFile = 1
         shape = self.data.shape
         for i in range(len(shape)):
-            key = 'Dim_%d' % (i+1,)
+            key = 'Dim_%d' % (i + 1,)
             self.info[key] = shape[i]
         self.info["SourceType"] = SOURCE_TYPE
         self.info["SourceName"] = self.sourceName
-        self.info["Size"]       = self.__nFiles * self.__nImagesPerFile
+        self.info["Size"] = self.__nFiles * self.__nImagesPerFile
         self.info["NumberOfFiles"] = self.__nFiles * 1
         self.info["FileIndex"] = fileindex
 
@@ -387,8 +391,9 @@ class SpecFileStack(DataObject.DataObject):
     def onEnd(self):
         pass
 
-    def loadIndexedStack(self,filename,begin=None,end=None, skip = None, fileindex=0):
-        #if begin is None: begin = 0
+    def loadIndexedStack(self, filename, begin=None, end=None,
+                         skip=None, fileindex=0):
+        # if begin is None: begin = 0
         if type(filename) == type([]):
             filename = filename[0]
         if not os.path.exists(filename):
@@ -397,28 +402,22 @@ class SpecFileStack(DataObject.DataObject):
         n = len(name)
         i = 1
         numbers = ['0', '1', '2', '3', '4', '5',
-                   '6', '7', '8','9']
-        while (i <= n):
-            c = name[n-i:n-i+1]
-            if c in ['0', '1', '2',
-                                '3', '4', '5',
-                                '6', '7', '8',
-                                '9']:
+                   '6', '7', '8', '9']
+        while i <= n:
+            c = name[n - i:n - i + 1]
+            if c in numbers:
                 break
             i += 1
-        suffix = name[n-i+1:]
+        suffix = name[n - i + 1:]
         if len(name) == len(suffix):
-            #just one file, one should use standard widget
-            #and not this one.
+            # just one file, one should use standard widget
+            # and not this one.
             self.loadFileList(filename, fileindex=fileindex)
         else:
             nchain = []
-            while (i<=n):
-                c = name[n-i:n-i+1]
-                if c not in ['0', '1', '2',
-                                    '3', '4', '5',
-                                    '6', '7', '8',
-                                    '9']:
+            while (i <= n):
+                c = name[n - i:n - i + 1]
+                if c not in numbers:
                     break
                 else:
                     nchain.append(c)
@@ -431,8 +430,8 @@ class SpecFileStack(DataObject.DataObject):
             if (len(number) + len(suffix)) == len(name):
                 prefix = ""
             else:
-                prefix = name[0:n-i+1]
-            prefix = os.path.join(os.path.dirname(filename),prefix)
+                prefix = name[0:n - i + 1]
+            prefix = os.path.join(os.path.dirname(filename), prefix)
             if not os.path.exists(prefix + number + suffix):
                 print("Internal error in EDFStack")
                 print("file should exist: %s" % (prefix + number + suffix))
@@ -440,18 +439,19 @@ class SpecFileStack(DataObject.DataObject):
             i = 0
             if begin is None:
                 begin = 0
-                testname = prefix+ fformat % begin+suffix
-                while not os.path.exists(prefix + fformat % begin+suffix):
+                testname = prefix + fformat % begin + suffix
+                while not os.path.exists(prefix + fformat % begin + suffix):
                     begin += 1
-                    testname = prefix + fformat % begin+suffix
-                    if len(testname) > len(filename):break
+                    testname = prefix + fformat % begin + suffix
+                    if len(testname) > len(filename):
+                        break
                 i = begin
             else:
                 i = begin
-            if not os.path.exists(prefix+ fformat % i+suffix):
-                raise ValueError("Invalid start index file = %s" % \
-                      (prefix+ fformat % i+suffix))
-            f = prefix + fformat % i+suffix
+            if not os.path.exists(prefix + fformat % i + suffix):
+                raise ValueError("Invalid start index file = %s" %
+                                 (prefix + fformat % i + suffix))
+            f = prefix + fformat % i + suffix
             filelist = []
             while os.path.exists(f):
                 filelist.append(f)
@@ -459,17 +459,17 @@ class SpecFileStack(DataObject.DataObject):
                 if end is not None:
                     if i > end:
                         break
-                f = prefix + fformat % i+suffix
+                f = prefix + fformat % i + suffix
             self.loadFileList(filelist, fileindex=fileindex)
 
     def getSourceInfo(self):
         sourceInfo = {}
-        sourceInfo["SourceType"]=SOURCE_TYPE
+        sourceInfo["SourceType"] = SOURCE_TYPE
         if self.__keyList == []:
             for i in range(1, self.__nFiles + 1):
                 for j in range(1, self.__nImages + 1):
-                    self.__keyList.append("%d.%d" % (i,j))
-        sourceInfo["KeyList"]= self.__keyList
+                    self.__keyList.append("%d.%d" % (i, j))
+        sourceInfo["KeyList"] = self.__keyList
 
     def getKeyInfo(self, key):
         print("Not implemented")
@@ -478,15 +478,15 @@ class SpecFileStack(DataObject.DataObject):
     def isIndexedStack(self):
         return self.__indexedStack
 
-    def getZSelectionArray(self,z=0):
-        return (self.data[:,:,z]).astype(numpy.float)
+    def getZSelectionArray(self, z=0):
+        return (self.data[:, :, z]).astype(numpy.float)
 
-    def getXYSelectionArray(self,coord=(0,0)):
-        x,y=coord
-        return (self.data[y,x,:]).astype(numpy.float)
+    def getXYSelectionArray(self, coord=(0, 0)):
+        x, y = coord
+        return (self.data[y, x, :]).astype(numpy.float)
+
 
 if __name__ == "__main__":
-    import sys
     stack = SpecFileStack()
     if len(sys.argv) > 1:
         stack.loadIndexedStack(sys.argv[1])
