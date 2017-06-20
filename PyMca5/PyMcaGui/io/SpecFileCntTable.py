@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -251,9 +251,8 @@ class SpecFileCntTable(qt.QTableWidget):
         for item in x:
             if item < len(cntlist):
                 counter = cntlist[item]
-                if 0:
-                    if counter in self.cntList:
-                        self.xSelection.append(self.cntList.index(counter))
+                if counter in self.cntList:
+                    self.xSelection.append(self.cntList.index(counter))
                 else:
                     self.xSelection.append(item)
 
