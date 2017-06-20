@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -173,6 +173,10 @@ class QSourceSelector(qt.QWidget):
                                 wdir,
                                 filetypes,
                                 self.lastFileFilter)
+                    if not len(filelist):
+                        return
+                    elif not len(filelist[0]):
+                        return
                     staticDialog = True
                 else:
                     fdialog = qt.QFileDialog(self)
