@@ -1638,6 +1638,7 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
                                        color=color,
                                        linewidth=linewidth,
                                        linestyle=linestyle)
+                self.ax.get_figure().canvas.draw()
             self._graphCursor.visible = True
         else:
             if self._graphCursor is not None:
