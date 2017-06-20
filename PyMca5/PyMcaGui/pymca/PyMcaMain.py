@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -643,7 +643,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d['PyMca']['Sources']['lastFileFilter'] = self.sourceWidget.sourceSelector.lastFileFilter
         for source in SOURCESLIST:
             d['PyMca'][source] = {}
-            if self.sourceWidget.sourceSelector.lastInputDir is not None:
+            if (self.sourceWidget.sourceSelector.lastInputDir is not None) and \
+               len(self.sourceWidget.sourceSelector.lastInputDir):
                 d['PyMca'][source]['lastInputDir'] = self.sourceWidget.sourceSelector.lastInputDir
                 try:
                     PyMcaDirs.inputDir = self.sourceWidget.sourceSelector.lastInputDir
@@ -766,6 +767,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         native = ddict.get('nativeFileDialogs', True)
         if native in ["False", "0", 0]:
             native = False
+        else:
+            native = True
         PyMcaDirs.nativeFileDialogs = native
 
         if 'Sources' in ddict:
@@ -774,7 +777,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         for source in SOURCESLIST:
             if source in ddict:
                 if 'lastInputDir' in ddict[source]:
-                    if ddict[source] ['lastInputDir'] != "None":
+                    if ddict[source] ['lastInputDir'] not in ["None", []]:
                         self.sourceWidget.sourceSelector.lastInputDir =  ddict[source] ['lastInputDir']
                         try:
                             PyMcaDirs.inputDir = ddict[source] ['lastInputDir']
