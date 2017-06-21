@@ -331,6 +331,12 @@ class MatplotlibGraph(FigureCanvas):
             else:
                 self.ax.set_axis_bgcolor('none')
             self.fig.sca(self.ax)
+            try:
+                # prevent use of offsets
+                self.ax.get_yaxis().get_major_formatter().set_useOffset(False)
+                self.ax.get_xaxis().get_major_formatter().set_useOffset(False)
+            except:
+                print("Error disabling matplotlib offsets")
         else:
             #this almost works
             self.ax2 = self.fig.add_axes([.15, .15, .75, .75],
