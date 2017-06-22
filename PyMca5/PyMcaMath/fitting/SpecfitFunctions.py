@@ -904,8 +904,9 @@ class SpecfitFunctions(object):
         if max(yy) > 0:
             yy = yy * max(yyy)/max(yy)
         xx=xxx[2:-2]
-        fittedpar,cons=self.estimate_agauss(xx,yy,zzz,xscaling,yscaling)
-        npeaks=int(len(cons[0])/4)
+        # use height and not area
+        fittedpar,cons=self.estimate_gauss(xx,yy,zzz,xscaling,yscaling)
+        npeaks=int(len(fittedpar)/3)
         largest_index=0
         largest=[fittedpar[3*largest_index],
                  fittedpar[3*largest_index+1],
@@ -999,8 +1000,8 @@ class SpecfitFunctions(object):
         if max(yy) > 0:
             yy = yy * max(yyy)/max(yy)
         xx = xxx[2:-2]
-        fittedpar, cons = self.estimate_agauss(xx, yy, zzz, xscaling, yscaling)
-        npeaks = int(len(cons[0]) / 4)
+        fittedpar, cons = self.estimate_gauss(xx, yy, zzz, xscaling, yscaling)
+        npeaks = int(len(fittedpar) / 3)
         largest_index = 0
         largest = [fittedpar[3 * largest_index],
                    fittedpar[3 * largest_index + 1],
