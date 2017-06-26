@@ -61,8 +61,7 @@ import silx
 from silx.gui.plot import PlotWidget
 from silx.gui.plot import PlotActions
 from silx.gui.plot import PlotToolButtons
-from silx.gui.plot.MaskToolsWidget import MaskToolsWidget
-from silx.gui.plot._BaseMaskToolsWidget import BaseMaskToolsDockWidget
+from silx.gui.plot.MaskToolsWidget import MaskToolsWidget, MaskToolsDockWidget
 from silx.gui.plot.AlphaSlider import NamedImageAlphaSlider
 from silx.gui.plot.Profile import ProfileToolBar
 
@@ -101,10 +100,6 @@ class MyMaskToolsWidget(MaskToolsWidget):
             self._mask.commit()
             return mask.shape
         else:
-            # _logger.warning('Mask has not the same size as current image.'
-            #                 ' Mask will be cropped or padded to fit image'
-            #                 ' dimensions. %s != %s',
-            #                 str(mask.shape), str(self._data.shape))
             resizedMask = numpy.zeros(self._data.shape[0:2],
                                       dtype=numpy.uint8)
             height = min(self._data.shape[0], mask.shape[0])
@@ -115,16 +110,16 @@ class MyMaskToolsWidget(MaskToolsWidget):
             return resizedMask.shape
 
 
-class MyMaskToolsDockWidget(BaseMaskToolsDockWidget):
+class MyMaskToolsDockWidget(MaskToolsDockWidget):
+    """
+    Regular MaskToolsDockWidget if silx version is at least 0.6.0,
+    else it uses a backported MaskToolsWidget
+    """
     def __init__(self, parent=None, plot=None, name='Mask'):
-        if silx.version > "0.5.0":
-            super(MyMaskToolsDockWidget, self).__init__(parent, name,
-                                                        MaskToolsWidget(plot=plot))
-        else:
-            super(MyMaskToolsDockWidget, self).__init__(parent, name)
+        super(MyMaskToolsDockWidget, self).__init__(parent, plot, name)
+        if silx.version <= "0.5.0":
             self.setWidget(MyMaskToolsWidget(plot=plot))
-
-        self.widget().sigMaskChanged.connect(self._emitSigMaskChanged)
+            self.widget().sigMaskChanged.connect(self._emitSigMaskChanged)
 
 
 class SaveImageListAction(qt.QAction):
