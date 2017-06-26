@@ -117,7 +117,7 @@ class MyMaskToolsDockWidget(MaskToolsDockWidget):
     """
     def __init__(self, parent=None, plot=None, name='Mask'):
         super(MyMaskToolsDockWidget, self).__init__(parent, plot, name)
-        if silx.version <= "0.5.0":
+        if silx.version < "0.6":
             self.setWidget(MyMaskToolsWidget(plot=plot))
             self.widget().sigMaskChanged.connect(self._emitSigMaskChanged)
 
