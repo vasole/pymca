@@ -80,6 +80,7 @@ These plugins will be compatible with any stack window that provides the functio
 
     - stackUpdated
     - selectionMaskUpdated
+    - stackClosed
 
 """
 import weakref
@@ -189,6 +190,14 @@ class StackPluginBase(object):
         if DEBUG:
             print("stackROIImageListUpdated(self) not implemented")
         return
+
+    def stackClosed(self):
+        """
+        This method is called when the stack widget is closed.
+        You can implement this to shut down the plugin (close widgets...).
+        """
+        if DEBUG:
+            print("stackClosed(self) not implemented")
 
     def selectionMaskUpdated(self):
         if DEBUG:
