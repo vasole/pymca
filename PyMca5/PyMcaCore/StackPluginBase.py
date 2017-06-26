@@ -195,9 +195,14 @@ class StackPluginBase(object):
         """
         This method is called when the stack widget is closed.
         You can implement this to shut down the plugin (close widgets...).
+
+        By default, widgets referenced as self.widget and self._widget
+        are closed.
         """
-        if DEBUG:
-            print("stackClosed(self) not implemented")
+        if hasattr(self, "widget") and self.widget is not None:
+            self.widget.close()
+        if hasattr(self, "_widget") and self._widget is not None:
+            self._widget.close()
 
     def selectionMaskUpdated(self):
         if DEBUG:
