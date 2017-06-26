@@ -102,6 +102,10 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             if not w.isHidden():
                 w.setSelectionMask(mask)
 
+    def stackClosed(self):
+        for label in self.windows:
+            self.windows[label].close()
+
     def onWidgetSignal(self, ddict):
         """triggered by self.windows["foo"].sigMaskImageWidget"""
         if ddict['event'] == "selectionMaskChanged":
