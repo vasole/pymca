@@ -148,7 +148,9 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             shape = r[0].shape
         else:
             shape = mask.shape
-        if filefilter.split()[0] in ["EDF"]:
+        extension = qt.safe_str(os.path.splitext(filenamelist[0])[1])
+        if (filefilter.split()[0] in ["EDF"]) or \
+           (extension.upper() in [".EDF", ".TIF"]):
             for filename in filenamelist:
                 #read the edf file
                 edf = EDFStack.EdfFileDataSource.EdfFileDataSource(filename)
