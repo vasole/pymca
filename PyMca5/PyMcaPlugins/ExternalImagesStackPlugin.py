@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -196,7 +196,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             for filename in filenamelist:
                 image = qt.QImage(filename)
                 if image.isNull():
-                    msg = qt.QMessageBox(self)
+                    msg = qt.QMessageBox(None)
                     msg.setIcon(qt.QMessageBox.Critical)
                     msg.setText("Cannot read file %s as an image" % filename)
                     msg.exec_()
