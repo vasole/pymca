@@ -105,6 +105,12 @@ class XASStackNormalizationPlugin(StackPluginBase.StackPluginBase):
         mask = self.getStackSelectionMask()
         self.imageWidget.setSelectionMask(mask)
 
+    def stackClosed(self):
+        if self.imageWidget is not None:
+            self.imageWidget.close()
+        if self.widget is not None:
+            self.widget.close()
+
     def getMethods(self):
         return self.__methodKeys
 

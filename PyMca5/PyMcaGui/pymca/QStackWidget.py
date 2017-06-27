@@ -60,6 +60,7 @@ QTVERSION = qt.qVersion()
 if DEBUG:
     StackBase.DEBUG = DEBUG
 
+
 class QStackWidget(StackBase.StackBase,
                    CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     def __init__(self, parent = None,
@@ -1096,6 +1097,13 @@ class QStackWidget(StackBase.StackBase,
     def getGraphYLabel(self):
         return self.mcaWidget.getGraphYLabel()
 
+    def closeEvent(self, event):
+        # Inform plugins
+        for key in self.pluginInstanceDict.keys():
+            self.pluginInstanceDict[key].stackClosed()
+        CloseEventNotifyingWidget.CloseEventNotifyingWidget.closeEvent(self, event)
+
+
 def test():
     #create a dummy stack
     nrows = 100
@@ -1110,6 +1118,7 @@ def test():
     w.setStack(stackData, mcaindex=2)
     w.show()
     return w
+
 
 if __name__ == "__main__":
     sys.excepthook = qt.exceptionHandler

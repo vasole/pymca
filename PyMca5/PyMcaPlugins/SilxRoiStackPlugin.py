@@ -94,6 +94,10 @@ class SilxRoiStackPlugin(StackPluginBase.StackPluginBase):
     def stackROIImageListUpdated(self):
         self.stackUpdated()
 
+    def stackClosed(self):
+        if self.widget is not None:
+            self.widget.close()
+
     def mySlot(self, ddict):
         if ddict['event'] == "selectionMaskChanged":
             mask = ddict["current"]

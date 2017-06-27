@@ -90,6 +90,10 @@ class FitStackPlugin(StackPluginBase.StackPluginBase):
             return
         self.simpleFitWindow.setMask(self.getStackSelectionMask())
 
+    def stackClosed(self):
+        if self.simpleFitWindow is not None:
+            self.simpleFitWindow.close()
+
     #Methods implemented by the plugin
     def getMethods(self):
         return self.__methodKeys

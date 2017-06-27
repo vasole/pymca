@@ -93,6 +93,10 @@ class ROIStackPlugin(StackPluginBase.StackPluginBase):
         mask = self.getStackSelectionMask()
         self.roiWindow.setSelectionMask(mask)
 
+    def stackClosed(self):
+        if self.roiWindow is not None:
+            self.roiWindow.close()
+
     def stackROIImageListUpdated(self):
         self.stackUpdated()
 
