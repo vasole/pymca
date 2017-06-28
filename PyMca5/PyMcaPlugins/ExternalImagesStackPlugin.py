@@ -128,6 +128,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         fileTypeList = ["PNG Files (*png)",
                         "JPEG Files (*jpg *jpeg)",
                         "IMAGE Files (*)",
+                        "DAT Files (*dat)",
                         "CSV Files (*csv)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
@@ -194,7 +195,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                                               image_names=imagenames)
             self._showWidget()
             return
-        elif extension.lower() in [".csv"]:
+        elif extension.lower() in [".csv", ".dat"]:
             # what to do if more than one file selected ?
             from PyMca5.PyMca import specfilewrapper as Specfile
             sf = Specfile.Specfile(filenamelist[0])
