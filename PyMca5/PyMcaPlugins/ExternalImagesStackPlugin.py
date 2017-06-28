@@ -128,6 +128,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         fileTypeList = ["PNG Files (*png)",
                         "JPEG Files (*jpg *jpeg)",
                         "IMAGE Files (*)",
+                        "CSV Files (*csv)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
                         "EDF Files (*)"]
@@ -184,6 +185,39 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                 msg.setText("Cannot read a valid image from the file")
                 msg.exec_()
                 return
+            crop = False
+            self.widget = StackPluginResultsWindow.StackPluginResultsWindow(parent=None,
+                                                    usetab=False)
+            self.widget.buildAndConnectImageButtonBox()
+            self.widget.sigMaskImageWidgetSignal.connect(self.mySlot)
+            self.widget.setStackPluginResults(imagelist,
+                                              image_names=imagenames)
+            self._showWidget()
+            return
+        elif extension.lower() in [".csv"]:
+            # what to do if more than one file selected ?
+            from PyMca5.PyMca import specfilewrapper as Specfile
+            sf = Specfile.Specfile(filenamelist[0])
+            scan = sf[0]
+            labels = scan.alllabels()
+            data = scan.data()
+            scan = None
+            sf = None
+            if "column" in labels:
+                offset = labels.index("column")
+                ncols = int(data[offset].max() + 1)
+                offset += 1
+            else:
+                raise IOError("Only images exported as csv supported")
+            imagelist = []
+            imagenames= []
+            for i in range(offset, len(labels)):
+                if labels[i].startswith("s("):
+                    continue
+                tmpData = data[i]
+                tmpData.shape = -1, ncols
+                imagelist.append(tmpData)
+                imagenames.append(labels[i])
             crop = False
             self.widget = StackPluginResultsWindow.StackPluginResultsWindow(parent=None,
                                                     usetab=False)
