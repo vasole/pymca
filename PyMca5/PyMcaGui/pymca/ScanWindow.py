@@ -512,7 +512,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                     if (maxXDistance > 0.0) and (maxYDistance > 0.0):
                         closestIndex = (pow((x - ddict['x'])/maxXDistance, 2) + \
                                         pow((y - ddict['y'])/maxYDistance, 2)).argmin()
-                        else:
+                    else:
                         closestIndex = (pow(x - ddict['x'], 2) + \
                                     pow(y - ddict['y'], 2)).argmin()
                     xCurve = x[closestIndex]
