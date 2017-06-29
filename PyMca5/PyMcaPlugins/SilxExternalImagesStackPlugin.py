@@ -150,6 +150,8 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         fileTypeList = ["PNG Files (*png)",
                         "JPEG Files (*jpg *jpeg)",
                         "IMAGE Files (*)",
+                        "DAT Files (*dat",
+                        "CSV Files (*csv)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
                         "EDF Files (*)"]
@@ -171,7 +173,7 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
             shape = r[0].shape
         else:
             shape = mask.shape
-
+        extension = qt.safe_str(os.path.splitext(filenamelist[0])[1])
         if filefilter.startswith("EDF"):
             for filename in filenamelist:
                 # read the edf file
@@ -205,6 +207,30 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
                 msg.setText("Cannot read a valid image from the file")
                 msg.exec_()
                 return
+        elif extension.lower() in [".csv", ".dat"]:
+            # what to do if more than one file selected ?
+            from PyMca5.PyMca import specfilewrapper as Specfile
+            sf = Specfile.Specfile(filenamelist[0])
+            scan = sf[0]
+            labels = scan.alllabels()
+            data = scan.data()
+            scan = None
+            sf = None
+            if "column" in labels:
+                offset = labels.index("column")
+                ncols = int(data[offset].max() + 1)
+                offset += 1
+            else:
+                raise IOError("Only images exported as csv supported")
+            imagelist = []
+            imagenames= []
+            for i in range(offset, len(labels)):
+                if labels[i].startswith("s("):
+                    continue
+                tmpData = data[i]
+                tmpData.shape = -1, ncols
+                imagelist.append(tmpData)
+                imagenames.append(labels[i])
         else:
             # Try pure Image formats
             for filename in filenamelist:
