@@ -504,17 +504,21 @@ class ScanWindow(PlotWindow.PlotWindow):
                     self._handleMouseMovedEvent(ddict)
                 else:
                     x, y, legend, info = activeCurve[0:4]
-                    closestIndex = (pow(x - ddict['x'], 2) + \
-                                    pow(y - ddict['y'], 2)).argmin()
                     # calculate the maximum distance
                     xMin, xMax = self.getGraphXLimits()
                     maxXDistance = abs(xMax - xMin)
+                    yMin, yMax = self.getGraphYLimits()
+                    maxYDistance = abs(yMax - yMin)
+                    if (maxXDistance > 0.0) and (maxYDistance > 0.0):
+                        closestIndex = (pow((x - ddict['x'])/maxXDistance, 2) + \
+                                        pow((y - ddict['y'])/maxYDistance, 2)).argmin()
+                        else:
+                        closestIndex = (pow(x - ddict['x'], 2) + \
+                                    pow(y - ddict['y'], 2)).argmin()
                     xCurve = x[closestIndex]
                     xText = '----'
                     yText = '----'
                     if abs(xCurve - ddict['x']) < (0.05 * maxXDistance):
-                        yMin, yMax = self.getGraphYLimits()
-                        maxYDistance = abs(yMax - yMin)
                         yCurve = y[closestIndex]
                         if abs(yCurve - ddict['y']) < (0.05 * maxYDistance):
                             xText = '%.7g' % xCurve
