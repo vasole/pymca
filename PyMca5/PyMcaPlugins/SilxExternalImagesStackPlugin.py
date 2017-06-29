@@ -150,7 +150,7 @@ class SilxExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         fileTypeList = ["PNG Files (*png)",
                         "JPEG Files (*jpg *jpeg)",
                         "IMAGE Files (*)",
-                        "DAT Files (*dat",
+                        "DAT Files (*dat)",
                         "CSV Files (*csv)",
                         "EDF Files (*edf)",
                         "EDF Files (*ccd)",
