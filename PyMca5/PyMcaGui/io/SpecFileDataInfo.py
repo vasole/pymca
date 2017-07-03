@@ -30,8 +30,16 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
+try:
+    from silx.gui.widgets.TableWidget import TableWidget
+except ImportError:
+    from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
+
+
 QTVERSION = qt.qVersion()
-class QTable(qt.QTableWidget):
+
+
+class QTable(TableWidget):
     def setText(self, row, col, text):
         if qt.qVersion() < "4.0.0":
             QTable.setText(self, row, col, text)
@@ -43,6 +51,7 @@ class QTable(qt.QTableWidget):
                 self.setItem(row, col, item)
             else:
                 item.setText(text)
+
 
 class SpecFileDataInfoCustomEvent(qt.QEvent):
     def __init__(self, ddict):
@@ -255,7 +264,6 @@ class SpecFileDataInfo(qt.QTabWidget):
             self.__adjustTable(table)
             self.addTab(table, "Header")
 
-
     def __createFileHeaderText(self):
         text= self.info.get("FileHeader", None)
         if text not in [None, []]:
@@ -281,6 +289,7 @@ class SpecFileDataInfo(qt.QTabWidget):
             self._notifyCloseEventToWidget = []
         return qt.QTabWidget.closeEvent(self, event)
 
+
 def test():
     from PyMca5.PyMcaCore import SpecFileLayer
 
@@ -298,5 +307,6 @@ def test():
     wid.show()
     app.exec_()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     test()
