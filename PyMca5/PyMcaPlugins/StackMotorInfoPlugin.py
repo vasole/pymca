@@ -132,13 +132,21 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
 
         positioners = self.getStackInfo().get("positioners", {})
         motorsValuesAtCursor = {}
-
         for motorName, motorValues in positioners.items():
-            assert hasattr(motorValues, "shape")
-            # assert motorValues.shape == (nRows, nCols),\   # fixme: commented because ID24 test data has wrong shape
-            #     "wrong shape (%d, %d) for motor data" % motorValues.shape +\
-            #     ", expected (%d, %d)" % (nRows, nCols)
-            motorsValuesAtCursor[motorName] = motorValues[r, c]
+
+            if hasattr(motorValues, "shape") and len(motorValues.shape) == 2:
+                # image
+                assert motorValues.shape == (nRows, nCols), "wrong shape for motor values frame"
+                motorsValuesAtCursor[motorName] = motorValues[r, c]
+            elif hasattr(motorValues, "__len__"):
+                # 1D array or list
+                nPixels = nRows * nCols
+                assert len(motorValues) == nPixels, "wrong number of motor values in list"
+                motorIndex = r * nCols + c
+                motorsValuesAtCursor[motorName] = motorValues[motorIndex]
+            else:
+                # scalar
+                motorsValuesAtCursor[motorName] = motorValues
 
         self.motorPositionsWindow.table.updateTable(legList=["Stack"],
                                                     motList=[motorsValuesAtCursor])
