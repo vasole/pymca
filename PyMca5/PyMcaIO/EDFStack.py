@@ -431,6 +431,14 @@ class EDFStack(DataObject.DataObject):
                                 if os.path.exists(i0EndFile):
                                     i0End = EdfFile.EdfFile(i0EndFile, 'rb').GetData(0) - bckData
                                     i0Slope = (i0End-i0Start)/len(filelist)
+                            positionersFile = filelist[0].replace("_sample_", "_positioners_")
+                            if os.path.exists(positionersFile):
+                                positionersEdf = EdfFile.EdfFile(positionersFile, 'rb')
+                                self.info["positioners"] = {}
+                                for i in range(positionersEdf.GetNumImages()):
+                                    motorName = positionersEdf.GetHeader(i).get("Title", "Motor_%02d" % i)
+                                    motorValue = positionersEdf.GetData(i)
+                                    self.info["positioners"][motorName] = motorValue
                         for tempEdfFileName in filelist:
                             tempEdf=EdfFile.EdfFile(tempEdfFileName, 'rb')
                             if ID24:

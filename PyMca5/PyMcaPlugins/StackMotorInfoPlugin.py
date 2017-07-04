@@ -123,37 +123,25 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
     def _updateMotors(self, ddict):
         if not ddict["event"] == "mouseMoved":
             return
-
         nRows, nCols = self.getStackOriginalImage().shape
-
         r, c = SilxMaskImageWidget.convertToRowAndColumn(ddict["x"], ddict["y"],
                                                          shape=(nRows, nCols),
                                                          xScale=self.getStackInfo().get("xScale"),
                                                          yScale=self.getStackInfo().get("yScale"),
                                                          safe=True)
-        motorIndex = r * nCols + c     # Fixme: not sure if this is always true (right-left scanning patterns?)
-        nPixels = nRows * nCols
 
-        allMotorsPositions = self.getStackInfo().get("positioners", {})
-        motorsValues = {}
-        for motorName, motorValuesList in allMotorsPositions.items():
-            if len(motorValuesList) == 1:
-                # constant motor position
-                motorsValues[motorName] = motorValuesList[0]
-            else:
-                # one motor value per stack image pixel
-                assert len(motorValuesList) == nPixels
-                motorsValues[motorName] = motorValuesList[motorIndex]
+        positioners = self.getStackInfo().get("positioners", {})
+        motorsValuesAtCursor = {}
 
-        # FIXME: after debugging, uncomment next line, remove following line
-        # (need to add "Positioners" to stack info first)
+        for motorName, motorValues in positioners.items():
+            assert hasattr(motorValues, "shape")
+            # assert motorValues.shape == (nRows, nCols),\   # fixme: commented because ID24 test data has wrong shape
+            #     "wrong shape (%d, %d) for motor data" % motorValues.shape +\
+            #     ", expected (%d, %d)" % (nRows, nCols)
+            motorsValuesAtCursor[motorName] = motorValues[r, c]
 
-        # self.motorPositionsWindow.table.updateTable(legList=["Stack"],
-        #                                             motList=[motorsValues])
         self.motorPositionsWindow.table.updateTable(legList=["Stack"],
-                                                    motList=[{"2x": 2 * ddict["x"],
-                                                              "y/2": 0.5 * ddict["y"],
-                                                              "pi": 3.14}])
+                                                    motList=[motorsValuesAtCursor])
 
     #Methods implemented by the plugin
     def getMethods(self):
