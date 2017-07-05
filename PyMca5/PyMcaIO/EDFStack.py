@@ -494,6 +494,28 @@ class EDFStack(DataObject.DataObject):
             self.info["NumberOfFiles"] = self.__nFiles * 1
             self.info["Size"] = self.__nFiles * self.__nImagesPerFile
 
+        # try to use positioners to compute the scales (ID24 specific)
+        xPositionerName = None
+        yPositionerName = None
+        if "positioners" in self.info and len(self.info["positioners"]) == 2:
+            for k, v in self.info["positioners"].items():
+                if isinstance(v, numpy.ndarray) and v.ndim == 2:
+                    deltaDim1 = v[:, 1:] - v[:, :-1]
+                    deltaDim0 = v[1:, :] - v[:-1, :]
+                    if numpy.any(deltaDim1) and not numpy.any(deltaDim0):
+                        # positioner varying only along dim1
+                        xPositionerName = k
+                        # should we check that all delta values are equal?
+                        deltaX = numpy.mean(deltaDim1)
+                        originX = v[0, 0]
+                    elif numpy.any(deltaDim0) and not numpy.any(deltaDim1):
+                        # positioner varying only along dim0
+                        yPositionerName = k
+                        deltaY = numpy.mean(deltaDim0)
+                        originY = v[0, 0]
+            if xPositionerName is not None and yPositionerName is not None:
+                self.info["xScale"] = (originX, deltaX)
+                self.info["yScale"] = (originY, deltaY)
 
     def onBegin(self, n):
         pass
