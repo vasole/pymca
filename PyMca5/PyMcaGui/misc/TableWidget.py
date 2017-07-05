@@ -105,6 +105,8 @@ class CopySelectedCellsAction(qt.QAction):
         Put this text into the clipboard.
         """
         selected_idx = self.table.selectedIndexes()
+        if not selected_idx:
+            return
         selected_idx_tuples = [(idx.row(), idx.column()) for idx in selected_idx]
 
         selected_rows = [idx[0] for idx in selected_idx_tuples]
@@ -412,7 +414,8 @@ class TableWidget(qt.QTableWidget):
 
     def mousePressEvent(self, event):
         item = self.itemAt(event.pos())
-        self._text_last_cell_clicked = item.text()
+        if item is not None:
+            self._text_last_cell_clicked = item.text()
         super(TableWidget, self).mousePressEvent(event)
 
     def enablePaste(self):
@@ -448,19 +451,25 @@ class TableWidget(qt.QTableWidget):
         """
         if mode == qt.QTableView.NoSelection:
             self.copySelectedCellsAction.setVisible(False)
+            self.copySelectedCellsAction.setEnabled(False)
             if self.cutSelectedCellsAction is not None:
                 self.cutSelectedCellsAction.setVisible(False)
+                self.cutSelectedCellsAction.setEnabled(False)
             if self.copySingleCellAction is None:
                 self.copySingleCellAction = CopySingleCellAction(self)
                 self.insertAction(self.copySelectedCellsAction,  # before first action
                                   self.copySingleCellAction)
             self.copySingleCellAction.setVisible(True)
+            self.copySingleCellAction.setEnabled(True)
         else:
             self.copySelectedCellsAction.setVisible(True)
+            self.copySelectedCellsAction.setEnabled(True)
             if self.cutSelectedCellsAction is not None:
                 self.cutSelectedCellsAction.setVisible(True)
+                self.cutSelectedCellsAction.setEnabled(True)
             if self.copySingleCellAction is not None:
                 self.copySingleCellAction.setVisible(False)
+                self.copySingleCellAction.setEnabled(False)
         super(TableWidget, self).setSelectionMode(mode)
 
 
@@ -572,19 +581,25 @@ class TableView(qt.QTableView):
         """
         if mode == qt.QTableView.NoSelection:
             self.copySelectedCellsAction.setVisible(False)
+            self.copySelectedCellsAction.setEnabled(False)
             if self.cutSelectedCellsAction is not None:
                 self.cutSelectedCellsAction.setVisible(False)
+                self.cutSelectedCellsAction.setEnabled(False)
             if self.copySingleCellAction is None:
                 self.copySingleCellAction = CopySingleCellAction(self)
                 self.insertAction(self.copySelectedCellsAction,  # before first action
                                   self.copySingleCellAction)
             self.copySingleCellAction.setVisible(True)
+            self.copySingleCellAction.setEnabled(True)
         else:
             self.copySelectedCellsAction.setVisible(True)
+            self.copySelectedCellsAction.setEnabled(True)
             if self.cutSelectedCellsAction is not None:
                 self.cutSelectedCellsAction.setVisible(True)
+                self.cutSelectedCellsAction.setEnabled(True)
             if self.copySingleCellAction is not None:
                 self.copySingleCellAction.setVisible(False)
+                self.copySingleCellAction.setEnabled(False)
         super(TableView, self).setSelectionMode(mode)
 
 
