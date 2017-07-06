@@ -30,6 +30,11 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import IconDict
 
+try:
+    from silx.gui.widgets.TableWidget import TableWidget
+except ImportError:
+    from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
+
 if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
@@ -136,9 +141,11 @@ class MotorInfoHeader(qt.QHeaderView):
                                       self.sectionSize(idx) +  self.xOffsetRight,
                                       self.height())
 
-class MotorInfoTable(qt.QTableWidget):
+class MotorInfoTable(TableWidget):
     def __init__(self, parent, numRows, numColumns, legList, motList):
-        qt.QTableWidget.__init__(self, 0, numColumns, parent)
+        TableWidget.__init__(self, parent)
+        self.setRowCount(0)
+        self.setColumnCount(numColumns)
         self.currentComboBox = 1
         self.legendsList = legList
         self.motorsList  = motList
@@ -267,6 +274,7 @@ class MotorInfoDialog(qt.QWidget):
                                 qt.QIcon(qt.QPixmap(IconDict["reload"])), '', self)
         # Table
         self.table = MotorInfoTable(self, self.numCurves, 4, legends, motorValues)
+
         # Layout
         self.mainLayout = qt.QGridLayout(self)
         self.mainLayout.setContentsMargins(1, 1, 1, 1)

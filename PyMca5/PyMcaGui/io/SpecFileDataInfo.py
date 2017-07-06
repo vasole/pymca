@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -30,8 +30,14 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
+try:
+    from silx.gui.widgets.TableWidget import TableWidget
+except ImportError:
+    from PyMca5.PyMcaGui.misc.TableWidget import TableWidget
+
 QTVERSION = qt.qVersion()
-class QTable(qt.QTableWidget):
+
+class QTable(TableWidget):
     def setText(self, row, col, text):
         if qt.qVersion() < "4.0.0":
             QTable.setText(self, row, col, text)
@@ -255,7 +261,6 @@ class SpecFileDataInfo(qt.QTabWidget):
             self.__adjustTable(table)
             self.addTab(table, "Header")
 
-
     def __createFileHeaderText(self):
         text= self.info.get("FileHeader", None)
         if text not in [None, []]:
@@ -298,5 +303,5 @@ def test():
     wid.show()
     app.exec_()
 
-if __name__=="__main__":
+if __name__ == "__main__":
     test()
