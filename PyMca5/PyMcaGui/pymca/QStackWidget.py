@@ -515,7 +515,7 @@ class QStackWidget(StackBase.StackBase,
 
     def loadSlaveStack(self):
         if self._slave is not None:
-            actionList = ['Load Slave', 'Show Slave', 'Delete Slave']
+            actionList = ['Load Slave', 'Show Slave', 'Delete Slave', 'Merge Slave']
             menu = qt.QMenu(self)
             for action in actionList:
                 text = QString(action)
@@ -524,13 +524,19 @@ class QStackWidget(StackBase.StackBase,
             if a is None:
                 return None
             if qt.safe_str(a.text()).startswith("Load"):
-                self._slave = None
+                self._closeSlave()
             elif qt.safe_str(a.text()).startswith("Show"):
                 self._slave.show()
                 self._slave.raise_()
                 return
+            elif qt.safe_str(a.text()).startswith("Merge"):
+                masterStackDataObject = self.getStackDataObject()
+                masterStackDataObject.data += self._slave.getStackData()
+                self.setStack(masterStackDataObject)
+                self._closeSlave()
+                return
             else:
-                self._slave = None
+                self._closeSlave()
                 return
         if self.stackSelector  is None:
             self.stackSelector = StackSelector.StackSelector(self)
@@ -557,6 +563,9 @@ class QStackWidget(StackBase.StackBase,
         slave.setStack(stack)
         self.setSlave(slave)
 
+    def _closeSlave(self):
+        self._slave.close()
+        self._slave = None
 
     def setSlave(self, slave):
         self._slave = None
