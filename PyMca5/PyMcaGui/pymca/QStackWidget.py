@@ -515,7 +515,7 @@ class QStackWidget(StackBase.StackBase,
 
     def loadSlaveStack(self):
         if self._slave is not None:
-            actionList = ['Load Slave', 'Show Slave', 'Delete Slave']
+            actionList = ['Load Slave', 'Show Slave', 'Merge Slave', 'Delete Slave']
             menu = qt.QMenu(self)
             for action in actionList:
                 text = QString(action)
@@ -524,13 +524,30 @@ class QStackWidget(StackBase.StackBase,
             if a is None:
                 return None
             if qt.safe_str(a.text()).startswith("Load"):
-                self._slave = None
+                self._closeSlave()
             elif qt.safe_str(a.text()).startswith("Show"):
                 self._slave.show()
                 self._slave.raise_()
                 return
+            elif qt.safe_str(a.text()).startswith("Merge"):
+                masterStackDataObject = self.getStackDataObject()
+                try:
+                    # Use views to ensure no casting is done in case of different dtype to save memory.
+                    # This is risky when the original stack is unsigned integers (overflow).
+                    masterStackDataObject.data[:] = masterStackDataObject.data[:] + self._slave.getStackData()
+                except:
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setWindowTitle("Stack Summing Error")
+                    msg.setText("An error has occurred while summing the master and slave stacks")
+                    msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
+                    msg.setDetailedText(traceback.format_exc())
+                    msg.exec_()
+                self._closeSlave()
+                self.setStack(masterStackDataObject)
+                return
             else:
-                self._slave = None
+                self._closeSlave()
                 return
         if self.stackSelector  is None:
             self.stackSelector = StackSelector.StackSelector(self)
@@ -557,6 +574,9 @@ class QStackWidget(StackBase.StackBase,
         slave.setStack(stack)
         self.setSlave(slave)
 
+    def _closeSlave(self):
+        self._slave.close()
+        self._slave = None
 
     def setSlave(self, slave):
         self._slave = None
