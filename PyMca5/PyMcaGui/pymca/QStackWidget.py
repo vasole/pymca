@@ -531,7 +531,19 @@ class QStackWidget(StackBase.StackBase,
                 return
             elif qt.safe_str(a.text()).startswith("Merge"):
                 masterStackDataObject = self.getStackDataObject()
-                masterStackDataObject.data += self._slave.getStackData()
+                try:
+                    # Use views to ensure no casting is done in case of different dtype to save memory.
+                    # This is risky when the original stack is unsigned integers (overflow).
+                    masterStackDataObject.data[:] = masterStackDataObject.data[:] + self._slave.getStackData()
+                except:
+                    msg = qt.QMessageBox(self)
+                    msg.setIcon(qt.QMessageBox.Critical)
+                    msg.setWindowTitle("Stack Summing Error")
+                    msg.setText("An error has occurred while summing the master and slave stacks")
+                    msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
+                    msg.setDetailedText(traceback.format_exc())
+                    msg.exec_()
+
                 self.setStack(masterStackDataObject)
                 self._closeSlave()
                 return
