@@ -1091,6 +1091,40 @@ class StackBase(object):
     def getStackInfo(self):
         return self._stack.info
 
+    def setPositioners(self, positioners):
+        """Updates the "positioners" field in the stack info, after
+        checking that the provided positioners have the proper number of
+        values.
+
+        :param dict positioners: Dictionary of positioners. The keys are
+            the motor names. The values should preferably be arrays with
+            the same number of values as there are stack pixels. Scalars
+            are accepted if the positioner has a constant value.
+        :raise: TypeError if positioners is not a dict or if any positioner
+            is not a scalar, list or numpy array.
+        :raise: IndexError if any positioner has an inconsitent number of
+            values.
+        """
+        if not isinstance(positioners, dict):
+            raise TypeError("Dictionary expected for positioners")
+        npixels = self.getStackOriginalImage().size
+        for motorName, motorValues in positioners.items():
+            if numpy.isscalar(motorValues):
+                continue
+            if hasattr(motorValues, "size"):
+                # numpy array
+                numMotorValues = motorValues.size
+            elif hasattr(motorValues, "__len__") and numpy.isscalar(motorValues[0]):
+                numMotorValues = len(motorValues)
+            else:
+                raise TypeError("Wrong type for positioner %s. " % motorName +
+                                "Valid types are numpy arrays, scalars or list of scalars.")
+
+            if numMotorValues != npixels:
+                raise IndexError("Number of motor values is inconsistent with stack size." +
+                                 " Found %d, expected %d" % (numMotorValues, npixels))
+        self._stack.info["positioners"] = positioners
+
 
 def test():
     #create a dummy stack
