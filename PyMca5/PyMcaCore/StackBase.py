@@ -1102,18 +1102,20 @@ class StackBase(object):
             are accepted if the positioner has a constant value.
         :raise: TypeError if positioners is not a dict or if any positioner
             is not a scalar, list or numpy array.
-        :raise: IndexError if any positioner has an inconsitent number of
-            values.
+        :raise: IndexError if any positioner has an inconsistent number of
+            values, or an inconsistent shape.
         """
         if not isinstance(positioners, dict):
             raise TypeError("Dictionary expected for positioners")
         npixels = self.getStackOriginalImage().size
         for motorName, motorValues in positioners.items():
+            shapeMotorValues = None
             if numpy.isscalar(motorValues):
                 continue
             if hasattr(motorValues, "size"):
                 # numpy array
                 numMotorValues = motorValues.size
+                shapeMotorValues = motorValues.shape
             elif hasattr(motorValues, "__len__") and numpy.isscalar(motorValues[0]):
                 numMotorValues = len(motorValues)
             else:
@@ -1123,6 +1125,11 @@ class StackBase(object):
             if numMotorValues != npixels:
                 raise IndexError("Number of motor values is inconsistent with stack size." +
                                  " Found %d, expected %d" % (numMotorValues, npixels))
+            if shapeMotorValues is not None and len(shapeMotorValues) != 1:
+                if shapeMotorValues != self.getStackOriginalImage().shape:
+                    raise IndexError("shape of motor values array does not match "
+                                     "shape of stack image.")
+
         self._stack.info["positioners"] = positioners
 
 
