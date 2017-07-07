@@ -1151,6 +1151,39 @@ class StackBase(object):
 
         self._stack.info["positioners"] = positionersCopy
 
+    def getPositionersFromIndex(self, index):
+        """Return the value of all positioners for the spectrum identified by
+        its 1D index.
+
+        If positioners are stored as 1D arrays ``a``, the value returned
+        is simply ``a[index]``.
+
+        If positioners are stored as 2D arrays, the index is applied to the
+        flattened array.
+
+        :param int index: Index of spectrum for which the the positioners
+            value is to be returned.
+        :return: dictionary of positioners values whose keys are the motor
+            name
+        :rtype: dict
+        """
+        positioners = self._stack.info.get("positioners", {})
+        positionersAtIdx = {}
+
+        if index >= self.getStackOriginalImage().size or index < 0:
+            raise IndexError("index out of bounds")
+
+        for motorName, motorValues in positioners.items():
+            # assert numpy.isscalar(motorValues) or hasattr(motorValues, "shape")
+            if numpy.isscalar(motorValues):
+                positionersAtIdx[motorName] = motorValues
+            elif len(motorValues.shape) == 1:
+                positionersAtIdx[motorName] = motorValues[index]
+            elif len(motorValues.shape) == 2:
+                positionersAtIdx[motorName] = motorValues.ravel()[index]
+
+        return positionersAtIdx
+
 
 def test():
     #create a dummy stack
