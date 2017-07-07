@@ -30,6 +30,7 @@ __authors__ = ["P. Knobel"]
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 
+import numpy
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
@@ -124,32 +125,40 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
         if not ddict["event"] == "mouseMoved":
             return
         nRows, nCols = self.getStackOriginalImage().shape
-        r, c = SilxMaskImageWidget.convertToRowAndColumn(ddict["x"], ddict["y"],
-                                                         shape=(nRows, nCols),
-                                                         xScale=self.getStackInfo().get("xScale"),
-                                                         yScale=self.getStackInfo().get("yScale"),
-                                                         safe=True)
+        r, c = SilxMaskImageWidget.convertToRowAndColumn(
+                ddict["x"], ddict["y"],
+                shape=(nRows, nCols),
+                xScale=self.getStackInfo().get("xScale"),
+                yScale=self.getStackInfo().get("yScale"),
+                safe=True)
 
         positioners = self.getStackInfo().get("positioners", {})
         motorsValuesAtCursor = {}
         for motorName, motorValues in positioners.items():
-
-            if hasattr(motorValues, "shape") and len(motorValues.shape) == 2:
-                # image
-                assert motorValues.shape == (nRows, nCols), "wrong shape for motor values frame"
-                motorsValuesAtCursor[motorName] = motorValues[r, c]
-            elif hasattr(motorValues, "__len__"):
-                # 1D array or list
-                nPixels = nRows * nCols
-                assert len(motorValues) == nPixels, "wrong number of motor values in list"
-                motorIndex = r * nCols + c
-                motorsValuesAtCursor[motorName] = motorValues[motorIndex]
-            else:
+            if numpy.isscalar(motorValues) or (hasattr(motorValues, "ndim") and
+                                               motorValues.ndim == 0):
                 # scalar
                 motorsValuesAtCursor[motorName] = motorValues
+            else:
+                # must be a numpy array
+                assert hasattr(motorValues, "ndim") and \
+                       hasattr(motorValues, "shape")
+                if motorValues.ndim == 2:
+                    # image
+                    assert motorValues.shape == (nRows, nCols), \
+                        "wrong shape for motor values frame"
+                    motorsValuesAtCursor[motorName] = motorValues[r, c]
+                elif motorValues.ndim == 1:
+                    # 1D array
+                    nPixels = nRows * nCols
+                    assert len(motorValues) == nPixels, \
+                        "wrong number of motor values in array"
+                    motorIndex = r * nCols + c
+                    motorsValuesAtCursor[motorName] = motorValues[motorIndex]
 
-        self.motorPositionsWindow.table.updateTable(legList=["Stack"],
-                                                    motList=[motorsValuesAtCursor])
+        self.motorPositionsWindow.table.updateTable(
+                legList=["Stack"],
+                motList=[motorsValuesAtCursor])
 
     #Methods implemented by the plugin
     def getMethods(self):
