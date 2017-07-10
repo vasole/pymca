@@ -244,6 +244,8 @@ class H5NodeProxy(object):
     def type(self):
         return self._type
 
+
+
     @property
     def shape(self):
         if type(self._shape) == type(""):
@@ -659,12 +661,17 @@ class HDF5Widget(FileView):
                 entryList.append((entry, item.file.filename))
         return entryList
 
-def getDatasetDialog(filename=None, value=False, message=None):
+
+def getHdf5ItemDialog(filename=None, value=False, message=None, itemtype=None):
     """
-    Simple dialog to select a dataset via a double click on the tree
+    Simple dialog to first select a HDF5 file and then a dataset or a group
+    via a double click on the tree.
 
     :param filename: Name of the HDF5 file
-    :param value: If True returns dataset value instead of just the dataset
+    :param value: If True returns dataset value instead of just the dataset.
+        This must be False if itemtype is not "dataset".
+    :param str itemtype: "dataset" or "group" or "any" (default)
+    :return: A h5py Group or Dataset, or None
     """
     if filename is None:
         from PyMca5.PyMca import PyMcaFileDialogs
@@ -680,6 +687,17 @@ def getDatasetDialog(filename=None, value=False, message=None):
         if len(filenamelist) < 1:
             return None
         filename = filenamelist[0]
+
+    return _getHdf5ItemFromFilename(filename, message, value, itemtype)
+
+
+def _getHdf5ItemFromFilename(filename, message=None, value=False,
+                             itemtype=None):
+    if itemtype is None:
+        itemtype = "any"
+    if itemtype not in ["any", "dataset", "group"]:
+        raise AttributeError(
+                "Invalid itemtype %s, should be 'group', 'dataset' or 'any'" % itemtype)
     if message is None:
         message = 'Select your item by a double click'
     hdf5Dialog = qt.QDialog()
@@ -690,26 +708,46 @@ def getDatasetDialog(filename=None, value=False, message=None):
     fileModel = FileModel()
     fileView = HDF5Widget(fileModel)
     hdf5File = fileModel.openFile(filename, "r")
+
     def _hdf5WidgetSlot(ddict):
         if ddict['event'] == "itemDoubleClicked":
-            if ddict['type'].lower() in ['dataset']:
-                hdf5Dialog._hdf5Datatset = ddict['name']
-                hdf5Dialog.accept()    
+            eventType = ddict['type'].lower()
+            isExpectedType = itemtype.lower() == "any" or \
+                    (eventType == 'dataset' and itemtype == "dataset") or \
+                    (eventType != 'dataset' and itemtype == "group")
+            if isExpectedType:
+                hdf5Dialog._hdf5ItemName = ddict['name']
+                hdf5Dialog.accept()
+
     fileView.sigHDF5WidgetSignal.connect(_hdf5WidgetSlot)
     hdf5Dialog.mainLayout.addWidget(fileView)
     hdf5Dialog.resize(400, 200)
     ret = hdf5Dialog.exec_()
     if not ret:
         return None
-    dataset = hdf5Dialog._hdf5Datatset
-    hdf5Dialog = None
+
+    hdf5Item = hdf5File[hdf5Dialog._hdf5ItemName]
+
     if value:
-        data = hdf5File[dataset].value
-        # is it dangerous to close the file?
+        if not hasattr(hdf5Item, "value"):
+            raise TypeError("Parameter value=True is not allowed for groups")
+        data = hdf5Item.value
         hdf5File.close()
     else:
-        data = hdf5File[dataset]
+        data = hdf5Item
+    hdf5Dialog = None
     return data
+
+
+def getDatasetDialog(filename=None, value=False, message=None):
+    return getHdf5ItemDialog(filename, value, message,
+                             itemtype="dataset")
+
+
+def getGroupDialog(filename=None, value=False, message=None):
+    return getHdf5ItemDialog(filename, value, message,
+                             itemtype="group")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
