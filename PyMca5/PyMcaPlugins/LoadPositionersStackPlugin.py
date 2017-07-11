@@ -29,6 +29,8 @@ Plugin to load positioner info from a CSV or HDF5 file.
 __authors__ = ["P. Knobel"]
 __license__ = "MIT"
 
+import csv
+from io import open
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.io.hdf5.HDF5Widget import getGroupDialog
@@ -36,12 +38,12 @@ from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 try:
     import h5py
-    HDF5 = True
 except ImportError:
-    HDF5 = False
-    # TODO!
+    h5py = None
 
 DEBUG = 0
+
+# TODO (handle .txt extension, and single scan .spec format)
 
 
 class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
@@ -78,6 +80,8 @@ class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
         if not (mcaIndex in [0, -1, 2]):
             raise IndexError("1D index must be 0, 2, or -1")
         filefilter = ['HDF5 Files (*.h5 *.nxs *.hdf *.hdf5)', 'CSV (*.csv)']
+        if h5py is None:
+            filefilter = filefilter[1:]
         filename, ffilter = PyMcaFileDialogs.\
                     getFileList(parent=None,
                         filetypelist=filefilter,
@@ -95,6 +99,7 @@ class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
             return
         filename = filename[0]
 
+        positioners = {}
         if ffilter.startswith('HDF5'):
             h5Group = getGroupDialog(filename)
             if h5Group is None:
@@ -106,8 +111,23 @@ class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
                     continue
                 positioners[dsname] = h5Group[dsname][()]
         else:
-            # CSV (TODO)
-            raise NotImplementedError("CSV TODO")
+            with open(filename, "rb") as csvfile:
+                has_header = csv.Sniffer().has_header(csvfile.read(1024))
+                if not has_header:
+                    raise IOError(
+                        "The CSV file does not appear to define motor names in header line")
+                csvfile.seek(0)
+                dialect = csv.Sniffer().sniff(csvfile.read(1024),
+                                              delimiters="\t;:|, ")
+                # (setting reasonable possible delimiters prevents corner cases in which
+                # a number is detected to be the delimiter)
+                csvfile.seek(0)
+                csvreader = csv.reader(csvfile, dialect)
+                motor_names = next(csvreader)
+                for row in csvreader:
+                    for i, value in enumerate(row):
+                        positioners[motor_names[i]] = float(value)
+
         self._stackWindow.setPositioners(positioners)
 
 
