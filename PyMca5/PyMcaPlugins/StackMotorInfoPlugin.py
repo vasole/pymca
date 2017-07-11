@@ -46,6 +46,12 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
         self.maskImageWidget = None
         self.motorPositionsWindow = None
 
+    def stackClosed(self):
+        if self.maskImageWidget is not None:
+            self.maskImageWidget.close()
+        if self.motorPositionsWindow is not None:
+            self.motorPositionsWindow.close()
+
     def _getStackOriginDelta(self):
         """Return (originX, originY) and (deltaX, deltaY)
         """
@@ -107,7 +113,7 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
         if self.motorPositionsWindow is None:
             legends = ["Stack"]
             motorValues = {}
-            self.motorPositionsWindow = MotorInfoWindow.MotorInfoDialog(None,
+            self.motorPositionsWindow = MotorInfoWindow.MotorInfoDialog(self.maskImageWidget,
                                                                         legends,
                                                                         motorValues)
             self.maskImageWidget.plot.sigPlotSignal.connect(self._updateMotors)
