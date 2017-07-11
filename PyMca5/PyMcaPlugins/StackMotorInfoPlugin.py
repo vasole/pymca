@@ -34,6 +34,7 @@ import numpy
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
+import PyMca5.PyMcaGui.PyMcaQt as qt
 from . import MotorInfoWindow
 
 
@@ -105,6 +106,14 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
             self.setStackSelectionMask(None)
 
     def _showWidgets(self):
+        if not self.getStackInfo().get("positioners", {}):
+            msg = qt.QMessageBox()
+            msg.setWindowTitle("No positioners")
+            msg.setIcon(qt.QMessageBox.Information)
+            msg.setInformativeText("No positioners are set for this stack.")
+            msg.raise_()
+            msg.exec_()
+            return
         if self.maskImageWidget is None:
             self.maskImageWidget = SilxMaskImageWidget.SilxMaskImageWidget()
             self.maskImageWidget.sigMaskImageWidget.connect(self.onWidgetSignal)
