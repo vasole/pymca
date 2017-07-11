@@ -108,7 +108,8 @@ class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
             scan = sf[0]
             labels = scan.alllabels()
             data = scan.data()
-
+            scan = None
+            sf = None
             for i, label in enumerate(labels):
                 positioners[label] = data[i, :]
 
