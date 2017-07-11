@@ -105,7 +105,6 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
             self.setStackSelectionMask(None)
 
     def _showWidgets(self):
-
         if self.maskImageWidget is None:
             self.maskImageWidget = SilxMaskImageWidget.SilxMaskImageWidget()
             self.maskImageWidget.sigMaskImageWidget.connect(self.onWidgetSignal)
@@ -113,9 +112,9 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
         if self.motorPositionsWindow is None:
             legends = ["Stack"]
             motorValues = {}
-            self.motorPositionsWindow = MotorInfoWindow.MotorInfoDialog(self.maskImageWidget,
+            self.motorPositionsWindow = MotorInfoWindow.MotorInfoDialog(None,
                                                                         legends,
-                                                                        motorValues)
+                                                                        [motorValues])
             self.maskImageWidget.plot.sigPlotSignal.connect(self._updateMotors)
 
         # Show

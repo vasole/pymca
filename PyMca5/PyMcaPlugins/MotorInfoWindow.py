@@ -256,6 +256,7 @@ class MotorInfoTable(TableWidget):
         if (dx != 0):
             self.horizontalHeader().fixComboPositions()
 
+
 class MotorInfoDialog(qt.QWidget):
     def __init__(self, parent, legends, motorValues):
         """
