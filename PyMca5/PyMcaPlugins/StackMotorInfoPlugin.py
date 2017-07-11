@@ -46,6 +46,7 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
         self.__methodKeys = ['Show motor positions']
         self.maskImageWidget = None
         self.motorPositionsWindow = None
+        self._first_update = True
 
     def stackClosed(self):
         if self.maskImageWidget is not None:
@@ -173,6 +174,21 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
         self.motorPositionsWindow.table.updateTable(
                 legList=["Stack"],
                 motList=[motorsValuesAtCursor])
+
+        if self._first_update:
+            self._select_motors()
+            self._first_update = False
+
+    def _select_motors(self):
+        """This methods sets the motors in the comboboxes when the widget
+        is first initialized."""
+        for i, combobox in enumerate(self.motorPositionsWindow.table.header.boxes):
+            # First item (index 0) in combobox is "", so first motor name is at index 1.
+            # First combobox in header.boxes is at index 1 (boxes[0] is None).
+            if i == 0:
+                continue
+            if i < combobox.count():
+                combobox.setCurrentIndex(i)
 
     #Methods implemented by the plugin
     def getMethods(self):
