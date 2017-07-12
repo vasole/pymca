@@ -436,7 +436,11 @@ class SilxMaskImageWidget(qt.QMainWindow):
 
     def __init__(self, parent=None):
         qt.QMainWindow.__init__(self, parent=parent)
-        self.setWindowTitle("PyMca - Image Selection Tool")
+        if parent is not None:
+            # behave as a widget
+            self.setWindowFlags(qt.Qt.Widget)
+        else:
+            self.setWindowTitle("PyMca - Image Selection Tool")
 
         centralWidget = qt.QWidget(self)
         layout = qt.QVBoxLayout(centralWidget)
