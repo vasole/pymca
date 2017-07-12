@@ -38,116 +38,58 @@ import PyMca5.PyMcaGui.PyMcaQt as qt
 from . import MotorInfoWindow
 
 
-class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
-    def __init__(self, stackWindow):
-        StackPluginBase.StackPluginBase.__init__(self, stackWindow)
-        self.methodDict = {'Show motor positions':
-                               [self._showWidgets, "Show motor positions in a popup window"], }
-        self.__methodKeys = ['Show motor positions']
-        self.maskImageWidget = None
-        self.motorPositionsWindow = None
+class PointInfoWindow(qt.QWidget):
+    """Display an image next to a MotorInfoWindow showing the values
+    from `info["positioners"]` associated with the data underneath
+    the mouse cursor."""
+    def __init__(self, parent=None, plugin=None):
+        super(PointInfoWindow, self).__init__(parent)
+        assert isinstance(plugin, StackPluginBase.StackPluginBase)
+        self.plugin = plugin
+
+        layout = qt.QVBoxLayout()
+        self.setLayout(layout)
+        self.maskImageWidget = SilxMaskImageWidget.SilxMaskImageWidget(self)
+        # self.maskImageWidget.setWindowFlags(qt.Qt.W)
+
+        self.motorPositionsWindow = MotorInfoWindow.MotorInfoDialog(self,
+                                                                    ["Stack"],
+                                                                    [{}])
+        self.motorPositionsWindow.setMaximumHeight(120)
+
+        self.maskImageWidget.sigMaskImageWidget.connect(self.onMaskImageWidgetSignal)
+        self.maskImageWidget.plot.sigPlotSignal.connect(self._updateMotors)
+
+        layout.addWidget(self.maskImageWidget)
+        layout.addWidget(self.motorPositionsWindow)
+
         self._first_update = True
 
-    def stackClosed(self):
-        if self.maskImageWidget is not None:
-            self.maskImageWidget.close()
-        if self.motorPositionsWindow is not None:
-            self.motorPositionsWindow.close()
-
-    def _getStackOriginDelta(self):
-        """Return (originX, originY) and (deltaX, deltaY)
-        """
-        info = self.getStackInfo()
-
-        xscale = info.get("xScale", [0.0, 1.0])
-        yscale = info.get("yScale", [0.0, 1.0])
-
-        origin = xscale[0], yscale[0]
-        delta = xscale[1], yscale[1]
-
-        return origin, delta
-
-    def stackUpdated(self):
-        if self.maskImageWidget is None:
-            return
-        if self.maskImageWidget.isHidden():
-            return
-        images, names = self.getStackROIImagesAndNames()
-
-        image_shape = list(self.getStackOriginalImage().shape)
-        origin, delta = self._getStackOriginDelta()
-
-        h = delta[1] * image_shape[0]
-        w = delta[0] * image_shape[1]
-
-        self.maskImageWidget.setImages(images, labels=names,
-                                       origin=origin, width=w, height=h)
-
-        self.maskImageWidget.setSelectionMask(self.getStackSelectionMask())
-
-    def selectionMaskUpdated(self):
-        if self.maskImageWidget is None:
-            return
-        mask = self.getStackSelectionMask()
-        if not self.maskImageWidget.isHidden():
-            self.maskImageWidget.setSelectionMask(mask)
-
-    def onWidgetSignal(self, ddict):
+    def onMaskImageWidgetSignal(self, ddict):
         """triggered by self.widget.sigMaskImageWidget"""
         if ddict['event'] == "selectionMaskChanged":
-            self.setStackSelectionMask(ddict["current"])
+            self.plugin.setStackSelectionMask(ddict["current"])
         elif ddict['event'] == "removeImageClicked":
-            self.removeImage(ddict['title'])
-        elif ddict['event'] in ["addImageClicked", "replaceImageClicked"]:
-            if ddict['event'] == "addImageClicked":
-                self.addImage(ddict['image'], ddict['title'])
-            elif ddict['event'] == "replaceImageClicked":
-                self.replaceImage(ddict['image'], ddict['title'])
+            self.plugin.removeImage(ddict['title'])
+        elif ddict['event'] == "addImageClicked":
+            self.plugin.addImage(ddict['image'], ddict['title'])
+        elif ddict['event'] == "replaceImageClicked":
+            self.plugin.replaceImage(ddict['image'], ddict['title'])
         elif ddict['event'] == "resetSelection":
-            self.setStackSelectionMask(None)
-
-    def _showWidgets(self):
-        if not self.getStackInfo().get("positioners", {}):
-            msg = qt.QMessageBox()
-            msg.setWindowTitle("No positioners")
-            msg.setIcon(qt.QMessageBox.Information)
-            msg.setInformativeText("No positioners are set for this stack.")
-            msg.raise_()
-            msg.exec_()
-            return
-        if self.maskImageWidget is None:
-            self.maskImageWidget = SilxMaskImageWidget.SilxMaskImageWidget()
-            self.maskImageWidget.sigMaskImageWidget.connect(self.onWidgetSignal)
-
-        if self.motorPositionsWindow is None:
-            legends = ["Stack"]
-            motorValues = {}
-            self.motorPositionsWindow = MotorInfoWindow.MotorInfoDialog(None,
-                                                                        legends,
-                                                                        [motorValues])
-            self.maskImageWidget.plot.sigPlotSignal.connect(self._updateMotors)
-
-        # Show
-        self.motorPositionsWindow.show()
-        self.motorPositionsWindow.raise_()
-
-        self.maskImageWidget.show()
-        self.maskImageWidget.raise_()
-
-        self.stackUpdated()    # fixme: is this necessary?
+            self.plugin.setStackSelectionMask(None)
 
     def _updateMotors(self, ddict):
         if not ddict["event"] == "mouseMoved":
             return
-        nRows, nCols = self.getStackOriginalImage().shape
+        nRows, nCols = self.plugin.getStackOriginalImage().shape
         r, c = SilxMaskImageWidget.convertToRowAndColumn(
                 ddict["x"], ddict["y"],
                 shape=(nRows, nCols),
-                xScale=self.getStackInfo().get("xScale"),
-                yScale=self.getStackInfo().get("yScale"),
+                xScale=self.plugin.getStackInfo().get("xScale"),
+                yScale=self.plugin.getStackInfo().get("yScale"),
                 safe=True)
 
-        positioners = self.getStackInfo().get("positioners", {})
+        positioners = self.plugin.getStackInfo().get("positioners", {})
         motorsValuesAtCursor = {}
         for motorName, motorValues in positioners.items():
             if numpy.isscalar(motorValues) or (hasattr(motorValues, "ndim") and
@@ -189,6 +131,73 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
                 continue
             if i < combobox.count():
                 combobox.setCurrentIndex(i)
+
+
+class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
+    def __init__(self, stackWindow):
+        StackPluginBase.StackPluginBase.__init__(self, stackWindow)
+        self.methodDict = {'Show motor positions':
+                               [self._showWidgets, "Show motor positions in a popup window"], }
+        self.__methodKeys = ['Show motor positions']
+        self.widget = None
+
+    def stackClosed(self):
+        if self.widget is not None:
+            self.widget.close()
+
+    def _getStackOriginDelta(self):
+        """Return (originX, originY) and (deltaX, deltaY)
+        """
+        info = self.getStackInfo()
+
+        xscale = info.get("xScale", [0.0, 1.0])
+        yscale = info.get("yScale", [0.0, 1.0])
+
+        origin = xscale[0], yscale[0]
+        delta = xscale[1], yscale[1]
+
+        return origin, delta
+
+    def stackUpdated(self):
+        if self.widget is None:
+            return
+        images, names = self.getStackROIImagesAndNames()
+
+        image_shape = list(self.getStackOriginalImage().shape)
+        origin, delta = self._getStackOriginDelta()
+
+        h = delta[1] * image_shape[0]
+        w = delta[0] * image_shape[1]
+
+        self.widget.maskImageWidget.setImages(images, labels=names,
+                                              origin=origin, width=w, height=h)
+
+        self.widget.maskImageWidget.setSelectionMask(self.getStackSelectionMask())
+
+    def selectionMaskUpdated(self):
+        if self.widget is None:
+            return
+        mask = self.getStackSelectionMask()
+        if not self.widget.maskImageWidget.isHidden():
+            self.widget.maskImageWidget.setSelectionMask(mask)
+
+    def _showWidgets(self):
+        if not self.getStackInfo().get("positioners", {}):
+            msg = qt.QMessageBox()
+            msg.setWindowTitle("No positioners")
+            msg.setIcon(qt.QMessageBox.Information)
+            msg.setInformativeText("No positioners are set for this stack.")
+            msg.raise_()
+            msg.exec_()
+            return
+        if self.widget is None:
+            self.widget = PointInfoWindow(plugin=self)
+
+        # Show
+        self.widget.show()
+        self.widget.raise_()
+
+        self.stackUpdated()    # fixme: is this necessary?
 
     #Methods implemented by the plugin
     def getMethods(self):
