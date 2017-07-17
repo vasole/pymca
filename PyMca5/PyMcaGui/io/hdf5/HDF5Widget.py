@@ -574,6 +574,7 @@ class FileView(qt.QTreeView):
                         break
         self.doItemsLayout()
 
+
 class HDF5Widget(FileView):
     def __init__(self, model, parent=None):
         FileView.__init__(self, model, parent)
@@ -662,10 +663,96 @@ class HDF5Widget(FileView):
         return entryList
 
 
+class Hdf5SelectionDialog(qt.QDialog):
+    """Dialog widget to select a HDF5 item in a file.
+
+    It is composed of a :class:`HDF5Widget` tree view,
+    and two buttons Ok and Cancel.
+
+    """
+    # fixme: file must be closed
+    def __init__(self, parent=None,
+                 filename="", message="", itemtype="any"):
+        """
+
+        :param filename: Name of the HDF5 file
+        :param value: If True returns dataset value instead of just the dataset.
+            This must be False if itemtype is not "dataset".
+        :param str itemtype: "dataset" or "group" or "any" (default)
+        """
+        if itemtype not in ["any", "dataset", "group"]:
+            raise AttributeError(
+                    "Invalid itemtype %s, should be 'group', 'dataset' or 'any'" % itemtype)
+        self.itemtype = itemtype
+
+        qt.QDialog.__init__(self, parent)
+
+        self.setWindowTitle(message)
+        mainLayout = qt.QVBoxLayout(self)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
+        mainLayout.setSpacing(0)
+        self.fileModel = FileModel()
+        self.fileView = HDF5Widget(self.fileModel)
+        self.fileModel.openFile(filename)
+
+        self.fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
+
+        mainLayout.addWidget(self.fileView)
+
+        buttonContainer = qt.QWidget(self)
+        buttonContainerLayout = qt.QHBoxLayout(buttonContainer)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
+        mainLayout.setSpacing(0)
+
+        self.okb = qt.QPushButton("OK", buttonContainer)
+        cancelb = qt.QPushButton("Cancel", buttonContainer)
+
+        self.okb.clicked.connect(self.onOk)
+        self.okb.setEnabled(False)    # requires item to be clicked or activated
+        cancelb.clicked.connect(self.reject)
+
+        buttonContainerLayout.addWidget(self.okb)
+        buttonContainerLayout.addWidget(cancelb)
+
+        mainLayout.addWidget(buttonContainer)
+
+        self.resize(400, 200)
+        self.selectedItemUri = None
+        """URI of selected HDF5 item"""
+
+        self._lastEvent = None
+        """Dictionary with info about latest event"""
+
+    def _hdf5WidgetSlot(self, ddict):
+        self._lastEvent = ddict
+        eventType = ddict['type'].lower()
+        isExpectedType = self.itemtype.lower() == "any" or \
+                (eventType == 'dataset' and self.itemtype == "dataset") or \
+                (eventType != 'dataset' and self.itemtype == "group")
+
+        if isExpectedType:
+            self.okb.setEnabled(True)
+        else:
+            self.okb.setEnabled(False)
+
+        if ddict['event'] == "itemDoubleClicked":
+            if isExpectedType:
+                self.selectedItemUri = ddict['file'] + "::" + ddict['name']
+                self.accept()
+
+    def onOk(self):
+        self.selectedItemUri = self._lastEvent['file'] + "::" + self._lastEvent['name']
+        self.accept()
+
+
 def getHdf5ItemDialog(filename=None, value=False, message=None, itemtype=None):
     """
     Simple dialog to first select a HDF5 file and then a dataset or a group
     via a double click on the tree.
+
+    .. warning::
+
+        The HDF5 is opened, but not closed.
 
     :param filename: Name of the HDF5 file
     :param value: If True returns dataset value instead of just the dataset.
@@ -695,38 +782,18 @@ def _getHdf5ItemFromFilename(filename, message=None, value=False,
                              itemtype=None):
     if itemtype is None:
         itemtype = "any"
-    if itemtype not in ["any", "dataset", "group"]:
-        raise AttributeError(
-                "Invalid itemtype %s, should be 'group', 'dataset' or 'any'" % itemtype)
     if message is None:
         message = 'Select your item by a double click'
-    hdf5Dialog = qt.QDialog()
-    hdf5Dialog.setWindowTitle(message)
-    hdf5Dialog.mainLayout = qt.QVBoxLayout(hdf5Dialog)
-    hdf5Dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
-    hdf5Dialog.mainLayout.setSpacing(0)
-    fileModel = FileModel()
-    fileView = HDF5Widget(fileModel)
-    hdf5File = fileModel.openFile(filename, "r")
 
-    def _hdf5WidgetSlot(ddict):
-        if ddict['event'] == "itemDoubleClicked":
-            eventType = ddict['type'].lower()
-            isExpectedType = itemtype.lower() == "any" or \
-                    (eventType == 'dataset' and itemtype == "dataset") or \
-                    (eventType != 'dataset' and itemtype == "group")
-            if isExpectedType:
-                hdf5Dialog._hdf5ItemName = ddict['name']
-                hdf5Dialog.accept()
-
-    fileView.sigHDF5WidgetSignal.connect(_hdf5WidgetSlot)
-    hdf5Dialog.mainLayout.addWidget(fileView)
-    hdf5Dialog.resize(400, 200)
+    hdf5Dialog = Hdf5SelectionDialog(None, filename, message, itemtype)
     ret = hdf5Dialog.exec_()
     if not ret:
         return None
 
-    hdf5Item = hdf5File[hdf5Dialog._hdf5ItemName]
+    selectedHdf5Uri = hdf5Dialog.selectedItemUri
+
+    hdf5File = h5py.File(filename)     # fixme: always close this
+    hdf5Item = hdf5File[selectedHdf5Uri.split("::")[-1]]
 
     if value:
         if not hasattr(hdf5Item, "value"):
@@ -744,8 +811,8 @@ def getDatasetDialog(filename=None, value=False, message=None):
                              itemtype="dataset")
 
 
-def getGroupDialog(filename=None, value=False, message=None):
-    return getHdf5ItemDialog(filename, value, message,
+def getGroupDialog(filename=None, message=None):
+    return getHdf5ItemDialog(filename, False, message,
                              itemtype="group")
 
 
