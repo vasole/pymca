@@ -791,7 +791,7 @@ def _getHdf5ItemFromFilename(filename, message=None, value=False,
 
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
 
-    hdf5File = h5py.File(filename)     # fixme: always close this
+    hdf5File = h5py.File(filename)
     hdf5Item = hdf5File[selectedHdf5Uri.split("::")[-1]]
 
     if value:
@@ -800,12 +800,16 @@ def _getHdf5ItemFromFilename(filename, message=None, value=False,
         data = hdf5Item.value
         hdf5File.close()
     else:
+        # Fixme: if this happens, file must be closed in a convoluted way
+        # data.file.close()
         data = hdf5Item
     hdf5Dialog = None
     return data
 
 
 def getDatasetDialog(filename=None, value=False, message=None):
+    # as far as I can tell, this is always used with value=True
+    # so the file is always closed
     return getHdf5ItemDialog(filename, value, message,
                              itemtype="dataset")
 
