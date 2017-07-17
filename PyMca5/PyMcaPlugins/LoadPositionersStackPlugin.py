@@ -31,7 +31,7 @@ __license__ = "MIT"
 
 
 from PyMca5 import StackPluginBase
-from PyMca5.PyMcaGui.io.hdf5.HDF5Widget import getGroupDialog
+from PyMca5.PyMcaGui.io.hdf5.HDF5Widget import getGroupNameDialog
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaIO import specfilewrapper
 
@@ -94,15 +94,17 @@ class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
 
         positioners = {}
         if ffilter.startswith('HDF5'):
-            h5Group = getGroupDialog(filename)
-            if h5Group is None:
+            h5GroupName = getGroupNameDialog(filename)
+            if h5GroupName is None:
                 return
-            positioners = {}
-            for dsname in h5Group:
-                # links and subgroups just ignored for the time being
-                if not isinstance(h5Group[dsname], h5py.Dataset):
-                    continue
-                positioners[dsname] = h5Group[dsname][()]
+            with h5py.File(filename) as h5f:
+                h5Group = h5f[h5GroupName]
+                positioners = {}
+                for dsname in h5Group:
+                    # links and subgroups just ignored for the time being
+                    if not isinstance(h5Group[dsname], h5py.Dataset):
+                        continue
+                    positioners[dsname] = h5Group[dsname][()]
         else:
             sf = specfilewrapper.Specfile(filename)
             scan = sf[0]

@@ -748,9 +748,6 @@ class Hdf5SelectionDialog(qt.QDialog):
         return ret
 
 
-
-
-
 def getHdf5ItemDialog(filename=None, value=False, message=None, itemtype=None):
     """
     Simple dialog to first select a HDF5 file and then a dataset or a group
@@ -813,9 +810,13 @@ def getDatasetDialog(filename=None, value=False, message=None):
                              itemtype="dataset")
 
 
-def getGroupDialog(filename=None, message=None):
-    return getHdf5ItemDialog(filename, False, message,
-                             itemtype="group")
+def getGroupNameDialog(filename=None, message=None):
+    group = getHdf5ItemDialog(filename, False, message,
+                              itemtype="group")
+    name = group.name
+    # we opened the file, we need to close it
+    group.file.close()
+    return name
 
 
 if __name__ == "__main__":
