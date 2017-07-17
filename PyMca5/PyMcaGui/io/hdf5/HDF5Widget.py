@@ -668,9 +668,7 @@ class Hdf5SelectionDialog(qt.QDialog):
 
     It is composed of a :class:`HDF5Widget` tree view,
     and two buttons Ok and Cancel.
-
     """
-    # fixme: file must be closed
     def __init__(self, parent=None,
                  filename="", message="", itemtype="any"):
         """
@@ -693,7 +691,7 @@ class Hdf5SelectionDialog(qt.QDialog):
         mainLayout.setSpacing(0)
         self.fileModel = FileModel()
         self.fileView = HDF5Widget(self.fileModel)
-        self.fileModel.openFile(filename)
+        self.hdf5File = self.fileModel.openFile(filename)
 
         self.fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
 
@@ -744,15 +742,19 @@ class Hdf5SelectionDialog(qt.QDialog):
         self.selectedItemUri = self._lastEvent['file'] + "::" + self._lastEvent['name']
         self.accept()
 
+    def exec_(self):
+        ret = qt.QDialog.exec_(self)
+        self.hdf5File.close()
+        return ret
+
+
+
+
 
 def getHdf5ItemDialog(filename=None, value=False, message=None, itemtype=None):
     """
     Simple dialog to first select a HDF5 file and then a dataset or a group
     via a double click on the tree.
-
-    .. warning::
-
-        The HDF5 is opened, but not closed.
 
     :param filename: Name of the HDF5 file
     :param value: If True returns dataset value instead of just the dataset.
