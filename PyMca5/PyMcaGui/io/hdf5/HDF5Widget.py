@@ -806,6 +806,22 @@ def getDatasetValueDialog(filename=None, message=None):
     return data
 
 
+def getDatasetDialog(filename=None, value=False, message=None):
+    # function kept for backward compatibility, in case someone
+    # uses it with value=False outside PyMca5
+    if value:
+        return getDatasetValueDialog(filename, message)
+
+    hdf5Dialog = Hdf5SelectionDialog(None, filename, message,
+                                     "dataset")
+    ret = hdf5Dialog.exec_()
+    if not ret:
+        return None
+    selectedHdf5Uri = hdf5Dialog.selectedItemUri
+    hdf5File = h5py.File(filename)
+    return hdf5File[selectedHdf5Uri.split("::")[-1]]
+
+
 def getGroupNameDialog(filename=None, message=None):
     """Open a dialog to select a group in a HDF5 file.
     Return the name of the group.
