@@ -34,6 +34,7 @@ QTVERSION = qt.qVersion()
 from PyMca5.PyMcaGui import PyMca_Icons as icons
 from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
 DEBUG = 0
 
@@ -139,7 +140,7 @@ class QSourceSelector(qt.QWidget):
                 specsession=False
         self.openFile(sourcename, specsession=specsession)
 
-    def openFile(self, filename=None,justloaded=None, specsession = False):
+    def openFile(self, filename=None, justloaded=None, specsession = False):
         if DEBUG:
             print("openfile = ",filename)
         staticDialog = False
@@ -151,67 +152,18 @@ class QSourceSelector(qt.QWidget):
                     if not os.path.exists(self.lastInputDir):
                         self.lastInputDir = None
                 wdir = self.lastInputDir
-                if wdir is None:
-                    wdir = os.getcwd()
-                if (sys.version < '3.0') and PyMcaDirs.nativeFileDialogs:
-                    filetypes = self.fileTypeList[0]
-                    for filetype in self.fileTypeList[1:]:
-                        filetypes += ";;" + filetype
-                    try:
-                        # API 1
-                        filelist = qt.QFileDialog.getOpenFileNames(self,
-                                "Open a new source file",
-                                wdir,
-                                filetypes,
-                                self.lastFileFilter)
-                    except:
-                        # API 2
-                        filelist, self.lastFileFilter =\
-                                qt.QFileDialog.getOpenFileNamesAndFilter(\
-                                self,
-                                "Open a new source file",
-                                wdir,
-                                filetypes,
-                                self.lastFileFilter)
-                    if not len(filelist):
-                        return
-                    elif not len(filelist[0]):
-                        return
-                    staticDialog = True
-                else:
-                    fdialog = qt.QFileDialog(self)
-                    fdialog.setModal(True)
-                    fdialog.setWindowTitle("Open a new source file")
-                    if hasattr(qt, "QStringList"):
-                        strlist = qt.QStringList()
-                    else:
-                        strlist = []
-                    for filetype in self.fileTypeList:
-                        strlist.append(filetype)
-                    if QTVERSION < '5.0.0':
-                        fdialog.setFilters(strlist)
-                        fdialog.selectFilter(self.lastFileFilter)
-                    else:
-                        fdialog.setNameFilters(strlist)
-                        fdialog.selectNameFilter(self.lastFileFilter)                        
-                    fdialog.setFileMode(fdialog.ExistingFiles)
-                    fdialog.setDirectory(wdir)
-                    ret = fdialog.exec_()
-                    if ret == qt.QDialog.Accepted:
-                        filelist = fdialog.selectedFiles()
-                        if QTVERSION < '5.0.0':
-                            self.lastFileFilter = qt.safe_str(\
-                                                    fdialog.selectedFilter())
-                        else:
-                            self.lastFileFilter = qt.safe_str(\
-                                                    fdialog.selectedNameFilter())
-                        fdialog.close()
-                        del fdialog
-                    else:
-                        fdialog.close()
-                        del fdialog
-                        return
-                #filelist.sort()
+                filelist, fileFilter =  PyMcaFileDialogs.getFileList(self,
+                                                 filetypelist=self.fileTypeList,
+                                                 message="Open a new source file",
+                                                 currentdir=wdir,
+                                                 mode="OPEN",
+                                                 getfilter=True,
+                                                 single=False,
+                                                 currentfilter=self.lastFileFilter)
+                if not len(filelist):
+                    return
+                if not len(filelist[0]):
+                    return
                 filename=[]
                 for f in filelist:
                     filename.append(qt.safe_str(f))
@@ -220,15 +172,7 @@ class QSourceSelector(qt.QWidget):
                 if len(filename):
                     self.lastInputDir  = os.path.dirname(filename[0])
                     PyMcaDirs.inputDir = os.path.dirname(filename[0])
-                    if staticDialog:
-                        if len(filename[0]) > 3:
-                            #figure out the selected filter
-                            extension = filename[0][-3:]
-                            self.lastFileFilter = self.fileTypeList[-1]
-                            for fileFilter in self.fileTypeList:
-                                if extension == fileFilter[-4:-1]:
-                                    self.lastFileFilter = fileFilter
-                                    break
+                    self.lastFileFilter = fileFilter
                 justloaded = True
             if justloaded:
                 if type(filename) != type([]):
@@ -236,7 +180,6 @@ class QSourceSelector(qt.QWidget):
             if not os.path.exists(filename[0]):
                 if '%' not in filename[0]:
                     raise IOError("File %s does not exist" % filename[0])
-
             #check if it is a stack
             if len(filename) > 1:
                 key = "STACK from %s to %s" % (filename[0], filename[-1])
