@@ -63,6 +63,7 @@ from PyMca5 import StackPluginBase
 from PyMca5.PyMca import PyMcaFileDialogs
 from PyMca5.PyMca import EdfFile
 from PyMca5.PyMca import specfilewrapper
+from PyMca5.PyMca import HDF5Widget
 try:
     import h5py
     HDF5 = True
