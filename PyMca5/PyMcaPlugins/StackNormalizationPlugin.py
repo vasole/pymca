@@ -155,8 +155,9 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
             return
         filename = filenamelist[0]
         if ffilter.startswith('HDF5'):
-            data = HDF5Widget.getDatasetDialog(filename, value=True,
-                            message='Select your data set by a double click')
+            data = HDF5Widget.getDatasetValueDialog(
+                    filename,
+                    message='Select your data set by a double click')
         elif ffilter.startswith("EDF"):
             edf = EdfFile.EdfFile(filename, "rb")
             if edf.GetNumImages() > 1:

@@ -668,9 +668,15 @@ class Hdf5SelectionDialog(qt.QDialog):
 
     It is composed of a :class:`HDF5Widget` tree view,
     and two buttons Ok and Cancel.
-    """
+
+    When the dialog's execution is ended with a click on the OK button,
+    or with a double-click on an item of the proper type, the URI of
+    the selected item will be available in attribute :attr:`selectedItemUri`.
+
+    If the user clicked cancel or closed the dialog
+    without selecting an item, :attr:`selectedItemUri` will be None."""
     def __init__(self, parent=None,
-                 filename="", message="", itemtype="any"):
+                 filename=None, message=None, itemtype="any"):
         """
 
         :param filename: Name of the HDF5 file
@@ -678,10 +684,17 @@ class Hdf5SelectionDialog(qt.QDialog):
             This must be False if itemtype is not "dataset".
         :param str itemtype: "dataset" or "group" or "any" (default)
         """
-        if itemtype not in ["any", "dataset", "group"]:
+        message = message if message is not None else 'Select your item'
+        self.itemtype = itemtype if itemtype is not None else "any"
+
+        if self.itemtype not in ["any", "dataset", "group"]:
             raise AttributeError(
                     "Invalid itemtype %s, should be 'group', 'dataset' or 'any'" % itemtype)
-        self.itemtype = itemtype
+
+        if filename is None:
+            filename = _getFilenameDialog()
+        if filename is None:
+            raise IOError("No filename specified")
 
         qt.QDialog.__init__(self, parent)
 
@@ -716,7 +729,8 @@ class Hdf5SelectionDialog(qt.QDialog):
 
         self.resize(400, 200)
         self.selectedItemUri = None
-        """URI of selected HDF5 item"""
+        """URI of selected HDF5 item, with format 'filename::item_name'
+        """
 
         self._lastEvent = None
         """Dictionary with info about latest event"""
@@ -748,79 +762,68 @@ class Hdf5SelectionDialog(qt.QDialog):
         return ret
 
 
-def getHdf5ItemDialog(filename=None, value=False, message=None, itemtype=None):
+def _getFilenameDialog():
+    """Open a dialog to select a file in a filesystem tree view.
+    Return the selected filename."""
+    from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+    fileTypeList = ['HDF5 Files (*.h5 *.nxs *.hdf)',
+                    'HDF5 Files (*)']
+    message = "Open HDF5 file"
+    filenamelist, ffilter = PyMcaFileDialogs.getFileList(parent=None,
+                                filetypelist=fileTypeList,
+                                message=message,
+                                getfilter=True,
+                                single=True,
+                                currentfilter=None)
+    if len(filenamelist) < 1:
+        return None
+    return filenamelist[0]
+
+
+def getDatasetValueDialog(filename=None, message=None):
+    """Open a dialog to select a dataset in a HDF5 file.
+    Return the value of the dataset.
+
+    If the dataset selection was cancelled, None is returned.
+
+    :param str filename: HDF5 file path. If None, a file dialog
+        is used to select the file.
+    :param str message: Message used as window title for dialog
+    :return: HDF5 dataset as numpy array, or None
     """
-    Simple dialog to first select a HDF5 file and then a dataset or a group
-    via a double click on the tree.
-
-    :param filename: Name of the HDF5 file
-    :param value: If True returns dataset value instead of just the dataset.
-        This must be False if itemtype is not "dataset".
-    :param str itemtype: "dataset" or "group" or "any" (default)
-    :return: A h5py Group or Dataset, or None
-    """
-    if filename is None:
-        from PyMca5.PyMca import PyMcaFileDialogs
-        fileTypeList = ['HDF5 Files (*.h5 *.nxs *.hdf)',
-                        'HDF5 Files (*)']
-        message = "Open HDF5 file"
-        filenamelist, ffilter = PyMcaFileDialogs.getFileList(parent=None,
-                                    filetypelist=fileTypeList,
-                                    message=message,
-                                    getfilter=True,
-                                    single=True,
-                                    currentfilter=None)
-        if len(filenamelist) < 1:
-            return None
-        filename = filenamelist[0]
-
-    return _getHdf5ItemFromFilename(filename, message, value, itemtype)
-
-
-def _getHdf5ItemFromFilename(filename, message=None, value=False,
-                             itemtype=None):
-    if itemtype is None:
-        itemtype = "any"
-    if message is None:
-        message = 'Select your item by a double click'
-
-    hdf5Dialog = Hdf5SelectionDialog(None, filename, message, itemtype)
+    hdf5Dialog = Hdf5SelectionDialog(None, filename, message,
+                                     "dataset")
     ret = hdf5Dialog.exec_()
     if not ret:
         return None
 
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
 
-    hdf5File = h5py.File(filename)
-    hdf5Item = hdf5File[selectedHdf5Uri.split("::")[-1]]
-
-    if value:
-        if not hasattr(hdf5Item, "value"):
-            raise TypeError("Parameter value=True is not allowed for groups")
+    with h5py.File(filename) as hdf5File:
+        hdf5Item = hdf5File[selectedHdf5Uri.split("::")[-1]]
         data = hdf5Item.value
-        hdf5File.close()
-    else:
-        # Fixme: if this happens, file must be closed in a convoluted way
-        # data.file.close()
-        data = hdf5Item
-    hdf5Dialog = None
+
     return data
 
 
-def getDatasetDialog(filename=None, value=False, message=None):
-    # as far as I can tell, this is always used with value=True
-    # so the file is always closed
-    return getHdf5ItemDialog(filename, value, message,
-                             itemtype="dataset")
-
-
 def getGroupNameDialog(filename=None, message=None):
-    group = getHdf5ItemDialog(filename, False, message,
-                              itemtype="group")
-    name = group.name
-    # we opened the file, we need to close it
-    group.file.close()
-    return name
+    """Open a dialog to select a group in a HDF5 file.
+    Return the name of the group.
+
+    :param str filename: HDF5 file path. If None, a file dialog
+        is used to select the file.
+    :param str message: Message used as window title for dialog
+    :return: HDF5 group name
+    """
+    hdf5Dialog = Hdf5SelectionDialog(None, filename, message,
+                                     "group")
+    ret = hdf5Dialog.exec_()
+    if not ret:
+        return None
+
+    selectedHdf5Uri = hdf5Dialog.selectedItemUri
+
+    return selectedHdf5Uri.split("::")[-1]
 
 
 if __name__ == "__main__":
