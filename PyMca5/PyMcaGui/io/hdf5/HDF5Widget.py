@@ -614,7 +614,7 @@ class HDF5Widget(FileView):
                 self.emitSignal(event, modelIndex)
 
     def itemActivated(self, modelIndex):
-        event ="itemActivated"
+        event = "itemActivated"
         self.emitSignal(event, modelIndex)
 
     def itemClicked(self, modelIndex):
@@ -625,10 +625,16 @@ class HDF5Widget(FileView):
         event ="itemDoubleClicked"
         self.emitSignal(event, modelIndex)
 
+    def selectionChanged(self, selected, deselected):
+        super(HDF5Widget, self).selectionChanged(selected, deselected)
+        event = "itemSelectionChanged"
+        modelIndex = self.currentIndex()
+        self.emitSignal(event, modelIndex)
+
     def emitSignal(self, event, modelIndex):
         if self.model() is None:
             return
-        item  = self.model().getProxyFromIndex(modelIndex)
+        item = self.model().getProxyFromIndex(modelIndex)
         if QVERSION > "5":
             # prevent crash clicking on empty space
             if not hasattr(item, "file"):
