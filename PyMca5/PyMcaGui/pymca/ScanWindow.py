@@ -1550,8 +1550,11 @@ class ScanWindow(PlotWindow.PlotWindow):
         # this does not work if I set the svgData before
         svgRenderer.setViewBox(body)
         svgRenderer._viewBox = body
+        if not sys.version.startswith("2"):
+            svgData = svgData.encode(encoding="utf-8",
+                                     errors="replace")
         svgRenderer._svgRawData = svgData
-        svgRenderer._svgRendererData = qt.QXmlStreamReader(svgData.encode())
+        svgRenderer._svgRendererData = qt.QXmlStreamReader(svgData)
 
         if not svgRenderer.load(svgRenderer._svgRendererData):
             raise RuntimeError("Cannot interpret svg data")
