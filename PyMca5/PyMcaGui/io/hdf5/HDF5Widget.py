@@ -244,6 +244,8 @@ class H5NodeProxy(object):
     def type(self):
         return self._type
 
+
+
     @property
     def shape(self):
         if type(self._shape) == type(""):
@@ -572,6 +574,7 @@ class FileView(qt.QTreeView):
                         break
         self.doItemsLayout()
 
+
 class HDF5Widget(FileView):
     def __init__(self, model, parent=None):
         FileView.__init__(self, model, parent)
@@ -611,7 +614,7 @@ class HDF5Widget(FileView):
                 self.emitSignal(event, modelIndex)
 
     def itemActivated(self, modelIndex):
-        event ="itemActivated"
+        event = "itemActivated"
         self.emitSignal(event, modelIndex)
 
     def itemClicked(self, modelIndex):
@@ -622,10 +625,16 @@ class HDF5Widget(FileView):
         event ="itemDoubleClicked"
         self.emitSignal(event, modelIndex)
 
+    def selectionChanged(self, selected, deselected):
+        super(HDF5Widget, self).selectionChanged(selected, deselected)
+        event = "itemSelectionChanged"
+        modelIndex = self.currentIndex()
+        self.emitSignal(event, modelIndex)
+
     def emitSignal(self, event, modelIndex):
         if self.model() is None:
             return
-        item  = self.model().getProxyFromIndex(modelIndex)
+        item = self.model().getProxyFromIndex(modelIndex)
         if QVERSION > "5":
             # prevent crash clicking on empty space
             if not hasattr(item, "file"):
@@ -659,57 +668,185 @@ class HDF5Widget(FileView):
                 entryList.append((entry, item.file.filename))
         return entryList
 
-def getDatasetDialog(filename=None, value=False, message=None):
-    """
-    Simple dialog to select a dataset via a double click on the tree
 
-    :param filename: Name of the HDF5 file
-    :param value: If True returns dataset value instead of just the dataset
-    """
-    if filename is None:
-        from PyMca5.PyMca import PyMcaFileDialogs
-        fileTypeList = ['HDF5 Files (*.h5 *.nxs *.hdf)',
-                        'HDF5 Files (*)']
-        message = "Open HDF5 file"
-        filenamelist, ffilter = PyMcaFileDialogs.getFileList(parent=None,
-                                    filetypelist=fileTypeList,
-                                    message=message,
-                                    getfilter=True,
-                                    single=True,
-                                    currentfilter=None)
-        if len(filenamelist) < 1:
-            return None
-        filename = filenamelist[0]
-    if message is None:
-        message = 'Select your item by a double click'
-    hdf5Dialog = qt.QDialog()
-    hdf5Dialog.setWindowTitle(message)
-    hdf5Dialog.mainLayout = qt.QVBoxLayout(hdf5Dialog)
-    hdf5Dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
-    hdf5Dialog.mainLayout.setSpacing(0)
-    fileModel = FileModel()
-    fileView = HDF5Widget(fileModel)
-    hdf5File = fileModel.openFile(filename, "r")
-    def _hdf5WidgetSlot(ddict):
+class Hdf5SelectionDialog(qt.QDialog):
+    """Dialog widget to select a HDF5 item in a file.
+
+    It is composed of a :class:`HDF5Widget` tree view,
+    and two buttons Ok and Cancel.
+
+    When the dialog's execution is ended with a click on the OK button,
+    or with a double-click on an item of the proper type, the URI of
+    the selected item will be available in attribute :attr:`selectedItemUri`.
+
+    If the user clicked cancel or closed the dialog
+    without selecting an item, :attr:`selectedItemUri` will be None."""
+    def __init__(self, parent=None,
+                 filename=None, message=None, itemtype="any"):
+        """
+
+        :param filename: Name of the HDF5 file
+        :param value: If True returns dataset value instead of just the dataset.
+            This must be False if itemtype is not "dataset".
+        :param str itemtype: "dataset" or "group" or "any" (default)
+        """
+        message = message if message is not None else 'Select your item'
+        self.itemtype = itemtype if itemtype is not None else "any"
+
+        if self.itemtype not in ["any", "dataset", "group"]:
+            raise AttributeError(
+                    "Invalid itemtype %s, should be 'group', 'dataset' or 'any'" % itemtype)
+
+        if filename is None:
+            filename = _getFilenameDialog()
+        if filename is None:
+            raise IOError("No filename specified")
+
+        qt.QDialog.__init__(self, parent)
+
+        self.setWindowTitle(message)
+        mainLayout = qt.QVBoxLayout(self)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
+        mainLayout.setSpacing(0)
+        self.fileModel = FileModel()
+        self.fileView = HDF5Widget(self.fileModel)
+        self.hdf5File = self.fileModel.openFile(filename)
+
+        self.fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
+
+        mainLayout.addWidget(self.fileView)
+
+        buttonContainer = qt.QWidget(self)
+        buttonContainerLayout = qt.QHBoxLayout(buttonContainer)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
+        mainLayout.setSpacing(0)
+
+        self.okb = qt.QPushButton("OK", buttonContainer)
+        cancelb = qt.QPushButton("Cancel", buttonContainer)
+
+        self.okb.clicked.connect(self.onOk)
+        self.okb.setEnabled(False)    # requires item to be clicked or activated
+        cancelb.clicked.connect(self.reject)
+
+        buttonContainerLayout.addWidget(self.okb)
+        buttonContainerLayout.addWidget(cancelb)
+
+        mainLayout.addWidget(buttonContainer)
+
+        self.resize(400, 200)
+        self.selectedItemUri = None
+        """URI of selected HDF5 item, with format 'filename::item_name'
+        """
+
+        self._lastEvent = None
+        """Dictionary with info about latest event"""
+
+    def _hdf5WidgetSlot(self, ddict):
+        self._lastEvent = ddict
+        eventType = ddict['type'].lower()
+        isExpectedType = self.itemtype.lower() == "any" or \
+                (eventType == 'dataset' and self.itemtype == "dataset") or \
+                (eventType != 'dataset' and self.itemtype == "group")
+
+        if isExpectedType:
+            self.okb.setEnabled(True)
+        else:
+            self.okb.setEnabled(False)
+
         if ddict['event'] == "itemDoubleClicked":
-            if ddict['type'].lower() in ['dataset']:
-                hdf5Dialog._hdf5Datatset = ddict['name']
-                hdf5Dialog.accept()    
-    fileView.sigHDF5WidgetSignal.connect(_hdf5WidgetSlot)
-    hdf5Dialog.mainLayout.addWidget(fileView)
-    hdf5Dialog.resize(400, 200)
+            if isExpectedType:
+                self.selectedItemUri = ddict['file'] + "::" + ddict['name']
+                self.accept()
+
+    def onOk(self):
+        self.selectedItemUri = self._lastEvent['file'] + "::" + self._lastEvent['name']
+        self.accept()
+
+    def exec_(self):
+        ret = qt.QDialog.exec_(self)
+        self.hdf5File.close()
+        return ret
+
+
+def _getFilenameDialog():
+    """Open a dialog to select a file in a filesystem tree view.
+    Return the selected filename."""
+    from PyMca5.PyMcaGui.io import PyMcaFileDialogs
+    fileTypeList = ['HDF5 Files (*.h5 *.nxs *.hdf)',
+                    'HDF5 Files (*)']
+    message = "Open HDF5 file"
+    filenamelist, ffilter = PyMcaFileDialogs.getFileList(parent=None,
+                                filetypelist=fileTypeList,
+                                message=message,
+                                getfilter=True,
+                                single=True,
+                                currentfilter=None)
+    if len(filenamelist) < 1:
+        return None
+    return filenamelist[0]
+
+
+def getDatasetValueDialog(filename=None, message=None):
+    """Open a dialog to select a dataset in a HDF5 file.
+    Return the value of the dataset.
+
+    If the dataset selection was cancelled, None is returned.
+
+    :param str filename: HDF5 file path. If None, a file dialog
+        is used to select the file.
+    :param str message: Message used as window title for dialog
+    :return: HDF5 dataset as numpy array, or None
+    """
+    hdf5Dialog = Hdf5SelectionDialog(None, filename, message,
+                                     "dataset")
     ret = hdf5Dialog.exec_()
     if not ret:
         return None
-    dataset = hdf5Dialog._hdf5Datatset
-    hdf5Dialog = None
-    if value:
-        data = hdf5File[dataset].value
-        # is it dangerous to close the file?
-        hdf5File.close()
-    else:
-        data = hdf5File[dataset]
+
+    selectedHdf5Uri = hdf5Dialog.selectedItemUri
+
+    with h5py.File(filename) as hdf5File:
+        hdf5Item = hdf5File[selectedHdf5Uri.split("::")[-1]]
+        data = hdf5Item.value
+
     return data
+
+
+def getDatasetDialog(filename=None, value=False, message=None):
+    # function kept for backward compatibility, in case someone
+    # uses it with value=False outside PyMca5
+    if value:
+        return getDatasetValueDialog(filename, message)
+
+    hdf5Dialog = Hdf5SelectionDialog(None, filename, message,
+                                     "dataset")
+    ret = hdf5Dialog.exec_()
+    if not ret:
+        return None
+    selectedHdf5Uri = hdf5Dialog.selectedItemUri
+    hdf5File = h5py.File(filename)
+    return hdf5File[selectedHdf5Uri.split("::")[-1]]
+
+
+def getGroupNameDialog(filename=None, message=None):
+    """Open a dialog to select a group in a HDF5 file.
+    Return the name of the group.
+
+    :param str filename: HDF5 file path. If None, a file dialog
+        is used to select the file.
+    :param str message: Message used as window title for dialog
+    :return: HDF5 group name
+    """
+    hdf5Dialog = Hdf5SelectionDialog(None, filename, message,
+                                     "group")
+    ret = hdf5Dialog.exec_()
+    if not ret:
+        return None
+
+    selectedHdf5Uri = hdf5Dialog.selectedItemUri
+
+    return selectedHdf5Uri.split("::")[-1]
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
