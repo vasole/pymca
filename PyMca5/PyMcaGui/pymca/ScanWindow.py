@@ -1433,7 +1433,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                 imgData = StringIO.StringIO()
             else:
                 from io import StringIO
-                imgData = StringIO
+                imgData = StringIO()
             self.saveGraph(imgData, fileFormat='svg')
             imgData.flush()
             imgData.seek(0)
@@ -1550,6 +1550,9 @@ class ScanWindow(PlotWindow.PlotWindow):
         # this does not work if I set the svgData before
         svgRenderer.setViewBox(body)
         svgRenderer._viewBox = body
+        if not sys.version.startswith("2"):
+            svgData = svgData.encode(encoding="utf-8",
+                                     errors="replace")
         svgRenderer._svgRawData = svgData
         svgRenderer._svgRendererData = qt.QXmlStreamReader(svgData)
 
