@@ -129,7 +129,7 @@ class PyMcaPrintPreview(qt.QDialog):
 
     def _buildToolbar(self):
         # --- command buttons
-        buttonSize = 65
+        # buttonSize = 65
         toolBar = qt.QWidget(self)
         # a layout for the toolbar
         toolsLayout = qt.QHBoxLayout(toolBar)
@@ -137,27 +137,26 @@ class PyMcaPrintPreview(qt.QDialog):
         toolsLayout.setSpacing(0)
 
         # Margin
-        """
-        marginLabel = qt.QLabel("Margins:", toolBar)
-        if QTVERSION < '4.0.0':
-            self.marginSpin = qt.QSpinBox(0, 50, 10, toolBar)
-        else:
-            self.marginSpin = qt.QSpinBox(toolBar)
-            self.marginSpin.setRange(0, 50)
-            self.marginSpin.setSingleStep(10)
-        self.marginSpin.valueChanged[int].connect( \
-                 self.__marginChanged)
-        """
+        # marginLabel = qt.QLabel("Margins:", toolBar)
+        # if QTVERSION < '4.0.0':
+        #     self.marginSpin = qt.QSpinBox(0, 50, 10, toolBar)
+        # else:
+        #     self.marginSpin = qt.QSpinBox(toolBar)
+        #     self.marginSpin.setRange(0, 50)
+        #     self.marginSpin.setSingleStep(10)
+        # self.marginSpin.valueChanged[int].connect( \
+        #          self.__marginChanged)
+
         # Scale / Zoom
-        scaleLabel = qt.QLabel("Zoom:", toolBar)
-        scaleCombo = qt.QComboBox(toolBar)
-        self.scaleValues = [20, 40, 60, 80, 100, 150, 200]
-
-        for scale in self.scaleValues:
-            scaleCombo.addItem("%3d %%"%scale)
-
-        self.scaleCombo = scaleCombo
-        self.scaleCombo.activated[int].connect(self.__scaleChanged)
+        # scaleLabel = qt.QLabel("Zoom:", toolBar)
+        # scaleCombo = qt.QComboBox(toolBar)
+        # self.scaleValues = [20, 40, 60, 80, 100, 150, 200]
+        #
+        # for scale in self.scaleValues:
+        #     scaleCombo.addItem("%3d %%"%scale)
+        #
+        # self.scaleCombo = scaleCombo
+        # self.scaleCombo.activated[int].connect(self.__scaleChanged)
 
         hideBut   = qt.QPushButton("Hide", toolBar)
         #hideBut.setFixedWidth(buttonSize-10)
