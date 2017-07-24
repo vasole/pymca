@@ -641,6 +641,7 @@ class GraphicsResizeRectItem(qt.QGraphicsRectItem):
         self.__point0 = self.pos()
         parent = self.parentItem()
         scene  = self.scene()
+        scene.clearSelection()
         rect = parent.rect()
         self._x = rect.x()
         self._y = rect.y()
