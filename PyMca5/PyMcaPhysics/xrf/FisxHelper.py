@@ -131,6 +131,8 @@ def getMultilayerFluorescence(multilayerSample,
 
     if DEBUG:
         print("Library actually using secondary = ", secondary)
+        print("Library using secondary limit = ", secondaryCalculationLimit)
+
     global xcom
     if xcom is None:
         if DEBUG:
@@ -554,6 +556,16 @@ def _getFisxDetector(fitConfiguration, attenuatorsDetector=None):
         fisxDetector.setMaximumNumberOfEscapePeaks(nThreshold)
     return fisxDetector
 
+def  _getSecondaryCalculationLimitFromFitConfiguration(fitConfiguration):
+    try:
+        limit = float(\
+            fitConfiguration["concentrations"]["secondarycalculationlimit"])
+    except:
+        if DEBUG:
+            print("Exception. Forcing no limit")
+        limit = 0.0
+    return limit
+
 def getMultilayerFluorescenceFromFitConfiguration(fitConfiguration,
                                                   elementsFromMatrix=False,
                                                   secondaryCalculationLimit=None):
@@ -575,9 +587,12 @@ def getFisxCorrectionFactorsFromFitConfiguration(fitConfiguration,
 def _fisxFromFitConfigurationAction(fitConfiguration,
                                     action=None,
                                     elementsFromMatrix=False, \
-                                    secondaryCalculationLimit=0.0):
+                                    secondaryCalculationLimit=None):
     if action is None:
         raise ValueError("Please specify action")
+    if secondaryCalculationLimit is None:
+        secondaryCalculationLimit = \
+            _getSecondaryCalculationLimitFromFitConfiguration(fitConfiguration)
     # This is highly inefficient because one has to perform all the parsing
     # that has been already made when configuring the fit. However, this is
     # currently the simplest implementation that can work as standalone given
@@ -601,9 +616,6 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
 
     try:
         secondary = fitConfiguration["concentrations"]["usemultilayersecondary"]
-        if secondary == 0:
-            # otherways it is meaning less to call this function
-            secondary = 2
     except:
         print("Exception. Forcing tertiary")
         secondary = 2
@@ -627,6 +639,9 @@ def _fisxFromFitConfigurationAction(fitConfiguration,
                                       secondaryCalculationLimit= \
                                           secondaryCalculationLimit)
     else:
+        if secondary == 0:
+            # otherways it is meaning less to call the function
+            secondary = 2            
         return getFisxCorrectionFactors(multilayerSample,
                                       energyList,
                                       weightList = weightList,
