@@ -34,6 +34,9 @@ import gc
 import re
 from operator import itemgetter
 
+from silx.io import is_group, is_dataset, is_file
+from silx.io import open as silx_open
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
 
@@ -194,7 +197,7 @@ class H5NodeProxy(object):
                     doit = False
                 try:
                     # better handling of external links
-                    finalList = h5py_sorting(items)
+                    finalList = h5py_sorting(list(items))
                     for i in range(len(finalList)):
                         if finalList[i][1] is not None:
                             finalList[i][1]._posixPath = posixpath.join(self.name,
@@ -284,7 +287,8 @@ class H5NodeProxy(object):
                 self._name = posixpath.basename(node.name)
             """
             self._type = type(node).__name__
-            self._hasChildren = isinstance(node, h5py.Group)
+            # self._hasChildren = isinstance(node, h5py.Group)
+            self._hasChildren = is_group(node)
             if hasattr(node, 'attrs'):
                 attrs = list(node.attrs)
                 for cname in ['class', 'NX_class']:
@@ -469,7 +473,8 @@ class FileModel(qt.QAbstractItemModel):
                 ddict['filename'] = filename
                 self.sigFileUpdated.emit(ddict)
                 return item.file
-        phynxFile = phynx.File(filename, 'r')
+        # phynxFile = phynx.File(filename, 'r')
+        phynxFile = silx_open(filename)
         if weakreference:
             def phynxFileInstanceDistroyed(weakrefObject):
                 idx = self.rootItem._identifiers.index(id(weakrefObject))
