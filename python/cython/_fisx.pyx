@@ -2,7 +2,7 @@
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2014-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -207,7 +207,7 @@ cdef class PyElement:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2014-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -424,6 +424,18 @@ cdef class PyElements:
             return toStringKeys(self.thisptr.getMassAttenuationCoefficients(element, energy))
 
     def getMassAttenuationCoefficients(self, name, energy=None):
+        """
+        name can be an element, a formula or a material composition given as a dictionary:
+            key is the element name
+            fraction is the mass fraction of the element.
+
+        WARNING: The library renormalizes in order to make sure the sum of mass
+                 fractions is 1.
+
+        It gives back the mass attenuation coefficients at the given energies as a map where
+        the keys are the different physical processes and the values are lists of the 
+        calculated values via log-log interpolation in the internal table.
+        """
         if hasattr(name, "keys"):
             return self._getMaterialMassAttenuationCoefficients(toBytes(name), energy)
         elif energy is None:
@@ -435,6 +447,12 @@ cdef class PyElements:
             return self._getMultipleMassAttenuationCoefficients(toBytes(name), [energy])
 
     def getExcitationFactors(self, name, energy, weight=None):
+        """
+        getExcitationFactors(name, energy, weight=None)	
+        Given energy(s) and (optional) weight(s), for the specfified element, this method returns
+        the emitted X-ray already corrected for cascade and fluorescence yield.
+        It is the equivalent of the excitation factor in D.K.G. de Boer's paper.
+        """
         if hasattr(energy, "__len__"):
             if weight is None:
                 weight = [1.0] * len(energy)
@@ -476,6 +494,12 @@ cdef class PyElements:
             return [toStringKeysAndValues(x) for x in self.thisptr.getExcitationFactors(element, energies, weights)]
 
     def getPeakFamilies(self, nameOrVector, energy):
+        """
+        getPeakFamilies(nameOrVector, energy)
+
+        Given an energy and a reference to an elements library return dictionarys.
+        The key is the peak family ("Si K", "Pb L1", ...) and the value the binding energy.
+        """
         if type(nameOrVector) in [type([]), type(())]:
             if sys.version < "3.0":
                 return sorted(self._getPeakFamiliesFromVectorOfElements(nameOrVector, energy), key=itemgetter(1))
@@ -516,6 +540,12 @@ cdef class PyElements:
         else:
             return toStringKeys(self.thisptr.getShellConstants(toBytes(elementName), toBytes(subshell)))
 
+    def getEmittedXRayLines(self, elementName, double energy=1000.):
+        if sys.version < "3.0":
+            return self.thisptr.getEmittedXRayLines(elementName, energy)
+        else:
+            return toStringKeys(self.thisptr.getEmittedXRayLines(toBytes(elementName), energy))
+
     def getRadiativeTransitions(self, elementName, subshell):
         if sys.version < "3.0":
             return self.thisptr.getRadiativeTransitions(elementName, subshell)
@@ -533,6 +563,47 @@ cdef class PyElements:
 
     def emptyElementCascadeCache(self, elementName):
         self.thisptr.emptyElementCascadeCache(toBytes(elementName))
+
+    def fillCache(self, elementName, std_vector[double] energy):
+        """
+        Optimization methods to keep the calculations at a set of energies
+        in cache.
+        Clear the calculation cache of given element and fill it at the
+        selected energies
+        """
+        self.thisptr.fillCache(toBytes(elementName), energy)
+
+    def updateCache(self, elementName, std_vector[double] energy):
+        """
+        Update the element cache with those energy values not already present.
+        The existing values will be kept.
+        """
+        self.thisptr.updateCache(toBytes(elementName), energy)
+
+    def setCacheEnabled(self, elementName, int flag = 1):
+        """
+        Enable or disable the use of the stored calculations (if any).
+        It does not clear the cache when disabling.
+        """
+        self.thisptr.setCacheEnabled(toBytes(elementName), flag)
+
+    def clearCache(self, elementName):
+        """
+        Clear the calculation cache
+        """
+        self.thisptr.clearCache(toBytes(elementName))
+
+    def isCacheEnabled(self, elementName):
+        """
+        Return 1 or 0 if the calculation cache is enabled or not
+        """
+        return self.thisptr.isCacheEnabled(toBytes(elementName))
+
+    def getCacheSize(self, elementName):
+        """
+        Return the number of energies for which the calculations are stored
+        """
+        return self.thisptr.getCacheSize(toBytes(elementName))
 
     def removeMaterials(self):
         self.thisptr.removeMaterials()
@@ -577,7 +648,10 @@ from EPDL97 cimport *
 cdef class PyEPDL97:
     cdef EPDL97 *thisptr
 
-    def __cinit__(self, name):
+    def __cinit__(self, name=None):
+        if name is None:
+            from fisx import DataDir
+            name = DataDir.FISX_DATA_DIR
         self.thisptr = new EPDL97(toBytes(name))
 
     def __dealloc__(self):
@@ -624,7 +698,7 @@ cdef class PyEPDL97:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2014-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -671,15 +745,41 @@ cdef class PyLayer:
     def __dealloc__(self):
         del self.thisptr
 
+    def getComposition(self, PyElements elementsLib):
+        """
+        getComposition(elementsLib)
+
+        Given a reference to an elements library, it gives back a dictionary where the keys are the
+        elements and the values the mass fractions.
+        """
+        return self.thisptr.getComposition(deref(elementsLib.thisptr))
+
     def getTransmission(self, energies, PyElements elementsLib, double angle=90.):
+        """
+        getTransmission(energies, ElementsLibraryInstance, angle=90.)
+
+        Given a list of energies and a reference to an elements library returns
+        the layer transmission according to the incident angle (default 90.)
+        """
         if not hasattr(energies, "__len__"):
             energies = numpy.array([energies], numpy.float)
         return self.thisptr.getTransmission(energies, deref(elementsLib.thisptr), angle)
 
     def setMaterial(self, PyMaterial material):
+        """
+        setMaterial(MaterialInstance)
+
+        Set the material of the layer. It has to be an instance!
+        """
         self.thisptr.setMaterial(deref(material.thisptr))
 
     def getPeakFamilies(self, double energy, PyElements elementsLib):
+        """
+        getPeakFamilies(energy, ElementsLibraryInstance)
+
+        Given an energy and a reference to an elements library return dictionarys.
+        The key is the peak family ("Si K", "Pb L1", ...) and the value the binding energy.
+        """
         tmpResult = self.thisptr.getPeakFamilies(energy, deref(elementsLib.thisptr))
         return sorted(tmpResult, key=itemgetter(1))
 
@@ -751,7 +851,7 @@ cdef class PyMaterial:
 #
 # The fisx library for X-Ray Fluorescence
 #
-# Copyright (c) 2014-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2014-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the fisx X-ray developed by V.A. Sole
 #
@@ -805,6 +905,22 @@ cdef class PyMath:
         The case the product density * thickness is 0.0 is for calculating the thick target limit
         """
         return self.thisptr.deBoerL0(mu1, mu2, muj, density, thickness)
+
+    def deBoerX(self, double p, double q, double d1, double d2, double mu_1_j, double mu_2_j, double mu_b_d_t = 0.0):
+        """
+        static double deBoerX(const double & p, const double & q, \
+                              const double & d1, const double & d2, \
+                              const double & mu_1_j, const double & mu_2_j, \
+                              const double & mu_b_j_d_t = 0.0);
+        For multilayers
+        p and q following article
+        d1 is the product density * thickness of fluorescing layer
+        d2 is the product density * thickness of layer j originating the secondary excitation
+        mu_1_j is the mass attenuation coefficient of fluorescing layer at j excitation energy
+        mu_2_j is the mass attenuation coefficient of layer j at j excitation energy
+        mu_b_d_t is the sum of the products mu * density * thickness of layers between layer i and j
+        """
+        return self.thisptr.deBoerX(p, q, d1, d2, mu_1_j, mu_2_j, mu_b_d_t)
 
     def erf(self, double x):
         """
