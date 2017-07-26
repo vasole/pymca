@@ -694,6 +694,10 @@ class Hdf5SelectionDialog(qt.QDialog):
 
     If the user clicked cancel or closed the dialog
     without selecting an item, :attr:`selectedItemUri` will be None."""
+    datasetTypes = ['dataset',
+                    'spech5dataset', 'spech5linktodataset',  # spech5
+                    'framedata', 'rawheaderdata']            # fabioh5
+
     def __init__(self, parent=None,
                  filename=None, message=None, itemtype="any"):
         """
@@ -757,9 +761,10 @@ class Hdf5SelectionDialog(qt.QDialog):
     def _hdf5WidgetSlot(self, ddict):
         self._lastEvent = ddict
         eventType = ddict['type'].lower()
+
         isExpectedType = self.itemtype.lower() == "any" or \
-                (eventType == 'dataset' and self.itemtype == "dataset") or \
-                (eventType != 'dataset' and self.itemtype == "group")
+                (eventType in self.datasetTypes and self.itemtype == "dataset") or \
+                (eventType not in self.datasetTypes and self.itemtype == "group")
 
         if isExpectedType:
             self.okb.setEnabled(True)
@@ -872,7 +877,7 @@ if __name__ == "__main__":
     phynxFile = fileModel.openFile(sys.argv[1])
     def mySlot(ddict):
         print(ddict)
-        if ddict['type'].lower() in ['dataset']:
+        if ddict['type'].lower() in Hdf5SelectionDialog.datasetTypes:
             print(phynxFile[ddict['name']].dtype, phynxFile[ddict['name']].shape)
     fileView.sigHDF5WidgetSignal.connect(mySlot)
     fileView.show()
