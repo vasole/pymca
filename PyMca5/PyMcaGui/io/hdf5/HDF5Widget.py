@@ -185,11 +185,7 @@ class H5NodeProxy(object):
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
-                items = self.getNode(self.name).items()
-                # previous line seems to retrieve an iterator under Python 3.3
-                if (sys.version > '3.2') and\
-                   (h5py.version.version > '2.1.1'):
-                    items = list(items)
+                items = list(self.getNode(self.name).items())
                 if posixpath.dirname(self.name) == "/":
                     # top level item
                     doit = True
@@ -197,7 +193,7 @@ class H5NodeProxy(object):
                     doit = False
                 try:
                     # better handling of external links
-                    finalList = h5py_sorting(list(items))
+                    finalList = h5py_sorting(items)
                     for i in range(len(finalList)):
                         if finalList[i][1] is not None:
                             finalList[i][1]._posixPath = posixpath.join(self.name,
@@ -215,7 +211,10 @@ class H5NodeProxy(object):
                     if DEBUG:
                         raise
                     else:
-                        tmpList = list(self.getNode(self.name).values())
+                        # tmpList = list(self.getNode(self.name).values())
+                        # spech5 does not implement values() prior to silx 0.6.0
+                        tmpList = list(map(self.getNode(self.name).__getitem__,
+                                           self.getNode(self.name).keys()))
                         finalList = tmpList
                     for i in range(len(finalList)):
                         finalList[i]._posixPath = posixpath.join(self.name,
