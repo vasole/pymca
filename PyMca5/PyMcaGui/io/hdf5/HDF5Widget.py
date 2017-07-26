@@ -27,12 +27,16 @@ __author__ = "Darren Dale (CHESS) & V.A. Sole (ESRF)"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 import sys
 import os
 import posixpath
 import gc
 import re
 from operator import itemgetter
+
+import h5py
+import weakref
 
 try:
     from silx.io import is_group
@@ -53,9 +57,6 @@ else:
     def MyQVariant(x=None):
         return x
 
-import h5py
-phynx = h5py
-import weakref
 
 DEBUG = 0
 QVERSION = qt.qVersion()
