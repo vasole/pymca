@@ -34,8 +34,15 @@ import gc
 import re
 from operator import itemgetter
 
-from silx.io import is_group, is_dataset, is_file
-from silx.io import open as silx_open
+try:
+    from silx.io import is_group
+    from silx.io import open as h5open
+except ImportError:
+    def is_group(node):
+        return isinstance(node, h5py.Group)
+
+    def h5open(filename):
+        return h5py.File(filename, "r")
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
@@ -52,6 +59,7 @@ import weakref
 
 DEBUG = 0
 QVERSION = qt.qVersion()
+
 
 #sorting method
 def h5py_sorting(object_list):
@@ -286,8 +294,9 @@ class H5NodeProxy(object):
                 self._name = posixpath.basename(node.name)
             """
             self._type = type(node).__name__
-            # self._hasChildren = isinstance(node, h5py.Group)
+
             self._hasChildren = is_group(node)
+
             if hasattr(node, 'attrs'):
                 attrs = list(node.attrs)
                 for cname in ['class', 'NX_class']:
@@ -472,8 +481,7 @@ class FileModel(qt.QAbstractItemModel):
                 ddict['filename'] = filename
                 self.sigFileUpdated.emit(ddict)
                 return item.file
-        # phynxFile = phynx.File(filename, 'r')
-        phynxFile = silx_open(filename)
+        phynxFile = h5open(filename)
         if weakreference:
             def phynxFileInstanceDistroyed(weakrefObject):
                 idx = self.rootItem._identifiers.index(id(weakrefObject))
@@ -809,7 +817,7 @@ def getDatasetValueDialog(filename=None, message=None):
 
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
 
-    with h5py.File(filename) as hdf5File:
+    with h5open(filename) as hdf5File:
         hdf5Item = hdf5File[selectedHdf5Uri.split("::")[-1]]
         data = hdf5Item.value
 
@@ -828,7 +836,7 @@ def getDatasetDialog(filename=None, value=False, message=None):
     if not ret:
         return None
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
-    hdf5File = h5py.File(filename)
+    hdf5File = h5open(filename)
     return hdf5File[selectedHdf5Uri.split("::")[-1]]
 
 
