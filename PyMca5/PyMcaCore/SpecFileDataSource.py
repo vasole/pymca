@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -118,20 +118,28 @@ class SpecFileDataSource(object):
                     if DEBUG:
                         print("getSourceInfo %s" % sys.exc_info()[1])
                     self.__fileHeaderList[0] = None
-            try: n= sel.nbmca()
-            except: n= 0
+            try:
+                n = sel.nbmca()
+            except:
+                n = 0
             num_mca.append(n)
-            try: n= sel.lines()
-            except: n= 0
+
+            try:
+                n = sel.lines()
+            except:
+                n= 0
             num_pts.append(n)
-            try: n= sel.command()
-            except: n= ""
+
+            try:
+                n = sel.command()
+            except:
+                n= ""
             commands.append(n)
-        source_info["FileHeader"]=self.__fileHeaderList[0]
-        source_info["NumMca"]=num_mca
-        source_info["NumPts"]=num_pts
-        source_info["Commands"]= commands
-        source_info["ScanType"]= map(self.__getScanType, num_pts, num_mca, commands)
+        source_info["FileHeader"] = self.__fileHeaderList[0]
+        source_info["NumMca"] = num_mca
+        source_info["NumPts"] = num_pts
+        source_info["Commands"] = commands
+        source_info["ScanType"] = map(self.__getScanType, num_pts, num_mca, commands)
         self.__source_info_cached = source_info
         return source_info
 
@@ -248,8 +256,8 @@ class SpecFileDataSource(object):
         try: info["hkl"] =  scandata.hkl()
         except: info["hkl"] =  None
         if info["NbMca"]:
-            if info["Lines"]>0 and info["NbMca"]%info["Lines"]==0:
-                info["NbMcaDet"]= info["NbMca"]/info["Lines"]
+            if info["Lines"] > 0 and info["NbMca"] % info["Lines"] == 0:
+                info["NbMcaDet"]= info["NbMca"] // info["Lines"]
             else:
                 info["NbMcaDet"]= info["NbMca"]
         info["ScanType"]= self.__getScanType(info["Lines"], info["NbMca"], info["Command"])
@@ -625,22 +633,22 @@ class SpecFileDataSource(object):
                     except:
                         raise IOError("SF_MESH read failed")
                 else:
-                    scan_array= scan_obj.data()
-                    (mot1,mot2,cnts)= self.__getMeshSize(scan_array)
-                    scan_data= numpy.zeros((mot1,mot2,cnts), numpy.float)
+                    scan_array = scan_obj.data()
+                    (mot1,mot2,cnts) = self.__getMeshSize(scan_array)
+                    scan_data = numpy.zeros((mot1,mot2,cnts), numpy.float)
                     for idx in range(mot2):
-                        scan_data[:,idx,:]= numpy.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
-                    scan_data= numpy.transpose(scan_data).copy()
+                        scan_data[:,idx,:] = numpy.transpose(scan_array[:,idx*mot1:(idx+1)*mot1]).copy()
+                    scan_data = numpy.transpose(scan_data).copy()
             except:
                 raise IOError("SF_MESH read failed")
         elif scan_type&SF_MCA:
             try:
-                scan_data= scan_obj.mca(1)
+                scan_data = scan_obj.mca(1)
             except:
                 raise IOError("SF_MCA read failed")
         elif scan_type&SF_NMCA:
             try:
-                scan_data= scan_obj.mca(1)
+                scan_data = scan_obj.mca(1)
             except:
                 raise IOError("SF_NMCA read failed")
 
@@ -681,29 +689,32 @@ class SpecFileDataSource(object):
                 dataObject.data = scan_data
                 return dataObject
 
-        elif len(key_split)==4:
-            if scan_type==SF_SCAN+SF_NMCA:
+        elif len(key_split) == 4:
+            if scan_type == SF_SCAN + SF_NMCA:
                 try:
-                    mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
-                    scan_data= scan_obj.mca(mca_no)
+                    mca_no = (int(key_split[2])-1) * scan_info["NbMcaDet"] + \
+                             int(key_split[3])
+                    scan_data = scan_obj.mca(mca_no)
                 except:
                     raise IOError("SF_SCAN+SF_NMCA read failed")
-            elif scan_type==SF_MESH+SF_MCA:
+            elif scan_type == SF_MESH + SF_MCA:
                 try:
                     #scan_array= scan_obj.data()
                     #(mot1,mot2,cnts)= self.__getMeshSize(scan_array)
                     #mca_no= 1 + int(key_split[2]) + int(key_split[3])*mot1
-                    mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
+                    mca_no = (int(key_split[2])-1) * scan_info["NbMcaDet"] + \
+                              int(key_split[3])
                     if DEBUG:
                         print("try to read mca number = ",mca_no)
                         print("total number of mca = ",scan_info["NbMca"])
-                    scan_data= scan_obj.mca(mca_no)
+                    scan_data = scan_obj.mca(mca_no)
                 except:
                     raise IOError("SF_MESH+SF_MCA read failed")
-            elif scan_type&SF_NMCA or scan_type&SF_MCA:
+            elif scan_type & SF_NMCA or scan_type & SF_MCA:
                 try:
-                    mca_no= (int(key_split[2])-1)*scan_info["NbMcaDet"] + int(key_split[3])
-                    scan_data= scan_obj.mca(mca_no)
+                    mca_no = (int(key_split[2])-1) * scan_info["NbMcaDet"] + \
+                             int(key_split[3])
+                    scan_data = scan_obj.mca(mca_no)
                 except:
                     raise IOError("SF_MCA or SF_NMCA read failed")
             else:
@@ -734,18 +745,19 @@ class SpecFileDataSource(object):
     def __getMeshSize(self, scan_array):
         """ Given the scandata array, return the size tuple of the mesh
         """
-        mot2_array= scan_array[1]
-        mot2_max= mot2_array.shape[0]
-        mot1_idx= 1
-        while mot1_idx<mot2_max and mot2_array[mot1_idx]==mot2_array[0]: mot1_idx+=1
-        mot2_idx= scan_array.shape[1]/mot1_idx
-        cnts_idx= scan_array.shape[0]
+        mot2_array = scan_array[1]
+        mot2_max = mot2_array.shape[0]
+        mot1_idx = 1
+        while mot1_idx < mot2_max and mot2_array[mot1_idx] == mot2_array[0]:
+            mot1_idx+=1
+        mot2_idx = scan_array.shape[1] // mot1_idx
+        cnts_idx = scan_array.shape[0]
         return (mot1_idx, mot2_idx, cnts_idx)
 
     def __getScanMotorRange(self, info, obj):
-        name= info["LabelNames"][0]
-        values= obj.datacol(1)
-        length= values.shape[0]
+        name = info["LabelNames"][0]
+        values = obj.datacol(1)
+        length = values.shape[0]
         return (name, values, length)
 
     def __getMeshMotorRange(self, info, obj):

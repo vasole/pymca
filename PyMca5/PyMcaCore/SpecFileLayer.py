@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -207,16 +207,16 @@ class SpecFileLayer(object):
         #AS if invalidate: self.Invalidate()
 
     def __LoadScanData(self, scan_key, file_info={}):
-        scan_obj= self.Source.select(scan_key)
-        scan_info= self.__GetScanInfo(scan_key,scan_obj)
-        scan_info["Key"]= scan_key
-        scan_info["FileInfo"]= file_info
-        scan_type= scan_info["ScanType"]
-        scan_data= None
+        scan_obj = self.Source.select(scan_key)
+        scan_info = self.__GetScanInfo(scan_key,scan_obj)
+        scan_info["Key"] = scan_key
+        scan_info["FileInfo"] = file_info
+        scan_type = scan_info["ScanType"]
+        scan_data = None
 
         if scan_type&SF_SCAN:
             try:
-                scan_data= numpy.transpose(scan_obj.data()).copy()
+                scan_data = numpy.transpose(scan_obj.data()).copy()
             except:
                 raise IOError("SF_SCAN read failed")
         elif scan_type&SF_MESH:
@@ -242,12 +242,13 @@ class SpecFileLayer(object):
     def __GetMeshSize(self, scan_array):
         """ Given the scandata array, return the size tuple of the mesh
         """
-        mot2_array= scan_array[1]
-        mot2_max= mot2_array.shape[0]
-        mot1_idx= 1
-        while mot1_idx<mot2_max and mot2_array[mot1_idx]==mot2_array[0]: mot1_idx+=1
-        mot2_idx= scan_array.shape[1]/mot1_idx
-        cnts_idx= scan_array.shape[0]
+        mot2_array = scan_array[1]
+        mot2_max = mot2_array.shape[0]
+        mot1_idx = 1
+        while mot1_idx < mot2_max and mot2_array[mot1_idx] == mot2_array[0]:
+            mot1_idx+=1
+        mot2_idx = scan_array.shape[1] // mot1_idx
+        cnts_idx = scan_array.shape[0]
         return (mot1_idx, mot2_idx, cnts_idx)
 
     def __GetScanMotorRange(self, info, obj):
@@ -480,10 +481,10 @@ class SpecFileLayer(object):
             scandata = self.Source.select(scankey)
 
         info={}
-        info["SourceType"]= SOURCE_TYPE
-        info["SourceName"]=self.SourceName
-        info["Key"]=scankey
-        info["Source"]=self.Source
+        info["SourceType"] = SOURCE_TYPE
+        info["SourceName"] =self.SourceName
+        info["Key"] =scankey
+        info["Source"] =self.Source
 
         try: info["Number"] = scandata.number()
         except: info["Number"] = None
@@ -511,7 +512,7 @@ class SpecFileLayer(object):
         except: info["hkl"] =  None
         if info["NbMca"]:
             if info["Lines"]>0 and info["NbMca"]%info["Lines"]==0:
-                info["NbMcaDet"]= info["NbMca"]/info["Lines"]
+                info["NbMcaDet"]= info["NbMca"] // info["Lines"]
             else:
                 info["NbMcaDet"]= info["NbMca"]
         info["ScanType"]= self.__GetScanType(info["Lines"], info["NbMca"], info["Command"])

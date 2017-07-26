@@ -31,6 +31,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import copy
+import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5 import PyMcaDirs
 from PyMca5 import DataObject
@@ -202,11 +203,9 @@ class StackSelector(object):
                 except:
                     msg = qt.QMessageBox()
                     msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("%s" % sys.exc_info()[1])
-                    if QTVERSION < '4.0.0':
-                        msg.exec_loop()
-                    else:
-                        msg.exec_()
+                    msg.setInformativeText("%s" % sys.exc_info()[1])
+                    msg.setDetailedText(traceback.format_exc())
+                    msg.exec_()
                     if DEBUG:
                         raise
         elif len(filelist):
