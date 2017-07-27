@@ -83,16 +83,9 @@ class PointInfoWindow(qt.QWidget):
     def _updateMotors(self, ddict):
         if not ddict["event"] == "mouseMoved":
             return
-        nRows, nCols = self.plugin.getStackOriginalImage().shape
-        r, c = SilxMaskImageWidget.convertToRowAndColumn(
-                ddict["x"], ddict["y"],
-                shape=(nRows, nCols),
-                xScale=self.plugin.getStackInfo().get("xScale"),
-                yScale=self.plugin.getStackInfo().get("yScale"),
-                safe=True)
 
-        idx1d = r * nCols + c
-        motorsValuesAtCursor = self._stackWindow.getPositionersFromIndex(idx1d)
+        motorsValuesAtCursor = self.plugin.getPositionersFromXY(ddict["x"],
+                                                                ddict["y"])
 
         self.motorPositionsWindow.table.updateTable(
                 legList=["Stack"],
@@ -179,6 +172,21 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
         self.widget.raise_()
 
         self.stackUpdated()    # fixme: is this necessary?
+
+    def getPositionersFromXY(self, x, y):
+        """Return positioner values for a stack pixel identified
+        by it's (x, y) coordinates.
+        """
+        nRows, nCols = self.getStackOriginalImage().shape
+        r, c = SilxMaskImageWidget.convertToRowAndColumn(
+                x, y,
+                shape=(nRows, nCols),
+                xScale=self.getStackInfo().get("xScale"),
+                yScale=self.getStackInfo().get("yScale"),
+                safe=True)
+
+        idx1d = r * nCols + c
+        return self._stackWindow.getPositionersFromIndex(idx1d)
 
     #Methods implemented by the plugin
     def getMethods(self):
