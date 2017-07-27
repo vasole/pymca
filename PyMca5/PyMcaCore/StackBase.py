@@ -1106,8 +1106,6 @@ class StackBase(object):
             numpy arrays and a copy is mandatory.
         :raise: TypeError if positioners is not a dict or if any positioner
             is not a scalar, list or numpy array.
-        :raise: IndexError if any positioner has an inconsistent number of
-            values, or an inconsistent shape.
         :raise: RuntimeError if any positioner is a list and copy=False
         """
         if not isinstance(positioners, dict):
