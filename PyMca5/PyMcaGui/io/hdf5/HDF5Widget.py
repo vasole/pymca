@@ -27,12 +27,26 @@ __author__ = "Darren Dale (CHESS) & V.A. Sole (ESRF)"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 import sys
 import os
 import posixpath
 import gc
 import re
 from operator import itemgetter
+
+import h5py
+import weakref
+
+try:
+    from silx.io import is_group
+    from silx.io import open as h5open
+except ImportError:
+    def is_group(node):
+        return isinstance(node, h5py.Group)
+
+    def h5open(filename):
+        return h5py.File(filename, "r")
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
@@ -43,12 +57,10 @@ else:
     def MyQVariant(x=None):
         return x
 
-import h5py
-phynx = h5py
-import weakref
 
 DEBUG = 0
 QVERSION = qt.qVersion()
+
 
 #sorting method
 def h5py_sorting(object_list):
@@ -182,11 +194,7 @@ class H5NodeProxy(object):
             # obtaining the lock here is necessary, otherwise application can
             # freeze if navigating tree while data is processing
             if 1: #with self.file.plock:
-                items = self.getNode(self.name).items()
-                # previous line seems to retrieve an iterator under Python 3.3
-                if (sys.version > '3.2') and\
-                   (h5py.version.version > '2.1.1'):
-                    items = list(items)
+                items = list(self.getNode(self.name).items())
                 if posixpath.dirname(self.name) == "/":
                     # top level item
                     doit = True
@@ -212,7 +220,10 @@ class H5NodeProxy(object):
                     if DEBUG:
                         raise
                     else:
-                        tmpList = list(self.getNode(self.name).values())
+                        # tmpList = list(self.getNode(self.name).values())
+                        # spech5 does not implement values() prior to silx 0.6.0
+                        tmpList = list(map(self.getNode(self.name).__getitem__,
+                                           self.getNode(self.name).keys()))
                         finalList = tmpList
                     for i in range(len(finalList)):
                         finalList[i]._posixPath = posixpath.join(self.name,
@@ -284,7 +295,9 @@ class H5NodeProxy(object):
                 self._name = posixpath.basename(node.name)
             """
             self._type = type(node).__name__
-            self._hasChildren = isinstance(node, h5py.Group)
+
+            self._hasChildren = is_group(node)
+
             if hasattr(node, 'attrs'):
                 attrs = list(node.attrs)
                 for cname in ['class', 'NX_class']:
@@ -469,7 +482,7 @@ class FileModel(qt.QAbstractItemModel):
                 ddict['filename'] = filename
                 self.sigFileUpdated.emit(ddict)
                 return item.file
-        phynxFile = phynx.File(filename, 'r')
+        phynxFile = h5open(filename)
         if weakreference:
             def phynxFileInstanceDistroyed(weakrefObject):
                 idx = self.rootItem._identifiers.index(id(weakrefObject))
@@ -681,6 +694,10 @@ class Hdf5SelectionDialog(qt.QDialog):
 
     If the user clicked cancel or closed the dialog
     without selecting an item, :attr:`selectedItemUri` will be None."""
+    datasetTypes = ['dataset',
+                    'spech5dataset', 'spech5linktodataset',  # spech5
+                    'framedata', 'rawheaderdata']            # fabioh5
+
     def __init__(self, parent=None,
                  filename=None, message=None, itemtype="any"):
         """
@@ -744,9 +761,10 @@ class Hdf5SelectionDialog(qt.QDialog):
     def _hdf5WidgetSlot(self, ddict):
         self._lastEvent = ddict
         eventType = ddict['type'].lower()
+
         isExpectedType = self.itemtype.lower() == "any" or \
-                (eventType == 'dataset' and self.itemtype == "dataset") or \
-                (eventType != 'dataset' and self.itemtype == "group")
+                (eventType in self.datasetTypes and self.itemtype == "dataset") or \
+                (eventType not in self.datasetTypes and self.itemtype == "group")
 
         if isExpectedType:
             self.okb.setEnabled(True)
@@ -805,7 +823,7 @@ def getDatasetValueDialog(filename=None, message=None):
 
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
 
-    with h5py.File(filename) as hdf5File:
+    with h5open(filename) as hdf5File:
         hdf5Item = hdf5File[selectedHdf5Uri.split("::")[-1]]
         data = hdf5Item.value
 
@@ -824,7 +842,7 @@ def getDatasetDialog(filename=None, value=False, message=None):
     if not ret:
         return None
     selectedHdf5Uri = hdf5Dialog.selectedItemUri
-    hdf5File = h5py.File(filename)
+    hdf5File = h5open(filename)
     return hdf5File[selectedHdf5Uri.split("::")[-1]]
 
 
@@ -859,7 +877,7 @@ if __name__ == "__main__":
     phynxFile = fileModel.openFile(sys.argv[1])
     def mySlot(ddict):
         print(ddict)
-        if ddict['type'].lower() in ['dataset']:
+        if ddict['type'].lower() in Hdf5SelectionDialog.datasetTypes:
             print(phynxFile[ddict['name']].dtype, phynxFile[ddict['name']].shape)
     fileView.sigHDF5WidgetSignal.connect(mySlot)
     fileView.show()
