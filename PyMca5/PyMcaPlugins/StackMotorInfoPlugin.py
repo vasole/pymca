@@ -91,32 +91,8 @@ class PointInfoWindow(qt.QWidget):
                 yScale=self.plugin.getStackInfo().get("yScale"),
                 safe=True)
 
-        positioners = self.plugin.getStackInfo().get("positioners", {})
-        motorsValuesAtCursor = {}
-        for motorName, motorValues in positioners.items():
-            if numpy.isscalar(motorValues) or (hasattr(motorValues, "ndim") and
-                                               motorValues.ndim == 0):
-                # scalar
-                motorsValuesAtCursor[motorName] = motorValues
-            else:
-                # must be a numpy array
-                assert hasattr(motorValues, "ndim") and \
-                       hasattr(motorValues, "shape")
-                if motorValues.ndim == 2 and motorValues.shape == (nRows, nCols):
-                    # image with expected size
-                    motorsValuesAtCursor[motorName] = motorValues[r, c]
-                else:
-                    # use a 1D index
-                    nPixels = nRows * nCols
-                    idx1d = r * nCols + c
-                    numValues = reduce(operator.mul, motorValues.shape)
-                    assert len(numValues) == nPixels, \
-                        "wrong number of motor values in array"
-                    if motorValues.ndim == 1:
-                        motorsValuesAtCursor[motorName] = motorValues[idx1d]
-                    else:
-                        # use a 1D view
-                        motorsValuesAtCursor[motorName] = motorValues.reshape((-1,))[idx1d]
+        idx1d = r * nCols + c
+        motorsValuesAtCursor = self._stackWindow.getPositionersFromIndex(idx1d)
 
         self.motorPositionsWindow.table.updateTable(
                 legList=["Stack"],

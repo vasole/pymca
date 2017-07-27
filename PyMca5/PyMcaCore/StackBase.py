@@ -256,6 +256,10 @@ class StackBase(object):
             # is not a numpy ndarray in any case
             self._tryNumpy = False
 
+        previousStackImageSize = None
+        if self._stackImageData is not None:
+            previousStackImageSize = self._stackImageData.size
+
         if self._tryNumpy and isinstance(self._stack.data, numpy.ndarray):
             self._stackImageData = numpy.sum(self._stack.data,
                                              axis=self.mcaIndex,
@@ -309,6 +313,10 @@ class StackBase(object):
 
         if DEBUG:
             print("__stackImageData.shape = ",  self._stackImageData.shape)
+
+        if previousStackImageSize != self._stackImageData.size:
+            self._clearPositioners()
+
         calib = self._stack.info.get('McaCalib', [0.0, 1.0, 0.0])
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
@@ -1115,7 +1123,9 @@ class StackBase(object):
         stackPositioners = {}
 
         for motorName, motorValues in positioners.items():
-            if numpy.isscalar(motorValues):
+            if numpy.isscalar(motorValues) or \
+                    (hasattr(motorValues, "ndim") and
+                     motorValues.ndim == 0):
                 stackPositioners[motorName] = motorValues
             elif hasattr(motorValues, "__len__") and numpy.isscalar(motorValues[0]):
                 # list: convert to numpy array before storing in info
@@ -1141,6 +1151,11 @@ class StackBase(object):
                   ', '.join(ignored_motors))
 
         self._stack.info["positioners"] = stackPositioners
+
+    def _clearPositioners(self):
+        """Removes the "positioners" field in the stack info"""
+        if "positioners" in self._stack.info:
+            self._stack.info["positioners"] = {}
 
     def getPositionersFromIndex(self, index):
         """Return the value of all positioners for the spectrum identified by
@@ -1170,8 +1185,8 @@ class StackBase(object):
                 positionersAtIdx[motorName] = motorValues
             elif len(motorValues.shape) == 1:
                 positionersAtIdx[motorName] = motorValues[index]
-            elif len(motorValues.shape) == 2:
-                positionersAtIdx[motorName] = motorValues.ravel()[index]
+            else:
+                positionersAtIdx[motorName] = motorValues.reshape((-1,))[index]
 
         return positionersAtIdx
 
