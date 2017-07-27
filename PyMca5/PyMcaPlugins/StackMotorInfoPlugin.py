@@ -31,6 +31,8 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 
 import numpy
+import operator
+from functools import reduce
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
@@ -100,18 +102,21 @@ class PointInfoWindow(qt.QWidget):
                 # must be a numpy array
                 assert hasattr(motorValues, "ndim") and \
                        hasattr(motorValues, "shape")
-                if motorValues.ndim == 2:
-                    # image
-                    assert motorValues.shape == (nRows, nCols), \
-                        "wrong shape for motor values frame"
+                if motorValues.ndim == 2 and motorValues.shape == (nRows, nCols):
+                    # image with expected size
                     motorsValuesAtCursor[motorName] = motorValues[r, c]
-                elif motorValues.ndim == 1:
-                    # 1D array
+                else:
+                    # use a 1D index
                     nPixels = nRows * nCols
-                    assert len(motorValues) == nPixels, \
+                    idx1d = r * nCols + c
+                    numValues = reduce(operator.mul, motorValues.shape)
+                    assert len(numValues) == nPixels, \
                         "wrong number of motor values in array"
-                    motorIndex = r * nCols + c
-                    motorsValuesAtCursor[motorName] = motorValues[motorIndex]
+                    if motorValues.ndim == 1:
+                        motorsValuesAtCursor[motorName] = motorValues[idx1d]
+                    else:
+                        # use a 1D view
+                        motorsValuesAtCursor[motorName] = motorValues.reshape((-1,))[idx1d]
 
         self.motorPositionsWindow.table.updateTable(
                 legList=["Stack"],
