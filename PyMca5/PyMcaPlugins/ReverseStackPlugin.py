@@ -205,7 +205,10 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
         """
         assert direction in ["rows", "columns"]
         stackImageShape = self.getStackOriginalImage().shape
-        positioners = self.getStackInfo().get("positioners", {})
+        positioners = self.getStackInfo().get("positioners", None)
+        if positioners is None:
+            return
+
         newPositioners = {}
 
         for motorName, motorValues in positioners.items():
