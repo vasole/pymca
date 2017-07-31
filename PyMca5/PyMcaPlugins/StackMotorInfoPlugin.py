@@ -30,9 +30,6 @@ __authors__ = ["P. Knobel"]
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 
-import numpy
-import operator
-from functools import reduce
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
@@ -51,6 +48,9 @@ class PointInfoWindow(qt.QWidget):
 
         layout = qt.QVBoxLayout()
         self.setLayout(layout)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         self.maskImageWidget = SilxMaskImageWidget.SilxMaskImageWidget(self)
         # self.maskImageWidget.setWindowFlags(qt.Qt.W)
 
