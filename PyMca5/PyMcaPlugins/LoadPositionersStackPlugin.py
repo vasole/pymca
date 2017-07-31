@@ -59,6 +59,12 @@ except ImportError:
         h5open = None
         is_dataset = None
 
+
+# suppress errors and warnings if fabio is missing
+if silx_open is not None:
+    import logging
+    logging.getLogger("silx.io.fabioh5").setLevel(logging.CRITICAL)
+
 DEBUG = 0
 
 
