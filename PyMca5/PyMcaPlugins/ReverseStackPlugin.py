@@ -72,34 +72,33 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
         function = self.reverseOddRows
         info = text
         icon = None
-        self.methodDict["Reverse Odd Rows"] =[function,
-                                              info,
-                                              icon]
+        self.methodDict["Reverse Odd Rows"] = [function,
+                                               info,
+                                               icon]
         text  = "Replace current stack by one\n"
         text += "with even rows reversed."
         function = self.reverseEvenRows
         info = text
         icon = None
-        self.methodDict["Reverse Even Rows"] =[function,
-                                              info,
-                                              icon]
+        self.methodDict["Reverse Even Rows"] = [function,
+                                                info,
+                                                icon]
         text  = "Replace current stack by one\n"
         text += "with odd columns reversed."
         function = self.reverseOddColumns
         info = text
         icon = None
-        self.methodDict["Reverse Odd Columns"] =[function,
-                                                 info,
-                                                 icon]
+        self.methodDict["Reverse Odd Columns"] = [function,
+                                                  info,
+                                                  icon]
         text  = "Replace current stack by one\n"
         text += "with odd columns reversed."
         function = self.reverseEvenColumns
         info = text
         icon = None
-        self.methodDict["Reverse Even Columns"] =[function,
-                                              info,
-                                              icon]
-
+        self.methodDict["Reverse Even Columns"] = [function,
+                                                   info,
+                                                   icon]
 
         self.__methodKeys = ["Reverse Odd Rows",
                              "Reverse Even Rows",
@@ -121,15 +120,19 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
 
     def reverseOddRows(self):
         self.reverseRows(offset=1)
+        self.reversePositioners(offset=1, direction="rows")
 
     def reverseEvenRows(self):
         self.reverseRows(offset=0)
+        self.reversePositioners(offset=0, direction="rows")
 
     def reverseOddColumns(self):
         self.reverseColumns(offset=1)
+        self.reversePositioners(offset=1, direction="columns")
 
     def reverseEvenColumns(self):
         self.reverseColumns(offset=0)
+        self.reversePositioners(offset=0, direction="columns")
 
     def reverseRows(self, offset=1):
         stack = self.getStackDataObject()
@@ -190,6 +193,41 @@ class ReverseStackPlugin(StackPluginBase.StackPluginBase):
         else:
             raise ValueError("Invalid 1D index %d" % mcaIndex)
         self.setStack(stack)
+
+    def reversePositioners(self, offset=1, direction="rows"):
+        """Re-arrange positioners data to preserve the match between
+        a pixel of the stack image and the corresponding values when
+        reversing half the rows or half the columns.
+
+        :param int offset: 1 to reverse odd rows orcolumns,
+            0 to reverse even ones.
+        :param str direction: "rows" or "columns"
+        """
+        assert direction in ["rows", "columns"]
+        stackImageShape = self.getStackOriginalImage().shape
+        positioners = self.getStackInfo().get("positioners", {})
+        newPositioners = {}
+
+        for motorName, motorValues in positioners.items():
+            if numpy.isscalar(motorValues) or (hasattr(motorValues, "ndim") and
+                                               motorValues.ndim == 0):
+                # scalar
+                newPositioners[motorName] = motorValues
+            else:
+                # non-scalar positioners are always stored as arrays in info
+                originalShape = motorValues.shape
+                motorValues2d = numpy.array(motorValues, copy=True)
+                motorValues2d.shape = stackImageShape
+
+                if direction == "rows":
+                    motorValues2d[offset::2] = numpy.fliplr(motorValues2d[offset::2])
+                elif direction == "columns":
+                    motorValues2d[:, offset::2] = numpy.flipud(motorValues2d[:, offset::2])
+
+                newPositioners[motorName] = motorValues2d.reshape(originalShape)
+
+        self._stackWindow.setPositioners(newPositioners)
+
 
 MENU_TEXT = "Stack Row or Column Reversing"
 def getStackPluginInstance(stackWindow, **kw):
