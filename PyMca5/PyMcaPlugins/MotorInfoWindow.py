@@ -234,7 +234,7 @@ class MotorInfoTable(TableWidget):
         else:
             for idx in range(0, self.rowCount()):
                 self.setItem(idx, column, '')
-        self.resizeColumnToContents(column)
+        # self.resizeColumnToContents(column)
 
     def getAllMotorNames(self):
         nameSet = []
