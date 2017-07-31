@@ -41,6 +41,8 @@ import weakref
 try:
     from silx.io import is_group
     from silx.io import open as h5open
+    import logging
+    logging.getLogger("silx.io.fabioh5").setLevel(logging.CRITICAL)
 except ImportError:
     def is_group(node):
         return isinstance(node, h5py.Group)
