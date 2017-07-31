@@ -256,6 +256,10 @@ class StackBase(object):
             # is not a numpy ndarray in any case
             self._tryNumpy = False
 
+        previousStackImageSize = None
+        if self._stackImageData is not None:
+            previousStackImageSize = self._stackImageData.size
+
         if self._tryNumpy and isinstance(self._stack.data, numpy.ndarray):
             self._stackImageData = numpy.sum(self._stack.data,
                                              axis=self.mcaIndex,
@@ -309,6 +313,10 @@ class StackBase(object):
 
         if DEBUG:
             print("__stackImageData.shape = ",  self._stackImageData.shape)
+
+        if previousStackImageSize != self._stackImageData.size:
+            self._clearPositioners()
+
         calib = self._stack.info.get('McaCalib', [0.0, 1.0, 0.0])
         dataObject = DataObject.DataObject()
         dataObject.info = {"McaCalib": calib,
@@ -1100,56 +1108,54 @@ class StackBase(object):
             the motor names. The values should preferably be arrays with
             the same number of values as there are stack pixels. Scalars
             are accepted if the positioner has a constant value.
-        :param bool copy: If *True* (default), store a copy of the positioners
-            dictionary. If *False*, store the original dictionary if possible.
+        :param bool copy: If *True* (default), store a copy of the data.
+            If *False*, store the original data whenever it is possible.
             If the dictionary contains lists, they need to be converted to
-            numpy arrays and a copy is mandatory. In such a case, an error
-            is raised if ``copy=False``.
+            numpy arrays and a copy is mandatory.
         :raise: TypeError if positioners is not a dict or if any positioner
             is not a scalar, list or numpy array.
-        :raise: IndexError if any positioner has an inconsistent number of
-            values, or an inconsistent shape.
         :raise: RuntimeError if any positioner is a list and copy=False
         """
         if not isinstance(positioners, dict):
             raise TypeError("Dictionary expected for positioners")
 
         npixels = self.getStackOriginalImage().size
-        positionersCopy = positioners.copy() if copy else positioners
+        stackPositioners = {}
 
         for motorName, motorValues in positioners.items():
-            shapeMotorValues = None
-            if numpy.isscalar(motorValues):
-                continue
-            if hasattr(motorValues, "size"):
-                # numpy array
-                numMotorValues = motorValues.size
-                shapeMotorValues = motorValues.shape
+            if numpy.isscalar(motorValues) or \
+                    (hasattr(motorValues, "ndim") and
+                     motorValues.ndim == 0):
+                stackPositioners[motorName] = motorValues
             elif hasattr(motorValues, "__len__") and numpy.isscalar(motorValues[0]):
                 # list: convert to numpy array before storing in info
                 numMotorValues = len(motorValues)
-                if not copy:
-                    raise RuntimeError(
-                        "copy=False is incompatible with positioners stored" +
-                        " as lists. Convert positioners to numpy arrays or " +
-                        "set copy=True."
-                    )
-                positionersCopy[motorName] = numpy.array(motorValues)
+                if numMotorValues == npixels:
+                    stackPositioners[motorName] = numpy.array(motorValues)
+            elif hasattr(motorValues, "size"):
+                # numpy array
+                numMotorValues = motorValues.size
+                if numMotorValues == npixels:
+                    stackPositioners[motorName] = numpy.array(motorValues,
+                                                              copy=copy)
             else:
                 raise TypeError(
                         "Wrong type for positioner %s. " % motorName +
                         "Valid types are numpy arrays, scalars or list of scalars.")
 
-            if numMotorValues != npixels:
-                raise IndexError(
-                        "Number of motor values is inconsistent with stack size." +
-                        " Found %d, expected %d" % (numMotorValues, npixels))
-            if shapeMotorValues is not None and len(shapeMotorValues) != 1:
-                if shapeMotorValues != self.getStackOriginalImage().shape:
-                    raise IndexError("shape of motor values array does not match "
-                                     "shape of stack image.")
+        if DEBUG and len(stackPositioners) != len(positioners):
+            ignored_motors = list(set(positioners.keys()) -
+                                  set(stackPositioners.keys()))
 
-        self._stack.info["positioners"] = positionersCopy
+            print("Ignored motors due to mismatch in number of values: " +
+                  ', '.join(ignored_motors))
+
+        self._stack.info["positioners"] = stackPositioners
+
+    def _clearPositioners(self):
+        """Removes the "positioners" field in the stack info"""
+        if "positioners" in self._stack.info:
+            self._stack.info["positioners"] = {}
 
     def getPositionersFromIndex(self, index):
         """Return the value of all positioners for the spectrum identified by
@@ -1179,8 +1185,8 @@ class StackBase(object):
                 positionersAtIdx[motorName] = motorValues
             elif len(motorValues.shape) == 1:
                 positionersAtIdx[motorName] = motorValues[index]
-            elif len(motorValues.shape) == 2:
-                positionersAtIdx[motorName] = motorValues.ravel()[index]
+            else:
+                positionersAtIdx[motorName] = motorValues.reshape((-1,))[index]
 
         return positionersAtIdx
 

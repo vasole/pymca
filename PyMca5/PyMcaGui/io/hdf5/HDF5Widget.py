@@ -41,6 +41,8 @@ import weakref
 try:
     from silx.io import is_group
     from silx.io import open as h5open
+    import logging
+    logging.getLogger("silx.io.fabioh5").setLevel(logging.CRITICAL)
 except ImportError:
     def is_group(node):
         return isinstance(node, h5py.Group)
@@ -302,10 +304,13 @@ class H5NodeProxy(object):
                 attrs = list(node.attrs)
                 for cname in ['class', 'NX_class']:
                     if cname in attrs:
+                        nodeattr = node.attrs[cname]
                         if sys.version <'3.0':
-                            _type = "%s" % node.attrs[cname]
+                            _type = "%s" % nodeattr
+                        elif hasattr(nodeattr, "decode"):
+                            _type = nodeattr.decode('utf=8')
                         else:
-                            _type = node.attrs[cname].decode('utf=8')
+                            _type = "%s" % nodeattr
                         self._type = _type
                         break
                         #self._type = _type[2].upper() + _type[3:]

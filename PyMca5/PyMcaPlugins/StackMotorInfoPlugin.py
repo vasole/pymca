@@ -30,7 +30,6 @@ __authors__ = ["P. Knobel"]
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 
-import numpy
 
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
@@ -49,6 +48,9 @@ class PointInfoWindow(qt.QWidget):
 
         layout = qt.QVBoxLayout()
         self.setLayout(layout)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         self.maskImageWidget = SilxMaskImageWidget.SilxMaskImageWidget(self)
         # self.maskImageWidget.setWindowFlags(qt.Qt.W)
 
@@ -81,37 +83,9 @@ class PointInfoWindow(qt.QWidget):
     def _updateMotors(self, ddict):
         if not ddict["event"] == "mouseMoved":
             return
-        nRows, nCols = self.plugin.getStackOriginalImage().shape
-        r, c = SilxMaskImageWidget.convertToRowAndColumn(
-                ddict["x"], ddict["y"],
-                shape=(nRows, nCols),
-                xScale=self.plugin.getStackInfo().get("xScale"),
-                yScale=self.plugin.getStackInfo().get("yScale"),
-                safe=True)
 
-        positioners = self.plugin.getStackInfo().get("positioners", {})
-        motorsValuesAtCursor = {}
-        for motorName, motorValues in positioners.items():
-            if numpy.isscalar(motorValues) or (hasattr(motorValues, "ndim") and
-                                               motorValues.ndim == 0):
-                # scalar
-                motorsValuesAtCursor[motorName] = motorValues
-            else:
-                # must be a numpy array
-                assert hasattr(motorValues, "ndim") and \
-                       hasattr(motorValues, "shape")
-                if motorValues.ndim == 2:
-                    # image
-                    assert motorValues.shape == (nRows, nCols), \
-                        "wrong shape for motor values frame"
-                    motorsValuesAtCursor[motorName] = motorValues[r, c]
-                elif motorValues.ndim == 1:
-                    # 1D array
-                    nPixels = nRows * nCols
-                    assert len(motorValues) == nPixels, \
-                        "wrong number of motor values in array"
-                    motorIndex = r * nCols + c
-                    motorsValuesAtCursor[motorName] = motorValues[motorIndex]
+        motorsValuesAtCursor = self.plugin.getPositionersFromXY(ddict["x"],
+                                                                ddict["y"])
 
         self.motorPositionsWindow.table.updateTable(
                 legList=["Stack"],
@@ -198,6 +172,21 @@ class StackMotorInfoPlugin(StackPluginBase.StackPluginBase):
         self.widget.raise_()
 
         self.stackUpdated()    # fixme: is this necessary?
+
+    def getPositionersFromXY(self, x, y):
+        """Return positioner values for a stack pixel identified
+        by it's (x, y) coordinates.
+        """
+        nRows, nCols = self.getStackOriginalImage().shape
+        r, c = SilxMaskImageWidget.convertToRowAndColumn(
+                x, y,
+                shape=(nRows, nCols),
+                xScale=self.getStackInfo().get("xScale"),
+                yScale=self.getStackInfo().get("yScale"),
+                safe=True)
+
+        idx1d = r * nCols + c
+        return self._stackWindow.getPositionersFromIndex(idx1d)
 
     #Methods implemented by the plugin
     def getMethods(self):

@@ -41,8 +41,9 @@ else:
     QString = qt.safe_str
 
 DEBUG = 0
-class MotorInfoComboBox(qt.QComboBox):
 
+
+class MotorInfoComboBox(qt.QComboBox):
     loadColumnSignal = qt.pyqtSignal(object)
 
     def __init__(self, parent, mlist, nCol):
@@ -73,11 +74,11 @@ class MotorInfoComboBox(qt.QComboBox):
             newIndex = 0
         self.setCurrentIndex(newIndex)
 
-class MotorInfoHeader(qt.QHeaderView):
 
+class MotorInfoHeader(qt.QHeaderView):
     xOffsetLeft = 5
-    xOffsetRight = -35
-    yOffset = -1
+    xOffsetRight = -5
+    yOffset = 0
 
     def __init__(self, parent):
         qt.QHeaderView.__init__(self, qt.Qt.Horizontal, parent)
@@ -103,7 +104,7 @@ class MotorInfoHeader(qt.QHeaderView):
                 self.boxes[idx] = newBox
             self.boxes[idx].setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft,
                                       self.yOffset,
-                                      self.sectionSize(idx) +  self.xOffsetRight,
+                                      self.sectionSize(idx) + self.xOffsetRight,
                                       self.height())
             #if idx > 0:
             #    self.setTabOrder(self.boxes[idx-1], self.boxes[idx])
@@ -113,10 +114,10 @@ class MotorInfoHeader(qt.QHeaderView):
     def handleSectionResized(self, index):
         for idx in range(self.visualIndex(index), len(self.boxes)):
             if idx > 0:
-                logical = self.logicalIndex (idx)
+                logical = self.logicalIndex(idx)
                 self.boxes[idx].setGeometry(self.sectionViewportPosition(logical) + self.xOffsetLeft,
                                           self.yOffset,
-                                          self.sectionSize(logical) +  self.xOffsetRight,
+                                          self.sectionSize(logical) + self.xOffsetRight,
                                           self.height())
 
     def deleteLastSection(self):
@@ -137,9 +138,10 @@ class MotorInfoHeader(qt.QHeaderView):
     def fixComboPositions(self):
         for idx in range(1, self.count()):
             self.boxes[idx].setGeometry(self.sectionViewportPosition(idx) + self.xOffsetLeft,
-                                      self.yOffset,
-                                      self.sectionSize(idx) +  self.xOffsetRight,
-                                      self.height())
+                                        self.yOffset,
+                                        self.sectionSize(idx) +  self.xOffsetRight,
+                                        self.height())
+
 
 class MotorInfoTable(TableWidget):
     def __init__(self, parent, numRows, numColumns, legList, motList):
@@ -232,7 +234,7 @@ class MotorInfoTable(TableWidget):
         else:
             for idx in range(0, self.rowCount()):
                 self.setItem(idx, column, '')
-        self.resizeColumnToContents(column)
+        # self.resizeColumnToContents(column)
 
     def getAllMotorNames(self):
         nameSet = []

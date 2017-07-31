@@ -40,6 +40,31 @@ try:
 except ImportError:
     h5py = None
 
+try:
+    # if silx is available, we can open SPEC
+    from silx.io import open as silx_open
+    h5open = silx_open
+    from silx.io import is_dataset
+except ImportError:
+    silx_open = None
+    if h5py is not None:
+        # at least we can open hdf5 files
+        def h5open(filename):
+            return h5py.File(filename, "r")
+
+        def is_dataset(item):
+            return isinstance(item, h5py.Dataset)
+    else:
+        # no luck, only CSV files available
+        h5open = None
+        is_dataset = None
+
+
+# suppress errors and warnings if fabio is missing
+if silx_open is not None:
+    import logging
+    logging.getLogger("silx.io.fabioh5").setLevel(logging.CRITICAL)
+
 DEBUG = 0
 
 
@@ -71,10 +96,16 @@ class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
         mcaIndex = stack.info.get('McaIndex')
         if not (mcaIndex in [0, -1, 2]):
             raise IndexError("1D index must be 0, 2, or -1")
-        filefilter = ['HDF5 Files (*.h5 *.nxs *.hdf *.hdf5)',
-                      'CSV (*.csv *.txt)']
+
+        # test io dependencies
         if h5py is None:
-            filefilter = filefilter[1:]
+            filefilter = []
+        else:
+            filefilter = ['HDF5 (*.h5 *.nxs *.hdf *.hdf5)']
+        filefilter.append('CSV (*.csv *.txt)')
+        if silx_open is not None:
+            filefilter.append('Any (*)')
+
         filename, ffilter = PyMcaFileDialogs.\
                     getFileList(parent=None,
                         filetypelist=filefilter,
@@ -93,16 +124,16 @@ class LoadPositionersStackPlugin(StackPluginBase.StackPluginBase):
         filename = filename[0]
 
         positioners = {}
-        if ffilter.startswith('HDF5'):
+        if not ffilter.startswith('CSV'):
             h5GroupName = getGroupNameDialog(filename)
             if h5GroupName is None:
                 return
-            with h5py.File(filename) as h5f:
+            with h5open(filename) as h5f:
                 h5Group = h5f[h5GroupName]
                 positioners = {}
                 for dsname in h5Group:
                     # links and subgroups just ignored for the time being
-                    if not isinstance(h5Group[dsname], h5py.Dataset):
+                    if not is_dataset(h5Group[dsname]):
                         continue
                     positioners[dsname] = h5Group[dsname][()]
         else:
