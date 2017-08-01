@@ -57,6 +57,7 @@ class McaTheory(object):
         self.__lastTime = None
         self.strategyInstances = {}
         self.__toBeConfigured = False
+        self.useFisxEscape(False)
         if initdict is None:
             dirname = PyMcaDataDir.PYMCA_DATA_DIR
             initdict = os.path.join(dirname, "McaTheory.cfg")
@@ -107,6 +108,19 @@ class McaTheory(object):
         self.startFit = self.startfit
         #incompatible with multiple energies
         #Elements.registerUpdate(self._updateCallback)
+
+    def useFisxEscape(self, flag=None):
+        if flag:
+            if FisxHelper.xcom is None:
+                FisxHelper.xcom =FisxHelper.getElementsInstance()
+            xcom = FisxHelper.xcom
+            if hasattr(xcom, "setEscapeCacheEnabled"):
+                xcom.setEscapeCacheEnabled(1)
+                self.__USE_FISX_ESCAPE = True
+            else:
+                self.__USE_FISX_ESCAPE = False
+        else:
+            self.__USE_FISX_ESCAPE = False
 
     def enableOptimizedLinearFit(self):
         self._batchFlag = True
@@ -436,12 +450,40 @@ class McaTheory(object):
             PEAKS0ESCAPE.append([])
             _nescape_ = 0
             if self.config['fit']['escapeflag']:
-                for i in range(len(newpeaks)):
-                    _esc_ = Elements.getEscape([detele,1.0,1.0], newpeaks[i][1],
-                                        ethreshold=ethreshold, ithreshold=ithreshold,
-                                        nthreshold=nthreshold)
-                    PEAKS0ESCAPE[-1].append(_esc_)
-                    _nescape_ += len(_esc_)
+                if self.__USE_FISX_ESCAPE:
+                    if DEBUG:
+                        print("Using fisx escape")
+                    xcom = FisxHelper.xcom
+                    detector_composition = Elements.getMaterialMassFractions([detele],
+                                                                             [1.0])
+                    xcom.updateEscapeCache(detector_composition,
+                                           [newpeaks[i][1] for i in range(len(newpeaks))],
+                                           energyThreshold=ethreshold,
+                                           intensityThreshold=ithreshold,
+                                           nThreshold=nthreshold)
+                    for i in range(len(newpeaks)):
+                        _esc_ = xcom.getEscape(detector_composition,
+                                       newpeaks[i][1],
+                                       energyThreshold=ethreshold,
+                                       intensityThreshold=ithreshold,
+                                       nThreshold=nthreshold)
+                        _esc_ = [[_esc_[x]["energy"],
+                                  _esc_[x]["rate"],
+                                   x[:-3].replace("_"," ")] for x in _esc_]
+                        _esc_ = Elements._filterPeaks(_esc_, ethreshold=ethreshold,
+                                          ithreshold=ithreshold,
+                                          nthreshold=nthreshold,
+                                           absoluteithreshold=True,
+                                           keeptotalrate=False)
+                        PEAKS0ESCAPE[-1].append(_esc_)
+                        _nescape_ += len(_esc_)
+                else:
+                    for i in range(len(newpeaks)):
+                        _esc_ = Elements.getEscape([detele,1.0,1.0], newpeaks[i][1],
+                                            ethreshold=ethreshold, ithreshold=ithreshold,
+                                            nthreshold=nthreshold)
+                        PEAKS0ESCAPE[-1].append(_esc_)
+                        _nescape_ += len(_esc_)
             PEAKS0.append(numpy.array(newpeaks))
             PEAKS0NAMES.append(newpeaksnames)
             #print ele,"PEAKS0ESCAPE[-1] = ",PEAKS0ESCAPE[-1]
@@ -721,12 +763,40 @@ class McaTheory(object):
                     PEAKS0ESCAPE.append([])
                     _nescape_ = 0
                     if self.config['fit']['escapeflag']:
-                        for i in range(len(newpeaks)):
-                            _esc_ = Elements.getEscape([detele,1.0,1.0], newpeaks[i][1],
-                                                ethreshold=ethreshold, ithreshold=ithreshold,
-                                                nthreshold=nthreshold)
-                            PEAKS0ESCAPE[-1].append(_esc_)
-                            _nescape_ += len(_esc_)
+                        if self.__USE_FISX_ESCAPE:
+                            if DEBUG:
+                                print("Using fisx escape")
+                            xcom = FisxHelper.xcom
+                            detector_composition = Elements.getMaterialMassFractions([detele],
+                                                                             [1.0])
+                            xcom.updateEscapeCache(detector_composition,
+                                                   [newpeaks[i][1] for i in range(len(newpeaks))],
+                                                   energyThreshold=ethreshold,
+                                                   intensityThreshold=ithreshold,
+                                                   nThreshold=nthreshold)
+                            for i in range(len(newpeaks)):
+                                _esc_ = xcom.getEscape(detector_composition,
+                                               newpeaks[i][1],
+                                               energyThreshold=ethreshold,
+                                               intensityThreshold=ithreshold,
+                                               nThreshold=nthreshold)
+                                _esc_ = [[_esc_[x]["energy"],
+                                          _esc_[x]["rate"],
+                                           x[:-3].replace("_"," ")] for x in _esc_]
+                                _esc_ = Elements._filterPeaks(_esc_, ethreshold=ethreshold,
+                                                  ithreshold=ithreshold,
+                                                  nthreshold=nthreshold,
+                                                   absoluteithreshold=True,
+                                                   keeptotalrate=False)
+                                PEAKS0ESCAPE[-1].append(_esc_)
+                                _nescape_ += len(_esc_)
+                        else:
+                            for i in range(len(newpeaks)):
+                                _esc_ = Elements.getEscape([detele,1.0,1.0], newpeaks[i][1],
+                                                    ethreshold=ethreshold, ithreshold=ithreshold,
+                                                    nthreshold=nthreshold)
+                                PEAKS0ESCAPE[-1].append(_esc_)
+                                _nescape_ += len(_esc_)
                     PEAKS0.append(numpy.array(newpeaks))
                     PEAKS0NAMES.append(newpeaksnames)
                     #print ele,"PEAKS0ESCAPE[-1] = ",PEAKS0ESCAPE[-1]
@@ -794,10 +864,35 @@ class McaTheory(object):
                                 PEAKS0ESCAPE.append([])
                                 _nescape_ = 0
                                 if self.config['fit']['escapeflag']:
-                                    _esc_ = Elements.getEscape([detele,1.0,1.0],
-                                                        ene,
-                                                        ethreshold=ethreshold, ithreshold=ithreshold,
-                                                        nthreshold=nthreshold)
+                                    if self.__USE_FISX_ESCAPE:
+                                        if DEBUG:
+                                            print("Using fisx escape")
+                                        xcom = FisxHelper.xcom
+                                        detector_composition = Elements.getMaterialMassFractions([detele],
+                                                                                                 [1.0])
+                                        xcom.updateEscapeCache(detector_composition,
+                                                               [ene],
+                                                               energyThreshold=ethreshold,
+                                                               intensityThreshold=ithreshold,
+                                                               nThreshold=nthreshold)
+                                        _esc_ = xcom.getEscape(detector_composition,
+                                                       ene,
+                                                       energyThreshold=ethreshold,
+                                                       intensityThreshold=ithreshold,
+                                                       nThreshold=nthreshold)
+                                        _esc_ = [[_esc_[x]["energy"],
+                                                  _esc_[x]["rate"],
+                                                  x[:-3].replace("_"," ")] for x in _esc_]
+                                        _esc_ = Elements._filterPeaks(_esc_, ethreshold=ethreshold,
+                                                              ithreshold=ithreshold,
+                                                              nthreshold=nthreshold,
+                                                              absoluteithreshold=True,
+                                                              keeptotalrate=False)
+                                    else:
+                                        _esc_ = Elements.getEscape([detele,1.0,1.0],
+                                                            ene,
+                                                            ethreshold=ethreshold, ithreshold=ithreshold,
+                                                            nthreshold=nthreshold)
                                     PEAKS0ESCAPE[-1].append(_esc_)
                                     _nescape_ += len(_esc_)
                                 r = 1
