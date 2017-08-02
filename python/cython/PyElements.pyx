@@ -329,6 +329,14 @@ cdef class PyElements:
         return self.thisptr.getEscape(composition, energy, energyThreshold, intensityThreshold, nThreshold,
                                       alphaIn, thickness)
 
+    def updateEscapeCache(self, std_map[std_string, double] composition, std_vector[double] energyList, double energyThreshold=0.010,
+                                        double intensityThreshold=1.0e-7,
+                                        int nThreshold=4 ,
+                                        double alphaIn=90.,
+                                        double thickness=0.0):
+        self.thisptr.updateEscapeCache(composition, energyList, energyThreshold, intensityThreshold, nThreshold,
+                                      alphaIn, thickness)
+
     def getShellConstants(self, elementName, subshell):
         if sys.version < "3.0":
             return self.thisptr.getShellConstants(elementName, subshell)
@@ -382,6 +390,13 @@ cdef class PyElements:
         """
         self.thisptr.setCacheEnabled(toBytes(elementName), flag)
 
+    def setEscapeCacheEnabled(self, int flag = 1):
+        """
+        Enable or disable the use of the stored calculations (if any).
+        It does not clear the cache when disabling.
+        """
+        self.thisptr.setEscapeCacheEnabled(flag)
+
     def clearCache(self, elementName):
         """
         Clear the calculation cache
@@ -393,6 +408,12 @@ cdef class PyElements:
         Return 1 or 0 if the calculation cache is enabled or not
         """
         return self.thisptr.isCacheEnabled(toBytes(elementName))
+
+    def isEscapeCacheEnabled(self):
+        """
+        Return 1 or 0 if the calculation cache is enabled or not
+        """
+        return self.thisptr.isEscapeCacheEnabled()
 
     def getCacheSize(self, elementName):
         """
