@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, ESRF - D. Dale CHESS
+# Copyright (C) 2004-2017 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -552,8 +552,11 @@ class FileModel(qt.QAbstractItemModel):
         self.sigFileAppended.emit(ddict)
 
     def clear(self):
-        self.reset()
-
+        if DEBUG:
+            print("Clear called")
+        # reset is considered obsolete under Qt 5.
+        if hasattr(self, "reset"):
+            self.reset()
 
 class FileView(qt.QTreeView):
 
