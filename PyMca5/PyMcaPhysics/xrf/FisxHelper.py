@@ -232,8 +232,20 @@ def getMultilayerFluorescence(multilayerSample,
     else:
         useGeometricEfficiency = 0
 
+    if elementsList in [None, []]:
+        raise ValueError("Element list not specified")
+
+    if len(elementsList):
+        if len(elementsList[0]) == 3:
+            # PyMca can send [atomic number, element, peak]
+            actualElementsList = [x[1] + " " + x[2] for x in elementsList]
+        elif len(elementsList[0]) == 2:
+            actualElementsList = [x[0] + " " + x[1] for x in elementsList]
+        else:
+            actualElementsList = elementsList
+
     matrixElementsList = []
-    for peak in elementsList:
+    for peak in actualElementsList:
         ele = peak.split()[0]
         considerIt = False
         for layer in multilayerSample:
@@ -246,19 +258,6 @@ def getMultilayerFluorescence(multilayerSample,
 
     if elementsFromMatrix:
         elementsList = matrixElementsList
-
-    # the detector distance and solid angle ???
-    if elementsList in [None, []]:
-        raise ValueError("Element list not specified")
-
-    if len(elementsList):
-        if len(elementsList[0]) == 3:
-            # PyMca can send [atomic number, element, peak]
-            actualElementList = [x[1] + " " + x[2] for x in elementsList]
-        elif len(elementsList[0]) == 2:
-            actualElementList = [x[0] + " " + x[1] for x in elementsList]
-        else:
-            actualElementList = elementsList
 
     # enabling the cascade cache gets a (miserable) 15 % speed up
     if DEBUG:
@@ -283,14 +282,25 @@ def getMultilayerFluorescence(multilayerSample,
     if hasattr(xcom, "updateCache"):
         if DEBUG:
             print("Filling atenuation cache")
+        composition = detectorInstance.getComposition(xcom)
+        for element in composition.keys():
+            xcom.setElementCascadeCacheEnabled(element, 1)
+            if element not in treatedElements:
+                lines = xcom.getEmittedXRayLines(element)
+                sampleEnergies = [lines[key] for key in lines]
+                for e in sampleEnergies:
+                    if e not in emittedLines:
+                        emittedLines.append(e)
+                treatedElements.append(element)
 
-        for element in actualElementList:
+        for element in actualElementsList:
             if element.split()[0] not in treatedElements:
                 treatedElements.append(element.split()[0])
 
         for element in treatedElements:
             # this limit seems overestimated but still reasonable
             if xcom.getCacheSize(element) > 5000:
+                print("Clearing cache")
                 xcom.clearCache(element)
             xcom.updateCache(element, energyList)
             xcom.updateCache(element, emittedLines)
@@ -298,16 +308,35 @@ def getMultilayerFluorescence(multilayerSample,
             if DEBUG:
                 print("Element %s cache size = %d" % (element, xcom.getCacheSize(element)))
 
-        for element in actualElementList:
+        for element in actualElementsList:
             xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
 
+    if hasattr(xcom, "updateEscapeCache"):
+        if detector is not None:
+            for element in actualElementsList:
+                lines = xcom.getEmittedXRayLines(element.split()[0])
+                lines_energy = [lines[key] for key in lines]
+                for e in lines_energy:
+                    if e not in emittedLines:
+                        emittedLines.append(e)
+                
+            xcom.updateEscapeCache(detectorInstance.getComposition(xcom),
+                            emittedLines,
+                            energyThreshold=detectorInstance.getEscapePeakEnergyThreshold(), \
+                            intensityThreshold=detectorInstance.getEscapePeakIntensityThreshold(), \
+                            nThreshold=detectorInstance.getEscapePeakNThreshold(), \
+                            alphaIn=detectorInstance.getEscapePeakAlphaIn(),
+                            thickness=0)  # No escape by the back considered yet
+    else:
+        if DEBUG:
+            print("NOT CALLING UPDATE CACHE")
     if DEBUG:
         print("C++ elapsed filling cache = ", time.time() - t0)
         
     if DEBUG:
         print("Calling getMultilayerFluorescence")
         t0 = time.time()
-    expectedFluorescence = xrf.getMultilayerFluorescence(actualElementList,
+    expectedFluorescence = xrf.getMultilayerFluorescence(actualElementsList,
                             xcom,
                             secondary=secondary,
                             useGeometricEfficiency=useGeometricEfficiency,
