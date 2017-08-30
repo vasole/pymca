@@ -1,3 +1,37 @@
+VERSION 5.2.0
+
+RGB Correlator can now export the data as a single TIFF file or as multiple TIFF
+files.
+
+XRF: Deal with the case the mass fraction is zero in one of the compounds of a material. It can arrive when applying a Strategy.
+
+Extend the command line usage of the FastXRFLinearFit module to HDF5 datasets.
+
+ROI Imaginng. Improved external images plugin. It requires silx.
+
+ROI Imaging. Plugin to display per pixel information (motors and others). It
+requires silx.
+
+ROI Imaging. Allow to sum the master and the slave stack. It can be used to
+sum an arbitrary number of stacks.
+
+ROI Imaging. Selecting multiple HDF5 datasets as signal generates a stack that
+is the sum of all of the datasets.
+
+Implement a calculation cache to speed up secondary excitation calculations.
+
+Allow to use fisx library for the calculation of escape peaks. Default is
+disabled.
+
+Improved support of OMDAQ lmf format.
+
+Correct bug affecting the calculation of ROIs when the x axis coordinates are
+negative
+
+MacOS. Correct bug on startup when reading the default configuration.
+
+MacOS. Frozen binary uses now HDF5 1.10.1 to support SWMR files.
+
 VERSION 5.1.4
 
 ROI Imaging tool can add multiple detector signals present in an HDF5 file.
