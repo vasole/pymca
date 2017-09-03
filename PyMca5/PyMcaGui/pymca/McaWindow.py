@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -694,6 +694,8 @@ class McaWindow(ScanWindow.ScanWindow):
                     else:
                         self.setGraphXLimits(emax, emin, replot=True)
             except:
+                if DEBUG:
+                    print("Refreshing due to exception", sys.exc_info()[1])
                 self.refresh()
                 #self.graph.replot()
 
@@ -1656,14 +1658,26 @@ class McaWindow(ScanWindow.ScanWindow):
         if DEBUG:
             print(" DANGEROUS REFRESH CALLED")
         activeCurve = self.getActiveCurve(just_legend=True)
+        # try to keep the same curve order
+        legendList = self.getAllCurves(just_legend=True)
+        dataObjectsKeyList = list(self.dataObjectsDict.keys())
         sellist = []
-        for key in self.dataObjectsDict.keys():
-            sel ={}
-            sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
-            sel['dataobject'] = self.dataObjectsDict[key]
-            sel['legend'] = key
-            sel['Key'] = self.dataObjectsDict[key].info['Key']
-            sellist.append(sel)
+        for key in legendList:
+            if key in dataObjectsKeyList:
+                sel ={}
+                sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
+                sel['dataobject'] = self.dataObjectsDict[key]
+                sel['legend'] = key
+                sel['Key'] = self.dataObjectsDict[key].info['Key']
+                sellist.append(sel)
+        for key in dataObjectsKeyList:
+            if key not in legendList:
+                sel ={}
+                sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
+                sel['dataobject'] = self.dataObjectsDict[key]
+                sel['legend'] = key
+                sel['Key'] = self.dataObjectsDict[key].info['Key']
+                sellist.append(sel)
         self.clearCurves()
         self._addSelection(sellist)
         if activeCurve is not None:
