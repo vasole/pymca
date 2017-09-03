@@ -1,3 +1,7 @@
+VERSION 5.2.1
+
+Correct annoying error message appearing when background is not defined.
+
 VERSION 5.2.0
 
 RGB Correlator can now export the data as a single TIFF file or as multiple TIFF
