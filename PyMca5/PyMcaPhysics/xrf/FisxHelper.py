@@ -311,7 +311,8 @@ def getMultilayerFluorescence(multilayerSample,
         for element in actualElementsList:
             xcom.setElementCascadeCacheEnabled(element.split()[0], 1)
 
-    if hasattr(xcom, "updateEscapeCache"):
+    if hasattr(xcom, "updateEscapeCache") and \
+       hasattr(xcom, "setEscapeCacheEnabled"):
         if detector is not None:
             for element in actualElementsList:
                 lines = xcom.getEmittedXRayLines(element.split()[0])
@@ -319,7 +320,7 @@ def getMultilayerFluorescence(multilayerSample,
                 for e in lines_energy:
                     if e not in emittedLines:
                         emittedLines.append(e)
-                
+            xcom.setEscapeCacheEnabled(1)
             xcom.updateEscapeCache(detectorInstance.getComposition(xcom),
                             emittedLines,
                             energyThreshold=detectorInstance.getEscapePeakEnergyThreshold(), \
