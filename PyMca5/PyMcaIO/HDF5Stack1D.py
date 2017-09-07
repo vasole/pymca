@@ -402,11 +402,17 @@ class HDF5Stack1D(DataObject.DataObject):
                                         if case == 0:
                                             mData = numpy.outer(mDataset[mca:(mca+dim1)],
                                                                 numpy.ones((mcaDim)))
-                                            self.data[i, :, :] += yData/mData
+                                            if mdata.dtype in [numpy.float, numpy.float32, numpy.float64]:
+                                                self.data[i, :, :] += yData/mData
+                                            else:
+                                                self.data[i, :, :] += yData/numpy.asarray(mData, dtype=numpy.float)
                                         elif case == 1:
                                             mData = mDataset[mca:(mca+dim1), :]
                                             mData.shape = -1, mcaDim
-                                            self.data[i, :, :]  += yData/mData
+                                            if mdata.dtype in [numpy.float, numpy.float32, numpy.float64]:
+                                                self.data[i, :, :]  += yData/mData
+                                            else:
+                                                self.data[i, :, :]  += yData//numpy.asarray(mData, dtype=numpy.float)
                                     else:
                                         self.data[i:(i+deltaI), :] += yData
                                     n += yDataset.shape[1]
@@ -425,9 +431,15 @@ class HDF5Stack1D(DataObject.DataObject):
                                         yData = yDataset
                                     if mSelection is not None:
                                         if case == 0:
-                                            self.data[i, j, :] += yData/mDataset[mca]
+                                            if mDataset.dtype in [numpy.float, numpy.float32, numpy.float64]:
+                                                self.data[i, j, :] += yData/mDataset[mca]
+                                            else:
+                                                self.data[i, j, :] += yData/numpy.asarray(mDataset[mca], dtype=numpy.float)
                                         elif case == 1:
-                                            self.data[i, j, :]  += yData/mDataset[mca, :]
+                                            if mDataset.dtype in [numpy.float, numpy.float32, numpy.float64]:
+                                                self.data[i, j, :]  += yData/mDataset[mca, :]
+                                            else:
+                                                self.data[i, j, :]  += yData/numpy.asarray(mDataset[mca, :], dtype=numpy.float)
                                     else:
                                         self.data[i, j, :] += yData
                                     n += 1
@@ -435,7 +447,7 @@ class HDF5Stack1D(DataObject.DataObject):
                             if mSelection is not None:
                                 case = -1
                                 nMonitorData = 1
-                                for  v in mDataset.shape:
+                                for v in mDataset.shape:
                                     nMonitorData *= v
                                 if nMonitorData == yDataset.shape[0]:
                                     case = 3
@@ -465,11 +477,11 @@ class HDF5Stack1D(DataObject.DataObject):
                                         yData = yDataset[:]
                                     if mSelection is not None:
                                         if case == 0:
-                                            self.data[i, j, :] += yData/mDataset[mca]
+                                            self.data[i, j, :] += yData/numpy.asarray(mDataset[mca], dtype=numpy.float)
                                         elif case == 1:
-                                            self.data[i, j, :]  += yData/mDataset[:, mca]
+                                            self.data[i, j, :]  += yData/numpy.asarray(mDataset[:, mca], dtype=numpy.float)
                                         elif case == 3:
-                                            self.data[i, j, :]  += yData/mDataset
+                                            self.data[i, j, :]  += yData/numpy.asarray(mDataset, dtype=numpy.float)
                                     else:
                                         self.data[i, j, :] += yData
                                     n += 1
@@ -494,9 +506,9 @@ class HDF5Stack1D(DataObject.DataObject):
                                         j = n % dim1
                                         yData = self.data[i, j, :]
                                         if case == 0:
-                                            self.data[i, j, :] += yData/mDataset[mca]
+                                            self.data[i, j, :] += yData/numpy.asarray(mDataset[mca], dtype=numpy.float)
                                         elif case == 1:
-                                            self.data[i, j, :]  += yData/mDataset[:, mca]
+                                            self.data[i, j, :]  += yData/numpy.asarray(mDataset[:, mca], dtype=numpy.float)
                                         n += 1
                                 else:
                                     n += tmp.shape[1] * tmp.shape[2]
@@ -526,6 +538,8 @@ class HDF5Stack1D(DataObject.DataObject):
                             if mSelection is not None:
                                 mpath = scan + mSelection
                                 mDataset = hdf[mpath].value
+                                if mDataset.dtype not in [numpy.float, numpy.float32, numpy.float64]:
+                                    mDataset = numpy.array(mDataset, dtype=numpy.float)
                             if xSelection is not None:
                                 xpath = scan + xSelection
                                 xDataset = hdf[xpath].value
@@ -546,10 +560,10 @@ class HDF5Stack1D(DataObject.DataObject):
                                     "I do not know how to handle this monitor data")
                             if case == 0:
                                 for i in range(yDatasetShape[0]):
-                                    self.data[i] += yDataset[i].value / mDataset[i]
+                                    self.data[i] += yDataset[i].value / numpy.asarray(mDataset[i], dtype=numpy.float)
                             elif case == 1:
                                 for i in range(yDataset.shape[0]):
-                                    self.data[i] += yDataset[i] / mDataset
+                                    self.data[i] += yDataset[i] / numpy.asarray(mDataset, dtype=numpy.float)
                         else:
                             for i in range(yDataset.shape[0]):
                                 self.data[i:i+1] += yDataset[i:i+1]
