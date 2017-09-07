@@ -81,6 +81,8 @@ def h5py_sorting(object_list):
         posixNames = [item[1].name for item in object_list]
     except AttributeError:
         # Typical of broken external links
+        if DEBUG:
+            print("HDF5Widget: Cannot get posixNames")
         return object_list
 
     # This implementation only sorts entries
@@ -88,10 +90,12 @@ def h5py_sorting(object_list):
         return object_list
 
     sorting_key = None
-    for key in sorting_list:
-        if key in object_list[0][1]:
-            sorting_key = key
-            break
+    if hasattr(object_list[0][1], "items"):
+        for key in sorting_list:
+            if key in [x[0] for x in object_list[0][1].items()]:
+                sorting_key = key
+                break
+
     if sorting_key is None:
         if 'name' in sorting_list:
             sorting_key = 'name'
