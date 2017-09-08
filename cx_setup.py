@@ -154,20 +154,17 @@ except ImportError:
     MDP = False
 
 H5PY_SPECIAL = False
-try:
-    import h5py
-    if h5py.version.version < '1.2.0':
-        includes = ['h5py._extras']
-    elif h5py.version.version < '1.3.0':
-        includes = ['h5py._stub', 'h5py._sync', 'h5py.utils']
-    elif h5py.version.version < '2.0.0':
-        includes = ['h5py._extras', 'h5py._stub', 'h5py.utils',
-                    'h5py._conv', 'h5py._proxy']
-    else:
-        H5PY_SPECIAL = True
-        includes = []
-except:
-    includes = []
+import h5py
+if h5py.version.version < '1.2.0':
+    includes = ['h5py._extras']
+elif h5py.version.version < '1.3.0':
+    includes = ['h5py._stub', 'h5py._sync', 'h5py.utils']
+elif h5py.version.version < '2.0.0':
+    includes = ['h5py._extras', 'h5py._stub', 'h5py.utils',
+                'h5py._conv', 'h5py._proxy']
+else:
+    H5PY_SPECIAL = True
+includes = []
 
 try:
     import fisx
