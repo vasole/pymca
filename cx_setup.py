@@ -114,13 +114,10 @@ for pluginSet in glob.glob(os.path.join(pluginsDir,'*')):
 
 #I should use somehow absolute import ...
 sys.path = [PyMcaInstallationDir] + sys.path[1:]
-try:
-    import ctypes
-    import OpenGL
-    from PyMca5 import Object3D
-    OBJECT3D = True
-except:
-    OBJECT3D = False
+import ctypes
+import OpenGL
+from PyMca5 import Object3D
+OBJECT3D = True
 
 try:
     import scipy
