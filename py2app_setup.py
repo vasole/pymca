@@ -75,11 +75,8 @@ except ImportError:
     print("Using PyQt5")
     PACKAGES.append("PyQt5")
 
-try:
-    import silx
-    PACKAGES.append("silx")
-except ImportError:
-    print("silx not present")
+import silx
+PACKAGES.append("silx")
 
 try:
     import mdp

@@ -203,12 +203,9 @@ if sys.platform == "win32":
         print("Please install hdf5plugin prior to freeze PyMca")
         raise
 
-try:
-    import silx
-    special_modules.append(os.path.dirname(silx.__file__))
-    SILX = True
-except:
-    SILX = False
+import silx
+special_modules.append(os.path.dirname(silx.__file__))
+SILX = True
 
 excludes = ["Tkinter", "tkinter",
             'tcl','_tkagg', 'Tkconstants',
