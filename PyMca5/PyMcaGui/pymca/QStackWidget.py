@@ -46,6 +46,8 @@ from PyMca5.PyMcaGui.pymca import McaWindow
 from PyMca5.PyMcaCore import StackBase
 from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 from PyMca5.PyMcaGui import MaskImageWidget
+convertToRowAndColumn = MaskImageWidget.convertToRowAndColumn
+
 from PyMca5.PyMcaGui.pymca import StackROIWindow
 from PyMca5.PyMcaGui.pymca import RGBCorrelator
 from PyMca5.PyMcaGui.pymca.RGBCorrelatorWidget import ImageShapeDialog
@@ -367,8 +369,21 @@ class QStackWidget(StackBase.StackBase,
     def _getCroppedView(self):
         mcaIndex = self._stack.info.get('McaIndex', -1)
         #get limits
-        row0, row1 = self.stackWidget.graph.getGraphYLimits()
-        col0, col1 = self.stackWidget.graph.getGraphXLimits()
+        y0, y1 = self.stackWidget.graph.getGraphYLimits()
+        x0, x1 = self.stackWidget.graph.getGraphXLimits()    
+        xScale = self._stack.info.get("xScale", None)
+        yScale = self._stack.info.get("yScale", None)
+        if mcaIndex in [0]:
+            shape = [self._stack.data.shape[1], self._stack.data.shape[2]]
+        elif mcaIndex in [1]:
+            shape = [self._stack.data.shape[0], self._stack.data.shape[2]]
+        else:
+            shape = [self._stack.data.shape[0], self._stack.data.shape[1]]
+        row0, col0 = convertToRowAndColumn( \
+                     x0, y0, shape, xScale=xScale, yScale=yScale, safe=True)
+        row1, col1 = convertToRowAndColumn( \
+                     x1, y1, shape, xScale=xScale, yScale=yScale, safe=True)
+
         #this should go to array save ...
         shape = self._stack.data.shape
         if mcaIndex in [0]:
