@@ -307,7 +307,8 @@ class HDF5Stack1D(DataObject.DataObject):
                 print("Attempting dynamic loading")
                 self.data = yDataset
                 if mSelection is not None:
-                    if tmpHdf[mpath].dtype not in [numpy.float64, numpy.float32]:
+                    mdtype = tmpHdf[mpath].dtype
+                    if mdtype not in [numpy.float64, numpy.float32]:
                         mdtype = numpy.float64
                     mDataset = numpy.asarray(tmpHdf[mpath], dtype=mdtype)
                     self.monitor = [mDataset]
@@ -353,7 +354,8 @@ class HDF5Stack1D(DataObject.DataObject):
                             path = entryName + ySelection
                             if mSelection is not None:
                                 mpath = entryName + mSelection
-                                if hdf[mpath].dtype not in [numpy.float64, numpy.float32]:
+                                mdtype = hdf[mpath].dtype
+                                if mdtype not in [numpy.float64, numpy.float32]:
                                     mdtype = numpy.float64
                                 mDataset = numpy.asarray(hdf[mpath], dtype=mdtype)
                             if xSelection is not None:
@@ -363,7 +365,8 @@ class HDF5Stack1D(DataObject.DataObject):
                             path = scan + ySelection
                             if mSelection is not None:
                                 mpath = scan + mSelection
-                                if hdf[mpath].dtype not in [numpy.float64, numpy.float32]:
+                                mdtype = hdf[mpath].dtype
+                                if mdtype not in [numpy.float64, numpy.float32]:
                                     mdtype = numpy.float64
                                 mDataset = numpy.asarray(hdf[mpath], dtype=mdtype)
                             if xSelection is not None:
@@ -541,7 +544,8 @@ class HDF5Stack1D(DataObject.DataObject):
                             path = scan + ySelection
                             if mSelection is not None:
                                 mpath = scan + mSelection
-                                if hdf[mpath].dtype not in [numpy.float64, numpy.float32]:
+                                mdtype = hdf[mpath].dtype
+                                if mdtype not in [numpy.float64, numpy.float32]:
                                     mdtype = numpy.float64
                                 mDataset = numpy.asarray(hdf[mpath], dtype=mdtype)
                             if xSelection is not None:
