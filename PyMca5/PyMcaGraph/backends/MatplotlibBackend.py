@@ -2327,15 +2327,14 @@ class MatplotlibBackend(PlotBackend.PlotBackend):
             if not len(self.ax2.lines):
                 self.enableAxis('right', False)
                 self._rightAxisEnabled = None
-        #print("Calling draw")
-        self.graph.draw()
-        #print("Back from draw")
-        """
-        if QT:
-            w = self.getWidgetHandle()
-            QtGui.qApp.postEvent(w, QtGui.QResizeEvent(w.size(),
-                                                   w.size()))
-        """
+        try:
+            self.graph.draw()
+        except ValueError:
+            # TODO: Understand why matplotlib 2.1.0rc0 raises an
+            # error when toggling semilogarithmic axes and previous
+            # versions not.
+            if DEBUG:
+                print("MatplotlibBackend ERROR", sys.exc_info())
         return
 
     def saveGraph(self, fileName, fileFormat='svg', dpi=None , **kw):
