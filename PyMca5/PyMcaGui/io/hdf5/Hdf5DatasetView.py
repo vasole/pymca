@@ -35,7 +35,14 @@ from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 from silx.gui.data import DataViewerFrame
 
 
-class HDF5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
+class DataViewerFrameWithPlugins(DataViewerFrame.DataViewerFrame):
+    def __init__(self, parent=None):
+        DataViewerFrame.DataViewerFrame.__init__(self, parent)
+        # self.removeView()
+        # self.addView()
+
+
+class Hdf5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     """QWidget displaying data as raw values in a table widget, or as a
     curve, image or stack in a plot widget.
 
@@ -47,7 +54,7 @@ class HDF5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.mainLayout = qt.QVBoxLayout(self)
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
-        self.viewWidget = DataViewerFrame.DataViewerFrame(self)
+        self.viewWidget = DataViewerFrameWithPlugins(self)
         self.mainLayout.addWidget(self.viewWidget)
 
     def setDataset(self, dataset):
