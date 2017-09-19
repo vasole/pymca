@@ -511,18 +511,20 @@ class ScanWindow(PlotWindow.PlotWindow):
                     maxYDistance = abs(yMax - yMin)
                     if (maxXDistance > 0.0) and (maxYDistance > 0.0):
                         closestIndex = (pow((x - ddict['x'])/maxXDistance, 2) + \
-                                        pow((y - ddict['y'])/maxYDistance, 2)).argmin()
+                                        pow((y - ddict['y'])/maxYDistance, 2))
                     else:
                         closestIndex = (pow(x - ddict['x'], 2) + \
-                                    pow(y - ddict['y'], 2)).argmin()
-                    xCurve = x[closestIndex]
+                                    pow(y - ddict['y'], 2))
                     xText = '----'
                     yText = '----'
-                    if abs(xCurve - ddict['x']) < (0.05 * maxXDistance):
-                        yCurve = y[closestIndex]
-                        if abs(yCurve - ddict['y']) < (0.05 * maxYDistance):
-                            xText = '%.7g' % xCurve
-                            yText = '%.7g' % yCurve
+                    if len(closestIndex):
+                        closestIndex = closestIndex.argmin()
+                        xCurve = x[closestIndex]
+                        if abs(xCurve - ddict['x']) < (0.05 * maxXDistance):
+                            yCurve = y[closestIndex]
+                            if abs(yCurve - ddict['y']) < (0.05 * maxYDistance):
+                                xText = '%.7g' % xCurve
+                                yText = '%.7g' % yCurve
                     if xText == '----':
                         if self.getGraphCursor():
                             self._xPos.setStyleSheet("color: rgb(255, 0, 0);")
