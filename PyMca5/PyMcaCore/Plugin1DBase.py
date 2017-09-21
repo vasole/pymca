@@ -238,6 +238,13 @@ class Plugin1DBase(object):
             The legend of the active curve (or None) is returned.
         """
         curve = self._plotWindow.getActiveCurve(just_legend=just_legend)
+
+        # silx specific: when there is only one curve, get it, even if not active
+        # (PyMca's getActiveCurve already does this)
+        if curve is None and not self._legacy:
+            if len(self.getAllCurves(just_legend=True)) == 1:
+                curve = self._plotWindow.getCurve()
+
         if self._legacy or just_legend or curve is None:
             return curve
 
