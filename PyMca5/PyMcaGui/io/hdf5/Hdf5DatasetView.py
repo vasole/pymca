@@ -70,6 +70,7 @@ if userPluginsDirectory is not None:
 class Plot1DWithPlugins(Plot1D):
     def __init__(self, parent=None):
         Plot1D.__init__(self, parent)
+        self._plotType = "SCAN"    # needed by legacy plugins
 
         self._toolbar = qt.QToolBar(self)
         self.addToolBar(self._toolbar)

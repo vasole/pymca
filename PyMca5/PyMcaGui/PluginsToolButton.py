@@ -81,7 +81,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
         self.setToolTip("Call/Load 1D Plugins")
 
         # fill attr pluginList and pluginInstanceDict with existing plugins
-        PluginLoader.__init__(self, parent)
+        PluginLoader.__init__(self, method='getPlugin1DInstance')
 
         # plugins expect a legacy API, not the silx Plot API
         self.plot = weakref.proxy(plot, self._ooPlotDestroyed)

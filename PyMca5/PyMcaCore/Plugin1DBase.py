@@ -125,7 +125,7 @@ try:
 except ImportError:
     print("WARNING: numpy not present")
 try:
-    from silx.gui.plot.Plot import Plot as silxPlot
+    from silx.gui.plot.PlotWidget import PlotWidget as silxPlot
 except ImportError:
     silxPlot = None
 
@@ -174,9 +174,8 @@ class Plugin1DBase(object):
         :attr:`_legacy` is set to *True*, or a :class:`PluginsToolButton`
         acting as proxy for a *silx* PlotWindow (*legacy=False*).
         """
+
         if silxPlot is not None:
-            # FIXME: uncomment this when PluginsToolButton is in PyMca
-            # if isinstance(plotWindow, (silxPlot, PluginsToolButton)):
             if hasattr(plotWindow, "plot"):  # PluginsToolButton.plot -> silx plot
                 self._legacy = False
 
