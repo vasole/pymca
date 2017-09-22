@@ -46,10 +46,10 @@ from . import HDF5Widget
 from . import HDF5Info
 from . import HDF5CounterTable
 try:
-    from . import Hdf5DatasetView
+    from . import Hdf5NodeView
 except ImportError:
     from . import HDF5DatasetTable
-    Hdf5DatasetView = None
+    Hdf5NodeView = None
 from PyMca5.PyMcaIO import ConfigDict
 if "PyMcaDirs" in sys.modules:
     from PyMca5 import PyMcaDirs
@@ -414,7 +414,7 @@ class QNexusWidget(qt.QWidget):
                                                  sourceObjectDestroyed)
         widget.setInfoDict(info)
         # fixme: this first `if` block can be dropped when silx is a hard dependency
-        if dset and Hdf5DatasetView is None:
+        if dset and Hdf5NodeView is None:
             dataset = phynxFile[name]
             if isinstance(dataset, h5py.Dataset):
                 if len(dataset.shape):
@@ -425,10 +425,9 @@ class QNexusWidget(qt.QWidget):
                     except:
                         print("Error filling table")
                     widget.addTab(widget.w, 'DataView')
-        elif Hdf5DatasetView is not None:
+        elif Hdf5NodeView is not None:
             data = phynxFile[name]
-            # TODO: rename Hdf5DatasetView to show it can handle groups
-            widget.w = Hdf5DatasetView.Hdf5DatasetView(widget)
+            widget.w = Hdf5NodeView.Hdf5NodeView(widget)
             widget.w.setData(data)
             widget.addTab(widget.w, 'DataView')
 
@@ -492,8 +491,8 @@ class QNexusWidget(qt.QWidget):
         fileIndex = self.data.sourceName.index(filename)
         phynxFile  = self.data._sourceObjectList[fileIndex]
         dataset = phynxFile[name]
-        if Hdf5DatasetView is not None:
-            widget = Hdf5DatasetView.Hdf5DatasetView()
+        if Hdf5NodeView is not None:
+            widget = Hdf5NodeView.Hdf5NodeView()
             widget.setData(dataset)
         else:
             widget = HDF5DatasetTable.HDF5DatasetTable()

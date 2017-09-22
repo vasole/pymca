@@ -23,9 +23,9 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-"""The :class:`HDF5DatasetView` widget in this module aims to be used
-instead of :class:`HDF5DatasetTable` in :class:`QNexusWidget` for
-visualization of HDF5 datasets.
+"""The :class:`Hdf5NodeView` widget in this module aims to replace
+:class:`HDF5DatasetTable` in :class:`QNexusWidget` for visualization of HDF5
+datasets and groups, with support of NXdata groups as plot.
 
 It uses the silx :class:`DataViewerFrame` widget with views modified
 to handle plugins."""
@@ -98,9 +98,11 @@ class DataViewerFrameWithPlugins(DataViewerFrame):
         return views
 
 
-class Hdf5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
+class Hdf5NodeView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
     """QWidget displaying data as raw values in a table widget, or as a
-    curve, image or stack in a plot widget.
+    curve, image or stack in a plot widget. It can also display information
+    related to HDF5 groups (attributes, compression, ...) and interpret
+    a NXdata group to plot its data.
 
     The plot features depend on *silx*'s availability.
     """
