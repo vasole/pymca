@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2015-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2015-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -788,7 +788,6 @@ class LegendListContextMenu(qt.QMenu):
             self.addAction(name, action)
 
     def exec_(self, pos, idx):
-        print("CALLED")
         self.__currentIdx = idx
         super(LegendListContextMenu, self).popup(pos)
 
