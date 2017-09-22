@@ -122,7 +122,7 @@ class Hdf5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
 
         self.mainLayout.addWidget(self.viewWidget)
 
-    def setDataset(self, dataset):
+    def setData(self, dataset):
         self.viewWidget.setData(dataset)
 
 

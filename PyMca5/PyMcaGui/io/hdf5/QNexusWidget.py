@@ -413,20 +413,25 @@ class QNexusWidget(qt.QWidget):
             widget._sourceObjectWeakReference = weakref.ref(phynxFile,
                                                  sourceObjectDestroyed)
         widget.setInfoDict(info)
-        if dset:
+        # fixme: this first `if` block can be dropped when silx is a hard dependency
+        if dset and Hdf5DatasetView is None:
             dataset = phynxFile[name]
             if isinstance(dataset, h5py.Dataset):
                 if len(dataset.shape):
                     #0 length datasets do not need a table
-                    if Hdf5DatasetView is not None:
-                        widget.w = Hdf5DatasetView.Hdf5DatasetView(widget)
-                    else:
-                        widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
+                    widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
                     try:
                         widget.w.setDataset(dataset)
                     except:
                         print("Error filling table")
                     widget.addTab(widget.w, 'DataView')
+        elif Hdf5DatasetView is not None:
+            data = phynxFile[name]
+            # TODO: rename Hdf5DatasetView to show it can handle groups
+            widget.w = Hdf5DatasetView.Hdf5DatasetView(widget)
+            widget.w.setData(data)
+            widget.addTab(widget.w, 'DataView')
+
         widget.show()
         return widget
 
@@ -489,12 +494,13 @@ class QNexusWidget(qt.QWidget):
         dataset = phynxFile[name]
         if Hdf5DatasetView is not None:
             widget = Hdf5DatasetView.Hdf5DatasetView()
+            widget.setData(dataset)
         else:
             widget = HDF5DatasetTable.HDF5DatasetTable()
+            widget.setDataset(dataset)
         title = os.path.basename(filename)
         title += " %s" % name
         widget.setWindowTitle(title)
-        widget.setDataset(dataset)
         if self._lastWidgetId is not None:
             ids = self._widgetDict.keys()
             if len(ids):
