@@ -937,6 +937,7 @@ class ScanWindow(PlotWindow.PlotWindow):
                         i += 1
                     else:
                         legend += " + " + key
+                        lastcurve = key
                     ndata += 1
             if ndata == 0: return #nothing to average
             dataObject = self.dataObjectsDict[firstcurve]
@@ -968,10 +969,17 @@ class ScanWindow(PlotWindow.PlotWindow):
             outputlegend  = legend + sel['Key']
         elif operation == "average":
             xplot, yplot = self.simpleMath.average(x, y)
-            sel['SourceName'] = legend
-            sel['Key']    = ""
-            sel['legend'] = "(%s)/%d" % (legend, ndata)
-            outputlegend  = "(%s)/%d" % (legend, ndata)
+            if len(legend) < 80:
+                sel['SourceName'] = legend
+                sel['Key']    = ""
+                sel['legend'] = "(%s)/%d" % (legend, ndata)
+                outputlegend  = "(%s)/%d" % (legend, ndata)
+            else:
+                sel['SourceName'] = legend
+                legend = "Average of %d from %s to %s" % (ndata, firstcurve, lastcurve)
+                sel['Key']    = ""
+                sel['legend'] = legend
+                outputlegend  = legend
         elif operation == "swapsign":
             xplot =  x * 1
             yplot = -y
