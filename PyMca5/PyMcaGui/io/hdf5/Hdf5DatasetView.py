@@ -42,8 +42,7 @@ from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 
 from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 
-from silx.gui.data.DataViewer import DataViewer
-from silx.gui.data.DataViewerSelector import DataViewerSelector
+from silx.gui.data.DataViewerFrame import DataViewerFrame
 from silx.gui.data import DataViews
 from silx.gui.plot import Plot1D
 
@@ -74,7 +73,7 @@ class Plot1DWithPlugins(Plot1D):
 
         self._toolbar = qt.QToolBar(self)
         self.addToolBar(self._toolbar)
-        pluginsToolButton = PluginsToolButton(plot=self)
+        pluginsToolButton = PluginsToolButton(plot=self, parent=self)
 
         if PLUGINS_DIR:
             pluginsToolButton.getPlugins(
@@ -88,95 +87,15 @@ class Plot1DViewWithPlugins(DataViews._Plot1dView):
         return Plot1DWithPlugins(parent=parent)
 
 
-class DataViewerFrameWithPlugins(qt.QWidget):
-    """
-    A silx  DataViewerFrame modified to replace
-    the silx DataViewer widget with our DataViewerWithPlugins.
-
-    See docstrings for attributes and methods on the original
-    :class:`silx.gui.data.DataViewerFrame`.
-    """
-    displayedViewChanged = qt.pyqtSignal(object)
-
-    dataChanged = qt.pyqtSignal()
-
-    def __init__(self, parent=None):
-        super(DataViewerFrameWithPlugins, self).__init__(parent)
-
-        class _DataViewer(DataViewer):
-            """Overwrite methods to avoid to create views while the instance
-            is not created. `initializeViews` have to be called manually."""
-
-            def _initializeViews(self):
-                pass
-
-            def initializeViews(self):
-                """Avoid to create views while the instance is not created."""
-                super(_DataViewer, self)._initializeViews()
-
-        self.__dataViewer = _DataViewer(self)
-
-        # initialize views when `self.__dataViewer` is set
-        self.__dataViewer.initializeViews()
-        # start of PyMca specific code
-        self.__dataViewer.removeView(
-            self.__dataViewer.getViewFromModeId(DataViews.PLOT1D_MODE))
-        self.__dataViewer.addView(Plot1DViewWithPlugins(self))
-        # end of PyMca specific code
-
-        self.__dataViewer.setFrameShape(qt.QFrame.StyledPanel)
-        self.__dataViewer.setFrameShadow(qt.QFrame.Sunken)
-        self.__dataViewerSelector = DataViewerSelector(self, self.__dataViewer)
-        self.__dataViewerSelector.setFlat(True)
-
-        layout = qt.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.addWidget(self.__dataViewer, 1)
-        layout.addWidget(self.__dataViewerSelector)
-        self.setLayout(layout)
-
-        self.__dataViewer.dataChanged.connect(self.__dataChanged)
-        self.__dataViewer.displayedViewChanged.connect(self.__displayedViewChanged)
-
-    def __dataChanged(self):
-        self.dataChanged.emit()
-
-    def __displayedViewChanged(self, view):
-        self.displayedViewChanged.emit(view)
-
-    def availableViews(self):
-        return self.__dataViewer.availableViews()
-
-    def currentAvailableViews(self):
-        return self.__dataViewer.currentAvailableViews()
-
+class DataViewerFrameWithPlugins(DataViewerFrame):
+    """Overloaded DataViewerFrame with the 1D view replaced by
+    Plot1DViewWithPlugins"""
     def createDefaultViews(self, parent=None):
-        return self.__dataViewer.createDefaultViews(parent)
-
-    def addView(self, view):
-        return self.__dataViewer.addView(view)
-
-    def removeView(self, view):
-        return self.__dataViewer.removeView(view)
-
-    def setData(self, data):
-        self.__dataViewer.setData(data)
-
-    def data(self):
-        return self.__dataViewer.data()
-
-    def setDisplayedView(self, view):
-        self.__dataViewer.setDisplayedView(view)
-
-    def displayedView(self):
-        return self.__dataViewer.displayedView()
-
-    def displayMode(self):
-        return self.__dataViewer.displayMode()
-
-    def setDisplayMode(self, modeId):
-        return self.__dataViewer.setDisplayMode(modeId)
+        views = list(DataViewerFrame.createDefaultViews(self, parent=parent))
+        oldView = [v for v in views if v.modeId() == DataViews.PLOT1D_MODE][0]
+        newView = Plot1DViewWithPlugins(parent=parent)
+        views[views.index(oldView)] = newView
+        return views
 
 
 class Hdf5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
@@ -193,12 +112,8 @@ class Hdf5DatasetView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.mainLayout.setSpacing(0)
 
         # # This should be the proper way of changing a single view without
-        # # redefining the complete DataViewer
+        # # overloading DataViewerFrame. See silx issue #1183.
         # self.viewWidget = DataViewerFrame(self)
-        # # for view in self.viewWidget.availableViews():
-        # #     if isinstance(view, DataViews._Plot1dView):
-        # #         self.viewWidget.removeView(view)
-        # # alternative:
         # self.viewWidget.removeView(
         #     self.viewWidget.getViewFromModeId(DataViews.PLOT1D_MODE))
         # self.viewWidget.addView(Plot1DViewWithPlugins(self))
