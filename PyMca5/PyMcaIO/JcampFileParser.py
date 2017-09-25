@@ -33,41 +33,80 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import sys
 import numpy
+import mmap
+import re
 from PyMca5.PyMcaIO import JcampReader
 from PyMca5.PyMcaIO import SpecFileAbstractClass
 if sys.version < "3":
     from StringIO import StringIO
 else:
     from io import StringIO
+DEBUG = 0
+if DEBUG:
+    import time
 
 class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
     def __init__(self, filename, single=False):
         # get the number of entries in the file
         self.__lastEntryData = -1
-        self._scanLimits = []
-        f = open(filename, "r")
-        entryStarted = False
-        current = f.tell()
-        line = f.readline()
-        nLines = 0
-        while len(line):
-            if entryStarted:
-                if line.startswith("##END="):
-                    lineEnd = nLines
-                    self._scanLimits.append((start, f.tell(), lineStart, lineEnd))
-                    entryStarted = False
-                    if single:
-                        break
-            elif line.startswith("##TITLE"):
-                start = current
-                lineStart = nLines
-                entryStarted = True
-            nLines += 1
+        if DEBUG:
+            t0 = time.time()
+        if sys.maxsize > 2**32:
+            self._useMMap = True
+        else:
+            self._useMMap = False
+        if DEBUG:
+            print("USING MMPA = ", self._useMMap)
+        if self._useMMap:
+            # 64-bit supported
+            f = open(filename, "rb")
+            mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+            a = [x.start() for x in re.finditer("##TITLE".encode("utf-8"), mm)]
+            b = [x.end() for x in re.finditer("##END.*\n".encode("utf-8"), mm)]
+            mm = None
+            f.close()
+            # we can have twice the TITLE before the first data block
+            # we get rid of the second to have also the file header
+            if len(a) > 1:
+                if a[1] < b[0]:
+                    del a[1]
+            self._scanLimits = [(start, end) for start, end in zip(a, b)]
+        else:
+            # 32-bit
+            self._scanLimits = []
+            f = open(filename, "rb")
+            entryStarted = False
             current = f.tell()
             line = f.readline()
-        f.close()
+            nLines = 0
+            while len(line):
+                if entryStarted:
+                    if line.startswith("##END=".encode("utf-8")):
+                        lineEnd = nLines
+                        self._scanLimits.append((start, f.tell(), lineStart, lineEnd))
+                        entryStarted = False
+                        if single:
+                            break
+                elif line.startswith("##TITLE".encode("utf-8")):
+                    start = current
+                    lineStart = nLines
+                    entryStarted = True
+                nLines += 1
+                current = f.tell()
+                line = f.readline()
+            f.close()
+        if DEBUG:
+            print("Elapsed CURRENT = ", time.time() - t0)
         self._filename = os.path.abspath(filename)
+        if DEBUG:
+            print("PARSING FIRST ")
+            t0 = time.time()
         self._parseEntryData(0)
+        if DEBUG:
+            elapsed = time.time() - t0
+            print("ELAPSED PER SCAN = ", elapsed)
+            print("N SCANS = ", self.scanno())
+            print("EXPECTED = ", elapsed * self.scanno())
 
     def _parseEntryData(self, idx):
         if idx == self.__lastEntryData:
@@ -75,13 +114,24 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
             return
         if (idx < 0) or (idx >= len(self._scanLimits)):
             raise IndexError("Only %d entries in file. Requested %d" % (len(self._scanLimits), idx))
-        #get the relevant file section
-        f = open(self._filename, "r")
         start, end = self._scanLimits[idx][0:2]
-        f.seek(start)
-        scanBuffer = StringIO(f.read(1 + end - start))
-        f.close()
-        instance = JcampReader.JcampReader(scanBuffer)
+        if self._useMMap:
+            #get the relevant file section
+            f = open(self._filename, "rb")
+            scanBuffer = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)[start:end]
+            f.close()
+            # the Reader expects to work with strings and not with bytes
+            scanBuffer = scanBuffer.decode("utf-8")
+            fileBlock = True
+        else:
+            #get the relevant file section
+            f = open(self._filename, "r")
+            start, end = self._scanLimits[idx][0:2]
+            f.seek(start)
+            scanBuffer = StringIO(f.read(1 + end - start))
+            f.close()
+            fileBlock = False
+        instance = JcampReader.JcampReader(scanBuffer, block=fileBlock)
         info = instance.info
         jcampDict = info
         x, y = instance.data
@@ -97,9 +147,9 @@ class JcampFileParser(SpecFileAbstractClass.SpecFileAbstractClass):
         data[:, 0] = x
         data[:, 1] = y
         self.scandata = []
-        scanheader = ["#S %d %s" % (2*idx + 1, title)]
-        scanheader.append("#N 2")
-        scanheader.append("#L %s  %s" % (xLabel, yLabel))
+        scanheader = ["#S %d %s" % (2*idx + 1, title),
+                      "#N 2",
+                      "#L %s  %s" % (xLabel, yLabel)]
         scanData = JCAMPFileScan(data,
                                  scantype="SCAN",
                                  scanheader=scanheader,

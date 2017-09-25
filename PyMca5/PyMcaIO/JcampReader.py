@@ -73,15 +73,17 @@ if DEBUG:
     print(['1.23', '+2', '456', '-7.98', '+5', '10', '+3.4E+01', '98', '-7.6E-2', '+3'])
 
 class BufferedFile(object):
-    def __init__(self, filename):
-        if hasattr(filename, "read"):
-            self.__buffer = filename.read()
-        elif os.path.exists(filename):
-            f = open(filename, 'r')
+    def __init__(self, filenameOrBuffer, block=False):
+        if block:
+            self.__buffer = filenameOrBuffer
+        elif hasattr(filenameOrBuffer, "read"):
+            self.__buffer = filenameOrBuffer.read()
+        elif os.path.exists(filenameOrBuffer):
+            f = open(filenameOrBuffer, 'r')
             self.__buffer = f.read()
             f.close()
         else:
-            raise IOError("File %s does not exists" % filename)
+            raise IOError("File %s does not exists" % filenameOrBuffer)
         self.__buffer = self.__buffer.replace("\r", "\n")
         self.__buffer = self.__buffer.replace("\n\n", "\n")
         self.__buffer = self.__buffer.split("\n")
@@ -100,8 +102,8 @@ class BufferedFile(object):
         return
 
 class JcampReader(object):
-    def __init__(self, filename):
-        _fileObject = BufferedFile(filename)
+    def __init__(self, filenameOrBuffer, block=False):
+        _fileObject = BufferedFile(filenameOrBuffer, block=block)
         # only one measurement per file
         ddict = {}
         header = []
