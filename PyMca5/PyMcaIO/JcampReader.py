@@ -103,7 +103,7 @@ class BufferedFile(object):
 
 class JcampReader(object):
     def __init__(self, filenameOrBuffer, block=False):
-        _fileObject = BufferedFile(filenameOrBuffer, block=block)
+        _fileObject = BufferedFile(filenameOrBuffer, block)
         # only one measurement per file
         ddict = {}
         header = []
@@ -136,6 +136,24 @@ class JcampReader(object):
         self._header = header
         self.info = self.parseHeader()
         self.data = self.parseData(data)
+        """
+        import time
+        t0 = time.time()
+        self.info = self.parseHeader()
+        print("elapsed parsing info = ", time.time() - t0)
+        t0 = time.clock()
+        for i in range(10000):
+            self.data = self.parseDataOld(data)
+        print("elapsed parsing data = ", (time.clock() - t0)/1000.)
+        t0 = time.clock()
+        for i in range(10000):
+            self.dataNew = self.parseData(data)
+        print("elapsed parsing dataNew = ", (time.clock() - t0)/1000.)
+        print(self.dataNew[0] - self.data[0]).min()
+        print(self.dataNew[0] - self.data[0]).max()
+        print(self.dataNew[1] - self.data[1]).min()
+        print(self.dataNew[1] - self.data[1]).max()
+        """
 
     def parseHeader(self, keyList=None):
         if keyList is None:
@@ -157,6 +175,62 @@ class JcampReader(object):
         return ddict
 
     def parseData(self, dataLines):
+        if self.info['XYDATA'].upper().strip() not in ["(X++(Y..Y))", "(XY..XY)"]:
+            raise IOError("Format <%s> not supported yet" %  self.info['XYDATA'])
+        if self.info['XYDATA'].upper().strip() == "(X++(Y..Y))":
+            lines = [re.findall(patternNumber, x) for x in dataLines if len(x)]
+            nLines = len(lines)
+            yValues = numpy.fromiter( \
+                        [item for sublist in lines for item in sublist[1:]],
+                        numpy.float)
+            nValues = [(len(x) - 1) for x in lines] 
+            # the y values are all there, but the x values are not
+            lastX = float(self.info["LASTX"])
+            try:
+                # try to apply the formula given in the article
+                # the problem is that DELTAX is not mandatory
+                firstX = float(self.info["FIRSTX"])
+                deltaX = float(self.info["DELTAX"])
+                nPoints = int(self.info.get("NPOINTS", 0))
+                if nPoints != len(yValues):
+                    print("Number of points does not match number of values")
+                    nPoints = len(yValues)
+                # this formula is given in the article
+                x = firstX + numpy.arange(nPoints) * \
+                    ((lastX - firstX) / (nPoints - 1.0))
+            except KeyError:
+                #print("WRONG")
+                xValues = numpy.fromiter( \
+                        [item for sublist in lines for item in sublist[0:1]],
+                        numpy.float)
+                xValues.append(lastX)
+                x = numpy.zeros((len(yValues),), dtype=numpy.float)
+                start = 0
+                nDataLines = len(nValues)
+                for i in range(nDataLines):
+                    n = nValues[i]
+                    end = start + n
+                    if i == (nDataLines - 1):
+                        endpoint = True
+                    else:
+                        endpoint = False
+                    x[start:end] = numpy.linspace(xValues[i],
+                                              xValues[i+1],
+                                              n, endpoint=endpoint)
+                    start = end
+        else:
+            # XY, XY, ...
+            values = []
+            for line in dataLines:
+                values += [float(x) for x in re.findall(patternNumber, line)]
+            values = numpy.array(values)
+            x = values[0::2]
+            yValues = values[1::2]
+        xFactor = float(self.info.get("XFACTOR", 1.0))
+        yFactor = float(self.info.get("YFACTOR", 1.0))
+        return x * xFactor, numpy.array(yValues, copy=False) * yFactor
+
+    def parseDataOld(self, dataLines):
         if self.info['XYDATA'].upper().strip() not in ["(X++(Y..Y))", "(XY..XY)"]:
             raise IOError("Format <%s> not supported yet" %  self.info['XYDATA'])
         if self.info['XYDATA'].upper().strip() == "(X++(Y..Y))":
