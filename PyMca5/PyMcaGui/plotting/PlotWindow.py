@@ -1623,12 +1623,12 @@ class PlotWindow(PlotWidget.PlotWidget):
         for idx in range(0, length, 16):
             if idx+15 < length:
                 for i in range(0, 16):
-                    tmpstr += "%.7g " % data[idx+i]
+                    tmpstr += "%.8g " % data[idx+i]
                 if idx+16 != length:
                     tmpstr += "\\"
             else:
                 for i in range(idx, length):
-                    tmpstr += "%.7g " % data[i]
+                    tmpstr += "%.8g " % data[i]
             tmpstr += "\n"
         return tmpstr
 
