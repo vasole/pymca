@@ -167,7 +167,7 @@ if __name__ == "__main__":
         qApp.processEvents()
 
 from PyMca5.PyMcaGraph.Plot import Plot
-from PyMca5.PyMcaGui.pymca import ScanWindow
+from PyMca5.PyMcaGui.silxplot import PyMcaScanWindow
 from PyMca5.PyMcaGui.pymca import McaWindow
 
 from PyMca5.PyMcaGui.pymca import PyMcaImageWindow
@@ -253,7 +253,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
             if not self.__useTabWidget:
                 self.mcaWindow = McaWindow.McaWidget(self.mdi)
-                self.scanWindow = ScanWindow.ScanWindow(self.mdi)
+                self.scanWindow = PyMcaScanWindow.PyMcaScanWindow(self.mdi)
                 self.imageWindowDict = None
                 self.connectDispatcher(self.mcaWindow, self.sourceWidget)
                 self.connectDispatcher(self.scanWindow, self.sourceWidget)
@@ -265,9 +265,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcaWindow = McaWindow.McaWindow(backend=backend)
-                self.scanWindow = ScanWindow.ScanWindow(info=True,
+                self.scanWindow = PyMcaScanWindow.PyMcaScanWindow(info=True,
                                                         backend=backend)
-                self.scanWindow._togglePointsSignal()
+                # self.scanWindow._togglePointsSignal()
+                self.scanWindow.getCurveStyleAction().trigger()
                 if OBJECT3D:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
                 self.mainTabWidget.addTab(self.mcaWindow, "MCA")
