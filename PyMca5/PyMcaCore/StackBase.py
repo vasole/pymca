@@ -1198,12 +1198,16 @@ class StackBase(object):
             "a" or "r+".
         """
         # see https://github.com/vasole/pymca/issues/92
+        infodict = self.getStackInfo()
 
         with H5pyFileInstance(file_, mode) as h5f:
             entry = h5f.create_group("stack")
             entry.attrs["NX_class"] = numpy.string_("NXentry")
 
             # todo: definition (@version, @url)
+            definition = entry.create_dataset("definition", shape=tuple())   # FIXME: group or dataset?
+            # definition.attrs["url"] = ???
+            definition.attrs["version"] = numpy.string_("0.0.1")
 
             # todo
             # coord = entry.create_group("coordinates")
@@ -1213,20 +1217,21 @@ class StackBase(object):
             signal = entry.create_group("signal")
             signal.attrs["NX_class"] = numpy.string_("NX_data")
             signal.attrs["signal"] = numpy.string_("data")
-            signal.attrs["axes"] = numpy.array(["dim_0", "dim_1", "dim_2"],
-                                               dtype=numpy.string_)
+            # signal.attrs["axes"] = numpy.array(["dim_0", "dim_1", "dim_2"],
+            #                                    dtype=numpy.string_)
             data = signal.create_dataset("data", data=self.getStackData())
             data.attrs["interpretation"] = numpy.string_("spectrum")
-            signal.create_dataset("dim_0", data=TODO)
-            signal.create_dataset("dim_1", data=TODO)
-            signal.create_dataset("dim_2", data=TODO)
-            signal.create_dataset("mca_index", data=TODO)
-            signal.create_dataset("mca_calibration", data=TODO)
-            signal.create_dataset("elapsed_time", data=TODO)
-            signal.create_dataset("live_time", data=TODO)
-            signal.create_dataset("preset_time", data=TODO)
+            # signal.create_dataset("dim_0", data=TODO)
+            # signal.create_dataset("dim_1", data=TODO)
+            # signal.create_dataset("dim_2", data=TODO)
+            mca_index = infodict.get("McaIndex", 2)
+            signal.create_dataset("mca_index", data=mca_index)
+            mca_calibration = infodict.get("McaCalibration", [0., 1., 0.])
+            signal.create_dataset("mca_calibration", data=mca_calibration)
+            # signal.create_dataset("elapsed_time", data=TODO)
+            # signal.create_dataset("live_time", data=TODO)
+            # signal.create_dataset("preset_time", data=TODO)
 
-            infodict = self.getStackInfo()
             if "positioners" in infodict or "counters" in infodict:
                 info = entry.create_group("info")
                 if "positioners" in infodict:
@@ -1241,16 +1246,56 @@ class StackBase(object):
                     for name, values in countersdict.items():
                         counters.create_dataset(name,
                                                 data=values)
-
             # todo: images
             #          image_name
             #              data
             #              dim0
             #              dim1
 
-    def load(self, filename):
+    def load(self, file_):
         """Load stack data and metadate from a HDF5 file."""
-        pass
+        self._clearPositioners()
+        with H5pyFileInstance(file_, "r") as h5f:
+            if len(h5f) != 1:
+                print("More than one entry in the root group. Cannot load the stack.")
+                return    # TODO: or raise IOError
+            entry = list(h5f.values())[0]
+            if "definition" in entry and entry["definition"].attrs.get("version") == "0.0.1":
+                # simple case of data saved by PyMca
+                return self._load_pymca_stack_0_0_1(entry)
+
+            # todo: general case parsing, files written by other programs
+
+    def _load_pymca_stack_0_0_1(self, entry):
+        if "signal" not in entry:
+            print("Could not read PyMca 0.0.1 stack format. "
+                  "Signal dataset not found.")
+        signal = entry["signal"]
+        mca_index_dataset = signal.get("mca_index", None)
+        mca_index = mca_index_dataset[()] if mca_index_dataset is not None else 2
+        if mca_index == -1:
+            mca_index = 2
+        self.setStack(signal["data"], mcaindex=mca_index)
+
+        # it seems mca_index is not updated in setStack if a value already exists in .info
+        self._stack.info['McaIndex'] = mca_index
+        mca_calib = signal.get('mca_calibration')
+        if mca_calib is None:
+            self._stack.info['McaCalib'] = [0.0, 1.0, 0.0]
+        else:
+            self._stack.info['McaCalib'] = mca_calib[()]
+
+        if "info" in entry:
+            info = entry.get("info")
+            if "positioners" in info:
+                self.setPositioners(info["positioners"])
+            if "counters" in info:
+                self._stack.info["counters"] = {}
+                for name, values in info["counters"].items():
+                    self._stack.info["counters"][name] = values[()]
+
+        self.stackUpdated()
+
 
 
 def test():
