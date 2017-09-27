@@ -35,6 +35,7 @@ Base class to handle stacks.
 
 """
 from . import DataObject
+from ..PyMcaIO.H5pyFileInstance import H5pyFileInstance
 import numpy
 import time
 import os
@@ -66,7 +67,6 @@ try:
 except:
     PYMCA_PLUGINS_DIR = None
     pass
-
 
 class StackBase(object):
     def __init__(self):
@@ -1189,6 +1189,68 @@ class StackBase(object):
                 positionersAtIdx[motorName] = motorValues.reshape((-1,))[index]
 
         return positionersAtIdx
+
+    def save(self, file_, mode="w"):
+        """Save stack data and metadata to a HDF5 file.
+
+        :param file_: File name or h5py.File instance.
+        :param str mode: File access mode. Can be "w", "w-",
+            "a" or "r+".
+        """
+        # see https://github.com/vasole/pymca/issues/92
+
+        with H5pyFileInstance(file_, mode) as h5f:
+            entry = h5f.create_group("stack")
+            entry.attrs["NX_class"] = numpy.string_("NXentry")
+
+            # todo: definition (@version, @url)
+
+            # todo
+            # coord = entry.create_group("coordinates")
+            # coord.create_dataset("x", data=?)
+            # coord.create_dataset("y", data=?)
+
+            signal = entry.create_group("signal")
+            signal.attrs["NX_class"] = numpy.string_("NX_data")
+            signal.attrs["signal"] = numpy.string_("data")
+            signal.attrs["axes"] = numpy.array(["dim_0", "dim_1", "dim_2"],
+                                               dtype=numpy.string_)
+            data = signal.create_dataset("data", data=self.getStackData())
+            data.attrs["interpretation"] = numpy.string_("spectrum")
+            signal.create_dataset("dim_0", data=TODO)
+            signal.create_dataset("dim_1", data=TODO)
+            signal.create_dataset("dim_2", data=TODO)
+            signal.create_dataset("mca_index", data=TODO)
+            signal.create_dataset("mca_calibration", data=TODO)
+            signal.create_dataset("elapsed_time", data=TODO)
+            signal.create_dataset("live_time", data=TODO)
+            signal.create_dataset("preset_time", data=TODO)
+
+            infodict = self.getStackInfo()
+            if "positioners" in infodict or "counters" in infodict:
+                info = entry.create_group("info")
+                if "positioners" in infodict:
+                    positionersdict = infodict["positioners"]
+                    positioners = info.create_group("positioners")
+                    for name, values in positionersdict.items():
+                        positioners.create_dataset(name,
+                                                   data=values)
+                if "counters" in infodict:
+                    countersdict = infodict["counters"]
+                    counters = info.create_group("counters")
+                    for name, values in countersdict.items():
+                        counters.create_dataset(name,
+                                                data=values)
+
+            # todo: images
+            #          image_name
+            #              data
+            #              dim0
+            #              dim1
+
+    def load(self, filename):
+        """Load stack data and metadate from a HDF5 file."""
+        pass
 
 
 def test():
