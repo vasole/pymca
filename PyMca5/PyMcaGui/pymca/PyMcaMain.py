@@ -267,7 +267,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mcaWindow = McaWindow.McaWindow(backend=backend)
                 self.scanWindow = ScanWindow.ScanWindow(info=True,
                                                         backend=backend)
-                self.scanWindow._togglePointsSignal()
+                self.scanWindow.getCurveStyleAction().trigger()
                 if OBJECT3D:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
                 self.mainTabWidget.addTab(self.mcaWindow, "MCA")

@@ -45,7 +45,7 @@ import copy
 
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui import IconDict
-from . import ScanWindow
+from . import LegacyScanWindow     # TODO: fix McaWindow to use new silx based ScanWindow
 from . import McaCalibrationControlGUI
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import McaAdvancedFit
@@ -68,11 +68,11 @@ except:
     #not a big problem
     pass
 DEBUG = 0
-class McaWindow(ScanWindow.ScanWindow):
+class McaWindow(LegacyScanWindow.ScanWindow):
     def __init__(self, parent=None, name="Mca Window", specfit=None, backend=None,
                  plugins=True, newplot=False, roi=True, fit=True, **kw):
 
-        ScanWindow.ScanWindow.__init__(self, parent,
+        LegacyScanWindow.ScanWindow.__init__(self, parent,
                                          name=name,
                                          newplot=newplot,
                                          plugins=plugins,
