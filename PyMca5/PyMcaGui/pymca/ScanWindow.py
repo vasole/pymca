@@ -73,7 +73,7 @@ if userPluginsDirectory is not None:
 
 
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+# _logger.setLevel(logging.DEBUG)
 
 
 class BaseScanWindow(PlotWindow):
@@ -448,12 +448,16 @@ class ScanWindow(BaseScanWindow):
                 del self.dataObjectsDict[legend]
 
     def addCurve(self, x, y, legend=None, info=None, replace=False,
-                 resetzoom=False, replot=True, color=None, symbol=None,
+                 resetzoom=False, color=None, symbol=None,
                  linestyle=None, xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
         """Add a curve. If a curve with the same legend already exists,
         the unspecified parameters (color, symbol, linestyle, yaxis) are
         assumed to be identical to the parameters of the existing curve."""
+        if "replot" in kw:
+            _logger.warning("addCurve deprecated replot argument, "
+                            "use resetzoom instead")
+            resetzoom = kw["replot"] and resetzoom
         if legend in self._curveList:
             if info is None:
                 info = {}
@@ -488,7 +492,7 @@ class ScanWindow(BaseScanWindow):
         if legend in self.dataObjectsDict:
             # the info is changing
             super(ScanWindow, self).addCurve(
-                    x, y, legend=legend, info=info, replot=replot,
+                    x, y, legend=legend, info=info,
                     replace=replace, color=color, symbol=symbol,
                     linestyle=linestyle, xlabel=xlabel, ylabel=ylabel,
                     yaxis=yaxis, xerror=xerror, yerror=yerror,
@@ -496,19 +500,23 @@ class ScanWindow(BaseScanWindow):
         else:
             # create the data object
             self.newCurve(
-                    x, y, legend=legend, info=info, replot=replot,
+                    x, y, legend=legend, info=info,
                     replace=replace, color=color, symbol=symbol,
                     linestyle=linestyle, xlabel=xlabel, ylabel=ylabel,
                     yaxis=yaxis, xerror=xerror, yerror=yerror,
                     resetzoom=resetzoom, **kw)
 
     def newCurve(self, x, y, legend=None, info=None, replace=False,
-                 resetzoom=False, replot=True, color=None, symbol=None,
+                 resetzoom=False, color=None, symbol=None,
                  linestyle=None, xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
         """
         Create and add a data object to :attr:`dataObjectsDict`
         """
+        if "replot" in kw:
+            _logger.warning("addCurve deprecated replot argument, "
+                            "use resetzoom instead")
+            resetzoom = kw["replot"] and resetzoom
         if legend is None:
             legend = "Unnamed curve 1.1"
         if xlabel is None:
@@ -551,7 +559,7 @@ class ScanWindow(BaseScanWindow):
         if replace:
             self._replaceSelection(sel_list)
         else:
-            self._addSelection(sel_list, resetzoom=replot)
+            self._addSelection(sel_list, resetzoom=resetzoom)
 
 
 def test():
