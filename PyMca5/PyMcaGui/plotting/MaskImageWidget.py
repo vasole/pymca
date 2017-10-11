@@ -848,25 +848,17 @@ class MaskImageWidget(qt.QWidget):
         if ddict['event'] == 'ADD':
             for i in range(n):
                 x, y, legend, info = curveList[i]
-                info['profilelabel'] = label
-                if i == (n-1):
-                    replot = True
+                resetzoom = (i == (n-1))
                 self._profileScanWindow.addCurve(x, y, legend=legend, info=info,
-                                                 replot=replot, replace=False)
+                                                 resetzoom=resetzoom, replace=False)
         elif ddict['event'] == 'REPLACE':
             for i in range(n):
                 x, y, legend, info = curveList[i]
                 info['profilelabel'] = label
-                if i in [0, n-1]:
-                    replace = True
-                else:
-                    replace = False
-                if i == (n-1):
-                    replot = True
-                else:
-                    replot = False
+                replace = (i in [0, n-1])
+                resetzoom = (i == (n-1))
                 self._profileScanWindow.addCurve(x, y, legend=legend, info=info,
-                                                 replot=replot, replace=replace)
+                                                 resetzoom=resetzoom, replace=replace)
         elif ddict['event'] == 'REMOVE':
             curveList = self._profileScanWindow.getAllCurves()
             if curveList in [None, []]:
@@ -882,11 +874,8 @@ class MaskImageWidget(qt.QWidget):
             n = len(toDelete)
             for i in range(n):
                 legend = toDelete[i]
-                if i == (n-1):
-                    replot = True
-                else:
-                    replot = False
-                self._profileScanWindow.removeCurve(legend, replot=replot)
+                resetzoom = (i == (n-1))
+                self._profileScanWindow.removeCurve(legend, resetzoom=resetzoom)
 
     def drawOverlayItem(self, x, y, legend=None, info=None, replace=False, replot=True):
         #same call as the plot1D addCurve command
