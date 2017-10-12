@@ -234,15 +234,13 @@ class MaterialEditor(qt.QWidget):
                                 legend=legend,
                                 xlabel='Energy (keV)',
                                 ylabel='Mass Att. (cm2/g)',
-                                replace=True,
-                                replot=False)
+                                replace=True)
             for legend in ['Compton', 'Photo','Total']:
                 self.graph.addCurve(energy, numpy.array(data[legend.lower()]),
-                                legend=legend,
-                                xlabel='Energy (keV)',
-                                ylabel='Mass Att. (cm2/g)',
-                                replace=False,
-                                replot=False)
+                                    legend=legend,
+                                    xlabel='Energy (keV)',
+                                    ylabel='Mass Att. (cm2/g)',
+                                    replace=False)
             self.graph.setActiveCurve(legend+' '+'Mass Att. (cm2/g)')
             self.graph.setGraphTitle(ddict['Comment'])
             if self.graphDialog is not None:
