@@ -123,18 +123,30 @@ class BaseScanWindow(PlotWindow):
         self._toolbar.addAction(self.yMinToZero)
         self._toolbar.addAction(self.subtractAction)
 
+        self.pluginsToolButton = None
+        """Plugins tool button, used to load and call plugins.
+        It inherits the PluginLoader API:
+
+            - getPlugins
+            - getPluginDirectoryList
+            - setPluginDirectoryList
+
+        It can be None, if plugins are disabled when initializing
+        the ScanWindow.
+        """
+
         if plugins:
-            pluginsToolButton = PluginsToolButton(plot=self)
+            self.pluginsToolButton = PluginsToolButton(plot=self)
 
             if PLUGINS_DIR is not None:
                 if isinstance(PLUGINS_DIR, list):
                     pluginDir = PLUGINS_DIR
                 else:
                     pluginDir = [PLUGINS_DIR]
-                pluginsToolButton.getPlugins(
+                self.pluginsToolButton.getPlugins(
                         method="getPlugin1DInstance",
                         directoryList=pluginDir)
-            self._toolbar.addWidget(pluginsToolButton)
+            self._toolbar.addWidget(self.pluginsToolButton)
 
         self.scanWindowInfoWidget = None
         self.infoDockWidget = None

@@ -548,7 +548,7 @@ if __name__ == "__main__":
     import time
     import sys
     import os.path
-    from PyMca5.PyMcaGui.plotting.PlotWindow import PlotWindow
+    from PyMca5.PyMcaGui.pymca.ScanWindow import ScanWindow
 
     if len(sys.argv) == 1 or \
        sys.argv[1] not in ('plugin', 'demoServer', 'demoClient', 'auto'):
@@ -568,17 +568,17 @@ Options: plugin, demoServer demoClient, auto
         app = qt.QApplication([])
 
         # Create plot window
-        plot = PlotWindow(roi=True)
+        plot = ScanWindow(roi=True)
         plot.show()
 
         # Load plugin
         pluginDir = os.path.dirname(os.path.abspath(__file__))
         pluginName = os.path.splitext(os.path.basename(__file__))[0]
 
-        plot.setPluginDirectoryList([pluginDir])
-        nbPlugins = plot.getPlugins()  # Update plug-in list
+        plot.pluginsToolButton.setPluginDirectoryList([pluginDir])
+        nbPlugins = plot.pluginsToolButton.getPlugins()  # Update plug-in list
         assert nbPlugins >= 1
-        plugin = plot.pluginInstanceDict[pluginName]
+        plugin = plot.pluginsToolButton.pluginInstanceDict[pluginName]
 
         if sys.argv[1] == 'auto':
             # Run automated demos
