@@ -118,7 +118,7 @@ class ProfileScanWidget(Window):
         elif action == 'REMOVE':
             self.sigRemoveClicked.emit(ddict)
         else:
-            self.replaceAddClicked.emit(ddict)
+            self.sigReplaceClicked.emit(ddict)
 
 def test():
     app = qt.QApplication([])
