@@ -37,14 +37,16 @@ import numpy
 from PyMca5.PyMcaMath.fitting.SpecfitFuns import upstep, downstep
 
 from PyMca5.PyMca import PyMcaQt as qt
-from PyMca5.PyMca import PlotWindow as DataDisplay
+
 from PyMca5.PyMca import Elements
 from PyMca5.PyMca import ConfigDict
 
 from PyMca5.PyMca import PyMcaDataDir, PyMcaDirs
 from PyMca5.PyMca import QSpecFileWidget
 from PyMca5.PyMca import SpecFileDataSource
-from PyMca5.PyMcaGui import IconDict
+
+from silx.gui.plot import PlotWindow as DataDisplay
+from silx.gui.plot.LegendSelector import LegendsDockWidget
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -154,9 +156,9 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         self.window = window
         self.plotWindow = plotWindow
         #self.graph = graph
-        self.markerID = self.plotWindow.insertXMarker(0.,
-                                                      legend=label,
-                                                      text=label)
+        self.markerID = self.plotWindow.addXMarker(0.,
+                                                   legend=label,
+                                                   text=label)
 
         # Initialize
         self.setMinimum(0.)
@@ -198,7 +200,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
 
     def showMarker(self):
         self.plotWindow.removeMarker(self.label)
-        self.markerID = self.plotWindow.insertXMarker(
+        self.markerID = self.plotWindow.addXMarker(
                                 self.value(),
                                 legend=self.label,
                                 text=self.label,
@@ -218,7 +220,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
             draggable  = False
         # Make shure that the marker is deleted
         # If marker is not present, removeMarker just passes..
-        self.markerID = self.plotWindow.insertXMarker(
+        self.markerID = self.plotWindow.addXMarker(
                                 self.value(),
                                 legend=self.label,
                                 text=self.label,
@@ -245,7 +247,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
                 print('_valueChanged -- Sorry, it ain\'t gonna float: %s'%str(val))
             return
         # Marker of same label as self.label gets replaced..
-        self.markerID = self.plotWindow.insertXMarker(
+        self.markerID = self.plotWindow.addXMarker(
                                 val,
                                 legend=self.label,
                                 text=self.label,
@@ -370,45 +372,22 @@ class SumRulesWindow(qt.QMainWindow):
     def __init__(self, parent=None):
         qt.QMainWindow.__init__(self, parent)
         self.setWindowTitle('Sum Rules Tool')
-        if hasattr(DataDisplay,'PlotWindow'):
-            self.plotWindow = DataDisplay.PlotWindow(
-                parent=self,
-                backend=None,
-                plugins=False, # Hide plugin tool button
-                newplot=False, # Hide mirror active curve, ... functionality
-                roi=False,     # No ROI widget
-                control=False, # Hide option button
-                position=True, # Show x,y position display
-                kw={'logx': False, # Hide logarithmic x-scale tool button
-                    'logy': False, # Hide logarithmic y-scale tool button
-                    'flip': False, # Hide whatever this does
-                    'fit': False}) # Hide simple fit tool button
-            self.plotWindow._buildLegendWidget()
-        else:
-            self.plotWindow = DataDisplay.ScanWindow(self)
+        self.plotWindow = DataDisplay(
+            parent=self,
+            roi=False,      # No ROI widget
+            control=False,  # hide option button, legend widget added later
+            position=True,  # Show x,y position display
+            fit=False,      # Hide simple fit tool button
+            colormap=False,
+            aspectRatio=False,
+            yInverted=False,
+            copy=False,
+            print_=False,
+            mask=False)
 
-        # Hide Buttons in the toolbar
-        if hasattr(self.plotWindow,'scanWindowInfoWidget'):
-            # Get rid of scanInfoWidget
-            self.plotWindow.scanWindowInfoWidget.hide()
-            self.plotWindow.graph.enablemarkermode()
-            # Hide unnecessary buttons in the toolbar
-            toolbarChildren = self.plotWindow.toolBar
-            # QWidget.findChildren(<qt-type>) matches
-            # all child widgets with the specified type
-            toolbarButtons  = toolbarChildren.findChildren(qt.QToolButton)
-            toolbarButtons[3].hide() # LogX
-            toolbarButtons[4].hide() # LogY
-            toolbarButtons[6].hide() # Simple Fit
-            toolbarButtons[7].hide() # Average Plotted Curves
-            toolbarButtons[8].hide() # Derivative
-            toolbarButtons[9].hide() # Smooth
-            toolbarButtons[11].hide() # Set active to zero
-            toolbarButtons[12].hide() # Subtract active curve
-            toolbarButtons[13].hide() # Save active curve
-            toolbarButtons[14].hide() # Plugins
-        else:
-            self.plotWindow
+        self._legendsDockWidget = LegendsDockWidget(plot=self.plotWindow)
+        self.plotWindow.addDockWidget(qt.Qt.RightDockWidgetArea,
+                                      self._legendsDockWidget)
 
         self.__savedConf = False
         self.__savedData = False
@@ -822,8 +801,8 @@ class SumRulesWindow(qt.QMainWindow):
         self.buttonEstimate.setShortcut(qt.Qt.CTRL+qt.Qt.Key_E)
         self.buttonEstimate.clicked.connect(self.estimate)
         self.buttonEstimate.setEnabled(False)
-        self.plotWindow.toolBar.addSeparator()
-        self.plotWindow.toolBar.addWidget(self.buttonEstimate)
+        self.plotWindow.toolBar().addSeparator()
+        self.plotWindow.toolBar().addWidget(self.buttonEstimate)
 
         self.plotWindow.sigPlotSignal.connect(self._handlePlotSignal)
 
@@ -1349,10 +1328,7 @@ class SumRulesWindow(qt.QMainWindow):
                         tmp = float(value)
                         obj.setValue(tmp)
                     except ValueError:
-                        if hasattr(self.plotWindow,'graph'):
-                            xmin, xmax = self.plotWindow.graph.getX1AxisLimits()
-                        else:
-                            xmin, xmax = self.plotWindow.getGraphXLimits()
+                        xmin, xmax = self.plotWindow.getGraphXLimits()
                         tmp = xmin + (xmax-xmin)/10.
                         if DEBUG:
                             msg  = 'setValuesDict -- Float conversion failed'
@@ -1416,7 +1392,6 @@ class SumRulesWindow(qt.QMainWindow):
         # Add spectrum to plotWindow using the
         if identifier == 'xmcd':
             self.xmcdData = (xSorted, ySorted)
-            #self.plotWindow.graph.mapToY2(intLegend)
         elif identifier == 'xas':
             self.xasData  = (xSorted, ySorted)
         # Trigger replot when data is added
@@ -1599,36 +1574,25 @@ class SumRulesWindow(qt.QMainWindow):
                                  model,
                                  self.__xasBGmodel,
                                  {},
-                                 replot=False)
+                                 resetzoom=False)
         self.plotWindow.addCurve(x,
                                  preModel,
                                  'Pre BG model',
                                  {},
-                                 replot=False)
+                                 resetzoom=False)
         self.plotWindow.addCurve(x,
                                  postModel,
                                  'Post BG model',
                                  {},
-                                 replot=False)
-        if hasattr(self.plotWindow, 'graph'):
-            self.plotWindow.graph.replot()
-        else:
-            self.plotWindow.replot()
-            self.plotWindow.updateLegends()
+                                 resetzoom=False)
 
     def plotOnDemand(self, window):
         # Remove all curves
-        if hasattr(self.plotWindow,'graph'):
-            legends = self.plotWindow.getAllCurves(just_legend=True)
-            for legend in legends:
-                self.plotWindow.removeCurve(legend, replot=False)
-        else:
-            self.plotWindow.clearCurves()
+        self.plotWindow.clearCurves()
         if (self.xmcdData is None) or (self.xasData is None):
             # Nothing to do
             return
         xyList  = []
-        mapToY2 = False
         window = window.lower()
         if window == self.__tabElem:
             if self.xmcdCorrData is not None:
@@ -1706,27 +1670,22 @@ class SumRulesWindow(qt.QMainWindow):
                     legend=legend,
                     info=info,
                     replace=False,
-                    replot=True)
-        # Assure margins in plot when using matplotlibbacken
-        if not hasattr(self.plotWindow, 'graph'):
-            if DEBUG == 1:
-                print('plotOnDemand -- Setting margins..')
-                print('\txmin:',xmin,'xmax:',xmax)
-                print('\tymin:',ymin,'ymax:',ymax)
-            # Pass if no curves present
-            curves = self.plotWindow.getAllCurves(just_legend=True)
-            if len(curves) == 0:
-                # At this point xymin, xymax should be infinite..
-                pass
-            xmargin = 0.1 * (xmax - xmin)
-            ymargin = 0.1 * (ymax - ymin)
-            self.plotWindow.setGraphXLimits(xmin-xmargin,
-                                            xmax+xmargin)
-            self.plotWindow.setGraphYLimits(ymin-ymargin,
-                                            ymax+ymargin)
-            # Need to force replot here for correct display
-            self.plotWindow.replot()
-            self.plotWindow.updateLegends()
+                    resetzoom=True)
+        # Assure margins in plot when using matplotlibbackend
+        if DEBUG == 1:
+            print('plotOnDemand -- Setting margins..')
+            print('\txmin:',xmin,'xmax:',xmax)
+            print('\tymin:',ymin,'ymax:',ymax)
+        # Pass if no curves present
+        if not len(self.plotWindow.getAllCurves(just_legend=True)):
+            # At this point xymin, xymax should be infinite..
+            pass
+        xmargin = 0.1 * (xmax - xmin)
+        ymargin = 0.1 * (ymax - ymin)
+        self.plotWindow.setGraphXLimits(xmin-xmargin,
+                                        xmax+xmargin)
+        self.plotWindow.setGraphYLimits(ymin-ymargin,
+                                        ymax+ymargin)
 
     def addMarker(self, window, label='X MARKER', xpos=None, unit=''):
         # Add spinbox controlling the marker
