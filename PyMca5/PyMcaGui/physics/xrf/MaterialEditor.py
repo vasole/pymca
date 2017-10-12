@@ -37,8 +37,8 @@ import numpy
 import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics import Elements
-from PyMca5.PyMcaGui import PlotWindow
-ScanWindow = PlotWindow.PlotWindow
+# from PyMca5.PyMcaGui import PlotWindow
+from silx.gui.plot import PlotWindow
 
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -105,13 +105,10 @@ class MaterialEditor(qt.QWidget):
         if self.__toolMode:
             self.materialGUI.setCurrent(a[0])
             if (self.graph is None):
-                self.graph = ScanWindow(self, newplot=False,
-                                        fit=False,
-                                        plugins=False,
+                self.graph = PlotWindow(self,
                                         control=True,
                                         position=True)
-                self.graph._togglePointsSignal()
-                self.graph.enableOwnSave(True)
+                self.graph.setDefaultPlotPoints(True)
             layout.addWidget(self.materialGUI)
             layout.addWidget(self.graph)
         else:
@@ -174,6 +171,8 @@ class MaterialEditor(qt.QWidget):
                                              density=density, thickness=thickness, listoutput=False)
             addButton = False
             if self.graph is None:
+                # probably dead code (ScanWindow.ScanWindow not imported)
+                # TODO: if needed, this should be updated for silx based ScanWindow
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
                 self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -216,6 +215,8 @@ class MaterialEditor(qt.QWidget):
                                                                  energy)
             addButton = False
             if self.graph is None:
+                # probably dead code (ScanWindow.ScanWindow not imported)
+                # TODO: if needed, this should be updated for silx based ScanWindow
                 self.graphDialog = qt.QDialog(self)
                 self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
                 self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
