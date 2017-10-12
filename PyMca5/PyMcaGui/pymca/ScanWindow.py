@@ -91,15 +91,15 @@ class BaseScanWindow(PlotWindow):
                                              mask=False,
                                              colormap=False)
         self.setDataMargins(0, 0, 0.025, 0.025)
+        self.setIconSize(qt.QSize(20, 20))
+
         self.setPanWithArrowKeys(True)
         self._plotType = "SCAN"     # needed by legacy plugins
 
         self.setWindowTitle(name)
 
         # Toolbar
-        # self.toolBar().setIconSize(qt.QSize(15, 18))
         self._toolbar = qt.QToolBar(self)
-        # self._toolbar.setIconSize(qt.QSize(15, 18))
 
         self.addToolBar(self._toolbar)
 
