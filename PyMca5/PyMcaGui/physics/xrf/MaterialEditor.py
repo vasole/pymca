@@ -105,9 +105,9 @@ class MaterialEditor(qt.QWidget):
         if self.__toolMode:
             self.materialGUI.setCurrent(a[0])
             if (self.graph is None):
-                self.graph = PlotWindow(self,
-                                        control=True,
-                                        position=True)
+                self.graph = PlotWindow(self, control=True, position=True,
+                                        colormap=False, aspectRatio=False,
+                                        yInverted=False, roi=False, mask=False)
                 self.graph.setDefaultPlotPoints(True)
             layout.addWidget(self.materialGUI)
             layout.addWidget(self.graph)
