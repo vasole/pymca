@@ -89,7 +89,10 @@ class BaseScanWindow(PlotWindow):
                                              control=control,
                                              position=position,
                                              mask=False,
-                                             colormap=False)
+                                             colormap=False,
+                                             aspectRatio=False,
+                                             yInverted=False,
+                                             copy=False)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setIconSize(qt.QSize(20, 20))
 
