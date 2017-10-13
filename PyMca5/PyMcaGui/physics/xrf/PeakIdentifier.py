@@ -159,7 +159,7 @@ class PeakIdentifier(qt.QWidget):
 
     def myslot(self):
         print("PeakIdentifier.py myslot deprecated, use mySlot")
-        return mySlot()
+        return self.mySlot()
 
     def _thresholdSlot(self, value):
         self.mySlot()
