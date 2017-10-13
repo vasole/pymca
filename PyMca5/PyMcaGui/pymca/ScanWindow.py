@@ -460,7 +460,7 @@ class ScanWindow(BaseScanWindow):
                 del self.dataObjectsDict[legend]
 
     def addCurve(self, x, y, legend=None, info=None, replace=False,
-                 resetzoom=False, color=None, symbol=None,
+                 resetzoom=True, color=None, symbol=None,
                  linestyle=None, xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
         """Add a curve. If a curve with the same legend already exists,
@@ -519,7 +519,7 @@ class ScanWindow(BaseScanWindow):
                     resetzoom=resetzoom, **kw)
 
     def newCurve(self, x, y, legend=None, info=None, replace=False,
-                 resetzoom=False, color=None, symbol=None,
+                 resetzoom=True, color=None, symbol=None,
                  linestyle=None, xlabel=None, ylabel=None, yaxis=None,
                  xerror=None, yerror=None, **kw):
         """
