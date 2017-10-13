@@ -37,6 +37,7 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from PyMca5.PyMcaMath.fitting import RateLaw
+from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 
 from silx.gui.plot import PlotWindow
 DEBUG = 0
@@ -70,6 +71,8 @@ class RateLawMdiArea(qt.QMdiArea):
                               position=True, backend=backend,
                               colormap=False, aspectRatio=False,
                               yInverted=False, roi=False, mask=False)
+            self.pluginsToolButton = PluginsToolButton(plot=plot)
+            plot.toolBar().addWidget(self.pluginsToolButton)
             plot.setWindowTitle(title)
             self.addSubWindow(plot)
             self._windowDict[title] = plot
