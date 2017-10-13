@@ -174,7 +174,7 @@ class PluginsToolButton(qt.QToolButton, PluginLoader):
             if len(dirName):
                 pluginsDir = self.getPluginDirectoryList()
                 pluginsDirList = [pluginsDir[0], dirName]
-                self.pluginsToolButton.setPluginDirectoryList(pluginsDirList)
+                self.setPluginDirectoryList(pluginsDirList)
             return
         if "Toggle DEBUG mode" in a.text():
             _toggleLogger()
