@@ -101,7 +101,12 @@ class BaseScanWindow(PlotWindow):
 
         self.setWindowTitle(name)
 
-        # Toolbar
+        # Toolbar:
+        # hide zoom and pan mode button
+        self.zoomModeAction.setVisible(False)
+        self.panModeAction.setVisible(False)
+
+        # additional buttons
         self._toolbar = qt.QToolBar(self)
 
         self.addToolBar(self._toolbar)
