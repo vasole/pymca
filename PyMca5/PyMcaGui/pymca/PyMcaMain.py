@@ -1129,7 +1129,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if self.identifier is None:
             self.identifier=PeakIdentifier.PeakIdentifier(energy=5.9,
                                 useviewer=1)
-            self.identifier.myslot()
+            self.identifier.mySlot()
         if self.identifier.isHidden():
             self.identifier.show()
         self.identifier.raise_()

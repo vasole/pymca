@@ -239,7 +239,7 @@ class QStackWidget(StackBase.StackBase,
             if 'SourceName' in self._stack.info:
                 if type(self._stack.info['SourceName']) == type([]):
                     if len(self._stack.info['SourceName']) == 1:
-                        title = qt.safe_str(self._stack.info['SourceName'])
+                        title = qt.safe_str(self._stack.info['SourceName'][0])
                     else:
                         f0 = qt.safe_str(self._stack.info['SourceName'][0])
                         f1 = qt.safe_str(self._stack.info['SourceName'][-1])
