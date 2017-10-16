@@ -222,6 +222,8 @@ class ScanWindow(BaseScanWindow):
 
         self.dataObjectsDict = {}
 
+        self.sigContentChanged.connect(self._handleContentChanged)
+
     @property
     def dataObjectsList(self):
         return self.getAllCurves(just_legend=True)
@@ -229,6 +231,10 @@ class ScanWindow(BaseScanWindow):
     @property
     def _curveList(self):
         return self.getAllCurves(just_legend=True)
+
+    def _handleContentChanged(self, action, kind, legend):
+        if action == 'remove' and kind == "curve":
+            self.removeCurves([legend])
 
     def setDispatcher(self, w):
         w.sigAddSelection.connect(self._addSelection)
