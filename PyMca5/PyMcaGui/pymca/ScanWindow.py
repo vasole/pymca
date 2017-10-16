@@ -170,6 +170,8 @@ class BaseScanWindow(PlotWindow):
 
             self.sigActiveCurveChanged.connect(self.__updateInfoWidget)
 
+        self.sigActiveCurveChanged.connect(self.__updateGraphTitle)
+
     def _customControlButtonMenu(self):
         """Display Options button sub-menu. Overloaded to add
         _toggleInfoAction"""
@@ -189,8 +191,16 @@ class BaseScanWindow(PlotWindow):
         controlMenu.addAction(self.getPanWithArrowKeysAction())
 
     def __updateInfoWidget(self, previous_legend, legend):
+        """Called on active curve changed, to update the info widget"""
         x, y, legend, info, params = self.getCurve(legend)
         self.scanWindowInfoWidget.updateFromXYInfo(x, y, info)
+
+    def __updateGraphTitle(self, previous_legend, legend):
+        """Called on active curve changed, to update the graph title"""
+        if legend is None and previous_legend is not None:
+            self.setGraphTitle()
+        elif legend is not None:
+            self.setGraphTitle(legend)
 
     def setWindowType(self, wtype=None):
         if wtype not in [None, "SCAN", "MCA"]:
