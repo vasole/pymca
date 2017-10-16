@@ -459,8 +459,7 @@ class AdvancedAlignmentScanPlugin(Plugin1DBase.Plugin1DBase):
         Returns the legends of the curves in the plot winow
         in the order they were added.
         """
-        ret = [legend for (x,y,legend,info) in self._plotWindow.getAllCurves()]
-        return ret
+        return self.getAllCurves(just_legend=True)
 
     # BEGIN Alignment Methods
     def calculateShiftsFitDerivative(self):

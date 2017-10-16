@@ -46,27 +46,29 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
         QNexusWidget.QNexusWidget.__init__(self, *var, **kw)
 
     def itemRightClickedSlot(self, ddict):
+        is_numeric_dset = not (ddict['dtype'].startswith('|S') or
+                               ddict['dtype'].startswith('|U') or
+                               ddict['dtype'].startswith('|O') or
+                               ddict['dtype'] == '')
         filename = ddict['file']
-        name = ddict['name']
-        if ddict['dtype'].startswith('|S') or\
-           ddict['dtype'].startswith('|O'):
-            #handle a right click on a dataset of string type
-            return self.showInfoWidget(filename, name, False)
-            pass
-        elif ddict['dtype'] == '':
-            #handle a right click on a group
-            return self.showInfoWidget(filename, name, False)
+        fileIndex = self.data.sourceName.index(filename)
+        phynxFile = self.data._sourceObjectList[fileIndex]
+
+        _hdf5WidgetDatasetMenu = qt.QMenu(self)
+
+        if not is_numeric_dset:
+            # handle a right click on a group or on a dataset of string type
+            _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
+                                             self._showInfoWidgetSlot)
         else:
-            #handle a right click on a numeric dataset
-            _hdf5WidgetDatasetMenu = qt.QMenu(self)
+            # handle a right click on a numeric dataset
             _hdf5WidgetDatasetMenu.addAction(QString("Add to selection table"),
-                                        self._addToSelectionTable)
+                                             self._addToSelectionTable)
 
             _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
-                                    self._showInfoWidgetSlot)
-            fileIndex = self.data.sourceName.index(filename)
-            phynxFile  = self.data._sourceObjectList[fileIndex]
-            info = self.getInfo(phynxFile, name)
+                                             self._showInfoWidgetSlot)
+
+            info = self.getInfo(phynxFile, ddict['name'])
             interpretation = info.get('interpretation', "")
             stack1D = False
             stack2D = False
@@ -82,18 +84,19 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
 
             if stack1D:
                 _hdf5WidgetDatasetMenu.addAction(QString("Show as 1D Stack"),
-                                    self._stack1DSignal)
+                                                 self._stack1DSignal)
                 _hdf5WidgetDatasetMenu.addAction(QString("Load and show as 1D Stack"),
-                                    self._loadStack1DSignal)
+                                                 self._loadStack1DSignal)
             if stack2D:
                 _hdf5WidgetDatasetMenu.addAction(QString("Show as 2D Stack"),
-                                    self._stack2DSignal)
+                                                 self._stack2DSignal)
                 _hdf5WidgetDatasetMenu.addAction(QString("Load and show as 2D Stack"),
-                                    self._loadStack2DSignal)
-            self._lastDatasetDict = ddict
-            _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
-            self._lastDatasetDict= None
-            return
+                                                 self._loadStack2DSignal)
+
+        self._lastItemDict = ddict
+        _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
+        self._lastItemDict= None
+        return
 
     def _stack1DSignal(self):
         if DEBUG:
@@ -116,7 +119,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
         self._stackSignal(index=0, load=False)
 
     def _stackSignal(self, index=-1, load=False):
-        ddict = self._lastDatasetDict
+        ddict = self._lastItemDict
         filename = ddict['file']
         name = ddict['name']
         sel = {}

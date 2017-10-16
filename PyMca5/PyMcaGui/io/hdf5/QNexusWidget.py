@@ -46,10 +46,10 @@ from . import HDF5Widget
 from . import HDF5Info
 from . import HDF5CounterTable
 try:
-    from . import HDF5DatasetView
+    from . import Hdf5NodeView
 except ImportError:
     from . import HDF5DatasetTable
-    HDF5DatasetView = None
+    Hdf5NodeView = None
 from PyMca5.PyMcaIO import ConfigDict
 if "PyMcaDirs" in sys.modules:
     from PyMca5 import PyMcaDirs
@@ -413,88 +413,89 @@ class QNexusWidget(qt.QWidget):
             widget._sourceObjectWeakReference = weakref.ref(phynxFile,
                                                  sourceObjectDestroyed)
         widget.setInfoDict(info)
-        if dset:
+        # todo: this first `if` block can be dropped when silx is a hard dependency
+        if dset and Hdf5NodeView is None:
             dataset = phynxFile[name]
             if isinstance(dataset, h5py.Dataset):
                 if len(dataset.shape):
                     #0 length datasets do not need a table
-                    if HDF5DatasetView is not None:
-                        widget.w = HDF5DatasetView.HDF5DatasetView(widget)
-                    else:
-                        widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
+                    widget.w = HDF5DatasetTable.HDF5DatasetTable(widget)
                     try:
                         widget.w.setDataset(dataset)
                     except:
                         print("Error filling table")
                     widget.addTab(widget.w, 'DataView')
+        elif Hdf5NodeView is not None:
+            data = phynxFile[name]
+            widget.w = Hdf5NodeView.Hdf5NodeView(widget)
+            widget.w.setData(data)
+            widget.addTab(widget.w, 'DataView')
+
         widget.show()
         return widget
 
     def itemRightClickedSlot(self, ddict):
-        filename = ddict['file']
-        name = ddict['name']
-        if ddict['dtype'].startswith('|S'):
-            #handle a right click on a dataset of string type
-            return self.showInfoWidget(filename, name, False)
-            pass
-        elif ddict['dtype'] == '':
-            #handle a right click on a group
-            return self.showInfoWidget(filename, name, False)
-        elif 0:
-            #should I show the option menu?
-            self.showInfoWidget(filename, name, True)
-            return
+        _hdf5WidgetDatasetMenu = qt.QMenu(self)
+        self._lastItemDict = ddict
+        if ddict['dtype'].startswith('|S') or ddict['dtype'] == '':
+            # handle a right click on a group or a dataset of string type
+            _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
+                                             self._showInfoWidgetSlot)
+            _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
         else:
             #handle a right click on a numeric dataset
-            _hdf5WidgetDatasetMenu = qt.QMenu(self)
             _hdf5WidgetDatasetMenu.addAction(QString("Add to selection table"),
-                                        self._addToSelectionTable)
+                                             self._addToSelectionTable)
 
             if 0:
                 #these two options can be combined into one for the time being
                 _hdf5WidgetDatasetMenu.addAction(QString("Open"),
-                                            self._openDataset)
+                                                 self._openDataset)
                 _hdf5WidgetDatasetMenu.addAction(QString("Show Properties"),
-                                            self._showDatasetProperties)
+                                                 self._showDatasetProperties)
             else:
                 _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
-                                        self._showInfoWidgetSlot)
-                self._lastDatasetDict= ddict
+                                                 self._showInfoWidgetSlot)
                 _hdf5WidgetDatasetMenu.exec_(qt.QCursor.pos())
-                self._lastDatasetDict= None
-            return
+        self._lastItemDict = None
+        return
 
     def _addToSelectionTable(self, ddict=None):
         if ddict is None:
-            ddict = self._lastDatasetDict
+            ddict = self._lastItemDict
         #handle as a double click
         ddict['event'] = "itemDoubleClicked"
         self.hdf5Slot(ddict)
 
     def _showInfoWidgetSlot(self, ddict=None):
         if ddict is None:
-            ddict = self._lastDatasetDict
-        filename = ddict['file']
-        name = ddict['name']
-        return self.showInfoWidget(filename, name, True)
+            ddict = self._lastItemDict
+        is_numeric_dataset = (not ddict['dtype'].startswith('|S') and not
+                              ddict['dtype'].startswith('|U') and not
+                              ddict['dtype'].startswith('|O') and not
+                              ddict['dtype'] == '')
+        return self.showInfoWidget(ddict['file'],
+                                   ddict['name'],
+                                   dset=is_numeric_dataset)
 
     def _openDataset(self, ddict=None):
         if ddict is None:
-            ddict = self._lastDatasetDict
+            ddict = self._lastItemDict
         filename = ddict['file']
         name = ddict['name']
         self._checkWidgetDict()
         fileIndex = self.data.sourceName.index(filename)
         phynxFile  = self.data._sourceObjectList[fileIndex]
         dataset = phynxFile[name]
-        if HDF5DatasetView is not None:
-            widget = HDF5DatasetView.HDF5DatasetView()
+        if Hdf5NodeView is not None:
+            widget = Hdf5NodeView.Hdf5NodeView()
+            widget.setData(dataset)
         else:
             widget = HDF5DatasetTable.HDF5DatasetTable()
+            widget.setDataset(dataset)
         title = os.path.basename(filename)
         title += " %s" % name
         widget.setWindowTitle(title)
-        widget.setDataset(dataset)
         if self._lastWidgetId is not None:
             ids = self._widgetDict.keys()
             if len(ids):
@@ -520,7 +521,7 @@ class QNexusWidget(qt.QWidget):
 
     def _showDatasetProperties(self, ddict=None):
         if ddict is None:
-            ddict = self._lastDatasetDict
+            ddict = self._lastItemDict
         filename = ddict['file']
         name = ddict['name']
         return self.showInfoWidget(filename, name)

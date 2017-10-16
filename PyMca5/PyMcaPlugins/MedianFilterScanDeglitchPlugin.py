@@ -160,7 +160,7 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
 
     def medianThresholdFilter(self, activeOnly, threshold, length):
         if activeOnly:
-            active = self._plotWindow.getActiveCurve()
+            active = self.getActiveCurve()
             if not active:
                 return
             else:
@@ -168,7 +168,7 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
                 self.removeCurve(legend)
                 spectra = [active]
         else:
-            spectra = self._plotWindow.getAllCurves()
+            spectra = self.getAllCurves()
         for (idx, spec) in enumerate(spectra):
             x, y, legend, info = spec
             filtered = medfilt1d(y, length)
