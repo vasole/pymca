@@ -30,8 +30,9 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaMath.fitting import SpecfitFuns
+
+from silx.gui.plot import PlotWindow
 
 
 class StripParametersWidget(qt.QWidget):
@@ -235,10 +236,12 @@ class StripBackgroundWidget(qt.QWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(2)
         self.parametersWidget = StripParametersWidget(self)
-        self.graphWidget = PlotWindow.PlotWindow(self,
-                                                 newplot=False,
-                                                 plugins=False,
-                                                 fit=False)
+        self.graphWidget = PlotWindow(self, position=False, aspectRatio=False,
+                                      colormap=False, yInverted=False,
+                                      roi=False, mask=False, fit=False)
+        self.graphWidget.zoomModeAction.setVisible(False)
+        self.graphWidget.panModeAction.setVisible(False)
+
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graphWidget)
         self.getParameters = self.parametersWidget.getParameters
@@ -319,16 +322,15 @@ class StripBackgroundWidget(qt.QWidget):
             snipBackground[lastAnchor:] =\
                             SpecfitFuns.snip1d(ysmooth[lastAnchor:], width, 0)
 
-        self.graphWidget.addCurve(x, y, \
-                                  legend='Input Data',\
-                                  replace=True,
-                                  replot=False)
-        self.graphWidget.addCurve(x, stripBackground,\
-                                  legend='Strip Background',\
-                                  replot=False)
-        self.graphWidget.addCurve(x, snipBackground,\
+        self.graphWidget.addCurve(x, y,
+                                  legend='Input Data',
+                                  color='black')
+        self.graphWidget.addCurve(x, stripBackground,
+                                  legend='Strip Background',
+                                  color='blue')
+        self.graphWidget.addCurve(x, snipBackground,
                                   legend='SNIP Background',
-                                  replot=True)
+                                  color='red')
 
 class StripBackgroundDialog(qt.QDialog):
     def __init__(self, parent=None):
