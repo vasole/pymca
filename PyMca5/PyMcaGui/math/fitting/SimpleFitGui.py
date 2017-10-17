@@ -34,7 +34,7 @@ from PyMca5.PyMcaMath.fitting import SimpleFitModule
 from . import SimpleFitConfigurationGui
 from PyMca5.PyMcaMath.fitting import SimpleFitUserEstimatedFunctions
 from . import Parameters
-from PyMca5.PyMcaGui import PlotWindow
+from silx.gui.plot import PlotWindow
 
 DEBUG = 0
 
@@ -140,11 +140,12 @@ class SimpleFitGui(qt.QWidget):
             self.fitModule = fit
         if graph is None:
             self.__useTab = True
-            self.graph = PlotWindow.PlotWindow(newplot=False,
-                                               plugins=False,
-                                               fit=False,
-                                               control=True,
-                                               position=True)
+            self.graph = PlotWindow(self,
+                                    aspectRatio=False, colormap=False,
+                                    yInverted=False, roi=False, mask=False,
+                                    fit=False, control=True, position=True)
+            self.graph.zoomModeAction.setVisible(False)
+            self.graph.panModeAction.setVisible(False)
         else:
             self.__useTab = False
             self.graph = graph
@@ -301,12 +302,14 @@ class SimpleFitGui(qt.QWidget):
                                     self.fitModule._y,
                                     legend='Data',
                                     replace=True)
+                self.graph.setActiveCurve('Data')
             elif hasattr(self.graph, "newCurve"):
+                # TODO: remove if not used
                 self.graph.clearCurves()
                 self.graph.newCurve('Data',
                                     self.fitModule._x,
                                     self.fitModule._y)
-            self.graph.replot()
+                self.graph.replot()
         return returnValue
 
     def estimate(self):
@@ -375,10 +378,9 @@ class SimpleFitGui(qt.QWidget):
         #ddict['yfit'] = self.evaluateDefinedFunction()
         #ddict['background'] = self.fitModule._evaluateBackground()
         self.graph.clear()
-        self.graph.addCurve(ddict['x'], ddict['y'], 'Data', replot=False)
-        self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit', replot=False)
-        self.graph.addCurve(ddict['x'], ddict['background'], 'Background',
-                                                replot=False)
+        self.graph.addCurve(ddict['x'], ddict['y'], 'Data')
+        self.graph.addCurve(ddict['x'], ddict['yfit'], 'Fit')
+        self.graph.addCurve(ddict['x'], ddict['background'], 'Background')
         contributions = ddict['contributions']
         if len(contributions) > 1:
             background = ddict['background']
@@ -386,9 +388,7 @@ class SimpleFitGui(qt.QWidget):
             for contribution in contributions:
                 i += 1
                 self.graph.addCurve(ddict['x'], background + contribution,
-                                    legend='Contribution %d' % i,
-                                    replot=False)
-        self.graph.replot()
+                                    legend='Contribution %d' % i)
         self.graph.show()
 
     def dismiss(self):
