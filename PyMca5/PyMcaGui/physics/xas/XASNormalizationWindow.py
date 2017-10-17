@@ -37,10 +37,8 @@ import copy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
-from PyMca5.PyMcaGraph.backends.MatplotlibBackend \
-     import MatplotlibBackend as backend
-from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaPhysics import XASNormalization
+from silx.gui.plot import PlotWindow
 
 POLYNOM_OPTIONS = ['Modif. Victoreen',
                    'Victoreen',
@@ -278,12 +276,17 @@ class XASNormalizationWindow(qt.QWidget):
             self.energy = energy
         self.spectrum = spectrum
         self.parametersWidget = XASNormalizationParametersWidget(self)
-        self.graph = PlotWindow.PlotWindow(self, backend=backend,
-                                           plugins=False, newplot=False)
+        self.graph = PlotWindow(self, position=False,
+                                aspectRatio=False, colormap=False,
+                                yInverted=False, roi=False, mask=False,
+                                fit=False)
+        self.graph.zoomModeAction.setVisible(False)
+        self.graph.panModeAction.setVisible(False)
         self.__lastDict = {}
         self.graph.sigPlotSignal.connect(self._handleGraphSignal)
         self.graph.addCurve(self.energy,
                             spectrum, legend="Spectrum", replace=True)
+        self.graph.setActiveCurve("Spectrum")
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graph)
         # initialize variables
@@ -310,7 +313,6 @@ class XASNormalizationWindow(qt.QWidget):
         self.graph.addCurve(self.energy,
                             self.spectrum,
                             legend="Spectrum",
-                            replot=True,
                             replace=True)
         edgeEnergy = XASNormalization.estimateXANESEdge(self.spectrum,
                                                         energy=self.energy,
@@ -379,13 +381,10 @@ class XASNormalizationWindow(qt.QWidget):
         yPost = postEdgeFunction(postEdgeParameters, x)
         self.graph.addCurve(x,
                             yPre,
-                            legend="Pre-edge Polynomial",
-                            replace=False)
+                            legend="Pre-edge Polynomial")
         self.graph.addCurve(x,
                             yPost+yPre,
-                            legend="Post-edge Polynomial",
-                            replace=False,
-                            replot=True)
+                            legend="Post-edge Polynomial")
 
     def updateMarkers(self, edgeEnergy, preEdgeRegions, postEdgeRegions, edge_auto=True):
         if edge_auto:
@@ -393,38 +392,33 @@ class XASNormalizationWindow(qt.QWidget):
         else:
             draggable = True
         #self.graph.clearMarkers()
-        self.graph.insertXMarker(edgeEnergy,
-                                'EDGE',
-                                 text='EDGE',
-                                 color='pink',
-                                 draggable=draggable,
-                                 replot=False)
+        self.graph.addXMarker(edgeEnergy,
+                              'EDGE',
+                              text='EDGE',
+                              color='pink',
+                              draggable=draggable)
         for i in range(2):
             x = preEdgeRegions[0][i] + edgeEnergy
             if i == 0:
                 label = 'MIN'
             else:
                 label = 'MAX'
-            self.graph.insertXMarker(x,
-                                'Pre-'+ label,
-                                text=label,
-                                color='blue',
-                                draggable=True,
-                                replot=False)
+            self.graph.addXMarker(x,
+                                  'Pre-' + label,
+                                  text=label,
+                                  color='blue',
+                                  draggable=True)
         for i in range(2):
             x = postEdgeRegions[0][i] + edgeEnergy
             if i == 0:
                 label = 'MIN'
-                replot=False
             else:
                 label = 'MAX'
-                replot=True
-            self.graph.insertXMarker(x,
-                                'Post-'+ label,
-                                text=label,
-                                color='blue',
-                                draggable=True,
-                                replot=replot)
+            self.graph.addXMarker(x,
+                                  'Post-' + label,
+                                  text=label,
+                                  color='blue',
+                                  draggable=True)
 
     def _handleGraphSignal(self, ddict):
         #print("ddict = ", ddict)
@@ -532,7 +526,7 @@ if __name__ == "__main__":
         w = XASNormalizationDialog(None, spectrum, energy=energy)
     else:
         from PyMca5 import SpecfitFuns
-        noise = numpy.random.randn(1500.)
+        noise = numpy.random.randn(1500)
         x = 8000. + numpy.arange(1500.)
         y = SpecfitFuns.upstep([100, 8500., 50], x)
         w = XASNormalizationDialog(None, y + numpy.sqrt(y)* noise, energy=x)
