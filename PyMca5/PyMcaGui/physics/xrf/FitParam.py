@@ -56,8 +56,8 @@ except ImportError:
     # no XRFMC support
     pass
 from PyMca5.PyMcaGui.math import StripBackgroundWidget
-from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaGui.physics.xrf import StrategyHandler
+from silx.gui.plot import PlotWindow
 import numpy
 
 DEBUG = 0
@@ -84,11 +84,14 @@ class FitParamWidget(FitParamForm):
         self.graphDialog.mainLayout = qt.QVBoxLayout(self.graphDialog)
         self.graphDialog.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.graphDialog.mainLayout.setSpacing(0)
-        self.graphDialog.graph = PlotWindow.PlotWindow(self.graphDialog,
-                                                       newplot=False,
-                                                       plugins=False, fit=False)
+        self.graphDialog.graph = PlotWindow(self.graphDialog,
+                                            position=False, colormap=False,
+                                            aspectRatio=False, yInverted=False,
+                                            roi=False, mask=False, fit=False)
         self.graph = self.graphDialog.graph
-        self.graph._togglePointsSignal()
+        self.graph.zoomModeAction.setVisible(False)
+        self.graph.panModeAction.setVisible(False)
+        self.graph.setDefaultPlotPoints(True)
         self.tabAttenuators   = AttenuatorsTable.AttenuatorsTab(self.tabAtt,
                                                 graph=self.graphDialog)
         self.graphDialog.mainLayout.addWidget(self.graph)
@@ -315,11 +318,11 @@ class FitParamWidget(FitParamForm):
                 efficiency *= (1.0 - numpy.exp(-coeffs))
 
         self.graph.setGraphTitle('Filter (not beam filter) and detector correction')
-        self.graph.addCurve(energies, efficiency,
-                            legend='Ta * (1.0 - Td)',
+        legend = 'Ta * (1.0 - Td)'
+        self.graph.addCurve(energies, efficiency, legend,
                             xlabel='Energy (keV)',
-                            ylabel='Efficiency Term',
-                            replace=True)
+                            ylabel='Efficiency Term')
+        self.graph.setActiveCurve(legend)
         self.graphDialog.exec_()
 
     def __contComboActivated(self, idx):
