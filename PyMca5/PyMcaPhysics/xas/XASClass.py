@@ -35,8 +35,6 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import copy
-import os
-import sys
 import numpy
 import time
 from PyMca5.PyMca import XASNormalization
@@ -1487,25 +1485,25 @@ if __name__ == "__main__":
     #sys.exit()
     from PyMca5.PyMca import PyMcaQt as qt
     app = qt.QApplication([])
-    from PyMca5.PyMca import PlotWindow
-    w = PlotWindow.PlotWindow()
-    w.addCurve(energy, mu, legend="original", replot=False)
+    from silx.gui.plot import Plot1D
+    w = Plot1D()
+    w.addCurve(energy, mu, legend="original")
     w.addCurve(ddict["NormalizedEnergy"],
-               ddict["NormalizedMu"], legend="Mu", yaxis="right", replot=False)
+               ddict["NormalizedMu"], legend="Mu", yaxis="right")
     w.addCurve(ddict["NormalizedEnergy"],
-               ddict["NormalizedSignal"], legend="Post", replot=False)
+               ddict["NormalizedSignal"], legend="Post")
     w.addCurve(ddict["NormalizedEnergy"],
-               ddict["NormalizedBackground"], legend="Pre",replot=False)
+               ddict["NormalizedBackground"], legend="Pre")
     w.resetZoom()
     w.show()
-    exafs = PlotWindow.PlotWindow()
+    exafs = Plot1D()
     idx = (ddict["EXAFSKValues"] >= ddict["KMin"]) & \
           (ddict["EXAFSKValues"] <= ddict["KMax"])
     exafs.addCurve(ddict["EXAFSKValues"][idx], ddict["EXAFSNormalized"][idx],
                    legend="Normalized EXAFS")
     exafs.show()
     #"""
-    ft = PlotWindow.PlotWindow()
+    ft = Plot1D()
     ft.addCurve(ddict["FT"]["FTRadius"], ddict["FT"]["FTIntensity"])
     ft.resetZoom()
     ft.show()
