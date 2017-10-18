@@ -255,6 +255,7 @@ class StripBackgroundWidget(qt.QWidget):
         self._x = x
         self._y = y
         self.update()
+        self.graphWidget.resetZoom()
 
     def _slot(self, ddict):
         self.update()
@@ -324,13 +325,14 @@ class StripBackgroundWidget(qt.QWidget):
 
         self.graphWidget.addCurve(x, y,
                                   legend='Input Data',
-                                  color='black')
+                                  resetzoom=False)
         self.graphWidget.addCurve(x, stripBackground,
-                                  legend='Strip Background',
-                                  color='blue')
+                                  resetzoom=False,
+                                  legend='Strip Background')
         self.graphWidget.addCurve(x, snipBackground,
-                                  legend='SNIP Background',
-                                  color='red')
+                                  resetzoom=False,
+                                  legend='SNIP Background')
+        self.graphWidget.setActiveCurve('Input Data')
 
 class StripBackgroundDialog(qt.QDialog):
     def __init__(self, parent=None):
