@@ -34,7 +34,7 @@ if 1:
     # if not, we miss profile fitting ...
     from PyMca5.PyMcaGui.pymca.ScanWindow import ScanWindow as Window
 else:
-    from .PlotWindow import PlotWindow as Window
+    from silx.gui.plot import PlotWindow as Window
 DEBUG = 0
 
 class ProfileScanWidget(Window):
