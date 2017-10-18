@@ -285,7 +285,7 @@ class XASNormalizationWindow(qt.QWidget):
         self.__lastDict = {}
         self.graph.sigPlotSignal.connect(self._handleGraphSignal)
         self.graph.addCurve(self.energy,
-                            spectrum, legend="Spectrum", replace=True)
+                            spectrum, legend="Spectrum")
         self.graph.setActiveCurve("Spectrum")
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graph)
@@ -310,10 +310,10 @@ class XASNormalizationWindow(qt.QWidget):
         else:
             self.energy = energy
         self.graph.clearMarkers()
+        self.graph.clearCurves()
         self.graph.addCurve(self.energy,
                             self.spectrum,
-                            legend="Spectrum",
-                            replace=True)
+                            legend="Spectrum")
         edgeEnergy = XASNormalization.estimateXANESEdge(self.spectrum,
                                                         energy=self.energy,
                                                         full=False)

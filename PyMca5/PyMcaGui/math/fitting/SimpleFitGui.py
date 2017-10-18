@@ -298,10 +298,10 @@ class SimpleFitGui(qt.QWidget):
         returnValue = self.fitModule.setData(*var, **kw)
         if self.__useTab:
             if hasattr(self.graph, "addCurve"):
+                self.graph.clear()
                 self.graph.addCurve(self.fitModule._x,
                                     self.fitModule._y,
-                                    legend='Data',
-                                    replace=True)
+                                    legend='Data')
                 self.graph.setActiveCurve('Data')
             elif hasattr(self.graph, "newCurve"):
                 # TODO: remove if not used
