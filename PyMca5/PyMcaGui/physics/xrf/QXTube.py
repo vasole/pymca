@@ -33,8 +33,9 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5.PyMcaPhysics import Elements
 from PyMca5.PyMcaPhysics import XRayTubeEbel
 import numpy
-from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
+from silx.gui.plot import PlotWindow
 
 
 DEBUG = 0
@@ -86,8 +87,14 @@ class QXTube(qt.QWidget):
         self.l.addWidget(label)
 
         self.l.addWidget(hbox)
-        self.graph = PlotWindow.PlotWindow(self,
-                                               backend=None)
+        self.graph = PlotWindow(self, colormap=False, yInverted=False,
+                                aspectRatio=False, control=False,
+                                position=False, roi=False, mask=False,
+                                fit=False)
+        self.pluginsToolButton = PluginsToolButton(plot=self.graph)
+        self.graph.toolBar().addWidget(self.pluginsToolButton)
+        self.graph.zoomModeAction.setVisible(False)
+        self.graph.panModeAction.setVisible(False)
         self.l.addWidget(self.graph)
         self.graph.setGraphXLabel("Energy (keV)")
         self.graph.setGraphYLabel("photons/sr/mA/keV/s")
@@ -133,11 +140,8 @@ class QXTube(qt.QWidget):
                                              targetthickness=anodethickness,
                                              filterlist=filterlist)
 
-
-
-
-            self.graph.addCurve(e, continuumR, "continuumR", replot=False)
-            self.graph.addCurve(e, continuumT, "continuumT", replot=False)
+            self.graph.addCurve(e, continuumR, "continuumR")
+            self.graph.addCurve(e, continuumT, "continuumT")
         else:
             continuum = XRayTubeEbel.continuumEbel([anode, anodedensity, anodethickness],
                                              voltage, e,
@@ -146,10 +150,10 @@ class QXTube(qt.QWidget):
                                              transmission=transmission,
                                              targetthickness=anodethickness,
                                              filterlist=filterlist)
-            self.graph.addCurve(e, continuum, "continuum", replot=False)
+            self.graph.addCurve(e, continuum, "continuum")
+            self.graph.setActiveCurve("continuum")
 
         self.graph.resetZoom()
-        self.graph.replot()
 
     def _export(self):
         d = self.tubeWidget.getParameters()
