@@ -176,7 +176,12 @@ class Plugin1DBase(object):
         """
 
         if silxPlot is not None:
-            if hasattr(plotWindow, "plot"):  # PluginsToolButton.plot -> silx plot
+            if hasattr(plotWindow, "plot"):
+                # PluginsToolButton.plot -> silx plot
+                self._legacy = False
+            if isinstance(plotWindow, silxPlot):
+                # in case the plugin is used without a PluginToolButton,
+                # like in MedianFilterScanDeglitchPlugin.__main__
                 self._legacy = False
 
     # Window related functions
