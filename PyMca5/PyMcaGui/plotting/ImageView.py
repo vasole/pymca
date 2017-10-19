@@ -31,25 +31,11 @@ __contact__ = "thomas.vincent@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
-QWidget displaying a 2D image with histograms on its sides.
+The classes in this module are deprecated. Use
+:class:`silx.gui.plot.ImageView` and
+:class:`silx.gui.plot.ImageViewMainWindow` instead.
 
-The :class:`ImageView` implements this widget, and
-:class:`ImageViewMainWindow` provides a main window with additional toolbar
-and status bar.
-
-Basic usage of :class:`ImageView` is through the following methods:
-
-- :meth:`ImageView.getColormap`, :meth:`ImageView.setColormap` to update the
-  default colormap to use and update the currently displayed image.
-- :meth:`ImageView.setImage` to update the displayed image.
-
-The :class:`ImageView` uses :class:`PlotWindow` and also
-exposes :class:`PyMca5.PyMcaGraph.Plot` API for further control
-(plot title, axes labels, adding other images, ...).
-
-For an example of use, see the implementation of :class:`ImageViewMainWindow`.
-
-The ImageView module can also be used to open an EDF or TIFF file
+This module can be used to open an EDF or TIFF file
 from the shell command line.
 To view an image file:
 ``python -m PyMca5.PyMcaGui.plotting.ImageView <file to open>``
