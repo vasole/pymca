@@ -30,8 +30,6 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
     Common tools to deal with common graphics operations on images.
     """
-import sys
-import os
 import numpy
 
 from PyMca5 import spslut
@@ -253,9 +251,9 @@ def applyMaskToImage(pixmap, mask=None, colors=None, copy=True):
 
 if __name__ == "__main__":
     from PyMca5.PyMcaGui import PyMcaQt as qt
-    from PyMca5.PyMcaGui import PlotWidget
+    from silx.gui.plot import PlotWidget
     app = qt.QApplication([])
-    w = PlotWidget.PlotWidget()
+    w = PlotWidget()
     data = numpy.arange(10000.).reshape(100, 100)
     mask = numpy.zeros(data.shape, dtype=numpy.uint8)
     mask[25:75, 25:75] = 1
