@@ -59,6 +59,28 @@ DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
 __revision__ = "$Revision: 1.35 $"
 
+
+def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
+    if xScale is None:
+        c = x
+    else:
+        c = (x - xScale[0]) / xScale[1]
+    if yScale is None:
+        r = y
+    else:
+        r = ( y - yScale[0]) / yScale[1]
+
+    if safe:
+        c = min(int(c), shape[1] - 1)
+        c = max(c, 0)
+        r = min(int(r), shape[0] - 1)
+        r = max(r, 0)
+    else:
+        c = int(c)
+        r = int(r)
+    return r, c
+
+
 class EdfFile_StandardArray(qt.QWidget):
     sigWidgetSignal = qt.pyqtSignal(object)
 
@@ -547,22 +569,25 @@ class QEdfFileWidget(qt.QWidget):
         else:
             self.saveGraphWidget(outputFile)
 
-    def saveGraphImage(self, filename,original=True):
-        fformat = filename[-3:].upper()
-        #This is the whole image, not the zoomed one ...
-        rgbData, legend, info, pixmap, params = self.graph.getActiveImage()
+    def saveGraphImage(self, filename, original=False):
+        format_ = filename[-3:].upper()
+        activeImage = self.graph.getActiveImage()
+        rgbdata = activeImage.getRgbaImageData()
+        # silx to pymca scale convention (a + b x)
+        xScale = activeImage.getOrigin()[0], activeImage.getScale()[0]
+        yScale = activeImage.getOrigin()[1], activeImage.getScale()[1]
         if original:
             # save whole image
-            bgrData = numpy.array(rgbData, copy=True)
-            bgrData[:,:,0] = rgbData[:, :, 2]
-            bgrData[:,:,2] = rgbData[:, :, 0]
+            bgradata = numpy.array(rgbdata, copy=True)
+            bgradata[:, :, 0] = rgbdata[:, :, 2]
+            bgradata[:, :, 2] = rgbdata[:, :, 0]
         else:
-            shape = rgbData.shape[:2]
+            shape = rgbdata.shape[:2]
             xmin, xmax = self.graph.getGraphXLimits()
             ymin, ymax = self.graph.getGraphYLimits()
             # save zoomed image, for that we have to get the limits
-            r0, c0 = ymin, xmin
-            r1, c1 = ymax, xmax
+            r0, c0 = convertToRowAndColumn(xmin, ymin, shape, xScale=xScale, yScale=yScale, safe=True)
+            r1, c1 = convertToRowAndColumn(xmax, ymax, shape, xScale=xScale, yScale=yScale, safe=True)
             row0 = int(min(r0, r1))
             row1 = int(max(r0, r1))
             col0 = int(min(c0, c1))
@@ -571,21 +596,22 @@ class QEdfFileWidget(qt.QWidget):
                 row1 += 1
             if col1 < shape[1]:
                 col1 += 1
-            tmpArray = rgbData[row0:row1, col0:col1, :]
-            bgrData = numpy.array(tmpArray, copy=True, dtype=rgbData.dtype)
-            bgrData[:,:,0] = tmpArray[:, :, 2]
-            bgrData[:,:,2] = tmpArray[:, :, 0]
+            tmpArray = rgbdata[row0:row1, col0:col1, :]
+            bgradata = numpy.array(tmpArray, copy=True, dtype=rgbdata.dtype)
+            bgradata[:, :, 0] = tmpArray[:, :, 2]
+            bgradata[:, :, 2] = tmpArray[:, :, 0]
         if self.graph.isYAxisInverted():
-            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
-                                   qt.QImage.Format_RGB32)
+            qImage = qt.QImage(bgradata, bgradata.shape[1], bgradata.shape[0],
+                               qt.QImage.Format_ARGB32)
         else:
-            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
-                                   qt.QImage.Format_RGB32).mirrored(False, True)
+            qImage = qt.QImage(bgradata, bgradata.shape[1], bgradata.shape[0],
+                               qt.QImage.Format_ARGB32).mirrored(False, True)
         pixmap = qt.QPixmap.fromImage(qImage)
-        if pixmap.save(filename, fformat):
+        if pixmap.save(filename, format_):
             return
         else:
-            qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
+            qt.QMessageBox.critical(self, "Save Error",
+                                    "%s" % sys.exc_info()[1])
             return
 
     def saveGraphWidget(self, filename):
