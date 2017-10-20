@@ -415,7 +415,7 @@ class ScanWindow(BaseScanWindow):
                                   xlabel=xlabel,
                                   ylabel=ylabel)
         try:
-            if activeCurve is None:
+            if activeCurve is None and self._curveList:
                 self.setActiveCurve(self._curveList[0])
         finally:
             if resetzoom:
