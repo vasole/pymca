@@ -27,11 +27,10 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import sys
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
-from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import ScanWindow
 from PyMca5.PyMcaMath import SGModule
 
@@ -111,8 +110,9 @@ class SGWindow(qt.QWidget):
         self.spectrum = spectrum
         self.parametersWidget = SGParametersWidget(self, length=len(spectrum))
         self.graph = ScanWindow.ScanWindow(self)
-        self.graph.newCurve(self.xValues,
-                        spectrum, "Spectrum", replace=True)
+        self.graph.addCurve(self.xValues,
+                            spectrum, "Spectrum",
+                            replace=True)
         self.mainLayout.addWidget(self.parametersWidget)
         self.mainLayout.addWidget(self.graph)
         self.getParameters = self.parametersWidget.getParameters
@@ -129,13 +129,13 @@ class SGWindow(qt.QWidget):
                                                     degree=degree,
                                                     order=order)
         if order > 0:
-            maptoy2 = True
+            yaxis = "right"
         else:
-            maptoy2 = False
-        self.graph.newCurve(self.xValues,
-                    self.background, "Filtered Spectrum",
-                    replace=False,
-                    maptoy2=maptoy2)
+            yaxis = "left"
+        self.graph.addCurve(self.xValues,
+                            self.background, "Filtered Spectrum",
+                            replace=False,
+                            yaxis=yaxis)
 
         #Force information update
         legend = self.graph.getActiveCurve(just_legend=True)
@@ -190,10 +190,11 @@ if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
     if 1:
-        noise = numpy.random.randn(1000.)
-        y=numpy.arange(1000.)
-        w = SGDialog(None, y+numpy.sqrt(y)* noise)
+        noise = numpy.random.randn(1000)
+        y = numpy.arange(1000.)
+        w = SGDialog(None,
+                     y + numpy.sqrt(y) * noise)
     w.show()
-    ret=w.exec_()
+    ret = w.exec_()
     if ret:
         print(w.getParameters())

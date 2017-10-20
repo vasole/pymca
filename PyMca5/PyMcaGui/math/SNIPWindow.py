@@ -244,8 +244,8 @@ class SNIPWindow(qt.QWidget):
                                                            length=len(spectrum),
                                                            smooth=smooth)
             self.graph = ScanWindow.ScanWindow(self)
-            self.graph.newCurve(self.xValues,
-                            spectrum, "Spectrum", replace=True)
+            self.graph.addCurve(self.xValues,
+                                spectrum, "Spectrum", replace=True)
             self.mainLayout.addWidget(self.parametersWidget)
             self.mainLayout.addWidget(self.graph)
         self.xMarkers = []
@@ -267,31 +267,31 @@ class SNIPWindow(qt.QWidget):
                 yMin, yMax = self.graph.getGraphYLimits()
                 xMean = 0.5 * (xMin + xMax)
                 yMean = 0.5 * (yMin + yMax)
-                self.xMarkers.append(self.graph.insertXMarker(roi_min[1],
-                                                              legend='C Min',
-                                                              text='C Min'))
-                self.xMarkers.append(self.graph.insertXMarker(roi_max[1],
-                                                            legend='C Max',
-                                                            text='C Max'))
-                self.yMarkers.append(self.graph.insertYMarker(roi_min[0],
-                                                            legend='R Min',
-                                                            text='R Min'))
-                self.yMarkers.append(self.graph.insertYMarker(roi_max[0],
-                                                            legend='R Max',
-                                                            text='R Max'))
+                self.xMarkers.append(self.graph.addXMarker(roi_min[1],
+                                                           legend='C Min',
+                                                           text='C Min'))
+                self.xMarkers.append(self.graph.addXMarker(roi_max[1],
+                                                           legend='C Max',
+                                                           text='C Max'))
+                self.yMarkers.append(self.graph.addYMarker(roi_min[0],
+                                                           legend='R Min',
+                                                           text='R Min'))
+                self.yMarkers.append(self.graph.addYMarker(roi_max[0],
+                                                           legend='R Max',
+                                                           text='R Max'))
             else:
-                self.graph.insertXMarker(roi_min[1],
-                                         legend='C Min',
-                                         text='C Min')
-                self.graph.insertXMarker(roi_max[1],
-                                         legend='C Max',
-                                         text='C Max')
-                self.graph.insertYMarker(roi_min[0],
-                                         legend='R Min',
-                                         text='R Min')
-                self.graph.insertYMarker(roi_max[0],
-                                         legend='R Max',
-                                         text='R Max')
+                self.graph.addXMarker(roi_min[1],
+                                      legend='C Min',
+                                      text='C Min')
+                self.graph.addXMarker(roi_max[1],
+                                      legend='C Max',
+                                      text='C Max')
+                self.graph.addYMarker(roi_min[0],
+                                      legend='R Min',
+                                      text='R Min')
+                self.graph.addYMarker(roi_max[0],
+                                      legend='R Max',
+                                      text='R Max')
             self.background = SNIPModule.getImageBackground(self.image, width,
                                                    roi_min=roi_min,
                                                    roi_max=roi_max,
@@ -319,8 +319,8 @@ class SNIPWindow(qt.QWidget):
                 legend0 = "Smoothed Spectrum"
             else:
                 legend0 = "Background"
-            self.graph.addCurve(self.xValues,
-                            self.background, legend0, replace=False)
+            self.graph.addCurve(self.xValues, self.background,
+                                legend0, replace=False)
 
             #Force information update
             legend = self.graph.getActiveCurve(just_legend=True)
@@ -398,8 +398,8 @@ if __name__ == "__main__":
     import numpy
     app = qt.QApplication([])
     if 0:
-        noise = numpy.random.randn(1000.)
-        y=numpy.arange(1000.)
+        noise = numpy.random.randn(1000)
+        y = numpy.arange(1000.)
         w = SNIPDialog(None, y+numpy.sqrt(y)* noise)
     elif len(sys.argv) > 1:
         from PyMca5.PyMcaIO import EdfFile
@@ -413,6 +413,6 @@ if __name__ == "__main__":
                100 * numpy.exp(-(1./20) * ((x-64)*(x-64) + (y-128)*(y-128)))
         w = SNIPDialog(None, data)
     w.show()
-    ret=w.exec_()
+    ret = w.exec_()
     if ret:
         print(w.getParameters())

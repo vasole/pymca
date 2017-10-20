@@ -532,7 +532,7 @@ if __name__ == "__main__":
         w = XASNormalizationDialog(None, spectrum, energy=energy)
     else:
         from PyMca5 import SpecfitFuns
-        noise = numpy.random.randn(1500.)
+        noise = numpy.random.randn(1500)
         x = 8000. + numpy.arange(1500.)
         y = SpecfitFuns.upstep([100, 8500., 50], x)
         w = XASNormalizationDialog(None, y + numpy.sqrt(y)* noise, energy=x)

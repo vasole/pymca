@@ -377,7 +377,7 @@ if __name__ == "__main__":
     import sys
     import os
     from PyMca5.PyMcaGui import PyMcaQt as qt
-    from PyMca5.PyMcaGui import PlotWindow
+    from PyMca5.PyMcaGui.pymca import ScanWindow
     from PyMca5.PyMcaIO import specfilewrapper as specfile
     from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR
     if len(sys.argv) > 1:
@@ -388,10 +388,11 @@ if __name__ == "__main__":
     energy = data[0, :]
     mu = data[1, :]
     app = qt.QApplication([])
-    plot = PlotWindow.PlotWindow()
-    plot.setPluginDirectoryList([os.path.dirname(__file__)])
-    plot.getPlugins()
-    plot.addCurve(energy, mu, os.path.basename(fileName))
+    plot = ScanWindow.ScanWindow()
+    plot.pluginsToolButton.setPluginDirectoryList([os.path.dirname(__file__)])
+    plot.pluginsToolButton.getPlugins()
+    plot.addCurve(energy, mu, os.path.basename(fileName),
+                  resetzoom=True)
     plot.show()
     plugin = getPlugin1DInstance(plot)
     for method in plugin.getMethods():

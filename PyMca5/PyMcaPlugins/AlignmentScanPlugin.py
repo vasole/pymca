@@ -205,18 +205,18 @@ if __name__ == "__main__":
     import os
     try:
         from PyMca5.PyMcaGui import PyMcaQt as qt
-        from PyMca5.PyMcaGui.plotting import PlotWindow
+        from PyMca5.PyMcaGui.pymca import ScanWindow
         app = qt.QApplication([])
         QT = True
-        plot = PlotWindow.PlotWindow()
+        plot = ScanWindow.ScanWindow()
     except:
         # test without graphical interface
         QT = False
         from PyMca5.PyMcaGraph import Plot
         plot = Plot.Plot()
     pluginDir = [os.path.dirname(__file__)]
-    plot.getPlugins(method="getPlugin1DInstance",
-                directoryList=pluginDir)
+    plot.pluginsToolButton.getPlugins(method="getPlugin1DInstance",
+                                      directoryList=pluginDir)
     i = numpy.arange(1000.)
     y1 = 10.0 + 5000.0 * numpy.exp(-0.01*(i-50)**2)
     y2 = 10.0 + 5000.0 * numpy.exp(-((i-55)/5.)**2)

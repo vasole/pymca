@@ -114,7 +114,7 @@ class StackScanWindowPlugin(StackPluginBase.StackPluginBase):
         x, y, legend, info = self.getActiveCurve()
         if self.widget is None:
             self.widget = ScanWindow.ScanWindow()
-        self.widget.addCurve(x, y, legend=legend, replot=True, replace=replace)
+        self.widget.addCurve(x, y, legend=legend, resetzoom=True, replace=replace)
         self.widget.show()
         self.widget.raise_()
 

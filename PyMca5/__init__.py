@@ -31,6 +31,10 @@ __version__ = "5.2.1"
 
 import os
 import sys
+
+import logging
+logging.basicConfig()
+
 from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR
 try:
     from fisx.DataDir import FISX_DATA_DIR

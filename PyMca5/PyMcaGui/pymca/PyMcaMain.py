@@ -267,7 +267,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mcaWindow = McaWindow.McaWindow(backend=backend)
                 self.scanWindow = ScanWindow.ScanWindow(info=True,
                                                         backend=backend)
-                self.scanWindow._togglePointsSignal()
+                self.scanWindow.getCurveStyleAction().trigger()
                 if OBJECT3D:
                     self.glWindow = SceneGLWindow.SceneGLWindow()
                 self.mainTabWidget.addTab(self.mcaWindow, "MCA")
@@ -333,7 +333,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                      self._startupSelection(source=kw['spec'],
                                                 selection=None)
 
-    def connectDispatcher(self, viewer, dispatcher = None):
+    def connectDispatcher(self, viewer, dispatcher=None):
         #I could connect sourceWidget to myself and then
         #pass the selections to the active window!!
         #That will be made in a next iteration I guess
@@ -446,13 +446,15 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 except:
                     pass
                 if hkl:
-                    imageWindow = PyMcaHKLImageWindow.PyMcaHKLImageWindow(name = legend,
-                                correlator = self.imageWindowCorrelator,
-                                scanwindow=self.scanWindow)
+                    imageWindow = PyMcaHKLImageWindow.PyMcaHKLImageWindow(
+                            name=legend,
+                            correlator=self.imageWindowCorrelator,
+                            scanwindow=self.scanWindow)
                 else:
-                    imageWindow = PyMcaImageWindow.PyMcaImageWindow(name = legend,
-                                correlator = self.imageWindowCorrelator,
-                                scanwindow=self.scanWindow)
+                    imageWindow = PyMcaImageWindow.PyMcaImageWindow(
+                            name=legend,
+                            correlator=self.imageWindowCorrelator,
+                            scanwindow=self.scanWindow)
                 self.imageWindowDict[legend] = imageWindow
 
                 imageWindow.sigAddImageClicked.connect( \
@@ -1348,8 +1350,10 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.saveMenu.addAction("Active Mca",
                              self.mcaWindow._saveIconSignal)
         elif text.upper() == 'SCAN':
-            self.saveMenu.addAction("Active Scan",
-                             self.scanWindow._saveIconSignal)
+            self.saveMenu.addAction(
+                    "Active Scan",
+                    self.scanWindow.getSaveAction().trigger)
+
         elif text in self.imageWindowDict.keys():
             self.saveMenu.addAction("Active Image",
                   self.imageWindowDict[text].graphWidget._saveIconSignal)
