@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -117,7 +117,6 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
             operations = info.get("operations", [])
             operations.append("SG Filtered")
             info['operations'] = operations
-            self.removeCurve(legend, replot=False)
             self.addCurve(xdata, ydata, legend=legend, info=info, replot=True)
 
     def subtract1DSnipBackgroundFromActiveCurve(self, smooth=False):
@@ -163,7 +162,6 @@ class BackgroundScanPlugin(Plugin1DBase.Plugin1DBase):
             operations = info.get("operations", [])
             operations.append("SNIP Deglith")
             info['operations'] = operations
-            self.removeCurve(legend, replot=False)
             self.addCurve(xdata, ydata, legend=legend, info=info, replot=True)
             self.deglitch1DSnipParameters = snipWindow.getParameters()
 

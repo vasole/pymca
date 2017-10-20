@@ -248,8 +248,8 @@ class McaWindow(ScanWindow.ScanWindow):
         Tries to provide the requested curve in terms of the channels and not in the terms
         as it is displayed.
         """
-        xdata    = None
-        ydata    = None
+        xdata = None
+        ydata = None
         info = None
 
         if legend in self.dataObjectsDict:
@@ -1120,8 +1120,13 @@ class McaWindow(ScanWindow.ScanWindow):
     def removeCurves(self, removelist, replot=True):
         for legend in removelist:
             self.removeCurve(legend, replot=False)
-            if legend in self.dataObjectsDict.keys():
-                del self.dataObjectsDict[legend]
+        if replot:
+            self.replot()
+
+    def removeCurve(self, legend, replot=True):
+        super(McaWindow, self).removeCurve(legend, replot=False)
+        if legend in self.dataObjectsDict.keys():
+            del self.dataObjectsDict[legend]
         self.dataObjectsList = self._curveList
         if replot:
             self.replot()
