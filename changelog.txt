@@ -1,3 +1,12 @@
+VERSION 5.2.2
+
+ROI Imaging. Correct problem normalizing integer data by integer monitor.
+
+HDF5 Widget. Use PyMca plugins on silx data viewer.
+
+HDF5 Batch. Correct error when all the entries in an HDF5 file do not present
+the same structure.
+
 VERSION 5.2.1
 
 Correct annoying error message appearing when background is not defined.
@@ -13,7 +22,7 @@ XRF: Deal with the case the mass fraction is zero in one of the compounds of a m
 
 Extend the command line usage of the FastXRFLinearFit module to HDF5 datasets.
 
-ROI Imaginng. Improved external images plugin. It requires silx.
+ROI Imaging. Improved external images plugin. It requires silx.
 
 ROI Imaging. Plugin to display per pixel information (motors and others). It
 requires silx.
