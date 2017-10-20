@@ -172,13 +172,13 @@ class HDF5Stack1D(DataObject.DataObject):
                 if len(entryNames):
                     i = 0
                     for entry in entryNames:
+                        i += 1
                         path = "/"+entry + ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
                         try:
                             file_entry = tmpHdf[dirname]
                             if hasattr(file_entry, "keys"):
-                                i += 1
                                 if base in file_entry.keys():
                                     scanlist.append("1.%d" % i)
                         except KeyError:
