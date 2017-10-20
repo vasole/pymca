@@ -32,15 +32,13 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import sys
-import numpy
-import traceback
-import copy
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
-from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaGui import XASParameters
 from PyMca5.PyMca import XASClass
+from silx.gui.plot import PlotWindow
+from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 DEBUG = 0
 
 class XASDialog(qt.QDialog):
@@ -156,10 +154,14 @@ class XASMdiArea(qt.QMdiArea):
         self._windowList = ["Spectrum", "Post-edge", "Signal", "FT"]
         self._windowList.reverse()
         for title in self._windowList:
-            plot = PlotWindow.PlotWindow(self,
-                                         #control=True,
-                                         position=True,
-                                         backend=backend)
+            plot = PlotWindow(self, position=True, aspectRatio=False,
+                              colormap=False, yInverted=False,
+                              roi=False, mask=False, fit=False,
+                              backend=backend)
+            plot.zoomModeAction.setVisible(False)
+            plot.panModeAction.setVisible(False)
+            pluginsToolButton = PluginsToolButton(plot=plot)
+            plot.toolBar().addWidget(pluginsToolButton)
             plot.setWindowTitle(title)
             self.addSubWindow(plot)
             self._windowDict[title] = plot
@@ -190,6 +192,7 @@ class XASMdiArea(qt.QMdiArea):
                                               legend="Spectrum",
                                               xlabel="Energy (eV)",
                                               ylabel="Absorption (a.u.)")
+        self._windowDict["Spectrum"].setActiveCurve("Spectrum")
         return self.analyzer.setSpectrum(energy, mu)
 
     def update(self, ddict=None):
@@ -200,19 +203,17 @@ class XASMdiArea(qt.QMdiArea):
         plot = self._windowDict["Spectrum"]
         e0 = ddict["Edge"]
         plot.addCurve(ddict["Energy"] - e0, ddict["Mu"], legend="Spectrum",
-                      xlabel="Energy (eV)", ylabel="Absorption (a.u.)",
-                      replot=False, replace=True)
-        plot.addCurve(ddict["NormalizedEnergy"][idx]  - e0,
+                      xlabel="Energy (eV)", ylabel="Absorption (a.u.)")
+        plot.addCurve(ddict["NormalizedEnergy"][idx] - e0,
                       ddict["NormalizedMu"][idx],
                       legend="Normalized",
                       xlabel="Energy (eV)",
                       ylabel="Absorption (a.u.)",
-                      yaxis="right",
-                      replot=False)
+                      yaxis="right")
         plot.addCurve(ddict["NormalizedEnergy"] - e0,
-               ddict["NormalizedSignal"], legend="Post", replot=False)
+               ddict["NormalizedSignal"], legend="Post", resetzoom=False)
         plot.addCurve(ddict["NormalizedEnergy"] - e0,
-               ddict["NormalizedBackground"], legend="Pre",replot=False)
+               ddict["NormalizedBackground"], legend="Pre", resetzoom=False)
         plot.resetZoom()
         #idxK = ddict["EXAFSKValues"] >= 0
         idx = (ddict["EXAFSKValues"] >= ddict["KMin"]) & \
@@ -222,32 +223,28 @@ class XASMdiArea(qt.QMdiArea):
                       ddict["EXAFSSignal"][idx],
                       legend="EXAFSSignal",
                       xlabel="K",
-                      ylabel="Normalized Units",
-                      replace=True,
-                      replot=False)
+                      ylabel="Normalized Units")
+        plot.setActiveCurve("EXAFSSignal")
         plot.addCurve(ddict["EXAFSKValues"][idx],
                       ddict["PostEdgeB"][idx],
                       legend="PostEdge",
                       xlabel="K",
                       ylabel="Normalized Units",
-                      color="blue",
-                      replot=False)
+                      color="blue")
         if 0:
             plot.clearMarkers()
             for i in range(len(ddict["KnotsX"])):
-                plot.insertMarker(ddict["KnotsX"][i],
-                                  ddict["KnotsY"][i],
-                          legend="Knot %d" % (i+1),
-                          text="Knot %d" % (i+1),
-                          replot=False,
-                          draggable=False,
-                          selectable=False,
-                          color="orange")
+                plot.addMarker(ddict["KnotsX"][i],
+                               ddict["KnotsY"][i],
+                               legend="Knot %d" % (i+1),
+                               text="Knot %d" % (i+1),
+                               draggable=False,
+                               selectable=False,
+                               color="orange")
         else:
             plot.addCurve(ddict["KnotsX"],
                           ddict["KnotsY"],
                           legend="Knots",
-                          replot=False,
                           linestyle="",
                           symbol="o",
                           color="orange")
@@ -264,46 +261,37 @@ class XASMdiArea(qt.QMdiArea):
                       ddict["EXAFSNormalized"][idx],
                       legend="Normalized EXAFS",
                       xlabel="K",
-                      ylabel=ylabel,
-                      replace=True,
-                      replot=False)
+                      ylabel=ylabel)
+        plot.setActiveCurve("Normalized EXAFS")
         plot.addCurve(ddict["FT"]["K"],
                       ddict["FT"]["WindowWeight"],
                       legend="FT Window",
                       xlabel="K",
                       ylabel="Weight",
                       yaxis="right",
-                      color="red",
-                      replace=False,
-                      replot=False)
+                      color="red")
         plot.resetZoom()
         plot = self._windowDict["FT"]
         plot.addCurve(ddict["FT"]["FTRadius"],
                       ddict["FT"]["FTIntensity"],
                       legend="FT Intensity",
                       xlabel="R (Angstrom)",
-                      ylabel="Arbitrary Units",
-                      replace=True,
-                      replot=False)
+                      ylabel="Arbitrary Units")
+        plot.setActiveCurve("FT Intensity")
         """
         plot.addCurve(ddict["FT"]["FTRadius"],
                       ddict["FT"]["FTReal"],
                       legend="FT Real",
                       xlabel="R (Angstrom)",
                       ylabel="Arbitrary Units",
-                      color="green",
-                      replace=False,
-                      replot=False)
+                      color="green")
         """
         plot.addCurve(ddict["FT"]["FTRadius"],
                       ddict["FT"]["FTImaginary"],
                       legend="FT Imaginary",
                       xlabel="R (Angstrom)",
                       ylabel="Arbitrary Units",
-                      color="red",
-                      replace=False,
-                      replot=False)
-        plot.resetZoom()
+                      color="red")
         self.sigXASMdiAreaSignal.emit(ddict)
 
 if __name__ == "__main__":
