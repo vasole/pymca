@@ -32,7 +32,7 @@ import os.path
 import numpy
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui import PlotWidget
+from silx.gui.plot import PlotWidget
 
 if not hasattr(qt, 'QString'):
     QString = qt.safe_str
@@ -58,6 +58,28 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
 DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
 __revision__ = "$Revision: 1.35 $"
+
+
+def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
+    if xScale is None:
+        c = x
+    else:
+        c = (x - xScale[0]) / xScale[1]
+    if yScale is None:
+        r = y
+    else:
+        r = ( y - yScale[0]) / yScale[1]
+
+    if safe:
+        c = min(int(c), shape[1] - 1)
+        c = max(c, 0)
+        r = min(int(r), shape[0] - 1)
+        r = max(r, 0)
+    else:
+        c = int(c)
+        r = int(r)
+    return r, c
+
 
 class EdfFile_StandardArray(qt.QWidget):
     sigWidgetSignal = qt.pyqtSignal(object)
@@ -245,7 +267,7 @@ class QEdfFileWidget(qt.QWidget):
         self.splitter.setOrientation(qt.Qt.Vertical)
 
         # --- graph
-        self.graph=PlotWidget.PlotWidget(self.splitter, backend=None)
+        self.graph = PlotWidget(self.splitter, backend=None)
         self.graph.setGraphTitle('')
         self.graph.setGraphXLabel('Columns')
         self.graph.setGraphYLabel('Rows')
@@ -345,8 +367,8 @@ class QEdfFileWidget(qt.QWidget):
         #save
         if MATPLOTLIB:
             tb = self._addToolButton(self.saveIcon,
-                                 self.__saveIconSignal,
-                                 'Export Graph')
+                                     self.__saveIconSignal,
+                                     'Export Graph')
             self._saveMenu = qt.QMenu()
             self._saveMenu.addAction(QString("Standard"),    self._saveIconSignal)
             self._saveMenu.addAction(QString("Matplotlib") , self._saveMatplotlibImage)
@@ -366,14 +388,11 @@ class QEdfFileWidget(qt.QWidget):
         tb = self._addToolButton(self.printIcon,
                                  self.printGraph,
                                  'Print the Graph')
+
     def _hFlipIconSignal(self):
         if DEBUG:
             print("_hFlipIconSignal called")
-        if self.graph.isYAxisInverted():
-            self.graph.invertYAxis(False)
-        else:
-            self.graph.invertYAxis(True)
-        self.graph.replot()
+        self.graph.setYAxisInverted(not self.graph.isYAxisInverted())
 
     def _aspectButtonSignal(self):
         if DEBUG:
@@ -385,15 +404,13 @@ class QEdfFileWidget(qt.QWidget):
 
     def keepDataAspectRatio(self, flag=True):
         if flag:
-            self._keepDataAspectRatioFlag = True
             self.aspectButton.setIcon(self.solidEllipseIcon)
             self.aspectButton.setToolTip("Set free data aspect ratio")
         else:
-            self._keepDataAspectRatioFlag = False
             self.aspectButton.setIcon(self.solidCircleIcon)
             self.aspectButton.setToolTip("Keep data aspect ratio")
-        self.graph.keepDataAspectRatio(self._keepDataAspectRatioFlag)
-
+        self._keepDataAspectRatioFlag = flag
+        self.graph.setKeepDataAspectRatio(flag)
 
     def _addToolButton(self, icon, action, tip, toggle=None):
         tb      = qt.QToolButton(self.toolBar)
@@ -552,22 +569,25 @@ class QEdfFileWidget(qt.QWidget):
         else:
             self.saveGraphWidget(outputFile)
 
-    def saveGraphImage(self, filename,original=True):
-        fformat = filename[-3:].upper()
-        #This is the whole image, not the zoomed one ...
-        rgbData, legend, info, pixmap = self.graph.getActiveImage()
+    def saveGraphImage(self, filename, original=False):
+        format_ = filename[-3:].upper()
+        activeImage = self.graph.getActiveImage()
+        rgbdata = activeImage.getRgbaImageData()
+        # silx to pymca scale convention (a + b x)
+        xScale = activeImage.getOrigin()[0], activeImage.getScale()[0]
+        yScale = activeImage.getOrigin()[1], activeImage.getScale()[1]
         if original:
             # save whole image
-            bgrData = numpy.array(rgbData, copy=True)
-            bgrData[:,:,0] = rgbData[:, :, 2]
-            bgrData[:,:,2] = rgbData[:, :, 0]
+            bgradata = numpy.array(rgbdata, copy=True)
+            bgradata[:, :, 0] = rgbdata[:, :, 2]
+            bgradata[:, :, 2] = rgbdata[:, :, 0]
         else:
-            shape = rgbData.shape[:2]
+            shape = rgbdata.shape[:2]
             xmin, xmax = self.graph.getGraphXLimits()
             ymin, ymax = self.graph.getGraphYLimits()
             # save zoomed image, for that we have to get the limits
-            r0, c0 = ymin, xmin
-            r1, c1 = ymax, xmax
+            r0, c0 = convertToRowAndColumn(xmin, ymin, shape, xScale=xScale, yScale=yScale, safe=True)
+            r1, c1 = convertToRowAndColumn(xmax, ymax, shape, xScale=xScale, yScale=yScale, safe=True)
             row0 = int(min(r0, r1))
             row1 = int(max(r0, r1))
             col0 = int(min(c0, c1))
@@ -576,26 +596,27 @@ class QEdfFileWidget(qt.QWidget):
                 row1 += 1
             if col1 < shape[1]:
                 col1 += 1
-            tmpArray = rgbData[row0:row1, col0:col1, :]
-            bgrData = numpy.array(tmpArray, copy=True, dtype=rgbData.dtype)
-            bgrData[:,:,0] = tmpArray[:, :, 2]
-            bgrData[:,:,2] = tmpArray[:, :, 0]
+            tmpArray = rgbdata[row0:row1, col0:col1, :]
+            bgradata = numpy.array(tmpArray, copy=True, dtype=rgbdata.dtype)
+            bgradata[:, :, 0] = tmpArray[:, :, 2]
+            bgradata[:, :, 2] = tmpArray[:, :, 0]
         if self.graph.isYAxisInverted():
-            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
-                                   qt.QImage.Format_RGB32)
+            qImage = qt.QImage(bgradata, bgradata.shape[1], bgradata.shape[0],
+                               qt.QImage.Format_ARGB32)
         else:
-            qImage = qt.QImage(bgrData, bgrData.shape[1], bgrData.shape[0],
-                                   qt.QImage.Format_RGB32).mirrored(False, True)
+            qImage = qt.QImage(bgradata, bgradata.shape[1], bgradata.shape[0],
+                               qt.QImage.Format_ARGB32).mirrored(False, True)
         pixmap = qt.QPixmap.fromImage(qImage)
-        if pixmap.save(filename, fformat):
+        if pixmap.save(filename, format_):
             return
         else:
-            qt.QMessageBox.critical(self, "Save Error", "%s" % sys.exc_info()[1])
+            qt.QMessageBox.critical(self, "Save Error",
+                                    "%s" % sys.exc_info()[1])
             return
 
     def saveGraphWidget(self, filename):
         fformat = filename[-3:].upper()
-        if hasattr(qt.QPixmap, "graphWidget"):
+        if hasattr(qt.QPixmap, "grabWidget"):
             # Qt4
             pixmap = qt.QPixmap.grabWidget(self.graph)
         else:
@@ -615,7 +636,7 @@ class QEdfFileWidget(qt.QWidget):
             return False
 
     def printGraph(self):
-        if hasattr(qt.QPixmap, "graphWidget"):
+        if hasattr(qt.QPixmap, "grabWidget"):
             # Qt4
             pixmap = qt.QPixmap.grabWidget(self.graph)
         else:
@@ -1022,10 +1043,9 @@ class QEdfFileWidget(qt.QWidget):
                              var[3],
                              var[4],
                              var[5]]
-        #self.graph.invertYAxis(True)
+        #self.graph.setYAxisInverted(True)
         pixmap = self.getPixmapFromData(self.lastData, self.colormap)
         self.graph.addImage(pixmap, legend="QEdfFileWidget")
-        self.graph.replot()
 
     def closeFile(self, filename=None):
         if filename is None:
@@ -1084,11 +1104,9 @@ class QEdfFileWidget(qt.QWidget):
         self.graph.removeImage(legend="QEdfFileWidget")
         self.oldsource = None
         self.graph.clearMarkers()
-        self.graph.replot()
         wid = self.__getParamWidget('array')
         wid.setImages(1)
-        wid.setDataSize(0,0)
-
+        wid.setDataSize(0, 0)
 
     def setDataSource(self,data=None):
         if DEBUG:
@@ -1204,7 +1222,6 @@ class QEdfFileWidget(qt.QWidget):
             pixmap = self.getPixmapFromData(data, self.colormap)
             self.graph.addImage(pixmap, legend="QEdfFileWidget")
         self.__refreshSelection()
-        self.graph.replot()
         self.oldsource       = "%s" % self.data.sourceName
         self.oldcurrentArray = self.currentArray * 1
 
@@ -1680,17 +1697,16 @@ class QEdfFileWidget(qt.QWidget):
             self.graph.clearMarkers()
             for i in rows:
                 label = "R%d" % i
-                marker=self.graph.insertYMarker(i,
-                                                label,
-                                                text=label,
-                                                color='white')
+                marker = self.graph.addYMarker(i,
+                                               label,
+                                               text=label,
+                                               color='white')
             for i in cols:
                 label = "C%d" % i
-                marker=self.graph.insertXMarker(i,
-                                                label,
-                                                text=label,
-                                                color='white')
-            self.graph.replot()
+                marker = self.graph.addXMarker(i,
+                                               label,
+                                               text=label,
+                                               color='white')
             return
 
     def closeEvent(self, event):
@@ -1719,9 +1735,12 @@ def test():
     def addSelection(sel):
         print("addSelection", sel)
 
-    a= qt.QApplication(sys.argv)
-    a.lastWindowClosed.connect(a.quit)
-
+    if qt.QApplication.instance() is None:
+        a = qt.QApplication(sys.argv)
+        a.lastWindowClosed.connect(a.quit)
+        sys.excepthook = qt.exceptionHandler
+    else:
+        a = None
     w = QEdfFileWidget()
     #print w
     if len(sys.argv) > 1:
@@ -1737,8 +1756,11 @@ def test():
     w.sigRemoveSelection.connect(removeSelection)
     w.sigReplaceSelection.connect(replaceSelection)
     w.show()
-    a.exec_()
+    if a is not None:
+        a.exec_()
+    else:
+        return w
 
-if __name__=="__main__":
+if __name__ == "__main__":
     test()
 
