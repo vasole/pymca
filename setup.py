@@ -903,7 +903,7 @@ if use_gui():
     install_requires += ["PyOpenGL",
                          "qtconsole",
                          "PyQt5",   # either PyQt4 or PySide supported too
-                         "silx>=0.7"]
+                         "silx>=0.8"]
 
 setup_requires = ["numpy"]
 
