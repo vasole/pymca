@@ -45,6 +45,8 @@ from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 from silx.gui.data.DataViewerFrame import DataViewerFrame
 from silx.gui.data import DataViews
 from silx.gui.plot import Plot1D
+from silx.gui.data.NXdataWidgets import ArrayCurvePlot
+from silx.gui import icons
 
 
 PLUGINS_DIR = []
@@ -67,6 +69,7 @@ if userPluginsDirectory is not None:
 
 
 class Plot1DWithPlugins(Plot1D):
+    """Add a plugin toolbutton to a Plot1D"""
     def __init__(self, parent=None):
         Plot1D.__init__(self, parent)
         self._plotType = "SCAN"    # needed by legacy plugins
@@ -83,8 +86,52 @@ class Plot1DWithPlugins(Plot1D):
 
 
 class Plot1DViewWithPlugins(DataViews._Plot1dView):
+    """Overload Plot1DView to use the widget with a
+    :class:`PluginsToolButton`"""
     def createWidget(self, parent):
         return Plot1DWithPlugins(parent=parent)
+
+
+class ArrayCurvePlotWithPlugins(ArrayCurvePlot):
+    """Add a plugin toolbutton to an ArrayCurvePlot widget"""
+    def __init__(self, parent=None):
+        ArrayCurvePlot.__init__(self, parent)
+        self._plot._plotType = "SCAN"    # attribute needed by legacy plugins
+
+        self._toolbar = qt.QToolBar(self)
+
+        self._plot.addToolBar(self._toolbar)
+
+        pluginsToolButton = PluginsToolButton(plot=self._plot,
+                                              parent=self)
+
+        if PLUGINS_DIR:
+            pluginsToolButton.getPlugins(
+                    method="getPlugin1DInstance",
+                    directoryList=PLUGINS_DIR)
+        self._toolbar.addWidget(pluginsToolButton)
+
+
+class NXdataCurveViewWithPlugins(DataViews._NXdataCurveView):
+    """Use the widget with a :class:`PluginsToolButton`"""
+    def createWidget(self, parent):
+        return ArrayCurvePlotWithPlugins(parent=parent)
+
+
+class NXdataViewWithPlugins(DataViews.CompositeDataView):
+    """Re-implement DataViews._NXdataView to use the 1D view with
+    a plugin toolbutton in the composite view."""
+    def __init__(self, parent):
+        super(NXdataViewWithPlugins, self).__init__(
+            parent=parent,
+            label="NXdata",
+            icon=icons.getQIcon("view-nexus"))
+
+        self.addView(DataViews._NXdataScalarView(parent))
+        self.addView(NXdataCurveViewWithPlugins(parent))
+        self.addView(DataViews._NXdataXYVScatterView(parent))
+        self.addView(DataViews._NXdataImageView(parent))
+        self.addView(DataViews._NXdataStackView(parent))
 
 
 class DataViewerFrameWithPlugins(DataViewerFrame):
@@ -92,9 +139,17 @@ class DataViewerFrameWithPlugins(DataViewerFrame):
     Plot1DViewWithPlugins"""
     def createDefaultViews(self, parent=None):
         views = list(DataViewerFrame.createDefaultViews(self, parent=parent))
+
+        # replace 1d view
         oldView = [v for v in views if v.modeId() == DataViews.PLOT1D_MODE][0]
         newView = Plot1DViewWithPlugins(parent=parent)
         views[views.index(oldView)] = newView
+
+        # replace NXdataView
+        oldView = [v for v in views if isinstance(v, DataViews._NXdataView)][0]
+        newView = NXdataViewWithPlugins(parent=parent)
+        views[views.index(oldView)] = newView
+
         return views
 
 
