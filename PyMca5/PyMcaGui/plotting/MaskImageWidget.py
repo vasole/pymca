@@ -331,10 +331,10 @@ class MaskImageWidget(qt.QWidget):
 
         if ddict['event'] == "profileWidthChanged":
             if self.__lastOverlayLegend is not None:
-                legend = self.__lastOverlayLegend
-                #TODO: Find a better way to deal with this
-                if legend in self.graphWidget.graph._itemDict:
-                    info = self.graphWidget.graph._itemDict[legend]['info']
+                shape = self.graphWidget.graph._getItem(kind='item',
+                                                        legend=self.__lastOverlayLegend)
+                if shape is not None:
+                    info = shape.getInfo(copy=False)
                     if info['mode'] == ddict['mode']:
                         newDict = {}
                         newDict['event'] = "updateProfile"
@@ -342,7 +342,6 @@ class MaskImageWidget(qt.QWidget):
                         newDict['ydata'] = info['ydata'] * 1
                         newDict['mode'] = info['mode'] * 1
                         newDict['pixelwidth'] = ddict['pixelwidth'] * 1
-                        info = None
                         #self._updateProfileCurve(newDict)
                         self._profileSignalSlot(newDict)
             return
@@ -885,8 +884,7 @@ class MaskImageWidget(qt.QWidget):
             for i in y:
                 yList.append(self._yScale[0] + i * self._yScale[1])
         self.graphWidget.graph.addItem(xList, yList, legend=legend, info=info,
-                                       replace=replace,
-                                       shape="polygon", fill=True)
+                                       replace=replace, shape="polygon", fill=True)
         self.__lastOverlayLegend = legend
 
     def _hFlipIconSignal(self):
@@ -958,8 +956,7 @@ class MaskImageWidget(qt.QWidget):
             print("_setEraseSelectionMode")
         self.__eraseMode = True
         self.__brushMode = True
-        if self.graphWidget.graph.getInteractiveMode()['mode'] == 'draw':
-            self.graphWidget.graph.setInteractiveMode('select')
+        self.graphWidget.graph.setInteractiveMode('select')
 
     def _setRectSelectionMode(self):
         if DEBUG:
@@ -967,23 +964,22 @@ class MaskImageWidget(qt.QWidget):
         self.__eraseMode = False
         self.__brushMode = False
         self.graphWidget.graph.setInteractiveMode("draw",
-                                                 shape="rectangle",
-                                                 label="mask")
+                                                  shape="rectangle",
+                                                  label="mask")
 
     def _setPolygonSelectionMode(self):
         self.__eraseMode = False
         self.__brushMode = False
-        self.graphWidget.graph.setInteractiveMode("draw",
-                                                 shape="polygon",
-                                                 label="mask")
+        self.graphWidget.graph.setInteractiveMode('draw',
+                                                  shape="polygon",
+                                                  label="mask")
 
     def _setBrushSelectionMode(self):
         if DEBUG:
             print("_setBrushSelectionMode")
         self.__eraseMode = False
         self.__brushMode = True
-        if self.graphWidget.graph.getInteractiveMode()['mode'] == 'draw':
-            self.graphWidget.graph.setInteractiveMode('select')
+        self.graphWidget.graph.setInteractiveMode('select')
 
     def _setBrush(self):
         if DEBUG:
