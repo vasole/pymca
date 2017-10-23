@@ -45,6 +45,8 @@ To get help:
 
 
 # import ######################################################################
+import logging
+import traceback
 try:
     from .. import PyMcaQt as qt
 except ImportError:
@@ -52,6 +54,14 @@ except ImportError:
 
 from silx.gui.plot.ImageView import ImageView as SilxImageView
 from silx.gui.plot.ImageView import ImageViewMainWindow as SilxImageViewMainWindow
+
+
+_logger = logging.getLogger(__name__)
+_logger.warning("%s is deprecated, you are advised to use "
+                "silx.gui.plot.ImageView instead",
+                __name__)
+for line in traceback.format_stack(limit=3):
+    _logger.warning(line.rstrip())
 
 
 class ImageView(SilxImageView):
