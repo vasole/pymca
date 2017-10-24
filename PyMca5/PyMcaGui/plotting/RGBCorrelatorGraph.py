@@ -31,9 +31,9 @@ import sys
 import os
 import numpy
 from silx.gui.plot import PlotWidget
+from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from .PyMca_Icons import IconDict
-from . import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs
 
 QTVERSION = qt.qVersion()
@@ -71,17 +71,20 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self._keepDataAspectRatioFlag = False
+
+        self.graph = PlotWidget(self, backend=backend)
+        self.graph.setGraphXLabel("Column")
+        self.graph.setGraphYLabel("Row")
+        self.graph.setYAxisAutoScale(True)
+        self.graph.setXAxisAutoScale(True)
+
         self._buildToolBar(selection, colormap, imageicons,
                            standalonesave,
                            standalonezoom=standalonezoom,
                            profileselection=profileselection,
                            aspect=aspect,
                            polygon=polygon)
-        self.graph = PlotWidget(self, backend=backend)
-        self.graph.setGraphXLabel("Column")
-        self.graph.setGraphYLabel("Row")
-        self.graph.setYAxisAutoScale(True)
-        self.graph.setXAxisAutoScale(True)
+
         if profileselection:
             if len(self._pickerSelectionButtons):
                 self.graph.sigPlotSignal.connect(\
@@ -91,9 +94,6 @@ class RGBCorrelatorGraph(qt.QWidget):
 
         self.saveDirectory = os.getcwd()
         self.mainLayout.addWidget(self.graph)
-        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-        if DEBUG:
-            print("printPreview id = %d" % id(self.printPreview))
 
     def sizeHint(self):
         return qt.QSize(1.5 * qt.QWidget.sizeHint(self).width(),
@@ -311,9 +311,10 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
         # ---print
-        tb = self._addToolButton(self.printIcon,
-                                 self.printGraph,
-                                 'Prints the Graph')
+        self.printPreview = SingletonPrintPreviewToolButton(parent=self,
+                                                            plot=self.graph)
+        self.printPreview.setIcon(self.printIcon)
+        self.toolBarLayout.addWidget(self.printPreview)
 
     def _aspectButtonSignal(self):
         if DEBUG:
@@ -681,17 +682,6 @@ class RGBCorrelatorGraph(qt.QWidget):
             return True
         else:
             return False
-
-    def printGraph(self):
-        if hasattr(qt.QPixmap, "grabWidget"):
-            pixmap = qt.QPixmap.grabWidget(self.graph.getWidgetHandle())
-        else:
-            pixmap = self.graph.getWidgetHandle().grab()
-        self.printPreview.addPixmap(pixmap)
-        if self.printPreview.isReady():
-            if self.printPreview.isHidden():
-                self.printPreview.show()
-            self.printPreview.raise_()
 
     def selectColormap(self):
         qt.QMessageBox.information(self, "Open", "Not implemented (yet)")
