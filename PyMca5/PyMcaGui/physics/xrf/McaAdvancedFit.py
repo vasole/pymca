@@ -802,7 +802,8 @@ class McaAdvancedFit(qt.QWidget):
     def printActiveTab(self):
         txt = str(self.mainTab.tabText(self.mainTab.currentIndex())).upper()
         if txt == "GRAPH":
-            self.graph.printps()   # TODO: does this work with silx
+            # trigger the 2nd action in the PrintPreviewToolButton drop-down menu
+            self.graph.printPreviewTB.menu().actions()[1].trigger()
         elif txt == "TABLE":
             self.printps(True)
         elif txt == "CONCENTRATIONS":
