@@ -50,7 +50,7 @@ from . import ScanFit
 from PyMca5.PyMcaMath import SimpleMath
 from PyMca5.PyMcaCore import DataObject
 import copy
-from PyMca5.PyMcaGui import PyMcaPrintPreview
+from PyMca5.PyMcaGui.plotting import PyMcaPrintPreview
 from PyMca5.PyMcaCore import PyMcaDirs
 from . import ScanWindowInfoWidget
 #implement the plugins interface
