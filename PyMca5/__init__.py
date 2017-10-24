@@ -23,11 +23,21 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+from __future__ import absolute_import, print_function
+
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__version__ = "5.2.2"
+
+
+try:
+    from ._version import __date__ as date  # noqa
+    from ._version import version as __version__
+    from ._version import version_info, hexversion, strictversion  # noqa
+except ImportError:
+    raise RuntimeError('PyMca cannot be imported from source directory')
+
 
 import os
 import sys
@@ -50,9 +60,6 @@ except:
     # but at the same time do not disturb other people
     pass
 
-if os.path.exists(os.path.join(\
-    os.path.dirname(os.path.dirname(__file__)), 'py2app_setup.py')):
-    raise ImportError('PyMca cannot be imported from source directory')
 
 def version():
     return __version__

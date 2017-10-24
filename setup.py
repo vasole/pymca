@@ -28,7 +28,7 @@ if 'bdist_wheel' in sys.argv:
     from setuptools.command.install import install as dftinstall
     from setuptools import Command
     from setuptools.extension import Extension
-    from setuptools.command.build_py import build_py
+    from setuptools.command.build_py import build_py as _build_py
     from distutils.command.install_data import install_data
     from setuptools.command.install_scripts import install_scripts
 elif '--distutils' in sys.argv:
@@ -38,7 +38,7 @@ elif '--distutils' in sys.argv:
     from distutils.command.install import install as dftinstall
     from distutils.core import Command
     from distutils.core import Extension
-    from distutils.command.build_py import build_py
+    from distutils.command.build_py import build_py as _build_py
     from distutils.command.install_data import install_data
     from distutils.command.install_scripts import install_scripts
     USING_SETUPTOOLS = False
@@ -48,7 +48,7 @@ else:
         from setuptools.command.install import install as dftinstall
         from setuptools import Command
         from setuptools.extension import Extension
-        from setuptools.command.build_py import build_py
+        from setuptools.command.build_py import build_py as _build_py
         from distutils.command.install_data import install_data
         from setuptools.command.install_scripts import install_scripts
     except ImportError:
@@ -56,7 +56,7 @@ else:
         from distutils.command.install import install as dftinstall
         from distutils.core import Command
         from distutils.core import Extension
-        from distutils.command.build_py import build_py
+        from distutils.command.build_py import build_py as _build_py
         from distutils.command.install_data import install_data
         from distutils.command.install_scripts import install_scripts
         USING_SETUPTOOLS = False
@@ -78,6 +78,14 @@ global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
 global USE_SMART_INSTALL_SCRIPTS
 
+PROJECT = "PyMca5"
+
+def get_version():
+    """Returns current version number from version.py file"""
+    import version
+    return version.strictversion
+
+__version__ = get_version()
 
 #package maintainers customization
 # Dear (Debian, RedHat, ...) package makers, please feel free to customize the
@@ -162,14 +170,6 @@ if use_fisx():
 else:
     fisx_src = None
 
-ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
-for line in ffile:
-    if line.startswith('__version__'):
-        #remove spaces and split
-        __version__ = "%s" % line.replace(' ','').split("=")[-1][:-1]
-        #remove " or ' present
-        __version__ = __version__[1:-1]
-        break
 
 # Make sure we work with a clean MANIFEST file
 DEBIAN_SRC = False
@@ -509,9 +509,9 @@ build_plotting_ctools(ext_modules)
 build_xas_xas(ext_modules)
 
 
-class smart_build_py(build_py):
+class smart_build_py(_build_py):
     def run (self):
-        toReturn = build_py.run(self)
+        toReturn = _build_py.run(self)
         global PYMCA_DATA_DIR
         global PYMCA_DOC_DIR
         global PYMCA_INSTALL_DIR
@@ -547,6 +547,12 @@ class smart_build_py(build_py):
             fid.write(lineToBeWritten)
         fid.close()
         return toReturn
+
+    def find_package_modules(self, package, package_dir):
+        modules = _build_py.find_package_modules(self, package, package_dir)
+        if package == PROJECT:
+            modules.append((PROJECT, '_version', 'version.py'))
+        return modules
 
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
 class smart_install_data(install_data):
@@ -961,9 +967,9 @@ __version__ = getFisxVersion()
 
 print("Processing fisx library %s\n" % __version__)
 
-class smart_build_fisx_py(build_py):
+class smart_build_fisx_py(_build_py):
     def run (self):
-        toReturn = build_py.run(self)
+        toReturn = _build_py.run(self)
         global FISX_DATA_DIR
         global FISX_DOC_DIR
         global INSTALL_DIR
