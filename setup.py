@@ -31,6 +31,7 @@ if 'bdist_wheel' in sys.argv:
     from setuptools.command.build_py import build_py as _build_py
     from distutils.command.install_data import install_data
     from setuptools.command.install_scripts import install_scripts
+    from setuptools.command.sdist import sdist
 elif '--distutils' in sys.argv:
     # The cx_setup.py machinery works with distutils
     sys.argv.remove("--distutils")
@@ -41,6 +42,7 @@ elif '--distutils' in sys.argv:
     from distutils.command.build_py import build_py as _build_py
     from distutils.command.install_data import install_data
     from distutils.command.install_scripts import install_scripts
+    from distutils.command.sdist import sdist
     USING_SETUPTOOLS = False
 else:
     try:
@@ -51,6 +53,7 @@ else:
         from setuptools.command.build_py import build_py as _build_py
         from distutils.command.install_data import install_data
         from setuptools.command.install_scripts import install_scripts
+        from setuptools.command.sdist import sdist
     except ImportError:
         from distutils.core import setup
         from distutils.command.install import install as dftinstall
@@ -59,6 +62,7 @@ else:
         from distutils.command.build_py import build_py as _build_py
         from distutils.command.install_data import install_data
         from distutils.command.install_scripts import install_scripts
+        from distutils.command.sdist import sdist
         USING_SETUPTOOLS = False
 try:
     import numpy
@@ -172,18 +176,18 @@ else:
 
 
 # Make sure we work with a clean MANIFEST file
-DEBIAN_SRC = False
-if "sdist" in sys.argv:
-    manifestFile  = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                 "MANIFEST")
-    if os.path.exists(manifestFile):
-        os.remove(manifestFile)
-
-    if "DEBIAN_SRC" in os.environ:
-        if os.environ["DEBIAN_SRC"] in ["True", "1", 1]:
-            print("Generating Debian specific source distribution without cython generated files")
-            print("If you cython version is incompatible, it will be your problem")
-            DEBIAN_SRC = True
+# DEBIAN_SRC = False
+# if "sdist" in sys.argv:
+#     manifestFile  = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+#                                  "MANIFEST")
+#     if os.path.exists(manifestFile):
+#         os.remove(manifestFile)
+#
+#     if "DEBIAN_SRC" in os.environ:
+#         if os.environ["DEBIAN_SRC"] in ["True", "1", 1]:
+#             print("Generating Debian specific source distribution without cython generated files")
+#             print("If you cython version is incompatible, it will be your problem")
+#             DEBIAN_SRC = True
 
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
@@ -822,24 +826,77 @@ if os.name == "posix":
     cmdclass['install'] = install
     cmdclass['install_man'] = install_man
 
-if DEBIAN_SRC:
-    from distutils.command.sdist import sdist
-    class sdist_debian(sdist):
-        def prune_file_list(self):
-            sdist.prune_file_list(self)
-            directories = ["third-party/fisx/python/cython",
-                           "PyMca5/PyMcaGraph/ctools/_ctools/cython",
-                           "PyMca5/PyMcaPhysics/xas/_xas/cython"]
-            print("Removing files for debian source distribution")
-            for directory in directories:
-                for pyxfile in glob.glob(os.path.join(directory, "*.pyx")):
-                    for extension in [".c", ".cpp"]:
-                        cf = os.path.splitext(pyxfile)[0] + extension
-                        if os.path.isfile(cf):
-                            print("Excluding file %s" % cf)
-                            self.filelist.exclude_pattern(pattern=cf)
 
-    cmdclass['sdist'] = sdist_debian
+class sdist_debian(sdist):
+    """
+    Tailor made sdist for debian
+    * remove auto-generated doc
+    * remove cython generated .c files
+    * remove cython generated .cpp files
+    * remove .bat files
+    * include .l man files
+    """
+    @staticmethod
+    def get_debian_name():
+        import version
+        name = "%s_%s" % (PROJECT, version.debianversion)
+        return name
+
+    def prune_file_list(self):
+        sdist.prune_file_list(self)
+        to_remove = ["doc/build", "doc/pdf", "doc/html", "pylint", "epydoc"]
+        print("Removing files for debian")
+        for rm in to_remove:
+            self.filelist.exclude_pattern(pattern="*", anchor=False, prefix=rm)
+
+        # this is for Cython files specifically: remove C & html files
+        search_root = os.path.dirname(os.path.abspath(__file__))
+        for root, _, files in os.walk(search_root):
+            for afile in files:
+                if os.path.splitext(afile)[1].lower() == ".pyx":
+                    base_file = os.path.join(root, afile)[len(search_root) + 1:-4]
+                    self.filelist.exclude_pattern(pattern=base_file + ".c")
+                    self.filelist.exclude_pattern(pattern=base_file + ".cpp")
+                    self.filelist.exclude_pattern(pattern=base_file + ".html")
+
+        # do not include third_party/_local files
+        # self.filelist.exclude_pattern(pattern="*", prefix=PROJECT + "/third_party/_local")
+        # TODO: reorganize third-party like silx, to be able to remove just a _local directory
+
+        # directories = ["third-party/fisx/python/cython",
+        #                "PyMca5/PyMcaGraph/ctools/_ctools/cython",
+        #                "PyMca5/PyMcaPhysics/xas/_xas/cython"]
+        # print("Removing files for debian source distribution")
+        # for directory in directories:
+        #     for pyxfile in glob.glob(os.path.join(directory, "*.pyx")):
+        #         for extension in [".c", ".cpp"]:
+        #             cf = os.path.splitext(pyxfile)[0] + extension
+        #             if os.path.isfile(cf):
+        #                 print("Excluding file %s" % cf)
+        #                 self.filelist.exclude_pattern(pattern=cf)
+
+    def make_distribution(self):
+        self.prune_file_list()
+        sdist.make_distribution(self)
+        dest = self.archive_files[0]
+        dirname, basename = os.path.split(dest)
+        base, ext = os.path.splitext(basename)
+        while ext in [".zip", ".tar", ".bz2", ".gz", ".Z", ".lz", ".orig"]:
+            base, ext = os.path.splitext(base)
+        if ext:
+            dest = "".join((base, ext))
+        else:
+            dest = base
+        # sp = dest.split("-")
+        # base = sp[:-1]
+        # nr = sp[-1]
+        debian_arch = os.path.join(dirname, self.get_debian_name() + ".orig.tar.gz")
+        os.rename(self.archive_files[0], debian_arch)
+        self.archive_files = [debian_arch]
+        print("Building debian .orig.tar.gz in %s" % self.archive_files[0])
+
+
+cmdclass['debian_src'] = sdist_debian
 
 description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
