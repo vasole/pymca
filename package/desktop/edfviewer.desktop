@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=EDFviewer
+Name[en_GB]=EDFviewer
+GenericName=Display files in ESRF Data Format
+GenericName[en_GB]=Display files in ESRF Data Format
+Type=Application
+Exec=edfviewer
+Icon=/usr/share/pixmaps/pymca.xpm
+Terminal=false
+Categories=Science;Education;Physics;
+

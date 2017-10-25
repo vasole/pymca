@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=PyMCA
+Name[en_GB]=PyMCA
+GenericName=X-ray Fluorescence Data-Analysis
+GenericName[en_GB]=X-ray Fluorescence Data-Analysis
+Comment=Analyse X-ray Fluorescence data
+Type=Application
+Exec=pymca
+Icon=/usr/share/pixmaps/pymca.xpm
+Terminal=false
+Categories=Science;Education;Physics;
+
