@@ -170,7 +170,7 @@ build_deb_8_plus () {
 	  #export PYBUILD_DISABLE_python3=test
 	  #export DEB_BUILD_OPTIONS=nocheck
 	fi
-	
+
 	dch -v ${debianversion}-1 "upstream development build of ${project} ${version}"
 	dch --bpo "${project} snapshot ${version} built for ${target_system}"
 	dpkg-buildpackage -r

@@ -1,0 +1,66 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE=1
+export SPECFILE_USE_GNU_SOURCE=1
+export WITH_CYTHON=1
+export QHULL_CFLAGS=-I/usr/include/qhull
+export QHULL_LIBS=-lqhull
+export PYMCA_DATA_DIR=/usr/share/pymca
+export PYMCA_DOC_DIR=$(PYMCA_DATA_DIR)/doc
+
+export PYMCA_DATA_DIR_TEST=$(CURDIR)/PyMca5/PyMcaData/
+export PYMCA_DOC_DIR_TEST=$(PYMCA_DATA_DIR_TEST)/doc
+
+export PYBUILD_NAME=pymca5
+export PYBUILD_AFTER_INSTALL=rm -rf {destdir}/usr/bin/ {destdir}/usr/share/man {destdir}$(PYMCA_DATA_DIR)
+
+%:
+	dh $@ --with python2,python3,sphinxdoc --buildsystem=pybuild
+
+override_dh_clean:
+	dh_clean
+	# remove the .c cython generated files
+	find PyMca5 -iname *.pyx | sed -e 's,\.pyx,\.c,g' | xargs -r rm -f
+	# remove the build documentation
+	rm -rf doc/build
+
+override_dh_installchangelogs:
+	dh_installchangelogs changelog.txt
+
+override_dh_install:
+	dh_install -O--buildsystem=pybuild
+
+	# pymca
+	python setup.py install_scripts -d debian/pymca/usr/bin
+	python setup.py install_man -d debian/pymca/usr/share/man
+
+	dh_install -p pymca debian/edfviewer.desktop usr/share/applications
+	dh_install -p pymca debian/elementsinfo.desktop usr/share/applications
+	dh_install -p pymca debian/peakidentifier.desktop usr/share/applications
+	dh_install -p pymca debian/pymca.desktop usr/share/applications
+	dh_install -p pymca debian/pymca.xpm usr/share/pixmaps
+	dh_install -p pymca debian/pymcaroitool.desktop usr/share/applications
+
+	# pymca-data
+	python setup.py install_data --root debian/pymca-data/
+	rm -f debian/pymca-data/usr/share/pymca/EPDL97/LICENSE
+	rm -f debian/pymca-data/usr/share/pymca/LICENSE
+	rm -f debian/pymca-data/usr/share/pymca/LICENSE.GPL
+	rm -f debian/pymca-data/usr/share/pymca/LICENSE.LGPL
+	rm -f debian/pymca-data/usr/share/pymca/LICENSE.MIT
+	rm -rf debian/pymca-data/usr/share/pymca/doc/HTML/PyMCA_files/
+
+	dh_numpy
+	dh_numpy3
+
+override_dh_auto_test:
+	PYBUILD_SYSTEM=custom \
+	PYBUILD_TEST_ARGS="cd {build_dir} && PYMCA_DATA_DIR=$(PYMCA_DATA_DIR_TEST) {interpreter} PyMca5/tests/TestAll.py" dh_auto_test
+
+override_dh_sphinxdoc:
+ifeq (,$(findstring nodocs, $(DEB_BUILD_OPTIONS)))
+	PYBUILD_SYSTEM=custom \
+	PYBUILD_BUILD_ARGS="cd doc && PYTHONPATH={build_dir} PYMCA_DATA_DIR=$(PYMCA_DATA_DIR_TEST) http_proxy='127.0.0.1:9' {interpreter} -m sphinx -N -bhtml source build/html" dh_auto_build  # HTML generator
+	dh_installdocs "doc/build/html" -p pymca-doc
+	dh_sphinxdoc -O--buildsystem=pybuild
+endif
