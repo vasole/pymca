@@ -27,7 +27,7 @@
 # Script that builds a debian package from this library
 
 project=PyMca5
-source_project=PyMca5
+source_project=pymca
 version=$(python -c"import version; print(version.version)")
 strictversion=$(python -c"import version; print(version.strictversion)")
 debianversion=$(python -c"import version; print(version.debianversion)")
