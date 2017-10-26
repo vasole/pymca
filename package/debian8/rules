@@ -7,6 +7,7 @@ export QHULL_CFLAGS=-I/usr/include/qhull
 export QHULL_LIBS=-lqhull
 export PYMCA_DATA_DIR=/usr/share/pymca
 export PYMCA_DOC_DIR=$(PYMCA_DATA_DIR)/doc
+export PYMCA_DISTUTILS=1
 
 export PYMCA_DATA_DIR_TEST=$(CURDIR)/PyMca5/PyMcaData/
 export PYMCA_DOC_DIR_TEST=$(PYMCA_DATA_DIR_TEST)/doc
@@ -34,12 +35,12 @@ override_dh_install:
 	python setup.py install_scripts -d debian/pymca/usr/bin
 	python setup.py install_man -d debian/pymca/usr/share/man
 
-	dh_install -p pymca debian/edfviewer.desktop usr/share/applications
-	dh_install -p pymca debian/elementsinfo.desktop usr/share/applications
-	dh_install -p pymca debian/peakidentifier.desktop usr/share/applications
-	dh_install -p pymca debian/pymca.desktop usr/share/applications
-	dh_install -p pymca debian/pymca.xpm usr/share/pixmaps
-	dh_install -p pymca debian/pymcaroitool.desktop usr/share/applications
+	dh_install -p pymca package/desktop/edfviewer.desktop usr/share/applications
+	dh_install -p pymca package/desktop/elementsinfo.desktop usr/share/applications
+	dh_install -p pymca package/desktop/peakidentifier.desktop usr/share/applications
+	dh_install -p pymca package/desktop/pymca.desktop usr/share/applications
+	dh_install -p pymca package/desktop/pymca.xpm usr/share/pixmaps
+	dh_install -p pymca package/desktop/pymcaroitool.desktop usr/share/applications
 
 	# pymca-data
 	python setup.py install_data --root debian/pymca-data/
