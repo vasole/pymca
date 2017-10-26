@@ -9,6 +9,8 @@ include cx_setup.py
 include py2app_setup.py
 include PlatypusScript
 include README
+include build-deb.sh
+include copyright
 recursive-include doc/man *.1
 recursive-include icons *.icns *.ico *_256x256.png
 recursive-include PyMca5/EPDL97 *.DAT
