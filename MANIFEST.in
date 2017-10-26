@@ -50,3 +50,4 @@ recursive-include third-party/fisx/fisx_data *.dat
 recursive-include third-party/fisx/python *.py *.pyx *.pxd *.cpp
 recursive-include third-party/fisx/src *.h *.cpp
 recursive-include scripts *.py *.bat
+recursive-include package *
