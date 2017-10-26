@@ -1,0 +1,308 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: PyMCA
+Upstream-Contact: V. Armando Sole <sole@esrf.fr>
+Files-Excluded: PyMca5/PyMcaMath/sift third-party/qhull third-party/fisx
+ third-party/khronos_headers
+
+Files: *
+Copyright: 2004-2013 European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/*
+Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/Object3D/*
+Copyright: 2004-2013 European Synchrotron Radiation Facility
+License: LGPL-2+
+
+Files: PyMca5/Object3D/Object3DCTools/*
+Copyright: 2004-2015, Cory Bloyd (corysama@yahoo.com)
+License: Expat
+
+Files: PyMca5/Object3D/Object3DCTools/Object3DCTools.c
+  PyMca5/Object3D/Object3DCTools/setup.py
+Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/Object3D/Object3DQhull/*
+Copyright: 2004-2014 European Synchrotron Radiation Facility (ESRF)
+License: Expat
+
+Files: PyMca5/Object3D/Object3DQhull/Object3DQhull.c
+Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
+License: LGPL-2+
+
+Files: PyMca5/Object3D/scripts/*
+Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMca/*
+Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaCore/XiaCorrect.py
+Copyright: 2004-2014, E. Papillon, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaData/*
+Copyright: 2004-2014 European Synchrotron Radiation Facility (ESRF)
+License: Expat
+
+Files: PyMca5/PyMcaGraph/ctools/_ctools/include/InsidePolygonWithBounds.h
+Copyright: Paul Bourke
+License: Expat
+
+Files: PyMca5/PyMcaGraph/ctools/_ctools/src/InsidePolygonWithBounds.c
+Copyright: Paul Bourke
+License: Expat
+
+Files: PyMca5/PyMcaGui/*
+Copyright: 2004-2014 European Synchrotron Radiation Facility (ESRF)
+License: Expat
+
+Files: PyMca5/PyMcaGui/io/QEdfFileWidget.py
+  PyMca5/PyMcaGui/io/QSpsWidget.py
+  PyMca5/PyMcaGui/io/SpecFileCntTable.py
+  PyMca5/PyMcaGui/io/SpecFileMcaTable.py
+Copyright: 2004-2015, E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaGui/io/QSpecFileWidget.py
+Copyright: 2004-2014, E. Papillon, V.A. Sole, European Synchrotron Radiation Facility / < other.text)
+License: Expat
+
+Files: PyMca5/PyMcaGui/io/hdf5/HDF5Widget.py
+Copyright: 2004-2014, V.A. Sole, ESRF - D. Dale CHESS
+License: Expat
+
+Files: PyMca5/PyMcaGui/misc/QIPythonWidget.py
+Copyright: no-info-found
+License: Expat
+
+Files: PyMca5/PyMcaGui/physics/*
+Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaGui/plotting/ImageView.py
+  PyMca5/PyMcaGui/plotting/_ImageProfile.py
+Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaGui/pymca/PyMca_help.py
+Copyright: 2004-2015, E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaGui/pymca/StackROIBatchWindow.py
+  PyMca5/PyMcaGui/pymca/StackXASBatchWindow.py
+Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaGui/pymca/SumRulesTool.py
+  PyMca5/PyMcaGui/pymca/XMCDWindow.py
+Copyright: 2004-2015, T. Rueter, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaGui/pymca/XiaCorrectWizard.py
+Copyright: 2004-2014, E. Papillon, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaIO/MEDFile.py
+Copyright: 2010, Matthew Newville, The University of Chicago
+License: Expat
+
+Files: PyMca5/PyMcaIO/PyMcaIOHelper/*
+Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaIO/specfile/*
+Copyright: 2004-2013 European Synchrotron Radiation Facility
+License: LGPL-2+
+
+Files: PyMca5/PyMcaIO/specfile/include/locale_management.h
+Copyright: 2004-2015, European Synchrotron Radiation Facility
+License: LGPL-2+
+
+Files: PyMca5/PyMcaIO/specfile/setup.py
+Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaIO/specfile/src/*
+Copyright: 2004-2015, European Synchrotron Radiation Facility
+License: LGPL-2+
+
+Files: PyMca5/PyMcaIO/sps/Include/*
+Copyright: 1998-2015, European Synchrotron Radiation Facility (ESRF)
+License: Expat
+
+Files: PyMca5/PyMcaIO/sps/Include/spec_shm.h
+Copyright: 1995-2010, Certified Scientific Software
+License: Expat
+
+Files: PyMca5/PyMcaIO/sps/Include/sps.h
+Copyright: 1998-2013, Certified Scientific Software (CSS)
+  1998-2011, European Synchrotron Radiation Facility (ESRF)
+License: Expat
+
+Files: PyMca5/PyMcaIO/sps/Include/sps_lut.h
+Copyright: 2004-2009, European Synchrotron Radiation Facility
+License: GPL-2+
+
+Files: PyMca5/PyMcaIO/sps/Src/sps.c
+Copyright: 1998-2013, Certified Scientific Software (CSS)
+  1998-2011, European Synchrotron Radiation Facility (ESRF)
+License: Expat
+
+Files: PyMca5/PyMcaIO/sps/Src/sps_py.c
+Copyright: 1998-2015, European Synchrotron Radiation Facility (ESRF)
+License: Expat
+
+Files: PyMca5/PyMcaMath/PyMcaSciPy/*
+Copyright: 1999-2005 Travis Oliphant
+ 2001-2002 Enthought, Inc.
+ 2002 Eric Jones
+ 2002 Patrick J. Miller
+ 2002-2003 Jochen Kuepper
+ 2002-2004 Pearu Peterson
+ 2002-2005 Jean-Sebastien Roy
+ 2003-2005 Peter J. Verveer
+ 2003-2006 Ed Schofield
+ 2003-2012 SciPy Developers.
+ 2004 David M. Cooke
+ 2006 Bart Vandereycken
+ 2006 BasSw
+ 2006 Johannes Loehnert
+ 2007 Andrew D Straw
+ 2007 John Travers, Robert Hetland
+ 2007-2008 Damian Eads
+ 2008 Tiziano Zito
+ Gary Strangman
+ 2010 Pauli Virtanen
+ 2010, 2011 Pim Schellart
+ 2009 Yosef Meller
+License: BSD-3-clause
+
+Files: PyMca5/PyMcaMath/PyMcaSciPy/signal/__init__.py
+  PyMca5/PyMcaMath/PyMcaSciPy/signal/median.py
+Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaMath/SGModule.py
+Copyright: 2008, Uwe Schmitt
+License: Expat
+
+Files: PyMca5/PyMcaMath/mva/NNMAModule.py
+Copyright: 2008, 2009, Uwe Schmitt, uschmitt@mineway.de
+License: BSD-3-clause
+
+Files: PyMca5/PyMcaMath/mva/py_nnma/*
+Copyright: 2008 Uwe Schmitt, uschmitt@mineway.de,
+ 2007 D. Kim, S.  Sra and I. S. Dhillon
+License: BSD-3-clause
+
+Files: PyMca5/PyMcaPlugins/*
+Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaPlugins/AdvancedAlignmentScanPlugin.py
+Copyright: 2004-2014, T. Rueter, V.A. Sole, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaPlugins/MedianFilterScanDeglitchPlugin.py
+Copyright: 2004-2015, T.Rueter, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaPlugins/MotorInfoPlugin.py
+  PyMca5/PyMcaPlugins/MotorInfoWindow.py
+  PyMca5/PyMcaPlugins/XMCDPlugin.py
+Copyright: 2004-2015, T. Rueter, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaPlugins/MultipleScanToMeshPlugin.py
+Copyright: 2004-2014, M. Rovezzi, V.A. Sole European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaPlugins/optional/*
+Copyright: 2002, 2004-2015, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/PyMcaPlugins/optional/TaurusPlugin1D.py
+Copyright: 2004-2015, V.A. Sole, T. Coutinho, European Synchrotron Radiation Facility
+License: Expat
+
+Files: PyMca5/__init__.py
+Copyright: 2004-2015, V.A. Sole, European Synchrotron Radiation Facility
+License: Expat
+
+Files: debian/*
+Copyright: 2009-2010 Teemu Ikonen <tpikonen@gmail.com>
+           2010-2015 Picca Frederic-Emmanuel <picca@debian.org>
+License: GPL-2+
+
+Files: scripts/*
+Copyright: 2004-2013, V. Armando Sole - ESRF
+License: Expat
+
+License: BSD-3-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ .
+   a. Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+   b. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+   c. Neither the name of Enthought nor the names of the SciPy Developers
+      may be used to endorse or promote products derived from this software
+      without specific prior written permission.
+ .
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIEED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIEED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+ DAMAGE.
+
+License: Expat
+ Permission is hereby granted, free of charge, to any person obtaining
+ a copy of the software in these files (the "Software"), to deal in
+ the Software without restriction, including without limitation the
+ rights to use, copy, modify, merge, publish, distribute, sublicense,
+ and/or sell copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be
+ included in all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIExpatED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+
+License: GPL-2+
+ This toolkit is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the Free
+ Software Foundation; either version 2 of the License, or (at your option)
+ any later version.
+ .
+ In Debian systems, the GNU General Public License version 2 can be found
+ at /usr/share/common-licenses/GPL-2
+
+License: LGPL-2+
+ This toolkit is free software; you can redistribute
+ it and/or modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either version
+ 2 of the License, or (at your option) any later version.
+ .
+ In Debian systems, the GNU General Public License version 2 can be
+ found at /usr/share/common-licenses/LGPL-2
