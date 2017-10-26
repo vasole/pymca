@@ -22,6 +22,7 @@ import glob
 import platform
 import time
 USING_SETUPTOOLS = True
+PYMCA_DISTUTILS=os.getenv("PYMCA_DISTUTILS")
 if 'bdist_wheel' in sys.argv:
     # wheels require setuptools
     from setuptools import setup
@@ -32,9 +33,12 @@ if 'bdist_wheel' in sys.argv:
     from distutils.command.install_data import install_data
     from setuptools.command.install_scripts import install_scripts
     from setuptools.command.sdist import sdist
-elif '--distutils' in sys.argv:
+elif ('--distutils' in sys.argv) or PYMCA_DISTUTILS in [1, "1", "True"]:
     # The cx_setup.py machinery works with distutils
-    sys.argv.remove("--distutils")
+    try:
+        sys.argv.remove("--distutils")
+    except:
+        pass
     from distutils.core import setup
     from distutils.command.install import install as dftinstall
     from distutils.core import Command
@@ -956,28 +960,51 @@ classifiers = ["Development Status :: 5 - Production/Stable",
 install_requires = ["numpy", "matplotlib", "fisx>=1.1.4"]
 setup_requires = ["numpy"]
 
-distrib = setup(name="PyMca5",
-                version= __version__,
-                description = description,
-                author = "V. Armando Sole",
-                author_email="sole@esrf.fr",
-                license= "MIT",
-                url = "http://pymca.sourceforge.net",
-                download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,  		
-                long_description = long_description,
-                packages = packages,
-                platforms='any',
-                ext_modules = ext_modules,
-                data_files = data_files,
-##                package_data = package_data,
-##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
-                cmdclass = cmdclass,
-                scripts=script_files,
-                py_modules=py_modules,
-                classifiers=classifiers,
-                install_requires=install_requires,
-                setup_requires=setup_requires,
-                )
+if USING_SETUPTOOLS:
+    distrib = setup(name="PyMca5",
+                    version= __version__,
+                    description = description,
+                    author = "V. Armando Sole",
+                    author_email="sole@esrf.fr",
+                    license= "MIT",
+                    url = "http://pymca.sourceforge.net",
+                    download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,
+                    long_description = long_description,
+                    packages = packages,
+                    platforms='any',
+                    ext_modules = ext_modules,
+                    data_files = data_files,
+    ##                package_data = package_data,
+    ##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
+                    cmdclass = cmdclass,
+                    scripts=script_files,
+                    py_modules=py_modules,
+                    classifiers=classifiers,
+                    install_requires=install_requires,
+                    setup_requires=setup_requires,
+                    )
+else:
+    distrib = setup(name="PyMca5",
+                    version= __version__,
+                    description = description,
+                    author = "V. Armando Sole",
+                    author_email="sole@esrf.fr",
+                    license= "MIT",
+                    url = "http://pymca.sourceforge.net",
+                    download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,
+                    long_description = long_description,
+                    packages = packages,
+                    platforms='any',
+                    ext_modules = ext_modules,
+                    data_files = data_files,
+    ##                package_data = package_data,
+    ##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
+                    cmdclass = cmdclass,
+                    scripts=script_files,
+                    py_modules=py_modules,
+                    classifiers=classifiers,
+                    )
+
 
 try:
     print("PyMca is installed in %s " % PYMCA_INSTALL_DIR)
