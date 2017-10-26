@@ -7,6 +7,7 @@ export QHULL_CFLAGS=-I/usr/include/qhull
 export QHULL_LIBS=-lqhull
 export PYMCA_DATA_DIR=/usr/share/pymca
 export PYMCA_DOC_DIR=$(PYMCA_DATA_DIR)/doc
+export PYMCA_DISTUTILS=1
 
 export PYMCA_DATA_DIR_TEST=$(CURDIR)/PyMca5/PyMcaData/
 export PYMCA_DOC_DIR_TEST=$(PYMCA_DATA_DIR_TEST)/doc
