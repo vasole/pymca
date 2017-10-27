@@ -23,8 +23,6 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
-from __future__ import absolute_import, print_function
-
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
