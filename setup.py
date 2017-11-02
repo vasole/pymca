@@ -196,8 +196,11 @@ else:
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # The following is not supported by python-2.3:
-#package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
-packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests',
+# package_data = {'PyMca5': ['PyMcaData/attdata/*',
+#                            'PyMcaData/HTML/*.*',
+#                            'PyMcaData/HTML/IMAGES/*',
+#                            'PyMcaData/HTML/PyMCA_files/*']}
+packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMca',
             'PyMca5.PyMcaCore',
             'PyMca5.PyMcaPhysics',
@@ -210,7 +213,7 @@ packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMcaMath.fitting',
             'PyMca5.PyMcaMath.mva',
             'PyMca5.PyMcaMath.mva.py_nnma',
-            'PyMca5.PyMcaGraph','PyMca5.PyMcaGraph.backends',
+            'PyMca5.PyMcaGraph', 'PyMca5.PyMcaGraph.backends',
             'PyMca5.PyMcaGui', 'PyMca5.PyMcaGui.plotting',
             'PyMca5.PyMcaGui.physics',
             'PyMca5.PyMcaGui.physics.xas',
@@ -225,28 +228,28 @@ py_modules = []
 
 # Specify all the required PyMca data
 data_files = [(PYMCA_DATA_DIR, ['LICENSE',
-                         'LICENSE.GPL',
-                         'LICENSE.LGPL',
-                         'LICENSE.MIT',                         
-                         'PyMca5/PyMcaData/Scofield1973.dict',
-                         'changelog.txt',
-                         'PyMca5/PyMcaData/McaTheory.cfg',
-                         'PyMca5/PyMcaData/PyMcaSplashImage.png',
-                         'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
-                         'PyMca5/PyMcaData/LShellRatesCampbell.dat',
-                         'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
-                         'PyMca5/PyMcaData/EXAFS_Cu.dat',
-                         'PyMca5/PyMcaData/EXAFS_Ge.dat',
-                         'PyMca5/PyMcaData/XRFSpectrum.mca']),
-              (PYMCA_DATA_DIR+'/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
+                                'LICENSE.GPL',
+                                'LICENSE.LGPL',
+                                'LICENSE.MIT',
+                                'PyMca5/PyMcaData/Scofield1973.dict',
+                                'changelog.txt',
+                                'PyMca5/PyMcaData/McaTheory.cfg',
+                                'PyMca5/PyMcaData/PyMcaSplashImage.png',
+                                'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
+                                'PyMca5/PyMcaData/LShellRatesCampbell.dat',
+                                'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
+                                'PyMca5/PyMcaData/EXAFS_Cu.dat',
+                                'PyMca5/PyMcaData/EXAFS_Ge.dat',
+                                'PyMca5/PyMcaData/XRFSpectrum.mca']),
+              (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
               (PYMCA_DOC_DIR+'/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
               (PYMCA_DOC_DIR+'/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
               (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*'))]
 
 if os.path.exists(os.path.join("PyMca5", "EPDL97")):
     packages.append('PyMca5.EPDL97')
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97',glob.glob('PyMca5/EPDL97/*.DAT')))
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97',['PyMca5/EPDL97/LICENSE']))
+    data_files.append((PYMCA_DATA_DIR+'/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')))
+    data_files.append((PYMCA_DATA_DIR+'/EPDL97', ['PyMca5/EPDL97/LICENSE']))
 
 global SIFT_OPENCL_FILES
 SIFT_OPENCL_FILES = []
@@ -563,48 +566,51 @@ class smart_build_py(_build_py):
         return modules
 
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
-class smart_install_data(install_data):
-    if USING_SETUPTOOLS:
-        def initialize_options (self):
-            self.outfiles = []
-            self.data_files = data_files
-
-        def finalize_options(self):
-            pass
-
-        def get_outputs(self):
-            return self.outfiles
-
-    def run(self):
-        global PYMCA_INSTALL_DIR
-        global PYMCA_DATA_DIR
-        global PYMCA_DOC_DIR
-        #need to change self.install_dir to the library dir
-        install_cmd = self.get_finalized_command('install')
-        self.install_dir = getattr(install_cmd, 'install_lib')
-        PYMCA_INSTALL_DIR = self.install_dir
-        print("PyMca to be installed in %s" %  self.install_dir)
-
-        #cleanup old stuff if present
-        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "Plugins1D")
-        if os.path.exists(pymcaOld):
-            for f in glob.glob(os.path.join(pymcaOld,"*.py")):
-                print("Removing previously installed file %s" % f)
-                os.remove(f)
-            for f in glob.glob(os.path.join(pymcaOld,"*.pyc")):
-                print("Removing previously installed file %s" % f)
-                os.remove(f)
-            print("Removing previously installed directory %s" % pymcaOld)
-            os.rmdir(pymcaOld)
-        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMca.py")
-        if os.path.exists(pymcaOld):
-            print("Removing previously installed file %s" % pymcaOld)
-            os.remove(pymcaOld)
-        pymcaOld += "c"
-        if os.path.exists(pymcaOld):
-            print("Removing previously installed file %s" % pymcaOld)
-            os.remove(pymcaOld)
-        return install_data.run(self)
+# class smart_install_data(install_data):
+#     if USING_SETUPTOOLS:
+#         def initialize_options (self):
+#             self.outfiles = []
+#             self.data_files = data_files
+#             self.install_dir = None
+#             self.root = None
+#             self.force = 0
+#
+#         def finalize_options(self):
+#             pass
+#
+#         def get_outputs(self):
+#             return self.outfiles
+#
+#     def run(self):
+#         global PYMCA_INSTALL_DIR
+#         global PYMCA_DATA_DIR
+#         global PYMCA_DOC_DIR
+#         #need to change self.install_dir to the library dir
+#         install_cmd = self.get_finalized_command('install')
+#         self.install_dir = getattr(install_cmd, 'install_lib')
+#         PYMCA_INSTALL_DIR = self.install_dir
+#         print("PyMca to be installed in %s" %  self.install_dir)
+#
+#         #cleanup old stuff if present
+#         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "Plugins1D")
+#         if os.path.exists(pymcaOld):
+#             for f in glob.glob(os.path.join(pymcaOld,"*.py")):
+#                 print("Removing previously installed file %s" % f)
+#                 os.remove(f)
+#             for f in glob.glob(os.path.join(pymcaOld,"*.pyc")):
+#                 print("Removing previously installed file %s" % f)
+#                 os.remove(f)
+#             print("Removing previously installed directory %s" % pymcaOld)
+#             os.rmdir(pymcaOld)
+#         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMca.py")
+#         if os.path.exists(pymcaOld):
+#             print("Removing previously installed file %s" % pymcaOld)
+#             os.remove(pymcaOld)
+#         pymcaOld += "c"
+#         if os.path.exists(pymcaOld):
+#             print("Removing previously installed file %s" % pymcaOld)
+#             os.remove(pymcaOld)
+#         return install_data.run(self)
 
 
 # smart_install_scripts
@@ -817,8 +823,8 @@ class install(dftinstall):
 
 
 # end of man pages handling
-cmdclass = {'install_data':smart_install_data,
-            'build_py':smart_build_py}
+cmdclass = {'install_data': install_data,   # smart_install_data,
+            'build_py': smart_build_py}
 if build_ext is not None:
     cmdclass['build_ext'] = build_ext
 
@@ -862,22 +868,6 @@ class sdist_debian(sdist):
                     self.filelist.exclude_pattern(pattern=base_file + ".c")
                     self.filelist.exclude_pattern(pattern=base_file + ".cpp")
                     self.filelist.exclude_pattern(pattern=base_file + ".html")
-
-        # do not include third_party/_local files
-        # self.filelist.exclude_pattern(pattern="*", prefix=PROJECT + "/third_party/_local")
-        # TODO: reorganize third-party like silx, to be able to remove just a _local directory
-
-        # directories = ["third-party/fisx/python/cython",
-        #                "PyMca5/PyMcaGraph/ctools/_ctools/cython",
-        #                "PyMca5/PyMcaPhysics/xas/_xas/cython"]
-        # print("Removing files for debian source distribution")
-        # for directory in directories:
-        #     for pyxfile in glob.glob(os.path.join(directory, "*.pyx")):
-        #         for extension in [".c", ".cpp"]:
-        #             cf = os.path.splitext(pyxfile)[0] + extension
-        #             if os.path.isfile(cf):
-        #                 print("Excluding file %s" % cf)
-        #                 self.filelist.exclude_pattern(pattern=cf)
 
     def make_distribution(self):
         self.prune_file_list()
