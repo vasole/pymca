@@ -61,7 +61,7 @@ override_dh_auto_test:
 override_dh_sphinxdoc:
 ifeq (,$(findstring nodocs, $(DEB_BUILD_OPTIONS)))
 	PYBUILD_SYSTEM=custom \
-	PYBUILD_BUILD_ARGS="cd doc && PYTHONPATH={build_dir} PYMCA_DATA_DIR=$(PYMCA_DATA_DIR_TEST) http_proxy='127.0.0.1:9' {interpreter} -m sphinx -N -bhtml source build/html" dh_auto_build  # HTML generator
+	PYBUILD_BUILD_ARGS="cd doc && PYTHONPATH={build_dir} PYMCA_DATA_DIR=$(PYMCA_DATA_DIR_TEST) http_proxy='127.0.0.1:9' sphinx-build -N -bhtml source build/html" dh_auto_build  # HTML generator
 	dh_installdocs "doc/build/html" -p pymca-doc
 	dh_sphinxdoc -O--buildsystem=pybuild
 endif
