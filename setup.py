@@ -196,7 +196,7 @@ else:
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # The following is not supported by python-2.3:
-# package_data = {'PyMca5': ['PyMcaData/attdata/*',
+package_data = {}   #'PyMca5': ['PyMcaData/attdata/*',
 #                            'PyMcaData/HTML/*.*',
 #                            'PyMcaData/HTML/IMAGES/*',
 #                            'PyMcaData/HTML/PyMCA_files/*']}
@@ -255,9 +255,10 @@ global SIFT_OPENCL_FILES
 SIFT_OPENCL_FILES = []
 if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
     packages.append('PyMca5.PyMcaMath.sift')
-    SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
-    data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
-                       SIFT_OPENCL_FILES))
+    package_data['PyMca5'] = ['PyMcaMath/sift/*.cl']
+    # SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
+    # data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
+    #                    SIFT_OPENCL_FILES))
 
 LOCAL_OBJECT3D =False
 if os.path.exists(os.path.join("PyMca5", "Object3D")):
@@ -964,7 +965,7 @@ if USING_SETUPTOOLS:
                     platforms='any',
                     ext_modules = ext_modules,
                     data_files = data_files,
-    ##                package_data = package_data,
+                    package_data = package_data,
     ##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
                     cmdclass = cmdclass,
                     scripts=script_files,
@@ -987,7 +988,7 @@ else:
                     platforms='any',
                     ext_modules = ext_modules,
                     data_files = data_files,
-    ##                package_data = package_data,
+                    package_data = package_data,
     ##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
                     cmdclass = cmdclass,
                     scripts=script_files,
