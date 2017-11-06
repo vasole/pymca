@@ -113,11 +113,12 @@ class BaseScanWindow(PlotWindow):
 
         self.addToolBar(self._toolbar)
 
+        self.fitToolButton = None
         if fit:
             # attr needed by scanFitToolButton
             self.scanFit = ScanFit.ScanFit(specfit=specfit)
-            scanFitToolButton = ScanFitToolButton(self)
-            self._toolbar.addWidget(scanFitToolButton)
+            self.fitToolButton = ScanFitToolButton(self)
+            self._toolbar.addWidget(self.fitToolButton)
 
         self.avgAction = SimpleActions.AverageAction(plot=self)
         self.derivativeAction = SimpleActions.DerivativeAction(plot=self)
