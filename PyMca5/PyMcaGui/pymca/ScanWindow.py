@@ -44,6 +44,7 @@ from PyMca5.PyMcaGui.pymca import ScanFit
 from PyMca5.PyMcaGui.pymca.ScanFitToolButton import ScanFitToolButton
 from PyMca5.PyMcaCore import DataObject
 
+from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -92,7 +93,8 @@ class BaseScanWindow(PlotWindow):
                                              colormap=False,
                                              aspectRatio=False,
                                              yInverted=False,
-                                             copy=False)
+                                             copy=False,
+                                             print_=False)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setIconSize(qt.QSize(20, 20))
 
@@ -155,6 +157,11 @@ class BaseScanWindow(PlotWindow):
                         method="getPlugin1DInstance",
                         directoryList=pluginDir)
             self._toolbar.addWidget(self.pluginsToolButton)
+
+        self._toolbar.addWidget(qt.HorizontalSpacer(self._toolbar))
+        self.printPreview = SingletonPrintPreviewToolButton(parent=self._toolbar,
+                                                            plot=self)
+        self._toolbar.addWidget(self.printPreview)
 
         self.scanWindowInfoWidget = None
         self.infoDockWidget = None
