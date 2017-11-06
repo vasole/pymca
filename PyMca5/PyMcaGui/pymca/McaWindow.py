@@ -35,6 +35,8 @@ import time
 import traceback
 import logging
 
+import silx.gui.icons
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -82,7 +84,7 @@ class McaWindow(ScanWindow.ScanWindow):
                                        control=control,
                                        position=position,
                                        roi=roi,
-                                       fit=fit,
+                                       fit=False,   # we redefine this
                                        info=info)
         self._plotType = "MCA"     # needed by legacy plugins
 
@@ -102,7 +104,6 @@ class McaWindow(ScanWindow.ScanWindow):
         self.peakmarker = None
 
         self.specfit = specfit if specfit is not None else Specfit.Specfit()
-
         self.simplefit = McaSimpleFit.McaSimpleFit(specfit=self.specfit)
         self.specfit.fitconfig['McaMode'] = 1
 
@@ -118,16 +119,37 @@ class McaWindow(ScanWindow.ScanWindow):
         self.connections()
         self.setGraphYLabel('Counts')
 
+        # Fit icon
+
+        self.fitToolButton = qt.QToolButton(self)
+        self.fitToolButton.setIcon(silx.gui.icons.getQIcon('math-fit'))
+        self.fitToolButton.setToolTip("Fit of Active Curve")
+        self.fitToolButton.clicked.connect(self._fitButtonClicked)
+
         self.fitButtonMenu = qt.QMenu()
         self.fitButtonMenu.addAction(QString("Simple"),
                                      self.mcaSimpleFitSignal)
         self.fitButtonMenu.addAction(QString("Advanced"),
                                      self.mcaAdvancedFitSignal)
 
+        if fit:
+            self._toolbar.insertWidget(self.avgAction, self.fitToolButton)
+
+        # hide a bunch of actions
+        self.avgAction.setVisible(False)
+        self.derivativeAction.setVisible(False)
+        self.smoothAction.setVisible(False)
+        self.swapSignAction.setVisible(False)
+        self.yMinToZero.setVisible(False)
+        self.subtractAction.setVisible(False)
+
+    def _fitButtonClicked(self):
+        self.fitButtonMenu.exec_(self.plot.cursor().pos())
+
     def _buildCalibrationControlWidget(self):
         widget = self.centralWidget()
         self.controlWidget = McaCalibrationControlGUI.McaCalibrationControlGUI(
-                                        widget)
+                                        widget)    # TODO: check what it is doing with the central widget
         widget.layout().addWidget(self.controlWidget)
         self.controlWidget.sigMcaCalibrationControlGUISignal.connect(
                             self.__anasignal)
