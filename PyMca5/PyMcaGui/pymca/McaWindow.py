@@ -27,12 +27,14 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
 import sys
 import os
 import numpy
-#from numpy import argsort, nonzero, take
 import time
 import traceback
+import logging
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -44,72 +46,69 @@ if __name__ == "__main__":
 import copy
 
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
-from PyMca5.PyMcaGui import IconDict
 from . import LegacyScanWindow     # TODO: fix McaWindow to use new silx based ScanWindow
 from . import McaCalibrationControlGUI
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5.PyMcaGui import McaAdvancedFit
-from PyMca5.PyMcaCore import DataObject
+from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
 from PyMca5.PyMcaGui.physics.xrf import McaCalWidget
+from PyMca5.PyMcaCore import DataObject
 from . import McaSimpleFit
 from PyMca5.PyMcaMath.fitting import Specfit
-from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5 import PyMcaDirs
 
-from PyMca5.PyMcaGui import QPyMcaMatplotlibSave1D
 MATPLOTLIB = True
 
-#force understanding of utf-8 encoding
-#otherways it cannot generate svg output
+# force understanding of utf-8 encoding
+# otherwise it cannot generate svg output
 try:
     import encodings.utf_8
 except:
-    #not a big problem
+    # not a big problem
     pass
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
+# _logger.setLevel(logging.DEBUG)
+
+
 class McaWindow(LegacyScanWindow.ScanWindow):
-    def __init__(self, parent=None, name="Mca Window", specfit=None, backend=None,
-                 plugins=True, newplot=False, roi=True, fit=True, **kw):
+    def __init__(self, parent=None, name="Mca Window", fit=True, backend=None,
+                 plugins=True, roi=True, specfit=None, **kw):
 
         LegacyScanWindow.ScanWindow.__init__(self, parent,
-                                         name=name,
-                                         newplot=newplot,
-                                         plugins=plugins,
-                                         backend=backend,
-                                         roi=roi,
-                                         fit=fit,
-                                         **kw)
-        self.setWindowType("MCA")
-        # these two objects are the same
-        self.dataObjectsList = self._curveList
-        # but this is tricky
+                                             name=name,
+                                             plugins=plugins,
+                                             backend=backend,
+                                             roi=roi,
+                                             fit=fit,
+                                             **kw)
+        self._plotType = "MCA"     # needed by legacy plugins
+
+        # this is tricky
         self.dataObjectsDict = {}
 
-        #self.setWindowTitle(name)
         self.outputDir = None
         self.outputFilter = None
         self.matplotlibDialog = None
 
-
         self.calibration = 'None'
-        self.calboxoptions = ['None','Original (from Source)','Internal (from Source OR PyMca)']
-        self.caldict={}
-        self.calwidget   =  None
+        self.calboxoptions = ['None', 'Original (from Source)',
+                              'Internal (from Source OR PyMca)']
+        self.caldict = {}
+        self.calwidget = None
         self.currentROI = None
-        self.peakmarker     = None
-        if specfit is None:
-            self.specfit = Specfit.Specfit()
-        else:
-            self.specfit = specfit
-        self.simplefit   = McaSimpleFit.McaSimpleFit(specfit=self.specfit)
+        self.peakmarker = None
+
+        self.specfit = specfit if specfit is not None else Specfit.Specfit()
+
+        self.simplefit = McaSimpleFit.McaSimpleFit(specfit=self.specfit)
         self.specfit.fitconfig['McaMode'] = 1
 
         self.advancedfit = McaAdvancedFit.McaAdvancedFit()
 
         self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-        if DEBUG:
-            print("printPreview id = %d" % id(self.printPreview))
+
+        _logger.debug("printPreview id = %d" % id(self.printPreview))
 
         self._buildCalibrationControlWidget()
         self._toggleCounter = 2
@@ -123,19 +122,15 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             self.fitButtonMenu = qt.QMenu()
             self.fitButtonMenu.addAction(QString("Simple"),
                                          self.mcaSimpleFitSignal)
-            self.fitButtonMenu.addAction(QString("Advanced") ,
+            self.fitButtonMenu.addAction(QString("Advanced"),
                                          self.mcaAdvancedFitSignal)
-            #self.fitButtonMenu.addAction(QString("Simple Fit"),
-            #                       self._simpleFitSignal)
-            #self.fitButtonMenu.addAction(QString("Customized Fit") ,
-            #                       self._customFitSignal)
 
     def _buildCalibrationControlWidget(self):
         widget = self.centralWidget()
-        self.controlWidget = McaCalibrationControlGUI.McaCalibrationControlGUI(\
+        self.controlWidget = McaCalibrationControlGUI.McaCalibrationControlGUI(
                                         widget)
         widget.layout().addWidget(self.controlWidget)
-        self.controlWidget.sigMcaCalibrationControlGUISignal.connect(\
+        self.controlWidget.sigMcaCalibrationControlGUISignal.connect(
                             self.__anasignal)
 
     def connections(self):
@@ -197,12 +192,10 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 msg.exec_()
 
     def getActiveCurve(self, just_legend=False):
-        if DEBUG:
-            print("Local MCA window getActiveCurve called!!!!")
-        legend = super(McaWindow, self).getActiveCurve(just_legend)
+        _logger.debug("Local MCA window getActiveCurve called!!!!")
+        activeCurve = super(McaWindow, self).getActiveCurve(just_legend)
         if just_legend:
-            return legend
-        activeCurve = legend
+            return activeCurve
         if activeCurve in [None, []]:
             return None
         x = activeCurve[0]
@@ -248,10 +241,6 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         Tries to provide the requested curve in terms of the channels and not in the terms
         as it is displayed.
         """
-        xdata    = None
-        ydata    = None
-        info = None
-
         if legend in self.dataObjectsDict:
             # The data as displayed
             x, y, legend, curveinfo = self.getCurve(legend)
@@ -342,16 +331,15 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         return
 
     def __anasignal(self,dict):
-        if DEBUG:
-            print("__anasignal called dict = ",dict)
+        _logger.debug("__anasignal called dict = %s", dict)
 
         if dict['event'] == 'clicked':
             # A button has been cicked
-            if   dict['button'] == 'Source':
+            if dict['button'] == 'Source':
                 pass
             elif dict['button'] == 'Calibration':
                 #legend,x,y = self.graph.getactivecurve()
-                legend = self.getActiveCurve(just_legend=1)
+                legend = self.getActiveCurve(just_legend=True)
                 if legend is None:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
@@ -363,14 +351,14 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                     if info is None:
                         return
                     ndict = {}
-                    ndict[legend] = {'order':1,
-                                     'A':0.0,
-                                     'B':1.0,
-                                     'C':0.0}
+                    ndict[legend] = {'order': 1,
+                                     'A': 0.0,
+                                     'B': 1.0,
+                                     'C': 0.0}
                     if legend in self.caldict:
                         ndict[legend].update(self.caldict[legend])
                         if abs(ndict[legend]['C']) > 0.0:
-                            ndict[legend]['order']  = self.caldict[legend].get('order', 2)
+                            ndict[legend]['order'] = self.caldict[legend].get('order', 2)
                     elif 'McaCalib' in info:
                         if type(info['McaCalib'][0]) == type([]):
                             calib = info['McaCalib'][0]
@@ -381,13 +369,13 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                             ndict[legend]['A'] = calib[0]
                             ndict[legend]['B'] = calib[1]
                             if len(calib) >2:
-                                ndict[legend]['order']  = calibrationOrder
-                                ndict[legend]['C']      = calib[2]
+                                ndict[legend]['order'] = calibrationOrder
+                                ndict[legend]['C'] = calib[2]
                     caldialog = McaCalWidget.McaCalWidget(legend=legend,
-                                                             x=x,
-                                                             y=y,
-                                                             modal=1,
-                                                             caldict=ndict)
+                                                          x=x,
+                                                          y=y,
+                                                          modal=1,
+                                                          caldict=ndict)
                     #info,x,y = self.getinfodatafromlegend(legend)
                     #caldialog.graph.newCurve("fromlegend",x=x,y=y)
                     ret = caldialog.exec_()
@@ -410,7 +398,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                     del caldialog
             elif dict['button'] == 'CalibrationCopy':
                 #legend,x,y = self.graph.getactivecurve()
-                legend = self.getActiveCurve(just_legend=1)
+                legend = self.getActiveCurve(just_legend=True)
                 if legend is None:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
@@ -466,7 +454,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                                             ndict[key]['order'] = 1
 
                     if not (legend in self.caldict):
-                        ndict[legend]={}
+                        ndict[legend] = {}
                         ndict[legend]['A'] = sourcecal[0]
                         ndict[legend]['B'] = sourcecal[1]
                         ndict[legend]['C'] = sourcecal[2]
@@ -498,7 +486,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                         self.refresh()
                     del caldialog
             elif dict['button'] == 'CalibrationLoad':
-                item     = dict['box'][0]
+                item = dict['box'][0]
                 itemtext = dict['box'][1]
                 filename = dict['line_edit']
                 if not os.path.exists(filename):
@@ -557,15 +545,15 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             elif dict['button'] == 'Search':
                 pass
             elif dict['button'] == 'Fit':
-                if dict['box'][1]   == 'Simple':
+                if dict['box'][1] == 'Simple':
                     self.mcasimplefitsignal()
-                elif dict['box'][1]   == 'Advanced':
+                elif dict['box'][1] == 'Advanced':
                     self.mcaadvancedfitsignal()
                 else:
-                    print("Unknown Fit Event")
+                    _logger.error("Unknown Fit Event")
         elif dict['event'] == 'activated':
             # A comboBox has been selected
-            if   dict['boxname'] == 'Source':
+            if dict['boxname'] == 'Source':
                 pass
             elif dict['boxname'] == 'Calibration':
                 self.calibration = dict['box'][1]
@@ -593,31 +581,30 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 """
                 pass
             else:
-                if DEBUG:
-                    print("Unknown combobox",dict['boxname'])
+                _logger.debug("Unknown combobox %s", dict['boxname'])
 
-        elif (dict['event'] == 'EstimateFinished'):
+        elif dict['event'] == 'EstimateFinished':
             pass
         elif (dict['event'] == 'McaAdvancedFitFinished') or \
-             (dict['event'] == 'McaAdvancedFitMatrixFinished') :
-            x      = dict['result']['xdata']
-            yb     = dict['result']['continuum']
-            legend0= dict['info']['legend']
+             (dict['event'] == 'McaAdvancedFitMatrixFinished'):
+            x = dict['result']['xdata']
+            yb = dict['result']['continuum']
+            legend0 = dict['info']['legend']
             fitcalibration = [dict['result']['fittedpar'][0],
                               dict['result']['fittedpar'][1],
                               0.0]
             if dict['event'] == 'McaAdvancedFitMatrixFinished':
                 legend = dict['info']['legend'] + " Fit"
                 legend3 = dict['info']['legend'] + " Matrix"
-                ymatrix   = dict['result']['ymatrix'] * 1.0
+                ymatrix = dict['result']['ymatrix'] * 1.0
                 #copy the original info from the curve
                 newDataObject = DataObject.DataObject()
                 newDataObject.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
-                newDataObject.info['SourceType']= 'AdvancedFit'
+                newDataObject.info['SourceType'] = 'AdvancedFit'
                 newDataObject.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
-                newDataObject.info['legend']    = legend3
-                newDataObject.info['Key']       = legend3
-                newDataObject.info['McaCalib']  = fitcalibration * 1
+                newDataObject.info['legend'] = legend3
+                newDataObject.info['Key'] = legend3
+                newDataObject.info['McaCalib'] = fitcalibration * 1
                 newDataObject.x = [x]
                 newDataObject.y = [ymatrix]
                 newDataObject.m = None
@@ -625,7 +612,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 #self.graph.newCurve(legend3,x=x,y=ymatrix,logfilter=1)
             else:
                 legend = dict['info']['legend'] + " Fit"
-                yfit   = dict['result']['yfit'] * 1.0
+                yfit = dict['result']['yfit'] * 1.0
 
                 #copy the original info from the curve
                 newDataObject = DataObject.DataObject()
@@ -659,12 +646,12 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 self.dataObjectsDict[legend2] = newDataObject2
                 #self.graph.newCurve(legend2,x=x,y=yb,logfilter=1)
 
-            if not (legend in self.caldict):
+            if legend not in self.caldict:
                 self.caldict[legend] = {}
-            self.caldict[legend] ['order'] = 1
-            self.caldict[legend] ['A']     = dict['result']['fittedpar'][0]
-            self.caldict[legend] ['B']     = dict['result']['fittedpar'][1]
-            self.caldict[legend] ['C']     = 0.0
+            self.caldict[legend]['order'] = 1
+            self.caldict[legend]['A'] = dict['result']['fittedpar'][0]
+            self.caldict[legend]['B'] = dict['result']['fittedpar'][1]
+            self.caldict[legend]['C'] = 0.0
             options = []
             for option in self.calboxoptions:
                 options.append(option)
@@ -678,13 +665,13 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                     #get current limits
                     if self.calibration == 'None':
                         xmin, xmax =self.getGraphXLimits()
-                        emin    = dict['result']['fittedpar'][0] + \
-                                  dict['result']['fittedpar'][1] * xmin
-                        emax    = dict['result']['fittedpar'][0] + \
-                                  dict['result']['fittedpar'][1] * xmax
+                        emin = dict['result']['fittedpar'][0] + \
+                               dict['result']['fittedpar'][1] * xmin
+                        emax = dict['result']['fittedpar'][0] + \
+                               dict['result']['fittedpar'][1] * xmax
                     else:
                         emin,emax = self.getGraphXLimits()
-                    ymin, ymax =self.getGraphYLimits()
+                    ymin, ymax = self.getGraphYLimits()
                     self.controlWidget.calbox.setCurrentIndex(options.index(legend))
                     self.calibration = legend
                     self.controlWidget._calboxactivated(legend)
@@ -694,38 +681,36 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                     else:
                         self.setGraphXLimits(emax, emin, replot=True)
             except:
-                if DEBUG:
-                    print("Refreshing due to exception", sys.exc_info()[1])
+                _logger.debug("Refreshing due to exception %s", sys.exc_info()[1])
                 self.refresh()
-                #self.graph.replot()
 
         elif dict['event'] == 'McaFitFinished':
             mcaresult = dict['data']
-            legend = dict['info']['legend'] + " "
             i = 0
             xfinal = []
             yfinal = []
-            ybfinal= []
+            ybfinal = []
             regions = []
-            legend0= dict['info']['legend']
+            legend0 = dict['info']['legend']
             mcamode = True
             for result in mcaresult:
                 i += 1
                 if result['chisq'] is not None:
-                     mcamode = result['fitconfig']['McaMode']
-                     idx=numpy.nonzero((self.specfit.xdata0>=result['xbegin']) & \
-                                    (self.specfit.xdata0<=result['xend']))[0]
-                     x=numpy.take(self.specfit.xdata0,idx)
-                     y=self.specfit.gendata(x=x,parameters=result['paramlist'])
-                     nparb= len(self.specfit.bkgdict[self.specfit.fitconfig['fitbkg']][1])
-                     yb   = self.specfit.gendata(x=x,parameters=result['paramlist'][0:nparb])
-                     xtoadd = numpy.take(self.dataObjectsDict[legend0].x[0],idx).tolist()
-                     if not len(xtoadd): continue
-                     xfinal = xfinal + xtoadd
-                     regions.append([xtoadd[0],xtoadd[-1]])
-                     yfinal = yfinal + y.tolist()
-                     ybfinal= ybfinal + yb.tolist()
-                    #self.graph.newCurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
+                    mcamode = result['fitconfig']['McaMode']
+                    idx = numpy.nonzero((self.specfit.xdata0 >= result['xbegin']) &
+                                        (self.specfit.xdata0 <= result['xend']))[0]
+                    x = numpy.take(self.specfit.xdata0, idx)
+                    y = self.specfit.gendata(x=x, parameters=result['paramlist'])
+                    nparb = len(self.specfit.bkgdict[self.specfit.fitconfig['fitbkg']][1])
+                    yb = self.specfit.gendata(x=x, parameters=result['paramlist'][0:nparb])
+                    xtoadd = numpy.take(self.dataObjectsDict[legend0].x[0], idx).tolist()
+                    if not len(xtoadd):
+                        continue
+                    xfinal = xfinal + xtoadd
+                    regions.append([xtoadd[0], xtoadd[-1]])
+                    yfinal = yfinal + y.tolist()
+                    ybfinal = ybfinal + yb.tolist()
+                    # self.graph.newCurve(legend + 'Region %d' % i,x=x,y=yfit,logfilter=1)
             legend = legend0 + " SFit"
             if legend in self.dataObjectsDict.keys():
                 if legend in self.getAllCurves(just_legend=True):
@@ -738,31 +723,32 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             #copy the original info from the curve
             newDataObject = DataObject.DataObject()
             newDataObject.info = copy.deepcopy(self.dataObjectsDict[legend0].info)
-            newDataObject.info['SourceType']= 'SimpleFit'
+            newDataObject.info['SourceType'] = 'SimpleFit'
             newDataObject.info['SourceName'] = 1 * self.dataObjectsDict[legend0].info['SourceName']
-            newDataObject.info['legend']    = legend
-            newDataObject.info['Key']       = legend
-            newDataObject.info['CalMode']   = self.__simplefitcalmode
-            newDataObject.info['McaCalib']  = self.__simplefitcalibration
-            x    = numpy.array(xfinal)
+            newDataObject.info['legend'] = legend
+            newDataObject.info['Key'] = legend
+            newDataObject.info['CalMode'] = self.__simplefitcalmode
+            newDataObject.info['McaCalib'] = self.__simplefitcalibration
+            x = numpy.array(xfinal)
             yfit = numpy.array(yfinal)
             yb = numpy.array(ybfinal)
             newDataObject.x = [x]
             newDataObject.y = [yfit]
             newDataObject.m = [numpy.ones(len(yfit)).astype(numpy.float)]
             if mcamode:
-                newDataObject.info['regions']   = regions
+                newDataObject.info['regions'] = regions
                 newDataObject.info['baseline'] = yb
             self.dataObjectsDict[legend] = newDataObject
             self.refresh()
             return
+
         elif dict['event'] == 'McaTableFilled':
             if self.peakmarker is not None:
                 self.graph.removeMarker(self.peakmarker)
             self.peakmarker = None
 
         elif dict['event'] == 'McaTableRowHeaderClicked':
-            #I have to mark the peaks
+            # I have to mark the peaks
             if dict['row'] >= 0:
                 pos = dict['Position']
                 label = 'PEAK %d' % (dict['row']+1)
@@ -782,13 +768,13 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             if self.peakmarker is not None:
                 self.removeMarker(self.peakmarker)
             self.peakmarker = None
+
         elif (dict['event'] == 'McaAdvancedFitElementClicked') or \
              (dict['event'] == 'ElementClicked'):
-            #this has been moved to the fit window
+            # this has been moved to the fit window
             pass
 
         elif dict['event'] == 'McaAdvancedFitPrint':
-            #self.advancedfit.printps(doit=1)
             self.printHtml(dict['text'])
 
         elif dict['event'] == 'McaSimpleFitPrint':
@@ -799,11 +785,13 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 self.removeMarker(self.peakmarker)
             self.peakmarker = None
             self.replot()
+
         elif dict['event'] == 'ScanFitPrint':
             self.printHtml(dict['text'])
 
         elif dict['event'] == 'AddROI':
             return super(McaWindow, self)._roiSignal(dict)
+
         elif dict['event'] == 'DelROI':
             return super(McaWindow, self)._roiSignal(dict)
 
@@ -811,21 +799,19 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             return super(McaWindow, self)._roiSignal(dict)
 
         elif dict['event'] == 'ActiveROI':
-            print("ActiveROI event")
-            pass
-        elif dict['event'] == 'selectionChanged':
-            print("Selection changed event not implemented any more")
-        else:
-            if DEBUG:
-                print("Unknown or ignored event",dict['event'])
+            _logger.debug("ActiveROI event")
 
+        elif dict['event'] == 'selectionChanged':
+            _logger.error("Selection changed event not implemented any more")
+        else:
+            _logger.debug("Unknown or ignored event %s", dict['event'])
 
     def emitCurrentROISignal(self):
         if self.currentROI is None:
             return
-        #I have to get the current calibration
+        # I have to get the current calibration
         if self.getGraphXLabel().upper() != "CHANNEL":
-            #I have to get the energy
+            # I have to get the energy
             A = self.controlWidget.calinfo.caldict['']['A']
             B = self.controlWidget.calinfo.caldict['']['B']
             C = self.controlWidget.calinfo.caldict['']['C']
@@ -837,22 +823,21 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 if legend in self.dataObjectsDict.keys():
                     A = self.dataObjectsDict[legend].x[0][0]
             except:
-                if DEBUG:
-                    print("X axis offset not found")
+                _logger.debug("X axis offset not found")
             B = 1.0
             C = 0.0
             order = 1
         key = self.currentROI
         roiList, roiDict = self.roiWidget.getROIListAndDict()
-        fromdata = roiDict[key]['from' ]
-        todata   = roiDict[key]['to']
-        ddict = {}
-        ddict['event'] = "ROISignal"
-        ddict['name'] = key
-        ddict['from'] = fromdata
-        ddict['to']   = todata
-        ddict['type'] = roiDict[self.currentROI]["type"]
-        ddict['calibration']= [A, B, C, order]
+        fromdata = roiDict[key]['from']
+        todata = roiDict[key]['to']
+        ddict = {
+            'event': "ROISignal",
+            'name': key,
+            'from': fromdata,
+            'to': todata,
+            'type': roiDict[self.currentROI]["type"],
+            'calibration': [A, B, C, order]}
         self.sigROISignal.emit(ddict)
 
     def setDispatcher(self, w):
@@ -861,10 +846,9 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         w.sigReplaceSelection.connect(self._replaceSelection)
 
     def _addSelection(self, selection, replot=True):
-        if DEBUG:
-            print("__add, selection = ",selection)
+        _logger.debug("__add, selection = %s", selection)
 
-        if type(selection) == type([]):
+        if isinstance(selection, list):
             sellist = selection
         else:
             sellist = [selection]
@@ -872,11 +856,11 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         for sel in sellist:
             # force the selections to include their source for completeness?
             # source = sel['SourceName']
-            key    = sel['Key']
+            key = sel['Key']
             if "scanselection" in sel:
                 if sel["scanselection"] not in [False, "MCA"]:
                     continue
-            mcakeys    = [key]
+            mcakeys = [key]
             for mca in mcakeys:
                 legend = sel['legend']
                 dataObject = sel['dataobject']
@@ -920,13 +904,13 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                             xhelp = numpy.take(xhelp, index)
                             data = numpy.take(data, index)
                             mdata = numpy.take(mdata, index)
-                            data = data/mdata
+                            data = data / mdata
                             dataObject.x = [xhelp * 1]
                             dataObject.m = [numpy.ones(len(data)).astype(numpy.float)]
                         elif (len(mdata) == 1) or (ylen == 1):
                             if mdata[0] == 0.0:
                                 continue
-                            data = data/mdata
+                            data = data / mdata
                         else:
                             raise ValueError("Cannot normalize data")
                         dataObject.y = [data]
@@ -936,14 +920,14 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 else:
                     simplefitplot = False
                 try:
-                    calib = [0.0,1.0,0.0]
+                    calib = [0.0, 1.0, 0.0]
                     for inputkey in ['baseline', 'regions', 'McaLiveTime']:
                         if inputkey in info:
                             curveinfo[inputkey] = info[inputkey]
                     curveinfo['McaCalib'] = calib
                     if 'McaCalib' in info:
                         if type(info['McaCalib'][0]) == type([]):
-                            calib0 = info['McaCalib'][info['McaDet']-1]
+                            calib0 = info['McaCalib'][info['McaDet'] - 1]
                         else:
                             calib0 = info['McaCalib']
                         if 'McaCalibSource' in info:
@@ -955,29 +939,28 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                             calib = curveinfo['McaCalibSource']  
                         elif 'McaCalib' in info:
                             if type(info['McaCalib'][0]) == type([]):
-                                calib = info['McaCalib'][info['McaDet']-1]
+                                calib = info['McaCalib'][info['McaDet'] - 1]
                             else:
                                 calib = info['McaCalib']
                         if len(calib) > 1:
-                            xdata=calib[0]+ \
-                                  calib[1]* xhelp
+                            xdata = calib[0] + calib[1] * xhelp
                             if len(calib) == 3:
-                                  xdata = xdata + calib[2]* xhelp * xhelp
+                                xdata = xdata + calib[2] * xhelp * xhelp
                             curveinfo['McaCalib'] = calib
                             if simplefitplot:
                                 inforegions = []
                                 for region in info['regions']:
-                                    inforegions.append([calib[0] + \
-                                                        calib[1] * region[0] +\
+                                    inforegions.append([calib[0] +
+                                                        calib[1] * region[0] +
                                                         calib[2] * region[0] * region[0],
-                                                        calib[0] + \
-                                                        calib[1] * region[1] +\
+                                                        calib[0] +
+                                                        calib[1] * region[1] +
                                                         calib[2] * region[1] * region[1]])
                                 self.addCurve(xdata, data, legend=legend,
-                                                info=curveinfo, own=True)
+                                              info=curveinfo, own=True)
                             else:
                                 self.addCurve(xdata, data, legend=legend,
-                                                info=curveinfo, own=True)
+                                              info=curveinfo, own=True)
                             self.setGraphXLabel('Energy')
                     elif self.calibration == self.calboxoptions[2]:
                         calibrationOrder = None
@@ -986,20 +969,19 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                             B = self.caldict[legend]['B']
                             C = self.caldict[legend]['C']
                             calibrationOrder = self.caldict[legend]['order']
-                            calib = [A,B,C]
+                            calib = [A, B, C]
                         elif 'McaCalib' in info:
                             if type(info['McaCalib'][0]) == type([]):
-                                calib = info['McaCalib'][info['McaDet']-1]
+                                calib = info['McaCalib'][info['McaDet'] - 1]
                             else:
                                 calib = info['McaCalib']
                         if len(calib) > 1:
-                            xdata=calib[0]+ \
-                                  calib[1]* xhelp
+                            xdata = calib[0] + calib[1] * xhelp
                             if len(calib) == 3:
                                 if calibrationOrder == 'TOF':
-                                    xdata = calib[2] + calib[0] / pow(xhelp-calib[1],2)
+                                    xdata = calib[2] + calib[0] / pow(xhelp - calib[1], 2)
                                 else:
-                                    xdata = xdata + calib[2]* xhelp * xhelp
+                                    xdata = xdata + calib[2] * xhelp * xhelp
                             curveinfo['McaCalib'] = calib
                             curveinfo['McaCalibOrder'] = calibrationOrder
                             if simplefitplot:
@@ -1009,61 +991,60 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                                         inforegions.append([calib[2] + calib[0] / pow(region[0]-calib[1],2),
                                                             calib[2] + calib[0] / pow(region[1]-calib[1],2)])
                                     else:
-                                        inforegions.append([calib[0] + \
-                                                        calib[1] * region[0] +\
-                                                        calib[2] * region[0] * region[0],
-                                                        calib[0] + \
-                                                        calib[1] * region[1] +\
-                                                        calib[2] * region[1] * region[1]])
+                                        inforegions.append([calib[0] +
+                                                            calib[1] * region[0] +
+                                                            calib[2] * region[0] * region[0],
+                                                            calib[0] +
+                                                            calib[1] * region[1] +
+                                                            calib[2] * region[1] * region[1]])
                                 self.addCurve(xdata, data,
-                                                legend=legend,
-                                                info=curveinfo,
-                                                own=True)
+                                              legend=legend,
+                                              info=curveinfo,
+                                              own=True)
                             else:
                                 self.addCurve(xdata, data,
-                                                legend=legend,
-                                                info=curveinfo,
-                                                own=True)
+                                              legend=legend,
+                                              info=curveinfo,
+                                              own=True)
                             if calibrationOrder == 'ID18':
                                 self.setGraphXLabel('Time')
                             else:
                                 self.setGraphXLabel('Energy')
                     elif self.calibration == 'Fit':
-                        print("Not yet implemented")
+                        _logger.error("Not yet implemented")
                         continue
-                    elif self.calibration in  self.caldict.keys():
+                    elif self.calibration in self.caldict.keys():
                             A = self.caldict[self.calibration]['A']
                             B = self.caldict[self.calibration]['B']
                             C = self.caldict[self.calibration]['C']
                             calibrationOrder = self.caldict[self.calibration]['order']
-                            calib = [A,B,C]
+                            calib = [A, B, C]
                             if calibrationOrder == 'TOF':
-                                xdata =  C + (A / ((xhelp - B) * (xhelp - B)))
+                                xdata = C + (A / ((xhelp - B) * (xhelp - B)))
                             else:
-                                xdata=calib[0]+ \
-                                  calib[1]* xhelp + \
-                                  calib[2]* xhelp * xhelp
+                                xdata = calib[0] + \
+                                        calib[1] * xhelp + \
+                                        calib[2] * xhelp * xhelp
                             curveinfo['McaCalib'] = calib
                             curveinfo['McaCalibOrder'] = calibrationOrder
                             if simplefitplot:
                                 inforegions = []
                                 for region in info['regions']:
                                     if calibrationOrder == 'TOF':
-                                        inforegions.append([calib[2] + calib[0] / pow(region[0]-calib[1],2),
-                                                            calib[2] + calib[0] / pow(region[1]-calib[1],2)])
+                                        inforegions.append(
+                                            [calib[2] + calib[0] / pow(region[0]-calib[1], 2),
+                                             calib[2] + calib[0] / pow(region[1]-calib[1], 2)])
                                     else:
-                                        inforegions.append([calib[0] + \
-                                                        calib[1] * region[0] +\
-                                                        calib[2] * region[0] * region[0],
-                                                        calib[0] + \
-                                                        calib[1] * region[1] +\
-                                                        calib[2] * region[1] * region[1]])
+                                        inforegions.append([calib[0] +
+                                                            calib[1] * region[0] +
+                                                            calib[2] * region[0] * region[0],
+                                                            calib[0] +
+                                                            calib[1] * region[1] +
+                                                            calib[2] * region[1] * region[1]])
                                 self.addCurve(xdata, data,
                                               legend=legend,
                                               info=curveinfo,
                                               own=True)
-                                                #baseline = info['baseline'],
-                                                #regions = inforegions)
                             else:
                                 self.addCurve(xdata, data,
                                               legend=legend,
@@ -1079,8 +1060,6 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                                           legend=legend,
                                           info=curveinfo,
                                           own=True)
-                                          #baseline = info['baseline'],
-                                          #regions = info['regions'])
                         else:
                             self.addCurve(xhelp, data,
                                           legend=legend,
@@ -1091,13 +1070,11 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                     del self.dataObjectsDict[legend]
                     raise
         if replot:
-            #self.replot()
             self.resetZoom()
         self.updateLegends()
 
     def _removeSelection(self, selectionlist):
-        if DEBUG:
-            print("_removeSelection(self, selectionlist)",selectionlist)
+        _logger.debug("_removeSelection(self, selectionlist) %d", selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -1105,12 +1082,12 @@ class McaWindow(LegacyScanWindow.ScanWindow):
 
         legendlist = []
         for sel in sellist:
-            key    = sel['Key']
+            key = sel['Key']
             if "scanselection" in sel:
                 if sel['scanselection'] not in [False, "MCA"]:
                     continue
 
-            mcakeys    = [key]
+            mcakeys = [key]
             for mca in mcakeys:
                 legend = sel['legend']
                 legendlist.append(legend)
@@ -1127,8 +1104,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             self.replot()
 
     def _replaceSelection(self, selectionlist):
-        if DEBUG:
-            print("_replaceSelection(self, selectionlist)",selectionlist)
+        _logger.debug("_replaceSelection(self, selectionlist) %s", selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -1144,13 +1120,12 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         if not doit:
             return
         self.clearCurves()
-        self.dataObjectsDict={}
-        self.dataObjectsList=self._curveList
+        self.dataObjectsDict = {}
+        self.dataObjectsList = self._curveList
         self._addSelection(selectionlist)
 
     def graphCallback(self, ddict):
-        if DEBUG:
-            print("McaWindow._graphCallback", ddict)
+        _logger.debug("McaWindow._graphCallback %s", ddict)
         if ddict['event'] in ['markerMoved', 'markerSelected']:
             return self._handleMarkerEvent(ddict)
         elif ddict['event'] in ["mouseMoved", "MouseAt"]:
@@ -1173,8 +1148,8 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             legend = ddict['legend']
             newlegend = ddict['newlegend']
             if legend in self.dataObjectsDict:
-                self.dataObjectsDict[newlegend]= copy.deepcopy(\
-                                    self.dataObjectsDict[legend])
+                self.dataObjectsDict[newlegend] = copy.deepcopy(
+                        self.dataObjectsDict[legend])
                 self.dataObjectsDict[newlegend].info['legend'] = newlegend
                 self.removeCurve(legend)
                 self.addCurve(self.dataObjectsDict[newlegend].x[0],
@@ -1200,39 +1175,40 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             self.controlWidget.calinfo.BText.setText("?????")
             self.controlWidget.calinfo.CText.setText("?????")
             return
-        if legend in self.dataObjectsDict.keys():
-            x0 = self.dataObjectsDict[legend].x[0]
-            y = self.dataObjectsDict[legend].y[0]
-            #those are the actual data
-            if str(self.getGraphXLabel()).upper() != "CHANNEL":
-                #I have to get the energy
-                A = self.controlWidget.calinfo.caldict['']['A']
-                B = self.controlWidget.calinfo.caldict['']['B']
-                C = self.controlWidget.calinfo.caldict['']['C']
-                order = self.controlWidget.calinfo.caldict['']['order']
-            else:
-                A = 0.0
-                B = 1.0
-                C = 0.0
-                order = 1
-            calib = [A,B,C]
-            if order == "TOF":
-                x = calib[2] + calib[0] / pow(x0-calib[1],2)
-            else:
-                x = calib[0]+ \
-                    calib[1]* x0 + \
-                    calib[2]* x0 * x0
-        else:
-            print("Received legend = ", legend)
-            print("legends recognized = ", self.dataObjectsDict.keys())
-            print("Should not be here")
+        # if legend in self.dataObjectsDict.keys():    # todo: unused block
+        #     x0 = self.dataObjectsDict[legend].x[0]
+        #     y = self.dataObjectsDict[legend].y[0]
+        #     # those are the actual data
+        #     if str(self.getGraphXLabel()).upper() != "CHANNEL":
+        #         # I have to get the energy
+        #         A = self.controlWidget.calinfo.caldict['']['A']
+        #         B = self.controlWidget.calinfo.caldict['']['B']
+        #         C = self.controlWidget.calinfo.caldict['']['C']
+        #         order = self.controlWidget.calinfo.caldict['']['order']
+        #     else:
+        #         A = 0.0
+        #         B = 1.0
+        #         C = 0.0
+        #         order = 1
+        #     calib = [A, B, C]
+        #     if order == "TOF":
+        #         x = calib[2] + calib[0] / pow(x0-calib[1], 2)
+        #     else:
+        #         x = calib[0] + \
+        #             calib[1] * x0 + \
+        #             calib[2] * x0 * x0
+        # else:
+        if legend not in self.dataObjectsDict.keys():
+            _logger.error("Received legend = %s\nlegends recognized = %s\n"
+                          "Should not be here",
+                          legend, self.dataObjectsDict.keys())
             return
         try:
             info = self.getCurve(legend)[3]
             calib = info['McaCalib']
-            self.controlWidget.calinfo.setParameters({'A':calib[0],
-                                                'B':calib[1],
-                                                'C':calib[2]})
+            self.controlWidget.calinfo.setParameters({'A': calib[0],
+                                                      'B': calib[1],
+                                                      'C': calib[2]})
         except KeyError:
             self.controlWidget.calinfo.AText.setText("?????")
             self.controlWidget.calinfo.BText.setText("?????")
@@ -1254,7 +1230,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             newDataObject.y = [yplot]
             newDataObject.m = [numpy.ones(len(yplot)).astype(numpy.float)]
 
-            #here I should check the log or linear status
+            # here I should check the log or linear status
             self.dataObjectsDict[newDataObject.info['legend']] = newDataObject
             self.addCurve(xplot,
                           yplot,
@@ -1262,8 +1238,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                           own=True)
 
     def _scanFitSignalReceived(self, ddict):
-        if DEBUG:
-            print("_graphSignalReceived", ddict)
+        _logger.debug("_graphSignalReceived %s", ddict)
         if ddict['event'] == "EstimateFinished":
             return
         if ddict['event'] == "FitFinished":
@@ -1288,7 +1263,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             msg.setWindowTitle('MCA window')
             msg.exec_()
             return
-        #get outputfile
+        # get outputfile
         self.outputDir = PyMcaDirs.outputDir
         if self.outputDir is None:
             self.outputDir = os.getcwd()
@@ -1314,7 +1289,8 @@ class McaWindow(LegacyScanWindow.ScanWindow):
 
         if self.outputFilter is None:
             self.outputFilter = format_list[0]
-        fileList, fileFilter = PyMcaFileDialogs.getFileList(self,
+        fileList, fileFilter = PyMcaFileDialogs.getFileList(
+                                     self,
                                      filetypelist=format_list,
                                      message="Output File Selection",
                                      currentdir=wdir,
@@ -1326,34 +1302,33 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             return
         self.outputFilter = fileFilter
         filterused = self.outputFilter.split()
-        filetype  = filterused[1]
+        filetype = filterused[1]
         extension = filterused[2]
-        outdir=qt.safe_str(fileList[0])
+        outdir = qt.safe_str(fileList[0])
         try:
-            self.outputDir  = os.path.dirname(outdir)
+            self.outputDir = os.path.dirname(outdir)
             PyMcaDirs.outputDir = os.path.dirname(outdir)
         except:
-            self.outputDir  = "."
+            self.outputDir = "."
         try:
             outputFile = os.path.basename(outdir)
         except:
-            outputFile  = outdir
+            outputFile = outdir
 
-        #get active curve
+        # get active curve
         x, y, legend, info = self.getActiveCurve()
         if info is None:
             return
 
-        ndict = {}
-        ndict[legend] = {'order':1,'A':0.0,'B':1.0,'C':0.0}
+        ndict = {legend: {'order': 1, 'A': 0.0, 'B': 1.0, 'C': 0.0}}
         if self.getGraphXLabel().upper() == "CHANNEL":
             if legend in self.caldict:
                 calibrationOrder = self.caldict[legend].get('McaCalibOrder',2)                
                 ndict[legend].update(self.caldict[legend])
                 if abs(ndict[legend]['C']) > 0.0:
-                    ndict[legend]['order']  = 2
+                    ndict[legend]['order'] = 2
             elif 'McaCalib' in info:
-                calibrationOrder = info.get('McaCalibOrder',2)                
+                calibrationOrder = info.get('McaCalibOrder', 2)
                 if type(info['McaCalib'][0]) == type([]):
                     calib = info['McaCalib'][0]
                 else:
@@ -1361,11 +1336,11 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 if len(calib) > 1:
                     ndict[legend]['A'] = calib[0]
                     ndict[legend]['B'] = calib[1]
-                    if len(calib) >2:
-                        ndict[legend]['order']  = 2
-                        ndict[legend]['C']      = calib[2]
+                    if len(calib) > 2:
+                        ndict[legend]['order'] = 2
+                        ndict[legend]['C'] = calib[2]
             elif legend in self.dataObjectsDict:
-                calibrationOrder = self.dataObjectsDict[legend].info.get('McaCalibOrder',2)
+                calibrationOrder = self.dataObjectsDict[legend].info.get('McaCalibOrder', 2)
                 if 'McaCalib' in self.dataObjectsDict[legend].info:
                     calib = self.dataObjectsDict[legend].info['McaCalib']
                     ndict[legend]['A'] = calib[0]
@@ -1373,16 +1348,16 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                     ndict[legend]['C'] = calib[2]
             calib = [ndict[legend]['A'], ndict[legend]['B'], ndict[legend]['C']]
             if calibrationOrder == 'TOF':
-                energy = calib[2] + calib[0] / pow(x - calib[1],2)
+                energy = calib[2] + calib[0] / pow(x - calib[1], 2)
             else:
                 energy = calib[0] + calib[1] * x + calib[2] * x * x
         else:
-            #I have it in energy
+            # I have it in energy
             A = self.controlWidget.calinfo.caldict['']['A']
             B = self.controlWidget.calinfo.caldict['']['B']
             C = self.controlWidget.calinfo.caldict['']['C']
             order = self.controlWidget.calinfo.caldict['']['order']
-            ndict[legend] = {'order':order,'A':A,'B':B,'C':C}
+            ndict[legend] = {'order': order, 'A': A, 'B': B, 'C': C}
             calib = [A, B, C]
             energy = x * 1
             if legend in self.dataObjectsDict.keys():
@@ -1394,9 +1369,9 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 if numpy.allclose(energy, x0):
                     x = self.dataObjectsDict[legend].x[0]
                 else:
-                    ndict[legend] = {'order':1,'A': 0.0, 'B':1.0, 'C': 1.0}
+                    ndict[legend] = {'order': 1, 'A': 0.0, 'B': 1.0, 'C': 1.0}
 
-        #always overwrite for the time being
+        # always overwrite for the time being
         if not outputFile.endswith(extension[1:]):
             outputFile += extension[1:]
         specFile = os.path.join(self.outputDir, outputFile)
@@ -1415,7 +1390,8 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             fformat = specFile[-3:].upper()
             pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
             if not pixmap.save(specFile, fformat):
-                qt.QMessageBox.critical(self,
+                qt.QMessageBox.critical(
+                        self,
                         "Save Error",
                         "%s" % "I could not save the file\nwith the desired format")
             return
@@ -1429,7 +1405,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 msg = qt.QMessageBox(self)
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setWindowTitle("Save error")
-                msg.setInformativeText("Graphics Saving Error: %s" % \
+                msg.setInformativeText("Graphics Saving Error: %s" %
                                        (sys.exc_info()[1]))
                 msg.setDetailedText(traceback.format_exc())
                 msg.exec_()
@@ -1446,18 +1422,16 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             msg.setText("Input Output Error: %s" % (sys.exc_info()[1]))
             msg.exec_()
             return
-        systemline = os.linesep
-        os.linesep = '\n'
-        #This was giving problems on legends with a leading b
-        #legend = legend.strip('<b>')
-        #legend = legend.strip('<\b>')
+        # This was giving problems on legends with a leading b
+        # legend = legend.strip('<b>')
+        # legend = legend.strip('<\b>')
         try:
             if filetype == 'Scan':
                 ffile.write("#F %s\n" % specFile)
-                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("#D %s\n" % (time.ctime(time.time())))
                 ffile.write("\n")
                 ffile.write("#S 1 %s\n" % legend)
-                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("#D %s\n" % (time.ctime(time.time())))
                 ffile.write("#N 3\n")
                 ffile.write("#L channel  counts  energy\n")
                 for i in range(len(y)):
@@ -1465,7 +1439,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                 ffile.write("\n")
             elif filetype == 'ASCII':
                 for i in range(len(y)):
-                   ffile.write("%.7g  %.7g  %.7g\n" % (x[i], y[i], energy[i]))
+                    ffile.write("%.7g  %.7g  %.7g\n" % (x[i], y[i], energy[i]))
             elif filetype == 'CSV':
                 if "," in filterused[0]:
                     csv = ","
@@ -1477,24 +1451,24 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                     csv = "\t"
                 if "OMNIC" in filterused[0]:
                     for i in range(len(y)):
-                        ffile.write("%.7E%s%.7E\n" % \
-                               (energy[i], csv, y[i]))
+                        ffile.write("%.7E%s%.7E\n" %
+                                    (energy[i], csv, y[i]))
                 else:
                     ffile.write('"channel"%s"counts"%s"energy"\n' % (csv, csv))
                     for i in range(len(y)):
-                        ffile.write("%.7E%s%.7E%s%.7E\n" % \
-                               (x[i], csv, y[i], csv, energy[i]))
+                        ffile.write("%.7E%s%.7E%s%.7E\n" %
+                                    (x[i], csv, y[i], csv, energy[i]))
             else:
                 ffile.write("#F %s\n" % specFile)
-                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("#D %s\n" % (time.ctime(time.time())))
                 ffile.write("\n")
                 ffile.write("#S 1 %s\n" % legend)
-                ffile.write("#D %s\n"%(time.ctime(time.time())))
+                ffile.write("#D %s\n" % (time.ctime(time.time())))
                 ffile.write("#@MCA %16C\n")
-                ffile.write("#@CHANN %d %d %d 1\n" %  (len(y), x[0], x[-1]))
+                ffile.write("#@CHANN %d %d %d 1\n" % (len(y), x[0], x[-1]))
                 ffile.write("#@CALIB %.7g %.7g %.7g\n" % (ndict[legend]['A'],
-                                                         ndict[legend]['B'],
-                                                         ndict[legend]['C']))
+                                                          ndict[legend]['B'],
+                                                          ndict[legend]['C']))
                 ffile.write(self.array2SpecMca(y))
                 ffile.write("\n")
             ffile.close()
@@ -1530,10 +1504,9 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         self.controlWidget.calbox.setCurrentIndex(item)
         self.refresh()
 
-    #The plugins interface
+    # The plugins interface
     def _toggleLogY(self):
-        if DEBUG:
-            print("McaWindow _toggleLogY")
+        _logger.debug("McaWindow _toggleLogY")
         self._ownSignal = True
         try:
             super(McaWindow, self)._toggleLogY()
@@ -1541,8 +1514,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             self._ownSignal = None
 
     def _toggleLogX(self):
-        if DEBUG:
-            print("McaWindow _toggleLogX")
+        _logger.debug("McaWindow _toggleLogX")
         self._ownSignal = True
         try:
             super(McaWindow, self)._toggleLogX()
@@ -1550,11 +1522,11 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             self._ownSignal = None
 
     def getGraphYLimits(self):
-        #if the active curve is mapped to second axis
-        #I should give the second axis limits
+        # if the active curve is mapped to second axis
+        # I should give the second axis limits
         return super(McaWindow, self).getGraphYLimits()
 
-    #end of plugins interface
+    # end of plugins interface
     def addCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
                  xlabel=None, ylabel=None, yaxis=None,
@@ -1570,16 +1542,16 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             if color is None:
                 color = info.get("plot_color", oldInfo.get("plot_color", None))
             if symbol is None:
-                symbol =  info.get("plot_symbol",oldInfo.get("plot_symbol", None))
+                symbol = info.get("plot_symbol", oldInfo.get("plot_symbol", None))
             if linestyle is None:
                 if self._plotLines:
-                    linestyle =  info.get("plot_linestyle",oldInfo.get("plot_linestyle", None))
+                    linestyle =  info.get("plot_linestyle", oldInfo.get("plot_linestyle", None))
                     if linestyle in [' ', None, '']:
                         linestyle = '-'
                 else:
                     linestyle = ' '
             if yaxis is None:
-                yaxis =  info.get("plot_yaxis",oldInfo.get("plot_yaxis", None))
+                yaxis = info.get("plot_yaxis", oldInfo.get("plot_yaxis", None))
         if xlabel is None:
             xlabel = self.getGraphXLabel()
         if ylabel is None:
@@ -1589,9 +1561,11 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         if own and (legend in self.dataObjectsDict):
             # The curve is already registered
             super(McaWindow, self).addCurve(x, y, legend=legend, info=info,
-                                replace=replace, replot=replot, color=color, symbol=symbol,
-                                linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
-                                xerror=xerror, yerror=yerror, **kw)
+                                            replace=replace, replot=replot,
+                                            color=color, symbol=symbol,
+                                            linestyle=linestyle, xlabel=xlabel,
+                                            ylabel=ylabel, yaxis=yaxis,
+                                            xerror=xerror, yerror=yerror, **kw)
         else:
             if legend in self.dataObjectsDict:
                 xChannels, yOrig, infoOrig = self.getDataAndInfoFromLegend(legend)
@@ -1606,9 +1580,9 @@ class McaWindow(LegacyScanWindow.ScanWindow):
                     x = xChannels
             # create the data object (Is this necessary????)
             self.newCurve(x, y, legend=legend, info=info,
-                                replace=replace, replot=replot, color=color, symbol=symbol,
-                                linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
-                                xerror=xerror, yerror=yerror, **kw)
+                          replace=replace, replot=replot, color=color, symbol=symbol,
+                          linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
+                          xerror=xerror, yerror=yerror, **kw)
 
     def newCurve(self, x, y, legend=None, info=None, replace=False, replot=True,
                  color=None, symbol=None, linestyle=None,
@@ -1655,8 +1629,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             self._addSelection(sel_list, replot=replot)
 
     def refresh(self):
-        if DEBUG:
-            print(" DANGEROUS REFRESH CALLED")
+        _logger.debug(" DANGEROUS REFRESH CALLED")
         activeCurve = self.getActiveCurve(just_legend=True)
         # try to keep the same curve order
         legendList = self.getAllCurves(just_legend=True)
@@ -1664,19 +1637,17 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         sellist = []
         for key in legendList:
             if key in dataObjectsKeyList:
-                sel ={}
-                sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
-                sel['dataobject'] = self.dataObjectsDict[key]
-                sel['legend'] = key
-                sel['Key'] = self.dataObjectsDict[key].info['Key']
+                sel = {'SourceName': self.dataObjectsDict[key].info['SourceName'],
+                       'dataobject': self.dataObjectsDict[key],
+                       'legend': key,
+                       'Key': self.dataObjectsDict[key].info['Key']}
                 sellist.append(sel)
         for key in dataObjectsKeyList:
             if key not in legendList:
-                sel ={}
-                sel['SourceName'] = self.dataObjectsDict[key].info['SourceName']
-                sel['dataobject'] = self.dataObjectsDict[key]
-                sel['legend'] = key
-                sel['Key'] = self.dataObjectsDict[key].info['Key']
+                sel = {'SourceName': self.dataObjectsDict[key].info['SourceName'],
+                       'dataobject': self.dataObjectsDict[key],
+                       'legend': key,
+                       'Key': self.dataObjectsDict[key].info['Key']}
                 sellist.append(sel)
         self.clearCurves()
         self._addSelection(sellist)
@@ -1688,7 +1659,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         xChannels, yOrig, infoOrig = self.getDataAndInfoFromLegend(oldLegend)
         x, y, legend, info = self.getCurve(oldLegend)[:4]
         calib = info.get('McaCalib', [0.0, 1.0, 0.0])
-        calibrationOrder = info.get('McaCalibOrder',2)
+        calibrationOrder = info.get('McaCalibOrder', 2)
         if calibrationOrder == 'TOF':
             xFromChannels = calib[2] + calib[0] / pow(xChannels-calib[1], 2)
         else:
@@ -1705,6 +1676,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
         self.removeCurve(oldLegend, replot=False)
         self.addCurve(x, y, legend=newLegend, info=newInfo, replot=replot)
         self.updateLegends()
+
 
 def test():
     w = McaWindow()
