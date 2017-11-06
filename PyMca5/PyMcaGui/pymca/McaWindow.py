@@ -46,7 +46,7 @@ if __name__ == "__main__":
 import copy
 
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
-from . import LegacyScanWindow     # TODO: fix McaWindow to use new silx based ScanWindow
+from . import ScanWindow
 from . import McaCalibrationControlGUI
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui.physics.xrf import McaAdvancedFit
@@ -54,7 +54,6 @@ from PyMca5.PyMcaGui.physics.xrf import McaCalWidget
 from PyMca5.PyMcaCore import DataObject
 from . import McaSimpleFit
 from PyMca5.PyMcaMath.fitting import Specfit
-from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5 import PyMcaDirs
 
 MATPLOTLIB = True
@@ -71,17 +70,20 @@ _logger = logging.getLogger(__name__)
 # _logger.setLevel(logging.DEBUG)
 
 
-class McaWindow(LegacyScanWindow.ScanWindow):
+class McaWindow(ScanWindow.ScanWindow):
     def __init__(self, parent=None, name="Mca Window", fit=True, backend=None,
-                 plugins=True, roi=True, specfit=None, **kw):
+                 plugins=True, control=True, position=True, roi=True,
+                 specfit=None, info=False):
 
-        LegacyScanWindow.ScanWindow.__init__(self, parent,
-                                             name=name,
-                                             plugins=plugins,
-                                             backend=backend,
-                                             roi=roi,
-                                             fit=fit,
-                                             **kw)
+        ScanWindow.ScanWindow.__init__(self, parent,
+                                       name=name,
+                                       plugins=plugins,
+                                       backend=backend,
+                                       control=control,
+                                       position=position,
+                                       roi=roi,
+                                       fit=fit,
+                                       info=info)
         self._plotType = "MCA"     # needed by legacy plugins
 
         # this is tricky
@@ -106,24 +108,21 @@ class McaWindow(LegacyScanWindow.ScanWindow):
 
         self.advancedfit = McaAdvancedFit.McaAdvancedFit()
 
-        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-
-        _logger.debug("printPreview id = %d" % id(self.printPreview))
-
         self._buildCalibrationControlWidget()
-        self._toggleCounter = 2
-        self._togglePointsSignal()
+
+        self.setDefaultPlotLines(False)
+        self.setDefaultPlotPoints(True)
+
         self._ownSignal = None
-        self.changeGridLevel()
+        self.setGraphGrid('major')
         self.connections()
         self.setGraphYLabel('Counts')
 
-        if 1:
-            self.fitButtonMenu = qt.QMenu()
-            self.fitButtonMenu.addAction(QString("Simple"),
-                                         self.mcaSimpleFitSignal)
-            self.fitButtonMenu.addAction(QString("Advanced"),
-                                         self.mcaAdvancedFitSignal)
+        self.fitButtonMenu = qt.QMenu()
+        self.fitButtonMenu.addAction(QString("Simple"),
+                                     self.mcaSimpleFitSignal)
+        self.fitButtonMenu.addAction(QString("Advanced"),
+                                     self.mcaAdvancedFitSignal)
 
     def _buildCalibrationControlWidget(self):
         widget = self.centralWidget()
@@ -165,7 +164,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             self.__simplefitcalibration = calib
             calibrationOrder = curveinfo.get('McaCalibOrder',2)
             if calibrationOrder == 'TOF':
-                x = calib[2] + calib[0] / pow(x-calib[1],2)
+                x = calib[2] + calib[0] / pow(x - calib[1], 2)
             else:
                 x = calib[0] + calib[1] * x + calib[2] * x * x
             self.simplefit.setdata(x=x,y=y,
@@ -198,43 +197,14 @@ class McaWindow(LegacyScanWindow.ScanWindow):
             return activeCurve
         if activeCurve in [None, []]:
             return None
-        x = activeCurve[0]
-        y = activeCurve[1]
-        legend = activeCurve[2]
-        curveinfo = activeCurve[3]
+        curveinfo = activeCurve.getLegend()
         xlabel = self.getGraphXLabel()
         ylabel = self.getGraphYLabel()
 
-        """
-        if legend in self.dataObjectsDict.keys():
-            info  = self.dataObjectsDict[legend].info
-            if str(xlabel.upper()) != "CHANNEL":
-                x = self.dataObjectsDict[legend].x[0]
-            else:
-                info = None
-        else:
-            info = None
-
-        if info is not None:
-            if self.calibration == 'None':
-                calib = [0.0,1.0,0.0]
-            else:
-                if 'McaCalib' in curveinfo:
-                    calib = curveinfo['McaCalib']
-                else:
-                    calib = [0.0, 1.0, 0.0]
-            calibrationOrder = curveinfo.get('McaCalibOrder',2)
-            if calibrationOrder == 'TOF':
-                x = calib[2] + calib[0] / pow(x - calib[1],2)
-            else:
-                x = calib[0] + calib[1] * x + calib[2] * x * x
-        else:
-            info = curveinfo
-        """
-        info = curveinfo
-        info['xlabel'] = xlabel
-        info['ylabel'] = ylabel
-        return x, y, legend, info
+        curveinfo['xlabel'] = xlabel
+        curveinfo['ylabel'] = ylabel
+        activeCurve.setInfo(curveinfo)
+        return activeCurve
 
     def getDataAndInfoFromLegend(self, legend):
         """
@@ -1507,17 +1477,19 @@ class McaWindow(LegacyScanWindow.ScanWindow):
     # The plugins interface
     def _toggleLogY(self):
         _logger.debug("McaWindow _toggleLogY")
+        # ensure call to addCurve does not change dataObjectsDict
         self._ownSignal = True
         try:
-            super(McaWindow, self)._toggleLogY()
+            self.setYAxisLogarithmic(not self.isYAxisLogarithmic())
         finally:
             self._ownSignal = None
 
     def _toggleLogX(self):
         _logger.debug("McaWindow _toggleLogX")
+        # ensure call to addCurve does not change dataObjectsDict
         self._ownSignal = True
         try:
-            super(McaWindow, self)._toggleLogX()
+            self.setXAxisLogarithmic(not self.isXAxisLogarithmic())
         finally:
             self._ownSignal = None
 
@@ -1681,7 +1653,7 @@ class McaWindow(LegacyScanWindow.ScanWindow):
 def test():
     w = McaWindow()
     x = numpy.arange(1000.)
-    y =  10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400)
+    y = 10 * x + 10000. * numpy.exp(-0.5*(x-500)*(x-500)/400)
     w.addCurve(x, y, legend="dummy", replot=True, replace=True)
     w.resetZoom()
     app.lastWindowClosed.connect(app.quit)
