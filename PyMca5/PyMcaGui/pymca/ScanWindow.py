@@ -83,12 +83,13 @@ class BaseScanWindow(PlotWindow):
     """
     def __init__(self, parent=None, name="Scan Window", fit=True, backend=None,
                  plugins=True, control=True, position=True, roi=True,
-                 specfit=None, info=False):
+                 specfit=None, info=False, save=True):
         super(BaseScanWindow, self).__init__(parent,
                                              backend=backend,
                                              roi=roi,
                                              control=control,
                                              position=position,
+                                             save=save,
                                              mask=False,
                                              colormap=False,
                                              aspectRatio=False,
@@ -157,7 +158,7 @@ class BaseScanWindow(PlotWindow):
                 self.pluginsToolButton.getPlugins(
                         method="getPlugin1DInstance",
                         directoryList=pluginDir)
-            self._toolbar.addWidget(self.pluginsToolButton)
+            self.pluginsAction = self._toolbar.addWidget(self.pluginsToolButton)
 
         self._toolbar.addWidget(qt.HorizontalSpacer(self._toolbar))
         self.printPreview = SingletonPrintPreviewToolButton(parent=self._toolbar,
@@ -222,11 +223,11 @@ class ScanWindow(BaseScanWindow):
 
     def __init__(self, parent=None, name="Scan Window", fit=True, backend=None,
                  plugins=True, control=True, position=True, roi=True,
-                 specfit=None, info=False):
+                 specfit=None, info=False, save=True):
         BaseScanWindow.__init__(self,
                                 parent, name, fit, backend,
                                 plugins, control, position, roi,
-                                specfit, info)
+                                specfit, info, save)
 
         self.dataObjectsDict = {}
 
