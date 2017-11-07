@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -215,7 +215,7 @@ class SpsDataSource(object):
             envdict[i] = val
         info["envdict"] = envdict
         scantest = (info['flag'] & sps.TAG_SCAN) == sps.TAG_SCAN
-        metdata = None
+        metadata = None
         if array in ["SCAN_D"]:
             # try to get new style SCAN_D metadata
             metadata = sps.getmetadata(self.name, array)
@@ -223,9 +223,14 @@ class SpsDataSource(object):
                 motors, metadata = metadata
                 #info["LabelNames"] = metadata["allcounters"].split(";")
                 labels = list(motors.keys())
+                try:
+                    labels = [(int(x),x) for x in labels]
+                except:
+                    print("SpsDataSource error reverting to old behavior")
+                    labels = [(x, x) for x in labels]
                 labels.sort()
                 if len(labels):
-                    info["LabelNames"] = [motors[x] for x in labels]
+                    info["LabelNames"] = [motors[x[1]] for x in labels]
                 if len(metadata["allmotorm"]):
                     info["MotorNames"] = metadata["allmotorm"].split(";")
                     info["MotorValues"] = [float(x) \
@@ -249,7 +254,7 @@ class SpsDataSource(object):
                 #for key in metadata:
                 #    if key not in info:
                 #        info[key] = metadata[key]
-        if (metdata is None) and ((array in ["SCAN_D"]) or scantest):
+        if (metadata is None) and ((array in ["SCAN_D"]) or scantest):
             # old style SCAN_D metadata
             if 'axistitles' in info["envdict"]:
                 info["LabelNames"] = self._buildLabelsList(info['envdict']['axistitles'])
