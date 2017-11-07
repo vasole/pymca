@@ -34,6 +34,7 @@ import logging
 import numpy
 
 from silx.gui.plot import PlotWindow
+from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 
 import PyMca5
 from PyMca5.PyMcaGui.pymca import ScanWindowInfoWidget
@@ -43,8 +44,6 @@ from PyMca5.PyMcaGui.math import SimpleActions
 from PyMca5.PyMcaGui.pymca import ScanFit
 from PyMca5.PyMcaGui.pymca.ScanFitToolButton import ScanFitToolButton
 from PyMca5.PyMcaCore import DataObject
-
-from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
