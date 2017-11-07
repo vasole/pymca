@@ -57,6 +57,7 @@ from PyMca5.PyMcaCore import DataObject
 from . import McaSimpleFit
 from PyMca5.PyMcaMath.fitting import Specfit
 from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaGui.pymca.McaLegendselector import McaLegendsDockWidget
 
 MATPLOTLIB = True
 
@@ -149,6 +150,14 @@ class McaWindow(ScanWindow.ScanWindow):
         self.swapSignAction.setVisible(False)
         self.yMinToZero.setVisible(False)
         self.subtractAction.setVisible(False)
+
+    def getLegendsDockWidget(self):
+        # customize the legendsdockwidget to handle curve renaming
+        if self._legendsDockWidget is None:
+            self._legendsDockWidget = McaLegendsDockWidget(plot=self)
+            self._legendsDockWidget.hide()
+            self.addTabbedDockWidget(self._legendsDockWidget)
+        return self._legendsDockWidget
 
     def _fitButtonClicked(self):
         self.fitButtonMenu.exec_(self.cursor().pos())
@@ -1096,30 +1105,6 @@ class McaWindow(ScanWindow.ScanWindow):
         self.dataObjectsDict = {}
         self._addSelection(selectionlist)
 
-    # TODO handle rename caldict and dataobjetsdict
-    # def graphCallback(self, ddict):
-    #     _logger.debug("McaWindow._graphCallback %s", ddict)
-    #
-    #     elif ddict['event'] == "renameCurveEvent":
-    #         legend = ddict['legend']
-    #         newlegend = ddict['newlegend']
-    #         if legend in self.dataObjectsDict:
-    #             self.dataObjectsDict[newlegend] = copy.deepcopy(
-    #                     self.dataObjectsDict[legend])
-    #             self.dataObjectsDict[newlegend].info['legend'] = newlegend
-    #             self.removeCurve(legend)
-    #             self.addCurve(self.dataObjectsDict[newlegend].x[0],
-    #                           self.dataObjectsDict[newlegend].y[0],
-    #                           legend=newlegend,
-    #                           info=self.dataObjectsDict[newlegend].info['legend'],
-    #                           own=True,
-    #                           replot=False)
-    #             if legend in self.caldict:
-    #                 self.caldict[newlegend] = copy.deepcopy(self.caldict[legend])
-    #             del self.dataObjectsDict[legend]
-    #         self.replot()
-    #     self.sigPlotSignal.emit(ddict)
-
     def setActiveCurve(self, legend):
         if legend is None:
             legend = self.getActiveCurve(just_legend=True)
@@ -1576,27 +1561,6 @@ class McaWindow(ScanWindow.ScanWindow):
         if activeCurve is not None:
             self.setActiveCurve(activeCurve)
         self.resetZoom()
-
-    def renameCurve(self, oldLegend, newLegend, replot=True):   # TODO
-        xChannels, yOrig, infoOrig = self.getDataAndInfoFromLegend(oldLegend)
-        x, y, legend, info = self.getCurve(oldLegend)[:4]
-        calib = info.get('McaCalib', [0.0, 1.0, 0.0])
-        calibrationOrder = info.get('McaCalibOrder', 2)
-        if calibrationOrder == 'TOF':
-            xFromChannels = calib[2] + calib[0] / pow(xChannels-calib[1], 2)
-        else:
-            xFromChannels = calib[0] + \
-                            calib[1] * xChannels + calib[2] * xChannels * xChannels
-        if numpy.allclose(xFromChannels, x):
-            x = xChannels
-        newInfo = copy.deepcopy(info)
-        newInfo['legend'] = newLegend
-        newInfo['SourceName'] = newLegend
-        newInfo['Key'] = ""
-        newInfo['selectiontype'] = "1D"                    
-        # create the data object (Is this necessary????)
-        self.removeCurve(oldLegend)
-        self.addCurve(x, y, legend=newLegend, info=newInfo, resetzoom=replot)
 
 
 def test():
