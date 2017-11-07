@@ -112,8 +112,8 @@ class McaWindow(ScanWindow.ScanWindow):
 
         self._buildCalibrationControlWidget()
 
-        self.setDefaultPlotLines(False)
-        self.setDefaultPlotPoints(True)
+        self.setDefaultPlotLines(True)
+        self.setDefaultPlotPoints(False)
 
         self._ownSignal = None
         self.setGraphGrid('major')
@@ -151,7 +151,7 @@ class McaWindow(ScanWindow.ScanWindow):
         self.subtractAction.setVisible(False)
 
     def _fitButtonClicked(self):
-        self.fitButtonMenu.exec_(self.plot.cursor().pos())
+        self.fitButtonMenu.exec_(self.cursor().pos())
 
     def _buildCalibrationControlWidget(self):
         widget = self.centralWidget()
@@ -212,7 +212,7 @@ class McaWindow(ScanWindow.ScanWindow):
             return activeCurve
         if activeCurve in [None, []]:
             return None
-        curveinfo = activeCurve.getLegend()
+        curveinfo = activeCurve.getInfo()
         xlabel = self.getGraphXLabel()
         ylabel = self.getGraphYLabel()
 
@@ -1168,7 +1168,7 @@ class McaWindow(ScanWindow.ScanWindow):
             self.controlWidget.calinfo.CText.setText("?????")
         xlabel = self.getGraphXLabel()
         ylabel = self.getGraphYLabel()
-        super(McaWindow, self).setActiveCurve(legend, replot=False)
+        super(McaWindow, self).setActiveCurve(legend)
         self.setGraphXLabel(xlabel)
         self.setGraphYLabel(ylabel)
 
@@ -1234,7 +1234,7 @@ class McaWindow(ScanWindow.ScanWindow):
             outputFile = outdir
 
         # get active curve
-        x, y, legend, info = self.getActiveCurve()
+        x, y, legend, info, params = self.getActiveCurve()
         if info is None:
             return
 
@@ -1450,7 +1450,8 @@ class McaWindow(ScanWindow.ScanWindow):
             _logger.warning("addCurve deprecated replot argument, "
                             "use resetzoom instead")
             resetzoom = kw["replot"] and resetzoom
-        if legend in self._curveList:
+        all_legends = self.getAllCurves(just_legend=True)
+        if legend in all_legends:
             if info is None:
                 info = {}
             oldStuff = self.getCurve(legend)
@@ -1497,6 +1498,9 @@ class McaWindow(ScanWindow.ScanWindow):
                           replace=replace, color=color, symbol=symbol, resetzoom=resetzoom,
                           linestyle=linestyle, xlabel=xlabel, ylabel=ylabel, yaxis=yaxis,
                           xerror=xerror, yerror=yerror, **kw)
+        # activate first curve
+        if not all_legends:
+            self.setActiveCurve(legend)
 
     def newCurve(self, x, y, legend=None, info=None, replace=False,
                  color=None, symbol=None, linestyle=None, resetzoom=True,
