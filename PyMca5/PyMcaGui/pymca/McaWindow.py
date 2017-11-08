@@ -165,7 +165,7 @@ class McaWindow(ScanWindow.ScanWindow):
     def _buildCalibrationControlWidget(self):
         widget = self.centralWidget()
         self.controlWidget = McaCalibrationControlGUI.McaCalibrationControlGUI(
-                                        widget)    # TODO: check what it is doing with the central widget
+                                        widget)
         widget.layout().addWidget(self.controlWidget)
         self.controlWidget.sigMcaCalibrationControlGUISignal.connect(
                             self.__anasignal)
@@ -775,7 +775,7 @@ class McaWindow(ScanWindow.ScanWindow):
         elif dict['event'] == 'ScanFitPrint':
             self.printHtml(dict['text'])
 
-        # elif dict['event'] == 'AddROI':     # TODO: should normally be handled entirely in silx
+        # elif dict['event'] == 'AddROI':     # TODO: should normally be handled entirely in silx (to be checked)
         #     return super(McaWindow, self)._roiSignal(dict)
         #
         # elif dict['event'] == 'DelROI':
@@ -825,11 +825,6 @@ class McaWindow(ScanWindow.ScanWindow):
             'type': roiDict[self.currentROI]["type"],
             'calibration': [A, B, C, order]}
         self.sigROISignal.emit(ddict)
-
-    def setDispatcher(self, w):      # TODO. Remove. Identical to parent class
-        w.sigAddSelection.connect(self._addSelection)
-        w.sigRemoveSelection.connect(self._removeSelection)
-        w.sigReplaceSelection.connect(self._replaceSelection)
 
     def _addSelection(self, selection, resetzoom=True, replot=None):
         _logger.debug("__add, selection = %s", selection)
