@@ -773,10 +773,8 @@ class QStackWidget(StackBase.StackBase,
 
         roiWidget = self.mcaWidget.getCurvesRoiDockWidget()
         if hasattr(roiWidget, "setMiddleROIMarkerFlag"):
-            # public settes available for silx >= 0.7
+            # Not implemented prior to silx >= 0.7
             roiWidget.setMiddleROIMarkerFlag(True)
-        else:
-            roiWidget._middleROIMarkerFlag = True   # noqa
 
     def _buildAndConnectButtonBox(self):
         #the MCA selection
@@ -820,7 +818,9 @@ class QStackWidget(StackBase.StackBase,
 
         self.stackGraphWidget.graph.sigPlotSignal.connect(
                                     self._stackGraphSignal)
-        self.mcaWidget.sigROISignal.connect(self._mcaWidgetSignal)
+
+        self.mcaWidget.getCurvesRoiDockWidget().sigROISignal.connect(
+                                    self._mcaWidgetSignal)
         self.roiWidget.graphWidget.graph.sigPlotSignal.connect(
                                     self._stackGraphSignal)
 
