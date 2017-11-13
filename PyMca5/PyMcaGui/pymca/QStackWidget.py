@@ -761,8 +761,8 @@ class QStackWidget(StackBase.StackBase,
                 self.mainLayout.addWidget(self.rgbWidget)
         elif n == 2:
             self.tab = qt.QTabWidget(self)
-            self.mcaWidget = McaWindow.McaWindow()#vertical=False)
-            #self.mcaWidget.graph.setMinimumWidth(0.5 * \
+            self.mcaWidget = McaWindow.McaWindow()
+            #self.mcaWidget.setMinimumWidth(0.5 *
             #                            qt.QWidget.sizeHint(self).width())
             self.tab.setMaximumHeight(1.3 * qt.QWidget.sizeHint(self).height())
             self.mcaWidget.setWindowTitle("PyMCA - Mca Window")
@@ -770,7 +770,13 @@ class QStackWidget(StackBase.StackBase,
             self.rgbWidget = RGBCorrelator.RGBCorrelator()
             self.tab.addTab(self.rgbWidget, "RGB Correlator")
             self.mainLayout.addWidget(self.tab)
-        self.mcaWidget.setMiddleROIMarkerFlag(True)
+
+        roiWidget = self.mcaWidget.getCurvesRoiDockWidget()
+        if hasattr(roiWidget, "setMiddleROIMarkerFlag"):
+            # public settes available for silx >= 0.7
+            roiWidget.setMiddleROIMarkerFlag(True)
+        else:
+            roiWidget._middleROIMarkerFlag = True   # noqa
 
     def _buildAndConnectButtonBox(self):
         #the MCA selection
