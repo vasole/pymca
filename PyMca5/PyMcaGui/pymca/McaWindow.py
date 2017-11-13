@@ -74,6 +74,8 @@ _logger = logging.getLogger(__name__)
 
 
 class McaWindow(ScanWindow.ScanWindow):
+    sigROISignal = qt.Signal(object)
+
     def __init__(self, parent=None, name="Mca Window", fit=True, backend=None,
                  plugins=True, control=True, position=True, roi=True,
                  specfit=None, info=False):
@@ -102,7 +104,6 @@ class McaWindow(ScanWindow.ScanWindow):
                               'Internal (from Source OR PyMca)']
         self.caldict = {}
         self.calwidget = None
-        self.currentROI = None
         self.peakmarker = None
 
         self.specfit = specfit if specfit is not None else Specfit.Specfit()
@@ -173,6 +174,7 @@ class McaWindow(ScanWindow.ScanWindow):
     def connections(self):
         self.simplefit.sigMcaSimpleFitSignal.connect(self.__anasignal)
         self.advancedfit.sigMcaAdvancedFitSignal.connect(self.__anasignal)
+        self.getCurvesRoiDockWidget().sigROISignal.connect(self.emitCurrentROISignal)
 
     def mcaSimpleFitSignal(self):
         legend = self.getActiveCurve(just_legend=True)
@@ -775,25 +777,15 @@ class McaWindow(ScanWindow.ScanWindow):
         elif dict['event'] == 'ScanFitPrint':
             self.printHtml(dict['text'])
 
-        # elif dict['event'] == 'AddROI':     # TODO: should normally be handled entirely in silx (to be checked)
-        #     return super(McaWindow, self)._roiSignal(dict)
-        #
-        # elif dict['event'] == 'DelROI':
-        #     return super(McaWindow, self)._roiSignal(dict)
-        #
-        # elif dict['event'] == 'ResetROI':
-        #     return super(McaWindow, self)._roiSignal(dict)
-        #
-        # elif dict['event'] == 'ActiveROI':
-        #     _logger.debug("ActiveROI event")
-
         elif dict['event'] == 'selectionChanged':
             _logger.error("Selection changed event not implemented any more")
         else:
             _logger.debug("Unknown or ignored event %s", dict['event'])
 
-    def emitCurrentROISignal(self):   # TODO
-        if self.currentROI is None:
+    def emitCurrentROISignal(self, ddict=None):
+        """Emit a custom ROISignal with calibration info.
+        Ignore the incoming signal emitted by CurvesRoiDockWidget"""
+        if self.getCurvesRoiDockWidget().currentROI is None:
             return
         # I have to get the current calibration
         if self.getGraphXLabel().upper() != "CHANNEL":
@@ -804,17 +796,17 @@ class McaWindow(ScanWindow.ScanWindow):
             order = self.controlWidget.calinfo.caldict['']['order']
         else:
             A = 0.0
-            try:
-                legend = self.getActiveCurve(just_legend=True)
-                if legend in self.dataObjectsDict.keys():
+            legend = self.getActiveCurve(just_legend=True)
+            if legend in self.dataObjectsDict:
+                try:
                     A = self.dataObjectsDict[legend].x[0][0]
-            except:
-                _logger.debug("X axis offset not found")
+                except:
+                    _logger.debug("X axis offset not found")
             B = 1.0
             C = 0.0
             order = 1
-        key = self.currentROI
-        roiList, roiDict = self.roiWidget.getROIListAndDict()
+        key = self.getCurvesRoiDockWidget().currentROI
+        roiList, roiDict = self.getCurvesRoiDockWidget().roiWidget.getROIListAndDict()
         fromdata = roiDict[key]['from']
         todata = roiDict[key]['to']
         ddict = {
@@ -822,7 +814,7 @@ class McaWindow(ScanWindow.ScanWindow):
             'name': key,
             'from': fromdata,
             'to': todata,
-            'type': roiDict[self.currentROI]["type"],
+            'type': roiDict[key]["type"],
             'calibration': [A, B, C, order]}
         self.sigROISignal.emit(ddict)
 
