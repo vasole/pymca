@@ -448,7 +448,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             button.hide()
         self._pickerSelectionWidthLabel.hide()
         self._pickerSelectionWidthValue.hide()
-        if self.graph.getInteractiveMode()['draw']:
+        if self.graph.getInteractiveMode()['mode'] == 'draw':
             self.graph.setInteractiveMode('select')
 
     def showProfileSelectionIcons(self):
