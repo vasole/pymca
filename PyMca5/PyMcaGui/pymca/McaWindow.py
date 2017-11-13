@@ -160,6 +160,17 @@ class McaWindow(ScanWindow.ScanWindow):
             self.addTabbedDockWidget(self._legendsDockWidget)
         return self._legendsDockWidget
 
+    def getCurvesRoiDockWidget(self):
+        """Reimplemented to add the dock widget to the right of the plot.
+        """
+        if self._curvesROIDockWidget is None:
+            self._curvesROIDockWidget =\
+                ScanWindow.ScanWindow.getCurvesRoiDockWidget(self)
+            self.addTabbedDockWidget(self._curvesROIDockWidget)
+            self.addDockWidget(qt.Qt.RightDockWidgetArea,
+                               self._curvesROIDockWidget)
+        return self._curvesROIDockWidget
+
     def _fitButtonClicked(self):
         self.fitButtonMenu.exec_(self.cursor().pos())
 
