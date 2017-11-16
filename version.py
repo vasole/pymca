@@ -71,7 +71,6 @@ def get_major_minor_micro():
     __version__ = None
     ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
     for line in ffile:
-        print("line = ", line)
         if line.startswith('__version__'):
             #remove spaces and split
             __version__ = "%s" % line.replace(' ','').split("=")[-1][:-1]
