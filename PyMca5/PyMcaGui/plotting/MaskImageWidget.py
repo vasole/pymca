@@ -185,13 +185,12 @@ class MaskImageWidget(qt.QWidget):
             self.buildStandaloneSaveMenu()
 
         self.graphWidget.zoomResetToolButton.clicked.connect(self._zoomResetSignal)
-        self.graphWidget.graph.setDrawModeEnabled(False)
-        self.graphWidget.graph.setZoomModeEnabled(True)
+        self.graphWidget.graph.setInteractiveMode('zoom')
         if self.__selectionFlag:
             if self.__imageIconsFlag:
                 self.setSelectionMode(False)
                 self._toggleSelectionMode()
-                self.graphWidget.graph.setDrawModeEnabled(True,
+                self.graphWidget.graph.setInteractiveMode('draw',
                                                           shape="rectangle",
                                                           label="mask")
             else:
@@ -978,30 +977,32 @@ class MaskImageWidget(qt.QWidget):
             print("_setEraseSelectionMode")
         self.__eraseMode = True
         self.__brushMode = True
-        self.graphWidget.graph.setDrawModeEnabled(False)
+        if self.graphWidget.graph.getInteractiveMode()['mode'] == 'draw':
+            self.graphWidget.graph.setInteractiveMode('select')
 
     def _setRectSelectionMode(self):
         if DEBUG:
             print("_setRectSelectionMode")
         self.__eraseMode = False
         self.__brushMode = False
-        self.graphWidget.graph.setDrawModeEnabled(True,
-                                                  shape="rectangle",
-                                                  label="mask")
+        self.graphWidget.graph.setInteractiveMode("draw",
+                                                 shape="rectangle",
+                                                 label="mask")
 
     def _setPolygonSelectionMode(self):
         self.__eraseMode = False
         self.__brushMode = False
-        self.graphWidget.graph.setDrawModeEnabled(True,
-                                                  shape="polygon",
-                                                  label="mask")
+        self.graphWidget.graph.setInteractiveMode("draw",
+                                                 shape="polygon",
+                                                 label="mask")
 
     def _setBrushSelectionMode(self):
         if DEBUG:
             print("_setBrushSelectionMode")
         self.__eraseMode = False
         self.__brushMode = True
-        self.graphWidget.graph.setDrawModeEnabled(False)
+        if self.graphWidget.graph.getInteractiveMode()['mode'] == 'draw':
+            self.graphWidget.graph.setInteractiveMode('select')
 
     def _setBrush(self):
         if DEBUG:
@@ -1041,25 +1042,25 @@ class MaskImageWidget(qt.QWidget):
         self.__brushWidth = 20
 
     def _toggleSelectionMode(self):
-        drawMode = self.graphWidget.graph.getDrawMode()
-        if drawMode is None:
+        mode = self.graphWidget.graph.getInteractiveMode()
+        if mode['mode'] != 'draw':
             # we are not drawing anything
-            if self.graphWidget.graph.isZoomModeEnabled():
+            if self.graphWidget.graph.getInteractiveMode()['mode'] == 'zoom':
                 # we have to pass to mask mode
                 self.setSelectionMode(True)
             else:
                 # we set zoom mode and show the line icons
                 self.setSelectionMode(False)
-        elif drawMode['label'] is not None:
-            if drawMode['label'].startswith('mask'):
-                #we set the zoom mode and show the line icons
+        elif mode['label'] is not None:
+            if mode['label'].startswith('mask'):
+                # we set the zoom mode and show the line icons
                 self.setSelectionMode(False)
             else:
                 # we disable zoom and drawing and set mask mode
                 self.setSelectionMode(True)
-        elif drawMode['label'] in [None]:
+        elif mode['label'] in [None]:
             # we are not drawing anything
-            if self.graphWidget.graph.isZoomModeEnabled():
+            if self.graphWidget.graph.getInteractiveMode()['mode'] == 'zoom':
                 # we have to pass to mask mode
                 self.setSelectionMode(True)
             else:
@@ -1071,17 +1072,17 @@ class MaskImageWidget(qt.QWidget):
         #if not self.__imageIconsFlag:
         #    mode = False
         if mode:
-            self.graphWidget.graph.setDrawModeEnabled(True,
-                                                      'rectangle',
+            self.graphWidget.graph.setInteractiveMode('draw',
+                                                      shape='rectangle',
                                                       label='mask')
-            self.__brushMode  = False
+            self.__brushMode = False
             self.graphWidget.hideProfileSelectionIcons()
             self.graphWidget.selectionToolButton.setChecked(True)
             self.graphWidget.selectionToolButton.setDown(True)
             self.graphWidget.showImageIcons()
         else:
             self.graphWidget.showProfileSelectionIcons()
-            self.graphWidget.graph.setZoomModeEnabled(True)
+            self.graphWidget.graph.setInteractiveMode('zoom')
             self.graphWidget.selectionToolButton.setChecked(False)
             self.graphWidget.selectionToolButton.setDown(False)
             self.graphWidget.hideImageIcons()
@@ -1932,7 +1933,7 @@ class MaskImageWidget(qt.QWidget):
                 self.setMouseText("%g, %g, %g" % (x, y, self.__imageData[row, column]))
 
             if self.__brushMode:
-                if self.graphWidget.graph.isZoomModeEnabled():
+                if self.graphWidget.graph.getInteractiveMode()['mode'] == 'zoom':
                     return
                 if ddict['button'] != "left":
                     return
