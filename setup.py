@@ -23,7 +23,11 @@ import platform
 import time
 USING_SETUPTOOLS = True
 PYMCA_DISTUTILS=os.getenv("PYMCA_DISTUTILS")
+if PYMCA_DISTUTILS in [1, "1", "True"]:
+    PYMCA_DISTUTILS = True
 if 'bdist_wheel' in sys.argv:
+    if PYMCA_DISTUTILS:
+        raise ValueError("Wheels have to be generated with setuptools")
     # wheels require setuptools
     from setuptools import setup
     from setuptools.command.install import install as dftinstall
@@ -33,7 +37,7 @@ if 'bdist_wheel' in sys.argv:
     from distutils.command.install_data import install_data
     from setuptools.command.install_scripts import install_scripts
     from setuptools.command.sdist import sdist
-elif ('--distutils' in sys.argv) or PYMCA_DISTUTILS in [1, "1", "True"]:
+elif ('--distutils' in sys.argv) or PYMCA_DISTUTILS:
     # The cx_setup.py machinery works with distutils
     try:
         sys.argv.remove("--distutils")
@@ -559,12 +563,6 @@ class smart_build_py(_build_py):
             fid.write(lineToBeWritten)
         fid.close()
         return toReturn
-
-    def find_package_modules(self, package, package_dir):
-        modules = _build_py.find_package_modules(self, package, package_dir)
-        if package == PROJECT:
-            modules.append((PROJECT, '_version', 'version.py'))
-        return modules
 
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
 # class smart_install_data(install_data):

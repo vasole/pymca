@@ -50,14 +50,15 @@ Thus 2.1.0a3 is hexversion 0x020100a3.
 """
 
 from __future__ import absolute_import, print_function, division
+import os
 __authors__ = ["Jérôme Kieffer"]
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__date__ = "01/10/2017"
+__date__ = "16/11/2017"
 __status__ = "production"
 __docformat__ = 'restructuredtext'
 __all__ = ["date", "version_info", "strictversion", "hexversion", "debianversion",
-           "calc_hexversion"]   # , "citation"]
+           "calc_hexversion"]
 
 RELEASE_LEVEL_VALUE = {"dev": 0,
                        "alpha": 10,
@@ -66,9 +67,22 @@ RELEASE_LEVEL_VALUE = {"dev": 0,
                        "rc": 13,
                        "final": 15}
 
-MAJOR = 5
-MINOR = 2
-MICRO = 3
+def get_major_minor_micro():
+    __version__ = None
+    ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
+    for line in ffile:
+        print("line = ", line)
+        if line.startswith('__version__'):
+            #remove spaces and split
+            __version__ = "%s" % line.replace(' ','').split("=")[-1][:-1]
+            #remove " or ' present
+            __version__ = __version__[1:-1]
+            break
+    if __version__ == None:
+        raise ValueError("Cannot figure out version")
+    return [int(x) for x in __version__.split(".")]
+
+MAJOR, MINOR, MICRO = get_major_minor_micro()
 RELEV = "final"  # <16
 SERIAL = 0  # <16
 
@@ -113,8 +127,6 @@ def calc_hexversion(major=0, minor=0, micro=0, releaselevel="dev", serial=0):
 
 
 hexversion = calc_hexversion(*version_info)
-
-# citation = "doi:10.5281/zenodo.1000472"
 
 if __name__ == "__main__":
     print(version)
