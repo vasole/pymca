@@ -252,7 +252,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.__useTabWidget = True
 
             if not self.__useTabWidget:
-                self.mcaWindow = McaWindow.McaWidget(self.mdi)
+                self.mcaWindow = McaWindow.McaWindow(self.mdi)
                 self.scanWindow = ScanWindow.ScanWindow(self.mdi)
                 self.imageWindowDict = None
                 self.connectDispatcher(self.mcaWindow, self.sourceWidget)
@@ -684,12 +684,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         d["PyMca"]["McaWindow"]["calibrations"] = self.mcaWindow.getCalibrations()
 
         #ROIs
-        d['ROI']={}
-        if self.mcaWindow.roiWidget is None:
-            roilist = []
-            roidict = {}
-        else:
-            roilist, roidict = self.mcaWindow.roiWidget.getROIListAndDict()
+        d['ROI'] = {}
+        roilist, roidict = self.mcaWindow.getCurvesRoiDockWidget().roiWidget.getROIListAndDict()
         d['ROI']['roilist'] = roilist
         d['ROI']['roidict'] = {}
         d['ROI']['roidict'].update(roidict)
@@ -747,17 +743,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             key = 'Splitter'
             if key in ddict['Geometry'].keys():
                 self.splitter.setSizes(ddict['Geometry'][key])
-            if hasattr(self.mcaWindow, "graph"):
-                # this was the way of working of 4.x.x versions
-                key = 'McaWindow'
-                if key in ddict['Geometry'].keys():
-                    r = qt.QRect(*ddict['Geometry']['McaWindow'])
-                    self.mcaWindow.setGeometry(r)
-                key = 'McaGraph'
-                if key in ddict['Geometry'].keys():
-                    r = qt.QRect(*ddict['Geometry']['McaGraph'])
-                    self.mcaWindow.graph.setGeometry(r)
-                self.show()
             qApp = qt.QApplication.instance()
             qApp.processEvents()
             qApp.postEvent(self, qt.QResizeEvent(qt.QSize(ddict['Geometry']['MainWindow'][2]+1,
@@ -839,10 +824,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 if type(roilist) != type([]):
                     roilist=[roilist]
                 roidict = ddict['roidict']
-                if self.mcaWindow.roiWidget is None:
-                    self.mcaWindow.showRoiWidget(qt.Qt.BottomDockWidgetArea)
-                self.mcaWindow.roiWidget.fillFromROIDict(roilist=roilist,
-                                                         roidict=roidict)
+                roiWidget = self.mcaWindow.getCurvesRoiDockWidget().roiWidget
+                roiWidget.fillFromROIDict(roilist=roilist,
+                                          roidict=roidict)
 
     def __configureElements(self, ddict):
         if 'Material' in ddict:
@@ -885,8 +869,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                (d['LastFit']['ydata0'] != 'None'):
                 self.mcaWindow.advancedfit.setdata(x=d['LastFit']['xdata0'],
                                                    y=d['LastFit']['ydata0'],
-                                              sigmay=d['LastFit']['sigmay0'],
-                                              **d['Information'])
+                                                   sigmay=d['LastFit']['sigmay0'],
+                                                   **d['Information'])
                 if d['LastFit']['hidden'] == 'False':
                     self.mcaWindow.advancedfit.show()
                     self.mcaWindow.advancedfit.raiseW()
@@ -1631,7 +1615,7 @@ if 0:
 
             #name= self.__getNewGraphName()
             if name == "MCA Graph":
-                graph= McaWindow.McaWindow(self.mdi, name=name)
+                graph = McaWindow.McaWindow(self.mdi, name=name)
             graph.windowClosed[()].connect(self.closeGraph)
             graph.show()
 
