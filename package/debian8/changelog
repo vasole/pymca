@@ -1,10 +1,10 @@
-pymca (5.2.3-2) unstable; urgency=low
+pymca (5.2.2-2) unstable; urgency=low
 
   * Bugfix SpsDataSource
 
  -- Pierre Knobel <pierre.knobel@esrf.fr>  Thu, 7 Nov 2017 10:01:17 +0200
 
-pymca (5.2.3-1) unstable; urgency=low
+pymca (5.2.2-1) unstable; urgency=low
 
   * Upstream version 5.2.2a.
   * New internal debian packaging scripts based on silx
