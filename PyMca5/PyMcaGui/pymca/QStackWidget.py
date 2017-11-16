@@ -771,10 +771,10 @@ class QStackWidget(StackBase.StackBase,
             self.tab.addTab(self.rgbWidget, "RGB Correlator")
             self.mainLayout.addWidget(self.tab)
 
-        roiWidget = self.mcaWidget.getCurvesRoiDockWidget()
-        if hasattr(roiWidget, "setMiddleROIMarkerFlag"):
+        curvesRoiWidget = self.mcaWidget.getCurvesRoiDockWidget().roiWidget
+        if hasattr(curvesRoiWidget, "setMiddleROIMarkerFlag"):
             # Not implemented prior to silx >= 0.7
-            roiWidget.setMiddleROIMarkerFlag(True)
+            curvesRoiWidget.setMiddleROIMarkerFlag(True)
 
     def _buildAndConnectButtonBox(self):
         #the MCA selection
