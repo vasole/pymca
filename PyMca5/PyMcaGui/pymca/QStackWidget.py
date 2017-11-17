@@ -65,11 +65,11 @@ if DEBUG:
 
 class QStackWidget(StackBase.StackBase,
                    CloseEventNotifyingWidget.CloseEventNotifyingWidget):
-    def __init__(self, parent = None,
-                 mcawidget = None,
-                 rgbwidget = None,
-                 vertical = False,
-                 master = True):
+    def __init__(self, parent=None,
+                 mcawidget=None,
+                 rgbwidget=None,
+                 vertical=False,
+                 master=True):
         StackBase.StackBase.__init__(self)
         CloseEventNotifyingWidget.CloseEventNotifyingWidget.__init__(self,
                                                                      parent)
@@ -145,7 +145,7 @@ class QStackWidget(StackBase.StackBase,
                                              self.saveStackAsFloat32TiffImages)
         self._stackSaveMenu.addAction(QString("Standard Graphics"),
                             self.stackWidget.graphWidget._saveIconSignal)
-        self.stackWidget.graphWidget.saveToolButton.clicked.connect( \
+        self.stackWidget.graphWidget.saveToolButton.clicked.connect(
                      self._stackSaveToolButtonSignal)
 
         self.stackGraphWidget = self.stackWidget.graphWidget
@@ -163,16 +163,16 @@ class QStackWidget(StackBase.StackBase,
                                                          standalonesave=standaloneSaving,
                                                          profileselection=True,
                                                          aspect=True)
-        infotext  = 'Toggle background subtraction from current image\n'
+        infotext = 'Toggle background subtraction from current image\n'
         infotext += 'subtracting a straight line between the ROI limits.'
         self.roiBackgroundIcon = qt.QIcon(qt.QPixmap(IconDict["subtract"]))
-        self.roiBackgroundButton = self.roiWidget.graphWidget._addToolButton(\
+        self.roiBackgroundButton = self.roiWidget.graphWidget._addToolButton(
                                     self.roiBackgroundIcon,
                                     self._roiSubtractBackgroundClicked,
                                     infotext,
-                                    toggle = True,
-                                    state = False,
-                                    position = 6)
+                                    toggle=True,
+                                    state=False,
+                                    position=6)
         self.roiGraphWidget = self.roiWidget.graphWidget
         self.stackWindow.mainLayout.addWidget(self.stackWidget)
         self.roiWindow.mainLayout.addWidget(self.roiWidget)
@@ -185,37 +185,37 @@ class QStackWidget(StackBase.StackBase,
 
         #add some missing icons
         offset = 6
-        infotext  = 'If checked, spectra will be added normalized to the number\n'
+        infotext = 'If checked, spectra will be added normalized to the number\n'
         infotext += 'of pixels. Be carefull if you are preparing a batch and you\n'
         infotext += 'fit the normalized spectra because the data in the batch will\n'
         infotext += 'have a different weight because they are not normalized.'
         self.normalizeIcon = qt.QIcon(qt.QPixmap(IconDict["normalize16"]))
-        self.normalizeButton = self.stackGraphWidget._addToolButton(\
+        self.normalizeButton = self.stackGraphWidget._addToolButton(
                                         self.normalizeIcon,
                                         self.normalizeIconChecked,
                                         infotext,
-                                        toggle = True,
-                                        state = False,
-                                        position = 6)
+                                        toggle=True,
+                                        state=False,
+                                        position=6)
         offset += 1
 
         if self.master:
             self.loadIcon = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))
-            self.loadStackButton = self.stackGraphWidget._addToolButton(\
+            self.loadStackButton = self.stackGraphWidget._addToolButton(
                                         self.loadIcon,
                                         self.loadSlaveStack,
                                         'Load another stack of same shape',
-                                        position = offset)
+                                        position=offset)
             offset += 1
 
-        self.pluginIcon     = qt.QIcon(qt.QPixmap(IconDict["plugin"]))
+        self.pluginIcon = qt.QIcon(qt.QPixmap(IconDict["plugin"]))
         infotext = "Call/Load Stack Plugins"
         self.stackGraphWidget._addToolButton(self.pluginIcon,
                                              self._pluginClicked,
                                              infotext,
-                                             toggle = False,
-                                             state = False,
-                                             position = offset)
+                                             toggle=False,
+                                             state=False,
+                                             position=offset)
 
     def setStack(self, *var, **kw):
         self.stackWidget.setImageData(None)
@@ -224,7 +224,7 @@ class QStackWidget(StackBase.StackBase,
         if (1 in self._stack.data.shape) and\
            isinstance(self._stack.data, numpy.ndarray):
             oldshape = self._stack.data.shape
-            dialog = ImageShapeDialog(self, shape = oldshape[0:2])
+            dialog = ImageShapeDialog(self, shape=oldshape[0:2])
             dialog.setModal(True)
             ret = dialog.exec_()
             if ret:
@@ -265,14 +265,14 @@ class QStackWidget(StackBase.StackBase,
         xScale = self._stack.info.get("xScale", None)
         yScale = self._stack.info.get("yScale", None)
         if self.roiBackgroundButton.isChecked():
-            self.roiWidget.graphWidget.graph.setGraphTitle(\
-                                self._ROIImageNames[0]+" Net")
-            self.roiWidget.setImageData(self._ROIImageList[0]-\
+            self.roiWidget.graphWidget.graph.setGraphTitle(
+                                self._ROIImageNames[0] + " Net")
+            self.roiWidget.setImageData(self._ROIImageList[0] -
                                         self._ROIImageList[-1],
                                         xScale=xScale,
                                         yScale=yScale)
         else:
-            self.roiWidget.graphWidget.graph.setGraphTitle(\
+            self.roiWidget.graphWidget.graph.setGraphTitle(
                                 self._ROIImageNames[0])
             self.roiWidget.setImageData(self._ROIImageList[0],
                                         xScale=xScale,
@@ -359,7 +359,7 @@ class QStackWidget(StackBase.StackBase,
 
         ArraySave.save3DArrayAsMonochromaticTiff(dataView,
                                     filename,
-                                    labels = None,
+                                    labels=None,
                                     dtype=dtype,
                                     mcaindex=mcaIndex)
 
@@ -403,7 +403,7 @@ class QStackWidget(StackBase.StackBase,
             row1 = int(min([row1+0.5, self._stack.data.shape[0]]))
             col0 = int(max([col0+0.5, 0]))
             col1 = int(min([col1+0.5, self._stack.data.shape[1]]))
-            view = self._stack.data[row0:row1+1, col0:col1+1,:]
+            view = self._stack.data[row0:row1+1, col0:col1+1, :]
         return view
 
     def saveStackAsNeXus(self, dtype=None, interpretation=None, compression=False):
@@ -489,14 +489,14 @@ class QStackWidget(StackBase.StackBase,
         if not len(filename):
             return
         ArraySave.save3DArrayAsHDF5(self._stack.data, filename,
-                                    labels = None, dtype=None, mode='nexus+')
+                                    labels=None, dtype=None, mode='nexus+')
 
     def saveStackAsSimpleHDF5(self):
         filename = self._getOutputHDF5Filename()
         if not len(filename):
             return
         ArraySave.save3DArrayAsHDF5(self._stack.data, filename,
-                                    labels = None, dtype=None, mode='simple')
+                                    labels=None, dtype=None, mode='simple')
 
     def saveStackAsSimplestHDF5(self):
         filename = self._getOutputHDF5Filename()
@@ -504,15 +504,15 @@ class QStackWidget(StackBase.StackBase,
             return
         view = self._getCroppedView()
         ArraySave.save3DArrayAsHDF5(view, filename,
-                                    labels = None, dtype=None, mode='simplest')
+                                    labels=None, dtype=None, mode='simplest')
 
     def loadStack(self):
         if self._stackImageData is not None:
             #clear with a small stack
             stack = DataObject.DataObject()
-            stack.data = numpy.zeros((100,100,100), numpy.float32)
+            stack.data = numpy.zeros((100, 100, 100), numpy.float32)
             self.setStack(stack)
-        if self.stackSelector  is None:
+        if self.stackSelector is None:
             self.stackSelector = StackSelector.StackSelector(self)
         stack = self.stackSelector.getStack()
         if (type(stack) == type([])) or isinstance(stack, list):
@@ -564,7 +564,7 @@ class QStackWidget(StackBase.StackBase,
             else:
                 self._closeSlave()
                 return
-        if self.stackSelector  is None:
+        if self.stackSelector is None:
             self.stackSelector = StackSelector.StackSelector(self)
 
         try:
@@ -812,10 +812,10 @@ class QStackWidget(StackBase.StackBase,
         # self.stackGraphWidget.setInfoText("    X = ???? Y = ???? Z = ????")
         # self.stackGraphWidget.showInfo()
 
-        self.stackGraphWidget.graph.sigPlotSignal.connect(\
+        self.stackGraphWidget.graph.sigPlotSignal.connect(
                                     self._stackGraphSignal)
         self.mcaWidget.sigROISignal.connect(self._mcaWidgetSignal)
-        self.roiWidget.graphWidget.graph.sigPlotSignal.connect(\
+        self.roiWidget.graphWidget.graph.sigPlotSignal.connect(
                                     self._stackGraphSignal)
 
     def showOriginalImage(self):
@@ -826,8 +826,8 @@ class QStackWidget(StackBase.StackBase,
         xScale = self._stack.info.get("xScale", None)
         yScale = self._stack.info.get("yScale", None)
         self.stackWidget.setImageData(self._stackImageData,
-                                        xScale=xScale,
-                                        yScale=yScale)
+                                      xScale=xScale,
+                                      yScale=yScale)
 
     def showOriginalMca(self):
         goodData = numpy.isfinite(self._mcaData0.y[0].sum())
@@ -839,7 +839,7 @@ class QStackWidget(StackBase.StackBase,
         msg = qt.QMessageBox(self)
         msg.setIcon(qt.QMessageBox.Information)
         msg.setWindowTitle("Non finite data")
-        text  = "Your data contain infinite values or nans.\n"
+        text = "Your data contain infinite values or nans.\n"
         text += "Pixels containing those values will be ignored."
         msg.setText(text)
         msg.exec_()
@@ -853,7 +853,7 @@ class QStackWidget(StackBase.StackBase,
             msg = qt.QMessageBox(self)
             msg.setIcon(qt.QMessageBox.Information)
             msg.setWindowTitle("No active curve selected")
-            text  = "Please select the MCA active curve."
+            text = "Please select the MCA active curve."
             msg.setText(text)
             msg.exec_()
             return
@@ -868,8 +868,8 @@ class QStackWidget(StackBase.StackBase,
         xScale = self._stack.info.get("xScale", None)
         yScale = self._stack.info.get("yScale", None)
         if self.roiBackgroundButton.isChecked():
-            self.roiWidget.graphWidget.graph.setGraphTitle(image_names[0]+\
-                                                      " Net")
+            self.roiWidget.graphWidget.graph.setGraphTitle(image_names[0] +
+                                                           " Net")
             self.roiWidget.setImageData(imageList[0]-imageList[-1],
                                         xScale=xScale,
                                         yScale=yScale)
@@ -949,9 +949,9 @@ class QStackWidget(StackBase.StackBase,
                               self._stackImageData.shape[1]
             legend += "/%d" % npixels
         return self.sendMcaSelection(dataObject,
-                          key = "Selection",
-                          legend =legend,
-                          action = action)
+                                     key="Selection",
+                                     legend=legend,
+                                     action=action)
 
     def _removeMcaClicked(self):
         #remove the mca
@@ -966,7 +966,7 @@ class QStackWidget(StackBase.StackBase,
                 if curve.startswith(legend):
                     legend = curve
                     break
-        self.sendMcaSelection(dataObject, legend = legend, action = "REMOVE")
+        self.sendMcaSelection(dataObject, legend=legend, action="REMOVE")
 
     def _replaceMcaClicked(self):
         #replace the mca
@@ -974,7 +974,7 @@ class QStackWidget(StackBase.StackBase,
         self._addMcaClicked(action="REPLACE")
         self.__ROIConnected = True
 
-    def sendMcaSelection(self, mcaObject, key = None, legend = None, action = None):
+    def sendMcaSelection(self, mcaObject, key=None, legend=None, action=None):
         if action is None:
             action = "ADD"
         if key is None:
@@ -987,9 +987,9 @@ class QStackWidget(StackBase.StackBase,
                 legend += "/%d" % npixels
         sel = {}
         sel['SourceName'] = "EDF Stack"
-        sel['Key']        =  key
-        sel['legend']     =  legend
-        sel['dataobject'] =  mcaObject
+        sel['Key'] = key
+        sel['legend'] = legend
+        sel['dataobject'] = mcaObject
         if action == "ADD":
             self.mcaWidget._addSelection([sel])
         elif action == "REMOVE":
@@ -1079,11 +1079,9 @@ class QStackWidget(StackBase.StackBase,
             return
         if ddict['event'] == "hFlipSignal":
             if ddict['id'] != id(self.stackWidget):
-                self.stackWidget.graph.invertYAxis(ddict['current'])
-                self.stackWidget.graph.replot()
+                self.stackWidget.graph.getYAxis().setInverted(ddict['current'])
             if ddict['id'] != id(self.roiWidget):
-                self.roiWidget.graph.invertYAxis(ddict['current'])
-                self.roiWidget.graph.replot()
+                self.roiWidget.graph.getYAxis().setInverted(ddict['current'])
             return
 
     def _stackGraphSignal(self, ddict):
@@ -1100,8 +1098,8 @@ class QStackWidget(StackBase.StackBase,
             x = min(int(x), limits[0]-1)
             y = min(int(y), limits[1]-1)
             z = self._stackImageData[x, y]
-            self.stackGraphWidget.setInfoText("    X = %d Y = %d Z = %.4g" %\
-                                               (y, x, z))
+            self.stackGraphWidget.setInfoText(
+                    "    X = %d Y = %d Z = %.4g" % (y, x, z))
 
     def _mcaWidgetSignal(self, ddict):
         if not self.__ROIConnected:
@@ -1148,7 +1146,7 @@ def test():
     stackData = numpy.zeros((nrows, ncols, nchannels), numpy.float)
     for i in range(nchannels):
         stackData[:, :, i] = a * i
-    stackData[0:10,:,:] = 0
+    stackData[0:10, :, :] = 0
     w = QStackWidget()
     w.setStack(stackData, mcaindex=2)
     w.show()
@@ -1159,7 +1157,7 @@ if __name__ == "__main__":
     sys.excepthook = qt.exceptionHandler
     import getopt
     options = ''
-    longoptions = ["fileindex=","old",
+    longoptions = ["fileindex=", "old",
                    "filepattern=", "begin=", "end=", "increment=",
                    "nativefiledialogs=", "imagestack=", "image=",
                    "backend="]
@@ -1196,17 +1194,17 @@ if __name__ == "__main__":
             else:
                 increment = int(arg)
         elif opt in '--filepattern':
-            filepattern = arg.replace('"','')
-            filepattern = filepattern.replace("'","")
+            filepattern = arg.replace('"', '')
+            filepattern = filepattern.replace("'", "")
         elif opt in '--fileindex':
             fileindex = int(arg)
         elif opt in ['--imagestack', "--image"]:
             imagestack = int(arg)
         elif opt in '--nativefiledialogs':
             if int(arg):
-                PyMcaDirs.nativeFileDialogs=True
+                PyMcaDirs.nativeFileDialogs = True
             else:
-                PyMcaDirs.nativeFileDialogs=False
+                PyMcaDirs.nativeFileDialogs = False
         elif opt in '--backend':
             backend = arg
         #elif opt in '--old':
