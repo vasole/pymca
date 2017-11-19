@@ -71,8 +71,12 @@ else:
                 os.environ['QT_API'] = 'pyside'
 
 import IPython
-if IPython.__version__.startswith("2"):
+_ipy_main_ver = int(IPython.__version__.split('.')[0])
+
+if _ipy_main_ver == 2:
     QTCONSOLE = False
+elif _ipy_main_ver > 4:
+    QTCONSOLE = True
 else:
     try:
         import qtconsole
