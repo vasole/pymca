@@ -102,7 +102,6 @@ else:
         IPython.external.qt_loaders.has_binding = has_binding 
     from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
     from IPython.qt.inprocess import QtInProcessKernelManager
-    print("ciccio sono qui invece")
 from IPython.lib import guisupport
 
 class QIPythonWidget(RichIPythonWidget):
