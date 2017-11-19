@@ -71,8 +71,12 @@ else:
                 os.environ['QT_API'] = 'pyside'
 
 import IPython
-if IPython.__version__.startswith("2"):
+_ipy_main_ver = int(IPython.__version__.split('.')[0])
+
+if _ipy_main_ver == 2:
     QTCONSOLE = False
+elif _ipy_main_ver > 4:
+    QTCONSOLE = True
 else:
     try:
         import qtconsole
@@ -98,6 +102,7 @@ else:
         IPython.external.qt_loaders.has_binding = has_binding 
     from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
     from IPython.qt.inprocess import QtInProcessKernelManager
+    print("ciccio sono qui invece")
 from IPython.lib import guisupport
 
 class QIPythonWidget(RichIPythonWidget):
