@@ -37,48 +37,45 @@ ___doc__ = """
     - Final layer containing the selected points with the selected colors.
 
 """
-import sys
-import os
 import numpy
 from PyMca5.PyMcaGraph.ctools import pnpoly
 DEBUG = 0
 
-from . import PlotWindow
 from . import MaskImageWidget
 from . import MaskImageTools
-qt = PlotWindow.qt
+from .. import PyMcaQt as qt
+from .PyMca_Icons import IconDict
+
+from silx.gui.plot import PlotWindow
+
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
     QString = qt.safe_str
-IconDict = PlotWindow.IconDict
 
-class MaskScatterWidget(PlotWindow.PlotWindow):
+
+class MaskScatterWidget(PlotWindow):
     sigMaskScatterWidgetSignal = qt.pyqtSignal(object)
     DEFAULT_COLORMAP_INDEX = 2
     DEFAULT_COLORMAP_LOG_FLAG = True
 
-    def __init__(self, parent=None, backend=None, plugins=False, newplot=False,
-                 control=False, position=False, maxNRois=1, grid=False,
-                 logx=False, logy=False, togglePoints=False, normal=True,
-                 polygon=True, colormap=True, aspect=True,
-                 imageIcons=True, bins=None, **kw):
+    def __init__(self, parent=None, backend=None, control=False,
+                 position=False, maxNRois=1, grid=False, logScale=False,
+                 curveStyle=False, resetzoom=True, colormap=True,
+                 aspectRatio=True, imageIcons=True, bins=None):
         super(MaskScatterWidget, self).__init__(parent=parent,
                                                 backend=backend,
-                                                plugins=plugins,
-                                                newplot=newplot,
                                                 control=control,
                                                 position=position,
                                                 grid=grid,
-                                                logx=logx,
-                                                logy=logy,
-                                                togglePoints=togglePoints,
-                                                normal=normal,
-                                                aspect=aspect,
+                                                logScale=logScale,
+                                                curveStyle=curveStyle,
+                                                resetzoom=resetzoom,
+                                                aspectRatio=aspectRatio,
                                                 colormap=colormap,
-                                                imageIcons=imageIcons,
-                                                polygon=polygon,
-                                                **kw)
+                                                imageIcons=imageIcons)
+                                                # polygon=polygon,     # TODO: polygon/mask toolbutton
+
         self._buildAdditionalSelectionMenuDict()
         self._selectionCurve = None
         self._selectionMask = None
