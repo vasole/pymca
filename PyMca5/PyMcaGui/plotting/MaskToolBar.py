@@ -132,6 +132,8 @@ class MaskToolBar(qt.QToolBar):
         if not polygon:
             self.polygonSelectionAction.setVisible(False)
 
+        self._buildAdditionalSelectionMenuDict()
+
         self._selectionColors = numpy.zeros((len(self.colorList), 4), numpy.uint8)
         for i in range(len(self.colorList)):
             self._selectionColors[i, 0] = eval("0x" + self.colorList[i][-2:])
@@ -163,7 +165,7 @@ class MaskToolBar(qt.QToolBar):
         self.rectSelectionAction.setCheckable(True)
 
     def _imageIconSignal(self):
-        self.emitIconSignal("image")
+        self.plot._resetSelection(owncall=True)
 
     def _eraseSelectionIconSignal(self):
         self.plot._eraseMode = self.eraseSelectionAction.isChecked()
@@ -256,9 +258,43 @@ class MaskToolBar(qt.QToolBar):
     def _setBrush6(self):
         self.plot._brushWidth = 20
 
+    def _buildAdditionalSelectionMenuDict(self):
+        self._additionalSelectionMenu = {}
+        #scatter view menu
+        menu = qt.QMenu()
+        menu.addAction(QString("Density plot view"), self.__setDensityPlotView)
+        menu.addAction(QString("Reset Selection"), self.__resetSelection)
+        menu.addAction(QString("Invert Selection"), self.plot._invertSelection)
+        self._additionalSelectionMenu["scatter"] = menu
+
+        # density view menu
+        menu = qt.QMenu()
+        menu.addAction(QString("Scatter plot view"), self.__setScatterPlotView)
+        menu.addAction(QString("Reset Selection"), self.__resetSelection)
+        menu.addAction(QString("Invert Selection"), self.plot._invertSelection)
+        menu.addAction(QString("I >= Colormap Max"), self.plot._selectMax)
+        menu.addAction(QString("Colormap Min < I < Colormap Max"),
+                               self.plot._selectMiddle)
+        menu.addAction(QString("I <= Colormap Min"), self.plot._selectMin)
+        menu.addAction(QString("Increase mask alpha"), self.plot._increaseMaskAlpha)
+        menu.addAction(QString("Decrease mask alpha"), self.plot._decreaseMaskAlpha)
+
+        self._additionalSelectionMenu["density"] = menu
+
+    def __setScatterPlotView(self):
+        self.plot.setPlotViewMode(mode="scatter")
+
+    def __setDensityPlotView(self):
+        self.plot.setPlotViewMode(mode="density")
+
+    def __resetSelection(self):
+        self.plot._resetSelection(owncall=True)
 
     def _additionalIconSignal(self):
-        self.emitIconSignal("additional")
+        if self.plot._plotViewMode == "density":   # and imageData is not none ...
+            self._additionalSelectionMenu["density"].exec_(self.cursor().pos())
+        else:
+            self._additionalSelectionMenu["scatter"].exec_(self.cursor().pos())
 
     def emitIconSignal(self, key, event="iconClicked"):
         ddict = {"key": key,
