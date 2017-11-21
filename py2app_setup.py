@@ -53,7 +53,8 @@ for line in ffile:
 PyMcaInstallationDir = os.path.abspath("build")
 PyMcaDir = os.path.join(PyMcaInstallationDir, "PyMca5")
 #make sure PyMca is freshly built
-cmd = "setup.py install --distutils --install-lib %s --install-scripts /tmp" % PyMcaInstallationDir
+cmd = "setup.py install --distutils --install-lib %s --install-data %s --install-scripts /tmp/scripts" % \
+                          (PyMcaInstallationDir, PyMcaInstallationDir)
 cmd = sys.executable + " " + cmd
 if os.system(cmd):
     print("Error building PyMca")
