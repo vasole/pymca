@@ -10,7 +10,7 @@ the same structure.
 SPEC shared memory. Correct counter labeling order in case of using 10 or more
 counters and motors in a scan.
 
-NeXus. Interpreter new style NXdata groups using silx NXdataViewer if silx is installed.
+NeXus. Interpret new style NXdata groups using silx NXdataViewer if silx is installed.
 
 VERSION 5.2.1
 
