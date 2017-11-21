@@ -407,7 +407,7 @@ class MaskScatterWidget(PlotWindow):
                 tmpMask = self._selectionMask[:]
                 tmpMask.shape = -1
                 for i in range(0, self._maxNRois + 1):
-                    colors[tmpMask == i, :] = self._selectionColors[i]
+                    colors[tmpMask == i, :] = self.maskToolBar._selectionColors[i]
                 self.setSelectionCurveData(x, y, legend=legend, info=info,
                                            #color=colors,
                                            color="k",
@@ -432,7 +432,7 @@ class MaskScatterWidget(PlotWindow):
                     if xMask.size < 1:
                         self.removeCurve(legend=legend + " %02d" % i)
                         continue
-                    color = self._selectionColors[i].copy()
+                    color = self.maskToolBar._selectionColors[i].copy()
                     if useAlpha:
                         if len(color) == 4:
                             if type(color[3]) in [numpy.uint8, numpy.int]:
