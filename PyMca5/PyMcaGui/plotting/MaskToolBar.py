@@ -145,7 +145,7 @@ class MaskToolBar(qt.QToolBar):
         self.eraseSelectionAction.setToolTip("Set erase mode if checked")
         self.eraseSelectionAction.setCheckable(True)
 
-        self.eraseSelectionAction.setChecked(self._eraseMode)
+        self.eraseSelectionAction.setChecked(self.plot._eraseMode)
 
         self.polygonSelectionAction.setCheckable(True)
         self.rectSelectionAction.setCheckable(True)

@@ -141,12 +141,12 @@ class ScatterPlotCorrelatorWidget(MaskScatterWidget.MaskScatterWidget):
         self.setSelectionCurveData(x, y, legend=None,
                                    color="k",
                                    symbol=".",
-                                   replot=False,
+                                   resetzoom=False,
                                    replace=True,
                                    xlabel=xLabel,
                                    ylabel=yLabel,
                                    selectable=False)
-        self._updatePlot(replot=False, replace=True)
+        self._updatePlot(resetzoom=False, replace=True)
         #matplotlib needs a zoom reset to update the scales
         # that problem does not seem to be present with OpenGL
         self.resetZoom()
