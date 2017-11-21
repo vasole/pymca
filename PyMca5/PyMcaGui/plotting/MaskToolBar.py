@@ -77,11 +77,7 @@ class MaskToolBar(qt.QToolBar):
             "It makes no sense to build an empty mask toolbar"
         self.plot = plot
 
-        self.polygonSelectionToolButton = qt.QToolButton(self)
-        self.polygonSelectionToolButton.setIcon(self.polygonIcon)
         self.polygonIcon = qt.QIcon(qt.QPixmap(IconDict["polygon"]))
-        self.polygonSelectionToolButton.setToolTip('Polygon selection\n'
-                                                   'Right click to finish')
         self.imageIcon = qt.QIcon(qt.QPixmap(IconDict["image"]))
         self.eraseSelectionIcon = qt.QIcon(qt.QPixmap(IconDict["eraseselect"]))
         self.rectSelectionIcon = qt.QIcon(qt.QPixmap(IconDict["boxselect"]))
@@ -89,6 +85,7 @@ class MaskToolBar(qt.QToolBar):
         self.brushIcon = qt.QIcon(qt.QPixmap(IconDict["brush"]))
         self.additionalIcon = qt.QIcon(qt.QPixmap(IconDict["additionalselect"]))
 
+        self.polygonSelectionToolButton = qt.QToolButton(self)
         self.imageToolButton = qt.QToolButton(self)
         self.eraseSelectionToolButton = qt.QToolButton(self)
         self.rectSelectionToolButton = qt.QToolButton(self)
@@ -96,6 +93,7 @@ class MaskToolBar(qt.QToolBar):
         self.brushToolButton = qt.QToolButton(self)
         self.additionalSelectionToolButton = qt.QToolButton(self)
 
+        self.polygonSelectionToolButton.setIcon(self.polygonIcon)
         self.imageToolButton.setIcon(self.imageIcon)
         self.eraseSelectionToolButton.setIcon(self.eraseSelectionIcon)
         self.rectSelectionToolButton.setIcon(self.rectSelectionIcon)
@@ -103,6 +101,8 @@ class MaskToolBar(qt.QToolBar):
         self.brushToolButton.setIcon(self.brushIcon)
         self.additionalSelectionToolButton.setIcon(self.additionalIcon)
 
+        self.polygonSelectionToolButton.setToolTip('Polygon selection\n'
+                                                   'Right click to finish')
         self.imageToolButton.setToolTip('Reset')
         self.eraseSelectionToolButton.setToolTip('Erase Selection')
         self.rectSelectionToolButton.setToolTip('Rectangular Selection')
