@@ -43,7 +43,7 @@ DEBUG = 0
 
 from . import MaskImageWidget
 from . import MaskImageTools
-from .. import PyMcaQt as qt
+from PyMca5.PyMcaGui import PyMcaQt as qt
 from .MaskToolBar import MaskToolBar
 
 from silx.gui.plot import PlotWindow
@@ -146,7 +146,7 @@ class MaskScatterWidget(PlotWindow):
         curve = self.getCurve(self._selectionCurve)
         if curve is None:
             return
-        x, y, legend, info = curve[0:4]
+        x, y, = curve[0:2]
         if bins is not None:
             if type(bins) == type(1):
                 bins = (bins, bins)
@@ -387,14 +387,14 @@ class MaskScatterWidget(PlotWindow):
     def getSelectionMask(self):
         if self._selectionMask is None:
             if self._selectionCurve is not None:
-                x, y, legend, info = self.getCurve(self._selectionCurve)
+                x, y = self.getCurve(self._selectionCurve)[0:2]
                 self._selectionMask = numpy.zeros(x.shape, numpy.uint8)
         return self._selectionMask
 
     def _updatePlot(self, resetzoom=True, replace=True):
         if self._selectionCurve is None:
             return
-        x0, y0, legend, info = self.getCurve(self._selectionCurve)
+        x0, y0, legend, info = self.getCurve(self._selectionCurve)[0:4]
         # make sure we work with views
         x = x0[:]
         y = y0[:]
@@ -478,7 +478,7 @@ class MaskScatterWidget(PlotWindow):
             value = 0
         else:
             value = self._nRoi
-        x, y, legend, info = self.getCurve(self._selectionCurve)
+        x, y = self.getCurve(self._selectionCurve)[0:2]
         x.shape = -1
         y.shape = -1
         currentMask = self.getSelectionMask()
@@ -751,14 +751,14 @@ class MaskScatterWidget(PlotWindow):
         curve = self.getCurve(self._selectionCurve)
         if curve is None:
             return
-        x, y, legend, info = curve[0:4]
+        x, y = curve[0:2]
         bins = self._bins
         x0 = x.min()
         y0 = y.min()
         deltaX = (x.max() - x0)/float(bins[0])
         deltaY = (y.max() - y0)/float(bins[1])
         columns = numpy.digitize(x, self._binsX, right=True)
-        columns[columns>=densityPlotMask.shape[1]] = \
+        columns[columns >= densityPlotMask.shape[1]] = \
                                                    densityPlotMask.shape[1] - 1
         rows = numpy.digitize(y, self._binsY, right=True)
         rows[rows>=densityPlotMask.shape[0]] = densityPlotMask.shape[0] - 1
@@ -794,7 +794,7 @@ class MaskScatterWidget(PlotWindow):
         curve = self.getCurve(self._selectionCurve)
         if curve is None:
             return
-        x, y, legend, info = curve[0:4]
+        x, y = curve[0:2]
         bins = self._bins
         x0 = x.min()
         y0 = y.min()
