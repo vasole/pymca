@@ -82,7 +82,6 @@ class MaskScatterWidget(PlotWindow):
                                            polygon=polygon)
             self.addToolBar(self.maskToolBar)
 
-        self._buildAdditionalSelectionMenuDict()
         self._selectionCurve = None
         self._selectionMask = None
         self._alphaLevel = None
@@ -627,48 +626,6 @@ class MaskScatterWidget(PlotWindow):
     def emitMaskScatterWidgetSignal(self, ddict):
         self.sigMaskScatterWidgetSignal.emit(ddict)
 
-    def _imageIconSignal(self):
-        self.__resetSelection()
-
-    def _buildAdditionalSelectionMenuDict(self):
-        self._additionalSelectionMenu = {}
-        #scatter view menu
-        menu = qt.QMenu()
-        menu.addAction(QString("Density plot view"), self.__setDensityPlotView)
-        menu.addAction(QString("Reset Selection"), self.__resetSelection)
-        menu.addAction(QString("Invert Selection"), self._invertSelection)
-        self._additionalSelectionMenu["scatter"] = menu
-
-        # density view menu
-        menu = qt.QMenu()
-        menu.addAction(QString("Scatter plot view"), self.__setScatterPlotView)
-        menu.addAction(QString("Reset Selection"), self.__resetSelection)
-        menu.addAction(QString("Invert Selection"), self._invertSelection)
-        menu.addAction(QString("I >= Colormap Max"), self._selectMax)
-        menu.addAction(QString("Colormap Min < I < Colormap Max"),
-                                                self._selectMiddle)
-        menu.addAction(QString("I <= Colormap Min"), self._selectMin)
-        menu.addAction(QString("Increase mask alpha"), self._increaseMaskAlpha)
-        menu.addAction(QString("Decrease mask alpha"), self._decreaseMaskAlpha)
-        self._additionalSelectionMenu["density"] = menu
-
-    def __setScatterPlotView(self):
-        self.setPlotViewMode(mode="scatter")
-
-    def __setDensityPlotView(self):
-        self.setPlotViewMode(mode="density")
-
-    def _additionalIconSignal(self):
-        if self._plotViewMode == "density": # and imageData is not none ...
-            self._additionalSelectionMenu["density"].exec_(self.cursor().pos())
-        else:
-            self._additionalSelectionMenu["scatter"].exec_(self.cursor().pos())
-
-    def __resetSelection(self):
-        # Needed because receiving directly in _resetSelection it was passing
-        # False as argument
-        self._resetSelection(True)
-
     def _resetSelection(self, owncall=True):
         if DEBUG:
             print("_resetSelection")
@@ -852,7 +809,6 @@ class MaskScatterWidget(PlotWindow):
             else:
                 print("OK!!!")
         self.setSelectionMask(view2)
-
 
     def _initializeAlpha(self):
         self._alphaLevel = 128
