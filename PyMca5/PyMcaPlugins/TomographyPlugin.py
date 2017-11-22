@@ -37,12 +37,16 @@ import logging
 logger = logging.getLogger(__name__)
 try:
     import tomogui
-    from tomogui.gui.NewProjectDialog import NewProjectDialog
-    from tomogui.gui.ProjectWidget import ProjectWindow
-    from silx.gui import qt
-    logger.warning('Tomography plugin found')
+    # neeed at least tomogui 0.2 to work
+    if tomogui._version.Minor < 2:
+        logger.warning('tomogui version is to old, please install v0.2 at least')
+        tomogui = None
+    else:
+        from tomogui.gui.NewProjectDialog import NewProjectDialog
+        from tomogui.gui.ProjectWidget import ProjectWindow
+        from silx.gui import qt
 except ImportError:
-    logger.warning('Tomography plugin disabled, tomogui not found')
+    logger.info('Tomography plugin disabled, tomogui not found')
     tomogui = None
 
 if tomogui:
