@@ -59,7 +59,7 @@ class McaAdvancedFitBatch(object):
                     concentrations=0, fitfiles=1, fitimages=1,
                     filebeginoffset = 0, fileendoffset=0,
                     mcaoffset=0, chunk = None,
-                    selection=None, lock=None, nosave=None):
+                    selection=None, lock=None, nosave=None, quiet=False):
         #for the time being the concentrations are bound to the .fit files
         #that is not necessary, but it will be correctly implemented in
         #future releases
@@ -104,7 +104,7 @@ class McaAdvancedFitBatch(object):
         self.mcaOffset = mcaoffset
         self.chunk     = chunk
         self.selection = selection
-
+        self.quiet = quiet
 
 
     def setFileList(self,filelist=None):
@@ -245,7 +245,8 @@ class McaAdvancedFitBatch(object):
 
 
     def onNewFile(self,ffile, filelist):
-        self.__log(ffile)
+        if not self.quiet:
+            self.__log(ffile)
 
     def onImage(self,image,imagelist):
         pass
