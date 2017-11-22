@@ -66,7 +66,10 @@ _COLORLIST = [_COLORDICT['black'],
 
 
 class MaskToolBar(qt.QToolBar):
-    sigIconSignal = qt.pyqtSignal(object)
+    """Toolbar with buttons controlling the mask drawing and erasing
+    interactions on a :class:`MaskScatterWidget`, to select or deselect
+    data."""
+    # sigIconSignal = qt.pyqtSignal(object)
     colorList = _COLORLIST
 
     def __init__(self, parent=None, plot=None, title="Mask tools",
@@ -296,9 +299,9 @@ class MaskToolBar(qt.QToolBar):
         else:
             self._additionalSelectionMenu["scatter"].exec_(self.cursor().pos())
 
-    def emitIconSignal(self, key, event="iconClicked"):
-        ddict = {"key": key,
-                 "event": event}
-        self.sigIconSignal.emit(ddict)
+    # def emitIconSignal(self, key, event="iconClicked"):
+    #     ddict = {"key": key,
+    #              "event": event}
+    #     self.sigIconSignal.emit(ddict)
 
 
