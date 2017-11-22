@@ -114,6 +114,9 @@ class MaskToolBar(qt.QToolBar):
         self.additionalSelectionToolButton.setToolTip('Additional Selections Menu')
 
         self.eraseSelectionToolButton.setCheckable(True)
+        self.polygonSelectionToolButton.setCheckable(True)
+        self.rectSelectionToolButton.setCheckable(True)
+
 
         self.imageAction = self.addWidget(self.imageToolButton)
         self.eraseSelectionAction = self.addWidget(self.eraseSelectionToolButton)
@@ -122,6 +125,14 @@ class MaskToolBar(qt.QToolBar):
         self.brushAction = self.addWidget(self.brushToolButton)
         self.polygonSelectionAction = self.addWidget(self.polygonSelectionToolButton)
         self.additionalSelectionAction = self.addWidget(self.additionalSelectionToolButton)
+
+        self.imageToolButton.clicked.connect(self._imageIconSignal)
+        self.eraseSelectionToolButton.clicked.connect(self._eraseSelectionIconSignal)
+        self.rectSelectionToolButton.clicked.connect(self._rectSelectionIconSignal)
+        self.brushSelectionToolButton.clicked.connect(self._brushSelectionIconSignal)
+        self.brushToolButton.clicked.connect(self._brushIconSignal)
+        self.polygonSelectionToolButton.clicked.connect(self._polygonIconSignal)
+        self.additionalSelectionToolButton.clicked.connect(self._additionalIconSignal)
 
         if not imageIcons:
             self.imageAction.setVisible(False)
@@ -148,30 +159,30 @@ class MaskToolBar(qt.QToolBar):
         self.brushSelectionAction.setVisible(False)
         self.brushAction.setVisible(False)
         self.eraseSelectionAction.setToolTip("Set erase mode if checked")
-        self.eraseSelectionAction.setCheckable(True)
+        self.eraseSelectionToolButton.setCheckable(True)
 
-        self.eraseSelectionAction.setChecked(self.plot._eraseMode)
+        self.eraseSelectionToolButton.setChecked(self.plot._eraseMode)
 
-        self.polygonSelectionAction.setCheckable(True)
-        self.rectSelectionAction.setCheckable(True)
+        self.polygonSelectionToolButton.setCheckable(True)
+        self.rectSelectionToolButton.setCheckable(True)
 
-        self.brushSelectionAction.setChecked(False)
+        self.brushSelectionToolButton.setChecked(False)
 
     def activateDensityPlotView(self):
         self.brushSelectionAction.setVisible(True)
         self.brushAction.setVisible(True)
         self.rectSelectionAction.setVisible(True)
 
-        self.eraseSelectionAction.setCheckable(True)
-        self.brushSelectionAction.setCheckable(True)
-        self.polygonSelectionAction.setCheckable(True)
-        self.rectSelectionAction.setCheckable(True)
+        self.eraseSelectionToolButton.setCheckable(True)
+        self.brushSelectionToolButton.setCheckable(True)
+        self.polygonSelectionToolButton.setCheckable(True)
+        self.rectSelectionToolButton.setCheckable(True)
 
-    def _imageIconSignal(self):
+    def _imageIconSignal(self, checked=False):
         self.plot._resetSelection(owncall=True)
 
-    def _eraseSelectionIconSignal(self):
-        self.plot._eraseMode = self.eraseSelectionAction.isChecked()
+    def _eraseSelectionIconSignal(self, checked=False):
+        self.plot._eraseMode = checked
 
     def _getSelectionColor(self):
         color = self._selectionColors[self.plot._nRoi]
@@ -181,52 +192,58 @@ class MaskToolBar(qt.QToolBar):
                 color = color.copy()
                 color[-1] = 255
 
-    def _polygonIconSignal(self):
-        if self.polygonSelectionAction.isChecked():
+    def _polygonIconSignal(self, checked=False):
+        if checked:
             self.plot.setInteractiveMode("draw", shape="polygon",
                                          label="mask",
                                          color=self._getSelectionColor())
-            self.plot.setPolygonSelectionMode()
             self.plot._zoomMode = False
             self.plot._brushMode = False
 
-            self.brushSelectionAction.setChecked(False)
-            self.rectSelectionAction.setChecked(False)
-            self.polygonSelectionAction.setChecked(True)
+            self.brushSelectionToolButton.setChecked(False)
+            self.rectSelectionToolButton.setChecked(False)
+            self.polygonSelectionToolButton.setChecked(True)
         else:
             self.plot.setZoomModeEnabled(True)
-            self.polygonSelectionAction.setChecked(False)
-            self.brushSelectionAction.setChecked(False)
+            self.polygonSelectionToolButton.setChecked(False)
+            self.brushSelectionToolButton.setChecked(False)
 
-    def _rectSelectionIconSignal(self):
-        if self.rectSelectionAction.isChecked():
+    def setPolygonSelectionMode(self):
+        """
+        Resets zoom mode and enters selection mode with the current active ROI index
+        """
+        self.polygonSelectionToolButton.setChecked(True)
+        self.polygonSelectionAction.trigger()    # calls _polygonIconSignal
+
+    def _rectSelectionIconSignal(self, checked=False):
+        if checked:
             self.plot.setInteractiveMode("draw", shape="rectangle",
                                          label="mask")
             self.plot._zoomMode = False
             self.plot._brushMode = False
-            self.brushSelectionAction.setChecked(False)
-            self.polygonSelectionAction.setChecked(False)
-            self.rectSelectionAction.setChecked(True)
+            self.brushSelectionToolButton.setChecked(False)
+            self.polygonSelectionToolButton.setChecked(False)
+            self.rectSelectionToolButton.setChecked(True)
 
-            self.setInteractiveMode("draw",
-                                    shape="rectangle",
-                                    label="mask",
-                                    color=self._getSelectionColor())
+            self.plot.setInteractiveMode("draw",
+                                        shape="rectangle",
+                                        label="mask",
+                                        color=self._getSelectionColor())
         else:
             self.plot.setZoomModeEnabled(True)
-            self.polygonSelectionAction.setChecked(False)
-            self.brushSelectionAction.setChecked(False)
+            self.polygonSelectionToolButton.setChecked(False)
+            self.brushSelectionToolButton.setChecked(False)
 
-    def _brushSelectionIconSignal(self):
-        self.polygonSelectionAction.setChecked(False)
-        if self.brushSelectionAction.isChecked():
+    def _brushSelectionIconSignal(self, checked=False):
+        self.polygonSelectionToolButton.setChecked(False)
+        if checked:
             self.plot._brushMode = True
             self.plot.setInteractiveMode('select')
         else:
             self._brushMode = False
             self.plot.setInteractiveMode('zoom')
 
-    def _brushIconSignal(self):
+    def _brushIconSignal(self, checked=False):
         if self._brushMenu is None:
             self._brushMenu = qt.QMenu()
             self._brushMenu.addAction(QString(" 1 Image Pixel Width"),
@@ -293,7 +310,7 @@ class MaskToolBar(qt.QToolBar):
     def __resetSelection(self):
         self.plot._resetSelection(owncall=True)
 
-    def _additionalIconSignal(self):
+    def _additionalIconSignal(self, checked=False):
         if self.plot._plotViewMode == "density":   # and imageData is not none ...
             self._additionalSelectionMenu["density"].exec_(self.cursor().pos())
         else:

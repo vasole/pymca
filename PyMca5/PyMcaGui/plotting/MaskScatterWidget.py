@@ -72,7 +72,12 @@ class MaskScatterWidget(PlotWindow):
                                                 curveStyle=curveStyle,
                                                 resetzoom=resetzoom,
                                                 aspectRatio=aspectRatio,
-                                                colormap=colormap)
+                                                colormap=colormap,
+                                                mask=False,
+                                                yInverted=False,
+                                                roi=False,
+                                                copy=False,
+                                                print_=False)
 
         self.maskToolBar = None
         if polygon or imageIcons:
@@ -96,7 +101,6 @@ class MaskScatterWidget(PlotWindow):
         self._densityPlotWidget = None
         self._pixmap = None
         self.setPlotViewMode("scatter", bins=bins)
-        self.setDrawModeEnabled(False)
 
     def setPlotViewMode(self, mode="scatter", bins=None):
         if mode.lower() != "density":
@@ -829,6 +833,12 @@ class MaskScatterWidget(PlotWindow):
         if self._alphaLevel < 2:
             self._alphaLevel = 2
         self._updatePlot()
+
+    def setPolygonSelectionMode(self):
+        """
+        Resets zoom mode and enters selection mode with the current active ROI index
+        """
+        self.maskToolBar.setPolygonSelectionMode()
 
 if __name__ == "__main__":
     backend = "matplotlib"
