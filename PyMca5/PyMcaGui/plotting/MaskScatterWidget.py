@@ -141,7 +141,7 @@ class MaskScatterWidget(PlotWindow):
         self._plotViewMode = "scatter"
         self.colormapAction.setVisible(False)
         self._brushMode = False
-        self.setInteractiveMode("zoom")
+        self.setInteractiveMode("select")
 
         if hasattr(self, "maskToolBar"):
             self.maskToolBar.activateScatterPlotView()
@@ -365,7 +365,7 @@ class MaskScatterWidget(PlotWindow):
         pixmap = MaskImageTools.getPixmapFromData(image.getData(), colormap)
         self.addImage(image.getData(), legend=image.getLegend(),
                       info=image.getInfo(),
-                      pixmap=pixmap.getRgbaImageData())
+                      pixmap=pixmap)
 
     def setSelectionCurveData(self, x, y, legend=None, info=None,
                               replace=True, linestyle=" ", resetzoom=True,
@@ -493,7 +493,7 @@ class MaskScatterWidget(PlotWindow):
                 self._selectionMask = numpy.zeros(x.shape, numpy.uint8)
         return self._selectionMask
 
-    def _updatePlot(self, resetzoom=True, replace=True):
+    def _updatePlot(self, resetzoom=False, replace=True):
         if self._selectionCurve is None:
             return
         x0, y0, legend, info = self.getCurve(self._selectionCurve)[0:4]
@@ -554,25 +554,6 @@ class MaskScatterWidget(PlotWindow):
         if (intValue < 0) or (intValue > self._maxNRois):
             raise ValueError("Value %d outside the interval [0, %d]" % (intValue, self._maxNRois))
         self._nRoi = intValue
-
-    # TODO
-
-    def setZoomModeEnabled(self, flag, color=None):
-        if color is None:
-            if hasattr(self, "colormapDialog"):
-                if self.colormapDialog is None:
-                    color = "#00FFFF"
-                else:
-                    cmap = self.colormapDialog.getColormap()
-                    if cmap[0] < 2:
-                        color = "#00FFFF"
-                    else:
-                        color = "black"
-        self.setInteractiveMode('zoom', color=color)
-        if flag:
-            if self.maskToolBar is not None:      # TODO: refactor --> MaskToolBar
-                self.maskToolBar.polygonSelectionAction.setChecked(False)
-                self.maskToolBar.brushSelectionAction.setChecked(False)
 
     def _handlePolygonMask(self, points):
         if DEBUG:
