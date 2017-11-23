@@ -45,6 +45,8 @@ from . import MaskImageWidget
 from . import MaskImageTools
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from .MaskToolBar import MaskToolBar
+from . import ColormapDialog
+from .PyMca_Icons import IconDict
 
 from silx.gui.plot import PlotWindow
 
@@ -61,7 +63,7 @@ class MaskScatterWidget(PlotWindow):
 
     def __init__(self, parent=None, backend=None, control=False,
                  position=False, maxNRois=1, grid=False, logScale=False,
-                 curveStyle=False, resetzoom=True, colormap=True,
+                 curveStyle=False, resetzoom=True,
                  aspectRatio=True, imageIcons=True, polygon=True, bins=None):
         super(MaskScatterWidget, self).__init__(parent=parent,
                                                 backend=backend,
@@ -72,12 +74,21 @@ class MaskScatterWidget(PlotWindow):
                                                 curveStyle=curveStyle,
                                                 resetzoom=resetzoom,
                                                 aspectRatio=aspectRatio,
-                                                colormap=colormap,
+                                                colormap=False,
                                                 mask=False,
                                                 yInverted=False,
                                                 roi=False,
                                                 copy=False,
                                                 print_=False)
+        self.setActiveCurveHandling(False)
+
+        self.colormapIcon = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
+        self.colormapToolButton = qt.QToolButton(self.toolBar())
+        self.colormapToolButton.setIcon(self.colormapIcon)
+        self.colormapToolButton.setToolTip('Change Colormap')
+        self.colormapToolButton.clicked.connect(self._colormapIconSignal)
+        self.colormapAction = self.toolBar().insertWidget(self.getSaveAction(),
+                                                          self.colormapToolButton)
 
         self.maskToolBar = None
         if polygon or imageIcons:
@@ -100,7 +111,25 @@ class MaskScatterWidget(PlotWindow):
         self._bins = bins
         self._densityPlotWidget = None
         self._pixmap = None
+        self._imageData = None
+        self.colormapDialog = None
+        self.colormap = None
         self.setPlotViewMode("scatter", bins=bins)
+
+    def _colormapIconSignal(self):
+        image = self.getActiveImage()
+        if image is None:
+            return
+
+        if hasattr(image, "getColormap"):
+            if self.colormapDialog is None:
+                self._initColormapDialog(image.getData(),
+                                         image.getColormap()._toDict())
+            self.colormapDialog.show()
+        else:
+            # RGBA image
+            print("No colormap to be handled")
+            return
 
     def setPlotViewMode(self, mode="scatter", bins=None):
         if mode.lower() != "density":
@@ -110,7 +139,7 @@ class MaskScatterWidget(PlotWindow):
 
     def _activateScatterPlotView(self):
         self._plotViewMode = "scatter"
-        self.getColormapAction().setVisible(False)
+        self.colormapAction.setVisible(False)
         self._brushMode = False
         self.setInteractiveMode("zoom")
 
@@ -122,7 +151,7 @@ class MaskScatterWidget(PlotWindow):
 
     def _activateDensityPlotView(self, bins=None):
         self._plotViewMode = "density"
-        self.getColormapAction().setVisible(True)
+        self.colormapAction.setVisible(True)
 
         if hasattr(self, "maskToolBar"):
             self.maskToolBar.activateDensityPlotView()
@@ -267,6 +296,76 @@ class MaskScatterWidget(PlotWindow):
         self._pixmap = pixmap
         self._imageData = image[0]
         #raise NotImplemented("Density plot view not implemented yet")
+
+    def _initColormapDialog(self, imageData, colormap=None):
+        """Set-up the colormap dialog default values.
+
+        :param numpy.ndarray imageData: data used to init dialog.
+        :param dict colormap: Description of the colormap as a dict.
+                              See :class:`PlotBackend` for details.
+                              If None, use default values.
+        """
+        goodData = imageData[numpy.isfinite(imageData)]
+        if goodData.size > 0:
+            maxData = goodData.max()
+            minData = goodData.min()
+        else:
+            qt.QMessageBox.critical(self, "No Data",
+                "Image data does not contain any real value")
+            return
+
+        self.colormapDialog = ColormapDialog.ColormapDialog(self)
+
+        if colormap is None:
+            colormapIndex = self.DEFAULT_COLORMAP_INDEX
+            if colormapIndex == 6:
+                colormapIndex = 1
+            self.colormapDialog.setColormap(colormapIndex)
+            self.colormapDialog.setDataMinMax(minData, maxData)
+            self.colormapDialog.setAutoscale(1)
+            self.colormapDialog.setColormap(self.colormapDialog.colormapIndex)
+            # linear or logarithmic
+            self.colormapDialog.setColormapType(self.DEFAULT_COLORMAP_LOG_FLAG,
+                                                update=False)
+        else:
+            # Set-up colormap dialog from provided colormap dict
+            cmapList = ColormapDialog.colormapDictToList(colormap)
+            index, autoscale, vMin, vMax, dataMin, dataMax, cmapType = cmapList
+            self.colormapDialog.setColormap(index)
+            self.colormapDialog.setAutoscale(autoscale)
+            self.colormapDialog.setMinValue(vMin)
+            self.colormapDialog.setMaxValue(vMax)
+            self.colormapDialog.setDataMinMax(minData, maxData)
+            self.colormapDialog.setColormapType(cmapType, update=False)
+
+        self.colormap = self.colormapDialog.getColormap()  # Is it used?
+        self.colormapDialog.setWindowTitle("Colormap Dialog")
+        self.colormapDialog.sigColormapChanged.connect(
+                    self.updateActiveImageColormap)
+        self.colormapDialog._update()
+
+    def updateActiveImageColormap(self, colormap):
+        if len(colormap) == 1:
+            colormap = colormap[0]
+        # TODO: Once everything is ready to work with dict instead of
+        # list, we can remove this translation
+        plotBackendColormap = ColormapDialog.colormapListToDict(colormap)
+        self.setDefaultColormap(plotBackendColormap)
+
+        image = self.getActiveImage()
+        if image is None:
+            if self.colormapDialog is not None:
+                self.colormapDialog.hide()
+            return
+
+        if not hasattr(image, "getColormap"):
+            if self.colormapDialog is not None:
+                self.colormapDialog.hide()
+            return
+        pixmap = MaskImageTools.getPixmapFromData(image.getData(), colormap)
+        self.addImage(image.getData(), legend=image.getLegend(),
+                      info=image.getInfo(),
+                      pixmap=pixmap.getRgbaImageData())
 
     def setSelectionCurveData(self, x, y, legend=None, info=None,
                               replace=True, linestyle=" ", resetzoom=True,
@@ -443,7 +542,8 @@ class MaskScatterWidget(PlotWindow):
                     # a copy of the input info is needed in order not
                     # to set the main curve to that color
                     self.addCurve(xMask, yMask, legend=legend + " %02d" % i,
-                                  info=info.copy(), color=color, linestyle=" ",
+                                  info=info.copy(), color=color,
+                                  linestyle=" ", symbol="o",
                                   selectable=False,
                                   z=1,
                                   resetzoom=False, replace=False)
@@ -848,7 +948,8 @@ if __name__ == "__main__":
         print("Received: ", ddict)
     x = numpy.arange(100.)
     y = x * 1
-    w = MaskScatterWidget(maxNRois=10, bins=(100,100), backend=backend)
+    w = MaskScatterWidget(maxNRois=10, bins=(100, 100), backend=backend,
+                          control=True)
     w.setSelectionCurveData(x, y, color="k", selectable=False)
     import numpy.random
     w.setSelectionMask(numpy.random.permutation(100) % 10)

@@ -43,6 +43,7 @@ else:
 
 
 _COLORDICT = Colors.COLORDICT
+# these are color RGBA strings '#0000ff'
 _COLORLIST = [_COLORDICT['black'],
               _COLORDICT['blue'],
               _COLORDICT['red'],
@@ -79,6 +80,7 @@ class MaskToolBar(qt.QToolBar):
         assert imageIcons or polygon,\
             "It makes no sense to build an empty mask toolbar"
         self.plot = plot
+        self._brushMenu = None
 
         self.polygonIcon = qt.QIcon(qt.QPixmap(IconDict["polygon"]))
         self.imageIcon = qt.QIcon(qt.QPixmap(IconDict["image"]))
@@ -105,7 +107,7 @@ class MaskToolBar(qt.QToolBar):
         self.additionalSelectionToolButton.setIcon(self.additionalIcon)
 
         self.polygonSelectionToolButton.setToolTip('Polygon selection\n'
-                                                   'Right click to finish')
+                                                   'Click first point to finish')
         self.imageToolButton.setToolTip('Reset')
         self.eraseSelectionToolButton.setToolTip('Erase Selection')
         self.rectSelectionToolButton.setToolTip('Rectangular Selection')
@@ -116,7 +118,6 @@ class MaskToolBar(qt.QToolBar):
         self.eraseSelectionToolButton.setCheckable(True)
         self.polygonSelectionToolButton.setCheckable(True)
         self.rectSelectionToolButton.setCheckable(True)
-
 
         self.imageAction = self.addWidget(self.imageToolButton)
         self.eraseSelectionAction = self.addWidget(self.eraseSelectionToolButton)
@@ -148,6 +149,7 @@ class MaskToolBar(qt.QToolBar):
 
         self._buildAdditionalSelectionMenuDict()
 
+        # selection colors as a RBGA (uint8) array
         self._selectionColors = numpy.zeros((len(self.colorList), 4), numpy.uint8)
         for i in range(len(self.colorList)):
             self._selectionColors[i, 0] = eval("0x" + self.colorList[i][-2:])
@@ -185,12 +187,18 @@ class MaskToolBar(qt.QToolBar):
         self.plot._eraseMode = checked
 
     def _getSelectionColor(self):
-        color = self._selectionColors[self.plot._nRoi]
+        """Return a selection color as hex "#RRGGBBAA" string"""
+        rgba_color_array = self._selectionColors[self.plot._nRoi]
         # make sure the selection is made with a non transparent color
-        if len(color) == 4:
-            if type(color[-1]) in [numpy.uint8, numpy.int8]:
-                color = color.copy()
-                color[-1] = 255
+        if len(rgba_color_array) == 4:
+            rgba_color_array = rgba_color_array.copy()
+            rgba_color_array[-1] = 255
+
+        # convert to string
+        s = "#"
+        for channel_uint8_value in rgba_color_array:
+            s += "{:02x}".format(channel_uint8_value)
+        return s
 
     def _polygonIconSignal(self, checked=False):
         if checked:
@@ -205,6 +213,8 @@ class MaskToolBar(qt.QToolBar):
             self.polygonSelectionToolButton.setChecked(True)
         else:
             self.plot.setZoomModeEnabled(True)
+            self.polygonSelectionAction.setChecked(False)
+            self.brushSelectionAction.setChecked(False)
             self.polygonSelectionToolButton.setChecked(False)
             self.brushSelectionToolButton.setChecked(False)
 
@@ -226,11 +236,13 @@ class MaskToolBar(qt.QToolBar):
             self.rectSelectionToolButton.setChecked(True)
 
             self.plot.setInteractiveMode("draw",
-                                        shape="rectangle",
-                                        label="mask",
-                                        color=self._getSelectionColor())
+                                         shape="rectangle",
+                                         label="mask",
+                                         color=self._getSelectionColor())
         else:
             self.plot.setZoomModeEnabled(True)
+            self.polygonSelectionAction.setChecked(False)
+            self.brushSelectionAction.setChecked(False)
             self.polygonSelectionToolButton.setChecked(False)
             self.brushSelectionToolButton.setChecked(False)
 
