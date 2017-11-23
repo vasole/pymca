@@ -609,8 +609,8 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         self.curvesDict = self.copyCurves(groupA + groupB)
 
         if (len(self.curvesDict) == 0) or\
-           ((len(self.selectionDict['A']) == 0) and\
-           (len(self.selectionDict['B']) == 0)):
+                ((len(self.selectionDict['A']) == 0) and
+                 (len(self.selectionDict['B']) == 0)):
             # Nothing to do
             return
 
@@ -621,7 +621,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             if active:
                 if DEBUG:
                     print('processSelection -- xrange: use active')
-                x, y, leg, info = active[0:4]
+                x = active.getXData()
                 xRange = self.interpXRange(xRange=x)
             else:
                 return
@@ -684,9 +684,9 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                           ylabel=ylabel,
                           color=color)
             if idx == 'A':
-                self.avgA = self.dataObjectsList[-1]
+                self.avgA = self.getAllCurves(just_legend=True)[-1]
             if idx == 'B':
-                self.avgB = self.dataObjectsList[-1]
+                self.avgB = self.getAllCurves(just_legend=True)[-1]
 
         if (self.avgA and self.avgB):
             self.performXMCD()
@@ -890,7 +890,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                       xlabel=xlabel,
                       ylabel=ylabel,
                       color="pink")
-        self.xas = self.dataObjectsList[-1]
+        self.xas = self.getAllCurves(just_legend=True)[-1]
 
     def performXMCD(self):
         keys = self.dataObjectsDict.keys()
@@ -924,8 +924,8 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                       ylabel=ylabel,
                       yaxis="right")
         # DELETE ME self.graph.mapToY2(' '.join([xmcdLegend, ylabel]))
-        self._zoomReset()
-        self.xmcd = self.dataObjectsList[-1]
+        self.resetZoom()
+        self.xmcd = self.getAllCurves(just_legend=True)[-1]
 
     def selectionInfo(self, idx, key):
         """
@@ -1009,7 +1009,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             return
 
         title = ''
-        legends = self.dataObjectsList
+        legends = self.getAllCurves(just_legend=True)
         tmpLegs = sorted(self.curvesDict.keys())
         if len(tmpLegs) > 0:
             title += self.curvesDict[tmpLegs[0]].info.get('selectionlegend','')
@@ -1077,7 +1077,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             self.saveOptionsSignal.emit(splitext(sepFileName)[0])
 
     def add(self):
-        if len(self.dataObjectsList) == 0:
+        if len(self.getAllCurves(just_legend=True)) == 0:
             return
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
@@ -1112,7 +1112,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         self.plotModifiedSignal.emit()
 
     def replace(self):
-        if len(self.dataObjectsList) == 0:
+        if len(self.getAllCurves(just_legend=True)) == 0:
             return
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
