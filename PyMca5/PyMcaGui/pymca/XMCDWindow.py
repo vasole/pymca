@@ -1082,7 +1082,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        (xVal,  yVal,  legend,  info) = activeCurve
+        (xVal,  yVal,  legend,  info) = activeCurve[0:4]
         #if 'selectionlegend' in info:
         #    newLegend = info['selectionlegend']
         #elif 'operation' in info:
@@ -1097,7 +1097,8 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         self.plotModifiedSignal.emit()
 
     def addAll(self):
-        for (xVal,  yVal,  legend,  info) in self.getAllCurves():
+        for curve in self.getAllCurves():
+            (xVal, yVal, legend, info) = curve[0:4]
             #if 'selectionlegend' in info:
             #    newLegend = info['selectionlegend']
             #elif 'operation' in info:
@@ -1117,7 +1118,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         activeCurve = self.getActiveCurve()
         if activeCurve is None:
             return
-        (xVal,  yVal,  legend,  info) = activeCurve
+        (xVal,  yVal,  legend,  info) = activeCurve[0:4]
         if 'selectionlegend' in info:
             newLegend = info['selectionlegend']
         elif 'operation' in info:
@@ -1133,7 +1134,8 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
 
     def replaceAll(self):
         allCurves = self.getAllCurves()
-        for (idx, (xVal,  yVal,  legend,  info)) in enumerate(allCurves):
+        for (idx, curve) in enumerate(allCurves):
+            (xVal, yVal, legend, info) = curve[0:4]
             if 'selectionlegend' in info:
                 newLegend = info['selectionlegend']
             elif 'operation' in info:
