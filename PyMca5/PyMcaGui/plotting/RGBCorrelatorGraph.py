@@ -78,7 +78,6 @@ class RGBCorrelatorGraph(qt.QWidget):
                            aspect=aspect,
                            polygon=polygon)
         self.graph = PlotWidget(self, backend=backend)
-        self.graph.setKeepDataAspectRatio(aspect)
         self.graph.setGraphXLabel("Column")
         self.graph.setGraphYLabel("Row")
         self.graph.setYAxisAutoScale(True)
@@ -161,16 +160,16 @@ class RGBCorrelatorGraph(qt.QWidget):
         #Aspect ratio
         if aspect:
             self.aspectButton = self._addToolButton(self.solidCircleIcon,
-                                self._aspectButtonSignal,
-                                'Keep data aspect ratio',
-                                toggle = False)
+                                                    self._aspectButtonSignal,
+                                                    'Keep data aspect ratio',
+                                                    toggle=False)
             self.aspectButton.setChecked(False)
 
         #colormap
         if colormap:
             tb = self._addToolButton(self.colormapIcon,
                                      None,
-                                    'Change Colormap')
+                                     'Change Colormap')
             self.colormapToolButton = tb
 
         #flip
@@ -448,7 +447,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             button.hide()
         self._pickerSelectionWidthLabel.hide()
         self._pickerSelectionWidthValue.hide()
-        if self.graph.getInteractiveMode()['draw']:
+        if self.graph.getInteractiveMode()['mode'] == 'draw':
             self.graph.setInteractiveMode('select')
 
     def showProfileSelectionIcons(self):
