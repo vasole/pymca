@@ -7,7 +7,7 @@ HDF5 Widget. Use PyMca plugins on silx data viewer.
 HDF5 Batch. Correct error when all the entries in an HDF5 file do not present
 the same structure.
 
-SPEC shared memory. Correct counter labeling order in case of using 10 or more
+SPEC shared memory. Correct counter labelling order in case of using 10 or more
 counters and motors in a scan.
 
 NeXus. Interpret new style NXdata groups using silx NXdataViewer if silx is installed.
