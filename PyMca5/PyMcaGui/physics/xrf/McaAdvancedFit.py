@@ -66,7 +66,6 @@ from . import McaAdvancedTable
 from . import QtMcaAdvancedFitReport
 from . import ConcentrationsWidget
 from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
-from PyMca5.PyMcaGui import PlotWindow
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from . import McaCalWidget
@@ -75,7 +74,7 @@ from PyMca5.PyMcaGui import SubprocessLogWidget
 from . import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
-from PyMca5.PyMcaGui import PyMcaPrintPreview
+
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import CalculationThread
@@ -93,6 +92,10 @@ except ImportError:
     if DEBUG:
         raise
 USE_BOLD_FONT = True
+
+from silx.gui.plot import PlotWindow
+from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
+
 
 class McaAdvancedFit(qt.QWidget):
     """
@@ -162,7 +165,7 @@ class McaAdvancedFit(qt.QWidget):
             self.graph = self.graphWindow
             self.graph.setGraphXLabel('Channel')
             self.graph.setGraphYLabel('Counts')
-            self.mainTab.addTab(self.tabGraph,"GRAPH")
+            self.mainTab.addTab(self.tabGraph, "GRAPH")
             self.graphWindow.sigPlotSignal.connect(self._mcaGraphSignalSlot)
             #table
             self.tabMca  = qt.QWidget()
@@ -449,7 +452,6 @@ class McaAdvancedFit(qt.QWidget):
             #del dialog
 
         self.graph.clearMarkers()
-        self.graph.replot()
         self.__fitdone = False
         self._concentrationsDict = None
         self._concentrationsInfo = None
@@ -570,7 +572,6 @@ class McaAdvancedFit(qt.QWidget):
         ele = dict['current']
         items = []
         if not (ele in dict):
-            self.graph.replot()
             return
         for rays in dict[ele]:
             for transition in Elements.Element[ele][rays +" xrays"]:
@@ -590,18 +591,15 @@ class McaAdvancedFit(qt.QWidget):
             if (x < xmin) or (x > xmax):continue
             if not self._energyAxis:
                 if abs(calib[1]) > 0.0000001:
-                    marker=self.graph.insertXMarker(x,
-                                                    legend=transition,
-                                                    text=transition,
-                                                    color='orange',
-                                                    replot=False)
+                    marker=self.graph.addXMarker(x,
+                                                 legend=transition,
+                                                 text=transition,
+                                                 color='orange')
             else:
-                marker=self.graph.insertXMarker(energy,
-                                                legend=transition,
-                                                text=transition,
-                                                color='orange',
-                                                replot=False)
-        self.graph.replot()
+                marker=self.graph.addXMarker(energy,
+                                             legend=transition,
+                                             text=transition,
+                                             color='orange')
 
     def _updateTop(self):
         config = {}
@@ -804,7 +802,8 @@ class McaAdvancedFit(qt.QWidget):
     def printActiveTab(self):
         txt = str(self.mainTab.tabText(self.mainTab.currentIndex())).upper()
         if txt == "GRAPH":
-            self.graph.printps()
+            # trigger the 2nd action in the PrintPreviewToolButton drop-down menu
+            self.graph.printPreviewTB.menu().actions()[1].trigger()
         elif txt == "TABLE":
             self.printps(True)
         elif txt == "CONCENTRATIONS":
@@ -1043,7 +1042,7 @@ class McaAdvancedFit(qt.QWidget):
                 else:
                     delcurves.append(key)
         for key in delcurves:
-            self.graph.removeCurve(key, replot=False)
+            self.graph.removeCurve(key)
 
 
     def matrixSpectrum(self):
@@ -1174,15 +1173,11 @@ class McaAdvancedFit(qt.QWidget):
             self.dict['result']['ymatrix']= ddict['result']['ymatrix'] * 1.0
         """
         if self.graph is not None:
-            if self._logY:
-                logfilter = 1
-            else:
-                logfilter = 0
             if self._energyAxis:
                 xdata = dict['result']['energy'][:]
             else:
                 xdata = dict['result']['xdata'][:]
-            self.graph.newCurve("Matrix",xdata,dict['result']['ymatrix'],logfilter=logfilter)
+            self.graph.addCurve(xdata, dict['result']['ymatrix'], "Matrix")
         """
         try:
             self.__anasignal(ddict)
@@ -1534,7 +1529,7 @@ class McaAdvancedFit(qt.QWidget):
                     selection=self.info['legend'],
                     fitresult=self.dict,
                     concentrations=self._concentrationsDict,
-                    plotdict={'logy':self.graph.isYAxisLogarithmic()})
+                    plotdict={'logy': self.graph.isYAxisLogarithmic()})
         if 0:
             #this forces to open and read the file
             self.__lastreport = report.writeReport()
@@ -2084,8 +2079,7 @@ class McaAdvancedFit(qt.QWidget):
                     ydata  = self.mcafit.ydata * 1.0
                 xdata.shape= [len(xdata),]
                 ydata.shape= [len(ydata),]
-                self.graph.addCurve(xdata, ydata, legend="Data", replot=True, replace=True)
-                self.graph.updateLegends()
+                self.graph.addCurve(xdata, ydata, legend="Data", replace=True)
                 return
             else:
                 ddict = self.dict
@@ -2093,22 +2087,19 @@ class McaAdvancedFit(qt.QWidget):
             xdata = ddict['result']['energy'][:]
         else:
             xdata = ddict['result']['xdata'][:]
-        self.graph.addCurve(xdata, ddict['result']['ydata'], legend="Data",
-                            replot=False)
-        self.graph.addCurve(xdata, ddict['result']['yfit'], legend="Fit",
-                            replot=False)
+        self.graph.addCurve(xdata, ddict['result']['ydata'], legend="Data")
+        self.graph.addCurve(xdata, ddict['result']['yfit'], legend="Fit")
         self.graph.addCurve(xdata, ddict['result']['continuum'],
-                            legend="Continuum",
-                            replot=False)
+                            legend="Continuum")
 
         curveList = self.graph.getAllCurves(just_legend=True)
 
         if config['fit']['sumflag']:
             self.graph.addCurve(xdata, ddict['result']['pileup'] + \
                                        ddict['result']['continuum'],
-                                       legend="Pile-up", replot=False)
+                                       legend="Pile-up")
         elif "Pile-up" in curveList:
-            self.graph.removeCurve("Pile-up", replot=False)
+            self.graph.removeCurve("Pile-up")
 
         if self.matrixSpectrumButton.isChecked():
             if 'ymatrix' in ddict['result']:
@@ -2130,12 +2121,10 @@ class McaAdvancedFit(qt.QWidget):
                 mcydatan = self._xrfmcMatrixSpectra[-1]
                 self.graph.addCurve(mcxdata,
                                     mcydata0,
-                                    legend='MC Matrix 1',
-                                    replot=False)
+                                    legend='MC Matrix 1')
                 self.graph.addCurve(mcxdata,
                                     mcydatan,
-                                    legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2),
-                                    replot=False)
+                                    legend='MC Matrix %d' % (len(self._xrfmcMatrixSpectra) - 2))
 
         if self.peaksSpectrumButton.isChecked():
             keep = ['Data','Fit','Continuum','Matrix','Pile-up']
@@ -2153,20 +2142,15 @@ class McaAdvancedFit(qt.QWidget):
                 if label in ddict['result']:
                     self.graph.addCurve(xdata,
                                         ddict['result'][label],
-                                        legend=label,
-                                        replot=False)
+                                        legend=label)
                 else:
                     if group in curveList:
-                        self.graph.removeCurve(label, replot=False)
+                        self.graph.removeCurve(label)
         else:
             self.__clearPeaksSpectrum()
 
-        self.graph.replot()
-        self.graph.updateLegends()
-
     def _saveGraph(self, dict=None):
-        curves = self.graph.getAllCurves()
-        if not len(curves):
+        if not len(self.graph.getAllCurves(just_legend=True)):
             return
         if not self.__fitdone:
             if False:
@@ -2863,6 +2847,7 @@ class Line(qt.QFrame):
         ddict['info'] = self.info
         self.sigLineDoubleClickEvent.emit(ddict)
 
+
 class SimpleThread(qt.QThread):
     def __init__(self, function = None, kw = None):
         if kw is None:
@@ -2882,65 +2867,83 @@ class SimpleThread(qt.QThread):
         except:
             self._result = ("Exception",) + sys.exc_info()
 
-class McaGraphWindow(PlotWindow.PlotWindow):
-    def __init__(self, parent=None, backend=None, plugins=False,
-                 newplot=False, position=True, control=True, **kw):
+
+class McaGraphWindow(PlotWindow):
+    def __init__(self, parent=None, backend=None,
+                 position=True, control=True, **kw):
         super(McaGraphWindow, self).__init__(parent, backend=backend,
-                                       plugins=plugins,
-                                       newplot=newplot,
-                                       energy=True,
-                                       roi=True,
-                                       logx=False,
-                                       fit=True,
-                                       position=position,
-                                       control=control,
-                                       **kw)
+                                             position=position, control=control,
+                                             roi=True, aspectRatio=False,
+                                             print_=False, colormap=False,
+                                             yInverted=False, mask=False,
+                                             fit=False, **kw)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setPanWithArrowKeys(True)
-        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
+        self.setIconSize(qt.QSize(20, 20))
+
+        # toolbar
+        # hide unused actions and separators
+        self.zoomModeAction.setVisible(False)
+        self.panModeAction.setVisible(False)
+        self.getXAxisLogarithmicAction().setVisible(False)
+        for action in self.toolBar().actions():
+            if action.isSeparator():
+                action.setVisible(False)
+
+        self.printPreviewTB = SingletonPrintPreviewToolButton(
+                parent=self.toolBar(), plot=self)
+        self.printPreviewTB.setIcon(
+                qt.QIcon(qt.QPixmap(IconDict["fileprint"])))
+
+        # self.fitIcon = qt.QIcon(qt.QPixmap(IconDict["fit"]))
+        self.fitButton = qt.QToolButton(self.toolBar())
+        self.fitButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["fit"])))
+        self.fitButton.setToolTip('Fit of Active Curve')
+        self.fitButton.clicked.connect(self._fitIconSignal)
+
+        # self.energyIcon = qt.QIcon(qt.QPixmap(IconDict["energy"]))
+        self.energyButton = qt.QToolButton(self.toolBar())
+        self.energyButton.setCheckable(True)
+        self.energyButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["energy"])))
+        self.energyButton.setToolTip('Toggle Energy Axis (On/Off)')
+        self.energyButton.clicked.connect(self._energyIconSignal)
+
+        self.fitAction = self.toolBar().insertWidget(self.getCopyAction(),
+                                                     self.fitButton)
+        self.energyAction = self.toolBar().insertWidget(self.getRoiAction(),
+                                                        self.energyButton)
+        self.toolBar().addWidget(qt.HorizontalSpacer(self.toolBar()))
+        self.printAction = self.toolBar().addWidget(self.printPreviewTB)
+
         self.setGraphYLabel("Counts")
         if self.energyButton.isChecked():
             self.setGraphXLabel("Energy")
         else:
             self.setGraphXLabel("Channel")
-
-    def printGraph(self):
-        pixmap = qt.QPixmap.grabWidget(self.getWidgetHandle())
-        self.printPreview.addPixmap(pixmap)
-        if self.printPreview.isHidden():
-            self.printPreview.show()
-        self.printPreview.raise_()
 
     def _energyIconSignal(self):
-        legend = self.getActiveCurve(just_legend=True)
-        ddict={}
-        ddict['event']  = 'EnergyClicked'
-        ddict['active'] = legend
-        self.sigPlotSignal.emit(ddict)
+        self.sigPlotSignal.emit(
+            {'event': 'EnergyClicked',
+             'active': self.getActiveCurve(just_legend=True)})
 
     def _fitIconSignal(self):
-        legend = self.getActiveCurve(just_legend=True)
-        ddict={}
-        ddict['event']  = 'FitClicked'
-        ddict['active'] = legend
-        self.sigPlotSignal.emit(ddict)
+        self.sigPlotSignal.emit(
+            {'event': 'FitClicked',
+             'active': self.getActiveCurve(just_legend=True)})
 
     def _saveIconSignal(self):
-        legend = self.getActiveCurve(just_legend=True)
-        ddict={}
-        ddict['event']  = 'SaveClicked'
-        ddict['active'] = legend
-        self.sigPlotSignal.emit(ddict)
+        self.sigPlotSignal.emit(
+            {'event': 'SaveClicked',
+             'active': self.getActiveCurve(just_legend=True)})
 
-    def setActiveCurve(self, legend, replot=True):
-        super(McaGraphWindow, self).setActiveCurve(legend, replot=False)
+    def setActiveCurve(self, legend, replot=None):
+        super(McaGraphWindow, self).setActiveCurve(legend, replot)
         self.setGraphYLabel("Counts")
         if self.energyButton.isChecked():
             self.setGraphXLabel("Energy")
         else:
             self.setGraphXLabel("Channel")
-        if replot:
-            self.replot()
+
 
 def test(ffile='03novs060sum.mca', cfg=None):
     from PyMca5.PyMcaIO import specfilewrapper as specfile
