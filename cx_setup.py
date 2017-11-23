@@ -79,7 +79,8 @@ if sys.platform == 'win32':
             print("Error building PyMca")
             sys.exit(1)
 
-cmd = "python setup.py install --install-lib %s --distutils" % PyMcaInstallationDir
+cmd = "python setup.py install --install-lib %s --install-data %s --distutils" % \
+              (PyMcaInstallationDir, PyMcaInstallationDir)
 if os.system(cmd):
     print("Error building PyMca")
     sys.exit(1)
