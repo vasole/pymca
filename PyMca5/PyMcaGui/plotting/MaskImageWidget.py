@@ -1257,10 +1257,14 @@ class MaskImageWidget(qt.QWidget):
             self.__pixmap0 = self.__pixmap.copy()
         self.__applyMaskToImage()
 
+        origin, scale = None, None
+        if self._xScale is not None:
+            origin = (self._xScale[0], self._yScale[0])
+            scale = (self._xScale[1], self._yScale[1])
         self.graphWidget.graph.addImage(self.__pixmap,
                                         "image", resetzoom=False,
-                                        origin=(self._xScale[0], self._yScale[0]),
-                                        scale=(self._xScale[1], self._yScale[1]))
+                                        origin=origin,
+                                        scale=scale)
         self.updateProfileSelectionWindow()
 
     def getPixmapFromData(self):
