@@ -819,8 +819,7 @@ class QStackWidget(StackBase.StackBase,
         self.stackGraphWidget.graph.sigPlotSignal.connect(
                                     self._stackGraphSignal)
 
-        self.mcaWidget.getCurvesRoiDockWidget().sigROISignal.connect(
-                                    self._mcaWidgetSignal)
+        self.mcaWidget.sigROISignal.connect(self._mcaWidgetSignal)
         self.roiWidget.graphWidget.graph.sigPlotSignal.connect(
                                     self._stackGraphSignal)
 
