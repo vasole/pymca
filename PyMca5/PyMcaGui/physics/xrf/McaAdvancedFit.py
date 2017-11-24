@@ -74,7 +74,6 @@ from PyMca5.PyMcaGui import SubprocessLogWidget
 from . import ElementsInfo
 Elements = ElementsInfo.Elements
 #import McaROIWidget
-
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import CalculationThread

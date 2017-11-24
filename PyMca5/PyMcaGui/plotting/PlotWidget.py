@@ -29,6 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import logging
+import traceback
 
 from PyMca5.PyMcaGraph import Plot
 
@@ -76,6 +77,9 @@ if DEBUG:
 _logger.warning("%s is deprecated, you are advised to use "
                 "silx.gui.plot.PlotWidget instead",
                 __name__)
+for line in traceback.format_stack(limit=3):
+    _logger.warning(line.rstrip())
+
 
 class PlotWidget(QtGui.QMainWindow, Plot.Plot):
     sigPlotSignal = QtCore.Signal(object)

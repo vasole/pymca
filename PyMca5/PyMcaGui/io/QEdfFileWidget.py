@@ -33,6 +33,7 @@ import numpy
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from silx.gui.plot import PlotWidget
+from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 
 if not hasattr(qt, 'QString'):
     QString = qt.safe_str
@@ -46,11 +47,11 @@ from PyMca5.PyMcaGui import QPyMcaMatplotlibSave
 MATPLOTLIB = True
 from PyMca5.PyMcaGui import IconDict
 from PyMca5.PyMcaGui import ColormapDialog
-from PyMca5.PyMcaGui import PyMcaPrintPreview
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
 from . import SpecFileDataInfo
 from PyMca5 import spslut
+
 COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
@@ -250,20 +251,13 @@ class QEdfFileWidget(qt.QWidget):
         self.lastInputDir = None
         self.colormapDialog = None
         self.colormap  = None
-        self.printPreview = PyMcaPrintPreview.PyMcaPrintPreview(modal = 0)
-        if DEBUG:
-            print("printPreview id = %d" % id(self.printPreview))
 
         #self.selectPixmap= qt.QPixmap(icons.selected)
         #self.unselectPixamp= qt.QPixmap(icons.unselected)
         self.mapComboName= {}
 
-        self.mainLayout= qt.QVBoxLayout(self)
-        self.toolBar = None
-        self._buildToolBar()
-
         # --- splitter
-        self.splitter= qt.QSplitter(self)
+        self.splitter = qt.QSplitter(self)
         self.splitter.setOrientation(qt.Qt.Vertical)
 
         # --- graph
@@ -274,6 +268,11 @@ class QEdfFileWidget(qt.QWidget):
         self.graph.sigPlotSignal.connect(self.widgetSignal)
         self._x1Limit = self.graph.getGraphXLimits()[-1]
         self._y1Limit = self.graph.getGraphYLimits()[-1]
+
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.toolBar = None
+        self._buildToolBar()
+
         #self.graph.hide()
         # --- array parameter
         self.__dummyW = qt.QWidget(self.splitter)
@@ -377,17 +376,20 @@ class QEdfFileWidget(qt.QWidget):
                                  self._saveIconSignal,
                                  'Export Graph')
 
+        self.printPreview = SingletonPrintPreviewToolButton(parent=self,
+                                                            plot=self.graph)
+        self.printPreview.setIcon(self.printIcon)
+        self.toolBarLayout.addWidget(self.printPreview)
+
+        if DEBUG:
+            print("printPreview id = %d" % id(self.printPreview.printPreviewDialog))
+
         #info
         self.infoText = qt.QLabel(self.toolBar)
         self.infoText.setText("    X = ???? Y = ???? Z = ????")
         self.toolBarLayout.addWidget(self.infoText)
 
         self.toolBarLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
-
-        # ---print
-        tb = self._addToolButton(self.printIcon,
-                                 self.printGraph,
-                                 'Print the Graph')
 
     def _hFlipIconSignal(self):
         if DEBUG:
@@ -634,18 +636,6 @@ class QEdfFileWidget(qt.QWidget):
             return True
         else:
             return False
-
-    def printGraph(self):
-        if hasattr(qt.QPixmap, "grabWidget"):
-            # Qt4
-            pixmap = qt.QPixmap.grabWidget(self.graph)
-        else:
-            #Qt5
-            pixmap = self.graph.grab()
-        self.printPreview.addPixmap(pixmap)
-        if self.printPreview.isHidden():
-            self.printPreview.show()
-        self.printPreview.raise_()
 
     def _buildActions(self):
         self.buttonBox = qt.QWidget(self)
