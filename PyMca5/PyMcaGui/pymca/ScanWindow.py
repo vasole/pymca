@@ -34,6 +34,7 @@ import logging
 import numpy
 
 from silx.gui.plot import PlotWindow
+from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 
 import PyMca5
 from PyMca5.PyMcaGui.pymca import ScanWindowInfoWidget
@@ -43,7 +44,6 @@ from PyMca5.PyMcaGui.math import SimpleActions
 from PyMca5.PyMcaGui.pymca import ScanFit
 from PyMca5.PyMcaGui.pymca.ScanFitToolButton import ScanFitToolButton
 from PyMca5.PyMcaCore import DataObject
-
 
 if hasattr(qt, 'QString'):
     QString = qt.QString
@@ -82,17 +82,19 @@ class BaseScanWindow(PlotWindow):
     """
     def __init__(self, parent=None, name="Scan Window", fit=True, backend=None,
                  plugins=True, control=True, position=True, roi=True,
-                 specfit=None, info=False):
+                 specfit=None, info=False, save=True):
         super(BaseScanWindow, self).__init__(parent,
                                              backend=backend,
                                              roi=roi,
                                              control=control,
                                              position=position,
+                                             save=save,
                                              mask=False,
                                              colormap=False,
                                              aspectRatio=False,
                                              yInverted=False,
-                                             copy=False)
+                                             copy=False,
+                                             print_=False)
         self.setDataMargins(0, 0, 0.025, 0.025)
         self.setIconSize(qt.QSize(20, 20))
 
@@ -111,11 +113,12 @@ class BaseScanWindow(PlotWindow):
 
         self.addToolBar(self._toolbar)
 
+        self.fitToolButton = None
         if fit:
             # attr needed by scanFitToolButton
             self.scanFit = ScanFit.ScanFit(specfit=specfit)
-            scanFitToolButton = ScanFitToolButton(self)
-            self._toolbar.addWidget(scanFitToolButton)
+            self.fitToolButton = ScanFitToolButton(self)
+            self._toolbar.addWidget(self.fitToolButton)
 
         self.avgAction = SimpleActions.AverageAction(plot=self)
         self.derivativeAction = SimpleActions.DerivativeAction(plot=self)
@@ -154,7 +157,12 @@ class BaseScanWindow(PlotWindow):
                 self.pluginsToolButton.getPlugins(
                         method="getPlugin1DInstance",
                         directoryList=pluginDir)
-            self._toolbar.addWidget(self.pluginsToolButton)
+            self.pluginsAction = self._toolbar.addWidget(self.pluginsToolButton)
+
+        self._toolbar.addWidget(qt.HorizontalSpacer(self._toolbar))
+        self.printPreview = SingletonPrintPreviewToolButton(parent=self._toolbar,
+                                                            plot=self)
+        self._toolbar.addWidget(self.printPreview)
 
         self.scanWindowInfoWidget = None
         self.infoDockWidget = None
@@ -214,11 +222,11 @@ class ScanWindow(BaseScanWindow):
 
     def __init__(self, parent=None, name="Scan Window", fit=True, backend=None,
                  plugins=True, control=True, position=True, roi=True,
-                 specfit=None, info=False):
+                 specfit=None, info=False, save=True):
         BaseScanWindow.__init__(self,
                                 parent, name, fit, backend,
                                 plugins, control, position, roi,
-                                specfit, info)
+                                specfit, info, save)
 
         self.dataObjectsDict = {}
 
