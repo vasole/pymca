@@ -388,12 +388,14 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                                        specfit=None,
                                        plugins=False,
                                        roi=False, fit=False)
+        self.plotWindow = origin
+
+        # hide the first 2 actions
         self.xAxisLogarithmicAction.setVisible(False)
         self.yAxisLogarithmicAction.setVisible(False)
-        # hide additional toolbar with simple math actions
-        self._toolbar.setVisible(False)
 
-        self.plotWindow = origin
+        # hide additional toolbar with simple math actions
+        self._mathToolBar.setVisible(False)
 
         # Buttons to push spectra to main Window
         buttonAdd = qt.QPushButton('Add', self)

@@ -104,21 +104,25 @@ class BaseScanWindow(PlotWindow):
         self.setWindowTitle(name)
 
         # Toolbar:
-        # hide zoom and pan mode button
+        # hide zoom and pan mode buttons, and the next separator
         self.zoomModeAction.setVisible(False)
         self.panModeAction.setVisible(False)
+        for action in self.toolBar().actions():
+            if action.isSeparator():
+                action.setVisible(False)
+                break
 
         # additional buttons
-        self._toolbar = qt.QToolBar(self)
+        self._mathToolBar = qt.QToolBar(self)
 
-        self.addToolBar(self._toolbar)
+        self.addToolBar(self._mathToolBar)
 
         self.fitToolButton = None
         if fit:
             # attr needed by scanFitToolButton
             self.scanFit = ScanFit.ScanFit(specfit=specfit)
             self.fitToolButton = ScanFitToolButton(self)
-            self._toolbar.addWidget(self.fitToolButton)
+            self._mathToolBar.addWidget(self.fitToolButton)
 
         self.avgAction = SimpleActions.AverageAction(plot=self)
         self.derivativeAction = SimpleActions.DerivativeAction(plot=self)
@@ -127,12 +131,12 @@ class BaseScanWindow(PlotWindow):
         self.yMinToZero = SimpleActions.YMinToZeroAction(plot=self)
         self.subtractAction = SimpleActions.SubtractAction(plot=self)
 
-        self._toolbar.addAction(self.avgAction)
-        self._toolbar.addAction(self.derivativeAction)
-        self._toolbar.addAction(self.smoothAction)
-        self._toolbar.addAction(self.swapSignAction)
-        self._toolbar.addAction(self.yMinToZero)
-        self._toolbar.addAction(self.subtractAction)
+        self._mathToolBar.addAction(self.avgAction)
+        self._mathToolBar.addAction(self.derivativeAction)
+        self._mathToolBar.addAction(self.smoothAction)
+        self._mathToolBar.addAction(self.swapSignAction)
+        self._mathToolBar.addAction(self.yMinToZero)
+        self._mathToolBar.addAction(self.subtractAction)
 
         self.pluginsToolButton = None
         """Plugins tool button, used to load and call plugins.
@@ -157,12 +161,16 @@ class BaseScanWindow(PlotWindow):
                 self.pluginsToolButton.getPlugins(
                         method="getPlugin1DInstance",
                         directoryList=pluginDir)
-            self.pluginsAction = self._toolbar.addWidget(self.pluginsToolButton)
+            self.pluginsAction = self._mathToolBar.addWidget(self.pluginsToolButton)
 
-        self._toolbar.addWidget(qt.HorizontalSpacer(self._toolbar))
-        self.printPreview = SingletonPrintPreviewToolButton(parent=self._toolbar,
+        self._printPreviewToolBar = qt.QToolBar(self)
+        self._printPreviewToolBar.setMovable(False)
+        self._printPreviewToolBar.setFloatable(False)
+        self.addToolBar(self._printPreviewToolBar)
+        self._printPreviewToolBar.addWidget(qt.HorizontalSpacer(self._printPreviewToolBar))
+        self.printPreview = SingletonPrintPreviewToolButton(parent=self._printPreviewToolBar,
                                                             plot=self)
-        self._toolbar.addWidget(self.printPreview)
+        self.printPreviewAction = self._printPreviewToolBar.addWidget(self.printPreview)
 
         self.scanWindowInfoWidget = None
         self.infoDockWidget = None
