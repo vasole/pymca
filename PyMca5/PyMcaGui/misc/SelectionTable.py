@@ -27,7 +27,8 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__doc__="""
+__doc__ = """
+
 Concenience widget to generate a selection  table in which each column can
 contain one type of widget.
 
@@ -39,8 +40,10 @@ is emitted indicating the current selection and the triggering cell.
 from PyMca5.PyMcaGui import PyMcaQt as qt
 DEBUG = 0
 
+
 class SelectionTable(qt.QTableWidget):
     sigSelectionTableSignal = qt.pyqtSignal(object)
+
     def __init__(self, parent=None, labels=None, types=None):
         qt.QTableWidget.__init__(self, parent)
         if labels is None:
@@ -73,7 +76,7 @@ class SelectionTable(qt.QTableWidget):
             if item is None:
                 item = qt.QTableWidgetItem(labels[i],
                                            qt.QTableWidgetItem.Type)
-                self.setHorizontalHeaderItem(i,item)
+                self.setHorizontalHeaderItem(i, item)
             item.setText(labels[i])
         rheight = self.horizontalHeader().sizeHint().height()
 
@@ -116,7 +119,7 @@ class SelectionTable(qt.QTableWidget):
                 if widget is None:
                     widget = RadioButtonItem(self, row, column)
                     self.setCellWidget(row, column, widget)
-                    widget.sigRadioButtonItemSignal.connect( \
+                    widget.sigRadioButtonItemSignal.connect(
                                         self._radioButtonSlot)
                     if self._buttonGroups[column] is None:
                         self._buttonGroups[column] = qt.QButtonGroup()
@@ -131,7 +134,7 @@ class SelectionTable(qt.QTableWidget):
                                                qt.QTableWidgetItem.Type)
                     item.setTextAlignment(qt.Qt.AlignHCenter | qt.Qt.AlignVCenter)
                     self.setItem(row, column, item)
-                    #item is enabled and selectable
+                    # item is enabled and selectable
                     item.setFlags(qt.Qt.ItemIsEnabled | qt.Qt.ItemIsSelectable)
                 else:
                     item.setText(content)
@@ -187,8 +190,10 @@ class SelectionTable(qt.QTableWidget):
         ddict["cell"] = cell
         self.sigSelectionTableSignal.emit(ddict)
 
+
 class CheckBoxItem(qt.QCheckBox):
     sigCheckBoxItemSignal = qt.pyqtSignal(object)
+
     def __init__(self, parent, row, col):
         super(CheckBoxItem, self).__init__(parent)
         self.__row = row
@@ -205,8 +210,10 @@ class CheckBoxItem(qt.QCheckBox):
         ddict["col"] = ddict["column"]
         self.sigCheckBoxItemSignal.emit(ddict)
 
+
 class RadioButtonItem(qt.QRadioButton):
     sigRadioButtonItemSignal = qt.pyqtSignal(object)
+
     def __init__(self, parent, row, col):
         super(RadioButtonItem, self).__init__(parent)
         self.__row = row
@@ -223,6 +230,7 @@ class RadioButtonItem(qt.QRadioButton):
         ddict["col"] = ddict["column"]
         self.sigRadioButtonItemSignal.emit(ddict)
 
+
 if __name__ == "__main__":
     app = qt.QApplication([])
     def slot(ddict):
@@ -235,9 +243,8 @@ if __name__ == "__main__":
                    ["Cnt3", "", ""],
                    ["Cnt4", "", ""],
                    ["Cnt5", "", ""]])
-    tab.setSelection({'x':[1],
-                      'y':[4],
-                      'legend':["dummy", "Ca K", "Fe K", "Pb M", "U l"]})
+    tab.setSelection({'x': [1],
+                      'y': [4],
+                      'legend': ["dummy", "Ca K", "Fe K", "Pb M", "U l"]})
     tab.show()
     app.exec_()
-
