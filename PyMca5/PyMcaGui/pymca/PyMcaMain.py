@@ -103,6 +103,12 @@ try:
 except:
     SUMRULES_FLAG = False
 
+try:
+    from tomogui.gui.ProjectWidget import ProjectWindow as TomoguiProjectWindow
+    TOMOGUI_FLAG = True
+except ImportError:
+    TOMOGUI_FLAG = False
+
 import PyMca5
 from PyMca5.PyMcaGui.pymca.PyMca_help import HelpDict
 from PyMca5 import PyMcaDataDir
@@ -241,6 +247,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.__imagingTool = None
             self._xrfmcTool = None
             self._sumRulesTool = None
+            self.__reconsWidget = None
             self.openMenu = qt.QMenu()
             self.openMenu.addAction("PyMca Configuration", self.openSource)
             self.openMenu.addAction("Data Source",
@@ -1094,6 +1101,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.menuTools.addAction("Sum Rules Tool", self._sumRules)
         if DEBUG:
             print("Fit to Specfile missing")
+        if TOMOGUI_FLAG:
+            self.menuTools.addAction("Tomography reconstruction",
+                                     self.__tomoRecons)
 
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
@@ -1186,6 +1196,12 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if self.__correlator is None:
             self.__correlator = []
 
+    def __tomoRecons(self):
+        if self.__reconsWidget is None:
+            self.__reconsWidget = TomoguiProjectWindow()
+        if self.__reconsWidget.isHidden():
+            self.__reconsWidget.show()
+        self.__reconsWidget.raise_()
 
     def _deleteCorrelator(self, ddict):
         n = len(self.__correlator)
