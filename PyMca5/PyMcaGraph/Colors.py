@@ -33,6 +33,16 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __doc__ = """
 Dictionary of common colors.
 """
+import logging
+import traceback
+_logger = logging.getLogger(__name__)
+
+_logger.warning("%s is deprecated, you are advised to use "
+                "silx.gui.plot.Colors instead",
+                __name__)
+for line in traceback.format_stack(limit=4):
+    _logger.warning(line.rstrip())
+
 
 COLORDICT = {}
 COLORDICT['b'] = COLORDICT['blue']   = '#0000ff'
