@@ -166,7 +166,6 @@ if __name__ == "__main__":
         qApp = qt.QApplication.instance()
         qApp.processEvents()
 
-from PyMca5.PyMcaGraph.Plot import Plot
 from PyMca5.PyMcaGui.pymca import ScanWindow
 from PyMca5.PyMcaGui.pymca import McaWindow
 
@@ -248,7 +247,6 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.openMenu.addAction("Load Training Data",
                                         self.loadTrainingData)
 
-
             self.__useTabWidget = True
 
             if not self.__useTabWidget:
@@ -261,7 +259,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.mdi.addWindow(self.scanWindow)
             else:
                 if backend is not None:
-                    Plot.defaultBackend = backend
+                    from silx.gui.plot import PlotWidget
+                    PlotWidget.setDefaultBackend(backend)
                 self.mainTabWidget = qt.QTabWidget(self.mdi)
                 self.mainTabWidget.setWindowTitle("Main Window")
                 self.mcaWindow = McaWindow.McaWindow(backend=backend)

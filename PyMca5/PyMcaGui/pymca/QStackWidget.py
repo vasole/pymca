@@ -1225,8 +1225,8 @@ if __name__ == "__main__":
     if backend is not None:
         # set the default backend
         try:
-            from PyMca5.PyMcaGraph.Plot import Plot
-            Plot.defaultBackend = backend
+            from silx.gui.plot import PlotWidget
+            PlotWidget.setDefaultBackend(backend)
         except:
             print("WARNING: Cannot set backend to %s" % backend)
     widget = QStackWidget()
