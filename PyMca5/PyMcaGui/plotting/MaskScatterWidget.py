@@ -547,8 +547,10 @@ class MaskScatterWidget(PlotWindow):
                                 color[3] = self._alphaLevel
                     # a copy of the input info is needed in order not
                     # to set the main curve to that color
+
                     self.addCurve(xMask, yMask, legend=legend + " %02d" % i,
                                   info=info.copy(), color=color,
+                                  ylabel=legend + " %02d" % i,
                                   linestyle=" ", symbol="o",
                                   selectable=False,
                                   z=1,
