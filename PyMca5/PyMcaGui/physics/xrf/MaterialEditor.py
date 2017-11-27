@@ -37,7 +37,6 @@ import numpy
 import traceback
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaPhysics import Elements
-# from PyMca5.PyMcaGui import PlotWindow
 from silx.gui.plot import PlotWindow
 
 if hasattr(qt, "QString"):
