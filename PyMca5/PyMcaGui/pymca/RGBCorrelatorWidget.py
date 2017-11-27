@@ -65,6 +65,12 @@ except:
     NNMA = False
     PCA  = False
 
+try:
+    import tomogui.gui.utils.icons
+    TOMOGUI_FLAG = True
+except ImportError:
+    TOMOGUI_FLAG = False
+
 DEBUG = 0
 
 
@@ -111,6 +117,12 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.profileButton = qt.QToolButton(hbox)
         self.profileButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["diagonal"])))
         self.profileButton.setToolTip("Show selected images profile")
+        if TOMOGUI_FLAG:
+            self.tomographyButton = qt.QToolButton(hbox)
+            tomoguiIcon = tomogui.gui.utils.icons.getQIcon('tomogui')
+            self.tomographyButton.setIcon(tomoguiIcon)
+            self.tomographyButton.setToolTip("Run tomography reconstruction")
+            hbox.mainLayout.addWidget(self.tomographyButton)
 
         #label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
         label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
