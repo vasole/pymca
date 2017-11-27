@@ -110,7 +110,6 @@ except ImportError:
     TOMOGUI_FLAG = False
 
 import PyMca5
-from PyMca5.PyMcaGui.pymca.PyMca_help import HelpDict
 from PyMca5 import PyMcaDataDir
 import os
 __version__ = PyMca5.version()
