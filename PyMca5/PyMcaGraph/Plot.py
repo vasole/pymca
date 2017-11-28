@@ -45,9 +45,21 @@ from . import PlotBase
 from . import PlotBackend
 from . import Colors
 
+import logging
+import traceback
+_logger = logging.getLogger(__name__)
+
 DEBUG = 0
 if DEBUG:
     PlotBase.DEBUG = True
+    _logger.setLevel(logging.DEBUG)
+
+_logger.warning("%s is deprecated, you are advised to use "
+                "silx.gui.plot.PlotWidget instead",
+                __name__)
+for line in traceback.format_stack(limit=4):
+    _logger.warning(line.rstrip())
+
 
 _COLORDICT =  Colors.COLORDICT
 _COLORLIST = [_COLORDICT['black'],

@@ -80,6 +80,8 @@ class MaskScatterWidget(PlotWindow):
                                                 roi=False,
                                                 copy=False,
                                                 print_=False)
+        if parent is None:
+            self.setWindowTitle("MaskScatterWidget")
         self.setActiveCurveHandling(False)
 
         self.colormapIcon = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
@@ -101,6 +103,8 @@ class MaskScatterWidget(PlotWindow):
         self._selectionCurve = None
         self._selectionMask = None
         self._alphaLevel = None
+        self._xScale = None
+        self._yScale = None
 
         self._maxNRois = maxNRois
         self._nRoi = 1
@@ -410,9 +414,13 @@ class MaskScatterWidget(PlotWindow):
             cmap = self.colormapDialog.getColormap()
             pixmap = MaskImageTools.getPixmapFromData(imageData,
                                                       colormap=cmap)
+            origin, scale = (0., 0.), (1., 1.)
+            if self._xScale is not None and self._yScale is not None:
+                origin = self._xScale[0], self._yScale[0]
+                scale = self._xScale[1], self._yScale[1]
+
             self.addImage(imageData, legend=legend + "density",
-                          xScale=self._xScale,
-                          yScale=self._yScale,
+                          origin=origin, scale=scale,
                           z=0,
                           pixmap=pixmap,
                           resetzoom=False)
@@ -541,8 +549,10 @@ class MaskScatterWidget(PlotWindow):
                                 color[3] = self._alphaLevel
                     # a copy of the input info is needed in order not
                     # to set the main curve to that color
+
                     self.addCurve(xMask, yMask, legend=legend + " %02d" % i,
                                   info=info.copy(), color=color,
+                                  ylabel=legend + " %02d" % i,
                                   linestyle=" ", symbol="o",
                                   selectable=False,
                                   z=1,
@@ -657,7 +667,7 @@ class MaskScatterWidget(PlotWindow):
                 #self.setMouseText("%g, %g, %g" % (row, column, self.__imageData[rowMin, columnMin]))
                 #To show mouse coordinates:
                 #self.setMouseText("%g, %g, %g" % (ddict['x'], ddict['y'], self.__imageData[rowMin, columnMin]))
-                if self._xScale is not None:
+                if self._xScale is not None and self._yScale is not None:
                     x = self._xScale[0] + column * self._xScale[1]
                     y = self._yScale[0] + row * self._yScale[1]
                 else:
