@@ -80,6 +80,8 @@ class MaskScatterWidget(PlotWindow):
                                                 roi=False,
                                                 copy=False,
                                                 print_=False)
+        if parent is None:
+            self.setWindowTitle("MaskScatterWidget")
         self.setActiveCurveHandling(False)
 
         self.colormapIcon = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
