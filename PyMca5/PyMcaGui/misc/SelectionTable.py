@@ -44,12 +44,15 @@ DEBUG = 0
 class SelectionTable(qt.QTableWidget):
     sigSelectionTableSignal = qt.pyqtSignal(object)
 
+    LABELS = ["Legend", "X", "Y"]
+    TYPES = ["Text", "RadioButton", "CheckBox"]
+
     def __init__(self, parent=None, labels=None, types=None):
         qt.QTableWidget.__init__(self, parent)
         if labels is None:
             if types is None:
-                labels = ["Legend", "X", "Y"]
-                types = ["Text", "RadioButton", "CheckBox"]
+                labels = self.LABELS
+                types = self.TYPES
             else:
                 labels = []
                 i = 0
@@ -189,6 +192,105 @@ class SelectionTable(qt.QTableWidget):
         ddict["event"] = "selectionChanged"
         ddict["cell"] = cell
         self.sigSelectionTableSignal.emit(ddict)
+
+    def setColumnEnabled(self, index, enabled):
+        if index < self.columnCount():
+            for row in range(self.rowCount()):
+                self.cellWidget(row, index).setEnabled(enabled)
+
+
+class FluoSinoReconsSelectionTable(SelectionTable):
+    """Table to select the sinogram to reconstruct and in the case of
+    the fluorescence reconstruction what are It, I0... sinograms"""
+    LABELS = ["name", "fluorescence sinogram to reconstruct", "I0", "It"]
+
+    TYPES = ["Text", "CheckBox", "RadioButton", "RadioButton"]
+
+    def __init__(self, parent=None):
+        SelectionTable.__init__(self, parent)
+
+    def getItSelection(self):
+        nSelection = len(self.getSelection()['it'])
+        if nSelection is 0:
+            return None
+        elif nSelection is 1:
+            index = self.getSelection()['it']
+            assert(len(index) is 1)
+            return self.getSelection()['name'][index[0]]
+        else:
+            raise ValueError('multiple sinogram set as I0, shouldn\'t happen')
+
+    def getI0Selection(self):
+        nSelection = len(self.getSelection()['i0'])
+        if nSelection is 0:
+            return None
+        elif nSelection is 1:
+            index = self.getSelection()['i0']
+            assert(len(index) is 1)
+            return self.getSelection()['name'][index[0]]
+        else:
+            raise ValueError('multiple sinogram set as I0, shouldn\'t happen')
+
+    def getSinogramsToRecons(self):
+        sinograms = []
+        selections = self.getSelection()
+        for iSino in selections['fluorescence sinogram to reconstruct']:
+            sinograms.append(selections['name'][iSino])
+        return sinograms
+
+    def setI0Enabled(self, enabled):
+        self.setColumnEnabled(index=2, enabled=enabled)
+
+    def setItEnabled(self, enabled):
+        self.setColumnEnabled(index=3, enabled=enabled)
+
+
+class TxSinoReconsSelectionTable(SelectionTable):
+    """Table to select the sinogram to reconstruct and in the case of
+    the fluorescence reconstruction what are It, I0... sinograms"""
+    LABELS = ["name", "sinogram to reconstruct", "I0"]
+
+    TYPES = ["Text", "CheckBox", "RadioButton"]
+
+    def __init__(self, parent=None):
+        SelectionTable.__init__(self, parent)
+
+    def getI0Selection(self):
+        nSelection = len(self.getSelection()['i0'])
+        if nSelection is 0:
+            return None
+        elif nSelection is 1:
+            index = self.getSelection()['i0']
+            assert(len(index) is 1)
+            return self.getSelection()['name'][index[0]]
+        else:
+            raise ValueError('multiple sinogram set as I0, shouldn\'t happen')
+
+    def getSinogramsToRecons(self):
+        sinograms = []
+        selections = self.getSelection()
+        for iSino in selections['sinogram to reconstruct']:
+            sinograms.append(selections['name'][iSino])
+        return sinograms
+
+    def setI0Enabled(self, enabled):
+        self.setColumnEnabled(index=2, enabled=enabled)
+
+
+class FBPSinoReconsSelectionTable(SelectionTable):
+    LABELS = ["name", "sinogram to reconstruct"]
+
+    TYPES = ["Text", "CheckBox"]
+
+    def __init__(self, parent=None):
+        SelectionTable.__init__(self, parent)
+
+    def getSinogramsToRecons(self):
+        sinograms = []
+        selections = self.getSelection()
+        for iSino in selections['sinogram to reconstruct']:
+            sinograms.append(selections['name'][iSino])
+        return sinograms
 
 
 class CheckBoxItem(qt.QCheckBox):

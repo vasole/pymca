@@ -67,6 +67,8 @@ except:
 
 try:
     import tomogui.gui.utils.icons
+    from tomogui.gui.ProjectWidget import ProjectWindow as TomoguiProjWindow
+    from PyMca5.PyMcaGui.pymca.TomographyRecons import TomoReconsDialog
     TOMOGUI_FLAG = True
 except ImportError:
     TOMOGUI_FLAG = False
@@ -123,6 +125,7 @@ class RGBCorrelatorWidget(qt.QWidget):
             self.tomographyButton.setIcon(tomoguiIcon)
             self.tomographyButton.setToolTip("Run tomography reconstruction")
             hbox.mainLayout.addWidget(self.tomographyButton)
+            self.tomographyButton.clicked.connect(self._showTomoReconsDialog)
 
         #label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
         label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
@@ -232,6 +235,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         self.scatterPlotWidget = None
         self.pcaDialog  = None
         self.nnmaDialog = None
+        self._tomoguiWindow = None
 
         self.__imageResizeButton.clicked.connect(self._imageResizeSlot)
         self.sliderWidget.sigRGBCorrelatorSliderSignal.connect(self._sliderSlot)
@@ -260,6 +264,34 @@ class RGBCorrelatorWidget(qt.QWidget):
                 self._calculationMenu.addAction(QString("NNMA Analysis"),
                                             self.showNNMADialog)
         self._calculationMenu.exec_(self.cursor().pos())
+
+    def _showTomoReconsDialog(self):
+        def getSinograms(ids):
+            datas = []
+            for id in ids:
+                assert 'image' in self._imageDict[id]
+                datas.append(self._imageDict[id]['image'])
+            return datas
+
+        assert(TOMOGUI_FLAG is True)
+        diag = TomoReconsDialog(entries=self._imageList)
+        if diag.exec_():
+            if self._tomoguiWindow is None:
+                self._tomoguiWindow = TomoguiProjWindow()
+
+            self._tomoguiWindow.clean()
+            reconsType = diag.getReconstructionType()
+            sinoIDs = diag.getSinogramsToRecons()
+            self._tomoguiWindow.setSinoToRecons(reconsType=reconsType,
+                                                sinograms=getSinograms(sinoIDs),
+                                                names=sinoIDs)
+            if diag.hasIt() is True:
+                it = self._imageDict[diag.getIt()]['image']
+                self._tomoguiWindow.setIt(it=it, name=diag.getIt())
+            if diag.hasI0() is True:
+                i0 = self._imageDict[diag.getI0()]['image']
+                self._tomoguiWindow.setI0(i0=i0, name=diag.getI0())
+            self._tomoguiWindow.show()
 
     def toggleSliders(self):
         if self.sliderWidget.isHidden():
