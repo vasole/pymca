@@ -2079,6 +2079,7 @@ class McaAdvancedFit(qt.QWidget):
                 xdata.shape= [len(xdata),]
                 ydata.shape= [len(ydata),]
                 self.graph.addCurve(xdata, ydata, legend="Data", replace=True)
+                self.graph.setActiveCurve("Data")
                 return
             else:
                 ddict = self.dict
@@ -2147,6 +2148,7 @@ class McaAdvancedFit(qt.QWidget):
                         self.graph.removeCurve(label)
         else:
             self.__clearPeaksSpectrum()
+        self.graph.setActiveCurve("Data")
 
     def _saveGraph(self, dict=None):
         if not len(self.graph.getAllCurves(just_legend=True)):
