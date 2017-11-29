@@ -147,6 +147,10 @@ class SimpleFitGui(qt.QWidget):
                                     fit=False, control=True, position=True)
             self.graph.zoomModeAction.setVisible(False)
             self.graph.panModeAction.setVisible(False)
+            # No context menu by default, execute zoomBack on right click
+            plotArea = self.graph.getWidgetHandle()
+            plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
+            plotArea.customContextMenuRequested.connect(self._zoomBack)
         else:
             self.__useTab = False
             self.graph = graph
@@ -335,7 +339,6 @@ class SimpleFitGui(qt.QWidget):
             msg.exec_()
             self.setStatus("Ready (after estimate error)")
 
-
     def setStatus(self, text=None):
         if text is None:
             text = "%s" % self.fitModule.getStatus()
@@ -402,6 +405,9 @@ class SimpleFitGui(qt.QWidget):
 
     def evaluateContributions(self, x=None):
         return self.fitModule.evaluateContributions(x)
+
+    def _zoomBack(self, pos):
+        self.graph.getLimitsHistory().pop()
 
 
 def test():
