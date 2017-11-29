@@ -320,6 +320,7 @@ class SimpleFitGui(qt.QWidget):
             y = self.fitModule._y
             self.graph.clear()
             self.graph.addCurve(x, y, 'Data')
+            self.graph.setActiveCurve('Data')
             self.fitModule.estimate()
             self.setStatus()
             self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
@@ -389,6 +390,7 @@ class SimpleFitGui(qt.QWidget):
                 i += 1
                 self.graph.addCurve(ddict['x'], background + contribution,
                                     legend='Contribution %d' % i)
+        self.graph.setActiveCurve('Data')
         self.graph.show()
 
     def dismiss(self):
