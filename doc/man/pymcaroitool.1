@@ -27,7 +27,7 @@ spectrum channel number).
 It allows one to display maps of particular regions of the spectra or spectra 
 of a particular region of the map.
 
-A system of plugins allow to extend the capabilities of this tool. Plugins 
+A system of plugins allows to extend the capabilities of this tool. Plugins
 for multivariate analysis are already built in.
  
 .P
@@ -61,15 +61,15 @@ Tries to open a series of uncompressed TIFF files as an image stack.
 Start the program loading the single indexed files from file_00100.edf to 
 file_00200.edf
 
-.B pymcaroitool --begin=10,100 --end=20,200 --filepattern=row%d_col%03d.dat
+.B pymcaroitool --begin=10,100 --end=20,200 --filepattern=row%d_col%04d.dat
 .P
-Load the double indexed files from row10_col100.dat, row10_col101.dat, ... 
-to row20_col00199.dat, row20_col00200.dat 
+Load the double indexed files from row10_col0100.dat, row10_col0101.dat, ... 
+to row20_col0199.dat, row20_col0200.dat
 
 .SH CAVEATS
-If files f_000.xxx and f_001.xxx are present in the same directory, the 
-program will always try to load both of them unless a cumbersome way using 
-a file pattern is used.
+If files f_000.xxx and f_001.xxx are present in the same directory, and 
+only one of them is selected, the program will always try to load both of
+them unless a cumbersome way using a file pattern is used.
 
 .SH SEE ALSO
 HDF5, h5py
