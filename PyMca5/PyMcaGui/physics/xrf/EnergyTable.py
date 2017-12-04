@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -295,7 +295,7 @@ class EnergyTable(QTable):
         self.offset      = offset
         self.scatterList = scatterlist
         self.verticalHeader().hide()
-        self.dataColumns = 20
+        self.dataColumns = 30
         if QTVERSION < '4.0.0':
             self.setLeftMargin(0)
             self.setFrameShape(qttable.QTable.NoFrame)
