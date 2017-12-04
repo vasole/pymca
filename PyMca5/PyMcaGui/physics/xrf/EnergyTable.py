@@ -401,7 +401,7 @@ class EnergyTable(QTable):
                 item.setChecked(False)
                 self.setText(r, 1+coloffset,"")
             if idx < len(self.weightList):
-                self.setText(r, 2+coloffset,"%f" % self.weightList[idx])
+                self.setText(r, 2+coloffset,"%g" % self.weightList[idx])
             else:
                 self.setText(r, 2+coloffset,"")
 
