@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -228,7 +228,7 @@ if __name__ == "__main__":
     def slot(ddict):
         print("received dict = ", ddict)
     tab = SelectionTable(labels=["Legend", "X", "Y"],
-                         types=["Text", "RadioButton", "RadioButton"])
+                         types=["Text", "RadioButton", "CheckBox"])
     tab.sigSelectionTableSignal.connect(slot)
     tab.fillTable([["Cnt1", "", ""],
                    ["Cnt2", "", ""],
