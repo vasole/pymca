@@ -30,9 +30,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui.misc.SelectionTable import FluoSinoReconsSelectionTable
-from PyMca5.PyMcaGui.misc.SelectionTable import TxSinoReconsSelectionTable
-from PyMca5.PyMcaGui.misc.SelectionTable import FBPSinoReconsSelectionTable
+from PyMca5.PyMcaGui.misc.SelectionTable import SelectionTable
 from tomogui.gui.datasource.QDataSourceWidget import QDataSourceWidget
 from tomogui.configuration.config import FBPConfig
 try:
@@ -264,6 +262,100 @@ class TomoReconsDialog(qt.QDialog):
             else:
                 return False
         return True
+
+
+class FluoSinoReconsSelectionTable(SelectionTable):
+    """Table to select the sinogram to reconstruct and in the case of
+    the fluorescence reconstruction what are It, I0... sinograms"""
+    LABELS = ["name", "fluorescence sinogram to reconstruct", "I0", "It"]
+
+    TYPES = ["Text", "CheckBox", "RadioButton", "RadioButton"]
+
+    def __init__(self, parent=None):
+        SelectionTable.__init__(self, parent)
+
+    def getItSelection(self):
+        nSelection = len(self.getSelection()['it'])
+        if nSelection is 0:
+            return None
+        elif nSelection is 1:
+            index = self.getSelection()['it']
+            assert(len(index) is 1)
+            return self.getSelection()['name'][index[0]]
+        else:
+            raise ValueError('multiple sinogram set as I0, shouldn\'t happen')
+
+    def getI0Selection(self):
+        nSelection = len(self.getSelection()['i0'])
+        if nSelection is 0:
+            return None
+        elif nSelection is 1:
+            index = self.getSelection()['i0']
+            assert(len(index) is 1)
+            return self.getSelection()['name'][index[0]]
+        else:
+            raise ValueError('multiple sinogram set as I0, shouldn\'t happen')
+
+    def getSinogramsToRecons(self):
+        sinograms = []
+        selections = self.getSelection()
+        for iSino in selections['fluorescence sinogram to reconstruct']:
+            sinograms.append(selections['name'][iSino])
+        return sinograms
+
+    def setI0Enabled(self, enabled):
+        self.setColumnEnabled(index=2, enabled=enabled)
+
+    def setItEnabled(self, enabled):
+        self.setColumnEnabled(index=3, enabled=enabled)
+
+
+class TxSinoReconsSelectionTable(SelectionTable):
+    """Table to select the sinogram to reconstruct and in the case of
+    the fluorescence reconstruction what are It, I0... sinograms"""
+    LABELS = ["name", "sinogram to reconstruct", "I0"]
+
+    TYPES = ["Text", "CheckBox", "RadioButton"]
+
+    def __init__(self, parent=None):
+        SelectionTable.__init__(self, parent)
+
+    def getI0Selection(self):
+        nSelection = len(self.getSelection()['i0'])
+        if nSelection is 0:
+            return None
+        elif nSelection is 1:
+            index = self.getSelection()['i0']
+            assert(len(index) is 1)
+            return self.getSelection()['name'][index[0]]
+        else:
+            raise ValueError('multiple sinogram set as I0, shouldn\'t happen')
+
+    def getSinogramsToRecons(self):
+        sinograms = []
+        selections = self.getSelection()
+        for iSino in selections['sinogram to reconstruct']:
+            sinograms.append(selections['name'][iSino])
+        return sinograms
+
+    def setI0Enabled(self, enabled):
+        self.setColumnEnabled(index=2, enabled=enabled)
+
+
+class FBPSinoReconsSelectionTable(SelectionTable):
+    LABELS = ["name", "sinogram to reconstruct"]
+
+    TYPES = ["Text", "CheckBox"]
+
+    def __init__(self, parent=None):
+        SelectionTable.__init__(self, parent)
+
+    def getSinogramsToRecons(self):
+        sinograms = []
+        selections = self.getSelection()
+        for iSino in selections['sinogram to reconstruct']:
+            sinograms.append(selections['name'][iSino])
+        return sinograms
 
 
 if __name__ == '__main__':
