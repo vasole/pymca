@@ -36,6 +36,7 @@ from PyMca5.PyMcaGui.io.hdf5 import QNexusWidget
 from PyMca5.PyMcaCore import NexusDataSource
 from PyMca5 import PyMcaDirs
 
+
 class IntroductionPage(qt.QWizardPage):
     def __init__(self, parent):
         qt.QWizardPage.__init__(self, parent)
@@ -43,6 +44,7 @@ class IntroductionPage(qt.QWizardPage):
         text  = "This wizard will help you to select the "
         text += "appropriate dataset(s) belonging to your stack"
         self.setSubTitle(text)
+
 
 class FileListPage(qt.QWizardPage):
     def __init__(self, parent):
@@ -218,50 +220,51 @@ class DatasetSelectionPage(qt.QWizardPage):
             return
         nxData = entry[nxDataList[0]]
 
-        #try to get the signals
-        signalList = []
-        axesList = []
-        interpretation = ""
-        for key in nxData.keys():
-            if 'signal' in nxData[key].attrs.keys():
-                if int(nxData[key].attrs['signal']) == 1:
-                    signalList.append(key)
-                    if len(signalList) == 1:
-                        if 'interpretation' in nxData[key].attrs.keys():
-                            interpretation = nxData[key].attrs['interpretation']
-                            if sys.version > '2.9':
-                                try:
-                                    interpretation = interpretation.decode('utf-8')
-                                except:
-                                    print("WARNING: Cannot decode interpretation")
-                            if interpretation == "image":
-                                self.stackIndexWidget.setIndex(0)
-                        if 'axes' in nxData[key].attrs.keys():
-                            axes = nxData[key].attrs['axes']
-                            if sys.version > '2.9':
-                                try:
-                                    axes = axes.decode('utf-8')
-                                except:
-                                    print("WARNING: Cannot decode axes")
-                            axes = axes.split(":")
-                            for axis in axes:
-                                if axis in nxData.keys():
-                                    axesList.append(axis)
+        signal_key = nxData.attrs.get("signal")
+        if signal_key is None:
+            return
+        if sys.version > '2.9':
+            try:
+                signal_key = signal_key.decode('utf-8')
+            except AttributeError:
+                print("WARNING: Cannot decode NX_class attribute")
 
-        if not len(signalList):
+        signal_dataset = nxData.get(signal_key)
+        if signal_dataset is None:
             return
 
-        ddict = {}
-        ddict['counters'] = []
-        ddict['aliases']  = []
+        interpretation = signal_dataset.attrs.get("interpretation", "")
+        if sys.version > '2.9':
+            try:
+                interpretation = interpretation.decode('utf-8')
+            except AttributeError:
+                print("WARNING: Cannot decode interpretation")
+        if interpretation == "image":
+            self.stackIndexWidget.setIndex(0)
 
-        for signal in signalList:
-            path = posixpath.join("/",nxDataList[0], signal)
-            ddict['counters'].append(path)
-            ddict['aliases'].append(posixpath.basename(signal))
+        axesList = list(nxData.attrs.get("axes", []))
+        if not axesList:
+            # try the old method, still documented on nexusformat.org:
+            # colon-delimited "array" of dataset names as a signal attr
+            axes = signal_dataset.attrs.get('axes')
+            if axes is not None:
+                if sys.version > '2.9':
+                    try:
+                        axes = axes.decode('utf-8')
+                    except AttributeError:
+                        print("WARNING: Cannot decode axes")
+            axes = axes.split(":")
+            axesList = [ax for ax in axes if ax in nxData]
+
+        ddict = {'counters': [],
+                 'aliases': []}
+
+        path = posixpath.join("/", nxDataList[0], signal_key)
+        ddict['counters'].append(path)
+        ddict['aliases'].append(posixpath.basename(signal_key))
 
         for axis in axesList:
-            path = posixpath.join("/",nxDataList[0], axis)
+            path = posixpath.join("/", nxDataList[0], axis)
             ddict['counters'].append(path)
             ddict['aliases'].append(posixpath.basename(axis))
 
@@ -274,15 +277,13 @@ class DatasetSelectionPage(qt.QWizardPage):
             return
 
         self.nexusWidget.setWidgetConfiguration(ddict)
-        if len(signalList):
-            if len(axesList) == 0:
-                self.nexusWidget.cntTable.setCounterSelection({'y':[0]})
-            elif interpretation == "image":
-                self.nexusWidget.cntTable.setCounterSelection({'y':[0], 'x':[1]})
-            elif interpretation == "spectrum":
-                self.nexusWidget.cntTable.setCounterSelection({'y':[0], 'x':[len(axesList)]})
-            else:
-                self.nexusWidget.cntTable.setCounterSelection({'y':[0]})
+
+        if axesList and interpretation == "image":
+            self.nexusWidget.cntTable.setCounterSelection({'y': [0], 'x': [1]})
+        elif axesList and interpretation == "spectrum":
+            self.nexusWidget.cntTable.setCounterSelection({'y': [0], 'x': [len(axesList)]})
+        else:
+            self.nexusWidget.cntTable.setCounterSelection({'y': [0]})
 
     def validatePage(self):
         cntSelection = self.nexusWidget.cntTable.getCounterSelection()
@@ -313,12 +314,14 @@ class DatasetSelectionPage(qt.QWizardPage):
         msg.setText(text)
         msg.exec_()
 
+
 class ShapePage(qt.QWizardPage):
     def __init__(self, parent):
         qt.QWizardPage.__init__(self, parent)
         self.setTitle("HDF5 Map Shape Selection")
         text  = "Adjust the shape of your map if necessary"
         self.setSubTitle(text)
+
 
 class LocalQNexusWidget(QNexusWidget.QNexusWidget):
     def __init__(self, parent=None, mca=False):
@@ -331,6 +334,7 @@ class LocalQNexusWidget(QNexusWidget.QNexusWidget):
         w.hide()
         w.setWindowModality(qt.Qt.ApplicationModal)
         w.show()
+
 
 class QHDF5StackWizard(qt.QWizard):
     def __init__(self, parent=None):
@@ -376,6 +380,7 @@ class QHDF5StackWizard(qt.QWizard):
         return self._fileList.fileList,\
                self._datasetSelection.selection,\
                [x[0] for x in self._datasetSelection.nexusWidget.getSelectedEntries()]
+
 
 if __name__ == "__main__":
     import sys
