@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -212,7 +212,14 @@ class SimpleFit(object):
             f=os.path.basename(os.path.splitext(modname)[0])
             newfun=__import__(f)
         else:
-            raise ValueError("Cannot interprete/find %s" % modname)
+            try:
+                # try to use a module from PyMca
+                # typically it will only work if using
+                # SimpleFitUserEstimatedFunctions as module
+                f=os.path.basename(os.path.splitext(modname)[0])
+                newfun=__import__(f)
+            except:
+                raise ValueError("Cannot interprete/find %s" % modname)
 
         theory = newfun.THEORY
         function=newfun.FUNCTION
