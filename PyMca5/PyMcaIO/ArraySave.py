@@ -332,9 +332,11 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                                       shape=shape,
                                       dtype=dtype,
                                       compression=None)
-    data.attrs['signal'] = numpy.int32(1)
+    # data.attrs['signal'] = numpy.int32(1)
+    nxData.attrs['signal'] = buffername.encode('utf-8')
     if interpretation is not None:
         data.attrs['interpretation'] = interpretation.encode('utf-8')
+
     for i in range(len(shape)):
         dim = numpy.arange(shape[i]).astype(numpy.float32)
         dset = nxData.require_dataset('dim_%d' % i,
@@ -342,7 +344,10 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                                       dim.dtype,
                                       dim,
                                       chunks=dim.shape)
-        dset.attrs['axis'] = numpy.int32(i + 1)
+        # dset.attrs['axis'] = numpy.int32(i + 1)
+    nxData.attrs["axes"] = [('dim_%d' % i).encode('utf-8')
+                            for i in range(len(shape))]
+
     nxEntry['end_time'] = getDate().encode('utf-8')
     return hdf, data
 
@@ -565,9 +570,12 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                 dset[i:i + 1] = tmpData[0:1]
                 print("Saved item %d of %d" % (i + 1, data.shape[0]))
 
-        dset.attrs['signal'] = "1".encode('utf-8')
+        # dset.attrs['signal'] = "1".encode('utf-8')
+        nxData.attrs["signal"] = 'data'
+
         if interpretation is not None:
             dset.attrs['interpretation'] = interpretation.encode('utf-8')
+
         axesAttribute = []
         for i in range(len(shape)):
             if axes is None:
@@ -592,7 +600,9 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                                            compression=None)
             adset[:] = dim[:]
             adset.attrs['axis'] = i + 1
-        dset.attrs['axes'] = (":".join(axesAttribute)).encode('utf-8')
+        # dset.attrs['axes'] = (":".join(axesAttribute)).encode('utf-8')
+        nxData.attrs["axes"] = [axAttr.encode('utf-8') for axAttr in axesAttribute]
+
         nxEntry['end_time'] = numpy.string_(getDate().encode('utf-8'))
         if mode.lower() == 'nexus+':
             # create link
