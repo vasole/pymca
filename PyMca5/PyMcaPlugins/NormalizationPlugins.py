@@ -137,12 +137,13 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, i1)
             y = numpy.take(y, i1)
             try:
-                ymin = numpy.nanmin()
+                ymin = numpy.nanmin(y)
                 y = y - ymin
-                ymax = numpy.nanmax(ymax)
+                ymax = numpy.nanmax(y)
                 if ymax != 0:
-                    y = y/ymax
+                    y = y / ymax
             except:
+                print(sys.exc_info())
                 continue
             if i == 0:
                 replace = True
@@ -175,11 +176,12 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, i1)
             y = numpy.take(y, i1)
             try:
-                ymin = numpy.nanmin()
+                ymin = numpy.nanmin(y)
                 y = y - ymin
-                ysum = numpy.nansum()
+                ysum = numpy.nansum(y)
                 y = y / ysum
             except:
+                print(sys.exc_info())
                 continue
             if i == 0:
                 replace = True
@@ -212,10 +214,11 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, i1)
             y = numpy.take(y, i1)
             try:
-                ymin = numpy.nanmin()
+                ymin = numpy.nanmin(y)
                 y = y - ymin
                 y = y / numpy.trapz(y, x)
             except:
+                print(sys.exc_info())
                 continue
             if i == 0:
                 replace = True
@@ -296,12 +299,14 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             else:
                 replot = False
                 replace = False
-            self.addCurve(x, y,
+            # this line is absolutely necessary!
+            xi.shape = y.shape
+            self.addCurve(xi, y,
                           legend=legend,
                           info=info,
                           replot=replot,
                           replace=replace)
-            lastCurve = [x, y, legend]
+            lastCurve = [xi, y, legend]
         self.addCurve(lastCurve[0],
                       lastCurve[1],
                       legend=lastCurve[2],
