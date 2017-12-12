@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -137,8 +137,11 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, i1)
             y = numpy.take(y, i1)
             try:
-                y = y - y.min()
-                y = y/y.max()
+                ymin = numpy.nanmin()
+                y = y - ymin
+                ymax = numpy.nanmax(ymax)
+                if ymax != 0:
+                    y = y/ymax
             except:
                 continue
             if i == 0:
@@ -172,8 +175,10 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, i1)
             y = numpy.take(y, i1)
             try:
-                y = y - y.min()
-                y = y/y.sum()
+                ymin = numpy.nanmin()
+                y = y - ymin
+                ysum = numpy.nansum()
+                y = y / ysum
             except:
                 continue
             if i == 0:
@@ -207,8 +212,9 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, i1)
             y = numpy.take(y, i1)
             try:
-                y = y - y.min()
-                y = y/numpy.trapz(y, x)
+                ymin = numpy.nanmin()
+                y = y - ymin
+                y = y / numpy.trapz(y, x)
             except:
                 continue
             if i == 0:
@@ -272,7 +278,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, idx)
             y = numpy.take(y, idx)
 
-            idx = numpy.nonzero((x0>=x.min()) & (x0<=x.max()))[0]
+            idx = numpy.nonzero((x0 >= numpy.nanmin(x)) & (x0 <= numpy.nanmax(x)))[0]
             if not len(idx):
                 #no overlap
                 continue
