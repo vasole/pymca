@@ -22,35 +22,25 @@ import glob
 import platform
 import time
 USING_SETUPTOOLS = True
-PYMCA_DISTUTILS=os.getenv("PYMCA_DISTUTILS")
-if PYMCA_DISTUTILS in [1, "1", "True"]:
-    PYMCA_DISTUTILS = True
 if 'bdist_wheel' in sys.argv:
-    if PYMCA_DISTUTILS:
-        raise ValueError("Wheels have to be generated with setuptools")
     # wheels require setuptools
     from setuptools import setup
     from setuptools.command.install import install as dftinstall
     from setuptools import Command
     from setuptools.extension import Extension
-    from setuptools.command.build_py import build_py as _build_py
+    from setuptools.command.build_py import build_py
     from distutils.command.install_data import install_data
     from setuptools.command.install_scripts import install_scripts
-    from setuptools.command.sdist import sdist
-elif ('--distutils' in sys.argv) or PYMCA_DISTUTILS:
+elif '--distutils' in sys.argv:
     # The cx_setup.py machinery works with distutils
-    try:
-        sys.argv.remove("--distutils")
-    except:
-        pass
+    sys.argv.remove("--distutils")
     from distutils.core import setup
     from distutils.command.install import install as dftinstall
     from distutils.core import Command
     from distutils.core import Extension
-    from distutils.command.build_py import build_py as _build_py
+    from distutils.command.build_py import build_py
     from distutils.command.install_data import install_data
     from distutils.command.install_scripts import install_scripts
-    from distutils.command.sdist import sdist
     USING_SETUPTOOLS = False
 else:
     try:
@@ -58,19 +48,17 @@ else:
         from setuptools.command.install import install as dftinstall
         from setuptools import Command
         from setuptools.extension import Extension
-        from setuptools.command.build_py import build_py as _build_py
+        from setuptools.command.build_py import build_py
         from distutils.command.install_data import install_data
         from setuptools.command.install_scripts import install_scripts
-        from setuptools.command.sdist import sdist
     except ImportError:
         from distutils.core import setup
         from distutils.command.install import install as dftinstall
         from distutils.core import Command
         from distutils.core import Extension
-        from distutils.command.build_py import build_py as _build_py
+        from distutils.command.build_py import build_py
         from distutils.command.install_data import install_data
         from distutils.command.install_scripts import install_scripts
-        from distutils.command.sdist import sdist
         USING_SETUPTOOLS = False
 try:
     import numpy
@@ -90,14 +78,6 @@ global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
 global USE_SMART_INSTALL_SCRIPTS
 
-PROJECT = "PyMca5"
-
-def get_version():
-    """Returns current version number from version.py file"""
-    import version
-    return version.strictversion
-
-__version__ = get_version()
 
 #package maintainers customization
 # Dear (Debian, RedHat, ...) package makers, please feel free to customize the
@@ -182,29 +162,34 @@ if use_fisx():
 else:
     fisx_src = None
 
+ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
+for line in ffile:
+    if line.startswith('__version__'):
+        #remove spaces and split
+        __version__ = "%s" % line.replace(' ','').split("=")[-1][:-1]
+        #remove " or ' present
+        __version__ = __version__[1:-1]
+        break
 
 # Make sure we work with a clean MANIFEST file
-# DEBIAN_SRC = False
-# if "sdist" in sys.argv:
-#     manifestFile  = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-#                                  "MANIFEST")
-#     if os.path.exists(manifestFile):
-#         os.remove(manifestFile)
-#
-#     if "DEBIAN_SRC" in os.environ:
-#         if os.environ["DEBIAN_SRC"] in ["True", "1", 1]:
-#             print("Generating Debian specific source distribution without cython generated files")
-#             print("If you cython version is incompatible, it will be your problem")
-#             DEBIAN_SRC = True
+DEBIAN_SRC = False
+if "sdist" in sys.argv:
+    manifestFile  = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 "MANIFEST")
+    if os.path.exists(manifestFile):
+        os.remove(manifestFile)
+
+    if "DEBIAN_SRC" in os.environ:
+        if os.environ["DEBIAN_SRC"] in ["True", "1", 1]:
+            print("Generating Debian specific source distribution without cython generated files")
+            print("If you cython version is incompatible, it will be your problem")
+            DEBIAN_SRC = True
 
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # The following is not supported by python-2.3:
-package_data = {}   #'PyMca5': ['PyMcaData/attdata/*',
-#                            'PyMcaData/HTML/*.*',
-#                            'PyMcaData/HTML/IMAGES/*',
-#                            'PyMcaData/HTML/PyMCA_files/*']}
-packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
+#package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
+packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMca',
             'PyMca5.PyMcaCore',
             'PyMca5.PyMcaPhysics',
@@ -217,7 +202,7 @@ packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMcaMath.fitting',
             'PyMca5.PyMcaMath.mva',
             'PyMca5.PyMcaMath.mva.py_nnma',
-            'PyMca5.PyMcaGraph', 'PyMca5.PyMcaGraph.backends',
+            'PyMca5.PyMcaGraph','PyMca5.PyMcaGraph.backends',
             'PyMca5.PyMcaGui', 'PyMca5.PyMcaGui.plotting',
             'PyMca5.PyMcaGui.physics',
             'PyMca5.PyMcaGui.physics.xas',
@@ -232,37 +217,36 @@ py_modules = []
 
 # Specify all the required PyMca data
 data_files = [(PYMCA_DATA_DIR, ['LICENSE',
-                                'LICENSE.GPL',
-                                'LICENSE.LGPL',
-                                'LICENSE.MIT',
-                                'PyMca5/PyMcaData/Scofield1973.dict',
-                                'changelog.txt',
-                                'PyMca5/PyMcaData/McaTheory.cfg',
-                                'PyMca5/PyMcaData/PyMcaSplashImage.png',
-                                'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
-                                'PyMca5/PyMcaData/LShellRatesCampbell.dat',
-                                'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
-                                'PyMca5/PyMcaData/EXAFS_Cu.dat',
-                                'PyMca5/PyMcaData/EXAFS_Ge.dat',
-                                'PyMca5/PyMcaData/XRFSpectrum.mca']),
-              (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
+                         'LICENSE.GPL',
+                         'LICENSE.LGPL',
+                         'LICENSE.MIT',                         
+                         'PyMca5/PyMcaData/Scofield1973.dict',
+                         'changelog.txt',
+                         'PyMca5/PyMcaData/McaTheory.cfg',
+                         'PyMca5/PyMcaData/PyMcaSplashImage.png',
+                         'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
+                         'PyMca5/PyMcaData/LShellRatesCampbell.dat',
+                         'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
+                         'PyMca5/PyMcaData/EXAFS_Cu.dat',
+                         'PyMca5/PyMcaData/EXAFS_Ge.dat',
+                         'PyMca5/PyMcaData/XRFSpectrum.mca']),
+              (PYMCA_DATA_DIR+'/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
               (PYMCA_DOC_DIR+'/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
               (PYMCA_DOC_DIR+'/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
               (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*'))]
 
 if os.path.exists(os.path.join("PyMca5", "EPDL97")):
     packages.append('PyMca5.EPDL97')
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')))
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97', ['PyMca5/EPDL97/LICENSE']))
+    data_files.append((PYMCA_DATA_DIR+'/EPDL97',glob.glob('PyMca5/EPDL97/*.DAT')))
+    data_files.append((PYMCA_DATA_DIR+'/EPDL97',['PyMca5/EPDL97/LICENSE']))
 
 global SIFT_OPENCL_FILES
 SIFT_OPENCL_FILES = []
 if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
     packages.append('PyMca5.PyMcaMath.sift')
-    package_data['PyMca5'] = ['PyMcaMath/sift/*.cl']
-    # SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
-    # data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
-    #                    SIFT_OPENCL_FILES))
+    SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
+    data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
+                       SIFT_OPENCL_FILES))
 
 LOCAL_OBJECT3D =False
 if os.path.exists(os.path.join("PyMca5", "Object3D")):
@@ -525,9 +509,9 @@ build_plotting_ctools(ext_modules)
 build_xas_xas(ext_modules)
 
 
-class smart_build_py(_build_py):
+class smart_build_py(build_py):
     def run (self):
-        toReturn = _build_py.run(self)
+        toReturn = build_py.run(self)
         global PYMCA_DATA_DIR
         global PYMCA_DOC_DIR
         global PYMCA_INSTALL_DIR
@@ -565,51 +549,48 @@ class smart_build_py(_build_py):
         return toReturn
 
 # data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
-# class smart_install_data(install_data):
-#     if USING_SETUPTOOLS:
-#         def initialize_options (self):
-#             self.outfiles = []
-#             self.data_files = data_files
-#             self.install_dir = None
-#             self.root = None
-#             self.force = 0
-#
-#         def finalize_options(self):
-#             pass
-#
-#         def get_outputs(self):
-#             return self.outfiles
-#
-#     def run(self):
-#         global PYMCA_INSTALL_DIR
-#         global PYMCA_DATA_DIR
-#         global PYMCA_DOC_DIR
-#         #need to change self.install_dir to the library dir
-#         install_cmd = self.get_finalized_command('install')
-#         self.install_dir = getattr(install_cmd, 'install_lib')
-#         PYMCA_INSTALL_DIR = self.install_dir
-#         print("PyMca to be installed in %s" %  self.install_dir)
-#
-#         #cleanup old stuff if present
-#         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "Plugins1D")
-#         if os.path.exists(pymcaOld):
-#             for f in glob.glob(os.path.join(pymcaOld,"*.py")):
-#                 print("Removing previously installed file %s" % f)
-#                 os.remove(f)
-#             for f in glob.glob(os.path.join(pymcaOld,"*.pyc")):
-#                 print("Removing previously installed file %s" % f)
-#                 os.remove(f)
-#             print("Removing previously installed directory %s" % pymcaOld)
-#             os.rmdir(pymcaOld)
-#         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMca.py")
-#         if os.path.exists(pymcaOld):
-#             print("Removing previously installed file %s" % pymcaOld)
-#             os.remove(pymcaOld)
-#         pymcaOld += "c"
-#         if os.path.exists(pymcaOld):
-#             print("Removing previously installed file %s" % pymcaOld)
-#             os.remove(pymcaOld)
-#         return install_data.run(self)
+class smart_install_data(install_data):
+    if USING_SETUPTOOLS:
+        def initialize_options (self):
+            self.outfiles = []
+            self.data_files = data_files
+
+        def finalize_options(self):
+            pass
+
+        def get_outputs(self):
+            return self.outfiles
+
+    def run(self):
+        global PYMCA_INSTALL_DIR
+        global PYMCA_DATA_DIR
+        global PYMCA_DOC_DIR
+        #need to change self.install_dir to the library dir
+        install_cmd = self.get_finalized_command('install')
+        self.install_dir = getattr(install_cmd, 'install_lib')
+        PYMCA_INSTALL_DIR = self.install_dir
+        print("PyMca to be installed in %s" %  self.install_dir)
+
+        #cleanup old stuff if present
+        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "Plugins1D")
+        if os.path.exists(pymcaOld):
+            for f in glob.glob(os.path.join(pymcaOld,"*.py")):
+                print("Removing previously installed file %s" % f)
+                os.remove(f)
+            for f in glob.glob(os.path.join(pymcaOld,"*.pyc")):
+                print("Removing previously installed file %s" % f)
+                os.remove(f)
+            print("Removing previously installed directory %s" % pymcaOld)
+            os.rmdir(pymcaOld)
+        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMca.py")
+        if os.path.exists(pymcaOld):
+            print("Removing previously installed file %s" % pymcaOld)
+            os.remove(pymcaOld)
+        pymcaOld += "c"
+        if os.path.exists(pymcaOld):
+            print("Removing previously installed file %s" % pymcaOld)
+            os.remove(pymcaOld)
+        return install_data.run(self)
 
 
 # smart_install_scripts
@@ -822,8 +803,8 @@ class install(dftinstall):
 
 
 # end of man pages handling
-cmdclass = {'install_data': install_data,   # smart_install_data,
-            'build_py': smart_build_py}
+cmdclass = {'install_data':smart_install_data,
+            'build_py':smart_build_py}
 if build_ext is not None:
     cmdclass['build_ext'] = build_ext
 
@@ -835,61 +816,24 @@ if os.name == "posix":
     cmdclass['install'] = install
     cmdclass['install_man'] = install_man
 
+if DEBIAN_SRC:
+    from distutils.command.sdist import sdist
+    class sdist_debian(sdist):
+        def prune_file_list(self):
+            sdist.prune_file_list(self)
+            directories = ["third-party/fisx/python/cython",
+                           "PyMca5/PyMcaGraph/ctools/_ctools/cython",
+                           "PyMca5/PyMcaPhysics/xas/_xas/cython"]
+            print("Removing files for debian source distribution")
+            for directory in directories:
+                for pyxfile in glob.glob(os.path.join(directory, "*.pyx")):
+                    for extension in [".c", ".cpp"]:
+                        cf = os.path.splitext(pyxfile)[0] + extension
+                        if os.path.isfile(cf):
+                            print("Excluding file %s" % cf)
+                            self.filelist.exclude_pattern(pattern=cf)
 
-class sdist_debian(sdist):
-    """
-    Tailor made sdist for debian
-    * remove auto-generated doc
-    * remove cython generated .c files
-    * remove cython generated .cpp files
-    * remove .bat files
-    * include .l man files
-    """
-    @staticmethod
-    def get_debian_name():
-        import version
-        name = "%s_%s" % (PROJECT, version.debianversion)
-        return name
-
-    def prune_file_list(self):
-        sdist.prune_file_list(self)
-        to_remove = ["doc/build", "doc/pdf", "doc/html", "pylint", "epydoc"]
-        print("Removing files for debian")
-        for rm in to_remove:
-            self.filelist.exclude_pattern(pattern="*", anchor=False, prefix=rm)
-
-        # this is for Cython files specifically: remove C & html files
-        search_root = os.path.dirname(os.path.abspath(__file__))
-        for root, _, files in os.walk(search_root):
-            for afile in files:
-                if os.path.splitext(afile)[1].lower() == ".pyx":
-                    base_file = os.path.join(root, afile)[len(search_root) + 1:-4]
-                    self.filelist.exclude_pattern(pattern=base_file + ".c")
-                    self.filelist.exclude_pattern(pattern=base_file + ".cpp")
-                    self.filelist.exclude_pattern(pattern=base_file + ".html")
-
-    def make_distribution(self):
-        self.prune_file_list()
-        sdist.make_distribution(self)
-        dest = self.archive_files[0]
-        dirname, basename = os.path.split(dest)
-        base, ext = os.path.splitext(basename)
-        while ext in [".zip", ".tar", ".bz2", ".gz", ".Z", ".lz", ".orig"]:
-            base, ext = os.path.splitext(base)
-        if ext:
-            dest = "".join((base, ext))
-        else:
-            dest = base
-        # sp = dest.split("-")
-        # base = sp[:-1]
-        # nr = sp[-1]
-        debian_arch = os.path.join(dirname, self.get_debian_name() + ".orig.tar.gz")
-        os.rename(self.archive_files[0], debian_arch)
-        self.archive_files = [debian_arch]
-        print("Building debian .orig.tar.gz in %s" % self.archive_files[0])
-
-
-cmdclass['debian_src'] = sdist_debian
+    cmdclass['sdist'] = sdist_debian
 
 description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
@@ -949,51 +893,28 @@ classifiers = ["Development Status :: 5 - Production/Stable",
 install_requires = ["numpy", "matplotlib", "fisx>=1.1.4"]
 setup_requires = ["numpy"]
 
-if USING_SETUPTOOLS:
-    distrib = setup(name="PyMca5",
-                    version= __version__,
-                    description = description,
-                    author = "V. Armando Sole",
-                    author_email="sole@esrf.fr",
-                    license= "MIT",
-                    url = "http://pymca.sourceforge.net",
-                    download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,
-                    long_description = long_description,
-                    packages = packages,
-                    platforms='any',
-                    ext_modules = ext_modules,
-                    data_files = data_files,
-                    package_data = package_data,
-    ##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
-                    cmdclass = cmdclass,
-                    scripts=script_files,
-                    py_modules=py_modules,
-                    classifiers=classifiers,
-                    install_requires=install_requires,
-                    setup_requires=setup_requires,
-                    )
-else:
-    distrib = setup(name="PyMca5",
-                    version= __version__,
-                    description = description,
-                    author = "V. Armando Sole",
-                    author_email="sole@esrf.fr",
-                    license= "MIT",
-                    url = "http://pymca.sourceforge.net",
-                    download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,
-                    long_description = long_description,
-                    packages = packages,
-                    platforms='any',
-                    ext_modules = ext_modules,
-                    data_files = data_files,
-                    package_data = package_data,
-    ##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
-                    cmdclass = cmdclass,
-                    scripts=script_files,
-                    py_modules=py_modules,
-                    classifiers=classifiers,
-                    )
-
+distrib = setup(name="PyMca5",
+                version= __version__,
+                description = description,
+                author = "V. Armando Sole",
+                author_email="sole@esrf.fr",
+                license= "MIT",
+                url = "http://pymca.sourceforge.net",
+                download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,  		
+                long_description = long_description,
+                packages = packages,
+                platforms='any',
+                ext_modules = ext_modules,
+                data_files = data_files,
+##                package_data = package_data,
+##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
+                cmdclass = cmdclass,
+                scripts=script_files,
+                py_modules=py_modules,
+                classifiers=classifiers,
+                install_requires=install_requires,
+                setup_requires=setup_requires,
+                )
 
 try:
     print("PyMca is installed in %s " % PYMCA_INSTALL_DIR)
@@ -1040,9 +961,9 @@ __version__ = getFisxVersion()
 
 print("Processing fisx library %s\n" % __version__)
 
-class smart_build_fisx_py(_build_py):
+class smart_build_fisx_py(build_py):
     def run (self):
-        toReturn = _build_py.run(self)
+        toReturn = build_py.run(self)
         global FISX_DATA_DIR
         global FISX_DOC_DIR
         global INSTALL_DIR
