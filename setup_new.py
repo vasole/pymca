@@ -20,18 +20,11 @@
 import sys,os
 import glob
 import platform
+
 USING_SETUPTOOLS = True
-if 'bdist_wheel' in sys.argv:
-    # wheels require setuptools
-    from setuptools import setup
-    from setuptools.command.install import install as dftinstall
-    from setuptools import Command
-    from setuptools.extension import Extension
-    from setuptools.command.build_py import build_py
-    from distutils.command.install_data import install_data
-    from setuptools.command.install_scripts import install_scripts
-elif '--distutils' in sys.argv:
-    # The cx_setup.py machinery works with distutils
+if '--distutils' in sys.argv:
+    assert 'bdist_wheel' not in sys.argv,\
+        "Incompatible arguments bdist_wheel and --distutils"
     sys.argv.remove("--distutils")
     from distutils.core import setup
     from distutils.command.install import install as dftinstall
@@ -42,29 +35,17 @@ elif '--distutils' in sys.argv:
     from distutils.command.install_scripts import install_scripts
     USING_SETUPTOOLS = False
 else:
-    try:
-        from setuptools import setup
-        from setuptools.command.install import install as dftinstall
-        from setuptools import Command
-        from setuptools.extension import Extension
-        from setuptools.command.build_py import build_py
-        from distutils.command.install_data import install_data
-        from setuptools.command.install_scripts import install_scripts
-    except ImportError:
-        from distutils.core import setup
-        from distutils.command.install import install as dftinstall
-        from distutils.core import Command
-        from distutils.core import Extension
-        from distutils.command.build_py import build_py
-        from distutils.command.install_data import install_data
-        from distutils.command.install_scripts import install_scripts
-        USING_SETUPTOOLS = False
-try:
-    import numpy
-except ImportError:
-    text  = "You must have numpy installed.\n"
-    text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
-    raise ImportError(text)
+    # wheels require setuptools
+    from setuptools import setup
+    from setuptools.command.install import install as dftinstall
+    from setuptools import Command
+    from setuptools.extension import Extension
+    from setuptools.command.build_py import build_py
+    from distutils.command.install_data import install_data
+    from setuptools.command.install_scripts import install_scripts
+
+
+import numpy
 
 
 try:
