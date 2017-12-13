@@ -20,7 +20,6 @@
 import sys,os
 import glob
 import platform
-import time
 USING_SETUPTOOLS = True
 if 'bdist_wheel' in sys.argv:
     # wheels require setuptools
@@ -66,7 +65,8 @@ except ImportError:
     text  = "You must have numpy installed.\n"
     text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
     raise ImportError(text)
-import distutils.sysconfig
+
+
 try:
     from Cython.Distutils import build_ext
     import Cython.Compiler.Version
@@ -109,6 +109,7 @@ if SPECFILE_USE_GNU_SOURCE is None:
 else:
     SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
 
+
 # check if cython is not to be used despite being present
 def use_cython():
     """
@@ -132,35 +133,6 @@ if build_ext is not None:
     if not use_cython():
         build_ext = None
 
-# check if fisx library is to be build
-def use_fisx():
-    """
-    Check if fisx is requested from the command line or the environment.
-    """
-    if "WITH_FISX" in os.environ:
-        if os.environ["WITH_FISX"] in ["True", "1", 1]:
-            print("Use of fisx library requested by environment")
-            return True
-
-    if ("--fisx" in sys.argv):
-        sys.argv.remove("--fisx")
-        os.environ["WITH_FISX"] = "True"
-        print("Use fisx library requested by command line")
-        return True
-
-    return False
-
-if use_fisx():
-    # fisx is expected to be an independent library and
-    # ideally one would use git subtree to put it in third-party
-    # but one needs  git > 1.9.x
-    fisx_src = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "third-party", "fisx")
-    if not os.path.exists(fisx_src):
-        print("fisx library not found but installation requested")
-        raise IOError("Installation of fisx requested but library not found")
-else:
-    fisx_src = None
 
 ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
 for line in ffile:
@@ -924,187 +896,5 @@ except:
     #I really do not see how this may happen but ...
     pass
 
-if fisx_src is None or ("sdist" in sys.argv):
-    sys.exit(0)
 
-#
-# What follows is ugly and it is not intended for
-# use outside the ESRF
-#
-# fisx should be installed as a separated Debian/RedHat/... package
-#
-
-fisx_src = os.path.abspath(fisx_src)
-
-# reproduce fisx setup.py file here ...
-# deal with required data
-
-#for the time being there is no doc directory
-FISX_DATA_DIR = os.getenv("FISX_DATA_DIR")
-FISX_DOC_DIR = os.getenv("FISX_DOC_DIR")
-
-if FISX_DATA_DIR is None:
-    FISX_DATA_DIR = os.path.join('fisx', 'fisx_data')
-if FISX_DOC_DIR is None:
-    FISX_DOC_DIR = os.path.join('fisx', 'fisx_data')
-
-def getFisxVersion():
-    cppDir = os.path.join(fisx_src, "src")
-    content = open(os.path.join(cppDir, "fisx_version.h"), "r").readlines()
-    for line in content:
-        if "FISX_VERSION_STR" in line:
-            version = line.split("FISX_VERSION_STR")[-1].replace("\n","")
-            version = version.replace(" ","")
-            return version[1:-1]
-
-__version__ = getFisxVersion()
-
-print("Processing fisx library %s\n" % __version__)
-
-class smart_build_fisx_py(build_py):
-    def run (self):
-        toReturn = build_py.run(self)
-        global FISX_DATA_DIR
-        global FISX_DOC_DIR
-        global INSTALL_DIR
-        defaultDataPath = os.path.join('fisx', 'fisx_data')
-        defaultDocPath = os.path.join('fisx', 'fisx_data')
-        if (FISX_DATA_DIR == defaultDataPath) or\
-           (FISX_DOC_DIR == defaultDocPath):
-            #default, just make sure the complete path is there
-            install_cmd = self.get_finalized_command('install')
-            INSTALL_DIR = getattr(install_cmd, 'install_lib')
-
-        #packager should have given the complete path
-        #in other cases
-        if FISX_DATA_DIR == defaultDataPath:
-            FISX_DATA_DIR = os.path.join(INSTALL_DIR, FISX_DATA_DIR)
-        if FISX_DOC_DIR == defaultDocPath:
-            #default, just make sure the complete path is there
-            FISX_DOC_DIR = os.path.join(INSTALL_DIR, FISX_DOC_DIR)
-        target = os.path.join(self.build_lib, "fisx", "DataDir.py")
-        fid = open(target,'r')
-        content = fid.readlines()
-        fid.close()
-        fid = open(target,'w')
-        for line in content:
-            lineToBeWritten = line
-            if lineToBeWritten.startswith("FISX_DATA_DIR"):
-                lineToBeWritten = "FISX_DATA_DIR = r'%s'\n" % FISX_DATA_DIR
-            if line.startswith("FISX_DOC_DIR"):
-                lineToBeWritten = "FISX_DOC_DIR = r'%s'\n" % FISX_DOC_DIR
-            fid.write(lineToBeWritten)
-        fid.close()
-        return toReturn
-
-class smart_install_fisx_data(install_data):
-    def run(self):
-        global INSTALL_DIR
-        global FISX_DATA_DIR
-        global FISX_DOC_DIR
-        #need to change self.install_dir to the library dir
-        install_cmd = self.get_finalized_command('install')
-        self.install_dir = getattr(install_cmd, 'install_lib')
-        INSTALL_DIR = self.install_dir
-        print("fisx to be installed in %s" %  self.install_dir)
-        return install_data.run(self)
-
-topLevel = fisx_src
-fileList = glob.glob(os.path.join(topLevel, "fisx_data", "*.dat"))
-fileList.append(os.path.join(topLevel, "changelog.txt"))
-fileList.append(os.path.join(topLevel, "LICENSE"))
-fileList.append(os.path.join(topLevel, "README.rst"))
-fileList.append(os.path.join(topLevel, "TODO"))
-data_files = [(FISX_DATA_DIR, fileList)]
-
-# actual build stuff
-FORCE = False
-#cython_dir = os.path.join(os.getcwd(), "python", "cython")
-cython_dir = os.path.join(fisx_src, "python", "cython")
-if build_ext:
-    #make sure everything is totally clean?
-    fileList  = glob.glob(os.path.join(cython_dir, "*.cpp"))
-    fileList += glob.glob(os.path.join(cython_dir, "*.h"))
-    if FORCE:
-        for fname in fileList:
-            if os.path.exists(fname):
-                os.remove(fname)
-    #this does not work:
-    #src = glob.glob(os.path.join(cython_dir, "*pyx"))
-    multiple_pyx = os.path.join(cython_dir, "_fisx.pyx")
-    if os.path.exists(multiple_pyx):
-        try:
-            os.remove(multiple_pyx)
-        except:
-            print("WARNING: Could not delete file. Assuming up-to-date.")
-    if not os.path.exists(multiple_pyx):
-        pyx = glob.glob(os.path.join(cython_dir, "*pyx"))
-        # until _fisx.pyx gets updated, we have to put
-        # the name PyEPDL after PyElement
-        pyx = sorted(pyx, key=str.lower)
-        f = open(multiple_pyx, 'wb')
-        for fname in pyx:
-            inFile = open(fname, 'rb')
-            lines = inFile.readlines()
-            inFile.close()
-            for line in lines:
-                f.write(line)
-        f.close()
-    src = [multiple_pyx]
-else:
-    src = glob.glob(os.path.join(cython_dir,'*.cpp'))
-src += glob.glob(os.path.join(fisx_src,
-                'src', 'fisx_*.cpp'))
-
-include_dirs = [numpy.get_include(),
-                os.path.join(fisx_src, "src")]
-
-if sys.platform == 'win32':
-    extra_compile_args = ['/EHsc']
-    extra_link_args = []
-else:
-    extra_compile_args = []
-    extra_link_args = []
-
-def buildExtension():
-    module = Extension(name="fisx._fisx",
-                    sources=src,
-                    include_dirs=include_dirs,
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args,
-                    language="c++",
-                    )
-    return module
-
-ext_modules = [buildExtension()]
-
-cmdclass = {'install_data':smart_install_fisx_data,
-            'build_py':smart_build_fisx_py,
-            'build_ext': build_ext,
-            }
-
-description = "Quantitative X-Ray Fluorescence Analysis Support Library"
-long_description = """
-Tools to evaluate the expected X-ray fluorescence measured when a sample is excitated by an X-ray beam. Secondary and tertiary excitation effects taken into account.
-"""
-
-# tell distutils where to find the packages
-package_dir = {"":os.path.join(fisx_src, "python")}
-packages = ['fisx', 'fisx.tests']
-setup(
-    name='fisx',
-    version=__version__,
-    author="V. Armando Sole",
-    author_email="sole@esrf.fr",
-    description=description,
-    long_description=long_description,
-    license="MIT",
-    url="https://github.com/vasole/fisx",
-    package_dir=package_dir,
-    packages=packages,
-    ext_modules=ext_modules,
-    data_files=data_files,
-    cmdclass=cmdclass,
-)
-os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
