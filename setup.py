@@ -75,11 +75,15 @@ PYMCA_SCRIPTS_DIR = None
 # with the PyMca sources you just need to delete the PyMca5/PyMcaMath/sift directory.
 PYMCA_DATA_DIR = os.getenv("PYMCA_DATA_DIR")
 PYMCA_DOC_DIR = os.getenv("PYMCA_DOC_DIR")
+
+
 assert (PYMCA_DATA_DIR is None) == (PYMCA_DOC_DIR is None), \
     "error: PYMCA_DATA_DIR and PYMCA_DOC_DIR must be both set (debian " + \
     "packaging) or both be unset (pip install or frozen binary)."
+
+defaultDataPath = os.path.join('PyMca5', 'PyMcaData')
 if PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
-    PYMCA_DATA_DIR = PYMCA_DOC_DIR = os.path.join('PyMca5', 'PyMcaData')
+    PYMCA_DATA_DIR = PYMCA_DOC_DIR = defaultDataPath
 
 
 USE_SMART_INSTALL_SCRIPTS = "--install-scripts" in sys.argv
@@ -166,7 +170,8 @@ packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
 # more packages are appended later, when building extensions
 
 
-if USING_SETUPTOOLS and PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
+if USING_SETUPTOOLS and PYMCA_DATA_DIR == defaultDataPath \
+        and PYMCA_DOC_DIR == defaultDataPath:
     # general case: pip install or "setup.py install" without parameters
     package_data = {'PyMca5': ['LICENSE*',
                                'changelog.txt',
@@ -180,8 +185,8 @@ if USING_SETUPTOOLS and PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
     data_files = []
 
 else:
-    # debian packaging or cx_freeze or py2app:
-    # use data_files to be able to be able to copy data to specific places
+    # used by debian packaging (PYMCA_DATA_DIR & PYMCA_DOC_DIR set by the packager)
+    # or used by cx_freeze or py2app to generate frozen binaries.
     package_data = {}
     data_files = [(PYMCA_DATA_DIR, ['LICENSE',
                                     'LICENSE.GPL',
@@ -453,21 +458,25 @@ class smart_build_py(build_py):
         global PYMCA_DATA_DIR
         global PYMCA_DOC_DIR
         global PYMCA_INSTALL_DIR
-        defaultPath = os.path.join('PyMca5', 'PyMcaData')
-        if PYMCA_DATA_DIR == defaultPath or PYMCA_DOC_DIR == defaultPath:
-            # default, just make sure the complete path is there
-            install_cmd = self.get_finalized_command('install')
+        install_cmd = self.get_finalized_command('install')
+
+        # frozen binary: use --install-data directory (absolute path)
+        if PYMCA_DATA_DIR == defaultDataPath and "--install-data" in sys.argv:
+            PYMCA_DATA_DIR = getattr(install_cmd, 'install_data')
+
+        # pip install or generic build/install: prepend lib path
+        if PYMCA_DATA_DIR == defaultDataPath or PYMCA_DOC_DIR == defaultDataPath:
             PYMCA_INSTALL_DIR = getattr(install_cmd, 'install_lib')
 
-        # packager should have given the complete path
-        # in other cases
-        if PYMCA_DATA_DIR == defaultPath:
-            PYMCA_DATA_DIR = os.path.join(PYMCA_INSTALL_DIR,
-                                          PYMCA_DATA_DIR)
-        if PYMCA_DOC_DIR == defaultPath:
-            # default, just make sure the complete path is there
-            PYMCA_DOC_DIR = os.path.join(PYMCA_INSTALL_DIR,
-                                         PYMCA_DOC_DIR)
+            if PYMCA_DATA_DIR == defaultDataPath:
+                PYMCA_DATA_DIR = os.path.join(PYMCA_INSTALL_DIR,
+                                              PYMCA_DATA_DIR)
+            if PYMCA_DOC_DIR == defaultDataPath:
+                PYMCA_DOC_DIR = os.path.join(PYMCA_INSTALL_DIR,
+                                             PYMCA_DOC_DIR)
+        # packager should have provided the complete path as an environment
+        # variable in other cases
+
         target = os.path.join(self.build_lib, "PyMca5", "PyMcaDataDir.py")
         fid = open(target, 'r')
         content = fid.readlines()
@@ -826,7 +835,6 @@ distrib = setup(name="PyMca5",
                 ext_modules=ext_modules,
                 data_files=data_files,
                 package_data=package_data,
-##                package_dir={'':'PyMca', 'PyMca.tests':'tests'},
                 cmdclass=cmdclass,
                 scripts=script_files,
                 classifiers=classifiers,
