@@ -73,6 +73,12 @@ PYMCA_SCRIPTS_DIR = None
 # with the PyMca sources you just need to delete the PyMca5/PyMcaMath/sift directory.
 PYMCA_DATA_DIR = os.getenv("PYMCA_DATA_DIR")
 PYMCA_DOC_DIR = os.getenv("PYMCA_DOC_DIR")
+assert (PYMCA_DATA_DIR is None) == (PYMCA_DOC_DIR is None), \
+    "error: PYMCA_DATA_DIR and PYMCA_DOC_DIR must be both set (debian " + \
+    "packaging) or both be unset (pip install or frozen binary)."
+if PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
+    PYMCA_DATA_DIR = PYMCA_DOC_DIR = os.path.join('PyMca5', 'PyMcaData')
+
 
 USE_SMART_INSTALL_SCRIPTS = "--install-scripts" in sys.argv
 
@@ -188,14 +194,7 @@ if USING_SETUPTOOLS and PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
 else:
     # debian packaging or cx_freeze or py2app:
     # use data_files to be able to be able to copy data to specific places
-    assert (PYMCA_DATA_DIR is None) == (PYMCA_DOC_DIR is None), \
-        "error: PYMCA_DATA_DIR and PYMCA_DOC_DIR must be both set (debian " +\
-        "packaging) or both unset (frozen binary)."
-    if PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
-        PYMCA_DATA_DIR = PYMCA_DOC_DIR = os.path.join('PyMca5', 'PyMcaData')
-
     package_data = {}
-
     data_files = [(PYMCA_DATA_DIR, ['LICENSE',
                                     'LICENSE.GPL',
                                     'LICENSE.LGPL',
@@ -536,7 +535,6 @@ class smart_install_scripts(install_scripts):
         if "." in PYMCA_INSTALL_DIR:
             PYMCA_INSTALL_DIR = os.path.abspath(PYMCA_INSTALL_DIR)
         PYMCA_SCRIPTS_DIR = self.install_dir
-        PYMCA_DATA_DIR = self.install_data   # todo: not declared as global, not used locally
         if sys.platform != "win32":
             print("PyMca scripts to be installed in %s" % self.install_dir)
         self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
