@@ -54,10 +54,8 @@ try:
 except ImportError:
     build_ext = None
 
-global PYMCA_INSTALL_DIR
-global PYMCA_SCRIPTS_DIR
-global USE_SMART_INSTALL_SCRIPTS
-
+PYMCA_INSTALL_DIR = None
+PYMCA_SCRIPTS_DIR = None
 
 # package maintainers customization
 # Dear (Debian, RedHat, ...) package makers, please feel free to customize the
@@ -194,7 +192,6 @@ if os.path.exists(os.path.join("PyMca5", "EPDL97")):
     data_files.append((PYMCA_DATA_DIR+'/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')))
     data_files.append((PYMCA_DATA_DIR+'/EPDL97', ['PyMca5/EPDL97/LICENSE']))
 
-global SIFT_OPENCL_FILES
 SIFT_OPENCL_FILES = []
 if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
     packages.append('PyMca5.PyMcaMath.sift')
