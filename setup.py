@@ -46,9 +46,9 @@ else:
     from distutils.command.install_data import install_data
     from setuptools.command.install_scripts import install_scripts
 
-# more command line verification related to --distutils
+# more command line verification related to --distutils (frozen binaries)
 if ("--install-scripts" in sys.argv or "--install-lib" in sys.argv or
-        "--install-data" in sys.argv) and not USING_SETUPTOOLS:
+        "--install-data" in sys.argv) and USING_SETUPTOOLS:
     print("error: --install-scripts, --install-lib and --install-data options "
           "require to specify --distutils.")
     sys.exit(1)
@@ -73,10 +73,6 @@ PYMCA_SCRIPTS_DIR = None
 # with the PyMca sources you just need to delete the PyMca5/PyMcaMath/sift directory.
 PYMCA_DATA_DIR = os.getenv("PYMCA_DATA_DIR")
 PYMCA_DOC_DIR = os.getenv("PYMCA_DOC_DIR")
-if PYMCA_DATA_DIR is None:
-    PYMCA_DATA_DIR = os.path.join('PyMca5', 'PyMcaData')
-if PYMCA_DOC_DIR is None:
-    PYMCA_DOC_DIR = os.path.join('PyMca5', 'PyMcaData')
 
 USE_SMART_INSTALL_SCRIPTS = "--install-scripts" in sys.argv
 
@@ -144,8 +140,6 @@ if "sdist" in sys.argv:
             DEBIAN_SRC = True
 
 
-# The following is not supported by python-2.3:
-# package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
 packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMca',
             'PyMca5.PyMcaCore',
@@ -175,36 +169,62 @@ packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMcaGraph.backends.GLSupport',
             'PyMca5.PyMcaGraph.backends.GLSupport.gl',
             'PyMca5.EPDL97']
+# more packages are appended later, when building extensions
 
-# Specify all the required PyMca data
-data_files = [(PYMCA_DATA_DIR, ['LICENSE',
-                                'LICENSE.GPL',
-                                'LICENSE.LGPL',
-                                'LICENSE.MIT',
-                                'PyMca5/PyMcaData/Scofield1973.dict',
-                                'changelog.txt',
-                                'PyMca5/PyMcaData/McaTheory.cfg',
-                                'PyMca5/PyMcaData/PyMcaSplashImage.png',
-                                'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
-                                'PyMca5/PyMcaData/LShellRatesCampbell.dat',
-                                'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
-                                'PyMca5/PyMcaData/EXAFS_Cu.dat',
-                                'PyMca5/PyMcaData/EXAFS_Ge.dat',
-                                'PyMca5/PyMcaData/XRFSpectrum.mca']),
-              (PYMCA_DATA_DIR+'/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
-              (PYMCA_DOC_DIR+'/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
-              (PYMCA_DOC_DIR+'/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
-              (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*')),
-              (PYMCA_DATA_DIR+'/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')),
-              (PYMCA_DATA_DIR+'/EPDL97', ['PyMca5/EPDL97/LICENSE'])]
+
+if USING_SETUPTOOLS and PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
+    # general case: pip install or "setup.py install" without parameters
+    package_data = {'PyMca5': ['LICENSE*',
+                               'changelog.txt',
+                               'PyMcaData/*',
+                               'PyMcaData/attdata/*',
+                               'PyMcaData/HTML/*.*',
+                               'PyMcaData/HTML/IMAGES/*',
+                               'PyMcaData/HTML/PyMCA_files/*',
+                               'EPDL97/*.DAT',
+                               'EPDL97/LICENSE']}
+    data_files = []
+
+else:
+    # debian packaging or cx_freeze or py2app:
+    # use data_files to be able to be able to copy data to specific places
+    assert (PYMCA_DATA_DIR is None) == (PYMCA_DOC_DIR is None), \
+        "error: PYMCA_DATA_DIR and PYMCA_DOC_DIR must be both set (debian " +\
+        "packaging) or both unset (frozen binary)."
+    if PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
+        PYMCA_DATA_DIR = PYMCA_DOC_DIR = os.path.join('PyMca5', 'PyMcaData')
+
+    package_data = {}
+
+    data_files = [(PYMCA_DATA_DIR, ['LICENSE',
+                                    'LICENSE.GPL',
+                                    'LICENSE.LGPL',
+                                    'LICENSE.MIT',
+                                    'PyMca5/PyMcaData/Scofield1973.dict',
+                                    'changelog.txt',
+                                    'PyMca5/PyMcaData/McaTheory.cfg',
+                                    'PyMca5/PyMcaData/PyMcaSplashImage.png',
+                                    'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
+                                    'PyMca5/PyMcaData/LShellRatesCampbell.dat',
+                                    'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
+                                    'PyMca5/PyMcaData/EXAFS_Cu.dat',
+                                    'PyMca5/PyMcaData/EXAFS_Ge.dat',
+                                    'PyMca5/PyMcaData/XRFSpectrum.mca']),
+                  (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
+                  (PYMCA_DOC_DIR + '/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
+                  (PYMCA_DOC_DIR + '/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
+                  (PYMCA_DOC_DIR + '/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*')),
+                  (PYMCA_DATA_DIR + '/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')),
+                  (PYMCA_DATA_DIR + '/EPDL97', ['PyMca5/EPDL97/LICENSE'])]
 
 
 SIFT_OPENCL_FILES = []
 if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
     packages.append('PyMca5.PyMcaMath.sift')
-    SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
-    data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
-                       SIFT_OPENCL_FILES))
+    if 'PyMca5' in package_data:
+        package_data['PyMca5'].append('PyMcaMath/sift/*.cl')
+    else:
+        package_data['PyMca5'] = ['PyMcaMath/sift/*.cl']
 
 sources = glob.glob('*.c')
 if sys.platform == "win32":
@@ -317,7 +337,7 @@ def build_Object3DCTools(ext_modules):
     module = Extension(name='PyMca5.Object3D.Object3DCTools',
                        sources=glob.glob('PyMca5/Object3D/Object3DCTools/*.c'),
                        define_macros=define_macros,
-                       libraries =libraries,
+                       libraries=libraries,
                        include_dirs=includes)
     ext_modules.append(module)
 
@@ -439,6 +459,8 @@ build_xas_xas(ext_modules)
 
 
 class smart_build_py(build_py):
+    """Subclass 'build' to patch 'PyMcaDataDir.py'
+    """
     def run(self):
         toReturn = build_py.run(self)
         global PYMCA_DATA_DIR
@@ -475,51 +497,6 @@ class smart_build_py(build_py):
             fid.write(lineToBeWritten)
         fid.close()
         return toReturn
-
-
-# data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
-class smart_install_data(install_data):
-    if USING_SETUPTOOLS:
-        def initialize_options(self):
-            self.outfiles = []
-            self.data_files = data_files
-
-        def finalize_options(self):
-            pass
-
-        def get_outputs(self):
-            return self.outfiles
-
-    def run(self):
-        global PYMCA_INSTALL_DIR
-        global PYMCA_DATA_DIR
-        global PYMCA_DOC_DIR
-        # need to change self.install_dir to the library dir
-        install_cmd = self.get_finalized_command('install')
-        self.install_dir = getattr(install_cmd, 'install_lib')
-        PYMCA_INSTALL_DIR = self.install_dir
-        print("PyMca to be installed in %s" % self.install_dir)
-
-        # cleanup old stuff if present
-        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "Plugins1D")
-        if os.path.exists(pymcaOld):
-            for f in glob.glob(os.path.join(pymcaOld, "*.py")):
-                print("Removing previously installed file %s" % f)
-                os.remove(f)
-            for f in glob.glob(os.path.join(pymcaOld, "*.pyc")):
-                print("Removing previously installed file %s" % f)
-                os.remove(f)
-            print("Removing previously installed directory %s" % pymcaOld)
-            os.rmdir(pymcaOld)
-        pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMca.py")
-        if os.path.exists(pymcaOld):
-            print("Removing previously installed file %s" % pymcaOld)
-            os.remove(pymcaOld)
-        pymcaOld += "c"
-        if os.path.exists(pymcaOld):
-            print("Removing previously installed file %s" % pymcaOld)
-            os.remove(pymcaOld)
-        return install_data.run(self)
 
 
 # smart_install_scripts
@@ -730,7 +707,7 @@ class install(dftinstall):
 
 
 # end of man pages handling
-cmdclass = {'install_data': smart_install_data,
+cmdclass = {'install_data': install_data,   # smart_install_data,
             'build_py': smart_build_py}
 if build_ext is not None:
     cmdclass['build_ext'] = build_ext
@@ -833,7 +810,7 @@ distrib = setup(name="PyMca5",
                 platforms='any',
                 ext_modules=ext_modules,
                 data_files=data_files,
-##                package_data=package_data,
+                package_data=package_data,
 ##                package_dir={'':'PyMca', 'PyMca.tests':'tests'},
                 cmdclass=cmdclass,
                 scripts=script_files,
