@@ -162,8 +162,10 @@ packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMcaGui.math',
             'PyMca5.PyMcaGui.math.fitting',
             'PyMca5.Object3D',
-            'PyMca5.Object3D.Object3DPlugins']
-py_modules = []
+            'PyMca5.Object3D.Object3DPlugins',
+            'PyMca5.PyMcaGraph.backends.GLSupport',
+            'PyMca5.PyMcaGraph.backends.GLSupport.gl',
+            'PyMca5.EPDL97']
 
 # Specify all the required PyMca data
 data_files = [(PYMCA_DATA_DIR, ['LICENSE',
@@ -183,12 +185,10 @@ data_files = [(PYMCA_DATA_DIR, ['LICENSE',
               (PYMCA_DATA_DIR+'/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
               (PYMCA_DOC_DIR+'/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
               (PYMCA_DOC_DIR+'/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
-              (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*'))]
+              (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*')),
+              (PYMCA_DATA_DIR+'/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')),
+              (PYMCA_DATA_DIR+'/EPDL97', ['PyMca5/EPDL97/LICENSE'])]
 
-if os.path.exists(os.path.join("PyMca5", "EPDL97")):
-    packages.append('PyMca5.EPDL97')
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')))
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97', ['PyMca5/EPDL97/LICENSE']))
 
 SIFT_OPENCL_FILES = []
 if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
@@ -196,13 +196,6 @@ if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
     SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
     data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
                        SIFT_OPENCL_FILES))
-
-if os.path.exists(os.path.join("PyMca5", "PyMcaGraph", "backends", "GLSupport")):
-    packages.append('PyMca5.PyMcaGraph.backends.GLSupport')
-
-if os.path.exists(os.path.join("PyMca5", "PyMcaGraph", "backends", "GLSupport", "gl")):
-    packages.append('PyMca5.PyMcaGraph.backends.GLSupport.gl')
-
 
 sources = glob.glob('*.c')
 if sys.platform == "win32":
@@ -835,7 +828,6 @@ distrib = setup(name="PyMca5",
 ##                package_dir={'':'PyMca', 'PyMca.tests':'tests'},
                 cmdclass=cmdclass,
                 scripts=script_files,
-                py_modules=py_modules,
                 classifiers=classifiers,
                 install_requires=install_requires,
                 setup_requires=setup_requires,
