@@ -17,7 +17,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import sys, os
+import sys
+import os
 import glob
 import platform
 import numpy
@@ -45,6 +46,12 @@ else:
     from distutils.command.install_data import install_data
     from setuptools.command.install_scripts import install_scripts
 
+# more command line verification related to --distutils
+if ("--install-scripts" in sys.argv or "--install-lib" in sys.argv or
+        "--install-data" in sys.argv) and not USING_SETUPTOOLS:
+    print("error: --install-scripts, --install-lib and --install-data options "
+          "require to specify --distutils.")
+    sys.exit(1)
 
 try:
     from Cython.Distutils import build_ext
@@ -111,6 +118,7 @@ if build_ext is not None:
 
 
 ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
+__version__ = None
 for line in ffile:
     if line.startswith('__version__'):
         # remove spaces and split
@@ -118,6 +126,8 @@ for line in ffile:
         # remove " or ' present
         __version__ = __version__[1:-1]
         break
+assert __version__ is not None
+print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # Make sure we work with a clean MANIFEST file
 DEBIAN_SRC = False
@@ -133,7 +143,6 @@ if "sdist" in sys.argv:
             print("If you cython version is incompatible, it will be your problem")
             DEBIAN_SRC = True
 
-print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
 # The following is not supported by python-2.3:
 # package_data = {'PyMca': ['attdata/*', 'HTML/*.*', 'HTML/IMAGES/*', 'HTML/PyMCA_files/*']}
