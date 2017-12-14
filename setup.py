@@ -17,7 +17,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import sys,os
+import sys, os
 import glob
 import platform
 import numpy
@@ -53,6 +53,7 @@ try:
         build_ext = None
 except:
     build_ext = None
+
 global PYMCA_INSTALL_DIR
 global PYMCA_SCRIPTS_DIR
 global USE_SMART_INSTALL_SCRIPTS
@@ -163,7 +164,9 @@ packages = ['PyMca5','PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMcaGui.io',
             'PyMca5.PyMcaGui.io.hdf5',
             'PyMca5.PyMcaGui.math',
-            'PyMca5.PyMcaGui.math.fitting',]
+            'PyMca5.PyMcaGui.math.fitting',
+            'PyMca5.Object3D',
+            'PyMca5.Object3D.Object3DPlugins']
 py_modules = []
 
 # Specify all the required PyMca data
@@ -198,10 +201,6 @@ if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
     SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
     data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
                        SIFT_OPENCL_FILES))
-
-LOCAL_OBJECT3D =False
-if os.path.exists(os.path.join("PyMca5", "Object3D")):
-    LOCAL_OBJECT3D = True
 
 if os.path.exists(os.path.join("PyMca5", "PyMcaGraph", "backends", "GLSupport")):
     packages.append('PyMca5.PyMcaGraph.backends.GLSupport')
@@ -439,22 +438,10 @@ build_specfile(ext_modules)
 build_specfit(ext_modules)
 build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
-if LOCAL_OBJECT3D:
-    try:
-        build_Object3DCTools(ext_modules)
-        build_Object3DQhull(ext_modules)
-        for python_file in glob.glob('PyMca5/Object3D/*.py'):
-            if python_file in ['setup.py', 'cx_setup.py']:
-                continue
-            m = "PyMca5.Object3D.%s" % os.path.basename(python_file)[:-3]
-            py_modules.append(m)
-        for python_file in glob.glob('PyMca5/Object3D/Object3DPlugins/*.py'):
-            m = "PyMca5.Object3D.Object3DPlugins.%s" %\
-                                    os.path.basename(python_file)[:-3]
-            py_modules.append(m)
-    except:
-        print("Object3D Module could not be built")
-        print(sys.exc_info())
+
+build_Object3DCTools(ext_modules)
+build_Object3DQhull(ext_modules)
+
 build_PyMcaSciPy(ext_modules)
 build_plotting_ctools(ext_modules)
 build_xas_xas(ext_modules)
