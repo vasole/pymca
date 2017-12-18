@@ -170,7 +170,7 @@ packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
 # more packages are appended later, when building extensions
 
 
-if USING_SETUPTOOLS and PYMCA_DATA_DIR == defaultDataPath \
+if 0 and USING_SETUPTOOLS and PYMCA_DATA_DIR == defaultDataPath \
         and PYMCA_DOC_DIR == defaultDataPath:
     # general case: pip install or "setup.py install" without parameters
     package_data = {'PyMca5': ['LICENSE*',
