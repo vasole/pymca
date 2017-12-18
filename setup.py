@@ -174,14 +174,14 @@ if USING_SETUPTOOLS and PYMCA_DATA_DIR == defaultDataPath \
         and PYMCA_DOC_DIR == defaultDataPath:
     # general case: pip install or "setup.py install" without parameters
     package_data = {'PyMca5': ['LICENSE*',
-                               'changelog.txt',
-                               'PyMcaData/*',
-                               'PyMcaData/attdata/*',
-                               'PyMcaData/HTML/*.*',
-                               'PyMcaData/HTML/IMAGES/*',
-                               'PyMcaData/HTML/PyMCA_files/*',
-                               'EPDL97/*.DAT',
-                               'EPDL97/LICENSE']}
+                               'changelog.txt'] + \
+                               glob.glob('PyMcaData/*') + \
+                               glob.glob('PyMcaData/attdata/*') + \
+                               glob.glob('PyMcaData/HTML/*.*') + \
+                               glob.glob('PyMcaData/HTML/IMAGES/*') + \
+                               glob.glob('PyMcaData/HTML/PyMCA_files/*') + \
+                               glob.glob('EPDL97/*.DAT') + \
+                               ['EPDL97/LICENSE']}
     data_files = []
 
 else:
