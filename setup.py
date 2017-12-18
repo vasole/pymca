@@ -17,89 +17,56 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import sys,os
+import sys
+import os
 import glob
 import platform
-import time
+import numpy
+
 USING_SETUPTOOLS = True
-PYMCA_DISTUTILS=os.getenv("PYMCA_DISTUTILS")
-if PYMCA_DISTUTILS in [1, "1", "True"]:
-    PYMCA_DISTUTILS = True
-if 'bdist_wheel' in sys.argv:
-    if PYMCA_DISTUTILS:
-        raise ValueError("Wheels have to be generated with setuptools")
-    # wheels require setuptools
-    from setuptools import setup
-    from setuptools.command.install import install as dftinstall
-    from setuptools import Command
-    from setuptools.extension import Extension
-    from setuptools.command.build_py import build_py as _build_py
-    from distutils.command.install_data import install_data
-    from setuptools.command.install_scripts import install_scripts
-    from setuptools.command.sdist import sdist
-elif ('--distutils' in sys.argv) or PYMCA_DISTUTILS:
-    # The cx_setup.py machinery works with distutils
-    try:
-        sys.argv.remove("--distutils")
-    except:
-        pass
+if '--distutils' in sys.argv:
+    assert 'bdist_wheel' not in sys.argv,\
+        "Incompatible arguments bdist_wheel and --distutils"
+    sys.argv.remove("--distutils")
     from distutils.core import setup
     from distutils.command.install import install as dftinstall
     from distutils.core import Command
     from distutils.core import Extension
-    from distutils.command.build_py import build_py as _build_py
+    from distutils.command.build_py import build_py
     from distutils.command.install_data import install_data
     from distutils.command.install_scripts import install_scripts
     from distutils.command.sdist import sdist
     USING_SETUPTOOLS = False
 else:
-    try:
-        from setuptools import setup
-        from setuptools.command.install import install as dftinstall
-        from setuptools import Command
-        from setuptools.extension import Extension
-        from setuptools.command.build_py import build_py as _build_py
-        from distutils.command.install_data import install_data
-        from setuptools.command.install_scripts import install_scripts
-        from setuptools.command.sdist import sdist
-    except ImportError:
-        from distutils.core import setup
-        from distutils.command.install import install as dftinstall
-        from distutils.core import Command
-        from distutils.core import Extension
-        from distutils.command.build_py import build_py as _build_py
-        from distutils.command.install_data import install_data
-        from distutils.command.install_scripts import install_scripts
-        from distutils.command.sdist import sdist
-        USING_SETUPTOOLS = False
-try:
-    import numpy
-except ImportError:
-    text  = "You must have numpy installed.\n"
-    text += "See http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103\n"
-    raise ImportError(text)
-import distutils.sysconfig
+    # wheels require setuptools
+    from setuptools import setup
+    from setuptools.command.install import install as dftinstall
+    from setuptools import Command
+    from setuptools.extension import Extension
+    from setuptools.command.build_py import build_py
+    from distutils.command.install_data import install_data
+    from setuptools.command.install_scripts import install_scripts
+    from setuptools.command.sdist import sdist
+
+# more command line verification related to --distutils (frozen binaries)
+if ("--install-scripts" in sys.argv or "--install-lib" in sys.argv or
+        "--install-data" in sys.argv) and USING_SETUPTOOLS:
+    print("error: --install-scripts, --install-lib and --install-data options "
+          "require to specify --distutils.")
+    sys.exit(1)
+
 try:
     from Cython.Distutils import build_ext
     import Cython.Compiler.Version
     if Cython.Compiler.Version.version < '0.18':
         build_ext = None
-except:
+except ImportError:
     build_ext = None
-global PYMCA_INSTALL_DIR
-global PYMCA_SCRIPTS_DIR
-global USE_SMART_INSTALL_SCRIPTS
 
-PROJECT = "PyMca5"
+PYMCA_INSTALL_DIR = None
+PYMCA_SCRIPTS_DIR = None
 
-def get_version():
-    """Returns current version number from version.py file"""
-    import version
-    return version.strictversion
-
-__version__ = get_version()
-
-#package maintainers customization
+# package maintainers customization
 # Dear (Debian, RedHat, ...) package makers, please feel free to customize the
 # following paths to the directory containing module's data relative to the
 # directory containing the python modules (aka. installation directory).
@@ -108,14 +75,18 @@ __version__ = get_version()
 # with the PyMca sources you just need to delete the PyMca5/PyMcaMath/sift directory.
 PYMCA_DATA_DIR = os.getenv("PYMCA_DATA_DIR")
 PYMCA_DOC_DIR = os.getenv("PYMCA_DOC_DIR")
-if PYMCA_DATA_DIR is None:
-    PYMCA_DATA_DIR = os.path.join('PyMca5','PyMcaData')
-if PYMCA_DOC_DIR is None:
-    PYMCA_DOC_DIR = os.path.join('PyMca5','PyMcaData')
 
-USE_SMART_INSTALL_SCRIPTS = False
-if "--install-scripts" in sys.argv:
-    USE_SMART_INSTALL_SCRIPTS = True
+
+assert (PYMCA_DATA_DIR is None) == (PYMCA_DOC_DIR is None), \
+    "error: PYMCA_DATA_DIR and PYMCA_DOC_DIR must be both set (debian " + \
+    "packaging) or both be unset (pip install or frozen binary)."
+
+defaultDataPath = os.path.join('PyMca5', 'PyMcaData')
+if PYMCA_DATA_DIR is None and PYMCA_DOC_DIR is None:
+    PYMCA_DATA_DIR = PYMCA_DOC_DIR = defaultDataPath
+
+
+USE_SMART_INSTALL_SCRIPTS = "--install-scripts" in sys.argv
 
 SPECFILE_USE_GNU_SOURCE = os.getenv("SPECFILE_USE_GNU_SOURCE")
 if SPECFILE_USE_GNU_SOURCE is None:
@@ -129,6 +100,7 @@ if SPECFILE_USE_GNU_SOURCE is None:
 else:
     SPECFILE_USE_GNU_SOURCE = int(SPECFILE_USE_GNU_SOURCE)
 
+
 # check if cython is not to be used despite being present
 def use_cython():
     """
@@ -139,7 +111,7 @@ def use_cython():
             print("No Cython requested by environment")
             return False
 
-    if ("--no-cython" in sys.argv):
+    if "--no-cython" in sys.argv:
         sys.argv.remove("--no-cython")
         os.environ["WITH_CYTHON"] = "False"
         print("No Cython requested by command line")
@@ -152,58 +124,20 @@ if build_ext is not None:
     if not use_cython():
         build_ext = None
 
-# check if fisx library is to be build
-def use_fisx():
-    """
-    Check if fisx is requested from the command line or the environment.
-    """
-    if "WITH_FISX" in os.environ:
-        if os.environ["WITH_FISX"] in ["True", "1", 1]:
-            print("Use of fisx library requested by environment")
-            return True
 
-    if ("--fisx" in sys.argv):
-        sys.argv.remove("--fisx")
-        os.environ["WITH_FISX"] = "True"
-        print("Use fisx library requested by command line")
-        return True
-
-    return False
-
-if use_fisx():
-    # fisx is expected to be an independent library and
-    # ideally one would use git subtree to put it in third-party
-    # but one needs  git > 1.9.x
-    fisx_src = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "third-party", "fisx")
-    if not os.path.exists(fisx_src):
-        print("fisx library not found but installation requested")
-        raise IOError("Installation of fisx requested but library not found")
-else:
-    fisx_src = None
-
-
-# Make sure we work with a clean MANIFEST file
-# DEBIAN_SRC = False
-# if "sdist" in sys.argv:
-#     manifestFile  = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-#                                  "MANIFEST")
-#     if os.path.exists(manifestFile):
-#         os.remove(manifestFile)
-#
-#     if "DEBIAN_SRC" in os.environ:
-#         if os.environ["DEBIAN_SRC"] in ["True", "1", 1]:
-#             print("Generating Debian specific source distribution without cython generated files")
-#             print("If you cython version is incompatible, it will be your problem")
-#             DEBIAN_SRC = True
-
+ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
+__version__ = None
+for line in ffile:
+    if line.startswith('__version__'):
+        # remove spaces and split
+        __version__ = "%s" % line.replace(' ', '').split("=")[-1][:-1]
+        # remove " or ' present
+        __version__ = __version__[1:-1]
+        break
+assert __version__ is not None
 print("PyMca X-Ray Fluorescence Toolkit %s\n" % __version__)
 
-# The following is not supported by python-2.3:
-package_data = {}   #'PyMca5': ['PyMcaData/attdata/*',
-#                            'PyMcaData/HTML/*.*',
-#                            'PyMcaData/HTML/IMAGES/*',
-#                            'PyMcaData/HTML/PyMCA_files/*']}
+
 packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMca',
             'PyMca5.PyMcaCore',
@@ -227,57 +161,66 @@ packages = ['PyMca5', 'PyMca5.PyMcaPlugins', 'PyMca5.tests',
             'PyMca5.PyMcaGui.io',
             'PyMca5.PyMcaGui.io.hdf5',
             'PyMca5.PyMcaGui.math',
-            'PyMca5.PyMcaGui.math.fitting',]
-py_modules = []
+            'PyMca5.PyMcaGui.math.fitting',
+            'PyMca5.Object3D',
+            'PyMca5.Object3D.Object3DPlugins',
+            'PyMca5.PyMcaGraph.backends.GLSupport',
+            'PyMca5.PyMcaGraph.backends.GLSupport.gl',
+            'PyMca5.EPDL97']
+# more packages are appended later, when building extensions
 
-# Specify all the required PyMca data
-data_files = [(PYMCA_DATA_DIR, ['LICENSE',
-                                'LICENSE.GPL',
-                                'LICENSE.LGPL',
-                                'LICENSE.MIT',
-                                'PyMca5/PyMcaData/Scofield1973.dict',
-                                'changelog.txt',
-                                'PyMca5/PyMcaData/McaTheory.cfg',
-                                'PyMca5/PyMcaData/PyMcaSplashImage.png',
-                                'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
-                                'PyMca5/PyMcaData/LShellRatesCampbell.dat',
-                                'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
-                                'PyMca5/PyMcaData/EXAFS_Cu.dat',
-                                'PyMca5/PyMcaData/EXAFS_Ge.dat',
-                                'PyMca5/PyMcaData/XRFSpectrum.mca']),
-              (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
-              (PYMCA_DOC_DIR+'/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
-              (PYMCA_DOC_DIR+'/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
-              (PYMCA_DOC_DIR+'/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*'))]
 
-if os.path.exists(os.path.join("PyMca5", "EPDL97")):
-    packages.append('PyMca5.EPDL97')
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')))
-    data_files.append((PYMCA_DATA_DIR+'/EPDL97', ['PyMca5/EPDL97/LICENSE']))
+if USING_SETUPTOOLS and PYMCA_DATA_DIR == defaultDataPath \
+        and PYMCA_DOC_DIR == defaultDataPath:
+    # general case: pip install or "setup.py install" without parameters
+    package_data = {'PyMca5': ['LICENSE*',
+                               'changelog.txt',
+                               'PyMcaData/*',
+                               'PyMcaData/attdata/*',
+                               'PyMcaData/HTML/*.*',
+                               'PyMcaData/HTML/IMAGES/*',
+                               'PyMcaData/HTML/PyMCA_files/*',
+                               'EPDL97/*.DAT',
+                               'EPDL97/LICENSE']}
+    data_files = []
 
-global SIFT_OPENCL_FILES
+else:
+    # used by debian packaging (PYMCA_DATA_DIR & PYMCA_DOC_DIR set by the packager)
+    # or used by cx_freeze or py2app to generate frozen binaries.
+    package_data = {}
+    data_files = [(PYMCA_DATA_DIR, ['LICENSE',
+                                    'LICENSE.GPL',
+                                    'LICENSE.LGPL',
+                                    'LICENSE.MIT',
+                                    'PyMca5/PyMcaData/Scofield1973.dict',
+                                    'changelog.txt',
+                                    'PyMca5/PyMcaData/McaTheory.cfg',
+                                    'PyMca5/PyMcaData/PyMcaSplashImage.png',
+                                    'PyMca5/PyMcaData/KShellRatesScofieldHS.dat',
+                                    'PyMca5/PyMcaData/LShellRatesCampbell.dat',
+                                    'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
+                                    'PyMca5/PyMcaData/EXAFS_Cu.dat',
+                                    'PyMca5/PyMcaData/EXAFS_Ge.dat',
+                                    'PyMca5/PyMcaData/XRFSpectrum.mca']),
+                  (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
+                  (PYMCA_DOC_DIR + '/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
+                  (PYMCA_DOC_DIR + '/HTML/IMAGES', glob.glob('PyMca5/PyMcaData/HTML/IMAGES/*')),
+                  (PYMCA_DOC_DIR + '/HTML/PyMCA_files', glob.glob('PyMca5/HTML/PyMCA_files/*')),
+                  (PYMCA_DATA_DIR + '/EPDL97', glob.glob('PyMca5/EPDL97/*.DAT')),
+                  (PYMCA_DATA_DIR + '/EPDL97', ['PyMca5/EPDL97/LICENSE'])]
+
+
 SIFT_OPENCL_FILES = []
 if os.path.exists(os.path.join("PyMca5", "PyMcaMath", "sift")):
     packages.append('PyMca5.PyMcaMath.sift')
-    package_data['PyMca5'] = ['PyMcaMath/sift/*.cl']
-    # SIFT_OPENCL_FILES = glob.glob('PyMca5/PyMcaMath/sift/*.cl')
-    # data_files.append((os.path.join('PyMca5', 'PyMcaMath', 'sift'),
-    #                    SIFT_OPENCL_FILES))
-
-LOCAL_OBJECT3D =False
-if os.path.exists(os.path.join("PyMca5", "Object3D")):
-    LOCAL_OBJECT3D = True
-
-if os.path.exists(os.path.join("PyMca5", "PyMcaGraph", "backends", "GLSupport")):
-    packages.append('PyMca5.PyMcaGraph.backends.GLSupport')
-
-if os.path.exists(os.path.join("PyMca5", "PyMcaGraph", "backends", "GLSupport", "gl")):
-    packages.append('PyMca5.PyMcaGraph.backends.GLSupport.gl')
-
+    if 'PyMca5' in package_data:
+        package_data['PyMca5'].append('PyMcaMath/sift/*.cl')
+    else:
+        package_data['PyMca5'] = ['PyMcaMath/sift/*.cl']
 
 sources = glob.glob('*.c')
 if sys.platform == "win32":
-    define_macros = [('WIN32',None)]
+    define_macros = [('WIN32', None)]
     script_files = glob.glob('PyMca5/scripts/*')
     script_files += glob.glob('scripts/*.bat')
     script_files.append('scripts/pymca_win_post_install.py')
@@ -285,81 +228,88 @@ else:
     define_macros = []
     script_files = glob.glob('PyMca5/scripts/*')
 
+
 def build_FastEdf(ext_modules):
-    module  = Extension(name = 'PyMca5.FastEdf',
-                        sources = glob.glob('PyMca5/PyMcaIO/edf/*.c'),
-                        define_macros = define_macros,
-                        include_dirs = [numpy.get_include()])
+    module = Extension(name='PyMca5.FastEdf',
+                       sources=glob.glob('PyMca5/PyMcaIO/edf/*.c'),
+                       define_macros=define_macros,
+                       include_dirs=[numpy.get_include()])
     ext_modules.append(module)
+
 
 def build_specfile(ext_modules):
     if os.name.lower().startswith('posix'):
         specfile_define_macros = [('PYMCA_POSIX', None)]
-        #the best choice is to use _GNU_SOURCE if possible
-        #because that enables the use of strtod_l
+        # the best choice is to use _GNU_SOURCE if possible
+        # because that enables the use of strtod_l
         if SPECFILE_USE_GNU_SOURCE:
             specfile_define_macros = [('_GNU_SOURCE', 1)]
     else:
         specfile_define_macros = define_macros
-    srcfiles = [ 'sfheader','sfinit','sflists','sfdata','sfindex',
-             'sflabel' ,'sfmca', 'sftools','locale_management','specfile_py']
+    srcfiles = ['sfheader', 'sfinit', 'sflists', 'sfdata', 'sfindex',
+                'sflabel', 'sfmca', 'sftools', 'locale_management',
+                'specfile_py']
     if sys.version >= '3.0':
         srcfiles[-1] += '3'
     sources = []
     specfile_source_dir = os.path.join('PyMca5', 'PyMcaIO', 'specfile', 'src')
     specfile_include_dir = os.path.join('PyMca5', 'PyMcaIO', 'specfile', 'include')
     for ffile in srcfiles:
-      sources.append(os.path.join(specfile_source_dir, ffile+'.c'))
-    module  = Extension(name = 'PyMca5.PyMcaIO.specfile',
-                        sources = sources,
-                        define_macros = specfile_define_macros,
-                        include_dirs = [specfile_include_dir,
-                                            numpy.get_include()])
+        sources.append(os.path.join(specfile_source_dir, ffile+'.c'))
+    module = Extension(name='PyMca5.PyMcaIO.specfile',
+                       sources=sources,
+                       define_macros=specfile_define_macros,
+                       include_dirs=[specfile_include_dir,
+                                     numpy.get_include()])
     ext_modules.append(module)
+
 
 def build_specfit(ext_modules):
-    module  = Extension(name = 'PyMca5.PyMcaMath.fitting.SpecfitFuns',
-                        sources = glob.glob('PyMca5/PyMcaMath/fitting/specfit/*.c'),
-                        define_macros = define_macros,
-                        include_dirs = ['PyMca5/PyMcaMath/fitting/specfit',
-                                         numpy.get_include()])
+    module = Extension(name='PyMca5.PyMcaMath.fitting.SpecfitFuns',
+                       sources=glob.glob('PyMca5/PyMcaMath/fitting/specfit/*.c'),
+                       define_macros=define_macros,
+                       include_dirs=['PyMca5/PyMcaMath/fitting/specfit',
+                                     numpy.get_include()])
     ext_modules.append(module)
 
+
 def build_sps(ext_modules):
-    if platform.system() == 'Linux' :
+    if platform.system() == 'Linux':
         extra_compile_args = ['-pthread']
-        #extra_compile_args = []
-    elif platform.system() == 'SunOS' :
-        #extra_compile_args = ['-pthreads']
+        # extra_compile_args = []
+    elif platform.system() == 'SunOS':
+        # extra_compile_args = ['-pthreads']
         extra_compile_args = []
     else:
         extra_compile_args = []
 
-    module  = Extension(name = 'PyMca5.spslut',
-                         sources = ['PyMca5/PyMcaIO/sps/Src/sps_lut.c',
-                                    'PyMca5/PyMcaIO/sps/Src/spslut_py.c'],
-                         define_macros = define_macros,
-                         extra_compile_args = extra_compile_args,
-                         include_dirs = ['PyMca5/PyMcaIO/sps/Include',
-                                          numpy.get_include()])
+    module = Extension(name='PyMca5.spslut',
+                       sources=['PyMca5/PyMcaIO/sps/Src/sps_lut.c',
+                                'PyMca5/PyMcaIO/sps/Src/spslut_py.c'],
+                       define_macros=define_macros,
+                       extra_compile_args=extra_compile_args,
+                       include_dirs=['PyMca5/PyMcaIO/sps/Include',
+                                     numpy.get_include()])
     ext_modules.append(module)
     if sys.platform != "win32":
-        module = (Extension(name = 'PyMca5.PyMcaIO.sps',
-                                            sources = ['PyMca5/PyMcaIO/sps/Src/sps.c',
-                                                       'PyMca5/PyMcaIO/sps/Src/sps_py.c'],
-                                            define_macros = define_macros,
-                                 extra_compile_args = extra_compile_args,
-                                            include_dirs = ['PyMca5/PyMcaIO/sps/Include',
-                                                             numpy.get_include()]))
+        module = Extension(name='PyMca5.PyMcaIO.sps',
+                           sources=['PyMca5/PyMcaIO/sps/Src/sps.c',
+                                    'PyMca5/PyMcaIO/sps/Src/sps_py.c'],
+                           define_macros=define_macros,
+                           extra_compile_args=extra_compile_args,
+                           include_dirs=['PyMca5/PyMcaIO/sps/Include',
+                                         numpy.get_include()])
         ext_modules.append(module)
 
+
 def build_PyMcaIOHelper(ext_modules):
-    module  = Extension(name = 'PyMca5.PyMcaIO.PyMcaIOHelper',
-                        sources = glob.glob('PyMca5/PyMcaIO/PyMcaIOHelper/*.c'),
-                        define_macros = define_macros,
-                        include_dirs = ['PyMca5/PyMcaIO/PyMcaIOHelper',
-                                        numpy.get_include()])
+    module = Extension(name='PyMca5.PyMcaIO.PyMcaIOHelper',
+                       sources=glob.glob('PyMca5/PyMcaIO/PyMcaIOHelper/*.c'),
+                       define_macros=define_macros,
+                       include_dirs=['PyMca5/PyMcaIO/PyMcaIOHelper',
+                                     numpy.get_include()])
     ext_modules.append(module)
+
 
 def build_Object3DCTools(ext_modules):
     includes = [numpy.get_include()]
@@ -371,16 +321,16 @@ def build_Object3DCTools(ext_modules):
         libraries = []
     else:
         libraries = ['GL', 'GLU']
-    if sys.platform == 'windows':
-        WindowsSDK = os.getenv('WindowsSdkDir')
-        #if WindowsSDK is not None:
-        #    includes.append(WindowsSDK)
+    # if sys.platform == 'windows':
+    #     WindowsSDK = os.getenv('WindowsSdkDir')
+    #     if WindowsSDK is not None:
+    #         includes.append(WindowsSDK)
 
-    module  = Extension(name = 'PyMca5.Object3D.Object3DCTools',
-                        sources = glob.glob('PyMca5/Object3D/Object3DCTools/*.c'),
-                        define_macros = define_macros,
-                        libraries  = libraries,
-                        include_dirs = includes)
+    module = Extension(name='PyMca5.Object3D.Object3DCTools',
+                       sources=glob.glob('PyMca5/Object3D/Object3DCTools/*.c'),
+                       define_macros=define_macros,
+                       libraries=libraries,
+                       include_dirs=includes)
     ext_modules.append(module)
 
 
@@ -417,24 +367,25 @@ def build_Object3DQhull(extensions):
 def build_PyMcaSciPy(ext_modules):
     packages.append('PyMca5.PyMcaMath.PyMcaSciPy')
     packages.append('PyMca5.PyMcaMath.PyMcaSciPy.signal')
-    module = Extension(name = 'PyMca5.PyMcaMath.PyMcaSciPy.signal.mediantools',
-                       sources = glob.glob('PyMca5/PyMcaMath/PyMcaSciPy/signal/*.c'),
-                       define_macros = [],
-                       include_dirs = [numpy.get_include()])
+    module = Extension(name='PyMca5.PyMcaMath.PyMcaSciPy.signal.mediantools',
+                       sources=glob.glob('PyMca5/PyMcaMath/PyMcaSciPy/signal/*.c'),
+                       define_macros=[],
+                       include_dirs=[numpy.get_include()])
     ext_modules.append(module)
+
 
 def build_plotting_ctools(ext_modules):
     packages.append('PyMca5.PyMcaGraph.ctools')
-    basedir = os.path.join('PyMca5', 'PyMcaGraph','ctools', '_ctools')
+    basedir = os.path.join('PyMca5', 'PyMcaGraph', 'ctools', '_ctools')
     c_files = [os.path.join(basedir, 'src', 'InsidePolygonWithBounds.c'),
                os.path.join(basedir, 'src', 'MinMaxImpl.c'),
                os.path.join(basedir, 'src', 'Colormap.c')]
 
     if build_ext:
-        src = [os.path.join(basedir, 'cython','_ctools.pyx')]
+        src = [os.path.join(basedir, 'cython', '_ctools.pyx')]
     else:
         src = []
-        for fname in glob.glob(os.path.join(basedir, 'cython','*.c')): 
+        for fname in glob.glob(os.path.join(basedir, 'cython', '*.c')):
             src.append(os.path.join(basedir, 'cython', os.path.basename(fname))) 
     src += c_files
 
@@ -446,39 +397,25 @@ def build_plotting_ctools(ext_modules):
         extra_link_args = []
 
     module = Extension(name="PyMca5.PyMcaGraph.ctools._ctools",
-                        sources=src,
-                        include_dirs=[numpy.get_include(),
-                                      os.path.join(basedir, "include")],
-                        extra_compile_args=extra_compile_args,
-                        extra_link_args=extra_link_args,
-                        language="c",
-                        )
-    """
-    setup(
-        name='ctools',
-        ext_modules=[Extension(name="_ctools",
-                    sources=src,
-                    include_dirs=[numpy.get_include(),
-                                  os.path.join(os.getcwd(),"include")],
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args,
-                    language="c",
-                    )] ,
-        cmdclass={'build_ext': build_ext},
-    )
-    """
+                       sources=src,
+                       include_dirs=[numpy.get_include(),
+                                     os.path.join(basedir, "include")],
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args,
+                       language="c",)
+
     ext_modules.append(module)
 
 
 def build_xas_xas(ext_modules):
-    basedir = os.path.join('PyMca5', 'PyMcaPhysics','xas', '_xas')
+    basedir = os.path.join('PyMca5', 'PyMcaPhysics', 'xas', '_xas')
     c_files = [os.path.join(basedir, 'src', 'polspl.c'),
                os.path.join(basedir, 'src', 'bessel0.c')]
     if build_ext:
-        src = [os.path.join(basedir, 'cython','_xas.pyx')]
+        src = [os.path.join(basedir, 'cython', '_xas.pyx')]
     else:
         src = []
-        for fname in glob.glob(os.path.join(basedir, 'cython','*.c')): 
+        for fname in glob.glob(os.path.join(basedir, 'cython', '*.c')):
             src.append(os.path.join(basedir, 'cython', os.path.basename(fname))) 
     src += c_files
     if sys.platform == 'win32':
@@ -488,14 +425,14 @@ def build_xas_xas(ext_modules):
         extra_compile_args = []
         extra_link_args = []
     module = Extension(name="PyMca5.PyMcaPhysics.xas._xas",
-                        sources=src,
-                        include_dirs=[numpy.get_include(),
-                                      os.path.join(basedir, "include")],
-                        extra_compile_args=extra_compile_args,
-                        extra_link_args=extra_link_args,
-                        language="c",
-                        )
+                       sources=src,
+                       include_dirs=[numpy.get_include(),
+                                     os.path.join(basedir, "include")],
+                       extra_compile_args=extra_compile_args,
+                       extra_link_args=extra_link_args,
+                       language="c",)
     ext_modules.append(module)
+
 
 ext_modules = []
 if sys.version < '3.0':
@@ -504,54 +441,52 @@ build_specfile(ext_modules)
 build_specfit(ext_modules)
 build_sps(ext_modules)
 build_PyMcaIOHelper(ext_modules)
-if LOCAL_OBJECT3D:
-    try:
-        build_Object3DCTools(ext_modules)
-        build_Object3DQhull(ext_modules)
-        for python_file in glob.glob('PyMca5/Object3D/*.py'):
-            if python_file in ['setup.py', 'cx_setup.py']:
-                continue
-            m = "PyMca5.Object3D.%s" % os.path.basename(python_file)[:-3]
-            py_modules.append(m)
-        for python_file in glob.glob('PyMca5/Object3D/Object3DPlugins/*.py'):
-            m = "PyMca5.Object3D.Object3DPlugins.%s" %\
-                                    os.path.basename(python_file)[:-3]
-            py_modules.append(m)
-    except:
-        print("Object3D Module could not be built")
-        print(sys.exc_info())
+
+build_Object3DCTools(ext_modules)
+build_Object3DQhull(ext_modules)
+
 build_PyMcaSciPy(ext_modules)
 build_plotting_ctools(ext_modules)
 build_xas_xas(ext_modules)
 
 
-class smart_build_py(_build_py):
-    def run (self):
-        toReturn = _build_py.run(self)
+class smart_build_py(build_py):
+    """Subclass 'build' to patch 'PyMcaDataDir.py'
+    """
+    def run(self):
+        toReturn = build_py.run(self)
         global PYMCA_DATA_DIR
         global PYMCA_DOC_DIR
         global PYMCA_INSTALL_DIR
-        defaultPath = os.path.join('PyMca5','PyMcaData')
-        if (PYMCA_DATA_DIR == defaultPath) or\
-           (PYMCA_DOC_DIR == defaultPath):
-            #default, just make sure the complete path is there
-            install_cmd = self.get_finalized_command('install')
+        install_cmd = self.get_finalized_command('install')
+        if "--install-lib" in sys.argv:
             PYMCA_INSTALL_DIR = getattr(install_cmd, 'install_lib')
 
-        #packager should have given the complete path
-        #in other cases
-        if PYMCA_DATA_DIR == defaultPath:
-            PYMCA_DATA_DIR = os.path.join(PYMCA_INSTALL_DIR,
-                                          PYMCA_DATA_DIR)
-        if PYMCA_DOC_DIR == defaultPath:
-            #default, just make sure the complete path is there
-            PYMCA_DOC_DIR = os.path.join(PYMCA_INSTALL_DIR,
-                                          PYMCA_DOC_DIR)
+        # frozen binary: use --install-data directory (absolute path)
+        if PYMCA_DATA_DIR == defaultDataPath and "--install-data" in sys.argv:
+            PYMCA_DATA_DIR = getattr(install_cmd, 'install_data')
+            if not PYMCA_DATA_DIR.endswith(defaultDataPath):
+                # append PyMca5/PyMcaData to build/
+                PYMCA_DATA_DIR = os.path.join(PYMCA_DATA_DIR,
+                                              defaultDataPath)
+
+        # pip install or generic build/install: prepend lib path
+        elif PYMCA_DATA_DIR == defaultDataPath or PYMCA_DOC_DIR == defaultDataPath:
+
+            if PYMCA_DATA_DIR == defaultDataPath:
+                PYMCA_DATA_DIR = os.path.join(PYMCA_INSTALL_DIR,
+                                              PYMCA_DATA_DIR)
+            if PYMCA_DOC_DIR == defaultDataPath:
+                PYMCA_DOC_DIR = os.path.join(PYMCA_INSTALL_DIR,
+                                             PYMCA_DOC_DIR)
+        # packager should have provided the complete path as an environment
+        # variable in other cases.
+
         target = os.path.join(self.build_lib, "PyMca5", "PyMcaDataDir.py")
-        fid = open(target,'r')
+        fid = open(target, 'r')
         content = fid.readlines()
         fid.close()
-        fid = open(target,'w')
+        fid = open(target, 'w')
         for line in content:
             lineToBeWritten = line
             txt = 'DATA_DIR_FROM_SETUP'
@@ -564,153 +499,103 @@ class smart_build_py(_build_py):
         fid.close()
         return toReturn
 
-# data_files fix from http://wiki.python.org/moin/DistutilsInstallDataScattered
-# class smart_install_data(install_data):
-#     if USING_SETUPTOOLS:
-#         def initialize_options (self):
-#             self.outfiles = []
-#             self.data_files = data_files
-#             self.install_dir = None
-#             self.root = None
-#             self.force = 0
-#
-#         def finalize_options(self):
-#             pass
-#
-#         def get_outputs(self):
-#             return self.outfiles
-#
-#     def run(self):
-#         global PYMCA_INSTALL_DIR
-#         global PYMCA_DATA_DIR
-#         global PYMCA_DOC_DIR
-#         #need to change self.install_dir to the library dir
-#         install_cmd = self.get_finalized_command('install')
-#         self.install_dir = getattr(install_cmd, 'install_lib')
-#         PYMCA_INSTALL_DIR = self.install_dir
-#         print("PyMca to be installed in %s" %  self.install_dir)
-#
-#         #cleanup old stuff if present
-#         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "Plugins1D")
-#         if os.path.exists(pymcaOld):
-#             for f in glob.glob(os.path.join(pymcaOld,"*.py")):
-#                 print("Removing previously installed file %s" % f)
-#                 os.remove(f)
-#             for f in glob.glob(os.path.join(pymcaOld,"*.pyc")):
-#                 print("Removing previously installed file %s" % f)
-#                 os.remove(f)
-#             print("Removing previously installed directory %s" % pymcaOld)
-#             os.rmdir(pymcaOld)
-#         pymcaOld = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMca.py")
-#         if os.path.exists(pymcaOld):
-#             print("Removing previously installed file %s" % pymcaOld)
-#             os.remove(pymcaOld)
-#         pymcaOld += "c"
-#         if os.path.exists(pymcaOld):
-#             print("Removing previously installed file %s" % pymcaOld)
-#             os.remove(pymcaOld)
-#         return install_data.run(self)
-
 
 # smart_install_scripts
-if USE_SMART_INSTALL_SCRIPTS:
-    class smart_install_scripts(install_scripts):
-        if USING_SETUPTOOLS:
-            def initialize_options (self):
-                self.outfiles = []
-
-            def finalize_options(self):
-                pass
-
-            def get_outputs(self):
-                return self.outfiles
-
-        def run (self):
-            global PYMCA_SCRIPTS_DIR
-            #I prefer not to translate the python used during the build
-            #process for the case of having an installation on a disk shared
-            #by different machines and starting python from a shell script
-            #that positions the environment
-            from distutils import log
-            from stat import ST_MODE
-            install_cmd = self.get_finalized_command('install')
-            #This is to ignore the --install-scripts keyword
-            #I do not know if to leave it optional ...
-            if False:
-                self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca5')
-                self.install_dir = os.path.join(self.install_dir, 'bin')
-            else:
-                self.install_dir = getattr(install_cmd, 'install_scripts')
-            self.install_data = getattr(install_cmd, 'install_data')
-            if "." in self.install_dir:
-                self.install_dir = os.path.abspath(self.install_dir)
-            if "." in self.install_data:
-                self.install_data = os.path.abspath(self.install_data)
-            global PYMCA_INSTALL_DIR
-            if "." in PYMCA_INSTALL_DIR:
-                PYMCA_INSTALL_DIR = os.path.abspath(PYMCA_INSTALL_DIR)
-            PYMCA_SCRIPTS_DIR = self.install_dir
-            PYMCA_DATA_DIR = self.install_data
-            if sys.platform != "win32":
-                print("PyMca scripts to be installed in %s" %  self.install_dir)
-            self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
+class smart_install_scripts(install_scripts):
+    if USING_SETUPTOOLS:
+        def initialize_options(self):
             self.outfiles = []
-            for filein in glob.glob('PyMca5/scripts/*'):
-                filedest = os.path.join(self.install_dir, os.path.basename(filein))
-                if os.path.exists(filedest):
-                    os.remove(filedest)
-                moddir = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMcaGui")
-                if 0:
-                    f = open(filein, 'r')
-                    modfile = f.readline().replace("\n","")
-                    f.close()
-                else:
-                    basename = os.path.basename(filein)
-                    if basename.startswith('pymcabatch'):
-                        modfile = os.path.join("pymca", 'PyMcaBatch.py')
-                    elif basename.startswith('pymcapostbatch') or\
-                         basename.startswith('rgbcorrelator'):
-                        modfile = os.path.join("pymca", 'PyMcaPostBatch.py')
-                    elif basename.startswith('pymcaroitool'):
-                        modfile = os.path.join("pymca", 'QStackWidget.py')
-                    elif basename.startswith('mca2edf'):
-                        modfile = os.path.join("pymca", 'Mca2Edf.py')
-                    elif basename.startswith('edfviewer'):
-                        modfile = os.path.join("pymca", 'EdfFileSimpleViewer.py')
-                    elif basename.startswith('peakidentifier'):
-                        modfile = os.path.join("physics", "xrf", 'PeakIdentifier.py')
-                    elif basename.startswith('elementsinfo'):
-                        modfile = os.path.join("physics", "xrf", 'ElementsInfo.py')
-                    elif basename.startswith('pymca'):
-                        modfile = os.path.join("pymca", 'PyMcaMain.py')
-                    else:
-                        print("ignored %s" % filein)
-                        continue
-                text  = "#!/bin/bash\n"
-                text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % PYMCA_INSTALL_DIR
-                #deal with sys.executables not named python
-                text += "exec %s %s $*\n" %  (
-                    sys.executable,
-                    os.path.join(moddir, modfile)
-                    )
 
-                f=open(filedest, 'w')
-                f.write(text)
+        def finalize_options(self):
+            pass
+
+        def get_outputs(self):
+            return self.outfiles
+
+    def run(self):
+        global PYMCA_SCRIPTS_DIR
+        global PYMCA_INSTALL_DIR
+        # I prefer not to translate the python used during the build
+        # process for the case of having an installation on a disk shared
+        # by different machines and starting python from a shell script
+        # that positions the environment
+        from distutils import log
+        from stat import ST_MODE
+        install_cmd = self.get_finalized_command('install')
+        # This is to ignore the --install-scripts keyword
+        # I do not know if to leave it optional ...
+        if False:
+            self.install_dir = os.path.join(getattr(install_cmd, 'install_lib'), 'PyMca5')
+            self.install_dir = os.path.join(self.install_dir, 'bin')
+        else:
+            self.install_dir = getattr(install_cmd, 'install_scripts')
+        self.install_data = getattr(install_cmd, 'install_data')
+        if "." in self.install_dir:
+            self.install_dir = os.path.abspath(self.install_dir)
+        if "." in self.install_data:
+            self.install_data = os.path.abspath(self.install_data)
+        if PYMCA_INSTALL_DIR is not None and "." in PYMCA_INSTALL_DIR:
+            PYMCA_INSTALL_DIR = os.path.abspath(PYMCA_INSTALL_DIR)
+        PYMCA_SCRIPTS_DIR = self.install_dir
+        if sys.platform != "win32":
+            print("PyMca scripts to be installed in %s" % self.install_dir)
+        self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
+        self.outfiles = []
+        for filein in glob.glob('PyMca5/scripts/*'):
+            filedest = os.path.join(self.install_dir, os.path.basename(filein))
+            if os.path.exists(filedest):
+                os.remove(filedest)
+            moddir = os.path.join(PYMCA_INSTALL_DIR, "PyMca5", "PyMcaGui")
+            if 0:
+                f = open(filein, 'r')
+                modfile = f.readline().replace("\n", "")
                 f.close()
-                #self.copy_file(filein, filedest)
-                self.outfiles.append(filedest)
-            if os.name == 'posix':
-                # Set the executable bits (owner, group, and world) on
-                # all the scripts we just installed.
-                for ffile in self.get_outputs():
-                    if self.dry_run:
-                        log.info("changing mode of %s", ffile)
-                    else:
-                        # python 2.5 does not accept next line
-                        #mode = ((os.stat(ffile)[ST_MODE]) | 0o555) & 0o7777
-                        mode = ((os.stat(ffile)[ST_MODE]) | 365) & 4095
-                        log.info("changing mode of %s to %o", ffile, mode)
-                        os.chmod(ffile, mode)
+            else:
+                basename = os.path.basename(filein)
+                if basename.startswith('pymcabatch'):
+                    modfile = os.path.join("pymca", 'PyMcaBatch.py')
+                elif basename.startswith('pymcapostbatch') or\
+                     basename.startswith('rgbcorrelator'):
+                    modfile = os.path.join("pymca", 'PyMcaPostBatch.py')
+                elif basename.startswith('pymcaroitool'):
+                    modfile = os.path.join("pymca", 'QStackWidget.py')
+                elif basename.startswith('mca2edf'):
+                    modfile = os.path.join("pymca", 'Mca2Edf.py')
+                elif basename.startswith('edfviewer'):
+                    modfile = os.path.join("pymca", 'EdfFileSimpleViewer.py')
+                elif basename.startswith('peakidentifier'):
+                    modfile = os.path.join("physics", "xrf", 'PeakIdentifier.py')
+                elif basename.startswith('elementsinfo'):
+                    modfile = os.path.join("physics", "xrf", 'ElementsInfo.py')
+                elif basename.startswith('pymca'):
+                    modfile = os.path.join("pymca", 'PyMcaMain.py')
+                else:
+                    print("ignored %s" % filein)
+                    continue
+            text = "#!/bin/bash\n"
+            text += "export PYTHONPATH=%s:${PYTHONPATH}\n" % PYMCA_INSTALL_DIR
+            # deal with sys.executables not named python
+            text += "exec %s %s $*\n" % (sys.executable,
+                                         os.path.join(moddir, modfile))
+
+            f = open(filedest, 'w')
+            f.write(text)
+            f.close()
+            # self.copy_file(filein, filedest)
+            self.outfiles.append(filedest)
+        if os.name == 'posix':
+            # Set the executable bits (owner, group, and world) on
+            # all the scripts we just installed.
+            for ffile in self.get_outputs():
+                if self.dry_run:
+                    log.info("changing mode of %s", ffile)
+                else:
+                    # python 2.5 does not accept next line
+                    # mode = ((os.stat(ffile)[ST_MODE]) | 0o555) & 0o7777
+                    mode = ((os.stat(ffile)[ST_MODE]) | 365) & 4095
+                    log.info("changing mode of %s to %o", ffile, mode)
+                    os.chmod(ffile, mode)
+
 
 # man pages handling
 def abspath(*path):
@@ -745,7 +630,7 @@ class install_man(Command):
         man_elems = os.listdir(src_man_dir)
         man_pages = []
         for f in man_elems:
-            f = os.path.join(src_man_dir,f)
+            f = os.path.join(src_man_dir, f)
             if not os.path.isfile(f):
                 continue
             if not f.endswith(".1"):
@@ -759,6 +644,7 @@ class install_man(Command):
 
         for man_page in man_pages:
             self.copy_file(man_page, install_dir)
+
 
 class install(dftinstall):
 
@@ -780,7 +666,6 @@ class install(dftinstall):
         # The hack consists in using install_data instead of install_base since
         # install_data seems to be, in practice, the proper install_base on all
         # different systems.
-        global USE_SMART_INSTALL_SCRIPTS
         dftinstall.finalize_options(self)
         if os.name != "posix":
             if self.install_man is not None:
@@ -791,16 +676,16 @@ class install(dftinstall):
                 if not USE_SMART_INSTALL_SCRIPTS:
                     # if one is installing the scripts somewhere else
                     # he can be smart enough to pass install_man
-                    self.install_man = os.path.join(self.install_data,\
+                    self.install_man = os.path.join(self.install_data,
                                                     'share', 'man')
         if self.install_man is not None:
             if not os.path.exists(self.install_man):
                 try:
                     os.makedirs(self.install_man)
                 except:
-                    #we'll get the error in the next check
+                    # we'll get the error in the next check
                     pass
-            #check if we can write
+            # check if we can write
             if not os.access(self.install_man, os.W_OK):
                 print("********************************")
                 print("")
@@ -821,21 +706,6 @@ class install(dftinstall):
     sub_commands.append(('install_man', has_man))
 
 
-# end of man pages handling
-cmdclass = {'install_data': install_data,   # smart_install_data,
-            'build_py': smart_build_py}
-if build_ext is not None:
-    cmdclass['build_ext'] = build_ext
-
-if USE_SMART_INSTALL_SCRIPTS:
-    # typical use of user without superuser privileges
-    cmdclass['install_scripts'] = smart_install_scripts
-
-if os.name == "posix":
-    cmdclass['install'] = install
-    cmdclass['install_man'] = install_man
-
-
 class sdist_debian(sdist):
     """
     Tailor made sdist for debian
@@ -848,7 +718,7 @@ class sdist_debian(sdist):
     @staticmethod
     def get_debian_name():
         import version
-        name = "%s_%s" % (PROJECT, version.debianversion)
+        name = "%s_%s" % ("PyMca5", version.debianversion)
         return name
 
     def prune_file_list(self):
@@ -876,20 +746,28 @@ class sdist_debian(sdist):
         base, ext = os.path.splitext(basename)
         while ext in [".zip", ".tar", ".bz2", ".gz", ".Z", ".lz", ".orig"]:
             base, ext = os.path.splitext(base)
-        if ext:
-            dest = "".join((base, ext))
-        else:
-            dest = base
-        # sp = dest.split("-")
-        # base = sp[:-1]
-        # nr = sp[-1]
+
         debian_arch = os.path.join(dirname, self.get_debian_name() + ".orig.tar.gz")
         os.rename(self.archive_files[0], debian_arch)
         self.archive_files = [debian_arch]
         print("Building debian .orig.tar.gz in %s" % self.archive_files[0])
 
 
-cmdclass['debian_src'] = sdist_debian
+# end of man pages handling
+cmdclass = {'install_data': install_data,
+            'build_py': smart_build_py}
+if build_ext is not None:
+    cmdclass['build_ext'] = build_ext
+
+if USE_SMART_INSTALL_SCRIPTS:
+    # typical use of user without superuser privileges
+    cmdclass['install_scripts'] = smart_install_scripts
+
+if os.name == "posix":
+    cmdclass['install'] = install
+    cmdclass['install_man'] = install_man
+    cmdclass['debian_src'] = sdist_debian
+
 
 description = "Mapping and X-Ray Fluorescence Analysis"
 long_description = """Stand-alone application and Python tools for interactive and/or batch processing analysis of X-Ray Fluorescence Spectra. Graphical user interface (GUI) and batch processing capabilities provided
@@ -924,7 +802,6 @@ if sphinx:
                 self.builder = builder
                 self.builder_target_dir = os.path.join(self.build_dir, builder)
                 self.mkpath(self.builder_target_dir)
-                builder_index = 'index_{0}.txt'.format(builder)
                 BuildDoc.run(self)
             sys.path.pop(0)
     cmdclass['build_doc'] = build_doc
@@ -949,51 +826,26 @@ classifiers = ["Development Status :: 5 - Production/Stable",
 install_requires = ["numpy", "matplotlib", "fisx>=1.1.4"]
 setup_requires = ["numpy"]
 
-if USING_SETUPTOOLS:
-    distrib = setup(name="PyMca5",
-                    version= __version__,
-                    description = description,
-                    author = "V. Armando Sole",
-                    author_email="sole@esrf.fr",
-                    license= "MIT",
-                    url = "http://pymca.sourceforge.net",
-                    download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,
-                    long_description = long_description,
-                    packages = packages,
-                    platforms='any',
-                    ext_modules = ext_modules,
-                    data_files = data_files,
-                    package_data = package_data,
-    ##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
-                    cmdclass = cmdclass,
-                    scripts=script_files,
-                    py_modules=py_modules,
-                    classifiers=classifiers,
-                    install_requires=install_requires,
-                    setup_requires=setup_requires,
-                    )
-else:
-    distrib = setup(name="PyMca5",
-                    version= __version__,
-                    description = description,
-                    author = "V. Armando Sole",
-                    author_email="sole@esrf.fr",
-                    license= "MIT",
-                    url = "http://pymca.sourceforge.net",
-                    download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,
-                    long_description = long_description,
-                    packages = packages,
-                    platforms='any',
-                    ext_modules = ext_modules,
-                    data_files = data_files,
-                    package_data = package_data,
-    ##                package_dir = {'':'PyMca', 'PyMca.tests':'tests'},
-                    cmdclass = cmdclass,
-                    scripts=script_files,
-                    py_modules=py_modules,
-                    classifiers=classifiers,
-                    )
-
+distrib = setup(name="PyMca5",
+                version=__version__,
+                description=description,
+                author="V. Armando Sole",
+                author_email="sole@esrf.fr",
+                license="MIT",
+                url="http://pymca.sourceforge.net",
+                download_url="https://github.com/vasole/pymca/archive/v%s.tar.gz" % __version__,  		
+                long_description=long_description,
+                packages=packages,
+                platforms='any',
+                ext_modules=ext_modules,
+                data_files=data_files,
+                package_data=package_data,
+                cmdclass=cmdclass,
+                scripts=script_files,
+                classifiers=classifiers,
+                install_requires=install_requires,
+                setup_requires=setup_requires,
+                )
 
 try:
     print("PyMca is installed in %s " % PYMCA_INSTALL_DIR)
@@ -1003,187 +855,5 @@ except:
     #I really do not see how this may happen but ...
     pass
 
-if fisx_src is None or ("sdist" in sys.argv):
-    sys.exit(0)
 
-#
-# What follows is ugly and it is not intended for
-# use outside the ESRF
-#
-# fisx should be installed as a separated Debian/RedHat/... package
-#
-
-fisx_src = os.path.abspath(fisx_src)
-
-# reproduce fisx setup.py file here ...
-# deal with required data
-
-#for the time being there is no doc directory
-FISX_DATA_DIR = os.getenv("FISX_DATA_DIR")
-FISX_DOC_DIR = os.getenv("FISX_DOC_DIR")
-
-if FISX_DATA_DIR is None:
-    FISX_DATA_DIR = os.path.join('fisx', 'fisx_data')
-if FISX_DOC_DIR is None:
-    FISX_DOC_DIR = os.path.join('fisx', 'fisx_data')
-
-def getFisxVersion():
-    cppDir = os.path.join(fisx_src, "src")
-    content = open(os.path.join(cppDir, "fisx_version.h"), "r").readlines()
-    for line in content:
-        if "FISX_VERSION_STR" in line:
-            version = line.split("FISX_VERSION_STR")[-1].replace("\n","")
-            version = version.replace(" ","")
-            return version[1:-1]
-
-__version__ = getFisxVersion()
-
-print("Processing fisx library %s\n" % __version__)
-
-class smart_build_fisx_py(_build_py):
-    def run (self):
-        toReturn = _build_py.run(self)
-        global FISX_DATA_DIR
-        global FISX_DOC_DIR
-        global INSTALL_DIR
-        defaultDataPath = os.path.join('fisx', 'fisx_data')
-        defaultDocPath = os.path.join('fisx', 'fisx_data')
-        if (FISX_DATA_DIR == defaultDataPath) or\
-           (FISX_DOC_DIR == defaultDocPath):
-            #default, just make sure the complete path is there
-            install_cmd = self.get_finalized_command('install')
-            INSTALL_DIR = getattr(install_cmd, 'install_lib')
-
-        #packager should have given the complete path
-        #in other cases
-        if FISX_DATA_DIR == defaultDataPath:
-            FISX_DATA_DIR = os.path.join(INSTALL_DIR, FISX_DATA_DIR)
-        if FISX_DOC_DIR == defaultDocPath:
-            #default, just make sure the complete path is there
-            FISX_DOC_DIR = os.path.join(INSTALL_DIR, FISX_DOC_DIR)
-        target = os.path.join(self.build_lib, "fisx", "DataDir.py")
-        fid = open(target,'r')
-        content = fid.readlines()
-        fid.close()
-        fid = open(target,'w')
-        for line in content:
-            lineToBeWritten = line
-            if lineToBeWritten.startswith("FISX_DATA_DIR"):
-                lineToBeWritten = "FISX_DATA_DIR = r'%s'\n" % FISX_DATA_DIR
-            if line.startswith("FISX_DOC_DIR"):
-                lineToBeWritten = "FISX_DOC_DIR = r'%s'\n" % FISX_DOC_DIR
-            fid.write(lineToBeWritten)
-        fid.close()
-        return toReturn
-
-class smart_install_fisx_data(install_data):
-    def run(self):
-        global INSTALL_DIR
-        global FISX_DATA_DIR
-        global FISX_DOC_DIR
-        #need to change self.install_dir to the library dir
-        install_cmd = self.get_finalized_command('install')
-        self.install_dir = getattr(install_cmd, 'install_lib')
-        INSTALL_DIR = self.install_dir
-        print("fisx to be installed in %s" %  self.install_dir)
-        return install_data.run(self)
-
-topLevel = fisx_src
-fileList = glob.glob(os.path.join(topLevel, "fisx_data", "*.dat"))
-fileList.append(os.path.join(topLevel, "changelog.txt"))
-fileList.append(os.path.join(topLevel, "LICENSE"))
-fileList.append(os.path.join(topLevel, "README.rst"))
-fileList.append(os.path.join(topLevel, "TODO"))
-data_files = [(FISX_DATA_DIR, fileList)]
-
-# actual build stuff
-FORCE = False
-#cython_dir = os.path.join(os.getcwd(), "python", "cython")
-cython_dir = os.path.join(fisx_src, "python", "cython")
-if build_ext:
-    #make sure everything is totally clean?
-    fileList  = glob.glob(os.path.join(cython_dir, "*.cpp"))
-    fileList += glob.glob(os.path.join(cython_dir, "*.h"))
-    if FORCE:
-        for fname in fileList:
-            if os.path.exists(fname):
-                os.remove(fname)
-    #this does not work:
-    #src = glob.glob(os.path.join(cython_dir, "*pyx"))
-    multiple_pyx = os.path.join(cython_dir, "_fisx.pyx")
-    if os.path.exists(multiple_pyx):
-        try:
-            os.remove(multiple_pyx)
-        except:
-            print("WARNING: Could not delete file. Assuming up-to-date.")
-    if not os.path.exists(multiple_pyx):
-        pyx = glob.glob(os.path.join(cython_dir, "*pyx"))
-        # until _fisx.pyx gets updated, we have to put
-        # the name PyEPDL after PyElement
-        pyx = sorted(pyx, key=str.lower)
-        f = open(multiple_pyx, 'wb')
-        for fname in pyx:
-            inFile = open(fname, 'rb')
-            lines = inFile.readlines()
-            inFile.close()
-            for line in lines:
-                f.write(line)
-        f.close()
-    src = [multiple_pyx]
-else:
-    src = glob.glob(os.path.join(cython_dir,'*.cpp'))
-src += glob.glob(os.path.join(fisx_src,
-                'src', 'fisx_*.cpp'))
-
-include_dirs = [numpy.get_include(),
-                os.path.join(fisx_src, "src")]
-
-if sys.platform == 'win32':
-    extra_compile_args = ['/EHsc']
-    extra_link_args = []
-else:
-    extra_compile_args = []
-    extra_link_args = []
-
-def buildExtension():
-    module = Extension(name="fisx._fisx",
-                    sources=src,
-                    include_dirs=include_dirs,
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args,
-                    language="c++",
-                    )
-    return module
-
-ext_modules = [buildExtension()]
-
-cmdclass = {'install_data':smart_install_fisx_data,
-            'build_py':smart_build_fisx_py,
-            'build_ext': build_ext,
-            }
-
-description = "Quantitative X-Ray Fluorescence Analysis Support Library"
-long_description = """
-Tools to evaluate the expected X-ray fluorescence measured when a sample is excitated by an X-ray beam. Secondary and tertiary excitation effects taken into account.
-"""
-
-# tell distutils where to find the packages
-package_dir = {"":os.path.join(fisx_src, "python")}
-packages = ['fisx', 'fisx.tests']
-setup(
-    name='fisx',
-    version=__version__,
-    author="V. Armando Sole",
-    author_email="sole@esrf.fr",
-    description=description,
-    long_description=long_description,
-    license="MIT",
-    url="https://github.com/vasole/fisx",
-    package_dir=package_dir,
-    packages=packages,
-    ext_modules=ext_modules,
-    data_files=data_files,
-    cmdclass=cmdclass,
-)
-os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
