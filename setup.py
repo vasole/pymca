@@ -459,7 +459,8 @@ class smart_build_py(build_py):
         global PYMCA_DOC_DIR
         global PYMCA_INSTALL_DIR
         install_cmd = self.get_finalized_command('install')
-        if "--install-lib" in sys.argv:
+        if (PYMCA_DATA_DIR == defaultDataPath) or (PYMCA_DOC_DIR == defaultDataPath):
+            #default, just make sure the complete path is there
             PYMCA_INSTALL_DIR = getattr(install_cmd, 'install_lib')
 
         # frozen binary: use --install-data directory (absolute path)
