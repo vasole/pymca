@@ -42,7 +42,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
         self._HKLOn = True
 
     def _graphSignal(self, ddict):
-        if (ddict['event'] not in ["MouseAt", "mouseClicked"]) or \
+        if (ddict['event'] not in ["MouseAt", "mouseMoved", "mouseClicked"]) or \
            (not self._HKLOn):
             return PyMcaImageWindow.PyMcaImageWindow._graphSignal(self, ddict)
 
