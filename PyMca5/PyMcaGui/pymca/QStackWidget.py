@@ -92,7 +92,7 @@ class QStackWidget(StackBase.StackBase,
         self.mcaWidget = mcawidget
         self.rgbWidget = rgbwidget
         self.master = master
-        self._slave = None
+        self._slaveList = None
         self._masterStack = None
         self.stackSelector = None
         self._build(vertical=vertical)
@@ -518,13 +518,18 @@ class QStackWidget(StackBase.StackBase,
         if (type(stack) == type([])) or isinstance(stack, list):
             #aifira like, two stacks
             self.setStack(stack[0])
-            self._slave = None
+            self._slaveList = None
             if len(stack) > 1:
-                if stack[1] is not None:
-                    slave = QStackWidget(master=False, rgbwidget=self.rgbWidget)
-                    slave.setStack(stack[1])
-                    if slave is not None:
-                        self.setSlave(slave)
+                for i in range(1, len(stack)):
+                    if stack[i] is not None:
+                        slave = QStackWidget(master=False,
+                                             rgbwidget=self.rgbWidget)
+                        slave.setStack(stack[i])
+                        if slave is not None:
+                            if i == 1:
+                                self.setSlave(slave)
+                            else:
+                                self.addSlave(slave)
         else:
             self.setStack(stack)
 
@@ -594,11 +599,18 @@ class QStackWidget(StackBase.StackBase,
         self._slave = None
 
     def setSlave(self, slave):
-        self._slave = None
-        self._slave = slave
-        self._slave.setSelectionMask(self.getSelectionMask())
-        self._slave.show()
-        self._slave._setMaster(self)
+        for slave in self._slaveList:
+            slave.close()
+        self._slaveList = None 
+        self.addSlave(slave)
+
+    def addSlave(self, slave):
+        if self._slaveList is None:
+            self._slaveList = []
+        slave.setSelectionMask(self.getSelectionMask())
+        slave.show()
+        slave._setMaster(self)
+        self._slaveList.append(slave)
 
     def _setMaster(self, master=None):
         if self.master:
@@ -1024,18 +1036,19 @@ class QStackWidget(StackBase.StackBase,
                     widget.setSelectionMask(mask, plot=True)
 
         #inform slave
-        if self._slave is not None:
+        if self._slaveList is not None:
             #This is a master instance
-            instanceList = [id(self._slave),
-                            id(self._slave.stackWidget),
-                            id(self._slave.roiWidget)]
-            for key in self._slave.pluginInstanceDict.keys():
-                instanceList.append(id(self._slave.pluginInstanceDict[key]))
-            if instance_id not in instanceList:
-                #Originated by the master
-                if DEBUG:
-                    print("INFORMING SLAVE")
-                self._slave.setSelectionMask(mask, instance_id=id(self))
+            for slave in self._slaveList:
+                instanceList = [id(slave),
+                                id(slave.stackWidget),
+                                id(slave.roiWidget)]
+                for key in slave.pluginInstanceDict.keys():
+                    instanceList.append(id(slave.pluginInstanceDict[key]))
+                if instance_id not in instanceList:
+                    #Originated by the master
+                    if DEBUG:
+                        print("INFORMING SLAVE")
+                    slave.setSelectionMask(mask, instance_id=id(self))
 
         if self._masterStack is not None:
             #This is a slave instance
@@ -1238,10 +1251,12 @@ if __name__ == "__main__":
         #aifira like, two stacks
         widget.setStack(stack[0])
         if len(stack) > 1:
-            if stack[1] is not None:
-                slave = QStackWidget(master=False, rgbwidget=widget.rgbWidget)
-                slave.setStack(stack[1])
-                widget.setSlave(slave)
+            for i in range(1, len(stack)):
+                if stack[i] is not None:
+                    slave = QStackWidget(master=False,
+                                         rgbwidget=widget.rgbWidget)
+                    slave.setStack(stack[i])
+                    widget.addSlave(slave)
         stack = None
     else:
         widget.setStack(stack)
