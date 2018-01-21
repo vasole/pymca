@@ -1161,6 +1161,8 @@ class QStackWidget(StackBase.StackBase,
         return self.mcaWidget.getGraphYLabel()
 
     def closeEvent(self, event):
+        if self._slaveList is not None:
+            self._closeSlave()
         # Inform plugins
         for key in self.pluginInstanceDict.keys():
             self.pluginInstanceDict[key].stackClosed()
