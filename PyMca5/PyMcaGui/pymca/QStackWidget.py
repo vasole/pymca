@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -534,8 +534,8 @@ class QStackWidget(StackBase.StackBase,
             self.setStack(stack)
 
     def loadSlaveStack(self):
-        if self._slave is not None:
-            actionList = ['Load Slave', 'Show Slave', 'Merge Slave', 'Delete Slave']
+        if self._slaveList is not None:
+            actionList = ['Add Slave', 'Load Slaves', 'Show Slaves', 'Merge Slaves', 'Delete Slaves']
             menu = qt.QMenu(self)
             for action in actionList:
                 text = QString(action)
@@ -546,15 +546,20 @@ class QStackWidget(StackBase.StackBase,
             if qt.safe_str(a.text()).startswith("Load"):
                 self._closeSlave()
             elif qt.safe_str(a.text()).startswith("Show"):
-                self._slave.show()
-                self._slave.raise_()
+                for slave in self._slaveList:
+                    slave.show()
+                    slave.raise_()
                 return
             elif qt.safe_str(a.text()).startswith("Merge"):
                 masterStackDataObject = self.getStackDataObject()
                 try:
-                    # Use views to ensure no casting is done in case of different dtype to save memory.
-                    # This is risky when the original stack is unsigned integers (overflow).
-                    masterStackDataObject.data[:] = masterStackDataObject.data[:] + self._slave.getStackData()
+                    # Use views to ensure no casting is done in case of different dtype
+                    # to save memory.
+                    # This is risky when the original stack is integers (overflow).
+                    for slave in self._slaveList:
+                        masterStackDataObject.data[:] = \
+                                            masterStackDataObject.data[:] + \
+                                            _slave.getStackData()
                 except:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
@@ -586,17 +591,27 @@ class QStackWidget(StackBase.StackBase,
             return
         if stack is None:
             return
-        if type(stack) == type([]):
-            stack = stack[0]
-
-        slave = QStackWidget(rgbwidget=self.rgbWidget,
-                                  master=False)
-        slave.setStack(stack)
-        self.setSlave(slave)
+        if (type(stack) == type([])) or (isinstance(stack, list)):
+            self._closeSlave()
+            for i in range(len(stack)):
+                if stack[i] is not None:
+                    slave = QStackWidget(master=False,
+                                         rgbwidget=widget.rgbWidget)
+                    slave.setStack(stack[i])
+                    widget.addSlave(slave)
+                    stack[i] = None
+        else:
+            slave = QStackWidget(rgbwidget=self.rgbWidget,
+                                 master=False)
+            slave.setStack(stack)
+            self.setSlave(slave)
 
     def _closeSlave(self):
-        self._slave.close()
-        self._slave = None
+        if self._slaveList is None:
+            return
+        for slave in self._slaveList:
+            slave.close()
+        self._slaveList = None
 
     def setSlave(self, slave):
         for slave in self._slaveList:
@@ -1022,7 +1037,7 @@ class QStackWidget(StackBase.StackBase,
             return
 
         if DEBUG:
-            if self._slave is not None:
+            if self._slaveList is not None:
                 print("MASTER  setSelectionMask CALLED")
             elif self._masterStack is not None:
                 print("SLAVE setSelectionMask CALLED")
