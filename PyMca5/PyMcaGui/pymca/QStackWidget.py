@@ -618,6 +618,8 @@ class QStackWidget(StackBase.StackBase,
         gc.collect()
 
     def setSlave(self, slave):
+        if self._slaveList is None:
+            self._slaveList = []
         for slave in self._slaveList:
             slave.close()
         self._slaveList = None 
