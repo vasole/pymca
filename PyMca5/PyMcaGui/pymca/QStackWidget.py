@@ -611,7 +611,11 @@ class QStackWidget(StackBase.StackBase,
             return
         for slave in self._slaveList:
             slave.close()
+        slave = None
         self._slaveList = None
+        # make sure memory is released
+        import gc
+        gc.collect()
 
     def setSlave(self, slave):
         for slave in self._slaveList:
