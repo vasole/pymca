@@ -111,7 +111,13 @@ class OmdaqLmf(list):
                                                       dtype=numpy.uint32)
                     self[adc].info = {}
                     self[adc].info["SourceType"] = SOURCE_TYPE
-                    self[adc].info["SourceName"] = adc_list[adc]["Name"]
+                    try:
+                        name = adc_list[adc]["Name"]
+                        if hasattr(name, "decode"):
+                            name = name.decode("utf-8").strip(chr(0))
+                        self[adc].info["SourceName"] = name
+                    except:
+                        self[adc].info["SourceName"] = adc_list[adc]["Name"]
                     self[adc].info["McaCalib"] = [\
                                 adc_list[adc]["Calibration"][0],
                                 adc_list[adc]["Calibration"][1],
