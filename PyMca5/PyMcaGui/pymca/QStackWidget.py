@@ -644,10 +644,13 @@ class QStackWidget(StackBase.StackBase,
     def getStackDataObjectList(self):
         stackList = []
         if self.master:
+            # master, join all slaves
             stackList.append(self.getStackDataObject())
-            if self._slave is not None:
-                stackList.append(self._slave.getStackDataObject())
+            if self._slaveList is not None:
+                for slave in self._slaveList:
+                    stackList.append(slave.getStackDataObject())
         else:
+            # slave, join master
             stackList.append(self._masterStack.getStackDataObject())
             stackList.append(self.getStackDataObject())
         return stackList
