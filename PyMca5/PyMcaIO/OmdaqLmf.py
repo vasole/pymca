@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -111,7 +111,13 @@ class OmdaqLmf(list):
                                                       dtype=numpy.uint32)
                     self[adc].info = {}
                     self[adc].info["SourceType"] = SOURCE_TYPE
-                    self[adc].info["SourceName"] = adc_list[adc]["Name"]
+                    try:
+                        name = adc_list[adc]["Name"]
+                        if hasattr(name, "decode"):
+                            name = name.decode("utf-8").strip(chr(0))
+                        self[adc].info["SourceName"] = name
+                    except:
+                        self[adc].info["SourceName"] = adc_list[adc]["Name"]
                     self[adc].info["McaCalib"] = [\
                                 adc_list[adc]["Calibration"][0],
                                 adc_list[adc]["Calibration"][1],
@@ -248,9 +254,8 @@ if __name__ == "__main__":
         fname = "-42181.LMF"
     print("Is OMDAQ LMF File = ", isOmdaqLmf(fname))
     omdaq = OmdaqLmf([fname])
-    print("omdaq = ", omdaq.adc)
-    for i in range(len(omdaq.adc)):
-        adc = omdaq.adc[i]
+    for i in range(len(omdaq)):
+        adc = omdaq[i]
         if adc is None:
             continue
         print("ADC = ", i + 1)
