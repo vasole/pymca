@@ -40,7 +40,7 @@ python setup.py install --user
 
 or
 
-pip install
+pip install --user
 
 You will need:
 
