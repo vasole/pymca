@@ -96,6 +96,7 @@ class RGBCorrelatorWidget(qt.QWidget):
         hbox.mainLayout = qt.QHBoxLayout(hbox)
         hbox.mainLayout.setContentsMargins(0, 0, 0, 0)
         hbox.mainLayout.setSpacing(0)
+
         self.loadButton = qt.QToolButton(hbox)
         self.loadButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["fileopen"])))
         self.loadButton.setToolTip("Load new images of the same size")
@@ -124,7 +125,6 @@ class RGBCorrelatorWidget(qt.QWidget):
             tomoguiIcon = tomogui.gui.utils.icons.getQIcon('tomogui')
             self.tomographyButton.setIcon(tomoguiIcon)
             self.tomographyButton.setToolTip("Run tomography reconstruction")
-            hbox.mainLayout.addWidget(self.tomographyButton)
             self.tomographyButton.clicked.connect(self._showTomoReconsDialog)
 
         #label1 = MyQLabel(self.labelWidget, color = qt.Qt.black)
@@ -148,6 +148,8 @@ class RGBCorrelatorWidget(qt.QWidget):
         hbox.mainLayout.addWidget(self.toggleSlidersButton)
         hbox.mainLayout.addWidget(self.calculationButton)
         hbox.mainLayout.addWidget(self.profileButton)
+        if TOMOGUI_FLAG:
+            hbox.mainLayout.addWidget(self.tomographyButton)
         hbox.mainLayout.addWidget(qt.HorizontalSpacer(self.toolBar))
 
         #hbox.mainLayout.addWidget(label1)
