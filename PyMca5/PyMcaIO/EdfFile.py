@@ -756,8 +756,7 @@ class  EdfFile(object):
         return Data
 
 
-
-    def GetPixel(self, Index, Position):
+    def _GetPixel(self, Index, Position):
         """ Returns double value of the pixel, regardless the format of the array
             Index:      The zero-based index of the image in the file
             Position:   Tuple with the coordinete (x), (x,y) or (x,y,z)
@@ -767,7 +766,8 @@ class  EdfFile(object):
         if len(Position) != self.Images[Index].NumDim:
             raise ValueError("EdfFile: coordinate with wrong dimension ")
 
-        size_pixel = self.__GetSizeNumpyType__(self.__GetDefaultNumpyType__(self.Images[Index].DataType), index=Index)
+        size_pixel = self.__GetSizeNumpyType__(self.__GetDefaultNumpyType__(self.Images[Index].DataType,
+                                                                            index=Index))
         offset = Position[0] * size_pixel
         if self.Images[Index].NumDim > 1:
             size_row = size_pixel * self.Images[Index].Dim1
@@ -776,11 +776,25 @@ class  EdfFile(object):
                 size_img = size_row * self.Images[Index].Dim2
                 offset = offset + (Position[2] * size_img)
         self.File.seek(self.Images[Index].DataPosition + offset, 0)
-        Data = numpy.fromstring(self.File.read(size_pixel), self.__GetDefaultNumpyType__(self.Images[Index].DataType, index=Index))
+        Data = numpy.fromstring(self.File.read(size_pixel),
+                                self.__GetDefaultNumpyType__(self.Images[Index].DataType,
+                                                             index=Index))
         if self.SysByteOrder.upper() != self.Images[Index].ByteOrder.upper():
             Data = Data.byteswap()
         Data = self.__SetDataType__ (Data, "DoubleValue")
         return Data[0]
+
+
+    def GetPixel(self, Index, Position):
+        """ Returns double value of the pixel, regardless the format of the array
+            Index:      The zero-based index of the image in the file
+            Position:   Tuple with the coordinete (x), (x,y) or (x,y,z)
+        """
+        try:
+            self.__makeSureFileIsOpen()
+            return self._GetPixel(Index, Position)
+        finally:
+            self.__makeSureFileIsClosed()
 
 
     def GetHeader(self, Index):
