@@ -35,7 +35,6 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 
 import os
-import numpy
 
 import PyMca5
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -43,6 +42,7 @@ from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 
 from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 
+import silx
 from silx.gui.data.DataViewerFrame import DataViewerFrame
 from silx.gui.data import DataViews
 from silx.gui.data import NXdataWidgets
@@ -127,6 +127,8 @@ class NXdataViewWithPlugins(DataViews.CompositeDataView):
             label="NXdata",
             icon=icons.getQIcon("view-nexus"))
 
+        if silx.version >= "0.7.0":
+            self.addView(DataViews._InvalidNXdataView(parent))
         self.addView(DataViews._NXdataScalarView(parent))
         self.addView(NXdataCurveViewWithPlugins(parent))
         self.addView(DataViews._NXdataXYVScatterView(parent))
@@ -137,6 +139,10 @@ class NXdataViewWithPlugins(DataViews.CompositeDataView):
 class DataViewerFrameWithPlugins(DataViewerFrame):
     """Overloaded DataViewerFrame with the 1D view replaced by
     Plot1DViewWithPlugins"""
+    # This widget is duplicated due to a bug in silx (#1183).
+    # This bug is fixed in silx 0.7.0 (~March 2018), so this code duplication
+    # should be removed when silx >= 0.7.0 is readily available
+    # (see more comments in Hdf5NodeView, on how to do this)
     def createDefaultViews(self, parent=None):
         views = list(DataViewerFrame.createDefaultViews(self, parent=parent))
 
