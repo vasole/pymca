@@ -35,7 +35,6 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 
 import os
-import numpy
 
 import PyMca5
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -43,10 +42,11 @@ from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 
 from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 
+import silx
 from silx.gui.data.DataViewerFrame import DataViewerFrame
 from silx.gui.data import DataViews
+from silx.gui.data import NXdataWidgets
 from silx.gui.plot import Plot1D
-from silx.gui.data.NumpyAxesSelector import NumpyAxesSelector
 from silx.gui import icons
 
 
@@ -93,153 +93,23 @@ class Plot1DViewWithPlugins(DataViews._Plot1dView):
         return Plot1DWithPlugins(parent=parent)
 
 
-class ArrayCurvePlotWithPlugins(qt.QWidget):
-    """Add a plugin toolbutton to an ArrayCurvePlot widget"""
+class ArrayCurvePlotWithPlugins(NXdataWidgets.ArrayCurvePlot):
+    """Adds a plugin toolbutton to an ArrayCurvePlot widget"""
     def __init__(self, parent=None):
-        qt.QWidget.__init__(self, parent)
+        NXdataWidgets.ArrayCurvePlot.__init__(self, parent)
 
-        self.__signal = None
-        self.__signal_name = None
-        self.__signal_errors = None
-        self.__axis = None
-        self.__axis_name = None
-        self.__axis_errors = None
-        self.__values = None
-
-        self.__first_curve_added = False
-
-        self._plot = Plot1D(self)
-        self._plot.setDefaultColormap(   # for scatters
-                {"name": "viridis",
-                 "vmin": 0., "vmax": 1.,   # ignored (autoscale) but mandatory
-                 "normalization": "linear",
-                 "autoscale": True})
-
-        self.selectorDock = qt.QDockWidget("Data selector", self._plot)
-        # not closable
-        self.selectorDock.setFeatures(qt.QDockWidget.DockWidgetMovable |
-                                qt.QDockWidget.DockWidgetFloatable)
-        self._selector = NumpyAxesSelector(self.selectorDock)
-        self._selector.setNamedAxesSelectorVisibility(False)
-        self.__selector_is_connected = False
-        self.selectorDock.setWidget(self._selector)
-        self._plot.addTabbedDockWidget(self.selectorDock)
-
-        layout = qt.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._plot,  0, 0)
-
-        self.setLayout(layout)
-
-        # plugin support
-        self._plot._plotType = "SCAN"    # attribute needed by legacy plugins
+        # patch the Plot1D to make it compatible with plugins
+        self._plot._plotType = "SCAN"
 
         self._toolbar = qt.QToolBar(self)
-
         self._plot.addToolBar(self._toolbar)
-
         pluginsToolButton = PluginsToolButton(plot=self._plot,
                                               parent=self)
-
         if PLUGINS_DIR:
             pluginsToolButton.getPlugins(
                     method="getPlugin1DInstance",
                     directoryList=PLUGINS_DIR)
         self._toolbar.addWidget(pluginsToolButton)
-
-    def setCurveData(self, y, x=None, values=None,
-                     yerror=None, xerror=None,
-                     ylabel=None, xlabel=None, title=None):
-        """
-
-        :param y: dataset to be represented by the y (vertical) axis.
-            For a scatter, this must be a 1D array and x and values must be
-            1-D arrays of the same size.
-            In other cases, it can be a n-D array whose last dimension must
-            have the same length as x (and values must be None)
-        :param x: 1-D dataset used as the curve's x values. If provided,
-            its lengths must be equal to the length of the last dimension of
-            ``y`` (and equal to the length of ``value``, for a scatter plot).
-        :param values: Values, to be provided for a x-y-value scatter plot.
-            This will be used to compute the color map and assign colors
-            to the points.
-        :param yerror: 1-D dataset of errors for y, or None
-        :param xerror: 1-D dataset of errors for x, or None
-        :param ylabel: Label for Y axis
-        :param xlabel: Label for X axis
-        :param title: Graph title
-        """
-        self.__signal = y
-        self.__signal_name = ylabel or "Y"
-        self.__signal_errors = yerror
-        self.__axis = x
-        self.__axis_name = xlabel
-        self.__axis_errors = xerror
-        self.__values = values
-
-        if self.__selector_is_connected:
-            self._selector.selectionChanged.disconnect(self._updateCurve)
-            self.__selector_is_connected = False
-        self._selector.setData(y)
-        self._selector.setAxisNames([ylabel or "Y"])
-
-        if len(y.shape) < 2:
-            self.selectorDock.hide()
-        else:
-            self.selectorDock.show()
-
-        self._plot.setGraphTitle(title or "")
-        self._plot.getXAxis().setLabel(self.__axis_name or "X")
-        self._plot.getYAxis().setLabel(self.__signal_name)
-        self._updateCurve()
-
-        if not self.__selector_is_connected:
-            self._selector.selectionChanged.connect(self._updateCurve)
-            self.__selector_is_connected = True
-
-    def _updateCurve(self):
-        y = self._selector.selectedData()
-        x = self.__axis
-        if x is None:
-            x = numpy.arange(len(y))
-        elif numpy.isscalar(x) or len(x) == 1:
-            # constant axis
-            x = x * numpy.ones_like(y)
-        elif len(x) == 2 and len(y) != 2:
-            # linear calibration a + b * x
-            x = x[0] + x[1] * numpy.arange(len(y))
-        legend = self.__signal_name + "["
-        for sl in self._selector.selection():
-            if sl == slice(None):
-                legend += ":, "
-            else:
-                legend += str(sl) + ", "
-        legend = legend[:-2] + "]"
-        if self.__signal_errors is not None:
-            y_errors = self.__signal_errors[self._selector.selection()]
-        else:
-            y_errors = None
-
-        self._plot.remove(kind=("curve", "scatter"))
-
-        # values: x-y-v scatter
-        if self.__values is not None:
-            self._plot.addScatter(x, y, self.__values,
-                                  legend=legend,
-                                  xerror=self.__axis_errors,
-                                  yerror=y_errors)
-
-        else:
-            self._plot.addCurve(x, y, legend=legend,
-                                xerror=self.__axis_errors,
-                                yerror=y_errors)
-
-        self._plot.resetZoom()
-        self._plot.getXAxis().setLabel(self.__axis_name)
-        self._plot.getYAxis().setLabel(self.__signal_name)
-
-    def clear(self):
-        self._plot.clear()
 
 
 class NXdataCurveViewWithPlugins(DataViews._NXdataCurveView):
@@ -257,6 +127,8 @@ class NXdataViewWithPlugins(DataViews.CompositeDataView):
             label="NXdata",
             icon=icons.getQIcon("view-nexus"))
 
+        if silx.version >= "0.7.0":
+            self.addView(DataViews._InvalidNXdataView(parent))
         self.addView(DataViews._NXdataScalarView(parent))
         self.addView(NXdataCurveViewWithPlugins(parent))
         self.addView(DataViews._NXdataXYVScatterView(parent))
@@ -267,6 +139,10 @@ class NXdataViewWithPlugins(DataViews.CompositeDataView):
 class DataViewerFrameWithPlugins(DataViewerFrame):
     """Overloaded DataViewerFrame with the 1D view replaced by
     Plot1DViewWithPlugins"""
+    # This widget is duplicated due to a bug in silx (#1183).
+    # This bug is fixed in silx 0.7.0 (~March 2018), so this code duplication
+    # should be removed when silx >= 0.7.0 is readily available
+    # (see more comments in Hdf5NodeView, on how to do this)
     def createDefaultViews(self, parent=None):
         views = list(DataViewerFrame.createDefaultViews(self, parent=parent))
 
