@@ -179,7 +179,7 @@ class TomoRecons(qt.QWidget):
             duplicated = {}
 
             if self._giveI0CheckBox.isChecked() and I0 in fluoSinograms:
-                duplicated[I0] = ['i0', 'fluorescence sinogram to reconstruct']
+                duplicated[I0] = ['i0', 'sinogram to reconstruct']
             if self._giveI0CheckBox.isChecked() and \
                     self._giveItCheckBox.isChecked() and I0 == It:
                 if I0 in duplicated:
@@ -187,8 +187,11 @@ class TomoRecons(qt.QWidget):
                 else:
                     duplicated[I0] = ['i0', 'it']
             elif self._giveItCheckBox.isChecked() and It in fluoSinograms:
-                duplicated[It] = ['it', 'fluorescence sinogram to reconstruct']
+                duplicated[It] = ['it', 'sinogram to reconstruct']
             return None if len(duplicated) is 0 else duplicated
+
+    def sizeHint(self):
+        return qt.QSize(400, 600)
 
 
 class TomoReconsDialog(qt.QDialog):
@@ -268,7 +271,7 @@ class TomoReconsDialog(qt.QDialog):
 class FluoSinoReconsSelectionTable(SelectionTable):
     """Table to select the sinogram to reconstruct and in the case of
     the fluorescence reconstruction what are It, I0... sinograms"""
-    LABELS = ["name", "fluorescence sinogram to reconstruct", "I0", "It"]
+    LABELS = ["name", "sinogram to reconstruct", "I0", "It"]
 
     TYPES = ["Text", "CheckBox", "RadioButton", "RadioButton"]
 
@@ -300,7 +303,7 @@ class FluoSinoReconsSelectionTable(SelectionTable):
     def getSinogramsToRecons(self):
         sinograms = []
         selections = self.getSelection()
-        for iSino in selections['fluorescence sinogram to reconstruct']:
+        for iSino in selections['sinogram to reconstruct']:
             sinograms.append(selections['name'][iSino])
         return sinograms
 
