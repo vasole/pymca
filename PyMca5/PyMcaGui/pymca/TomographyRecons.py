@@ -98,6 +98,7 @@ class TomoRecons(qt.QWidget):
                 self._txSelectionTable.fillLine(iEntry, [entry, "", ""])
                 self._fluoSelectionTable.fillLine(iEntry, [entry, "", "", ""])
 
+            self._fbpSelectionTable.resizeColumnsToContents()
             self._txSelectionTable.resizeColumnsToContents()
             self._fluoSelectionTable.resizeColumnsToContents()
 
