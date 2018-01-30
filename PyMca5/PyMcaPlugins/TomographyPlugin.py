@@ -104,6 +104,8 @@ if tomogui:
                     self.mainWindow.setSinoToRecons(
                         reconsType=reconsType,
                         sinograms=[self.getStackData()])
+                    # by default do not reconstruct log
+                    self.mainWindow.setLogRecons(False)
                     self.mainWindow.show()
             else:
                 logger.info('reconstruction has been cancel')

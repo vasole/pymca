@@ -293,6 +293,8 @@ class RGBCorrelatorWidget(qt.QWidget):
             if diag.hasI0() is True:
                 i0 = self._imageDict[diag.getI0()]['image']
                 self._tomoguiWindow.setI0(i0=i0, name=diag.getI0())
+            # by default do not reconstruct log
+            self._tomoguiWindow.setLogRecons(False)
             self._tomoguiWindow.show()
 
     def toggleSliders(self):
