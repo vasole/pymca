@@ -95,20 +95,14 @@ class SimpleFitAllGui(SimpleFitGui):
         estimation purposes."""
         SimpleFitGui.setData(self, *var, **kw)
 
-    def setSpectra(self, x, curves_y, data_index=-1):
+    def setSpectra(self, x, curves_y):
         """Set all curves to be fitted.
 
         :param x: 1D array of X values
         :param curves_y: 2D array of curves y.
-        :param data_index: Index of the curves_y dimension to be used
-            as the data point index. The other index
         """
         self.curves_x = x
         self.curves_y = curves_y
-
-        if data_index < 0:
-            data_index += len(curves_y.shape)
-        self.data_index = data_index
 
     def startFitAll(self):
         xmin = self.fitModule._fitConfiguration['fit']['xmin']
@@ -119,8 +113,6 @@ class SimpleFitAllGui(SimpleFitGui):
                 self.outputParameters.getOutputFileName())
         self.fitAllInstance.setData(self.curves_x, self.curves_y,
                                     sigma=None, xmin=xmin, xmax=xmax)
-
-        self.fitAllInstance.setDataIndex(self.data_index)
 
         fileName = self.outputParameters.getOutputFileName()
         if os.path.exists(fileName):
@@ -176,11 +168,8 @@ class SimpleFitAllGui(SimpleFitGui):
             if len(thread.result):
                 raise RuntimeError(*thread.result[1:])
 
-    def setMask(self, mask):   # ?????????????????
-        self.__mask = mask
-
     def processStack(self):
-        self.fitAllInstance.processAll(mask=self.__mask)
+        self.fitAllInstance.processAll()
 
     def progressUpdate(self, idx, total):
         self._index = int(idx)

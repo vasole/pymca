@@ -33,6 +33,8 @@ from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
 
+DEBUG = False
+
 
 class SimpleFitAll(object):
     def __init__(self, fit):
@@ -44,9 +46,7 @@ class SimpleFitAll(object):
         self._progress = 0.0
         self._status = "Ready"
         self.progressCallback = None
-        self.dataIndex = None
         # optimization variables
-        self.mask = None
         self.__ALWAYS_ESTIMATE = True
 
     def setProgressCallback(self, method):
@@ -79,9 +79,6 @@ class SimpleFitAll(object):
         self.xMin = xmin
         self.xMax = xmax
 
-    def setDataIndex(self, data_index=None):
-        self.dataIndex = data_index
-
     # TODO
     def setConfigurationFile(self, fname):
         if not os.path.exists(fname):
@@ -93,97 +90,38 @@ class SimpleFitAll(object):
     def setConfiguration(self, ddict):
         self.fit.setConfiguration(ddict, try_import=True)
 
-    def processAll(self, mask=None):
-        self.mask = mask
-        data_index = self.dataIndex
-        if data_index == None:
-            data_index = -1
-        if type(data_index) == type(1):
-            data_index = [data_index]
+    def processAll(self):
+        data = self.curves_y
 
-        if len(data_index) > 1:
-            raise IndexError("Only 1D fitting implemented for the time being")
-
-        #this leaves the possibility to fit images by giving
-        #two indices specifying the image dimensions
-        self.stackDataIndexList = data_index
-
-        stack = self.curves_y
-        if stack is None:
-            raise ValueError("No data to be processed")
-
-        if hasattr(stack, "info") and hasattr(stack, "data"):
-            data = stack.data
-        else:
-            data = stack
-
-        #make sure all the indices are positive
-        for i in range(len(data_index)):
-            if data_index[i] < 0:
-                data_index[i] = range(len(data.shape))[data_index[i]]
-
-        #get the total number of fits to be performed
-        outputDimension = []
-        nPixels = 1
-        for i in range(len(data.shape)):
-            if not (i in data_index):
-                nPixels *= data.shape[i]
-                outputDimension.append(data.shape[i])
-
-        lenOutput = len(outputDimension)
-        if lenOutput > 2:
-            raise ValueError("Rank of  output greater than 2")
-        elif lenOutput == 2:
-            self._nRows = outputDimension[0]
-            self._nColumns = outputDimension[1]
-        else:
-            self._nRows = outputDimension[0]
-            self._nColumns = 1
-
-        if self.mask is not None:
-            if (self.mask.shape[0] != self._nRows) or\
-               (self.mask.shape[1] != self._nColumns):
-                raise ValueError("Invalid mask shape for stack")
-        else:
-            self.mask = numpy.ones((self._nRows, self._nColumns),
-                                   numpy.uint8)
+        # get the total number of fits to be performed
+        nSpectra = data.shape[0]
 
         # optimization
         self.__ALWAYS_ESTIMATE = True
-        backgroundPolicy = self.fit._fitConfiguration['fit'] \
-                           ['background_estimation_policy']
-        functionPolicy = self.fit._fitConfiguration['fit'] \
-                         ['function_estimation_policy']
+        backgroundPolicy = self.fit._fitConfiguration['fit']['background_estimation_policy']
+        functionPolicy = self.fit._fitConfiguration['fit']['function_estimation_policy']
         if "Estimate always" not in [functionPolicy, backgroundPolicy]:
             self.__ALWAYS_ESTIMATE = False
 
         # initialize control variables
         self._parameters = None
-        self._row = 0
-        self._column = -1
         self._progress = 0
         self._status = "Fitting"
-        for i in range(nPixels):
-            self._progress = (i * 100.)/ nPixels
-            if (self._column+1) == self._nColumns:
-                self._column = 0
-                self._row   += 1
-            else:
-                self._column += 1
+        for i in range(nSpectra):
+            self._progress = (i * 100.) / nSpectra
             try:
-                if self.mask[self._row, self._column]:
-                    self.processStackData(i)
+                self.processSpectrum(i)
             except:
-                print("Error %s processing index = %d, row = %d column = %d" %\
-                        (sys.exc_info()[1], i, self._row, self._column))
+                print("Error %s processing index = %d" %
+                      (sys.exc_info()[1], i))
                 if DEBUG:
                     raise
-        self.onProcessStackFinished()
+        self.onProcessSpectraFinished()
         self._status = "Ready"
         if self.progressCallback is not None:
-            self.progressCallback(nPixels, nPixels)
+            self.progressCallback(nSpectra, nSpectra)
 
-    def processStackData(self, i):
+    def processSpectrum(self, i):
         self.aboutToGetStackData(i)
         x, y, sigma, xmin, xmax = self.getFitInputValues(i)
         self.fit.setData(x, y, sigma=sigma, xmin=xmin, xmax=xmax)
@@ -394,7 +332,7 @@ class SimpleFitAll(object):
         ddict['edf'] = edf
         return ddict
 
-    def onProcessStackFinished(self):
+    def onProcessSpectraFinished(self):
         if DEBUG:
             print("Stack proccessed")
         self._status = "Stack Fitting finished"
