@@ -141,27 +141,11 @@ class SimpleFitAll(object):
         """
         Returns the fit parameters x, y, sigma, xmin, xmax
         """
-        row    = self._row
-        column = self._column
-        data_index = self.stackDataIndexList[0]
-
-        #get y
+        # get y (always 2D, curve index first)
         yShape = self.curves_y.shape
-        if len(yShape) == 3:
-            if data_index == 0:
-                y = self.curves_y[:, row, column]
-            elif data_index == 1:
-                y = self.curves_y[row, :, column]
-            else:
-                y = self.curves_y[row, column]
-        elif len(yShape) == 2:
-            if column > 0:
-                raise ValueError("Column index > 0 on a single column stack")
-            y = self.curves_y[row]
-        else:
-            raise TypeError("Unsupported y data shape lenght")
+        y = self.curves_y[index]
 
-        #get x
+        # get x
         if self.curves_x is None:
             nValues = y.size
             x = numpy.arange(float(nValues))
@@ -169,27 +153,17 @@ class SimpleFitAll(object):
             self.curves_x = x
 
         xShape = self.curves_x.shape
-        xSize  = self.curves_x.size
+        xSize = self.curves_x.size
         sigma = None
         if xShape == yShape:
-            #as many x as y, follow same criterium
-            if len(xShape) == 3:
-                if data_index == 0:
-                    x = self.curves_x[:, row, column]
-                elif data_index == 1:
-                    x = self.curves_x[row, :, column]
-                else:
-                    x = self.curves_x[row, column]
-            elif len(xShape) == 2:
-                if column > 0:
-                    raise ValueError("Column index > 0 on a single column stack")
-                x = self.curves_x[row]
+            # as many x as y, follow same criterium
+            if len(xShape) == 2:
+                x = self.curves_x[index]
             else:
                 raise TypeError("Unsupported x data shape lenght")
         elif xSize == y.size:
-            #only one x for all the y values
-            x = numpy.zeros(y.size, numpy.float)
-            x[:] = self.curves_x[:]
+            # only one x for all the y values
+            x = numpy.array(self.curves_x[:], numpy.float)
             x.shape = y.shape
         else:
             raise ValueError("Cannot handle incompatible X and Y values")
@@ -199,28 +173,17 @@ class SimpleFitAll(object):
 
         # get sigma
         sigmaShape = self.curves_sigma.shape
-        sigmaSize  = self.curves_sigma.size
+        sigmaSize = self.curves_sigma.size
 
         if sigmaShape == yShape:
-            #as many sigma as y, follow same criterium
-            if len(sigmaShape) == 3:
-                if data_index == 0:
-                    sigma = self.curves_sigma[:, row, column]
-                elif data_index == 1:
-                    sigma = self.curves_sigma[row, :, column]
-                else:
-                    sigma = self.curves_sigma[row, column]
-            elif len(sigmaShape) == 2:
-                if column > 0:
-                    raise ValueError("Column index > 0 on a single column stack")
-                sigma = self.curves_sigma[row]
+            # as many sigma as y, follow same criterium
+            if len(sigmaShape) == 2:
+                sigma = self.curves_sigma[index]
             else:
                 raise TypeError("Unsupported sigma data shape lenght")
         elif sigmaSize == y.size:
-            #only one sigma for all the y values
-            sigma = numpy.zeros(y.size, numpy.float)
-            sgima[:] = self.curves_sigma[:]
-            sigma.shape = y.shape
+            # only one sigma for all the y values
+            sigma = numpy.array(self.curves_sigma[:], numpy.float)
         else:
             raise ValueError("Cannot handle incompatible sigma and y values")
 

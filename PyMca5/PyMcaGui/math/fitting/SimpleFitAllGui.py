@@ -95,13 +95,14 @@ class SimpleFitAllGui(SimpleFitGui):
         estimation purposes."""
         SimpleFitGui.setData(self, *var, **kw)
 
-    def setSpectra(self, x, curves_y):
+    def setSpectra(self, curves_x, curves_y):
         """Set all curves to be fitted.
 
-        :param x: 1D array of X values
+        :param curves_x: 1D array of X values, or 2D array if the same x
+            is not shared by all curves
         :param curves_y: 2D array of curves y.
         """
-        self.curves_x = x
+        self.curves_x = curves_x
         self.curves_y = curves_y
 
     def startFitAll(self):
