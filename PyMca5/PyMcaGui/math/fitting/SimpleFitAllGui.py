@@ -33,7 +33,7 @@ class OutputParameters(qt.QWidget):
         self.outputDir = PyMcaDirs.outputDir
         self.outputFile = "SimpleFitAllOutput.h5"
         self.setOutputDirectory(self.outputDir)
-        self.setOutputFileBaseName(self.outputFile)
+        self.setOutputFileName(self.outputFile)
 
         self.mainLayout.addWidget(self.outputDirLabel, 0, 0)
         self.mainLayout.addWidget(self.outputDirLine, 0, 1)
@@ -55,7 +55,7 @@ class OutputParameters(qt.QWidget):
         else:
             raise IOError("Directory does not exists")
 
-    def setOutputFileBaseName(self, txt):
+    def setOutputFileName(self, txt):
         if len(txt):
             self.outputFileLine.setText(txt)
             self.outputFile = txt
@@ -142,7 +142,7 @@ class SimpleFitAllGui(SimpleFitGui):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Fitting All Error")
             msg.setText("Error has occurred while processing the data")
-            msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
+            msg.setInformativeText(qt.safself.outputFile+e_str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
         finally:

@@ -45,6 +45,8 @@ class SimpleFitAll(object):
         self.fixedLenghtOutput = True
         self._progress = 0.0
         self._status = "Ready"
+        self._currentFitIndex = None
+        self._nSpectra = None
         self.progressCallback = None
         # optimization variables
         self.__ALWAYS_ESTIMATE = True
@@ -94,7 +96,7 @@ class SimpleFitAll(object):
         data = self.curves_y
 
         # get the total number of fits to be performed
-        nSpectra = data.shape[0]
+        self._nSpectra = data.shape[0]
 
         # optimization
         self.__ALWAYS_ESTIMATE = True
@@ -107,8 +109,8 @@ class SimpleFitAll(object):
         self._parameters = None
         self._progress = 0
         self._status = "Fitting"
-        for i in range(nSpectra):
-            self._progress = (i * 100.) / nSpectra
+        for i in range(self._nSpectra):
+            self._progress = (i * 100.) / self._nSpectra
             try:
                 self.processSpectrum(i)
             except:
@@ -119,7 +121,7 @@ class SimpleFitAll(object):
         self.onProcessSpectraFinished()
         self._status = "Ready"
         if self.progressCallback is not None:
-            self.progressCallback(nSpectra, nSpectra)
+            self.progressCallback(self._nSpectra, self._nSpectra)
 
     def processSpectrum(self, i):
         self.aboutToGetSpectrum(i)
@@ -198,13 +200,13 @@ class SimpleFitAll(object):
             print("New spectrum %d" % idx)
         self._currentFitIndex = idx
         if self.progressCallback is not None:
-            self.progressCallback(idx, self._nRows * self._nColumns)
+            self.progressCallback(idx, self._nSpectra)
 
-        if idx == 0:
-            specfile = os.path.join(self.outputDir,
-                                    self.outputFile+".spec")
-            if os.path.exists(self.outputFile):
-                os.remove(self.outputFile)
+        # if idx == 0:
+        #     hdf5file = os.path.join(self.outputDir,
+        #                             self.outputFile)
+        #     if os.path.exists(self.outputFile):
+        #         os.remove(self.outputFile)
 
     def fitFinished(self):
         if DEBUG:
