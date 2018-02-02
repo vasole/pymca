@@ -137,7 +137,7 @@ class SimpleFitAll(object):
             self.fit.estimate()
         self.estimateFinished()
         values, chisq, sigma, niter, lastdeltachi = self.fit.startFit()
-        self.fitFinished()
+        self.fitOneSpectrumFinished()
 
     def getFitInputValues(self, index):
         """
@@ -202,64 +202,23 @@ class SimpleFitAll(object):
         if self.progressCallback is not None:
             self.progressCallback(idx, self._nSpectra)
 
-        # if idx == 0:
-        #     hdf5file = os.path.join(self.outputDir,
-        #                             self.outputFile)
-        #     if os.path.exists(self.outputFile):
-        #         os.remove(self.outputFile)
-
-    def fitFinished(self):
+    def fitOneSpectrumFinished(self):
         if DEBUG:
             print("fit finished")
 
-        #get parameter results
+        # get parameter results
         fitOutput = self.fit.getResult(configuration=False)
         result = fitOutput['result']
-        row= self._row
-        column = self._column
+        idx = self._currentFitIndex
         if result is None:
-            print("result not valid for row %d, column %d" % (row, column))
+            print("result not valid for index %d" % idx)
             return
 
-        if self.fixedLenghtOutput and (self._parameters is None):
-            #If it is the first fit, initialize results array
-            imgdir = os.path.join(self.outputDir, "IMAGES")
-            if not os.path.exists(imgdir):
-                os.mkdir(imgdir)
-            if not os.path.isdir(imgdir):
-                msg= "%s does not seem to be a valid directory" % imgdir
-                raise IOError(msg)
-            self.imgDir = imgdir
-            self._parameters  = []
-            self._images      = {}
-            self._sigmas      = {}
-            for parameter in result['parameters']:
-                self._parameters.append(parameter)
-                self._images[parameter] = numpy.zeros((self._nRows,
-                                                       self._nColumns),
-                                                       numpy.float32)
-                self._sigmas[parameter] = numpy.zeros((self._nRows,
-                                                       self._nColumns),
-                                                       numpy.float32)
-            self._images['chisq'] = numpy.zeros((self._nRows,
-                                                       self._nColumns),
-                                                       numpy.float32)
+        self.getOutputFileName()
+        self._appendOneResultToHdf5(self.getOutputFileName(),
+                                    result=fitOutput)
 
-        if self.fixedLenghtOutput:
-            i = 0
-            for parameter in self._parameters:
-                self._images[parameter] [row, column] =\
-                                        result['fittedvalues'][i]
-                self._sigmas[parameter] [row, column] =\
-                                        result['sigma_values'][i]
-                i += 1
-            self._images['chisq'][row, column] = result['chisq']
-        else:
-            #specfile output always available
-            specfile = self.getOutputFileNames()['specfile']
-            self._appendOneResultToSpecfile(specfile, result=fitOutput)
-
-    def _appendOneResultToSpecfile(self, filename, result=None):
+    def _appendOneResultToHdf5(self, filename, result=None):   # TODO
         if result is None:
             result = self.fit.getResult(configuration=False)
 
@@ -270,7 +229,8 @@ class SimpleFitAll(object):
         fittedValues = fitResult['fittedvalues']
         fittedParameters = fitResult['parameters']
         chisq = fitResult['chisq']
-        text = "\n#S %d %s\n" % (scanNumber, "PyMca Stack Simple Fit")
+        text = "\n#S %d %s\n" % (scanNumber, "PyMca Stack Simple F"
+                                             "it")
         text += "#N %d\n" % (len(fittedParameters)+2)
         text += "#L N  Chisq"
         for parName in fittedParameters:
@@ -284,25 +244,16 @@ class SimpleFitAll(object):
         sf.write(text)
         sf.close()
 
-    def getOutputFileNames(self):
-        specfile = os.path.join(self.outputDir,
-                                self.outputFile+".spec")
-        imgDir = os.path.join(self.outputDir, "IMAGES")
-        filename = os.path.join(imgDir, self.outputFile)
-        csv = filename + ".csv"
-        edf = filename + ".edf"
-        ddict = {}
-        ddict['specfile'] = specfile
-        ddict['csv'] = csv
-        ddict['edf'] = edf
-        return ddict
+    def getOutputFileName(self):
+        return os.path.join(self.outputDir,
+                            self.outputFile)
 
     def onProcessSpectraFinished(self):
         if DEBUG:
-            print("Stack proccessed")
-        self._status = "Stack Fitting finished"
+            print("All curves processed")
+        self._status = "Curves Fitting finished"
         if self.fixedLenghtOutput:
-            self._status = "Writing output files"
+            self._status = "Writing output file"
             nParameters = len(self._parameters)
             datalist = [None] * (2*len(self._sigmas.keys())+1)
             labels = []
@@ -314,44 +265,16 @@ class SimpleFitAll(object):
                 labels.append('s(%s)' % parameter)
             datalist[-1] = self._images['chisq']
             labels.append('chisq')
-            filenames = self.getOutputFileNames()
-            csvName = filenames['csv']
-            edfName = filenames['edf']
-            ArraySave.save2DArrayListAsASCII(datalist,
-                                             csvName,
-                                             labels=labels,
-                                             csv=True,
-                                             csvseparator=";")
-            ArraySave.save2DArrayListAsEDF(datalist,
-                                           edfName,
-                                           labels = labels,
-                                           dtype=numpy.float32)
 
-def test():
-    import numpy
-    from PyMca5.PyMcaMath.fitting import SpecfitFuns
-    x = numpy.arange(1000.)
-    data = numpy.zeros((50, 1000), numpy.float)
-
-    #the peaks to be fitted
-    p0 = [100., 300., 50.,
-          200., 500., 30.,
-          300., 800., 65]
-
-    #generate the data to be fitted
-    for i in range(data.shape[0]):
-        nPeaks = 3 - i % 3
-        data[i,:] = SpecfitFuns.gauss(p0[:3*nPeaks],x)
-
-    oldShape = data.shape
-    data.shape = 1,oldShape[0], oldShape[1]
-
-    instance = StackSimpleFit()
-    instance.setData(x, data)
-    # TODO: Generate this file "on-the-fly" to be able to test everywhere
-    instance.setConfigurationFile("C:\StackSimpleFit.cfg")
-    instance.processAll()
-
-if __name__=="__main__":
-    DEBUG = 0
-    test()
+            # filenames = self.getOutputFileNames()
+            # csvName = filenames['csv']
+            # edfName = filenames['edf']
+            # ArraySave.save2DArrayListAsASCII(datalist,
+            #                                  csvName,
+            #                                  labels=labels,
+            #                                  csv=True,
+            #                                  csvseparator=";")
+            # ArraySave.save2DArrayListAsEDF(datalist,
+            #                                edfName,
+            #                                labels = labels,
+            #                                dtype=numpy.float32)
