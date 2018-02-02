@@ -122,7 +122,7 @@ class SimpleFitAll(object):
             self.progressCallback(nSpectra, nSpectra)
 
     def processSpectrum(self, i):
-        self.aboutToGetStackData(i)
+        self.aboutToGetSpectrum(i)
         x, y, sigma, xmin, xmax = self.getFitInputValues(i)
         self.fit.setData(x, y, sigma=sigma, xmin=xmin, xmax=xmax)
         if self._parameters is None:
@@ -230,7 +230,7 @@ class SimpleFitAll(object):
         if DEBUG:
             print("Estimate finished")
 
-    def aboutToGetStackData(self, idx):
+    def aboutToGetSpectrum(self, idx):
         if DEBUG:
             print("New spectrum %d" % idx)
         self._currentFitIndex = idx
