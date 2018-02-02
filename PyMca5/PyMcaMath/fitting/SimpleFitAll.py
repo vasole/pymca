@@ -93,7 +93,7 @@ class SimpleFitAll(object):
     def setConfiguration(self, ddict):
         self.fit.setConfiguration(ddict, try_import=True)
 
-    def processStack(self, mask=None):
+    def processAll(self, mask=None):
         self.mask = mask
         data_index = self.dataIndex
         if data_index == None:
@@ -447,7 +447,7 @@ def test():
     instance.setData(x, data)
     # TODO: Generate this file "on-the-fly" to be able to test everywhere
     instance.setConfigurationFile("C:\StackSimpleFit.cfg")
-    instance.processStack()
+    instance.processAll()
 
 if __name__=="__main__":
     DEBUG = 0

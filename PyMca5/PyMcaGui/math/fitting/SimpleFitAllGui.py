@@ -2,12 +2,13 @@
 import os
 import sys
 import traceback
+import time
 
 from .SimpleFitGui import SimpleFitGui
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaMath.fitting import SimpleFitAll
-
+from PyMca5.PyMcaGui.misc import CalculationThread
 
 
 class OutputParameters(qt.QWidget):
@@ -61,9 +62,8 @@ class OutputParameters(qt.QWidget):
 
     def browseDirectory(self):
         wdir = self.outputDir
-        outputDir = qt.QFileDialog.getExistingDirectory(self,
-                                                        "Please select output directory",
-                                                        wdir)
+        outputDir = qt.QFileDialog.getExistingDirectory(
+                self, "Please select output directory", wdir)
         if len(outputDir):
             self.setOutputDirectory(qt.safe_str(outputDir))
 
@@ -88,10 +88,21 @@ class SimpleFitAllGui(SimpleFitGui):
         # progress handling
         self._total = 100
         self._index = 0
-        self.fitAllInstance.setProgressCallback(self.progressBarUpdate)
+        self.fitAllInstance.setProgressCallback(self.progressUpdate)
 
-    def setCurves(self, x, curves_y, data_index=-1):
-        """Set data to be fitted"""
+    def setSpectrum(self, *var, **kw):   # self, x, y, sigma=None, xmin=None, xmax=None
+        """Set the main active curve to be plotted, for
+        estimation purposes."""
+        SimpleFitGui.setData(self, *var, **kw)
+
+    def setSpectra(self, x, curves_y, data_index=-1):
+        """Set all curves to be fitted.
+
+        :param x: 1D array of X values
+        :param curves_y: 2D array of curves y.
+        :param data_index: Index of the curves_y dimension to be used
+            as the data point index. The other index
+        """
         self.curves_x = x
         self.curves_y = curves_y
 
@@ -112,7 +123,6 @@ class SimpleFitAllGui(SimpleFitGui):
         self.fitAllInstance.setDataIndex(self.data_index)
 
         fileName = self.outputParameters.getOutputFileName()
-        deleteFile = False
         if os.path.exists(fileName):
             msg = qt.QMessageBox()
             msg.setWindowTitle("Output file(s) exists")
@@ -147,5 +157,33 @@ class SimpleFitAllGui(SimpleFitGui):
             self.setEnabled(True)
 
     def _startWork(self):
+        self.setEnabled(False)
+        self.progressBar.show()
+        thread = CalculationThread.CalculationThread(
+                parent=self, calculation_method=self.processAll)
+        thread.start()
+        self._total = 100
+        self._index = 0
+        while thread.isRunning():
+            time.sleep(2)
+            qApp = qt.QApplication.instance()
+            qApp.processEvents()
+            self.progressBar.setMaximum(self._total)
+            self.progressBar.setValue(self._index)
+        self.progressBar.hide()
+        self.setEnabled(True)
+        if thread.result is not None:
+            if len(thread.result):
+                raise RuntimeError(*thread.result[1:])
 
+    def setMask(self, mask):   # ?????????????????
+        self.__mask = mask
 
+    def processStack(self):
+        self.fitAllInstance.processAll(mask=self.__mask)
+
+    def progressUpdate(self, idx, total):
+        self._index = int(idx)
+        self._total = int(total)
+        if idx % 10 == 0:
+            print("Fitted %d of %d" % (idx, total))
