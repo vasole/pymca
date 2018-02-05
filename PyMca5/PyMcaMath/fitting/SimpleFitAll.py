@@ -161,7 +161,7 @@ class SimpleFitAll(object):
             x = numpy.arange(float(nValues))
             x.shape = y.shape
             self.curves_x = x
-        elif hasattr(self.curves_x, "ndim") and self.curves_x.ndim == 1:
+        elif hasattr(self.curves_x, "shape") and len(self.curves_x.shape) == 1:
             # same x array for all curves
             x = self.curves_x
         else:
@@ -174,7 +174,7 @@ class SimpleFitAll(object):
             return x, y, None, self.xMin, self.xMax
 
         # get sigma
-        if hasattr(self.curves_sigma, "ndim") and self.curves_sigma.ndim == 1:
+        if hasattr(self.curves_sigma, "shape") and len(self.curves_sigma.shape) == 1:
             # only one sigma for all the y values
             sigma = self.curves_sigma
         else:
