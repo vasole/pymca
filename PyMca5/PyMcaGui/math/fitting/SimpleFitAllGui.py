@@ -98,9 +98,8 @@ class SimpleFitAllGui(SimpleFitGui):
     def setSpectra(self, curves_x, curves_y):
         """Set all curves to be fitted.
 
-        :param curves_x: 1D array of X values, or 2D array if the same x
-            is not shared by all curves
-        :param curves_y: 2D array of curves y.
+        :param curves_x: list of 1D arrays of X curve values
+        :param curves_y: list of 1D arrays of Y curve values.
         """
         self.curves_x = curves_x
         self.curves_y = curves_y

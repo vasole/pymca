@@ -75,6 +75,15 @@ class SimpleFitAll(object):
         self.outputFile = outputfile
 
     def setData(self, curves_x, curves_y, sigma=None, xmin=None, xmax=None):
+        """
+
+        :param curves_x: List of 1D arrays, one per curve, or single 1D array
+        :param curves_y: List of 1D arrays, one per curve
+        :param sigma: List of 1D arrays, one per curve, or single 1D array
+        :param float xmin:
+        :param float xmax:
+        :return:
+        """
         self.curves_x = curves_x
         self.curves_y = curves_y
         self.curves_sigma = sigma
@@ -96,7 +105,7 @@ class SimpleFitAll(object):
         data = self.curves_y
 
         # get the total number of fits to be performed
-        self._nSpectra = data.shape[0]
+        self._nSpectra = len(data)
 
         # optimization
         self.__ALWAYS_ESTIMATE = True
@@ -143,8 +152,7 @@ class SimpleFitAll(object):
         """
         Returns the fit parameters x, y, sigma, xmin, xmax
         """
-        # get y (always 2D, curve index first)
-        yShape = self.curves_y.shape
+        # get y (always a list of 1D arrays)
         y = self.curves_y[index]
 
         # get x
@@ -153,41 +161,25 @@ class SimpleFitAll(object):
             x = numpy.arange(float(nValues))
             x.shape = y.shape
             self.curves_x = x
-
-        xShape = self.curves_x.shape
-        xSize = self.curves_x.size
-        sigma = None
-        if xShape == yShape:
-            # as many x as y, follow same criterium
-            if len(xShape) == 2:
-                x = self.curves_x[index]
-            else:
-                raise TypeError("Unsupported x data shape lenght")
-        elif xSize == y.size:
-            # only one x for all the y values
-            x = numpy.array(self.curves_x[:], numpy.float)
-            x.shape = y.shape
+        elif hasattr(self.curves_x, "ndim") and self.curves_x.ndim == 1:
+            # same x array for all curves
+            x = self.curves_x
         else:
-            raise ValueError("Cannot handle incompatible X and Y values")
+            # list of abscissas, one per curve
+            x = self.curves_x[index]
+
+        assert x.shape == y.shape
 
         if self.curves_sigma is None:
-            return x, y, sigma, self.xMin, self.xMax
+            return x, y, None, self.xMin, self.xMax
 
         # get sigma
-        sigmaShape = self.curves_sigma.shape
-        sigmaSize = self.curves_sigma.size
-
-        if sigmaShape == yShape:
-            # as many sigma as y, follow same criterium
-            if len(sigmaShape) == 2:
-                sigma = self.curves_sigma[index]
-            else:
-                raise TypeError("Unsupported sigma data shape lenght")
-        elif sigmaSize == y.size:
+        if hasattr(self.curves_sigma, "ndim") and self.curves_sigma.ndim == 1:
             # only one sigma for all the y values
-            sigma = numpy.array(self.curves_sigma[:], numpy.float)
+            sigma = self.curves_sigma
         else:
-            raise ValueError("Cannot handle incompatible sigma and y values")
+            sigma = self.curves_sigma[index]
+        assert sigma.shape == y.shape
 
         return x, y, sigma, self.xMin, self.xMax
 
@@ -218,10 +210,9 @@ class SimpleFitAll(object):
         self._appendOneResultToHdf5(self.getOutputFileName(),
                                     result=fitOutput)
 
-    def _appendOneResultToHdf5(self, filename, result=None):   # TODO
-        if result is None:
-            result = self.fit.getResult(configuration=False)
-
+    def _appendOneResultToHdf5(self, filename, result):   # TODO
+        print(result)   # PK debugging
+        return
         scanNumber = self._currentFitIndex
 
         #open file in append mode
