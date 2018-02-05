@@ -69,10 +69,10 @@ class FitAllCurvesPlugin(Plugin1DBase.Plugin1DBase):
             xmin, xmax = self.getGraphXLimits()
             self.widget.setSpectrum(activeCurve[0], activeCurve[1],
                                     xmin=xmin, xmax=xmax)
-            for i in range(len(allCurves)):
-                curves_x = [curve[0] for curve in allCurves]
-                curves_y = [curve[1] for curve in allCurves]
-                self.widget.setSpectra(curves_x, curves_y)
+            curves_x = [curve[0] for curve in allCurves]
+            curves_y = [curve[1] for curve in allCurves]
+            self.widget.setSpectra(curves_x, curves_y)
+
             self.widget.show()
 
 

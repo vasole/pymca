@@ -29,20 +29,41 @@
 import sys
 import os
 import numpy
+import h5py
+import datetime
+
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
 
 DEBUG = False
 
+if sys.version_info < (3, ):
+    text_dtype = h5py.special_dtype(vlen=unicode)
+else:
+    text_dtype = h5py.special_dtype(vlen=str)
+
+
+def to_h5py_utf8(str_list):
+    """Convert a string or a list of strings to a numpy array of
+    unicode strings that can be written to HDF5 as utf-8.
+    """
+    return numpy.array(str_list, dtype=text_dtype)
+
 
 class SimpleFitAll(object):
+    """Fit module designed to fit a number of curves, and save its
+    output to HDF5 - nexus."""
     def __init__(self, fit):
         self.fit = fit
+        self.curves_x = None
         self.curves_y = None
+        self.curves_sigma = None
+        self.legends = None
+        self.xMin = None
+        self.xMax = None
         self.outputDir = PyMcaDirs.outputDir
+        self.outputFileName = None
         self.outputFile = None
-        self.fixedLenghtOutput = True
         self._progress = 0.0
         self._status = "Ready"
         self._currentFitIndex = None
@@ -50,6 +71,8 @@ class SimpleFitAll(object):
         self.progressCallback = None
         # optimization variables
         self.__ALWAYS_ESTIMATE = True
+        self._startTime = ""
+        self._endTime = ""
 
     def setProgressCallback(self, method):
         """
@@ -72,9 +95,10 @@ class SimpleFitAll(object):
         self.outputDir = outputdir
 
     def setOutputFileName(self, outputfile):
-        self.outputFile = outputfile
+        self.outputFileName = outputfile
 
-    def setData(self, curves_x, curves_y, sigma=None, xmin=None, xmax=None):
+    def setData(self, curves_x, curves_y, sigma=None, xmin=None, xmax=None,
+                legends=None):
         """
 
         :param curves_x: List of 1D arrays, one per curve, or single 1D array
@@ -82,15 +106,16 @@ class SimpleFitAll(object):
         :param sigma: List of 1D arrays, one per curve, or single 1D array
         :param float xmin:
         :param float xmax:
-        :return:
+        :param List[str] legends: List of curve legends. If None, defaults to
+            ``["curve0", "curve1"...]``
         """
         self.curves_x = curves_x
         self.curves_y = curves_y
         self.curves_sigma = sigma
         self.xMin = xmin
         self.xMax = xmax
+        self.legends = legends or ["curve%d" % i for i in range(len(curves_y))]
 
-    # TODO
     def setConfigurationFile(self, fname):
         if not os.path.exists(fname):
             raise IOError("File %s does not exist" % fname)
@@ -102,7 +127,12 @@ class SimpleFitAll(object):
         self.fit.setConfiguration(ddict, try_import=True)
 
     def processAll(self):
+        assert self.curves_y is not None, "You must first call setData()!"
         data = self.curves_y
+
+        assert self.outputFile is None
+        # self.outputFile = h5py.File(self.getOutputFileName(), mode="w-")
+        # self.outputFile.attrs["NX_class"] = "NXroot"
 
         # get the total number of fits to be performed
         self._nSpectra = len(data)
@@ -128,11 +158,14 @@ class SimpleFitAll(object):
                 if DEBUG:
                     raise
         self.onProcessSpectraFinished()
+        # self.outputFile.close()
+        # self.outputFile = None
         self._status = "Ready"
         if self.progressCallback is not None:
             self.progressCallback(self._nSpectra, self._nSpectra)
 
     def processSpectrum(self, i):
+        self._startTime = datetime.datetime.now().isoformat()
         self.aboutToGetSpectrum(i)
         x, y, sigma, xmin, xmax = self.getFitInputValues(i)
         self.fit.setData(x, y, sigma=sigma, xmin=xmin, xmax=xmax)
@@ -146,6 +179,7 @@ class SimpleFitAll(object):
             self.fit.estimate()
         self.estimateFinished()
         values, chisq, sigma, niter, lastdeltachi = self.fit.startFit()
+        self._endTime = datetime.datetime.now().isoformat()
         self.fitOneSpectrumFinished()
 
     def getFitInputValues(self, index):
@@ -206,14 +240,20 @@ class SimpleFitAll(object):
             print("result not valid for index %d" % idx)
             return
 
-        self.getOutputFileName()
         self._appendOneResultToHdf5(self.getOutputFileName(),
                                     result=fitOutput)
 
-    def _appendOneResultToHdf5(self, filename, result):   # TODO
-        print(result)   # PK debugging
+    def _appendOneResultToHdf5(self, filename, result):
+
+        idx = self._currentFitIndex        # TODO
+        print(idx, "\n", result)
+        print(ConfigDict.ConfigDict(self.fit.getConfiguration()).tostring())
+
         return
-        scanNumber = self._currentFitIndex
+        entry = self.outputFile.create_group("fit_curve_%d" % idx)
+        entry.attrs["title"] = to_h5py_utf8("Fit of curve '%s'" % self.legends[idx])
+        entry.create_dataset("start_time", data=to_h5py_utf8(self._startTime))
+        entry.create_dataset("end_time", data=to_h5py_utf8(self._endTime))
 
         #open file in append mode
         fitResult = result['result']
@@ -237,25 +277,26 @@ class SimpleFitAll(object):
 
     def getOutputFileName(self):
         return os.path.join(self.outputDir,
-                            self.outputFile)
+                            self.outputFileName)
 
     def onProcessSpectraFinished(self):
         if DEBUG:
             print("All curves processed")
         self._status = "Curves Fitting finished"
-        if self.fixedLenghtOutput:
-            self._status = "Writing output file"
-            nParameters = len(self._parameters)
-            datalist = [None] * (2*len(self._sigmas.keys())+1)
-            labels = []
-            for i in range(nParameters):
-                parameter = self._parameters[i]
-                datalist[2*i] = self._images[parameter]
-                datalist[2*i + 1] = self._sigmas[parameter]
-                labels.append(parameter)
-                labels.append('s(%s)' % parameter)
-            datalist[-1] = self._images['chisq']
-            labels.append('chisq')
+
+        # if self.fixedLenghtOutput:
+        #     self._status = "Writing output file"
+        #     nParameters = len(self._parameters)
+        #     datalist = [None] * (2*len(self._sigmas.keys())+1)
+        #     labels = []
+        #     for i in range(nParameters):
+        #         parameter = self._parameters[i]
+        #         datalist[2*i] = self._images[parameter]
+        #         datalist[2*i + 1] = self._sigmas[parameter]
+        #         labels.append(parameter)
+        #         labels.append('s(%s)' % parameter)
+        #     datalist[-1] = self._images['chisq']
+        #     labels.append('chisq')
 
             # filenames = self.getOutputFileNames()
             # csvName = filenames['csv']

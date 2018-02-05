@@ -98,19 +98,25 @@ class SimpleFitAllGui(SimpleFitGui):
         self._index = 0
         self.fitAllInstance.setProgressCallback(self.progressUpdate)
 
+        self.curves_x = None
+        self.curves_y = None
+        self.legends = None
+
     def setSpectrum(self, *var, **kw):   # self, x, y, sigma=None, xmin=None, xmax=None
         """Set the main active curve to be plotted, for
         estimation purposes."""
         SimpleFitGui.setData(self, *var, **kw)
 
-    def setSpectra(self, curves_x, curves_y):
+    def setSpectra(self, curves_x, curves_y, legends=None):
         """Set all curves to be fitted.
 
         :param curves_x: list of 1D arrays of X curve values
         :param curves_y: list of 1D arrays of Y curve values.
+        :param legends: list of curve legends
         """
         self.curves_x = curves_x
         self.curves_y = curves_y
+        self.legends = legends
 
     def startFitAll(self):
         xmin = self.fitModule._fitConfiguration['fit']['xmin']
@@ -120,7 +126,8 @@ class SimpleFitAllGui(SimpleFitGui):
         self.fitAllInstance.setOutputFileName(
                 self.outputParameters.getOutputFileName())
         self.fitAllInstance.setData(self.curves_x, self.curves_y,
-                                    sigma=None, xmin=xmin, xmax=xmax)
+                                    sigma=None, xmin=xmin, xmax=xmax,
+                                    legends=self.legends)
 
         fileName = self.outputParameters.getOutputFileName()
         if os.path.exists(fileName):
