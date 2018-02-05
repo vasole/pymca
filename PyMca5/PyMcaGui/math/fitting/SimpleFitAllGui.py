@@ -8,7 +8,12 @@ from .SimpleFitGui import SimpleFitGui
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaMath.fitting import SimpleFitAll
+from PyMca5.PyMcaMath.fitting import SimpleFitModule
+from PyMca5.PyMcaMath.fitting import SpecfitFunctions
+
+
 from PyMca5.PyMcaGui.misc import CalculationThread
+
 
 
 class OutputParameters(qt.QWidget):
@@ -71,6 +76,9 @@ class OutputParameters(qt.QWidget):
 class SimpleFitAllGui(SimpleFitGui):
 
     def __init__(self, parent=None, fit=None, graph=None, actions=True):
+        if fit is None:
+            fit = SimpleFitModule.SimpleFit()
+            fit.importFunctions(SpecfitFunctions)
         SimpleFitGui.__init__(self, parent, fit, graph, actions)
 
         self.fitAllInstance = SimpleFitAll.SimpleFitAll(fit=self.fitModule)
@@ -168,7 +176,7 @@ class SimpleFitAllGui(SimpleFitGui):
             if len(thread.result):
                 raise RuntimeError(*thread.result[1:])
 
-    def processStack(self):
+    def processAll(self):
         self.fitAllInstance.processAll()
 
     def progressUpdate(self, idx, total):
