@@ -142,7 +142,7 @@ class SimpleFitAllGui(SimpleFitGui):
             msg.setIcon(qt.QMessageBox.Critical)
             msg.setWindowTitle("Fitting All Error")
             msg.setText("Error has occurred while processing the data")
-            msg.setInformativeText(qt.safself.outputFile+e_str(sys.exc_info()[1]))
+            msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
         finally:
