@@ -15,7 +15,6 @@ from PyMca5.PyMcaMath.fitting import SpecfitFunctions
 from PyMca5.PyMcaGui.misc import CalculationThread
 
 
-
 class OutputParameters(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)

@@ -35,7 +35,7 @@ import datetime
 from PyMca5.PyMcaIO import ConfigDict
 import PyMca5
 
-DEBUG = True
+DEBUG = False
 
 if sys.version_info < (3, ):
     text_dtype = h5py.special_dtype(vlen=unicode)
