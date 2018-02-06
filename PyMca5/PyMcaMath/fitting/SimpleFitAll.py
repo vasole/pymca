@@ -247,7 +247,7 @@ class SimpleFitAll(object):
             entry = h5f.create_group("fit_curve_%d" % idx)
             entry.attrs["NX_class"] = to_h5py_utf8("NXentry")
             entry.attrs["title"] = to_h5py_utf8("Fit of curve '%s'" % self.legends[idx])
-            entry.attrs["default"] = to_h5py_utf8("fit_process/results/plot")
+            entry.attrs["default"] = to_h5py_utf8("results/plot")
             entry.create_dataset("start_time", data=to_h5py_utf8(self._startTime))
             entry.create_dataset("end_time", data=to_h5py_utf8(self._endTime))
             entry.create_dataset("curve_legend", data=to_h5py_utf8(self.legends[idx]))
