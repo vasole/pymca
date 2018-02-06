@@ -34,7 +34,10 @@ __license__ = "MIT"
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
 import PyMca5.PyMcaGui.PyMcaQt as qt
-from . import MotorInfoWindow
+try:
+    from PyMca5.PyMcaPlugins import MotorInfoWindow
+except ImportError:
+    from . import MotorInfoWindow
 
 
 class PointInfoWindow(qt.QWidget):
