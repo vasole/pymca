@@ -227,41 +227,41 @@ class SpecfitFunctions(object):
         set.sort() #sorts by values and then by index
         return map(lambda x:x[1],set)
 
-    def bkg_constant(self,pars,x):
-       """
-       Constant background
-       """
-       return pars[0]
+    def bkg_constant(self, pars, x):
+        """
+        Constant background
+        """
+        return pars[0] * numpy.ones_like(x)
 
-    def bkg_linear(self,pars,x):
-       """
-       Linear background
-       """
-       return pars[0] + pars [1] * x
+    def bkg_linear(self, pars, x):
+        """
+        Linear background
+        """
+        return pars[0] + pars[1] * x
 
     def bkg_internal(self,pars,x):
-       """
-       Internal Background
-       """
-       #fast
-       #return self.zz
-       #slow: recalculate the background as function of the parameters
-       #yy=SpecfitFuns.subac(self.ydata*self.fitconfig['Yscaling'],
-       #                     pars[0],pars[1])
-       yy=SpecfitFuns.subac(self.ydata*1.0,
-                            pars[0],pars[1])
-       nrx=shape(x)[0]
-       nry=shape(yy)[0]
-       if nrx == nry:
+        """
+        Internal Background
+        """
+        #fast
+        #return self.zz
+        #slow: recalculate the background as function of the parameters
+        #yy=SpecfitFuns.subac(self.ydata*self.fitconfig['Yscaling'],
+        #                     pars[0],pars[1])
+        yy=SpecfitFuns.subac(self.ydata*1.0,
+                             pars[0],pars[1])
+        nrx=shape(x)[0]
+        nry=shape(yy)[0]
+        if nrx == nry:
             return SpecfitFuns.subac(yy,pars[0],pars[1])
-       else:
+        else:
             return SpecfitFuns.subac(numpy.take(yy,numpy.arange(0,nry,2)),pars[0],pars[1])
 
     def bkg_none(self,pars,x):
-       """
-       Internal Background
-       """
-       return numpy.zeros(x.shape,numpy.float)
+        """
+        Internal Background
+        """
+        return numpy.zeros(x.shape,numpy.float)
 
     def fun(self,param, t):
         gterm = param[2] * numpy.exp(-0.5 * ((t - param[3]) * (t - param[3]))/param[4])
@@ -378,6 +378,31 @@ class SpecfitFunctions(object):
 
         return fwhm
 
+    def estimate_constant(self, xx, yy, zzz, xscaling=1.0, yscaling=None):
+        estimated_par = [min(yy)]
+        constraints = [[0], [0], [0]]
+        return estimated_par, constraints
+
+    def estimate_linear(self, xx, yy, zzz, xscaling=1.0, yscaling=None):
+        # compute strip bg and use it to estimate the linear bg parameters
+        zz = SpecfitFuns.subac(yy, 1.000, 10000)
+        n = float(len(zz))
+        Sy = numpy.sum(zz)
+        Sx = float(numpy.sum(xx))
+        Sxx = float(numpy.sum(xx * xx))
+        Sxy = float(numpy.sum(xx * zz))
+
+        deno = n * Sxx - (Sx * Sx)
+        if deno != 0:
+            bg = (Sxx * Sy - Sx * Sxy) / deno
+            slope = (n * Sxy - Sx * Sy) / deno
+        else:
+            bg = 0.0
+            slope = 0.0
+        estimated_par = [bg, slope]
+        # code = 0: FREE
+        constraints = [[0, 0], [0, 0], [0, 0]]
+        return estimated_par, constraints
 
     def estimate_gauss(self,xx,yy,zzz,xscaling=1.0,yscaling=None):
        if yscaling == None:
@@ -1175,7 +1200,9 @@ FUNCTION=[fitfuns.gauss,
           fitfuns.slit,
           fitfuns.atan,
           fitfuns.hypermet,
-          fitfuns.periodic_gauss]
+          fitfuns.periodic_gauss,
+          fitfuns.bkg_constant,
+          fitfuns.bkg_linear]
 
 PARAMETERS=[['Height','Position','FWHM'],
             ['Height','Position','Fwhm'],
@@ -1192,7 +1219,9 @@ PARAMETERS=[['Height','Position','FWHM'],
             ['Height','Position','Width'],
             ['G_Area','Position','FWHM',
              'ST_Area','ST_Slope','LT_Area','LT_Slope','Step_H'],
-            ['N', 'Delta', 'Height', 'Position', 'FWHM']]
+            ['N', 'Delta', 'Height', 'Position', 'FWHM'],
+            ['Constant'],
+            ['Constant', 'Slope']]
 
 THEORY=['Gaussians',
         'Lorentz',
@@ -1208,7 +1237,9 @@ THEORY=['Gaussians',
         'Slit',
         'Atan',
         'Hypermet',
-        'Periodic Gaussians']
+        'Periodic Gaussians',
+        'Constant',
+        'Linear']
 
 ESTIMATE=[fitfuns.estimate_gauss,
           fitfuns.estimate_lorentz,
@@ -1224,9 +1255,13 @@ ESTIMATE=[fitfuns.estimate_gauss,
           fitfuns.estimate_slit,
           fitfuns.estimate_atan,
           fitfuns.estimate_hypermet,
-          fitfuns.estimate_periodic_gauss]
+          fitfuns.estimate_periodic_gauss,
+          fitfuns.estimate_constant,
+          fitfuns.estimate_linear]
 
 CONFIGURE=[fitfuns.configure,
+           fitfuns.configure,
+           fitfuns.configure,
            fitfuns.configure,
            fitfuns.configure,
            fitfuns.configure,
