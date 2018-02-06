@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 try:
     import tomogui
     # neeed at least tomogui 0.2 to work
-    if tomogui._version.Minor < 2:
+    if tomogui._version.MINOR < 2:
         logger.warning('tomogui version is to old, please install v0.2 at least')
         tomogui = None
     else:
