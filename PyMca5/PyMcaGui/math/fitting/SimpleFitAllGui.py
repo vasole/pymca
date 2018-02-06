@@ -15,6 +15,7 @@ from PyMca5.PyMcaMath.fitting import SpecfitFunctions
 from PyMca5.PyMcaGui.misc import CalculationThread
 
 
+
 class OutputParameters(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
@@ -180,6 +181,8 @@ class SimpleFitAllGui(SimpleFitGui):
         self.setEnabled(True)
         if thread.result is not None:
             if len(thread.result):
+                tb = thread.result[-1]
+                traceback.print_tb(tb)
                 raise RuntimeError(*thread.result[1:])
 
     def processAll(self):
