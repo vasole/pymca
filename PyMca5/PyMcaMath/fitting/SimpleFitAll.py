@@ -272,10 +272,10 @@ class SimpleFitAll(object):
                 if numpy.issubdtype(value_dtype, numpy.number) or\
                         numpy.issubdtype(value_dtype, numpy.bool_):
                     # straightforward conversion to HDF5
-                    results.create_dataset(key, value)
+                    results.create_dataset(key, data=value)
                 elif numpy.issubdtype(value_dtype, numpy.character):
                     # ensure utf-8 output
-                    results.create_dataset(key, to_h5py_utf8(value))
+                    results.create_dataset(key, data=to_h5py_utf8(value))
 
             # results.create_dataset("chisq", data=result["chisq"])
             # results.create_dataset("niter", data=result["niter"])
