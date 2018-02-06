@@ -63,7 +63,6 @@ class SimpleFitAll(object):
         self.xMax = None
         self.outputDir = PyMca5.PyMcaDirs.outputDir
         self.outputFileName = None
-        self.outputFile = None
         self._progress = 0.0
         self._status = "Ready"
         self._currentFitIndex = None
@@ -130,9 +129,9 @@ class SimpleFitAll(object):
         assert self.curves_y is not None, "You must first call setData()!"
         data = self.curves_y
 
-        assert self.outputFile is None
-        # self.outputFile = h5py.File(self.getOutputFileName(), mode="w-")
-        # self.outputFile.attrs["NX_class"] = "NXroot"
+        # create output file
+        with h5py.File(self.getOutputFileName(), mode="w-") as h5f:
+            h5f.attrs["NX_class"] = "NXroot"
 
         # get the total number of fits to be performed
         self._nSpectra = len(data)
@@ -158,8 +157,6 @@ class SimpleFitAll(object):
                 if DEBUG:
                     raise
         self.onProcessSpectraFinished()
-        # self.outputFile.close()
-        # self.outputFile = None
         self._status = "Ready"
         if self.progressCallback is not None:
             self.progressCallback(self._nSpectra, self._nSpectra)
@@ -243,79 +240,56 @@ class SimpleFitAll(object):
         self._appendOneResultToHdf5(result=fitOutput["result"])
 
     def _appendOneResultToHdf5(self, result):
-
-        idx = self._currentFitIndex        # TODO
-        print(idx, "\n", result)
-
-        configFitFunction = result["fit_function"]
-        configBackgroundFunction = result["background_function"],
+        idx = self._currentFitIndex
         configIni = ConfigDict.ConfigDict(self.fit.getConfiguration()).tostring()
 
-        entry = self.outputFile.create_group("fit_curve_%d" % idx)
-        entry.attrs["NX_class"] = to_h5py_utf8("NXentry")
-        entry.attrs["title"] = to_h5py_utf8("Fit of curve '%s'" % self.legends[idx])
-        entry.attrs["default"] = to_h5py_utf8("fit_process/results/plot")
-        entry.create_dataset("start_time", data=to_h5py_utf8(self._startTime))
-        entry.create_dataset("end_time", data=to_h5py_utf8(self._endTime))
-        entry.create_dataset("curve_legend", data=to_h5py_utf8(self.legends[idx]))
+        # append to existing file
+        with h5py.File(self.getOutputFileName(), mode="r+") as h5f:
+            entry = h5f.create_group("fit_curve_%d" % idx)
+            entry.attrs["NX_class"] = to_h5py_utf8("NXentry")
+            entry.attrs["title"] = to_h5py_utf8("Fit of curve '%s'" % self.legends[idx])
+            entry.attrs["default"] = to_h5py_utf8("fit_process/results/plot")
+            entry.create_dataset("start_time", data=to_h5py_utf8(self._startTime))
+            entry.create_dataset("end_time", data=to_h5py_utf8(self._endTime))
+            entry.create_dataset("curve_legend", data=to_h5py_utf8(self.legends[idx]))
 
-        process = entry.create_group("fit_process")
-        process.create_dataset("program", data=to_h5py_utf8("pymca"))
-        process.create_dataset("version", data=to_h5py_utf8(PyMca5.version()))
-        process.create_dataset("date", data=to_h5py_utf8(self._endTime))
+            process = entry.create_group("fit_process")
+            process.create_dataset("program", data=to_h5py_utf8("pymca"))
+            process.create_dataset("version", data=to_h5py_utf8(PyMca5.version()))
+            process.create_dataset("date", data=to_h5py_utf8(self._endTime))
 
-        configuration = process.create_group("configuration")
-        configuration.attrs["NX_class"] = to_h5py_utf8("NXnote")
-        # not sure if these attrs are needed, they are repeated in the INI
-        # configuration.create_dataset("function", configFitFunction)
-        # configuration.create_dataset("background_function", configBackgroundFunction)
-        # ...
-        configuration.create_dataset("type", data=to_h5py_utf8("text/ini"))
-        configuration.create_dataset("data", data=to_h5py_utf8(configIni))
+            configuration = process.create_group("configuration")
+            configuration.attrs["NX_class"] = to_h5py_utf8("NXnote")
+            # not sure if these attrs are needed, they are repeated in the INI
+            # configuration.create_dataset("function", result["fit_function"])
+            # configuration.create_dataset("background_function", result["background_function"])
+            # ...
+            configuration.create_dataset("type", data=to_h5py_utf8("text/ini"))
+            configuration.create_dataset("data", data=to_h5py_utf8(configIni))
 
-        results = entry.create_group("results")
-        for key, value in result.items():
-            if not numpy.issubdtype(type(key), numpy.character):
-                print("skipping key %s (not a text string)" % key)
-                continue
-            value_dtype = numpy.array(value).dtype
-            if numpy.issubdtype(value_dtype, numpy.number) or\
-                    numpy.issubdtype(value_dtype, numpy.bool_):
-                # straightforward conversion to HDF5
-                results.create_dataset(key, value)
-            elif numpy.issubdtype(value_dtype, numpy.character):
-                results.create_dataset(key, to_h5py_utf8(value))
+            results = entry.create_group("results")
+            for key, value in result.items():
+                if not numpy.issubdtype(type(key), numpy.character):
+                    print("skipping key %s (not a text string)" % key)
+                    continue
+                value_dtype = numpy.array(value).dtype
+                if numpy.issubdtype(value_dtype, numpy.number) or\
+                        numpy.issubdtype(value_dtype, numpy.bool_):
+                    # straightforward conversion to HDF5
+                    results.create_dataset(key, value)
+                elif numpy.issubdtype(value_dtype, numpy.character):
+                    results.create_dataset(key, to_h5py_utf8(value))
 
 
 
-        results.create_dataset("chisq", data=result["chisq"])
-        results.create_dataset("niter", data=result["niter"])
-        results.create_dataset("lastdeltachi", data=result["lastdeltachi"])
-        results.create_dataset("parameters", data=to_h5py_utf8(result["parameters"]))
-        results.create_dataset("fittedvalues", data=to_h5py_utf8(result["fittedvalues"]))
-        ...
+            results.create_dataset("chisq", data=result["chisq"])
+            results.create_dataset("niter", data=result["niter"])
+            results.create_dataset("lastdeltachi", data=result["lastdeltachi"])
+            results.create_dataset("parameters", data=to_h5py_utf8(result["parameters"]))
+            results.create_dataset("fittedvalues", data=to_h5py_utf8(result["fittedvalues"]))
+            ...
 
-        return
-
-        #open file in append mode
-        fitResult = result['result']
-        fittedValues = fitResult['fittedvalues']
-        fittedParameters = fitResult['parameters']
-        chisq = fitResult['chisq']
-        text = "\n#S %d %s\n" % (scanNumber, "PyMca Stack Simple F"
-                                             "it")
-        text += "#N %d\n" % (len(fittedParameters)+2)
-        text += "#L N  Chisq"
-        for parName in fittedParameters:
-            text += '  %s' % parName
-        text += "\n"
-        text += "1 %f" % chisq
-        for parValue in fittedValues:
-            text += "% .7E" % parValue
-        text += "\n"
-        sf = open(filename, 'ab')
-        sf.write(text)
-        sf.close()
+            return
 
     def getOutputFileName(self):
         return os.path.join(self.outputDir,
@@ -325,30 +299,3 @@ class SimpleFitAll(object):
         if DEBUG:
             print("All curves processed")
         self._status = "Curves Fitting finished"
-
-        # if self.fixedLenghtOutput:
-        #     self._status = "Writing output file"
-        #     nParameters = len(self._parameters)
-        #     datalist = [None] * (2*len(self._sigmas.keys())+1)
-        #     labels = []
-        #     for i in range(nParameters):
-        #         parameter = self._parameters[i]
-        #         datalist[2*i] = self._images[parameter]
-        #         datalist[2*i + 1] = self._sigmas[parameter]
-        #         labels.append(parameter)
-        #         labels.append('s(%s)' % parameter)
-        #     datalist[-1] = self._images['chisq']
-        #     labels.append('chisq')
-
-            # filenames = self.getOutputFileNames()
-            # csvName = filenames['csv']
-            # edfName = filenames['edf']
-            # ArraySave.save2DArrayListAsASCII(datalist,
-            #                                  csvName,
-            #                                  labels=labels,
-            #                                  csv=True,
-            #                                  csvseparator=";")
-            # ArraySave.save2DArrayListAsEDF(datalist,
-            #                                edfName,
-            #                                labels = labels,
-            #                                dtype=numpy.float32)
