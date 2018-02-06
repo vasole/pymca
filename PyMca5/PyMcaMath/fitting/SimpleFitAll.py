@@ -33,7 +33,7 @@ import h5py
 import datetime
 
 from PyMca5.PyMcaIO import ConfigDict
-from PyMca5 import PyMcaDirs
+import PyMca5
 
 DEBUG = False
 
@@ -61,7 +61,7 @@ class SimpleFitAll(object):
         self.legends = None
         self.xMin = None
         self.xMax = None
-        self.outputDir = PyMcaDirs.outputDir
+        self.outputDir = PyMca5.PyMcaDirs.outputDir
         self.outputFileName = None
         self.outputFile = None
         self._progress = 0.0
@@ -240,20 +240,62 @@ class SimpleFitAll(object):
             print("result not valid for index %d" % idx)
             return
 
-        self._appendOneResultToHdf5(self.getOutputFileName(),
-                                    result=fitOutput)
+        self._appendOneResultToHdf5(result=fitOutput["result"])
 
-    def _appendOneResultToHdf5(self, filename, result):
+    def _appendOneResultToHdf5(self, result):
 
         idx = self._currentFitIndex        # TODO
         print(idx, "\n", result)
-        print(ConfigDict.ConfigDict(self.fit.getConfiguration()).tostring())
 
-        return
+        configFitFunction = result["fit_function"]
+        configBackgroundFunction = result["background_function"],
+        configIni = ConfigDict.ConfigDict(self.fit.getConfiguration()).tostring()
+
         entry = self.outputFile.create_group("fit_curve_%d" % idx)
+        entry.attrs["NX_class"] = to_h5py_utf8("NXentry")
         entry.attrs["title"] = to_h5py_utf8("Fit of curve '%s'" % self.legends[idx])
+        entry.attrs["default"] = to_h5py_utf8("fit_process/results/plot")
         entry.create_dataset("start_time", data=to_h5py_utf8(self._startTime))
         entry.create_dataset("end_time", data=to_h5py_utf8(self._endTime))
+        entry.create_dataset("curve_legend", data=to_h5py_utf8(self.legends[idx]))
+
+        process = entry.create_group("fit_process")
+        process.create_dataset("program", data=to_h5py_utf8("pymca"))
+        process.create_dataset("version", data=to_h5py_utf8(PyMca5.version()))
+        process.create_dataset("date", data=to_h5py_utf8(self._endTime))
+
+        configuration = process.create_group("configuration")
+        configuration.attrs["NX_class"] = to_h5py_utf8("NXnote")
+        # not sure if these attrs are needed, they are repeated in the INI
+        # configuration.create_dataset("function", configFitFunction)
+        # configuration.create_dataset("background_function", configBackgroundFunction)
+        # ...
+        configuration.create_dataset("type", data=to_h5py_utf8("text/ini"))
+        configuration.create_dataset("data", data=to_h5py_utf8(configIni))
+
+        results = entry.create_group("results")
+        for key, value in result.items():
+            if not numpy.issubdtype(type(key), numpy.character):
+                print("skipping key %s (not a text string)" % key)
+                continue
+            value_dtype = numpy.array(value).dtype
+            if numpy.issubdtype(value_dtype, numpy.number) or\
+                    numpy.issubdtype(value_dtype, numpy.bool_):
+                # straightforward conversion to HDF5
+                results.create_dataset(key, value)
+            elif numpy.issubdtype(value_dtype, numpy.character):
+                results.create_dataset(key, to_h5py_utf8(value))
+
+
+
+        results.create_dataset("chisq", data=result["chisq"])
+        results.create_dataset("niter", data=result["niter"])
+        results.create_dataset("lastdeltachi", data=result["lastdeltachi"])
+        results.create_dataset("parameters", data=to_h5py_utf8(result["parameters"]))
+        results.create_dataset("fittedvalues", data=to_h5py_utf8(result["fittedvalues"]))
+        ...
+
+        return
 
         #open file in append mode
         fitResult = result['result']
