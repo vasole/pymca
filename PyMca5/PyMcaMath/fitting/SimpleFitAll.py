@@ -43,6 +43,16 @@ else:
     text_dtype = h5py.special_dtype(vlen=str)
 
 
+CONS = ['FREE',
+        'POSITIVE',
+        'QUOTED',
+        'FIXED',
+        'FACTOR',
+        'DELTA',
+        'SUM',
+        'IGNORE']
+
+
 def to_h5py_utf8(str_list):
     """Convert a string or a list of strings to a numpy array of
     unicode strings that can be written to HDF5 as utf-8.
@@ -273,6 +283,20 @@ class SimpleFitAll(object):
             configuration.create_dataset("data", data=to_h5py_utf8(configIni))
 
             results = entry.create_group("results")
+
+            estimation = results.create_group("estimation")
+            for p in self.fit.paramlist:
+                pgroup = estimation.create_group(p["name"])
+                # constraint code can be an int, convert to str
+                if numpy.issubdtype(numpy.array(p['code']).dtype,
+                                    numpy.integer):
+                    pgroup.create_dataset('code', data=to_h5py_utf8(CONS[p['code']]))
+                else:
+                    pgroup.create_dataset('code', data=to_h5py_utf8(p['code']))
+                pgroup.create_dataset('cons1', data=p['cons1'])
+                pgroup.create_dataset('cons2', data=p['cons2'])
+                pgroup.create_dataset('estimation', data=p['estimation'])
+
             for key, value in resultDict.items():
                 if not numpy.issubdtype(type(key), numpy.character):
                     if DEBUG:
