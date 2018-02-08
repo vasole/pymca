@@ -221,6 +221,11 @@ class SimpleFit(object):
             except:
                 raise ValueError("Cannot interprete/find %s" % modname)
 
+        if isinstance(newfun.THEORY, dict):
+            # silx fit theories
+            self._importSilxFunctions(newfun)
+            return
+
         theory = newfun.THEORY
         function=newfun.FUNCTION
         parameters = newfun.PARAMETERS
@@ -240,8 +245,6 @@ class SimpleFit(object):
             widget=newfun.WIDGET
         except:
             widget=None
-
-        basename = os.path.basename(newfun.__file__)
 
         for i in range(len(theory)):
             ddict = {}
@@ -269,6 +272,60 @@ class SimpleFit(object):
                 ddict['widget'] = widget[i]
             self._fitConfiguration['functions'][functionName] = ddict
             self._fitConfiguration['fit']['functions'].append(functionName)
+
+    def _importSilxFunctions(self, mod):
+        """
+        :param mod: Module defining silx fit theories
+        """
+        theoryDict = mod.THEORY
+
+        for name, theory in theoryDict.items():
+            assert not theory.pymca_legacy,\
+                "It makes no sense to wrap a PyMca fit theory " +\
+                "in a silx theory to load it back in PyMca"
+            ddict = {}
+            functionName = name
+            ddict['function'] = self._wrapSilxFunction(theory.function)
+            ddict['parameters'] = theory.parameters
+            ddict['default_parameters'] = None
+            ddict['estimate']   = self._wrapSilxEstimate(theory.estimate)
+            ddict['derivative'] = self._wrapSilxDerivate(theory.derivative)
+            ddict['configure']  = theory.configure
+            ddict['widget']     = None
+            ddict['file']       = mod.__file__
+            ddict['configuration'] = {}
+            if theory.configure is not None:
+                ddict['configuration'] = theory.configure()
+                if ddict['estimate'] is None:
+                    ddict['configuration']['estimation'] = None
+            self._fitConfiguration['functions'][functionName] = ddict
+            self._fitConfiguration['fit']['functions'].append(functionName)
+
+    def _wrapSilxEstimate(self, f):
+        if f is None:
+            return None
+
+        def wrapped(xx, yy, zzz, xscaling=1.0, yscaling=None):
+            estimated_param, constraints = f(xx, yy)
+            pymca_constraints = numpy.array(constraints).transpose()
+            return estimated_param, pymca_constraints
+        return wrapped
+
+    def _wrapSilxFunction(self, f):
+        if f is None:
+            return None
+
+        def wrapped(pars, x):
+            return f(x, *pars)
+        return wrapped
+
+    def _wrapSilxDerivate(self, f):
+        if f is None:
+            return None
+
+        def wrapped(parameters, index, x):
+            return f(x, parameters, index)
+        return wrapped
 
     def setFitFunction(self, name):
         if name in [None, "None", "NONE"]:
