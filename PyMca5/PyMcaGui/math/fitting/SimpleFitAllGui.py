@@ -85,12 +85,12 @@ class SimpleFitAllGui(SimpleFitGui):
 
         self.fitActions.dismissButton.hide()
         self.outputParameters = OutputParameters(self)
-        self.startButton = qt.QPushButton(self)
-        self.startButton.setText("Fit all")
-        self.startButton.clicked.connect(self.startFitAll)
+        self.startFitAllButton = qt.QPushButton(self)
+        self.startFitAllButton.setText("Fit all")
+        self.startFitAllButton.clicked.connect(self.startFitAll)
         self.progressBar = qt.QProgressBar(self)
         self.mainLayout.addWidget(self.outputParameters)
-        self.mainLayout.addWidget(self.startButton)
+        self.mainLayout.addWidget(self.startFitAllButton)
         self.mainLayout.addWidget(self.progressBar)
 
         # progress handling
@@ -186,6 +186,8 @@ class SimpleFitAllGui(SimpleFitGui):
                 raise RuntimeError(*thread.result[1:])
 
     def processAll(self):
+        # fill estimation from table, in case it has been updated manually
+        self.fitModule.paramlist = self.parametersTable.fillFitFromTable()
         self.fitAllInstance.processAll()
 
     def progressUpdate(self, idx, total):

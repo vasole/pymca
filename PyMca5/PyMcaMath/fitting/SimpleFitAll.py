@@ -69,7 +69,7 @@ class SimpleFitAll(object):
         self._nSpectra = None
         self.progressCallback = None
         # optimization variables
-        self.__ALWAYS_ESTIMATE = True
+        self.__estimationPolicy = "always"
         self._startTime = ""
         self._endTime = ""
 
@@ -137,11 +137,15 @@ class SimpleFitAll(object):
         self._nSpectra = len(data)
 
         # optimization
-        self.__ALWAYS_ESTIMATE = True
+        self.__estimationPolicy = "always"
         backgroundPolicy = self.fit._fitConfiguration['fit']['background_estimation_policy']
         functionPolicy = self.fit._fitConfiguration['fit']['function_estimation_policy']
-        if "Estimate always" not in [functionPolicy, backgroundPolicy]:
-            self.__ALWAYS_ESTIMATE = False
+        if "Estimate always" in [functionPolicy, backgroundPolicy]:
+            self.__estimationPolicy = "always"
+        elif "Estimate once" in [functionPolicy, backgroundPolicy]:
+            self.__estimationPolicy = "once"
+        else:
+            self.__estimationPolicy = "never"
 
         # initialize control variables
         self._parameters = None
@@ -166,16 +170,21 @@ class SimpleFitAll(object):
         self.aboutToGetSpectrum(i)
         x, y, sigma, xmin, xmax = self.getFitInputValues(i)
         self.fit.setData(x, y, sigma=sigma, xmin=xmin, xmax=xmax)
-        if self._parameters is None:
+        if self._parameters is None and self.__estimationPolicy != "never":
             if DEBUG:
                 print("First estimation")
             self.fit.estimate()
-        elif self.__ALWAYS_ESTIMATE:
+        elif self.__estimationPolicy == "always":
             if DEBUG:
                 print("Estimation due to settings")
             self.fit.estimate()
+        else:
+            if DEBUG:
+                print("Using user estimation")
+
         self.estimateFinished()
         values, chisq, sigma, niter, lastdeltachi = self.fit.startFit()
+
         self._endTime = datetime.datetime.now().isoformat()
         self.fitOneSpectrumFinished()
 
@@ -266,7 +275,8 @@ class SimpleFitAll(object):
             results = entry.create_group("results")
             for key, value in resultDict.items():
                 if not numpy.issubdtype(type(key), numpy.character):
-                    print("skipping key %s (not a text string)" % key)
+                    if DEBUG:
+                        print("skipping key %s (not a text string)" % key)
                     continue
                 value_dtype = numpy.array(value).dtype
                 if numpy.issubdtype(value_dtype, numpy.number) or\
@@ -277,11 +287,6 @@ class SimpleFitAll(object):
                     # ensure utf-8 output
                     results.create_dataset(key, data=to_h5py_utf8(value))
 
-            # results.create_dataset("chisq", data=result["chisq"])
-            # results.create_dataset("niter", data=result["niter"])
-            # results.create_dataset("lastdeltachi", data=result["lastdeltachi"])
-            # results.create_dataset("parameters", data=to_h5py_utf8(result["parameters"]))
-            # results.create_dataset("fittedvalues", data=to_h5py_utf8(result["fittedvalues"]))
             plot = results.create_group("plot")
             plot.attrs["NX_class"] = to_h5py_utf8("NXdata")
             plot.attrs["signal"] = to_h5py_utf8("raw_data")
