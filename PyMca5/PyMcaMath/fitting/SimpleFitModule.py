@@ -306,7 +306,7 @@ class SimpleFit(object):
             return None
 
         def wrapped(xx, yy, zzz, xscaling=1.0, yscaling=None):
-            estimated_param, constraints = f(xx, yy)
+            estimated_param, constraints = f(xx, yy - zzz)
             pymca_constraints = numpy.array(constraints).transpose()
             return estimated_param, pymca_constraints
         return wrapped
