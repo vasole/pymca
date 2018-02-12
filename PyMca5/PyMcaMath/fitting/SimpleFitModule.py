@@ -249,6 +249,7 @@ class SimpleFit(object):
         for i in range(len(theory)):
             ddict = {}
             functionName = theory[i]
+            ddict['signature'] = 'pymca'
             ddict['function'] = function[i]
             ddict['parameters'] = parameters[i]
             ddict['default_parameters'] = None
@@ -285,6 +286,7 @@ class SimpleFit(object):
                 "in a silx theory to load it back in PyMca"
             ddict = {}
             functionName = name
+            ddict['signature'] = 'silx'
             ddict['function'] = self._wrapSilxFunction(theory.function)
             ddict['parameters'] = theory.parameters
             ddict['default_parameters'] = None
