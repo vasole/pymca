@@ -374,8 +374,11 @@ class QNexusWidget(qt.QWidget):
         self._data = self.hdf5Widget.model().openFile(filename, weakreference=True)
 
     def showInfoWidget(self, filename, name, dset=False):
+        # delete references to all the closed widgets
         self._checkWidgetDict()
-        #this solution seems more robust
+
+        # we can use the existing instance or a new one
+        # the former solution seems more robust
         if 1:
             useInstance = True
         else:
@@ -407,7 +410,7 @@ class QNexusWidget(qt.QWidget):
         if useInstance:
             def sourceObjectDestroyed(weakrefReference):
                 if wid == self._lastWidgetId:
-                    self._latWidgetId = None
+                    self._lastWidgetId = None
                 if wid in self._widgetDict:
                     del self._widgetDict[wid]
             widget._sourceObjectWeakReference = weakref.ref(phynxFile,
@@ -425,12 +428,13 @@ class QNexusWidget(qt.QWidget):
                     except:
                         print("Error filling table")
                     widget.addTab(widget.w, 'DataView')
+                    widget.setCurrentWidget(widget.w)
         elif Hdf5NodeView is not None:
             data = phynxFile[name]
             widget.w = Hdf5NodeView.Hdf5NodeView(widget)
             widget.w.setData(data)
             widget.addTab(widget.w, 'DataView')
-
+            widget.setCurrentWidget(widget.w)
         widget.show()
         return widget
 
@@ -549,6 +553,9 @@ class QNexusWidget(qt.QWidget):
                         else:
                             self._aliasList.append(cnt)
                         self.cntTable.build(self._cntList, self._aliasList)
+            elif (ddict['color'] == qt.Qt.blue) and ("silx" in sys.modules):
+                # there is an action to be applied
+                self.showInfoWidget(ddict["file"], ddict["name"], dset=False)
             elif ddict['type'] in ['NXentry', 'Entry']:
                 if self._lastAction is None:
                     return
@@ -673,14 +680,14 @@ class QNexusWidget(qt.QWidget):
         return self.hdf5Widget.getSelectedEntries()
 
     def closeEvent(self, event):
-        keyList = self._widgetDict.keys()
+        keyList = list(self._widgetDict.keys())
         for key in keyList:
             self._widgetDict[key].close()
             del self._widgetDict[key]
         return qt.QWidget.closeEvent(self, event)
 
     def _checkWidgetDict(self):
-        keyList = self._widgetDict.keys()
+        keyList = list(self._widgetDict.keys())
         for key in keyList:
             if self._widgetDict[key].isHidden():
                 del self._widgetDict[key]
