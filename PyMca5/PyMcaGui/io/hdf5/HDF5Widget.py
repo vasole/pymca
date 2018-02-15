@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, ESRF - D. Dale CHESS
+# Copyright (C) 2004-2018 V.A. Sole, ESRF - D. Dale CHESS
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -261,8 +261,6 @@ class H5NodeProxy(object):
     def type(self):
         return self._type
 
-
-
     @property
     def shape(self):
         if type(self._shape) == type(""):
@@ -285,6 +283,13 @@ class H5NodeProxy(object):
     def parent(self):
         return self._parent
 
+    #@property
+    #def attrs(self):
+    #    return self._attrs
+
+    @property
+    def color(self):
+        return self._color
 
     def __init__(self, ffile, node, parent=None, path=None):
         if 1:#with ffile.plock:
@@ -303,7 +308,8 @@ class H5NodeProxy(object):
             self._type = type(node).__name__
 
             self._hasChildren = is_group(node)
-
+            #self._attrs = []
+            self._color = qt.QColor(qt.Qt.black)
             if hasattr(node, 'attrs'):
                 attrs = list(node.attrs)
                 for cname in ['class', 'NX_class']:
@@ -316,6 +322,11 @@ class H5NodeProxy(object):
                         else:
                             _type = "%s" % nodeattr
                         self._type = _type
+                        if _type in ["NXdata"]:
+                            self._color = qt.QColor(qt.Qt.blue)
+                        elif _type in ["NXroot", "NXentry"] and ("default" in attrs):
+                            self._color = qt.QColor(qt.Qt.blue)                        
+                        #self._attrs = attrs
                         break
                         #self._type = _type[2].upper() + _type[3:]
             self._children = []
@@ -393,36 +404,44 @@ class FileModel(qt.QAbstractItemModel):
         return 4
 
     def data(self, index, role):
-        if role != qt.Qt.DisplayRole:
-            return MyQVariant()
-        item = self.getProxyFromIndex(index)
-        column = index.column()
-        if column == 0:
-            if isinstance(item, H5FileProxy):
-                return MyQVariant(os.path.basename(item.file.filename))
-            else:
-                return MyQVariant(posixpath.basename(item.name))
-        if column == 1:
-            showtitle = True
-            if showtitle:
-                if hasattr(item, 'type'):
-                    if item.type in ["Entry", "NXentry"]:
-                        children = item.children
-                        names = [posixpath.basename(o.name) for o in children]
-                        if "title" in names:
-                            idx = names.index("title")
-                            if len(children[idx].getNode().shape):
-                                #stored as an array of strings!!!
-                                #return just the first item
-                                return MyQVariant("%s" % children[idx].getNode().value[0])
-                            else:
-                                #stored as a string
-                                return MyQVariant("%s" % children[idx].getNode().value)
-            return MyQVariant(item.type)
-        if column == 2:
-            return MyQVariant(item.shape)
-        if column == 3:
-            return MyQVariant(item.dtype)
+        if role == qt.Qt.DisplayRole:
+            item = self.getProxyFromIndex(index)
+            column = index.column()
+            if column == 0:
+                if isinstance(item, H5FileProxy):
+                    return MyQVariant(os.path.basename(item.file.filename))
+                else:
+                    return MyQVariant(posixpath.basename(item.name))
+            if column == 1:
+                showtitle = True
+                if showtitle:
+                    if hasattr(item, 'type'):
+                        if item.type in ["Entry", "NXentry"]:
+                            children = item.children
+                            names = [posixpath.basename(o.name) for o in children]
+                            if "title" in names:
+                                idx = names.index("title")
+                                if len(children[idx].getNode().shape):
+                                    #stored as an array of strings!!!
+                                    #return just the first item
+                                    return MyQVariant("%s" % children[idx].getNode().value[0])
+                                else:
+                                    #stored as a string
+                                    return MyQVariant("%s" % children[idx].getNode().value)
+                return MyQVariant(item.type)
+            if column == 2:
+                return MyQVariant(item.shape)
+            if column == 3:
+                return MyQVariant(item.dtype)
+        elif role == qt.Qt.ForegroundRole:
+            item = self.getProxyFromIndex(index)
+            column = index.column()
+            if column == 0:
+                return MyQVariant(qt.QColor(item.color))
+        elif role == qt.Qt.ToolTipRole:
+            item = self.getProxyFromIndex(index)
+            if item.color == qt.Qt.blue:
+                return MyQVariant("Item has a double click NXdata associated action")
         return MyQVariant()
 
     def getNodeFromIndex(self, index):
@@ -672,6 +691,7 @@ class HDF5Widget(FileView):
         ddict['type']  = item.type
         ddict['dtype'] = item.dtype
         ddict['shape'] = item.shape
+        ddict['color'] = item.color
         ddict['mouse'] = self._lastMouse * 1
         self.sigHDF5WidgetSignal.emit(ddict)
 
