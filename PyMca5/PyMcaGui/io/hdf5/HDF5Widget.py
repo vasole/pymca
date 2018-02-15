@@ -435,7 +435,13 @@ class FileModel(qt.QAbstractItemModel):
                 return MyQVariant(item.dtype)
         elif role == qt.Qt.ForegroundRole:
             item = self.getProxyFromIndex(index)
-            return MyQVariant(qt.QColor(item.color))
+            column = index.column()
+            if column == 0:
+                return MyQVariant(qt.QColor(item.color))
+        elif role == qt.Qt.ToolTipRole:
+            item = self.getProxyFromIndex(index)
+            if item.color == qt.Qt.blue:
+                return MyQVariant("Item has a double click NXdata associated action")
         return MyQVariant()
 
     def getNodeFromIndex(self, index):
