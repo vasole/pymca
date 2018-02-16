@@ -351,9 +351,10 @@ class NexusDataSource(object):
                     for key in positioners.keys():
                         output.info['MotorNames'].append(key)
                         value = positioners[key].value
-                        if hasattr(value, "__len__"):
-                            if len(value):
-                                value = value[0]
+                        if hasattr(value, "size"):
+                            if value.size > 1:
+                                if hasattr(value, "flat"):
+                                    value = value.flat[0]
                         output.info['MotorValues'].append(value)
             except:
                 # I cannot affort to fail here for something probably not used
