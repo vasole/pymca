@@ -450,7 +450,6 @@ class NexusDataSource(object):
                         else:
                             output.data.append(dataset)
         """
-        print("RETURNING= ", output.info)
         return output
 
     def isUpdated(self, sourceName, key):
