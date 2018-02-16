@@ -498,14 +498,14 @@ class SimpleFitConfigurationGui(qt.QDialog):
 
 def test():
     app = qt.QApplication(sys.argv)
-    app.lastWindowClosed.conenct(app.quit)
-    wid = SimpleFitConfigurationGui()
-    ddict = {}
-    ddict['fit'] = {}
-    ddict['fit']['use_limits'] = 1
-    ddict['fit']['xmin'] = 1
-    ddict['fit']['xmax'] = 1024
-    wid.setConfiguration(ddict)
+    app.lastWindowClosed.connect(app.quit)
+    wid = SimpleFitConfigurationGui()\
+    # ddict = {}
+    # ddict['fit'] = {}
+    # ddict['fit']['use_limits'] = 1
+    # ddict['fit']['xmin'] = 1
+    # ddict['fit']['xmax'] = 1024
+    # wid.setConfiguration(ddict)
     wid.exec_()
     print(wid.getConfiguration())
     sys.exit()
