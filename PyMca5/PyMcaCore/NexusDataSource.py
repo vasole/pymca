@@ -39,7 +39,7 @@ import re
 import posixpath
 phynx = h5py
 
-if sys.version_info < (3,):
+if sys.version_info >= (3,):
     basestring = str
 
 from . import DataObject
