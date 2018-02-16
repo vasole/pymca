@@ -350,7 +350,11 @@ class NexusDataSource(object):
                     output.info['MotorValues'] = []
                     for key in positioners.keys():
                         output.info['MotorNames'].append(key)
-                        output.info['MotorValues'].append(positioners[key].value)
+                        value = positioners[key].value
+                        if hasattr(value, "__len__"):
+                            if len(value):
+                                value = value[0]
+                        output.info['MotorValues'].append(value)
             except:
                 # I cannot affort to fail here for something probably not used
                 if DEBUG:
@@ -406,7 +410,7 @@ class NexusDataSource(object):
         # MCA specific
         if selection['selectiontype'].upper() == "MCA":
             if not 'Channel0' in output.info:
-                output.info['Channel0'] = 0        
+                output.info['Channel0'] = 0
         """"
         elif selection['selectiontype'].upper() in ["BATCH"]:
             #assume already digested
