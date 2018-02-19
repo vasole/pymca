@@ -411,7 +411,11 @@ class FileModel(qt.QAbstractItemModel):
                 if isinstance(item, H5FileProxy):
                     return MyQVariant(os.path.basename(item.file.filename))
                 else:
-                    return MyQVariant(posixpath.basename(item.name))
+                    if hasattr(item, "name"):
+                        return MyQVariant(posixpath.basename(item.name))
+                    else:
+                        # this can only happen with the root
+                        return MyQVariant("/")
             if column == 1:
                 showtitle = True
                 if showtitle:
@@ -437,11 +441,13 @@ class FileModel(qt.QAbstractItemModel):
             item = self.getProxyFromIndex(index)
             column = index.column()
             if column == 0:
-                return MyQVariant(qt.QColor(item.color))
+                if hasattr(item, "color"):
+                    return MyQVariant(qt.QColor(item.color))
         elif role == qt.Qt.ToolTipRole:
             item = self.getProxyFromIndex(index)
-            if item.color == qt.Qt.blue:
-                return MyQVariant("Item has a double click NXdata associated action")
+            if hasattr(item, "color"):
+                if item.color == qt.Qt.blue:
+                    return MyQVariant("Item has a double click NXdata associated action")
         return MyQVariant()
 
     def getNodeFromIndex(self, index):
