@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -38,6 +38,8 @@ from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaMath.fitting import SimpleFitAll
 from PyMca5.PyMcaMath.fitting import SimpleFitModule
 from PyMca5.PyMcaMath.fitting import SpecfitFunctions
+
+from PyMca5.PyMcaGui.math.fitting import SpecfitConfigGui
 
 
 from PyMca5.PyMcaGui.misc import CalculationThread
@@ -105,6 +107,9 @@ class SimpleFitAllGui(SimpleFitGui):
     def __init__(self, parent=None, fit=None, graph=None, actions=True):
         if fit is None:
             fit = SimpleFitModule.SimpleFit()
+            # inject config widget by patching the module
+            w = SpecfitConfigGui.SpecfitConfigGui
+            SpecfitFunctions.WIDGET = [w for _t in SpecfitFunctions.THEORY]
             fit.importFunctions(SpecfitFunctions)
         SimpleFitGui.__init__(self, parent, fit, graph, actions)
 
