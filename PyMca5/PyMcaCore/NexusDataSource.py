@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -39,7 +39,7 @@ import re
 import posixpath
 phynx = h5py
 
-if sys.version > '2.9':
+if sys.version_info >= (3,):
     basestring = str
 
 from . import DataObject
@@ -140,6 +140,28 @@ def get_family_pattern(filelist):
         rootname = name1[0:]
     return rootname
 
+# tool to retrieve the positioners group associated to a path
+# retrieving them from the same entry (assuming they are in
+# NXentry/instrument/positioners)
+def getPositionersGroup(h5file, path):
+    entry = path
+    candidate = os.path.dirname(entry)
+    while len(candidate) > 1:
+        entry = candidate
+        candidate = os.path.dirname(entry)
+    instrument = None
+    for key, group in h5file[entry].items():
+        for attr in group.attrs:
+            if attr in ["NX_class", b"NX_class"]:
+                if group.attrs[attr] in ["NXinstrument", b"NXinstrument"]:
+                    instrument = group
+                    break
+    positioners = None
+    if instrument is not None:
+        for key in instrument.keys():
+            if key in ["positioners", b"positioners"]:
+                positioners = instrument[key]
+    return positioners
 
 class NexusDataSource(object):
     def __init__(self,nameInput):
@@ -320,6 +342,24 @@ class NexusDataSource(object):
             output.info['LabelNames'] = selection['aliaslist']
         else:
             output.info['LabelNames'] = selection['cntlist']
+        if entry != "/":
+            try:
+                positioners = getPositionersGroup(phynxFile, entry)
+                if positioners is not None:
+                    output.info['MotorNames'] = []
+                    output.info['MotorValues'] = []
+                    for key in positioners.keys():
+                        output.info['MotorNames'].append(key)
+                        value = positioners[key].value
+                        if hasattr(value, "size"):
+                            if value.size > 1:
+                                if hasattr(value, "flat"):
+                                    value = value.flat[0]
+                        output.info['MotorValues'].append(value)
+            except:
+                # I cannot affort to fail here for something probably not used
+                if DEBUG:
+                    print("Error reading positioners ", sys.exc_info())
         output.x = None
         output.y = None
         output.m = None
