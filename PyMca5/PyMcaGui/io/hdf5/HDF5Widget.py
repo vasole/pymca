@@ -586,6 +586,16 @@ class FileModel(qt.QAbstractItemModel):
         # reset is considered obsolete under Qt 5.
         if hasattr(self, "reset"):
             self.reset()
+        else:
+            rootItem = self.rootItem
+            self.beginResetModel()
+            #for idx in range(len(rootItem._children)):
+            #    child = rootItem._children[idx]
+            #    child.clearChildren()
+            #    del self._idMap[id(child)]
+            #    rootItem.deleteChild(child)
+            rootItem.children.clear()
+            self.endResetModel()
 
 class FileView(qt.QTreeView):
 
