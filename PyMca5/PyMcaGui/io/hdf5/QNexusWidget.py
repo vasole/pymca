@@ -35,7 +35,7 @@ import gc
 import h5py
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMca import NexusTools
+from PyMca5.PyMcaCore import NexusTools
 safe_str = qt.safe_str
 
 if hasattr(qt, 'QString'):
