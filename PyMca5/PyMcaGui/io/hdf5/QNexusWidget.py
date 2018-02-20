@@ -136,9 +136,11 @@ class QNexusWidget(qt.QWidget):
            ('PyMca5.Object3D' in sys.modules):
             self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
             self.cntTable.set3DEnabled(True)
+            self.autoTable.set3DEnabled(True)
         else:
             self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D'])
             self.cntTable.set3DEnabled(False)
+            self.autoTable.set3DEnabled(False)
         self.mainLayout.addWidget(self.buttons)
         self.hdf5Widget.sigHDF5WidgetSignal.connect(self.hdf5Slot)
         self.cntTable.customContextMenuRequested[qt.QPoint].connect(\
@@ -450,7 +452,8 @@ class QNexusWidget(qt.QWidget):
     def itemRightClickedSlot(self, ddict):
         _hdf5WidgetDatasetMenu = qt.QMenu(self)
         self._lastItemDict = ddict
-        if ddict['dtype'].startswith('|S') or ddict['dtype'] == '':
+        if ddict['dtype'].startswith('|S') or ddict['dtype'] == '' or \
+           ddict['dtype'].startswith('object'):
             # handle a right click on a group or a dataset of string type
             _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
                                              self._showInfoWidgetSlot)
