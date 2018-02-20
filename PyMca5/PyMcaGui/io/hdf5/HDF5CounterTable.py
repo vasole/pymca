@@ -231,8 +231,8 @@ class HDF5CounterTable(qt.QTableWidget):
         ddict = {}
         ddict['cntlist'] = self.cntList * 1
         ddict['aliaslist'] = self.aliasList * 1
-        ddict['x']       = self.xSelection * 1
-        ddict['y']       = self.ySelection * 1
+        ddict['x'] = self.xSelection * 1
+        ddict['y'] = self.ySelection * 1
         ddict['m'] = self.monSelection * 1
         return ddict
 
@@ -242,7 +242,6 @@ class HDF5CounterTable(qt.QTableWidget):
             cntlist = ddict['cntlist']
         else:
             cntlist = self.cntList * 1
-
 
         # no selection based on aliaslist or counterlist (yet?)
         if 0:
@@ -291,7 +290,6 @@ class HDF5CounterTable(qt.QTableWidget):
                 if counter in self.cntList:
                     self.monSelection.append(self.cntList.index(counter))
         self._update()
-
 
 class CheckBoxItem(qt.QCheckBox):
 
