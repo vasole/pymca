@@ -31,7 +31,7 @@ SimpleFitWindow."""
 
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
-from PyMca5.PyMcaGui.math.fitting import QScriptOption
+from PyMca5.PyMcaGui.math.fitting.QScriptOption import FieldSheet
 from PyMca5.PyMcaMath.fitting import SpecfitFunctions
 
 
@@ -56,30 +56,38 @@ sheet3 = {'notetitle': 'Fit',
                      ["CheckField", 'AutoScaling', 'AutoScaling'])}
 
 
-def getSpecfitConfigGui(parent, default=None):
-    if default is None:
-        default = SpecfitFunctions.SPECFITFUNCTIONS_DEFAULTS
-    return QScriptOption.QScriptOption(
-        parent, name='Fit Configuration',
-        sheets=(sheet1, sheet2),
-        default=default)
-
 class SpecfitConfigGui(qt.QWidget):
     def __init__(self, parent=None):
         qt.QWidget.__init__(self, parent)
 
-        self.configWidget = getSpecfitConfigGui(parent=self)
+        layout = qt.QHBoxLayout(self)
 
-        layout = qt.QVBoxLayout(self)
-        layout.addWidget(self.configWidget)
+        self.default = SpecfitFunctions.SPECFITFUNCTIONS_DEFAULTS
+        self.sheets = {}
+        self.output = {}
+
+        for sheet in [sheet1, sheet2, sheet3]:
+            frame = qt.QFrame(self)
+            sublayout = qt.QVBoxLayout()
+            frame.setLayout(sublayout)
+            name = sheet['notetitle']
+            label = qt.QLabel(frame)
+            label.setText(name)
+            self.sheets[name] = FieldSheet(fields=sheet['fields'])
+            self.sheets[name].setdefaults(self.default)
+            sublayout.addWidget(label)
+            sublayout.addWidget(self.sheets[name])
+            frame.setLayout(sublayout)
+            frame.setFrameStyle(qt.QFrame.StyledPanel | qt.QFrame.Raised)
+            layout.addWidget(frame)
 
         self.setLayout(layout)
 
     def setConfiguration(self, ddict):
-        self.configWidget.output.update(ddict)
+        self.output.update(ddict)
 
     def getConfiguration(self):
-        self.configWidget.output.update(self.configWidget.default)
-        for name, sheet in self.configWidget.sheets.items():
-            self.configWidget.output.update(sheet.get())
-        return self.configWidget.output
+        self.output.update(self.default)
+        for name, sheet in self.sheets.items():
+            self.output.update(sheet.get())
+        return self.output
