@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -85,7 +85,7 @@ class PlotWidget(QtGui.QMainWindow, Plot.Plot):
         self.containerWidget.mainLayout.setSpacing(0)
         widget = self.getWidgetHandle()
         if widget is not None:
-            self.containerWidget.mainLayout.addWidget(widget)
+            self.containerWidget.mainLayout.addWidget(widget, 1)
             self.setCentralWidget(self.containerWidget)
         else:
             print("WARNING: No backend. Using default.")
