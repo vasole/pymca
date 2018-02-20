@@ -34,6 +34,7 @@ from operator import itemgetter
 import re
 import posixpath
 from h5py import Dataset, Group
+DEBUG = 0
 
 #sorting method
 def h5py_sorting(object_list):
