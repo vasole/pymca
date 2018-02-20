@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -49,6 +49,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
         is_numeric_dset = not (ddict['dtype'].startswith('|S') or
                                ddict['dtype'].startswith('|U') or
                                ddict['dtype'].startswith('|O') or
+                               ddict['dtype'].startswith('object') or 
                                ddict['dtype'] == '')
         filename = ddict['file']
         fileIndex = self.data.sourceName.index(filename)

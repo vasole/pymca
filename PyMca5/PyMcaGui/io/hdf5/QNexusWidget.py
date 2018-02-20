@@ -35,6 +35,7 @@ import gc
 import h5py
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+from PyMca5.PyMcaCore import NexusTools
 safe_str = qt.safe_str
 
 if hasattr(qt, 'QString'):
@@ -103,6 +104,8 @@ class QNexusWidget(qt.QWidget):
         self._oldCntSelection = None
         self._cntList = []
         self._aliasList = []
+        self._autoCntList = []
+        self._autoAliasList = []
         self._defaultModel = HDF5Widget.FileModel()
         self.getInfo = HDF5Info.getInfo
         self._modelDict = {}
@@ -110,6 +113,7 @@ class QNexusWidget(qt.QWidget):
         self._lastWidgetId = None
         self._dir = None
         self._lastAction = None
+        self._lastEntry = None
         self.build()
 
     def build(self):
@@ -119,7 +123,12 @@ class QNexusWidget(qt.QWidget):
         self.hdf5Widget = HDF5Widget.HDF5Widget(self._defaultModel,
                                                 self.splitter)
         self.hdf5Widget.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
-        self.cntTable = HDF5CounterTable.HDF5CounterTable(self.splitter)
+        self.tableTab = qt.QTabWidget(self.splitter)
+        self.tableTab.setContentsMargins(0, 0, 0, 0)        
+        self.cntTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
+        self.autoTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
+        self.tableTab.addTab(self.autoTable, "AUTO")
+        self.tableTab.addTab(self.cntTable, "USER")
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
         if ('PyMca.Object3D' in sys.modules) or \
@@ -127,9 +136,11 @@ class QNexusWidget(qt.QWidget):
            ('PyMca5.Object3D' in sys.modules):
             self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
             self.cntTable.set3DEnabled(True)
+            self.autoTable.set3DEnabled(True)
         else:
             self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D'])
             self.cntTable.set3DEnabled(False)
+            self.autoTable.set3DEnabled(False)
         self.mainLayout.addWidget(self.buttons)
         self.hdf5Widget.sigHDF5WidgetSignal.connect(self.hdf5Slot)
         self.cntTable.customContextMenuRequested[qt.QPoint].connect(\
@@ -441,7 +452,8 @@ class QNexusWidget(qt.QWidget):
     def itemRightClickedSlot(self, ddict):
         _hdf5WidgetDatasetMenu = qt.QMenu(self)
         self._lastItemDict = ddict
-        if ddict['dtype'].startswith('|S') or ddict['dtype'] == '':
+        if ddict['dtype'].startswith('|S') or ddict['dtype'] == '' or \
+           ddict['dtype'].startswith('object'):
             # handle a right click on a group or a dataset of string type
             _hdf5WidgetDatasetMenu.addAction(QString("Show Information"),
                                              self._showInfoWidgetSlot)
@@ -530,12 +542,65 @@ class QNexusWidget(qt.QWidget):
         name = ddict['name']
         return self.showInfoWidget(filename, name)
 
+    def _isNumeric(self, hdf5item):
+        if hasattr(hdf5item, "dtype"):
+            dtype = safe_str(hdf5item.dtype)
+            if dtype.startswith('|S') or dtype.startswith('|U') or \
+               dtype.startswith('|O') or dtype.startswith('object'):
+                   return False
+            else:
+                return True
+        else:
+            return False
+
     def hdf5Slot(self, ddict):
+        entryName = NexusTools.getEntryName(ddict['name'])
+        currentEntry = "%s::%s" % (ddict['file'], entryName)
+        if currentEntry != self._lastEntry:
+            self._lastEntry = None
+            with h5py.File(ddict['file'], "r") as h5file:
+                measurement = NexusTools.getMeasurementGroup(h5file,
+                                                             ddict['name'])
+                scanned = NexusTools.getScannedPositioners(h5file,
+                                                           ddict['name'])
+                if measurement is not None:
+                    measurement = [item.name for key,item in measurement.items() if self._isNumeric(item)]
+            cntList = []
+            aliasList = []
+            for i in range(len(scanned)):
+                key = scanned[i]
+                cntList.append(key)
+                aliasList.append(posixpath.basename(key))
+            if measurement is not None:
+                for key in measurement:
+                    if key not in cntList:
+                        cntList.append(key)
+                        aliasList.append(posixpath.basename(key))
+            cleanedCntList = []
+            for key in cntList:
+                root = key.split('/')
+                root = "/" + root[1]
+                if len(key) == len(root):
+                    cleanedCntList.append(key)
+                else:
+                    cleanedCntList.append(key[len(root):])
+            self._autoAliasList = aliasList
+            self._autoCntList = cleanedCntList
+            self.autoTable.build(self._autoCntList,
+                                 self._autoAliasList)
+            self._lastEntry = currentEntry
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
                 return self.itemRightClickedSlot(ddict)
         if ddict['event'] == "itemDoubleClicked":
             if ddict['type'] in ['Dataset']:
+                currentIndex = self.tableTab.currentIndex()
+                text = safe_str(self.tableTab.tabText(currentIndex))
+                if text.upper() != "USER":
+                    if currentIndex == 0:
+                        self.tableTab.setCurrentIndex(1)
+                    else:
+                        self.tableTab.setCurrentIndex(0)
                 if ddict['dtype'].startswith('|S'):
                     print("string")
                 else:
@@ -596,8 +661,13 @@ class QNexusWidget(qt.QWidget):
         entryList = self.getSelectedEntries()
         if not len(entryList):
             return
-        cntSelection = self.cntTable.getCounterSelection()
-        self._aliasList = cntSelection['aliaslist']
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "AUTO":
+            cntSelection = self.autoTable.getCounterSelection()
+            # self._aliasList = cntSelection['aliaslist']
+        else:
+            cntSelection = self.cntTable.getCounterSelection()
+            self._aliasList = cntSelection['aliaslist']
         selectionList = []
         for entry, filename in entryList:
             if not len(cntSelection['cntlist']):
