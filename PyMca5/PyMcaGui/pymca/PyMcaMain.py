@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1316,6 +1316,21 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         if ddict['id'] == self.__imagingTool:
                             self.__imagingTool = None
                         del self._widgetDict[ddict['id']]
+
+    def closeEvent(self, event):
+        if __name__ == "__main__":
+            app = qt.QApplication.instance()
+            allWidgets = app.allWidgets()
+            for widget in allWidgets:
+                try:
+                    # we cannot afford to crash here
+                    if id(widget) != id(self):
+                        if widget.parent() is None:
+                            widget.close()
+                except:
+                    if DEBUG:
+                        print("Error closing widget")
+        return PyMcaMdi.PyMcaMdi.closeEvent(self, event)
 
     def __xiaCorrect(self):
         qApp = qt.QApplication.instance()
