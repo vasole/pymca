@@ -84,10 +84,18 @@ class SpecfitConfigGui(qt.QWidget):
         self.setLayout(layout)
 
     def setConfiguration(self, ddict):
+        for name, sheet in self.sheets.items():
+            if "configuration" in ddict:
+                sheet.setdefaults(ddict["configuration"])
+            else:
+                sheet.setdefaults(ddict)
+
         self.output.update(ddict)
 
     def getConfiguration(self):
-        self.output.update(self.default)
         for name, sheet in self.sheets.items():
-            self.output.update(sheet.get())
+            if "configuration" in self.output:
+                self.output["configuration"].update(sheet.get())
+            else:
+                self.output.update(sheet.get())
         return self.output
