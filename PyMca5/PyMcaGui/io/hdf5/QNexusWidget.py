@@ -542,6 +542,17 @@ class QNexusWidget(qt.QWidget):
         name = ddict['name']
         return self.showInfoWidget(filename, name)
 
+    def _isNumeric(self, hdf5item):
+        if hasattr(hdf5item, "dtype"):
+            dtype = safe_str(hdf5item.dtype)
+            if dtype.startswith('|S') or dtype.startswith('|U') or \
+               dtype.startswith('|O') or dtype.startswith('object'):
+                   return False
+            else:
+                return True
+        else:
+            return False
+
     def hdf5Slot(self, ddict):
         entryName = NexusTools.getEntryName(ddict['name'])
         currentEntry = "%s::%s" % (ddict['file'], entryName)
@@ -553,7 +564,7 @@ class QNexusWidget(qt.QWidget):
                 scanned = NexusTools.getScannedPositioners(h5file,
                                                            ddict['name'])
                 if measurement is not None:
-                    measurement = [item.name for key,item in measurement.items()]
+                    measurement = [item.name for key,item in measurement.items() if self._isNumeric(item)]
             cntList = []
             aliasList = []
             for i in range(len(scanned)):
