@@ -84,6 +84,15 @@ class SpecfitConfigGui(qt.QWidget):
         self.setLayout(layout)
 
     def setConfiguration(self, ddict):
+        # None can show up when checkbox is unchecked
+        # and FieldSheet cannot handle None for checkboxes
+        for key, value in ddict.items():
+            if value is None:
+                ddict[key] = 0
+        if "configuration" in ddict:
+            for key, value in ddict["configuration"].items():
+                if value is None:
+                    ddict["configuration"][key] = 0
         for name, sheet in self.sheets.items():
             if "configuration" in ddict:
                 sheet.setdefaults(ddict["configuration"])
