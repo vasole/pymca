@@ -561,15 +561,18 @@ class QNexusWidget(qt.QWidget):
         currentEntry = "%s::%s" % (ddict['file'], entryName)
         if currentEntry != self._lastEntry:
             self._lastEntry = None
-            with h5py.File(ddict['file'], "r") as h5file:
-                measurement = NexusTools.getMeasurementGroup(h5file,
-                                                             ddict['name'])
-                scanned = NexusTools.getScannedPositioners(h5file,
-                                                           ddict['name'])
-                if measurement is not None:
-                    measurement = [item.name for key,item in measurement.items() if self._isNumeric(item)]
             cntList = []
             aliasList = []
+            measurement = None
+            scanned = []
+            if posixpath.dirname(entryName) != entryName:
+                with h5py.File(ddict['file'], "r") as h5file:
+                    measurement = NexusTools.getMeasurementGroup(h5file,
+                                                                 ddict['name'])
+                    scanned = NexusTools.getScannedPositioners(h5file,
+                                                               ddict['name'])
+                    if measurement is not None:
+                        measurement = [item.name for key,item in measurement.items() if self._isNumeric(item)]
             for i in range(len(scanned)):
                 key = scanned[i]
                 cntList.append(key)
