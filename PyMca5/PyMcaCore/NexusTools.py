@@ -242,17 +242,22 @@ def getScannedPositioners(h5file, path):
             else:
                 motors = [key for key, item in positioners.items() if isDataset(item)]
                 scanned = [item.name for key, item in measurement.items() if key in motors]
+                if len(scanned) > 1:
+                    # check that motors are not duplicated without reason
+                    scanned = [item.name for key, item in measurement.items() if \
+                                          (key in motors) and \
+                                          (hasattr(item, "size") and (item.size > 1))]
             if not len(scanned):
                 # look for datasets with more than one single value inside positioners
                 scanned = [item.name for key, item in positioners.items() if \
                                             isDataset(item) and \
-                                            (hasattr(item, "size") and (item.size() > 1))]
+                                            (hasattr(item, "size") and (item.size > 1))]
         if not len(scanned):
             entry = h5file[entry_name]
             if "title" in entry:
                 title = entry["title"].value
                 if hasattr(title, "decode"):
-                    title = title.decode
+                    title = title.decode("utf-8")
                 tokens = title.split()
                 candidates = [key for key, item in measurement.items() if \
                                             isDataset(item) and \
