@@ -916,6 +916,10 @@ class McaWindow(ScanWindow.ScanWindow):
                     dataObject.m = None
 
                 if dataObject.m is not None:
+                    for imon in range(len(dataObject.m)):
+                        if numpy.isscalar(dataObject.m[imon]):
+                            dataObject.m[imon] = \
+                                            numpy.array([dataObject.m[imon]])
                     if len(dataObject.m[0]) > 0:
                         mdata = dataObject.m[0]
                         if len(mdata) == len(data):

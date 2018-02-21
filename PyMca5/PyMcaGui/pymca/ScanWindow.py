@@ -338,6 +338,11 @@ class ScanWindow(PlotWindow.PlotWindow):
                     ycounter += 1
                     newDataObject   = DataObject.DataObject()
                     newDataObject.info = copy.deepcopy(dataObject.info)
+                    if dataObject.m is not None:
+                        for imon in range(len(dataObject.m)):
+                            if numpy.isscalar(dataObject.m[imon]):
+                                dataObject.m[imon] = \
+                                             numpy.array([dataObject.m[imon]])
                     if dataObject.m is None:
                         mdata = numpy.ones(len(ydata)).astype(numpy.float)
                     elif len(dataObject.m[0]) > 0:
