@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -236,6 +236,13 @@ class ScanWindow(PlotWindow.PlotWindow):
             #there must be something to plot
             if not hasattr(dataObject, 'y'):
                 continue
+            if len(dataObject.y) == 0:
+                # nothing to be plot
+                continue
+            else:
+                for i in range(len(dataObject.y)):
+                    if numpy.isscalar(dataObject.y[i]):
+                        dataObject.y[i] = numpy.array([dataObject.y[i]])
             if not hasattr(dataObject, 'x'):
                 ylen = len(dataObject.y[0])
                 if ylen:
@@ -255,6 +262,8 @@ class ScanWindow(PlotWindow.PlotWindow):
                     print("Mesh plots")
                 continue
             else:
+                if numpy.isscalar(dataObject.x[0]):
+                    dataObject.x[0] = numpy.array([dataObject.x[0]])    
                 xdata = dataObject.x[0]
             sps_source = False
             if 'SourceType' in sel:
@@ -329,6 +338,11 @@ class ScanWindow(PlotWindow.PlotWindow):
                     ycounter += 1
                     newDataObject   = DataObject.DataObject()
                     newDataObject.info = copy.deepcopy(dataObject.info)
+                    if dataObject.m is not None:
+                        for imon in range(len(dataObject.m)):
+                            if numpy.isscalar(dataObject.m[imon]):
+                                dataObject.m[imon] = \
+                                             numpy.array([dataObject.m[imon]])
                     if dataObject.m is None:
                         mdata = numpy.ones(len(ydata)).astype(numpy.float)
                     elif len(dataObject.m[0]) > 0:

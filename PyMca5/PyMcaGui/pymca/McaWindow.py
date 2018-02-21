@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -881,15 +881,21 @@ class McaWindow(ScanWindow.ScanWindow):
                 legend = sel['legend']
                 dataObject = sel['dataobject']
                 info = dataObject.info
-                data  = dataObject.y[0]
                 if "selectiontype" in dataObject.info:
                     if dataObject.info["selectiontype"] != "1D": continue
+                if numpy.isscalar(dataObject.y[0]):
+                    dataObject.y[0] = numpy.array([dataObject.y[0]])
+                data  = dataObject.y[0]
                 curveinfo=copy.deepcopy(info)
                 curveinfo["ylabel"] = info.get("ylabel", "Counts")
                 if dataObject.x is None:
                     xhelp = None
-                else:
+                elif len(dataObject.x):
+                    if numpy.isscalar(dataObject.x[0]):
+                        dataObject.x[0] = numpy.array([dataObject.x[0]])
                     xhelp = dataObject.x[0]
+                else:
+                    xhelp = None
 
                 if xhelp is None:
                     if 'Channel0' not in info:
@@ -910,6 +916,10 @@ class McaWindow(ScanWindow.ScanWindow):
                     dataObject.m = None
 
                 if dataObject.m is not None:
+                    for imon in range(len(dataObject.m)):
+                        if numpy.isscalar(dataObject.m[imon]):
+                            dataObject.m[imon] = \
+                                            numpy.array([dataObject.m[imon]])
                     if len(dataObject.m[0]) > 0:
                         mdata = dataObject.m[0]
                         if len(mdata) == len(data):

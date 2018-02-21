@@ -542,14 +542,17 @@ class QNexusWidget(qt.QWidget):
         name = ddict['name']
         return self.showInfoWidget(filename, name)
 
+    def _isNumericType(self, dtype):
+        if dtype.startswith('|S') or dtype.startswith('|U') or \
+           dtype.startswith('|O') or dtype.startswith('object'):
+            return False
+        else:
+            return True
+
     def _isNumeric(self, hdf5item):
         if hasattr(hdf5item, "dtype"):
             dtype = safe_str(hdf5item.dtype)
-            if dtype.startswith('|S') or dtype.startswith('|U') or \
-               dtype.startswith('|O') or dtype.startswith('object'):
-                   return False
-            else:
-                return True
+            return self._isNumericType(dtype)
         else:
             return False
 
@@ -601,8 +604,9 @@ class QNexusWidget(qt.QWidget):
                         self.tableTab.setCurrentIndex(1)
                     else:
                         self.tableTab.setCurrentIndex(0)
-                if ddict['dtype'].startswith('|S'):
-                    print("string")
+                if not self._isNumericType(ddict['dtype']):
+                    if DEBUG:
+                        print("string like %s" % ddict['dtype'])
                 else:
                     root = ddict['name'].split('/')
                     root = "/" + root[1]
