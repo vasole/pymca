@@ -1171,17 +1171,15 @@ class SpecfitFunctions(object):
 
 
     def configure(self,*vars,**kw):
-        if kw.keys() == []:
-            return self.config
-        for key in kw.keys():
-            notdone=1
+        for key in kw:
+            notdone = 1
             #take care of lower / upper case problems ...
-            for config_key in self.config.keys():
+            for config_key in self.config:
                 if config_key.lower() == key.lower():
                     self.config[config_key] = kw[key]
-                    notdone=0
+                    notdone = 0
             if notdone:
-                self.config[key]=kw[key]
+                self.config[key] = kw[key]
         return self.config
 
 fitfuns=SpecfitFunctions()
