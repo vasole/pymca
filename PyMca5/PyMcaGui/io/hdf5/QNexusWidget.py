@@ -46,6 +46,7 @@ else:
 from . import HDF5Widget
 from . import HDF5Info
 from . import HDF5CounterTable
+from . import QNexusWidgetActions
 try:
     from . import Hdf5NodeView
 except ImportError:
@@ -131,22 +132,44 @@ class QNexusWidget(qt.QWidget):
         self.tableTab.addTab(self.cntTable, "USER")
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
-        if ('PyMca.Object3D' in sys.modules) or \
-           ('Object3D' in sys.modules) or \
-           ('PyMca5.Object3D' in sys.modules):
-            self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
-            self.cntTable.set3DEnabled(True)
-            self.autoTable.set3DEnabled(True)
+        BUTTONS = False
+        if BUTTONS:
+            if ('PyMca.Object3D' in sys.modules) or \
+               ('Object3D' in sys.modules) or \
+               ('PyMca5.Object3D' in sys.modules):
+                self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
+                self.cntTable.set3DEnabled(True)
+                self.autoTable.set3DEnabled(True)
+            else:
+                self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D'])
+                self.cntTable.set3DEnabled(False)
+                self.autoTable.set3DEnabled(False)
+            self.mainLayout.addWidget(self.buttons)
         else:
-            self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D'])
-            self.cntTable.set3DEnabled(False)
-            self.autoTable.set3DEnabled(False)
-        self.mainLayout.addWidget(self.buttons)
+            self.actions = QNexusWidgetActions.QNexusWidgetActions(self)
+            if ('PyMca.Object3D' in sys.modules) or \
+               ('Object3D' in sys.modules) or \
+               ('PyMca5.Object3D' in sys.modules):
+                self.cntTable.set3DEnabled(True)
+                self.autoTable.set3DEnabled(True)
+                self.actions.set3DEnabled(True)
+            else:
+                self.cntTable.set3DEnabled(False)
+                self.autoTable.set3DEnabled(False)
+                self.actions.set3DEnabled(False)
+            self.mainLayout.addWidget(self.actions)
         self.hdf5Widget.sigHDF5WidgetSignal.connect(self.hdf5Slot)
         self.cntTable.customContextMenuRequested[qt.QPoint].connect(\
                         self._counterTableCustomMenuSlot)
-        self.buttons.sigButtonsSignal.connect(self.buttonsSlot)
-
+        
+        if BUTTONS:
+            self.buttons.sigButtonsSignal.connect(self.buttonsSlot)
+        else:
+            self.actions.sigAddSelection.connect(self._addAction)
+            self.actions.sigRemoveSelection.connect(self._removeAction)
+            self.actions.sigReplaceSelection.connect(self._replaceAction)
+            self.actions.sigActionsConfigurationChanged.connect(\
+                self._configurationChangedAction)
 
         # Some convenience functions to customize the table
         # They could have been included in other class inheriting
@@ -257,6 +280,7 @@ class QNexusWidget(qt.QWidget):
         else:
             ddict['HDF5'] ={'WidgetConfiguration':\
                              self.getWidgetConfiguration()}
+        print("TODO - Add selection options")
         ddict.write(fname)
 
     def _deleteAllCountersFromTable(self):
@@ -360,6 +384,7 @@ class QNexusWidget(qt.QWidget):
             if type(self._aliasList) == type(""):
                 self._aliasList = [ddict['aliases']]
         self.cntTable.build(self._cntList, self._aliasList)
+        print("TODO - Add selection options")
 
     def setDataSource(self, dataSource):
         self.data = dataSource
@@ -660,6 +685,44 @@ class QNexusWidget(qt.QWidget):
                         return
                 if DEBUG:
                     print("Unhandled item type: %s" % ddict['dtype'])
+
+    def _addAction(self):
+        if DEBUG:
+            print("_addAction received")
+        # formerly we had action and selection type
+        ddict = {}
+        mca = self.actions.getConfiguration()["mca"]
+        if mca:
+            ddict['action'] = "ADD MCA"
+        else:
+            ddict['action'] = "ADD SCAN"
+        self.buttonsSlot(ddict, emit=True)
+
+    def _removeAction(self):
+        if DEBUG:
+            print("_removeAction received")
+        ddict = {}
+        mca = self.actions.getConfiguration()["mca"]
+        if mca:
+            ddict['action'] = "REMOVE MCA"
+        else:
+            ddict['action'] = "REMOVE SCAN"
+        self.buttonsSlot(ddict, emit=True)
+
+    def _replaceAction(self):
+        if DEBUG:
+            print("_replaceAction received")
+        ddict = {}
+        mca = self.actions.getConfiguration()["mca"]
+        if mca:
+            ddict['action'] = "REPLACE MCA"
+        else:
+            ddict['action'] = "REPLACE SCAN"
+        self.buttonsSlot(ddict, emit=True)
+
+    def _configurationChangedAction(self, ddict):
+        if DEBUG:
+            print("_configurationChangedAction received")
 
     def buttonsSlot(self, ddict, emit=True):
         if self.data is None:

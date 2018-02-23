@@ -35,7 +35,7 @@ class QNexusWidgetActions(qt.QWidget):
     sigAddSelection = qt.pyqtSignal()
     sigRemoveSelection = qt.pyqtSignal()
     sigReplaceSelection = qt.pyqtSignal()
-    sigConfigurationChanged = qt.pyqtSignal(object)
+    sigActionsConfigurationChanged = qt.pyqtSignal(object)
     def __init__(self, parent=None, autoreplace=False):
         self.autoReplace = autoreplace
         if self.autoReplace:
@@ -191,7 +191,17 @@ class QNexusWidgetActions(qt.QWidget):
         if DEBUG:
             print("configurationChanged(object)")
         ddict = self.getConfiguration()
-        self.sigConfigurationChanged.emit(ddict)
+        self.sigActionsConfigurationChanged.emit(ddict)
+
+    def set3DEnabled(self, flag):
+        if flag:
+            self.object3DBox.setEnabled(True)
+        else:
+            wasChecked = self.object3DBox.isChecked() 
+            self.object3DBox.setChecked(False)
+            self.object3DBox.setEnabled(False)
+            if wasChecked:
+                self.configurationChanged()
 
     def getConfiguration(self):
         ddict = {}
@@ -223,6 +233,6 @@ if __name__ == "__main__":
     w.sigAddSelection.connect(addSelection)
     w.sigRemoveSelection.connect(removeSelection)
     w.sigReplaceSelection.connect(replaceSelection)
-    w.sigConfigurationChanged.connect(configurationChanged)
+    w.sigActionsConfigurationChanged.connect(configurationChanged)
     sys.exit(app.exec_())
     
