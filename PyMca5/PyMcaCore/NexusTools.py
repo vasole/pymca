@@ -125,6 +125,28 @@ def getEntryName(path):
         candidate = posixpath.dirname(entry)
     return entry
 
+
+def getMcaList(h5file, path, dataset=False):
+    """
+    Retrieve the hdf5 dataset names down a given path where the interpretation attribute
+    is set to "spectrum".
+
+    If dataset is False (default) it returns the dataset names.
+    If dataset is True it returns the actual datasets.
+    """
+    datasetList =[]
+    def visit_function(name, obj):
+        if isDataset(obj):
+            for name, value in obj.attrs.items():
+                if name == "interpretation":
+                    if value in ["spectrum", b"spectrum"]:
+                        if dataset:
+                            datasetList.append(obj)
+                        else:
+                            datasetList.append(obj.name)
+    h5file.visititems(visit_function)
+    return datasetList
+
 def getNXClassGroups(h5file, path, classes, single=False):
     """
     Retrieve the hdf5 groups inside a given path where the NX_class attribute
@@ -305,3 +327,9 @@ if __name__ == "__main__":
                 print("Scanned motors %d = %s" % (i, scanned[i]))
         else:
             print("Unknown scanned motors")
+        mca = getMcaList(h5, entry.name, dataset=False)
+        if len(mca):
+            for i in range(len(mca)):
+                print("MCA dataset %d = %s" % (i, mca[i]))
+        else:
+            print("No MCA found")
