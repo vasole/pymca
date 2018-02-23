@@ -131,6 +131,9 @@ def getMcaList(h5file, path, dataset=False):
     Retrieve the hdf5 dataset names down a given path where the interpretation attribute
     is set to "spectrum".
 
+    It also considers as eligible datasets, those whose last dimension is more than 1 and
+    their name or parent group name start by mca.
+
     If dataset is False (default) it returns the dataset names.
     If dataset is True it returns the actual datasets.
     """
