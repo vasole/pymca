@@ -136,6 +136,12 @@ def getMcaList(h5file, path, dataset=False):
 
     If dataset is False (default) it returns the dataset names.
     If dataset is True it returns the actual datasets.
+
+    Apparently visititems ignores links. The following situation would not work:
+
+    Actual dataset in /entry/detector/data with no interpretation attribute set
+    and link to it named /entry/measurement/mca
+
     """
     datasetList =[]
     def visit_function(name, obj):
@@ -336,6 +342,8 @@ if __name__ == "__main__":
         sys.exit()
     h5 = h5py.File(sourcename)    
     entries = getNXClassGroups(h5, "/", ["NXentry", b"NXentry"], single=False)
+    if not len(entries):
+        entries = [item for name, item in h5["/"].items() if isGroup(item)]
     for entry in entries:
         print("Entry name = %s" % entry.name)
         if "title" in entry:
