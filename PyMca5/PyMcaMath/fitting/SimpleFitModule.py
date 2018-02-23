@@ -122,7 +122,7 @@ class SimpleFit(object):
                 configureMethod = self._fitConfiguration['functions'][fName]\
                                   ['configure']
                 if configureMethod is not None:
-                    configureMethod(ddict['functions'][fName]['configuration'])
+                    configureMethod(**ddict['functions'][fName]['configuration'])
 
         #if data are present, update strip background
         if (self._x0 is None) or (self._y0 is None):
