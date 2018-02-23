@@ -137,9 +137,40 @@ def getMcaList(h5file, path, dataset=False):
     datasetList =[]
     def visit_function(name, obj):
         if isDataset(obj):
-            for name, value in obj.attrs.items():
-                if name == "interpretation":
+            append = False
+            forget = False
+            namebased = False
+            for key, value in obj.attrs.items():
+                if key == "interpretation":
                     if value in ["spectrum", b"spectrum"]:
+                        append = True
+                    else:
+                        forget = True
+            if (not append) and (not forget):
+                #support (risky) name based solutions too.
+                # the dataset name starts with MCA or
+                # the parent group starts with MCA
+                if posixpath.basename(name).lower().startswith("mca") or \
+                   posixpath.basename(posixpath.dirname(name)).lower().startswith("mca"):
+                    append = True
+                    namebased = True
+            if append:
+                # add another test
+                # an actual MCA spectrum will have more than one channel
+                if (not namebased) and ("measurement" in name):
+                    # ALBA sets the interpretation attribute to spectrum
+                    # to every counter in the measurement group
+                    if len(obj.shape) == 1:
+                        # I have to figure out if in fact it is just a
+                        # misuse of the interpretation attribute
+                        posnames = getScannedPositioners(h5file, path)
+                        for motor in posnames:
+                            if h5file[motor].size == obj.size:
+                                append = False
+            if append:
+                # the measurement group
+                if len(obj.shape) > 0:
+                    if obj.shape[-1] > 1:
                         if dataset:
                             datasetList.append(obj)
                         else:
