@@ -46,6 +46,7 @@ else:
 from . import HDF5Widget
 from . import HDF5Info
 from . import HDF5CounterTable
+from . import HDF5McaTable
 from . import QNexusWidgetActions
 try:
     from . import Hdf5NodeView
@@ -98,7 +99,7 @@ class QNexusWidget(qt.QWidget):
     sigRemoveSelection = qt.pyqtSignal(object)
     sigReplaceSelection = qt.pyqtSignal(object)
     sigOtherSignals = qt.pyqtSignal(object)
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, mca=False):
         qt.QWidget.__init__(self, parent)
         self.data = None
         self._dataSourceList = []
@@ -115,6 +116,7 @@ class QNexusWidget(qt.QWidget):
         self._dir = None
         self._lastAction = None
         self._lastEntry = None
+        self._mca = mca
         self.build()
 
     def build(self):
@@ -125,11 +127,14 @@ class QNexusWidget(qt.QWidget):
                                                 self.splitter)
         self.hdf5Widget.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
         self.tableTab = qt.QTabWidget(self.splitter)
-        self.tableTab.setContentsMargins(0, 0, 0, 0)        
+        self.tableTab.setContentsMargins(0, 0, 0, 0)    
         self.cntTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
         self.autoTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
         self.tableTab.addTab(self.autoTable, "AUTO")
         self.tableTab.addTab(self.cntTable, "USER")
+        if self._mca:
+            self.mcaTable = HDF5McaTable.HDF5McaTable(self.tableTab)
+            self.tableTab.addTab(self.mcaTable, "MCA")
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
         BUTTONS = False
@@ -590,6 +595,7 @@ class QNexusWidget(qt.QWidget):
             aliasList = []
             measurement = None
             scanned = []
+            mcaList = []
             if posixpath.dirname(entryName) != entryName:
                 with h5py.File(ddict['file'], "r") as h5file:
                     measurement = NexusTools.getMeasurementGroup(h5file,
@@ -597,7 +603,10 @@ class QNexusWidget(qt.QWidget):
                     scanned = NexusTools.getScannedPositioners(h5file,
                                                                ddict['name'])
                     if measurement is not None:
-                        measurement = [item.name for key,item in measurement.items() if self._isNumeric(item)]
+                        measurement = [item.name for key,item in measurement.items() \
+                                       if self._isNumeric(item)]
+                    if self._mca:
+                        mcaList = NexusTools.getMcaList(h5file, entryName)
             for i in range(len(scanned)):
                 key = scanned[i]
                 cntList.append(key)
@@ -619,6 +628,18 @@ class QNexusWidget(qt.QWidget):
             self._autoCntList = cleanedCntList
             self.autoTable.build(self._autoCntList,
                                  self._autoAliasList)
+            if self._mca:
+                print("MCA LIST = ", mcaList)
+                mcaAliasList = []
+                for key in mcaList:
+                    mcaAliasList.append(posixpath.basename(key))
+                self.mcaTable.build(mcaList, mcaAliasList)
+                nTabs = self.tableTab.count()
+                print("nTabs = ", nTabs)
+                if (len(mcaList) > 0) and (nTabs < 3):
+                    self.tableTab.insertTab(2, self.mcaTable, "MCA")
+                elif (len(mcaList)==0) and (nTabs > 2):
+                    self.tableTab.removeTab(2)
             self._lastEntry = currentEntry
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
@@ -694,39 +715,64 @@ class QNexusWidget(qt.QWidget):
                 if DEBUG:
                     print("Unhandled item type: %s" % ddict['dtype'])
 
+
+    def _addMcaAction(self):
+        if DEBUG:
+            print("_addMcaAction received")
+
+    def _removeMcaAction(self):
+        if DEBUG:
+            print("_removeMcaAction received")
+
+    def _replaceMcaAction(self):
+        if DEBUG:
+            print("_replaceMcaAction received")
+
     def _addAction(self):
         if DEBUG:
             print("_addAction received")
         # formerly we had action and selection type
-        ddict = {}
-        mca = self.actions.getConfiguration()["mca"]
-        if mca:
-            ddict['action'] = "ADD MCA"
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "MCA":
+            self._addMcaAction()
         else:
-            ddict['action'] = "ADD SCAN"
-        self.buttonsSlot(ddict, emit=True)
+            ddict = {}
+            mca = self.actions.getConfiguration()["mca"]
+            if mca:
+                ddict['action'] = "ADD MCA"
+            else:
+                ddict['action'] = "ADD SCAN"
+            self.buttonsSlot(ddict, emit=True)
 
     def _removeAction(self):
         if DEBUG:
             print("_removeAction received")
-        ddict = {}
-        mca = self.actions.getConfiguration()["mca"]
-        if mca:
-            ddict['action'] = "REMOVE MCA"
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "MCA":
+            self._removeMcaAction()
         else:
-            ddict['action'] = "REMOVE SCAN"
-        self.buttonsSlot(ddict, emit=True)
+            ddict = {}
+            mca = self.actions.getConfiguration()["mca"]
+            if mca:
+                ddict['action'] = "REMOVE MCA"
+            else:
+                ddict['action'] = "REMOVE SCAN"
+            self.buttonsSlot(ddict, emit=True)
 
     def _replaceAction(self):
         if DEBUG:
             print("_replaceAction received")
-        ddict = {}
-        mca = self.actions.getConfiguration()["mca"]
-        if mca:
-            ddict['action'] = "REPLACE MCA"
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "MCA":
+            self._replaceMcaAction()
         else:
-            ddict['action'] = "REPLACE SCAN"
-        self.buttonsSlot(ddict, emit=True)
+            ddict = {}
+            mca = self.actions.getConfiguration()["mca"]
+            if mca:
+                ddict['action'] = "REPLACE MCA"
+            else:
+                ddict['action'] = "REPLACE SCAN"
+            self.buttonsSlot(ddict, emit=True)
 
     def _configurationChangedAction(self, ddict):
         if DEBUG:
@@ -743,6 +789,9 @@ class QNexusWidget(qt.QWidget):
         if text.upper() == "AUTO":
             cntSelection = self.autoTable.getCounterSelection()
             # self._aliasList = cntSelection['aliaslist']
+        elif text.upper() == "MCA":
+            print("TO IMPLEMENT")
+            return
         else:
             cntSelection = self.cntTable.getCounterSelection()
             self._aliasList = cntSelection['aliaslist']

@@ -42,8 +42,8 @@ else:
 DEBUG=0
 
 class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
-    def __init__(self, *var, **kw):
-        QNexusWidget.QNexusWidget.__init__(self, *var, **kw)
+    def __init__(self, parent=None, mca=True):
+        QNexusWidget.QNexusWidget.__init__(self, parent=parent, mca=mca)
 
     def itemRightClickedSlot(self, ddict):
         is_numeric_dset = not (ddict['dtype'].startswith('|S') or
