@@ -243,7 +243,7 @@ class MyCheckField(CheckField.CheckField):
     def setdefaults(self, ddict):
         for key in self.dict.keys():
             if key in ddict:
-                if int(ddict[key]):
+                if ddict[key]:
                     self.CheckBox.setChecked(1)
                     self.dict[key]=1
                 else:
