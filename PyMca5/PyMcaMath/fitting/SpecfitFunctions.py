@@ -1170,7 +1170,10 @@ class SpecfitFunctions(object):
         return fittedpar,cons
 
 
-    def configure(self,*vars,**kw):
+    def configure(self, *vars, **kw):
+        if len(vars) == 1:
+            if isinstance(vars[0], dict):
+                kw.update(vars[0])
         for key in kw:
             notdone = 1
             #take care of lower / upper case problems ...
