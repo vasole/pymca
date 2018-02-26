@@ -719,14 +719,25 @@ class QNexusWidget(qt.QWidget):
     def _addMcaAction(self):
         if DEBUG:
             print("_addMcaAction received")
+        self.mcaAction("ADD")
 
     def _removeMcaAction(self):
         if DEBUG:
             print("_removeMcaAction received")
+        self.mcaAction("REMOVE")
 
     def _replaceMcaAction(self):
         if DEBUG:
             print("_replaceMcaAction received")
+        self.mcaAction("REPLACE")
+
+    def mcaAction(self, action="ADD"):
+        if DEBUG:
+            print("mcaAction %s" % action)
+        self.mcaTable.getMcaSelection()
+        ddict = {}
+        ddict['action'] = "%s MCA" % action
+        self.buttonsSlot(ddict, emit=True)
 
     def _addAction(self):
         if DEBUG:
@@ -779,6 +790,7 @@ class QNexusWidget(qt.QWidget):
             print("_configurationChangedAction received")
 
     def buttonsSlot(self, ddict, emit=True):
+        print("buttonsSlot ", ddict)
         if self.data is None:
             return
         action, selectionType = ddict['action'].split()
@@ -786,22 +798,67 @@ class QNexusWidget(qt.QWidget):
         if not len(entryList):
             return
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        mcaSelection = {'mcalist':[], 'selectionindex':[]}
+        cntSelection = {'cntlist':[], 'y':[]}
         if text.upper() == "AUTO":
             cntSelection = self.autoTable.getCounterSelection()
             # self._aliasList = cntSelection['aliaslist']
         elif text.upper() == "MCA":
-            print("TO IMPLEMENT")
-            return
+            mcaSelection = self.mcaTable.getMcaSelection()
+            print("mcaSelection = ", mcaSelection)
         else:
             cntSelection = self.cntTable.getCounterSelection()
             self._aliasList = cntSelection['aliaslist']
         selectionList = []
         for entry, filename in entryList:
-            if not len(cntSelection['cntlist']):
+            if not len(cntSelection['cntlist']) and \
+               not len(mcaSelection['mcalist']):
                 continue
-            if not len(cntSelection['y']):
+            if not len(cntSelection['y']) and \
+               not len(mcaSelection['selectionindex']):
                 #nothing to plot
                 continue
+            for yMca in mcaSelection['selectionindex']:
+                sel = {}
+                sel['SourceName'] = self.data.sourceName * 1
+                sel['SourceType'] = "HDF5"
+                fileIndex = self.data.sourceName.index(filename)
+                phynxFile  = self.data._sourceObjectList[fileIndex]
+                entryIndex = list(phynxFile["/"].keys()).index(entry[1:])
+                sel['Key']        = "%d.%d" % (fileIndex+1, entryIndex+1)
+                sel['legend']     = os.path.basename(sel['SourceName'][0])+\
+                                    " " + posixpath.basename(entry) #it was sel['Key']
+                sel['selection'] = {}
+                sel['selection']['sourcename'] = filename
+                #deal with the case the "entry" is a dataset hunging at root level
+                if isinstance(phynxFile[entry], h5py.Dataset):
+                    entry = "/"
+                sel['selection']['entry'] = entry
+                sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
+                sel['selection']['mca'] = [yMca]
+                sel['selection']['mcalist'] = mcaSelection['mcalist']
+                sel['selection']['LabelNames'] = mcaSelection['aliaslist']
+                #sel['selection']['aliaslist'] = cntSelection['aliaslist']
+                sel['selection']['selectiontype'] = mcaSelection['selectiontype']
+                sel['mcaselection']  = True
+                aliases = mcaSelection['aliaslist']
+                """
+                if len(cntSelection['x']) and len(cntSelection['m']):
+                    addLegend = " (%s/%s) vs %s" % (aliases[yCnt],
+                                                   aliases[cntSelection['m'][0]],
+                                                   aliases[cntSelection['x'][0]])
+                elif len(cntSelection['x']):
+                    addLegend = " %s vs %s" % (aliases[yCnt],
+                                               aliases[cntSelection['x'][0]])
+                elif len(cntSelection['m']):
+                    addLegend = " (%s/%s)" % (aliases[yCnt],
+                                            aliases[cntSelection['m'][0]])
+                else:
+                    addLegend = " %s" % aliases[yCnt]
+                sel['legend'] += addLegend
+                """
+                selectionList.append(sel)
+
             for yCnt in cntSelection['y']:
                 sel = {}
                 sel['SourceName'] = self.data.sourceName * 1
@@ -851,6 +908,7 @@ class QNexusWidget(qt.QWidget):
                 sel['legend'] += addLegend
                 selectionList.append(sel)
 
+        print("SELECTION LIST = ", selectionList)
         if not emit:
             return selectionList
         self._lastAction = "%s" % ddict['action']
