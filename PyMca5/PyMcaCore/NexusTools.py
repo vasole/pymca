@@ -187,6 +187,77 @@ def getMcaList(h5file, path, dataset=False):
     h5file.visititems(visit_function)
     return datasetList
 
+def getMcaDataPaths(h5file, mcaPath):
+    """
+    Given an h5py instance and the path to a dataset, try to retrieve all the
+    associated information returning an McaSpectrumObject.
+
+    McaSpectrumObject is a DataObject where data are the counts and the info
+    part contains the information below
+
+    - live_time
+    - preset_time
+    - elapsed_time
+    - counts
+    - channels
+    - calibration
+    - i0
+    - it
+    - i02flux
+    - it2flux    
+    """
+
+    mca = {}
+    mca["counts"] = mcaPath
+    mcaKeys = ["channels",
+               "calibration",
+               "live_time",
+               "preset_time",
+               "elapsed_time",
+               "i0",
+               "it",
+               "i0_to_flux_factor",
+               "it_to_flux_factor"]
+
+    #mca["channels"] = None
+    #mca["i0"] = None
+    #mca["live_time"] = None
+    #mca["preset_time"]= None
+    #mca["calibration"] = [0.0, 1.0, 0.0]
+    #mca["i0"] = None
+    #mca["it"] = None
+    #mca["i0_to_flux_factor"] = 1.0
+    #mca["it_to_flux_factor"] = 1.0
+
+    # look at the same level as the dataset
+    parentPath = posixpath.dirname(mcaPath)
+    searchPaths =[parentPath]
+    
+    # look at a container group named info at the same level
+    if "info" in h5file[parentPath]:
+        infoPath = posixpath.join(parentPath, "info")
+        searchPaths.append(infoPath)
+
+    # look at one level higher if the container is an NXdetector
+    detectorPath = posixpath.dirname(parentPath)
+    nxClass = ""
+    obj = h5file[detectorPath]
+    for key, value in obj.attrs.items():
+        if key in ["NX_class", b"NX_class"]:
+            if value in ["NXdetector", b"NXdetector"]:
+                searchPaths.append(detectorPath)
+
+    # look for the relevant information in those groups
+    for path in searchPaths:
+        group = h5file[path]
+        items_list = list(group.items())
+        for key, item in items_list:
+            baseKey = posixpath.basename(key)
+            if (baseKey in mcaKeys) and (key != mcaPath):
+                if baseKey not in mca:
+                    mca[baseKey] = posixpath.join(path, key)
+    return mca
+
 def getNXClassGroups(h5file, path, classes, single=False):
     """
     Retrieve the hdf5 groups inside a given path where the NX_class attribute
@@ -373,5 +444,8 @@ if __name__ == "__main__":
         if len(mca):
             for i in range(len(mca)):
                 print("MCA dataset %d = %s" % (i, mca[i]))
+                info = getMcaDataPaths(h5, mca[i])
+                for key in info:
+                    print('mca["%s"] = %s' % (key, info[key]))
         else:
             print("No MCA found")
