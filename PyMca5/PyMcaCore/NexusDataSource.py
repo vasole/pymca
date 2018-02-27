@@ -292,6 +292,7 @@ class NexusDataSource(object):
               starting by 1.
         selection: a dictionnary generated via QNexusWidget
         """
+        print("NEXUS", selection)
         if selection is not None:
             if 'sourcename' in selection:
                 filename  = selection['sourcename']
@@ -326,7 +327,23 @@ class NexusDataSource(object):
         output = DataObject.DataObject()
         output.info = self.__getKeyInfo(actual_key)
         output.info['selection'] = selection
-        if selection['selectiontype'].upper() in ["SCAN", "MCA"]:
+        if "mca" in selection:
+            if selection['selectiontype'].lower() in ["avg", "average", "sum"]:
+                mcaPath = selection["mcalist"][selection["mca"][0]]
+                mcaData = phynxFile[mcaPath]
+                divider = 1.0
+                if len(mcaData.shape) > 1:
+                    divider *= mcaData.shape[0]
+                    mcaData = numpy.sum(mcaData, axis=0, dtype=numpy.float32)
+                    while len(mcaData.shape) > 1:
+                        divider *= mcaData.shape[0]
+                        mcaData = mcaData.sum(axis=0)
+                    if selection['selectiontype'].lower() != "sum":        
+                        mcaData /= divider
+                else:
+                    mcaData = mcaData.value
+            
+        elif selection['selectiontype'].upper() in ["SCAN", "MCA"]:
             output.info['selectiontype'] = "1D"
         elif selection['selectiontype'] == "3D":
             output.info['selectiontype'] = "3D"
