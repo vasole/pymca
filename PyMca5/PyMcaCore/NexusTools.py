@@ -152,7 +152,9 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                   "i0",
                   "it",
                   "i0_to_flux_factor",
-                  "it_to_flux_factor"]
+                  "it_to_flux_factor",
+                  "time",
+                  "energy"]
     datasetList =[]
     def visit_function(name, obj):
         if isDataset(obj):
@@ -188,7 +190,7 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                                 append = False
             if append:
                 # perform some name filtering
-                if posixpath.basename(obj.name) in ignore:
+                if posixpath.basename(obj.name).lower() in ignore:
                     append = False
 
             if append:
@@ -199,8 +201,10 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                             datasetList.append(obj)
                         else:
                             datasetList.append(obj.name)
+
     h5file.visititems(visit_function)
     return datasetList
+
 
 def getMcaObjectPaths(h5file, mcaPath):
     """
