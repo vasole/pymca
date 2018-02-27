@@ -126,7 +126,7 @@ def getEntryName(path):
     return entry
 
 
-def getMcaList(h5file, path, dataset=False):
+def getMcaList(h5file, path, dataset=False, ignore=None):
     """
     Retrieve the hdf5 dataset names down a given path where the interpretation attribute
     is set to "spectrum".
@@ -143,6 +143,16 @@ def getMcaList(h5file, path, dataset=False):
     and link to it named /entry/measurement/mca
 
     """
+    if ignore is None:
+        ignore = ["channels",
+                  "calibration",
+                  "live_time",
+                  "preset_time",
+                  "elapsed_time",
+                  "i0",
+                  "it",
+                  "i0_to_flux_factor",
+                  "it_to_flux_factor"]
     datasetList =[]
     def visit_function(name, obj):
         if isDataset(obj):
@@ -163,8 +173,8 @@ def getMcaList(h5file, path, dataset=False):
                    posixpath.basename(posixpath.dirname(name)).lower().startswith("mca"):
                     append = True
                     namebased = True
+
             if append:
-                # add another test
                 # an actual MCA spectrum will have more than one channel
                 if (not namebased) and ("measurement" in name):
                     # ALBA sets the interpretation attribute to spectrum
@@ -177,6 +187,11 @@ def getMcaList(h5file, path, dataset=False):
                             if h5file[motor].size == obj.size:
                                 append = False
             if append:
+                # perform some name filtering
+                if posixpath.basename(obj.name) in ignore:
+                    append = False
+
+            if append:
                 # the measurement group
                 if len(obj.shape) > 0:
                     if obj.shape[-1] > 1:
@@ -187,7 +202,7 @@ def getMcaList(h5file, path, dataset=False):
     h5file.visititems(visit_function)
     return datasetList
 
-def getMcaDataPaths(h5file, mcaPath):
+def getMcaObjectPaths(h5file, mcaPath):
     """
     Given an h5py instance and the path to a dataset, try to retrieve all the
     associated information returning an McaSpectrumObject.
@@ -255,7 +270,7 @@ def getMcaDataPaths(h5file, mcaPath):
             baseKey = posixpath.basename(key)
             if (baseKey in mcaKeys) and (key != mcaPath):
                 if baseKey not in mca:
-                    mca[baseKey] = posixpath.join(path, key)
+                    mca[baseKey] = item.name
     return mca
 
 def getNXClassGroups(h5file, path, classes, single=False):
@@ -444,7 +459,7 @@ if __name__ == "__main__":
         if len(mca):
             for i in range(len(mca)):
                 print("MCA dataset %d = %s" % (i, mca[i]))
-                info = getMcaDataPaths(h5, mca[i])
+                info = getMcaObjectPaths(h5, mca[i])
                 for key in info:
                     print('mca["%s"] = %s' % (key, info[key]))
         else:
