@@ -121,6 +121,7 @@ class NXdataCurveViewWithPlugins(DataViews._NXdataCurveView):
 class NXdataViewWithPlugins(DataViews.CompositeDataView):
     """Re-implement DataViews._NXdataView to use the 1D view with
     a plugin toolbutton in the composite view."""
+    # This widget is needed only for silx < 0.7.
     def __init__(self, parent):
         super(NXdataViewWithPlugins, self).__init__(
             parent=parent,
@@ -139,10 +140,7 @@ class NXdataViewWithPlugins(DataViews.CompositeDataView):
 class DataViewerFrameWithPlugins(DataViewerFrame):
     """Overloaded DataViewerFrame with the 1D view replaced by
     Plot1DViewWithPlugins"""
-    # This widget is duplicated due to a bug in silx (#1183).
-    # This bug is fixed in silx 0.7.0 (~March 2018), so this code duplication
-    # should be removed when silx >= 0.7.0 is readily available
-    # (see more comments in Hdf5NodeView, on how to do this)
+    # This widget is needed only for silx < 0.7.
     def createDefaultViews(self, parent=None):
         views = list(DataViewerFrame.createDefaultViews(self, parent=parent))
 
@@ -174,14 +172,14 @@ class Hdf5NodeView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
 
-        # # This should be the proper way of changing a single view without
-        # # overloading DataViewerFrame. See silx issue #1183.
-        # self.viewWidget = DataViewerFrame(self)
-        # self.viewWidget.removeView(
-        #     self.viewWidget.getViewFromModeId(DataViews.PLOT1D_MODE))
-        # self.viewWidget.addView(Plot1DViewWithPlugins(self))
-
-        self.viewWidget = DataViewerFrameWithPlugins(self)
+        if silx.hexversion >= 0x000700f0:       # 0.7.0 final
+            self.viewWidget = DataViewerFrame(self)
+            self.viewWidget.replaceView(DataViews.PLOT1D_MODE,
+                                        Plot1DViewWithPlugins(self))
+            self.viewWidget.replaceView(DataViews.NXDATA_CURVE_MODE,
+                                        NXdataCurveViewWithPlugins(self))
+        else:
+            self.viewWidget = DataViewerFrameWithPlugins(self)
 
         self.mainLayout.addWidget(self.viewWidget)
 
