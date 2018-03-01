@@ -202,7 +202,7 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                         else:
                             datasetList.append(obj.name)
 
-    h5file.visititems(visit_function)
+    h5file[path].visititems(visit_function)
     return datasetList
 
 
