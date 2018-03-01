@@ -43,6 +43,7 @@ if sys.version_info >= (3,):
     basestring = str
 
 from . import DataObject
+from . import NexusTools
 
 SOURCE_TYPE = "HDF5"
 DEBUG = 0
@@ -292,7 +293,6 @@ class NexusDataSource(object):
               starting by 1.
         selection: a dictionnary generated via QNexusWidget
         """
-        print("NEXUS", selection)
         if selection is not None:
             if 'sourcename' in selection:
                 filename  = selection['sourcename']
@@ -325,24 +325,55 @@ class NexusDataSource(object):
             raise NotImplemented("Direct NXdata plot not implemented yet")
         #create data object
         output = DataObject.DataObject()
+        output.x = None
+        output.y = None
+        output.m = None
+        output.data = None
         output.info = self.__getKeyInfo(actual_key)
         output.info['selection'] = selection
         if "mca" in selection:
-            if selection['selectiontype'].lower() in ["avg", "average", "sum"]:
-                mcaPath = selection["mcalist"][selection["mca"][0]]
-                mcaData = phynxFile[mcaPath]
-                divider = 1.0
-                if len(mcaData.shape) > 1:
-                    divider *= mcaData.shape[0]
-                    mcaData = numpy.sum(mcaData, axis=0, dtype=numpy.float32)
-                    while len(mcaData.shape) > 1:
-                        divider *= mcaData.shape[0]
-                        mcaData = mcaData.sum(axis=0)
-                    if selection['selectiontype'].lower() != "sum":        
-                        mcaData /= divider
+            # this should go somewhere else
+            h5File = phynxFile
+            mcaPath = entry + selection["mcalist"][selection["mca"][0]]
+            mcaObjectPaths = NexusTools.getMcaObjectPaths(phynxFile, mcaPath)
+            mcaData = h5File[mcaObjectPaths['counts']]
+            try:
+                if "channels" in mcaObjectPaths:
+                    mcaChannels = h5File[mcaObjectPaths["channels"]].value
                 else:
-                    mcaData = mcaData.value
-            
+                    mcaChannels = numpy.arange(mcaData.shape[-1]).astype(numpy.float32)
+                if "calibration" in mcaObjectPaths:
+                    mcaCalibration = h5File[mcaObjectPaths["calibration"]].value
+                else:
+                    mcaCalibration = numpy.array([0.0, 1.0, 0.0])
+                output.info["McaCalib"] = mcaCalibration
+                if "preset_time" in mcaObjectPaths:
+                    mcainfo["McaPresetTime"]= \
+                                    float(h5File[mcaObjectPaths["preset_time"]].value)
+                if "elapsed_time" in mcaObjectPaths:
+                    mcainfo["McaRealTime"]= \
+                                    float(h5File[mcaObjectPaths["elapsed_time"]].value)
+                if "live_time" in mcaObjectPaths:
+                    mcainfo["McaLiveTime"]= \
+                                    float(h5File[mcaObjectPaths["live_time"]].value)
+                if selection['mcaselectiontype'].lower() in ["avg", "average", "sum"]:
+                    divider = 1.0
+                    if len(mcaData.shape) > 1:
+                        divider *= mcaData.shape[0]
+                        mcaData = numpy.sum(mcaData, axis=0, dtype=numpy.float32)
+                        while len(mcaData.shape) > 1:
+                            divider *= mcaData.shape[0]
+                            mcaData = mcaData.sum(axis=0)
+                        if selection['selectiontype'].lower() != "sum":
+                            mcaData /= divider
+                    else:
+                        mcaData = mcaData.value
+                output.x = [mcaChannels]
+                output.y = [mcaData]
+                output.info['selectiontype'] = "1D"
+            except:
+                print("exception", sys.exc_info())
+            return output
         elif selection['selectiontype'].upper() in ["SCAN", "MCA"]:
             output.info['selectiontype'] = "1D"
         elif selection['selectiontype'] == "3D":
@@ -377,10 +408,6 @@ class NexusDataSource(object):
                 # I cannot affort to fail here for something probably not used
                 if DEBUG:
                     print("Error reading positioners ", sys.exc_info())
-        output.x = None
-        output.y = None
-        output.m = None
-        output.data = None
         for cnt in ['y', 'x', 'm']:
             if not cnt in selection:
                 continue

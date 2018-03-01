@@ -629,13 +629,18 @@ class QNexusWidget(qt.QWidget):
             self.autoTable.build(self._autoCntList,
                                  self._autoAliasList)
             if self._mca:
-                print("MCA LIST = ", mcaList)
                 mcaAliasList = []
+                cleanedMcaList = []
                 for key in mcaList:
+                    root = key.split('/')
+                    root = "/" + root[1]
+                    if len(key) == len(root):
+                        cleanedMcaList.append(key)
+                    else:
+                        cleanedMcaList.append(key[len(root):])
                     mcaAliasList.append(posixpath.basename(key))
-                self.mcaTable.build(mcaList, mcaAliasList)
+                self.mcaTable.build(cleanedMcaList, mcaAliasList)
                 nTabs = self.tableTab.count()
-                print("nTabs = ", nTabs)
                 if (len(mcaList) > 0) and (nTabs < 3):
                     self.tableTab.insertTab(2, self.mcaTable, "MCA")
                 elif (len(mcaList)==0) and (nTabs > 2):
@@ -818,6 +823,7 @@ class QNexusWidget(qt.QWidget):
                not len(mcaSelection['selectionindex']):
                 #nothing to plot
                 continue
+            mcaIdx = 0
             for yMca in mcaSelection['selectionindex']:
                 sel = {}
                 sel['SourceName'] = self.data.sourceName * 1
@@ -836,10 +842,12 @@ class QNexusWidget(qt.QWidget):
                 sel['selection']['entry'] = entry
                 sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
                 sel['selection']['mca'] = [yMca]
+                sel['selection']['mcaselectiontype'] = mcaSelection['selectiontype'][mcaIdx]
+                mcaIdx += 1
                 sel['selection']['mcalist'] = mcaSelection['mcalist']
                 sel['selection']['LabelNames'] = mcaSelection['aliaslist']
                 #sel['selection']['aliaslist'] = cntSelection['aliaslist']
-                sel['selection']['selectiontype'] = mcaSelection['selectiontype']
+                sel['selection']['selectiontype'] = "MCA"
                 sel['mcaselection']  = True
                 aliases = mcaSelection['aliaslist']
                 """
