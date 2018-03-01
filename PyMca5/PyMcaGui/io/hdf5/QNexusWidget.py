@@ -808,6 +808,9 @@ class QNexusWidget(qt.QWidget):
         elif ddict["2d"]:
             self.autoTable.set2DEnabled(True, emit=False)
             self.cntTable.set2DEnabled(True, emit=False)
+        else:
+            self.autoTable.set2DEnabled(False, emit=False)
+            self.cntTable.set2DEnabled(False, emit=False)
 
     def buttonsSlot(self, ddict, emit=True):
         if self.data is None:
