@@ -119,27 +119,28 @@ class QNexusWidgetActions(qt.QWidget):
         self.replaceButton.clicked.connect(self._replaceClicked)
 
     def _setObject3DBox(self):
-        self.autoAddBox.setChecked(False)
-        self.meshBox.setChecked(False)
-        self.autoReplaceBox.setChecked(False)
-        self.autoOffBox.setChecked(True)
-        self.object3DBox.setChecked(True)
+        if self.object3DBox.isChecked():
+            self.meshBox.setChecked(True)
+            self.autoOffBox.setChecked(True)
+            self.autoReplaceBox.setChecked(False)
+            self.autoAddBox.setChecked(False)
         self.configurationChanged()
 
     def _setMeshBox(self):
-        self.autoAddBox.setChecked(False)
-        self.autoReplaceBox.setChecked(False)
-        self.autoOffBox.setChecked(True)
-        self.object3DBox.setChecked(False)
-        self.meshBox.setChecked(True)
+        if self.meshBox.isChecked():
+            self.autoAddBox.setChecked(False)
+            self.autoReplaceBox.setChecked(False)
+            self.autoOffBox.setChecked(True)
+        else:
+            self.object3DBox.setChecked(False)
         self.configurationChanged()
 
     def _setAutoOff(self):
-        self.object3DBox.setChecked(False)
-        self.meshBox.setChecked(False)
         self.autoAddBox.setChecked(False)
         self.autoReplaceBox.setChecked(False)
         self.autoOffBox.setChecked(True)
+        self.object3DBox.setChecked(False)
+        self.meshBox.setChecked(False)
         self.configurationChanged()
 
     def _setAutoAdd(self):

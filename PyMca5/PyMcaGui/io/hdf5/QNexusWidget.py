@@ -130,6 +130,7 @@ class QNexusWidget(qt.QWidget):
         self.tableTab.setContentsMargins(0, 0, 0, 0)    
         self.cntTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
         self.autoTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
+        self.tableTabOrder = ["AUTO", "USER", "MCA"]
         self.tableTab.addTab(self.autoTable, "AUTO")
         self.tableTab.addTab(self.cntTable, "USER")
         if self._mca:
@@ -155,13 +156,11 @@ class QNexusWidget(qt.QWidget):
             if ('PyMca.Object3D' in sys.modules) or \
                ('Object3D' in sys.modules) or \
                ('PyMca5.Object3D' in sys.modules):
-                self.cntTable.set3DEnabled(True)
-                self.autoTable.set3DEnabled(True)
                 self.actions.set3DEnabled(True)
             else:
-                self.cntTable.set3DEnabled(False)
-                self.autoTable.set3DEnabled(False)
                 self.actions.set3DEnabled(False)
+            self.cntTable.set2DEnabled(False)
+            self.autoTable.set2DEnabled(False)
             self.mainLayout.addWidget(self.actions)
         self.hdf5Widget.sigHDF5WidgetSignal.connect(self.hdf5Slot)
         self.cntTable.customContextMenuRequested[qt.QPoint].connect(\
@@ -592,6 +591,7 @@ class QNexusWidget(qt.QWidget):
         if currentEntry != self._lastEntry:
             self._lastEntry = None
             cntList = []
+            mcaList = []
             aliasList = []
             measurement = None
             scanned = []
@@ -645,6 +645,15 @@ class QNexusWidget(qt.QWidget):
                     self.tableTab.insertTab(2, self.mcaTable, "MCA")
                 elif (len(mcaList)==0) and (nTabs > 2):
                     self.tableTab.removeTab(2)
+            currentTab = qt.safe_str(self.tableTab.tabText( \
+                                    self.tableTab.currentIndex()))
+            if currentTab != "USER":
+                if (len(mcaList) > 0) and (len(cntList) == 0):
+                    idx = self.tableTabOrder.index("MCA")
+                    self.tableTab.setCurrentIndex(idx)
+                elif (len(mcaList) == 0) and (len(cntList) > 0):
+                    idx = self.tableTabOrder.index("AUTO")
+                    self.tableTab.setCurrentIndex(idx)
             self._lastEntry = currentEntry
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
@@ -792,10 +801,15 @@ class QNexusWidget(qt.QWidget):
 
     def _configurationChangedAction(self, ddict):
         if DEBUG:
-            print("_configurationChangedAction received")
+            print("_configurationChangedAction received", ddict)
+        if ddict["3d"]:
+            self.autoTable.set3DEnabled(True, emit=False)
+            self.cntTable.set3DEnabled(True, emit=False)
+        elif ddict["2d"]:
+            self.autoTable.set2DEnabled(True, emit=False)
+            self.cntTable.set2DEnabled(True, emit=False)
 
     def buttonsSlot(self, ddict, emit=True):
-        print("buttonsSlot ", ddict)
         if self.data is None:
             return
         action, selectionType = ddict['action'].split()
@@ -916,7 +930,6 @@ class QNexusWidget(qt.QWidget):
                 sel['legend'] += addLegend
                 selectionList.append(sel)
 
-        print("SELECTION LIST = ", selectionList)
         if not emit:
             return selectionList
         self._lastAction = "%s" % ddict['action']

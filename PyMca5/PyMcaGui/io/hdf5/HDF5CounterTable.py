@@ -46,6 +46,7 @@ class HDF5CounterTable(qt.QTableWidget):
         self.ySelection   = []
         self.monSelection = []
         self.__is3DEnabled = False
+        self.__is2DEnabled = False
         labels = ['Dataset', 'Axes', 'Signals', 'Monitor', 'Alias']
         self.setColumnCount(len(labels))
         for i in range(len(labels)):
@@ -139,14 +140,26 @@ class HDF5CounterTable(qt.QTableWidget):
         else:
             item.setText(alias)
 
-    def set3DEnabled(self, value):
+    def set3DEnabled(self, value, emit=True):
         if value:
             self.__is3DEnabled = True
         else:
             self.__is3DEnabled = False
             if len(self.xSelection) > 1:
-                self.xSelection = [1 * self.xSelection[0]]
-        self._update()
+                self.xSelection = self.xSelection[-1:]
+        self._update(emit=emit)
+
+    def set2DEnabled(self, value, emit=True):
+        if value:
+            self.__is2DEnabled = True
+            if len(self.xSelection) > 2:
+                self.xSelection = self.xSelection[-2:]
+        else:
+            self.__is2DEnabled = False
+            self.__is3DEnabled = False
+            if len(self.xSelection) > 1:
+                self.xSelection = self.xSelection[-1:]
+        self._update(emit=emit)
 
     def _aliasSlot(self, row, col):
         if self.__building:
@@ -166,15 +179,15 @@ class HDF5CounterTable(qt.QTableWidget):
             else:
                 if row in self.xSelection:
                     del self.xSelection[self.xSelection.index(row)]
-            if not self.__is3DEnabled:
+            if self.__is3DEnabled:
+                if len(self.xSelection) > 3:
+                    self.xSelection = self.xSelection[-3:]
+            elif self.__is2DEnabled:
                 if len(self.xSelection) > 2:
-                    #that is to support mesh plots
                     self.xSelection = self.xSelection[-2:]
+            else:
                 if len(self.xSelection) > 1:
                     self.xSelection = self.xSelection[-1:]
-            elif len(self.xSelection) > 3:
-                self.xSelection = self.xSelection[-3:]
-
         if col == 2:
             if ddict["state"]:
                 if row not in self.ySelection:
@@ -193,7 +206,7 @@ class HDF5CounterTable(qt.QTableWidget):
                 self.monSelection = self.monSelection[-1:]
         self._update()
 
-    def _update(self):
+    def _update(self, emit=True):
         axisLabels = ['X', 'Y', 'Z']
         for i in range(self.rowCount()):
             j = 1
@@ -222,10 +235,10 @@ class HDF5CounterTable(qt.QTableWidget):
             else:
                 if widget.isChecked():
                     widget.setChecked(False)
-        ddict = {}
-        ddict["event"] = "updated"
-        self.sigHDF5CounterTableSignal.emit(ddict)
-
+        if emit:
+            ddict = {}
+            ddict["event"] = "updated"
+            self.sigHDF5CounterTableSignal.emit(ddict)
 
     def getCounterSelection(self):
         ddict = {}
