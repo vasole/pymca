@@ -46,6 +46,8 @@ else:
 from . import HDF5Widget
 from . import HDF5Info
 from . import HDF5CounterTable
+from . import HDF5McaTable
+from . import QNexusWidgetActions
 try:
     from . import Hdf5NodeView
 except ImportError:
@@ -97,7 +99,7 @@ class QNexusWidget(qt.QWidget):
     sigRemoveSelection = qt.pyqtSignal(object)
     sigReplaceSelection = qt.pyqtSignal(object)
     sigOtherSignals = qt.pyqtSignal(object)
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, mca=False):
         qt.QWidget.__init__(self, parent)
         self.data = None
         self._dataSourceList = []
@@ -114,6 +116,7 @@ class QNexusWidget(qt.QWidget):
         self._dir = None
         self._lastAction = None
         self._lastEntry = None
+        self._mca = mca
         self.build()
 
     def build(self):
@@ -122,31 +125,56 @@ class QNexusWidget(qt.QWidget):
         self.splitter.setOrientation(qt.Qt.Vertical)
         self.hdf5Widget = HDF5Widget.HDF5Widget(self._defaultModel,
                                                 self.splitter)
+        self.hdf5Widget.setExpandsOnDoubleClick(False)
         self.hdf5Widget.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
         self.tableTab = qt.QTabWidget(self.splitter)
-        self.tableTab.setContentsMargins(0, 0, 0, 0)        
+        self.tableTab.setContentsMargins(0, 0, 0, 0)
         self.cntTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
         self.autoTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
+        self.tableTabOrder = ["AUTO", "USER", "MCA"]
         self.tableTab.addTab(self.autoTable, "AUTO")
         self.tableTab.addTab(self.cntTable, "USER")
+        if self._mca:
+            self.mcaTable = HDF5McaTable.HDF5McaTable(self.tableTab)
+            self.tableTab.addTab(self.mcaTable, "MCA")
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
-        if ('PyMca.Object3D' in sys.modules) or \
-           ('Object3D' in sys.modules) or \
-           ('PyMca5.Object3D' in sys.modules):
-            self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
-            self.cntTable.set3DEnabled(True)
-            self.autoTable.set3DEnabled(True)
+        BUTTONS = False
+        if BUTTONS:
+            if ('PyMca.Object3D' in sys.modules) or \
+               ('Object3D' in sys.modules) or \
+               ('PyMca5.Object3D' in sys.modules):
+                self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D', '3D'])
+                self.cntTable.set3DEnabled(True)
+                self.autoTable.set3DEnabled(True)
+            else:
+                self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D'])
+                self.cntTable.set3DEnabled(False)
+                self.autoTable.set3DEnabled(False)
+            self.mainLayout.addWidget(self.buttons)
         else:
-            self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D'])
-            self.cntTable.set3DEnabled(False)
-            self.autoTable.set3DEnabled(False)
-        self.mainLayout.addWidget(self.buttons)
+            self.actions = QNexusWidgetActions.QNexusWidgetActions(self)
+            if ('PyMca.Object3D' in sys.modules) or \
+               ('Object3D' in sys.modules) or \
+               ('PyMca5.Object3D' in sys.modules):
+                self.actions.set3DEnabled(True)
+            else:
+                self.actions.set3DEnabled(False)
+            self.cntTable.set2DEnabled(False)
+            self.autoTable.set2DEnabled(False)
+            self.mainLayout.addWidget(self.actions)
         self.hdf5Widget.sigHDF5WidgetSignal.connect(self.hdf5Slot)
         self.cntTable.customContextMenuRequested[qt.QPoint].connect(\
                         self._counterTableCustomMenuSlot)
-        self.buttons.sigButtonsSignal.connect(self.buttonsSlot)
 
+        if BUTTONS:
+            self.buttons.sigButtonsSignal.connect(self.buttonsSlot)
+        else:
+            self.actions.sigAddSelection.connect(self._addAction)
+            self.actions.sigRemoveSelection.connect(self._removeAction)
+            self.actions.sigReplaceSelection.connect(self._replaceAction)
+            self.actions.sigActionsConfigurationChanged.connect(\
+                self._configurationChangedAction)
 
         # Some convenience functions to customize the table
         # They could have been included in other class inheriting
@@ -257,6 +285,7 @@ class QNexusWidget(qt.QWidget):
         else:
             ddict['HDF5'] ={'WidgetConfiguration':\
                              self.getWidgetConfiguration()}
+        print("TODO - Add selection options")
         ddict.write(fname)
 
     def _deleteAllCountersFromTable(self):
@@ -360,6 +389,7 @@ class QNexusWidget(qt.QWidget):
             if type(self._aliasList) == type(""):
                 self._aliasList = [ddict['aliases']]
         self.cntTable.build(self._cntList, self._aliasList)
+        print("TODO - Add selection options")
 
     def setDataSource(self, dataSource):
         self.data = dataSource
@@ -562,9 +592,11 @@ class QNexusWidget(qt.QWidget):
         if currentEntry != self._lastEntry:
             self._lastEntry = None
             cntList = []
+            mcaList = []
             aliasList = []
             measurement = None
             scanned = []
+            mcaList = []
             if posixpath.dirname(entryName) != entryName:
                 with h5py.File(ddict['file'], "r") as h5file:
                     measurement = NexusTools.getMeasurementGroup(h5file,
@@ -572,7 +604,10 @@ class QNexusWidget(qt.QWidget):
                     scanned = NexusTools.getScannedPositioners(h5file,
                                                                ddict['name'])
                     if measurement is not None:
-                        measurement = [item.name for key,item in measurement.items() if self._isNumeric(item)]
+                        measurement = [item.name for key,item in measurement.items() \
+                                       if self._isNumeric(item)]
+                    if self._mca:
+                        mcaList = NexusTools.getMcaList(h5file, entryName)
             for i in range(len(scanned)):
                 key = scanned[i]
                 cntList.append(key)
@@ -594,10 +629,44 @@ class QNexusWidget(qt.QWidget):
             self._autoCntList = cleanedCntList
             self.autoTable.build(self._autoCntList,
                                  self._autoAliasList)
+            if self._mca:
+                mcaAliasList = []
+                cleanedMcaList = []
+                for key in mcaList:
+                    root = key.split('/')
+                    root = "/" + root[1]
+                    if len(key) == len(root):
+                        cleanedMcaList.append(key)
+                    else:
+                        cleanedMcaList.append(key[len(root):])
+                    mcaAliasList.append(posixpath.basename(key))
+                self.mcaTable.build(cleanedMcaList, mcaAliasList)
+                nTabs = self.tableTab.count()
+                if (len(mcaList) > 0) and (nTabs < 3):
+                    self.tableTab.insertTab(2, self.mcaTable, "MCA")
+                elif (len(mcaList)==0) and (nTabs > 2):
+                    self.tableTab.removeTab(2)
+            currentTab = qt.safe_str(self.tableTab.tabText( \
+                                    self.tableTab.currentIndex()))
+            if currentTab != "USER":
+                if (len(mcaList) > 0) and (len(cntList) == 0):
+                    idx = self.tableTabOrder.index("MCA")
+                    self.tableTab.setCurrentIndex(idx)
+                elif (len(mcaList) == 0) and (len(cntList) > 0):
+                    idx = self.tableTabOrder.index("AUTO")
+                    self.tableTab.setCurrentIndex(idx)
             self._lastEntry = currentEntry
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
                 return self.itemRightClickedSlot(ddict)
+            if ddict['mouse'] == "left":
+                # If parent is root do it even if not NXentry??
+                if ddict['type'] in ['NXentry', 'Entry']:
+                    auto = self.actions.getConfiguration()["auto"]
+                    if auto == "ADD":
+                        self._addAction()
+                    elif auto == "REPLACE":
+                        self._replaceAction()
         if ddict['event'] == "itemDoubleClicked":
             if ddict['type'] in ['Dataset']:
                 currentIndex = self.tableTab.currentIndex()
@@ -661,6 +730,89 @@ class QNexusWidget(qt.QWidget):
                 if DEBUG:
                     print("Unhandled item type: %s" % ddict['dtype'])
 
+
+    def _addMcaAction(self):
+        if DEBUG:
+            print("_addMcaAction received")
+        self.mcaAction("ADD")
+
+    def _removeMcaAction(self):
+        if DEBUG:
+            print("_removeMcaAction received")
+        self.mcaAction("REMOVE")
+
+    def _replaceMcaAction(self):
+        if DEBUG:
+            print("_replaceMcaAction received")
+        self.mcaAction("REPLACE")
+
+    def mcaAction(self, action="ADD"):
+        if DEBUG:
+            print("mcaAction %s" % action)
+        self.mcaTable.getMcaSelection()
+        ddict = {}
+        ddict['action'] = "%s MCA" % action
+        self.buttonsSlot(ddict, emit=True)
+
+    def _addAction(self):
+        if DEBUG:
+            print("_addAction received")
+        # formerly we had action and selection type
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "MCA":
+            self._addMcaAction()
+        else:
+            ddict = {}
+            mca = self.actions.getConfiguration()["mca"]
+            if mca:
+                ddict['action'] = "ADD MCA"
+            else:
+                ddict['action'] = "ADD SCAN"
+            self.buttonsSlot(ddict, emit=True)
+
+    def _removeAction(self):
+        if DEBUG:
+            print("_removeAction received")
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "MCA":
+            self._removeMcaAction()
+        else:
+            ddict = {}
+            mca = self.actions.getConfiguration()["mca"]
+            if mca:
+                ddict['action'] = "REMOVE MCA"
+            else:
+                ddict['action'] = "REMOVE SCAN"
+            self.buttonsSlot(ddict, emit=True)
+
+    def _replaceAction(self):
+        if DEBUG:
+            print("_replaceAction received")
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "MCA":
+            self._replaceMcaAction()
+        else:
+            ddict = {}
+            mca = self.actions.getConfiguration()["mca"]
+            if mca:
+                ddict['action'] = "REPLACE MCA"
+            else:
+                ddict['action'] = "REPLACE SCAN"
+            self.buttonsSlot(ddict, emit=True)
+
+    def _configurationChangedAction(self, ddict):
+        if DEBUG:
+            print("_configurationChangedAction received", ddict)
+        if ddict["3d"]:
+            self.autoTable.set3DEnabled(True, emit=False)
+            self.cntTable.set3DEnabled(True, emit=False)
+        elif ddict["2d"]:
+            self.autoTable.set2DEnabled(True, emit=False)
+            self.cntTable.set2DEnabled(True, emit=False)
+        else:
+            self.autoTable.set2DEnabled(False, emit=False)
+            self.cntTable.set2DEnabled(False, emit=False)
+
     def buttonsSlot(self, ddict, emit=True):
         if self.data is None:
             return
@@ -669,19 +821,70 @@ class QNexusWidget(qt.QWidget):
         if not len(entryList):
             return
         text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        mcaSelection = {'mcalist':[], 'selectionindex':[]}
+        cntSelection = {'cntlist':[], 'y':[]}
         if text.upper() == "AUTO":
             cntSelection = self.autoTable.getCounterSelection()
             # self._aliasList = cntSelection['aliaslist']
+        elif text.upper() == "MCA":
+            mcaSelection = self.mcaTable.getMcaSelection()
+            print("mcaSelection = ", mcaSelection)
         else:
             cntSelection = self.cntTable.getCounterSelection()
             self._aliasList = cntSelection['aliaslist']
         selectionList = []
         for entry, filename in entryList:
-            if not len(cntSelection['cntlist']):
+            if not len(cntSelection['cntlist']) and \
+               not len(mcaSelection['mcalist']):
                 continue
-            if not len(cntSelection['y']):
+            if not len(cntSelection['y']) and \
+               not len(mcaSelection['selectionindex']):
                 #nothing to plot
                 continue
+            mcaIdx = 0
+            for yMca in mcaSelection['selectionindex']:
+                sel = {}
+                sel['SourceName'] = self.data.sourceName * 1
+                sel['SourceType'] = "HDF5"
+                fileIndex = self.data.sourceName.index(filename)
+                phynxFile  = self.data._sourceObjectList[fileIndex]
+                entryIndex = list(phynxFile["/"].keys()).index(entry[1:])
+                sel['Key']        = "%d.%d" % (fileIndex+1, entryIndex+1)
+                sel['legend']     = os.path.basename(sel['SourceName'][0])+\
+                                    " " + posixpath.basename(entry) #it was sel['Key']
+                sel['selection'] = {}
+                sel['selection']['sourcename'] = filename
+                #deal with the case the "entry" is a dataset hunging at root level
+                if isinstance(phynxFile[entry], h5py.Dataset):
+                    entry = "/"
+                sel['selection']['entry'] = entry
+                sel['selection']['key'] = "%d.%d" % (fileIndex+1, entryIndex+1)
+                sel['selection']['mca'] = [yMca]
+                sel['selection']['mcaselectiontype'] = mcaSelection['selectiontype'][mcaIdx]
+                mcaIdx += 1
+                sel['selection']['mcalist'] = mcaSelection['mcalist']
+                sel['selection']['LabelNames'] = mcaSelection['aliaslist']
+                #sel['selection']['aliaslist'] = cntSelection['aliaslist']
+                sel['selection']['selectiontype'] = "MCA"
+                sel['mcaselection']  = True
+                aliases = mcaSelection['aliaslist']
+                """
+                if len(cntSelection['x']) and len(cntSelection['m']):
+                    addLegend = " (%s/%s) vs %s" % (aliases[yCnt],
+                                                   aliases[cntSelection['m'][0]],
+                                                   aliases[cntSelection['x'][0]])
+                elif len(cntSelection['x']):
+                    addLegend = " %s vs %s" % (aliases[yCnt],
+                                               aliases[cntSelection['x'][0]])
+                elif len(cntSelection['m']):
+                    addLegend = " (%s/%s)" % (aliases[yCnt],
+                                            aliases[cntSelection['m'][0]])
+                else:
+                    addLegend = " %s" % aliases[yCnt]
+                sel['legend'] += addLegend
+                """
+                selectionList.append(sel)
+
             for yCnt in cntSelection['y']:
                 sel = {}
                 sel['SourceName'] = self.data.sourceName * 1

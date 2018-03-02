@@ -125,6 +125,158 @@ def getEntryName(path):
         candidate = posixpath.dirname(entry)
     return entry
 
+
+def getMcaList(h5file, path, dataset=False, ignore=None):
+    """
+    Retrieve the hdf5 dataset names down a given path where the interpretation attribute
+    is set to "spectrum".
+
+    It also considers as eligible datasets, those whose last dimension is more than 1 and
+    their name or parent group name start by mca.
+
+    If dataset is False (default) it returns the dataset names.
+    If dataset is True it returns the actual datasets.
+
+    Apparently visititems ignores links. The following situation would not work:
+
+    Actual dataset in /entry/detector/data with no interpretation attribute set
+    and link to it named /entry/measurement/mca
+
+    """
+    if ignore is None:
+        ignore = ["channels",
+                  "calibration",
+                  "live_time",
+                  "preset_time",
+                  "elapsed_time",
+                  "i0",
+                  "it",
+                  "i0_to_flux_factor",
+                  "it_to_flux_factor",
+                  "time",
+                  "energy"]
+    datasetList =[]
+    def visit_function(name, obj):
+        if isDataset(obj):
+            append = False
+            forget = False
+            namebased = False
+            for key, value in obj.attrs.items():
+                if key == "interpretation":
+                    if value in ["spectrum", b"spectrum"]:
+                        append = True
+                    else:
+                        forget = True
+            if (not append) and (not forget):
+                #support (risky) name based solutions too.
+                # the dataset name starts with MCA or
+                # the parent group starts with MCA
+                if posixpath.basename(name).lower().startswith("mca") or \
+                   posixpath.basename(posixpath.dirname(name)).lower().startswith("mca"):
+                    append = True
+                    namebased = True
+
+            if append:
+                # an actual MCA spectrum will have more than one channel
+                if (not namebased) and ("measurement" in name):
+                    # ALBA sets the interpretation attribute to spectrum
+                    # to every counter in the measurement group
+                    if len(obj.shape) == 1:
+                        # I have to figure out if in fact it is just a
+                        # misuse of the interpretation attribute
+                        posnames = getScannedPositioners(h5file, path)
+                        for motor in posnames:
+                            if h5file[motor].size == obj.size:
+                                append = False
+            if append:
+                # perform some name filtering
+                if posixpath.basename(obj.name).lower() in ignore:
+                    append = False
+
+            if append:
+                # the measurement group
+                if len(obj.shape) > 0:
+                    if obj.shape[-1] > 1:
+                        if dataset:
+                            datasetList.append(obj)
+                        else:
+                            datasetList.append(obj.name)
+
+    h5file[path].visititems(visit_function)
+    return datasetList
+
+
+def getMcaObjectPaths(h5file, mcaPath):
+    """
+    Given an h5py instance and the path to a dataset, try to retrieve all the
+    associated information returning an McaSpectrumObject.
+
+    McaSpectrumObject is a DataObject where data are the counts and the info
+    part contains the information below
+
+    - live_time
+    - preset_time
+    - elapsed_time
+    - counts
+    - channels
+    - calibration
+    - i0
+    - it
+    - i02flux
+    - it2flux    
+    """
+
+    mca = {}
+    mca["counts"] = mcaPath
+    mcaKeys = ["channels",
+               "calibration",
+               "live_time",
+               "preset_time",
+               "elapsed_time",
+               "i0",
+               "it",
+               "i0_to_flux_factor",
+               "it_to_flux_factor"]
+
+    #mca["channels"] = None
+    #mca["i0"] = None
+    #mca["live_time"] = None
+    #mca["preset_time"]= None
+    #mca["calibration"] = [0.0, 1.0, 0.0]
+    #mca["i0"] = None
+    #mca["it"] = None
+    #mca["i0_to_flux_factor"] = 1.0
+    #mca["it_to_flux_factor"] = 1.0
+
+    # look at the same level as the dataset
+    parentPath = posixpath.dirname(mcaPath)
+    searchPaths =[parentPath]
+    
+    # look at a container group named info at the same level
+    if "info" in h5file[parentPath]:
+        infoPath = posixpath.join(parentPath, "info")
+        searchPaths.append(infoPath)
+
+    # look at one level higher if the container is an NXdetector
+    detectorPath = posixpath.dirname(parentPath)
+    nxClass = ""
+    obj = h5file[detectorPath]
+    for key, value in obj.attrs.items():
+        if key in ["NX_class", b"NX_class"]:
+            if value in ["NXdetector", b"NXdetector"]:
+                searchPaths.append(detectorPath)
+
+    # look for the relevant information in those groups
+    for path in searchPaths:
+        group = h5file[path]
+        items_list = list(group.items())
+        for key, item in items_list:
+            baseKey = posixpath.basename(key)
+            if (baseKey in mcaKeys) and (key != mcaPath):
+                if baseKey not in mca:
+                    mca[baseKey] = item.name
+    return mca
+
 def getNXClassGroups(h5file, path, classes, single=False):
     """
     Retrieve the hdf5 groups inside a given path where the NX_class attribute
@@ -280,6 +432,8 @@ if __name__ == "__main__":
         sys.exit()
     h5 = h5py.File(sourcename)    
     entries = getNXClassGroups(h5, "/", ["NXentry", b"NXentry"], single=False)
+    if not len(entries):
+        entries = [item for name, item in h5["/"].items() if isGroup(item)]
     for entry in entries:
         print("Entry name = %s" % entry.name)
         if "title" in entry:
@@ -305,3 +459,12 @@ if __name__ == "__main__":
                 print("Scanned motors %d = %s" % (i, scanned[i]))
         else:
             print("Unknown scanned motors")
+        mca = getMcaList(h5, entry.name, dataset=False)
+        if len(mca):
+            for i in range(len(mca)):
+                print("MCA dataset %d = %s" % (i, mca[i]))
+                info = getMcaObjectPaths(h5, mca[i])
+                for key in info:
+                    print('mca["%s"] = %s' % (key, info[key]))
+        else:
+            print("No MCA found")
