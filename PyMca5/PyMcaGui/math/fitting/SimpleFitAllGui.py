@@ -167,7 +167,7 @@ class SimpleFitAllGui(SimpleFitGui):
             msg.setWindowTitle("Output file(s) exists")
             msg.setIcon(qt.QMessageBox.Information)
             msg.setText("Do you want to delete current output files?")
-            msg.setStandardButtons(qt.QMessageBox.Yes | qt.QMessageBox.No)
+            msg.setStandardButtons(qt.QMessageBox.Yes | qt.QMessageBox.Cancel)
             answer = msg.exec_()
             if answer == qt.QMessageBox.Yes:
                 try:
@@ -181,6 +181,8 @@ class SimpleFitAllGui(SimpleFitGui):
                         qt.QMessageBox.NoButton,
                         qt.QMessageBox.NoButton)
                     return
+            else:
+                return
         try:
             self._startWork()
         except:
