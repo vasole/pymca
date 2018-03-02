@@ -293,6 +293,8 @@ class SimpleFitAll(object):
             results.attrs["NX_class"] = to_h5py_utf8("NXcollection")
 
             estimation = results.create_group("estimation")
+            estimation.attrs["NX_class"] = to_h5py_utf8("NXcollection")
+
             for p in self.fit.paramlist:
                 pgroup = estimation.create_group(p["name"])
                 # constraint code can be an int, convert to str
@@ -315,7 +317,7 @@ class SimpleFitAll(object):
                 elif key == "parameters":
                     output_key = "parameter_names"
                 elif key == "sigma_values":
-                    output_key = "parameter_sigma"
+                    output_key = "parameter_sigmas"
                 else:
                     output_key = key
 
