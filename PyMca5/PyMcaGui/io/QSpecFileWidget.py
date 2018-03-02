@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -111,17 +111,19 @@ class QSpecFileWidget(QSelectorWidget.QSelectorWidget):
         if OBJECT3D:
             self.object3DBox = qt.QCheckBox(autoBox)
             self.object3DBox.setText("3D On")
+            self.object3DBox.setToolTip("Use OpenGL and enable 2D & 3D selections")
             autoBoxLayout.addWidget(self.object3DBox, row, 0)
             self.mcaTable.sigMcaDeviceSelected.connect(self.mcaDeviceSelected)
 
         self.meshBox = qt.QCheckBox(autoBox)
-        self.meshBox.setText("Mesh")
-        self.meshBox.setToolTip("Consider selection as a regular mesh")
+        self.meshBox.setText("2D On")
+        self.meshBox.setToolTip("Enable 2D selections (mesh and scatter)")
         autoBoxLayout.addWidget(self.meshBox, row, 1)
 
 
         self.forceMcaBox = qt.QCheckBox(autoBox)
         self.forceMcaBox.setText("Force MCA")
+        self.forceMcaBox.setToolTip("Interpret selections as MCA")
         autoBoxLayout.addWidget(self.forceMcaBox, row, 2)
 
         self.mainLayout.addWidget(self.splitter)
