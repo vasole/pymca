@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -1141,7 +1141,7 @@ class TiffIO(object):
                 outputIFD += struct.pack(fmt, TAG_IMAGE_DESCRIPTION,
                                          FIELD_TYPE_OUT['s'],
                                          descriptionLength,
-                                         description)
+                                         imageDescription)
 
         if len(stripOffsets) == 1:
             fmt = st + 'HHII'
