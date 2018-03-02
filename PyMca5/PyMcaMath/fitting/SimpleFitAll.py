@@ -259,19 +259,23 @@ class SimpleFitAll(object):
         self._appendOneResultToHdf5(resultDict=fitOutput["result"])
 
     def _appendOneResultToHdf5(self, resultDict):
+        # TODO: this code should become a more general function,
+        #       reusable by other fit modules and plugins
         idx = self._currentFitIndex
 
         # append to existing file
         with h5py.File(self.getOutputFileName(), mode="r+") as h5f:
             entry = h5f.create_group("fit_curve_%d" % idx)
             entry.attrs["NX_class"] = to_h5py_utf8("NXentry")
-            entry.attrs["title"] = to_h5py_utf8("Fit of curve '%s'" % self.legends[idx])
-            entry.attrs["default"] = to_h5py_utf8("results/plot")
-            entry.create_dataset("start_time", data=to_h5py_utf8(self._startTime))
+            entry.attrs["default"] = to_h5py_utf8("fit_process/results/plot")
+            entry.create_dataset("start_time",
+                                 data=to_h5py_utf8(self._startTime))
             entry.create_dataset("end_time", data=to_h5py_utf8(self._endTime))
-            entry.create_dataset("curve_legend", data=to_h5py_utf8(self.legends[idx]))
+            entry.create_dataset("title",
+                                 data=to_h5py_utf8("Fit of '%s'" % self.legends[idx]))
 
             process = entry.create_group("fit_process")
+            process.attrs["NX_class"] = to_h5py_utf8("NXprocess")
             process.create_dataset("program", data=to_h5py_utf8("pymca"))
             process.create_dataset("version", data=to_h5py_utf8(PyMca5.version()))
             process.create_dataset("date", data=to_h5py_utf8(self._endTime))
@@ -279,10 +283,14 @@ class SimpleFitAll(object):
             configIni = ConfigDict.ConfigDict(self.fit.getConfiguration()).tostring()
             configuration = process.create_group("configuration")
             configuration.attrs["NX_class"] = to_h5py_utf8("NXnote")
-            configuration.create_dataset("type", data=to_h5py_utf8("text/ini"))
+            configuration.create_dataset("type", data=to_h5py_utf8("text/plain"))
             configuration.create_dataset("data", data=to_h5py_utf8(configIni))
+            configuration.create_dataset("file_name", data=to_h5py_utf8("SimpleFit.ini"))
+            configuration.create_dataset("description",
+                                         data=to_h5py_utf8("Fit configuration"))
 
-            results = entry.create_group("results")
+            results = process.create_group("results")
+            results.attrs["NX_class"] = to_h5py_utf8("NXcollection")
 
             estimation = results.create_group("estimation")
             for p in self.fit.paramlist:
@@ -302,14 +310,25 @@ class SimpleFitAll(object):
                     if DEBUG:
                         print("skipping key %s (not a text string)" % key)
                     continue
+                if key == "fittedvalues":
+                    output_key = "parameter_values"
+                elif key == "parameters":
+                    output_key = "parameter_names"
+                elif key == "sigma_values":
+                    output_key = "parameter_sigma"
+                else:
+                    output_key = key
+
                 value_dtype = numpy.array(value).dtype
                 if numpy.issubdtype(value_dtype, numpy.number) or\
                         numpy.issubdtype(value_dtype, numpy.bool_):
                     # straightforward conversion to HDF5
-                    results.create_dataset(key, data=value)
+                    results.create_dataset(output_key,
+                                           data=value)
                 elif numpy.issubdtype(value_dtype, numpy.character):
                     # ensure utf-8 output
-                    results.create_dataset(key, data=to_h5py_utf8(value))
+                    results.create_dataset(output_key,
+                                           data=to_h5py_utf8(value))
 
             plot = results.create_group("plot")
             plot.attrs["NX_class"] = to_h5py_utf8("NXdata")
