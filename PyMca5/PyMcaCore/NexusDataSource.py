@@ -348,13 +348,13 @@ class NexusDataSource(object):
                     mcaCalibration = numpy.array([0.0, 1.0, 0.0])
                 output.info["McaCalib"] = mcaCalibration
                 if "preset_time" in mcaObjectPaths:
-                    mcainfo["McaPresetTime"]= \
+                    output.info["McaPresetTime"]= \
                                     float(h5File[mcaObjectPaths["preset_time"]].value)
                 if "elapsed_time" in mcaObjectPaths:
-                    mcainfo["McaRealTime"]= \
+                    output.info["McaRealTime"]= \
                                     float(h5File[mcaObjectPaths["elapsed_time"]].value)
                 if "live_time" in mcaObjectPaths:
-                    mcainfo["McaLiveTime"]= \
+                    output.info["McaLiveTime"]= \
                                     float(h5File[mcaObjectPaths["live_time"]].value)
                 if selection['mcaselectiontype'].lower() in ["avg", "average", "sum"]:
                     divider = 1.0
@@ -368,11 +368,12 @@ class NexusDataSource(object):
                             mcaData /= divider
                     else:
                         mcaData = mcaData.value
-                output.x = [mcaChannels]
-                output.y = [mcaData]
-                output.info['selectiontype'] = "1D"
             except:
                 print("exception", sys.exc_info())
+                return output
+            output.x = [mcaChannels]
+            output.y = [mcaData]
+            output.info['selectiontype'] = "1D"
             return output
         elif selection['selectiontype'].upper() in ["SCAN", "MCA"]:
             output.info['selectiontype'] = "1D"
