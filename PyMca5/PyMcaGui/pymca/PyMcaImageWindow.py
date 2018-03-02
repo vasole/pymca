@@ -176,6 +176,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                         nColumns = numpy.argmin(abs(x0-x0[0]) < 1.0e-6)
                         nRows = x1.size / nColumns
                         if nRows!= int(nRows):
+                            print("%f != %d" % (nRows, int(nRows)))
                             raise ValueError("2D Selection not understood")
                         transpose = False
                         nColumns = int(nColumns)
@@ -185,6 +186,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                         nRows = numpy.argmin(abs(x1-x1[0]) < 1.0e-6)
                         nColumns = x0.size / nRows
                         if nColumns != int(nColumns):
+                            print("%f != %d" % (nColumns, int(nColumns)))
                             raise ValueError("2D Selection not understood")
                         transpose = True
                         nRows = int(nRows)
