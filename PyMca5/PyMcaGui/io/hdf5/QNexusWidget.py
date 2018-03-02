@@ -125,6 +125,7 @@ class QNexusWidget(qt.QWidget):
         self.splitter.setOrientation(qt.Qt.Vertical)
         self.hdf5Widget = HDF5Widget.HDF5Widget(self._defaultModel,
                                                 self.splitter)
+        self.hdf5Widget.setExpandsOnDoubleClick(False)
         self.hdf5Widget.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
         self.tableTab = qt.QTabWidget(self.splitter)
         self.tableTab.setContentsMargins(0, 0, 0, 0)
