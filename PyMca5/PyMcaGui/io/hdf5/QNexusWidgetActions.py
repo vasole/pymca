@@ -47,7 +47,7 @@ class QNexusWidgetActions(qt.QWidget):
         self._build()
 
     def _build(self):
-        self.mainLayout = qt.QVBoxLayout(self)        
+        self.mainLayout = qt.QVBoxLayout(self)
         autoBox = qt.QWidget(self)
         autoBoxLayout = qt.QGridLayout(autoBox)
         autoBoxLayout.setContentsMargins(0, 0, 0, 0)
@@ -74,12 +74,12 @@ class QNexusWidgetActions(qt.QWidget):
 
         self.object3DBox = qt.QCheckBox(autoBox)
         self.object3DBox.setText("3D On")
-        self.object3DBox.setToolTip("Enable 3-Axes selections")
+        self.object3DBox.setToolTip("Use OpenGL and Enable 3-Axes selections")
         autoBoxLayout.addWidget(self.object3DBox, row, 0)
 
         self.meshBox = qt.QCheckBox(autoBox)
         self.meshBox.setText("2D On")
-        self.meshBox.setToolTip("Enable 2-Axes selections")
+        self.meshBox.setToolTip("Enable 2-Axes selections (mesh and scatter)")
         autoBoxLayout.addWidget(self.meshBox, row, 1)
 
 
@@ -87,7 +87,7 @@ class QNexusWidgetActions(qt.QWidget):
         self.forceMcaBox.setText("Force MCA")
         self.forceMcaBox.setToolTip("Interpret selections as MCA")
         autoBoxLayout.addWidget(self.forceMcaBox, row, 2)
-    
+
         self.mainLayout.addWidget(autoBox)
 
         self.buttonBox = qt.QWidget(self)
@@ -120,7 +120,7 @@ class QNexusWidgetActions(qt.QWidget):
 
     def _setObject3DBox(self):
         if self.object3DBox.isChecked():
-            self.meshBox.setChecked(True)
+            self.meshBox.setChecked(False)
             self.autoOffBox.setChecked(True)
             self.autoReplaceBox.setChecked(False)
             self.autoAddBox.setChecked(False)
@@ -131,7 +131,6 @@ class QNexusWidgetActions(qt.QWidget):
             self.autoAddBox.setChecked(False)
             self.autoReplaceBox.setChecked(False)
             self.autoOffBox.setChecked(True)
-        else:
             self.object3DBox.setChecked(False)
         self.configurationChanged()
 
@@ -198,7 +197,7 @@ class QNexusWidgetActions(qt.QWidget):
         if flag:
             self.object3DBox.setEnabled(True)
         else:
-            wasChecked = self.object3DBox.isChecked() 
+            wasChecked = self.object3DBox.isChecked()
             self.object3DBox.setChecked(False)
             self.object3DBox.setEnabled(False)
             if wasChecked:
@@ -236,4 +235,4 @@ if __name__ == "__main__":
     w.sigReplaceSelection.connect(replaceSelection)
     w.sigActionsConfigurationChanged.connect(configurationChanged)
     sys.exit(app.exec_())
-    
+

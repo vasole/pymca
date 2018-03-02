@@ -143,6 +143,7 @@ class HDF5CounterTable(qt.QTableWidget):
     def set3DEnabled(self, value, emit=True):
         if value:
             self.__is3DEnabled = True
+            self.__is2DEnabled = True
         else:
             self.__is3DEnabled = False
             if len(self.xSelection) > 1:
@@ -152,11 +153,11 @@ class HDF5CounterTable(qt.QTableWidget):
     def set2DEnabled(self, value, emit=True):
         if value:
             self.__is2DEnabled = True
+            self.__is3DEnabled = False
             if len(self.xSelection) > 2:
                 self.xSelection = self.xSelection[-2:]
         else:
             self.__is2DEnabled = False
-            self.__is3DEnabled = False
             if len(self.xSelection) > 1:
                 self.xSelection = self.xSelection[-1:]
         self._update(emit=emit)

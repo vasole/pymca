@@ -127,7 +127,7 @@ class QNexusWidget(qt.QWidget):
                                                 self.splitter)
         self.hdf5Widget.setSelectionMode(qt.QAbstractItemView.ExtendedSelection)
         self.tableTab = qt.QTabWidget(self.splitter)
-        self.tableTab.setContentsMargins(0, 0, 0, 0)    
+        self.tableTab.setContentsMargins(0, 0, 0, 0)
         self.cntTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
         self.autoTable = HDF5CounterTable.HDF5CounterTable(self.tableTab)
         self.tableTabOrder = ["AUTO", "USER", "MCA"]
@@ -165,7 +165,7 @@ class QNexusWidget(qt.QWidget):
         self.hdf5Widget.sigHDF5WidgetSignal.connect(self.hdf5Slot)
         self.cntTable.customContextMenuRequested[qt.QPoint].connect(\
                         self._counterTableCustomMenuSlot)
-        
+
         if BUTTONS:
             self.buttons.sigButtonsSignal.connect(self.buttonsSlot)
         else:
