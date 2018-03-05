@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -81,7 +81,7 @@ class ConsoleStackPlugin(StackPluginBase.StackPluginBase):
                 banner = "%s Stack Console Window.\n" % self.windowTitle()
             except:
                 banner = "Stack Console Window.\n"
-            banner += "Use plugin to access the stack plugin\n"
+            banner += "Use plugin to access the stack plugin interface.\n"
             self._widget = QIPythonWidget.QIPythonWidget(customBanner=banner)
             self._widget.pushVariables({"plugin":self})
         self._widget.show()
