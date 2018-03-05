@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -79,11 +79,14 @@ class ConsolePlugin(Plugin1DBase.Plugin1DBase):
     def _embed(self):
         if self._widget is None:
             try:
-                banner = "%s Console 1D Window" % self.windowTitle()
+                banner = "%s Console 1D Window.\n" % self.windowTitle()
             except:
-                banner = "Console 1D Window"
+                banner = "%s Console 1D Window.\n" % self.windowTitle()
+            banner += "Use plt to access the plot.\n"
+            banner += "Use plugin to access the plugin interface"
             self._widget = QIPythonWidget.QIPythonWidget(customBanner=banner)
-            self._widget.pushVariables({"plugin":self})
+            self._widget.pushVariables({"plt": self._plotWindow,
+                                        "plugin": self})
         self._widget.show()
         self._widget.raise_()
 
