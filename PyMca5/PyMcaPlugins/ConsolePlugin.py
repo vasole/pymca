@@ -83,7 +83,7 @@ class ConsolePlugin(Plugin1DBase.Plugin1DBase):
             except:
                 banner = "%s Console 1D Window.\n" % self.windowTitle()
             banner += "Use plt to access the plot.\n"
-            banner += "Use plugin to access the plugin interface"
+            banner += "Use plugin to access the plugin interface.\n"
             self._widget = QIPythonWidget.QIPythonWidget(customBanner=banner)
             self._widget.pushVariables({"plt": self._plotWindow,
                                         "plugin": self})
