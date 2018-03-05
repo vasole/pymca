@@ -852,10 +852,15 @@ class TiffIO(object):
         fd.seek(0, os.SEEK_END)
 
         # get the description information from the input information
-        if info is None:
-            description = info
+        if not isinstance(info, dict):
+            if hasattr(info, "decode") or hasattr(info, "encode"):
+                # provided information is text like
+                description = info
+            else:
+                # convert to a string representation
+                description = "%s" % info
         else:
-            description = "%s" % ""
+            description = ""
             for key in info.keys():
                 description += "%s=%s\n"  % (key, info[key])
 
