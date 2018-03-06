@@ -45,6 +45,7 @@ class HDF5CounterTable(qt.QTableWidget):
         self.xSelection   = []
         self.ySelection   = []
         self.monSelection = []
+        self.__oldSelection = self.getCounterSelection()
         self.__is3DEnabled = False
         self.__is2DEnabled = False
         labels = ['Dataset', 'Axes', 'Signals', 'Monitor', 'Alias']
@@ -65,6 +66,9 @@ class HDF5CounterTable(qt.QTableWidget):
 
     def build(self, cntlist, aliaslist=None):
         self.__building = True
+        if len(cntlist):
+            if len(self.cntList):
+                self.__oldSelection = self.getCounterSelection()
         if aliaslist is None:
             aliaslist = []
             for item in cntlist:
@@ -103,6 +107,7 @@ class HDF5CounterTable(qt.QTableWidget):
         self.resizeColumnToContents(1)
         self.resizeColumnToContents(2)
         self.resizeColumnToContents(3)
+        self.setCounterSelection(self.__oldSelection)
         self.__building = False
 
     def __addLine(self, i, cntlabel):
@@ -251,6 +256,8 @@ class HDF5CounterTable(qt.QTableWidget):
         return ddict
 
     def setCounterSelection(self, ddict):
+        if DEBUG:
+            print("HDF5CounterTable.setCounterSelection", ddict)
         keys = ddict.keys()
         if 'cntlist' in keys:
             cntlist = ddict['cntlist']
@@ -285,10 +292,11 @@ class HDF5CounterTable(qt.QTableWidget):
         for item in x:
             if item < len(cntlist):
                 counter = cntlist[item]
-                if 0:
-                    if counter in self.cntList:
-                        self.xSelection.append(self.cntList.index(counter))
-                else:
+                if counter in self.cntList:
+                    # counter name based selection
+                    self.xSelection.append(self.cntList.index(counter))
+                elif item < len(self.cntList):
+                    # index based selection
                     self.xSelection.append(item)
 
         self.ySelection = []
@@ -297,6 +305,7 @@ class HDF5CounterTable(qt.QTableWidget):
                 counter = cntlist[item]
                 if counter in self.cntList:
                     self.ySelection.append(self.cntList.index(counter))
+
         self.monSelection = []
         for item in monitor:
             if item < len(cntlist):
