@@ -201,7 +201,8 @@ class HDF5McaTable(qt.QTableWidget):
         self._update(row, col)
 
     def _mySlot(self, ddict):
-        print("_mySlot", ddict)
+        if DEBUG:
+            print("HDF5McaTable._mySlot", ddict)
         row = ddict["row"]
         col = ddict["column"]
         if col == 1:
