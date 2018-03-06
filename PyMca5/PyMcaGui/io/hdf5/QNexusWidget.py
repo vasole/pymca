@@ -877,7 +877,6 @@ class QNexusWidget(qt.QWidget):
             # self._aliasList = cntSelection['aliaslist']
         elif text.upper() == "MCA":
             mcaSelection = self.mcaTable.getMcaSelection()
-            print("mcaSelection = ", mcaSelection)
         else:
             cntSelection = self.cntTable.getCounterSelection()
             self._aliasList = cntSelection['aliaslist']
