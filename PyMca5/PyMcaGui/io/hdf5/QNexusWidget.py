@@ -175,6 +175,13 @@ class QNexusWidget(qt.QWidget):
             self.actions.sigReplaceSelection.connect(self._replaceAction)
             self.actions.sigActionsConfigurationChanged.connect(\
                 self._configurationChangedAction)
+            self.autoTable.sigHDF5CounterTableSignal.connect(\
+                                    self._autoTableUpdated)
+            self.cntTable.sigHDF5CounterTableSignal.connect(\
+                                    self._userTableUpdated)
+            if self._mca:
+                self.mcaTable.sigHDF5McaTableSignal.connect(\
+                                    self._mcaTableUpdated)
 
         # Some convenience functions to customize the table
         # They could have been included in other class inheriting
@@ -629,6 +636,8 @@ class QNexusWidget(qt.QWidget):
             self._autoCntList = cleanedCntList
             self.autoTable.build(self._autoCntList,
                                  self._autoAliasList)
+            currentTab = qt.safe_str(self.tableTab.tabText( \
+                                    self.tableTab.currentIndex()))
             if self._mca:
                 mcaAliasList = []
                 cleanedMcaList = []
@@ -646,15 +655,19 @@ class QNexusWidget(qt.QWidget):
                     self.tableTab.insertTab(2, self.mcaTable, "MCA")
                 elif (len(mcaList)==0) and (nTabs > 2):
                     self.tableTab.removeTab(2)
-            currentTab = qt.safe_str(self.tableTab.tabText( \
-                                    self.tableTab.currentIndex()))
+            if DEBUG:
+                print("currentTab = ", currentTab)
             if currentTab != "USER":
                 if (len(mcaList) > 0) and (len(cntList) == 0):
                     idx = self.tableTabOrder.index("MCA")
                     self.tableTab.setCurrentIndex(idx)
+                    if DEBUG:
+                        print("setting tab = ", idx, "MCA")
                 elif (len(mcaList) == 0) and (len(cntList) > 0):
                     idx = self.tableTabOrder.index("AUTO")
                     self.tableTab.setCurrentIndex(idx)
+                    if DEBUG:
+                        print("setting tab = ", idx, "AUTO")
             self._lastEntry = currentEntry
         if ddict['event'] == 'itemClicked':
             if ddict['mouse'] == "right":
@@ -812,6 +825,42 @@ class QNexusWidget(qt.QWidget):
         else:
             self.autoTable.set2DEnabled(False, emit=False)
             self.cntTable.set2DEnabled(False, emit=False)
+
+    def _autoTableUpdated(self, ddict):
+        if DEBUG:
+            print("_autoTableUpdated(self, ddict) ", ddict)
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "AUTO":
+            actions = self.actions.getConfiguration()
+            if len(self.autoTable.getCounterSelection()['y']):
+                if actions["auto"] == "ADD":
+                    self._addAction()
+                elif actions["auto"] == "REPLACE":
+                    self._replaceAction()
+
+    def _userTableUpdated(self, ddict):
+        if DEBUG:
+            print("_userTableUpdated(self, ddict) ", ddict)
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "USER":
+            actions = self.actions.getConfiguration()
+            if len(self.autoTable.getCounterSelection()['y']):
+                if actions["auto"] == "ADD":
+                    self._addAction()
+                elif actions["auto"] == "REPLACE":
+                    self._replaceAction()
+
+    def _mcaTableUpdated(self, ddict):
+        if DEBUG:
+            print("_mcaTableUpdated(self, ddict) ", ddict)
+        text = qt.safe_str(self.tableTab.tabText(self.tableTab.currentIndex()))
+        if text.upper() == "MCA":
+            actions = self.actions.getConfiguration()
+            if len(self.autoTable.getCounterSelection()['y']):
+                if actions["auto"] == "ADD":
+                    self._addAction()
+                elif actions["auto"] == "REPLACE":
+                    self._replaceAction()
 
     def buttonsSlot(self, ddict, emit=True):
         if self.data is None:
