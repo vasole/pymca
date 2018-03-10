@@ -362,7 +362,10 @@ class McaAdvancedFitBatch(object):
                 infoDict = {}
                 infoDict['SourceName'] = info['SourceName']
                 infoDict['Key']        = key
-                self.__processOneMca(x,y0,filename,key,info=infoDict)
+                if "McaLiveTime" in info:
+                    infoDict["McaLiveTime"] = \
+                            info["McaLiveTime"][i * numberofmca + mca]
+                self.__processOneMca(x, y0, filename, key, info=infoDict)
                 self.onMca(mca, numberofmca, filename=filename,
                                             key=key,
                                             info=infoDict)
