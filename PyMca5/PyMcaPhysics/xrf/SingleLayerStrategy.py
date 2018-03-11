@@ -150,8 +150,8 @@ class SingleLayerStrategy(object):
                 CompoundFraction[i] /= total;
         materialName = "SingleLayerStrategyMaterial"
         newConfiguration["materials"][materialName] = \
-            {"Density": newConfiguration['attenuators'][attenuator][2],
-             "Thickness":newConfiguration['attenuators'][attenuator][3],
+            {"Density": newConfiguration[parentKey][daughterKey][2],
+             "Thickness":newConfiguration[parentKey][daughterKey][3],
              "CompoundList":CompoundList,
              "CompoundFraction":CompoundFraction,
              "Comment":"Last Single Layer Strategy iteration"}
