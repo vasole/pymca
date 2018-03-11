@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -121,6 +121,10 @@ class SingleLayerStrategy(object):
             materialCounter += 1
             if "-" in group:
                 continue
+            if strategyConfiguration["flags"][materialCounter] in ["0", 0]:
+                if DEBUG:
+                    print("ignoring ", group)
+                continue
             ele = group.split()[0]
             material = strategyConfiguration["materials"][materialCounter]
             if material in ["-", ele, ele + "1"]:
@@ -130,8 +134,8 @@ class SingleLayerStrategy(object):
             else:
                 massFractions = Elements.getMaterialMassFractions( \
                             [material], [1.0])
-                CompoundFraction.append(massFractions[ele] / \
-                                       ddict["mass fraction"][group])
+                CompoundFraction.append( \
+                        ddict["mass fraction"][group] / massFractions[ele])
                 CompoundList.append(material)
             total += CompoundFraction[-1]
         if strategyConfiguration["completer"] not in ["-"]:
