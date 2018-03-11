@@ -272,7 +272,7 @@ class MaterialComboBox(qt.QComboBox):
         self.setDuplicatesEnabled(False)
         self.setEditable(True)
         self._line = self.lineEdit()
-        self._lastText = "_U_N1iKeLyText"
+        self.lastText = "_U_N1iKeLyText"
         self.activated[str].connect(self._mySignal)
         self._line.editingFinished.connect(self._mySlot)
 
@@ -349,7 +349,7 @@ class MaterialComboBox(qt.QComboBox):
                     break
             return
         self.setCurrentText(text)
-        self._lastText = text
+        self.lastText = text
         ddict = {}
         ddict['event'] = 'activated'
         ddict['row']   = self.row
@@ -370,7 +370,7 @@ class MaterialComboBox(qt.QComboBox):
 
     def _mySlot(self):
         current = str(self.currentText())
-        if current != self._lastText:
+        if current != self.lastText:
             self._mySignal(self.currentText())
 
 class MaterialValidator(qt.QValidator):
