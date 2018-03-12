@@ -863,6 +863,8 @@ class QNexusWidget(qt.QWidget):
                     self._replaceAction()
 
     def buttonsSlot(self, ddict, emit=True):
+        if DEBUG:
+            print("buttonsSlot(self, ddict,emit=True)", ddict, "emit = ", emit)
         if self.data is None:
             return
         action, selectionType = ddict['action'].split()
@@ -958,7 +960,23 @@ class QNexusWidget(qt.QWidget):
                 #sel['selection']['aliaslist'] = cntSelection['aliaslist']
                 sel['selection']['selectiontype'] = selectionType
                 if selectionType.upper() == "SCAN":
+                    if cntSelection['cntlist'][yCnt].startswith("/"):
+                        actualDatasetPath = posixpath.join(entry,
+                                                cntSelection['cntlist'][yCnt][1:])
+                    else:
+                        actualDatasetPath = posixpath.join(entry,
+                                                cntSelection['cntlist'][yCnt])
+                    actualDataset = phynxFile[actualDatasetPath]
                     sel['scanselection'] = True
+                    if hasattr(actualDataset, "shape"):
+                        if len(actualDataset.shape) > 1:
+                            if 1 in actualDataset.shape[-2:]:
+                                #shape (1, n) or (n, 1)
+                                pass
+                            else:
+                                # at least twoD dataset
+                                selectionType= "2D"
+                                sel['scanselection'] = False
                     sel['mcaselection']  = False
                 elif selectionType.upper() == "MCA":
                     sel['scanselection'] = False
@@ -966,6 +984,7 @@ class QNexusWidget(qt.QWidget):
                 else:
                     sel['scanselection'] = False
                     sel['mcaselection']  = False
+                sel['selection']['selectiontype'] = selectionType
                 aliases = cntSelection['aliaslist']
                 if len(cntSelection['x']) and len(cntSelection['m']):
                     addLegend = " (%s/%s) vs %s" % (aliases[yCnt],
