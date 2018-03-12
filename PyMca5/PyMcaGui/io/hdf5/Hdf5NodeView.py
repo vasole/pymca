@@ -50,6 +50,19 @@ from silx.gui.plot import Plot1D
 from silx.gui import icons
 
 
+# Quick and dirty workaround for issue #173
+if silx.version == '0.7.0':
+    from silx.gui.plot.actions.control import ColormapAction
+    from silx.gui.plot.ColormapDialog import ColormapDialog
+
+    def _ColormapAction_createDialog(parent):
+        dialog = ColormapDialog()
+        dialog.setModal(False)
+        return dialog
+
+    ColormapAction._createDialog = _ColormapAction_createDialog
+
+
 PLUGINS_DIR = []
 if os.path.exists(os.path.join(os.path.dirname(PyMca5.__file__), "PyMcaPlugins")):
     from PyMca5 import PyMcaPlugins
