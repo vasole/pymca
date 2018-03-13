@@ -98,7 +98,7 @@ else:
         IPython.external.qt_loaders.has_binding = has_binding 
     from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
     from IPython.qt.inprocess import QtInProcessKernelManager
-from IPython.lib import guisupport
+#from IPython.lib import guisupport
 
 class QIPythonWidget(RichIPythonWidget):
     """ Convenience class for a live IPython console widget. We can replace the standard banner using the customBanner argument"""
@@ -116,7 +116,11 @@ class QIPythonWidget(RichIPythonWidget):
         def stop():
             kernel_client.stop_channels()
             kernel_manager.shutdown_kernel()
-            guisupport.get_app_qt4().exit()
+            # uncommenting next line forces the application to quit
+            #guisupport.get_app_qt4().exit()
+            # this alternative closes the widget but it does not cleanup
+            # the variables used.
+            self.close()
         self.exit_requested.connect(stop)
 
     def pushVariables(self,variableDict):
