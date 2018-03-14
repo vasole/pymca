@@ -305,12 +305,39 @@ class testXrf(unittest.TestCase):
         # make sure we are using Co as internal standard
         cToolConfiguration["usematrix"] = 1
         cToolConfiguration["reference"] = "Co"
-        ddict, info = cTool.processFitResult( \
+        concentrationsResult, addInfo = cTool.processFitResult( \
                     config=cToolConfiguration,
                     fitresult={"result":result},
                     elementsfrommatrix=False,
                     fluorates = mcaFit._fluoRates,
                     addinfo=True)
+        referenceElement = addInfo['ReferenceElement']
+        referenceTransitions = addInfo['ReferenceTransitions']
+        self.assertTrue(referenceElement == "Co",
+               "referenceElement is <%s> instead of <Co>" % referenceElement)
+
+        # we should get the same result with internal parameters
+        cTool = ConcentrationsTool.ConcentrationsTool()
+        cToolConfiguration = cTool.configure()
+        cToolConfiguration.update(configuration['concentrations'])
+
+        # make sure we are not using an internal standard
+        cToolConfiguration['usematrix'] = 0
+        cToolConfiguration['flux'] = addInfo["Flux"]
+        cToolConfiguration['time'] = addInfo["Time"]
+        cToolConfiguration['area'] = addInfo["DetectorArea"]
+        cToolConfiguration['distance'] = addInfo["DetectorDistance"]
+        concentrationsResult, addInfo = cTool.processFitResult( \
+                    config=cToolConfiguration,
+                    fitresult={"result":result},
+                    elementsfrommatrix=False,
+                    fluorates = mcaFit._fluoRates,
+                    addinfo=True)
+        referenceElement = addInfo['ReferenceElement']
+        referenceTransitions = addInfo['ReferenceTransitions']
+        self.assertTrue(referenceElement in ["None", "", None],
+               "referenceElement is <%s> instead of <None>" % referenceElement)
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
