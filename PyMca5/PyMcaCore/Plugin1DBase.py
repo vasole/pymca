@@ -124,10 +124,6 @@ try:
     from numpy import argsort, nonzero, take
 except ImportError:
     print("WARNING: numpy not present")
-try:
-    from silx.gui.plot.PlotWidget import PlotWidget as silxPlot
-except ImportError:
-    silxPlot = None
 
 
 def merge_info_params(info, params):
@@ -175,9 +171,8 @@ class Plugin1DBase(object):
         acting as proxy for a *silx* PlotWindow (*legacy=False*).
         """
 
-        if silxPlot is not None:
-            if hasattr(plotWindow, "plot"):  # PluginsToolButton.plot -> silx plot
-                self._legacy = False
+        if hasattr(plotWindow, "plot"):  # PluginsToolButton.plot -> silx plot
+            self._legacy = False
 
     # Window related functions
     def windowTitle(self):
