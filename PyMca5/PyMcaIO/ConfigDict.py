@@ -92,7 +92,7 @@ class ConfigDict(dict):
 
     def read(self, filelist, sections=None):
         """
-        read the input filename into the internal dictionary
+        read the input file list into the internal dictionary
         """
         filelist = self.__tolist(filelist)
         sections = self.__tolist(sections)
@@ -103,6 +103,16 @@ class ConfigDict(dict):
 
         for ffile in filelist:
             self.filelist.append([ffile, sections])
+        self._check()
+
+    def readfp(self, filelike, sections=None):
+        """
+        read the input file-like object into the internal dictionary
+        """
+        cfg = ConfigParser.ConfigParser()
+        cfg.optionxform = self.__convert
+        cfg.readfp(filelike)
+        self.__read(cfg, sections)
         self._check()
 
     def __read(self, cfg, sections=None):
