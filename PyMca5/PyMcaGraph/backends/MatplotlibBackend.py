@@ -59,6 +59,50 @@ def nanmin(x):
 
 import sys
 import types
+# This should be independent of Qt
+TK = False
+if "tk" in sys.argv or "Tkinter" in sys.modules or "tkinter" in sys.modules:
+    TK = True
+if TK and "PyQt4.QtCore" not in sys.modules and "PyQt5.QtCore" not in sys.modules and\
+        "PySide.QtCore" not in sys.modules:
+    if sys.version < '3.0':
+        import Tkinter as Tk
+    else:
+        import tkinter as Tk
+elif 'PySide.QtCore' in sys.modules or 'PySide' in sys.argv:
+    matplotlib.rcParams['backend'] = 'Qt4Agg'
+    matplotlib.rcParams['backend.qt4'] = 'PySide'
+    from PySide import QtCore, QtGui
+elif "PyQt4.QtCore" in sys.modules or 'PyQt4' in sys.argv:
+    from PyQt4 import QtCore, QtGui
+    matplotlib.rcParams['backend'] = 'Qt4Agg'
+elif 'PyQt5.QtCore' in sys.modules:
+    matplotlib.rcParams['backend'] = 'Qt5Agg'
+    from PyQt5 import QtCore, QtGui, QtWidgets
+    QtGui.QApplication = QtWidgets.QApplication
+else:
+    try:
+        from PyQt4 import QtCore, QtGui
+        matplotlib.rcParams['backend'] = 'Qt4Agg'
+    except ImportError:
+        try:
+            from PyQt5 import QtCore, QtGui, QtWidgets
+            QtGui.QApplication = QtWidgets.QApplication
+            matplotlib.rcParams['backend']='Qt5Agg'
+        except ImportError:
+            from PySide import QtCore, QtGui
+if ("PyQt4.QtCore" in sys.modules) or ("PySide.QtCore" in sys.modules):
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    TK = False
+    QT = True
+elif "PyQt5.QtCore" in sys.modules:
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    TK = False
+    QT = True
+elif ("Tkinter" in sys.modules) or "tkinter" in sys.modules:
+    TK = True
+    QT = False
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
 try:
     from .. import PlotBackend
 except ImportError:
@@ -69,50 +113,6 @@ try:
     from matplotlib.widgets import Cursor
 except:
     print("matplotlib.widgets Cursor not available")
-# This should be independent of Qt
-TK = False
-if ("tk" in sys.argv) or ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
-    TK = True
-if TK and ("PyQt4" not in sys.modules) and ("PyQt5" not in sys.modules) and\
-    ("PySide" not in sys.modules):
-    if sys.version < '3.0':
-        import Tkinter as Tk
-    else:
-        import tkinter as Tk
-elif ('PySide' in sys.modules) or ('PySide' in sys.argv) :
-    matplotlib.rcParams['backend']='Qt4Agg'
-    matplotlib.rcParams['backend.qt4']='PySide'
-    from PySide import QtCore, QtGui
-elif ("PyQt4" in sys.modules) or ('PyQt4' in sys.argv):
-    from PyQt4 import QtCore, QtGui
-    matplotlib.rcParams['backend']='Qt4Agg'
-elif ('PyQt5' in sys.modules):
-    matplotlib.rcParams['backend']='Qt5Agg'
-    from PyQt5 import QtCore, QtGui, QtWidgets
-    QtGui.QApplication = QtWidgets.QApplication
-else:
-    try:
-        from PyQt4 import QtCore, QtGui
-        matplotlib.rcParams['backend']='Qt4Agg'
-    except ImportError:
-        try:
-            from PyQt5 import QtCore, QtGui, QtWidgets
-            QtGui.QApplication = QtWidgets.QApplication
-            matplotlib.rcParams['backend']='Qt5Agg'
-        except ImportError:
-            from PySide import QtCore, QtGui
-if ("PyQt4" in sys.modules) or ("PySide" in sys.modules):
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-    TK = False
-    QT = True
-elif "PyQt5" in sys.modules:
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-    TK = False
-    QT = True
-elif ("Tkinter" in sys.modules) or ("tkinter") in sys.modules:
-    TK = True
-    QT = False
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
 
 from matplotlib.figure import Figure
 import matplotlib.patches as patches
@@ -359,7 +359,7 @@ class MatplotlibGraph(FigureCanvas):
         # this respects aspect size
         # self.ax = self.fig.add_subplot(111, aspect='equal')
         # This should be independent of Qt
-        if ("PyQt4" in sys.modules) or ("PySide" in sys.modules):
+        if matplotlib.rcParams['backend'] == "Qt4Agg":
             FigureCanvas.setSizePolicy(self,
                                    QtGui.QSizePolicy.Expanding,
                                    QtGui.QSizePolicy.Expanding)
