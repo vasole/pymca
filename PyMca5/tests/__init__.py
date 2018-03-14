@@ -36,6 +36,7 @@ if os.path.exists('PyMca5'):
         if os.path.exists('py2app_setup.py'):
             txt ='Tests cannnot be imported from top source directory'
             raise ImportError(txt)
+
 from PyMca5.tests.TestAll import main as testAll
 from PyMca5.tests.ConfigDictTest import test as testConfigDict
 from PyMca5.tests.EdfFileTest import test as testEdfFile

@@ -315,6 +315,9 @@ class testXrf(unittest.TestCase):
         referenceTransitions = addInfo['ReferenceTransitions']
         self.assertTrue(referenceElement == "Co",
                "referenceElement is <%s> instead of <Co>" % referenceElement)
+        cobalt = concentrationsResult["mass fraction"]["Co K"]
+        self.assertTrue( cobalt == 0.0005,
+                        "Wrong Co concentration %f" % cobalt)
 
         # we should get the same result with internal parameters
         cTool = ConcentrationsTool.ConcentrationsTool()
@@ -327,7 +330,7 @@ class testXrf(unittest.TestCase):
         cToolConfiguration['time'] = addInfo["Time"]
         cToolConfiguration['area'] = addInfo["DetectorArea"]
         cToolConfiguration['distance'] = addInfo["DetectorDistance"]
-        concentrationsResult, addInfo = cTool.processFitResult( \
+        concentrationsResult2, addInfo = cTool.processFitResult( \
                     config=cToolConfiguration,
                     fitresult={"result":result},
                     elementsfrommatrix=False,
@@ -337,6 +340,12 @@ class testXrf(unittest.TestCase):
         referenceTransitions = addInfo['ReferenceTransitions']
         self.assertTrue(referenceElement in ["None", "", None],
                "referenceElement is <%s> instead of <None>" % referenceElement)
+
+        for key in concentrationsResult["mass fraction"]:
+            internal = concentrationsResult["mass fraction"][key]
+            fp = concentrationsResult2["mass fraction"][key]
+            self.assertTrue( internal == fp,
+                "Error for <%s> concentration %g != %g" % (key, internal, fp))
 
 
 def getSuite(auto=True):
