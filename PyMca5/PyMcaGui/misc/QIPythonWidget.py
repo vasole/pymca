@@ -42,7 +42,8 @@ else:
 
 if PYSIDE:
     os.environ['QT_API'] = 'pyside'
-    from PySide.QtGui import QApplication, QWidget, QPushButton, QVBoxLayout
+    from PySide.QtGui import QApplication, QWidget, \
+                     QPushButton, QVBoxLayout, QMessageBox
 else:
     os.environ['QT_API'] = 'pyqt'
     try:
@@ -53,21 +54,21 @@ else:
         pass
     if "PyQt4" in sys.modules:
         from PyQt4.QtGui import QApplication, QWidget, \
-                                        QPushButton, QVBoxLayout
+                                        QPushButton, QVBoxLayout, QMessageBox
     elif "PyQt5" in sys.modules:
         from PyQt5.QtWidgets import QApplication, QWidget, \
-                                        QPushButton, QVBoxLayout
+                                        QPushButton, QVBoxLayout, QMessageBox
     else:
         try:
             from PyQt4.QtGui import QApplication, QWidget, \
-                                        QPushButton, QVBoxLayout
+                                        QPushButton, QVBoxLayout, QMessageBox
         except:
             try:
                 from PyQt5.QtWidgets import QApplication, QWidget, \
-                                           QPushButton, QVBoxLayout
+                                           QPushButton, QVBoxLayout, QMessageBox
             except:
                 from PySide.QtGui import QApplication, QWidget, \
-                                        QPushButton, QVBoxLayout
+                                        QPushButton, QVBoxLayout, QMessageBox
                 os.environ['QT_API'] = 'pyside'
 
 import IPython
@@ -98,7 +99,6 @@ else:
         IPython.external.qt_loaders.has_binding = has_binding 
     from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
     from IPython.qt.inprocess import QtInProcessKernelManager
-#from IPython.lib import guisupport
 
 class QIPythonWidget(RichIPythonWidget):
     """ Convenience class for a live IPython console widget. We can replace the standard banner using the customBanner argument"""
@@ -114,12 +114,23 @@ class QIPythonWidget(RichIPythonWidget):
         kernel_client.start_channels()
 
         def stop():
-            kernel_client.stop_channels()
-            kernel_manager.shutdown_kernel()
-            # uncommenting next line forces the application to quit
-            #guisupport.get_app_qt4().exit()
-            # this alternative closes the widget but it does not cleanup
-            # the variables used.
+            #clear workspace
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Console cleanup")
+            msg.setText("Do you want to clean the console workspace?")
+            msg.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
+            msg.setDefaultButton(QMessageBox.Yes)
+            ret = msg.exec_()
+            try:
+                if ret == QMessageBox.Yes:
+                    self.kernel_manager.kernel.shell.magic('reset -sf')
+                    kernel_client.stop_channels()
+                    kernel_manager.shutdown_kernel()
+            except:
+                print("Error cleaning console variables")
+                kernel_client.stop_channels()
+                kernel_manager.shutdown_kernel()
+            # close widget instead of quitting application
             self.close()
         self.exit_requested.connect(stop)
 
@@ -136,6 +147,12 @@ class QIPythonWidget(RichIPythonWidget):
         """ Execute a command in the frame of the console widget """
         self._execute(command,False)
 
+    def show(self):
+        if self.kernel_manager.kernel is None:
+            # we need to restart the kernel
+            self.kernel_manager.start_kernel()
+            self.kernel_client.start_channels()
+        return RichIPythonWidget.show(self)
 
 class ExampleWidget(QWidget):
     """ Main GUI Widget including a button and IPython Console widget inside vertical layout """
