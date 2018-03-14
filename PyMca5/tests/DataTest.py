@@ -118,7 +118,8 @@ class testData(unittest.TestCase):
                       'LShellRatesScofieldHS.dat',
                       'McaTheory.cfg',
                       'Scofield1973.dict',
-                      'XRFSpectrum.mca']:
+                      'XRFSpectrum.mca',
+                      'Steel.cfg', 'Steel.spe']:
             actualName = os.path.join(self.dataDir, fname)
             self.assertTrue(os.path.exists(actualName),
                             'File "%s" does not exist.' % actualName)
