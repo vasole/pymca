@@ -61,19 +61,19 @@ import sys
 import types
 # This should be independent of Qt
 TK = False
-if "tk" in sys.argv or "Tkinter" in sys.modules or "tkinter" in sys.modules:
+if ("tk" in sys.argv) or ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
     TK = True
-if TK and "PyQt4.QtCore" not in sys.modules and "PyQt5.QtCore" not in sys.modules and\
-        "PySide.QtCore" not in sys.modules:
+if TK and ("PyQt4.QtCore" not in sys.modules) and ("PyQt5.QtCore" not in sys.modules) and\
+        ("PySide.QtCore" not in sys.modules):
     if sys.version < '3.0':
         import Tkinter as Tk
     else:
         import tkinter as Tk
-elif 'PySide.QtCore' in sys.modules or 'PySide' in sys.argv:
+elif ('PySide.QtCore' in sys.modules) or ('PySide' in sys.argv):
     matplotlib.rcParams['backend'] = 'Qt4Agg'
     matplotlib.rcParams['backend.qt4'] = 'PySide'
     from PySide import QtCore, QtGui
-elif "PyQt4.QtCore" in sys.modules or 'PyQt4' in sys.argv:
+elif ("PyQt4.QtCore" in sys.modules) or ('PyQt4' in sys.argv):
     from PyQt4 import QtCore, QtGui
     matplotlib.rcParams['backend'] = 'Qt4Agg'
 elif 'PyQt5.QtCore' in sys.modules:
@@ -88,7 +88,7 @@ else:
         try:
             from PyQt5 import QtCore, QtGui, QtWidgets
             QtGui.QApplication = QtWidgets.QApplication
-            matplotlib.rcParams['backend']='Qt5Agg'
+            matplotlib.rcParams['backend'] = 'Qt5Agg'
         except ImportError:
             from PySide import QtCore, QtGui
 if ("PyQt4.QtCore" in sys.modules) or ("PySide.QtCore" in sys.modules):
@@ -99,7 +99,7 @@ elif "PyQt5.QtCore" in sys.modules:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     TK = False
     QT = True
-elif ("Tkinter" in sys.modules) or "tkinter" in sys.modules:
+elif ("Tkinter" in sys.modules) or ("tkinter" in sys.modules):
     TK = True
     QT = False
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvas
@@ -747,7 +747,7 @@ class MatplotlibGraph(FigureCanvas):
                         self._mouseData[0,1] = self._ymin
                         self._mouseData[1,0] = self._x0
                         self._mouseData[1,1] = self._ymax
-                    color=self._getDrawingColor()
+                    color = self._getDrawingColor()
                     self._drawingPatch = Polygon(self._mouseData,
                                              closed=True,
                                              fill=False,
@@ -2907,7 +2907,7 @@ def main(parent=None):
     return plot
 
 if __name__ == "__main__":
-    if "tkinter" in sys.modules or "Tkinter" in sys.modules:
+    if ("tkinter" in sys.modules) or ("Tkinter" in sys.modules):
         root = Tk.Tk()
         parent=root
         #w = MatplotlibGraph(root)
@@ -2917,7 +2917,7 @@ if __name__ == "__main__":
         widget = w._plot.graph
     else:
         app = QtGui.QApplication([])
-        parent=None
+        parent = None
         w = main(parent)
         widget = w.getWidgetHandle()
     #w.invertYAxis(True)
@@ -2945,7 +2945,7 @@ if __name__ == "__main__":
     w.resetZoom()
     #print(w.widget.ax.get_images())
     #print(w.widget.ax.get_lines())
-    if "tkinter" in sys.modules or "Tkinter" in sys.modules:
+    if ("tkinter" in sys.modules) or ("Tkinter" in sys.modules):
         tkWidget = w.getWidgetHandle()
         tkWidget.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         Tk.mainloop()
