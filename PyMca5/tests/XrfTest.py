@@ -284,6 +284,7 @@ class testXrf(unittest.TestCase):
         self.assertTrue(sf[1].nbmca() == 1,
                         "Training data 1st scan should contain no MCAs")
         y = mcaData = sf[1].mca(1)
+        sf = None
 
         # perform the actual XRF analysis
         configuration = ConfigDict.ConfigDict()
@@ -347,6 +348,202 @@ class testXrf(unittest.TestCase):
             self.assertTrue( internal == fp,
                 "Error for <%s> concentration %g != %g" % (key, internal, fp))
 
+    def testStainlessSteelDataFit(self):
+        from PyMca5.PyMcaIO import specfilewrapper as specfile
+        from PyMca5.PyMcaPhysics.xrf import ClassMcaTheory
+        from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
+        from PyMca5.PyMcaIO import ConfigDict
+
+        # read the data
+        dataFile = os.path.join(self.dataDir, "Steel.spe")
+        self.assertTrue(os.path.isfile(dataFile),
+                        "File %s is not an actual file" % dataFile)
+        sf = specfile.Specfile(dataFile)
+        self.assertTrue(len(sf) == 1, "File %s cannot be read" % dataFile)
+        self.assertTrue(sf[0].nbmca() == 1,
+                        "Spe file should contain MCA data")
+        y = counts = sf[0].mca(1)
+        x = channels = numpy.arange(y.size).astype(numpy.float)
+        sf = None
+
+        # read the fit configuration
+        configFile = os.path.join(self.dataDir, "Steel.cfg")
+        self.assertTrue(os.path.isfile(configFile),
+                        "File %s is not an actual file" % configFile)
+        configuration = ConfigDict.ConfigDict()
+        configuration.read(configFile)
+        # configure the fit
+        # make sure no secondary excitations are used
+        configuration["concentrations"]["usemultilayersecondary"] = 0
+        mcaFit = ClassMcaTheory.ClassMcaTheory()
+        configuration=mcaFit.configure(configuration)
+        mcaFit.setData(x, y,
+                       xmin=configuration["fit"]["xmin"],
+                       xmax=configuration["fit"]["xmax"])
+        mcaFit.estimate()
+        fitResult, result = mcaFit.startFit(digest=1)
+
+        # concentrations
+        # fit is already done, calculate the concentrations
+        concentrationsConfiguration = configuration["concentrations"]
+        cTool = ConcentrationsTool.ConcentrationsTool()
+        cToolConfiguration = cTool.configure()
+        cToolConfiguration.update(configuration['concentrations'])
+
+        # make sure we are using Fe as internal standard
+        matrix = configuration["attenuators"]["Matrix"]
+        self.assertTrue(matrix[1] == "SRM_1155",
+                "Invalid matrix. Expected <SRM_1155> got <%s>" % matrix[1])
+        cToolConfiguration["usematrix"] = 1
+        cToolConfiguration["reference"] = "Fe"
+        concentrationsResult, addInfo = cTool.processFitResult( \
+                    config=cToolConfiguration,
+                    fitresult={"result":result},
+                    elementsfrommatrix=False,
+                    fluorates = mcaFit._fluoRates,
+                    addinfo=True)
+        referenceElement = addInfo['ReferenceElement']
+        referenceTransitions = addInfo['ReferenceTransitions']
+        self.assertTrue(referenceElement == "Fe",
+               "referenceElement is <%s> instead of <Fe>" % referenceElement)
+
+        # check the Fe concentration is 0.65 +/ 5 %
+        self.assertTrue( \
+            abs(concentrationsResult["mass fraction"]["Fe Ka"] - 0.65) < 0.03,
+            "Invalid Fe Concentration")
+        # check the Cr concentration is overestimated (more than 30 %) %
+        testValue = concentrationsResult["mass fraction"]["Cr K"]
+        self.assertTrue( testValue > 0.30,
+            "Expected Cr concentration above 0.30 got %.3f" % testValue)
+
+        # chek the sum of concentration of main components is above 1
+        # because of neglecting higher order excitations
+        elements = ["Cr K", "V K", "Mn K", "Fe Ka", "Ni K"]
+        total = 0.0
+        for element in elements:
+            total += concentrationsResult["mass fraction"][element]
+        self.assertTrue(total > 1,
+                    "Sum of concentrations should be above 1 got %.3f" % total)
+
+        # correct for tertiary excitation without a new fit
+        cToolConfiguration["usemultilayersecondary"] = 2
+        concentrationsResult, addInfo = cTool.processFitResult( \
+                    config=cToolConfiguration,
+                    fitresult={"result":result},
+                    elementsfrommatrix=False,
+                    fluorates = mcaFit._fluoRates,
+                    addinfo=True)
+
+        # check the Fe concentration is 0.65 +/ 5 %
+        self.assertTrue( \
+            abs(concentrationsResult["mass fraction"]["Fe Ka"] - 0.65) < 0.03,
+            "Invalid Fe Concentration Using Tertiary Excitation")
+
+        # chek the sum of concentration of main components is above 1
+        elements = ["Cr K", "Mn K", "Fe Ka", "Ni K"]
+        total = 0.0
+        for element in elements:
+            total += concentrationsResult["mass fraction"][element]
+        self.assertTrue(total < 1,
+                   "Sum of concentrations should be below 1 got %.3f" % total)
+        # check the Cr concentration is not overestimated (more than 30 %) %
+        testValue = concentrationsResult["mass fraction"]["Cr K"]
+        self.assertTrue( (testValue > 0.18) and (testValue < 0.20),
+            "Expected Cr between 0.18 and 0.20 got %.3f" % testValue)
+                           
+        # perform the fit already accounting for tertiary excitation
+        # in order to get the good fundamental parameters
+        configuration["concentrations"]['usematrix'] = 1
+        configuration["concentrations"]["usemultilayersecondary"] = 2
+        mcaFit.setConfiguration(configuration)
+        mcaFit.setData(x, y,
+                       xmin=configuration["fit"]["xmin"],
+                       xmax=configuration["fit"]["xmax"])
+        mcaFit.estimate()
+        fitResult, result = mcaFit.startFit(digest=1)
+
+        # concentrations
+        # fit is already done, calculate the concentrations
+        concentrationsConfiguration = configuration["concentrations"]
+        cTool = ConcentrationsTool.ConcentrationsTool()
+        cToolConfiguration = cTool.configure()
+        cToolConfiguration.update(configuration['concentrations'])
+        matrix = configuration["attenuators"]["Matrix"]
+        self.assertTrue(matrix[1] == "SRM_1155",
+                "Invalid matrix. Expected <SRM_1155> got <%s>" % matrix[1])
+        cToolConfiguration["usematrix"] = 1
+        cToolConfiguration["reference"] = "Fe"
+        concentrationsResult, addInfo = cTool.processFitResult( \
+                    config=cToolConfiguration,
+                    fitresult={"result":result},
+                    elementsfrommatrix=False,
+                    fluorates = mcaFit._fluoRates,
+                    addinfo=True)
+
+        # make sure we are not using an internal standard
+        # repeat everything using a single layer strategy
+        configuration["concentrations"]['usematrix'] = 0
+        configuration["concentrations"]['flux'] = addInfo["Flux"]
+        configuration["concentrations"]['time'] = addInfo["Time"]
+        configuration["concentrations"]['area'] = addInfo["DetectorArea"]
+        configuration["concentrations"]['distance'] = \
+                                                    addInfo["DetectorDistance"]
+        configuration["concentrations"]["usemultilayersecondary"] = 2
+
+        # setup the strategy starting with Fe as matrix
+        matrix[1] = "Fe"
+        configuration["attenuators"]["Matrix"] = matrix
+        configuration["fit"]["strategyflag"] = 1
+        configuration["fit"]["strategy"] = "SingleLayerStrategy"
+        configuration["SingleLayerStrategy"] = {}
+        configuration["SingleLayerStrategy"]["layer"] = "Auto"
+        configuration["SingleLayerStrategy"]["iterations"] = 3
+        configuration["SingleLayerStrategy"]["completer"] = "-"
+        configuration["SingleLayerStrategy"]["flags"] = [1, 1, 1, 1, 0,
+                                                         0, 0, 0, 0, 0]
+        configuration["SingleLayerStrategy"]["peaks"] = [ "Cr K",
+                                                         "Mn K", "Fe Ka",
+                                                         "Ni K", "-", "-",
+                                                         "-","-","-","-"]
+        configuration["SingleLayerStrategy"]["materials"] = ["Cr",
+                                                         "Mn", "Fe",
+                                                         "Ni", "-", "-",
+                                                         "-","-","-"]
+        mcaFit = ClassMcaTheory.ClassMcaTheory()
+        configuration=mcaFit.configure(configuration)
+        mcaFit.setData(x, y,
+                       xmin=configuration["fit"]["xmin"],
+                       xmax=configuration["fit"]["xmax"])
+        mcaFit.estimate()
+        fitResult, result = mcaFit.startFit(digest=1)
+
+        # concentrations
+        # fit is already done, calculate the concentrations
+        concentrationsConfiguration = configuration["concentrations"]
+        cTool = ConcentrationsTool.ConcentrationsTool()
+        cToolConfiguration = cTool.configure()
+        cToolConfiguration.update(configuration['concentrations'])
+        concentrationsResult2, addInfo = cTool.processFitResult( \
+                    config=cToolConfiguration,
+                    fitresult={"result":result},
+                    elementsfrommatrix=False,
+                    fluorates = mcaFit._fluoRates,
+                    addinfo=True)
+
+        # chek the sum of concentration of main components is above 1
+        elements = ["Cr K", "Mn K", "Fe Ka", "Ni K"]
+        total = 0.0
+        for element in elements:
+            if element == "Cr K":
+                tolerance = 6 # 6 %
+            else:
+                tolerance = 5 # 5 %
+            previous = concentrationsResult["mass fraction"][element]
+            current = concentrationsResult2["mass fraction"][element]
+            delta = 100 * (abs(previous - current) / previous)
+            self.assertTrue(delta < tolerance,
+                "Strategy: Element %s discrepancy too large %.1f %%" % \
+                  (element.split()[0], delta))
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
@@ -357,6 +554,7 @@ def getSuite(auto=True):
         testSuite.addTest(testXrf("testTrainingDataDirectoryPresence"))
         testSuite.addTest(testXrf("testTrainingDataFilePresence"))
         testSuite.addTest(testXrf("testTrainingDataFit"))
+        testSuite.addTest(testXrf("testStainlessSteelDataFit"))
     return testSuite
 
 def test(auto=False):
