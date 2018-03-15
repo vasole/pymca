@@ -65,4 +65,4 @@ script:
     - pip list
 
     # Run the tests
-    - python -m fisx.tests.testAll
+    - python PyMca5/tests/TestAll.py
