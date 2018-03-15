@@ -57,6 +57,10 @@ script:
     - pip install --upgrade setuptools
     - pip install --upgrade pip
 
+    # dependencies
+    - pip install matplotlib
+    - pip install fisx
+
     # Install from source package
     - pip install --pre --find-links dist/ --no-cache-dir --no-index PyMca5 $PIP_INSTALL_EXTRA_ARGS
 
