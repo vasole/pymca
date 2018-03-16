@@ -34,6 +34,9 @@ import unittest
 import os
 import sys
 import numpy
+import gc
+import shutil
+
 try:
     import h5py
     HAS_H5PY = True
@@ -50,7 +53,7 @@ class testStackInfo(unittest.TestCase):
         Get the data directory
         """
         self._importSuccess = False
-        self._stack = None
+        self._outputDir = None
         self._h5File = None
         try:
             from PyMca5 import PyMcaDataDir
@@ -60,13 +63,9 @@ class testStackInfo(unittest.TestCase):
             self.dataDir = None
 
     def tearDown(self):
-        import gc
         gc.collect()
-        if self._stack is not None:
-            for sourceObject in self._stack:
-                print("CLOSING FILE")
-                sourceObject.close()
-
+        if self._outputDir is not None:
+            shutil.rmtree(self._outputDir, ignore_errors=True)
         if self._h5File is not None:
             fileName = self._h5File
             if os.path.exists(fileName):
