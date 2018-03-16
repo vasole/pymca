@@ -57,4 +57,4 @@ script:
     - pip list
 
     # Run the tests
-    - python PyMca5/tests/TestAll.py
+    - python -m PyMca5.tests.TestAll
