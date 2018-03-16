@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -100,7 +100,7 @@ class HDF5Stack1D(DataObject.DataObject):
         # built the selection in terms of HDF terms
         # for the time being, only the first item in x selection used
 
-        xSelection = selection['x']
+        xSelection = selection.get('x', None)
         if xSelection is not None:
             if type(xSelection) != type([]):
                 xSelection = [xSelection]
@@ -120,7 +120,7 @@ class HDF5Stack1D(DataObject.DataObject):
             ySelectionList = [ySelection]
 
         # monitor selection
-        mSelection = selection['m']
+        mSelection = selection.get('m', None)
         if mSelection not in [None, []]:
             if type(mSelection) != type([]):
                 mSelection = [mSelection]
@@ -656,8 +656,8 @@ class HDF5Stack1D(DataObject.DataObject):
             self.info["FileIndex"] = 1
         else:
             self.info["FileIndex"] = 0
-        if _calibration:
-            self.info['McaCalib'] = calibration
+        if _calibration is not None:
+            self.info['McaCalib'] = _calibration
         else:
             self.info['McaCalib'] = [ 0.0, 1.0, 0.0]
         shape = self.data.shape
@@ -670,10 +670,10 @@ class HDF5Stack1D(DataObject.DataObject):
                 self.x = [xDataset.reshape(-1)]
             else:
                 print("Ignoring xSelection")
-        elif _channels:
+        elif _channels is not None:
             _channels.shape = -1
             self.x = [_channels]
-        if _time:
+        if _time is not None:
             self.info["McaLiveTime"] = _time
 
     def getDimensions(self, nFiles, nScans, shape, index=None):
