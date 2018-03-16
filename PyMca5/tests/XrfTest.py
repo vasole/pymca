@@ -451,7 +451,7 @@ class testXrf(unittest.TestCase):
         testValue = concentrationsResult["mass fraction"]["Cr K"]
         self.assertTrue( (testValue > 0.18) and (testValue < 0.20),
             "Expected Cr between 0.18 and 0.20 got %.3f" % testValue)
-                           
+
         # perform the fit already accounting for tertiary excitation
         # in order to get the good fundamental parameters
         configuration["concentrations"]['usematrix'] = 1
@@ -559,7 +559,12 @@ def getSuite(auto=True):
     return testSuite
 
 def test(auto=False):
-    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
+    return unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
 
 if __name__ == '__main__':
-    test()
+    if len(sys.argv) > 1:
+        auto = False
+    else:
+        auto = True
+    result = test(auto)
+    sys.exit(not result.wasSuccessful())
