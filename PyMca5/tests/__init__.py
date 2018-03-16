@@ -46,3 +46,4 @@ from PyMca5.tests.PCAToolsTest import test as testPCATools
 from PyMca5.tests.SpecfileTest import test as testSpecfile
 from PyMca5.tests.specfilewrapperTest import test as testSpecfilewrapper
 from PyMca5.tests.XrfTest import test as testXrf
+from PyMca5.tests.StackInfoTest import test as testStackInfo
