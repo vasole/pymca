@@ -178,8 +178,35 @@ class testStackInfo(unittest.TestCase):
         batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfg,
                                         filelist=[self._h5File],
                                         outputdir=self._outputDir,
+                                        concentrations=True,
                                         selection=selection)
+        batch.processList()
 
+        # recover the results
+        imageFile = os.path.join(self._outputDir, "IMAGES", "Steel.dat")
+        self.assertTrue(os.path.isfile(imageFile),
+                "Batch fit result file <%s> not present" % imageFile)
+        sf = specfile.Specfile(imageFile)
+        labels = sf[0].alllabels()
+        scanData = sf[0].data()
+        sf = None
+        self.assertTrue(scanData.shape[-1] == (nRows * nColumns),
+           "Expected %d values got %d" % (nRows * nColumns, scanData.shape[-1]))
+
+        referenceResult = {}
+        for point in range(scanData.shape[-1]):
+            for label in labels:
+                idx = labels.index(label)
+                if label in ["Point", "row", "column"]:
+                    continue
+                elif point == 0:
+                    referenceResult[label] = scanData[idx, point]
+                elif label.endswith("-mass-fraction"):
+                    print(label, scanData[idx, point])
+                elif label not in ["Point", "row", "column"]:
+                    self.assertTrue(scanData[idx, point] == \
+                                    referenceResult[label],
+                                    "Incorrect result for point %d" % point)
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
