@@ -66,6 +66,8 @@ class testStackInfo(unittest.TestCase):
         gc.collect()
         if self._outputDir is not None:
             shutil.rmtree(self._outputDir, ignore_errors=True)
+            if os.path.exists(self._outputDir):
+                raise IOError("Directory <%s> not deleted" % self._outputDir)
         if self._h5File is not None:
             fileName = self._h5File
             if os.path.exists(fileName):
@@ -113,6 +115,7 @@ class testStackInfo(unittest.TestCase):
         # create the data
         nRows = 5
         nColumns = 10
+        nTimes = 3
         data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float)
         live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float)
 
@@ -120,7 +123,8 @@ class testStackInfo(unittest.TestCase):
         for i in range(nRows):
             for j in range(nColumns):
                 data[i, j] = counts
-                live_time[i * nColumns + j] = initialTime * (1 + mcaIndex % 3)
+                live_time[i * nColumns + j] = initialTime * \
+                                              (1 + mcaIndex % nTimes)
                 mcaIndex += 1
         self._h5File = os.path.join(tempfile.gettempdir(), "Steel.h5")
 
@@ -175,7 +179,16 @@ class testStackInfo(unittest.TestCase):
         self._outputDir = os.path.join(tempfile.gettempdir(), "SteelTestDir")
         if not os.path.exists(self._outputDir):
             os.mkdir(self._outputDir)
-        batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfg,
+        cfgFile = os.path.join(tempfile.gettempdir(), "SteelNew.cfg")
+        if os.path.exists(cfgFile):
+            os.remove(cfgFile)
+        # we need to make sure we use fundamental parameters and
+        # the time read from the file
+        configuration["concentrations"]["usematrix"] = 0
+        configuration["concentrations"]["useautotime"] = 1
+        configuration.write(cfgFile)
+            
+        batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
                                         filelist=[self._h5File],
                                         outputdir=self._outputDir,
                                         concentrations=True,
@@ -202,11 +215,29 @@ class testStackInfo(unittest.TestCase):
                 elif point == 0:
                     referenceResult[label] = scanData[idx, point]
                 elif label.endswith("-mass-fraction"):
-                    print(label, scanData[idx, point])
+                    #print("label = ", label)
+                    #print("reference = ", referenceResult[label])
+                    #print("current = ", scanData[idx, point])
+                    reference = referenceResult[label]
+                    current = scanData[idx, point]
+                    #print("ratio = ", current / reference)
+                    #print("time ratio = ", readLiveTime[point] / readLiveTime[0])
+                    if point % nTimes:
+                        self.assertTrue(reference != current,
+                            "Incorrect concentration for point %d" % point)
+                        corrected = current * \
+                                    (readLiveTime[point] / readLiveTime[0])
+                        delta = 100 * abs((reference - corrected) / reference)
+                        self.assertTrue(delta < 0.01,
+                             "Incorrect concentration(t) for point %d" % point)
+                    else:
+                        self.assertTrue(reference == current,
+                            "Incorrect concentration for point %d" % point)
                 elif label not in ["Point", "row", "column"]:
-                    self.assertTrue(scanData[idx, point] == \
-                                    referenceResult[label],
-                                    "Incorrect result for point %d" % point)
+                    reference = referenceResult[label]
+                    current = scanData[idx, point]
+                    self.assertTrue( reference == current,
+                                    "Incorrect value for point %d" % point)
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
