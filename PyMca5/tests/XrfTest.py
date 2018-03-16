@@ -345,7 +345,8 @@ class testXrf(unittest.TestCase):
         for key in concentrationsResult["mass fraction"]:
             internal = concentrationsResult["mass fraction"][key]
             fp = concentrationsResult2["mass fraction"][key]
-            self.assertTrue( internal == fp,
+            delta = 100 * (abs(internal - fp) / internal)
+            self.assertTrue( delta < 1.0e-5,
                 "Error for <%s> concentration %g != %g" % (key, internal, fp))
 
     def testStainlessSteelDataFit(self):
