@@ -54,12 +54,12 @@ def getSuite(auto=True):
     return testSuite
 
 def main(auto=True):
-    return unittest.TextTestRunner(verbosity=2).run( \
-                        getSuite(auto=auto)).wasSuccessful()
+    return unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         auto = False
     else:
         auto = True
-    sys.exit(main(auto))
+    result = main(auto)
+    sys.exit(not result.wasSuccessful())
