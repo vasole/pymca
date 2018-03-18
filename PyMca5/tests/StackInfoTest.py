@@ -250,7 +250,7 @@ class testStackInfo(unittest.TestCase):
                                              weight=0,
                                              configuration=configuration,
                                              concentrations=True,
-                                             refit=1)
+                                             refit=0)
         print("keys = ", outputDict.keys())
         names = outputDict["names"]
         parameters = outputDict["parameters"]
@@ -261,8 +261,21 @@ class testStackInfo(unittest.TestCase):
             name = names[i]
             if name.startswith("C(") and name.endswith(")"):
                 # it is a concentrations parameter
+                # verify that concentrations took into account the time
+                reference = concentrations[cCounter][0, 0]
+                cTime = configuration['concentrations']['time']
+                values = concentrations[cCounter][:]
+                values.shape = -1
+                for point in range(live_time.size):
+                    current = values[point]
+                    if point % nTimes:
+                        self.assertTrue(reference != current,
+                            "Incorrect concentration for point %d" % point)
+                    corrected = current * live_time[point] / cTime
+                    delta = 100 * abs((reference - corrected) / reference)
+                    self.assertTrue(delta < 0.01,
+                         "Incorrect concentration(t) for point %d" % point)
                 cCounter += 1
-                continue
             else:
                 print(name, parameters[i][0, 0])
                 delta = (parameters[i] - parameters[i][0, 0])
@@ -283,7 +296,7 @@ class testStackInfo(unittest.TestCase):
                                              weight=0,
                                              configuration=configuration,
                                              concentrations=True,
-                                             refit=0)
+                                             refit=1)
         print("keys = ", outputDict.keys())
         names = outputDict["names"]
         parameters = outputDict["parameters"]
@@ -294,8 +307,21 @@ class testStackInfo(unittest.TestCase):
             name = names[i]
             if name.startswith("C(") and name.endswith(")"):
                 # it is a concentrations parameter
+                # verify that concentrations took into account the time
+                reference = concentrations[cCounter][0, 0]
+                cTime = configuration['concentrations']['time']
+                values = concentrations[cCounter][:]
+                values.shape = -1
+                for point in range(live_time.size):
+                    current = values[point]
+                    if point % nTimes:
+                        self.assertTrue(reference != current,
+                            "Incorrect concentration for point %d" % point)
+                    corrected = current * live_time[point] / cTime
+                    delta = 100 * abs((reference - corrected) / reference)
+                    self.assertTrue(delta < 0.01,
+                         "Incorrect concentration(t) for point %d" % point)
                 cCounter += 1
-                continue
             else:
                 print(name, parameters[i][0, 0])
                 delta = (parameters[i] - parameters[i][0, 0])
@@ -312,7 +338,6 @@ class testStackInfo(unittest.TestCase):
                 self.assertTrue(delta.min() == 0,
                     "Different sigma value for parameter %s delta %f" % \
                                 (name, delta.min()))
-
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
