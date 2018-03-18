@@ -223,8 +223,9 @@ class testStackInfo(unittest.TestCase):
                     #print("ratio = ", current / reference)
                     #print("time ratio = ", readLiveTime[point] / readLiveTime[0])
                     if point % nTimes:
-                        self.assertTrue(reference != current,
-                            "Incorrect concentration for point %d" % point)
+                        if abs(reference) > 1.0e-10:
+                            self.assertTrue(reference != current,
+                                "Incorrect concentration for point %d" % point)
                         corrected = current * \
                                     (readLiveTime[point] / readLiveTime[0])
                         if abs(reference) > 1.0e-10:
@@ -273,7 +274,8 @@ class testStackInfo(unittest.TestCase):
                 values.shape = -1
                 for point in range(live_time.size):
                     current = values[point]
-                    if point % nTimes:
+                    #print(name, point, reference, current, point % nTimes)
+                    if (point % nTimes) and (abs(reference) > 1.0e-10):
                         self.assertTrue(reference != current,
                             "Incorrect concentration for point %d" % point)
                     corrected = current * live_time[point] / cTime
@@ -323,7 +325,8 @@ class testStackInfo(unittest.TestCase):
                 values.shape = -1
                 for point in range(live_time.size):
                     current = values[point]
-                    if point % nTimes:
+                    # print(name, point, reference, current, point % nTimes)
+                    if (point % nTimes) and (abs(reference) > 1.0e-10):
                         self.assertTrue(reference != current,
                             "Incorrect concentration for point %d" % point)
                     corrected = current * live_time[point] / cTime
