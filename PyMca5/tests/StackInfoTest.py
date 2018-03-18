@@ -187,7 +187,7 @@ class testStackInfo(unittest.TestCase):
         configuration["concentrations"]["usematrix"] = 0
         configuration["concentrations"]["useautotime"] = 1
         configuration.write(cfgFile)
-            
+
         batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
                                         filelist=[self._h5File],
                                         outputdir=self._outputDir,
@@ -238,6 +238,81 @@ class testStackInfo(unittest.TestCase):
                     current = scanData[idx, point]
                     self.assertTrue( reference == current,
                                     "Incorrect value for point %d" % point)
+
+        # Batch fitting went well
+        # Test the fast XRF
+        from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
+        ffit = FastXRFLinearFit.FastXRFLinearFit()
+        configuration["concentrations"]["usematrix"] = 0
+        configuration["concentrations"]["useautotime"] = 1
+        configuration['fit']['stripalgorithm'] = 1
+        outputDict = ffit.fitMultipleSpectra(y=stack,
+                                             weight=0,
+                                             configuration=configuration,
+                                             concentrations=True,
+                                             refit=1)
+        print("keys = ", outputDict.keys())
+        names = outputDict["names"]
+        parameters = outputDict["parameters"]
+        uncertainties = outputDict["uncertainties"]
+        concentrations = outputDict["concentrations"]
+        cCounter = 0
+        for i in range(len(names)):
+            name = names[i]
+            if name.startswith("C(") and name.endswith(")"):
+                # it is a concentrations parameter
+                cCounter += 1
+                continue
+            else:
+                print(name, parameters[i][0, 0])
+                delta = (parameters[i] - parameters[i][0, 0])
+                self.assertTrue(delta.max() == 0,
+                    "Different fit value for parameter %s delta %f" % \
+                                (name, delta.max()))
+                self.assertTrue(delta.min() == 0,
+                    "Different fit value for parameter %s delta %f" % \
+                                (name, delta.min()))
+                delta = (uncertainties[i] - uncertainties[i][0, 0])
+                self.assertTrue(delta.max() == 0,
+                    "Different sigma value for parameter %s delta %f" % \
+                                (name, delta.max()))
+                self.assertTrue(delta.min() == 0,
+                    "Different sigma value for parameter %s delta %f" % \
+                                (name, delta.min()))
+        outputDict = ffit.fitMultipleSpectra(y=stack,
+                                             weight=0,
+                                             configuration=configuration,
+                                             concentrations=True,
+                                             refit=0)
+        print("keys = ", outputDict.keys())
+        names = outputDict["names"]
+        parameters = outputDict["parameters"]
+        uncertainties = outputDict["uncertainties"]
+        concentrations = outputDict["concentrations"]
+        cCounter = 0
+        for i in range(len(names)):
+            name = names[i]
+            if name.startswith("C(") and name.endswith(")"):
+                # it is a concentrations parameter
+                cCounter += 1
+                continue
+            else:
+                print(name, parameters[i][0, 0])
+                delta = (parameters[i] - parameters[i][0, 0])
+                self.assertTrue(delta.max() == 0,
+                    "Different fit value for parameter %s delta %f" % \
+                                (name, delta.max()))
+                self.assertTrue(delta.min() == 0,
+                    "Different fit value for parameter %s delta %f" % \
+                                (name, delta.min()))
+                delta = (uncertainties[i] - uncertainties[i][0, 0])
+                self.assertTrue(delta.max() == 0,
+                    "Different sigma value for parameter %s delta %f" % \
+                                (name, delta.max()))
+                self.assertTrue(delta.min() == 0,
+                    "Different sigma value for parameter %s delta %f" % \
+                                (name, delta.min()))
+
 
 def getSuite(auto=True):
     testSuite = unittest.TestSuite()
