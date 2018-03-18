@@ -84,6 +84,11 @@ class MaskScatterWidget(PlotWindow):
             self.setWindowTitle("MaskScatterWidget")
         self.setActiveCurveHandling(False)
 
+        # No context menu by default, execute zoomBack on right click
+        plotArea = self.getWidgetHandle()
+        plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
+        plotArea.customContextMenuRequested.connect(self._zoomBack)
+
         self.colormapIcon = qt.QIcon(qt.QPixmap(IconDict["colormap"]))
         self.colormapToolButton = qt.QToolButton(self.toolBar())
         self.colormapToolButton.setIcon(self.colormapIcon)
@@ -930,6 +935,9 @@ class MaskScatterWidget(PlotWindow):
         Resets zoom mode and enters selection mode with the current active ROI index
         """
         self.maskToolBar.setPolygonSelectionMode()
+
+    def _zoomBack(self, pos):
+        self.getLimitsHistory().pop()
 
 if __name__ == "__main__":
     backend = "matplotlib"

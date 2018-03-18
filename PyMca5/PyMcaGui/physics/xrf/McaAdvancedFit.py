@@ -2079,6 +2079,7 @@ class McaAdvancedFit(qt.QWidget):
                 xdata.shape= [len(xdata),]
                 ydata.shape= [len(ydata),]
                 self.graph.addCurve(xdata, ydata, legend="Data", replace=True)
+                self.graph.setActiveCurve("Data")
                 return
             else:
                 ddict = self.dict
@@ -2147,6 +2148,7 @@ class McaAdvancedFit(qt.QWidget):
                         self.graph.removeCurve(label)
         else:
             self.__clearPeaksSpectrum()
+        self.graph.setActiveCurve("Data")
 
     def _saveGraph(self, dict=None):
         if not len(self.graph.getAllCurves(just_legend=True)):
@@ -2880,6 +2882,11 @@ class McaGraphWindow(PlotWindow):
         self.setPanWithArrowKeys(True)
         self.setIconSize(qt.QSize(20, 20))
 
+        # No context menu by default, execute zoomBack on right click
+        plotArea = self.getWidgetHandle()
+        plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
+        plotArea.customContextMenuRequested.connect(self._zoomBack)
+
         # toolbar
         # hide unused actions and separators
         self.zoomModeAction.setVisible(False)
@@ -2942,6 +2949,9 @@ class McaGraphWindow(PlotWindow):
             self.setGraphXLabel("Energy")
         else:
             self.setGraphXLabel("Channel")
+
+    def _zoomBack(self, pos):
+        self.getLimitsHistory().pop()
 
 
 def test(ffile='03novs060sum.mca', cfg=None):

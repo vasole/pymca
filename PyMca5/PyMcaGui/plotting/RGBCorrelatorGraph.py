@@ -77,6 +77,9 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.graph.setGraphYLabel("Row")
         self.graph.setYAxisAutoScale(True)
         self.graph.setXAxisAutoScale(True)
+        plotArea = self.graph.getWidgetHandle()
+        plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
+        plotArea.customContextMenuRequested.connect(self._zoomBack)
 
         self._buildToolBar(selection, colormap, imageicons,
                            standalonesave,
@@ -685,6 +688,9 @@ class RGBCorrelatorGraph(qt.QWidget):
 
     def selectColormap(self):
         qt.QMessageBox.information(self, "Open", "Not implemented (yet)")
+
+    def _zoomBack(self, pos):
+        self.graph.getLimitsHistory().pop()
 
 class MyQLabel(qt.QLabel):
     def __init__(self,parent=None,name=None,fl=0,bold=True, color= qt.Qt.red):

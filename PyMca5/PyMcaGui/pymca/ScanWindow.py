@@ -103,6 +103,11 @@ class BaseScanWindow(PlotWindow):
 
         self.setWindowTitle(name)
 
+        # No context menu by default, execute zoomBack on right click
+        plotArea = self.getWidgetHandle()
+        plotArea.setContextMenuPolicy(qt.Qt.CustomContextMenu)
+        plotArea.customContextMenuRequested.connect(self._zoomBack)
+
         # Toolbar:
         # hide zoom and pan mode buttons, and the next separator
         self.zoomModeAction.setVisible(False)
@@ -222,6 +227,9 @@ class BaseScanWindow(PlotWindow):
         if wtype not in [None, "SCAN", "MCA"]:
             raise AttributeError("Unsupported window type %s." % wtype)
         self._plotType = wtype
+
+    def _zoomBack(self, pos):
+        self.getLimitsHistory().pop()
 
 
 class ScanWindow(BaseScanWindow):
