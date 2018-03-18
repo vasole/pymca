@@ -99,7 +99,6 @@ class HDF5Stack1D(DataObject.DataObject):
 
         # built the selection in terms of HDF terms
         # for the time being, only the first item in x selection used
-
         xSelection = selection.get('x', None)
         if xSelection is not None:
             if type(xSelection) != type([]):
@@ -175,7 +174,7 @@ class HDF5Stack1D(DataObject.DataObject):
                     i = 0
                     for entry in entryNames:
                         i += 1
-                        path = "/"+entry + ySelection
+                        path = "/"+ entry + ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
                         try:

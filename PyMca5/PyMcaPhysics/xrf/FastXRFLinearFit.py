@@ -797,13 +797,32 @@ if __name__ == "__main__":
         if (not os.path.exists(fileList[0])) and \
            os.path.exists(fileList[0].split("::")[0]):
             # odo convention to get a dataset form an HDF5
-            import h5py
             fname, dataPath = fileList[0].split("::")
-            h5 = h5py.File(fname, "r")
-            # compared to the ROI imaging tool, this way of reading puts data into memory
-            # while with the ROI imaging tool, there is a check.
-            dataStack = h5[dataPath][:]
-            h5.close()
+            # compared to the ROI imaging tool, this way of reading puts data
+            # into memory while with the ROI imaging tool, there is a check.
+            if 0:
+                import h5py
+                h5 = h5py.File(fname, "r")
+                dataStack = h5[dataPath][:]
+                h5.close()
+            else:
+                from PyMca5.PyMcaIO import HDF5Stack1D
+                # this way reads information associated to the dataset (if present)
+                if dataPath.startswith("/"):
+                    pathItems = dataPath[1:].split("/")
+                else:
+                    pathItems = dataPath.split("/")
+                if len(pathItems) > 1:
+                    scanlist = ["/" + pathItems[0]]
+                    selection = {"y":"/" + "/".join(pathItems[1:])}
+                else:
+                    selection = {"y":dataPath}
+                    scanlist = None
+                print(selection)
+                print("scanlist = ", scanlist)
+                dataStack = HDF5Stack1D.HDF5Stack1D([fname],
+                                                    selection,
+                                                    scanlist=scanlist)
         else:
             dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
     else:
