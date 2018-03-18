@@ -468,8 +468,6 @@ class FastXRFLinearFit(object):
                 A = derivatives[:, [i for i in range(nFree) if i not in badParameters]]
                 #assume we'll not have too many spectra
                 if data.dtype not in [numpy.float32, numpy.float64]:
-                    data
-                if data.dtype not in [numpy.float32, numpy.float64]:
                     if data.itemsize < 5:
                         data_dtype = numpy.float32
                     else:
@@ -519,7 +517,7 @@ class FastXRFLinearFit(object):
                                     SpecfitFuns.snip1d(background[lastAnchor:],
                                                        config['fit']['snipwidth'],
                                                        0)
-                    spectra[:, k] -= background
+                        spectra[:, k] -= background
                 ddict = lstsq(A, spectra,
                               sigma_b=sigma_b,
                               weight=weight,
