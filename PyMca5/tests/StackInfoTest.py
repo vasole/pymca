@@ -47,6 +47,8 @@ if sys.version_info < (3,):
 else:
     from io import StringIO
 
+DEBUG = 0
+
 class testStackInfo(unittest.TestCase):
     def setUp(self):
         """
@@ -187,12 +189,12 @@ class testStackInfo(unittest.TestCase):
         configuration["concentrations"]["usematrix"] = 0
         configuration["concentrations"]["useautotime"] = 1
         configuration.write(cfgFile)
-
         batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
                                         filelist=[self._h5File],
                                         outputdir=self._outputDir,
                                         concentrations=True,
-                                        selection=selection)
+                                        selection=selection,
+                                        quiet=True)
         batch.processList()
 
         # recover the results
@@ -257,7 +259,6 @@ class testStackInfo(unittest.TestCase):
                                              configuration=configuration,
                                              concentrations=True,
                                              refit=0)
-        print("keys = ", outputDict.keys())
         names = outputDict["names"]
         parameters = outputDict["parameters"]
         uncertainties = outputDict["uncertainties"]
@@ -274,7 +275,7 @@ class testStackInfo(unittest.TestCase):
                 values.shape = -1
                 for point in range(live_time.size):
                     current = values[point]
-                    #print(name, point, reference, current, point % nTimes)
+                    print(name, point, reference, current, point % nTimes)
                     if (point % nTimes) and (abs(reference) > 1.0e-10):
                         self.assertTrue(reference != current,
                             "Incorrect concentration for point %d" % point)
@@ -288,7 +289,8 @@ class testStackInfo(unittest.TestCase):
                              "Incorrect concentration(t) for point %d" % point)
                 cCounter += 1
             else:
-                print(name, parameters[i][0, 0])
+                if DEBUG:
+                    print(name, parameters[i][0, 0])
                 delta = (parameters[i] - parameters[i][0, 0])
                 self.assertTrue(delta.max() == 0,
                     "Different fit value for parameter %s delta %f" % \
@@ -308,7 +310,6 @@ class testStackInfo(unittest.TestCase):
                                              configuration=configuration,
                                              concentrations=True,
                                              refit=1)
-        print("keys = ", outputDict.keys())
         names = outputDict["names"]
         parameters = outputDict["parameters"]
         uncertainties = outputDict["uncertainties"]
@@ -325,7 +326,7 @@ class testStackInfo(unittest.TestCase):
                 values.shape = -1
                 for point in range(live_time.size):
                     current = values[point]
-                    # print(name, point, reference, current, point % nTimes)
+                    print(name, point, reference, current, point % nTimes)
                     if (point % nTimes) and (abs(reference) > 1.0e-10):
                         self.assertTrue(reference != current,
                             "Incorrect concentration for point %d" % point)
@@ -339,7 +340,8 @@ class testStackInfo(unittest.TestCase):
                              "Incorrect concentration(t) for point %d" % point)
                 cCounter += 1
             else:
-                print(name, parameters[i][0, 0])
+                if DEBUG:
+                    print(name, parameters[i][0, 0])
                 delta = (parameters[i] - parameters[i][0, 0])
                 self.assertTrue(delta.max() == 0,
                     "Different fit value for parameter %s delta %f" % \
