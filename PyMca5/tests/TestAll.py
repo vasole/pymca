@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -54,11 +54,12 @@ def getSuite(auto=True):
     return testSuite
 
 def main(auto=True):
-    unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
+    return unittest.TextTestRunner(verbosity=2).run(getSuite(auto=auto))
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         auto = False
     else:
         auto = True
-    main(auto)
+    result = main(auto)
+    sys.exit(not result.wasSuccessful())

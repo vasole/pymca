@@ -48,6 +48,7 @@ script:
     # Dependencies
     - pip install matplotlib
     - pip install fisx
+    - pip install h5py
 
     # Install from source package
     - pip install --pre --find-links dist/ --no-cache-dir --no-index PyMca5 $PIP_INSTALL_EXTRA_ARGS
@@ -57,4 +58,5 @@ script:
     - pip list
 
     # Run the tests
-    - python PyMca5/tests/TestAll.py
+    - cd ..
+    - python -m PyMca5.tests.TestAll

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -55,6 +55,7 @@ class FastXRFLinearFit(object):
 
     def setFitConfiguration(self, configuration):
         self._mcaTheory.setConfiguration(configuration)
+        self._config = self._mcaTheory.getConfiguration()
 
     def setFitConfigurationFile(self, ffile):
         if not os.path.exists(ffile):
@@ -65,7 +66,8 @@ class FastXRFLinearFit(object):
 
     def fitMultipleSpectra(self, x=None, y=None, xmin=None, xmax=None,
                            configuration=None, concentrations=False,
-                           ysum=None, weight=None, refit=True):
+                           ysum=None, weight=None, refit=True,
+                           livetime=None):
         """
         This method performs the actual fit. The y keyword is the only mandatory input argument.
 
@@ -76,22 +78,88 @@ class FastXRFLinearFit(object):
         :param weight: 0 Means no weight, 1 Use an average weight, 2 Individual weights (slow)
         :param concentrations: 0 Means no calculation, 1 Calculate them
         :param refit: if False, no check for negative results. Default is True.
+        :livetime: It will be used if not different from None and concentrations
+                   are to be calculated by using fundamental parameters with
+                   automatic time. The default is None.
         :return: A dictionnary with the parameters, uncertainties, concentrations and names as keys.
         """
         if y is None:
             raise RuntimeError("y keyword argument is mandatory!")
 
-        #if concentrations:
-        #    txt = "Fast concentration calculation not implemented yet"
-        #    raise NotImplemented(txt)
+        if hasattr(y, "info") and hasattr(y, "data"):
+            data = y.data
+            mcaIndex = y.info.get("McaIndex", -1)
+        else:
+            data = y
+            mcaIndex = -1
 
+        if x is None:
+            if hasattr(y, "info") and hasattr(y, "x"):
+                x = y.x[0]
+
+        if livetime is None:
+            if hasattr(y, "info"):
+                if "McaLiveTime" in y.info:
+                    livetime = y.info["McaLiveTime"]
         if DEBUG:
             t0 = time.time()
         if configuration is not None:
             self._mcaTheory.setConfiguration(configuration)
-
+        elif self._config is None:
+            raise ValueError("Fit configuration missing")
+        else:
+            if DEBUG:
+                print("Setting default configuration")
+            self._mcaTheory.setConfiguration(self._config)
         # read the current configuration
+        # it is a copy, we can modify it at will
         config = self._mcaTheory.getConfiguration()
+        if xmin is None:
+            xmin = config['fit']['xmin']
+        if xmax is None:
+            xmax = config['fit']['xmax']
+        toReconfigure = False
+
+        # if concentrations and use times, it needs to be reconfigured
+        # without using times and correct later on. If the concentrations
+        # are to be calculated from internal standard there is no need to
+        # raise an exception either.
+        autotime = 0
+        liveTimeFactor = 1.0
+        if not concentrations:
+            # ignore any time information to prevent unnecessary errors when
+            # setting the fitting data whithout the time information
+            if config['concentrations'].get("useautotime", 0):
+                config['concentrations']["useautotime"] = 0
+                toReconfigure = True
+        elif config["concentrations"]["usematrix"]:
+            if config['concentrations'].get("useautotime", 0):
+                config['concentrations']["useautotime"] = 0
+                toReconfigure = True
+        else:
+            # we are calculating concentrations from fundamental parameters
+            autotime = config['concentrations'].get("useautotime", 0)
+            nSpectra = data.size // data.shape[mcaIndex]
+            if autotime:
+                if livetime is None:
+                    txt = "Automatic time requested but no time information provided"
+                    raise RuntimeError(txt)
+                elif numpy.isscalar(livetime):
+                    liveTimeFactor = \
+                        float(config['concentrations']["time"]) / livetime
+                elif livetime.size == nSpectra:
+                    liveTimeFactor = \
+                        float(config['concentrations']["time"]) / livetime
+                else:
+                    raise RuntimeError( \
+                        "Number of live times not equal number of spectra")
+                config['concentrations']["useautotime"] = 0
+                toReconfigure = True
+
+        # use of strategies is not supported for the time being
+        strategy = config['fit'].get('strategyflag', 0)
+        if strategy:
+            raise RuntimeError("Strategies are incompatible with fast fit")
 
         # background
         if config['fit']['stripflag']:
@@ -101,7 +169,6 @@ class FastXRFLinearFit(object):
             else:
                 raise RuntimeError("Please use the faster SNIP background")
 
-        toReconfigure = False
         if weight is None:
             # dictated by the file
             weight = config['fit']['fitweight']
@@ -140,13 +207,6 @@ class FastXRFLinearFit(object):
         if toReconfigure:
             # we must configure again the fit
             self._mcaTheory.setConfiguration(config)
-
-        if hasattr(y, "info") and hasattr(y, "data"):
-            data = y.data
-            mcaIndex = y.info.get("McaIndex", -1)
-        else:
-            data = y
-            mcaIndex = -1
 
         if len(data.shape) != 3:
             txt = "For the time being only three dimensional arrays supported"
@@ -207,6 +267,10 @@ class FastXRFLinearFit(object):
                 freeNames.append(param)
                 if i < self._mcaTheory.NGLOBAL:
                     nFreeBackgroundParameters += 1
+        if nFree == 0:
+            txt = "No free parameters to be fitted!\n"
+            txt += "No peaks inside fitting region?"
+            raise ValueError(txt)
 
         #build the matrix of derivatives
         derivatives = None
@@ -255,7 +319,7 @@ class FastXRFLinearFit(object):
             iXMax = numpy.nonzero(x >= xdata[-1])[0][0]
         # numpy 1.11.0 returns an array on previous expression
         # and then complains about a future deprecation warning
-        # because of using an arry and not an scalar in the selection
+        # because of using an array and not an scalar in the selection
         if hasattr(iXMin, "shape"):
             if len(iXMin.shape):
                 iXMin = iXMin[0]
@@ -404,8 +468,6 @@ class FastXRFLinearFit(object):
                 A = derivatives[:, [i for i in range(nFree) if i not in badParameters]]
                 #assume we'll not have too many spectra
                 if data.dtype not in [numpy.float32, numpy.float64]:
-                    data
-                if data.dtype not in [numpy.float32, numpy.float64]:
                     if data.itemsize < 5:
                         data_dtype = numpy.float32
                     else:
@@ -455,7 +517,7 @@ class FastXRFLinearFit(object):
                                     SpecfitFuns.snip1d(background[lastAnchor:],
                                                        config['fit']['snipwidth'],
                                                        0)
-                    spectra[:, k] -= background
+                        spectra[:, k] -= background
                 ddict = lstsq(A, spectra,
                               sigma_b=sigma_b,
                               weight=weight,
@@ -492,6 +554,10 @@ class FastXRFLinearFit(object):
                     print("USING MATRIX")
                 if config['concentrations']['reference'].upper() == "AUTO":
                     fitFirstSpectrum = True
+            elif autotime:
+                # we have to calculate with the time in the configuration
+                # and correct later on
+                cToolConf["autotime"] = 0
 
             fitresult = {}
             if fitFirstSpectrum:
@@ -557,14 +623,21 @@ class FastXRFLinearFit(object):
                             print("skept %s" % group)
                         continue
                     outputDict['names'].append("C(%s)" % group)
-                    massFractions[counter] = results[nFreeBackgroundParameters+i] *\
-                        (concentrationsResult['mass fraction'][group]/fitresult['result'][group]['fitarea'])
+                    if counter == 0:
+                        if hasattr(liveTimeFactor, "shape"):
+                            liveTimeFactor.shape = results[nFreeBackgroundParameters+i].shape
+                    massFractions[counter] = liveTimeFactor * \
+                        results[nFreeBackgroundParameters+i] * \
+                        (concentrationsResult['mass fraction'][group] / \
+                         fitresult['result'][group]['fitarea'])
                     counter += 1
                     if len(concentrationsResult['layerlist']) > 1:
                         for layer in concentrationsResult['layerlist']:
                             outputDict['names'].append("C(%s)-%s" % (group, layer))
-                            massFractions[counter] = results[nFreeBackgroundParameters+i] *\
-                        (concentrationsResult[layer]['mass fraction'][group]/fitresult['result'][group]['fitarea'])
+                            massFractions[counter] = liveTimeFactor * \
+                                    results[nFreeBackgroundParameters+i] * \
+                                    (concentrationsResult[layer]['mass fraction'][group] / \
+                                     fitresult['result'][group]['fitarea'])
                             counter += 1
             else:
                 if DEBUG:
@@ -724,13 +797,32 @@ if __name__ == "__main__":
         if (not os.path.exists(fileList[0])) and \
            os.path.exists(fileList[0].split("::")[0]):
             # odo convention to get a dataset form an HDF5
-            import h5py
             fname, dataPath = fileList[0].split("::")
-            h5 = h5py.File(fname, "r")
-            # compared to the ROI imaging tool, this way of reading puts data into memory
-            # while with the ROI imaging tool, there is a check.
-            dataStack = h5[dataPath][:]
-            h5.close()
+            # compared to the ROI imaging tool, this way of reading puts data
+            # into memory while with the ROI imaging tool, there is a check.
+            if 0:
+                import h5py
+                h5 = h5py.File(fname, "r")
+                dataStack = h5[dataPath][:]
+                h5.close()
+            else:
+                from PyMca5.PyMcaIO import HDF5Stack1D
+                # this way reads information associated to the dataset (if present)
+                if dataPath.startswith("/"):
+                    pathItems = dataPath[1:].split("/")
+                else:
+                    pathItems = dataPath.split("/")
+                if len(pathItems) > 1:
+                    scanlist = ["/" + pathItems[0]]
+                    selection = {"y":"/" + "/".join(pathItems[1:])}
+                else:
+                    selection = {"y":dataPath}
+                    scanlist = None
+                print(selection)
+                print("scanlist = ", scanlist)
+                dataStack = HDF5Stack1D.HDF5Stack1D([fname],
+                                                    selection,
+                                                    scanlist=scanlist)
         else:
             dataStack = EDFStack.EDFStack(fileList, dtype=numpy.float32)
     else:

@@ -241,6 +241,7 @@ def getMcaObjectPaths(h5file, mcaPath):
     #mca["channels"] = None
     #mca["i0"] = None
     #mca["live_time"] = None
+    #mca["elapsed_time"] = None
     #mca["preset_time"]= None
     #mca["calibration"] = [0.0, 1.0, 0.0]
     #mca["i0"] = None
