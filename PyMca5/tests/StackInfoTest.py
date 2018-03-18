@@ -227,9 +227,14 @@ class testStackInfo(unittest.TestCase):
                             "Incorrect concentration for point %d" % point)
                         corrected = current * \
                                     (readLiveTime[point] / readLiveTime[0])
-                        delta = 100 * abs((reference - corrected) / reference)
-                        self.assertTrue(delta < 0.01,
-                             "Incorrect concentration(t) for point %d" % point)
+                        if abs(reference) > 1.0e-10:
+                            delta = \
+                                100 * abs((reference - corrected) / reference)
+                            self.assertTrue(delta < 0.01,
+                                "Incorrect concentration(t) for point %d" % point)
+                        else:
+                            self.assertTrue(abs(reference - corrected) < 1.0e-5,
+                                 "Incorrect concentration(t) for point %d" % point)
                     else:
                         self.assertTrue(reference == current,
                             "Incorrect concentration for point %d" % point)
@@ -272,9 +277,13 @@ class testStackInfo(unittest.TestCase):
                         self.assertTrue(reference != current,
                             "Incorrect concentration for point %d" % point)
                     corrected = current * live_time[point] / cTime
-                    delta = 100 * abs((reference - corrected) / reference)
-                    self.assertTrue(delta < 0.01,
-                         "Incorrect concentration(t) for point %d" % point)
+                    if abs(reference) > 1.0e-10:
+                        delta = 100 * abs((reference - corrected) / reference)
+                        self.assertTrue(delta < 0.01,
+                             "Incorrect concentration(t) for point %d" % point)
+                    else:
+                        self.assertTrue(abs(reference - corrected) < 1.0e-5,
+                             "Incorrect concentration(t) for point %d" % point)
                 cCounter += 1
             else:
                 print(name, parameters[i][0, 0])
@@ -318,9 +327,13 @@ class testStackInfo(unittest.TestCase):
                         self.assertTrue(reference != current,
                             "Incorrect concentration for point %d" % point)
                     corrected = current * live_time[point] / cTime
-                    delta = 100 * abs((reference - corrected) / reference)
-                    self.assertTrue(delta < 0.01,
-                         "Incorrect concentration(t) for point %d" % point)
+                    if abs(reference) > 1.0e-10:
+                        delta = 100 * abs((reference - corrected) / reference)
+                        self.assertTrue(delta < 0.01,
+                             "Incorrect concentration(t) for point %d" % point)
+                    else:
+                        self.assertTrue(abs(reference - corrected) < 1.0e-5,
+                             "Incorrect concentration(t) for point %d" % point)
                 cCounter += 1
             else:
                 print(name, parameters[i][0, 0])
