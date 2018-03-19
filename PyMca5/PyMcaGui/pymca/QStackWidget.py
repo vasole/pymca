@@ -571,11 +571,12 @@ class QStackWidget(StackBase.StackBase,
                 if "McaLiveTime" in masterStackDataObject.info:
                     try:
                         for slave in self._slaveList:
-                            if "McaLiveTime" in slave.info:
-                                slave.info["McaLiveTime"].shape = \
+                            info = slave.getStackInfo()
+                            if "McaLiveTime" in info:
+                                info["McaLiveTime"].shape = \
                                    masterStackDataObject.info["McaLiveTime"].shape                                
                                 masterStackDataObject.info["McaLiveTime"] += \
-                                        slave.info["McaLiveTime"]
+                                        info["McaLiveTime"]
                             else:
                                 raise ValueError("No compatible time information")
                     except:
@@ -585,7 +586,7 @@ class QStackWidget(StackBase.StackBase,
                         txt = "An error has occurred cumulating the master and slave times\n"
                         txt += "Time information is lost"
                         del masterStackDataObject.info["McaLiveTime"] 
-                        msg.setText()
+                        msg.setText(txt)
                         msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
                         msg.setDetailedText(traceback.format_exc())
                         msg.exec_()
