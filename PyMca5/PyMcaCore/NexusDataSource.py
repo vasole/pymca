@@ -338,24 +338,47 @@ class NexusDataSource(object):
             mcaObjectPaths = NexusTools.getMcaObjectPaths(phynxFile, mcaPath)
             mcaData = h5File[mcaObjectPaths['counts']]
             try:
+                for key in list(mcaObjectPaths.keys()):
+                    if key == "counts":
+                        continue
+                    mcaDatasetObjectPath = mcaObjectPaths[key]
+                    dataset = None
+                    if mcaDatasetObjectPath in h5file:
+                        dataset = h5file[mcaDatasetObjectPath].value
+                    elif "::" in mcaDatasetObjectPath:
+                        fileName, path = mcaDatasetObjectPath.split()
+                        if os.path.exists(fileName):
+                            with h5py.File(fileName, "r") as h5:
+                                if path in h5:
+                                    dataset = h5[path].value
+                    if dataset is None:
+                        if DEBUG:
+                            print("Broken link? Ignoring key %s = % s" % \
+                                                  (key, mcaDatasetObjectPath ))
+                        del mcaObjectPaths[key]
+                    else:
+                        mcaObjectPaths[key] = dataset
                 if "channels" in mcaObjectPaths:
-                    mcaChannels = h5File[mcaObjectPaths["channels"]].value
+                    mcaChannels = mcaObjectPaths["channels"]
+                    del mcaObjectPaths["channels"]
                 else:
                     mcaChannels = numpy.arange(mcaData.shape[-1]).astype(numpy.float32)
                 if "calibration" in mcaObjectPaths:
-                    mcaCalibration = h5File[mcaObjectPaths["calibration"]].value
+                    mcaCalibration = mcaObjectPaths["calibration"]
+                    del mcaObjectPaths["channels"]
                 else:
                     mcaCalibration = numpy.array([0.0, 1.0, 0.0])
                 output.info["McaCalib"] = mcaCalibration
                 if "preset_time" in mcaObjectPaths:
-                    output.info["McaPresetTime"]= \
-                                    float(h5File[mcaObjectPaths["preset_time"]].value)
+                    output.info["McaPresetTime"]= mcaObjectPaths["preset_time"]
+                    del mcaObjectPaths["preset_time"]
                 if "elapsed_time" in mcaObjectPaths:
-                    output.info["McaRealTime"]= \
-                                    float(h5File[mcaObjectPaths["elapsed_time"]].value)
+                    output.info["McaRealTime"]= mcaObjectPaths["elapsed_time"]
+                    del mcaObjectPaths["elapsed_time"]
                 if "live_time" in mcaObjectPaths:
-                    output.info["McaLiveTime"]= \
-                                    float(h5File[mcaObjectPaths["live_time"]].value)
+                    output.info["McaLiveTime"]= mcaObjectPaths["live_time"]
+                    del mcaObjectPaths["live_time"]
+                del mcaObjectPaths
                 if selection['mcaselectiontype'].lower() in ["avg", "average", "sum"]:
                     divider = 1.0
                     if len(mcaData.shape) > 1:
