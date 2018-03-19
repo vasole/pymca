@@ -206,11 +206,10 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
     h5file[path].visititems(visit_function)
     return datasetList
 
-
 def getMcaObjectPaths(h5file, mcaPath):
     """
     Given an h5py instance and the path to a dataset, try to retrieve all the
-    associated information returning an McaSpectrumObject.
+    paths with associated information needed to build an McaSpectrumObject.
 
     McaSpectrumObject is a DataObject where data are the counts and the info
     part contains the information below
@@ -226,7 +225,10 @@ def getMcaObjectPaths(h5file, mcaPath):
     - i02flux
     - it2flux
     """
-
+    if not mcaPath.startswith("/"):
+        # this is needed in order to avoid posixpath to return
+        # an empty string
+        mcaPath = "/" + mcaPath
     mca = {}
     mca["counts"] = mcaPath
     mcaKeys = ["channels",
