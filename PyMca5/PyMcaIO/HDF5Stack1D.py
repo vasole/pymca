@@ -157,7 +157,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 #expect same entry names in the files
                 #Unfortunately this does not work for SOLEIL
                 for entry in entryNames:
-                    path = "/"+entry + ySelection
+                    path = "/" + entry + ySelection
                     dirname = posixpath.dirname(path)
                     base = posixpath.basename(path)
                     try:
@@ -174,22 +174,32 @@ class HDF5Stack1D(DataObject.DataObject):
                     i = 0
                     for entry in entryNames:
                         i += 1
-                        path = "/"+ entry + ySelection
+                        path = "/" + entry + ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
                         try:
                             file_entry = tmpHdf[dirname]
                             if hasattr(file_entry, "keys"):
                                 if base in file_entry.keys():
+                                    # this is the case of a selection inside a group
                                     scanlist.append("1.%d" % i)
                         except KeyError:
                             print("%s not in file, ignoring." % dirname)
                     if not len(scanlist):
-                        path = "/" + ySelection
+                        if not ySelection.startswith("/"):
+                            path = "/" + ySelection
+                        else:
+                            path = ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
                         try:
-                            if base in file_entry.keys():
+                            if dirname in tmpHdf["/"]:
+                                # this is the case of a dataset at top plevel
+                                # or having given the complete path
+                                if base in tmpHdf[dirname]:
+                                    JUST_KEYS = False
+                                    scanlist.append("")
+                            elif base in file_entry.keys():
                                 JUST_KEYS = False
                                 scanlist.append("")
                         except:
@@ -337,25 +347,59 @@ class HDF5Stack1D(DataObject.DataObject):
                 if "live_time" in mcaObjectPaths:
                     if DONE:
                         # hopefully it will fit into memory
-                        _time = tmpHdf[mcaObjectPaths["live_time"]].value
+                        if mcaObjectPaths["live_time"] in tmpHdf:
+                            _time = tmpHdf[mcaObjectPaths["live_time"]].value
+                        elif "::" in mcaObjectPaths["live_time"]:
+                            tmpFileName, tmpDatasetPath = \
+                                        mcaObjectPaths["live_time"].split("::") 
+                            with h5py.File(tmpFileName, "r") as tmpH5:
+                                _time = tmpH5[tmpDatasetPath].value
+                        else:
+                            del mcaObjectPaths["live_time"]
                     else:
                         # we have to have as many live times as MCA spectra
-                        _time = numpy.zeros((self.data.shape[0] * self.data.shape[1]),
-                                                numpy.float64)                
+                        _time = numpy.zeros( \
+                                    (self.data.shape[0] * self.data.shape[1]),
+                                    dtype=numpy.float64)                
                 elif "elapsed_time" in mcaObjectPaths:
                     if DONE:
                         # hopefully it will fit into memory
-                        _time = tmpHdf[mcaObjectPaths["elased_time"]].value
+                        if mcaObjectPaths["elapsed_time"] in tmpHdf:
+                            _time = \
+                                tmpHdf[mcaObjectPaths["elapsed_time"]].value
+                        elif "::" in mcaObjectPaths["elapsed_time"]:
+                            tmpFileName, tmpDatasetPath = \
+                                    mcaObjectPaths["elapsed_time"].split("::") 
+                            with h5py.File(tmpFileName, "r") as tmpH5:
+                                _time = tmpH5[tmpDatasetPath].value
+                        else:
+                            del mcaObjectPaths["elapsed_time"]
                     else:
                         # we have to have as many elpased times as MCA spectra
                         _time = numpy.zeros((self.data.shape[0] * self.data.shape[1]),
-                                                numpy.float32)
+                                                numpy.float32)                    
                 if "calibration" in mcaObjectPaths:
-                    _calibration = tmpHdf[mcaObjectPaths["calibration"]].value
+                    if mcaObjectPaths["calibration"] in tmpHdf:
+                        _calibration = \
+                                tmpHdf[mcaObjectPaths["calibration"]].value
+                    elif "::" in mcaObjectPaths["calibration"]:
+                        tmpFileName, tmpDatasetPath = \
+                                    mcaObjectPaths["calibration"].split("::") 
+                        with h5py.File(tmpFileName, "r") as tmpH5:
+                            _calibration = tmpH5[tmpDatasetPath].value
+                    else:
+                        del mcaObjectPaths["calibration"]
                 if "channels" in mcaObjectPaths:
-                    _channels = tmpHdf[mcaObjectPaths["channels"]].value
-
-                    
+                    if mcaObjectPaths["channels"] in tmpHdf:
+                        _channels = \
+                                tmpHdf[mcaObjectPaths["channels"]].value
+                    elif "::" in mcaObjectPaths["channels"]:
+                        tmpFileName, tmpDatasetPath = \
+                                    mcaObjectPaths["channels"].split("::") 
+                        with h5py.File(tmpFileName, "r") as tmpH5:
+                            _channels = tmpH5[tmpDatasetPath].value
+                    else:
+                        del mcaObjectPaths["channels"]
             else:
                 self._pathHasRelevantInfo = False
 
@@ -431,12 +475,16 @@ class HDF5Stack1D(DataObject.DataObject):
                         if _time is not None:
                             if "live_time" in mcaObjectPaths:
                                 # it is assumed that all have the same structure!!!
-                                timePath = NexusTools.getMcaObjectPaths(hdf,
-                                                                        path)["live_time"]
+                                timePath = NexusTools.getMcaObjectPaths(hdf, path)["live_time"]
                             elif "elapsed_time" in mcaObjectPaths:
                                 timePath = NexusTools.getMcaObjectPaths(hdf,
                                                                         path)["elapsed_time"]
-                            timeData = hdf[timePath].value
+                            if timePath in hdf:
+                                timeData = hdf[timePath].value
+                            elif "::" in timePath:
+                                externalFile, externalPath = timePath.split("::")
+                                with h5py.File(externalFile, "r") as timeHdf:
+                                    timeData = timeHdf[externalPath].value
                         if mcaIndex != 0:
                             if IN_MEMORY:
                                 yDataset.shape = -1, mcaDim

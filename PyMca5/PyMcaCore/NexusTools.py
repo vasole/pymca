@@ -30,10 +30,11 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import os
 from operator import itemgetter
 import re
 import posixpath
-from h5py import Dataset, Group
+from h5py import File, Dataset, Group
 DEBUG = 0
 
 #sorting method
@@ -205,11 +206,10 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
     h5file[path].visititems(visit_function)
     return datasetList
 
-
 def getMcaObjectPaths(h5file, mcaPath):
     """
     Given an h5py instance and the path to a dataset, try to retrieve all the
-    associated information returning an McaSpectrumObject.
+    paths with associated information needed to build an McaSpectrumObject.
 
     McaSpectrumObject is a DataObject where data are the counts and the info
     part contains the information below
@@ -223,9 +223,12 @@ def getMcaObjectPaths(h5file, mcaPath):
     - i0
     - it
     - i02flux
-    - it2flux    
+    - it2flux
     """
-
+    if not mcaPath.startswith("/"):
+        # this is needed in order to avoid posixpath to return
+        # an empty string
+        mcaPath = "/" + mcaPath
     mca = {}
     mca["counts"] = mcaPath
     mcaKeys = ["channels",
@@ -252,7 +255,7 @@ def getMcaObjectPaths(h5file, mcaPath):
     # look at the same level as the dataset
     parentPath = posixpath.dirname(mcaPath)
     searchPaths =[parentPath]
-    
+
     # look at a container group named info at the same level
     if "info" in h5file[parentPath]:
         infoPath = posixpath.join(parentPath, "info")
@@ -276,6 +279,27 @@ def getMcaObjectPaths(h5file, mcaPath):
             if (baseKey in mcaKeys) and (key != mcaPath):
                 if baseKey not in mca:
                     mca[baseKey] = item.name
+
+    if len(mca) == 1:
+        # we found nothing
+        # check if we are dealing with a soft link
+        basename = posixpath.basename(mcaPath)
+        link = h5file[parentPath].get(basename, getlink=True)
+        if hasattr(link, "path"):
+            if hasattr(link, "filename"):
+                # external link
+                filename = link.filename
+                if os.path.exists(filename):
+                    # it should always exist
+                    h5file = File(filename, "r")
+                    mca = getMcaObjectPaths(h5file, link.path)
+                    keys = list(mca.keys())
+                    for key in keys:
+                        mca[key] = filename + "::" + mca[key]
+            else:
+                # soft link
+                mca = getMcaObjectPaths(h5file, link.path)
+            mca["counts"] = mcaPath
     return mca
 
 def getNXClassGroups(h5file, path, classes, single=False):
@@ -344,7 +368,7 @@ def getMeasurementGroup(h5file, path):
         # hdf5 stores in utf-8 the paths if we got bytes, they need to be converted
         if hasattr(default, "decode"):
             default = default.decode()
-        if default is None:            
+        if default is None:
             # get the NXdata group just behind entry that contains more items inside
             # and take it as measurement group
             nxdatas = getNXClassGroups(h5file, entry_path, ["NXdata", b"NXdata"], single=False)
@@ -362,7 +386,7 @@ def getMeasurementGroup(h5file, path):
                 if isGroup(group):
                     measurement = group
     return measurement
-    
+
 def getInstrumentGroup(h5file, path):
     entry_name = getEntryName(path)
     groups = getNXClassGroups(h5file, entry_name, ["NXinstrument", b"NXinstrument"] , single=False)
@@ -420,7 +444,7 @@ def getScannedPositioners(h5file, path):
                     indices.append((tokens.index(key), key))
                 indices.sort()
                 if len(indices):
-                    scanned = [measurement[key].name for idx, key in indices]        
+                    scanned = [measurement[key].name for idx, key in indices]
     return scanned
 
 if __name__ == "__main__":
@@ -431,7 +455,7 @@ if __name__ == "__main__":
     except:
         print("Usage: NexusTools <file> <key>")
         sys.exit()
-    h5 = h5py.File(sourcename)    
+    h5 = h5py.File(sourcename)
     entries = getNXClassGroups(h5, "/", ["NXentry", b"NXentry"], single=False)
     if not len(entries):
         entries = [item for name, item in h5["/"].items() if isGroup(item)]
