@@ -303,38 +303,50 @@ class testStackInfo(unittest.TestCase):
         h5["/entry/instrument/detector/"].attrs["NX_class"] = u"NXdetector"
         h5["/entry/instrument/detector/data"].attrs["interpretation"] = \
                                                               u"spectrum"
+
+        # case with softlink
+        h5["/entry/measurement/mca_soft/data"] = \
+                    h5py.SoftLink("/entry/instrument/detector/data")
+        # case with info
+        h5["/entry/measurement/mca_with_info/data"] = \
+                    h5["/entry/instrument/detector/data"]
+        h5["/entry/measurement/mca_with_info/info"] = \
+                    h5["/entry/instrument/detector"]
         h5.flush()
         h5.close()
         h5 = None
 
         # check that the data can be read as a stack
         fileList = [self._h5File]
-        selection = {"y":"/instrument/detector/data"}
-        stack = HDF5Stack1D.HDF5Stack1D(fileList, selection)
-        info = stack.info
-        for key in ["McaCalib", "McaLiveTime"]:
-            self.assertTrue(key in info,
-                        "Key <%s>  not present but it should be there")
+        for selection in [{"y":"/measurement/mca_with_info/data"},
+                          {"y":"/measurement/mca_soft/data"},
+                          {"y":"/instrument/detector/data"}]:
+            stack = HDF5Stack1D.HDF5Stack1D(fileList, selection)
+            info = stack.info
+            for key in ["McaCalib", "McaLiveTime"]:
+                self.assertTrue(key in info,
+                            "Key <%s>  not present but it should be there")
 
-        readCalib = info["McaCalib"]
-        readLiveTime = info["McaLiveTime"]
-        self.assertTrue(abs(readCalib[0] - calibration[0]) < 1.0e-10,
-                "Calibration zero. Expected %f got %f" % \
-                             (calibration[0], readCalib[0]))
-        self.assertTrue(abs(readCalib[1] - calibration[1]) < 1.0e-10,
-                "Calibration gain. Expected %f got %f" % \
-                             (calibration[1], readCalib[0]))
-        self.assertTrue(abs(readCalib[2] - calibration[2]) < 1.0e-10,
-                "Calibration 2nd order. Expected %f got %f" % \
-                             (calibration[2], readCalib[2]))
-        self.assertTrue(live_time.size == readLiveTime.size,
-                        "Incorrect size of live time data")
-        self.assertTrue(numpy.allclose(live_time, readLiveTime),
-                        "Incorrect live time read")
-        self.assertTrue(numpy.allclose(stack.x, channels),
-                        "Incorrect channels read")
-        self.assertTrue(numpy.allclose(stack.data, data),
-                        "Incorrect data read")
+            readCalib = info["McaCalib"]
+            readLiveTime = info["McaLiveTime"]
+            self.assertTrue(abs(readCalib[0] - calibration[0]) < 1.0e-10,
+                    "Calibration zero. Expected %f got %f" % \
+                                 (calibration[0], readCalib[0]))
+            self.assertTrue(abs(readCalib[1] - calibration[1]) < 1.0e-10,
+                    "Calibration gain. Expected %f got %f" % \
+                                 (calibration[1], readCalib[0]))
+            self.assertTrue(abs(readCalib[2] - calibration[2]) < 1.0e-10,
+                    "Calibration 2nd order. Expected %f got %f" % \
+                                 (calibration[2], readCalib[2]))
+            self.assertTrue(live_time.size == readLiveTime.size,
+                            "Incorrect size of live time data")
+            self.assertTrue(numpy.allclose(live_time, readLiveTime),
+                            "Incorrect live time read")
+            self.assertTrue(numpy.allclose(stack.x, channels),
+                            "Incorrect channels read")
+            self.assertTrue(numpy.allclose(stack.data, data),
+                            "Incorrect data read")
+
         # perform the batch fit
         self._outputDir = os.path.join(tempfile.gettempdir(), "SteelTestDir")
         if not os.path.exists(self._outputDir):
