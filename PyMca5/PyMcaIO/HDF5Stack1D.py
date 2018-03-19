@@ -157,7 +157,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 #expect same entry names in the files
                 #Unfortunately this does not work for SOLEIL
                 for entry in entryNames:
-                    path = "/"+entry + ySelection
+                    path = "/" + entry + ySelection
                     dirname = posixpath.dirname(path)
                     base = posixpath.basename(path)
                     try:
@@ -174,22 +174,32 @@ class HDF5Stack1D(DataObject.DataObject):
                     i = 0
                     for entry in entryNames:
                         i += 1
-                        path = "/"+ entry + ySelection
+                        path = "/" + entry + ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
                         try:
                             file_entry = tmpHdf[dirname]
                             if hasattr(file_entry, "keys"):
                                 if base in file_entry.keys():
+                                    # this is the case of a selection inside a group
                                     scanlist.append("1.%d" % i)
                         except KeyError:
                             print("%s not in file, ignoring." % dirname)
                     if not len(scanlist):
-                        path = "/" + ySelection
+                        if not ySelection.startswith("/"):
+                            path = "/" + ySelection
+                        else:
+                            path = ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
                         try:
-                            if base in file_entry.keys():
+                            if dirname in tmpHdf["/"]:
+                                # this is the case of a dataset at top plevel
+                                # or having given the complete path
+                                if base in tmpHdf[dirname]:
+                                    JUST_KEYS = False
+                                    scanlist.append("")
+                            elif base in file_entry.keys():
                                 JUST_KEYS = False
                                 scanlist.append("")
                         except:
@@ -381,7 +391,7 @@ class HDF5Stack1D(DataObject.DataObject):
                         del mcaObjectPaths["calibration"]
                 if "channels" in mcaObjectPaths:
                     if mcaObjectPaths["channels"] in tmpHdf:
-                        _calibration = \
+                        _channels = \
                                 tmpHdf[mcaObjectPaths["channels"]].value
                     elif "::" in mcaObjectPaths["channels"]:
                         tmpFileName, tmpDatasetPath = \
