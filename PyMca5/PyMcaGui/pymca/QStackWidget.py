@@ -559,7 +559,7 @@ class QStackWidget(StackBase.StackBase,
                     for slave in self._slaveList:
                         masterStackDataObject.data[:] = \
                                             masterStackDataObject.data[:] + \
-                                            _slave.getStackData()
+                                            slave.getStackData()
                 except:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
@@ -568,6 +568,27 @@ class QStackWidget(StackBase.StackBase,
                     msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
                     msg.setDetailedText(traceback.format_exc())
                     msg.exec_()
+                if "McaLiveTime" in masterStackDataObject.info:
+                    try:
+                        for slave in self._slaveList:
+                            if "McaLiveTime" in slave.info:
+                                slave.info["McaLiveTime"].shape = \
+                                   masterStackDataObject.info["McaLiveTime"].shape                                
+                                masterStackDataObject.info["McaLiveTime"] += \
+                                        slave.info["McaLiveTime"]
+                            else:
+                                raise ValueError("No compatible time information")
+                    except:
+                        msg = qt.QMessageBox(self)
+                        msg.setIcon(qt.QMessageBox.Critical)
+                        msg.setWindowTitle("Stack Time Summing Error")
+                        txt = "An error has occurred cumulating the master and slave times\n"
+                        txt += "Time information is lost"
+                        del masterStackDataObject.info["McaLiveTime"] 
+                        msg.setText()
+                        msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
+                        msg.setDetailedText(traceback.format_exc())
+                        msg.exec_()
                 self._closeSlave()
                 self.setStack(masterStackDataObject)
                 return
