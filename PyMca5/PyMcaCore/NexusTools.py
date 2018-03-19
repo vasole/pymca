@@ -30,10 +30,11 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import os
 from operator import itemgetter
 import re
 import posixpath
-from h5py import Dataset, Group, SoftLink
+from h5py import File, Dataset, Group
 DEBUG = 0
 
 #sorting method
@@ -282,8 +283,20 @@ def getMcaObjectPaths(h5file, mcaPath):
         # check if we are dealing with a soft link
         basename = posixpath.basename(mcaPath)
         link = h5file[parentPath].get(basename, getlink=True)
-        if isinstance(link, SoftLink):
-            mca = getMcaObjectPaths(h5file, link.path)
+        if hasattr(link, "path"):
+            if hasattr(link, "filename"):
+                # external link
+                filename = link.filename
+                if os.path.exists(filename):
+                    # it should always exist
+                    h5file = File(filename, "r")
+                    mca = getMcaObjectPaths(h5file, link.path)
+                    keys = list(mca.keys())
+                    for key in keys:
+                        mca[key] = filename + "::" + mca[key]
+            else:
+                # soft link
+                mca = getMcaObjectPaths(h5file, link.path)
             mca["counts"] = mcaPath
     return mca
 
