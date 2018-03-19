@@ -370,7 +370,7 @@ class QStackWidget(StackBase.StackBase,
         mcaIndex = self._stack.info.get('McaIndex', -1)
         #get limits
         y0, y1 = self.stackWidget.graph.getGraphYLimits()
-        x0, x1 = self.stackWidget.graph.getGraphXLimits()    
+        x0, x1 = self.stackWidget.graph.getGraphXLimits()
         xScale = self._stack.info.get("xScale", None)
         yScale = self._stack.info.get("yScale", None)
         if mcaIndex in [0]:
@@ -622,7 +622,7 @@ class QStackWidget(StackBase.StackBase,
             self._slaveList = []
         for slave in self._slaveList:
             slave.close()
-        self._slaveList = None 
+        self._slaveList = None
         self.addSlave(slave)
 
     def addSlave(self, slave):
