@@ -96,6 +96,91 @@ class testStackInfo(unittest.TestCase):
             self.assertTrue(os.path.isfile(dataFile),
                             "File %s is not an actual file" % dataFile)
 
+    def testStackBaseAverageAndSum(self):
+        from PyMca5.PyMcaIO import specfilewrapper as specfile
+        from PyMca5.PyMcaIO import ConfigDict
+        from PyMca5.PyMcaCore import DataObject
+        from PyMca5.PyMcaCore import StackBase
+        from PyMca5.PyMcaPhysics.xrf import FastXRFLinearFit
+        spe = os.path.join(self.dataDir, "Steel.spe")
+        cfg = os.path.join(self.dataDir, "Steel.cfg")
+        sf = specfile.Specfile(spe)
+        self.assertTrue(len(sf) == 1, "File %s cannot be read" % spe)
+        self.assertTrue(sf[0].nbmca() == 1,
+                        "Spe file should contain MCA data")
+
+        y = counts = sf[0].mca(1)
+        x = channels = numpy.arange(y.size).astype(numpy.float)
+        sf = None
+        configuration = ConfigDict.ConfigDict()
+        configuration.read(cfg)
+        calibration = configuration["detector"]["zero"], \
+                      configuration["detector"]["gain"], 0.0
+        initialTime = configuration["concentrations"]["time"]
+        # create the data
+        nRows = 5
+        nColumns = 10
+        nTimes = 3
+        data = numpy.zeros((nRows, nColumns, counts.size), dtype = numpy.float)
+        live_time = numpy.zeros((nRows * nColumns), dtype=numpy.float)
+        mcaIndex = 0
+        for i in range(nRows):
+            for j in range(nColumns):
+                data[i, j] = counts
+                live_time[i * nColumns + j] = initialTime * \
+                                              (1 + mcaIndex % nTimes)
+                mcaIndex += 1
+
+        # create the stack data object
+        stack = DataObject.DataObject()
+        stack.data = data
+        stack.info = {}
+        stack.info["McaCalib"] = calibration
+        stack.info["McaLiveTime"] = live_time
+        stack.x = [channels]
+
+        # let's play
+        sb = StackBase.StackBase()
+        sb.setStack(stack)
+        x, y, legend, info = sb.getStackOriginalCurve()
+
+        readCalib = info["McaCalib"]
+        readLiveTime = info["McaLiveTime"]
+        self.assertTrue(abs(readCalib[0] - calibration[0]) < 1.0e-10,
+                "Calibration zero. Expected %f got %f" % \
+                             (calibration[0], readCalib[0]))
+        self.assertTrue(abs(readCalib[1] - calibration[1]) < 1.0e-10,
+                "Calibration gain. Expected %f got %f" % \
+                             (calibration[1], readCalib[0]))
+        self.assertTrue(abs(readCalib[2] - calibration[2]) < 1.0e-10,
+                "Calibration 2nd order. Expected %f got %f" % \
+                             (calibration[2], readCalib[2]))
+        self.assertTrue(abs(live_time.sum() - readLiveTime) < 1.0e-5,
+                "Incorrect sum of live time data")
+
+        mask = sb.getSelectionMask()
+        if mask is None:
+            mask = numpy.zeros((nRows, nColumns), dtype=numpy.uint8)
+        mask[2, :] = 1
+        mask[0, 0:2] = 1
+        live_time.shape = mask.shape
+        sb.setSelectionMask(mask)
+        mcaObject = sb.calculateMcaDataObject(normalize=False)
+        live_time.shape = mask.shape
+        readLiveTime = mcaObject.info["McaLiveTime"]
+        self.assertTrue(abs(live_time[mask > 0].sum() - readLiveTime) < 1.0e-5,
+                "Incorrect sum of masked live time data")
+        
+        mcaObject = sb.calculateMcaDataObject(normalize=True)
+        live_time.shape = mask.shape
+        tmpBuffer = numpy.zeros(mask.shape, dtype=numpy.int32)
+        tmpBuffer[mask > 0] = 1
+        nSelectedPixels = float(tmpBuffer.sum())
+        readLiveTime = mcaObject.info["McaLiveTime"]
+        self.assertTrue( \
+            abs((live_time[mask > 0].sum() / nSelectedPixels) - readLiveTime) < 1.0e-5,
+                "Incorrect average of masked live time data")
+
     def testStackFastFit(self):
         from PyMca5.PyMcaIO import specfilewrapper as specfile
         from PyMca5.PyMcaIO import ConfigDict
@@ -581,6 +666,7 @@ def getSuite(auto=True):
     else:
         # use a predefined order
         testSuite.addTest(testStackInfo("testDataDirectoryPresence"))
+        testSuite.addTest(testStackInfo("testStackBaseAverageAndSum"))
         testSuite.addTest(testStackInfo("testDataFilePresence"))
         testSuite.addTest(testStackInfo("testFastFitStack"))
         testSuite.addTest(testStackInfo("testBatchFitHdf5Stack"))
