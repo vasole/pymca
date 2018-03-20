@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -319,6 +319,11 @@ class ShapePage(qt.QWizardPage):
         self.setSubTitle(text)
 
 class LocalQNexusWidget(QNexusWidget.QNexusWidget):
+    def __init__(self, parent=None, mca=False):
+        QNexusWidget.QNexusWidget.__init__(self, parent=parent,
+                                           mca=mca,
+                                           buttons=True)
+
     def showInfoWidget(self, filename, name, dset=False):
         w = QNexusWidget.QNexusWidget.showInfoWidget(self, filename, name, dset)
         w.hide()

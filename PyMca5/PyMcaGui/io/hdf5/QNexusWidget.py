@@ -99,7 +99,7 @@ class QNexusWidget(qt.QWidget):
     sigRemoveSelection = qt.pyqtSignal(object)
     sigReplaceSelection = qt.pyqtSignal(object)
     sigOtherSignals = qt.pyqtSignal(object)
-    def __init__(self, parent=None, mca=False):
+    def __init__(self, parent=None, mca=False, buttons=False):
         qt.QWidget.__init__(self, parent)
         self.data = None
         self._dataSourceList = []
@@ -117,6 +117,7 @@ class QNexusWidget(qt.QWidget):
         self._lastAction = None
         self._lastEntry = None
         self._mca = mca
+        self._BUTTONS = buttons
         self.build()
 
     def build(self):
@@ -139,7 +140,7 @@ class QNexusWidget(qt.QWidget):
             self.tableTab.addTab(self.mcaTable, "MCA")
         self.mainLayout.addWidget(self.splitter)
         #Enable 3D
-        BUTTONS = False
+        BUTTONS = self._BUTTONS
         if BUTTONS:
             if ('PyMca.Object3D' in sys.modules) or \
                ('Object3D' in sys.modules) or \
@@ -151,6 +152,9 @@ class QNexusWidget(qt.QWidget):
                 self.buttons = Buttons(self, options=['SCAN', 'MCA', '2D'])
                 self.cntTable.set3DEnabled(False)
                 self.autoTable.set3DEnabled(False)
+            if self._mca:
+                self.tableTab.removeTab(2)
+            self.tableTab.removeTab(0)
             self.mainLayout.addWidget(self.buttons)
         else:
             self.actions = QNexusWidgetActions.QNexusWidgetActions(self)
@@ -596,7 +600,7 @@ class QNexusWidget(qt.QWidget):
     def hdf5Slot(self, ddict):
         entryName = NexusTools.getEntryName(ddict['name'])
         currentEntry = "%s::%s" % (ddict['file'], entryName)
-        if currentEntry != self._lastEntry:
+        if (currentEntry != self._lastEntry) and not self._BUTTONS:
             self._lastEntry = None
             cntList = []
             mcaList = []

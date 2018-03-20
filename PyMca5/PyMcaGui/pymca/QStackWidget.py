@@ -370,7 +370,7 @@ class QStackWidget(StackBase.StackBase,
         mcaIndex = self._stack.info.get('McaIndex', -1)
         #get limits
         y0, y1 = self.stackWidget.graph.getGraphYLimits()
-        x0, x1 = self.stackWidget.graph.getGraphXLimits()    
+        x0, x1 = self.stackWidget.graph.getGraphXLimits()
         xScale = self._stack.info.get("xScale", None)
         yScale = self._stack.info.get("yScale", None)
         if mcaIndex in [0]:
@@ -559,7 +559,7 @@ class QStackWidget(StackBase.StackBase,
                     for slave in self._slaveList:
                         masterStackDataObject.data[:] = \
                                             masterStackDataObject.data[:] + \
-                                            _slave.getStackData()
+                                            slave.getStackData()
                 except:
                     msg = qt.QMessageBox(self)
                     msg.setIcon(qt.QMessageBox.Critical)
@@ -568,6 +568,28 @@ class QStackWidget(StackBase.StackBase,
                     msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
                     msg.setDetailedText(traceback.format_exc())
                     msg.exec_()
+                if "McaLiveTime" in masterStackDataObject.info:
+                    try:
+                        for slave in self._slaveList:
+                            info = slave.getStackInfo()
+                            if "McaLiveTime" in info:
+                                info["McaLiveTime"].shape = \
+                                   masterStackDataObject.info["McaLiveTime"].shape                                
+                                masterStackDataObject.info["McaLiveTime"] += \
+                                        info["McaLiveTime"]
+                            else:
+                                raise ValueError("No compatible time information")
+                    except:
+                        msg = qt.QMessageBox(self)
+                        msg.setIcon(qt.QMessageBox.Critical)
+                        msg.setWindowTitle("Stack Time Summing Error")
+                        txt = "An error has occurred cumulating the master and slave times\n"
+                        txt += "Time information is lost"
+                        del masterStackDataObject.info["McaLiveTime"] 
+                        msg.setText(txt)
+                        msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
+                        msg.setDetailedText(traceback.format_exc())
+                        msg.exec_()
                 self._closeSlave()
                 self.setStack(masterStackDataObject)
                 return
@@ -622,7 +644,7 @@ class QStackWidget(StackBase.StackBase,
             self._slaveList = []
         for slave in self._slaveList:
             slave.close()
-        self._slaveList = None 
+        self._slaveList = None
         self.addSlave(slave)
 
     def addSlave(self, slave):
