@@ -37,7 +37,7 @@ build_script:
     - "virtualenv --clear %VENV_BUILD_DIR%"
     - "%VENV_BUILD_DIR%\\Scripts\\activate.bat"
 
-    # Install build dependencies (should I try to install cython?)
+    # Install build dependencies
     - "pip install wheel"
     - "pip install numpy"
 
@@ -73,8 +73,8 @@ test_script:
     - "python -m PyMca5.tests.TestAll"
 
     # Leave test virtualenv
-    - "%VENV_TEST_DIR%\\Scripts\\deactivate.bat"
-    - "rmdir %VENV_TEST_DIR% /s /q"
+    - "pymca\\%VENV_TEST_DIR%\\Scripts\\deactivate.bat"
+    - "rmdir pymca\\%VENV_TEST_DIR% /s /q"
 
 artifacts:
     # Archive the generated wheel package in the ci.appveyor.com build report.
