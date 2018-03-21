@@ -293,6 +293,8 @@ class NexusDataSource(object):
               starting by 1.
         selection: a dictionnary generated via QNexusWidget
         """
+        if DEBUG:
+            print("getDataObject selection = ", selection)
         if selection is not None:
             if 'sourcename' in selection:
                 filename  = selection['sourcename']
@@ -337,14 +339,15 @@ class NexusDataSource(object):
             mcaPath = entry + selection["mcalist"][selection["mca"][0]]
             mcaObjectPaths = NexusTools.getMcaObjectPaths(phynxFile, mcaPath)
             mcaData = h5File[mcaObjectPaths['counts']]
+            output.info['selectiontype'] = "1D"
             try:
                 for key in list(mcaObjectPaths.keys()):
                     if key == "counts":
                         continue
                     mcaDatasetObjectPath = mcaObjectPaths[key]
                     dataset = None
-                    if mcaDatasetObjectPath in h5file:
-                        dataset = h5file[mcaDatasetObjectPath].value
+                    if mcaDatasetObjectPath in h5File:
+                        dataset = h5File[mcaDatasetObjectPath].value
                     elif "::" in mcaDatasetObjectPath:
                         fileName, path = mcaDatasetObjectPath.split()
                         if os.path.exists(fileName):
@@ -365,7 +368,7 @@ class NexusDataSource(object):
                     mcaChannels = numpy.arange(mcaData.shape[-1]).astype(numpy.float32)
                 if "calibration" in mcaObjectPaths:
                     mcaCalibration = mcaObjectPaths["calibration"]
-                    del mcaObjectPaths["channels"]
+                    del mcaObjectPaths["calibration"]
                 else:
                     mcaCalibration = numpy.array([0.0, 1.0, 0.0])
                 output.info["McaCalib"] = mcaCalibration
@@ -387,16 +390,17 @@ class NexusDataSource(object):
                         while len(mcaData.shape) > 1:
                             divider *= mcaData.shape[0]
                             mcaData = mcaData.sum(axis=0)
-                        if selection['selectiontype'].lower() != "sum":
+                        if selection['mcaselectiontype'].lower() != "sum":
                             mcaData /= divider
                     else:
                         mcaData = mcaData.value
             except:
+                import traceback                
                 print("exception", sys.exc_info())
+                print(("%s " % value) + ''.join(traceback.format_tb(trace)))
                 return output
             output.x = [mcaChannels]
             output.y = [mcaData]
-            output.info['selectiontype'] = "1D"
             return output
         elif selection['selectiontype'].upper() in ["SCAN", "MCA"]:
             output.info['selectiontype'] = "1D"
@@ -448,8 +452,27 @@ class NexusDataSource(object):
                 except MemoryError:
                     data = phynxFile[path]
                     pass
-            if output.info['selectiontype'] == "1D":
-                if len(data.shape) == 2:
+            if output.info['selectiontype'] in ["1D", "MCA"]:
+                if (len(data.shape) > 1) and ('mcaselectiontype' in selection):
+                    mcaselectiontype = selection['mcaselectiontype'].lower()
+                    nSpectra = 1.0
+                    for iDummy in data.shape[:-1]:
+                        data = data.sum(axis=0, dtype=numpy.float)
+                        nSpectra *= iDummy
+                    if mcaselectiontype == "sum":
+                        # sum already calculated
+                        if DEBUG:
+                            print("SUM")
+                    elif mcaselectiontype in ["avg", "average"]:
+                        # calculate the average
+                        if DEBUG:
+                            print("AVERAGE")
+                        data /= nSpectra
+                    else:                        
+                        print("Unsupported selection type %s" % mcaselectiontype)
+                        print("Calculating average")
+                        data /= nSpectra
+                elif len(data.shape) == 2:
                     if min(data.shape) == 1:
                         data = numpy.ravel(data)
                     else:

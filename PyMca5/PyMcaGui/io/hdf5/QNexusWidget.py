@@ -922,21 +922,6 @@ class QNexusWidget(qt.QWidget):
                 sel['selection']['selectiontype'] = "MCA"
                 sel['mcaselection']  = True
                 aliases = mcaSelection['aliaslist']
-                """
-                if len(cntSelection['x']) and len(cntSelection['m']):
-                    addLegend = " (%s/%s) vs %s" % (aliases[yCnt],
-                                                   aliases[cntSelection['m'][0]],
-                                                   aliases[cntSelection['x'][0]])
-                elif len(cntSelection['x']):
-                    addLegend = " %s vs %s" % (aliases[yCnt],
-                                               aliases[cntSelection['x'][0]])
-                elif len(cntSelection['m']):
-                    addLegend = " (%s/%s)" % (aliases[yCnt],
-                                            aliases[cntSelection['m'][0]])
-                else:
-                    addLegend = " %s" % aliases[yCnt]
-                sel['legend'] += addLegend
-                """
                 selectionList.append(sel)
 
             for yCnt in cntSelection['y']:
@@ -985,6 +970,26 @@ class QNexusWidget(qt.QWidget):
                 elif selectionType.upper() == "MCA":
                     sel['scanselection'] = False
                     sel['mcaselection']  = True
+                    if cntSelection['cntlist'][yCnt].startswith("/"):
+                        actualDatasetPath = posixpath.join(entry,
+                                                cntSelection['cntlist'][yCnt][1:])
+                    else:
+                        actualDatasetPath = posixpath.join(entry,
+                                                cntSelection['cntlist'][yCnt])
+                    actualDataset = phynxFile[actualDatasetPath]
+                    if hasattr(actualDataset, "shape"):
+                        actualDatasetLen = len(actualDataset.shape)
+                        if (actualDatasetLen == 2) and (1 in actualDataset.shape):
+                            # still can be used
+                            pass
+                        elif (actualDatasetLen > 1) and (not hasattr(self, "_messageShown")):
+                            # at least twoD dataset
+                            msg = qt.QMessageBox(self)
+                            msg.setIcon(qt.QMessageBox.Information)
+                            msg.setText("Multidimensional data set as MCA. Using Average. You should use ROI Imaging")
+                            msg.exec_()
+                            self._messageShown = True
+                        sel['selection']['mcaselectiontype'] = "avg"
                 else:
                     sel['scanselection'] = False
                     sel['mcaselection']  = False
