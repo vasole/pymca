@@ -394,13 +394,16 @@ class NexusDataSource(object):
                             mcaData /= divider
                     else:
                         mcaData = mcaData.value
+                        divider = 1.0
                     if "McaLiveTime" in output.info:
                         if numpy.isscalar(output.info["McaLiveTime"]):
-                            output.info["McaLiveTime"] = \
-                                    output.info["McaLiveTime"] / divider
+                            # it is already a single number
+                            pass
                         else:
                             output.info["McaLiveTime"] = \
-                                    output.info["McaLiveTime"].sum() / divider
+                                    output.info["McaLiveTime"].sum()
+                        if selection['mcaselectiontype'].lower() != "sum":
+                            output.info["McaLiveTime"] /= divider                        
             except:
                 import traceback                
                 print("exception", sys.exc_info())
