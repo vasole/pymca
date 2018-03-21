@@ -68,6 +68,8 @@ test_script:
     - "python ci\\info_platform.py"
     - "pip freeze"
 
+    # Run the tests
+    - "cd .."
     - "python -m PyMca5.tests.TestAll"
 
     # Leave test virtualenv
