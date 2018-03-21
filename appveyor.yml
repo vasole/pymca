@@ -60,6 +60,8 @@ test_script:
 
     # Install the generated wheel package to test it
     - "pip install numpy"
+    - "pip install fisx"
+    - "pip install matplotlib"
     - "pip install --pre --no-index --no-cache-dir --find-links dist/ PyMca5"
 
     # Print Python info
