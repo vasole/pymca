@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -290,18 +290,21 @@ def _getROILineProfileCurve(image, roiStart, roiEnd, roiWidth,
 
         for a in rowLimits0:
             if (a >= image.shape[0]) or (a < 0):
-                print("outside row limits", a)
+                if DEBUG:
+                    print("outside row limits", a)
                 return None
         for a in colLimits0:
             if (a >= image.shape[1]) or (a < 0):
-                print("outside column limits", a)
+                if DEBUG:
+                    print("outside column limits", a)
                 return None
 
         r0 = rowLimits0[0]
         r1 = rowLimits0[1]
 
         if r0 > r1:
-            print("r0 > r1", r0, r1)
+            if DEBUG:
+                print("r0 > r1", r0, r1)
             raise ValueError("r0 > r1")
 
         x = numpy.zeros((2, nPoints), numpy.float)
