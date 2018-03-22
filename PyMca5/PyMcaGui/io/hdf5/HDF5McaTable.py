@@ -45,10 +45,10 @@ class McaSelectionType(qt.QWidget):
         self._column = column
         self._selection = qt.QCheckBox(self)
         self._selectionType = qt.QComboBox(self)
-        self._optionsList = ["single", "sum", "avg", "all"]
+        self._optionsList = ["sum", "avg"]
         for option in self._optionsList:
             self._selectionType.addItem(option[0].upper() + option[1:])
-        self._selectionType.setCurrentIndex(2)
+        self._selectionType.setCurrentIndex(self._optionsList.index("avg"))
         self.mainLayout.addWidget(self._selection)
         self.mainLayout.addWidget(self._selectionType)
         self._selection.clicked.connect(self._mySignal)
@@ -86,7 +86,10 @@ class McaSelectionType(qt.QWidget):
         ddict = {}
         ddict["event"] = "clicked"
         ddict["state"] = self._selection.isChecked()
-        idx = self._selectionType.currentIndex()
+        if value is None:
+            idx = self._selectionType.currentIndex()
+        else:
+            idx = value
         ddict["type"] = self._optionsList[idx]
         ddict["row"] = self._row * 1
         ddict["column"] = self._column * 1
@@ -210,6 +213,9 @@ class HDF5McaTable(qt.QTableWidget):
                 if row not in self.mcaSelection:
                     self.mcaSelection.append(row)
                     self.mcaSelectionType.append(ddict["type"])
+                else:
+                    idx = self.mcaSelection.index(row)
+                    self.mcaSelectionType[idx] = ddict["type"]
             else:
                 if row in self.mcaSelection:
                     idx = self.mcaSelection.index(row)
