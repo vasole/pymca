@@ -1,5 +1,5 @@
 # /*#########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -34,7 +34,10 @@ __license__ = "MIT"
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.plotting import SilxMaskImageWidget
 import PyMca5.PyMcaGui.PyMcaQt as qt
-from . import MotorInfoWindow
+try:
+    from PyMca5.PyMcaPlugins import MotorInfoWindow
+except ImportError:
+    from . import MotorInfoWindow
 
 
 class PointInfoWindow(qt.QWidget):
