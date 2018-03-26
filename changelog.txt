@@ -1,3 +1,28 @@
+VERSION 5.3.0
+
+- XRF. Correct several Single Layer Strategy issues.
+
+- XRF. Support calibration readout using HDF5 files.
+
+- XRF. Support time readout and use of time information from HDF5 files.
+
+- HDF5. Simplify HDF5 data selection handling by generatic automatic data selection tables
+besides the user defined one (requires use of a measurement group)
+
+- HDF5. Support readout of motor positions together with curve data when following ESRF and Sardana standards.
+
+- HDF5. Support NXdata and default plots (requires silx)
+
+- Add plugin to fit all curves present in a 1D window (requires h5py)
+
+- ROI Imaging. No limit on the number of slaves.
+
+- Add tomographic reconstruction capabilities (requires freeART and tomoGUI)
+
+- Allow to build PyMca using GLIBC 2.26
+
+- Activate Continuous Integration.
+
 VERSION 5.2.2
 
 ROI Imaging. Correct problem normalizing integer data by integer monitor.
