@@ -200,6 +200,8 @@ else:
                                     'PyMca5/PyMcaData/LShellRatesScofieldHS.dat',
                                     'PyMca5/PyMcaData/EXAFS_Cu.dat',
                                     'PyMca5/PyMcaData/EXAFS_Ge.dat',
+                                    'PyMca5/PyMcaData/Steel.cfg',
+                                    'PyMca5/PyMcaData/Steel.spe',
                                     'PyMca5/PyMcaData/XRFSpectrum.mca']),
                   (PYMCA_DATA_DIR + '/attdata', glob.glob('PyMca5/PyMcaData/attdata/*')),
                   (PYMCA_DOC_DIR + '/HTML', glob.glob('PyMca5/PyMcaData/HTML/*.*')),
