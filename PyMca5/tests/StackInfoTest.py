@@ -483,12 +483,17 @@ class testStackInfo(unittest.TestCase):
             os.mkdir(self._outputDir)
         cfgFile = os.path.join(tempfile.gettempdir(), "SteelNew.cfg")
         if os.path.exists(cfgFile):
-            os.remove(cfgFile)
+            try:
+                os.remove(cfgFile)
+            except:
+                print("Cannot remove file %s" % cfgFile)
         # we need to make sure we use fundamental parameters and
         # the time read from the file
         configuration["concentrations"]["usematrix"] = 0
         configuration["concentrations"]["useautotime"] = 1
-        configuration.write(cfgFile)
+        if not os.path.exists(cfgFile):
+            configuration.write(cfgFile)
+            os.chmod(cfgFile, 0o777)
         batch = McaAdvancedFitBatch.McaAdvancedFitBatch(cfgFile,
                                         filelist=[self._h5File],
                                         outputdir=self._outputDir,
