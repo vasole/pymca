@@ -70,7 +70,7 @@ try:
     from tomogui.gui.ProjectWidget import ProjectWindow as TomoguiProjWindow
     from PyMca5.PyMcaGui.pymca.TomographyRecons import TomoReconsDialog
     TOMOGUI_FLAG = True
-except ImportError:
+except:
     TOMOGUI_FLAG = False
 
 DEBUG = 0
