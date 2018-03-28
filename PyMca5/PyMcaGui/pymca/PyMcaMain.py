@@ -106,7 +106,12 @@ except:
 try:
     from tomogui.gui.ProjectWidget import ProjectWindow as TomoguiProjectWindow
     TOMOGUI_FLAG = True
-except ImportError:
+except:
+    # we cannot afford any crash (for instance proglems with pyopencl
+    # not finding its cl directory in frozen version)
+    if DEBUG:
+        print(sys.exc_info()[1])
+        print(traceback.format_exc())
     TOMOGUI_FLAG = False
 
 import PyMca5
