@@ -77,6 +77,7 @@ _logger = logging.getLogger(__name__)
 try:
     from PyMca5.PyMcaGui import SIFTAlignmentWindow
     sift = SIFTAlignmentWindow.sift
+    ocl = SIFTAlignmentWindow.silx.opencl.ocl
     SIFT = True
 except:
     _logger.warning("SIFTAlignmentWindow not successful")
@@ -291,14 +292,14 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 import pyopencl
             except:
                 raise ImportError("PyOpenCL does not seem to be installed on your system")
-        if sift.opencl.ocl is None:
+        if ocl is None:
             raise ImportError("PyOpenCL does not seem to be installed on your system")
         stack = self.getStackDataObject()
         if stack is None:
             return
         mcaIndex = stack.info.get('McaIndex')
         if not (mcaIndex in [0, 2, -1]):
-             raise IndexError("Unsupported 1D index %d" % mcaIndex)
+            raise IndexError("Unsupported 1D index %d" % mcaIndex)
         widget = SIFTAlignmentWindow.SIFTAlignmentDialog()
         widget.setStack(stack)
         mask = self.getStackSelectionMask()
@@ -350,7 +351,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                                                 devicetype="cpu",
                                                 init_sigma=sigma)
         else:
-            deviceType = sift.opencl.ocl.platforms[device[0]].devices[device[1]].type
+            deviceType = ocl.platforms[device[0]].devices[device[1]].type
             if deviceType.lower() == "cpu" and sys.platform == 'darwin':
                 max_workgroup_size = 1
                 siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
