@@ -340,28 +340,13 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             if mask.sum() == 0:
                 mask = None
         if device is None:
-            if sys.platform == 'darwin':
-                max_workgroup_size = 1
-                siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
-                                                max_workgroup_size=max_workgroup_size,
-                                                devicetype="cpu",
-                                                init_sigma=sigma)
-            else:
-                siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
-                                                devicetype="cpu",
-                                                init_sigma=sigma)
+            siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
+                                            devicetype="cpu",
+                                            init_sigma=sigma)
         else:
-            deviceType = ocl.platforms[device[0]].devices[device[1]].type
-            if deviceType.lower() == "cpu" and sys.platform == 'darwin':
-                max_workgroup_size = 1
-                siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
-                                                max_workgroup_size=max_workgroup_size,
-                                                device=device,
-                                                init_sigma=sigma)
-            else:
-                siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
-                                                device=device,
-                                                init_sigma=sigma)
+            siftInstance = sift.LinearAlign(reference.astype(numpy.float32),
+                                            deviceid=device,
+                                            init_sigma=sigma)
         data = stack.data
         mcaIndex = stack.info['McaIndex']
         if not (mcaIndex in [0, 2, -1]):
