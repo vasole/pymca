@@ -82,12 +82,13 @@ class SimpleFitAll(object):
         self._progress = 0.0
         self._status = "Ready"
         self._currentFitIndex = None
+        self._currentSigma = None
         self._nSpectra = None
         self.progressCallback = None
         # optimization variables
         self.__estimationPolicy = "always"
-        self._startTime = ""
-        self._endTime = ""
+        self._currentFitStartTime = ""
+        self._currentFitEndTime = ""
 
     def setProgressCallback(self, method):
         """
@@ -184,7 +185,7 @@ class SimpleFitAll(object):
             self.progressCallback(self._nSpectra, self._nSpectra)
 
     def processSpectrum(self, i):
-        self._startTime = datetime.datetime.now().isoformat()
+        self._currentFitStartTime = datetime.datetime.now().isoformat()
         self.aboutToGetSpectrum(i)
         x, y, sigma, xmin, xmax = self.getFitInputValues(i)
         self.fit.setData(x, y, sigma=sigma, xmin=xmin, xmax=xmax)
@@ -198,9 +199,10 @@ class SimpleFitAll(object):
             _logger.debug("Using user estimation")
 
         self.estimateFinished()
-        values, chisq, sigma, niter, lastdeltachi = self.fit.startFit()
+        values, chisq, sigmaFromFit, niter, lastdeltachi = self.fit.startFit()
+        self._currentSigma = sigma if sigma is not None else sigmaFromFit
 
-        self._endTime = datetime.datetime.now().isoformat()
+        self._currentFitEndTime = datetime.datetime.now().isoformat()
         self.fitOneSpectrumFinished()
 
     def getFitInputValues(self, index):
@@ -261,28 +263,37 @@ class SimpleFitAll(object):
         self._appendOneResultToHdf5(resultDict=fitOutput["result"])
 
     def _appendOneResultToHdf5(self, resultDict):
-        # TODO: this code should become a more general function,
-        #       reusable by other fit modules and plugins
+        # Get all the  necessary data (TODO: pass it to method as attrs)
         idx = self._currentFitIndex
+        end_time = self._currentFitEndTime
+        start_time = self._currentFitStartTime
+        sigma = self._currentSigma
+        legend = self.legends[idx]
+        xlabel = self.xlabels[idx]
+        ylabel = self.ylabels[idx]
+        x, y, _inSigma, xMin, xMax = self.getFitInputValues(idx)
+        fitted_data = self.fit.evaluateDefinedFunction(x)
+        configIni = ConfigDict.ConfigDict(self.fit.getConfiguration()).tostring()
+        fit_paramlist = self.fit.paramlist
+        filename = self.getOutputFileName()
 
-        # append to existing file
-        with h5py.File(self.getOutputFileName(), mode="r+") as h5f:
+        # Write the data to file (append)
+        with h5py.File(filename, mode="r+") as h5f:
             entry = h5f.create_group("fit_curve_%d" % idx)
             entry.attrs["NX_class"] = to_h5py_utf8("NXentry")
             entry.attrs["default"] = to_h5py_utf8("fit_process/results/plot")
             entry.create_dataset("start_time",
-                                 data=to_h5py_utf8(self._startTime))
-            entry.create_dataset("end_time", data=to_h5py_utf8(self._endTime))
+                                 data=to_h5py_utf8(start_time))
+            entry.create_dataset("end_time", data=to_h5py_utf8(end_time))
             entry.create_dataset("title",
-                                 data=to_h5py_utf8("Fit of '%s'" % self.legends[idx]))
+                                 data=to_h5py_utf8("Fit of '%s'" % legend))
 
             process = entry.create_group("fit_process")
             process.attrs["NX_class"] = to_h5py_utf8("NXprocess")
             process.create_dataset("program", data=to_h5py_utf8("pymca"))
             process.create_dataset("version", data=to_h5py_utf8(PyMca5.version()))
-            process.create_dataset("date", data=to_h5py_utf8(self._endTime))
+            process.create_dataset("date", data=to_h5py_utf8(end_time))
 
-            configIni = ConfigDict.ConfigDict(self.fit.getConfiguration()).tostring()
             configuration = process.create_group("configuration")
             configuration.attrs["NX_class"] = to_h5py_utf8("NXnote")
             configuration.create_dataset("type", data=to_h5py_utf8("text/plain"))
@@ -297,7 +308,7 @@ class SimpleFitAll(object):
             estimation = results.create_group("estimation")
             estimation.attrs["NX_class"] = to_h5py_utf8("NXcollection")
 
-            for p in self.fit.paramlist:
+            for p in fit_paramlist:
                 pgroup = estimation.create_group(p["name"])
                 # constraint code can be an int, convert to str
                 if numpy.issubdtype(numpy.array(p['code']).dtype,
@@ -338,17 +349,16 @@ class SimpleFitAll(object):
             plot.attrs["signal"] = to_h5py_utf8("raw_data")
             plot.attrs["auxiliary_signals"] = to_h5py_utf8(["fitted_data"])
             plot.attrs["axes"] = to_h5py_utf8(["x"])
-            plot.attrs["title"] = to_h5py_utf8("Fit of '%s'" % self.legends[idx])
-            x, y, sigma, xMin, xMax = self.getFitInputValues(idx)
+            plot.attrs["title"] = to_h5py_utf8("Fit of '%s'" % legend)
             signal = plot.create_dataset("raw_data", data=y)
-            if self.ylabels[idx] is not None:
-                signal.attrs["long_name"] = to_h5py_utf8(self.ylabels[idx])
+            if ylabel is not None:
+                signal.attrs["long_name"] = to_h5py_utf8(ylabel)
             axis = plot.create_dataset("x", data=x)
-            if self.xlabels[idx] is not None:
-                axis.attrs["long_name"] = to_h5py_utf8(self.xlabels[idx])
+            if xlabel is not None:
+                axis.attrs["long_name"] = to_h5py_utf8(xlabel)
             if sigma is not None:
                 plot.create_dataset("errors", data=sigma)
-            plot.create_dataset("fitted_data", data=self.fit.evaluateDefinedFunction(x))
+            plot.create_dataset("fitted_data", data=fitted_data)
 
     def getOutputFileName(self):
         return os.path.join(self.outputDir,
