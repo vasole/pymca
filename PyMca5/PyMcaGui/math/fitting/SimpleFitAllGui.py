@@ -27,6 +27,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 
+import logging
 import os
 import sys
 import traceback
@@ -41,8 +42,10 @@ from PyMca5.PyMcaMath.fitting import SpecfitFunctions
 
 from PyMca5.PyMcaGui.math.fitting import SpecfitConfigGui
 
-
 from PyMca5.PyMcaGui.misc import CalculationThread
+
+
+_logger = logging.getLogger(__name__)
 
 
 class OutputParameters(qt.QWidget):
@@ -228,4 +231,4 @@ class SimpleFitAllGui(SimpleFitGui):
         self._index = int(idx)
         self._total = int(total)
         if idx % 10 == 0:
-            print("Fitted %d of %d" % (idx, total))
+            _logger.info("Fitted %d of %d", idx, total)
