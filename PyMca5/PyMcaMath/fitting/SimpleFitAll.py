@@ -73,6 +73,8 @@ class SimpleFitAll(object):
         self.curves_y = None
         self.curves_sigma = None
         self.legends = None
+        self.xlabels = None
+        self.ylabels = None
         self.xMin = None
         self.xMax = None
         self.outputDir = PyMca5.PyMcaDirs.outputDir
@@ -111,7 +113,7 @@ class SimpleFitAll(object):
         self.outputFileName = outputfile
 
     def setData(self, curves_x, curves_y, sigma=None, xmin=None, xmax=None,
-                legends=None):
+                legends=None, xlabels=None, ylabels=None):
         """
 
         :param curves_x: List of 1D arrays, one per curve, or single 1D array
@@ -128,6 +130,8 @@ class SimpleFitAll(object):
         self.xMin = xmin
         self.xMax = xmax
         self.legends = legends or ["curve%d" % i for i in range(len(curves_y))]
+        self.xlabels = xlabels or ["X" for _cy in curves_y]
+        self.ylabels = ylabels or ["Y" for _cy in curves_y]
 
     def setConfigurationFile(self, fname):
         if not os.path.exists(fname):
@@ -336,8 +340,12 @@ class SimpleFitAll(object):
             plot.attrs["axes"] = to_h5py_utf8(["x"])
             plot.attrs["title"] = to_h5py_utf8("Fit of '%s'" % self.legends[idx])
             x, y, sigma, xMin, xMax = self.getFitInputValues(idx)
-            plot.create_dataset("raw_data", data=y)
-            plot.create_dataset("x", data=x)
+            signal = plot.create_dataset("raw_data", data=y)
+            if self.ylabels[idx] is not None:
+                signal.attrs["long_name"] = to_h5py_utf8(self.ylabels[idx])
+            axis = plot.create_dataset("x", data=x)
+            if self.xlabels[idx] is not None:
+                axis.attrs["long_name"] = to_h5py_utf8(self.xlabels[idx])
             if sigma is not None:
                 plot.create_dataset("errors", data=sigma)
             plot.create_dataset("fitted_data", data=self.fit.evaluateDefinedFunction(x))
