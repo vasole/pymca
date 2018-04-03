@@ -31,6 +31,7 @@ import os
 import numpy
 import h5py
 import datetime
+import logging
 
 from PyMca5.PyMcaIO import ConfigDict
 import PyMca5
@@ -41,6 +42,9 @@ if sys.version_info < (3, ):
     text_dtype = h5py.special_dtype(vlen=unicode)
 else:
     text_dtype = h5py.special_dtype(vlen=str)
+
+
+_logger = logging.getLogger(__name__)
 
 
 CONS = ['FREE',
@@ -166,8 +170,8 @@ class SimpleFitAll(object):
             try:
                 self.processSpectrum(i)
             except:
-                print("Error %s processing index = %d" %
-                      (sys.exc_info()[1], i))
+                _logger.error(
+                        "Error %s processing index = %d", sys.exc_info()[1], i)
                 if DEBUG:
                     raise
         self.onProcessSpectraFinished()
@@ -181,16 +185,13 @@ class SimpleFitAll(object):
         x, y, sigma, xmin, xmax = self.getFitInputValues(i)
         self.fit.setData(x, y, sigma=sigma, xmin=xmin, xmax=xmax)
         if self._parameters is None and self.__estimationPolicy != "never":
-            if DEBUG:
-                print("First estimation")
+            _logger.debug("First estimation")
             self.fit.estimate()
         elif self.__estimationPolicy == "always":
-            if DEBUG:
-                print("Estimation due to settings")
+            _logger.debug("Estimation due to settings")
             self.fit.estimate()
         else:
-            if DEBUG:
-                print("Using user estimation")
+            _logger.debug("Using user estimation")
 
         self.estimateFinished()
         values, chisq, sigma, niter, lastdeltachi = self.fit.startFit()
@@ -234,26 +235,23 @@ class SimpleFitAll(object):
         return x, y, sigma, self.xMin, self.xMax
 
     def estimateFinished(self):
-        if DEBUG:
-            print("Estimate finished")
+        _logger.debug("Estimate finished")
 
     def aboutToGetSpectrum(self, idx):
-        if DEBUG:
-            print("New spectrum %d" % idx)
+        _logger.debug("New spectrum %d", idx)
         self._currentFitIndex = idx
         if self.progressCallback is not None:
             self.progressCallback(idx, self._nSpectra)
 
     def fitOneSpectrumFinished(self):
-        if DEBUG:
-            print("fit finished")
+        _logger.debug("fit finished")
 
         # get parameter results
         fitOutput = self.fit.getResult(configuration=False)
         result = fitOutput['result']
         idx = self._currentFitIndex
         if result is None:
-            print("result not valid for index %d" % idx)
+            _logger.warning("result not valid for index %d", idx)
             return
 
         self._appendOneResultToHdf5(resultDict=fitOutput["result"])
@@ -309,8 +307,7 @@ class SimpleFitAll(object):
 
             for key, value in resultDict.items():
                 if not numpy.issubdtype(type(key), numpy.character):
-                    if DEBUG:
-                        print("skipping key %s (not a text string)" % key)
+                    _logger.debug("skipping key %s (not a text string)", key)
                     continue
                 if key == "fittedvalues":
                     output_key = "parameter_values"
@@ -350,6 +347,5 @@ class SimpleFitAll(object):
                             self.outputFileName)
 
     def onProcessSpectraFinished(self):
-        if DEBUG:
-            print("All curves processed")
+        _logger.debug("All curves processed")
         self._status = "Curves Fitting finished"
