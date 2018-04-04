@@ -60,7 +60,7 @@ if silx.version == '0.7.0':
         dialog.setModal(False)
         return dialog
 
-    ColormapAction._createDialog = _ColormapAction_createDialog
+    ColormapAction._createDialog = staticmethod(_ColormapAction_createDialog)
 
 
 PLUGINS_DIR = []
