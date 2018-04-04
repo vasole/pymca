@@ -63,6 +63,34 @@ if silx.version == '0.7.0':
     ColormapAction._createDialog = staticmethod(_ColormapAction_createDialog)
 
 
+if silx.version == '0.7.0':
+    import sys
+    if sys.version_info < (3,):
+        import numpy
+        def _get_attr_as_string(item, attr_name, default=None):
+            attr = item.attrs.get(attr_name, default)
+            if hasattr(attr, "encode"):
+                # unicode
+                return attr.encode("utf-8")
+            elif isinstance(attr, numpy.ndarray) and not attr.shape and\
+                    hasattr(attr[()], "decode"):
+                # byte string as ndarray scalar
+                return attr[()].decode("utf-8")
+            elif isinstance(attr, numpy.ndarray) and len(attr.shape) and\
+                    hasattr(attr[0], "decode"):
+                # array of byte-strings
+                return [element.decode("utf-8") for element in attr]
+            elif isinstance(attr, numpy.ndarray) and not attr.shape:
+                # convert array to list
+                return attr[()]
+            elif isinstance(attr, numpy.ndarray) and len(attr.shape):
+                # convert array to list
+                return [element for element in attr]
+            else:
+                return attr
+        from silx.io import nxdata
+        nxdata.get_attr_as_string = _get_attr_as_string
+
 PLUGINS_DIR = []
 if os.path.exists(os.path.join(os.path.dirname(PyMca5.__file__), "PyMcaPlugins")):
     from PyMca5 import PyMcaPlugins
