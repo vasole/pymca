@@ -78,6 +78,11 @@ except ImportError:
 
 import silx
 PACKAGES.append("silx")
+try:
+    import fabio
+    PACKAGES.append("fabio")
+except:
+    pass
 
 try:
     import mdp
@@ -87,6 +92,16 @@ except:
 try:
     import pyopencl
     PACKAGES.append('pyopencl')
+except:
+    pass
+try:
+    import tomogui
+    PACKAGES.append('tomogui')
+    try:
+       import freeart
+       PACKAGES.append('freeart')
+    except:
+       pass
 except:
     pass
 PY2APP_OPTIONS = {'packages':PACKAGES}
