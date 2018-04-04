@@ -103,16 +103,8 @@ try:
 except:
     SUMRULES_FLAG = False
 
-try:
-    from tomogui.gui.ProjectWidget import ProjectWindow as TomoguiProjectWindow
-    TOMOGUI_FLAG = True
-except:
-    # we cannot afford any crash (for instance proglems with pyopencl
-    # not finding its cl directory in frozen version)
-    if DEBUG:
-        print(sys.exc_info()[1])
-        print(traceback.format_exc())
-    TOMOGUI_FLAG = False
+# prefer lazy import to avoid OpenCL related crashes on startup
+TOMOGUI_FLAG = True
 
 import PyMca5
 from PyMca5 import PyMcaDataDir
@@ -1202,6 +1194,17 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
     def __tomoRecons(self):
         if self.__reconsWidget is None:
+            try:
+                from tomogui.gui.ProjectWidget \
+                     import ProjectWindow as TomoguiProjectWindow
+            except ImportError:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                txt = "This functionality requires tomogui, silx and FreeART"
+                msg.setInformativeText(txt)
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
+                return
             self.__reconsWidget = TomoguiProjectWindow()
         if self.__reconsWidget.isHidden():
             self.__reconsWidget.show()
