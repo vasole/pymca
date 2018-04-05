@@ -82,6 +82,11 @@ if __name__ == '__main__':
         raise NotImplementedError("Qt3 is not longer supported")
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+try:
+    # try to import silx prior to import matplotlib
+    import silx.gui.plot
+except:
+    pass
 from PyMca5.PyMcaGui.pymca import PyMcaMdi
 IconDict = PyMcaMdi.IconDict
 if hasattr(qt, "QString"):

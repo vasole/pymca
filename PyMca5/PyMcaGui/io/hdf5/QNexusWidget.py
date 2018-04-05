@@ -296,7 +296,8 @@ class QNexusWidget(qt.QWidget):
         else:
             ddict['HDF5'] ={'WidgetConfiguration':\
                              self.getWidgetConfiguration()}
-        print("TODO - Add selection options")
+        if DEBUG:
+            print("TODO - Add selection options")
         ddict.write(fname)
 
     def _deleteAllCountersFromTable(self):
