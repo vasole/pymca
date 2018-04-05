@@ -30,8 +30,17 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import traceback
 import os.path
-import numpy
 from . import SimpleFitControlWidget
+
+if sys.version_info < (3,):
+    from StringIO import StringIO
+else:
+    from io import StringIO
+
+try:
+    import h5py
+except ImportError:
+    h5py = None
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import ConfigDict
@@ -149,6 +158,8 @@ class DefaultParametersWidget(qt.QWidget):
             return self.setConfiguration(ddict)
 
 class SimpleFitConfigurationGui(qt.QDialog):
+    _HDF5_EXTENSIONS = [".h5", ".hdf5", ".hdf", ".nxs", ".nx"]
+
     def __init__(self, parent = None, fit=None):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("PyMca - Simple Fit Configuration")
@@ -426,6 +437,9 @@ class SimpleFitConfigurationGui(qt.QDialog):
 
     def load(self):
         filetypelist = ["Fit configuration files (*.cfg)"]
+        if h5py is not None:
+            filetypelist.append(
+                    "Fit results file (*%s)" % " *".join(self._HDF5_EXTENSIONS))
         message = "Choose fit configuration file"
         initdir = os.path.curdir
         if self.initDir is not None:
@@ -466,9 +480,14 @@ class SimpleFitConfigurationGui(qt.QDialog):
         return
 
     def loadConfiguration(self, filename):
-        cfg= ConfigDict.ConfigDict()
+        cfg = ConfigDict.ConfigDict()
+        _basename, extension = os.path.splitext(filename)
         try:
-            cfg.read(filename)
+            if extension in self._HDF5_EXTENSIONS:
+                initxt = self._loadIniFromNXprocess(filename)
+                cfg.readfp(StringIO(initxt))
+            else:
+                cfg.read(filename)
             self.initDir = os.path.dirname(filename)
             self.setConfiguration(cfg)
         except:
@@ -480,6 +499,28 @@ class SimpleFitConfigurationGui(qt.QDialog):
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
+
+    def _loadIniFromNXprocess(self, filename):
+        """Return the INI configuration data as a string.
+
+        The configuration is taken from the first entry.
+        We assume that there is one entry per fitted curve,
+        and all curves share the same config.
+        """
+        with h5py.File(filename, "r") as h5f:
+            entry = None
+            for name, item in h5f.items():
+                if isinstance(item, h5py.Group) and\
+                        item.attrs.get("NX_class") == "NXentry":
+                    entry = item
+            if entry is None:
+                raise IOError("No NXentry found in file %s" % filename)
+            data = entry.get("fit_process/configuration/data")
+            if data is None or not isinstance(data, h5py.Dataset) or\
+                    not data.shape == tuple():
+                raise IOError("Could not find fit configuration in NXentry")
+            initxt = data[()]
+        return initxt
 
     def saveConfiguration(self, filename):
         cfg = ConfigDict.ConfigDict(self.getConfiguration())
