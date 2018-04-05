@@ -401,7 +401,8 @@ class QNexusWidget(qt.QWidget):
             if type(self._aliasList) == type(""):
                 self._aliasList = [ddict['aliases']]
         self.cntTable.build(self._cntList, self._aliasList)
-        print("TODO - Add selection options")
+        if DEBUG:
+            print("TODO - Add selection options")
 
     def setDataSource(self, dataSource):
         self.data = dataSource
