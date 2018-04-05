@@ -353,6 +353,7 @@ if SILX:
     # silx gui._qt module needs to be patched to get rid of uic
     initFile = os.path.join(install_dir, "silx", "gui", "qt", "_qt.py")
     print("###################################################################")
+    print("Patching silx file")
     print(initFile)
     print("###################################################################")
     f = open(initFile, "r")
@@ -368,6 +369,10 @@ if SILX:
 if OPENCL:
     # pyopencl __init__.py needs to be patched
     initFile = os.path.join(install_dir, "pyopencl", "__init__.py")
+    print("###################################################################")
+    print("Patching pyopencl file")
+    print(initFile)
+    print("###################################################################")
     f = open(initFile, "r")
     content = f.readlines()
     f.close()
