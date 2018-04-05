@@ -30,14 +30,25 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import traceback
 import os.path
-import numpy
 from . import SimpleFitControlWidget
+
+if sys.version_info < (3,):
+    from StringIO import StringIO
+else:
+    from io import StringIO
+
+try:
+    import h5py
+except ImportError:
+    h5py = None
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui import PyMca_Icons as Icons
 from PyMca5 import PyMcaDirs
+if h5py is not None:
+    from PyMca5.PyMcaGui.io.hdf5 import HDF5Widget
 
 #strip background handling
 from . import Parameters
@@ -149,6 +160,8 @@ class DefaultParametersWidget(qt.QWidget):
             return self.setConfiguration(ddict)
 
 class SimpleFitConfigurationGui(qt.QDialog):
+    _HDF5_EXTENSIONS = [".h5", ".hdf5", ".hdf", ".nxs", ".nx"]
+
     def __init__(self, parent = None, fit=None):
         qt.QDialog.__init__(self, parent)
         self.setWindowTitle("PyMca - Simple Fit Configuration")
@@ -426,6 +439,9 @@ class SimpleFitConfigurationGui(qt.QDialog):
 
     def load(self):
         filetypelist = ["Fit configuration files (*.cfg)"]
+        if h5py is not None:
+            filetypelist.append(
+                    "Fit results file (*%s)" % " *".join(self._HDF5_EXTENSIONS))
         message = "Choose fit configuration file"
         initdir = os.path.curdir
         if self.initDir is not None:
@@ -466,9 +482,14 @@ class SimpleFitConfigurationGui(qt.QDialog):
         return
 
     def loadConfiguration(self, filename):
-        cfg= ConfigDict.ConfigDict()
+        cfg = ConfigDict.ConfigDict()
+        _basename, extension = os.path.splitext(filename)
         try:
-            cfg.read(filename)
+            if extension in self._HDF5_EXTENSIONS:
+                initxt = self._loadIniFromHdf5(filename)
+                cfg.readfp(StringIO(initxt))
+            else:
+                cfg.read(filename)
             self.initDir = os.path.dirname(filename)
             self.setConfiguration(cfg)
         except:
@@ -480,6 +501,32 @@ class SimpleFitConfigurationGui(qt.QDialog):
             msg.setInformativeText(str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
+
+    def _loadIniFromHdf5(self, filename):
+        self.__hdf5Dialog = qt.QDialog()
+        self.__hdf5Dialog.setWindowTitle('Select the fit configuration dataset by a double click')
+        self.__hdf5Dialog.mainLayout = qt.QVBoxLayout(self.__hdf5Dialog)
+        self.__hdf5Dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.__hdf5Dialog.mainLayout.setSpacing(0)
+        fileModel = HDF5Widget.FileModel()
+        fileView = HDF5Widget.HDF5Widget(fileModel)
+        hdf5File = fileModel.openFile(filename)
+        fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
+        self.__hdf5Dialog.mainLayout.addWidget(fileView)
+        self.__hdf5Dialog.resize(400, 200)
+        ret = self.__hdf5Dialog.exec_()
+        if not ret:
+            return
+        initxt = hdf5File[self.__fitConfigDataset][()]
+        hdf5File.close()
+
+        return initxt
+
+    def _hdf5WidgetSlot(self, ddict):
+        if ddict['event'] == "itemDoubleClicked":
+            if ddict['type'].lower() in ['dataset']:
+                self.__fitConfigDataset = ddict['name']
+                self.__hdf5Dialog.accept()
 
     def saveConfiguration(self, filename):
         cfg = ConfigDict.ConfigDict(self.getConfiguration())

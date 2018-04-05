@@ -31,6 +31,7 @@ import os
 import numpy
 import h5py
 import datetime
+import logging
 
 from PyMca5.PyMcaIO import ConfigDict
 import PyMca5
@@ -41,6 +42,9 @@ if sys.version_info < (3, ):
     text_dtype = h5py.special_dtype(vlen=unicode)
 else:
     text_dtype = h5py.special_dtype(vlen=str)
+
+
+_logger = logging.getLogger(__name__)
 
 
 CONS = ['FREE',
@@ -69,6 +73,8 @@ class SimpleFitAll(object):
         self.curves_y = None
         self.curves_sigma = None
         self.legends = None
+        self.xlabels = None
+        self.ylabels = None
         self.xMin = None
         self.xMax = None
         self.outputDir = PyMca5.PyMcaDirs.outputDir
@@ -76,12 +82,13 @@ class SimpleFitAll(object):
         self._progress = 0.0
         self._status = "Ready"
         self._currentFitIndex = None
+        self._currentSigma = None
         self._nSpectra = None
         self.progressCallback = None
         # optimization variables
         self.__estimationPolicy = "always"
-        self._startTime = ""
-        self._endTime = ""
+        self._currentFitStartTime = ""
+        self._currentFitEndTime = ""
 
     def setProgressCallback(self, method):
         """
@@ -107,7 +114,7 @@ class SimpleFitAll(object):
         self.outputFileName = outputfile
 
     def setData(self, curves_x, curves_y, sigma=None, xmin=None, xmax=None,
-                legends=None):
+                legends=None, xlabels=None, ylabels=None):
         """
 
         :param curves_x: List of 1D arrays, one per curve, or single 1D array
@@ -124,6 +131,8 @@ class SimpleFitAll(object):
         self.xMin = xmin
         self.xMax = xmax
         self.legends = legends or ["curve%d" % i for i in range(len(curves_y))]
+        self.xlabels = xlabels or ["X" for _cy in curves_y]
+        self.ylabels = ylabels or ["Y" for _cy in curves_y]
 
     def setConfigurationFile(self, fname):
         if not os.path.exists(fname):
@@ -166,8 +175,8 @@ class SimpleFitAll(object):
             try:
                 self.processSpectrum(i)
             except:
-                print("Error %s processing index = %d" %
-                      (sys.exc_info()[1], i))
+                _logger.error(
+                        "Error %s processing index = %d", sys.exc_info()[1], i)
                 if DEBUG:
                     raise
         self.onProcessSpectraFinished()
@@ -176,26 +185,24 @@ class SimpleFitAll(object):
             self.progressCallback(self._nSpectra, self._nSpectra)
 
     def processSpectrum(self, i):
-        self._startTime = datetime.datetime.now().isoformat()
+        self._currentFitStartTime = datetime.datetime.now().isoformat()
         self.aboutToGetSpectrum(i)
         x, y, sigma, xmin, xmax = self.getFitInputValues(i)
         self.fit.setData(x, y, sigma=sigma, xmin=xmin, xmax=xmax)
         if self._parameters is None and self.__estimationPolicy != "never":
-            if DEBUG:
-                print("First estimation")
+            _logger.debug("First estimation")
             self.fit.estimate()
         elif self.__estimationPolicy == "always":
-            if DEBUG:
-                print("Estimation due to settings")
+            _logger.debug("Estimation due to settings")
             self.fit.estimate()
         else:
-            if DEBUG:
-                print("Using user estimation")
+            _logger.debug("Using user estimation")
 
         self.estimateFinished()
-        values, chisq, sigma, niter, lastdeltachi = self.fit.startFit()
+        values, chisq, sigmaFromFit, niter, lastdeltachi = self.fit.startFit()
+        self._currentSigma = sigma if sigma is not None else sigmaFromFit
 
-        self._endTime = datetime.datetime.now().isoformat()
+        self._currentFitEndTime = datetime.datetime.now().isoformat()
         self.fitOneSpectrumFinished()
 
     def getFitInputValues(self, index):
@@ -234,53 +241,59 @@ class SimpleFitAll(object):
         return x, y, sigma, self.xMin, self.xMax
 
     def estimateFinished(self):
-        if DEBUG:
-            print("Estimate finished")
+        _logger.debug("Estimate finished")
 
     def aboutToGetSpectrum(self, idx):
-        if DEBUG:
-            print("New spectrum %d" % idx)
+        _logger.debug("New spectrum %d", idx)
         self._currentFitIndex = idx
         if self.progressCallback is not None:
             self.progressCallback(idx, self._nSpectra)
 
     def fitOneSpectrumFinished(self):
-        if DEBUG:
-            print("fit finished")
+        _logger.debug("fit finished")
 
         # get parameter results
         fitOutput = self.fit.getResult(configuration=False)
         result = fitOutput['result']
         idx = self._currentFitIndex
         if result is None:
-            print("result not valid for index %d" % idx)
+            _logger.warning("result not valid for index %d", idx)
             return
 
         self._appendOneResultToHdf5(resultDict=fitOutput["result"])
 
     def _appendOneResultToHdf5(self, resultDict):
-        # TODO: this code should become a more general function,
-        #       reusable by other fit modules and plugins
+        # Get all the  necessary data (TODO: pass it to method as attrs)
         idx = self._currentFitIndex
+        end_time = self._currentFitEndTime
+        start_time = self._currentFitStartTime
+        sigma = self._currentSigma
+        legend = self.legends[idx]
+        xlabel = self.xlabels[idx]
+        ylabel = self.ylabels[idx]
+        x, y, _inSigma, xMin, xMax = self.getFitInputValues(idx)
+        fitted_data = self.fit.evaluateDefinedFunction(x)
+        configIni = ConfigDict.ConfigDict(self.fit.getConfiguration()).tostring()
+        fit_paramlist = self.fit.paramlist
+        filename = self.getOutputFileName()
 
-        # append to existing file
-        with h5py.File(self.getOutputFileName(), mode="r+") as h5f:
+        # Write the data to file (append)
+        with h5py.File(filename, mode="r+") as h5f:
             entry = h5f.create_group("fit_curve_%d" % idx)
             entry.attrs["NX_class"] = to_h5py_utf8("NXentry")
             entry.attrs["default"] = to_h5py_utf8("fit_process/results/plot")
             entry.create_dataset("start_time",
-                                 data=to_h5py_utf8(self._startTime))
-            entry.create_dataset("end_time", data=to_h5py_utf8(self._endTime))
+                                 data=to_h5py_utf8(start_time))
+            entry.create_dataset("end_time", data=to_h5py_utf8(end_time))
             entry.create_dataset("title",
-                                 data=to_h5py_utf8("Fit of '%s'" % self.legends[idx]))
+                                 data=to_h5py_utf8("Fit of '%s'" % legend))
 
             process = entry.create_group("fit_process")
             process.attrs["NX_class"] = to_h5py_utf8("NXprocess")
             process.create_dataset("program", data=to_h5py_utf8("pymca"))
             process.create_dataset("version", data=to_h5py_utf8(PyMca5.version()))
-            process.create_dataset("date", data=to_h5py_utf8(self._endTime))
+            process.create_dataset("date", data=to_h5py_utf8(end_time))
 
-            configIni = ConfigDict.ConfigDict(self.fit.getConfiguration()).tostring()
             configuration = process.create_group("configuration")
             configuration.attrs["NX_class"] = to_h5py_utf8("NXnote")
             configuration.create_dataset("type", data=to_h5py_utf8("text/plain"))
@@ -295,7 +308,7 @@ class SimpleFitAll(object):
             estimation = results.create_group("estimation")
             estimation.attrs["NX_class"] = to_h5py_utf8("NXcollection")
 
-            for p in self.fit.paramlist:
+            for p in fit_paramlist:
                 pgroup = estimation.create_group(p["name"])
                 # constraint code can be an int, convert to str
                 if numpy.issubdtype(numpy.array(p['code']).dtype,
@@ -309,8 +322,7 @@ class SimpleFitAll(object):
 
             for key, value in resultDict.items():
                 if not numpy.issubdtype(type(key), numpy.character):
-                    if DEBUG:
-                        print("skipping key %s (not a text string)" % key)
+                    _logger.debug("skipping key %s (not a text string)", key)
                     continue
                 if key == "fittedvalues":
                     output_key = "parameter_values"
@@ -337,19 +349,21 @@ class SimpleFitAll(object):
             plot.attrs["signal"] = to_h5py_utf8("raw_data")
             plot.attrs["auxiliary_signals"] = to_h5py_utf8(["fitted_data"])
             plot.attrs["axes"] = to_h5py_utf8(["x"])
-            plot.attrs["title"] = to_h5py_utf8("Fit of '%s'" % self.legends[idx])
-            x, y, sigma, xMin, xMax = self.getFitInputValues(idx)
-            plot.create_dataset("raw_data", data=y)
-            plot.create_dataset("x", data=x)
+            plot.attrs["title"] = to_h5py_utf8("Fit of '%s'" % legend)
+            signal = plot.create_dataset("raw_data", data=y)
+            if ylabel is not None:
+                signal.attrs["long_name"] = to_h5py_utf8(ylabel)
+            axis = plot.create_dataset("x", data=x)
+            if xlabel is not None:
+                axis.attrs["long_name"] = to_h5py_utf8(xlabel)
             if sigma is not None:
                 plot.create_dataset("errors", data=sigma)
-            plot.create_dataset("fitted_data", data=self.fit.evaluateDefinedFunction(x))
+            plot.create_dataset("fitted_data", data=fitted_data)
 
     def getOutputFileName(self):
         return os.path.join(self.outputDir,
                             self.outputFileName)
 
     def onProcessSpectraFinished(self):
-        if DEBUG:
-            print("All curves processed")
+        _logger.debug("All curves processed")
         self._status = "Curves Fitting finished"
