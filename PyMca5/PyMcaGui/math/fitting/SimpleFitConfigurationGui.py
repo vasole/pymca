@@ -47,6 +47,7 @@ from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 from PyMca5.PyMcaGui import PyMca_Icons as Icons
 from PyMca5 import PyMcaDirs
+from PyMca5.PyMcaGui.io.hdf5 import HDF5Widget
 
 #strip background handling
 from . import Parameters
@@ -484,7 +485,7 @@ class SimpleFitConfigurationGui(qt.QDialog):
         _basename, extension = os.path.splitext(filename)
         try:
             if extension in self._HDF5_EXTENSIONS:
-                initxt = self._loadIniFromNXprocess(filename)
+                initxt = self._loadIniFromHdf5(filename)
                 cfg.readfp(StringIO(initxt))
             else:
                 cfg.read(filename)
@@ -500,27 +501,31 @@ class SimpleFitConfigurationGui(qt.QDialog):
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
 
-    def _loadIniFromNXprocess(self, filename):
-        """Return the INI configuration data as a string.
+    def _loadIniFromHdf5(self, filename):
+        self.__hdf5Dialog = qt.QDialog()
+        self.__hdf5Dialog.setWindowTitle('Select the fit configuration dataset by a double click')
+        self.__hdf5Dialog.mainLayout = qt.QVBoxLayout(self.__hdf5Dialog)
+        self.__hdf5Dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.__hdf5Dialog.mainLayout.setSpacing(0)
+        fileModel = HDF5Widget.FileModel()
+        fileView = HDF5Widget.HDF5Widget(fileModel)
+        hdf5File = fileModel.openFile(filename)
+        fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
+        self.__hdf5Dialog.mainLayout.addWidget(fileView)
+        self.__hdf5Dialog.resize(400, 200)
+        ret = self.__hdf5Dialog.exec_()
+        if not ret:
+            return
+        initxt = hdf5File[self.__fitConfigDataset][()]
+        hdf5File.close()
 
-        The configuration is taken from the first entry.
-        We assume that there is one entry per fitted curve,
-        and all curves share the same config.
-        """
-        with h5py.File(filename, "r") as h5f:
-            entry = None
-            for name, item in h5f.items():
-                if isinstance(item, h5py.Group) and\
-                        item.attrs.get("NX_class") == "NXentry":
-                    entry = item
-            if entry is None:
-                raise IOError("No NXentry found in file %s" % filename)
-            data = entry.get("fit_process/configuration/data")
-            if data is None or not isinstance(data, h5py.Dataset) or\
-                    not data.shape == tuple():
-                raise IOError("Could not find fit configuration in NXentry")
-            initxt = data[()]
         return initxt
+
+    def _hdf5WidgetSlot(self, ddict):
+        if ddict['event'] == "itemDoubleClicked":
+            if ddict['type'].lower() in ['dataset']:
+                self.__fitConfigDataset = ddict['name']
+                self.__hdf5Dialog.accept()
 
     def saveConfiguration(self, filename):
         cfg = ConfigDict.ConfigDict(self.getConfiguration())
