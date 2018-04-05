@@ -78,6 +78,8 @@ except ImportError:
 
 import silx
 PACKAGES.append("silx")
+SILX = True
+
 try:
     import fabio
     PACKAGES.append("fabio")
@@ -92,8 +94,10 @@ except:
 try:
     import pyopencl
     PACKAGES.append('pyopencl')
+    PYOPENCL = True
 except:
-    pass
+    PYOPENCL = False
+
 try:
     import tomogui
     PACKAGES.append('tomogui')
@@ -104,6 +108,7 @@ try:
        pass
 except:
     pass
+
 PY2APP_OPTIONS = {'packages':PACKAGES}
 if "PyQt5" in PACKAGES:
     PY2APP_OPTIONS['qt_plugins'] = ["cocoa"]
@@ -126,6 +131,58 @@ setup(
 # move to the proper place
 os.system("mv -f ./dist ../dist")
 os.chdir(os.path.dirname(PyMcaInstallationDir))
+
+# patch problematic modules
+patching_dir = os.path.join(os.getcwd(),
+                    "dist/PyMcaMain.app/Contents/Resources/lib/python%s/" % \
+                            sys.version[:3])
+if SILX:
+    # silx gui._qt module needs to be patched to get rid of uic
+    initFile = os.path.join(patching_dir, "silx", "gui", "qt", "_qt.py")
+    print("###################################################################")
+    print(initFile)
+    print("###################################################################")
+    f = open(initFile, "r")
+    content = f.readlines()
+    f.close()
+    f = open(initFile, "w")
+    for line in content:
+        if ("PyQt4.uic" in line) or ("PyQt5.uic" in line):
+            continue
+        f.write(line)
+    f.close()
+
+if PYOPENCL:
+    # pyopencl __init__.py needs to be patched
+    initFile = os.path.join(patching_dir, "pyopencl", "__init__.py")
+    print("###################################################################")
+    print(initFile)
+    print("###################################################################")
+    f = open(initFile, "r")
+    content = f.readlines()
+    f.close()
+    i = 0
+    i0 = 0
+    for line in content:
+        if "def _find_pyopencl_include_path():" in line:
+            i0 = i - 1
+        elif (i0 != 0) and ("}}}" in line):
+            i1 = i
+            break
+        i += 1
+    f = open(initFile, "w")
+    for i in range(0, i0):
+        f.write(content[i])
+    txt ='\n'
+    txt +='def _find_pyopencl_include_path():\n'
+    txt +='     from os.path import dirname, join, realpath\n'
+    txt +="     return '\"%s\"' % join(realpath(dirname(__file__)), \"cl\")"
+    txt +="\n"
+    txt +="\n"
+    f.write(txt)
+    for line in content[i1:]:
+        f.write(line)
+    f.close()
 
 #Command line call to Platypus ...
 platypusFile = '/usr/local/bin/platypus'
