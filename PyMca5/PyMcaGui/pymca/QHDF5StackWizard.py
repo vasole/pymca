@@ -220,48 +220,83 @@ class DatasetSelectionPage(qt.QWizardPage):
             return
         nxData = entry[nxDataList[0]]
 
+        ddict = {'counters': [],
+                 'aliases': []}
+        signalList = []
+        axesList = []
+        interpretation = ""
+
         signal_key = nxData.attrs.get("signal")
-        if signal_key is None:
-            return
-        if sys.version > '2.9':
-            try:
-                signal_key = signal_key.decode('utf-8')
-            except AttributeError:
-                print("WARNING: Cannot decode NX_class attribute")
+        if signal_key is not None:
+            # recent NXdata specification
+            if hasattr(signal_key, "decode"):
+                try:
+                    signal_key = signal_key.decode('utf-8')
+                except AttributeError:
+                    print("WARNING: Cannot decode NX_class attribute")
 
-        signal_dataset = nxData.get(signal_key)
-        if signal_dataset is None:
-            return
+            signal_dataset = nxData.get(signal_key)
+            if signal_dataset is None:
+                return
 
-        interpretation = signal_dataset.attrs.get("interpretation", "")
-        if sys.version > '2.9':
-            try:
-                interpretation = interpretation.decode('utf-8')
-            except AttributeError:
-                print("WARNING: Cannot decode interpretation")
-        if interpretation == "image":
-            self.stackIndexWidget.setIndex(0)
+            interpretation = signal_dataset.attrs.get("interpretation", "")
+            if hasattr(interpretation, "decode"):
+                try:
+                    interpretation = interpretation.decode('utf-8')
+                except AttributeError:
+                    print("WARNING: Cannot decode interpretation")
 
-        axesList = list(nxData.attrs.get("axes", []))
-        if not axesList:
-            # try the old method, still documented on nexusformat.org:
-            # colon-delimited "array" of dataset names as a signal attr
-            axes = signal_dataset.attrs.get('axes')
-            if axes is not None:
-                if sys.version > '2.9':
+            axesList = list(nxData.attrs.get("axes", []))
+            if not axesList:
+                # try the old method, still documented on nexusformat.org:
+                # colon-delimited "array" of dataset names as a signal attr
+                axes = signal_dataset.attrs.get('axes')
+                if axes is not None and hasattr(axes, "decode"):
                     try:
                         axes = axes.decode('utf-8')
                     except AttributeError:
                         print("WARNING: Cannot decode axes")
-            axes = axes.split(":")
-            axesList = [ax for ax in axes if ax in nxData]
+                axes = axes.split(":")
+                axesList = [ax for ax in axes if ax in nxData]
 
-        ddict = {'counters': [],
-                 'aliases': []}
+            signalList.append(signal_key)
+        else:
+            # old specification
+            for key in nxData.keys():
+                if 'signal' in nxData[key].attrs.keys():
+                    if int(nxData[key].attrs['signal']) == 1:
+                        signalList.append(key)
+                        if len(signalList) == 1:
+                            if 'interpretation' in nxData[key].attrs.keys():
+                                interpretation = nxData[key].attrs['interpretation']
+                                if sys.version > '2.9':
+                                    try:
+                                        interpretation = interpretation.decode('utf-8')
+                                    except:
+                                        print("WARNING: Cannot decode interpretation")
 
-        path = posixpath.join("/", nxDataList[0], signal_key)
-        ddict['counters'].append(path)
-        ddict['aliases'].append(posixpath.basename(signal_key))
+                            if 'axes' in nxData[key].attrs.keys():
+                                axes = nxData[key].attrs['axes']
+                                if sys.version > '2.9':
+                                    try:
+                                        axes = axes.decode('utf-8')
+                                    except:
+                                        print("WARNING: Cannot decode axes")
+                                axes = axes.split(":")
+                                for axis in axes:
+                                    if axis in nxData.keys():
+                                        axesList.append(axis)
+
+            if not len(signalList):
+                return
+
+        if interpretation == "image":
+            self.stackIndexWidget.setIndex(0)
+
+        for signal_key in signalList:
+            path = posixpath.join("/", nxDataList[0], signal_key)
+            ddict['counters'].append(path)
+            ddict['aliases'].append(posixpath.basename(signal_key))
 
         for axis in axesList:
             path = posixpath.join("/", nxDataList[0], axis)
