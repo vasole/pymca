@@ -829,7 +829,7 @@ class Hdf5SelectionDialog(qt.QDialog):
         self.accept()
 
     def exec_(self):
-        with h5py.File(self.filename, "r") as hdf5File:
+        with h5open(self.filename) as hdf5File:
             self.fileModel.appendPhynxFile(hdf5File, weakreference=True)
             ret = qt.QDialog.exec_(self)
         return ret
