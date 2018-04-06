@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     keywords={}
     debugreport = 0
-    qtversion = '4'
+    qtversion = None
     for opt, arg in opts:
         if  opt in ('--spec'):
             keywords['spec'] = arg
@@ -77,9 +77,23 @@ if __name__ == '__main__':
             else:
                 nativeFileDialogs = False
         elif opt in ('--PySide'):
-            import PySide
+            import PySide.QtCore
     if qtversion == '3':
-        raise NotImplementedError("Qt3 is not longer supported")
+        raise NotImplementedError("Qt3 is no longer supported")
+    elif qtversion == '4':
+        try:
+            import sip
+            sip.setapi("QString", 2)
+            sip.setapi("QVariant", 2)
+        except:
+            print("Cannot set sip API") # Console widget not available
+        import PyQt4.QtCore
+    elif qtversion == '5':
+        try:
+            import sip
+        except:
+            pass
+        import PyQt5.QtCore
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 try:
