@@ -138,10 +138,14 @@ class SimpleFitAllGui(SimpleFitGui):
         self.xlabels = None
         self.ylabels = None
 
-    def setSpectrum(self, *var, **kw):   # self, x, y, sigma=None, xmin=None, xmax=None
+        # store active curve
+        self._activeData = None
+
+    def setSpectrum(self, x, y, sigma=None, xmin=None, xmax=None):
         """Set the main active curve to be plotted, for
         estimation purposes."""
-        SimpleFitGui.setData(self, *var, **kw)
+        self._activeData = x, y, sigma, xmin, xmax
+        SimpleFitGui.setData(self, x, y, sigma, xmin, xmax)
 
     def setSpectra(self, curves_x, curves_y, legends=None,
                    xlabels=None, ylabels=None):
@@ -205,6 +209,8 @@ class SimpleFitAllGui(SimpleFitGui):
         finally:
             self.progressBar.hide()
             self.setEnabled(True)
+        if self._activeData is not None:
+            self.setSpectrum(*self._activeData)
 
     def _startWork(self):
         self.setEnabled(False)
