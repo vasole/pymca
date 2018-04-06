@@ -551,16 +551,16 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             self.__hdf5Dialog.mainLayout.setSpacing(0)
             fileModel = HDF5Widget.FileModel()
             fileView = HDF5Widget.HDF5Widget(fileModel)
-            hdf5File = fileModel.openFile(filename)
-            shiftsDataset = None
-            fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
-            self.__hdf5Dialog.mainLayout.addWidget(fileView)
-            self.__hdf5Dialog.resize(400, 200)
-            ret = self.__hdf5Dialog.exec_()
-            if not ret:
-                return
-            shifts = hdf5File[self.__shitfsDataset].value
-            hdf5File.close()
+            with h5py.File(filename, "r") as hdfFile:
+                fileModel.appendPhynxFile(hdfFile, weakreference=True)
+                shiftsDataset = None
+                fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
+                self.__hdf5Dialog.mainLayout.addWidget(fileView)
+                self.__hdf5Dialog.resize(400, 200)
+                ret = self.__hdf5Dialog.exec_()
+                if not ret:
+                    return
+                shifts = hdfFile[self.__shitfsDataset].value
         else:
             sf = specfilewrapper.Specfile(filename)
             nScans = len(sf)
