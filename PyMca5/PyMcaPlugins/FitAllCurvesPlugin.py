@@ -53,22 +53,24 @@ class FitAllCurvesPlugin(Plugin1DBase.Plugin1DBase):
 
     def applyMethod(self, methodName):
         activeCurve = self.getActiveCurve()
+        allCurves = self.getAllCurves()
+        if not allCurves:
+            msg = qt.QMessageBox()
+            msg.setWindowTitle("No curves to be fitted")
+            msg.setIcon(qt.QMessageBox.Warning)
+            msg.setText("There are no curves to be fitted on this plot.")
+            msg.setStandardButtons(qt.QMessageBox.Ok)
+            msg.exec_()
+            return
+        if activeCurve is None:
+            activeCurve = allCurves[0]
+
         xmin, xmax = self.getGraphXLimits()
         self.widget.setSpectrum(activeCurve[0], activeCurve[1],
                                 xmin=xmin, xmax=xmax)
         if methodName == self._configure_method:
             self.widget.configureButtonSlot()
         if methodName == self._fit_all_method:
-            allCurves = self.getAllCurves()
-            if not allCurves:
-                msg = qt.QMessageBox()
-                msg.setWindowTitle("No curves to be fitted")
-                msg.setIcon(qt.QMessageBox.Warning)
-                msg.setText("There are no curves to be fitted on this plot.")
-                msg.setStandardButtons(qt.QMessageBox.Ok)
-                msg.exec_()
-                return
-
             curves_x, curves_y, legends, xlabels, ylabels = [], [], [], [], []
 
             for x, y, legend, info in allCurves:
