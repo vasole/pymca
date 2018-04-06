@@ -553,7 +553,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             fileView = HDF5Widget.HDF5Widget(fileModel)
             with h5py.File(filename, "r") as hdfFile:
                 fileModel.appendPhynxFile(hdfFile, weakreference=True)
-                shiftsDataset = None
+                self.__shiftsDataset = None
                 fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
                 self.__hdf5Dialog.mainLayout.addWidget(fileView)
                 self.__hdf5Dialog.resize(400, 200)
