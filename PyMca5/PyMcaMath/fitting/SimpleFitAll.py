@@ -200,7 +200,7 @@ class SimpleFitAll(object):
 
         self.estimateFinished()
         values, chisq, sigmaFromFit, niter, lastdeltachi = self.fit.startFit()
-        self._currentSigma = sigma if sigma is not None else sigmaFromFit
+        self._currentSigma = sigma if sigma is not None else numpy.sqrt(y)
 
         self._currentFitEndTime = datetime.datetime.now().isoformat()
         self.fitOneSpectrumFinished()
