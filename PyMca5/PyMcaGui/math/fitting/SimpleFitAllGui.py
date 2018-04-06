@@ -65,7 +65,6 @@ class OutputParameters(qt.QWidget):
         self.outputFileLabel = qt.QLabel(self)
         self.outputFileLabel.setText("Output file root")
         self.outputFileLine = qt.QLineEdit(self)
-        self.outputFileLine.setReadOnly(True)
 
         self.outputDir = PyMcaDirs.outputDir
         self.outputFile = "SimpleFitAllOutput.h5"
