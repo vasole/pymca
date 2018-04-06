@@ -775,7 +775,7 @@ class Hdf5SelectionDialog(qt.QDialog):
         mainLayout.setSpacing(0)
         self.fileModel = FileModel()
         self.fileView = HDF5Widget(self.fileModel)
-        self.hdf5File = self.fileModel.openFile(filename)
+        self.filename = filename
 
         self.fileView.sigHDF5WidgetSignal.connect(self._hdf5WidgetSlot)
 
@@ -829,8 +829,9 @@ class Hdf5SelectionDialog(qt.QDialog):
         self.accept()
 
     def exec_(self):
-        ret = qt.QDialog.exec_(self)
-        self.hdf5File.close()
+        with h5open(self.filename) as hdf5File:
+            self.fileModel.appendPhynxFile(hdf5File, weakreference=True)
+            ret = qt.QDialog.exec_(self)
         return ret
 
 
