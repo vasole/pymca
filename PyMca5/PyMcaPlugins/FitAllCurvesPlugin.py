@@ -52,10 +52,13 @@ class FitAllCurvesPlugin(Plugin1DBase.Plugin1DBase):
         raise RuntimeError("Unrecognized method name '%s'" % methodName)
 
     def applyMethod(self, methodName):
+        activeCurve = self.getActiveCurve()
+        xmin, xmax = self.getGraphXLimits()
+        self.widget.setSpectrum(activeCurve[0], activeCurve[1],
+                                xmin=xmin, xmax=xmax)
         if methodName == self._configure_method:
             self.widget.configureButtonSlot()
         if methodName == self._fit_all_method:
-
             allCurves = self.getAllCurves()
             if not allCurves:
                 msg = qt.QMessageBox()
@@ -65,10 +68,7 @@ class FitAllCurvesPlugin(Plugin1DBase.Plugin1DBase):
                 msg.setStandardButtons(qt.QMessageBox.Ok)
                 msg.exec_()
                 return
-            activeCurve = self.getActiveCurve()
-            xmin, xmax = self.getGraphXLimits()
-            self.widget.setSpectrum(activeCurve[0], activeCurve[1],
-                                    xmin=xmin, xmax=xmax)
+
             curves_x, curves_y, legends, xlabels, ylabels = [], [], [], [], []
 
             for x, y, legend, info in allCurves:
