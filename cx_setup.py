@@ -30,8 +30,12 @@
 # If everything works well one should find a directory in the build
 # directory that contains the files needed to run the PyMca without Python
 #
-from cx_Freeze import setup, Executable
+from cx_Freeze import setup, Executable, version
+if not version.startswith('4'):
+    raise RuntimeError("At this point only cx_Freeze 4.x.x supported")
 import sys
+if sys.version_info >= (3,):
+    raise RuntimeError("At this point only Python 2 supported")
 import os
 import glob
 import cx_Freeze.hooks as _hooks
@@ -61,7 +65,11 @@ def load_PyQt4_Qt(finder, module):
         except ImportError:
             pass
 
+def dummy(*var, **kw):
+    pass
+
 _hooks.load_PyQt4_Qt = load_PyQt4_Qt
+_hooks.copy_qt_plugins = dummy
 
 
 PyMcaInstallationDir = "build"
@@ -131,11 +139,8 @@ except:
 # For the time being I leave SciPy out
 SCIPY = False
 
-try:
-    import matplotlib
-    MATPLOTLIB = True
-except ImportError:
-    MATPLOTLIB = False
+import matplotlib
+MATPLOTLIB = True
 
 try:
     import pyopencl
@@ -167,48 +172,42 @@ else:
     H5PY_SPECIAL = True
 includes = []
 
-try:
-    import fisx
-    FISX = True
-except ImportError:
-    print("Please install fisx module prior to freeze PyMca")
-    FISX = False
-    raise
-
-try:
-    import hdf5plugin
-except ImportError:
-    pass
-
+import fisx
+FISX = True
 
 #some standard encodings
 includes.append('encodings.ascii')
 includes.append('encodings.utf_8')
 includes.append('encodings.latin_1')
 import PyMca5
+import hdf5plugin
+import silx
+SILX = True
 
 special_modules = [os.path.dirname(PyMca5.__file__),
-                  os.path.dirname(ctypes.__file__)]
+                   os.path.dirname(matplotlib.__file__),                   
+                   os.path.dirname(ctypes.__file__),
+                   os.path.dirname(fisx.__file__),
+                   os.path.dirname(hdf5plugin.__file__),
+                   os.path.dirname(silx.__file__)]
 
-if sys.platform == "win32":
-    try:
-        import hdf5plugin
-        special_modules.append(os.path.dirname(hdf5plugin.__file__))
-    except ImportError:
-        print("Please install hdf5plugin prior to freeze PyMca")
-        raise
+try:
+    import tomogui
+    special_modules.append(os.path.dirname(tomogui.__file__))
+    import freeart
+    special_modules.append(os.path.dirname(freeart.__file__))
+except:
+    pass
 
-import silx
-special_modules.append(os.path.dirname(silx.__file__))
-SILX = True
 
 excludes = ["Tkinter", "tkinter",
             'tcl','_tkagg', 'Tkconstants',
-            "scipy", "Numeric", "numarray"]
+            "scipy", "Numeric", "numarray", "PyQt5"]
 
 try:
     import IPython
     if IPython.__version__.startswith('2'):
+        # this works with IPython 2.4.1
         special_modules.append(os.path.dirname(IPython.__file__))
         includes.append("colorsys")
         import pygments
@@ -238,12 +237,11 @@ if OPENCL:
     includes.append("decorator")
 else:
     excludes.append("pyopencl")
+
 if MDP:
     #mdp versions above 2.5 need special treatment
     if mdp.__version__  > '2.5':
         special_modules.append(os.path.dirname(mdp.__file__))
-if MATPLOTLIB:
-    special_modules.append(os.path.dirname(matplotlib.__file__))
 if SCIPY:
     special_modules.append(os.path.dirname(scipy.__file__))
 
@@ -251,9 +249,6 @@ if OBJECT3D:
     includes.append("logging")
     excludes.append("OpenGL")
     special_modules.append(os.path.dirname(OpenGL.__file__))
-
-if FISX:
-    special_modules.append(os.path.dirname(fisx.__file__))
 
 for f in special_modules:
     include_files.append((f, os.path.basename(f)))
@@ -485,9 +480,23 @@ else:
     if DEBUG:
         print("NO PROBLEM")
 
+# cleanup binary modules already added within packages
+files = glob.glob(os.path.join(install_dir, "*"))
+for fname in files:
+    for module in ["PyMca5", "matplotlib", "fisx", "silx",
+                   "h5py", "hdf5", "freeart"]:
+        basename = os.path.basename(fname)
+        if basename.startswith(module + "_"):
+            os.remove(fname)
+            print("DELETING %s" % fname)
+        elif basename.startswith(module + "."):
+            os.remove(fname)
+            print("DELETING %s" % fname)
+
 if os.path.exists('bin'):
     for f in glob.glob(os.path.join('bin','*')):
         os.remove(f)
+        print("DELETING %s" % f)
     os.rmdir('bin')
 
 if not SCIPY:
