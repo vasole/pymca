@@ -506,6 +506,26 @@ if not SCIPY:
             print("Deleting plugin %s" % plugin)
             os.remove(plugin)
 
+nsis = os.path.join("\Program Files (x86)", "NSIS", "makensis.exe")
+if sys.platform.startswith("win") and os.path.exists(nsis):
+    # check if we can perform the packaging
+    outFile = "nsisscript.nsi"
+    f = open("nsisscript.nsi.in", "rb")
+    content = f.readlines()
+    f.close()
+    if os.path.exists(outFile):
+        os.remove(outFile)
+    pymcaexe = "pymca%s-win64.exe" % PyMca5.version()
+    if os.path.exists(pymcaexe):
+        os.remove(pymcaexe)
+    f = open(outFile, "wb")
+    for line in content:
+        line = line.replace("__VERSION__", PyMca5.version())
+        f.write(line)
+    f.close()
+    cmd = '"%s" %s' % (nsis, outFile)
+    print(cmd)
+    os.system(cmd)
 sys.exit(0)
 
 ########################## WHAT FOLLOWS IS UNUSED CODE ################

@@ -8,6 +8,7 @@ include qtconffile
 include cx_setup.py
 include py2app_setup.py
 include PlatypusScript
+include nsisscript.nsi.in
 include README
 include build-deb.sh
 include version.py
