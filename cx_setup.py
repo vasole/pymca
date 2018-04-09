@@ -233,7 +233,13 @@ if H5PY_SPECIAL:
     special_modules.append(os.path.dirname(h5py.__file__))
 if OPENCL:
     special_modules.append(os.path.dirname(pyopencl.__file__))
-    includes.append("pytools")
+    import mako
+    import cffi
+    import pytools
+    special_modules.append(os.path.dirname(mako.__file__))
+    special_modules.append(os.path.dirname(cffi.__file__))
+    special_modules.append(os.path.dirname(pytools.__file__))
+    #includes.append("pytools")
     includes.append("decorator")
 else:
     excludes.append("pyopencl")
