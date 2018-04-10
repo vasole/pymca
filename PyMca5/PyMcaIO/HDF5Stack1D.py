@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -42,8 +42,10 @@ except ImportError:
     import PhysicalMemory
 try:
     from PyMca5.PyMcaCore import NexusDataSource
+    from PyMca5.PyMcaCore import NexusTools
 except ImportError:
     print("HDF5Stack1D importing NexusDataSource from local directory!")
+    import NexusDataSource
     import NexusDataSource
 
 DEBUG = 0
@@ -87,8 +89,8 @@ class HDF5Stack1D(DataObject.DataObject):
         # all the files in the same source
         hdfStack = NexusDataSource.NexusDataSource(filelist)
 
-        #if there is more than one file, it is assumed all the files have
-        #the same structure.
+        # if there is more than one file, it is assumed all the files have
+        # the same structure.
         tmpHdf = hdfStack._sourceObjectList[0]
         entryNames = []
         for key in tmpHdf["/"].keys():
@@ -97,8 +99,7 @@ class HDF5Stack1D(DataObject.DataObject):
 
         # built the selection in terms of HDF terms
         # for the time being, only the first item in x selection used
-
-        xSelection = selection['x']
+        xSelection = selection.get('x', None)
         if xSelection is not None:
             if type(xSelection) != type([]):
                 xSelection = [xSelection]
@@ -118,7 +119,7 @@ class HDF5Stack1D(DataObject.DataObject):
             ySelectionList = [ySelection]
 
         # monitor selection
-        mSelection = selection['m']
+        mSelection = selection.get('m', None)
         if mSelection not in [None, []]:
             if type(mSelection) != type([]):
                 mSelection = [mSelection]
@@ -147,16 +148,16 @@ class HDF5Stack1D(DataObject.DataObject):
         elif scanlist in [None, []]:
             USE_JUST_KEYS = True
         if USE_JUST_KEYS:
-            #if the scanlist is None, it is assumed we are interested on all
-            #the scans containing the selection, not that all the scans
-            #contain the selection.
+            # if the scanlist is None, it is assumed we are interested on all
+            # the scans containing the selection, not that all the scans
+            # contain the selection.
             scanlist = []
             if 0:
                 JUST_KEYS = False
                 #expect same entry names in the files
                 #Unfortunately this does not work for SOLEIL
                 for entry in entryNames:
-                    path = "/"+entry + ySelection
+                    path = "/" + entry + ySelection
                     dirname = posixpath.dirname(path)
                     base = posixpath.basename(path)
                     try:
@@ -172,23 +173,33 @@ class HDF5Stack1D(DataObject.DataObject):
                 if len(entryNames):
                     i = 0
                     for entry in entryNames:
-                        path = "/"+entry + ySelection
+                        i += 1
+                        path = "/" + entry + ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
                         try:
                             file_entry = tmpHdf[dirname]
                             if hasattr(file_entry, "keys"):
-                                i += 1
                                 if base in file_entry.keys():
+                                    # this is the case of a selection inside a group
                                     scanlist.append("1.%d" % i)
                         except KeyError:
                             print("%s not in file, ignoring." % dirname)
                     if not len(scanlist):
-                        path = "/" + ySelection
+                        if not ySelection.startswith("/"):
+                            path = "/" + ySelection
+                        else:
+                            path = ySelection
                         dirname = posixpath.dirname(path)
                         base = posixpath.basename(path)
                         try:
-                            if base in file_entry.keys():
+                            if dirname in tmpHdf["/"]:
+                                # this is the case of a dataset at top plevel
+                                # or having given the complete path
+                                if base in tmpHdf[dirname]:
+                                    JUST_KEYS = False
+                                    scanlist.append("")
+                            elif base in file_entry.keys():
                                 JUST_KEYS = False
                                 scanlist.append("")
                         except:
@@ -222,8 +233,8 @@ class HDF5Stack1D(DataObject.DataObject):
             print("Retained number of files = %d" % nFiles)
             print("Retained number of scans = %d" % nScans)
 
-        #Now is to decide the number of mca ...
-        #I assume all the scans contain the same number of mca
+        # Now is to decide the number of mca ...
+        # I assume all the scans contain the same number of mca
         if JUST_KEYS:
             path = "/" + entryNames[int(scanlist[0].split(".")[-1])-1] + ySelection
             if mSelection is not None:
@@ -238,7 +249,6 @@ class HDF5Stack1D(DataObject.DataObject):
                 xpath = scanlist[0] + xSelection
 
         yDataset = tmpHdf[path]
-
         if (self.__dtype is None) or (mSelection is not None):
             self.__dtype = yDataset.dtype
             if self.__dtype in [numpy.int16, numpy.uint16]:
@@ -256,7 +266,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 else:
                     self.__dtype = numpy.float64
 
-        #figure out the shape of the stack
+        # figure out the shape of the stack
         shape = yDataset.shape
         mcaIndex = selection.get('index', len(shape)-1)
         if mcaIndex == -1:
@@ -287,7 +297,7 @@ class HDF5Stack1D(DataObject.DataObject):
                and (nFiles == 1) and (len(shape) == 3):
                 if self.__dtype0 is None:
                     if (bytefactor == 8) and (neededMegaBytes < (2*physicalMemory)):
-                        #try reading as float32
+                        # try reading as float32
                         self.__dtype = numpy.float32
                     else:
                         raise MemoryError("Force dynamic loading")
@@ -302,7 +312,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 self.data = numpy.zeros((dim0, dim1, mcaDim), self.__dtype)
             DONE = False
         except (MemoryError, ValueError):
-            #some versions report ValueError instead of MemoryError
+            # some versions report ValueError instead of MemoryError
             if (nFiles == 1) and (len(shape) == 3):
                 print("Attempting dynamic loading")
                 self.data = yDataset
@@ -321,8 +331,77 @@ class HDF5Stack1D(DataObject.DataObject):
                     self._fileReference = hdfStack
                 DONE = True
             else:
-                #what to do if the number of dimensions is only 2?
+                # what to do if the number of dimensions is only 2?
                 raise
+
+        # get the mca information associated to the path
+        mcaObjectPaths = NexusTools.getMcaObjectPaths(tmpHdf, path)
+        _time = None
+        _calibration = None
+        _channels = None
+        if considerAsImages:
+            self._pathHasRelevantInfo = False
+        else:
+            if len(list(mcaObjectPaths.keys())) > 1: # not just "counts"
+                self._pathHasRelevantInfo = True
+                if "live_time" in mcaObjectPaths:
+                    if DONE:
+                        # hopefully it will fit into memory
+                        if mcaObjectPaths["live_time"] in tmpHdf:
+                            _time = tmpHdf[mcaObjectPaths["live_time"]].value
+                        elif "::" in mcaObjectPaths["live_time"]:
+                            tmpFileName, tmpDatasetPath = \
+                                        mcaObjectPaths["live_time"].split("::") 
+                            with h5py.File(tmpFileName, "r") as tmpH5:
+                                _time = tmpH5[tmpDatasetPath].value
+                        else:
+                            del mcaObjectPaths["live_time"]
+                    else:
+                        # we have to have as many live times as MCA spectra
+                        _time = numpy.zeros( \
+                                    (self.data.shape[0] * self.data.shape[1]),
+                                    dtype=numpy.float64)                
+                elif "elapsed_time" in mcaObjectPaths:
+                    if DONE:
+                        # hopefully it will fit into memory
+                        if mcaObjectPaths["elapsed_time"] in tmpHdf:
+                            _time = \
+                                tmpHdf[mcaObjectPaths["elapsed_time"]].value
+                        elif "::" in mcaObjectPaths["elapsed_time"]:
+                            tmpFileName, tmpDatasetPath = \
+                                    mcaObjectPaths["elapsed_time"].split("::") 
+                            with h5py.File(tmpFileName, "r") as tmpH5:
+                                _time = tmpH5[tmpDatasetPath].value
+                        else:
+                            del mcaObjectPaths["elapsed_time"]
+                    else:
+                        # we have to have as many elpased times as MCA spectra
+                        _time = numpy.zeros((self.data.shape[0] * self.data.shape[1]),
+                                                numpy.float32)                    
+                if "calibration" in mcaObjectPaths:
+                    if mcaObjectPaths["calibration"] in tmpHdf:
+                        _calibration = \
+                                tmpHdf[mcaObjectPaths["calibration"]].value
+                    elif "::" in mcaObjectPaths["calibration"]:
+                        tmpFileName, tmpDatasetPath = \
+                                    mcaObjectPaths["calibration"].split("::") 
+                        with h5py.File(tmpFileName, "r") as tmpH5:
+                            _calibration = tmpH5[tmpDatasetPath].value
+                    else:
+                        del mcaObjectPaths["calibration"]
+                if "channels" in mcaObjectPaths:
+                    if mcaObjectPaths["channels"] in tmpHdf:
+                        _channels = \
+                                tmpHdf[mcaObjectPaths["channels"]].value
+                    elif "::" in mcaObjectPaths["channels"]:
+                        tmpFileName, tmpDatasetPath = \
+                                    mcaObjectPaths["channels"].split("::") 
+                        with h5py.File(tmpFileName, "r") as tmpH5:
+                            _channels = tmpH5[tmpDatasetPath].value
+                    else:
+                        del mcaObjectPaths["channels"]
+            else:
+                self._pathHasRelevantInfo = False
 
         if (not DONE) and (not considerAsImages):
             self.info["McaIndex"] = 2
@@ -392,6 +471,20 @@ class HDF5Stack1D(DataObject.DataObject):
                         for dim in yDataset.shape:
                             nMcaInYDataset *= dim
                         nMcaInYDataset = int(nMcaInYDataset/mcaDim)
+                        timeData = None
+                        if _time is not None:
+                            if "live_time" in mcaObjectPaths:
+                                # it is assumed that all have the same structure!!!
+                                timePath = NexusTools.getMcaObjectPaths(hdf, path)["live_time"]
+                            elif "elapsed_time" in mcaObjectPaths:
+                                timePath = NexusTools.getMcaObjectPaths(hdf,
+                                                                        path)["elapsed_time"]
+                            if timePath in hdf:
+                                timeData = hdf[timePath].value
+                            elif "::" in timePath:
+                                externalFile, externalPath = timePath.split("::")
+                                with h5py.File(externalFile, "r") as timeHdf:
+                                    timeData = timeHdf[externalPath].value
                         if mcaIndex != 0:
                             if IN_MEMORY:
                                 yDataset.shape = -1, mcaDim
@@ -409,6 +502,19 @@ class HDF5Stack1D(DataObject.DataObject):
                                 if case == -1:
                                     raise ValueError(\
                                         "I do not know how to handle this monitor data")
+                            if timeData is not None:
+                                case = -1
+                                nTimeData = 1
+                                for v in timeData.shape:
+                                    nTimeData *= v
+                                if nTimeData == nMcaInYDataset:
+                                    timeData.shape = nMcaInYDataset
+                                    case = 0
+                                    _time[nStart: nStart + nMcaInYDataset] += timeData
+                                if case == -1:
+                                    print("I do not know how to handle this time data")
+                                    print("Ignoring time information")
+                                    _time= None
                             if (len(yDataset.shape) == 3) and\
                                (dim1 == yDataset.shape[1]):
                                 mca = 0
@@ -577,6 +683,17 @@ class HDF5Stack1D(DataObject.DataObject):
                                 self.data[i:i+1] += yDataset[i:i+1]
         else:
             self.info["McaIndex"] = mcaIndex
+            if _time:
+                nRequiredValues = 1
+                for i in range(len(self.data.shape)):
+                    if i != mcaIndex:
+                        nRequiredValues *= self.data.shape[i] 
+                if _time.size != nRequiredValues:
+                    print("I do not know how to interpret the time information")
+                    print("Ignoring time information")
+                    _time = None
+                else:
+                    _time.shape = -1
 
         self.info["SourceType"] = SOURCE_TYPE
         self.info["SourceName"] = filelist
@@ -586,18 +703,25 @@ class HDF5Stack1D(DataObject.DataObject):
             self.info["FileIndex"] = 1
         else:
             self.info["FileIndex"] = 0
-        self.info['McaCalib'] = [ 0.0, 1.0, 0.0]
-        self.info['Channel0'] = 0
+        if _calibration is not None:
+            self.info['McaCalib'] = _calibration
+        else:
+            self.info['McaCalib'] = [ 0.0, 1.0, 0.0]
         shape = self.data.shape
         for i in range(len(shape)):
             key = 'Dim_%d' % (i+1,)
             self.info[key] = shape[i]
+        self.info['Channel0'] = 0
         if xSelection is not None:
             if xDataset.size == shape[self.info['McaIndex']]:
                 self.x = [xDataset.reshape(-1)]
             else:
                 print("Ignoring xSelection")
-
+        elif _channels is not None:
+            _channels.shape = -1
+            self.x = [_channels]
+        if _time is not None:
+            self.info["McaLiveTime"] = _time
 
     def getDimensions(self, nFiles, nScans, shape, index=None):
         #some body may want to overwrite this

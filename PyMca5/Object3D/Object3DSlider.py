@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -65,6 +65,8 @@ class Object3DSlider(qt.QWidget):
     def setRange(self, minValue, maxValue, increment=None):
         if increment is None:
             self.__factor = 201.
+        elif increment == 0.0:
+            self.__factor = 1.0
         else:
             self.__factor = (maxValue - minValue) / float(increment)
 

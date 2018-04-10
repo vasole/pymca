@@ -1,0 +1,238 @@
+#/*##########################################################################
+# Copyright (C) 2018 V.A. Sole, European Synchrotron Radiation Facility
+#
+# This file is part of the PyMca X-ray Fluorescence Toolkit developed at
+# the ESRF by the Software group.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+#############################################################################*/
+__author__ = "V.A. Sole - ESRF Data Analysis"
+__contact__ = "sole@esrf.fr"
+__license__ = "MIT"
+__copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import sys
+from PyMca5.PyMcaGui import PyMcaQt as qt
+DEBUG = 0
+
+class QNexusWidgetActions(qt.QWidget):
+    sigAddSelection = qt.pyqtSignal()
+    sigRemoveSelection = qt.pyqtSignal()
+    sigReplaceSelection = qt.pyqtSignal()
+    sigActionsConfigurationChanged = qt.pyqtSignal(object)
+    def __init__(self, parent=None, autoreplace=False):
+        self.autoReplace = autoreplace
+        if self.autoReplace:
+            self.autoAdd     = False
+        else:
+            self.autoAdd     = True
+        self._oldCntSelection = None
+        qt.QWidget.__init__(self, parent)
+        self._build()
+
+    def _build(self):
+        self.mainLayout = qt.QVBoxLayout(self)
+        autoBox = qt.QWidget(self)
+        autoBoxLayout = qt.QGridLayout(autoBox)
+        autoBoxLayout.setContentsMargins(0, 0, 0, 0)
+        autoBoxLayout.setSpacing(0)
+        self.autoOffBox = qt.QCheckBox(autoBox)
+        self.autoOffBox.setText("Auto OFF")
+        self.autoAddBox = qt.QCheckBox(autoBox)
+        self.autoAddBox.setText("Auto ADD")
+        self.autoReplaceBox = qt.QCheckBox(autoBox)
+        self.autoReplaceBox.setText("Auto REPLACE")
+
+        row = 0
+        autoBoxLayout.addWidget(self.autoOffBox, row, 0)
+        autoBoxLayout.addWidget(self.autoAddBox, row, 1)
+        autoBoxLayout.addWidget(self.autoReplaceBox, row, 2)
+
+        if self.autoReplace:
+            self.autoAddBox.setChecked(False)
+            self.autoReplaceBox.setChecked(True)
+        else:
+            self.autoAddBox.setChecked(True)
+            self.autoReplaceBox.setChecked(False)
+        row += 1
+
+        self.object3DBox = qt.QCheckBox(autoBox)
+        self.object3DBox.setText("3D On")
+        self.object3DBox.setToolTip("Use OpenGL and Enable 3-Axes selections")
+        autoBoxLayout.addWidget(self.object3DBox, row, 0)
+
+        self.meshBox = qt.QCheckBox(autoBox)
+        self.meshBox.setText("2D On")
+        self.meshBox.setToolTip("Enable 2-Axes selections (mesh and scatter)")
+        autoBoxLayout.addWidget(self.meshBox, row, 1)
+
+
+        self.forceMcaBox = qt.QCheckBox(autoBox)
+        self.forceMcaBox.setText("Force MCA")
+        self.forceMcaBox.setToolTip("Interpret selections as MCA")
+        autoBoxLayout.addWidget(self.forceMcaBox, row, 2)
+
+        self.mainLayout.addWidget(autoBox)
+
+        self.buttonBox = qt.QWidget(self)
+        buttonBox = self.buttonBox
+        self.buttonBoxLayout = qt.QHBoxLayout(buttonBox)
+
+        self.addButton = qt.QPushButton(buttonBox)
+        self.addButton.setText("ADD")
+        self.removeButton = qt.QPushButton(buttonBox)
+        self.removeButton.setText("REMOVE")
+        self.replaceButton = qt.QPushButton(buttonBox)
+        self.replaceButton.setText("REPLACE")
+
+        self.buttonBoxLayout.addWidget(self.addButton)
+        self.buttonBoxLayout.addWidget(self.removeButton)
+        self.buttonBoxLayout.addWidget(self.replaceButton)
+
+        self.mainLayout.addWidget(buttonBox)
+
+        # --- signal handling
+        self.object3DBox.clicked.connect(self._setObject3DBox)
+        self.meshBox.clicked.connect(self._setMeshBox)
+        self.autoOffBox.clicked.connect(self._setAutoOff)
+        self.autoAddBox.clicked.connect(self._setAutoAdd)
+        self.autoReplaceBox.clicked.connect(self._setAutoReplace)
+        self.forceMcaBox.clicked.connect(self._setForcedMca)
+        self.addButton.clicked.connect(self._addClickedSlot)
+        self.removeButton.clicked.connect(self._removeClicked)
+        self.replaceButton.clicked.connect(self._replaceClicked)
+
+    def _setObject3DBox(self):
+        if self.object3DBox.isChecked():
+            self.meshBox.setChecked(False)
+            self.autoOffBox.setChecked(True)
+            self.autoReplaceBox.setChecked(False)
+            self.autoAddBox.setChecked(False)
+        self.configurationChanged()
+
+    def _setMeshBox(self):
+        if self.meshBox.isChecked():
+            self.autoAddBox.setChecked(False)
+            self.autoReplaceBox.setChecked(False)
+            self.autoOffBox.setChecked(True)
+            self.object3DBox.setChecked(False)
+        self.configurationChanged()
+
+    def _setAutoOff(self):
+        self.autoAddBox.setChecked(False)
+        self.autoReplaceBox.setChecked(False)
+        self.autoOffBox.setChecked(True)
+        self.object3DBox.setChecked(False)
+        self.meshBox.setChecked(False)
+        self.configurationChanged()
+
+    def _setAutoAdd(self):
+        self.object3DBox.setChecked(False)
+        self.meshBox.setChecked(False)
+        self.autoOffBox.setChecked(False)
+        self.autoReplaceBox.setChecked(False)
+        self.autoAddBox.setChecked(True)
+        self.configurationChanged()
+
+    def _setAutoReplace(self):
+        self.object3DBox.setChecked(False)
+        self.meshBox.setChecked(False)
+        self.autoOffBox.setChecked(False)
+        self.autoAddBox.setChecked(False)
+        self.autoReplaceBox.setChecked(True)
+        self.configurationChanged()
+
+    def _setForcedMca(self):
+        if self.forceMcaBox.isChecked():
+            self.object3DBox.setChecked(False)
+            self.object3DBox.setEnabled(False)
+            self.meshBox.setChecked(False)
+            self.meshBox.setEnabled(False)
+        else:
+            self.object3DBox.setEnabled(True)
+            self.meshBox.setEnabled(True)
+        self.configurationChanged()
+
+    def _addClickedSlot(self):
+        self._addClicked()
+
+    def _addClicked(self):
+        if DEBUG:
+            print("_addClicked()")
+        self.sigAddSelection.emit()
+
+    def _removeClicked(self):
+        if DEBUG:
+            print("_removeClicked()")
+        self.sigRemoveSelection.emit()
+
+    def _replaceClicked(self):
+        if DEBUG:
+            print("_replaceClicked()")
+        self.sigReplaceSelection.emit()
+
+    def configurationChanged(self):
+        if DEBUG:
+            print("configurationChanged(object)")
+        ddict = self.getConfiguration()
+        self.sigActionsConfigurationChanged.emit(ddict)
+
+    def set3DEnabled(self, flag):
+        if flag:
+            self.object3DBox.setEnabled(True)
+        else:
+            wasChecked = self.object3DBox.isChecked()
+            self.object3DBox.setChecked(False)
+            self.object3DBox.setEnabled(False)
+            if wasChecked:
+                self.configurationChanged()
+
+    def getConfiguration(self):
+        ddict = {}
+        ddict["mca"]= self.forceMcaBox.isChecked()
+        if self.autoReplaceBox.isChecked():
+            ddict['auto'] = "REPLACE"
+        elif self.autoAddBox.isChecked():
+            ddict['auto'] = "ADD"
+        else:
+            ddict['auto'] = "OFF"
+        ddict["2d"]= self.meshBox.isChecked()
+        ddict["3d"]= self.object3DBox.isChecked()
+        ddict["mca"]= self.forceMcaBox.isChecked()
+        return ddict
+
+if __name__ == "__main__":
+    app = qt.QApplication([])
+    w = QNexusWidgetActions()
+    w.show()
+    def addSelection():
+        print("addSelectionCalled")
+    def removeSelection():
+        print("removeSelectionCalled")
+    def replaceSelection():
+        print("replaceSelectionCalled")
+    def configurationChanged(ddict):
+        print("configurationChanged ", ddict)
+    w.show()
+    w.sigAddSelection.connect(addSelection)
+    w.sigRemoveSelection.connect(removeSelection)
+    w.sigReplaceSelection.connect(replaceSelection)
+    w.sigActionsConfigurationChanged.connect(configurationChanged)
+    sys.exit(app.exec_())
+

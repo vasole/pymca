@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -42,7 +42,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
         self._HKLOn = True
 
     def _graphSignal(self, ddict):
-        if (ddict['event'] not in ["MouseAt", "mouseClicked"]) or \
+        if (ddict['event'] not in ["MouseAt", "mouseMoved", "mouseClicked"]) or \
            (not self._HKLOn):
             return PyMcaImageWindow.PyMcaImageWindow._graphSignal(self, ddict)
 
@@ -272,7 +272,7 @@ class PyMcaHKLImageWindow(PyMcaImageWindow.PyMcaImageWindow):
                 continue
 
             #wave length
-            if key in ['source_wavelength']:
+            if key in ['source_wavelength', 'lambda']:
                 ddict['lambda'] = float(info[key])
                 continue
 

@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -36,6 +36,7 @@ if os.path.exists('PyMca5'):
         if os.path.exists('py2app_setup.py'):
             txt ='Tests cannnot be imported from top source directory'
             raise ImportError(txt)
+
 from PyMca5.tests.TestAll import main as testAll
 from PyMca5.tests.ConfigDictTest import test as testConfigDict
 from PyMca5.tests.EdfFileTest import test as testEdfFile
@@ -44,3 +45,5 @@ from PyMca5.tests.GefitTest import test as testGefit
 from PyMca5.tests.PCAToolsTest import test as testPCATools
 from PyMca5.tests.SpecfileTest import test as testSpecfile
 from PyMca5.tests.specfilewrapperTest import test as testSpecfilewrapper
+from PyMca5.tests.XrfTest import test as testXrf
+from PyMca5.tests.StackInfoTest import test as testStackInfo

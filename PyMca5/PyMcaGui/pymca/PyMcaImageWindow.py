@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -161,7 +161,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                                             tmpData = numpy.transpose(dataObject.y[yIndex])[:]
                                         else:
                                             tmpData = dataObject.y[yIndex][:]
-                                        tmpData.shape = nRows, nColumns
+                                        tmpData.shape = int(nRows), int(nColumns)
                                         dataObject.data[yIndex] = tmpData
                     else:
                         print("Nothing to plot")
@@ -176,16 +176,20 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                         nColumns = numpy.argmin(abs(x0-x0[0]) < 1.0e-6)
                         nRows = x1.size / nColumns
                         if nRows!= int(nRows):
+                            print("%f != %d" % (nRows, int(nRows)))
                             raise ValueError("2D Selection not understood")
                         transpose = False
+                        nColumns = int(nColumns)
                         self._yScale = x0[0], x0[nColumns] - x0[0]
                         self._xScale = x1[0], x1[1] - x1[0]
                     elif abs(x1[1] - x1[0]) < 1.0e-6:
                         nRows = numpy.argmin(abs(x1-x1[0]) < 1.0e-6)
                         nColumns = x0.size / nRows
                         if nColumns != int(nColumns):
+                            print("%f != %d" % (nColumns, int(nColumns)))
                             raise ValueError("2D Selection not understood")
                         transpose = True
+                        nRows = int(nRows)
                         self._xScale = x0[0], x0[1] - x0[0]
                         self._yScale = x1[0], x1[nRows] - x1[0]
                     elif (len(x0) == shape[-2]) and (len(x1) == shape[-1]):

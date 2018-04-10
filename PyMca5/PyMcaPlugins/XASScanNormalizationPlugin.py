@@ -203,7 +203,11 @@ class XASScanNormalizationPlugin(Plugin1DBase.Plugin1DBase):
             else:
                 replot = False
                 replace = False
-            newLegend = " ".join(legend.split(" ")[:-1])
+            legend_words = legend.split(" ")
+            if len(legend_words) > 1:
+                newLegend = " ".join(legend_words[:-1])
+            else:
+                newLegend = " ".join(legend_words)
             if not newLegend.startswith('Norm.'):
                 newLegend = "Norm. " + newLegend
             self.addCurve(x, y,

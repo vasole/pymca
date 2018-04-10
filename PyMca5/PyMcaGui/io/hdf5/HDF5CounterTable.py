@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2014 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -27,6 +27,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import posixpath
 from PyMca5.PyMcaGui import PyMcaQt as qt
 safe_str = qt.safe_str
 
@@ -44,8 +45,10 @@ class HDF5CounterTable(qt.QTableWidget):
         self.xSelection   = []
         self.ySelection   = []
         self.monSelection = []
+        self.__oldSelection = self.getCounterSelection()
         self.__is3DEnabled = False
-        labels = ['Counter', 'Axes', 'Signals', 'Monitor', 'Alias']
+        self.__is2DEnabled = False
+        labels = ['Dataset', 'Axes', 'Signals', 'Monitor', 'Alias']
         self.setColumnCount(len(labels))
         for i in range(len(labels)):
             item = self.horizontalHeaderItem(i)
@@ -63,8 +66,10 @@ class HDF5CounterTable(qt.QTableWidget):
 
     def build(self, cntlist, aliaslist=None):
         self.__building = True
+        if len(cntlist):
+            if len(self.cntList):
+                self.__oldSelection = self.getCounterSelection()
         if aliaslist is None:
-            import posixpath
             aliaslist = []
             for item in cntlist:
                 aliaslist.append(posixpath.basename(item))
@@ -77,9 +82,22 @@ class HDF5CounterTable(qt.QTableWidget):
         if n > 0:
             self.setRowCount(n)
             rheight = self.horizontalHeader().sizeHint().height()
+            # check if we need the complete description
+            useFullPath = []
+            for i in range(n):
+                iName = posixpath.basename(cntlist[i])
+                for j in range(i+1, n):
+                    if posixpath.basename(cntlist[j]) == iName:
+                        if i not in useFullPath:
+                            useFullPath.append(i)
+                        if j not in useFullPath:
+                            useFullPath.append(j)
             for i in range(n):
                 self.setRowHeight(i, rheight)
-                self.__addLine(i, cntlist[i])
+                if i in useFullPath:
+                    self.__addLine(i, cntlist[i])
+                else:
+                    self.__addLine(i, posixpath.basename(cntlist[i]))
                 for j in range(1, 4, 1):
                     widget = self.cellWidget(i, j)
                     widget.setEnabled(True)
@@ -89,6 +107,7 @@ class HDF5CounterTable(qt.QTableWidget):
         self.resizeColumnToContents(1)
         self.resizeColumnToContents(2)
         self.resizeColumnToContents(3)
+        self.setCounterSelection(self.__oldSelection)
         self.__building = False
 
     def __addLine(self, i, cntlabel):
@@ -126,14 +145,27 @@ class HDF5CounterTable(qt.QTableWidget):
         else:
             item.setText(alias)
 
-    def set3DEnabled(self, value):
+    def set3DEnabled(self, value, emit=True):
         if value:
             self.__is3DEnabled = True
+            self.__is2DEnabled = True
         else:
             self.__is3DEnabled = False
             if len(self.xSelection) > 1:
-                self.xSelection = [1 * self.xSelection[0]]
-        self._update()
+                self.xSelection = self.xSelection[-1:]
+        self._update(emit=emit)
+
+    def set2DEnabled(self, value, emit=True):
+        if value:
+            self.__is2DEnabled = True
+            self.__is3DEnabled = False
+            if len(self.xSelection) > 2:
+                self.xSelection = self.xSelection[-2:]
+        else:
+            self.__is2DEnabled = False
+            if len(self.xSelection) > 1:
+                self.xSelection = self.xSelection[-1:]
+        self._update(emit=emit)
 
     def _aliasSlot(self, row, col):
         if self.__building:
@@ -153,15 +185,15 @@ class HDF5CounterTable(qt.QTableWidget):
             else:
                 if row in self.xSelection:
                     del self.xSelection[self.xSelection.index(row)]
-            if not self.__is3DEnabled:
+            if self.__is3DEnabled:
+                if len(self.xSelection) > 3:
+                    self.xSelection = self.xSelection[-3:]
+            elif self.__is2DEnabled:
                 if len(self.xSelection) > 2:
-                    #that is to support mesh plots
                     self.xSelection = self.xSelection[-2:]
+            else:
                 if len(self.xSelection) > 1:
                     self.xSelection = self.xSelection[-1:]
-            elif len(self.xSelection) > 3:
-                self.xSelection = self.xSelection[-3:]
-
         if col == 2:
             if ddict["state"]:
                 if row not in self.ySelection:
@@ -180,7 +212,7 @@ class HDF5CounterTable(qt.QTableWidget):
                 self.monSelection = self.monSelection[-1:]
         self._update()
 
-    def _update(self):
+    def _update(self, emit=True):
         axisLabels = ['X', 'Y', 'Z']
         for i in range(self.rowCount()):
             j = 1
@@ -209,27 +241,28 @@ class HDF5CounterTable(qt.QTableWidget):
             else:
                 if widget.isChecked():
                     widget.setChecked(False)
-        ddict = {}
-        ddict["event"] = "updated"
-        self.sigHDF5CounterTableSignal.emit(ddict)
-
+        if emit:
+            ddict = {}
+            ddict["event"] = "updated"
+            self.sigHDF5CounterTableSignal.emit(ddict)
 
     def getCounterSelection(self):
         ddict = {}
         ddict['cntlist'] = self.cntList * 1
         ddict['aliaslist'] = self.aliasList * 1
-        ddict['x']       = self.xSelection * 1
-        ddict['y']       = self.ySelection * 1
+        ddict['x'] = self.xSelection * 1
+        ddict['y'] = self.ySelection * 1
         ddict['m'] = self.monSelection * 1
         return ddict
 
     def setCounterSelection(self, ddict):
+        if DEBUG:
+            print("HDF5CounterTable.setCounterSelection", ddict)
         keys = ddict.keys()
         if 'cntlist' in keys:
             cntlist = ddict['cntlist']
         else:
             cntlist = self.cntList * 1
-
 
         # no selection based on aliaslist or counterlist (yet?)
         if 0:
@@ -259,10 +292,11 @@ class HDF5CounterTable(qt.QTableWidget):
         for item in x:
             if item < len(cntlist):
                 counter = cntlist[item]
-                if 0:
-                    if counter in self.cntList:
-                        self.xSelection.append(self.cntList.index(counter))
-                else:
+                if counter in self.cntList:
+                    # counter name based selection
+                    self.xSelection.append(self.cntList.index(counter))
+                elif item < len(self.cntList):
+                    # index based selection
                     self.xSelection.append(item)
 
         self.ySelection = []
@@ -271,6 +305,7 @@ class HDF5CounterTable(qt.QTableWidget):
                 counter = cntlist[item]
                 if counter in self.cntList:
                     self.ySelection.append(self.cntList.index(counter))
+
         self.monSelection = []
         for item in monitor:
             if item < len(cntlist):
@@ -278,7 +313,6 @@ class HDF5CounterTable(qt.QTableWidget):
                 if counter in self.cntList:
                     self.monSelection.append(self.cntList.index(counter))
         self._update()
-
 
 class CheckBoxItem(qt.QCheckBox):
 

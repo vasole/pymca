@@ -42,10 +42,54 @@ from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 
 from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 
+import silx
 from silx.gui.data.DataViewerFrame import DataViewerFrame
 from silx.gui.data import DataViews
+from silx.gui.data import NXdataWidgets
 from silx.gui.plot import Plot1D
+from silx.gui import icons
 
+
+# Quick and dirty workaround for issue #173
+if silx.version == '0.7.0':
+    from silx.gui.plot.actions.control import ColormapAction
+    from silx.gui.plot.ColormapDialog import ColormapDialog
+
+    def _ColormapAction_createDialog(parent):
+        dialog = ColormapDialog()
+        dialog.setModal(False)
+        return dialog
+
+    ColormapAction._createDialog = staticmethod(_ColormapAction_createDialog)
+
+
+if silx.version == '0.7.0':
+    import sys
+    if sys.version_info < (3,):
+        import numpy
+        def _get_attr_as_string(item, attr_name, default=None):
+            attr = item.attrs.get(attr_name, default)
+            if hasattr(attr, "encode"):
+                # unicode
+                return attr.encode("utf-8")
+            elif isinstance(attr, numpy.ndarray) and not attr.shape and\
+                    hasattr(attr[()], "decode"):
+                # byte string as ndarray scalar
+                return attr[()].decode("utf-8")
+            elif isinstance(attr, numpy.ndarray) and len(attr.shape) and\
+                    hasattr(attr[0], "decode"):
+                # array of byte-strings
+                return [element.decode("utf-8") for element in attr]
+            elif isinstance(attr, numpy.ndarray) and not attr.shape:
+                # convert array to list
+                return attr[()]
+            elif isinstance(attr, numpy.ndarray) and len(attr.shape):
+                # convert array to list
+                return [element for element in attr]
+            else:
+                return attr
+        from silx.io import nxdata
+        nxdata.get_attr_as_string = _get_attr_as_string
 
 PLUGINS_DIR = []
 if os.path.exists(os.path.join(os.path.dirname(PyMca5.__file__), "PyMcaPlugins")):
@@ -67,6 +111,7 @@ if userPluginsDirectory is not None:
 
 
 class Plot1DWithPlugins(Plot1D):
+    """Add a plugin toolbutton to a Plot1D"""
     def __init__(self, parent=None):
         Plot1D.__init__(self, parent)
         self._plotType = "SCAN"    # needed by legacy plugins
@@ -83,18 +128,73 @@ class Plot1DWithPlugins(Plot1D):
 
 
 class Plot1DViewWithPlugins(DataViews._Plot1dView):
+    """Overload Plot1DView to use the widget with a
+    :class:`PluginsToolButton`"""
     def createWidget(self, parent):
         return Plot1DWithPlugins(parent=parent)
+
+
+class ArrayCurvePlotWithPlugins(NXdataWidgets.ArrayCurvePlot):
+    """Adds a plugin toolbutton to an ArrayCurvePlot widget"""
+    def __init__(self, parent=None):
+        NXdataWidgets.ArrayCurvePlot.__init__(self, parent)
+
+        # patch the Plot1D to make it compatible with plugins
+        self._plot._plotType = "SCAN"
+
+        self._toolbar = qt.QToolBar(self)
+        self._plot.addToolBar(self._toolbar)
+        pluginsToolButton = PluginsToolButton(plot=self._plot,
+                                              parent=self)
+        if PLUGINS_DIR:
+            pluginsToolButton.getPlugins(
+                    method="getPlugin1DInstance",
+                    directoryList=PLUGINS_DIR)
+        self._toolbar.addWidget(pluginsToolButton)
+
+
+class NXdataCurveViewWithPlugins(DataViews._NXdataCurveView):
+    """Use the widget with a :class:`PluginsToolButton`"""
+    def createWidget(self, parent):
+        return ArrayCurvePlotWithPlugins(parent=parent)
+
+
+class NXdataViewWithPlugins(DataViews.CompositeDataView):
+    """Re-implement DataViews._NXdataView to use the 1D view with
+    a plugin toolbutton in the composite view."""
+    # This widget is needed only for silx < 0.7.
+    def __init__(self, parent):
+        super(NXdataViewWithPlugins, self).__init__(
+            parent=parent,
+            label="NXdata",
+            icon=icons.getQIcon("view-nexus"))
+
+        if silx.version >= "0.7.0":
+            self.addView(DataViews._InvalidNXdataView(parent))
+        self.addView(DataViews._NXdataScalarView(parent))
+        self.addView(NXdataCurveViewWithPlugins(parent))
+        self.addView(DataViews._NXdataXYVScatterView(parent))
+        self.addView(DataViews._NXdataImageView(parent))
+        self.addView(DataViews._NXdataStackView(parent))
 
 
 class DataViewerFrameWithPlugins(DataViewerFrame):
     """Overloaded DataViewerFrame with the 1D view replaced by
     Plot1DViewWithPlugins"""
+    # This widget is needed only for silx < 0.7.
     def createDefaultViews(self, parent=None):
         views = list(DataViewerFrame.createDefaultViews(self, parent=parent))
+
+        # replace 1d view
         oldView = [v for v in views if v.modeId() == DataViews.PLOT1D_MODE][0]
         newView = Plot1DViewWithPlugins(parent=parent)
         views[views.index(oldView)] = newView
+
+        # replace NXdataView
+        oldView = [v for v in views if isinstance(v, DataViews._NXdataView)][0]
+        newView = NXdataViewWithPlugins(parent=parent)
+        views[views.index(oldView)] = newView
+
         return views
 
 
@@ -113,14 +213,14 @@ class Hdf5NodeView(CloseEventNotifyingWidget.CloseEventNotifyingWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
 
-        # # This should be the proper way of changing a single view without
-        # # overloading DataViewerFrame. See silx issue #1183.
-        # self.viewWidget = DataViewerFrame(self)
-        # self.viewWidget.removeView(
-        #     self.viewWidget.getViewFromModeId(DataViews.PLOT1D_MODE))
-        # self.viewWidget.addView(Plot1DViewWithPlugins(self))
-
-        self.viewWidget = DataViewerFrameWithPlugins(self)
+        if silx.hexversion >= 0x000700f0:       # 0.7.0 final
+            self.viewWidget = DataViewerFrame(self)
+            self.viewWidget.replaceView(DataViews.PLOT1D_MODE,
+                                        Plot1DViewWithPlugins(self))
+            self.viewWidget.replaceView(DataViews.NXDATA_CURVE_MODE,
+                                        NXdataCurveViewWithPlugins(self))
+        else:
+            self.viewWidget = DataViewerFrameWithPlugins(self)
 
         self.mainLayout.addWidget(self.viewWidget)
 

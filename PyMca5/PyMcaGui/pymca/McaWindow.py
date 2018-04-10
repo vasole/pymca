@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -248,22 +248,29 @@ class McaWindow(ScanWindow.ScanWindow):
         Tries to provide the requested curve in terms of the channels and not in the terms
         as it is displayed.
         """
+        xdata = None
+        ydata = None
+        info = None
+
         if legend in self.dataObjectsDict:
             # The data as displayed
-            x, y, legend, curveinfo, params = self.getCurve(legend)
+            x, y, legend, curveinfo = self.getCurve(legend)[:4]
             # the data as first entered
-            dataObjectInfo = self.dataObjectsDict[legend].info
+            info  = self.dataObjectsDict[legend].info
             if self.calibration == 'None':
-                if 'McaCalibSource' in curveinfo or 'McaCalibSource' not in dataObjectInfo:
+                if 'McaCalibSource' in curveinfo:
+                    calib = curveinfo['McaCalibSource']
                     return x, y, curveinfo
+                elif 'McaCalibSource' in info:
+                    return x, y, info
                 else:
-                    return x, y, dataObjectInfo
+                    return x, y, curveinfo
             else:
                 if 'McaCalib' in curveinfo:
                     calib = curveinfo['McaCalib']
                     current = True
                 else:
-                    calib = dataObjectInfo['McaCalib']
+                    calib = info['McaCalib']
                     current = False
                 x0 = self.dataObjectsDict[legend].x[0]
                 energy = calib[0] + calib[1] * x0 + calib[2] * x0 * x0
@@ -273,15 +280,15 @@ class McaWindow(ScanWindow.ScanWindow):
                     if current:
                         return xdata, ydata, curveinfo
                     else:
-                        return xdata, ydata, dataObjectInfo
+                        return xdata, ydata, info
                 else:
                     # return current data
                     return x, y, curveinfo
         else:
-            dataObjectInfo = None
+            info = None
             xdata = None
             ydata = None
-        return xdata, ydata, dataObjectInfo
+        return xdata, ydata, info
 
     def mcaAdvancedFitSignal(self):
         legend = self.getActiveCurve(just_legend=True)
@@ -850,15 +857,22 @@ class McaWindow(ScanWindow.ScanWindow):
                 legend = sel['legend']
                 dataObject = sel['dataobject']
                 info = dataObject.info
-                data = dataObject.y[0]
+
                 if dataObject.info.get("selectiontype", "1D") != "1D":
                     continue
+                if numpy.isscalar(dataObject.y[0]):
+                    dataObject.y[0] = numpy.array([dataObject.y[0]])
+                data  = dataObject.y[0]
                 curveinfo = copy.deepcopy(info)
                 curveinfo["ylabel"] = info.get("ylabel", "Counts")
                 if dataObject.x is None:
                     xhelp = None
-                else:
+                elif len(dataObject.x):
+                    if numpy.isscalar(dataObject.x[0]):
+                        dataObject.x[0] = numpy.array([dataObject.x[0]])
                     xhelp = dataObject.x[0]
+                else:
+                    xhelp = None
 
                 if xhelp is None:
                     if 'Channel0' not in info:
@@ -879,6 +893,10 @@ class McaWindow(ScanWindow.ScanWindow):
                     dataObject.m = None
 
                 if dataObject.m is not None:
+                    for imon in range(len(dataObject.m)):
+                        if numpy.isscalar(dataObject.m[imon]):
+                            dataObject.m[imon] = \
+                                            numpy.array([dataObject.m[imon]])
                     if len(dataObject.m[0]) > 0:
                         mdata = dataObject.m[0]
                         if len(mdata) == len(data):
@@ -1081,8 +1099,11 @@ class McaWindow(ScanWindow.ScanWindow):
     def removeCurves(self, removelist):
         for legend in removelist:
             self.removeCurve(legend)
-            if legend in self.dataObjectsDict.keys():
-                del self.dataObjectsDict[legend]
+
+    def removeCurve(self, legend):
+        super(McaWindow, self).removeCurve(legend)
+        if legend in self.dataObjectsDict.keys():
+            del self.dataObjectsDict[legend]
 
     def _replaceSelection(self, selectionlist):
         _logger.debug("_replaceSelection(self, selectionlist) %s", selectionlist)

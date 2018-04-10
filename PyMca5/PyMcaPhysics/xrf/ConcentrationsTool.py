@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2015 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -707,6 +707,8 @@ class ConcentrationsTool(object):
                 referenceLines = referenceTransitions.split()[0]
                 referenceCorrection = corrections[referenceElement][referenceLines]\
                                             ['correction_factor'][-1]
+                # the flux has to be corrected too!!!
+                flux = flux /referenceCorrection
             else:
                 referenceCorrection = 1.0
             # now we have to apply the corrections

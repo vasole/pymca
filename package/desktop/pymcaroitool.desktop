@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=PyMCA ROI tool
+Name[en_GB]=PyMCA ROI tool
+GenericName=Region of Interest imaging tool for XRF analysis
+GenericName[en_GB]=Region Of Interest imaging tool for XRF analysis
+Type=Application
+Exec=pymcaroitool
+Icon=/usr/share/pixmaps/pymca.xpm
+Terminal=false
+Categories=Science;Education;Physics;
+
