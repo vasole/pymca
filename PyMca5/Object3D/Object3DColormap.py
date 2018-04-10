@@ -27,10 +27,13 @@ __contact__ = "sole@esrf.fr"
 __license__ = "LGPL2+"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 from . import Object3DQt   as qt
 from . import Object3DSlider
 
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
+
 
 class Object3DColormap(qt.QGroupBox):
     sigObject3DColormapSignal = qt.pyqtSignal(object)
@@ -200,8 +203,7 @@ class Object3DColormap(qt.QGroupBox):
     def sliderChanged(self, value):
         if self.__disconnected:
             return
-        if DEBUG:
-            print("sliderChanged")
+        _logger.debug("sliderChanged")
         value0 = self.sliderList[0].value()
         value1 = self.sliderList[1].value()
         self.maxText.setText("%f" % max(value0, value1))
@@ -212,8 +214,7 @@ class Object3DColormap(qt.QGroupBox):
         self._emitSignal()
 
     def _update(self):
-        if DEBUG:
-            print("colormap _update called")
+        _logger.debug("colormap _update called")
         self.__disconnected = True
         delta = (self.dataMax - self.dataMin)/ 200.
         self.sliderList[0].setRange(self.dataMin, self.dataMax, delta)
@@ -233,15 +234,13 @@ class Object3DColormap(qt.QGroupBox):
             return
         if event is None:
             event = 'ColormapChanged'
-        if DEBUG:
-            print("sending colormap")
+        _logger.debug("sending colormap")
         ddict = self.getParameters()
         ddict['event'] = event
         self.sigObject3DColormapSignal.emit(ddict)
 
     def setAutoscale(self, val):
-        if DEBUG:
-            print("setAutoscale called", val)
+        _logger.debug("setAutoscale called %s", val)
         if val:
             self.autoScaleButton.setChecked(True)
             self.autoScale90Button.setChecked(False)
