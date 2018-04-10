@@ -60,6 +60,7 @@ test_script:
     - "pip install fisx"
     - "pip install matplotlib"
     - "pip install h5py"
+    - "pip install silx"
     - "pip install --pre --no-index --no-cache-dir --find-links dist/ PyMca5"
 
     # Print Python info
