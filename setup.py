@@ -825,7 +825,7 @@ classifiers = ["Development Status :: 5 - Production/Stable",
                "Topic :: Scientific/Engineering :: Visualization",
                ]
 
-install_requires = ["numpy", "matplotlib", "fisx>=1.1.4", "silx>=0.6.0"]
+install_requires = ["numpy", "matplotlib", "fisx>=1.1.4", "silx>=0.7.0"]
 setup_requires = ["numpy"]
 
 distrib = setup(name="PyMca5",
