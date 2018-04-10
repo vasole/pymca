@@ -41,7 +41,10 @@ try:
 except ImportError:
     FISX_DATA_DIR = None
 
-DEBUG = 0
+import logging as _logging
+_logging.basicConfig(level=_logging.INFO)
+_logger = _logging.getLogger(__name__)
+
 
 if sys.platform.startswith("win"):
     import ctypes
@@ -141,13 +144,12 @@ def getUserDataFile(fileName, directory=""):
     else:
         userDataFile = os.path.join(userDataDir, baseName)
     if os.path.exists(userDataFile):
-        if DEBUG:
-            print("Using user data file: %s" % userDataFile)
+        _logger.debug("Using user data file: %s", userDataFile)
         return userDataFile
     else:
-        if DEBUG:
-            print("Using data file: %s" % fileName)
+        _logger.debug("Using data file: %s", fileName)
         return fileName
+
 
 def getDataFile(fileName, directory=None):
     """
@@ -161,8 +163,7 @@ def getDataFile(fileName, directory=None):
 
     # return the input file name if exists
     if os.path.exists(fileName):
-        if DEBUG:
-            print("Filename as supplied <%s>" % newFileName)
+        _logger.debug("Filename as supplied <%s>", fileName)
         return fileName
 
     # the list of sub-directories where to look for the file
@@ -175,8 +176,7 @@ def getDataFile(fileName, directory=None):
     for subdirectory in directoryList:
         newFileName = getUserDataFile(fileName, directory=subdirectory)
         if os.path.exists(newFileName):
-            if DEBUG:
-                print("Filename from user <%s>" % newFileName)
+            _logger.debug("Filename from user <%s>", newFileName)
             return newFileName
 
     # PyMca
@@ -185,8 +185,7 @@ def getDataFile(fileName, directory=None):
                                    subdirectory,
                                    os.path.basename(fileName))
         if os.path.exists(newFileName):
-            if DEBUG:
-                print("Filename from PyMca Data Directory <%s>" % newFileName)
+            _logger.debug("Filename from PyMca Data Directory <%s>", newFileName)
             return newFileName
 
     # fisx
@@ -196,9 +195,8 @@ def getDataFile(fileName, directory=None):
                                        subdirectory,
                                        os.path.basename(fileName))
             if os.path.exists(newFileName):
-                if DEBUG:
-                    print("Filename from fisx Data Directory <%s>" % \
-                                                  newFileName)
+                _logger.debug("Filename from fisx Data Directory <%s>",
+                              newFileName)
                 return newFileName
 
     # file not found
