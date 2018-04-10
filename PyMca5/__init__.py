@@ -130,7 +130,7 @@ def getDefaultUserPluginsDirectory():
         else:
             return None
     except:
-        print("WARNING: Cannot initialize plugins directory")
+        _logger.warning("Cannot initialize plugins directory")
         return None
 
 def getDefaultUserFitFunctionsDirectory():
@@ -149,7 +149,7 @@ def getDefaultUserFitFunctionsDirectory():
         else:
             return None
     except:
-        print("WARNING: Cannot initialize fit functions directory")
+        _logger.warning("Cannot initialize user fit functions directory")
         return None
 
 def getUserDataFile(fileName, directory=""):
@@ -164,7 +164,7 @@ def getUserDataFile(fileName, directory=""):
             if not os.path.exists(userDataDir):
                 os.mkdir(userDataDir)
     except:
-        print("WARNING: cannot initialize user data directory")
+        _logger.info("WARNING: cannot initialize user data directory")
         
     if userDataDir is None:
         return fileName
@@ -243,7 +243,7 @@ if sys.platform.startswith("win"):
         if os.getenv("MPLCONFIGDIR") is None:
             os.environ['MPLCONFIGDIR'] = getDefaultSettingsDirectory()
     except:
-        print("WARNING: Could not set MPLCONFIGDIR.", sys.exc_info()[1])
+        _logger.info("WARNING: Could not set MPLCONFIGDIR. %s", sys.exc_info()[1])
 
 # mandatory modules for backwards compatibility
 from .PyMcaCore import Plugin1DBase, StackPluginBase, PyMcaDirs, DataObject
@@ -253,7 +253,7 @@ from .PyMcaCore import Plugin1DBase, StackPluginBase, PyMcaDirs, DataObject
 try:
     from .PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
 except:
-    print("WARNING importing IO directly")
+    _logger.info("WARNING importing IO directly")
     from PyMcaIO import specfilewrapper, EdfFile, specfile, ConfigDict
 
 from .PyMcaMath.fitting import SpecfitFuns, Gefit, Specfit
