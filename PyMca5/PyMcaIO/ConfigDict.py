@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,10 +31,12 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
-if sys.version < '3.0':
+if sys.version_info < (3,):
     import ConfigParser
+    from StringIO import StringIO
 else:
     import configparser as ConfigParser
+    from io import StringIO
 try:
     import numpy
     USE_NUMPY = True
@@ -90,7 +92,7 @@ class ConfigDict(dict):
 
     def read(self, filelist, sections=None):
         """
-        read the input filename into the internal dictionary
+        read the input file list into the internal dictionary
         """
         filelist = self.__tolist(filelist)
         sections = self.__tolist(sections)
@@ -101,6 +103,16 @@ class ConfigDict(dict):
 
         for ffile in filelist:
             self.filelist.append([ffile, sections])
+        self._check()
+
+    def readfp(self, filelike, sections=None):
+        """
+        read the input file-like object into the internal dictionary
+        """
+        cfg = ConfigParser.ConfigParser()
+        cfg.optionxform = self.__convert
+        cfg.readfp(filelike)
+        self.__read(cfg, sections)
         self._check()
 
     def __read(self, cfg, sections=None):
@@ -170,8 +182,7 @@ class ConfigDict(dict):
                 return sstr
 
     def tostring(self, sections=None):
-        import StringIO
-        tmp = StringIO.StringIO()
+        tmp = StringIO()
         sections = self.__tolist(sections)
         self.__write(tmp, self, sections)
         return tmp.getvalue()

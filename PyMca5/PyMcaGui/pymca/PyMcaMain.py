@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     keywords={}
     debugreport = 0
-    qtversion = '4'
+    qtversion = None
     for opt, arg in opts:
         if  opt in ('--spec'):
             keywords['spec'] = arg
@@ -77,11 +77,30 @@ if __name__ == '__main__':
             else:
                 nativeFileDialogs = False
         elif opt in ('--PySide'):
-            import PySide
+            import PySide.QtCore
     if qtversion == '3':
-        raise NotImplementedError("Qt3 is not longer supported")
+        raise NotImplementedError("Qt3 is no longer supported")
+    elif qtversion == '4':
+        try:
+            import sip
+            sip.setapi("QString", 2)
+            sip.setapi("QVariant", 2)
+        except:
+            print("Cannot set sip API") # Console widget not available
+        import PyQt4.QtCore
+    elif qtversion == '5':
+        try:
+            import sip
+        except:
+            pass
+        import PyQt5.QtCore
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
+try:
+    # try to import silx prior to import matplotlib
+    import silx.gui.plot
+except:
+    pass
 from PyMca5.PyMcaGui.pymca import PyMcaMdi
 IconDict = PyMcaMdi.IconDict
 if hasattr(qt, "QString"):
@@ -103,8 +122,10 @@ try:
 except:
     SUMRULES_FLAG = False
 
+# prefer lazy import to avoid OpenCL related crashes on startup
+TOMOGUI_FLAG = True
+
 import PyMca5
-from PyMca5.PyMcaGui.pymca.PyMca_help import HelpDict
 from PyMca5 import PyMcaDataDir
 import os
 __version__ = PyMca5.version()
@@ -240,6 +261,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.__imagingTool = None
             self._xrfmcTool = None
             self._sumRulesTool = None
+            self.__reconsWidget = None
             self.openMenu = qt.QMenu()
             self.openMenu.addAction("PyMca Configuration", self.openSource)
             self.openMenu.addAction("Data Source",
@@ -1079,6 +1101,9 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.menuTools.addAction("Sum Rules Tool", self._sumRules)
         if DEBUG:
             print("Fit to Specfile missing")
+        if TOMOGUI_FLAG:
+            self.menuTools.addAction("Tomography reconstruction",
+                                     self.__tomoRecons)
 
     def fontdialog(self):
         fontd = qt.QFontDialog.getFont(self)
@@ -1171,6 +1196,23 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if self.__correlator is None:
             self.__correlator = []
 
+    def __tomoRecons(self):
+        if self.__reconsWidget is None:
+            try:
+                from tomogui.gui.ProjectWidget \
+                     import ProjectWindow as TomoguiProjectWindow
+            except ImportError:
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                txt = "This functionality requires tomogui, silx and FreeART"
+                msg.setInformativeText(txt)
+                msg.setDetailedText(traceback.format_exc())
+                msg.exec_()
+                return
+            self.__reconsWidget = TomoguiProjectWindow()
+        if self.__reconsWidget.isHidden():
+            self.__reconsWidget.show()
+        self.__reconsWidget.raise_()
 
     def _deleteCorrelator(self, ddict):
         n = len(self.__correlator)
@@ -1301,6 +1343,21 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         if ddict['id'] == self.__imagingTool:
                             self.__imagingTool = None
                         del self._widgetDict[ddict['id']]
+
+    def closeEvent(self, event):
+        if __name__ == "__main__":
+            app = qt.QApplication.instance()
+            allWidgets = app.allWidgets()
+            for widget in allWidgets:
+                try:
+                    # we cannot afford to crash here
+                    if id(widget) != id(self):
+                        if widget.parent() is None:
+                            widget.close()
+                except:
+                    if DEBUG:
+                        print("Error closing widget")
+        return PyMcaMdi.PyMcaMdi.closeEvent(self, event)
 
     def __xiaCorrect(self):
         qApp = qt.QApplication.instance()

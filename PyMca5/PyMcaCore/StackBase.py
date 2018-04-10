@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -66,7 +66,6 @@ try:
 except:
     PYMCA_PLUGINS_DIR = None
     pass
-
 
 class StackBase(object):
     def __init__(self):
@@ -323,6 +322,9 @@ class StackBase(object):
                            "selectiontype": "1D",
                            "SourceName": "Stack",
                            "Key": "SUM"}
+        if "McaLiveTime" in self._stack.info:
+            dataObject.info["McaLiveTime"] = \
+                                self._stack.info["McaLiveTime"].sum()
         if not hasattr(self._stack, 'x'):
             self._stack.x = None
         if self._stack.x in [None, []]:
@@ -537,7 +539,9 @@ class StackBase(object):
                 dataObject = DataObject.DataObject()
                 dataObject.info.update(self._mcaData0.info)
                 dataObject.x = [self._mcaData0.x[0]]
-                dataObject.y = [self._mcaData0.y[0] / npixels];
+                dataObject.y = [self._mcaData0.y[0] / float(npixels)]
+                if "McaLiveTime" in dataObject.info:
+                    dataObject.info["McaLiveTime"] /= float(npixels)
             else:
                 if DEBUG:
                     print("Case 2")
@@ -567,7 +571,9 @@ class StackBase(object):
                 dataObject = DataObject.DataObject()
                 dataObject.info.update(self._mcaData0.info)
                 dataObject.x = [self._mcaData0.x[0]]
-                dataObject.y = [self._mcaData0.y[0] / npixels]
+                dataObject.y = [self._mcaData0.y[0] / float(npixels)]
+                if "McaLiveTime" in dataObject.info:
+                    dataObject.info["McaLiveTime"] /= float(npixels)
             else:
                 if DEBUG:
                     print("Case 4")
@@ -730,7 +736,7 @@ class StackBase(object):
                 mcaData = self._mcaData0.y[0] - mcaData
 
         if normalize:
-            mcaData = mcaData / npixels
+            mcaData = mcaData / float(npixels)
 
         calib = self._stack.info['McaCalib']
         dataObject = DataObject.DataObject()
@@ -738,6 +744,15 @@ class StackBase(object):
                            "selectiontype": "1D",
                            "SourceName": "Stack",
                            "Key": "Selection"}
+        if "McaLiveTime" in self._stack.info:
+            selectedPixels = actualSelectionMask > 0
+            liveTime = self._stack.info["McaLiveTime"][:]
+            liveTime.shape = actualSelectionMask.shape
+            liveTime = liveTime[selectedPixels].sum()
+            if normalize:
+                liveTime = liveTime / float(npixels)
+            dataObject.info["McaLiveTime"] = liveTime
+
         dataObject.x = [self._mcaData0.x[0]]
         dataObject.y = [mcaData]
 

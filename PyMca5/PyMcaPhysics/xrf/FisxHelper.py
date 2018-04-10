@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -387,7 +387,11 @@ def _getFisxMaterials(fitConfiguration):
                 pass
             else:
                 thickness = inputMaterialDict[materialName].get("Thickness", 1.0)
+                if thickness <= 0:
+                    raise ValueError("Invalid thickness %f" % thickness)
                 density = inputMaterialDict[materialName].get("Density", 1.0)
+                if density == 0.0:
+                    raise ValueError("Invalid density %f" % density)
                 comment = inputMaterialDict[materialName].get("Comment", "")
                 if type(comment) in [type([])]:
                     # the user may have put a comma in the comment leading to

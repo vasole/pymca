@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Elementsinfo
+Name[en_GB]=Elementsinfo
+GenericName=Display X-ray information on elements
+GenericName[en_GB]=Display X-ray information on elements
+Type=Application
+Exec=elementsinfo
+Icon=/usr/share/pixmaps/pymca.xpm
+Terminal=false
+Categories=Science;Education;Physics;

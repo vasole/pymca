@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -156,7 +156,7 @@ class PlotWindow(PlotWidget.PlotWidget):
             self._yPos.setFixedWidth(self._yPos.fontMetrics().width('##############'))
             self.graphBottomLayout.addWidget(self._yPos)
             self.graphBottomLayout.addWidget(qt.HorizontalSpacer(self.graphBottom))
-        widget.layout().addWidget(self.graphBottom)
+        widget.layout().addWidget(self.graphBottom, 0)
 
     def setPrintMenu(self, menu):
         self._printMenu = menu

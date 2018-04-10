@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2015 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -137,9 +137,13 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, i1)
             y = numpy.take(y, i1)
             try:
-                y = y - y.min()
-                y = y/y.max()
+                ymin = numpy.nanmin(y)
+                y = y - ymin
+                ymax = numpy.nanmax(y)
+                if ymax != 0:
+                    y = y / ymax
             except:
+                print(sys.exc_info())
                 continue
             if i == 0:
                 replace = True
@@ -172,9 +176,12 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, i1)
             y = numpy.take(y, i1)
             try:
-                y = y - y.min()
-                y = y/y.sum()
+                ymin = numpy.nanmin(y)
+                y = y - ymin
+                ysum = numpy.nansum(y)
+                y = y / ysum
             except:
+                print(sys.exc_info())
                 continue
             if i == 0:
                 replace = True
@@ -207,9 +214,11 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, i1)
             y = numpy.take(y, i1)
             try:
-                y = y - y.min()
-                y = y/numpy.trapz(y, x)
+                ymin = numpy.nanmin(y)
+                y = y - ymin
+                y = y / numpy.trapz(y, x)
             except:
+                print(sys.exc_info())
                 continue
             if i == 0:
                 replace = True
@@ -272,7 +281,7 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             x = numpy.take(x, idx)
             y = numpy.take(y, idx)
 
-            idx = numpy.nonzero((x0>=x.min()) & (x0<=x.max()))[0]
+            idx = numpy.nonzero((x0 >= numpy.nanmin(x)) & (x0 <= numpy.nanmax(x)))[0]
             if not len(idx):
                 #no overlap
                 continue
@@ -290,12 +299,14 @@ class NormalizationPlugins(Plugin1DBase.Plugin1DBase):
             else:
                 replot = False
                 replace = False
-            self.addCurve(x, y,
+            # this line is absolutely necessary!
+            xi.shape = y.shape
+            self.addCurve(xi, y,
                           legend=legend,
                           info=info,
                           replot=replot,
                           replace=replace)
-            lastCurve = [x, y, legend]
+            lastCurve = [xi, y, legend]
         self.addCurve(lastCurve[0],
                       lastCurve[1],
                       legend=lastCurve[2],

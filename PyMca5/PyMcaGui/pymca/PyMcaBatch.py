@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -498,7 +498,7 @@ class McaBatchGUI(qt.QWidget):
                         #self._hdf5Widget.selectionWidgetsDict['m'].hide()
                         if self._hdf5Widget.isHidden():
                             self._hdf5Widget.show()
-                elif filelist[0][-3:].lower() in ['.h5', 'nxs', 'hdf']:
+                elif filelist[0][-3:].lower() in ['.h5', 'nxs', 'hdf', 'hdf5']:
                             text = "Warning, this looks as an HDF5 file "
                             text += "but you do not have HDF5 support."
                             self.showMessage(text)
@@ -636,7 +636,7 @@ class McaBatchGUI(qt.QWidget):
 
         filetypes  = "McaFiles (*.mca)\nEdfFiles (*.edf)\n"
         if HDF5SUPPORT:
-            filetypes += "HDF5 (*.nxs *.h5 *.hdf)\n"
+            filetypes += "HDF5 (*.nxs *.h5 *.hdf *.hdf5)\n"
         filetypes += "SpecFiles (*.spec)\nSpecFiles (*.dat)\nAll files (*)"
         #if (QTVERSION < '4.3.0') and sys.platform == "win32":
         if False and PyMcaDirs.nativeFileDialogs:

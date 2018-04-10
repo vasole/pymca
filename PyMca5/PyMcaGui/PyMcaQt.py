@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -36,7 +36,7 @@ This module simplifies writing code that has to deal with with PySide and PyQt4.
 """
 # force cx_freeze to consider sip among the modules to add
 # to the binary packages
-if (('PySide' in sys.modules) or
+if (('PySide.QtCore' in sys.modules) or
         (hasattr(sys, 'argv') and 'PySide' in sys.argv)):
         # argv might not be defined for embedded python (e.g., in Qt designer)
     from PySide.QtCore import *
@@ -57,7 +57,7 @@ if (('PySide' in sys.modules) or
         matplotlib.rcParams['backend.qt4']='PySide'
     except:
         pass
-elif "PyQt5" in sys.modules:
+elif "PyQt5.QtCore" in sys.modules:
     try:
         import sip
     except:
@@ -76,7 +76,7 @@ elif "PyQt5" in sys.modules:
     except:
         pass
 else:
-    if sys.version < "3.0.0":
+    if sys.version_info < (3,):
         try:
             import sip
             sip.setapi("QString", 2)
@@ -109,7 +109,7 @@ else:
                 pass
             pyqtSignal = Signal
 
-            #matplotlib has difficulties to identify PySide
+            # matplotlib has difficulties to identify PySide
             try:
                 import matplotlib
                 matplotlib.rcParams['backend.qt4']='PySide'
@@ -167,7 +167,7 @@ class VerticalSpacer(QWidget):
         self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,
                                           QSizePolicy.Expanding))
 
-if sys.version < '3.0':
+if sys.version_info < (3,):
     import types
     # perhaps a better name would be safe unicode?
     # should this method be a more generic tool to

@@ -77,7 +77,12 @@ class ConsoleStackPlugin(StackPluginBase.StackPluginBase):
 
     def _embed(self):
         if self._widget is None:
-            self._widget = QIPythonWidget.QIPythonWidget(customBanner="Console 1D Window")
+            try:
+                banner = "%s Stack Console Window.\n" % self.windowTitle()
+            except:
+                banner = "Stack Console Window.\n"
+            banner += "Use plugin to access the stack plugin interface.\n"
+            self._widget = QIPythonWidget.QIPythonWidget(customBanner=banner)
             self._widget.pushVariables({"plugin":self})
         self._widget.show()
         self._widget.raise_()

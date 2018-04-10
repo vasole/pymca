@@ -1,0 +1,78 @@
+os:
+    - Visual Studio 2015
+
+cache:
+    - '%LOCALAPPDATA%\pip\Cache'
+
+# fetch repository as zip archive
+shallow_clone: true
+
+environment:
+    global:
+        WIN_SDK_ROOT: "C:\\Program Files\\Microsoft SDKs\\Windows"
+        VENV_BUILD_DIR: "venv_build"
+        VENV_TEST_DIR: "venv_test"
+
+    matrix:
+        # Python 3.6
+        - PYTHON_DIR: "C:\\Python36-x64"
+
+install:
+    # Add Python to PATH
+    - "SET PATH=%PYTHON_DIR%;%PYTHON_DIR%\\Scripts;%PATH%"
+
+    # Upgrade distribution modules
+    - "pip install --upgrade setuptools"
+    - "python -m pip install --upgrade pip"
+
+    # Install virtualenv
+    - "pip install virtualenv"
+    - "virtualenv --version"
+
+build_script:
+    # Create build virtualenv
+    - "virtualenv --clear %VENV_BUILD_DIR%"
+    - "%VENV_BUILD_DIR%\\Scripts\\activate.bat"
+
+    # Install build dependencies
+    - "pip install wheel"
+    - "pip install numpy"
+
+    # Print Python info
+    - "python ci\\info_platform.py"
+    - "pip freeze"
+
+    # Build
+    - "python setup.py bdist_wheel bdist_msi"
+    - ps: "ls dist"
+
+    # Leave build virtualenv
+    - "%VENV_BUILD_DIR%\\Scripts\\deactivate.bat"
+    - "rmdir %VENV_BUILD_DIR% /s /q"
+
+test_script:
+    # Create test virtualenv
+    - "virtualenv --clear %VENV_TEST_DIR%"
+    - "%VENV_TEST_DIR%\\Scripts\\activate.bat"
+
+    # Install the generated wheel package to test it
+    - "pip install numpy"
+    - "pip install fisx"
+    - "pip install matplotlib"
+    - "pip install --pre --no-index --no-cache-dir --find-links dist/ PyMca5"
+
+    # Print Python info
+    - "python ci\\info_platform.py"
+    - "pip freeze"
+
+    # Run the tests
+    - "cd .."
+    - "python -m PyMca5.tests.TestAll"
+
+    # Leave test virtualenv
+    - "pymca\\%VENV_TEST_DIR%\\Scripts\\deactivate.bat"
+    - "rmdir pymca\\%VENV_TEST_DIR% /s /q"
+
+artifacts:
+    # Archive the generated wheel package in the ci.appveyor.com build report.
+    - path: dist\*

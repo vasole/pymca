@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2014 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -39,10 +39,11 @@ import re
 import posixpath
 phynx = h5py
 
-if sys.version > '2.9':
+if sys.version_info >= (3,):
     basestring = str
 
 from . import DataObject
+from . import NexusTools
 
 SOURCE_TYPE = "HDF5"
 DEBUG = 0
@@ -140,6 +141,28 @@ def get_family_pattern(filelist):
         rootname = name1[0:]
     return rootname
 
+# tool to retrieve the positioners group associated to a path
+# retrieving them from the same entry (assuming they are in
+# NXentry/instrument/positioners)
+def getPositionersGroup(h5file, path):
+    entry = path
+    candidate = os.path.dirname(entry)
+    while len(candidate) > 1:
+        entry = candidate
+        candidate = os.path.dirname(entry)
+    instrument = None
+    for key, group in h5file[entry].items():
+        for attr in group.attrs:
+            if attr in ["NX_class", b"NX_class"]:
+                if group.attrs[attr] in ["NXinstrument", b"NXinstrument"]:
+                    instrument = group
+                    break
+    positioners = None
+    if instrument is not None:
+        for key in instrument.keys():
+            if key in ["positioners", b"positioners"]:
+                positioners = instrument[key]
+    return positioners
 
 class NexusDataSource(object):
     def __init__(self,nameInput):
@@ -270,6 +293,8 @@ class NexusDataSource(object):
               starting by 1.
         selection: a dictionnary generated via QNexusWidget
         """
+        if DEBUG:
+            print("getDataObject selection = ", selection)
         if selection is not None:
             if 'sourcename' in selection:
                 filename  = selection['sourcename']
@@ -302,9 +327,92 @@ class NexusDataSource(object):
             raise NotImplemented("Direct NXdata plot not implemented yet")
         #create data object
         output = DataObject.DataObject()
+        output.x = None
+        output.y = None
+        output.m = None
+        output.data = None
         output.info = self.__getKeyInfo(actual_key)
         output.info['selection'] = selection
-        if selection['selectiontype'].upper() in ["SCAN", "MCA"]:
+        if "mca" in selection:
+            # this should go somewhere else
+            h5File = phynxFile
+            mcaPath = entry + selection["mcalist"][selection["mca"][0]]
+            mcaObjectPaths = NexusTools.getMcaObjectPaths(phynxFile, mcaPath)
+            mcaData = h5File[mcaObjectPaths['counts']]
+            output.info['selectiontype'] = "1D"
+            try:
+                for key in list(mcaObjectPaths.keys()):
+                    if key == "counts":
+                        continue
+                    mcaDatasetObjectPath = mcaObjectPaths[key]
+                    dataset = None
+                    if mcaDatasetObjectPath in h5File:
+                        dataset = h5File[mcaDatasetObjectPath].value
+                    elif "::" in mcaDatasetObjectPath:
+                        fileName, path = mcaDatasetObjectPath.split()
+                        if os.path.exists(fileName):
+                            with h5py.File(fileName, "r") as h5:
+                                if path in h5:
+                                    dataset = h5[path].value
+                    if dataset is None:
+                        if DEBUG:
+                            print("Broken link? Ignoring key %s = % s" % \
+                                                  (key, mcaDatasetObjectPath ))
+                        del mcaObjectPaths[key]
+                    else:
+                        mcaObjectPaths[key] = dataset
+                if "channels" in mcaObjectPaths:
+                    mcaChannels = mcaObjectPaths["channels"]
+                    del mcaObjectPaths["channels"]
+                else:
+                    mcaChannels = numpy.arange(mcaData.shape[-1]).astype(numpy.float32)
+                if "calibration" in mcaObjectPaths:
+                    mcaCalibration = mcaObjectPaths["calibration"]
+                    del mcaObjectPaths["calibration"]
+                else:
+                    mcaCalibration = numpy.array([0.0, 1.0, 0.0])
+                output.info["McaCalib"] = mcaCalibration
+                if "preset_time" in mcaObjectPaths:
+                    output.info["McaPresetTime"]= mcaObjectPaths["preset_time"]
+                    del mcaObjectPaths["preset_time"]
+                if "elapsed_time" in mcaObjectPaths:
+                    output.info["McaRealTime"]= mcaObjectPaths["elapsed_time"]
+                    del mcaObjectPaths["elapsed_time"]
+                if "live_time" in mcaObjectPaths:
+                    output.info["McaLiveTime"]= mcaObjectPaths["live_time"]
+                    del mcaObjectPaths["live_time"]
+                del mcaObjectPaths
+                if selection['mcaselectiontype'].lower() in ["avg", "average", "sum"]:
+                    divider = 1.0
+                    if len(mcaData.shape) > 1:
+                        divider *= mcaData.shape[0]
+                        mcaData = numpy.sum(mcaData, axis=0, dtype=numpy.float32)
+                        while len(mcaData.shape) > 1:
+                            divider *= mcaData.shape[0]
+                            mcaData = mcaData.sum(axis=0)
+                        if selection['mcaselectiontype'].lower() != "sum":
+                            mcaData /= divider
+                    else:
+                        mcaData = mcaData.value
+                        divider = 1.0
+                    if "McaLiveTime" in output.info:
+                        if numpy.isscalar(output.info["McaLiveTime"]):
+                            # it is already a single number
+                            pass
+                        else:
+                            output.info["McaLiveTime"] = \
+                                    output.info["McaLiveTime"].sum()
+                        if selection['mcaselectiontype'].lower() != "sum":
+                            output.info["McaLiveTime"] /= divider                        
+            except:
+                import traceback                
+                print("exception", sys.exc_info())
+                print(("%s " % value) + ''.join(traceback.format_tb(trace)))
+                return output
+            output.x = [mcaChannels]
+            output.y = [mcaData]
+            return output
+        elif selection['selectiontype'].upper() in ["SCAN", "MCA"]:
             output.info['selectiontype'] = "1D"
         elif selection['selectiontype'] == "3D":
             output.info['selectiontype'] = "3D"
@@ -320,10 +428,24 @@ class NexusDataSource(object):
             output.info['LabelNames'] = selection['aliaslist']
         else:
             output.info['LabelNames'] = selection['cntlist']
-        output.x = None
-        output.y = None
-        output.m = None
-        output.data = None
+        if entry != "/":
+            try:
+                positioners = getPositionersGroup(phynxFile, entry)
+                if positioners is not None:
+                    output.info['MotorNames'] = []
+                    output.info['MotorValues'] = []
+                    for key in positioners.keys():
+                        output.info['MotorNames'].append(key)
+                        value = positioners[key].value
+                        if hasattr(value, "size"):
+                            if value.size > 1:
+                                if hasattr(value, "flat"):
+                                    value = value.flat[0]
+                        output.info['MotorValues'].append(value)
+            except:
+                # I cannot affort to fail here for something probably not used
+                if DEBUG:
+                    print("Error reading positioners ", sys.exc_info())
         for cnt in ['y', 'x', 'm']:
             if not cnt in selection:
                 continue
@@ -340,8 +462,27 @@ class NexusDataSource(object):
                 except MemoryError:
                     data = phynxFile[path]
                     pass
-            if output.info['selectiontype'] == "1D":
-                if len(data.shape) == 2:
+            if output.info['selectiontype'] in ["1D", "MCA"]:
+                if (len(data.shape) > 1) and ('mcaselectiontype' in selection):
+                    mcaselectiontype = selection['mcaselectiontype'].lower()
+                    nSpectra = 1.0
+                    for iDummy in data.shape[:-1]:
+                        data = data.sum(axis=0, dtype=numpy.float)
+                        nSpectra *= iDummy
+                    if mcaselectiontype == "sum":
+                        # sum already calculated
+                        if DEBUG:
+                            print("SUM")
+                    elif mcaselectiontype in ["avg", "average"]:
+                        # calculate the average
+                        if DEBUG:
+                            print("AVERAGE")
+                        data /= nSpectra
+                    else:                        
+                        print("Unsupported selection type %s" % mcaselectiontype)
+                        print("Calculating average")
+                        data /= nSpectra
+                elif len(data.shape) == 2:
                     if min(data.shape) == 1:
                         data = numpy.ravel(data)
                     else:

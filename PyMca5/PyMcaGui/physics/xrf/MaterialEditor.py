@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2016 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -258,7 +258,7 @@ class MaterialEditor(qt.QWidget):
 
 class MaterialComboBox(qt.QComboBox):
     sigMaterialComboBoxSignal = qt.pyqtSignal(object)
-    def __init__(self,parent = None,name = None,fl = 0,
+    def __init__(self,parent=None,name = None,fl = 0,
                  options=['1','2','3'],row=None,col=None):
         if row is None: row = 0
         if col is None: col = 0
@@ -270,6 +270,7 @@ class MaterialComboBox(qt.QComboBox):
         self.setDuplicatesEnabled(False)
         self.setEditable(True)
         self._line = self.lineEdit()
+        self.lastText = "_U_N1iKeLyText"
         self.activated[str].connect(self._mySignal)
         self._line.editingFinished.connect(self._mySlot)
 
@@ -346,6 +347,7 @@ class MaterialComboBox(qt.QComboBox):
                     break
             return
         self.setCurrentText(text)
+        self.lastText = text
         ddict = {}
         ddict['event'] = 'activated'
         ddict['row']   = self.row
@@ -365,7 +367,9 @@ class MaterialComboBox(qt.QComboBox):
         self.sigMaterialComboBoxSignal.emit(ddict)
 
     def _mySlot(self):
-        self._mySignal(self.currentText())
+        current = str(self.currentText())
+        if current != self.lastText:
+            self._mySignal(self.currentText())
 
 class MaterialValidator(qt.QValidator):
     def __init__(self, *var):

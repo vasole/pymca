@@ -249,6 +249,14 @@ PyMcaPlugins Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`TomographyPlugin` Module
+-----------------------------
+
+.. automodule:: PyMca5.PyMcaPlugins.TomographyPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`XASScanNormalizationPlugin` Module
 ----------------------------------------
 
