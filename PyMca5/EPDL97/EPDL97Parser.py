@@ -32,6 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 __doc__ =\
 """
 The 1997 release of the Evaluated Photon Data Library (EPDL97)
@@ -213,7 +214,8 @@ SHELL_LIST = EADLSubshells
 getSubshellFromValue = EADLSubshells.getSubshellFromValue
 getValueFromSubshell = EADLSubshells.getValueFromSubshell
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 AVOGADRO_NUMBER = 6.02214179E23
 
 #Read the EPDL library
@@ -463,8 +465,8 @@ def parseHeader1(line):
         ddict['subshell_code'] = 0
         ddict['subshell'] = 'none'
     else:
-        print("Inconsistent data")
-        print("X1 = ", X1, "S = ", S)
+        _logger.error("Inconsistent data")
+        _logger.error("X1 = %s; S = %s", X1, S)
         sys.exit(1)
     return ddict
 
@@ -478,12 +480,12 @@ def parseHeader(line0, line1):
 if 0:
     ddict = parseHeader0(EPDL97_DATA[0])
     for key in ddict.keys():
-        print(key, ddict[key])
+        _logger.info("%s: %s", key, ddict[key])
 
 if 0:
     ddict = parseHeader1(EPDL97_DATA[1])
     for key in ddict.keys():
-        print (key, ddict[key])
+        _logger.info("%s: %s", key, ddict[key])
 
 
 def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I, getmode=True):
@@ -500,61 +502,46 @@ def getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I, getmode=True):
         try:
             ddict = parseHeader(lines[i], lines[i+1])
         except:
-            print("Error with lines")
-            print(lines[i])
-            print(lines[i+1])
-            print(sys.exc_info())
+            _logger.error("Error with lines")
+            _logger.error(lines[i])
+            _logger.error(lines[i+1])
+            _logger.error(sys.exc_info())
             raise
         if 0:
-            print(ddict['Z'], z)
-            print(ddict['Yi'], Yi)
-            print(ddict['C'], C)
-            print(ddict['S'], S)
-            print(ddict['X1'], X1)
-            print(ddict['Yo'], Yo)
-            print(ddict['I'], I)
-        if DEBUG:
-            if ddict['Z'] == z:
-                print("Z found")
-                if ddict['Yi'] == Yi:
-                    print("Yi found")
-                    if ddict['C'] == C:
-                        print("C found")
-                        if ddict['S'] == S:
-                            print("S found with X1 = ", ddict['X1'])
-                            print("Requested    X1 = ", X1)
-                            print(lines[i])
-                            print(lines[i+1])
-                            if ddict['X1'] == X1:
-                                if ddict['Yo'] == Yo:
-                                    if ddict['I'] == I:
-                                        print("FOUND!")
-                                        print(lines[i])
-                                        print(lines[i+1])
-                                        LAST_INDEX = i - 1
-                                        if getmode:
-                                            return i, ddict['interpolation_type']
-                                        else:
-                                            return i
-                                        break
-        else:
-            if ddict['Z'] == z:
-                if ddict['Yi'] == Yi:
-                    if ddict['C'] == C:
-                        if ddict['S'] == S:
-                            if ddict['X1'] == X1:
-                                if ddict['Yo'] == Yo:
-                                    if ddict['I'] == I:
-                                        LAST_INDEX = i - 1
-                                        if getmode:
-                                            return i, ddict['interpolation_type']
-                                        else:
-                                            return i
-                                        break
+            _logger.info("%s, %s", ddict['Z'], z)
+            _logger.info("%s, %s", ddict['Yi'], Yi)
+            _logger.info("%s, %s", ddict['C'], C)
+            _logger.info("%s, %s", ddict['S'], S)
+            _logger.info("%s, %s", ddict['X1'], X1)
+            _logger.info("%s, %s", ddict['Yo'], Yo)
+            _logger.info("%s, %s", ddict['I'], I)
+
+        if ddict['Z'] == z:
+            _logger.debug("Z found")
+            if ddict['Yi'] == Yi:
+                _logger.debug("Yi found")
+                if ddict['C'] == C:
+                    _logger.debug("C found")
+                    if ddict['S'] == S:
+                        _logger.debug("S found with X1 = %s", ddict['X1'])
+                        _logger.debug("Requested    X1 = %s", X1)
+                        _logger.debug(lines[i])
+                        _logger.debug(lines[i+1])
+                        if ddict['X1'] == X1:
+                            if ddict['Yo'] == Yo:
+                                if ddict['I'] == I:
+                                    _logger.debug("FOUND!")
+                                    _logger.debug(lines[i])
+                                    _logger.debug(lines[i+1])
+                                    LAST_INDEX = i - 1
+                                    if getmode:
+                                        return i, ddict['interpolation_type']
+                                    else:
+                                        return i
+
         i += 1
     if LAST_INDEX > 0:
-        if DEBUG:
-            print("REPEATING")
+        _logger.debug("REPEATING")
         LAST_INDEX = -1
         return getDataLineIndex(lines, z, Yi, C, S, X1, Yo, I, getmode=getmode)
     if getmode:
@@ -567,12 +554,11 @@ def getActualDataFromLinesAndOffset(lines, index):
     data_end   = index + 2
     while len(lines[data_end].split()) == 2:
         data_end += 1
-    if DEBUG:
-        print("COMPLETE DATA SET")
-        print(lines[index:data_end])
-        print("END DATA SET")
-        print(lines[data_end])
-        print("ADDITIONAL LINE")
+    _logger.debug("COMPLETE DATA SET")
+    _logger.debug(lines[index:data_end])
+    _logger.debug("END DATA SET")
+    _logger.debug(lines[data_end])
+    _logger.debug("ADDITIONAL LINE")
     ndata = data_end - data_begin
     energy = numpy.zeros((ndata,), numpy.float)
     value  = numpy.zeros((ndata,), numpy.float)
@@ -714,45 +700,45 @@ if __name__ == "__main__":
     else:
         Z = 82
     energy, value, mode = getTotalCoherentCrossSection(Z, EPDL97_DATA, getmode=True)
-    print("TOTAL COHERENT ", mode)
+    _logger.info("TOTAL COHERENT %s", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print(energy[i], value[i])
+                _logger.info("%s, %s", energy[i], value[i])
 
     energy, value, mode = getTotalIncoherentCrossSection(Z, EPDL97_DATA , getmode=True)
-    print("TOTAL INCOHERENT ", mode)
+    _logger.info("TOTAL INCOHERENT %s", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print(energy[i], value[i])
+                _logger.info("%s, %s", energy[i], value[i])
 
     energy, value, mode = getTotalPhotoelectricCrossSection(Z, EPDL97_DATA, getmode=True)
-    print("TOTAL PHOTOELECTRIC ", mode)
+    _logger.info("TOTAL PHOTOELECTRIC %s", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print(energy[i], value[i])
+                _logger.info("%s, %s", energy[i], value[i])
 
     energy, value, mode = getTotalPairCrossSection(Z, EPDL97_DATA, getmode=True)
-    print(" TOTAL PAIR ", mode)
+    _logger.info(" TOTAL PAIR %s", mode)
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print(energy[i], value[i])
+                _logger.info("%s, %s", energy[i], value[i])
 
     energy, value, mode = getPartialPhotoelectricCrossSection(Z, 'L1', EPDL97_DATA, getmode=True)
-    print("L1 SHELL PARTIAL PHOTOELECTRIC IDX")
+    _logger.info("L1 SHELL PARTIAL PHOTOELECTRIC IDX")
     for i in range(len(energy)):
         if energy[i] > 0.010:
             if energy[i] < 0.020:
-                print(energy[i], value[i], mode)
+                _logger.info("%s, %s, %s", energy[i], value[i], mode)
 
     energy, value, mode = getPartialPhotoelectricCrossSection(Z, 'K', EPDL97_DATA, getmode=True)
-    print("K SHELL PARTIAL PHOTOELECTRIC")
+    _logger.info("K SHELL PARTIAL PHOTOELECTRIC")
     for i in range(len(energy)):
         if energy[i] > 0.088:
             if energy[i] < 0.090:
-                print(energy[i], value[i], mode)
+                _logger.info("%s, %s, %s", energy[i], value[i], mode)
 
-    print("atomic weight = ", getAtomicWeights()[Z-1])
+    _logger.info("atomic weight = %s", getAtomicWeights()[Z-1])
