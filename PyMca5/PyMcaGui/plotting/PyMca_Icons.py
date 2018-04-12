@@ -27,6 +27,13 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
+import logging
+
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.DEBUG)
+
+
 aspect_ratio = [
 #/* columns rows colors chars-per-pixel */
 "32 32 5 1",
@@ -3647,7 +3654,7 @@ zoomreset = [
 ]
 
 
-IconDict = {
+IconDict0 = {
     "derive": derive,
     "close": close,
     "fileclose": fileclose,
@@ -3718,11 +3725,127 @@ IconDict = {
     "rotate_right": rotate_right
 }
 
-def showIcons():
-    import sys
+# corresponding silx icons
+TRANSLATION_TABLE = {
+    "average16": "math-average",
+    "derive": "math-derive",
+    "close": "close",
+    "crop": "crop",
+    #"fileclose": fileclose,
+    #"fileopen": fileopen,
+    #"filesave": filesave,
+    #"fileprint": fileprint,
+    #"spec": spec,
+    #"normal": normal,
+    #"normalize16": normalize16,
+    #"reload": reload_,
+    #"window_fullscreen": window_fullscreen,
+    #"window_new": window_new,
+    #"window_nofullscreen": window_nofullscreen,
+    "zoomplus": "zoom-in",
+    "zoomminus": "zoom-out",
+    "zoomreset": "zoom-original",
+    "zoom": "zoom",
+    "logx": "plot-xlog",
+    "logy": "plot-ylog",
+    "peak": "math-peak",
+    "peakreset": "math-peak-reset",
+    "peaksearch": "math-peak-search",
+    #"roi": roi,
+    #"roireset": roireset,
+    #"selected": selected,
+    #"unselected": unselected,
+    "fit": "math-fit",
+    "energy": "math-energy",
+    "xauto": "plot-xauto",
+    "yauto": "plot-yauto",
+    "colormap": "colormap",
+    #"colormap16": colormap16,
+    #"gioconda16": gioconda16,
+    #"gioconda16mirror": gioconda16mirror,
+    #"grid16": grid16,
+    #"image": image,
+    #"eraseselect": eraseselect,
+    #"boxselect": boxselect,
+    #"brush": brush,
+    #"brushselect": brushselect,
+    #"rgb16": rgb16,
+    #"rgb": rgb,
+    "sliderson": "sliders-on",
+    "slidersoff": "sliders-off",
+    "sigma": "math-sigma",
+    "swapsign": "math-swap-sign",
+    "ymintozero": "math-ymin-to-zero",
+    "square": "shape-square",
+    "polygon": "shape-polygon",
+    "rectangle": "shape-rectangle",
+    "circle": "shape-circle",
+    "ellipse": "shape-ellipse",
+    "solidcircle": "shape-circle-solid",
+    "solidellipse": "shape-ellipse-solid",
+    "smooth": "math-smooth",
+    "subtract": "math-substract",
+    "substract": "math-substract",
+    #"togglepoints": togglepoints,
+    #"remove": remove,
+    #"additionalselect": additionalselect,
+    #"plugin": plugin,
+    "horizontal": "shape-horizontal",
+    "vertical": "shape-vertical",
+    "diagonal": "shape-diagonal",
+    #"rotate_left": rotate_left,
+    #"rotate_right": rotate_right
+    }
+
+
+_qapp = None
+
+
+def _getSilxIconDict():
+    from silx.gui import icons
+
+    # we need to instantiate QApplication before storing QPixmaps
+    global _qapp
     from PyMca5.PyMcaGui import PyMcaQt as qt
-    a= qt.QApplication(sys.argv)
-    a.lastWindowClosed.connect(a.quit)
+    _qapp = qt.QApplication.instance()
+    if _qapp is None:
+        _logger.debug("Instantiating QApplication before filling IconDict "
+                      "with QPixmaps.")
+        import sys
+        _qapp = qt.QApplication(sys.argv)
+
+    IconDict1 = {}
+    for key in IconDict0.keys():
+        if key in TRANSLATION_TABLE:
+            try:
+                IconDict1[key] = icons.getQPixmap(TRANSLATION_TABLE[key])
+            except ValueError:
+                _logger.warning("Icon '%s' not found in silx. "
+                                "Using original PyMca icon '%s'.",
+                                TRANSLATION_TABLE[key], key)
+                IconDict1[key] = IconDict0[key]
+            else:
+                _logger.debug("Using silx icon '%s' in replacement of legacy"
+                              " icon '%s'.", TRANSLATION_TABLE[key], key)
+        else:
+            _logger.debug("Icon '%s' not in translation table. "
+                          "Using original PyMca icon.", key)
+            IconDict1[key] = IconDict0[key]
+    return IconDict1
+
+
+try:
+    IconDict = _getSilxIconDict()
+except ImportError:
+    _logger.debug("silx not available, using legacy PyMca icons")
+    IconDict = IconDict0
+
+
+def showIcons():
+    from PyMca5.PyMcaGui import PyMcaQt as qt
+    app = _qapp
+    app.lastWindowClosed.connect(app.quit)
+
     w= qt.QWidget()
     g= qt.QGridLayout(w)
 
@@ -3740,7 +3863,7 @@ def showIcons():
         idx+= 1
 
     w.show()
-    a.exec_()
+    app.exec_()
 
-if __name__=='__main__':
+if __name__ == '__main__':
     showIcons()
