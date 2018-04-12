@@ -3843,7 +3843,9 @@ except ImportError:
 
 def showIcons():
     from PyMca5.PyMcaGui import PyMcaQt as qt
-    app = _qapp
+    import sys
+
+    app = qt.QApplication.instance() or qt.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
 
     w= qt.QWidget()
