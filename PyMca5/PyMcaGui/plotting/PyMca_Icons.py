@@ -30,6 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import logging
 import sys
+from PyMca5.PyMcaGui import PyMcaQt as qt
 
 if sys.version_info < (3, ):
     from collections import MutableMapping
@@ -3845,7 +3846,6 @@ class _PatchedIconDict(MutableMapping):
                           key)
             return self._unpatched_icons[key]
 
-        from PyMca5.PyMcaGui import PyMcaQt as qt
         if qt.QApplication.instance() is None:
             _logger.warning("Cannot fetch QPixmap without a QApplication."
                             " Using legacy PyMca icon as fallback.")
@@ -3879,16 +3879,11 @@ IconDict = _PatchedIconDict(IconDict0)
 
 
 def showIcons():
-    from PyMca5.PyMcaGui import PyMcaQt as qt
-
-    app = qt.QApplication(sys.argv)
-    app.lastWindowClosed.connect(app.quit)
-
     w = qt.QWidget()
     g = qt.QGridLayout(w)
 
     idx = 0
-    for name, icon in list(IconDict.items()):
+    for name, icon in IconDict.items():
         print(name, type(icon))
         column = int(idx / 10)
         row = idx % 10
@@ -3902,9 +3897,12 @@ def showIcons():
         idx += 1
 
     w.show()
-    app.exec_()
+    return w
 
 if __name__ == '__main__':
+    app = qt.QApplication(sys.argv)
+    app.lastWindowClosed.connect(app.quit)
     logging.basicConfig()
     _logger.setLevel(logging.DEBUG)
-    showIcons()
+    w = showIcons()
+    app.exec_()
