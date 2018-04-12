@@ -29,6 +29,12 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import logging
+import sys
+
+if sys.version_info < (3, ):
+    from collections import MutableMapping
+else:
+    from collections.abc import MutableMapping
 
 _logger = logging.getLogger(__name__)
 
@@ -3797,74 +3803,108 @@ TRANSLATION_TABLE = {
     }
 
 
-_qapp = None
+class _PatchedIconDict(MutableMapping):
+    """IconDict that patches some legacy icons with new
+    silx icons, when available.
 
+    This object must be initialized with a legacy dictionary of icons.
+    If silx is installed and a corresponding silx icon name is specified in
+    TRANSLATION_TABLE, the silx icon is returned by __getitem__ rather
+    than the legacy icon.
 
-def _getSilxIconDict():
-    from silx.gui import icons
+    This object allows modifying the icon dict via __setitem__ and
+    deleting icons, like a real dict.
+    """
+    def __init__(self, *args, **kw):
+        self._unpatched_icons = dict(*args, **kw)
+        try:
+            from silx.gui import icons as silx_icons
+        except ImportError:
+            _logger.debug("Could not import silx. Legacy icons will be used.")
+            silx_icons = None
 
-    # we need to instantiate QApplication before storing QPixmaps
-    global _qapp
-    from PyMca5.PyMcaGui import PyMcaQt as qt
-    _qapp = qt.QApplication.instance()
-    if _qapp is None:
-        _logger.debug("Instantiating QApplication before filling IconDict "
-                      "with QPixmaps.")
-        import sys
-        _qapp = qt.QApplication(sys.argv)
+        self._silx_icons = silx_icons
+        # keep an internal copy:
+        self._translation_table = TRANSLATION_TABLE.copy()
 
-    IconDict1 = {}
-    for key in IconDict0.keys():
-        if key in TRANSLATION_TABLE:
-            try:
-                IconDict1[key] = icons.getQPixmap(TRANSLATION_TABLE[key])
-            except ValueError:
-                _logger.warning("Icon '%s' not found in silx. "
-                                "Using original PyMca icon '%s'.",
-                                TRANSLATION_TABLE[key], key)
-                IconDict1[key] = IconDict0[key]
-            else:
-                _logger.debug("Using silx icon '%s' in replacement of legacy"
-                              " icon '%s'.", TRANSLATION_TABLE[key], key)
+    def __iter__(self):
+        for key in self._unpatched_icons:
+            yield key
+
+    def __len__(self):
+        # same length
+        return len(self._unpatched_icons)
+
+    def __getitem__(self, key):
+        if key not in self._unpatched_icons:
+            raise KeyError("Unknown icon '%s'" % key)
+
+        if self._silx_icons is None or key not in TRANSLATION_TABLE:
+            _logger.debug("Using legacy icon '%s' because silx is not "
+                          "available or because it has no corresponding icon.",
+                          key)
+            return self._unpatched_icons[key]
+
+        from PyMca5.PyMcaGui import PyMcaQt as qt
+        if qt.QApplication.instance() is None:
+            _logger.warning("Cannot fetch QPixmap without a QApplication."
+                            " Using legacy PyMca icon as fallback.")
+            return self._unpatched_icons[key]
+
+        try:
+            icon = self._silx_icons.getQPixmap(TRANSLATION_TABLE[key])
+        except ValueError:
+            _logger.warning("Icon '%s' not found in silx. "
+                            "Using legacy PyMca icon '%s'.",
+                            TRANSLATION_TABLE[key], key)
+            icon = self._unpatched_icons[key]
         else:
-            _logger.debug("Icon '%s' not in translation table. "
-                          "Using original PyMca icon.", key)
-            IconDict1[key] = IconDict0[key]
-    return IconDict1
+            _logger.debug("Using silx icon '%s' instead of legacy icon '%s'.",
+                          TRANSLATION_TABLE[key], key)
+        finally:
+            return icon
+
+    def __delitem__(self, key):
+        # deleting from legacy dict is enough
+        del self._unpatched_icons[key]
+
+    def __setitem__(self, key, item):
+        self._unpatched_icons[key] = item
+        if self._silx_icons is not None and key in self._translation_table:
+            # we also need to remove the key from internal translation table
+            del self._translation_table[key]
 
 
-try:
-    IconDict = _getSilxIconDict()
-except ImportError:
-    _logger.debug("silx not available, using legacy PyMca icons")
-    IconDict = IconDict0
+IconDict = _PatchedIconDict(IconDict0)
 
 
 def showIcons():
     from PyMca5.PyMcaGui import PyMcaQt as qt
-    import sys
 
-    app = qt.QApplication.instance() or qt.QApplication(sys.argv)
+    app = qt.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
 
-    w= qt.QWidget()
-    g= qt.QGridLayout(w)
+    w = qt.QWidget()
+    g = qt.QGridLayout(w)
 
-    idx= 0
-    for name,icon in IconDict.items():
+    idx = 0
+    for name, icon in list(IconDict.items()):
+        print(name, type(icon))
         column = int(idx / 10)
         row = idx % 10
         #print "name",name
-        lab= qt.QLabel(w)
+        lab = qt.QLabel(w)
         lab.setText(str(name))
         g.addWidget(lab, row, 2 * column + 1)
-        lab= qt.QLabel(w)
+        lab = qt.QLabel(w)
         lab.setPixmap(qt.QPixmap(icon))
         g.addWidget(lab, row, 2 * column)
-        idx+= 1
+        idx += 1
 
     w.show()
     app.exec_()
 
 if __name__ == '__main__':
+    logging.basicConfig()
+    _logger.setLevel(logging.DEBUG)
     showIcons()
