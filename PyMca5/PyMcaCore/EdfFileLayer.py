@@ -38,12 +38,14 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 
 ################################################################################
+import logging
 #import fast_EdfFile as EdfFile
 from PyMca5.PyMcaIO import EdfFile
 ################################################################################
 
+_logger = logging.getLogger(__name__)
 SOURCE_TYPE = "EdfFile"
-DEBUG = 0
+
 
 class EdfFileLayer(object):
     """
@@ -87,20 +89,19 @@ class EdfFileLayer(object):
                 self.Source= source_obj
             else:
                 if (type(source_name) == type([])):
-                    if DEBUG:
-                        print("List of files")
+                    _logger.debug("List of files")
                     self.Source=[]
                     for name in source_name:
                         try:
                             self.Source.append(EdfFile.EdfFile(name,fastedf=self.fastedf))
                         except:
-                            #print("EdfFileLayer.SetSource: Error trying to read EDF file %s" % name)
+                            # _logger.info("EdfFileLayer.SetSource: Error trying to read EDF file %s", name)
                             self.Source.append( None)
                 else:
                     try:
                         self.Source = EdfFile.EdfFile(source_name, fastedf=self.fastedf)
                     except:
-                        #print("EdfFileLayer.SetSource: Error trying to read EDF file")
+                        # _logger.info("EdfFileLayer.SetSource: Error trying to read EDF file")
                         self.Source=None
         else:
             self.Source=None
@@ -200,7 +201,7 @@ class EdfFileLayer(object):
                     index = int(index)-1
                     image = int(image)-1
                 except:
-                    print("Error trying to interpret key = %s" % key)
+                    _logger.error("Error trying to interpret key = %s", key)
                     return {}
                 source = self.Source[index]
                 NumImages=source.GetNumImages()
@@ -379,7 +380,8 @@ class EdfFileLayer(object):
         """
         #AS if append==0: Data.Delete(self)
         numimages=self.Source.GetNumImages()
-        if key_list == "ALL": key_list=range(numimages)
+        if key_list == "ALL":
+            key_list=range(numimages)
         elif type(key_list) != type([]): key_list=[key_list]
         #AS elif type(key_list) is types.IntType: key_list=[key_list]
         if pos is not None:
@@ -445,11 +447,11 @@ if __name__ == "__main__":
         fast = int(sys.argv[3])
         obj=EdfFileLayer(fastedf=fast)
         if not obj.SetSource([filename]):
-            print("ERROR: cannot open file %s" % filename)
+            _logger.error("ERROR: cannot open file %s" % filename)
             sys.exit()
         #obj.LoadSource(key)
     except:
-        print("Usage: EdfFileData.py <filename> <image> <fastflag>")
+        _logger.error("Usage: EdfFileData.py <filename> <image> <fastflag>")
         sys.exit()
     print(obj.GetSourceInfo())
     for i in range(1):
