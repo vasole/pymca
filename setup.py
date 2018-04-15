@@ -124,8 +124,10 @@ if build_ext is not None:
     if not use_cython():
         build_ext = None
 
+fid = open(os.path.join('PyMca5', '__init__.py'), 'r')
+ffile = fid.readlines()
+fid.close()
 
-ffile = open(os.path.join('PyMca5', '__init__.py'), 'r').readlines()
 __version__ = None
 for line in ffile:
     if line.startswith('__version__'):
