@@ -43,7 +43,16 @@ QTVERSION = qt.qVersion()
 DEBUG = 0
 SCENE_MATRIX = True
 
-class SceneGLWidget(qt.QGLWidget):
+
+if hasattr(qt, 'QOpenGLWidget'):  # PyQt>=5.4
+    _BaseOpenGLWidget = qt.QOpenGLWidget
+elif hasattr(qt, 'QGLWidget'):
+    _BaseOpenGLWidget = qt.QGLWidget
+else:
+    raise ImportError("QOpenGLWidget not available.")
+
+
+class SceneGLWidget(_BaseOpenGLWidget):
 
     sigScaleChanged = qt.pyqtSignal(object)
     sigObjectSelected = qt.pyqtSignal(object)
@@ -51,8 +60,8 @@ class SceneGLWidget(qt.QGLWidget):
     sigMouseMoved = qt.pyqtSignal(object)
 
     def __init__(self, parent = None, scene=None):
-        #qt.QGLWidget.__init__(self, qt.QGLFormat(qt.QGL.SampleBuffers), parent)
-        qt.QGLWidget.__init__(self, parent)
+        #_BaseOpenGLWidget.__init__(self, qt.QGLFormat(qt.QGL.SampleBuffers), parent)
+        _BaseOpenGLWidget.__init__(self, parent)
         if 1:
             self.__test = None
         else:
@@ -947,14 +956,14 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
         def renderText(self,  x, y, z, text, font = None, listbase = 2000):
             GL.glGetError()
             GL.glGetError()
-            qt.QGLWidget.renderText(self, x, y, z, text, font, listbase)
+            _BaseOpenGLWidget.renderText(self, x, y, z, text, font, listbase)
             GL.glGetError()
             GL.glGetError()
 
     def renderText(self, x, y, z, text, font = None, listbase = 2000):
         if font is None: font=self.font()
         if (QTVERSION < '4.3.2') or (QTVERSION > '4.4.0'):
-            qt.QGLWidget.renderText(self, x, y, z, text, font, listbase)
+            _BaseOpenGLWidget.renderText(self, x, y, z, text, font, listbase)
         else:
             if 0:
                 GL.glRasterPos3d(x, y, z)
@@ -1396,7 +1405,7 @@ gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
     def closeEvent(self, event):
         self.__cacheTexture.openGLCleanup()
         self.setCacheEnabled(False)
-        qt.QGLWidget.closeEvent(self, event)
+        _BaseOpenGLWidget.closeEvent(self, event)
 
 if __name__ == '__main__':
     import sys

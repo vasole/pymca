@@ -30,6 +30,13 @@ import OpenGL.GL  as GL
 import numpy
 from . import Object3DQt as qt
 
+if hasattr(qt, 'QOpenGLWidget'):  # PyQt>=5.4
+    _BaseOpenGLWidget = qt.QOpenGLWidget
+elif hasattr(qt, 'QGLWidget'):
+    _BaseOpenGLWidget = qt.QGLWidget
+else:
+    raise ImportError("QOpenGLWidget is not available.")
+
 rasters = numpy.array([
  [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
  [0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
@@ -150,9 +157,9 @@ class Object3DRedBookFont:
         GL.glPopAttrib()
 
 
-class TestWidget(qt.QGLWidget):
+class TestWidget(_BaseOpenGLWidget):
     def initializeGL(self):
-        qt.QGLWidget.initializeGL(self)
+        _BaseOpenGLWidget.initializeGL(self)
         self.redBookFont = Object3DRedBookFont()
         self.redBookFont.initialize()
 
