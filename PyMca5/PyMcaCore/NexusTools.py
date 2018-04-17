@@ -202,8 +202,9 @@ def getMcaList(h5file, path, dataset=False, ignore=None):
                             datasetList.append(obj)
                         else:
                             datasetList.append(obj.name)
-
-    h5file[path].visititems(visit_function)
+    if hasattr(h5file[path], "visititems"):
+        # prevent errors dealing with toplevel datasets
+        h5file[path].visititems(visit_function)
     return datasetList
 
 def getMcaObjectPaths(h5file, mcaPath):
@@ -353,7 +354,11 @@ def getMeasurementGroup(h5file, path):
         raise ValueError("path cannot be the toplevel root")
     entry_path = getEntryName(path)
     entry = h5file[entry_path]
-    items_list = entry.items()
+    if hasattr(entry, "items"):
+        items_list = entry.items()
+    else:
+        # we have received a top level dataset
+        return None
     measurement = None
     for key, group in items_list:
         if key in ["measurement", b"measurement"]:
