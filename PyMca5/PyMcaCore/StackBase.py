@@ -40,7 +40,11 @@ import time
 import os
 import sys
 import glob
-DEBUG = 0
+import logging
+
+_logger = logging.getLogger(__name__)
+
+
 PLUGINS_DIR = None
 try:
     import PyMca5
@@ -182,8 +186,7 @@ class StackBase(object):
                                 sys.modules[plugin].getStackPluginInstance(self)
                         self.pluginList.append(plugin)
                 except:
-                    if DEBUG:
-                        print("Problem importing module %s" % plugin)
+                    _logger.debug("Problem importing module %s", plugin)
                         raise
         return len(self.pluginList)
 
@@ -264,17 +267,15 @@ class StackBase(object):
                                              axis=self.mcaIndex,
                                              dtype=numpy.float)
             #original ICR mca
-            if DEBUG:
-                print("(self.otherIndex, self.fileIndex) = (%d, %d)" %\
-                      (self.otherIndex, self.fileIndex))
+            _logger.debug("(self.otherIndex, self.fileIndex) = (%d, %d)",
+                          self.otherIndex, self.fileIndex)
             i = max(self.otherIndex, self.fileIndex)
             j = min(self.otherIndex, self.fileIndex)
             mcaData0 = numpy.sum(numpy.sum(self._stack.data,
                                            axis=i,
                                            dtype=numpy.float), j)
         else:
-            if DEBUG:
-                t0 = time.time()
+            t0 = time.time()
             shape = self._stack.data.shape
             if self.mcaIndex in [2, -1]:
                 self._stackImageData = numpy.zeros((shape[0], shape[1]),
@@ -307,11 +308,9 @@ class StackBase(object):
                     mcaData0[i] = tmpData.sum()
             else:
                 raise ValueError("Unhandled case 1D index = %d" % self.mcaIndex)
-            if DEBUG:
-                print("Print dynamic loading elapsed = %f" % (time.time() - t0))
+            _logger.debug("Print dynamic loading elapsed = %f", time.time() - t0)
 
-        if DEBUG:
-            print("__stackImageData.shape = ",  self._stackImageData.shape)
+        _logger.debug("__stackImageData.shape = %s",  self._stackImageData.shape)
 
         if previousStackImageSize != self._stackImageData.size:
             self._clearPositioners()
@@ -381,7 +380,7 @@ class StackBase(object):
     def handleNonFiniteData(self):
         text  = "Your data contain infinite values or nans.\n"
         text += "Pixels containing those values will be ignored."
-        print(text)
+        _logger.info(text)
 
     def updateROIImages(self, ddict=None):
         if ddict is None:
@@ -406,15 +405,13 @@ class StackBase(object):
                 if len(i1):
                     i1 = min(i1)
                 else:
-                    if DEBUG:
-                        print("updateROIImages: nothing to be made")
+                    _logger.debug("updateROIImages: nothing to be made")
                     return
                 i2 = numpy.nonzero(xw <= ddict['to'])[0]
                 if len(i2):
                     i2 = max(i2) + 1
                 else:
-                    if DEBUG:
-                        print("updateROIImages: nothing to be made")
+                    _logger.debug("updateROIImages: nothing to be made")
                     return
                 pos = 0.5 * (ddict['from'] + ddict['to'])
                 imiddle = max(numpy.nonzero(xw <= pos)[0])
@@ -423,15 +420,13 @@ class StackBase(object):
                 if len(i2):
                     i2 = max(i2)
                 else:
-                    if DEBUG:
-                        print("updateROIImages: nothing to be made")
+                    _logger.debug("updateROIImages: nothing to be made")
                     return
                 i1 = numpy.nonzero(xw <= ddict['to'])[0]
                 if len(i1):
                     i1 = min(i1) + 1
                 else:
-                    if DEBUG:
-                        print("updateROIImages: nothing to be made")
+                    _logger.debug("updateROIImages: nothing to be made")
                     return
                 pos = 0.5 * (ddict['from'] + ddict['to'])
                 imiddle = min(numpy.nonzero(xw <= pos)[0])
@@ -500,12 +495,10 @@ class StackBase(object):
         self.showROIImageList(imageList, image_names=imageNames)
 
     def showOriginalImage(self):
-        if DEBUG:
-            print("showOriginalImage to be implemented")
+        _logger.debug("showOriginalImage to be implemented")
 
     def showOriginalMca(self):
-        if DEBUG:
-            print("showOriginalMca to be implemented")
+        _logger.debug("showOriginalMca to be implemented")
 
     def showROIImageList(self, imageList, image_names=None):
         self._ROIImageList = imageList
@@ -528,12 +521,10 @@ class StackBase(object):
             return
         mcaData = None
         goodData = numpy.isfinite(self._mcaData0.y[0].sum())
-        if DEBUG:
-            print("Stack data is not finite")
+        _logger.debug("Stack data is not finite")
         if (self._selectionMask is None) and goodData:
             if normalize:
-                if DEBUG:
-                    print("Case 1")
+                _logger.debug("Case 1")
                 npixels = self._stackImageData.shape[0] *\
                           self._stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
@@ -543,8 +534,7 @@ class StackBase(object):
                 if "McaLiveTime" in dataObject.info:
                     dataObject.info["McaLiveTime"] /= float(npixels)
             else:
-                if DEBUG:
-                    print("Case 2")
+                _logger.debug("Case 2")
                 dataObject = self._mcaData0
             return dataObject
 
@@ -565,8 +555,7 @@ class StackBase(object):
         npixels = actualSelectionMask.sum()
         if (npixels == 0) and goodData:
             if normalize:
-                if DEBUG:
-                    print("Case 3")
+                _logger.debug("Case 3")
                 npixels = self._stackImageData.shape[0] * self._stackImageData.shape[1] * 1.0
                 dataObject = DataObject.DataObject()
                 dataObject.info.update(self._mcaData0.info)
@@ -575,8 +564,7 @@ class StackBase(object):
                 if "McaLiveTime" in dataObject.info:
                     dataObject.info["McaLiveTime"] /= float(npixels)
             else:
-                if DEBUG:
-                    print("Case 4")
+                _logger.debug("Case 4")
                 dataObject = self._mcaData0
             return dataObject
 
@@ -592,28 +580,22 @@ class StackBase(object):
         else:
                 arrayMask = (actualSelectionMask > 0)
 
-        if DEBUG:
-            print("Reached MCA calculation")
+        _logger.debug("Reached MCA calculation")
         cleanMask = numpy.nonzero(arrayMask)
-        if DEBUG:
-            print("self.fileIndex, self.mcaIndex = %d , %d" %\
-                  (self.fileIndex, self.mcaIndex))
-        if DEBUG:
-            t0 = time.time()
+        _logger.debug("self.fileIndex, self.mcaIndex = %d , %d",
+                      self.fileIndex, self.mcaIndex)
+        t0 = time.time()
         if len(cleanMask[0]) and len(cleanMask[1]):
-            if DEBUG:
-                print("USING MASK")
+            _logger.debug("USING MASK")
             cleanMask = numpy.array(cleanMask).transpose()
             if self.fileIndex == 2:
                 if self.mcaIndex == 0:
                     if isinstance(self._stack.data, numpy.ndarray):
-                        if DEBUG:
-                            print("In memory case 0")
+                        _logger.debug("In memory case 0")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[:, r, c]
                     else:
-                        if DEBUG:
-                            print("Dynamic loading case 0")
+                        _logger.debug("Dynamic loading case 0")
                         #no other choice than to read all images
                         #for the time being, one by one
                         rMin = cleanMask[0][0]
@@ -639,13 +621,11 @@ class StackBase(object):
             elif self.fileIndex == 1:
                 if self.mcaIndex == 0:
                     if isinstance(self._stack.data, numpy.ndarray):
-                        if DEBUG:
-                            print("In memory case 2")
+                        _logger.debug("In memory case 2")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[:, r, c]
                     else:
-                        if DEBUG:
-                            print("Dynamic loading case 2")
+                        _logger.debug("Dynamic loading case 2")
                         #no other choice than to read all images
                         #for the time being, one by one
                         if 1:
@@ -670,13 +650,11 @@ class StackBase(object):
                                 mcaData[i] = (tmpData[0] * arrayMask).sum(dtype=numpy.float)
                 elif self.mcaIndex == 2:
                     if isinstance(self._stack.data, numpy.ndarray):
-                        if DEBUG:
-                            print("In memory case 3")
+                        _logger.debug("In memory case 3")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r, c, :]
                     else:
-                        if DEBUG:
-                            print("Dynamic loading case 3")
+                        _logger.debug("Dynamic loading case 3")
                         #try to minimize access to the file
                         row_list = []
                         row_dict = {}
@@ -694,21 +672,18 @@ class StackBase(object):
             elif self.fileIndex == 0:
                 if self.mcaIndex == 1:
                     if isinstance(self._stack.data, numpy.ndarray):
-                        if DEBUG:
-                            print("In memory case 4")
+                        _logger.debug("In memory case 4")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r, :, c]
                     else:
                         raise IndexError("Dynamic loading case 4")
                 elif self.mcaIndex in [2, -1]:
                     if isinstance(self._stack.data, numpy.ndarray):
-                        if DEBUG:
-                            print("In memory case 5")
+                        _logger.debug("In memory case 5")
                         for r, c in cleanMask:
                             mcaData += self._stack.data[r, c, :]
                     else:
-                        if DEBUG:
-                            print("Dynamic loading case 5")
+                        _logger.debug("Dynamic loading case 5")
                         #try to minimize access to the file
                         row_list = []
                         row_dict = {}
@@ -726,11 +701,9 @@ class StackBase(object):
             else:
                 raise IndexError("File index undefined")
         else:
-            if DEBUG:
-                print("NOT USING MASK !")
+            _logger.debug("NOT USING MASK !")
 
-        if DEBUG:
-            print("Mca sum elapsed = %f" % (time.time() - t0))
+        _logger.debug("Mca sum elapsed = %f", time.time() - t0)
         if goodData:
             if n_nonselected < npixels:
                 mcaData = self._mcaData0.y[0] - mcaData
@@ -759,8 +732,7 @@ class StackBase(object):
         return dataObject
 
     def calculateROIImages(self, index1, index2, imiddle=None, energy=None):
-        if DEBUG:
-            print("Calculating ROI images")
+        _logger.debug("Calculating ROI images")
         i1 = min(index1, index2)
         i2 = max(index1, index2)
         if imiddle is None:
@@ -792,8 +764,7 @@ class StackBase(object):
                 minImage = energy[(numpy.argmin(dataImage, axis=1) + i1)]
                 isUsingSuppliedEnergyAxis = True
             else:
-                if DEBUG:
-                    t0 = time.time()
+                t0 = time.time()
                 if self._tryNumpy and\
                    isinstance(self._stack.data, numpy.ndarray):
                     leftImage = self._stack.data[:, :, i1]
@@ -805,9 +776,8 @@ class StackBase(object):
                     maxImage = energy[numpy.argmax(dataImage, axis=2) + i1]
                     minImage = energy[numpy.argmin(dataImage, axis=2) + i1]
                     isUsingSuppliedEnergyAxis = True
-                    if DEBUG:
-                        print("Case 1 ROI image calculation elapsed = %f " %\
-                              (time.time() - t0))
+                    _logger.debug("Case 1 ROI image calculation elapsed = %f ",
+                                  time.time() - t0)
                 else:
                     shape = self._stack.data.shape
                     roiImage = numpy.zeros(self._stackImageData.shape,
@@ -836,13 +806,11 @@ class StackBase(object):
                     isUsingSuppliedEnergyAxis = True
                     minImage = energy[minImage]
                     maxImage = energy[maxImage]
-                    if DEBUG:
-                        print("2 Dynamic ROI image calculation elapsed = %f " %\
-                              (time.time() - t0))
+                    _logger.debug("2 Dynamic ROI image calculation elapsed = %f ",
+                                  time.time() - t0)
         elif self.fileIndex == 1:
             if self.mcaIndex == 0:
-                if DEBUG:
-                    t0 = time.time()
+                t0 = time.time()
                 if isinstance(self._stack.data, numpy.ndarray) and\
                    self._tryNumpy:
                     leftImage = self._stack.data[i1, :, :]
@@ -879,9 +847,8 @@ class StackBase(object):
                     isUsingSuppliedEnergyAxis = True
                     background = 0.5 * (i2 - i1) * (leftImage + rightImage)
                     roiImage = numpy.sum(dataImage, axis=0, dtype=numpy.float)
-                    if DEBUG:
-                        print("Case 3 ROI image calculation elapsed = %f " %\
-                              (time.time() - t0))
+                    _logger.debug("Case 3 ROI image calculation elapsed = %f ",
+                                  time.time() - t0)
                 else:
                     shape = self._stack.data.shape
                     roiImage = numpy.zeros(self._stackImageData.shape,
@@ -923,12 +890,10 @@ class StackBase(object):
                     maxImage = energy[maxImage]
                     if i2 > i1:
                         background = (leftImage + rightImage) * 0.5 * (i2 - i1)
-                    if DEBUG:
-                        print("Case 4 Dynamic ROI elapsed = %f" %\
-                              (time.time() - t0))
+                    _logger.debug("Case 4 Dynamic ROI elapsed = %f",
+                                  time.time() - t0)
             else:
-                if DEBUG:
-                    t0 = time.time()
+                t0 = time.time()
                 if self._tryNumpy and\
                    isinstance(self._stack.data, numpy.ndarray):
                     leftImage = self._stack.data[:, :, i1]
@@ -940,9 +905,8 @@ class StackBase(object):
                     maxImage = energy[numpy.argmax(dataImage, axis=2) + i1]
                     minImage = energy[numpy.argmin(dataImage, axis=2) + i1]
                     isUsingSuppliedEnergyAxis = True
-                    if DEBUG:
-                        print("Case 5 ROI Image elapsed = %f" %\
-                              (time.time() - t0))
+                    _logger.debug("Case 5 ROI Image elapsed = %f",
+                                  time.time() - t0)
                 else:
                     shape = self._stack.data.shape
                     roiImage = numpy.zeros(self._stackImageData.shape,
@@ -969,13 +933,11 @@ class StackBase(object):
                         middleImage[i:i+step, :] += tmpData[:, :, imiddle-i1]
                         rightImage[i:i+step, :]  += tmpData[:, :,-1]
                     background = 0.5*(i2-i1)*(leftImage+rightImage)
-                    if DEBUG:
-                        print("Case 6 Dynamic ROI image calculation elapsed = %f" %\
-                                          (time.time() - t0))
+                    _logger.debug("Case 6 Dynamic ROI image calculation elapsed = %f",
+                                  time.time() - t0)
         else:
             #self.fileIndex = 2
-            if DEBUG:
-                t0 = time.time()
+            t0 = time.time()
             if self.mcaIndex == 0:
                 leftImage = self._stack.data[i1]
                 middleImage = self._stack.data[imiddle]
@@ -986,9 +948,8 @@ class StackBase(object):
                 minImage = energy[numpy.argmin(dataImage, axis=0) + i1]
                 maxImage = energy[numpy.argmax(dataImage, axis=0) + i1]
                 isUsingSuppliedEnergyAxis = True
-                if DEBUG:
-                   print("Case 7 Default ROI image calculation elapsed = %f" %\
-                                          (time.time() - t0))
+                _logger.debug("Case 7 Default ROI image calculation elapsed = %f",
+                              time.time() - t0)
             else:
                 leftImage = self._stack.data[:, i1, :]
                 middleImage = self._stack.data[:, imiddle, :]
@@ -999,9 +960,8 @@ class StackBase(object):
                 minImage = energy[numpy.argmin(dataImage, axis=1) + i1]
                 maxImage = energy[numpy.argmax(dataImage, axis=1) + i1]
                 isUsingSuppliedEnergyAxis = True
-                if DEBUG:
-                   print("Case 8 Default ROI image calculation elapsed = %f" %\
-                                          (time.time() - t0))
+                _logger.debug("Case 8 Default ROI image calculation elapsed = %f",
+                              time.time() - t0)
 
         imageDict = {'ROI': roiImage,
                      'Maximum': maxImage,
@@ -1011,13 +971,11 @@ class StackBase(object):
                      'Right': rightImage,
                      'Background': background}
         self.__ROIImageCalculationIsUsingSuppliedEnergyAxis = isUsingSuppliedEnergyAxis
-        if DEBUG:
-            print("ROI images calculated")
+        _logger.debug("ROI images calculated")
         return imageDict
 
     def setSelectionMask(self, mask):
-        if DEBUG:
-            print("setSelectionMask called")
+        _logger.debug("setSelectionMask called")
         goodData = numpy.isfinite(self._mcaData0.y[0].sum())
 
         if goodData:
@@ -1033,8 +991,7 @@ class StackBase(object):
             self.pluginInstanceDict[key].selectionMaskUpdated()
 
     def getSelectionMask(self):
-        if DEBUG:
-            print("getSelectionMask called")
+        _logger.debug("getSelectionMask called")
         return self._selectionMask
 
     def addImage(self, image, name, info=None, replace=False, replot=True):
@@ -1087,8 +1044,7 @@ class StackBase(object):
         If just_legend is True:
             The legend of the active curve (or None) is returned.
         """
-        if DEBUG:
-            print("getActiveCurve default implementation")
+        _logger.debug("getActiveCurve default implementation")
         info = {}
         info['xlabel'] = 'Channel'
         info['ylabel'] = 'Counts'
@@ -1096,13 +1052,11 @@ class StackBase(object):
         return self._mcaData0.x[0], self._mcaData0.y[0], legend, info
 
     def getGraphXLimits(self):
-        if DEBUG:
-            print("getGraphXLimits default implementation")
+        _logger.debug("getGraphXLimits default implementation")
         return self._mcaData0.x[0].min(), self._mcaData0.x[0].max()
 
     def getGraphYLimits(self):
-        if DEBUG:
-            print("getGraphYLimits default implementation")
+        _logger.debug("getGraphYLimits default implementation")
         return self._mcaData0.y[0].min(), self._mcaData0.y[0].max()
 
     def getStackDataObject(self):
@@ -1158,12 +1112,11 @@ class StackBase(object):
                         "Wrong type for positioner %s. " % motorName +
                         "Valid types are numpy arrays, scalars or list of scalars.")
 
-        if DEBUG and len(stackPositioners) != len(positioners):
+        if len(stackPositioners) != len(positioners):
             ignored_motors = list(set(positioners.keys()) -
                                   set(stackPositioners.keys()))
-
-            print("Ignored motors due to mismatch in number of values: " +
-                  ', '.join(ignored_motors))
+            _logger.debug("Ignored motors due to mismatch in number of values: %s",
+                          ', '.join(ignored_motors))
 
         self._stack.info["positioners"] = stackPositioners
 
