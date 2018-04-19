@@ -28,8 +28,11 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
+
 
 class QNexusWidgetActions(qt.QWidget):
     sigAddSelection = qt.pyqtSignal()
@@ -173,23 +176,19 @@ class QNexusWidgetActions(qt.QWidget):
         self._addClicked()
 
     def _addClicked(self):
-        if DEBUG:
-            print("_addClicked()")
+        _logger.debug("_addClicked()")
         self.sigAddSelection.emit()
 
     def _removeClicked(self):
-        if DEBUG:
-            print("_removeClicked()")
+        _logger.debug("_removeClicked()")
         self.sigRemoveSelection.emit()
 
     def _replaceClicked(self):
-        if DEBUG:
-            print("_replaceClicked()")
+        _logger.debug("_replaceClicked()")
         self.sigReplaceSelection.emit()
 
     def configurationChanged(self):
-        if DEBUG:
-            print("configurationChanged(object)")
+        _logger.debug("configurationChanged(object)")
         ddict = self.getConfiguration()
         self.sigActionsConfigurationChanged.emit(ddict)
 
