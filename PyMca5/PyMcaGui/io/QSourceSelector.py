@@ -29,6 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
 from PyMca5.PyMcaGui import PyMca_Icons as icons
@@ -36,7 +37,7 @@ from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 class QSourceSelector(qt.QWidget):
     sigSourceSelectorSignal = qt.pyqtSignal(object)
@@ -116,8 +117,7 @@ class QSourceSelector(qt.QWidget):
         self.mainLayout.addWidget(self.fileWidget)
 
     def _reload(self):
-        if DEBUG:
-            print("_reload called")
+        _logger.debug("_reload called")
         qstring = self.fileCombo.currentText()
         if not len(qstring):
             return
@@ -141,8 +141,7 @@ class QSourceSelector(qt.QWidget):
         self.openFile(sourcename, specsession=specsession)
 
     def openFile(self, filename=None, justloaded=None, specsession = False):
-        if DEBUG:
-            print("openfile = ",filename)
+        _logger.debug("openfile = %s", filename)
         staticDialog = False
         if not specsession:
             if justloaded is None:
@@ -218,8 +217,7 @@ class QSourceSelector(qt.QWidget):
         self.sigSourceSelectorSignal.emit(ddict)
 
     def closeFile(self):
-        if DEBUG:
-            print("closeFile called")
+        _logger.debug("closeFile called")
         #get current combobox key
         qstring = self.fileCombo.currentText()
         if not len(qstring):
@@ -244,9 +242,7 @@ class QSourceSelector(qt.QWidget):
                     "No SPEC Shared Memory Found",
                     "No shared memory source available")
             return
-        if QTVERSION < '4.0.0':
-            print("should I keep Qt3 version?")
-            return
+
         menu = qt.QMenu()
         for spec in speclist:
             if hasattr(qt, "QString"):
@@ -258,8 +254,7 @@ class QSourceSelector(qt.QWidget):
         menu.exec_(self.cursor().pos())
 
     def _fileSelection(self, qstring):
-        if DEBUG:
-            print("file selected ", qstring)
+        _logger.debug("file selected %s", qstring)
         key = str(qstring)
         ddict = {}
         ddict["event"] = "SourceSelected"

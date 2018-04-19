@@ -60,7 +60,6 @@ COLORMAPLIST = [spslut.GREYSCALE, spslut.REVERSEGREY, spslut.TEMP,
                 spslut.RED, spslut.GREEN, spslut.BLUE, spslut.MANY]
 
 
-DEBUG = 0
 SOURCE_TYPE = 'EdfFile'
 __revision__ = "$Revision: 1.35 $"
 
