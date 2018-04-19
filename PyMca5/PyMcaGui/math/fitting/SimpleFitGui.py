@@ -29,6 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaMath.fitting import SimpleFitModule
 from . import SimpleFitConfigurationGui
@@ -36,7 +37,8 @@ from PyMca5.PyMcaMath.fitting import SimpleFitUserEstimatedFunctions
 from . import Parameters
 from silx.gui.plot import PlotWindow
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class TopWidget(qt.QWidget):
     def __init__(self, parent=None):
@@ -225,14 +227,14 @@ class SimpleFitGui(qt.QWidget):
                 functionsfile= qt.safe_str(fn)
             if not len(functionsfile):
                 return
-        if DEBUG:
+
+        try:
             self.fitModule.importFunctions(functionsfile)
-        else:
-            try:
-                self.fitModule.importFunctions(functionsfile)
-            except:
-                qt.QMessageBox.critical(self, "ERROR",
-                                        "Function not imported")
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            qt.QMessageBox.critical(self, "ERROR",
+                                    "Function not imported")
 
         config = self.fitModule.getConfiguration()
         self.topWidget.setFunctions(config['fit']['functions'])
@@ -257,8 +259,7 @@ class SimpleFitGui(qt.QWidget):
                 SimpleFitConfigurationGui.SimpleFitConfigurationGui()
         self._configurationDialog.setSimpleFitInstance(self.fitModule)
         if not self._configurationDialog.exec_():
-            if DEBUG:
-                print("NOT UPDATING CONFIGURATION")
+            _logger.debug("NOT UPDATING CONFIGURATION")
             oldConfig = self.fitModule.getConfiguration()
             self._configurationDialog.setConfiguration(oldConfig)
             return
@@ -280,8 +281,7 @@ class SimpleFitGui(qt.QWidget):
             idx = newConfig['fit']['functions'].index(fname) + 1
         idx = self.topWidget.backgroundCombo.findText(fname)
         self.topWidget.backgroundCombo.setCurrentIndex(idx)
-        if DEBUG:
-            print("TABLE TO BE CLEANED")
+        _logger.debug("TABLE TO BE CLEANED")
         #self.estimate()
 
     def setFitFunction(self, fname):
@@ -329,7 +329,7 @@ class SimpleFitGui(qt.QWidget):
             self.setStatus()
             self.parametersTable.fillTableFromFit(self.fitModule.paramlist)
         except:
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
             msg = qt.QMessageBox(self)
@@ -351,7 +351,7 @@ class SimpleFitGui(qt.QWidget):
             values,chisq,sigma,niter,lastdeltachi = self.fitModule.startFit()
             self.setStatus()
         except:
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             text = "%s:%s" % (sys.exc_info()[0], sys.exc_info()[1])
             msg = qt.QMessageBox(self)
@@ -440,7 +440,7 @@ def test():
     return w
 
 if __name__=="__main__":
-    DEBUG = 0
+    _logger.setLevel(logging.DEBUG)
     app = qt.QApplication([])
     w = test()
     app.exec_()
