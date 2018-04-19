@@ -27,6 +27,7 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -37,7 +38,8 @@ QTVERSION = qt.qVersion()
 
 QTable = qt.QTableWidget
 
-DEBUG=0
+_logger = logging.getLogger(__name__)
+
 
 class McaTable(QTable):
     sigMcaTableSignal = qt.pyqtSignal(object)
@@ -72,8 +74,8 @@ class McaTable(QTable):
 
         self.regionlist=[]
         self.regiondict={}
-        if DEBUG:
-            print("MCATABLE click on vertical header items?")
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            _logger.debug("MCATABLE click on vertical header items?")
             self.verticalHeader().sectionClicked[int].connect(self.__myslot)
         self.cellClicked[int, int].connect(self.__myslot)
         self.itemSelectionChanged[()].connect(self.__myslot)

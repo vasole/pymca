@@ -40,7 +40,6 @@ from PyMca5.PyMcaMath.fitting import RateLaw
 from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 
 from silx.gui.plot import PlotWindow
-DEBUG = 0
 
 class RateLawWindow(qt.QMainWindow):
     def __init__(self, parent=None, backend=None):

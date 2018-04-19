@@ -28,6 +28,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if not hasattr(qt, "QString"):
     QString = str
@@ -42,6 +43,9 @@ else:
 QTVERSION = qt.qVersion()
 QTable = qt.QTableWidget
 
+_logger = logging.getLogger(__name__)
+
+
 class QComboTableItem(qt.QComboBox):
     sigCellChanged = qt.pyqtSignal(int, int)
     def __init__(self, parent=None, row=None, col=None):
@@ -51,8 +55,7 @@ class QComboTableItem(qt.QComboBox):
         self.activated[int].connect(self._cellChanged)
 
     def _cellChanged(self, idx):
-        if DEBUG:
-            print("cell changed", idx)
+        _logger.debug("cell changed %s", idx)
         self.sigCellChanged.emit(self._row, self._col)
 
 class QCheckBoxItem(qt.QCheckBox):
@@ -66,8 +69,6 @@ class QCheckBoxItem(qt.QCheckBox):
     def _cellChanged(self):
         self.sigCellChanged.emit(self._row, self._col)
 
-DEBUG = 0
-
 
 class Parameters(QTable):
     def __init__(self, parent=None, allowBackgroundAdd=False, **kw):
@@ -77,7 +78,7 @@ class Parameters(QTable):
         self.setColumnCount(1)
         self.labels = ['Parameter', 'Estimation', 'Fit Value', 'Sigma',
                        'Constraints', 'Min/Parame', 'Max/Factor/Delta/']
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             self.code_options = ["FREE", "POSITIVE", "QUOTED", "FIXED",
                                  "FACTOR", "DELTA", "SUM", "IGNORE", "ADD",
                                  "SHOW"]
@@ -267,9 +268,8 @@ class Parameters(QTable):
         return fitparameterslist
 
     def myslot(self, row, col):
-        if DEBUG:
-            print("Passing by myslot(%d, %d)" % (row, col))
-            print("current(%d, %d)" % (self.currentRow(), self.currentColumn()))
+        _logger.debug("Passing by myslot(%d, %d)", row, col)
+        _logger.debug("current(%d, %d)", self.currentRow(), self.currentColumn())
         if (col != 4) and (col != -1):
             if row != self.currentRow():
                 return
@@ -290,17 +290,14 @@ class Parameters(QTable):
             #this is the combobox
             widget = self.cellWidget(row, col)
             newvalue = widget.currentText()
-        if DEBUG:
-            print("old value = ", oldvalue)
-            print("new value = ", newvalue)
+        _logger.debug("old value = %s", oldvalue)
+        _logger.debug("new value = %s", newvalue)
         if self.validate(param, field, oldvalue, newvalue):
-            if DEBUG:
-                print("Change is valid")
+            _logger.debug("Change is valid")
             exec("self.configure(name=param,%s=newvalue)" % field)
         else:
-            if DEBUG:
-                print("Change is not valid")
-                print("oldvalue ", oldvalue)
+            _logger.debug("Change is not valid")
+            _logger.debug("oldvalue %s", oldvalue)
             if field == 'code':
                 index = self.code_options.index(oldvalue)
                 self.__configuring = True
@@ -460,15 +457,14 @@ class Parameters(QTable):
             self.addgroup(i, group)
             return 0
         elif str(newvalue) == 'SHOW':
-            print(self.cget(workparam))
+            _logger.info(self.cget(workparam))
             return 0
         else:
-            print("None of the others!")
+            _logger.info("None of the others!")
 
     def addgroup(self, newg, gtype):
-        if DEBUG:
-            print("addgroup called")
-            print("newg = ", newg, "gtype = ", gtype)
+        _logger.debug("addgroup called")
+        _logger.debug("newg = %s gtype = %s", newg, gtype)
         line = 0
         newparam = []
         oldparamlist = list(self.paramlist)
@@ -545,10 +541,9 @@ class Parameters(QTable):
         return candidates[0], candidates
 
     def setReadOnly(self, parameter, fields):
-        if DEBUG:
-            print("parameter ", parameter)
-            print("fields = ", fields)
-            print("asked to be read only")
+        _logger.debug("parameter %s", parameter)
+        _logger.debug("fields = %s", fields)
+        _logger.debug("asked to be read only")
         if QTVERSION < '4.0.0':
             self.setfield(parameter, fields, qttable.QTableItem.Never)
         else:
@@ -556,10 +551,9 @@ class Parameters(QTable):
             self.setfield(parameter, fields, editflags)
 
     def setReadWrite(self, parameter, fields):
-        if DEBUG:
-            print("parameter ", parameter)
-            print("fields = ", fields)
-            print("asked to be read write")
+        _logger.debug("parameter %s", parameter)
+        _logger.debug("fields = %s", fields)
+        _logger.debug("asked to be read write")
         if QTVERSION < '4.0.0':
             self.setfield(parameter, fields, qttable.QTableItem.OnTyping)
         else:
@@ -569,9 +563,8 @@ class Parameters(QTable):
             self.setfield(parameter, fields, editflags)
 
     def setfield(self, parameter, fields, EditType):
-        if DEBUG:
-            print("setfield. parameter =", parameter)
-            print("fields = ", fields)
+        _logger.debug("setfield. parameter = %s", parameter)
+        _logger.debug("fields = %s", fields)
         if isinstance(parameter, list) or \
            isinstance(parameter, tuple):
             paramlist = parameter
@@ -613,8 +606,7 @@ class Parameters(QTable):
         self.__configuring = _oldvalue
 
     def configure(self, *vars, **kw):
-        if DEBUG:
-            print("configure called with **kw = ", kw)
+        _logger.debug("configure called with **kw = %s", kw)
         name = None
         error = 0
         if 'name' in kw:
@@ -655,8 +647,7 @@ class Parameters(QTable):
                     elif key in self.parameters[name].keys():
                         newvalue = QString(str(kw[key]))
                         self.parameters[name][key] = newvalue
-            if DEBUG:
-                print("error = ", error)
+            _logger.debug("error = %s", error)
             if 'code' in kw.keys():
                 newvalue = QString(kw['code'])
                 self.parameters[name]['code'] = newvalue
@@ -756,7 +747,7 @@ class Parameters(QTable):
                         float(str(self.parameters[name]['val2']))
                 except:
                     error = 1
-                    print("Forcing factor to 1")
+                    _logger.warning("Forcing factor to 1")
                     self.parameters[name]['cons2'] = 1.0
                 self.setReadWrite(name, ['estimation', 'val1', 'val2'])
                 self.setReadOnly(name, ['fitresult', 'sigma'])
@@ -770,7 +761,7 @@ class Parameters(QTable):
                         float(str(self.parameters[name]['val2']))
                 except:
                     error = 1
-                    print("Forcing delta to 0")
+                    _logger.warning("Forcing delta to 0")
                     self.parameters[name]['cons2'] = 0.0
                 self.setReadWrite(name, ['estimation', 'val1', 'val2'])
                 self.setReadOnly(name, ['fitresult', 'sigma'])
@@ -784,7 +775,7 @@ class Parameters(QTable):
                         float(str(self.parameters[name]['val2']))
                 except:
                     error = 1
-                    print("Forcing sum to 0")
+                    _logger.warning("Forcing sum to 0")
                     self.parameters[name]['cons2'] = 0.0
                 self.setReadWrite(name, ['estimation', 'val1', 'val2'])
                 self.setReadOnly(name, ['fitresult', 'sigma'])
