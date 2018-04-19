@@ -31,10 +31,13 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import copy
+import logging
 from . import DataObject
 from PyMca5.PyMcaIO import spswrap as sps
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
+
 SOURCE_TYPE = 'SPS'
 
 
@@ -186,8 +189,7 @@ class SpsDataSource(object):
                 if (arrayflag & sps.TAG_ARRAY) == sps.TAG_ARRAY:
                     arraylist.append(array)
                     continue
-            if DEBUG:
-                print("array not added %s" % array)
+            _logger.debug("array not added %s", array)
         source_info = {}
         source_info["Size"] = len(arraylist)
         source_info["KeyList"] = arraylist
@@ -226,7 +228,7 @@ class SpsDataSource(object):
                 try:
                     labels = [(int(x),x) for x in labels]
                 except:
-                    print("SpsDataSource error reverting to old behavior")
+                    _logger.warning("SpsDataSource error reverting to old behavior")
                     labels = [(x, x) for x in labels]
                 labels.sort()
                 if len(labels):
@@ -292,8 +294,7 @@ class SpsDataSource(object):
         return info
 
     def _buildLabelsList(self, instr):
-        if DEBUG:
-            print('SpsDataSource : building counter list')
+        _logger.debug('SpsDataSource : building counter list')
         state = 0
         llist  = ['']
         for letter in instr:
