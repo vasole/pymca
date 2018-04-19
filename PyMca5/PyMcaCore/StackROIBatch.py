@@ -37,8 +37,10 @@ import os
 import numpy
 from PyMca5.PyMcaIO import ConfigDict
 import time
+import logging
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class StackROIBatch(object):
     def __init__(self):
@@ -98,7 +100,7 @@ class StackROIBatch(object):
         except AttributeError:
             txt = "%s" % type(data)
             if 'h5py' in txt:
-                print("Implementing h5py workaround")
+                _logger.info("Implementing h5py workaround")
                 import h5py
                 data = h5py.Dataset(data.id)
             else:
@@ -108,8 +110,6 @@ class StackROIBatch(object):
         if x is None:
             x = numpy.arange(data.shape[index]).astype(numpy.float32)
 
-        if DEBUG:
-            t0 = time.time()
         if configuration is not None:
             self.setConfiguration(configuration)
 
@@ -252,12 +252,12 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
     return fileList
 
 if __name__ == "__main__":
-    DEBUG = True
     import glob
     import sys
     from PyMca5.PyMca import EDFStack
     from PyMca5.PyMca import ArraySave
     import getopt
+    _logger.setLevel(logging.DEBUG)
     options     = ''
     longoptions = ['cfg=', 'outdir=',
                    'tif=', #'listfile=',
@@ -269,7 +269,7 @@ if __name__ == "__main__":
                      options,
                      longoptions)
     except:
-        print(sys.exc_info()[1])
+        _logger.error(sys.exc_info()[1])
         sys.exit(1)
     fileRoot = ""
     outputDir = None

@@ -34,11 +34,14 @@ import sys
 import os
 import numpy
 import types
+import logging
 from . import DataObject
 from PyMca5.PyMcaIO import specfilewrapper as specfile
 
+_logger = logging.getLogger(__name__)
+
+
 SOURCE_TYPE = "SpecFile"
-DEBUG = 0
 
 # Scan types
 # ----------
@@ -115,8 +118,7 @@ class SpecFileDataSource(object):
                 try:
                     self.__fileHeaderList[0] = sel.fileheader('')
                 except:
-                    if DEBUG:
-                        print("getSourceInfo %s" % sys.exc_info()[1])
+                    _logger.debug("getSourceInfo %s", sys.exc_info()[1])
                     self.__fileHeaderList[0] = None
             try:
                 n = sel.nbmca()
@@ -219,8 +221,7 @@ class SpecFileDataSource(object):
             try:
                 self.__fileHeaderList[index] = scandata.fileheader('')
             except:
-                if DEBUG:
-                    print("getScanInfo %s" % sys.exc_info()[1])
+                _logger.debug("getScanInfo %s", sys.exc_info()[1])
                 self.__fileHeaderList[index] = None
         info["FileHeader"] = self.__fileHeaderList[index]
         try: info["Number"] = scandata.number()
@@ -284,8 +285,7 @@ class SpecFileDataSource(object):
             if len(calib) == info["NbMcaDet"]:
                 calib = [calib[mcainfo["McaDet"]-1]]
             else:
-                if DEBUG:
-                    print("Warning","Number of calibrations does not match number of MCAs")
+                _logger.debug("Number of calibrations does not match number of MCAs")
                 if len(calib) == 1:
                     pass
                 else:
@@ -304,8 +304,7 @@ class SpecFileDataSource(object):
             if len(ctime) == info["NbMcaDet"]:
                 ctime = [ctime[mcainfo["McaDet"]-1]]
             else:
-                if DEBUG:
-                    print("Warning","Number of counting times does not match number of MCAs")
+                _logger.debug("Number of counting times does not match number of MCAs")
                 if len(ctime) == 1:
                     pass
                 else:
@@ -324,8 +323,7 @@ class SpecFileDataSource(object):
             if len(chann) == info["NbMcaDet"]:
                 chann = [chann[mcainfo["McaDet"] - 1]]
             else:
-                if DEBUG:
-                    print("Warning","Number of @CHANN information does not match number of MCAs")
+                _logger.debug("Number of @CHANN information does not match number of MCAs")
                 if len(chann) == 1:
                     pass
                 else:
@@ -408,9 +406,8 @@ class SpecFileDataSource(object):
             raise KeyError("Key %s not in source keys" % key)
 
         mca3D = False
-        if DEBUG:
-            print("SELECTION = ", selection)
-            print("key_type = ", key_type)
+        _logger.debug("SELECTION = %s", selection)
+        _logger.debug("key_type = %s", key_type)
         if key_type == "scan":
             if selection  is not None:
                 if 'mcalist' in selection:
@@ -704,9 +701,8 @@ class SpecFileDataSource(object):
                     #mca_no= 1 + int(key_split[2]) + int(key_split[3])*mot1
                     mca_no = (int(key_split[2])-1) * scan_info["NbMcaDet"] + \
                               int(key_split[3])
-                    if DEBUG:
-                        print("try to read mca number = ",mca_no)
-                        print("total number of mca = ",scan_info["NbMca"])
+                    _logger.debug("try to read mca number = %s", mca_no)
+                    _logger.debug("total number of mca = %s", scan_info["NbMca"])
                     scan_data = scan_obj.mca(mca_no)
                 except:
                     raise IOError("SF_MESH+SF_MCA read failed")
