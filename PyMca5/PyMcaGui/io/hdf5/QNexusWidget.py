@@ -681,11 +681,12 @@ class QNexusWidget(qt.QWidget):
             if ddict['mouse'] == "left":
                 # If parent is root do it even if not NXentry??
                 if ddict['type'] in ['NXentry', 'Entry']:
-                    auto = self.actions.getConfiguration()["auto"]
-                    if auto == "ADD":
-                        self._addAction()
-                    elif auto == "REPLACE":
-                        self._replaceAction()
+                    if not self._BUTTONS:
+                        auto = self.actions.getConfiguration()["auto"]
+                        if auto == "ADD":
+                            self._addAction()
+                        elif auto == "REPLACE":
+                            self._replaceAction()
         if ddict['event'] == "itemDoubleClicked":
             if ddict['type'] in ['Dataset']:
                 currentIndex = self.tableTab.currentIndex()
