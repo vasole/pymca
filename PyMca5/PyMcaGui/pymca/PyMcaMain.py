@@ -30,11 +30,12 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys, getopt
 import traceback
+import logging
 if sys.platform == 'win32':
     import ctypes
     from ctypes.wintypes import MAX_PATH
 nativeFileDialogs = None
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 backend=None
 if __name__ == '__main__':
     options     = '-f'
@@ -51,7 +52,7 @@ if __name__ == '__main__':
                      options,
                      longoptions)
     except getopt.error:
-        print(sys.exc_info()[1])
+        _logger.error("%s", sys.exc_info()[1])
         sys.exit(1)
 
     keywords={}
@@ -64,7 +65,7 @@ if __name__ == '__main__':
             keywords['shm']  = arg
         elif opt in ('--debug'):
             debugreport = 1
-            DEBUG = 1
+            _logger.setLevel(logging.DEBUG)
         elif opt in ('-f'):
             keywords['fresh'] = 1
         elif opt in ('--qt'):
@@ -86,7 +87,7 @@ if __name__ == '__main__':
             sip.setapi("QString", 2)
             sip.setapi("QVariant", 2)
         except:
-            print("Cannot set sip API") # Console widget not available
+            _logger.info("Cannot set sip API") # Console widget not available
         import PyQt4.QtCore
     elif qtversion == '5':
         try:
@@ -421,22 +422,22 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             if self.mainTabWidget.isHidden():
                 #make sure it is visible in case of being closed
                 self.mainTabWidget.show()
-        if DEBUG:
+
+        try:
             self._dispatcherAddSelectionSlot(ddict)
-        else:
-            try:
-                self._dispatcherAddSelectionSlot(ddict)
-            except:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error: %s" % sys.exc_info()[1])
-                msg.setInformativeText(str(sys.exc_info()[1]))
-                msg.setDetailedText(traceback.format_exc())
-                msg.exec_()
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error: %s" % sys.exc_info()[1])
+            msg.setInformativeText(str(sys.exc_info()[1]))
+            msg.setDetailedText(traceback.format_exc())
+            msg.exec_()
 
     def _dispatcherAddSelectionSlot(self, dictOrList):
-        if DEBUG:
-            print("self._dispatcherAddSelectionSlot(ddict), ddict = ", dictOrList)
+        _logger.debug("self._dispatcherAddSelectionSlot(ddict), ddict = %s",
+                      dictOrList)
         if type(dictOrList) == type([]):
             ddict = dictOrList[0]
         else:
@@ -444,8 +445,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
         toadd = False
         if self._is2DSelection(ddict):
-            if DEBUG:
-                print("2D selection")
+            _logger.debug("2D selection")
             if self.imageWindowCorrelator is None:
                 self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
                 #toadd = True
@@ -503,8 +503,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             else:
                 self.imageWindowDict[legend]._addSelection(ddict)
         elif self._isStackSelection(ddict):
-            if DEBUG:
-                print("Stack selection")
+            _logger.debug("Stack selection")
             legend = ddict['legend']
             widget = QStackWidget.QStackWidget()
             widget.notifyCloseEventToWidget(self)
@@ -515,18 +514,15 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         else:
             if OBJECT3D:
                 if ddict['dataobject'].info['selectiontype'] == "1D":
-                    if DEBUG:
-                        print("1D selection")
+                    _logger.debug("1D selection")
                     self.mcaWindow._addSelection(dictOrList)
                     self.scanWindow._addSelection(dictOrList)
                 else:
-                    if DEBUG:
-                        print("3D selection")
+                    _logger.debug("3D selection")
                     self.mainTabWidget.setCurrentWidget(self.glWindow)
                     self.glWindow._addSelection(dictOrList)
             else:
-                if DEBUG:
-                    print("1D selection")
+                _logger.debug("1D selection")
                 self.mcaWindow._addSelection(dictOrList)
                 self.scanWindow._addSelection(dictOrList)
 
@@ -541,8 +537,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
 
     def _dispatcherRemoveSelectionSlot(self, dictOrList):
-        if DEBUG:
-            print("self.dispatcherRemoveSelectionSlot(ddict), ddict = ",ddict)
+        _logger.debug("self.dispatcherRemoveSelectionSlot(ddict), ddict = %s", dictOrList)
         if type(dictOrList) == type([]):
             ddict = dictOrList[0]
         else:
@@ -573,8 +568,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             msg.exec_()
 
     def _dispatcherReplaceSelectionSlot(self, dictOrList):
-        if DEBUG:
-            print("self.dispatcherReplaceSelectionSlot(ddict), ddict = ", dictOrList)
+        _logger.debug("self.dispatcherReplaceSelectionSlot(ddict), ddict = %s",
+                      dictOrList)
         if type(dictOrList) == type([]):
             ddict = dictOrList[0]
         else:
@@ -608,8 +603,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             self.scanWindow._replaceSelection(dictOrList)
 
     def dispatcherOtherSignalsSlot(self, dictOrList):
-        if DEBUG:
-            print("self.dispatcherOtherSignalsSlot(ddict), ddict = ",dictOrList)
+        _logger.debug("self.dispatcherOtherSignalsSlot(ddict), ddict = %s",
+                      dictOrList)
         if type(dictOrList) == type([]):
             ddict = dictOrList[0]
         else:
@@ -628,8 +623,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         if ddict['event'] == "SourceTypeChanged":
             pass
             return
-        if DEBUG:
-            print("Unhandled dict")
+        _logger.debug("Unhandled dict")
 
     def setConfig(self, configDict):
         if 'PyMca' in configDict:
@@ -735,15 +729,14 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         #ScanFit related
         d['ScanSimpleFit'] = {}
         d['ScanSimpleFit']['Configuration'] = {}
-        if DEBUG:
-                  d['ScanSimpleFit']['Configuration'].update(\
-                      self.scanWindow.scanFit.getConfiguration())
-        else:
-            try:
-                  d['ScanSimpleFit']['Configuration'].update(\
-                      self.scanWindow.scanFit.getConfiguration())
-            except:
-                print("Error getting ScanFint configuration")
+
+        try:
+            d['ScanSimpleFit']['Configuration'].update(
+                self.scanWindow.scanFit.getConfiguration())
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            _logger.warning("Error getting ScanFit configuration")
         return d
 
     def saveConfig(self, config, filename = None):
@@ -901,7 +894,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         except:
                             pass
                 else:
-                    print("hidden")
+                    _logger.info("hidden")
 
     def __configureScanCustomFit(self, ddict):
         pass
@@ -1075,8 +1068,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         """
 
     def menuToolsAboutToShow(self):
-        if DEBUG:
-            print("menu ToolsAboutToShow")
+        _logger.debug("menu ToolsAboutToShow")
         self.menuTools.clear()
         if self.sourceFrame.isHidden():
             self.menuTools.addAction("Show Source",self.toggleSource)
@@ -1099,8 +1091,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                      self._xrfmcPyMca)
         if SUMRULES_FLAG:
             self.menuTools.addAction("Sum Rules Tool", self._sumRules)
-        if DEBUG:
-            print("Fit to Specfile missing")
+        _logger.debug("Fit to Specfile missing")
         if TOMOGUI_FLAG:
             self.menuTools.addAction("Tomography reconstruction",
                                      self.__tomoRecons)
@@ -1113,8 +1104,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
 
 
     def toggleSource(self,**kw):
-        if DEBUG:
-            print("toggleSource called")
+        _logger.debug("toggleSource called")
         if self.sourceFrame.isHidden():
             self.sourceFrame.show()
             self.sourceFrame.raise_()
@@ -1355,8 +1345,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                         if widget.parent() is None:
                             widget.close()
                 except:
-                    if DEBUG:
-                        print("Error closing widget")
+                    _logger.debug("Error closing widget")
         return PyMcaMdi.PyMcaMdi.closeEvent(self, event)
 
     def __xiaCorrect(self):
@@ -1519,8 +1508,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             msg.exec_()
 
     def openSource(self,index=0):
-        if DEBUG:
-            print("index = %d " % index)
+        _logger.debug("index = %d ", index)
         if index <= 0:
             outfile = qt.QFileDialog(self)
             outfile.setWindowTitle("Select PyMca Configuration File")
@@ -1635,18 +1623,19 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         self.changeLog.show()
 
     def onDebug(self):
-        print("Module name PyQt  ",qt.PYQT_VERSION_STR)
+        _logger.debug("Module name PyQt  %s", qt.PYQT_VERSION_STR)
         for module in sys.modules.values():
             try:
                 if 'Revision' in module.__revision__:
                     if module.__name__ != "__main__":
-                        print("Module name = ",module.__name__,module.__revision__.replace("$",""))
+                        _logger.debug("Module name = %s, %s",
+                                      module.__name__,
+                                      module.__revision__.replace("$", ""))
             except:
                 pass
 
     def onPrint(self):
-        if DEBUG:
-            print("onPrint called")
+        _logger.debug("onPrint called")
         if not self.scanWindow.isHidden():
             self.scanWindow.printGraph()
             return
@@ -1704,7 +1693,7 @@ if 0:
             """
             Called after a graph is closed
             """
-            print("closeGraph", name)
+            _logger.info("closeGraph", name)
 
     def __getGraphNames(self):
             return [ str(window.caption()) for window in self.mdi.windowList() ]
@@ -1744,8 +1733,7 @@ class MyQTextBrowser(qt.QTextBrowser):
 class Line(qt.QFrame):
     sigLineDoubleClickEvent = qt.pyqtSignal(object)
     def mouseDoubleClickEvent(self,event):
-        if DEBUG:
-            print("Double Click Event")
+        _logger.debug("Double Click Event")
         ddict={}
         ddict['event']="DoubleClick"
         ddict['data'] = event
@@ -1754,8 +1742,7 @@ class Line(qt.QFrame):
 class PixmapLabel(qt.QLabel):
     sigPixmapLabelMousePressEvent = qt.pyqtSignal(object)
     def mousePressEvent(self,event):
-        if DEBUG:
-            print("Mouse Press Event")
+        _logger.debug("Mouse Press Event")
         ddict={}
         ddict['event']="MousePress"
         ddict['data'] = event

@@ -28,15 +28,17 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
+import logging
+_logger = logging.getLogger(__name__)
+
 try:
     from PyMca5.PyMcaGui.pymca import StackBrowser
     from PyMca5.PyMcaMath.PyMcaSciPy.signal import median
 except ImportError:
-    print("Median2DBrowser problem!")
+    _logger.warning("Median2DBrowser problem!")
 
 medfilt2d = median.medfilt2d
 qt = StackBrowser.qt
-DEBUG = 0
 
 class MedianParameters(qt.QWidget):
     def __init__(self, parent=None, use_conditional=False):

@@ -28,20 +28,20 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy
-DEBUG = 0
+import logging
+_logger = logging.getLogger(__name__)
+
 try:
     from PyMca5 import Object3D
     from PyMca5.Object3D import Object3DScene
 except ImportError:
-    if DEBUG:
-        print("PyMcaGLWindow imports Object3D direcly. Frozen version?")
+    _logger.debug("PyMcaGLWindow imports Object3D direcly. Frozen version?")
     import Object3D
     from Object3D import Object3DScene
 
 class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
     def _addSelection(self, selectionlist, replot=True):
-        if DEBUG:
-            print("addSelection(self, selectionlist)",selectionlist)
+        _logger.debug("addSelection(self, selectionlist=%s)", selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -68,8 +68,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
             else:
                 numberOfXAxes = len(dataObject.x)
                 if numberOfXAxes > 1:
-                    if DEBUG:
-                        print("Mesh plots")
+                    _logger.debug("Mesh plots")
                 else:
                     xdata = dataObject.x[0]
 
@@ -93,8 +92,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
 
 
     def _removeSelection(self, selectionlist):
-        if DEBUG:
-            print("_removeSelection(self, selectionlist)",selectionlist)
+        _logger.debug("_removeSelection(self, selectionlist=%s)", selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -117,8 +115,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
 
 
     def _replaceSelection(self, selectionlist):
-        if DEBUG:
-            print("_replaceSelection(self, selectionlist)",selectionlist)
+        _logger.debug("_replaceSelection(self, selectionlist=%s)", selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -165,8 +162,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
             #or not
             if ndim == ndata:
                 if len(data.shape) == 3:
-                    if DEBUG:
-                        print("CASE 1")
+                    _logger.debug("CASE 1")
                     if (xDimList[0] != data.shape[0]) or\
                        (xDimList[1] != data.shape[1]) or\
                        (xDimList[2] != data.shape[2]):
@@ -185,8 +181,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                                           legend=legend,
                                           update_scene=update_scene)
                 elif len(data.shape) == 2:
-                    if DEBUG:
-                        print("CASE 2")
+                    _logger.debug("CASE 2")
                     object3D = self.mesh(data,
                                          x=dataObject.x[0],
                                          y=dataObject.x[1],
@@ -195,8 +190,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                                          legend=legend,
                                          update_scene=update_scene)
                 elif len(data.shape) == 1:
-                    if DEBUG:
-                        print("CASE 3")
+                    _logger.debug("CASE 3")
                     object3D = self.mesh(data,
                                          x=dataObject.x[0],
                                          y=numpy.zeros((1,1), numpy.float32),
@@ -205,9 +199,8 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
                                          update_scene=update_scene)
                 return object3D
         elif (len(data.shape) == 3) and (len(xDimList) == 2):
-            print("WARNING Assuming last dimension")
-            if DEBUG:
-                print("CASE 1.1")
+            _logger.warning("Assuming last dimension")
+            _logger.debug("CASE 1.1")
             if (xDimList[0] != data.shape[0]) or\
                (xDimList[1] != data.shape[1]):
                 text = "Wrong dimensions:"
@@ -247,8 +240,7 @@ class SceneGLWindow(Object3D.Object3DScene.Object3DScene):
         #I force a surface plot.
         if ndata < 200000:
             cfg = object3D.setConfiguration({'common':{'mode':3}})
-        if DEBUG:
-            print("DEFAULT CASE")
+        _logger.debug("DEFAULT CASE")
         object3D.setData(values, xyz=xyzData)
         self.addObject(object3D, legend, update_scene=update_scene)
         return object3D
