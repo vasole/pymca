@@ -30,6 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 from silx.gui.plot import PlotWidget
 from silx.gui.plot.PrintPreviewToolButton import SingletonPrintPreviewToolButton
 from PyMca5.PyMcaGui import PyMcaQt as qt
@@ -37,7 +38,8 @@ from .PyMca_Icons import IconDict
 from PyMca5.PyMcaCore import PyMcaDirs
 
 QTVERSION = qt.qVersion()
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 def convertToRowAndColumn(x, y, shape, xScale=None, yScale=None, safe=True):
     if xScale is None:
@@ -295,7 +297,7 @@ class RGBCorrelatorGraph(qt.QWidget):
                 #self.lineWidthProfileButton = tb
                 #self._pickerSelectionButtons.append(tb)
             if self._polygonSelection:
-                print("Polygon selection not implemented yet")
+                _logger.info("Polygon selection not implemented yet")
         #hide profile selection buttons
         if imageicons:
             for button in self._pickerSelectionButtons:
@@ -320,8 +322,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.toolBarLayout.addWidget(self.printPreview)
 
     def _aspectButtonSignal(self):
-        if DEBUG:
-            print("_aspectButtonSignal")
+        _logger.debug("_aspectButtonSignal")
         if self._keepDataAspectRatioFlag:
             self.keepDataAspectRatio(False)
         else:
@@ -355,7 +356,7 @@ class RGBCorrelatorGraph(qt.QWidget):
             else:
                 qt.QToolTip.hideText()
         except:
-            print("Error trying to show mouse text <%s>" % text)
+            _logger.warning("Error trying to show mouse text <%s>" % text)
 
     def focusOutEvent(self, ev):
         qt.QToolTip.hideText()
@@ -494,15 +495,14 @@ class RGBCorrelatorGraph(qt.QWidget):
         self.sigProfileSignal.emit(ddict)
 
     def _graphPolygonSignalReceived(self, ddict):
-        if DEBUG:
-            print("PolygonSignal Received")
-            for key in ddict.keys():
-                print(key, ddict[key])
+        _logger.debug("PolygonSignal Received")
+        for key in ddict.keys():
+            _logger.debug("%s: %s", key, ddict[key])
 
         if ddict['event'] not in ['drawingProgress', 'drawingFinished']:
             return
         label = ddict['parameters']['label']
-        if  label not in ['HORIZONTAL', 'VERTICAL', 'LINE']:
+        if label not in ['HORIZONTAL', 'VERTICAL', 'LINE']:
             return
         ddict['mode'] = label
         ddict['pixelwidth'] = self._pickerSelectionWidthValue.value()
@@ -533,8 +533,7 @@ class RGBCorrelatorGraph(qt.QWidget):
         self._zoomReset()
 
     def _zoomReset(self, replot=None):
-        if DEBUG:
-            print("_zoomReset")
+        _logger.debug("_zoomReset")
         if self.graph is not None:
             self.graph.resetZoom()
 
