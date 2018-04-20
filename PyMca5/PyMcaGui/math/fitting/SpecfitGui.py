@@ -316,7 +316,7 @@ class SpecfitGui(qt.QWidget):
                 msg.setIcon(qt.QMessageBox.Critical)
                 msg.setText("Error on mcafit: %s" % sys.exc_info()[1])
                 msg.exec_()
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 return
             self.guiparameters.fillfrommca(mcaresult)

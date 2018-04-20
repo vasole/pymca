@@ -38,7 +38,6 @@ Each time one of the contained widgets changes, a sigSelectionTableSignal
 is emitted indicating the current selection and the triggering cell.
 """
 from PyMca5.PyMcaGui import PyMcaQt as qt
-DEBUG = 0
 
 
 class SelectionTable(qt.QTableWidget):

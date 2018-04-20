@@ -32,6 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
@@ -39,7 +40,9 @@ from PyMca5.PyMcaGui import XASParameters
 from PyMca5.PyMca import XASClass
 from silx.gui.plot import PlotWindow
 from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
+
 
 class XASDialog(qt.QDialog):
     def __init__(self, parent=None, analyzer=None, backend=None):
@@ -114,15 +117,13 @@ class XASWindow(qt.QMainWindow):
         return self.parametersWidget.getParameters()
 
     def _parametersSlot(self, ddict):
-        if DEBUG:
-            print("XASWindow.parametersSlot", ddict)
+        _logger.debug("XASWindow.parametersSlot: %s", ddict)
         analyzer = self.mdiArea.analyzer
         if "XASParameters" in ddict:
             ddict = ddict["XASParameters"]
         analyzer.setConfiguration(ddict)
-        if DEBUG:
-            print("ANALYZER CONFIGURATION FINAL")
-            print(analyzer.getConfiguration())
+        _logger.debug("ANALYZER CONFIGURATION FINAL")
+        _logger.debug(analyzer.getConfiguration())
         self.update()
 
     def update(self, ddict=None):
@@ -295,7 +296,7 @@ class XASMdiArea(qt.QMdiArea):
         self.sigXASMdiAreaSignal.emit(ddict)
 
 if __name__ == "__main__":
-    DEBUG = 1
+    _logger.setLevel(logging.DEBUG)
     app = qt.QApplication([])
     from PyMca5.PyMcaIO import specfilewrapper as specfile
     from PyMca5.PyMcaDataDir import PYMCA_DATA_DIR

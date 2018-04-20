@@ -31,6 +31,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
@@ -40,7 +41,8 @@ from PyMca5.PyMcaGui import XASFourierTransformParameters
 from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaIO import ConfigDict
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class XASParameters(qt.QWidget):
     sigXASParametersSignal = qt.pyqtSignal(object)
@@ -145,8 +147,7 @@ class XASParameters(qt.QWidget):
         self._emitSignal(ddict["event"])
 
     def _postEdgeParameterSlot(self, ddict):
-        if DEBUG:
-            print("_postEdgeParameterSlot ", ddict)
+        _logger.debug("_postEdgeParameterSlot: %s", ddict)
         # Should I change the event to "EXAFSChanged"?
         self.fourierTransformWidget.setKRange([ddict["KMin"], ddict["KMax"]])
         self._emitSignal(ddict["event"])
@@ -213,10 +214,10 @@ class XASParameters(qt.QWidget):
             self.postEdgeWidget.setTitleColor(color)
             self.fourierTransformWidget.setTitleColor(color)
         except:
-            print("Error setting title color", sys.exc_info())
+            _logger.error("Error setting title color: %s", sys.exc_info())
 
 if __name__ == "__main__":
-    DEBUG = 1
+    _logger.setLevel(logging.DEBUG)
     app = qt.QApplication([])
     def testSlot(ddict):
         print("Emitted signal = ", ddict)
