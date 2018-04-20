@@ -29,8 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
-import time
-from PyMca5.PyMcaGui import IconDict
+import logging
 from . import RGBImageCalculator
 qt = RGBImageCalculator.qt
 QTVERSION = qt.qVersion()
@@ -38,7 +37,8 @@ from . import RGBCorrelator
 from PyMca5.PyMcaGui import FrameBrowser
 USE_BROWSER = True
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
     def __init__(self, parent = None,
@@ -99,8 +99,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
         w.sigReplaceSelection.connect(self._replaceSelection)
 
     def _addSelection(self, selectionlist):
-        if DEBUG:
-            print("_addSelection(self, selectionlist)",selectionlist)
+        _logger.debug("_addSelection(self, selectionlist=%s)", selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -164,7 +163,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                                         tmpData.shape = int(nRows), int(nColumns)
                                         dataObject.data[yIndex] = tmpData
                     else:
-                        print("Nothing to plot")
+                        _logger.info("Nothing to plot")
             elif hasattr(dataObject, "x") and (dataObject.x is not None):
                 shape = dataObject.data.shape
                 if len(dataObject.x) == 2:
@@ -176,7 +175,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                         nColumns = numpy.argmin(abs(x0-x0[0]) < 1.0e-6)
                         nRows = x1.size / nColumns
                         if nRows!= int(nRows):
-                            print("%f != %d" % (nRows, int(nRows)))
+                            _logger.warning("%f != %d", nRows, int(nRows))
                             raise ValueError("2D Selection not understood")
                         transpose = False
                         nColumns = int(nColumns)
@@ -186,7 +185,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                         nRows = numpy.argmin(abs(x1-x1[0]) < 1.0e-6)
                         nColumns = x0.size / nRows
                         if nColumns != int(nColumns):
-                            print("%f != %d" % (nColumns, int(nColumns)))
+                            _logger.warning("%f != %d", nColumns, int(nColumns))
                             raise ValueError("2D Selection not understood")
                         transpose = True
                         nRows = int(nRows)
@@ -299,8 +298,7 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 pass
 
     def _removeSelection(self, selectionlist):
-        if DEBUG:
-            print("_removeSelection(self, selectionlist)",selectionlist)
+        _logger.debug("_removeSelection(self, selectionlist=%s)", selectionlist)
         if type(selectionlist) == type([]):
             sellist = selectionlist
         else:
@@ -316,8 +314,8 @@ class PyMcaImageWindow(RGBImageCalculator.RGBImageCalculator):
                 #self.plotImage(True)
 
     def _replaceSelection(self, selectionlist):
-        if DEBUG:
-            print("_replaceSelection(self, selectionlist)",selectionlist)
+        _logger.debug("_replaceSelection(self, selectionlist=%s)",
+                      selectionlist)
         current = self.slider.value()
         self._addSelection(selectionlist)
         if current < self._nImages:
@@ -362,7 +360,7 @@ class TimerLoop:
         self.__timer.start(period)
 
     def test(self):
-        print("Test function called")
+        _logger.info("Test function called")
 
 if __name__ == "__main__":
     from PyMca5 import DataObject
@@ -378,8 +376,7 @@ if __name__ == "__main__":
     def buildSelection(dataObject, name = "image_data0"):
         key = dataObject.info['Key']
         def dataObjectDestroyed(ref, dataObjectKey=key):
-            if DEBUG:
-                print("dataObject distroyed key = %s" % key)
+            _logger.debug("dataObject distroyed key = %s", key)
         dataObjectRef=weakref.proxy(dataObject, dataObjectDestroyed)
         selection = {}
         selection['SourceType'] = 'SPS'
