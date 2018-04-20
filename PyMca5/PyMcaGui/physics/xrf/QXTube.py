@@ -30,6 +30,7 @@ __author__ = "V. Armando Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+import logging
 from PyMca5.PyMcaPhysics import Elements
 from PyMca5.PyMcaPhysics import XRayTubeEbel
 import numpy
@@ -37,8 +38,8 @@ from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui.PluginsToolButton import PluginsToolButton
 from silx.gui.plot import PlotWindow
 
+_logger = logging.getLogger(__name__)
 
-DEBUG = 0
 
 if qt.qVersion() > '4.0.0':
     class QGridLayout(qt.QGridLayout):
@@ -196,19 +197,18 @@ class QXTube(qt.QWidget):
                      filterlist=filterlist)
 
         d["characteristic"] = fllines
-        if DEBUG:
-            fsum = 0.0
-            for l in fllines:
-                print("%s %.4f %.3e" % (l[2],l[0],l[1]))
-                fsum += l[1]
-            print(fsum)
+        fsum = 0.0
+        for l in fllines:
+            _logger.debug("%s %.4f %.3e", l[2], l[0], l[1])
+            fsum += l[1]
+        _logger.debug("%s", fsum)
 
-        energy, energyweight, energyscatter = XRayTubeEbel.generateLists([anode, anodedensity,
-                                                                          anodethickness],
+        energy, energyweight, energyscatter = XRayTubeEbel.generateLists(
+                                                        [anode, anodedensity, anodethickness],
                                                         voltage,
-                                                        window = [wele, wdensity, wthickness],
-                                                        alphae = alphae, alphax = alphax,
-                                                        transmission = transmission,
+                                                        window=[wele, wdensity, wthickness],
+                                                        alphae=alphae, alphax=alphax,
+                                                        transmission=transmission,
                                                         targetthickness=anodethickness,
                                                         filterlist=filterlist)
 
@@ -416,23 +416,19 @@ class TubeWidget(qt.QWidget):
         return d
 
     def _anodeSlot(self, ddict):
-        if DEBUG:
-            print("_anodeSlot", ddict)
+        _logger.debug("_anodeSlot %s", ddict)
         self.anodeDensity.setText("%f" % Elements.Element[ddict["element"]]["density"])
 
     def _windowSlot(self, ddict):
-        if DEBUG:
-            print("_windowSlot", ddict)
+        _logger.debug("_windowSlot %s", ddict)
         self.windowDensity.setText("%f" % Elements.Element[ddict["element"]]["density"])
 
     def _filter1Slot(self, ddict):
-        if DEBUG:
-            print("_filter1Slot", ddict)
+        _logger.debug("_filter1Slot %s", ddict)
         self.filter1Density.setText("%f" % Elements.Element[ddict["element"]]["density"])
 
     def _transmissionSlot(self):
-        if DEBUG:
-            print("_transmissionSlot")
+        _logger.debug("_transmissionSlot")
         if self.transmissionCheckBox.isChecked():
             self.anodeThickness.setEnabled(1)
         else:
@@ -464,8 +460,7 @@ class MyQComboBox(qt.QComboBox):
         return   self.currentIndex(),str(self.currentText())
 
     def _mySignal(self, qstring0):
-        if DEBUG:
-            print("_mySignal ", qstring0)
+        _logger.debug("_mySignal %s", qstring0)
         text = str(qstring0)
         d = {}
         d['event']   = 'activated'

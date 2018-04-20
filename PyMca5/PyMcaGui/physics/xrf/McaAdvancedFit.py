@@ -35,6 +35,7 @@ import os
 import numpy
 import time
 import copy
+import logging
 import tempfile
 import shutil
 import traceback
@@ -77,18 +78,18 @@ Elements = ElementsInfo.Elements
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
 from PyMca5.PyMcaGui import CalculationThread
-DEBUG = 0
-if DEBUG:
-    print("############################################")
-    print("#    McaAdvancedFit is in DEBUG mode %s     #" % DEBUG)
-    print("############################################")
+_logger = logging.getLogger(__name__)
+
+_logger.debug("############################################\n"
+              "#    McaAdvancedFit is in DEBUG mode       #\n"
+              "############################################")
 XRFMC_FLAG = False
 try:
     from PyMca5.PyMcaPhysics.xrf.XRFMC import XRFMCHelper
     XRFMC_FLAG = True
 except ImportError:
-    print("Cannot import XRFMCHelper module")
-    if DEBUG:
+    _logger.warning("Cannot import XRFMCHelper module")
+    if _logger.getEffectiveLevel() == logging.DEBUG:
         raise
 USE_BOLD_FONT = True
 
@@ -479,7 +480,7 @@ class McaAdvancedFit(qt.QWidget):
         else:
             self.matrixXRFMCSpectrumButton.show()
 
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             self.mcafit.configure(config)
         elif 1:
             try:
@@ -551,8 +552,7 @@ class McaAdvancedFit(qt.QWidget):
                     self.mainTab.setCurrentIndex(0)
 
     def __configureFromConcentrations(self,ddict):
-        if DEBUG:
-            print("McaAdvancedFit.__configureFromConcentrations", ddict)
+        _logger.debug("McaAdvancedFit.__configureFromConcentrations %s", ddict)
         config = self.concentrationsWidget.getParameters()
         self.mcafit.config['concentrations'].update(config)
         if ddict['event'] == 'updated':
@@ -616,11 +616,10 @@ class McaAdvancedFit(qt.QWidget):
     def __updatefromtop(self,ndict):
         config = self.mcafit.configure()
         for key in ndict.keys():
-            if DEBUG:
-                keylist = ['stripflag','hypermetflag','sumflag','escapeflag',
-                           'fitfunction', 'continuum']
-                if key not in keylist:
-                    print("UNKNOWN key ",key)
+            if key not in ['stripflag', 'hypermetflag',
+                           'sumflag', 'escapeflag',
+                           'fitfunction', 'continuum']:
+                _logger.debug("UNKNOWN key %s", key)
             config['fit'][key] = ndict[key]
         self.__fitdone = False
         #erase table
@@ -641,7 +640,7 @@ class McaAdvancedFit(qt.QWidget):
             self.graph.removeCurve(key)
         self.plot()
 
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             self.mcafit.configure(config)
         elif 1:
             try:
@@ -686,8 +685,7 @@ class McaAdvancedFit(qt.QWidget):
                 return
 
     def _tabChanged(self, value):
-        if DEBUG:
-            print("_tabChanged(self, value) called")
+        _logger.debug("_tabChanged(self, value) called")
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "CONCENTRATIONS":
             self.printButton.setEnabled(False)
             w = self.concentrationsWidget
@@ -698,21 +696,19 @@ class McaAdvancedFit(qt.QWidget):
                 self.printButton.setEnabled(True)
                 #do not calculate again. It should be already updated
                 return
-            if DEBUG:
+            try:
                 self.concentrations()
                 self.printButton.setEnabled(True)
-            else:
-                try:
-                    self.concentrations()
-                    self.printButton.setEnabled(True)
-                except:
-                    #print "try to set"
-                    self.printButton.setEnabled(False)
-                    msg = qt.QMessageBox(self)
-                    msg.setIcon(qt.QMessageBox.Critical)
-                    msg.setText("Concentrations error: %s" % sys.exc_info()[1])
-                    msg.exec_()
-                    self.mainTab.setCurrentIndex(0)
+            except:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
+                    raise
+                #print "try to set"
+                self.printButton.setEnabled(False)
+                msg = qt.QMessageBox(self)
+                msg.setIcon(qt.QMessageBox.Critical)
+                msg.setText("Concentrations error: %s" % sys.exc_info()[1])
+                msg.exec_()
+                self.mainTab.setCurrentIndex(0)
         elif str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == "TABLE":
             self.printButton.setEnabled(True)
             w = self.mcatable
@@ -990,25 +986,21 @@ class McaAdvancedFit(qt.QWidget):
         ddict = {}
         ddict.update(config['concentrations'])
         tool.setParameters(ddict, signal=False)
-        if DEBUG:
-            ddict, info = tool.processFitResult(config=ddict,fitresult=fitresult,
+        try:
+            ddict, info = tool.processFitResult(config=ddict, fitresult=fitresult,
                                                 elementsfrommatrix=False,
-                                                fluorates = self.mcafit._fluoRates,
+                                                fluorates=self.mcafit._fluoRates,
                                                 addinfo=True)
-        else:
-            try:
-                ddict, info = tool.processFitResult(config=ddict,fitresult=fitresult,
-                                                    elementsfrommatrix=False,
-                                                    fluorates = self.mcafit._fluoRates,
-                                                    addinfo=True)
-            except:
-                msg = qt.QMessageBox(self)
-                msg.setIcon(qt.QMessageBox.Critical)
-                msg.setText("Error processing fit result: %s" % (sys.exc_info()[1]))
-                msg.exec_()
-                if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'CONCENTRATIONS':
-                    self.mainTab.setCurrentIndex(0)
-                return
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            msg = qt.QMessageBox(self)
+            msg.setIcon(qt.QMessageBox.Critical)
+            msg.setText("Error processing fit result: %s" % (sys.exc_info()[1]))
+            msg.exec_()
+            if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'CONCENTRATIONS':
+                self.mainTab.setCurrentIndex(0)
+            return
         self._concentrationsDict = ddict
         self._concentrationsInfo = info
         tool.show()
@@ -1064,17 +1056,17 @@ class McaAdvancedFit(qt.QWidget):
         ddict = {}
         ddict.update(config['concentrations'])
         tool.configure(ddict)
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             ddict, info = tool.processFitResult(fitresult=fitresult,
-                                         elementsfrommatrix=True,
-                                         addinfo=True)
+                                                elementsfrommatrix=True,
+                                                addinfo=True)
         elif 1:
             try:
-                thread = CalculationThread.CalculationThread( \
-                                      calculation_method = tool.processFitResult,
-                                  calculation_kw = {'fitresult':fitresult,
-                                    'elementsfrommatrix':True,
-                                    'addinfo':True},
+                thread = CalculationThread.CalculationThread(
+                                      calculation_method=tool.processFitResult,
+                                      calculation_kw={'fitresult': fitresult,
+                                                      'elementsfrommatrix': True,
+                                                      'addinfo': True},
                                       expand_vars=True,
                                       expand_kw=True)
                 thread.start()
@@ -1181,14 +1173,14 @@ class McaAdvancedFit(qt.QWidget):
         try:
             self.__anasignal(ddict)
         except:
-            print("Error generating matrix output. ")
-            print("Try to perform your fit again.  ")
-            print(sys.exc_info())
-            print("If error persists, please report this error.")
-            print("ymatrix shape = ", ddict['result']['ymatrix'].shape)
-            print("xmatrix shape = ", xmatrix.shape)
-            print("continuum shape = ", ddict['result']['continuum'].shape)
-            print("zz      shape = ", self.mcafit.zz.shape)
+            _logger.warning("Error generating matrix output. ")
+            _logger.warning("Try to perform your fit again.  ")
+            _logger.warning("%s", sys.exc_info())
+            _logger.warning("If error persists, please report this error.")
+            _logger.warning("ymatrix shape = %s", ddict['result']['ymatrix'].shape)
+            _logger.warning("xmatrix shape = %s", xmatrix.shape)
+            _logger.warning("continuum shape = %s", ddict['result']['continuum'].shape)
+            _logger.warning("zz      shape = %s", self.mcafit.zz.shape)
 
     def fisxSpectrum(self):
         if not self.__fitdone:
@@ -1428,8 +1420,8 @@ class McaAdvancedFit(qt.QWidget):
                 try:
                     self.__anasignal(ddict)
                 except:
-                    print("Error generating Monte Carlo matrix output. ")
-                    print(sys.exc_info())
+                    _logger.warning("Error generating Monte Carlo matrix output. ")
+                    _logger.warning(sys.exc_info())
 
     def peaksSpectrum(self):
         if not self.__fitdone:
@@ -1471,14 +1463,14 @@ class McaAdvancedFit(qt.QWidget):
         try:
             self.__anasignal(ddict)
         except:
-            print("Error generating peaks output. ")
-            print("Try to perform your fit again.  ")
-            print(sys.exc_info())
-            print("If error persists, please report this error.")
-            print("ymatrix shape = ", ddict['result']['ymatrix'].shape)
-            print("xmatrix shape = ", xmatrix.shape)
-            print("continuum shape = ", ddict['result']['continuum'].shape)
-            print("zz      shape = ", self.mcafit.zz.shape)
+            _logger.warning("Error generating peaks output. ")
+            _logger.warning("Try to perform your fit again.  ")
+            _logger.warning("%s", sys.exc_info())
+            _logger.warning("If error persists, please report this error.")
+            _logger.warning("ymatrix shape = %s", ddict['result']['ymatrix'].shape)
+            _logger.warning("xmatrix shape = %s", xmatrix.shape)
+            _logger.warning("continuum shape = %s", ddict['result']['continuum'].shape)
+            _logger.warning("zz      shape = %s", self.mcafit.zz.shape)
 
     def __printps(self):
         self.__printmenu.exec_(self.cursor().pos())
@@ -1703,8 +1695,8 @@ class McaAdvancedFit(qt.QWidget):
         return h
 
     # pyflakes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=666503
-    def __print(self,text):
-        print("__print not working yet")
+    def __print(self, text):
+        _logger.info("__print not working yet")
         return
         printer = qt.QPrinter()
         printDialog = qt.QPrintDialog(printer, self)
@@ -1723,9 +1715,8 @@ class McaAdvancedFit(qt.QWidget):
             document.print_(printer)
 
     def setdata(self, *var, **kw):
-        if DEBUG:
-            print("McaAdvancedFit.setdata deprecated, use setData instead.")
-        return self.setData( *var, **kw)
+        _logger.debug("McaAdvancedFit.setdata deprecated, use setData instead.")
+        return self.setData(*var, **kw)
 
     def setData(self,*var,**kw):
         """
@@ -1835,8 +1826,7 @@ class McaAdvancedFit(qt.QWidget):
         self.plot()
 
     def setheader(self, *var, **kw):
-        if DEBUG:
-            print("McaAdvancedFit.setheader deprecated, use setHeader instead.")
+        _logger.debug("McaAdvancedFit.setheader deprecated, use setHeader instead.")
         return self.setHeader( *var, **kw)
 
     def setHeader(self,*var,**kw):
@@ -1880,18 +1870,14 @@ class McaAdvancedFit(qt.QWidget):
             msg.setText("No peaks defined.\nPlease configure peaks")
             msg.exec_()
             return
-        if DEBUG:
-            if DEBUG:
-                print("calling estimate")
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            _logger.debug("calling estimate")
             self.mcafit.estimate()
-            if DEBUG:
-                print("calling startfit")
-            fitresult,result = self.mcafit.startfit(digest=1)
-            if DEBUG:
-                print("filling table")
+            _logger.debug("calling startfit")
+            fitresult, result = self.mcafit.startfit(digest=1)
+            _logger.debug("filling table")
             self.mcatable.fillfrommca(result)
-            if DEBUG:
-                print("finished")
+            _logger.debug("finished")
         elif 1:
             try:
                 self.mcafit.estimate()
@@ -1995,17 +1981,16 @@ class McaAdvancedFit(qt.QWidget):
             if (str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'CONCENTRATIONS') or \
                 (self.concentrationsWidget.parent() is None):
                 if not self.concentrationsWidget.isHidden():
-                    if DEBUG:
+                    try:
                         self.concentrations()
-                    else:
-                        try:
-                            self.concentrations()
-                        except:
-                            msg = qt.QMessageBox(self)
-                            msg.setIcon(qt.QMessageBox.Critical)
-                            msg.setText("Concentrations Error: %s" % (sys.exc_info()[1]))
-                            msg.exec_()
-                            return
+                    except:
+                        if _logger.getEffectiveLevel() == logging.DEBUG:
+                            raise
+                        msg = qt.QMessageBox(self)
+                        msg.setIcon(qt.QMessageBox.Critical)
+                        msg.setText("Concentrations Error: %s" % (sys.exc_info()[1]))
+                        msg.exec_()
+                        return
         if str(self.mainTab.tabText(self.mainTab.currentIndex())).upper() == 'DIAGNOSTICS':
             try:
                 self.diagnostics()
@@ -2190,7 +2175,7 @@ class McaAdvancedFit(qt.QWidget):
                                                      fitresult['result']['xdata'][-1]))
         if MCLabels is not None:
             if MCSpectra[2].size != fitresult['result']['xdata'].size:
-                print("Monte Carlo Spectra not saved: Wrong spectrum length.")
+                _logger.warning("Monte Carlo Spectra not saved: Wrong spectrum length.")
                 MCLabels = None
                 MCSpectra = None
 
@@ -2840,8 +2825,7 @@ class Line(qt.QFrame):
 
 
     def mouseDoubleClickEvent(self, event):
-        if DEBUG:
-            print("Double Click Event")
+        _logger.debug("Double Click Event")
         ddict={}
         ddict['event']="DoubleClick"
         ddict['data'] = event

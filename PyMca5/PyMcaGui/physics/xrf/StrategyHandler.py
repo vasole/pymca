@@ -32,6 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import copy
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaPhysics import Elements
@@ -41,7 +42,8 @@ from .MaterialEditor import MaterialComboBox
 
 IconDict = PyMca_Icons.IconDict
 QTVERSION = qt.qVersion()
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 def _getPeakList(fitConfiguration):
     elementsList = []
@@ -365,10 +367,9 @@ class IterationTable(qt.QTableWidget):
         item.setEditText(material)
 
     def mySlot(self,row,col):
-        if DEBUG:
-            print("Value changed row = %d col = %d" % (row, col))
-            if col != 0:
-                print("Text = %s" % self.cellWidget(row, col).currentText())
+        _logger.debug("Value changed row = %d col = %d", row, col)
+        if col != 0:
+            _logger.debug("Text = %s", self.cellWidget(row, col).currentText())
 
     def _checkBoxSlot(self, ddict):
         # check we do not have duplicates
@@ -461,8 +462,7 @@ class IterationTable(qt.QTableWidget):
             materialItem.setCurrentIndex(0)
 
     def _peakFamilySlot(self, ddict):
-        if DEBUG:
-            print("_peakFamilySlot", ddict)
+        _logger.debug("_peakFamilySlot %s", ddict)
         # check we do not have duplicates
         target = ddict["text"].split()[0]
         row = ddict['row']
@@ -486,8 +486,7 @@ class IterationTable(qt.QTableWidget):
         self.sigValueChanged.emit(row, col)
 
     def _comboSlot(self, ddict):
-        if DEBUG:
-            print("_comboSlot", ddict)
+        _logger.debug("_comboSlot %s", ddict)
         row = ddict['row']
         col = ddict['col']
         text = ddict['text']

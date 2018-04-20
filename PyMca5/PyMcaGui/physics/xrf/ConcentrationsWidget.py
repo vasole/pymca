@@ -31,6 +31,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 if hasattr(qt, 'QString'):
@@ -49,9 +50,10 @@ QTable = qt.QTableWidget
 from PyMca5.PyMcaPhysics.xrf import ConcentrationsTool
 from PyMca5.PyMcaPhysics.xrf import Elements
 import time
-DEBUG = 0
-if DEBUG:
-    print("ConcentrationsWidget is in debug mode")
+
+_logger = logging.getLogger(__name__)
+
+_logger.debug("ConcentrationsWidget is in debug mode")
 
 
 class Concentrations(qt.QWidget):
@@ -127,7 +129,7 @@ class Concentrations(qt.QWidget):
         if 'addinfo' in kw:
             if kw['addinfo']:
                 addInfo = True
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             if addInfo:
                 ddict, info = self.concentrationsTool.processFitResult(*var, **kw)
                 self.concentrationsTable.fillFromResult(ddict)
@@ -217,13 +219,12 @@ class SimpleThread(qt.QThread):
         self._result = None
 
     def run(self):
-        if DEBUG:
+        try:
             self._result = self._function(*self._var, **self._kw)
-        else:
-            try:
-                self._result = self._function(*self._var, **self._kw)
-            except:
-                self._result = ("Exception",) + sys.exc_info()
+        except:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                raise
+            self._result = ("Exception",) + sys.exc_info()
 
 
 class ConcentrationsWidget(qt.QWidget):
