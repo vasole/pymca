@@ -29,6 +29,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
@@ -41,7 +42,9 @@ QTVERSION = qt.qVersion()
 from PyMca5.PyMcaCore import PyMcaDirs
 from PyMca5.PyMcaIO import ConfigDict
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
+
 class McaROIWidget(qt.QWidget):
     sigMcaROIWidgetSignal = qt.pyqtSignal(object)
 
@@ -109,8 +112,7 @@ class McaROIWidget(qt.QWidget):
         self.mcaROITable.sigMcaROITableSignal.connect(self._forward)
 
     def _add(self):
-        if DEBUG:
-            print("McaROIWidget._add")
+        _logger.debug("McaROIWidget._add")
         ddict={}
         ddict['event']   = "AddROI"
         roilist, roidict  = self.mcaROITable.getROIListAndDict()
@@ -409,8 +411,7 @@ class McaROITable(qt.QTableWidget):
         else:
             if currentroi in self.roidict.keys():
                 self.selectRow(self.roidict[currentroi]['line'])
-                if DEBUG:
-                    print("Qt4 ensureCellVisible to be implemented")
+                _logger.debug("Qt4 ensureCellVisible to be implemented")
         self.building = False
 
     def addROI(self, roi, key=None):
@@ -472,8 +473,7 @@ class McaROITable(qt.QTableWidget):
             ddict['row'  ] = row
             ddict['col'  ] = col
             if row >= len(self.roilist):
-                if DEBUG:
-                    print("deleting???")
+                _logger.debug("deleting???")
                 return
                 row = 0
             item = self.item(row, 0)
@@ -492,8 +492,7 @@ class McaROITable(qt.QTableWidget):
         self._emitSelectionChangedSignal(row, 0)
 
     def _cellChangedSlot(self, row, col):
-        if DEBUG:
-            print("_cellChangedSlot(%d, %d)" % (row, col))
+        _logger.debug("_cellChangedSlot(%d, %d)", row, col)
         if self.building:
             return
         if col == 0:
@@ -513,8 +512,7 @@ class McaROITable(qt.QTableWidget):
         except:
             return
         if row >= len(self.roilist):
-            if DEBUG:
-                print("deleting???")
+            _logger.debug("deleting???")
             return
         if QTVERSION < '4.0.0':
             text = str(self.text(row, 0))
@@ -535,8 +533,7 @@ class McaROITable(qt.QTableWidget):
     def nameSlot(self, row, col):
         if col != 0: return
         if row >= len(self.roilist):
-            if DEBUG:
-                print("deleting???")
+            _logger.debug("deleting???")
             return
         item = self.item(row, col)
         if item is None:
@@ -572,8 +569,7 @@ class McaROITable(qt.QTableWidget):
             col = var[1]
             if col == 0:
                 if row >= len(self.roilist):
-                    if DEBUG:
-                        print("deleting???")
+                    _logger.debug("deleting???")
                     return
                     row = 0
                 item = self.item(row, col)
