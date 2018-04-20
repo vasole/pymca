@@ -27,11 +27,10 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import sys
+
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import HDF5Stack1D
 from PyMca5.PyMcaGui.pymca import QHDF5StackWizard
-DEBUG = 0
 
 class QHDF5Stack1D(HDF5Stack1D.HDF5Stack1D):
     def __init__(self, filelist=None,

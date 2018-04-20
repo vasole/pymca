@@ -27,10 +27,11 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-import sys
+
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 SOURCE_EVENT = qt.QEvent.User
 
 class SourceEvent(qt.QEvent):
@@ -80,10 +81,9 @@ class QSource(qt.QObject):
         reference        = id(dataObject)
 
         def dataObjectDestroyed(ref, dataObjectKey=key, dataObjectRef=reference):
-            if DEBUG:
-                print('data object destroyed, key was %s' % dataObjectKey)
-                print('data object destroyed, ref was 0x%x' % dataObjectRef)
-                print("self.surveyDict[key] = ",self.surveyDict[key])
+            _logger.debug('data object destroyed, key was %s', dataObjectKey)
+            _logger.debug('data object destroyed, ref was 0x%x', dataObjectRef)
+            _logger.debug("self.surveyDict[key] = %s", self.surveyDict[key])
 
             n = len(self.surveyDict[dataObjectKey])
             if n > 0:
@@ -96,8 +96,7 @@ class QSource(qt.QObject):
             if len(self.surveyDict[dataObjectKey]) == 0:
                 del self.surveyDict[dataObjectKey]
 
-            if DEBUG:
-                print("SURVEY DICT AFTER DELETION = ", self.surveyDict)
+            _logger.debug("SURVEY DICT AFTER DELETION = %s", self.surveyDict)
             return
 
         # create a weak reference to the dataObject and we call it dataObjectRef
@@ -111,12 +110,10 @@ class QSource(qt.QObject):
             self.surveyDict[key] = [dataObjectRef]
             self.selections[key] = [(id(dataObjectRef), dataObjectRef.info)]
         except ReferenceError:
-            if DEBUG:
-                print("NOT ADDED TO THE POLL dataObject = ", dataObject)
+            _logger.debug("NOT ADDED TO THE POLL dataObject = %s", dataObject)
             return
 
-        if DEBUG:
-            print("SURVEY DICT AFTER ADDITION = ", self.surveyDict)
+        _logger.debug("SURVEY DICT AFTER ADDITION = %s", self.surveyDict)
 
         if self.pollerThreadId is None:
             # start a new polling thread
@@ -130,8 +127,7 @@ class QSource(qt.QObject):
             #for key in self.surveyDict is dangerous
             # runtime error: dictionnary changed during iteration
             # a mutex is needed
-            if DEBUG:
-                print("In loop")
+            _logger.debug("In loop")
             dummy = list(self.surveyDict.keys())
             eventsToPost = {}
             #for key in self.surveyDict:
@@ -139,8 +135,7 @@ class QSource(qt.QObject):
                 if key not in eventsToPost: 
                     eventsToPost[key] = []
                 if self.isUpdated(self.sourceName, key):
-                    if DEBUG:
-                        print(self.sourceName,key,"is updated")
+                    _logger.debug("%s %s is updated", self.sourceName, key)
                     try:
                         if len(self.surveyDict[key]):
                             #there are still instances of dataObjects
@@ -161,16 +156,14 @@ class QSource(qt.QObject):
                             del self.surveyDict[key]
                             del self.selections[key]
                     except KeyError:
-                        if DEBUG:
-                            print("key error in loop")
+                        _logger.debug("key error in loop")
                         pass
             for key in eventsToPost:
                 for event in eventsToPost[key]:
                     qt.QApplication.postEvent(self, event)
             qt.QApplication.instance().processEvents()
             time.sleep(self._pollTime)
-            if DEBUG:
-                print("woke up")
+            _logger.debug("woke up")
 
         self.pollerThreadId = None
         self.selections = {}

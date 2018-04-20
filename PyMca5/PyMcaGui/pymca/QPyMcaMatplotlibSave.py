@@ -34,6 +34,7 @@ import os
 import numpy
 import traceback
 from io import StringIO
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import PyMcaMatplotlibSave
@@ -49,7 +50,7 @@ from matplotlib.figure import Figure
 from matplotlib.colors import LinearSegmentedColormap, LogNorm, Normalize
 from matplotlib.ticker import MaxNLocator, AutoLocator
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 
 class TopWidget(qt.QWidget):
@@ -181,7 +182,6 @@ class SaveImageSetup(qt.QWidget):
             msg.setWindowTitle('Matplotlib Save Image')
             msg.exec_()
 
-
     def printClicked(self):
         try:
             imgData = StringIO()
@@ -289,7 +289,7 @@ class SaveImageSetup(qt.QWidget):
                                           format=finalFile[-3:],
                                           dpi=self.imageWidget.config['outputdpi'])
         except:
-            print("WARNING: trying to save using obsolete method")
+            _logger.warning("trying to save using obsolete method")
             config = self.imageWidget.getParameters()
             try:
                 s=PyMcaMatplotlibSave.PyMcaMatplotlibSaveImage(self.imageWidget.imageData)
@@ -743,8 +743,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
         elif self.config['colormap'] == 'ylgnbu_r':
             cmap = cm.YlGnBu_r
         else:
-            print("Unsupported colormap %s" % self.config['colormap'])
-
+            _logger.warning("Unsupported colormap %s", self.config['colormap'])
 
         if self.config['extent'] is None:
             h, w = self.imageData.shape
@@ -817,7 +816,7 @@ class QPyMcaMatplotlibImage(FigureCanvas):
                         self._colorbar.locator = tick_locator
                         self._colorbar.update_ticks()
                     except:
-                        print("Colorbar error", sys.exc_info())
+                        _logger.warning("Colorbar error %s", sys.exc_info())
                         pass
             else:
                 self._colorbar = self.figure.colorbar(self._image,
