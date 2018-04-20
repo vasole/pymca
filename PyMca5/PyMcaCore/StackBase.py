@@ -187,6 +187,7 @@ class StackBase(object):
                         self.pluginList.append(plugin)
                 except:
                     _logger.debug("Problem importing module %s", plugin)
+                    if _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
         return len(self.pluginList)
 
