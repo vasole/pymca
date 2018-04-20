@@ -32,6 +32,7 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 
 import copy
+import logging
 
 from . import EnergyTable
 from PyMca5.PyMcaPhysics import Elements
@@ -39,8 +40,8 @@ from .QPeriodicTable import QPeriodicTable
 from PyMca5.PyMcaGui import PyMcaQt as qt
 
 
+_logger = logging.getLogger(__name__)
 
-DEBUG = 0
 QTVERSION = qt.qVersion()
 ElementList = Elements.ElementList
 __revision__ = "$Revision: 1.12 $"
@@ -374,9 +375,7 @@ class FitPeakSelect(qt.QWidget):
         self._energyClicked()
 
     def _energyTableAction(self, ddict):
-        if DEBUG:
-            print("_energyTableAction called",)
-            print("ddict = ",ddict.dict)
+        _logger.debug("_energyTableAction called, ddict = %s", ddict.dict)
         elist, wlist, flist, slist= self.energyTable.getParameters()
         maxenergy = 0.0
         for i in range(len(flist)):

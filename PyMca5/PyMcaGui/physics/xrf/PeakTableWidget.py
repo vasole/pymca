@@ -31,6 +31,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QStringList"):
     QStringList = qt.QStringList
@@ -43,7 +44,8 @@ else:
     QString = str
 from PyMca5.PyMcaPhysics import Elements
 
-DEBUG=0
+_logger = logging.getLogger(__name__)
+
 
 QTable = qt.QTableWidget
 class QComboTableItem(qt.QComboBox):
@@ -55,8 +57,7 @@ class QComboTableItem(qt.QComboBox):
         self.activated[int].connect(self._cellChanged)
 
     def _cellChanged(self, idx):
-        if DEBUG:
-            print("cell changed",idx)
+        _logger.debug("cell changed %s", idx)
         self.sigCellChanged.emit(self._row, self._col)
 
 class QCheckBoxItem(qt.QCheckBox):
@@ -178,14 +179,13 @@ class PeakTableWidget(QTable):
         self.peaks[peak]['use_item'].setChecked(self.peaks[peak]['use'])
 
     def myslot(self, row, col):
-        if DEBUG:
-            print("Passing by myslot",
-                  self.peaks[self.peaklist[row]]['fields'][col])
-        peak=self.peaklist[row]
-        field=self.peaks[peak]['fields'][col]
+        _logger.debug("Passing by myslot %s",
+                      self.peaks[self.peaklist[row]]['fields'][col])
+        peak = self.peaklist[row]
+        field = self.peaks[peak]['fields'][col]
         if (field == "element") or (field == "elementline"):
-            key = field+"_item"
-            newvalue=self.peaks[peak][key].currentText()
+            key = field + "_item"
+            newvalue = self.peaks[peak][key].currentText()
         elif field == "use":
             pass
         else:
@@ -239,7 +239,7 @@ class PeakTableWidget(QTable):
                             energy = "%.5f " % (Elements.Element[ele][transition]['energy'])
                             break
                 if energy == "0.0":
-                    print("Something is wrong")
+                    _logger.warning("Something is wrong")
                 else:
                     self.configure(name=peak,setenergy=energy)
                 self.setReadOnly(peak,'setenergy')
@@ -249,7 +249,7 @@ class PeakTableWidget(QTable):
             try:
                 value = float(str(newvalue))
             except:
-                print(field, " newvalue = ", newvalue, "taking old value", oldvalue)
+                _logger.warning("%s newvalue = %s taking old value %s", field, newvalue, oldvalue)
                 item = self.item(row, col)
                 item.setText("%s" % oldvalue)
                 value = float(str(oldvalue))
@@ -263,7 +263,7 @@ class PeakTableWidget(QTable):
             try:
                 value = float(str(newvalue))
             except:
-                print(field, " newvalue = ", newvalue, "taking old value", oldvalue)
+                _logger.warning("%s newvalue = %s taking old value%s", field, newvalue, oldvalue)
                 item = self.item(row, col)
                 item.setText("%s" % oldvalue)
                 value = float(str(oldvalue))
@@ -281,22 +281,18 @@ class PeakTableWidget(QTable):
             ddict['event'] = 'use'
             self.sigPeakTableWidgetSignal.emit(ddict)
 
-    def setReadOnly(self,parameter,fields):
-        if DEBUG:
-            print("peak ",parameter,"fields = ",fields,"asked to be read only")
+    def setReadOnly(self, parameter, fields):
+        _logger.debug("peak %s fields = %s asked to be read only", parameter, fields)
         self.setfield(parameter, fields,
-                      qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)
+                      qt.Qt.ItemIsSelectable | qt.Qt.ItemIsEnabled)
 
-
-    def setReadWrite(self,parameter,fields):
-        if DEBUG:
-            print("peak ",parameter,"fields = ",fields,"asked to be read write")
+    def setReadWrite(self, parameter, fields):
+        _logger.debug("peak %s fields = %s asked to be read write", parameter, fields)
         self.setfield(parameter, fields,
-                      qt.Qt.ItemIsEditable|qt.Qt.ItemIsSelectable|qt.Qt.ItemIsEnabled)
+                      qt.Qt.ItemIsEditable | qt.Qt.ItemIsSelectable | qt.Qt.ItemIsEnabled)
 
     def setfield(self,peak,fields,EditType):
-        if DEBUG:
-            print("setfield. peak =",peak,"fields = ",fields)
+        _logger.debug("setfield. peak = %s fields = %s",peak, fields)
         if type(peak) == type (()) or \
            type(peak) == type ([]):
             peaklist=peak
@@ -331,10 +327,9 @@ class PeakTableWidget(QTable):
 
 
     def configure(self,*vars,**kw):
-        if DEBUG:
-            print("configure called with **kw = ",kw)
-            print("configure called with *vars = ",vars)
-        name=None
+        _logger.debug("configure called with **kw = %s", kw)
+        _logger.debug("configure called with *vars = %s", vars)
+        name = None
         error=0
         if 'name' in kw:
             name=kw['name']
@@ -371,13 +366,13 @@ class PeakTableWidget(QTable):
                         try:
                             self.myslot(row,col)
                         except:
-                            print("Error setting element")
+                            _logger.warning("Error setting element")
                     elif key is 'elementline':
                         try:
                             iv = self.peaks[name][key+"_item"].findText(QString(kw[key]))
                             self.peaks[name][key+"_item"].setCurrentIndex(iv)
                         except:
-                            print("Error setting elementline")
+                            _logger.warning("Error setting elementline")
                     elif key is 'use':
                         if kw[key]:
                             self.peaks[name][key] = 1
@@ -400,11 +395,10 @@ class PeakTableWidget(QTable):
                         else:
                             item.setText(text)
                     elif key == 'channel':
-                        if DEBUG:
-                            print("setting channel in configure")
+                        _logger.debug("setting channel in configure")
                         if len(str(kw[key])):
-                            newvalue=float(str(kw[key]))
-                            newvalue= QString("%.3f" % newvalue)
+                            newvalue = float(str(kw[key]))
+                            newvalue = QString("%.3f" % newvalue)
                             self.peaks[name][key]=newvalue
                         else:
                             self.peaks[name][key]=oldvalue
@@ -454,7 +448,7 @@ class PeakTableWidget(QTable):
         return 1
 
     def getdict(self, *var):
-        print("PeakTableWidget.getdict deprecated. Use getDict")
+        _logger.warning("PeakTableWidget.getdict deprecated. Use getDict")
         return self.getDict(*var)
 
     def getDict(self,*var):
