@@ -30,6 +30,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import posixpath
 import h5py
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaCore import DataObject
 from PyMca5.PyMcaGui.io.hdf5 import QNexusWidget
@@ -39,7 +40,8 @@ if hasattr(qt, 'QString'):
     QString = qt.QString
 else:
     QString = str
-DEBUG=0
+_logger = logging.getLogger(__name__)
+
 
 class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
     def __init__(self, parent=None, mca=True):
@@ -100,23 +102,19 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
         return
 
     def _stack1DSignal(self):
-        if DEBUG:
-            print("_stack1DSignal")
+        _logger.debug("_stack1DSignal")
         self._stackSignal(index=-1, load=False)
 
     def _loadStack1DSignal(self):
-        if DEBUG:
-            print("_stack1DSignal")
+        _logger.debug("_stack1DSignal")
         self._stackSignal(index=-1, load=True)
 
     def _loadStack2DSignal(self):
-        if DEBUG:
-            print("_loadStack2DSignal")
+        _logger.debug("_loadStack2DSignal")
         self._stackSignal(index=0, load=True)
 
     def _stack2DSignal(self, load=False):
-        if DEBUG:
-            print("_stack2DSignal")
+        _logger.debug("_stack2DSignal")
         self._stackSignal(index=0, load=False)
 
     def _stackSignal(self, index=-1, load=False):
@@ -171,7 +169,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
                     try:
                         axes = axes.decode('utf-8')
                     except:
-                        print("WARNING: Cannot decode axes")
+                        _logger.warning("Cannot decode axes")
                 axes = axes.split(":")
                 for axis in axes:
                     if axis in group.keys():
@@ -181,7 +179,7 @@ class PyMcaNexusWidget(QNexusWidget.QNexusWidget):
         except:
             # I cannot afford this Nexus specific things
             # to break the generic HDF5 functionality
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
             axesList = []
 

@@ -28,6 +28,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys, getopt, string
+import logging
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
     QString = qt.QString
@@ -39,7 +40,7 @@ QTVERSION = qt.qVersion()
 from PyMca5.PyMcaGui import PyMca_Icons
 IconDict = PyMca_Icons.IconDict
 from .PyMca_help  import HelpDict
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 
 __version__ = "1.5"
 
@@ -173,8 +174,7 @@ class PyMcaMdi(qt.QMainWindow):
             self.winToolBar = self.addToolBar("wintoolbar")
 
     def onWinToolMenu(self, idx):
-        if DEBUG:
-            print("onWinToolMenu %d " % idx)
+        _logger.debug("onWinToolMenu %d ", idx)
         for midx in self.winToolMenuIndex:
                 self.winToolMenu.setItemChecked(midx, midx==idx)
         act= self.winToolMenuIndex.index(idx)
@@ -286,8 +286,7 @@ class PyMcaMdi(qt.QMainWindow):
             self.menuBar().addMenu(self.menuHelp)
 
     def menuWindowAboutToShow(self):
-        if DEBUG:
-            print("menuWindowAboutToShow")
+        _logger.debug("menuWindowAboutToShow")
         self.menuWindow.clear()
         if len(self.mdi.windowList())==0:
             return
@@ -311,10 +310,10 @@ class PyMcaMdi(qt.QMainWindow):
     def _windowMapperMapSlot(self):
         return self.windowMapper.map()
 
-    def menuWindowActivated(self, idx = None):
-        if DEBUG:
-            print("menuWindowActivated idx = ",idx)
-        if idx is None:return
+    def menuWindowActivated(self, idx=None):
+        _logger.debug("menuWindowActivated idx = %s", idx)
+        if idx is None:
+            return
         if self.menuWindowMap[idx].isHidden():
             self.menuWindowMap[idx].show()
             self.menuWindowMap[idx].raise_()
@@ -335,7 +334,7 @@ class PyMcaMdi(qt.QMainWindow):
             self.followActiveWindow= follow
 
     def onWindowActivated(self, win):
-        print("Window activated")
+        _logger.info("Window activated")
         pass
 
     #
@@ -367,8 +366,7 @@ class PyMcaMdi(qt.QMainWindow):
         pass
 
     def menuToolsAboutToShow(self):
-        if DEBUG:
-            print("menuToolsAboutToShow")
+        _logger.debug("menuToolsAboutToShow")
         self.menuTools.clear()
         self.menuToolsMap= {}
         """
@@ -383,8 +381,7 @@ class PyMcaMdi(qt.QMainWindow):
             self.menuTools.insertItem("Customize", self.customize)
 
     def menuToolsActivated(self, idx):
-        if DEBUG:
-            print("menuToolsActivated idx = ",idx)
+        _logger.debug("menuToolsActivated idx = %s", idx)
         if self.menuTools.isItemChecked(idx):
             self.menuToolsMap[idx].hide()
         else:
@@ -444,7 +441,7 @@ def main(args):
                      options,
                      longoptions)
     except getopt.error:
-        print(sys.exc_info()[1])
+        _logger.error(sys.exc_info()[1])
         sys.exit(1)
     # --- waiting widget
     kw={}
