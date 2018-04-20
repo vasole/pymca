@@ -148,8 +148,8 @@ class PluginLoader(object):
                     exceptionMessage += "%s\n" % sys.exc_info()[1]
                     exceptionMessage += "%s\n" % sys.exc_info()[2]
 
-        if len(exceptionMessage):
-            _logger.error(exceptionMessage)
+        if len(exceptionMessage) and _logger.getEffectiveLevel() == logging.DEBUG:
+            raise IOError(exceptionMessage)
         if exceptions:
             return len(self.pluginList), exceptionMessage
         else:
