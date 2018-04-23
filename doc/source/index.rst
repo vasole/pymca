@@ -23,7 +23,7 @@ field for which is among the most complete solutions available.
 
 Synchotron radiation XRF is closely associated to microscopy. To properly achieve its objectives,
 PyMca had to incorporate more than just 1D visualization and XRF spectrum modelling.
-PyMca has evolved into a library and set of tools to provide close-to-the-source data visualization
+PyMca has evolved into a set of tools to provide close-to-the-source data visualization
 and diagnostic capabilities.
 
 Features
