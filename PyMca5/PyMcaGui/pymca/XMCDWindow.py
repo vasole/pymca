@@ -28,6 +28,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import numpy, copy
+import logging
 import sys
 from os.path import splitext, basename, dirname, exists, join as pathjoin
 from PyMca5.PyMcaGui import IconDict
@@ -46,8 +47,9 @@ else:
     QString = str
     QStringList = list
 
-DEBUG = 0
-if DEBUG:
+_logger = logging.getLogger(__name__)
+
+if _logger.getEffectiveLevel() == logging.DEBUG:
     numpy.set_printoptions(threshold=50)
 
 NEWLINE = '\n'
@@ -257,8 +259,7 @@ class XMCDOptions(qt.QDialog):
             except IndexError:
                 # Returned list is empty
                 return
-            if DEBUG:
-                print('saveOptions -- Filename: "%s"' % filename)
+            _logger.debug('saveOptions -- Filename: "%s"', filename)
         if len(filename) == 0:
             self.saved = False
             return False
@@ -304,25 +305,22 @@ class XMCDOptions(qt.QDialog):
         try:
             self.setOptions(confDict['XMCDOptions'])
         except ValueError as e:
-            if DEBUG:
-                print('loadOptions -- int conversion failed:',)
-                print('Invalid value for option \'%s\'' % e)
-            else:
-                msg = qt.QMessageBox()
-                msg.setWindowTitle('XMCD Options Error')
-                msg.setText('Configuration file \'%s\' corruted' % filename)
-                msg.exec_()
-                return
+            _logger.debug('loadOptions -- int conversion failed:\n'
+                          'Invalid value for option \'%s\'', e)
+            msg = qt.QMessageBox()
+            msg.setWindowTitle('XMCD Options Error')
+            msg.setText('Configuration file \'%s\' corruted' % filename)
+            msg.exec_()
+            return
         except KeyError as e:
-            if DEBUG:
-                print('loadOptions -- invalid identifier:',)
-                print('option \'%s\' not found' % e)
-            else:
-                msg = qt.QMessageBox()
-                msg.setWindowTitle('XMCD Options Error')
-                msg.setText('Configuration file \'%s\' corruted' % filename)
-                msg.exec_()
-                return
+            _logger.debug('loadOptions -- invalid identifier:\n'
+                          'option \'%s\' not found', e)
+
+            msg = qt.QMessageBox()
+            msg.setWindowTitle('XMCD Options Error')
+            msg.setText('Configuration file \'%s\' corruted' % filename)
+            msg.exec_()
+            return
         self.saved = True
 
     def getOptions(self):
@@ -550,8 +548,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             keys = sorted(self.curvesDict.keys())
             xRangeList = [self.curvesDict[k].x[0] for k in keys]
         if not len(xRangeList):
-            if DEBUG:
-                print('interpXRange -- Nothing to do')
+            _logger.debug('interpXRange -- Nothing to do')
             return None
 
         num = 0
@@ -585,11 +582,10 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             mask = numpy.nonzero((x > xmin) &
                                  (x < xmax))[0]
             out = numpy.sort(numpy.take(x, mask))
-        if DEBUG:
-            print('interpXRange -- Resulting xrange:')
-            print('\tmin = %f' % out.min())
-            print('\tmax = %f' % out.max())
-            print('\tnum = %f' % len(out))
+        _logger.debug('interpXRange -- Resulting xrange:')
+        _logger.debug('\tmin = %f', out.min())
+        _logger.debug('\tmax = %f', out.max())
+        _logger.debug('\tnum = %f', len(out))
         return out
 
     def processSelection(self, groupA, groupB):
@@ -621,19 +617,16 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             # Get active curve
             active = self.plotWindow.getActiveCurve()
             if active:
-                if DEBUG:
-                    print('processSelection -- xrange: use active')
+                _logger.debug('processSelection -- xrange: use active')
                 x = active.getXData()
                 xRange = self.interpXRange(xRange=x)
             else:
                 return
         elif self.optsDict['equidistant']:
-            if DEBUG:
-                print('processSelection -- xrange: use equidistant')
+            _logger.debug('processSelection -- xrange: use equidistant')
             xRange = self.interpXRange(equidistant=True)
         else:
-            if DEBUG:
-                print('processSelection -- xrange: use first')
+            _logger.debug('processSelection -- xrange: use first')
             xRange = self.interpXRange()
         if hasattr(self.plotWindow, 'graph'):
             activeLegend = self.plotWindow.graph.getActiveCurve(justlegend=True)
@@ -739,8 +732,7 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                 out[legend] = tmp
             else:
                 # TODO: Errorhandling, curve not found
-                if DEBUG:
-                    print("copyCurves -- Retrieved none type curve")
+                _logger.debug("copyCurves -- Retrieved none type curve")
                 continue
         return out
 
@@ -768,9 +760,8 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
         """
         if (len(xarr) != len(yarr)) or\
            (len(xarr) == 0) or (len(yarr) == 0):
-            if DEBUG:
-                print('specAverage -- invalid input!')
-                print('Array lengths do not match or are 0')
+            _logger.debug('specAverage -- invalid input!')
+            _logger.debug('Array lengths do not match or are 0')
             return None, None
 
         same = True
@@ -818,9 +809,8 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
                 if xmax < xmax0:
                     xmax0 = xmax
             if xmax <= xmin:
-                if DEBUG:
-                    print('specAverage -- ')
-                    print('No overlap between spectra!')
+                _logger.debug('specAverage --\n'
+                              'No overlap between spectra!')
                 return numpy.array([]), numpy.array([])
 
         # Clip xRange to maximal overlap in spectra
@@ -868,17 +858,15 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             a = self.dataObjectsDict[self.avgA]
             b = self.dataObjectsDict[self.avgB]
         else:
-            if DEBUG:
-                print('performXAS -- Data not found: ')
-                print('\tavg_m = %f' % self.avgA)
-                print('\tavg_p = %f' % self.avgB)
+            _logger.debug('performXAS -- Data not found: ')
+            _logger.debug('\tavg_m = %f', self.avgA)
+            _logger.debug('\tavg_p = %f', self.avgB)
             return
         if numpy.all( a.x[0] == b.x[0] ):
             avg = .5*(b.y[0] + a.y[0])
         else:
-            if DEBUG:
-                print('performXAS -- x ranges are not the same! ')
-                print('Force interpolation')
+            _logger.debug('performXAS -- x ranges are not the same! ')
+            _logger.debug('Force interpolation')
             avg = self.performAverage([a.x[0], b.x[0]],
                                       [a.y[0], b.y[0]],
                                        b.x[0])
@@ -900,15 +888,13 @@ class XMCDScanWindow(ScanWindow.ScanWindow):
             a = self.dataObjectsDict[self.avgA]
             b = self.dataObjectsDict[self.avgB]
         else:
-            if DEBUG:
-                print('performXMCD -- Data not found:')
+            _logger.debug('performXMCD -- Data not found:')
             return
         if numpy.all( a.x[0] == b.x[0] ):
             diff = b.y[0] - a.y[0]
         else:
-            if DEBUG:
-                print('performXMCD -- x ranges are not the same! ')
-                print('Force interpolation using p Average xrange')
+            _logger.debug('performXMCD -- x ranges are not the same! ')
+            _logger.debug('Force interpolation using p Average xrange')
             # Use performAverage d = 2 * avg(y1, -y2)
             # and force interpolation on p-xrange
             diff = 2. * self.performAverage([a.x[0], b.x[0]],
@@ -1259,10 +1245,8 @@ class XMCDTreeWidget(qt.QTreeWidget):
         out = []
         convert = (convertType != str)
         if ncol > (self.columnCount()-1):
-            if DEBUG:
-                print('getColum -- Selected column out of bounds')
+            _logger.debug('getColum -- Selected column out of bounds')
             raise IndexError("Selected column '%d' out of bounds" % ncol)
-            return out
         if selectedOnly:
             sel = self.selectedItems()
         else:
@@ -1277,8 +1261,7 @@ class XMCDTreeWidget(qt.QTreeWidget):
                     if convertType == float:
                         tmp = float('NaN')
                     else:
-                        if DEBUG:
-                            print('getColum -- Conversion failed!')
+                        _logger.debug('getColum -- Conversion failed!')
                         raise TypeError
             out += [tmp]
         return out
@@ -1478,8 +1461,7 @@ class XMCDWidget(qt.QWidget):
             helpFileHandle.close()
             self.helpFileBrowser.setHtml(helpFileHTML)
         except IOError:
-            if DEBUG:
-                print('XMCDWindow -- init: Unable to read help file')
+            _logger.debug('XMCDWindow -- init: Unable to read help file')
             self.helpFileBrowser = None
 
         self.selectionDict = {'D': [],
@@ -2005,7 +1987,7 @@ class XMCDWidget(qt.QWidget):
             if len(namesList) == len(valuesList):
                 ret.append(dict(zip(namesList,  valuesList)))
             else:
-                print("Number of motors and values does not match!")
+                _logger.warning("Number of motors and values does not match!")
         return ret
 
     def _setLists(self):
@@ -2025,8 +2007,7 @@ class XMCDWidget(qt.QWidget):
         if self.plotWindow is not None:
             curves = self.plotWindow.getAllCurves()
         else:
-            if DEBUG:
-                print('_setLists -- Set self.plotWindow before calling self._setLists')
+            _logger.debug('_setLists -- Set self.plotWindow before calling self._setLists')
             return
         # nCurves = len(curves)
         self.legendList = [curve.getLegend() for curve in curves]
