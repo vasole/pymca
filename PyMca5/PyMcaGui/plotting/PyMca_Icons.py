@@ -27,6 +27,19 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
+
+import logging
+import sys
+from PyMca5.PyMcaGui import PyMcaQt as qt
+
+if sys.version_info < (3, ):
+    from collections import MutableMapping
+else:
+    from collections.abc import MutableMapping
+
+_logger = logging.getLogger(__name__)
+
+
 aspect_ratio = [
 #/* columns rows colors chars-per-pixel */
 "32 32 5 1",
@@ -3646,14 +3659,313 @@ zoomreset = [
 ">pppppppppppp  >"
 ]
 
+# Object3DIcons
 
-IconDict = {
+image_print_data = [
+"22 22 88 2",
+"Qt c None",
+".2 c #000000",
+".S c #08ff08",
+"#v c #100810",
+".U c #101010",
+"#c c #101018",
+".M c #181018",
+"#e c #181818",
+".A c #181821",
+".L c #211821",
+"#l c #212121",
+".z c #212129",
+"#m c #292129",
+"#u c #292929",
+"#n c #292931",
+".R c #29ff29",
+"#o c #312931",
+".T c #313131",
+"#p c #313139",
+".Z c #31ff31",
+"#q c #393139",
+"#t c #393939",
+".y c #393942",
+"#s c #423942",
+".o c #424242",
+"#h c #4a4a52",
+".n c #5a525a",
+"#r c #5a5a63",
+".I c #5ace5a",
+"#b c #6b636b",
+".p c #6b6b6b",
+".x c #6b6b73",
+".Y c #6bff63",
+".l c #736b73",
+".t c #7b737b",
+".s c #7b7384",
+".0 c #7bff7b",
+".r c #847b84",
+".u c #847b8c",
+"#g c #84848c",
+".v c #8c7b94",
+"#i c #8c848c",
+".w c #8c8494",
+"#j c #8c8c8c",
+".8 c #8c8c94",
+".m c #948c94",
+"#k c #948c9c",
+"#f c #949494",
+".q c #94949c",
+".J c #94c694",
+"#d c #9c949c",
+"#a c #9c94a5",
+".k c #9c9c9c",
+".N c #9c9ca5",
+".H c #9ccea5",
+".K c #a59ca5",
+"#. c #a59cad",
+".i c #a5a5a5",
+".3 c #a5a5ad",
+"## c #ad9cad",
+".V c #ada5ad",
+".d c #adadad",
+".j c #adadb5",
+".9 c #b5adb5",
+".# c #b5b5b5",
+".a c #bdbdbd",
+".7 c #bdd6bd",
+".c c #c6c6c6",
+".5 c #cec6ce",
+".b c #cecece",
+".4 c #ceced6",
+".F c #d6ced6",
+".G c #d6cede",
+".h c #d6d6d6",
+".E c #d6d6de",
+".Q c #d6ffd6",
+".B c #ded6de",
+".1 c #ded6e7",
+".g c #dedede",
+".D c #dedee7",
+".6 c #e7dee7",
+".f c #e7e7e7",
+".C c #e7e7ef",
+".X c #e7ffe7",
+".O c #efe7ef",
+".e c #efefef",
+".W c #f7f7f7",
+".P c #ffffff",
+"QtQtQtQtQtQt.#.a.b.b.b.b.c.c.a.a.d.aQtQtQtQt",
+"QtQtQtQtQtQt.a.e.f.f.f.f.f.e.e.e.g.aQtQtQtQt",
+"QtQtQtQtQtQt.a.c.c.c.b.b.c.c.c.c.a.cQtQtQtQt",
+"QtQtQtQtQtQt.#.a.a.a.a.#.a.a.#.#.d.aQtQtQtQt",
+"QtQtQtQtQt.c.d.c.a.c.c.c.a.a.a.c.#QtQtQtQtQt",
+"QtQtQtQtQt.a.a.#.a.a.a.a.a.a.c.c.#QtQtQtQtQt",
+"QtQtQtQtQt.a.#.c.a.a.a.a.a.c.a.c.dQtQtQtQtQt",
+"QtQtQtQtQt.c.a.a.a.a.a.a.a.a.a.a.#QtQtQtQtQt",
+"QtQtQtQtQt.d.b.f.g.g.g.g.g.g.h.g.i.i.jQtQtQt",
+"QtQtQt.a.k.l.#.h.b.h.b.h.b.h.g.g.m.n.o.p.#Qt",
+"QtQt.a.q.r.s.t.t.t.t.t.t.t.u.v.w.x.y.z.A.o.i",
+"Qt.a.k.B.C.D.B.E.E.E.E.F.G.H.I.J.K.o.L.L.M.y",
+".a.N.O.P.P.P.P.P.P.P.P.P.Q.R.S.R.b.v.T.A.U.L",
+".V.W.P.P.P.P.P.P.P.P.P.P.X.Y.Z.0.P.1.t.A.2.L",
+".3.E.4.5.4.h.E.E.g.6.D.B.D.E.7.F.4.5.8.M.2.A",
+".m.9.j.V.3#..3.K#.#..i#..K#.###a.q.8#b#c.2.L",
+".m.j.j#..3.K.K.K.N.K.N.N.N.N#a#d#d.w#b#c.2#e",
+"#f#.#..K.N.K.N.N.N#a.k#a#d#d#d#a.m#g#b.M.2#h",
+".m.3.K.K#a.k#a#d#a.k#a#d#a#d.q.m.8#i.x#c#e.d",
+"#f#g#i.w#j.w#i.8.w#i.8.8.m.8.m#k.8.w#b#e#fQt",
+".#.l.z.A#l.z#m#m#m#n#o#o#p#p#q#q#p#o#p#fQtQt",
+"QtQt.d#r#s#s#t#p.T.T.T#u#u.z#e#e#v.o.kQtQtQt"
+]
+
+image_cut_data = [
+"22 22 3 1",
+". c None",
+"# c #000000",
+"a c #000082",
+"......................",
+".......#.....#........",
+".......#.....#........",
+".......#.....#........",
+".......#....##........",
+".......##...#.........",
+"........#...#.........",
+"........##.##.........",
+".........###..........",
+".........###..........",
+"..........#...........",
+".........a#a..........",
+"........aa.aaa........",
+".......a.a.a..a.......",
+"......a..a.a...a......",
+".....a...a.a....a.....",
+"....a....a.a....a.....",
+"....a....a..a...a.....",
+"....a....a..a..a......",
+"....a...a....aa.......",
+".....aaa..............",
+"......................"
+]
+
+image_copy_data = [
+"22 22 6 1",
+". c None",
+"# c #000000",
+"b c #000082",
+"c c #3c3cfd",
+"d c #8b8bfd",
+"a c #ffffff",
+"......................",
+"......................",
+"########..............",
+"#aaaaaa##.............",
+"#a####a#a#............",
+"#aaaaaa#aa#...........",
+"#a####a#bbbbbbbb......",
+"#aaaaaa#baaaaaabb.....",
+"#a#####aba####abcb....",
+"#aaaaaaabaaaaaabdcb...",
+"#a#####aba####abadcb..",
+"#aaaaaaabaaaaaabbbbbb.",
+"#a#####aba####aaaaaab.",
+"#aaaaaaabaaaaaaaaaaab.",
+"#a#####aba#########ab.",
+"#aaaaaaabaaaaaaaaaaab.",
+"########ba#########ab.",
+"........baaaaaaaaaaab.",
+"........ba#########ab.",
+"........baaaaaaaaaaab.",
+"........bbbbbbbbbbbbb.",
+"......................"
+]
+
+image_delete_data = [
+"22 22 2 1",
+". c None",
+"# c #ff0000",
+"......................",
+"......................",
+".................###..",
+"...............####...",
+".###..........###.....",
+"..####.......###......",
+"....####....###.......",
+"......####.###........",
+".......######.........",
+"........######........",
+"........#######.......",
+".......#########......",
+".......###..#####.....",
+"......####...#####....",
+".....####.....#####...",
+"....#####.....#####...",
+"...#####.......###....",
+"...#####.......##.....",
+"...####...............",
+"....##................",
+"......................",
+"......................"
+]
+
+
+image_paste_data = [
+"22 22 8 1",
+". c None",
+"# c #000000",
+"e c #000084",
+"c c #848200",
+"b c #848284",
+"d c #c6c3c6",
+"a c #ffff00",
+"f c #ffffff",
+"......................",
+".......#####..........",
+"..######aaa######.....",
+".######aaaaa######....",
+"##bcb##a###a##bcb##...",
+"#bcb#ddddddddd#bcb#...",
+"#cbc#ddddddddd#cbc#...",
+"#bcb###########bcb#...",
+"#cbcbcbcbcbcbcbcbc#...",
+"#bcbcbcbcbcbcbcbcb#...",
+"#cbcbcbceeeeeeeeee#...",
+"#bcbcbcbefffffffefe...",
+"#cbcbcbcefeeeeefeffe..",
+"#bcbcbcbefffffffefffe.",
+"#cbcbcbcefeeeeefeffffe",
+"#bcbcbcbefffffffeeeeee",
+"#cbcbcbcefeeeeeffffffe",
+"#bcbcbcbeffffffffffffe",
+"#cbcbcbcefeeeeeeeeeefe",
+".#######effffffffffffe",
+"........eeeeeeeeeeeeee",
+"......................"
+]
+
+file_open = ["22 22 5 1",
+". c None",
+"# c #000000",
+"c c #848200",
+"a c #ffff00",
+"b c #ffffff",
+"......................",
+"......................",
+"......................",
+"............####....#.",
+"...........#....##.##.",
+"..................###.",
+".................####.",
+".####...........#####.",
+"#abab##########.......",
+"#babababababab#.......",
+"#ababababababa#.......",
+"#babababababab#.......",
+"#ababab###############",
+"#babab##cccccccccccc##",
+"#abab##cccccccccccc##.",
+"#bab##cccccccccccc##..",
+"#ab##cccccccccccc##...",
+"#b##cccccccccccc##....",
+"###cccccccccccc##.....",
+"##cccccccccccc##......",
+"###############.......",
+"......................"]
+
+file_save = ["22 22 5 1",
+". c None",
+"# c #000000",
+"a c #848200",
+"b c #c1c1c1",
+"c c #cab5d1",
+"......................",
+".####################.",
+".#aa#bbbbbbbbbbbb#bb#.",
+".#aa#bbbbbbbbbbbb#bb#.",
+".#aa#bbbbbbbbbcbb####.",
+".#aa#bbbccbbbbbbb#aa#.",
+".#aa#bbbccbbbbbbb#aa#.",
+".#aa#bbbbbbbbbbbb#aa#.",
+".#aa#bbbbbbbbbbbb#aa#.",
+".#aa#bbbbbbbbbbbb#aa#.",
+".#aa#bbbbbbbbbbbb#aa#.",
+".#aaa############aaa#.",
+".#aaaaaaaaaaaaaaaaaa#.",
+".#aaaaaaaaaaaaaaaaaa#.",
+".#aaa#############aa#.",
+".#aaa#########bbb#aa#.",
+".#aaa#########bbb#aa#.",
+".#aaa#########bbb#aa#.",
+".#aaa#########bbb#aa#.",
+".#aaa#########bbb#aa#.",
+"..##################..",
+"......................"]
+
+
+
+IconDict0 = {
     "derive": derive,
     "close": close,
     "fileclose": fileclose,
-    "fileopen": fileopen,
-    "filesave": filesave,
-    "fileprint": fileprint,
+    "fileopen": file_open,
+    "filesave": file_save,
+    "fileprint": image_print_data,
     "spec": spec,
     "normal": normal,
     "normalize16": normalize16,
@@ -3718,29 +4030,178 @@ IconDict = {
     "rotate_right": rotate_right
 }
 
-def showIcons():
-    import sys
-    from PyMca5.PyMcaGui import PyMcaQt as qt
-    a= qt.QApplication(sys.argv)
-    a.lastWindowClosed.connect(a.quit)
-    w= qt.QWidget()
-    g= qt.QGridLayout(w)
+# corresponding silx icons
+TRANSLATION_TABLE = {
+    "average16": "math-average",
+    "derive": "math-derive",
+    "close": "close",
+    "crop": "crop",
+    #"fileclose": fileclose,
+    "fileopen": "document-open",
+    "filesave": "document-save",
+    "fileprint": "document-print",
+    "spec": "spec",
+    "normal": "normal",
+    "normalize16": "math-normalize",
+    "reload": "view-refresh",
+    "window_fullscreen": "view-fullscreen",
+    #"window_new": window_new,
+    "window_nofullscreen": "view-nofullscreen",
+    "zoomplus": "zoom-in",
+    "zoomminus": "zoom-out",
+    "zoomreset": "zoom-original",
+    "zoom": "zoom",
+    "logx": "plot-xlog",
+    "logy": "plot-ylog",
+    "peak": "math-peak",
+    "peakreset": "math-peak-reset",
+    "peaksearch": "math-peak-search",
+    "roi": "plot-roi",
+    "roireset": "plot-roi-reset",
+    "selected": "selected",
+    #"unselected": unselected,
+    "fit": "math-fit",
+    "energy": "math-energy",
+    "xauto": "plot-xauto",
+    "yauto": "plot-yauto",
+    "colormap": "colormap",
+    "colormap16": "colormap",
+    #"gioconda16": gioconda16,
+    #"gioconda16mirror": gioconda16mirror,
+    "grid16": "plot-grid",
+    #"image": image,
+    #"eraseselect": eraseselect,
+    #"boxselect": boxselect,
+    "brush": "draw-brush",
+    #"brushselect": brushselect,
+    #"rgb16": rgb16,
+    #"rgb": rgb,
+    "sliderson": "sliders-on",
+    "slidersoff": "sliders-off",
+    "sigma": "math-sigma",
+    "swapsign": "math-swap-sign",
+    "ymintozero": "math-ymin-to-zero",
+    "square": "shape-square",
+    "polygon": "shape-polygon",
+    "rectangle": "shape-rectangle",
+    "circle": "shape-circle",
+    "ellipse": "shape-ellipse",
+    "solidcircle": "shape-circle-solid",
+    "solidellipse": "shape-ellipse-solid",
+    "smooth": "math-smooth",
+    "subtract": "math-substract",
+    "substract": "math-substract",
+    "togglepoints": "plot-toggle-points",
+    "remove": "remove",
+    #"additionalselect": additionalselect,
+    #"plugin": plugin,
+    "horizontal": "shape-horizontal",
+    "vertical": "shape-vertical",
+    "diagonal": "shape-diagonal",
+    #"rotate_left": rotate_left,
+    #"rotate_right": rotate_right
+    }
 
-    idx= 0
-    for name,icon in IconDict.items():
+
+class _PatchedIconDict(MutableMapping):
+    """IconDict that patches some legacy icons with new
+    silx icons, when available.
+
+    This object must be initialized with a legacy dictionary of icons.
+    If silx is installed and a corresponding silx icon name is specified in
+    TRANSLATION_TABLE, the silx icon is returned by __getitem__ rather
+    than the legacy icon.
+
+    This object allows modifying the icon dict via __setitem__ and
+    deleting icons, like a real dict.
+    """
+    def __init__(self, *args, **kw):
+        self._unpatched_icons = dict(*args, **kw)
+        try:
+            from silx.gui import icons as silx_icons
+        except ImportError:
+            _logger.debug("Could not import silx. Legacy icons will be used.")
+            silx_icons = None
+
+        self._silx_icons = silx_icons
+        # keep an internal copy:
+        self._translation_table = TRANSLATION_TABLE.copy()
+
+    def __iter__(self):
+        for key in self._unpatched_icons:
+            yield key
+
+    def __len__(self):
+        # same length
+        return len(self._unpatched_icons)
+
+    def __getitem__(self, key):
+        if key not in self._unpatched_icons:
+            raise KeyError("Unknown icon '%s'" % key)
+
+        if self._silx_icons is None or key not in TRANSLATION_TABLE:
+            _logger.debug("Using legacy icon '%s' because silx is not "
+                          "available or because it has no corresponding icon.",
+                          key)
+            return self._unpatched_icons[key]
+
+        if qt.QApplication.instance() is None:
+            _logger.warning("Cannot fetch QPixmap without a QApplication."
+                            " Using legacy PyMca icon as fallback.")
+            return self._unpatched_icons[key]
+
+        try:
+            icon = self._silx_icons.getQPixmap(TRANSLATION_TABLE[key])
+        except ValueError:
+            _logger.warning("Icon '%s' not found in silx. "
+                            "Using legacy PyMca icon '%s'.",
+                            TRANSLATION_TABLE[key], key)
+            icon = self._unpatched_icons[key]
+        else:
+            _logger.debug("Using silx icon '%s' instead of legacy icon '%s'.",
+                          TRANSLATION_TABLE[key], key)
+        finally:
+            return icon
+
+    def __delitem__(self, key):
+        # deleting from legacy dict is enough
+        del self._unpatched_icons[key]
+
+    def __setitem__(self, key, item):
+        self._unpatched_icons[key] = item
+        if self._silx_icons is not None and key in self._translation_table:
+            # we also need to remove the key from internal translation table
+            del self._translation_table[key]
+
+
+IconDict = _PatchedIconDict(IconDict0)
+
+
+def showIcons():
+    w = qt.QWidget()
+    g = qt.QGridLayout(w)
+
+    idx = 0
+    for name, icon in IconDict.items():
+        print(name, type(icon))
         column = int(idx / 10)
         row = idx % 10
         #print "name",name
-        lab= qt.QLabel(w)
+        lab = qt.QLabel(w)
         lab.setText(str(name))
         g.addWidget(lab, row, 2 * column + 1)
-        lab= qt.QLabel(w)
+        lab = qt.QLabel(w)
         lab.setPixmap(qt.QPixmap(icon))
         g.addWidget(lab, row, 2 * column)
-        idx+= 1
+        idx += 1
 
     w.show()
-    a.exec_()
+    return w
 
-if __name__=='__main__':
-    showIcons()
+if __name__ == '__main__':
+    app = qt.QApplication(sys.argv)
+    app.lastWindowClosed.connect(app.quit)
+    logging.basicConfig()
+    _logger.setLevel(logging.DEBUG)
+    w = showIcons()
+    app.exec_()

@@ -80,7 +80,8 @@ class PlotWindow(PlotWidget.PlotWidget):
         self.setWindowType(None)      # None, "SCAN", "MCA"
         self._initIcons()
         self._buildToolBar(kw)
-        self.setIconSize(qt.QSize(16, 16))
+        if "silx" not in sys.modules:
+            self.setIconSize(qt.QSize(16, 16))
         self._toggleCounter = 0
         self._keepDataAspectRatioFlag = False
         self.gridLevel = 0
