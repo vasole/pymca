@@ -175,11 +175,14 @@ class StackPluginBase(object):
         Function to access the currently active curve.
         It returns None in case of not having an active curve.
 
-        Output has the form:
+        Output has the form::
+
             xvalues, yvalues, legend, dict
-            where dict is a dictionnary containing curve info.
-            For the time being, only the plot labels associated to the
-            curve are warranted to be present under the keys xlabel, ylabel.
+
+        where dict is a dictionnary containing curve info.
+
+        For the time being, only the plot labels associated to the
+        curve are warranted to be present under the keys xlabel, ylabel.
         """
         return self._stackWindow.getActiveCurve()
 

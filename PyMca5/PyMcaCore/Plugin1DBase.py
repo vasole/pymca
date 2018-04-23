@@ -197,7 +197,7 @@ class Plugin1DBase(object):
         :type replace: boolean default False
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
-        :param **kw: Additional keywords recognized by the plot window.
+        :param kw: Additional keywords recognized by the plot window.
             Beware that the keywords recognized by *silx* and *PyMca*
             plot windows may differ.
         """
@@ -217,19 +217,22 @@ class Plugin1DBase(object):
         """
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
-        :return: legend of the active curve or list [x, y, legend, info]
+        :return: legend of the active curve or list ``[x, y, legend, info]``
         :rtype: string or list
 
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
-        Default output has the form:
+        Default output has the form::
+
             xvalues, yvalues, legend, dict
-            where dict is a dictionary containing curve info.
-            For the time being, only the plot labels associated to the
-            curve are warranted to be present under the keys xlabel, ylabel.
+
+        where dict is a dictionary containing curve info.
+        For the time being, only the plot labels associated to the
+        curve are warranted to be present under the keys xlabel, ylabel.
 
         If just_legend is True:
+
             The legend of the active curve (or None) is returned.
         """
         curve = self._plotWindow.getActiveCurve(just_legend=just_legend)
@@ -251,21 +254,21 @@ class Plugin1DBase(object):
         """
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
-        :return: legend of the curves or list [[x, y, legend, info], ...]
+        :return: legend of the curves or list ``[[x, y, legend, info], ...]``
         :rtype: list of strings or list of curves
 
         It returns an empty list in case of not having any curve.
-        If just_legend is False:
-            It returns a list of the form:
+
+        If just_legend is *False*, it returns a list of the form::
+
                 [[xvalues0, yvalues0, legend0, dict0],
                  [xvalues1, yvalues1, legend1, dict1],
                  [...],
                  [xvaluesn, yvaluesn, legendn, dictn]]
-            or just an empty list.
-        If just_legend is True:
-            It returns a list of the form:
+
+        If just_legend is *True*, it returns a list of the form::
+
                 [legend0, legend1, ..., legendn]
-            or just an empty list.
         """
         all_curves = []
         for curve in self._plotWindow.getAllCurves(just_legend=just_legend):
@@ -287,10 +290,11 @@ class Plugin1DBase(object):
 
     def getMonotonicCurves(self):
         """
-        Convenience method that calls getAllCurves and makes sure that all of
+        Convenience method that calls :meth:`getAllCurves` and makes sure that all of
         the X values are strictly increasing.
 
-        :return: It returns a list of the form:
+        It returns a list of the form::
+
                 [[xvalues0, yvalues0, legend0, dict0],
                  [xvalues1, yvalues1, legend1, dict1],
                  [...],
