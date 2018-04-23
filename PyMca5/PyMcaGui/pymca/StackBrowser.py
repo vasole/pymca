@@ -29,13 +29,15 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import numpy
+import logging
 from PyMca5.PyMcaGui import MaskImageWidget
 from PyMca5.PyMcaGui import FrameBrowser
 from PyMca5.PyMcaCore import DataObject
 qt = MaskImageWidget.qt
 IconDict = MaskImageWidget.IconDict
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class StackBrowser(MaskImageWidget.MaskImageWidget):
     def __init__(self, *var, **kw):
@@ -184,8 +186,7 @@ class StackBrowser(MaskImageWidget.MaskImageWidget):
         if background is None:
             background = self._backgroundSubtraction
         if not len(self.dataObjectsList):
-            if DEBUG:
-                print("nothing to show")
+            _logger.debug("nothing to show")
             return
         legend = self.dataObjectsList[0]
         if type(legend) == type([]):

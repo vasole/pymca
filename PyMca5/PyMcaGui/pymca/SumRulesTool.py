@@ -28,6 +28,7 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
 import os
 from os.path import isdir as osPathIsDir
 from os.path import basename as osPathBasename
@@ -60,7 +61,7 @@ else:
     QStringList = list
 
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
 NEWLINE = '\n'
 
 class Calculations(object):
@@ -117,9 +118,9 @@ class Calculations(object):
 
         # Determine number of states in outer shell
         if econf == '3d':
-            if DEBUG >= 1:
-                print('Calculations.magneticMoment -- considering 3d material:')
-                print('\tp: %s, q: %s, r:%s'%(str(p),str(q),str(r)))
+            _logger.debug(
+                    'Calculations.magneticMoment -- considering 3d material:''
+                    '\n\tp: %s, q: %s, r:%s', str(p), str(q), str(r))
             nMax = 10.
             # Calculate Integrals
             if q is not None:
@@ -130,9 +131,8 @@ class Calculations(object):
                 mSpin  = abs((3.*p - 2.*q) * (nMax - n) / r)
                 mRatio = abs(2.*q/(9.*p-6.*q))
         elif econf == '4f':
-            if DEBUG >= 1:
-                print('Calculations.magneticMoment -- considering 4f material:')
-                print('\tp: %s, q: %s, r:%s'%(str(p),str(q),str(r)))
+            _logger.debug('Calculations.magneticMoment -- considering 4f material:'
+                          '\n\tp: %s, q: %s, r:%s', str(p), str(q), str(r))
             nMax = 14.
             if q is not None:
                 mOrbt = abs(q * (nMax - n) / r)
@@ -243,8 +243,7 @@ class MarkerSpinBox(qt.QDoubleSpinBox):
         try:
             val = float(val)
         except ValueError:
-            if DEBUG == 1:
-                print('_valueChanged -- Sorry, it ain\'t gonna float: %s'%str(val))
+            _logger.debug('_valueChanged -- Sorry, it ain\'t gonna float: %s', str(val))
             return
         # Marker of same label as self.label gets replaced..
         self.markerID = self.plotWindow.addXMarker(
@@ -291,8 +290,7 @@ class LineEditDisplay(qt.QLineEdit):
         elif isinstance(self.controller, qt.QDoubleSpinBox):
             tmp = self.controller.value()
         else:
-            if DEBUG == 1:
-                print('LineEditDisplay.checkController -- Reached untreated case, setting empty string')
+            _logger.debug('LineEditDisplay.checkController -- Reached untreated case, setting empty string')
             tmp = ''
         self.setText(tmp)
 
@@ -313,8 +311,7 @@ class LineEditDisplay(qt.QLineEdit):
         elif isinstance(self.controller, qt.QDoubleSpinBox):
             text = inp + ' ' + self.unit
         else:
-            if DEBUG == 1:
-                print('LineEditDisplay.setText -- Reached untreated case, setting empty string')
+            _logger.debug('LineEditDisplay.setText -- Reached untreated case, setting empty string')
             text = ''
         qt.QLineEdit.setText(self, text)
 
@@ -979,16 +976,14 @@ class SumRulesWindow(qt.QMainWindow):
         try:
             n = float(electronOccupation.text())
         except ValueError:
-            if DEBUG == 1:
-                print('calcMM -- Could not convert electron occupation')
+            _logger.debug('calcMM -- Could not convert electron occupation')
             return
         electronConfiguration = ddict[self.__tabElem]['electron configuration']
         econf = str(electronConfiguration.currentText())
         try:
             mmO, mmS, mmR = mathObj.magneticMoment(p,q,r,n,econf)
         except ValueError as e:
-            if DEBUG == 1:
-                print(e)
+            _logger.debug(e)
             mmO, mmS, mmR = 3*['---']
         self.mmOrbt.setText(str(mmO))
         self.mmSpin.setText(str(mmS))
@@ -1199,14 +1194,13 @@ class SumRulesWindow(qt.QMainWindow):
             #keysLoaded = confDict.keys()
             #keysValues = self.valuesDict.keys()
         except KeyError as e:
-            if DEBUG:
-                print('loadConfiguration -- Key Error in \'%s\''%filename)
-                print('\tMessage:', e)
-            else:
-                msg = qt.QMessageBox()
-                msg.setWindowTitle('Sum Rules Analysis Error')
-                msg.setIcon(qt.QMessageBox.Warning)
-                msg.setText('Malformed configuration file \'%s\''%filename)
+            _logger.debug('loadConfiguration -- Key Error in \'%s\'', filename)
+            _logger.debug('\tMessage: %s', e)
+
+            msg = qt.QMessageBox()
+            msg.setWindowTitle('Sum Rules Analysis Error')
+            msg.setIcon(qt.QMessageBox.Warning)
+            msg.setText('Malformed configuration file \'%s\''%filename)
             return
         self.__savedConf = True
 
@@ -1244,7 +1238,7 @@ class SumRulesWindow(qt.QMainWindow):
         except KeyError:
             msg  = ('setElement -- \'%s\' not found in '%symbol)
             msg += 'Elements.Element dictionary'
-            print(msg)
+            _logger.error(msg)
         # Update valuesDict
         self.valuesDict[self.__tabElem]['info'] = ddict
         # Update the EdgeCBs
@@ -1330,10 +1324,10 @@ class SumRulesWindow(qt.QMainWindow):
                     except ValueError:
                         xmin, xmax = self.plotWindow.getGraphXLimits()
                         tmp = xmin + (xmax-xmin)/10.
-                        if DEBUG:
-                            msg  = 'setValuesDict -- Float conversion failed'
-                            msg += ' while setting marker positions. Value:', value
-                            print(msg)
+                        _logger.debug(
+                                'setValuesDict -- Float conversion failed'
+                                ' while setting marker positions. Value: %s',
+                                value)
                 elif isinstance(obj, qt.QCheckBox):
                     if value == 'True':
                         state = qt.Qt.Checked
@@ -1345,10 +1339,10 @@ class SumRulesWindow(qt.QMainWindow):
                         tmp = float(value)
                         obj.setValue(tmp)
                     except ValueError:
-                        if DEBUG:
-                            msg  = 'setValuesDict -- Float conversion failed'
-                            msg += ' while setting QDoubleSpinBox value. Value:', value
-                            print(msg)
+                        _logger.debug(
+                                'setValuesDict -- Float conversion failed'
+                                ' while setting QDoubleSpinBox value. Value: %s',
+                                value)
                 elif isinstance(obj, qt.QComboBox):
                     idx = obj.findText(QString(value))
                     obj.setCurrentIndex(idx)
@@ -1528,8 +1522,7 @@ class SumRulesWindow(qt.QMainWindow):
         idxPost = numpy.nonzero((postMin <= x) & (x <= postMax))[0]
 
         if (len(idxPre) == 0) or (len(idxPost) == 0):
-            if DEBUG:
-                print('estimateBG -- Somethings wrong with pre/post edge markers')
+            _logger.debug('estimateBG -- Somethings wrong with pre/post edge markers')
             return
 
         xPreMin  = x[idxPre.min()]
@@ -1553,16 +1546,15 @@ class SumRulesWindow(qt.QMainWindow):
         if x02 < x01:
             par1 = (ratio, x02, width)
             par2 = ((1.-ratio), x01, width)
-            if DEBUG:
-                print('estimateBG -- x02 < x01, using par1: %s and par2: %s'\
-                        %(str(par1),str(par2)))
+            _logger.debug('estimateBG -- x02 < x01, using par1: %s and par2: %s',
+                          par1, par2)
             model = bottom + sign * diff * (erf(par1, x) + erf(par2, x))
         else:
             par1 = (ratio, x01, width)
             par2 = ((1.-ratio), x02, width)
-            if DEBUG:
-                print('estimateBG -- x01 < x02, using par1: %s and par2: %s'\
-                        %(str(par1),str(par2)))
+
+            _logger.debug('estimateBG -- x01 < x02, using par1: %s and par2: %s',
+                          par1, par2)
             model = bottom + sign * diff * (erf(par1, x) + erf(par2, x))
 
         preModel  = numpy.asarray(len(x)*[avgPre])
@@ -1596,13 +1588,11 @@ class SumRulesWindow(qt.QMainWindow):
         window = window.lower()
         if window == self.__tabElem:
             if self.xmcdCorrData is not None:
-                if DEBUG == 1:
-                    print('plotOnDemand -- __tabElem: Using self.xmcdCorrData')
+                _logger.debug('plotOnDemand -- __tabElem: Using self.xmcdCorrData')
                 xmcdX, xmcdY = self.xmcdCorrData
                 xmcdLabel = 'xmcd corr'
             else:
-                if DEBUG == 1:
-                    print('plotOnDemand -- __tabElem: Using self.xmcdData')
+                _logger.debug('plotOnDemand -- __tabElem: Using self.xmcdData')
                 xmcdX, xmcdY = self.xmcdData
                 xmcdLabel = 'xmcd'
             xasX,  xasY  = self.xasData
@@ -1627,13 +1617,11 @@ class SumRulesWindow(qt.QMainWindow):
             x, y = self.xasData
             self.xasDataCorr = x, y-yBG
             if self.xmcdCorrData is not None:
-                if DEBUG:
-                    print('plotOnDemand -- __tabInt: Using self.xmcdCorrData')
+                _logger.debug('plotOnDemand -- __tabInt: Using self.xmcdCorrData')
                 xmcdX, xmcdY = self.xmcdCorrData
                 xmcdIntLabel = 'xmcd corr Int'
             else:
-                if DEBUG:
-                    print('plotOnDemand -- __tabInt: Using self.xmcdData')
+                _logger.debug('plotOnDemand -- __tabInt: Using self.xmcdData')
                 xmcdX, xmcdY = self.xmcdData
                 xmcdIntLabel = 'xmcd Int'
             mathObj = Calculations()
@@ -1654,8 +1642,7 @@ class SumRulesWindow(qt.QMainWindow):
             xmax = max(xmax, x.max())
             ymin = min(ymin, y.min())
             ymax = max(ymax, y.max())
-            if DEBUG == 1:
-                print('plotOnDemand -- adding Curve..')
+            _logger.debug('plotOnDemand -- adding Curve..')
             """
             if mapToY2:
                 if hasattr(self.plotWindow, 'graph'):
@@ -1672,10 +1659,9 @@ class SumRulesWindow(qt.QMainWindow):
                     replace=False,
                     resetzoom=True)
         # Assure margins in plot when using matplotlibbackend
-        if DEBUG == 1:
-            print('plotOnDemand -- Setting margins..')
-            print('\txmin:',xmin,'xmax:',xmax)
-            print('\tymin:',ymin,'ymax:',ymax)
+        _logger.debug('plotOnDemand -- Setting margins..\n'
+                      '\txmin: %s xmax: %s\n\tymin: %s ymax: %s',
+                      xmin, xmax , ymin, ymax)
         # Pass if no curves present
         if not len(self.plotWindow.getAllCurves(just_legend=True)):
             # At this point xymin, xymax should be infinite..
@@ -1717,7 +1703,7 @@ class SumRulesWindow(qt.QMainWindow):
 
     def _handleTabChangedSignal(self, idx):
         if idx >= len(self.tabList):
-            print('Tab changed -- Index out of range')
+            _logger.info('Tab changed -- Index out of range')
             return
         tab = self.tabList[idx]
         self.plotOnDemand(window=tab)
@@ -1868,8 +1854,7 @@ class LoadDichorismDataDialog(qt.QFileDialog):
         # contents in the top right widget
         filename = str(filename)
         if osPathIsDir(filename):
-            if DEBUG == 1:
-                print('LoadDichorismDataDialog.setDataSource -- Invalid path or filename..')
+            _logger.debug('LoadDichorismDataDialog.setDataSource -- Invalid path or filename..')
             return
         try:
             src = SpecFileDataSource.SpecFileDataSource(filename)
