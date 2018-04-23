@@ -33,6 +33,7 @@ import os
 import traceback
 import numpy
 import weakref
+import logging
 
 from PyMca5.PyMcaGui import PyMcaQt as qt
 if hasattr(qt, "QString"):
@@ -48,7 +49,6 @@ from PyMca5.PyMcaGui import CloseEventNotifyingWidget
 from PyMca5.PyMcaGui import MaskImageWidget
 convertToRowAndColumn = MaskImageWidget.convertToRowAndColumn
 
-from PyMca5.PyMcaGui.pymca import StackROIWindow
 from PyMca5.PyMcaGui.pymca import RGBCorrelator
 from PyMca5.PyMcaGui.pymca.RGBCorrelatorWidget import ImageShapeDialog
 from PyMca5.PyMcaGui import IconDict
@@ -57,10 +57,11 @@ from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaIO import ArraySave
 HDF5 = ArraySave.HDF5
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+# _logger.setLevel(logging.DEBUG)
 QTVERSION = qt.qVersion()
-if DEBUG:
-    StackBase.DEBUG = DEBUG
+if _logger.getEffectiveLevel() == logging.DEBUG:
+    StackBase.logger.setLevel(logging.DEBUG)
 
 
 class QStackWidget(StackBase.StackBase,
@@ -686,8 +687,8 @@ class QStackWidget(StackBase.StackBase,
         text = QString("Set User Plugin Directory")
         menu.addAction(text)
         actionList.append(text)
-        global DEBUG
-        if DEBUG:
+        global _logger
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             text = QString("Toggle DEBUG mode OFF")
         else:
             text = QString("Toggle DEBUG mode ON")
@@ -746,11 +747,12 @@ class QStackWidget(StackBase.StackBase,
                 self.setPluginDirectoryList(pluginsDirList)
             return
         if idx == 2:
-            if DEBUG:
-                DEBUG = 0
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                _logger.setLevel(logging.DEBUG)
+                StackBase.logger.setLevel(logging.DEBUG)
             else:
-                DEBUG = 1
-            StackBase.DEBUG = DEBUG
+                _logger.setLevel(logging.NOTSET)
+                StackBase.logger.setLevel(logging.NOTSET)
             return
         key = callableKeys[idx]
         methods = self.pluginInstanceDict[key].getMethods()
@@ -793,7 +795,7 @@ class QStackWidget(StackBase.StackBase,
             msg.setInformativeText(qt.safe_str(sys.exc_info()[1]))
             msg.setDetailedText(traceback.format_exc())
             msg.exec_()
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 raise
 
     def _actionHovered(self, action):
@@ -1072,11 +1074,10 @@ class QStackWidget(StackBase.StackBase,
         if instance_id == id(self):
             return
 
-        if DEBUG:
-            if self._slaveList is not None:
-                print("MASTER  setSelectionMask CALLED")
-            elif self._masterStack is not None:
-                print("SLAVE setSelectionMask CALLED")
+        if self._slaveList is not None:
+            _logger.debug("MASTER  setSelectionMask CALLED")
+        elif self._masterStack is not None:
+            _logger.debug("SLAVE setSelectionMask CALLED")
 
         #inform built in widgets
         for widget in [self.stackWidget, self.roiWidget]:
@@ -1097,8 +1098,7 @@ class QStackWidget(StackBase.StackBase,
                     instanceList.append(id(slave.pluginInstanceDict[key]))
                 if instance_id not in instanceList:
                     #Originated by the master
-                    if DEBUG:
-                        print("INFORMING SLAVE")
+                    _logger.warning("INFORMING SLAVE")
                     slave.setSelectionMask(mask, instance_id=id(self))
 
         if self._masterStack is not None:
@@ -1109,8 +1109,7 @@ class QStackWidget(StackBase.StackBase,
                 instanceList.append(id(self.pluginInstanceDict[key]))
             if instance_id in instanceList:
                 #Originated by the slave
-                if DEBUG:
-                    print("INFORMING MASTER")
+                _logger.debug("INFORMING MASTER")
                 self._masterStack.setSelectionMask(mask, instance_id=id(self))
 
         #Inform plugins
@@ -1233,7 +1232,7 @@ if __name__ == "__main__":
                      options,
                      longoptions)
     except:
-        print(sys.exc_info()[1])
+        _logger.error("%s", sys.exc_info()[1])
         sys.exit(1)
     fileindex = 0
     filepattern=None
@@ -1289,7 +1288,7 @@ if __name__ == "__main__":
             from silx.gui.plot import PlotWidget
             PlotWidget.setDefaultBackend(backend)
         except:
-            print("WARNING: Cannot set backend to %s" % backend)
+            _logger.warning("WARNING: Cannot set backend to %s", backend)
     widget = QStackWidget()
     w = StackSelector.StackSelector(widget)
     if filepattern is not None:
