@@ -36,15 +36,15 @@ perform user defined operations of the plotted 1D data.
 
 Plugins can be automatically installed provided they are in the appropriate place:
 
-    - In the user home directory: ${HOME}/PyMca/plugins (POSIX systems)
-    - In "My Documents\\\\PyMca\\\\plugins" (Windows)
+    - In the user home directory: *${HOME}/PyMca/plugins* (POSIX systems)
+    - In *"My Documents\\\\PyMca\\\\plugins"* (Windows)
 
-A plugin inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
+A plugin inherit the :class:`Plugin1DBase` class and implement the methods:
 
-    - getMethods
-    - getMethodToolTip (optional but convenient)
-    - getMethodPixmap (optional)
-    - applyMethod
+    - :meth:`Plugin1DBase.getMethods`
+    - :meth:`Plugin1DBase.getMethodToolTip` (optional but convenient)
+    - :meth:`Plugin1DBase.getMethodPixmap` (optional)
+    - :meth:`Plugin1DBase.applyMethod`
 
 and modify the static module variable MENU_TEXT and the static module function
 getPlugin1DInstance according to the defined plugin.
@@ -54,25 +54,25 @@ interface. The plot window interface is described in the Plot1DBase class.
 
 The main items are reproduced here and can be directly accessed as plugin methods.
 
-    - addCurve
-    - getActiveCurve
-    - getAllCurves
-    - getGraphXLimits
-    - getGraphYLimits
-    - getGraphTitle
-    - getGraphXLabel
-    - getGraphXTitle
-    - getGraphYLabel
-    - getGraphYTitle
-    - removeCurve
-    - setActiveCurve
-    - setGraphTitle
-    - setGraphXLimits
-    - setGraphYLimits
-    - setGraphXLabel
-    - setGraphYLabel
-    - setGraphXTitle
-    - setGraphYTitle
+    - :meth:`Plugin1DBase.addCurve`
+    - :meth:`Plugin1DBase.getActiveCurve`
+    - :meth:`Plugin1DBase.getAllCurves`
+    - :meth:`Plugin1DBase.getGraphXLimits`
+    - :meth:`Plugin1DBase.getGraphYLimits`
+    - :meth:`Plugin1DBase.getGraphTitle`
+    - :meth:`Plugin1DBase.getGraphXLabel`
+    - :meth:`Plugin1DBase.getGraphXTitle`
+    - :meth:`Plugin1DBase.getGraphYLabel`
+    - :meth:`Plugin1DBase.getGraphYTitle`
+    - :meth:`Plugin1DBase.removeCurve`
+    - :meth:`Plugin1DBase.setActiveCurve`
+    - :meth:`Plugin1DBase.setGraphTitle`
+    - :meth:`Plugin1DBase.setGraphXLimits`
+    - :meth:`Plugin1DBase.setGraphYLimits`
+    - :meth:`Plugin1DBase.setGraphXLabel`
+    - :meth:`Plugin1DBase.setGraphYLabel`
+    - :meth:`Plugin1DBase.setGraphXTitle`
+    - :meth:`Plugin1DBase.setGraphYTitle`
 
 A simple plugin example, normalizing each curve to its maximum and vertically
 shifting the curves.
@@ -481,13 +481,14 @@ class Plugin1DBase(object):
 
 
 MENU_TEXT = "Plugin1D Base"
+"""This text appears at the root of the plugins menu"""
 
 
 def getPlugin1DInstance(plotWindow, **kw):
     """
     This function will be called by the plot window instantiating and calling
-    the plugins. It passes itslef as first argument, but the default implementation
-    of the base class only keeps a weak reference to prevent cirvular references.
+    the plugins. It passes itself as first argument, but the default implementation
+    of the base class only keeps a weak reference to prevent circular references.
     """
     ob = Plugin1DBase(plotWindow)
     return ob

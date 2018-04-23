@@ -6,13 +6,12 @@
 Welcome to PyMca's documentation!
 =================================
 
-.. Contents:
-..
-.. .. toctree::
-..    :maxdepth: 2
-..
-..    placeholder
+Contents:
 
+.. toctree::
+   :maxdepth: 2
+
+   plugins
 
 PyMca
 =====
