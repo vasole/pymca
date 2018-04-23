@@ -46,8 +46,8 @@ A plugin inherit the :class:`Plugin1DBase` class and implement the methods:
     - :meth:`Plugin1DBase.getMethodPixmap` (optional)
     - :meth:`Plugin1DBase.applyMethod`
 
-and modify the static module variable MENU_TEXT and the static module function
-getPlugin1DInstance according to the defined plugin.
+and modify the static module variable :const:`MENU_TEXT` and the static module function
+:func:`getPlugin1DInstance` according to the defined plugin.
 
 These plugins will be compatible with any 1D-plot window that implements the Plot1D
 interface. The plot window interface is described in the Plot1DBase class.
@@ -481,7 +481,7 @@ class Plugin1DBase(object):
 
 
 MENU_TEXT = "Plugin1D Base"
-"""This text appears at the root of the plugins menu"""
+"""This is the name of the plugin, as it appears in the plugins menu."""
 
 
 def getPlugin1DInstance(plotWindow, **kw):

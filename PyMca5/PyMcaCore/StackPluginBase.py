@@ -30,57 +30,82 @@ __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
-__doc__="""
+__doc__ = """
 
 A Stack plugin is a module that will be automatically added to the PyMca stack windows
 in order to perform user defined operations on the data stack. It has to
-inherit the StackPluginBase.StackPluginBase class and implement the methods:
+inherit the :class:`StackPluginBase` class and implement the following methods:
 
-    - getMethods
-    - getMethodToolTip (optional but convenient)
-    - getMethodPixmap (optional)
-    - applyMethod
+    - :meth:`StackPluginBase.getMethods`
+    - :meth:`StackPluginBase.getMethodToolTip` (optional but convenient)
+    - :meth:`StackPluginBase.getMethodPixmap` (optional)
+    - :meth:`StackPluginBase.applyMethod`
 
-and modify the static module variable MENU_TEXT and the static module function
-getStackPluginInstance according to the defined plugin.
+and modify the static module variable :const:`MENU_TEXT` and the static module function
+:func:`getStackPluginInstance` according to the defined plugin.
 
-These plugins will be compatible with any stack window that provides the functions:
+The plugin class has access to following inherited methods:
+
+   - :meth:`StackPluginBase.addImage`
+   - :meth:`StackPluginBase.getActiveCurve`
+   - :meth:`StackPluginBase.getGraphXLabel`
+   - :meth:`StackPluginBase.getGraphXLimits`
+   - :meth:`StackPluginBase.getGraphYLabel`
+   - :meth:`StackPluginBase.getGraphYLimits`
+   - :meth:`StackPluginBase.getStackData`
+   - :meth:`StackPluginBase.getStackDataObject`
+   - :meth:`StackPluginBase.getStackDataObjectList`
+   - :meth:`StackPluginBase.getStackInfo`
+   - :meth:`StackPluginBase.getStackOriginalCurve`
+   - :meth:`StackPluginBase.getStackOriginalImage`
+   - :meth:`StackPluginBase.getStackROIImagesAndNames`
+   - :meth:`StackPluginBase.getStackSelectionMask`
+   - :meth:`StackPluginBase.isStackFinite`
+   - :meth:`StackPluginBase.removeImage`
+   - :meth:`StackPluginBase.replaceImage`
+   - :meth:`StackPluginBase.setStack`
+   - :meth:`StackPluginBase.setStackSelectionMask`
+   - :meth:`StackPluginBase.stackClosed`
+
+
+These plugins will be compatible with any stack window that provides the following methods:
 
     #data related
 
-    - getStackDataObject
-    - getStackData
-    - getStackInfo
-    - setStack
-    - getStackROIImagesAndNames
-    - isStackFinite
-    - getStackOriginalCurve
-    - getStackOriginalImage
+    - :meth:`getStackDataObject`
+    - :meth:`getStackData`
+    - :meth:`getStackInfo`
+    - :meth:`setStack`
+    - :meth:`getStackROIImagesAndNames`
+    - :meth:`isStackFinite`
+    - :meth:`getStackOriginalCurve`
+    - :meth:`getStackOriginalImage`
 
     #mask related
 
-    - setStackSelectionMask
-    - getStackSelectionMask
+    - :meth:`setStackSelectionMask`
+    - :meth:`getStackSelectionMask`
 
     #displayed curves
 
-    - getActiveCurve
-    - getGraphXLimits
-    - getGraphYLimits
-    - getGraphXLabel
-    - getGraphYLabel
+    - :meth:`getActiveCurve`
+    - :meth:`getGraphXLimits`
+    - :meth:`getGraphYLimits`
+    - :meth:`getGraphXLabel`
+    - :meth:`getGraphYLabel`
 
     #images
 
-    - addImage
-    - removeImage
-    - replaceImage
+    - :meth:`addImage`
+    - :meth:`removeImage`
+    - :meth:`replaceImage`
 
     #information method
 
-    - stackUpdated
-    - selectionMaskUpdated
-    - stackClosed
+    - :meth:`stackUpdated`
+    - :meth:`selectionMaskUpdated`
+    - :meth:`stackClosed`
+
 
 """
 import weakref
@@ -236,7 +261,16 @@ class StackPluginBase(object):
         print("applyMethod not implemented")
         return
 
+
 MENU_TEXT = "StackPluginBase"
+"""This is the name of the plugin, as it appears in the plugins menu."""
+
+
 def getStackPluginInstance(stackWindow, **kw):
+    """
+    This function will be called by the stack window instantiating and calling
+    the plugins. It passes itself as first argument, but the default implementation
+    of the base class only keeps a weak reference to prevent circular references.
+    """
     ob = StackPluginBase(stackWindow)
     return ob
