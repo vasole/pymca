@@ -11,7 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   customisation/index.rst
+   customization/index.rst
 
 PyMca
 =====
