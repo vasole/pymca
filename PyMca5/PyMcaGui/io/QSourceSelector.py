@@ -31,7 +31,7 @@ import sys
 import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-from PyMca5.PyMcaGui.PyMca_Icons import IconDict
+from PyMca5.PyMcaGui import PyMca_Icons as icons
 from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
@@ -69,10 +69,10 @@ class QSourceSelector(qt.QWidget):
         self.mapCombo= {}
         openButton= qt.QPushButton(self.fileWidget)
 
-        self.openIcon   = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))
-        self.closeIcon  = qt.QIcon(qt.QPixmap(IconDict["fileclose"]))
-        self.reloadIcon = qt.QIcon(qt.QPixmap(IconDict["reload"]))
-        self.specIcon   = qt.QIcon(qt.QPixmap(IconDict["spec"]))
+        self.openIcon   = qt.QIcon(qt.QPixmap(icons.fileopen))
+        self.closeIcon  = qt.QIcon(qt.QPixmap(icons.close))
+        self.reloadIcon = qt.QIcon(qt.QPixmap(icons.reload_))
+        self.specIcon   = qt.QIcon(qt.QPixmap(icons.spec))
 
         openButton.setIcon(self.openIcon)
         openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
@@ -110,7 +110,7 @@ class QSourceSelector(qt.QWidget):
         self.specButton = specButton
         if pluginsIcon:
             self.pluginsButton = qt.QPushButton(self.fileWidget)
-            self.pluginsButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["plugin"])))
+            self.pluginsButton.setIcon(qt.QIcon(qt.QPixmap(icons.plugin)))
             self.pluginsButton.setToolTip("Plugin handling")
             fileWidgetLayout.addWidget(self.pluginsButton)
         self.mainLayout.addWidget(self.fileWidget)
