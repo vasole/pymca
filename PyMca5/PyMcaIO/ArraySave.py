@@ -33,12 +33,14 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import os
 import numpy
 import time
+import logging
+_logger = logging.getLogger(__name__)
 
 try:
     from PyMca5.PyMcaIO import EdfFile
     from PyMca5.PyMcaIO import TiffIO
 except ImportError:
-    print("ArraySave.py is importing EdfFile and TiffIO from local directory")
+    _logger.info("ArraySave.py is importing EdfFile and TiffIO from local directory")
     import EdfFile
     import TiffIO
 
@@ -49,7 +51,6 @@ except ImportError:
     HDF5 = False
 
 
-DEBUG = 0
 
 
 def getDate():
@@ -192,7 +193,7 @@ def save2DArrayListAsMonochromaticTiff(datalist, filename,
             try:
                 os.remove(fname)
             except OSError:
-                print("Cannot remove file %s" % fname)
+                _logger.warning("Cannot remove file %s", fname)
                 pass
         if (savedData == 0) or multifile:
             outfileInstance = TiffIO.TiffIO(fname, mode="wb+")
@@ -302,8 +303,7 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
         #should I raise an error?
         pass
     if compression:
-        if DEBUG:
-            print("Saving compressed and chunked dataset")
+        _logger.debug("Saving compressed and chunked dataset")
         chunk1 = int(shape[1] / 10)
         if chunk1 == 0:
             chunk1 = shape[1]
@@ -325,8 +325,7 @@ def getHDF5FileInstanceAndBuffer(filename, shape,
                            compression=compression)
     else:
         #no chunking
-        if DEBUG:
-            print("Saving not compressed and not chunked dataset")
+        _logger.debug("Saving not compressed and not chunked dataset")
         data = nxData.require_dataset(buffername,
                            shape=shape,
                            dtype=dtype,
@@ -373,7 +372,7 @@ def save3DArrayAsMonochromaticTiff(data, filename,
                 tmpData = data[:, :, i].astype(dtype)
             outfileInstance.writeImage(tmpData, info={'Title': labels[i]})
             if (ndata > 10):
-                print("Saved image %d of %d" % (i + 1, ndata))
+                _logger.info("Saved image %d of %d", i + 1, ndata)
     elif mcaindex == 1:
         for i in range(ndata):
             if i == 1:
@@ -384,7 +383,7 @@ def save3DArrayAsMonochromaticTiff(data, filename,
                 tmpData = data[:, i, :].astype(dtype)
             outfileInstance.writeImage(tmpData, info={'Title': labels[i]})
             if (ndata > 10):
-                print("Saved image %d of %d" % (i + 1, ndata))
+                _logger.info("Saved image %d of %d", i + 1, ndata)
     else:
         for i in range(ndata):
             if i == 1:
@@ -395,7 +394,8 @@ def save3DArrayAsMonochromaticTiff(data, filename,
                 tmpData = data[i].astype(dtype)
             outfileInstance.writeImage(tmpData, info={'Title': labels[i]})
             if (ndata > 10):
-                print("Saved image %d of %d" % (i + 1, ndata))
+                _logger.info("Saved image %d of %d",
+                             i + 1, ndata)
     outfileInstance.close()  # force file close
 
 # it should be used to name the data that for the time being is named 'data'.
@@ -444,8 +444,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
         if modify:
             if interpretation in ["image", "image".encode('utf-8')]:
                 if compression:
-                    if DEBUG:
-                        print("Saving compressed and chunked dataset")
+                    _logger.debug("Saving compressed and chunked dataset")
                     #risk of taking a 10 % more space in disk
                     chunk1 = int(shape[1] / 10)
                     if chunk1 == 0:
@@ -465,8 +464,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                                        chunks=(1, chunk1, chunk2),
                                        compression=compression)
                 else:
-                    if DEBUG:
-                        print("Saving not compressed and not chunked dataset")
+                    _logger.debug("Saving not compressed and not chunked dataset")
                     #print not compressed -> Not chunked
                     dset = nxData.require_dataset('data',
                                        shape=shape,
@@ -476,7 +474,8 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                     tmp = data[:, :, i:i + 1]
                     tmp.shape = 1, shape[1], shape[2]
                     dset[i, 0:shape[1], :] = tmp
-                    print("Saved item %d of %d" % (i + 1, data.shape[-1]))
+                    _logger.info("Saved item %d of %d",
+                                 i + 1, data.shape[-1])
             elif 0:
                 #if I do not match the input and output shapes it takes ages
                 #to save the images as spectra. However, it is much faster
@@ -498,23 +497,22 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                             tmpData = data[k:k + 1, i, :]
                             tmpData.shape = -1
                             chunk[0, :, k] = tmpData
-                    print("Saving item %d of %d" % (i, data.shape[1]))
+                    _logger.info("Saving item %d of %d",
+                                 i, data.shape[1])
                     dset[i, :, :] = chunk
             else:
                 #if I do not match the input and output shapes it takes ages
                 #to save the images as spectra. This is a very fast saving, but
                 #the performance is awful when reading.
                 if compression:
-                    if DEBUG:
-                        print("Saving compressed and chunked dataset")
+                    _logger.debug("Saving compressed and chunked dataset")
                     dset = nxData.require_dataset('data',
                                shape=shape,
                                dtype=dtype,
                                chunks=(shape[0], shape[1], 1),
                                compression=compression)
                 else:
-                    if DEBUG:
-                        print("Saving not compressed and not chunked dataset")
+                    _logger.debug("Saving not compressed and not chunked dataset")
                     dset = nxData.require_dataset('data',
                                shape=shape,
                                dtype=dtype,
@@ -525,8 +523,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                     dset[:, :, i:i + 1] = tmp
         else:
             if compression:
-                if DEBUG:
-                    print("Saving compressed and chunked dataset")
+                _logger.debug("Saving compressed and chunked dataset")
                 chunk1 = int(shape[1] / 10)
                 if chunk1 == 0:
                     chunk1 = shape[1]
@@ -541,16 +538,15 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
                     if (shape[2] % i) == 0:
                         chunk2 = int(shape[2] / i)
                         break
-                if DEBUG:
-                    print("Used chunk size = (1, %d, %d)" % (chunk1, chunk2))
+                _logger.debug("Used chunk size = (1, %d, %d)",
+                              chunk1, chunk2)
                 dset = nxData.require_dataset('data',
                                shape=shape,
                                dtype=dtype,
                                chunks=(1, chunk1, chunk2),
                                compression=compression)
             else:
-                if DEBUG:
-                    print("Saving not compressed and notchunked dataset")
+                _logger.debug("Saving not compressed and notchunked dataset")
                 dset = nxData.require_dataset('data',
                                shape=shape,
                                dtype=dtype,
@@ -560,7 +556,7 @@ def save3DArrayAsHDF5(data, filename, axes=None, labels=None, dtype=None, mode='
             for i in range(data.shape[0]):
                 tmpData[0:1] = data[i:i + 1]
                 dset[i:i + 1] = tmpData[0:1]
-                print("Saved item %d of %d" % (i + 1, data.shape[0]))
+                _logger.info("Saved item %d of %d", i + 1, data.shape[0])
 
         dset.attrs['signal'] = "1".encode('utf-8')
         if interpretation is not None:

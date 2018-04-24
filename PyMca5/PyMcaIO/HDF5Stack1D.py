@@ -33,22 +33,23 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import posixpath
 import numpy
 import h5py
+import logging
+_logger = logging.getLogger(__name__)
 try:
     from PyMca5.PyMcaCore import DataObject
     from PyMca5.PyMcaMisc import PhysicalMemory
 except ImportError:
-    print("HDF5Stack1D importing DataObject from local directory!")
+    _logger.info("HDF5Stack1D importing DataObject from local directory!")
     import DataObject
     import PhysicalMemory
 try:
     from PyMca5.PyMcaCore import NexusDataSource
     from PyMca5.PyMcaCore import NexusTools
 except ImportError:
-    print("HDF5Stack1D importing NexusDataSource from local directory!")
+    _logger.info("HDF5Stack1D importing NexusDataSource from local directory!")
     import NexusDataSource
     import NexusDataSource
 
-DEBUG = 0
 SOURCE_TYPE = "HDF5Stack1D"
 
 class HDF5Stack1D(DataObject.DataObject):
@@ -82,10 +83,9 @@ class HDF5Stack1D(DataObject.DataObject):
                  That means scanlist = ["/whatever1"]
                  and               selection['y'] = "/whatever2/counts"
         """
-        if DEBUG:
-            print("filelist = ", filelist)
-            print("selection = ", selection)
-            print("scanlist = ", scanlist)
+        _logger.debug("filelist = %s", filelist)
+        _logger.debug("selection = %s", selection)
+        _logger.debug("scanlist = %s", scanlist)
         # all the files in the same source
         hdfStack = NexusDataSource.NexusDataSource(filelist)
 
@@ -184,7 +184,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                     # this is the case of a selection inside a group
                                     scanlist.append("1.%d" % i)
                         except KeyError:
-                            print("%s not in file, ignoring." % dirname)
+                            _logger.warning("%s not in file, ignoring.", dirname)
                     if not len(scanlist):
                         if not ySelection.startswith("/"):
                             path = "/" + ySelection
@@ -229,9 +229,8 @@ class HDF5Stack1D(DataObject.DataObject):
             if not nScans:
                 raise IOError("No entry contains the required data")
 
-        if DEBUG:
-            print("Retained number of files = %d" % nFiles)
-            print("Retained number of scans = %d" % nScans)
+        _logger.debug("Retained number of files = %d", nFiles)
+        _logger.debug("Retained number of scans = %d", nScans)
 
         # Now is to decide the number of mca ...
         # I assume all the scans contain the same number of mca
@@ -259,8 +258,7 @@ class HDF5Stack1D(DataObject.DataObject):
                                       numpy.float64]:
                 # Some datasets form CLS (origin APS?) arrive as data format
                 # equal to ">u2" and are not triggered as integer types
-                if DEBUG:
-                    print("Not basic dataset type %s" % self.__dtype)
+                _logger.debug("Not basic dataset type %s", self.__dtype)
                 if ("%s" % self.__dtype).endswith("2"):
                     self.__dtype = numpy.float32
                 else:
@@ -271,8 +269,7 @@ class HDF5Stack1D(DataObject.DataObject):
         mcaIndex = selection.get('index', len(shape)-1)
         if mcaIndex == -1:
             mcaIndex = len(shape) - 1
-        if DEBUG:
-            print("mcaIndex = %d" % mcaIndex)
+        _logger.debug("mcaIndex = %d", mcaIndex)
         considerAsImages = False
         dim0, dim1, mcaDim = self.getDimensions(nFiles, nScans, shape,
                                                 index=mcaIndex)
@@ -314,7 +311,7 @@ class HDF5Stack1D(DataObject.DataObject):
         except (MemoryError, ValueError):
             # some versions report ValueError instead of MemoryError
             if (nFiles == 1) and (len(shape) == 3):
-                print("Attempting dynamic loading")
+                _logger.warning("Attempting dynamic loading")
                 self.data = yDataset
                 if mSelection is not None:
                     mdtype = tmpHdf[mpath].dtype
@@ -426,7 +423,7 @@ class HDF5Stack1D(DataObject.DataObject):
                         n = nStart
                         if IN_MEMORY == False:
                             # We can only deal with one dynamic dataset
-                            print("Selection %s ignored" % ySelection)
+                            _logger.warning("Selection %s ignored", ySelection)
                             continue
                         if JUST_KEYS:
                             entryName = goodEntryNames[int(scan.split(".")[-1])-1]
@@ -512,8 +509,8 @@ class HDF5Stack1D(DataObject.DataObject):
                                     case = 0
                                     _time[nStart: nStart + nMcaInYDataset] += timeData
                                 if case == -1:
-                                    print("I do not know how to handle this time data")
-                                    print("Ignoring time information")
+                                    _logger.warning("I do not know how to handle this time data")
+                                    _logger.warning("Ignoring time information")
                                     _time= None
                             if (len(yDataset.shape) == 3) and\
                                (dim1 == yDataset.shape[1]):
@@ -689,8 +686,8 @@ class HDF5Stack1D(DataObject.DataObject):
                     if i != mcaIndex:
                         nRequiredValues *= self.data.shape[i] 
                 if _time.size != nRequiredValues:
-                    print("I do not know how to interpret the time information")
-                    print("Ignoring time information")
+                    _logger.warning("I do not know how to interpret the time information")
+                    _logger.warning("Ignoring time information")
                     _time = None
                 else:
                     _time.shape = -1
@@ -716,7 +713,7 @@ class HDF5Stack1D(DataObject.DataObject):
             if xDataset.size == shape[self.info['McaIndex']]:
                 self.x = [xDataset.reshape(-1)]
             else:
-                print("Ignoring xSelection")
+                _logger.warning("Ignoring xSelection")
         elif _channels is not None:
             _channels.shape = -1
             self.x = [_channels]
@@ -732,8 +729,7 @@ class HDF5Stack1D(DataObject.DataObject):
             index = -1
         if index == -1:
             index = len(shape) - 1
-        if DEBUG:
-            print("INDEX = %d" % index)
+        _logger.debug("INDEX = %d", index)
         #figure out the shape of the stack
         if len(shape) == 0:
             #a scalar?
@@ -764,9 +760,8 @@ class HDF5Stack1D(DataObject.DataObject):
                 nMca *= shape[i]
 
         mcaDim = shape[index]
-        if DEBUG:
-            print("nMca = %d" % nMca)
-            print("mcaDim = ", mcaDim)
+        _logger.debug("nMca = %d", nMca)
+        _logger.debug("mcaDim = %s", mcaDim)
 
         # HDF allows to work directly from the files without loading
         # them into memory.
