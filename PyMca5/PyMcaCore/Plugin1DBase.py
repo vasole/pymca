@@ -61,9 +61,7 @@ The main items are reproduced here and can be directly accessed as plugin method
     - :meth:`Plugin1DBase.getGraphYLimits`
     - :meth:`Plugin1DBase.getGraphTitle`
     - :meth:`Plugin1DBase.getGraphXLabel`
-    - :meth:`Plugin1DBase.getGraphXTitle`
     - :meth:`Plugin1DBase.getGraphYLabel`
-    - :meth:`Plugin1DBase.getGraphYTitle`
     - :meth:`Plugin1DBase.removeCurve`
     - :meth:`Plugin1DBase.setActiveCurve`
     - :meth:`Plugin1DBase.setGraphTitle`
@@ -71,8 +69,6 @@ The main items are reproduced here and can be directly accessed as plugin method
     - :meth:`Plugin1DBase.setGraphYLimits`
     - :meth:`Plugin1DBase.setGraphXLabel`
     - :meth:`Plugin1DBase.setGraphYLabel`
-    - :meth:`Plugin1DBase.setGraphXTitle`
-    - :meth:`Plugin1DBase.setGraphYTitle`
 
 A simple plugin example, normalizing each curve to its maximum and vertically
 shifting the curves.
@@ -346,10 +342,6 @@ class Plugin1DBase(object):
         return self._plotWindow.getGraphXLabel()
 
     def getGraphXTitle(self):
-        """
-        :return: The graph X axis label
-        :rtype: string
-        """
         print("getGraphXTitle deprecated, use getGraphXLabel")
         return self._plotWindow.getGraphXLabel()
 
@@ -361,10 +353,6 @@ class Plugin1DBase(object):
         return self._plotWindow.getGraphYLabel()
 
     def getGraphYTitle(self):
-        """
-        :return: The graph Y axis label
-        :rtype: string
-        """
         print("getGraphYTitle deprecated, use getGraphYLabel")
         return self._plotWindow.getGraphYLabel()
 
@@ -431,6 +419,10 @@ class Plugin1DBase(object):
         return self._plotWindow.setGraphTitle(title)
 
     def setGraphXTitle(self, title):
+        print("setGraphXTitle deprecated, use setGraphXLabel")
+        self.setGraphXLabel(title)
+
+    def setGraphXLabel(self, title):
         """
         :param title: The title to be associated to the X axis
         :type title: string
@@ -440,6 +432,10 @@ class Plugin1DBase(object):
         return self._plotWindow.setGraphXLabel(title)
 
     def setGraphYTitle(self, title):
+        print("setGraphYTitle deprecated, use setGraphYLabel")
+        self.setGraphYLabel(title)
+
+    def setGraphYLabel(self, title):
         """
         :param title: The title to be associated to the X axis
         :type title: string
