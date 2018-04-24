@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2016 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 E. Papillon, V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -313,6 +313,7 @@ class QEdfFileWidget(qt.QWidget):
 
         self.toolBar = qt.QWidget(self)
         self.toolBarLayout = qt.QHBoxLayout(self.toolBar)
+        self.toolBarLayout.setSpacing(0)
         self.toolBarLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.addWidget(self.toolBar)
         #Autoscale
