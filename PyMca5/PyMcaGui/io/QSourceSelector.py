@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -31,7 +31,7 @@ import sys
 import os
 from PyMca5.PyMcaGui import PyMcaQt as qt
 QTVERSION = qt.qVersion()
-from PyMca5.PyMcaGui import PyMca_Icons as icons
+from PyMca5.PyMcaGui.PyMca_Icons import IconDict
 from PyMca5.PyMcaIO import spswrap as sps
 from PyMca5 import PyMcaDirs
 from PyMca5.PyMcaGui.io import PyMcaFileDialogs
@@ -67,26 +67,26 @@ class QSourceSelector(qt.QWidget):
         self.fileCombo  = qt.QComboBox(self.fileWidget)
         self.fileCombo.setEditable(0)
         self.mapCombo= {}
-        openButton= qt.QToolButton(self.fileWidget)
+        openButton= qt.QPushButton(self.fileWidget)
 
-        self.openIcon   = qt.QIcon(qt.QPixmap(icons.fileopen))
-        self.closeIcon  = qt.QIcon(qt.QPixmap(icons.fileclose))
-        self.reloadIcon = qt.QIcon(qt.QPixmap(icons.reload_))
-        self.specIcon   = qt.QIcon(qt.QPixmap(icons.spec))
+        self.openIcon   = qt.QIcon(qt.QPixmap(IconDict["fileopen"]))
+        self.closeIcon  = qt.QIcon(qt.QPixmap(IconDict["fileclose"]))
+        self.reloadIcon = qt.QIcon(qt.QPixmap(IconDict["reload"]))
+        self.specIcon   = qt.QIcon(qt.QPixmap(IconDict["spec"]))
 
         openButton.setIcon(self.openIcon)
         openButton.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Minimum))
         openButton.setToolTip("Open new file data source")
 
-        closeButton= qt.QToolButton(self.fileWidget)
+        closeButton= qt.QPushButton(self.fileWidget)
         closeButton.setIcon(self.closeIcon)
         closeButton.setToolTip("Close current data source")
 
-        refreshButton= qt.QToolButton(self.fileWidget)
+        refreshButton= qt.QPushButton(self.fileWidget)
         refreshButton.setIcon(self.reloadIcon)
         refreshButton.setToolTip("Refresh data source")
 
-        specButton= qt.QToolButton(self.fileWidget)
+        specButton= qt.QPushButton(self.fileWidget)
         specButton.setIcon(self.specIcon)
         specButton.setToolTip("Open new shared memory source")
 
@@ -109,8 +109,8 @@ class QSourceSelector(qt.QWidget):
         fileWidgetLayout.addWidget(refreshButton)
         self.specButton = specButton
         if pluginsIcon:
-            self.pluginsButton = qt.QToolButton(self.fileWidget)
-            self.pluginsButton.setIcon(qt.QIcon(qt.QPixmap(icons.plugin)))
+            self.pluginsButton = qt.QPushButton(self.fileWidget)
+            self.pluginsButton.setIcon(qt.QIcon(qt.QPixmap(IconDict["plugin"])))
             self.pluginsButton.setToolTip("Plugin handling")
             fileWidgetLayout.addWidget(self.pluginsButton)
         self.mainLayout.addWidget(self.fileWidget)

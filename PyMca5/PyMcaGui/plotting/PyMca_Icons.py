@@ -1,5 +1,5 @@
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -4039,7 +4039,7 @@ TRANSLATION_TABLE = {
     #"fileclose": fileclose,
     "fileopen": "document-open",
     "filesave": "document-save",
-    "fileprint": "document-print",
+    #"fileprint": "document-print", PyMca icon is nicer
     "spec": "spec",
     "normal": "normal",
     "normalize16": "math-normalize",
