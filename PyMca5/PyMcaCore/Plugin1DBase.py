@@ -36,43 +36,39 @@ perform user defined operations of the plotted 1D data.
 
 Plugins can be automatically installed provided they are in the appropriate place:
 
-    - In the user home directory: ${HOME}/PyMca/plugins (POSIX systems)
-    - In "My Documents\\\\PyMca\\\\plugins" (Windows)
+    - In the user home directory: *${HOME}/PyMca/plugins* (POSIX systems)
+    - In *"My Documents\\\\PyMca\\\\plugins"* (Windows)
 
-A plugin inherit the Plugin1DBase.Plugin1DBase class and implement the methods:
+A plugin inherit the :class:`Plugin1DBase` class and implement the methods:
 
-    - getMethods
-    - getMethodToolTip (optional but convenient)
-    - getMethodPixmap (optional)
-    - applyMethod
+    - :meth:`Plugin1DBase.getMethods`
+    - :meth:`Plugin1DBase.getMethodToolTip` (optional but convenient)
+    - :meth:`Plugin1DBase.getMethodPixmap` (optional)
+    - :meth:`Plugin1DBase.applyMethod`
 
-and modify the static module variable MENU_TEXT and the static module function
-getPlugin1DInstance according to the defined plugin.
+and modify the static module variable :const:`MENU_TEXT` and the static module function
+:func:`getPlugin1DInstance` according to the defined plugin.
 
 These plugins will be compatible with any 1D-plot window that implements the Plot1D
 interface. The plot window interface is described in the Plot1DBase class.
 
 The main items are reproduced here and can be directly accessed as plugin methods.
 
-    - addCurve
-    - getActiveCurve
-    - getAllCurves
-    - getGraphXLimits
-    - getGraphYLimits
-    - getGraphTitle
-    - getGraphXLabel
-    - getGraphXTitle
-    - getGraphYLabel
-    - getGraphYTitle
-    - removeCurve
-    - setActiveCurve
-    - setGraphTitle
-    - setGraphXLimits
-    - setGraphYLimits
-    - setGraphXLabel
-    - setGraphYLabel
-    - setGraphXTitle
-    - setGraphYTitle
+    - :meth:`Plugin1DBase.addCurve`
+    - :meth:`Plugin1DBase.getActiveCurve`
+    - :meth:`Plugin1DBase.getAllCurves`
+    - :meth:`Plugin1DBase.getGraphXLimits`
+    - :meth:`Plugin1DBase.getGraphYLimits`
+    - :meth:`Plugin1DBase.getGraphTitle`
+    - :meth:`Plugin1DBase.getGraphXLabel`
+    - :meth:`Plugin1DBase.getGraphYLabel`
+    - :meth:`Plugin1DBase.removeCurve`
+    - :meth:`Plugin1DBase.setActiveCurve`
+    - :meth:`Plugin1DBase.setGraphTitle`
+    - :meth:`Plugin1DBase.setGraphXLimits`
+    - :meth:`Plugin1DBase.setGraphYLimits`
+    - :meth:`Plugin1DBase.setGraphXLabel`
+    - :meth:`Plugin1DBase.setGraphYLabel`
 
 A simple plugin example, normalizing each curve to its maximum and vertically
 shifting the curves.
@@ -197,7 +193,7 @@ class Plugin1DBase(object):
         :type replace: boolean default False
         :param replot: Flag to indicate plot is to be immediately updated
         :type replot: boolean default True
-        :param **kw: Additional keywords recognized by the plot window.
+        :param kw: Additional keywords recognized by the plot window.
             Beware that the keywords recognized by *silx* and *PyMca*
             plot windows may differ.
         """
@@ -217,19 +213,22 @@ class Plugin1DBase(object):
         """
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
-        :return: legend of the active curve or list [x, y, legend, info]
+        :return: legend of the active curve or list ``[x, y, legend, info]``
         :rtype: string or list
 
         Function to access the graph currently active curve.
         It returns None in case of not having an active curve.
 
-        Default output has the form:
+        Default output has the form::
+
             xvalues, yvalues, legend, dict
-            where dict is a dictionary containing curve info.
-            For the time being, only the plot labels associated to the
-            curve are warranted to be present under the keys xlabel, ylabel.
+
+        where dict is a dictionary containing curve info.
+        For the time being, only the plot labels associated to the
+        curve are warranted to be present under the keys xlabel, ylabel.
 
         If just_legend is True:
+
             The legend of the active curve (or None) is returned.
         """
         curve = self._plotWindow.getActiveCurve(just_legend=just_legend)
@@ -251,21 +250,21 @@ class Plugin1DBase(object):
         """
         :param just_legend: Flag to specify the type of output required
         :type just_legend: boolean
-        :return: legend of the curves or list [[x, y, legend, info], ...]
+        :return: legend of the curves or list ``[[x, y, legend, info], ...]``
         :rtype: list of strings or list of curves
 
         It returns an empty list in case of not having any curve.
-        If just_legend is False:
-            It returns a list of the form:
+
+        If just_legend is *False*, it returns a list of the form::
+
                 [[xvalues0, yvalues0, legend0, dict0],
                  [xvalues1, yvalues1, legend1, dict1],
                  [...],
                  [xvaluesn, yvaluesn, legendn, dictn]]
-            or just an empty list.
-        If just_legend is True:
-            It returns a list of the form:
+
+        If just_legend is *True*, it returns a list of the form::
+
                 [legend0, legend1, ..., legendn]
-            or just an empty list.
         """
         all_curves = []
         for curve in self._plotWindow.getAllCurves(just_legend=just_legend):
@@ -287,10 +286,11 @@ class Plugin1DBase(object):
 
     def getMonotonicCurves(self):
         """
-        Convenience method that calls getAllCurves and makes sure that all of
+        Convenience method that calls :meth:`getAllCurves` and makes sure that all of
         the X values are strictly increasing.
 
-        :return: It returns a list of the form:
+        It returns a list of the form::
+
                 [[xvalues0, yvalues0, legend0, dict0],
                  [xvalues1, yvalues1, legend1, dict1],
                  [...],
@@ -342,10 +342,6 @@ class Plugin1DBase(object):
         return self._plotWindow.getGraphXLabel()
 
     def getGraphXTitle(self):
-        """
-        :return: The graph X axis label
-        :rtype: string
-        """
         print("getGraphXTitle deprecated, use getGraphXLabel")
         return self._plotWindow.getGraphXLabel()
 
@@ -357,10 +353,6 @@ class Plugin1DBase(object):
         return self._plotWindow.getGraphYLabel()
 
     def getGraphYTitle(self):
-        """
-        :return: The graph Y axis label
-        :rtype: string
-        """
         print("getGraphYTitle deprecated, use getGraphYLabel")
         return self._plotWindow.getGraphYLabel()
 
@@ -427,6 +419,10 @@ class Plugin1DBase(object):
         return self._plotWindow.setGraphTitle(title)
 
     def setGraphXTitle(self, title):
+        print("setGraphXTitle deprecated, use setGraphXLabel")
+        self.setGraphXLabel(title)
+
+    def setGraphXLabel(self, title):
         """
         :param title: The title to be associated to the X axis
         :type title: string
@@ -436,6 +432,10 @@ class Plugin1DBase(object):
         return self._plotWindow.setGraphXLabel(title)
 
     def setGraphYTitle(self, title):
+        print("setGraphYTitle deprecated, use setGraphYLabel")
+        self.setGraphYLabel(title)
+
+    def setGraphYLabel(self, title):
         """
         :param title: The title to be associated to the X axis
         :type title: string
@@ -481,13 +481,14 @@ class Plugin1DBase(object):
 
 
 MENU_TEXT = "Plugin1D Base"
+"""This is the name of the plugin, as it appears in the plugins menu."""
 
 
 def getPlugin1DInstance(plotWindow, **kw):
     """
     This function will be called by the plot window instantiating and calling
-    the plugins. It passes itslef as first argument, but the default implementation
-    of the base class only keeps a weak reference to prevent cirvular references.
+    the plugins. It passes itself as first argument, but the default implementation
+    of the base class only keeps a weak reference to prevent circular references.
     """
     ob = Plugin1DBase(plotWindow)
     return ob
