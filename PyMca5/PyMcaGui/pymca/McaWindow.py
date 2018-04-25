@@ -74,7 +74,7 @@ _logger = logging.getLogger(__name__)
 
 
 class McaWindow(ScanWindow.ScanWindow):
-    sigROISignal = qt.Signal(object)
+    sigROISignal = qt.pyqtSignal(object)
 
     def __init__(self, parent=None, name="Mca Window", fit=True, backend=None,
                  plugins=True, control=True, position=True, roi=True,
