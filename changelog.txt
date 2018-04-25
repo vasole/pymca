@@ -212,15 +212,15 @@ VERSION 5.0.2
 VERSION 5.0.1
 -------------
 
-- Fast XRF fitting: Give the user the option not to check for negative peak contributions in order to maximize speed. The default behavior is unchanged.
+- Fast XRF fitting. Give the user the option not to check for negative peak contributions in order to maximize speed. The default behavior is unchanged.
 
 - Add copyright information to files missing it.
 
-- Correct bug: Windows frozen binary could not start batch from main window.
+- Correct bug. Windows frozen binary could not start batch from main window.
 
-- Correct bug: Fast XRF fit was not working on dynamically loaded stacks when negative peak contributions were detected.
+- Correct bug. Fast XRF fit was not working on dynamically loaded stacks when negative peak contributions were detected.
 
-- Correct bug: Save action was not active on some plots.
+- Correct bug. Save action was not active on some plots.
 
 VERSION 5.0.0
 -------------
@@ -333,8 +333,7 @@ VERSION 4.7.0
 VERSION 4.6.2
 -------------
 
-- Fix calculation of the MCA associated to a region when using dynamically
-loaded 1D stacks.
+- Fix calculation of the MCA associated to a region when using dynamically loaded 1D stacks.
 
 - Fix scan XANES normalization. All curves normalized instead of just the active one.
 
@@ -833,14 +832,13 @@ VERSION 4.0.2
 
 - Allow the user to choose if the data have to be weighted during the fit.
 
-- Correct a bug only affecting linear batches: areas and concentrations were smaller by
-a factor 10000. The bug was introduced in version 4.0.0
+- Correct a bug only affecting linear batches: areas and concentrations were smaller by a factor 10000. The bug was introduced in version 4.0.0
 
 - Faster concentrations calculation.
 
 - Concentrations calculated on batches do not force the generation of the .fit files.
 
-- Linux: sps library made locale independent.
+- Linux sps library made locale independent.
 
 VERSION 4.0.1
 -------------
