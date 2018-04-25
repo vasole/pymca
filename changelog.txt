@@ -7,8 +7,7 @@ VERSION 5.3.0
 
 - XRF. Support time readout and use of time information from HDF5 files.
 
-- HDF5. Simplify HDF5 data selection handling by generatic automatic data selection tables
-besides the user defined one (requires use of a measurement group)
+- HDF5. Simplify HDF5 data selection handling by generatic automatic data selection tables besides the user defined one (requires use of a measurement group)
 
 - HDF5. Support readout of motor positions together with curve data when following ESRF and Sardana standards.
 
@@ -31,8 +30,7 @@ VERSION 5.2.2
 
 - HDF5 Widget. Use PyMca plugins on silx data viewer.
 
-- HDF5 Batch. Correct error when all the entries in an HDF5 file do not present
-the same structure.
+- HDF5 Batch. Correct error when all the entries in an HDF5 file do not present the same structure.
 
 - SPEC shared memory. Correct counter labelling order in case of using 10 or more counters and motors in a scan.
 
@@ -54,30 +52,25 @@ VERSION 5.2.0
 
 - Extend the command line usage of the FastXRFLinearFit module to HDF5 datasets.
 
-- ROI Imaging. Improved external images plugin. It requires silx.
+- ROI Imaging.
 
-- ROI Imaging. Plugin to display per pixel information (motors and others). It
-requires silx.
-
-- ROI Imaging. Allow to sum the master and the slave stack. It can be used to
-sum an arbitrary number of stacks.
-
-- ROI Imaging. Selecting multiple HDF5 datasets as signal generates a stack that
-is the sum of all of the datasets.
+  - Improved external images plugin. It requires silx.
+  - Plugin to display per pixel information (motors and others). It requires silx.
+  - Allow to sum the master and the slave stack. It can be used to sum an arbitrary number of stacks.
+  - Selecting multiple HDF5 datasets as signal generates a stack that is the sum of all of the datasets.
 
 - Implement a calculation cache to speed up secondary excitation calculations.
 
-- Allow to use fisx library for the calculation of escape peaks. Default is
-disabled.
+- Allow to use fisx library for the calculation of escape peaks. Default is disabled.
 
 - Improved support of OMDAQ lmf format.
 
-- Correct bug affecting the calculation of ROIs when the x axis coordinates are
-negative
+- Correct bug affecting the calculation of ROIs when the x axis coordinates are negative
 
-- MacOS. Correct bug on startup when reading the default configuration.
+- MacOS
 
-- MacOS. Frozen binary uses now HDF5 1.10.1 to support SWMR files.
+  - Correct bug on startup when reading the default configuration.
+  - Frozen binary uses now HDF5 1.10.1 to support SWMR files.
 
 VERSION 5.1.4
 -------------
