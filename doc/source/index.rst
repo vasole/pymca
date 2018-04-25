@@ -34,7 +34,6 @@ The current version features:
    tutorials.rst
    changelog.rst
    license.rst
-   virtualenv.rst
 
 :doc:`overview`
     Releases, repository, issue tracker, mailing list, ...
@@ -50,6 +49,9 @@ The current version features:
 
 :doc:`license`
     License information
+
+:doc:`faq`
+    Frequently Asked Questions
 
 Indices
 =======
