@@ -9,7 +9,7 @@ The `Getting Started tutorial <http://pymca.sourceforge.net/PyMcaCHESS.pdf>`_ is
 
 `Calibration tutorial <http://www.esrf.fr/computing/bliss/downloads/pymca/calibrationtutorial.htm>`_. To be used if you still have some doubts about how to calibrate your spectra.
 
-`Materials tutorial <http://pymca.sourceforge.net/materials.html>`_ . This tutorial will show you how to define your own materials.
+:doc:`./xrf/material-definition/index`. This tutorial will show you how to define your own materials.
 
 `ROI Imaging tutorial <http://www.esrf.fr/computing/bliss/downloads/pymca/roitooltutorial.htm>`_ . Introduction to the stack imaging capabilities of PyMca
 
