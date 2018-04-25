@@ -15,7 +15,7 @@ The `Getting Started tutorial <http://pymca.sourceforge.net/PyMcaCHESS.pdf>`_ is
 
 `Kinetics tutorial <http://www.esrf.fr/computing/bliss/downloads/pymca/kineticstutorial.htm>`_ . Illustration of the use of the ROI Imaging tool for kinetics studies.
 
-`Understanding and using the strip background <http://pymca.sourceforge.net/stripbackground.html>`_. Description of the parameters defining your favorite background.
-	
+:doc:`./xrf/strip-background/index`. Description of the parameters defining your favorite background.
+
 :doc:`./customization/index` Description about how to add your own add-ons to PyMca.
 
