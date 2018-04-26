@@ -8,7 +8,7 @@ programming language.
 Stand-alone Executable
 ----------------------
 
-Stand-alone applications (aka. frozen binaries) are supplied for Windows and MacOS. They and do not require any additional dependency and can be downloaded from `here <https://sourceforge.net/projects/pymca/files/pymca/>`_. Just download the installer for your platform.
+Stand-alone applications (aka. frozen binaries) are supplied for Windows and MacOS. They do not require any additional dependency and can be downloaded from `here <https://sourceforge.net/projects/pymca/files/pymca/>`_. Just download the installer for your platform.
 
 
 Python module
@@ -117,7 +117,7 @@ Please follow the instructions suplied by the silx project http://www.silx.org/d
 Using pip
 +++++++++
 
-Configure your PATH environment variable to include the pip installation
+Configure your PATH environment variable to include the pip installation
 directory, the same way as described for Python.
 
 The pip installation directory will likely be ``C:\Python35\Scripts\``.
@@ -137,7 +137,7 @@ All dependencies may be simply installed with pip:
 
 
 Installing *PyMca*
-+++++++++++++++++
+++++++++++++++++++
 
 Provided numpy is installed, you can install *PyMca* with:
 
