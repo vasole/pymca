@@ -225,7 +225,7 @@ def getMcaObjectPaths(h5file, mcaPath):
     The information below will be read but is not used as it does not belong to the
     detector but to a yet-to-be-defined PyMca XRF application definition. Please do
     not rely on it.
-
+    
     - i0
     - it
     - i0_to_flux_factor
@@ -334,8 +334,10 @@ def getPositionersGroup(h5file, path):
     Retrieve the positioners group associated to a path
     retrieving them from the same entry.
 
-    It assumes they are either in NXentry/NXinstrument/positioners
-    or in NXentry/measurement/pre_scan_snapshot
+    It assumes they are either in:
+
+    - NXentry/NXinstrument/positioners or
+    - NXentry/measurement/pre_scan_snapshot
 
     """
     entry_path = getEntryName(path)
