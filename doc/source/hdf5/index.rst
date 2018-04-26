@@ -41,6 +41,8 @@ The *measurement* group was thought havingin mind interactive handling of HDF5 f
 
 Other facilities following a different approache consiting on having an NXdata group as container irrespectively of defining a default plot or not. In an attempt to offer the described functionality to users dealing with data from those facilities, PyMca also fills the AUTO table with the datasets found in the NXdata group containing the largest number of datasets.
 
+This is implemented by the function :func:`PyMca5.PyMcaCore.NexusTools.getMeasurementGroup`
+
 Positioners
 -----------
 
@@ -51,3 +53,20 @@ PyMca tries to retrieve as much information as possible associated to the select
 
 This is implemented by the function :func:`PyMca5.PyMcaCore.NexusTools.getPositionersGroup`
 
+MCA Data
+--------
+
+When selecting a dataset as MCA, PyMca will try to retrieve associated information like the associated channels, live_time, elapsed_time, preset_time and calibration. For that to happen, datasets with those names should be present at the same level as the target dataset.
+
+Please refer to the function :func:`PyMca5.PyMcaCore.NexusTools.getMcaObjectPaths` for details.
+
+
+Similar to the AUTO table, PyMca tries to to build a selection table named MCA for datasets that may be considered as containing 1D data. For that, it searches for datasets containing the attribute *interpretation*  set to *spectrum*
+
+Please refer to the function :func:`PyMca5.PyMcaCore.NexusTools.getMcaList` for details.
+
+The following command::
+
+   python -m PyMca5.PyMcaCore.NexusTools [your_HDF5_file_name]
+
+will show you the information PyMca can automatically retrieve in terms of measurement groups, positioners, scanned motors, MCAs and associated information
