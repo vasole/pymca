@@ -2,5 +2,7 @@
 Customizing PyMca
 =================
 
-- :doc:`plugins1d`
-- :doc:`stackplugins`
+.. toctree::
+
+    plugins1d
+    stackplugins
