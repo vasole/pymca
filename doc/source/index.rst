@@ -40,6 +40,11 @@ Table of contents
    license.rst
    faq.rst
 
+.. toctree::
+   :hidden:
+
+   modules/index.rst
+
 
 Indices
 =======

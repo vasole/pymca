@@ -7,6 +7,7 @@ Tutorials and sample code
    ./xrf/material-definition/index.rst
    ./xrf/strip-background/index.rst
    ./customization/index.rst
+   ./hdf5/index.rst
 
 There are several tutorials explaining different aspects of the program.
 
@@ -15,7 +16,7 @@ is a very old tutorial written by Darren Dale and initially tailored to `CHESS <
 users but usefull to everybody starting to use PyMca. In case the previous link is down, you can try
 this `alternative link <https://wiki.utep.edu/display/MASE6402MME4501/PyMCA+support>`_.
 
-`Accessing HDF5 data <http://www.esrf.fr/computing/bliss/downloads/pymca/PyMcaHDF5.pdf>`_. PyMca can deal with
+:doc:`./hdf5/index` PyMca can deal with
 HDF5 files since version 4.4.0. You should take a look at the
 `HDF Group web site <https://portal.hdfgroup.org/display/HDF5/HDF5>`_ to know more about HDF.
 `NeXus <http://www.nexusformat.org>`_ files are only supported when using the HDF5 backend.
