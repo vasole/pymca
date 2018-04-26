@@ -55,7 +55,7 @@ master_doc = 'index'
 from PyMca5 import __version__
 import datetime
 project = u'PyMca5'
-copyright = u'2004-%s, V Armando Solé' % datetime.datetime.now().year
+copyright = u'2004-%s, European Synchrotron Radiation Facility' % datetime.datetime.now().year
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -148,7 +148,7 @@ html_favicon = "img/PyMca.ico"
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-#html_sidebars = {}
+html_sidebars = {'**': ['globaltoc.html', 'localtoc.html', 'relations.html', 'searchbox.html', 'pagesource.html']}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

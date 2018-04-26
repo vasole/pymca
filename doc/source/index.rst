@@ -26,32 +26,20 @@ The current version features:
 - Multivariate analysis.
 - Common data reduction operation (normalization, fitting, ...)
 
+
+Table of contents
+=================
+
 .. toctree::
-   :hidden:
+   :maxdepth: 1
 
    overview.rst
    install.rst
    tutorials.rst
    changelog.rst
    license.rst
+   faq.rst
 
-:doc:`overview`
-    Releases, repository, issue tracker, mailing list, ...
-
-:doc:`install`
-    How to install *PyMca* on Linux, Windows and MacOS X
-
-:doc:`tutorials`
-    Tutorials and sample code
-
-:doc:`changelog`
-    List of changes between releases
-
-:doc:`license`
-    License information
-
-:doc:`faq`
-    Frequently Asked Questions
 
 Indices
 =======
