@@ -2,7 +2,7 @@
 Installation steps
 ==================
 
-*PyMca* supports most operating systems, different version of the Python
+*PyMca* supports most operating systems and different version of the Python
 programming language.
 
 Stand-alone Executable
@@ -14,7 +14,7 @@ Stand-alone applications (aka. frozen binaries) are supplied for Windows and Mac
 Python module
 -------------
 
-The best use of PyMca can be achieved installing PyMca as a python package inside an Python installation. For Windows and MacOS there are pre-compiled modules available in order to simplify the tast.
+The best use of PyMca can be achieved installing PyMca as a python package inside an existing Python installation. For Windows and MacOS there are pre-compiled modules available in order to simplify the tast.
 
 You can also install PyMca from its source code. While `numpy <http://www.numpy.org/>`_ and `fisx <https://github.com/vasole/fisx>`_ are the only mandatory dependencies for command line usage,
 graphical widgets require Qt and `matplotlib <http://matplotlib.org/>`_ and management of HDF5 data files requires
