@@ -9,8 +9,8 @@ datasets.
 - Use QOpenGLWidget when available instead of QGLWidget. It solves a Debian
 packaging issue.
 
-- Prepare web pages using sphinx to be ready for easy deploy of improved
-documentation.
+- Prepare web pages using sphinx to be ready for easy deployment of improved
+documentation (accessible from http://www.silx.org)
 
 VERSION 5.3.0
 -------------
