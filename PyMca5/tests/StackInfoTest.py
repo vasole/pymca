@@ -170,7 +170,7 @@ class testStackInfo(unittest.TestCase):
         readLiveTime = mcaObject.info["McaLiveTime"]
         self.assertTrue(abs(live_time[mask > 0].sum() - readLiveTime) < 1.0e-5,
                 "Incorrect sum of masked live time data")
-        
+
         mcaObject = sb.calculateMcaDataObject(normalize=True)
         live_time.shape = mask.shape
         tmpBuffer = numpy.zeros(mask.shape, dtype=numpy.int32)
@@ -403,6 +403,19 @@ class testStackInfo(unittest.TestCase):
         h5.flush()
         h5.close()
         h5 = None
+
+        # check that the data can be read as a stack as
+        # single top level dataset (issue #226)
+        external = self._h5File + "external.h5"
+        if os.path.exists(external):
+            os.remove(external)
+        h5 = h5py.File(external, "w")
+        h5["/data_at_top"] = h5py.ExternalLink(self._h5File,
+                                           "/entry/measurement/mca_soft/data")
+        h5.flush()
+        h5.close()
+        h5 = None
+        stack = HDF5Stack1D.HDF5Stack1D([external], {"y":"/data_at_top"})
 
         # check that the data can be read as a stack through a external link
         external = self._h5File + "external.h5"
