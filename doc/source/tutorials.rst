@@ -4,7 +4,7 @@ Tutorials and sample code
 .. toctree::
    :hidden:
 
-   ./xrf/strip-background/index.rst
+   ./xrf/material-definition/index.rst
    ./xrf/strip-background/index.rst
    ./customization/index.rst
 
