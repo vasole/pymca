@@ -148,7 +148,7 @@ html_favicon = "img/PyMca.ico"
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-#html_sidebars = {'**': ['globaltoc.html','localtoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html']}
+html_sidebars = {'**': ['globaltoc.html', 'localtoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html']}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
