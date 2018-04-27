@@ -426,8 +426,10 @@ def getInstrumentGroup(h5file, path):
 
 def getScannedPositioners(h5file, path):
     """
-    Try to retrieve the positioners (aka. motors) that were moved
+    Try to retrieve the positioners (aka. motors) that were moved.
+
     For that:
+
         - Look for datasets present at measurement and positioners groups
         - Look for positioners with more than one single value
         - Look for datasets present at measurement and title
