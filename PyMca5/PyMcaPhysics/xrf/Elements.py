@@ -2703,6 +2703,7 @@ def getelementmassattcoef(ele,energy=None):
                 Element[ele]['xcom']['pair'][i] += float(value)
                 i += 1
             line = f.readline()
+        f.close()
         if sys.version >= '3.0':
             # next line gave problems under under windows
             # just try numpy.argsort([1,1,1,1,1]) under linux and windows to see
