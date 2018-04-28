@@ -858,7 +858,7 @@ if use_gui():
                         "matplotlib>1.0",
                         "qtconsole",
                         "PyQt5",
-                        "silx>=0.7]
+                        "silx>=0.7"]
 else:
     install_requires = ["numpy",
                         "matplotlib",
