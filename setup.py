@@ -860,7 +860,8 @@ install_requires = ["numpy",
                     "PyQt5",          # either PyQt4 or PySide supported too
                     "silx>=0.7"]
 if not use_gui():
-    # requirements for non-GUI usage
+    # this is the default
+    # just include requirements for non-GUI usage
     install_requires = install_requires[:4]
 
 setup_requires = ["numpy"]
