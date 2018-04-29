@@ -857,10 +857,10 @@ if use_gui():
     # install requires with all easy-to-provide GUI functionality
     # plese take a look at requirements.txt for detailed explanation
     install_requires += ["PyOpenGL",
-                        "matplotlib>1.0",
-                        "qtconsole",
-                        "PyQt5",          # either PyQt4 or PySide supported too
-                        "silx>=0.7"]
+                         "matplotlib>1.0",
+                         "qtconsole",
+                         "PyQt5",   # either PyQt4 or PySide supported too
+                         "silx>=0.7"]
 
 setup_requires = ["numpy"]
 
