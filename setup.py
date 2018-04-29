@@ -848,22 +848,18 @@ classifiers = ["Development Status :: 5 - Production/Stable",
                "Topic :: Scientific/Engineering :: Visualization",
                ]
 
+install_requires = ["numpy",
+                    "matplotlib",
+                    "fisx>=1.1.4",
+                    "h5py"]
+
 if use_gui():
     # plese take a look at requirements.txt for detailed explanation
-    install_requires = ["numpy",
-                        "matplotlib",
-                        "fisx>=1.1.4",
-                        "h5py",
-                        "PyOpenGL",
-                        "matplotlib>1.0",
-                        "qtconsole",
-                        "PyQt5",
-                        "silx>=0.7"]
-else:
-    install_requires = ["numpy",
-                        "matplotlib",
-                        "fisx>=1.1.4",
-                        "h5py"]
+    install_requires += ["PyOpenGL",
+                         "matplotlib>1.0",
+                         "qtconsole",
+                         "PyQt5",
+                         "silx>=0.7"]
 
 setup_requires = ["numpy"]
 
