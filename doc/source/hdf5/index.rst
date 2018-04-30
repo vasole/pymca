@@ -14,7 +14,7 @@ Generic HDF5 Support
 
 The data in an HDF5 file provide information about their size and type but they do not provide information about what they represent. Therefore, the approach followed by PyMca to properly visualize the data is cumbersome (at least when used for first time) but simple. 
 
-The approach is based on creating a USER selection table with the datasets of interest inorder to allow the user to choose waht to visualize (aka. *signal*) against what (aka. *axes*).
+The approach is based on creating a USER selection table with the datasets of interest in order to allow the user to choose what to visualize (aka. *signal*) against what (aka. *axes*).
 
 This can be achieved by double clicking the relevant datasets or via a right-button mouse click. 
 The nice feature is that the table provides a context menu (right-buttonmouse click) allowing the user to save or load selection tables therefore reducing the need to repetitively browse the file. In addition, the selection table is saved among the PyMca settings (File Menu -> Save ->PyMca Configuration or File Menu -> Save Default Settings).
