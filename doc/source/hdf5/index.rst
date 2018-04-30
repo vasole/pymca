@@ -17,16 +17,16 @@ The data in an HDF5 file provide information about their size and type but they 
 The approach is based on creating a USER selection table with the datasets of interest inorder to allow the user to choose waht to visualize (aka. *signal*) against what (aka. *axes*).
 
 This can be achieved by double clicking the relevant datasets or via a right-button mouse click. 
-The nice feature is that the table provides a context menu (right-buttonmouse click) allowing the user to save or load selection tables therefore reducing the need to repetitively browse the file. In addition, the selection table is saved among the PyMca settings(File Menu -> Save ->PyMca Configuration or File Menu -> Save Default Settings).
+The nice feature is that the table provides a context menu (right-buttonmouse click) allowing the user to save or load selection tables therefore reducing the need to repetitively browse the file. In addition, the selection table is saved among the PyMca settings (File Menu -> Save ->PyMca Configuration or File Menu -> Save Default Settings).
 
 Once the datasets of user interest are in the table, the user can select what datasets are to be used as axes (first table column containing checkboxes), as signals (second column containing checkboxes) and eventually as monitor (third column with checkboxes). The only selection that is mandatory to generate a plot is the one corresponding to the signal.
 
-In case of selection of selecting several axes, the order in which the check boxes were selected determines the dataset to be used as first, second or third axis.
+In case of selecting several axes, the order in which the check boxes were selected determines the dataset to be used as first, second or third axis.
 
 NeXus Support
 -------------
 
-`NeXus <http://www.nexusformat.org>`_ provides a set of directives to share data among different facilities. It provides an API supporting an HDF4 backend, an XML backend and an HDF5 backend. PyMca does not use the NeXus API and therefore only supports the HDF5 backend. By other hand, HDF5 is the most common NeXus backend used at large scale research facilities.
+`NeXus <http://www.nexusformat.org>`_ provides a set of directives to share data among different facilities. It provides an API supporting an HDF4 backend, an XML backend and an HDF5 backend. PyMca does not use the NeXus API and therefore only supports the HDF5 backend. On the other hand, HDF5 is the most common NeXus backend used at large scale research facilities.
 
 NeXus HDF5 files can be handled in the same way as standard HDF5 files. In addition, PyMca will try to make as much use as possible of metadata, default plots and application definitions provided by NeXus to reduce user interaction.
 
@@ -35,11 +35,11 @@ For instance, version 5.3.0 of PyMca highlights NXdata groups in blue and a doub
 Measurement Group Support
 -------------------------
 
-Some facilities follow what we can call the *measurement group approach* when collecting data. It is an additional convention to NeXus characterized for the addition of a group named *measurement* to each NXentry. That goal of that group is to provide the user with a quick access to information without the burden of having to hunt for the information in the highly hierarchical layout imposed by NeXus.
+Some facilities follow what we can call the *measurement group approach* when collecting data. It is an additional convention to NeXus characterized by the addition of a group named *measurement* to each NXentry. The goal of that group is to provide the user with a quick access to information without the burden of having to hunt for the information in the highly hierarchical layout imposed by NeXus.
 
-The *measurement* group was thought havingin mind interactive handling of HDF5 files by users. Despite that, PyMca exploits that to provide a an automatically filled selection table based on the contents of a *measurement* if present. Therefore, besides the USER selection table described above, PyMca provides the AUTO selection table automatically generated.
+The *measurement* group was thought having in mind interactive handling of HDF5 files by users. Despite that, PyMca exploits that to provide an automatically filled selection table based on the contents of a *measurement* if present. Therefore, besides the USER selection table described above, PyMca provides the AUTO selection table automatically generated.
 
-Other facilities following a different approache consiting on having an NXdata group as container irrespectively of defining a default plot or not. In an attempt to offer the described functionality to users dealing with data from those facilities, PyMca also fills the AUTO table with the datasets found in the NXdata group containing the largest number of datasets.
+Other facilities follow a different approach consiting on having an NXdata group as container irrespectively of defining a default plot or not. In an attempt to offer the described functionality to users dealing with data from those facilities, PyMca also fills the AUTO table with the datasets found in the NXdata group containing the largest number of datasets.
 
 This is implemented by the function :func:`PyMca5.PyMcaCore.NexusTools.getMeasurementGroup`
 
