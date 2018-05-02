@@ -178,6 +178,7 @@ or
 
 This should work without issues, as binary wheels of *PyMca* are provided on PyPI.
 
+.. _Installing from source:
 
 Installing from source
 ----------------------

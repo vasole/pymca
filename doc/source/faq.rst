@@ -68,6 +68,6 @@ What have you used to build the binaries?
 I have used cx_freeze on linux and windows. For the Mac I have used py2app. In order to make installable packages I have used the Nullsoft installer on windows and Platypus on the Mac.
 
 I want to build the program from its source code. What do I need?
------------------------------------------------------------------------------
+-----------------------------------------------------------------
 
-Please refer to the appropriate installation section.
+Please refer to the paragraph :ref:`Installing from source` in the installation instructions.
