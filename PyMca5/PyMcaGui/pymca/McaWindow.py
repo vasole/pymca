@@ -123,6 +123,7 @@ class McaWindow(ScanWindow.ScanWindow):
         self.setGraphYLabel('Counts')
 
         # custom save
+        self.getOutputToolBar().setVisible(False)
         self.mcaSaveButton = qt.QToolButton(self)
         self.mcaSaveButton.setIcon(silx.gui.icons.getQIcon('document-save'))
         self.mcaSaveButton.setToolTip('Save as')
