@@ -905,6 +905,7 @@ if use_gui():
                          "PyQt5",   # either PyQt4 or PySide supported too
                          "silx>=0.8"]
 
+
 setup_requires = ["numpy"]
 
 distrib = setup(name="PyMca5",
