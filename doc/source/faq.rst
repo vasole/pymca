@@ -42,7 +42,10 @@ The description of the scattering peaks is very poor, why?
 ----------------------------------------------------------
 
 Because they are fitted as simple gaussians and that is not correct. The reason? I considered that you could always leave them out of the fitting region and therefore the main interest of having them is to allow to deal with their escape peaks when falling  into the fitting region. I have to admit that, while this is mostly the case when using synchrotron radiation as excitation source, the Compton peaks can be a problem when using X-ray tubes.
+
 I am on windows, what program version should I use?
+---------------------------------------------------
+
 The most recent.
 
 From the program point of view I would say that the bugs introduced when switching from PyQt to PyQt4 have been already fixed. In any case, if you make any batch fitting or imaging, you certainly want the latest version. Among other features you can easily find a 10 fold speed improvement ...
