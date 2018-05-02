@@ -1,16 +1,16 @@
 Frequently Asked Questions
 ==========================
 
-    Should I write PyMCA or PyMca?
-    Why did you take the Gioconda as logo?
-    I do not use the ESRF data format nor the SPEC file format. Do I have to convert my data?
-    I use an X-ray tube, how can I make quantitative analysis?
-    The description of the scattering peaks is very poor, why?
-    I am on windows, what program version should I use?
-    Does PyMca work on Vista or Windows 7?
-    I have a Mac, the program seems to hang or to do nothing, how can I report what's happening?
-    What have you used to build the binaries?
-    I want to build the program from its source code. Do I need Numeric or Numpy?
+    - `Should I write PyMCA or PyMca?`_
+    - `Why did you take the Gioconda as logo?`_
+    - `I do not use the ESRF data format nor the SPEC file format. Do I have to convert my data?`_
+    - `I use an X-ray tube, how can I make quantitative analysis?`_
+    - `The description of the scattering peaks is very poor, why?`_
+    - `I am on windows, what program version should I use?`_
+    - `Does PyMca work on Windows 7 and Windows 10?`_
+    - `I have a Mac, the program seems to hang or to do nothing, how can I report what's happening?`_
+    - `What have you used to build the binaries?`_
+    - `I want to build the program from its source code. What do I need?`_
 
 Should I write PyMCA or PyMca?
 ------------------------------
