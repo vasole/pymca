@@ -2889,8 +2889,7 @@ class McaGraphWindow(PlotWindow):
 
         # toolbar
         # hide unused actions and separators
-        self.zoomModeAction.setVisible(False)
-        self.panModeAction.setVisible(False)
+        self.getInteractiveModeToolBar().setVisible(False)
         self.getXAxisLogarithmicAction().setVisible(False)
         for action in self.toolBar().actions():
             if action.isSeparator():
