@@ -1,16 +1,16 @@
 Frequently Asked Questions
 ==========================
 
-    Should I write PyMCA or PyMca?
-    Why did you take the Gioconda as logo?
-    I do not use the ESRF data format nor the SPEC file format. Do I have to convert my data?
-    I use an X-ray tube, how can I make quantitative analysis?
-    The description of the scattering peaks is very poor, why?
-    I am on windows, what program version should I use?
-    Does PyMca work on Vista or Windows 7?
-    I have a Mac, the program seems to hang or to do nothing, how can I report what's happening?
-    What have you used to build the binaries?
-    I want to build the program from its source code. Do I need Numeric or Numpy?
+- `Should I write PyMCA or PyMca?`_
+- `Why did you take the Gioconda as logo?`_
+- `I do not use the ESRF data format nor the SPEC file format. Do I have to convert my data?`_
+- `I use an X-ray tube, how can I make quantitative analysis?`_
+- `The description of the scattering peaks is very poor, why?`_
+- `I am on windows, what program version should I use?`_
+- `Does PyMca work on Windows 7 and Windows 10?`_
+- `I have a Mac, the program seems to hang or to do nothing, how can I report what's happening?`_
+- `What have you used to build the binaries?`_
+- `I want to build the program from its source code. What do I need?`_
 
 Should I write PyMCA or PyMca?
 ------------------------------
@@ -42,7 +42,10 @@ The description of the scattering peaks is very poor, why?
 ----------------------------------------------------------
 
 Because they are fitted as simple gaussians and that is not correct. The reason? I considered that you could always leave them out of the fitting region and therefore the main interest of having them is to allow to deal with their escape peaks when falling  into the fitting region. I have to admit that, while this is mostly the case when using synchrotron radiation as excitation source, the Compton peaks can be a problem when using X-ray tubes.
+
 I am on windows, what program version should I use?
+---------------------------------------------------
+
 The most recent.
 
 From the program point of view I would say that the bugs introduced when switching from PyQt to PyQt4 have been already fixed. In any case, if you make any batch fitting or imaging, you certainly want the latest version. Among other features you can easily find a 10 fold speed improvement ...
@@ -68,6 +71,6 @@ What have you used to build the binaries?
 I have used cx_freeze on linux and windows. For the Mac I have used py2app. In order to make installable packages I have used the Nullsoft installer on windows and Platypus on the Mac.
 
 I want to build the program from its source code. What do I need?
------------------------------------------------------------------------------
+-----------------------------------------------------------------
 
-Please refer to the appropriate installation section.
+Please refer to the paragraph :ref:`Installing from source` in the installation instructions.
