@@ -13,7 +13,8 @@ include README
 include build-deb.sh
 include version.py
 include copyright
-recursive-include doc *.py *.rst
+include requirements.txt
+recursive-include doc *.py *.rst *.html *.ico *.png *.jpg
 recursive-include doc/man *.1
 recursive-include icons *.icns *.ico *_256x256.png
 recursive-include PyMca5/EPDL97 *.DAT

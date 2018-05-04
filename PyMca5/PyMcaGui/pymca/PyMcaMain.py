@@ -103,6 +103,7 @@ except:
     pass
 from PyMca5.PyMcaGui.pymca import PyMcaMdi
 IconDict = PyMcaMdi.IconDict
+IconDict0 = PyMcaMdi.IconDict0
 if hasattr(qt, "QString"):
     QString = qt.QString
 else:
@@ -1012,7 +1013,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         layout1.addWidget(self.line1)
         #self.closelabel = qt.QLabel(sourceToolbar)
         self.closelabel = PixmapLabel(sourceToolbar)
-        self.closelabel.setPixmap(qt.QPixmap(IconDict['close']))
+        self.closelabel.setPixmap(qt.QPixmap(IconDict0['close']))
         layout1.addWidget(self.closelabel)
         self.closelabel.setSizePolicy(qt.QSizePolicy(qt.QSizePolicy.Fixed, qt.QSizePolicy.Fixed))
         #self.sourceBrowserTab=qt.QTabWidget(self.sourceFrame)

@@ -36,31 +36,46 @@ PYMCA_DATA_DIR = 'DATA_DIR_FROM_SETUP'
 # This is to be filled by the setup
 PYMCA_DOC_DIR = 'DOC_DIR_FROM_SETUP'
 
+PYMCA_DATA_DIR_ENV = os.getenv("PYMCA_DATA_DIR")
+if PYMCA_DATA_DIR_ENV is not None:
+    PYMCA_DATA_DIR = PYMCA_DATA_DIR_ENV
+    if not os.path.exists(PYMCA_DATA_DIR):
+        raise IOError('%s directory set from environment not found' % \
+                      PYMCA_DATA_DIR)
+    else:
+        txt = "WARNING: Taking PYMCA_DATA_DIR from environment.\n"
+        txt += "Use it at your own risk."
+        print(txt)
+
+
 # this is used in build directory
 if not os.path.exists(PYMCA_DATA_DIR):
     tmp_dir = os.path.dirname(os.path.abspath(__file__))
     old_tmp_dir = tmp_dir + "dummy"
     basename = "PyMcaData"
-    PYMCA_DATA_DIR = os.path.join(tmp_dir, "PyMca5", basename)
-    while (len(PYMCA_DATA_DIR) > 20) and (tmp_dir != old_tmp_dir):
-        if os.path.exists(PYMCA_DATA_DIR):
+    PYMCA_DATA_DIR_BUILD = os.path.join(tmp_dir, "PyMca5", basename)
+    while (len(PYMCA_DATA_DIR_BUILD) > 20) and (tmp_dir != old_tmp_dir):
+        if os.path.exists(PYMCA_DATA_DIR_BUILD):
+            PYMCA_DATA_DIR = PYMCA_DATA_DIR_BUILD
             break
         old_tmp_dir = tmp_dir
         tmp_dir = os.path.dirname(tmp_dir)
-        PYMCA_DATA_DIR = os.path.join(tmp_dir, "PyMca5", basename)
+        PYMCA_DATA_DIR_BUILD = os.path.join(tmp_dir, "PyMca5", basename)
 
 if not os.path.exists(PYMCA_DATA_DIR):
-    PYMCA_DATA_DIR = os.getenv("PYMCA_DATA_DIR")
-    if PYMCA_DATA_DIR is not None:
-        if not os.path.exists(PYMCA_DATA_DIR):
-            raise IOError('%s directory set from environent not found' % \
+    raise IOError('%s directory not found' % PYMCA_DATA_DIR)
+
+
+PYMCA_DOC_DIR_ENV = os.getenv("PYMCA_DOC_DIR")
+if PYMCA_DOC_DIR_ENV is not None:
+    PYMCA_DOC_DIR = PYMCA_DOC_DIR_ENV
+    if not os.path.exists(PYMCA_DOC_DIR):
+        raise IOError('%s directory set from environent not found' % \
                           PYMCA_DATA_DIR)
-        else:
-            txt = "WARNING: Taking PYMCA_DATA_DIR from environement.\n"
-            txt += "Use it at your own risk."
-            print(txt)
     else:
-        raise IOError('%s directory not found' % basename)
+        txt = "WARNING: Taking PYMCA_DOC_DIR from environement.\n"
+        txt += "Use it at your own risk."
+        print(txt)
 
 # do the same for the directory containing HTML files
 if not os.path.exists(PYMCA_DOC_DIR):
@@ -74,21 +89,6 @@ if not os.path.exists(PYMCA_DOC_DIR):
         old_tmp_dir = tmp_dir
         tmp_dir = os.path.dirname(tmp_dir)
         PYMCA_DOC_DIR = os.path.join(tmp_dir, "PyMca5", basename)
-
-if not os.path.exists(PYMCA_DOC_DIR):
-    PYMCA_DOC_DIR = os.getenv("PYMCA_DOC_DIR")
-    if PYMCA_DOC_DIR is not None:
-        if not os.path.exists(PYMCA_DOC_DIR):
-            raise IOError('%s directory set from environent not found' % \
-                          PYMCA_DATA_DIR)
-        else:
-            txt = "WARNING: Taking PYMCA_DOC_DIR from environement.\n"
-            txt += "Use it at your own risk."
-            print(txt)
-    else:
-        # use the data dir as doc dir
+    if not os.path.exists(PYMCA_DOC_DIR):
         print("Setting PYMCA_DOC_DIR equal to PYMCA_DATA_DIR")
         PYMCA_DOC_DIR = PYMCA_DATA_DIR
-
-if not os.path.exists(PYMCA_DOC_DIR):
-    raise IOError('%s documentation directory not found' % basename)
