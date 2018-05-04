@@ -804,7 +804,9 @@ class McaWindow(ScanWindow.ScanWindow):
     def emitCurrentROISignal(self, ddict=None):
         """Emit a custom ROISignal with calibration info.
         Ignore the incoming signal emitted by CurvesRoiDockWidget"""
-        if self.getCurvesRoiDockWidget().currentROI is None:
+        # if self.getCurvesRoiDockWidget().currentROI is None:
+        #     return
+        if ddict['current'] is None:
             return
         # I have to get the current calibration
         if self.getGraphXLabel().upper() != "CHANNEL":
@@ -824,16 +826,15 @@ class McaWindow(ScanWindow.ScanWindow):
             B = 1.0
             C = 0.0
             order = 1
-        key = self.getCurvesRoiDockWidget().currentROI
-        roiList, roiDict = self.getCurvesRoiDockWidget().roiWidget.getROIListAndDict()
-        fromdata = roiDict[key]['from']
-        todata = roiDict[key]['to']
+        name = ddict["current"]
+        fromdata = ddict["ROI"]['from']
+        todata = ddict['ROI']['to']
         ddict = {
             'event': "ROISignal",
-            'name': key,
+            'name': name,
             'from': fromdata,
             'to': todata,
-            'type': roiDict[key]["type"],
+            'type': ddict['ROI']["type"],
             'calibration': [A, B, C, order]}
         self.sigROISignal.emit(ddict)
 
