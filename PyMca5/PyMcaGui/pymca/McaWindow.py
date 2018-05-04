@@ -804,10 +804,16 @@ class McaWindow(ScanWindow.ScanWindow):
     def emitCurrentROISignal(self, ddict=None):
         """Emit a custom ROISignal with calibration info.
         Ignore the incoming signal emitted by CurvesRoiDockWidget"""
-        # if self.getCurvesRoiDockWidget().currentROI is None:
-        #     return
-        if ddict['current'] is None:
+        currentRoi = self.getCurvesRoiDockWidget().currentROI
+        if currentRoi is None:
+            # could be a silx <= 0.7.0 bug
+            if hasattr(self.getCurvesRoiDockWidget().roiWidget,
+                       "currentROI"):
+                currentRoi = self.getCurvesRoiDockWidget().roiWidget.currentROI
+        if currentRoi is None:
+            _logger.debug("No current ROI")
             return
+
         # I have to get the current calibration
         if self.getGraphXLabel().upper() != "CHANNEL":
             # I have to get the energy
@@ -826,15 +832,34 @@ class McaWindow(ScanWindow.ScanWindow):
             B = 1.0
             C = 0.0
             order = 1
-        name = ddict["current"]
-        fromdata = ddict["ROI"]['from']
-        todata = ddict['ROI']['to']
+
+        if hasattr(currentRoi, "getName"):
+            # TODO: double-check ROIWidget.currentROI API after merging silx#1714
+            # silx.gui.plot.CurvesROIWidget.ROI object
+            name = currentRoi.getName()
+        else:
+            # assume it is a string (silx <= 0.7.0)
+            name = currentRoi
+
+        roisDict = self.getCurvesRoiDockWidget().roiWidget.getRois()
+        assert name in roisDict, "roiWidget.currentRoi not found in roiDict!"
+        roi = roisDict[name]
+        if isinstance(roi, dict):
+            from_ = roi['from']
+            to_ = roi['to']
+            type_ = roi["type"]
+        else:
+            # silx >= 0.8.0
+            from_ = roi.getFrom()
+            to_ = roi.getTo()
+            type_ = roi.getType()
+
         ddict = {
             'event': "ROISignal",
             'name': name,
-            'from': fromdata,
-            'to': todata,
-            'type': ddict['ROI']["type"],
+            'from': from_,
+            'to': to_,
+            'type': type_,
             'calibration': [A, B, C, order]}
         self.sigROISignal.emit(ddict)
 
