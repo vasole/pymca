@@ -33,10 +33,15 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 from . import SpecfitFuns
 from .Gefit import LeastSquaresFit
 from PyMca5.PyMcaCore import EventHandler
-DEBUG = 0
+
+
+_logger = logging.getLogger(__name__)
+
+
 class Specfit(object):
     #def __init__(self,x=None,y=None,sigmay=None):
     def __init__(self, *vars, **kw):
@@ -576,9 +581,8 @@ class Specfit(object):
         try:
             theory=newfun.THEORY
         except:
-            if DEBUG:
-                print("No theory name")
-            theory="%s" % file
+            _logger.debug("No theory name")
+            theory = "%s" % file
         try:
             parameters=newfun.PARAMETERS
         except:
@@ -631,7 +635,7 @@ class Specfit(object):
                     #tkMessageBox.showerror('Error',"Problem implementing user theory")
                     badluck=1
         if badluck:
-            print("ERROR IMPORTING")
+            _logger.warning("ERROR IMPORTING")
         return badluck
 
     def startfit(self,mcafit=0):
@@ -800,7 +804,7 @@ class Specfit(object):
         try:
             idx = numpy.nonzero((self.xdata>=x[0]) & (self.xdata<=x[-1]))[0]
         except:
-            print("ERROR ",x)
+            _logger.warning("ERROR %s", x)
         yy=numpy.take(self.ydata,idx)
         nrx=numpy.shape(x)[0]
         nry=numpy.shape(yy)[0]
@@ -912,7 +916,7 @@ class Specfit(object):
                 if self.fitconfig['fittheory'] is not None:
                     error = self.settheory(self.fitconfig[key])
         if error:
-            print("ERROR on background and/or theory configuration")
+            _logger.warning("ERROR on background and/or theory configuration")
         result.update(self.fitconfig)
         return result
 
@@ -951,9 +955,8 @@ class Specfit(object):
             y = self.ydata0
 
         if 'debug' in kw:
-            mcadebug = 1
-        else:
-            mcadebug = 0
+            _logger.setLevel(logging.DEBUG)
+
         if 'Yscaling' in kw:
             if kw['Yscaling'] is not None:
                 yscaling=kw['Yscaling']
@@ -1004,14 +1007,12 @@ class Specfit(object):
                                     sensitivity)
             for idx in peaksidx:
                 peaks.append(self.xdata[int(idx)])
-            if mcadebug:
-                print("MCA Found peaks = ",peaks)
+            _logger.debug("MCA Found peaks = %s", peaks)
         if len(peaks):
             regions=self.mcaregions(peaks,self.xdata[fwhm]-self.xdata[0])
         else:
             regions=[]
-        if mcadebug:
-            print(" regions = ",regions)
+        _logger.debug(" regions = %s", regions)
         #if the function needs a scaling just give it
         #removed estimate should deal with it
         #self.configure(Yscaling=yscaling,yscaling=yscaling)
