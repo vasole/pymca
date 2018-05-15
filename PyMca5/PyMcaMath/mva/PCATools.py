@@ -618,7 +618,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                     cov[:, i] /= numpy.sqrt(totalVariance[i])
 
     t0 = time.time()
-    
+
     evalues, evectors = numpy.linalg.eigh(cov)
     # The total variance should also be the sum of all the eigenvalues
     calculatedTotalVariance = evalues.sum()

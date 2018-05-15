@@ -34,6 +34,11 @@ import sys
 import os
 import ctypes
 import traceback
+import logging
+
+
+_logger = logging.getLogger(__name__)
+
 
 def loadCLibrary(name="libc.so"):
     try:
@@ -114,8 +119,8 @@ def getPhysicalMemoryOrNone():
         if value <= 0:
             # Value makes no sense.
             # return None as requested in case of failure
-            print("WARNING: Returned physical memory does not make sense %d" % \
-                          value)
+            _logger.warning("WARNING: Returned physical memory does not make sense %d",
+                            value)
             return None
         else:
             return value
