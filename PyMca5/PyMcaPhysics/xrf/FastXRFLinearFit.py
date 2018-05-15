@@ -35,6 +35,7 @@ Module to perform a fast linear fit on a stack of fluorescence spectra.
 """
 import os
 import numpy
+import logging
 from PyMca5.PyMcaMath.linalg import lstsq
 from . import ClassMcaTheory
 from PyMca5.PyMcaMath.fitting import Gefit
@@ -43,7 +44,8 @@ from PyMca5.PyMcaMath.fitting import SpecfitFuns
 from PyMca5.PyMcaIO import ConfigDict
 import time
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class FastXRFLinearFit(object):
     def __init__(self, mcafit=None):
@@ -101,15 +103,13 @@ class FastXRFLinearFit(object):
             if hasattr(y, "info"):
                 if "McaLiveTime" in y.info:
                     livetime = y.info["McaLiveTime"]
-        if DEBUG:
-            t0 = time.time()
+        t0 = time.time()
         if configuration is not None:
             self._mcaTheory.setConfiguration(configuration)
         elif self._config is None:
             raise ValueError("Fit configuration missing")
         else:
-            if DEBUG:
-                print("Setting default configuration")
+            _logger.debug("Setting default configuration")
             self._mcaTheory.setConfiguration(self._config)
         # read the current configuration
         # it is a copy, we can modify it at will
@@ -164,8 +164,7 @@ class FastXRFLinearFit(object):
         # background
         if config['fit']['stripflag']:
             if config['fit']['stripalgorithm'] == 1:
-                if DEBUG:
-                    print("SNIP")
+                _logger.debug("SNIP")
             else:
                 raise RuntimeError("Please use the faster SNIP background")
 
@@ -335,9 +334,8 @@ class FastXRFLinearFit(object):
         uncertainties = numpy.zeros((nFree, nRows, nColumns), numpy.float32)
 
         #perform the initial fit
-        if DEBUG:
-            print("Configuration elapsed = %f"  % (time.time() - t0))
-            t0 = time.time()
+        _logger.debug("Configuration elapsed = %f", time.time() - t0)
+        t0 = time.time()
         totalSpectra = data.shape[0] * data.shape[1]
         jStep = min(100, data.shape[1])
         if weightPolicy == 2:
@@ -397,11 +395,11 @@ class FastXRFLinearFit(object):
                 results[:, i, jStart:jEnd] = parameters
                 uncertainties[:, i, jStart:jEnd] = ddict['uncertainties']
                 jStart = jEnd
-        if DEBUG:
-            t = time.time() - t0
-            print("First fit elapsed = %f" % t)
-            print("Spectra per second = %f" % (data.shape[0]*data.shape[1]/float(t)))
-            t0 = time.time()
+        t = time.time() - t0
+        _logger.debug("First fit elapsed = %f", t)
+        _logger.debug("Spectra per second = %f",
+                      data.shape[0]*data.shape[1]/float(t))
+        t0 = time.time()
 
         # cleanup zeros
         # start with the parameter with the largest amount of negative values
@@ -434,7 +432,8 @@ class FastXRFLinearFit(object):
                     i = item[1]
                     badMask = item[2]
                     results[i][badMask] = 0.0
-                    print("WARNING: %d pixels of parameter %s forced to zero" % (item[0], freeNames[i]))
+                    _logger.warning("WARNING: %d pixels of parameter %s forced to zero",
+                                    item[0], freeNames[i])
                 continue
             zeroList.sort()
             zeroList.reverse()
@@ -458,12 +457,10 @@ class FastXRFLinearFit(object):
                 for i in badParameters:
                     results[i][badMask] = 0.0
                     uncertainties[i][badMask] = 0.0
-                    if DEBUG:
-                        print("WARNING: %d pixels of parameter %s set to zero" % (badMask.sum(),
-                                                                                  freeNames[i]))
+                    _logger.debug("WARNING: %d pixels of parameter %s set to zero",
+                                  badMask.sum(), freeNames[i])
             else:
-                if DEBUG:
-                    print("Number of secondary fits = %d" % (nFits + 1))
+                _logger.debug("Number of secondary fits = %d", nFits + 1)
                 nFits += 1
                 A = derivatives[:, [i for i in range(nFree) if i not in badParameters]]
                 #assume we'll not have too many spectra
@@ -533,9 +530,9 @@ class FastXRFLinearFit(object):
                         uncertainties[i][badMask] = ddict['uncertainties'][idx]
                         idx += 1
 
-        if DEBUG and refit:
+        if refit:
             t = time.time() - t0
-            print("Fit of negative peaks elapsed = %f" % t)
+            _logger.debug("Fit of negative peaks elapsed = %f", t)
             t0 = time.time()
 
         outputDict = {'parameters':results, 'uncertainties':uncertainties, 'names':freeNames}
@@ -550,8 +547,7 @@ class FastXRFLinearFit(object):
 
             fitFirstSpectrum = False
             if config['concentrations']['usematrix']:
-                if DEBUG:
-                    print("USING MATRIX")
+                _logger.debug("USING MATRIX")
                 if config['concentrations']['reference'].upper() == "AUTO":
                     fitFirstSpectrum = True
             elif autotime:
@@ -611,16 +607,14 @@ class FastXRFLinearFit(object):
 
             referenceElement = addInfo['ReferenceElement']
             referenceTransitions = addInfo['ReferenceTransitions']
-            if DEBUG:
-                print("Reference <%s>  transition <%s>" % (referenceElement, referenceTransitions))
+            _logger.debug("Reference <%s>  transition <%s>",
+                          referenceElement, referenceTransitions)
             if referenceElement in ["", None, "None"]:
-                if DEBUG:
-                    print("No reference")
+                _logger.debug("No reference")
                 counter = 0
                 for i, group in enumerate(fitresult['result']['groups']):
                     if group.lower().startswith("scatter"):
-                        if DEBUG:
-                            print("skept %s" % group)
+                        _logger.debug("skept %s", group)
                         continue
                     outputDict['names'].append("C(%s)" % group)
                     if counter == 0:
@@ -640,8 +634,7 @@ class FastXRFLinearFit(object):
                                      fitresult['result'][group]['fitarea'])
                             counter += 1
             else:
-                if DEBUG:
-                    print("With reference")
+                _logger.debug("With reference")
                 idx = None
                 testGroup = referenceElement+ " " + referenceTransitions.split()[0]
                 for i, group in enumerate(fitresult['result']['groups']):
@@ -659,8 +652,7 @@ class FastXRFLinearFit(object):
                 counter = 0
                 for i, group in enumerate(fitresult['result']['groups']):
                     if group.lower().startswith("scatter"):
-                        if DEBUG:
-                            print("skept %s" % group)
+                        _logger.debug("skept %s", group)
                         continue
                     outputDict['names'].append("C(%s)" % group)
                     goodI = results[nFreeBackgroundParameters+i] > 0
@@ -677,10 +669,8 @@ class FastXRFLinearFit(object):
                                 (concentrationsResult[layer]['mass fraction'][group]))
                             counter += 1
             outputDict['concentrations'] = massFractions
-            if DEBUG:
-                t = time.time() - t0
-                print("Calculation of concentrations elapsed = %f" % t)
-                t0 = time.time()
+            t = time.time() - t0
+            _logger.debug("Calculation of concentrations elapsed = %f", t)
             ####################################################
         return outputDict
 
@@ -718,7 +708,7 @@ def getFileListFromPattern(pattern, begin, end, increment=None):
     return fileList
 
 if __name__ == "__main__":
-    DEBUG = True
+    _logger.setLevel(logging.DEBUG)
     import glob
     import sys
     from PyMca5.PyMca import EDFStack

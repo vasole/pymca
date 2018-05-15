@@ -31,10 +31,12 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import copy
+import logging
 from . import Elements
 from . import ConcentrationsTool
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class SingleLayerStrategy(object):
     def __init__(self):
@@ -48,8 +50,7 @@ class SingleLayerStrategy(object):
         Returning an empty fit configuration, or a number of iterations equal 0
         will indicate the process is over.
         """
-        if DEBUG:
-            print("SingleLayerStrategy called with iteration ", currentIteration)
+        _logger.debug("SingleLayerStrategy called with iteration %s", currentIteration)
         newConfiguration = copy.deepcopy(fitResult['config'])
         strategyConfiguration = newConfiguration['SingleLayerStrategy']
         if currentIteration is None:
@@ -122,8 +123,7 @@ class SingleLayerStrategy(object):
             if "-" in group:
                 continue
             if strategyConfiguration["flags"][materialCounter] in ["0", 0]:
-                if DEBUG:
-                    print("ignoring ", group)
+                _logger.debug("ignoring %s", group)
                 continue
             ele = group.split()[0]
             material = strategyConfiguration["materials"][materialCounter]
@@ -157,7 +157,6 @@ class SingleLayerStrategy(object):
              "Comment":"Last Single Layer Strategy iteration"}
         # and update it
         newConfiguration[parentKey][daughterKey][1] = materialName
-        if DEBUG:
-            print("Updated sample material: ", \
-                  newConfiguration["materials"][materialName])
+        _logger.debug("Updated sample material: %s",
+                      newConfiguration["materials"][materialName])
         return newConfiguration, currentIteration - 1
