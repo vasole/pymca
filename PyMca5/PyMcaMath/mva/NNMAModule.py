@@ -184,6 +184,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 import numpy
+import logging
 try:
     import os
     os.environ["MDP_DISABLE_SKLEARN"] = "yes"
@@ -196,7 +197,10 @@ except:
     MDP = False
 
 from . import py_nnma
-DEBUG = 0
+
+
+_logger = logging.getLogger(__name__)
+
 
 function_list = ['FNMAI', 'ALS', 'FastHALS', 'GDCLS']
 function_dict = {"NNSC": py_nnma.NNSC,
@@ -211,8 +215,13 @@ function_dict = {"NNSC": py_nnma.NNSC,
                  "FastHALS": py_nnma.FastHALS,
                  "SNMF": py_nnma.SNMF,
                  }
+
+VERBOSE = _logger.getEffectiveLevel() == logging.DEBUG
+
+
 def nnma(stack, ncomponents, binning=None,
-         function=None, eps=5e-5, verbose=DEBUG, maxcount=1000, kmeans=False):
+         function=None, eps=5e-5, verbose=VERBOSE,
+         maxcount=1000, kmeans=False):
     if kmeans and (not MDP):
         raise ValueError("K Means not supported")
     #I take the defaults for the other parameters
