@@ -36,9 +36,12 @@ import re
 import struct
 import numpy
 import copy
+import logging
 from PyMca5 import DataObject
 
-DEBUG = 0
+
+_logger = logging.getLogger(__name__)
+
 SOURCE_TYPE = "EdfFileStack"
 
 
@@ -79,9 +82,8 @@ class OmnicMap(DataObject.DataObject):
         s = data[firstByte:(firstByte + 100 - 16)]
         if sys.version >= '3.0':
             s = str(s)
-        if DEBUG:
-            print("firstByte = %d" % firstByte)
-            print("s1 = %s " % s)
+        _logger.debug("firstByte = %d", firstByte)
+        _logger.debug("s1 = %s ", s)
         exp = re.compile('(-?[0-9]+\.?[0-9]*)')
         tmpValues = exp.findall(s)
         spectrumIndex = int(tmpValues[0])
@@ -92,20 +94,17 @@ class OmnicMap(DataObject.DataObject):
         else:
             # I have to calculate them from the scan
             xPosition, yPosition = self.getPositionFromIndexAndInfo(0, omnicInfo)
-        if DEBUG:
-            print("spectrumIndex, nSpectra, xPosition, yPosition = %d %d %f %f" %\
-                    (spectrumIndex, self.nSpectra, xPosition, yPosition))
+        _logger.debug("spectrumIndex, nSpectra, xPosition, yPosition = %d %d %f %f",
+                      spectrumIndex, self.nSpectra, xPosition, yPosition)
         if sys.version < '3.0':
             chain = "Spectrum"
         else:
             chain = bytes("Spectrum", 'utf-8')
         secondByte = data[(firstByte + 1):].index(chain)
         secondByte += firstByte + 1
-        if DEBUG:
-            print("secondByte = ", secondByte)
+        _logger.debug("secondByte = %s", secondByte)
         self.nChannels = int((secondByte - firstByte - 100) / 4)
-        if DEBUG:
-            print("nChannels = %d" % self.nChannels)
+        _logger.debug("nChannels = %d", self.nChannels)
         self.firstSpectrumOffset = firstByte - 16
 
         #fill the header
@@ -130,10 +129,9 @@ class OmnicMap(DataObject.DataObject):
             if (abs(yPosition - oldYPosition) > 1.0e-6) and\
                (abs(xPosition - oldXPosition) < 1.0e-6):
                 break
-            self.nRows = self.nRows + 1
-        if DEBUG:
-            print("DIMENSIONS X = %f Y=%d" %\
-                  ((self.nSpectra * 1.0) / self.nRows, self.nRows))
+            self.nRows += 1
+        _logger.debug("DIMENSIONS X = %f Y=%d",
+                      self.nSpectra * 1.0 / self.nRows, self.nRows)
 
         #arrange as an EDF Stack
         self.info = {}
@@ -214,9 +212,8 @@ class OmnicMap(DataObject.DataObject):
         ddict['Laser frequency'] = vFloats[16]
         ddict['Data spacing'] = (lastX - firstX) / (ddict['Number of points'] - 1.0)
         ddict['Background gain'] = vFloats[10]
-        if DEBUG:
-            for key in ddict.keys():
-                print(key, ddict[key])
+        for key in ddict.keys():
+            _logger.debug("%s: %s", key, ddict[key])
         ddict.update(self.getMapInformation(data))
         return ddict
 
@@ -257,9 +254,8 @@ class OmnicMap(DataObject.DataObject):
             ddict['Mapping stage X step size'] = deltaX
             ddict['Mapping stage Y step size'] = deltaY
             ddict['Number of spectra'] = abs((1 + ((y1 - y0) / deltaY)) * (1 + ((x1 - x0) / deltaX)))
-        if DEBUG:
-            for key in ddict.keys():
-                print(key, ddict[key])
+        for key in ddict.keys():
+            _logger.debug("%s: %s", key, ddict[key])
         return ddict
 
     def getOmnicInfo(self):
@@ -302,7 +298,7 @@ class OmnicMap(DataObject.DataObject):
 if __name__ == "__main__":
     filename = None
     if len(sys.argv) > 2:
-        DEBUG = int(sys.argv[2])
+        _logger.setLevel(logging.DEBUG)
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     elif os.path.exists("SambaPhg_IR.map"):
