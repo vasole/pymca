@@ -61,16 +61,19 @@ import os
 import sys
 import re
 import numpy
+import logging
+
 patternKey=re.compile(r'^[#][#]\s*(?P<name>[^=]+)=(?P<value>.*)$')
 #patternNumber = re.compile(r'([+-]?\d+\.?\d*)')
 patternNumber = re.compile(r'[+-]?[0-9]+\.?[0-9]*(?:[eE][+-]?[0-9]+)?')
-DEBUG = 0
-if DEBUG:
-    text = '1.23 +2 456-7.98+5 10+3.4E+01 98-7.6E-2+3'
-    print("RESULT:")
-    print(re.findall(patternNumber, text))
-    print("EXPECTED:")
-    print(['1.23', '+2', '456', '-7.98', '+5', '10', '+3.4E+01', '98', '-7.6E-2', '+3'])
+_logger = logging.getLogger(__name__)
+
+
+text = '1.23 +2 456-7.98+5 10+3.4E+01 98-7.6E-2+3'
+_logger.debug("RESULT:")
+_logger.debug("\t%s", re.findall(patternNumber, text))
+_logger.debug("EXPECTED:")
+_logger.debug("\t%s", ['1.23', '+2', '456', '-7.98', '+5', '10', '+3.4E+01', '98', '-7.6E-2', '+3'])
 
 class BufferedFile(object):
     def __init__(self, filenameOrBuffer, block=False):
@@ -193,7 +196,7 @@ class JcampReader(object):
                 deltaX = float(self.info["DELTAX"])
                 nPoints = int(self.info.get("NPOINTS", 0))
                 if nPoints != len(yValues):
-                    print("Number of points does not match number of values")
+                    _logger.warning("Number of points does not match number of values")
                     nPoints = len(yValues)
                 # this formula is given in the article
                 x = firstX + numpy.arange(nPoints) * \
@@ -251,7 +254,7 @@ class JcampReader(object):
                 deltaX = float(self.info["DELTAX"])
                 nPoints = int(self.info.get("NPOINTS", 0))
                 if nPoints != len(yValues):
-                    print("Number of points does not match number of values")
+                    _logger.warning("Number of points does not match number of values")
                     nPoints = len(yValues)
                 # this formula is given in the article
                 x = firstX + numpy.arange(nPoints) * \

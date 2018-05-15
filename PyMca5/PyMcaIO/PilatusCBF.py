@@ -40,7 +40,6 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 __license__   = "MIT"
 
 import sys
-import os
 import numpy as np
 import logging
 if sys.version < '3':
@@ -49,7 +48,8 @@ else:
     import io
     _fileClass = io.IOBase
 
-DEBUG = False
+_logger = logging.getLogger(__name__)
+
 
 DATA_TYPES = { "signed 8-bit integer"   : np.int8,
                "signed 16-bit integer"  : np.int16,
@@ -135,8 +135,7 @@ class PilatusCBF(object):
             if item not in self.__header.keys():
                 missing.append(item)
         if len(missing) > 0:
-            if DEBUG:
-                print("CBF file misses the keys " + " ".join(missing))
+            _logger.debug("CBF file misses the keys %s", " ".join(missing))
 
     def _readbinary_byte_offset(self, inStream):
         """
@@ -241,7 +240,7 @@ class PilatusCBF(object):
         except KeyError:
             bytecode = np.int32
             self.bpp = 32
-            logging.warning("Defaulting type to int32")
+            _logger.warning("Defaulting type to int32")
 
         if self.__header["conversions"] == "x-CBF_BYTE_OFFSET":
             self.__data = self._readbinary_byte_offset(self.cif["_array_data.data"]).astype(bytecode).reshape((self.dim2, self.dim1))
@@ -298,7 +297,7 @@ class CIF(dict):
         @return the
         """
         if not os.path.isfile(_strFilename):
-            print("I cannot find the file %s" % _strFilename)
+            _logger.error("I cannot find the file %s", _strFilename)
             raise IOError("I cannot find the file %s" % _strFilename)
         if _bKeepComment:
             self._parseCIF(open(_strFilename, "rb").read())
@@ -335,7 +334,7 @@ class CIF(dict):
         @rtype: string
         """
         if not os.path.isfile(_strFilename):
-            print("I cannot find the file %s" % _strFilename)
+            _logger.error("I cannot find the file %s", _strFilename)
             raise IOError("I cannot find the file %s" % _strFilename)
         lLinesRead = open(_strFilename, "r").readlines()
         sText = ""
@@ -345,12 +344,14 @@ class CIF(dict):
                 if CIF.isAscii(sLine):
                     sText += sLine[:iPos] + "\n"
 
-                if iPos > 80 :
-                    print("Warning, this line is too long and could cause problems in PreQuest\n", sLine)
+                if iPos > 80:
+                    _logger.warning("Warning, this line is too long and could cause problems in PreQuest\n"
+                                    "%s", sLine)
             else :
                 sText += sLine
                 if len(sLine.strip()) > 80 :
-                    print("Warning, this line is too long and could cause problems in PreQuest\n", sLine)
+                    _logger.warning("Warning, this line is too long and could cause problems in PreQuest\n"
+                                    "%s", sLine)
         return sText
 
 
@@ -564,13 +565,13 @@ class CIF(dict):
         try:
             fFile = open(_strFilename, "w")
         except IOError:
-            print("Error during the opening of file for write : %s" % _strFilename)
+            _logger.error("Error during the opening of file for write : %s", _strFilename)
             return
         fFile.write(self._cif2str(_strFilename))
         try:
             fFile.close()
         except IOError:
-            print("Error during the closing of file for write : %s" % _strFilename)
+            _logger.error("Error during the closing of file for write : %s", _strFilename)
             raise
 
 
@@ -683,7 +684,7 @@ class CIF(dict):
         @rtype: dictionnary
         """
         if not os.path.isfile(_strFilename):
-            print("I cannot find the file %s" % _strFilename)
+            _logger.error("I cannot find the file %s", _strFilename)
             raise IOError("I cannot find the file %s" % _strFilename)
         lInFile = open(_strFilename, "r").readlines()
         self["_audit_creation_method"] = 'From 2-D detector using FIT2D and CIFfile'
