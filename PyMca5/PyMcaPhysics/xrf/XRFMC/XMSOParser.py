@@ -32,9 +32,11 @@ __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
+import logging
 import xml.etree.ElementTree as ElementTree
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 def getXMSOFileFluorescenceInformation(xmsoFile):
     f = ElementTree.parse(xmsoFile)
@@ -42,10 +44,9 @@ def getXMSOFileFluorescenceInformation(xmsoFile):
     root = f.getroot()
     transitions = ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M']
     for i in root.iter('fluorescence_line_counts'):
-        if DEBUG:
-            print(i.attrib)
-            for key in ['symbol', 'total_counts']:
-                print(key, '= ', i.get(key))
+        _logger.debug("%s", i.attrib)
+        for key in ['symbol', 'total_counts']:
+            _logger.debug('%s = %s', key, i.get(key))
         element = i.get('symbol')
         ddict[element] = {}
         #ddict[element]['z'] = i.get('atomic_number')
@@ -54,10 +55,9 @@ def getXMSOFileFluorescenceInformation(xmsoFile):
                                     'counts': [],
                                     'correction_factor':[]}
         for a in i.iter('fluorescence_line'):
-            if DEBUG:
-                print(a.attrib)
-                for key in ['type', 'total_counts']:
-                    print(key, '= ', a.get(key))
+            _logger.debug("%s", a.attrib)
+            for key in ['type', 'total_counts']:
+                _logger.debug('%s = %s', key, a.get(key))
             line = a.get('type')
             ddict[element][line] = {}
             #ddict[element][line]['total'] = float(a.get('total_counts'))
@@ -74,8 +74,7 @@ def getXMSOFileFluorescenceInformation(xmsoFile):
                         transitionsAffected.append(key)
             cumulator = 0
             for b in a.iter('counts'):
-                if DEBUG:
-                    print(b.attrib)
+                _logger.debug("%s", b.attrib)
                 value = float(b.text)
                 ddict[element][line]['counts'].append(value)
                 cumulator += value
@@ -117,7 +116,7 @@ def test(xmsoFile='t.xmso'):
             if line == "z":
                 #atomic number
                 continue
-            if 1 or DEBUG or line in ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M']:
+            if 1 or line in ['K', 'Ka', 'Kb', 'L', 'L1', 'L2', 'L3', 'M']:
                 correction1 = ddict[element][line]['correction_factor'][1]
                 correctionn = ddict[element][line]['correction_factor'][-1]
                 print("Element %s Line %s Correction 2 = %f Correction n = %f" %\
