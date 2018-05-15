@@ -33,12 +33,14 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 from PyMca5.PyMcaIO import ConfigDict
 from . import SimpleFitModule
 from PyMca5.PyMcaIO import ArraySave
 from PyMca5 import PyMcaDirs
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class StackSimpleFit(object):
     def __init__(self, fit=None):
@@ -181,9 +183,9 @@ class StackSimpleFit(object):
                 if self.mask[self._row, self._column]:
                     self.processStackData(i)
             except:
-                print("Error %s processing index = %d, row = %d column = %d" %\
-                        (sys.exc_info()[1], i, self._row, self._column))
-                if DEBUG:
+                _logger.warning("Error %s processing index = %d, row = %d column = %d",
+                                sys.exc_info()[1], i, self._row, self._column)
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
         self.onProcessStackFinished()
         self._status = "Ready"
@@ -195,12 +197,10 @@ class StackSimpleFit(object):
         x, y, sigma, xmin, xmax = self.getFitInputValues(i)
         self.fit.setData(x, y, sigma=sigma, xmin=xmin, xmax=xmax)
         if self._parameters is None:
-            if DEBUG:
-                print("First estimation")
+            _logger.debug("First estimation")
             self.fit.estimate()
         elif self.__ALWAYS_ESTIMATE:
-            if DEBUG:
-                print("Estimation due to settings")
+            _logger.debug("Estimation due to settings")
             self.fit.estimate()
         self.estimateFinished()
         values, chisq, sigma, niter, lastdeltachi = self.fit.startFit()
@@ -296,12 +296,10 @@ class StackSimpleFit(object):
         return x, y, sigma, self.xMin, self.xMax
 
     def estimateFinished(self):
-        if DEBUG:
-            print("Estimate finished")
+        _logger.debug("Estimate finished")
 
     def aboutToGetStackData(self, idx):
-        if DEBUG:
-            print("New spectrum %d" % idx)
+        _logger.debug("New spectrum %d", idx)
         self._currentFitIndex = idx
         if self.progressCallback is not None:
             self.progressCallback(idx, self._nRows * self._nColumns)
@@ -313,8 +311,7 @@ class StackSimpleFit(object):
                 os.remove(self.outputFile)
 
     def fitFinished(self):
-        if DEBUG:
-            print("fit finished")
+        _logger.debug("fit finished")
 
         #get parameter results
         fitOutput = self.fit.getResult(configuration=False)
@@ -322,7 +319,7 @@ class StackSimpleFit(object):
         row= self._row
         column = self._column
         if result is None:
-            print("result not valid for row %d, column %d" % (row, column))
+            _logger.warning("result not valid for row %d, column %d", row, column)
             return
 
         if self.fixedLenghtOutput and (self._parameters is None):
@@ -402,8 +399,7 @@ class StackSimpleFit(object):
         return ddict
 
     def onProcessStackFinished(self):
-        if DEBUG:
-            print("Stack proccessed")
+        _logger.debug("Stack proccessed")
         self._status = "Stack Fitting finished"
         if self.fixedLenghtOutput:
             self._status = "Writing output files"
@@ -457,5 +453,4 @@ def test():
     instance.processStack()
 
 if __name__=="__main__":
-    DEBUG = 0
     test()
