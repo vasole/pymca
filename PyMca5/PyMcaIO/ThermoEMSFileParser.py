@@ -33,8 +33,10 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class BufferedFile(object):
     def __init__(self, filename):
@@ -211,9 +213,8 @@ class ThermoEMSScan(object):
         #a = "#S %d %s" % (self._number + 1, self.command()) 
         #return [a]
 
-    def header(self,key):
-        if DEBUG:
-            print("Requested key = ", key)
+    def header(self, key):
+        _logger.debug("Requested key = %s", key)
         if key in ['S', '#S']:
             return self.fileheader()[0]
         elif key == 'N':

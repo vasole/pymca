@@ -35,11 +35,14 @@ import os
 import numpy
 import struct
 import time
+import logging
 from PyMca5 import DataObject
 from PyMca5.PyMcaIO import PyMcaIOHelper
 
-DEBUG = 0
-SOURCE_TYPE="EdfFileStack"
+
+_logger = logging.getLogger(__name__)
+
+SOURCE_TYPE = "EdfFileStack"
 
 class SupaVisioMap(DataObject.DataObject):
     def __init__(self, filename):
@@ -95,7 +98,7 @@ if __name__ == "__main__":
     elif os.path.exists(".\PIGE\010826.pige"):
         filename = ".\PIGE\010826.pige"
     if filename is not None:
-        DEBUG = 1
+        _logger.setLevel(logging.DEBUG)
         w = SupaVisioMap(filename)
     else:
         print("Please supply input filename")
