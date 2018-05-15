@@ -31,6 +31,8 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
+import logging
+import time
 import numpy
 import numpy.linalg
 try:
@@ -41,7 +43,8 @@ except ImportError:
     #print("WARNING: Not using BLAS/ATLAS, PCA calculation will be slower")
     dotblas = numpy
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 def getCovarianceMatrix(stack,
                         index=None,
@@ -157,8 +160,7 @@ def getCovarianceMatrix(stack,
     eigenvectorLength = nChannels
 
     if (not force)and isinstance(data, numpy.ndarray):
-        if DEBUG:
-            print("Memory consuming calculation")
+        _logger.debug("Memory consuming calculation")
         #make a direct calculation (memory cosuming)
         #take a view to the data
         dataView = data[:]
@@ -197,8 +199,7 @@ def getCovarianceMatrix(stack,
         return covMatrix, sumSpectrum / usedPixels, usedPixels
 
     #we are dealing with dynamically loaded data
-    if DEBUG:
-        print("DYNAMICALLY LOADED DATA")
+    _logger.debug("DYNAMICALLY LOADED DATA")
     #create the needed storage space for the covariance matrix
     try:
         covMatrix = numpy.zeros((eigenvectorLength, eigenvectorLength),
@@ -224,7 +225,7 @@ def getCovarianceMatrix(stack,
     except AttributeError:
         txt = "%s" % type(data)
         if 'h5py' in txt:
-            print("Implementing h5py workaround")
+            _logger.warning("Implementing h5py workaround")
             import h5py
             data = h5py.Dataset(data.id)
         else:
@@ -246,8 +247,7 @@ def getCovarianceMatrix(stack,
             if divider <= 0:
                 step = oldShape[index]
                 break
-        if DEBUG:
-            print("Reading chunks of %d images" % step)
+        _logger.debug("Reading chunks of %d images", step)
         nImagesRead = 0
         if (binning == 1) and oldShape[index] >= step:
             chunk1 = numpy.zeros((step, nPixels), numpy.float64)
@@ -321,8 +321,7 @@ def getCovarianceMatrix(stack,
                 i += iToRead
             chunk1 = None
             chunk2 = None
-            if DEBUG:
-                print("totalImages Read = ", nImagesRead)
+            _logger.debug("totalImages Read = %s", nImagesRead)
         elif (binning > 1) and (oldShape[index] >= step):
             chunk1 = numpy.zeros((step, nPixels), numpy.float64)
             chunk2 = numpy.zeros((nPixels, step), numpy.float64)
@@ -411,8 +410,7 @@ def getCovarianceMatrix(stack,
                 step = nPixels
                 break
         step = nPixels
-        if DEBUG:
-            print("Reading chunks of %d spectra" % step)
+        _logger.debug("Reading chunks of %d spectra", step)
 
         cleanWeights.shape = 1, -1
         if len(data.shape) == 2:
@@ -537,11 +535,10 @@ def getCovarianceMatrix(stack,
 
 def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                 center=True, scale=True, mask=None, spectral_mask=None, legacy=True, **kw):
-    if DEBUG:
-        print("PCATools.numpyPCA")
-        print("index = %d" % index)
-        print("center = %s" % center)
-        print("scale = %s" % scale)
+    _logger.debug("PCATools.numpyPCA")
+    _logger.debug("index = %d", index)
+    _logger.debug("center = %s", center)
+    _logger.debug("scale = %s", scale)
     #recover the actual data to work with
     if hasattr(stack, "info") and hasattr(stack, "data"):
         #we are dealing with a PyMca data object
@@ -573,7 +570,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     except AttributeError:
         txt = "%s" % type(data)
         if 'h5py' in txt:
-            print("Implementing h5py workaround")
+            _logger.warning("Implementing h5py workaround")
             import h5py
             data = h5py.Dataset(data.id)
         else:
@@ -609,7 +606,7 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
     totalVariance = numpy.diag(cov)
     standardDeviation = numpy.sqrt(totalVariance)
     standardDeviation = standardDeviation + (standardDeviation == 0)
-    print("Total Variance = ", totalVariance.sum())
+    _logger.info("Total Variance = %s", totalVariance.sum())
 
     normalizeToUnitStandardDeviation = scale
     if 0:
@@ -620,18 +617,18 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
                     cov[i, :] /= numpy.sqrt(totalVariance[i])
                     cov[:, i] /= numpy.sqrt(totalVariance[i])
 
-    if DEBUG:
-        import time
-        t0 = time.time()
+    t0 = time.time()
+    
     evalues, evectors = numpy.linalg.eigh(cov)
     # The total variance should also be the sum of all the eigenvalues
     calculatedTotalVariance = evalues.sum()
     if abs(totalVariance.sum() - evalues.sum()) > 0.0001:
-        print("WARNING: Discrepancy on total variance")
-        print("Variance from covariance matrix = ", totalVariance.sum())
-        print("Variance from sum of eigenvalues = ", calculatedTotalVariance)
-    if DEBUG:
-        print("Eig elapsed = ", time.time() - t0)
+        _logger.info("WARNING: Discrepancy on total variance")
+        _logger.info("Variance from covariance matrix = %s",
+                     totalVariance.sum())
+        _logger.info("Variance from sum of eigenvalues = %s",
+                     calculatedTotalVariance)
+    _logger.debug("Eig elapsed = %s", time.time() - t0)
     cov = None
 
     dtype = numpy.float32
@@ -649,12 +646,13 @@ def numpyPCA(stack, index=-1, ncomponents=10, binning=None,
             eigenvalues[i0] = evalues[i]
             partialExplainedVariance = 100. * evalues[i] / \
                                        calculatedTotalVariance
-            print("PC%02d  Explained variance %.5f %% " %\
-                                        (i0 + 1, partialExplainedVariance))
+            _logger.info("PC%02d  Explained variance %.5f %% ",
+                         i0 + 1, partialExplainedVariance)
             totalExplainedVariance += partialExplainedVariance
             eigenvectors[i0, :] = evectors[:, i]
             #print("NORMA = ", numpy.dot(evectors[:, i].T, evectors[:, i]))
-        print("Total explained variance = %.2f %% " % totalExplainedVariance)
+        _logger.info("Total explained variance = %.2f %% ",
+                     totalExplainedVariance)
     else:
         idx = numpy.argsort(evalues)
         eigenvalues[:]  = evalues[idx]
