@@ -156,7 +156,7 @@ class McaTheory(object):
         if newdict in [None, {}]:
             if self.__toBeConfigured:
                 _logger.debug("WARNING: This configuration is the one of last fit.\n"
-                              "It does not correspond to the one of next fit.")""
+                              "It does not correspond to the one of next fit.")
             return copy.deepcopy(self.config)
         self.config.update(newdict)
         self.__toBeConfigured = False
