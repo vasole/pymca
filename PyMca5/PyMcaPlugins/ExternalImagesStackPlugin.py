@@ -58,6 +58,7 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import os
+import logging
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaIO import EDFStack
@@ -66,10 +67,13 @@ from PyMca5.PyMcaGui import StackPluginResultsWindow
 from PyMca5.PyMcaGui import ExternalImagesWindow
 from PyMca5.PyMcaGui import PyMca_Icons as PyMca_Icons
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
+
 class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {'Load':[self._loadImageFiles,
                                    "Load Images",
@@ -92,8 +96,7 @@ class ExternalImagesStackPlugin(StackPluginBase.StackPluginBase):
         self.widget.setSelectionMask(mask)
 
     def mySlot(self, ddict):
-        if DEBUG:
-            print("mySlot ", ddict['event'], ddict.keys())
+        _logger.debug("mySlot %s %s", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":

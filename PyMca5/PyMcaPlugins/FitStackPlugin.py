@@ -57,18 +57,22 @@ These plugins will be compatible with any stack window that provides the functio
     stackUpdated
     selectionMaskUpdated
 """
+import logging
+_logger = logging.getLogger(__name__)
+
 try:
     from PyMca5 import StackPluginBase
     from PyMca5.PyMcaGui import StackSimpleFitWindow
     from PyMca5.PyMcaGui import PyMca_Icons
 except ImportError:
-    print("FitStackPlugin importing from somewhere else")
+    _logger.warning("FitStackPlugin importing from somewhere else")
 
-DEBUG = 0
 
 class FitStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
+
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         function = self.fitStack
