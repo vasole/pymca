@@ -32,8 +32,11 @@ from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaGui.pymca import XMCDWindow
 
 from platform import node as gethostname
+import logging
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
+
 class XMCDAnalysis(Plugin1DBase.Plugin1DBase):
     def __init__(self,  plotWindow,  **kw):
         Plugin1DBase.Plugin1DBase.__init__(self,  plotWindow,  **kw)
@@ -75,8 +78,7 @@ class XMCDAnalysis(Plugin1DBase.Plugin1DBase):
             if guess.startswith(hostname):
                 beamline = 'ID08'
                 break
-        if DEBUG:
-            print('_createWidget -- beamline = "%s"' % beamline)
+        _logger.debug('_createWidget -- beamline = "%s"', beamline)
         parent = None
         self.widget = XMCDWindow.XMCDWidget(parent,
                                               self._plotWindow,

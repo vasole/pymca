@@ -57,16 +57,19 @@ These plugins will be compatible with any stack window that provides the functio
     stackUpdated
     selectionMaskUpdated
 """
+import logging
 from PyMca5 import StackPluginBase
 
 from PyMca5.PyMcaGui.pymca import StackBrowser
 from PyMca5.PyMcaGui import PyMca_Icons
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class StackBrowserPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {'Show':[self._showWidget,
                                    "Show Stack Image Browser",
@@ -75,8 +78,7 @@ class StackBrowserPlugin(StackPluginBase.StackPluginBase):
         self.widget = None
 
     def stackUpdated(self):
-        if DEBUG:
-            print("StackBrowserPlugin.stackUpdated() called")
+        _logger.debug("StackBrowserPlugin.stackUpdated() called")
         if self.widget is None:
             return
         if self.widget.isHidden():
@@ -109,8 +111,7 @@ class StackBrowserPlugin(StackPluginBase.StackPluginBase):
         self.widget.setBackgroundImage(self._getBackgroundImage())
 
     def mySlot(self, ddict):
-        if DEBUG:
-            print("mySlot ", ddict['event'], ddict.keys())
+        _logger.debug("mySlot %s %s", ddict['event'], ddict.keys())
         if ddict['event'] == "selectionMaskChanged":
             self.setStackSelectionMask(ddict['current'])
         elif ddict['event'] == "addImageClicked":

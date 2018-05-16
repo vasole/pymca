@@ -30,12 +30,15 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 from PyMca5 import StackPluginBase
 from PyMca5.PyMca import ScanWindow
 import numpy
+import logging
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class ShowSpectra(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         function = self.showSpectra

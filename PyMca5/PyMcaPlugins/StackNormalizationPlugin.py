@@ -58,6 +58,7 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import numpy
+import logging
 from PyMca5 import StackPluginBase
 # Add support for normalization by data
 from PyMca5.PyMca import PyMcaFileDialogs
@@ -70,11 +71,13 @@ try:
 except:
     HDF5 = False
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         text  = "Stack/I0 where I0 is the active curve\n"
@@ -164,7 +167,7 @@ class StackNormalizationPlugin(StackPluginBase.StackPluginBase):
             if edf.GetNumImages() > 1:
                 # TODO: A dialog showing the different images
                 # based on the external images browser needed
-                print("WARNING: Taking first image")
+                _logger.warning("WARNING: Taking first image")
             data = edf.GetData(0)
             edf = None
         elif ffilter.startswith("ASCII"):

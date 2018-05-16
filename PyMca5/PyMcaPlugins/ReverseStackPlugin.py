@@ -58,13 +58,16 @@ These plugins will be compatible with any stack window that provides the functio
     selectionMaskUpdated
 """
 import numpy
+import logging
 from PyMca5 import StackPluginBase
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
 
 class ReverseStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {}
         text  = "Replace current stack by one\n"
