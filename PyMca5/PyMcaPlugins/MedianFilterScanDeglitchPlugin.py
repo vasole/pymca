@@ -37,8 +37,11 @@ from PyMca5 import Plugin1DBase
 from PyMca5.PyMcaMath.PyMcaSciPy.signal import medfilt1d
 from PyMca5.PyMcaGui import PyMcaQt as qt
 import numpy
+import logging
 
-DEBUG = 0
+_logger = logging.getLogger(__name__)
+
+
 class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
     def __init__(self,  plotWindow,  **kw):
         Plugin1DBase.Plugin1DBase.__init__(self,  plotWindow,  **kw)
@@ -150,12 +153,10 @@ class MedianFilterScanDeglitchPlugin(Plugin1DBase.Plugin1DBase):
             if not (self.width%2):
                 self.width += 1
             if self._widget.buttonAll.isChecked():
-                if DEBUG:
-                    print('AllChecked')
+                _logger.debug('AllChecked')
                 self.removeSpikesAll()
             elif self._widget.buttonActive.isChecked():
-                if DEBUG:
-                    print('ActiveChecked')
+                _logger.debug('ActiveChecked')
                 self.removeSpikesActive()
 
     def removeSpikesAll(self):

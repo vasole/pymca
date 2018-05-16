@@ -40,6 +40,7 @@ __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 import sys
 import os
 import numpy
+import logging
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui import PyMcaQt as qt
 from PyMca5.PyMcaGui import FFTAlignmentWindow
@@ -51,12 +52,14 @@ from PyMca5.PyMcaGui import PyMcaFileDialogs
 from PyMca5.PyMcaIO import specfilewrapper
 from PyMca5.PyMcaGui import HDF5Widget
 
+_logger = logging.getLogger(__name__)
+
 try:
     from PyMca5.PyMcaGui import SIFTAlignmentWindow
     sift = SIFTAlignmentWindow.sift
     SIFT = True
 except:
-    print("SIFTAlignmentWindow not successful")
+    _logger.warning("SIFTAlignmentWindow not successful")
     SIFT = False
 
 try:
@@ -65,10 +68,11 @@ try:
 except:
     HDF5 = False
 
-DEBUG = 0
+
 class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
     def __init__(self, stackWindow, **kw):
-        StackPluginBase.DEBUG = DEBUG
+        if _logger.getEffectiveLevel() == logging.DEBUG:
+            StackPluginBase.pluginBaseLogger.setLevel(logging.DEBUG)
         StackPluginBase.StackPluginBase.__init__(self, stackWindow, **kw)
         self.methodDict = {'FFT Alignment':[self._fftAlignment,
                                             "Align using FFT",
@@ -132,7 +136,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             if filename is not None:
                 self.__hdf5 = self.initializeHDF5File(filename)
 
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 shifts = self.calculateShiftsFFT(stack,
                                                  reference,
                                                  offsets=offsets,
@@ -198,7 +202,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                     dataGroup[info['xlabel']].attrs['axis'] = numpy.int32(1)
                     axesAttribute = '%s:dim_1:dim_2' % info['xlabel']
                 except:
-                    if DEBUG:
+                    if _logger.getEffectiveLevel() == logging.DEBUG:
                         raise
                     dataGroup['dim_0'] = numpy.arange(stack.data.shape[mcaIndex]).astype(numpy.float32)
                     dataGroup['dim_0'].attrs['axis'] = numpy.int32(1)
@@ -293,7 +297,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 self.__hdf5 = self.initializeHDF5File(filename)
             crop = False
             device = ddict['opencl_device']
-            if DEBUG:
+            if _logger.getEffectiveLevel() == logging.DEBUG:
                 result = self.calculateShiftsSIFT(stack, reference, mask=mask, device=device,
                                                   crop=crop, filename=filename)
             else:
@@ -358,11 +362,10 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         shifts = numpy.zeros((data.shape[mcaIndex], 2), dtype=numpy.float32)
         if mcaIndex == 0:
             for i in range(data.shape[mcaIndex]):
-                if DEBUG:
-                    print("SIFT Shifting image %d" % i)
+                _logger.debug("SIFT Shifting image %d", i)
                 result = siftInstance.align(data[i].astype(numpy.float32), shift_only=True, return_all=True)
-                if DEBUG:
-                    print("Index = %d shift = %.4f, %.4f" % (i, result['offset'][0], result['offset'][1]))
+                _logger.debug("Index = %d shift = %.4f, %.4f",
+                              i, result['offset'][0], result['offset'][1])
                 if filename is None:
                     stack.data[i] = result['result']
                 else:
@@ -373,12 +376,11 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
         else:
             image2 = numpy.zeros(reference.shape, dtype=numpy.float32)
             for i in range(data.shape[mcaIndex]):
-                if DEBUG:
-                    print("SIFT Shifting image %d" % i)
+                _logger.debug("SIFT Shifting image %d", i)
                 image2[:, :] = data[:, :, i]
                 result = siftInstance.align(image2, shift_only=True, return_all=True)
-                if DEBUG:
-                    print("Index = %d shift = %.4f, %.4f" % (i, result['offset'][0], result['offset'][1]))
+                _logger.debug("Index = %d shift = %.4f, %.4f",
+                              i, result['offset'][0], result['offset'][1])
                 if filename is None:
                     stack.data[:, :, i] = result['result']
                 else:
@@ -423,7 +425,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 dataGroup[info['xlabel']].attrs['axis'] = numpy.int32(1)
                 axesAttribute = '%s:dim_1:dim_2' % info['xlabel']
             except:
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 dataGroup['dim_0'] = numpy.arange(stack.data.shape[mcaIndex]).astype(numpy.float32)
                 dataGroup['dim_0'].attrs['axis'] = numpy.int32(1)
@@ -437,9 +439,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
             self.finishHDF5File(hdf)
 
     def calculateShiftsFFT(self, stack, reference, offsets=None, widths=None, crop=False):
-        if DEBUG:
-            print("Offsets = ", offsets)
-            print("Widths = ", widths)
+        _logger.debug("Offsets = %s", offsets)
+        _logger.debug("Widths = %s", widths)
         data = stack.data
         if offsets is None:
             offsets = [0.0, 0.0]
@@ -479,8 +480,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 image1fft2 = fft2Function(image1)
                 shifts[i] = ImageRegistration.measure_offset_from_ffts(image2fft2,
                                                                        image1fft2)
-                if DEBUG:
-                    print("Index = %d shift = %.4f, %.4f" % (i, shifts[i][0], shifts[i][1]))
+                _logger.debug("Index = %d shift = %.4f, %.4f",
+                              i, shifts[i][0], shifts[i][1])
                 self._progress = (100 * i) / total
         elif mcaIndex in [2, -1]:
             for i in range(data.shape[mcaIndex]):
@@ -490,8 +491,8 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 image1fft2 = fft2Function(image1)
                 shifts[i] = ImageRegistration.measure_offset_from_ffts(image2fft2,
                                                                        image1fft2)
-                if DEBUG:
-                    print("Index = %d shift = %.4f, %.4f" % (i, shifts[i][0], shifts[i][1]))
+                _logger.debug("Index = %d shift = %.4f, %.4f",
+                              i, shifts[i][0], shifts[i][1])
                 self._progress = (100 * i) / total
         else:
             raise IndexError("Only stacks of images or spectra supported. 1D index should be 0 or 2")
@@ -515,11 +516,9 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                         getfilter=True,
                         currentfilter=filefilter[0])
         if len(filename):
-            if DEBUG:
-                print("file name = %s file filter = %s" % (filename, ffilter))
+            _logger.debug("file name = %s file filter = %s", filename, ffilter)
         else:
-            if DEBUG:
-                print("nothing selected")
+            _logger.debug("nothing selected")
             return
         filename = filename[0]
         if ffilter.startswith('HDF5'):
@@ -575,14 +574,13 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                         currentfilter=filefilter[0])
             if len(filename):
                 filename = filename[0]
-                if DEBUG:
-                    print("file name = %s" % filename)
+                _logger.debug("file name = %s", filename)
             else:
                 raise IOError("No output file selected")
         if filename is not None:
             self.__hdf5 = self.initializeHDF5File(filename)
         crop = False
-        if DEBUG:
+        if _logger.getEffectiveLevel() == logging.DEBUG:
             result = self.shiftStack(stack,
                                      shifts,
                                      crop=crop,
@@ -620,7 +618,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                 dataGroup[info['xlabel']].attrs['axis'] = numpy.int32(1)
                 axesAttribute = '%s:dim_1:dim_2' % info['xlabel']
             except:
-                if DEBUG:
+                if _logger.getEffectiveLevel() == logging.DEBUG:
                     raise
                 dataGroup['dim_0'] = numpy.arange(stack.data.shape[mcaIndex]).astype(numpy.float32)
                 dataGroup['dim_0'].attrs['axis'] = numpy.int32(1)
@@ -688,8 +686,7 @@ class ImageAlignmentStackPlugin(StackPluginBase.StackPluginBase):
                     stack.data[:, :, i] = tmpImage * window
                 else:
                     outputStack[i] = tmpImage * window
-            if DEBUG:
-                print("Index %d bilinear shifted" % i)
+            _logger.debug("Index %d bilinear shifted", i)
             self._progress = (100 * i) / total
 
     def initializeHDF5File(self, fname):
