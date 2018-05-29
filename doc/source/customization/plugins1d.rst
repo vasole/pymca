@@ -30,3 +30,10 @@ Background subtraction tools
 ++++++++++++++++++++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.BackgroundScanPlugin
+
+Median filter average
++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.MedianFilterScanPlugin
+
+
