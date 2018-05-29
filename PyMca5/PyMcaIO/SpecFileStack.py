@@ -2,7 +2,7 @@
 #
 # The PyMca X-Ray Fluorescence Toolkit
 #
-# Copyright (c) 2004-2017 European Synchrotron Radiation Facility
+# Copyright (c) 2004-2018 European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -110,10 +110,19 @@ class SpecFileStack(DataObject.DataObject):
             iterlist = [1]
         if SLOW_METHOD and shape is None:
             self.data = numpy.zeros((self.nbFiles,
-                                     nmca / numberofdetectors,
+                                     nmca // numberofdetectors,
                                      arrRet.shape[0]),
                                      arrRet.dtype.char)
             filecounter = 0
+            if "McaLiveTime" in info:
+                nTimes = self.nbFiles * (nmca // numberofdetectors)
+                self.info["McaLiveTime"] = numpy.zeros((nTimes,),
+                                                        numpy.float32)
+            if "McaElapsedTime" in info:
+                nTimes = self.nbFiles * (nmca // numberofdetectors)
+                self.info["McaElapsedTime"] = numpy.zeros((nTimes,),
+                                                        numpy.float32)
+            nTimes = -1
             for tempFileName in filelist:
                 tempInstance = SpecFileDataSource.SpecFileDataSource(tempFileName)
                 mca_number = -1
@@ -122,16 +131,22 @@ class SpecFileStack(DataObject.DataObject):
                     numberofmca = info['NbMca']
                     if numberofmca <= 0:
                         continue
+                    # only the last mca is read
                     key = "%s.1.%s" % (keyindex, numberofmca)
                     dataObject = tempInstance._getMcaData(key)
                     arrRet = dataObject.data
                     mca_number += 1
+                    nTimes += 1
                     for i in iterlist:
                         # mcadata = scan_obj.mca(i)
                         self.data[filecounter,
                                   mca_number,
                                   :] = arrRet[:]
                         self.incrProgressBar += 1
+                        for timeKey in ["McaElapsedTime", "McaLiveTime"]:
+                            if timeKey in dataObject.info:
+                                self.info[timeKey][nTimes] = \
+                                    dataObject.info[timeKey] 
                         self.onProgress(self.incrProgressBar)
                 filecounter += 1
         elif shape is None and (self.nbFiles == 1) and (iterlist == [1]):
@@ -142,6 +157,9 @@ class SpecFileStack(DataObject.DataObject):
                                      numberofmca,
                                      arrRet.shape[0]),
                                      arrRet.dtype.char)
+            # when reading fast we do not read the time information
+            # therefore we have to remove it from the info
+            self._cleanupTimeInfo()
             for tempFileName in filelist:
                 tempInstance = specfile.Specfile(tempFileName)
                 # it can only be here if there is one scan per file
@@ -159,9 +177,12 @@ class SpecFileStack(DataObject.DataObject):
                 filecounter = 1
         elif shape is None:
             # it can only be here if there is one scan per file
+            # when reading fast we do not read the time information
+            # therefore we have to remove it from the info
+            self._cleanupTimeInfo()
             try:
                 self.data = numpy.zeros((self.nbFiles,
-                                         numberofmca / numberofdetectors,
+                                         numberofmca // numberofdetectors,
                                          arrRet.shape[0]),
                                          arrRet.dtype.char)
                 filecounter = 0
@@ -254,6 +275,8 @@ class SpecFileStack(DataObject.DataObject):
                 else:
                     raise
         else:
+            # time information not read
+            self._cleanupTimeInfo()
             sampling_order = 1
             s0 = shape[0]
             s1 = shape[1]
@@ -380,6 +403,11 @@ class SpecFileStack(DataObject.DataObject):
         self.info["Size"] = self.__nFiles * self.__nImagesPerFile
         self.info["NumberOfFiles"] = self.__nFiles * 1
         self.info["FileIndex"] = fileindex
+
+    def _cleanupTimeInfo(self):
+        for timeKey in ["McaElapsedTime", "McaLiveTime"]:
+            if timeKey in self.info:
+                del self.info[timeKey]
 
     def onBegin(self, n):
         pass
