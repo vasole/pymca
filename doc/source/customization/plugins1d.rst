@@ -36,4 +36,10 @@ Median filter average
 
 .. automodule:: PyMca5.PyMcaPlugins.MedianFilterScanPlugin
 
+Simple vertical shift
++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.SimpleShift
+
+
 
