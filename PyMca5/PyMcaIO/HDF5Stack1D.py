@@ -289,9 +289,14 @@ class HDF5Stack1D(DataObject.DataObject):
                 bytefactor = 8
 
             neededMegaBytes = nFiles * dim0 * dim1 * (mcaDim * bytefactor/(1024*1024.))
-            physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
+            physicalMemory = None
+            if hasattr(PhysicalMemory, "getAvailablePhysicalMemoryOrNone"):
+                physicalMemory = getAvailablePhysicalMemoryOrNone()
+            if not physicalMemory:
+                physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
             if physicalMemory is None:
-                # 5 Gigabytes should be a good compromise
+                # 6 Gigabytes of available memory
+                # should be a good compromise in 2018
                 physicalMemory = 6000
             else:
                 physicalMemory /= (1024*1024.)
@@ -300,6 +305,7 @@ class HDF5Stack1D(DataObject.DataObject):
                 if self.__dtype0 is None:
                     if (bytefactor == 8) and (neededMegaBytes < (2*physicalMemory)):
                         # try reading as float32
+                        print("Forcing the use of float32 data")
                         self.__dtype = numpy.float32
                     else:
                         raise MemoryError("Force dynamic loading")
@@ -317,6 +323,8 @@ class HDF5Stack1D(DataObject.DataObject):
             # some versions report ValueError instead of MemoryError
             if (nFiles == 1) and (len(shape) == 3):
                 print("Attempting dynamic loading")
+                if mSelection is not None:
+                    print("Ignoring monitor")
                 self.data = yDataset
                 if mSelection is not None:
                     mdtype = tmpHdf[mpath].dtype
