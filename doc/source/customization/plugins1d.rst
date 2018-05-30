@@ -60,3 +60,11 @@ Remove glitches from curves
 +++++++++++++++++++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.MedianFilterScanDeglitchPlugin
+
+
+Built-in Math
++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.MathPlugins
+
+
