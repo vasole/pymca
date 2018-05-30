@@ -68,3 +68,15 @@ Built-in Math
 .. automodule:: PyMca5.PyMcaPlugins.MathPlugins
 
 
+.. TODO: XAS Self-Attenuation Correction
+.. TODO: Regular Mesh Plugins
+
+Normalization
++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.NormalizationPlugins
+
+
+
+
+
