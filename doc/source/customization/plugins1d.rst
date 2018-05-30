@@ -36,12 +36,27 @@ Median filter average
 
 .. automodule:: PyMca5.PyMcaPlugins.MedianFilterScanPlugin
 
+.. TODO: XAS
+
 Simple vertical shift
 +++++++++++++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.SimpleShift
 
+.. TODO: MultipleScanToMeshPlugin
+
 Alignment plugin
 ++++++++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.AlignmentScanPlugin
+
+.. TODO: Kinetic tools
+
+.. TODO: XASNormalization
+
+.. TODO: AdvancedAlignmentScanPlugin (see .html file in PYMCA_DOC_DIR)
+
+Remove glitches from curves
++++++++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.MedianFilterScanDeglitchPlugin

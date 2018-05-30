@@ -23,6 +23,12 @@
 # THE SOFTWARE.
 #
 #############################################################################*/
+"""This plugin uses a median filter smoothing to remove glitches from curves.
+A configuration widget can be used to configure the median filter (width and
+threshold), and the user can choose to apply it on the active curve or on all
+curves.
+
+"""
 __author__ = "T. Rueter - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
