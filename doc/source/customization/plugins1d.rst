@@ -41,5 +41,7 @@ Simple vertical shift
 
 .. automodule:: PyMca5.PyMcaPlugins.SimpleShift
 
+Alignment plugin
+++++++++++++++++
 
-
+.. automodule:: PyMca5.PyMcaPlugins.AlignmentScanPlugin
