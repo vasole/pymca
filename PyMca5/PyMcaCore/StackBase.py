@@ -281,11 +281,12 @@ class StackBase(object):
                                                 dtype=numpy.float)
                 mcaData0 = numpy.zeros((shape[2],), numpy.float)
                 step = 1
-                if hasattr(self._stack, "monitor"):
-                    monitor = self._stack.monitor[:]
-                    monitor.shape = shape[2]
-                else:
-                    monitor = numpy.ones((shape[2],), numpy.float)
+                # this is not the meaning of monitor
+                #if hasattr(self._stack, "monitor"):
+                #    monitor = self._stack.monitor[:]
+                #    monitor.shape = shape[2]
+                #else:
+                #    monitor = numpy.ones((shape[2],), numpy.float)
                 for i in range(shape[0]):
                     tmpData = self._stack.data[i:i+step,:,:]
                     numpy.add(self._stackImageData[i:i+step,:],
