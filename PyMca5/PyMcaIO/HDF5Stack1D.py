@@ -256,7 +256,10 @@ class HDF5Stack1D(DataObject.DataObject):
             if self.__dtype in [numpy.int16, numpy.uint16]:
                 self.__dtype = numpy.float32
             elif self.__dtype in [numpy.int32, numpy.uint32]:
-                self.__dtype = numpy.float64
+                if mSelection:
+                    self.__dtype = numpy.float32
+                else:
+                    self.__dtype = numpy.float64
             elif self.__dtype not in [numpy.float16, numpy.float32,
                                       numpy.float64]:
                 # Some datasets form CLS (origin APS?) arrive as data format
@@ -266,7 +269,10 @@ class HDF5Stack1D(DataObject.DataObject):
                 if ("%s" % self.__dtype).endswith("2"):
                     self.__dtype = numpy.float32
                 else:
-                    self.__dtype = numpy.float64
+                    if mSelection:
+                        self.__dtype = numpy.float32
+                    else:
+                        self.__dtype = numpy.float64
 
         # figure out the shape of the stack
         shape = yDataset.shape
