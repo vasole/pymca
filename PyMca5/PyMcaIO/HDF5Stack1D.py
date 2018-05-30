@@ -291,7 +291,7 @@ class HDF5Stack1D(DataObject.DataObject):
             neededMegaBytes = nFiles * dim0 * dim1 * (mcaDim * bytefactor/(1024*1024.))
             physicalMemory = None
             if hasattr(PhysicalMemory, "getAvailablePhysicalMemoryOrNone"):
-                physicalMemory = getAvailablePhysicalMemoryOrNone()
+                physicalMemory = PhysicalMemory.getAvailablePhysicalMemoryOrNone()
             if not physicalMemory:
                 physicalMemory = PhysicalMemory.getPhysicalMemoryOrNone()
             if physicalMemory is None:
