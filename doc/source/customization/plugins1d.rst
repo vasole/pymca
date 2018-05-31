@@ -76,7 +76,12 @@ Normalization
 
 .. automodule:: PyMca5.PyMcaPlugins.NormalizationPlugins
 
+Fit all curves
+++++++++++++++
 
+.. automodule:: PyMca5.PyMcaPlugins.FitAllCurvesPlugin
 
+Motor Info
+++++++++++
 
-
+.. automodule:: PyMca5.PyMcaPlugins.MotorInfoPlugin
