@@ -31,6 +31,11 @@ Alternative ROI options
 
 .. automodule:: PyMca5.PyMcaPlugins.ROIStackPlugin
 
+Silx Alternative ROI options
+++++++++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.SilxRoiStackPlugin
+
 External Images Tool
 ++++++++++++++++++++
 

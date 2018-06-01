@@ -23,7 +23,19 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
-"""Plugin to apply a median filter on the ROI stack.
+"""
+This plugin opens a stack ROI window providing alternative views:
+
+ - ICR Energy at Max.
+ - ICR Energy at Min.
+ - 3 energy slices
+ - ICR Background
+
+The background image can be subtracted from the other images to show
+a net count.
+
+This window also provides a median filter tool, with a configurable filter
+width, to smooth the stack image.
 
 The mask of the plot widget is synchronized with the master stack widget.
 """
