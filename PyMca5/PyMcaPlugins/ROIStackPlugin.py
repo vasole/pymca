@@ -28,34 +28,18 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
+This plugin opens a stack ROI window providing alternative views:
 
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
+ - ICR Energy at Max.
+ - ICR Energy at Min.
+ - 3 energy slices
+ - ICR Background
 
-These plugins will be compatible with any stack window that provides the functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
+This window also provides a median filter tool, with a configurable filter
+width, to smooth the stack image.
 
-    #images related
-    addImage
-    removeImage
-    replaceImage
+The mask of this plot widget is synchronized with the master stack widget.
 
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
 """
 from PyMca5 import StackPluginBase
 from PyMca5.PyMcaGui.pymca import StackROIWindow

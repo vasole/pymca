@@ -28,34 +28,18 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
+This plugin open a file selection dialog to open one or more images in a
+new window. Usual image data formats are supported, as well as standard
+image formats (JPG, PNG).
 
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
+The tool is meant to view an alternative view of the data, such as a
+photograph of the sample or a different type of scientific measurement
+of the same sample.
 
-These plugins will be compatible with any stack window that provides the functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
+The window offer a cropping tool, to crop the image to the current visible
+zoomed area and then resize it to fit the original size.
 
-    #images related
-    addImage
-    removeImage
-    replaceImage
-
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
+The mask of this plot widget is synchronized with the master stack widget.
 """
 import os
 from PyMca5 import StackPluginBase

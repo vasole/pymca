@@ -23,8 +23,8 @@ Overview
 .. autofunction:: getPlugin1DInstance
 
 
-Existing 1D plugins
-*******************
+Builtin 1D plugins
+******************
 
 Background subtraction tools
 ++++++++++++++++++++++++++++
@@ -85,3 +85,5 @@ Motor Info
 ++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.MotorInfoPlugin
+
+.. TODO: XLD/XMCD Analysis
