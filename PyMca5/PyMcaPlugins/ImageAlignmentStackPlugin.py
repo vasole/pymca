@@ -28,34 +28,13 @@ __contact__ = "sole@esrf.fr"
 __license__ = "MIT"
 __copyright__ = "European Synchrotron Radiation Facility, Grenoble, France"
 """
+This plugin provides two methods to align stack images, one based on a FFT
+algorithm and the other one based on the SIFT algorithm (on GPU).
 
-A Stack plugin is a module that will be automatically added to the PyMca stack windows
-in order to perform user defined operations on the data stack.
+The result of the alignment computation may be applied directly to the data,
+or saved to a file.
 
-These plugins will be compatible with any stack window that provides the functions:
-    #data related
-    getStackDataObject
-    getStackData
-    getStackInfo
-    setStack
-
-    #images related
-    addImage
-    removeImage
-    replaceImage
-
-    #mask related
-    setSelectionMask
-    getSelectionMask
-
-    #displayed curves
-    getActiveCurve
-    getGraphXLimits
-    getGraphYLimits
-
-    #information method
-    stackUpdated
-    selectionMaskUpdated
+This plugin also allows to apply the results from a file.
 """
 import sys
 import os

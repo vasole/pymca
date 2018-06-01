@@ -45,3 +45,9 @@ Silx External Images Tool
 +++++++++++++++++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.SilxExternalImagesStackPlugin
+
+
+Image Alignment Tool
+++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.ImageAlignmentStackPlugin
