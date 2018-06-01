@@ -51,3 +51,9 @@ Image Alignment Tool
 ++++++++++++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.ImageAlignmentStackPlugin
+
+
+Image Browser with Median Filter
+++++++++++++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.MedianFilterStackPlugin
