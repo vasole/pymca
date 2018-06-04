@@ -63,3 +63,8 @@ Load positioners from file
 ++++++++++++++++++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.LoadPositionersStackPlugin
+
+Stack motor positions
++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.StackMotorInfoPlugin
