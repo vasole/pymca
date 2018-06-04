@@ -57,3 +57,9 @@ Image Browser with Median Filter
 ++++++++++++++++++++++++++++++++
 
 .. automodule:: PyMca5.PyMcaPlugins.MedianFilterStackPlugin
+
+
+Load positioners from file
+++++++++++++++++++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.LoadPositionersStackPlugin
