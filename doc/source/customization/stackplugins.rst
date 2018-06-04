@@ -64,6 +64,19 @@ Load positioners from file
 
 .. automodule:: PyMca5.PyMcaPlugins.LoadPositionersStackPlugin
 
+.. TODO:
+
+    PyMca NNMA
+    ++++++++++
+
+    .. automodule:: PyMca5.PyMcaPlugins.NNMAStackPlugin
+
+PyMca PCA
++++++++++
+
+.. automodule:: PyMca5.PyMcaPlugins.PCAStackPlugin
+
+
 Stack motor positions
 +++++++++++++++++++++
 
