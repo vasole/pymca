@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #/*##########################################################################
-# Copyright (C) 2004-2017 V.A. Sole, European Synchrotron Radiation Facility
+# Copyright (C) 2004-2018 V.A. Sole, European Synchrotron Radiation Facility
 #
 # This file is part of the PyMca X-ray Fluorescence Toolkit developed at
 # the ESRF by the Software group.
@@ -460,7 +460,8 @@ class McaBatchGUI(qt.QWidget):
                         dialog.mainLayout.setContentsMargins(0, 0, 0, 0)
                         dialog.mainLayout.setSpacing(0)
                         datasource = NexusDataSource.NexusDataSource(filelist[0])
-                        nexusWidget = QNexusWidget.QNexusWidget(dialog)
+                        nexusWidget = QNexusWidget.QNexusWidget(dialog,
+                                                                buttons=True)
                         nexusWidget.buttons.hide()
                         nexusWidget.setDataSource(datasource)
                         button = qt.QPushButton(dialog)

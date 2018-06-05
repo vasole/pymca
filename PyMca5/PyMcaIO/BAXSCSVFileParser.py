@@ -194,6 +194,7 @@ def isBAXSCSVFile(filename):
     except:
         f.close()
         return False
+    f.close()
     try:
         if filename.lower().endswith(".csv"):
             if line.startswith("Bruker AXS") or \
